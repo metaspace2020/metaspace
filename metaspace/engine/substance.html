@@ -1,0 +1,276 @@
+{% extends "main.html" %}
+
+{% block add_includes %}
+    <link rel="stylesheet" href="{{ static_url("js/fancybox/source/jquery.fancybox.css") }}" type="text/css" media="screen" />
+    <script type="text/javascript" src="{{ static_url("js/fancybox/source/jquery.fancybox.pack.js") }}" ></script>
+
+    <!-- AmCharts -->
+    <script src="{{ static_url("js/amcharts/amcharts.js") }}"></script>
+    <script src="{{ static_url("js/amcharts/serial.js") }}"></script>
+{% end %}
+
+{% block init_script %}
+    <script type="text/javascript" class="init">
+      $(document).ready(function() {
+        var subst_id = window.location.pathname.split('/')[window.location.pathname.split('/').length-1];
+        
+        // chemical structure pic
+        $('#a-fb-wishart').attr("href", "http://moldb.wishartlab.com/molecules/HMDB" + subst_id + "/image.png");
+        $('#a-fb-wishart img').attr("src", "http://moldb.wishartlab.com/molecules/HMDB" + subst_id + "/thumb.png");
+        $(".fancybox").fancybox();
+        
+        var mz_array = [];
+        var mz_array_forspark = [];
+        $.getJSON("/ajax/substance/" + subst_id + "/", function (data) {
+          $("#about-name").text( data["name"] );
+          $("#about-sf").text( data["sf"] );
+
+          for (var i=0; i < data["isodist_mzs"].length; i++) {
+            var cur = { "mz" : data["isodist_mzs"][i].toFixed(3),
+                        "int" : data["isodist_int"][i].toFixed(3) };
+                        // "alpha" : "0.4" } ;
+                        // "lineColor" : linecolors[2] };
+            mz_array.push(cur);
+            mz_array_forspark.push(cur["mz"]);
+          }
+
+          // alert(mz_array[mz_array.length-2]["int"].toString());
+
+          var mz_peak_array = [];
+          for (var i=0; i < data["grad_ind"].length; i++) {
+            var cur = [ data["grad_mzs"][i], data["grad_int"][i] ];
+            mz_peak_array.push(cur);
+            // mz_array[data["grad_ind"][i]]["lineColor"] = linecolors[0];
+            // mz_array[data["grad_ind"][i]]["alpha"] = 0.8;
+          }
+          $('#table-mzs').dataTable( {
+            "data": mz_peak_array,
+            aLengthMenu: [100, 200, 500],
+            "columns": [
+                { "title": "m/z value" },
+                { "title": "Intensity" }
+            ]
+          } );
+
+          var guides=[];
+
+          chart = AmCharts.makeChart("chartdiv",{
+            "type": "serial",
+            "theme": "none",
+            "dataProvider": mz_array,
+            "pathToImages": "{{ static_url("js/amcharts/images/") }}",
+            "categoryField": "mz",
+            "categoryAxis": {
+                "dashLength": 1,
+                // "minorGridEnabled": true,
+                "position": "bottom",
+                "guides" : guides
+            },
+            "graphs": [
+              {
+                "id"              : "int",
+                // "type"            : "column",
+                // "type"            : "column",
+                "valueAxis"       : "axisval",
+                // "bullet"          : "round",
+                // "bulletSize"      : 3,
+                "valueField"      : "int",
+                "colorField"      : "lineColor",
+                "lineColorField"  : "lineColor",
+                // "fillColorsField" : "lineColor",
+                // "fillAlphas"      : 0.4,
+                "lineAlpha"       : 1,
+                "lineColor"       : linecolors[2],
+                "alphaField"      : "alpha",
+                "lineThickness"   : 1.5
+              }
+            ],
+            "chartScrollbar" : {
+            },
+            "chartCursor": {
+                "cursorPosition": "mouse",
+                "zoomable": true,
+                 "valueLineEnabled":true,
+                 "valueLineBalloonEnabled":true
+            },
+            "valueAxes": [{
+                "id": "axisval",
+                "reversed": false,
+                "axisAlpha": 1,
+                "axisThickness": 2,
+                "dashLength": 5,
+                "gridCount": 10,
+                "axisColor": "red",
+                "position": "left",
+                "title": "Value"
+            }],
+          });
+
+          $('#btn-runmz').click(function() {
+            $('#btn-runmz').addClass("disabled");
+            // alert(mz_array_forspark.toString());
+            $.post("/run/extractmzs", {
+              "data" : mz_array_forspark.toString(),
+              "formula_id" : subst_id,
+              "dataset_id" : 0
+            });
+          });
+        });
+        
+        var tbl_spark = $('#table-spark').DataTable( {
+          ajax: "/ajax/substancejobs/" + subst_id + "/",
+          processing: true,
+          serverSide: true,
+          order: [[ 8, "desc" ]],
+          aLengthMenu: [10, 20, 50],
+          "columnDefs": [
+            { "render": function ( data ) { return data.slice(0, 19).replace('T', ' '); }, "targets": [8] },
+            { "render": function ( data, type, row ) { if (row[4]) { return sin_render_time(data); } else { return ""; } }, "targets": [9] },
+            { "render": function ( data, type, row ) { return sin_render_dataset(row[0], data); }, "targets": [1] },
+            { "render": function ( data, type, row ) { return sin_render_job(row[2], row[1], data); }, "targets": [3] },
+            { "render": function ( data, type, row ) { return sin_render_tasks(row[6], data); }, "targets": [7] },
+            { "render": function ( data, type, row ) { if (row[5] != "SUCCEEDED") { return ""; } else {
+              return sin_render_jobresult(data); } }, "targets": [10] },
+            { "visible": false,  "targets": [ 0, 2, 4, 6 ] },
+          ],
+          "fnDrawCallback": function( oSettings ) {
+            $(".fancybox-ajax").fancybox({type : "image"});
+            $(".btn-mz").click(show_images_callback);
+          }
+        } );
+
+        setInterval( function () {
+            tbl_spark.ajax.reload();
+        }, 5000 );
+      } );
+{% end %}
+
+{% block body %}
+    <div class="page-header">
+      <table width="100%"><tr><td width="3%"></td><td><h1 id="about-name"><small>Name</small></h1></td>
+        <td width="3%"></td>
+        <td><h2 id="about-sf"><small>Sum formula</small></h2>
+        <td width="3%"></td>
+        <td><a id="a-fb-wishart" class="fancybox" rel="group" href=""><img height="100%" src="" alt="" /></a></td>
+      </tr>
+      </table>
+    </div>
+
+    <div class="panel panel-primary">
+      <div class="panel-heading">Spark jobs</div>
+      <table id="table-spark" class="table table-striped" cellspacing="0" width="100%">
+        <thead>
+          <tr>
+            <th>Dataset id</th>
+            <th>Dataset</th>
+            <th>Job id</th>
+            <th>Job</th>
+            <th>Done</th>
+            <th>Status</th>
+            <th>Tasks done</th>
+            <th>Tasks</th>
+            <th>Started at</th>
+            <th>Finished at</th>
+            <th></th>
+          </tr>
+        </thead>
+   
+        <tfoot>
+          <tr>
+            <th>Dataset id</th>
+            <th>Dataset</th>
+            <th>Job id</th>
+            <th>Job</th>
+            <th>Done</th>
+            <th>Status</th>
+            <th>Tasks done</th>
+            <th>Tasks</th>
+            <th>Started at</th>
+            <th>Finished at</th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <div class="panel panel-primary">
+          <div class="panel-heading">Run m/z extraction</div>
+          <div class="panel-body"><div class="row">
+            <div class="col-md-8">
+              When you press this button, a Spark job will be initiated at the server side.
+                It will appear in the list (updated every 5 seconds). When it finishes, you will
+                be able to view the m/z image.
+            </div>
+            <div class="col-md-4">
+              <div class="pull-right">
+                <button id="btn-runmz" class="btn btn-large btn-primary" type="button">Run m/z extraction</button>
+              </div>
+            </div>
+          </div></div>
+        </div>
+        <div class="panel panel-primary">
+          <div class="panel-heading">m/z peak values</div>
+          <table id="table-mzs" class="table table-striped" cellspacing="0" width="100%">
+            <thead>
+              <tr>
+                <th>m/z</th>
+                <th>Intensity</th>
+              </tr>
+            </thead>
+       
+            <tfoot>
+              <tr>
+                <th>m/z</th>
+                <th>Intensity</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="panel panel-primary">
+          <div class="panel-heading">m/z intensities graph</div>
+          <div id="chartdiv" style="width: 100%; height: 400px;"></div>
+        </div>
+      </div>
+    </div>
+   <div class="modal fade" id="mzmodal">
+    <div class="modal-dialog" style="width:80%;">
+      <div class="modal-content"><div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">m/z images</h4>
+      </div>
+      <div class="modal-body">
+        <p>The images below correspond to individual isotope peaks. Image entropies are shown below the images.</p>
+        <div id="mz-body">
+        </div>
+      </div>
+    </div>
+    </div>
+    </div>
+
+  </div>
+{% end %}
+
+
+{% block modals %}
+ <div class="modal fade" id="mzmodal">
+  <div class="modal-dialog" style="width:80%;">
+    <div class="modal-content"><div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+      <h4 class="modal-title">m/z images</h4>
+    </div>
+    <div class="modal-body">
+      <p>The images below correspond to individual isotope peaks. Image entropies are shown below the images.</p>
+      <div id="mz-body">
+      </div>
+    </div>
+  </div>
+{% end %}
+

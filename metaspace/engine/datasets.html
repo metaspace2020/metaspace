@@ -1,0 +1,112 @@
+{% extends "main.html" %}
+
+{% block add_includes %}
+    <link rel="stylesheet" href="{{ static_url("js/fancybox/source/jquery.fancybox.css") }}" type="text/css" media="screen" />
+    <script type="text/javascript" src="{{ static_url("js/fancybox/source/jquery.fancybox.pack.js") }}" ></script>
+{% end %}
+
+
+{% block init_script %}
+    <script type="text/javascript" class="init">
+      $(document).ready(function() {
+        $("#nav-datasets").addClass("active");
+        $("#nav-datasets a").attr("href", "#");
+        $("#nav-datasets a").html( $("#nav-datasets a").html() + ' <span class="sr-only">(current)</span>' );
+
+        $('#myModal').on('shown.bs.modal', function () {
+          $('#myInput').focus()
+        })
+
+        var tbl_datasets = $('#tbl-datasets').dataTable( {
+          ajax: "/ajax/datasets/",
+          processing: true,
+          serverSide: true,
+          order: [[ 0, "asc" ]],
+          aLengthMenu: [100, 200, 500],
+          bFilter: false,
+          // oLanguage: myTableLanguagePlayers,
+          "columnDefs": [
+            // { "render": function ( data, type, row ) { return sin_render_dataset(row[0], data); }, "targets": [1] },
+            // { "render": function ( data, type, row ) { return sin_render_job(row[2], data); }, "targets": [3] },
+            // { "render": function ( data, type, row ) { return sin_render_substance(row[4], data); }, "targets": [5] },
+            // { "render": function ( data, type, row ) { return sin_render_tasks(row[8], data); }, "targets": [9] },
+            // { "render": function ( data, type, row ) { return sin_render_time(data); }, "targets": [10] },
+            // { "render": function ( data, type, row ) { if (row[6]) { return sin_render_time(data); } else { return ""; } }, "targets": [11] },
+            { "render": function ( data ) { return sin_render_fullextract(data); }, "targets": [4] },
+            // { "visible": false,  "targets": [ 2, 4, 6, 8 ] },
+          ],
+          "fnDrawCallback": function( oSettings ) {
+            $(".fancybox-ajax").fancybox({type : "image"});
+            $(".btn-fullextract").click( function() {
+              var ds_id = $(this).attr("datasetid");
+              $("#modalbutton").click( function() {
+                $(".btn-fullextract[datasetid="+ds_id+"]").addClass("disabled");
+                $.post("/run/fulldataset", {
+                  "dataset_id" : ds_id
+                });
+              })
+            });
+          }
+        } );
+
+        // setInterval( function () {
+        //     tbl_datasets.ajax.reload();
+        // }, 5000 );
+      } );
+    </script>
+{% end %}
+
+{% block modals %}
+    <div class="modal fade" id="myModal" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Run full extraction</h4>
+          </div>
+          <div class="modal-body">
+            <p>Running a full m/z image extraction process on a large dataset is very computationally intensive
+              and time-consuming. Be warned.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" id="modalbutton" class="btn btn-danger" data-dismiss="modal">Run full extraction!</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+{% end %}
+
+{% block body %}
+    <div class="panel panel-primary">
+      <div class="panel-heading">Test server on Spark</div>
+      <div class="panel-body">
+        <p>This test web server for IMS data processing is built with Tornado and is (trying to) communicate with Spark.</p>
+      </div>
+    </div>
+    <div class="panel panel-primary">
+      <div class="panel-heading">Datasets</div>
+      <table id="tbl-datasets" class="table table-striped" cellspacing="0" width="100%">
+        <thead>
+          <tr>
+            <th>Dataset id</th>
+            <th>Dataset</th>
+            <th>Rows</th>
+            <th>Columns</th>
+            <th></th>
+          </tr>
+        </thead>
+   
+        <tfoot>
+          <tr>
+            <th>Dataset id</th>
+            <th>Dataset</th>
+            <th>Rows</th>
+            <th>Columns</th>
+            <th></th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+{% end %}
