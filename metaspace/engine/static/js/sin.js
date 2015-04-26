@@ -29,8 +29,8 @@ function sin_render_job(id, type, name) {
 
 function sin_render_substance_small(id, name) {
   var res = '<a href="/substance/' + id +'">' + name + '</a>';
-  if (name != null && name.length > 50) {
-    return res.substring(0, 50) + '...';
+  if (name != null && name.length > 40) {
+    return res.substring(0, 37) + '...';
   }
   return res;
 }
