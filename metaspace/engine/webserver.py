@@ -40,7 +40,7 @@ sql_counts = dict(
 sql_queries = dict(
 	formulas="SELECT id,name,sf FROM formulas ",
 	formulas_search="SELECT id,name,sf FROM formulas WHERE lower(name) like '%%%s%%' OR lower(sf) like '%%%s%%' OR id like '%s%%' ",
-	substance="SELECT f.id,name,sf,peaks,ints,array_agg(s.job_id) as job_ids,array_agg(d.dataset_id) as dataset_ids,array_agg(dataset) as datasets,array_agg(stats) as stats FROM formulas f JOIN mz_peaks p ON f.id=p.formula_id JOIN job_result_stats s ON f.id=s.formula_id JOIN jobs j ON s.job_id=j.id JOIN datasets d ON j.dataset_id=d.dataset_id WHERE f.id='%s' GROUP BY f.id,name,sf,peaks,ints",
+	substance="SELECT f.id,name,sf,peaks,ints,array_agg(s.job_id) as job_ids,array_agg(d.dataset_id) as dataset_ids,array_agg(dataset) as datasets,array_agg(stats) as stats FROM formulas f JOIN mz_peaks p ON f.id=p.formula_id LEFT JOIN job_result_stats s ON f.id=s.formula_id LEFT JOIN jobs j ON s.job_id=j.id LEFT JOIN datasets d ON j.dataset_id=d.dataset_id WHERE f.id='%s' GROUP BY f.id,name,sf,peaks,ints",
 	jobstats="SELECT stats,peaks FROM job_result_stats s JOIN mz_peaks p ON s.formula_id=p.formula_id WHERE job_id=%s",
 	substancejobs='''
 		SELECT j.dataset_id,dataset,id,description,done,status,tasks_done,tasks_total,start,finish,id
