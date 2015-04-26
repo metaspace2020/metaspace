@@ -70,6 +70,8 @@ function show_images_callback() {
   $.getJSON("/ajax/jobstats/" + id + "/", function (data) {
     var mzbody = '<div class="container-fluid" style="padding-right: 50px;"><div class="row">';
     var ent = data["stats"]["entropies"];
+    $('#span-corriso').text(data["stats"]["corr_images"].toFixed(4));
+    $('#span-corrint').text(data["stats"]["corr_int"].toFixed(4));
     var peaks = data["peaks"];
     var npeaks = peaks.length;
     var img_wid = 1000 / npeaks;

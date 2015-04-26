@@ -93,7 +93,8 @@ class RunSparkHandler(tornado.web.RequestHandler):
 			)
 		self.insert_job_result_stats( [ self.formula_id ], [ len(res_array) ], [ {
 			"entropies" : entropies,
-			"corr_images" : avg_dict_correlation(res_array)
+			"corr_images" : avg_dict_correlation(res_array),
+			"corr_int" : avg_intensity_correlation(res_array, self.intensities)
 		} ] )
 
 	def process_res_fulldataset(self, result, offset=0):
@@ -109,7 +110,11 @@ class RunSparkHandler(tornado.web.RequestHandler):
 		self.insert_job_result_stats(
 			[ self.formulas[i+offset]["id"] for i in xrange(len(res_dicts)) ],
 			[ len(res_dicts[i]) for i in xrange(len(res_dicts)) ],
-			[ { "entropies" : entropies[i], "corr_images" : avg_dict_correlation(res_dicts[i]) } for i in xrange(len(res_dicts)) ]
+			[ {
+				"entropies" : entropies[i],
+				"corr_images" : avg_dict_correlation(res_dicts[i]),
+				"corr_int" : avg_intensity_correlation(res_dicts[i], self.intensities[i])
+			  } for i in xrange(len(res_dicts)) ]
 		)
 
 	@gen.coroutine
@@ -127,7 +132,9 @@ class RunSparkHandler(tornado.web.RequestHandler):
 			self.formula_id = self.get_argument("formula_id")
 			self.job_type = 0
 			tol = 0.01
-			peaks = self.db.query("SELECT peaks FROM mz_peaks WHERE formula_id='%s'" % self.formula_id)[0]["peaks"]
+			formula_data = self.db.query("SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'" % self.formula_id)[0]
+			peaks = formula_data["peaks"]
+			self.intensities = formula_data["ints"]
 			# data = [ [float(x)-tol, float(x)+tol] for x in self.get_argument("data").strip().split(',')]
 			data = [ [float(x)-tol, float(x)+tol] for x in peaks]
 			my_print("Running m/z extraction for formula id %s" % self.formula_id)
@@ -158,8 +165,9 @@ class RunSparkHandler(tornado.web.RequestHandler):
 			prefix = "\t[fullrun %s] " % self.dataset_id
 			my_print(prefix + "collecting m/z queries for the run")
 			tol = 0.01
-			self.formulas = self.db.query("SELECT formula_id as id,peaks FROM mz_peaks")
+			self.formulas = self.db.query("SELECT formula_id as id,peaks,ints FROM mz_peaks")
 			mzpeaks = [ x["peaks"] for x in self.formulas]
+			self.intensities = [ x["ints"] for x in self.formulas]
 			data = [ [ [float(x)-tol, float(x)+tol] for x in peaks ] for peaks in mzpeaks ]
 			my_print(prefix + "looking for %d peaks" % sum([len(x) for x in data]))
 			self.num_chunks = 1 + len(data) / fulldataset_chunk_size

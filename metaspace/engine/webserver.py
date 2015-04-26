@@ -40,7 +40,7 @@ sql_counts = dict(
 sql_queries = dict(
 	formulas="SELECT id,name,sf FROM formulas ",
 	formulas_search="SELECT id,name,sf FROM formulas WHERE lower(name) like '%%%s%%' OR lower(sf) like '%%%s%%' OR id like '%s%%' ",
-	substance="SELECT id,name,sf,peaks FROM formulas f JOIN mz_peaks p ON f.id=p.formula_id where id='%s'",
+	substance="SELECT f.id,name,sf,peaks,ints,array_agg(s.job_id) as job_ids,array_agg(d.dataset_id) as dataset_ids,array_agg(dataset) as datasets,array_agg(stats) as stats FROM formulas f JOIN mz_peaks p ON f.id=p.formula_id JOIN job_result_stats s ON f.id=s.formula_id JOIN jobs j ON s.job_id=j.id JOIN datasets d ON j.dataset_id=d.dataset_id WHERE f.id='%s' GROUP BY f.id,name,sf,peaks,ints",
 	jobstats="SELECT stats,peaks FROM job_result_stats s JOIN mz_peaks p ON s.formula_id=p.formula_id WHERE job_id=%s",
 	substancejobs='''
 		SELECT j.dataset_id,dataset,id,description,done,status,tasks_done,tasks_total,start,finish,id
@@ -64,7 +64,7 @@ sql_queries = dict(
 		WHERE j.id=%s
 	''',
 	fullimages='''
-		SELECT id,name,sf,stats->'entropies' as entropies,stats->'mean_ent' as mean_ent,stats->'corr_images' as corr_images,id
+		SELECT id,name,sf,stats->'entropies' as entropies,stats->'mean_ent' as mean_ent,stats->'corr_images' as corr_images,stats->'corr_int' as corr_int,id
 		FROM job_result_stats j LEFT JOIN formulas f ON f.id=j.formula_id
 		WHERE (stats->'mean_ent')::text::real > 0.0001 AND job_id=%s
 	'''
@@ -75,7 +75,7 @@ sql_fields = dict(
 	substancejobs=["dataset_id", "dataset", "id", "description", "done", "status", "tasks_done", "tasks_total", "start", "finish", "id"],
 	jobs=["id", "type", "description", "dataset_id", "dataset", "formula_id", "formula_name", "done", "status", "tasks_done", "tasks_total", "start", "finish", "id"],
 	datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
-	fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "id"]
+	fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"]
 )
 
 def get_formula_and_peak(s):
@@ -184,6 +184,7 @@ class AjaxHandler(tornado.web.RequestHandler):
 				res_dict = res_list[0]
 			## add isotopes for the substance query
 			if query_id == "substance":
+				res_dict.update({"all_datasets" : self.application.all_datasets})
 				res_dict.update(get_lists_of_mzs(res_dict["sf"]))
 			res_dict.update({"draw" : draw})
 
@@ -242,6 +243,7 @@ class Application(tornado.web.Application):
 		self.max_jobid = self.db.get("SELECT max(id) as maxid FROM jobs").maxid
 		self.max_jobid = int(self.max_jobid) if self.max_jobid != None else 0
 		self.jobs = {}
+		self.all_datasets = [d["dataset"] for d in self.db.query("SELECT dataset FROM datasets ORDER BY dataset_id")]
 
 	def get_next_job_id(self):
 		self.max_jobid += 1

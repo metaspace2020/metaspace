@@ -34,7 +34,7 @@
       }
 
       function filter_row(row) {
-        return (row[4] <= val_maxent && row[5] >= val_corrimages);
+        return (row[4] <= val_maxent && row[5] >= val_corrimages && row[6] >= val_corrisotope);
       }
     </script>
 {% end %}
@@ -71,14 +71,14 @@
             order: [[ 4, "asc" ]],
             aLengthMenu: [100, 200, 500],
             "columnDefs": [
-              { "render": function ( data ) { return data.toFixed(3); }, "targets": [4, 5] },
+              { "render": function ( data ) { return data.toFixed(3); }, "targets": [4, 5, 6] },
               { "render": function ( data, type, row ) { 
                 return '<a class="btn btn-xs btn-link" data-toggle="collapse" href="#tr' + row[0] + '" aria-controls="tr' + row[0] + '">Show/hide</a><div class="collapse" id="tr' + row[0] + '">' + data.map(function(x) { return x.toFixed(3); }).join("<br/>") + '</div>';
               }, "targets": [3] },
               { "render": function ( data, type, row ) { return sin_render_substance_small(row[0], data); }, "targets": [1, 2] },
               { "render": function ( data, type, row ) { 
                 return sin_render_jobresult(job_id + "/" + row[0]);
-              }, "targets": [6] },
+              }, "targets": [7] },
               // { "visible": false,  "targets": [ 0, 2, 4, 6 ] },
             ],
             "fnDrawCallback": function( oSettings ) {
@@ -140,14 +140,14 @@
                 </div>
                 <div class="form-group form-group-sm">
                     <label class="control-label col-lg-1"><input id="useMinCorrIsotope" type="checkbox"></label>
-                    <label for="minCorrIsotope" class="control-label col-lg-7">Correlation with isotope images &ge;</label>
+                    <label for="minCorrIsotope" class="control-label col-lg-7">Correlation with peak intensities &ge;</label>
                     <div class="col-lg-4">
                         <input type="number" pattern="[0-9]+([\.|,][0-9]+)?" step="0.001" value="0.900" class="form-control" id="minCorrIsotope" disabled>
                     </div>
                 </div>
                 <div class="form-group form-group-sm">
                     <label class="control-label col-lg-1"><input id="useMinCorrImages" type="checkbox"></label>
-                    <label for="minCorrImages" class="control-label col-lg-7">Correlation between images &ge;</label>
+                    <label for="minCorrImages" class="control-label col-lg-7">Avg. correlation with monoisotopic &ge;</label>
                     <div class="col-lg-4">
                         <input type="number" pattern="[0-9]+([\.|,][0-9]+)?" step="0.001" value="0.900" class="form-control" id="minCorrImages" disabled>
                     </div>
@@ -174,7 +174,8 @@
             <th>Formula</th>
             <th>Image entropies</th>
             <th>Average entropy</th>
-            <th>Average image correlation</th>
+            <th>Average image correlation with monoisotopic</th>
+            <th>Image intensity correlation with peak intensities</th>
             <th></th>
           </tr>
         </thead>
@@ -186,7 +187,8 @@
             <th>Formula</th>
             <th>Image entropies</th>
             <th>Average entropy</th>
-            <th>Average image correlation</th>
+            <th>Average image correlation with monoisotopic</th>
+            <th>Image intensity correlation with peak intensities</th>
             <th></th>
           </tr>
         </tfoot>

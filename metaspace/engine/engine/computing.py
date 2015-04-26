@@ -57,30 +57,23 @@ def get_many_groups2d_total_dict(data, sp):
 	# return [ [get_one_group_total_dict(sp[0], q[0], q[1], sp[1], sp[2]) for q in queries] for queries in data]
 	return [ get_many_groups_total_dict(queries, sp) for queries in data]
 
-def inner_correlations(images):
-	# 3. Score correlation with monoiso
-	notnull_monoiso = ion_datacube.xic[:,0] > 0 # only compare pixels with values in the monoisotopic (otherwise high correlation for large empty areas)
-	print isotope_ms[adduct].get_spectrum(source='centroids')[1][1:]
-	iso_correlation_score[adduct] = np.average([np.corrcoef(ion_datacube.xic[notnull_monoiso,0],ion_datacube.xic[notnull_monoiso,ii])[0,1] for ii in range(1,len(mz_list))] ,weights=isotope_ms[adduct].get_spectrum(source='centroids')[1][1:])
-	
-	# 4. Score isotope ratio
-	isotope_intensity = np.asarray(isotope_ms[adduct].get_spectrum(source='centroids')[1])
-	image_intensities = [sum(ion_datacube.xic[:,ii]) for ii in range(0,len(mz_list))]
-	iso_ratio_score[adduct] = 1-np.mean(abs( isotope_intensity/np.linalg.norm(isotope_intensity) - image_intensities/np.linalg.norm(image_intensities)))
-
 def corr_dicts(a, b):
     commonkeys = [ k for k in a if k in b ]
     return np.corrcoef(np.array([ a[k] for k in commonkeys ]), np.array([ b[k] for k in commonkeys ]))[0][1]
 
+def avg_intensity_correlation(images, peak_intensities):
+	'''Correlation between peak intensities and images intensities'''
+	return np.corrcoef( np.array([ np.sum(img.values()) for img in images ]), np.array(peak_intensities) )[0][1]
+
 def avg_dict_correlation(images):
+	'''Average correlation between the first, monoisotopic image and all other images'''
 	corrs = []
-	for i in xrange(len(images)):
-		for j in xrange(i):
-			commonkeys = [ k for k in images[i] if k in images[j] ]
-			if len(commonkeys) > 0:
-				corrs.append(np.corrcoef(np.array([ images[i][k] for k in commonkeys ]), np.array([ images[j][k] for k in commonkeys ]))[0][1])
-			else:
-				corrs.append( 0 )
+	for i in xrange(1, len(images)):
+		commonkeys = [ k for k in images[i] if k in images[0] ]
+		if len(commonkeys) > 0:
+			corrs.append(np.corrcoef(np.array([ images[i][k] for k in commonkeys ]), np.array([ images[0][k] for k in commonkeys ]))[0][1])
+		else:
+			corrs.append( 0 )
 	res = np.mean(corrs)
 	if np.isnan(res):
 		return 0
