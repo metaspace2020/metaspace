@@ -23,11 +23,14 @@ import decimal
 from pyspark import SparkContext, SparkConf
 
 import os,sys,inspect
-currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0,parentdir)
+# currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+# parentdir = os.path.dirname(currentdir)
+# sys.path.insert(0,parentdir)
 
-from engine import *
+# sys.path = ['..'] + sys.path
+from engine.util import *
+from engine.spark import *
+from engine.computing import *
 
 sql_counts = dict(
 	formulas="SELECT count(*) FROM formulas",
