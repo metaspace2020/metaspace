@@ -92,7 +92,7 @@ def reduce_manygroups2d_dict(xarray, yarray):
 
 def get_lists_of_mzs(sf):
 	try:
-		isotope_ms = pyisocalc.isodist(sf,plot=False,sigma=0.01,charges=-2,resolution=100000.0,do_centroid=False)
+		isotope_ms = pyisocalc.isodist(sf,plot=False,sigma=0.01,charges=-1,resolution=100000.0,do_centroid=False)
 		mzlist = list(isotope_ms.get_mzs())
 		intenslist = list(isotope_ms.get_intensities())
 		mzs_list, intensities_list, indices_list = gradient(isotope_ms.get_mzs(), isotope_ms.get_intensities(), max_output=-1, weighted_bins=0)

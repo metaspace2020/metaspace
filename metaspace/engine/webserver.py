@@ -40,7 +40,7 @@ sql_counts = dict(
 sql_queries = dict(
 	formulas="SELECT id,name,sf FROM formulas ",
 	formulas_search="SELECT id,name,sf FROM formulas WHERE lower(name) like '%%%s%%' OR lower(sf) like '%%%s%%' OR id like '%s%%' ",
-	substance="SELECT id,name,sf FROM formulas where id='%s'",
+	substance="SELECT id,name,sf,peaks FROM formulas f JOIN mz_peaks p ON f.id=p.formula_id where id='%s'",
 	jobstats="SELECT stats,peaks FROM job_result_stats s JOIN mz_peaks p ON s.formula_id=p.formula_id WHERE job_id=%s",
 	substancejobs='''
 		SELECT j.dataset_id,dataset,id,description,done,status,tasks_done,tasks_total,start,finish,id
