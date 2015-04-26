@@ -22,15 +22,11 @@ import decimal
 
 from pyspark import SparkContext, SparkConf
 
-import os,sys,inspect
-# currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
-# parentdir = os.path.dirname(currentdir)
-# sys.path.insert(0,parentdir)
-
 # sys.path = ['..'] + sys.path
 from engine.util import *
 from engine.spark import *
 from engine.computing import *
+from engine.imaging import *
 
 sql_counts = dict(
 	formulas="SELECT count(*) FROM formulas",
@@ -105,7 +101,7 @@ class MZImageHandler(tornado.web.RequestHandler):
 			data = self.db.query("SELECT spectrum as s,value as v FROM job_result_data WHERE job_id=%d AND peak=%d" % (job_id, peak_id))
 		else:
 			data = self.db.query("SELECT spectrum as s,value as v FROM job_result_data WHERE job_id=%d" % job_id)
-		sio = imaging.write_image( imaging.make_image_arrays(dRows, dColumns, [int(row["s"]) for row in data], [float(row["v"]) for row in data]) )
+		sio = write_image( make_image_arrays(dRows, dColumns, [int(row["s"]) for row in data], [float(row["v"]) for row in data]) )
 		self.set_header("Content-Type", "image/png")
 		self.write(sio.getvalue())
 
@@ -124,7 +120,7 @@ class MZImageParamHandler(tornado.web.RequestHandler):
 		params = self.db.query("SELECT nrows,ncols FROM jobs j JOIN datasets d on j.dataset_id=d.dataset_id WHERE j.id=%d" % job_id)[0]
 		(dRows, dColumns) = ( int(params["nrows"]), int(params["ncols"]) )
 		data = self.db.query("SELECT spectrum as s,value as v FROM job_result_data WHERE job_id=%d AND param=%d AND peak=%d" % (job_id, formula_id, peak_id))
-		sio = imaging.write_image( imaging.make_image_arrays(dRows, dColumns, [int(row["s"]) for row in data], [float(row["v"]) for row in data]) )
+		sio = write_image( make_image_arrays(dRows, dColumns, [int(row["s"]) for row in data], [float(row["v"]) for row in data]) )
 		self.set_header("Content-Type", "image/png")
 		self.write(sio.getvalue())
 

@@ -79,7 +79,7 @@ class RunSparkHandler(tornado.web.RequestHandler):
 				if "entropies" in stdict:
 					stdict.update({ 'mean_ent' : np.mean(stdict["entropies"]) })
 			self.db.query('INSERT INTO job_result_stats VALUES %s' % (
-				",".join([ '(%d, %s, %d, \'%s\')' % (self.job_id, formula_ids[i], num_peaks[i], json.dumps(
+				",".join([ '(%d, \'%s\', %d, \'%s\')' % (self.job_id, formula_ids[i], num_peaks[i], json.dumps(
 					stats[i]
 				)) for i in xrange(len(formula_ids)) ])
 			) )
