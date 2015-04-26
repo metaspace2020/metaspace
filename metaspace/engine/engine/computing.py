@@ -63,7 +63,11 @@ def corr_dicts(a, b):
 
 def avg_intensity_correlation(images, peak_intensities):
 	'''Correlation between peak intensities and images intensities'''
-	return np.corrcoef( np.array([ np.sum(img.values()) for img in images ]), np.array(peak_intensities) )[0][1]
+	res = np.corrcoef( np.array([ np.sum(img.values()) for img in images ]), np.array(peak_intensities) )[0][1]
+	if np.isnan(res):
+		return 0
+	else:
+		return res
 
 def avg_dict_correlation(images):
 	'''Average correlation between the first, monoisotopic image and all other images'''
