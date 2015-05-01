@@ -4,7 +4,7 @@
 
 .inuse, .ui-slider-range .inuse, .yadcf-filter-range-number-slider .inuse {
 	background: #8BBEF0;
-	font-size: 12px;
+	font-size: 13px;
 }
 
 .yadcf-filter-reset-button {
@@ -23,7 +23,7 @@
 	padding-left: 1px;
 	padding-bottom: 1px;
 	padding-top: 1px;
-	font-size: 12px;
+	font-size: 13px;
 	width:100%;
 }
 
@@ -39,13 +39,14 @@
 	font-size:11px;
 }
 .yadcf-filter-wrapper {
-	display: inline-block;
+	/*display: inline-block;*/
 	white-space: nowrap;
 	margin-left: 2px;
+	outline-style: none;
 }
 
 .yadcf-filter-range-number {
-	width: 40px;
+	width: 100%;
 }
 
 .yadcf-filter-range-number-seperator {
@@ -63,8 +64,8 @@
 }
 
 .yadcf-filter-wrapper-inner {
-	display: inline-block;
-	border: 1px solid #ABADB3;
+	/*display: inline-block;*/
+	/*border: 1px solid #ABADB3;*/
 	padding-left: 2px;
 	padding-right: 2px;
 }
@@ -113,9 +114,11 @@
 .yadcf-number-slider-filter-wrapper-inner .yadcf-filter-range-number-slider-min-tip-inner {
 	position:absolute;
 	top: 11px;
+	outline-style: none;
 }
 
 .yadcf-number-slider-filter-wrapper-inner .yadcf-filter-range-number-slider-max-tip-inner {
 	position:absolute;
 	top: 11px;
+	outline-style: none;
 }

@@ -159,12 +159,11 @@ function sin_amchart_spectrum(selector, data, pathtoimages) {
         "dashLength": 1,
         // "minorGridEnabled": true,
         "position": "bottom",
-        "guides" : guides
+        "guides" : []
     },
     "graphs": [
       {
         "id"              : "int",
-        // "type"            : "column",
         // "type"            : "column",
         "valueAxis"       : "axisval",
         // "bullet"          : "round",

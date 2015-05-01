@@ -751,7 +751,6 @@ var yadcf = (function ($) {
 	}
 
 	function addRangeNumberFilterCapability(table_selector_jq_friendly, fromId, toId, col_num, ignore_char) {
-
 		$.fn.dataTableExt.afnFiltering.push(
 			function (oSettings, aData, iDataIndex) {
 				var min = document.getElementById(fromId).value,
@@ -792,6 +791,42 @@ var yadcf = (function ($) {
 			}
 		);
 	}
+
+	function addLowerBoundNumberFilterCapability(table_selector_jq_friendly, fromId, toId, col_num, ignore_char) {
+		$.fn.dataTableExt.afnFiltering.push(
+			function (oSettings, aData, iDataIndex) {
+				var min = document.getElementById(fromId).value,
+					val = aData[col_num] === "-" ? 0 : aData[col_num],
+					retVal = false,
+					table_selector_jq_friendly_local = table_selector_jq_friendly,
+					current_table_selector_jq_friendly = yadcf.generateTableSelectorJQFriendly(oSettings.oInstance.selector),
+					ignore_char_local = ignore_char;
+
+				if (table_selector_jq_friendly_local !== current_table_selector_jq_friendly) {
+					return true;
+				}
+
+				if (ignore_char_local !== undefined) {
+					min = min.replace(ignore_char_local, "");
+					if (val) {
+						val = val.toString().replace(ignore_char_local, "");
+					} else {
+						val = "";
+					}
+				}
+
+				min = (min !== "") ? (+min) : min;
+				val = (val !== "") ? (+val) : val;
+				if (min === "") {
+					retVal = true;
+				} else if (min <= val) {
+					retVal = true;
+				}
+				return retVal;
+			}
+		);
+	}
+
 
 	function addCustomFunctionFilterCapability(table_selector_jq_friendly, filterId, col_num) {
 
@@ -990,6 +1025,61 @@ var yadcf = (function ($) {
 
 		if (oTable.fnSettings().oFeatures.bServerSide !== true) {
 			addRangeNumberFilterCapability(table_selector_jq_friendly, fromId, toId, column_number, ignore_char);
+		}
+
+	}
+
+
+	function addLowerBoundNumberFilter(filter_selector_string, table_selector_jq_friendly, column_number, filter_reset_button_text, filter_default_label, ignore_char) {
+		var fromId = "yadcf-filter-" + table_selector_jq_friendly + "-from-" + column_number,
+			filter_selector_string_tmp,
+			filter_wrapper_id,
+			oTable;
+
+		filter_wrapper_id = "yadcf-filter-wrapper-" + table_selector_jq_friendly + "-" + column_number;
+
+		if ($("#" + filter_wrapper_id).length > 0) {
+			return;
+		}
+
+		//add a wrapper to hold both filter and reset button
+		$(filter_selector_string).append("<div onmousedown=\"yadcf.stopPropagation(event);\" onclick=\"yadcf.stopPropagation(event);\"  id=\"" + filter_wrapper_id + "\" class=\"yadcf-filter-wrapper\" width=\"100%\"></div>");
+		filter_selector_string = filter_selector_string + " div.yadcf-filter-wrapper";
+		filter_selector_string_tmp = filter_selector_string;
+
+		// $(filter_selector_string).append("<div id=\"yadcf-filter-wrapper-inner-" + table_selector_jq_friendly + "-" + column_number + "\" class=\"yadcf-filter-wrapper-inner\"  width=\"100%\"></div>");
+		// filter_selector_string = filter_selector_string + " div.yadcf-filter-wrapper-inner";
+
+		$(filter_selector_string).append("<input placeholder=\"" + filter_default_label[0] + "\" id=\"" + fromId + "\" class=\"yadcf-filter-range-number yadcf-filter-range\" onkeyup=\"yadcf.lowerBoundNumberKeyUP('" + table_selector_jq_friendly + "',event);\">" +
+			"</input>");
+		// $(filter_selector_string).append("<span class=\"yadcf-filter-range-number-seperator\" >" +
+		// 	"</span>");
+		// $(filter_selector_string).append("<input placeholder=\"" + filter_default_label[1] + "\" id=\"" + toId + "\" class=\"yadcf-filter-range-number yadcf-filter-range\" onkeyup=\"yadcf.rangeNumberKeyUP('" + table_selector_jq_friendly + "',event);\">" +
+		// 	"</input>");
+
+		if (filter_reset_button_text !== false) {
+			$(filter_selector_string_tmp).append("<button type=\"button\" onmousedown=\"yadcf.stopPropagation(event);\" " +
+				"onclick=\"yadcf.stopPropagation(event);yadcf.rangeClear('" + table_selector_jq_friendly + "',event); return false;\" class=\"yadcf-filter-reset-button\">" + filter_reset_button_text + "</button>");
+		}
+
+		$.fn.dataTableExt.iApiIndex = oTablesIndex[table_selector_jq_friendly];
+		oTable = oTables[table_selector_jq_friendly];
+		if (oTable.fnSettings().oFeatures.bStateSave === true && oTable.fnSettings().oLoadedState) {
+			if (oTable.fnSettings().oLoadedState.yadcfState && oTable.fnSettings().oLoadedState.yadcfState[table_selector_jq_friendly] && oTable.fnSettings().oLoadedState.yadcfState[table_selector_jq_friendly][column_number]) {
+				$('#' + fromId).val(oTable.fnSettings().oLoadedState.yadcfState[table_selector_jq_friendly][column_number].from);
+				if (oTable.fnSettings().oLoadedState.yadcfState[table_selector_jq_friendly][column_number].from !== "") {
+					$('#' + fromId).addClass("inuse");
+				}
+				// $('#' + toId).val(oTable.fnSettings().oLoadedState.yadcfState[table_selector_jq_friendly][column_number].to);
+				// if (oTable.fnSettings().oLoadedState.yadcfState[table_selector_jq_friendly][column_number].to !== "") {
+				// 	$('#' + toId).addClass("inuse");
+				// }
+			}
+		}
+		resetIApiIndex();
+
+		if (oTable.fnSettings().oFeatures.bServerSide !== true) {
+			addLowerBoundNumberFilterCapability(table_selector_jq_friendly, fromId, "", column_number, ignore_char);
 		}
 
 	}
@@ -1935,6 +2025,10 @@ var yadcf = (function ($) {
 
 						addRangeNumberFilter(filter_selector_string, table_selector_jq_friendly, column_number, filter_reset_button_text, filter_default_label, ignore_char);
 
+					} else if (columnObj.filter_type === "lower_bound_number") {
+
+						addLowerBoundNumberFilter(filter_selector_string, table_selector_jq_friendly, column_number, filter_reset_button_text, filter_default_label, ignore_char);
+
 					} else if (columnObj.filter_type === "range_number_slider") {
 
 						addRangeNumberSliderFilter(filter_selector_string, table_selector_jq_friendly, column_number, filter_reset_button_text, min_val, max_val, ignore_char);
@@ -2264,6 +2358,73 @@ var yadcf = (function ($) {
 			}, options.filter_delay);
 		}
 	}
+
+	function lowerBoundNumberKeyUP(table_selector_jq_friendly, event) {
+		event = eventTargetFixUp(event);
+		$.fn.dataTableExt.iApiIndex = oTablesIndex[table_selector_jq_friendly];
+		var oTable = oTables[table_selector_jq_friendly],
+			min,
+			fromId,
+			yadcfState,
+			column_number,
+			options,
+			keyUp;
+
+		column_number = parseInt($(event.target).attr("id").replace('-from-', '').replace('-to-', '').replace('yadcf-filter-' + table_selector_jq_friendly, ''), 10);
+		options = getOptions(oTable.selector)[column_number];
+
+		keyUp = function () {
+
+			fromId = event.target.id;
+			min = document.getElementById(fromId).value;
+			min = (min !== "") ? (+min) : min;
+
+			if ((!isNaN(min)) || min === "") {
+
+				if (oTable.fnSettings().oFeatures.bServerSide !== true) {
+					oTable.fnDraw();
+				} else {
+					oTable.fnFilter(min + '-yadcf_delim-', column_number);
+				}
+				if (document.getElementById(fromId).value !== "") {
+					$("#" + fromId).addClass("inuse");
+				}
+				if ($.trim(event.target.value) === "" && $(event.target).hasClass("inuse")) {
+					$("#" + event.target.id).removeClass("inuse");
+				}
+				if (!oTable.fnSettings().oLoadedState) {
+					oTable.fnSettings().oLoadedState = {};
+					oTable.fnSettings().oApi._fnSaveState(oTable.fnSettings());
+				}
+				if (oTable.fnSettings().oFeatures.bStateSave === true) {
+					if (oTable.fnSettings().oLoadedState.yadcfState !== undefined && oTable.fnSettings().oLoadedState.yadcfState[table_selector_jq_friendly] !== undefined) {
+						oTable.fnSettings().oLoadedState.yadcfState[table_selector_jq_friendly][column_number] =
+							{
+								'from' : min
+							};
+					} else {
+						yadcfState = {};
+						yadcfState[table_selector_jq_friendly] = [];
+						yadcfState[table_selector_jq_friendly][column_number] = {
+							'from' : min
+						};
+						oTable.fnSettings().oLoadedState.yadcfState = yadcfState;
+					}
+					oTable.fnSettings().oApi._fnSaveState(oTable.fnSettings());
+				}
+			}
+			resetIApiIndex();
+		};
+
+		if (options.filter_delay === undefined) {
+			keyUp();
+		} else {
+			yadcfDelay(function () {
+				keyUp();
+			}, options.filter_delay);
+		}
+	}
+
 
 	function doFilterMultiTables(tablesSelectors, event, column_number_str, clear) {
 
@@ -3094,6 +3255,7 @@ var yadcf = (function ($) {
 		autocompleteKeyUP : autocompleteKeyUP,
 		getOptions : getOptions,
 		rangeNumberKeyUP : rangeNumberKeyUP,
+		lowerBoundNumberKeyUP : lowerBoundNumberKeyUP,
 		rangeDateKeyUP : rangeDateKeyUP,
 		rangeClear : rangeClear,
 		rangeNumberSliderClear : rangeNumberSliderClear,

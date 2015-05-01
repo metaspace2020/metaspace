@@ -18,7 +18,6 @@
     <script type="text/javascript" class="init">
       $(document).ready(function() {
         var mz_array = [];
-        var mz_array_forspark = [];
 
         var res_datasetids = [];
         var res_datasets = [];
@@ -73,10 +72,22 @@
             $(row_object).addClass('selected');
             var d = tbl_demo.row(row_object).data();
             var subst_id = d[4];
-            console.log( d );
+            // console.log( d );
 
-            $.getJSON("/ajax/demosubst/" + d[8].toString() + "/" + subst_id + "/", function (data) {
-              alert(data["data"][0]["sp"].toString());
+            $.getJSON("/ajax/demosubst/" + d[8].toString() + "/" + subst_id + "/" + d[3] + "/", function (data) {
+              // console.log(data);
+              var num_peaks = data["data"].length;
+              var w_percent = 100 / num_peaks;
+              mz_array = [];
+              // console.log(data["spec"]);
+              for (var i=0; i < data["spec"]["isodist_mzs"].length; i++) {
+                var cur = { "mz" : data["spec"]["isodist_mzs"][i].toFixed(3),
+                            "int" : data["spec"]["isodist_int"][i].toFixed(3) };
+                mz_array.push(cur);
+              }
+              // console.log(mz_array);
+              $("#molecular_chart").attr("style", "width: 100%; height: 300px;");
+              var chart = sin_amchart_spectrum("molecular_chart", mz_array, '{{ static_url("js/amcharts/images/") }}');
             });
 
             $("#about-name").text( d[2] );
@@ -85,69 +96,6 @@
             $('#a-fb-wishart img').attr("src", "http://moldb.wishartlab.com/molecules/HMDB" + subst_id + "/thumb.png");
         }
 
-        // $.getJSON("/ajax/substance/" + subst_id + "/", function (data) {
-        //   $("#about-name").text( data["name"] );
-        //   $("#about-sf").text( data["sf"] );
-        //   res_datasetids = data["dataset_ids"];
-        //   res_alldatasets = data["all_datasets"];
-        //   res_datasets = data["datasets"];
-        //   res_stats = data["stats"];
-        //   res_jobids = data["job_ids"];
-        //   for (var i=0; i < data["all_datasets"].length; i++) {
-        //     $("#dd-menu").append('<li role="presentation"><a role="menuitem" tabindex="-1" href="#" datasetid="' + i.toString() + '">' + data["all_datasets"][i] + '</a></li>')
-        //   }
-        //   $(".dropdown-menu").on('click', 'li a', function(){
-        //     $("#btn-dd-ds:first-child").html($(this).text() + ' <span class="caret"></span>');
-        //     set_dataset($(this).attr("datasetid"));
-        //   });
-
-        //   for (var i=0; i < data["isodist_mzs"].length; i++) {
-        //     var cur = { "mz" : data["isodist_mzs"][i].toFixed(3),
-        //                 "int" : data["isodist_int"][i].toFixed(3) };
-        //                 // "alpha" : "0.4" } ;
-        //                 // "lineColor" : linecolors[2] };
-        //     mz_array.push(cur);
-        //     mz_array_forspark.push(cur["mz"]);
-        //   }
-
-        //   // alert(mz_array[mz_array.length-2]["int"].toString());
-
-        //   var mz_peak_array = [];
-        //   for (var i=0; i < data["grad_ind"].length; i++) {
-        //     var cur = [ data["grad_mzs"][i], data["grad_int"][i] ];
-        //     mz_peak_array.push(cur);
-        //     // mz_array[data["grad_ind"][i]]["lineColor"] = linecolors[0];
-        //     // mz_array[data["grad_ind"][i]]["alpha"] = 0.8;
-        //   }
-        //   $('#table-mzs').dataTable( {
-        //     "data": mz_peak_array,
-        //     aLengthMenu: [100, 200, 500],
-        //     "columns": [
-        //         { "title": "m/z value" },
-        //         { "title": "Intensity" }
-        //     ]
-        //   } );
-
-        //   var guides=[];
-
-        //   chart = sin_amchart_spectrum("chartdiv", mz_array, '{{ static_url("js/amcharts/images/") }}');
-        // });
-
-        // $.fn.dataTableExt.afnFiltering.push(
-        //     function( settings, data, dataIndex ) {
-        //         console.log(data);
-        //         var min_ent = parseFloat( $('#min_ent').val(), 10 );
-        //         var ent = parseFloat( data[5] ) || 0; // use data for the ent column
-        //         alert(min_ent.toString() + " " + end.toString());
-        //         if ( ( isNaN( min_ent ) && isNaN( max ) ) ||
-        //              ( isNaN( min_ent ) && ent >= min_ent ) )
-        //         {
-        //             return true;
-        //         }
-        //         return false;
-        //     }
-        // );
-        
         tbl_demo = $('#table-demo').DataTable( {
           ajax: "/ajax/demobigtable/",
           scrollY: "200px",
@@ -172,24 +120,7 @@
               // return sin_render_jobresult(data); } }, "targets": [10] },
             { "visible": false,  "targets": [ 8 ] },
           ],
-          // "fnDrawCallback": function( oSettings ) {
-          //   $(".fancybox-ajax").fancybox({type : "image"});
-          //   $(".btn-mz").click(show_images_callback);
-          // }
         } );
-        // columnFilter({
-        //   sPlaceHolder: "head:after",
-        //   aoColumns: [
-        //    { type: "text" },
-        //    { type: "text" },
-        //    { type: "text" },
-        //    { type: "text" },
-        //    { type: "text" },
-        //    { type: "text" },
-        //    { type: "text" },
-        //    { type: "text" }
-        //   ]
-        // });
         
         yadcf.init(tbl_demo, [
           {column_number : 0, filter_type: "select", filter_container_id: "fil-db", filter_reset_button_text: false, filter_default_label: 'Select...'},
@@ -197,9 +128,11 @@
           {column_number : 2, filter_type: "text", filter_container_id: "fil-nm", filter_reset_button_text: false },
           {column_number : 3, filter_type: "text", filter_container_id: "fil-sf", filter_reset_button_text: false},
           {column_number : 4, filter_type: "text", filter_container_id: "fil-id", filter_reset_button_text: false},
-          {column_number : 5, filter_type: "text", filter_container_id: "fil-sp", filter_reset_button_text: false},
-          {column_number : 6, filter_type: "text", filter_container_id: "fil-ic", filter_reset_button_text: false},
-          {column_number : 7, filter_type: "text", filter_container_id: "fil-sc", filter_reset_button_text: false}
+          {column_number : 5, filter_type: "lower_bound_number", filter_container_id: "fil-sp",
+            filter_reset_button_text: false, filter_default_label: ['&ge;']
+          },
+          {column_number : 6, filter_type: "lower_bound_number", filter_container_id: "fil-ic", filter_reset_button_text: false, filter_default_label: ['&ge;'] },
+          {column_number : 7, filter_type: "lower_bound_number", filter_container_id: "fil-sc", filter_reset_button_text: false, filter_default_label: ['&ge;']}
           // {column_number : 7, filter_type: "range_number", filter_container_id: "fil-jb", filter_reset_button_text: false},
         ]);
 
@@ -277,24 +210,23 @@
       </table>
     </div>
 
-    <div class="page-header">
-      <table width="100%"><tr><td width="3%"></td><td><h1 id="about-name"><small>Name</small></h1></td>
-        <td width="3%"></td>
-        <td><h2 id="about-sf"><small>Sum formula</small></h2>
-        <td width="3%"></td>
-        <td><a id="a-fb-wishart" class="fancybox" rel="group" href=""><img height="100%" src="" alt="" /></a></td>
-        <!--td>
-          <h4>Dataset</h4>
-          <div class="dropdown">
-          <button class="btn btn-primary dropdown-toggle" type="button" id="btn-dd-ds" data-toggle="dropdown" aria-expanded="true">Choose...
-            <span class="caret"></span>
-          </button>
-          <ul class="dropdown-menu" role="menu" aria-labelledby="btn-dd-ds" id="dd-menu">
-          </ul>
-        </td-->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="container-fluid">
+          <div class="page-header">
+            <div class="row">
+              <h2 id="about-name"></h2>
+            </div>
+            <div class="row">
+              <div class="col-md-6"><h3 id="about-sf"></h3></div>
+              <div><a id="a-fb-wishart" class="fancybox" rel="group" href=""><img height="100%" src="" alt="" /></a></div>
+            </div>
+          </div>
         </div>
-      </tr>
-      </table>
+      </div>
+      <div class="col-md-6">
+        <div id="molecular_chart"></div>
+      </div>
     </div>
 
     <!--div class="panel panel-primary">
@@ -348,43 +280,6 @@
           <div id="chartdiv" style="width: 100%; height: 400px;"></div>
         </div>
       </div>
-    </div>
-
-    <div class="panel panel-primary">
-      <div class="panel-heading">Spark jobs</div>
-      <table id="table-spark" class="table table-striped" cellspacing="0" width="100%">
-        <thead>
-          <tr>
-            <th>Dataset id</th>
-            <th>Dataset</th>
-            <th>Job id</th>
-            <th>Job</th>
-            <th>Done</th>
-            <th>Status</th>
-            <th>Tasks done</th>
-            <th>Tasks</th>
-            <th>Started at</th>
-            <th>Finished at</th>
-            <th></th>
-          </tr>
-        </thead>
-   
-        <tfoot>
-          <tr>
-            <th>Dataset id</th>
-            <th>Dataset</th>
-            <th>Job id</th>
-            <th>Job</th>
-            <th>Done</th>
-            <th>Status</th>
-            <th>Tasks done</th>
-            <th>Tasks</th>
-            <th>Started at</th>
-            <th>Finished at</th>
-            <th></th>
-          </tr>
-        </tfoot>
-      </table>
     </div-->
   </div>
 {% end %}

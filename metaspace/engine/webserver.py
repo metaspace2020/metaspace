@@ -84,7 +84,8 @@ sql_queries = dict(
 		FROM job_result_stats s JOIN job_result_data d ON s.job_id=d.job_id
 		WHERE d.job_id=%d AND formula_id='%s' AND d.param=%d
 		GROUP BY s.job_id,formula_id,peak
-	'''
+	''',
+	demosubstpeaks="SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'"
 )
 
 sql_fields = dict(
@@ -199,6 +200,8 @@ class AjaxHandler(tornado.web.RequestHandler):
 					final_query = sql_queries[query_id] % input_id
 			elif query_id == 'demosubst':
 				arr = input_id.split('/')
+				# spectrum = self.db.query( sql_queries['demosubstpeaks'] % arr[1] )
+				spectrum = get_lists_of_mzs(arr[2])
 				final_query = sql_queries[query_id] % ( int(arr[0]), arr[1], int(arr[1]) )
 			else:
 				final_query = sql_queries[query_id] % input_id
@@ -207,7 +210,7 @@ class AjaxHandler(tornado.web.RequestHandler):
 			if query_id == 'fullimages':
 				res_dict = {"data" : [ [x[field] for field in sql_fields[query_id]] for x in res_list]}
 			elif query_id == 'demosubst':
-				res_dict = {"data" : res_list}
+				res_dict = {"data" : res_list, "spec" : spectrum}
 			else:
 				res_dict = res_list[0]
 			## add isotopes for the substance query
