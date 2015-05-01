@@ -28,11 +28,11 @@ function sin_render_job(id, type, name) {
 }
 
 function sin_render_substance_small(id, name) {
-  var res = '<a href="/substance/' + id +'">' + name + '</a>';
+  var res = name;
   if (name != null && name.length > 40) {
-    return res.substring(0, 37) + '...';
+    res = res.substring(0, 37) + '...';
   }
-  return res;
+  return '<a href="/substance/' + id +'">' + res + '</a>';;
 }
 
 function sin_render_substance(id, name) {
@@ -131,125 +131,6 @@ function sin_format_nodash(dtstring) {
   return dtstring.substring(0,4) + dtstring.substring(5,7) + dtstring.substring(8,10);
 }
 
-function sin_render_team(id, name) {
-  // if (id == null) return '&ndash;';
-  if (id == null) return '';
-  if (id == 0) return 'Без команды';
-  return '<a href="/team/' + id +'">' + name + '</a>';
-}
-
-function sin_render_place(minpl, maxpl) {
-  // if (minpl == null) return '&ndash;';
-  if (minpl == null) return '';
-  if (minpl != maxpl) {
-    return minpl + '&ndash;' + maxpl;
-  }
-  return minpl;
-}
-
-function sin_render_result(correct, total) {
-  // if (correct == null) return '&ndash;';
-  if (correct == null) return '';
-  return correct + ' / ' + total;
-}
-
-function sin_render_tourn(id, name) {
-  return '<a href="/tourn/' + id +'">' + name + '</a>';
-}
-
-function sin_render_rating(data) {
-  if (data == null) {
-    return "";
-  } else {
-    return data.toFixed(3);
-  }
-}
-
-function sin_render_rating_short(data) {
-  if (data == null) {
-    return "";
-  } else {
-    return data.toFixed(1);
-  }
-}
-
-function sin_render_avatar(player_id, size, alttext) {
-  return '<img width="' + size + '" height="' + size + '" src="/img/p/' + player_id + '.jpg" alt="' + alttext + '"/>';
-}
-
-function sin_render_roster_photos(data, picsize, shownames, reverse) {
-  if(typeof(reverse)==='undefined') reverse = false;
-  var roster = '<table><tr>';
-  for (var i=0; i < data.length; ++i) {
-    var j = reverse ? data.length - i - 1 : i;
-    roster += '<td width="100pt"><a href="/player/' + data[j][0] + '" rel="tooltip" data-toggle="tooltip" title="' + data[j][2] + ' ' + data[j][1] + '">' + sin_render_avatar(data[j][0], picsize, data[j][2] + ' ' + data[j][1]) + '</a></td>';
-  }
-  if (shownames > 0) {
-    roster += '</tr><tr>';
-    for (var i=0; i < data.length; ++i) {
-      var j = reverse ? data.length - i - 1 : i;
-      roster += '<td class="td-small"><a href="/player/' + data[j][0] + '">' + data[j][2] + '<br/>' + data[j][1] + '</a></td>';
-    }
-  }
-  return roster + '</tr></table>';
-}
-
-function sin_render_roster(rowid, arr_id, arr_last, arr_first, arr_rating) {
-  if (arr_id == null || arr_id.length == 0) {
-    return '';
-  }
-  arr = []
-  for(var i = 0; i < arr_id.length; i++) {
-    arr.push('<b>' + sin_render_rating_short(arr_rating[i]) + '</b> <a href="/player/' + arr_id[i] + '">' + arr_last[i] + ' ' + arr_first[i] + '</a>')
-  }
-  return '<a class="btn btn-xs btn-link" data-toggle="collapse" href="#tr' + rowid + '" aria-controls="tr' + rowid + '">Показать/скрыть состав</a><div class="collapse" id="tr' + rowid + '">' + arr.join("<br/>") + '</div>';
-}
-
-function sin_render_question(row_id, question, answer, pass, comment, author, source) {
-  var res = '<a class="btn btn-xs btn-link" data-toggle="collapse" href="#tr' + row_id + '" aria-controls="tr' + row_id + '">Показать/скрыть вопрос</a>';
-  res += '<a class="btn btn-xs btn-link" data-toggle="collapse" data-target="#tr' + row_id + ',#tra' + row_id + '" aria-controls="tr' + row_id + '">с ответом</a>';
-  res += '<div class="collapse" id="tr' + row_id + '">';
-  res += '<div class="well well-sm"><p><b>Вопрос</b>.<br/>' + question.replace(/(?:\r\n|\r|\n)/g, '<br />') + '</p>';
-  res += '<a class="btn btn-xs btn-link" data-toggle="collapse" href="#tra' + row_id + '" aria-controls="tra' + row_id + '">Показать/скрыть ответ</i></a><div class="collapse" id="tra' + row_id + '">'
-  res += '<p><b>Ответ</b>. ' + answer + '</p>';
-  if (pass != null) {
-    res += '<p><b>Зачёт</b>. ' + pass + '</p>';
-  }
-  if (comment != null) {
-    res += '<p><b>Комментарий</b>.<br/>' + comment.replace(/(?:\r\n|\r|\n)/g, '<br />') + '</p>';
-  }
-  if (source != null) {
-    res += '<b>Источник</b>. ' + source.replace(/(?:\r\n|\r|\n)/g, '<br />') + '<p>';
-  }
-  if (author != null) {
-    res += '<b>Автор</b>. ' + author + '<br/></p></div></div>';
-  }
-  return res;
-}
-
-function sin_render_resbytour(num_tour_cols, data) {
-  res = '<div class="row-fluid">';
-  for (var i=0; i<data.length; i++) {
-    res += '<div class="col-xs-' + num_tour_cols + '">' + data[i] + '</div>';
-  }
-  return res + '</div>';
-}
-
-function sin_tourq_columns(number) {
-    res = [
-      {"data" : "0"}, {"data" : "1"}, {"data" : "2"}
-    ];
-    for (var i=0; i<number; i++) {
-      res.push({"data" : "3." + i});
-    }
-    res.push({"data" : "4"});
-    res.push({"data" : "5"});
-    res.push({"data" : "6"});
-    alert(number);
-    alert(res);
-    return res;
-}
-
 function pad(number, length) {
     var str = '' + number;
     var diff = length - str.length;
@@ -267,45 +148,56 @@ function pad_space(number, length) {
     return str;
 }
 
-var myTableLanguagePlayers = {
-            "sSearch": "Введите id или начало фамилии:",
-            "sLengthMenu": "Показывать по _MENU_ записей",
-            "sZeroRecords": "Записей не найдено",
-            "sInfoEmpty": "Что-то пошло не так: в таблице нет записей...",
-            "sInfo": "Всего _TOTAL_ записей (от _START_ до _END_)",
-            "oPaginate": {
-              "sFirst":     "Первая",
-              "sNext":      "След.",
-              "sPrevious":  "Пред.",
-              "sLast":      "Последняя"
-            }
-};
-
-var myTableLanguageTeams = {
-            "sSearch": "Введите id или начало названия:",
-            "sLengthMenu": "Показывать по _MENU_ записей",
-            "sZeroRecords": "Записей не найдено",
-            "sInfoEmpty": "Что-то пошло не так: в таблице нет записей...",
-            "sInfo": "Всего _TOTAL_ записей (от _START_ до _END_)",
-            "oPaginate": {
-              "sFirst":     "Первая",
-              "sNext":      "След.",
-              "sPrevious":  "Пред.",
-              "sLast":      "Последняя"
-            }
-};
-
-var myTableLanguageTourns = {
-            "sSearch": "Введите id или часть названия:",
-            "sLengthMenu": "Показывать по _MENU_ записей",
-            "sZeroRecords": "Записей не найдено",
-            "sInfoEmpty": "Что-то пошло не так: в таблице нет записей...",
-            "sInfo": "Всего _TOTAL_ записей (от _START_ до _END_)",
-            "oPaginate": {
-              "sFirst":     "Первый",
-              "sNext":      "След.",
-              "sPrevious":  "Пред.",
-              "sLast":      "Последний"
-            }
-};
-
+function sin_amchart_spectrum(selector, data, pathtoimages) {
+  return AmCharts.makeChart(selector, {
+    "type": "serial",
+    "theme": "none",
+    "dataProvider": data,
+    "pathToImages": pathtoimages,
+    "categoryField": "mz",
+    "categoryAxis": {
+        "dashLength": 1,
+        // "minorGridEnabled": true,
+        "position": "bottom",
+        "guides" : guides
+    },
+    "graphs": [
+      {
+        "id"              : "int",
+        // "type"            : "column",
+        // "type"            : "column",
+        "valueAxis"       : "axisval",
+        // "bullet"          : "round",
+        // "bulletSize"      : 3,
+        "valueField"      : "int",
+        "colorField"      : "lineColor",
+        "lineColorField"  : "lineColor",
+        // "fillColorsField" : "lineColor",
+        // "fillAlphas"      : 0.4,
+        "lineAlpha"       : 1,
+        "lineColor"       : linecolors[2],
+        "alphaField"      : "alpha",
+        "lineThickness"   : 1.5
+      }
+    ],
+    "chartScrollbar" : {
+    },
+    "chartCursor": {
+        "cursorPosition": "mouse",
+        "zoomable": true,
+         "valueLineEnabled":true,
+         "valueLineBalloonEnabled":true
+    },
+    "valueAxes": [{
+        "id": "axisval",
+        "reversed": false,
+        "axisAlpha": 1,
+        "axisThickness": 2,
+        "dashLength": 5,
+        "gridCount": 10,
+        "axisColor": "red",
+        "position": "left",
+        "title": "Value"
+    }],
+  });
+}

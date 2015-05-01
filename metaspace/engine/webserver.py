@@ -34,7 +34,8 @@ sql_counts = dict(
 	substancejobs="SELECT count(*) FROM jobs WHERE formula_id='%s'",
 	jobs="SELECT count(*) FROM jobs",
 	datasets="SELECT count(*) FROM datasets",
-	fullimages="SELECT count(*) FROM job_result_stats WHERE job_id=%s"
+	fullimages="SELECT count(*) FROM job_result_stats WHERE job_id=%s",
+	demobigtable="SELECT count(*) FROM job_result_stats"
 )
 
 sql_queries = dict(
@@ -67,6 +68,22 @@ sql_queries = dict(
 		SELECT id,name,sf,stats->'entropies' as entropies,stats->'mean_ent' as mean_ent,stats->'corr_images' as corr_images,stats->'corr_int' as corr_int,id
 		FROM job_result_stats j LEFT JOIN formulas f ON f.id=j.formula_id
 		WHERE (stats->'mean_ent')::text::real > 0.0001 AND job_id=%s
+	''',
+	demobigtable='''
+		SELECT db,ds.dataset,f.name,f.sf,f.id,
+			(s.stats->'mean_ent')::text::real AS mean_ent,
+			(s.stats->'corr_images')::text::real AS corr_images,
+			(s.stats->'corr_int')::text::real AS corr_int,
+			j.id as job_id
+		FROM formulas f JOIN formula_dbs db ON f.db_id=db.db_id
+			JOIN job_result_stats s ON f.id=s.formula_id JOIN jobs j ON s.job_id=j.id
+			JOIN datasets ds ON j.dataset_id=ds.dataset_id
+	''',
+	demosubst='''
+		SELECT s.job_id,formula_id,peak,array_agg(spectrum) as sp,array_agg(value) as val
+		FROM job_result_stats s JOIN job_result_data d ON s.job_id=d.job_id
+		WHERE d.job_id=%d AND formula_id='%s' AND d.param=%d
+		GROUP BY s.job_id,formula_id,peak
 	'''
 )
 
@@ -75,7 +92,8 @@ sql_fields = dict(
 	substancejobs=["dataset_id", "dataset", "id", "description", "done", "status", "tasks_done", "tasks_total", "start", "finish", "id"],
 	jobs=["id", "type", "description", "dataset_id", "dataset", "formula_id", "formula_name", "done", "status", "tasks_done", "tasks_total", "start", "finish", "id"],
 	datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
-	fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"]
+	fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"],
+	demobigtable=["db", "dataset", "name", "sf", "id", "mean_ent", "corr_images", "corr_int", "job_id"]
 )
 
 def get_formula_and_peak(s):
@@ -148,10 +166,11 @@ class AjaxHandler(tornado.web.RequestHandler):
 		if len(slug) > 0:
 			input_id = get_id_from_slug(slug)
 		
-		if query_id in ['formulas', 'substancejobs', 'jobs', 'datasets']:
+		if query_id in ['formulas', 'substancejobs', 'jobs', 'datasets', 'demobigtable']:
 			orderby = sql_fields[query_id][ int(self.get_argument('order[0][column]', 0)) ]
 			orderdir = self.get_argument('order[0][dir]', 0)
 			limit = self.get_argument('length', 0)
+			limit_string = "LIMIT %s" % limit if limit != '-1' else ""
 			offset = self.get_argument('start', 0)
 			searchval = self.get_argument('search[value]', "")
 			my_print("search for : %s" % searchval)
@@ -163,9 +182,13 @@ class AjaxHandler(tornado.web.RequestHandler):
 				q_count = q_count % input_id
 				q_res = q_res % input_id
 			my_print(q_count)
-			my_print(q_res + " ORDER BY %s %s LIMIT %s OFFSET %s" % (orderby, orderdir, limit, offset))
-			count = int(self.db.query(q_count)[0]['count'])
-			res = self.db.query(q_res + " ORDER BY %s %s LIMIT %s OFFSET %s" % (orderby, orderdir, limit, offset))
+			if query_id == 'demobigtable':
+				count = int(self.db.query(q_count)[0]['count'])
+				res = self.db.query(q_res)
+			else:
+				my_print(q_res + " ORDER BY %s %s %s OFFSET %s" % (orderby, orderdir, limit_string, offset))
+				count = int(self.db.query(q_count)[0]['count'])
+				res = self.db.query(q_res + " ORDER BY %s %s %s OFFSET %s" % (orderby, orderdir, limit_string, offset))
 			res_dict = self.make_datatable_dict(draw, count, [[ row[x] for x in sql_fields[query_id] ] for row in res])
 		else:
 			if query_id == 'jobstats':
@@ -174,12 +197,17 @@ class AjaxHandler(tornado.web.RequestHandler):
 					final_query = sql_queries[query_id] % arr[0] + " AND s.formula_id='%s'" % arr[1]
 				else: 
 					final_query = sql_queries[query_id] % input_id
+			elif query_id == 'demosubst':
+				arr = input_id.split('/')
+				final_query = sql_queries[query_id] % ( int(arr[0]), arr[1], int(arr[1]) )
 			else:
 				final_query = sql_queries[query_id] % input_id
 			my_print(final_query)
 			res_list = self.db.query(final_query)
-			if query_id in ['fullimages']:
+			if query_id == 'fullimages':
 				res_dict = {"data" : [ [x[field] for field in sql_fields[query_id]] for x in res_list]}
+			elif query_id == 'demosubst':
+				res_dict = {"data" : res_list}
 			else:
 				res_dict = res_list[0]
 			## add isotopes for the substance query
@@ -219,6 +247,7 @@ class Application(tornado.web.Application):
 			(r"^/run/(.*)", RunSparkHandler),
 			(r"^/mzimage/([^/]*)\.png", MZImageHandler),
 			(r"^/mzimage/([^/]*)/([^/]*)\.png", MZImageParamHandler),
+			(r"^/demo/", SimpleHtmlHandler),
 			(r"^/jobs/", SimpleHtmlHandler),
 			(r"^/datasets/", SimpleHtmlHandler),
 			(r"^/fullresults/(.*)", SimpleHtmlHandlerWithId),
