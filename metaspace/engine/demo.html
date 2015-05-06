@@ -101,17 +101,20 @@
                     break;
                   }
                 }
-                console.log(data["data"][imInd]);
-                console.log(data["data"][imInd]["x"]);
-                $("#row-images").append('<div class="col-lg-' + col_w.toString() + '" id="col-img-' + imInd.toString() + '"></div>');
-                var svg = d3.select("#col-img-" + imInd.toString()).append("svg").attr("width", "100%");
+                $("#row-images").append('<div style="text-align:center;" class="col-lg-' + col_w.toString() + '">'
+  		    + '<div class="container-fluid"><div class="row">'
+		    + '<div class="col-lg-8">Spectral correlation</div><div class="col-lg-4">' + (0.00).toFixed(3) + '</div></div>'
+		    + '<div class="row" id="col-img-' + imInd.toString() + '">'
+		    + '</div>');
+		var img_wid = $("#col-img-" + imInd.toString()).width();
+                var svg = d3.select("#col-img-" + imInd.toString()).append("svg").attr("width", img_wid).attr("height", img_wid);
                 var svg_datapoints = svg.selectAll(".p")
                     .data(data["data"][imInd]["val"])
                     .enter();
 
                 var img_color = d3.scale.linear()
                   .domain(d3.extent(data["data"][imInd]["val"]))
-                  .range( ["lightblue", "white", "yellow", "red"] );
+                  .range( ["lightblue", "red"] );
 
                 svg_datapoints
                     .append("rect")
