@@ -77,6 +77,9 @@
             var entropies = d[9];
             // console.log( d );
 
+            $("#imagediv").empty();
+            $("#imagediv").html("<h4 style='text-align:center'>...loading images...</h4>");
+
             $.getJSON("/ajax/demosubst/" + d[8].toString() + "/" + subst_id + "/" + d[3] + "/" + dataset_id + "/", function (data) {
               var num_peaks = data["data"].length;
               var w_percent = 100 / num_peaks;
