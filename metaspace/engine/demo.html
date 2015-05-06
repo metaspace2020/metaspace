@@ -72,15 +72,16 @@
         function select_row(row_object) {
             $(row_object).addClass('selected');
             var d = tbl_demo.row(row_object).data();
+            var dataset_id = d[10];
             var subst_id = d[4];
             var entropies = d[9];
             // console.log( d );
 
-            $.getJSON("/ajax/demosubst/" + d[8].toString() + "/" + subst_id + "/" + d[3] + "/", function (data) {
+            $.getJSON("/ajax/demosubst/" + d[8].toString() + "/" + subst_id + "/" + d[3] + "/" + dataset_id + "/", function (data) {
               var num_peaks = data["data"].length;
               var w_percent = 100 / num_peaks;
               mz_array = [];
-              // console.log(data["spec"]);
+              console.log(data["coords"]);
               for (var i=0; i < data["spec"]["isodist_mzs"].length; i++) {
                 var cur = { "mz" : data["spec"]["isodist_mzs"][i].toFixed(3),
                             "int" : data["spec"]["isodist_int"][i].toFixed(3) };
@@ -90,7 +91,8 @@
               $("#molecular_chart").attr("style", "width: 100%; height: 300px;");
               var chart = sin_amchart_spectrum("molecular_chart", mz_array, '{{ static_url("js/amcharts/images/") }}');
 
-              var colors = ["violet", "indigo", "blue", "green", "yellow", "orange", "red"];
+              // var colors = ["violet", "indigo", "blue", "green", "yellow", "orange", "red"];
+              var colors = ["white", "red"];
 
               var col_w = num_peaks > 12 ? 1 : Math.floor(12 / num_peaks);
               var pixel_size = 4;
@@ -122,8 +124,8 @@
                     .append("rect")
                     .attr("width", pixel_size).attr("height", pixel_size)
                     .style("fill", function(d) { return img_color(d); } )
-                    .attr("x",function(d, i) {return data["data"][imInd]["x"][i] * pixel_size / 20;})
-                    .attr("y",function(d, i) {return data["data"][imInd]["y"][i] * pixel_size / 20;});
+                    .attr("x",function(d, i) {return data["coords"][ data["data"][imInd]["sp"][i] ][0] * pixel_size / 20;})
+                    .attr("y",function(d, i) {return data["coords"][ data["data"][imInd]["sp"][i] ][1] * pixel_size / 20;});
               } 
             });
 
@@ -155,7 +157,7 @@
             // { "render": function ( data, type, row ) { return sin_render_tasks(row[6], data); }, "targets": [7] },
             // { "render": function ( data, type, row ) { if (row[5] != "SUCCEEDED") { return ""; } else {
               // return sin_render_jobresult(data); } }, "targets": [10] },
-            { "visible": false,  "targets": [ 8, 9 ] },
+            { "visible": false,  "targets": [ 8, 9, 10 ] },
           ],
         } );
         
@@ -218,6 +220,7 @@
             <th>Spectral correlation</th>
             <th>Job id</th>
             <th>Entropies</th>
+            <th>Dataset id</th>
           </tr>
           <tr>
             <th id="fil-db"></th>
@@ -229,6 +232,7 @@
             <th id="fil-ic"></th>
             <th id="fil-sc"></th>
             <th id="fil-jb"></th>
+            <th></th><th></th>
           </tr>
         </thead>
    
@@ -244,6 +248,7 @@
             <th>Spectral correlation</th>
             <th>Job id</th>
             <th>Entropies</th>
+            <th>Dataset id</th>
           </tr>
         </tfoot-->
       </table>

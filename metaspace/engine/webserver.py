@@ -75,21 +75,31 @@ sql_queries = dict(
 			(s.stats->'corr_images')::text::real AS corr_images,
 			(s.stats->'corr_int')::text::real AS corr_int,
 			j.id as job_id,
-			s.stats->'entropies' AS entropies
+			s.stats->'entropies' AS entropies,
+			j.dataset_id
 		FROM formulas f JOIN formula_dbs db ON f.db_id=db.db_id
 			JOIN job_result_stats s ON f.id=s.formula_id JOIN jobs j ON s.job_id=j.id
 			JOIN datasets ds ON j.dataset_id=ds.dataset_id
 	''',
+	# demosubst='''
+	# 	SELECT s.job_id,s.formula_id,peak,array_agg(x) as x,array_agg(y) as y,array_agg(value) as val
+	# 	FROM job_result_stats s 
+	# 		JOIN job_result_data d ON s.job_id=d.job_id 
+	# 		JOIN jobs j ON d.job_id=j.id 
+	# 		JOIN coordinates c ON j.dataset_id=c.dataset_id AND c.index=spectrum
+	# 	WHERE d.job_id=%d AND s.formula_id='%s' AND d.param=%d
+	# 	GROUP BY s.job_id,s.formula_id,peak
+	# ''',
 	demosubst='''
-		SELECT s.job_id,s.formula_id,peak,array_agg(x) as x,array_agg(y) as y,array_agg(value) as val
+		SELECT s.job_id,s.formula_id,peak,array_agg(spectrum) as sp,array_agg(value) as val
 		FROM job_result_stats s 
 			JOIN job_result_data d ON s.job_id=d.job_id 
 			JOIN jobs j ON d.job_id=j.id 
-			JOIN coordinates c ON j.dataset_id=c.dataset_id AND c.index=spectrum
 		WHERE d.job_id=%d AND s.formula_id='%s' AND d.param=%d
 		GROUP BY s.job_id,s.formula_id,peak
 	''',
-	demosubstpeaks="SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'"
+	demosubstpeaks="SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'",
+	democoords="SELECT index,x,y FROM coordinates WHERE dataset_id=%d"
 )
 
 sql_fields = dict(
@@ -98,7 +108,7 @@ sql_fields = dict(
 	jobs=["id", "type", "description", "dataset_id", "dataset", "formula_id", "formula_name", "done", "status", "tasks_done", "tasks_total", "start", "finish", "id"],
 	datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
 	fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"],
-	demobigtable=["db", "dataset", "name", "sf", "id", "mean_ent", "corr_images", "corr_int", "job_id", "entropies"]
+	demobigtable=["db", "dataset", "name", "sf", "id", "mean_ent", "corr_images", "corr_int", "job_id", "entropies", "dataset_id"]
 )
 
 def get_formula_and_peak(s):
@@ -206,6 +216,8 @@ class AjaxHandler(tornado.web.RequestHandler):
 				arr = input_id.split('/')
 				# spectrum = self.db.query( sql_queries['demosubstpeaks'] % arr[1] )
 				spectrum = get_lists_of_mzs(arr[2])
+				coords_q = self.db.query( sql_queries['democoords'] % int(arr[3]) )
+				coords = { row["index"] : [row["x"], row["y"]] for row in coords_q }
 				final_query = sql_queries[query_id] % ( int(arr[0]), arr[1], int(arr[1]) )
 			else:
 				final_query = sql_queries[query_id] % input_id
@@ -215,6 +227,7 @@ class AjaxHandler(tornado.web.RequestHandler):
 				res_dict = {"data" : [ [x[field] for field in sql_fields[query_id]] for x in res_list]}
 			elif query_id == 'demosubst':
 				res_dict = {"data" : res_list, "spec" : spectrum}
+				res_dict.update({ "coords" : coords })
 			else:
 				res_dict = res_list[0]
 			## add isotopes for the substance query
