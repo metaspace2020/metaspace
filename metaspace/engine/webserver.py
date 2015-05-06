@@ -74,7 +74,8 @@ sql_queries = dict(
 			(s.stats->'mean_ent')::text::real AS mean_ent,
 			(s.stats->'corr_images')::text::real AS corr_images,
 			(s.stats->'corr_int')::text::real AS corr_int,
-			j.id as job_id
+			j.id as job_id,
+			s.stats->'entropies' AS entropies
 		FROM formulas f JOIN formula_dbs db ON f.db_id=db.db_id
 			JOIN job_result_stats s ON f.id=s.formula_id JOIN jobs j ON s.job_id=j.id
 			JOIN datasets ds ON j.dataset_id=ds.dataset_id
@@ -97,7 +98,7 @@ sql_fields = dict(
 	jobs=["id", "type", "description", "dataset_id", "dataset", "formula_id", "formula_name", "done", "status", "tasks_done", "tasks_total", "start", "finish", "id"],
 	datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
 	fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"],
-	demobigtable=["db", "dataset", "name", "sf", "id", "mean_ent", "corr_images", "corr_int", "job_id"]
+	demobigtable=["db", "dataset", "name", "sf", "id", "mean_ent", "corr_images", "corr_int", "job_id", "entropies"]
 )
 
 def get_formula_and_peak(s):
