@@ -80,10 +80,13 @@ sql_queries = dict(
 			JOIN datasets ds ON j.dataset_id=ds.dataset_id
 	''',
 	demosubst='''
-		SELECT s.job_id,formula_id,peak,array_agg(spectrum) as sp,array_agg(value) as val
-		FROM job_result_stats s JOIN job_result_data d ON s.job_id=d.job_id
-		WHERE d.job_id=%d AND formula_id='%s' AND d.param=%d
-		GROUP BY s.job_id,formula_id,peak
+		SELECT s.job_id,s.formula_id,peak,array_agg(x) as x,array_agg(y) as y,array_agg(value) as val
+		FROM job_result_stats s 
+			JOIN job_result_data d ON s.job_id=d.job_id 
+			JOIN jobs j ON d.job_id=j.id 
+			JOIN coordinates c ON j.dataset_id=c.dataset_id AND c.index=spectrum
+		WHERE d.job_id=%d AND s.formula_id='%s' AND d.param=%d
+		GROUP BY s.job_id,s.formula_id,peak
 	''',
 	demosubstpeaks="SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'"
 )

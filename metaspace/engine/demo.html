@@ -6,6 +6,7 @@
     <script type="text/javascript" src="{{ static_url("js/fancybox/source/jquery.fancybox.pack.js") }}" ></script>
 
     <!-- AmCharts -->
+    <script src="{{ static_url("js/d3.min.js") }}"></script>
     <script src="{{ static_url("js/amcharts/amcharts.js") }}"></script>
     <script src="{{ static_url("js/amcharts/serial.js") }}"></script>
     
@@ -75,7 +76,7 @@
             // console.log( d );
 
             $.getJSON("/ajax/demosubst/" + d[8].toString() + "/" + subst_id + "/" + d[3] + "/", function (data) {
-              // console.log(data);
+              console.log(data["data"][0]);
               var num_peaks = data["data"].length;
               var w_percent = 100 / num_peaks;
               mz_array = [];
@@ -88,6 +89,24 @@
               // console.log(mz_array);
               $("#molecular_chart").attr("style", "width: 100%; height: 300px;");
               var chart = sin_amchart_spectrum("molecular_chart", mz_array, '{{ static_url("js/amcharts/images/") }}');
+
+              var col_w = num_peaks > 12 ? 1 : Math.floor(12 / num_peaks);
+              $("#imagediv").empty();
+              $("#imagediv").append('<div class="row" id="row-images"></div>');
+              for (var i=0; i < num_peaks; i++) {
+                $("#row-images").append('<div class="col-lg-' + col_w.toString() + '" id="col-img-' + i.toString() + '"></div>');
+                var svg = d3.select("#col-img-" + i.toString()).append("svg").attr("width", "100%");
+                var svg_datapoints = svg.selectAll(".p")
+                    .data(data["data"][0]["val"])
+                    .enter();
+
+                svg_datapoints
+                    .append("rect")
+                    .attr("width", 2).attr("height", 2)
+                    .attr("style", "fill:rgb(0,0,255);stroke-width:1;stroke:rgb(0,0,0)")
+                    .attr("x",function(d, i){return data["data"][0]["x"][i] / 10;})
+                    .attr("y",function(d, i){return data["data"][1]["x"][i] / 10;});
+              }
             });
 
             $("#about-name").text( d[2] );
@@ -228,6 +247,10 @@
         <div id="molecular_chart"></div>
       </div>
     </div>
+
+    <div id="imagediv">
+    </div>
+
 
     <!--div class="panel panel-primary">
       <div class="panel-heading" id="img-header">Images and statistics</div>

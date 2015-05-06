@@ -43,3 +43,22 @@ cur.execute("INSERT INTO job_result_data VALUES %s" %
 			)
 
 
+
+
+import h5py
+hf = h5py.File('../data/Ctrl3s2_SpheroidsCtrl_DHBSub_IMS.hdf5')
+
+c = {}
+for k in hf['spectral_data'].keys():
+    c[int(k)] = ( hf['spectral_data'][k]['coordinates'][0], hf['spectral_data'][k]['coordinates'][1] )
+
+min_x = min([ v[0] for v in c.values() ])
+min_y = min([ v[1] for v in c.values() ])
+
+c = { k : (v[0]-min_x, v[1]-min_y) for k,v in c.iteritems() }
+
+with open("../data/Ctrl3s2_SpheroidsCtrl_DHBSub_IMS.coords.txt", "w") as f:
+    f.write("\n".join([ "0;%d;%d;%d" % ( int(k), int(v[0]), int(v[1]) ) for k,v in c.iteritems() ]) + "\n" )
+    f.write("\n".join([ "1;%d;%d;%d" % ( int(k), int(v[0]), int(v[1]) ) for k,v in c.iteritems() ]) )
+
+
