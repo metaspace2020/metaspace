@@ -56,15 +56,18 @@
           } else {
             $("#img-header").text("Run m/z extraction for dataset " + res_alldatasets[id]);
             $("#img-body").append('<div class="row"><div class="col-md-8">When you press this button, a Spark job will be initiated at the server side. It will appear in the list (updated every 5 seconds). When it finishes, <b>reload the page</b> to view the m/z image.</div><div class="col-md-4"><div class="pull-right"><button id="btn-runmz" class="btn btn-large btn-primary" type="button">Run m/z extraction for dataset ' + res_alldatasets[id] + '</button></div></div></div>');
-            $('#btn-runmz').click(function() {
-              $('#btn-runmz').addClass("disabled");
-              // alert(mz_array_forspark.toString());
-              $.post("/run/extractmzs", {
-                "data" : mz_array_forspark.toString(),
-                "formula_id" : subst_id,
-                "dataset_id" : current_dataset
+            {% if sparkactivated %}
+              $('#btn-runmz').click(function() {
+                $('#btn-runmz').addClass("disabled");
+                $.post("/run/extractmzs", {
+                  "data" : mz_array_forspark.toString(),
+                  "formula_id" : subst_id,
+                  "dataset_id" : current_dataset
+                });
               });
-            });
+            {% else %}
+              $('#btn-runmz').addClass("disabled");
+            {% end %}
           }
         }
 

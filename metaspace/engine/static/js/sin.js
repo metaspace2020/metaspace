@@ -100,6 +100,10 @@ function sin_render_fullextract(data) {
   return "<a class=\"btn btn-danger btn-sm btn-fullextract\" datasetid=\"" + data + "\" rel=\"group\" data-toggle=\"modal\" data-target=\"#myModal\">Run full extraction</a>";
 }
 
+function sin_render_fullextract_disabled(data) {
+  return "<a class=\"btn btn-danger btn-sm disabled btn-fullextract\" datasetid=\"" + data + "\" rel=\"group\" data-toggle=\"modal\" data-target=\"#myModal\">Run full extraction</a>";
+}
+
 function sin_format_daterange(dts1, dts2) {
   var d1 = new Date(dts1);
   var d2 = new Date(dts2);

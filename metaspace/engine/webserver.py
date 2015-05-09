@@ -6,6 +6,7 @@ from datetime import datetime,time,date,timedelta
 from os import curdir,sep,path
 import psycopg2,psycopg2.extras
 import json
+import argparse
 
 import tornado.ioloop
 import tornado.web
@@ -20,13 +21,23 @@ import numpy as np
 import time
 import decimal
 
-from pyspark import SparkContext, SparkConf
-
 # sys.path = ['..'] + sys.path
 from engine.util import *
-from engine.spark import *
 from engine.computing import *
 from engine.imaging import *
+
+
+parser = argparse.ArgumentParser(description='IMS webserver.')
+parser.add_argument('--no-spark', dest='spark', action='store_false')
+parser.set_defaults(spark=True)
+args = parser.parse_args()
+
+if args.spark:
+	from pyspark import SparkContext, SparkConf
+	from engine.spark import *
+
+
+adducts = [ "H", "Na", "K" ]
 
 sql_counts = dict(
 	formulas="SELECT count(*) FROM formulas",
@@ -74,6 +85,7 @@ sql_queries = dict(
 			(s.stats->'mean_ent')::text::real AS mean_ent,
 			(s.stats->'corr_images')::text::real AS corr_images,
 			(s.stats->'corr_int')::text::real AS corr_int,
+			s.adduct,
 			j.id as job_id,
 			s.stats->'entropies' AS entropies,
 			j.dataset_id
@@ -81,15 +93,6 @@ sql_queries = dict(
 			JOIN job_result_stats s ON f.id=s.formula_id JOIN jobs j ON s.job_id=j.id
 			JOIN datasets ds ON j.dataset_id=ds.dataset_id
 	''',
-	# demosubst='''
-	# 	SELECT s.job_id,s.formula_id,peak,array_agg(x) as x,array_agg(y) as y,array_agg(value) as val
-	# 	FROM job_result_stats s 
-	# 		JOIN job_result_data d ON s.job_id=d.job_id 
-	# 		JOIN jobs j ON d.job_id=j.id 
-	# 		JOIN coordinates c ON j.dataset_id=c.dataset_id AND c.index=spectrum
-	# 	WHERE d.job_id=%d AND s.formula_id='%s' AND d.param=%d
-	# 	GROUP BY s.job_id,s.formula_id,peak
-	# ''',
 	demosubst='''
 		SELECT s.job_id,s.formula_id,peak,array_agg(spectrum) as sp,array_agg(value) as val
 		FROM job_result_stats s 
@@ -242,7 +245,7 @@ class AjaxHandler(tornado.web.RequestHandler):
 class IndexHandler(tornado.web.RequestHandler):
 	@gen.coroutine
 	def get(self):
-		self.render("index.html")
+		self.render("index.html", sparkactivated=args.spark)
 
 html_pages = {
 }
@@ -251,20 +254,19 @@ class SimpleHtmlHandlerWithId(tornado.web.RequestHandler):
 	@gen.coroutine
 	def get(self, id):
 		my_print("Request: %s, Id: %s" % (self.request.uri, id))
-		self.render( html_pages.get( self.request.uri.split('/')[1], self.request.uri.split('/')[1] + ".html") )
+		self.render( html_pages.get( self.request.uri.split('/')[1], self.request.uri.split('/')[1] + ".html"), sparkactivated=args.spark )
 
 class SimpleHtmlHandler(tornado.web.RequestHandler):
 	@gen.coroutine
 	def get(self):
 		my_print("Request: %s" % self.request.uri)
-		self.render( html_pages.get( self.request.uri.split('/')[1], self.request.uri.split('/')[1] + ".html") )
+		self.render( html_pages.get( self.request.uri.split('/')[1], self.request.uri.split('/')[1] + ".html"), sparkactivated=args.spark )
 
 class Application(tornado.web.Application):
 	def __init__(self):
 		handlers = [
 			(r"^/ajax/([a-z]*)/(.*)", AjaxHandler),
 			(r"^/substance/(.*)", SimpleHtmlHandlerWithId),
-			(r"^/run/(.*)", RunSparkHandler),
 			(r"^/mzimage/([^/]*)\.png", MZImageHandler),
 			(r"^/mzimage/([^/]*)/([^/]*)\.png", MZImageParamHandler),
 			(r"^/demo/", SimpleHtmlHandler),
@@ -273,6 +275,8 @@ class Application(tornado.web.Application):
 			(r"^/fullresults/(.*)", SimpleHtmlHandlerWithId),
 			(r"/", IndexHandler)
 		]
+		if args.spark:
+			handlers = [ (r"^/run/(.*)", RunSparkHandler) ] + handlers
 		settings = dict(
 			static_path=path.join(os.path.dirname(__file__), "static"),
 			debug=True
@@ -286,9 +290,10 @@ class Application(tornado.web.Application):
 		tornado.web.Application.__init__(self, handlers, **settings)
 		# Have one global connection to the blog DB across all handlers
 		self.db = tornpsql.Connection(config_db['host'], config_db['db'], config_db['user'], config_db['password'], 5432)
-		self.conf = SparkConf().setMaster("local[2]").setAppName("IMS Webserver v0.2").set("spark.ui.showConsoleProgress", "false")
-		self.sc = SparkContext(conf=self.conf)
-		self.status = self.sc.statusTracker()
+		if args.spark:
+			self.conf = SparkConf().setMaster("local[2]").setAppName("IMS Webserver v0.2").set("spark.ui.showConsoleProgress", "false")
+			self.sc = SparkContext(conf=self.conf)
+			self.status = self.sc.statusTracker()
 		self.max_jobid = self.db.get("SELECT max(id) as maxid FROM jobs").maxid
 		self.max_jobid = int(self.max_jobid) if self.max_jobid != None else 0
 		self.jobs = {}

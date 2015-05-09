@@ -53,7 +53,9 @@
             <li id="nav-jobs"><a href="/jobs/">Spark jobs</a></li>
             <li id="nav-datasets"><a href="/datasets/">Datasets</a></li>
           </ul>
-          <p id="navbarid" class="navbar-brand navbar-right" href="#"></p>
+          <p id="navbarid" class="navbar-brand navbar-right" href="#">
+            {% if not sparkactivated %} SPARK DISABLED {% end %}
+          </p>
           <p id="navbarname" class="navbar-brand navbar-right"></p>
         </div><!-- /.navbar-collapse -->
       </div><!-- /.container-fluid -->

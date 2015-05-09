@@ -32,7 +32,11 @@
             // { "render": function ( data, type, row ) { return sin_render_tasks(row[8], data); }, "targets": [9] },
             // { "render": function ( data, type, row ) { return sin_render_time(data); }, "targets": [10] },
             // { "render": function ( data, type, row ) { if (row[6]) { return sin_render_time(data); } else { return ""; } }, "targets": [11] },
+            {% if sparkactivated %}
             { "render": function ( data ) { return sin_render_fullextract(data); }, "targets": [4] },
+            {% else %}
+            { "render": function ( data ) { return sin_render_fullextract_disabled(data); }, "targets": [4] },
+            {% end %}
             // { "visible": false,  "targets": [ 2, 4, 6, 8 ] },
           ],
           "fnDrawCallback": function( oSettings ) {

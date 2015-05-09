@@ -30,7 +30,7 @@ def get_one_group_total_dict(name, mz_lower, mz_upper, mzs, intensities):
     	return {}
 
 def get_many_groups_total_dict_individual(queries, sp):
-	res = [ get_one_group_total_dict(sp[0], q[0], q[1], sp[1], sp[2]) for q in queries ]
+	res = { k : [ get_one_group_total_dict(sp[0], q[0], q[1], sp[1], sp[2]) for q in v ] for k,v in queries.iteritems() }
 	return res
 
 def get_many_groups2d_total_dict_individual(data, sp):
@@ -42,7 +42,7 @@ def run_extractmzs(sc, fname, data, nrows, ncols):
 	spectra = ff.map(txt_to_spectrum)
 	# qres = spectra.map(lambda sp : get_many_groups_total_dict(data, sp)).reduce(join_dicts)
 	qres = spectra.map(lambda sp : get_many_groups_total_dict_individual(data, sp)).reduce(reduce_manygroups_dict)
-	entropies = [ get_block_entropy_dict(x, nrows, ncols) for x in qres ]
+	entropies = { k : [ get_block_entropy_dict(x, nrows, ncols) for x in v ] for k,v in qres.iteritems() }
 	return (qres, entropies)
 
 def dicts_to_dict(dictresults):
@@ -73,33 +73,31 @@ class RunSparkHandler(tornado.web.RequestHandler):
 			res_dict.update({ int(x.split(':')[0]) : float(x.split(':')[1]) + res_dict.get(int(x.split(':')[0]), 0.0) for x in res_string.split(' ') })
 		return res_dict
 
-	def insert_job_result_stats(self, formula_ids, num_peaks, stats):
+	def insert_job_result_stats(self, formula_ids, adducts, num_peaks, stats):
 		if len(formula_ids) > 0:
 			for stdict in stats:
 				if "entropies" in stdict:
 					stdict.update({ 'mean_ent' : np.mean(stdict["entropies"]) })
-			# my_print('INSERT INTO job_result_stats VALUES %s' % (
-			# 	",".join([ '(%d, \'%s\', %d, \'%s\')' % (self.job_id, formula_ids[i], num_peaks[i], json.dumps(
-			# 		stats[i]
-			# 	)) for i in xrange(len(formula_ids)) ]) ) )
 			self.db.query('INSERT INTO job_result_stats VALUES %s' % (
-				",".join([ '(%d, \'%s\', %d, \'%s\')' % (self.job_id, formula_ids[i], num_peaks[i], json.dumps(
+				",".join([ '(%d, \'%s\', %d, %d, \'%s\')' % (self.job_id, formula_ids[i], adducts[i], num_peaks[i], json.dumps(
 					stats[i]
 				)) for i in xrange(len(formula_ids)) ])
 			) )
 
 	def process_res_extractmzs(self, result):
-		res_array, entropies = result.get()
-		my_print("Got result of job %d with %d peaks" % (self.job_id, len(res_array)))
-		if (sum([len(x) for x in res_array]) > 0):
-			self.db.query("INSERT INTO job_result_data VALUES %s" %
-				",".join(['(%d, %d, %d, %d, %.6f)' % (self.job_id, -1, i, k, v) for i in xrange(len(res_array)) for k,v in res_array[i].iteritems()])
-			)
-		self.insert_job_result_stats( [ self.formula_id ], [ len(res_array) ], [ {
-			"entropies" : entropies,
-			"corr_images" : avg_dict_correlation(res_array),
-			"corr_int" : avg_intensity_correlation(res_array, self.intensities)
-		} ] )
+		res_dict, entropies_dict = result.get()
+		for k, res_array in res_dict:
+			entropies = entropies_dict[k]
+			my_print("Got result of job %d with %d peaks" % (self.job_id, len(res_array)))
+			if (sum([len(x) for x in res_array]) > 0):
+				self.db.query("INSERT INTO job_result_data VALUES %s" %
+					",".join(['(%d, %d, %d, %d, %.6f)' % (self.job_id, -1, i, k, v) for i in xrange(len(res_array)) for k,v in res_array[i].iteritems()])
+				)
+			self.insert_job_result_stats( [ self.formula_id ], [ k ], [ len(res_array) ], [ {
+				"entropies" : entropies,
+				"corr_images" : avg_dict_correlation(res_array),
+				"corr_int" : avg_intensity_correlation(res_array, self.intensities)
+			} ] )
 
 	def process_res_fulldataset(self, result, offset=0):
 		res_dicts, entropies = result.get()
@@ -108,11 +106,13 @@ class RunSparkHandler(tornado.web.RequestHandler):
 		if (total_nonzero > 0):
 			self.db.query("INSERT INTO job_result_data VALUES %s" %
 				",".join(['(%d, %d, %d, %d, %.6f)' % (self.job_id,
-					int(self.formulas[i+offset]["id"]), j, k, v)
+					int(self.formulas[i+offset]["id"]),
+					int(self.mzadducts[i+offset]["id"]), j, k, v)
 					for i in xrange(len(res_dicts)) for j in xrange(len(res_dicts[i])) for k,v in res_dicts[i][j].iteritems()])
 			)
 		self.insert_job_result_stats(
 			[ self.formulas[i+offset]["id"] for i in xrange(len(res_dicts)) ],
+			[ int(self.mzadducts[i+offset]["id"]) for i in xrange(len(res_dicts)) ],
 			[ len(res_dicts[i]) for i in xrange(len(res_dicts)) ],
 			[ {
 				"entropies" : entropies[i],
@@ -136,13 +136,15 @@ class RunSparkHandler(tornado.web.RequestHandler):
 			self.formula_id = self.get_argument("formula_id")
 			self.job_type = 0
 			tol = 0.01
-			formula_data = self.db.query("SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'" % self.formula_id)[0]
-			peaks = formula_data["peaks"]
-			self.intensities = formula_data["ints"]
-			# data = [ [float(x)-tol, float(x)+tol] for x in self.get_argument("data").strip().split(',')]
-			data = [ [float(x)-tol, float(x)+tol] for x in peaks]
-			my_print("Running m/z extraction for formula id %s" % self.formula_id)
-			my_print("Input data: %s" % " ".join([ "[%.3f, %.3f]" % (x[0], x[1]) for x in data]))
+			formula_data = self.db.query("SELECT adduct,peaks,ints FROM mz_peaks WHERE formula_id='%s'" % self.formula_id)
+			peaks = {}
+			self.intensities = {}
+			for row in formula_data:
+				peaks[row["adduct"]] = row["peaks"]
+				self.intensities[row["adduct"]] = row["ints"]
+			data = { k : [ [float(x)-tol, float(x)+tol] for x in pks] for k,pks in peaks.iteritems() }
+			my_print("Running m/z extraction for formula id %s. Input data:" % self.formula_id)
+			my_print("\n".join([ "\t%s\t%s" % (adducts[k], " ".join([ "[%.3f, %.3f]" % (x[0], x[1]) for x in d])) for k,d in data.iteritems() ]))
 
 			cur_jobs = set(self.application.status.getActiveJobsIds())
 			my_print("Current jobs: %s" % cur_jobs)
@@ -169,7 +171,8 @@ class RunSparkHandler(tornado.web.RequestHandler):
 			prefix = "\t[fullrun %s] " % self.dataset_id
 			my_print(prefix + "collecting m/z queries for the run")
 			tol = 0.01
-			self.formulas = self.db.query("SELECT formula_id as id,peaks,ints FROM mz_peaks")
+			self.formulas = self.db.query("SELECT formula_id as id,adduct,peaks,ints FROM mz_peaks")
+			self.mzadducts = [ x["adduct"] for x in self.formulas]
 			mzpeaks = [ x["peaks"] for x in self.formulas]
 			self.intensities = [ x["ints"] for x in self.formulas]
 			data = [ [ [float(x)-tol, float(x)+tol] for x in peaks ] for peaks in mzpeaks ]
