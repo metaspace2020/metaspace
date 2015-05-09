@@ -17,6 +17,7 @@ from util import *
 from blockentropy import *
 
 fulldataset_chunk_size = 1000
+adducts = [ "H", "Na", "K" ]
 
 def get_one_group_total(mz_lower, mz_upper, mzs, intensities):
     return np.sum(intensities[ bisect.bisect_left(mzs, mz_lower) : bisect.bisect_right(mzs, mz_upper) ])
@@ -33,8 +34,11 @@ def get_many_groups_total_dict_individual(queries, sp):
 	res = { k : [ get_one_group_total_dict(sp[0], q[0], q[1], sp[1], sp[2]) for q in v ] for k,v in queries.iteritems() }
 	return res
 
+def get_many_groups_total_arr_individual(queries, sp):
+	return [ get_one_group_total_dict(sp[0], q[0], q[1], sp[1], sp[2]) for q in queries ]
+
 def get_many_groups2d_total_dict_individual(data, sp):
-	return [ get_many_groups_total_dict_individual(queries, sp) for queries in data]
+	return [ get_many_groups_total_arr_individual(queries, sp) for queries in data]
 
 
 def run_extractmzs(sc, fname, data, nrows, ncols):
@@ -86,17 +90,19 @@ class RunSparkHandler(tornado.web.RequestHandler):
 
 	def process_res_extractmzs(self, result):
 		res_dict, entropies_dict = result.get()
-		for k, res_array in res_dict:
-			entropies = entropies_dict[k]
+		print "%s" % res_dict.keys()
+		print "%s" % entropies_dict
+		for ad, res_array in res_dict.iteritems():
+			entropies = entropies_dict[ad]
 			my_print("Got result of job %d with %d peaks" % (self.job_id, len(res_array)))
 			if (sum([len(x) for x in res_array]) > 0):
 				self.db.query("INSERT INTO job_result_data VALUES %s" %
-					",".join(['(%d, %d, %d, %d, %.6f)' % (self.job_id, -1, i, k, v) for i in xrange(len(res_array)) for k,v in res_array[i].iteritems()])
+					",".join(['(%d, %d, %d, %d, %d, %.6f)' % (self.job_id, -1, ad, i, k, v) for i in xrange(len(res_array)) for k,v in res_array[i].iteritems()])
 				)
-			self.insert_job_result_stats( [ self.formula_id ], [ k ], [ len(res_array) ], [ {
+			self.insert_job_result_stats( [ self.formula_id ], [ ad ], [ len(res_array) ], [ {
 				"entropies" : entropies,
 				"corr_images" : avg_dict_correlation(res_array),
-				"corr_int" : avg_intensity_correlation(res_array, self.intensities)
+				"corr_int" : avg_intensity_correlation(res_array, self.intensities[ad])
 			} ] )
 
 	def process_res_fulldataset(self, result, offset=0):
@@ -105,14 +111,14 @@ class RunSparkHandler(tornado.web.RequestHandler):
 		my_print("Got result of full dataset job %d with %d nonzero spectra" % (self.job_id, total_nonzero))
 		if (total_nonzero > 0):
 			self.db.query("INSERT INTO job_result_data VALUES %s" %
-				",".join(['(%d, %d, %d, %d, %.6f)' % (self.job_id,
+				",".join(['(%d, %d, %d, %d, %d, %.6f)' % (self.job_id,
 					int(self.formulas[i+offset]["id"]),
-					int(self.mzadducts[i+offset]["id"]), j, k, v)
+					int(self.mzadducts[i+offset]), j, k, v)
 					for i in xrange(len(res_dicts)) for j in xrange(len(res_dicts[i])) for k,v in res_dicts[i][j].iteritems()])
 			)
 		self.insert_job_result_stats(
 			[ self.formulas[i+offset]["id"] for i in xrange(len(res_dicts)) ],
-			[ int(self.mzadducts[i+offset]["id"]) for i in xrange(len(res_dicts)) ],
+			[ int(self.mzadducts[i+offset]) for i in xrange(len(res_dicts)) ],
 			[ len(res_dicts[i]) for i in xrange(len(res_dicts)) ],
 			[ {
 				"entropies" : entropies[i],

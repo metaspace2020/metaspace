@@ -94,12 +94,12 @@ sql_queries = dict(
 			JOIN datasets ds ON j.dataset_id=ds.dataset_id
 	''',
 	demosubst='''
-		SELECT s.job_id,s.formula_id,peak,array_agg(spectrum) as sp,array_agg(value) as val
+		SELECT s.job_id,s.formula_id,s.adduct,peak,array_agg(spectrum) as sp,array_agg(value) as val
 		FROM job_result_stats s 
 			JOIN job_result_data d ON s.job_id=d.job_id 
 			JOIN jobs j ON d.job_id=j.id 
 		WHERE d.job_id=%d AND s.formula_id='%s' AND d.param=%d
-		GROUP BY s.job_id,s.formula_id,peak
+		GROUP BY s.job_id,s.formula_id,s.adduct,peak
 	''',
 	demosubstpeaks="SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'",
 	democoords="SELECT index,x,y FROM coordinates WHERE dataset_id=%d"
@@ -111,7 +111,7 @@ sql_fields = dict(
 	jobs=["id", "type", "description", "dataset_id", "dataset", "formula_id", "formula_name", "done", "status", "tasks_done", "tasks_total", "start", "finish", "id"],
 	datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
 	fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"],
-	demobigtable=["db", "dataset", "name", "sf", "id", "mean_ent", "corr_images", "corr_int", "job_id", "entropies", "dataset_id"]
+	demobigtable=["db", "dataset", "name", "sf", "id", "mean_ent", "corr_images", "corr_int", "adduct", "job_id", "entropies", "dataset_id"]
 )
 
 def get_formula_and_peak(s):
@@ -229,7 +229,12 @@ class AjaxHandler(tornado.web.RequestHandler):
 			if query_id == 'fullimages':
 				res_dict = {"data" : [ [x[field] for field in sql_fields[query_id]] for x in res_list]}
 			elif query_id == 'demosubst':
-				res_dict = {"data" : res_list, "spec" : spectrum}
+				adduct_dict = {};
+				for row in res_list:
+					if adducts[ row["adduct"] ] not in adduct_dict:
+						adduct_dict[ adducts[ row["adduct"] ] ] = []
+					adduct_dict[ adducts[ row["adduct"] ] ].append(row)
+				res_dict = {"data" : adduct_dict, "spec" : spectrum}
 				res_dict.update({ "coords" : coords })
 			else:
 				res_dict = res_list[0]

@@ -48,7 +48,7 @@ def get_many_groups_total_dict(queries, sp):
 
 
 def reduce_manygroups_dict(x, y):
-	return [ join_dicts(x[i], y[i]) for i in xrange(len(x))]
+	return { k : [ join_dicts(v[i], y[k][i]) for i in xrange(len(v))] for k,v in x.iteritems() }
 
 def reduce_manygroups2d_dict_individual(xarray, yarray):
 	return [ [ join_dicts(xarray[j][i], yarray[j][i]) for i in xrange(len(xarray[j])) ] for j in xrange(len(xarray)) ]

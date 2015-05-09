@@ -104,6 +104,17 @@ function sin_render_fullextract_disabled(data) {
   return "<a class=\"btn btn-danger btn-sm disabled btn-fullextract\" datasetid=\"" + data + "\" rel=\"group\" data-toggle=\"modal\" data-target=\"#myModal\">Run full extraction</a>";
 }
 
+function sin_render_adduct(d) {
+  if (d == 0) {
+    return 'H';
+  } else if (d == 1) {
+    return 'Na';
+  } else if (d == 2) {
+    return 'K';
+  }
+  return '???';
+}
+
 function sin_format_daterange(dts1, dts2) {
   var d1 = new Date(dts1);
   var d2 = new Date(dts2);
