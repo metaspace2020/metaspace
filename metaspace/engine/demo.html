@@ -81,42 +81,41 @@
             $("#imagediv").html("<h4 style='text-align:center'>...loading images...</h4>");
 
             $.getJSON("/ajax/demosubst/" + d[9].toString() + "/" + subst_id + "/" + d[3] + "/" + dataset_id + "/", function (data) {
+
+              var mz_array = [];
+              for (var i=0; i < data["spec"]["isodist_mzs"].length; i++) {
+                var cur = { "mz" : data["spec"]["isodist_mzs"][i].toFixed(3),
+                            "int" : data["spec"]["isodist_int"][i].toFixed(3) };
+                mz_array.push(cur);
+              }
+              // console.log(mz_array);
+              $("#molecular_chart").attr("style", "width: 100%; height: 300px;");
+              var chart = sin_amchart_spectrum("molecular_chart", mz_array, '{{ static_url("js/amcharts/images/") }}');
+
               var num_adducts = data["data"].length;
-              console.log(data["data"]);
               $("#imagediv").empty();
               for (var iAdd in data["data"]) {
-                console.log(iAdd);
-                console.log(data["data"][iAdd]);
                 var num_peaks = data["data"][iAdd].length;
-                console.log(num_peaks);
                 var w_percent = 100 / num_peaks;
-                mz_array = [];
                 // console.log(data["coords"]);
-                for (var i=0; i < data["spec"]["isodist_mzs"].length; i++) {
-                  var cur = { "mz" : data["spec"]["isodist_mzs"][i].toFixed(3),
-                              "int" : data["spec"]["isodist_int"][i].toFixed(3) };
-                  mz_array.push(cur);
-                }
-                // console.log(mz_array);
-                $("#molecular_chart").attr("style", "width: 100%; height: 300px;");
-                var chart = sin_amchart_spectrum("molecular_chart", mz_array, '{{ static_url("js/amcharts/images/") }}');
-
                 // var colors = ["violet", "indigo", "blue", "green", "yellow", "orange", "red"];
                 var colors = ["white", "red"];
 
                 var col_w = num_peaks > 12 ? 1 : Math.floor(12 / num_peaks);
                 var pixel_size = 4;
-                $("#imagediv").append('<div class="row" id="row-images-' + iAdd + '"></div>');
+                console.log(data["data"]);
+                $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>+' + iAdd + '</h3></div></div><div class="row" id="row-images-' + iAdd + '"></div>');
                 for (var imInd=0; imInd < num_peaks; imInd++) {
+                  console.log(data["data"][iAdd][imInd]);
                   $('#row-images-' + iAdd).append('<div style="text-align:center;" class="col-lg-' + col_w.toString() + '">'
             		    + '<div class="container-fluid">'
                     + '<div class="row" id="col-img-' + iAdd + '-' + imInd.toString() + '"></div>'
                     + '<div class="row">'
-          		      + '<div class="col-lg-8">Spatial presence</div><div class="col-lg-4">' + entropies[imInd].toFixed(3) + '</div></div>'
+          		      + '<div class="col-lg-8">Spatial presence</div><div class="col-lg-4">' + data["data"][iAdd][imInd]["entropy"].toFixed(3) + '</div></div>'
           		      + '</div>');
   		            var img_wid = $("#col-img-" + iAdd + "-" + imInd.toString()).width();
                   var svg = d3.select("#col-img-" + iAdd + "-" + imInd.toString()).append("svg").attr("width", img_wid).attr("height", img_wid);
-                  console.log(data["data"][iAdd][imInd]["val"]);
+                  // console.log(data["data"][iAdd][imInd]["val"]);
                   var svg_datapoints = svg.selectAll(".p")
                       .data(data["data"][iAdd][imInd]["val"])
                       .enter();
@@ -153,7 +152,6 @@
           bSearchable: false,
           bStateSave: true,
           order: [[ 7, "desc" ]],
-          // aLengthMenu: [51, 100, 250],
           "columnDefs": [
             { "render": function ( data, type, row ) { return sin_render_substance_small(row[4], data); }, "targets": [2] },
             { "render": function ( data, type, row ) { return sin_render_adduct(data); }, "targets": [8] },
@@ -178,7 +176,8 @@
             filter_reset_button_text: false, filter_default_label: ['&ge;']
           },
           {column_number : 6, filter_type: "lower_bound_number", filter_container_id: "fil-ic", filter_reset_button_text: false, filter_default_label: ['&ge;'] },
-          {column_number : 7, filter_type: "lower_bound_number", filter_container_id: "fil-sc", filter_reset_button_text: false, filter_default_label: ['&ge;']}
+          {column_number : 7, filter_type: "lower_bound_number", filter_container_id: "fil-sc", filter_reset_button_text: false, filter_default_label: ['&ge;']},
+          {column_number : 8, filter_type: "select", filter_container_id: "fil-ad", filter_reset_button_text: false, filter_default_label: 'all'},
           // {column_number : 7, filter_type: "range_number", filter_container_id: "fil-jb", filter_reset_button_text: false},
         ]);
 
@@ -239,9 +238,8 @@
             <th id="fil-sp"></th>
             <th id="fil-ic"></th>
             <th id="fil-sc"></th>
-            <th></th>
-            <th id="fil-jb"></th>
-            <th></th><th></th>
+            <th id="fil-ad"></th>
+            <th></th><th></th><th></th>
           </tr>
         </thead>
    
@@ -255,6 +253,7 @@
             <th>Spatial presence</th>
             <th>Image correlation</th>
             <th>Spectral correlation</th>
+            <th>Adduct</th>
             <th>Job id</th>
             <th>Entropies</th>
             <th>Dataset id</th>

@@ -94,12 +94,13 @@ sql_queries = dict(
 			JOIN datasets ds ON j.dataset_id=ds.dataset_id
 	''',
 	demosubst='''
-		SELECT s.job_id,s.formula_id,s.adduct,peak,array_agg(spectrum) as sp,array_agg(value) as val
+		SELECT s.job_id,s.formula_id,s.adduct,
+			(s.stats->'entropies'->peak)::text::real as entropy,peak,array_agg(spectrum) as sp,array_agg(value) as val
 		FROM job_result_stats s 
-			JOIN job_result_data d ON s.job_id=d.job_id 
+			JOIN job_result_data d ON s.job_id=d.job_id  and s.adduct=d.adduct 
 			JOIN jobs j ON d.job_id=j.id 
 		WHERE d.job_id=%d AND s.formula_id='%s' AND d.param=%d
-		GROUP BY s.job_id,s.formula_id,s.adduct,peak
+		GROUP BY s.job_id,s.formula_id,entropy,s.adduct,peak
 	''',
 	demosubstpeaks="SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'",
 	democoords="SELECT index,x,y FROM coordinates WHERE dataset_id=%d"
@@ -234,7 +235,7 @@ class AjaxHandler(tornado.web.RequestHandler):
 					if adducts[ row["adduct"] ] not in adduct_dict:
 						adduct_dict[ adducts[ row["adduct"] ] ] = []
 					adduct_dict[ adducts[ row["adduct"] ] ].append(row)
-				res_dict = {"data" : adduct_dict, "spec" : spectrum}
+				res_dict = {"data" : { k : sorted(v, key=lambda x: x["peak"]) for k,v in adduct_dict.iteritems() }, "spec" : spectrum}
 				res_dict.update({ "coords" : coords })
 			else:
 				res_dict = res_list[0]
