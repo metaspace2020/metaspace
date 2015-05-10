@@ -111,14 +111,16 @@ class RunSparkHandler(tornado.web.RequestHandler):
 		my_print("Got result of full dataset job %d with %d nonzero spectra" % (self.job_id, total_nonzero))
 		with open("jobresults.txt", "a") as f:
 			for i in xrange(len(res_dicts)):
-				f.write( "%s;%d;%d;%.3f;%.3f;%.3f\n" % ( self.formulas[i+offset]["id"],
+				# print "%s" % self.intensities[i]
+				# print "%s" % res_dicts[i]
+				f.write( "%s;%d;%d;%s;%.3f;%.3f\n" % ( self.formulas[i+offset]["id"],
 					int(self.mzadducts[i+offset]),
 					len(res_dicts[i]),
 					entropies[i],
 					avg_dict_correlation(res_dicts[i]),
 					avg_intensity_correlation(res_dicts[i], self.intensities[i])
-			  	)
-		if (total_nonzero > 0):
+			  	) )
+		if total_nonzero > 0:
 			self.db.query("INSERT INTO job_result_data VALUES %s" %
 				",".join(['(%d, %d, %d, %d, %d, %.6f)' % (self.job_id,
 					int(self.formulas[i+offset]["id"]),

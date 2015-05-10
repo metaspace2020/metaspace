@@ -64,6 +64,9 @@ def corr_dicts(a, b):
 def avg_intensity_correlation(images, peak_intensities):
 	'''Correlation between peak intensities and images intensities'''
 	if len(images) != len(peak_intensities):
+		print "Length mismatch"
+		print "%s" % peak_intensities
+		print "%s" % images
 		return 0
 	res = np.corrcoef( np.array([ np.sum(img.values()) for img in images ]), np.array(peak_intensities) )[0][1]
 	if np.isnan(res):
