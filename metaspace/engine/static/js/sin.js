@@ -15,7 +15,7 @@ var m_names_im = new Array("Январь ", "Февраль ", "Март ", "А�
 
 function sin_render_ionimage(selector, data, coords, pixel_size, colors) {
   var img_wid = $(selector).width();
-  var psize = pixel_size * img_wid / 300;
+  var psize = pixel_size;
   var svg = d3.select(selector).append("svg").attr("width", img_wid).attr("height", img_wid);
   var svg_datapoints = svg.selectAll(".p")
       .data(data["val"])
