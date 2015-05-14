@@ -13,6 +13,26 @@ var linecolors = [
 var m_names_rod = new Array(" января ", " февраля ", " марта ", " апреля ", " мая ", " июня ", " июля ", " августа ", " сентября ", " октября ", " ноября ", " декабря ");
 var m_names_im = new Array("Январь ", "Февраль ", "Март ", "Апрель ", "Май ", "Июнь ", "Июль ", "Август ", "Сентябрь ", "Октябрь ", "Ноябрь ", "Декабрь ");
 
+function sin_render_ionimage(selector, data, coords, pixel_size, colors) {
+  var img_wid = $(selector).width();
+  var psize = pixel_size * img_wid / 300;
+  var svg = d3.select(selector).append("svg").attr("width", img_wid).attr("height", img_wid);
+  var svg_datapoints = svg.selectAll(".p")
+      .data(data["val"])
+      .enter();
+
+  var img_color = d3.scale.linear()
+    .domain(d3.extent(data["val"]))
+    .range( colors );
+
+  svg_datapoints
+      .append("rect")
+      .attr("width", psize).attr("height", psize)
+      .style("fill", function(d) { return img_color(d); } )
+      .attr("x",function(d, i) {return coords[ data["sp"][i] ][0] * psize / 20;})
+      .attr("y",function(d, i) {return coords[ data["sp"][i] ][1] * psize / 20;});
+}
+
 
 function sin_render_dataset(id, name) {
   return name;

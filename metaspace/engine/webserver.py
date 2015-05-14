@@ -92,6 +92,7 @@ sql_queries = dict(
 		FROM formulas f JOIN formula_dbs db ON f.db_id=db.db_id
 			JOIN job_result_stats s ON f.id=s.formula_id JOIN jobs j ON s.job_id=j.id
 			JOIN datasets ds ON j.dataset_id=ds.dataset_id
+		LIMIT 10
 	''',
 	demosubst='''
 		SELECT s.job_id,s.formula_id,s.adduct,
@@ -220,6 +221,7 @@ class AjaxHandler(tornado.web.RequestHandler):
 				arr = input_id.split('/')
 				# spectrum = self.db.query( sql_queries['demosubstpeaks'] % arr[1] )
 				spectrum = get_lists_of_mzs(arr[2])
+				spec_add = { ad : get_lists_of_mzs(arr[2] + ad)["grad_mzs"] for ad in adducts }
 				coords_q = self.db.query( sql_queries['democoords'] % int(arr[3]) )
 				coords = { row["index"] : [row["x"], row["y"]] for row in coords_q }
 				final_query = sql_queries[query_id] % ( int(arr[0]), arr[1], int(arr[1]) )
@@ -235,7 +237,7 @@ class AjaxHandler(tornado.web.RequestHandler):
 					if adducts[ row["adduct"] ] not in adduct_dict:
 						adduct_dict[ adducts[ row["adduct"] ] ] = []
 					adduct_dict[ adducts[ row["adduct"] ] ].append(row)
-				res_dict = {"data" : { k : sorted(v, key=lambda x: x["peak"]) for k,v in adduct_dict.iteritems() }, "spec" : spectrum}
+				res_dict = {"data" : { k : sorted(v, key=lambda x: x["peak"]) for k,v in adduct_dict.iteritems() }, "spec" : spectrum, "spadd" : spec_add }
 				res_dict.update({ "coords" : coords })
 			else:
 				res_dict = res_list[0]

@@ -75,13 +75,13 @@
             var dataset_id = d[11];
             var subst_id = d[4];
             var entropies = d[10];
-            // console.log( d );
+            var colors = ["white", "red"];
+            var pixel_size = 4;
 
             $("#imagediv").empty();
             $("#imagediv").html("<h4 style='text-align:center'>...loading images...</h4>");
 
             $.getJSON("/ajax/demosubst/" + d[9].toString() + "/" + subst_id + "/" + d[3] + "/" + dataset_id + "/", function (data) {
-
               var mz_array = [];
               for (var i=0; i < data["spec"]["isodist_mzs"].length; i++) {
                 var cur = { "mz" : data["spec"]["isodist_mzs"][i].toFixed(3),
@@ -89,47 +89,66 @@
                 mz_array.push(cur);
               }
               // console.log(mz_array);
-              $("#molecular_chart").attr("style", "width: 100%; height: 300px;");
+              $("#molecular_chart").attr("style", "width: 100%; height: 200px;");
               var chart = sin_amchart_spectrum("molecular_chart", mz_array, '{{ static_url("js/amcharts/images/") }}');
 
               var num_adducts = data["data"].length;
               $("#imagediv").empty();
+
+              console.log(data["spadd"]);
+              data_dict = {};
+              for (var iAdd in data["data"]) {
+                for (var imInd = 0; imInd < data["data"][iAdd].length; imInd++) {
+                  for (var sp in data["data"][iAdd][imInd]["sp"]) {
+                    if (!(data["data"][iAdd][imInd]["sp"][sp] in data_dict)) {
+                      data_dict[data["data"][iAdd][imInd]["sp"][sp]] = data["data"][iAdd][imInd]["val"][sp];
+                    } else {
+                      data_dict[data["data"][iAdd][imInd]["sp"][sp]] += data["data"][iAdd][imInd]["val"][sp];
+                    }
+                  }
+                }
+              }
+              data_arrs = {"sp" : [], "val" : []};
+              for (var sp in data_dict) {
+                data_arrs["sp"].push(parseInt(sp, 10));
+                data_arrs["val"].push(data_dict[sp]);
+              }
+              $("#ionimage_total").empty();
+              $("#ionimage_total").attr("align", "center");
+              sin_render_ionimage("#ionimage_total", data_arrs, data["coords"], pixel_size, colors);
+              
               for (var iAdd in data["data"]) {
                 var num_peaks = data["data"][iAdd].length;
                 var w_percent = 100 / num_peaks;
-                // console.log(data["coords"]);
-                // var colors = ["violet", "indigo", "blue", "green", "yellow", "orange", "red"];
-                var colors = ["white", "red"];
-
                 var col_w = num_peaks > 12 ? 1 : Math.floor(12 / num_peaks);
-                var pixel_size = 4;
-                console.log(data["data"]);
                 $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>+' + iAdd + '</h3></div></div><div class="row" id="row-images-' + iAdd + '"></div>');
                 for (var imInd=0; imInd < num_peaks; imInd++) {
                   console.log(data["data"][iAdd][imInd]);
                   $('#row-images-' + iAdd).append('<div style="text-align:center;" class="col-lg-' + col_w.toString() + '">'
             		    + '<div class="container-fluid">'
+                    + '<div class="row"><b>'
+                    + data["spadd"][iAdd][imInd].toFixed(3) + '</b></div>'
                     + '<div class="row" id="col-img-' + iAdd + '-' + imInd.toString() + '"></div>'
                     + '<div class="row">'
-          		      + '<div class="col-lg-8">Spatial presence</div><div class="col-lg-4">' + data["data"][iAdd][imInd]["entropy"].toFixed(3) + '</div></div>'
+                    + '<div class="col-lg-8">Spatial presence</div><div class="col-lg-4">' + data["data"][iAdd][imInd]["entropy"].toFixed(3) + '</div></div>'
           		      + '</div>');
-  		            var img_wid = $("#col-img-" + iAdd + "-" + imInd.toString()).width();
-                  var svg = d3.select("#col-img-" + iAdd + "-" + imInd.toString()).append("svg").attr("width", img_wid).attr("height", img_wid);
-                  // console.log(data["data"][iAdd][imInd]["val"]);
-                  var svg_datapoints = svg.selectAll(".p")
-                      .data(data["data"][iAdd][imInd]["val"])
-                      .enter();
+                  sin_render_ionimage("#col-img-" + iAdd + "-" + imInd.toString(), data["data"][iAdd][imInd], data["coords"], pixel_size, colors);
+  		            // var img_wid = $("#col-img-" + iAdd + "-" + imInd.toString()).width();
+                //   var svg = d3.select("#col-img-" + iAdd + "-" + imInd.toString()).append("svg").attr("width", img_wid).attr("height", img_wid);
+                //   var svg_datapoints = svg.selectAll(".p")
+                //       .data(data["data"][iAdd][imInd]["val"])
+                //       .enter();
 
-                  var img_color = d3.scale.linear()
-                    .domain(d3.extent(data["data"][iAdd][imInd]["val"]))
-                    .range( colors );
+                //   var img_color = d3.scale.linear()
+                //     .domain(d3.extent(data["data"][iAdd][imInd]["val"]))
+                //     .range( colors );
 
-                  svg_datapoints
-                      .append("rect")
-                      .attr("width", pixel_size).attr("height", pixel_size)
-                      .style("fill", function(d) { return img_color(d); } )
-                      .attr("x",function(d, i) {return data["coords"][ data["data"][iAdd][imInd]["sp"][i] ][0] * pixel_size / 20;})
-                      .attr("y",function(d, i) {return data["coords"][ data["data"][iAdd][imInd]["sp"][i] ][1] * pixel_size / 20;});
+                //   svg_datapoints
+                //       .append("rect")
+                //       .attr("width", pixel_size).attr("height", pixel_size)
+                //       .style("fill", function(d) { return img_color(d); } )
+                //       .attr("x",function(d, i) {return data["coords"][ data["data"][iAdd][imInd]["sp"][i] ][0] * pixel_size / 20;})
+                //       .attr("y",function(d, i) {return data["coords"][ data["data"][iAdd][imInd]["sp"][i] ][1] * pixel_size / 20;});
                 }
               }
             });
@@ -273,11 +292,14 @@
               <div class="col-md-6"><h3 id="about-sf"></h3></div>
               <div><a id="a-fb-wishart" class="fancybox" rel="group" href=""><img height="100%" src="" alt="" /></a></div>
             </div>
+            <div class="row">
+              <div id="molecular_chart"></div>
+            </div>
           </div>
         </div>
       </div>
       <div class="col-md-6">
-        <div id="molecular_chart"></div>
+        <div id="ionimage_total"></div>
       </div>
     </div>
 
