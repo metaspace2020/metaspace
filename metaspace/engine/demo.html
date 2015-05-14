@@ -95,7 +95,7 @@
               var num_adducts = data["data"].length;
               $("#imagediv").empty();
 
-              console.log(data["spadd"]);
+              // console.log(data["spadd"]);
               data_dict = {};
               for (var iAdd in data["data"]) {
                 for (var imInd = 0; imInd < data["data"][iAdd].length; imInd++) {
@@ -123,7 +123,7 @@
                 var col_w = num_peaks > 12 ? 1 : Math.floor(12 / num_peaks);
                 $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>+' + iAdd + '</h3></div></div><div class="row" id="row-images-' + iAdd + '"></div>');
                 for (var imInd=0; imInd < num_peaks; imInd++) {
-                  console.log(data["data"][iAdd][imInd]);
+                  // console.log(data["data"][iAdd][imInd]);
                   $('#row-images-' + iAdd).append('<div style="text-align:center;" class="col-lg-' + col_w.toString() + '">'
             		    + '<div class="container-fluid">'
                     + '<div class="row"><b>'
