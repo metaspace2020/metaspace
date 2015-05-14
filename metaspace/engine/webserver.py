@@ -92,6 +92,9 @@ sql_queries = dict(
 		FROM formulas f JOIN formula_dbs db ON f.db_id=db.db_id
 			JOIN job_result_stats s ON f.id=s.formula_id JOIN jobs j ON s.job_id=j.id
 			JOIN datasets ds ON j.dataset_id=ds.dataset_id
+		WHERE
+			(s.stats->'corr_images')::text::real > 0.3 AND
+			(s.stats->'corr_int')::text::real > 0.3
 	''',
 	demosubst='''
 		SELECT s.job_id,s.formula_id,s.adduct,
