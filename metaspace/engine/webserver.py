@@ -223,7 +223,7 @@ class AjaxHandler(tornado.web.RequestHandler):
 				arr = input_id.split('/')
 				# spectrum = self.db.query( sql_queries['demosubstpeaks'] % arr[1] )
 				spectrum = get_lists_of_mzs(arr[2])
-				spec_add = { ad : get_lists_of_mzs(arr[2] + ad)["grad_mzs"] for ad in adducts }
+				spec_add = { ad : get_lists_of_mzs(arr[2] + ad) for ad in adducts }
 				coords_q = self.db.query( sql_queries['democoords'] % int(arr[3]) )
 				coords = { row["index"] : [row["x"], row["y"]] for row in coords_q }
 				final_query = sql_queries[query_id] % ( int(arr[0]), arr[1], int(arr[1]) )
@@ -239,7 +239,9 @@ class AjaxHandler(tornado.web.RequestHandler):
 					if adducts[ row["adduct"] ] not in adduct_dict:
 						adduct_dict[ adducts[ row["adduct"] ] ] = []
 					adduct_dict[ adducts[ row["adduct"] ] ].append(row)
-				res_dict = {"data" : { k : sorted(v, key=lambda x: x["peak"]) for k,v in adduct_dict.iteritems() }, "spec" : spectrum, "spadd" : spec_add }
+				res_dict = {"data" : { k : sorted(v, key=lambda x: x["peak"]) for k,v in adduct_dict.iteritems() },
+					"spec" : spectrum, "spadd" : spec_add
+				}
 				res_dict.update({ "coords" : coords })
 			else:
 				res_dict = res_list[0]

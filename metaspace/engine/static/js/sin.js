@@ -235,3 +235,49 @@ function sin_amchart_spectrum(selector, data, pathtoimages) {
     }],
   });
 }
+
+function sin_amchart_spectrum_withsample(selector, data, pathtoimages) {
+  var chart = sin_amchart_spectrum(selector, data, pathtoimages);
+  var graph = new AmCharts.AmGraph();
+  // {
+  //       "id"              : "sample",
+  //       "type"            : "column",
+  //       "valueAxis"       : "axisval",
+  //       "bullet"          : "round",
+  //       "bulletSize"      : 3,
+  //       "valueField"      : "sample",
+  //       // "colorField"      : "lineColor",
+  //       // "lineColorField"  : "lineColor",
+  //       // "fillColorsField" : "lineColor",
+  //       // "fillAlphas"      : 0.4,
+  //       "lineAlpha"       : 1,
+  //       "lineColor"       : linecolors[3],
+  //       // "alphaField"      : "alpha",
+  //       "lineThickness"   : 1.5
+  //     });
+  graph.valueField = "sample";
+  graph.type = "column";
+  graph.lineColor = linecolors[3];
+  graph.lineThickness = 1.5;
+  graph.bulletField = "bullet";
+  graph.bulletSize = 5;
+  // graph.lineAlpha = 0.6;
+  chart.addGraph(graph);
+  // graph.addGraph({
+  //       "id"              : "int",
+  //       "type"            : "column",
+  //       "valueAxis"       : "axisval",
+  //       // "bullet"          : "round",
+  //       // "bulletSize"      : 3,
+  //       "valueField"      : "sample",
+  //       // "colorField"      : "lineColor",
+  //       // "lineColorField"  : "lineColor",
+  //       // "fillColorsField" : "lineColor",
+  //       // "fillAlphas"      : 0.4,
+  //       "lineAlpha"       : 1,
+  //       "lineColor"       : linecolors[3],
+  //       "alphaField"      : "alpha",
+  //       "lineThickness"   : 1.5
+  //     });
+  return chart;
+}

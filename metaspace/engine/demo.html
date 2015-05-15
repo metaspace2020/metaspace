@@ -82,24 +82,18 @@
             $("#imagediv").html("<h4 style='text-align:center'>...loading images...</h4>");
 
             $.getJSON("/ajax/demosubst/" + d[9].toString() + "/" + subst_id + "/" + d[3] + "/" + dataset_id + "/", function (data) {
-              var mz_array = [];
-              for (var i=0; i < data["spec"]["isodist_mzs"].length; i++) {
-                var cur = { "mz" : data["spec"]["isodist_mzs"][i].toFixed(3),
-                            "int" : data["spec"]["isodist_int"][i].toFixed(3) };
-                mz_array.push(cur);
-              }
-              // console.log(mz_array);
-              $("#molecular_chart").attr("style", "width: 100%; height: 200px;");
-              var chart = sin_amchart_spectrum("molecular_chart", mz_array, '{{ static_url("js/amcharts/images/") }}');
-
               var num_adducts = data["data"].length;
               $("#imagediv").empty();
 
-              // console.log(data["spadd"]);
-              data_dict = {};
+              console.log(data["spadd"]);
+              var data_dict = {};
+              var adduct_peak_ints = {};
               for (var iAdd in data["data"]) {
+                adduct_peak_ints[iAdd] = [];
                 for (var imInd = 0; imInd < data["data"][iAdd].length; imInd++) {
+                  adduct_peak_ints[iAdd].push(0);
                   for (var sp in data["data"][iAdd][imInd]["sp"]) {
+                    adduct_peak_ints[iAdd][imInd] += data["data"][iAdd][imInd]["val"][sp];
                     if (!(data["data"][iAdd][imInd]["sp"][sp] in data_dict)) {
                       data_dict[data["data"][iAdd][imInd]["sp"][sp]] = data["data"][iAdd][imInd]["val"][sp];
                     } else {
@@ -108,6 +102,22 @@
                   }
                 }
               }
+              for (var iAdd in data["data"]) {
+                var first_element = adduct_peak_ints[iAdd][0];
+                for (var imInd = 0; imInd < adduct_peak_ints[iAdd].length; imInd++) {
+                  adduct_peak_ints[iAdd][imInd] = 100.0 * adduct_peak_ints[iAdd][imInd] / first_element;
+                }
+              }
+
+              var mz_array = [];
+              for (var i=0; i < data["spec"]["isodist_mzs"].length; i++) {
+                var cur = { "mz" : data["spec"]["isodist_mzs"][i].toFixed(3),
+                            "int" : data["spec"]["isodist_int"][i].toFixed(3) };
+                mz_array.push(cur);
+              }
+              console.log(mz_array);
+              // $("#molecular_chart").attr("style", "width: 100%; height: 200px;");
+              // var chart = sin_amchart_spectrum("molecular_chart", mz_array, '{{ static_url("js/amcharts/images/") }}');
               data_arrs = {"sp" : [], "val" : []};
               for (var sp in data_dict) {
                 data_arrs["sp"].push(parseInt(sp, 10));
@@ -117,23 +127,47 @@
               $("#ionimage_total").attr("align", "center");
               sin_render_ionimage("#ionimage_total", data_arrs, data["coords"], pixel_size, colors);
               
+              var add_mzarrays = {}
               for (var iAdd in data["data"]) {
                 var num_peaks = data["data"][iAdd].length;
                 var w_percent = 100 / num_peaks;
                 var col_w = num_peaks > 12 ? 1 : Math.floor(12 / num_peaks);
-                $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>+' + iAdd + '</h3></div></div><div class="row" id="row-images-' + iAdd + '"></div>');
+                $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>+' + iAdd + '</h3></div></div><div class="row" id="row-images-' + iAdd + '"></div><div class="row"><div id="molchart_' + iAdd + '"></div></div>');
                 for (var imInd=0; imInd < num_peaks; imInd++) {
                   // console.log(data["data"][iAdd][imInd]);
                   $('#row-images-' + iAdd).append('<div style="text-align:center;" class="col-lg-' + col_w.toString() + '">'
             		    + '<div class="container-fluid">'
                     + '<div class="row"><b>'
-                    + data["spadd"][iAdd][imInd].toFixed(3) + '</b></div>'
+                    + data["spadd"][iAdd]["grad_mzs"][imInd].toFixed(3) + '</b></div>'
                     + '<div class="row" id="col-img-' + iAdd + '-' + imInd.toString() + '"></div>'
                     + '<div class="row">'
                     + '<div class="col-lg-8">Spatial presence</div><div class="col-lg-4">' + data["data"][iAdd][imInd]["entropy"].toFixed(3) + '</div></div>'
-          		      + '</div>');
+                    + '</div>');
                   sin_render_ionimage("#col-img-" + iAdd + "-" + imInd.toString(), data["data"][iAdd][imInd], data["coords"], pixel_size, colors);
                 }
+                add_mzarrays[iAdd] = [];
+                var curPeak = 0;
+                for (var i=0; i < data["spadd"][iAdd]["isodist_mzs"].length; i++) {
+                  cur_mz = data["spadd"][iAdd]["isodist_mzs"][i];
+                  var cur = { "mz" : cur_mz.toFixed(3),
+                              "int" : data["spadd"][iAdd]["isodist_int"][i].toFixed(3),
+                              "sample" : (0).toFixed(3) };
+                  if ( data["spadd"][iAdd]["grad_mzs"][curPeak] == cur_mz ) {
+                    cur["sample"] = adduct_peak_ints[iAdd][curPeak];
+                    cur["bullet"] = "round";
+                    curPeak++;
+                  }
+                  add_mzarrays[iAdd].push(cur);
+                }
+                for (var imInd in adduct_peak_ints[iAdd]) {
+                  
+                }
+
+                $("#molchart_" + iAdd).attr("style", "width: 100%; height: 200px;");
+                console.log(add_mzarrays[iAdd]);
+                var newchart = sin_amchart_spectrum_withsample("molchart_" + iAdd,
+                  add_mzarrays[iAdd],
+                  '{{ static_url("js/amcharts/images/") }}');
               }
             });
 
@@ -158,13 +192,6 @@
           "columnDefs": [
             { "render": function ( data, type, row ) { return sin_render_substance_small(row[4], data); }, "targets": [2] },
             { "render": function ( data, type, row ) { return sin_render_adduct(data); }, "targets": [8] },
-            // { "render": function ( data ) { return data.slice(0, 19).replace('T', ' '); }, "targets": [8] },
-            // { "render": function ( data, type, row ) { if (row[4]) { return sin_render_time(data); } else { return ""; } }, "targets": [9] },
-            // { "render": function ( data, type, row ) { return sin_render_dataset(row[0], data); }, "targets": [1] },
-            // { "render": function ( data, type, row ) { return sin_render_job(row[2], row[1], data); }, "targets": [3] },
-            // { "render": function ( data, type, row ) { return sin_render_tasks(row[6], data); }, "targets": [7] },
-            // { "render": function ( data, type, row ) { if (row[5] != "SUCCEEDED") { return ""; } else {
-              // return sin_render_jobresult(data); } }, "targets": [10] },
             { "visible": false,  "targets": [ 9, 10, 11 ] },
           ],
         } );
@@ -291,58 +318,6 @@
     </div>
 
 
-    <!--div class="panel panel-primary">
-      <div class="panel-heading" id="img-header">Images and statistics</div>
-      <div class="panel-body" id="img-body">
-      <p>Choose a dataset from the dropdown menu on top right to view the results and/or run the corresponding job.</p>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-6">
-        <div class="panel panel-primary">
-          <div class="panel-heading">Run m/z extraction</div>
-          <div class="panel-body">
-            <div class="row">
-              <div class="col-md-8">
-                When you press this button, a Spark job will be initiated at the server side.
-                  It will appear in the list (updated every 5 seconds). When it finishes, you will
-                  be able to view the m/z image.
-              </div>
-              <div class="col-md-4">
-                <div class="pull-right">
-                  <button id="btn-runmz" class="btn btn-large btn-primary" type="button">Run m/z extraction</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="panel panel-primary">
-          <div class="panel-heading">m/z peak values</div>
-          <table id="table-mzs" class="table table-striped" cellspacing="0" width="100%">
-            <thead>
-              <tr>
-                <th>m/z</th>
-                <th>Intensity</th>
-              </tr>
-            </thead>
-       
-            <tfoot>
-              <tr>
-                <th>m/z</th>
-                <th>Intensity</th>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <div class="panel panel-primary">
-          <div class="panel-heading">m/z intensities graph</div>
-          <div id="chartdiv" style="width: 100%; height: 400px;"></div>
-        </div>
-      </div>
-    </div-->
   </div>
 {% end %}
 
