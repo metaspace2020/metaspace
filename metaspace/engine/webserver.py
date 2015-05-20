@@ -95,12 +95,12 @@ sql_queries = dict(
 	''',
 	demobigtable='''
 		SELECT db,ds.dataset,f.sf,f.names,f.subst_ids,
-			(s.stats->'mean_ent')::text::real AS mean_ent,
-			(s.stats->'corr_images')::text::real AS corr_images,
-			(s.stats->'corr_int')::text::real AS corr_int,
-			s.adduct,
+			array_agg((s.stats->'mean_ent')::text::real) AS mean_ent,
+			array_agg((s.stats->'corr_images')::text::real) AS corr_images,
+			array_agg((s.stats->'corr_int')::text::real) AS corr_int,
+			array_agg(s.adduct) as adducts,
 			j.id as job_id,
-			s.stats->'entropies' AS entropies,
+			array_agg(s.stats->'entropies') AS entropies,
 			j.dataset_id,f.id as sf_id
 		FROM agg_formulas f
 			JOIN formula_dbs db ON f.db_ids[1]=db.db_id
@@ -109,6 +109,7 @@ sql_queries = dict(
 		WHERE
 			(s.stats->'corr_images')::text::real > 0.3 AND
 			(s.stats->'corr_int')::text::real > 0.3
+		GROUP BY db,ds.dataset,f.sf,f.names,f.subst_ids,j.id,j.dataset_id,sf_id
 	''',
 	demosubst='''
 		SELECT s.job_id,s.formula_id,s.adduct,
@@ -129,7 +130,7 @@ sql_fields = dict(
 	jobs=["id", "type", "description", "dataset_id", "dataset", "formula_id", "formula_name", "done", "status", "tasks_done", "tasks_total", "start", "finish", "id"],
 	datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
 	fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"],
-	demobigtable=["db", "dataset", "sf", "names", "subst_ids", "mean_ent", "corr_images", "corr_int", "adduct", "job_id", "entropies", "dataset_id", "sf_id"]
+	demobigtable=["db", "dataset", "sf", "names", "subst_ids", "mean_ent", "corr_images", "corr_int", "adducts", "job_id", "entropies", "dataset_id", "sf_id"]
 )
 
 def get_formula_and_peak(s):

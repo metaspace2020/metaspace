@@ -183,31 +183,34 @@ function pad_space(number, length) {
     return str;
 }
 
-function sin_amchart_spectrum(selector, data, pathtoimages) {
+function sin_amchart_spectrum(selector, data, guides, pathtoimages) {
   return AmCharts.makeChart(selector, {
     "type": "serial",
     "theme": "none",
     "dataProvider": data,
     "pathToImages": pathtoimages,
     "categoryField": "mz",
+    "legend": {
+      "useGraphSettings": true,
+      "position" : "right"
+    },
     "categoryAxis": {
         "dashLength": 1,
         // "minorGridEnabled": true,
+        "labelsEnabled": false,
         "position": "bottom",
-        "guides" : []
+        // "minimum": d3.min( data, function(d) { return d["mz"]; } ) - 5.25,
+        // "maximum": d3.max( data, function(d) { return d["mz"]; } ) + 0.25,
+        "guides" : guides
     },
     "graphs": [
       {
         "id"              : "int",
-        // "type"            : "column",
+        "title"            : "Theoretical",
         "valueAxis"       : "axisval",
-        // "bullet"          : "round",
-        // "bulletSize"      : 3,
         "valueField"      : "int",
         "colorField"      : "lineColor",
         "lineColorField"  : "lineColor",
-        // "fillColorsField" : "lineColor",
-        // "fillAlphas"      : 0.4,
         "lineAlpha"       : 1,
         "lineColor"       : linecolors[2],
         "alphaField"      : "alpha",
@@ -229,6 +232,7 @@ function sin_amchart_spectrum(selector, data, pathtoimages) {
         "axisThickness": 2,
         "dashLength": 5,
         "gridCount": 10,
+        "maximum": 100,
         "axisColor": "black",
         "position": "left",
         "title": "Intensity (a.u.)"
@@ -236,48 +240,19 @@ function sin_amchart_spectrum(selector, data, pathtoimages) {
   });
 }
 
-function sin_amchart_spectrum_withsample(selector, data, pathtoimages) {
-  var chart = sin_amchart_spectrum(selector, data, pathtoimages);
+function sin_amchart_spectrum_withsample(selector, data, guides, pathtoimages) {
+  var chart = sin_amchart_spectrum(selector, data, guides, pathtoimages);
+  // console.log(chart.categoryAxis.minimum);
   var graph = new AmCharts.AmGraph();
-  // {
-  //       "id"              : "sample",
-  //       "type"            : "column",
-  //       "valueAxis"       : "axisval",
-  //       "bullet"          : "round",
-  //       "bulletSize"      : 3,
-  //       "valueField"      : "sample",
-  //       // "colorField"      : "lineColor",
-  //       // "lineColorField"  : "lineColor",
-  //       // "fillColorsField" : "lineColor",
-  //       // "fillAlphas"      : 0.4,
-  //       "lineAlpha"       : 1,
-  //       "lineColor"       : linecolors[3],
-  //       // "alphaField"      : "alpha",
-  //       "lineThickness"   : 1.5
-  //     });
   graph.valueField = "sample";
+  graph.title = "Sample";
   graph.type = "column";
   graph.lineColor = "red";
+  graph.fillColor = "red";
+  graph.fillAlpha = 0.8;
   graph.lineThickness = 1.5;
   graph.bulletField = "bullet";
   graph.bulletSize = 5;
-  // graph.lineAlpha = 0.6;
   chart.addGraph(graph);
-  // graph.addGraph({
-  //       "id"              : "int",
-  //       "type"            : "column",
-  //       "valueAxis"       : "axisval",
-  //       // "bullet"          : "round",
-  //       // "bulletSize"      : 3,
-  //       "valueField"      : "sample",
-  //       // "colorField"      : "lineColor",
-  //       // "lineColorField"  : "lineColor",
-  //       // "fillColorsField" : "lineColor",
-  //       // "fillAlphas"      : 0.4,
-  //       "lineAlpha"       : 1,
-  //       "lineColor"       : linecolors[3],
-  //       "alphaField"      : "alpha",
-  //       "lineThickness"   : 1.5
-  //     });
   return chart;
 }

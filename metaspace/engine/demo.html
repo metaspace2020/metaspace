@@ -88,7 +88,7 @@
               var num_adducts = data["data"].length;
               $("#imagediv").empty();
 
-              console.log(data["spadd"]);
+              // console.log(data["spadd"]);
               var data_dict = {};
               var adduct_peak_ints = {};
               for (var iAdd in data["data"]) {
@@ -118,9 +118,7 @@
                             "int" : data["spec"]["isodist_int"][i].toFixed(3) };
                 mz_array.push(cur);
               }
-              console.log(mz_array);
-              // $("#molecular_chart").attr("style", "width: 100%; height: 200px;");
-              // var chart = sin_amchart_spectrum("molecular_chart", mz_array, '{{ static_url("js/amcharts/images/") }}');
+              // console.log(mz_array);
               data_arrs = {"sp" : [], "val" : []};
               for (var sp in data_dict) {
                 data_arrs["sp"].push(parseInt(sp, 10));
@@ -154,27 +152,42 @@
                   sin_render_ionimage("#col-img-" + iAdd + "-" + imInd.toString(), data["data"][iAdd][imInd], data["coords"], pixel_size, colors);
                 }
                 add_mzarrays[iAdd] = [];
+                var curGuides = [];
                 var curPeak = 0;
+                var cur = { "mz" : (data["spadd"][iAdd]["isodist_mzs"][0]-0.25).toFixed(3),
+                              "int" : (0).toFixed(3),
+                              "sample" : (0).toFixed(3) };
+                add_mzarrays[iAdd].push(cur);
                 for (var i=0; i < data["spadd"][iAdd]["isodist_mzs"].length; i++) {
                   cur_mz = data["spadd"][iAdd]["isodist_mzs"][i];
                   var cur = { "mz" : cur_mz.toFixed(3),
                               "int" : data["spadd"][iAdd]["isodist_int"][i].toFixed(3),
                               "sample" : (0).toFixed(3) };
                   if ( data["spadd"][iAdd]["grad_mzs"][curPeak] == cur_mz ) {
-                    cur["sample"] = adduct_peak_ints[iAdd][curPeak];
+                    cur["sample"] = adduct_peak_ints[iAdd][curPeak].toFixed(3);
                     cur["bullet"] = "round";
                     curPeak++;
+                    curGuides.push({
+                      "category" : cur_mz.toFixed(3),
+                      "boldLabel" : "True",
+                      "color" : "black",
+                      "dashLength" : 5,
+                      "lineAlpha" : 1,
+                      "label" : cur_mz.toFixed(3),
+                    });
                   }
                   add_mzarrays[iAdd].push(cur);
                 }
-                for (var imInd in adduct_peak_ints[iAdd]) {
-                  
-                }
-
+                var cur = { "mz" : (cur_mz+0.25).toFixed(3),
+                              "int" : (0).toFixed(3),
+                              "sample" : (0).toFixed(3) };
+                add_mzarrays[iAdd].push(cur);
+                // console.log(curGuides);
                 $("#molchart_" + iAdd).attr("style", "width: 100%; height: 200px;");
-                console.log(add_mzarrays[iAdd]);
+                // console.log(add_mzarrays[iAdd]);
                 var newchart = sin_amchart_spectrum_withsample("molchart_" + iAdd,
                   add_mzarrays[iAdd],
+                  curGuides,
                   '{{ static_url("js/amcharts/images/") }}');
               }
             });
@@ -182,14 +195,17 @@
             $("#about-name").text( d[2] );
             var asf_html = '';
             for (var i = 0; i < d[3].length; i++) {
-              asf_html += '<div class="col-md-8"><h4>' + d[3][i] + '</h4></div>';
-              asf_html += '<div class="col-md-4"><a class="fancybox" rel="group" href="http://moldb.wishartlab.com/molecules/HMDB'
+              asf_html += '<div class="col-md-4"><h4>' + d[3][i] + '</h4></div>';
+              asf_html += '<div class="col-md-2"><a class="fancybox" rel="group" href="http://moldb.wishartlab.com/molecules/HMDB'
                 + d[4][i].toString()
                 + '/image.png"><img height="80" src="http://moldb.wishartlab.com/molecules/HMDB'
                 + d[4][i].toString()
                 + '/thumb.png" alt="" /></a></div>';
+              if (i % 2 == 1) {
+                asf_html += '</div><div class="row">'
+              }
             }
-            $("#about-sf").html( asf_html );
+            $("#about-sf").html( '<div class="row">' + asf_html + '</div>' );
         }
 
         tbl_demo = $('#table-demo').DataTable( {
@@ -348,7 +364,7 @@
       <div class="col-md-8">
         <div class="container-fluid">
           <div class="page-header">
-            <div class="row">
+            <div class="row" style="text-align=center;">
               <h2 id="about-name"></h2>
             </div>
             <div class="row" id="about-sf">
