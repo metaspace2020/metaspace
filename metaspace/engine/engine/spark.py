@@ -83,7 +83,7 @@ class RunSparkHandler(tornado.web.RequestHandler):
 				if "entropies" in stdict:
 					stdict.update({ 'mean_ent' : np.mean(stdict["entropies"]) })
 			self.db.query('INSERT INTO job_result_stats VALUES %s' % (
-				",".join([ '(%d, \'%s\', %d, %d, \'%s\')' % (self.job_id, formula_ids[i], adducts[i], num_peaks[i], json.dumps(
+				",".join([ '(%d, %s, %d, %d, \'%s\')' % (self.job_id, formula_ids[i], adducts[i], num_peaks[i], json.dumps(
 					stats[i]
 				)) for i in xrange(len(formula_ids)) ])
 			) )
@@ -150,10 +150,10 @@ class RunSparkHandler(tornado.web.RequestHandler):
 		self.job_id = -1
 		## we want to extract m/z values
 		if query_id == "extractmzs":
-			self.formula_id = self.get_argument("formula_id")
+			self.formula_id = self.get_argument("sf_id")
 			self.job_type = 0
 			tol = 0.01
-			formula_data = self.db.query("SELECT adduct,peaks,ints FROM mz_peaks WHERE formula_id='%s'" % self.formula_id)
+			formula_data = self.db.query("SELECT adduct,peaks,ints FROM mz_peaks WHERE sf_id=%d" % int(self.formula_id))
 			peaks = {}
 			self.intensities = {}
 			for row in formula_data:
@@ -188,7 +188,7 @@ class RunSparkHandler(tornado.web.RequestHandler):
 			prefix = "\t[fullrun %s] " % self.dataset_id
 			my_print(prefix + "collecting m/z queries for the run")
 			tol = 0.01
-			self.formulas = self.db.query("SELECT formula_id as id,adduct,peaks,ints FROM mz_peaks")
+			self.formulas = self.db.query("SELECT sf_id as id,adduct,peaks,ints FROM mz_peaks")
 			self.mzadducts = [ x["adduct"] for x in self.formulas]
 			mzpeaks = [ x["peaks"] for x in self.formulas]
 			self.intensities = [ x["ints"] for x in self.formulas]

@@ -11,7 +11,7 @@ conn = psycopg2.connect("host='%s' dbname='%s' user='%s' password='%s'" % (
     config_db["host"], config_db["db"], config_db["user"], config_db["password"]
     ))
 cur = conn.cursor()
-cur.execute("SELECT id,sf FROM formulas")
+cur.execute("SELECT id,sf FROM agg_formulas")
 rows = cur.fetchall()
 
 adducts = [ "H", "Na", "K" ]

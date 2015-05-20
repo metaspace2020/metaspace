@@ -229,9 +229,9 @@ function sin_amchart_spectrum(selector, data, pathtoimages) {
         "axisThickness": 2,
         "dashLength": 5,
         "gridCount": 10,
-        "axisColor": "red",
+        "axisColor": "black",
         "position": "left",
-        "title": "Value"
+        "title": "Intensity (a.u.)"
     }],
   });
 }
@@ -257,7 +257,7 @@ function sin_amchart_spectrum_withsample(selector, data, pathtoimages) {
   //     });
   graph.valueField = "sample";
   graph.type = "column";
-  graph.lineColor = linecolors[3];
+  graph.lineColor = "red";
   graph.lineThickness = 1.5;
   graph.bulletField = "bullet";
   graph.bulletSize = 5;

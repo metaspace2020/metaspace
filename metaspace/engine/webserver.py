@@ -29,13 +29,16 @@ from engine.imaging import *
 
 parser = argparse.ArgumentParser(description='IMS webserver.')
 parser.add_argument('--no-spark', dest='spark', action='store_false')
-parser.set_defaults(spark=True)
+parser.add_argument('--config', dest='config', type=str, help='config file name')
+parser.set_defaults(spark=True, config='config.json')
 args = parser.parse_args()
 
 if args.spark:
 	from pyspark import SparkContext, SparkConf
 	from engine.spark import *
 
+with open(args.config) as f:
+	config = json.load(f)
 
 adducts = [ "H", "Na", "K" ]
 
@@ -52,7 +55,17 @@ sql_counts = dict(
 sql_queries = dict(
 	formulas="SELECT id,name,sf FROM formulas ",
 	formulas_search="SELECT id,name,sf FROM formulas WHERE lower(name) like '%%%s%%' OR lower(sf) like '%%%s%%' OR id like '%s%%' ",
-	substance="SELECT f.id,name,sf,peaks,ints,array_agg(s.job_id) as job_ids,array_agg(d.dataset_id) as dataset_ids,array_agg(dataset) as datasets,array_agg(stats) as stats FROM formulas f JOIN mz_peaks p ON f.id=p.formula_id LEFT JOIN job_result_stats s ON f.id=s.formula_id LEFT JOIN jobs j ON s.job_id=j.id LEFT JOIN datasets d ON j.dataset_id=d.dataset_id WHERE f.id='%s' GROUP BY f.id,name,sf,peaks,ints",
+	substance='''SELECT
+		f.id,f.sf_id,name,sf,peaks,ints,array_agg(s.job_id) as job_ids,
+		array_agg(d.dataset_id) as dataset_ids,array_agg(dataset) as datasets,
+		array_agg(stats) as stats
+		FROM formulas f 
+			JOIN mz_peaks p ON f.sf_id=p.sf_id
+			LEFT JOIN job_result_stats s ON f.id=s.formula_id
+			LEFT JOIN jobs j ON s.job_id=j.id
+			LEFT JOIN datasets d ON j.dataset_id=d.dataset_id
+		WHERE f.id='%s' GROUP BY f.id,f.sf_id,name,sf,peaks,ints
+	''',
 	jobstats="SELECT stats,peaks FROM job_result_stats s JOIN mz_peaks p ON s.formula_id=p.formula_id WHERE job_id=%s",
 	substancejobs='''
 		SELECT j.dataset_id,dataset,id,description,done,status,tasks_done,tasks_total,start,finish,id
@@ -81,15 +94,16 @@ sql_queries = dict(
 		WHERE (stats->'mean_ent')::text::real > 0.0001 AND job_id=%s
 	''',
 	demobigtable='''
-		SELECT db,ds.dataset,f.name,f.sf,f.id,
+		SELECT db,ds.dataset,f.sf,f.names,f.subst_ids,
 			(s.stats->'mean_ent')::text::real AS mean_ent,
 			(s.stats->'corr_images')::text::real AS corr_images,
 			(s.stats->'corr_int')::text::real AS corr_int,
 			s.adduct,
 			j.id as job_id,
 			s.stats->'entropies' AS entropies,
-			j.dataset_id
-		FROM formulas f JOIN formula_dbs db ON f.db_id=db.db_id
+			j.dataset_id,f.id as sf_id
+		FROM agg_formulas f
+			JOIN formula_dbs db ON f.db_ids[1]=db.db_id
 			JOIN job_result_stats s ON f.id=s.formula_id JOIN jobs j ON s.job_id=j.id
 			JOIN datasets ds ON j.dataset_id=ds.dataset_id
 		WHERE
@@ -102,7 +116,7 @@ sql_queries = dict(
 		FROM job_result_stats s 
 			JOIN job_result_data d ON s.job_id=d.job_id  and s.adduct=d.adduct 
 			JOIN jobs j ON d.job_id=j.id 
-		WHERE d.job_id=%d AND s.formula_id='%s' AND d.param=%d
+		WHERE d.job_id=%d AND s.formula_id=%s AND d.param=%d
 		GROUP BY s.job_id,s.formula_id,entropy,s.adduct,peak
 	''',
 	demosubstpeaks="SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'",
@@ -115,7 +129,7 @@ sql_fields = dict(
 	jobs=["id", "type", "description", "dataset_id", "dataset", "formula_id", "formula_name", "done", "status", "tasks_done", "tasks_total", "start", "finish", "id"],
 	datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
 	fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"],
-	demobigtable=["db", "dataset", "name", "sf", "id", "mean_ent", "corr_images", "corr_int", "adduct", "job_id", "entropies", "dataset_id"]
+	demobigtable=["db", "dataset", "sf", "names", "subst_ids", "mean_ent", "corr_images", "corr_int", "adduct", "job_id", "entropies", "dataset_id", "sf_id"]
 )
 
 def get_formula_and_peak(s):
@@ -293,12 +307,7 @@ class Application(tornado.web.Application):
 			static_path=path.join(os.path.dirname(__file__), "static"),
 			debug=True
 		)
-		config_db = dict(
-		    host="/var/run/postgresql/",
-		    db="ims",
-		    user="snikolenko",
-		    password=""
-		)
+		config_db = config["db"]
 		tornado.web.Application.__init__(self, handlers, **settings)
 		# Have one global connection to the blog DB across all handlers
 		self.db = tornpsql.Connection(config_db['host'], config_db['db'], config_db['user'], config_db['password'], 5432)
@@ -383,8 +392,9 @@ def main():
 		tornado.ioloop.IOLoop.instance().start()
 	except KeyboardInterrupt:
 		my_print( '^C received, shutting down server' )
-		torn_app.sc.stop()
-		http_server.socket.close()
+		if args.spark:
+			torn_app.sc.stop()
+		# http_server.socket.close()
 
 
 if __name__ == "__main__":

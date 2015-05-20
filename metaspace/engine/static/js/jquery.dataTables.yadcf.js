@@ -1573,7 +1573,7 @@ var yadcf = (function ($) {
 					}
 				} else {
 					if (columnObj.column_number_data === undefined) {
-						col_inner_data = data[j]._aData[columnObj.column_number];
+						col_inner_data = data[j]._aFilterData[columnObj.column_number];
 						if (typeof col_inner_data === 'object') {
 							if (columnObj.html5_data !== undefined) {
 								col_inner_data = col_inner_data['@' + columnObj.html5_data];

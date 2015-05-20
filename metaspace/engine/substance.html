@@ -13,6 +13,7 @@
     <script type="text/javascript" class="init">
       $(document).ready(function() {
         var subst_id = window.location.pathname.split('/')[window.location.pathname.split('/').length-1];
+        var sf_id = 0;
         
         // chemical structure pic
         $('#a-fb-wishart').attr("href", "http://moldb.wishartlab.com/molecules/HMDB" + subst_id + "/image.png");
@@ -61,7 +62,7 @@
                 $('#btn-runmz').addClass("disabled");
                 $.post("/run/extractmzs", {
                   "data" : mz_array_forspark.toString(),
-                  "formula_id" : subst_id,
+                  "sf_id" : sf_id,
                   "dataset_id" : current_dataset
                 });
               });
@@ -78,6 +79,7 @@
           res_alldatasets = data["all_datasets"];
           res_datasets = data["datasets"];
           res_stats = data["stats"];
+          sf_id = data["sf_id"];
           res_jobids = data["job_ids"];
           for (var i=0; i < data["all_datasets"].length; i++) {
             $("#dd-menu").append('<li role="presentation"><a role="menuitem" tabindex="-1" href="#" datasetid="' + i.toString() + '">' + data["all_datasets"][i] + '</a></li>')

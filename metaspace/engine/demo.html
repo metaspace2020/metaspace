@@ -73,15 +73,18 @@
             $(row_object).addClass('selected');
             var d = tbl_demo.row(row_object).data();
             var dataset_id = d[11];
+            var sf_id = d[12];
             var subst_id = d[4];
             var entropies = d[10];
-            var colors = ["white", "red"];
+            // var colors = ["white", "red"];
+            var colors = ['#352A87', '#0268E1', '#108ED2', '#0FAEB9', '#65BE86', '#C0BC60', '#FFC337', '#F9FB0E'];
+
             var pixel_size = 4;
 
             $("#imagediv").empty();
             $("#imagediv").html("<h4 style='text-align:center'>...loading images...</h4>");
 
-            $.getJSON("/ajax/demosubst/" + d[9].toString() + "/" + subst_id + "/" + d[3] + "/" + dataset_id + "/", function (data) {
+            $.getJSON("/ajax/demosubst/" + d[9].toString() + "/" + sf_id + "/" + d[2] + "/" + dataset_id + "/", function (data) {
               var num_adducts = data["data"].length;
               $("#imagediv").empty();
 
@@ -135,14 +138,19 @@
                 $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>+' + iAdd + '</h3></div></div><div class="row" id="row-images-' + iAdd + '"></div><div class="row"><div id="molchart_' + iAdd + '"></div></div>');
                 for (var imInd=0; imInd < num_peaks; imInd++) {
                   // console.log(data["data"][iAdd][imInd]);
-                  $('#row-images-' + iAdd).append('<div style="text-align:center;" class="col-lg-' + col_w.toString() + '">'
+                  to_append = '<div style="text-align:center;" class="col-lg-' + col_w.toString() + '">'
             		    + '<div class="container-fluid">'
                     + '<div class="row"><b>'
                     + data["spadd"][iAdd]["grad_mzs"][imInd].toFixed(3) + '</b></div>'
                     + '<div class="row" id="col-img-' + iAdd + '-' + imInd.toString() + '"></div>'
-                    + '<div class="row">'
-                    + '<div class="col-lg-8">Spatial presence</div><div class="col-lg-4">' + data["data"][iAdd][imInd]["entropy"].toFixed(3) + '</div></div>'
-                    + '</div>');
+                    + '<div class="row">';
+                  if (imInd == 0) {
+                    to_append += '<div class="col-lg-8">Spatial presence</div><div class="col-lg-4">';
+                  } else {
+                    to_append += '<div class="col-lg-12">';
+                  }
+                  to_append += data["data"][iAdd][imInd]["entropy"].toFixed(3) + '</div></div></div>';
+                  $('#row-images-' + iAdd).append(to_append);
                   sin_render_ionimage("#col-img-" + iAdd + "-" + imInd.toString(), data["data"][iAdd][imInd], data["coords"], pixel_size, colors);
                 }
                 add_mzarrays[iAdd] = [];
@@ -190,10 +198,39 @@
           bStateSave: true,
           order: [[ 7, "desc" ]],
           "columnDefs": [
-            { "render": function ( data, type, row ) { return sin_render_substance_small(row[4], data); }, "targets": [2] },
+            { "render": function ( data, type, row ) {
+              if (type === 'filter' || type === 'sort') {
+                return data.join(" ");
+              }
+              res = '<span style="margin:0 0px;" rel="tooltip" data-html="true" title="'
+                + data.join("<br/>").replace(/"/g, '\\"')
+                + '">' + data.length.toString() + ' metabolite';
+              if (data.length > 1) {
+                res += 's';
+              }
+              return res + '</span>';
+            }, "targets": [3] },
+            { "render": function ( data, type, row ) {
+              if (type === 'filter' || type === 'sort') {
+                return data.join(" ");
+              }
+              res = '<span style="margin:0 0px;" rel="tooltip" data-html="true" title="'
+                + data.join("<br/>").replace(/"/g, '\\"')
+                + '">' + data.length.toString() + ' id';
+              if (data.length > 1) {
+                res += 's';
+              }
+              return res + '</span>';
+            }, "targets": [4] },
             { "render": function ( data, type, row ) { return sin_render_adduct(data); }, "targets": [8] },
             { "visible": false,  "targets": [ 9, 10, 11 ] },
           ],
+          "initComplete" : function(oSettings, json) {
+            $('#table-demo').tooltip({
+              selector: "span[rel=tooltip]",
+              html: true
+            });
+          }
         } );
         
         yadcf.init(tbl_demo, [
@@ -248,8 +285,8 @@
           <tr>
             <th>Database</th>
             <th>Dataset</th>
-            <th>Name</th>
             <th>Molecular formula</th>
+            <th>Name</th>
             <th>Database ID</th>
             <th>Spatial presence</th>
             <th>Image correlation</th>
@@ -258,6 +295,7 @@
             <th>Job id</th>
             <th>Entropies</th>
             <th>Dataset id</th>
+            <th>SF id</th>
           </tr>
           <tr>
             <th id="fil-db"></th>
@@ -269,7 +307,7 @@
             <th id="fil-ic"></th>
             <th id="fil-sc"></th>
             <th id="fil-ad"></th>
-            <th></th><th></th><th></th>
+            <th></th><th></th><th></th><th></th>
           </tr>
         </thead>
    
@@ -277,8 +315,8 @@
           <tr>
             <th>Database</th>
             <th>Dataset</th>
-            <th>Name</th>
             <th>Molecular formula</th>
+            <th>Name</th>
             <th>Database ID</th>
             <th>Spatial presence</th>
             <th>Image correlation</th>
@@ -287,6 +325,7 @@
             <th>Job id</th>
             <th>Entropies</th>
             <th>Dataset id</th>
+            <th>SF id</th>
           </tr>
         </tfoot-->
       </table>
