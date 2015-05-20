@@ -180,9 +180,16 @@
             });
 
             $("#about-name").text( d[2] );
-            $("#about-sf").text( d[3] );
-            $('#a-fb-wishart').attr("href", "http://moldb.wishartlab.com/molecules/HMDB" + subst_id + "/image.png");
-            $('#a-fb-wishart img').attr("src", "http://moldb.wishartlab.com/molecules/HMDB" + subst_id + "/thumb.png");
+            var asf_html = '';
+            for (var i = 0; i < d[3].length; i++) {
+              asf_html += '<div class="col-md-8"><h4>' + d[3][i] + '</h4></div>';
+              asf_html += '<div class="col-md-4"><a class="fancybox" rel="group" href="http://moldb.wishartlab.com/molecules/HMDB'
+                + d[4][i].toString()
+                + '/image.png"><img height="80" src="http://moldb.wishartlab.com/molecules/HMDB'
+                + d[4][i].toString()
+                + '/thumb.png" alt="" /></a></div>';
+            }
+            $("#about-sf").html( asf_html );
         }
 
         tbl_demo = $('#table-demo').DataTable( {
@@ -202,6 +209,9 @@
               if (type === 'filter' || type === 'sort') {
                 return data.join(" ");
               }
+              if (data.length == 1) {
+                return data[0];
+              }
               res = '<span style="margin:0 0px;" rel="tooltip" data-html="true" title="'
                 + data.join("<br/>").replace(/"/g, '\\"')
                 + '">' + data.length.toString() + ' metabolite';
@@ -214,6 +224,9 @@
               if (type === 'filter' || type === 'sort') {
                 return data.join(" ");
               }
+              if (data.length == 1) {
+                return data[0];
+              }
               res = '<span style="margin:0 0px;" rel="tooltip" data-html="true" title="'
                 + data.join("<br/>").replace(/"/g, '\\"')
                 + '">' + data.length.toString() + ' id';
@@ -223,7 +236,7 @@
               return res + '</span>';
             }, "targets": [4] },
             { "render": function ( data, type, row ) { return sin_render_adduct(data); }, "targets": [8] },
-            { "visible": false,  "targets": [ 9, 10, 11 ] },
+            { "visible": false,  "targets": [ 9, 10, 11, 12 ] },
           ],
           "initComplete" : function(oSettings, json) {
             $('#table-demo').tooltip({
@@ -286,7 +299,7 @@
             <th>Database</th>
             <th>Dataset</th>
             <th>Molecular formula</th>
-            <th>Name</th>
+            <th width="200">Name</th>
             <th>Database ID</th>
             <th>Spatial presence</th>
             <th>Image correlation</th>
@@ -338,9 +351,7 @@
             <div class="row">
               <h2 id="about-name"></h2>
             </div>
-            <div class="row">
-              <div class="col-md-6"><h3 id="about-sf"></h3></div>
-              <div><a id="a-fb-wishart" class="fancybox" rel="group" href=""><img height="100%" src="" alt="" /></a></div>
+            <div class="row" id="about-sf">
             </div>
             <div class="row">
               <div id="molecular_chart"></div>
