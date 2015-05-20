@@ -118,6 +118,8 @@ sql_queries = dict(
 			JOIN job_result_data d ON s.job_id=d.job_id  and s.adduct=d.adduct 
 			JOIN jobs j ON d.job_id=j.id 
 		WHERE d.job_id=%d AND s.formula_id=%s AND d.param=%d
+		AND (s.stats->'corr_images')::text::real > 0.3 AND
+			(s.stats->'corr_int')::text::real > 0.3
 		GROUP BY s.job_id,s.formula_id,entropy,s.adduct,peak
 	''',
 	demosubstpeaks="SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'",

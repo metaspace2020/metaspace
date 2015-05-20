@@ -13,10 +13,14 @@ var linecolors = [
 var m_names_rod = new Array(" января ", " февраля ", " марта ", " апреля ", " мая ", " июня ", " июля ", " августа ", " сентября ", " октября ", " ноября ", " декабря ");
 var m_names_im = new Array("Январь ", "Февраль ", "Март ", "Апрель ", "Май ", "Июнь ", "Июль ", "Август ", "Сентябрь ", "Октябрь ", "Ноябрь ", "Декабрь ");
 
-function sin_render_ionimage(selector, data, coords, pixel_size, colors) {
+function sin_render_ionimage(selector, data, coords, pixel_size, colors, max_x, max_y) {
   var img_wid = $(selector).width();
   var psize = pixel_size;
   var svg = d3.select(selector).append("svg").attr("width", img_wid).attr("height", img_wid);
+  svg.append("rect")
+    .attr("width", 1 + max_x * psize / 20)
+    .attr("height", 1 + max_y * psize / 20)
+    .style("fill", colors[0]);
   var svg_datapoints = svg.selectAll(".p")
       .data(data["val"])
       .enter();

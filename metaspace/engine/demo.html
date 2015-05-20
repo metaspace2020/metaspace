@@ -18,6 +18,8 @@
 {% block init_script %}
     <script type="text/javascript" class="init">
       $(document).ready(function() {
+        var array_adducts = ['H', 'Na', 'K'];
+
         var mz_array = [];
 
         var res_datasetids = [];
@@ -86,6 +88,17 @@
 
             $.getJSON("/ajax/demosubst/" + d[9].toString() + "/" + sf_id + "/" + d[2] + "/" + dataset_id + "/", function (data) {
               var num_adducts = data["data"].length;
+              var max_x = 0;
+              var max_y = 0;
+              for (var k in data["coords"]) {
+                if (data["coords"][k][0] > max_x) {
+                  max_x = data["coords"][k][0];
+                }
+                if (data["coords"][k][1] > max_y) {
+                  max_y = data["coords"][k][1];
+                }
+              }
+              console.log(max_x + " " + max_y);
               $("#imagediv").empty();
 
               // console.log(data["spadd"]);
@@ -126,7 +139,7 @@
               }
               $("#ionimage_total").empty();
               $("#ionimage_total").attr("align", "center");
-              sin_render_ionimage("#ionimage_total", data_arrs, data["coords"], pixel_size, colors);
+              sin_render_ionimage("#ionimage_total", data_arrs, data["coords"], pixel_size, colors, max_x, max_y);
               
               var add_mzarrays = {}
               for (var iAdd in data["data"]) {
@@ -149,7 +162,7 @@
                   }
                   to_append += data["data"][iAdd][imInd]["entropy"].toFixed(3) + '</div></div></div>';
                   $('#row-images-' + iAdd).append(to_append);
-                  sin_render_ionimage("#col-img-" + iAdd + "-" + imInd.toString(), data["data"][iAdd][imInd], data["coords"], pixel_size, colors);
+                  sin_render_ionimage("#col-img-" + iAdd + "-" + imInd.toString(), data["data"][iAdd][imInd], data["coords"], pixel_size, colors, max_x, max_y);
                 }
                 add_mzarrays[iAdd] = [];
                 var curGuides = [];
@@ -195,7 +208,8 @@
             $("#about-name").text( d[2] );
             var asf_html = '';
             for (var i = 0; i < d[3].length; i++) {
-              asf_html += '<div class="col-md-4"><h4>' + d[3][i] + '</h4></div>';
+              asf_html += '<div class="col-md-1"><h5>' + d[4][i] + '</h5></div>';
+              asf_html += '<div class="col-md-3" style="word-wrap: break-word;"><h4>' + d[3][i] + '</h4></div>';
               asf_html += '<div class="col-md-2"><a class="fancybox" rel="group" href="http://moldb.wishartlab.com/molecules/HMDB'
                 + d[4][i].toString()
                 + '/image.png"><img height="80" src="http://moldb.wishartlab.com/molecules/HMDB'
@@ -226,7 +240,7 @@
                 return data.join(" ");
               }
               if (data.length == 1) {
-                return data[0];
+                return sin_render_substance_small(row[4][0], data[0]);
               }
               res = '<span style="margin:0 0px;" rel="tooltip" data-html="true" title="'
                 + data.join("<br/>").replace(/"/g, '\\"')
@@ -241,7 +255,7 @@
                 return data.join(" ");
               }
               if (data.length == 1) {
-                return data[0];
+                return sin_render_substance_small(row[4][0], data[0]);
               }
               res = '<span style="margin:0 0px;" rel="tooltip" data-html="true" title="'
                 + data.join("<br/>").replace(/"/g, '\\"')
@@ -252,10 +266,11 @@
               return res + '</span>';
             }, "targets": [4] },
             { "render": function ( data, type, row ) {
+              // console.log(data);
               return d3.max(data);
             }, "targets": [5, 6, 7] },
             { "render": function ( data, type, row ) {
-              return sin_render_adduct(data);
+              return data.sort().map(function(d) { return array_adducts[d]; }).join(" ");
             }, "targets": [8] },
             { "visible": false,  "targets": [ 9, 10, 11, 12 ] },
           ],
@@ -366,7 +381,7 @@
     </div>
 
     <div class="row">
-      <div class="col-md-8">
+      <div class="col-md-9">
         <div class="container-fluid">
           <div class="page-header">
             <div class="row" style="text-align=center;">
@@ -380,7 +395,7 @@
           </div>
         </div>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-3">
         <div id="ionimage_total"></div>
       </div>
     </div>
