@@ -49,7 +49,7 @@ sql_counts = dict(
 	jobs="SELECT count(*) FROM jobs",
 	datasets="SELECT count(*) FROM datasets",
 	fullimages="SELECT count(*) FROM job_result_stats WHERE job_id=%s",
-	demobigtable="SELECT count(*) FROM job_result_stats"
+	demobigtable="SELECT count(distinct formula_id) FROM job_result_stats"
 )
 
 sql_queries = dict(
