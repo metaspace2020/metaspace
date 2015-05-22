@@ -252,6 +252,7 @@ class AjaxHandler(tornado.web.RequestHandler):
 				res_dict = {"data" : [ [x[field] for field in sql_fields[query_id]] for x in res_list]}
 			elif query_id == 'demosubst':
 				adduct_dict = {};
+				
 				for row in res_list:
 					if adducts[ row["adduct"] ] not in adduct_dict:
 						adduct_dict[ adducts[ row["adduct"] ] ] = []
@@ -259,6 +260,15 @@ class AjaxHandler(tornado.web.RequestHandler):
 				res_dict = {"data" : { k : sorted(v, key=lambda x: x["peak"]) for k,v in adduct_dict.iteritems() },
 					"spec" : spectrum, "spadd" : spec_add
 				}
+				for k, v in res_dict["data"].iteritems():
+					for imInd in xrange(len(v)):
+						v[imInd]["val"] = np.array(v[imInd]["val"])
+						im_q = np.percentile(v[imInd]["val"], 99.0)
+						# my_print("%s" % v[imInd]["val"][:100])
+						# my_print("quantile = %.4f" % im_q)
+						im_rep =  v[imInd]["val"] > im_q
+						v[imInd]["val"][im_rep] = im_q
+						v[imInd]["val"] = list(v[imInd]["val"])
 				res_dict.update({ "coords" : coords })
 			else:
 				res_dict = res_list[0]

@@ -13,20 +13,70 @@ var linecolors = [
 var m_names_rod = new Array(" января ", " февраля ", " марта ", " апреля ", " мая ", " июня ", " июля ", " августа ", " сентября ", " октября ", " ноября ", " декабря ");
 var m_names_im = new Array("Январь ", "Февраль ", "Март ", "Апрель ", "Май ", "Июнь ", "Июль ", "Август ", "Сентябрь ", "Октябрь ", "Ноябрь ", "Декабрь ");
 
+function sin_render_colorbar_horiz(selector, myScale) {
+  var cb_svg = d3.select(selector).append("svg").attr("width", "100%").attr("height", "100%");
+  var sel_wid = $(selector).width();
+  var rects = cb_svg.selectAll("rect")
+    .data(d3.range(myScale[1], myScale[2], Math.floor( (myScale[2] - myScale[1]) / 20) ) );
+  var bar_wid = Math.floor( sel_wid / 20 );
+  rects.enter()
+    .append("rect")
+    .attr({
+      width: bar_wid,
+      height: 50,
+      y: 0,
+      x: function(d,i) {
+        return i * bar_wid;
+      },
+      fill: function(d,i) {
+        return myScale[0](d);
+      }
+    });
+    var tick_range = [myScale[1], (myScale[2] - myScale[1]) / 2, myScale[2]];
+    var ticks = cb_svg.selectAll("text").data( tick_range )
+    .enter()
+    .append("text")
+    .attr({
+      // width : 20, height : 10,
+      "font-size": "12px", fill : "black", "text-anchor" : function( d, i) {
+        if (i == 0) {
+          return "start";
+        } else if (i == 2) {
+          return "end";
+        } else {
+          return "middle";
+        }
+      },
+      y : 60,
+      x : function(d, i) {
+        if (i == 0) {
+          return 0;
+        } else if (i == 2) {
+          return i * bar_wid * 10 + bar_wid - 1;
+        } else {
+          return i * bar_wid * 10 + bar_wid / 2;
+        }
+      }
+    }).text(function(d, i) { return d.toFixed(2); } );
+}
+
 function sin_render_ionimage(selector, data, coords, pixel_size, colors, max_x, max_y) {
-  var img_wid = $(selector).width();
-  var psize = pixel_size;
-  var svg = d3.select(selector).append("svg").attr("width", img_wid).attr("height", img_wid);
+  var total_wid = $(selector).width();
+  var psize = Math.floor( (20.0 * total_wid) / (max_x) );
+  var img_wid = 1 + max_x * psize / 20;
+  var img_hei = 1 + max_y * psize / 20;
+  var svg = d3.select(selector).append("svg").attr("width", img_wid).attr("height", img_hei);
   svg.append("rect")
-    .attr("width", 1 + max_x * psize / 20)
-    .attr("height", 1 + max_y * psize / 20)
+    .attr("width", img_wid)
+    .attr("height", img_hei)
     .style("fill", colors[0]);
   var svg_datapoints = svg.selectAll(".p")
       .data(data["val"])
       .enter();
-
+  var val_min = d3.min(data["val"]);
+  var val_max = d3.max(data["val"]);
   var img_color = d3.scale.linear()
-    .domain(d3.extent(data["val"]))
+    .domain(d3.range( val_min, val_max, (val_max - val_min) / colors.length ))
     .range( colors );
 
   svg_datapoints
@@ -35,6 +85,8 @@ function sin_render_ionimage(selector, data, coords, pixel_size, colors, max_x, 
       .style("fill", function(d) { return img_color(d); } )
       .attr("x",function(d, i) {return coords[ data["sp"][i] ][0] * psize / 20;})
       .attr("y",function(d, i) {return coords[ data["sp"][i] ][1] * psize / 20;});
+
+  return [img_color, val_min, val_max];
 }
 
 
@@ -49,6 +101,10 @@ function sin_render_job(id, type, name) {
   }
   return name;
   // return '<a href="/dataset/' + id +'">' + name + '</a>';
+}
+
+function sin_render_sf(sf) {
+  return sf.replace(/([0-9]+)/g, "<sub>$1</sub>");
 }
 
 function sin_render_substance_small(id, name) {
