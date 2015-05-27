@@ -20,6 +20,7 @@
       $(document).ready(function() {
         var array_adducts = ['H', 'Na', 'K'];
 
+        var max_peaks_to_show = 6;
         var mz_array = [];
 
         var res_datasetids = [];
@@ -85,6 +86,9 @@
 
             $("#imagediv").empty();
             $("#imagediv").html("<h4 style='text-align:center'>...loading images...</h4>");
+            $("#ionimage_total").empty();
+            $("#ionimage_total").html("<h4 style='text-align:center'>...loading image...</h4>");
+            $("#ionimage_total_cb").empty();
 
             $.getJSON("/ajax/demosubst/" + d[9].toString() + "/" + sf_id + "/" + d[2] + "/" + dataset_id + "/", function (data) {
               var num_adducts = data["data"].length;
@@ -98,7 +102,6 @@
                   max_y = data["coords"][k][1];
                 }
               }
-              console.log(max_x + " " + max_y);
               $("#imagediv").empty();
 
               // console.log(data["spadd"]);
@@ -139,13 +142,14 @@
               }
               $("#ionimage_total").empty();
               $("#ionimage_total").attr("align", "center");
-              sin_render_ionimage("#ionimage_total", data_arrs, data["coords"], pixel_size, colors, max_x, max_y);
+              var ionimage_scale = sin_render_ionimage("#ionimage_total", data_arrs, data["coords"], pixel_size, colors, max_x, max_y);
+              sin_render_colorbar_horiz("#ionimage_total_cb", ionimage_scale);
               
               var add_mzarrays = {}
               for (var iAdd in data["data"]) {
-                var num_peaks = data["data"][iAdd].length;
+                var num_peaks = Math.min(data["data"][iAdd].length, max_peaks_to_show);
                 var w_percent = 100 / num_peaks;
-                var col_w = num_peaks > 12 ? 1 : Math.floor(12 / num_peaks);
+                var col_w = Math.floor(12 / num_peaks);
                 $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>+' + iAdd + '</h3></div></div><div class="row" id="row-images-' + iAdd + '"></div><div class="row"><div id="molchart_' + iAdd + '"></div></div>');
                 for (var imInd=0; imInd < num_peaks; imInd++) {
                   // console.log(data["data"][iAdd][imInd]);
@@ -205,7 +209,7 @@
               }
             });
 
-            $("#about-name").text( d[2] );
+            $("#about-name").html( sin_render_sf(d[2]) );
             var asf_html = '';
             for (var i = 0; i < d[3].length; i++) {
               asf_html += '<div class="col-md-1"><h5>' + d[4][i] + '</h5></div>';
@@ -235,6 +239,13 @@
           bStateSave: true,
           order: [[ 7, "desc" ]],
           "columnDefs": [
+            { "render": function ( data, type, row ) {
+              if (type === 'display') {
+                return sin_render_sf(data);
+              } else {
+                return data;
+              }
+            }, "targets": [2] },
             { "render": function ( data, type, row ) {
               if (type === 'filter' || type === 'sort') {
                 return data.join(" ");
@@ -328,7 +339,7 @@
 
 {% block body %}
     <div class="panel panel-primary">
-      <div class="panel-heading">Demo table</div>
+      <div class="panel-heading">Results overview</div>
       <table id="table-demo" class="table table-striped" cellspacing="0" width="100%">
         <thead>
           <tr>
@@ -396,7 +407,14 @@
         </div>
       </div>
       <div class="col-md-3">
-        <div id="ionimage_total"></div>
+        <div class="container-fluid">
+          <div class="row">
+            <div id="ionimage_total"></div>
+          </div>
+          <div class="row">
+            <div id="ionimage_total_cb"></div>
+          </div>
+        </div>
       </div>
     </div>
 
