@@ -1,16 +1,13 @@
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+import png
 import cStringIO
 
 
 def write_image(img, format="png"):
 	'''Save image in a given format and return the StringIO object'''
-	fig = plt.figure()
-	fig_ax1=fig.add_subplot(111)
-	fig_ax1.imshow(img)
 	sio = cStringIO.StringIO()
-	plt.savefig(sio, format=format, bbox_inches='tight')
+	w = png.Writer()
+	w.write(sio, img)
 	return sio
 
 def make_image_dict(nRows, nColumns, valdict, offset=0):

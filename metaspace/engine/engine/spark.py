@@ -120,22 +120,25 @@ class RunSparkHandler(tornado.web.RequestHandler):
 					avg_dict_correlation(res_dicts[i]),
 					avg_intensity_correlation(res_dicts[i], self.intensities[i])
 			  	) )
+		corr_images = [ avg_dict_correlation(res_dicts[i]) for i in xrange(len(res_dicts)) ]
+		corr_int = [ avg_intensity_correlation(res_dicts[i], self.intensities[i]) for i in xrange(len(res_dicts)) ]
+		to_insert = [ i for i in xrange(len(res_dicts)) if corr_int[i] > 0.3 and corr_images[i] > 0.3 ]
 		if total_nonzero > 0:
 			self.db.query("INSERT INTO job_result_data VALUES %s" %
 				",".join(['(%d, %d, %d, %d, %d, %.6f)' % (self.job_id,
 					int(self.formulas[i+offset]["id"]),
 					int(self.mzadducts[i+offset]), j, k, v)
-					for i in xrange(len(res_dicts)) for j in xrange(len(res_dicts[i])) for k,v in res_dicts[i][j].iteritems()])
+					for i in to_insert for j in xrange(len(res_dicts[i])) for k,v in res_dicts[i][j].iteritems()])
 			)
 		self.insert_job_result_stats(
-			[ self.formulas[i+offset]["id"] for i in xrange(len(res_dicts)) ],
-			[ int(self.mzadducts[i+offset]) for i in xrange(len(res_dicts)) ],
-			[ len(res_dicts[i]) for i in xrange(len(res_dicts)) ],
+			[ self.formulas[i+offset]["id"] for i in to_insert ],
+			[ int(self.mzadducts[i+offset]) for i in to_insert ],
+			[ len(res_dicts[i]) for i in to_insert ],
 			[ {
 				"entropies" : entropies[i],
-				"corr_images" : avg_dict_correlation(res_dicts[i]),
-				"corr_int" : avg_intensity_correlation(res_dicts[i], self.intensities[i])
-			  } for i in xrange(len(res_dicts)) ]
+				"corr_images" : corr_images[i],
+				"corr_int" : corr_int[i]
+			  } for i in to_insert ]
 		)
 
 	@gen.coroutine
@@ -152,14 +155,14 @@ class RunSparkHandler(tornado.web.RequestHandler):
 		if query_id == "extractmzs":
 			self.formula_id = self.get_argument("sf_id")
 			self.job_type = 0
-			tol = 0.01
+			tol = 3*(1e-6)
 			formula_data = self.db.query("SELECT adduct,peaks,ints FROM mz_peaks WHERE sf_id=%d" % int(self.formula_id))
 			peaks = {}
 			self.intensities = {}
 			for row in formula_data:
 				peaks[row["adduct"]] = row["peaks"]
 				self.intensities[row["adduct"]] = row["ints"]
-			data = { k : [ [float(x)-tol, float(x)+tol] for x in pks] for k,pks in peaks.iteritems() }
+			data = { k : [ [float(x)*(1-tol), float(x)*(1+tol)] for x in pks] for k,pks in peaks.iteritems() }
 			my_print("Running m/z extraction for formula id %s. Input data:" % self.formula_id)
 			my_print("\n".join([ "\t%s\t%s" % (adducts[k], " ".join([ "[%.3f, %.3f]" % (x[0], x[1]) for x in d])) for k,d in data.iteritems() ]))
 

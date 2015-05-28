@@ -31,7 +31,6 @@ from numpy import linspace #for gaussian
 from numpy import copysign
 from itertools import groupby
 import operator
-import matplotlib.pyplot as plt #for plotting
 from pyMS.mass_spectrum import mass_spectrum
 from pyMS import centroid_detection
 
@@ -450,6 +449,7 @@ def isodist(molecules,charges=0,output='',plot=False,sigma=0.35,resolution=250,c
 		mz_list,intensity_list,centroid_list = centroid_detection.gradient(ms_output.get_mzs(),ms_output.get_intensities(),max_output=-1,weighted_bins=5)
 		ms_output.add_centroids(mz_list,intensity_list)
 	if plot==True:
+		import matplotlib.pyplot as plt
 		plt.plot(xvector,yvector)
 		plt.plot(mz_list,intensity_list,'rx')
 		plt.show()

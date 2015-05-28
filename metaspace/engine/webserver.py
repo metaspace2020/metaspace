@@ -30,7 +30,8 @@ from engine.imaging import *
 parser = argparse.ArgumentParser(description='IMS webserver.')
 parser.add_argument('--no-spark', dest='spark', action='store_false')
 parser.add_argument('--config', dest='config', type=str, help='config file name')
-parser.set_defaults(spark=True, config='config.json')
+parser.add_argument('--port', dest='port', type=int, help='port on which to access the web server')
+parser.set_defaults(spark=True, config='config.json', port=80)
 args = parser.parse_args()
 
 if args.spark:
@@ -75,9 +76,9 @@ sql_queries = dict(
 		WHERE formula_id='%s'
 	''',
 	jobs='''
-		SELECT j.id as id,t.type,t.description,j.dataset_id,dataset,formula_id,f.name as formula_name,done,status,tasks_done,tasks_total,start,finish,j.id as id
+		SELECT j.id as id,t.type,t.description,j.dataset_id,dataset,formula_id,f.sf as formula_name,done,status,tasks_done,tasks_total,start,finish,j.id as id
 		FROM jobs j LEFT JOIN datasets d on j.dataset_id=d.dataset_id
-		LEFT JOIN formulas f on j.formula_id=f.id
+		LEFT JOIN agg_formulas f on j.formula_id=f.id
 		LEFT JOIN job_types t on t.type=j.type
 	''',
 	datasets='SELECT dataset_id,dataset,nrows,ncols,dataset_id FROM datasets',
@@ -394,7 +395,7 @@ class Application(tornado.web.Application):
 
 def main():
 	try:
-		port = 2347
+		port = args.port
 		torn_app = Application()
 		http_server = tornado.httpserver.HTTPServer(torn_app)
 		http_server.listen(port)
