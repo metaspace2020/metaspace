@@ -30,7 +30,8 @@ from engine.imaging import *
 parser = argparse.ArgumentParser(description='IMS webserver.')
 parser.add_argument('--no-spark', dest='spark', action='store_false')
 parser.add_argument('--config', dest='config', type=str, help='config file name')
-parser.set_defaults(spark=True, config='config.json')
+parser.add_argument('--port', dest='port', type=int, help='port on which to access the web server')
+parser.set_defaults(spark=True, config='config.json', port=80)
 args = parser.parse_args()
 
 if args.spark:
@@ -394,7 +395,7 @@ class Application(tornado.web.Application):
 
 def main():
 	try:
-		port = 2347
+		port = args.port
 		torn_app = Application()
 		http_server = tornado.httpserver.HTTPServer(torn_app)
 		http_server.listen(port)
