@@ -76,9 +76,9 @@ sql_queries = dict(
 		WHERE formula_id='%s'
 	''',
 	jobs='''
-		SELECT j.id as id,t.type,t.description,j.dataset_id,dataset,formula_id,f.name as formula_name,done,status,tasks_done,tasks_total,start,finish,j.id as id
+		SELECT j.id as id,t.type,t.description,j.dataset_id,dataset,formula_id,f.sf as formula_name,done,status,tasks_done,tasks_total,start,finish,j.id as id
 		FROM jobs j LEFT JOIN datasets d on j.dataset_id=d.dataset_id
-		LEFT JOIN formulas f on j.formula_id=f.id
+		LEFT JOIN agg_formulas f on j.formula_id=f.id
 		LEFT JOIN job_types t on t.type=j.type
 	''',
 	datasets='SELECT dataset_id,dataset,nrows,ncols,dataset_id FROM datasets',
