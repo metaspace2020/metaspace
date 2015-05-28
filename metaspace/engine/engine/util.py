@@ -4,6 +4,7 @@ import Queue
 
 from datetime import datetime,date,timedelta
 import time
+import numpy
 
 from tornado import gen
 from tornado.ioloop import IOLoop
@@ -37,13 +38,17 @@ def my_print(s):
 class DateTimeEncoder(json.JSONEncoder):
     '''Auxuliary class that lets us encode dates in json'''
     def default(self, obj):
-        if isinstance(obj, datetime):
+        if hasattr(obj, 'isoformat'):
+	   return obj.isoformat()
+	elif isinstance(obj, datetime):
             return obj.isoformat()
         elif isinstance(obj, date):
             return obj.isoformat()
         elif isinstance(obj, timedelta):
             return (datetime.min + obj).time().isoformat()
-        else:
+        elif isinstance(obj, numpy.generic):
+    	    return numpy.asscalar(obj)
+	else:
             return super(DateTimeEncoder, self).default(obj)
 
 
