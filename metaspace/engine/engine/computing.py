@@ -1,8 +1,5 @@
 import numpy as np
-<<<<<<< HEAD
 import numpy.linalg
-=======
->>>>>>> b8ca61cfbca0cd53b1a9df2813b88cedccb5cf59
 import bisect
 
 from pyMS.pyisocalc import pyisocalc
