@@ -91,6 +91,7 @@
             $("#ionimage_total_cb").empty();
 
             $.getJSON("/ajax/demosubst/" + d[9].toString() + "/" + sf_id + "/" + d[2] + "/" + dataset_id + "/", function (data) {
+              console.log(data);
               var num_adducts = data["data"].length;
               var max_x = 0;
               var max_y = 0;

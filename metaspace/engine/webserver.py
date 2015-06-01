@@ -408,7 +408,7 @@ def main():
 		my_print( '^C received, shutting down server' )
 		if args.spark:
 			torn_app.sc.stop()
-		# http_server.socket.close()
+		http_server.socket.close()
 
 
 if __name__ == "__main__":

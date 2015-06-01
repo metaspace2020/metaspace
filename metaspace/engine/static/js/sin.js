@@ -62,9 +62,17 @@ function sin_render_colorbar_horiz(selector, myScale) {
 
 function sin_render_ionimage(selector, data, coords, pixel_size, colors, max_x, max_y) {
   var total_wid = $(selector).width();
-  var psize = Math.floor( (20.0 * total_wid) / (max_x) );
-  var img_wid = 1 + max_x * psize / 20;
-  var img_hei = 1 + max_y * psize / 20;
+  var factor = 20.0;
+  if (max_x % 20 > 0 || max_y % 20 > 0) {
+    factor = 1.0;
+  }
+  var intfactor = Math.round(factor);
+  var psize = Math.max(1, Math.floor( (factor * total_wid) / (max_x) ));
+  // console.log("max_x=" + max_x.toString() + "\tmax_y=" + max_y.toString());
+  var img_wid = 1 + max_x * psize / intfactor;
+  var img_hei = 1 + max_y * psize / intfactor;
+  // console.log("img_wid=" + img_wid.toString() + "\timg_hei=" + img_hei.toString());
+  // console.log("psize=" + psize.toString());
   var svg = d3.select(selector).append("svg").attr("width", img_wid).attr("height", img_hei);
   svg.append("rect")
     .attr("width", img_wid)
@@ -83,8 +91,8 @@ function sin_render_ionimage(selector, data, coords, pixel_size, colors, max_x, 
       .append("rect")
       .attr("width", psize).attr("height", psize)
       .style("fill", function(d) { return img_color(d); } )
-      .attr("x",function(d, i) {return coords[ data["sp"][i] ][0] * psize / 20;})
-      .attr("y",function(d, i) {return coords[ data["sp"][i] ][1] * psize / 20;});
+      .attr("x",function(d, i) {return coords[ data["sp"][i] ][0] * psize / intfactor;})
+      .attr("y",function(d, i) {return coords[ data["sp"][i] ][1] * psize / intfactor;});
 
   return [img_color, val_min, val_max];
 }
