@@ -18,6 +18,9 @@
 {% block init_script %}
     <script type="text/javascript" class="init">
       $(document).ready(function() {
+          $("#nav-demo").addClass("active");
+          $("#nav-demo a").attr("href", "#");
+          $("#nav-demo a").html( $("#nav-demo a").html() + ' <span class="sr-only">(current)</span>' );
         var array_adducts = ['H', 'Na', 'K'];
 
         var max_peaks_to_show = 6;
