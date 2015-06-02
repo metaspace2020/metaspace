@@ -1,6 +1,6 @@
 import numpy as np
 import cStringIO
-
+import png
 
 def write_image(img, format="png"):
 	'''Save image in a given format and return the StringIO object'''
