@@ -65,6 +65,7 @@ CREATE TABLE coordinates (
 \COPY coordinates FROM '/media/data/ims/14037s1_Spheroids24h_DHBSub_centroids_IMS_coordinates.csv' csv;
 \COPY coordinates FROM '/media/data/ims/14040s1_Spheroids12h_DHBSub_centroids_IMS_coordinates.csv' csv;
 \COPY coordinates FROM '/media/data/ims/Spheroids_sublimation_6h_centroids_IMS_coordinates.csv' csv;
+\COPY coordinates FROM '/media/data/ims/HR2MSI_mouse_urinary_bladder_S096_centroids_IMS_coordinates.csv' csv;
 
 CREATE INDEX ind_coordinates_1 ON coordinates (dataset_id, index);
 CREATE INDEX ind_coordinates_2 ON coordinates (dataset_id);
@@ -144,3 +145,14 @@ CREATE INDEX ind_mz_peaks_2 ON mz_peaks(sf_id);
 --     WHERE d.job_id=5 AND s.formula_id='13676' AND d.param=13676
 --     GROUP BY s.job_id,s.formula_id,peak;
 
+
+\COPY formulas TO '/media/data/ims/dump28052015/formulas.csv' WITH delimiter ';' csv;
+\COPY agg_formulas TO '/media/data/ims/dump28052015/agg_formulas.csv' WITH delimiter ';' csv;
+\COPY formula_dbs TO '/media/data/ims/dump28052015/formula_dbs.csv' WITH delimiter ';' csv;
+\COPY mz_peaks TO '/media/data/ims/dump28052015/mz_peaks.csv' WITH delimiter ';' csv;
+\COPY job_types TO '/media/data/ims/dump28052015/job_types.csv' WITH delimiter ';' csv;
+\COPY jobs TO '/media/data/ims/dump28052015/jobs.csv' WITH delimiter ';' csv;
+\COPY datasets TO '/media/data/ims/dump28052015/datasets.csv' WITH delimiter ';' csv;
+\COPY coordinates TO '/media/data/ims/dump28052015/coordinates.csv' WITH delimiter ';' csv;
+\COPY job_result_stats TO '/media/data/ims/dump28052015/job_result_stats.csv' WITH delimiter ';' csv;
+\COPY job_result_data TO '/media/data/ims/dump28052015/job_result_data.csv' WITH delimiter ';' csv;

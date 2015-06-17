@@ -25,6 +25,7 @@ import decimal
 from engine.util import *
 from engine.computing import *
 from engine.imaging import *
+from engine.isocalc import *
 
 
 parser = argparse.ArgumentParser(description='IMS webserver.')

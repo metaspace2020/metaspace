@@ -1,10 +1,12 @@
 import numpy as np
 
 from math import log
-from collections import Counter
 
 def simple_entropy(arr, levels=100, size=9.0):
-	return np.sum( [ v * log(size / v) for k,v in Counter(arr).iteritems() if v > 0 ] ) / size
+	cnts = {}
+	for x in arr:
+		cnts[x] = cnts.get(x, 0) + 1
+	return np.sum( [ v * log(size / v) for k,v in cnts.iteritems() if v > 0 ] ) / size
 
 def get_block_entropy_dict(d, nrows, ncols, K=20, M=3, levels=100):
 	norm = np.linalg.norm(d.values())

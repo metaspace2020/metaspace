@@ -6,14 +6,6 @@ from datetime import datetime,date,timedelta
 import time
 import numpy
 
-from tornado import gen
-from tornado.ioloop import IOLoop
-
-@gen.coroutine
-def async_sleep(seconds):
-    yield gen.Task(IOLoop.instance().add_timeout, time.time() + seconds)
-
-
 def delayed(seconds):
 	def f(x):
 		time.sleep(seconds)
