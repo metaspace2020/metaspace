@@ -31,12 +31,15 @@ cur = conn.cursor()
 job_id = args.jobid
 if job_id == None:
 	cur.execute("SELECT max(id) FROM jobs")
-	job_id = cur.fetchone()[0] + 1
+	try:
+		job_id = cur.fetchone()[0] + 1
+	except:
+		job_id = 0
 	my_print("No job id specified, using %d" % job_id)
 
 my_print("Reading %s..." % args.fname)
 with open(args.fname) as f:
-# with open("result.1434563340.pkl") as f:
+# with open("result.pkl") as f:
 	r = cPickle.load(f)
 
 

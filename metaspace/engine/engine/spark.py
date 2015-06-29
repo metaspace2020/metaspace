@@ -131,7 +131,7 @@ class RunSparkHandler(tornado.web.RequestHandler):
 					yield async_sleep(1)
 				my_print("Processing results...")
 				res_dicts, entropies = result.get()
-				process_res_fulldataset(self.db, res_dicts, entropies, self.formulas, self.mzadducts, self.intensities, self.job_id, offset=fulldataset_chunk_size*i)
+				process_res_fulldataset(self.db, res_dicts, entropies, self.formulas, self.mzadducts, self.intensities, self.nrows, self.ncols, self.job_id, offset=fulldataset_chunk_size*i)
 		else:
 			my_print("[ERROR] Incorrect run query %s!" % query_id)
 			return

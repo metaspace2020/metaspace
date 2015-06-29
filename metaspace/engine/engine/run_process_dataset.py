@@ -11,25 +11,27 @@ fulldataset_chunk_size = 1000
 from util import *
 from computing import *
 
-def get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, job_id=0, offset=0):
+def get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id=0, offset=0):
 	total_nonzero = sum([len(x) for x in res_dicts])
 	my_print("Got result of full dataset job %d with %d nonzero spectra" % (job_id, total_nonzero))
 	corr_images = [ avg_dict_correlation(res_dicts[i]) for i in xrange(len(res_dicts)) ]
 	corr_int = [ avg_intensity_correlation(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts)) ]
 	to_insert = [ i for i in xrange(len(res_dicts)) if corr_int[i] > 0.3 and corr_images[i] > 0.3 ]
+	chaos_measures = [ measure_of_chaos_dict(res_dicts[i][0], nrows, ncols) if corr_int[i] > 0.3 and corr_images[i] > 0.3 else 0 for i in xrange(len(res_dicts)) ]
 	return ([ formulas[i+offset][0] for i in to_insert ],
 		[ int(mzadducts[i+offset]) for i in to_insert ],
 		[ len(res_dicts[i]) for i in to_insert ],
 		[ {
 			"entropies" : entropies[i],
 			"corr_images" : corr_images[i],
-			"corr_int" : corr_int[i]
+			"corr_int" : corr_int[i],
+			"chaos" : chaos_measures[i]
 		  } for i in to_insert ],
 		[ res_dicts[i] for i in to_insert ]
 		)
 
-def process_res_fulldataset(db, res_dicts, entropies, formulas, mzadducts, intensities, job_id=0, offset=0):
-	formulas, mzadducts, lengths, stat_dicts, res_dicts = get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, job_id, offset)
+def process_res_fulldataset(db, res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id=0, offset=0):
+	formulas, mzadducts, lengths, stat_dicts, res_dicts = get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id, offset)
 	if sum(lengths) > 0:
 		db.query("INSERT INTO job_result_data VALUES %s" %
 			",".join(['(%d, %d, %d, %d, %d, %.6f)' % (job_id,
@@ -82,7 +84,7 @@ for i in xrange(num_chunks):
 	data = q["data"][fulldataset_chunk_size*i:fulldataset_chunk_size*(i+1)]
 	qres = spectra.map(lambda sp : get_many_groups2d_total_dict_individual(data, sp)).reduce(reduce_manygroups2d_dict_individual)
 	entropies = [ [ get_block_entropy_dict(x, args.rows, args.cols) for x in one_result ] for one_result in qres ]
-	cur_results = get_full_dataset_results(qres, entropies, q["formulas"], q["mzadducts"], q["intensities"], args.job_id, fulldataset_chunk_size*i)	
+	cur_results = get_full_dataset_results(qres, entropies, q["formulas"], q["mzadducts"], q["intensities"], args.rows, args.cols, args.job_id, fulldataset_chunk_size*i)
 	res["formulas"].extend([ n + fulldataset_chunk_size*i for n in cur_results[0] ])
 	res["mzadducts"].extend(cur_results[1])
 	res["lengths"].extend(cur_results[2])

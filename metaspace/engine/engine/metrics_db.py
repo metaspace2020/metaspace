@@ -25,7 +25,7 @@ def insert_job_result_stats(db, job_id, formula_ids, adducts, num_peaks, stats):
 			)) for i in xrange(len(formula_ids)) ])
 		) )
 
-def get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, job_id=0, offset=0):
+def get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id=0, offset=0):
 	total_nonzero = sum([len(x) for x in res_dicts])
 	my_print("Got result of full dataset job %d with %d nonzero spectra" % (job_id, total_nonzero))
 	# with open("jobresults.txt", "a") as f:
@@ -40,19 +40,21 @@ def get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensit
 	corr_images = [ avg_dict_correlation(res_dicts[i]) for i in xrange(len(res_dicts)) ]
 	corr_int = [ avg_intensity_correlation(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts)) ]
 	to_insert = [ i for i in xrange(len(res_dicts)) if corr_int[i] > 0.3 and corr_images[i] > 0.3 ]
+	chaos_measures = [ measure_of_chaos_dict(res_dicts[i][0], nrows, ncols) if corr_int[i] > 0.3 and corr_images[i] > 0.3 else 0 for i in xrange(len(res_dicts)) ]
 	return ([ formulas[i+offset]["id"] for i in to_insert ],
 		[ int(mzadducts[i+offset]) for i in to_insert ],
 		[ len(res_dicts[i]) for i in to_insert ],
 		[ {
 			"entropies" : entropies[i],
 			"corr_images" : corr_images[i],
-			"corr_int" : corr_int[i]
+			"corr_int" : corr_int[i],
+			"chaos" : chaos_measures[i]
 		  } for i in to_insert ],
 		[ res_dicts[i] for i in to_insert ]
 		)
 
-def process_res_fulldataset(db, res_dicts, entropies, formulas, mzadducts, intensities, job_id=0, offset=0):
-	formulas, mzadducts, lengths, stat_dicts, res_dicts = get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, job_id, offset)
+def process_res_fulldataset(db, res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id=0, offset=0):
+	formulas, mzadducts, lengths, stat_dicts, res_dicts = get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, job_id, nrows, ncols, offset)
 	if sum(lengths) > 0:
 		db.query("INSERT INTO job_result_data VALUES %s" %
 			",".join(['(%d, %d, %d, %d, %d, %.6f)' % (job_id,
