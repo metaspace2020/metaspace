@@ -35,7 +35,9 @@ if job_id == None:
 		job_id = cur.fetchone()[0] + 1
 	except:
 		job_id = 0
-	my_print("No job id specified, using %d" % job_id)
+	my_print("No job id specified, using %d and inserting to jobs" % job_id)
+	cur.execute("INSERT INTO jobs VALUES (%d, 1, -1, %d, true, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', '2000-01-01 00:00:00')" %
+		job_id, 1, -1, ds_id)
 
 my_print("Reading %s..." % args.fname)
 with open(args.fname) as f:

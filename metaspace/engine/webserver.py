@@ -97,7 +97,7 @@ sql_queries = dict(
 	''',
 	demobigtable='''
 		SELECT db,ds.dataset,f.sf,f.names,f.subst_ids,
-			array_agg((s.stats->'mean_ent')::text::real) AS mean_ent,
+			array_agg(COALESCE( (s.stats->'chaos')::text::real, 0 )) AS mean_ent,
 			array_agg((s.stats->'corr_images')::text::real) AS corr_images,
 			array_agg((s.stats->'corr_int')::text::real) AS corr_int,
 			array_agg(s.adduct) as adducts,
