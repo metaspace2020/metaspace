@@ -12,8 +12,9 @@ adducts = [ "H", "Na", "K" ]
 parser = argparse.ArgumentParser(description='Insert pickled results to DB.')
 parser.add_argument('--in', dest='fname', type=str, help='input filename')
 parser.add_argument('--config', dest='config', type=str, help='config filename')
-parser.add_argument('--jobid', dest='jobid', type=int, help='job id filename')
-parser.set_defaults(config='config.json', fname='result.pkl')
+parser.add_argument('--jobid', dest='jobid', type=int, help='job id')
+parser.add_argument('--dsid', dest='dsid', type=int, help='dataset id')
+parser.set_defaults(config='config.json', fname='result.pkl', dsid=0)
 args = parser.parse_args()
 
 with open(args.config) as f:
@@ -37,7 +38,7 @@ if job_id == None:
 		job_id = 0
 	my_print("No job id specified, using %d and inserting to jobs" % job_id)
 	cur.execute("INSERT INTO jobs VALUES (%d, 1, -1, %d, true, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', '2000-01-01 00:00:00')" %
-		job_id, 1, -1, ds_id)
+		job_id, 1, -1, args.ds_id)
 
 my_print("Reading %s..." % args.fname)
 with open(args.fname) as f:
