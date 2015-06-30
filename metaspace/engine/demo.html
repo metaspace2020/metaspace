@@ -76,6 +76,10 @@
         $(".fancybox").fancybox();
 
         function select_row(row_object) {
+            /*
+             * Measuring total time for select_row.
+             */
+            var t_total_start = performance.now();
             $(row_object).addClass('selected');
             var d = tbl_demo.row(row_object).data();
             var dataset_id = d[11];
@@ -93,7 +97,9 @@
             $("#ionimage_total").html("<h4 style='text-align:center'>...loading image...</h4>");
             $("#ionimage_total_cb").empty();
 
+            var t_getJson_start = performance.now();
             $.getJSON("/ajax/demosubst/" + d[9].toString() + "/" + sf_id + "/" + d[2] + "/" + dataset_id + "/", function (data) {
+              var t_getJsonBody_start = performance.now();
               console.log(data);
               var num_adducts = data["data"].length;
               var max_x = 0;
@@ -146,9 +152,29 @@
               }
               $("#ionimage_total").empty();
               $("#ionimage_total").attr("align", "center");
+
+              /*
+               * Measuring time for rendering total ion image.
+               */
+            //   var start = new Date().getTime();
+              var t_start = performance.now();
               var ionimage_scale = sin_render_ionimage("#ionimage_total", data_arrs, data["coords"], pixel_size, colors, max_x, max_y);
+              var t_end = performance.now();
+            //   var time_delta = new Date().getTime() - start;
+              console.log("Rendering ionimage_total took " + (t_end - t_start) + "ms.");
+
+              /*
+               * Measuring time for rendering horizontal color bar.
+               */
+              var t_start = performance.now();
               sin_render_colorbar_horiz("#ionimage_total_cb", ionimage_scale);
-              
+              var t_end = performance.now();
+              console.log("Rendering color bar took " + (t_end - t_start) + "ms.")
+
+              /*
+               * Measuring time for adduct-specific computation.
+               */
+              var t_start = performance.now();
               var add_mzarrays = {}
               for (var iAdd in data["data"]) {
                 var num_peaks = Math.min(data["data"][iAdd].length, max_peaks_to_show);
@@ -211,6 +237,11 @@
                   curGuides,
                   '{{ static_url("js/amcharts/images/") }}');
               }
+              var t_end = performance.now();
+              console.log("Adduct-specific computations took " + (t_end - t_start) + "ms.");
+              console.log("Time for getJSON body: " + (t_end - t_getJsonBody_start) + "ms.");
+              console.log("Time for getJSON overall: " + (t_end - t_getJson_start) + "ms.");
+              console.log("Total time for select_row: " + (t_end - t_total_start) + "ms.");
             });
 
             $("#about-name").html( sin_render_sf(d[2]) );

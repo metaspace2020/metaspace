@@ -1,6 +1,7 @@
 #!/home/snikolenko/anaconda/bin/python
 # -*- coding: utf8 -*
 
+import cProfile
 import os
 from datetime import datetime,time,date,timedelta
 from os import curdir,sep,path
@@ -199,89 +200,100 @@ class AjaxHandler(tornado.web.RequestHandler):
 
 	@gen.coroutine
 	def get(self, query_id, slug):
-		my_print("ajax %s starting..." % query_id)
-		my_print("%s" % query_id)
-		my_print("%s" % slug)
-		draw = self.get_argument('draw', 0)
-		input_id = ""
-		if len(slug) > 0:
-			input_id = get_id_from_slug(slug)
-		
-		if query_id in ['formulas', 'substancejobs', 'jobs', 'datasets', 'demobigtable']:
-			orderby = sql_fields[query_id][ int(self.get_argument('order[0][column]', 0)) ]
-			orderdir = self.get_argument('order[0][dir]', 0)
-			limit = self.get_argument('length', 0)
-			limit_string = "LIMIT %s" % limit if limit != '-1' else ""
-			offset = self.get_argument('start', 0)
-			searchval = self.get_argument('search[value]', "")
-			my_print("search for : %s" % searchval)
+		def flushed_callback(t0):
+			def callback():
+				my_print("Finished write in AjaxHandler. Took %s" % (datetime.now() - t0))
+			return callback
 
-			## queries
-			q_count = sql_counts[query_id] if searchval == "" else (sql_counts[query_id + '_search'] % (searchval, searchval, searchval))
-			q_res = sql_queries[query_id] if searchval == "" else (sql_queries[query_id + '_search'] % (searchval, searchval, searchval))
-			if query_id in ['substancejobs', 'fullimages']:
-				q_count = q_count % input_id
-				q_res = q_res % input_id
-			my_print(q_count)
-			if query_id == 'demobigtable':
-				count = int(self.db.query(q_count)[0]['count'])
-				res = self.db.query(q_res)
+		def wrapper(self, query_id, slug, cProfile_res_list):
+			my_print("ajax %s starting..." % query_id)
+			my_print("%s" % query_id)
+			my_print("%s" % slug)
+			draw = self.get_argument('draw', 0)
+			input_id = ""
+			if len(slug) > 0:
+				input_id = get_id_from_slug(slug)
+
+			if query_id in ['formulas', 'substancejobs', 'jobs', 'datasets', 'demobigtable']:
+				orderby = sql_fields[query_id][ int(self.get_argument('order[0][column]', 0)) ]
+				orderdir = self.get_argument('order[0][dir]', 0)
+				limit = self.get_argument('length', 0)
+				limit_string = "LIMIT %s" % limit if limit != '-1' else ""
+				offset = self.get_argument('start', 0)
+				searchval = self.get_argument('search[value]', "")
+				my_print("search for : %s" % searchval)
+
+				## queries
+				q_count = sql_counts[query_id] if searchval == "" else (sql_counts[query_id + '_search'] % (searchval, searchval, searchval))
+				q_res = sql_queries[query_id] if searchval == "" else (sql_queries[query_id + '_search'] % (searchval, searchval, searchval))
+				if query_id in ['substancejobs', 'fullimages']:
+					q_count = q_count % input_id
+					q_res = q_res % input_id
+				my_print(q_count)
+				if query_id == 'demobigtable':
+					count = int(self.db.query(q_count)[0]['count'])
+					res = self.db.query(q_res)
+				else:
+					my_print(q_res + " ORDER BY %s %s %s OFFSET %s" % (orderby, orderdir, limit_string, offset))
+					count = int(self.db.query(q_count)[0]['count'])
+					res = self.db.query(q_res + " ORDER BY %s %s %s OFFSET %s" % (orderby, orderdir, limit_string, offset))
+				res_dict = self.make_datatable_dict(draw, count, [[ row[x] for x in sql_fields[query_id] ] for row in res])
 			else:
-				my_print(q_res + " ORDER BY %s %s %s OFFSET %s" % (orderby, orderdir, limit_string, offset))
-				count = int(self.db.query(q_count)[0]['count'])
-				res = self.db.query(q_res + " ORDER BY %s %s %s OFFSET %s" % (orderby, orderdir, limit_string, offset))
-			res_dict = self.make_datatable_dict(draw, count, [[ row[x] for x in sql_fields[query_id] ] for row in res])
-		else:
-			if query_id == 'jobstats':
-				arr = input_id.split('/')
-				if len(arr) > 1:
-					final_query = sql_queries[query_id] % arr[0] + " AND s.formula_id='%s'" % arr[1]
-				else: 
+				if query_id == 'jobstats':
+					arr = input_id.split('/')
+					if len(arr) > 1:
+						final_query = sql_queries[query_id] % arr[0] + " AND s.formula_id='%s'" % arr[1]
+					else:
+						final_query = sql_queries[query_id] % input_id
+				elif query_id == 'demosubst':
+					arr = input_id.split('/')
+					# spectrum = self.db.query( sql_queries['demosubstpeaks'] % arr[1] )
+					spectrum = get_lists_of_mzs(arr[2])
+					spec_add = { ad : get_lists_of_mzs(arr[2] + ad) for ad in adducts }
+					coords_q = self.db.query( sql_queries['democoords'] % int(arr[3]) )
+					coords = { row["index"] : [row["x"], row["y"]] for row in coords_q }
+					final_query = sql_queries[query_id] % ( int(arr[0]), arr[1], int(arr[1]) )
+				else:
 					final_query = sql_queries[query_id] % input_id
-			elif query_id == 'demosubst':
-				arr = input_id.split('/')
-				# spectrum = self.db.query( sql_queries['demosubstpeaks'] % arr[1] )
-				spectrum = get_lists_of_mzs(arr[2])
-				spec_add = { ad : get_lists_of_mzs(arr[2] + ad) for ad in adducts }
-				coords_q = self.db.query( sql_queries['democoords'] % int(arr[3]) )
-				coords = { row["index"] : [row["x"], row["y"]] for row in coords_q }
-				final_query = sql_queries[query_id] % ( int(arr[0]), arr[1], int(arr[1]) )
-			else:
-				final_query = sql_queries[query_id] % input_id
-			my_print(final_query)
-			res_list = self.db.query(final_query)
-			if query_id == 'fullimages':
-				res_dict = {"data" : [ [x[field] for field in sql_fields[query_id]] for x in res_list]}
-			elif query_id == 'demosubst':
-				adduct_dict = {};
-				
-				for row in res_list:
-					if adducts[ row["adduct"] ] not in adduct_dict:
-						adduct_dict[ adducts[ row["adduct"] ] ] = []
-					adduct_dict[ adducts[ row["adduct"] ] ].append(row)
-				res_dict = {"data" : { k : sorted(v, key=lambda x: x["peak"]) for k,v in adduct_dict.iteritems() },
-					"spec" : spectrum, "spadd" : spec_add
-				}
-				for k, v in res_dict["data"].iteritems():
-					for imInd in xrange(len(v)):
-						v[imInd]["val"] = np.array(v[imInd]["val"])
-						im_q = np.percentile(v[imInd]["val"], 99.0)
-						# my_print("%s" % v[imInd]["val"][:100])
-						# my_print("quantile = %.4f" % im_q)
-						im_rep =  v[imInd]["val"] > im_q
-						v[imInd]["val"][im_rep] = im_q
-						v[imInd]["val"] = list(v[imInd]["val"])
-				res_dict.update({ "coords" : coords })
-			else:
-				res_dict = res_list[0]
-			## add isotopes for the substance query
-			if query_id == "substance":
-				res_dict.update({"all_datasets" : self.application.all_datasets})
-				res_dict.update(get_lists_of_mzs(res_dict["sf"]))
-			res_dict.update({"draw" : draw})
+				my_print(final_query)
+				res_list = self.db.query(final_query)
+				if query_id == 'fullimages':
+					res_dict = {"data" : [ [x[field] for field in sql_fields[query_id]] for x in res_list]}
+				elif query_id == 'demosubst':
+					adduct_dict = {};
 
+					for row in res_list:
+						if adducts[ row["adduct"] ] not in adduct_dict:
+							adduct_dict[ adducts[ row["adduct"] ] ] = []
+						adduct_dict[ adducts[ row["adduct"] ] ].append(row)
+					res_dict = {"data" : { k : sorted(v, key=lambda x: x["peak"]) for k,v in adduct_dict.iteritems() },
+						"spec" : spectrum, "spadd" : spec_add
+					}
+					for k, v in res_dict["data"].iteritems():
+						for imInd in xrange(len(v)):
+							v[imInd]["val"] = np.array(v[imInd]["val"])
+							im_q = np.percentile(v[imInd]["val"], 99.0)
+							# my_print("%s" % v[imInd]["val"][:100])
+							# my_print("quantile = %.4f" % im_q)
+							im_rep =  v[imInd]["val"] > im_q
+							v[imInd]["val"][im_rep] = im_q
+							v[imInd]["val"] = list(v[imInd]["val"])
+					res_dict.update({ "coords" : coords })
+				else:
+					res_dict = res_list[0]
+				## add isotopes for the substance query
+				if query_id == "substance":
+					res_dict.update({"all_datasets" : self.application.all_datasets})
+					res_dict.update(get_lists_of_mzs(res_dict["sf"]))
+				res_dict.update({"draw" : draw})
+			cProfile_res_list.append(res_dict)
+		res = []
+		cProfile.runctx("wrapper(self, query_id, slug, res)", globals(), locals())
+		res_dict = res[0]
 		my_print("ajax %s processed, returning..." % query_id)
+		t0 = datetime.now()
 		self.write(json.dumps(res_dict, cls = DateTimeEncoder))
+		self.flush(callback=flushed_callback(t0))
 
 class IndexHandler(tornado.web.RequestHandler):
 	@gen.coroutine
