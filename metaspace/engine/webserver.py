@@ -319,7 +319,7 @@ class SimpleHtmlHandler(tornado.web.RequestHandler):
 		my_print("Request: %s" % self.request.uri)
 		self.render( html_pages.get( self.request.uri.split('/')[1], self.request.uri.split('/')[1] + ".html"), sparkactivated=args.spark )
 
-class Application(tornado.web.Application, compress_response=True):
+class Application(tornado.web.Application):
 	def __init__(self):
 		handlers = [
 			(r"^/ajax/([a-z]*)/(.*)", AjaxHandler),
@@ -413,7 +413,7 @@ class Application(tornado.web.Application, compress_response=True):
 def main():
 	try:
 		port = args.port
-		torn_app = Application()
+		torn_app = Application(compress_response=True)
 		http_server = tornado.httpserver.HTTPServer(torn_app)
 		http_server.listen(port)
 		my_print("Starting server, listening to port %d..." % port)
