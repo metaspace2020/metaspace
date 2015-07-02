@@ -337,6 +337,7 @@ class Application(tornado.web.Application):
 		settings = dict(
 			static_path=path.join(os.path.dirname(__file__), "static"),
 			debug=True
+			compress_response=True
 		)
 		config_db = config["db"]
 		tornado.web.Application.__init__(self, handlers, **settings)
@@ -413,7 +414,7 @@ class Application(tornado.web.Application):
 def main():
 	try:
 		port = args.port
-		torn_app = Application(compress_response=True)
+		torn_app = Application()
 		http_server = tornado.httpserver.HTTPServer(torn_app)
 		http_server.listen(port)
 		my_print("Starting server, listening to port %d..." % port)
