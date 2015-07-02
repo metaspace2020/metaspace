@@ -33,7 +33,8 @@ parser = argparse.ArgumentParser(description='IMS webserver.')
 parser.add_argument('--no-spark', dest='spark', action='store_false')
 parser.add_argument('--config', dest='config', type=str, help='config file name')
 parser.add_argument('--port', dest='port', type=int, help='port on which to access the web server')
-parser.set_defaults(spark=True, config='config.json', port=80)
+parser.add_argument('--profile', dest='time_profiling_enabled', action='store_true')
+parser.set_defaults(spark=True, config='config.json', port=80, time_profiling_enabled=False)
 args = parser.parse_args()
 
 if args.spark:
@@ -288,7 +289,10 @@ class AjaxHandler(tornado.web.RequestHandler):
 				res_dict.update({"draw" : draw})
 			cProfile_res_list.append(res_dict)
 		res = []
-		cProfile.runctx("wrapper(self, query_id, slug, res)", globals(), locals())
+		if args.time_profiling_enabled:
+			cProfile.runctx("wrapper(self, query_id, slug, res)", globals(), locals())
+		else:
+			wrapper(self, query_id, slug, res)
 		res_dict = res[0]
 		my_print("ajax %s processed, returning..." % query_id)
 		t0 = datetime.now()
