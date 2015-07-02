@@ -319,7 +319,7 @@ class SimpleHtmlHandler(tornado.web.RequestHandler):
 		my_print("Request: %s" % self.request.uri)
 		self.render( html_pages.get( self.request.uri.split('/')[1], self.request.uri.split('/')[1] + ".html"), sparkactivated=args.spark )
 
-class Application(tornado.web.Application):
+class Application(tornado.web.Application, compress_response=True):
 	def __init__(self):
 		handlers = [
 			(r"^/ajax/([a-z]*)/(.*)", AjaxHandler),
