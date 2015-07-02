@@ -336,7 +336,7 @@ class Application(tornado.web.Application):
 			handlers = [ (r"^/run/(.*)", RunSparkHandler) ] + handlers
 		settings = dict(
 			static_path=path.join(os.path.dirname(__file__), "static"),
-			debug=True
+			debug=True,
 			compress_response=True
 		)
 		config_db = config["db"]
