@@ -60,7 +60,7 @@ function sin_render_colorbar_horiz(selector, myScale) {
     }).text(function(d, i) { return d.toFixed(2); } );
 }
 
-function sin_render_ionimage(selector, data, coords, pixel_size, colors, max_x, max_y) {
+function sin_render_ionimage(selector, data, coords, pixel_size, colors, max_x, max_y, coords_aligned) {
   var total_wid = $(selector).width();
   var factor = 20.0;
   if (max_x % 20 > 0 || max_y % 20 > 0) {
@@ -87,12 +87,21 @@ function sin_render_ionimage(selector, data, coords, pixel_size, colors, max_x, 
     .domain(d3.range( val_min, val_max, (val_max - val_min) / colors.length ))
     .range( colors );
 
-  svg_datapoints
-      .append("rect")
-      .attr("width", psize).attr("height", psize)
-      .style("fill", function(d) { return img_color(d); } )
-      .attr("x",function(d, i) {return coords[ data["sp"][i] ][0] * psize / intfactor;})
-      .attr("y",function(d, i) {return coords[ data["sp"][i] ][1] * psize / intfactor;});
+  if (coords_aligned == true) {
+    svg_datapoints
+        .append("rect")
+        .attr("width", psize).attr("height", psize)
+        .style("fill", function(d) { return img_color(d); } )
+        .attr("x",function(d, i) {return coords[i][0] * psize / intfactor;})
+        .attr("y",function(d, i) {return coords[i][1] * psize / intfactor;});
+  } else {
+    svg_datapoints
+        .append("rect")
+        .attr("width", psize).attr("height", psize)
+        .style("fill", function(d) { return img_color(d); } )
+        .attr("x",function(d, i) {return coords[ data["sp"][i] ][0] * psize / intfactor;})
+        .attr("y",function(d, i) {return coords[ data["sp"][i] ][1] * psize / intfactor;});
+  }
 
   return [img_color, val_min, val_max];
 }

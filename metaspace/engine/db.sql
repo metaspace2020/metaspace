@@ -25,6 +25,7 @@ CREATE TABLE agg_formulas (
 	names 		text[]
 );
 \COPY agg_formulas FROM '/home/snikolenko/soft/ims/webserver/agg_formulas.csv';
+-- \COPY agg_formulas FROM '/home/snikolenko/soft/ims/data/dump15072015/agg_formulas.csv' WITH delimiter ';' csv;
 -- INSERT INTO agg_formulas (sf, db_ids, subst_ids, names) 
 -- 	SELECT sf,array_agg(db_id) as db_ids,array_agg(id) as subst_ids,array_agg(name) as names
 -- 	FROM formulas
@@ -66,6 +67,7 @@ CREATE TABLE coordinates (
 \COPY coordinates FROM '/media/data/ims/14040s1_Spheroids12h_DHBSub_centroids_IMS_coordinates.csv' csv;
 \COPY coordinates FROM '/media/data/ims/Spheroids_sublimation_6h_centroids_IMS_coordinates.csv' csv;
 \COPY coordinates FROM '/media/data/ims/HR2MSI_mouse_urinary_bladder_S096_centroids_IMS_coordinates.csv' csv;
+-- \COPY coordinates FROM '/home/snikolenko/soft/ims/data/dump15072015/coordinates.csv' WITH delimiter ';' csv;
 
 CREATE INDEX ind_coordinates_1 ON coordinates (dataset_id, index);
 CREATE INDEX ind_coordinates_2 ON coordinates (dataset_id);
@@ -94,6 +96,7 @@ CREATE TABLE jobs (
 );
 CREATE INDEX ind_jobs_1 ON jobs (id);
 -- \COPY jobs FROM '/home/snikolenko/soft/ims/pySIN/frontend/jobs.csv' WITH delimiter ';' quote '@' csv;
+-- \COPY jobs FROM '/home/snikolenko/soft/ims/data/dump15072015/jobs.csv' WITH delimiter ';' csv;
 
 DROP TABLE IF EXISTS job_result_data;
 CREATE TABLE job_result_data (
@@ -109,7 +112,7 @@ CREATE INDEX ind_job_result_data_2 ON job_result_data (job_id, param);
 -- CREATE INDEX ind_job_result_data_3 ON job_result_data (job_id, param, peak);
 CREATE INDEX ind_job_result_data_4 ON job_result_data (job_id, param, adduct);
 CREATE INDEX ind_job_result_data_5 ON job_result_data (job_id, param, peak, adduct);
-
+-- \COPY job_result_data FROM '/home/snikolenko/soft/ims/data/dump15072015/job_result_data.csv' WITH delimiter ';' csv;
 
 DROP TABLE IF EXISTS job_result_stats;
 CREATE TABLE job_result_stats (
@@ -121,6 +124,7 @@ CREATE TABLE job_result_stats (
 );
 CREATE INDEX ind_job_result_stats_1 ON job_result_stats (job_id);
 CREATE INDEX ind_job_result_stats_2 ON job_result_stats (job_id, formula_id);
+-- \COPY job_result_stats FROM '/home/snikolenko/soft/ims/data/dump15072015/job_result_stats.csv' WITH delimiter ';' csv;
 
 DROP TABLE IF EXISTS mz_peaks;
 CREATE TABLE mz_peaks (
@@ -146,13 +150,38 @@ CREATE INDEX ind_mz_peaks_2 ON mz_peaks(sf_id);
 --     GROUP BY s.job_id,s.formula_id,peak;
 
 
-\COPY formulas TO '/media/data/ims/dump28052015/formulas.csv' WITH delimiter ';' csv;
-\COPY agg_formulas TO '/media/data/ims/dump28052015/agg_formulas.csv' WITH delimiter ';' csv;
-\COPY formula_dbs TO '/media/data/ims/dump28052015/formula_dbs.csv' WITH delimiter ';' csv;
-\COPY mz_peaks TO '/media/data/ims/dump28052015/mz_peaks.csv' WITH delimiter ';' csv;
-\COPY job_types TO '/media/data/ims/dump28052015/job_types.csv' WITH delimiter ';' csv;
-\COPY jobs TO '/media/data/ims/dump28052015/jobs.csv' WITH delimiter ';' csv;
-\COPY datasets TO '/media/data/ims/dump28052015/datasets.csv' WITH delimiter ';' csv;
-\COPY coordinates TO '/media/data/ims/dump28052015/coordinates.csv' WITH delimiter ';' csv;
-\COPY job_result_stats TO '/media/data/ims/dump28052015/job_result_stats.csv' WITH delimiter ';' csv;
-\COPY job_result_data TO '/media/data/ims/dump28052015/job_result_data.csv' WITH delimiter ';' csv;
+\COPY formulas TO '/media/data/ims/dump15072015/formulas.csv' WITH delimiter ';' csv;
+\COPY agg_formulas TO '/media/data/ims/dump15072015/agg_formulas.csv' WITH delimiter ';' csv;
+\COPY formula_dbs TO '/media/data/ims/dump15072015/formula_dbs.csv' WITH delimiter ';' csv;
+\COPY mz_peaks TO '/media/data/ims/dump15072015/mz_peaks.csv' WITH delimiter ';' csv;
+\COPY job_types TO '/media/data/ims/dump15072015/job_types.csv' WITH delimiter ';' csv;
+\COPY jobs TO '/media/data/ims/dump15072015/jobs.csv' WITH delimiter ';' csv;
+\COPY datasets TO '/media/data/ims/dump15072015/datasets.csv' WITH delimiter ';' csv;
+\COPY coordinates TO '/media/data/ims/dump15072015/coordinates.csv' WITH delimiter ';' csv;
+\COPY job_result_stats TO '/media/data/ims/dump15072015/job_result_stats.csv' WITH delimiter ';' csv;
+\COPY job_result_data TO '/media/data/ims/dump15072015/job_result_data.csv' WITH delimiter ';' csv;
+
+
+
+\COPY formulas FROM '/home/snikolenko/soft/ims/data/dump15072015/formulas.csv' WITH delimiter ';' csv;
+\COPY agg_formulas FROM '/home/snikolenko/soft/ims/data/dump15072015/agg_formulas.csv' WITH delimiter ';' csv;
+\COPY formula_dbs FROM '/home/snikolenko/soft/ims/data/dump15072015/formula_dbs.csv' WITH delimiter ';' csv;
+\COPY mz_peaks FROM '/home/snikolenko/soft/ims/data/dump15072015/mz_peaks.csv' WITH delimiter ';' csv;
+\COPY job_types FROM '/home/snikolenko/soft/ims/data/dump15072015/job_types.csv' WITH delimiter ';' csv;
+\COPY jobs FROM '/home/snikolenko/soft/ims/data/dump15072015/jobs.csv' WITH delimiter ';' csv;
+\COPY datasets FROM '/home/snikolenko/soft/ims/data/dump15072015/datasets.csv' WITH delimiter ';' csv;
+\COPY coordinates FROM '/home/snikolenko/soft/ims/data/dump15072015/coordinates.csv' WITH delimiter ';' csv;
+\COPY job_result_stats FROM '/home/snikolenko/soft/ims/data/dump15072015/job_result_stats.csv' WITH delimiter ';' csv;
+\COPY job_result_data FROM '/home/snikolenko/soft/ims/data/dump15072015/job_result_data.csv' WITH delimiter ';' csv;
+
+
+
+
+DROP TABLE IF EXISTS game_results;
+CREATE TABLE game_results (
+	time			timestamp,
+	res 			json
+);
+
+
+

@@ -127,7 +127,15 @@ sql_queries = dict(
 		GROUP BY s.job_id,s.formula_id,entropy,s.adduct,peak
 	''',
 	demosubstpeaks="SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'",
-	democoords="SELECT index,x,y FROM coordinates WHERE dataset_id=%d"
+	democoords="SELECT index,x,y FROM coordinates WHERE dataset_id=%d",
+	randomstat="SELECT job_id,dataset_id,s.formula_id,adduct,param,json_array_length(s.stats->'entropies') FROM job_result_stats s JOIN jobs j ON s.job_id=j.id OFFSET random() * (SELECT count(*) FROM job_result_stats) LIMIT 1",
+	onedata='''
+		SELECT spectrum,value,x,y
+		FROM job_result_data d 
+			JOIN jobs j ON d.job_id=j.id 
+			JOIN coordinates c ON j.dataset_id=c.dataset_id AND d.spectrum=c.index
+		WHERE d.job_id=%d AND d.param=%d AND d.adduct=%d AND d.peak=%d
+	'''
 )
 
 sql_fields = dict(
@@ -199,6 +207,25 @@ class AjaxHandler(tornado.web.RequestHandler):
 			"data":             res    
 		}
 
+	def load_random_image(self):
+		im1 = self.db.query(sql_queries['randomstat'])[0]
+		my_print("%s" % im1)
+		peak1 = np.random.randint(im1['json_array_length'])
+		im1.update({'peak' : peak1})
+		my_print("chose peak %d" % peak1)
+		my_print(sql_queries['onedata'] % (im1['job_id'], im1['formula_id'], im1['adduct'], peak1))
+		data1 = self.db.query(sql_queries['onedata'] % (im1['job_id'], im1['formula_id'], im1['adduct'], peak1))
+		return {
+			"meta" : im1,
+			"data" : {
+				"val" : [ x['value'] for x in data1 ],
+				"sp" : [ x['spectrum'] for x in data1 ]
+			},
+			"coords" : [ [x['x'], x['y']] for x in data1 ],
+			"max_x" : np.max([ x['x'] for x in data1 ]),
+			"max_y" : np.max([ x['y'] for x in data1 ])
+		}
+
 	@gen.coroutine
 	def get(self, query_id, slug):
 		def flushed_callback(t0):
@@ -239,6 +266,13 @@ class AjaxHandler(tornado.web.RequestHandler):
 					count = int(self.db.query(q_count)[0]['count'])
 					res = self.db.query(q_res + " ORDER BY %s %s %s OFFSET %s" % (orderby, orderdir, limit_string, offset))
 				res_dict = self.make_datatable_dict(draw, count, [[ row[x] for x in sql_fields[query_id] ] for row in res])
+
+			elif query_id == 'imagegame':
+				res_dict = {"draw" : draw,
+					"im1" : self.load_random_image(),
+					"im2" : self.load_random_image()
+				}
+
 			else:
 				if query_id == 'jobstats':
 					arr = input_id.split('/')
@@ -299,6 +333,32 @@ class AjaxHandler(tornado.web.RequestHandler):
 		self.write(json.dumps(res_dict, cls = DateTimeEncoder))
 		self.flush(callback=flushed_callback(t0))
 
+	@gen.coroutine
+	def post(self, query_id, slug):
+		my_print("ajax post " + query_id)
+		if query_id in ['postgameimages']:
+			my_print("%s" % self.request.body)
+			self.db.query("INSERT INTO game_results VALUES ('%s', '%s')" % (datetime.now(), json.dumps({
+				"meta1"  : {
+					"job_id" : self.get_argument("m1_job_id"),
+					"dataset_id" : self.get_argument("m1_dataset_id"),
+					"formula_id" : self.get_argument("m1_formula_id"),
+					"adduct" : self.get_argument("m1_adduct"),
+					"param" : self.get_argument("m1_param"),
+					"peak" : self.get_argument("m1_peak")
+				},
+				"meta2"  : {
+					"job_id" : self.get_argument("m2_job_id"),
+					"dataset_id" : self.get_argument("m2_dataset_id"),
+					"formula_id" : self.get_argument("m2_formula_id"),
+					"adduct" : self.get_argument("m2_adduct"),
+					"param" : self.get_argument("m2_param"),
+					"peak" : self.get_argument("m2_peak")
+				},
+				"ans" : self.get_argument("chosen"),
+			})) )
+
+
 class IndexHandler(tornado.web.RequestHandler):
 	@gen.coroutine
 	def get(self):
@@ -328,6 +388,7 @@ class Application(tornado.web.Application):
 			(r"^/mzimage/([^/]*)/([^/]*)\.png", MZImageParamHandler),
 			(r"^/demo/", SimpleHtmlHandler),
 			(r"^/jobs/", SimpleHtmlHandler),
+			(r"^/gameimages/", SimpleHtmlHandler),
 			(r"^/datasets/", SimpleHtmlHandler),
 			(r"^/fullresults/(.*)", SimpleHtmlHandlerWithId),
 			(r"/", IndexHandler)
