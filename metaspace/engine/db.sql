@@ -49,6 +49,8 @@ INSERT INTO datasets VALUES (4, '14037s1_24h', '/media/data/ims/14037s1_Spheroid
 INSERT INTO datasets VALUES (5, '14040s1_12h', '/media/data/ims/14040s1_Spheroids12h_DHBSub_centroids_IMS.txt', 32, 52);
 INSERT INTO datasets VALUES (6, 'sublimation', '/media/data/ims/Spheroids_sublimation_6h_centroids_IMS.txt', 43, 37);
 INSERT INTO datasets VALUES (7, 'mouse', '/media/data/ims/HR2MSI_mouse_urinary_bladder_S096_centroids_IMS.txt', 134, 260);
+
+
 -- INSERT INTO datasets VALUES (6, 'Ctrl3s2_centroids', '/media/data/ims/Ctrl3s2_SpheroidsCtrl_DHBSub_centroids_IMS.txt', 51, 49);
 -- INSERT INTO datasets VALUES (7, 'Ctrl3s2_centroids', '/media/data/ims/Ctrl3s2_SpheroidsCtrl_DHBSub_centroids_IMS.txt', 51, 49);
 -- INSERT INTO datasets VALUES (0, 'test', '/home/snikolenko/soft/ims/data/testdataset.txt', 51, 49);
@@ -137,6 +139,16 @@ CREATE TABLE mz_peaks (
 CREATE INDEX ind_mz_peaks_1 ON mz_peaks(sf_id, adduct);
 CREATE INDEX ind_mz_peaks_2 ON mz_peaks(sf_id);
 
+
+DROP TABLE IF EXISTS game_results;
+CREATE TABLE game_results (
+	time			timestamp,
+	res 			json
+);
+
+
+
+
 -- SELECT f.id,name,sf,peaks,ints,array_agg(d.dataset_id) as dataset_ids,array_agg(dataset) as datasets,array_agg(stats) as stats FROM formulas f JOIN mz_peaks p ON f.id=p.formula_id LEFT JOIN job_result_stats s ON f.id=s.formula_id LEFT JOIN jobs j ON s.job_id=j.id LEFT JOIN datasets d ON j.dataset_id=d.dataset_id WHERE f.id='10705' GROUP BY f.id,name,sf,peaks,ints;
 
 
@@ -174,14 +186,6 @@ CREATE INDEX ind_mz_peaks_2 ON mz_peaks(sf_id);
 \COPY job_result_stats FROM '/home/snikolenko/soft/ims/data/dump15072015/job_result_stats.csv' WITH delimiter ';' csv;
 \COPY job_result_data FROM '/home/snikolenko/soft/ims/data/dump15072015/job_result_data.csv' WITH delimiter ';' csv;
 
-
-
-
-DROP TABLE IF EXISTS game_results;
-CREATE TABLE game_results (
-	time			timestamp,
-	res 			json
-);
 
 
 
