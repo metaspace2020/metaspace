@@ -1,13 +1,21 @@
 import numpy as np
 import cStringIO
-# import png
+import png
 
-# def write_image(img, format="png"):
-# 	'''Save image in a given format and return the StringIO object'''
-# 	sio = cStringIO.StringIO()
-# 	w = png.Writer()
-# 	w.write(sio, img)
-# 	return sio
+def write_image(img, fp=None, size=None, colormap=None, format="png"):
+	'''Save image in a given format and return the StringIO object'''
+	if not fp:
+		fp = cStringIO.StringIO()
+	if not size:
+		size = (len(img[0]), len(img))
+	if colormap:
+		w = png.Writer(size=size, bitdepth=8, palette=colormap)
+	else:
+		w = png.Writer(size=size, bitdepth=8)
+	w.write(fp, img)
+	# png_img = png.from_array(img, mode='RGB', info={"height":size[1], "width":size[0]})
+	# png_img.save(fp)
+	return fp
 
 def make_image_dict(nRows, nColumns, valdict, offset=0):
 	'''Create image from a dictionary of its nonzero pixels'''
