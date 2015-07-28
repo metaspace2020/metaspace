@@ -157,62 +157,44 @@ class NewPngHandler(tornado.web.RequestHandler):
 		colormap = ((0x35, 0x2A, 0x87), (0x02, 0x68, 0xE1), (0x10, 0x8E, 0xD2), (0x0F, 0xAE, 0xB9), (0x65, 0xBE, 0x86), (0xC0, 0xBC, 0x60), (0xFF, 0xC3, 0x37), (0xF9, 0xFB, 0x0E))
 		bitdepth = 8
 		query_id = "demosubst"
-		peak_id, job_id, sf_id = int(get_id_from_slug(peak_id)), int(job_id), int(sf_id)
+		peak_id, job_id, sf_id, dataset_id = int(get_id_from_slug(peak_id)), int(job_id), int(sf_id), int(dataset_id)
 		def flushed_callback(t0):
 			def callback():
 				my_print("Finished write in NewPngHandler. Took %s" % (datetime.now() - t0))
 			return callback
 		def res_dict():
-			draw = self.get_argument('draw', 0)
-			spectrum = get_lists_of_mzs(sf)
-			spec_add = { ad : get_lists_of_mzs(sf + ad) for ad in adducts }
-			coords_q = self.db.query( sql_queries['democoords'] % int(dataset_id) )
+			coords_q = self.db.query( sql_queries['democoords'] % dataset_id )
 			coords = { row["index"] : [row["x"], row["y"]] for row in coords_q }
-			final_query = sql_queries[query_id] % ( int(job_id), str(sf_id), sf_id )
+			dimensions = self.db.query("SELECT nrows,ncols FROM jobs j JOIN datasets d on j.dataset_id=d.dataset_id WHERE j.id=%d" % (job_id))[0]
+			(nRows, nColumns) = ( int(dimensions["nrows"]), int(dimensions["ncols"]) )
+			final_query = sql_queries[query_id] % ( job_id, sf_id, sf_id )
 			res_list = self.db.query(final_query)
 			adduct_dict = {}
 			for row in res_list:
 				if adducts[ row["adduct"] ] not in adduct_dict:
 					adduct_dict[ adducts[ row["adduct"] ] ] = []
 				adduct_dict[ adducts[ row["adduct"] ] ].append(row)
-			print adduct_dict
-			res_dict = {"data" : { k : sorted(v, key=lambda x: x["peak"]) for k,v in adduct_dict.iteritems() },
-				"spec" : spectrum, "spadd" : spec_add
+			res_dict = {
+				"data" : {k : sorted(v, key=lambda x: x["peak"]) for k,v in adduct_dict.iteritems()},
+				"coords" : coords,
+				"dimensions" : (nRows, nColumns)
 			}
 			for k, v in res_dict["data"].iteritems():
 				for imInd in xrange(len(v)):
 					v[imInd]["val"] = np.array(v[imInd]["val"])
 					im_q = np.percentile(v[imInd]["val"], 99.0)
-					# my_print("%s" % v[imInd]["val"][:100])
-					# my_print("quantile = %.4f" % im_q)
 					im_rep =  v[imInd]["val"] > im_q
 					v[imInd]["val"][im_rep] = im_q
 					v[imInd]["val"] = [round(x, 2) for x in list(v[imInd]["val"])]
-			res_dict.update({ "coords" : coords })
-			res_dict.update({"draw" : draw})
 			return res_dict
 		def image_data(res_dict):
-			print res_dict["data"].keys()
 			data = res_dict["data"][adduct][peak_id]
-			dimensions = self.db.query("SELECT nrows,ncols FROM jobs j JOIN datasets d on j.dataset_id=d.dataset_id WHERE j.id=%d" % (job_id))[0]
-			(nRows, nColumns) = ( int(dimensions["nrows"]), int(dimensions["ncols"]) )
 			coords = res_dict["coords"]
-			# initialize empty matrix with proper dimensions
-			im = [[0]*nColumns for _ in range(nRows)]
-			# fill matrix
-			max_val = 0
-			min_val = 0
-			# debug = []
-			# print len(data["sp"]), len(data["val"])
-			for idx, val in zip(data["sp"], data["val"]):
-				x,y = coords[idx]
-				# debug.append((idx, x, y))
-				# write data into image
-				im[y][x] = val
-				min_val = val if min_val == 0 else min(min_val, val)
-				max_val = max(max_val, val)
-			max_val -= min_val
-			# print len(debug)
+			nRows, nColumns = res_dict["dimensions"]
+			# find highest and lowest intensity
+			non_zero_intensities = filter(lambda x: x > 0, data["val"])
+			min_val = min(non_zero_intensities)
+			max_val = max(non_zero_intensities) - min_val
 			# normalize to byte (bitdepth=8)
 			im_new = [list(colormap[0])*nColumns for _ in range(nRows)]
 			for idx, val in zip(data["sp"], data["val"]):
@@ -227,9 +209,17 @@ class NewPngHandler(tornado.web.RequestHandler):
 					colors[i] = int(l + (u-l)*pos_in_chunk/float(chunk_size))
 				im_new[y][3*x:3*x+3] = colors
 			return im_new, (nColumns, nRows)
-		im_data, size = image_data(res_dict())
+		def wrapper(res, res_list):
+			res_list.append(res)
+			
+		if args.time_profiling_enabled:
+			res = []
+			cProfile.runctx("wrapper(image_data(res_dict()), res)", globals(), locals())
+			im_data, size = res[0]
+		else:
+			im_data, size = image_data(res_dict())
 		fp = cStringIO.StringIO()
-		write_image(im_data, fp, size=size) #, colormap=colormap)
+		write_image(im_data, fp, size=size)
 		self.set_header("Content-Type", "image/png")
 		self.write(fp.getvalue())
 
