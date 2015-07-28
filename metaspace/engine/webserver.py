@@ -28,6 +28,7 @@ import numpy as np
 
 import time
 import decimal
+import math
 
 import sys, os, glob
 
@@ -66,6 +67,9 @@ class Application(tornado.web.Application):
 			(r"^/jobs/", handlers.SimpleHtmlHandler),
 			(r"^/gameimages/", handlers.SimpleHtmlHandler),
 			(r"^/datasets/", handlers.SimpleHtmlHandler),
+			(r"^/mzimage/([^/]*)\.png", handlers.MZImageHandler),
+			(r"^/mzimage/([^/]*)/([^/]*)\.png", handlers.MZImageParamHandler),
+			(r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
 			(r"^/fullresults/(.*)", handlers.SimpleHtmlHandlerWithId),
 			(r"/", handlers.IndexHandler)
 		]
