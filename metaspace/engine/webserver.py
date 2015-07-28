@@ -200,7 +200,8 @@ class NewPngHandler(tornado.web.RequestHandler):
 			# initialize empty matrix with proper dimensions
 			im = [[0]*nColumns for _ in range(nRows)]
 			# fill matrix
-			max_vals = [0] * nRows
+			max_val = 0
+			min_val = 0
 			# debug = []
 			# print len(data["sp"]), len(data["val"])
 			for idx, val in zip(data["sp"], data["val"]):
@@ -208,13 +209,15 @@ class NewPngHandler(tornado.web.RequestHandler):
 				# debug.append((idx, x, y))
 				# write data into image
 				im[y][x] = val
-				max_vals[y] = max(max_vals[y], val)
+				min_val = val if min_val == 0 else min(min_val, val)
+				max_val = max(max_val, val)
+			max_val -= min_val
 			# print len(debug)
 			# normalize to byte (bitdepth=8)
 			im_new = [list(colormap[0])*nColumns for _ in range(nRows)]
 			for idx, val in zip(data["sp"], data["val"]):
 				x,y = coords[idx]
-				new_val = int(255 * val/max(max_vals))
+				new_val = 0 if val == 0 else int(255 * (val - min_val)/max_val)
 				chunk_size = math.ceil(2.0**bitdepth / (len(colormap)-1))
 				color_chunk = int(new_val//chunk_size)
 				pos_in_chunk = new_val % chunk_size
