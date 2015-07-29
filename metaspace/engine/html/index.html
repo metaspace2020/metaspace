@@ -1,0 +1,56 @@
+{% extends "main.html" %}
+
+{% block init_script %}
+    <script type="text/javascript" class="init">
+      $(document).ready(function() {
+        $("#nav-formulas").addClass("active");
+        $("#nav-formulas a").attr("href", "#");
+        $("#nav-formulas a").html( $("#nav-formulas a").html() + ' <span class="sr-only">(current)</span>' );
+
+        $('#formulas').dataTable( {
+          ajax: "/ajax/formulas/",
+          processing: true,
+          serverSide: true,
+          order: [[ 0, "asc" ]],
+          aLengthMenu: [100, 200, 500],
+          // oLanguage: myTableLanguagePlayers,
+          "columnDefs": [
+            { "render": function ( data, type, row ) { return '<a href="/substance/' + row[0] + '">' + data +'</a>'; },
+              "targets": [0, 1, 2]
+            }
+            // { "visible": false,  "targets": [ 5, 8 ] },
+          ]
+        } );
+      } );
+    </script>
+{% end %}
+
+{% block body %}
+    <div class="panel panel-primary">
+      <div class="panel-heading">Test server on Spark</div>
+      <div class="panel-body">
+        <p>This test web server for IMS data processing is built with Tornado and is (trying to) communicate with Spark.</p>
+      </div>
+    </div>
+    <div class="panel panel-primary">
+      <div class="panel-heading">Formulas</div>
+      <table id="formulas" class="table table-striped" cellspacing="0" width="100%">
+        <thead>
+          <tr>
+            <th>id</th>
+            <th>Name</th>
+            <th>Formula</th>
+          </tr>
+        </thead>
+   
+        <tfoot>
+          <tr>
+            <th>id</th>
+            <th>Name</th>
+            <th>Formula</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+{% end %}
