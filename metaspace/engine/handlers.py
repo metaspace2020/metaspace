@@ -337,9 +337,9 @@ class RunSparkHandler(tornado.web.RequestHandler):
 
 
 class NewPngHandler(tornado.web.RequestHandler):
-	'''A new handler for producing pngs (probably experimental).'''
-	cache = {}	
-		
+	'''A RequestHandler for producing pngs. Returns a single ion image for given dataset, formula, adduct and peak. Not used in web code yet. Caches the res_dict until a request arrives that requires computing a different res_dict.'''
+	cache = {}
+
 	@property
 	def db(self):
 		return self.application.db
@@ -355,6 +355,7 @@ class NewPngHandler(tornado.web.RequestHandler):
 				my_print("Finished write in NewPngHandler. Took %s" % (datetime.now() - t0))
 			return callback
 		def res_dict():
+			# return immediately if result is cached.
 			request_as_tuple = (dataset_id, job_id, sf_id, sf)
 			if request_as_tuple in NewPngHandler.cache:
 				my_print("request_as_tuple found in cache, returning immediately.")
