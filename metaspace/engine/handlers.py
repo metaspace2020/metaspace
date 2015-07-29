@@ -338,6 +338,8 @@ class RunSparkHandler(tornado.web.RequestHandler):
 
 class NewPngHandler(tornado.web.RequestHandler):
 	'''A new handler for producing pngs (probably experimental).'''
+	cache = {}	
+		
 	@property
 	def db(self):
 		return self.application.db
@@ -353,7 +355,16 @@ class NewPngHandler(tornado.web.RequestHandler):
 				my_print("Finished write in NewPngHandler. Took %s" % (datetime.now() - t0))
 			return callback
 		def res_dict():
+			request_as_tuple = (dataset_id, job_id, sf_id, sf)
+			if request_as_tuple in NewPngHandler.cache:
+				my_print("request_as_tuple found in cache, returning immediately.")
+				return NewPngHandler.cache[request_as_tuple]
+			else:
+				my_print("request was not cached; clearing cache")
+				NewPngHandler.cache.clear()
+			# coords_q = self.db.query( sql_queries['mzimage2coords'] % int(dataset_id) )
 			coords_q = self.db.query( sql_queries['democoords'] % dataset_id )
+			# coords = { row["index"] : [row["column"], row["row"]] for row in coords_q }
 			coords = { row["index"] : [row["x"], row["y"]] for row in coords_q }
 			dimensions = self.db.query("SELECT nrows,ncols FROM jobs j JOIN datasets d on j.dataset_id=d.dataset_id WHERE j.id=%d" % (job_id))[0]
 			(nRows, nColumns) = ( int(dimensions["nrows"]), int(dimensions["ncols"]) )
@@ -376,6 +387,8 @@ class NewPngHandler(tornado.web.RequestHandler):
 					im_rep =  v[imInd]["val"] > im_q
 					v[imInd]["val"][im_rep] = im_q
 					v[imInd]["val"] = [round(x, 2) for x in list(v[imInd]["val"])]
+			NewPngHandler.cache[request_as_tuple] = res_dict
+			my_print("stored res_dict in cache")
 			return res_dict
 		def image_data(res_dict):
 			data = res_dict["data"][adduct][peak_id]

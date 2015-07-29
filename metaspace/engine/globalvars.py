@@ -99,7 +99,8 @@ sql_queries = dict(
 			JOIN jobs j ON d.job_id=j.id 
 			JOIN coordinates c ON j.dataset_id=c.dataset_id AND d.spectrum=c.index
 		WHERE d.job_id=%d AND d.param=%d AND d.adduct=%d AND d.peak=%d
-	'''
+	''',
+    mzimage2coords="SELECT index, row, column FROM coordinates WHERE dataset_id=%d"
 )
 
 sql_fields = dict(
