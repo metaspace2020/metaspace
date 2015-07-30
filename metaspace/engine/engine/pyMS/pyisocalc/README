@@ -1,0 +1,64 @@
+Note that this program has only been tested on linux (Debian Testing/Wheezy) and Windows XP in a virtual machine. 
+
+###  Set up the Python environment ###
+First you need to set up yyour python environment and install numpy and matplotlib.
+On Debian Testing/Wheezy the command would be
+sudo apt-get install python2.7 python-numpy python-matplotlib
+
+Other flavours of linux would have similar packages.
+
+On Windows 
+You'll need python, which you can download from here
+http://www.python.org/ftp/python/2.7.3/python-2.7.3.msi
+
+You'll also need matplotlib:
+http://matplotlib.org/downloads.html
+
+and numpy:
+http://sourceforge.net/projects/numpy/files/latest/download?source=files
+
+Once you've installed the three binaries above, go to Control Panel/System/Advanced/Environment Variables.
+Under System Variables, edit Path and append 
+;C:\Python27
+Or whatever the installation directory was.
+
+On Mac you will probably find the necessary files on the same site as the windows binaries above. Note that the python 
+provided by Apple may not work, so that you will most likely have to install python from python.org.
+
+### Installation of pyisocalc###
+Linux:
+Download the pyisocalc.py file and change the permissions to make it executable:
+chmod +x pyisocalc.py
+A more convenient alternative is to rename the file and put it into /usr/local/bin
+sudo mv pyisocalc.py /usr/local/bin/pysisocalc
+sudo chmod +x /usr/local/bin/pysisocalc
+
+Assuming that /usr/local/bin is in $PATH you can now call the executable using e.g.
+pysisocalc --help
+
+Windows/Mac:
+Run cmd.exe, and change directory to where your pyisocalc.py file is, and you should be able to run it using e.g.
+python pyisocalc.py -f "CaCl2" -p y
+
+I may write an interactive shell at some later point.
+
+Note that you will most likely need to convert the file from linux 
+to Mac/Windows text format e.g. here: http://www.cometdocs.com/unix2dos.htm
+
+### Usage ###
+The input format has been extensively rewritten in version 0.8. 
+In general, do
+./pyisocalc.py --help 
+to get a list over acceptable syntax.
+-f  --formula     String enclosed in apostrophes, e.g. 'Al2(NO3)6'
+-c  --charge      Integer. Can be negative or positive, e.g. -2. By default the charge is calculated based on 
+                  a set of default oxidation states defined in pyisocalc.py
+-o  --ouput       String. File to save calculated pattern to, e.g. mydata.dat. By default nothing is saved.
+-p  --plot        Char/string. Whether to plot the spectrum or not. Use y, Y, yes, Yes, YES. By default no plotting is done.
+-g  --gauss       Float. Gaussian broadening factor (essentially sigma). Higher value means lower resolution. 
+                  Adjust to simulate spectrometer resolution. Default 0.35.
+-r  --resolution  Integer. Number of points in the m/z axis. The actual resolution will depend on the m/z
+                  range covered by the isotopic envelope. Default 500.
+
+Example:
+./pysisocalc.py -f 'Ru(NO3)6' -c -3 -o rutheniumnitrate.dat -p y -g 0.2 -r 175
