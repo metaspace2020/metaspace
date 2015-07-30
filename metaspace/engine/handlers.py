@@ -25,10 +25,10 @@ from tornado import gen
 from tornado.ioloop import IOLoop
 import tornpsql
 
-from util import *
+from engine.util import *
 from globalvars import *
-from computing import run_fulldataset, run_extractmzs
-from metrics_db import get_fulldataset_query_data, process_res_extractmzs, process_res_fulldataset
+from engine.computing import run_fulldataset, run_extractmzs
+from engine.metrics_db import get_fulldataset_query_data, process_res_extractmzs, process_res_fulldataset
 
 
 @gen.coroutine

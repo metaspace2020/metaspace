@@ -34,13 +34,11 @@ import sys, os, glob
 
 ## get list of engine files
 engine_pyfiles =  ['computing.py', 'util.py', 'imaging.py', 'chaos.py']
-engine_path = os.getcwd() + '/../engine'
-sys.path = sys.path + [engine_path]
 
-from util import *
-from computing import *
-from imaging import *
-from isocalc import *
+from engine.util import *
+from engine.computing import *
+from engine.imaging import *
+from engine.isocalc import *
 
 from globalvars import *
 import handlers
@@ -95,7 +93,7 @@ class Application(tornado.web.Application):
 		self.db = tornpsql.Connection(config_db['host'], config_db['db'], config_db['user'], config_db['password'], 5432)
 		if args.spark:
 			self.conf = SparkConf().setMaster("local[2]").setAppName("IMS Webserver v0.2").set("spark.ui.showConsoleProgress", "false")
-			self.sc = SparkContext(conf=self.conf, pyFiles=[engine_path + '/' + x for x in engine_pyfiles ])
+			self.sc = SparkContext(conf=self.conf, pyFiles=[os.join(os.getcwd(), 'engine', x) for x in engine_pyfiles ])
 			self.status = self.sc.statusTracker()
 		self.max_jobid = self.db.get("SELECT max(id) as maxid FROM jobs").maxid
 		self.max_jobid = int(self.max_jobid) if self.max_jobid != None else 0
