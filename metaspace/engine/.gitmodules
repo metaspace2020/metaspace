@@ -1,0 +1,3 @@
+[submodule "engine/pyMS"]
+	path = engine/pyMS
+	url = https://github.com/SpatialMetabolomics/pyMS
