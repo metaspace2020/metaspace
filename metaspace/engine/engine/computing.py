@@ -13,7 +13,7 @@ import bisect
 import numpy as np
 
 from util import * 
-from chaos import * 
+from pyIMS.image_measures.level_sets_measure import * 
 
 
 def run_fulldataset(sc, fname, data, nrows, ncols):
