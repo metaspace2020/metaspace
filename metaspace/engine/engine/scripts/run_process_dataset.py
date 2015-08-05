@@ -5,9 +5,21 @@
 .. moduleauthor:: Sergey Nikolenko <snikolenko@gmail.com>
 """
 
+# import numpy as np
+# import json
+import argparse
+import cPickle
+
+import sys
+from os.path import dirname, realpath
+engine_path = dirname(dirname(realpath(__file__)))
+sys.path.append(engine_path)
+
+from pyspark import SparkContext, SparkConf
 
 
 def main():
+
 	'''Processes a full dataset query (on pickled m/z values) and writes the pickled result.
 
 	:param --out: output filename (defaults to result.pkl)
@@ -27,20 +39,9 @@ def main():
 	parser.add_argument('--queries', dest='queries', type=str, help='queries file name')
 	parser.set_defaults(config='config.json', queries='queries.pkl', fname='result.pkl', ds='', job_id=0, rows=-1, cols=-1)
 
-
-	import numpy as np
-	import json
-	import argparse
-	import cPickle
-
-	from pyspark import SparkContext, SparkConf
-
-	adducts = [ "H", "Na", "K" ]
+	# adducts = [ "H", "Na", "K" ]
 	fulldataset_chunk_size = 1000
 
-	import sys, os
-	engine_path = os.getcwd() + '/../'
-	sys.path = sys.path + [engine_path]
 	import util
 	import computing
 
@@ -63,26 +64,27 @@ def main():
 			[ res_dicts[i] for i in to_insert ]
 			)
 
-	def process_res_fulldataset(db, res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id=0, offset=0):
-		formulas, mzadducts, lengths, stat_dicts, res_dicts = get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id, offset)
-		if sum(lengths) > 0:
-			db.query("INSERT INTO job_result_data VALUES %s" %
-				",".join(['(%d, %d, %d, %d, %d, %.6f)' % (job_id,
-					int(formulas[i+offset][0]),
-					int(mzadducts[i+offset]), j, k, v)
-					for i in xrange(len(res_dicts)) for j in xrange(len(res_dicts[i])) for k,v in res_dicts[i][j].iteritems()])
-			)
-		insert_job_result_stats( db, job_id, formulas, mzadducts, lengths, stat_dicts )
+	# def process_res_fulldataset(db, res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id=0, offset=0):
+	# 	formulas, mzadducts, lengths, stat_dicts, res_dicts = get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id, offset)
+	# 	if sum(lengths) > 0:
+	# 		db.query("INSERT INTO job_result_data VALUES %s" %
+	# 			",".join(['(%d, %d, %d, %d, %d, %.6f)' % (job_id,
+	# 				int(formulas[i+offset][0]),
+	# 				int(mzadducts[i+offset]), j, k, v)
+	# 				for i in xrange(len(res_dicts)) for j in xrange(len(res_dicts[i])) for k,v in res_dicts[i][j].iteritems()])
+	# 		)
+	# 	insert_job_result_stats( db, job_id, formulas, mzadducts, lengths, stat_dicts )
 
 
-	parser = argparse.ArgumentParser(description='IMS process dataset at a remote spark location.')
-	parser.add_argument('--out', dest='fname', type=str, help='filename')
-	parser.add_argument('--job_id', dest='job_id', type=int, help='job id for the database')
-	parser.add_argument('--rows', dest='rows', type=int, help='number of rows')
-	parser.add_argument('--cols', dest='cols', type=int, help='number of columns')
-	parser.add_argument('--ds', dest='ds', type=str, help='dataset file name')
-	parser.add_argument('--queries', dest='queries', type=str, help='queries file name')
-	parser.set_defaults(config='config.json', queries='queries.pkl', fname='result.pkl', ds='', job_id=0, rows=-1, cols=-1)
+	# parser = argparse.ArgumentParser(description='IMS process dataset at a remote spark location.')
+	# parser.add_argument('--out', dest='fname', type=str, help='filename')
+	# parser.add_argument('--job_id', dest='job_id', type=int, help='job id for the database')
+	# parser.add_argument('--rows', dest='rows', type=int, help='number of rows')
+	# parser.add_argument('--cols', dest='cols', type=int, help='number of columns')
+	# parser.add_argument('--ds', dest='ds', type=str, help='dataset file name')
+	# parser.add_argument('--queries', dest='queries', type=str, help='queries file name')
+	# parser.set_defaults(config='config.json', queries='queries.pkl', fname='result.pkl', ds='', job_id=0, rows=-1, cols=-1)
+
 	args = parser.parse_args()
 
 	if args.ds == '':
@@ -100,8 +102,8 @@ def main():
 	sc = SparkContext(conf=conf)
 
 	ff = sc.textFile(args.ds)
-	spectra = ff.map(txt_to_spectrum)
-	# spectra.cache()
+	spectra = ff.map(computing.txt_to_spectrum)
+	spectra.cache()
 
 	res = {
 		"formulas" : [],
@@ -115,8 +117,10 @@ def main():
 		util.my_print("Processing chunk %d..." % i)
 
 		data = q["data"][fulldataset_chunk_size*i:fulldataset_chunk_size*(i+1)]
-		qres = spectra.map(lambda sp : get_many_groups2d_total_dict_individual(data, sp)).reduce(reduce_manygroups2d_dict_individual)
-		entropies = [ [ get_block_entropy_dict(x, args.rows, args.cols) for x in one_result ] for one_result in qres ]
+		qres = (spectra.map(lambda sp : computing.process_spectrum_multiple_queries(data, sp))
+				.reduce(computing.reduce_manygroups2d_dict_individual))
+		#entropies = [ [ get_block_entropy_dict(x, args.rows, args.cols) for x in one_result ] for one_result in qres ]
+		entropies = [ [ 0 for x in one_result ] for one_result in qres ]
 		cur_results = get_full_dataset_results(qres, entropies, q["formulas"], q["mzadducts"], q["intensities"], args.rows, args.cols, args.job_id, fulldataset_chunk_size*i)
 		res["formulas"].extend([ n + fulldataset_chunk_size*i for n in cur_results[0] ])
 		res["mzadducts"].extend(cur_results[1])

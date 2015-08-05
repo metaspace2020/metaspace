@@ -6,7 +6,7 @@ from pyMS.pyisocalc import pyisocalc
 from pyMS.centroid_detection import gradient
 
 from util import * 
-from blockentropy import * 
+# from blockentropy import *
 
 def get_lists_of_mzs(sf):
 	try:

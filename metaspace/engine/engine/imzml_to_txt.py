@@ -28,6 +28,7 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
     max_x, max_y = 0,0
     print("Starting conversion...")
     n_pixels = len(parser.coordinates)
+    step = max(n_pixels/100, 100)
     for i,(x,y) in enumerate(parser.coordinates):
         mz_arr, int_arr = parser.getspectrum(i)
         if preprocess:
@@ -38,7 +39,7 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
             coord_file.write(encode_coord_line(i,x,y) + '\n')
         max_x = max(max_x, x)
         max_y = max(max_y, y)
-        if i % (n_pixels/100) == 0 and print_progress:
+        if i % step == 0 and print_progress:
             print("Wrote %.1f%% (%d of %d)" % (float(i)/n_pixels*100, i, n_pixels))
     print("Finished.")
     return max_x, max_y

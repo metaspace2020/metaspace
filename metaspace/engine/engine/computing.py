@@ -10,10 +10,8 @@ import numpy as np
 import numpy.linalg
 import bisect
 
-import numpy as np
-
-from util import * 
-from chaos import * 
+from util import *
+# from chaos import *
 
 
 def run_fulldataset(sc, fname, data, nrows, ncols):

@@ -32,7 +32,7 @@ def main():
 	import sys, os
         engine_path = os.getcwd() + '/../'
         sys.path = sys.path + [engine_path]
-        import util
+        from engine import util
 
 	adducts = [ "H", "Na", "K" ]
 

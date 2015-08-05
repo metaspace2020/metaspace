@@ -1,6 +1,6 @@
 import numpy as np
 from os import curdir,sep,path
-import psycopg2,psycopg2.extras
+import psycopg2, psycopg2.extras
 import json
 import argparse
 import cPickle
@@ -8,8 +8,8 @@ import cPickle
 tol = 0.01
 adducts = [ "H", "Na", "K" ]
 
-from util import *
-from metrics_db import *
+from engine.util import *
+from engine.metrics_db import *
 
 parser = argparse.ArgumentParser(description='IMS webserver.')
 parser.add_argument('--out', dest='fname', type=str, help='filename')
@@ -27,7 +27,7 @@ my_print("Reading formulas from DB...")
 conn = psycopg2.connect("dbname=%s user=%s password=%s host=%s" % (config_db['db'], config_db['user'], config_db['password'], config_db['host']) )
 cur = conn.cursor()
 
-cur.execute("SELECT sf_id as id,adduct,peaks,ints FROM mz_peaks")
+cur.execute("SELECT sf_id as id,adduct,peaks,ints FROM mz_peaks limit 1000")
 formulas = cur.fetchall()
 ids = [ x[0] for x in formulas]
 mzadducts = [ x[1] for x in formulas]

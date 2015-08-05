@@ -1,8 +1,8 @@
 {
     "db": {
-        "host": "/var/run/postgresql/",
+        "host": "localhost",
         "db": "ims",
         "user": "snikolenko",
-        "password": ""
+        "password": "1234"
     }
 }
