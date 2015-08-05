@@ -1,9 +1,10 @@
-docs/_build
-docs/_static
-docs/_templates
 *.pyc
 .idea
 *.pkl
 conf
 test/data
 data/*
+data
+docs/_build
+docs/_static
+docs/_templates
