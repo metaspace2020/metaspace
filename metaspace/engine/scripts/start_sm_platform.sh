@@ -27,18 +27,20 @@ done
 
 #timestamp=`date +"%s"`
 
-#echo "  === [1] Start webserver instance ===  "
-#aws configure set default.region eu-west-1
-#aws ec2 start-instances --instance-ids=i-9fdcdf32
-#
-#echo "Continue?"
-#read varname
+echo "  === [1] Start webserver instance ===  "
+aws configure set default.region eu-west-1
+aws ec2 start-instances --instance-ids=i-9fdcdf32
+
+echo "Continue?"
+read varname
 
 wait
 
 echo "  === [2] Code deployment to SM webserver ===  "
 ssh ubuntu@sm-webserver "mkdir -p /home/ubuntu/sm/data"
 rsync -rv ../../webserver ubuntu@sm-webserver:/home/ubuntu/sm
+
+#export LUIGI_CONFIG_PATH=/home/ubuntu/sm/websever/scripts/luigi.cfg
 
 wait
 
