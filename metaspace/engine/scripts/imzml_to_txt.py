@@ -1,11 +1,40 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 import sys
 
-from python_to_txt import encode_data_line, encode_coord_line
 from pyimzml.ImzMLParser import ImzMLParser
 import numpy as np
+
+
+def encode_data_line(index, mz_list, int_list, decimals=3):
+    '''
+    Encodes given spectrum into a line in Sergey's text-based format:
+    "index|int_1 int_2 ... int_n|mz_1 mz_2 ... mz_n"
+    '''
+    if not isinstance(index,int):
+        raise TypeError("index must be integer")
+    idx_string = str(index)
+    mz_list = [round(x, decimals) for x in mz_list]
+    int_list = [round(x, decimals) for x in int_list]
+    mz_string = to_space_separated_string(mz_list)
+    int_string = to_space_separated_string(int_list)
+    return "%s|%s|%s" % (idx_string, mz_string, int_string)
+
+
+def encode_coord_line(index, x, y):
+    '''
+    Encodes given coordinate into a csv line:
+    "index,x,y"
+    '''
+    if not (isinstance(index,int) and isinstance(x, int) and isinstance(y, int)):
+        raise TypeError("parameters must be integer")
+    return "%d,%d,%d" % (index, x, y)
+
+
+def to_space_separated_string(seq):
+    return reduce(lambda a,b: "%s %s" % (a,b), seq)
+
 
 def do_write(parser, data_file, coord_file=None, preprocess=False, print_progress=False):
     """
@@ -22,9 +51,14 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
     
     Returns the maximum x and maximum y coordinate found in the dataset.
     """
+    import sys
+    from os.path import dirname, realpath
+    engine_path = dirname(dirname(realpath(__file__)))
+    sys.path.append(engine_path)
+
     if preprocess:
         import scipy.signal as signal
-        from pyMS.centroid_detection import gradient
+        from engine.pyMS.centroid_detection import gradient
     max_x, max_y = 0,0
     print("Starting conversion...")
     n_pixels = len(parser.coordinates)
@@ -48,8 +82,7 @@ if __name__=="__main__":
     try:
         imzml_fn = sys.argv[1]
         data_fp = open(sys.argv[2], 'w')
+        coord_fp = open(sys.argv[3], 'w') if len(sys.argv) > 3 else None
+        do_write(ImzMLParser(imzml_fn), data_fp, coord_fp, preprocess=True, print_progress=True)
     except IndexError:
-        print """
-Usage: imzml_to_txt.py <imput file> <data output file> [<coordinate output file]"""
-    coord_fp = open(sys.argv[3], 'w') if len(sys.argv) > 3 else None
-    do_write(ImzMLParser(imzml_fn), data_fp, coord_fp, preprocess=True, print_progress=True)
+        print """\nUsage: imzml_to_txt.py <input file> <data output file> [<coordinate output file]"""
