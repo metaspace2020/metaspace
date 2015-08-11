@@ -19,7 +19,8 @@ class PipelineContext(object):
     s3_client = luigi.s3.S3Client(aws_access_key_id=environ['AWS_ACCESS_KEY_ID'],
                                   aws_secret_access_key=environ['AWS_SECRET_ACCESS_KEY'])
     spark_master_host = luigi.Parameter(get_spark_master_host())
-    cluster_key_file = '~/.ssh/sm_spark_cluster.pem'
+    cluster_key_file = '/home/ubuntu/.ssh/sm_spark_cluster.pem'
+    cluster_user = 'root'
 
     local_data_dir = luigi.Parameter()
     s3_dir = luigi.Parameter()
@@ -39,7 +40,11 @@ class GetInputData(PipelineContext, luigi.Task):
     def run(self):
         print "Downloading from {} to {}".format(self.s3_dir, self.local_data_dir)
         with self.output()[0].open('w') as out:
-            out.write(self.s3_client.get_key(join(self.s3_dir, self.fn)).read())
+            path = join(self.s3_dir, self.fn)
+            if self.s3_client.exists(path):
+                out.write(self.s3_client.get_key().read())
+            else:
+                print "File {} doesn't exists".fomat(path)
 
         print "Unzipping file {}".format(self.fn)
         call(['unzip', join(self.local_data_dir, self.fn), '-d', self.local_data_dir])
@@ -87,7 +92,9 @@ class PrepareQueries(PipelineContext, luigi.Task):
 
     def output(self):
         return luigi.contrib.ssh.RemoteTarget(path=join(self.master_data_dir, self.queries_fn),
-                                              host=self.spark_master_host)
+                                              host=self.spark_master_host,
+                                              username=self.cluster_user,
+                                              key_file=self.cluster_key_file)
 
     def run(self):
         print "Exporting queries from DB to {} file".format(join(self.local_data_dir, self.queries_fn))
@@ -96,11 +103,7 @@ class PrepareQueries(PipelineContext, luigi.Task):
         cmd = ['python', 'run_save_queries.py',
               '--out', join(self.local_data_dir, self.queries_fn),
               '--config', '../conf/config.json']
-        spark_master_context = luigi.contrib.ssh.RemoteContext(host=self.spark_master_host,
-                                                               username='root',
-                                                               key_file=self.cluster_key_file)
-        proc = spark_master_context.Popen(cmd, stdout=PIPE, stderr=PIPE)
-        proc.communicate()
+        check_call(cmd)
 
         print "Uploading queries file {} to {} spark master dir".format(self.queries_fn, self.master_data_dir)
         self.output().put(join(self.local_data_dir, self.queries_fn))
@@ -109,7 +112,7 @@ class PrepareQueries(PipelineContext, luigi.Task):
 class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
     spark_submit = luigi.Parameter('/root/spark/bin/spark-submit')
     app = luigi.Parameter('/root/sm/scripts/run_process_dataset.py')
-    # name = luigi.Parameter('SM Molecule Annotation')
+    name = luigi.Parameter('SM Molecule Annotation')
     # deploy_mode = luigi.Parameter('client')
     executor_memory = luigi.Parameter('6g')
     py_files = luigi.Parameter('/root/sm/engine.zip')
@@ -143,17 +146,20 @@ class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
                           **self.context())
 
     def output(self):
-        # return luigi.s3.S3Target(join(self.s3_dir, self.annotation_results_fn))
         return luigi.LocalTarget(join(self.local_data_dir, self.annotation_results_fn))
 
     def run(self):
-        spark_master_context = luigi.contrib.ssh.RemoteContext(host=self.spark_master_host, username='root')
+        spark_master_context = luigi.contrib.ssh.RemoteContext(host=self.spark_master_host,
+                                                               username=self.cluster_user,
+                                                               key_file=self.cluster_key_file)
         cmd = [self.spark_submit] + self.spark_command() + self.app_options()
         popen = spark_master_context.Popen(cmd)
         out, err = popen.communicate()
 
         master_data = luigi.contrib.ssh.RemoteTarget(path=join(self.master_data_dir, self.annotation_results_fn),
-                                                     host=self.spark_master_host)
+                                                     host=self.spark_master_host,
+                                                     username=self.cluster_user,
+                                                     key_file=self.cluster_key_file)
         master_data.get(join(self.local_data_dir, self.annotation_results_fn))
 
 
@@ -209,7 +215,6 @@ if __name__ == '__main__':
     # since we are setting MySecondTask to be the main task,
     # it will check for the requirements first, then run
     # cmd_args = ["--local-scheduler"]
-    # luigi.run(main_task_cls=RunPipeline)
-    luigi.run(main_task_cls=PrepareQueries)
+    luigi.run(main_task_cls=RunPipeline)
 
-# ssh -t sm-webserver "export AWS_ACCESS_KEY_ID='AKIAIHSHCY7SBXNFGARQ';  export AWS_SECRET_ACCESS_KEY='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'; cd ~/sm/webserver/scripts; python sm_pipeline.py --logging-conf-file luigi_log.cfg --s3-dir s3://embl-intsco-sm-test --fn Example_Processed.zip --local-data-dir /home/ubuntu/sm/data/test1 --rows 3 --cols 3"
+# ssh -t sm-webserver "cd ~/sm/webserver/scripts; python sm_pipeline.py --logging-conf-file luigi_log.cfg --s3-dir s3://embl-intsco-sm-test --fn Example_Processed.zip --local-data-dir /home/ubuntu/sm/data/test1 --rows 3 --cols 3"

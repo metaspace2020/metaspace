@@ -3,6 +3,7 @@ __author__ = 'intsco'
 from fabric.api import run, local, env, hosts
 from fabric.colors import green
 from fabric.contrib.project import rsync_project
+from fabric.contrib.files import append
 
 import json
 
@@ -61,6 +62,12 @@ def cluster_launch(name, slaves=1, price=0.05):
 
 
 @hosts(get_spark_master_host())
+def cluster_config():
+    text = "\nexport AWS_ACCESS_KEY_ID=AKIAIHSHCY7SBXNFGARQ \nexport AWS_SECRET_ACCESS_KEY=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"
+    append('/root/spark/conf/spark-env.sh', text)
+
+
+@hosts(get_spark_master_host())
 def cluster_deploy():
     print green('========= [3] Code deployment to Spark cluster =========')
     run('mkdir -p /root/sm/data')
@@ -72,6 +79,7 @@ def platform_start(cluster_name, slaves=1, price=0.05):
     webserver_start()
     webserver_deploy()
     cluster_launch(name=cluster_name, slaves=slaves, price=price)
+    cluster_config()
     cluster_deploy()
 
 
