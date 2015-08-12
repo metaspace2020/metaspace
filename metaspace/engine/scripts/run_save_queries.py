@@ -33,13 +33,18 @@ conn = psycopg2.connect("dbname=%s user=%s password=%s host=%s" % (
 config_db['db'], config_db['user'], config_db['password'], config_db['host']))
 cur = conn.cursor()
 
-cur.execute("SELECT sf_id as id,adduct,peaks,ints FROM mz_peaks limit 2000")
+cur.execute("SELECT sf_id as id, adduct, peaks, ints FROM mz_peaks limit 10000")
 formulas = cur.fetchall()
 ids = [x[0] for x in formulas]
 mzadducts = [x[1] for x in formulas]
 mzpeaks = [x[2] for x in formulas]
 intensities = [x[3] for x in formulas]
 data = [[[float(x) - tol, float(x) + tol] for x in peaks] for peaks in mzpeaks]
+
+if len(data) <= 0:
+    raise Exception('Empty database result set!')
+else:
+    print 'Fetched {} formulas from DB'.format(len(data))
 
 res = {
     "ids": ids,

@@ -16,8 +16,9 @@ def get_spark_master_host():
 
 
 class PipelineContext(object):
-    s3_client = luigi.s3.S3Client(aws_access_key_id=environ['AWS_ACCESS_KEY_ID'],
-                                  aws_secret_access_key=environ['AWS_SECRET_ACCESS_KEY'])
+    # s3_client = luigi.s3.S3Client(aws_access_key_id=environ['AWS_ACCESS_KEY_ID'],
+    #                               aws_secret_access_key=environ['AWS_SECRET_ACCESS_KEY'])
+    s3_client = luigi.s3.S3Client()
     spark_master_host = luigi.Parameter(get_spark_master_host())
     cluster_key_file = '/home/ubuntu/.ssh/sm_spark_cluster.pem'
     cluster_user = 'root'
@@ -39,12 +40,12 @@ class GetInputData(PipelineContext, luigi.Task):
 
     def run(self):
         print "Downloading from {} to {}".format(self.s3_dir, self.local_data_dir)
-        with self.output()[0].open('w') as out:
-            path = join(self.s3_dir, self.fn)
-            if self.s3_client.exists(path):
-                out.write(self.s3_client.get_key().read())
-            else:
-                print "File {} doesn't exists".fomat(path)
+        path = join(self.s3_dir, self.fn)
+        if self.s3_client.exists(path):
+            with self.output()[0].open('w') as out:
+                out.write(self.s3_client.get_key(path).read())
+        else:
+            print "File {} doesn't exists".fomat(path)
 
         print "Unzipping file {}".format(self.fn)
         call(['unzip', join(self.local_data_dir, self.fn), '-d', self.local_data_dir])
