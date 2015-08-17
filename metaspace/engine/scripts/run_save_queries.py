@@ -23,17 +23,15 @@ parser.set_defaults(config='config.json', fname='queries.pkl')
 args = parser.parse_args()
 
 with open(args.config) as f:
-    config = json.load(f)
-
-config_db = config["db"]
+    config = json.load(f)['db']
 
 my_print("Reading formulas from DB...")
 
 conn = psycopg2.connect("dbname=%s user=%s password=%s host=%s" % (
-config_db['db'], config_db['user'], config_db['password'], config_db['host']))
+config['database'], config['user'], config['password'], config['host']))
 cur = conn.cursor()
 
-cur.execute("SELECT sf_id as id, adduct, peaks, ints FROM mz_peaks limit 10000")
+cur.execute("SELECT sf_id as id, adduct, peaks, ints FROM mz_peaks")
 formulas = cur.fetchall()
 ids = [x[0] for x in formulas]
 mzadducts = [x[1] for x in formulas]

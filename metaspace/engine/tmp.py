@@ -7,7 +7,7 @@ config_db = dict(
                     password=""
                 )
 conn = psycopg2.connect("host='%s' dbname='%s' user='%s' password='%s'" % (
-    config_db["host"], config_db["db"], config_db["user"], config_db["password"]
+    config_db["host"], config_db["database"], config_db["user"], config_db["password"]
     ))
 cur = conn.cursor()
 

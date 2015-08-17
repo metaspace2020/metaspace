@@ -66,7 +66,7 @@ def main():
     util.my_print("Connecting to DB...")
 
     conn = psycopg2.connect("dbname=%s user=%s password=%s host=%s" % (
-    config_db['db'], config_db['user'], config_db['password'], config_db['host']))
+    config_db['database'], config_db['user'], config_db['password'], config_db['host']))
     cur = conn.cursor()
 
     '''

@@ -41,14 +41,14 @@ CREATE TABLE datasets (
 	nrows		int,
 	ncols		int
 );
-INSERT INTO datasets VALUES (0, 'test', '/media/data/ims/testdataset.txt', 51, 49);
-INSERT INTO datasets VALUES (1, 'Ctrl3s2', '/media/data/ims/Ctrl3s2_SpheroidsCtrl_DHBSub_IMS.txt', 51, 49);
-INSERT INTO datasets VALUES (2, 'Rat_brain', '/media/data/ims/Rat_brain_1M_50um_centroids_IMS.txt', 51, 49);
-INSERT INTO datasets VALUES (3, 'Ctrl3s2_centroids', '/media/data/ims/Ctrl3s2_SpheroidsCtrl_DHBSub_centroids_IMS.txt', 51, 49);
-INSERT INTO datasets VALUES (4, '14037s1_24h', '/media/data/ims/14037s1_Spheroids24h_DHBSub_centroids_IMS.txt', 33, 58);
-INSERT INTO datasets VALUES (5, '14040s1_12h', '/media/data/ims/14040s1_Spheroids12h_DHBSub_centroids_IMS.txt', 32, 52);
-INSERT INTO datasets VALUES (6, 'sublimation', '/media/data/ims/Spheroids_sublimation_6h_centroids_IMS.txt', 43, 37);
-INSERT INTO datasets VALUES (7, 'mouse', '/media/data/ims/HR2MSI_mouse_urinary_bladder_S096_centroids_IMS.txt', 134, 260);
+--INSERT INTO datasets VALUES (0, 'test', '/media/data/ims/testdataset.txt', 51, 49);
+--INSERT INTO datasets VALUES (1, 'Ctrl3s2', '/media/data/ims/Ctrl3s2_SpheroidsCtrl_DHBSub_IMS.txt', 51, 49);
+--INSERT INTO datasets VALUES (2, 'Rat_brain', '/media/data/ims/Rat_brain_1M_50um_centroids_IMS.txt', 51, 49);
+--INSERT INTO datasets VALUES (3, 'Ctrl3s2_centroids', '/media/data/ims/Ctrl3s2_SpheroidsCtrl_DHBSub_centroids_IMS.txt', 51, 49);
+--INSERT INTO datasets VALUES (4, '14037s1_24h', '/media/data/ims/14037s1_Spheroids24h_DHBSub_centroids_IMS.txt', 33, 58);
+--INSERT INTO datasets VALUES (5, '14040s1_12h', '/media/data/ims/14040s1_Spheroids12h_DHBSub_centroids_IMS.txt', 32, 52);
+--INSERT INTO datasets VALUES (6, 'sublimation', '/media/data/ims/Spheroids_sublimation_6h_centroids_IMS.txt', 43, 37);
+--INSERT INTO datasets VALUES (7, 'mouse', '/media/data/ims/HR2MSI_mouse_urinary_bladder_S096_centroids_IMS.txt', 134, 260);
 
 
 -- INSERT INTO datasets VALUES (6, 'Ctrl3s2_centroids', '/media/data/ims/Ctrl3s2_SpheroidsCtrl_DHBSub_centroids_IMS.txt', 51, 49);
@@ -64,11 +64,11 @@ CREATE TABLE coordinates (
 	x 			int,
 	y 			int
 );
-\COPY coordinates FROM '/home/snikolenko/soft/ims/data/Ctrl3s2_SpheroidsCtrl_DHBSub_IMS.coords.txt' WITH delimiter ';' quote '@' csv;
-\COPY coordinates FROM '/media/data/ims/14037s1_Spheroids24h_DHBSub_centroids_IMS_coordinates.csv' csv;
-\COPY coordinates FROM '/media/data/ims/14040s1_Spheroids12h_DHBSub_centroids_IMS_coordinates.csv' csv;
-\COPY coordinates FROM '/media/data/ims/Spheroids_sublimation_6h_centroids_IMS_coordinates.csv' csv;
-\COPY coordinates FROM '/media/data/ims/HR2MSI_mouse_urinary_bladder_S096_centroids_IMS_coordinates.csv' csv;
+--\COPY coordinates FROM '/home/snikolenko/soft/ims/data/Ctrl3s2_SpheroidsCtrl_DHBSub_IMS.coords.txt' WITH delimiter ';' quote '@' csv;
+--\COPY coordinates FROM '/media/data/ims/14037s1_Spheroids24h_DHBSub_centroids_IMS_coordinates.csv' csv;
+--\COPY coordinates FROM '/media/data/ims/14040s1_Spheroids12h_DHBSub_centroids_IMS_coordinates.csv' csv;
+--\COPY coordinates FROM '/media/data/ims/Spheroids_sublimation_6h_centroids_IMS_coordinates.csv' csv;
+--\COPY coordinates FROM '/media/data/ims/HR2MSI_mouse_urinary_bladder_S096_centroids_IMS_coordinates.csv' csv;
 -- \COPY coordinates FROM '/home/snikolenko/soft/ims/data/dump15072015/coordinates.csv' WITH delimiter ';' csv;
 
 CREATE INDEX ind_coordinates_1 ON coordinates (dataset_id, index);

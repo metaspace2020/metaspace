@@ -363,7 +363,7 @@ class NewPngHandler(tornado.web.RequestHandler):
 			else:
 				my_print("request was not cached; clearing cache")
 				NewPngHandler.cache.clear()
-			# coords_q = self.db.query( sql_queries['mzimage2coords'] % int(dataset_id) )
+			# coords_q = self.database.query( sql_queries['mzimage2coords'] % int(dataset_id) )
 			coords_q = self.db.query( sql_queries['democoords'] % dataset_id )
 			# coords = { row["index"] : [row["column"], row["row"]] for row in coords_q }
 			coords = { row["index"] : [row["x"], row["y"]] for row in coords_q }

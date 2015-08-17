@@ -91,7 +91,7 @@ class Application(tornado.web.Application):
 		config_db = config["db"]
 		tornado.web.Application.__init__(self, torn_handlers, **settings)
 		# Have one global connection to the blog DB across all handlers
-		self.db = tornpsql.Connection(config_db['host'], config_db['db'], config_db['user'], config_db['password'], 5432)
+		self.db = tornpsql.Connection(config_db['host'], config_db['database'], config_db['user'], config_db['password'], 5432)
 		if args.spark:
 			self.conf = SparkConf().setMaster("local[2]").setAppName("IMS Webserver v0.2").set("spark.ui.showConsoleProgress", "false")
 			self.sc = SparkContext(conf=self.conf, pyFiles=[os.path.join(os.getcwd(), 'engine', x) for x in engine_pyfiles ])

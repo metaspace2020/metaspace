@@ -36,6 +36,7 @@ def main():
     parser.add_argument('--cols', dest='cols', type=int, help='number of columns')
     parser.add_argument('--ds', dest='ds', type=str, help='dataset file name')
     parser.add_argument('--queries', dest='queries', type=str, help='queries file name')
+    parser.add_argument('--config', dest='config_path', type=str, help='config file path')
     parser.set_defaults(config='config.json', queries='queries.pkl', fname='result.pkl', ds='', job_id=0, rows=-1,
                         cols=-1)
 
@@ -48,6 +49,7 @@ def main():
 
     def get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id=0,
                                  offset=0):
+        # try:
         total_nonzero = sum([len(x) for x in res_dicts])
         util.my_print("Got result of full dataset job %d with %d nonzero spectra" % (job_id, total_nonzero))
         corr_images = [computing.avg_dict_correlation(res_dicts[i]) for i in xrange(len(res_dicts))]
@@ -55,7 +57,9 @@ def main():
         to_insert = [i for i in xrange(len(res_dicts)) if corr_int[i] > 0.3 and corr_images[i] > 0.3]
         chaos_measures = [
             measure_of_chaos_dict(res_dicts[i][0], nrows, ncols) if corr_int[i] > 0.3 and corr_images[i] > 0.3 else 0
+            # 0 if corr_int[i] > 0.3 and corr_images[i] > 0.3 else 0
             for i in xrange(len(res_dicts))]
+
         return ([formulas[i + offset][0] for i in to_insert],
                 [int(mzadducts[i + offset]) for i in to_insert],
                 [len(res_dicts[i]) for i in to_insert],
@@ -67,17 +71,6 @@ def main():
                  } for i in to_insert],
                 [res_dicts[i] for i in to_insert]
                 )
-
-    # def process_res_fulldataset(db, res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id=0, offset=0):
-    # 	formulas, mzadducts, lengths, stat_dicts, res_dicts = get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id, offset)
-    # 	if sum(lengths) > 0:
-    # 		db.query("INSERT INTO job_result_data VALUES %s" %
-    # 			",".join(['(%d, %d, %d, %d, %d, %.6f)' % (job_id,
-    # 				int(formulas[i+offset][0]),
-    # 				int(mzadducts[i+offset]), j, k, v)
-    # 				for i in xrange(len(res_dicts)) for j in xrange(len(res_dicts[i])) for k,v in res_dicts[i][j].iteritems()])
-    # 		)
-    # 	insert_job_result_stats( db, job_id, formulas, mzadducts, lengths, stat_dicts )
 
     args = parser.parse_args()
 
@@ -93,7 +86,7 @@ def main():
     num_chunks = 1 + len(q["data"]) / fulldataset_chunk_size
 
     conf = SparkConf()  # .setAppName("Extracting m/z images").setMaster("local") #.set("spark.executor.memory", "16g").set("spark.driver.memory", "8g")
-    sc = SparkContext(conf=conf)
+    sc = SparkContext(conf=conf, master='local')
 
     ff = sc.textFile(args.ds, minPartitions=10)
     spectra = ff.map(computing.txt_to_spectrum)
@@ -110,8 +103,8 @@ def main():
     for i in xrange(num_chunks):
         util.my_print("Processing chunk %d..." % i)
 
-        data = q["data"][fulldataset_chunk_size * i:fulldataset_chunk_size * (i + 1)]
-        qres = (spectra.map(lambda sp: computing.process_spectrum_multiple_queries(data, sp))
+        mol_mz_intervals = q["data"][fulldataset_chunk_size * i:fulldataset_chunk_size * (i + 1)]
+        qres = (spectra.map(lambda sp: computing.process_spectrum_multiple_queries(mol_mz_intervals, sp))
                 .reduce(computing.reduce_manygroups2d_dict_individual))
         # entropies = [ [ get_block_entropy_dict(x, args.rows, args.cols) for x in one_result ] for one_result in qres ]
         entropies = [[0 for x in one_result] for one_result in qres]

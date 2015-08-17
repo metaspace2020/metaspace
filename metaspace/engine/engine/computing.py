@@ -40,18 +40,18 @@ def run_extractmzs(sc, fname, data, nrows, ncols):
     return qres
 
 
-def process_spectrum_multiple_queries(data, sp):
+def process_spectrum_multiple_queries(mol_mz_intervals, sp):
     '''Run multiple queries on a spectrum.
 
-	:param data: list of sets of queries (each set corresponds to several peaks)
+	:param mol_mz_intervals: list of sets of queries (each set corresponds to several peaks)
 	:param sp: spectrum given as a dictionary
 	'''
-    return [process_spectrum_onequery(queries, sp) for queries in data]
+    return [process_spectrum_onequery(mz_intervals, sp) for mz_intervals in mol_mz_intervals]
 
 
-def process_spectrum_onequery(queries, sp):
+def process_spectrum_onequery(mz_intervals, sp):
     '''Run one set of queries on a spectrum.'''
-    return [get_one_group_total_dict(sp[0], q[0], q[1], sp[1], sp[2]) for q in queries]
+    return [get_one_group_total_dict(sp[0], mz_int[0], mz_int[1], sp[1], sp[2]) for mz_int in mz_intervals]
 
 
 def get_one_group_total_dict(name, mz_lower, mz_upper, mzs, intensities):
