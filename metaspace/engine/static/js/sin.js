@@ -60,6 +60,47 @@ function sin_render_colorbar_horiz(selector, myScale) {
     }).text(function(d, i) { return d.toFixed(2); } );
 }
 
+function sin_render_colorbar_vertical(selector, myScale) {
+  var cb_svg = d3.select(selector).append("svg").attr("width", "100%").attr("height", "100%");
+  var sel_wid = $(selector).width();
+  var sel_height = $(selector).height();
+  var rects = cb_svg.selectAll("rect")
+    .data(d3.range(myScale[1], myScale[2], Math.floor( (myScale[2] - myScale[1]) / 30) ) );
+  var bar_wid = 20;
+  var bar_height = Math.floor(sel_height / 30);
+  rects.enter()
+    .append("rect")
+    .attr({
+      width: bar_wid,
+      height: bar_height,
+      x: 0,
+      y: function(d,i) {
+        return sel_height - (i * bar_height);
+      },
+      fill: function(d,i) {
+        return myScale[0](d);
+      }
+    });
+    var tick_range = [myScale[2], (myScale[2] - myScale[1]) / 2, myScale[1]];
+    var ticks = cb_svg.selectAll("text").data( tick_range )
+    .enter()
+    .append("text")
+    .attr({
+      // width : 20, height : 10,
+      "font-size": "12px", fill : "black", 
+      x : bar_wid + 10,
+      y : function(d, i) {
+        if (i == 0) {
+          return 2 * bar_height;
+        } else if (i == 2) {
+          return sel_height - bar_height;
+        } else {
+          return sel_height / 2;
+        }
+      }
+    }).text(function(d, i) { return d.toFixed(2); } );
+}
+
 function sin_render_ionimage(selector, data, coords, pixel_size, colors, max_x, max_y, coords_aligned) {
   var total_wid = $(selector).width();
   var factor = 20.0;

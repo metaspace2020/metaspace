@@ -173,7 +173,14 @@
                 var to_append = '<img src="' + urls[i] + '" width="95%">';
                 elem.append(to_append);
             }
-            
+            $.getJSON('/mzimage_meta/' + url_params, function (json) {
+                var min_val = json["min"];
+                var max_val = json["max"];
+                var img_color = d3.scale.linear().domain(d3.range(
+                    min_val, max_val, (max_val - min_val) / colors.length
+                )).range( colors );
+                sin_render_colorbar_vertical('#ionimage_total_cb', [img_color, min_val, max_val]);
+            });
         }
 
         tbl_demo = $('#table-demo').DataTable( {

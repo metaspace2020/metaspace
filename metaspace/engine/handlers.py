@@ -348,6 +348,14 @@ class NewPngHandler(tornado.web.RequestHandler):
 	def get(self, dataset_id, job_id, sf_id, sf, adduct=None, peak_id=None):
 		request_as_tuple = (dataset_id, job_id, sf_id, sf)
 		request_as_tuple_long = (dataset_id, job_id, sf_id, sf, adduct, peak_id)
+		if self.request.uri.split('/')[1] == "mzimage_meta":
+			while not request_as_tuple_long in NewPngHandler.minmax_cache:
+				time.sleep(50)
+				my_print("Min and Max of %s not cached yet. Sleeping 50ms." % (request_as_tuple_long,))
+			min_val, max_val = NewPngHandler.minmax_cache[request_as_tuple_long]
+			self.write(json.dumps({"min":min_val, "max":max_val}))
+			# self.write('{ "message" : "Dummy json"}')
+			return
 		colormap = ((0x35, 0x2A, 0x87), (0x02, 0x68, 0xE1), (0x10, 0x8E, 0xD2), (0x0F, 0xAE, 0xB9), (0x65, 0xBE, 0x86), (0xC0, 0xBC, 0x60), (0xFF, 0xC3, 0x37), (0xF9, 0xFB, 0x0E))
 		bitdepth = 8
 		query_id = "demosubst"
@@ -415,12 +423,17 @@ class NewPngHandler(tornado.web.RequestHandler):
 			# find highest and lowest intensity
 			non_zero_intensities = filter(lambda x: x > 0, data["val"])
 			min_val = min(non_zero_intensities)
-			max_val = max(non_zero_intensities) - min_val
+			max_val = max(non_zero_intensities)
+			NewPngHandler.minmax_cache[request_as_tuple_long] = (min_val, max_val)
+			normalized_max_val = max_val- min_val
 			# normalize to byte (bitdepth=8)
 			im_new = [list(colormap[0])*nColumns for _ in range(nRows)]
 			for idx, val in zip(data["sp"], data["val"]):
 				x,y = coords[idx]
-				new_val = 0 if val == 0 else int(255 * (val - min_val)/max_val)
+				if val == 0:
+					new_val = 0
+				else:
+					new_val = int(255 * (val - min_val)/normalized_max_val)
 				chunk_size = math.ceil(2.0**bitdepth / (len(colormap)-1))
 				color_chunk = int(new_val//chunk_size)
 				pos_in_chunk = new_val % chunk_size

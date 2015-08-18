@@ -69,6 +69,8 @@ class Application(tornado.web.Application):
 			(r"^/mzimage/([^/]*)/([^/]*)\.png", handlers.MZImageParamHandler),
 			(r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", NewPngHandler),
 			(r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
+			(r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", NewPngHandler),
+			(r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)", NewPngHandler),
 			(r"^/fullresults/(.*)", handlers.SimpleHtmlHandlerWithId),
 			(r"/", handlers.IndexHandler)
 		]
