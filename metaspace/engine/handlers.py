@@ -18,6 +18,8 @@ import threading
 import Queue
 from collections import defaultdict
 import operator
+import math
+import cStringIO
 
 import tornado.ioloop
 import tornado.web
@@ -31,6 +33,7 @@ from engine.util import *
 from globalvars import *
 from engine.computing import run_fulldataset, run_extractmzs
 from engine.metrics_db import get_fulldataset_query_data, process_res_extractmzs, process_res_fulldataset
+from engine.imaging import write_image
 
 
 @gen.coroutine
@@ -341,6 +344,7 @@ class RunSparkHandler(tornado.web.RequestHandler):
 class NewPngHandler(tornado.web.RequestHandler):
 	'''A RequestHandler for producing pngs. Returns a single ion image for given dataset, formula, adduct and peak. Available at url /demo-png. Caches the res_dict until a request arrives that requires computing a different res_dict.'''
 	cache = {}
+	minmax_cache = {}
 
 	@property
 	def db(self):

@@ -1,3 +1,4 @@
+import png
 import numpy as np
 import cStringIO
 

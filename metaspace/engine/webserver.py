@@ -33,7 +33,7 @@ import math
 import sys, os, glob
 
 ## get list of engine files
-engine_pyfiles =  ['computing.py', 'util.py', 'imaging.py', os.join('pyIMS', 'image_measures', 'level_sets_measure.py')]
+engine_pyfiles =  ['computing.py', 'util.py', 'imaging.py', path.join('pyIMS', 'image_measures', 'level_sets_measure.py')]
 
 from engine.util import *
 from engine.computing import *
@@ -62,15 +62,16 @@ class Application(tornado.web.Application):
 			(r"^/ajax/([a-z]*)/(.*)", handlers.AjaxHandler),
 			(r"^/substance/(.*)", handlers.SimpleHtmlHandlerWithId),
 			(r"^/demo/", handlers.SimpleHtmlHandler),
+			(r"^/demo-png/", handlers.SimpleHtmlHandler),
 			(r"^/jobs/", handlers.SimpleHtmlHandler),
 			(r"^/gameimages/", handlers.SimpleHtmlHandler),
 			(r"^/datasets/", handlers.SimpleHtmlHandler),
 			(r"^/mzimage/([^/]*)\.png", handlers.MZImageHandler),
 			(r"^/mzimage/([^/]*)/([^/]*)\.png", handlers.MZImageParamHandler),
-			(r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", NewPngHandler),
+			(r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
 			(r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
-			(r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", NewPngHandler),
-			(r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)", NewPngHandler),
+			(r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
+			(r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
 			(r"^/fullresults/(.*)", handlers.SimpleHtmlHandlerWithId),
 			(r"/", handlers.IndexHandler)
 		]
@@ -86,7 +87,7 @@ class Application(tornado.web.Application):
 			from pyspark import SparkContext, SparkConf
 			torn_handlers.extend([ (r"^/run/(.*)", handlers.RunSparkHandler) ])
 		settings = dict(
-			static_path=path.join(os.path.dirname(__file__), "static"),
+			static_path=path.join(path.dirname(__file__), "static"),
 			debug=True,
 			compress_response=True
 		)
@@ -96,7 +97,7 @@ class Application(tornado.web.Application):
 		self.db = tornpsql.Connection(config_db['host'], config_db['db'], config_db['user'], config_db['password'], 5432)
 		if args.spark:
 			self.conf = SparkConf().setMaster("local[2]").setAppName("IMS Webserver v0.2").set("spark.ui.showConsoleProgress", "false")
-			self.sc = SparkContext(conf=self.conf, pyFiles=[os.join(os.getcwd(), 'engine', x) for x in engine_pyfiles ])
+			self.sc = SparkContext(conf=self.conf, pyFiles=[path.join(os.getcwd(), 'engine', x) for x in engine_pyfiles ])
 			self.status = self.sc.statusTracker()
 		self.max_jobid = self.db.get("SELECT max(id) as maxid FROM jobs").maxid
 		self.max_jobid = int(self.max_jobid) if self.max_jobid != None else 0
