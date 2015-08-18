@@ -337,7 +337,7 @@ class RunSparkHandler(tornado.web.RequestHandler):
 
 
 class NewPngHandler(tornado.web.RequestHandler):
-	'''A RequestHandler for producing pngs. Returns a single ion image for given dataset, formula, adduct and peak. Not used in web code yet. Caches the res_dict until a request arrives that requires computing a different res_dict.'''
+	'''A RequestHandler for producing pngs. Returns a single ion image for given dataset, formula, adduct and peak. Available at url /demo-png. Caches the res_dict until a request arrives that requires computing a different res_dict.'''
 	cache = {}
 
 	@property
@@ -345,18 +345,20 @@ class NewPngHandler(tornado.web.RequestHandler):
 		return self.application.db
 	
 	@gen.coroutine
-	def get(self, dataset_id, job_id, sf_id, sf, adduct, peak_id):
+	def get(self, dataset_id, job_id, sf_id, sf, adduct=None, peak_id=None):
+		request_as_tuple = (dataset_id, job_id, sf_id, sf)
+		request_as_tuple_long = (dataset_id, job_id, sf_id, sf, adduct, peak_id)
 		colormap = ((0x35, 0x2A, 0x87), (0x02, 0x68, 0xE1), (0x10, 0x8E, 0xD2), (0x0F, 0xAE, 0xB9), (0x65, 0xBE, 0x86), (0xC0, 0xBC, 0x60), (0xFF, 0xC3, 0x37), (0xF9, 0xFB, 0x0E))
 		bitdepth = 8
 		query_id = "demosubst"
-		peak_id, job_id, sf_id, dataset_id = int(get_id_from_slug(peak_id)), int(job_id), int(sf_id), int(dataset_id)
+		# cast args to int
+		peak_id, job_id, sf_id, dataset_id = int(get_id_from_slug(peak_id)) if peak_id else None, int(job_id), int(sf_id), int(dataset_id)
 		def flushed_callback(t0):
 			def callback():
 				my_print("Finished write in NewPngHandler. Took %s" % (datetime.now() - t0))
 			return callback
 		def res_dict():
 			# return immediately if result is cached.
-			request_as_tuple = (dataset_id, job_id, sf_id, sf)
 			if request_as_tuple in NewPngHandler.cache:
 				my_print("request_as_tuple found in cache, returning immediately.")
 				return NewPngHandler.cache[request_as_tuple]
@@ -392,7 +394,22 @@ class NewPngHandler(tornado.web.RequestHandler):
 			my_print("stored res_dict in cache")
 			return res_dict
 		def image_data(res_dict):
-			data = res_dict["data"][adduct][peak_id]
+			if not adduct and not peak_id:
+				# total image
+				# flat objects out into a list
+				data_list = reduce(operator.add, res_dict["data"].values())
+				# write them to a dict
+				data_dict = defaultdict(float)
+				for data_obj in data_list:
+					for idx, val in zip(data_obj["sp"], data_obj["val"]):
+						data_dict[idx] += val
+				# convert it into the desired format
+				data = {
+					'sp' : data_dict.keys(),
+					'val' : data_dict.values()
+				}
+			else:
+				data = res_dict["data"][adduct][peak_id]
 			coords = res_dict["coords"]
 			nRows, nColumns = res_dict["dimensions"]
 			# find highest and lowest intensity

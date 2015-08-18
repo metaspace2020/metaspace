@@ -136,6 +136,12 @@
             $("#about-sf").html( '<div class="row">' + asf_html + '</div>' );
             
             // IMAGES
+            // total image
+            var url_params = dataset_id + '/'
+                + job_id + '/' + sf_id + '/' + sf;
+            $("#ionimage_total").html(
+                '<img src="/mzimage2/' + url_params + '" width="100%">'
+            );
             // images per adduct and peak
             var col_w = Math.floor(12 / entropies.length);
             var urls = [];
