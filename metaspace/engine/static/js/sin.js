@@ -19,11 +19,12 @@ function sin_render_colorbar_horiz(selector, myScale) {
   var rects = cb_svg.selectAll("rect")
     .data(d3.range(myScale[1], myScale[2], Math.floor( (myScale[2] - myScale[1]) / 20) ) );
   var bar_wid = Math.floor( sel_wid / 20 );
+  var bar_height = 25;
   rects.enter()
     .append("rect")
     .attr({
       width: bar_wid,
-      height: 50,
+      height: bar_height,
       y: 0,
       x: function(d,i) {
         return i * bar_wid;
@@ -47,12 +48,12 @@ function sin_render_colorbar_horiz(selector, myScale) {
           return "middle";
         }
       },
-      y : 60,
+      y : bar_height + 10,
       x : function(d, i) {
         if (i == 0) {
           return 0;
         } else if (i == 2) {
-          return i * bar_wid * 10 + bar_wid - 1;
+          return i * bar_wid * 10 + bar_wid - 20;
         } else {
           return i * bar_wid * 10 + bar_wid / 2;
         }
