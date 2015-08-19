@@ -47,24 +47,27 @@ def main():
     from engine import computing
     from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos_dict
 
-    def get_full_dataset_results(res_dicts, entropies, formulas, mzadducts, intensities, nrows, ncols, job_id=0,
+    def get_full_dataset_results(res_dicts, formulas, mzadducts, intensities, nrows, ncols, job_id=0,
                                  offset=0):
-        # try:
+        iso_corr_tol = 0.5
+        iso_ratio_tol = 0.85
+        measure_tol = 0.99
+
         total_nonzero = sum([len(x) for x in res_dicts])
         util.my_print("Got result of full dataset job %d with %d nonzero spectra" % (job_id, total_nonzero))
         corr_images = [computing.avg_dict_correlation(res_dicts[i]) for i in xrange(len(res_dicts))]
         corr_int = [computing.avg_intensity_correlation(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts))]
-        to_insert = [i for i in xrange(len(res_dicts)) if corr_int[i] > 0.3 and corr_images[i] > 0.3]
         chaos_measures = [
-            measure_of_chaos_dict(res_dicts[i][0], nrows, ncols) if corr_int[i] > 0.3 and corr_images[i] > 0.3 else 0
-            # 0 if corr_int[i] > 0.3 and corr_images[i] > 0.3 else 0
-            for i in xrange(len(res_dicts))]
+            measure_of_chaos_dict(res_dicts[i][0], nrows, ncols)
+            if corr_int[i] > iso_corr_tol and corr_images[i] > iso_ratio_tol else 0 for i in xrange(len(res_dicts))]
+
+        to_insert = [i for i in xrange(len(res_dicts)) if corr_int[i] > iso_corr_tol
+                     and corr_images[i] > iso_ratio_tol and chaos_measures[i] > measure_tol]
 
         return ([formulas[i + offset][0] for i in to_insert],
                 [int(mzadducts[i + offset]) for i in to_insert],
                 [len(res_dicts[i]) for i in to_insert],
                 [{
-                     "entropies": entropies[i],
                      "corr_images": corr_images[i],
                      "corr_int": corr_int[i],
                      "chaos": chaos_measures[i]
@@ -86,7 +89,7 @@ def main():
     num_chunks = 1 + len(q["data"]) / fulldataset_chunk_size
 
     conf = SparkConf()  # .setAppName("Extracting m/z images").setMaster("local") #.set("spark.executor.memory", "16g").set("spark.driver.memory", "8g")
-    sc = SparkContext(conf=conf, master='local')
+    sc = SparkContext(conf=conf)
 
     ff = sc.textFile(args.ds, minPartitions=10)
     spectra = ff.map(computing.txt_to_spectrum)
@@ -107,8 +110,8 @@ def main():
         qres = (spectra.map(lambda sp: computing.process_spectrum_multiple_queries(mol_mz_intervals, sp))
                 .reduce(computing.reduce_manygroups2d_dict_individual))
         # entropies = [ [ get_block_entropy_dict(x, args.rows, args.cols) for x in one_result ] for one_result in qres ]
-        entropies = [[0 for x in one_result] for one_result in qres]
-        cur_results = get_full_dataset_results(qres, entropies, q["formulas"], q["mzadducts"], q["intensities"],
+        # entropies = [[0 for x in one_result] for one_result in qres]
+        cur_results = get_full_dataset_results(qres, q["formulas"], q["mzadducts"], q["intensities"],
                                                args.rows, args.cols, args.job_id, fulldataset_chunk_size * i)
         res["formulas"].extend([n + fulldataset_chunk_size * i for n in cur_results[0]])
         res["mzadducts"].extend(cur_results[1])

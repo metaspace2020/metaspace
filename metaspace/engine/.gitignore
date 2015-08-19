@@ -2,3 +2,4 @@
 .idea
 *.pkl
 conf
+test/data

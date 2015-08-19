@@ -18,8 +18,9 @@ class PipelineContext(object):
 
     cluster_key_file = luigi.Parameter('/home/ubuntu/.ssh/sm_spark_cluster.pem')
     cluster_user = luigi.Parameter('root')
-    spark_master_host = luigi.Parameter('')
+    _spark_master_host = luigi.Parameter('')
 
+    project_dir = '/home/ubuntu/sm'
     base_data_dir = luigi.Parameter('/home/ubuntu/sm/data')
     data_dir = luigi.Parameter('/')
     master_base_data_dir = luigi.Parameter('/root/sm/data')
@@ -51,11 +52,11 @@ class PipelineContext(object):
         return PipelineContext._annot_results_fn
 
     def get_spark_master_host(self):
-        return open('/home/ubuntu/sm/webserver/conf/SPARK_MASTER').readline().strip('\n')
+        with open('/home/ubuntu/sm/conf/SPARK_MASTER') as f:
+            return f.readline().strip('\n')
 
     def context(self):
-        return {'spark_master_host': self.get_spark_master_host(),
-                'base_data_dir': self.base_data_dir,
+        return {'base_data_dir': self.base_data_dir,
                 'data_dir': join(self.base_data_dir, self.input_fn.split('.')[0]),
                 'master_base_data_dir': self.master_base_data_dir,
                 'master_data_dir': self.master_base_data_dir,
@@ -98,7 +99,7 @@ class ImzMLToTxt(PipelineContext, luigi.Task):
 
     def run(self):
         print "Converting {} file".format(self.imzml_fn())
-        call(['python', join(self.scripts_dir, 'imzml_to_txt.py'),
+        call(['python', join(self.project_dir, 'scripts/imzml_to_txt.py'),
               join(self.data_dir, self.imzml_fn()),
               join(self.data_dir, self.txt_fn()),
               join(self.data_dir, self.coord_fn())])
@@ -115,7 +116,7 @@ class PrepareQueries(PipelineContext, luigi.Task):
 
     def output(self):
         return luigi.contrib.ssh.RemoteTarget(path=join(self.master_data_dir, self.queries_fn),
-                                              host=self.spark_master_host,
+                                              host=self.get_spark_master_host(),
                                               username=self.cluster_user,
                                               key_file=self.cluster_key_file)
 
@@ -123,9 +124,9 @@ class PrepareQueries(PipelineContext, luigi.Task):
         print "Exporting queries from DB to {} file".format(join(self.data_dir, self.queries_fn))
         call(['mkdir', '-p', self.data_dir])
 
-        cmd = ['python', 'run_save_queries.py',
+        cmd = ['python', join(self.project_dir, 'scripts/run_save_queries.py'),
               '--out', join(self.data_dir, self.queries_fn),
-              '--config', '../conf/config.json']
+              '--config', join(self.project_dir, 'conf/config.json')]
         check_call(cmd)
 
         print "Uploading queries file {} to {} spark master dir".format(self.queries_fn, self.master_data_dir)
@@ -145,7 +146,8 @@ class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
     cols = luigi.Parameter()
 
     def spark_command(self):
-        return ['--executor-memory', self.executor_memory,
+        return ['--master', 'spark://{}:7077'.format(self.get_spark_master_host()),
+                '--executor-memory', self.executor_memory,
                 '--py-files', self.py_files,
                 '--verbose',
                 self.app]
@@ -165,7 +167,7 @@ class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
         return luigi.LocalTarget(join(self.data_dir, self.annotation_results_fn()))
 
     def run(self):
-        spark_master_remote_context = luigi.contrib.ssh.RemoteContext(host=self.spark_master_host,
+        spark_master_remote_context = luigi.contrib.ssh.RemoteContext(host=self.get_spark_master_host(),
                                                                       username=self.cluster_user,
                                                                       key_file=self.cluster_key_file)
         cmd = [self.spark_submit] + self.spark_command() + self.app_options()
@@ -173,7 +175,7 @@ class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
         out, err = popen.communicate()
 
         master_data = luigi.contrib.ssh.RemoteTarget(path=join(self.master_data_dir, self.annotation_results_fn()),
-                                                     host=self.spark_master_host,
+                                                     host=self.get_spark_master_host(),
                                                      username=self.cluster_user,
                                                      key_file=self.cluster_key_file)
         master_data.get(join(self.data_dir, self.annotation_results_fn()))
@@ -191,13 +193,13 @@ class InsertAnnotationsToDB(PipelineContext, luigi.Task):
         return luigi.LocalTarget(join(self.data_dir, 'AnnotationInsertStatus'))
 
     def run(self):
-        cmd = ['python', '/home/ubuntu/sm/webserver/scripts/run_insert_to_db.py',
+        cmd = ['python', '/home/ubuntu/sm/scripts/run_insert_to_db.py',
                '--ip', join(self.s3_dir, self.input_fn),
                '--rp', join(self.data_dir, self.annotation_results_fn()),
                '--cp', join(self.data_dir, self.coord_fn()),
                '--rows', self.rows,
                '--cols', self.cols,
-               '--config', '/home/ubuntu/sm/webserver/conf/config.json',
+               '--config', '/home/ubuntu/sm/conf/config.json',
                '--dsname', self.base_fn]
         try:
             check_call(cmd)
@@ -223,4 +225,4 @@ if __name__ == '__main__':
     # cmd_args = ["--local-scheduler"]
     luigi.run(main_task_cls=RunPipeline)
 
-# ssh -t sm-webserver "cd ~/sm/webserver/scripts; python sm_pipeline.py --logging-conf-file luigi_log.cfg --s3-dir s3://embl-intsco-sm-test --fn Example_Processed.zip --local-data-dir /home/ubuntu/sm/data/test1 --rows 3 --cols 3"
+# ssh -t sm-webserver "cd ~/sm/scripts; python sm_pipeline.py --logging-conf-file luigi_log.cfg --s3-dir s3://embl-intsco-sm-test --fn Example_Processed.zip --local-data-dir /home/ubuntu/sm/data/test1 --rows 3 --cols 3"

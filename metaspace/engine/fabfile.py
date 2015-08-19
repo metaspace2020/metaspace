@@ -12,7 +12,7 @@ from fabric.context_managers import cd
 import json
 from os import environ
 from time import sleep
-from os.path import dirname, realpath
+from os.path import dirname, realpath, join
 
 from test.blackbox_pipeline_test import BlackboxPipelineTest
 
@@ -55,8 +55,8 @@ def webserver_stop():
 def webserver_deploy():
     print green('========= Code deployment to SM webserver =========')
 
-    run('mkdir -p /home/ubuntu/sm/data')
-    rsync_project(remote_dir='/home/ubuntu/sm', exclude=['.*', '*.pyc'])
+    rsync_project(remote_dir='/home/ubuntu', exclude=['.*', '*.pyc'])
+    # run('mkdir -p /home/ubuntu/sm/data')
 
 
 # @hosts(get_webserver_host())
@@ -71,15 +71,18 @@ def get_aws_instance_info(name):
 
 
 def run_spark_ec2_script(command, cluster_name, slaves=1, price=0.07):
-    cmd = '''/opt/dev/spark-1.4.0/ec2/spark-ec2 --key-pair=sm_spark_cluster --identity-file={0} \
+    cmd = '''/opt/dev/spark-1.4.0/ec2/spark-ec2 --key-pair=sm_spark_cluster --identity-file={0} --ami ami-0e451a79 \
 --region=eu-west-1 --slaves={1} --instance-type=m3.large --master-instance-type=m3.medium --copy-aws-credentials \
 --spot-price={2} {3} {4}'''.format(env['cluster_key_file'], slaves, price, command, cluster_name)
     local(cmd)
 
 
-def cluster_launch(name, slaves=1, price=0.06):
+@task
+def cluster_launch(name, slaves=1, price=0.07):
     print green('========= Launching Spark cluster =========')
-    run_spark_ec2_script('launch', name, slaves=1, price=0.07)
+    local('rm conf/SPARK_MASTER')
+
+    run_spark_ec2_script('launch', name, slaves=slaves, price=price)
 
     info = get_aws_instance_info(name)
     spark_master_host = info['Reservations'][0]['Instances'][0]['PublicDnsName']
@@ -92,9 +95,7 @@ def cluster_launch(name, slaves=1, price=0.06):
 @task
 def cluster_config():
     print green('========= Configuring Spark cluster =========')
-
-    # run('yum install -y python-pip')
-    # run('pip install --upgrade scipy')
+    print get_spark_master_host(), env.host_string
 
     text = "\nexport AWS_ACCESS_KEY_ID={} \nexport AWS_SECRET_ACCESS_KEY={}".format(environ['AWS_ACCESS_KEY_ID'], environ['AWS_SECRET_ACCESS_KEY'])
     append('/root/spark/conf/spark-env.sh', text)
@@ -108,8 +109,8 @@ def cluster_deploy():
     rsync_project(local_dir='engine scripts test', remote_dir='/root/sm/', exclude=['.*', '*.pyc'])
     run('cd /root/sm; zip -r engine.zip engine')
 
-
-def cluster_destroy(name):
+@task
+def cluster_terminate(name):
     print green('========= Destroying Spark cluster =========')
     cmd = '''{0}/ec2/spark-ec2 --key-pair=sm_spark_cluster --identity-file={1} \
 --region=eu-west-1 destroy {2}'''.format(environ['SPARK_HOME'], env['cluster_key_file'], name)
@@ -138,7 +139,7 @@ def platform_start(cluster_name, slaves=1, price=0.07, components=['webserver', 
 
     if 'cluster' in components:
         # execute(cluster_launch, name=cluster_name, slaves=slaves, price=price)
-        execute(cluster_start, name=cluster_name, slaves=slaves, price=price)
+        execute(cluster_launch, name=cluster_name, slaves=slaves, price=price)
 
     # deploy and configure
     if 'webserver' in components:
@@ -151,7 +152,7 @@ def platform_start(cluster_name, slaves=1, price=0.07, components=['webserver', 
 
 @task
 def platform_stop(cluster_name):
-    execute(cluster_destroy, name=cluster_name)
+    execute(cluster_terminate, name=cluster_name)
     execute(webserver_stop)
 
 
