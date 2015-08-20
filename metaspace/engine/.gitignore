@@ -6,4 +6,4 @@ docs/_templates
 *.pkl
 conf
 test/data
-data
+data/*
