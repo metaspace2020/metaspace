@@ -124,7 +124,7 @@ def avg_intensity_correlation(images, peak_intensities):
         return res
 
 
-def avg_dict_correlation(images):
+def avg_img_correlation(images):
     '''Average correlation between the first, monoisotopic image and all other images'''
     corrs = []
     for i in xrange(1, len(images)):

@@ -55,14 +55,14 @@ def main():
 
         total_nonzero = sum([len(x) for x in res_dicts])
         util.my_print("Got result of full dataset job %d with %d nonzero spectra" % (job_id, total_nonzero))
-        corr_images = [computing.avg_dict_correlation(res_dicts[i]) for i in xrange(len(res_dicts))]
+        corr_images = [computing.avg_img_correlation(res_dicts[i]) for i in xrange(len(res_dicts))]
         corr_int = [computing.avg_intensity_correlation(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts))]
-        chaos_measures = [
-            measure_of_chaos_dict(res_dicts[i][0], nrows, ncols)
-            if corr_int[i] > iso_corr_tol and corr_images[i] > iso_ratio_tol else 0 for i in xrange(len(res_dicts))]
+        chaos_measures = [measure_of_chaos_dict(res_dicts[i][0], nrows, ncols)
+                          if corr_int[i] > iso_corr_tol and corr_images[i] > iso_ratio_tol else 0
+                          for i in xrange(len(res_dicts))]
 
-        to_insert = [i for i in xrange(len(res_dicts)) if corr_int[i] > iso_corr_tol
-                     and corr_images[i] > iso_ratio_tol and chaos_measures[i] > measure_tol]
+        to_insert = [i for i in xrange(len(res_dicts))
+                     if corr_int[i] > iso_corr_tol and corr_images[i] > iso_ratio_tol and chaos_measures[i] > measure_tol]
 
         return ([formulas[i + offset][0] for i in to_insert],
                 [int(mzadducts[i + offset]) for i in to_insert],
@@ -72,8 +72,7 @@ def main():
                      "corr_int": corr_int[i],
                      "chaos": chaos_measures[i]
                  } for i in to_insert],
-                [res_dicts[i] for i in to_insert]
-                )
+                [res_dicts[i] for i in to_insert])
 
     args = parser.parse_args()
 
@@ -89,6 +88,7 @@ def main():
     num_chunks = 1 + len(q["data"]) / fulldataset_chunk_size
 
     conf = SparkConf()  # .setAppName("Extracting m/z images").setMaster("local") #.set("spark.executor.memory", "16g").set("spark.driver.memory", "8g")
+    # sc = SparkContext(conf=conf, master='local')
     sc = SparkContext(conf=conf)
 
     ff = sc.textFile(args.ds, minPartitions=10)
