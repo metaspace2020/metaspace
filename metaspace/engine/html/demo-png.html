@@ -140,7 +140,7 @@
             var url_params = dataset_id + '/'
                 + job_id + '/' + sf_id + '/' + sf;
             $("#ionimage_total").html(
-                '<img src="/mzimage2/' + url_params + '" width="100%">'
+                '<img src="/mzimage2/' + url_params + '" width="100%" id="img-total">'
             );
             // images per adduct and peak
             var col_w = Math.floor(12 / entropies.length);
@@ -173,13 +173,15 @@
                 var to_append = '<img src="' + urls[i] + '" width="95%">';
                 elem.append(to_append);
             }
-            $.getJSON('/mzimage_meta/' + url_params, function (json) {
-                var min_val = json["min"];
-                var max_val = json["max"];
-                var img_color = d3.scale.linear().domain(d3.range(
-                    min_val, max_val, (max_val - min_val) / colors.length
-                )).range( colors );
-                sin_render_colorbar_horiz('#ionimage_total_cb', [img_color, min_val, max_val]);
+            $("#img-total").load(function () {
+                $.getJSON('/mzimage_meta/' + url_params, function (json) {
+                    var min_val = json["min"];
+                    var max_val = json["max"];
+                    var img_color = d3.scale.linear().domain(d3.range(
+                        min_val, max_val, (max_val - min_val) / colors.length
+                    )).range( colors );
+                    sin_render_colorbar_horiz('#ionimage_total_cb', [img_color, min_val, max_val]);
+                });
             });
         }
 
@@ -365,16 +367,6 @@
       </div>
       <div class="col-md-4">
         <div class="container-fluid">
-          <!--
-          <div class="row">
-            <div class="col-sm-8" id="ionimage_total_div">
-                <div id="ionimage_total"></div>
-            </div>
-            <div class="col-sm-4">
-                <div id="ionimage_total_cb"></div>
-            </div>
-          </div>
-          -->
           <div class="row">
             <div id="ionimage_total"></div>
           </div>
