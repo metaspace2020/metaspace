@@ -8,6 +8,41 @@ computing.py
 	:members:
 	:noindex:
 
+computing_deprecated.py
+---------------------------
+
+.. automodule:: computing_deprecated
+	:members:
+	:noindex:
+
+imageentropy.py
+---------------
+
+.. automodule:: imageentropy
+	:members:
+	:noindex:
+
+imaging.py
+-------------
+
+.. automodule:: imaging
+	:members:
+	:noindex:
+
+imzml_to_txt.py
+---------------
+
+.. automodule:: imzml_to_txt
+	:members:
+	:noindex:
+
+isocalc.py
+-------------
+
+.. automodule:: isocalc
+	:members:
+	:noindex:
+
 metrics_db.py
 -------------
 
@@ -15,16 +50,16 @@ metrics_db.py
 	:members:
 	:noindex:
 
-chaos.py
--------------
+python_to_txt.py
+----------------
 
-.. automodule:: chaos
+.. automodule:: python_to_txt
 	:members:
 	:noindex:
 
-computing_deprecated.py
----------------------------
+util.py
+-------
 
-.. automodule:: computing_deprecated
+.. automodule:: util
 	:members:
 	:noindex:
