@@ -6,10 +6,15 @@
 Welcome to Spatial Metabolomics's documentation!
 ================================================
 
+Spatial Metabolomics provides computational biology tools that aim to reveal the spatial organisation of metabolomic processes. For more information about the project, check: http://www.embl.de/research/units/scb/alexandrov/ 
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
+
+   tutorial
+   code
 
 
 
