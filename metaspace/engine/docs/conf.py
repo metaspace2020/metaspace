@@ -22,7 +22,7 @@ import shlex
 #sys.path.insert(0, os.path.abspath('.'))
 
 
-sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('../../webserver'))
 sys.path.insert(0, os.path.abspath('../engine'))
 sys.path.insert(0, os.path.abspath('../engine/pyMS'))
 sys.path.insert(0, os.path.abspath('../engine/pyIMS'))

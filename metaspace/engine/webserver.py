@@ -33,7 +33,7 @@ import math
 import sys, os, glob
 
 ## get list of engine files
-engine_pyfiles =  ['computing.py', 'util.py', 'imaging.py', os.join('pyIMS', 'image_measures', 'level_sets_measure.py')]
+engine_pyfiles =  ['computing.py', 'util.py', 'imaging.py', path.join('pyIMS', 'image_measures', 'level_sets_measure.py')]
 
 from engine.util import *
 from engine.computing import *

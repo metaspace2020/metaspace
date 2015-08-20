@@ -15,9 +15,9 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
     :param parser: the parser to read the dataset
     :param data_file: the output text file for the spectral data
     :param coord_file: the text file for the coordinates. If omitted or None,
-    the coordinates will not be written
+    	the coordinates will not be written
     :param preprocess: apply filter and centroid detection to all spectra before
-    writing (rarely useful)
+    	writing (rarely useful)
     :param print_progress: whether or not to print progress information to stdout
     
     Returns the maximum x and maximum y coordinate found in the dataset.
