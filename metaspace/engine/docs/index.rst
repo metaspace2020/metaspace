@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Spatial Metabolomics's documentation!
+Welcome to Spatial Metabolomics documentation!
 ================================================
 
 Spatial Metabolomics provides computational biology tools that aim to reveal the spatial organisation of metabolomic processes. For more information about the project, check: http://www.embl.de/research/units/scb/alexandrov/ 
