@@ -2,7 +2,7 @@
 # -*- coding: utf8 -*
 """
 .. module:: handlers
-    :synopsis: Handlers for the webserver.
+	:synopsis: Handlers for the webserver.
 
 .. moduleauthor:: Sergey Nikolenko <snikolenko@gmail.com>
 """
@@ -20,6 +20,7 @@ from collections import defaultdict
 import operator
 import math
 import cStringIO
+import cProfile
 
 import tornado.ioloop
 import tornado.web
@@ -34,6 +35,7 @@ from globalvars import *
 from engine.computing import run_fulldataset, run_extractmzs
 from engine.metrics_db import get_fulldataset_query_data, process_res_extractmzs, process_res_fulldataset
 from engine.imaging import write_image
+from engine.isocalc import get_lists_of_mzs
 
 
 @gen.coroutine
@@ -342,7 +344,9 @@ class RunSparkHandler(tornado.web.RequestHandler):
 
 
 class NewPngHandler(tornado.web.RequestHandler):
-	'''A RequestHandler for producing pngs. Returns a single ion image for given dataset, formula, adduct and peak. Available at url /demo-png. Caches the res_dict until a request arrives that requires computing a different res_dict.'''
+	'''A RequestHandler for producing pngs. Returns a single ion image for given dataset, formula, adduct and peak. Available at url /demo-png. Caches the res_dict until a request arrives that requires computing a different res_dict.
+	
+	The min and max intensity is also cached for the colorbar. It is required that the client download the total ion image before requesting the colorbar, since the min and max values are computed during the image generation.'''
 	cache = {}
 	minmax_cache = {}
 
@@ -355,12 +359,8 @@ class NewPngHandler(tornado.web.RequestHandler):
 		request_as_tuple = (dataset_id, job_id, sf_id, sf)
 		request_as_tuple_long = (dataset_id, job_id, sf_id, sf, adduct, peak_id)
 		if self.request.uri.split('/')[1] == "mzimage_meta":
-			while not request_as_tuple_long in NewPngHandler.minmax_cache:
-				time.sleep(50)
-				my_print("Min and Max of %s not cached yet. Sleeping 50ms." % (request_as_tuple_long,))
 			min_val, max_val = NewPngHandler.minmax_cache[request_as_tuple_long]
 			self.write(json.dumps({"min":min_val, "max":max_val}))
-			# self.write('{ "message" : "Dummy json"}')
 			return
 		colormap = ((0x35, 0x2A, 0x87), (0x02, 0x68, 0xE1), (0x10, 0x8E, 0xD2), (0x0F, 0xAE, 0xB9), (0x65, 0xBE, 0x86), (0xC0, 0xBC, 0x60), (0xFF, 0xC3, 0x37), (0xF9, 0xFB, 0x0E))
 		bitdepth = 8
