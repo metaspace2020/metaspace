@@ -1,8 +1,0 @@
-{
-    "db": {
-        "host": "localhost",
-        "db": "ims",
-        "user": "snikolenko",
-        "password": "1234"
-    }
-}

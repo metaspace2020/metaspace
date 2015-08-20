@@ -1,5 +1,6 @@
-#!/home/snikolenko/anaconda/bin/python
+#!/usr/bin/python
 # -*- coding: utf8 -*
+
 """
 .. module:: webserver
     :synopsis: The main webserver file.
@@ -94,7 +95,7 @@ class Application(tornado.web.Application):
 		config_db = config["db"]
 		tornado.web.Application.__init__(self, torn_handlers, **settings)
 		# Have one global connection to the blog DB across all handlers
-		self.db = tornpsql.Connection(config_db['host'], config_db['db'], config_db['user'], config_db['password'], 5432)
+		self.db = tornpsql.Connection(config_db['host'], config_db['database'], config_db['user'], config_db['password'], 5432)
 		if args.spark:
 			self.conf = SparkConf().setMaster("local[2]").setAppName("IMS Webserver v0.2").set("spark.ui.showConsoleProgress", "false")
 			self.sc = SparkContext(conf=self.conf, pyFiles=[path.join(os.getcwd(), 'engine', x) for x in engine_pyfiles ])
@@ -171,12 +172,12 @@ def main():
 	global args, config
 
 	parser = argparse.ArgumentParser(description='IMS webserver.')
-	parser.add_argument('--no-spark', dest='spark', action='store_false')
+	parser.add_argument('--no-spark', dest='spark', action='store_true')
 	parser.add_argument('--config', dest='config', type=str, help='config file name')
 	parser.add_argument('--port', dest='port', type=int, help='port on which to access the web server')
 	parser.add_argument('--profile', dest='time_profiling_enabled', action='store_true')
 	parser.add_argument('--use-deprecated', dest='use_deprecated', action='store_true')
-	parser.set_defaults(spark=True, config='config.json', port=80, time_profiling_enabled=False, use_deprecated=False)
+	parser.set_defaults(spark=False, config='config.json', port=8080, time_profiling_enabled=False, use_deprecated=False)
 	args = parser.parse_args()
 	handlers.args = args
 

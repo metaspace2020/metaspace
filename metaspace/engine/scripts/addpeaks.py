@@ -19,7 +19,7 @@ def main():
     import sys, os
     engine_path = os.getcwd() + '/../'
     sys.path = sys.path + [engine_path]
-    import isocalc
+    from engine import isocalc
 
     config_db = dict(
                         host="/var/run/postgresql/",
@@ -28,7 +28,7 @@ def main():
                         password=""
                     )
     conn = psycopg2.connect("host='%s' dbname='%s' user='%s' password='%s'" % (
-        config_db["host"], config_db["db"], config_db["user"], config_db["password"]
+        config_db["host"], config_db["database"], config_db["user"], config_db["password"]
         ))
     cur = conn.cursor()
     cur.execute("SELECT id,sf FROM agg_formulas")
@@ -45,7 +45,9 @@ def main():
             mzints[(x[0], i)] = d["grad_int"]
 
     with open("mzpeaks.csv", "w") as outfile:
-        outfile.write("\n".join(["%s;%d;{%s};{%s}" % (k[0], k[1], ",".join(["%.4f" % x for x in mzpeaks[k]]), ",".join(["%.4f" % x for x in mzints[k]]) ) for k in mzpeaks if len(mzpeaks[k]) > 0 ]))
+        outfile.write("\n".join(["%s;%d;{%s};{%s}" %
+                                 (k[0], k[1], ",".join(["%.4f" % x for x in mzpeaks[k]]), ",".join(["%.4f" % x for x in mzints[k]]) )
+                                 for k in mzpeaks if len(mzpeaks[k]) > 0 ]))
 
 
 if __name__ == "__main__":
