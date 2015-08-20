@@ -14,6 +14,7 @@ var m_names_rod = new Array(" января ", " февраля ", " марта "
 var m_names_im = new Array("Январь ", "Февраль ", "Март ", "Апрель ", "Май ", "Июнь ", "Июль ", "Август ", "Сентябрь ", "Октябрь ", "Ноябрь ", "Декабрь ");
 
 function sin_render_colorbar_horiz(selector, myScale) {
+  $(selector).empty();
   var cb_svg = d3.select(selector).append("svg").attr("width", "100%").attr("height", "100%");
   var sel_wid = $(selector).width();
   var rects = cb_svg.selectAll("rect")
@@ -62,6 +63,7 @@ function sin_render_colorbar_horiz(selector, myScale) {
 }
 
 function sin_render_colorbar_vertical(selector, myScale) {
+  $(selector).empty();
   var cb_svg = d3.select(selector).append("svg").attr("width", "100%").attr("height", "100%");
   var sel_wid = $(selector).width();
   var sel_height = $(selector).height();
