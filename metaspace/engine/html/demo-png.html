@@ -90,6 +90,7 @@
         $(".fancybox").fancybox();
 
         function select_row(row_object) {
+            var t_start = performance.now();
             $(row_object).addClass('selected');
             var d = tbl_demo.row(row_object).data();
             console.log(d);
@@ -168,10 +169,17 @@
                     urls.push(url);
                 }
             }
+            var loaded_images = 0;
             for (var i = 0; i < urls.length; i++) {
                 var elem = $("#col-img-" + 0 + "-" + i.toString());
-                var to_append = '<img src="' + urls[i] + '" width="95%">';
+                var to_append = '<img src="' + urls[i] + '" width="95%" id="img-' + i.toString() + '">';
                 elem.append(to_append);
+                // callback for logging the elapsed time
+                $("#img-" + i.toString()).load(function () {
+                    if (++loaded_images == urls.length) {
+                        console.log((performance.now() - t_start).toFixed(2).toString() + "ms for images.");
+                    }
+                });
             }
             $("#img-total").load(function () {
                 $.getJSON('/mzimage_meta/' + url_params, function (json) {
