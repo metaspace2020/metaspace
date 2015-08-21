@@ -19,11 +19,12 @@ function sin_render_colorbar_horiz(selector, myScale) {
   var rects = cb_svg.selectAll("rect")
     .data(d3.range(myScale[1], myScale[2], Math.floor( (myScale[2] - myScale[1]) / 20) ) );
   var bar_wid = Math.floor( sel_wid / 20 );
+  var bar_height = 25;
   rects.enter()
     .append("rect")
     .attr({
       width: bar_wid,
-      height: 50,
+      height: bar_height,
       y: 0,
       x: function(d,i) {
         return i * bar_wid;
@@ -47,14 +48,55 @@ function sin_render_colorbar_horiz(selector, myScale) {
           return "middle";
         }
       },
-      y : 60,
+      y : bar_height + 10,
       x : function(d, i) {
         if (i == 0) {
           return 0;
         } else if (i == 2) {
-          return i * bar_wid * 10 + bar_wid - 1;
+          return i * bar_wid * 10 + bar_wid - 20;
         } else {
           return i * bar_wid * 10 + bar_wid / 2;
+        }
+      }
+    }).text(function(d, i) { return d.toFixed(2); } );
+}
+
+function sin_render_colorbar_vertical(selector, myScale) {
+  var cb_svg = d3.select(selector).append("svg").attr("width", "100%").attr("height", "100%");
+  var sel_wid = $(selector).width();
+  var sel_height = $(selector).height();
+  var rects = cb_svg.selectAll("rect")
+    .data(d3.range(myScale[1], myScale[2], Math.floor( (myScale[2] - myScale[1]) / 30) ) );
+  var bar_wid = 20;
+  var bar_height = Math.floor(sel_height / 30);
+  rects.enter()
+    .append("rect")
+    .attr({
+      width: bar_wid,
+      height: bar_height,
+      x: 0,
+      y: function(d,i) {
+        return sel_height - (i * bar_height);
+      },
+      fill: function(d,i) {
+        return myScale[0](d);
+      }
+    });
+    var tick_range = [myScale[2], (myScale[2] - myScale[1]) / 2, myScale[1]];
+    var ticks = cb_svg.selectAll("text").data( tick_range )
+    .enter()
+    .append("text")
+    .attr({
+      // width : 20, height : 10,
+      "font-size": "12px", fill : "black", 
+      x : bar_wid + 10,
+      y : function(d, i) {
+        if (i == 0) {
+          return 2 * bar_height;
+        } else if (i == 2) {
+          return sel_height - bar_height;
+        } else {
+          return sel_height / 2;
         }
       }
     }).text(function(d, i) { return d.toFixed(2); } );

@@ -10,10 +10,10 @@ from util import *
 
 def get_lists_of_mzs(sf):
 	try:
-		isotope_ms = pyisocalc.isodist(sf,plot=False,sigma=0.01,charges=-1,resolution=100000.0,do_centroid=False)
-		mzlist = list(isotope_ms.get_mzs())
-		intenslist = list(isotope_ms.get_intensities())
-		mzs_list, intensities_list, indices_list = gradient(isotope_ms.get_mzs(), isotope_ms.get_intensities(), max_output=-1, weighted_bins=0)
+		isotope_ms = pyisocalc.isodist(sf,plot=False,sigma=0.01,charges=1,resolution=200000.0,do_centroid=True)
+		mzlist = list(isotope_ms.mzs)
+		intenslist = list(isotope_ms.intensities)
+		mzs_list, intensities_list, indices_list = gradient(isotope_ms.mzs, isotope_ms.intensities, max_output=-1, weighted_bins=0)
 		indices_list = [i if intenslist[i] > intenslist[i+1] else i+1 for i in indices_list]
 		mzs_list = [mzlist[i] for i in indices_list]
 		intensities_list = [intenslist[i] for i in indices_list]
@@ -25,7 +25,9 @@ def get_lists_of_mzs(sf):
 			"grad_mzs"	  : list(mzs_list),
 			"grad_int"	  : list(intensities_list),
 			"grad_ind"	  : list(indices_list - min_i) }
-	except:
+	except Exception as e:
+		print e
+
 		return {
 			"isodist_mzs" : [],
 			"isodist_int" : [],
@@ -33,6 +35,4 @@ def get_lists_of_mzs(sf):
 			"grad_int"	  : [],
 			"grad_ind"	  : []
 		}
-
-
 

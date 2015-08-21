@@ -1,8 +1,0 @@
-{
-    "db": {
-        "host": "/var/run/postgresql/",
-        "db": "ims",
-        "user": "snikolenko",
-        "password": ""
-    }
-}
