@@ -5,6 +5,7 @@ import json
 import argparse
 import cPickle
 
+ppm = 1.0
 tol = 0.01
 adducts = ["H", "Na", "K"]
 
@@ -37,7 +38,7 @@ ids = [x[0] for x in formulas]
 mzadducts = [x[1] for x in formulas]
 mzpeaks = [x[2] for x in formulas]
 intensities = [x[3] for x in formulas]
-data = [[[float(x) - tol, float(x) + tol] for x in peaks] for peaks in mzpeaks]
+data = [[[float(x) - ppm*x/1e6, float(x) + ppm*x/1e6] for x in peaks] for peaks in mzpeaks]
 
 if len(data) <= 0:
     raise Exception('Empty database result set!')

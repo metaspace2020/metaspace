@@ -116,12 +116,13 @@ def avg_intensity_correlation(images, peak_intensities):
         # print "%s" % images
         return 0
     image_intensities = np.array([np.sum(img.values()) for img in images])
-    res = 1 - np.linalg.norm(abs(
-        peak_intensities / np.linalg.norm(peak_intensities) - image_intensities / np.linalg.norm(image_intensities)))
-    if np.isnan(res):
+    # res = 1 - np.linalg.norm(abs(
+    #     peak_intensities / np.linalg.norm(peak_intensities) - image_intensities / np.linalg.norm(image_intensities)))
+    corr = abs(np.corrcoef(image_intensities, peak_intensities)[0][1])
+    if np.isnan(corr):
         return 0
     else:
-        return res
+        return corr
 
 
 def avg_img_correlation(images):

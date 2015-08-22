@@ -11,13 +11,16 @@ from fabric.api import env
 from fabric.api import put, local, run
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
+import argparse
 
 
 class BlackboxPipelineTest:
-    def __init__(self, project_dir):
+    def __init__(self, project_dir, clear=False):
+        self._clear = clear
         self._project_dir = project_dir
         self._test_dataset_s3_dir = 's3://embl-sm-testing'
         self._input_fn = '20150730_ANB_spheroid_control_65x65_15um.zip'
+        self._base_fn = self._input_fn.split('.')[0]
         self._test_data_dir = join(project_dir, 'test/data')
         self._master_data_dir = '/root/sm/data'
         self._rows = 65
@@ -54,6 +57,12 @@ class BlackboxPipelineTest:
             return f.readline().strip('\n')
 
     def setup(self):
+        print "Setting up testing environment..."
+        if self._clear:
+            local('rm -r {}'.format(join(self._project_dir, 'data', self._base_fn)))
+        else:
+            local('rm {}'.format(join(self._project_dir, 'data', self._base_fn, 'AnnotationInsertStatus')))
+
         self._load_sf()
         self._collect_sf_ids()
 
@@ -62,7 +71,7 @@ class BlackboxPipelineTest:
         local('python {}/scripts/run_save_queries.py --out {} --config {}'.
               format(self._project_dir, join(self._test_data_dir, self._queries_fn), self._config_path))
 
-        queries = {}
+        # queries = {}
         with open(join(self._test_data_dir, self._queries_fn)) as f:
             queries = cPickle.load(f)
 
@@ -82,11 +91,13 @@ class BlackboxPipelineTest:
             remote_path=join(self._master_data_dir, self._test_queries_fn))
 
     def _run_pipeline(self):
+        print "Starting test pipeline..."
         cmd = 'python {}/scripts/sm_pipeline.py --s3-dir {} --input-fn {} --queries-fn {} --rows {} --cols {}'.format(
             self._project_dir, self._test_dataset_s3_dir, self._input_fn, self._test_queries_fn, self._rows, self._cols)
         local(cmd)
 
     def _compare_results(self):
+        print "Comparing test results..."
         sql = 'select max(id) from jobs'
         cur = self._run_query(sql)
         job_id = cur.fetchall()[0][0]
@@ -96,7 +107,7 @@ class BlackboxPipelineTest:
         cur = self._run_query(sql)
         res_df = pd.DataFrame([(sf, adduct, stats['chaos'], stats['corr_int'], stats['corr_images'])
                               for sf, adduct, stats in cur.fetchall()],
-                             columns=['sf', 'adduct', 'moc', 'spec', 'spat'])
+                              columns=['sf', 'adduct', 'moc', 'spec', 'spat'])
         res_df.drop_duplicates(inplace=True)
         res_df.to_csv(join(self._project_dir, 'test/data/result_sf_metrics.csv'), sep='\t', index=False)
 
@@ -108,12 +119,16 @@ class BlackboxPipelineTest:
         assert_frame_equal(res_df, ref_df)
 
     def test(self):
-        print "Starting test pipeline..."
         self._run_pipeline()
         self._compare_results()
 
 if __name__ == '__main__':
-    test = BlackboxPipelineTest('/home/ubuntu/sm')
+    parser = argparse.ArgumentParser(description='Add molecule peaks script')
+    parser.add_argument('--proj-dir', dest='proj_dir', type=str, help='Project dir path')
+    parser.add_argument('--clear', dest='clear', help='Clear all tmp results', action='store_true', default=False)
+    args = parser.parse_args()
+
+    test = BlackboxPipelineTest(args.proj_dir, clear=args.clear)
     # test = BlackboxPipelineTest('/home/intsco/embl/SpatialMetabolomics')
     test.setup()
     test.test()

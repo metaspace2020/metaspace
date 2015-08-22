@@ -4,7 +4,7 @@ __author__ = 'intsco'
 
 from fabric.api import run, local, env, hosts
 from fabric.colors import green
-from fabric.contrib.project import rsync_project
+from fabric.contrib.project import rsync_project, put
 from fabric.contrib.files import append
 from fabric.tasks import execute
 from fabric.context_managers import cd
@@ -13,8 +13,6 @@ import json
 from os import environ
 from time import sleep
 from os.path import dirname, realpath, join
-
-from test.blackbox_pipeline_test import BlackboxPipelineTest
 
 conf_path = 'conf/fabric.json'
 with open(conf_path) as f:
@@ -55,8 +53,9 @@ def webserver_stop():
 def webserver_deploy():
     print green('========= Code deployment to SM webserver =========')
 
-    rsync_project(remote_dir='/home/ubuntu', exclude=['.*', '*.pyc'])
-    # run('mkdir -p /home/ubuntu/sm/data')
+    rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'conf', 'data'])
+    for conf_file in ['conf/config.json', 'conf/luigi.cfg', 'conf/luigi_log.cfg']:
+        put(local_path=conf_file, remote_path='/home/ubuntu/sm/conf/')
 
 
 # @hosts(get_webserver_host())
