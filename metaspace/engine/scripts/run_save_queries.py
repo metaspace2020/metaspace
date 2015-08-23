@@ -6,7 +6,7 @@ import argparse
 import cPickle
 
 ppm = 1.0
-tol = 0.01
+# tol = 0.01
 adducts = ["H", "Na", "K"]
 
 import sys
@@ -24,15 +24,20 @@ parser.set_defaults(config='config.json', fname='queries.pkl')
 args = parser.parse_args()
 
 with open(args.config) as f:
-    config = json.load(f)['db']
+    config_db = json.load(f)['db']
 
 my_print("Reading formulas from DB...")
 
-conn = psycopg2.connect("dbname=%s user=%s password=%s host=%s" % (
-config['database'], config['user'], config['password'], config['host']))
+conn = psycopg2.connect(**config_db)
 cur = conn.cursor()
 
-cur.execute("SELECT sf_id as id, adduct, peaks, ints FROM mz_peaks")
+# import pandas as pd
+# ref_sf_adduct_df = pd.read_csv('/home/intsco/embl/SpatialMetabolomics/sm/data/ref_sf_adduct.csv')
+# sf_adduct_filter = set(map(tuple, ref_sf_adduct_df.values))
+
+sql = 'SELECT sf_id as id, adduct, peaks, ints FROM mz_peaks'
+cur.execute(sql)
+# formulas = filter(lambda row: (row[0], row[1]) in sf_adduct_filter, cur.fetchall())
 formulas = cur.fetchall()
 ids = [x[0] for x in formulas]
 mzadducts = [x[1] for x in formulas]
@@ -41,7 +46,7 @@ intensities = [x[3] for x in formulas]
 data = [[[float(x) - ppm*x/1e6, float(x) + ppm*x/1e6] for x in peaks] for peaks in mzpeaks]
 
 if len(data) <= 0:
-    raise Exception('Empty database result set!')
+    raise Exception('{} returned empty result set'.format(sql))
 else:
     print 'Fetched {} formulas from DB'.format(len(data))
 

@@ -24,14 +24,16 @@ CREATE TABLE agg_formulas (
 	subst_ids 	text[],
 	names 		text[]
 );
-\COPY agg_formulas FROM '/home/snikolenko/soft/ims/webserver/agg_formulas.csv';
+--\COPY agg_formulas FROM '/home/snikolenko/soft/ims/webserver/agg_formulas.csv';
 -- \COPY agg_formulas FROM '/home/snikolenko/soft/ims/data/dump15072015/agg_formulas.csv' WITH delimiter ';' csv;
--- INSERT INTO agg_formulas (sf, db_ids, subst_ids, names) 
--- 	SELECT sf,array_agg(db_id) as db_ids,array_agg(id) as subst_ids,array_agg(name) as names
--- 	FROM formulas
--- 	GROUP BY sf
--- ;
+INSERT INTO agg_formulas (sf, db_ids, subst_ids, names)
+	SELECT sf_id, sf,array_agg(db_id) as db_ids,array_agg(id) as subst_ids,array_agg(name) as names
+	FROM formulas
+	GROUP BY sf, sf_id
+;
 CREATE INDEX ind_agg_formulas_1 ON agg_formulas (sf);
+CREATE INDEX ind_agg_formulas_2 ON agg_formulas (id);
+CREATE INDEX ind_agg_formulas_3 ON agg_formulas (id, sf);
 
 DROP TABLE IF EXISTS datasets;
 CREATE TABLE datasets (

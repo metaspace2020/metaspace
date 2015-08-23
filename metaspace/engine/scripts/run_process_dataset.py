@@ -92,7 +92,7 @@ def main():
     util.my_print("Looking for %d peaks" % sum([len(x) for x in q["data"]]))
     num_chunks = 1 + len(q["data"]) / fulldataset_chunk_size
 
-    conf = SparkConf()  # .setAppName("Extracting m/z images").setMaster("local") #.set("spark.executor.memory", "16g").set("spark.driver.memory", "8g")
+    conf = SparkConf().set('spark.python.profile', True)
     # sc = SparkContext(conf=conf, master='local')
     sc = SparkContext(conf=conf)
 
@@ -114,10 +114,10 @@ def main():
         mol_mz_intervals = q["data"][fulldataset_chunk_size * i:fulldataset_chunk_size * (i + 1)]
         qres = (spectra.map(lambda sp: computing.process_spectrum_multiple_queries(mol_mz_intervals, sp))
                 .reduce(computing.reduce_manygroups2d_dict_individual))
-        # entropies = [ [ get_block_entropy_dict(x, args.rows, args.cols) for x in one_result ] for one_result in qres ]
-        # entropies = [[0 for x in one_result] for one_result in qres]
+
         cur_results = get_full_dataset_results(qres, q["formulas"], q["mzadducts"], q["intensities"],
                                                args.rows, args.cols, args.job_id, fulldataset_chunk_size * i)
+
         res["formulas"].extend([n + fulldataset_chunk_size * i for n in cur_results[0]])
         res["mzadducts"].extend(cur_results[1])
         res["lengths"].extend(cur_results[2])

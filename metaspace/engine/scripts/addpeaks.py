@@ -27,6 +27,8 @@ from fabric.api import local
 def main():
     parser = argparse.ArgumentParser(description='Add molecule peaks script')
     parser.add_argument('--config', dest='config_path', type=str, help='config file path')
+    parser.add_argument('--out', dest='out_file_path', type=str, help='out file path')
+    parser.set_defaults(out_file_path='mz_peaks.csv')
     args = parser.parse_args()
 
     with open(args.config_path) as f:
@@ -39,53 +41,34 @@ def main():
 
         adducts = ["H", "Na", "K"]
 
-        # mzpeaks = {}
-        # mzints = {}
-        # peaks = {}
         i = 0
-        out_fn = 'mz_peaks.csv'
-        with open(out_fn, 'w') as out_file:
+        with open(args.out_file_path, 'w') as out_file:
             for id, sf in curs.fetchall():
                 for add_id, _ in enumerate(adducts):
-                    iso_dict = isocalc.get_lists_of_mzs(sf + adducts[add_id])
-                    # mzpeaks[(id, i)] = d["grad_mzs"]
-                    # mzints[(id, i)] = d["grad_int"]
-                    # peaks[(id, add_id)] = (d['grad_mzs'], d['grad_int'])
+                    iso_dict = isocalc.get_iso_mzs(sf + adducts[add_id])
 
                     out_file.write('%s\t%d\t{%s}\t{%s}\n' % (
                         id, add_id,
-                        ','.join(map(lambda x: '{:.4f}'.format(x), iso_dict['grad_mzs'])),
-                        ','.join(map(lambda x: '{:.4f}'.format(x), iso_dict['grad_ints']))
+                        ','.join(map(lambda x: '{:.4f}'.format(x), iso_dict['centr_mzs'])),
+                        ','.join(map(lambda x: '{:.4f}'.format(x), iso_dict['centr_ints']))
                     ))
 
                 i += 1
                 if i % 100 == 0:
                     print 'Saved peaks for {} formulas'.format(i)
-        print 'Saved all formula peaks to {}'.format(out_fn)
+        print 'Saved all formula peaks to {}'.format(args.out_file_path)
 
     print 'Importing peaks to the database...'
-    with conn.cursor() as curs:
+    with conn.cursor() as curs, open(args.out_file_path) as mzfile:
         curs.execute('truncate mz_peaks;')
+        curs.copy_from(mzfile, 'mz_peaks')
 
-    local(''' psql -h {} -U {} {} -c "\copy mz_peaks from '{}/{}'" '''.format(
-        config_db['host'], config_db['user'], config_db['database'], dirname(realpath(__file__)), out_fn
-    ))
-
+    # local('''PGPASSWORD={} psql -h {} -U {} {} -c "\copy mz_peaks from '{}'" '''.format(
+    #     config_db['password'], config_db['host'], config_db['user'], config_db['database'], args.out_file_path
+    # ))
+    conn.commit()
     conn.close()
     print 'Finished'
-
-    # print 'Saving molecule peaks to {} file...'.format(out_fn)
-    # with open(out_fn, 'w') as outfile:
-    #     for (id, add_id), (mzs, ints) in peaks.iteritems():
-    #         outfile.write('{};{};{};{}\n'.format(
-    #             id, add_id,
-    #             ','.join(map(lambda x: '{.4f}'.format(x), mzs)),
-    #             ','.join(map(lambda x: '{.4f}'.format(x), ints))
-    #         ))
-
-        # outfile.write("\n".join(["%s;%d;{%s};{%s}" %
-        #                          (k[0], k[1], ",".join(["%.4f" % x for x in mzpeaks[k]]), ",".join(["%.4f" % x for x in mzints[k]]) )
-        #                          for k in mzpeaks if len(mzpeaks[k]) > 0 ]))
 
 
 if __name__ == "__main__":

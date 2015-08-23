@@ -51,10 +51,10 @@ def process_spectrum_multiple_queries(mol_mz_intervals, sp):
 
 def process_spectrum_onequery(mz_intervals, sp):
     '''Run one set of queries on a spectrum.'''
-    return [get_one_group_total_dict(sp[0], mz_int[0], mz_int[1], sp[1], sp[2]) for mz_int in mz_intervals]
+    return [get_sp_peak_int(sp[0], mz_int[0], mz_int[1], sp[1], sp[2]) for mz_int in mz_intervals]
 
 
-def get_one_group_total_dict(name, mz_lower, mz_upper, mzs, intensities):
+def get_sp_peak_int(name, mz_lower, mz_upper, mzs, intensities):
     '''Get a single query datapoint as a dictionary.
 
 	:param name: key for the resulting dictionary
@@ -76,7 +76,7 @@ def get_one_group_total_dict(name, mz_lower, mz_upper, mzs, intensities):
 def get_many_groups_total_dict_individual(queries, sp):
     '''Run one set of queries on a spectrum and return result as a dictionary.'''
     res = dict(
-        (k, [get_one_group_total_dict(sp[0], q[0], q[1], sp[1], sp[2]) for q in v]) for k, v in queries.iteritems())
+        (k, [get_sp_peak_int(sp[0], q[0], q[1], sp[1], sp[2]) for q in v]) for k, v in queries.iteritems())
     return res
 
 
@@ -141,3 +141,6 @@ def avg_img_correlation(images):
         return 0
     else:
         return res
+
+if __name__ == '__main__':
+    pass
