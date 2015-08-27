@@ -6,7 +6,6 @@ import sys
 from pyimzml.ImzMLParser import ImzMLParser
 import numpy as np
 
-
 def encode_data_line(index, mz_list, int_list, decimals=3):
     '''
     Encodes given spectrum into a line in Sergey's text-based format:
@@ -15,8 +14,8 @@ def encode_data_line(index, mz_list, int_list, decimals=3):
     if not isinstance(index,int):
         raise TypeError("index must be integer")
     idx_string = str(index)
-    mz_list = [round(x, decimals) for x in mz_list]
-    int_list = [round(x, decimals) for x in int_list]
+    mz_list = mz_list.round(decimals)
+    int_list = int_list.round(decimals)
     mz_string = to_space_separated_string(mz_list)
     int_string = to_space_separated_string(int_list)
     return "%s|%s|%s" % (idx_string, mz_string, int_string)
@@ -33,8 +32,7 @@ def encode_coord_line(index, x, y):
 
 
 def to_space_separated_string(seq):
-    return reduce(lambda a,b: "%s %s" % (a,b), seq)
-
+    return ' '.join(map(str, seq.tolist()))
 
 def do_write(parser, data_file, coord_file=None, preprocess=False, print_progress=False):
     """
