@@ -24,7 +24,12 @@ with open(conf_path) as f:
 
 
 def get_spark_master_host():
-    return ['root@' + open('conf/SPARK_MASTER').readline().strip('\n')]
+    try:
+        with open('conf/SPARK_MASTER') as f:
+            return ['root@' + f.readline().strip('\n')]
+    except Exception as e:
+        print e
+        return 'localhost'
 
 
 def get_webserver_host():
@@ -53,9 +58,10 @@ def webserver_stop():
 def webserver_deploy():
     print green('========= Code deployment to SM webserver =========')
 
-    rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'conf', 'data'])
-    for conf_file in ['conf/config.json', 'conf/luigi.cfg', 'conf/luigi_log.cfg']:
-        put(local_path=conf_file, remote_path='/home/ubuntu/sm/conf/')
+    rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'data'])
+    rsync_project(local_dir='test/data/', remote_dir='/home/ubuntu/sm/test/data/', exclude=['tmp'])
+    # for conf_file in ['conf/config.json', 'conf/luigi.cfg', 'conf/luigi_log.cfg']:
+    #     put(local_path=conf_file, remote_path='/home/ubuntu/sm/conf/')
 
 
 # @hosts(get_webserver_host())
@@ -63,9 +69,8 @@ def webserver_deploy():
 #     run('export LUIGI_CONFIG_PATH=/home/ubuntu/sm/webserver/conf/luigi_log.cfg')
 
 def get_aws_instance_info(name):
-    out = local('aws ec2 describe-instances --filter "Name=tag:Name,Values={}-master-*"\
-                "Name=instance-state-name,Values=running"'.format(name),
-                capture=True)
+    out = local('aws ec2 describe-instances\
+    --filter "Name=tag:Name,Values={}-master-*" "Name=instance-state-name,Values=running" '.format(name), capture=True)
     return json.loads(out.stdout)
 
 
@@ -79,7 +84,7 @@ def run_spark_ec2_script(command, cluster_name, slaves=1, price=0.07):
 @task
 def cluster_launch(name, slaves=1, price=0.07):
     print green('========= Launching Spark cluster =========')
-    local('rm conf/SPARK_MASTER')
+    # local('rm conf/SPARK_MASTER')
 
     run_spark_ec2_script('launch', name, slaves=slaves, price=price)
 
@@ -94,7 +99,8 @@ def cluster_launch(name, slaves=1, price=0.07):
 @task
 def cluster_config():
     print green('========= Configuring Spark cluster =========')
-    print get_spark_master_host(), env.host_string
+    print get_spark_master_host()
+    print env.host_string
 
     text = "\nexport AWS_ACCESS_KEY_ID={} \nexport AWS_SECRET_ACCESS_KEY={}".format(environ['AWS_ACCESS_KEY_ID'], environ['AWS_SECRET_ACCESS_KEY'])
     append('/root/spark/conf/spark-env.sh', text)
@@ -105,7 +111,7 @@ def cluster_config():
 def cluster_deploy():
     print green('========= Code deployment to Spark cluster =========')
     run('mkdir -p /root/sm/data')
-    rsync_project(local_dir='engine scripts test', remote_dir='/root/sm/', exclude=['.*', '*.pyc'])
+    rsync_project(local_dir='engine scripts test', remote_dir='/root/sm/', exclude=['.*', '*.pyc', 'test'])
     run('cd /root/sm; zip -r engine.zip engine')
 
 @task

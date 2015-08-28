@@ -85,7 +85,7 @@ def txt_to_spectrum(s):
 	:samp:`id|mz1 mz2 ... mzN|int1 int2 ... intN`
 	to a spectrum in the form of two arrays: array of m/z values and array of intensities.'''
     arr = s.strip().split("|")
-    return (arr[0], np.array([float(x) for x in arr[2].split(" ")]), np.array([float(x) for x in arr[1].split(" ")]))
+    return (arr[0], np.array([float(x) for x in arr[1].split(" ")]), np.array([float(x) for x in arr[2].split(" ")]))
 
 
 def reduce_manygroups2d_dict(xarray, yarray):

@@ -49,24 +49,24 @@ def main():
 
     def get_full_dataset_results(res_dicts, formulas, mzadducts, intensities, nrows, ncols, job_id=0,
                                  offset=0):
-        iso_corr_tol = 0.5
-        iso_ratio_tol = 0.85
-        measure_tol = 0.99
+        iso_spec_corr_tol = 0.5
+        iso_img_corr_tol = 0.85
+        measure_of_chaos_tol = 0.99
         # n = 100
         # iso_corr_tol = 0.5 / n
         # iso_ratio_tol = 0.85 / n
         # measure_tol = 0.99 / n
 
         total_nonzero = sum([len(x) for x in res_dicts])
-        util.my_print("Got result of full dataset job %d with %d nonzero spectra" % (job_id, total_nonzero))
+        util.my_print("Got result of full dataset job %d with %d nonzero centroid intensities" % (job_id, total_nonzero))
         corr_images = [computing.avg_img_correlation(res_dicts[i]) for i in xrange(len(res_dicts))]
         corr_int = [computing.avg_intensity_correlation(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts))]
         chaos_measures = [1 - measure_of_chaos_dict(res_dicts[i][0], nrows, ncols)
-                          if corr_int[i] > iso_corr_tol and corr_images[i] > iso_ratio_tol else 0
+                          if corr_int[i] > iso_spec_corr_tol and corr_images[i] > iso_img_corr_tol else 0
                           for i in xrange(len(res_dicts))]
 
         to_insert = [i for i in xrange(len(res_dicts))
-                     if corr_int[i] > iso_corr_tol and corr_images[i] > iso_ratio_tol and chaos_measures[i] > measure_tol]
+                     if corr_int[i] > iso_spec_corr_tol and corr_images[i] > iso_img_corr_tol and chaos_measures[i] > measure_of_chaos_tol]
         util.my_print('{} sum formula results to insert'.format(len(to_insert)))
 
         return ([formulas[i + offset][0] for i in to_insert],

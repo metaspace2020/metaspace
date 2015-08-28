@@ -18,13 +18,13 @@ class PipelineContext(object):
 
     cluster_key_file = luigi.Parameter('/home/ubuntu/.ssh/sm_spark_cluster.pem')
     cluster_user = luigi.Parameter('root')
-    _spark_master_host = luigi.Parameter('')
+    # _spark_master_host = luigi.Parameter('')
 
     project_dir = '/home/ubuntu/sm'
     base_data_dir = luigi.Parameter('/home/ubuntu/sm/data')
     data_dir = luigi.Parameter('/')
-    master_base_data_dir = luigi.Parameter('/root/sm/data')
-    master_data_dir = luigi.Parameter('/')
+    # master_base_data_dir = luigi.Parameter('/root/sm/data')
+    master_data_dir = luigi.Parameter('/root/sm/data')
     s3_dir = luigi.Parameter()
     input_fn = luigi.Parameter()
     base_fn = luigi.Parameter('')
@@ -58,8 +58,8 @@ class PipelineContext(object):
     def context(self):
         return {'base_data_dir': self.base_data_dir,
                 'data_dir': join(self.base_data_dir, self.input_fn.split('.')[0]),
-                'master_base_data_dir': self.master_base_data_dir,
-                'master_data_dir': self.master_base_data_dir,
+                # 'master_base_data_dir': self.master_base_data_dir,
+                'master_data_dir': self.master_data_dir,
                 's3_dir': self.s3_dir,
                 'input_fn': self.input_fn,
                 'base_fn': self.input_fn.split('.')[0],
@@ -225,4 +225,5 @@ if __name__ == '__main__':
     # cmd_args = ["--local-scheduler"]
     luigi.run(main_task_cls=RunPipeline)
 
-# ssh -t sm-webserver "cd ~/sm/scripts; python sm_pipeline.py --logging-conf-file luigi_log.cfg --s3-dir s3://embl-intsco-sm-test --fn Example_Processed.zip --local-data-dir /home/ubuntu/sm/data/test1 --rows 3 --cols 3"
+# python sm_pipeline.py --logging-conf-file luigi_log.cfg --s3-dir s3://embl-intsco-sm-test
+# --fn Example_Processed.zip --local-data-dir /home/ubuntu/sm/data/test1 --rows 3 --cols 3"

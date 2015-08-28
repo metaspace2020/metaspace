@@ -59,18 +59,18 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
     if preprocess:
         import scipy.signal as signal
         from engine.pyMS.centroid_detection import gradient
-    max_x, max_y = 0,0
+    max_x, max_y = 0, 0
     print("Starting conversion...")
     n_pixels = len(parser.coordinates)
     step = max(n_pixels/100, 100)
-    for i,(x,y) in enumerate(parser.coordinates):
+    for i, (x, y) in enumerate(parser.coordinates):
         mz_arr, int_arr = parser.getspectrum(i)
         if preprocess:
             int_arr = signal.savgol_filter(int_arr, 5, 2)
             mz_arr, int_arr,_ = gradient(np.asarray(mz_arr), np.asarray(int_arr), max_output=-1, weighted_bins=3)
-        data_file.write(encode_data_line(i, int_arr, mz_arr) + '\n')
+        data_file.write(encode_data_line(i, mz_arr, int_arr) + '\n')
         if coord_file:
-            coord_file.write(encode_coord_line(i,x,y) + '\n')
+            coord_file.write(encode_coord_line(i, x, y) + '\n')
         max_x = max(max_x, x)
         max_y = max(max_y, y)
         if i % step == 0 and print_progress:
@@ -83,6 +83,7 @@ if __name__=="__main__":
         imzml_fn = sys.argv[1]
         data_fp = open(sys.argv[2], 'w')
         coord_fp = open(sys.argv[3], 'w') if len(sys.argv) > 3 else None
-        do_write(ImzMLParser(imzml_fn), data_fp, coord_fp, preprocess=True, print_progress=True)
+        # TO-DO: add script parameter - preprocess
+        do_write(ImzMLParser(imzml_fn), data_fp, coord_fp, preprocess=False, print_progress=True)
     except IndexError:
         print """\nUsage: imzml_to_txt.py <input file> <data output file> [<coordinate output file]"""
