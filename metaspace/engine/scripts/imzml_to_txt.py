@@ -66,6 +66,9 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
         if preprocess:
             int_arr = signal.savgol_filter(int_arr, 5, 2)
             mz_arr, int_arr,_ = gradient(np.asarray(mz_arr), np.asarray(int_arr), max_output=-1, weighted_bins=3)
+            order = mz_arr.argsort()
+            mz_arr = mz_arr[order]
+            int_arr = int_arr[order]
         data_file.write(encode_data_line(i, mz_arr, int_arr) + '\n')
         if coord_file:
             coord_file.write(encode_coord_line(i, x, y) + '\n')
