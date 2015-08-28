@@ -3,6 +3,7 @@
     :synopsis: Script for processing a dataset.
 
 .. moduleauthor:: Sergey Nikolenko <snikolenko@gmail.com>
+.. moduleauthor:: Artem Tarasov <lomereiter@gmail.com>
 """
 
 # import numpy as np
@@ -44,7 +45,8 @@ def main():
     fulldataset_chunk_size = 1000
 
     from engine import util
-    from engine import computing
+    from engine import computing_fast
+    from engine.computing import avg_img_correlation, avg_intensity_correlation
     from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos_dict
 
     def get_full_dataset_results(res_dicts, formulas, mzadducts, intensities, nrows, ncols, job_id=0,
@@ -59,8 +61,8 @@ def main():
 
         total_nonzero = sum([len(x) for x in res_dicts])
         util.my_print("Got result of full dataset job %d with %d nonzero centroid intensities" % (job_id, total_nonzero))
-        corr_images = [computing.avg_img_correlation(res_dicts[i]) for i in xrange(len(res_dicts))]
-        corr_int = [computing.avg_intensity_correlation(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts))]
+        corr_images = [avg_img_correlation(res_dicts[i]) for i in xrange(len(res_dicts))]
+        corr_int = [avg_intensity_correlation(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts))]
         chaos_measures = [1 - measure_of_chaos_dict(res_dicts[i][0], nrows, ncols)
                           if corr_int[i] > iso_spec_corr_tol and corr_images[i] > iso_img_corr_tol else 0
                           for i in xrange(len(res_dicts))]
@@ -97,7 +99,7 @@ def main():
     sc = SparkContext(conf=conf)
 
     ff = sc.textFile(args.ds, minPartitions=10)
-    spectra = ff.map(computing.txt_to_spectrum)
+    spectra = ff.map(computing_fast.txt_to_spectrum)
     spectra.cache()
 
     res = {
@@ -112,9 +114,11 @@ def main():
         util.my_print("Processing chunk %d..." % i)
 
         mol_mz_intervals = q["data"][fulldataset_chunk_size * i:fulldataset_chunk_size * (i + 1)]
-        qres = (spectra.map(lambda sp: computing.process_spectrum_multiple_queries(mol_mz_intervals, sp))
-                .reduce(computing.reduce_manygroups2d_dict_individual))
 
+        qres = computing_fast.process_data(spectra, mol_mz_intervals)
+
+        # entropies = [ [ get_block_entropy_dict(x, args.rows, args.cols) for x in one_result ] for one_result in qres ]
+        # entropies = [[0 for x in one_result] for one_result in qres]
         cur_results = get_full_dataset_results(qres, q["formulas"], q["mzadducts"], q["intensities"],
                                                args.rows, args.cols, args.job_id, fulldataset_chunk_size * i)
 
