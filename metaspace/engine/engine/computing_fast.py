@@ -9,11 +9,11 @@ import numpy as np
 
 def txt_to_spectrum(s):
     '''Converts a text string in the format
-	:samp:`id|int1 int2 ... intN|mz1 mz2 ... mzN`
+	:samp:`id|mz1 mz2 ... mzN|int1 int2 ... intN`
 	to a spectrum in the form of two arrays: array of m/z values and array of partial sums of intensities.'''
     arr = s.strip().split("|")
-    intensities = np.fromstring("0 " + arr[1], sep=' ')
-    return (int(arr[0]), np.fromstring(arr[2], sep=' '), np.cumsum(intensities))
+    intensities = np.fromstring("0 " + arr[2], sep=' ')
+    return (int(arr[0]), np.fromstring(arr[1], sep=' '), np.cumsum(intensities))
 
 def process_spectrum_multiple_queries(mol_mz_intervals, sp):
     '''Run multiple queries on a spectrum.
