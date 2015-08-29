@@ -3,7 +3,7 @@ __author__ = 'intsco'
 import unittest
 from os.path import join, realpath, dirname
 import cPickle
-from engine.computing import avg_intensity_correlation, avg_img_correlation
+from engine.computing import *
 from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos_dict
 
 
@@ -21,20 +21,18 @@ class IsotopeMetricsTest(unittest.TestCase):
         self.interp = True
 
         with open(self.path) as f:
-            self.sf, self.adduct, self.imgs, self.iso_centr = cPickle.load(f)
+            self.sf, self.adduct, self.imgs, self.theor_iso_ints = cPickle.load(f)
 
-    def test_avg_intens_corr(self):
-        self.assertAlmostEqual(avg_intensity_correlation(self.imgs, self.iso_centr), 0.996819266322, places=self.dec_places)
+    def test_iso_pattern_match(self):
+        self.assertAlmostEqual(iso_pattern_match(self.imgs, self.theor_iso_ints), 0.996819266322, places=self.dec_places)
 
     def test_avg_img_corr(self):
-        self.assertAlmostEqual(avg_img_correlation(self.imgs), 0.989614474795, places=self.dec_places)
+        self.assertAlmostEqual(iso_img_correlation(self.imgs, theor_iso_ints=self.theor_iso_ints), 0.989614474795, places=self.dec_places)
 
-    # TO-DO; 
+    # TO-DO: provide reference value computed with a different peace of code (not pyIMS.image_measures.level_sets_measure)
     def test_level_sets_measure(self):
         moc = 1 - measure_of_chaos_dict(self.imgs[0], self.rows, self.cols, nlevels=self.nlevels, interp=self.interp, q_val=self.qval)
         self.assertAlmostEqual(moc, 0.9922743055555555, places=self.dec_places)
-
-#(0.9922743055555555, 0.98961447479461062, 0.99681926632222428)
 
 if __name__ == '__main__':
     unittest.main()

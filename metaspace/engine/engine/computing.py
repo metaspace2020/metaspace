@@ -108,39 +108,42 @@ def reduce_manygroups2d_dict_individual(xarray, yarray):
     return [[join_dicts(xarray[j][i], yarray[j][i]) for i in xrange(len(xarray[j]))] for j in xrange(len(xarray))]
 
 
-def avg_intensity_correlation(images, peak_intensities):
-    '''Correlation between peak intensities and images intensities'''
-    if len(images) != len(peak_intensities):
-        # print "Length mismatch"
-        # print "%s" % peak_intensities
-        # print "%s" % images
+def iso_pattern_match(images, theor_iso_ints):
+    '''Match between theor isotope intensities and images intensities'''
+    if len(images) != len(theor_iso_ints):
         return 0
     image_intensities = np.array([np.sum(img.values()) for img in images])
-    # res = 1 - np.linalg.norm(abs(
-    #     peak_intensities / np.linalg.norm(peak_intensities) - image_intensities / np.linalg.norm(image_intensities)))
-    corr = abs(np.corrcoef(image_intensities, peak_intensities)[0][1])
-    if np.isnan(corr):
+    ints_match = 1 - np.mean(abs(theor_iso_ints/np.linalg.norm(theor_iso_ints) - image_intensities/np.linalg.norm(image_intensities)))
+    if np.isnan(ints_match):
         return 0
     else:
-        return corr
+        return ints_match
 
 
-def avg_img_correlation(images):
-    '''Average correlation between the first, monoisotopic image and all other images'''
-    corrs = []
-    for i in xrange(1, len(images)):
-        commonkeys = [k for k in images[i] if k in images[0]]
-        if len(commonkeys) > 0:
-            corrs.append(
-                np.corrcoef(np.array([images[i][k] for k in commonkeys]), np.array([images[0][k] for k in commonkeys]))[
-                    0][1])
-        else:
-            corrs.append(0)
-    res = np.mean(corrs)
-    if np.isnan(res):
+def iso_img_correlation(images, theor_iso_ints=[]):
+    '''Average correlation between the first monoisotopic image and all other images'''
+    img_arrays = []
+    for i, img in enumerate(images):
+        maxInd = max(img.keys())
+        img_arrays.append(np.array([img.get(ind, 0) for ind in range(maxInd+1)]))
+
+    if len(theor_iso_ints):
+        iso_correlation = np.average(np.corrcoef(img_arrays)[1:,0], weights=theor_iso_ints[1:])
+    else:
+        iso_correlation = np.average(np.corrcoef(img_arrays)[1:,0])
+
+    if np.isnan(iso_correlation):
         return 0
     else:
-        return res
+        return iso_correlation
+
 
 if __name__ == '__main__':
     pass
+
+
+
+
+
+
+

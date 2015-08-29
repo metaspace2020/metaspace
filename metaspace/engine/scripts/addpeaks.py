@@ -45,7 +45,7 @@ def main():
         with open(args.out_file_path, 'w') as out_file:
             for id, sf in curs.fetchall():
                 for add_id, _ in enumerate(adducts):
-                    iso_dict = isocalc.get_iso_mzs(sf + adducts[add_id])
+                    iso_dict = isocalc.get_iso_peaks(sf + adducts[add_id])
 
                     out_file.write('%s\t%d\t{%s}\t{%s}\n' % (
                         id, add_id,

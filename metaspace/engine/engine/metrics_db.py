@@ -52,8 +52,8 @@ def get_full_dataset_results(res_dicts, formulas, mzadducts, intensities, nrows,
 	'''
 	total_nonzero = sum([len(x) for x in res_dicts])
 	my_print("Got result of full dataset job %d with %d nonzero spectra" % (job_id, total_nonzero))
-	corr_images = [ avg_img_correlation(res_dicts[i]) for i in xrange(len(res_dicts)) ]
-	corr_int = [ avg_intensity_correlation(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts)) ]
+	corr_images = [ iso_img_correlation(res_dicts[i]) for i in xrange(len(res_dicts)) ]
+	corr_int = [ iso_pattern_match(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts)) ]
 	to_insert = [ i for i in xrange(len(res_dicts)) if corr_int[i] > 0.3 and corr_images[i] > 0.3 ]
 	chaos_measures = [ measure_of_chaos_dict(res_dicts[i][0], nrows, ncols) if corr_int[i] > 0.3 and corr_images[i] > 0.3 else 0 for i in xrange(len(res_dicts)) ]
 	return ([ formulas[i+offset]["id"] for i in to_insert ],
@@ -90,7 +90,7 @@ def process_res_extractmzs(db, result, formula_id, intensities, job_id):
 				",".join(['(%d, %d, %d, %d, %d, %.6f)' % (job_id, -1, ad, i, k, v) for i in xrange(len(res_array)) for k,v in res_array[i].iteritems()])
 			)
 		insert_job_result_stats( [ formula_id ], [ ad ], [ len(res_array) ], [ {
-			"corr_images" : avg_img_correlation(res_array),
-			"corr_int" : avg_intensity_correlation(res_array, intensities[ad])
+			"corr_images" : iso_img_correlation(res_array),
+			"corr_int" : iso_pattern_match(res_array, intensities[ad])
 		} ] )
 

@@ -8,7 +8,7 @@ from pyMS.centroid_detection import gradient
 from util import *
 
 
-def get_iso_mzs(sf):
+def get_iso_peaks(sf):
     res_dict = {
         # "isodist_mzs": [],
         # "isodist_ints": [],
