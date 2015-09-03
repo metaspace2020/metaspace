@@ -59,7 +59,8 @@ def webserver_deploy():
     print green('========= Code deployment to SM webserver =========')
 
     rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'data'])
-    rsync_project(local_dir='test/data/', remote_dir='/home/ubuntu/sm/test/data/', exclude=['tmp'])
+    # rsync_project(local_dir='test/data/', remote_dir='/home/ubuntu/sm/test/data/', exclude=['tmp'])
+
     # for conf_file in ['conf/config.json', 'conf/luigi.cfg', 'conf/luigi_log.cfg']:
     #     put(local_path=conf_file, remote_path='/home/ubuntu/sm/conf/')
 
@@ -95,9 +96,10 @@ def cluster_launch(name, slaves=1, price=0.07):
         f.write(spark_master_host)
 
 
-@hosts(get_spark_master_host())
+# @hosts(get_spark_master_host())
 @task
 def cluster_config():
+    env.host_string = get_spark_master_host()[0]
     print green('========= Configuring Spark cluster =========')
     print get_spark_master_host()
     print env.host_string
@@ -106,9 +108,10 @@ def cluster_config():
     append('/root/spark/conf/spark-env.sh', text)
 
 
-@hosts(get_spark_master_host())
+# @hosts(get_spark_master_host())
 @task
 def cluster_deploy():
+    env.host_string = get_spark_master_host()[0]
     print green('========= Code deployment to Spark cluster =========')
     run('mkdir -p /root/sm/data')
     rsync_project(local_dir='engine scripts test', remote_dir='/root/sm/', exclude=['.*', '*.pyc', 'test'])

@@ -11,8 +11,6 @@
 import argparse
 import cPickle
 
-import sys
-from os.path import dirname, realpath
 # engine_path = dirname(dirname(realpath(__file__)))
 # sys.path.append(engine_path)
 
@@ -44,40 +42,40 @@ def main():
     # adducts = [ "H", "Na", "K" ]
     fulldataset_chunk_size = 1000
 
-    from engine import util
     from engine import computing_fast
     from engine.computing import avg_img_correlation, avg_intensity_correlation
+    import util
+    from engine import computing
     from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos_dict
 
     def get_full_dataset_results(res_dicts, formulas, mzadducts, intensities, nrows, ncols, job_id=0,
                                  offset=0):
-        iso_spec_corr_tol = 0.5
-        iso_img_corr_tol = 0.85
-        measure_of_chaos_tol = 0.99
-        # n = 100
-        # iso_corr_tol = 0.5 / n
-        # iso_ratio_tol = 0.85 / n
-        # measure_tol = 0.99 / n
+        measure_of_chaos_tol = 0.99 # 0.998
+        iso_img_corr_tol = 0.3 #0.5
+        iso_pattern_match_tol = 0.85  # aka iso_ratio_tol
+        # measure_of_chaos_tol = 0
+        # iso_img_corr_tol = 0
+        # iso_pattern_match_tol = 0
 
         total_nonzero = sum([len(x) for x in res_dicts])
         util.my_print("Got result of full dataset job %d with %d nonzero centroid intensities" % (job_id, total_nonzero))
-        corr_images = [avg_img_correlation(res_dicts[i]) for i in xrange(len(res_dicts))]
-        corr_int = [avg_intensity_correlation(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts))]
-        chaos_measures = [1 - measure_of_chaos_dict(res_dicts[i][0], nrows, ncols)
-                          if corr_int[i] > iso_spec_corr_tol and corr_images[i] > iso_img_corr_tol else 0
+        img_corr = [computing.iso_img_correlation(res_dicts[i], weights=intensities[i][1:]) for i in xrange(len(res_dicts))]
+        pattern_match = [computing.iso_pattern_match(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts))]
+        chaos_measures = [1 - measure_of_chaos_dict(res_dicts[i][0], nrows, ncols, interp=False)
+                          if pattern_match[i] > iso_pattern_match_tol and img_corr[i] > iso_img_corr_tol else 0
                           for i in xrange(len(res_dicts))]
 
         to_insert = [i for i in xrange(len(res_dicts))
-                     if corr_int[i] > iso_spec_corr_tol and corr_images[i] > iso_img_corr_tol and chaos_measures[i] > measure_of_chaos_tol]
+                     if pattern_match[i] > iso_pattern_match_tol and img_corr[i] > iso_img_corr_tol and chaos_measures[i] > measure_of_chaos_tol]
         util.my_print('{} sum formula results to insert'.format(len(to_insert)))
 
         return ([formulas[i + offset][0] for i in to_insert],
                 [int(mzadducts[i + offset]) for i in to_insert],
                 [len(res_dicts[i]) for i in to_insert],
                 [{
-                     "corr_images": corr_images[i],
-                     "corr_int": corr_int[i],
-                     "chaos": chaos_measures[i]
+                    "moc": chaos_measures[i],
+                    "spec": img_corr[i],
+                    "spat": pattern_match[i]
                  } for i in to_insert],
                 [res_dicts[i] for i in to_insert])
 

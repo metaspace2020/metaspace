@@ -15,16 +15,28 @@ import os
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
+<<<<<<< HEAD
 import tornpsql
 
 import handlers
 from engine.isocalc import *
+=======
+from tornado.ioloop import IOLoop
+import tornpsql
+
+>>>>>>> Added test for run_process_dataset
 
 
+<<<<<<< HEAD
 # get list of engine files
 engine_pyfiles = ['computing.py', 'util.py', 'imaging.py',
                   path.join('pyIMS', 'image_measures', 'level_sets_measure.py')]
 
+=======
+from engine.isocalc import *
+
+import handlers
+>>>>>>> Added test for run_process_dataset
 
 # global variables
 args = None

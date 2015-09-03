@@ -6,12 +6,13 @@ import argparse
 import cPickle
 import pandas as pd
 
-ppm = 1.0
+ppm = 1.5
 # tol = 0.01
 adducts = ["H", "Na", "K"]
 
 import sys
 from os.path import dirname, realpath
+from util import *
 
 engine_path = dirname(dirname(realpath(__file__)))
 sys.path.append(engine_path)
@@ -43,8 +44,8 @@ curs.execute(sql)
 if args.sf_filter_path:
     print 'Using filter file: ', args.sf_filter_path
     with open(args.sf_filter_path) as f:
-        sfs = set(map(tuple, pd.read_csv(args.sf_filter_path).values))
-        formulas = filter(lambda row: (row[0], row[1]) in sfs, curs.fetchall())
+        sfs = map(int, open(args.sf_filter_path).readlines())
+        formulas = filter(lambda row: row[0] in sfs, curs.fetchall())
 else:
     formulas = curs.fetchall()
 ids = [x[0] for x in formulas]

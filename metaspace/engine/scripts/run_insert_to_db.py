@@ -24,7 +24,6 @@ def main():
 	'''
 
     import numpy as np
-    from os import curdir, sep, path
     import psycopg2, psycopg2.extras
     import json
     import argparse
@@ -34,7 +33,7 @@ def main():
     from os.path import dirname, realpath
     sys.path.append(dirname(dirname(realpath(__file__))))
 
-    from engine import util
+    import util
 
     adducts = ["H", "Na", "K"]
 

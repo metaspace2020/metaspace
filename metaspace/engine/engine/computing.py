@@ -5,13 +5,8 @@
 .. moduleauthor:: Sergey Nikolenko <snikolenko@gmail.com>
 """
 
-import numpy as np
-import numpy.linalg
 import bisect
 
-import numpy as np
-
-from engine.util import *
 from engine.pyIMS.image_measures.level_sets_measure import *
 
 
@@ -120,17 +115,17 @@ def iso_pattern_match(images, theor_iso_ints):
         return ints_match
 
 
-def iso_img_correlation(images, theor_iso_ints=[]):
+def iso_img_correlation(images, weights=None):
     '''Average correlation between the first monoisotopic image and all other images'''
+    maxInd = max(max(img.keys()) if len(img) > 0 else 0 for img in images)
     img_arrays = []
     for i, img in enumerate(images):
-        maxInd = max(img.keys())
         img_arrays.append(np.array([img.get(ind, 0) for ind in range(maxInd+1)]))
 
-    if len(theor_iso_ints):
-        iso_correlation = np.average(np.corrcoef(img_arrays)[1:,0], weights=theor_iso_ints[1:])
-    else:
+    if weights is None:
         iso_correlation = np.average(np.corrcoef(img_arrays)[1:,0])
+    else:
+        iso_correlation = np.average(np.corrcoef(img_arrays)[1:,0], weights=weights)
 
     if np.isnan(iso_correlation):
         return 0

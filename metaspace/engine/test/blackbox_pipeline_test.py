@@ -62,10 +62,10 @@ class BlackboxPipelineTest:
     def setup(self):
         print "Setting up testing environment..."
         if self._clear:
-            local('rm -r {}'.format(self._data_dir))
+            local('rm -r -f {}'.format(self._data_dir))
             local('mkdir {}'.format(self._data_dir))
         else:
-            local('rm {}'.format(join(self._data_dir, 'AnnotationInsertStatus')))
+            local('rm -f {}'.format(join(self._data_dir, 'AnnotationInsertStatus')))
 
         # self._load_sf()
         # self._collect_sf_ids()
@@ -77,6 +77,11 @@ class BlackboxPipelineTest:
                      join(self._data_dir, self._queries_fn),
                      self._config_path,
                      join(self._test_dir, 'ref_sf_adduct.csv')))
+
+        env.host_string = 'root@' + self._get_master_host()
+        env.key_filename = '~/.ssh/sm_spark_cluster.pem'
+        put(local_path=join(self._data_dir, self._queries_fn),
+            remote_path=join(self._master_data_dir, self._queries_fn))
 
         # # queries = {}
         # with open(join(self._test_data_dir, self._queries_fn)) as f:

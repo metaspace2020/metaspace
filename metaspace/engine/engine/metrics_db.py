@@ -5,13 +5,6 @@
 .. moduleauthor:: Sergey Nikolenko <snikolenko@gmail.com>
 """
 
-
-import numpy as np
-
-from math import log
-from collections import Counter
-
-from util import *
 from computing import *
 
 def get_fulldataset_query_data(db, tol=3e-6):

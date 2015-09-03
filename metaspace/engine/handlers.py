@@ -21,7 +21,7 @@ import tornado.httpserver
 from tornado import gen
 from tornado.ioloop import IOLoop
 
-from engine.util import *
+from util import *
 from globalvars import *
 from engine.imaging import write_image
 from engine.isocalc import get_iso_mzs
@@ -29,7 +29,6 @@ from engine.isocalc import get_iso_mzs
 # global variable for special case html files
 html_pages = {
 }
-from engine.isocalc import get_lists_of_mzs
 
 
 @gen.coroutine
