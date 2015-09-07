@@ -49,13 +49,13 @@ def main():
 
                     out_file.write('%s\t%d\t{%s}\t{%s}\n' % (
                         id, add_id,
-                        ','.join(map(lambda x: '{:.4f}'.format(x), iso_dict['centr_mzs'])),
-                        ','.join(map(lambda x: '{:.4f}'.format(x), iso_dict['centr_ints']))
+                        ','.join(map(lambda x: '{:.9f}'.format(x), iso_dict['centr_mzs'])),
+                        ','.join(map(lambda x: '{:.9f}'.format(x), iso_dict['centr_ints']))
                     ))
 
                 i += 1
-                if i % 100 == 0:
-                    print 'Saved peaks for {} formulas'.format(i)
+                if i % 10 == 0:
+                    print 'Saved peaks for {} formulas\r'.format(i),
         print 'Saved all formula peaks to {}'.format(args.out_file_path)
 
     print 'Importing peaks to the database...'

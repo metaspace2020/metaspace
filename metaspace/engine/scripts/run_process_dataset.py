@@ -10,6 +10,8 @@
 # import json
 import argparse
 import cPickle
+import numpy as np
+import time
 
 # engine_path = dirname(dirname(realpath(__file__)))
 # sys.path.append(engine_path)
@@ -27,7 +29,6 @@ def main():
     :param --cols: number of columns in the dataset (needed to compute image-based metrics)
     :param --job_id: job id for the database
     """
-
     parser = argparse.ArgumentParser(description='IMS process dataset at a remote spark location.')
     parser.add_argument('--out', dest='fname', type=str, help='filename')
     parser.add_argument('--job_id', dest='job_id', type=int, help='job id for the database')
@@ -39,45 +40,53 @@ def main():
     parser.set_defaults(config='config.json', queries='queries.pkl', fname='result.pkl', ds='', job_id=0, rows=-1,
                         cols=-1)
 
-    # adducts = [ "H", "Na", "K" ]
-    fulldataset_chunk_size = 1000
-
-    from engine import computing_fast
-    from engine.computing import avg_img_correlation, avg_intensity_correlation
     import util
-    from engine import computing
-    from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos_dict
+    from engine import computing, computing_fast, computing_fast_spark
+    from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos
+    from engine.pyIMS.image_measures.isotope_pattern_match import isotope_pattern_match
+    from engine.pyIMS.image_measures.isotope_image_correlation import isotope_image_correlation
 
-    def get_full_dataset_results(res_dicts, formulas, mzadducts, intensities, nrows, ncols, job_id=0,
-                                 offset=0):
-        measure_of_chaos_tol = 0.99 # 0.998
-        iso_img_corr_tol = 0.3 #0.5
+    def get_full_dataset_results(qres, formulas, mzadducts, intensities, job_id=0):
+        measure_of_chaos_tol = 0.998
+        iso_img_corr_tol = 0.5
         iso_pattern_match_tol = 0.85  # aka iso_ratio_tol
         # measure_of_chaos_tol = 0
         # iso_img_corr_tol = 0
         # iso_pattern_match_tol = 0
 
-        total_nonzero = sum([len(x) for x in res_dicts])
+        total_nonzero = sum([len(x) for x in qres])
         util.my_print("Got result of full dataset job %d with %d nonzero centroid intensities" % (job_id, total_nonzero))
-        img_corr = [computing.iso_img_correlation(res_dicts[i], weights=intensities[i][1:]) for i in xrange(len(res_dicts))]
-        pattern_match = [computing.iso_pattern_match(res_dicts[i], intensities[i]) for i in xrange(len(res_dicts))]
-        chaos_measures = [1 - measure_of_chaos_dict(res_dicts[i][0], nrows, ncols, interp=False)
-                          if pattern_match[i] > iso_pattern_match_tol and img_corr[i] > iso_img_corr_tol else 0
-                          for i in xrange(len(res_dicts))]
 
-        to_insert = [i for i in xrange(len(res_dicts))
-                     if pattern_match[i] > iso_pattern_match_tol and img_corr[i] > iso_img_corr_tol and chaos_measures[i] > measure_of_chaos_tol]
+        chaos_measures, pattern_match, img_corr = [], [], []
+        for i, iso_imgs in enumerate(qres):
+            iso_imgs = [img.toarray() for img in iso_imgs]
+            if len(iso_imgs) > 0:
+                chaos = 1 - measure_of_chaos(iso_imgs[0], nlevels=30, interp=False, q_val=99.)[0]
+                chaos_measures.append(chaos if not np.isnan(chaos) and abs(chaos-1.0) > 1e-9 else 0)
+                img_corr.append(isotope_image_correlation(iso_imgs, weights=intensities[i][1:]))
+                pattern_match.append(isotope_pattern_match(iso_imgs, intensities[i]))
+            else:
+                chaos_measures.append(0)
+                img_corr.append(0)
+                pattern_match.append(0)
+
+        to_insert = [i for i, _ in enumerate(qres)
+                     if pattern_match[i] > iso_pattern_match_tol and
+                     img_corr[i] > iso_img_corr_tol and
+                     chaos_measures[i] > measure_of_chaos_tol]
         util.my_print('{} sum formula results to insert'.format(len(to_insert)))
 
-        return ([formulas[i + offset][0] for i in to_insert],
-                [int(mzadducts[i + offset]) for i in to_insert],
-                [len(res_dicts[i]) for i in to_insert],
+        return ([formulas[i][0] for i in to_insert],
+                [int(mzadducts[i]) for i in to_insert],
+                [len(qres[i]) for i in to_insert],
                 [{
                     "moc": chaos_measures[i],
                     "spec": img_corr[i],
                     "spat": pattern_match[i]
                  } for i in to_insert],
-                [res_dicts[i] for i in to_insert])
+                [qres[i] for i in to_insert])
+
+    start = time.time()
 
     args = parser.parse_args()
 
@@ -90,41 +99,27 @@ def main():
         q = cPickle.load(f)
 
     util.my_print("Looking for %d peaks" % sum([len(x) for x in q["data"]]))
-    num_chunks = 1 + len(q["data"]) / fulldataset_chunk_size
 
-    conf = SparkConf().set('spark.python.profile', True)
-    # sc = SparkContext(conf=conf, master='local')
-    sc = SparkContext(conf=conf)
-
-    ff = sc.textFile(args.ds, minPartitions=10)
-    spectra = ff.map(computing_fast.txt_to_spectrum)
+    conf = SparkConf().set('spark.python.profile', True).set("spark.executor.memory", "2g")
+    sc = SparkContext(conf=conf, master='local[4]')
+    ff = sc.textFile(args.ds, minPartitions=4)
+    spectra = ff.map(computing_fast_spark.txt_to_spectrum)
     spectra.cache()
 
+    util.my_print("Processing...")
+
+    mol_mz_intervals = q["data"]
+    qres = computing_fast_spark.process_data(spectra, mol_mz_intervals, args.rows, args.cols)
+    cur_results = get_full_dataset_results(qres, q["formulas"],
+                                           q["mzadducts"], q["intensities"], args.job_id)
+
     res = {
-        "formulas": [],
-        "mzadducts": [],
-        "lengths": [],
-        "stat_dicts": [],
-        "res_dicts": []
+        "formulas": cur_results[0],
+        "mzadducts": cur_results[1],
+        "lengths": cur_results[2],
+        "stat_dicts": cur_results[3],
+        "res_dicts": cur_results[4]
     }
-
-    for i in xrange(num_chunks):
-        util.my_print("Processing chunk %d..." % i)
-
-        mol_mz_intervals = q["data"][fulldataset_chunk_size * i:fulldataset_chunk_size * (i + 1)]
-
-        qres = computing_fast.process_data(spectra, mol_mz_intervals)
-
-        # entropies = [ [ get_block_entropy_dict(x, args.rows, args.cols) for x in one_result ] for one_result in qres ]
-        # entropies = [[0 for x in one_result] for one_result in qres]
-        cur_results = get_full_dataset_results(qres, q["formulas"], q["mzadducts"], q["intensities"],
-                                               args.rows, args.cols, args.job_id, fulldataset_chunk_size * i)
-
-        res["formulas"].extend([n + fulldataset_chunk_size * i for n in cur_results[0]])
-        res["mzadducts"].extend(cur_results[1])
-        res["lengths"].extend(cur_results[2])
-        res["stat_dicts"].extend(cur_results[3])
-        res["res_dicts"].extend(cur_results[4])
 
     util.my_print("Saving results to %s..." % args.fname)
 
@@ -132,6 +127,8 @@ def main():
         cPickle.dump(res, outf)
 
     util.my_print("All done!")
+    time_spent = time.time() - start
+    print 'Time spent: %d mins %d secs' % (int(round(time_spent/60)), int(round(time_spent%60)))
 
 
 if __name__ == "__main__":

@@ -134,8 +134,8 @@ DROP TABLE IF EXISTS mz_peaks;
 CREATE TABLE mz_peaks (
 	sf_id			int,
 	adduct			int,
-	peaks			real[],
-	ints			real[]
+	peaks			double precision[],
+	ints			double precision[]
 );
 \COPY mz_peaks FROM '/home/snikolenko/soft/ims/webserver/mzpeaks.csv' WITH delimiter ';' csv;
 CREATE INDEX ind_mz_peaks_1 ON mz_peaks(sf_id, adduct);

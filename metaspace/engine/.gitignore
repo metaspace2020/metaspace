@@ -1,6 +1,7 @@
 *.pyc
 .idea
 *.pkl
+*.zip
 conf
 test/data
 data/*

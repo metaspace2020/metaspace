@@ -69,7 +69,7 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
             order = mz_arr.argsort()
             mz_arr = mz_arr[order]
             int_arr = int_arr[order]
-        data_file.write(encode_data_line(i, mz_arr, int_arr) + '\n')
+        data_file.write(encode_data_line(i, mz_arr, int_arr, decimals=9) + '\n')
         if coord_file:
             coord_file.write(encode_coord_line(i, x, y) + '\n')
         max_x = max(max_x, x)

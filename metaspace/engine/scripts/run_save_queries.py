@@ -34,9 +34,8 @@ my_print("Reading formulas from DB...")
 conn = psycopg2.connect(**config_db)
 curs = conn.cursor()
 
-# import pandas as pd
-# ref_sf_adduct_df = pd.read_csv('/home/intsco/embl/SpatialMetabolomics/sm/data/ref_sf_adduct.csv')
-# sf_adduct_filter = set(map(tuple, ref_sf_adduct_df.values))
+# --sf-filter-file
+#/home/intsco/embl/SpatialMetabolomics/sm/test/data/run_process_dataset_test/20150730_ANB_spheroid_control_65x65_15um/sf_id_sample.csv
 
 sql = 'SELECT sf_id as id, adduct, peaks, ints FROM mz_peaks'
 curs.execute(sql)
@@ -53,7 +52,7 @@ mzadducts = [x[1] for x in formulas]
 mzpeaks = [x[2] for x in formulas]
 intensities = [x[3] for x in formulas]
 
-data = [[[float(x) - ppm*x/1e6, float(x) + ppm*x/1e6] for x in peaks] for peaks in mzpeaks]
+data = [[[x - ppm*x/1e6, x + ppm*x/1e6] for x in peaks] for peaks in mzpeaks]
 
 if len(data) <= 0:
     raise Exception('{} returned empty result set'.format(sql))

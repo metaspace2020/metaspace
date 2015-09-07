@@ -1,3 +1,5 @@
+from __future__ import division
+
 __author__ = 'intsco'
 
 import unittest
@@ -12,7 +14,7 @@ import pandas as pd
 from pandas.util.testing import assert_frame_equal
 
 
-class RunProcessDataset(TestCase):
+class RunProcessDatasetTest(TestCase):
 
     def setUp(self):
         self.ds = '20150730_ANB_spheroid_control_65x65_15um'
@@ -40,10 +42,7 @@ class RunProcessDataset(TestCase):
                '--cols', str(self.cols)]
         check_call(cmd)
 
-    def test_run(self):
-        self.run_process_dataset()
-        ref_df = pd.read_csv(self.ref_res_path, sep='\t').drop(['ID', 'mz', 'spec', 'spat'], axis=1)
-
+    def load_results_df(self, columns):
         with open(self.out_path) as f:
             res = cPickle.load(f)
 
@@ -59,25 +58,40 @@ class RunProcessDataset(TestCase):
             moc = res['stat_dicts'][i]['moc']
             spec = res['stat_dicts'][i]['spec']
             spat = res['stat_dicts'][i]['spat']
+            res_list.append((sf, adduct, moc, spec, spat))
 
-            res_list.append((sf, adduct,
-                             moc,
-                             # spec,
-                             # spat
-                             ))
-        res_df = pd.DataFrame(data=res_list, columns=ref_df.columns.values)
+        res_df = pd.DataFrame(data=res_list, columns=columns)
         res_df.to_csv(self.text_out_path, sep='\t', index=False)
+        return res_df
 
-        self.assertEqual(len(res_df), len(ref_df))
+    def test_run(self):
+        self.run_process_dataset()
 
+        ref_df = pd.read_csv(self.ref_res_path, sep='\t').drop(['ID', 'mz'], axis=1)
+        res_df = self.load_results_df(ref_df.columns.values)
         ref_df = ref_df.set_index(['sf', 'adduct'])
         res_df = res_df.set_index(['sf', 'adduct'])
 
-        self.assertSetEqual(set(res_df.index), set(ref_df.index))
+        res_sf_set = set(res_df.index)
+        ref_sf_set = set(ref_df.index)
 
-        for sf_adduct in res_df.index:
-            print sf_adduct[0]
-            self.assertAlmostEqual(res_df.loc[sf_adduct], ref_df.loc[sf_adduct], places=3)
+        # Results contain all ref sum formulas
+        self.assertTrue(res_sf_set.issuperset(ref_sf_set))
+
+        print 'FDR: ', len(res_sf_set.difference(ref_sf_set)) / len(res_sf_set)
+        print list(res_sf_set.difference(ref_sf_set))
+        print
+
+        for sf_adduct in ref_df.index:
+            print sf_adduct
+
+            res_metrics = res_df.loc[sf_adduct].to_dict()
+            ref_metrics = ref_df.loc[sf_adduct].to_dict()
+            print 'Res metrics: ', res_metrics
+            print 'Ref metrics: ', ref_metrics
+
+            for m in ref_metrics:
+                self.assertAlmostEqual(res_metrics[m], ref_metrics[m], places=2)
 
 
 if __name__ == '__main__':
