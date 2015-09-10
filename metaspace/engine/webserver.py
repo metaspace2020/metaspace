@@ -15,7 +15,6 @@ import os
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
-
 import tornpsql
 
 import handlers
@@ -178,12 +177,12 @@ def main():
     with open(args.config) as f:
         config = json.load(f)
 
+    port = args.port
+    torn_app = Application()
+    http_server = tornado.httpserver.HTTPServer(torn_app)
+    http_server.listen(port)
+    my_print("Starting server, listening to port %d..." % port)
     try:
-        port = args.port
-        torn_app = Application()
-        http_server = tornado.httpserver.HTTPServer(torn_app)
-        http_server.listen(port)
-        my_print("Starting server, listening to port %d..." % port)
         # set periodic updates
         if args.spark:
             tornado.ioloop.IOLoop.instance().add_timeout(timedelta(seconds=5), torn_app.update_all_jobs_callback)
@@ -193,7 +192,7 @@ def main():
         my_print('^C received, shutting down server')
         if args.spark:
             torn_app.sc.stop()
-        http_server.socket.close()
+        http_server.stop()
 
 
 if __name__ == "__main__":
