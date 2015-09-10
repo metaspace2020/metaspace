@@ -52,8 +52,6 @@ class Application(tornado.web.Application):
             (r"^/jobs/", handlers.SimpleHtmlHandler),
             (r"^/gameimages/", handlers.SimpleHtmlHandler),
             (r"^/datasets/", handlers.SimpleHtmlHandler),
-            (r"^/mzimage/([^/]*)\.png", handlers.MZImageHandler),
-            (r"^/mzimage/([^/]*)/([^/]*)\.png", handlers.MZImageParamHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
             (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
