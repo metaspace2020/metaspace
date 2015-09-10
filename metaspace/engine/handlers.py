@@ -35,7 +35,7 @@ from globalvars import *
 from engine.computing import run_fulldataset, run_extractmzs
 from engine.metrics_db import get_fulldataset_query_data, process_res_extractmzs, process_res_fulldataset
 from engine.imaging import write_image
-from engine.isocalc import get_lists_of_mzs
+from engine.isocalc import get_iso_mzs
 
 
 @gen.coroutine
@@ -140,8 +140,8 @@ class AjaxHandler(tornado.web.RequestHandler):
 						final_query = sql_queries[query_id] % input_id
 				elif query_id == 'demosubst':
 					arr = input_id.split('/')
-					spectrum = get_lists_of_mzs(arr[2])
-					spec_add = { ad : get_lists_of_mzs(arr[2] + ad) for ad in adducts }
+					spectrum = get_iso_mzs(arr[2])
+					spec_add = { ad : get_iso_mzs(arr[2] + ad) for ad in adducts }
 					coords_q = self.db.query( sql_queries['democoords'] % int(arr[3]) )
 					coords = { row["index"] : [row["x"], row["y"]] for row in coords_q }
 					final_query = sql_queries[query_id] % ( int(arr[0]), arr[1], int(arr[1]) )
@@ -174,7 +174,7 @@ class AjaxHandler(tornado.web.RequestHandler):
 				## add isotopes for the substance query
 				if query_id == "substance":
 					res_dict.update({"all_datasets" : self.application.all_datasets})
-					res_dict.update(get_lists_of_mzs(res_dict["sf"]))
+					res_dict.update(get_iso_mzs(res_dict["sf"]))
 				res_dict.update({"draw" : draw})
 			cProfile_res_list.append(res_dict)
 		res = []
