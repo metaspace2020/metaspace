@@ -5,13 +5,11 @@ __author__ = 'intsco'
 import unittest
 from unittest import TestCase
 from os.path import join, dirname, realpath
-from util import Config
+from engine.util import Config
 from subprocess import check_call
-import json
 import psycopg2
 import cPickle
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
 
 
 class RunProcessDatasetTest(TestCase):

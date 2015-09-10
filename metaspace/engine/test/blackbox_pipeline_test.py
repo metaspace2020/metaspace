@@ -72,11 +72,10 @@ class BlackboxPipelineTest:
 
         print "Preparing test queries file..."
 
-        local('python {}/scripts/run_save_queries.py --out {} --config {} --sf-filter-file {}'.
-              format(self._project_dir,
-                     join(self._data_dir, self._queries_fn),
-                     self._config_path,
-                     join(self._test_dir, 'ref_sf_adduct.csv')))
+        local('python {}/scripts/run_save_queries.py --out {} --config {}'.format(
+            self._project_dir,
+            join(self._data_dir, self._queries_fn),
+            self._config_path))
 
         env.host_string = 'root@' + self._get_master_host()
         env.key_filename = '~/.ssh/sm_spark_cluster.pem'

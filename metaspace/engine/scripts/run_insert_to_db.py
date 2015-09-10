@@ -33,7 +33,7 @@ def main():
     from os.path import dirname, realpath
     sys.path.append(dirname(dirname(realpath(__file__))))
 
-    import util
+    from engine import util
 
     adducts = ["H", "Na", "K"]
 

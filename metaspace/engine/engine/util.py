@@ -52,4 +52,4 @@ class Config(object):
 
     @classmethod
     def get_config_path(cls):
-        return join(dirname(realpath(__file__)), 'conf/config.json')
+        return join(dirname(dirname(realpath(__file__))), 'conf/config.json')

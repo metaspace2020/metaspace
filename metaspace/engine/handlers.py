@@ -21,7 +21,7 @@ import tornado.httpserver
 from tornado import gen
 from tornado.ioloop import IOLoop
 
-from util import *
+from engine.util import *
 from globalvars import *
 from engine.imaging import write_image
 from engine.isocalc import get_iso_mzs

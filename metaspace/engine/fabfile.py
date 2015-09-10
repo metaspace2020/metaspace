@@ -164,6 +164,10 @@ def platform_stop(cluster_name):
     execute(webserver_stop)
 
 
+@task
+@hosts(get_webserver_host())
+def deploy_test_data():
+    rsync_project(local_dir='test/data/blackbox_pipeline_test', remote_dir='/home/ubuntu/sm/test/data')
 
 
 
