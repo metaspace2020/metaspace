@@ -46,23 +46,23 @@ class Application(tornado.web.Application):
         """Initializes handlers, including the spark handler, sets up database connection."""
         torn_handlers = [
             (r"^/ajax/([a-z]*)/(.*)", handlers.AjaxHandler),
-            (r"^/substance/(.*)", handlers.SimpleHtmlHandlerWithId),
-            (r"^/demo/", handlers.SimpleHtmlHandler),
-            (r"^/demo-png/", handlers.SimpleHtmlHandler),
-            (r"^/jobs/", handlers.SimpleHtmlHandler),
-            (r"^/gameimages/", handlers.SimpleHtmlHandler),
-            (r"^/datasets/", handlers.SimpleHtmlHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
             (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
             (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
-            (r"^/fullresults/(.*)", handlers.SimpleHtmlHandlerWithId),
+            (r"^/gameimages/", handlers.SimpleHtmlHandler),
             (r"/", handlers.IndexHandler)
         ]
         # you can add deprecated handlers by specifying --use-deprecated in the command line
         if args.use_deprecated:
             import handlers_deprecated
             torn_handlers.extend([
+                (r"^/fullresults/(.*)", handlers.SimpleHtmlHandlerWithId),
+                (r"^/substance/(.*)", handlers.SimpleHtmlHandlerWithId),
+                (r"^/demo/", handlers.SimpleHtmlHandler),
+                (r"^/demo-png/", handlers.SimpleHtmlHandler),
+                (r"^/jobs/", handlers.SimpleHtmlHandler),
+                (r"^/datasets/", handlers.SimpleHtmlHandler),
                 (r"^/mzimage/([^/]*)\.png", handlers_deprecated.MZImageHandler),
                 (r"^/mzimage/([^/]*)/([^/]*)\.png", handlers_deprecated.MZImageParamHandler)
             ])

@@ -223,7 +223,6 @@ class IndexHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self):
-        self.render("html/index.html", sparkactivated=args.spark)
 
 
 class SimpleHtmlHandlerWithId(tornado.web.RequestHandler):
@@ -366,6 +365,7 @@ class RunSparkHandler(tornado.web.RequestHandler):
         else:
             my_print("[ERROR] Incorrect run query %s!" % query_id)
             return
+        self.render("html/demo-png.html", sparkactivated=args.spark)
 
 
 class NewPngHandler(tornado.web.RequestHandler):
