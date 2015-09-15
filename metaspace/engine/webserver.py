@@ -66,10 +66,10 @@ class Application(tornado.web.Application):
                 (r"^/mzimage/([^/]*)\.png", handlers_deprecated.MZImageHandler),
                 (r"^/mzimage/([^/]*)/([^/]*)\.png", handlers_deprecated.MZImageParamHandler)
             ])
-        # only if spark is used we add the RunSparkHandler
-        if args.spark:
-            from pyspark import SparkContext, SparkConf
-            torn_handlers.extend([(r"^/run/(.*)", handlers.RunSparkHandler)])
+            # only if spark is used we add the RunSparkHandler
+            if args.spark:
+                from pyspark import SparkContext, SparkConf
+                torn_handlers.extend([(r"^/run/(.*)", handlers_deprecated.RunSparkHandler)])
         settings = dict(
             static_path=path.join(path.dirname(__file__), "static"),
             debug=True,
