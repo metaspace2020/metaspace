@@ -101,8 +101,8 @@ def cluster_launch(name, slaves=1, price=0.07):
 def cluster_config():
     env.host_string = get_spark_master_host()[0]
     print green('========= Configuring Spark cluster =========')
-    print get_spark_master_host()
-    print env.host_string
+    # print get_spark_master_host()
+    # print env.host_string
 
     text = "\nexport AWS_ACCESS_KEY_ID={} \nexport AWS_SECRET_ACCESS_KEY={}".format(environ['AWS_ACCESS_KEY_ID'], environ['AWS_SECRET_ACCESS_KEY'])
     append('/root/spark/conf/spark-env.sh', text)

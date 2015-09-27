@@ -32,10 +32,11 @@ def sample_spectrum(sp, mol_mz_intervals):
     lower, upper = mol_mz_intervals
     sp_id, mzs, cum_ints = sp
     intensities = cum_ints[mzs.searchsorted(upper, 'r')] - cum_ints[mzs.searchsorted(lower, 'l')]
+    non_zero_intens = filter(lambda ((sf_i, p_i), intens): intens > 0.001, izip(sf_peak_map, intensities))
+    return non_zero_intens
 
-    for peak_id, intens in enumerate(intensities):
-        if intens > 0.01:
-            yield peak_id, (sp_id, intens)
+    # for (sf_i, p_i), intens in izip(sf_peak_map, intensities):
+    #     yield (sf_i, (p_i, sp_i, intens))
 
 
 def flat_coord_list_to_matrix(coords, rows, cols, row_wise=True):
@@ -72,20 +73,26 @@ def process_data(sc, spectra, sf_mz_intervals, rows, cols, minPartitions):
     mz_bounds = [np.array([s[0] for _q in sf_mz_intervals for s in _q]),
                  np.array([s[1] for _q in sf_mz_intervals for s in _q])]
 
+    # mz_bounds = [np.array([q[0][0] if len(q)>0 else 0 for q in sf_mz_intervals]),
+    #              np.array([q[0][1] if len(q)>0 else 0 for q in sf_mz_intervals])]
+
+    # spectra = spectra.collect()
+    # x = map(lambda sp: _sample_spectrum(sp, mz_bounds, sf_peak_map), spectra)
+    # print len(x), x[:10]
+
     mz_bounds_brcast = sc.broadcast(mz_bounds)
     qres = (spectra
-                 .flatMap(lambda sp: sample_spectrum(sp, mz_bounds_brcast.value))
-                 .groupByKey()
-                 .mapValues(lambda iso_px_it: list(iso_px_it))
-                 # .filter(lambda (peak_i, iso_pixels): len(iso_pixels) > float(rows*cols)/100)
-                 # .join(sf_peak_map_rdd)
-                 # .map(lambda (peak_i, (iso_pixels, (sf_i, p_i))): (sf_i, (p_i, iso_pixels)))
-                 # .groupByKey()
-                 # .mapValues(lambda iso_pixel_list_it: img_pairs_to_list(iso_pixel_list_it))
-                 # .mapValues(lambda sf_peaks: [flat_coord_list_to_matrix(p, rows, cols, row_wise=False) for p in sf_peaks])
-                 )
-
-    return qres
+            .flatMap(lambda sp: sample_spectrum(sp, mz_bounds_brcast.value, sf_peak_map_brcast.value))
+            # .filter(lambda (sf_i, (p_i, sp_i, intens)): intens > 0.001)
+            .groupByKey()
+            .keys().map(lambda (sf_i, p_i): sf_i).distinct()
+            # .mapValues(lambda sf_res_it: _combine_sf_results(sf_res_it, rows, cols))
+            # # .filter(lambda (sf_i, iso_images): all(img.nnz > 0.001*rows*cols for (peak_i, img) in iso_images))
+            # .mapValues(lambda iso_img_pairs: _img_pairs_to_list(iso_img_pairs))
+             )
+    x = qres.collect()
+    print len(x), x[:10]
+    # return qres
 
     # peak_n = len(mz_bounds[0])
     # qres_all_peaks = (qres_dict[peak_i] if peak_i in qres_dict else [] for peak_i in xrange(peak_n))

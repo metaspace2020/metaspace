@@ -12,9 +12,9 @@ from fabric.api import put, local, run
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import argparse
+from run_process_dataset_test import assert_sf_res_dataframes_equal
 
-
-class BlackboxPipelineTest:
+class BlackboxPipelineTest(object):
 
     def __init__(self, project_dir, clear=False):
         self._clear = clear
@@ -35,11 +35,8 @@ class BlackboxPipelineTest:
         # self._sf_set = set()
         # self._sf_id_set = set()
 
-    # def _load_sf(self):
-    #     with open(join(self._test_data_dir, self._sf_fn)) as f:
-    #         self._sf_set = set(f.read().split('\n'))
+        self.adducts = {0: 'H', 1: 'Na', 2: 'K'}
 
-    def _get_db_config(self):
         with open(self._config_path) as f:
             config = json.load(f)['db']
         return config
@@ -72,10 +69,11 @@ class BlackboxPipelineTest:
 
         print "Preparing test queries file..."
 
-        local('python {}/scripts/run_save_queries.py --out {} --config {}'.format(
-            self._project_dir,
-            join(self._data_dir, self._queries_fn),
-            self._config_path))
+        cmd = ['python', '{}/scripts/run_save_queries.py'.format(self._project_dir),
+               '--out', join(self._data_dir, self._queries_fn),
+               '--config', self._config_path,]
+               # '--sf-filter-file', join(self._test_dir, 'sf_id.csv')]
+        local(' '.join(cmd))
 
         env.host_string = 'root@' + self._get_master_host()
         env.key_filename = '~/.ssh/sm_spark_cluster.pem'
@@ -117,21 +115,22 @@ class BlackboxPipelineTest:
         curs = self._run_query(sql)
         job_id = curs.fetchall()[0][0]
 
-        sql = 'select f.sf, adduct, stats from job_result_stats jrs join formulas f \
-        on jrs.formula_id = f.sf_id where jrs.job_id = {}'.format(job_id)
+        sql = '''select f.sf, adduct, stats from job_result_stats jrs
+            join agg_formulas f on jrs.formula_id = f.id
+            where jrs.job_id = {}'''.format(job_id)
         curs = self._run_query(sql)
-        res_df = pd.DataFrame([(sf, adduct, stats['chaos'], stats['corr_int'], stats['corr_images'])
+        res_df = pd.DataFrame([(sf, adduct, stats['moc'], stats['spec'], stats['spat'])
                               for sf, adduct, stats in curs.fetchall()],
                               columns=['sf', 'adduct', 'moc', 'spec', 'spat'])
-        # res_df.drop_duplicates(inplace=True)
+        res_df['adduct'] = res_df.adduct.map(self.adducts)
         res_df.to_csv(join(self._data_dir, 'result_sf_metrics.csv'), sep='\t', index=False)
 
         ref_df = pd.read_csv(join(self._test_dir, 'ref_result_sf_metrics.csv'),
                              sep='\t',
-                             names=['sf', 'adduct', 'mz', 'moc', 'spec', 'spat'])
-        ref_df.drop('mz', axis=1, inplace=True)
+                             names=['ID', 'sf', 'adduct', 'mz', 'moc', 'spec', 'spat'], skiprows=1)
+        ref_df.drop(['ID', 'mz'], axis=1, inplace=True)
 
-        assert_frame_equal(res_df, ref_df)
+        assert_sf_res_dataframes_equal(res_df, ref_df)
 
     def test(self):
         self._run_pipeline()

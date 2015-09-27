@@ -116,29 +116,24 @@ def main():
 
     util.my_print("Reading %s..." % args.rp)
     with open(args.rp) as f:
-        r = cPickle.load(f)
+        res = cPickle.load(f)
 
-    if sum(r["lengths"]) > 0:
-        util.my_print("Inserting to job_result_data...")
-        cur.execute("INSERT INTO job_result_data VALUES %s" %
-                    ",".join(['(%d, %d, %d, %d, %d, %.6f)' % (job_id,
-                                                              int(r["formulas"][i]),
-                                                              int(r["mzadducts"][i]), j, k, v)
-                              for i in xrange(len(r["res_dicts"])) for j in xrange(len(r["res_dicts"][i])) for k, v in
-                              r["res_dicts"][i][j].iteritems()])
-                    )
+    util.my_print("Inserting to job_result_data...")
 
-        util.my_print("Inserting to job_result_stats...")
-        for stdict in r["stat_dicts"]:
-            if "entropies" in stdict:
-                stdict.update({'mean_ent': np.mean(stdict["entropies"])})
+    rows = [(job_id, res["formulas"][i], res["mzadducts"][i], peak_i,
+             [] if img_sparse is None else img_sparse.toarray().flatten().tolist())
+            for i, img_list in enumerate(res["res_dicts"])
+            for peak_i, img_sparse in enumerate(img_list)]
 
-        cur.execute('INSERT INTO job_result_stats VALUES %s' % (
-            ",".join(
-                ['(%d, %s, %d, %d, \'%s\')' % (job_id, r["formulas"][i], r["mzadducts"][i], r["lengths"][i], json.dumps(
-                    r["stat_dicts"][i]
-                )) for i in xrange(len(r["formulas"]))])
-        ))
+    cur.executemany("INSERT INTO job_result_data VALUES (%s, %s, %s, %s, %s)", rows)
+
+    util.my_print("Inserting to job_result_stats...")
+    sql = 'INSERT INTO job_result_stats VALUES %s' % (
+        ",".join(
+            ['(%d, %s, %d, %d, \'%s\')' % (job_id, res["formulas"][i], res["mzadducts"][i], 0, json.dumps(
+                res["stat_dicts"][i]
+            )) for i in xrange(len(res["formulas"]))]))
+    cur.execute(sql)
 
     conn.commit()
     conn.close()

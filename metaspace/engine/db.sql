@@ -104,18 +104,17 @@ CREATE INDEX ind_jobs_1 ON jobs (id);
 
 DROP TABLE IF EXISTS job_result_data;
 CREATE TABLE job_result_data (
-	job_id			int,
-	param			int,
-	adduct 			int,
-	peak			int,
-	spectrum		int,
-	value real
+	job_id				int,
+	sf_id				int,
+	adduct 				int,
+	peak				int,
+	intensities			real[]
 );
 CREATE INDEX ind_job_result_data_1 ON job_result_data (job_id);
-CREATE INDEX ind_job_result_data_2 ON job_result_data (job_id, param);
+CREATE INDEX ind_job_result_data_2 ON job_result_data (job_id, sf_id);
 -- CREATE INDEX ind_job_result_data_3 ON job_result_data (job_id, param, peak);
-CREATE INDEX ind_job_result_data_4 ON job_result_data (job_id, param, adduct);
-CREATE INDEX ind_job_result_data_5 ON job_result_data (job_id, param, peak, adduct);
+CREATE INDEX ind_job_result_data_4 ON job_result_data (job_id, sf_id, adduct);
+CREATE INDEX ind_job_result_data_5 ON job_result_data (job_id, sf_id, peak, adduct);
 -- \COPY job_result_data FROM '/home/snikolenko/soft/ims/data/dump15072015/job_result_data.csv' WITH delimiter ';' csv;
 
 DROP TABLE IF EXISTS job_result_stats;
