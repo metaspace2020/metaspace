@@ -7,36 +7,24 @@
 
 .. moduleauthor:: Sergey Nikolenko <snikolenko@gmail.com>
 """
-
+import json
 from os import path
 import argparse
 import os
+from datetime import datetime, timedelta
 
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
-<<<<<<< HEAD
 import tornpsql
 
 import handlers
-from engine.isocalc import *
-=======
-from tornado.ioloop import IOLoop
-import tornpsql
-
->>>>>>> Added test for run_process_dataset
+from engine.util import my_print
 
 
-<<<<<<< HEAD
 # get list of engine files
 engine_pyfiles = ['computing.py', 'util.py', 'imaging.py',
                   path.join('pyIMS', 'image_measures', 'level_sets_measure.py')]
-
-=======
-from engine.isocalc import *
-
-import handlers
->>>>>>> Added test for run_process_dataset
 
 # global variables
 args = None
@@ -58,12 +46,13 @@ class Application(tornado.web.Application):
         """Initializes handlers, including the spark handler, sets up database connection."""
         torn_handlers = [
             (r"^/ajax/([a-z]*)/(.*)", handlers.AjaxHandler),
-            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
-            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
-            (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
-            (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler),
+            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler2),
+            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler2),
+            (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler2),
+            (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler2),
             (r"^/gameimages/", handlers.SimpleHtmlHandler),
-            (r"/", handlers.IndexHandler)
+            (r"/", handlers.IndexHandler),
+            (r"/beta", handlers.IndexHandlerBeta)
         ]
         # you can add deprecated handlers by specifying --use-deprecated in the command line
         if args.use_deprecated:

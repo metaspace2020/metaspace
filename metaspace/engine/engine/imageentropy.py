@@ -1,10 +1,8 @@
-import numpy as np
-import bisect
-
 from math import log
 from collections import Counter
 
-import imaging
+import numpy as np
+
 
 def entropy(probability_list):
     """
@@ -108,7 +106,7 @@ def get_total_entropy_matrix(active_matrix):
 		matrices.append(output_matrix)
 	return sum(profile(matrices))
 
-def get_total_entropy_dict(d, nrows, ncols):
-	return get_total_entropy_matrix(imaging.make_image_dict(nrows, ncols, d))
+# def get_total_entropy_dict(d, nrows, ncols):
+# 	return get_total_entropy_matrix(imaging.make_image_dict(nrows, ncols, d))
 
 

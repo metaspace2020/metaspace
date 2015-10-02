@@ -14,7 +14,7 @@ import tornado.httpserver
 from tornado import gen
 
 from engine.computing import run_fulldataset, run_extractmzs
-from engine.imaging import write_image, make_image_arrays
+from webapp.imaging import write_image, make_image_arrays
 from engine.metrics_db import process_res_extractmzs, get_fulldataset_query_data, process_res_fulldataset
 from engine.util import my_print, get_id_from_slug
 from handlers import call_in_background, async_sleep

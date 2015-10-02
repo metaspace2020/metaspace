@@ -36,6 +36,7 @@ def main():
     parser.add_argument('--rows', dest='rows', type=int, help='number of rows')
     parser.add_argument('--cols', dest='cols', type=int, help='number of columns')
     parser.add_argument('--ds', dest='ds', type=str, help='dataset file name')
+    parser.add_argument('--coord', dest='coord', type=str, help='dataset coordinates file name')
     parser.add_argument('--queries', dest='queries', type=str, help='queries file name')
     parser.add_argument('--config', dest='config_path', type=str, help='config file path')
     parser.set_defaults(config='config.json', queries='queries.pkl', fname='result.pkl', ds='', job_id=0, rows=-1,
@@ -90,7 +91,7 @@ def main():
     #                                    args.rows, args.cols, args.job_id)
 
     from engine.mol_searcher import MolSearcher
-    searcher = MolSearcher(args.ds, args.rows, args.cols, q['data'], np.array(q['intensities']))
+    searcher = MolSearcher(args.ds, args.coord, q['data'], np.array(q['intensities']))
     found_mol_iso_images, found_mol_measures = searcher.run()
     results = convert_search_results(found_mol_iso_images, found_mol_measures,
                                     q["formulas"], q["mzadducts"], args.job_id)

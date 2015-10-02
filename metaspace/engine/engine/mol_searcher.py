@@ -84,14 +84,13 @@ def sample_spectrum(sp, peak_bounds, sf_peak_map):
                izip(repeat(sp_i), non_zero_ints))
 
 
-def flat_coord_list_to_matrix(coords, rows, cols, row_wise=True):
-    if not coords:
+def flat_coord_list_to_matrix(sp_intens_pairs, pixels_order, rows, cols):
+    if not sp_intens_pairs:
         return None
-    inds = map(lambda t: t[0], coords)
-    vals = map(lambda t: t[1], coords)
-    array = np.bincount(inds, weights=vals, minlength=rows * cols)
+    inds, vals = zip(*map(lambda (sp_i, intens): (pixels_order[sp_i], intens), sp_intens_pairs))
+    array = np.bincount(inds, weights=vals, minlength=rows*cols)
     img = np.reshape(array, (rows, cols))
-    return scipy.sparse.csr_matrix(img if row_wise else img.T)
+    return scipy.sparse.csr_matrix(img)
 
 
 def img_pairs_to_list(pairs):
@@ -136,9 +135,11 @@ def compute_img_measures(iso_images_sparse, sf_intensity, rows, cols):
 
 
 class MolSearcher(object):
-    def __init__(self, ds_path, rows, cols, sf_mz_intervals, theor_peak_intens):
+
+    def __init__(self, ds_path, ds_coords_path, sf_mz_intervals, theor_peak_intens):
         self.ds_path = ds_path
-        self.rows, self.cols = rows, cols
+        self.ds_coord_path = ds_coords_path
+        # self.rows, self.cols = rows, cols
         self.sf_mz_intervals = np.array(sf_mz_intervals)
         self.sf_peak_inds = np.insert(np.cumsum(map(len, self.sf_mz_intervals)), 0, 0)  # 0 - extra index
         self.theor_peak_intens = theor_peak_intens
@@ -147,6 +148,8 @@ class MolSearcher(object):
 
         self.sc = SparkContext(conf=SparkConf().set('spark.python.profile', True)
                                .set("spark.executor.memory", "1g"))
+
+        self._define_pixels_order()
 
     def _get_peak_bounds(self, sf_filter=None):
         sf_peak_bounds = self.sf_mz_intervals[sf_filter] if sf_filter else self.sf_mz_intervals
@@ -180,6 +183,32 @@ class MolSearcher(object):
     #                                                       theor_peak_intens_brcast.value))
     #             .distinct()).collect()
 
+    def _define_pixels_order(self):
+        # this function maps coords onto pixel indicies (assuming a grid defined by bounding box and transform type)
+        # -implement methods such as interp onto grid spaced over coords
+        # -currently treats coords as grid positions,
+
+        # pixel_indices = np.zeros(len(self.coords))
+        with open(self.ds_coord_path) as f:
+            coords = map(lambda s: map(int, s.strip('\n').split(',')[1:]), f.readlines())
+        _coord = np.asarray(coords)
+        _coord = np.around(_coord, 5)  # correct for numerical precision
+        _coord -= np.amin(_coord, axis=0)
+
+        step = np.zeros((2, 1))
+        for ii in range(0, 2):
+            step[ii] = np.mean(np.diff(np.unique(_coord[:, ii])))
+
+        # coordinate to pixels
+        _coord /= np.reshape(step, (2,))
+        _coord_max = np.amax(_coord, axis=0)
+        self.cols = _coord_max[1]+1
+        self.rows = _coord_max[0]+1
+
+        pixel_indices = _coord[:,0] * self.cols + _coord[:,1]
+        pixel_indices = pixel_indices.astype(np.int32)
+        self.pixels_order = pixel_indices
+
     def _compute_sf_images(self, spectra):
         # mz_bounds_cand = self._get_peak_bounds(sf_cand_inds)
         # sf_peak_map = self._get_sf_peak_map(sf_cand_inds)
@@ -187,12 +216,13 @@ class MolSearcher(object):
         mz_bounds_cand_brcast = self.sc.broadcast(self._get_peak_bounds())
         sf_peak_map_brcast = self.sc.broadcast(self._get_sf_peak_map())
         rows, cols = self.rows, self.cols
+        pixels_order = self.pixels_order
 
         sf_images = (spectra
                      .flatMap(lambda sp: sample_spectrum(sp, mz_bounds_cand_brcast.value, sf_peak_map_brcast.value))
                      .groupByKey()
                      .map(lambda ((sf_i, p_i), pixel_it):
-                          (sf_i, (p_i, flat_coord_list_to_matrix(list(pixel_it), rows, cols))))
+                          (sf_i, (p_i, flat_coord_list_to_matrix(list(pixel_it), pixels_order, rows, cols))))
                      .groupByKey()
                      .mapValues(lambda img_pairs_it: img_pairs_to_list(list(img_pairs_it))))
         return sf_images

@@ -62,36 +62,38 @@ sql_queries = dict(
 		WHERE (stats->'mean_ent')::text::real > 0.0001 AND job_id=%s
 	''',
 	demobigtable='''
-		SELECT db,ds.dataset,f.sf,f.names,f.subst_ids,
-			array_agg(COALESCE( (s.stats->'chaos')::text::real, 0 )) AS mean_ent,
-			array_agg((s.stats->'corr_images')::text::real) AS corr_images,
-			array_agg((s.stats->'corr_int')::text::real) AS corr_int,
-			array_agg(s.adduct) as adducts,
-			j.id as job_id,
-			array_agg(s.stats->'entropies') AS entropies,
-			j.dataset_id,f.id as sf_id
+		SELECT db, ds_name, f.sf, f.names, f.subst_ids,
+			(s.stats->'moc')::text::real AS chaos,
+			(s.stats->'spec')::text::real AS image_corr,
+			(s.stats->'spat')::text::real AS pattern_match,
+			s.adduct as adduct,
+			last_job_id,
+			ds_j.dataset_id,
+			f.id as sf_id,
+			s.peak_n
 		FROM agg_formulas f
 			JOIN formula_dbs db ON f.db_ids[1]=db.db_id
-			JOIN job_result_stats s ON f.id=s.formula_id JOIN jobs j ON s.job_id=j.id
-			JOIN datasets ds ON j.dataset_id=ds.dataset_id
+			JOIN job_result_stats s ON f.id=s.formula_id
+			JOIN (
+				select ds.dataset_id, ds.dataset as ds_name, max(j.id) as last_job_id
+				from jobs j
+				join datasets ds on j.dataset_id = ds.dataset_id
+				group by ds.dataset_id, ds.dataset
+			) ds_j ON ds_j.last_job_id = s.job_id
 		WHERE
-			(s.stats->'corr_images')::text::real > 0.3 AND
-			(s.stats->'corr_int')::text::real > 0.3
-		GROUP BY db,ds.dataset,f.sf,f.names,f.subst_ids,j.id,j.dataset_id,sf_id
+			(s.stats->'moc')::text::real > 0.3 AND
+			(s.stats->'spec')::text::real > 0.3 AND
+			(s.stats->'spat')::text::real > 0.3
 	''',
-	demosubst='''
-		SELECT s.job_id,s.formula_id,s.adduct,
-			(s.stats->'entropies'->peak)::text::real as entropy,peak,array_agg(spectrum) as sp,array_agg(value) as val
-		FROM job_result_stats s 
-			JOIN job_result_data d ON s.job_id=d.job_id  and s.adduct=d.adduct 
-			JOIN jobs j ON d.job_id=j.id 
-		WHERE d.job_id=%d AND s.formula_id=%s AND d.param=%d
-		AND (s.stats->'corr_images')::text::real > 0.3 AND
-			(s.stats->'corr_int')::text::real > 0.3
-		GROUP BY s.job_id,s.formula_id,entropy,s.adduct,peak
+	demosubst='''SELECT s.job_id, s.formula_id, s.adduct, peak, intensities as ints
+		FROM job_result_stats s
+		JOIN job_result_data d ON s.job_id=d.job_id  and s.adduct=d.adduct
+		JOIN jobs j ON d.job_id=j.id
+		WHERE d.job_id=%d AND s.formula_id=%d AND d.sf_id=%d
+		AND (s.stats->'spec')::text::real > 0.3 AND (s.stats->'spat')::text::real > 0.3
 	''',
 	demosubstpeaks="SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'",
-	democoords="SELECT index,x,y FROM coordinates WHERE dataset_id=%d",
+	democoords="SELECT x,y FROM coordinates WHERE dataset_id=%s ORDER BY index",
 	randomstat="SELECT job_id,dataset_id,s.formula_id,adduct,param,json_array_length(s.stats->'entropies') FROM job_result_stats s JOIN jobs j ON s.job_id=j.id OFFSET random() * (SELECT count(*) FROM job_result_stats) LIMIT 1",
 	onedata='''
 		SELECT spectrum,value,x,y
@@ -109,6 +111,7 @@ sql_fields = dict(
 	jobs=["id", "type", "description", "dataset_id", "dataset", "formula_id", "formula_name", "done", "status", "tasks_done", "tasks_total", "start", "finish", "id"],
 	datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
 	fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"],
-	demobigtable=["db", "dataset", "sf", "names", "subst_ids", "mean_ent", "corr_images", "corr_int", "adducts", "job_id", "entropies", "dataset_id", "sf_id"]
+	demobigtable=["db", "ds_name", "sf", "names", "subst_ids", "chaos", "image_corr", "pattern_match",
+				  "adduct", "last_job_id", "dataset_id", "sf_id", "peak_n"]
 )
 

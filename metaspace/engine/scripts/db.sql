@@ -64,7 +64,8 @@ CREATE TABLE coordinates (
 	dataset_id 	int,
 	index 		int,
 	x 			int,
-	y 			int
+	y 			int,
+	CONSTRAINT ds_id_ind PRIMARY KEY(dataset_id,index)
 );
 --\COPY coordinates FROM '/home/snikolenko/soft/ims/data/Ctrl3s2_SpheroidsCtrl_DHBSub_IMS.coords.txt' WITH delimiter ';' quote '@' csv;
 --\COPY coordinates FROM '/media/data/ims/14037s1_Spheroids24h_DHBSub_centroids_IMS_coordinates.csv' csv;
@@ -122,7 +123,7 @@ CREATE TABLE job_result_stats (
 	job_id			int,
 	formula_id		int,
 	adduct 			int,
-	param			int,
+	peak_n			int,
 	stats 			json
 );
 CREATE INDEX ind_job_result_stats_1 ON job_result_stats (job_id);
@@ -163,29 +164,29 @@ CREATE TABLE game_results (
 --     GROUP BY s.job_id,s.formula_id,peak;
 
 
-\COPY formulas TO '/media/data/ims/dump15072015/formulas.csv' WITH delimiter ';' csv;
-\COPY agg_formulas TO '/media/data/ims/dump15072015/agg_formulas.csv' WITH delimiter ';' csv;
-\COPY formula_dbs TO '/media/data/ims/dump15072015/formula_dbs.csv' WITH delimiter ';' csv;
-\COPY mz_peaks TO '/media/data/ims/dump15072015/mz_peaks.csv' WITH delimiter ';' csv;
-\COPY job_types TO '/media/data/ims/dump15072015/job_types.csv' WITH delimiter ';' csv;
-\COPY jobs TO '/media/data/ims/dump15072015/jobs.csv' WITH delimiter ';' csv;
-\COPY datasets TO '/media/data/ims/dump15072015/datasets.csv' WITH delimiter ';' csv;
-\COPY coordinates TO '/media/data/ims/dump15072015/coordinates.csv' WITH delimiter ';' csv;
-\COPY job_result_stats TO '/media/data/ims/dump15072015/job_result_stats.csv' WITH delimiter ';' csv;
-\COPY job_result_data TO '/media/data/ims/dump15072015/job_result_data.csv' WITH delimiter ';' csv;
-
-
-
-\COPY formulas FROM '/home/snikolenko/soft/ims/data/dump15072015/formulas.csv' WITH delimiter ';' csv;
-\COPY agg_formulas FROM '/home/snikolenko/soft/ims/data/dump15072015/agg_formulas.csv' WITH delimiter ';' csv;
-\COPY formula_dbs FROM '/home/snikolenko/soft/ims/data/dump15072015/formula_dbs.csv' WITH delimiter ';' csv;
-\COPY mz_peaks FROM '/home/snikolenko/soft/ims/data/dump15072015/mz_peaks.csv' WITH delimiter ';' csv;
-\COPY job_types FROM '/home/snikolenko/soft/ims/data/dump15072015/job_types.csv' WITH delimiter ';' csv;
-\COPY jobs FROM '/home/snikolenko/soft/ims/data/dump15072015/jobs.csv' WITH delimiter ';' csv;
-\COPY datasets FROM '/home/snikolenko/soft/ims/data/dump15072015/datasets.csv' WITH delimiter ';' csv;
-\COPY coordinates FROM '/home/snikolenko/soft/ims/data/dump15072015/coordinates.csv' WITH delimiter ';' csv;
-\COPY job_result_stats FROM '/home/snikolenko/soft/ims/data/dump15072015/job_result_stats.csv' WITH delimiter ';' csv;
-\COPY job_result_data FROM '/home/snikolenko/soft/ims/data/dump15072015/job_result_data.csv' WITH delimiter ';' csv;
+--\COPY formulas TO '/media/data/ims/dump15072015/formulas.csv' WITH delimiter ';' csv;
+--\COPY agg_formulas TO '/media/data/ims/dump15072015/agg_formulas.csv' WITH delimiter ';' csv;
+--\COPY formula_dbs TO '/media/data/ims/dump15072015/formula_dbs.csv' WITH delimiter ';' csv;
+--\COPY mz_peaks TO '/media/data/ims/dump15072015/mz_peaks.csv' WITH delimiter ';' csv;
+--\COPY job_types TO '/media/data/ims/dump15072015/job_types.csv' WITH delimiter ';' csv;
+--\COPY jobs TO '/media/data/ims/dump15072015/jobs.csv' WITH delimiter ';' csv;
+--\COPY datasets TO '/media/data/ims/dump15072015/datasets.csv' WITH delimiter ';' csv;
+--\COPY coordinates TO '/media/data/ims/dump15072015/coordinates.csv' WITH delimiter ';' csv;
+--\COPY job_result_stats TO '/media/data/ims/dump15072015/job_result_stats.csv' WITH delimiter ';' csv;
+--\COPY job_result_data TO '/media/data/ims/dump15072015/job_result_data.csv' WITH delimiter ';' csv;
+--
+--
+--
+--\COPY formulas FROM '/home/snikolenko/soft/ims/data/dump15072015/formulas.csv' WITH delimiter ';' csv;
+--\COPY agg_formulas FROM '/home/snikolenko/soft/ims/data/dump15072015/agg_formulas.csv' WITH delimiter ';' csv;
+--\COPY formula_dbs FROM '/home/snikolenko/soft/ims/data/dump15072015/formula_dbs.csv' WITH delimiter ';' csv;
+--\COPY mz_peaks FROM '/home/snikolenko/soft/ims/data/dump15072015/mz_peaks.csv' WITH delimiter ';' csv;
+--\COPY job_types FROM '/home/snikolenko/soft/ims/data/dump15072015/job_types.csv' WITH delimiter ';' csv;
+--\COPY jobs FROM '/home/snikolenko/soft/ims/data/dump15072015/jobs.csv' WITH delimiter ';' csv;
+--\COPY datasets FROM '/home/snikolenko/soft/ims/data/dump15072015/datasets.csv' WITH delimiter ';' csv;
+--\COPY coordinates FROM '/home/snikolenko/soft/ims/data/dump15072015/coordinates.csv' WITH delimiter ';' csv;
+--\COPY job_result_stats FROM '/home/snikolenko/soft/ims/data/dump15072015/job_result_stats.csv' WITH delimiter ';' csv;
+--\COPY job_result_data FROM '/home/snikolenko/soft/ims/data/dump15072015/job_result_data.csv' WITH delimiter ';' csv;
 
 
 

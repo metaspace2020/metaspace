@@ -74,24 +74,33 @@ def main():
 	If dataset id is not provided, use an auto increamented one. If user provides a dataset id that already exists, then, it will throw an error (dataset_id - primary key)
 	'''
     util.my_print("Inserting to datasets ...")
-    ds_id = args.dsid
-    if ds_id == None:
+
+    sql = "select dataset_id from datasets where dataset = '%s'" % args.dsname
+    cur.execute(sql)
+    # if dataset already exists
+    try:
+        ds_id = cur.fetchone()[0]
+
+    # if it's a new dataset
+    except:
         cur.execute("SELECT max(dataset_id) FROM datasets")
         try:
             ds_id = cur.fetchone()[0] + 1
         except:
             ds_id = 0
-        util.my_print("No dataset id specified, using %d and inserting to datasets" % ds_id)
-    cur.execute("INSERT INTO datasets VALUES (%s, %s, %s, %s, %s)", (ds_id, args.dsname, args.ip, args.rows, args.cols))
+        util.my_print("Inserting to datasets: %d" % ds_id)
+        cur.execute("INSERT INTO datasets VALUES (%s, %s, %s, %s, %s)", (ds_id, args.dsname, args.ip, args.rows, args.cols))
 
-    '''
-	Insert into coordinates table.
-	coordinates table columns: dataset_id, index, x, y
-	'''
-    util.my_print("Inserting to coordinates ...")
-    f = open(args.cp)
-    cur.execute("ALTER TABLE ONLY coordinates ALTER COLUMN dataset_id SET DEFAULT %d" % ds_id)
-    cur.copy_from(f, 'coordinates', sep=',', columns=('index', 'x', 'y'))
+        '''
+        Insert into coordinates table.
+        coordinates table columns: dataset_id, index, x, y
+        '''
+        util.my_print("Inserting to coordinates ...")
+        f = open(args.cp)
+        cur.execute("ALTER TABLE ONLY coordinates ALTER COLUMN dataset_id SET DEFAULT %d" % ds_id)
+        cur.copy_from(f, 'coordinates', sep=',', columns=('index', 'x', 'y'))
+
+    util.my_print("Using %s dataset" % args.dsname)
 
     '''
 	Insert into jobs table
@@ -121,7 +130,7 @@ def main():
     util.my_print("Inserting to job_result_data...")
 
     rows = [(job_id, res["formulas"][i], res["mzadducts"][i], peak_i,
-             [] if img_sparse is None else img_sparse.toarray().flatten().tolist())
+             (np.zeros(args.rows*args.cols) if img_sparse is None else img_sparse.T.toarray().flatten()).tolist())
             for i, img_list in enumerate(res["res_dicts"])
             for peak_i, img_sparse in enumerate(img_list)]
 
@@ -130,7 +139,7 @@ def main():
     util.my_print("Inserting to job_result_stats...")
     sql = 'INSERT INTO job_result_stats VALUES %s' % (
         ",".join(
-            ['(%d, %s, %d, %d, \'%s\')' % (job_id, res["formulas"][i], res["mzadducts"][i], 0, json.dumps(
+            ['(%d, %s, %d, %d, \'%s\')' % (job_id, res["formulas"][i], res["mzadducts"][i], len(res['res_dicts'][i]), json.dumps(
                 res["stat_dicts"][i]
             )) for i in xrange(len(res["formulas"]))]))
     cur.execute(sql)

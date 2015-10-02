@@ -10,26 +10,17 @@ from subprocess import check_call
 import psycopg2
 import cPickle
 import pandas as pd
-
-
-<<<<<<< HEAD
-class RunProcessDatasetTest(TestCase):
-
-    def setUp(self):
-        self.ds = '20150730_ANB_spheroid_control_65x65_15um'
-=======
-from engine.computing_fast_spark import compute_img_measures
+from pyspark import SparkConf, SparkContext
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_almost_equal
+from engine.mol_searcher import *
 
 
 class ProcessDatasetBaseTest(TestCase):
     # C44H84NO8P is used as a reference SF
 
-    def __init__(self):
-        super.__init__(self, TestCase)
-        self.sc = SparkContext(conf=SparkConf())
-
     def setUp(self):
+        # super.__init__(self, TestCase)
+        self.sc = SparkContext(conf=SparkConf())
         self.ds = '20150730_ANB_spheroid_control_65x65_15um'
         self.base_path = realpath(join('data/run_process_dataset_test', self.ds))
         self.ds_path = join(self.base_path, 'ds.txt')
@@ -111,18 +102,16 @@ def assert_sf_res_dataframes_equal(res_df, ref_df):
 
 
 class RunProcessDatasetTestBase(TestCase):
-    ds = None
 
     def setUp(self):
-        # self.ds = '20150730_ANB_spheroid_control_65x65_15um'
->>>>>>> One more attempt to make molecules search faster.
+        self.ds = '20150730_ANB_spheroid_control_65x65_15um'
         self.rows, self.cols = 65, 65
 
         self.base_path = realpath(join('data/run_process_dataset_test', self.ds))
         self.out_path = join(self.base_path, 'results.pkl')
         self.text_out_path = join(self.base_path, 'results.csv')
         self.ds_path = join(self.base_path, 'ds.txt')
-        # self.queries_path = join(self.base_path, 'C44H84NO8P_queries.pkl')
+        self.ds_coord_path = join(self.base_path, 'ds_coord.txt')
         self.queries_path = join(self.base_path, 'queries.pkl')
         self.ref_res_path = join(self.base_path, 'ref_result_sf_metrics.csv')
         self.run_process_dataset_script = join(dirname(dirname(realpath(__file__))), 'scripts/run_process_dataset.py')
@@ -136,6 +125,7 @@ class RunProcessDatasetTestBase(TestCase):
                '--config', self.config_path,
                '--out', self.out_path,
                '--ds', self.ds_path,
+               '--coord', self.ds_coord_path,
                '--queries', self.queries_path,
                '--rows', str(self.rows),
                '--cols', str(self.cols)]

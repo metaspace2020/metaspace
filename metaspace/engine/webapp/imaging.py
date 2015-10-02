@@ -1,6 +1,6 @@
-import png
 import numpy as np
 import cStringIO
+import png
 
 def write_image(img, fp=None, size=None, colormap=None, format="png"):
 	'''Save image in a given format and return the StringIO object'''
@@ -40,4 +40,3 @@ def make_image_arrays(nRows, nColumns, indices, values, offset=0):
 			print("[WARNING]: Index %d out of bounds for %dx%d m/z image!" % (indices[n]+offset, nRows, nColumns))
 	img=np.reshape(img,(nRows, nColumns))
 	return img
-
