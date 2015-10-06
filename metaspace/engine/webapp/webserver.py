@@ -49,11 +49,7 @@ class Application(tornado.web.Application):
             (r"^/ajax/([a-z]*)/(.*)", handlers.AjaxHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.AggIsoImgPngHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgPngHandler),
-            # (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgMetaHandler),
-            # (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgMetaHandler),
-            # (r"^/gameimages/", handlers.SimpleHtmlHandler),
-            (r"/", handlers.IndexHandler),
-            (r"/beta", handlers.IndexHandlerBeta)
+            (r"/", handlers.IndexHandler)
         ]
         # you can add deprecated handlers by specifying --use-deprecated in the command line
         if args.use_deprecated:

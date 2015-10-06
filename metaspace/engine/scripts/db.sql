@@ -103,19 +103,15 @@ CREATE TABLE job_result_stats (
 CREATE INDEX ind_job_result_stats_1 ON job_result_stats (job_id);
 CREATE INDEX ind_job_result_stats_2 ON job_result_stats (job_id, formula_id);
 
-DROP TABLE IF EXISTS mz_peaks;
-CREATE TABLE mz_peaks (
+DROP TABLE IF EXISTS theor_peaks;
+CREATE TABLE theor_peaks (
 	sf_id			int,
-	adduct			int,
-	peaks			double precision[],
-	ints			double precision[]
+	adduct			text,
+	centr_mzs		double precision[],
+	centr_ints		double precision[],
+	prof_mzs		double precision[],
+	prof_ints		double precision[],
+	CONSTRAINT sf_id_adduct PRIMARY KEY(sf_id, adduct)
 );
-CREATE INDEX ind_mz_peaks_1 ON mz_peaks(sf_id, adduct);
-CREATE INDEX ind_mz_peaks_2 ON mz_peaks(sf_id);
-
-
-DROP TABLE IF EXISTS game_results;
-CREATE TABLE game_results (
-	time			timestamp,
-	res 			json
-);
+CREATE INDEX ind_theor_peaks_1 ON theor_peaks(sf_id, adduct);
+CREATE INDEX ind_theor_peaks_2 ON theor_peaks(sf_id);

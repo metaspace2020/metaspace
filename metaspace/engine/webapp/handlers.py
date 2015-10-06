@@ -227,15 +227,7 @@ class IndexHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self):
-        self.render("html/demo-png.html", sparkactivated=args.spark)
-
-
-class IndexHandlerBeta(tornado.web.RequestHandler):
-    """Tornado handler for the index page."""
-
-    @gen.coroutine
-    def get(self):
-        self.render("html/index-beta.html")
+        self.render("html/index.html")
 
 
 class SimpleHtmlHandlerWithId(tornado.web.RequestHandler):
@@ -256,42 +248,6 @@ class SimpleHtmlHandler(tornado.web.RequestHandler):
         my_print("Request: %s" % self.request.uri)
         self.render(html_pages.get(self.request.uri.split('/')[1], 'html/' + self.request.uri.split('/')[1] + ".html"),
                     sparkactivated=args.spark)
-
-
-# class IsoImgMetaHandler(IsoImgBaseHandler):
-#
-#     @gen.coroutine
-#     def get(self, *args, **kwargs):
-#         key = '_'.join(args)
-#         min_int, max_int = self.min_max_ints_cache[key]
-#
-#         colorbar_img_fp = self.create_colorbar(min_int, max_int)
-#
-#         self.set_header("Content-Type", "image/png")
-#         self.write(colorbar_img_fp.getvalue())
-#         return
-#
-#     def create_colorbar(self, min_int, max_int):
-#         # Make a figure and axes with dimensions as desired.
-#         fig = plt.figure(figsize=(0.2, 3))
-#         ax1 = fig.add_axes([0, 0, 1, 1])
-#         ax1.get_xaxis().set_visible(False)
-#         # plt.tick_params(axis='both', which='major', labelsize=12)
-#
-#         cmap = mpl.colors.ListedColormap(map(lambda t: map(lambda x: float(x)/255, t), self.colormap))
-#         norm = mpl.colors.Normalize(vmin=min_int, vmax=max_int)
-#
-#         # ColorbarBase derives from ScalarMappable and puts a colorbar
-#         # in a specified axes, so it has everything needed for a
-#         # standalone colorbar.  There are many more kwargs, but the
-#         # following gives a basic continuous colorbar with ticks
-#         # and labels.
-#         cb = mpl.colorbar.ColorbarBase(ax1, cmap=cmap, norm=norm, orientation='vertical')
-#         # cb.set_label('MZ')
-#
-#         fp = cStringIO.StringIO()
-#         fig.savefig(fp)
-#         return fp
 
 
 class IsoImgBaseHandler(tornado.web.RequestHandler):
@@ -328,27 +284,28 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
 
 
 class IsoImgPngHandler(IsoImgBaseHandler):
+    theor_peaks_sql = "select centr_mzs[%s] from theor_peaks where sf_id = %s and adduct = %s;"
 
     @gen.coroutine
     def get(self, *args):
         dataset_id, job_id, sf_id, sf, adduct, peak_id = args
         ints_list, coords, rows, cols = self.res_dict(self.query_id, int(dataset_id), int(job_id), int(sf_id), sf)
 
-        # peak_mzs = self.db.query("SELECT nrows, ncols FROM jobs j JOIN datasets d on j.dataset_id=d.dataset_id WHERE j.id=%d" % (job_id))[0]
+        peak_mz = self.db.query(self.theor_peaks_sql, int(peak_id)+1, int(sf_id), adduct)[0].values()[0]
 
         img_ints = ints_list[peak_id]
 
-        img_fp = self.create_iso_img(img_ints.reshape(rows, cols), 1233.233, 0.234)
+        img_fp = self.create_iso_img(img_ints.reshape(rows, cols), peak_mz)
         self.send_img_response(img_fp)
 
-    def create_iso_img(self, img_data, peak_mz, spatial_presence):
+    def create_iso_img(self, img_data, peak_mz):
         # Make a figure and axes with dimensions as desired.
         fig, ax = plt.subplots(figsize=(5, 5))
         cmap = mpl.colors.ListedColormap(self.colormap.astype(float) / 255)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         plt.imshow(img_data, interpolation='nearest', cmap=cmap, vmin=img_data.min(), vmax=img_data.max())
-        plt.figtext(0.4, 0.92, '%.3f' % peak_mz, size=14)
+        plt.figtext(0.45, 0.92, '%.3f' % peak_mz, size=14)
 
         fp = cStringIO.StringIO()
         fig.savefig(fp, format='png')

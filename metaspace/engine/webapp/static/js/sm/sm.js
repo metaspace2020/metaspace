@@ -235,7 +235,7 @@ $(document).ready(function() {
         var loaded_images = 0;
         for (var i = 0; i < urls.length; i++) {
             var elem = $("#col-img-" + 0 + "-" + i.toString());
-            var to_append = '<img src="' + urls[i] + '" width="95%" id="img-' + i.toString() + '">';
+            var to_append = '<img src="' + urls[i] + '" width="100%" id="img-' + i.toString() + '">';
             elem.append(to_append);
             // callback for logging the elapsed time
             $("#img-" + i.toString()).load(function () {
