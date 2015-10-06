@@ -64,6 +64,9 @@ $(document).ready(function() {
       bSearchable: false,
       bStateSave: true,
       order: [[ 7, "desc" ]],
+      fnInitComplete: function(oSettings, json) {
+        $('#table-demo tbody tr:eq(0)').click();
+      },
       "columnDefs": [
         { "render": function ( data, type, row ) {
           if (type === 'display') {
@@ -160,7 +163,7 @@ $(document).ready(function() {
         var dataset_id = d[10];
         var sf_id = d[11];
         var peak_n = d[12];
-        var colors = ['#352A87', '#0268E1', '#108ED2', '#0FAEB9', '#65BE86', '#C0BC60', '#FFC337', '#F9FB0E'];
+//        var colors = ['#352A87', '#0268E1', '#108ED2', '#0FAEB9', '#65BE86', '#C0BC60', '#FFC337', '#F9FB0E'];
 
         var pixel_size = 4;
 
@@ -199,30 +202,31 @@ $(document).ready(function() {
         var url_params = dataset_id + '/'
             + job_id + '/' + sf_id + '/' + sf;
         $("#ionimage_total").html(
-            '<img src="/mzimage2/' + url_params + '" width="100%" id="img-total">'
+            '<img src="/mzimage2/' + url_params + '" id="img-total">'
         );
         // images per adduct and peak
-//        var col_w = Math.floor(12 / entropies.length);
-        var col_w = 0;
+        var iso_img_n = Math.min(peak_n, 5)
+        var col_w = Math.floor(12 / iso_img_n);
         var urls = [];
         for (adduct_idx in adducts) {
             var adduct = adducts[adduct_idx];
 //            var col_w = Math.floor(12 / entropies[adduct_idx].length);
             $("#imagediv").empty();
             $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>+' + array_adducts[adduct] + '</h3></div></div><div class="row" id="row-images-' + adduct_idx + '"></div><div class="row"><div id="molchart_' + adduct_idx + '"></div></div>');
-            for (var peak_id = 0; peak_id < Math.min(peak_n, 4); peak_id++) {
+            for (var peak_id = 0; peak_id < iso_img_n; peak_id++) {
                 to_append = '<div style="text-align:center;" class="col-lg-'
-                    + col_w.toString() + '">' + '<div class="container-fluid"'
-                    + '<div class="row"><b>'
-                    + "insert m/z here" + '</b></div>'
+                    + col_w.toString() + '">' + '<div class="container-fluid">'
+//                    + '<div class="row"><b>'
+//                    + "insert m/z here" + '</b></div>'
                     + '<div class="row" id="col-img-' + adduct_idx + '-' + peak_id.toString() + '"></div>'
                     + '<div class="row">';
-                if (peak_id == 0) {
-                    to_append += '<div class="col-lg-8">Spatial presence</div><div class="col-lg-4">';
-                } else {
-                    to_append += '<div class="col-lg-12">';
-                }
-                to_append += '0' + '</div></div></div>';
+//                if (peak_id == 0) {
+//                    to_append += '<div class="col-lg-8">Spatial presence</div><div class="col-lg-4">';
+//                } else {
+//                    to_append += '<div class="col-lg-12">';
+//                }
+//                to_append += '0' + '</div></div></div>';
+                to_append += '</div></div></div>';
                 $('#row-images-' + adduct_idx).append(to_append);
                 var url = "/mzimage2/" + dataset_id + '/' + job_id + '/' + sf_id + '/' + sf + '/' + array_adducts[adduct] + '/' + peak_id;
                 urls.push(url);
@@ -240,16 +244,18 @@ $(document).ready(function() {
                 }
             });
         }
-        $("#img-total").load(function () {
-            $.getJSON('/mzimage_meta/' + url_params, function (json) {
-                var min_val = json["min"];
-                var max_val = json["max"];
-                var img_color = d3.scale.linear().domain(d3.range(
-                    min_val, max_val, (max_val - min_val) / colors.length
-                )).range( colors );
-                sin_render_colorbar_horiz('#ionimage_total_cb', [img_color, min_val, max_val]);
-            });
-        });
+
+//        $("#img-total").load(function () {
+//            $.getJSON('/mzimage_meta/' + url_params, function (json) {
+//                var min_val = json["min"];
+//                var max_val = json["max"];
+
+//                var img_color = d3.scale.linear().domain(d3.range(
+//                    min_val, max_val, (max_val - min_val) / colors.length
+//                )).range( colors );
+//                sin_render_colorbar_horiz('#ionimage_total_cb', [img_color, min_val, max_val]);
+//            });
+//        });
     }
 
     function handleKeyPress(e){

@@ -13,7 +13,7 @@ This script:
 
 * selects all sum formulas from the agg_formulas table,
 
-* writes to a separate file mzpeaks.csv all peaks for all sum formulas.
+* writes to a separate file mz_peaks.csv all peaks for all sum formulas.
 """
 import psycopg2
 import json
@@ -36,21 +36,24 @@ def main():
     print 'Selecting all formulas from {} database...'.format(config_db['database'])
     conn = psycopg2.connect(**config_db)
     with conn.cursor() as curs:
-        curs.execute('SELECT id, sf FROM agg_formulas')
+        curs.execute('SELECT id, sf FROM agg_formulas limit 100')
         formulas = list(curs.fetchall())
 
     adducts = ["H", "Na", "K"]
     formula_adduct_pairs = product(formulas, enumerate(adducts))
 
     conf = SparkConf()
-    sc = SparkContext(conf=conf)
-    formula_adduct_rdd = sc.parallelize(formula_adduct_pairs).repartition(4)
+    sc = SparkContext(conf=conf, master='local[8]')
+    formula_adduct_rdd = sc.parallelize(formula_adduct_pairs).repartition(8)
 
-    def format_peak_str(sf, add_id, iso_dict):
-        return '%s\t%d\t{%s}\t{%s}\n' % (
-            id, add_id,
+    def format_peak_str(sf_id, add_id, iso_dict):
+        return '%s\t%d\t{%s}\t{%s}\t{%s}\t{%s}' % (
+            sf_id, add_id,
             ','.join(map(lambda x: '{:.9f}'.format(x), iso_dict['centr_mzs'])),
-            ','.join(map(lambda x: '{:.9f}'.format(x), iso_dict['centr_ints'])))
+            ','.join(map(lambda x: '{:.9f}'.format(x), iso_dict['centr_ints'])),
+            ','.join(map(lambda x: '{:.9f}'.format(x), iso_dict['profile_mzs'])),
+            ','.join(map(lambda x: '{:.9f}'.format(x), iso_dict['profile_ints']))
+        )
 
     peak_lines = (formula_adduct_rdd
         .map(lambda ((sf_id, sf), (add_id, adduct)): (sf_id, add_id, isocalc.get_iso_peaks(sf + adduct)))

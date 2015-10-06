@@ -44,13 +44,14 @@ class Application(tornado.web.Application):
 
     def __init__(self):
         """Initializes handlers, including the spark handler, sets up database connection."""
+
         torn_handlers = [
             (r"^/ajax/([a-z]*)/(.*)", handlers.AjaxHandler),
-            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler2),
-            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler2),
-            (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler2),
-            (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.NewPngHandler2),
-            (r"^/gameimages/", handlers.SimpleHtmlHandler),
+            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.AggIsoImgPngHandler),
+            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgPngHandler),
+            # (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgMetaHandler),
+            # (r"^/mzimage_meta/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgMetaHandler),
+            # (r"^/gameimages/", handlers.SimpleHtmlHandler),
             (r"/", handlers.IndexHandler),
             (r"/beta", handlers.IndexHandlerBeta)
         ]

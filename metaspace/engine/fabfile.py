@@ -35,7 +35,7 @@ def get_spark_master_host():
 def get_webserver_host():
     return ['ubuntu@sm-webserver']
 
-
+@task
 @hosts(get_webserver_host())
 def webserver_start():
     print green('========= Starting webserver instance =========')

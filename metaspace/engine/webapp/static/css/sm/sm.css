@@ -1,4 +1,9 @@
 
-#img-total {
-  width: 50%
+#ionimage_total img {
+  width: 100%;
+  min-width: 450px;
+}
+
+/*#ionimage_total_cb {
+  width: 100%;
 }
