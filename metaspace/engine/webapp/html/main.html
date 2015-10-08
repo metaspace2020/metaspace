@@ -4,59 +4,74 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Test server on Spark</title>
+    <title>SM Web App</title>
 
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <!-- <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet" > -->
-    <link href="{{ static_url("css/bootstrap.min.css") }}" rel="stylesheet">
-    <link href="{{ static_url("css/chosen.min.css") }}" rel="stylesheet">
-    <link href="{{ static_url("css/jquery.dataTables.css") }}" rel="stylesheet">
-    <link href="{{ static_url("css/sin.css") }}" rel="stylesheet">
-    <link href="{{ static_url("css/sm/sm.css") }}" rel="stylesheet">
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/chosen.min.css" rel="stylesheet">
+    <link href="/static/css/jquery.dataTables.css" rel="stylesheet">
+    <link href="/static/css/sin.css" rel="stylesheet">
+    <link href="/static/css/sm/sm.css" rel="stylesheet">
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <link rel="stylesheet" href="/static/js/fancybox/source/jquery.fancybox.css" type="text/css" media="screen" />
+    <link rel="stylesheet" href="/static/css/jquery.dataTables.yadcf.css" type="text/css" media="screen" />
 
-    <script src="{{ static_url("js/jquery.min.js") }}"></script>
-    <script src="{{ static_url("js/jquery.dataTables.js") }}"></script>
-    <!--script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script-->
-    <script src="{{ static_url("js/bootstrap.min.js") }}"></script>
-    <script type="text/javascript" charset="utf8" src="{{ static_url("js/sm/sin.js") }}"></script>
+    <!-- Display images pixelated; this is a hack that makes it work for all browsers -->
+    <style type="text/css">
+        img {
+            image-rendering: optimizeSpeed;
+            image-rendering: -moz-crisp-edges;          /* Firefox */
+            image-rendering: -o-crisp-edges;            /* Opera */
+            image-rendering: -webkit-optimize-contrast; /* Chrome (and eventually Safari) */
+            image-rendering: pixelated;                 /* Chrome */
+            image-rendering: optimize-contrast;         /* CSS3 Proposed */
+            -ms-interpolation-mode: nearest-neighbor;   /* IE8+ */
+        }
+	</style>
 
-    {% block add_includes %}
-    {% end %}
-    
-    {% block init_script %}
-    <script type="text/javascript" class="init">
-      $(document).ready(function() {
-      } );
-    {% end %}
-    </script>
+
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/jquery.dataTables.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" src="/static/js/fancybox/source/jquery.fancybox.pack.js"></script>
+    <script src="/static/js/jquery.dataTables.columnFilter.js"></script>
+    <script src="/static/js/jquery.dataTables.yadcf.js"></script>
+    <script src="/static/js/fnGetAdjacentTr.js"></script>
+
+    <script src="/static/js/d3.min.js"></script>
+    <script src="/static/js/amcharts/amcharts.js"></script>
+    <script src="/static/js/amcharts/serial.js"></script>
+
+    <script src="/static/js/sm/sin.js"></script>
+    <script src="/static/js/sm/sm.js"></script>
+
   </head>
   <body>
     <div class="container-fluid">
-    <nav class="navbar navbar-default">
-      <div class="container-fluid">
-        <!-- Brand and toggle get grouped for better mobile display -->
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="/">Spatial metabolomics server</a>
-        </div>
+        <nav class="navbar navbar-default">
+          <div class="container-fluid">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="/">Spatial metabolomics server</a>
+            </div>
 
-        <!-- Collect the nav links, forms, and other content for toggling -->
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-          <p id="navbarname" class="navbar-brand navbar-right"></p>
-        </div><!-- /.navbar-collapse -->
-      </div><!-- /.container-fluid -->
-    </nav>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <p id="navbarname" class="navbar-brand navbar-right"></p>
+            </div><!-- /.navbar-collapse -->
+          </div><!-- /.container-fluid -->
+        </nav>
+    </div>
 
     {% block body %}
     {% end %}
-
 
     {% block modals %}
     {% end %}

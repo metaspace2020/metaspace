@@ -1,6 +1,7 @@
 
+// Page initialisation
 $(document).ready(function() {
-    var array_adducts = ['H', 'Na', 'K'];
+    //var array_adducts = ['H', 'Na', 'K'];
 
     var max_peaks_to_show = 6;
     var mz_array = [];
@@ -111,7 +112,7 @@ $(document).ready(function() {
 //        }, "targets": [5, 6, 7] },
         { "render": function ( data, type, row ) {
 //          return data.sort().map(function(d) { return array_adducts[d]; }).join(" ");
-            return array_adducts[data];
+            return data;
         }, "targets": [8] },
         { "visible": false,  "targets": [ 9, 10, 11, 12] },
       ],
@@ -123,6 +124,7 @@ $(document).ready(function() {
       }
     } );
 
+    // Column filter/sorters
     yadcf.init(tbl_demo, [
       {column_number : 0, filter_type: "select", filter_container_id: "fil-db", filter_reset_button_text: false, filter_default_label: 'Select...'},
       {column_number : 1, filter_type: "select", filter_container_id: "fil-ds", filter_reset_button_text: false, filter_default_label: 'Select...'},
@@ -138,6 +140,7 @@ $(document).ready(function() {
       // {column_number : 7, filter_type: "range_number", filter_container_id: "fil-jb", filter_reset_button_text: false},
     ]);
 
+    // Row select action
     $('#table-demo tbody').on( 'click', 'tr', function () {
       if ( $(this).hasClass('selected') ) {
         $(this).removeClass('selected');
@@ -150,6 +153,7 @@ $(document).ready(function() {
 
     $(".fancybox").fancybox();
 
+    // Row select handler
     function select_row(row_object) {
         var t_start = performance.now();
         $(row_object).addClass('selected');
@@ -205,14 +209,14 @@ $(document).ready(function() {
             '<img src="/mzimage2/' + url_params + '" id="img-total">'
         );
         // images per adduct and peak
-        var iso_img_n = Math.min(peak_n, 5)
+        var iso_img_n = Math.min(peak_n, 6)
         var col_w = Math.floor(12 / iso_img_n);
         var urls = [];
         for (adduct_idx in adducts) {
             var adduct = adducts[adduct_idx];
 //            var col_w = Math.floor(12 / entropies[adduct_idx].length);
             $("#imagediv").empty();
-            $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>+' + array_adducts[adduct] + '</h3></div></div><div class="row" id="row-images-' + adduct_idx + '"></div><div class="row"><div id="molchart_' + adduct_idx + '"></div></div>');
+            $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>+' + adduct + '</h3></div></div><div class="row" id="row-images-' + adduct_idx + '"></div><div class="row"><div id="molchart_' + adduct_idx + '"></div></div>');
             for (var peak_id = 0; peak_id < iso_img_n; peak_id++) {
                 to_append = '<div style="text-align:center;" class="col-lg-'
                     + col_w.toString() + '">' + '<div class="container-fluid">'
@@ -228,7 +232,7 @@ $(document).ready(function() {
 //                to_append += '0' + '</div></div></div>';
                 to_append += '</div></div></div>';
                 $('#row-images-' + adduct_idx).append(to_append);
-                var url = "/mzimage2/" + dataset_id + '/' + job_id + '/' + sf_id + '/' + sf + '/' + array_adducts[adduct] + '/' + peak_id;
+                var url = "/mzimage2/" + dataset_id + '/' + job_id + '/' + sf_id + '/' + sf + '/' + adduct + '/' + peak_id;
                 urls.push(url);
             }
         }
@@ -245,33 +249,132 @@ $(document).ready(function() {
             });
         }
 
-//        $("#img-total").load(function () {
-//            $.getJSON('/mzimage_meta/' + url_params, function (json) {
-//                var min_val = json["min"];
-//                var max_val = json["max"];
+        // Bottom line chart generation
+        var url = "/spectrum_line_chart_data/" + job_id + "/" + sf_id + "/" + adducts[0];
+        $.getJSON(url, function( data ) {
+            var min_mz = data["mz_grid"]["min_mz"];
+            var max_mz = data["mz_grid"]["max_mz"];
+            var points_n = data["mz_grid"]["points_n"];
 
-//                var img_color = d3.scale.linear().domain(d3.range(
-//                    min_val, max_val, (max_val - min_val) / colors.length
-//                )).range( colors );
-//                sin_render_colorbar_horiz('#ionimage_total_cb', [img_color, min_val, max_val]);
-//            });
-//        });
+            // create a grid
+            var grid = [];
+            var step = (max_mz - min_mz) / (points_n-1);
+            for (var i = 0; i < points_n; i++) {
+                grid.push((min_mz + i*step).toFixed(3));
+            }
+
+            // create intensity series for profiles
+            var prof_int_series = [];
+            for (var i = 0; i < points_n; i++) {
+                prof_int_series[i] = 0;
+            }
+            for (var i = 0; i < data["theor"]["inds"].length; i++) {
+                var grid_ind = data["theor"]["inds"][i];
+                prof_int_series[grid_ind] = data["theor"]["ints"][i]
+            }
+
+            // create intensity series for centroids
+            var centr_int_series = [];
+            for (var i = 0; i < points_n; i++) {
+                centr_int_series[i] = 0;
+            }
+            for (var i = 0; i < data["sample"]["inds"].length; i++) {
+                var grid_ind = data["sample"]["inds"][i];
+                centr_int_series[grid_ind] = data["sample"]["ints"][i]
+            }
+
+            // prepare chart data structure
+            var chartData = [];
+            for (var i = 0; i < points_n; i++) {
+                chartData.push({"peak_mz": grid[i],
+                                "prof_peak_int": prof_int_series[i],
+                                "centr_peak_int": centr_int_series[i]});
+            }
+
+            // create guides from centroids
+            var guides = data["sample"]["inds"].map(function(grid_ind, ind, arr) {
+                return {"category" : grid[grid_ind],
+                        "boldLabel" : "True",
+                        "color" : "black",
+                        "dashLength" : 5,
+                        "lineAlpha" : 1,
+                        "label" : grid[grid_ind]}
+            });
+
+            AmCharts.makeChart("peaks-line-chart", {
+                type: "serial",
+                pathToImages: "/static/js/amcharts/images/",
+                dataProvider: chartData,
+                categoryField: "peak_mz",
+
+                categoryAxis: {
+                    dashLength: 1,
+                    labelsEnabled: false,
+                    fontSize: 14,
+                    guides: guides,
+                },
+
+                valueAxes: [{
+                    id: "val_axis",
+                    title: "Intensity (a.u.)",
+                    fontSize: 14,
+                    maximum: 100,
+                    axisThickness: 1.5,
+                    dashLength: 5,
+                    gridCount: 10,
+                    dashLength: 1,
+                }],
+
+                graphs: [{
+                    id: "theor_int",
+                    valueField: "prof_peak_int",
+                    title: "Theoretical",
+                    lineColor: "blue",
+                    type: "smoothedLine",
+
+                },{
+                    id: "sample_int",
+                    valueField: "centr_peak_int",
+                    title: "Sample",
+                    lineColor: "red",
+                    type: "column",
+                    fillAlphas: 1,
+                }],
+
+                chartScrollbar : {
+                    //updateOnReleaseOnly: true,
+                },
+
+                chartCursor: {
+                    cursorPosition: "mouse",
+                },
+
+                legend: {
+                  fontSize: 14,
+                  markerSize: 15,
+                  useGraphSettings: true,
+                  position: "bottom",
+                  align: "center",
+                },
+            });
+        });
+
     }
 
-    function handleKeyPress(e){
-      var keycode;
-      if (window.event) keycode = window.event.keyCode;
-      else if (e) keycode = e.which;
-      var direction = (keycode==38)?-1:(keycode==40)?1:0;
-      if (direction != 0 && $('#table-demo tbody tr').hasClass('selected')){
-        var tbl_demo_my = $("#table-demo").dataTable();
-        var cur = tbl_demo_my.$('#table-demo tbody tr.selected');
-        var next = tbl_demo_my.fnGetAdjacentTr( cur[0], (direction == 1) );
-        cur.removeClass('selected');
-        select_row(next);
-      }
-    }
-
-    document.onkeydown = handleKeyPress;
+//    function handleKeyPress(e){
+//      var keycode;
+//      if (window.event) keycode = window.event.keyCode;
+//      else if (e) keycode = e.which;
+//      var direction = (keycode==38)?-1:(keycode==40)?1:0;
+//      if (direction != 0 && $('#table-demo tbody tr').hasClass('selected')){
+//        var tbl_demo_my = $("#table-demo").dataTable();
+//        var cur = tbl_demo_my.$('#table-demo tbody tr.selected');
+//        var next = tbl_demo_my.fnGetAdjacentTr( cur[0], (direction == 1) );
+//        cur.removeClass('selected');
+//        select_row(next);
+//      }
+//    }
+//
+//    document.onkeydown = handleKeyPress;
 
 } );

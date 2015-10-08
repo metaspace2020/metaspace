@@ -81,7 +81,7 @@ DROP TABLE IF EXISTS job_result_data;
 CREATE TABLE job_result_data (
 	job_id		int,
 	sf_id		int,
-	adduct 		int,
+	adduct 		text,
 	peak		int,
 	intensities	real[],
 	min_int		real,
@@ -96,7 +96,7 @@ DROP TABLE IF EXISTS job_result_stats;
 CREATE TABLE job_result_stats (
 	job_id			int,
 	formula_id		int,
-	adduct 			int,
+	adduct 			text,
 	peak_n			int,
 	stats 			json
 );

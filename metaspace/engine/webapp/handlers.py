@@ -14,6 +14,7 @@ import cStringIO
 import cProfile
 
 import numpy as np
+from scipy.stats import mode
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
@@ -340,3 +341,66 @@ class AggIsoImgPngHandler(IsoImgBaseHandler):
         fp = cStringIO.StringIO()
         fig.savefig(fp, format='png')
         return fp
+
+
+class SpectrumLineChartHandler(tornado.web.RequestHandler):
+    peak_profile_sql = 'select centr_mzs, centr_ints, prof_mzs, prof_ints from theor_peaks where sf_id = %s and adduct = %s;'
+    sample_intens_sql = 'select intensities from job_result_data where job_id = %s and sf_id = %s and adduct = %s order by peak;'
+
+    @property
+    def db(self):
+        return self.application.db
+
+    def find_closest_inds(self, mz_grid, mzs):
+        return map(lambda mz: (np.abs(mz_grid - mz)).argmin(), mzs)
+
+    def to_str(self, list_of_numbers):
+        return map(lambda x: '%.3f' % x, list(list_of_numbers))
+
+    def convert_to_serial(self, centr_mzs, prof_mzs):
+        step = mode(np.diff(prof_mzs)).mode[0]
+        min_mz = prof_mzs[0] - 15*step
+        max_mz = prof_mzs[-1]
+
+        points_n = int(np.round((max_mz - min_mz) / step)) + 1
+        mz_grid = np.linspace(min_mz, max_mz, points_n)
+
+        centr_inds = self.find_closest_inds(mz_grid, centr_mzs)
+        prof_inds = self.find_closest_inds(mz_grid, prof_mzs)
+
+        return min_mz, max_mz, points_n, centr_inds, prof_inds
+
+    @gen.coroutine
+    def get(self, job_id, sf_id, adduct):
+        peaks_dict = self.db.query(self.peak_profile_sql, int(sf_id), adduct)[0]
+        prof_mzs = np.array(peaks_dict['prof_mzs'])
+        prof_ints = np.array(peaks_dict['prof_ints'])
+        centr_mzs = np.array(peaks_dict['centr_mzs'])
+
+        min_mz, max_mz, points_n, centr_inds, prof_inds = self.convert_to_serial(centr_mzs, prof_mzs)
+
+        sample_ints_list = self.db.query(self.sample_intens_sql, int(job_id), int(sf_id), adduct)
+        sample_centr_ints = np.array(map(lambda d: sum(d.values()[0]), sample_ints_list))
+        sample_centr_ints_norm = sample_centr_ints / sample_centr_ints.max() * 100
+
+        self.write(json.dumps({
+            'mz_grid': {
+                'min_mz': min_mz,
+                'max_mz': max_mz,
+                'points_n': points_n,
+            },
+            'sample': {
+                'inds': centr_inds,
+                'ints': self.to_str(sample_centr_ints_norm)
+            },
+            'theor': {
+                'inds': prof_inds,
+                'ints': self.to_str(prof_ints)
+            }
+        }))
+
+
+
+
+
+

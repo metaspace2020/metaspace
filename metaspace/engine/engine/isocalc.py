@@ -27,4 +27,4 @@ def get_iso_peaks(sf):
     return res_dict
 
 if __name__ == '__main__':
-    get_iso_peaks('C15H22O9')
+    get_iso_peaks('C15H22O9K')

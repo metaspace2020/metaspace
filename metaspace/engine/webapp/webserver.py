@@ -46,10 +46,13 @@ class Application(tornado.web.Application):
         """Initializes handlers, including the spark handler, sets up database connection."""
 
         torn_handlers = [
+            (r"/", handlers.IndexHandler),
+            (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": path.join(path.dirname(__file__), "static")}),
             (r"^/ajax/([a-z]*)/(.*)", handlers.AjaxHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.AggIsoImgPngHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgPngHandler),
-            (r"/", handlers.IndexHandler)
+            (r"^/spectrum_line_chart_data/([^/]+)/([^/]+)/([^/]+)", handlers.SpectrumLineChartHandler),
+            (r"^/demo", handlers.AjaxHandler)
         ]
         # you can add deprecated handlers by specifying --use-deprecated in the command line
         if args.use_deprecated:

@@ -91,6 +91,7 @@ sql_queries = dict(
 		JOIN jobs j ON d.job_id=j.id
 		WHERE d.job_id=%d AND s.formula_id=%d AND d.sf_id=%d
 		AND (s.stats->'spec')::text::real > 0.3 AND (s.stats->'spat')::text::real > 0.3
+		ORDER BY peak
 	''',
 	demosubstpeaks="SELECT peaks,ints FROM mz_peaks WHERE formula_id='%s'",
 	democoords="SELECT x,y FROM coordinates WHERE dataset_id=%s ORDER BY index",

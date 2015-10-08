@@ -133,17 +133,17 @@ def main():
     for i, img_list in enumerate(res["res_dicts"]):
         for peak_i, img_sparse in enumerate(img_list):
             img_ints = np.zeros(args.rows*args.cols) if img_sparse is None else img_sparse.T.toarray().flatten()
-            r = (job_id, res["formulas"][i], res["mzadducts"][i], peak_i, img_ints.tolist(), img_ints.min(), img_ints.max())
+            r = (job_id, res["formulas"][i], adducts[res["mzadducts"][i]], peak_i,
+                 img_ints.tolist(), img_ints.min(), img_ints.max())
             rows.append(r)
     cur.executemany("INSERT INTO job_result_data VALUES (%s, %s, %s, %s, %s, %s, %s)", rows)
 
     util.my_print("Inserting to job_result_stats...")
-    sql = 'INSERT INTO job_result_stats VALUES %s' % (
-        ",".join(
-            ['(%d, %s, %d, %d, \'%s\')' % (job_id, res["formulas"][i], res["mzadducts"][i], len(res['res_dicts'][i]), json.dumps(
-                res["stat_dicts"][i]
-            )) for i in xrange(len(res["formulas"]))]))
-    cur.execute(sql)
+    rows = []
+    for i, sf_id in enumerate(res["formulas"]):
+        r = (job_id, sf_id, adducts[res["mzadducts"][i]], len(res['res_dicts'][i]), json.dumps(res["stat_dicts"][i]))
+        rows.append(r)
+    cur.executemany('INSERT INTO job_result_stats VALUES (%s, %s, %s, %s, %s)', rows)
 
     conn.commit()
     conn.close()
