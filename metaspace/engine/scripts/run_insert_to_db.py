@@ -35,7 +35,7 @@ def main():
 
     from engine import util
 
-    adducts = ["H", "Na", "K"]
+    # adducts = ["H", "Na", "K"]
 
     parser = argparse.ArgumentParser(description='Insert pickled results to DB.')
     parser.add_argument('--ip', dest='ip', type=str, help='input file path', required=True)
@@ -132,8 +132,8 @@ def main():
     rows = []
     for i, img_list in enumerate(res["res_dicts"]):
         for peak_i, img_sparse in enumerate(img_list):
-            img_ints = np.zeros(args.rows*args.cols) if img_sparse is None else img_sparse.T.toarray().flatten()
-            r = (job_id, res["formulas"][i], adducts[res["mzadducts"][i]], peak_i,
+            img_ints = np.zeros(args.rows*args.cols) if img_sparse is None else img_sparse.toarray().flatten()
+            r = (job_id, res["formulas"][i], res["mzadducts"][i], peak_i,
                  img_ints.tolist(), img_ints.min(), img_ints.max())
             rows.append(r)
     cur.executemany("INSERT INTO job_result_data VALUES (%s, %s, %s, %s, %s, %s, %s)", rows)
@@ -141,7 +141,7 @@ def main():
     util.my_print("Inserting to job_result_stats...")
     rows = []
     for i, sf_id in enumerate(res["formulas"]):
-        r = (job_id, sf_id, adducts[res["mzadducts"][i]], len(res['res_dicts'][i]), json.dumps(res["stat_dicts"][i]))
+        r = (job_id, sf_id, res["mzadducts"][i], len(res['res_dicts'][i]), json.dumps(res["stat_dicts"][i]))
         rows.append(r)
     cur.executemany('INSERT INTO job_result_stats VALUES (%s, %s, %s, %s, %s)', rows)
 

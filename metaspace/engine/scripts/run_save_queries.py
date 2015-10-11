@@ -4,7 +4,7 @@ import cPickle
 import psycopg2
 import psycopg2.extras
 
-ppm = 1.5
+ppm = 1.0
 # tol = 0.01
 adducts = ["H", "Na", "K"]
 
@@ -32,7 +32,7 @@ curs = conn.cursor()
 # --sf-filter-file
 #/home/intsco/embl/SpatialMetabolomics/sm/test/data/run_process_dataset_test/20150730_ANB_spheroid_control_65x65_15um/sf_id_sample.csv
 
-sql = 'SELECT sf_id as id, adduct_id, centr_mzs, centr_ints FROM theor_peaks'
+sql = 'SELECT sf_id as id, adduct, centr_mzs, centr_ints FROM theor_peaks'
 curs.execute(sql)
 
 if args.sf_filter_path:

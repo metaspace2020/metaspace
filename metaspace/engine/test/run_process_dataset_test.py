@@ -116,7 +116,7 @@ class RunProcessDatasetTestBase(TestCase):
         self.ref_res_path = join(self.base_path, 'ref_result_sf_metrics.csv')
         self.run_process_dataset_script = join(dirname(dirname(realpath(__file__))), 'scripts/run_process_dataset.py')
 
-        self.adducts = {0: 'H', 1: 'Na', 2: 'K'}
+        # self.adducts = {0: 'H', 1: 'Na', 2: 'K'}
         self.config = Config.get_config()
         self.config_path = Config.get_config_path()
 
@@ -140,8 +140,7 @@ class RunProcessDatasetTestBase(TestCase):
 
         res_list = []
         for i, sf_id in enumerate(res['formulas']):
-            add_id = res['mzadducts'][i]
-            adduct = self.adducts[add_id]
+            adduct = res['mzadducts'][i]
             curs.execute('select sf from agg_formulas where id = %s;', (sf_id,))
             sf = curs.fetchone()[0]
             moc = res['stat_dicts'][i]['moc']

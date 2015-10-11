@@ -20,7 +20,6 @@ import tornado.web
 import tornado.httpserver
 from tornado import gen
 from tornado.ioloop import IOLoop
-import png
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -28,7 +27,6 @@ from matplotlib import pyplot as plt
 
 from engine.util import *
 from webapp.globalvars import *
-from webapp.imaging import write_image
 from engine.isocalc import get_iso_peaks
 
 
@@ -310,6 +308,7 @@ class IsoImgPngHandler(IsoImgBaseHandler):
 
         fp = cStringIO.StringIO()
         fig.savefig(fp, format='png')
+        plt.close()
         return fp
 
 
@@ -340,6 +339,7 @@ class AggIsoImgPngHandler(IsoImgBaseHandler):
 
         fp = cStringIO.StringIO()
         fig.savefig(fp, format='png')
+        plt.close()
         return fp
 
 

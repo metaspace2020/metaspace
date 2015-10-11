@@ -128,8 +128,12 @@ def compute_img_measures(iso_images_sparse, sf_intensity, rows, cols):
 
             if image_corr:
                 chaos = measure_of_chaos(iso_imgs[0].copy(), nlevels=30, interp=False, q_val=99.)[0]
-                chaos = 0 if np.isnan(chaos) and np.allclose(chaos, 1.0, atol=1e-9) else 1 - chaos
-                measures = (chaos, image_corr, pattern_match)
+                if np.isnan(chaos):
+                    chaos = 0
+                inv_chaos = 1 - chaos
+                if np.allclose(inv_chaos, 1.0, atol=1e-6):
+                    inv_chaos = 0
+                measures = (inv_chaos, image_corr, pattern_match)
 
     return measures
 
@@ -146,8 +150,8 @@ class MolSearcher(object):
         self.minPartitions = 8
         self.measures_thr = np.array([0.998, 0.5, 0.85])
 
-        self.sc = SparkContext(conf=SparkConf().set('spark.python.profile', True)
-                               .set("spark.executor.memory", "1g"))
+        self.sconf = SparkConf().set('spark.python.profile', True).set("spark.executor.memory", "1g")
+        self.sc = SparkContext(conf=self.sconf)
 
         self._define_pixels_order()
 

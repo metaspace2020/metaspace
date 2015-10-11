@@ -14,6 +14,11 @@ from os import environ
 from time import sleep
 from os.path import dirname, realpath, join
 
+env.roledefs = {
+    'web_dev': ['ubuntu@52.19.27.255'],
+    'web_stage': ['ubuntu@52.19.0.118'],
+}
+
 conf_path = 'conf/fabric.json'
 with open(conf_path) as f:
     print green('Loading fabric config from {}'.format(conf_path))
@@ -33,7 +38,7 @@ def get_spark_master_host():
 
 
 def get_webserver_host():
-    return ['ubuntu@sm-webserver']
+    return ['ubuntu@sm-dev-webserver']
 
 @task
 @hosts(get_webserver_host())
@@ -54,7 +59,7 @@ def webserver_stop():
 
 
 @task
-@hosts(get_webserver_host())
+#@hosts(get_webserver_host())
 def webserver_deploy():
     print green('========= Code deployment to SM webserver =========')
 
@@ -64,6 +69,13 @@ def webserver_deploy():
     # for conf_file in ['conf/config.json', 'conf/luigi.cfg', 'conf/luigi_log.cfg']:
     #     put(local_path=conf_file, remote_path='/home/ubuntu/sm/conf/')
 
+
+@task
+# @hosts(get_webserver_host())
+def webserver_deploy_db():
+    local('pg_dump -h localhost -U sm --clean ims > data/db/ims.sql')
+    rsync_project(local_dir='data/db/', remote_dir='/home/ubuntu/sm/data/db/')
+    run('psql -h localhost -U sm ims < /home/ubuntu/sm/data/db/ims.sql')
 
 # @hosts(get_webserver_host())
 # def webserver_config():
