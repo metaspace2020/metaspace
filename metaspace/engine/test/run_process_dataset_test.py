@@ -111,6 +111,7 @@ class RunProcessDatasetTestBase(TestCase):
         self.out_path = join(self.base_path, 'results.pkl')
         self.text_out_path = join(self.base_path, 'results.csv')
         self.ds_path = join(self.base_path, 'ds.txt')
+        self.db_id = 0
         self.ds_coord_path = join(self.base_path, 'ds_coord.txt')
         self.queries_path = join(self.base_path, 'queries.pkl')
         self.ref_res_path = join(self.base_path, 'ref_result_sf_metrics.csv')
@@ -141,7 +142,7 @@ class RunProcessDatasetTestBase(TestCase):
         res_list = []
         for i, sf_id in enumerate(res['formulas']):
             adduct = res['mzadducts'][i]
-            curs.execute('select sf from agg_formulas where id = %s;', (sf_id,))
+            curs.execute('select sf from agg_formula where db_id = %s and id = %s;', (self.db_id, sf_id))
             sf = curs.fetchone()[0]
             moc = res['stat_dicts'][i]['moc']
             spec = res['stat_dicts'][i]['spec']
@@ -159,7 +160,6 @@ class RunProcessDatasetTestBase(TestCase):
         res_df = self.load_results_df(ref_df.columns.values)
 
         assert_sf_res_dataframes_equal(res_df, ref_df)
-
 
 if __name__ == '__main__':
     unittest.main()

@@ -27,7 +27,8 @@ def main():
     parser = argparse.ArgumentParser(description='Add molecule peaks script')
     parser.add_argument('--config', dest='config_path', type=str, help='config file path')
     parser.add_argument('--out', dest='out_file_path', type=str, help='out file path')
-    parser.set_defaults(out_file_path='theor_peaks.csv')
+    parser.add_argument('--db-id', dest='db_id', type=int, help='molecule db id')
+    parser.set_defaults(out_file_path='../data/theor_peaks.csv')
     args = parser.parse_args()
 
     with open(args.config_path) as f:
@@ -36,12 +37,10 @@ def main():
 
     print 'Selecting all formulas from {} database...'.format(config_db['database'])
     with conn.cursor() as curs:
-        curs.execute('SELECT id, sf FROM agg_formulas')
+        curs.execute('SELECT id, sf FROM agg_formula where db_id = %s', (args.db_id,))
         formulas = list(curs.fetchall())
 
-    from random import shuffle
     adducts = ["H", "Na", "K"]
-    shuffle(formulas)
     formula_adduct_pairs = product(formulas, adducts)
 
     conf = SparkConf()
@@ -49,8 +48,8 @@ def main():
     formula_adduct_rdd = sc.parallelize(formula_adduct_pairs).repartition(8)
 
     def format_peak_str(sf_id, adduct, iso_dict):
-        return '%s\t%s\t{%s}\t{%s}\t{%s}\t{%s}' % (
-            sf_id, adduct,
+        return '%s\t%s\t%s\t{%s}\t{%s}\t{%s}\t{%s}' % (
+            args.db_id, sf_id, adduct,
             ','.join(map(lambda x: '{:.9f}'.format(x), iso_dict['centr_mzs'])),
             ','.join(map(lambda x: '{:.9f}'.format(x), iso_dict['centr_ints'])),
             ','.join(map(lambda x: '{:.9f}'.format(x), iso_dict['profile_mzs'])),
@@ -68,7 +67,7 @@ def main():
 
     print 'Importing theor peaks to the database...'
     with conn.cursor() as curs, open(args.out_file_path) as peaks_file:
-        curs.execute('truncate theor_peaks;')
+        curs.execute('delete from theor_peaks where db_id = %s', (args.db_id,))
         curs.copy_from(peaks_file, 'theor_peaks')
     conn.commit()
     print 'Finished'

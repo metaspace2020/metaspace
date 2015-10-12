@@ -1,9 +1,11 @@
-DROP TABLE IF EXISTS formula_dbs;
-CREATE TABLE formula_dbs (
-	db_id		int,
-	db			text
+DROP TABLE IF EXISTS formula_db;
+CREATE TABLE formula_db (
+	id		int,
+	version	date,
+	db		text,
+	CONSTRAINT id_version_ind PRIMARY KEY(id, version)
 );
-INSERT INTO formula_dbs VALUES (0, 'HMDB');
+INSERT INTO formula_db VALUES (0, '2015-01-01', 'HMDB'), (1, '2015-01-01', 'apple_db');
 
 DROP TABLE IF EXISTS formulas;
 CREATE TABLE formulas (
@@ -14,23 +16,25 @@ CREATE TABLE formulas (
 	sf 		text
 );
 
-DROP TABLE IF EXISTS agg_formulas;
-CREATE TABLE agg_formulas (
-	-- id 			serial not null,
-	id 			int,
-	sf 			text,
-	db_ids 		int[],
+DROP TABLE IF EXISTS agg_formula;
+CREATE TABLE agg_formula (
+    db_id 		int,
+	id 		    int,
+	sf 		    text,
 	subst_ids 	text[],
-	names 		text[]
+	names 		text[],
+	CONSTRAINT db_id_id_ind PRIMARY KEY(db_id, id)
 );
-INSERT INTO agg_formulas (sf, db_ids, subst_ids, names)
-	SELECT sf_id, sf,array_agg(db_id) as db_ids,array_agg(id) as subst_ids,array_agg(name) as names
+
+INSERT INTO agg_formula (id, sf, db_id, subst_ids, names)
+	SELECT sf_id, sf, db_id, array_agg(id) as subst_ids, array_agg(name) as names
 	FROM formulas
-	GROUP BY sf, sf_id
+	GROUP BY sf, sf_id, db_id
 ;
-CREATE INDEX ind_agg_formulas_1 ON agg_formulas (sf);
-CREATE INDEX ind_agg_formulas_2 ON agg_formulas (id);
-CREATE INDEX ind_agg_formulas_3 ON agg_formulas (id, sf);
+CREATE INDEX ind_agg_formulas_1 ON agg_formula (sf);
+CREATE INDEX ind_agg_formulas_2 ON agg_formula (id);
+CREATE INDEX ind_agg_formulas_3 ON agg_formula (id, sf);
+CREATE INDEX ind_agg_formulas_4 ON agg_formula (db_id, id, sf);
 
 DROP TABLE IF EXISTS datasets;
 CREATE TABLE datasets (
@@ -47,7 +51,7 @@ CREATE TABLE coordinates (
 	index 		int,
 	x 			int,
 	y 			int,
-	CONSTRAINT ds_id_ind PRIMARY KEY(dataset_id,index)
+	CONSTRAINT ds_id_ind PRIMARY KEY(dataset_id, index)
 );
 
 CREATE INDEX ind_coordinates_1 ON coordinates (dataset_id, index);
@@ -105,13 +109,13 @@ CREATE INDEX ind_job_result_stats_2 ON job_result_stats (job_id, formula_id);
 
 DROP TABLE IF EXISTS theor_peaks;
 CREATE TABLE theor_peaks (
+    db_id           int,
 	sf_id			int,
 	adduct			text,
 	centr_mzs		double precision[],
 	centr_ints		double precision[],
 	prof_mzs		double precision[],
 	prof_ints		double precision[],
-	CONSTRAINT sf_id_adduct PRIMARY KEY(sf_id, adduct)
+	CONSTRAINT sf_id_adduct PRIMARY KEY(db_id, sf_id, adduct)
 );
-CREATE INDEX ind_theor_peaks_1 ON theor_peaks(sf_id, adduct);
-CREATE INDEX ind_theor_peaks_2 ON theor_peaks(sf_id);
+CREATE INDEX ind_theor_peaks_2 ON theor_peaks(db_id, sf_id);
