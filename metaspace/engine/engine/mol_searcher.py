@@ -77,8 +77,8 @@ def sample_spectrum(sp, peak_bounds, sf_peak_map):
     """
     lower, upper = peak_bounds
     sp_i, non_zero_int_inds, non_zero_ints = get_nonzero_ints(sp, lower, upper)
-    sf_inds = sf_peak_map[:,0][non_zero_int_inds]
-    peak_inds = sf_peak_map[:,1][non_zero_int_inds]
+    sf_inds = sf_peak_map[:, 0][non_zero_int_inds]
+    peak_inds = sf_peak_map[:, 1][non_zero_int_inds]
 
     return zip(izip(sf_inds, peak_inds),
                izip(repeat(sp_i), non_zero_ints))
@@ -88,7 +88,7 @@ def flat_coord_list_to_matrix(sp_intens_pairs, pixels_order, rows, cols):
     if not sp_intens_pairs:
         return None
     inds, vals = zip(*map(lambda (sp_i, intens): (pixels_order[sp_i], intens), sp_intens_pairs))
-    array = np.bincount(inds, weights=vals, minlength=rows*cols)
+    array = np.bincount(inds, weights=vals, minlength=rows * cols)
     img = np.reshape(array, (rows, cols))
     return scipy.sparse.csr_matrix(img)
 
@@ -113,42 +113,19 @@ def correct_peak_intens_distribution(iso_imgs_flat):
         return True
 
 
-def compute_img_measures(iso_images_sparse, sf_intensity, rows, cols):
-    diff = len(sf_intensity) - len(iso_images_sparse)
-    iso_imgs = [np.zeros((rows, cols)) if img is None else img.toarray()
-                for img in iso_images_sparse + [None] * diff]
-    iso_imgs_flat = [img.flat[:] for img in iso_imgs]
-
-    measures = 0, 0, 0
-    if (len(iso_imgs) > 0) and correct_peak_intens_distribution(iso_imgs_flat):
-        pattern_match = isotope_pattern_match(iso_imgs_flat, sf_intensity)
-
-        if pattern_match:
-            image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_intensity[1:])
-
-            if image_corr:
-                chaos = measure_of_chaos(iso_imgs[0].copy(), nlevels=30, interp=False, q_val=99.)[0]
-                if np.isnan(chaos):
-                    chaos = 0
-                inv_chaos = 1 - chaos
-                if np.allclose(inv_chaos, 1.0, atol=1e-6):
-                    inv_chaos = 0
-                measures = (inv_chaos, image_corr, pattern_match)
-
-    return measures
-
-
 class MolSearcher(object):
-
-    def __init__(self, ds_path, ds_coords_path, sf_mz_intervals, theor_peak_intens):
+    def __init__(self, ds_path, ds_coords_path, sf_mz_intervals, theor_peak_intens, ds_config):
         self.ds_path = ds_path
         self.ds_coord_path = ds_coords_path
+        self.ds_config = ds_config
         # self.rows, self.cols = rows, cols
         self.sf_mz_intervals = np.array(sf_mz_intervals)
         self.sf_peak_inds = np.insert(np.cumsum(map(len, self.sf_mz_intervals)), 0, 0)  # 0 - extra index
         self.theor_peak_intens = theor_peak_intens
         self.minPartitions = 8
-        self.measures_thr = np.array([0.998, 0.5, 0.85])
+        self.measures_thr = np.array([self.ds_config['image_measure_thresholds']['measure_of_chaos'],
+                                      self.ds_config['image_measure_thresholds']['image_corr'],
+                                      self.ds_config['image_measure_thresholds']['pattern_match']])
 
         self.sconf = SparkConf().set('spark.python.profile', True).set("spark.executor.memory", "1g")
         self.sc = SparkContext(conf=self.sconf)
@@ -163,29 +140,17 @@ class MolSearcher(object):
 
     def _get_sf_peak_map(self, sf_filer=None):
         return np.array([(i, j)
-                        for i, sf_peaks in enumerate(self.sf_mz_intervals)
-                        for j, p in enumerate(sf_peaks)])
+                         for i, sf_peaks in enumerate(self.sf_mz_intervals)
+                         for j, p in enumerate(sf_peaks)])
 
     def run(self):
         # convert strings to numpy arrays for each spectra
         ds_rdd = self.sc.textFile(self.ds_path, minPartitions=self.minPartitions)
         spectra = ds_rdd.map(txt_to_spectrum)
 
-        # sf_cand_inds = self._find_sf_candidates(spectra,
-        #                                         self.sc.broadcast(mz_bounds),
-        #                                         self.sc.broadcast(sf_peak_inds),
-        #                                         self.sc.broadcast(self.theor_peak_intens.copy()))
-
         sf_images = self._compute_sf_images(spectra)
         sf_iso_images_map, sf_metrics_map = self._filter_search_results(sf_images)
         return sf_iso_images_map, sf_metrics_map
-
-    # def _find_sf_candidates(self, spectra, mz_bounds_brcast, sf_peak_inds_brcast, theor_peak_intens_brcast):
-    #     return (spectra
-    #             .mapPartitions(lambda sp: find_candidates(sp, mz_bounds_brcast.value,
-    #                                                       sf_peak_inds_brcast.value,
-    #                                                       theor_peak_intens_brcast.value))
-    #             .distinct()).collect()
 
     def _define_pixels_order(self):
         # this function maps coords onto pixel indicies (assuming a grid defined by bounding box and transform type)
@@ -206,17 +171,14 @@ class MolSearcher(object):
         # coordinate to pixels
         _coord /= np.reshape(step, (2,))
         _coord_max = np.amax(_coord, axis=0)
-        self.cols = _coord_max[1]+1
-        self.rows = _coord_max[0]+1
+        self.cols = _coord_max[1] + 1
+        self.rows = _coord_max[0] + 1
 
-        pixel_indices = _coord[:,0] * self.cols + _coord[:,1]
+        pixel_indices = _coord[:, 0] * self.cols + _coord[:, 1]
         pixel_indices = pixel_indices.astype(np.int32)
         self.pixels_order = pixel_indices
 
     def _compute_sf_images(self, spectra):
-        # mz_bounds_cand = self._get_peak_bounds(sf_cand_inds)
-        # sf_peak_map = self._get_sf_peak_map(sf_cand_inds)
-
         mz_bounds_cand_brcast = self.sc.broadcast(self._get_peak_bounds())
         sf_peak_map_brcast = self.sc.broadcast(self._get_sf_peak_map())
         rows, cols = self.rows, self.cols
@@ -231,15 +193,46 @@ class MolSearcher(object):
                      .mapValues(lambda img_pairs_it: img_pairs_to_list(list(img_pairs_it))))
         return sf_images
 
+    def get_compute_img_meausures_func(self):
+        rows, cols = self.rows, self.cols
+        nlevels = self.ds_config['image_generation']['nlevels']
+        q = self.ds_config['image_generation']['q']
+        preprocessing = self.ds_config['image_generation']['do_preprocessing']
+
+        def compute_img_measures(iso_images_sparse, sf_intensity):
+            diff = len(sf_intensity) - len(iso_images_sparse)
+            iso_imgs = [np.zeros((rows, cols)) if img is None else img.toarray()
+                        for img in iso_images_sparse + [None] * diff]
+            iso_imgs_flat = [img.flat[:] for img in iso_imgs]
+
+            measures = 0, 0, 0
+            if (len(iso_imgs) > 0) and correct_peak_intens_distribution(iso_imgs_flat):
+                pattern_match = isotope_pattern_match(iso_imgs_flat, sf_intensity)
+
+                if pattern_match:
+                    image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_intensity[1:])
+
+                    if image_corr:
+                        chaos = measure_of_chaos(iso_imgs[0].copy(), nlevels=nlevels, interp=preprocessing, q_val=q)[0]
+                        if np.isnan(chaos):
+                            chaos = 0
+                        inv_chaos = 1 - chaos
+                        if np.allclose(inv_chaos, 1.0, atol=1e-6):
+                            inv_chaos = 0
+                        measures = (inv_chaos, image_corr, pattern_match)
+            return measures
+
+        return compute_img_measures
+
     def _filter_search_results(self, sf_images):
         theor_peak_intens_brcast = self.sc.broadcast(self.theor_peak_intens)
         rows, cols = self.rows, self.cols
         thr = self.measures_thr
+        compute_img_measures = self.get_compute_img_meausures_func()
 
         sf_metrics_map = (sf_images
-                          .map(lambda (sf_i, imgs): (sf_i, compute_img_measures(imgs,
-                                                                                theor_peak_intens_brcast.value[sf_i],
-                                                                                rows, cols)))
+                          .map(lambda (sf_i, imgs):
+                               (sf_i, compute_img_measures(imgs, theor_peak_intens_brcast.value[sf_i])))
                           .filter(lambda (_, metrics): np.all(np.array(metrics) > thr))
                           ).collectAsMap()
 

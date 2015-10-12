@@ -30,33 +30,22 @@ def main():
     :param --cols: number of columns in the dataset (needed to compute image-based measures)
     :param --job_id: job id for the database
     """
-    parser = argparse.ArgumentParser(description='IMS process dataset at a remote spark location.')
-    parser.add_argument('--out', dest='fname', type=str, help='filename')
-    parser.add_argument('--job_id', dest='job_id', type=int, help='job id for the database')
-    parser.add_argument('--rows', dest='rows', type=int, help='number of rows')
-    parser.add_argument('--cols', dest='cols', type=int, help='number of columns')
-    parser.add_argument('--ds', dest='ds', type=str, help='dataset file name')
-    parser.add_argument('--coord', dest='coord', type=str, help='dataset coordinates file name')
+    parser = argparse.ArgumentParser(description='SM process dataset at a remote spark location.')
+    parser.add_argument('--out', dest='out_fn', type=str, help='filename')
+    # parser.add_argument('--job_id', dest='job_id', type=int, help='job id for the database')
+    # parser.add_argument('--rows', dest='rows', type=int, help='number of rows')
+    # parser.add_argument('--cols', dest='cols', type=int, help='number of columns')
+    parser.add_argument('--ds', dest='ds_path', type=str, help='dataset file name')
+    parser.add_argument('--coord', dest='coord_path', type=str, help='dataset coordinates file name')
     parser.add_argument('--queries', dest='queries', type=str, help='queries file name')
-    parser.add_argument('--config', dest='config_path', type=str, help='config file path')
-    parser.set_defaults(config='config.json', queries='queries.pkl', fname='result.pkl', ds='', job_id=0, rows=-1,
-                        cols=-1)
+    # parser.add_argument('--config', dest='config_path', type=str, help='sm config file path')
+    parser.add_argument('--ds-config', dest='ds_config_path', type=str, help='dataset config file path')
+    parser.set_defaults(queries='queries.pkl', fname='result.pkl')
 
     from collections import defaultdict
     from engine import util
-    from engine import computing, computing_fast, computing_fast_spark
-    from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos
-    from engine.pyIMS.image_measures.isotope_pattern_match import isotope_pattern_match
-    from engine.pyIMS.image_measures.isotope_image_correlation import isotope_image_correlation
 
-    minPartitions = 8
-
-    # def img_pairs_to_list(pairs):
-    #     pair_dict = dict(pairs)
-    #     max_i = max(pair_dict.keys())+1
-    #     return [pair_dict[i].toarray() if i in pair_dict else [] for i in xrange(max_i)]
-
-    def convert_search_results(mol_iso_images, mol_measures, formulas, mzadducts, job_id=0):
+    def convert_search_results(mol_iso_images, mol_measures, formulas, mzadducts):
         res = defaultdict(list)
         for sf_i, measures in mol_measures.iteritems():
             res['formulas'].append(formulas[sf_i][0])
@@ -66,39 +55,29 @@ def main():
         return res
 
     start = time.time()
-
     args = parser.parse_args()
+
+    # Dataset config
+    with open(args.ds_config_path) as f:
+        import json
+        ds_config = json.load(f)
 
     util.my_print("Reading %s..." % args.queries)
     with open(args.queries) as f:
         q = cPickle.load(f)
 
     util.my_print("Looking for %d peaks" % sum([len(x) for x in q["data"]]))
-
-    # conf = SparkConf().set('spark.python.profile', 'true')\
-    #     .set('spark.python.profile.dump', '/home/intsco/embl/SpatialMetabolomics/spark_profiling')\
-    #     .set("spark.executor.memory", "1g")
-    # sc = SparkContext(conf=conf)
-    # ff = sc.textFile(args.ds, minPartitions=minPartitions)
-    # spectra = ff.map(txt_to_spectrum)
-    # spectra.cache()
-
     util.my_print("Processing...")
 
-    # mol_mz_intervals = q["data"]
-    # sf_res_rdd = search_peak_ints(sc, spectra, mol_mz_intervals, args.rows, args.cols, minPartitions)
-    # results = result = convert_search_results(sc, sf_res_rdd, q["formulas"], q["mzadducts"], q["intensities"],
-    #                                    args.rows, args.cols, args.job_id)
-
     from engine.mol_searcher import MolSearcher
-    searcher = MolSearcher(args.ds, args.coord, q['data'], np.array(q['intensities']))
+    searcher = MolSearcher(args.ds_path, args.coord_path, q['data'], np.array(q['intensities']), ds_config)
     found_mol_iso_images, found_mol_measures = searcher.run()
     results = convert_search_results(found_mol_iso_images, found_mol_measures,
-                                    q["formulas"], q["mzadducts"], args.job_id)
+                                    q["formulas"], q["mzadducts"])
 
     util.my_print("Saving results to %s..." % args.fname)
 
-    with open(args.fname, "w") as outf:
+    with open(args.out_fn, "w") as outf:
         cPickle.dump(results, outf)
 
     util.my_print("All done!")

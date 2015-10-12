@@ -4,10 +4,6 @@ import cPickle
 import psycopg2
 import psycopg2.extras
 
-ppm = 1.0
-# tol = 0.01
-adducts = ["H", "Na", "K"]
-
 import sys
 from engine.util import *
 
@@ -15,15 +11,20 @@ engine_path = dirname(dirname(realpath(__file__)))
 sys.path.append(engine_path)
 
 parser = argparse.ArgumentParser(description='Queries saving script')
-parser.add_argument('--db-id', dest='db_id', type=int, help='molecule db id')
 parser.add_argument('--out', dest='fname', type=str, help='filename')
 parser.add_argument('--sf-filter-file', dest='sf_filter_path', type=str, help='filter path')
 parser.add_argument('--config', dest='config', type=str, help='config file name')
+parser.add_argument('--ds-config', dest='ds_config_path', type=str, help='dataset config file name')
 parser.set_defaults(config='config.json', fname='queries.pkl')
 args = parser.parse_args()
 
+# SM config
 with open(args.config) as f:
     config_db = json.load(f)['db']
+
+# Dataset config
+with open(args.ds_config_path) as f:
+    ds_config = json.load(f)
 
 my_print("Reading formulas from DB...")
 
@@ -34,7 +35,7 @@ curs = conn.cursor()
 #/home/intsco/embl/SpatialMetabolomics/sm/test/data/run_process_dataset_test/20150730_ANB_spheroid_control_65x65_15um/sf_id_sample.csv
 
 sql = 'SELECT sf_id as id, adduct, centr_mzs, centr_ints FROM theor_peaks where db_id = %s'
-curs.execute(sql, (args.db_id,))
+curs.execute(sql, (ds_config['inputs']['database_id'],))
 
 if args.sf_filter_path:
     print 'Using filter file: ', args.sf_filter_path
@@ -48,6 +49,7 @@ mzadducts = [x[1] for x in formulas]
 mzpeaks = [x[2] for x in formulas]
 intensities = [x[3] for x in formulas]
 
+ppm = ds_config['image_generation']['ppm']
 data = [[[x - ppm*x/1e6, x + ppm*x/1e6] for x in peaks] for peaks in mzpeaks]
 
 if len(data) <= 0:

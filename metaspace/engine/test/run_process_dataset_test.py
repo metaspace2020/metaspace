@@ -105,7 +105,7 @@ class RunProcessDatasetTestBase(TestCase):
 
     def setUp(self):
         self.ds = '20150730_ANB_spheroid_control_65x65_15um'
-        self.rows, self.cols = 65, 65
+        # self.rows, self.cols = 65, 65
 
         self.base_path = realpath(join('data/run_process_dataset_test', self.ds))
         self.out_path = join(self.base_path, 'results.pkl')
@@ -117,19 +117,17 @@ class RunProcessDatasetTestBase(TestCase):
         self.ref_res_path = join(self.base_path, 'ref_result_sf_metrics.csv')
         self.run_process_dataset_script = join(dirname(dirname(realpath(__file__))), 'scripts/run_process_dataset.py')
 
-        # self.adducts = {0: 'H', 1: 'Na', 2: 'K'}
         self.config = Config.get_config()
-        self.config_path = Config.get_config_path()
+
+        self.ds_config_path = join(self.base_path, 'config.json')
 
     def run_process_dataset(self):
         cmd = ['python', self.run_process_dataset_script,
-               '--config', self.config_path,
+               '--ds-config', self.ds_config_path,
                '--out', self.out_path,
                '--ds', self.ds_path,
                '--coord', self.ds_coord_path,
-               '--queries', self.queries_path,
-               '--rows', str(self.rows),
-               '--cols', str(self.cols)]
+               '--queries', self.queries_path]
         check_call(cmd)
 
     def load_results_df(self, columns):

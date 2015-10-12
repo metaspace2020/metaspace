@@ -1,13 +1,8 @@
 __author__ = 'intsco'
 
+import json
 import luigi
-# import luigi.s3
-# import luigi.contrib.spark
-# import luigi.contrib.ssh
 import luigi.file
-
-import sys
-from os import environ
 from os.path import join, dirname, realpath
 from subprocess import call, Popen, check_call, PIPE
 from datetime import datetime
@@ -16,14 +11,17 @@ from datetime import datetime
 class PipelineContext(object):
     # major obligatory parameters, should be provided as pipeline start args
     project_dir = luigi.Parameter()
-    input_fn = luigi.Parameter()
-    db_id = luigi.Parameter()
+    data_dir = luigi.Parameter()
 
     # parameters computed on the basis of the major ones
-    # base_data_dir = luigi.Parameter('')
-    data_dir = luigi.Parameter('')
+    ds_config_fn = luigi.Parameter('config.json')
+    # ds_config = luigi.Parameter('')
+    input_fn = luigi.Parameter('')
+    db_id = luigi.Parameter('')
     base_fn = luigi.Parameter('')
     queries_fn = luigi.Parameter('queries.pkl')
+    rows = luigi.Parameter('')
+    cols = luigi.Parameter('')
 
     _annot_results_fn = None
 
@@ -51,36 +49,54 @@ class PipelineContext(object):
         return PipelineContext._annot_results_fn
 
     def context(self):
-        base_fn = self.input_fn.split('.')[0]
+        with open(join(self.data_dir, self.ds_config_fn)) as f:
+            ds_config = json.load(f)
+
         return {'project_dir': self.project_dir,
-                'data_dir': join(self.project_dir, 'data', base_fn),
-                'db_id': self.db_id,
-                'input_fn': self.input_fn,
-                'base_fn': base_fn,
-                'queries_fn': self.queries_fn}
+                'data_dir': self.data_dir,
+                'db_id': ds_config['inputs']['database_id'],
+                'input_fn': ds_config['inputs']['data_file'],
+                'base_fn': ds_config['inputs']['data_file'].split('.')[0],
+                'queries_fn': self.queries_fn,
+                'rows': str(ds_config['inputs']['rows']),
+                'cols': str(ds_config['inputs']['cols']),
+                'ds_config_fn': self.ds_config_fn}
 
 
 class ImzMLToTxt(PipelineContext, luigi.Task):
-
     def output(self):
-        return luigi.LocalTarget(join(self.data_dir, self.txt_fn)),\
+        return luigi.LocalTarget(join(self.data_dir, self.txt_fn)), \
                luigi.LocalTarget(join(self.data_dir, self.coord_fn))
 
     def run(self):
-        print "Converting {} file".format(self.imzml_fn())
-        call(['python', join(self.project_dir, 'scripts/imzml_to_txt.py'),
-              join(self.data_dir, self.imzml_fn()),
-              join(self.data_dir, self.txt_fn),
-              join(self.data_dir, self.coord_fn)])
+        print "Converting {} file".format(self.imzml_fn)
+        check_call(['python', join(self.project_dir, 'scripts/imzml_to_txt.py'),
+                  join(self.data_dir, self.imzml_fn),
+                  join(self.data_dir, self.txt_fn),
+                  join(self.data_dir, self.coord_fn)])
 
-        # print "Uploading {}, {} converted data to {} path".format(
-        #     join(self.data_dir, self.txt_fn()),
-        #     join(self.data_dir, self.coord_fn()))
-        # for f in [self.txt_fn(), self.coord_fn()]:
-        #     self.s3_client.put(join(self.data_dir, f), join(self.s3_dir, f))
+
+class PreparePeaksMZTable(PipelineContext, luigi.Task):
+    def output(self):
+        return luigi.LocalTarget(path=join(self.data_dir, 'peaks_mz_insert_status'))
+
+    def run(self):
+        cmd = ['python', join(self.project_dir, 'scripts/produce_theor_peaks_spark.py'),
+               '--config', join(self.project_dir, 'conf/config.json'),
+               '--ds-config', join(self.data_dir, self.ds_config_fn)]
+
+        try:
+            check_call(cmd)
+        except Exception as e:
+            print e
+        else:
+            with self.output().open('w') as output:
+                output.write('OK')
 
 
 class PrepareQueries(PipelineContext, luigi.Task):
+    def requires(self):
+        return PreparePeaksMZTable(**self.context())
 
     def output(self):
         return luigi.LocalTarget(path=join(self.data_dir, self.queries_fn))
@@ -90,8 +106,8 @@ class PrepareQueries(PipelineContext, luigi.Task):
         # call(['mkdir', '-p', self.data_dir])
 
         cmd = ['python', join(self.project_dir, 'scripts/run_save_queries.py'),
-               '--db-id', str(self.db_id),
                '--config', join(self.project_dir, 'conf/config.json'),
+               '--ds-config', join(self.data_dir, 'config.json'),
                '--out', self.output().path]
         check_call(cmd)
 
@@ -108,8 +124,8 @@ class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
 
     # master_data_dir = luigi.Parameter('/root/sm/data')
     # queries_fn = luigi.Parameter('queries.pkl')
-    rows = luigi.Parameter()
-    cols = luigi.Parameter()
+    # rows = luigi.Parameter()
+    # cols = luigi.Parameter()
 
     # def spark_command(self):
     #     return ['--master', 'spark://{}:7077'.format(self.get_spark_master_host()),
@@ -120,12 +136,11 @@ class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
 
     def run_command(self):
         return ['python', join(self.project_dir, 'scripts/run_process_dataset.py'),
+                '--ds-config', join(self.data_dir, 'config.json'),
                 '--out', join(self.data_dir, self.annotation_results_fn),
                 '--ds', join(self.data_dir, self.txt_fn),
                 '--coord', join(self.data_dir, self.coord_fn),
-                '--queries', join(self.data_dir, self.queries_fn),
-                '--rows', str(self.rows),
-                '--cols', str(self.cols)]
+                '--queries', join(self.data_dir, self.queries_fn)]
 
     def requires(self):
         return PrepareQueries(**self.context()), \
@@ -152,15 +167,12 @@ class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
 
 
 class InsertAnnotationsToDB(PipelineContext, luigi.Task):
-    rows = luigi.Parameter()
-    cols = luigi.Parameter()
 
     def requires(self):
-        return SparkMoleculeAnnotation(rows=self.rows, cols=self.cols,
-                                       **self.context())
+        return SparkMoleculeAnnotation(**self.context())
 
     def output(self):
-        return luigi.LocalTarget(join(self.data_dir, 'AnnotationInsertStatus'))
+        return luigi.LocalTarget(join(self.data_dir, 'annotation_insert_status'))
 
     def run(self):
         cmd = ['python', join(self.project_dir, 'scripts/run_insert_to_db.py'),
@@ -175,18 +187,17 @@ class InsertAnnotationsToDB(PipelineContext, luigi.Task):
             check_call(cmd)
         except Exception as e:
             print e
-        # else:
-        #     with self.output().open('w') as output:
-        #         output.write('OK')
+        else:
+            with self.output().open('w') as output:
+                output.write('OK')
 
 
 class RunPipeline(PipelineContext, luigi.WrapperTask):
     # don't try to access parameters from PipelineContext here
-    rows = luigi.Parameter()
-    cols = luigi.Parameter()
 
     def requires(self):
-        yield InsertAnnotationsToDB(rows=str(self.rows), cols=str(self.cols), **self.context())
+        # yield InsertAnnotationsToDB(**self.context())
+        yield InsertAnnotationsToDB(**self.context())
 
 
 if __name__ == '__main__':
@@ -195,5 +206,5 @@ if __name__ == '__main__':
     # cmd_args = ["--local-scheduler"]
     luigi.run(main_task_cls=RunPipeline)
 
-# python sm_pipeline.py --logging-conf-file luigi_log.cfg --s3-dir s3://embl-intsco-sm-test
-# --fn Example_Processed.zip --local-data-dir /home/ubuntu/sm/data/test1 --rows 3 --cols 3"
+    # python sm_pipeline.py --logging-conf-file luigi_log.cfg --s3-dir s3://embl-intsco-sm-test
+    # --fn Example_Processed.zip --local-data-dir /home/ubuntu/sm/data/test1 --rows 3 --cols 3"
