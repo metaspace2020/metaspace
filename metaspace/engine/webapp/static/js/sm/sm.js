@@ -114,7 +114,7 @@ $(document).ready(function() {
 //          return data.sort().map(function(d) { return array_adducts[d]; }).join(" ");
             return data;
         }, "targets": [8] },
-        { "visible": false,  "targets": [ 9, 10, 11, 12] },
+        { "visible": false,  "targets": [ 9, 10, 11, 12, 13] },
       ],
       "initComplete" : function(oSettings, json) {
         $('#table-demo').tooltip({
@@ -166,7 +166,8 @@ $(document).ready(function() {
         var job_id = d[9];
         var dataset_id = d[10];
         var sf_id = d[11];
-        var peak_n = d[12];
+        var peaks_n = d[12];
+        var db_id = d[13];
 //        var colors = ['#352A87', '#0268E1', '#108ED2', '#0FAEB9', '#65BE86', '#C0BC60', '#FFC337', '#F9FB0E'];
 
         var pixel_size = 4;
@@ -209,7 +210,7 @@ $(document).ready(function() {
             '<img src="/mzimage2/' + url_params + '" id="img-total">'
         );
         // images per adduct and peak
-        var iso_img_n = Math.min(peak_n, 6)
+        var iso_img_n = Math.min(peaks_n, 6)
         var col_w = Math.floor(12 / iso_img_n);
         var urls = [];
         for (adduct_idx in adducts) {
@@ -220,19 +221,12 @@ $(document).ready(function() {
             for (var peak_id = 0; peak_id < iso_img_n; peak_id++) {
                 to_append = '<div style="text-align:center;" class="col-lg-'
                     + col_w.toString() + '">' + '<div class="container-fluid">'
-//                    + '<div class="row"><b>'
-//                    + "insert m/z here" + '</b></div>'
                     + '<div class="row" id="col-img-' + adduct_idx + '-' + peak_id.toString() + '"></div>'
                     + '<div class="row">';
-//                if (peak_id == 0) {
-//                    to_append += '<div class="col-lg-8">Spatial presence</div><div class="col-lg-4">';
-//                } else {
-//                    to_append += '<div class="col-lg-12">';
-//                }
-//                to_append += '0' + '</div></div></div>';
                 to_append += '</div></div></div>';
                 $('#row-images-' + adduct_idx).append(to_append);
-                var url = "/mzimage2/" + dataset_id + '/' + job_id + '/' + sf_id + '/' + sf + '/' + adduct + '/' + peak_id;
+                var url = "/mzimage2/" + db_id + '/' + dataset_id + '/' + job_id + '/' +
+                            sf_id + '/' + sf + '/' + adduct + '/' + peak_id;
                 urls.push(url);
             }
         }
@@ -250,7 +244,7 @@ $(document).ready(function() {
         }
 
         // Bottom line chart generation
-        var url = "/spectrum_line_chart_data/" + job_id + "/" + sf_id + "/" + adducts[0];
+        var url = "/spectrum_line_chart_data/" + job_id + "/" + db_id + "/" + sf_id + "/" + adducts[0];
         $.getJSON(url, function( data ) {
             var min_mz = data["mz_grid"]["min_mz"];
             var max_mz = data["mz_grid"]["max_mz"];
@@ -318,7 +312,7 @@ $(document).ready(function() {
                     id: "val_axis",
                     title: "Intensity (a.u.)",
                     fontSize: 14,
-                    maximum: 100,
+                    maximum: 120,
                     axisThickness: 1.5,
                     dashLength: 5,
                     gridCount: 10,

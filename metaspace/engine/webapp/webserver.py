@@ -31,12 +31,12 @@ args = None
 config = None
 
 
-def get_formula_and_peak(s):
-    arr = get_id_from_slug(s).split('p')
-    if len(arr) > 1:
-        return int(arr[0]), int(arr[1])
-    else:
-        return int(arr[0]), -1
+# def get_formula_and_peak(s):
+#     arr = get_id_from_slug(s).split('p')
+#     if len(arr) > 1:
+#         return int(arr[0]), int(arr[1])
+#     else:
+#         return int(arr[0]), -1
 
 
 class Application(tornado.web.Application):
@@ -50,8 +50,8 @@ class Application(tornado.web.Application):
             (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": path.join(path.dirname(__file__), "static")}),
             (r"^/ajax/([a-z]*)/(.*)", handlers.AjaxHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.AggIsoImgPngHandler),
-            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgPngHandler),
-            (r"^/spectrum_line_chart_data/([^/]+)/([^/]+)/([^/]+)", handlers.SpectrumLineChartHandler),
+            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgPngHandler),
+            (r"^/spectrum_line_chart_data/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.SpectrumLineChartHandler),
             (r"^/demo", handlers.AjaxHandler)
         ]
         # you can add deprecated handlers by specifying --use-deprecated in the command line
@@ -87,32 +87,32 @@ class Application(tornado.web.Application):
             self.sc = SparkContext(conf=self.conf,
                                    pyFiles=[path.join(os.getcwd(), 'engine', x) for x in engine_pyfiles])
             self.status = self.sc.statusTracker()
-        self.max_jobid = self.db.get("SELECT max(id) as maxid FROM jobs").maxid
-        self.max_jobid = int(self.max_jobid) if self.max_jobid != None else 0
-        self.jobs = {}
-        self.all_datasets = [d["dataset"] for d in self.db.query("SELECT dataset FROM datasets ORDER BY dataset_id")]
+        # self.max_jobid = self.db.get("SELECT max(id) as maxid FROM jobs").maxid
+        # self.max_jobid = int(self.max_jobid) if self.max_jobid != None else 0
+        # self.jobs = {}
+        # self.all_datasets = [d["dataset"] for d in self.db.query("SELECT dataset FROM datasets ORDER BY dataset_id")]
 
-    def get_next_job_id(self):
-        self.max_jobid += 1
-        return self.max_jobid
+    # def get_next_job_id(self):
+    #     self.max_jobid += 1
+    #     return self.max_jobid
 
-    def add_job(self, spark_id, formula_id, data_id, job_type, started, chunks=1):
-        """Adds a job to the job table of the database and to the application queue."""
-        job_id = self.get_next_job_id()
-        self.jobs[job_id] = {
-            "type": job_type,
-            "spark_id": spark_id,
-            "formula_id": formula_id,
-            "started": started,
-            "finished": started,
-            "chunks": chunks,
-            "chunk_size": 0,
-            "chunks_done": 0
-        }
-        self.db.query('''
-            INSERT INTO jobs VALUES (%d, %d, '%s', %d, false, 'RUNNING', %d, %d, '%s', '%s')
-        ''' % (job_id, job_type, formula_id, data_id, 0, 0, str(started), str(started)))
-        return job_id
+    # def add_job(self, spark_id, formula_id, data_id, job_type, started, chunks=1):
+    #     """Adds a job to the job table of the database and to the application queue."""
+    #     job_id = self.get_next_job_id()
+    #     self.jobs[job_id] = {
+    #         "type": job_type,
+    #         "spark_id": spark_id,
+    #         "formula_id": formula_id,
+    #         "started": started,
+    #         "finished": started,
+    #         "chunks": chunks,
+    #         "chunk_size": 0,
+    #         "chunks_done": 0
+    #     }
+    #     self.db.query('''
+    #         INSERT INTO jobs VALUES (%d, %d, '%s', %d, false, 'RUNNING', %d, %d, '%s', '%s')
+    #     ''' % (job_id, job_type, formula_id, data_id, 0, 0, str(started), str(started)))
+    #     return job_id
 
     def update_all_jobs_callback(self):
         """For each job, checks whether its status has changed."""

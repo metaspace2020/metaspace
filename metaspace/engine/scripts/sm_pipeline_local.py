@@ -43,10 +43,11 @@ class PipelineContext(object):
 
     @property
     def annotation_results_fn(self):
-        if not PipelineContext._annot_results_fn:
-            PipelineContext._annot_results_fn = 'results_{}.pkl'.format(
-                datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
-        return PipelineContext._annot_results_fn
+        # if not PipelineContext._annot_results_fn:
+        #     PipelineContext._annot_results_fn = 'results_{}.pkl'.format(
+        #         datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+        # return PipelineContext._annot_results_fn
+        return 'results.pkl'
 
     def context(self):
         with open(join(self.data_dir, self.ds_config_fn)) as f:
@@ -179,10 +180,8 @@ class InsertAnnotationsToDB(PipelineContext, luigi.Task):
                '--ip', join(self.data_dir, self.input_fn),
                '--rp', join(self.data_dir, self.annotation_results_fn),
                '--cp', join(self.data_dir, self.coord_fn),
-               '--rows', self.rows,
-               '--cols', self.cols,
                '--config', join(self.project_dir, 'conf/config.json'),
-               '--dsname', self.base_fn]
+               '--ds-config', join(self.data_dir, 'config.json')]
         try:
             check_call(cmd)
         except Exception as e:

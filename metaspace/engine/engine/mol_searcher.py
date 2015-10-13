@@ -193,7 +193,7 @@ class MolSearcher(object):
                      .mapValues(lambda img_pairs_it: img_pairs_to_list(list(img_pairs_it))))
         return sf_images
 
-    def get_compute_img_meausures_func(self):
+    def get_compute_img_measures_func(self):
         rows, cols = self.rows, self.cols
         nlevels = self.ds_config['image_generation']['nlevels']
         q = self.ds_config['image_generation']['q']
@@ -226,9 +226,8 @@ class MolSearcher(object):
 
     def _filter_search_results(self, sf_images):
         theor_peak_intens_brcast = self.sc.broadcast(self.theor_peak_intens)
-        rows, cols = self.rows, self.cols
         thr = self.measures_thr
-        compute_img_measures = self.get_compute_img_meausures_func()
+        compute_img_measures = self.get_compute_img_measures_func()
 
         sf_metrics_map = (sf_images
                           .map(lambda (sf_i, imgs):
