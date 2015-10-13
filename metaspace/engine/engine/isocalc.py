@@ -15,17 +15,11 @@ def get_iso_peaks(sf_id, sf, isocalc_config):
         charges = -isocalc_config['charge']['n_charges']
 
     for adduct in isocalc_config['adducts']:
-        sf_adduct = pyisocalc.complex_to_simple(sf + polarity + adduct)
+        sf_adduct = pyisocalc.complex_to_simple(sf + adduct)
 
         if sf_adduct:
             try:
-                res_dict = {
-                    'centr_mzs': [],
-                    'centr_ints': [],
-                    'profile_mzs': [],
-                    'profile_ints': []
-                }
-
+                res_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
                 isotope_ms = pyisocalc.isodist(sf_adduct,
                                                plot=False,
                                                sigma=isocalc_config['isocalc_sig'],
@@ -45,8 +39,8 @@ def get_iso_peaks(sf_id, sf, isocalc_config):
 
             except Exception as e:
                 print sf, e.message
-
-            yield sf_id, adduct, res_dict
+            finally:
+                yield sf_id, adduct, res_dict
 
 
 if __name__ == '__main__':

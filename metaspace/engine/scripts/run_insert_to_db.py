@@ -53,8 +53,8 @@ def main():
         ds_config = json.load(f)
     ds_name = ds_config['name']
     db_id = ds_config['inputs']['database_id']
-    nrows = ds_config['inputs']['rows']
-    ncols = ds_config['inputs']['cols']
+    nrows = ds_config['inputs']['max_y']
+    ncols = ds_config['inputs']['max_x']
 
     util.my_print("Connecting to DB...")
 

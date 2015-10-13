@@ -20,8 +20,6 @@ class PipelineContext(object):
     db_id = luigi.Parameter('')
     base_fn = luigi.Parameter('')
     queries_fn = luigi.Parameter('queries.pkl')
-    rows = luigi.Parameter('')
-    cols = luigi.Parameter('')
 
     _annot_results_fn = None
 
@@ -59,8 +57,6 @@ class PipelineContext(object):
                 'input_fn': ds_config['inputs']['data_file'],
                 'base_fn': ds_config['inputs']['data_file'].split('.')[0],
                 'queries_fn': self.queries_fn,
-                'rows': str(ds_config['inputs']['rows']),
-                'cols': str(ds_config['inputs']['cols']),
                 'ds_config_fn': self.ds_config_fn}
 
 

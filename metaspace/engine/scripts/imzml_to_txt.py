@@ -84,7 +84,8 @@ if __name__=="__main__":
         imzml_fn = sys.argv[1]
         data_fp = open(sys.argv[2], 'w')
         coord_fp = open(sys.argv[3], 'w') if len(sys.argv) > 3 else None
-        # TO-DO: add script parameter - preprocess
-        do_write(ImzMLParser(imzml_fn), data_fp, coord_fp, preprocess=False, print_progress=True)
+
+        max_x, max_y = do_write(ImzMLParser(imzml_fn), data_fp, coord_fp, preprocess=False, print_progress=True)
+        print 'Dataset max_x = %d, max_y = %d' % (max_x, max_y)
     except IndexError:
         print """\nUsage: imzml_to_txt.py <input file> <data output file> [<coordinate output file]"""

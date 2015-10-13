@@ -217,7 +217,7 @@ $(document).ready(function() {
             var adduct = adducts[adduct_idx];
 //            var col_w = Math.floor(12 / entropies[adduct_idx].length);
             $("#imagediv").empty();
-            $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>+' + adduct + '</h3></div></div><div class="row" id="row-images-' + adduct_idx + '"></div><div class="row"><div id="molchart_' + adduct_idx + '"></div></div>');
+            $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>' + adduct + '</h3></div></div><div class="row" id="row-images-' + adduct_idx + '"></div><div class="row"><div id="molchart_' + adduct_idx + '"></div></div>');
             for (var peak_id = 0; peak_id < iso_img_n; peak_id++) {
                 to_append = '<div style="text-align:center;" class="col-lg-'
                     + col_w.toString() + '">' + '<div class="container-fluid">'

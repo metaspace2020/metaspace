@@ -84,12 +84,12 @@ def sample_spectrum(sp, peak_bounds, sf_peak_map):
                izip(repeat(sp_i), non_zero_ints))
 
 
-def flat_coord_list_to_matrix(sp_intens_pairs, pixels_order, rows, cols):
+def flat_coord_list_to_matrix(sp_intens_pairs, pixels_order, max_x, max_y):
     if not sp_intens_pairs:
         return None
     inds, vals = zip(*map(lambda (sp_i, intens): (pixels_order[sp_i], intens), sp_intens_pairs))
-    array = np.bincount(inds, weights=vals, minlength=rows * cols)
-    img = np.reshape(array, (rows, cols))
+    array = np.bincount(inds, weights=vals, minlength=max_y * max_x)
+    img = np.reshape(array, (max_y, max_x))
     return scipy.sparse.csr_matrix(img)
 
 
@@ -118,7 +118,7 @@ class MolSearcher(object):
         self.ds_path = ds_path
         self.ds_coord_path = ds_coords_path
         self.ds_config = ds_config
-        # self.rows, self.cols = rows, cols
+        self.max_x, self.max_y = None, None
         self.sf_mz_intervals = np.array(sf_mz_intervals)
         self.sf_peak_inds = np.insert(np.cumsum(map(len, self.sf_mz_intervals)), 0, 0)  # 0 - extra index
         self.theor_peak_intens = theor_peak_intens
@@ -171,37 +171,38 @@ class MolSearcher(object):
         # coordinate to pixels
         _coord /= np.reshape(step, (2,))
         _coord_max = np.amax(_coord, axis=0)
-        self.cols = _coord_max[1] + 1
-        self.rows = _coord_max[0] + 1
+        self.max_x = _coord_max[0] + 1
+        self.max_y = _coord_max[1] + 1
 
-        pixel_indices = _coord[:, 0] * self.cols + _coord[:, 1]
+        pixel_indices = _coord[:, 1] * self.max_x + _coord[:, 0]
         pixel_indices = pixel_indices.astype(np.int32)
         self.pixels_order = pixel_indices
 
     def _compute_sf_images(self, spectra):
         mz_bounds_cand_brcast = self.sc.broadcast(self._get_peak_bounds())
         sf_peak_map_brcast = self.sc.broadcast(self._get_sf_peak_map())
-        rows, cols = self.rows, self.cols
+        max_x, max_y = self.max_x, self.max_y
         pixels_order = self.pixels_order
 
         sf_images = (spectra
                      .flatMap(lambda sp: sample_spectrum(sp, mz_bounds_cand_brcast.value, sf_peak_map_brcast.value))
                      .groupByKey()
                      .map(lambda ((sf_i, p_i), pixel_it):
-                          (sf_i, (p_i, flat_coord_list_to_matrix(list(pixel_it), pixels_order, rows, cols))))
+                          (sf_i, (p_i, flat_coord_list_to_matrix(list(pixel_it), pixels_order, max_x, max_y))))
                      .groupByKey()
                      .mapValues(lambda img_pairs_it: img_pairs_to_list(list(img_pairs_it))))
         return sf_images
 
     def get_compute_img_measures_func(self):
-        rows, cols = self.rows, self.cols
+        max_x, max_y = self.max_x, self.max_y
+        empty_matrix = np.zeros((max_y, max_x))
         nlevels = self.ds_config['image_generation']['nlevels']
         q = self.ds_config['image_generation']['q']
         preprocessing = self.ds_config['image_generation']['do_preprocessing']
 
         def compute_img_measures(iso_images_sparse, sf_intensity):
             diff = len(sf_intensity) - len(iso_images_sparse)
-            iso_imgs = [np.zeros((rows, cols)) if img is None else img.toarray()
+            iso_imgs = [empty_matrix if img is None else img.toarray()
                         for img in iso_images_sparse + [None] * diff]
             iso_imgs_flat = [img.flat[:] for img in iso_imgs]
 

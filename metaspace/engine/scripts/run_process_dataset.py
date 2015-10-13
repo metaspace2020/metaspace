@@ -25,20 +25,13 @@ def main():
 
     :param --out: output filename (defaults to result.pkl)
     :param --queries: queries to be run (defaults to queries.pkl)
-    :param --ds: dataset file name
-    :param --rows: number of rows in the dataset (needed to compute image-based measures)
-    :param --cols: number of columns in the dataset (needed to compute image-based measures)
-    :param --job_id: job id for the database
+    :param --ds: dataset file path
     """
     parser = argparse.ArgumentParser(description='SM process dataset at a remote spark location.')
     parser.add_argument('--out', dest='out_fn', type=str, help='filename')
-    # parser.add_argument('--job_id', dest='job_id', type=int, help='job id for the database')
-    # parser.add_argument('--rows', dest='rows', type=int, help='number of rows')
-    # parser.add_argument('--cols', dest='cols', type=int, help='number of columns')
     parser.add_argument('--ds', dest='ds_path', type=str, help='dataset file name')
     parser.add_argument('--coord', dest='coord_path', type=str, help='dataset coordinates file name')
     parser.add_argument('--queries', dest='queries', type=str, help='queries file name')
-    # parser.add_argument('--config', dest='config_path', type=str, help='sm config file path')
     parser.add_argument('--ds-config', dest='ds_config_path', type=str, help='dataset config file path')
     parser.set_defaults(queries='queries.pkl', fname='result.pkl')
 

@@ -24,6 +24,8 @@ from tornado.ioloop import IOLoop
 import matplotlib as mpl
 mpl.use('Agg')
 from matplotlib import pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+
 
 from engine.util import *
 from webapp.globalvars import *
@@ -341,7 +343,10 @@ class AggIsoImgPngHandler(IsoImgBaseHandler):
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         img = plt.imshow(img_data, interpolation='nearest', cmap=cmap, vmin=img_data.min(), vmax=img_data.max())
-        cbar = plt.colorbar(img, ticks=[img_data.min(), (img_data.max() - img_data.min())/2, img_data.max()])
+
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="5%", pad=0.15)
+        cbar = plt.colorbar(img, ticks=[img_data.min(), img_data.max()], cax=cax)
         cbar.ax.tick_params(labelsize=12)
 
         fp = cStringIO.StringIO()
