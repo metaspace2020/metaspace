@@ -18,6 +18,7 @@ def main():
     parser = argparse.ArgumentParser(description='Add molecule peaks script')
     parser.add_argument('--config', dest='config_path', type=str, help='sm config file path')
     parser.add_argument('--ds-config', dest='ds_config_path', type=str, help='dataset config file path')
+    parser.add_argument('--theor-peaks-path', dest='theor_peaks_path', type=str, help='theor_peaks_path')
     args = parser.parse_args()
 
     # SM config
@@ -29,6 +30,7 @@ def main():
     with open(args.ds_config_path) as f:
         ds_config = json.load(f)
     db_id = ds_config['inputs']['database_id']
+    adducts = ds_config['isotope_generation']['adducts']
 
     print 'Selecting all formulas from {} table, molecule db id = {}...'.format(config_db['database'], db_id)
     with conn.cursor() as curs:
@@ -53,15 +55,13 @@ def main():
         .map(lambda args: format_peak_str(*args))
         .collect())
 
-    out_file_path = '../data/theor_peaks_db_id_{}.csv'.format(db_id)
-
-    with open(out_file_path, 'w') as f:
+    with open(args.theor_peaks_path, 'w') as f:
         f.write('\n'.join(peak_lines))
     print 'Finished iso pattern generation'
 
     print 'Importing theor peaks to the database...'
-    with conn.cursor() as curs, open(out_file_path) as peaks_file:
-        curs.execute('delete from theor_peaks where db_id = %s', (db_id,))
+    with conn.cursor() as curs, open(args.theor_peaks_path) as peaks_file:
+        curs.execute('DELETE FROM theor_peaks WHERE db_id = %s AND adduct = ANY(%s)', (db_id, adducts))
         curs.copy_from(peaks_file, 'theor_peaks')
     conn.commit()
     print 'Finished'

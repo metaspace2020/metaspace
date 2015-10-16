@@ -47,6 +47,16 @@ class PipelineContext(object):
         # return PipelineContext._annot_results_fn
         return 'results.pkl'
 
+    @staticmethod
+    def run_cmd_write_status(cmd, status_path):
+        try:
+            check_call(cmd)
+        except Exception as e:
+            print e
+        else:
+            with open(status_path, 'w') as output:
+                output.write('OK')
+
     def context(self):
         with open(join(self.data_dir, self.ds_config_fn)) as f:
             ds_config = json.load(f)
@@ -61,6 +71,7 @@ class PipelineContext(object):
 
 
 class ImzMLToTxt(PipelineContext, luigi.Task):
+
     def output(self):
         return luigi.LocalTarget(join(self.data_dir, self.txt_fn)), \
                luigi.LocalTarget(join(self.data_dir, self.coord_fn))
@@ -68,9 +79,11 @@ class ImzMLToTxt(PipelineContext, luigi.Task):
     def run(self):
         print "Converting {} file".format(self.imzml_fn)
         check_call(['python', join(self.project_dir, 'scripts/imzml_to_txt.py'),
-                  join(self.data_dir, self.imzml_fn),
-                  join(self.data_dir, self.txt_fn),
-                  join(self.data_dir, self.coord_fn)])
+                    '--imzml', join(self.data_dir, self.imzml_fn),
+                    '--data', join(self.data_dir, self.txt_fn),
+                    '--coord', join(self.data_dir, self.coord_fn),
+                    '--config', join(self.project_dir, 'conf/config.json'),
+                    '--ds-config', join(self.data_dir, self.ds_config_fn)])
 
 
 class PreparePeaksMZTable(PipelineContext, luigi.Task):
@@ -80,15 +93,10 @@ class PreparePeaksMZTable(PipelineContext, luigi.Task):
     def run(self):
         cmd = ['python', join(self.project_dir, 'scripts/produce_theor_peaks_spark.py'),
                '--config', join(self.project_dir, 'conf/config.json'),
-               '--ds-config', join(self.data_dir, self.ds_config_fn)]
+               '--ds-config', join(self.data_dir, self.ds_config_fn),
+               '--theor-peaks-path', join(self.data_dir, 'theor_peaks.csv')]
 
-        try:
-            check_call(cmd)
-        except Exception as e:
-            print e
-        else:
-            with self.output().open('w') as output:
-                output.write('OK')
+        self.run_cmd_write_status(cmd, self.output().path)
 
 
 class PrepareQueries(PipelineContext, luigi.Task):
@@ -108,28 +116,8 @@ class PrepareQueries(PipelineContext, luigi.Task):
                '--out', self.output().path]
         check_call(cmd)
 
-        # print "Uploading queries file {} to {} spark master dir".format(self.queries_fn, self.master_data_dir)
-        # self.output().put(join(self.data_dir, self.queries_fn))
-
 
 class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
-    # spark_submit = luigi.Parameter('/root/spark/bin/spark-submit')
-    # app = luigi.Parameter('/root/sm/scripts/run_process_dataset.py')
-    # name = luigi.Parameter('SM Molecule Annotation')
-    # executor_memory = luigi.Parameter('6g')
-    # py_files = luigi.Parameter('/root/sm/engine.zip')
-
-    # master_data_dir = luigi.Parameter('/root/sm/data')
-    # queries_fn = luigi.Parameter('queries.pkl')
-    # rows = luigi.Parameter()
-    # cols = luigi.Parameter()
-
-    # def spark_command(self):
-    #     return ['--master', 'spark://{}:7077'.format(self.get_spark_master_host()),
-    #             '--executor-memory', self.executor_memory,
-    #             '--py-files', self.py_files,
-    #             '--verbose',
-    #             self.app]
 
     def run_command(self):
         return ['python', join(self.project_dir, 'scripts/run_process_dataset.py'),
@@ -147,18 +135,6 @@ class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
         return luigi.LocalTarget(join(self.data_dir, self.annotation_results_fn))
 
     def run(self):
-        # spark_master_remote_context = luigi.contrib.ssh.RemoteContext(host=self.get_spark_master_host(),
-        #                                                               username=self.cluster_user,
-        #                                                               key_file=self.cluster_key_file)
-        # cmd = [self.spark_submit] + self.spark_command() + self.run_command()
-        # popen = spark_master_remote_context.Popen(cmd)
-        # out, err = popen.communicate()
-        #
-        # master_data = luigi.contrib.ssh.RemoteTarget(path=join(self.master_data_dir, self.annotation_results_fn()),
-        #                                              host=self.get_spark_master_host(),
-        #                                              username=self.cluster_user,
-        #                                              key_file=self.cluster_key_file)
-        # master_data.get(join(self.data_dir, self.annotation_results_fn()))
         print self.run_command()
         check_call(self.run_command())
 
@@ -178,28 +154,22 @@ class InsertAnnotationsToDB(PipelineContext, luigi.Task):
                '--cp', join(self.data_dir, self.coord_fn),
                '--config', join(self.project_dir, 'conf/config.json'),
                '--ds-config', join(self.data_dir, 'config.json')]
-        try:
-            check_call(cmd)
-        except Exception as e:
-            print e
-        else:
-            with self.output().open('w') as output:
-                output.write('OK')
+
+        self.run_cmd_write_status(cmd, self.output().path)
 
 
 class RunPipeline(PipelineContext, luigi.WrapperTask):
     # don't try to access parameters from PipelineContext here
 
     def requires(self):
-        # yield InsertAnnotationsToDB(**self.context())
         yield InsertAnnotationsToDB(**self.context())
 
 
 if __name__ == '__main__':
-    # since we are setting MySecondTask to be the main task,
-    # it will check for the requirements first, then run
-    # cmd_args = ["--local-scheduler"]
+    import time
+    start = time.time()
+
     luigi.run(main_task_cls=RunPipeline)
 
-    # python sm_pipeline.py --logging-conf-file luigi_log.cfg --s3-dir s3://embl-intsco-sm-test
-    # --fn Example_Processed.zip --local-data-dir /home/ubuntu/sm/data/test1 --rows 3 --cols 3"
+    time_spent = time.time() - start
+    print 'Pipeline running time: %d mins %d secs' % (int(round(time_spent/60)), int(round(time_spent%60)))

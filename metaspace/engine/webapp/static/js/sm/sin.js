@@ -173,11 +173,13 @@ function sin_render_substance_small(id, name) {
   if (name != null && name.length > 30) {
     res = res.substring(0, 27) + '...';
   }
-  return '<a href="/substance/' + id +'">' + res + '</a>';;
+  //return '<a href="/substance/' + id +'">' + res + '</a>';;
+  return res;
 }
 
 function sin_render_substance(id, name) {
-  return '<a href="/substance/' + id +'">' + name + '</a>';
+//  return '<a href="/substance/' + id +'">' + name + '</a>';
+  return name;
 }
 
 function sin_render_fullresults(id) {

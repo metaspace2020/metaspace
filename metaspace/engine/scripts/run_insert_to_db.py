@@ -53,8 +53,8 @@ def main():
         ds_config = json.load(f)
     ds_name = ds_config['name']
     db_id = ds_config['inputs']['database_id']
-    nrows = ds_config['inputs']['max_y']
-    ncols = ds_config['inputs']['max_x']
+    # nrows = ds_config['inputs']['max_y']
+    # ncols = ds_config['inputs']['max_x']
 
     util.my_print("Connecting to DB...")
 
@@ -62,39 +62,16 @@ def main():
     config_db['database'], config_db['user'], config_db['password'], config_db['host']))
     cur = conn.cursor()
 
-    '''
-	Insert into datasets table.
-	datasets table columns: dataset_id, dataset(name), filename, nrows, ncols 
-	If dataset id is not provided, use an auto increamented one. If user provides a dataset id that already exists, then, it will throw an error (dataset_id - primary key)
-	'''
-    util.my_print("Inserting to datasets ...")
-
-    sql = "select id from dataset where name = '%s'" % ds_name
-    cur.execute(sql)
-    # if dataset already exists
-    try:
-        ds_id = cur.fetchone()[0]
-
-    # if it's a new dataset
-    except:
-        cur.execute("SELECT max(id) FROM dataset")
-        try:
-            ds_id = cur.fetchone()[0] + 1
-        except:
-            ds_id = 0
-        util.my_print("Inserting to datasets: %d" % ds_id)
-        cur.execute("INSERT INTO dataset VALUES (%s, %s, %s, %s, %s)", (ds_id, ds_name, args.ip, nrows, ncols))
-
-        '''
-        Insert into coordinates table.
-        coordinates table columns: dataset_id, index, x, y
-        '''
-        util.my_print("Inserting to coordinates ...")
-        f = open(args.cp)
-        cur.execute("ALTER TABLE ONLY coordinates ALTER COLUMN ds_id SET DEFAULT %d" % ds_id)
-        cur.copy_from(f, 'coordinates', sep=',', columns=('index', 'x', 'y'))
-
     util.my_print("Using %s dataset" % ds_name)
+
+    sql = "select id, ncols, nrows from dataset where name = '%s'" % ds_name
+    try:
+        cur.execute(sql)
+        ds_id, nrows, ncols = cur.fetchone()
+
+    except Exception as e:
+        print e.message
+        raise Exception('No dataset with name = %s!' % ds_name)
 
     '''
 	Insert into jobs table
@@ -123,7 +100,7 @@ def main():
     rows = []
     for i, img_list in enumerate(res["res_dicts"]):
         for peak_i, img_sparse in enumerate(img_list):
-            img_ints = np.zeros(nrows*ncols) if img_sparse is None else img_sparse.toarray().flatten()
+            img_ints = np.zeros(int(nrows)*int(ncols)) if img_sparse is None else img_sparse.toarray().flatten()
             r = (job_id, db_id, res["formulas"][i], res["mzadducts"][i], peak_i,
                  img_ints.tolist(), img_ints.min(), img_ints.max())
             rows.append(r)

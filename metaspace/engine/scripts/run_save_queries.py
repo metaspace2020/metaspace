@@ -34,8 +34,10 @@ curs = conn.cursor()
 # --sf-filter-file
 #/home/intsco/embl/SpatialMetabolomics/sm/test/data/run_process_dataset_test/20150730_ANB_spheroid_control_65x65_15um/sf_id_sample.csv
 
-sql = 'SELECT sf_id as id, adduct, centr_mzs, centr_ints FROM theor_peaks where db_id = %s'
-curs.execute(sql, (ds_config['inputs']['database_id'],))
+sql = '''SELECT sf_id, adduct, centr_mzs, centr_ints
+        FROM theor_peaks
+        WHERE db_id = %s AND adduct = ANY(ARRAY[%s])'''
+curs.execute(sql, (ds_config['inputs']['database_id'], ds_config['isotope_generation']['adducts']))
 
 if args.sf_filter_path:
     print 'Using filter file: ', args.sf_filter_path

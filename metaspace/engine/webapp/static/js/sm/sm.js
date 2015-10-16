@@ -99,7 +99,7 @@ $(document).ready(function() {
             return sin_render_substance_small(row[4][0], data[0]);
           }
           res = '<span style="margin:0 0px;" rel="tooltip" data-html="true" title="'
-            + data.join("<br/>").replace(/"/g, '\\"')
+            + data.join("&#13;").replace(/"/g, '\\"')
             + '">' + data.length.toString() + ' id';
           if (data.length > 1) {
             res += 's';

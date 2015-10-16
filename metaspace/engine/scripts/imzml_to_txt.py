@@ -2,9 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import sys
-
+import json
+import argparse
 from pyimzml.ImzMLParser import ImzMLParser
 import numpy as np
+import psycopg2
+from engine import util
+
 
 def encode_data_line(index, mz_list, int_list, decimals=3):
     '''
@@ -79,13 +83,58 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
     print("Finished.")
     return max_x, max_y
 
-if __name__=="__main__":
-    try:
-        imzml_fn = sys.argv[1]
-        data_fp = open(sys.argv[2], 'w')
-        coord_fp = open(sys.argv[3], 'w') if len(sys.argv) > 3 else None
 
-        max_x, max_y = do_write(ImzMLParser(imzml_fn), data_fp, coord_fp, preprocess=False, print_progress=True)
+def save_ds_meta(db_config, imzml_path, coord_path, ds_name, nrows, ncols):
+    util.my_print("Inserting to datasets ...")
+
+    conn = psycopg2.connect(**db_config)
+    cur = conn.cursor()
+
+    cur.execute("SELECT max(id) FROM dataset")
+    try:
+        ds_id = cur.fetchone()[0] + 1
+    except Exception:
+        ds_id = 0
+    util.my_print("Inserting to datasets: %d" % ds_id)
+    cur.execute("INSERT INTO dataset VALUES (%s, %s, %s, %s, %s)",
+                (ds_id, ds_name, imzml_path, nrows, ncols))
+
+    '''
+    Insert into coordinates table.
+    coordinates table columns: dataset_id, index, x, y
+    '''
+    util.my_print("Inserting to coordinates ...")
+    with open(coord_path) as f:
+        cur.execute("ALTER TABLE ONLY coordinates ALTER COLUMN ds_id SET DEFAULT %d" % ds_id)
+        cur.copy_from(f, 'coordinates', sep=',', columns=('index', 'x', 'y'))
+    conn.commit()
+    conn.close()
+
+
+if __name__=="__main__":
+    parser = argparse.ArgumentParser(description='imzML->plain text conversion script')
+    parser.add_argument('--imzml', dest='imzml_path', type=str, help='imzml_path')
+    parser.add_argument('--data', dest='data_file_path', type=str, help='data_file_path')
+    parser.add_argument('--coord', dest='coord_file_path', type=str, help='coord_file_path')
+    parser.add_argument('--config', dest='sm_config_path', type=str, help='SM config path')
+    parser.add_argument('--ds-config', dest='ds_config_path', type=str, help='dataset config path')
+    args = parser.parse_args()
+
+    # SM config
+    with open(args.sm_config_path) as f:
+        config_db = json.load(f)['db']
+
+    # Dataset config
+    with open(args.ds_config_path) as f:
+        ds_config = json.load(f)
+
+    try:
+        max_x, max_y = do_write(ImzMLParser(args.imzml_path),
+                                open(args.data_file_path, 'w'),
+                                open(args.coord_file_path, 'w'),
+                                preprocess=False, print_progress=True)
+        save_ds_meta(config_db, args.imzml_path, args.coord_file_path, ds_config['name'], max_y, max_x)
+
         print 'Dataset max_x = %d, max_y = %d' % (max_x, max_y)
     except IndexError:
         print """\nUsage: imzml_to_txt.py <input file> <data output file> [<coordinate output file]"""

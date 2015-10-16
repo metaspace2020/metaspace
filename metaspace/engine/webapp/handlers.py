@@ -325,11 +325,6 @@ class AggIsoImgPngHandler(IsoImgBaseHandler):
 
     @gen.coroutine
     def get(self, *args):
-        # request_as_tuple = (dataset_id, job_id, sf_id, sf)
-        # request_as_tuple_long = (dataset_id, job_id, sf_id, sf, adduct, peak_id)
-        # key = '_'.join(args)
-        # min_int, max_int = self.min_max_ints_cache[key]
-
         dataset_id, job_id, sf_id, sf = args
         ints_list, coords, rows, cols = self.res_dict(int(dataset_id), int(job_id), int(sf_id))
 

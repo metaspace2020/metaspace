@@ -1,59 +1,62 @@
 {% extends "main.html" %}
 
 {% block body %}
-    <div class="panel panel-primary">
-      <div class="panel-heading">Results overview</div>
-      <table id="table-demo" class="table table-striped" cellspacing="0" width="100%">
-        <thead>
-          <tr>
-            <th>Database</th>
-            <th>Dataset</th>
-            <th>Molecular formula</th>
-            <th width="200">Name</th>
-            <th>Database ID</th>
-            <th>Spatial presence</th>
-            <th>Image correlation</th>
-            <th>Spectral correlation</th>
-            <th>Adduct</th>
-            <th>Job id</th>
-            <th>Dataset id</th>
-            <th>SF id</th>
-          </tr>
-          <tr>
-            <th id="fil-db"></th>
-            <th id="fil-ds"></th>
-            <th id="fil-nm"></th>
-            <th id="fil-sf"></th>
-            <th id="fil-id"></th>
-            <th id="fil-sp"></th>
-            <th id="fil-ic"></th>
-            <th id="fil-sc"></th>
-            <th id="fil-ad"></th>
-            <th></th>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-   
-        <!--tfoot>
-          <tr>
-            <th>Database</th>
-            <th>Dataset</th>
-            <th>Molecular formula</th>
-            <th>Name</th>
-            <th>Database ID</th>
-            <th>Spatial presence</th>
-            <th>Image correlation</th>
-            <th>Spectral correlation</th>
-            <th>Adduct</th>
-            <th>Job id</th>
-            <th>Dataset id</th>
-            <th>SF id</th>
-          </tr>
-        </tfoot-->
-      </table>
+    <div class="container-fluid">
+        <div class="panel panel-primary">
+          <div class="panel-heading">Results overview</div>
+          <table id="table-demo" class="table table-striped" cellspacing="0" width="100%">
+            <thead>
+              <tr>
+                <th>Database</th>
+                <th>Dataset</th>
+                <th>Molecular formula</th>
+                <th width="200">Name</th>
+                <th>Database ID</th>
+                <th>Spatial presence</th>
+                <th>Image correlation</th>
+                <th>Spectral correlation</th>
+                <th>Adduct</th>
+                <th>Job id</th>
+                <th>Dataset id</th>
+                <th>SF id</th>
+              </tr>
+              <tr>
+                <th id="fil-db"></th>
+                <th id="fil-ds"></th>
+                <th id="fil-nm"></th>
+                <th id="fil-sf"></th>
+                <th id="fil-id"></th>
+                <th id="fil-sp"></th>
+                <th id="fil-ic"></th>
+                <th id="fil-sc"></th>
+                <th id="fil-ad"></th>
+                <th></th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+
+            <!--tfoot>
+              <tr>
+                <th>Database</th>
+                <th>Dataset</th>
+                <th>Molecular formula</th>
+                <th>Name</th>
+                <th>Database ID</th>
+                <th>Spatial presence</th>
+                <th>Image correlation</th>
+                <th>Spectral correlation</th>
+                <th>Adduct</th>
+                <th>Job id</th>
+                <th>Dataset id</th>
+                <th>SF id</th>
+              </tr>
+            </tfoot-->
+          </table>
+        </div>
     </div>
 
+  <div class="container-fluid">
     <div class="row">
       <div class="col-md-8">
         <div class="container-fluid">
@@ -80,8 +83,9 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <div id="imagediv">
+    <div id="imagediv" class="container-fluid">
     </div>
 
     <div class="container-fluid">
