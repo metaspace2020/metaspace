@@ -52,6 +52,8 @@ class Application(tornado.web.Application):
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.AggIsoImgPngHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgPngHandler),
             (r"^/spectrum_line_chart_data/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.SpectrumLineChartHandler),
+            (r"^/sf_peak_mzs/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.SFPeakMZsHandler),
+            (r"^/min_max_int/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.MinMaxIntHandler),
             (r"^/demo", handlers.AjaxHandler)
         ]
         # you can add deprecated handlers by specifying --use-deprecated in the command line

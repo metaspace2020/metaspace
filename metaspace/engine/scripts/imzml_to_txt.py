@@ -65,7 +65,8 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
     print("Starting conversion...")
     n_pixels = len(parser.coordinates)
     step = max(n_pixels/100, 100)
-    for i, (x, y) in enumerate(parser.coordinates):
+    for i, coord in enumerate(parser.coordinates):
+        x, y = coord[:2]
         mz_arr, int_arr = map(np.array, parser.getspectrum(i))
         if preprocess:
             int_arr = signal.savgol_filter(int_arr, 5, 2)

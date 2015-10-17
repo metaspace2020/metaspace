@@ -313,10 +313,10 @@ class IsoImgPngHandler(IsoImgBaseHandler):
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
         plt.imshow(img_data, interpolation='nearest', cmap=cmap, vmin=img_data.min(), vmax=img_data.max())
-        plt.figtext(0.45, 0.92, '%.3f' % peak_mz, size=14)
+        # plt.figtext(0.45, 0.92, '%.3f' % peak_mz, size=14)
 
         fp = cStringIO.StringIO()
-        fig.savefig(fp, format='png')
+        fig.savefig(fp, format='png', bbox_inches='tight')
         plt.close()
         return fp
 
@@ -341,13 +341,37 @@ class AggIsoImgPngHandler(IsoImgBaseHandler):
 
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.15)
-        cbar = plt.colorbar(img, ticks=[img_data.min(), img_data.max()], cax=cax)
+        # cbar = plt.colorbar(img, ticks=[img_data.min(), img_data.max()], cax=cax)
+        cbar = plt.colorbar(img, ticks=[], cax=cax)
         cbar.ax.tick_params(labelsize=12)
 
         fp = cStringIO.StringIO()
-        fig.savefig(fp, format='png')
+        fig.savefig(fp, format='png', bbox_inches='tight')
         plt.close()
         return fp
+
+
+class SFPeakMZsHandler(tornado.web.RequestHandler):
+    peak_profile_sql = '''select centr_mzs
+                       from theor_peaks
+                       where db_id = %s and sf_id = %s and adduct = %s'''
+
+    @gen.coroutine
+    def get(self, job_id, db_id, sf_id, adduct):
+        peaks_dict = self.application.db.query(self.peak_profile_sql, int(db_id), int(sf_id), adduct)[0]
+        centr_mzs = peaks_dict['centr_mzs']
+        self.write(json.dumps(centr_mzs))
+
+
+class MinMaxIntHandler(tornado.web.RequestHandler):
+    min_max_int_sql = '''select min_int, max_int
+                        from job_result_data
+                        where job_id = %s and db_id = %s and sf_id = %s and adduct = %s;'''
+
+    @gen.coroutine
+    def get(self, job_id, db_id, sf_id, adduct):
+        min_max_row = self.application.db.query(self.min_max_int_sql, int(job_id), int(db_id), int(sf_id), adduct)[0]
+        self.write(json.dumps(min_max_row))
 
 
 class SpectrumLineChartHandler(tornado.web.RequestHandler):

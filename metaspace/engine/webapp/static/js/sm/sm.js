@@ -1,7 +1,6 @@
 
 // Page initialisation
 $(document).ready(function() {
-    //var array_adducts = ['H', 'Na', 'K'];
 
     var max_peaks_to_show = 6;
     var mz_array = [];
@@ -25,7 +24,7 @@ $(document).ready(function() {
       $("#img-body").empty();
       if (j < res_datasetids.length) {
         $("#img-header").text("Images and statistics for dataset " + res_datasets[j]);
-        $("#img-body").append('<div class="row"><div class="col-lg-8" style="text-align:right;">Average correlation with the monoisotopic (first) image:</div><div class="col-lg-4"><b><span id="span-corriso"></span></b></div></div><div class="row"><div class="col-lg-8" style="text-align:right;">Correlation with peak intensities:</div><div class="col-lg-4"><b><span id="span-corrint"></span></b></div></div><div class="row"><div class="col-lg-8" style="text-align:right;">Mean entropy:</div><div class="col-lg-4"><b><span id="span-meanent"></span></b></div></div><table id="tbl-images" width="100%"></table>');
+        $("#img-body").append('<div class="row"><div class="col-xs-8" style="text-align:right;">Average correlation with the monoisotopic (first) image:</div><div class="col-xs-4"><b><span id="span-corriso"></span></b></div></div><div class="row"><div class="col-xs-8" style="text-align:right;">Correlation with peak intensities:</div><div class="col-xs-4"><b><span id="span-corrint"></span></b></div></div><div class="row"><div class="col-xs-8" style="text-align:right;">Mean entropy:</div><div class="col-xs-4"><b><span id="span-meanent"></span></b></div></div><table id="tbl-images" width="100%"></table>');
         $("#span-corriso").text(res_stats[j]["corr_images"].toFixed(4));
         $("#span-corrint").text(res_stats[j]["corr_int"].toFixed(4));
         $("#span-meanent").text(res_stats[j]["mean_ent"].toFixed(4));
@@ -106,12 +105,7 @@ $(document).ready(function() {
           }
           return res + '</span>';
         }, "targets": [4] },
-//        { "render": function ( data, type, row ) {
-//          // console.log(data);
-//          return d3.max(data);
-//        }, "targets": [5, 6, 7] },
         { "render": function ( data, type, row ) {
-//          return data.sort().map(function(d) { return array_adducts[d]; }).join(" ");
             return data;
         }, "targets": [8] },
         { "visible": false,  "targets": [ 9, 10, 11, 12, 13] },
@@ -162,15 +156,12 @@ $(document).ready(function() {
         var sf = d[2];
         var subst_names = d[3];
         var subst_ids = d[4];
-        var adducts = [d[8]];
+        var adduct = d[8];
         var job_id = d[9];
         var dataset_id = d[10];
         var sf_id = d[11];
         var peaks_n = d[12];
         var db_id = d[13];
-//        var colors = ['#352A87', '#0268E1', '#108ED2', '#0FAEB9', '#65BE86', '#C0BC60', '#FFC337', '#F9FB0E'];
-
-        var pixel_size = 4;
 
         $("#imagediv").empty();
         $("#imagediv").html("<h4 style='text-align:center'>...loading images...</h4>");
@@ -204,47 +195,57 @@ $(document).ready(function() {
 
         // IMAGES
         // total image
-        var url_params = dataset_id + '/'
-            + job_id + '/' + sf_id + '/' + sf;
-        $("#ionimage_total").html(
-            '<img src="/mzimage2/' + url_params + '" id="img-total">'
-        );
+        var url = '/min_max_int/' + job_id + '/' + db_id + '/' + sf_id + '/' + adduct;
+        $.getJSON(url, function( data ) {
+            var url_params = dataset_id + '/' + job_id + '/' + sf_id + '/' + sf;
+            $("#ionimage_total").html(
+                '<img src="/mzimage2/' + url_params + '" id="img-total">'
+            );
+
+            $("#ionimage_min_int").text(data['min_int']);
+            $("#ionimage_max_int").text(data['max_int']);
+        })
+
         // images per adduct and peak
         var iso_img_n = Math.min(peaks_n, 6)
         var col_w = Math.floor(12 / iso_img_n);
         var urls = [];
-        for (adduct_idx in adducts) {
-            var adduct = adducts[adduct_idx];
-//            var col_w = Math.floor(12 / entropies[adduct_idx].length);
-            $("#imagediv").empty();
-            $("#imagediv").append('<div class="row"><div class="col-lg-3"><h3>' + adduct + '</h3></div></div><div class="row" id="row-images-' + adduct_idx + '"></div><div class="row"><div id="molchart_' + adduct_idx + '"></div></div>');
-            for (var peak_id = 0; peak_id < iso_img_n; peak_id++) {
-                to_append = '<div style="text-align:center;" class="col-lg-'
-                    + col_w.toString() + '">' + '<div class="container-fluid">'
-                    + '<div class="row" id="col-img-' + adduct_idx + '-' + peak_id.toString() + '"></div>'
-                    + '<div class="row">';
-                to_append += '</div></div></div>';
-                $('#row-images-' + adduct_idx).append(to_append);
-                var url = "/mzimage2/" + db_id + '/' + dataset_id + '/' + job_id + '/' +
-                            sf_id + '/' + sf + '/' + adduct + '/' + peak_id;
-                urls.push(url);
-            }
-        }
-        var loaded_images = 0;
-        for (var i = 0; i < urls.length; i++) {
-            var elem = $("#col-img-" + 0 + "-" + i.toString());
-            var to_append = '<img src="' + urls[i] + '" width="100%" id="img-' + i.toString() + '">';
-            elem.append(to_append);
-            // callback for logging the elapsed time
-            $("#img-" + i.toString()).load(function () {
-                if (++loaded_images == urls.length) {
-                    console.log((performance.now() - t_start).toFixed(2).toString() + "ms for images.");
-                }
-            });
+
+        $("#imagediv").empty();
+        $("#imagediv").append('<div class="row"><div class="col-xs-3"><h3>' + adduct + '</h3></div></div><div class="row" id="row-images"></div><div class="row"><div id="molchart"></div></div>');
+        for (var peak_id = 0; peak_id < iso_img_n; peak_id++) {
+            to_append = '<div style="text-align:center;" class="col-xs-'
+                + col_w.toString() + '">' + '<div class="container-fluid">'
+                + '<div class="row" id="col-img-' + peak_id.toString() + '"></div>'
+                + '<div class="row">';
+            to_append += '</div></div></div>';
+            $("#row-images").append(to_append);
+            var url = "/mzimage2/" + db_id + '/' + dataset_id + '/' + job_id + '/' +
+                        sf_id + '/' + sf + '/' + adduct + '/' + peak_id;
+            urls.push(url);
         }
 
+        var url = '/sf_peak_mzs/' + job_id + '/' + db_id + '/' + sf_id + '/' + adduct;
+        $.getJSON(url, function( data ) {
+            var sf_mzs = data;
+
+            var loaded_images = 0;
+            for (var i = 0; i < urls.length; i++) {
+                var elem = $("#col-img-" +  i.toString());
+                var to_append = '<span>' + sf_mzs[i].toFixed(4) + '</span>';
+                to_append += '<img src="' + urls[i] + '" width="100%" id="img-' + i.toString() + '">';
+                elem.append(to_append);
+                // callback for logging the elapsed time
+                $("#img-" + i.toString()).load(function () {
+                    if (++loaded_images == urls.length) {
+                        console.log((performance.now() - t_start).toFixed(2).toString() + "ms for images.");
+                    }
+                });
+            }
+        })
+
         // Bottom line chart generation
-        var url = "/spectrum_line_chart_data/" + job_id + "/" + db_id + "/" + sf_id + "/" + adducts[0];
+        var url = "/spectrum_line_chart_data/" + job_id + "/" + db_id + "/" + sf_id + "/" + adduct;
         $.getJSON(url, function( data ) {
             var min_mz = data["mz_grid"]["min_mz"];
             var max_mz = data["mz_grid"]["max_mz"];
