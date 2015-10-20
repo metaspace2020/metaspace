@@ -6,7 +6,9 @@ from unittest import TestCase
 from engine.mol_searcher import *
 from os.path import join, dirname, realpath
 import cPickle
+import json
 from numpy.testing import assert_array_almost_equal
+from engine.mol_searcher import *
 
 
 class BaseTest(TestCase):
@@ -18,8 +20,13 @@ class BaseTest(TestCase):
         q = cPickle.load(f)
     formulas = q['formulas']
 
+    with open(join(data_dir, 'config.json')) as f:
+        ds_config = json.load(f)
+
     ds_path = join(data_dir, 'ds.txt')
-    searcher = MolSearcher(ds_path, rows, cols, q['data'], q['intensities'])
+    ds_coord_path = join(data_dir, 'ds_coord.txt')
+
+    searcher = MolSearcher(ds_path, ds_coord_path, q['data'], np.array(q['intensities']), ds_config)
     sc = searcher.sc
 
     spectra = sc.textFile(ds_path, minPartitions=4).map(txt_to_spectrum)
@@ -83,7 +90,8 @@ class ComputeSFImagesTest(BaseTest):
         #                     8435, 8494, 8495, 8906, 8951, 10243, 11990, 14714, 14858, 18046, 18398, 18399,
         #                     18653, 18654, 18686, 18687, 19362, 19374, 19375, 19550, 19985, 20022, 20023,
         #                     20234, 20258, 20585, 20642, 20657, 20658, 20870]
-        self.sf_cand_inds = range(0, 30294)
+        # self.sf_cand_inds = range(0, 30294)
+        pass
 
     def test_compute_sf_images(self):
         sf_images = self.searcher._compute_sf_images(self.spectra)
@@ -102,12 +110,12 @@ class ComputeImgMeasuresTest(BaseTest):
         measures = []
         for sf_i, imgs in self.sf_images:
             theor_ints = self.searcher.theor_peak_intens[sf_i]
-            measures.append(compute_img_measures(imgs, theor_ints, self.rows, self.cols))
+            measures.append(self.searcher._compute_sf_images(self.spectra))
 
         self.assertEqual(len(self.sf_images), len(measures))
 
     def test_compute_img_measures_almost_equal(self):
-        measures = compute_img_measures(self.sf_img_C15H22O9_K,
+        measures = self.searcher._compute_sf_images(self.sf_img_C15H22O9_K,
                                         self.searcher.theor_peak_intens[self.sf_i_C15H22O9_K],
                                         self.rows, self.cols)
 

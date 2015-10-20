@@ -29,13 +29,19 @@ def main():
     # Dataset config
     with open(args.ds_config_path) as f:
         ds_config = json.load(f)
-    db_id = ds_config['inputs']['database_id']
+    db_name = ds_config['inputs']['database']
     adducts = ds_config['isotope_generation']['adducts']
 
+    curs = conn.cursor()
+
+    # get db_id by name
+    sql = '''SELECT id FROM formula_db WHERE name = %s'''
+    curs.execute(sql, (db_name,))
+    db_id = curs.fetchone()[0]
+
     print 'Selecting all formulas from {} table, molecule db id = {}...'.format(config_db['database'], db_id)
-    with conn.cursor() as curs:
-        curs.execute('SELECT id, sf FROM agg_formula where db_id = %s', (db_id,))
-        formulas = list(curs.fetchall())
+    curs.execute('SELECT id, sf FROM agg_formula where db_id = %s', (db_id,))
+    formulas = list(curs.fetchall())
 
     conf = SparkConf()
     sc = SparkContext(conf=conf, master='local[8]')

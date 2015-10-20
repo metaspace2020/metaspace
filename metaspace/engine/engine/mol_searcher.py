@@ -84,13 +84,18 @@ def sample_spectrum(sp, peak_bounds, sf_peak_map):
                izip(repeat(sp_i), non_zero_ints))
 
 
-def flat_coord_list_to_matrix(sp_intens_pairs, pixels_order, max_x, max_y):
-    if not sp_intens_pairs:
-        return None
-    inds, vals = zip(*map(lambda (sp_i, intens): (pixels_order[sp_i], intens), sp_intens_pairs))
-    array = np.bincount(inds, weights=vals, minlength=max_y * max_x)
-    img = np.reshape(array, (max_y, max_x))
-    return scipy.sparse.csr_matrix(img)
+def coord_list_to_matrix(sp_iter, norm_img_pixel_inds, nrows, ncols):
+    sp_intens_arr = np.array(list(sp_iter), dtype=[('sp', int), ('intens', float)])
+    # inds, vals = zip(*map(lambda (sp_i, intens): (pixels_order[sp_i], intens), sp_intens_arr))
+    img_array = np.zeros(nrows*ncols)
+    pixel_inds = norm_img_pixel_inds[sp_intens_arr['sp']]
+    img_array[pixel_inds] = sp_intens_arr['intens']
+    return scipy.sparse.csr_matrix(img_array.reshape(nrows, ncols))
+
+    # inds, vals = zip(*map(lambda (sp_i, intens): (pixels_order[sp_i], intens), sp_intens_pairs))
+    # array = np.bincount(inds, weights=vals, minlength=max_y * max_x)
+    # img = np.reshape(array, (max_y, max_x))
+    # return scipy.sparse.csr_matrix(img)
 
 
 def img_pairs_to_list(pairs):
@@ -114,6 +119,7 @@ def correct_peak_intens_distribution(iso_imgs_flat):
 
 
 class MolSearcher(object):
+
     def __init__(self, ds_path, ds_coords_path, sf_mz_intervals, theor_peak_intens, ds_config):
         self.ds_path = ds_path
         self.ds_coord_path = ds_coords_path
@@ -170,32 +176,36 @@ class MolSearcher(object):
 
         # coordinate to pixels
         _coord /= np.reshape(step, (2,))
-        _coord_max = np.amax(_coord, axis=0)
-        self.max_x = _coord_max[0] + 1
-        self.max_y = _coord_max[1] + 1
+        self.min_x, self.min_y = np.amin(_coord, axis=0)
+        self.max_x, self.max_y = np.amax(_coord, axis=0)
 
-        pixel_indices = _coord[:, 1] * self.max_x + _coord[:, 0]
+        pixel_indices = _coord[:, 1] * (self.max_x+1) + _coord[:, 0]
         pixel_indices = pixel_indices.astype(np.int32)
-        self.pixels_order = pixel_indices
+        self.norm_img_pixel_inds = pixel_indices
+
+    def _get_dims(self):
+        return (self.max_y - self.min_y + 1,
+                self.max_x - self.min_x + 1)
 
     def _compute_sf_images(self, spectra):
         mz_bounds_cand_brcast = self.sc.broadcast(self._get_peak_bounds())
         sf_peak_map_brcast = self.sc.broadcast(self._get_sf_peak_map())
-        max_x, max_y = self.max_x, self.max_y
-        pixels_order = self.pixels_order
+        nrows, ncols = self._get_dims()
+        norm_img_pixel_inds = self.norm_img_pixel_inds
 
         sf_images = (spectra
                      .flatMap(lambda sp: sample_spectrum(sp, mz_bounds_cand_brcast.value, sf_peak_map_brcast.value))
                      .groupByKey()
-                     .map(lambda ((sf_i, p_i), pixel_it):
-                          (sf_i, (p_i, flat_coord_list_to_matrix(list(pixel_it), pixels_order, max_x, max_y))))
+                     .map(lambda ((sf_i, p_i), spectrum_it):
+                          (sf_i, (p_i, coord_list_to_matrix(spectrum_it, norm_img_pixel_inds, nrows, ncols))))
                      .groupByKey()
                      .mapValues(lambda img_pairs_it: img_pairs_to_list(list(img_pairs_it))))
+
         return sf_images
 
-    def get_compute_img_measures_func(self):
-        max_x, max_y = self.max_x, self.max_y
-        empty_matrix = np.zeros((max_y, max_x))
+    def _get_compute_img_measures_func(self):
+        nrows, ncols = self._get_dims()
+        empty_matrix = np.zeros((nrows, ncols))
         nlevels = self.ds_config['image_generation']['nlevels']
         q = self.ds_config['image_generation']['q']
         preprocessing = self.ds_config['image_generation']['do_preprocessing']
@@ -228,7 +238,7 @@ class MolSearcher(object):
     def _filter_search_results(self, sf_images):
         theor_peak_intens_brcast = self.sc.broadcast(self.theor_peak_intens)
         thr = self.measures_thr
-        compute_img_measures = self.get_compute_img_measures_func()
+        compute_img_measures = self._get_compute_img_measures_func()
 
         sf_metrics_map = (sf_images
                           .map(lambda (sf_i, imgs):

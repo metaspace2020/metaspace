@@ -2,9 +2,10 @@ DROP TABLE IF EXISTS formula_db;
 CREATE TABLE formula_db (
 	id		int,
 	version	date,
-	db		text,
+    name	text,
 	CONSTRAINT id_version_ind PRIMARY KEY(id, version)
 );
+CREATE INDEX ind_formula_db_name ON formula_db (name);
 INSERT INTO formula_db VALUES (0, '2015-01-01', 'HMDB'), (1, '2015-01-01', 'apple_db');
 
 DROP TABLE IF EXISTS formulas;
@@ -41,10 +42,10 @@ CREATE TABLE dataset (
 	id	        int,
 	name		text,
 	file_path   text,
-	nrows		int,
-	ncols		int,
+	img_bounds	json,
 	CONSTRAINT dataset_id_ind PRIMARY KEY(id)
 );
+CREATE INDEX ind_dataset_name ON dataset (name);
 
 DROP TABLE IF EXISTS coordinates;
 CREATE TABLE coordinates (
@@ -54,7 +55,6 @@ CREATE TABLE coordinates (
 	y 			int,
 	CONSTRAINT coord_ds_id_ind PRIMARY KEY(ds_id, index)
 );
-
 CREATE INDEX ind_coordinates_2 ON coordinates (ds_id);
 CREATE INDEX ind_coordinates_3 ON coordinates (index);
 

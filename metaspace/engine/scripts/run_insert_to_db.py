@@ -52,40 +52,45 @@ def main():
     with open(args.ds_config) as f:
         ds_config = json.load(f)
     ds_name = ds_config['name']
-    db_id = ds_config['inputs']['database_id']
-    # nrows = ds_config['inputs']['max_y']
-    # ncols = ds_config['inputs']['max_x']
+    db_name = ds_config['inputs']['database']
 
     util.my_print("Connecting to DB...")
 
     conn = psycopg2.connect("dbname=%s user=%s password=%s host=%s" % (
     config_db['database'], config_db['user'], config_db['password'], config_db['host']))
-    cur = conn.cursor()
+    curs = conn.cursor()
 
-    util.my_print("Using %s dataset" % ds_name)
+    # get db_id by name
+    sql = '''SELECT id FROM formula_db WHERE name = %s'''
+    curs.execute(sql, (db_name,))
+    db_id = curs.fetchone()[0]
 
-    sql = "select id, ncols, nrows from dataset where name = '%s'" % ds_name
+    util.my_print("Using %s database, %s dataset" % (db_name, ds_name))
+
+    sql = "select id, img_bounds from dataset where name = '%s'" % ds_name
     try:
-        cur.execute(sql)
-        ds_id, nrows, ncols = cur.fetchone()
-
+        curs.execute(sql)
+        ds_id, img_bounds = curs.fetchone()
     except Exception as e:
         print e.message
         raise Exception('No dataset with name = %s!' % ds_name)
+
+    nrows = img_bounds['y']['max'] - img_bounds['y']['min'] + 1
+    ncols = img_bounds['x']['max'] - img_bounds['x']['min'] + 1
 
     '''
 	Insert into jobs table
 	jobs table columns:  id, type, formula_id, dataset_id, done, status, tasks_done, tasks_total, start, finish
 	'''
     util.my_print("Inserting to jobs...")
-    cur.execute("SELECT max(id) FROM job")
+    curs.execute("SELECT max(id) FROM job")
     try:
-        job_id = cur.fetchone()[0] + 1
+        job_id = curs.fetchone()[0] + 1
     except:
         job_id = 0
     util.my_print("No job id specified, using %d and inserting to jobs" % job_id)
     sql = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', %s)"
-    cur.execute(sql, (job_id, db_id, ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
+    curs.execute(sql, (job_id, db_id, ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S')))
 
     '''
 	Insert results into job_result_data, and job_result_stat
@@ -104,14 +109,14 @@ def main():
             r = (job_id, db_id, res["formulas"][i], res["mzadducts"][i], peak_i,
                  img_ints.tolist(), img_ints.min(), img_ints.max())
             rows.append(r)
-    cur.executemany("INSERT INTO job_result_data VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", rows)
+    curs.executemany("INSERT INTO job_result_data VALUES (%s, %s, %s, %s, %s, %s, %s, %s)", rows)
 
     util.my_print("Inserting to job_result_stat...")
     rows = []
     for i, sf_id in enumerate(res["formulas"]):
         r = (job_id, db_id, sf_id, res["mzadducts"][i], len(res['res_dicts'][i]), json.dumps(res["stat_dicts"][i]))
         rows.append(r)
-    cur.executemany('INSERT INTO job_result_stat VALUES (%s, %s, %s, %s, %s, %s)', rows)
+    curs.executemany('INSERT INTO job_result_stat VALUES (%s, %s, %s, %s, %s, %s)', rows)
 
     conn.commit()
     conn.close()

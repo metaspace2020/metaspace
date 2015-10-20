@@ -15,7 +15,7 @@ def encode_data_line(index, mz_list, int_list, decimals=3):
     Encodes given spectrum into a line in Sergey's text-based format:
     "index|int_1 int_2 ... int_n|mz_1 mz_2 ... mz_n"
     '''
-    if not isinstance(index,int):
+    if not isinstance(index, int):
         raise TypeError("index must be integer")
     idx_string = str(index)
     mz_list = mz_list.round(decimals)
@@ -30,13 +30,14 @@ def encode_coord_line(index, x, y):
     Encodes given coordinate into a csv line:
     "index,x,y"
     '''
-    if not (isinstance(index,int) and isinstance(x, int) and isinstance(y, int)):
+    if not (isinstance(index, int) and isinstance(x, int) and isinstance(y, int)):
         raise TypeError("parameters must be integer")
     return "%d,%d,%d" % (index, x, y)
 
 
 def to_space_separated_string(seq):
     return ' '.join(map(str, seq.tolist()))
+
 
 def do_write(parser, data_file, coord_file=None, preprocess=False, print_progress=False):
     """
@@ -64,55 +65,55 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
     max_x, max_y = 0, 0
     print("Starting conversion...")
     n_pixels = len(parser.coordinates)
-    step = max(n_pixels/100, 100)
+    step = max(n_pixels / 100, 100)
     for i, coord in enumerate(parser.coordinates):
         x, y = coord[:2]
         mz_arr, int_arr = map(np.array, parser.getspectrum(i))
         if preprocess:
             int_arr = signal.savgol_filter(int_arr, 5, 2)
-            mz_arr, int_arr,_ = gradient(np.asarray(mz_arr), np.asarray(int_arr), max_output=-1, weighted_bins=3)
+            mz_arr, int_arr, _ = gradient(np.asarray(mz_arr), np.asarray(int_arr), max_output=-1, weighted_bins=3)
             order = mz_arr.argsort()
             mz_arr = mz_arr[order]
             int_arr = int_arr[order]
         data_file.write(encode_data_line(i, mz_arr, int_arr, decimals=9) + '\n')
         if coord_file:
             coord_file.write(encode_coord_line(i, x, y) + '\n')
-        max_x = max(max_x, x)
-        max_y = max(max_y, y)
+        max_x, max_y = max(max_x, x), max(max_y, y)
         if i % step == 0 and print_progress:
-            print("Wrote %.1f%% (%d of %d)" % (float(i)/n_pixels*100, i, n_pixels))
+            print("Wrote %.1f%% (%d of %d)" % (float(i) / n_pixels * 100, i, n_pixels))
     print("Finished.")
     return max_x, max_y
 
 
-def save_ds_meta(db_config, imzml_path, coord_path, ds_name, nrows, ncols):
+def save_ds_meta(db_config, imzml_path, coord_path, ds_name, img_bounds):
     util.my_print("Inserting to datasets ...")
 
     conn = psycopg2.connect(**db_config)
     cur = conn.cursor()
 
-    cur.execute("SELECT max(id) FROM dataset")
     try:
-        ds_id = cur.fetchone()[0] + 1
+        cur.execute("SELECT id FROM dataset where name = %s", ds_name)
+        cur.fetchone()[0]
     except Exception:
-        ds_id = 0
-    util.my_print("Inserting to datasets: %d" % ds_id)
-    cur.execute("INSERT INTO dataset VALUES (%s, %s, %s, %s, %s)",
-                (ds_id, ds_name, imzml_path, nrows, ncols))
+        try:
+            cur.execute("SELECT max(id) FROM dataset")
+            ds_id = cur.fetchone()[0] + 1
+        except Exception:
+            ds_id = 0
 
-    '''
-    Insert into coordinates table.
-    coordinates table columns: dataset_id, index, x, y
-    '''
-    util.my_print("Inserting to coordinates ...")
-    with open(coord_path) as f:
-        cur.execute("ALTER TABLE ONLY coordinates ALTER COLUMN ds_id SET DEFAULT %d" % ds_id)
-        cur.copy_from(f, 'coordinates', sep=',', columns=('index', 'x', 'y'))
-    conn.commit()
-    conn.close()
+        util.my_print("Inserting to datasets: %d" % ds_id)
+        cur.execute("INSERT INTO dataset VALUES (%s, %s, %s, %s)",
+                    (ds_id, ds_name, imzml_path, img_bounds))
+
+        util.my_print("Inserting to coordinates ...")
+        with open(coord_path) as f:
+            cur.execute("ALTER TABLE ONLY coordinates ALTER COLUMN ds_id SET DEFAULT %d" % ds_id)
+            cur.copy_from(f, 'coordinates', sep=',', columns=('index', 'x', 'y'))
+        conn.commit()
+        conn.close()
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='imzML->plain text conversion script')
     parser.add_argument('--imzml', dest='imzml_path', type=str, help='imzml_path')
     parser.add_argument('--data', dest='data_file_path', type=str, help='data_file_path')
@@ -130,11 +131,11 @@ if __name__=="__main__":
         ds_config = json.load(f)
 
     try:
-        max_x, max_y = do_write(ImzMLParser(args.imzml_path),
-                                open(args.data_file_path, 'w'),
-                                open(args.coord_file_path, 'w'),
-                                preprocess=False, print_progress=True)
-        save_ds_meta(config_db, args.imzml_path, args.coord_file_path, ds_config['name'], max_y, max_x)
+        img_bounds = do_write(ImzMLParser(args.imzml_path),
+                                              open(args.data_file_path, 'w'),
+                                              open(args.coord_file_path, 'w'),
+                                              preprocess=False, print_progress=True)
+        save_ds_meta(config_db, args.imzml_path, args.coord_file_path, ds_config['name'], img_bounds)
 
         print 'Dataset max_x = %d, max_y = %d' % (max_x, max_y)
     except IndexError:

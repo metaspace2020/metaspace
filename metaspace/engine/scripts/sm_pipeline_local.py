@@ -63,7 +63,7 @@ class PipelineContext(object):
 
         return {'project_dir': self.project_dir,
                 'data_dir': self.data_dir,
-                'db_id': ds_config['inputs']['database_id'],
+                'db_id': ds_config['inputs']['database'],
                 'input_fn': ds_config['inputs']['data_file'],
                 'base_fn': ds_config['inputs']['data_file'].split('.')[0],
                 'queries_fn': self.queries_fn,

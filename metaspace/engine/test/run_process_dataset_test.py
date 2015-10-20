@@ -101,7 +101,7 @@ def assert_sf_res_dataframes_equal(res_df, ref_df):
             assert_almost_equal(res_metrics[m], ref_metrics[m], decimal=2)
 
 
-class RunProcessDatasetTestBase(TestCase):
+class RunProcessDatasetSpheroidTest(TestCase):
 
     def setUp(self):
         self.ds = '20150730_ANB_spheroid_control_65x65_15um'

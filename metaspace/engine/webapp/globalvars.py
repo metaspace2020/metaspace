@@ -62,7 +62,7 @@ sql_queries = dict(
 		WHERE (stats->'mean_ent')::text::real > 0.0001 AND job_id=%s
 	''',
     demobigtable='''
-        SELECT db, ds_name, f.sf, f.names, f.subst_ids,
+        SELECT db.name as db_name, ds_name, f.sf, f.names, f.subst_ids,
             (s.stats->'moc')::text::real AS chaos,
             (s.stats->'spec')::text::real AS image_corr,
             (s.stats->'spat')::text::real AS pattern_match,
@@ -115,6 +115,6 @@ sql_fields = dict(
           "tasks_done", "tasks_total", "start", "finish", "id"],
     datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
     fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"],
-    demobigtable=["db", "ds_name", "sf", "names", "subst_ids", "chaos", "image_corr", "pattern_match",
+    demobigtable=["db_name", "ds_name", "sf", "names", "subst_ids", "chaos", "image_corr", "pattern_match",
                   "adduct", "last_job_id", "ds_id", "sf_id", "peaks_n", "db_id"]
 )
