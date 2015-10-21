@@ -7,7 +7,15 @@
 }
 
 #ionimage_total img {
-  width: 100%;
+    max-height: 500px;
+    width: 100%;
+    object-fit: contain;
+}
+
+img.iso-image {
+    max-height: 500px;
+    width: 100%;
+    object-fit: contain;
 }
 
 #ionimage_total_labels {

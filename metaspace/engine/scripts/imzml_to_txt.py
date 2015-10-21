@@ -62,6 +62,7 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
     if preprocess:
         import scipy.signal as signal
         from engine.pyMS.centroid_detection import gradient
+    min_x, min_y = sys.maxint, sys.maxint
     max_x, max_y = 0, 0
     print("Starting conversion...")
     n_pixels = len(parser.coordinates)
@@ -78,11 +79,12 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
         data_file.write(encode_data_line(i, mz_arr, int_arr, decimals=9) + '\n')
         if coord_file:
             coord_file.write(encode_coord_line(i, x, y) + '\n')
+        min_x, min_y = min(min_x, x), min(min_y, y)
         max_x, max_y = max(max_x, x), max(max_y, y)
         if i % step == 0 and print_progress:
             print("Wrote %.1f%% (%d of %d)" % (float(i) / n_pixels * 100, i, n_pixels))
     print("Finished.")
-    return max_x, max_y
+    return json.dumps({'x': {'min': min_x, 'max': max_x}, 'y': {'min': min_y, 'max': max_y}})
 
 
 def save_ds_meta(db_config, imzml_path, coord_path, ds_name, img_bounds):
@@ -101,7 +103,7 @@ def save_ds_meta(db_config, imzml_path, coord_path, ds_name, img_bounds):
         except Exception:
             ds_id = 0
 
-        util.my_print("Inserting to datasets: %d" % ds_id)
+        util.my_print("Inserting to dataset table: %d" % ds_id)
         cur.execute("INSERT INTO dataset VALUES (%s, %s, %s, %s)",
                     (ds_id, ds_name, imzml_path, img_bounds))
 
@@ -137,6 +139,6 @@ if __name__ == "__main__":
                                               preprocess=False, print_progress=True)
         save_ds_meta(config_db, args.imzml_path, args.coord_file_path, ds_config['name'], img_bounds)
 
-        print 'Dataset max_x = %d, max_y = %d' % (max_x, max_y)
+        print 'Dataset image bounds %s' % img_bounds
     except IndexError:
         print """\nUsage: imzml_to_txt.py <input file> <data output file> [<coordinate output file]"""

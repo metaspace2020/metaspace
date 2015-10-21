@@ -63,7 +63,7 @@ $(document).ready(function() {
       bSortCellsTop: true,
       bSearchable: false,
       bStateSave: true,
-      order: [[ 7, "desc" ]],
+      order: [[ 3, "desc" ]],
       fnInitComplete: function(oSettings, json) {
         $('#table-demo tbody tr:eq(0)').click();
       },
@@ -233,7 +233,7 @@ $(document).ready(function() {
             for (var i = 0; i < urls.length; i++) {
                 var elem = $("#col-img-" +  i.toString());
                 var to_append = '<span>' + sf_mzs[i].toFixed(4) + '</span>';
-                to_append += '<img src="' + urls[i] + '" width="100%" id="img-' + i.toString() + '">';
+                to_append += '<img src="' + urls[i] + '" id="img-' + i.toString() + '" ' + 'class="iso-image">';
                 elem.append(to_append);
                 // callback for logging the elapsed time
                 $("#img-" + i.toString()).load(function () {

@@ -16,6 +16,8 @@ import cProfile
 import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.stats import mode
+from scipy import ndimage
+
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
@@ -29,7 +31,6 @@ import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.pyplot import gcf
-
 
 from engine.util import *
 from webapp.globalvars import *
@@ -326,7 +327,7 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         color_img_data[:, :, 3] = mask
         return color_img_data
 
-    def customize_fig(self, *args):
+    def img_show(self, *args):
         pass
 
     def plot_iso_img(self, ds_id, job_id, sf_id):
@@ -338,8 +339,7 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         fig.add_axes(ax)
 
         color_img_data = self._get_color_image_data(ds_id, job_id, sf_id)
-        img = ax.imshow(color_img_data, interpolation='nearest', cmap=self.viridis_cmap)
-        self.customize_fig(img)
+        self.img_show(color_img_data)
 
         fp = cStringIO.StringIO()
         plt.savefig(fp, format='png', bbox_inches='tight')
@@ -366,6 +366,12 @@ class IsoImgPngHandler(IsoImgBaseHandler):
     def get_img_ints(self, ints_list):
         return ints_list[self.peak_id]
 
+    def img_show(self, color_img_data):
+        # nrows, ncols = color_img_data.shape[:2]
+        # if nrows < ncols:
+        #     color_img_data = np.swapaxes(color_img_data, 0, 1)
+        gcf().gca().imshow(color_img_data, interpolation='nearest', cmap=self.viridis_cmap)
+
 
 class AggIsoImgPngHandler(IsoImgBaseHandler):
 
@@ -382,7 +388,9 @@ class AggIsoImgPngHandler(IsoImgBaseHandler):
     def get_img_ints(self, ints_list):
         return ints_list.sum(axis=0)
 
-    def customize_fig(self, img):
+    def img_show(self, color_img_data):
+        img = gcf().gca().imshow(color_img_data, interpolation='nearest', cmap=self.viridis_cmap)
+
         divider = make_axes_locatable(gcf().gca())
         cax = divider.append_axes("right", size="5%", pad=0.15)
         cbar = plt.colorbar(img, ticks=[], cax=cax)

@@ -133,7 +133,10 @@ class MolSearcher(object):
                                       self.ds_config['image_measure_thresholds']['image_corr'],
                                       self.ds_config['image_measure_thresholds']['pattern_match']])
 
-        self.sconf = SparkConf().set('spark.python.profile', True).set("spark.executor.memory", "1g")
+        self.sconf = (SparkConf()
+                      # .set('spark.python.profile', True)
+                      .set("spark.executor.memory", "2g")
+                      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer"))
         self.sc = SparkContext(conf=self.sconf)
 
         self._define_pixels_order()
