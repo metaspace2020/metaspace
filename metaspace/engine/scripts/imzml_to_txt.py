@@ -83,6 +83,7 @@ def do_write(parser, data_file, coord_file=None, preprocess=False, print_progres
         max_x, max_y = max(max_x, x), max(max_y, y)
         if i % step == 0 and print_progress:
             print("Wrote %.1f%% (%d of %d)" % (float(i) / n_pixels * 100, i, n_pixels))
+
     print("Finished.")
     return json.dumps({'x': {'min': min_x, 'max': max_x}, 'y': {'min': min_y, 'max': max_y}})
 
@@ -94,25 +95,28 @@ def save_ds_meta(db_config, imzml_path, coord_path, ds_name, img_bounds):
     cur = conn.cursor()
 
     try:
-        cur.execute("SELECT id FROM dataset where name = %s", ds_name)
-        cur.fetchone()[0]
-    except Exception:
-        try:
-            cur.execute("SELECT max(id) FROM dataset")
-            ds_id = cur.fetchone()[0] + 1
-        except Exception:
-            ds_id = 0
+        cur.execute("SELECT id FROM dataset where name = %s", (ds_name,))
+        if cur.fetchone() is None:
+            try:
+                cur.execute("SELECT max(id) FROM dataset")
+                ds_id = cur.fetchone()[0] + 1
+            except Exception as e:
+                print e.message
+                ds_id = 0
 
-        util.my_print("Inserting to dataset table: %d" % ds_id)
-        cur.execute("INSERT INTO dataset VALUES (%s, %s, %s, %s)",
-                    (ds_id, ds_name, imzml_path, img_bounds))
+            util.my_print("Inserting to dataset table: %d" % ds_id)
+            cur.execute("INSERT INTO dataset VALUES (%s, %s, %s, %s)",
+                        (ds_id, ds_name, imzml_path, img_bounds))
 
-        util.my_print("Inserting to coordinates ...")
-        with open(coord_path) as f:
-            cur.execute("ALTER TABLE ONLY coordinates ALTER COLUMN ds_id SET DEFAULT %d" % ds_id)
-            cur.copy_from(f, 'coordinates', sep=',', columns=('index', 'x', 'y'))
-        conn.commit()
-        conn.close()
+            util.my_print("Inserting to coordinates ...")
+            with open(coord_path) as f:
+                cur.execute("ALTER TABLE ONLY coordinates ALTER COLUMN ds_id SET DEFAULT %d" % ds_id)
+                cur.copy_from(f, 'coordinates', sep=',', columns=('index', 'x', 'y'))
+            conn.commit()
+            conn.close()
+
+    except Exception as e:
+        print e.message
 
 
 if __name__ == "__main__":

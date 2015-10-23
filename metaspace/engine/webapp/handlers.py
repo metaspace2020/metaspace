@@ -367,9 +367,6 @@ class IsoImgPngHandler(IsoImgBaseHandler):
         return ints_list[self.peak_id]
 
     def img_show(self, color_img_data):
-        # nrows, ncols = color_img_data.shape[:2]
-        # if nrows < ncols:
-        #     color_img_data = np.swapaxes(color_img_data, 0, 1)
         gcf().gca().imshow(color_img_data, interpolation='nearest', cmap=self.viridis_cmap)
 
 

@@ -86,16 +86,10 @@ def sample_spectrum(sp, peak_bounds, sf_peak_map):
 
 def coord_list_to_matrix(sp_iter, norm_img_pixel_inds, nrows, ncols):
     sp_intens_arr = np.array(list(sp_iter), dtype=[('sp', int), ('intens', float)])
-    # inds, vals = zip(*map(lambda (sp_i, intens): (pixels_order[sp_i], intens), sp_intens_arr))
     img_array = np.zeros(nrows*ncols)
     pixel_inds = norm_img_pixel_inds[sp_intens_arr['sp']]
     img_array[pixel_inds] = sp_intens_arr['intens']
     return scipy.sparse.csr_matrix(img_array.reshape(nrows, ncols))
-
-    # inds, vals = zip(*map(lambda (sp_i, intens): (pixels_order[sp_i], intens), sp_intens_pairs))
-    # array = np.bincount(inds, weights=vals, minlength=max_y * max_x)
-    # img = np.reshape(array, (max_y, max_x))
-    # return scipy.sparse.csr_matrix(img)
 
 
 def img_pairs_to_list(pairs):
@@ -173,12 +167,12 @@ class MolSearcher(object):
         _coord = np.around(_coord, 5)  # correct for numerical precision
         _coord -= np.amin(_coord, axis=0)
 
-        step = np.zeros((2, 1))
-        for ii in range(0, 2):
-            step[ii] = np.mean(np.diff(np.unique(_coord[:, ii])))
-
-        # coordinate to pixels
-        _coord /= np.reshape(step, (2,))
+        # step = np.zeros((2, 1))
+        # for ii in range(0, 2):
+        #     step[ii] = np.mean(np.diff(np.unique(_coord[:, ii])))
+        #
+        # # coordinate to pixels
+        # _coord /= np.reshape(step, (2,))
         self.min_x, self.min_y = np.amin(_coord, axis=0)
         self.max_x, self.max_y = np.amax(_coord, axis=0)
 

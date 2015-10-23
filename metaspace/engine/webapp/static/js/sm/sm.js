@@ -82,8 +82,8 @@ $(document).ready(function() {
           if (data.length == 1) {
             return sin_render_substance_small(row[4][0], data[0]);
           }
-          res = '<span style="margin:0 0px;" rel="tooltip" data-html="true" title="'
-            + data.join("<br/>").replace(/"/g, '\\"')
+          res = '<span style="margin:0 0px; white-space: pre-line;" rel="tooltip" data-html="true" title="'
+            + data.join(", ") //.replace(/"/g, '\\"')
             + '">' + data.length.toString() + ' metabolite';
           if (data.length > 1) {
             res += 's';
@@ -97,8 +97,8 @@ $(document).ready(function() {
           if (data.length == 1) {
             return sin_render_substance_small(row[4][0], data[0]);
           }
-          res = '<span style="margin:0 0px;" rel="tooltip" data-html="true" title="'
-            + data.join("&#13;").replace(/"/g, '\\"')
+          res = '<span style="margin:0 0px; white-space: pre-line;" rel="tooltip" data-html="true" title="'
+            + data.join(", ").replace(/"/g, '\\"')
             + '">' + data.length.toString() + ' id';
           if (data.length > 1) {
             res += 's';
