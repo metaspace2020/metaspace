@@ -9,7 +9,7 @@ __author__ = 'intsco'
 import psycopg2
 import json
 import argparse
-from engine import isocalc
+from engine import pyisocalc_wrapper
 from pyspark import SparkContext, SparkConf
 from itertools import product
 
@@ -57,7 +57,7 @@ def main():
         )
 
     peak_lines = (formula_rdd
-        .flatMap(lambda (sf_id, sf): isocalc.get_iso_peaks(sf_id, sf, ds_config['isotope_generation']))
+        .flatMap(lambda (sf_id, sf): pyisocalc_wrapper.get_iso_peaks(sf_id, sf, ds_config['isotope_generation']))
         .map(lambda args: format_peak_str(*args))
         .collect())
 

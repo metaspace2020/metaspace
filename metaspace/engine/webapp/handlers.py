@@ -34,7 +34,7 @@ from matplotlib.pyplot import gcf
 
 from engine.util import *
 from webapp.globalvars import *
-from engine.isocalc import get_iso_peaks
+from engine.pyisocalc_wrapper import get_iso_peaks
 
 
 

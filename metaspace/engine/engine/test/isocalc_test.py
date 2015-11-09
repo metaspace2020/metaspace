@@ -4,7 +4,7 @@ import unittest
 from unittest import TestCase
 import pandas
 from cStringIO import StringIO
-from engine.isocalc import get_iso_peaks
+from engine.pyisocalc_wrapper import get_iso_peaks
 
 
 class IsocalcTest(TestCase):
