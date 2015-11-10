@@ -120,7 +120,7 @@ class PrepareQueries(PipelineContext, luigi.Task):
 class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
 
     def run_command(self):
-        return ['python', join(self.project_dir, 'scripts/run_process_dataset.py'),
+        return ['python', join(self.project_dir, 'scripts/run_molecule_search.py'),
                 '--ds-config', join(self.data_dir, 'config.json'),
                 '--out', join(self.data_dir, self.annotation_results_fn),
                 '--ds', join(self.data_dir, self.txt_fn),

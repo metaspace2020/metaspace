@@ -3,12 +3,12 @@ __author__ = 'intsco'
 import numpy as np
 import unittest
 from unittest import TestCase
-from engine.mol_searcher import *
+from engine.formula_imager import *
 from os.path import join, dirname, realpath
 import cPickle
 import json
 from numpy.testing import assert_array_almost_equal
-from engine.mol_searcher import *
+from engine.formula_imager import *
 
 
 class BaseTest(TestCase):
@@ -26,10 +26,10 @@ class BaseTest(TestCase):
     ds_path = join(data_dir, 'ds.txt')
     ds_coord_path = join(data_dir, 'ds_coord.txt')
 
-    searcher = MolSearcher(ds_path, ds_coord_path, q['data'], np.array(q['intensities']), ds_config)
+    searcher = FormulaImager(ds_path, ds_coord_path, q['data'], np.array(q['intensities']), ds_config)
     sc = searcher.sc
 
-    spectra = sc.textFile(ds_path, minPartitions=4).map(txt_to_spectrum)
+    spectra = sc.textFile(ds_path, minPartitions=4).map(_txt_to_spectrum)
 
 
 class FindSFCandidatesTest(BaseTest):
@@ -75,7 +75,7 @@ class SampleSpectrumTest(BaseTest):
     def test_sample_spectrum_one_sf(self):
         res = []
         for sp in self.spectra.collect():
-            res.append(sample_spectrum(sp, self.peak_bounds_one_sf, self.sf_peak_inds_one_sf))
+            res.append(_sample_spectrum(sp, self.peak_bounds_one_sf, self.sf_peak_inds_one_sf))
 
         self.assertEqual(len(res), 4225)
         self.assertEqual(sum(map(lambda r: len(r)>0, res)), 2372)
@@ -94,7 +94,7 @@ class ComputeSFImagesTest(BaseTest):
         pass
 
     def test_compute_sf_images(self):
-        sf_images = self.searcher._compute_sf_images(self.spectra)
+        sf_images = self.searcher.compute_images(self.spectra)
 
         print len(sf_images)
 
@@ -110,14 +110,14 @@ class ComputeImgMeasuresTest(BaseTest):
         measures = []
         for sf_i, imgs in self.sf_images:
             theor_ints = self.searcher.theor_peak_intens[sf_i]
-            measures.append(self.searcher._compute_sf_images(self.spectra))
+            measures.append(self.searcher.compute_images(self.spectra))
 
         self.assertEqual(len(self.sf_images), len(measures))
 
     def test_compute_img_measures_almost_equal(self):
-        measures = self.searcher._compute_sf_images(self.sf_img_C15H22O9_K,
-                                        self.searcher.theor_peak_intens[self.sf_i_C15H22O9_K],
-                                        self.rows, self.cols)
+        measures = self.searcher.compute_images(self.sf_img_C15H22O9_K,
+                                                self.searcher.theor_peak_intens[self.sf_i_C15H22O9_K],
+                                                self.rows, self.cols)
 
         assert_array_almost_equal(measures, (0.998207733559, 0.55484692205, 0.977315866329))
 

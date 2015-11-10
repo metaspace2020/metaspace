@@ -135,7 +135,7 @@ class PrepareQueries(PipelineContext, luigi.Task):
 
 class SparkMoleculeAnnotation(PipelineContext, luigi.Task):
     spark_submit = luigi.Parameter('/root/spark/bin/spark-submit')
-    app = luigi.Parameter('/root/sm/scripts/run_process_dataset.py')
+    app = luigi.Parameter('/root/sm/scripts/run_molecule_search.py')
     name = luigi.Parameter('SM Molecule Annotation')
     executor_memory = luigi.Parameter('6g')
     py_files = luigi.Parameter('/root/sm/engine.zip')

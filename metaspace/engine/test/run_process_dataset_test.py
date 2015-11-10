@@ -12,7 +12,7 @@ import cPickle
 import pandas as pd
 from pyspark import SparkConf, SparkContext
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_almost_equal
-from engine.mol_searcher import *
+from engine.formula_imager import *
 
 
 class ProcessDatasetBaseTest(TestCase):
@@ -32,7 +32,7 @@ class ProcessDatasetBaseTest(TestCase):
             self.sf_mz_intervals = cPickle.load(f)['data']
 
         ff = self.sc.textFile(self.ds_path, minPartitions=self.minPartitions)
-        self.spectra = ff.map(txt_to_spectrum)
+        self.spectra = ff.map(_txt_to_spectrum)
 
 
 class SampleSpectraSpheroidsTest(ProcessDatasetBaseTest):
@@ -115,7 +115,7 @@ class RunProcessDatasetSpheroidTest(TestCase):
         self.ds_coord_path = join(self.base_path, 'ds_coord.txt')
         self.queries_path = join(self.base_path, 'queries.pkl')
         self.ref_res_path = join(self.base_path, 'ref_result_sf_metrics.csv')
-        self.run_process_dataset_script = join(dirname(dirname(realpath(__file__))), 'scripts/run_process_dataset.py')
+        self.run_process_dataset_script = join(dirname(dirname(realpath(__file__))), 'scripts/run_molecule_search.py')
 
         self.config = Config.get_config()
 

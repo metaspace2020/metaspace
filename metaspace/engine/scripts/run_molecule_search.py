@@ -6,26 +6,18 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 .. moduleauthor:: Artem Tarasov <lomereiter@gmail.com>
 """
-
-# import numpy as np
-# import json
 import argparse
 import cPickle
 import numpy as np
 import time
-
-# engine_path = dirname(dirname(realpath(__file__)))
-# sys.path.append(engine_path)
+import json
 
 from pyspark import SparkContext, SparkConf
 
 
 def main():
-    """Processes a full dataset query (on pickled m/z values) and writes the pickled result.
+    """
 
-    :param --out: output filename (defaults to result.pkl)
-    :param --queries: queries to be run (defaults to queries.pkl)
-    :param --ds: dataset file path
     """
     parser = argparse.ArgumentParser(description='SM process dataset at a remote spark location.')
     parser.add_argument('--out', dest='out_fn', type=str, help='filename')
@@ -52,8 +44,11 @@ def main():
 
     # Dataset config
     with open(args.ds_config_path) as f:
-        import json
         ds_config = json.load(f)
+
+    # SM config
+    with open('../conf/config.json') as f:
+        sm_config = json.load(f)
 
     util.my_print("Reading %s..." % args.queries)
     with open(args.queries) as f:
@@ -62,11 +57,33 @@ def main():
     util.my_print("Looking for %d peaks" % sum([len(x) for x in q["data"]]))
     util.my_print("Processing...")
 
-    from engine.mol_searcher import MolSearcher
-    searcher = MolSearcher(args.ds_path, args.coord_path, q['data'], np.array(q['intensities']), ds_config)
-    found_mol_iso_images, found_mol_measures = searcher.run()
-    results = convert_search_results(found_mol_iso_images, found_mol_measures,
-                                    q["formulas"], q["mzadducts"])
+    # Spark context setup
+    sconf = (SparkConf()
+              # .set('spark.python.profile', True)
+              .set("spark.executor.memory", "2g")
+              .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer"))
+    sc = SparkContext(conf=sconf)
+
+    # Import
+    from engine.db import DB
+    from engine.dataset import Dataset
+    from engine.formulas import Formulas
+    from engine.formula_imager import compute_images
+    from engine.formula_img_validator import filter_sf_images
+
+    # Create and init
+    ds = Dataset(sc, args.ds_path, args.coord_path)
+    db = DB(sm_config['db'])
+    formulas = Formulas(ds_config, db)
+    # imager = FormulaImager(sc, ds_config, ds, formulas)
+    # validator = FormulaImgValidator(sc, ds_config, ds, formulas)
+
+    # Run search
+    sf_images = compute_images(sc, ds_config, ds, formulas)
+    sf_iso_images_map, sf_metrics_map = filter_sf_images(ds_config, ds, formulas, sf_images)
+
+    results = convert_search_results(sf_iso_images_map, sf_metrics_map,
+                                     q["formulas"], q["mzadducts"])
 
     util.my_print("Saving results to %s..." % args.fname)
 
