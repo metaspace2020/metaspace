@@ -1,4 +1,3 @@
-__author__ = 'intsco'
 """
 .. module:: mol_searcher
     :synopsis: Classes for searching molecules in mass spec datasets.

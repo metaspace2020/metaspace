@@ -1,11 +1,9 @@
-__author__ = 'intsco'
 """
 .. module::
     :synopsis:
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
-
 import psycopg2
 import psycopg2.extras
 

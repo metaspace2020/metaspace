@@ -1,12 +1,11 @@
-__author__ = 'intsco'
 """
 .. module::
     :synopsis:
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
-
 import numpy as np
+
 
 theor_peaks_sql = """
     select centr_mzs, centr_ints
