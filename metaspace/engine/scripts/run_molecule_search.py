@@ -68,18 +68,18 @@ def main():
     from engine.db import DB
     from engine.dataset import Dataset
     from engine.formulas import Formulas
-    from engine.formula_imager import compute_images
+    from engine.formula_imager import sample_spectra, compute_sf_peak_images, compute_sf_images
     from engine.formula_img_validator import filter_sf_images
 
     # Create and init
     ds = Dataset(sc, args.ds_path, args.coord_path)
     db = DB(sm_config['db'])
     formulas = Formulas(ds_config, db)
-    # imager = FormulaImager(sc, ds_config, ds, formulas)
-    # validator = FormulaImgValidator(sc, ds_config, ds, formulas)
 
     # Run search
-    sf_images = compute_images(sc, ds_config, ds, formulas)
+    sf_sp_intens = sample_spectra(sc, ds, formulas)
+    sf_peak_imgs = compute_sf_peak_images(ds, sf_sp_intens)
+    sf_images = compute_sf_images(sf_peak_imgs)
     sf_iso_images_map, sf_metrics_map = filter_sf_images(ds_config, ds, formulas, sf_images)
 
     results = convert_search_results(sf_iso_images_map, sf_metrics_map,

@@ -5,6 +5,9 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 import numpy as np
+from codecs import open
+
+from engine.util import txt_to_spectrum
 
 
 class Dataset(object):
@@ -18,13 +21,22 @@ class Dataset(object):
 
         self._define_pixels_order()
 
+    @staticmethod
+    def _parse_coord_row(s):
+        res = []
+        row = s.strip('\n')
+        if len(row) > 0:
+            vals = row.split(',')
+            if len(vals) > 0:
+                res = map(int, vals)[1:]
+        return res
+
     def _define_pixels_order(self):
         # this function maps coords onto pixel indicies (assuming a grid defined by bounding box and transform type)
         # -implement methods such as interp onto grid spaced over coords
         # -currently treats coords as grid positions,
-
         with open(self.ds_coord_path) as f:
-            coords = map(lambda s: map(int, s.strip('\n').split(',')[1:]), f.readlines())
+            coords = filter(lambda t: len(t) == 2, map(self._parse_coord_row, f.readlines()))
         _coord = np.asarray(coords)
         _coord = np.around(_coord, 5)  # correct for numerical precision
         _coord -= np.amin(_coord, axis=0)
@@ -43,5 +55,5 @@ class Dataset(object):
         return (self.max_y - self.min_y + 1,
                 self.max_x - self.min_x + 1)
 
-    def get_data(self):
-        return self.sc.textFile(self.ds_path)
+    def get_spectra(self):
+        return self.sc.textFile(self.ds_path).map(txt_to_spectrum)

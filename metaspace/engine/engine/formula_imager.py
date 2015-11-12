@@ -8,17 +8,7 @@ import numpy as np
 import scipy.sparse
 from itertools import izip, repeat
 
-
-def _txt_to_spectrum(s):
-    """Converts a text string in the format to a spectrum in the form of two arrays:
-    array of m/z values and array of partial sums of intensities.
-
-    :param s: string id|mz1 mz2 ... mzN|int1 int2 ... intN
-    :returns: triple spectrum_id, mzs, cumulative sum of intensities
-    """
-    arr = s.strip().split("|")
-    intensities = np.fromstring("0 " + arr[2], sep=' ')
-    return int(arr[0]), np.fromstring(arr[1], sep=' '), np.cumsum(intensities)
+from engine.util import txt_to_spectrum
 
 
 def _get_nonzero_ints(sp, lower, upper):
@@ -62,19 +52,26 @@ def _img_pairs_to_list(pairs):
     return res.tolist()
 
 
-def compute_images(sc, ds_config, ds, formulas):
-    spectra = ds.get_data().map(_txt_to_spectrum)
-
+def sample_spectra(sc, ds, formulas):
     mz_bounds_cand_brcast = sc.broadcast(formulas.get_sf_peak_bounds())
     sf_peak_map_brcast = sc.broadcast(formulas.get_sf_peak_map())
+    sf_sp_intens = (ds.get_spectra()
+                    .flatMap(lambda sp: _sample_spectrum(sp, mz_bounds_cand_brcast.value, sf_peak_map_brcast.value)))
+    return sf_sp_intens
+
+
+def compute_sf_peak_images(ds, sf_sp_intens):
     nrows, ncols = ds.get_dims()
     norm_img_pixel_inds = ds.get_norm_img_pixel_inds()
+    sf_peak_imgs = (sf_sp_intens
+                    .groupByKey()
+                    .map(lambda ((sf_i, p_i), spectrum_it):
+                         (sf_i, (p_i, _coord_list_to_matrix(spectrum_it, norm_img_pixel_inds, nrows, ncols)))))
+    return sf_peak_imgs
 
-    sf_images = (spectra
-                 .flatMap(lambda sp: _sample_spectrum(sp, mz_bounds_cand_brcast.value, sf_peak_map_brcast.value))
-                 .groupByKey()
-                 .map(lambda ((sf_i, p_i), spectrum_it):
-                      (sf_i, (p_i, _coord_list_to_matrix(spectrum_it, norm_img_pixel_inds, nrows, ncols))))
+
+def compute_sf_images(sf_peak_imgs):
+    sf_images = (sf_peak_imgs
                  .groupByKey()
                  .mapValues(lambda img_pairs_it: _img_pairs_to_list(list(img_pairs_it))))
 
