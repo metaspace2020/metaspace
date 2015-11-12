@@ -23,7 +23,7 @@ class Formulas(object):
         db_name = ds_config['inputs']['database']
         adducts = ds_config['isotope_generation']['adducts']
 
-        sf_peaks = list(db.select(theor_peaks_sql, (db_name, adducts)))
+        sf_peaks = db.select(theor_peaks_sql, (db_name, adducts))
         self.sf_theor_peaks = [row[0] for row in sf_peaks]
         self.sf_theor_peak_ints = [row[1] for row in sf_peaks]
 
@@ -39,5 +39,8 @@ class Formulas(object):
                          for i, sf_peaks in enumerate(self.sf_theor_peaks)
                          for j, __ in enumerate(sf_peaks)])
 
-    def get_sf_peak_intens(self):
+    def get_sf_peak_ints(self):
         return self.sf_theor_peak_ints
+
+    def get_sf_peaks(self):
+        return self.sf_theor_peaks

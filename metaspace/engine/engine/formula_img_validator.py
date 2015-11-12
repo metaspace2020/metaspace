@@ -56,7 +56,7 @@ def filter_sf_images(sc, ds_config, ds, formulas, sf_images):
 
     nrows, ncols = ds.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
-    sf_peak_intens_brcast = sc.broadcast(formulas.get_sf_peak_intens())
+    sf_peak_intens_brcast = sc.broadcast(formulas.get_sf_peak_ints())
 
     sf_metrics_map = (sf_images
                       .map(lambda (sf_i, imgs):
