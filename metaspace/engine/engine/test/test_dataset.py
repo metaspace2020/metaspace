@@ -17,7 +17,7 @@ def coord_file_content():
 def test_get_dims_2by3(coord_file_content):
     m = mock_open(read_data=coord_file_content)
     with patch('engine.dataset.open', m):
-        ds = Dataset('', '')
+        ds = Dataset(None, '', '')
 
         m.assert_called_once_with('')
         assert ds.get_dims() == (2, 3)
@@ -26,7 +26,7 @@ def test_get_dims_2by3(coord_file_content):
 def test_get_norm_img_pixel_inds_2by3(coord_file_content):
     m = mock_open(read_data=coord_file_content)
     with patch('engine.dataset.open', m):
-        ds = Dataset('', '')
+        ds = Dataset(None, '', '')
 
         m.assert_called_once_with('')
         assert_array_equal(ds.get_norm_img_pixel_inds(), [0, 5, 2, 3, 4])
