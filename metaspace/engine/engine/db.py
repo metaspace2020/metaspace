@@ -14,13 +14,13 @@ def db_dec(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         res = []
-        curs = self.conn.cursor()
         try:
             res = func(*args, **kwargs)
         except Exception as e:
             print e.message
         finally:
-            curs.close()
+            self.conn.commit()
+            self.curs.close()
         return res
 
     return wrapper
@@ -30,9 +30,18 @@ class DB(object):
 
     def __init__(self, config):
         self.conn = psycopg2.connect(**config)
+        self.curs = None
 
     @db_dec
-    def select(self, sql, params=None):
-        curs = self.conn.cursor()
-        curs.execute(sql, params)
-        return curs.fetchall()
+    def select(self, sql, *params):
+        self.curs = self.conn.cursor()
+        self.curs.execute(sql, params)
+        return self.curs.fetchall()
+
+    def select_one(self, sql, *params):
+        return self.select(sql, params)[0]
+
+    @db_dec
+    def insert(self, sql, rows=[]):
+        self.curs = self.conn.cursor()
+        self.curs.executemany(sql, rows)

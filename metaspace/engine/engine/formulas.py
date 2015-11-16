@@ -8,7 +8,7 @@ import numpy as np
 
 
 theor_peaks_sql = """
-    select centr_mzs, centr_ints
+    select sf_id, adduct, centr_mzs, centr_ints
     from theor_peaks p
     join formula_db d on d.id = p.db_id
     where d.name = %s and adduct = ANY(ARRAY[%s])
@@ -20,12 +20,11 @@ class Formulas(object):
 
     def __init__(self, ds_config, db):
         self.ppm = ds_config['image_generation']['ppm']
-        db_name = ds_config['inputs']['database']
+        self.db_name = ds_config['inputs']['database']
         adducts = ds_config['isotope_generation']['adducts']
 
-        sf_peaks = db.select(theor_peaks_sql, (db_name, adducts))
-        self.sf_theor_peaks = [row[0] for row in sf_peaks]
-        self.sf_theor_peak_ints = [row[1] for row in sf_peaks]
+        sf_peaks = db.select(theor_peaks_sql, (self.db_name, adducts))
+        self.sf_ids, self.adducts, self.sf_theor_peaks, self.sf_theor_peak_ints = zip(*sf_peaks)
 
         # self.sf_peak_inds = np.insert(np.cumsum(map(len, self.sf_theor_peaks)), 0, 0)  # 0 - extra index
 
@@ -44,3 +43,7 @@ class Formulas(object):
 
     def get_sf_peaks(self):
         return self.sf_theor_peaks
+
+    def get_sf_adduct_peaksn(self):
+        return zip(self.sf_ids, self.adducts, map(len, self.sf_theor_peaks))
+

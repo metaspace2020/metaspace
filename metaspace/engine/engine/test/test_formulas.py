@@ -1,5 +1,5 @@
 from mock import patch, mock_open, mock, Mock, MagicMock
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal, assert_array_almost_equal
 import pytest
 from collections import defaultdict
 
@@ -10,7 +10,7 @@ from engine.db import DB
 @pytest.fixture
 def formulas():
     db_mock = MagicMock(spec=DB)
-    db_mock.select.return_value = [([100, 200], [100, 10])]
+    db_mock.select.return_value = [(1, '+H', [100, 200], [100, 10])]
 
     ds_config = defaultdict(dict)
     ds_config['image_generation']['ppm'] = 1.0
@@ -38,3 +38,7 @@ def test_get_sf_peak_ints(formulas):
 def test_get_sf_peaks(formulas):
     assert_array_almost_equal(formulas.get_sf_peaks(),
                               [[100, 200]])
+
+
+def test_get_sf_adduct_peaksn(formulas):
+    assert_array_equal(formulas.get_sf_adduct_peaksn(), [(1, '+H', 2)])
