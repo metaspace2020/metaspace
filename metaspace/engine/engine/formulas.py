@@ -11,7 +11,7 @@ theor_peaks_sql = """
     select sf_id, adduct, centr_mzs, centr_ints
     from theor_peaks p
     join formula_db d on d.id = p.db_id
-    where d.name = %s and adduct = ANY(ARRAY[%s])
+    where d.name = %s and adduct = ANY(%s)
     order by sf_id, adduct
     """
 

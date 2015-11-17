@@ -71,8 +71,8 @@ CREATE TABLE job (
 	CONSTRAINT job_id_ind PRIMARY KEY(id)
 );
 
-DROP TABLE IF EXISTS job_result_data;
-CREATE TABLE job_result_data (
+DROP TABLE IF EXISTS iso_image;
+CREATE TABLE iso_image (
 	job_id		int,
 	db_id		int,
 	sf_id		int,
@@ -81,22 +81,22 @@ CREATE TABLE job_result_data (
 	intensities	real[],
 	min_int		real,
 	max_int		real,
-	CONSTRAINT job_result_data_id_ind PRIMARY KEY(job_id, db_id, sf_id, adduct, peak)
+	CONSTRAINT iso_image_id_ind PRIMARY KEY(job_id, db_id, sf_id, adduct, peak)
 );
 --CREATE INDEX ind_job_result_data_1 ON job_result_data (job_id);
 --CREATE INDEX ind_job_result_data_2 ON job_result_data (job_id, sf_id);
 --CREATE INDEX ind_job_result_data_4 ON job_result_data (job_id, sf_id, adduct);
 --CREATE INDEX ind_job_result_data_5 ON job_result_data (job_id, sf_id, peak, adduct);
 
-DROP TABLE IF EXISTS job_result_stat;
-CREATE TABLE job_result_stat (
+DROP TABLE IF EXISTS iso_image_metrics;
+CREATE TABLE iso_image_metrics (
 	job_id		int,
 	db_id		int,
 	sf_id		int,
 	adduct 		text,
 	peaks_n		int,
 	stats 		json,
-	CONSTRAINT job_result_stat_id_ind PRIMARY KEY(job_id, db_id, sf_id, adduct)
+	CONSTRAINT iso_image_metrics_id_ind PRIMARY KEY(job_id, db_id, sf_id, adduct)
 );
 --CREATE INDEX ind_job_result_stats_1 ON job_result_stats (job_id);
 --CREATE INDEX ind_job_result_stats_2 ON job_result_stats (job_id, formula_id);
