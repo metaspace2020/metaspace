@@ -45,7 +45,7 @@ def main():
 
     conf = SparkConf()
     sc = SparkContext(conf=conf, master='local[8]')
-    formula_rdd = sc.parallelize(formulas).repartition(8)
+    formula_rdd = sc.parallelize(formulas, numSlices=8)
 
     def format_peak_str(sf_id, adduct, iso_dict):
         return '%s\t%s\t%s\t{%s}\t{%s}\t{%s}\t{%s}' % (

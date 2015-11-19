@@ -1,14 +1,9 @@
-from mock import patch, mock_open, mock, Mock, MagicMock
-from numpy.testing import assert_array_equal, assert_array_almost_equal
+from mock import patch
 import pytest
-from collections import defaultdict
-from scipy.sparse.csr import csr_matrix
 import json
 from collections import OrderedDict
 from pyspark import SparkContext
-import numpy as np
 from os.path import join, realpath
-from psycopg2 import connect
 from fabric.api import local
 
 from engine.search_job import SearchJob
@@ -26,7 +21,6 @@ def create_fill_sm_database(request):
     db.alter('CREATE DATABASE sm_test')
     db.close()
 
-    # db.alter(open(join(proj_dir_path, "scripts/create_schema.sql")).read())
     local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
 
     db_config = dict(database='sm_test', user='sm', host='localhost', password='1321')
@@ -116,7 +110,7 @@ def ds_config(request):
     }
 
 
-def test_search_results(create_fill_sm_database, create_fill_work_dir, sm_config, ds_config):
+def test_search_job(create_fill_sm_database, create_fill_work_dir, sm_config, ds_config):
     with patch('engine.search_job.SparkContext') as sc_mock:
         sc_mock.return_value = SparkContext(master='local[2]')
 

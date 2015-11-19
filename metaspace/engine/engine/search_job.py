@@ -15,6 +15,7 @@ from engine.formulas import Formulas
 from engine.search_results import SearchResults
 from engine.formula_imager import sample_spectra, compute_sf_peak_images, compute_sf_images
 from engine.formula_img_validator import filter_sf_images
+from engine.theor_peaks_gen import TheorPeaksGenerator
 
 
 ds_id_sql = "SELECT id FROM dataset WHERE name = %s"
@@ -32,14 +33,17 @@ class SearchJob(object):
                  .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer"))
         self.sc = SparkContext(conf=sconf)
 
+        self.formulas = None
+        self.theor_peaks_gen = TheorPeaksGenerator(self.sc, sm_config, ds_config)
         self.ds = Dataset(self.sc, ds_path, coord_path)
-        self.formulas = Formulas(ds_config, self.db)
         self.sm_config, self.ds_config = sm_config, ds_config
 
-        self.db_id = self.db.select_one(db_id_sql, self.formulas.db_name)
+        self.db_id = self.db.select_one(db_id_sql, ds_config['inputs']['database'])
         self.job_id = self.db.select_one(max_job_id_sql)[0] + 1
 
     def run(self):
+        self.theor_peaks_gen.run()
+        self.formulas = Formulas(self.ds_config, self.db)
         search_results = self._search()
         self._store_results(search_results)
         self._store_job_meta()

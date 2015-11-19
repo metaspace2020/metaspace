@@ -26,8 +26,6 @@ class Formulas(object):
         sf_peaks = db.select(theor_peaks_sql, (self.db_name, adducts))
         self.sf_ids, self.adducts, self.sf_theor_peaks, self.sf_theor_peak_ints = zip(*sf_peaks)
 
-        # self.sf_peak_inds = np.insert(np.cumsum(map(len, self.sf_theor_peaks)), 0, 0)  # 0 - extra index
-
     def get_sf_peak_bounds(self):
         lower = np.array([mz - self.ppm*mz/1e6 for sf_peaks in self.sf_theor_peaks for mz in sf_peaks])
         upper = np.array([mz + self.ppm*mz/1e6 for sf_peaks in self.sf_theor_peaks for mz in sf_peaks])

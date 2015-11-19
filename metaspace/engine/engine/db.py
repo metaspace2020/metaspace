@@ -64,6 +64,11 @@ class DB(object):
         self.curs.executemany(sql, rows)
 
     @db_dec
-    def alter(self, sql):
+    def alter(self, sql, params=None):
         self.curs = self.conn.cursor()
-        self.curs.execute(sql)
+        self.curs.execute(sql, self.valid_params(params))
+
+    @db_dec
+    def copy(self, file, table):
+        self.curs = self.conn.cursor()
+        self.curs.copy_from(file, table)
