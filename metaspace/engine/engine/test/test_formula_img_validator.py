@@ -1,5 +1,5 @@
 import pytest
-from mock import patch, mock_open, mock, Mock, MagicMock
+from mock import patch, mock, MagicMock
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from scipy.sparse import csr_matrix

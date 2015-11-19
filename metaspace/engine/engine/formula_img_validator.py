@@ -5,7 +5,6 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 import numpy as np
-from collections import namedtuple
 
 from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos
 from engine.pyIMS.image_measures.isotope_pattern_match import isotope_pattern_match

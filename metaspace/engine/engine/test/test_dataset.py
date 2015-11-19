@@ -1,4 +1,4 @@
-from mock import patch, mock_open, mock
+from mock import patch, mock_open
 from numpy.testing import assert_array_equal
 import numpy as np
 import pytest

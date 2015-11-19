@@ -1,7 +1,5 @@
 from mock import patch, mock_open, mock, Mock, MagicMock
-from numpy.testing import assert_array_equal, assert_array_almost_equal
 import pytest
-from collections import defaultdict
 from scipy.sparse.csr import csr_matrix
 import json
 from collections import OrderedDict

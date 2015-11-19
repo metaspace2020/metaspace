@@ -8,7 +8,6 @@ import psycopg2
 import psycopg2.extras
 from functools import wraps
 import traceback
-import sys
 
 
 def db_dec(func):

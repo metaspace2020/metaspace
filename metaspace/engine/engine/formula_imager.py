@@ -8,8 +8,6 @@ import numpy as np
 import scipy.sparse
 from itertools import izip, repeat
 
-from engine.util import txt_to_spectrum
-
 
 def _get_nonzero_ints(sp, lower, upper):
     sp_i, mzs, cum_ints = sp

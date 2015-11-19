@@ -1,4 +1,4 @@
-from mock import patch, mock_open, mock, Mock, MagicMock
+from mock import MagicMock
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from engine.formula_imager import sample_spectra, compute_sf_peak_images, compute_sf_images

@@ -7,7 +7,9 @@
 import argparse
 import time
 import json
+
 from engine.search_job import SearchJob
+from engine import util
 
 
 if __name__ == "__main__":
@@ -18,8 +20,6 @@ if __name__ == "__main__":
     parser.add_argument('--queries', dest='queries', type=str, help='queries file name')
     parser.add_argument('--ds-config', dest='ds_config_path', type=str, help='dataset config file path')
     parser.set_defaults(queries='queries.pkl', fname='result.pkl')
-
-    from engine import util
 
     start = time.time()
     args = parser.parse_args()

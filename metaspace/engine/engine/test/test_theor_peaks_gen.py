@@ -1,12 +1,6 @@
-from mock import patch, mock_open, mock, Mock, MagicMock
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-import pytest
-from collections import defaultdict
-from scipy.sparse.csr import csr_matrix
-import json
-from collections import OrderedDict
+from mock import mock, MagicMock
+from numpy.testing import assert_array_almost_equal
 import numpy as np
-from engine.search_job import DB
 from engine.pyMS.mass_spectrum import MassSpectrum
 from engine.theor_peaks_gen import format_peak_str, TheorPeaksGenerator, get_iso_peaks
 from engine.test.util import spark_context, sm_config, ds_config

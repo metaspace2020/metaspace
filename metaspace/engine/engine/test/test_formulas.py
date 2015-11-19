@@ -1,4 +1,4 @@
-from mock import patch, mock_open, mock, Mock, MagicMock
+from mock import MagicMock
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 import pytest
 from collections import defaultdict

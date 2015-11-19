@@ -7,7 +7,17 @@
 import numpy as np
 from codecs import open
 
-from engine.util import txt_to_spectrum
+
+def txt_to_spectrum(s):
+    """Converts a text string in the format to a spectrum in the form of two arrays:
+    array of m/z values and array of partial sums of intensities.
+
+    :param s: string id|mz1 mz2 ... mzN|int1 int2 ... intN
+    :returns: triple spectrum_id, mzs, cumulative sum of intensities
+    """
+    arr = s.strip().split("|")
+    intensities = np.fromstring("0 " + arr[2], sep=' ')
+    return int(arr[0]), np.fromstring(arr[1], sep=' '), np.cumsum(intensities)
 
 
 class Dataset(object):
