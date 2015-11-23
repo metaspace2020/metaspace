@@ -68,6 +68,6 @@ class DB(object):
         self.curs.execute(sql, self.valid_params(params))
 
     @db_dec
-    def copy(self, file, table):
+    def copy(self, inp_file, table, sep, columns):
         self.curs = self.conn.cursor()
-        self.curs.copy_from(file, table)
+        self.curs.copy_from(inp_file, table, sep, columns)

@@ -49,14 +49,12 @@ CREATE INDEX ind_dataset_name ON dataset (name);
 
 DROP TABLE IF EXISTS coordinates;
 CREATE TABLE coordinates (
-	ds_id 	    int,
-	index 		int,
-	x 			int,
-	y 			int,
-	CONSTRAINT coord_ds_id_ind PRIMARY KEY(ds_id, index)
+	ds_id 	int,
+	xs       int[],
+	ys       int[],
+	CONSTRAINT coord_ds_id_ind PRIMARY KEY(ds_id)
 );
 CREATE INDEX ind_coordinates_2 ON coordinates (ds_id);
-CREATE INDEX ind_coordinates_3 ON coordinates (index);
 
 DROP TABLE IF EXISTS job;
 CREATE TABLE job (

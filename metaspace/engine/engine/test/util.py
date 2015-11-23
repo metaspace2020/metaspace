@@ -1,5 +1,9 @@
 import pytest
 from pyspark import SparkContext, SparkConf
+from fabric.api import local
+from os.path import join, realpath
+
+from engine.db import DB
 
 
 @pytest.fixture(scope='module')
@@ -11,6 +15,27 @@ def spark_context(request):
     request.addfinalizer(fin)
 
     return sc
+
+
+@pytest.fixture(scope='module')
+def create_test_db():
+    db_config = dict(database='postgres', user='sm', host='localhost', password='1321')
+    db = DB(db_config, autocommit=True)
+    db.alter('CREATE DATABASE sm_test')
+    db.close()
+
+    proj_dir_path = realpath('..')
+    local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
+
+
+@pytest.fixture(scope='module')
+def drop_test_db(request):
+    def fin():
+        db_config = dict(database='postgres', user='sm', host='localhost', password='1321')
+        db = DB(db_config, autocommit=True)
+        db.alter('DROP DATABASE sm_test')
+        db.close()
+    request.addfinalizer(fin)
 
 
 @pytest.fixture()

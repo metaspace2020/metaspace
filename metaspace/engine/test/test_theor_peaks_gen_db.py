@@ -1,38 +1,14 @@
 from mock import patch
 import pytest
 from os.path import join, realpath
-from fabric.api import local
 
 from engine.theor_peaks_gen import TheorPeaksGenerator
 from engine.db import DB
-from engine.test.util import spark_context, sm_config, ds_config
-
-
-proj_dir_path = realpath('..')
-
-
-@pytest.fixture(scope='module')
-def create_test_db():
-    db_config = dict(database='postgres', user='sm', host='localhost', password='1321')
-    db = DB(db_config, autocommit=True)
-    db.alter('CREATE DATABASE sm_test')
-    db.close()
-
-    local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
-
-
-@pytest.fixture(scope='module')
-def drop_test_db(request):
-    def fin():
-        db_config = dict(database='postgres', user='sm', host='localhost', password='1321')
-        db = DB(db_config, autocommit=True)
-        db.alter('DROP DATABASE sm_test')
-        db.close()
-    request.addfinalizer(fin)
+from engine.test.util import spark_context, sm_config, ds_config, create_test_db, drop_test_db
 
 
 @pytest.fixture()
-def create_fill_test_db(request, create_test_db, drop_test_db):
+def create_fill_test_db(create_test_db, drop_test_db):
 
     db_config = dict(database='sm_test', user='sm', host='localhost', password='1321')
     db = DB(db_config)
