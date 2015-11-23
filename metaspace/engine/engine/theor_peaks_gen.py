@@ -20,39 +20,35 @@ sf_id_sf_adduct_sql = ('SELECT sf_id, sf, adduct FROM theor_peaks p '
 
 
 def slice_array(mzs, lower, upper):
-    return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
+        return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
 
 
-def _get_isodist(isocalc_config):
-    charges = 0
-    if 'polarity' in isocalc_config['charge']:
-        polarity = isocalc_config['charge']['polarity']
-        charges = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
+class IsocalcWrapper(object):
 
-    plot = False
-    sigma = isocalc_config['isocalc_sig']
-    resolution = isocalc_config['isocalc_resolution']
-    do_centroid = isocalc_config['isocalc_do_centroid']
+    def __init__(self, isocalc_config):
+        self.charges = 0
+        if 'polarity' in isocalc_config['charge']:
+            polarity = isocalc_config['charge']['polarity']
+            self.charges = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
 
-    def _isodist(sf_adduct):
+        self.plot = False
+        self.sigma = isocalc_config['isocalc_sig']
+        self.resolution = isocalc_config['isocalc_resolution']
+        self.do_centroid = isocalc_config['isocalc_do_centroid']
+
+    def _isodist(self, sf_adduct):
         return pyisocalc.isodist(sf_adduct,
-                                 plot=plot,
-                                 sigma=sigma,
-                                 charges=charges,
-                                 resolution=resolution,
-                                 do_centroid=do_centroid)
+                                 plot=self.plot,
+                                 sigma=self.sigma,
+                                 charges=self.charges,
+                                 resolution=self.resolution,
+                                 do_centroid=self.do_centroid)
 
-    return _isodist
-
-
-def get_iso_peaks(isocalc_config):
-    isodist = _get_isodist(isocalc_config)
-
-    def iso_peaks(sf_id, sf, adduct):
+    def iso_peaks(self, sf_id, sf, adduct):
         res_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
         try:
             sf_adduct = pyisocalc.complex_to_simple(sf + adduct)
-            isotope_ms = isodist(sf_adduct)
+            isotope_ms = self._isodist(sf_adduct)
 
             centr_mzs, centr_ints = isotope_ms.get_spectrum(source='centroids')
             res_dict['centr_mzs'] = centr_mzs
@@ -69,8 +65,6 @@ def get_iso_peaks(isocalc_config):
             print e.message
         finally:
             return sf_id, adduct, res_dict
-
-    return iso_peaks
 
 
 def list_of_floats_to_str(l):
@@ -109,14 +103,15 @@ class TheorPeaksGenerator(object):
         self.db_id = self.db.select_one(db_id_sql, db_name)[0]
         self.adducts = self.ds_config['isotope_generation']['adducts']
 
+        self.isocalc_wrapper = IsocalcWrapper(self.ds_config['isotope_generation'])
+
     def run(self):
         sfid_sf_adduct = self.db.select(sf_id_sf_adduct_sql, self.db_id)
         stored_sf_adduct_set = set(map(lambda t: t[1:3], sfid_sf_adduct))
         sf_adduct_cand = self.find_sf_adduct_cand(stored_sf_adduct_set)
 
         if sf_adduct_cand:
-            iso_peaks = get_iso_peaks(self.ds_config['isotope_generation'])
-            peak_lines = self.generate_theor_peaks(sf_adduct_cand, iso_peaks)
+            peak_lines = self.generate_theor_peaks(sf_adduct_cand)
             self._import_theor_peaks_to_db(peak_lines)
 
     def find_sf_adduct_cand(self, stored_sf_adduct):
@@ -124,7 +119,11 @@ class TheorPeaksGenerator(object):
         cand_sf_adduct = [sf_row + (adduct,) for sf_row in formula_list for adduct in self.adducts]
         return filter(lambda (sf_id, sf, adduct): (sf, adduct) not in stored_sf_adduct, cand_sf_adduct)
 
-    def generate_theor_peaks(self, sf_adduct_cand, iso_peaks):
+    def get_iso_peaks(self):
+        return self.isocalc_wrapper.iso_peaks
+
+    def generate_theor_peaks(self, sf_adduct_cand):
+        iso_peaks = self.get_iso_peaks()
         db_id = self.db_id
         sf_adduct_cand_rdd = self.sc.parallelize(sf_adduct_cand, numSlices=8)
         peak_lines = (sf_adduct_cand_rdd

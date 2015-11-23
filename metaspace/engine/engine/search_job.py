@@ -4,10 +4,10 @@
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
-import numpy as np
-import json
 from datetime import datetime
 from pyspark import SparkContext, SparkConf
+from os.path import join, realpath
+from fabric.api import local
 
 from engine.db import DB
 from engine.dataset import Dataset
@@ -16,6 +16,7 @@ from engine.search_results import SearchResults
 from engine.formula_imager import sample_spectra, compute_sf_peak_images, compute_sf_images
 from engine.formula_img_validator import filter_sf_images
 from engine.theor_peaks_gen import TheorPeaksGenerator
+from engine.imzml_txt_converter import ImzmlTxtConverter
 
 
 ds_id_sql = "SELECT id FROM dataset WHERE name = %s"
@@ -24,9 +25,32 @@ max_job_id_sql = "SELECT COALESCE(MAX(id), -1) FROM job"
 insert_job_sql = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', %s)"
 
 
+class WorkDir(object):
+
+    def __init__(self, path, ds_config):
+        self.ds_config = ds_config
+        self.path = join(realpath(path), 'data', ds_config['name'])
+        local('mkdir -p ' + self.path)
+
+    def copy_input_data(self, input_data_path):
+        local('cp {} {}'.format(input_data_path, self.path))
+
+    @property
+    def imzml_path(self):
+        return join(self.path, self.ds_config['inputs']['data_file'])
+
+    @property
+    def txt_path(self):
+        return join(self.path, 'ds.txt')
+
+    @property
+    def coord_path(self):
+        return join(self.path, 'ds_coord.txt')
+
+
 class SearchJob(object):
 
-    def __init__(self, ds_path, coord_path, ds_config, sm_config):
+    def __init__(self, input_path, ds_config, sm_config):
         self.db = DB(sm_config['db'])
         sconf = (SparkConf()
                  .set("spark.executor.memory", "2g")
@@ -34,14 +58,19 @@ class SearchJob(object):
         self.sc = SparkContext(conf=sconf)
 
         self.formulas = None
-        self.theor_peaks_gen = TheorPeaksGenerator(self.sc, sm_config, ds_config)
-        self.ds = Dataset(self.sc, ds_path, coord_path)
         self.sm_config, self.ds_config = sm_config, ds_config
 
-        self.db_id = self.db.select_one(db_id_sql, ds_config['inputs']['database'])
+        self.work_dir = WorkDir('..', self.ds_config)
+        # self.imzml_converter = ImzmlTxtConverter(sm_config, ds_config, self.work_dir.imzml_path,
+        #                                          self.work_dir.txt_path, self.work_dir.coord_path)
+        self.theor_peaks_gen = TheorPeaksGenerator(self.sc, sm_config, ds_config)
+        self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path)
+
+        self.db_id = self.db.select_one(db_id_sql, ds_config['inputs']['database'])[0]
         self.job_id = self.db.select_one(max_job_id_sql)[0] + 1
 
     def run(self):
+        # self.imzml_converter.convert()
         self.theor_peaks_gen.run()
         self.formulas = Formulas(self.ds_config, self.db)
         search_results = self._search()

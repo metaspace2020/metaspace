@@ -19,7 +19,8 @@ def create_fill_test_db(create_test_db, drop_test_db):
     db.close()
 
 
-def test_save_ds_meta_ds_doesnt_exist(create_test_db, drop_test_db, sm_config, ds_config):
+@patch('engine.imzml_txt_converter.ImzMLParser')
+def test_save_ds_meta_ds_doesnt_exist(ImzMLParserMock, create_test_db, drop_test_db, sm_config, ds_config):
     sm_config['name'] = 'test_ds'
     converter = ImzmlTxtConverter(sm_config, ds_config, 'imzml_path', '', '')
     converter.image_bounds = ImageBounds()
@@ -40,7 +41,8 @@ def test_save_ds_meta_ds_doesnt_exist(create_test_db, drop_test_db, sm_config, d
     db.close()
 
 
-def test_save_ds_meta_ds_exists(create_fill_test_db, sm_config, ds_config):
+@patch('engine.imzml_txt_converter.ImzMLParser')
+def test_save_ds_meta_ds_exists(ImzMLParserMock, create_fill_test_db, sm_config, ds_config):
     sm_config['name'] = 'test_ds'
     converter = ImzmlTxtConverter(sm_config, ds_config, 'imzml_path', '', '')
     converter.image_bounds = ImageBounds()

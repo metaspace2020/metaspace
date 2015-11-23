@@ -95,7 +95,7 @@ class ImzmlTxtConverter(object):
         self.txt_file = None
         self.coord_file = None
 
-        self.parser = None
+        self.parser = ImzMLParser(self.imzml_path)
         self.image_bounds = ImageBounds()
 
     def parse_save_spectrum(self, i, x, y):
@@ -130,28 +130,20 @@ class ImzmlTxtConverter(object):
         finally:
             db.close()
 
-    def convert(self, preprocess=False, print_progress=False):
+    def convert(self, preprocess=False, print_progress=True):
         """
         Converts MS imaging data provided by given parser to a text-based
         format. Optionally writes the coordinates into a coordinate file.
 
-        :param parser: the parser to read the dataset
-        :param data_file: the output text file for the spectral data
-        :param coord_file: the text file for the coordinates. If omitted or None,
-            the coordinates will not be written
         :param preprocess: apply filter and centroid detection to all spectra before
             writing (rarely useful)
         :param print_progress: whether or not to print progress information to stdout
-
-        Returns the maximum x and maximum y coordinate found in the dataset.
         """
         print("Starting conversion...")
         self.preprocess = preprocess
 
         self.txt_file = open(self.txt_path, 'w')
         self.coord_file = open(self.coord_path, 'w') if self.coord_path else None
-
-        self.parser = ImzMLParser(self.imzml_path)
 
         n_pixels = len(self.parser.coordinates)
         track_progress = get_track_progress(n_pixels, max(n_pixels / 100, 100), print_progress)
