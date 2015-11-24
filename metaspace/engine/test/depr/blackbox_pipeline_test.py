@@ -1,18 +1,16 @@
 __author__ = 'intsco'
 
-from os.path import join
-import psycopg2
-import json
-import cPickle
-from luigi import interface, scheduler, worker
-from os import environ
-from scripts.sm_pipeline import RunPipeline
-from fabric.api import env
-from fabric.api import put, local, run
-import pandas as pd
-from pandas.util.testing import assert_frame_equal
 import argparse
-from run_process_dataset_test import assert_sf_res_dataframes_equal
+import json
+from os.path import join
+
+import pandas as pd
+import psycopg2
+from fabric.api import env
+from fabric.api import put, local
+
+from test.depr.run_process_dataset_test import assert_sf_res_dataframes_equal
+
 
 class BlackboxPipelineTest(object):
 

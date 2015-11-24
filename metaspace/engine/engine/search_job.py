@@ -61,16 +61,16 @@ class SearchJob(object):
         self.sm_config, self.ds_config = sm_config, ds_config
 
         self.work_dir = WorkDir('..', self.ds_config)
-        # self.imzml_converter = ImzmlTxtConverter(sm_config, ds_config, self.work_dir.imzml_path,
-        #                                          self.work_dir.txt_path, self.work_dir.coord_path)
+        self.imzml_converter = ImzmlTxtConverter(sm_config, ds_config, self.work_dir.imzml_path,
+                                                 self.work_dir.txt_path, self.work_dir.coord_path)
         self.theor_peaks_gen = TheorPeaksGenerator(self.sc, sm_config, ds_config)
-        self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path)
 
         self.db_id = self.db.select_one(db_id_sql, ds_config['inputs']['database'])[0]
         self.job_id = self.db.select_one(max_job_id_sql)[0] + 1
 
     def run(self):
-        # self.imzml_converter.convert()
+        self.imzml_converter.convert()
+        self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path)
         self.theor_peaks_gen.run()
         self.formulas = Formulas(self.ds_config, self.db)
         search_results = self._search()
