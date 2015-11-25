@@ -69,6 +69,7 @@ CREATE TABLE job (
 	CONSTRAINT job_id_ind PRIMARY KEY(id)
 );
 
+-- TODO: store non-zero intensities only
 DROP TABLE IF EXISTS iso_image;
 CREATE TABLE iso_image (
 	job_id		int,

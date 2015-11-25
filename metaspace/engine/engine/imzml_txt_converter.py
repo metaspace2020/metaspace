@@ -95,7 +95,7 @@ class ImzmlTxtConverter(object):
         self.txt_file = None
         self.coord_file = None
 
-        self.parser = ImzMLParser(self.imzml_path)
+        self.parser = None
         self.image_bounds = ImageBounds()
 
     def parse_save_spectrum(self, i, x, y):
@@ -141,6 +141,8 @@ class ImzmlTxtConverter(object):
         """
         print("Starting conversion...")
         self.preprocess = preprocess
+
+        self.parser = ImzMLParser(self.imzml_path)
 
         self.txt_file = open(self.txt_path, 'w')
         self.coord_file = open(self.coord_path, 'w') if self.coord_path else None

@@ -1,7 +1,7 @@
 import pytest
 from pyspark import SparkContext, SparkConf
 from fabric.api import local
-from os.path import join, realpath
+from os.path import join, realpath, dirname
 
 from engine.db import DB
 
@@ -24,7 +24,7 @@ def create_test_db():
     db.alter('CREATE DATABASE sm_test')
     db.close()
 
-    proj_dir_path = realpath('..')
+    proj_dir_path = dirname(dirname(dirname(__file__)))
     local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
 
 

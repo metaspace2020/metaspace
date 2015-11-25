@@ -6,8 +6,9 @@
 """
 from datetime import datetime
 from pyspark import SparkContext, SparkConf
-from os.path import join, realpath
+from os.path import join, realpath, dirname
 from fabric.api import local
+from shutil import copytree
 
 from engine.db import DB
 from engine.dataset import Dataset
@@ -27,13 +28,12 @@ insert_job_sql = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-0
 
 class WorkDir(object):
 
-    def __init__(self, path, ds_config):
+    def __init__(self, ds_config):
         self.ds_config = ds_config
-        self.path = join(realpath(path), 'data', ds_config['name'])
-        local('mkdir -p ' + self.path)
+        self.path = join(dirname(dirname(__file__)), 'data', ds_config['name'])
 
     def copy_input_data(self, input_data_path):
-        local('cp {} {}'.format(input_data_path, self.path))
+        copytree(input_data_path, self.path)
 
     @property
     def imzml_path(self):
@@ -50,17 +50,18 @@ class WorkDir(object):
 
 class SearchJob(object):
 
-    def __init__(self, input_path, ds_config, sm_config):
+    def __init__(self, ds_config, sm_config):
         self.db = DB(sm_config['db'])
         sconf = (SparkConf()
                  .set("spark.executor.memory", "2g")
                  .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer"))
         self.sc = SparkContext(conf=sconf)
 
+        self.ds = None
         self.formulas = None
         self.sm_config, self.ds_config = sm_config, ds_config
 
-        self.work_dir = WorkDir('..', self.ds_config)
+        self.work_dir = WorkDir(self.ds_config)
         self.imzml_converter = ImzmlTxtConverter(sm_config, ds_config, self.work_dir.imzml_path,
                                                  self.work_dir.txt_path, self.work_dir.coord_path)
         self.theor_peaks_gen = TheorPeaksGenerator(self.sc, sm_config, ds_config)
@@ -68,14 +69,19 @@ class SearchJob(object):
         self.db_id = self.db.select_one(db_id_sql, ds_config['inputs']['database'])[0]
         self.job_id = self.db.select_one(max_job_id_sql)[0] + 1
 
-    def run(self):
+    def run(self, input_path):
+        self.work_dir.copy_input_data(input_path)
+
         self.imzml_converter.convert()
         self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path)
+
         self.theor_peaks_gen.run()
         self.formulas = Formulas(self.ds_config, self.db)
+
         search_results = self._search()
         self._store_results(search_results)
         self._store_job_meta()
+
         self.db.close()
 
     def _search(self):
