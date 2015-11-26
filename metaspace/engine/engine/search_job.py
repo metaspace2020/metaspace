@@ -9,6 +9,7 @@ from pyspark import SparkContext, SparkConf
 from os.path import join, realpath, dirname
 from fabric.api import local
 from shutil import copytree
+from os.path import exists
 
 from engine.db import DB
 from engine.dataset import Dataset
@@ -28,12 +29,19 @@ insert_job_sql = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-0
 
 class WorkDir(object):
 
-    def __init__(self, ds_config):
+    def __init__(self, ds_config, data_dir_path=None):
         self.ds_config = ds_config
-        self.path = join(dirname(dirname(__file__)), 'data', ds_config['name'])
+        if data_dir_path:
+            self.path = join(data_dir_path, ds_config['name'])
+        else:
+            self.path = join(dirname(dirname(__file__)), 'data', ds_config['name'])
 
     def copy_input_data(self, input_data_path):
-        copytree(input_data_path, self.path)
+        if not exists(self.path):
+            print 'Copying {} to {}'.format(input_data_path, self.path)
+            copytree(input_data_path, self.path)
+        else:
+            print 'Path {} already exists'.format(self.path)
 
     @property
     def imzml_path(self):
@@ -61,7 +69,7 @@ class SearchJob(object):
         self.formulas = None
         self.sm_config, self.ds_config = sm_config, ds_config
 
-        self.work_dir = WorkDir(self.ds_config)
+        self.work_dir = WorkDir(self.ds_config, data_dir_path=sm_config['fs']['data_dir'])
         self.imzml_converter = ImzmlTxtConverter(sm_config, ds_config, self.work_dir.imzml_path,
                                                  self.work_dir.txt_path, self.work_dir.coord_path)
         self.theor_peaks_gen = TheorPeaksGenerator(self.sc, sm_config, ds_config)

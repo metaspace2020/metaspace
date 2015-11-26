@@ -26,11 +26,11 @@ def create_fill_sm_database(create_test_db, drop_test_db):
 
 
 @pytest.fixture
-def create_work_dir(request):
-    local('mkdir -p ../data/test_ds')
+def create_work_dir(request, sm_config):
+    local('mkdir -p {}/test_ds'.format(sm_config['fs']['data_dir']))
 
     def fin():
-        local('rm -r ../data/test_ds')
+        local('rm -r {}/test_ds'.format(sm_config['fs']['data_dir']))
 
     request.addfinalizer(fin)
 
@@ -56,9 +56,9 @@ def test_search_job_artificial_data(copy_input_data_mock, create_fill_sm_databas
             db = DB(sm_config['db'])
             try:
                 # dataset meta asserts
-                rows = db.select("SELECT id, name, file_path, img_bounds from dataset")
-                img_bounds = {"y": {"max": 1, "min": 0}, "x": {"max": 2, "min": 0}}
-                file_path = join(proj_dir_path, 'data', 'test_ds', 'test_ds.imzML')
+                rows = db.select('SELECT id, name, file_path, img_bounds from dataset')
+                img_bounds = {u'y': {u'max': 1, u'min': 0}, u'x': {u'max': 2, u'min': 0}}
+                file_path = join(sm_config['fs']['data_dir'], ds_config['name'], 'test_ds.imzML')
                 assert rows == [(0, 'test_ds', file_path, img_bounds)]
 
                 # theoretical patterns asserts

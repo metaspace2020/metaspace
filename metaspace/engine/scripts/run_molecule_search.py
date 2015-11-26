@@ -7,6 +7,7 @@
 import argparse
 import time
 import json
+from os.path import join
 
 from engine.search_job import SearchJob
 from engine import util
@@ -14,18 +15,13 @@ from engine import util
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='SM process dataset at a remote spark location.')
-    parser.add_argument('--out', dest='out_fn', type=str, help='filename')
-    parser.add_argument('--ds', dest='ds_path', type=str, help='dataset file name')
-    parser.add_argument('--coord', dest='coord_path', type=str, help='dataset coordinates file name')
-    parser.add_argument('--queries', dest='queries', type=str, help='queries file name')
-    parser.add_argument('--ds-config', dest='ds_config_path', type=str, help='dataset config file path')
-    parser.set_defaults(queries='queries.pkl', fname='result.pkl')
+    parser.add_argument('input_path', type=str, help='path to a dataset location')
 
     start = time.time()
     args = parser.parse_args()
 
     # Dataset config
-    with open(args.ds_config_path) as f:
+    with open(join(args.input_path, 'config.json')) as f:
         ds_config = json.load(f)
 
     # SM config
@@ -34,8 +30,8 @@ if __name__ == "__main__":
 
     util.my_print("Processing...")
 
-    job = SearchJob(args.ds_path, args.coord_path, ds_config, sm_config)
-    job.run()
+    job = SearchJob(ds_config, sm_config)
+    job.run(args.input_path)
 
     util.my_print("All done!")
     time_spent = time.time() - start

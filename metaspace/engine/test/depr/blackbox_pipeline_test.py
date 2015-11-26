@@ -9,7 +9,7 @@ import psycopg2
 from fabric.api import env
 from fabric.api import put, local
 
-from test.depr.run_process_dataset_test import assert_sf_res_dataframes_equal
+from test.test_search_job_spheroid_dataset import assert_sf_res_dataframes_equal
 
 
 class BlackboxPipelineTest(object):
@@ -99,7 +99,7 @@ class BlackboxPipelineTest(object):
 
     def _run_pipeline(self):
         print "Starting test pipeline..."
-        cmd = ['python', self._project_dir + '/scripts/sm_pipeline.py',
+        cmd = ['python', self._project_dir + '/scripts/sm_pipeline_depr.py',
                '--s3-dir', self._ds_s3_dir,
                '--input-fn', self._input_fn,
                '--queries-fn', self._queries_fn,

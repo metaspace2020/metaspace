@@ -8,6 +8,7 @@ import numpy as np
 import scipy.signal as signal
 import sys
 import json
+from os.path import exists
 from pyimzml.ImzMLParser import ImzMLParser
 
 from engine.db import DB
@@ -142,25 +143,28 @@ class ImzmlTxtConverter(object):
         print("Starting conversion...")
         self.preprocess = preprocess
 
-        self.parser = ImzMLParser(self.imzml_path)
+        if not exists(self.txt_path):
+            self.txt_file = open(self.txt_path, 'w')
+            self.coord_file = open(self.coord_path, 'w') if self.coord_path else None
 
-        self.txt_file = open(self.txt_path, 'w')
-        self.coord_file = open(self.coord_path, 'w') if self.coord_path else None
+            self.parser = ImzMLParser(self.imzml_path)
 
-        n_pixels = len(self.parser.coordinates)
-        track_progress = get_track_progress(n_pixels, max(n_pixels / 100, 100), print_progress)
+            n_pixels = len(self.parser.coordinates)
+            track_progress = get_track_progress(n_pixels, max(n_pixels / 100, 100), print_progress)
 
-        for i, coord in enumerate(self.parser.coordinates):
-            x, y = coord[:2]
-            self.image_bounds.update(x, y)
-            self.parse_save_spectrum(i, x, y)
-            track_progress(i)
+            for i, coord in enumerate(self.parser.coordinates):
+                x, y = coord[:2]
+                self.image_bounds.update(x, y)
+                self.parse_save_spectrum(i, x, y)
+                track_progress(i)
 
-        self.txt_file.close()
-        if self.coord_file:
-            self.coord_file.close()
+            self.txt_file.close()
+            if self.coord_file:
+                self.coord_file.close()
 
-        self.save_ds_meta()
+            self.save_ds_meta()
 
-        print("Finished.")
+            print("Finished.")
+        else:
+            print 'File {} already exists'.format(self.txt_path)
 

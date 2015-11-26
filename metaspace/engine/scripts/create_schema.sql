@@ -8,13 +8,14 @@ CREATE TABLE formula_db (
 CREATE INDEX ind_formula_db_name ON formula_db (name);
 INSERT INTO formula_db VALUES (0, '2015-01-01', 'HMDB'), (1, '2015-01-01', 'apple_db');
 
-DROP TABLE IF EXISTS formulas;
-CREATE TABLE formulas (
+DROP TABLE IF EXISTS formula;
+CREATE TABLE formula (
 	db_id	int,
 	id		text,
 	sf_id 	int,
 	name	text,
-	sf 		text
+	sf 		text,
+	CONSTRAINT formula_dbid_id PRIMARY KEY(db_id, id)
 );
 
 DROP TABLE IF EXISTS agg_formula;
@@ -27,10 +28,10 @@ CREATE TABLE agg_formula (
 	CONSTRAINT db_id_id_ind PRIMARY KEY(db_id, id)
 );
 
-INSERT INTO agg_formula (id, sf, db_id, subst_ids, names)
-	SELECT sf_id, sf, db_id, array_agg(id) as subst_ids, array_agg(name) as names
-	FROM formulas
-	GROUP BY sf, sf_id, db_id
+--INSERT INTO agg_formula (id, sf, db_id, subst_ids, names)
+--	SELECT sf_id, sf, db_id, array_agg(id) as subst_ids, array_agg(name) as names
+--	FROM formulas
+--	GROUP BY sf, sf_id, db_id
 ;
 CREATE INDEX ind_agg_formulas_1 ON agg_formula (sf);
 CREATE INDEX ind_agg_formulas_2 ON agg_formula (id);
@@ -112,3 +113,13 @@ CREATE TABLE theor_peaks (
 	CONSTRAINT sf_id_adduct PRIMARY KEY(db_id, sf_id, adduct)
 );
 CREATE INDEX ind_theor_peaks_2 ON theor_peaks(db_id, sf_id);
+
+DROP TABLE IF EXISTS sample_dataset_report;
+CREATE TABLE sample_dataset_report (
+    hash            text,
+	ds_name			text,
+    dt              timestamp,
+    report          json,
+	CONSTRAINT sample_ds_rep_hash PRIMARY KEY(hash)
+);
+

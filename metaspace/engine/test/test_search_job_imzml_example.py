@@ -15,7 +15,7 @@ from engine.test.util import sm_config, ds_config, create_test_db, drop_test_db
 test_ds_name = 'imzml_example_ds'
 
 proj_dir_path = dirname(dirname(__file__))
-data_dir_path = join(proj_dir_path, 'data', test_ds_name)
+data_dir_path = join(sm_config()["fs"]["data_dir"], test_ds_name)
 test_dir_path = join(proj_dir_path, 'test/data/imzml_example_ds')
 
 
@@ -36,12 +36,12 @@ def test_search_job_imzml_example(create_fill_sm_database, sm_config):
     with patch('engine.search_job.SparkContext') as sc:
         sc.return_value = SparkContext(master='local[2]')
 
-        # dataset meta asserts
         db = DB(sm_config['db'])
         try:
             job = SearchJob(ds_config, sm_config)
             job.run(test_dir_path)
 
+            # dataset meta asserts
             rows = db.select("SELECT id, name, file_path, img_bounds from dataset")
             img_bounds = {u'y': {u'max': 3, u'min': 1}, u'x': {u'max': 3, u'min': 1}}
             file_path = join(data_dir_path, 'Example_Continuous.imzML')

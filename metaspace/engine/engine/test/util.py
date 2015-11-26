@@ -39,7 +39,7 @@ def drop_test_db(request):
 
 
 @pytest.fixture()
-def ds_config(request):
+def ds_config():
     return {
         "name": "test_ds",
         "inputs": {
@@ -71,12 +71,15 @@ def ds_config(request):
 
 
 @pytest.fixture()
-def sm_config(request):
+def sm_config():
     return {
         "db": {
             "host": "localhost",
             "database": "sm_test",
             "user": "sm",
             "password": "1321"
+        },
+        "fs": {
+            "data_dir": "/opt/data/sm_data"
         }
     }
