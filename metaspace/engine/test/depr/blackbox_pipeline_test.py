@@ -9,7 +9,7 @@ import psycopg2
 from fabric.api import env
 from fabric.api import put, local
 
-from test.test_search_job_spheroid_dataset import assert_sf_res_dataframes_equal
+from test.sci_test_search_job_spheroid_dataset import assert_sf_res_dataframes_equal
 
 
 class BlackboxPipelineTest(object):

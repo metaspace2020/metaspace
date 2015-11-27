@@ -75,9 +75,12 @@ class SearchJob(object):
         self.theor_peaks_gen = TheorPeaksGenerator(self.sc, sm_config, ds_config)
 
         self.db_id = self.db.select_one(db_id_sql, ds_config['inputs']['database'])[0]
-        self.job_id = self.db.select_one(max_job_id_sql)[0] + 1
+        # self.job_id = self.db.select_one(max_job_id_sql)[0] + 1
+        # TODO: decide if we need both db_id and job_id (both dataset and job tables)
+        self.job_id = self.db_id
 
     def run(self, input_path):
+        print self.ds_config
         self.work_dir.copy_input_data(input_path)
 
         self.imzml_converter.convert()
@@ -104,6 +107,7 @@ class SearchJob(object):
                              self.db)
 
     def _store_results(self, search_results):
+        search_results.clear_old_results()
         search_results.save_sf_img_metrics()
         nrows, ncols = self.ds.get_dims()
         search_results.save_sf_iso_images(nrows, ncols)

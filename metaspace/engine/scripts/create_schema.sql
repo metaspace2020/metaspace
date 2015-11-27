@@ -117,6 +117,7 @@ CREATE INDEX ind_theor_peaks_2 ON theor_peaks(db_id, sf_id);
 DROP TABLE IF EXISTS sample_dataset_report;
 CREATE TABLE sample_dataset_report (
     hash            text,
+    message         text,
 	ds_name			text,
     dt              timestamp,
     report          json,

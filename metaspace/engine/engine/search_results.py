@@ -11,6 +11,9 @@ from collections import OrderedDict
 
 insert_sf_metrics_sql = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s)'
 insert_sf_iso_imgs_sql = 'INSERT INTO iso_image VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
+clear_job_sql = 'DELETE FROM job WHERE id = %s'
+clear_iso_image_sql = 'DELETE FROM iso_image WHERE job_id = %s'
+clear_iso_image_metrics_sql = 'DELETE FROM iso_image_metrics WHERE job_id = %s'
 
 
 class SearchResults(object):
@@ -21,6 +24,12 @@ class SearchResults(object):
         self.sf_adduct_peaksn = sf_adduct_peaksn
         self.sf_iso_images_map = sf_iso_images_map
         self.sf_metrics_map = sf_metrics_map
+
+    def clear_old_results(self):
+        print 'Clearing old job results'
+        self.db.alter(clear_job_sql, self.job_id)
+        self.db.alter(clear_iso_image_sql, self.job_id)
+        self.db.alter(clear_iso_image_metrics_sql, self.job_id)
 
     def save_sf_img_metrics(self):
         rows = []
