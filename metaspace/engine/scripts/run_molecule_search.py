@@ -7,7 +7,7 @@
 import argparse
 import time
 import json
-from os.path import join
+from os.path import join, dirname
 
 from engine.search_job import SearchJob
 from engine import util
@@ -25,7 +25,8 @@ if __name__ == "__main__":
         ds_config = json.load(f)
 
     # SM config
-    with open('../conf/config.json') as f:
+    proj_dir = dirname(dirname(__file__))
+    with open(join(proj_dir, 'conf/config.json')) as f:
         sm_config = json.load(f)
 
     util.my_print("Processing...")
