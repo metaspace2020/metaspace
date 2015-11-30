@@ -86,7 +86,7 @@ class SciTester(object):
         _compare_reports(base_report, report)
 
     def save_sci_test_report(self):
-        # self._run_search()
+        self._run_search()
 
         branch = local("git rev-parse --abbrev-ref HEAD", capture=True)
         status = local('git status -s', capture=True)
