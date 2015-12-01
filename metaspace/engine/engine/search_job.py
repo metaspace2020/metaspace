@@ -84,7 +84,7 @@ class SearchJob(object):
         self.work_dir.copy_input_data(input_path)
 
         self.imzml_converter.convert()
-        self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path)
+        self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path, self.sm_config)
 
         self.theor_peaks_gen.run()
         self.formulas = Formulas(self.ds_config, self.db)

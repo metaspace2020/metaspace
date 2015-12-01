@@ -22,10 +22,11 @@ def txt_to_spectrum(s):
 
 class Dataset(object):
 
-    def __init__(self, sc, ds_path, ds_coord_path):
+    def __init__(self, sc, ds_path, ds_coord_path, sm_config):
         self.sc = sc
         self.ds_path = ds_path
         self.ds_coord_path = ds_coord_path
+        self.sm_config = sm_config
 
         self.max_x, self.max_y = None, None
 
@@ -66,4 +67,7 @@ class Dataset(object):
                 self.max_x - self.min_x + 1)
 
     def get_spectra(self):
-        return self.sc.textFile(self.ds_path).map(txt_to_spectrum)
+        if self.sm_config['fs']['local']:
+            return self.sc.textFile('file:///' + self.ds_path).map(txt_to_spectrum)
+        else:
+            return self.sc.textFile('hdfs://localhost:9000' + self.ds_path).map(txt_to_spectrum)

@@ -80,6 +80,7 @@ def sm_config():
             "password": "1321"
         },
         "fs": {
-            "data_dir": "/opt/data/sm_data"
+            "data_dir": "/opt/data/sm_data",
+            "local": True
         }
     }
