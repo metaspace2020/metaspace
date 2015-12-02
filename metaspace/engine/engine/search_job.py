@@ -19,6 +19,7 @@ from engine.formula_imager import sample_spectra, compute_sf_peak_images, comput
 from engine.formula_img_validator import filter_sf_images
 from engine.theor_peaks_gen import TheorPeaksGenerator
 from engine.imzml_txt_converter import ImzmlTxtConverter
+from engine.util import local_path, hdfs_path, proj_root
 
 
 ds_id_sql = "SELECT id FROM dataset WHERE name = %s"
@@ -63,7 +64,8 @@ class SearchJob(object):
         sconf = (SparkConf()
                  .set("spark.executor.memory", "2g")
                  .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer"))
-        self.sc = SparkContext(conf=sconf)
+        self.sc = SparkContext(master='yarn-client', conf=sconf)
+        self.sc.addPyFile(join(local_path(proj_root()), 'engine.zip'))
 
         self.ds = None
         self.formulas = None
@@ -84,6 +86,8 @@ class SearchJob(object):
         self.work_dir.copy_input_data(input_path)
 
         self.imzml_converter.convert()
+        self._copy_to_hdfs(self.work_dir.txt_path, self.work_dir.txt_path)
+
         self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path, self.sm_config)
 
         self.theor_peaks_gen.run()
@@ -105,6 +109,10 @@ class SearchJob(object):
                              sf_iso_images_map, sf_metrics_map,
                              self.formulas.get_sf_adduct_peaksn(),
                              self.db)
+
+    def _copy_to_hdfs(self, localpath, hdfspath):
+        print 'Coping DS textfile to HDFS...'
+        self.sc.textFile(local_path(localpath)).saveAsTextFile(hdfs_path(hdfspath))
 
     def _store_results(self, search_results):
         search_results.clear_old_results()

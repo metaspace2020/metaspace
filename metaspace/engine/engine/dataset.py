@@ -7,6 +7,8 @@
 import numpy as np
 from codecs import open
 
+from engine.util import local_path, hdfs_path
+
 
 def txt_to_spectrum(s):
     """Converts a text string in the format to a spectrum in the form of two arrays:
@@ -68,6 +70,6 @@ class Dataset(object):
 
     def get_spectra(self):
         if self.sm_config['fs']['local']:
-            return self.sc.textFile('file:///' + self.ds_path).map(txt_to_spectrum)
+            return self.sc.textFile(local_path(self.ds_path)).map(txt_to_spectrum)
         else:
-            return self.sc.textFile('hdfs://localhost:9000' + self.ds_path).map(txt_to_spectrum)
+            return self.sc.textFile(hdfs_path(self.ds_path)).map(txt_to_spectrum)

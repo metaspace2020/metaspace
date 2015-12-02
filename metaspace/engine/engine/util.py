@@ -1,6 +1,7 @@
 from datetime import datetime, date, timedelta
 import numpy as np
 from os.path import realpath, dirname, join
+import os
 import json
 
 
@@ -27,14 +28,17 @@ class DateTimeEncoder(json.JSONEncoder):
             return super(DateTimeEncoder, self).default(obj)
 
 
-class Config(object):
-    @classmethod
-    def get_config(cls):
-        config_path = cls.get_config_path()
-        with open(config_path) as f:
-            config = json.load(f)
-        return config
+def local_path(path):
+    return 'file://' + path
 
-    @classmethod
-    def get_config_path(cls):
-        return join(dirname(dirname(realpath(__file__))), 'conf/config.json')
+
+def hdfs_path(path):
+    return 'hdfs://localhost:9000' + path
+
+
+def hdfs(cmd):
+    return '{}/bin/hdfs dfs {}'.format(os.environ['HADOOP_HOME'], cmd)
+
+
+def proj_root():
+    return dirname(dirname(__file__))

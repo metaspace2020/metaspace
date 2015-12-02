@@ -2,9 +2,9 @@ import pytest
 from pyspark import SparkContext, SparkConf
 from fabric.api import local
 from os.path import join, realpath, dirname
+import os
 
 from engine.db import DB
-
 
 @pytest.fixture(scope='module')
 def spark_context(request):

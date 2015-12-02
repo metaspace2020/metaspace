@@ -6,15 +6,22 @@ import argparse
 from datetime import datetime
 import json
 from fabric.api import local
+from fabric.context_managers import warn_only
 from numpy.testing import assert_almost_equal
 
 from engine.db import DB
-from engine.test.util import sm_config, ds_config, create_test_db, drop_test_db
+from engine.util import proj_root, hdfs
 
-proj_dir_path = dirname(dirname(__file__))
+
+def sm_config():
+    with open(join(proj_root(), 'conf/config.json')) as f:
+        return json.load(f)
+
+
 ds_name = 'spheroid_12h'
-data_dir_path = join(proj_dir_path, 'data', ds_name)
-test_dir_path = join(proj_dir_path, 'test/data/test_search_job_spheroid_dataset')
+# data_dir_path = join(proj_root(), 'data', ds_name)
+data_dir_path = join(sm_config()['fs']['data_dir'], ds_name)
+test_dir_path = join(proj_root(), 'test/data/test_search_job_spheroid_dataset')
 test_dir_ds_path = join(test_dir_path, ds_name)
 agg_formula_path = join(test_dir_path, 'agg_formula.csv')
 
@@ -63,6 +70,21 @@ def _compare_reports(base_report, report):
                     print '{} -> {} diff = {}'.format(b_sf_add, s, diff)
 
 
+def zip_engine():
+    local('cd {}; zip -rq engine.zip engine'.format(proj_root()))
+
+
+def run_search():
+    cmd = ['python', join(proj_root(), 'scripts/run_molecule_search.py'), test_dir_ds_path]
+    check_call(cmd)
+
+
+def clear_data_dirs():
+    with warn_only():
+        local('rm -r {}'.format(data_dir_path))
+        local(hdfs('-rmr {}'.format(data_dir_path)))
+
+
 class SciTester(object):
 
     def __init__(self):
@@ -74,41 +96,23 @@ class SciTester(object):
         }
         self.db = DB(db_config)
 
-    def _run_search(self):
-        cmd = ['python', join(proj_dir_path, 'scripts/run_molecule_search.py'), test_dir_ds_path]
-        check_call(cmd)
-
     def run_sci_test(self):
-        self._run_search()
-
         base_report = self.db.select_one(sample_ds_report_select, (_master_head_hash(), ds_name))[0]
         report = self.db.select(make_report_select, (ds_name, 'HMDB'))
         _compare_reports(base_report, report)
 
-    def save_sci_test_report(self):
-        self._run_search()
+    def save_sci_test_report(self, commit_hash, commit_message):
+        report = self.db.select(make_report_select, (ds_name, 'HMDB'))
+        dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        branch = local("git rev-parse --abbrev-ref HEAD", capture=True)
-        status = local('git status -s', capture=True)
-        if branch != 'master':
-            print 'Wrong branch {}! Checkout master branch first'.format(branch)
-        elif status:
-            print 'Uncommitted changes in files:\n{}'.format(status)
-        else:
-            commit_hash = local('git rev-parse --short master', capture=True)
-            commit_message = local("git log --abbrev-commit -n1", capture=True)
+        print commit_message
+        print dt
+        for r in report:
+            print r
+        self.db.insert(sample_ds_report_insert,
+                       [(commit_hash, commit_message, ds_name, dt, json.dumps(report))])
 
-            report = self.db.select(make_report_select, (ds_name, 'HMDB'))
-            dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-            print commit_message
-            print dt
-            for r in report:
-                print r
-            self.db.insert(sample_ds_report_insert,
-                           [(commit_hash, commit_message, ds_name, dt, json.dumps(report))])
-
-            print 'Successfully saved sample dataset search report'
+        print 'Successfully saved sample dataset search report'
 
 
 if __name__ == '__main__':
@@ -118,9 +122,24 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     sci_tester = SciTester()
+
     if args.run:
-        sci_tester.run_sci_test()
+        try:
+            zip_engine()
+            run_search()
+            sci_tester.run_sci_test()
+        finally:
+            clear_data_dirs()
     elif args.save:
-        sci_tester.save_sci_test_report()
+        branch = local("git rev-parse --abbrev-ref HEAD", capture=True)
+        status = local('git status -s', capture=True)
+        if branch != 'master':
+            print 'Wrong branch {}! Checkout master branch first'.format(branch)
+        elif status:
+            print 'Uncommitted changes in files:\n{}'.format(status)
+        else:
+            commit_hash = local('git rev-parse --short master', capture=True)
+            commit_message = local("git log --abbrev-commit -n1", capture=True)
+            sci_tester.save_sci_test_report(commit_hash, commit_message)
     else:
         print 'Dry run'

@@ -4,12 +4,15 @@ import numpy as np
 from pyspark import SparkContext
 from os.path import join, realpath, dirname
 from fabric.api import local
+from fabric.context_managers import warn_only
+import os
 
 from engine.search_job import SearchJob
 from engine.db import DB
 from engine.imzml_txt_converter import ImzmlTxtConverter
 from engine.pyMS.mass_spectrum import MassSpectrum
 from engine.test.util import sm_config, ds_config, create_test_db, drop_test_db
+from engine.util import hdfs
 
 
 proj_dir_path = dirname(dirname(__file__))
@@ -27,16 +30,20 @@ def create_fill_sm_database(create_test_db, drop_test_db):
 
 @pytest.fixture
 def create_work_dir(request, sm_config):
-    local('mkdir -p {}/test_ds'.format(sm_config['fs']['data_dir']))
+    with warn_only():
+        local('mkdir -p {}/test_ds'.format(sm_config['fs']['data_dir']))
+        local(hdfs('-mkdir {}/test_ds'.format(sm_config['fs']['data_dir'])))
 
     def fin():
         local('rm -r {}/test_ds'.format(sm_config['fs']['data_dir']))
+        local(hdfs('-rmr {}/test_ds'.format(sm_config['fs']['data_dir'])))
 
     request.addfinalizer(fin)
 
 
 @patch('engine.search_job.WorkDir.copy_input_data')
-def test_search_job_artificial_data(copy_input_data_mock, create_fill_sm_database, create_work_dir,
+def test_search_job_artificial_data(copy_input_data_mock,
+                                    create_fill_sm_database, create_work_dir,
                                     sm_config, ds_config):
     with patch('engine.search_job.SparkContext') as sc_mock:
         sc_mock.return_value = SparkContext(master='local[2]')
