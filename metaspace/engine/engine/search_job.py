@@ -7,7 +7,6 @@
 from datetime import datetime
 from pyspark import SparkContext, SparkConf
 from os.path import join, realpath, dirname
-from fabric.api import local
 from shutil import copytree
 from os.path import exists
 

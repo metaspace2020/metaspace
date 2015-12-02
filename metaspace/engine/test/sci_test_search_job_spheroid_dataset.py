@@ -1,15 +1,11 @@
 from __future__ import division
 from os.path import join, dirname
 from subprocess import check_call
-import pytest
 import argparse
-from datetime import datetime
 import json
 import numpy as np
-from collections import OrderedDict
 from fabric.api import local
 from fabric.context_managers import warn_only
-from numpy.testing import assert_almost_equal
 
 from engine.db import DB
 from engine.util import proj_root, hdfs
@@ -21,16 +17,9 @@ def sm_config():
 
 
 ds_name = 'spheroid_12h'
-# data_dir_path = join(proj_root(), 'data', ds_name)
 data_dir_path = join(sm_config()['fs']['data_dir'], ds_name)
 test_dir_path = join(proj_root(), 'test/data/sci_test_search_job_spheroid_dataset')
-# test_dir_ds_path = join(test_dir_path, ds_name)
-# agg_formula_path = join(test_dir_path, 'agg_formula.csv')
 
-# sample_ds_report_insert = "INSERT INTO sample_dataset_report VALUES (%s, %s, %s, %s, %s)"
-# sample_ds_report_select = ("SELECT report from sample_dataset_report "
-#                            "WHERE hash = %s AND ds_name = %s "
-#                            "ORDER BY dt DESC")
 search_res_select = ("select sf, adduct, stats "
                      "from iso_image_metrics s "
                      "join formula_db db on db.id = s.db_id "
@@ -39,14 +28,6 @@ search_res_select = ("select sf, adduct, stats "
                      "join dataset ds on ds.id = j.ds_id "
                      "where ds.name = %s and db.name = %s "
                      "ORDER BY sf, adduct ")
-
-
-# def _master_head_hash():
-#     return local('git rev-parse --short master', capture=True)
-
-
-# def make_sf_adduct_dict(report):
-#     return {(r[0], r[1]): r[2] for r in report}
 
 
 def compare_search_results(base_search_res, search_res):
@@ -62,10 +43,6 @@ def compare_search_results(base_search_res, search_res):
     for b_sf_add, b_metr in base_search_res.iteritems():
         if b_sf_add in search_res.keys():
             metr = search_res[b_sf_add]
-
-            # for s in b_metr.keys():
-            #     diff = abs(b_metr[s] - metr[s])
-            #     if diff > 1e-6:
             diff = np.abs(b_metr - metr)
             if np.any(diff > 1e-6):
                 print '{} metrics diff = {}'.format(b_sf_add, diff)
@@ -139,15 +116,6 @@ if __name__ == '__main__':
         finally:
             clear_data_dirs()
     elif args.save:
-        # branch = local("git rev-parse --abbrev-ref HEAD", capture=True)
-        # status = local('git status -s', capture=True)
-        # if branch != 'master':
-        #     print 'Wrong branch {}! Checkout master branch first'.format(branch)
-        # elif status:
-        #     print 'Uncommitted changes in files:\n{}'.format(status)
-        # else:
-        #     commit_hash = local('git rev-parse --short master', capture=True)
-        #     commit_message = local("git log --abbrev-commit -n1", capture=True)
         resp = raw_input('You are going to replace the reference values. Are you sure? (y/n): ')
         if resp == 'y':
             sci_tester.save_sci_test_report()
