@@ -31,6 +31,6 @@ def test_save_sf_img_metrics_correct_db_call(search_results):
 def test_save_sf_iso_images_correct_db_call(search_results):
     search_results.save_sf_iso_images(nrows=2, ncols=3)
 
-    correct_rows = [(0, 0, 1, '+H', 0, [100, 0, 0, 0, 0, 0], 0, 100),
-                    (0, 0, 1, '+H', 1, [0, 0, 0, 0, 0, 10], 0, 10)]
+    correct_rows = [(0, 0, 1, '+H', 0, [0], [100], 0, 100),
+                    (0, 0, 1, '+H', 1, [5], [10], 0, 10)]
     db_mock.insert.assert_called_with(insert_sf_iso_imgs_sql, correct_rows)

@@ -6,14 +6,12 @@ from os.path import join, realpath, dirname
 from fabric.api import local
 from fabric.context_managers import warn_only
 import os
-
 from engine.search_job import SearchJob
 from engine.db import DB
 from engine.imzml_txt_converter import ImzmlTxtConverter
 from engine.pyMS.mass_spectrum import MassSpectrum
 from engine.test.util import sm_config, ds_config, create_test_db, drop_test_db
 from engine.util import hdfs
-
 
 proj_dir_path = dirname(dirname(__file__))
 
@@ -85,19 +83,22 @@ def test_search_job_artificial_data(copy_input_data_mock,
                 assert set(rows[0][5].keys()) == {'chaos', 'img_corr', 'pat_match'}
 
                 # image asserts
-                rows = db.select(('SELECT job_id, db_id, sf_id, adduct, peak, intensities, min_int, max_int '
+                rows = db.select(('SELECT job_id, db_id, sf_id, adduct, peak, '
+                                  'pixel_inds, intensities, min_int, max_int '
                                   'FROM iso_image'))
 
                 assert rows
                 assert len(rows) == 2
 
                 assert tuple(rows[0][:5]) == (0, 0, 9, '+H', 0)
-                assert rows[0][5] == [100., 0., 0., 0., 0., 0.]
-                assert tuple(rows[0][6:8]) == (0, 100)
+                assert rows[0][5] == [0]
+                assert rows[0][6] == [100.]
+                assert tuple(rows[0][7:]) == (0, 100)
 
                 assert tuple(rows[1][:5]) == (0, 0, 9, '+H', 1)
-                assert rows[1][5] == [0., 0., 0., 0., 0., 10.]
-                assert tuple(rows[1][6:8]) == (0, 10)
+                assert rows[1][5] == [5]
+                assert rows[1][6] == [10.]
+                assert tuple(rows[1][7:]) == (0, 10)
 
             finally:
                 db.close()

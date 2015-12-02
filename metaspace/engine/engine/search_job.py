@@ -66,6 +66,7 @@ class SearchJob(object):
                  .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer"))
         self.sc = SparkContext(master='yarn-client', conf=sconf)
         self.sc.addPyFile(join(local_path(proj_root()), 'engine.zip'))
+        self.sc.appName = 'SM engine'
 
         self.ds = None
         self.formulas = None

@@ -10,7 +10,7 @@ from collections import OrderedDict
 
 
 insert_sf_metrics_sql = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s)'
-insert_sf_iso_imgs_sql = 'INSERT INTO iso_image VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
+insert_sf_iso_imgs_sql = 'INSERT INTO iso_image VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
 clear_job_sql = 'DELETE FROM job WHERE id = %s'
 clear_iso_image_sql = 'DELETE FROM iso_image WHERE job_id = %s'
 clear_iso_image_metrics_sql = 'DELETE FROM iso_image_metrics WHERE job_id = %s'
@@ -48,7 +48,10 @@ class SearchResults(object):
 
             for peak_i, img_sparse in enumerate(img_list):
                 img_ints = np.zeros(int(nrows)*int(ncols)) if img_sparse is None else img_sparse.toarray().flatten()
-                r = (self.job_id, self.db_id, sf_id, adduct, peak_i, img_ints.tolist(), img_ints.min(), img_ints.max())
+                pixel_inds = np.arange(img_ints.shape[0])
+                r = (self.job_id, self.db_id, sf_id, adduct, peak_i,
+                     pixel_inds[img_ints > 0.001].tolist(), img_ints[img_ints > 0.001].tolist(),
+                     img_ints.min(), img_ints.max())
                 rows.append(r)
 
         self.db.insert(insert_sf_iso_imgs_sql, rows)

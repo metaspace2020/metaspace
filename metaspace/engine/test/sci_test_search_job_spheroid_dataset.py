@@ -5,6 +5,8 @@ import pytest
 import argparse
 from datetime import datetime
 import json
+import numpy as np
+from collections import OrderedDict
 from fabric.api import local
 from fabric.context_managers import warn_only
 from numpy.testing import assert_almost_equal
@@ -21,53 +23,52 @@ def sm_config():
 ds_name = 'spheroid_12h'
 # data_dir_path = join(proj_root(), 'data', ds_name)
 data_dir_path = join(sm_config()['fs']['data_dir'], ds_name)
-test_dir_path = join(proj_root(), 'test/data/test_search_job_spheroid_dataset')
-test_dir_ds_path = join(test_dir_path, ds_name)
-agg_formula_path = join(test_dir_path, 'agg_formula.csv')
+test_dir_path = join(proj_root(), 'test/data/sci_test_search_job_spheroid_dataset')
+# test_dir_ds_path = join(test_dir_path, ds_name)
+# agg_formula_path = join(test_dir_path, 'agg_formula.csv')
 
-sample_ds_report_insert = "INSERT INTO sample_dataset_report VALUES (%s, %s, %s, %s, %s)"
-sample_ds_report_select = ("SELECT report from sample_dataset_report "
-                           "WHERE hash = %s AND ds_name = %s "
-                           "ORDER BY dt DESC")
-make_report_select = ("select sf, adduct, stats "
-                      "from iso_image_metrics s "
-                      "join formula_db db on db.id = s.db_id "
-                      "join agg_formula f on f.id = s.sf_id "
-                      "join job j on j.id = s.job_id "
-                      "join dataset ds on ds.id = j.ds_id "
-                      "where ds.name = %s and db.name = %s "
-                      "ORDER BY sf, adduct ")
-
-
-def _master_head_hash():
-    return local('git rev-parse --short master', capture=True)
+# sample_ds_report_insert = "INSERT INTO sample_dataset_report VALUES (%s, %s, %s, %s, %s)"
+# sample_ds_report_select = ("SELECT report from sample_dataset_report "
+#                            "WHERE hash = %s AND ds_name = %s "
+#                            "ORDER BY dt DESC")
+search_res_select = ("select sf, adduct, stats "
+                     "from iso_image_metrics s "
+                     "join formula_db db on db.id = s.db_id "
+                     "join agg_formula f on f.id = s.sf_id "
+                     "join job j on j.id = s.job_id "
+                     "join dataset ds on ds.id = j.ds_id "
+                     "where ds.name = %s and db.name = %s "
+                     "ORDER BY sf, adduct ")
 
 
-def _get_sf_adduct_dict(report):
-    return {(r[0], r[1]): r[2] for r in report}
+# def _master_head_hash():
+#     return local('git rev-parse --short master', capture=True)
 
 
-def _compare_reports(base_report, report):
-    base_sf_adduct_dict = _get_sf_adduct_dict(base_report)
-    sf_adduct_dict = _get_sf_adduct_dict(report)
+# def make_sf_adduct_dict(report):
+#     return {(r[0], r[1]): r[2] for r in report}
 
-    missed_sf_adduct = set(base_sf_adduct_dict.keys()).difference(set(sf_adduct_dict.keys()))
-    print 'Missed formulas: {:.1f}%'.format(len(missed_sf_adduct) / len(base_sf_adduct_dict) * 100)
+
+def compare_search_results(base_search_res, search_res):
+    missed_sf_adduct = set(base_search_res.keys()).difference(set(search_res.keys()))
+    print 'Missed formulas: {:.1f}%'.format(len(missed_sf_adduct) / len(base_search_res) * 100)
     print list(missed_sf_adduct)
 
-    new_sf_adduct = set(sf_adduct_dict.keys()).difference(set(base_sf_adduct_dict.keys()))
-    print 'False discovery formulas: {:.1f}%'.format(len(new_sf_adduct) / len(sf_adduct_dict) * 100)
+    new_sf_adduct = set(search_res.keys()).difference(set(base_search_res.keys()))
+    print 'False discovery: {:.1f}%'.format(len(new_sf_adduct) / len(base_search_res) * 100)
     print list(new_sf_adduct)
 
     print 'Differences in metrics'
-    for b_sf_add, b_stat in base_sf_adduct_dict.iteritems():
-        if b_sf_add in sf_adduct_dict.keys():
-            stat = sf_adduct_dict[b_sf_add]
+    for b_sf_add, b_metr in base_search_res.iteritems():
+        if b_sf_add in search_res.keys():
+            metr = search_res[b_sf_add]
 
-            for s in b_stat.keys():
-                diff = abs(b_stat[s] - stat[s])
-                if diff > 1e-6:
-                    print '{} -> {} diff = {}'.format(b_sf_add, s, diff)
+            # for s in b_metr.keys():
+            #     diff = abs(b_metr[s] - metr[s])
+            #     if diff > 1e-6:
+            diff = np.abs(b_metr - metr)
+            if np.any(diff > 1e-6):
+                print '{} metrics diff = {}'.format(b_sf_add, diff)
 
 
 def zip_engine():
@@ -75,7 +76,7 @@ def zip_engine():
 
 
 def run_search():
-    cmd = ['python', join(proj_root(), 'scripts/run_molecule_search.py'), test_dir_ds_path]
+    cmd = ['python', join(proj_root(), 'scripts/run_molecule_search.py'), test_dir_path]
     check_call(cmd)
 
 
@@ -95,22 +96,29 @@ class SciTester(object):
             "password": "1321"
         }
         self.db = DB(db_config)
+        self.base_search_res_path = join(proj_root(), 'test/reports', 'spheroid_12h_search_res.csv')
+        self.metrics = ['chaos', 'img_corr', 'pat_match']
+
+    def metr_dict_to_array(self, metr_d):
+        return np.array([metr_d[m] for m in self.metrics])
+
+    def read_base_search_res(self):
+        with open(self.base_search_res_path) as f:
+            rows = map(lambda line: line.strip('\n').split('\t'), f.readlines()[1:])
+            return {(r[0], r[1]): np.array(r[2:], dtype=float) for r in rows}
+
+    def fetch_search_res(self):
+        rows = self.db.select(search_res_select, (ds_name, 'HMDB'))
+        return {(r[0], r[1]): self.metr_dict_to_array(r[2]) for r in rows}
 
     def run_sci_test(self):
-        base_report = self.db.select_one(sample_ds_report_select, (_master_head_hash(), ds_name))[0]
-        report = self.db.select(make_report_select, (ds_name, 'HMDB'))
-        _compare_reports(base_report, report)
+        compare_search_results(self.read_base_search_res(), self.fetch_search_res())
 
-    def save_sci_test_report(self, commit_hash, commit_message):
-        report = self.db.select(make_report_select, (ds_name, 'HMDB'))
-        dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-        print commit_message
-        print dt
-        for r in report:
-            print r
-        self.db.insert(sample_ds_report_insert,
-                       [(commit_hash, commit_message, ds_name, dt, json.dumps(report))])
+    def save_sci_test_report(self):
+        with open(self.base_search_res_path, 'w') as f:
+            f.write('\t'.join(['sf', 'adduct'] + self.metrics) + '\n')
+            for (sf, adduct), metrics in self.fetch_search_res().iteritems():
+                f.write('\t'.join([sf, adduct] + metrics.astype(str).tolist()) + '\n')
 
         print 'Successfully saved sample dataset search report'
 
@@ -131,15 +139,17 @@ if __name__ == '__main__':
         finally:
             clear_data_dirs()
     elif args.save:
-        branch = local("git rev-parse --abbrev-ref HEAD", capture=True)
-        status = local('git status -s', capture=True)
-        if branch != 'master':
-            print 'Wrong branch {}! Checkout master branch first'.format(branch)
-        elif status:
-            print 'Uncommitted changes in files:\n{}'.format(status)
-        else:
-            commit_hash = local('git rev-parse --short master', capture=True)
-            commit_message = local("git log --abbrev-commit -n1", capture=True)
-            sci_tester.save_sci_test_report(commit_hash, commit_message)
+        # branch = local("git rev-parse --abbrev-ref HEAD", capture=True)
+        # status = local('git status -s', capture=True)
+        # if branch != 'master':
+        #     print 'Wrong branch {}! Checkout master branch first'.format(branch)
+        # elif status:
+        #     print 'Uncommitted changes in files:\n{}'.format(status)
+        # else:
+        #     commit_hash = local('git rev-parse --short master', capture=True)
+        #     commit_message = local("git log --abbrev-commit -n1", capture=True)
+        resp = raw_input('You are going to replace the reference values. Are you sure? (y/n): ')
+        if resp == 'y':
+            sci_tester.save_sci_test_report()
     else:
         print 'Dry run'

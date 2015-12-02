@@ -70,7 +70,6 @@ CREATE TABLE job (
 	CONSTRAINT job_id_ind PRIMARY KEY(id)
 );
 
--- TODO: store non-zero intensities only
 DROP TABLE IF EXISTS iso_image;
 CREATE TABLE iso_image (
 	job_id		int,
@@ -78,6 +77,7 @@ CREATE TABLE iso_image (
 	sf_id		int,
 	adduct 		text,
 	peak		int,
+	pixel_inds  int[],
 	intensities	real[],
 	min_int		real,
 	max_int		real,
@@ -114,13 +114,13 @@ CREATE TABLE theor_peaks (
 );
 CREATE INDEX ind_theor_peaks_2 ON theor_peaks(db_id, sf_id);
 
-DROP TABLE IF EXISTS sample_dataset_report;
-CREATE TABLE sample_dataset_report (
-    hash            text,
-    message         text,
-	ds_name			text,
-    dt              timestamp,
-    report          json,
-	CONSTRAINT sample_ds_rep_hash PRIMARY KEY(hash)
-);
+--DROP TABLE IF EXISTS sample_dataset_report;
+--CREATE TABLE sample_dataset_report (
+--    hash            text,
+--    message         text,
+--	ds_name			text,
+--    dt              timestamp,
+--    report          json,
+--	CONSTRAINT sample_ds_rep_hash PRIMARY KEY(hash)
+--);
 
