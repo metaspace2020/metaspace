@@ -28,17 +28,23 @@ class DateTimeEncoder(json.JSONEncoder):
             return super(DateTimeEncoder, self).default(obj)
 
 
+def proj_root():
+    return dirname(dirname(__file__))
+
+
+def sm_config():
+    with open(join(proj_root(), 'conf', 'config.json')) as f:
+        return json.load(f)
+
+
 def local_path(path):
     return 'file://' + path
 
 
 def hdfs_path(path):
-    return 'hdfs://localhost:9000' + path
+    return 'hdfs://{}:9000{}'.format(sm_config()['hadoop']['master'], path)
 
 
 def hdfs(cmd):
     return '{}/bin/hdfs dfs {}'.format(os.environ['HADOOP_HOME'], cmd)
 
-
-def proj_root():
-    return dirname(dirname(__file__))

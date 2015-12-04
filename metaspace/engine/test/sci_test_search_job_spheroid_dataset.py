@@ -22,11 +22,11 @@ test_dir_path = join(proj_root(), 'test/data/sci_test_search_job_spheroid_datase
 
 search_res_select = ("select sf, adduct, stats "
                      "from iso_image_metrics s "
-                     "join formula_db db on db.id = s.db_id "
+                     "join formula_db sm_db on sm_db.id = s.db_id "
                      "join agg_formula f on f.id = s.sf_id "
                      "join job j on j.id = s.job_id "
                      "join dataset ds on ds.id = j.ds_id "
-                     "where ds.name = %s and db.name = %s "
+                     "where ds.name = %s and sm_db.name = %s "
                      "ORDER BY sf, adduct ")
 
 
@@ -59,20 +59,14 @@ def run_search():
 
 def clear_data_dirs():
     with warn_only():
-        local('rm -r {}'.format(data_dir_path))
-        local(hdfs('-rmr {}'.format(data_dir_path)))
+        local('rm -rf {}'.format(data_dir_path))
+        local(hdfs('-rm -r {}'.format(data_dir_path)))
 
 
 class SciTester(object):
 
     def __init__(self):
-        db_config = {
-            "host": "localhost",
-            "database": "sm",
-            "user": "sm",
-            "password": "1321"
-        }
-        self.db = DB(db_config)
+        self.db = DB(sm_config()['db'])
         self.base_search_res_path = join(proj_root(), 'test/reports', 'spheroid_12h_search_res.csv')
         self.metrics = ['chaos', 'img_corr', 'pat_match']
 
@@ -120,4 +114,4 @@ if __name__ == '__main__':
         if resp == 'y':
             sci_tester.save_sci_test_report()
     else:
-        print 'Dry run'
+        parser.print_help()

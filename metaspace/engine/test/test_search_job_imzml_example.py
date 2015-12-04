@@ -87,5 +87,5 @@ def test_search_job_imzml_example(create_fill_sm_database, sm_config):
         db.close()
         # sc.close()
         with warn_only():
-            local('rm -r {}'.format(data_dir_path))
-            local(hdfs('-rmr {}'.format(data_dir_path)))
+            local('rm -rf {}'.format(data_dir_path))
+            local(hdfs('-rm -r {}'.format(data_dir_path)))

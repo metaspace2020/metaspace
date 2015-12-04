@@ -9,6 +9,7 @@ from pyspark import SparkContext, SparkConf
 from os.path import join, realpath, dirname
 from shutil import copytree
 from os.path import exists
+from subprocess import check_call
 
 from engine.db import DB
 from engine.dataset import Dataset
@@ -63,9 +64,9 @@ class SearchJob(object):
         sconf = (SparkConf()
                  .set("spark.executor.memory", "2g")
                  .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer"))
-        self.sc = SparkContext(master='yarn-client', conf=sconf)
+        self.sc = SparkContext(master='yarn-client', conf=sconf, appName='SM engine')
         self.sc.addPyFile(join(local_path(proj_root()), 'engine.zip'))
-        self.sc.appName = 'SM engine'
+        # self.sc.appName = 'SM engine'
 
         self.ds = None
         self.formulas = None
@@ -77,7 +78,7 @@ class SearchJob(object):
         self.theor_peaks_gen = TheorPeaksGenerator(self.sc, sm_config, ds_config)
 
         self.db_id = self.db.select_one(db_id_sql, ds_config['inputs']['database'])[0]
-        # self.job_id = self.db.select_one(max_job_id_sql)[0] + 1
+        # self.job_id = self.sm_db.select_one(max_job_id_sql)[0] + 1
         # TODO: decide if we need both db_id and job_id (both dataset and job tables)
         self.job_id = self.db_id
 
@@ -94,6 +95,7 @@ class SearchJob(object):
         self.formulas = Formulas(self.ds_config, self.db)
 
         search_results = self._search()
+        # TODO: store the first 1k results only
         self._store_results(search_results)
         self._store_job_meta()
 
@@ -112,7 +114,10 @@ class SearchJob(object):
 
     def _copy_to_hdfs(self, localpath, hdfspath):
         print 'Coping DS textfile to HDFS...'
-        self.sc.textFile(local_path(localpath)).saveAsTextFile(hdfs_path(hdfspath))
+        cmd = 'hdfs dfs -mkdir {}'.format(hdfs_path(self.work_dir.path))
+        check_call(cmd.split())
+        cmd = 'hdfs dfs -copyFromLocal {} {}'.format(local_path(localpath), hdfs_path(hdfspath))
+        check_call(cmd.split())
 
     def _store_results(self, search_results):
         search_results.clear_old_results()

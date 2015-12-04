@@ -36,7 +36,7 @@ class BlackboxPipelineTest(object):
         self.adducts = {0: 'H', 1: 'Na', 2: 'K'}
 
         with open(self._config_path) as f:
-            config = json.load(f)['db']
+            config = json.load(f)['sm_db']
         return config
 
     def _run_query(self, sql):

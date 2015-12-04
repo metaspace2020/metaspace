@@ -33,8 +33,8 @@ def create_work_dir(request, sm_config):
         local(hdfs('-mkdir {}/test_ds'.format(sm_config['fs']['data_dir'])))
 
     def fin():
-        local('rm -r {}/test_ds'.format(sm_config['fs']['data_dir']))
-        local(hdfs('-rmr {}/test_ds'.format(sm_config['fs']['data_dir'])))
+        local('rm -rf {}/test_ds'.format(sm_config['fs']['data_dir']))
+        local(hdfs('-rm -r {}/test_ds'.format(sm_config['fs']['data_dir'])))
 
     request.addfinalizer(fin)
 

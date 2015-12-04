@@ -14,10 +14,20 @@ from os import environ
 from time import sleep
 from os.path import dirname, realpath, join
 
+
 env.roledefs = {
     'web_dev': ['ubuntu@52.19.27.255'],
     'web_stage': ['ubuntu@52.19.0.118'],
 }
+
+
+def rel_path(path=''):
+    return join(dirname(__file__), path)
+
+
+def remote_rel_path(path=''):
+    return join('/home/ubuntu/sm', path)
+
 
 conf_path = 'conf/fabric.json'
 with open(conf_path) as f:
@@ -63,7 +73,7 @@ def webserver_stop():
 def webserver_deploy():
     print green('========= Code deployment to SM webserver =========')
 
-    rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'data'])
+    rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'conf'])
     # rsync_project(local_dir='test/data/', remote_dir='/home/ubuntu/sm/test/data/', exclude=['tmp'])
 
     # for conf_file in ['conf/config.json', 'conf/luigi.cfg', 'conf/luigi_log.cfg']:
@@ -72,10 +82,14 @@ def webserver_deploy():
 
 @task
 # @hosts(get_webserver_host())
-def webserver_deploy_db():
-    local('pg_dump -h localhost -U sm --clean ims > data/db/ims.sql')
-    rsync_project(local_dir='data/db/', remote_dir='/home/ubuntu/sm/data/db/')
-    run('psql -h localhost -U sm ims < /home/ubuntu/sm/data/db/ims.sql')
+def webserver_setup_db():
+    print green('========= DB setup on SM webserver =========')
+    with cd(remote_rel_path()):
+        run('mkdir -p data/sm_db')
+    rsync_project(local_dir=rel_path('data/sm_db/'), remote_dir=remote_rel_path('data/sm_db/'))
+    run('psql -h localhost -U sm sm < {}'.format(remote_rel_path('scripts/create_schema.sql')))
+    run('psql -h localhost -U sm sm < {}'.format(remote_rel_path('data/sm_db/agg_formula.sql')))
+
 
 # @hosts(get_webserver_host())
 # def webserver_config():
@@ -116,18 +130,18 @@ def cluster_config():
     # print get_spark_master_host()
     # print env.host_string
 
-    text = "\nexport AWS_ACCESS_KEY_ID={} \nexport AWS_SECRET_ACCESS_KEY={}".format(environ['AWS_ACCESS_KEY_ID'], environ['AWS_SECRET_ACCESS_KEY'])
-    append('/root/spark/conf/spark-env.sh', text)
+    # text = "\nexport AWS_ACCESS_KEY_ID={} \nexport AWS_SECRET_ACCESS_KEY={}".format(environ['AWS_ACCESS_KEY_ID'], environ['AWS_SECRET_ACCESS_KEY'])
+    # append('/root/spark/conf/spark-env.sh', text)
 
 
 # @hosts(get_spark_master_host())
 @task
 def cluster_deploy():
-    env.host_string = get_spark_master_host()[0]
+    # env.host_string = get_spark_master_host()[0]
     print green('========= Code deployment to Spark cluster =========')
-    run('mkdir -p /root/sm/data')
-    rsync_project(local_dir='engine scripts test', remote_dir='/root/sm/', exclude=['.*', '*.pyc', 'test'])
-    run('cd /root/sm; zip -r engine.zip engine')
+    run('mkdir -p /home/ubuntu/sm')
+    rsync_project(local_dir='engine scripts test', remote_dir='/home/ubuntu/sm/', exclude=['.*', '*.pyc', 'engine/test'])
+    run('cd /home/ubuntu/sm; zip -r engine.zip engine')
 
 @task
 def cluster_terminate(name):

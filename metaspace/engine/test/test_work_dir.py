@@ -24,8 +24,8 @@ def create_sample_files(path):
 def clear_files(request):
     def fin():
         with warn_only():
-            local('rm -R {}'.format(input_path))
-            local('rm -R {}'.format(ds_path))
+            local('rm -rf {}'.format(input_path))
+            local('rm -rf {}'.format(ds_path))
     request.addfinalizer(fin)
 
 
