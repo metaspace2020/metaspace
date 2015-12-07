@@ -42,7 +42,7 @@ def local_path(path):
 
 
 def hdfs_path(path):
-    return 'hdfs://{}:9000{}'.format(sm_config()['hadoop']['master'], path)
+    return 'hdfs://{}:9000{}'.format(sm_config()['hdfs']['namenode'], path)
 
 
 def hdfs(cmd):

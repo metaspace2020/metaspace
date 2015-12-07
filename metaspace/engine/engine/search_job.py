@@ -9,8 +9,7 @@ from pyspark import SparkContext, SparkConf
 from os.path import join, realpath, dirname
 from shutil import copytree
 from os.path import exists
-from subprocess import check_call
-
+from subprocess import check_call, call
 from engine.db import DB
 from engine.dataset import Dataset
 from engine.formulas import Formulas
@@ -19,7 +18,7 @@ from engine.formula_imager import sample_spectra, compute_sf_peak_images, comput
 from engine.formula_img_validator import filter_sf_images
 from engine.theor_peaks_gen import TheorPeaksGenerator
 from engine.imzml_txt_converter import ImzmlTxtConverter
-from engine.util import local_path, hdfs_path, proj_root
+from engine.util import local_path, hdfs_path, proj_root, hdfs
 
 
 ds_id_sql = "SELECT id FROM dataset WHERE name = %s"
@@ -60,18 +59,13 @@ class WorkDir(object):
 class SearchJob(object):
 
     def __init__(self, ds_config, sm_config):
-        self.db = DB(sm_config['db'])
-        sconf = (SparkConf()
-                 .set("spark.executor.memory", "2g")
-                 .set("num-executors", "16")
-                 .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer"))
-        self.sc = SparkContext(master='yarn-client', conf=sconf, appName='SM engine')
-        self.sc.addPyFile(join(local_path(proj_root()), 'engine.zip'))
-        # self.sc.appName = 'SM engine'
-
+        self.sc = None
         self.ds = None
         self.formulas = None
         self.sm_config, self.ds_config = sm_config, ds_config
+
+        self.db = DB(sm_config['db'])
+        self.configure_spark()
 
         self.work_dir = WorkDir(self.ds_config, data_dir_path=sm_config['fs']['data_dir'])
         self.imzml_converter = ImzmlTxtConverter(sm_config, ds_config, self.work_dir.imzml_path,
@@ -79,16 +73,25 @@ class SearchJob(object):
         self.theor_peaks_gen = TheorPeaksGenerator(self.sc, sm_config, ds_config)
 
         self.db_id = self.db.select_one(db_id_sql, ds_config['inputs']['database'])[0]
+        self.ds_id = self.db.select_one(ds_id_sql, self.ds_config['name'])[0]
+        self.job_id = self.ds_id
         # self.job_id = self.sm_db.select_one(max_job_id_sql)[0] + 1
         # TODO: decide if we need both db_id and job_id (both dataset and job tables)
-        self.job_id = self.db_id
+
+    def configure_spark(self):
+        sconf = SparkConf()
+        sconf.set("spark.executor.memory", self.sm_config['spark']['executor.memory'])
+        sconf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+        self.sc = SparkContext(master=self.sm_config['spark']['master'], conf=sconf, appName='SM engine')
+        self.sc.addPyFile(join(local_path(proj_root()), 'engine.zip'))
 
     def run(self, input_path):
         print self.ds_config
         self.work_dir.copy_input_data(input_path)
 
         self.imzml_converter.convert()
-        self._copy_to_hdfs(self.work_dir.txt_path, self.work_dir.txt_path)
+        if not self.sm_config['fs']['local']:
+            self._copy_to_hdfs(self.work_dir.txt_path, self.work_dir.txt_path)
 
         self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path, self.sm_config)
 
@@ -115,10 +118,10 @@ class SearchJob(object):
 
     def _copy_to_hdfs(self, localpath, hdfspath):
         print 'Coping DS textfile to HDFS...'
-        cmd = 'hdfs dfs -mkdir {}'.format(hdfs_path(self.work_dir.path))
-        check_call(cmd.split())
-        cmd = 'hdfs dfs -copyFromLocal {} {}'.format(local_path(localpath), hdfs_path(hdfspath))
-        check_call(cmd.split())
+        return_code = call(hdfs('-test -e {}'.format(hdfs_path(self.work_dir.path))).split())
+        if return_code:
+            check_call(hdfs('-mkdir -p {}'.format(hdfs_path(self.work_dir.path))).split())
+            check_call(hdfs('-copyFromLocal {} {}'.format(local_path(localpath), hdfs_path(hdfspath))).split())
 
     def _store_results(self, search_results):
         search_results.clear_old_results()
@@ -127,7 +130,6 @@ class SearchJob(object):
         search_results.save_sf_iso_images(nrows, ncols)
 
     def _store_job_meta(self):
-        ds_id = self.db.select_one(ds_id_sql, self.ds_config['name'])[0]
-
-        rows = [(self.job_id, self.db_id, ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
+        print 'Storing job metadata'
+        rows = [(self.job_id, self.db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self.db.insert(insert_job_sql, rows)
