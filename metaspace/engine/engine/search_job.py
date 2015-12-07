@@ -63,6 +63,7 @@ class SearchJob(object):
         self.db = DB(sm_config['db'])
         sconf = (SparkConf()
                  .set("spark.executor.memory", "2g")
+                 .set("num-executors", "16")
                  .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer"))
         self.sc = SparkContext(master='yarn-client', conf=sconf, appName='SM engine')
         self.sc.addPyFile(join(local_path(proj_root()), 'engine.zip'))

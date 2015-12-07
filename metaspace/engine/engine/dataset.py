@@ -72,4 +72,4 @@ class Dataset(object):
         if self.sm_config['fs']['local']:
             return self.sc.textFile(local_path(self.ds_path)).map(txt_to_spectrum)
         else:
-            return self.sc.textFile(hdfs_path(self.ds_path)).map(txt_to_spectrum)
+            return self.sc.textFile(hdfs_path(self.ds_path), minPartitions=8).map(txt_to_spectrum)

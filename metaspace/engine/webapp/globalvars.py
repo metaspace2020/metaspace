@@ -16,7 +16,7 @@ sql_counts = dict(
     jobs="SELECT count(*) FROM jobs",
     datasets="SELECT count(*) FROM datasets",
     fullimages="SELECT count(*) FROM job_result_stats WHERE job_id=%s",
-    demobigtable="SELECT count(distinct sf_id) FROM job_result_stat"
+    demobigtable="SELECT count(distinct sf_id) FROM iso_image_metrics"
 )
 
 sql_queries = dict(
@@ -63,28 +63,24 @@ sql_queries = dict(
 	''',
     demobigtable='''
         SELECT db.name as db_name, ds_name, f.sf, f.names, f.subst_ids,
-            (s.stats->'moc')::text::real AS chaos,
-            (s.stats->'spec')::text::real AS image_corr,
-            (s.stats->'spat')::text::real AS pattern_match,
-            s.adduct as adduct,
+            (m.stats->'chaos')::text::real AS chaos,
+            (m.stats->'img_corr')::text::real AS image_corr,
+            (m.stats->'pat_match')::text::real AS pattern_match,
+            m.adduct as adduct,
             last_job_id,
             ds_j.ds_id,
             f.id as sf_id,
-            s.peaks_n,
+            m.peaks_n,
             db.id as db_id
         FROM agg_formula f
         JOIN formula_db db ON db.id=f.db_id
-        JOIN job_result_stat s ON f.id=s.sf_id
+        JOIN iso_image_metrics m ON f.id=m.sf_id
         JOIN (
             SELECT j.db_id, ds.id as ds_id, ds.name as ds_name, max(j.id) as last_job_id
             FROM job j
             JOIN dataset ds on ds.id = j.ds_id
             GROUP BY j.db_id, ds.id, ds.name
-        ) ds_j ON ds_j.last_job_id = s.job_id AND db.id=ds_j.db_id
-        WHERE
-            (s.stats->'moc')::text::real > 0.3 AND
-            (s.stats->'spec')::text::real > 0.3 AND
-            (s.stats->'spat')::text::real > 0.3
+        ) ds_j ON ds_j.last_job_id = m.job_id AND db.id=ds_j.db_id
 	''',
     demosubst='''SELECT s.job_id, s.sf_id, s.adduct, peak, intensities as ints
 		FROM job_result_stat s
