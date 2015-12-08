@@ -23,7 +23,7 @@ from engine.util import local_path, hdfs_path, proj_root, hdfs
 
 ds_id_sql = "SELECT id FROM dataset WHERE name = %s"
 db_id_sql = "SELECT id FROM formula_db WHERE name = %s"
-max_job_id_sql = "SELECT COALESCE(MAX(id), -1) FROM job"
+max_ds_id_sql = "SELECT COALESCE(MAX(id), -1) FROM dataset"
 insert_job_sql = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', %s)"
 
 
@@ -59,6 +59,8 @@ class WorkDir(object):
 class SearchJob(object):
 
     def __init__(self, ds_config, sm_config):
+        self.ds_id = None
+        self.job_id = None
         self.sc = None
         self.ds = None
         self.formulas = None
@@ -73,10 +75,16 @@ class SearchJob(object):
         self.theor_peaks_gen = TheorPeaksGenerator(self.sc, sm_config, ds_config)
 
         self.db_id = self.db.select_one(db_id_sql, ds_config['inputs']['database'])[0]
-        self.ds_id = self.db.select_one(ds_id_sql, self.ds_config['name'])[0]
-        self.job_id = self.ds_id
-        # self.job_id = self.sm_db.select_one(max_job_id_sql)[0] + 1
+        self.choose_ds_job_id()
+
+    def choose_ds_job_id(self):
+        ds_id_row = self.db.select_one(ds_id_sql, self.ds_config['name'])
+        if ds_id_row:
+            self.ds_id = ds_id_row[0]
+        else:
+            self.ds_id = self.db.select_one(max_ds_id_sql)[0] + 1
         # TODO: decide if we need both db_id and job_id (both dataset and job tables)
+        self.job_id = self.ds_id
 
     def configure_spark(self):
         sconf = SparkConf()

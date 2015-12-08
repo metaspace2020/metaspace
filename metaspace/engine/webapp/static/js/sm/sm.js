@@ -121,7 +121,7 @@ $(document).ready(function() {
     // Column filter/sorters
     yadcf.init(tbl_demo, [
       {column_number : 0, filter_type: "select", filter_container_id: "fil-db", filter_reset_button_text: false, filter_default_label: 'Select...'},
-      {column_number : 1, filter_type: "select", filter_container_id: "fil-ds", filter_reset_button_text: false, filter_default_label: 'Select...'},
+      {column_number : 1, filter_type: "select", filter_container_id: "fil-ds", filter_reset_button_text: false, filter_default_label: 'Select...', filter_match_mode: "exact"},
       {column_number : 2, filter_type: "text", filter_container_id: "fil-nm", filter_reset_button_text: false },
       {column_number : 3, filter_type: "text", filter_container_id: "fil-sf", filter_reset_button_text: false},
       {column_number : 4, filter_type: "text", filter_container_id: "fil-id", filter_reset_button_text: false},

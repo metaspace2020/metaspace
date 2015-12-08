@@ -141,7 +141,7 @@ def cluster_deploy():
     print green('========= Code deployment to Spark cluster =========')
     run('mkdir -p /home/ubuntu/sm')
     rsync_project(local_dir='engine scripts test', remote_dir='/home/ubuntu/sm/', exclude=['.*', '*.pyc', 'engine/test'])
-    run('cd /home/ubuntu/sm; zip -r engine.zip engine')
+    run('cd /home/ubuntu/sm; zip -rq engine.zip engine')
 
 @task
 def cluster_terminate(name):
