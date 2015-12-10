@@ -4,6 +4,7 @@ import numpy as np
 from cStringIO import StringIO
 
 from engine.imzml_txt_converter import ImzmlTxtConverter, ImageBounds, encode_coord_line, encode_data_line
+from engine.util import SMConfig
 from engine.test.util import sm_config, ds_config
 
 
@@ -44,7 +45,9 @@ def test_imzml_txt_converter_parse_save_spectrum(MockImzMLParser, sm_config, ds_
     mock_parser.getspectrum.side_effect = [(np.array([100., 200.]), np.array([100., 10.])),
                                            (np.array([100., 200.]), np.array([100., 10.]))]
 
-    converter = ImzmlTxtConverter(sm_config, ds_config, '', '', '')
+    SMConfig._config_dic = sm_config
+
+    converter = ImzmlTxtConverter('test_ds', ds_config, '', '', '')
     converter.parser = mock_parser
     converter.txt_file = StringIO()
     converter.coord_file = StringIO()

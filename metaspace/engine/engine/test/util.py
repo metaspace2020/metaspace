@@ -82,5 +82,12 @@ def sm_config():
         "fs": {
             "data_dir": "/opt/data/sm_data",
             "local": True
+        },
+        "hdfs": {
+            "namenode": "localhost"
+        },
+        "spark": {
+            "master": "local[2]",
+            "executor.memory": "1g"
         }
     }

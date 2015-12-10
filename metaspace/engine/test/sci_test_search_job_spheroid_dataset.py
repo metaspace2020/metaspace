@@ -8,17 +8,18 @@ from fabric.api import local
 from fabric.context_managers import warn_only
 
 from engine.db import DB
-from engine.util import proj_root, hdfs
+from engine.util import proj_root, hdfs_prefix, SMConfig
 
 
-def sm_config():
-    with open(join(proj_root(), 'conf/config.json')) as f:
-        return json.load(f)
+# def sm_config():
+#     with open(join(proj_root(), 'conf/config.json')) as f:
+#         return json.load(f)
 
+SMConfig.set_path(join(proj_root(), 'conf/config.json'))
 
 ds_name = 'spheroid_12h'
-data_dir_path = join(sm_config()['fs']['data_dir'], ds_name)
-test_dir_path = join(proj_root(), 'test/data/sci_test_search_job_spheroid_dataset')
+data_dir_path = join(SMConfig.get_conf()['fs']['data_dir'], ds_name)
+input_dir_path = join(proj_root(), 'test/data/sci_test_search_job_spheroid_dataset')
 
 search_res_select = ("select sf, adduct, stats "
                      "from iso_image_metrics s "
@@ -53,20 +54,23 @@ def zip_engine():
 
 
 def run_search():
-    cmd = ['python', join(proj_root(), 'scripts/run_molecule_search.py'), test_dir_path]
+    cmd = ['python',
+           join(proj_root(), 'scripts/run_molecule_search.py'),
+           ds_name,
+           input_dir_path]
     check_call(cmd)
 
 
 def clear_data_dirs():
     with warn_only():
         local('rm -rf {}'.format(data_dir_path))
-        local(hdfs('-rm -r {}'.format(data_dir_path)))
+        local(hdfs_prefix() + '-rm -r {}'.format(data_dir_path))
 
 
 class SciTester(object):
 
     def __init__(self):
-        self.db = DB(sm_config()['db'])
+        self.db = DB(SMConfig.get_conf()['db'])
         self.base_search_res_path = join(proj_root(), 'test/reports', 'spheroid_12h_search_res.csv')
         self.metrics = ['chaos', 'img_corr', 'pat_match']
 

@@ -10,14 +10,14 @@ from fabric.context_managers import warn_only
 from engine.search_job import SearchJob
 from engine.db import DB
 from engine.test.util import sm_config, ds_config, create_test_db, drop_test_db
-from engine.util import hdfs
+from engine.util import hdfs_prefix, SMConfig
 
 
 test_ds_name = 'imzml_example_ds'
 
 proj_dir_path = dirname(dirname(__file__))
 data_dir_path = join(sm_config()["fs"]["data_dir"], test_ds_name)
-test_dir_path = join(proj_dir_path, 'test/data/imzml_example_ds')
+input_dir_path = join(proj_dir_path, 'test/data/imzml_example_ds')
 
 
 @pytest.fixture()
@@ -31,16 +31,18 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
 
 
 def test_search_job_imzml_example(create_fill_sm_database, sm_config):
-    with open(join(test_dir_path, 'config.json')) as ds_config_file:
-        ds_config = json.load(ds_config_file)
+    # with open(join(test_dir_path, 'config.json')) as ds_config_file:
+    #     ds_config = json.load(ds_config_file)
 
     # with patch('engine.search_job.SparkContext') as sc:
     #     sc.return_value = SparkContext(master='local[2]')
 
+    SMConfig._config_dict = sm_config
+
     db = DB(sm_config['db'])
     try:
-        job = SearchJob(ds_config, sm_config)
-        job.run(test_dir_path)
+        job = SearchJob('imzml_example_ds')
+        job.run(input_dir_path)
 
         # dataset meta asserts
         rows = db.select("SELECT id, name, file_path, img_bounds from dataset")
@@ -88,4 +90,4 @@ def test_search_job_imzml_example(create_fill_sm_database, sm_config):
         # sc.close()
         with warn_only():
             local('rm -rf {}'.format(data_dir_path))
-            local(hdfs('-rm -r {}'.format(data_dir_path)))
+            local(hdfs_prefix() + '-rm -r {}'.format(data_dir_path))

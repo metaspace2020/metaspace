@@ -5,6 +5,7 @@ import json
 
 from engine.imzml_txt_converter import ImzmlTxtConverter, ImageBounds
 from engine.db import DB
+from engine.util import SMConfig
 from engine.test.util import spark_context, sm_config, ds_config, create_test_db, drop_test_db
 
 
@@ -21,8 +22,9 @@ def create_fill_test_db(create_test_db, drop_test_db):
 
 @patch('engine.imzml_txt_converter.ImzMLParser')
 def test_save_ds_meta_ds_doesnt_exist(ImzMLParserMock, create_test_db, drop_test_db, sm_config, ds_config):
-    sm_config['name'] = 'test_ds'
-    converter = ImzmlTxtConverter(sm_config, ds_config, 'imzml_path', '', '')
+    SMConfig._config_dict = sm_config
+
+    converter = ImzmlTxtConverter('test_ds', ds_config, 'imzml_path', '', '')
     converter.image_bounds = ImageBounds()
     converter.image_bounds.update(1, 1)
     converter.image_bounds.update(100, 200)
@@ -43,8 +45,9 @@ def test_save_ds_meta_ds_doesnt_exist(ImzMLParserMock, create_test_db, drop_test
 
 @patch('engine.imzml_txt_converter.ImzMLParser')
 def test_save_ds_meta_ds_exists(ImzMLParserMock, create_fill_test_db, sm_config, ds_config):
-    sm_config['name'] = 'test_ds'
-    converter = ImzmlTxtConverter(sm_config, ds_config, 'imzml_path', '', '')
+    SMConfig._config_dict = sm_config
+
+    converter = ImzmlTxtConverter('test_ds', ds_config, 'imzml_path', '', '')
     converter.image_bounds = ImageBounds()
     converter.image_bounds.update(1, 1)
     converter.image_bounds.update(100, 200)
@@ -71,7 +74,9 @@ def test_convert(MockImzMLParser, sm_config, ds_config):
     mock_parser.getspectrum.side_effect = [(np.array([100., 200.]), np.array([100., 10.])),
                                            (np.array([100., 200.]), np.array([100., 10.]))]
 
-    converter = ImzmlTxtConverter(sm_config, ds_config, 'imzml_path', 'txt_path', 'coord_path')
+    SMConfig._config_dict = sm_config
+
+    converter = ImzmlTxtConverter('test_ds', ds_config, 'imzml_path', 'txt_path', 'coord_path')
     converter.save_ds_meta = lambda: 0
 
     with patch('engine.imzml_txt_converter.open', create=True) as mock_open:

@@ -1,4 +1,4 @@
-from mock import patch, MagicMock
+from mock import patch, MagicMock, PropertyMock
 import pytest
 import numpy as np
 from pyspark import SparkContext
@@ -11,7 +11,7 @@ from engine.db import DB
 from engine.imzml_txt_converter import ImzmlTxtConverter
 from engine.pyMS.mass_spectrum import MassSpectrum
 from engine.test.util import sm_config, ds_config, create_test_db, drop_test_db
-from engine.util import hdfs
+# from engine.util import hdfs_prefix
 
 proj_dir_path = dirname(dirname(__file__))
 
@@ -30,19 +30,23 @@ def create_fill_sm_database(create_test_db, drop_test_db):
 def create_work_dir(request, sm_config):
     with warn_only():
         local('mkdir -p {}/test_ds'.format(sm_config['fs']['data_dir']))
-        local(hdfs('-mkdir {}/test_ds'.format(sm_config['fs']['data_dir'])))
+        # local(hdfs_prefix() + '-mkdir {}/test_ds'.format(sm_config['fs']['data_dir']))
 
     def fin():
         local('rm -rf {}/test_ds'.format(sm_config['fs']['data_dir']))
-        local(hdfs('-rm -r {}/test_ds'.format(sm_config['fs']['data_dir'])))
+        # local(hdfs_prefix() + '-rm -r {}/test_ds'.format(sm_config['fs']['data_dir']))
 
     request.addfinalizer(fin)
 
 
+@patch('engine.search_job.SearchJob._read_config')
 @patch('engine.search_job.WorkDir.copy_input_data')
-def test_search_job_artificial_data(copy_input_data_mock,
+@patch('engine.search_job.WorkDir.imzml_path')
+def test_search_job_artificial_data(read_config_mock, copy_input_data_mock, imzml_path_mock,
                                     create_fill_sm_database, create_work_dir,
                                     sm_config, ds_config):
+    imzml_path_mock.__get__ = PropertyMock(return_value='/tmp/foo.imzML')
+
     with patch('engine.search_job.SparkContext') as sc_mock:
         sc_mock.return_value = SparkContext(master='local[2]')
 
@@ -55,7 +59,9 @@ def test_search_job_artificial_data(copy_input_data_mock,
                                                    (np.array([197.973847]), np.array([0.])),
                                                    (np.array([198.98012]), np.array([10.]))]
 
-            job = SearchJob(ds_config, sm_config)
+            job = SearchJob('test_ds', '')
+            job.sm_config = sm_config
+            job.ds_config = ds_config
             job.run('')
 
             db = DB(sm_config['db'])

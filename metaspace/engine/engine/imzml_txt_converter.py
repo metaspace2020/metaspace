@@ -13,6 +13,7 @@ from pyimzml.ImzMLParser import ImzMLParser
 
 from engine.db import DB
 from engine.pyMS.centroid_detection import gradient
+from engine.util import SMConfig
 
 
 def preprocess_spectrum(mzs, ints):
@@ -84,11 +85,12 @@ coord_insert_sql = "INSERT INTO coordinates VALUES (%s, %s, %s)"
 
 class ImzmlTxtConverter(object):
 
-    def __init__(self, sm_config, ds_config, imzml_path, txt_path, coord_path=None):
+    def __init__(self, ds_name, ds_config, imzml_path, txt_path, coord_path=None):
+        self.ds_name = ds_name
         self.imzml_path = imzml_path
         self.preprocess = None
         self.image_bounds = None
-        self.sm_config = sm_config
+        self.sm_config = SMConfig.get_conf()
         self.ds_config = ds_config
 
         self.txt_path = txt_path
@@ -112,16 +114,14 @@ class ImzmlTxtConverter(object):
         print "Inserting to datasets ..."
         db = DB(self.sm_config['db'])
         try:
-            ds_name = self.ds_config['name']
-
-            ds_id_row = db.select_one(ds_id_sql, ds_name)
+            ds_id_row = db.select_one(ds_id_sql, self.ds_name)
             if not ds_id_row:
-                print 'No dataset with name {} found'.format(ds_name)
+                print 'No dataset with name {} found'.format(self.ds_name)
 
                 ds_id = db.select_one(max_ds_id_sql)[0] + 1
 
                 print "Inserting to dataset table: %d" % ds_id
-                db.insert(ds_insert_sql, [(ds_id, ds_name, self.imzml_path, self.image_bounds.to_json())])
+                db.insert(ds_insert_sql, [(ds_id, self.ds_name, self.imzml_path, self.image_bounds.to_json())])
 
                 print "Inserting to coordinates table ..."
                 with open(self.coord_path) as f:
