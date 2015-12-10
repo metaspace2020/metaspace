@@ -64,8 +64,10 @@ class SearchJob(object):
         self.sf_db_id = self.db.select_one(db_id_sql, self.ds_config['inputs']['database'])[0]
         self._choose_ds_job_id()
 
-    def run(self, input_path):
+    def run(self, input_path, clean=False):
         self.work_dir = WorkDir(self.ds_name, self.sm_config['fs']['data_dir'])
+        if clean:
+            self.work_dir.del_work_dir()
         self.work_dir.copy_input_data(input_path)
         self._read_config()
         print self.ds_config
@@ -85,7 +87,6 @@ class SearchJob(object):
         self.formulas = Formulas(self.ds_config, self.db)
 
         search_results = self._search()
-        # TODO: store the first 1k results only
         self._store_results(search_results)
         self._store_job_meta()
 

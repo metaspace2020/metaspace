@@ -37,12 +37,13 @@ def test_search_job_imzml_example(create_fill_sm_database, sm_config):
     # with patch('engine.search_job.SparkContext') as sc:
     #     sc.return_value = SparkContext(master='local[2]')
 
+    sm_config['fs']['local'] = False
     SMConfig._config_dict = sm_config
 
     db = DB(sm_config['db'])
     try:
         job = SearchJob('imzml_example_ds')
-        job.run(input_dir_path)
+        job.run(input_dir_path, clean=True)
 
         # dataset meta asserts
         rows = db.select("SELECT id, name, file_path, img_bounds from dataset")

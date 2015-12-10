@@ -21,6 +21,9 @@ class WorkDir(object):
         self.path = join(self.data_dir_path, ds_name)
         self.ds_config = None
 
+    def del_work_dir(self):
+        cmd_check('rm -rf {}', self.path)
+
     def copy_input_data(self, input_data_path):
         if not exists(self.path):
             print 'Copying {} to {}'.format(input_data_path, self.path)

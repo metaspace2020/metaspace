@@ -41,7 +41,6 @@ def drop_test_db(request):
 @pytest.fixture()
 def ds_config():
     return {
-        "name": "test_ds",
         "inputs": {
             "data_file": "test_ds.imzML",
             "database": "HMDB"
@@ -66,7 +65,8 @@ def ds_config():
             "measure_of_chaos": -1.0,
             "image_corr": -1.0,
             "pattern_match": -1.0
-        }
+        },
+        "molecules_num": 3
     }
 
 

@@ -5,6 +5,7 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 import numpy as np
+from operator import mul
 
 from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos
 from engine.pyIMS.image_measures.isotope_pattern_match import isotope_pattern_match
@@ -73,10 +74,12 @@ def filter_sf_images(sc, ds_config, ds, formulas, sf_images):
     compute_measures = get_compute_img_measures(empty_matrix, ds_config['image_generation'])
     sf_peak_intens_brcast = sc.broadcast(formulas.get_sf_peak_ints())
 
-    sf_metrics_map = (sf_images
-                      .map(lambda (sf_i, imgs): (sf_i, compute_measures(imgs, sf_peak_intens_brcast.value[sf_i])))
-                      .filter(lambda (_, metrics): np.all(np.array(metrics) > measures_thr))
-                      ).collectAsMap()
+    sf_metrics = sf_images.map(lambda (sf_i, imgs): (sf_i, compute_measures(imgs, sf_peak_intens_brcast.value[sf_i])))
+    if ds_config["molecules_num"]:
+        sf_metrics_map = dict(sf_metrics.takeOrdered(ds_config["molecules_num"],
+                                                     lambda (_, metrics): -reduce(mul, metrics)))
+    else:
+        sf_metrics_map = sf_metrics.collectAsMap()
 
     sf_iso_images_map = sf_images.filter(lambda (sf_i, _): sf_i in sf_metrics_map).collectAsMap()
     return sf_iso_images_map, sf_metrics_map
