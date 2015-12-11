@@ -65,16 +65,18 @@ def get_compute_img_measures(empty_matrix, img_gen_conf):
 
 
 def filter_sf_images(sc, ds_config, ds, formulas, sf_images):
-    measures_thr = np.array([ds_config['image_measure_thresholds']['measure_of_chaos'],
-                             ds_config['image_measure_thresholds']['image_corr'],
-                             ds_config['image_measure_thresholds']['pattern_match']])
+    # measures_thr = np.array([ds_config['image_measure_thresholds']['measure_of_chaos'],
+    #                          ds_config['image_measure_thresholds']['image_corr'],
+    #                          ds_config['image_measure_thresholds']['pattern_match']])
 
     nrows, ncols = ds.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
     compute_measures = get_compute_img_measures(empty_matrix, ds_config['image_generation'])
     sf_peak_intens_brcast = sc.broadcast(formulas.get_sf_peak_ints())
 
-    sf_metrics = sf_images.map(lambda (sf_i, imgs): (sf_i, compute_measures(imgs, sf_peak_intens_brcast.value[sf_i])))
+    sf_metrics = (sf_images
+                  .map(lambda (sf_i, imgs): (sf_i, compute_measures(imgs, sf_peak_intens_brcast.value[sf_i])))
+                  .filter(lambda (_, metrics): reduce(mul, metrics) > 0))
     if ds_config["molecules_num"]:
         sf_metrics_map = dict(sf_metrics.takeOrdered(ds_config["molecules_num"],
                                                      lambda (_, metrics): -reduce(mul, metrics)))

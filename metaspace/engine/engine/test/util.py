@@ -17,10 +17,11 @@ def spark_context(request):
     return sc
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def create_test_db():
     db_config = dict(database='postgres', user='sm', host='localhost', password='1321')
     db = DB(db_config, autocommit=True)
+    db.alter('DROP DATABASE IF EXISTS sm_test')
     db.alter('CREATE DATABASE sm_test')
     db.close()
 
@@ -28,12 +29,12 @@ def create_test_db():
     local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture()
 def drop_test_db(request):
     def fin():
         db_config = dict(database='postgres', user='sm', host='localhost', password='1321')
         db = DB(db_config, autocommit=True)
-        db.alter('DROP DATABASE sm_test')
+        db.alter('DROP DATABASE IF EXISTS sm_test')
         db.close()
     request.addfinalizer(fin)
 

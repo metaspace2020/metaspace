@@ -25,12 +25,17 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
     local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
 
     db = DB(sm_config['db'])
+    db.insert("INSERT INTO formula VALUES (%s, %s, %s, %s, %s)",
+              [(0, '00001', 10007, 'compound_name', 'C12H24O')])
     db.insert("INSERT INTO agg_formula VALUES (%s, %s, %s, %s, %s)",
               [(0, 10007, 'C12H24O', ['00001'], ['compound_name'])])
     db.close()
 
 
-def test_search_job_imzml_example(create_fill_sm_database, sm_config):
+@patch('engine.formula_img_validator.get_compute_img_measures')
+def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_database, sm_config):
+    get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
+
     # with open(join(test_dir_path, 'config.json')) as ds_config_file:
     #     ds_config = json.load(ds_config_file)
 

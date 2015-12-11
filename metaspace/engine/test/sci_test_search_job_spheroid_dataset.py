@@ -21,7 +21,7 @@ ds_name = 'spheroid_12h'
 data_dir_path = join(SMConfig.get_conf()['fs']['data_dir'], ds_name)
 input_dir_path = join(proj_root(), 'test/data/sci_test_search_job_spheroid_dataset')
 
-search_res_select = ("select sf, adduct, stats "
+SEARCH_RES_SELECT = ("select sf, adduct, stats "
                      "from iso_image_metrics s "
                      "join formula_db sm_db on sm_db.id = s.db_id "
                      "join agg_formula f on f.id = s.sf_id "
@@ -83,7 +83,7 @@ class SciTester(object):
             return {(r[0], r[1]): np.array(r[2:], dtype=float) for r in rows}
 
     def fetch_search_res(self):
-        rows = self.db.select(search_res_select, (ds_name, 'HMDB'))
+        rows = self.db.select(SEARCH_RES_SELECT, (ds_name, 'HMDB'))
         return {(r[0], r[1]): self.metr_dict_to_array(r[2]) for r in rows}
 
     def run_sci_test(self):
@@ -92,7 +92,7 @@ class SciTester(object):
     def save_sci_test_report(self):
         with open(self.base_search_res_path, 'w') as f:
             f.write('\t'.join(['sf', 'adduct'] + self.metrics) + '\n')
-            for (sf, adduct), metrics in self.fetch_search_res().iteritems():
+            for (sf, adduct), metrics in sorted(self.fetch_search_res().iteritems()):
                 f.write('\t'.join([sf, adduct] + metrics.astype(str).tolist()) + '\n')
 
         print 'Successfully saved sample dataset search report'

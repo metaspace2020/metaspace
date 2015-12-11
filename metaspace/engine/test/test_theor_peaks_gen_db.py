@@ -12,9 +12,10 @@ def create_fill_test_db(create_test_db, drop_test_db):
 
     db_config = dict(database='sm_test', user='sm', host='localhost', password='1321')
     db = DB(db_config)
-    db.alter('TRUNCATE agg_formula')
+    db.alter('TRUNCATE agg_formula CASCADE')
+    db.insert("INSERT INTO formula VALUES (%s, %s, %s, %s, %s)", [(0, '04138', 9, 'Au', 'Gold')])
     db.insert("INSERT INTO agg_formula VALUES (%s, %s, %s, %s, %s)", [(0, 9, 'Au', ['04138'], ['Gold'])])
-    db.alter('TRUNCATE theor_peaks')
+    db.alter('TRUNCATE theor_peaks CASCADE')
     db.insert("INSERT INTO theor_peaks VALUES (%s, %s, %s, %s, %s, %s, %s)",
               [(0, 9, '+H', [100, 200], [100, 10], [], [])])
     db.close()

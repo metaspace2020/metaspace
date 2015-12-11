@@ -14,9 +14,9 @@ def create_fill_test_db(create_test_db, drop_test_db):
 
     db_config = dict(database='sm_test', user='sm', host='localhost', password='1321')
     db = DB(db_config)
-    db.alter('TRUNCATE dataset')
+    db.alter('TRUNCATE dataset CASCADE')
     db.insert("INSERT INTO dataset VALUES (%s, %s, %s, %s)", [(1, 'test_ds', 'fn_path', json.dumps({}))])
-    db.alter('TRUNCATE coordinates')
+    db.alter('TRUNCATE coordinates CASCADE')
     db.close()
 
 

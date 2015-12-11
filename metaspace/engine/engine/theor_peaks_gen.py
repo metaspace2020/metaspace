@@ -96,7 +96,7 @@ class TheorPeaksGenerator(object):
         self.sm_config = sm_config
         self.ds_config = ds_config
 
-        self.theor_peaks_tmp_dir = realpath('../data/theor_peaks_gen')
+        self.theor_peaks_tmp_dir = join(sm_config['fs']['data_dir'], 'theor_peaks_gen')
         self.db = DB(sm_config['db'])
 
         db_name = self.ds_config['inputs']['database']

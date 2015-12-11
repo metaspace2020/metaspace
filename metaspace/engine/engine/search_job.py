@@ -4,7 +4,6 @@
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
-from datetime import datetime
 from pyspark import SparkContext, SparkConf
 from os.path import join, realpath, dirname
 import json
@@ -23,7 +22,6 @@ from engine.util import local_path, hdfs_path, proj_root, hdfs_prefix, cmd_check
 ds_id_sql = "SELECT id FROM dataset WHERE name = %s"
 db_id_sql = "SELECT id FROM formula_db WHERE name = %s"
 max_ds_id_sql = "SELECT COALESCE(MAX(id), -1) FROM dataset"
-insert_job_sql = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', %s)"
 
 
 class SearchJob(object):
@@ -88,7 +86,6 @@ class SearchJob(object):
 
         search_results = self._search()
         self._store_results(search_results)
-        self._store_job_meta()
 
         self.db.close()
 
@@ -98,7 +95,7 @@ class SearchJob(object):
         sf_images = compute_sf_images(sf_peak_imgs)
         sf_iso_images_map, sf_metrics_map = filter_sf_images(self.sc, self.ds_config, self.ds, self.formulas, sf_images)
 
-        return SearchResults(self.job_id, self.sf_db_id,
+        return SearchResults(self.sf_db_id, self.ds_id, self.job_id,
                              sf_iso_images_map, sf_metrics_map,
                              self.formulas.get_sf_adduct_peaksn(),
                              self.db)
@@ -113,11 +110,7 @@ class SearchJob(object):
 
     def _store_results(self, search_results):
         search_results.clear_old_results()
-        search_results.save_sf_img_metrics()
+        search_results.store_job_meta()
+        search_results.store_sf_img_metrics()
         nrows, ncols = self.ds.get_dims()
-        search_results.save_sf_iso_images(nrows, ncols)
-
-    def _store_job_meta(self):
-        print 'Storing job metadata'
-        rows = [(self.job_id, self.sf_db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
-        self.db.insert(insert_job_sql, rows)
+        search_results.store_sf_iso_images(nrows, ncols)
