@@ -36,12 +36,6 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
 def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_database, sm_config):
     get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
 
-    # with open(join(test_dir_path, 'config.json')) as ds_config_file:
-    #     ds_config = json.load(ds_config_file)
-
-    # with patch('engine.search_job.SparkContext') as sc:
-    #     sc.return_value = SparkContext(master='local[2]')
-
     sm_config['fs']['local'] = False
     SMConfig._config_dict = sm_config
 

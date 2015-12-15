@@ -8,8 +8,9 @@ import numpy as np
 from os.path import realpath, join, exists
 from os import makedirs
 import logging
+from traceback import format_exc
 
-from engine.pyMS.pyisocalc import pyisocalc
+from engine.pyMS.pyisocalc.pyisocalc import isodist, SumFormulaParser, complex_to_simple
 from engine.db import DB
 
 
@@ -24,35 +25,30 @@ logger = logging.getLogger('SM')
 
 
 def slice_array(mzs, lower, upper):
-        return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
+    return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
 
 
 class IsocalcWrapper(object):
 
     def __init__(self, isocalc_config):
-        self.logger = logging.getLogger('SM')
-        self.charges = 0
+        self.charge = 0
         if 'polarity' in isocalc_config['charge']:
             polarity = isocalc_config['charge']['polarity']
-            self.charges = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
+            self.charge = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
 
-        self.plot = False
-        self.sigma = isocalc_config['isocalc_sig']
-        self.resolution = isocalc_config['isocalc_resolution']
-        self.do_centroid = isocalc_config['isocalc_do_centroid']
+        # self.plot = False
+        # self.sigma = isocalc_config['isocalc_sig']
+        # self.resolution = isocalc_config['isocalc_resolution']
+        # self.do_centroid = isocalc_config['isocalc_do_centroid']
 
     def _isodist(self, sf_adduct):
-        return pyisocalc.isodist(sf_adduct,
-                                 plot=self.plot,
-                                 sigma=self.sigma,
-                                 charges=self.charges,
-                                 resolution=self.resolution,
-                                 do_centroid=self.do_centroid)
+        sf_adduct_obj = SumFormulaParser.parse_string(sf_adduct)
+        return isodist(sf_adduct_obj, charge=self.charge)
 
     def iso_peaks(self, sf_id, sf, adduct):
         res_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
         try:
-            sf_adduct = pyisocalc.complex_to_simple(sf + adduct)
+            sf_adduct = complex_to_simple(sf + adduct)
             isotope_ms = self._isodist(sf_adduct)
 
             centr_mzs, centr_ints = isotope_ms.get_spectrum(source='centroids')
@@ -65,8 +61,8 @@ class IsocalcWrapper(object):
             res_dict['profile_mzs'] = slice_array(profile_mzs, lower, upper)
             res_dict['profile_ints'] = slice_array(profile_ints, lower, upper)
 
-        except Exception as e:
-            self.logger.warning('(%s, %s) - %s', sf, adduct, e.message)
+        except ValueError as e:
+            logger.warning('(%s, %s) - %s', sf, adduct, e.message)
         finally:
             return sf_id, adduct, res_dict
 
@@ -125,12 +121,9 @@ class TheorPeaksGenerator(object):
         cand_sf_adduct = [sf_row + (adduct,) for sf_row in formula_list for adduct in self.adducts]
         return filter(lambda (sf_id, sf, adduct): (sf, adduct) not in stored_sf_adduct, cand_sf_adduct)
 
-    def get_iso_peaks(self):
-        return self.isocalc_wrapper.iso_peaks
-
     def generate_theor_peaks(self, sf_adduct_cand):
         logger.info('Generating missing peaks')
-        iso_peaks = self.get_iso_peaks()
+        iso_peaks = self.isocalc_wrapper.iso_peaks
         db_id = self.db_id
         sf_adduct_cand_rdd = self.sc.parallelize(sf_adduct_cand, numSlices=8)
         peak_lines = (sf_adduct_cand_rdd

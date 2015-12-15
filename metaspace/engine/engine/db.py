@@ -18,6 +18,7 @@ def db_dec(func):
     def wrapper(self, *args, **kwargs):
         res = []
         try:
+            print args[0]
             res = func(self, *args, **kwargs)
         except psycopg2.Error as e:
             # traceback.print_stack(limit=5)
