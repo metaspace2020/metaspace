@@ -48,17 +48,6 @@ with open(conf_path) as f:
 #         return 'localhost'
 
 
-# def get_webserver_host():
-#     return ['ubuntu@sm-dev-webserver']
-
-@task
-@roles('dev_web')
-def test():
-    # run('export PYTHONPATH=$PYTHONPATH:{}'.format(remote_full_path()))
-    run('python -c "import sys; print sys.path"')
-    run('supervisord -n')
-
-
 @task
 @roles('dev_web')
 def webserver_start():
@@ -85,26 +74,17 @@ def webserver_deploy():
     rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'conf'])
     run('supervisorctl restart all')
 
-    # rsync_project(local_dir='test/data/', remote_dir='/home/ubuntu/sm/test/data/', exclude=['tmp'])
 
-    # for conf_file in ['conf/config.json', 'conf/luigi.cfg', 'conf/luigi_log.cfg']:
-    #     put(local_path=conf_file, remote_path='/home/ubuntu/sm/conf/')
+# @task
+# # @hosts(get_webserver_host())
+# def webserver_setup_db():
+#     print green('========= DB setup on SM webserver =========')
+#     with cd(remote_full_path()):
+#         run('mkdir -p data/sm_db')
+#     rsync_project(local_dir=full_path('data/sm_db/'), remote_dir=remote_full_path('data/sm_db/'))
+#     run('psql -h localhost -U sm sm < {}'.format(remote_full_path('scripts/create_schema.sql')))
+#     run('psql -h localhost -U sm sm < {}'.format(remote_full_path('data/sm_db/agg_formula.sql')))
 
-
-@task
-# @hosts(get_webserver_host())
-def webserver_setup_db():
-    print green('========= DB setup on SM webserver =========')
-    with cd(remote_full_path()):
-        run('mkdir -p data/sm_db')
-    rsync_project(local_dir=full_path('data/sm_db/'), remote_dir=remote_full_path('data/sm_db/'))
-    run('psql -h localhost -U sm sm < {}'.format(remote_full_path('scripts/create_schema.sql')))
-    run('psql -h localhost -U sm sm < {}'.format(remote_full_path('data/sm_db/agg_formula.sql')))
-
-
-# @hosts(get_webserver_host())
-# def webserver_config():
-#     run('export LUIGI_CONFIG_PATH=/home/ubuntu/sm/webserver/conf/luigi_log.cfg')
 
 # def get_aws_instance_info(name):
 #     out = local('aws ec2 describe-instances\
@@ -144,7 +124,6 @@ def webserver_setup_db():
 #     # append('/root/spark/conf/spark-env.sh', text)
 
 
-# @hosts(get_spark_master_host())
 @task
 @roles('dev_master')
 def cluster_deploy():
@@ -154,12 +133,12 @@ def cluster_deploy():
     rsync_project(local_dir='engine scripts test', remote_dir='/home/ubuntu/sm/', exclude=['.*', '*.pyc', 'engine/test'])
     run('cd /home/ubuntu/sm; zip -rq engine.zip engine')
 
-@task
-def cluster_terminate(name):
-    print green('========= Destroying Spark cluster =========')
-    cmd = '''{0}/ec2/spark-ec2 --key-pair=sm_spark_cluster --identity-file={1} \
---region=eu-west-1 destroy {2}'''.format(environ['SPARK_HOME'], env['cluster_key_file'], name)
-    local(cmd)
+# @task
+# def cluster_terminate(name):
+#     print green('========= Destroying Spark cluster =========')
+#     cmd = '''{0}/ec2/spark-ec2 --key-pair=sm_spark_cluster --identity-file={1} \
+# --region=eu-west-1 destroy {2}'''.format(environ['SPARK_HOME'], env['cluster_key_file'], name)
+#     local(cmd)
 
 
 @task
@@ -220,35 +199,30 @@ def cluster_start(inst_type='c4.2xlarge', slaves=2):
         run('sbin/start-all.sh')
 
 
-@task
-def platform_start(cluster_name, slaves=1, price=0.07, components=['webserver', 'cluster']):
-    # launch
-    if 'webserver' in components:
-        execute(webserver_start)
-
-    if 'cluster' in components:
-        # execute(cluster_launch, name=cluster_name, slaves=slaves, price=price)
-        execute(cluster_launch, name=cluster_name, slaves=slaves, price=price)
-
-    # deploy and configure
-    if 'webserver' in components:
-        execute(webserver_deploy)
-
-    if 'cluster' in components:
-        # execute(cluster_config)
-        execute(cluster_deploy)
-
-
-@task
-def platform_stop(cluster_name):
-    execute(cluster_terminate, name=cluster_name)
-    execute(webserver_stop)
-
-
 # @task
-# @hosts(get_webserver_host())
-# def deploy_test_data():
-#     rsync_project(local_dir='test/data/blackbox_pipeline_test', remote_dir='/home/ubuntu/sm/test/data')
+# def platform_start(cluster_name, slaves=1, price=0.07, components=['webserver', 'cluster']):
+#     # launch
+#     if 'webserver' in components:
+#         execute(webserver_start)
+#
+#     if 'cluster' in components:
+#         # execute(cluster_launch, name=cluster_name, slaves=slaves, price=price)
+#         execute(cluster_launch, name=cluster_name, slaves=slaves, price=price)
+#
+#     # deploy and configure
+#     if 'webserver' in components:
+#         execute(webserver_deploy)
+#
+#     if 'cluster' in components:
+#         # execute(cluster_config)
+#         execute(cluster_deploy)
+#
+#
+# @task
+# def platform_stop(cluster_name):
+#     execute(cluster_terminate, name=cluster_name)
+#     execute(webserver_stop)
+
 
 
 
