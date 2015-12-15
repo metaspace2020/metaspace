@@ -1,4 +1,4 @@
-from fabric.decorators import task
+from fabric.decorators import task, roles
 
 __author__ = 'intsco'
 
@@ -16,16 +16,17 @@ from os.path import dirname, realpath, join
 
 
 env.roledefs = {
-    'web_dev': ['ubuntu@52.19.27.255'],
-    'web_stage': ['ubuntu@52.19.0.118'],
+    'dev_master': ['ubuntu@54.171.149.242'],
+    'dev_web': ['ubuntu@52.19.27.255'],
+    'stage_web': ['ubuntu@52.19.0.118']
 }
 
 
-def rel_path(path=''):
+def full_path(path=''):
     return join(dirname(__file__), path)
 
 
-def remote_rel_path(path=''):
+def remote_full_path(path=''):
     return join('/home/ubuntu/sm', path)
 
 
@@ -38,42 +39,52 @@ with open(conf_path) as f:
         env[k] = v
 
 
-def get_spark_master_host():
-    try:
-        with open('conf/SPARK_MASTER') as f:
-            return ['root@' + f.readline().strip('\n')]
-    except Exception as e:
-        print e
-        return 'localhost'
+# def get_spark_master_host():
+#     try:
+#         with open('conf/SPARK_MASTER') as f:
+#             return ['root@' + f.readline().strip('\n')]
+#     except Exception as e:
+#         print e
+#         return 'localhost'
 
 
-def get_webserver_host():
-    return ['ubuntu@sm-dev-webserver']
+# def get_webserver_host():
+#     return ['ubuntu@sm-dev-webserver']
 
 @task
-@hosts(get_webserver_host())
+@roles('dev_web')
+def test():
+    # run('export PYTHONPATH=$PYTHONPATH:{}'.format(remote_full_path()))
+    run('python -c "import sys; print sys.path"')
+    run('supervisord -n')
+
+
+@task
+@roles('dev_web')
 def webserver_start():
     print green('========= Starting webserver instance =========')
 
-    local('aws configure set default.region eu-west-1')
+    # local('aws configure set default.region eu-west-1')
     local('aws ec2 start-instances --instance-ids=i-9fdcdf32')
     sleep(60)
-
-    run('luigid --background --logdir /home/ubuntu/luigi_logs', pty=False)
+    run('supervisord -l /home/ubuntu/supervisord.log')
 
 
 @task
 def webserver_stop():
     print green('========= Stopping webserver instance =========')
-    local('aws ec2 stop-instances --instance-ids=i-9fdcdf32')
+    web_inst = 'i-9fdcdf32'
+    local('aws ec2 stop-instances --instance-ids={}'.format(web_inst))
 
 
 @task
-#@hosts(get_webserver_host())
+@roles('dev_web')
 def webserver_deploy():
     print green('========= Code deployment to SM webserver =========')
 
     rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'conf'])
+    run('supervisorctl restart all')
+
     # rsync_project(local_dir='test/data/', remote_dir='/home/ubuntu/sm/test/data/', exclude=['tmp'])
 
     # for conf_file in ['conf/config.json', 'conf/luigi.cfg', 'conf/luigi_log.cfg']:
@@ -84,58 +95,58 @@ def webserver_deploy():
 # @hosts(get_webserver_host())
 def webserver_setup_db():
     print green('========= DB setup on SM webserver =========')
-    with cd(remote_rel_path()):
+    with cd(remote_full_path()):
         run('mkdir -p data/sm_db')
-    rsync_project(local_dir=rel_path('data/sm_db/'), remote_dir=remote_rel_path('data/sm_db/'))
-    run('psql -h localhost -U sm sm < {}'.format(remote_rel_path('scripts/create_schema.sql')))
-    run('psql -h localhost -U sm sm < {}'.format(remote_rel_path('data/sm_db/agg_formula.sql')))
+    rsync_project(local_dir=full_path('data/sm_db/'), remote_dir=remote_full_path('data/sm_db/'))
+    run('psql -h localhost -U sm sm < {}'.format(remote_full_path('scripts/create_schema.sql')))
+    run('psql -h localhost -U sm sm < {}'.format(remote_full_path('data/sm_db/agg_formula.sql')))
 
 
 # @hosts(get_webserver_host())
 # def webserver_config():
 #     run('export LUIGI_CONFIG_PATH=/home/ubuntu/sm/webserver/conf/luigi_log.cfg')
 
-def get_aws_instance_info(name):
-    out = local('aws ec2 describe-instances\
-    --filter "Name=tag:Name,Values={}-master-*" "Name=instance-state-name,Values=running" '.format(name), capture=True)
-    return json.loads(out.stdout)
+# def get_aws_instance_info(name):
+#     out = local('aws ec2 describe-instances\
+#     --filter "Name=tag:Name,Values={}-master-*" "Name=instance-state-name,Values=running" '.format(name), capture=True)
+#     return json.loads(out.stdout)
 
 
-def run_spark_ec2_script(command, cluster_name, slaves=1, price=0.07):
-    cmd = '''/opt/dev/spark-1.4.0/ec2/spark-ec2 --key-pair=sm_spark_cluster --identity-file={0} --ami ami-0e451a79 \
---region=eu-west-1 --slaves={1} --instance-type=m3.large --master-instance-type=m3.medium --copy-aws-credentials \
---spot-price={2} {3} {4}'''.format(env['cluster_key_file'], slaves, price, command, cluster_name)
-    local(cmd)
+# def run_spark_ec2_script(command, cluster_name, slaves=1, price=0.07):
+#     cmd = '''/opt/dev/spark-1.4.0/ec2/spark-ec2 --key-pair=sm_spark_cluster --identity-file={0} --ami ami-0e451a79 \
+# --region=eu-west-1 --slaves={1} --instance-type=m3.large --master-instance-type=m3.medium --copy-aws-credentials \
+# --spot-price={2} {3} {4}'''.format(env['cluster_key_file'], slaves, price, command, cluster_name)
+#     local(cmd)
 
 
-@task
-def cluster_launch(name, slaves=1, price=0.07):
-    print green('========= Launching Spark cluster =========')
-    # local('rm conf/SPARK_MASTER')
+# @task
+# def cluster_launch():
+#     print green('========= Launching Spark cluster =========')
+#     # local('rm conf/SPARK_MASTER')
+#     # run_spark_ec2_script('launch', name, slaves=slaves, price=price)
+#     # info = get_aws_instance_info(name)
+#     # spark_master_host = info['Reservations'][0]['Instances'][0]['PublicDnsName']
+#
+#     print 'Spark master host: {}'.format(spark_master_host)
+#     with open('conf/SPARK_MASTER', 'w') as f:
+#         f.write(spark_master_host)
 
-    run_spark_ec2_script('launch', name, slaves=slaves, price=price)
 
-    info = get_aws_instance_info(name)
-    spark_master_host = info['Reservations'][0]['Instances'][0]['PublicDnsName']
-    print 'Spark master host: {}'.format(spark_master_host)
-    with open('conf/SPARK_MASTER', 'w') as f:
-        f.write(spark_master_host)
+# @hosts(get_spark_master_host())
+# @task
+# def cluster_config():
+#     env.host_string = get_spark_master_host()[0]
+#     print green('========= Configuring Spark cluster =========')
+#     # print get_spark_master_host()
+#     # print env.host_string
+#
+#     # text = "\nexport AWS_ACCESS_KEY_ID={} \nexport AWS_SECRET_ACCESS_KEY={}".format(environ['AWS_ACCESS_KEY_ID'], environ['AWS_SECRET_ACCESS_KEY'])
+#     # append('/root/spark/conf/spark-env.sh', text)
 
 
 # @hosts(get_spark_master_host())
 @task
-def cluster_config():
-    env.host_string = get_spark_master_host()[0]
-    print green('========= Configuring Spark cluster =========')
-    # print get_spark_master_host()
-    # print env.host_string
-
-    # text = "\nexport AWS_ACCESS_KEY_ID={} \nexport AWS_SECRET_ACCESS_KEY={}".format(environ['AWS_ACCESS_KEY_ID'], environ['AWS_SECRET_ACCESS_KEY'])
-    # append('/root/spark/conf/spark-env.sh', text)
-
-
-# @hosts(get_spark_master_host())
-@task
+@roles('dev_master')
 def cluster_deploy():
     # env.host_string = get_spark_master_host()[0]
     print green('========= Code deployment to Spark cluster =========')
@@ -151,18 +162,62 @@ def cluster_terminate(name):
     local(cmd)
 
 
-# @hosts(get_webserver_host())
 @task
-def cluster_stop(name):
+@roles('dev_master')
+def cluster_stop():
     print green('========= Stopping Spark cluster =========')
-    run_spark_ec2_script('stop', name)
+    HADOOP_HOME = '/opt/dev/hadoop-2.6.2'
+    SPARK_HOME = '/opt/dev/spark-1.5.1-bin-hadoop2.6'
+
+    print 'Stopping HDFS and Spark...'
+    run('{}/sbin/stop-dfs.sh'.format(HADOOP_HOME))
+    run('{}/sbin/stop-all.sh'.format(SPARK_HOME))
+
+    print 'Terminating slaves...'
+    out = run('cat {}/etc/hadoop/slaves'.format(HADOOP_HOME))
+    slaves = filter(lambda h: h != 'localhost', [h.strip() for h in out.split('\n')])
+
+    desc_cmd = 'aws ec2 describe-instances --filters "Name=private-dns-name,Values={}"'.format(','.join(slaves))
+    out = json.loads(local(desc_cmd, capture=True))
+    for inst_out in out['Reservations'][0]['Instances']:
+        inst_id = inst_out['InstanceId']
+        term_cmd = 'aws ec2 terminate-instances --instance-ids {}'.format(inst_id)
+        local(term_cmd)
+
+    print 'Stopping master...'
+    master_inst = 'i-54c44cd9'
+    stop_cmd = 'aws ec2 stop-instances --instance-ids={}'.format(master_inst)
+    local(stop_cmd)
 
 
-@hosts(get_webserver_host())
 @task
-def cluster_start(name):
+@roles('dev_master')
+def cluster_start(inst_type='c4.2xlarge', slaves=2):
     print green('========= Starting Spark cluster =========')
-    run_spark_ec2_script('start', name)
+    HADOOP_HOME = '/opt/dev/hadoop-2.6.2'
+    SPARK_HOME = '/opt/dev/spark-1.5.1-bin-hadoop2.6'
+
+    print 'Starting master...'
+    master_inst = 'i-54c44cd9'
+    local('aws ec2 start-instances --instance-ids={}'.format(master_inst))
+    sleep(60)
+
+    run_slave_cmd = ('aws ec2 run-instances --image-id ami-6d2a8a1e --instance-type {} --count {} '
+                     '--key-name sm_spark_cluster --security-group-ids sg-921b7ff6').format(inst_type, slaves)
+    out = json.loads(local(run_slave_cmd, capture=True))
+    slave_hosts = [inst_out['PrivateDnsName'] for inst_out in out['Instances']]
+
+    with cd(HADOOP_HOME):
+        run('echo "localhost" > etc/hadoop/slaves')
+        for host in slave_hosts:
+            run('echo "{}" >> etc/hadoop/slaves'.format(host))
+        run('sbin/start-dfs.sh')
+
+    with cd(SPARK_HOME):
+        run('echo "localhost" > conf/slaves')
+        for host in slave_hosts:
+            run('echo "{}" >> conf/slaves'.format(host))
+        run('sbin/start-all.sh')
 
 
 @task
@@ -180,7 +235,7 @@ def platform_start(cluster_name, slaves=1, price=0.07, components=['webserver', 
         execute(webserver_deploy)
 
     if 'cluster' in components:
-        execute(cluster_config)
+        # execute(cluster_config)
         execute(cluster_deploy)
 
 
@@ -190,10 +245,10 @@ def platform_stop(cluster_name):
     execute(webserver_stop)
 
 
-@task
-@hosts(get_webserver_host())
-def deploy_test_data():
-    rsync_project(local_dir='test/data/blackbox_pipeline_test', remote_dir='/home/ubuntu/sm/test/data')
+# @task
+# @hosts(get_webserver_host())
+# def deploy_test_data():
+#     rsync_project(local_dir='test/data/blackbox_pipeline_test', remote_dir='/home/ubuntu/sm/test/data')
 
 
 

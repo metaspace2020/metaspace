@@ -19,7 +19,7 @@ import tornado.httpserver
 import tornpsql
 
 import handlers
-from engine.util import my_print
+from util import my_print
 
 
 # get list of engine files
@@ -197,4 +197,6 @@ def main():
 
 
 if __name__ == "__main__":
+    import sys
+    print '\n'.join(sys.path)
     main()

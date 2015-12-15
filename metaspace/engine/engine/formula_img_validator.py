@@ -65,10 +65,6 @@ def get_compute_img_measures(empty_matrix, img_gen_conf):
 
 
 def filter_sf_images(sc, ds_config, ds, formulas, sf_images):
-    # measures_thr = np.array([ds_config['image_measure_thresholds']['measure_of_chaos'],
-    #                          ds_config['image_measure_thresholds']['image_corr'],
-    #                          ds_config['image_measure_thresholds']['pattern_match']])
-
     nrows, ncols = ds.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
     compute_measures = get_compute_img_measures(empty_matrix, ds_config['image_generation'])
