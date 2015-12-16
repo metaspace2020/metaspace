@@ -4,6 +4,10 @@ from os.path import realpath, dirname, join
 import os
 import json
 from subprocess import check_call, call
+import logging
+
+
+logger = logging.getLogger('SM')
 
 
 def proj_root():
@@ -39,13 +43,15 @@ def hdfs_prefix():
     return '{}/bin/hdfs dfs '.format(os.environ['HADOOP_HOME'])
 
 
+def _cmd(template, call_func, *args):
+    cmd_str = template.format(*args)
+    logger.info('Call "%s"', cmd_str)
+    return call_func(cmd_str.split())
+
+
 def cmd_check(template, *args):
-    cmd = template.format(*args)
-    print 'Call ', cmd
-    return check_call(cmd.split())
+    return _cmd(template, check_call, *args)
 
 
 def cmd(template, *args):
-    cmd = template.format(*args)
-    print 'Call ', cmd
-    return call(cmd.split())
+    return _cmd(template, call, *args)

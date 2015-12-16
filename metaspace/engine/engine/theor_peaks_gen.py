@@ -7,6 +7,7 @@
 import numpy as np
 from os.path import realpath, join, exists
 from os import makedirs
+import logging
 
 from engine.pyMS.pyisocalc import pyisocalc
 from engine.db import DB
@@ -19,6 +20,9 @@ sf_id_sf_adduct_sql = ('SELECT sf_id, sf, adduct FROM theor_peaks p '
                        'WHERE p.db_id = %s')
 
 
+logger = logging.getLogger('SM')
+
+
 def slice_array(mzs, lower, upper):
         return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
 
@@ -26,6 +30,7 @@ def slice_array(mzs, lower, upper):
 class IsocalcWrapper(object):
 
     def __init__(self, isocalc_config):
+        self.logger = logging.getLogger('SM')
         self.charges = 0
         if 'polarity' in isocalc_config['charge']:
             polarity = isocalc_config['charge']['polarity']
@@ -61,8 +66,7 @@ class IsocalcWrapper(object):
             res_dict['profile_ints'] = slice_array(profile_ints, lower, upper)
 
         except Exception as e:
-            print sf, adduct
-            print e.message
+            self.logger.warning('(%s, %s) - %s', sf, adduct, e.message)
         finally:
             return sf_id, adduct, res_dict
 
@@ -83,7 +87,7 @@ def format_peak_str(db_id, sf_id, adduct, peak_dict):
 
 def valid_sf_adduct(sf, adduct):
     if not (sf and adduct):
-        print 'Wrong arguments for pyisocalc: sf={} or adduct={}'.format(sf, adduct)
+        logger.warning('Wrong arguments for pyisocalc: sf={} or adduct={}', sf, adduct)
         return False
     else:
         return True
@@ -106,6 +110,7 @@ class TheorPeaksGenerator(object):
         self.isocalc_wrapper = IsocalcWrapper(self.ds_config['isotope_generation'])
 
     def run(self):
+        logger.info('Running theoretical peaks generation')
         sfid_sf_adduct = self.db.select(sf_id_sf_adduct_sql, self.db_id)
         stored_sf_adduct_set = set(map(lambda t: t[1:3], sfid_sf_adduct))
         sf_adduct_cand = self.find_sf_adduct_cand(stored_sf_adduct_set)
@@ -115,6 +120,7 @@ class TheorPeaksGenerator(object):
             self._import_theor_peaks_to_db(peak_lines)
 
     def find_sf_adduct_cand(self, stored_sf_adduct):
+        logger.info('Checking theoretical peaks saved in the DB')
         formula_list = self.db.select(agg_formula_sql, self.db_id)
         cand_sf_adduct = [sf_row + (adduct,) for sf_row in formula_list for adduct in self.adducts]
         return filter(lambda (sf_id, sf, adduct): (sf, adduct) not in stored_sf_adduct, cand_sf_adduct)
@@ -123,6 +129,7 @@ class TheorPeaksGenerator(object):
         return self.isocalc_wrapper.iso_peaks
 
     def generate_theor_peaks(self, sf_adduct_cand):
+        logger.info('Generating missing peaks')
         iso_peaks = self.get_iso_peaks()
         db_id = self.db_id
         sf_adduct_cand_rdd = self.sc.parallelize(sf_adduct_cand, numSlices=8)
@@ -134,6 +141,7 @@ class TheorPeaksGenerator(object):
         return peak_lines
 
     def _import_theor_peaks_to_db(self, peak_lines):
+        logger.info('Saving new peaks to the DB')
         if not exists(self.theor_peaks_tmp_dir):
             makedirs(self.theor_peaks_tmp_dir)
 

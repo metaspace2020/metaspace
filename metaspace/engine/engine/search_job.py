@@ -7,6 +7,8 @@
 from pyspark import SparkContext, SparkConf
 from os.path import join, realpath, dirname
 import json
+import logging
+from pprint import pformat
 
 from engine.db import DB
 from engine.dataset import Dataset
@@ -22,6 +24,9 @@ from engine.util import local_path, hdfs_path, proj_root, hdfs_prefix, cmd_check
 ds_id_sql = "SELECT id FROM dataset WHERE name = %s"
 db_id_sql = "SELECT id FROM formula_db WHERE name = %s"
 max_ds_id_sql = "SELECT COALESCE(MAX(id), -1) FROM dataset"
+
+
+logger = logging.getLogger('SM')
 
 
 class SearchJob(object):
@@ -42,6 +47,7 @@ class SearchJob(object):
             self.ds_config = json.load(f)
 
     def _configure_spark(self):
+        logger.info('Configuring Spark')
         sconf = SparkConf()
         sconf.set("spark.executor.memory", self.sm_config['spark']['executor.memory'])
         sconf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
@@ -59,6 +65,7 @@ class SearchJob(object):
         self.job_id = self.ds_id
 
     def _init_db(self):
+        logger.info('Connecting to the DB')
         self.db = DB(self.sm_config['db'])
         self.sf_db_id = self.db.select_one(db_id_sql, self.ds_config['inputs']['database'])[0]
         self._choose_ds_job_id()
@@ -69,7 +76,7 @@ class SearchJob(object):
             self.work_dir.del_work_dir()
         self.work_dir.copy_input_data(input_path)
         self._read_config()
-        print self.ds_config
+        logger.info('Dataset config:\n%s', pformat(self.ds_config))
 
         self._configure_spark()
         self._init_db()
@@ -91,6 +98,7 @@ class SearchJob(object):
         self.db.close()
 
     def _search(self):
+        logger.info('Running molecule search')
         sf_sp_intens = sample_spectra(self.sc, self.ds, self.formulas)
         sf_peak_imgs = compute_sf_peak_images(self.ds, sf_sp_intens)
         sf_images = compute_sf_images(sf_peak_imgs)
@@ -103,13 +111,14 @@ class SearchJob(object):
 
     def _copy_txt_to_hdfs(self, localpath, hdfspath):
         if not self.sm_config['fs']['local']:
-            print 'Coping DS textfile to HDFS...'
+            logger.info('Coping DS text file to HDFS...')
             return_code = cmd(hdfs_prefix() + '-test -e {}', hdfs_path(self.work_dir.path))
             if return_code:
                 cmd_check(hdfs_prefix() + '-mkdir -p {}', hdfs_path(self.work_dir.path))
                 cmd_check(hdfs_prefix() + '-copyFromLocal {} {}', local_path(localpath), hdfs_path(hdfspath))
 
     def _store_results(self, search_results):
+        logger.info('Storing search results to the DB')
         search_results.clear_old_results()
         search_results.store_job_meta()
         search_results.store_sf_img_metrics()

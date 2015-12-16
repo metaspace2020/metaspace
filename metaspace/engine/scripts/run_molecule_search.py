@@ -6,8 +6,7 @@
 """
 import argparse
 import time
-import json
-from os.path import join, dirname
+import logging
 
 from engine.search_job import SearchJob
 from engine.util import SMConfig
@@ -23,13 +22,22 @@ if __name__ == "__main__":
     start = time.time()
     args = parser.parse_args()
 
-    print "Processing..."
+    logger = logging.getLogger('SM')
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    frm = logging.Formatter(('%(asctime)s - %(levelname)s - %(name)s - '
+                             '%(filename)s:%(lineno)d - %(message)s'))
+    ch.setFormatter(frm)
+    logger.addHandler(ch)
 
     SMConfig.set_path(args.sm_config_path)
+
+    logger.info("Processing...")
 
     job = SearchJob(args.ds_name)
     job.run(args.input_path, clean=args.clean)
 
-    print "All done!"
+    logger.info("All done!")
     time_spent = time.time() - start
-    print 'Time spent: %d mins %d secs' % (int(round(time_spent/60)), int(round(time_spent%60)))
+    logger.info('Time spent: %d mins %d secs', int(round(time_spent/60)), int(round(time_spent%60)))
