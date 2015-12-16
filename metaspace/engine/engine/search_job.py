@@ -46,7 +46,8 @@ class SearchJob(object):
         sconf.set("spark.executor.memory", self.sm_config['spark']['executor.memory'])
         sconf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
         self.sc = SparkContext(master=self.sm_config['spark']['master'], conf=sconf, appName='SM engine')
-        self.sc.addPyFile(join(local_path(proj_root()), 'engine.zip'))
+        if not self.sm_config['spark']['master'].startswith('local'):
+            self.sc.addPyFile(join(local_path(proj_root()), 'engine.zip'))
 
     def _choose_ds_job_id(self):
         ds_id_row = self.db.select_one(ds_id_sql, self.ds_name)
