@@ -10,11 +10,11 @@ from os import makedirs
 import logging
 from traceback import format_exc
 
-from engine.pyMS.pyisocalc.pyisocalc import isodist, SumFormulaParser, complex_to_simple
+from engine.pyMS.pyisocalc.pyisocalc import complete_isodist, complex_to_simple, SumFormulaParser
 from engine.db import DB
 
 
-db_id_sql = '''SELECT id FROM formula_db WHERE name = %s'''
+db_id_sql = 'SELECT id FROM formula_db WHERE name = %s'
 agg_formula_sql = 'SELECT id, sf FROM agg_formula where db_id = %s'
 sf_id_sf_adduct_sql = ('SELECT sf_id, sf, adduct FROM theor_peaks p '
                        'JOIN agg_formula f on p.sf_id = f.id and p.db_id = f.db_id '
@@ -35,21 +35,18 @@ class IsocalcWrapper(object):
         if 'polarity' in isocalc_config['charge']:
             polarity = isocalc_config['charge']['polarity']
             self.charge = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
-
-        # self.plot = False
-        # self.sigma = isocalc_config['isocalc_sig']
-        # self.resolution = isocalc_config['isocalc_resolution']
-        # self.do_centroid = isocalc_config['isocalc_do_centroid']
+            self.sigma = isocalc_config['isocalc_sigma']
 
     def _isodist(self, sf_adduct):
-        sf_adduct_obj = SumFormulaParser.parse_string(sf_adduct)
-        return isodist(sf_adduct_obj, charge=self.charge)
+        sf_adduct_simplified = complex_to_simple(sf_adduct)
+        sf_adduct_obj = SumFormulaParser.parse_string(sf_adduct_simplified)
+        # TODO: fwhm changes patterns so should be stored in the DB as well
+        return complete_isodist(sf_adduct_obj, sigma=self.sigma, charge=self.charge)
 
     def iso_peaks(self, sf_id, sf, adduct):
         res_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
         try:
-            sf_adduct = complex_to_simple(sf + adduct)
-            isotope_ms = self._isodist(sf_adduct)
+            isotope_ms = self._isodist(sf + adduct)
 
             centr_mzs, centr_ints = isotope_ms.get_spectrum(source='centroids')
             res_dict['centr_mzs'] = centr_mzs
@@ -60,6 +57,11 @@ class IsocalcWrapper(object):
             upper = profile_mzs.searchsorted(centr_mzs, 'r') + 3
             res_dict['profile_mzs'] = slice_array(profile_mzs, lower, upper)
             res_dict['profile_ints'] = slice_array(profile_ints, lower, upper)
+        except (ValueError, TypeError) as e:
+            # print format_exc()
+            print sf, adduct, e.message
+        except Exception as e:
+            raise Exception(e.message)
 
         except ValueError as e:
             logger.warning('(%s, %s) - %s', sf, adduct, e.message)

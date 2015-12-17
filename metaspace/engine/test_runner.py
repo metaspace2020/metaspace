@@ -32,6 +32,6 @@ if __name__ == '__main__':
         local('python test/sci_test_search_job_spheroid_dataset.py --run')
 
     if args.unit or args.all or args.regr or args.sci:
-        print 'All tests finished successfully'
+        print 'ALL TESTS FINISHED SUCCESSFULLY'
     else:
         parser.print_help()

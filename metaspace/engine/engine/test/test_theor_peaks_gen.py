@@ -5,17 +5,6 @@ from engine.pyMS.mass_spectrum import MassSpectrum
 from engine.theor_peaks_gen import format_peak_str, TheorPeaksGenerator, IsocalcWrapper
 from engine.test.util import spark_context, sm_config, ds_config
 
-isocalc_config = {
-    "adducts": ["+H", "+Na", "+K"],
-    "charge": {
-        "polarity": "+",
-        "n_charges": 1
-    },
-    "isocalc_sig": 0.01,
-    "isocalc_resolution": 200000,
-    "isocalc_do_centroid": True
-}
-
 
 def get_spectrum_side_effect(source):
     if source == 'centroids':
@@ -27,13 +16,13 @@ def get_spectrum_side_effect(source):
                           1., 5., 9., 10., 9., 5., 1., 100500.]))
 
 
-@mock.patch('engine.pyMS.pyisocalc.pyisocalc.isodist')
-def test_isocalc_get_iso_peaks_correct_sf_adduct(isocalc_isodist):
+@mock.patch('engine.theor_peaks_gen.complete_isodist')
+def test_isocalc_get_iso_peaks_correct_sf_adduct(isocalc_isodist, ds_config):
     mock_mass_sp = MagicMock(spec=MassSpectrum)
     mock_mass_sp.get_spectrum.side_effect = get_spectrum_side_effect
     isocalc_isodist.return_value = mock_mass_sp
 
-    isocalc_wrapper = IsocalcWrapper(isocalc_config)
+    isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
     sf_id, adduct, peak_dict = isocalc_wrapper.iso_peaks(9, 'Au', '+H')
 
     assert sf_id == 9
@@ -50,13 +39,13 @@ def test_isocalc_get_iso_peaks_correct_sf_adduct(isocalc_isodist):
     assert_array_almost_equal(peak_dict['profile_ints'], get_spectrum_side_effect('profile')[1][1:-1])
 
 
-@mock.patch('engine.pyMS.pyisocalc.pyisocalc.isodist')
-def test_isocalc_get_iso_peaks_wrong_sf_adduct(isocalc_isodist):
+@mock.patch('engine.theor_peaks_gen.complete_isodist')
+def test_isocalc_get_iso_peaks_wrong_sf_adduct(isocalc_isodist, ds_config):
     mock_mass_sp = MagicMock(spec=MassSpectrum)
     mock_mass_sp.get_spectrum.side_effect = get_spectrum_side_effect
     isocalc_isodist.return_value = mock_mass_sp
 
-    isocalc_wrapper = IsocalcWrapper(isocalc_config)
+    isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
     emtpy_iso_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
     assert isocalc_wrapper.iso_peaks(9, None, '+H') == (9, '+H', emtpy_iso_dict)
     assert isocalc_wrapper.iso_peaks(9, 'Au', None) == (9, None, emtpy_iso_dict)
@@ -90,16 +79,14 @@ def get_iso_peaks_side_effect():
 
 
 @mock.patch('engine.theor_peaks_gen.DB')
-def test_generate_theor_peaks(mock_db, spark_context, sm_config, ds_config):
-    mock_db_inst = mock_db.return_value
-    mock_db_inst.select_one.return_value = [0]
+def test_generate_theor_peaks(mockDB, spark_context, sm_config, ds_config):
+    mock_db = mockDB.return_value
+    mock_db.select_one.return_value = [0]
 
-    def get_iso_peaks_mock():
-        return lambda *args: (9, '+Na', {'centr_mzs': [100.], 'centr_ints': [1000.],
-                                               'profile_mzs': [90., 100., 110.],
-                                               'profile_ints': [1., 1000., 1001.]})
     peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    peaks_gen.get_iso_peaks = get_iso_peaks_mock
+    peaks_gen.isocalc_wrapper.iso_peaks = lambda *args: (9, '+Na', {'centr_mzs': [100.], 'centr_ints': [1000.],
+                                                                    'profile_mzs': [90., 100., 110.],
+                                                                    'profile_ints': [1., 1000., 1001.]})
 
     sf_adduct_cand = [(9, 'Au', '+Na')]
     peak_lines = peaks_gen.generate_theor_peaks(sf_adduct_cand)

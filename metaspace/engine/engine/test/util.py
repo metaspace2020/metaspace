@@ -52,9 +52,8 @@ def ds_config():
                 "polarity": "+",
                 "n_charges": 1
             },
-            "isocalc_sig": 0.01,
-            "isocalc_resolution": 200000,
-            "isocalc_do_centroid": True
+            "isocalc_sigma": 0.01,
+            "isocalc_points_per_mz": 10000
         },
         "image_generation": {
             "ppm": 1.0,

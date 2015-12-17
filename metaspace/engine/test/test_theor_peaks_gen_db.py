@@ -21,16 +21,14 @@ def create_fill_test_db(create_test_db, drop_test_db):
     db.close()
 
 
-@patch('engine.theor_peaks_gen.TheorPeaksGenerator.get_iso_peaks')
-def test_theor_peaks_generator_run_1(get_iso_peaks_mock, create_fill_test_db, spark_context, sm_config, ds_config):
-    get_iso_peaks_mock.return_value = lambda *ars: (9, '+Na', {'centr_mzs': [100., 200.],
-                                                               'centr_ints': [10., 1.],
-                                                                'profile_mzs': [],
-                                                                'profile_ints': []})
-
+def test_theor_peaks_generator_run_1(create_fill_test_db, spark_context, sm_config, ds_config):
     ds_config["isotope_generation"]["adducts"] = ["+H", "+Na"]
-
     theor_peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
+    theor_peaks_gen.isocalc_wrapper.iso_peaks = lambda *args: (9, '+Na', {'centr_mzs': [100., 200.],
+                                                                          'centr_ints': [10., 1.],
+                                                                          'profile_mzs': [],
+                                                                          'profile_ints': []})
+
     theor_peaks_gen.run()
 
     db = DB(sm_config['db'])
@@ -43,13 +41,11 @@ def test_theor_peaks_generator_run_1(get_iso_peaks_mock, create_fill_test_db, sp
     db.close()
 
 
-@patch('engine.theor_peaks_gen.TheorPeaksGenerator.get_iso_peaks')
-def test_theor_peaks_generator_run_2(get_iso_peaks_mock, create_fill_test_db, spark_context, sm_config, ds_config):
-    get_iso_peaks_mock.return_value = lambda *args: None
-
+def test_theor_peaks_generator_run_2(create_fill_test_db, spark_context, sm_config, ds_config):
     ds_config["isotope_generation"]["adducts"] = ["+H"]
-
     theor_peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
+    theor_peaks_gen.isocalc_wrapper.iso_peaks = lambda *args: None
+
     theor_peaks_gen.run()
 
     db = DB(sm_config['db'])
