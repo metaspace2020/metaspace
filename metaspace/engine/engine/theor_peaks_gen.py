@@ -59,11 +59,7 @@ class IsocalcWrapper(object):
             res_dict['profile_mzs'] = slice_array(profile_mzs, lower, upper)
             res_dict['profile_ints'] = slice_array(profile_ints, lower, upper)
         except (ValueError, TypeError) as e:
-            # print format_exc()
             print sf, adduct, e.message
-        except Exception as e:
-            raise Exception(e.message)
-
         except ValueError as e:
             logger.warning('(%s, %s) - %s', sf, adduct, e.message)
         finally:
