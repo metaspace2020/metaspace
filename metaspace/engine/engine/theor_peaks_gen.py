@@ -35,13 +35,14 @@ class IsocalcWrapper(object):
         if 'polarity' in isocalc_config['charge']:
             polarity = isocalc_config['charge']['polarity']
             self.charge = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
-            self.sigma = isocalc_config['isocalc_sigma']
+        self.sigma = isocalc_config['isocalc_sigma']
+        self.points_per_mz = isocalc_config['isocalc_points_per_mz']
 
     def _isodist(self, sf_adduct):
         sf_adduct_simplified = complex_to_simple(sf_adduct)
         sf_adduct_obj = SumFormulaParser.parse_string(sf_adduct_simplified)
-        # TODO: fwhm changes patterns so should be stored in the DB as well
-        return complete_isodist(sf_adduct_obj, sigma=self.sigma, charge=self.charge)
+        # TODO: sigma, points_per_mz change patterns so should be stored in the DB as well
+        return complete_isodist(sf_adduct_obj, sigma=self.sigma, charge=self.charge, pts_per_mz=self.points_per_mz)
 
     def iso_peaks(self, sf_id, sf, adduct):
         res_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
