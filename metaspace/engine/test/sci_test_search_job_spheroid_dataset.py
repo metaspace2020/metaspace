@@ -33,14 +33,14 @@ SEARCH_RES_SELECT = ("select sf, adduct, stats "
 
 def compare_search_results(base_search_res, search_res):
     missed_sf_adduct = set(base_search_res.keys()).difference(set(search_res.keys()))
-    print 'Missed formulas: {:.1f}%'.format(len(missed_sf_adduct) / len(base_search_res) * 100)
+    print 'MISSED FORMULAS: {:.1f}%'.format(len(missed_sf_adduct) / len(base_search_res) * 100)
     print list(missed_sf_adduct)
 
     new_sf_adduct = set(search_res.keys()).difference(set(base_search_res.keys()))
-    print 'False discovery: {:.1f}%'.format(len(new_sf_adduct) / len(base_search_res) * 100)
+    print 'FALSE DISCOVERY: {:.1f}%'.format(len(new_sf_adduct) / len(base_search_res) * 100)
     print list(new_sf_adduct)
 
-    print 'Differences in metrics'
+    print 'DIFFERENCE IN METRICS'
     for b_sf_add, b_metr in base_search_res.iteritems():
         if b_sf_add in search_res.keys():
             metr = search_res[b_sf_add]

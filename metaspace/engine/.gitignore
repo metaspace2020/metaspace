@@ -4,9 +4,8 @@
 *.pkl
 *.zip
 conf
-test/data
 data/*
-data
 docs/_build
 docs/_static
 docs/_templates
+webapp/static/js/amcharts/plugins/dataloader/examples/data/

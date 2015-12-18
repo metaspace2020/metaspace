@@ -9,8 +9,12 @@ from os.path import exists, splitext, join
 import tempfile
 import json
 import glob
+import logging
 
 from engine.util import local_path, hdfs_path, proj_root, hdfs_prefix, cmd_check, cmd, SMConfig
+
+
+logger = logging.getLogger('SM')
 
 
 class WorkDir(object):
@@ -26,7 +30,7 @@ class WorkDir(object):
 
     def copy_input_data(self, input_data_path):
         if not exists(self.path):
-            print 'Copying {} to {}'.format(input_data_path, self.path)
+            logger.info('Copying %s to %s', input_data_path, self.path)
 
             if input_data_path.startswith('http'):
                 tmp_path = join(self.data_dir_path, 'tmp')
@@ -39,7 +43,7 @@ class WorkDir(object):
             else:
                 copytree(input_data_path, self.path)
         else:
-            print 'Path {} already exists'.format(self.path)
+            logger.info('Path %s already exists', self.path)
 
     @property
     def ds_config_path(self):

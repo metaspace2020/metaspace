@@ -7,7 +7,9 @@
 import psycopg2
 import psycopg2.extras
 from functools import wraps
-import traceback
+from traceback import format_exc
+
+from engine.util import logger
 
 
 def db_dec(func):
@@ -16,11 +18,11 @@ def db_dec(func):
     def wrapper(self, *args, **kwargs):
         res = []
         try:
+            logger.debug(args[0])
             res = func(self, *args, **kwargs)
         except psycopg2.Error as e:
-            traceback.print_stack(limit=5)
-            print e.message
-            print 'SQL: ', args[0]
+            logger.error(format_exc)
+            logger.error('SQL: %s', args[0])
         else:
             self.conn.commit()
         finally:

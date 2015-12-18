@@ -9,6 +9,8 @@ import json
 from collections import OrderedDict
 from datetime import datetime
 
+from engine.util import logger
+
 
 insert_sf_metrics_sql = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s)'
 insert_sf_iso_imgs_sql = 'INSERT INTO iso_image VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
@@ -30,11 +32,12 @@ class SearchResults(object):
         self.sf_metrics_map = sf_metrics_map
 
     def clear_old_results(self):
-        print 'Clearing old job results'
+        logger.info('Clearing old job results')
         self.db.alter(clear_iso_image_sql, self.job_id)
         self.db.alter(clear_iso_image_metrics_sql, self.job_id)
 
     def store_sf_img_metrics(self):
+        logger.info('Storing iso image metrics')
         rows = []
         for sf_i, metrics in self.sf_metrics_map.iteritems():
             sf_id, adduct, peaks_n = self.sf_adduct_peaksn[sf_i]
@@ -45,6 +48,7 @@ class SearchResults(object):
         self.db.insert(insert_sf_metrics_sql, rows)
 
     def store_sf_iso_images(self, nrows, ncols):
+        logger.info('Storing iso images')
         rows = []
         for sf_i, img_list in self.sf_iso_images_map.iteritems():
             sf_id, adduct, _ = self.sf_adduct_peaksn[sf_i]
@@ -61,7 +65,7 @@ class SearchResults(object):
 
     # TODO: add tests
     def store_job_meta(self):
-        print 'Storing job metadata'
+        logger.info('Storing job metadata')
         self.db.alter(CLEAR_JOB_SQL, self.job_id)
         rows = [(self.job_id, self.sf_db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self.db.insert(INSERT_JOB_SQL, rows)
