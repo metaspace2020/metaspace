@@ -48,6 +48,7 @@ class IsocalcWrapper(object):
         self.points_per_mz = isocalc_config['isocalc_points_per_mz']
 
     def _isodist(self, sf_adduct):
+        # TODO: move the next two calls to the lib
         sf_adduct_simplified = complex_to_simple(sf_adduct)
         sf_adduct_obj = SumFormulaParser.parse_string(sf_adduct_simplified)
         # TODO: sigma, points_per_mz change patterns so should be stored in the DB as well

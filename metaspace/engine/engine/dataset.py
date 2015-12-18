@@ -7,19 +7,7 @@
 import numpy as np
 from codecs import open
 
-from engine.util import local_path, hdfs_path
-
-
-def txt_to_spectrum(s):
-    """Converts a text string in the format to a spectrum in the form of two arrays:
-    array of m/z values and array of partial sums of intensities.
-
-    :param s: string id|mz1 mz2 ... mzN|int1 int2 ... intN
-    :returns: triple spectrum_id, mzs, cumulative sum of intensities
-    """
-    arr = s.strip().split("|")
-    intensities = np.fromstring("0 " + arr[2], sep=' ')
-    return int(arr[0]), np.fromstring(arr[1], sep=' '), np.cumsum(intensities)
+from engine.util import local_path, hdfs_path, logger
 
 
 class Dataset(object):
@@ -68,8 +56,23 @@ class Dataset(object):
         return (self.max_y - self.min_y + 1,
                 self.max_x - self.min_x + 1)
 
+    @staticmethod
+    def txt_to_spectrum(s):
+        """Converts a text string in the format to a spectrum in the form of two arrays:
+        array of m/z values and array of partial sums of intensities.
+
+        :param s: string id|mz1 mz2 ... mzN|int1 int2 ... intN
+        :returns: triple spectrum_id, mzs, cumulative sum of intensities
+        """
+        arr = s.strip().split("|")
+        intensities = np.fromstring("0 " + arr[2], sep=' ')
+        return int(arr[0]), np.fromstring(arr[1], sep=' '), np.cumsum(intensities)
+
     def get_spectra(self):
+        txt_to_spectrum = self.txt_to_spectrum
         if self.sm_config['fs']['local']:
+            logger.info('Converting txt to spectrum rdd from %s', local_path(self.ds_path))
             return self.sc.textFile(local_path(self.ds_path)).map(txt_to_spectrum)
         else:
+            logger.info('Converting txt to spectrum rdd from %s', hdfs_path(self.ds_path))
             return self.sc.textFile(hdfs_path(self.ds_path), minPartitions=8).map(txt_to_spectrum)

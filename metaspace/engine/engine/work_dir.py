@@ -9,12 +9,8 @@ from os.path import exists, splitext, join
 import tempfile
 import json
 import glob
-import logging
 
-from engine.util import local_path, hdfs_path, proj_root, hdfs_prefix, cmd_check, cmd, SMConfig
-
-
-logger = logging.getLogger('SM')
+from engine.util import local_path, hdfs_path, proj_root, hdfs_prefix, cmd_check, cmd, SMConfig, logger
 
 
 class WorkDir(object):

@@ -20,6 +20,7 @@ from engine.imzml_txt_converter import ImzmlTxtConverter
 from engine.work_dir import WorkDir
 from engine.util import local_path, hdfs_path, proj_root, hdfs_prefix, cmd_check, cmd, SMConfig, logger
 
+
 ds_id_sql = "SELECT id FROM dataset WHERE name = %s"
 db_id_sql = "SELECT id FROM formula_db WHERE name = %s"
 max_ds_id_sql = "SELECT COALESCE(MAX(id), -1) FROM dataset"

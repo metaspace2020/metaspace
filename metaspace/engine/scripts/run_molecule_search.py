@@ -9,6 +9,7 @@ import time
 
 from engine.search_job import SearchJob
 from engine.util import SMConfig, logger
+from pprint import pformat
 
 
 if __name__ == "__main__":
@@ -22,6 +23,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     SMConfig.set_path(args.sm_config_path)
+    logger.debug('Using SM config:\n%s', pformat(SMConfig.get_conf()))
 
     logger.info("Processing...")
 

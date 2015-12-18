@@ -12,6 +12,7 @@ from os.path import join
 def proj_root():
     return dirname(dirname(__file__))
 
+
 fileConfig(join(proj_root(), 'conf/sm_log.cfg'))
 logger = logging.getLogger(name='SM')
 

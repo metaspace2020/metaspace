@@ -18,10 +18,5 @@
     "q": 99,
     "do_preprocessing": false
   },
-  "image_measure_thresholds": {
-    "measure_of_chaos": -1.0,
-    "image_corr": -1.0,
-    "pattern_match": -1.0
-  },
   "molecules_num": null
 }

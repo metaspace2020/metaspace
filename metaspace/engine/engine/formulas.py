@@ -6,6 +6,8 @@
 """
 import numpy as np
 
+from engine.util import logger
+
 
 THEOR_PEAKS_SQL = ('SELECT sf_id, adduct, centr_mzs, centr_ints '
                    'FROM theor_peaks p '
@@ -23,8 +25,8 @@ class Formulas(object):
 
         sf_peaks = db.select(THEOR_PEAKS_SQL, (self.db_name, adducts))
         self.sf_ids, self.adducts, self.sf_theor_peaks, self.sf_theor_peak_ints = zip(*sf_peaks)
+        logger.info('Loaded %s sum formulas from the DB', len(self.sf_ids))
 
-    # TODO: add logging messages with details
     def get_sf_peak_bounds(self):
         lower = np.array([mz - self.ppm*mz/1e6 for sf_peaks in self.sf_theor_peaks for mz in sf_peaks])
         upper = np.array([mz + self.ppm*mz/1e6 for sf_peaks in self.sf_theor_peaks for mz in sf_peaks])

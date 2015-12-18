@@ -22,17 +22,18 @@ def _correct_peak_intens_distribution(iso_imgs_flat):
         return True
 
 
-def inv_chaos(iso_img, img_gen_conf):
-    chaos = measure_of_chaos(iso_img.copy(),
-                             nlevels=img_gen_conf['nlevels'],
-                             interp=img_gen_conf['do_preprocessing'],
-                             q_val=img_gen_conf['q'])[0]
-    if np.isnan(chaos):
-        chaos = 0
-    inv_chaos = 1 - chaos
-    if np.allclose(inv_chaos, 1.0, atol=1e-6):
-        inv_chaos = 0
-    return inv_chaos
+def chaos(iso_img, img_gen_conf):
+    ch = measure_of_chaos(iso_img.copy(),
+                          nlevels=img_gen_conf['nlevels'],
+                          interp=img_gen_conf['do_preprocessing'],
+                          q_val=img_gen_conf['q'])[0]
+    if np.isnan(ch):
+        inv_ch = 0
+    elif np.allclose(ch, 0.0, atol=1e-6):
+        inv_ch = 0
+    else:
+        inv_ch = 1 - ch
+    return inv_ch
 
 
 class ImgMeasures(object):
@@ -58,7 +59,7 @@ def get_compute_img_measures(empty_matrix, img_gen_conf):
                 measures.image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_intensity[1:])
 
                 if measures.image_corr:
-                    measures.chaos = inv_chaos(iso_imgs[0], img_gen_conf)
+                    measures.chaos = chaos(iso_imgs[0], img_gen_conf)
         return measures.chaos, measures.image_corr, measures.pattern_match
 
     return compute

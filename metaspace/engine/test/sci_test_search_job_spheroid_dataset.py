@@ -16,8 +16,9 @@ from engine.util import proj_root, hdfs_prefix, SMConfig
 #         return json.load(f)
 
 SMConfig.set_path(join(proj_root(), 'conf/config.json'))
+sm_config = SMConfig.get_conf()
 
-ds_name = 'spheroid_12h'
+ds_name = 'sci_test_spheroid_12h'
 data_dir_path = join(SMConfig.get_conf()['fs']['data_dir'], ds_name)
 input_dir_path = join(proj_root(), 'test/data/sci_test_search_job_spheroid_dataset')
 
@@ -34,11 +35,15 @@ SEARCH_RES_SELECT = ("select sf, adduct, stats "
 def compare_search_results(base_search_res, search_res):
     missed_sf_adduct = set(base_search_res.keys()).difference(set(search_res.keys()))
     print 'MISSED FORMULAS: {:.1f}%'.format(len(missed_sf_adduct) / len(base_search_res) * 100)
-    print list(missed_sf_adduct)
+    if missed_sf_adduct:
+        print list(missed_sf_adduct)
 
     new_sf_adduct = set(search_res.keys()).difference(set(base_search_res.keys()))
     print 'FALSE DISCOVERY: {:.1f}%'.format(len(new_sf_adduct) / len(base_search_res) * 100)
-    print list(new_sf_adduct)
+
+    for sf_adduct in new_sf_adduct:
+        metrics = search_res[sf_adduct]
+        print '{} metrics = {}'.format(sf_adduct, metrics)
 
     print 'DIFFERENCE IN METRICS'
     for b_sf_add, b_metr in base_search_res.iteritems():
@@ -64,13 +69,14 @@ def run_search():
 def clear_data_dirs():
     with warn_only():
         local('rm -rf {}'.format(data_dir_path))
-        local(hdfs_prefix() + '-rm -r {}'.format(data_dir_path))
+        if not sm_config['fs']['local']:
+            local(hdfs_prefix() + '-rm -r {}'.format(data_dir_path))
 
 
 class SciTester(object):
 
     def __init__(self):
-        self.db = DB(SMConfig.get_conf()['db'])
+        self.db = DB(sm_config['db'])
         self.base_search_res_path = join(proj_root(), 'test/reports', 'spheroid_12h_search_res.csv')
         self.metrics = ['chaos', 'img_corr', 'pat_match']
 

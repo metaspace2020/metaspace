@@ -130,7 +130,8 @@ def cluster_deploy():
     # env.host_string = get_spark_master_host()[0]
     print green('========= Code deployment to Spark cluster =========')
     run('mkdir -p /home/ubuntu/sm')
-    rsync_project(local_dir='engine scripts test', remote_dir='/home/ubuntu/sm/', exclude=['.*', '*.pyc', 'engine/test'])
+    rsync_project(local_dir='engine scripts test', remote_dir='/home/ubuntu/sm/',
+                  exclude=['.*', '*.pyc', 'engine/test', 'engine/pyMS/test', 'engine/pyIMS/test'])
     run('cd /home/ubuntu/sm; zip -rq engine.zip engine')
 
 # @task
@@ -171,7 +172,7 @@ def cluster_stop():
 
 @task
 @roles('dev_master')
-def cluster_start(inst_type='c4.2xlarge', slaves=2):
+def cluster_start(slave_type='c4.2xlarge', slaves=2):
     print green('========= Starting Spark cluster =========')
     HADOOP_HOME = '/opt/dev/hadoop-2.6.2'
     SPARK_HOME = '/opt/dev/spark-1.5.1-bin-hadoop2.6'
@@ -181,23 +182,29 @@ def cluster_start(inst_type='c4.2xlarge', slaves=2):
     local('aws ec2 start-instances --instance-ids={}'.format(master_inst))
     sleep(60)
 
-    run_slave_cmd = ('aws ec2 run-instances --image-id ami-6d2a8a1e --instance-type {} --count {} '
-                     '--key-name sm_spark_cluster --security-group-ids sg-921b7ff6').format(inst_type, slaves)
-    out = json.loads(local(run_slave_cmd, capture=True))
-    slave_hosts = [inst_out['PrivateDnsName'] for inst_out in out['Instances']]
+    if slaves > 0:
+        run_slave_cmd = ('aws ec2 run-instances --image-id ami-6d2a8a1e --instance-type {} --count {} '
+                         '--key-name sm_spark_cluster --security-group-ids sg-921b7ff6').format(slave_type, slaves)
+        out = json.loads(local(run_slave_cmd, capture=True))
+        slave_hosts = [inst_out['PrivateDnsName'] for inst_out in out['Instances']]
+
+        with cd(HADOOP_HOME):
+            run('echo "localhost" > etc/hadoop/slaves')
+            for host in slave_hosts:
+                run('echo "{}" >> etc/hadoop/slaves'.format(host))
+
+        with cd(SPARK_HOME):
+            run('echo "localhost" > conf/slaves')
+            for host in slave_hosts:
+                run('echo "{}" >> conf/slaves'.format(host))
 
     with cd(HADOOP_HOME):
-        run('echo "localhost" > etc/hadoop/slaves')
-        for host in slave_hosts:
-            run('echo "{}" >> etc/hadoop/slaves'.format(host))
         run('sbin/start-dfs.sh')
 
     with cd(SPARK_HOME):
-        run('echo "localhost" > conf/slaves')
-        for host in slave_hosts:
-            run('echo "{}" >> conf/slaves'.format(host))
         run('sbin/start-all.sh')
 
+    run('jps -l')
 
 # @task
 # def platform_start(cluster_name, slaves=1, price=0.07, components=['webserver', 'cluster']):
