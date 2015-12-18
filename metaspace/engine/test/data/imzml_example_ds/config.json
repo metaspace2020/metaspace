@@ -1,0 +1,27 @@
+{
+  "inputs": {
+    "data_file": "Example_Continuous.imzML",
+    "database": "HMDB"
+  },
+  "isotope_generation": {
+    "adducts": ["+H","+Na","+K"],
+    "charge": {
+        "polarity": "+",
+        "n_charges": 1
+	},
+    "isocalc_sigma": 0.01,
+    "isocalc_points_per_mz": 10000
+  },
+  "image_generation": {
+    "ppm": 100.0,
+    "nlevels": 30,
+    "q": 99,
+    "do_preprocessing": false
+  },
+  "image_measure_thresholds": {
+    "measure_of_chaos": -1.0,
+    "image_corr": -1.0,
+    "pattern_match": -1.0
+  },
+  "molecules_num": null
+}
