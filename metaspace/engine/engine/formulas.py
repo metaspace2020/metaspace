@@ -24,6 +24,7 @@ class Formulas(object):
         sf_peaks = db.select(THEOR_PEAKS_SQL, (self.db_name, adducts))
         self.sf_ids, self.adducts, self.sf_theor_peaks, self.sf_theor_peak_ints = zip(*sf_peaks)
 
+    # TODO: add logging messages with details
     def get_sf_peak_bounds(self):
         lower = np.array([mz - self.ppm*mz/1e6 for sf_peaks in self.sf_theor_peaks for mz in sf_peaks])
         upper = np.array([mz + self.ppm*mz/1e6 for sf_peaks in self.sf_theor_peaks for mz in sf_peaks])

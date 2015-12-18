@@ -6,10 +6,9 @@
 """
 import argparse
 import time
-import logging
 
 from engine.search_job import SearchJob
-from engine.util import SMConfig
+from engine.util import SMConfig, logger
 
 
 if __name__ == "__main__":
@@ -21,15 +20,6 @@ if __name__ == "__main__":
 
     start = time.time()
     args = parser.parse_args()
-
-    logger = logging.getLogger('SM')
-    logger.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    frm = logging.Formatter(('%(asctime)s - %(levelname)s - %(name)s - '
-                             '%(filename)s:%(lineno)d - %(message)s'))
-    ch.setFormatter(frm)
-    logger.addHandler(ch)
 
     SMConfig.set_path(args.sm_config_path)
 

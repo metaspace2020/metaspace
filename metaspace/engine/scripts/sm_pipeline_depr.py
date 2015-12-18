@@ -225,5 +225,5 @@ if __name__ == '__main__':
     # cmd_args = ["--local-scheduler"]
     luigi.run(main_task_cls=RunPipeline)
 
-# python sm_pipeline_depr.py --logging-conf-file luigi_log.cfg --s3-dir s3://embl-intsco-sm-test
+# python sm_pipeline_depr.py --logging-conf-file sm_log.cfg --s3-dir s3://embl-intsco-sm-test
 # --fn Example_Processed.zip --local-data-dir /home/ubuntu/sm/data/test1 --rows 3 --cols 3"

@@ -8,7 +8,8 @@ import numpy as np
 import json
 from collections import OrderedDict
 from datetime import datetime
-import logging
+
+from engine.util import logger
 
 
 insert_sf_metrics_sql = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s)'
@@ -17,9 +18,6 @@ clear_iso_image_sql = 'DELETE FROM iso_image WHERE job_id = %s'
 clear_iso_image_metrics_sql = 'DELETE FROM iso_image_metrics WHERE job_id = %s'
 INSERT_JOB_SQL = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', %s)"
 CLEAR_JOB_SQL = 'DELETE FROM job WHERE id = %s'
-
-
-logger = logging.getLogger('SM')
 
 
 class SearchResults(object):

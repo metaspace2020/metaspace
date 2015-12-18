@@ -4,9 +4,8 @@
 *.pkl
 *.zip
 conf
-test/data
 data/*
-data
+test/data
 docs/_build
 docs/_static
 docs/_templates

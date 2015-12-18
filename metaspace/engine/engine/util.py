@@ -5,13 +5,15 @@ import os
 import json
 from subprocess import check_call, call
 import logging
-
-
-logger = logging.getLogger('SM')
+from logging.config import fileConfig
+from os.path import join
 
 
 def proj_root():
     return dirname(dirname(__file__))
+
+fileConfig(join(proj_root(), 'conf/sm_log.cfg'))
+logger = logging.getLogger(name='SM')
 
 
 class SMConfig(object):

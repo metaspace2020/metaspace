@@ -7,11 +7,11 @@
 import numpy as np
 from os.path import realpath, join, exists
 from os import makedirs
-import logging
 from traceback import format_exc
 
 from engine.pyMS.pyisocalc.pyisocalc import complete_isodist, complex_to_simple, SumFormulaParser
 from engine.db import DB
+from engine.util import logger
 
 
 db_id_sql = 'SELECT id FROM formula_db WHERE name = %s'
@@ -21,11 +21,20 @@ sf_id_sf_adduct_sql = ('SELECT sf_id, sf, adduct FROM theor_peaks p '
                        'WHERE p.db_id = %s')
 
 
-logger = logging.getLogger('SM')
-
-
 def slice_array(mzs, lower, upper):
     return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
+
+
+def list_of_floats_to_str(l):
+    return ','.join(map(lambda x: '{:.6f}'.format(x), l))
+
+
+def valid_sf_adduct(sf, adduct):
+    if not (sf and adduct):
+        logger.warning('Wrong arguments for pyisocalc: sf=%s or adduct=%s', sf, adduct)
+        return False
+    else:
+        return True
 
 
 class IsocalcWrapper(object):
@@ -44,7 +53,7 @@ class IsocalcWrapper(object):
         # TODO: sigma, points_per_mz change patterns so should be stored in the DB as well
         return complete_isodist(sf_adduct_obj, sigma=self.sigma, charge=self.charge, pts_per_mz=self.points_per_mz)
 
-    def iso_peaks(self, sf_id, sf, adduct):
+    def iso_peaks(self, sf, adduct):
         res_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
         try:
             isotope_ms = self._isodist(sf + adduct)
@@ -59,33 +68,26 @@ class IsocalcWrapper(object):
             res_dict['profile_mzs'] = slice_array(profile_mzs, lower, upper)
             res_dict['profile_ints'] = slice_array(profile_ints, lower, upper)
         except (ValueError, TypeError) as e:
-            print sf, adduct, e.message
-        except ValueError as e:
             logger.warning('(%s, %s) - %s', sf, adduct, e.message)
+        except Exception as e:
+            logger.error('(%s, %s) - %s', sf, adduct, e.message)
+            logger.error(format_exc())
         finally:
-            return sf_id, adduct, res_dict
+            return res_dict
 
+    @staticmethod
+    def format_peak_str(db_id, sf_id, adduct, peak_dict):
+        return '%d\t%d\t%s\t{%s}\t{%s}\t{%s}\t{%s}' % (
+            db_id, sf_id, adduct,
+            list_of_floats_to_str(peak_dict['centr_mzs']),
+            list_of_floats_to_str(peak_dict['centr_ints']),
+            list_of_floats_to_str(peak_dict['profile_mzs']),
+            list_of_floats_to_str(peak_dict['profile_ints'])
+        )
 
-def list_of_floats_to_str(l):
-    return ','.join(map(lambda x: '{:.6f}'.format(x), l))
-
-
-def format_peak_str(db_id, sf_id, adduct, peak_dict):
-    return '%s\t%s\t%s\t{%s}\t{%s}\t{%s}\t{%s}' % (
-        db_id, sf_id, adduct,
-        list_of_floats_to_str(peak_dict['centr_mzs']),
-        list_of_floats_to_str(peak_dict['centr_ints']),
-        list_of_floats_to_str(peak_dict['profile_mzs']),
-        list_of_floats_to_str(peak_dict['profile_ints'])
-    )
-
-
-def valid_sf_adduct(sf, adduct):
-    if not (sf and adduct):
-        logger.warning('Wrong arguments for pyisocalc: sf={} or adduct={}', sf, adduct)
-        return False
-    else:
-        return True
+    def formatted_iso_peaks(self, db_id, sf_id, sf, adduct):
+        peak_dict = self.iso_peaks(sf, adduct)
+        return self.format_peak_str(db_id, sf_id, adduct, peak_dict)
 
 
 class TheorPeaksGenerator(object):
@@ -122,13 +124,12 @@ class TheorPeaksGenerator(object):
 
     def generate_theor_peaks(self, sf_adduct_cand):
         logger.info('Generating missing peaks')
-        iso_peaks = self.isocalc_wrapper.iso_peaks
+        formatted_iso_peaks = self.isocalc_wrapper.formatted_iso_peaks
         db_id = self.db_id
         sf_adduct_cand_rdd = self.sc.parallelize(sf_adduct_cand, numSlices=8)
         peak_lines = (sf_adduct_cand_rdd
                       .filter(lambda (_, sf, adduct): valid_sf_adduct(sf, adduct))
-                      .map(lambda args: iso_peaks(*args))
-                      .map(lambda args: format_peak_str(db_id, *args))
+                      .map(lambda (sf_id, sf, adduct): formatted_iso_peaks(db_id, sf_id, sf, adduct))
                       .collect())
         return peak_lines
 

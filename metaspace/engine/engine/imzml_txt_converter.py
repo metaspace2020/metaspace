@@ -10,11 +10,10 @@ import sys
 import json
 from os.path import exists
 from pyimzml.ImzMLParser import ImzMLParser
-import logging
 
 from engine.db import DB
 from engine.pyMS.centroid_detection import gradient
-from engine.util import SMConfig
+from engine.util import SMConfig, logger
 
 
 def preprocess_spectrum(mzs, ints):
@@ -87,7 +86,6 @@ coord_insert_sql = "INSERT INTO coordinates VALUES (%s, %s, %s)"
 class ImzmlTxtConverter(object):
 
     def __init__(self, ds_name, ds_config, imzml_path, txt_path, coord_path=None):
-        self.logger = logging.getLogger('SM')
         self.ds_name = ds_name
         self.imzml_path = imzml_path
         self.preprocess = None
@@ -117,13 +115,13 @@ class ImzmlTxtConverter(object):
         try:
             ds_id_row = db.select_one(ds_id_sql, self.ds_name)
             if not ds_id_row:
-                self.logger.info('No dataset with name {} found', self.ds_name)
+                logger.info('No dataset with name %s found', self.ds_name)
                 ds_id = db.select_one(max_ds_id_sql)[0] + 1
 
-                self.logger.info("Inserting to the dataset table: %d", ds_id)
+                logger.info("Inserting to the dataset table: %d", ds_id)
                 db.insert(ds_insert_sql, [(ds_id, self.ds_name, self.imzml_path, self.image_bounds.to_json())])
 
-                self.logger.info("Inserting to the coordinates table")
+                logger.info("Inserting to the coordinates table")
                 with open(self.coord_path) as f:
                     coord_tuples = map(lambda s: map(int, s.split(',')), f.readlines())
                     _, xs, ys = map(list, zip(*coord_tuples))
@@ -140,7 +138,7 @@ class ImzmlTxtConverter(object):
             writing (rarely useful)
         :param print_progress: whether or not to print progress information to stdout
         """
-        self.logger.info("ImzML -> Txt conversion...")
+        logger.info("ImzML -> Txt conversion...")
         self.preprocess = preprocess
 
         if not exists(self.txt_path):
@@ -164,7 +162,7 @@ class ImzmlTxtConverter(object):
 
             self.save_ds_meta()
 
-            self.logger.info("Conversion finished successfully")
+            logger.info("Conversion finished successfully")
         else:
-            self.logger.info('File {} already exists', self.txt_path)
+            logger.info('File %s already exists', self.txt_path)
 
