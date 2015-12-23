@@ -89,7 +89,7 @@ class SciTester(object):
             return {(r[0], r[1]): np.array(r[2:], dtype=float) for r in rows}
 
     def fetch_search_res(self):
-        rows = self.db.select(SEARCH_RES_SELECT, (ds_name, 'HMDB'))
+        rows = self.db.select(SEARCH_RES_SELECT, ds_name, 'HMDB')
         return {(r[0], r[1]): self.metr_dict_to_array(r[2]) for r in rows}
 
     def run_sci_test(self):

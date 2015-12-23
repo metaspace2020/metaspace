@@ -21,7 +21,7 @@ class Formulas(object):
         self.db_name = ds_config['inputs']['database']
         adducts = ds_config['isotope_generation']['adducts']
 
-        sf_peaks = db.select(THEOR_PEAKS_SQL, (self.db_name, adducts))
+        sf_peaks = db.select(THEOR_PEAKS_SQL, self.db_name, adducts)
         self.sf_ids, self.adducts, self.sf_theor_peaks, self.sf_theor_peak_ints = zip(*sf_peaks)
 
     # TODO: add logging messages with details
