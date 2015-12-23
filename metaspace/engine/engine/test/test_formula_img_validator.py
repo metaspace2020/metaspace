@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from scipy.sparse import csr_matrix
 
-from engine.formula_img_validator import filter_sf_images, get_compute_img_measures
+from engine.formula_img_validator import filter_sf_images, get_compute_img_measures, ImgMeasures
 from engine.dataset import Dataset
 from engine.formulas import Formulas
 from engine.test.util import spark_context, ds_config
@@ -24,9 +24,9 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
     empty_matrix = np.zeros((2, 3))
     compute_measures = get_compute_img_measures(empty_matrix, img_gen_conf)
 
-    sf_iso_images = [csr_matrix([[0, 100, 100], [10, 0, 3]]),
-                     csr_matrix([[0, 50, 50], [0, 20, 0]])]
-    sf_intensity = [100, 10, 1]
+    sf_iso_images = [csr_matrix([[0., 100., 100.], [10., 0., 3.]]),
+                     csr_matrix([[0., 50., 50.], [0., 20., 0.]])]
+    sf_intensity = [100., 10., 1.]
 
     measures = compute_measures(sf_iso_images, sf_intensity)
     assert_array_almost_equal(measures, [0.99, 0.8, 0.95])
@@ -68,3 +68,16 @@ def test_filter_sf_images_n_mol_pass(image_measures, mol_num, spark_context, fil
 
         assert 0 in measures
         assert_array_almost_equal(measures[0], image_measures)
+
+
+@pytest.mark.parametrize("nan_value", [None, np.NaN, np.NAN, np.inf])
+def test_img_measures_replace_invalid_measure_values(nan_value):
+    invalid_img_measures = ImgMeasures(nan_value, nan_value, nan_value)
+    assert invalid_img_measures.to_tuple(replace_nan=True) == (0., 0., 0.)
+
+
+# @pytest.mark.parametrize("invalid_input", [[], np.array([])])
+# def test_img_measures_wrong_input_type_assert_exception(invalid_input):
+#     with pytest.raises(AssertionError):
+#         ImgMeasures(invalid_input, invalid_input, invalid_input)
+

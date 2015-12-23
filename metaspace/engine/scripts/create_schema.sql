@@ -25,10 +25,10 @@ CREATE TABLE agg_formula (
 	sf 		    text,
 	subst_ids 	text[],
 	names 		text[],
-	CONSTRAINT agg_formula_db_id_id_pk PRIMARY KEY(db_id, id),
-	CONSTRAINT agg_formula_db_id_id_fk FOREIGN KEY (db_id, id)
-      REFERENCES formula (db_id, sf_id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE CASCADE
+	CONSTRAINT agg_formula_db_id_id_pk PRIMARY KEY(db_id, id)
+--	CONSTRAINT agg_formula_db_id_id_fk FOREIGN KEY (db_id, id)
+--      REFERENCES formula (db_id, sf_id) MATCH SIMPLE
+--      ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 ;
