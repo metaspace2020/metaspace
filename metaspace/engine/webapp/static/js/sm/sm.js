@@ -333,6 +333,7 @@ $(document).ready(function() {
                     title: "Sample",
                     lineColor: "red",
                     type: "column",
+                    fixedColumnWidth: 5,
                     fillAlphas: 1,
                 }],
 

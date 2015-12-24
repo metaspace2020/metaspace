@@ -424,10 +424,10 @@ class MinMaxIntHandler(tornado.web.RequestHandler):
 
 
 class SpectrumLineChartHandler(tornado.web.RequestHandler):
-    peak_profile_sql = '''SELECT centr_mzs, centr_ints, prof_mzs, prof_ints
+    PEAK_PROFILE_SQL = '''SELECT centr_mzs, centr_ints, prof_mzs, prof_ints
                           FROM theor_peaks
                           WHERE db_id = %s and sf_id = %s and adduct = %s'''
-    sample_intens_sql = '''SELECT intensities
+    SAMPLE_INTENS_SQL = '''SELECT intensities
                            FROM iso_image
                            WHERE job_id = %s and db_id = %s and sf_id = %s and adduct = %s order by peak'''
 
@@ -435,16 +435,18 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
     def db(self):
         return self.application.db
 
-    def find_closest_inds(self, mz_grid, mzs):
+    @staticmethod
+    def find_closest_inds(mz_grid, mzs):
         return map(lambda mz: (np.abs(mz_grid - mz)).argmin(), mzs)
 
-    def to_str(self, list_of_numbers):
+    @staticmethod
+    def to_str(list_of_numbers):
         return map(lambda x: '%.3f' % x, list(list_of_numbers))
 
     def convert_to_serial(self, centr_mzs, prof_mzs):
         step = mode(np.diff(prof_mzs)).mode[0]
-        min_mz = prof_mzs[0] - 15*step
-        max_mz = prof_mzs[-1]
+        min_mz = prof_mzs[0] - 0.25
+        max_mz = prof_mzs[-1] + 0.25
 
         points_n = int(np.round((max_mz - min_mz) / step)) + 1
         mz_grid = np.linspace(min_mz, max_mz, points_n)
@@ -456,14 +458,14 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
-        peaks_dict = self.db.query(self.peak_profile_sql, int(db_id), int(sf_id), adduct)[0]
+        peaks_dict = self.db.query(self.PEAK_PROFILE_SQL, int(db_id), int(sf_id), adduct)[0]
         prof_mzs = np.array(peaks_dict['prof_mzs'])
         prof_ints = np.array(peaks_dict['prof_ints'])
         centr_mzs = np.array(peaks_dict['centr_mzs'])
 
         min_mz, max_mz, points_n, centr_inds, prof_inds = self.convert_to_serial(centr_mzs, prof_mzs)
 
-        sample_ints_list = self.db.query(self.sample_intens_sql, int(job_id), int(db_id), int(sf_id), adduct)
+        sample_ints_list = self.db.query(self.SAMPLE_INTENS_SQL, int(job_id), int(db_id), int(sf_id), adduct)
         sample_centr_ints = np.array(map(lambda d: sum(d.values()[0]), sample_ints_list))
         sample_centr_ints_norm = sample_centr_ints / sample_centr_ints.max() * 100
 

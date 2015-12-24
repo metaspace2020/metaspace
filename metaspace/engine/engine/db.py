@@ -44,11 +44,6 @@ class DB(object):
     def close(self):
         self.conn.close()
 
-    # def valid_params(self, *args):
-    #     if type(args) not in [list, tuple]:
-    #         return (params,)
-    #     return params
-
     @db_dec
     def select(self, sql, *args):
         self.curs = self.conn.cursor()

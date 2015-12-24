@@ -23,7 +23,7 @@ def test_isocalc_get_iso_peaks_correct_sf_adduct(isocalc_isodist, ds_config):
     isocalc_isodist.return_value = mock_mass_sp
 
     isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
-    peak_dict = isocalc_wrapper._iso_peaks('Au', '+H')
+    peak_dict = isocalc_wrapper.iso_peaks('Au', '+H')
 
     for k in ['centr_mzs', 'centr_ints', 'profile_mzs', 'profile_ints']:
         assert k in peak_dict
@@ -37,19 +37,55 @@ def test_isocalc_get_iso_peaks_correct_sf_adduct(isocalc_isodist, ds_config):
 
 
 @mock.patch('engine.theor_peaks_gen.complete_isodist')
-def test_isocalc_get_iso_peaks_wrong_sf_adduct(isocalc_isodist, ds_config):
+def test_isocalc_wrapper_get_iso_peaks_wrong_sf_adduct(isocalc_isodist, ds_config):
     mock_mass_sp = MagicMock(spec=MassSpectrum)
     mock_mass_sp.get_spectrum.side_effect = get_spectrum_side_effect
     isocalc_isodist.return_value = mock_mass_sp
 
     isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
     emtpy_iso_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
-    assert isocalc_wrapper._iso_peaks(None, '+H') == emtpy_iso_dict
-    assert isocalc_wrapper._iso_peaks('Au', None) == emtpy_iso_dict
+    assert isocalc_wrapper.iso_peaks(None, '+H') == emtpy_iso_dict
+    assert isocalc_wrapper.iso_peaks('Au', None) == emtpy_iso_dict
+
+
+@mock.patch('engine.theor_peaks_gen.complete_isodist')
+def test_isocalc_wrapper_get_iso_peaks_check_profiles_correct(isocalc_isodist, ds_config):
+
+    def get_spectrum_side_effect(source):
+        if source == 'centroids':
+            return (np.array([100., 200.]),
+                    np.array([100., 10.]))
+        elif source == 'profile':
+            return (np.hstack([np.linspace(50, 150, 10000), np.linspace(150, 250, 10000)]),
+                    np.hstack([np.ones(10000)*100, np.ones(10000)*10]))
+
+    mock_mass_sp = MagicMock(spec=MassSpectrum)
+    mock_mass_sp.get_spectrum.side_effect = get_spectrum_side_effect
+    isocalc_isodist.return_value = mock_mass_sp
+
+    pts_per_centr = 6
+    isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
+    isocalc_wrapper.prof_pts_per_centr = pts_per_centr
+    peaks_dict = isocalc_wrapper.iso_peaks('Au', '+H')
+
+    # print peaks_dict['centr_mzs'], peaks_dict['centr_ints']
+    # print len(peaks_dict['profile_mzs']), len(peaks_dict['profile_ints'])
+    print '\n', peaks_dict
+
+    # profiles not huge in size
+    assert len(peaks_dict['profile_mzs']) <= (pts_per_centr + 1) * len(peaks_dict['centr_mzs'])
+    assert len(peaks_dict['profile_ints']) <= (pts_per_centr + 1) * len(peaks_dict['centr_ints'])
+
+    # profile points not too far or close to the centroids
+    assert 0.1 < abs(peaks_dict['centr_mzs'][0] - peaks_dict['profile_mzs'][0]) < 0.2
+    assert 0.1 < abs(peaks_dict['centr_mzs'][0] - peaks_dict['profile_mzs'][pts_per_centr-1]) < 0.2
+
+    assert 0.1 < abs(peaks_dict['centr_mzs'][1] - peaks_dict['profile_mzs'][pts_per_centr]) < 0.2
+    assert 0.1 < abs(peaks_dict['centr_mzs'][1] - peaks_dict['profile_mzs'][2*pts_per_centr-1]) < 0.2
 
 
 @mock.patch('engine.theor_peaks_gen.IsocalcWrapper._iso_peaks')
-def test_formatted_iso_peaks_correct(iso_peaks_mock, ds_config):
+def test_formatted_iso_peaks_correct_input(iso_peaks_mock, ds_config):
     peak_dict = {'centr_mzs': [100.], 'centr_ints': [1000.],
                  'profile_mzs': [90., 100., 110.], 'profile_ints': [1., 1000., 1001.]}
     iso_peaks_mock.return_value = peak_dict
@@ -85,7 +121,7 @@ def test_generate_theor_peaks(mockDB, spark_context, sm_config, ds_config):
     mock_db.select_one.return_value = [0]
 
     peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    peaks_gen.isocalc_wrapper._iso_peaks = lambda *args: {'centr_mzs': [100.],
+    peaks_gen.isocalc_wrapper.iso_peaks = lambda *args: {'centr_mzs': [100.],
                                                           'centr_ints': [1000.],
                                                           'profile_mzs': [90., 100., 110.],
                                                           'profile_ints': [1., 1000., 1001.]}

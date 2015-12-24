@@ -21,10 +21,6 @@ SF_ADDUCT_SEL = ('SELECT sf, adduct FROM theor_peaks p '
                  'WHERE p.db_id = %s AND ROUND(sigma::numeric, 4) = %s AND charge = %s AND pts_per_mz = %s')
 
 
-def slice_array(mzs, lower, upper):
-    return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
-
-
 def list_of_floats_to_str(l):
     return ','.join(map(lambda x: '{:.6f}'.format(x), l))
 
@@ -46,13 +42,14 @@ class IsocalcWrapper(object):
             self.charge = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
         self.sigma = isocalc_config['isocalc_sigma']
         self.pts_per_mz = isocalc_config['isocalc_points_per_mz']
+        self.prof_pts_per_centr = 6
 
     def _isodist(self, sf_adduct):
         sf_adduct_simplified = complex_to_simple(sf_adduct)
         sf_adduct_obj = SumFormulaParser.parse_string(sf_adduct_simplified)
         return complete_isodist(sf_adduct_obj, sigma=self.sigma, charge=self.charge, pts_per_mz=self.pts_per_mz)
 
-    def _iso_peaks(self, sf, adduct):
+    def iso_peaks(self, sf, adduct):
         res_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
         try:
             isotope_ms = self._isodist(sf + adduct)
@@ -62,10 +59,8 @@ class IsocalcWrapper(object):
             res_dict['centr_ints'] = centr_ints
 
             profile_mzs, profile_ints = isotope_ms.get_spectrum(source='profile')
-            lower = profile_mzs.searchsorted(centr_mzs, 'l') - 3
-            upper = profile_mzs.searchsorted(centr_mzs, 'r') + 3
-            res_dict['profile_mzs'] = slice_array(profile_mzs, lower, upper)
-            res_dict['profile_ints'] = slice_array(profile_ints, lower, upper)
+            res_dict['profile_mzs'], res_dict['profile_ints'] = \
+                self._sample_profiles(centr_mzs, profile_mzs, profile_ints)
         except (ValueError, TypeError) as e:
             logger.warning('(%s, %s) - %s', sf, adduct, e.message)
         except Exception as e:
@@ -73,6 +68,23 @@ class IsocalcWrapper(object):
             logger.error(format_exc())
         finally:
             return res_dict
+
+    @staticmethod
+    def slice_array(mzs, lower, upper):
+        return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
+
+    def _sample_profiles(self, centr_mzs, profile_mzs, profile_ints):
+        sampled_prof_mz_list, sampled_prof_int_list = [], []
+
+        for cmz in centr_mzs:
+            centr_mask = np.abs(profile_mzs - cmz) < 0.15  # max mz distance from a centroid
+            sample_step = max(1, len(profile_mzs[centr_mask]) / self.prof_pts_per_centr)
+
+            # take only N mz points for each centroid
+            sampled_prof_mz_list.append(profile_mzs[centr_mask][::sample_step])
+            sampled_prof_int_list.append(profile_ints[centr_mask][::sample_step])
+
+        return np.hstack(sampled_prof_mz_list), np.hstack(sampled_prof_int_list)
 
     def _format_peak_str(self, db_id, sf_id, adduct, peak_dict):
         return '%d\t%d\t%s\t%.4f\t%d\t%d\t{%s}\t{%s}\t{%s}\t{%s}' % (
@@ -85,7 +97,7 @@ class IsocalcWrapper(object):
         )
 
     def formatted_iso_peaks(self, db_id, sf_id, sf, adduct):
-        peak_dict = self._iso_peaks(sf, adduct)
+        peak_dict = self.iso_peaks(sf, adduct)
         if np.all([len(v) > 0 for v in peak_dict.values()]):
             yield self._format_peak_str(db_id, sf_id, adduct, peak_dict)
 
@@ -134,10 +146,7 @@ class TheorPeaksGenerator(object):
         peak_lines = (sf_adduct_cand_rdd
                       .flatMap(lambda (sf_id, sf, adduct): formatted_iso_peaks(db_id, sf_id, sf, adduct))
                       .collect())
-        # for res in map(lambda (sf_id, sf, adduct): formatted_iso_peaks(db_id, sf_id, sf, adduct), sf_adduct_cand):
-        #     print list(res)[0]
         return peak_lines
-        # return None
 
     def _import_theor_peaks_to_db(self, peak_lines):
         logger.info('Saving new peaks to the DB')
