@@ -23,6 +23,7 @@ def test_isocalc_get_iso_peaks_correct_sf_adduct(isocalc_isodist, ds_config):
     isocalc_isodist.return_value = mock_mass_sp
 
     isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
+    isocalc_wrapper.max_mz_dist_to_centr = 5
     peak_dict = isocalc_wrapper.iso_peaks('Au', '+H')
 
     for k in ['centr_mzs', 'centr_ints', 'profile_mzs', 'profile_ints']:
@@ -32,8 +33,8 @@ def test_isocalc_get_iso_peaks_correct_sf_adduct(isocalc_isodist, ds_config):
     assert_array_almost_equal(peak_dict['centr_mzs'], get_spectrum_side_effect('centroids')[0])
     assert_array_almost_equal(peak_dict['centr_ints'], get_spectrum_side_effect('centroids')[1])
 
-    assert_array_almost_equal(peak_dict['profile_mzs'], get_spectrum_side_effect('profile')[0][1:-1])
-    assert_array_almost_equal(peak_dict['profile_ints'], get_spectrum_side_effect('profile')[1][1:-1])
+    assert_array_almost_equal(peak_dict['profile_mzs'], [95., 99., 100., 101., 105., 195.,  199.,  200.,  201.,  205.])
+    assert_array_almost_equal(peak_dict['profile_ints'], [50., 90., 100., 90., 50., 5., 9., 10., 9., 5.])
 
 
 @mock.patch('engine.theor_peaks_gen.complete_isodist')
@@ -84,7 +85,7 @@ def test_isocalc_wrapper_get_iso_peaks_check_profiles_correct(isocalc_isodist, d
     assert 0.1 < abs(peaks_dict['centr_mzs'][1] - peaks_dict['profile_mzs'][2*pts_per_centr-1]) < 0.2
 
 
-@mock.patch('engine.theor_peaks_gen.IsocalcWrapper._iso_peaks')
+@mock.patch('engine.theor_peaks_gen.IsocalcWrapper.iso_peaks')
 def test_formatted_iso_peaks_correct_input(iso_peaks_mock, ds_config):
     peak_dict = {'centr_mzs': [100.], 'centr_ints': [1000.],
                  'profile_mzs': [90., 100., 110.], 'profile_ints': [1., 1000., 1001.]}

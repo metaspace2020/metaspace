@@ -43,6 +43,7 @@ class IsocalcWrapper(object):
         self.sigma = isocalc_config['isocalc_sigma']
         self.pts_per_mz = isocalc_config['isocalc_points_per_mz']
         self.prof_pts_per_centr = 6
+        self.max_mz_dist_to_centr = 0.15
 
     def _isodist(self, sf_adduct):
         sf_adduct_simplified = complex_to_simple(sf_adduct)
@@ -77,7 +78,7 @@ class IsocalcWrapper(object):
         sampled_prof_mz_list, sampled_prof_int_list = [], []
 
         for cmz in centr_mzs:
-            centr_mask = np.abs(profile_mzs - cmz) < 0.15  # max mz distance from a centroid
+            centr_mask = np.abs(profile_mzs - cmz) <= self.max_mz_dist_to_centr
             sample_step = max(1, len(profile_mzs[centr_mask]) / self.prof_pts_per_centr)
 
             # take only N mz points for each centroid
