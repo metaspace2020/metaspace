@@ -49,8 +49,8 @@ def compare_search_results(base_search_res, search_res):
     for b_sf_add, b_metr in base_search_res.iteritems():
         if b_sf_add in search_res.keys():
             metr = search_res[b_sf_add]
-            diff = np.abs(b_metr - metr)
-            if np.any(diff > 1e-6):
+            diff = b_metr - metr
+            if np.any(np.abs(diff) > 1e-6):
                 print '{} metrics diff = {}'.format(b_sf_add, diff)
 
 

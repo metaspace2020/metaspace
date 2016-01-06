@@ -11,15 +11,17 @@ from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos
 from engine.pyIMS.image_measures.isotope_pattern_match import isotope_pattern_match
 from engine.pyIMS.image_measures.isotope_image_correlation import isotope_image_correlation
 
+# from engine.pyIMS.image_measures import measure_of_chaos, isotope_image_correlation, isotope_pattern_match
 
-def _correct_peak_intens_distribution(iso_imgs_flat):
-    first_peak_ints = np.sum(map(np.sum, iso_imgs_flat[0:1]))
-    second_peak_ints = np.sum(map(np.sum, iso_imgs_flat[1:2]))
-    rest_peak_ints = np.sum(map(np.sum, iso_imgs_flat[2:]))
-    if (first_peak_ints < second_peak_ints + rest_peak_ints) or (second_peak_ints < rest_peak_ints):
-        return False
-    else:
-        return True
+
+# def _correct_peak_intens_distribution(iso_imgs_flat):
+#     first_peak_ints = np.sum(map(np.sum, iso_imgs_flat[0:1]))
+#     second_peak_ints = np.sum(map(np.sum, iso_imgs_flat[1:2]))
+#     rest_peak_ints = np.sum(map(np.sum, iso_imgs_flat[2:]))
+#     if (first_peak_ints < second_peak_ints + rest_peak_ints) or (second_peak_ints < rest_peak_ints):
+#         return False
+#     else:
+#         return True
 
 
 def inv_chaos(iso_img, img_gen_conf):
@@ -51,7 +53,7 @@ def get_compute_img_measures(empty_matrix, img_gen_conf):
         iso_imgs_flat = [img.flat[:] for img in iso_imgs]
 
         measures = ImgMeasures(0, 0, 0)
-        if (len(iso_imgs) > 0) and _correct_peak_intens_distribution(iso_imgs_flat):
+        if len(iso_imgs) > 0:
             measures.pattern_match = isotope_pattern_match(iso_imgs_flat, sf_intensity)
 
             if measures.pattern_match:
@@ -59,6 +61,7 @@ def get_compute_img_measures(empty_matrix, img_gen_conf):
 
                 if measures.image_corr:
                     measures.chaos = inv_chaos(iso_imgs[0], img_gen_conf)
+                    # measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'], overwrite=False)
         return measures.chaos, measures.image_corr, measures.pattern_match
 
     return compute

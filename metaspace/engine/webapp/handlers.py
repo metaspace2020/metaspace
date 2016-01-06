@@ -101,14 +101,14 @@ class AjaxHandler(tornado.web.RequestHandler):
 
             return callback
 
-        def wrapper(self, query_id, slug, cProfile_res_list):
+        def wrapper(self, query_id, slug):
             my_print("ajax %s starting..." % query_id)
             my_print("%s" % query_id)
             my_print("%s" % slug)
             draw = self.get_argument('draw', 0)
             input_id = ""
-            if len(slug) > 0:
-                input_id = get_id_from_slug(slug)
+            # if len(slug) > 0:
+            #     input_id = get_id_from_slug(slug)
 
             if query_id in ['formulas', 'substancejobs', 'jobs', 'datasets', 'demobigtable']:
                 orderby = sql_fields[query_id][int(self.get_argument('order[0][column]', 0))]
@@ -131,6 +131,8 @@ class AjaxHandler(tornado.web.RequestHandler):
                 if query_id == 'demobigtable':
                     count = int(self.db.query(q_count)[0]['count'])
                     res = self.db.query(q_res)
+                    for r in res:
+                        r['msm'] = round(r['chaos'] * r['image_corr'] * r['pattern_match'], 6)
                 else:
                     my_print(q_res + " ORDER BY %s %s %s OFFSET %s" % (orderby, orderdir, limit_string, offset))
                     count = int(self.db.query(q_count)[0]['count'])
@@ -190,14 +192,14 @@ class AjaxHandler(tornado.web.RequestHandler):
                     res_dict.update({"all_datasets": self.application.all_datasets})
                     res_dict.update(get_iso_peaks(res_dict["sf"]))
                 res_dict.update({"draw": draw})
-            cProfile_res_list.append(res_dict)
 
-        res = []
-        if args.time_profiling_enabled:
-            cProfile.runctx("wrapper(self, query_id, slug, res)", globals(), locals())
-        else:
-            wrapper(self, query_id, slug, res)
-        res_dict = res[0]
+            return res_dict
+
+        # res = []
+        # if args.time_profiling_enabled:
+        #     cProfile.runctx("wrapper(self, query_id, slug, res)", globals(), locals())
+        # else:
+        res_dict = wrapper(self, query_id, slug)
         my_print("ajax %s processed, returning..." % query_id)
         t0 = datetime.now()
         self.write(json.dumps(res_dict, cls=DateTimeEncoder))

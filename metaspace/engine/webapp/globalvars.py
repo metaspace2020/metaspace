@@ -112,5 +112,6 @@ sql_fields = dict(
     datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
     fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"],
     demobigtable=["db_name", "ds_name", "sf", "names", "subst_ids", "chaos", "image_corr", "pattern_match",
+                  "msm",
                   "adduct", "last_job_id", "ds_id", "sf_id", "peaks_n", "db_id"]
 )
