@@ -48,7 +48,8 @@ class IsocalcWrapper(object):
     def _isodist(self, sf_adduct):
         sf_adduct_simplified = complex_to_simple(sf_adduct)
         sf_adduct_obj = SumFormulaParser.parse_string(sf_adduct_simplified)
-        return complete_isodist(sf_adduct_obj, sigma=self.sigma, charge=self.charge, pts_per_mz=self.pts_per_mz)
+        return complete_isodist(sf_adduct_obj, sigma=self.sigma, charge=self.charge, pts_per_mz=self.pts_per_mz,
+                                centroid_kwargs={'weighted_bins': 5})
 
     def iso_peaks(self, sf, adduct):
         res_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}

@@ -5,7 +5,7 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 import numpy as np
-from operator import mul
+from operator import mul, add
 
 from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos
 from engine.pyIMS.image_measures.isotope_pattern_match import isotope_pattern_match
@@ -55,13 +55,9 @@ def get_compute_img_measures(empty_matrix, img_gen_conf):
         measures = ImgMeasures(0, 0, 0)
         if len(iso_imgs) > 0:
             measures.pattern_match = isotope_pattern_match(iso_imgs_flat, sf_intensity)
-
-            if measures.pattern_match:
-                measures.image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_intensity[1:])
-
-                if measures.image_corr:
-                    measures.chaos = inv_chaos(iso_imgs[0], img_gen_conf)
-                    # measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'], overwrite=False)
+            measures.image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_intensity[1:])
+            measures.chaos = inv_chaos(iso_imgs[0], img_gen_conf)
+            # measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'], overwrite=False)
         return measures.chaos, measures.image_corr, measures.pattern_match
 
     return compute
@@ -75,7 +71,7 @@ def filter_sf_images(sc, ds_config, ds, formulas, sf_images):
 
     sf_metrics = (sf_images
                   .map(lambda (sf_i, imgs): (sf_i, compute_measures(imgs, sf_peak_intens_brcast.value[sf_i])))
-                  .filter(lambda (_, metrics): reduce(mul, metrics) > 0))
+                  .filter(lambda (_, metrics): reduce(add, metrics) > 0))
     if ds_config["molecules_num"]:
         sf_metrics_map = dict(sf_metrics.takeOrdered(ds_config["molecules_num"],
                                                      lambda (_, metrics): -reduce(mul, metrics)))

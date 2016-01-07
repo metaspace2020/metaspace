@@ -6,6 +6,7 @@ import json
 import numpy as np
 from fabric.api import local
 from fabric.context_managers import warn_only
+from operator import mul, add
 
 from engine.db import DB
 from engine.util import proj_root, hdfs_prefix, SMConfig
@@ -43,7 +44,8 @@ def compare_search_results(base_search_res, search_res):
 
     for sf_adduct in new_sf_adduct:
         metrics = search_res[sf_adduct]
-        print '{} metrics = {}'.format(sf_adduct, metrics)
+        msm = reduce(mul, map(lambda m: m if m >= 0 else 0, metrics))
+        print '{} metrics = {}, MSM = {}'.format(sf_adduct, metrics, msm)
 
     print 'DIFFERENCE IN METRICS'
     for b_sf_add, b_metr in base_search_res.iteritems():

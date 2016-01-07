@@ -49,7 +49,7 @@ class Application(tornado.web.Application):
             (r"/", handlers.IndexHandler),
             (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": path.join(path.dirname(__file__), "static")}),
             (r"^/ajax/([a-z]*)/(.*)", handlers.AjaxHandler),
-            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.AggIsoImgPngHandler),
+            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.AggIsoImgPngHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgPngHandler),
             (r"^/spectrum_line_chart_data/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.SpectrumLineChartHandler),
             (r"^/sf_peak_mzs/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.SFPeakMZsHandler),

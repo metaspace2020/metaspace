@@ -198,7 +198,7 @@ $(document).ready(function() {
         // total image
         var url = '/min_max_int/' + job_id + '/' + db_id + '/' + sf_id + '/' + adduct;
         $.getJSON(url, function( data ) {
-            var url_params = dataset_id + '/' + job_id + '/' + sf_id + '/' + sf;
+            var url_params = dataset_id + '/' + job_id + '/' + sf_id + '/' + sf + '/' + adduct;
             $("#ionimage_total").html(
                 '<img src="/mzimage2/' + url_params + '" id="img-total">'
             );

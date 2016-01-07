@@ -260,10 +260,10 @@ class SimpleHtmlHandler(tornado.web.RequestHandler):
 
 
 class IsoImgBaseHandler(tornado.web.RequestHandler):
-    ints_sql = ('SELECT pixel_inds inds, intensities as ints '
+    INTS_SQL = ('SELECT pixel_inds inds, intensities as ints '
                 'FROM iso_image img '
                 'JOIN job j ON img.job_id=j.id '
-                'WHERE j.id=%s AND img.sf_id=%s '
+                'WHERE j.id=%s AND img.sf_id=%s AND adduct=%s '
                 'ORDER BY peak')
     peaks_n_sql = 'SELECT peaks_n FROM iso_image_metrics WHERE sf_id=%s AND adduct=%s AND job_id=%s AND db_id=%s'
     bounds_sql = ('SELECT img_bounds '
@@ -296,8 +296,8 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "image/png")
         self.write(img_fp.getvalue())
 
-    def _get_intens_list(self, job_id, sf_id, nrows, ncols):
-        res_list_rows = self.db.query(self.ints_sql % (job_id, sf_id))
+    def _get_intens_list(self, job_id, sf_id, adduct, nrows, ncols):
+        res_list_rows = self.db.query(self.INTS_SQL, job_id, sf_id, adduct)
         intens_list = []
         for res_row in res_list_rows:
             img_arr = np.zeros(nrows*ncols)
@@ -322,13 +322,13 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
     def get_img_ints(self, ints_list):
         pass
 
-    def _get_color_image_data(self, ds_id, job_id, sf_id):
+    def _get_color_image_data(self, ds_id, job_id, sf_id, adduct):
         coords_row = self.db.query(self.coord_sql % int(ds_id))[0]
         coords = np.array(zip(coords_row.xs, coords_row.ys))
         coords -= coords.min(axis=0)
         self.ncols, self.nrows = coords.max(axis=0) + 1
 
-        visible_pixels = self.get_img_ints(self._get_intens_list(job_id, sf_id, self.nrows, self.ncols))
+        visible_pixels = self.get_img_ints(self._get_intens_list(job_id, sf_id, adduct, self.nrows, self.ncols))
         normalizer = Normalize(vmin=np.min(visible_pixels), vmax=np.max(visible_pixels))
         # color_img_data = np.zeros((nrows, ncols, 4))
         color_img_data = self.viridis_cmap(normalizer(visible_pixels))
@@ -339,7 +339,7 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
     def img_show(self, *args):
         pass
 
-    def plot_iso_img(self, ds_id, job_id, sf_id):
+    def plot_iso_img(self, ds_id, job_id, sf_id, adduct):
         fig = plt.figure()
         ax = plt.Axes(fig, [0., 0., 1., 1.])
         ax.get_xaxis().set_visible(False)
@@ -347,7 +347,7 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         ax.set_axis_off()
         fig.add_axes(ax)
 
-        color_img_data = self._get_color_image_data(ds_id, job_id, sf_id)
+        color_img_data = self._get_color_image_data(ds_id, job_id, sf_id, adduct)
         self.img_show(color_img_data)
 
         fp = cStringIO.StringIO()
@@ -365,7 +365,7 @@ class IsoImgPngHandler(IsoImgBaseHandler):
     @gen.coroutine
     def get(self, db_id, ds_id, job_id, sf_id, sf, adduct, peak_id):
         self.peak_id = int(peak_id)
-        img_fp = self.plot_iso_img(int(ds_id), int(job_id), int(sf_id))
+        img_fp = self.plot_iso_img(int(ds_id), int(job_id), int(sf_id), adduct)
         self.send_img_response(img_fp)
 
     def get_img_ints(self, ints_list):
@@ -381,13 +381,12 @@ class IsoImgPngHandler(IsoImgBaseHandler):
 class AggIsoImgPngHandler(IsoImgBaseHandler):
 
     @gen.coroutine
-    def get(self, *args):
-        ds_id, job_id, sf_id, sf = args
+    def get(self, ds_id, job_id, sf_id, sf, adduct):
         ds_id = int(ds_id)
         job_id = int(job_id)
         sf_id = int(sf_id)
 
-        img_fp = self.plot_iso_img(ds_id, job_id, sf_id)
+        img_fp = self.plot_iso_img(ds_id, job_id, sf_id, adduct)
         self.send_img_response(img_fp)
 
     def get_img_ints(self, ints_list):
@@ -404,8 +403,6 @@ class AggIsoImgPngHandler(IsoImgBaseHandler):
 
 class SFPeakMZsHandler(tornado.web.RequestHandler):
     peak_profile_sql = '''select centr_mzs
-
-
                        from theor_peaks
                        where db_id = %s and sf_id = %s and adduct = %s'''
 
