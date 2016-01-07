@@ -63,7 +63,7 @@ $(document).ready(function() {
       bSortCellsTop: true,
       bSearchable: false,
       bStateSave: true,
-      order: [[ 3, "desc" ]],
+      order: [[ 8, "desc" ]],
       fnInitComplete: function(oSettings, json) {
         $('#table-demo tbody tr:eq(0)').click();
       },
@@ -107,8 +107,8 @@ $(document).ready(function() {
         }, "targets": [4] },
         { "render": function ( data, type, row ) {
             return data;
-        }, "targets": [8] },
-        { "visible": false,  "targets": [ 9, 10, 11, 12, 13] },
+        }, "targets": [9] },
+        { "visible": false,  "targets": [10, 11, 12, 13, 14] },
       ],
       "initComplete" : function(oSettings, json) {
         $('#table-demo').tooltip({
@@ -122,15 +122,16 @@ $(document).ready(function() {
     yadcf.init(tbl_demo, [
       {column_number : 0, filter_type: "select", filter_container_id: "fil-db", filter_reset_button_text: false, filter_default_label: 'Select...'},
       {column_number : 1, filter_type: "select", filter_container_id: "fil-ds", filter_reset_button_text: false, filter_default_label: 'Select...', filter_match_mode: "exact"},
-      {column_number : 2, filter_type: "text", filter_container_id: "fil-nm", filter_reset_button_text: false },
-      {column_number : 3, filter_type: "text", filter_container_id: "fil-sf", filter_reset_button_text: false},
+      {column_number : 2, filter_type: "text", filter_container_id: "fil-sf", filter_reset_button_text: false},
+      {column_number : 3, filter_type: "text", filter_container_id: "fil-nm", filter_reset_button_text: false},
       {column_number : 4, filter_type: "text", filter_container_id: "fil-id", filter_reset_button_text: false},
-      {column_number : 5, filter_type: "lower_bound_number", filter_container_id: "fil-sp",
+      {column_number : 5, filter_type: "lower_bound_number", filter_container_id: "fil-chaos",
         filter_reset_button_text: false, filter_default_label: ['&ge;']
       },
-      {column_number : 6, filter_type: "lower_bound_number", filter_container_id: "fil-ic", filter_reset_button_text: false, filter_default_label: ['&ge;'] },
-      {column_number : 7, filter_type: "lower_bound_number", filter_container_id: "fil-sc", filter_reset_button_text: false, filter_default_label: ['&ge;']},
-      {column_number : 8, filter_type: "select", filter_container_id: "fil-ad", filter_reset_button_text: false, filter_default_label: 'all'},
+      {column_number : 6, filter_type: "lower_bound_number", filter_container_id: "fil-img-corr", filter_reset_button_text: false, filter_default_label: ['&ge;'] },
+      {column_number : 7, filter_type: "lower_bound_number", filter_container_id: "fil-pat-match", filter_reset_button_text: false, filter_default_label: ['&ge;']},
+      {column_number : 8, filter_type: "lower_bound_number", filter_container_id: "fil-msm", filter_reset_button_text: false, filter_default_label: ['&ge;']},
+      {column_number : 9, filter_type: "select", filter_container_id: "fil-add", filter_reset_button_text: false, filter_default_label: 'all'},
       // {column_number : 7, filter_type: "range_number", filter_container_id: "fil-jb", filter_reset_button_text: false},
     ]);
 
@@ -156,12 +157,12 @@ $(document).ready(function() {
         var sf = d[2];
         var subst_names = d[3];
         var subst_ids = d[4];
-        var adduct = d[8];
-        var job_id = d[9];
-        var dataset_id = d[10];
-        var sf_id = d[11];
-        var peaks_n = d[12];
-        var db_id = d[13];
+        var adduct = d[9];
+        var job_id = d[10];
+        var dataset_id = d[11];
+        var sf_id = d[12];
+        var peaks_n = d[13];
+        var db_id = d[14];
 
         $("#imagediv").empty();
         $("#imagediv").html("<h4 style='text-align:center'>...loading images...</h4>");
@@ -197,7 +198,7 @@ $(document).ready(function() {
         // total image
         var url = '/min_max_int/' + job_id + '/' + db_id + '/' + sf_id + '/' + adduct;
         $.getJSON(url, function( data ) {
-            var url_params = dataset_id + '/' + job_id + '/' + sf_id + '/' + sf;
+            var url_params = dataset_id + '/' + job_id + '/' + sf_id + '/' + sf + '/' + adduct;
             $("#ionimage_total").html(
                 '<img src="/mzimage2/' + url_params + '" id="img-total">'
             );
@@ -333,6 +334,7 @@ $(document).ready(function() {
                     title: "Sample",
                     lineColor: "red",
                     type: "column",
+                    fixedColumnWidth: 5,
                     fillAlphas: 1,
                 }],
 

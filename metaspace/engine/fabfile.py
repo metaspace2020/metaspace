@@ -83,7 +83,7 @@ def webserver_deploy():
 #         run('mkdir -p data/sm_db')
 #     rsync_project(local_dir=full_path('data/sm_db/'), remote_dir=remote_full_path('data/sm_db/'))
 #     run('psql -h localhost -U sm sm < {}'.format(remote_full_path('scripts/create_schema.sql')))
-#     run('psql -h localhost -U sm sm < {}'.format(remote_full_path('data/sm_db/agg_formula.sql')))
+#     run('psql -h localhost -U sm sm < {}'.format(remote_full_path('data/sm_db/hmdb_agg_formula.sql')))
 
 
 # def get_aws_instance_info(name):
@@ -159,10 +159,11 @@ def cluster_stop():
 
     desc_cmd = 'aws ec2 describe-instances --filters "Name=private-dns-name,Values={}"'.format(','.join(slaves))
     out = json.loads(local(desc_cmd, capture=True))
-    for inst_out in out['Reservations'][0]['Instances']:
-        inst_id = inst_out['InstanceId']
-        term_cmd = 'aws ec2 terminate-instances --instance-ids {}'.format(inst_id)
-        local(term_cmd)
+    for res_out in out['Reservations']:
+        for inst_out in res_out['Instances']:
+            inst_id = inst_out['InstanceId']
+            term_cmd = 'aws ec2 terminate-instances --instance-ids {}'.format(inst_id)
+            local(term_cmd)
 
     print 'Stopping master...'
     master_inst = 'i-54c44cd9'

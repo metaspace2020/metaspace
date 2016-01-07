@@ -15,7 +15,7 @@ CREATE TABLE formula (
 	sf_id 	int,
 	name	text,
 	sf 		text,
-	CONSTRAINT formula_db_id_sf_id_pk PRIMARY KEY(db_id, sf_id)
+	CONSTRAINT formula_db_id_sf_id_pk PRIMARY KEY(db_id, id, sf_id)
 );
 
 DROP TABLE IF EXISTS agg_formula CASCADE;
@@ -111,11 +111,14 @@ CREATE TABLE theor_peaks (
     db_id           int,
 	sf_id			int,
 	adduct			text,
+	sigma           real,
+	charge          int,
+	pts_per_mz      int,
 	centr_mzs		double precision[],
 	centr_ints		double precision[],
 	prof_mzs		double precision[],
 	prof_ints		double precision[],
-	CONSTRAINT theor_peaks_sf_id_adduct_pk PRIMARY KEY(db_id, sf_id, adduct),
+	CONSTRAINT theor_peaks_sf_id_adduct_pk PRIMARY KEY(db_id, sf_id, adduct, sigma, charge, pts_per_mz),
 	CONSTRAINT theor_peaks_db_id_sf_id_fk FOREIGN KEY (db_id, sf_id)
       REFERENCES agg_formula (db_id, id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE

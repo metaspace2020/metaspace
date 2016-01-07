@@ -13,7 +13,7 @@
     "isocalc_points_per_mz": 10000
   },
   "image_generation": {
-    "ppm": 1.0,
+    "ppm": 2.0,
     "nlevels": 30,
     "q": 99,
     "do_preprocessing": false

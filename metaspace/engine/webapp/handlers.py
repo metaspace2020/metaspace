@@ -101,14 +101,14 @@ class AjaxHandler(tornado.web.RequestHandler):
 
             return callback
 
-        def wrapper(self, query_id, slug, cProfile_res_list):
+        def wrapper(self, query_id, slug):
             my_print("ajax %s starting..." % query_id)
             my_print("%s" % query_id)
             my_print("%s" % slug)
             draw = self.get_argument('draw', 0)
             input_id = ""
-            if len(slug) > 0:
-                input_id = get_id_from_slug(slug)
+            # if len(slug) > 0:
+            #     input_id = get_id_from_slug(slug)
 
             if query_id in ['formulas', 'substancejobs', 'jobs', 'datasets', 'demobigtable']:
                 orderby = sql_fields[query_id][int(self.get_argument('order[0][column]', 0))]
@@ -131,6 +131,8 @@ class AjaxHandler(tornado.web.RequestHandler):
                 if query_id == 'demobigtable':
                     count = int(self.db.query(q_count)[0]['count'])
                     res = self.db.query(q_res)
+                    for r in res:
+                        r['msm'] = round(r['chaos'] * r['image_corr'] * r['pattern_match'], 6)
                 else:
                     my_print(q_res + " ORDER BY %s %s %s OFFSET %s" % (orderby, orderdir, limit_string, offset))
                     count = int(self.db.query(q_count)[0]['count'])
@@ -190,14 +192,14 @@ class AjaxHandler(tornado.web.RequestHandler):
                     res_dict.update({"all_datasets": self.application.all_datasets})
                     res_dict.update(get_iso_peaks(res_dict["sf"]))
                 res_dict.update({"draw": draw})
-            cProfile_res_list.append(res_dict)
 
-        res = []
-        if args.time_profiling_enabled:
-            cProfile.runctx("wrapper(self, query_id, slug, res)", globals(), locals())
-        else:
-            wrapper(self, query_id, slug, res)
-        res_dict = res[0]
+            return res_dict
+
+        # res = []
+        # if args.time_profiling_enabled:
+        #     cProfile.runctx("wrapper(self, query_id, slug, res)", globals(), locals())
+        # else:
+        res_dict = wrapper(self, query_id, slug)
         my_print("ajax %s processed, returning..." % query_id)
         t0 = datetime.now()
         self.write(json.dumps(res_dict, cls=DateTimeEncoder))
@@ -258,10 +260,10 @@ class SimpleHtmlHandler(tornado.web.RequestHandler):
 
 
 class IsoImgBaseHandler(tornado.web.RequestHandler):
-    ints_sql = ('SELECT pixel_inds inds, intensities as ints '
+    INTS_SQL = ('SELECT pixel_inds inds, intensities as ints '
                 'FROM iso_image img '
                 'JOIN job j ON img.job_id=j.id '
-                'WHERE j.id=%s AND img.sf_id=%s '
+                'WHERE j.id=%s AND img.sf_id=%s AND adduct=%s '
                 'ORDER BY peak')
     peaks_n_sql = 'SELECT peaks_n FROM iso_image_metrics WHERE sf_id=%s AND adduct=%s AND job_id=%s AND db_id=%s'
     bounds_sql = ('SELECT img_bounds '
@@ -294,8 +296,8 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "image/png")
         self.write(img_fp.getvalue())
 
-    def _get_intens_list(self, job_id, sf_id, nrows, ncols):
-        res_list_rows = self.db.query(self.ints_sql % (job_id, sf_id))
+    def _get_intens_list(self, job_id, sf_id, adduct, nrows, ncols):
+        res_list_rows = self.db.query(self.INTS_SQL, job_id, sf_id, adduct)
         intens_list = []
         for res_row in res_list_rows:
             img_arr = np.zeros(nrows*ncols)
@@ -320,13 +322,13 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
     def get_img_ints(self, ints_list):
         pass
 
-    def _get_color_image_data(self, ds_id, job_id, sf_id):
+    def _get_color_image_data(self, ds_id, job_id, sf_id, adduct):
         coords_row = self.db.query(self.coord_sql % int(ds_id))[0]
         coords = np.array(zip(coords_row.xs, coords_row.ys))
         coords -= coords.min(axis=0)
         self.ncols, self.nrows = coords.max(axis=0) + 1
 
-        visible_pixels = self.get_img_ints(self._get_intens_list(job_id, sf_id, self.nrows, self.ncols))
+        visible_pixels = self.get_img_ints(self._get_intens_list(job_id, sf_id, adduct, self.nrows, self.ncols))
         normalizer = Normalize(vmin=np.min(visible_pixels), vmax=np.max(visible_pixels))
         # color_img_data = np.zeros((nrows, ncols, 4))
         color_img_data = self.viridis_cmap(normalizer(visible_pixels))
@@ -337,7 +339,7 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
     def img_show(self, *args):
         pass
 
-    def plot_iso_img(self, ds_id, job_id, sf_id):
+    def plot_iso_img(self, ds_id, job_id, sf_id, adduct):
         fig = plt.figure()
         ax = plt.Axes(fig, [0., 0., 1., 1.])
         ax.get_xaxis().set_visible(False)
@@ -345,7 +347,7 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         ax.set_axis_off()
         fig.add_axes(ax)
 
-        color_img_data = self._get_color_image_data(ds_id, job_id, sf_id)
+        color_img_data = self._get_color_image_data(ds_id, job_id, sf_id, adduct)
         self.img_show(color_img_data)
 
         fp = cStringIO.StringIO()
@@ -363,7 +365,7 @@ class IsoImgPngHandler(IsoImgBaseHandler):
     @gen.coroutine
     def get(self, db_id, ds_id, job_id, sf_id, sf, adduct, peak_id):
         self.peak_id = int(peak_id)
-        img_fp = self.plot_iso_img(int(ds_id), int(job_id), int(sf_id))
+        img_fp = self.plot_iso_img(int(ds_id), int(job_id), int(sf_id), adduct)
         self.send_img_response(img_fp)
 
     def get_img_ints(self, ints_list):
@@ -379,13 +381,12 @@ class IsoImgPngHandler(IsoImgBaseHandler):
 class AggIsoImgPngHandler(IsoImgBaseHandler):
 
     @gen.coroutine
-    def get(self, *args):
-        ds_id, job_id, sf_id, sf = args
+    def get(self, ds_id, job_id, sf_id, sf, adduct):
         ds_id = int(ds_id)
         job_id = int(job_id)
         sf_id = int(sf_id)
 
-        img_fp = self.plot_iso_img(ds_id, job_id, sf_id)
+        img_fp = self.plot_iso_img(ds_id, job_id, sf_id, adduct)
         self.send_img_response(img_fp)
 
     def get_img_ints(self, ints_list):
@@ -402,8 +403,6 @@ class AggIsoImgPngHandler(IsoImgBaseHandler):
 
 class SFPeakMZsHandler(tornado.web.RequestHandler):
     peak_profile_sql = '''select centr_mzs
-
-
                        from theor_peaks
                        where db_id = %s and sf_id = %s and adduct = %s'''
 
@@ -424,10 +423,10 @@ class MinMaxIntHandler(tornado.web.RequestHandler):
 
 
 class SpectrumLineChartHandler(tornado.web.RequestHandler):
-    peak_profile_sql = '''SELECT centr_mzs, centr_ints, prof_mzs, prof_ints
+    PEAK_PROFILE_SQL = '''SELECT centr_mzs, centr_ints, prof_mzs, prof_ints
                           FROM theor_peaks
                           WHERE db_id = %s and sf_id = %s and adduct = %s'''
-    sample_intens_sql = '''SELECT intensities
+    SAMPLE_INTENS_SQL = '''SELECT intensities
                            FROM iso_image
                            WHERE job_id = %s and db_id = %s and sf_id = %s and adduct = %s order by peak'''
 
@@ -435,16 +434,18 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
     def db(self):
         return self.application.db
 
-    def find_closest_inds(self, mz_grid, mzs):
+    @staticmethod
+    def find_closest_inds(mz_grid, mzs):
         return map(lambda mz: (np.abs(mz_grid - mz)).argmin(), mzs)
 
-    def to_str(self, list_of_numbers):
+    @staticmethod
+    def to_str(list_of_numbers):
         return map(lambda x: '%.3f' % x, list(list_of_numbers))
 
     def convert_to_serial(self, centr_mzs, prof_mzs):
         step = mode(np.diff(prof_mzs)).mode[0]
-        min_mz = prof_mzs[0] - 15*step
-        max_mz = prof_mzs[-1]
+        min_mz = prof_mzs[0] - 0.25
+        max_mz = prof_mzs[-1] + 0.25
 
         points_n = int(np.round((max_mz - min_mz) / step)) + 1
         mz_grid = np.linspace(min_mz, max_mz, points_n)
@@ -456,14 +457,14 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
-        peaks_dict = self.db.query(self.peak_profile_sql, int(db_id), int(sf_id), adduct)[0]
+        peaks_dict = self.db.query(self.PEAK_PROFILE_SQL, int(db_id), int(sf_id), adduct)[0]
         prof_mzs = np.array(peaks_dict['prof_mzs'])
         prof_ints = np.array(peaks_dict['prof_ints'])
         centr_mzs = np.array(peaks_dict['centr_mzs'])
 
         min_mz, max_mz, points_n, centr_inds, prof_inds = self.convert_to_serial(centr_mzs, prof_mzs)
 
-        sample_ints_list = self.db.query(self.sample_intens_sql, int(job_id), int(db_id), int(sf_id), adduct)
+        sample_ints_list = self.db.query(self.SAMPLE_INTENS_SQL, int(job_id), int(db_id), int(sf_id), adduct)
         sample_centr_ints = np.array(map(lambda d: sum(d.values()[0]), sample_ints_list))
         sample_centr_ints_norm = sample_centr_ints / sample_centr_ints.max() * 100
 

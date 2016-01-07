@@ -6,6 +6,7 @@ import json
 import numpy as np
 from fabric.api import local
 from fabric.context_managers import warn_only
+from operator import mul, add
 
 from engine.db import DB
 from engine.util import proj_root, hdfs_prefix, SMConfig
@@ -43,14 +44,15 @@ def compare_search_results(base_search_res, search_res):
 
     for sf_adduct in new_sf_adduct:
         metrics = search_res[sf_adduct]
-        print '{} metrics = {}'.format(sf_adduct, metrics)
+        msm = reduce(mul, map(lambda m: m if m >= 0 else 0, metrics))
+        print '{} metrics = {}, MSM = {}'.format(sf_adduct, metrics, msm)
 
     print 'DIFFERENCE IN METRICS'
     for b_sf_add, b_metr in base_search_res.iteritems():
         if b_sf_add in search_res.keys():
             metr = search_res[b_sf_add]
-            diff = np.abs(b_metr - metr)
-            if np.any(diff > 1e-6):
+            diff = b_metr - metr
+            if np.any(np.abs(diff) > 1e-6):
                 print '{} metrics diff = {}'.format(b_sf_add, diff)
 
 
@@ -89,7 +91,7 @@ class SciTester(object):
             return {(r[0], r[1]): np.array(r[2:], dtype=float) for r in rows}
 
     def fetch_search_res(self):
-        rows = self.db.select(SEARCH_RES_SELECT, (ds_name, 'HMDB'))
+        rows = self.db.select(SEARCH_RES_SELECT, ds_name, 'HMDB')
         return {(r[0], r[1]): self.metr_dict_to_array(r[2]) for r in rows}
 
     def run_sci_test(self):

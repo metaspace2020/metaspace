@@ -21,7 +21,7 @@ def db_dec(func):
             logger.debug(args[0])
             res = func(self, *args, **kwargs)
         except psycopg2.Error as e:
-            logger.error(format_exc)
+            logger.error(format_exc())
             logger.error('SQL: %s', args[0])
         else:
             self.conn.commit()
@@ -44,19 +44,14 @@ class DB(object):
     def close(self):
         self.conn.close()
 
-    def valid_params(self, params):
-        if type(params) not in [list, tuple]:
-            return (params,)
-        return params
-
     @db_dec
-    def select(self, sql, params=None):
+    def select(self, sql, *args):
         self.curs = self.conn.cursor()
-        self.curs.execute(sql, self.valid_params(params))
+        self.curs.execute(sql, args)
         return self.curs.fetchall()
 
-    def select_one(self, sql, params=None):
-        res = self.select(sql, self.valid_params(params))
+    def select_one(self, sql, *args):
+        res = self.select(sql, *args)
         return res[0] if len(res) > 0 else []
 
     @db_dec
@@ -65,9 +60,9 @@ class DB(object):
         self.curs.executemany(sql, rows)
 
     @db_dec
-    def alter(self, sql, params=None):
+    def alter(self, sql, *args):
         self.curs = self.conn.cursor()
-        self.curs.execute(sql, self.valid_params(params))
+        self.curs.execute(sql, args)
 
     @db_dec
     def copy(self, inp_file, table, sep='\t', columns=None):

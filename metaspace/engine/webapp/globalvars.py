@@ -62,26 +62,29 @@ sql_queries = dict(
 		WHERE (stats->'mean_ent')::text::real > 0.0001 AND job_id=%s
 	''',
     demobigtable='''
-        SELECT db.name as db_name, ds_name, f.sf, f.names, f.subst_ids,
+        SELECT sf_db.name as db_name, ds.name as ds_name, f.sf, f.names, f.subst_ids,
             (m.stats->'chaos')::text::real AS chaos,
             (m.stats->'img_corr')::text::real AS image_corr,
             (m.stats->'pat_match')::text::real AS pattern_match,
-            m.adduct as adduct,
-            last_job_id,
-            ds_j.ds_id,
-            f.id as sf_id,
+            m.adduct AS adduct,
+            j.id AS job_id,
+            ds.id AS ds_id,
+            f.id AS sf_id,
             m.peaks_n,
-            db.id as db_id
-        FROM agg_formula f
-        JOIN formula_db db ON db.id=f.db_id
-        JOIN iso_image_metrics m ON f.id=m.sf_id
-        JOIN (
-            SELECT j.db_id, ds.id as ds_id, ds.name as ds_name, max(j.id) as last_job_id
-            FROM job j
-            JOIN dataset ds on ds.id = j.ds_id
-            GROUP BY j.db_id, ds.id, ds.name
-        ) ds_j ON ds_j.last_job_id = m.job_id AND db.id=ds_j.db_id
-	''',
+            sf_db.id AS db_id
+        FROM iso_image_metrics m
+        JOIN formula_db sf_db ON sf_db.id = m.db_id
+        JOIN agg_formula f ON f.id = m.sf_id
+        JOIN job j ON j.id = m.job_id
+        JOIN dataset ds ON ds.id = j.ds_id
+        ''',
+    #  JOIN (
+    #      SELECT j.db_id, ds.id as ds_id, ds.name as ds_name, max(j.id) as last_job_id
+    #      FROM job j
+    #      JOIN dataset ds on ds.id = j.ds_id
+    #      GROUP BY j.db_id, ds.id, ds.name
+    # ) ds_j ON ds_j.last_job_id = m.job_id AND db.id=ds_j.db_id
+
     demosubst='''SELECT s.job_id, s.sf_id, s.adduct, peak, intensities as ints
 		FROM job_result_stat s
 		JOIN job_result_data d ON s.job_id=d.job_id  and s.adduct=d.adduct
@@ -112,5 +115,6 @@ sql_fields = dict(
     datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
     fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"],
     demobigtable=["db_name", "ds_name", "sf", "names", "subst_ids", "chaos", "image_corr", "pattern_match",
-                  "adduct", "last_job_id", "ds_id", "sf_id", "peaks_n", "db_id"]
+                  "msm",
+                  "adduct", "job_id", "ds_id", "sf_id", "peaks_n", "db_id"]
 )

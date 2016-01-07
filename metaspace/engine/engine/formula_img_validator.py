@@ -5,19 +5,21 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 import numpy as np
-from operator import mul
+from operator import mul, add
 
 from engine.pyIMS.image_measures import measure_of_chaos, isotope_image_correlation, isotope_pattern_match
 
+# from engine.pyIMS.image_measures import measure_of_chaos, isotope_image_correlation, isotope_pattern_match
 
-def _correct_peak_intens_distribution(iso_imgs_flat):
-    first_peak_ints = np.sum(map(np.sum, iso_imgs_flat[0:1]))
-    second_peak_ints = np.sum(map(np.sum, iso_imgs_flat[1:2]))
-    rest_peak_ints = np.sum(map(np.sum, iso_imgs_flat[2:]))
-    if (first_peak_ints < second_peak_ints + rest_peak_ints) or (second_peak_ints < rest_peak_ints):
-        return False
-    else:
-        return True
+
+# def _correct_peak_intens_distribution(iso_imgs_flat):
+#     first_peak_ints = np.sum(map(np.sum, iso_imgs_flat[0:1]))
+#     second_peak_ints = np.sum(map(np.sum, iso_imgs_flat[1:2]))
+#     rest_peak_ints = np.sum(map(np.sum, iso_imgs_flat[2:]))
+#     if (first_peak_ints < second_peak_ints + rest_peak_ints) or (second_peak_ints < rest_peak_ints):
+#         return False
+#     else:
+#         return True
 
 
 class ImgMeasures(object):
@@ -50,16 +52,12 @@ def get_compute_img_measures(empty_matrix, img_gen_conf):
                     for img in iso_images_sparse + [None] * diff]
         iso_imgs_flat = [img.flat[:] for img in iso_imgs]
 
-        measures = ImgMeasures(0., 0., 0.)
-        if (len(iso_imgs) > 0) and _correct_peak_intens_distribution(iso_imgs_flat):
+        measures = ImgMeasures(0, 0, 0)
+        if len(iso_imgs) > 0:
             measures.pattern_match = isotope_pattern_match(iso_imgs_flat, sf_intensity)
-
-            if measures.pattern_match:
-                measures.image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_intensity[1:])
-
-                if measures.image_corr:
-                    measures.chaos = measure_of_chaos(iso_imgs[0], nlevels=img_gen_conf['nlevels'], overwrite=False)
-        return measures.to_tuple(replace_nan=True)
+            measures.image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_intensity[1:])
+            measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'], overwrite=False)
+        return measures.chaos, measures.image_corr, measures.pattern_match
 
     return compute
 
@@ -72,7 +70,7 @@ def filter_sf_images(sc, ds_config, ds, formulas, sf_images):
 
     sf_metrics = (sf_images
                   .map(lambda (sf_i, imgs): (sf_i, compute_measures(imgs, sf_peak_intens_brcast.value[sf_i])))
-                  .filter(lambda (_, metrics): reduce(mul, metrics) > 0))
+                  .filter(lambda (_, metrics): reduce(add, metrics) > 0))
     if ds_config["molecules_num"]:
         sf_metrics_map = dict(sf_metrics.takeOrdered(ds_config["molecules_num"],
                                                      lambda (_, metrics): -reduce(mul, metrics)))
