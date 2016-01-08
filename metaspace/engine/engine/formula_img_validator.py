@@ -7,9 +7,11 @@
 import numpy as np
 from operator import mul, add
 
-from engine.pyIMS.image_measures import measure_of_chaos, isotope_image_correlation, isotope_pattern_match
-
 # from engine.pyIMS.image_measures import measure_of_chaos, isotope_image_correlation, isotope_pattern_match
+
+from engine.pyIMS.image_measures.level_sets_measure import measure_of_chaos
+from engine.pyIMS.image_measures.isotope_image_correlation import isotope_image_correlation
+from engine.pyIMS.image_measures.isotope_pattern_match import isotope_pattern_match
 
 
 # def _correct_peak_intens_distribution(iso_imgs_flat):
@@ -56,8 +58,8 @@ def get_compute_img_measures(empty_matrix, img_gen_conf):
         if len(iso_imgs) > 0:
             measures.pattern_match = isotope_pattern_match(iso_imgs_flat, sf_intensity)
             measures.image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_intensity[1:])
-            measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'], overwrite=False)
-        return measures.chaos, measures.image_corr, measures.pattern_match
+            measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'], interp=False, overwrite=False)
+        return measures.to_tuple()
 
     return compute
 

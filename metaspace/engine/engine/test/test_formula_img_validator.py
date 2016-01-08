@@ -12,14 +12,12 @@ from engine.test.util import spark_context, ds_config
 
 @mock.patch('engine.formula_img_validator.isotope_pattern_match', return_value=0.95)
 @mock.patch('engine.formula_img_validator.isotope_image_correlation', return_value=0.8)
-@mock.patch('engine.formula_img_validator.chaos', return_value=0.99)
+@mock.patch('engine.formula_img_validator.measure_of_chaos', return_value=0.99)
 def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_match_mock):
     img_gen_conf = {
-        'image_generation': {
-            'nlevels': 30,
-            'do_preprocessing': False,
-            'q': 99.0
-        }
+        'nlevels': 30,
+        'do_preprocessing': False,
+        'q': 99.0
     }
     empty_matrix = np.zeros((2, 3))
     compute_measures = get_compute_img_measures(empty_matrix, img_gen_conf)
