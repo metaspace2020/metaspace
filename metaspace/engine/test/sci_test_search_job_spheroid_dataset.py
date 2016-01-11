@@ -7,6 +7,7 @@ import numpy as np
 from fabric.api import local
 from fabric.context_managers import warn_only
 from operator import mul, add
+from pprint import pprint
 
 from engine.db import DB
 from engine.util import proj_root, hdfs_prefix, SMConfig
@@ -33,21 +34,38 @@ SEARCH_RES_SELECT = ("select sf, adduct, stats "
                      "ORDER BY sf, adduct ")
 
 
+def print_metric_hist(metric_arr, bins=10):
+    metric_freq, metric_interv = np.histogram(metric_arr, bins=bins)
+    metric_interv = map(lambda x: round(x, 2), metric_interv)
+    pprint(zip(zip(metric_interv[:-1], metric_interv[1:]), metric_freq))
+
+
 def compare_search_results(base_search_res, search_res):
     missed_sf_adduct = set(base_search_res.keys()).difference(set(search_res.keys()))
     print 'MISSED FORMULAS: {:.1f}%'.format(len(missed_sf_adduct) / len(base_search_res) * 100)
     if missed_sf_adduct:
         print list(missed_sf_adduct)
 
+    missed_sf_base_metrics = np.array([np.array(base_search_res[k]) for k in missed_sf_adduct])
+
+    print "\nCHAOS HISTOGRAM"
+    print_metric_hist(missed_sf_base_metrics[:, 0])
+    print "\nIMG_CORR HISTOGRAM"
+    print_metric_hist(missed_sf_base_metrics[:, 1])
+    print "\nPAT_MATCH HISTOGRAM"
+    print_metric_hist(missed_sf_base_metrics[:, 2])
+    print "\nMSM HISTOGRAM"
+    print_metric_hist([a*b*c for a, b, c in missed_sf_base_metrics])
+
     new_sf_adduct = set(search_res.keys()).difference(set(base_search_res.keys()))
-    print 'FALSE DISCOVERY: {:.1f}%'.format(len(new_sf_adduct) / len(base_search_res) * 100)
+    print '\nFALSE DISCOVERY: {:.1f}%'.format(len(new_sf_adduct) / len(base_search_res) * 100)
 
     for sf_adduct in new_sf_adduct:
         metrics = search_res[sf_adduct]
         msm = reduce(mul, map(lambda m: m if m >= 0 else 0, metrics))
         print '{} metrics = {}, MSM = {}'.format(sf_adduct, metrics, msm)
 
-    print 'DIFFERENCE IN METRICS'
+    print '\nDIFFERENCE IN METRICS'
     for b_sf_add, b_metr in base_search_res.iteritems():
         if b_sf_add in search_res.keys():
             metr = search_res[b_sf_add]
