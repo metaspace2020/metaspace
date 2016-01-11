@@ -46,16 +46,17 @@ def compare_search_results(base_search_res, search_res):
     if missed_sf_adduct:
         print list(missed_sf_adduct)
 
-    missed_sf_base_metrics = np.array([np.array(base_search_res[k]) for k in missed_sf_adduct])
+    if missed_sf_adduct:
+        missed_sf_base_metrics = np.array([np.array(base_search_res[k]) for k in missed_sf_adduct])
 
-    print "\nCHAOS HISTOGRAM"
-    print_metric_hist(missed_sf_base_metrics[:, 0])
-    print "\nIMG_CORR HISTOGRAM"
-    print_metric_hist(missed_sf_base_metrics[:, 1])
-    print "\nPAT_MATCH HISTOGRAM"
-    print_metric_hist(missed_sf_base_metrics[:, 2])
-    print "\nMSM HISTOGRAM"
-    print_metric_hist([a*b*c for a, b, c in missed_sf_base_metrics])
+        print "\nCHAOS HISTOGRAM"
+        print_metric_hist(missed_sf_base_metrics[:, 0])
+        print "\nIMG_CORR HISTOGRAM"
+        print_metric_hist(missed_sf_base_metrics[:, 1])
+        print "\nPAT_MATCH HISTOGRAM"
+        print_metric_hist(missed_sf_base_metrics[:, 2])
+        print "\nMSM HISTOGRAM"
+        print_metric_hist([a*b*c for a, b, c in missed_sf_base_metrics])
 
     new_sf_adduct = set(search_res.keys()).difference(set(base_search_res.keys()))
     print '\nFALSE DISCOVERY: {:.1f}%'.format(len(new_sf_adduct) / len(base_search_res) * 100)
@@ -66,12 +67,23 @@ def compare_search_results(base_search_res, search_res):
         print '{} metrics = {}, MSM = {}'.format(sf_adduct, metrics, msm)
 
     print '\nDIFFERENCE IN METRICS'
+    metric_diffs = []
     for b_sf_add, b_metr in base_search_res.iteritems():
         if b_sf_add in search_res.keys():
             metr = search_res[b_sf_add]
             diff = b_metr - metr
+            metric_diffs.append(diff)
             if np.any(np.abs(diff) > 1e-6):
                 print '{} metrics diff = {}'.format(b_sf_add, diff)
+
+    if metric_diffs:
+        metric_diffs = np.asarray(metric_diffs)
+        print "\nCHAOS HISTOGRAM"
+        print_metric_hist(metric_diffs[:, 0])
+        print "\nIMG_CORR HISTOGRAM"
+        print_metric_hist(metric_diffs[:, 1])
+        print "\nPAT_MATCH HISTOGRAM"
+        print_metric_hist(metric_diffs[:, 2])
 
 
 def zip_engine():
