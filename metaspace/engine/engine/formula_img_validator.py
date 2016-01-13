@@ -58,7 +58,7 @@ def get_compute_img_measures(empty_matrix, img_gen_conf):
         if len(iso_imgs) > 0:
             measures.pattern_match = isotope_pattern_match(iso_imgs_flat, sf_intensity)
             measures.image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_intensity[1:])
-            measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'], interp=False, overwrite=False)
+            measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'], overwrite=False)
         return measures.to_tuple()
 
     return compute
