@@ -12,7 +12,7 @@ import numpy as np
 
 from engine.db import DB
 from engine.util import logger
-from pyMS.pyisocalc.pyisocalc import complete_isodist, complex_to_simple, SumFormulaParser
+from pyMS.pyisocalc.pyisocalc import complete_isodist, parseSumFormula
 
 db_id_sql = 'SELECT id FROM formula_db WHERE name = %s'
 agg_formula_sql = 'SELECT id, sf FROM agg_formula where db_id = %s'
@@ -46,9 +46,7 @@ class IsocalcWrapper(object):
         self.max_mz_dist_to_centr = 0.15
 
     def _isodist(self, sf_adduct):
-        # TODO: move the next two calls to the lib
-        sf_adduct_simplified = complex_to_simple(sf_adduct)
-        sf_adduct_obj = SumFormulaParser.parse_string(sf_adduct_simplified)
+        sf_adduct_obj = parseSumFormula(sf_adduct)
         return complete_isodist(sf_adduct_obj, sigma=self.sigma, charge=self.charge, pts_per_mz=self.pts_per_mz,
                                 centroid_kwargs={'weighted_bins': 5})
 
