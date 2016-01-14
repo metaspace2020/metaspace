@@ -4,16 +4,17 @@
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
+import json
+import sys
+from os.path import exists
+
 import numpy as np
 import scipy.signal as signal
-import sys
-import json
-from os.path import exists
 from pyimzml.ImzMLParser import ImzMLParser
 
 from engine.db import DB
-from engine.pyMS.centroid_detection import gradient
 from engine.util import SMConfig, logger
+from pyMS.centroid_detection import gradient
 
 
 def preprocess_spectrum(mzs, ints):

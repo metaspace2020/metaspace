@@ -1,8 +1,8 @@
-[submodule "engine/pyMS"]
-	path = engine/pyMS
+[submodule "pyMS"]
+	path = pyMS
 	url = https://github.com/alexandrovteam/pyMS
 	ignore = dirty
-[submodule "engine/pyIMS"]
-	path = engine/pyIMS
+[submodule "pyIMS"]
+	path = pyIMS
 	url = https://github.com/alexandrovteam/pyIMS
 	ignore = dirty

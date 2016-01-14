@@ -1,8 +1,9 @@
+import numpy as np
 from mock import mock, MagicMock
 from numpy.testing import assert_array_almost_equal
-import numpy as np
-from engine.pyMS.mass_spectrum import MassSpectrum
+
 from engine.theor_peaks_gen import TheorPeaksGenerator, IsocalcWrapper
+from pyMS.mass_spectrum import MassSpectrum
 from engine.test.util import spark_context, sm_config, ds_config
 
 

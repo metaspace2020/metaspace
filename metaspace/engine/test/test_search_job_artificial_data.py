@@ -1,16 +1,15 @@
-from mock import patch, MagicMock, PropertyMock
-import pytest
+from os.path import join, dirname
+
 import numpy as np
-from pyspark import SparkContext
-from os.path import join, realpath, dirname
+import pytest
 from fabric.api import local
 from fabric.context_managers import warn_only
-import os
-from engine.search_job import SearchJob
+from mock import patch, PropertyMock
+
 from engine.db import DB
-from engine.imzml_txt_converter import ImzmlTxtConverter
-from engine.pyMS.mass_spectrum import MassSpectrum
-from engine.test.util import sm_config, ds_config, create_test_db, drop_test_db
+from engine.search_job import SearchJob
+from pyspark import SparkContext
+
 # from engine.util import hdfs_prefix
 
 proj_dir_path = dirname(dirname(__file__))

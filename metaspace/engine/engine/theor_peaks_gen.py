@@ -4,15 +4,15 @@
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
-import numpy as np
-from os.path import realpath, join, exists
 from os import makedirs
+from os.path import join, exists
 from traceback import format_exc
 
-from engine.pyMS.pyisocalc.pyisocalc import complete_isodist, complex_to_simple, SumFormulaParser
+import numpy as np
+
 from engine.db import DB
 from engine.util import logger
-
+from pyMS.pyisocalc.pyisocalc import complete_isodist, complex_to_simple, SumFormulaParser
 
 db_id_sql = 'SELECT id FROM formula_db WHERE name = %s'
 agg_formula_sql = 'SELECT id, sf FROM agg_formula where db_id = %s'
