@@ -3,7 +3,8 @@
 .idea
 *.pkl
 *.zip
-conf
+conf/*.json
+conf/*.cfg
 data/*
 docs/_build
 docs/_static
