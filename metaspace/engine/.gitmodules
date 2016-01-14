@@ -1,5 +1,3 @@
-[submodule "pyMS"]
-	path = pyMS
-	url = https://github.com/alexandrovteam/pyMS
-	ignore = dirty
-
+[submodule "pyIMS"]
+	path = pyIMS
+	url = git@github.com:alexandrovteam/pyIMS.git
