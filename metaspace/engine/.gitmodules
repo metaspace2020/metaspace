@@ -2,7 +2,4 @@
 	path = pyMS
 	url = https://github.com/alexandrovteam/pyMS
 	ignore = dirty
-[submodule "pyIMS"]
-	path = pyIMS
-	url = https://github.com/alexandrovteam/pyIMS
-	ignore = dirty
+
