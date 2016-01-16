@@ -1,0 +1,36 @@
+# main container that runs the web interface on host port 8642
+web:
+  build: .
+  ports:
+    - "8642:8080"
+  volumes:
+    - ..:/code/SM_distributed
+    - ../test/data/:/data # mount directory with datasets to /data
+    - config.json:/code/webapp/config.json
+  links:
+    - postgres # must be the host name in the config
+  working_dir: /code/SM_distributed
+  restart: always
+  # wait a few seconds for postgres to initialize and start web interface
+  command: bash -c 'sleep 10 && $CONDA_ACTIVATE && PYTHONPATH=.:$PYTHONPATH python webapp/webserver.py --config /code/webapp/config.json'
+
+# data-only container for storing the database
+dbdata:
+  image: postgres:latest
+  entrypoint: /bin/true
+  volumes:
+    - /var/lib/postgresql
+
+# container that runs the database
+postgres:
+  image: postgres:latest
+  environment: # config file 'db' section
+    POSTGRES_DB: sm
+    POSTGRES_USER: sm
+    POSTGRES_PASSWORD: securepassword
+  volumes:
+    - ../scripts/create_schema.sql:/docker-entrypoint-initdb.d/01-create_schema.sql
+    - hmdb_agg_formula.sql:/docker-entrypoint-initdb.d/02-hmdb_agg_formula.sql
+  volumes_from:
+    - dbdata
+  restart: always
