@@ -146,7 +146,7 @@ $(document).ready(function() {
       }
     } );
 
-    $(".fancybox").fancybox();
+//    $(".fancybox").fancybox();
 
     // Row select handler
     function select_row(row_object) {
