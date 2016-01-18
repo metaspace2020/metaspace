@@ -1,0 +1,19 @@
+{
+  "db": {
+    "host": "postgres",
+    "database": "sm",
+    "user": "sm",
+    "password": "securepassword"
+  },
+  "fs": {
+    "data_dir": "/opt/data/sm_data",
+    "local": true
+  },
+  "hdfs": {
+    "namenode": "localhost"
+  },
+  "spark": {
+    "master": "local[*]",
+    "executor.memory": "1g"
+  }
+}
