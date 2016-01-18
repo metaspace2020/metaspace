@@ -1,6 +1,6 @@
 [submodule "pyIMS"]
-	path = pyIMS
-	url = git@github.com:alexandrovteam/pyIMS.git
+    path = pyIMS
+    url = https://github.com/alexandrovteam/pyIMS.git
 [submodule "pyMS"]
-	path = pyMS
-	url = git@github.com:alexandrovteam/pyMS.git
+    path = pyMS
+    url = https://github.com/alexandrovteam/pyMS.git

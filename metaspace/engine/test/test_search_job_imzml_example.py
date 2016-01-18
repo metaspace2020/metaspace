@@ -10,7 +10,7 @@ from fabric.context_managers import warn_only
 from engine.search_job import SearchJob
 from engine.db import DB
 from engine.test.util import sm_config, ds_config, create_test_db, drop_test_db
-from engine.util import hdfs_prefix, SMConfig
+from engine.util import hdfs_prefix, SMConfig, proj_root
 
 
 test_ds_name = 'imzml_example_ds'
@@ -32,11 +32,16 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
     db.close()
 
 
+def if_fs_local():
+    SMConfig.set_path(join(proj_root(), 'conf/config.json'))
+    return SMConfig.get_conf()['fs']['local']
+
+
 @patch('engine.formula_img_validator.get_compute_img_measures')
 def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_database, sm_config, ds_config):
     get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
 
-    sm_config['fs']['local'] = False
+    sm_config['fs']['local'] = if_fs_local()
     SMConfig._config_dict = sm_config
 
     db = DB(sm_config['db'])
@@ -87,7 +92,7 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_
 
     finally:
         db.close()
-        # sc.close()
         with warn_only():
             local('rm -rf {}'.format(data_dir_path))
-            local(hdfs_prefix() + '-rm -r {}'.format(data_dir_path))
+            if not sm_config['fs']['local']:
+                local(hdfs_prefix() + '-rm -r {}'.format(data_dir_path))

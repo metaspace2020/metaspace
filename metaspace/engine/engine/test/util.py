@@ -6,6 +6,7 @@ import os
 
 from engine.db import DB
 
+
 @pytest.fixture(scope='module')
 def spark_context(request):
     sc = SparkContext(master='local[2]', conf=SparkConf())
@@ -80,7 +81,7 @@ def sm_config():
             "password": "1321"
         },
         "fs": {
-            "data_dir": "/opt/data/sm_data",
+            "data_dir": "/opt/data/sm_test_data",
             "local": True
         },
         "hdfs": {
