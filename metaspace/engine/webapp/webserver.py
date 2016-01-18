@@ -31,14 +31,6 @@ args = None
 config = None
 
 
-# def get_formula_and_peak(s):
-#     arr = get_id_from_slug(s).split('p')
-#     if len(arr) > 1:
-#         return int(arr[0]), int(arr[1])
-#     else:
-#         return int(arr[0]), -1
-
-
 class Application(tornado.web.Application):
     """Main class of the tornado application."""
 
@@ -54,25 +46,8 @@ class Application(tornado.web.Application):
             (r"^/spectrum_line_chart_data/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.SpectrumLineChartHandler),
             (r"^/sf_peak_mzs/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.SFPeakMZsHandler),
             (r"^/min_max_int/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.MinMaxIntHandler),
-            (r"^/demo", handlers.AjaxHandler)
+            # (r"^/demo", handlers.AjaxHandler)
         ]
-        # you can add deprecated handlers by specifying --use-deprecated in the command line
-        if args.use_deprecated:
-            import handlers_deprecated
-            torn_handlers.extend([
-                (r"^/fullresults/(.*)", handlers.SimpleHtmlHandlerWithId),
-                (r"^/substance/(.*)", handlers.SimpleHtmlHandlerWithId),
-                (r"^/demo/", handlers.SimpleHtmlHandler),
-                (r"^/demo-png/", handlers.SimpleHtmlHandler),
-                (r"^/jobs/", handlers.SimpleHtmlHandler),
-                (r"^/datasets/", handlers.SimpleHtmlHandler),
-                (r"^/mzimage/([^/]*)\.png", handlers_deprecated.MZImageHandler),
-                (r"^/mzimage/([^/]*)/([^/]*)\.png", handlers_deprecated.MZImageParamHandler)
-            ])
-            # only if spark is used we add the RunSparkHandler
-            if args.spark:
-                from pyspark import SparkContext, SparkConf
-                torn_handlers.extend([(r"^/run/(.*)", handlers_deprecated.RunSparkHandler)])
         settings = dict(
             static_path=path.join(path.dirname(__file__), "static"),
             debug=True,
@@ -83,38 +58,6 @@ class Application(tornado.web.Application):
         # Have one global connection to the blog DB across all handlers
         self.db = tornpsql.Connection(config_db['host'], config_db['database'], config_db['user'],
                                       config_db['password'], 5432)
-        if args.spark:
-            self.conf = SparkConf().setMaster("local[2]").setAppName("IMS Webserver v0.2").set(
-                "spark.ui.showConsoleProgress", "false")
-            self.sc = SparkContext(conf=self.conf,
-                                   pyFiles=[path.join(os.getcwd(), 'engine', x) for x in engine_pyfiles])
-            self.status = self.sc.statusTracker()
-        # self.max_jobid = self.db.get("SELECT max(id) as maxid FROM jobs").maxid
-        # self.max_jobid = int(self.max_jobid) if self.max_jobid != None else 0
-        # self.jobs = {}
-        # self.all_datasets = [d["dataset"] for d in self.db.query("SELECT dataset FROM datasets ORDER BY dataset_id")]
-
-    # def get_next_job_id(self):
-    #     self.max_jobid += 1
-    #     return self.max_jobid
-
-    # def add_job(self, spark_id, formula_id, data_id, job_type, started, chunks=1):
-    #     """Adds a job to the job table of the database and to the application queue."""
-    #     job_id = self.get_next_job_id()
-    #     self.jobs[job_id] = {
-    #         "type": job_type,
-    #         "spark_id": spark_id,
-    #         "formula_id": formula_id,
-    #         "started": started,
-    #         "finished": started,
-    #         "chunks": chunks,
-    #         "chunk_size": 0,
-    #         "chunks_done": 0
-    #     }
-    #     self.db.query('''
-    #         INSERT INTO jobs VALUES (%d, %d, '%s', %d, false, 'RUNNING', %d, %d, '%s', '%s')
-    #     ''' % (job_id, job_type, formula_id, data_id, 0, 0, str(started), str(started)))
-    #     return job_id
 
     def update_all_jobs_callback(self):
         """For each job, checks whether its status has changed."""
@@ -162,7 +105,6 @@ def main():
     global args, config
 
     parser = argparse.ArgumentParser(description='IMS webserver.')
-    parser.add_argument('--no-spark', dest='spark', action='store_true')
     parser.add_argument('--config', dest='config', type=str, help='config file name')
     parser.add_argument('--port', dest='port', type=int, help='port on which to access the web server')
     parser.add_argument('--profile', dest='time_profiling_enabled', action='store_true')
@@ -171,9 +113,6 @@ def main():
                         use_deprecated=False)
     args = parser.parse_args()
     handlers.args = args
-
-    if args.spark:
-        from pyspark import SparkContext, SparkConf
 
     with open(args.config) as f:
         config = json.load(f)

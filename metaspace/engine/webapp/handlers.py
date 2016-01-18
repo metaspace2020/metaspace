@@ -33,15 +33,8 @@ from matplotlib.colors import Normalize
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.pyplot import gcf
 
-# from engine.util import *
 from globalvars import *
 from util import my_print, DateTimeEncoder
-# from engine.pyisocalc_wrapper import get_iso_peaks
-
-
-# global variable for special case html files
-html_pages = {
-}
 
 
 @gen.coroutine
@@ -107,10 +100,8 @@ class AjaxHandler(tornado.web.RequestHandler):
             my_print("%s" % slug)
             draw = self.get_argument('draw', 0)
             input_id = ""
-            # if len(slug) > 0:
-            #     input_id = get_id_from_slug(slug)
 
-            if query_id in ['formulas', 'substancejobs', 'jobs', 'datasets', 'demobigtable']:
+            if query_id == 'demobigtable':
                 orderby = sql_fields[query_id][int(self.get_argument('order[0][column]', 0))]
                 orderdir = self.get_argument('order[0][dir]', 0)
                 limit = self.get_argument('length', 0)
@@ -138,97 +129,16 @@ class AjaxHandler(tornado.web.RequestHandler):
                     count = int(self.db.query(q_count)[0]['count'])
                     res = self.db.query(
                         q_res + " ORDER BY %s %s %s OFFSET %s" % (orderby, orderdir, limit_string, offset))
-                res_dict = self.make_datatable_dict(draw, count,
+                return self.make_datatable_dict(draw, count,
                                                     [[row[x] for x in sql_fields[query_id]] for row in res])
-
-            elif query_id == 'imagegame':
-                res_dict = {"draw": draw,
-                            "im1": self.load_random_image(),
-                            "im2": self.load_random_image()
-                            }
-
             else:
-                if query_id == 'jobstats':
-                    arr = input_id.split('/')
-                    if len(arr) > 1:
-                        final_query = sql_queries[query_id] % arr[0] + " AND s.formula_id='%s'" % arr[1]
-                    else:
-                        final_query = sql_queries[query_id] % input_id
-                elif query_id == 'demosubst':
-                    arr = input_id.split('/')
-                    spectrum = get_iso_peaks(arr[2])
-                    spec_add = {ad: get_iso_peaks(arr[2] + ad) for ad in adducts}
-                    coords_q = self.db.query(sql_queries['democoords'] % int(arr[3]))
-                    coords = {row["index"]: [row["x"], row["y"]] for row in coords_q}
-                    final_query = sql_queries[query_id] % (int(arr[0]), arr[1], int(arr[1]))
-                else:
-                    final_query = sql_queries[query_id] % input_id
-                my_print(final_query)
-                res_list = self.db.query(final_query)
-                if query_id == 'fullimages':
-                    res_dict = {"data": [[x[field] for field in sql_fields[query_id]] for x in res_list]}
-                elif query_id == 'demosubst':
-                    adduct_dict = {}
+                raise Exception('Wrong query_id = %s' % query_id)
 
-                    for row in res_list:
-                        if adducts[row["adduct"]] not in adduct_dict:
-                            adduct_dict[adducts[row["adduct"]]] = []
-                        adduct_dict[adducts[row["adduct"]]].append(row)
-                    res_dict = {"data": {k: sorted(v, key=lambda x: x["peak"]) for k, v in adduct_dict.iteritems()},
-                                "spec": spectrum, "spadd": spec_add
-                                }
-                    for k, v in res_dict["data"].iteritems():
-                        for imInd in xrange(len(v)):
-                            v[imInd]["val"] = np.array(v[imInd]["val"])
-                            im_q = np.percentile(v[imInd]["val"], 99.0)
-                            im_rep = v[imInd]["val"] > im_q
-                            v[imInd]["val"][im_rep] = im_q
-                            v[imInd]["val"] = list(v[imInd]["val"])
-                    res_dict.update({"coords": coords})
-                else:
-                    res_dict = res_list[0]
-                # add isotopes for the substance query
-                if query_id == "substance":
-                    res_dict.update({"all_datasets": self.application.all_datasets})
-                    res_dict.update(get_iso_peaks(res_dict["sf"]))
-                res_dict.update({"draw": draw})
-
-            return res_dict
-
-        # res = []
-        # if args.time_profiling_enabled:
-        #     cProfile.runctx("wrapper(self, query_id, slug, res)", globals(), locals())
-        # else:
         res_dict = wrapper(self, query_id, slug)
         my_print("ajax %s processed, returning..." % query_id)
         t0 = datetime.now()
         self.write(json.dumps(res_dict, cls=DateTimeEncoder))
         self.flush(callback=flushed_callback(t0))
-
-    # @gen.coroutine
-    # def post(self, query_id, slug):
-    #     my_print("ajax post " + query_id)
-    #     if query_id in ['postgameimages']:
-    #         my_print("%s" % self.request.body)
-    #         self.db.query("INSERT INTO game_results VALUES ('%s', '%s')" % (datetime.now(), json.dumps({
-    #             "meta1": {
-    #                 "job_id": self.get_argument("m1_job_id"),
-    #                 "dataset_id": self.get_argument("m1_dataset_id"),
-    #                 "formula_id": self.get_argument("m1_formula_id"),
-    #                 "adduct": self.get_argument("m1_adduct"),
-    #                 "param": self.get_argument("m1_param"),
-    #                 "peak": self.get_argument("m1_peak")
-    #             },
-    #             "meta2": {
-    #                 "job_id": self.get_argument("m2_job_id"),
-    #                 "dataset_id": self.get_argument("m2_dataset_id"),
-    #                 "formula_id": self.get_argument("m2_formula_id"),
-    #                 "adduct": self.get_argument("m2_adduct"),
-    #                 "param": self.get_argument("m2_param"),
-    #                 "peak": self.get_argument("m2_peak")
-    #             },
-    #             "ans": self.get_argument("chosen"),
-    #         })))
 
 
 class IndexHandler(tornado.web.RequestHandler):
