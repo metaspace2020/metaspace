@@ -1,0 +1,12 @@
+language: python
+
+sudo: required
+
+services:
+  - docker
+
+before_script:
+  cd docker && docker-compose build
+
+script:
+  docker-compose run --rm web bash docker/run_unittests.sh
