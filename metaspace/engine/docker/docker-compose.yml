@@ -11,7 +11,7 @@ web:
   working_dir: /code/SM_distributed
   restart: always
   # wait a few seconds for postgres to initialize and start web interface
-  command: bash -c 'sleep 10 && source docker/env.sh python webapp/webserver.py --config /code/SM_distributed/docker/config.json'
+  command: bash -c 'sleep 10 && source docker/env.sh && python webapp/webserver.py --config /code/SM_distributed/docker/config.json'
 
 # data-only container for storing the database
 dbdata:
