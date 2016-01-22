@@ -1,4 +1,4 @@
-# Spatial Metabolomics Engine
+# Spatial Metabolomics Engine [![Build Status](https://travis-ci.org/SpatialMetabolomics/SM_distributed.svg?branch=master)](https://travis-ci.org/SpatialMetabolomics/SM_distributed)
 High throughput molecules annotation for imaging mass spectrometry datasets.
 
 ##Main Features

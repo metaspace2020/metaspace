@@ -13,7 +13,7 @@
     "namenode": "localhost"
   },
   "spark": {
-    "master": "local[*]",
+    "master": "local[2]",
     "executor.memory": "1g"
   }
 }
