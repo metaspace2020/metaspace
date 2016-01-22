@@ -299,7 +299,7 @@ $(document).ready(function() {
 
             AmCharts.makeChart("peaks-line-chart", {
                 type: "serial",
-                pathToImages: "/static/js/amcharts/images/",
+                pathToImages: "http://sm-engine-webapp.s3-website-eu-west-1.amazonaws.com/js/amcharts/images/",
                 dataProvider: chartData,
                 categoryField: "peak_mz",
 
