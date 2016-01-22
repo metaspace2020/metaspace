@@ -1,4 +1,10 @@
 #!/usr/bin/python
+"""
+test_runner
+-----------
+A handy module for easy tests running
+"""
+
 
 from fabric.api import local
 import argparse

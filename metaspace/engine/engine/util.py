@@ -18,15 +18,30 @@ logger = logging.getLogger(name='SM')
 
 
 class SMConfig(object):
+
+    """ Engine configuration manager """
+
     _path = None
     _config_dict = {}
 
     @classmethod
     def set_path(cls, path):
+        """ Set path for a SM configuration file
+
+        Parameters
+        ----------
+        path : String
+        """
         cls._path = path
 
     @classmethod
     def get_conf(cls):
+        """
+        Returns
+        -------
+        : dict
+            SM engine configuration
+        """
         if not cls._config_dict:
             config_path = cls._path or join(proj_root(), 'conf', 'config.json')
             with open(config_path) as f:

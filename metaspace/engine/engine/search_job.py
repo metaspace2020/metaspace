@@ -27,7 +27,13 @@ max_ds_id_sql = "SELECT COALESCE(MAX(id), -1) FROM dataset"
 
 
 class SearchJob(object):
+    """ Main class responsible for molecule search. Uses other modules of the engine.
 
+    Args
+    ----------
+    ds_name : string
+        A dataset short name
+    """
     def __init__(self, ds_name):
         self.sm_config = SMConfig.get_conf()
         self.ds_name = ds_name
@@ -68,6 +74,20 @@ class SearchJob(object):
         self._choose_ds_job_id()
 
     def run(self, input_path, clean=False):
+        """ Entry point of the engine. Molecule search is completed in several steps:
+         * Copying input data to the engine work dir
+         * Conversion input data (imzML+ibd) to plain text format. One line - one spectrum data
+         * Generation and saving to the database theoretical peaks for all formulas from the molecule database
+         * Molecules search. The most compute intensive part. Spark is used to run it in distributed manner.
+         * Saving results (isotope images and their metrics of quality for each putative molecule) to the database
+
+        Args
+        -------
+        input_path : string
+            Path to the dataset folder with .imzML, .ibd and config.json files
+        clean : bool
+            Clean all interim data files before starting molecule search
+        """
         self.work_dir = WorkDir(self.ds_name, self.sm_config['fs']['data_dir'])
         if clean:
             self.work_dir.del_work_dir()

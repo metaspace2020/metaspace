@@ -1,9 +1,3 @@
-"""
-.. module::
-    :synopsis:
-
-.. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
-"""
 import numpy as np
 import json
 from collections import OrderedDict
@@ -21,7 +15,24 @@ CLEAR_JOB_SQL = 'DELETE FROM job WHERE id = %s'
 
 
 class SearchResults(object):
+    """ Container for molecule search results
 
+    Args
+    ----------
+    sf_db_id : int
+        Formula database id
+    ds_id : int
+        Dataset id
+    job_id : int
+        Search job id
+    sf_iso_images_map : dict
+        Result images of format (formula id -> list of images)
+    sf_metrics_map : dict
+        Result images of format (formula id -> list of quality metrics)
+    sf_adduct_peaksn : list
+        List of triples (formula id, adduct, number of theoretical peaks)
+    db: engine.db.DB
+    """
     def __init__(self, sf_db_id, ds_id, job_id, sf_iso_images_map, sf_metrics_map, sf_adduct_peaksn, db):
         self.sf_db_id = sf_db_id
         self.ds_id = ds_id
@@ -32,11 +43,13 @@ class SearchResults(object):
         self.sf_metrics_map = sf_metrics_map
 
     def clear_old_results(self):
+        """ Clear all previous search results for the dataset from the database """
         logger.info('Clearing old job results')
         self.db.alter(clear_iso_image_sql, self.job_id)
         self.db.alter(clear_iso_image_metrics_sql, self.job_id)
 
     def store_sf_img_metrics(self):
+        """ Store formula image metrics in the database """
         logger.info('Storing iso image metrics')
         rows = []
         for sf_i, metrics in self.sf_metrics_map.iteritems():
@@ -48,6 +61,15 @@ class SearchResults(object):
         self.db.insert(insert_sf_metrics_sql, rows)
 
     def store_sf_iso_images(self, nrows, ncols):
+        """ Store formula images int the database
+
+        Args
+        -----------
+        nrows : int
+            Number of rows in the dataset image
+        ncols : int
+            Number of columns in the dataset image
+        """
         logger.info('Storing iso images')
         rows = []
         for sf_i, img_list in self.sf_iso_images_map.iteritems():
@@ -65,6 +87,7 @@ class SearchResults(object):
 
     # TODO: add tests
     def store_job_meta(self):
+        """ Store search job metadata in the database """
         logger.info('Storing job metadata')
         self.db.alter(CLEAR_JOB_SQL, self.job_id)
         rows = [(self.job_id, self.sf_db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]

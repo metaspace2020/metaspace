@@ -1,8 +1,5 @@
 """
-.. module::
-    :synopsis: Script for running molecule search
-
-.. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
+Script for running molecule search
 """
 import argparse
 import time
