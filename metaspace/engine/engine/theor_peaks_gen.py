@@ -143,7 +143,7 @@ class TheorPeaksGenerator(object):
         logger.info('Generating missing peaks')
         formatted_iso_peaks = self.isocalc_wrapper.formatted_iso_peaks
         db_id = self.db_id
-        sf_adduct_cand_rdd = self.sc.parallelize(sf_adduct_cand, numSlices=8)
+        sf_adduct_cand_rdd = self.sc.parallelize(sf_adduct_cand)
         peak_lines = (sf_adduct_cand_rdd
                       .flatMap(lambda (sf_id, sf, adduct): formatted_iso_peaks(db_id, sf_id, sf, adduct))
                       .collect())

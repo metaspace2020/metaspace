@@ -2,7 +2,9 @@ from mock import patch, mock_open
 from numpy.testing import assert_array_equal
 import numpy as np
 import pytest
+
 from engine.dataset import Dataset
+from engine.util import SMConfig
 from engine.test.util import spark_context, sm_config
 
 
@@ -19,7 +21,8 @@ def coord_file_content():
 def test_get_dims_2by3(coord_file_content, sm_config):
     m = mock_open(read_data=coord_file_content)
     with patch('engine.dataset.open', m):
-        ds = Dataset(None, '', '', sm_config)
+        SMConfig._config_dict = sm_config
+        ds = Dataset(None, '', '')
 
         m.assert_called_once_with('')
         assert ds.get_dims() == (2, 3)
@@ -28,7 +31,8 @@ def test_get_dims_2by3(coord_file_content, sm_config):
 def test_get_norm_img_pixel_inds_2by3(coord_file_content, sm_config):
     m = mock_open(read_data=coord_file_content)
     with patch('engine.dataset.open', m):
-        ds = Dataset(None, '', '', sm_config)
+        SMConfig._config_dict = sm_config
+        ds = Dataset(None, '', '')
 
         m.assert_called_once_with('')
         assert_array_equal(ds.get_norm_img_pixel_inds(), [0, 5, 2, 3, 4])
@@ -44,7 +48,8 @@ def test_get_spectra_2by3(spark_context, sm_config):
             '4|200|10\n'])
 
         with patch('engine.test.test_dataset.Dataset._define_pixels_order'):
-            ds = Dataset(spark_context, '/fn', '', sm_config)
+            SMConfig._config_dict = sm_config
+            ds = Dataset(spark_context, '/fn', '')
             res = ds.get_spectra().collect()
             exp_res = [(0, np.array([100.]), np.array([0., 100.])),
                        (1, np.array([101.]), np.array([0., 0.])),

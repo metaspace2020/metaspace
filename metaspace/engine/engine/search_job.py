@@ -83,7 +83,7 @@ class SearchJob(object):
         imzml_converter.convert()
         self._copy_txt_to_hdfs(self.work_dir.txt_path, self.work_dir.txt_path)
 
-        self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path, self.sm_config)
+        self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path)
 
         theor_peaks_gen = TheorPeaksGenerator(self.sc, self.sm_config, self.ds_config)
         theor_peaks_gen.run()
