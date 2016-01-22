@@ -20,12 +20,15 @@ Install Oracle Java 7
 	java -version  # should work now
 
 Add an env variable to .bashrc
-
-    export JAVA_HOME=/usr/lib/jvm/java-7-oracle
+    
+    echo -e '\nexport JAVA_HOME=/usr/lib/jvm/java-7-oracle' >> ~/.bashrc
 
 Download Spark 1.5 with pre-build for Hadoop 2.6 and higher (http://spark.apache.org/downloads.html)
+Don't forget to replace **USER:GROUP** with your linux user and group 
     
     sudo mkdir /opt/dev
+    id -un  # your user
+    id -gn  # your group
 	sudo chown USER:GROUP /opt/dev
 	cd /opt/dev
 	wget -O - http://apache.lauf-forum.at/spark/spark-1.5.2/spark-1.5.2-bin-hadoop2.6.tgz | tar xz -C /opt/dev
@@ -33,16 +36,13 @@ Download Spark 1.5 with pre-build for Hadoop 2.6 and higher (http://spark.apache
 Install ssh daemon and create a public/private key pair
 
     sudo apt-get install ssh
-    cd .ssh/
+    mkdir -p ~/.ssh  # create if not exists
+    chmod 700 ~/.ssh  # set proper permissions
+    cd ~/.ssh/
 	ssh-keygen -t rsa
 	cat id_rsa.pub >> authorized_keys
 	ssh localhost  # should work now
 	exit
-
-Add env variables to .bashrc
-
-    export SPARK_HOME=/opt/dev/spark-1.5.2-bin-hadoop2.6
-    export PYTHONPATH=/opt/dev/spark-1.5.2-bin-hadoop2.6/python:/opt/dev/spark-1.5.2-bin-hadoop2.6/python/build:$PYTHONPATH
     
 ###Postgres Installation and Setup
 More details can be found here https://help.ubuntu.com/community/PostgreSQL
@@ -63,11 +63,11 @@ Make local ipv4 connections password free. Put **trust** instead of **md5**
 
 Install git and pip
 
-	sudo apt-get install git pip
+	sudo apt-get install git python-pip
 	
 Clone **SM_distributed** repository
 	
-	cd
+	cd  # go to home directory
 	git clone --recursive https://github.com/SpatialMetabolomics/SM_distributed.git
 	
 Install numpy, scipy, matplotlib dependencies
@@ -77,14 +77,14 @@ Install numpy, scipy, matplotlib dependencies
 
 Install SM engine python dependencies
 
-	sudo pip install scipy==0.16.0 numpy==1.10.4 Fabric==1.10.2 lxml==3.3.3 pypng==0.0.18 matplotlib==1.5.0 mock==1.3.0 psycopg2==2.6.1 py4j==0.9 pytest==2.8.2 tornado==4.2.1 tornpsql==1.1.0
-	sudo pip install --no-deps pyimzML
+	sudo pip install numpy==1.10.4 scipy==0.16.0 Fabric==1.10.2 lxml==3.3.3 pypng==0.0.18 matplotlib==1.5.0 mock==1.3.0 psycopg2==2.6.1 py4j==0.9 pytest==2.8.2 tornado==4.2.1 tornpsql==1.1.0
+	sudo pip install --no-deps pyimzML==1.0.1
 
 Postgres server setup for local use only
 
 	sudo -u postgres psql
 	
-	CREATE ROLE sm LOGIN CREATEDB NOSUPERUSER PASSWORD '******';
+	CREATE ROLE sm LOGIN CREATEDB NOSUPERUSER PASSWORD 'simple_pass';
 	CREATE DATABASE sm WITH OWNER sm;
 	\q  # exit
 	
@@ -93,22 +93,22 @@ SM engine schema creation
 	cd SM_distributed
 	psql -h localhost -U sm sm < scripts/create_schema.sql
 
-Create data directory for SM engine
+Create data directory for SM engine. Don't forget to replace **USER:GROUP** with your linux user and group (id -un and id -gn)
 
 	sudo mkdir /opt/data && sudo chown USER:GROUP /opt/data
 
-Create config files. For **conf/config.json** put the values for needed parameters, at least **db.password** for the db access
-and **fs.data_dir** for storing interim data
+Create config files. For **conf/config.json** put values for needed parameters
 
 	cd SM_distributed/config
 	cp sm_log.cfg.template sm_log.cfg
 	cp config.json.template config.json
 	nano config.json
+	# replace **fs.data_dir** with path to the data directory (/opt/data)
 
-Add **SM_distributed** path to **export PYTHONPATH=...** command in **.bashrc**
+Add environment variables to .bashrc
 
-	nano ~/.bashrc
-    # export PYTHONPATH=...:/path/to/SM_distributed
+    echo -e '\nexport SPARK_HOME=/opt/dev/spark-1.5.2-bin-hadoop2.6' >> ~/.bashrc
+    echo 'export PYTHONPATH=$HOME/SM_distributed:/opt/dev/spark-1.5.2-bin-hadoop2.6/python:/opt/dev/spark-1.5.2-bin-hadoop2.6/python/build:$PYTHONPATH' >> ~/.bashrc
     
 ### Run Tests
 Run the engine unit tests
@@ -122,11 +122,11 @@ Run the regression tests
 
 Run the scientific test. Download and import HMDB first.
     
-    wget https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb_agg_formula.sql | psql -h localhost -U sm sm
+    wget -O - https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb_agg_formula.sql | psql -h localhost -U sm sm
     ./test_runner.py --sci
 		
 When run the first time it will work pretty long time as the engine will be generating and saving to the DB theoretical spectra
-for all HMDB molecules. In the end should print 
+for all HMDB molecules. In the end it should print
 **ALL TESTS FINISHED SUCCESSFULLY**
 If not something went wrong.
 
@@ -137,7 +137,7 @@ Once you have successfully installed SM engine and its dependencies you can star
     python scripts/run_molecule_search.py dataset_name /path/to/dataset/folder
 
 **/path/to/dataset/folder** should contain three files: **.imzML**, **.ibd**, **config.json**. Names for **.imzML** and **.ibd** files
-should be identical. Where **config.json** is a file with parameters for the molecule annotation job of a form
+should be identical. Where **config.json** is a file with parameters for the molecule annotation job of the form
  
     {
       "inputs": {
@@ -176,7 +176,8 @@ To explore the results of a job start the web application
     cd ~/SM_distributed
 	python webapp/webserver.py --config conf/config.json --port 8090
 	
-Open http://localhost:8090 url address in a browser
+Open [http://localhost:8090](http://localhost:8090) url address in a browser
 
 ##Add New Molecule Database
-to be done...
+=======
+to be added...
