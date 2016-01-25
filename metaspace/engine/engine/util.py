@@ -45,7 +45,7 @@ class SMConfig(object):
         if not cls._config_dict:
             config_path = cls._path or join(proj_root(), 'conf', 'config.json')
             with open(config_path) as f:
-                return json.load(f)
+                cls._config_dict = json.load(f)
         return cls._config_dict
 
 

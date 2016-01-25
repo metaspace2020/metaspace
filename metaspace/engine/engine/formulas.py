@@ -6,7 +6,8 @@ from engine.util import logger
 THEOR_PEAKS_SQL = ('SELECT sf_id, adduct, centr_mzs, centr_ints '
                    'FROM theor_peaks p '
                    'JOIN formula_db d ON d.id = p.db_id '
-                   'WHERE d.name = %s AND adduct = ANY(%s) '
+                   'WHERE d.name = %s AND adduct = ANY(%s) AND '
+                   'ROUND(sigma::numeric, 5) = %s AND pts_per_mz = %s '
                    'ORDER BY sf_id, adduct')
 
 
@@ -23,11 +24,21 @@ class Formulas(object):
     def __init__(self, ds_config, db):
         self.ppm = ds_config['image_generation']['ppm']
         self.db_name = ds_config['inputs']['database']
-        adducts = ds_config['isotope_generation']['adducts']
+        iso_gen_conf = ds_config['isotope_generation']
 
-        sf_peaks = db.select(THEOR_PEAKS_SQL, self.db_name, adducts)
+        sf_peaks = db.select(THEOR_PEAKS_SQL, self.db_name, iso_gen_conf['adducts'],
+                             iso_gen_conf['isocalc_sigma'], iso_gen_conf['isocalc_points_per_mz'])
         self.sf_ids, self.adducts, self.sf_theor_peaks, self.sf_theor_peak_ints = zip(*sf_peaks)
+        self.check_formula_uniqueness(self.sf_ids, self.adducts)
+
         logger.info('Loaded %s sum formulas from the DB', len(self.sf_ids))
+
+    @staticmethod
+    def check_formula_uniqueness(formula_ids, adducts):
+        pairs = zip(formula_ids, adducts)
+        uniq_pairs = set(pairs)
+        assert len(uniq_pairs) == len(pairs),\
+            'Not unique formula-adduct combinations {} != {}'.format(len(uniq_pairs), len(pairs))
 
     def get_sf_peak_bounds(self):
         """

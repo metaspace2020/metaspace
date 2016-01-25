@@ -52,8 +52,10 @@ class SearchJob(object):
     def _configure_spark(self):
         logger.info('Configuring Spark')
         sconf = SparkConf()
-        sconf.set("spark.executor.memory", self.sm_config['spark']['executor.memory'])
-        sconf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+        for prop, value in self.sm_config['spark'].iteritems():
+            if prop.startswith('spark.'):
+                sconf.set(prop, value)
+
         self.sc = SparkContext(master=self.sm_config['spark']['master'], conf=sconf, appName='SM engine')
         if not self.sm_config['spark']['master'].startswith('local'):
             self.sc.addPyFile(join(local_path(proj_root()), 'engine.zip'))

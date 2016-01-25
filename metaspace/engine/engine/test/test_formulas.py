@@ -5,17 +5,21 @@ from collections import defaultdict
 
 from engine.formulas import Formulas
 from engine.db import DB
+from engine.test.util import ds_config
+
+
+# @pytest.fixture()
+# def ds_config():
+#     ds_config = defaultdict(dict)
+#     ds_config['image_generation']['ppm'] = 1.0
+#     ds_config['inputs']['database'] = 'HMDB'
+#     ds_config['isotope_generation']['adducts'] = ["H", "Na", "K"]
 
 
 @pytest.fixture
-def formulas():
+def formulas(ds_config):
     db_mock = MagicMock(spec=DB)
     db_mock.select.return_value = [(1, '+H', [100, 200], [100, 10])]
-
-    ds_config = defaultdict(dict)
-    ds_config['image_generation']['ppm'] = 1.0
-    ds_config['inputs']['database'] = 'HMDB'
-    ds_config['isotope_generation']['adducts'] = ["H", "Na", "K"]
 
     return Formulas(ds_config, db_mock)
 
@@ -42,3 +46,11 @@ def test_get_sf_peaks(formulas):
 
 def test_get_sf_adduct_peaksn(formulas):
     assert_array_equal(formulas.get_sf_adduct_peaksn(), [(1, '+H', 2)])
+
+
+def test_raisases_exc_on_duplicate_formula_ids(ds_config):
+    with pytest.raises(AssertionError):
+        db_mock = MagicMock(spec=DB)
+        db_mock.select.return_value = [(1, '+H', [100, 200], [100, 10]),
+                                       (1, '+H', [10, 20], [10, 1])]
+        Formulas(ds_config, db_mock)
