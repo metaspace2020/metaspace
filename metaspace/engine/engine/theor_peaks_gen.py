@@ -1,9 +1,3 @@
-"""
-.. module::
-    :synopsis:
-
-.. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
-"""
 from os import makedirs
 from os.path import join, exists
 from traceback import format_exc
@@ -34,7 +28,14 @@ def valid_sf_adduct(sf, adduct):
 
 
 class IsocalcWrapper(object):
+    """ Wrapper around pyMS.pyisocalc.pyisocalc used for getting theoretical isotope peaks'
+    centroids and profiles for a sum formula.
 
+    Args
+    ----------
+    isocalc_config : dict
+        Dictionary representing isotope_generation section of a dataset config file
+    """
     def __init__(self, isocalc_config):
         self.charge = 0
         if 'polarity' in isocalc_config['charge']:
@@ -50,7 +51,25 @@ class IsocalcWrapper(object):
         return complete_isodist(sf_adduct_obj, sigma=self.sigma, charge=self.charge, pts_per_mz=self.pts_per_mz,
                                 centroid_kwargs={'weighted_bins': 5})
 
-    def iso_peaks(self, sf, adduct):
+    def isotope_peaks(self, sf, adduct):
+        """
+        Args
+        ----
+        sf : str
+            Sum formula
+        adduct : str
+            Molecule adduct. One of isotope_generation.adducts from a dataset config file
+
+        Returns
+        -------
+        : dict
+            A dict with keys:
+             - centroid mzs
+             - centroid intensities
+             - profile mzs
+             - profile intensities
+            In case of any errors returns a dict of empty lists.
+        """
         res_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
         try:
             isotope_ms = self._isodist(sf + adduct)
@@ -98,13 +117,39 @@ class IsocalcWrapper(object):
         )
 
     def formatted_iso_peaks(self, db_id, sf_id, sf, adduct):
-        peak_dict = self.iso_peaks(sf, adduct)
+        """
+        Args
+        ----
+        db_id : int
+            Database id
+        sf_id : int
+            Sum formula id
+        sf : str
+            Sum formula
+        adduct : str
+            Sum formula adduct
+
+        Returns
+        -------
+        : str
+            A one line string with tab separated lists. Every list is a comma separated string.
+        """
+        peak_dict = self.isotope_peaks(sf, adduct)
         if np.all([len(v) > 0 for v in peak_dict.values()]):
             yield self._format_peak_str(db_id, sf_id, adduct, peak_dict)
 
 
 class TheorPeaksGenerator(object):
+    """ Generator of theoretical isotope peaks for all molecules in a database.
 
+    Args
+    ----------
+    sc : pyspark.SparkContext
+    sm_config : dict
+        SM engine config
+    ds_config : dict
+        Dataset config
+    """
     def __init__(self, sc, sm_config, ds_config):
         self.sc = sc
         self.sm_config = sm_config
@@ -120,6 +165,8 @@ class TheorPeaksGenerator(object):
         self.isocalc_wrapper = IsocalcWrapper(self.ds_config['isotope_generation'])
 
     def run(self):
+        """ Starts peaks generation. Checks all formula peaks saved in the database and
+        generates peaks only for new ones"""
         logger.info('Running theoretical peaks generation')
         stored_sf_adduct = self.db.select(SF_ADDUCT_SEL, self.db_id,
                                           self.isocalc_wrapper.sigma,
@@ -135,11 +182,33 @@ class TheorPeaksGenerator(object):
             self._import_theor_peaks_to_db(peak_lines)
 
     def find_sf_adduct_cand(self, stored_sf_adduct):
+        """
+        Args
+        ----
+        stored_sf_adduct : set
+            Set of (formula, adduct) pairs which have theoretical patterns saved in the database
+
+        Returns
+        -------
+        : list
+            List of (formula id, formula, adduct) triples which don't have theoretical patterns saved in the database
+        """
         formula_list = self.db.select(agg_formula_sql, self.db_id)
         cand = [sf_row + (adduct,) for sf_row in formula_list for adduct in self.adducts]
         return filter(lambda (sf_id, sf, adduct): (sf, adduct) not in stored_sf_adduct, cand)
 
     def generate_theor_peaks(self, sf_adduct_cand):
+        """
+        Args
+        ----
+        sf_adduct_cand : list
+            List of (formula id, formula, adduct) triples which don't have theoretical patterns saved in the database
+
+        Returns
+        -------
+        : list
+            List of strings with formatted theoretical peaks data
+        """
         logger.info('Generating missing peaks')
         formatted_iso_peaks = self.isocalc_wrapper.formatted_iso_peaks
         db_id = self.db_id

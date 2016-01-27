@@ -61,7 +61,7 @@ class SearchResults(object):
         self.db.insert(insert_sf_metrics_sql, rows)
 
     def store_sf_iso_images(self, nrows, ncols):
-        """ Store formula images int the database
+        """ Store formula images in the database
 
         Args
         -----------

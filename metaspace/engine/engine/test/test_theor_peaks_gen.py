@@ -25,7 +25,7 @@ def test_isocalc_get_iso_peaks_correct_sf_adduct(isocalc_isodist, ds_config):
 
     isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
     isocalc_wrapper.max_mz_dist_to_centr = 5
-    peak_dict = isocalc_wrapper.iso_peaks('Au', '+H')
+    peak_dict = isocalc_wrapper.isotope_peaks('Au', '+H')
 
     for k in ['centr_mzs', 'centr_ints', 'profile_mzs', 'profile_ints']:
         assert k in peak_dict
@@ -46,8 +46,8 @@ def test_isocalc_wrapper_get_iso_peaks_wrong_sf_adduct(isocalc_isodist, ds_confi
 
     isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
     emtpy_iso_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
-    assert isocalc_wrapper.iso_peaks(None, '+H') == emtpy_iso_dict
-    assert isocalc_wrapper.iso_peaks('Au', None) == emtpy_iso_dict
+    assert isocalc_wrapper.isotope_peaks(None, '+H') == emtpy_iso_dict
+    assert isocalc_wrapper.isotope_peaks('Au', None) == emtpy_iso_dict
 
 
 @mock.patch('engine.theor_peaks_gen.complete_isodist')
@@ -68,7 +68,7 @@ def test_isocalc_wrapper_get_iso_peaks_check_profiles_correct(isocalc_isodist, d
     pts_per_centr = 6
     isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
     isocalc_wrapper.prof_pts_per_centr = pts_per_centr
-    peaks_dict = isocalc_wrapper.iso_peaks('Au', '+H')
+    peaks_dict = isocalc_wrapper.isotope_peaks('Au', '+H')
 
     # print peaks_dict['centr_mzs'], peaks_dict['centr_ints']
     # print len(peaks_dict['profile_mzs']), len(peaks_dict['profile_ints'])
@@ -86,7 +86,7 @@ def test_isocalc_wrapper_get_iso_peaks_check_profiles_correct(isocalc_isodist, d
     assert 0.1 < abs(peaks_dict['centr_mzs'][1] - peaks_dict['profile_mzs'][2*pts_per_centr-1]) < 0.2
 
 
-@mock.patch('engine.theor_peaks_gen.IsocalcWrapper.iso_peaks')
+@mock.patch('engine.theor_peaks_gen.IsocalcWrapper.isotope_peaks')
 def test_formatted_iso_peaks_correct_input(iso_peaks_mock, ds_config):
     peak_dict = {'centr_mzs': [100.], 'centr_ints': [1000.],
                  'profile_mzs': [90., 100., 110.], 'profile_ints': [1., 1000., 1001.]}
@@ -123,7 +123,7 @@ def test_generate_theor_peaks(mockDB, spark_context, sm_config, ds_config):
     mock_db.select_one.return_value = [0]
 
     peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    peaks_gen.isocalc_wrapper.iso_peaks = lambda *args: {'centr_mzs': [100.],
+    peaks_gen.isocalc_wrapper.isotope_peaks = lambda *args: {'centr_mzs': [100.],
                                                           'centr_ints': [1000.],
                                                           'profile_mzs': [90., 100., 110.],
                                                           'profile_ints': [1., 1000., 1001.]}

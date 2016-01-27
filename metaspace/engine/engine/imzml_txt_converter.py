@@ -29,10 +29,9 @@ def to_space_separated_string(seq):
 
 
 def encode_data_line(index, mzs, ints, decimals=3):
-    '''
-    Encodes given spectrum into a line in a text-based format:
+    """ Encodes given spectrum into a line in a text-based format:
     "index|int_1 int_2 ... int_n|mz_1 mz_2 ... mz_n"
-    '''
+    """
     if not isinstance(index, int):
         raise TypeError("index must be integer")
     idx_string = str(index)
@@ -44,10 +43,7 @@ def encode_data_line(index, mzs, ints, decimals=3):
 
 
 def encode_coord_line(index, x, y):
-    '''
-    Encodes given coordinate into a csv line:
-    "index,x,y"
-    '''
+    """ Encodes given coordinate into a csv line: "index,x,y" """
     if not (isinstance(index, int) and isinstance(x, int) and isinstance(y, int)):
         raise TypeError("parameters must be integer")
     return "%d,%d,%d" % (index, x, y)
@@ -64,7 +60,7 @@ def get_track_progress(n_points, step, active=False):
 
 
 class ImageBounds(object):
-
+    """ Keeps track of min, max coordinate values for x, y axis """
     def __init__(self):
         self.min_x, self.min_y = sys.maxint, sys.maxint
         self.max_x, self.max_y = -sys.maxint, -sys.maxint
@@ -78,14 +74,28 @@ class ImageBounds(object):
                            'y': {'min': self.min_y, 'max': self.max_y}})
 
 
-ds_id_sql = "SELECT id FROM dataset where name = %s"
-max_ds_id_sql = "SELECT COALESCE(MAX(id), -1) FROM dataset"
-ds_insert_sql = "INSERT INTO dataset VALUES (%s, %s, %s, %s)"
-coord_insert_sql = "INSERT INTO coordinates VALUES (%s, %s, %s)"
+DS_ID_SELECT = "SELECT id FROM dataset where name = %s"
+MAX_DS_ID_SELECT = "SELECT COALESCE(MAX(id), -1) FROM dataset"
+DS_INSERT = "INSERT INTO dataset VALUES (%s, %s, %s, %s)"
+COORD_INSERT = "INSERT INTO coordinates VALUES (%s, %s, %s)"
 
 
 class ImzmlTxtConverter(object):
+    """ Converts spectra from imzML/ibd to plain text files for later access from Spark
 
+    Args
+    ----
+    ds_name : str
+        Dataset name (alias)
+    ds_config : dict
+        Dataset config
+    imzml_path : str
+        Path to an imzML file
+    txt_path : str
+        Path to store spectra in plain text format
+    coord_path : str
+        Path to store spectra coordinates in plain text format
+    """
     def __init__(self, ds_name, ds_config, imzml_path, txt_path, coord_path=None):
         self.ds_name = ds_name
         self.imzml_path = imzml_path
@@ -103,6 +113,7 @@ class ImzmlTxtConverter(object):
         self.image_bounds = ImageBounds()
 
     def parse_save_spectrum(self, i, x, y):
+        """ Parse and save to files spectrum with index i and its coordinates x,y"""
         mzs, ints = map(np.array, self.parser.getspectrum(i))
         if self.preprocess:
             mzs, ints = preprocess_spectrum(mzs, ints)
@@ -112,21 +123,22 @@ class ImzmlTxtConverter(object):
             self.coord_file.write(encode_coord_line(i, x, y) + '\n')
 
     def save_ds_meta(self):
+        """ Save dataset metadata (name, path, image bounds, coordinates) to the database """
         db = DB(self.sm_config['db'])
         try:
-            ds_id_row = db.select_one(ds_id_sql, self.ds_name)
+            ds_id_row = db.select_one(DS_ID_SELECT, self.ds_name)
             if not ds_id_row:
                 logger.info('No dataset with name %s found', self.ds_name)
-                ds_id = db.select_one(max_ds_id_sql)[0] + 1
+                ds_id = db.select_one(MAX_DS_ID_SELECT)[0] + 1
 
                 logger.info("Inserting to the dataset table: %d", ds_id)
-                db.insert(ds_insert_sql, [(ds_id, self.ds_name, self.imzml_path, self.image_bounds.to_json())])
+                db.insert(DS_INSERT, [(ds_id, self.ds_name, self.imzml_path, self.image_bounds.to_json())])
 
                 logger.info("Inserting to the coordinates table")
                 with open(self.coord_path) as f:
                     coord_tuples = map(lambda s: map(int, s.split(',')), f.readlines())
                     _, xs, ys = map(list, zip(*coord_tuples))
-                    db.insert(coord_insert_sql, [(ds_id, xs, ys)])
+                    db.insert(COORD_INSERT, [(ds_id, xs, ys)])
         finally:
             db.close()
 
@@ -135,9 +147,12 @@ class ImzmlTxtConverter(object):
         Converts MS imaging data provided by given parser to a text-based
         format. Optionally writes the coordinates into a coordinate file.
 
-        :param preprocess: apply filter and centroid detection to all spectra before
-            writing (rarely useful)
-        :param print_progress: whether or not to print progress information to stdout
+        Args
+        ----
+        preprocess : bool
+            Apply filter and centroid detection to all spectra before writing (rarely useful)
+        print_progress : bool
+            Whether or not to print progress information to stdout
         """
         logger.info("ImzML -> Txt conversion...")
         self.preprocess = preprocess

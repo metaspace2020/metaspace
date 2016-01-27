@@ -208,7 +208,7 @@ $(document).ready(function() {
         })
 
         // images per adduct and peak
-        var iso_img_n = Math.min(peaks_n, 6)
+        var iso_img_n = Math.min(peaks_n, max_peaks_to_show)
         var col_w = Math.floor(12 / iso_img_n);
         var urls = [];
 

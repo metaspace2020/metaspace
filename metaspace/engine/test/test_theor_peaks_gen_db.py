@@ -24,7 +24,7 @@ def create_fill_test_db(create_test_db, drop_test_db):
 def test_theor_peaks_generator_run_1(create_fill_test_db, spark_context, sm_config, ds_config):
     ds_config["isotope_generation"]["adducts"] = ["+H", "+Na"]
     theor_peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    theor_peaks_gen.isocalc_wrapper.iso_peaks = lambda *args: {'centr_mzs': [100., 200.],
+    theor_peaks_gen.isocalc_wrapper.isotope_peaks = lambda *args: {'centr_mzs': [100., 200.],
                                                                 'centr_ints': [10., 1.],
                                                                 'profile_mzs': [100., 200.],
                                                                 'profile_ints': [10., 1.]}
@@ -44,7 +44,7 @@ def test_theor_peaks_generator_run_1(create_fill_test_db, spark_context, sm_conf
 def test_theor_peaks_generator_run_failed_iso_peaks(create_fill_test_db, spark_context, sm_config, ds_config):
     ds_config["isotope_generation"]["adducts"] = ["+Na"]
     theor_peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    theor_peaks_gen.isocalc_wrapper.iso_peaks = lambda *args: {'centr_mzs': [],
+    theor_peaks_gen.isocalc_wrapper.isotope_peaks = lambda *args: {'centr_mzs': [],
                                                                 'centr_ints': [],
                                                                 'profile_mzs': [],
                                                                 'profile_ints': []}

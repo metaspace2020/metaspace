@@ -14,7 +14,15 @@ from engine.util import local_path, hdfs_path, proj_root, hdfs_prefix, cmd_check
 
 
 class WorkDir(object):
+    """ Provides an access to a work directory for a processed dataset
 
+    Args
+    ----
+    ds_name : str
+        Dataset name (alias)
+    data_dir_path : str
+        Dataset config
+    """
     def __init__(self, ds_name, data_dir_path=None):
         self.ds_name = ds_name
         self.data_dir_path = data_dir_path
@@ -25,9 +33,17 @@ class WorkDir(object):
         cmd_check('rm -rf {}', self.path)
 
     def copy_input_data(self, input_data_path):
+        """ Copy imzML/ibd/config files from input path to a dataset work directory
+
+        Args
+        ----
+        input_data_path : str
+            Path to input files
+        """
         if not exists(self.path):
             logger.info('Copying %s to %s', input_data_path, self.path)
 
+            # TODO: add support for S3 paths
             if input_data_path.startswith('http'):
                 tmp_path = join(self.data_dir_path, 'tmp')
                 cmd_check('mkdir -p {}', tmp_path)
