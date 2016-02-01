@@ -47,7 +47,7 @@ def test_imzml_txt_converter_parse_save_spectrum(MockImzMLParser, sm_config, ds_
 
     SMConfig._config_dic = sm_config
 
-    converter = ImzmlTxtConverter('test_ds', ds_config, '', '', '')
+    converter = ImzmlTxtConverter('test_ds', '', '')
     converter.parser = mock_parser
     converter.txt_file = StringIO()
     converter.coord_file = StringIO()
