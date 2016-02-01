@@ -1,6 +1,5 @@
 {
   "inputs": {
-    "data_file": "12hour_5_210_centroid.imzML",
     "database": "HMDB"
   },
   "isotope_generation": {

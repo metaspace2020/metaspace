@@ -24,7 +24,7 @@ def create_fill_test_db(create_test_db, drop_test_db):
 def test_save_ds_meta_ds_doesnt_exist(ImzMLParserMock, create_test_db, drop_test_db, sm_config, ds_config):
     SMConfig._config_dict = sm_config
 
-    converter = ImzmlTxtConverter('test_ds', ds_config, 'imzml_path', '', '')
+    converter = ImzmlTxtConverter('test_ds', 'imzml_path', '')
     converter.image_bounds = ImageBounds()
     converter.image_bounds.update(1, 1)
     converter.image_bounds.update(100, 200)
@@ -47,7 +47,7 @@ def test_save_ds_meta_ds_doesnt_exist(ImzMLParserMock, create_test_db, drop_test
 def test_save_ds_meta_ds_exists(ImzMLParserMock, create_fill_test_db, sm_config, ds_config):
     SMConfig._config_dict = sm_config
 
-    converter = ImzmlTxtConverter('test_ds', ds_config, 'imzml_path', '', '')
+    converter = ImzmlTxtConverter('test_ds', 'imzml_path', '')
     converter.image_bounds = ImageBounds()
     converter.image_bounds.update(1, 1)
     converter.image_bounds.update(100, 200)
@@ -76,7 +76,7 @@ def test_convert(MockImzMLParser, sm_config, ds_config):
 
     SMConfig._config_dict = sm_config
 
-    converter = ImzmlTxtConverter('test_ds', ds_config, 'imzml_path', 'txt_path', 'coord_path')
+    converter = ImzmlTxtConverter('test_ds', 'imzml_path', 'txt_path', 'coord_path')
     converter.save_ds_meta = lambda: 0
 
     with patch('engine.imzml_txt_converter.open', create=True) as mock_open:

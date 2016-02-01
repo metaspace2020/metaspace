@@ -100,7 +100,7 @@ class SearchJob(object):
         self._configure_spark()
         self._init_db()
 
-        imzml_converter = ImzmlTxtConverter(self.ds_name, self.ds_config, self.work_dir.imzml_path,
+        imzml_converter = ImzmlTxtConverter(self.ds_name, self.work_dir.imzml_path,
                                             self.work_dir.txt_path, self.work_dir.coord_path)
         imzml_converter.convert()
         self._copy_txt_to_hdfs(self.work_dir.txt_path, self.work_dir.txt_path)

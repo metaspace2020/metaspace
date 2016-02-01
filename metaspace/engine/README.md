@@ -77,7 +77,8 @@ Install numpy, scipy, matplotlib dependencies
 
 Install SM engine python dependencies
 
-	sudo pip install numpy==1.10.4 scipy==0.16.0 Fabric==1.10.2 lxml==3.3.3 pypng==0.0.18 matplotlib==1.5.0 mock==1.3.0 psycopg2==2.6.1 py4j==0.9 pytest==2.8.2 tornado==4.2.1 tornpsql==1.1.0
+	sudo pip install numpy==1.10.4
+	sudo pip install scipy==0.16.0 Fabric==1.10.2 lxml==3.3.3 pypng==0.0.18 matplotlib==1.5.0 mock==1.3.0 psycopg2==2.6.1 py4j==0.9 pytest==2.8.2 tornado==4.2.1 tornpsql==1.1.0
 	sudo pip install --no-deps pyimzML==1.0.1
 
 Postgres server setup for local use only
@@ -109,6 +110,7 @@ Add environment variables to .bashrc
 
     echo -e '\nexport SPARK_HOME=/opt/dev/spark-1.5.2-bin-hadoop2.6' >> ~/.bashrc
     echo 'export PYTHONPATH=$HOME/SM_distributed:/opt/dev/spark-1.5.2-bin-hadoop2.6/python:/opt/dev/spark-1.5.2-bin-hadoop2.6/python/build:$PYTHONPATH' >> ~/.bashrc
+    source ~/.bashrc
     
 ### Run Tests
 Run the engine unit tests

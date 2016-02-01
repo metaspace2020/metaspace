@@ -87,8 +87,6 @@ class ImzmlTxtConverter(object):
     ----
     ds_name : str
         Dataset name (alias)
-    ds_config : dict
-        Dataset config
     imzml_path : str
         Path to an imzML file
     txt_path : str
@@ -96,13 +94,12 @@ class ImzmlTxtConverter(object):
     coord_path : str
         Path to store spectra coordinates in plain text format
     """
-    def __init__(self, ds_name, ds_config, imzml_path, txt_path, coord_path=None):
+    def __init__(self, ds_name, imzml_path, txt_path, coord_path=None):
         self.ds_name = ds_name
         self.imzml_path = imzml_path
         self.preprocess = None
         self.image_bounds = None
         self.sm_config = SMConfig.get_conf()
-        self.ds_config = ds_config
 
         self.txt_path = txt_path
         self.coord_path = coord_path

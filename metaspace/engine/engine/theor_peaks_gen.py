@@ -10,6 +10,7 @@ from pyMS.pyisocalc.pyisocalc import complete_isodist, parseSumFormula
 
 db_id_sql = 'SELECT id FROM formula_db WHERE name = %s'
 agg_formula_sql = 'SELECT id, sf FROM agg_formula where db_id = %s'
+# TODO: sigma precision to take into account?
 SF_ADDUCT_SEL = ('SELECT sf, adduct FROM theor_peaks p '
                  'JOIN agg_formula f on p.sf_id = f.id and p.db_id = f.db_id '
                  'WHERE p.db_id = %s AND ROUND(sigma::numeric, 5) = %s AND charge = %s AND pts_per_mz = %s')

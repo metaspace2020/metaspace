@@ -45,7 +45,6 @@ class DB(object):
     """
 
     def __init__(self, config, autocommit=False):
-
         self.conn = psycopg2.connect(**config)
         if autocommit:
             self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
