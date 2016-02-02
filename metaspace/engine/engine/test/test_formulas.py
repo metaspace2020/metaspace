@@ -48,9 +48,17 @@ def test_get_sf_adduct_peaksn(formulas):
     assert_array_equal(formulas.get_sf_adduct_peaksn(), [(1, '+H', 2)])
 
 
-def test_raisases_exc_on_duplicate_formula_ids(ds_config):
+def test_raises_exc_on_duplicate_formula_ids(ds_config):
     with pytest.raises(AssertionError):
         db_mock = MagicMock(spec=DB)
         db_mock.select.return_value = [(1, '+H', [100, 200], [100, 10]),
                                        (1, '+H', [10, 20], [10, 1])]
+        Formulas(ds_config, db_mock)
+
+
+def test_raises_exc_on_empty_data_table(ds_config):
+    with pytest.raises(AssertionError):
+        db_mock = MagicMock(spec=DB)
+        db_mock.select.return_value = []
+
         Formulas(ds_config, db_mock)

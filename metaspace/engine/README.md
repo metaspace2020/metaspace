@@ -58,6 +58,10 @@ Make local ipv4 connections password free. Put **trust** instead of **md5**
     ...
     # # IPv4 local connections:
     # host    all             all             127.0.0.1/32            md5
+
+Don't forget to restart the database server
+
+    sudo service postgresql restart
 	
 ###SM Engine Installation and Setup
 

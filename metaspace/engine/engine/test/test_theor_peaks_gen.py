@@ -1,8 +1,10 @@
+import pytest
 import numpy as np
 from mock import mock, MagicMock
 from numpy.testing import assert_array_almost_equal
 
 from engine.theor_peaks_gen import TheorPeaksGenerator, IsocalcWrapper
+from engine.db import DB
 from pyMS.mass_spectrum import MassSpectrum
 from engine.test.util import spark_context, sm_config, ds_config
 
@@ -97,6 +99,16 @@ def test_formatted_iso_peaks_correct_input(iso_peaks_mock, ds_config):
     assert ('0\t9\t+H\t0.0100\t1\t10000\t{100.000000}\t{1000.000000}\t'
             '{90.000000,100.000000,110.000000}\t'
             '{1.000000,1000.000000,1001.000000}') == list(isocalc_wrapper.formatted_iso_peaks(0, 9, 'Au', '+H'))[0]
+
+
+@mock.patch('engine.theor_peaks_gen.DB')
+def test_raises_exc_on_empty_formula_table(MockDB, ds_config):
+    with pytest.raises(AssertionError):
+        mock_db = MockDB.return_value
+        mock_db.select.return_value = []
+
+        gen = TheorPeaksGenerator(None, {'db': {}, 'fs': {'data_dir': ''}}, ds_config)
+        gen.find_sf_adduct_cand([])
 
 
 @mock.patch('engine.theor_peaks_gen.DB')

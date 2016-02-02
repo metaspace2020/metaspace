@@ -8,13 +8,6 @@ from engine.db import DB
 from engine.util import logger
 from pyMS.pyisocalc.pyisocalc import complete_isodist, parseSumFormula
 
-db_id_sql = 'SELECT id FROM formula_db WHERE name = %s'
-agg_formula_sql = 'SELECT id, sf FROM agg_formula where db_id = %s'
-# TODO: sigma precision to take into account?
-SF_ADDUCT_SEL = ('SELECT sf, adduct FROM theor_peaks p '
-                 'JOIN agg_formula f on p.sf_id = f.id and p.db_id = f.db_id '
-                 'WHERE p.db_id = %s AND ROUND(sigma::numeric, 5) = %s AND charge = %s AND pts_per_mz = %s')
-
 
 def list_of_floats_to_str(l):
     return ','.join(map(lambda x: '{:.6f}'.format(x), l))
@@ -140,6 +133,14 @@ class IsocalcWrapper(object):
             yield self._format_peak_str(db_id, sf_id, adduct, peak_dict)
 
 
+DB_ID_SEL = 'SELECT id FROM formula_db WHERE name = %s'
+AGG_FORMULA_SEL = 'SELECT id, sf FROM agg_formula where db_id = %s'
+# TODO: sigma precision to take into account?
+SF_ADDUCT_SEL = ('SELECT sf, adduct FROM theor_peaks p '
+                 'JOIN agg_formula f on p.sf_id = f.id and p.db_id = f.db_id '
+                 'WHERE p.db_id = %s AND ROUND(sigma::numeric, 5) = %s AND charge = %s AND pts_per_mz = %s')
+
+
 class TheorPeaksGenerator(object):
     """ Generator of theoretical isotope peaks for all molecules in a database.
 
@@ -151,7 +152,7 @@ class TheorPeaksGenerator(object):
     ds_config : dict
         Dataset config
     """
-    def __init__(self, sc, sm_config, ds_config):
+    def __init__(self, sc, sm_config, ds_config):  # TODO: replace sm_config with db
         self.sc = sc
         self.sm_config = sm_config
         self.ds_config = ds_config
@@ -160,7 +161,7 @@ class TheorPeaksGenerator(object):
         self.db = DB(sm_config['db'])
 
         db_name = self.ds_config['inputs']['database']
-        self.db_id = self.db.select_one(db_id_sql, db_name)[0]
+        self.db_id = self.db.select_one(DB_ID_SEL, db_name)[0]
         self.adducts = self.ds_config['isotope_generation']['adducts']
 
         self.isocalc_wrapper = IsocalcWrapper(self.ds_config['isotope_generation'])
@@ -194,7 +195,8 @@ class TheorPeaksGenerator(object):
         : list
             List of (formula id, formula, adduct) triples which don't have theoretical patterns saved in the database
         """
-        formula_list = self.db.select(agg_formula_sql, self.db_id)
+        formula_list = self.db.select(AGG_FORMULA_SEL, self.db_id)
+        assert formula_list, 'Emtpy agg_formula table!'
         cand = [sf_row + (adduct,) for sf_row in formula_list for adduct in self.adducts]
         return filter(lambda (sf_id, sf, adduct): (sf, adduct) not in stored_sf_adduct, cand)
 

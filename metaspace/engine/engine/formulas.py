@@ -28,6 +28,7 @@ class Formulas(object):
 
         sf_peaks = db.select(THEOR_PEAKS_SQL, self.db_name, iso_gen_conf['adducts'],
                              iso_gen_conf['isocalc_sigma'], iso_gen_conf['isocalc_points_per_mz'])
+        assert sf_peaks, 'Empty theor_peaks table!'
         self.sf_ids, self.adducts, self.sf_theor_peaks, self.sf_theor_peak_ints = zip(*sf_peaks)
         self.check_formula_uniqueness(self.sf_ids, self.adducts)
 
