@@ -13,14 +13,6 @@ def list_of_floats_to_str(l):
     return ','.join(map(lambda x: '{:.6f}'.format(x), l))
 
 
-def valid_sf_adduct(sf, adduct):
-    if not sf or not adduct or sf == 'None' or adduct == 'None':
-        logger.warning('Wrong arguments for pyisocalc: sf=%s or adduct=%s', sf, adduct)
-        return False
-    else:
-        return True
-
-
 class IsocalcWrapper(object):
     """ Wrapper around pyMS.pyisocalc.pyisocalc used for getting theoretical isotope peaks'
     centroids and profiles for a sum formula.
@@ -160,33 +152,70 @@ class TheorPeaksGenerator(object):
         self.theor_peaks_tmp_dir = join(sm_config['fs']['data_dir'], 'theor_peaks_gen')
         self.db = DB(sm_config['db'])
 
-        db_name = self.ds_config['inputs']['database']
-        self.db_id = self.db.select_one(DB_ID_SEL, db_name)[0]
         self.adducts = self.ds_config['isotope_generation']['adducts']
 
         self.isocalc_wrapper = IsocalcWrapper(self.ds_config['isotope_generation'])
+
+    @staticmethod
+    def _sf_elements(sf):
+        return [seg.element().name() for seg in parseSumFormula(sf).get_segments()]
+
+    @classmethod
+    def _valid_sf_adduct(cls, sf, adduct):
+        if sf is None or adduct is None or sf == 'None' or adduct == 'None':
+            logger.warning('Invalid sum formula or adduct: sf=%s, adduct=%s', sf, adduct)
+            return False
+
+        if '-' in adduct and adduct.strip('-') not in cls._sf_elements(sf):
+            logger.info('No negative adduct element in the sum formula: sf=%s, adduct=%s', sf, adduct)
+            return False
+
+        return True
 
     def run(self):
         """ Starts peaks generation. Checks all formula peaks saved in the database and
         generates peaks only for new ones"""
         logger.info('Running theoretical peaks generation')
-        stored_sf_adduct = self.db.select(SF_ADDUCT_SEL, self.db_id,
+
+        db_id = self.db.select_one(DB_ID_SEL, self.ds_config['database']['name'])[0]
+        formula_list = self.apply_database_filters(self.db.select(AGG_FORMULA_SEL, db_id))
+
+        stored_sf_adduct = self.db.select(SF_ADDUCT_SEL, db_id,
                                           self.isocalc_wrapper.sigma,
                                           self.isocalc_wrapper.charge,
                                           self.isocalc_wrapper.pts_per_mz)
 
-        sf_adduct_cand = self.find_sf_adduct_cand(set(stored_sf_adduct))
-        sf_adduct_cand = filter(lambda (_, sf, adduct): valid_sf_adduct(sf, adduct), sf_adduct_cand)
+        sf_adduct_cand = self.find_sf_adduct_cand(formula_list, set(stored_sf_adduct))
         logger.info('%d saved (sf, adduct)s, %s not saved (sf, adduct)s', len(stored_sf_adduct), len(sf_adduct_cand))
 
         if sf_adduct_cand:
             peak_lines = self.generate_theor_peaks(sf_adduct_cand)
             self._import_theor_peaks_to_db(peak_lines)
 
-    def find_sf_adduct_cand(self, stored_sf_adduct):
+    def apply_database_filters(self, formula_list):
+        """ Filters according to settings in dataset config
+
+        Args
+        ----
+        formula_list : list
+            List of pairs (id, sum formula) to search through
+
+        Returns
+        -------
+        : list
+            Filtered list of pairs (id, sum formula)
+        """
+        if 'Organic' in self.ds_config['database'].get('filters', []):
+            logger.info('Organic sum formula filter has been applied')
+            return filter(lambda (_, sf): 'C' in self._sf_elements(sf), formula_list)
+        return formula_list
+
+    def find_sf_adduct_cand(self, formula_list, stored_sf_adduct):
         """
         Args
         ----
+        formula_list : list
+            List of pairs (id, sum formula) to search through
         stored_sf_adduct : set
             Set of (formula, adduct) pairs which have theoretical patterns saved in the database
 
@@ -195,10 +224,10 @@ class TheorPeaksGenerator(object):
         : list
             List of (formula id, formula, adduct) triples which don't have theoretical patterns saved in the database
         """
-        formula_list = self.db.select(AGG_FORMULA_SEL, self.db_id)
         assert formula_list, 'Emtpy agg_formula table!'
         cand = [sf_row + (adduct,) for sf_row in formula_list for adduct in self.adducts]
-        return filter(lambda (sf_id, sf, adduct): (sf, adduct) not in stored_sf_adduct, cand)
+        valid_cand = filter(lambda (_, sf, adduct): self._valid_sf_adduct(sf, adduct), cand)
+        return filter(lambda (sf_id, sf, adduct): (sf, adduct) not in stored_sf_adduct, valid_cand)
 
     def generate_theor_peaks(self, sf_adduct_cand):
         """
@@ -214,7 +243,7 @@ class TheorPeaksGenerator(object):
         """
         logger.info('Generating missing peaks')
         formatted_iso_peaks = self.isocalc_wrapper.formatted_iso_peaks
-        db_id = self.db_id
+        db_id = self.db.select_one(DB_ID_SEL, self.ds_config['database']['name'])[0]
         sf_adduct_cand_rdd = self.sc.parallelize(sf_adduct_cand)
         peak_lines = (sf_adduct_cand_rdd
                       .flatMap(lambda (sf_id, sf, adduct): formatted_iso_peaks(db_id, sf_id, sf, adduct))

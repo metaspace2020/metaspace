@@ -1,7 +1,6 @@
 {
-  "inputs": {
-    "data_file": "Example_Continuous.imzML",
-    "database": "HMDB"
+  "database": {
+    "name": "HMDB"
   },
   "isotope_generation": {
     "adducts": ["+H","+Na","+K"],

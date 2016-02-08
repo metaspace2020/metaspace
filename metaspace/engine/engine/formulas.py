@@ -23,7 +23,7 @@ class Formulas(object):
     """
     def __init__(self, ds_config, db):
         self.ppm = ds_config['image_generation']['ppm']
-        self.db_name = ds_config['inputs']['database']
+        self.db_name = ds_config['database']['name']
         iso_gen_conf = ds_config['isotope_generation']
 
         sf_peaks = db.select(THEOR_PEAKS_SQL, self.db_name, iso_gen_conf['adducts'],

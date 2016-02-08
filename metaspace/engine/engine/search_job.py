@@ -72,7 +72,7 @@ class SearchJob(object):
     def _init_db(self):
         logger.info('Connecting to the DB')
         self.db = DB(self.sm_config['db'])
-        self.sf_db_id = self.db.select_one(db_id_sql, self.ds_config['inputs']['database'])[0]
+        self.sf_db_id = self.db.select_one(db_id_sql, self.ds_config['database']['name'])[0]
         self._choose_ds_job_id()
 
     def run(self, input_path, clean=False):

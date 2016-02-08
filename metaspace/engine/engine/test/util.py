@@ -43,9 +43,8 @@ def drop_test_db(request):
 @pytest.fixture()
 def ds_config():
     return {
-        "inputs": {
-            "data_file": "test_ds.imzML",
-            "database": "HMDB"
+        "database": {
+            "name": "HMDB",
         },
         "isotope_generation": {
             "adducts": ["+H", "+Na"],

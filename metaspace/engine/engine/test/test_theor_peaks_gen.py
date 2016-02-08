@@ -108,25 +108,36 @@ def test_raises_exc_on_empty_formula_table(MockDB, ds_config):
         mock_db.select.return_value = []
 
         gen = TheorPeaksGenerator(None, {'db': {}, 'fs': {'data_dir': ''}}, ds_config)
-        gen.find_sf_adduct_cand([])
+        gen.find_sf_adduct_cand([], {})
 
 
 @mock.patch('engine.theor_peaks_gen.DB')
 def test_find_sf_adduct_cand(MockDB, spark_context, sm_config, ds_config):
-    mock_db = MockDB.return_value
-    mock_db.select_one.return_value = [0]
-    mock_db.select.return_value = [(0, 'He'), (9, 'Au')]
-
     peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    stored_sf_adduct = {('He', '+H'), ('Au', '+H')}
-    sf_adduct_cand = peaks_gen.find_sf_adduct_cand(stored_sf_adduct)
+    sf_adduct_cand = peaks_gen.find_sf_adduct_cand([(0, 'He'), (9, 'Au')], {('He', '+H'), ('Au', '+H')})
 
     assert sf_adduct_cand == [(0, 'He', '+Na'), (9, 'Au', '+Na')]
 
 
-# def get_iso_peaks_side_effect():
-#     return [(0, '+H', {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}),
-#             (9, '+H', {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []})]
+@mock.patch('engine.theor_peaks_gen.DB')
+def test_find_sf_adduct_cand_invalid_sf_neg_adduct(MockDB, spark_context, sm_config, ds_config):
+    ds_config['isotope_generation']['adducts'] = ['-H']
+
+    peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
+    sf_adduct_cand = peaks_gen.find_sf_adduct_cand([(0, 'He'), (9, 'Au')], {})
+
+    assert sf_adduct_cand == []
+
+
+@mock.patch('engine.theor_peaks_gen.DB')
+def test_apply_database_filters_organic_filter(MockDB, spark_context, sm_config, ds_config):
+    ds_config['isotope_generation']['adducts'] = ['+H']
+    ds_config['database']['filters'] = ["Organic"]
+
+    peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
+    sf_adduct_cand = peaks_gen.apply_database_filters([(0, 'He'), (9, 'CO2')])
+
+    assert sf_adduct_cand == [(9, 'CO2')]
 
 
 @mock.patch('engine.theor_peaks_gen.DB')
