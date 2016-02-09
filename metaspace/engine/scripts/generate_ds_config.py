@@ -1,13 +1,15 @@
 """
 Script for generating dataset config files based on chosen instrument and its settings
 """
-from difflib import SequenceMatcher as seqm
+from difflib import SequenceMatcher as SeqM
 import numpy as np
+import json
+from pprint import pprint, pformat
 
 
 ds_config = {
-    "inputs": {
-        "database": "HMDB"
+    "database": {
+        "name": "HMDB"
     },
     "isotope_generation": {
         "adducts": ["+H", "+Na", "+K"],
@@ -24,7 +26,7 @@ ds_config = {
         "q": 99,
         "do_preprocessing": False
     },
-    "molecules_num": 'null'
+    "molecules_num": ""
 }
 
 
@@ -38,7 +40,13 @@ instruments = {
 }
 
 
-resolv_power_params = {
+instrument_modes = {
+    'neg': ['-H', '+Cl'],
+    'pos': ['+H', '+Na', '+K']
+}
+
+
+resol_power_params = {
     '70K': {
         'fwhm': 0.00285714285,
         'sigma': 0.006728,
@@ -75,7 +83,7 @@ resolv_power_params = {
 def get_best_match(input, options):
     if len(options) == 1:
         return options[0]
-    match_opt_ind = np.argmax([seqm(None, str(input), str(opt)).ratio() for opt in options])
+    match_opt_ind = np.argmax([SeqM(None, str(input), str(opt)).ratio() for opt in options])
     return options[match_opt_ind]
 
 
@@ -92,14 +100,28 @@ if __name__ == "__main__":
     resolv_power = get_best_match(resolv_power, instruments[instr_type][instr_model])
     print 'Chosen resolving power @200 "{}"'.format(resolv_power)
 
-    ds_config['isotope_generation']['isocalc_sigma'] = resolv_power_params[resolv_power]['sigma']
-    ds_config['isotope_generation']['isocalc_pts_per_mz'] = resolv_power_params[resolv_power]['pts_per_mz']
+    instr_mode = raw_input('Instrument mode ({}): '.format('/'.join(instrument_modes.keys())))
+    instr_mode = get_best_match(instr_mode, instrument_modes.keys())
+    print 'Chosen instrument mode "{}"'.format(instr_mode)
+    print 'Adducts to be used "{}"'.format(instrument_modes[instr_mode])
 
-    from pprint import pprint, pformat
-    pprint(ds_config)
+    ppm = raw_input('ppm number (integer): ')
+    print 'Chosen ppm number "{}"'.format(ppm)
+
+    number_of_mol = raw_input('Number of molecules in search results (integer): ')
+    print 'Chosen number of molecules "{}"'.format(number_of_mol)
+
+    ds_config['isotope_generation']['adducts'] = instrument_modes[instr_mode]
+    ds_config['isotope_generation']['charge']['polarity'] = '+' if instr_mode == 'pos' else '-'
+    ds_config['isotope_generation']['isocalc_sigma'] = round(resol_power_params[resolv_power]['sigma'], 6)
+    ds_config['isotope_generation']['isocalc_pts_per_mz'] = resol_power_params[resolv_power]['pts_per_mz']
+    ds_config['image_generation']['ppm'] = int(ppm)
+    ds_config['molecules_num'] = int(number_of_mol)
+
+    print json.dumps(ds_config, indent=4)
 
     save = raw_input('Save to "config.json" file (Y/n)?: ')
     if save == 'Y':
         with open('config.json', 'w') as fp:
-            fp.write(pformat(ds_config))
+            fp.write(json.dumps(ds_config, indent=4))
         print 'Saved the dataset config to "config.json" file'
