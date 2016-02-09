@@ -6,6 +6,7 @@ import numpy as np
 
 from engine.db import DB
 from engine.util import logger
+from pyMS.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError, ParseError
 from pyMS.pyisocalc.pyisocalc import complete_isodist, parseSumFormula
 
 
@@ -28,7 +29,7 @@ class IsocalcWrapper(object):
             polarity = isocalc_config['charge']['polarity']
             self.charge = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
         self.sigma = isocalc_config['isocalc_sigma']
-        self.pts_per_mz = isocalc_config['isocalc_points_per_mz']
+        self.pts_per_mz = isocalc_config['isocalc_pts_per_mz']
         self.prof_pts_per_centr = 6
         self.max_mz_dist_to_centr = 0.15
 
@@ -67,10 +68,10 @@ class IsocalcWrapper(object):
             profile_mzs, profile_ints = isotope_ms.get_spectrum(source='profile')
             res_dict['profile_mzs'], res_dict['profile_ints'] = \
                 self._sample_profiles(centr_mzs, profile_mzs, profile_ints)
-        except (ValueError, TypeError) as e:
-            logger.warning('(%s, %s) - %s', sf, adduct, e.message)
+        except (InvalidFormulaError, ParseError) as e:
+            logger.warning('(%s, %s) - %s', sf, adduct, e)
         except Exception as e:
-            logger.error('(%s, %s) - %s', sf, adduct, e.message)
+            logger.error('(%s, %s) - %s', sf, adduct, e)
             logger.error(format_exc())
         finally:
             return res_dict
@@ -93,9 +94,9 @@ class IsocalcWrapper(object):
         return np.hstack(sampled_prof_mz_list), np.hstack(sampled_prof_int_list)
 
     def _format_peak_str(self, db_id, sf_id, adduct, peak_dict):
-        return '%d\t%d\t%s\t%.4f\t%d\t%d\t{%s}\t{%s}\t{%s}\t{%s}' % (
+        return '%d\t%d\t%s\t%.6f\t%d\t%d\t{%s}\t{%s}\t{%s}\t{%s}' % (
             db_id, sf_id, adduct,
-            self.sigma, self.charge, self.pts_per_mz,
+            round(self.sigma, 6), self.charge, self.pts_per_mz,
             list_of_floats_to_str(peak_dict['centr_mzs']),
             list_of_floats_to_str(peak_dict['centr_ints']),
             list_of_floats_to_str(peak_dict['profile_mzs']),
@@ -130,7 +131,7 @@ AGG_FORMULA_SEL = 'SELECT id, sf FROM agg_formula where db_id = %s'
 # TODO: sigma precision to take into account?
 SF_ADDUCT_SEL = ('SELECT sf, adduct FROM theor_peaks p '
                  'JOIN agg_formula f on p.sf_id = f.id and p.db_id = f.db_id '
-                 'WHERE p.db_id = %s AND ROUND(sigma::numeric, 5) = %s AND charge = %s AND pts_per_mz = %s')
+                 'WHERE p.db_id = %s AND ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s')
 
 
 class TheorPeaksGenerator(object):

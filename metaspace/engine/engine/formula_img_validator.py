@@ -109,7 +109,7 @@ def filter_sf_images(sc, ds_config, ds, formulas, sf_images):
                   .map(lambda (sf_i, imgs): (sf_i, compute_measures(imgs, sf_peak_intens_brcast.value[sf_i])))
                   .filter(lambda (_, metrics): reduce(add, metrics) > 0))
     if ds_config["molecules_num"]:
-        sf_metrics_map = dict(sf_metrics.takeOrdered(ds_config["molecules_num"],
+        sf_metrics_map = dict(sf_metrics.takeOrdered(int(ds_config["molecules_num"]),
                                                      lambda (_, metrics): -reduce(mul, metrics)))
     else:
         sf_metrics_map = sf_metrics.collectAsMap()

@@ -1,8 +1,6 @@
 from fabric.decorators import task, roles
 
-__author__ = 'intsco'
-
-from fabric.api import run, local, env, hosts
+from fabric.api import run, local, env, hosts, sudo
 from fabric.colors import green
 from fabric.contrib.project import rsync_project, put
 from fabric.contrib.files import append

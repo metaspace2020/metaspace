@@ -53,7 +53,7 @@ def ds_config():
                 "n_charges": 1
             },
             "isocalc_sigma": 0.01,
-            "isocalc_points_per_mz": 10000
+            "isocalc_pts_per_mz": 10000
         },
         "image_generation": {
             "ppm": 1.0,
