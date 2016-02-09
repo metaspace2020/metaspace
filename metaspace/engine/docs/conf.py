@@ -12,8 +12,25 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
+import sys
+
+from mock import Mock
+
+
+# see http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
+class DependencyMock(Mock):
+    @classmethod
+    def __getattr__(cls, name):
+        return DependencyMock()
+
+
+mock_modules = ("numpy", "scipy", "scipy.signal", "scipy.sparse", "scipy.stats", "scipy.optimize", "pandas",
+                "matplotlib",
+                "mpl_toolkits.axes_grid1", "matplotlib.cm", "engine.util", "matplotlib.colors", "matplotlib.pyplot",
+                "psycopg2", "psycopg2.extras", "pyimzML", "pyspark", "fabfile", "tornpsql")
+
+sys.modules.update((mod, DependencyMock()) for mod in mock_modules)
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
