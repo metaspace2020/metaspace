@@ -1,7 +1,7 @@
 # Spatial Metabolomics Engine [![Build Status](https://travis-ci.org/SpatialMetabolomics/SM_distributed.svg?branch=master)](https://travis-ci.org/SpatialMetabolomics/SM_distributed) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest)
 High throughput molecules annotation for imaging mass spectrometry datasets.
 
-##Main Features
+## Main Features
 - centroided imzML files as input dataset files
 - Apache Spark based implementation for easy scaling from one machine to a cluster
 - Can be run in both local and distributed modes
@@ -9,8 +9,8 @@ High throughput molecules annotation for imaging mass spectrometry datasets.
 - Web application for browsing the search results
 - Fabric script for easy deploy and an AWS cluster start
 
-##Installation Manual
-###Spark Installation and Setup
+## Installation Manual
+### Spark Installation and Setup
 
 Install Oracle Java 7
 
@@ -44,7 +44,7 @@ Install ssh daemon and create a public/private key pair
 	ssh localhost  # should work now
 	exit
     
-###Postgres Installation and Setup
+### Postgres Installation and Setup
 More details can be found here https://help.ubuntu.com/community/PostgreSQL
 
 Server installation from a repository
@@ -63,7 +63,7 @@ Don't forget to restart the database server
 
     sudo service postgresql restart
 	
-###SM Engine Installation and Setup
+### SM Engine Installation and Setup
 
 Install git and pip
 
@@ -136,7 +136,7 @@ for all HMDB molecules. In the end it should print
 **ALL TESTS FINISHED SUCCESSFULLY**
 If not something went wrong.
 
-##Run Molecule Annotation Job
+## Run Molecule Annotation Job
 Once you have successfully installed SM engine and its dependencies you can start a molecule annotation job with the command
     
     cd ~/SM_distributed
@@ -184,6 +184,5 @@ To explore the results of a job start the web application
 	
 Open [http://localhost:8090](http://localhost:8090) url address in a browser
 
-##Add New Molecule Database
-=======
+## Add New Molecule Database
 to be added...
