@@ -16,6 +16,7 @@ import os
 import sys
 
 from mock import Mock
+from recommonmark.parser import CommonMarkParser
 
 
 # see http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
@@ -49,6 +50,10 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
 ]
+
+source_parsers = {
+    '.md': CommonMarkParser,
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

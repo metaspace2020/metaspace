@@ -3,11 +3,13 @@
 
 # You can set these variables from the command line.
 SPHINXOPTS     =
+SPHINX_APIDOC  = sphinx-apidoc
 APIDOC_EXCLUDE = ../pyMS ../pyIMS ../test ../engine/test
-SPHINXBUILD    = sphinx-apidoc -f -o . .. $(APIDOC_EXCLUDE); sphinx-build
+CP_SM_LOG_CFG  = ../conf/sm_log.cfg.template ../conf/sm_log.cfg
+CP_README      = ../README.md .
+SPHINXBUILD    = $(SPHINX_APIDOC) -f -o . .. $(APIDOC_EXCLUDE); cp $(CP_README) ; cp $(CP_SM_LOG_CFG); sphinx-build
 PAPER          =
 BUILDDIR       = _build
-#SPHINX_APIDOC  = sphinx-apidoc
 
 # User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
@@ -52,6 +54,8 @@ help:
 .PHONY: clean
 clean:
 	rm -rf $(BUILDDIR)/*
+	rm ../conf/sm_log.cfg
+	rm README.md
 
 .PHONY: html
 html:

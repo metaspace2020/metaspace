@@ -6,15 +6,18 @@
 Welcome to SM_distributed's documentation!
 ==========================================
 
-Contents:
-
 .. toctree::
    :maxdepth: 2
 
 
+Readme
+------
+
+The :doc:`README <README>` should provide you with an overview and usage instructions. Or take a look at the developer
+documentation below for more details.
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
