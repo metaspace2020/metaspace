@@ -53,16 +53,23 @@ $(document).ready(function() {
     }
 
     tbl_demo = $('#table-demo').DataTable( {
-      ajax: "/ajax/demobigtable/",
-      scrollY: "200px",
-      dom: "rtiS",
+      ajax: {
+        "url": "/results_table/",
+        "type": "POST"
+      },
+      scroller: {
+        loadingIndicator: true
+      },
+      scrollY: "200",
+      dom: "frtiS",
       deferRender: true,
       processing: true,
-      serverSide: false,
-      paging:     false,
+      serverSide: true,
+      colReorder: false,
+      paging:     true,
       bSortCellsTop: true,
       bSearchable: false,
-      bStateSave: true,
+      bStateSave: false,  // server side filtering doesn't work with bStateSave=true
       order: [[ 8, "desc" ]],
       fnInitComplete: function(oSettings, json) {
         $('#table-demo tbody tr:eq(0)').click();
@@ -118,21 +125,48 @@ $(document).ready(function() {
       }
     } );
 
-    // Column filter/sorters
+    // Column filters
     yadcf.init(tbl_demo, [
-      {column_number : 0, filter_type: "select", filter_container_id: "fil-db", filter_reset_button_text: false, filter_default_label: 'Select...'},
-      {column_number : 1, filter_type: "select", filter_container_id: "fil-ds", filter_reset_button_text: false, filter_default_label: 'Select...', filter_match_mode: "exact"},
-      {column_number : 2, filter_type: "text", filter_container_id: "fil-sf", filter_reset_button_text: false},
-      {column_number : 3, filter_type: "text", filter_container_id: "fil-nm", filter_reset_button_text: false},
-      {column_number : 4, filter_type: "text", filter_container_id: "fil-id", filter_reset_button_text: false},
-      {column_number : 5, filter_type: "lower_bound_number", filter_container_id: "fil-chaos",
-        filter_reset_button_text: false, filter_default_label: ['&ge;']
+      {
+        column_number : 0,
+        filter_type: "select",
+        filter_delay: 500,
+        filter_container_id: "fil-db",
+        filter_reset_button_text: false,
+        filter_default_label: 'Select...'
       },
-      {column_number : 6, filter_type: "lower_bound_number", filter_container_id: "fil-img-corr", filter_reset_button_text: false, filter_default_label: ['&ge;'] },
-      {column_number : 7, filter_type: "lower_bound_number", filter_container_id: "fil-pat-match", filter_reset_button_text: false, filter_default_label: ['&ge;']},
-      {column_number : 8, filter_type: "lower_bound_number", filter_container_id: "fil-msm", filter_reset_button_text: false, filter_default_label: ['&ge;']},
-      {column_number : 9, filter_type: "select", filter_container_id: "fil-add", filter_reset_button_text: false, filter_default_label: 'all'},
-      // {column_number : 7, filter_type: "range_number", filter_container_id: "fil-jb", filter_reset_button_text: false},
+      {
+        column_number : 1,
+        filter_type: "select",
+        filter_delay: 500,
+        filter_container_id: "fil-ds",
+        filter_reset_button_text: false,
+        filter_default_label: 'Select...',
+//        filter_match_mode: "exact"
+      },
+      {
+        column_number : 2,
+        filter_type: "text",
+        filter_delay: 500,
+        filter_container_id: "fil-sf",
+        filter_reset_button_text: false
+      },
+//      {column_number : 3, filter_type: "text", filter_container_id: "fil-nm", filter_reset_button_text: false},
+//      {column_number : 4, filter_type: "text", filter_container_id: "fil-id", filter_reset_button_text: false},
+//      {column_number : 5, filter_type: "lower_bound_number", filter_container_id: "fil-chaos",
+//        filter_reset_button_text: false, filter_default_label: ['&ge;']
+//      },
+//      {column_number : 6, filter_type: "lower_bound_number", filter_container_id: "fil-img-corr", filter_reset_button_text: false, filter_default_label: ['&ge;'] },
+//      {column_number : 7, filter_type: "lower_bound_number", filter_container_id: "fil-pat-match", filter_reset_button_text: false, filter_default_label: ['&ge;']},
+//      {column_number : 8, filter_type: "lower_bound_number", filter_container_id: "fil-msm", filter_reset_button_text: false, filter_default_label: ['&ge;']},
+      {
+        column_number : 9,
+        filter_type: "select",
+        filter_delay: 500,
+        filter_container_id: "fil-add",
+        filter_reset_button_text: false,
+        filter_default_label: 'all'
+      },
     ]);
 
     // Row select action

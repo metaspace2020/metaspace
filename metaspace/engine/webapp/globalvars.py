@@ -16,7 +16,7 @@ sql_counts = dict(
     jobs="SELECT count(*) FROM jobs",
     datasets="SELECT count(*) FROM datasets",
     fullimages="SELECT count(*) FROM job_result_stats WHERE job_id=%s",
-    demobigtable="SELECT count(distinct sf_id) FROM iso_image_metrics"
+    # demobigtable="SELECT count(distinct sf_id) FROM iso_image_metrics"
 )
 
 sql_queries = dict(
@@ -61,23 +61,23 @@ sql_queries = dict(
 		FROM job_result_stats j LEFT JOIN formulas f ON f.id=j.formula_id
 		WHERE (stats->'mean_ent')::text::real > 0.0001 AND job_id=%s
 	''',
-    demobigtable='''
-        SELECT sf_db.name as db_name, ds.name as ds_name, f.sf, f.names, f.subst_ids,
-            (m.stats->'chaos')::text::real AS chaos,
-            (m.stats->'img_corr')::text::real AS image_corr,
-            (m.stats->'pat_match')::text::real AS pattern_match,
-            m.adduct AS adduct,
-            j.id AS job_id,
-            ds.id AS ds_id,
-            f.id AS sf_id,
-            m.peaks_n,
-            sf_db.id AS db_id
-        FROM iso_image_metrics m
-        JOIN formula_db sf_db ON sf_db.id = m.db_id
-        JOIN agg_formula f ON f.id = m.sf_id
-        JOIN job j ON j.id = m.job_id
-        JOIN dataset ds ON ds.id = j.ds_id
-        ''',
+    # demobigtable='''
+    #     SELECT sf_db.name as db_name, ds.name as ds_name, f.sf, f.names, f.subst_ids,
+    #         (m.stats->'chaos')::text::real AS chaos,
+    #         (m.stats->'img_corr')::text::real AS image_corr,
+    #         (m.stats->'pat_match')::text::real AS pattern_match,
+    #         m.adduct AS adduct,
+    #         j.id AS job_id,
+    #         ds.id AS ds_id,
+    #         f.id AS sf_id,
+    #         m.peaks_n,
+    #         sf_db.id AS db_id
+    #     FROM iso_image_metrics m
+    #     JOIN formula_db sf_db ON sf_db.id = m.db_id
+    #     JOIN agg_formula f ON f.id = m.sf_id
+    #     JOIN job j ON j.id = m.job_id
+    #     JOIN dataset ds ON ds.id = j.ds_id
+    #     ''',
     #  JOIN (
     #      SELECT j.db_id, ds.id as ds_id, ds.name as ds_name, max(j.id) as last_job_id
     #      FROM job j
@@ -114,7 +114,7 @@ sql_fields = dict(
           "tasks_done", "tasks_total", "start", "finish", "id"],
     datasets=["dataset_id", "dataset", "nrows", "ncols", "dataset_id"],
     fullimages=["id", "name", "sf", "entropies", "mean_ent", "corr_images", "corr_int", "id"],
-    demobigtable=["db_name", "ds_name", "sf", "names", "subst_ids", "chaos", "image_corr", "pattern_match",
-                  "msm",
-                  "adduct", "job_id", "ds_id", "sf_id", "peaks_n", "db_id"]
+    # demobigtable=["db_name", "ds_name", "sf", "names", "subst_ids", "chaos", "image_corr", "pattern_match",
+    #               "msm",
+    #               "adduct", "job_id", "ds_id", "sf_id", "peaks_n", "db_id"]
 )
