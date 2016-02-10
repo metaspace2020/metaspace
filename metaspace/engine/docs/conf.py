@@ -12,13 +12,13 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-sys.path.append('.')
-
 import os
 import sys
 
 from mock import Mock
 from recommonmark.parser import CommonMarkParser
+
+sys.path.append('.')
 
 import rtd_gen_docs
 
