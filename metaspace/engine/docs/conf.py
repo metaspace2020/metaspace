@@ -12,11 +12,17 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+sys.path.append('.')
+
 import os
 import sys
 
 from mock import Mock
 from recommonmark.parser import CommonMarkParser
+
+import rtd_gen_docs
+
+rtd_gen_docs.main()
 
 
 # see http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
