@@ -32,16 +32,10 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
     db.close()
 
 
-def if_fs_local():
-    SMConfig.set_path(join(proj_root(), 'conf/config.json'))
-    return SMConfig.get_conf()['fs']['local']
-
-
 @patch('engine.formula_img_validator.get_compute_img_measures')
 def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_database, sm_config, ds_config):
     get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
 
-    sm_config['fs']['local'] = if_fs_local()
     SMConfig._config_dict = sm_config
 
     db = DB(sm_config['db'])

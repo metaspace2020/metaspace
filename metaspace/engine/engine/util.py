@@ -5,7 +5,7 @@ import os
 import json
 from subprocess import check_call, call
 import logging
-from logging.config import fileConfig
+from logging.config import dictConfig
 from os.path import join
 
 
@@ -13,7 +13,21 @@ def proj_root():
     return dirname(dirname(__file__))
 
 
-fileConfig(join(proj_root(), 'conf/sm_log.cfg'))
+dictConfig({
+    'version': 1,
+    'formatters': {
+        'SM': {
+            'format': '%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s'
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'SM',
+            'level': 'DEBUG',
+        }
+    }
+})
 logger = logging.getLogger(name='SM')
 
 

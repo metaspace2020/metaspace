@@ -20,7 +20,7 @@ def spark_context(request):
 
 @pytest.fixture()
 def create_test_db():
-    db_config = dict(database='postgres', user='postgres', host='localhost')
+    db_config = dict(database='postgres', user='sm', host='localhost')
     db = DB(db_config, autocommit=True)
     db.alter('DROP DATABASE IF EXISTS sm_test')
     db.alter('CREATE DATABASE sm_test')

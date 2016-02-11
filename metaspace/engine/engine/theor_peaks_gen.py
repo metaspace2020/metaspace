@@ -206,7 +206,7 @@ class TheorPeaksGenerator(object):
         : list
             Filtered list of pairs (id, sum formula)
         """
-        if 'Organic' in self.ds_config['database'].get('filters', []):
+        if 'organic' in map(lambda s: s.lower(), self.ds_config['database'].get('filters', [])):
             logger.info('Organic sum formula filter has been applied')
             return filter(lambda (_, sf): 'C' in self._sf_elements(sf), formula_list)
         return formula_list

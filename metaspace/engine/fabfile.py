@@ -70,6 +70,7 @@ def webserver_deploy():
     print green('========= Code deployment to SM webserver =========')
 
     rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'conf'])
+    run('cd /home/ubuntu/sm; rm engine.zip; zip -rq sm.zip engine pyMS pyIMS __init__.py')
     run('supervisorctl restart all')
 
 
@@ -130,7 +131,6 @@ def cluster_deploy():
     run('mkdir -p /home/ubuntu/sm')
     rsync_project(local_dir='engine scripts test', remote_dir='/home/ubuntu/sm/',
                   exclude=['.*', '*.pyc', 'engine/test', 'engine/pyMS/test', 'engine/pyIMS/test'])
-    run('cd /home/ubuntu/sm; zip -rq engine.zip engine')
 
 # @task
 # def cluster_terminate(name):
