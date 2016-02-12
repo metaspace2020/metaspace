@@ -246,7 +246,7 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
     PEAK_PROFILE_SQL = '''SELECT centr_mzs, centr_ints, prof_mzs, prof_ints
                           FROM theor_peaks
                           WHERE db_id = %s and sf_id = %s and adduct = %s'''
-    SAMPLE_INTENS_SQL = '''SELECT intensities
+    SAMPLE_INTENS_SQL = '''SELECT pixel_inds, intensities
                            FROM iso_image
                            WHERE job_id = %s and db_id = %s and sf_id = %s and adduct = %s order by peak'''
 
@@ -275,6 +275,19 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
 
         return min_mz, max_mz, points_n, centr_inds, prof_inds
 
+    # TODO: remove metrics calculation logic from here
+    @staticmethod
+    def sample_centr_ints_norm(sample_ints_list):
+        first_peak_inds = set(sample_ints_list[0]['pixel_inds'])
+        sample_centr_ints = []
+        for peak_d in sample_ints_list:
+            flt_peak_inds_mask = np.array(map(lambda i: i in first_peak_inds, peak_d['pixel_inds']))
+            peak_int_sum = np.array(peak_d['intensities'])[flt_peak_inds_mask].sum()
+            sample_centr_ints.append(peak_int_sum)
+
+        sample_centr_ints = np.asarray(sample_centr_ints)
+        return sample_centr_ints / sample_centr_ints.max() * 100
+
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
         peaks_dict = self.db.query(self.PEAK_PROFILE_SQL, int(db_id), int(sf_id), adduct)[0]
@@ -285,8 +298,7 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
         min_mz, max_mz, points_n, centr_inds, prof_inds = self.convert_to_serial(centr_mzs, prof_mzs)
 
         sample_ints_list = self.db.query(self.SAMPLE_INTENS_SQL, int(job_id), int(db_id), int(sf_id), adduct)
-        sample_centr_ints = np.array(map(lambda d: sum(d.values()[0]), sample_ints_list))
-        sample_centr_ints_norm = sample_centr_ints / sample_centr_ints.max() * 100
+        sample_centr_ints_norm = self.sample_centr_ints_norm(sample_ints_list)
 
         self.write(json.dumps({
             'mz_grid': {

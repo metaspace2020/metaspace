@@ -25,6 +25,16 @@ dictConfig({
             'class': 'logging.StreamHandler',
             'formatter': 'SM',
             'level': 'DEBUG',
+        },
+    },
+    'loggers': {
+        'root': {
+            'handlers': ['console'],
+            'level': logging.DEBUG
+        },
+        'SM': {
+            'handlers': ['console'],
+            'level': logging.DEBUG
         }
     }
 })

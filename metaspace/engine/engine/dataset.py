@@ -38,8 +38,12 @@ class Dataset(object):
         return res
 
     def _define_pixels_order(self):
-        with open(self.ds_coord_path) as f:
-            coords = filter(lambda t: len(t) == 2, map(self._parse_coord_row, f.readlines()))
+        if self.sm_config['fs']['local']:
+            coord_path = local_path(self.ds_coord_path)
+        else:
+            coord_path = hdfs_path(self.ds_coord_path)
+
+        coords = self.sc.textFile(coord_path).map(self._parse_coord_row).filter(lambda t: len(t) == 2).collect()
         _coord = np.asarray(coords)
         _coord = np.around(_coord, 5)  # correct for numerical precision
         _coord -= np.amin(_coord, axis=0)

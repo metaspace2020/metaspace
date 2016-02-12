@@ -92,7 +92,7 @@ class SearchJob(object):
         """
         self.work_dir = WorkDir(self.ds_name, self.sm_config['fs']['data_dir'])
         if clean:
-            self.work_dir.del_work_dir()
+            self.work_dir.clean_work_dirs()
         self.work_dir.copy_input_data(input_path)
         self._read_config()
         logger.info('Dataset config:\n%s', pformat(self.ds_config))
@@ -103,7 +103,7 @@ class SearchJob(object):
         imzml_converter = ImzmlTxtConverter(self.ds_name, self.work_dir.imzml_path,
                                             self.work_dir.txt_path, self.work_dir.coord_path)
         imzml_converter.convert()
-        self._copy_txt_to_hdfs(self.work_dir.txt_path, self.work_dir.txt_path)
+        self.work_dir.upload_data_to_hdfs()
 
         self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path)
 
@@ -113,6 +113,9 @@ class SearchJob(object):
 
         search_results = self._search()
         self._store_results(search_results)
+
+        if not self.sm_config['fs']['local']:
+            self.work_dir.drop_local_work_dir()
 
         self.db.close()
 
@@ -127,14 +130,6 @@ class SearchJob(object):
                              sf_iso_images_map, sf_metrics_map,
                              self.formulas.get_sf_adduct_peaksn(),
                              self.db)
-
-    def _copy_txt_to_hdfs(self, localpath, hdfspath):
-        if not self.sm_config['fs']['local']:
-            logger.info('Coping DS text file to HDFS...')
-            return_code = cmd(hdfs_prefix() + '-test -e {}', hdfs_path(self.work_dir.path))
-            if return_code:
-                cmd_check(hdfs_prefix() + '-mkdir -p {}', hdfs_path(self.work_dir.path))
-                cmd_check(hdfs_prefix() + '-copyFromLocal {} {}', local_path(localpath), hdfs_path(hdfspath))
 
     def _store_results(self, search_results):
         logger.info('Storing search results to the DB')
