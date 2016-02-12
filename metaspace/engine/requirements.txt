@@ -11,3 +11,4 @@ pytest==2.8.2
 scipy==0.16.0
 tornado==4.2.1
 tornpsql==1.1.0
+recommonmark
