@@ -15,7 +15,6 @@
 import os
 import sys
 
-from mock import Mock
 import sphinx_rtd_theme
 from recommonmark.parser import CommonMarkParser
 
@@ -25,35 +24,25 @@ import rtd_gen_docs
 
 rtd_gen_docs.main()
 
-
-# see http://read-the-docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
-class DependencyMock(Mock):
-    @classmethod
-    def __getattr__(cls, name):
-        return DependencyMock()
-
-
-# Add all dependencies here that are not resolvable by readthedocs
-mock_modules = ['fabfile',
-                'matplotlib',
-                'matplotlib.cm',
-                'matplotlib.colors',
-                'matplotlib.pyplot',
-                'mpl_toolkits.axes_grid1',
-                'numpy',
-                'pandas',
-                'psycopg2',
-                'psycopg2.extras',
-                'pyimzML',
-                'pyspark',
-                'scipy',
-                'scipy.optimize',
-                'scipy.signal',
-                'scipy.sparse',
-                'scipy.stats',
-                'tornpsql']
-
-sys.modules.update((mod, DependencyMock()) for mod in mock_modules)
+# see http://www.sphinx-doc.org/en/stable/ext/autodoc.html#confval-autodoc_mock_imports
+autodoc_mock_imports = ['fabfile',
+                        'matplotlib',
+                        'matplotlib.cm',
+                        'matplotlib.colors',
+                        'matplotlib.pyplot',
+                        'mpl_toolkits.axes_grid1',
+                        'numpy',
+                        'pandas',
+                        'psycopg2',
+                        'psycopg2.extras',
+                        'pyimzML',
+                        'pyspark',
+                        'scipy',
+                        'scipy.optimize',
+                        'scipy.signal',
+                        'scipy.sparse',
+                        'scipy.stats',
+                        'tornpsql']
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
