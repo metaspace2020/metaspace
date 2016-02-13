@@ -103,7 +103,8 @@ class SearchJob(object):
         imzml_converter = ImzmlTxtConverter(self.ds_name, self.work_dir.imzml_path,
                                             self.work_dir.txt_path, self.work_dir.coord_path)
         imzml_converter.convert()
-        self.work_dir.upload_data_to_hdfs()
+        if not self.sm_config['fs']['local']:
+            self.work_dir.upload_data_to_hdfs()
 
         self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path)
 

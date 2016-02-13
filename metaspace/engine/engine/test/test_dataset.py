@@ -8,33 +8,46 @@ from engine.util import SMConfig
 from engine.test.util import spark_context, sm_config
 
 
-@pytest.fixture
-def coord_file_content():
-    return (
-        '0,0,1\n'
-        '1,2,2\n'
-        '2,2,1\n'
-        '3,0,2\n'
-        '4,1,2\n')
+# @pytest.fixture
+# def coord_file_content():
+#     return (
+#         '0,0,1\n'
+#         '1,2,2\n'
+#         '2,2,1\n'
+#         '3,0,2\n'
+#         '4,1,2\n')
 
 
-def test_get_dims_2by3(coord_file_content, sm_config):
-    m = mock_open(read_data=coord_file_content)
-    with patch('engine.dataset.open', m):
+def test_get_dims_2by3(spark_context, sm_config):
+    with patch('engine.test.util.SparkContext.textFile') as m:
+        m.return_value = spark_context.parallelize([
+            '0,0,1\n',
+            '1,2,2\n',
+            '2,2,1\n',
+            '3,0,2\n',
+            '4,1,2\n'])
+
         SMConfig._config_dict = sm_config
-        ds = Dataset(None, '', '')
+        ds = Dataset(spark_context, '', '/fn')
 
-        m.assert_called_once_with('')
+        m.assert_called_once_with('file:///fn')
         assert ds.get_dims() == (2, 3)
 
 
-def test_get_norm_img_pixel_inds_2by3(coord_file_content, sm_config):
-    m = mock_open(read_data=coord_file_content)
-    with patch('engine.dataset.open', m):
+def test_get_norm_img_pixel_inds_2by3(spark_context, sm_config):
+    with patch('engine.test.util.SparkContext.textFile') as m:
+        m.return_value = spark_context.parallelize([
+            '0,0,1\n',
+            '1,2,2\n',
+            '2,2,1\n',
+            '3,0,2\n',
+            '4,1,2\n'])
+    # m = mock_open(read_data=coord_file_content)
+    # with patch('engine.dataset.open', m):
         SMConfig._config_dict = sm_config
-        ds = Dataset(None, '', '')
+        ds = Dataset(spark_context, '', '/fn')
 
-        m.assert_called_once_with('')
+        m.assert_called_once_with('file:///fn')
         assert_array_equal(ds.get_norm_img_pixel_inds(), [0, 5, 2, 3, 4])
 
 

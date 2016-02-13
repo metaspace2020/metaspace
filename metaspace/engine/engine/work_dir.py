@@ -31,6 +31,7 @@ class WorkDir(object):
         self.path = join(self.data_dir_path, ds_name)
         self.ds_config = None
 
+    # TODO: add tests
     def drop_local_work_dir(self):
         try:
             cmd_check('rm -rf {}', self.path)
@@ -72,15 +73,14 @@ class WorkDir(object):
 
     def upload_data_to_hdfs(self):
         """ If non local file system is used uploads plain text data files to it """
-        if not self.sm_config['fs']['local']:
-            logger.info('Coping DS text file to HDFS...')
-            return_code = cmd(hdfs_prefix() + '-test -e {}', hdfs_path(self.path))
-            if return_code:
-                cmd_check(hdfs_prefix() + '-mkdir -p {}', hdfs_path(self.path))
-                cmd_check(hdfs_prefix() + '-copyFromLocal {} {}',
-                          local_path(self.txt_path), hdfs_path(self.txt_path))
-                cmd_check(hdfs_prefix() + '-copyFromLocal {} {}',
-                          local_path(self.coord_path), hdfs_path(self.coord_path))
+        logger.info('Coping DS text file to HDFS...')
+        return_code = cmd(hdfs_prefix() + '-test -e {}', hdfs_path(self.path))
+        if return_code:
+            cmd_check(hdfs_prefix() + '-mkdir -p {}', hdfs_path(self.path))
+            cmd_check(hdfs_prefix() + '-copyFromLocal {} {}',
+                      local_path(self.txt_path), hdfs_path(self.txt_path))
+            cmd_check(hdfs_prefix() + '-copyFromLocal {} {}',
+                      local_path(self.coord_path), hdfs_path(self.coord_path))
 
     @property
     def ds_config_path(self):
