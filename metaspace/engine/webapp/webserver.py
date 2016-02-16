@@ -7,20 +7,19 @@
 
 .. moduleauthor:: Sergey Nikolenko <snikolenko@gmail.com>
 """
-import json
-from os import path
 import argparse
-import os
+import json
 from datetime import datetime, timedelta
+from os import path
 
+import tornado.httpserver
 import tornado.ioloop
 import tornado.web
-import tornado.httpserver
 import tornpsql
 
-import handlers, results_table
+from handlers import results_table, iso_image_generation, misc
 from util import my_print
-
+from webapp.handlers import results_table
 
 # get list of engine files
 engine_pyfiles = ['computing.py', 'util.py', 'imaging.py',
@@ -37,24 +36,24 @@ class Application(tornado.web.Application):
     def __init__(self):
         """Initializes handlers, including the spark handler, sets up database connection."""
 
-        torn_handlers = [
-            (r"/", handlers.IndexHandler),
+        handlers = [
+            (r"/", misc.IndexHandler),
             (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": path.join(path.dirname(__file__), "static")}),
             (r"^/results_table/(.*)", results_table.ResultsTableHandler),
-            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.AggIsoImgPngHandler),
-            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.IsoImgPngHandler),
-            (r"^/spectrum_line_chart_data/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.SpectrumLineChartHandler),
-            (r"^/sf_peak_mzs/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.SFPeakMZsHandler),
-            (r"^/min_max_int/([^/]+)/([^/]+)/([^/]+)/([^/]+)", handlers.MinMaxIntHandler),
-            # (r"^/demo", handlers.AjaxHandler)
+            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", iso_image_generation.AggIsoImgPngHandler),
+            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", iso_image_generation.IsoImgPngHandler),
+            (r"^/spectrum_line_chart_data/([^/]+)/([^/]+)/([^/]+)/([^/]+)", misc.SpectrumLineChartHandler),
+            (r"^/sf_peak_mzs/([^/]+)/([^/]+)/([^/]+)/([^/]+)", misc.SFPeakMZsHandler),
+            (r"^/min_max_int/([^/]+)/([^/]+)/([^/]+)/([^/]+)", misc.MinMaxIntHandler),
         ]
         settings = dict(
-            static_path=path.join(path.dirname(__file__), "static"),
+            static_path=path.join(path.dirname(__file__), 'static'),
+            template_path=path.join(path.dirname(__file__), 'html'),
             debug=True,
             compress_response=True
         )
         config_db = config["db"]
-        tornado.web.Application.__init__(self, torn_handlers, **settings)
+        tornado.web.Application.__init__(self, handlers, **settings)
         # Have one global connection to the blog DB across all handlers
         self.db = tornpsql.Connection(config_db['host'], config_db['database'], config_db['user'],
                                       config_db['password'], 5432)
@@ -112,7 +111,7 @@ def main():
     parser.set_defaults(spark=False, config='config.json', port=8080, time_profiling_enabled=False,
                         use_deprecated=False)
     args = parser.parse_args()
-    handlers.args = args
+    # handlers.args = args
 
     with open(args.config) as f:
         config = json.load(f)

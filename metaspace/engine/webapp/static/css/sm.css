@@ -7,8 +7,11 @@
 }
 
 #ionimage_total img {
-    max-height: 500px;
+    /*max-height: 500px;
     width: 100%;
+    object-fit: contain;*/
+    max-width: 700px;
+    min-height: 500px;
     object-fit: contain;
 }
 
