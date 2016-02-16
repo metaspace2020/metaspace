@@ -19,7 +19,6 @@ import tornpsql
 
 from handlers import results_table, iso_image_generation, misc
 from util import my_print
-from webapp.handlers import results_table
 
 # get list of engine files
 engine_pyfiles = ['computing.py', 'util.py', 'imaging.py',

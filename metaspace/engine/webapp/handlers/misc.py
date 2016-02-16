@@ -22,7 +22,7 @@ import tornado.httpserver
 from tornado import gen
 from tornado.ioloop import IOLoop
 
-from webapp.util import my_print, DateTimeEncoder
+from util import my_print
 
 
 @gen.coroutine
