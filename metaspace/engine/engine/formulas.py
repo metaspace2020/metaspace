@@ -6,8 +6,8 @@ from engine.util import logger
 THEOR_PEAKS_SQL = ('SELECT sf_id, adduct, centr_mzs, centr_ints '
                    'FROM theor_peaks p '
                    'JOIN formula_db d ON d.id = p.db_id '
-                   'WHERE d.name = %s AND adduct = ANY(%s) AND '
-                   'ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s '
+                   'WHERE d.name = %s AND adduct = ANY(%s) AND ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s '
+                   'AND charge = %s'
                    'ORDER BY sf_id, adduct')
 
 
@@ -26,8 +26,9 @@ class Formulas(object):
         self.db_name = ds_config['database']['name']
         iso_gen_conf = ds_config['isotope_generation']
 
-        sf_peaks = db.select(THEOR_PEAKS_SQL, self.db_name, iso_gen_conf['adducts'],
-                             iso_gen_conf['isocalc_sigma'], iso_gen_conf['isocalc_pts_per_mz'])
+        charge = iso_gen_conf['charge']['polarity'] + iso_gen_conf['charge']['n_charges']
+        sf_peaks = db.select(THEOR_PEAKS_SQL, self.db_name, iso_gen_conf['adducts'], iso_gen_conf['isocalc_sigma'],
+                             iso_gen_conf['isocalc_pts_per_mz'], charge)
         assert sf_peaks, 'No formulas matching the criteria were found in theor_peaks!'
         self.sf_ids, self.adducts, self.sf_theor_peaks, self.sf_theor_peak_ints = zip(*sf_peaks)
         self.check_formula_uniqueness(self.sf_ids, self.adducts)
