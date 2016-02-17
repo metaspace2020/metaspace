@@ -26,7 +26,7 @@ class Formulas(object):
         self.db_name = ds_config['database']['name']
         iso_gen_conf = ds_config['isotope_generation']
 
-        charge = iso_gen_conf['charge']['polarity'] + iso_gen_conf['charge']['n_charges']
+        charge = '{}{}'.format(iso_gen_conf['charge']['polarity'], iso_gen_conf['charge']['n_charges'])
         sf_peaks = db.select(THEOR_PEAKS_SQL, self.db_name, iso_gen_conf['adducts'], iso_gen_conf['isocalc_sigma'],
                              iso_gen_conf['isocalc_pts_per_mz'], charge)
         assert sf_peaks, 'No formulas matching the criteria were found in theor_peaks!'
