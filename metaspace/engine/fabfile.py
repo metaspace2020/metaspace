@@ -66,10 +66,10 @@ def webserver_stop():
 
 @task
 @roles('dev_web')
-def webserver_deploy():
+def webserver_deploy(delete=False):
     print green('========= Code deployment to SM webserver =========')
 
-    rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'conf'])
+    rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'conf', 'logs'], delete=delete)
     run('cd /home/ubuntu/sm; rm engine.zip; zip -rq sm.zip engine pyMS pyIMS __init__.py')
     run('supervisorctl restart all')
 

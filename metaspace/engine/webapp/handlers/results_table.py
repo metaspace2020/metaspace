@@ -5,11 +5,11 @@ import tornado.httpserver
 from tornado import gen
 
 
-results_count_tpl = "SELECT COUNT(*) as count FROM ({}) tt"
-results_fields = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids',
+RESULTS_COUNT_TPL = "SELECT COUNT(*) as count FROM ({}) tt"
+RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids',
                   'chaos', 'image_corr', 'pattern_match', 'msm', 'adduct',
                   'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id']
-results_sel = '''
+RESULTS_SEL = '''
         SELECT * FROM (
             SELECT sf_db.name as db_name, ds.name as ds_name, f.sf as sf, f.names as comp_names, f.subst_ids as comp_ids,
                 (m.stats->'chaos')::text::real AS chaos,
@@ -24,7 +24,7 @@ results_sel = '''
                 sf_db.id AS db_id
             FROM iso_image_metrics m
             JOIN formula_db sf_db ON sf_db.id = m.db_id
-            JOIN agg_formula f ON f.id = m.sf_id
+            JOIN agg_formula f ON f.id = m.sf_id AND sf_db.id = f.db_id
             JOIN job j ON j.id = m.job_id
             JOIN dataset ds ON ds.id = j.ds_id) as t
         '''
@@ -41,7 +41,7 @@ def select_results(query, where=None, orderby='msm', asc=False, limit=500, offse
         query += 'WHERE ' + ' and '.join(conditions) + '\n'
         query_params.extend(cond_vals)
 
-    count_query = results_count_tpl.format(query)
+    count_query = RESULTS_COUNT_TPL.format(query)
 
     if orderby is not None:
         query += 'ORDER BY {} {}\n'.format(orderby, 'ASC' if asc else 'DESC')
@@ -90,7 +90,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         ds_name = self.request.arguments['columns[1][search][value]'][0]
         adduct = self.request.arguments['columns[9][search][value]'][0]
         sf = self.request.arguments['columns[2][search][value]'][0]
-        orderby = results_fields[int(self.get_argument('order[0][column]', 0))]
+        orderby = RESULTS_FIELDS[int(self.get_argument('order[0][column]', 0))]
         order_asc = self.get_argument('order[0][dir]', 0) == 'asc'
 
         where = [
@@ -99,13 +99,13 @@ class ResultsTableHandler(tornado.web.RequestHandler):
             {'field': 'adduct', 'value': adduct, 'cond': '='},
             {'field': 'sf', 'value': sf, 'cond': 'like'}
         ]
-        count_query, query, query_params = select_results(query=results_sel, where=where,
+        count_query, query, query_params = select_results(query=RESULTS_SEL, where=where,
                                                           orderby=orderby, asc=order_asc,
                                                           limit=limit, offset=offset)
         count = int(self.db.query(count_query, *query_params)[0]['count'])
         results = self.db.query(query, *query_params)
 
-        results_dict = self.make_datatable_dict(draw, count, [[row[x] for x in results_fields] for row in results])
+        results_dict = self.make_datatable_dict(draw, count, [[row[x] for x in RESULTS_FIELDS] for row in results])
 
         results_dict['yadcf_data_0'] = self.formula_dbs
         results_dict['yadcf_data_1'] = self.datasets

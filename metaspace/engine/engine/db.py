@@ -88,6 +88,7 @@ class DB(object):
             single row
         """
         res = self.select(sql, *args)
+        assert len(res) in [0, 1], "Requested one row, got {}".format(len(res))
         return res[0] if len(res) > 0 else []
 
     @db_decor
