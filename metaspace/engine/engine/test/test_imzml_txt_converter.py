@@ -3,29 +3,9 @@ import json
 import numpy as np
 from cStringIO import StringIO
 
-from engine.imzml_txt_converter import ImzmlTxtConverter, ImageBounds, encode_coord_line, encode_data_line
+from engine.imzml_txt_converter import ImzmlTxtConverter, encode_coord_line, encode_data_line
 from engine.util import SMConfig
 from engine.test.util import sm_config, ds_config
-
-
-def test_image_bounds_update():
-    image_bounds = ImageBounds()
-    image_bounds.update(-1, -50)
-    image_bounds.update(100, 500)
-
-    assert image_bounds.min_x == -1
-    assert image_bounds.max_x == 100
-    assert image_bounds.min_y == -50
-    assert image_bounds.max_y == 500
-
-
-def test_image_bounds_to_json():
-    image_bounds = ImageBounds()
-    image_bounds.update(-10, -30)
-    image_bounds.update(10, 30)
-
-    assert image_bounds.to_json() == json.dumps({'x': {'min': -10, 'max': 10},
-                                                 'y': {'min': -30, 'max': 30}})
 
 
 def test_encode_data_line():

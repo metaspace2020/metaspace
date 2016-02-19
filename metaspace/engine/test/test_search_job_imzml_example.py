@@ -25,15 +25,21 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
     local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
 
     db = DB(sm_config['db'])
-    db.insert("INSERT INTO formula VALUES (%s, %s, %s, %s, %s)",
-              [(0, '00001', 10007, 'compound_name', 'C12H24O')])
-    db.insert("INSERT INTO agg_formula VALUES (%s, %s, %s, %s, %s)",
-              [(0, 10007, 'C12H24O', ['00001'], ['compound_name'])])
-    db.close()
+    try:
+        db.insert('INSERT INTO formula_db VALUES (%s, %s, %s)',
+                  [(0, '2016-01-01', 'HMDB')])
+        db.insert('INSERT INTO formula VALUES (%s, %s, %s, %s, %s)',
+                  [(100, 0, '00001', 'compound_name', 'C12H24O')])
+        db.insert('INSERT INTO agg_formula VALUES (%s, %s, %s, %s, %s)',
+                  [(10007, 0, 'C12H24O', ['00001'], ['compound_name'])])
+    except:
+        raise
+    finally:
+        db.close()
 
 
 @patch('engine.formula_img_validator.get_compute_img_measures')
-def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_database, sm_config, ds_config):
+def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_database, sm_config):
     get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
 
     SMConfig._config_dict = sm_config
@@ -44,14 +50,13 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_
         job.run(input_dir_path, clean=True)
 
         # dataset meta asserts
-        rows = db.select("SELECT id, name, file_path, img_bounds from dataset")
+        rows = db.select("SELECT name, file_path, img_bounds from dataset")
         img_bounds = {u'y': {u'max': 3, u'min': 1}, u'x': {u'max': 3, u'min': 1}}
         file_path = join(data_dir_path, 'Example_Continuous.imzML')
         assert len(rows) == 1
-        assert rows[0] == (0, test_ds_name, file_path, img_bounds)
+        assert rows[0] == (test_ds_name, file_path, img_bounds)
 
         # theoretical patterns asserts
-        db = DB(sm_config['db'])
         rows = db.select('SELECT db_id, sf_id, adduct, centr_mzs, centr_ints, prof_mzs, prof_ints '
                          'FROM theor_peaks '
                          'ORDER BY adduct')
@@ -64,16 +69,16 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_
             assert r[3] and r[4] and r[5] and r[6]
 
         # image metrics asserts
-        rows = db.select(('SELECT job_id, db_id, sf_id, adduct, peaks_n, stats FROM iso_image_metrics '
+        rows = db.select(('SELECT db_id, sf_id, adduct, peaks_n, stats FROM iso_image_metrics '
                           'ORDER BY sf_id, adduct'))
 
         assert rows
         assert rows[0]
-        assert tuple(rows[0][:3]) == (0, 0, 10007)
-        assert set(rows[0][5].keys()) == {'chaos', 'img_corr', 'pat_match'}
+        assert tuple(rows[0][:2]) == (0, 10007)
+        assert set(rows[0][4].keys()) == {'chaos', 'img_corr', 'pat_match'}
 
         # image asserts
-        rows = db.select(('SELECT job_id, db_id, sf_id, adduct, peak, intensities, min_int, max_int '
+        rows = db.select(('SELECT db_id, sf_id, adduct, peak, intensities, min_int, max_int '
                           'FROM iso_image '
                           'ORDER BY sf_id, adduct'))
         assert rows
@@ -81,7 +86,7 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_
         max_int = 0.0
         for r in rows:
             max_int = max(max_int, r[-1])
-            assert tuple(r[:3]) == (0, 0, 10007)
+            assert tuple(r[:2]) == (0, 10007)
         assert max_int
 
     finally:

@@ -22,8 +22,6 @@ import tornado.httpserver
 from tornado import gen
 from tornado.ioloop import IOLoop
 
-from util import my_print
-
 
 @gen.coroutine
 def async_sleep(seconds):
@@ -89,12 +87,16 @@ class MinMaxIntHandler(tornado.web.RequestHandler):
 
 
 class SpectrumLineChartHandler(tornado.web.RequestHandler):
+    DS_CONF_SEL = 'SELECT config FROM dataset where id = %s'
     PEAK_PROFILE_SQL = '''SELECT centr_mzs, centr_ints, prof_mzs, prof_ints
                           FROM theor_peaks
-                          WHERE db_id = %s and sf_id = %s and adduct = %s'''
+                          WHERE db_id = %s AND sf_id = %s AND adduct = %s AND
+                          ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s'''
+
     SAMPLE_INTENS_SQL = '''SELECT pixel_inds, intensities
                            FROM iso_image
-                           WHERE job_id = %s and db_id = %s and sf_id = %s and adduct = %s order by peak'''
+                           WHERE job_id = %s and db_id = %s and sf_id = %s and adduct = %s
+                           ORDER by peak'''
 
     @property
     def db(self):
@@ -136,7 +138,13 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
-        peaks_dict = self.db.query(self.PEAK_PROFILE_SQL, int(db_id), int(sf_id), adduct)[0]
+        ds_config = self.db.query(self.DS_CONF_SEL, job_id)[0]['config'] # job_id for now is equal to ds_id
+        iso_gen_config = ds_config['isotope_generation']
+        charge = '{}{}'.format(iso_gen_config['charge']['polarity'], iso_gen_config['charge']['n_charges'])
+        res = self.db.query(self.PEAK_PROFILE_SQL, int(db_id), int(sf_id), adduct,
+                            iso_gen_config['isocalc_sigma'], charge, iso_gen_config['isocalc_pts_per_mz'])
+        assert len(res) == 1
+        peaks_dict = res[0]
         prof_mzs = np.array(peaks_dict['prof_mzs'])
         prof_ints = np.array(peaks_dict['prof_ints'])
         centr_mzs = np.array(peaks_dict['centr_mzs'])

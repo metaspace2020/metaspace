@@ -26,11 +26,11 @@ input_dir_path = join(proj_root(), 'test/data/sci_test_search_job_spheroid_datas
 
 SEARCH_RES_SELECT = ("select sf, adduct, stats "
                      "from iso_image_metrics s "
-                     "join formula_db sm_db on sm_db.id = s.db_id "
-                     "join agg_formula f on f.id = s.sf_id "
+                     "join formula_db sf_db on sf_db.id = s.db_id "
+                     "join agg_formula f on f.id = s.sf_id AND sf_db.id = f.db_id "
                      "join job j on j.id = s.job_id "
                      "join dataset ds on ds.id = j.ds_id "
-                     "where ds.name = %s and sm_db.name = %s "
+                     "where ds.name = %s and sf_db.name = %s "
                      "ORDER BY sf, adduct ")
 
 
@@ -87,14 +87,15 @@ def compare_search_results(base_search_res, search_res):
 
 
 def zip_engine():
-    local('cd {}; zip -rq engine.zip engine'.format(proj_root()))
+    local('cd {}; zip -rq sm.zip engine pyMS pyIMS'.format(proj_root()))
 
 
 def run_search():
     cmd = ['python',
            join(proj_root(), 'scripts/run_molecule_search.py'),
            ds_name,
-           input_dir_path]
+           input_dir_path,
+           '--clean']
     check_call(cmd)
 
 
@@ -146,7 +147,6 @@ if __name__ == '__main__':
 
     if args.run:
         try:
-            zip_engine()
             run_search()
             sci_tester.run_sci_test()
         finally:

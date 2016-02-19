@@ -59,25 +59,19 @@ def get_track_progress(n_points, step, active=False):
     return track if active else dont_track
 
 
-class ImageBounds(object):
-    """ Keeps track of min, max coordinate values for x, y axis """
-    def __init__(self):
-        self.min_x, self.min_y = sys.maxint, sys.maxint
-        self.max_x, self.max_y = -sys.maxint, -sys.maxint
-
-    def update(self, x, y):
-        self.min_x, self.min_y = min(self.min_x, x), min(self.min_y, y)
-        self.max_x, self.max_y = max(self.max_x, x), max(self.max_y, y)
-
-    def to_json(self):
-        return json.dumps({'x': {'min': self.min_x, 'max': self.max_x},
-                           'y': {'min': self.min_y, 'max': self.max_y}})
-
-
-DS_ID_SELECT = "SELECT id FROM dataset where name = %s"
-MAX_DS_ID_SELECT = "SELECT COALESCE(MAX(id), -1) FROM dataset"
-DS_INSERT = "INSERT INTO dataset VALUES (%s, %s, %s, %s)"
-COORD_INSERT = "INSERT INTO coordinates VALUES (%s, %s, %s)"
+# class ImageBounds(object):
+#     """ Keeps track of min, max coordinate values for x, y axis """
+#     def __init__(self):
+#         self.min_x, self.min_y = sys.maxint, sys.maxint
+#         self.max_x, self.max_y = -sys.maxint, -sys.maxint
+#
+#     def update(self, x, y):
+#         self.min_x, self.min_y = min(self.min_x, x), min(self.min_y, y)
+#         self.max_x, self.max_y = max(self.max_x, x), max(self.max_y, y)
+#
+#     def to_json(self):
+#         return json.dumps({'x': {'min': self.min_x, 'max': self.max_x},
+#                            'y': {'min': self.min_y, 'max': self.max_y}})
 
 
 class ImzmlTxtConverter(object):
@@ -98,7 +92,7 @@ class ImzmlTxtConverter(object):
         self.ds_name = ds_name
         self.imzml_path = imzml_path
         self.preprocess = None
-        self.image_bounds = None
+        # self.image_bounds = None
         self.sm_config = SMConfig.get_conf()
 
         self.txt_path = txt_path
@@ -107,7 +101,7 @@ class ImzmlTxtConverter(object):
         self.coord_file = None
 
         self.parser = None
-        self.image_bounds = ImageBounds()
+        # self.image_bounds = ImageBounds()
 
     def parse_save_spectrum(self, i, x, y):
         """ Parse and save to files spectrum with index i and its coordinates x,y"""
@@ -118,26 +112,6 @@ class ImzmlTxtConverter(object):
         self.txt_file.write(encode_data_line(i, mzs, ints, decimals=9) + '\n')
         if self.coord_file:
             self.coord_file.write(encode_coord_line(i, x, y) + '\n')
-
-    def save_ds_meta(self):
-        """ Save dataset metadata (name, path, image bounds, coordinates) to the database """
-        db = DB(self.sm_config['db'])
-        try:
-            ds_id_row = db.select_one(DS_ID_SELECT, self.ds_name)
-            if not ds_id_row:
-                logger.info('No dataset with name %s found', self.ds_name)
-                ds_id = db.select_one(MAX_DS_ID_SELECT)[0] + 1
-
-                logger.info("Inserting to the dataset table: %d", ds_id)
-                db.insert(DS_INSERT, [(ds_id, self.ds_name, self.imzml_path, self.image_bounds.to_json())])
-
-                logger.info("Inserting to the coordinates table")
-                with open(self.coord_path) as f:
-                    coord_tuples = map(lambda s: map(int, s.split(',')), f.readlines())
-                    _, xs, ys = map(list, zip(*coord_tuples))
-                    db.insert(COORD_INSERT, [(ds_id, xs, ys)])
-        finally:
-            db.close()
 
     def convert(self, preprocess=False, print_progress=True):
         """
@@ -165,7 +139,7 @@ class ImzmlTxtConverter(object):
 
             for i, coord in enumerate(self.parser.coordinates):
                 x, y = coord[:2]
-                self.image_bounds.update(x, y)
+                # self.image_bounds.update(x, y)
                 self.parse_save_spectrum(i, x, y)
                 track_progress(i)
 
@@ -173,7 +147,7 @@ class ImzmlTxtConverter(object):
             if self.coord_file:
                 self.coord_file.close()
 
-            self.save_ds_meta()
+            # self.save_ds_meta()
 
             logger.info("Conversion finished successfully")
         else:

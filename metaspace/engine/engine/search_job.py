@@ -21,8 +21,8 @@ from engine.work_dir import WorkDir
 from engine.util import local_path, hdfs_path, proj_root, hdfs_prefix, cmd_check, cmd, SMConfig, logger
 
 
-ds_id_sql = "SELECT id FROM dataset WHERE name = %s"
-db_id_sql = "SELECT id FROM formula_db WHERE name = %s"
+DS_ID_SEL = "SELECT id FROM dataset WHERE name = %s"
+DB_ID_SEL = "SELECT id FROM formula_db WHERE name = %s"
 max_ds_id_sql = "SELECT COALESCE(MAX(id), -1) FROM dataset"
 
 
@@ -60,20 +60,10 @@ class SearchJob(object):
         if not self.sm_config['spark']['master'].startswith('local'):
             self.sc.addPyFile(join(local_path(proj_root()), 'sm.zip'))
 
-    def _choose_ds_job_id(self):
-        ds_id_row = self.db.select_one(ds_id_sql, self.ds_name)
-        if ds_id_row:
-            self.ds_id = ds_id_row[0]
-        else:
-            self.ds_id = self.db.select_one(max_ds_id_sql)[0] + 1
-        # TODO: decide if we need both db_id and job_id
-        self.job_id = self.ds_id
-
     def _init_db(self):
         logger.info('Connecting to the DB')
         self.db = DB(self.sm_config['db'])
-        self.sf_db_id = self.db.select_one(db_id_sql, self.ds_config['database']['name'])[0]
-        self._choose_ds_job_id()
+        self.sf_db_id = self.db.select_one(DB_ID_SEL, self.ds_config['database']['name'])[0]
 
     def run(self, input_path, clean=False):
         """ Entry point of the engine. Molecule search is completed in several steps:
@@ -90,35 +80,40 @@ class SearchJob(object):
         clean : bool
             Clean all interim data files before starting molecule search
         """
-        self.work_dir = WorkDir(self.ds_name, self.sm_config['fs']['data_dir'])
-        if clean:
-            self.work_dir.clean_work_dirs()
-        self.work_dir.copy_input_data(input_path)
-        self._read_config()
-        logger.info('Dataset config:\n%s', pformat(self.ds_config))
+        try:
+            self.work_dir = WorkDir(self.ds_name, self.sm_config['fs']['data_dir'])
+            if clean:
+                self.work_dir.clean_work_dirs()
+            self.work_dir.copy_input_data(input_path)
+            self._read_config()
+            logger.info('Dataset config:\n%s', pformat(self.ds_config))
 
-        self._configure_spark()
-        self._init_db()
+            self._configure_spark()
+            self._init_db()
 
-        imzml_converter = ImzmlTxtConverter(self.ds_name, self.work_dir.imzml_path,
-                                            self.work_dir.txt_path, self.work_dir.coord_path)
-        imzml_converter.convert()
-        if not self.sm_config['fs']['local']:
-            self.work_dir.upload_data_to_hdfs()
+            imzml_converter = ImzmlTxtConverter(self.ds_name, self.work_dir.imzml_path,
+                                                self.work_dir.txt_path, self.work_dir.coord_path)
+            imzml_converter.convert()
+            if not self.sm_config['fs']['local']:
+                self.work_dir.upload_data_to_hdfs()
 
-        self.ds = Dataset(self.sc, self.work_dir.txt_path, self.work_dir.coord_path)
+            self.ds = Dataset(self.sc, self.ds_name, self.ds_config, self.work_dir, self.db)
+            self.ds.save_ds_meta()
 
-        theor_peaks_gen = TheorPeaksGenerator(self.sc, self.sm_config, self.ds_config)
-        theor_peaks_gen.run()
-        self.formulas = Formulas(self.ds_config, self.db)
+            theor_peaks_gen = TheorPeaksGenerator(self.sc, self.sm_config, self.ds_config)
+            theor_peaks_gen.run()
+            self.formulas = Formulas(self.ds_config, self.db)
 
-        search_results = self._search()
-        self._store_results(search_results)
+            search_results = self._search()
+            self._store_results(search_results)
 
-        if not self.sm_config['fs']['local']:
-            self.work_dir.drop_local_work_dir()
-
-        self.db.close()
+            if not self.sm_config['fs']['local']:
+                self.work_dir.drop_local_work_dir()
+        except Exception as e:
+            raise
+        finally:
+            self.sc.stop()
+            self.db.close()
 
     def _search(self):
         logger.info('Running molecule search')
@@ -127,6 +122,8 @@ class SearchJob(object):
         sf_images = compute_sf_images(sf_peak_imgs)
         sf_iso_images_map, sf_metrics_map = filter_sf_images(self.sc, self.ds_config, self.ds, self.formulas, sf_images)
 
+        self.ds_id = int(self.db.select_one(DS_ID_SEL, self.ds_name)[0])
+        self.job_id = self.ds_id
         return SearchResults(self.sf_db_id, self.ds_id, self.job_id,
                              sf_iso_images_map, sf_metrics_map,
                              self.formulas.get_sf_adduct_peaksn(),
