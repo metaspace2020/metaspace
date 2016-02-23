@@ -75,13 +75,22 @@ class SFPeakMZsHandler(tornado.web.RequestHandler):
         peaks_dict = self.application.db.query(self.peak_profile_sql, int(db_id), int(sf_id), adduct)[0]
         centr_mzs = peaks_dict['centr_mzs']
         self.write(json.dumps(centr_mzs))
+
+
 class MinMaxIntHandler(tornado.web.RequestHandler):
     min_max_int_sql = '''SELECT min_int, max_int
                          FROM iso_image
                          WHERE job_id = %s and db_id = %s and sf_id = %s and adduct = %s;'''
 
+    def get_current_user(self):
+        return self.get_secure_cookie('client_id')
+
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
+        if self.current_user:
+            print 'USER_ID={} tries to access the DB'.format(self.current_user)
+        else:
+            print 'Not authenticated USER_ID tries to access the DB'
         min_max_row = self.application.db.query(self.min_max_int_sql, int(job_id), int(db_id), int(sf_id), adduct)[0]
         self.write(json.dumps(min_max_row))
 

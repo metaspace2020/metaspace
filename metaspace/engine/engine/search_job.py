@@ -34,8 +34,9 @@ class SearchJob(object):
     ds_name : string
         A dataset short name
     """
-    def __init__(self, ds_name):
+    def __init__(self, client_email, ds_name):
         self.sm_config = SMConfig.get_conf()
+        self.client_email = client_email
         self.ds_name = ds_name
         self.ds_id = None
         self.job_id = None
@@ -98,7 +99,7 @@ class SearchJob(object):
             if not self.sm_config['fs']['local']:
                 self.work_dir.upload_data_to_hdfs()
 
-            self.ds = Dataset(self.sc, self.ds_name, self.ds_config, self.work_dir, self.db)
+            self.ds = Dataset(self.sc, self.ds_name, self.client_email, self.ds_config, self.work_dir, self.db)
             self.ds.save_ds_meta()
 
             theor_peaks_gen = TheorPeaksGenerator(self.sc, self.sm_config, self.ds_config)

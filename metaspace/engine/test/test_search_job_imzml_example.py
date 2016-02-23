@@ -46,7 +46,7 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_
 
     db = DB(sm_config['db'])
     try:
-        job = SearchJob('imzml_example_ds')
+        job = SearchJob('abc@co.de', 'imzml_example_ds')
         job.run(input_dir_path, clean=True)
 
         # dataset meta asserts

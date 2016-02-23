@@ -8,8 +8,9 @@ from engine.util import local_path, hdfs_path, logger, SMConfig
 
 DS_ID_SELECT = "SELECT id FROM dataset where name = %s"
 DS_DEL = "DELETE FROM dataset where name = %s"
+CLIENT_ID_SEL = "SELECT id FROM client where email = %s"
 # MAX_DS_ID_SELECT = "SELECT COALESCE(MAX(id), -1) FROM dataset"
-DS_INSERT = "INSERT INTO dataset (name, file_path, img_bounds, config) VALUES (%s, %s, %s, %s)"
+DS_INSERT = "INSERT INTO dataset (name, owner, file_path, img_bounds, config) VALUES (%s, %s, %s, %s, %s)"
 COORD_INSERT = "INSERT INTO coordinates VALUES (%s, %s, %s)"
 
 
@@ -28,10 +29,11 @@ class Dataset(object):
     work_dir : engine.work_dir.WorkDir
     db : engine.db.DB
     """
-    def __init__(self, sc, name, ds_config, work_dir, db):
+    def __init__(self, sc, name, owner_email, ds_config, work_dir, db):
         self.db = db
         self.sc = sc
         self.name = name
+        self.owner_email = owner_email
         self.ds_config = ds_config
         self.work_dir = work_dir
         self.sm_config = SMConfig.get_conf()
@@ -130,7 +132,13 @@ class Dataset(object):
         img_bounds = json.dumps({'x': {'min': self.min_x, 'max': self.max_x},
                                  'y': {'min': self.min_y, 'max': self.max_y}})
         ds_config_json = json.dumps(self.ds_config)
-        ds_row = [(self.name, self.work_dir.imzml_path, img_bounds, ds_config_json)]
+
+        owner_rs = self.db.select_one(CLIENT_ID_SEL, self.owner_email)
+        if self.owner_email and not owner_rs:
+            raise Exception("Could't find a user with email {}".format(self.owner_email))
+
+        owner_id = owner_rs[0] if owner_rs else None
+        ds_row = [(self.name, owner_id, self.work_dir.imzml_path, img_bounds, ds_config_json)]
         self.db.insert(DS_INSERT, ds_row)
 
         ds_id = self.db.select(DS_ID_SELECT, self.name)[0]

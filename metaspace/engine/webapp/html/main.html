@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="google-signin-client_id" content="224834570929-h8j8jq50358l8s7cq1hnhq39cio5igbu.apps.googleusercontent.com">
+
     <title>SM Web App</title>
 
     <!-- Include all compiled plugins (below), or include individual files as needed -->
@@ -14,7 +16,6 @@
 
     <link href="/static/css/sin.css" rel="stylesheet">
     <link href="/static/css/sm.css" rel="stylesheet">
-
 
     <!-- Display images pixelated; this is a hack that makes it work for all browsers -->
     <style type="text/css">
@@ -41,32 +42,43 @@
     <script src="http://sm-engine-webapp.s3-website-eu-west-1.amazonaws.com/js/amcharts/amcharts.js"></script>
     <script src="http://sm-engine-webapp.s3-website-eu-west-1.amazonaws.com/js/amcharts/serial.js"></script>
 
+    <script src="https://apis.google.com/js/platform.js?onload=gapi_load" async defer></script>
+
     <script src="/static/js/sin.js"></script>
+    <script src="/static/js/auth.js"></script>
     <script src="/static/js/sm.js"></script>
 
   </head>
   <body>
     <div class="container-fluid">
         <nav class="navbar navbar-default">
-          <div class="container-fluid">
+          <!--<div class="container-fluid">-->
             <!-- Brand and toggle get grouped for better mobile display -->
-            <div class="navbar-header">
-              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-              </button>
-              <a class="navbar-brand" href="/">Spatial metabolomics server</a>
-            </div>
+
+                <!--<div class="navbar-header">-->
+                    <!--<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">-->
+                      <!--<span class="sr-only">Toggle navigation</span>-->
+                      <!--<span class="icon-bar"></span>-->
+                      <!--<span class="icon-bar"></span>-->
+                      <!--<span class="icon-bar"></span>-->
+                    <!--</button>-->
+                <!--</div>-->
+                <a class="navbar-brand" href="/">Spatial metabolomics server</a>
+                <!--<div class="g-signin2" data-onsuccess="onSignIn"></div>-->
+                <div id="google-sign-in"></div>
+                <a href='#' id="google-sign-out">Sign out</a>
+                <!--<a href='#' id="user_info">Get user info</a>-->
+                <!--<a href='#' id="feedback">Send feedback</a>-->
 
             <!-- Collect the nav links, forms, and other content for toggling -->
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-              <p id="navbarname" class="navbar-brand navbar-right"></p>
-            </div><!-- /.navbar-collapse -->
-          </div><!-- /.container-fluid -->
+            <!--<div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">-->
+              <!--<p id="navbarname" class="navbar-brand navbar-right"></p>-->
+            <!--</div>&lt;!&ndash; /.navbar-collapse &ndash;&gt;-->
+          <!--</div>&lt;!&ndash; /.container-fluid &ndash;&gt;-->
         </nav>
     </div>
+
+    <script src="https://apis.google.com/js/platform.js?onload=renderSignInButton" async defer></script>
 
     {% block body %}
     {% end %}

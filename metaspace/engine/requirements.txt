@@ -1,3 +1,4 @@
+requests
 numpy==1.10.4
 Fabric==1.10.2
 lxml==3.3.3

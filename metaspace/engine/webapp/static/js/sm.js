@@ -1,6 +1,7 @@
 
 // Page initialisation
 $(document).ready(function() {
+    addSignOutAction();
 
     var max_peaks_to_show = 6;
     var mz_array = [];
