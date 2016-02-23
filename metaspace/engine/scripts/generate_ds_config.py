@@ -108,15 +108,15 @@ if __name__ == "__main__":
     ppm = raw_input('ppm number (integer): ')
     print 'Chosen ppm number "{}"'.format(ppm)
 
-    number_of_mol = raw_input('Number of molecules in search results (integer): ')
-    print 'Chosen number of molecules "{}"'.format(number_of_mol)
+    number_of_mol = raw_input('Number of molecules in search results. Leave empty for unlimited number: ')
+    print 'Chosen number of molecules "{}"'.format(number_of_mol if number_of_mol else 'Unlimited')
 
     ds_config['isotope_generation']['adducts'] = instrument_modes[instr_mode]
     ds_config['isotope_generation']['charge']['polarity'] = '+' if instr_mode == 'pos' else '-'
     ds_config['isotope_generation']['isocalc_sigma'] = round(resol_power_params[resolv_power]['sigma'], 6)
     ds_config['isotope_generation']['isocalc_pts_per_mz'] = resol_power_params[resolv_power]['pts_per_mz']
     ds_config['image_generation']['ppm'] = int(ppm)
-    ds_config['molecules_num'] = int(number_of_mol)
+    ds_config['molecules_num'] = int(number_of_mol) if number_of_mol else ""
 
     print json.dumps(ds_config, indent=4)
 

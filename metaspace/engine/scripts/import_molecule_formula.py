@@ -41,7 +41,9 @@ def insert_agg_formulas(db, db_name):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Import a new molecule formula database into the engine')
+    help_msg = ('Import a new molecule formula database into the engine'
+                'CSV file should contain only three columns without headers: formula id, formula name, sum formula')
+    parser = argparse.ArgumentParser(description=help_msg)
     parser.add_argument('db_name', type=str, help='Database name')
     parser.add_argument('csv_file', type=str, help='Path to a database csv file')
     parser.add_argument('--sep', dest='sep', type=str, help='CSV file fields separator')
