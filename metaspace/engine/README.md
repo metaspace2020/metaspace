@@ -69,10 +69,16 @@ Install git and pip
 
 	sudo apt-get install git python-pip
 	
-Clone **SM_distributed** repository
+Download the latest "stable" release of **SM_distributed** repository into the home directory and rename it to **sm**
 	
-	cd  # go to home directory
-	git clone --recursive https://github.com/SpatialMetabolomics/SM_distributed.git
+	wget -qO- https://github.com/SpatialMetabolomics/SM_distributed/archive/v0.2.0.tar.gz | tar xvz -C ~
+	mv SM_distributed-0.2.0/ sm
+	rm -R sm/pyMS sm/pyIMS
+	
+Download the latest versions of pyMS and pyIMS libraries
+    
+    wget -qO- https://github.com/alexandrovteam/pyMS/archive/v0.1.tar.gz | tar xvz -C ~/sm; mv ~/sm/pyMS-0.1 ~/sm/pyMS
+    wget -qO- https://github.com/alexandrovteam/pyIMS/archive/v0.1.tar.gz | tar xvz -C ~/sm; mv ~/sm/pyIMS-0.1 ~/sm/pyIMS
 	
 Install numpy, scipy, matplotlib dependencies
 
@@ -95,7 +101,7 @@ Postgres server setup for local use only
 	
 SM engine schema creation
 
-	cd SM_distributed
+	cd sm
 	psql -h localhost -U sm sm < scripts/create_schema.sql
 
 Create data directory for SM engine. Don't forget to replace **USER:GROUP** with your linux user and group (id -un and id -gn)
@@ -104,7 +110,7 @@ Create data directory for SM engine. Don't forget to replace **USER:GROUP** with
 
 Create config files. For **conf/config.json** put values for needed parameters
 
-	cd SM_distributed/config
+	cd sm/conf
 	cp sm_log.cfg.template sm_log.cfg
 	cp config.json.template config.json
 	nano config.json
@@ -113,22 +119,26 @@ Create config files. For **conf/config.json** put values for needed parameters
 Add environment variables to .bashrc
 
     echo -e '\nexport SPARK_HOME=/opt/dev/spark-1.5.2-bin-hadoop2.6' >> ~/.bashrc
-    echo 'export PYTHONPATH=$HOME/SM_distributed:/opt/dev/spark-1.5.2-bin-hadoop2.6/python:/opt/dev/spark-1.5.2-bin-hadoop2.6/python/build:$PYTHONPATH' >> ~/.bashrc
+    echo 'export PYTHONPATH=$HOME/sm:/opt/dev/spark-1.5.2-bin-hadoop2.6/python:/opt/dev/spark-1.5.2-bin-hadoop2.6/python/build:$PYTHONPATH' >> ~/.bashrc
     source ~/.bashrc
     
 ### Run Tests
 Run the engine unit tests
 
-	cd ~/SM_distributed
+	cd ~/sm
     ./test_runner.py --unit
 
 Run the regression tests
 
     ./test_runner.py --regr
 
-Run the scientific test. Download and import HMDB first.
+Download and import molecule database (HMDB) first
+
+    wget https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv
+    python scripts/import_molecule_formula.py HMDB hmdb.csv
+
+Run the scientific test
     
-    wget -O - https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb_agg_formula.sql | psql -h localhost -U sm sm
     ./test_runner.py --sci
 		
 When run the first time it will work pretty long time as the engine will be generating and saving to the DB theoretical spectra
@@ -139,7 +149,7 @@ If not something went wrong.
 ## Run Molecule Annotation Job
 Once you have successfully installed SM engine and its dependencies you can start a molecule annotation job with the command
     
-    cd ~/SM_distributed
+    cd ~/sm
     python scripts/run_molecule_search.py dataset_name /path/to/dataset/folder
 
 **/path/to/dataset/folder** should contain three files: **.imzML**, **.ibd**, **config.json**. Names for **.imzML** and **.ibd** files
@@ -179,10 +189,7 @@ If you want to add your own one please refer to the next section.
 
 To explore the results of a job start the web application
  
-    cd ~/SM_distributed
+    cd ~/sm
 	python webapp/webserver.py --config conf/config.json --port 8090
 	
 Open [http://localhost:8090](http://localhost:8090) url address in a browser
-
-## Add New Molecule Database
-to be added...
