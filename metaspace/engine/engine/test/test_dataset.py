@@ -18,7 +18,7 @@ def test_get_dims_2by3(spark_context, sm_config):
             '3,0,2\n',
             '4,1,2\n'])
         work_dir_mock = MagicMock(WorkDir)
-        work_dir_mock.ds_coord_path = '/fn'
+        work_dir_mock.coord_path = '/fn'
 
         SMConfig._config_dict = sm_config
         ds = Dataset(spark_context, '', {}, work_dir_mock, None)
@@ -36,7 +36,7 @@ def test_get_norm_img_pixel_inds_2by3(spark_context, sm_config):
             '3,0,2\n',
             '4,1,2\n'])
         work_dir_mock = MagicMock(WorkDir)
-        work_dir_mock.ds_coord_path = '/fn'
+        work_dir_mock.coord_path = '/fn'
 
         SMConfig._config_dict = sm_config
         ds = Dataset(spark_context, '', {}, work_dir_mock, None)
@@ -54,8 +54,8 @@ def test_get_spectra_2by3(spark_context, sm_config):
             '3|103|0\n',
             '4|200|10\n'])
         work_dir_mock = MagicMock(WorkDir)
-        work_dir_mock.ds_coord_path = '/coord_path'
-        work_dir_mock.ds_path = '/ds_path'
+        work_dir_mock.coord_path = '/coord_path'
+        work_dir_mock.txt_path = '/txt_path'
 
         with patch('engine.test.test_dataset.Dataset._define_pixels_order'):
             SMConfig._config_dict = sm_config
@@ -67,7 +67,7 @@ def test_get_spectra_2by3(spark_context, sm_config):
                        (3, np.array([103.]), np.array([0., 0.])),
                        (4, np.array([200.]), np.array([0., 10.]))]
 
-            m.assert_called_once_with('file:///ds_path')
+            m.assert_called_once_with('file:///txt_path')
             assert len(res) == len(exp_res)
 
             for r, exp_r in zip(res, exp_res):
