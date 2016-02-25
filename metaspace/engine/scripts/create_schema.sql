@@ -46,6 +46,19 @@ CREATE TABLE client (
 	CONSTRAINT user_id_pk PRIMARY KEY(id)
 );
 
+DROP TABLE IF EXISTS feedback CASCADE;
+CREATE TABLE feedback (
+    id	        serial,
+    client_id   decimal(21),
+    job_id      int,
+    db_id       int,
+    sf_id       int,
+    adduct      text,
+	rating		smallint,
+    comment     text,
+	CONSTRAINT feedback_id_pk PRIMARY KEY(id)
+);
+
 DROP TABLE IF EXISTS dataset CASCADE;
 CREATE TABLE dataset (
 	id	        serial,
@@ -60,7 +73,7 @@ CREATE INDEX ind_dataset_name ON dataset (name);
 
 DROP TABLE IF EXISTS coordinates;
 CREATE TABLE coordinates (
-	ds_id 	int,
+	ds_id 	 int,
 	xs       int[],
 	ys       int[],
 	CONSTRAINT coord_ds_id_pk PRIMARY KEY(ds_id),

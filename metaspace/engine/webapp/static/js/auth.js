@@ -21,6 +21,7 @@ function renderSignInButton() {
         'onsuccess': function(googleUser) {
             console.log('Signed in as: ' + googleUser.getBasicProfile().getName());
             backendSignIn(googleUser.getAuthResponse().id_token);
+            $('#feedback-accordion').css('visibility', 'visible');
         },
         'onfailure': function (error) {
             console.log(error);
@@ -36,8 +37,8 @@ function backendSignOut() {
         data: {'action': 'sign_out'}
     }).done(function() {
         console.log('Sent a sign out request to the backend');
-    }).error(function() {
-        console.log('Error');
+    }).error(function(error) {
+        console.log(error);
     });
 }
 
@@ -48,5 +49,15 @@ function addSignOutAction() {
             console.log('Signed out');
         });
         backendSignOut();
+        $('#feedback-accordion').css('visibility', 'hidden');
     });
+}
+
+function updateFeedbackFormVisibility() {
+    if (typeof $.cookie('client_id') === 'undefined') {
+        $('#feedback-accordion').css('visibility', 'hidden');
+    }
+    else {
+        $('#feedback-accordion').css('visibility', 'visible');
+    }
 }

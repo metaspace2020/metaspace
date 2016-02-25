@@ -11,7 +11,7 @@ CLIENT_SEL = 'SELECT id FROM client WHERE id = %s'
 CLIENT_INS = 'INSERT INTO client VALUES (%s, %s, %s)'
 
 
-class AuthenticateUser(tornado.web.RequestHandler):
+class AuthenticateClient(tornado.web.RequestHandler):
 
     @staticmethod
     def validate_id_token(id_token):

@@ -17,7 +17,7 @@ import tornado.ioloop
 import tornado.web
 import tornpsql
 
-from handlers import results_table, iso_image_generation, misc, auth
+from handlers import results_table, iso_image_generation, misc, auth, feedback
 from util import my_print
 
 # get list of engine files
@@ -37,7 +37,8 @@ class Application(tornado.web.Application):
 
         handlers = [
             (r"/", misc.IndexHandler),
-            (r"/auth", auth.AuthenticateUser),
+            (r"/auth", auth.AuthenticateClient),
+            (r"/feedback", feedback.Feedback),
             (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": path.join(path.dirname(__file__), "static")}),
             (r"^/results_table/(.*)", results_table.ResultsTableHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", iso_image_generation.AggIsoImgPngHandler),

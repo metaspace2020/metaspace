@@ -11,7 +11,7 @@
     width: 100%;
     object-fit: contain;*/
     max-width: 700px;
-    min-height: 500px;
+    min-height: 400px;
     object-fit: contain;
 }
 
@@ -33,3 +33,10 @@ div.sm-navbar {
     margin-bottom: 5px;
 }
 
+#btnGroupRating .active {
+    background-color : red
+}
+
+#feedback-accordion {
+    visibility: hidden;
+}
