@@ -71,8 +71,8 @@ Install git and pip
 	
 Download the latest "stable" release of **SM_distributed** repository into the home directory and rename it to **sm**
 	
-	wget -qO- https://github.com/SpatialMetabolomics/SM_distributed/archive/v0.2.0.tar.gz | tar xvz -C ~
-	mv SM_distributed-0.2.0/ sm
+	wget -qO- https://github.com/SpatialMetabolomics/SM_distributed/archive/v0.2.1.tar.gz | tar xvz -C ~
+	mv SM_distributed-0.2.1/ sm
 	rm -R sm/pyMS sm/pyIMS
 	
 Download the latest versions of pyMS and pyIMS libraries
