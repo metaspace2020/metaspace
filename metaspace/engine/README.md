@@ -69,21 +69,10 @@ Install git and pip
 
 	sudo apt-get install git python-pip
 	
-Download the latest "stable" release of **SM_distributed** repository into the home directory and rename it to **sm**
+Clone the latest "stable" **SM_distributed** repository branch into the home directory and rename it to **sm**
 	
-	wget -qO- https://github.com/SpatialMetabolomics/SM_distributed/archive/v0.2.1.tar.gz | tar xvz -C ~
-	mv SM_distributed-0.2.1/ sm
-	rm -R sm/pyMS sm/pyIMS
-	
-Download the latest versions of pyMS and pyIMS libraries
-    
-    wget -qO- https://github.com/alexandrovteam/pyMS/archive/v0.1.tar.gz | tar xvz -C ~/sm; mv ~/sm/pyMS-0.1 ~/sm/pyMS
-    wget -qO- https://github.com/alexandrovteam/pyIMS/archive/v0.1.tar.gz | tar xvz -C ~/sm; mv ~/sm/pyIMS-0.1 ~/sm/pyIMS
-	
-Install numpy, scipy, matplotlib dependencies
-
-	sudo apt-get install python-dev libfreetype6-dev
-	sudo apt-get install libblas-dev liblapack-dev libatlas-base-dev gfortran	
+	git clone -b v0.2 --single-branch --recursive https://github.com/SpatialMetabolomics/SM_distributed.git
+	mv SM_distributed sm
 
 Install SM engine python dependencies
 
