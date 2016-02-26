@@ -40,6 +40,7 @@ class SearchJob(object):
         self.ds_id = None
         self.job_id = None
         self.sc = None
+        self.db = None
         self.ds = None
         self.formulas = None
         self.ds_config = None
@@ -112,8 +113,10 @@ class SearchJob(object):
         except Exception as e:
             raise
         finally:
-            self.sc.stop()
-            self.db.close()
+            if self.sc:
+                self.sc.stop()
+            if self.db:
+                self.db.close()
 
     def _search(self):
         logger.info('Running molecule search')

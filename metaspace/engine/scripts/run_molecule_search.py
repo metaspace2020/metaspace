@@ -14,7 +14,7 @@ if __name__ == "__main__":
     parser.add_argument('ds_name', type=str, help='Dataset name')
     parser.add_argument('input_path', type=str, help='Path to a dataset location')
     parser.add_argument('--config', dest='sm_config_path', type=str, help='SM config path')
-    parser.add_argument('--clean', dest='clean', action='store_true', help='clean all interim files')
+    parser.add_argument('--no-clean', dest='no_clean', action='store_true', help='do not clean interim files')
 
     start = time.time()
     args = parser.parse_args()
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     logger.info("Processing...")
 
     job = SearchJob(args.ds_name)
-    job.run(args.input_path, clean=args.clean)
+    job.run(args.input_path, clean=args.no_clean)
 
     logger.info("All done!")
     time_spent = time.time() - start
