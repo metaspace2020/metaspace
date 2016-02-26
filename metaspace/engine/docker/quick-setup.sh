@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cp config.json ../conf/config.json
+
 # docker-compose.yml mounts formula_dbs to /databases directory
 mkdir -p formula_dbs
 
