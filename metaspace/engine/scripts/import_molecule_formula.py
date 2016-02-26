@@ -9,10 +9,12 @@ from engine.db import DB
 from engine.util import proj_root
 
 
-def del_prev_formula_db(db, db_name):
+def del_prev_formula_db(db, db_name, confirmed=False):
     if db.select_one('SELECT * FROM formula_db WHERE name = %s', db_name):
-        delete = raw_input('Do you want to delete all the data associated with {} database? (y/n): '.format(db_name))
-        if delete.lower() == 'y':
+        if not confirmed:
+            delete = raw_input('Do you want to delete all the data associated with {} database? (y/n): '.format(db_name))
+            confirmed = delete.lower() == 'y'
+        if confirmed:
             db.alter('DELETE FROM formula_db WHERE name = %s', db_name)
         else:
             exit()
@@ -47,13 +49,14 @@ if __name__ == "__main__":
     parser.add_argument('db_name', type=str, help='Database name')
     parser.add_argument('csv_file', type=str, help='Path to a database csv file')
     parser.add_argument('--sep', dest='sep', type=str, help='CSV file fields separator')
-    parser.set_defaults(sep='\t')
+    parser.add_argument('--yes', dest='confirmed', type=bool, help='Don\'t ask for a confirmation')
+    parser.set_defaults(sep='\t', confirmed=False)
     args = parser.parse_args()
 
     sm_config = json.load(open(path.join(proj_root(), 'conf/config.json')))
     db = DB(sm_config['db'], autocommit=True)
 
-    del_prev_formula_db(db, args.db_name)
+    del_prev_formula_db(db, args.db_name, args.confirmed)
     insert_new_formula_db(db, args.db_name)
     insert_new_formulas(db, args.db_name, args.csv_file, args.sep.decode('string-escape'))
     insert_agg_formulas(db, args.db_name)

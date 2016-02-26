@@ -1,37 +1,38 @@
 DROP TABLE IF EXISTS formula_db CASCADE;
 CREATE TABLE formula_db (
-	id		int,
+	id		serial PRIMARY KEY,
 	version	date,
-    name	text,
-	CONSTRAINT formula_db_id_version_pk PRIMARY KEY(id, version)
+	name	text
 );
 CREATE INDEX ind_formula_db_name ON formula_db (name);
-INSERT INTO formula_db VALUES (0, '2015-01-01', 'HMDB'), (1, '2015-01-01', 'apple_db');
+--INSERT INTO formula_db (version, name) VALUES ('2015-01-01', 'HMDB'), ('2015-01-01', 'apple_db');
 
 DROP TABLE IF EXISTS formula CASCADE;
 CREATE TABLE formula (
+    id		serial PRIMARY KEY,
 	db_id	int,
-	id		text,
-	sf_id 	int,
+	fid 	text,
 	name	text,
 	sf 		text,
-	CONSTRAINT formula_db_id_sf_id_pk PRIMARY KEY(db_id, id, sf_id)
+	CONSTRAINT formula_id_sf_id_uniq UNIQUE(db_id, fid),
+	CONSTRAINT formula_id_fk FOREIGN KEY (db_id)
+        REFERENCES formula_db (id) MATCH SIMPLE
+        ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS agg_formula CASCADE;
 CREATE TABLE agg_formula (
+    id 		    int,
     db_id 		int,
-	id 		    int,
 	sf 		    text,
 	subst_ids 	text[],
 	names 		text[],
-	CONSTRAINT agg_formula_db_id_id_pk PRIMARY KEY(db_id, id)
---	CONSTRAINT agg_formula_db_id_id_fk FOREIGN KEY (db_id, id)
---      REFERENCES formula (db_id, sf_id) MATCH SIMPLE
---      ON UPDATE NO ACTION ON DELETE CASCADE
+	CONSTRAINT agg_formula_db_id_id_pk PRIMARY KEY(db_id, id),
+	CONSTRAINT agg_formula_db_id_fk FOREIGN KEY (db_id)
+      REFERENCES formula_db (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-;
 CREATE INDEX ind_agg_formulas_1 ON agg_formula (sf);
 CREATE INDEX ind_agg_formulas_2 ON agg_formula (id);
 CREATE INDEX ind_agg_formulas_3 ON agg_formula (id, sf);
@@ -39,10 +40,11 @@ CREATE INDEX ind_agg_formulas_4 ON agg_formula (db_id, id, sf);
 
 DROP TABLE IF EXISTS dataset CASCADE;
 CREATE TABLE dataset (
-	id	        int,
+	id	        serial,
 	name		text,
 	file_path   text,
 	img_bounds	json,
+	config      json,
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
 );
 CREATE INDEX ind_dataset_name ON dataset (name);
