@@ -94,8 +94,7 @@ def run_search():
     cmd = ['python',
            join(proj_root(), 'scripts/run_molecule_search.py'),
            ds_name,
-           input_dir_path,
-           '--clean']
+           input_dir_path]
     check_call(cmd)
 
 
