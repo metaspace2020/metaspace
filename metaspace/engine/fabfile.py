@@ -171,7 +171,7 @@ def cluster_stop():
 
 @task
 @roles('dev_master')
-def cluster_start(slave_type='c4.2xlarge', slaves=2):
+def cluster_start(slave_type='c4.2xlarge', slaves=0):
     print green('========= Starting Spark cluster =========')
     HADOOP_HOME = '/opt/dev/hadoop-2.6.2'
     SPARK_HOME = '/opt/dev/spark-1.5.1-bin-hadoop2.6'
@@ -191,17 +191,21 @@ def cluster_start(slave_type='c4.2xlarge', slaves=2):
             run('echo "localhost" > etc/hadoop/slaves')
             for host in slave_hosts:
                 run('echo "{}" >> etc/hadoop/slaves'.format(host))
+            run('sbin/start-dfs.sh')
 
         with cd(SPARK_HOME):
             run('echo "localhost" > conf/slaves')
             for host in slave_hosts:
                 run('echo "{}" >> conf/slaves'.format(host))
+            run('sbin/start-all.sh')
+    else:
+        with cd(HADOOP_HOME):
+            run('echo "localhost" > etc/hadoop/slaves')
+            run('sbin/start-dfs.sh')
 
-    with cd(HADOOP_HOME):
-        run('sbin/start-dfs.sh')
-
-    with cd(SPARK_HOME):
-        run('sbin/start-all.sh')
+        with cd(SPARK_HOME):
+            run('echo "localhost" > conf/slaves')
+            run('sbin/start-all.sh')
 
     run('jps -l')
 
