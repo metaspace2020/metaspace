@@ -227,8 +227,8 @@ class TheorPeaksGenerator(object):
         """
         assert formula_list, 'Emtpy agg_formula table!'
         cand = [sf_row + (adduct,) for sf_row in formula_list for adduct in self.adducts]
-        valid_cand = filter(lambda (_, sf, adduct): self._valid_sf_adduct(sf, adduct), cand)
-        return filter(lambda (sf_id, sf, adduct): (sf, adduct) not in stored_sf_adduct, valid_cand)
+        # valid_cand = filter(lambda (_, sf, adduct): self._valid_sf_adduct(sf, adduct), cand)
+        return filter(lambda (sf_id, sf, adduct): (sf, adduct) not in stored_sf_adduct, cand)
 
     def generate_theor_peaks(self, sf_adduct_cand):
         """

@@ -118,14 +118,14 @@ def test_find_sf_adduct_cand(MockDB, spark_context, sm_config, ds_config):
     assert sf_adduct_cand == [(0, 'He', '+Na'), (9, 'Au', '+Na')]
 
 
-@mock.patch('engine.theor_peaks_gen.DB')
-def test_find_sf_adduct_cand_invalid_sf_neg_adduct(MockDB, spark_context, sm_config, ds_config):
-    ds_config['isotope_generation']['adducts'] = ['-H']
-
-    peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    sf_adduct_cand = peaks_gen.find_sf_adduct_cand([(0, 'He'), (9, 'Au')], {})
-
-    assert sf_adduct_cand == []
+# @mock.patch('engine.theor_peaks_gen.DB')
+# def test_find_sf_adduct_cand_invalid_sf_neg_adduct(MockDB, spark_context, sm_config, ds_config):
+#     ds_config['isotope_generation']['adducts'] = ['-H']
+#
+#     peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
+#     sf_adduct_cand = peaks_gen.find_sf_adduct_cand([(0, 'He'), (9, 'Au')], {})
+#
+#     assert sf_adduct_cand == []
 
 
 @mock.patch('engine.theor_peaks_gen.DB')

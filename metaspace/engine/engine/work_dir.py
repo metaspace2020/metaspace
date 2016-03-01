@@ -4,7 +4,7 @@
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
-from shutil import copytree
+from shutil import copytree, rmtree
 from os.path import exists, splitext, join
 import tempfile
 import json
@@ -54,22 +54,23 @@ class WorkDir(object):
         input_data_path : str
             Path to input files
         """
-        if not exists(self.path):
-            logger.info('Copying %s to %s', input_data_path, self.path)
+        if exists(self.path):
+            logger.info('Path %s already exists and will be cleaned', self.path)
+            rmtree(self.path)
 
-            # TODO: add support for S3 paths
-            if input_data_path.startswith('http'):
-                tmp_path = join(self.data_dir_path, 'tmp')
-                cmd_check('mkdir -p {}', tmp_path)
+        logger.info('Copying %s to %s', input_data_path, self.path)
 
-                tmp_zip = tempfile.mkstemp(dir=tmp_path, suffix='.zip')[1]
-                cmd_check('wget {} -O {}', input_data_path, tmp_zip)
-                cmd_check('mkdir -p {}', self.path)
-                cmd_check('unzip {} -d {}', tmp_zip, self.path)
-            else:
-                copytree(input_data_path, self.path)
+        # TODO: add support for S3 paths
+        if input_data_path.startswith('http'):
+            tmp_path = join(self.data_dir_path, 'tmp')
+            cmd_check('mkdir -p {}', tmp_path)
+
+            tmp_zip = tempfile.mkstemp(dir=tmp_path, suffix='.zip')[1]
+            cmd_check('wget {} -O {}', input_data_path, tmp_zip)
+            cmd_check('mkdir -p {}', self.path)
+            cmd_check('unzip {} -d {}', tmp_zip, self.path)
         else:
-            logger.info('Path %s already exists', self.path)
+            copytree(input_data_path, self.path)
 
     def upload_data_to_hdfs(self):
         """ If non local file system is used uploads plain text data files to it """

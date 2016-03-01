@@ -69,6 +69,7 @@ def test_work_dir_copy_input_data_no_files_local_path(clear_files):
 
 
 def test_work_dir_copy_input_data_files_exist(clear_files):
+    create_sample_files(input_local_path)
     create_sample_files(ds_path)
 
     work_dir = WorkDir(ds_name, sm_config()['fs']['data_dir'])
