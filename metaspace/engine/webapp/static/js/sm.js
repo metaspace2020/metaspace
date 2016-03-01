@@ -6,7 +6,8 @@ $(document).ready(function() {
 
     var results_table = initResultsTable();
     addRowSelectionHandler(results_table);
-    addFeedbackFormSubmitHandler(results_table);
+    addRatingChangeHandler(results_table);
+    addCommentSaveHandler(results_table);
     initColumnFilters(results_table);
 
     updateFeedbackFormVisibility();

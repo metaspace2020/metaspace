@@ -38,7 +38,8 @@ class Application(tornado.web.Application):
         handlers = [
             (r"/", misc.IndexHandler),
             (r"/auth", auth.AuthenticateClient),
-            (r"/feedback", feedback.Feedback),
+            (r"/feedback-rating", feedback.FeedbackRating),
+            (r"/feedback-comment", feedback.FeedbackComment),
             (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": path.join(path.dirname(__file__), "static")}),
             (r"^/results_table/(.*)", results_table.ResultsTableHandler),
             (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", iso_image_generation.AggIsoImgPngHandler),

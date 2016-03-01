@@ -1,23 +1,21 @@
 
-function addFeedbackFormSubmitHandler(results_table) {
-    $("#feedbackForm").submit(function (e) {
+function addRatingChangeHandler(results_table) {
+    $( "form#feedbackForm label.btn" ).click(function() {
         var rowData = results_table.rows('.selected').data()[0];
 
         var rating;
-        if ($("input[name=good]:checked").val() == 'on') {
+        if (this.id == 'labelGood') {
             rating = 1;
         }
-        else if ($("input[name=bad]:checked").val() == 'on') {
+        else if (this.id == 'labelBad') {
             rating = -1;
         }
         else {
             rating = 0;
         }
-        var comment = $("textarea[name=comment]").val();
-        updateFeedbackPanelMsg(comment);
 
         $.ajax({
-            url: '/feedback',
+            url: '/feedback-rating',
             type: 'POST',
             contentType: 'application/x-www-form-urlencoded',
             data: {
@@ -25,7 +23,30 @@ function addFeedbackFormSubmitHandler(results_table) {
                 'db_id': rowData[14],
                 'sf_id': rowData[12],
                 'adduct': rowData[9],
-                'rating': rating,
+                'rating': rating
+            }
+        }).done(function() {
+            console.log('Sent rating to the backend: ' + rating);
+        }).error(function(error) {
+            console.log(error);
+        });
+    });
+}
+
+function addCommentSaveHandler(results_table) {
+    $("#feedbackForm").submit(function (e) {
+        var rowData = results_table.rows('.selected').data()[0];
+        var comment = $("textarea[name=comment]").val();
+
+        $.ajax({
+            url: '/feedback-comment',
+            type: 'POST',
+            contentType: 'application/x-www-form-urlencoded',
+            data: {
+                'job_id': rowData[10],
+                'db_id': rowData[14],
+                'sf_id': rowData[12],
+                'adduct': rowData[9],
                 'comment': comment
             }
         }).done(function() {
@@ -38,20 +59,9 @@ function addFeedbackFormSubmitHandler(results_table) {
     });
 }
 
-function updateFeedbackPanelMsg(comment) {
-    if (typeof comment !== 'undefined') {
-        $('#feedbackPanel').removeClass('panel-danger').addClass('panel-success')
-        $('#feedbackPanelMsg').text("Thank you for your assistance! You contributed to society and human well-being");
-    }
-    else {
-        $('#feedbackPanel').removeClass('panel-success').addClass('panel-danger')
-        $('#feedbackPanelMsg').text("We need your feedback for this molecule! Urgently! Now or never! Only today buy one get two!");
-    }
-}
-
-function initFeedbackForm(job_id, db_id, sf_id, adduct) {
+function initFeedbackRating(job_id, db_id, sf_id, adduct) {
     $.ajax({
-        url: '/feedback',
+        url: '/feedback-rating',
         type: 'GET',
         contentType: 'application/x-www-form-urlencoded',
         data: {
@@ -61,8 +71,6 @@ function initFeedbackForm(job_id, db_id, sf_id, adduct) {
             'adduct': adduct,
         }
     }).done(function(data) {
-        updateFeedbackPanelMsg(data.comment);
-        $("#feedbackForm textarea[name=comment]").val(data.comment);
         $('label').removeClass('active');
         switch (data.rating) {
             case 1:
@@ -74,7 +82,26 @@ function initFeedbackForm(job_id, db_id, sf_id, adduct) {
             default:
                 $('#labelNotSure').addClass('active');
         }
-        console.log('Initialized feedback form with saved values');
+        console.log('Initialized rating with saved values');
+    }).error(function(error) {
+        console.log(error);
+    });
+}
+
+function initFeedbackComment(job_id, db_id, sf_id, adduct) {
+    $.ajax({
+        url: '/feedback-comment',
+        type: 'GET',
+        contentType: 'application/x-www-form-urlencoded',
+        data: {
+            'job_id': job_id,
+            'db_id': db_id,
+            'sf_id': sf_id,
+            'adduct': adduct,
+        }
+    }).done(function(data) {
+        $("#feedbackForm textarea[name=comment]").val(data.comment);
+        console.log('Initialized comment with saved values');
     }).error(function(error) {
         console.log(error);
     });

@@ -33,10 +33,27 @@ div.sm-navbar {
     margin-bottom: 5px;
 }
 
-#btnGroupRating .active {
-    background-color : red
+#btnGroupRating #labelNotSure.active {
+    background-color : grey;
 }
 
-#feedback-accordion {
-    visibility: hidden;
+#btnGroupRating #labelBad.active {
+    background-color : red;
+}
+
+#btnGroupRating #labelGood.active {
+    background-color : green;
+}
+
+#feedbackForm {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding: 0;
+    align-items: center;
+}
+
+#textAreaComment {
+    width: 50%;
+    margin: 0 10px;
 }

@@ -14,14 +14,15 @@ function backendSignIn(id_token) {
 function renderSignInButton() {
     gapi.signin2.render('google-sign-in', {
         'scope': 'profile email',
-        'width': 200,
-        'height': 35,
+        'width': 210,
+        'height': 45,
         'longtitle': true,
         'theme': 'dark',
         'onsuccess': function(googleUser) {
             console.log('Signed in as: ' + googleUser.getBasicProfile().getName());
             backendSignIn(googleUser.getAuthResponse().id_token);
-            $('#feedback-accordion').css('visibility', 'visible');
+            $('#google-sign-out').show();
+            $('#feedbackForm').show();
         },
         'onfailure': function (error) {
             console.log(error);
@@ -49,7 +50,8 @@ function addSignOutAction() {
             console.log('Signed out');
         });
         backendSignOut();
-        $('#feedback-accordion').css('visibility', 'hidden');
+        $('#google-sign-out').hide();
+        $('#feedbackForm').hide();
     });
 }
 

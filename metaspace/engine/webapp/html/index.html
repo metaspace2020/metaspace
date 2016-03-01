@@ -60,53 +60,54 @@
 
   <div class="container-fluid">
     <div class="row">
-      <div class="col-xs-6">
+      <div class="col-xs-8">
         <div class="container-fluid">
           <div class="page-header">
+            <div class="row">
+
+                <!--<div id="feedbackPanel" class="panel panel-danger">-->
+                    <!--<div class="panel-heading">-->
+                        <!--<a id="feedbackPanelMsg" data-toggle="collapse" data-parent="#feedback-accordion" href="#collapseOne"></a>-->
+                    <!--</div>-->
+
+                    <!--<div id="collapseOne" class="panel-collapse collapse">-->
+                        <!--<div class="panel-body">-->
+                            <form id="feedbackForm" class="form-inline" method="POST">
+                                <!--<div class="form-group">-->
+                                    <!--<label for="btnGroupRating" class="control-label col-xs-2">Rating</label>-->
+                                    <div class="btn-group" id="btnGroupRating" data-toggle="buttons">
+                                        <label id="labelGood" class="btn btn-primary" title="Good">
+                                            <input name="good" value="good" id="optionGood" type="radio">
+                                            <span class="glyphicon glyphicon-thumbs-up"></span>
+                                        </label>
+                                        <label id="labelBad" class="btn btn-primary" title="Bad">
+                                            <input name="bad" value="bad" id="optionBad" type="radio">
+                                            <span class="glyphicon glyphicon-thumbs-down"></span>
+                                        </label>
+                                        <label id="labelNotSure" class="btn btn-primary active" title="Not sure">
+                                            <input name="not_sure" value="not_sure" id="optionNotSure" type="radio">
+                                            <span class="glyphicon glyphicon-question-sign"></span>
+                                        </label>
+                                    </div>
+                                <!--</div>-->
+                                <!--<div class="form-group">-->
+                                    <!--<label for="textAreaComment" class="control-label col-xs-2">Comments</label>-->
+                                    <textarea class="form-control" id="textAreaComment" name="comment" placeholder="Leave your comment here"></textarea>
+                                <!--</div>-->
+                                <!--<div class="form-group">-->
+                                    <button type="submit" class="btn btn-primary">Save</button>
+                                <!--</div>-->
+                            </form>
+                        <!--</div>-->
+                    <!--</div>-->
+                <!--</div>-->
+
+            </div>
             <div class="row">
               <div class="col-xs-4">
                 <h2 id="about-name"></h2>
               </div>
               <div class="col-xs-8">
-                <div class="panel-group" id="feedback-accordion">
-                    <div id="feedbackPanel" class="panel panel-danger">
-                        <div class="panel-heading">
-                            <a id="feedbackPanelMsg" data-toggle="collapse" data-parent="#feedback-accordion" href="#collapseOne"></a>
-                        </div>
-
-                        <div id="collapseOne" class="panel-collapse collapse">
-                            <div class="panel-body">
-                                <form id="feedbackForm" class="form-horizontal" method="POST">
-                                    <div class="form-group">
-                                        <label for="btnGroupRating" class="control-label col-xs-2">Rating</label>
-                                        <div class="btn-group col-xs-10" id="btnGroupRating" data-toggle="buttons">
-                                            <label id="labelGood" class="btn btn-primary">
-                                                <input name="good" id="optionGood" type="radio"> Good
-                                            </label>
-                                            <label id="labelBad" class="btn btn-primary">
-                                                <input name="bad" id="optionBad" type="radio"> Bad
-                                            </label>
-                                            <label id="labelNotSure" class="btn btn-primary active">
-                                                <input name="not_sure" id="optionNotSure" type="radio"> Not sure
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="textAreaComment" class="control-label col-xs-2">Comments</label>
-                                        <div class="col-xs-10">
-                                            <textarea class="form-control" id="textAreaComment" name="comment"></textarea>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <div class="col-xs-offset-2 col-xs-10">
-                                            <button type="submit" class="btn btn-primary">Save</button>
-                                        </div>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                  </div>
               </div>
             </div>
             <div class="row" id="about-sf">
@@ -117,7 +118,7 @@
           </div>
         </div>
       </div>
-      <div class="col-xs-6">
+      <div class="col-xs-4">
           <div id="ionimage_flex_container">
               <div id="ionimage_total"></div>
               <div id="ionimage_total_labels">

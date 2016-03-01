@@ -109,7 +109,8 @@ function select_row(results_table, row_object) {
     })
 
     // Update feedback form content
-    initFeedbackForm(job_id, db_id, sf_id, adduct);
+    initFeedbackRating(job_id, db_id, sf_id, adduct);
+    initFeedbackComment(job_id, db_id, sf_id, adduct);
 
     // Bottom line chart generation
     drawLineChart(job_id, db_id, sf_id, adduct);
