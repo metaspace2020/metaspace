@@ -57,3 +57,7 @@ div.sm-navbar {
     width: 50%;
     margin: 0 10px;
 }
+
+#google-sign-out {
+    visibility: hidden;
+}

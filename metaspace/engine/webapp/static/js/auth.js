@@ -21,7 +21,7 @@ function renderSignInButton() {
         'onsuccess': function(googleUser) {
             console.log('Signed in as: ' + googleUser.getBasicProfile().getName());
             backendSignIn(googleUser.getAuthResponse().id_token);
-            $('#google-sign-out').show();
+            $('#google-sign-out').css('visibility', 'visible');
             $('#feedbackForm').show();
         },
         'onfailure': function (error) {
@@ -50,16 +50,16 @@ function addSignOutAction() {
             console.log('Signed out');
         });
         backendSignOut();
-        $('#google-sign-out').hide();
+        $('#google-sign-out').css('visibility', 'hidden');
         $('#feedbackForm').hide();
     });
 }
 
-function updateFeedbackFormVisibility() {
+/*function updateFeedbackFormVisibility() {
     if (typeof $.cookie('client_id') === 'undefined') {
         $('#feedback-accordion').css('visibility', 'hidden');
     }
     else {
         $('#feedback-accordion').css('visibility', 'visible');
     }
-}
+}*/

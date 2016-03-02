@@ -79,8 +79,9 @@ function initFeedbackRating(job_id, db_id, sf_id, adduct) {
             case -1:
                 $('#labelBad').addClass('active');
                 break;
-            default:
+            case 0:
                 $('#labelNotSure').addClass('active');
+                break;
         }
         console.log('Initialized rating with saved values');
     }).error(function(error) {

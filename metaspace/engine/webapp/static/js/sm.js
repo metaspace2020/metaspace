@@ -10,7 +10,8 @@ $(document).ready(function() {
     addCommentSaveHandler(results_table);
     initColumnFilters(results_table);
 
-    updateFeedbackFormVisibility();
+    $( "#feedbackForm" ).hide();
+//    updateFeedbackFormVisibility();
 });
 
 //    function handleKeyPress(e){
