@@ -14,9 +14,10 @@ from engine.db import DB
 from engine.dataset import Dataset
 from engine.fdr import FDR
 from engine.formulas import Formulas
-from engine.search_results import SearchResults
-from engine.formula_imager import sample_spectra, compute_sf_peak_images, compute_sf_images
 from engine.formula_img_validator import sf_image_metrics, sf_image_metrics_est_fdr, filter_sf_images
+from engine.formulas_segm import FormulasSegm
+from engine.search_results import SearchResults
+from engine.formula_imager_segm import compute_sf_images
 from engine.theor_peaks_gen import TheorPeaksGenerator
 from engine.imzml_txt_converter import ImzmlTxtConverter
 from engine.work_dir import WorkDir
@@ -116,7 +117,7 @@ class SearchJob(object):
             target_adducts = self.ds_config['isotope_generation']['adducts']
             self.fdr = FDR(self.job_id, self.sf_db_id, decoy_sample_size=20,target_adducts=target_adducts, db=self.db)
             self.fdr.decoy_adduct_selection()
-            self.formulas = Formulas(self.job_id, self.sf_db_id, self.ds_config, self.db)
+            self.formulas = FormulasSegm(self.ds_config, self.db)
 
             search_results = self._search()
             self._store_results(search_results)
@@ -146,9 +147,7 @@ class SearchJob(object):
 
     def _search(self):
         logger.info('Running molecule search')
-        sf_sp_intens = sample_spectra(self.sc, self.ds, self.formulas)
-        peak_imgs = compute_sf_peak_images(self.ds, sf_sp_intens)
-        sf_images = compute_sf_images(peak_imgs)
+        sf_images = compute_sf_images(self.sc, self.ds, self.formulas.self.sf_peak_df)
         all_sf_metrics_df = sf_image_metrics(sf_images, self.sc, self.formulas, self.ds, self.ds_config)
         sf_metrics_fdr_df = sf_image_metrics_est_fdr(all_sf_metrics_df, self.formulas, self.fdr)
         sf_metrics_fdr_df = sf_metrics_fdr_df[sf_metrics_fdr_df.msm > 0]

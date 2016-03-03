@@ -67,16 +67,16 @@ def get_compute_img_measures(empty_matrix, img_gen_conf):
     : function
         function that returns tuples of metrics for every list of isotope images
     """
-    def compute(iso_images_sparse, sf_intensity):
-        diff = len(sf_intensity) - len(iso_images_sparse)
+    def compute(iso_images_sparse, sf_ints):
+        diff = len(sf_ints) - len(iso_images_sparse)
         iso_imgs = [empty_matrix if img is None else img.toarray()
                     for img in iso_images_sparse + [None] * diff]
         iso_imgs_flat = [img.flat[:] for img in iso_imgs]
 
         measures = ImgMeasures(0, 0, 0)
         if len(iso_imgs) > 0:
-            measures.pattern_match = isotope_pattern_match(iso_imgs_flat, sf_intensity)
-            measures.image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_intensity[1:])
+            measures.pattern_match = isotope_pattern_match(iso_imgs_flat, sf_ints)
+            measures.image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_ints[1:])
             measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'], overwrite=False)
         return measures.to_tuple()
 
@@ -106,7 +106,8 @@ def sf_image_metrics(sf_images, sc, formulas, ds, ds_config):
     nrows, ncols = ds.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
     compute_measures = get_compute_img_measures(empty_matrix, ds_config['image_generation'])
-    sf_peak_intens_brcast = sc.broadcast(formulas.get_sf_peak_ints())
+    # sf_peak_df_brcast = sc.broadcast(formulas.sf_df)
+    sf_peak_ints = sc.parallelize(formulas.get_sf_peak_ints())
 
     sf_metrics = (sf_images
                   .map(lambda (sf_i, imgs): (sf_i,) + compute_measures(imgs, sf_peak_intens_brcast.value[sf_i]))
@@ -128,3 +129,4 @@ def sf_image_metrics_est_fdr(sf_metrics_df, formulas, fdr):
 def filter_sf_images(sf_images, sf_metrics_df):
     # TODO: copying all images to the driver is really slow
     return sf_images.filter(lambda (sf_i, _): sf_i in sf_metrics_df.index).collectAsMap()
+

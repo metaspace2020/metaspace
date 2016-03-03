@@ -106,6 +106,11 @@ class Dataset(object):
         intensities = np.fromstring("0 " + arr[2], sep=' ')
         return int(arr[0]), np.fromstring(arr[1], sep=' '), np.cumsum(intensities)
 
+    @staticmethod
+    def txt_to_spectrum_non_cum(s):
+        arr = s.strip().split("|")
+        return int(arr[0]), np.fromstring(arr[1], sep=' ').astype('float32'), np.fromstring(arr[2], sep=' ')
+
     def get_spectra(self):
         """
         Returns
@@ -113,7 +118,7 @@ class Dataset(object):
         : pyspark.rdd.RDD
             Spark RDD with spectra. One spectrum per RDD entry.
         """
-        txt_to_spectrum = self.txt_to_spectrum
+        txt_to_spectrum = self.txt_to_spectrum_non_cum
         if self.sm_config['fs']['local']:
             logger.info('Converting txt to spectrum rdd from %s', local_path(self.work_dir.txt_path))
             return self.sc.textFile(local_path(self.work_dir.txt_path), minPartitions=8).map(txt_to_spectrum)

@@ -57,13 +57,6 @@ class SearchResults(object):
     def store_sf_img_metrics(self):
         """ Store formula image metrics in the database """
         logger.info('Storing iso image metrics')
-        # rows = []
-        # for sf_i, metrics in self.sf_metrics_map.iteritems():
-        #     sf_id, adduct, peaks_n = self.sf_adduct_peaksn[sf_i]
-        #     metrics_json = json.dumps(OrderedDict(zip(['chaos', 'img_corr', 'pat_match'], metrics)))
-        #     r = (self.job_id, self.sf_db_id, sf_id, adduct, peaks_n, metrics_json)
-        #     rows.append(r)
-        # metr_df = self.sf_metrics_df.join(pd.Series(self.sf_adduct_peaksn, name='peaks_n'))
         rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id, self.sf_metrics_df, self.sf_adduct_peaksn))
         self.db.insert(METRICS_INS, rows)
 
@@ -79,8 +72,8 @@ class SearchResults(object):
         """
         logger.info('Storing iso images')
         rows = []
-        for sf_i, img_list in self.sf_iso_images_map.iteritems():
-            sf_id, adduct, _ = self.sf_adduct_peaksn[sf_i]
+        for (sf_id, adduct), img_list in self.sf_iso_images_map.iteritems():
+            # sf_id, adduct, _ = self.sf_adduct_peaksn[sf_i]
 
             for peak_i, img_sparse in enumerate(img_list):
                 img_ints = np.zeros(int(nrows)*int(ncols)) if img_sparse is None else img_sparse.toarray().flatten()
