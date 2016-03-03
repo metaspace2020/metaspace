@@ -25,7 +25,7 @@ if __name__ == "__main__":
     logger.info("Processing...")
 
     job = SearchJob(args.ds_name)
-    job.run(args.input_path, clean=args.no_clean)
+    job.run(args.input_path, clean=not args.no_clean)
 
     logger.info("All done!")
     time_spent = time.time() - start
