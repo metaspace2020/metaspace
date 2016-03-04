@@ -106,7 +106,7 @@ def compute_sf_images(sc, ds, sf_peak_df):
     """
     nrows, ncols = ds.get_dims()
     spectra_rdd = ds.get_spectra()
-    spectra_rdd.cache()
+    # spectra_rdd.cache()
 
     mz_grid, workload_per_mz = estimate_mz_workload(spectra_rdd, sf_peak_df)
 
