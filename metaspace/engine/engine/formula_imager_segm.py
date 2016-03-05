@@ -26,17 +26,18 @@ def find_mz_bounds(mz_grid, workload_per_mz, n=32):
     return mz_bounds
 
 
-def create_mz_buckets(mz_bounds, ppm=4):
+def create_mz_buckets(mz_bounds, ppm):
     mz_buckets = []
     for i, (l, r) in enumerate(zip([0] + mz_bounds, mz_bounds + [sys.float_info.max])):
-        l -= ppm * 1e-6
-        r += ppm * 1e-6
+        l -= l * ppm * 1e-6
+        r += r * ppm * 1e-6
         mz_buckets.append((l, r))
     return mz_buckets
 
 
 def segment_sf_peaks(mz_buckets, sf_peak_df):
-    return [(s_i, sf_peak_df[(sf_peak_df.mz >= l) & (sf_peak_df.mz <= r)])
+    # return [(s_i, sf_peak_df[(sf_peak_df.mz >= l) & (sf_peak_df.mz <= r)])
+    return [(s_i, sf_peak_df)
             for s_i, (l, r) in enumerate(mz_buckets)]
 
 
@@ -47,7 +48,7 @@ def segment_spectra(sp, mz_buckets):
         yield s_i, (sp_id, mzs[smask], ints[smask])
 
 
-def gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm=3, min_px=4):
+def gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, min_px=4):
     if len(sf_peak_df) > 0:
         lower = sf_peak_df.mz.map(lambda mz: mz - mz*ppm*1e-6)
         upper = sf_peak_df.mz.map(lambda mz: mz + mz*ppm*1e-6)
@@ -96,7 +97,7 @@ def _img_pairs_to_list(pairs):
     return res.tolist()
 
 
-def compute_sf_images(sc, ds, sf_peak_df):
+def compute_sf_images(sc, ds, sf_peak_df, ppm):
     """ Compute isotopic images for all formula
 
     Returns
@@ -111,7 +112,7 @@ def compute_sf_images(sc, ds, sf_peak_df):
     mz_grid, workload_per_mz = estimate_mz_workload(spectra_rdd, sf_peak_df)
 
     mz_bounds = find_mz_bounds(mz_grid, workload_per_mz)
-    mz_buckets = create_mz_buckets(mz_bounds)
+    mz_buckets = create_mz_buckets(mz_bounds, ppm=ppm)
 
     segm_sf_peaks = sc.parallelize(segment_sf_peaks(mz_buckets, sf_peak_df))
     segm_spectra = (spectra_rdd

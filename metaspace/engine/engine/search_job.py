@@ -147,7 +147,8 @@ class SearchJob(object):
 
     def _search(self):
         logger.info('Running molecule search')
-        sf_images = compute_sf_images(self.sc, self.ds, self.formulas.self.sf_peak_df)
+        sf_images = compute_sf_images(self.sc, self.ds, self.formulas.sf_peak_df,
+                                      self.ds_config['image_generation']['ppm'])
         all_sf_metrics_df = sf_image_metrics(sf_images, self.sc, self.formulas, self.ds, self.ds_config)
         sf_metrics_fdr_df = sf_image_metrics_est_fdr(all_sf_metrics_df, self.formulas, self.fdr)
         sf_metrics_fdr_df = sf_metrics_fdr_df[sf_metrics_fdr_df.msm > 0]
