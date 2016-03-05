@@ -4,7 +4,7 @@
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
-from shutil import copytree, rmtree
+from shutil import copytree, rmtree, copy
 from os.path import exists, splitext, join
 import tempfile
 import json
@@ -56,9 +56,9 @@ class WorkDir(object):
         """
         if exists(self.path):
             logger.info('Path %s already exists', self.path)
-            # rmtree(self.path)
+            copy(join(input_data_path, 'config.json'), self.path)
         else:
-            logger.info('Copying %s to %s', input_data_path, self.path)
+            logger.info('Copying %s to %s', input_data_path, self.ds_config_path)
 
             # TODO: add support for S3 paths
             if input_data_path.startswith('http'):
