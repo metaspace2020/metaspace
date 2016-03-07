@@ -107,10 +107,10 @@ def sf_image_metrics(sf_images, sc, formulas, ds, ds_config):
     empty_matrix = np.zeros((nrows, ncols))
     compute_measures = get_compute_img_measures(empty_matrix, ds_config['image_generation'])
     # sf_peak_df_brcast = sc.broadcast(formulas.sf_df)
-    sf_peak_ints = sc.parallelize(formulas.get_sf_peak_ints())
+    sf_peak_ints_brcast = sc.broadcast(formulas.get_sf_peak_ints())
 
     sf_metrics = (sf_images
-                  .map(lambda (sf_i, imgs): (sf_i,) + compute_measures(imgs, sf_peak_intens_brcast.value[sf_i]))
+                  .map(lambda (sf_i, imgs): (sf_i,) + compute_measures(imgs, sf_peak_ints_brcast.value[sf_i]))
                   ).collect()
     sf_metrics_df = pd.DataFrame(sf_metrics, columns=['index', 'chaos', 'spatial', 'spectral']).set_index('index')
     sf_metrics_df['msm'] = _calculate_msm(sf_metrics_df)

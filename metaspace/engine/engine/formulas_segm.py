@@ -24,7 +24,9 @@ class FormulasSegm(object):
 
         self.sf_df = pd.DataFrame(sf_peak_rs, columns=['sf_id', 'adduct', 'centr_mzs', 'centr_ints'])
 
-        self.sf_peak_df = pd.DataFrame(self.sf_peak_gen(self.sf_df), columns=['sf_id', 'adduct', 'peak_i', 'mz']).sort('mz')
+        self.sf_peak_df = pd.DataFrame(self.sf_peak_gen(self.sf_df),
+                                       columns=['sf_id', 'adduct', 'peak_i', 'mz']).sort_values(by='mz')
+        # self.sf_peak_df = self.sf_peak_df[(self.sf_peak_df.sf_id == 6850) & (self.sf_peak_df.adduct == '+K')]
         self.check_formula_uniqueness(self.sf_peak_df)
 
         logger.info('Loaded %s sum formula, adduct combinations from the DB', self.sf_df.shape[0])
@@ -42,7 +44,7 @@ class FormulasSegm(object):
             'Not unique formula-adduct combinations {} != {}'.format(uniq_sf_adduct_peak_n, sf_peak_df.shape[0])
 
     def get_sf_peak_ints(self):
-        return zip(zip(self.sf_df.sf_id, self.sf_df.adduct), self.sf_df.centr_ints)
+        return dict(zip(zip(self.sf_df.sf_id, self.sf_df.adduct), self.sf_df.centr_ints))
 
     def get_sf_adduct_peaksn(self):
         """

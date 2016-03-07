@@ -4,8 +4,9 @@ from scipy.sparse import coo_matrix
 
 
 def estimate_mz_workload(spectra_rdd, sf_peak_df):
-    spectra_sample_rdd = spectra_rdd.sample(withReplacement=False, fraction=0.01)
-    spectra_sample = spectra_sample_rdd.collect()
+    # spectra_sample_rdd = spectra_rdd.sample(withReplacement=False, fraction=0.01)
+    # spectra_sample = spectra_sample_rdd.collect()
+    spectra_sample = spectra_rdd.take(100)
     mz_arr = np.sort(np.concatenate(map(lambda sp: sp[1], spectra_sample)))
     spectrum_mz_freq, mz_grid = np.histogram(mz_arr, bins=1000, range=(mz_arr.min(), mz_arr.max()))
     sf_peak_mz_freq, _ = np.histogram(sf_peak_df.mz, bins=1000, range=(mz_arr.min(), mz_arr.max()))
@@ -36,8 +37,8 @@ def create_mz_buckets(mz_bounds, ppm):
 
 
 def segment_sf_peaks(mz_buckets, sf_peak_df):
-    # return [(s_i, sf_peak_df[(sf_peak_df.mz >= l) & (sf_peak_df.mz <= r)])
-    return [(s_i, sf_peak_df)
+    return [(s_i, sf_peak_df[(sf_peak_df.mz >= l) & (sf_peak_df.mz <= r)])
+    # return [(s_i, sf_peak_df)
             for s_i, (l, r) in enumerate(mz_buckets)]
 
 
@@ -50,9 +51,6 @@ def segment_spectra(sp, mz_buckets):
 
 def gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, min_px=4):
     if len(sf_peak_df) > 0:
-        lower = sf_peak_df.mz.map(lambda mz: mz - mz*ppm*1e-6)
-        upper = sf_peak_df.mz.map(lambda mz: mz + mz*ppm*1e-6)
-
         idx_list = []
         mz_list = []
         int_list = []
@@ -62,6 +60,7 @@ def gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, min_px
             mz_list.extend(mzs)
             int_list.extend(ints)
 
+        # TODO: replace with pd.DataFrame
         idx_list = np.asarray(idx_list)
         mz_list = np.asarray(mz_list)
         int_list = np.asarray(int_list)
@@ -71,9 +70,12 @@ def gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, min_px
         mz_list = mz_list[mz_order]
         int_list = int_list[mz_order]
 
+        sf_peak_segm_df = sf_peak_df[(sf_peak_df.mz >= mz_list.min()) & (sf_peak_df.mz <= mz_list.max())]
+        lower = sf_peak_segm_df.mz.map(lambda mz: mz - mz*ppm*1e-6)
+        upper = sf_peak_segm_df.mz.map(lambda mz: mz + mz*ppm*1e-6)
+
         lower_idx = np.searchsorted(mz_list, lower, 'l')
         upper_idx = np.searchsorted(mz_list, upper, 'r')
-        assert (upper_idx - lower_idx).sum() > 0, 'misalignment of spectra formula and formula segments'
 
         for i, (l, u) in enumerate(zip(lower_idx, upper_idx)):
             if u - l >= min_px:
@@ -82,8 +84,8 @@ def gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, min_px
                     idx = idx_list[l:u]
                     row_inds = idx / ncols
                     col_inds = idx % ncols
-                    yield (sf_peak_df.sf_id.iloc[i], sf_peak_df.adduct.iloc[i]),\
-                          (sf_peak_df.peak_i.iloc[i], coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols)))
+                    yield (sf_peak_segm_df.sf_id.iloc[i], sf_peak_segm_df.adduct.iloc[i]),\
+                          (sf_peak_segm_df.peak_i.iloc[i], coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols)))
 
 
 def _img_pairs_to_list(pairs):
@@ -111,20 +113,21 @@ def compute_sf_images(sc, ds, sf_peak_df, ppm):
 
     mz_grid, workload_per_mz = estimate_mz_workload(spectra_rdd, sf_peak_df)
 
-    mz_bounds = find_mz_bounds(mz_grid, workload_per_mz)
+    n = 64
+    mz_bounds = find_mz_bounds(mz_grid, workload_per_mz, n)
     mz_buckets = create_mz_buckets(mz_bounds, ppm=ppm)
-
-    segm_sf_peaks = sc.parallelize(segment_sf_peaks(mz_buckets, sf_peak_df))
     segm_spectra = (spectra_rdd
                     .flatMap(lambda sp: segment_spectra(sp, mz_buckets))
-                    .groupByKey())
+                    .groupByKey(numPartitions=n))
 
-    sp_indexes = ds.norm_img_pixel_inds
+    sp_indexes_brcast = sc.broadcast(ds.norm_img_pixel_inds)
+    sf_peak_df_brcast = sc.broadcast(sf_peak_df)  # TODO: replace broadcast variable with rdd and cogroup
     iso_peak_images = (segm_spectra
-                       .join(segm_sf_peaks)
-                       .flatMap(lambda (s_i, (sp_segm, sf_peak_df_segm)):
-                            gen_iso_images(sp_segm, sp_indexes, sf_peak_df_segm, nrows, ncols, ppm=2, min_px=1))
+                       .flatMap(lambda (s_i, sp_segm):
+                            gen_iso_images(sp_segm, sp_indexes_brcast.value, sf_peak_df_brcast.value,
+                                           nrows, ncols, ppm=ppm, min_px=1))
                        )
+
     iso_sf_images = (iso_peak_images
                      .groupByKey()
                      .mapValues(lambda img_pairs_it: _img_pairs_to_list(list(img_pairs_it))))
