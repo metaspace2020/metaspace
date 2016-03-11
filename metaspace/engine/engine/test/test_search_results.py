@@ -4,7 +4,7 @@ from scipy.sparse.csr import csr_matrix
 import json
 from collections import OrderedDict
 
-from engine.search_results import SearchResults, insert_sf_metrics_sql, insert_sf_iso_imgs_sql
+from engine.search_results import SearchResults, METRICS_INS, insert_sf_iso_imgs_sql
 from engine.search_job import DB
 
 
@@ -25,7 +25,7 @@ def test_save_sf_img_metrics_correct_db_call(search_results):
 
     metrics_json = json.dumps(OrderedDict(zip(['chaos', 'img_corr', 'pat_match'], (0.9, 0.9, 0.9))))
     correct_rows = [(0, 0, 1, '+H', 2, metrics_json)]
-    db_mock.insert.assert_called_with(insert_sf_metrics_sql, correct_rows)
+    db_mock.insert.assert_called_with(METRICS_INS, correct_rows)
 
 
 def test_save_sf_iso_images_correct_db_call(search_results):

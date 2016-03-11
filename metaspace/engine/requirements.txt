@@ -1,3 +1,4 @@
+pandas
 requests
 numpy==1.10.4
 Fabric==1.10.2

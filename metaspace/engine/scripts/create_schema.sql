@@ -99,6 +99,19 @@ CREATE TABLE job (
       ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS target_decoy_add CASCADE;
+CREATE TABLE target_decoy_add (
+    job_id	    int,
+	db_id       int,
+    sf_id       int,
+	target_add  text,
+	decoy_add   text,
+	CONSTRAINT target_decoy_add_id_pk PRIMARY KEY(job_id, db_id, sf_id, target_add, decoy_add),
+	CONSTRAINT target_decoy_add_job_id_fk FOREIGN KEY (job_id)
+      REFERENCES job (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
 DROP TABLE IF EXISTS iso_image;
 CREATE TABLE iso_image (
 	job_id		int,
@@ -122,8 +135,10 @@ CREATE TABLE iso_image_metrics (
 	db_id		int,
 	sf_id		int,
 	adduct 		text,
-	peaks_n		int,
+	msm         real,
+	fdr         real,
 	stats 		json,
+	peaks_n		int,
 	CONSTRAINT iso_image_metrics_id_pk PRIMARY KEY(job_id, db_id, sf_id, adduct),
 	CONSTRAINT iso_image_metrics_job_id_fk FOREIGN KEY (job_id)
       REFERENCES job (id) MATCH SIMPLE

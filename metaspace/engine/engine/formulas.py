@@ -1,14 +1,23 @@
 import numpy as np
-
 from engine.util import logger
 
 
-THEOR_PEAKS_SQL = ('SELECT sf_id, adduct, centr_mzs, centr_ints '
-                   'FROM theor_peaks p '
-                   'JOIN formula_db d ON d.id = p.db_id '
-                   'WHERE d.name = %s AND adduct = ANY(%s) AND ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s '
-                   'AND charge = %s'
-                   'ORDER BY sf_id, adduct')
+THEOR_PEAKS_TARGET_ADD_SEL = (
+    'SELECT sf_id, adduct, centr_mzs, centr_ints '
+    'FROM theor_peaks p '
+    'JOIN formula_db db ON db.id = p.db_id '
+    'WHERE db.id = %s AND adduct = ANY(%s) AND ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s '
+    'AND charge = %s '
+    'ORDER BY sf_id, adduct')
+
+THEOR_PEAKS_DECOY_ADD_SEL = (
+    'SELECT DISTINCT p.sf_id, decoy_add as adduct, centr_mzs, centr_ints '
+    'FROM theor_peaks p '
+    'JOIN formula_db db ON db.id = p.db_id '
+    'JOIN target_decoy_add td on td.job_id = %s '
+    'AND td.db_id = p.db_id AND td.sf_id = p.sf_id AND td.decoy_add = p.adduct '
+    'WHERE db.id = %s AND ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s AND charge = %s '
+    'ORDER BY sf_id, adduct')
 
 
 class Formulas(object):
@@ -21,16 +30,25 @@ class Formulas(object):
         Dataset configuration
     db : engine.db.DB
     """
-    def __init__(self, ds_config, db):
-        self.ppm = ds_config['image_generation']['ppm']
-        self.db_name = ds_config['database']['name']
-        iso_gen_conf = ds_config['isotope_generation']
 
+    def __init__(self, job_id, db_id, ds_config, db):
+        self.job_id = job_id
+        self.db_id = db_id
+        self.ppm = ds_config['image_generation']['ppm']
+        iso_gen_conf = ds_config['isotope_generation']
         charge = '{}{}'.format(iso_gen_conf['charge']['polarity'], iso_gen_conf['charge']['n_charges'])
-        sf_peaks = db.select(THEOR_PEAKS_SQL, self.db_name, iso_gen_conf['adducts'], iso_gen_conf['isocalc_sigma'],
-                             iso_gen_conf['isocalc_pts_per_mz'], charge)
-        assert sf_peaks, 'No formulas matching the criteria were found in theor_peaks!'
-        self.sf_ids, self.adducts, self.sf_theor_peaks, self.sf_theor_peak_ints = zip(*sf_peaks)
+
+        target_sf_peaks_rs = db.select(THEOR_PEAKS_TARGET_ADD_SEL, self.db_id,
+                                       iso_gen_conf['adducts'], iso_gen_conf['isocalc_sigma'],
+                                       iso_gen_conf['isocalc_pts_per_mz'], charge)
+        assert target_sf_peaks_rs, 'No formulas matching the criteria were found in theor_peaks! (target)'
+
+        decoy_sf_peaks_rs = db.select(THEOR_PEAKS_DECOY_ADD_SEL, self.job_id, self.db_id,
+                                      iso_gen_conf['isocalc_sigma'], iso_gen_conf['isocalc_pts_per_mz'], charge)
+        assert decoy_sf_peaks_rs, 'No formulas matching the criteria were found in theor_peaks! (decoy)'
+
+        sf_peak_rs = target_sf_peaks_rs + decoy_sf_peaks_rs
+        self.sf_ids, self.adducts, self.sf_theor_peaks, self.sf_theor_peak_ints = zip(*sf_peak_rs)
         self.check_formula_uniqueness(self.sf_ids, self.adducts)
 
         logger.info('Loaded %s sum formulas from the DB', len(self.sf_ids))
@@ -39,7 +57,7 @@ class Formulas(object):
     def check_formula_uniqueness(formula_ids, adducts):
         pairs = zip(formula_ids, adducts)
         uniq_pairs = set(pairs)
-        assert len(uniq_pairs) == len(pairs),\
+        assert len(uniq_pairs) == len(pairs), \
             'Not unique formula-adduct combinations {} != {}'.format(len(uniq_pairs), len(pairs))
 
     def get_sf_peak_bounds(self):
@@ -49,8 +67,8 @@ class Formulas(object):
         : tuple
             A pair of ndarrays with bound mz values for each molecule from the molecule database
         """
-        lower = np.array([mz - self.ppm*mz/1e6 for sf_peaks in self.sf_theor_peaks for mz in sf_peaks])
-        upper = np.array([mz + self.ppm*mz/1e6 for sf_peaks in self.sf_theor_peaks for mz in sf_peaks])
+        lower = np.array([mz - self.ppm * mz / 1e6 for sf_peaks in self.sf_theor_peaks for mz in sf_peaks])
+        upper = np.array([mz + self.ppm * mz / 1e6 for sf_peaks in self.sf_theor_peaks for mz in sf_peaks])
         return lower, upper
 
     def get_sf_peak_map(self):
@@ -90,4 +108,3 @@ class Formulas(object):
             An array of triples (formula id, adduct, number of theoretical peaks)
         """
         return zip(self.sf_ids, self.adducts, map(len, self.sf_theor_peaks))
-

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import json
 from collections import OrderedDict
 from datetime import datetime
@@ -6,12 +7,10 @@ from datetime import datetime
 from engine.util import logger
 
 
-insert_sf_metrics_sql = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s)'
+METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
 insert_sf_iso_imgs_sql = 'INSERT INTO iso_image VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
 clear_iso_image_sql = 'DELETE FROM iso_image WHERE job_id = %s'
 clear_iso_image_metrics_sql = 'DELETE FROM iso_image_metrics WHERE job_id = %s'
-INSERT_JOB_SQL = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', %s)"
-CLEAR_JOB_SQL = 'DELETE FROM job WHERE id = %s'
 
 
 class SearchResults(object):
@@ -33,14 +32,14 @@ class SearchResults(object):
         List of triples (formula id, adduct, number of theoretical peaks)
     db: engine.db.DB
     """
-    def __init__(self, sf_db_id, ds_id, job_id, sf_iso_images_map, sf_metrics_map, sf_adduct_peaksn, db):
+    def __init__(self, sf_db_id, ds_id, job_id, sf_metrics_df, sf_iso_images_map, sf_adduct_peaksn, db):
         self.sf_db_id = sf_db_id
         self.ds_id = ds_id
         self.job_id = job_id
         self.db = db
         self.sf_adduct_peaksn = sf_adduct_peaksn
         self.sf_iso_images_map = sf_iso_images_map
-        self.sf_metrics_map = sf_metrics_map
+        self.sf_metrics_df = sf_metrics_df
 
     def clear_old_results(self):
         """ Clear all previous search results for the dataset from the database """
@@ -48,17 +47,25 @@ class SearchResults(object):
         self.db.alter(clear_iso_image_sql, self.job_id)
         self.db.alter(clear_iso_image_metrics_sql, self.job_id)
 
+    @staticmethod
+    def _metrics_table_row_gen(job_id, db_id, metr_df, sf_adduct_peaksn):
+        for ind, s in metr_df.iterrows():
+            metr_json = json.dumps({'chaos': s.chaos, 'spatial': s.spatial, 'spectral': s.spectral})
+            peaks_n = sf_adduct_peaksn[ind][2]
+            yield (job_id, db_id, s.sf_id, s.adduct, s.msm, s.fdr, metr_json, peaks_n)
+
     def store_sf_img_metrics(self):
         """ Store formula image metrics in the database """
         logger.info('Storing iso image metrics')
-        rows = []
-        for sf_i, metrics in self.sf_metrics_map.iteritems():
-            sf_id, adduct, peaks_n = self.sf_adduct_peaksn[sf_i]
-            metrics_json = json.dumps(OrderedDict(zip(['chaos', 'img_corr', 'pat_match'], metrics)))
-            r = (self.job_id, self.sf_db_id, sf_id, adduct, peaks_n, metrics_json)
-            rows.append(r)
-
-        self.db.insert(insert_sf_metrics_sql, rows)
+        # rows = []
+        # for sf_i, metrics in self.sf_metrics_map.iteritems():
+        #     sf_id, adduct, peaks_n = self.sf_adduct_peaksn[sf_i]
+        #     metrics_json = json.dumps(OrderedDict(zip(['chaos', 'img_corr', 'pat_match'], metrics)))
+        #     r = (self.job_id, self.sf_db_id, sf_id, adduct, peaks_n, metrics_json)
+        #     rows.append(r)
+        # metr_df = self.sf_metrics_df.join(pd.Series(self.sf_adduct_peaksn, name='peaks_n'))
+        rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id, self.sf_metrics_df, self.sf_adduct_peaksn))
+        self.db.insert(METRICS_INS, rows)
 
     def store_sf_iso_images(self, nrows, ncols):
         """ Store formula images in the database
@@ -84,11 +91,3 @@ class SearchResults(object):
                 rows.append(r)
 
         self.db.insert(insert_sf_iso_imgs_sql, rows)
-
-    # TODO: add tests
-    def store_job_meta(self):
-        """ Store search job metadata in the database """
-        logger.info('Storing job metadata')
-        self.db.alter(CLEAR_JOB_SQL, self.job_id)
-        rows = [(self.job_id, self.sf_db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
-        self.db.insert(INSERT_JOB_SQL, rows)

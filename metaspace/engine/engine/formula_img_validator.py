@@ -2,6 +2,7 @@
 Classes and functions for isotope image validation
 """
 import numpy as np
+import pandas as pd
 from operator import mul, add
 
 from pyIMS.image_measures import measure_of_chaos, isotope_image_correlation, isotope_pattern_match
@@ -82,7 +83,11 @@ def get_compute_img_measures(empty_matrix, img_gen_conf):
     return compute
 
 
-def filter_sf_images(sc, ds_config, ds, formulas, sf_images):
+def calculate_msm(sf_metrics_df):
+    return (sf_metrics_df.chaos + sf_metrics_df.spatial + sf_metrics_df.spectral) / 3
+
+
+def filter_sf_images(sf_images, sc, fdr, formulas, ds, ds_config):
     """ Compute isotope image metrics for each formula. If specified in the dataset config returns only images and metrics
     for topN formulas with the highest metrics product.
 
@@ -106,13 +111,21 @@ def filter_sf_images(sc, ds_config, ds, formulas, sf_images):
     sf_peak_intens_brcast = sc.broadcast(formulas.get_sf_peak_ints())
 
     sf_metrics = (sf_images
-                  .map(lambda (sf_i, imgs): (sf_i, compute_measures(imgs, sf_peak_intens_brcast.value[sf_i])))
-                  .filter(lambda (_, metrics): reduce(add, metrics) > 0))
-    if ds_config["molecules_num"]:
-        sf_metrics_map = dict(sf_metrics.takeOrdered(int(ds_config["molecules_num"]),
-                                                     lambda (_, metrics): -reduce(mul, metrics)))
-    else:
-        sf_metrics_map = sf_metrics.collectAsMap()
+                  .map(lambda (sf_i, imgs): (sf_i,) + compute_measures(imgs, sf_peak_intens_brcast.value[sf_i]))
+                  ).collect()
+    sf_metrics_df = pd.DataFrame(sf_metrics, columns=['index', 'chaos', 'spatial', 'spectral']).set_index('index')
 
-    sf_iso_images_map = sf_images.filter(lambda (sf_i, _): sf_i in sf_metrics_map).collectAsMap()
-    return sf_iso_images_map, sf_metrics_map
+    # TODO: replace add with mul
+    msm_ser = calculate_msm(sf_metrics_df)
+    msm_ser.name = 'msm'
+
+    sf_msm_df = pd.DataFrame(formulas.get_sf_adduct_peaksn(),
+                             columns=['sf_id', 'adduct', 'peakn']).drop('peakn', axis=1)
+    sf_msm_df = sf_msm_df.join(msm_ser).fillna(0)
+
+    sf_adduct_msm_fdr = fdr.estimate_fdr(sf_msm_df)
+    sf_metrics_df = sf_adduct_msm_fdr.join(sf_metrics_df)
+
+    # TODO: copying all images to the driver is really slow
+    sf_iso_images_map = sf_images.filter(lambda (sf_i, _): sf_i in sf_metrics_df.index).collectAsMap()
+    return sf_metrics_df, sf_iso_images_map

@@ -8,9 +8,11 @@ from pyspark import SparkContext, SparkConf
 from os.path import join, realpath, dirname
 import json
 from pprint import pformat
+from datetime import datetime
 
 from engine.db import DB
 from engine.dataset import Dataset
+from engine.fdr import FDR
 from engine.formulas import Formulas
 from engine.search_results import SearchResults
 from engine.formula_imager import sample_spectra, compute_sf_peak_images, compute_sf_images
@@ -23,7 +25,10 @@ from engine.util import local_path, hdfs_path, proj_root, hdfs_prefix, cmd_check
 
 DS_ID_SEL = "SELECT id FROM dataset WHERE name = %s"
 DB_ID_SEL = "SELECT id FROM formula_db WHERE name = %s"
-max_ds_id_sql = "SELECT COALESCE(MAX(id), -1) FROM dataset"
+# max_ds_id_sql = "SELECT COALESCE(MAX(id), -1) FROM dataset"
+
+DEL_JOB_SQL = 'DELETE FROM job WHERE id = %s'
+INSERT_JOB_SQL = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', %s)"
 
 
 class SearchJob(object):
@@ -43,6 +48,7 @@ class SearchJob(object):
         self.sc = None
         self.db = None
         self.ds = None
+        self.fdr = None
         self.formulas = None
         self.ds_config = None
         self.work_dir = None
@@ -102,9 +108,14 @@ class SearchJob(object):
             self.ds = Dataset(self.sc, self.ds_name, self.client_email, self.ds_config, self.work_dir, self.db)
             self.ds.save_ds_meta()
 
+            self.store_job_meta()
+
             theor_peaks_gen = TheorPeaksGenerator(self.sc, self.sm_config, self.ds_config)
             theor_peaks_gen.run()
-            self.formulas = Formulas(self.ds_config, self.db)
+
+            self.fdr = FDR(self.job_id, self.sf_db_id, n=3, ds_config=self.ds_config, db=self.db)
+            self.fdr.decoy_adduct_selection()
+            self.formulas = Formulas(self.job_id, self.sf_db_id, self.ds_config, self.db)
 
             search_results = self._search()
             self._store_results(search_results)
@@ -119,24 +130,33 @@ class SearchJob(object):
             if self.db:
                 self.db.close()
 
+    # TODO: add tests
+    def store_job_meta(self):
+        """ Store search job metadata in the database """
+        logger.info('Storing job metadata')
+        self.ds_id = int(self.db.select_one(DS_ID_SEL, self.ds_name)[0])
+        self.job_id = self.ds_id
+        self.db.alter(DEL_JOB_SQL, self.job_id)
+        rows = [(self.job_id, self.sf_db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
+        self.db.insert(INSERT_JOB_SQL, rows)
+
     def _search(self):
         logger.info('Running molecule search')
         sf_sp_intens = sample_spectra(self.sc, self.ds, self.formulas)
-        sf_peak_imgs = compute_sf_peak_images(self.ds, sf_sp_intens)
-        sf_images = compute_sf_images(sf_peak_imgs)
-        sf_iso_images_map, sf_metrics_map = filter_sf_images(self.sc, self.ds_config, self.ds, self.formulas, sf_images)
+        peak_imgs = compute_sf_peak_images(self.ds, sf_sp_intens)
+        sf_images = compute_sf_images(peak_imgs)
+        sf_metrics_df, sf_iso_images_map = filter_sf_images(sf_images,
+                                                             self.sc, self.fdr, self.formulas, self.ds,
+                                                             self.ds_config)
 
-        self.ds_id = int(self.db.select_one(DS_ID_SEL, self.ds_name)[0])
-        self.job_id = self.ds_id
         return SearchResults(self.sf_db_id, self.ds_id, self.job_id,
-                             sf_iso_images_map, sf_metrics_map,
+                             sf_metrics_df, sf_iso_images_map,
                              self.formulas.get_sf_adduct_peaksn(),
                              self.db)
 
     def _store_results(self, search_results):
         logger.info('Storing search results to the DB')
         search_results.clear_old_results()
-        search_results.store_job_meta()
         search_results.store_sf_img_metrics()
         nrows, ncols = self.ds.get_dims()
         search_results.store_sf_iso_images(nrows, ncols)
