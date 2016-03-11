@@ -13,9 +13,9 @@ RESULTS_SEL = '''
         SELECT * FROM (
             SELECT sf_db.name as db_name, ds.name as ds_name, f.sf as sf, f.names as comp_names, f.subst_ids as comp_ids,
                 (m.stats->'chaos')::text::real AS chaos,
-                (m.stats->'img_corr')::text::real AS image_corr,
-                (m.stats->'pat_match')::text::real AS pattern_match,
-                (m.stats->'chaos')::text::real * (m.stats->'img_corr')::text::real * (m.stats->'pat_match')::text::real AS msm,
+                (m.stats->'spatial')::text::real AS image_corr,
+                (m.stats->'spectral')::text::real AS pattern_match,
+                msm,
                 m.adduct AS adduct,
                 j.id AS job_id,
                 ds.id AS ds_id,

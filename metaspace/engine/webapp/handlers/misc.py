@@ -132,14 +132,17 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
 
         return min_mz, max_mz, points_n, centr_inds, prof_inds
 
-    # TODO: remove metrics calculation logic from here
+    # TODO: move metric calculation logic to the engine
     @staticmethod
     def sample_centr_ints_norm(sample_ints_list):
         first_peak_inds = set(sample_ints_list[0]['pixel_inds'])
         sample_centr_ints = []
         for peak_d in sample_ints_list:
-            flt_peak_inds_mask = np.array(map(lambda i: i in first_peak_inds, peak_d['pixel_inds']))
-            peak_int_sum = np.array(peak_d['intensities'])[flt_peak_inds_mask].sum()
+            first_peak_inds_mask = np.array(map(lambda i: i in first_peak_inds, peak_d['pixel_inds']))
+            if first_peak_inds_mask.size > 0:
+                peak_int_sum = np.array(peak_d['intensities'])[first_peak_inds_mask].sum()
+            else:
+                peak_int_sum = 0
             sample_centr_ints.append(peak_int_sum)
 
         sample_centr_ints = np.asarray(sample_centr_ints)

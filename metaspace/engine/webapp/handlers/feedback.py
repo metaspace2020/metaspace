@@ -57,7 +57,7 @@ class FeedbackRating(tornado.web.RequestHandler):
         client_id = self.get_secure_cookie('client_id')
         if not client_id:
             self.write({})
-            print 'Sent empty feedback'.format()
+            print 'Not authenticated get'.format()
             return
 
         args = arg_dict(self.request.arguments)
@@ -65,7 +65,7 @@ class FeedbackRating(tornado.web.RequestHandler):
                                             args['sf_id'], args['adduct'], client_id)
         if not feed_rs:
             self.write({})
-            print 'Sent empty feedback'.format()
+            print 'Sent empty feedback rating'.format()
             return
 
         self.write(dict(rating=feed_rs[0]['rating']))
@@ -89,7 +89,7 @@ class FeedbackComment(tornado.web.RequestHandler):
         client_id = self.get_secure_cookie('client_id')
         if not client_id:
             self.write({})
-            print 'Sent empty feedback'.format()
+            print 'Not authenticated get'.format()
             return
 
         args = arg_dict(self.request.arguments)
@@ -97,7 +97,7 @@ class FeedbackComment(tornado.web.RequestHandler):
                                             args['sf_id'], args['adduct'], client_id)
         if not feed_rs:
             self.write({})
-            print 'Sent empty feedback'.format()
+            print 'Sent empty feedback comment'.format()
             return
 
         self.write(dict(comment=feed_rs[0]['comment']))
