@@ -78,7 +78,7 @@ class SFPeakMZsHandler(tornado.web.RequestHandler):
 
 
 class MinMaxIntHandler(tornado.web.RequestHandler):
-    min_max_int_sql = '''SELECT min_int, max_int
+    MIN_MAX_INT_SEL = '''SELECT min_int, max_int
                          FROM iso_image
                          WHERE job_id = %s and db_id = %s and sf_id = %s and adduct = %s;'''
 
@@ -91,8 +91,9 @@ class MinMaxIntHandler(tornado.web.RequestHandler):
             print 'USER_ID={} tries to access the DB'.format(self.current_user)
         else:
             print 'Not authenticated USER_ID tries to access the DB'
-        min_max_row = self.application.db.query(self.min_max_int_sql, int(job_id), int(db_id), int(sf_id), adduct)[0]
-        self.write(json.dumps(min_max_row))
+        min_max_rs = self.application.db.query(self.MIN_MAX_INT_SEL, int(job_id), int(db_id), int(sf_id), adduct)
+        min_max_dict = min_max_rs[0] if min_max_rs else {'min_int': 0, 'max_int': 0}
+        self.write(json.dumps(min_max_dict))
 
 
 class SpectrumLineChartHandler(tornado.web.RequestHandler):
@@ -164,7 +165,10 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
         min_mz, max_mz, points_n, centr_inds, prof_inds = self.convert_to_serial(centr_mzs, prof_mzs)
 
         sample_ints_list = self.db.query(self.SAMPLE_INTENS_SQL, int(job_id), int(db_id), int(sf_id), adduct)
-        sample_centr_ints_norm = self.sample_centr_ints_norm(sample_ints_list)
+        if sample_ints_list:
+            sample_centr_ints_norm = self.sample_centr_ints_norm(sample_ints_list)
+        else:
+            sample_centr_ints_norm = []
 
         self.write(json.dumps({
             'mz_grid': {

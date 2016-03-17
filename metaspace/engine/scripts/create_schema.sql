@@ -99,6 +99,16 @@ CREATE TABLE job (
       ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS adduct;
+CREATE TABLE adduct (
+    job_id  int,
+	adduct 	 text,
+	CONSTRAINT adduct_job_id_add_pk PRIMARY KEY(job_id, adduct),
+	CONSTRAINT adduct_job_id_fk FOREIGN KEY (job_id)
+      REFERENCES job (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
 DROP TABLE IF EXISTS target_decoy_add CASCADE;
 CREATE TABLE target_decoy_add (
     job_id	    int,

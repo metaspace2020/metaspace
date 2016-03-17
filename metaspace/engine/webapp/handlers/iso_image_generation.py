@@ -80,11 +80,14 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         coords -= coords.min(axis=0)
         self.ncols, self.nrows = coords.max(axis=0) + 1
 
-        visible_pixels = self.get_img_ints(self._get_intens_list(job_id, sf_id, adduct, self.nrows, self.ncols))
-        normalizer = Normalize(vmin=np.min(visible_pixels), vmax=np.max(visible_pixels))
-        # color_img_data = np.zeros((nrows, ncols, 4))
-        color_img_data = self.viridis_cmap(normalizer(visible_pixels))
         mask = self._get_ds_mask(coords, self.nrows, self.ncols)
+        int_list = self._get_intens_list(job_id, sf_id, adduct, self.nrows, self.ncols)
+        if int_list.size > 0:
+            visible_pixels = self.get_img_ints(int_list)
+            normalizer = Normalize(vmin=np.min(visible_pixels), vmax=np.max(visible_pixels))
+            color_img_data = self.viridis_cmap(normalizer(visible_pixels))
+        else:
+            color_img_data = np.zeros(shape=(self.nrows, self.ncols, 4))
         color_img_data[:, :, 3] = mask
         return color_img_data
 

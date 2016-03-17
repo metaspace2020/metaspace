@@ -25,10 +25,10 @@ from engine.util import local_path, hdfs_path, proj_root, hdfs_prefix, cmd_check
 
 DS_ID_SEL = "SELECT id FROM dataset WHERE name = %s"
 DB_ID_SEL = "SELECT id FROM formula_db WHERE name = %s"
-# max_ds_id_sql = "SELECT COALESCE(MAX(id), -1) FROM dataset"
 
 DEL_JOB_SQL = 'DELETE FROM job WHERE id = %s'
-INSERT_JOB_SQL = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', %s)"
+JOB_INS = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', %s)"
+ADDUCT_INS = 'INSERT INTO adduct VALUES (%s, %s)'
 
 
 class SearchJob(object):
@@ -138,7 +138,10 @@ class SearchJob(object):
         self.job_id = self.ds_id
         self.db.alter(DEL_JOB_SQL, self.job_id)
         rows = [(self.job_id, self.sf_db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
-        self.db.insert(INSERT_JOB_SQL, rows)
+        self.db.insert(JOB_INS, rows)
+
+        rows = [(self.job_id, adduct) for adduct in self.ds_config['isotope_generation']['adducts']]
+        self.db.insert(ADDUCT_INS, rows)
 
     def _search(self):
         logger.info('Running molecule search')

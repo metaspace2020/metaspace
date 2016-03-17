@@ -10,24 +10,28 @@ RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids',
                   'chaos', 'image_corr', 'pattern_match', 'msm', 'adduct',
                   'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id']
 RESULTS_SEL = '''
-        SELECT * FROM (
-            SELECT sf_db.name as db_name, ds.name as ds_name, f.sf as sf, f.names as comp_names, f.subst_ids as comp_ids,
-                (m.stats->'chaos')::text::real AS chaos,
-                (m.stats->'spatial')::text::real AS image_corr,
-                (m.stats->'spectral')::text::real AS pattern_match,
-                msm,
-                m.adduct AS adduct,
-                j.id AS job_id,
-                ds.id AS ds_id,
-                f.id AS sf_id,
-                m.peaks_n as peaks,
-                sf_db.id AS db_id
-            FROM iso_image_metrics m
-            JOIN formula_db sf_db ON sf_db.id = m.db_id
-            JOIN agg_formula f ON f.id = m.sf_id AND sf_db.id = f.db_id
-            JOIN job j ON j.id = m.job_id
-            JOIN dataset ds ON ds.id = j.ds_id) as t
-        '''
+    SELECT * FROM (
+        SELECT sf_db.name as db_name, ds.name as ds_name, f.sf as sf, f.names as comp_names, f.subst_ids as comp_ids,
+            coalesce((m.stats->'chaos')::text::real, 0) AS chaos,
+            coalesce((m.stats->'spatial')::text::real, 0) AS image_corr,
+            coalesce((m.stats->'spectral')::text::real, 0) AS pattern_match,
+            coalesce(msm, 0) as msm,
+            a.adduct AS adduct,
+            j.id AS job_id,
+            ds.id AS ds_id,
+            f.id AS sf_id,
+            m.peaks_n as peaks,
+            sf_db.id AS db_id
+            --CASE WHEN fdr < 0.5 THEN 1 ELSE 0 END AS fdr_thr
+        FROM agg_formula f
+        CROSS JOIN adduct a
+        JOIN formula_db sf_db ON sf_db.id = f.db_id
+        LEFT JOIN job j ON j.id = a.job_id
+        LEFT JOIN dataset ds ON ds.id = j.ds_id
+        LEFT JOIN iso_image_metrics m ON m.sf_id = f.id AND f.db_id = sf_db.id AND m.adduct = a.adduct AND m.job_id = j.id
+        ORDER BY sf
+    ) as t
+    '''
 
 
 def select_results(query, where=None, orderby='msm', asc=False, limit=500, offset=0):
