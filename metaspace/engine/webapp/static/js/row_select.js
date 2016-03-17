@@ -2,20 +2,17 @@
 // Row select action
 function addRowSelectionHandler(results_table) {
     $('#results-table tbody').on( 'click', 'tr', function () {
-      if ( $(this).hasClass('selected') ) {
-        $(this).removeClass('selected');
-      }
-      else {
-        results_table.$('tr.selected').removeClass('selected');
-        select_row(results_table, this);
-      }
+        if ($(this).hasClass('selected') != true) {
+            results_table.$('tr.selected').removeClass('selected');
+            $(this).addClass('selected');
+            select_row(results_table.row($(this)).data());
+        }
     });
 }
 
-function select_row(results_table, row_object) {
+function select_row(data) {
     var t_start = performance.now();
-    $(row_object).addClass('selected');
-    var d = results_table.row(row_object).data();
+    var d = data;
     console.log(d);
     var sf = d[2];
     var subst_names = d[3];
@@ -26,6 +23,7 @@ function select_row(results_table, row_object) {
     var sf_id = d[12];
     var peaks_n = d[13];
     var db_id = d[14];
+    var fdr_pass = d[15];
 
     $("#imagediv").empty();
     $("#imagediv").html("<h4 style='text-align:center'>...loading images...</h4>");

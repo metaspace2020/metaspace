@@ -22,7 +22,7 @@ function initResultsTable() {
       fnInitComplete: function(oSettings, json) {
         $('#results-table tbody tr:eq(0)').click();
       },
-      "columnDefs": [
+      columnDefs: [
         { "render": function ( data, type, row ) {
           if (type === 'display') {
             return sin_render_sf(data);
@@ -65,11 +65,19 @@ function initResultsTable() {
         }, "targets": [9] },
         { "visible": false,  "targets": [10, 11, 12, 13, 14] },
       ],
-      "initComplete" : function(oSettings, json) {
+      initComplete : function(oSettings, json) {
         $('#results-table').tooltip({
           selector: "span[rel=tooltip]",
           html: true
         });
+      },
+      fnRowCallback: function( row, data, iDisplayIndex, iDisplayIndexFull ) {
+        if ( data[15] == "1" ) {
+            row.classList.add('correct');
+        }
+        else if ( data[15] == "0" ) {
+            row.classList.add('wrong');
+        }
       }
     });
 }

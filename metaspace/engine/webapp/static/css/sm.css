@@ -61,3 +61,15 @@ div.sm-navbar {
 #google-sign-out {
     visibility: hidden;
 }
+
+table.dataTable > tbody > tr.correct {
+    background-color: #dff0d8;
+}
+
+table.dataTable > tbody > tr.wrong {
+    background-color: #f2dede;
+}
+
+table.dataTable > tbody > tr.selected {
+    background-color: #B0BED9;
+}

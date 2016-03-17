@@ -8,7 +8,7 @@ from tornado import gen
 RESULTS_COUNT_TPL = "SELECT COUNT(*) as count FROM ({}) tt"
 RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids',
                   'chaos', 'image_corr', 'pattern_match', 'msm', 'adduct',
-                  'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id']
+                  'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id', 'pass_fdr']
 RESULTS_SEL = '''
     SELECT * FROM (
         SELECT sf_db.name as db_name, ds.name as ds_name, f.sf as sf, f.names as comp_names, f.subst_ids as comp_ids,
@@ -21,8 +21,8 @@ RESULTS_SEL = '''
             ds.id AS ds_id,
             f.id AS sf_id,
             m.peaks_n as peaks,
-            sf_db.id AS db_id
-            --CASE WHEN fdr < 0.5 THEN 1 ELSE 0 END AS fdr_thr
+            sf_db.id AS db_id,
+            CASE WHEN fdr < 0.5 THEN 1 ELSE 0 END AS pass_fdr
         FROM agg_formula f
         CROSS JOIN adduct a
         JOIN formula_db sf_db ON sf_db.id = f.db_id
