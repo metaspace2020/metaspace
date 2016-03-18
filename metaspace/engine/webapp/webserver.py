@@ -17,7 +17,7 @@ import tornado.ioloop
 import tornado.web
 import tornpsql
 
-from handlers import results_table, iso_image_generation, misc, auth, feedback
+from handlers import results_table, iso_image_gen, misc, auth, feedback
 from util import my_print
 
 # get list of engine files
@@ -42,8 +42,8 @@ class Application(tornado.web.Application):
             (r"/feedback-comment", feedback.FeedbackComment),
             # (r"/static/(.*)", tornado.web.StaticFileHandler, {"path": path.join(path.dirname(__file__), "static")}),
             (r"^/results_table/(.*)", results_table.ResultsTableHandler),
-            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", iso_image_generation.AggIsoImgPngHandler),
-            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", iso_image_generation.IsoImgPngHandler),
+            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", iso_image_gen.AggIsoImgPngHandler),
+            (r"^/mzimage2/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)/([^/]+)", iso_image_gen.IsoImgPngHandler),
             (r"^/spectrum_line_chart_data/([^/]+)/([^/]+)/([^/]+)/([^/]+)", misc.SpectrumLineChartHandler),
             (r"^/sf_peak_mzs/([^/]+)/([^/]+)/([^/]+)/([^/]+)", misc.SFPeakMZsHandler),
             (r"^/min_max_int/([^/]+)/([^/]+)/([^/]+)/([^/]+)", misc.MinMaxIntHandler),

@@ -2,8 +2,12 @@
 function initResultsTable() {
     return $('#results-table').DataTable( {
       ajax: {
-        "url": "/results_table/",
-        "type": "POST"
+        url: "/results_table/",
+        type: "POST",
+        data: function(data, settings) {
+            data.fdr_thr = $("#fdr_thr_btn").text();
+            return data
+        },
       },
       scroller: {
         loadingIndicator: true
@@ -79,6 +83,15 @@ function initResultsTable() {
             row.classList.add('wrong');
         }
       }
+    });
+}
+
+function fdrThrUpdate(results_table) {
+    $(".dropdown-menu li a").click(function() {
+      var selText = $(this).text();
+      $(this).parents('.btn-group').find('.dropdown-toggle').html(selText+' <span class="caret"></span>');
+
+      results_table.ajax.reload();
     });
 }
 

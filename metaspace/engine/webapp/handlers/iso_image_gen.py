@@ -91,12 +91,10 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         color_img_data[:, :, 3] = mask
         return color_img_data
 
-    def gen_iso_img(self, ds_id, job_id, sf_id, adduct):
+    def gen_iso_img(self, ds_id, job_id, sf_id, adduct, color_img_data):
         img_bounds = self.db.query(BOUNDS_SEL, job_id)[0]['img_bounds']
         nrows = img_bounds['y']['max'] - img_bounds['y']['min'] + 1
         ncols = img_bounds['x']['max'] - img_bounds['x']['min'] + 1
-
-        color_img_data = self._get_color_image_data(ds_id, job_id, sf_id, adduct)
 
         fp = cStringIO.StringIO()
         png_writer = png.Writer(width=ncols, height=nrows, alpha=True)
@@ -113,8 +111,13 @@ class IsoImgPngHandler(IsoImgBaseHandler):
     @gen.coroutine
     def get(self, db_id, ds_id, job_id, sf_id, sf, adduct, peak_id):
         self.peak_id = int(peak_id)
-        img_fp = self.gen_iso_img(int(ds_id), int(job_id), int(sf_id), adduct)
-        self.send_img_response(img_fp)
+
+        color_img_data = self._get_color_image_data(ds_id, job_id, sf_id, adduct)
+        if color_img_data[:,:,:3].sum() > 0:
+            img_fp = self.gen_iso_img(int(ds_id), int(job_id), int(sf_id), adduct, color_img_data)
+            self.send_img_response(img_fp)
+        else:
+            self.redirect('/static/iso_placeholder.png')
 
     def get_img_ints(self, ints_list):
         if self.peak_id < len(ints_list):
@@ -131,8 +134,12 @@ class AggIsoImgPngHandler(IsoImgBaseHandler):
         job_id = int(job_id)
         sf_id = int(sf_id)
 
-        img_fp = self.gen_iso_img(ds_id, job_id, sf_id, adduct)
-        self.send_img_response(img_fp)
+        color_img_data = self._get_color_image_data(ds_id, job_id, sf_id, adduct)
+        if color_img_data[:,:,:3].sum() > 0:
+            img_fp = self.gen_iso_img(ds_id, job_id, sf_id, adduct, color_img_data)
+            self.send_img_response(img_fp)
+        else:
+            self.redirect('/static/iso_placeholder.png')
 
     def get_img_ints(self, ints_list):
         return ints_list.sum(axis=0)

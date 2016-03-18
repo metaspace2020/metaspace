@@ -5,6 +5,7 @@ $(document).ready(function() {
     addSignOutAction();
 
     var results_table = initResultsTable();
+    fdrThrUpdate(results_table);
     addRowSelectionHandler(results_table);
     addRatingChangeHandler(results_table);
     addCommentSaveHandler(results_table);

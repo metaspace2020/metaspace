@@ -3,7 +3,25 @@
 {% block body %}
     <div class="container-fluid">
         <div class="panel panel-primary">
-          <div class="panel-heading">Results overview</div>
+          <div class="panel-heading">
+              <div class="row">
+                  <div class="col-xs-9"><h4>Results overview</h4></div>
+                  <div class="col-xs-3">
+                    <span>FDR threshold:</span>
+                    <div class="btn-group">
+                        <button id="fdr_thr_btn" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            0.1 <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a href="#">0.5</a></li>
+                            <li><a href="#">0.2</a></li>
+                            <li><a href="#">0.1</a></li>
+                            <li><a href="#">0.05</a></li>
+                        </ul>
+                    </div>
+                  </div>
+              </div>
+          </div>
           <table id="results-table" class="table table-striped" cellspacing="0" width="100%">
             <thead>
               <tr>
@@ -84,10 +102,10 @@
                                             <input name="bad" value="bad" id="optionBad" type="radio">
                                             <span class="glyphicon glyphicon-thumbs-down"></span>
                                         </label>
-                                        <label id="labelNotSure" class="btn btn-primary" title="Not sure">
-                                            <input name="not_sure" value="not_sure" id="optionNotSure" type="radio">
-                                            <span class="glyphicon glyphicon-question-sign"></span>
-                                        </label>
+                                        <!--<label id="labelNotSure" class="btn btn-primary" title="Not sure">-->
+                                            <!--<input name="not_sure" value="not_sure" id="optionNotSure" type="radio">-->
+                                            <!--<span class="glyphicon glyphicon-question-sign"></span>-->
+                                        <!--</label>-->
                                     </div>
                                 <!--</div>-->
                                 <!--<div class="form-group">-->

@@ -22,14 +22,14 @@ RESULTS_SEL = '''
             f.id AS sf_id,
             m.peaks_n as peaks,
             sf_db.id AS db_id,
-            CASE WHEN fdr < 0.5 THEN 1 ELSE 0 END AS pass_fdr
+            CASE WHEN fdr < %s THEN 1 ELSE 0 END AS pass_fdr
         FROM agg_formula f
         CROSS JOIN adduct a
         JOIN formula_db sf_db ON sf_db.id = f.db_id
         LEFT JOIN job j ON j.id = a.job_id
         LEFT JOIN dataset ds ON ds.id = j.ds_id
         LEFT JOIN iso_image_metrics m ON m.sf_id = f.id AND f.db_id = sf_db.id AND m.adduct = a.adduct AND m.job_id = j.id
-        ORDER BY sf
+        --ORDER BY sf
     ) as t
     '''
 
@@ -90,6 +90,8 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         limit = int(self.get_argument('length', 500))
         offset = int(self.get_argument('start', 0))
 
+        fdr_thr = float(self.get_argument('fdr_thr'))
+
         db_name = self.request.arguments['columns[0][search][value]'][0]
         ds_name = self.request.arguments['columns[1][search][value]'][0]
         adduct = self.request.arguments['columns[9][search][value]'][0]
@@ -106,6 +108,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         count_query, query, query_params = select_results(query=RESULTS_SEL, where=where,
                                                           orderby=orderby, asc=order_asc,
                                                           limit=limit, offset=offset)
+        query_params.insert(0, fdr_thr)
         count = int(self.db.query(count_query, *query_params)[0]['count'])
         results = self.db.query(query, *query_params)
 
