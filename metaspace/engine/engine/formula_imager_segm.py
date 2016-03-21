@@ -1,4 +1,7 @@
 import sys
+import pandas as pd
+from itertools import izip, repeat
+
 import numpy as np
 from scipy.sparse import coo_matrix
 
@@ -49,43 +52,34 @@ def segment_spectra(sp, mz_buckets):
         yield s_i, (sp_id, mzs[smask], ints[smask])
 
 
+def sp_df_gen(sp_it, sp_indexes):
+    for sp_id, mzs, intensities in sp_it:
+        for mz, ints in izip(mzs, intensities):
+            yield sp_indexes[sp_id], mz, ints
+
+
 def gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, min_px=4):
     if len(sf_peak_df) > 0:
-        idx_list = []
-        mz_list = []
-        int_list = []
-        for sp_id, mzs, ints in spectra_it:
-            sp_idx = len(mzs) * [sp_indexes[sp_id]]
-            idx_list.extend(sp_idx)
-            mz_list.extend(mzs)
-            int_list.extend(ints)
+        # a bit slower than using pure numpy arrays but much shorter
+        sp_df = pd.DataFrame(sp_df_gen(spectra_it, sp_indexes),
+                             columns=['idx', 'mz', 'ints']).sort_values(by='mz')
 
-        # TODO: replace with pd.DataFrame
-        idx_list = np.asarray(idx_list)
-        mz_list = np.asarray(mz_list)
-        int_list = np.asarray(int_list)
+        sf_peak_df = sf_peak_df[(sf_peak_df.mz >= sp_df.mz.min()) & (sf_peak_df.mz <= sp_df.mz.max())]
+        lower = sf_peak_df.mz.map(lambda mz: mz - mz*ppm*1e-6)
+        upper = sf_peak_df.mz.map(lambda mz: mz + mz*ppm*1e-6)
 
-        mz_order = np.argsort(mz_list)
-        idx_list = idx_list[mz_order]
-        mz_list = mz_list[mz_order]
-        int_list = int_list[mz_order]
-
-        sf_peak_segm_df = sf_peak_df[(sf_peak_df.mz >= mz_list.min()) & (sf_peak_df.mz <= mz_list.max())]
-        lower = sf_peak_segm_df.mz.map(lambda mz: mz - mz*ppm*1e-6)
-        upper = sf_peak_segm_df.mz.map(lambda mz: mz + mz*ppm*1e-6)
-
-        lower_idx = np.searchsorted(mz_list, lower, 'l')
-        upper_idx = np.searchsorted(mz_list, upper, 'r')
+        lower_idx = np.searchsorted(sp_df.mz, lower, 'l')
+        upper_idx = np.searchsorted(sp_df.mz, upper, 'r')
 
         for i, (l, u) in enumerate(zip(lower_idx, upper_idx)):
             if u - l >= min_px:
-                data = int_list[l:u]
+                data = sp_df.ints[l:u].values
                 if data.shape[0] > 0:
-                    idx = idx_list[l:u]
+                    idx = sp_df.idx[l:u].values
                     row_inds = idx / ncols
                     col_inds = idx % ncols
-                    yield (sf_peak_segm_df.sf_id.iloc[i], sf_peak_segm_df.adduct.iloc[i]),\
-                          (sf_peak_segm_df.peak_i.iloc[i], coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols)))
+                    yield (sf_peak_df.sf_id.iloc[i], sf_peak_df.adduct.iloc[i]),\
+                          (sf_peak_df.peak_i.iloc[i], coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols)))
 
 
 def _img_pairs_to_list(pairs):
@@ -113,7 +107,7 @@ def compute_sf_images(sc, ds, sf_peak_df, ppm):
 
     mz_grid, workload_per_mz = estimate_mz_workload(spectra_rdd, sf_peak_df)
 
-    n = 64
+    n = 256
     mz_bounds = find_mz_bounds(mz_grid, workload_per_mz, n)
     mz_buckets = create_mz_buckets(mz_bounds, ppm=ppm)
     segm_spectra = (spectra_rdd

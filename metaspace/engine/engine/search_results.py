@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import json
+from operator import mul
 from collections import OrderedDict
 from datetime import datetime
 
