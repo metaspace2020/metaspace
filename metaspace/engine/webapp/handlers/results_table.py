@@ -28,7 +28,7 @@ RESULTS_SEL = '''
         JOIN formula_db sf_db ON sf_db.id = f.db_id
         LEFT JOIN job j ON j.id = a.job_id
         LEFT JOIN dataset ds ON ds.id = j.ds_id
-        LEFT JOIN iso_image_metrics m ON m.sf_id = f.id AND f.db_id = sf_db.id AND m.adduct = a.adduct AND m.job_id = j.id
+        LEFT JOIN iso_image_metrics m ON m.job_id = j.id AND m.db_id = sf_db.id AND m.sf_id = f.id AND m.adduct = a.adduct
         --ORDER BY sf
     ) as t
     '''
@@ -96,6 +96,8 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         ds_name = self.request.arguments['columns[1][search][value]'][0]
         adduct = self.request.arguments['columns[9][search][value]'][0]
         sf = self.request.arguments['columns[2][search][value]'][0]
+        min_msm = self.request.arguments['columns[8][search][value]'][0]
+
         orderby = RESULTS_FIELDS[int(self.get_argument('order[0][column]', 0))]
         order_asc = self.get_argument('order[0][dir]', 0) == 'asc'
 
@@ -103,7 +105,8 @@ class ResultsTableHandler(tornado.web.RequestHandler):
             {'field': 'db_name', 'value': db_name, 'cond': '='},
             {'field': 'ds_name', 'value': ds_name, 'cond': '='},
             {'field': 'adduct', 'value': adduct, 'cond': '='},
-            {'field': 'sf', 'value': sf, 'cond': 'like'}
+            {'field': 'sf', 'value': sf, 'cond': 'like'},
+            {'field': 'msm', 'value': min_msm, 'cond': '>='}
         ]
         count_query, query, query_params = select_results(query=RESULTS_SEL, where=where,
                                                           orderby=orderby, asc=order_asc,
@@ -117,6 +120,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         results_dict['yadcf_data_0'] = self.formula_dbs
         results_dict['yadcf_data_1'] = self.datasets
         results_dict['yadcf_data_2'] = []
+        results_dict['yadcf_data_8'] = ['0.1']
         results_dict['yadcf_data_9'] = self.adducts
 
         self.write(json.dumps(results_dict))

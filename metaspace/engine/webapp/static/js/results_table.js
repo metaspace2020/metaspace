@@ -128,7 +128,16 @@ function initColumnFilters(results_table) {
 //      },
 //      {column_number : 6, filter_type: "lower_bound_number", filter_container_id: "fil-img-corr", filter_reset_button_text: false, filter_default_label: ['&ge;'] },
 //      {column_number : 7, filter_type: "lower_bound_number", filter_container_id: "fil-pat-match", filter_reset_button_text: false, filter_default_label: ['&ge;']},
-//      {column_number : 8, filter_type: "lower_bound_number", filter_container_id: "fil-msm", filter_reset_button_text: false, filter_default_label: ['&ge;']},
+      {
+        column_number : 8,
+//        filter_type: "lower_bound_number",
+        filter_type: "text",
+        filter_delay: 500,
+        filter_container_id: "fil-msm",
+        filter_reset_button_text: false,
+//        filter_default_label: ['&ge;']
+//        filter_default_label: ["0.5"]
+      },
       {
         column_number : 9,
         filter_type: "select",
@@ -137,5 +146,10 @@ function initColumnFilters(results_table) {
         filter_reset_button_text: false,
         filter_default_label: 'all'
       },
+    ]);
+
+    yadcf.exFilterColumn(results_table, [
+//        [0, "HMDB"],
+        [8, "0.1"]
     ]);
 }
