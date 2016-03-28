@@ -116,7 +116,7 @@ class Dataset(object):
         txt_to_spectrum = self.txt_to_spectrum
         if self.sm_config['fs']['local']:
             logger.info('Converting txt to spectrum rdd from %s', local_path(self.work_dir.txt_path))
-            return self.sc.textFile(local_path(self.work_dir.txt_path)).map(txt_to_spectrum)
+            return self.sc.textFile(local_path(self.work_dir.txt_path), minPartitions=8).map(txt_to_spectrum)
         else:
             logger.info('Converting txt to spectrum rdd from %s', hdfs_path(self.work_dir.txt_path))
             return self.sc.textFile(hdfs_path(self.work_dir.txt_path), minPartitions=8).map(txt_to_spectrum)

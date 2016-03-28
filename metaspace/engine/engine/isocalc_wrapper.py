@@ -3,7 +3,8 @@ import numpy as np
 
 from engine.util import logger
 from pyMS.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError, ParseError
-from pyMS.pyisocalc.pyisocalc import complete_isodist, parseSumFormula
+from pyMS.pyisocalc.pyisocalc import parseSumFormula
+from cpyMSpec.legacy_interface import complete_isodist
 
 
 def list_of_floats_to_str(l):

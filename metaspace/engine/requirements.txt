@@ -1,3 +1,4 @@
+cpyMSpec==0.0.9
 pandas
 requests
 numpy==1.10.4

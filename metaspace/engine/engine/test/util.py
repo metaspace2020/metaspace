@@ -3,6 +3,7 @@ from pyspark import SparkContext, SparkConf
 from fabric.api import local
 from os.path import join, realpath, dirname
 import os
+from pprint import pprint
 
 from engine.db import DB
 
@@ -91,3 +92,14 @@ def sm_config():
             "executor.memory": "1g"
         }
     }
+
+
+def assert_df_equal(act, exp):
+    equal = act.equals(exp)
+    if not equal:
+        print 'Actual:'
+        pprint(act)
+        print 'Expected:'
+        pprint(exp)
+    assert equal
+

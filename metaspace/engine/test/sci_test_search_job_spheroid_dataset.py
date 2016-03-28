@@ -110,7 +110,7 @@ class SciTester(object):
     def __init__(self):
         self.db = DB(sm_config['db'])
         self.base_search_res_path = join(proj_root(), 'test/reports', 'spheroid_12h_search_res.csv')
-        self.metrics = ['chaos', 'img_corr', 'pat_match']
+        self.metrics = ['chaos', 'spatial', 'spectral']
 
     def metr_dict_to_array(self, metr_d):
         return np.array([metr_d[m] for m in self.metrics])

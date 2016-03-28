@@ -67,7 +67,7 @@ def test_get_spectra_2by3(spark_context, sm_config):
                        (3, np.array([103.]), np.array([0., 0.])),
                        (4, np.array([200.]), np.array([0., 10.]))]
 
-            m.assert_called_once_with('file:///txt_path')
+            m.assert_called_once_with('file:///txt_path', minPartitions=8)
             assert len(res) == len(exp_res)
 
             for r, exp_r in zip(res, exp_res):

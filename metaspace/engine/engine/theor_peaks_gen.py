@@ -71,8 +71,7 @@ class TheorPeaksGenerator(object):
         logger.info('%d saved (sf, adduct)s, %s not saved (sf, adduct)s', len(stored_sf_adduct), len(sf_adduct_cand))
 
         if sf_adduct_cand:
-            peak_lines = self.generate_theor_peaks(sf_adduct_cand)
-            self._import_theor_peaks_to_db(peak_lines)
+            self.generate_theor_peaks(sf_adduct_cand)
 
     def apply_database_filters(self, formula_list):
         """ Filters according to settings in dataset config
@@ -126,11 +125,13 @@ class TheorPeaksGenerator(object):
         logger.info('Generating missing peaks')
         formatted_iso_peaks = self.isocalc_wrapper.formatted_iso_peaks
         db_id = self.db.select_one(DB_ID_SEL, self.ds_config['database']['name'])[0]
-        sf_adduct_cand_rdd = self.sc.parallelize(sf_adduct_cand)
-        peak_lines = (sf_adduct_cand_rdd
-                      .flatMap(lambda (sf_id, sf, adduct): formatted_iso_peaks(db_id, sf_id, sf, adduct))
-                      .collect())
-        return peak_lines
+        n = 100
+        for i in xrange(0, len(sf_adduct_cand), n):
+            sf_adduct_cand_rdd = self.sc.parallelize(sf_adduct_cand[i:i+n])
+            peak_lines = (sf_adduct_cand_rdd
+                          .flatMap(lambda (sf_id, sf, adduct): formatted_iso_peaks(db_id, sf_id, sf, adduct))
+                          .collect())
+            self._import_theor_peaks_to_db(peak_lines)
 
     def _import_theor_peaks_to_db(self, peak_lines):
         logger.info('Saving new peaks to the DB')

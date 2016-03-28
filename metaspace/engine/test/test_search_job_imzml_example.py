@@ -61,10 +61,7 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_
                          'FROM theor_peaks '
                          'ORDER BY adduct')
 
-        assert len(rows) == 3
-        assert rows[0][:3] == (0, 10007, '+H')
-        assert rows[1][:3] == (0, 10007, '+K')
-        assert rows[2][:3] == (0, 10007, '+Na')
+        assert len(rows) == 3 + 81
         for r in rows:
             assert r[3] and r[4] and r[5] and r[6]
 
@@ -75,7 +72,7 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_
         assert rows
         assert rows[0]
         assert tuple(rows[0][:2]) == (0, 10007)
-        assert set(rows[0][4].keys()) == {'chaos', 'img_corr', 'pat_match'}
+        assert set(rows[0][4].keys()) == {'chaos', 'spatial', 'spectral'}
 
         # image asserts
         rows = db.select(('SELECT db_id, sf_id, adduct, peak, intensities, min_int, max_int '

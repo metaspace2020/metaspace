@@ -74,6 +74,7 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
     def get_img_ints(self, ints_list):
         pass
 
+    # TODO: get rid of matplotlib
     def _get_color_image_data(self, ds_id, job_id, sf_id, adduct):
         coords_row = self.db.query(COORD_SEL % int(ds_id))[0]
         coords = np.array(zip(coords_row.xs, coords_row.ys))
