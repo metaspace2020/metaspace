@@ -53,7 +53,7 @@ class ImgMeasures(object):
             return self.chaos, self.image_corr, self.pattern_match
 
 
-def get_compute_img_measures(empty_matrix, img_gen_conf):
+def get_compute_img_metrics(empty_matrix, img_gen_conf):
     """ Returns a function for computing isotope image metrics
 
     Args
@@ -105,21 +105,22 @@ def sf_image_metrics(sf_images, sc, formulas, ds, ds_config):
     """
     nrows, ncols = ds.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
-    compute_measures = get_compute_img_measures(empty_matrix, ds_config['image_generation'])
-    # sf_peak_df_brcast = sc.broadcast(formulas.sf_df)
-    sf_peak_ints_brcast = sc.broadcast(formulas.get_sf_peak_ints())
+    compute_metrics = get_compute_img_metrics(empty_matrix, ds_config['image_generation'])
+    sf_add_ints_map_brcast = sc.broadcast(formulas.get_sf_peak_ints())
+    # sf_peak_ints_brcast = sc.broadcast(formulas.get_sf_peak_ints())
 
     sf_metrics = (sf_images
-                  .map(lambda (sf_i, imgs): (sf_i,) + compute_measures(imgs, sf_peak_ints_brcast.value[sf_i]))
+                  .map(lambda ((sf, adduct), imgs):
+                      (sf, adduct) + compute_metrics(imgs, sf_add_ints_map_brcast.value[(sf, adduct)]))
                   ).collect()
-    sf_metrics_df = pd.DataFrame(sf_metrics, columns=['index', 'chaos', 'spatial', 'spectral']).set_index('index')
+    sf_metrics_df = (pd.DataFrame(sf_metrics, columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral'])
+                     .set_index(['sf_id', 'adduct']))
     sf_metrics_df['msm'] = _calculate_msm(sf_metrics_df)
     return sf_metrics_df
 
 
 def sf_image_metrics_est_fdr(sf_metrics_df, formulas, fdr):
-    sf_msm_df = pd.DataFrame(formulas.get_sf_adduct_peaksn(),
-                             columns=['sf_id', 'adduct', 'peakn']).drop('peakn', axis=1)
+    sf_msm_df = formulas.sf_df[['sf_id', 'adduct']].copy().set_index(['sf_id', 'adduct'])
     sf_msm_df = sf_msm_df.join(sf_metrics_df.msm).fillna(0)
 
     sf_adduct_fdr = fdr.estimate_fdr(sf_msm_df)

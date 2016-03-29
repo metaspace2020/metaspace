@@ -3,7 +3,7 @@ import pandas as pd
 from cStringIO import StringIO
 from engine.util import logger
 
-DECOY_ADDUCTS = ['+He', '+Li', '+Be', '+B', '+C', '+N', '+O', '+F', '+Ne', '+Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Ir', 'Th', 'Pt', 'Pu', 'Os', 'Yb', 'Lu', 'Bi', 'Pb', 'Re', 'Tl', 'Tm', 'U', 'W', 'Au', 'Er', 'Hf', 'Hg', 'Ta']
+DECOY_ADDUCTS = ['+He', '+Li', '+Be', '+B', '+C', '+N', '+O', '+F', '+Ne', '+Mg', '+Al', '+Si', '+P', '+S', '+Cl', '+Ar', '+Ca', '+Sc', '+Ti', '+V', '+Cr', '+Mn', '+Fe', '+Co', '+Ni', '+Cu', '+Zn', '+Ga', '+Ge', '+As', '+Se', '+Br', '+Kr', '+Rb', '+Sr', '+Y', '+Zr', '+Nb', '+Mo', '+Ru', '+Rh', '+Pd', '+Ag', '+Cd', '+In', '+Sn', '+Sb', '+Te', '+I', '+Xe', '+Cs', '+Ba', '+La', '+Ce', '+Pr', '+Nd', '+Sm', '+Eu', '+Gd', '+Tb', '+Dy', '+Ho', '+Ir', '+Th', '+Pt', '+Pu', '+Os', '+Yb', '+Lu', '+Bi', '+Pb', '+Re', '+Tl', '+Tm', '+U', '+W', '+Au', '+Er', '+Hf', '+Hg', '+Ta']
 SF_LIST_SEL = ('SELECT af.id '
                'FROM agg_formula af '
                'JOIN formula_db db ON db.id = af.db_id '
@@ -44,7 +44,8 @@ class FDR(object):
                                   columns=['sf_id', 'ta', 'da'])
         self._save_target_decoy_df()
 
-    def _msm_fdr_map(self, target_msm, decoy_msm):
+    @staticmethod
+    def _msm_fdr_map(target_msm, decoy_msm):
         target_msm_hits = pd.Series(target_msm.msm.value_counts(), name='target')
         decoy_msm_hits = pd.Series(decoy_msm.msm.value_counts(), name='decoy')
         msm_df = pd.concat([target_msm_hits, decoy_msm_hits], axis=1).fillna(0).sort_index(ascending=False)

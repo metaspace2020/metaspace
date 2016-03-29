@@ -38,7 +38,7 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
         db.close()
 
 
-@patch('engine.formula_img_validator.get_compute_img_measures')
+@patch('engine.formula_img_validator.get_compute_img_metrics')
 def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_database, sm_config):
     get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
 

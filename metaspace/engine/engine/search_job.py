@@ -13,7 +13,6 @@ from datetime import datetime
 from engine.db import DB
 from engine.dataset import Dataset
 from engine.fdr import FDR
-from engine.formulas import Formulas
 from engine.formula_img_validator import sf_image_metrics, sf_image_metrics_est_fdr, filter_sf_images
 from engine.formulas_segm import FormulasSegm
 from engine.search_results import SearchResults
@@ -117,7 +116,7 @@ class SearchJob(object):
             target_adducts = self.ds_config['isotope_generation']['adducts']
             self.fdr = FDR(self.job_id, self.sf_db_id, decoy_sample_size=20,target_adducts=target_adducts, db=self.db)
             self.fdr.decoy_adduct_selection()
-            self.formulas = FormulasSegm(self.ds_config, self.db)
+            self.formulas = FormulasSegm(self.job_id, self.sf_db_id, self.ds_config, self.db)
 
             search_results = self._search()
             self._store_results(search_results)
@@ -147,7 +146,7 @@ class SearchJob(object):
 
     def _search(self):
         logger.info('Running molecule search')
-        sf_images = compute_sf_images(self.sc, self.ds, self.formulas.sf_peak_df,
+        sf_images = compute_sf_images(self.sc, self.ds, self.formulas.get_sf_peak_df(),
                                       self.ds_config['image_generation']['ppm'])
         all_sf_metrics_df = sf_image_metrics(sf_images, self.sc, self.formulas, self.ds, self.ds_config)
         sf_metrics_fdr_df = sf_image_metrics_est_fdr(all_sf_metrics_df, self.formulas, self.fdr)

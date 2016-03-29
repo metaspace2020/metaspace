@@ -5,7 +5,7 @@ import pandas as pd
 from numpy.testing import assert_array_almost_equal
 from scipy.sparse import csr_matrix
 
-from engine.formula_img_validator import sf_image_metrics, get_compute_img_measures, ImgMeasures, sf_image_metrics_est_fdr, \
+from engine.formula_img_validator import sf_image_metrics, get_compute_img_metrics, ImgMeasures, sf_image_metrics_est_fdr, \
     filter_sf_images
 from engine.dataset import Dataset
 from engine.formulas import Formulas
@@ -23,7 +23,7 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
         'q': 99.0
     }
     empty_matrix = np.zeros((2, 3))
-    compute_measures = get_compute_img_measures(empty_matrix, img_gen_conf)
+    compute_measures = get_compute_img_metrics(empty_matrix, img_gen_conf)
 
     sf_iso_images = [csr_matrix([[0., 100., 100.], [10., 0., 3.]]),
                      csr_matrix([[0., 50., 50.], [0., 20., 0.]])]
