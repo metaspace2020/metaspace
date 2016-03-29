@@ -29,4 +29,4 @@ if __name__ == "__main__":
 
     logger.info("All done!")
     time_spent = time.time() - start
-    logger.info('Time spent: %d mins %d secs', int(round(time_spent/60)), int(round(time_spent%60)))
+    logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
