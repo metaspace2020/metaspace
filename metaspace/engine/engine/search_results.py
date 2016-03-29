@@ -50,8 +50,8 @@ class SearchResults(object):
 
     @staticmethod
     def _metrics_table_row_gen(job_id, db_id, metr_df, sf_adduct_peaksn):
-        for ind, s in metr_df.iterrows():
-            metr_json = json.dumps({'chaos': s.chaos, 'spatial': s.spatial, 'spectral': s.spectral})
+        for ind, s in metr_df.reset_index().iterrows():
+            metr_json = json.dumps(OrderedDict([('chaos', s.chaos), ('spatial', s.spatial), ('spectral', s.spectral)]))
             peaks_n = sf_adduct_peaksn[ind][2]
             yield (job_id, db_id, s.sf_id, s.adduct, s.msm, s.fdr, metr_json, peaks_n)
 

@@ -64,13 +64,13 @@ class FormulasSegm(object):
     def get_sf_peak_ints(self):
         return dict(zip(zip(self.sf_df.sf_id, self.sf_df.adduct), self.sf_df.centr_ints))
 
-    # def get_sf_adduct_peaksn(self):
-    #     """
-    #     Returns
-    #     -------
-    #     : list
-    #         An array of triples (formula id, adduct, number of theoretical peaks)
-    #     """
-    #     # return zip(self.sf_ids, self.adducts, map(len, self.sf_theor_peaks))
-    #     return zip(self.sf_df.sf_id, self.sf_df.adduct, self.sf_df.centr_mzs.map(len))
+    def get_sf_adduct_peaksn(self):
+        """
+        Returns
+        -------
+        : list
+            An array of triples (formula id, adduct, number of theoretical peaks)
+        """
+        # return zip(self.sf_ids, self.adducts, map(len, self.sf_theor_peaks))
+        return zip(self.sf_df.sf_id, self.sf_df.adduct, self.sf_df.centr_mzs.map(len))
 

@@ -124,7 +124,7 @@ def sf_image_metrics_est_fdr(sf_metrics_df, formulas, fdr):
     sf_msm_df = sf_msm_df.join(sf_metrics_df.msm).fillna(0)
 
     sf_adduct_fdr = fdr.estimate_fdr(sf_msm_df)
-    return sf_metrics_df.join(sf_adduct_fdr, how='inner')[['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm', 'fdr']]
+    return sf_metrics_df.join(sf_adduct_fdr, how='inner')[['chaos', 'spatial', 'spectral', 'msm', 'fdr']]
 
 
 def filter_sf_images(sf_images, sf_metrics_df):

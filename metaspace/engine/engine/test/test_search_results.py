@@ -1,4 +1,5 @@
 from mock import patch, mock_open, mock, Mock, MagicMock
+import pandas as pd
 import pytest
 from scipy.sparse.csr import csr_matrix
 import json
@@ -13,18 +14,19 @@ db_mock = MagicMock(spec=DB)
 
 @pytest.fixture
 def search_results():
-    imgs_map = {0: [csr_matrix([[100, 0, 0], [0, 0, 0]]), csr_matrix([[0, 0, 0], [0, 0, 10]])]}
-    img_metrics_map = {0: (0.9, 0.9, 0.9)}
+    imgs_map = {(1, '+H'): [csr_matrix([[100, 0, 0], [0, 0, 0]]), csr_matrix([[0, 0, 0], [0, 0, 10]])]}
+    img_metrics_df = pd.DataFrame([(1, '+H', 0.9, 0.9, 0.9, 0.9**3, 0.5)],
+                                  columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm', 'fdr'])
     sf_adduct_peaksn = [(1, '+H', 2)]
 
-    return SearchResults(0, 0, 0, imgs_map, img_metrics_map, sf_adduct_peaksn, db_mock)
+    return SearchResults(0, 0, 0, img_metrics_df, imgs_map, sf_adduct_peaksn, db_mock)
 
 
 def test_save_sf_img_metrics_correct_db_call(search_results):
     search_results.store_sf_img_metrics()
 
-    metrics_json = json.dumps(OrderedDict(zip(['chaos', 'img_corr', 'pat_match'], (0.9, 0.9, 0.9))))
-    correct_rows = [(0, 0, 1, '+H', 2, metrics_json)]
+    metrics_json = json.dumps(OrderedDict(zip(['chaos', 'spatial', 'spectral'], (0.9, 0.9, 0.9))))
+    correct_rows = [(0, 0, 1, '+H', 0.9**3, 0.5, metrics_json, 2)]
     db_mock.insert.assert_called_with(METRICS_INS, correct_rows)
 
 

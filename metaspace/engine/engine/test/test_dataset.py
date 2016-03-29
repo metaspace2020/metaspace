@@ -61,11 +61,11 @@ def test_get_spectra_2by3(spark_context, sm_config):
             SMConfig._config_dict = sm_config
             ds = Dataset(spark_context, '', 0, {}, work_dir_mock, None)
             res = ds.get_spectra().collect()
-            exp_res = [(0, np.array([100.]), np.array([0., 100.])),
-                       (1, np.array([101.]), np.array([0., 0.])),
-                       (2, np.array([102.]), np.array([0., 0.])),
-                       (3, np.array([103.]), np.array([0., 0.])),
-                       (4, np.array([200.]), np.array([0., 10.]))]
+            exp_res = [(0, np.array([100.]), np.array([100.])),
+                       (1, np.array([101.]), np.array([0.])),
+                       (2, np.array([102.]), np.array([0.])),
+                       (3, np.array([103.]), np.array([0.])),
+                       (4, np.array([200.]), np.array([10.]))]
 
             m.assert_called_once_with('file:///txt_path', minPartitions=8)
             assert len(res) == len(exp_res)

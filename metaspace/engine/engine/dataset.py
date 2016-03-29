@@ -88,23 +88,23 @@ class Dataset(object):
         return (self.max_y - self.min_y + 1,
                 self.max_x - self.min_x + 1)
 
-    @staticmethod
-    def txt_to_spectrum(s):
-        """Converts a text string in the format to a spectrum in the form of two arrays:
-        array of m/z values and array of partial sums of intensities.
-
-        Args
-        ----------
-        s : String
-            id|mz1 mz2 ... mzN|int1 int2 ... intN
-        Returns
-        -------
-        : tuple
-            triple spectrum_id, mzs, cumulative sum of intensities
-        """
-        arr = s.strip().split("|")
-        intensities = np.fromstring("0 " + arr[2], sep=' ')
-        return int(arr[0]), np.fromstring(arr[1], sep=' '), np.cumsum(intensities)
+    # @staticmethod
+    # def txt_to_spectrum(s):
+    #     """Converts a text string in the format to a spectrum in the form of two arrays:
+    #     array of m/z values and array of partial sums of intensities.
+    #
+    #     Args
+    #     ----------
+    #     s : String
+    #         id|mz1 mz2 ... mzN|int1 int2 ... intN
+    #     Returns
+    #     -------
+    #     : tuple
+    #         triple spectrum_id, mzs, cumulative sum of intensities
+    #     """
+    #     arr = s.strip().split("|")
+    #     intensities = np.fromstring("0 " + arr[2], sep=' ')
+    #     return int(arr[0]), np.fromstring(arr[1], sep=' '), np.cumsum(intensities)
 
     @staticmethod
     def txt_to_spectrum_non_cum(s):
