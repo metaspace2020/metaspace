@@ -16,6 +16,7 @@ from os.path import dirname, realpath, join
 env.roledefs = {
     'dev_master': ['ubuntu@54.171.149.242'],
     'dev_web': ['ubuntu@52.19.27.255'],
+    'demo_web': ['ubuntu@52.50.109.217'],
     'stage_web': ['ubuntu@52.19.0.118']
 }
 
@@ -65,7 +66,7 @@ def webserver_stop():
 
 
 @task
-@roles('dev_web')
+#@roles('dev_web')
 def webserver_deploy(delete=False):
     print green('========= Code deployment to SM webserver =========')
 
