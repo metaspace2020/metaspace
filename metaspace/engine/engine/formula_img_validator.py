@@ -120,7 +120,7 @@ def sf_image_metrics(sf_images, sc, formulas, ds, ds_config):
 
 
 def sf_image_metrics_est_fdr(sf_metrics_df, formulas, fdr):
-    sf_msm_df = formulas.sf_df[['sf_id', 'adduct']].copy().set_index(['sf_id', 'adduct'])
+    sf_msm_df = formulas.get_sf_adduct_sorted_df()
     sf_msm_df = sf_msm_df.join(sf_metrics_df.msm).fillna(0)
 
     sf_adduct_fdr = fdr.estimate_fdr(sf_msm_df)

@@ -38,9 +38,11 @@ def test_theor_peaks_generator_run_1(create_fill_test_db, spark_context, sm_conf
     rows = db.select(('SELECT db_id, sf_id, adduct, sigma, charge, pts_per_mz, centr_mzs, '
                       'centr_ints, prof_mzs, prof_ints FROM theor_peaks ORDER BY sf_id, adduct'))
 
-    assert len(rows) == 2
-    assert rows[0] == (0, 9, '+H', 0.01, 1, 10000, [100., 200.], [10., 1.], [100., 200.], [10., 1.])
-    assert rows[1] == (0, 9, '+Na', 0.01, 1, 10000, [100., 200.], [10., 1.], [100., 200.], [10., 1.])
+    assert len(rows) == 2 + 81
+    assert (filter(lambda r: r[2] == '+H', rows)[0] ==
+            (0, 9, '+H', 0.01, 1, 10000, [100., 200.], [10., 1.], [100., 200.], [10., 1.]))
+    assert (filter(lambda r: r[2] == '+Na', rows)[0] ==
+            (0, 9, '+Na', 0.01, 1, 10000, [100., 200.], [10., 1.], [100., 200.], [10., 1.]))
 
     db.close()
 

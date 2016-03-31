@@ -37,14 +37,14 @@ def test_estimate_fdr_returns_correct_df():
                               [2, '+H', '+Ar']],
                              columns=['sf_id', 'ta', 'da'])
 
-    sf_df = pd.DataFrame([[1, '+H', 0.85],
+    msm_df = pd.DataFrame([[1, '+H', 0.85],
                           [2, '+H', 0.5],
                           [1, '+Cu', 0.5],
                           [1, '+Co', 0.5],
                           [2, '+Ag', 0.75],
                           [2, '+Ar', 0.0]],
-                         columns=['sf_id', 'adduct', 'msm'])
+                          columns=['sf_id', 'adduct', 'msm']).set_index(['sf_id', 'adduct']).sort_index()
     exp_sf_df = pd.DataFrame([[1, '+H', 0], [2, '+H', 0.75]],
-                             columns=['sf_id', 'adduct', 'fdr'])
+                             columns=['sf_id', 'adduct', 'fdr']).set_index(['sf_id', 'adduct'])
 
-    assert_df_equal(fdr.estimate_fdr(sf_df), exp_sf_df)
+    assert_df_equal(fdr.estimate_fdr(msm_df), exp_sf_df)

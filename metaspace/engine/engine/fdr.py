@@ -54,10 +54,8 @@ class FDR(object):
         msm_df['fdr'] = msm_df.decoy_cum / msm_df.target_cum
         return msm_df.fdr
 
-    def estimate_fdr(self, sf_df):
+    def estimate_fdr(self, msm_df):
         logger.info('Estimating FDR...')
-
-        msm_df = sf_df.set_index(['sf_id', 'adduct']).sort_index()
 
         target_fdr_df_list = []
         for ta in self.target_adducts:
@@ -74,8 +72,4 @@ class FDR(object):
             target_fdr = target_msm.join(msm_fdr_avg, on='msm').drop('msm', axis=1)
             target_fdr_df_list.append(target_fdr)
 
-        final_fdr = pd.concat(target_fdr_df_list, axis=0)
-
-        sf_df_metrics = sf_df.drop('msm', axis=1).reset_index().set_index(['sf_id', 'adduct'])
-        return final_fdr.join(sf_df_metrics).reset_index().set_index('index')
-
+        return pd.concat(target_fdr_df_list, axis=0)
