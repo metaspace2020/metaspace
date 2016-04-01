@@ -22,7 +22,7 @@ RESULTS_SEL = '''
             f.id AS sf_id,
             m.peaks_n as peaks,
             sf_db.id AS db_id,
-            CASE WHEN fdr < %s THEN 1 ELSE 0 END AS pass_fdr
+            CASE WHEN ROUND(fdr::numeric, 2) <= %s THEN 1 ELSE 0 END AS pass_fdr
         FROM agg_formula f
         CROSS JOIN adduct a
         JOIN formula_db sf_db ON sf_db.id = f.db_id

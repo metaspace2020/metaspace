@@ -19,6 +19,7 @@ class FDR(object):
         self.db = db
         self.target_adducts = target_adducts
         self.td_df = None
+        self.fdr_levels = [0.05, 0.1, 0.2, 0.5]
 
     @staticmethod
     def _decoy_adduct_gen(sf_ids, target_adducts, decoy_adducts_cand, decoy_sample_size):
@@ -54,6 +55,16 @@ class FDR(object):
         msm_df['fdr'] = msm_df.decoy_cum / msm_df.target_cum
         return msm_df.fdr
 
+    def _digitize_fdr(self, fdr_df):
+        df = fdr_df.copy().sort_values(by='msm', ascending=False)
+        msm_levels = [df[df.fdr < fdr_thr].msm.min() for fdr_thr in self.fdr_levels]
+        df['fdr_d'] = 1.
+        for msm_thr, fdr_thr in zip(msm_levels, self.fdr_levels):
+            row_mask = np.isclose(df.fdr_d, 1.) & np.greater_equal(df.msm, msm_thr)
+            df.loc[row_mask, 'fdr_d'] = fdr_thr
+        df['fdr'] = df.fdr_d
+        return df.drop('fdr_d', axis=1)
+
     def estimate_fdr(self, msm_df):
         logger.info('Estimating FDR...')
 
@@ -69,7 +80,7 @@ class FDR(object):
                 msm_fdr_list.append(msm_fdr)
 
             msm_fdr_avg = pd.Series(pd.concat(msm_fdr_list, axis=1).median(axis=1), name='fdr')
-            target_fdr = target_msm.join(msm_fdr_avg, on='msm').drop('msm', axis=1)
-            target_fdr_df_list.append(target_fdr)
+            target_fdr = self._digitize_fdr(target_msm.join(msm_fdr_avg, on='msm'))
+            target_fdr_df_list.append(target_fdr.drop('msm', axis=1))
 
         return pd.concat(target_fdr_df_list, axis=0)

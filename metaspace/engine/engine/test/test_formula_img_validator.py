@@ -2,6 +2,7 @@ import pytest
 from mock import patch, mock, MagicMock
 import numpy as np
 import pandas as pd
+from pandas.util.testing import assert_frame_equal
 from numpy.testing import assert_array_almost_equal
 from scipy.sparse import csr_matrix
 
@@ -10,7 +11,7 @@ from engine.formula_img_validator import ImgMeasures, sf_image_metrics_est_fdr, 
 from engine.dataset import Dataset
 from engine.formulas_segm import FormulasSegm
 from engine.fdr import FDR
-from engine.test.util import spark_context, ds_config, assert_df_equal
+from engine.test.util import spark_context, ds_config
 
 
 @mock.patch('engine.formula_img_validator.isotope_pattern_match', return_value=0.95)
@@ -60,7 +61,7 @@ def test_sf_image_metrics(spark_context, ds_formulas_images_mock, ds_config):
                                        [1, '+H', 0.9, 0.9, 0.9, 0.9**3]],
                                        columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm'])
                           .set_index(['sf_id', 'adduct']))
-        assert_df_equal(metrics_df, exp_metrics_df)
+        assert_frame_equal(metrics_df, exp_metrics_df)
 
 
 def test_add_sf_image_est_fdr():
@@ -82,7 +83,7 @@ def test_add_sf_image_est_fdr():
     exp_metrics_df = pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, 0.9**3, 0.99],
                                    [1, '+H', 0.5, 0.5, 0.5, 0.5**3, 0.5]],
                                   columns=exp_col_list).set_index(['sf_id', 'adduct'])
-    assert_df_equal(res_metrics_df, exp_metrics_df)
+    assert_frame_equal(res_metrics_df, exp_metrics_df)
 
 
 def test_filter_sf_images(spark_context):
