@@ -149,7 +149,6 @@ function initColumnFilters(results_table) {
     ]);
 
     yadcf.exFilterColumn(results_table, [
-//        [0, "HMDB"],
         [8, "0.1"]
     ]);
 }

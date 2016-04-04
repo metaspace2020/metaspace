@@ -65,14 +65,27 @@ class SimpleHtmlHandler(tornado.web.RequestHandler):
                     sparkactivated=args.spark)
 
 
+def fetch_sigma_charge_ptspermz(db, job_id):
+    DS_CONF_SEL = 'SELECT config FROM dataset where id = %s'
+    ds_config = db.query(DS_CONF_SEL, job_id)[0]['config']  # job_id for now is equal to ds_id
+    iso_gen_config = ds_config['isotope_generation']
+    charge = '{}{}'.format(iso_gen_config['charge']['polarity'], iso_gen_config['charge']['n_charges'])
+    return iso_gen_config['isocalc_sigma'], charge, iso_gen_config['isocalc_pts_per_mz']
+
+
 class SFPeakMZsHandler(tornado.web.RequestHandler):
-    peak_profile_sql = '''select centr_mzs
-                       from theor_peaks
-                       where db_id = %s and sf_id = %s and adduct = %s'''
+    CENTR_MZS_SEL = '''SELECT centr_mzs
+                       FROM theor_peaks
+                       WHERE db_id = %s AND sf_id = %s AND adduct = %s AND
+                          ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s'''
+    @property
+    def db(self):
+        return self.application.db
 
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
-        peaks_dict = self.application.db.query(self.peak_profile_sql, int(db_id), int(sf_id), adduct)[0]
+        peaks_dict = self.db.query(self.CENTR_MZS_SEL, int(db_id), int(sf_id), adduct,
+                                   *fetch_sigma_charge_ptspermz(self.db, job_id))[0]
         centr_mzs = peaks_dict['centr_mzs']
         self.write(json.dumps(centr_mzs))
 
@@ -97,7 +110,6 @@ class MinMaxIntHandler(tornado.web.RequestHandler):
 
 
 class SpectrumLineChartHandler(tornado.web.RequestHandler):
-    DS_CONF_SEL = 'SELECT config FROM dataset where id = %s'
     PEAK_PROFILE_SQL = '''SELECT centr_mzs, centr_ints, prof_mzs, prof_ints
                           FROM theor_peaks
                           WHERE db_id = %s AND sf_id = %s AND adduct = %s AND
@@ -151,11 +163,8 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
-        ds_config = self.db.query(self.DS_CONF_SEL, job_id)[0]['config'] # job_id for now is equal to ds_id
-        iso_gen_config = ds_config['isotope_generation']
-        charge = '{}{}'.format(iso_gen_config['charge']['polarity'], iso_gen_config['charge']['n_charges'])
         res = self.db.query(self.PEAK_PROFILE_SQL, int(db_id), int(sf_id), adduct,
-                            iso_gen_config['isocalc_sigma'], charge, iso_gen_config['isocalc_pts_per_mz'])
+                            *fetch_sigma_charge_ptspermz(self.db, job_id))
         assert len(res) == 1
         peaks_dict = res[0]
         prof_mzs = np.array(peaks_dict['prof_mzs'])

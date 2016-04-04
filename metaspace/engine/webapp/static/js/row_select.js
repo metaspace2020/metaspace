@@ -69,30 +69,30 @@ function select_row(data) {
     })
 
     // images per adduct and peak
-    var iso_img_n = Math.min(peaks_n, max_peaks_to_show)
-    var col_w = Math.floor(12 / iso_img_n);
-    var urls = [];
-
-    $("#imagediv").empty();
-    $("#imagediv").append('<div class="row"><div class="col-xs-3"><h3>' + adduct + '</h3></div></div><div class="row" id="row-images"></div><div class="row"><div id="molchart"></div></div>');
-    for (var peak_id = 0; peak_id < iso_img_n; peak_id++) {
-        to_append = '<div style="text-align:center;" class="col-xs-'
-            + col_w.toString() + '">' + '<div class="container-fluid">'
-            + '<div class="row" id="col-img-' + peak_id.toString() + '"></div>'
-            + '<div class="row">';
-        to_append += '</div></div></div>';
-        $("#row-images").append(to_append);
-        var url = "/mzimage2/" + db_id + '/' + dataset_id + '/' + job_id + '/' +
-                    sf_id + '/' + sf + '/' + adduct + '/' + peak_id;
-        urls.push(url);
-    }
-
     var url = '/sf_peak_mzs/' + job_id + '/' + db_id + '/' + sf_id + '/' + adduct;
     $.getJSON(url, function( data ) {
         var sf_mzs = data;
 
+        var iso_img_n = Math.min(sf_mzs.length, max_peaks_to_show)
+        var col_w = Math.floor(12 / iso_img_n);
+        var urls = [];
+
+        $("#imagediv").empty();
+        $("#imagediv").append('<div class="row"><div class="col-xs-3"><h3>' + adduct + '</h3></div></div><div class="row" id="row-images"></div><div class="row"><div id="molchart"></div></div>');
+        for (var peak_id = 0; peak_id < iso_img_n; peak_id++) {
+            to_append = '<div style="text-align:center;" class="col-xs-'
+                + col_w.toString() + '">' + '<div class="container-fluid">'
+                + '<div class="row" id="col-img-' + peak_id.toString() + '"></div>'
+                + '<div class="row">';
+            to_append += '</div></div></div>';
+            $("#row-images").append(to_append);
+            var url = "/mzimage2/" + db_id + '/' + dataset_id + '/' + job_id + '/' +
+                        sf_id + '/' + sf + '/' + adduct + '/' + peak_id;
+            urls.push(url);
+        }
+
         var loaded_images = 0;
-        for (var i = 0; i < urls.length; i++) {
+        for (var i = 0; i < iso_img_n; i++) {
             var elem = $("#col-img-" +  i.toString());
             var to_append = '<span>' + sf_mzs[i].toFixed(4) + '</span>';
             to_append += '<img src="' + urls[i] + '" id="img-' + i.toString() + '" ' + 'class="iso-image">';
