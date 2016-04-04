@@ -1,6 +1,8 @@
 [submodule "pyIMS"]
     path = pyIMS
     url = https://github.com/alexandrovteam/pyIMS.git
+    branch = sm_engine
 [submodule "pyMS"]
 	path = pyMS
 	url = https://github.com/alexandrovteam/pyMS.git
+	branch = sm_engine
