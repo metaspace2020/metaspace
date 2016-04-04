@@ -22,7 +22,7 @@ from util import my_print
 
 # get list of engine files
 engine_pyfiles = ['computing.py', 'util.py', 'imaging.py',
-                  path.join('pyIMS', 'image_measures', 'level_sets_measure.py')]
+                  path.join('pyImagingMSpec', 'image_measures', 'level_sets_measure.py')]
 
 # global variables
 args = None

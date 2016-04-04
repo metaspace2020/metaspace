@@ -87,7 +87,7 @@ def compare_search_results(base_search_res, search_res):
 
 
 def zip_engine():
-    local('cd {}; zip -rq sm.zip engine pyMS pyIMS'.format(proj_root()))
+    local('cd {}; zip -rq sm.zip engine pyMS pyImagingMSpec'.format(proj_root()))
 
 
 def run_search():

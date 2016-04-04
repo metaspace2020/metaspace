@@ -1,5 +1,5 @@
+pyImagingMSpec==0.1.1
 cpyMSpec==0.0.9
-pandas
 requests
 numpy==1.10.4
 Fabric==1.10.2

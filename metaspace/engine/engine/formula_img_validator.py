@@ -5,8 +5,9 @@ import numpy as np
 import pandas as pd
 from operator import mul, add
 
-from pyIMS.image_measures import isotope_image_correlation, isotope_pattern_match
-from cpyImagingMSpec import measure_of_chaos
+from pyImagingMSpec.image_measures import isotope_image_correlation, isotope_pattern_match
+from pyImagingMSpec.image_measures import measure_of_chaos
+# from cpyImagingMSpec import measure_of_chaos
 
 
 class ImgMeasures(object):
@@ -15,11 +16,11 @@ class ImgMeasures(object):
     Args
     ----------
     chaos : float
-        measure of chaos, pyIMS.image_measures.measure_of_chaos
+        measure of chaos, pyImagingMSpec.image_measures.measure_of_chaos
     image_corr : float
-        isotope image correlation, pyIMS.image_measures.isotope_image_correlation
+        isotope image correlation, pyImagingMSpec.image_measures.isotope_image_correlation
     pattern_match : float
-        theoretical pattern match, pyIMS.image_measures.isotope_pattern_match
+        theoretical pattern match, pyImagingMSpec.image_measures.isotope_pattern_match
     """
 
     def __init__(self, chaos, image_corr, pattern_match):
