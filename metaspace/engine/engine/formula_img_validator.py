@@ -5,7 +5,8 @@ import numpy as np
 import pandas as pd
 from operator import mul, add
 
-from pyIMS.image_measures import measure_of_chaos, isotope_image_correlation, isotope_pattern_match
+from pyIMS.image_measures import isotope_image_correlation, isotope_pattern_match
+from cpyImagingMSpec import measure_of_chaos
 
 
 class ImgMeasures(object):
@@ -77,7 +78,7 @@ def get_compute_img_metrics(empty_matrix, img_gen_conf):
         if len(iso_imgs) > 0:
             measures.pattern_match = isotope_pattern_match(iso_imgs_flat, sf_ints)
             measures.image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_ints[1:])
-            measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'], overwrite=False)
+            measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'])
         return measures.to_tuple()
 
     return compute
