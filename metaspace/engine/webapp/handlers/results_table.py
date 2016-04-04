@@ -101,6 +101,18 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         orderby = RESULTS_FIELDS[int(self.get_argument('order[0][column]', 0))]
         order_asc = self.get_argument('order[0][dir]', 0) == 'asc'
 
+        target_adducts_query = '''
+        SELECT DISTINCT(target_add) as adduct
+        FROM target_decoy_add td
+        JOIN job j ON j.id = td.job_id
+        JOIN dataset ds ON j.ds_id = ds.id
+        '''
+
+        if ds_name:
+            target_adducts_query += "WHERE ds.name = '{}'".format(ds_name)
+
+        self.adducts = [row['adduct'] for row in self.db.query(target_adducts_query)]
+
         where = [
             {'field': 'db_name', 'value': db_name, 'cond': '='},
             {'field': 'ds_name', 'value': ds_name, 'cond': '='},
