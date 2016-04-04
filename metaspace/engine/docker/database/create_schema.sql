@@ -38,10 +38,32 @@ CREATE INDEX ind_agg_formulas_2 ON agg_formula (id);
 CREATE INDEX ind_agg_formulas_3 ON agg_formula (id, sf);
 CREATE INDEX ind_agg_formulas_4 ON agg_formula (db_id, id, sf);
 
+DROP TABLE IF EXISTS client CASCADE;
+CREATE TABLE client (
+    id	        decimal(21),
+	name		text,
+	email       text,
+	CONSTRAINT user_id_pk PRIMARY KEY(id)
+);
+
+DROP TABLE IF EXISTS feedback CASCADE;
+CREATE TABLE feedback (
+    id	        serial,
+    client_id   decimal(21),
+    job_id      int,
+    db_id       int,
+    sf_id       int,
+    adduct      text,
+	rating		smallint,
+    comment     text,
+	CONSTRAINT feedback_id_pk PRIMARY KEY(id)
+);
+
 DROP TABLE IF EXISTS dataset CASCADE;
 CREATE TABLE dataset (
 	id	        serial,
 	name		text,
+	owner       decimal(21),
 	file_path   text,
 	img_bounds	json,
 	config      json,
@@ -51,7 +73,7 @@ CREATE INDEX ind_dataset_name ON dataset (name);
 
 DROP TABLE IF EXISTS coordinates;
 CREATE TABLE coordinates (
-	ds_id 	int,
+	ds_id 	 int,
 	xs       int[],
 	ys       int[],
 	CONSTRAINT coord_ds_id_pk PRIMARY KEY(ds_id),
@@ -74,6 +96,29 @@ CREATE TABLE job (
 	CONSTRAINT job_id_pk PRIMARY KEY(id),
 	CONSTRAINT job_ds_id_fk FOREIGN KEY (ds_id)
       REFERENCES dataset (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS adduct;
+CREATE TABLE adduct (
+    job_id  int,
+	adduct 	 text,
+	CONSTRAINT adduct_job_id_add_pk PRIMARY KEY(job_id, adduct),
+	CONSTRAINT adduct_job_id_fk FOREIGN KEY (job_id)
+      REFERENCES job (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS target_decoy_add CASCADE;
+CREATE TABLE target_decoy_add (
+    job_id	    int,
+	db_id       int,
+    sf_id       int,
+	target_add  text,
+	decoy_add   text,
+	CONSTRAINT target_decoy_add_id_pk PRIMARY KEY(job_id, db_id, sf_id, target_add, decoy_add),
+	CONSTRAINT target_decoy_add_job_id_fk FOREIGN KEY (job_id)
+      REFERENCES job (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
@@ -100,8 +145,10 @@ CREATE TABLE iso_image_metrics (
 	db_id		int,
 	sf_id		int,
 	adduct 		text,
-	peaks_n		int,
+	msm         real,
+	fdr         real,
 	stats 		json,
+	peaks_n		int,
 	CONSTRAINT iso_image_metrics_id_pk PRIMARY KEY(job_id, db_id, sf_id, adduct),
 	CONSTRAINT iso_image_metrics_job_id_fk FOREIGN KEY (job_id)
       REFERENCES job (id) MATCH SIMPLE
