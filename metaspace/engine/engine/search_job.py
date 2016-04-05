@@ -151,12 +151,12 @@ class SearchJob(object):
         all_sf_metrics_df = sf_image_metrics(sf_images, self.sc, self.formulas, self.ds, self.ds_config)
         sf_metrics_fdr_df = sf_image_metrics_est_fdr(all_sf_metrics_df, self.formulas, self.fdr)
         sf_metrics_fdr_df = filter_sf_metrics(sf_metrics_fdr_df)
-        sf_iso_images_map = filter_sf_images(sf_images, sf_metrics_fdr_df)
+        sf_images = filter_sf_images(sf_images, sf_metrics_fdr_df)
 
         return SearchResults(self.sf_db_id, self.ds_id, self.job_id,
-                             sf_metrics_fdr_df, sf_iso_images_map,
+                             sf_metrics_fdr_df, sf_images,
                              self.formulas.get_sf_adduct_peaksn(),
-                             self.db)
+                             self.db, self.sm_config)
 
     def _store_results(self, search_results):
         logger.info('Storing search results to the DB')

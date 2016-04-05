@@ -136,6 +136,5 @@ def filter_sf_metrics(sf_metrics_df):
 
 
 def filter_sf_images(sf_images, sf_metrics_df):
-    # TODO: copying all images to the driver is really slow
-    return sf_images.filter(lambda (sf_i, _): sf_i in sf_metrics_df.index).collectAsMap()
+    return sf_images.filter(lambda (sf_i, _): sf_i in sf_metrics_df.index)
 

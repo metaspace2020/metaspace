@@ -123,6 +123,6 @@ def compute_sf_images(sc, ds, sf_peak_df, ppm):
                        )
 
     iso_sf_images = (iso_peak_images
-                     .groupByKey()
+                     .groupByKey(numPartitions=64)
                      .mapValues(lambda img_pairs_it: _img_pairs_to_list(list(img_pairs_it))))
     return iso_sf_images

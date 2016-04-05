@@ -6,6 +6,7 @@ from collections import OrderedDict
 from datetime import datetime
 
 from engine.util import logger
+from engine.db import DB
 
 
 METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
@@ -25,21 +26,22 @@ class SearchResults(object):
         Dataset id
     job_id : int
         Search job id
-    sf_iso_images_map : dict
-        Result images of format (formula id -> list of images)
-    sf_metrics_map : dict
-        Result images of format (formula id -> list of quality metrics)
+    sf_metrics_df : pandas.Dataframe
+    sf_iso_images : pyspark.RDD
+        Result images of format ((formula_id, adduct)), list of images)
     sf_adduct_peaksn : list
         List of triples (formula id, adduct, number of theoretical peaks)
     db: engine.db.DB
+    sm_config: dict
     """
-    def __init__(self, sf_db_id, ds_id, job_id, sf_metrics_df, sf_iso_images_map, sf_adduct_peaksn, db):
+    def __init__(self, sf_db_id, ds_id, job_id, sf_metrics_df, sf_iso_images, sf_adduct_peaksn, db, sm_config):
         self.sf_db_id = sf_db_id
         self.ds_id = ds_id
         self.job_id = job_id
         self.db = db
+        self.sm_config = sm_config
         self.sf_adduct_peaksn = sf_adduct_peaksn
-        self.sf_iso_images_map = sf_iso_images_map
+        self.sf_iso_images = sf_iso_images
         self.sf_metrics_df = sf_metrics_df
 
     def clear_old_results(self):
@@ -71,17 +73,29 @@ class SearchResults(object):
         ncols : int
             Number of columns in the dataset image
         """
-        logger.info('Storing iso images')
-        rows = []
-        for (sf_id, adduct), img_list in self.sf_iso_images_map.iteritems():
-            # sf_id, adduct, _ = self.sf_adduct_peaksn[sf_i]
+        job_id = self.job_id
+        sf_db_id = self.sf_db_id
+        db_config = self.sm_config['db']
 
+        def iso_img_row_gen(((sf_id, adduct), img_list)):
             for peak_i, img_sparse in enumerate(img_list):
                 img_ints = np.zeros(int(nrows)*int(ncols)) if img_sparse is None else img_sparse.toarray().flatten()
                 pixel_inds = np.arange(img_ints.shape[0])
-                r = (self.job_id, self.sf_db_id, sf_id, adduct, peak_i,
-                     pixel_inds[img_ints > 0.001].tolist(), img_ints[img_ints > 0.001].tolist(),
-                     img_ints.min(), img_ints.max())
-                rows.append(r)
+                img_ints_mask = img_ints > 0.001
+                if img_ints_mask.sum() > 0:
+                    yield (job_id, sf_db_id, sf_id, adduct, peak_i,
+                           pixel_inds[img_ints_mask].tolist(), img_ints[img_ints_mask].tolist(),
+                           img_ints.min(), img_ints.max())
 
-        self.db.insert(insert_sf_iso_imgs_sql, rows)
+        def store_iso_img_rows(row_it):
+            db = DB(db_config)
+            try:
+                rows = list(row_it)
+                if rows:
+                    db.insert(insert_sf_iso_imgs_sql, rows)
+            finally:
+                db.close()
+
+        logger.info('Storing iso images')
+
+        self.sf_iso_images.flatMap(iso_img_row_gen).foreachPartition(store_iso_img_rows)
