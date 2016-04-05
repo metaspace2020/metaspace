@@ -13,7 +13,7 @@ from datetime import datetime
 from engine.db import DB
 from engine.dataset import Dataset
 from engine.fdr import FDR
-from engine.formula_img_validator import sf_image_metrics, sf_image_metrics_est_fdr, filter_sf_images
+from engine.formula_img_validator import sf_image_metrics, sf_image_metrics_est_fdr, filter_sf_images, filter_sf_metrics
 from engine.formulas_segm import FormulasSegm
 from engine.search_results import SearchResults
 from engine.formula_imager_segm import compute_sf_images
@@ -150,7 +150,7 @@ class SearchJob(object):
                                       self.ds_config['image_generation']['ppm'])
         all_sf_metrics_df = sf_image_metrics(sf_images, self.sc, self.formulas, self.ds, self.ds_config)
         sf_metrics_fdr_df = sf_image_metrics_est_fdr(all_sf_metrics_df, self.formulas, self.fdr)
-        sf_metrics_fdr_df = sf_metrics_fdr_df[sf_metrics_fdr_df.msm > 0]
+        sf_metrics_fdr_df = filter_sf_metrics(sf_metrics_fdr_df)
         sf_iso_images_map = filter_sf_images(sf_images, sf_metrics_fdr_df)
 
         return SearchResults(self.sf_db_id, self.ds_id, self.job_id,

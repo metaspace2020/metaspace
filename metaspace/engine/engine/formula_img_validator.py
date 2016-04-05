@@ -6,8 +6,8 @@ import pandas as pd
 from operator import mul, add
 
 from pyImagingMSpec.image_measures import isotope_image_correlation, isotope_pattern_match
-from pyImagingMSpec.image_measures import measure_of_chaos
-# from cpyImagingMSpec import measure_of_chaos
+# from pyImagingMSpec.image_measures import measure_of_chaos
+from cpyImagingMSpec import measure_of_chaos
 
 
 class ImgMeasures(object):
@@ -79,7 +79,8 @@ def get_compute_img_metrics(empty_matrix, img_gen_conf):
         if len(iso_imgs) > 0:
             measures.pattern_match = isotope_pattern_match(iso_imgs_flat, sf_ints)
             measures.image_corr = isotope_image_correlation(iso_imgs_flat, weights=sf_ints[1:])
-            measures.chaos = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'])
+            moc = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'])
+            measures.chaos = 0 if np.isclose(moc, 1.0) else moc
         return measures.to_tuple()
 
     return compute
@@ -127,6 +128,11 @@ def sf_image_metrics_est_fdr(sf_metrics_df, formulas, fdr):
 
     sf_adduct_fdr = fdr.estimate_fdr(sf_msm_df)
     return sf_metrics_df.join(sf_adduct_fdr, how='inner')[['chaos', 'spatial', 'spectral', 'msm', 'fdr']]
+
+
+def filter_sf_metrics(sf_metrics_df):
+    # return sf_metrics_df[(sf_metrics_df.chaos > 0) | (sf_metrics_df.spatial > 0) | (sf_metrics_df.spectral > 0)]
+    return sf_metrics_df[sf_metrics_df.msm > 0]
 
 
 def filter_sf_images(sf_images, sf_metrics_df):

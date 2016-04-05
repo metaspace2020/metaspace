@@ -35,7 +35,7 @@ SEARCH_RES_SELECT = ("select sf, adduct, stats "
 
 
 def print_metric_hist(metric_arr, bins=10):
-    metric_freq, metric_interv = np.histogram(metric_arr, bins=bins)
+    metric_freq, metric_interv = np.histogram(metric_arr, bins=np.linspace(0, 1, 11))
     metric_interv = map(lambda x: round(x, 2), metric_interv)
     pprint(zip(zip(metric_interv[:-1], metric_interv[1:]), metric_freq))
 
