@@ -131,8 +131,8 @@ def sf_image_metrics_est_fdr(sf_metrics_df, formulas, fdr):
 
 
 def filter_sf_metrics(sf_metrics_df):
-    # return sf_metrics_df[(sf_metrics_df.chaos > 0) | (sf_metrics_df.spatial > 0) | (sf_metrics_df.spectral > 0)]
-    return sf_metrics_df[sf_metrics_df.msm > 0]
+    return sf_metrics_df[(sf_metrics_df.chaos > 0) | (sf_metrics_df.spatial > 0) | (sf_metrics_df.spectral > 0)]
+    # return sf_metrics_df[sf_metrics_df.msm > 0]
 
 
 def filter_sf_images(sf_images, sf_metrics_df):
