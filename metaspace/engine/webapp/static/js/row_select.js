@@ -5,12 +5,41 @@ function addRowSelectionHandler(results_table) {
         if ($(this).hasClass('selected') != true) {
             results_table.$('tr.selected').removeClass('selected');
             $(this).addClass('selected');
-            select_row(results_table.row($(this)).data());
+            on_select_row(results_table.row($(this)).data());
         }
     });
 }
 
-function select_row(data) {
+// Arrow key press action
+function addKeyPressHandler(results_table) {
+    document.onkeydown = function (e) {
+        var keycode;
+        if (window.event)
+            keycode = window.event.keyCode;
+        else if (e)
+            keycode = e.which;
+
+        var direction = (keycode==38) ? -1 : (keycode==40) ? 1 : 0;
+        if (direction != 0 && $('#results-table tbody tr').hasClass('selected')) {
+            var cur = results_table.$('#results-table tbody tr.selected');
+            var next;
+            if (direction == 1)
+                next = $(cur).next();
+            else if (direction == -1)
+                next = $(cur).prev();
+            else
+                next = cur;
+            var next_data = results_table.row(next).data();
+            if (next_data != null) {
+                $(cur).removeClass('selected');
+                $(next).addClass('selected');
+                on_select_row(next_data);
+            }
+        }
+    }
+}
+
+function on_select_row(data) {
     var t_start = performance.now();
     var d = data;
     console.log(d);
