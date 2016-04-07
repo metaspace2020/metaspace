@@ -98,7 +98,7 @@ def test_filter_sf_images(spark_context):
 
     flt_iso_images = filter_sf_images(sf_iso_images, sf_metrics_df)
 
-    assert flt_iso_images.keys() == dict(sf_iso_images.take(1)).keys()
+    assert dict(flt_iso_images.take(1)).keys() == dict(sf_iso_images.take(1)).keys()
 
 
 @pytest.mark.parametrize("nan_value", [None, np.NaN, np.NAN, np.inf])

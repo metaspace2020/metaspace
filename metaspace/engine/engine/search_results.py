@@ -10,7 +10,7 @@ from engine.db import DB
 
 
 METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
-insert_sf_iso_imgs_sql = 'INSERT INTO iso_image VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
+SF_ISO_IMGS_INS = 'INSERT INTO iso_image VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
 clear_iso_image_sql = 'DELETE FROM iso_image WHERE job_id = %s'
 clear_iso_image_metrics_sql = 'DELETE FROM iso_image_metrics WHERE job_id = %s'
 
@@ -92,7 +92,7 @@ class SearchResults(object):
             try:
                 rows = list(row_it)
                 if rows:
-                    db.insert(insert_sf_iso_imgs_sql, rows)
+                    db.insert(SF_ISO_IMGS_INS, rows)
             finally:
                 db.close()
 
