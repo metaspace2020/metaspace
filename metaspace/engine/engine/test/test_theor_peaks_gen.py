@@ -4,7 +4,7 @@ from mock import mock, MagicMock
 from numpy.testing import assert_array_almost_equal
 from engine.theor_peaks_gen import TheorPeaksGenerator, IsocalcWrapper
 from engine.db import DB
-from pyMS.mass_spectrum import MassSpectrum
+from pyMSpec.mass_spectrum import MassSpectrum
 from engine.test.util import spark_context, sm_config, ds_config
 
 

@@ -5,7 +5,7 @@ from engine.db import DB
 from engine.util import logger
 from engine.isocalc_wrapper import IsocalcWrapper
 from engine.fdr import DECOY_ADDUCTS
-from pyMS.pyisocalc.pyisocalc import parseSumFormula
+from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 
 
 DB_ID_SEL = 'SELECT id FROM formula_db WHERE name = %s'

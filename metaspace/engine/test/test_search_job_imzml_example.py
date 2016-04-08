@@ -7,6 +7,7 @@ from os.path import join, realpath, dirname
 from fabric.api import local
 from fabric.context_managers import warn_only
 
+from engine.fdr import DECOY_ADDUCTS
 from engine.search_job import SearchJob
 from engine.db import DB
 from engine.test.util import sm_config, ds_config, create_test_db, drop_test_db
@@ -61,7 +62,7 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_
                          'FROM theor_peaks '
                          'ORDER BY adduct')
 
-        assert len(rows) == 3 + 81
+        assert len(rows) == 3 + len(DECOY_ADDUCTS)
         for r in rows:
             assert r[3] and r[4] and r[5] and r[6]
 

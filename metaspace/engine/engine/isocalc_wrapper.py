@@ -2,8 +2,8 @@ from traceback import format_exc
 import numpy as np
 
 from engine.util import logger
-from pyMS.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError, ParseError
-from pyMS.pyisocalc.pyisocalc import parseSumFormula
+from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
+from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 from cpyMSpec.legacy_interface import complete_isodist
 
 
@@ -12,7 +12,7 @@ def list_of_floats_to_str(l):
 
 
 class IsocalcWrapper(object):
-    """ Wrapper around pyMS.pyisocalc.pyisocalc used for getting theoretical isotope peaks'
+    """ Wrapper around pyMSpec.pyisocalc.pyisocalc used for getting theoretical isotope peaks'
     centroids and profiles for a sum formula.
 
     Args
@@ -65,7 +65,7 @@ class IsocalcWrapper(object):
             profile_mzs, profile_ints = isotope_ms.get_spectrum(source='profile')
             res_dict['profile_mzs'], res_dict['profile_ints'] = \
                 self._sample_profiles(centr_mzs, profile_mzs, profile_ints)
-        except (InvalidFormulaError, ParseError) as e:
+        except InvalidFormulaError as e:
             logger.warning('(%s, %s) - %s', sf, adduct, e)
         except Exception as e:
             logger.error('(%s, %s) - %s', sf, adduct, e)

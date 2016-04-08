@@ -63,7 +63,7 @@ def webserver_stop(inst_name='sm-dev-webserver'):
 @task
 def webserver_deploy(delete=False):
     print green('========= Code deployment to SM webserver =========')
-    rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'conf', 'logs'], delete=delete)
+    rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'conf', 'logs', 'data'], delete=delete)
     run('supervisorctl restart all')
 
 
@@ -104,9 +104,9 @@ def webserver_deploy(delete=False):
 def cluster_deploy(delete=False):
     print green('========= Code deployment to Spark cluster =========')
     run('mkdir -p /home/ubuntu/sm')
-    rsync_project(local_dir='engine scripts test pyMS test_runner.py', remote_dir='/home/ubuntu/sm/', delete=delete,
-                  exclude=['.*', '*.pyc', 'engine/pyMS/test'])
-    run('cd /home/ubuntu/sm; rm sm.zip; zip -rq sm.zip engine pyMS __init__.py')
+    rsync_project(local_dir='engine scripts test test_runner.py', remote_dir='/home/ubuntu/sm/', delete=delete,
+                  exclude=['.*', '*.pyc'])
+    run('cd /home/ubuntu/sm; rm sm.zip; zip -rq sm.zip engine __init__.py')
 
 
 @task

@@ -2,7 +2,7 @@ import numpy as np
 from mock import mock, MagicMock
 
 from engine.isocalc_wrapper import IsocalcWrapper
-from pyMS.mass_spectrum import MassSpectrum
+from pyMSpec.mass_spectrum import MassSpectrum
 from engine.test.util import spark_context, sm_config, ds_config
 
 
