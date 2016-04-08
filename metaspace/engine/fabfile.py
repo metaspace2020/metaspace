@@ -7,6 +7,7 @@ from fabric.contrib.files import append
 from fabric.tasks import execute
 from fabric.context_managers import cd
 
+from pprint import pprint
 import json
 from os import environ
 from time import sleep
@@ -16,8 +17,7 @@ from os.path import dirname, realpath, join
 env.roledefs = {
     'dev_master': ['ubuntu@54.171.149.242'],
     'dev_web': ['ubuntu@52.19.27.255'],
-    'demo_web': ['ubuntu@52.50.109.217'],
-    'stage_web': ['ubuntu@52.19.0.118']
+    'demo_web': ['ubuntu@52.50.109.217']
 }
 
 
@@ -38,58 +38,33 @@ with open(conf_path) as f:
         env[k] = v
 
 
-# def get_spark_master_host():
-#     try:
-#         with open('conf/SPARK_MASTER') as f:
-#             return ['root@' + f.readline().strip('\n')]
-#     except Exception as e:
-#         print e
-#         return 'localhost'
+def get_inst_id(inst_name, status):
+    out = json.loads(local('aws ec2 describe-instances --filter "Name=tag:Name,Values={}" "Name=instance-state-name,Values={}"'.format(inst_name, status), capture=True))
+    pprint(out)
+    return out['Reservations'][0]['Instances'][0]['InstanceId']
 
 
 @task
-@roles('dev_web')
-def webserver_start():
+def webserver_start(inst_name='sm-dev-webserver'):
     print green('========= Starting webserver instance =========')
-
-    # local('aws configure set default.region eu-west-1')
-    local('aws ec2 start-instances --instance-ids=i-9fdcdf32')
+    inst_id = get_inst_id(inst_name, 'stopped')
+    local('aws ec2 start-instances --instance-ids={}'.format(inst_id))
     sleep(60)
     run('supervisord -l /home/ubuntu/supervisord.log')
 
 
 @task
-def webserver_stop():
+def webserver_stop(inst_name='sm-dev-webserver'):
     print green('========= Stopping webserver instance =========')
-    web_inst = 'i-9fdcdf32'
-    local('aws ec2 stop-instances --instance-ids={}'.format(web_inst))
+    inst_id = get_inst_id(inst_name, 'running')
+    local('aws ec2 stop-instances --instance-ids={}'.format(inst_id))
 
 
 @task
-#@roles('dev_web')
 def webserver_deploy(delete=False):
     print green('========= Code deployment to SM webserver =========')
-
     rsync_project(remote_dir='/home/ubuntu/', exclude=['.*', '*.pyc', 'conf', 'logs'], delete=delete)
-    run('cd /home/ubuntu/sm; rm engine.zip; zip -rq sm.zip engine pyMS pyImagingMSpec __init__.py')
     run('supervisorctl restart all')
-
-
-# @task
-# # @hosts(get_webserver_host())
-# def webserver_setup_db():
-#     print green('========= DB setup on SM webserver =========')
-#     with cd(remote_full_path()):
-#         run('mkdir -p data/sm_db')
-#     rsync_project(local_dir=full_path('data/sm_db/'), remote_dir=remote_full_path('data/sm_db/'))
-#     run('psql -h localhost -U sm sm < {}'.format(remote_full_path('scripts/create_schema.sql')))
-#     run('psql -h localhost -U sm sm < {}'.format(remote_full_path('data/sm_db/hmdb_agg_formula.sql')))
-
-
-# def get_aws_instance_info(name):
-#     out = local('aws ec2 describe-instances\
-#     --filter "Name=tag:Name,Values={}-master-*" "Name=instance-state-name,Values=running" '.format(name), capture=True)
-#     return json.loads(out.stdout)
 
 
 # def run_spark_ec2_script(command, cluster_name, slaves=1, price=0.07):
@@ -126,19 +101,12 @@ def webserver_deploy(delete=False):
 
 @task
 @roles('dev_master')
-def cluster_deploy():
-    # env.host_string = get_spark_master_host()[0]
+def cluster_deploy(delete=False):
     print green('========= Code deployment to Spark cluster =========')
     run('mkdir -p /home/ubuntu/sm')
-    rsync_project(local_dir='engine scripts test', remote_dir='/home/ubuntu/sm/',
-                  exclude=['.*', '*.pyc', 'engine/test', 'engine/pyMS/test', 'engine/pyImagingMSpec/test'])
-
-# @task
-# def cluster_terminate(name):
-#     print green('========= Destroying Spark cluster =========')
-#     cmd = '''{0}/ec2/spark-ec2 --key-pair=sm_spark_cluster --identity-file={1} \
-# --region=eu-west-1 destroy {2}'''.format(environ['SPARK_HOME'], env['cluster_key_file'], name)
-#     local(cmd)
+    rsync_project(local_dir='engine scripts test pyMS test_runner.py', remote_dir='/home/ubuntu/sm/', delete=delete,
+                  exclude=['.*', '*.pyc', 'engine/pyMS/test'])
+    run('cd /home/ubuntu/sm; rm sm.zip; zip -rq sm.zip engine pyMS __init__.py')
 
 
 @task
@@ -178,15 +146,18 @@ def cluster_start(slave_type='c4.2xlarge', slaves=0):
     SPARK_HOME = '/opt/dev/spark-1.5.1-bin-hadoop2.6'
 
     print 'Starting master...'
-    master_inst = 'i-54c44cd9'
-    local('aws ec2 start-instances --instance-ids={}'.format(master_inst))
+    master_inst_name = 'sm-dev-master'
+    master_ints_id = get_inst_id(master_inst_name, 'stopped')
+    local('aws ec2 start-instances --instance-ids={}'.format(master_ints_id))
     sleep(60)
 
     if slaves > 0:
-        run_slave_cmd = ('aws ec2 run-instances --image-id ami-6d2a8a1e --instance-type {} --count {} '
-                         '--key-name sm_spark_cluster --security-group-ids sg-921b7ff6').format(slave_type, slaves)
+        slave_ami_id = 'ami-18f97a6b'
+        run_slave_cmd = ('aws ec2 run-instances --image-id {} --instance-type {} --count {} '
+                         '--key-name sm_spark_cluster --security-group-ids sg-921b7ff6').format(slave_ami_id, slave_type, slaves)
         out = json.loads(local(run_slave_cmd, capture=True))
         slave_hosts = [inst_out['PrivateDnsName'] for inst_out in out['Instances']]
+        sleep(100)
 
         with cd(HADOOP_HOME):
             run('echo "localhost" > etc/hadoop/slaves')

@@ -1,5 +1,6 @@
 pyImagingMSpec==0.1.1
 cpyImagingMSpec
+pyMSpec==0.1
 cpyMSpec==0.0.9
 requests
 numpy==1.10.4
