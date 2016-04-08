@@ -121,7 +121,13 @@ function initColumnFilters(results_table) {
         filter_container_id: "fil-sf",
         filter_reset_button_text: false
       },
-//      {column_number : 3, filter_type: "text", filter_container_id: "fil-nm", filter_reset_button_text: false},
+      {
+        column_number : 3,
+        filter_type: "text",
+        filter_delay: 500,
+        filter_container_id: "fil-nm",
+        filter_reset_button_text: false
+      },
 //      {column_number : 4, filter_type: "text", filter_container_id: "fil-id", filter_reset_button_text: false},
 //      {column_number : 5, filter_type: "lower_bound_number", filter_container_id: "fil-chaos",
 //        filter_reset_button_text: false, filter_default_label: ['&ge;']

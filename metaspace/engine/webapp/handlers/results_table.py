@@ -69,7 +69,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         super(ResultsTableHandler, self).initialize()
         self.formula_dbs = [row['name'] for row in self.db.query('select name from formula_db')]
         self.datasets = [row['name'] for row in self.db.query('select name from dataset')]
-        self.adducts = [row['adduct'] for row in self.db.query('select distinct(adduct) as adduct from theor_peaks')]
+        self.adducts = [row['adduct'] for row in self.db.query('select distinct(target_add) as adduct from target_decoy_add')]
 
     @property
     def db(self):
@@ -96,29 +96,19 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         ds_name = self.request.arguments['columns[1][search][value]'][0]
         adduct = self.request.arguments['columns[9][search][value]'][0]
         sf = self.request.arguments['columns[2][search][value]'][0]
+        compound = self.request.arguments['columns[3][search][value]'][0]
         min_msm = self.request.arguments['columns[8][search][value]'][0]
 
         orderby = RESULTS_FIELDS[int(self.get_argument('order[0][column]', 0))]
         order_asc = self.get_argument('order[0][dir]', 0) == 'asc'
-
-        target_adducts_query = '''
-        SELECT DISTINCT(target_add) as adduct
-        FROM target_decoy_add td
-        JOIN job j ON j.id = td.job_id
-        JOIN dataset ds ON j.ds_id = ds.id
-        '''
-
-        if ds_name:
-            target_adducts_query += "WHERE ds.name = '{}'".format(ds_name)
-
-        self.adducts = [row['adduct'] for row in self.db.query(target_adducts_query)]
 
         where = [
             {'field': 'db_name', 'value': db_name, 'cond': '='},
             {'field': 'ds_name', 'value': ds_name, 'cond': '='},
             {'field': 'adduct', 'value': adduct, 'cond': '='},
             {'field': 'sf', 'value': sf, 'cond': 'like'},
-            {'field': 'msm', 'value': min_msm, 'cond': '>='}
+            {'field': "array_to_string(comp_names, ',')", 'value': compound, 'cond': 'like'},
+            {'field': 'msm', 'value': min_msm, 'cond': '>='},
         ]
         count_query, query, query_params = select_results(query=RESULTS_SEL, where=where,
                                                           orderby=orderby, asc=order_asc,
@@ -132,6 +122,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         results_dict['yadcf_data_0'] = self.formula_dbs
         results_dict['yadcf_data_1'] = self.datasets
         results_dict['yadcf_data_2'] = []
+        results_dict['yadcf_data_3'] = []
         results_dict['yadcf_data_8'] = ['0.1']
         results_dict['yadcf_data_9'] = self.adducts
 
