@@ -53,7 +53,7 @@ class SearchJob(object):
         self.ds_config = None
         self.work_dir = None
 
-    def _read_config(self):
+    def _read_ds_config(self):
         with open(self.work_dir.ds_config_path) as f:
             self.ds_config = json.load(f)
 
@@ -73,7 +73,7 @@ class SearchJob(object):
         self.db = DB(self.sm_config['db'])
         self.sf_db_id = self.db.select_one(DB_ID_SEL, self.ds_config['database']['name'])[0]
 
-    def run(self, input_path, clean=False):
+    def run(self, input_path, ds_config_path, clean=False):
         """ Entry point of the engine. Molecule search is completed in several steps:
          * Copying input data to the engine work dir
          * Conversion input data (imzML+ibd) to plain text format. One line - one spectrum data
@@ -84,7 +84,9 @@ class SearchJob(object):
         Args
         -------
         input_path : string
-            Path to the dataset folder with .imzML, .ibd and config.json files
+            Path to the dataset folder with .imzML and .ibd files
+        ds_config_path: string
+            Path to the dataset config file
         clean : bool
             Clean all interim data files before starting molecule search
         """
@@ -92,8 +94,8 @@ class SearchJob(object):
             self.work_dir = WorkDir(self.ds_name, self.sm_config['fs']['data_dir'])
             if clean:
                 self.work_dir.clean_work_dirs()
-            self.work_dir.copy_input_data(input_path)
-            self._read_config()
+            self.work_dir.copy_input_data(input_path, ds_config_path)
+            self._read_ds_config()
             logger.info('Dataset config:\n%s', pformat(self.ds_config))
 
             self._configure_spark()

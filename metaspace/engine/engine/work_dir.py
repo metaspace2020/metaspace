@@ -8,6 +8,7 @@ from shutil import copytree, rmtree, copy
 from os.path import exists, splitext, join
 import tempfile
 import json
+import boto3
 import glob
 from subprocess import CalledProcessError
 
@@ -29,7 +30,7 @@ class WorkDir(object):
         self.ds_name = ds_name
         self.data_dir_path = data_dir_path
         self.path = join(self.data_dir_path, ds_name)
-        self.ds_config = None
+        self.boto_session = boto3.Session()
 
     # TODO: add tests
     def drop_local_work_dir(self):
@@ -46,7 +47,11 @@ class WorkDir(object):
         except CalledProcessError as e:
             logger.warning('Deleting interim data files error: {}', e.message)
 
-    def copy_input_data(self, input_data_path):
+    @staticmethod
+    def split_s3_path(path):
+        return path.split('s3://')[1].split('/', 1)
+
+    def copy_input_data(self, input_data_path, ds_config_path):
         """ Copy imzML/ibd/config files from input path to a dataset work directory
 
         Args
@@ -56,21 +61,23 @@ class WorkDir(object):
         """
         if exists(self.path):
             logger.info('Path %s already exists', self.path)
-            copy(join(input_data_path, 'config.json'), self.path)
         else:
-            logger.info('Copying %s to %s', input_data_path, self.ds_config_path)
+            cmd_check('mkdir -p {}', self.path)
+            logger.info('Copying data from %s to %s', input_data_path, self.path)
 
-            # TODO: add support for S3 paths
-            if input_data_path.startswith('http'):
-                tmp_path = join(self.data_dir_path, 'tmp')
-                cmd_check('mkdir -p {}', tmp_path)
-
-                tmp_zip = tempfile.mkstemp(dir=tmp_path, suffix='.zip')[1]
-                cmd_check('wget {} -O {}', input_data_path, tmp_zip)
-                cmd_check('mkdir -p {}', self.path)
-                cmd_check('unzip {} -d {}', tmp_zip, self.path)
+            if input_data_path.startswith('s3://'):
+                s3 = self.boto_session.resource('s3')
+                bucket_name, inp_path = self.split_s3_path(input_data_path)
+                bucket = s3.Bucket(bucket_name)
+                for obj in bucket.objects.filter(Prefix=inp_path):
+                    if not obj.key.endswith('/'):
+                        path = join(self.path, obj.key.replace('/', '_'))
+                        with open(path, 'w') as f:
+                            f.write(obj.get()['Body'].read())
             else:
                 copytree(input_data_path, self.path)
+
+        copy(ds_config_path, join(self.path, 'config.json'))
 
     def upload_data_to_hdfs(self):
         """ If non local file system is used uploads plain text data files to it """

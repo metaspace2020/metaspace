@@ -5,7 +5,7 @@
 *.zip
 conf/*.json
 conf/*.cfg
-data/*
+data/*/*
 docs/_build
 docs/_static
 docs/_templates
