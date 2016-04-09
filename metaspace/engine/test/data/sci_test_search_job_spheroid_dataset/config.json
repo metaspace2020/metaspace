@@ -16,6 +16,5 @@
     "nlevels": 30,
     "q": 99,
     "do_preprocessing": false
-  },
-  "molecules_num": ""
+  }
 }

@@ -65,13 +65,13 @@ Don't forget to restart the database server
 	
 ### SM Engine Installation and Setup
 
-Install git and pip
+Install git, pip and libffi
 
-	sudo apt-get install git python-pip
+	sudo apt-get install git python-pip libffi-dev
 	
 Clone the latest "stable" **SM_distributed** repository branch into the home directory and rename it to **sm**
 	
-	git clone -b v0.2 --single-branch --recursive https://github.com/SpatialMetabolomics/SM_distributed.git
+	git clone -b v0.3 --single-branch https://github.com/SpatialMetabolomics/SM_distributed.git
 	mv SM_distributed sm
 
 Install SM engine python dependencies
@@ -79,6 +79,8 @@ Install SM engine python dependencies
 	sudo pip install numpy==1.10.4
 	sudo pip install scipy==0.16.0 Fabric==1.10.2 lxml==3.3.3 pypng==0.0.18 matplotlib==1.5.0 mock==1.3.0 psycopg2==2.6.1 py4j==0.9 pytest==2.8.2 tornado==4.2.1 tornpsql==1.1.0
 	sudo pip install --no-deps pyimzML==1.0.1
+	sudo pip install pyMSpec pyImagingMSpec
+	sudo easy_install cpyMSpec cpyImagingMSpec
 
 Postgres server setup for local use only
 
@@ -103,7 +105,7 @@ Create config files. For **conf/config.json** put values for needed parameters
 	cp sm_log.cfg.template sm_log.cfg
 	cp config.json.template config.json
 	nano config.json
-	# replace **fs.data_dir** with path to the data directory (/opt/data)
+	# replace fs.data_dir with path to the data directory (/opt/data)
 
 Add environment variables to .bashrc
 
@@ -124,7 +126,7 @@ Run the regression tests
 Download and import molecule database (HMDB) first
 
     wget https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv
-    python scripts/import_molecule_formula.py HMDB hmdb.csv
+    python scripts/import_molecule_formula_db.py HMDB hmdb.csv
 
 Run the scientific test
     
@@ -132,22 +134,25 @@ Run the scientific test
 		
 When run the first time it will work pretty long time as the engine will be generating and saving to the DB theoretical spectra
 for all HMDB molecules. In the end it should print
+
+
 **ALL TESTS FINISHED SUCCESSFULLY**
+
+
 If not something went wrong.
 
 ## Run Molecule Annotation Job
 Once you have successfully installed SM engine and its dependencies you can start a molecule annotation job with the command
     
     cd ~/sm
-    python scripts/run_molecule_search.py dataset_name /path/to/dataset/folder
+    python scripts/run_molecule_search.py dataset_name /path/to/dataset/folder /path/to/dataset/config.json
 
-**/path/to/dataset/folder** should contain three files: **.imzML**, **.ibd**, **config.json**. Names for **.imzML** and **.ibd** files
-should be identical. Where **config.json** is a file with parameters for the molecule annotation job of the form
+**/path/to/dataset/folder** should contain two files: **.imzML** and**.ibd**. Names for **.imzML** and **.ibd** files
+should be identical. **config.json** is a file with parameters for the molecule annotation job of the form
  
     {
-      "inputs": {
-        "data_file": "12hour_5_210_centroid.imzML",
-        "database": "HMDB"
+      "database": {
+        "name": "HMDB"
       },
       "isotope_generation": {
         "adducts": ["+H","+Na","+K"],
@@ -163,18 +168,16 @@ should be identical. Where **config.json** is a file with parameters for the mol
         "nlevels": 30,
         "q": 99,
         "do_preprocessing": false
-      },
-      "molecules_num": null
+      }
     }
 
-**database** is a specific name of a database that you would like to search through. Default one is HMDB.
+
+**database.name** is a specific name of a database that you would like to search through. Default one is HMDB.
 If you want to add your own one please refer to the next section.
 
-**isotope_generation** is a section specific for [pyMS](https://github.com/alexandrovteam/pyMS) library.
+**isotope_generation** is a section specific for [pyMSpec](https://github.com/alexandrovteam/pyMS) library.
 
-**image_generation** is a section specific for [pyIMS](https://github.com/alexandrovteam/pyIMS) library.
-
-**molecules_num** is a maximum number of annotated molecules to store.
+**image_generation** is a section specific for [pyImaingMSpec](https://github.com/alexandrovteam/pyIMS) library.
 
 To explore the results of a job start the web application
  
