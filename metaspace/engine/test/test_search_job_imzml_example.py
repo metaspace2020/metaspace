@@ -19,6 +19,7 @@ test_ds_name = 'imzml_example_ds'
 proj_dir_path = dirname(dirname(__file__))
 data_dir_path = join(sm_config()["fs"]["data_dir"], test_ds_name)
 input_dir_path = join(proj_dir_path, 'test/data/imzml_example_ds')
+ds_config_path = join(input_dir_path, 'config.json')
 
 
 @pytest.fixture()
@@ -48,7 +49,7 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_
     db = DB(sm_config['db'])
     try:
         job = SearchJob(None, 'imzml_example_ds')
-        job.run(input_dir_path, clean=True)
+        job.run(input_dir_path, ds_config_path, clean=True)
 
         # dataset meta asserts
         rows = db.select("SELECT name, file_path, img_bounds from dataset")

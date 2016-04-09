@@ -62,12 +62,13 @@ class WorkDir(object):
         if exists(self.path):
             logger.info('Path %s already exists', self.path)
         else:
-            cmd_check('mkdir -p {}', self.path)
             logger.info('Copying data from %s to %s', input_data_path, self.path)
 
             if input_data_path.startswith('s3://'):
-                s3 = self.boto_session.resource('s3')
+                cmd_check('mkdir -p {}', self.path)
                 bucket_name, inp_path = self.split_s3_path(input_data_path)
+
+                s3 = self.boto_session.resource('s3')
                 bucket = s3.Bucket(bucket_name)
                 for obj in bucket.objects.filter(Prefix=inp_path):
                     if not obj.key.endswith('/'):

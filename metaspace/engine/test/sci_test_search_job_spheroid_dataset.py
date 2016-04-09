@@ -23,6 +23,7 @@ sm_config = SMConfig.get_conf()
 ds_name = 'sci_test_spheroid_12h'
 data_dir_path = join(SMConfig.get_conf()['fs']['data_dir'], ds_name)
 input_dir_path = join(proj_root(), 'test/data/sci_test_search_job_spheroid_dataset')
+ds_config_path = join(input_dir_path, 'config.json')
 
 SEARCH_RES_SELECT = ("select sf, adduct, stats "
                      "from iso_image_metrics s "
@@ -94,7 +95,8 @@ def run_search():
     cmd = ['python',
            join(proj_root(), 'scripts/run_molecule_search.py'),
            ds_name,
-           input_dir_path]
+           input_dir_path,
+           ds_config_path]
     check_call(cmd)
 
 
