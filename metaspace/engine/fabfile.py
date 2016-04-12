@@ -17,7 +17,8 @@ from os.path import dirname, realpath, join
 env.roledefs = {
     'dev_master': ['ubuntu@54.171.149.242'],
     'dev_web': ['ubuntu@52.19.27.255'],
-    'demo_web': ['ubuntu@52.50.109.217']
+    'demo_web': ['ubuntu@52.50.109.217'],
+    'alpha_web': ['ubuntu@52.19.0.118']
 }
 
 
