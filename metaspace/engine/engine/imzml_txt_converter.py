@@ -93,10 +93,12 @@ class ImzmlTxtConverter(object):
         if self.coord_file:
             self.coord_file.write(encode_coord_line(i, x, y) + '\n')
 
-    def _check_coord_uniq(self, x, y):
+    def _uniq_coord(self, x, y):
         if (x, y) in self.coord_set:
-            raise Exception('Duplicated x,y = ({},{}) pair'.format(x, y))
+            logger.warning('Duplicated x,y = ({},{}) pair'.format(x, y))
+            return False
         self.coord_set.add((x, y))
+        return True
 
     def convert(self, preprocess=False, print_progress=True):
         """
@@ -122,10 +124,12 @@ class ImzmlTxtConverter(object):
             n_pixels = len(self.parser.coordinates)
             track_progress = get_track_progress(n_pixels, max(n_pixels / 100, 100), print_progress)
 
-            for i, coord in enumerate(self.parser.coordinates):
+            i = 0
+            for coord in self.parser.coordinates:
                 x, y = coord[:2]
-                self._check_coord_uniq(x, y)
-                self.parse_save_spectrum(i, x, y)
+                if self._uniq_coord(x, y):
+                    self.parse_save_spectrum(i, x, y)
+                    i += 1
                 track_progress(i)
 
             self.txt_file.close()
