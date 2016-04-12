@@ -84,3 +84,7 @@ div.iso_colorbar {
     background-image: -o-linear-gradient(bottom, #440154, #20908C, #FDE724);
     background-image: linear-gradient(bottom, #440154, #20908C, #FDE724);
 }
+
+.center-block {
+    float: none !important
+}

@@ -95,8 +95,9 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         db_name = self.request.arguments['columns[0][search][value]'][0]
         ds_name = self.request.arguments['columns[1][search][value]'][0]
         adduct = self.request.arguments['columns[9][search][value]'][0]
-        sf = self.request.arguments['columns[2][search][value]'][0]
-        compound = self.request.arguments['columns[3][search][value]'][0]
+        sf = (self.request.arguments['columns[2][search][value]'][0]).upper()
+        compound = (self.request.arguments['columns[3][search][value]'][0]).lower()
+        comp_id = self.request.arguments['columns[4][search][value]'][0]
         min_msm = self.request.arguments['columns[8][search][value]'][0]
 
         orderby = RESULTS_FIELDS[int(self.get_argument('order[0][column]', 0))]
@@ -107,7 +108,8 @@ class ResultsTableHandler(tornado.web.RequestHandler):
             {'field': 'ds_name', 'value': ds_name, 'cond': '='},
             {'field': 'adduct', 'value': adduct, 'cond': '='},
             {'field': 'sf', 'value': sf, 'cond': 'like'},
-            {'field': "array_to_string(comp_names, ',')", 'value': compound, 'cond': 'like'},
+            {'field': "lower(array_to_string(comp_names, ','))", 'value': compound, 'cond': 'like'},
+            {'field': "array_to_string(comp_ids, ',')", 'value': comp_id, 'cond': 'like'},
             {'field': 'msm', 'value': min_msm, 'cond': '>='},
         ]
         count_query, query, query_params = select_results(query=RESULTS_SEL, where=where,
@@ -123,6 +125,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         results_dict['yadcf_data_1'] = self.datasets
         results_dict['yadcf_data_2'] = []
         results_dict['yadcf_data_3'] = []
+        results_dict['yadcf_data_4'] = []
         results_dict['yadcf_data_8'] = ['0.1']
         results_dict['yadcf_data_9'] = self.adducts
 

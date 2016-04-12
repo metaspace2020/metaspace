@@ -13,7 +13,7 @@ function initResultsTable() {
         loadingIndicator: true
       },
       scrollY: "200",
-      dom: "frtiS",
+      dom: "rtiS",
       deferRender: true,
       processing: true,
       serverSide: true,
@@ -22,6 +22,7 @@ function initResultsTable() {
       bSortCellsTop: true,
       bSearchable: false,
       bStateSave: false,  // server side filtering doesn't work with bStateSave=true
+//      searching: false,
       order: [[ 8, "desc" ]],
       fnInitComplete: function(oSettings, json) {
         $('#results-table tbody tr:eq(0)').click();
@@ -128,7 +129,13 @@ function initColumnFilters(results_table) {
         filter_container_id: "fil-nm",
         filter_reset_button_text: false
       },
-//      {column_number : 4, filter_type: "text", filter_container_id: "fil-id", filter_reset_button_text: false},
+      {
+        column_number : 4,
+        filter_type: "text",
+        filter_delay: 500,
+        filter_container_id: "fil-id",
+        filter_reset_button_text: false
+      },
 //      {column_number : 5, filter_type: "lower_bound_number", filter_container_id: "fil-chaos",
 //        filter_reset_button_text: false, filter_default_label: ['&ge;']
 //      },

@@ -37,6 +37,8 @@ CREATE INDEX ind_agg_formulas_1 ON agg_formula (sf);
 CREATE INDEX ind_agg_formulas_2 ON agg_formula (id);
 CREATE INDEX ind_agg_formulas_3 ON agg_formula (id, sf);
 CREATE INDEX ind_agg_formulas_4 ON agg_formula (db_id, id, sf);
+CREATE INDEX agg_formula_names_ind ON agg_formula (names);
+CREATE INDEX agg_formula_ids_ind ON agg_formula (subst_ids);
 
 DROP TABLE IF EXISTS client CASCADE;
 CREATE TABLE client (

@@ -19,5 +19,6 @@ $(document).ready(function() {
     initColumnFilters(results_table);
 
     $( "#feedbackForm" ).hide();
-//    updateFeedbackFormVisibility();
+
+    $(".fancybox").fancybox();
 });
