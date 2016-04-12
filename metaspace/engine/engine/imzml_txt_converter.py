@@ -55,21 +55,6 @@ def get_track_progress(n_points, step, active=False):
     return track if active else dont_track
 
 
-# class ImageBounds(object):
-#     """ Keeps track of min, max coordinate values for x, y axis """
-#     def __init__(self):
-#         self.min_x, self.min_y = sys.maxint, sys.maxint
-#         self.max_x, self.max_y = -sys.maxint, -sys.maxint
-#
-#     def update(self, x, y):
-#         self.min_x, self.min_y = min(self.min_x, x), min(self.min_y, y)
-#         self.max_x, self.max_y = max(self.max_x, x), max(self.max_y, y)
-#
-#     def to_json(self):
-#         return json.dumps({'x': {'min': self.min_x, 'max': self.max_x},
-#                            'y': {'min': self.min_y, 'max': self.max_y}})
-
-
 class ImzmlTxtConverter(object):
     """ Converts spectra from imzML/ibd to plain text files for later access from Spark
 
@@ -88,8 +73,8 @@ class ImzmlTxtConverter(object):
         self.ds_name = ds_name
         self.imzml_path = imzml_path
         self.preprocess = None
-        # self.image_bounds = None
         self.sm_config = SMConfig.get_conf()
+        self.coord_set = set()
 
         self.txt_path = txt_path
         self.coord_path = coord_path
@@ -97,7 +82,6 @@ class ImzmlTxtConverter(object):
         self.coord_file = None
 
         self.parser = None
-        # self.image_bounds = ImageBounds()
 
     def parse_save_spectrum(self, i, x, y):
         """ Parse and save to files spectrum with index i and its coordinates x,y"""
@@ -108,6 +92,11 @@ class ImzmlTxtConverter(object):
         self.txt_file.write(encode_data_line(i, mzs, ints, decimals=9) + '\n')
         if self.coord_file:
             self.coord_file.write(encode_coord_line(i, x, y) + '\n')
+
+    def _check_coord_uniq(self, x, y):
+        if (x, y) in self.coord_set:
+            raise Exception('Duplicated x,y = ({},{}) pair'.format(x, y))
+        self.coord_set.add((x, y))
 
     def convert(self, preprocess=False, print_progress=True):
         """
@@ -135,15 +124,13 @@ class ImzmlTxtConverter(object):
 
             for i, coord in enumerate(self.parser.coordinates):
                 x, y = coord[:2]
-                # self.image_bounds.update(x, y)
+                self._check_coord_uniq(x, y)
                 self.parse_save_spectrum(i, x, y)
                 track_progress(i)
 
             self.txt_file.close()
             if self.coord_file:
                 self.coord_file.close()
-
-            # self.save_ds_meta()
 
             logger.info("Conversion finished successfully")
         else:

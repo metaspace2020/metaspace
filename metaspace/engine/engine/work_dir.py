@@ -37,7 +37,7 @@ class WorkDir(object):
         try:
             cmd_check('rm -rf {}', self.path)
         except CalledProcessError as e:
-            logger.warning('Deleting interim local data files error: {}', e.message)
+            logger.warning('Deleting interim local data files error: %s', e.message)
 
     def clean_work_dirs(self):
         try:
@@ -45,7 +45,7 @@ class WorkDir(object):
             if not self.sm_config['fs']['local']:
                 cmd_check(hdfs_prefix() + '-rm -R {}', hdfs_path(self.path))
         except CalledProcessError as e:
-            logger.warning('Deleting interim data files error: {}', e.message)
+            logger.warning('Deleting interim data files error: %s', e.message)
 
     @staticmethod
     def split_s3_path(path):
