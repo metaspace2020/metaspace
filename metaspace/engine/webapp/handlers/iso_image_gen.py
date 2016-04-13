@@ -65,11 +65,12 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
 
         return np.array(intens_list)
 
-    def _get_ds_mask(self, coords, nrows, ncols):
+    @staticmethod
+    def _get_ds_mask(coords, nrows, ncols):
         rows = coords[:, 1]
         cols = coords[:, 0]
         data = np.ones(coords.shape[0])
-        return coo_matrix((data, (rows, cols)), shape=(nrows, ncols)).toarray()
+        return coo_matrix((data, (rows, cols)), shape=(nrows, ncols)).toarray() > 0
 
     def get_img_ints(self, ints_list):
         pass

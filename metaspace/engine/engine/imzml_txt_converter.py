@@ -124,7 +124,6 @@ class ImzmlTxtConverter(object):
             n_pixels = len(self.parser.coordinates)
             track_progress = get_track_progress(n_pixels, max(n_pixels / 100, 100), print_progress)
 
-            i = 0
             for i, coord in enumerate(self.parser.coordinates):
                 x, y = coord[:2]
                 self._uniq_coord(x, y)
