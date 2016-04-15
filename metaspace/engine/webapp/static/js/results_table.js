@@ -8,6 +8,14 @@ function initResultsTable() {
             data.fdr_thr = $("#fdr_thr_btn").text();
             return data
         },
+//        dataFilter: function(data){
+//            var json = jQuery.parseJSON( data );
+//            json.recordsTotal = json.total;
+//            json.recordsFiltered = json.total;
+//            json.data = json.list;
+//
+//            return JSON.stringify( json ); // return JSON string
+//        }
       },
       scroller: {
         loadingIndicator: true
@@ -28,6 +36,7 @@ function initResultsTable() {
         $('#results-table tbody tr:eq(0)').click();
       },
       columnDefs: [
+        {"width": "15%", "targets": 3},
         { "render": function ( data, type, row ) {
           if (type === 'display') {
             return sin_render_sf(data);
@@ -94,6 +103,13 @@ function fdrThrUpdate(results_table) {
 
       results_table.ajax.reload();
     });
+}
+
+function addOndrawHandler(results_table) {
+    results_table.on( 'draw', function () {
+//        var first_visible_row_ind = parseInt($('.dataTables_info').text().match(/[0-9]+/g)[0]) - 1;
+        $('#results-table tbody tr:eq(0)').click();
+    } );
 }
 
 function initColumnFilters(results_table) {

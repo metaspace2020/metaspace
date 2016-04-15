@@ -85,7 +85,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def post(self, *args):
-        draw = self.get_argument('draw', 0)
+        draw = int(self.get_argument('draw', 0))
 
         limit = int(self.get_argument('length', 500))
         offset = int(self.get_argument('start', 0))

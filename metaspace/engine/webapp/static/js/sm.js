@@ -7,7 +7,7 @@ $(document).ready(function() {
 //    init_s3_upload();
 
     var results_table = initResultsTable();
-
+    addOndrawHandler(results_table);
     fdrThrUpdate(results_table);
 
     addRowSelectionHandler(results_table);
