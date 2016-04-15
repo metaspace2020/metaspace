@@ -23,6 +23,7 @@ function addRatingChangeHandler(results_table) {
                 'db_id': rowData[14],
                 'sf_id': rowData[12],
                 'adduct': rowData[9],
+                'fdr_thr': $("#fdr_thr_btn").text(),
                 'rating': rating
             }
         }).done(function() {
@@ -47,6 +48,7 @@ function addCommentSaveHandler(results_table) {
                 'db_id': rowData[14],
                 'sf_id': rowData[12],
                 'adduct': rowData[9],
+                'fdr_thr': $("#fdr_thr_btn").text(),
                 'comment': comment
             }
         }).done(function() {
@@ -69,6 +71,7 @@ function initFeedbackRating(job_id, db_id, sf_id, adduct) {
             'db_id': db_id,
             'sf_id': sf_id,
             'adduct': adduct,
+            'fdr_thr': $("#fdr_thr_btn").text()
         }
     }).done(function(data) {
         $('label').removeClass('active');
@@ -99,6 +102,7 @@ function initFeedbackComment(job_id, db_id, sf_id, adduct) {
             'db_id': db_id,
             'sf_id': sf_id,
             'adduct': adduct,
+            'fdr_thr': $("#fdr_thr_btn").text()
         }
     }).done(function(data) {
         $("#feedbackForm textarea[name=comment]").val(data.comment);

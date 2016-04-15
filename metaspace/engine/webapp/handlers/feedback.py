@@ -7,14 +7,14 @@ import json
 import requests
 
 
-FEEDBACK_INS = ("INSERT INTO feedback (client_id, job_id, db_id, sf_id, adduct, rating, comment) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s)")
+FEEDBACK_INS = ("INSERT INTO feedback (client_id, job_id, db_id, sf_id, adduct, rating, comment, fdr_thr) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)")
 RATING_UPD = ("UPDATE feedback SET rating = %s "
-              "WHERE job_id=%s AND db_id=%s AND sf_id=%s AND adduct=%s AND client_id=%s")
+              "WHERE job_id=%s AND db_id=%s AND sf_id=%s AND adduct=%s AND fdr_thr=%s AND client_id=%s")
 COMMENT_UPD = ("UPDATE feedback SET comment = %s "
-               "WHERE job_id=%s AND db_id=%s AND sf_id=%s AND adduct=%s AND client_id=%s")
+               "WHERE job_id=%s AND db_id=%s AND sf_id=%s AND adduct=%s AND fdr_thr=%s AND client_id=%s")
 FEEDBACK_SEL = ("SELECT rating, comment FROM feedback WHERE job_id=%s AND db_id=%s AND sf_id=%s AND adduct=%s "
-                "AND client_id=%s")
+                "AND fdr_thr=%s AND client_id=%s")
 
 
 def arg_dict(args):
@@ -24,20 +24,24 @@ def arg_dict(args):
 def upsert_feedback(db, client_id, args):
     assert ('rating' in args or 'comment' in args)
 
-    if db.query(FEEDBACK_SEL, args['job_id'], args['db_id'], args['sf_id'], args['adduct'], client_id):
+    if db.query(FEEDBACK_SEL, args['job_id'], args['db_id'], args['sf_id'], args['adduct'], args['fdr_thr'], client_id):
         if 'rating' in args:
             db.query(RATING_UPD,
-                     args['rating'], args['job_id'], args['db_id'], args['sf_id'], args['adduct'], client_id)
+                     args['rating'], args['job_id'], args['db_id'], args['sf_id'], args['adduct'],
+                     args['fdr_thr'], client_id)
         elif 'comment' in args:
             db.query(COMMENT_UPD,
-                     args['comment'], args['job_id'], args['db_id'], args['sf_id'], args['adduct'], client_id)
+                     args['comment'], args['job_id'], args['db_id'], args['sf_id'], args['adduct'],
+                     args['fdr_thr'], client_id)
     else:
         if 'rating' in args:
             db.query(FEEDBACK_INS,
-                     client_id, args['job_id'], args['db_id'], args['sf_id'], args['adduct'], args['rating'], None)
+                     client_id, args['job_id'], args['db_id'], args['sf_id'], args['adduct'],
+                     args['rating'], None, args['fdr_thr'])
         elif 'comment' in args:
             db.query(FEEDBACK_INS,
-                     client_id, args['job_id'], args['db_id'], args['sf_id'], args['adduct'], 0, args['comment'])
+                     client_id, args['job_id'], args['db_id'], args['sf_id'], args['adduct'],
+                     0, args['comment'], args['fdr_thr'])
 
 
 class FeedbackRating(tornado.web.RequestHandler):
@@ -62,7 +66,7 @@ class FeedbackRating(tornado.web.RequestHandler):
 
         args = arg_dict(self.request.arguments)
         feed_rs = self.application.db.query(FEEDBACK_SEL, args['job_id'], args['db_id'],
-                                            args['sf_id'], args['adduct'], client_id)
+                                            args['sf_id'], args['adduct'], args['fdr_thr'], client_id)
         if not feed_rs:
             self.write({})
             print 'Sent empty feedback rating'.format()
@@ -94,7 +98,7 @@ class FeedbackComment(tornado.web.RequestHandler):
 
         args = arg_dict(self.request.arguments)
         feed_rs = self.application.db.query(FEEDBACK_SEL, args['job_id'], args['db_id'],
-                                            args['sf_id'], args['adduct'], client_id)
+                                            args['sf_id'], args['adduct'], args['fdr_thr'], client_id)
         if not feed_rs:
             self.write({})
             print 'Sent empty feedback comment'.format()

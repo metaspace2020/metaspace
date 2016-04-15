@@ -58,6 +58,7 @@ CREATE TABLE feedback (
     adduct      text,
 	rating		smallint,
     comment     text,
+    fdr_thr     real,
 	CONSTRAINT feedback_id_pk PRIMARY KEY(id)
 );
 
