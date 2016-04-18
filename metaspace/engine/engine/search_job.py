@@ -124,7 +124,7 @@ class SearchJob(object):
             self._store_results(search_results)
 
             if not self.sm_config['fs']['local']:
-                self.work_dir.drop_local_work_dir()
+                self.work_dir.clean_local_work_dir()
         except Exception as e:
             raise
         finally:

@@ -33,9 +33,10 @@ class WorkDir(object):
         self.boto_session = boto3.Session()
 
     # TODO: add tests
-    def drop_local_work_dir(self):
+    def clean_local_work_dir(self):
         try:
-            cmd_check('rm -rf {}', self.path)
+            # cmd_check('rm -rf {}', self.path)
+            cmd_check("find {} -type f ! -name '*.json' -delete", self.path)
         except CalledProcessError as e:
             logger.warning('Deleting interim local data files error: %s', e.message)
 
@@ -44,12 +45,26 @@ class WorkDir(object):
             cmd_check('rm -rf {}', self.path)
             if not self.sm_config['fs']['local']:
                 cmd_check(hdfs_prefix() + '-rm -R {}', hdfs_path(self.path))
+            logger.info('Successfully deleted interim data')
         except CalledProcessError as e:
             logger.warning('Deleting interim data files error: %s', e.message)
 
     @staticmethod
     def split_s3_path(path):
         return path.split('s3://')[1].split('/', 1)
+
+    # TODO: add tests
+    def work_dir_exists(self):
+        if self.sm_config['fs']['local']:
+            return exists(self.path)
+        else:
+            try:
+                cmd_check(hdfs_prefix() + '-count {}', self.path)
+            except CalledProcessError as e:
+                logger.info(e)
+                return False
+            else:
+                return True
 
     def copy_input_data(self, input_data_path, ds_config_path):
         """ Copy imzML/ibd/config files from input path to a dataset work directory
@@ -59,7 +74,7 @@ class WorkDir(object):
         input_data_path : str
             Path to input files
         """
-        if exists(self.path):
+        if self.work_dir_exists():
             logger.info('Path %s already exists', self.path)
         else:
             logger.info('Copying data from %s to %s', input_data_path, self.path)
