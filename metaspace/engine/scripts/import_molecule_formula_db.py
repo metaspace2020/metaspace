@@ -3,10 +3,13 @@ Script for importing a new molecule database into the sm engine from a csv file
 """
 import argparse
 import json
+import pandas as pd
 from os import path
 from datetime import datetime as dt
+from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
+
 from engine.db import DB
-from engine.util import proj_root
+from engine.util import proj_root, logger
 
 
 def del_prev_formula_db(db, db_name, confirmed=False):
@@ -26,10 +29,20 @@ def insert_new_formula_db(db, db_name):
 
 
 def insert_new_formulas(db, db_name, csv_file, sep):
+
+    def parsable(sf):
+        try:
+            parseSumFormula(sf)
+            return True
+        except Exception as e:
+            logger.warning(e)
+            return False
+
+    sf_df = pd.read_csv(csv_file, names=['fid', 'name', 'sf'], sep='\t')
+    sf_df = sf_df[sf_df.sf.map(parsable)]
     db_id = db.select_one('SELECT id FROM formula_db WHERE name = %s', db_name)[0]
-    db.alter('ALTER TABLE formula ALTER COLUMN db_id SET DEFAULT %s', db_id)
-    with open(csv_file) as f:
-        db.copy(f, 'formula', sep=sep, columns=['fid', 'name', 'sf'])
+    sf_df.insert(0, 'db_id', db_id)
+    db.insert("INSERT INTO formula (db_id, fid, name, sf) VALUES (%s, %s, %s, %s)", [tuple(r) for r in sf_df.values])
 
 
 def insert_agg_formulas(db, db_name):
