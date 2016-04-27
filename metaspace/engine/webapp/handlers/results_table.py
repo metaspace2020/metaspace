@@ -3,14 +3,20 @@ import tornado.ioloop
 import tornado.web
 import tornado.httpserver
 from tornado import gen
+from time import time
 
 
 RESULTS_COUNT_TPL = "SELECT COUNT(*) as count FROM ({}) tt"
 RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids',
                   'chaos', 'image_corr', 'pattern_match', 'msm', 'adduct',
                   'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id', 'pass_fdr']
+# RESULTS_SEL = '''
+    # SELECT db_name, ds_name, sf, comp_names, comp_ids, chaos, image_corr, pattern_match, msm,
+    # adduct, job_id, ds_id, sf_id, peaks, db_id,
+    # CASE WHEN ROUND(fdr::numeric, 2) <= %s THEN 1 ELSE 0 END AS pass_fdr
+    # FROM results_table
+    # '''
 RESULTS_SEL = '''
-    SELECT * FROM (
         SELECT sf_db.name as db_name, ds.name as ds_name, f.sf as sf, f.names as comp_names, f.subst_ids as comp_ids,
             coalesce((m.stats->'chaos')::text::real, 0) AS chaos,
             coalesce((m.stats->'spatial')::text::real, 0) AS image_corr,
@@ -30,7 +36,6 @@ RESULTS_SEL = '''
         LEFT JOIN dataset ds ON ds.id = j.ds_id
         LEFT JOIN iso_image_metrics m ON m.job_id = j.id AND m.db_id = sf_db.id AND m.sf_id = f.id AND m.adduct = a.adduct
         --ORDER BY sf
-    ) as t
     '''
 
 
@@ -85,6 +90,8 @@ class ResultsTableHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def post(self, *args):
+        start = time()
+
         draw = int(self.get_argument('draw', 0))
 
         limit = int(self.get_argument('length', 500))
@@ -130,3 +137,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         results_dict['yadcf_data_9'] = self.adducts
 
         self.write(json.dumps(results_dict))
+
+        time_spent = time() - start
+        # print divmod(int(round(time_spent)), 60)
+        print 'results_table post time = {} s'.format(time_spent)

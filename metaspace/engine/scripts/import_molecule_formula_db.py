@@ -38,7 +38,7 @@ def insert_new_formulas(db, db_name, csv_file, sep):
             logger.warning(e)
             return False
 
-    sf_df = pd.read_csv(csv_file, names=['fid', 'name', 'sf'], sep='\t')
+    sf_df = pd.read_csv(csv_file, names=['fid', 'name', 'sf'], sep=sep)
     sf_df = sf_df[sf_df.sf.map(parsable)]
     db_id = db.select_one('SELECT id FROM formula_db WHERE name = %s', db_name)[0]
     sf_df.insert(0, 'db_id', db_id)

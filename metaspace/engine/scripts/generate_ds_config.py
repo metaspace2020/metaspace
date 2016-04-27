@@ -25,8 +25,7 @@ ds_config = {
         "nlevels": 30,
         "q": 99,
         "do_preprocessing": False
-    },
-    "molecules_num": ""
+    }
 }
 
 
