@@ -17,6 +17,7 @@ RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids',
     # FROM results_table
     # '''
 RESULTS_SEL = '''
+        SELECT * FROM (
         SELECT sf_db.name as db_name, ds.name as ds_name, f.sf as sf, f.names as comp_names, f.subst_ids as comp_ids,
             coalesce((m.stats->'chaos')::text::real, 0) AS chaos,
             coalesce((m.stats->'spatial')::text::real, 0) AS image_corr,
@@ -36,6 +37,7 @@ RESULTS_SEL = '''
         LEFT JOIN dataset ds ON ds.id = j.ds_id
         LEFT JOIN iso_image_metrics m ON m.job_id = j.id AND m.db_id = sf_db.id AND m.sf_id = f.id AND m.adduct = a.adduct
         --ORDER BY sf
+        ) tt
     '''
 
 

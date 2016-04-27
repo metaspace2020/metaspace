@@ -10,7 +10,7 @@ from operator import mul, add
 from pprint import pprint
 
 from engine.db import DB
-from engine.util import proj_root, hdfs_prefix, SMConfig
+from engine.util import proj_root, SMConfig
 
 
 # def sm_config():
@@ -21,7 +21,7 @@ SMConfig.set_path(join(proj_root(), 'conf/config.json'))
 sm_config = SMConfig.get_conf()
 
 ds_name = 'sci_test_spheroid_12h'
-data_dir_path = join(SMConfig.get_conf()['fs']['data_dir'], ds_name)
+data_dir_path = join(SMConfig.get_conf()['fs']['base_path'], ds_name)
 input_dir_path = join(proj_root(), 'test/data/sci_test_search_job_spheroid_dataset')
 ds_config_path = join(input_dir_path, 'config.json')
 
@@ -103,8 +103,6 @@ def run_search():
 def clear_data_dirs():
     with warn_only():
         local('rm -rf {}'.format(data_dir_path))
-        if not sm_config['fs']['local']:
-            local(hdfs_prefix() + '-rm -r {}'.format(data_dir_path))
 
 
 class SciTester(object):

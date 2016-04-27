@@ -6,8 +6,7 @@
     "password": "*****"
   },
   "fs": {
-    "data_dir": "/opt/data/sm_data",
-    "local": true
+    "base_path": "/opt/data/sm_data"
   },
   "hdfs": {
     "namenode": "localhost"
