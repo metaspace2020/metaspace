@@ -61,6 +61,7 @@ class SearchResults(object):
         """ Store formula image metrics in the database """
         logger.info('Storing iso image metrics')
         rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id, self.sf_metrics_df, self.sf_adduct_peaksn))
+        # TODO: for some unknown reason in some cases may be super slow (minutes)
         self.db.insert(METRICS_INS, rows)
 
     def store_sf_iso_images(self, nrows, ncols):
@@ -98,4 +99,5 @@ class SearchResults(object):
 
         logger.info('Storing iso images')
 
+        # self.sf_iso_images.flatMap(iso_img_row_gen).coalesce(32).foreachPartition(store_iso_img_rows)
         self.sf_iso_images.flatMap(iso_img_row_gen).foreachPartition(store_iso_img_rows)
