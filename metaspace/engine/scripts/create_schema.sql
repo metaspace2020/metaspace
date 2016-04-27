@@ -176,3 +176,37 @@ CREATE TABLE theor_peaks (
       ON UPDATE NO ACTION ON DELETE CASCADE
 );
 CREATE INDEX ind_theor_peaks_2 ON theor_peaks(db_id, sf_id);
+
+DROP MATERIALIZED VIEW IF EXISTS results_table;
+
+CREATE MATERIALIZED VIEW results_table AS
+ SELECT sf_db.name AS db_name,
+    ds.name AS ds_name,
+    f.sf,
+    f.names AS comp_names,
+    f.subst_ids AS comp_ids,
+    COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
+    COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
+    COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
+    COALESCE(m.msm, 0::real) AS msm,
+    a.adduct,
+    j.id AS job_id,
+    ds.id AS ds_id,
+    f.id AS sf_id,
+    m.peaks_n AS peaks,
+    sf_db.id AS db_id,
+    m.fdr
+   FROM agg_formula f
+     CROSS JOIN adduct a
+     JOIN formula_db sf_db ON sf_db.id = f.db_id
+     LEFT JOIN job j ON j.id = a.job_id
+     LEFT JOIN dataset ds ON ds.id = j.ds_id
+     LEFT JOIN iso_image_metrics m ON m.job_id = j.id AND m.db_id = sf_db.id AND m.sf_id = f.id AND m.adduct = a.adduct
+  ORDER BY COALESCE(m.msm, 0::real) DESC
+WITH DATA;
+
+ALTER TABLE results_table
+  OWNER TO sm;
+
+CREATE UNIQUE INDEX results_table_msm ON results_table
+(db_name, sf, comp_names, comp_ids, chaos, image_corr, pattern_match, msm, adduct);

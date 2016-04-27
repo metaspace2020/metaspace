@@ -32,7 +32,7 @@ config = None
 class Application(tornado.web.Application):
     """Main class of the tornado application."""
 
-    def __init__(self):
+    def __init__(self, debug=False):
         """Initializes handlers, including the spark handler, sets up database connection."""
 
         handlers = [
@@ -52,7 +52,7 @@ class Application(tornado.web.Application):
             static_path=path.join(path.dirname(__file__), 'static'),
             template_path=path.join(path.dirname(__file__), 'html'),
             cookie_secret='59x6wj71r6462o16PSFsouy5QnaviACW',
-            debug=True,
+            debug=debug,
             compress_response=True
         )
         config_db = config["db"]
@@ -60,6 +60,9 @@ class Application(tornado.web.Application):
         # Have one global connection to the blog DB across all handlers
         self.db = tornpsql.Connection(config_db['host'], config_db['database'], config_db['user'],
                                       config_db['password'], 5432)
+
+        # hack needed to overcome sending expensive query every time results table is filtered or sorted
+        self.adducts = [row['adduct'] for row in self.db.query('select distinct(target_add) as adduct from target_decoy_add')]
 
     def update_all_jobs_callback(self):
         """For each job, checks whether its status has changed."""
@@ -111,6 +114,7 @@ def main():
     parser.add_argument('--port', dest='port', type=int, help='port on which to access the web server')
     parser.add_argument('--profile', dest='time_profiling_enabled', action='store_true')
     parser.add_argument('--use-deprecated', dest='use_deprecated', action='store_true')
+    parser.add_argument('--debug', dest='debug', action='store_true')
     parser.set_defaults(spark=False, config='config.json', port=8080, time_profiling_enabled=False,
                         use_deprecated=False)
     args = parser.parse_args()
@@ -120,7 +124,7 @@ def main():
         config = json.load(f)
 
     port = args.port
-    torn_app = Application()
+    torn_app = Application(args.debug)
     http_server = tornado.httpserver.HTTPServer(torn_app)
     http_server.listen(port)
     my_print("Starting server, listening to port %d..." % port)

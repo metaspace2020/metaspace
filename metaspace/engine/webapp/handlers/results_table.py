@@ -6,39 +6,46 @@ from tornado import gen
 from time import time
 
 
-RESULTS_COUNT_TPL = "SELECT COUNT(*) as count FROM ({}) tt"
+RESULTS_COUNT_TPL = "SELECT COUNT(*) as count FROM ({}) t"
 RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids',
                   'chaos', 'image_corr', 'pattern_match', 'msm', 'adduct',
                   'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id', 'pass_fdr']
+
+RESULTS_SEL = 'SELECT * FROM results_table '
+FDR_THR_TPL = '''SELECT db_name, ds_name, sf, comp_names, comp_ids, chaos, image_corr, pattern_match, msm, adduct,
+                job_id, ds_id, sf_id, peaks, db_id,
+                CASE WHEN ROUND(fdr::numeric, 2) <= %s THEN 1 ELSE 0 END AS pass_fdr
+                FROM ({}) tt
+                '''
 # RESULTS_SEL = '''
-    # SELECT db_name, ds_name, sf, comp_names, comp_ids, chaos, image_corr, pattern_match, msm,
-    # adduct, job_id, ds_id, sf_id, peaks, db_id,
-    # CASE WHEN ROUND(fdr::numeric, 2) <= %s THEN 1 ELSE 0 END AS pass_fdr
-    # FROM results_table
-    # '''
-RESULTS_SEL = '''
-        SELECT * FROM (
-        SELECT sf_db.name as db_name, ds.name as ds_name, f.sf as sf, f.names as comp_names, f.subst_ids as comp_ids,
-            coalesce((m.stats->'chaos')::text::real, 0) AS chaos,
-            coalesce((m.stats->'spatial')::text::real, 0) AS image_corr,
-            coalesce((m.stats->'spectral')::text::real, 0) AS pattern_match,
-            coalesce(msm, 0) as msm,
-            a.adduct AS adduct,
-            j.id AS job_id,
-            ds.id AS ds_id,
-            f.id AS sf_id,
-            m.peaks_n as peaks,
-            sf_db.id AS db_id,
-            CASE WHEN ROUND(fdr::numeric, 2) <= %s THEN 1 ELSE 0 END AS pass_fdr
-        FROM agg_formula f
-        CROSS JOIN adduct a
-        JOIN formula_db sf_db ON sf_db.id = f.db_id
-        LEFT JOIN job j ON j.id = a.job_id
-        LEFT JOIN dataset ds ON ds.id = j.ds_id
-        LEFT JOIN iso_image_metrics m ON m.job_id = j.id AND m.db_id = sf_db.id AND m.sf_id = f.id AND m.adduct = a.adduct
-        --ORDER BY sf
-        ) tt
-    '''
+#     SELECT db_name, ds_name, sf, comp_names, comp_ids, chaos, image_corr, pattern_match, msm,
+#     adduct, job_id, ds_id, sf_id, peaks, db_id,
+#     CASE WHEN ROUND(fdr::numeric, 2) <= %s THEN 1 ELSE 0 END AS pass_fdr
+#     FROM results_table
+#     '''
+# RESULTS_SEL = '''
+#         SELECT * FROM (
+#         SELECT sf_db.name as db_name, ds.name as ds_name, f.sf as sf, f.names as comp_names, f.subst_ids as comp_ids,
+#             coalesce((m.stats->'chaos')::text::real, 0) AS chaos,
+#             coalesce((m.stats->'spatial')::text::real, 0) AS image_corr,
+#             coalesce((m.stats->'spectral')::text::real, 0) AS pattern_match,
+#             coalesce(msm, 0) as msm,
+#             a.adduct AS adduct,
+#             j.id AS job_id,
+#             ds.id AS ds_id,
+#             f.id AS sf_id,
+#             m.peaks_n as peaks,
+#             sf_db.id AS db_id,
+#             CASE WHEN ROUND(fdr::numeric, 2) <= %s THEN 1 ELSE 0 END AS pass_fdr
+#         FROM agg_formula f
+#         CROSS JOIN adduct a
+#         JOIN formula_db sf_db ON sf_db.id = f.db_id
+#         LEFT JOIN job j ON j.id = a.job_id
+#         LEFT JOIN dataset ds ON ds.id = j.ds_id
+#         LEFT JOIN iso_image_metrics m ON m.job_id = j.id AND m.db_id = sf_db.id AND m.sf_id = f.id AND m.adduct = a.adduct
+#         --ORDER BY sf
+#         ) tt
+#     '''
 
 
 def select_results(query, where=None, orderby='msm', asc=False, limit=500, offset=0):
@@ -76,7 +83,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         super(ResultsTableHandler, self).initialize()
         self.formula_dbs = [row['name'] for row in self.db.query('select name from formula_db')]
         self.datasets = [row['name'] for row in self.db.query('select name from dataset')]
-        self.adducts = [row['adduct'] for row in self.db.query('select distinct(target_add) as adduct from target_decoy_add')]
+        self.adducts = self.application.adducts
 
     @property
     def db(self):
@@ -124,9 +131,11 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         count_query, query, query_params = select_results(query=RESULTS_SEL, where=where,
                                                           orderby=orderby, asc=order_asc,
                                                           limit=limit, offset=offset)
-        query_params.insert(0, fdr_thr)
         count = int(self.db.query(count_query, *query_params)[0]['count'])
-        results = self.db.query(query, *query_params)
+
+        fdr_thr_query = FDR_THR_TPL.format(query)
+        query_params.insert(0, fdr_thr)
+        results = self.db.query(fdr_thr_query, *query_params)
 
         results_dict = self.make_datatable_dict(draw, count, [[row[x] for x in RESULTS_FIELDS] for row in results])
 

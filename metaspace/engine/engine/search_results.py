@@ -13,6 +13,7 @@ METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s,
 SF_ISO_IMGS_INS = 'INSERT INTO iso_image VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
 clear_iso_image_sql = 'DELETE FROM iso_image WHERE job_id = %s'
 clear_iso_image_metrics_sql = 'DELETE FROM iso_image_metrics WHERE job_id = %s'
+RESULTS_TABLE_VIEW_REFRESH = 'REFRESH MATERIALIZED VIEW results_table'
 
 
 class SearchResults(object):
@@ -63,6 +64,8 @@ class SearchResults(object):
         rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id, self.sf_metrics_df, self.sf_adduct_peaksn))
         # TODO: for some unknown reason in some cases may be super slow (minutes)
         self.db.insert(METRICS_INS, rows)
+
+        self.db.alter(RESULTS_TABLE_VIEW_REFRESH)
 
     def store_sf_iso_images(self, nrows, ncols):
         """ Store formula images in the database
