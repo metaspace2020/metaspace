@@ -3,7 +3,7 @@ import json
 import numpy as np
 from codecs import open
 
-from engine.util import local_path, hdfs_path, logger, SMConfig
+from engine.util import local_path, s3_path, logger, SMConfig
 
 
 DS_ID_SELECT = "SELECT id FROM dataset where name = %s"
@@ -26,16 +26,16 @@ class Dataset(object):
         Dataset name
     ds_config : dict
         Dataset config file
-    work_dir : engine.work_dir.WorkDir
+    wd_manager : engine.local_dir.WorkDir
     db : engine.db.DB
     """
-    def __init__(self, sc, name, owner_email, ds_config, work_dir, db):
+    def __init__(self, sc, name, owner_email, ds_config, wd_manager, db):
         self.db = db
         self.sc = sc
         self.name = name
         self.owner_email = owner_email
         self.ds_config = ds_config
-        self.work_dir = work_dir
+        self.wd_manager = wd_manager
         self.sm_config = SMConfig.get_conf()
 
         self._define_pixels_order()
@@ -51,10 +51,7 @@ class Dataset(object):
         return res
 
     def _define_pixels_order(self):
-        if self.sm_config['fs']['local']:
-            coord_path = local_path(self.work_dir.coord_path)
-        else:
-            coord_path = hdfs_path(self.work_dir.coord_path)
+        coord_path = self.wd_manager.coord_path
 
         self.coords = self.sc.textFile(coord_path).map(self._parse_coord_row).filter(lambda t: len(t) == 2).collect()
         self.min_x, self.min_y = np.amin(np.asarray(self.coords), axis=0)
@@ -119,12 +116,12 @@ class Dataset(object):
             Spark RDD with spectra. One spectrum per RDD entry.
         """
         txt_to_spectrum = self.txt_to_spectrum_non_cum
-        if self.sm_config['fs']['local']:
-            logger.info('Converting txt to spectrum rdd from %s', local_path(self.work_dir.txt_path))
-            return self.sc.textFile(local_path(self.work_dir.txt_path), minPartitions=8).map(txt_to_spectrum)
-        else:
-            logger.info('Converting txt to spectrum rdd from %s', hdfs_path(self.work_dir.txt_path))
-            return self.sc.textFile(hdfs_path(self.work_dir.txt_path), minPartitions=8).map(txt_to_spectrum)
+        # if self.sm_config['fs']['local']:
+        logger.info('Converting txt to spectrum rdd from %s', self.wd_manager.txt_path)
+        return self.sc.textFile(self.wd_manager.txt_path,minPartitions=8).map(txt_to_spectrum)
+        # else:
+        #     logger.info('Converting txt to spectrum rdd from %s', hdfs_path(self.wd_manager.txt_path))
+        #     return self.sc.textFile(hdfs_path(self.wd_manager.txt_path), minPartitions=8).map(txt_to_spectrum)
 
     def save_ds_meta(self):
         """ Save dataset metadata (name, path, image bounds, coordinates) to the database """
@@ -143,7 +140,7 @@ class Dataset(object):
             raise Exception("Could't find a user with email {}".format(self.owner_email))
 
         owner_id = owner_rs[0] if owner_rs else None
-        ds_row = [(self.name, owner_id, self.work_dir.imzml_path, img_bounds, ds_config_json)]
+        ds_row = [(self.name, owner_id, self.wd_manager.txt_path, img_bounds, ds_config_json)]
         self.db.insert(DS_INSERT, ds_row)
 
         ds_id = self.db.select(DS_ID_SELECT, self.name)[0]

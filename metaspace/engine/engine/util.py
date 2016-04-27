@@ -77,12 +77,16 @@ def local_path(path):
     return 'file://' + path
 
 
-def hdfs_path(path):
-    return 'hdfs://{}:9000{}'.format(SMConfig.get_conf()['hdfs']['namenode'], path)
+# def hdfs_path(path):
+#     return 'hdfs://{}:9000{}'.format(SMConfig.get_conf()['hdfs']['namenode'], path)
 
 
-def hdfs_prefix():
-    return '{}/bin/hdfs dfs '.format(os.environ['HADOOP_HOME'])
+def s3_path(path):
+    return 's3a://{}'.format(path)
+
+
+# def hdfs_prefix():
+#     return '{}/bin/hdfs dfs '.format(os.environ['HADOOP_HOME'])
 
 
 def _cmd(template, call_func, *args):

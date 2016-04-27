@@ -16,11 +16,11 @@ from engine.fdr import FDR
 from engine.formula_img_validator import sf_image_metrics, sf_image_metrics_est_fdr, filter_sf_images, filter_sf_metrics
 from engine.formulas_segm import FormulasSegm
 from engine.search_results import SearchResults
-from engine.formula_imager_segm import compute_sf_images
 from engine.theor_peaks_gen import TheorPeaksGenerator
 from engine.imzml_txt_converter import ImzmlTxtConverter
-from engine.work_dir import WorkDir
-from engine.util import local_path, hdfs_path, proj_root, hdfs_prefix, cmd_check, cmd, SMConfig, logger
+from engine.work_dir import WorkDirManager
+from engine.util import local_path, proj_root, SMConfig, logger
+from engine.formula_imager_segm import compute_sf_images
 
 
 DS_ID_SEL = "SELECT id FROM dataset WHERE name = %s"
@@ -51,10 +51,10 @@ class SearchJob(object):
         self.fdr = None
         self.formulas = None
         self.ds_config = None
-        self.work_dir = None
+        self.wd_manager = None
 
     def _read_ds_config(self):
-        with open(self.work_dir.ds_config_path) as f:
+        with open(self.wd_manager.ds_config_path) as f:
             self.ds_config = json.load(f)
 
     def _configure_spark(self):
@@ -64,6 +64,11 @@ class SearchJob(object):
             if prop.startswith('spark.'):
                 sconf.set(prop, value)
 
+        sconf.set("spark.hadoop.fs.s3a.access.key", self.sm_config['aws']['aws_access_key_id'])
+        sconf.set("spark.hadoop.fs.s3a.secret.key", self.sm_config['aws']['aws_secret_access_key'])
+        sconf.set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+
+        # sconf.set("spark.python.profile", "true")
         self.sc = SparkContext(master=self.sm_config['spark']['master'], conf=sconf, appName='SM engine')
         if not self.sm_config['spark']['master'].startswith('local'):
             self.sc.addPyFile(join(local_path(proj_root()), 'sm.zip'))
@@ -91,23 +96,30 @@ class SearchJob(object):
             Clean all interim data files before starting molecule search
         """
         try:
-            self.work_dir = WorkDir(self.ds_name, self.sm_config['fs']['data_dir'])
+            self.wd_manager = WorkDirManager(self.ds_name)
             if clean:
-                self.work_dir.clean_work_dirs()
-            self.work_dir.copy_input_data(input_path, ds_config_path)
+                self.wd_manager.clean()
+
+            # if not self.wd_manager.exists(self.wd_manager.txt_path):
+            self.wd_manager.copy_input_data(input_path, ds_config_path)
+
             self._read_ds_config()
             logger.info('Dataset config:\n%s', pformat(self.ds_config))
 
             self._configure_spark()
             self._init_db()
 
-            imzml_converter = ImzmlTxtConverter(self.ds_name, self.work_dir.imzml_path,
-                                                self.work_dir.txt_path, self.work_dir.coord_path)
-            imzml_converter.convert()
-            if not self.sm_config['fs']['local']:
-                self.work_dir.upload_data_to_hdfs()
+            if not self.wd_manager.exists(self.wd_manager.txt_path):
+                imzml_converter = ImzmlTxtConverter(self.ds_name,
+                                                    self.wd_manager.local_dir.imzml_path,
+                                                    self.wd_manager.local_dir.txt_path,
+                                                    self.wd_manager.local_dir.coord_path)
+                imzml_converter.convert()
 
-            self.ds = Dataset(self.sc, self.ds_name, self.client_email, self.ds_config, self.work_dir, self.db)
+                if not self.wd_manager.local_fs_only:
+                    self.wd_manager.upload_to_remote()
+
+            self.ds = Dataset(self.sc, self.ds_name, self.client_email, self.ds_config, self.wd_manager, self.db)
             self.ds.save_ds_meta()
 
             self.store_job_meta()
@@ -116,19 +128,18 @@ class SearchJob(object):
             theor_peaks_gen.run()
 
             target_adducts = self.ds_config['isotope_generation']['adducts']
-            self.fdr = FDR(self.job_id, self.sf_db_id, decoy_sample_size=20,target_adducts=target_adducts, db=self.db)
+            self.fdr = FDR(self.job_id, self.sf_db_id, decoy_sample_size=20, target_adducts=target_adducts, db=self.db)
             self.fdr.decoy_adduct_selection()
             self.formulas = FormulasSegm(self.job_id, self.sf_db_id, self.ds_config, self.db)
 
             search_results = self._search()
             self._store_results(search_results)
 
-            if not self.sm_config['fs']['local']:
-                self.work_dir.clean_local_work_dir()
         except Exception as e:
             raise
         finally:
             if self.sc:
+                # self.sc.show_profiles()
                 self.sc.stop()
             if self.db:
                 self.db.close()

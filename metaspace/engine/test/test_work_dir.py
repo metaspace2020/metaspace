@@ -50,8 +50,8 @@ def check_call_side_effect(args):
 # def test_work_dir_copy_input_data_no_files_remote_path(check_call_mock, clear_files):
 #     create_sample_files(input_local_path)
 #
-#     work_dir = WorkDir('test_ds', sm_config()['fs']['data_dir'])
-#     work_dir.copy_input_data(input_remote_path, None)
+#     local_dir = WorkDir('test_ds', sm_config()['fs']['data_dir'])
+#     local_dir.copy_input_data(input_remote_path, None)
 #
 #     file_list = set(listdir(ds_path))
 #     assert file_list == {'foo.imzML', 'foo.ibd', 'config.json'}

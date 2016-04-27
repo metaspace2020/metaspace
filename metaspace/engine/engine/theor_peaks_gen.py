@@ -31,7 +31,7 @@ class TheorPeaksGenerator(object):
         self.sm_config = sm_config
         self.ds_config = ds_config
 
-        self.theor_peaks_tmp_dir = join(sm_config['fs']['data_dir'], 'theor_peaks_gen')
+        self.theor_peaks_tmp_dir = join(sm_config['fs']['base_path'], 'tmp_theor_peaks_gen')
         self.db = DB(sm_config['db'])
 
         self.adducts = self.ds_config['isotope_generation']['adducts']
