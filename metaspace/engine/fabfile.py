@@ -21,6 +21,8 @@ env.roledefs = {
     'alpha_web': ['ubuntu@52.19.0.118']
 }
 
+env.disable_known_hosts = True
+
 
 def full_path(path=''):
     return join(dirname(__file__), path)
@@ -114,15 +116,15 @@ def cluster_deploy(delete=False):
 @roles('dev_master')
 def cluster_stop():
     print green('========= Stopping Spark cluster =========')
-    HADOOP_HOME = '/opt/dev/hadoop-2.6.2'
-    SPARK_HOME = '/opt/dev/spark-1.5.1-bin-hadoop2.6'
+    # HADOOP_HOME = '/opt/dev/hadoop-2.6.2'
+    SPARK_HOME = '/opt/dev/spark-1.6.0-bin-hadoop2.7.1'
 
-    print 'Stopping HDFS and Spark...'
-    run('{}/sbin/stop-dfs.sh'.format(HADOOP_HOME))
+    print 'Stopping Spark...'
+    # run('{}/sbin/stop-dfs.sh'.format(HADOOP_HOME))
     run('{}/sbin/stop-all.sh'.format(SPARK_HOME))
 
     print 'Terminating slaves...'
-    out = run('cat {}/etc/hadoop/slaves'.format(HADOOP_HOME))
+    out = run('cat {}/conf/slaves'.format(SPARK_HOME))
     slaves = filter(lambda h: h != 'localhost', [h.strip() for h in out.split('\n')])
 
     desc_cmd = 'aws ec2 describe-instances --filters "Name=private-dns-name,Values={}"'.format(','.join(slaves))
@@ -134,8 +136,10 @@ def cluster_stop():
             local(term_cmd)
 
     print 'Stopping master...'
-    master_inst = 'i-54c44cd9'
-    stop_cmd = 'aws ec2 stop-instances --instance-ids={}'.format(master_inst)
+    master_inst_name = 'sm-dev-master'
+    master_ints_id = get_inst_id(master_inst_name, 'running')
+    # master_inst = 'i-54c44cd9'
+    stop_cmd = 'aws ec2 stop-instances --instance-ids={}'.format(master_ints_id)
     local(stop_cmd)
 
 
@@ -143,8 +147,8 @@ def cluster_stop():
 @roles('dev_master')
 def cluster_start(slave_type='c4.2xlarge', slaves=0):
     print green('========= Starting Spark cluster =========')
-    HADOOP_HOME = '/opt/dev/hadoop-2.6.2'
-    SPARK_HOME = '/opt/dev/spark-1.5.1-bin-hadoop2.6'
+    # HADOOP_HOME = '/opt/dev/hadoop-2.6.2'
+    SPARK_HOME = '/opt/dev/spark-1.6.0-bin-hadoop2.7.1'
 
     print 'Starting master...'
     master_inst_name = 'sm-dev-master'
@@ -153,18 +157,21 @@ def cluster_start(slave_type='c4.2xlarge', slaves=0):
     sleep(60)
 
     if slaves > 0:
-        slave_ami_id = 'ami-18f97a6b'
+        # slave_ami_id = 'ami-337cf140'
+        slave_ami_id = 'ami-81a827f2'
         run_slave_cmd = ('aws ec2 run-instances --image-id {} --instance-type {} --count {} '
-                         '--key-name sm_spark_cluster --security-group-ids sg-921b7ff6').format(slave_ami_id, slave_type, slaves)
+                         '--key-name sm_spark_cluster --security-group-ids sg-921b7ff6 '
+                         # '--block-device-mappings "[{\"DeviceName\":\"/dev/sdb\",\"VirtualName\":\"ephemeral0\"}]"'
+                         ).format(slave_ami_id, slave_type, slaves)
         out = json.loads(local(run_slave_cmd, capture=True))
         slave_hosts = [inst_out['PrivateDnsName'] for inst_out in out['Instances']]
         sleep(100)
 
-        with cd(HADOOP_HOME):
-            run('echo "localhost" > etc/hadoop/slaves')
-            for host in slave_hosts:
-                run('echo "{}" >> etc/hadoop/slaves'.format(host))
-            run('sbin/start-dfs.sh')
+        # with cd(HADOOP_HOME):
+        #     run('echo "localhost" > etc/hadoop/slaves')
+        #     for host in slave_hosts:
+        #         run('echo "{}" >> etc/hadoop/slaves'.format(host))
+        #     run('sbin/start-dfs.sh')
 
         with cd(SPARK_HOME):
             run('echo "localhost" > conf/slaves')
@@ -172,9 +179,9 @@ def cluster_start(slave_type='c4.2xlarge', slaves=0):
                 run('echo "{}" >> conf/slaves'.format(host))
             run('sbin/start-all.sh')
     else:
-        with cd(HADOOP_HOME):
-            run('echo "localhost" > etc/hadoop/slaves')
-            run('sbin/start-dfs.sh')
+        # with cd(HADOOP_HOME):
+        #     run('echo "localhost" > etc/hadoop/slaves')
+        #     run('sbin/start-dfs.sh')
 
         with cd(SPARK_HOME):
             run('echo "localhost" > conf/slaves')
