@@ -4,9 +4,8 @@ Script for exporting search results into csv file
 import argparse
 from os import path
 
-from engine.db import DB
-from engine.util import SMConfig, logger, proj_root
-
+from sm.engine.db import DB
+from sm.engine.util import SMConfig, logger, proj_root
 
 DS_CONFIG_SEL = "SELECT config FROM dataset WHERE name = %s"
 

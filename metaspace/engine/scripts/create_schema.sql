@@ -178,7 +178,6 @@ CREATE TABLE theor_peaks (
 CREATE INDEX ind_theor_peaks_2 ON theor_peaks(db_id, sf_id);
 
 DROP MATERIALIZED VIEW IF EXISTS results_table;
-
 CREATE MATERIALIZED VIEW results_table AS
  SELECT sf_db.name AS db_name,
     ds.name AS ds_name,
@@ -208,5 +207,5 @@ WITH DATA;
 ALTER TABLE results_table
   OWNER TO sm;
 
-CREATE UNIQUE INDEX results_table_msm ON results_table
+CREATE INDEX results_table_msm ON results_table
 (db_name, sf, comp_names, comp_ids, chaos, image_corr, pattern_match, msm, adduct);

@@ -3,13 +3,14 @@ Script for importing a new molecule database into the sm engine from a csv file
 """
 import argparse
 import json
-import pandas as pd
-from os import path
 from datetime import datetime as dt
+from os import path
+
+import pandas as pd
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 
-from engine.db import DB
-from engine.util import proj_root, logger
+from sm.engine.db import DB
+from sm.engine.util import proj_root, logger
 
 
 def del_prev_formula_db(db, db_name, confirmed=False):

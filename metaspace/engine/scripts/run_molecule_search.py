@@ -3,11 +3,10 @@ Script for running molecule search
 """
 import argparse
 import time
-
-from engine.search_job import SearchJob
-from engine.util import SMConfig, logger
 from pprint import pformat
 
+from sm.engine.util import SMConfig, logger
+from sm.engine.search_job import SearchJob
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='SM process dataset at a remote spark location.')

@@ -3,13 +3,10 @@
     "host": "localhost",
     "database": "sm",
     "user": "sm",
-    "password": "*****"
+    "password": "{{ postgres_sm_password }}"
   },
   "fs": {
     "base_path": "/opt/data/sm_data"
-  },
-  "hdfs": {
-    "namenode": "localhost"
   },
   "spark": {
     "master": "local[*]",

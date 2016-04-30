@@ -6,7 +6,7 @@ web:
     - "8643:8080"
   volumes:
     - ..:/code/SM_distributed
-    - ../test/data/:/data # mount directory with datasets to /data
+    - ../tests/data/:/data # mount directory with datasets to /data
     - ./formula_dbs/:/databases
   links:
     - postgres # must be the host name in the config
