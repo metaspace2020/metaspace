@@ -10,7 +10,8 @@ from os.path import join
 
 
 def proj_root():
-    return dirname(dirname(dirname(__file__)))
+    # return dirname(dirname(dirname(__file__)))
+    return os.getcwd()
 
 
 dictConfig({

@@ -13,17 +13,6 @@ from fabric.context_managers import warn_only
 from sm.engine.db import DB
 from sm.engine.util import proj_root, SMConfig
 
-# def sm_config():
-#     with open(join(proj_root(), 'conf/config.json')) as f:
-#         return json.load(f)
-
-SMConfig.set_path(join(proj_root(), 'conf/config.json'))
-sm_config = SMConfig.get_conf()
-
-ds_name = 'sci_test_spheroid_12h'
-data_dir_path = join(SMConfig.get_conf()['fs']['base_path'], ds_name)
-input_dir_path = join(proj_root(), 'tests/data/sci_test_search_job_spheroid_dataset')
-ds_config_path = join(input_dir_path, 'config.json')
 
 SEARCH_RES_SELECT = ("select sf, adduct, stats "
                      "from iso_image_metrics s "
@@ -107,8 +96,8 @@ def clear_data_dirs():
 
 class SciTester(object):
 
-    def __init__(self):
-        self.db = DB(sm_config['db'])
+    def __init__(self, db_config):
+        self.db = DB(db_config)
         self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_12h_search_res.csv')
         self.metrics = ['chaos', 'spatial', 'spectral']
 
@@ -140,9 +129,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scientific tests runner')
     parser.add_argument('-r', '--run', action='store_true', help='compare current search results with previous')
     parser.add_argument('-s', '--save', action='store_true', help='store current search results')
+    parser.add_argument('--sm-config', help='path to sm config file')
     args = parser.parse_args()
 
-    sci_tester = SciTester()
+    sm_config_path = args.sm_config if args.sm_config else join(proj_root(), 'conf/config.json')
+    SMConfig.set_path(sm_config_path)
+
+    sm_config = SMConfig.get_conf()
+    ds_name = 'sci_test_spheroid_12h'
+    data_dir_path = join(sm_config['fs']['base_path'], ds_name)
+    input_dir_path = join(proj_root(), 'tests/data/sci_test_search_job_spheroid_dataset')
+    ds_config_path = join(input_dir_path, 'config.json')
+
+    sci_tester = SciTester(sm_config['db'])
 
     if args.run:
         try:
