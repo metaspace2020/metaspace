@@ -7,4 +7,5 @@ setup(name='sm',
       description='High throughput molecules annotation for imaging mass spectrometry data sets',
       url='https://github.com/SpatialMetabolomics/SM_distributed.git',
       author='Alexandrov Team, EMBL',
+      author_email='vitaly.kovalev@embl.de',
       packages=find_packages())

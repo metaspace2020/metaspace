@@ -185,3 +185,7 @@ To explore the results of a job start the web application
 	python webapp/webserver.py --config conf/config.json --port 8090
 	
 Open [http://localhost:8090](http://localhost:8090) url address in a browser
+
+## License
+
+This project is licensed under Apache 2.0 license.
