@@ -5,8 +5,9 @@ test_runner
 A handy module for easy tests running
 """
 
-
+import os
 from fabric.api import local
+from fabric.context_managers import lcd
 import argparse
 
 
@@ -22,24 +23,25 @@ if __name__ == '__main__':
 
     py_test_cmd = 'py.test -x -v '
 
-    # Engine unit tests
-    if args.unit or args.all:
-        local(py_test_cmd + 'sm/engine/tests')
+    with lcd(os.path.dirname(__file__)):
+        # Engine unit tests
+        if args.unit or args.all:
+            local(py_test_cmd + 'sm/engine/tests')
 
-    # Regression tests
-    if args.regr or args.all:
-        local(py_test_cmd + 'tests/test_imzml_txt_converter_db.py')
-        local(py_test_cmd + 'tests/test_theor_peaks_gen_db.py')
-        local(py_test_cmd + 'tests/test_work_dir.py')
-        local(py_test_cmd + 'tests/test_dataset_db.py')
-        local(py_test_cmd + 'tests/test_search_results.py')
-        local(py_test_cmd + 'tests/test_search_job_imzml_example.py')
+        # Regression tests
+        if args.regr or args.all:
+            local(py_test_cmd + 'tests/test_imzml_txt_converter_db.py')
+            local(py_test_cmd + 'tests/test_theor_peaks_gen_db.py')
+            local(py_test_cmd + 'tests/test_work_dir.py')
+            local(py_test_cmd + 'tests/test_dataset_db.py')
+            local(py_test_cmd + 'tests/test_search_results.py')
+            local(py_test_cmd + 'tests/test_search_job_imzml_example.py')
 
-    # Functional/scientific tests
-    if args.sci or args.all:
-        local('python tests/sci_test_search_job_spheroid_dataset.py --run')
+        # Functional/scientific tests
+        if args.sci or args.all:
+            local('python tests/sci_test_search_job_spheroid_dataset.py --run')
 
-    if args.unit or args.all or args.regr or args.sci:
-        print 'ALL TESTS FINISHED SUCCESSFULLY'
-    else:
-        parser.print_help()
+        if args.unit or args.all or args.regr or args.sci:
+            print 'ALL TESTS FINISHED SUCCESSFULLY'
+        else:
+            parser.print_help()
