@@ -1,10 +1,10 @@
 import json
 from collections import OrderedDict
-
 import numpy as np
 
 from sm.engine.db import DB
 from sm.engine.util import logger
+
 
 METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
 SF_ISO_IMGS_INS = 'INSERT INTO iso_image VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
@@ -32,15 +32,21 @@ class SearchResults(object):
     db: engine.db.DB
     sm_config: dict
     """
-    def __init__(self, sf_db_id, ds_id, job_id, sf_metrics_df, sf_iso_images, sf_adduct_peaksn, db, sm_config):
+    def __init__(self, sf_db_id, ds_id, job_id, ds_name, sf_adduct_peaksn, db,
+                 sm_config, ds_config):
         self.sf_db_id = sf_db_id
         self.ds_id = ds_id
         self.job_id = job_id
+        self.ds_name = ds_name
         self.db = db
         self.sm_config = sm_config
+        self.ds_config = ds_config
         self.sf_adduct_peaksn = sf_adduct_peaksn
-        self.sf_iso_images = sf_iso_images
-        self.sf_metrics_df = sf_metrics_df
+        self.sf_iso_images = None
+        self.sf_metrics_df = None
+        self.metrics = None
+        self.ncols = None
+        self.nrows = None
 
     def clear_old_results(self):
         """ Clear all previous search results for the dataset from the database """
@@ -49,22 +55,23 @@ class SearchResults(object):
         self.db.alter(clear_iso_image_metrics_sql, self.job_id)
 
     @staticmethod
-    def _metrics_table_row_gen(job_id, db_id, metr_df, sf_adduct_peaksn):
-        for ind, s in metr_df.reset_index().iterrows():
-            metr_json = json.dumps(OrderedDict([('chaos', s.chaos), ('spatial', s.spatial), ('spectral', s.spectral)]))
+    def _metrics_table_row_gen(job_id, db_id, metr_df, sf_adduct_peaksn, metrics):
+        for ind, r in metr_df.reset_index().iterrows():
+            metr_json = json.dumps(OrderedDict([(m, r[m]) for m in metrics]))
             peaks_n = sf_adduct_peaksn[ind][2]
-            yield (job_id, db_id, s.sf_id, s.adduct, s.msm, s.fdr, metr_json, peaks_n)
+            yield (job_id, db_id, r.sf_id, r.adduct, r.msm, r.fdr, metr_json, peaks_n)
 
     def store_sf_img_metrics(self):
         """ Store formula image metrics in the database """
         logger.info('Storing iso image metrics')
-        rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id, self.sf_metrics_df, self.sf_adduct_peaksn))
+        rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id,
+                                                self.sf_metrics_df, self.sf_adduct_peaksn,
+                                                self.metrics))
         # TODO: for some unknown reason in some cases may be super slow (minutes)
         self.db.insert(METRICS_INS, rows)
-
         self.db.alter(RESULTS_TABLE_VIEW_REFRESH)
 
-    def store_sf_iso_images(self, nrows, ncols):
+    def store_sf_iso_images(self):
         """ Store formula images in the database
 
         Args
@@ -77,6 +84,8 @@ class SearchResults(object):
         job_id = self.job_id
         sf_db_id = self.sf_db_id
         db_config = self.sm_config['db']
+        nrows = self.nrows
+        ncols = self.ncols
 
         def iso_img_row_gen(((sf_id, adduct), img_list)):
             for peak_i, img_sparse in enumerate(img_list):
@@ -101,3 +110,9 @@ class SearchResults(object):
 
         # self.sf_iso_images.flatMap(iso_img_row_gen).coalesce(32).foreachPartition(store_iso_img_rows)
         self.sf_iso_images.flatMap(iso_img_row_gen).foreachPartition(store_iso_img_rows)
+
+    def store(self):
+        logger.info('Storing search results to the DB')
+        self.clear_old_results()
+        self.store_sf_img_metrics()
+        self.store_sf_iso_images()

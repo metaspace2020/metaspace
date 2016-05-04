@@ -9,21 +9,25 @@ from scipy.sparse.csr import csr_matrix
 
 from sm.engine.db import DB
 from sm.engine.search_results import SearchResults, METRICS_INS
-from sm.engine.tests.util import spark_context, sm_config, create_test_db, drop_test_db
+from sm.engine.tests.util import spark_context, sm_config, ds_config, create_test_db, drop_test_db
 
 db_mock = MagicMock(spec=DB)
 
 
 @pytest.fixture
-def search_results(spark_context, sm_config):
-    sf_imgs = spark_context.parallelize([((1, '+H'),
-                                          [csr_matrix([[100, 0, 0], [0, 0, 0]]),
-                                           csr_matrix([[0, 0, 0], [0, 0, 10]])])])
-    img_metrics_df = pd.DataFrame([(1, '+H', 0.9, 0.9, 0.9, 0.9**3, 0.5)],
+def search_results(spark_context, sm_config, ds_config):
+    sf_iso_imgs = spark_context.parallelize([((1, '+H'),
+                                            [csr_matrix([[100, 0, 0], [0, 0, 0]]),
+                                             csr_matrix([[0, 0, 0], [0, 0, 10]])])])
+    sf_metrics_df = pd.DataFrame([(1, '+H', 0.9, 0.9, 0.9, 0.9**3, 0.5)],
                                   columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm', 'fdr'])
     sf_adduct_peaksn = [(1, '+H', 2)]
 
-    return SearchResults(0, 0, 0, img_metrics_df, sf_imgs, sf_adduct_peaksn, db_mock, sm_config)
+    res = SearchResults(0, 0, 0, 'ds_name', sf_adduct_peaksn, db_mock, sm_config, ds_config)
+    res.sf_metrics_df = sf_metrics_df
+    res.metrics = ['chaos', 'spatial', 'spectral']
+    res.sf_iso_images = sf_iso_imgs
+    return res
 
 
 def test_save_sf_img_metrics_correct_db_call(search_results):
@@ -51,13 +55,15 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
         db.close()
 
 
-def test_save_sf_iso_images_correct_db_call(spark_context, create_fill_sm_database, sm_config):
-    sf_imgs = spark_context.parallelize([((1, '+H'),
-                                          [csr_matrix([[100, 0, 0], [0, 0, 0]]),
-                                           csr_matrix([[0, 0, 0], [0, 0, 10]])])])
+def test_save_sf_iso_images_correct_db_call(spark_context, create_fill_sm_database, sm_config, ds_config):
+    sf_iso_imgs = spark_context.parallelize([((1, '+H'),
+                                             [csr_matrix([[100, 0, 0], [0, 0, 0]]),
+                                              csr_matrix([[0, 0, 0], [0, 0, 10]])])])
     sf_adduct_peaksn = [(1, '+H', 2)]
-    search_results = SearchResults(0, 0, 0, None, sf_imgs, sf_adduct_peaksn, db_mock, sm_config)
-    search_results.store_sf_iso_images(nrows=2, ncols=3)
+    res = SearchResults(0, 0, 0, 'ds_name', sf_adduct_peaksn, db_mock, sm_config, ds_config)
+    res.sf_iso_images = sf_iso_imgs
+    res.nrows, res.ncols = 2, 3
+    res.store_sf_iso_images()
 
     correct_rows = [(0, 0, 1, '+H', 0, [0], [100], 0, 100),
                     (0, 0, 1, '+H', 1, [5], [10], 0, 10)]

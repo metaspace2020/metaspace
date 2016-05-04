@@ -1,22 +1,22 @@
 import numpy as np
 import pandas as pd
 import pytest
-from sm.engine.dataset import Dataset
-from sm.engine.formula_img_validator import ImgMeasures, sf_image_metrics_est_fdr, filter_sf_images
-from sm.engine.formula_img_validator import sf_image_metrics, get_compute_img_metrics
-from sm.engine.formulas_segm import FormulasSegm
 from mock import patch, MagicMock
 from numpy.testing import assert_array_almost_equal
 from pandas.util.testing import assert_frame_equal
 from scipy.sparse import csr_matrix
 
+from sm.engine.dataset import Dataset
 from sm.engine.fdr import FDR
+from sm.engine.formulas_segm import FormulasSegm
+from sm.engine.msm_basic.formula_img_validator import ImgMeasures, sf_image_metrics_est_fdr
+from sm.engine.msm_basic.formula_img_validator import sf_image_metrics, get_compute_img_metrics
 from sm.engine.tests.util import spark_context, ds_config
 
 
-@patch('sm.engine.formula_img_validator.isotope_pattern_match', return_value=0.95)
-@patch('sm.engine.formula_img_validator.isotope_image_correlation', return_value=0.8)
-@patch('sm.engine.formula_img_validator.measure_of_chaos', return_value=0.99)
+@patch('sm.engine.msm_basic.formula_img_validator.isotope_pattern_match', return_value=0.95)
+@patch('sm.engine.msm_basic.formula_img_validator.isotope_image_correlation', return_value=0.8)
+@patch('sm.engine.msm_basic.formula_img_validator.measure_of_chaos', return_value=0.99)
 def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_match_mock):
     img_gen_conf = {
         'nlevels': 30,
@@ -49,7 +49,7 @@ def ds_formulas_images_mock():
 
 
 def test_sf_image_metrics(spark_context, ds_formulas_images_mock, ds_config):
-    with patch('sm.engine.formula_img_validator.get_compute_img_metrics') as mock:
+    with patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics') as mock:
         mock.return_value = lambda *args: (0.9, 0.9, 0.9)
 
         ds_mock, formulas_mock, ref_images = ds_formulas_images_mock
@@ -84,21 +84,6 @@ def test_add_sf_image_est_fdr():
                                    [1, '+H', 0.5, 0.5, 0.5, 0.5**3, 0.5]],
                                   columns=exp_col_list).set_index(['sf_id', 'adduct'])
     assert_frame_equal(res_metrics_df, exp_metrics_df)
-
-
-def test_filter_sf_images(spark_context):
-    sf_iso_images = spark_context.parallelize([(0, [csr_matrix([[0, 100, 100], [10, 0, 3]]),
-                                                    csr_matrix([[0, 50, 50], [0, 20, 0]])]),
-                                               (1, [csr_matrix([[0, 0, 0], [0, 0, 0]]),
-                                                    csr_matrix([[0, 0, 0], [0, 0, 0]])])])
-
-    sf_metrics_df = (pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, 0.9**3]],
-                                  columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm'])
-                     .set_index(['sf_id', 'adduct']))
-
-    flt_iso_images = filter_sf_images(sf_iso_images, sf_metrics_df)
-
-    assert dict(flt_iso_images.take(1)).keys() == dict(sf_iso_images.take(1)).keys()
 
 
 @pytest.mark.parametrize("nan_value", [None, np.NaN, np.NAN, np.inf])

@@ -1,10 +1,10 @@
 import numpy as np
-from sm.engine.dataset import Dataset
-from sm.engine.formulas import Formulas
 from mock import MagicMock
 from numpy.testing import assert_array_almost_equal
 
-from sm.engine.formula_imager import sample_spectra, compute_sf_peak_images, compute_sf_images
+from sm.engine.dataset import Dataset
+from sm.engine.formulas import Formulas
+from sm.engine.msm_basic.formula_imager import sample_spectra, compute_sf_peak_images, compute_sf_images
 from sm.engine.tests.util import spark_context
 
 
