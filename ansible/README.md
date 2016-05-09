@@ -33,3 +33,7 @@ source /opt/dev/miniconda/bin/activate sm
 Run tests
 
 scripts/run.sh test_runner.py -u -r
+
+## License
+
+This project is licensed under Apache 2.0 license.
