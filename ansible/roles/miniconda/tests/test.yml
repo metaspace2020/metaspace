@@ -1,0 +1,15 @@
+---
+- hosts: all
+  become: yes
+  roles:
+    - role: ansible-miniconda-role
+      miniconda_python: 2
+      miniconda_prefix: /opt/miniconda
+      miniconda_env:
+        name: scipy-lecture
+        dependencies:
+          - python=3
+          - numpy=1.9
+          - scipy=0.14.0
+          - matplotlib=1.4.0
+

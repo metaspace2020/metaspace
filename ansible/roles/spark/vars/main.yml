@@ -1,0 +1,17 @@
+---
+
+spark_version: spark_version
+spark_mirror: spark_mirror
+spark_src_dir: spark_src_dir
+spark_conf_dir: spark_conf_dir
+spark_usr_parent_dir: spark_usr_parent_dir
+spark_usr_dir: spark_usr_dir
+spark_lib_dir: spark_lib_dir
+spark_log_dir: spark_log_dir
+spark_run_dir: spark_run_dir
+spark_user: spark_user           # the name of the (OS)user created for spark
+spark_user_groups: spark_user_groups         # Optional list of (OS)groups the new spark user should belong to
+spark_user_shell: spark_user_shell
+
+spark_env_extras: spark_env_extras
+spark_defaults_extras: spark_defaults_extras

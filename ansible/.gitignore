@@ -1,0 +1,4 @@
+.vagrant
+.idea
+*.retry
+group_vars/*.yml

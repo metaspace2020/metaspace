@@ -1,0 +1,22 @@
+---
+
+- name: installing spark
+  hosts: sm-vbox
+  remote_user: ubuntu
+  become: yes
+
+  roles:
+    - role: "spark"
+      spark_version: "1.6.0-bin-hadoop2.7.1"
+      spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
+      spark_user: "ubuntu"
+      spark_user_groups: ["ubuntu"]
+      spark_src_dir: "/tmp"
+      spark_conf_dir: "/etc/spark"
+      spark_usr_parent_dir: "/usr/lib"  #this is the folder where the spark archive will be extracted
+      spark_usr_dir: "/usr/lib/spark"   #this is the symlink to the extracted/installed spark
+      spark_lib_dir: "/var/lib/spark"
+      spark_log_dir: "/var/log/spark"
+      spark_run_dir: "/run/spark"
+      spark_env_extras: {}
+      spark_defaults_extras: {}

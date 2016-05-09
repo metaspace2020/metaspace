@@ -1,0 +1,62 @@
+---
+
+- name: running unit, regression and sci tests
+  hosts: sm-vbox
+  remote_user: ubuntu
+
+  vars:
+    - role: sm
+      venv: "/opt/dev/miniconda"
+      conda_env: "sm"
+      spark_home: "/usr/lib/spark"
+      sm_home: "/opt/dev/sm"
+      hmdb_url: https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv
+      #hmdb_url: https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb_small.csv
+      
+  tasks:
+    - name: run unit tests
+      shell: "source {{ venv }}/bin/activate {{ conda_env }} && scripts/run.sh test_runner.py --unit"
+      args:
+        chdir: "{{ sm_home }}"
+        executable: /bin/bash
+      register: unit_tests
+      failed_when:
+        not ('ALL TESTS FINISHED SUCCESSFULLY' in unit_tests.stdout)
+
+    #- name: print unit tests output
+    #  debug: msg="{{ unit_tests.stdout_lines }}"
+    
+    - name: run regression tests
+      shell: "source {{ venv }}/bin/activate {{ conda_env }} && scripts/run.sh test_runner.py --regr"
+      args:
+        chdir: "{{ sm_home }}"
+        executable: /bin/bash
+      ignore_errors: yes
+      register: regr_tests
+      failed_when:
+        not ('ALL TESTS FINISHED SUCCESSFULLY' in regr_tests.stdout)
+
+    #- name: print regr tests output
+    #  debug: msg="{{ regr_tests.stdout_lines }}"
+      
+    - name: download {{ hmdb_url }}
+      get_url: url={{ hmdb_url }} dest={{ sm_home }}/hmdb.csv
+      
+    - name: import HMDB molecule database
+      shell: source {{ venv }}/bin/activate {{ conda_env }} && python scripts/import_molecule_formula_db.py HMDB hmdb.csv --yes=False
+      args:
+        chdir: "{{ sm_home }}"
+        executable: /bin/bash
+
+    - name: run scientific tests
+      shell: "source {{ venv }}/bin/activate {{ conda_env }} && scripts/run.sh tests/sci_test_search_job_spheroid_dataset.py --run"
+      args:
+        chdir: "{{ sm_home }}"
+        executable: /bin/bash
+      #ignore_errors: yes
+      #register: sci_tests
+      #async: 3600
+      #poll: 60
+  
+    #- name: print sci tests output
+    #  debug: msg="{{ sci_tests.stdout_lines }}"

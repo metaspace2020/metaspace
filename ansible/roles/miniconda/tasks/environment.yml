@@ -1,0 +1,24 @@
+---
+
+- name: conda list environments
+  command: "{{ miniconda_prefix }}/bin/conda env list"
+  register: conda_env_list_out
+  changed_when: no
+
+- name: conda environment {{ miniconda_env.name }} is created
+  command:
+    '"{{ miniconda_prefix }}/bin/conda" env create -f "/tmp/{{ miniconda_env.name }}-environment.yml"'
+  args:
+    creates: '{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}'
+  register: miniconda_env_create
+  when: "miniconda_env != '' and conda_env_list_out.stdout.find('{{ miniconda_env.name }}') == -1"
+  failed_when: "'failed' in miniconda_env_create.stderr"
+
+- name: conda environment {{ miniconda_env.name }} is up-to-date
+  command:
+    '"{{ miniconda_prefix }}/bin/conda" env update -f "/tmp/{{ miniconda_env.name }}-environment.yml"'
+  register: miniconda_env_update
+  #when: '"skipped" in miniconda_env_create.stdout'
+  when: "conda_env_list_out.stdout.find('{{ miniconda_env.name }}') != -1"
+  changed_when: '"COMPLETE" in miniconda_env_update.stdout'
+

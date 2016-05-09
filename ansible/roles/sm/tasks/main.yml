@@ -1,0 +1,66 @@
+---
+
+- name: install git
+  apt: name=git state=present
+  become: yes
+  
+- name: create /opt/dev directory
+  file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
+  become: yes
+
+- name: clone sm git repository
+  git: >
+    dest=/opt/dev/sm
+    repo=https://github.com/SpatialMetabolomics/SM_distributed.git
+    update=no
+    version={{ sm_branch }}
+
+- name: install psycopg2 (required by ansible)
+  apt: name=python-psycopg2 state=latest
+  become: yes
+    
+- name: create sm postgres user
+  postgresql_user: name=sm password={{ postgres_sm_password }} role_attr_flags=CREATEDB
+  become: yes
+  become_user: postgres
+  
+- name: create sm postgres database
+  become: yes
+  become_user: postgres
+  postgresql_db: name=sm owner=sm
+  
+- name: create sm schema
+  shell: psql -h localhost -U sm sm < /opt/dev/sm/scripts/create_schema.sql
+  args:
+    executable: /bin/bash
+  
+- name: create /opt/data/sm_data directory
+  file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
+  become: yes
+  
+- name: create sm config files
+  shell: cp sm_log.cfg.template sm_log.cfg && cp config.json.template config.json
+  args:
+    chdir: /opt/dev/sm/conf
+    creates: sm_log.cfg config.json
+    
+- name: put postgres user password into config.json
+  lineinfile:
+    dest: /opt/dev/sm/conf/config.json
+    regexp: '^\s+"password"'
+    line: '    "password": "{{ postgres_sm_password }}"'
+
+#- name: update ~/.bashrc file
+#  template: src=bashrc.j2 dest=/home/ubuntu/.bashrc owner=ubuntu group=ubuntu mode=0644
+
+- name: install SM into conda environment
+  args:
+    chdir: /opt/dev/sm
+    executable: /bin/bash
+  shell: "source {{ venv }}/bin/activate {{ conda_env }} && pip install ."
+
+- name: put SPARK_HOME into update sm-env.sh scripts
+  template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
+
+- name: ensure that scripts/run.sh is executable
+  file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755

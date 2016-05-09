@@ -1,0 +1,7 @@
+---
+
+spark_user_groups: []         # Optional list of (OS)groups the new spark user should belong to
+spark_user_shell: "/bin/false"    # the spark user's default shell
+
+spark_env_extras: {}
+spark_defaults_extras: {}

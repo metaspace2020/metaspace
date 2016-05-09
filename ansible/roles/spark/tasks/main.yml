@@ -1,0 +1,59 @@
+---
+
+- name: Ensure Spark configuration directory exists
+  file: path="{{ spark_conf_dir }}"
+        state=directory
+  tags: ["config"]
+
+- name: Ensure Spark log and run directories exist
+  file: path="{{ item }}"
+        owner={{ spark_user }}
+        group={{ spark_user }}
+        mode=0755
+        state=directory
+  with_items:
+    - "{{ spark_log_dir }}"
+    - "{{ spark_run_dir }}"
+
+- name: Download Spark distribution
+  get_url: url="{{ spark_mirror }}/spark-{{ spark_version }}.tar.gz"
+           dest="{{ spark_src_dir }}/spark-{{ spark_version }}.tar.gz"
+
+- name: Extract Spark distribution
+  unarchive: src="{{ spark_src_dir }}/spark-{{ spark_version }}.tar.gz"
+             dest="{{ spark_usr_parent_dir }}"
+             copy=no
+             creates="{{ spark_usr_parent_dir }}/spark-{{ spark_version }}"
+
+- name: Setup Spark distribution symlinks
+  file: src="{{ item.src }}"
+        dest="{{ item.dest }}"
+        state=link
+  with_items:
+    - { src: "{{ spark_usr_parent_dir }}/spark-{{ spark_version }}", dest: "{{ spark_usr_dir }}" }
+    - { src: "{{ spark_usr_parent_dir }}/spark-{{ spark_version }}/conf", dest: "{{ spark_conf_dir }}/conf" }
+  tags: ["symlinks"]
+
+- name: Create shims for Spark binaries
+  template: src=spark-shim.j2
+            dest="/usr/bin/{{ item }}"
+            mode=0755
+  with_items:
+    - spark-class
+    - spark-shell
+    - spark-sql
+    - spark-submit
+  tags: ["shims"]
+
+- name: Configure Spark environment
+  template: src=spark-env.sh.j2
+            dest="{{ spark_usr_parent_dir }}/spark-{{ spark_version }}/conf/spark-env.sh"
+  tags: ["config"]
+
+- name: Configure Spark defaults config file
+  template: src=spark-defaults.conf.j2
+            dest="{{ spark_usr_parent_dir }}/spark-{{ spark_version }}/conf/spark-defaults.conf"
+  tags: ["config"]
+
+- name: Edit Spark log4j properties file
+  template: src=log4j.properties dest="{{ spark_usr_parent_dir }}/spark-{{ spark_version }}/conf/log4j.properties" owner=ubuntu group=ubuntu mode=0644

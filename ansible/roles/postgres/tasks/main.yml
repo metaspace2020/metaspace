@@ -1,0 +1,23 @@
+---
+
+- name: install postgres
+  apt: name={{ item }} state=present
+  with_items:
+    - postgresql-{{ postgres_version }}
+    - postgresql-contrib-{{ postgres_version }}
+    - libpq-dev
+
+- name: create postgres user
+  user: name=postgres shell=/bin/bash
+
+- name: create postgrs cluster
+  command: pg_createcluster {{ postgres_version }} main
+  ignore_errors: yes
+
+- name: replace posgres config file pg_hba.conf
+  template: src=pg_hba.conf dest=/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf owner=postgres group=postgres mode="u=rw,g=r"
+  notify:
+  - pg_hba_update
+
+- name: start postgres server
+  service: name=postgresql state=running

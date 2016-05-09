@@ -1,0 +1,12 @@
+---
+
+- name: Update APT cache
+  become: yes
+  apt: update_cache=yes
+  when: update_apt_cache
+
+- include: "openjdk.yml"
+  when: java_flavor == "openjdk"
+
+- include: "oracle.yml"
+  when: java_flavor == "oracle"

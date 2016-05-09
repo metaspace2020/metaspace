@@ -1,0 +1,16 @@
+---
+
+- name: reconfigure buggy ubuntu locales
+  template: src=locale dest=/etc/default/locale owner=root mode="u=rw,g=r,o=r" force=yes
+  
+- name: upload ssh key file "{{ pub_key_file }}"
+  authorized_key: user=ubuntu key="{{ lookup('file', '{{ pub_key_file }}') }}"
+
+- name: update apt cache
+  apt: update_cache=yes
+  
+- name: install misc packages
+  apt: name={{ item }} state=present
+  with_items:
+    - htop
+    - mc
