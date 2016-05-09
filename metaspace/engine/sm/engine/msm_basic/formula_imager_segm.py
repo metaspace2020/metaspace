@@ -1,4 +1,5 @@
 import sys
+from collections import defaultdict
 import pandas as pd
 from itertools import izip, repeat, islice
 import numpy as np
@@ -26,7 +27,7 @@ def _find_mz_bounds(mz_grid, workload_per_mz, n=32):
     return mz_bounds
 
 
-def _create_mz_buckets(mz_bounds, ppm):
+def _create_mz_segments(mz_bounds, ppm):
     mz_buckets = []
     for i, (l, r) in enumerate(zip([0] + mz_bounds, mz_bounds + [sys.float_info.max])):
         l -= l * ppm * 1e-6
@@ -41,7 +42,7 @@ def _create_mz_buckets(mz_bounds, ppm):
 #             for s_i, (l, r) in enumerate(mz_buckets)]
 
 
-def _segment_spectra(sp, mz_buckets):
+def _segment_spectrum(sp, mz_buckets):
     sp_id, mzs, ints = sp
     for s_i, (l, r) in enumerate(mz_buckets):
         smask = (mzs >= l) & (mzs <= r)
@@ -70,7 +71,7 @@ def _gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, peaks
             # a bit slower than using pure numpy arrays but much shorter
             # may leak memory because of https://github.com/pydata/pandas/issues/2659 or smth else
             sp_df = pd.DataFrame(_sp_df_gen(sp_list, sp_indexes),
-                                 columns=['idx', 'mz', 'ints'], dtype=np.float64).sort_values(by='mz')
+                                 columns=['idx', 'mz', 'ints']).sort_values(by='mz')
             # print sp_df.info()
 
             # -1, + 1 are needed to extend sf_peak_mz range so that it covers 100% of spectra
@@ -91,15 +92,47 @@ def _gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, peaks
                               (sf_peak_df.peak_i.iloc[i], coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols)))
 
 
-def _img_pairs_to_list(pairs):
+def _img_pairs_to_list(pairs, shape):
     """ list of (coord, value) pairs -> list of values """
     if not pairs:
         return None
-    length = max([i for i, img in pairs]) + 1
-    res = np.ndarray((length,), dtype=object)
-    for i, img in pairs:
-        res[i] = img
+
+    d = defaultdict(lambda: coo_matrix(shape))
+    for k, m in pairs:
+        _m = d[k]
+        d[k] = _m if _m.nnz >= m.nnz else m
+    distinct_pairs = d.items()
+
+    res = np.ndarray((max(d.keys()) + 1,), dtype=object)
+    for i, m in distinct_pairs:
+        res[i] = m
     return res.tolist()
+
+
+def find_mz_segments(spectra, sf_peak_df, ppm):
+    # spectra_sample = spectra.take(200)
+    spectra_sample = spectra.takeSample(withReplacement=False, num=200)
+    mz_grid, workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10000)
+    mz_bounds = _find_mz_bounds(mz_grid, workload_per_mz, n=1024)
+    mz_segments = _create_mz_segments(mz_bounds, ppm=ppm)
+    return spectra_sample, mz_segments
+
+
+def gen_iso_peak_images(sc, ds, sf_peak_df, segm_spectra, peaks_per_sp_segm, ppm):
+    sp_indexes_brcast = sc.broadcast(ds.norm_img_pixel_inds)
+    sf_peak_df_brcast = sc.broadcast(sf_peak_df)  # TODO: replace broadcast variable with rdd and cogroup
+    nrows, ncols = ds.get_dims()
+    iso_peak_images = (segm_spectra.flatMap(lambda (s_i, sp_segm):
+                                            _gen_iso_images(sp_segm, sp_indexes_brcast.value, sf_peak_df_brcast.value,
+                                                            nrows, ncols, ppm, peaks_per_sp_segm)))
+    return iso_peak_images
+
+
+def gen_iso_sf_images(iso_peak_images, shape):
+    iso_sf_images = (iso_peak_images
+                     .groupByKey(numPartitions=256)
+                     .mapValues(lambda img_pairs_it: _img_pairs_to_list(list(img_pairs_it), shape)))
+    return iso_sf_images
 
 
 # TODO: add tests
@@ -111,27 +144,16 @@ def compute_sf_images(sc, ds, sf_peak_df, ppm):
     : pyspark.rdd.RDD
         RDD of sum formula, list[sparse matrix of intensities]
     """
-    nrows, ncols = ds.get_dims()
     spectra_rdd = ds.get_spectra()
-    # spectra_rdd.cache()
 
-    spectra_sample = spectra_rdd.takeSample(withReplacement=False, num=200)
-    mz_grid, workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10000)
-
-    mz_bounds = _find_mz_bounds(mz_grid, workload_per_mz, n=1024)
-    mz_buckets = _create_mz_buckets(mz_bounds, ppm=ppm)
+    spectra_sample, mz_segments = find_mz_segments(spectra_rdd, sf_peak_df, ppm)
     segm_spectra = (spectra_rdd
-                    .flatMap(lambda sp: _segment_spectra(sp, mz_buckets))
-                    .groupByKey(numPartitions=len(mz_buckets)))
+                    .flatMap(lambda sp: _segment_spectrum(sp, mz_segments))
+                    .groupByKey(numPartitions=len(mz_segments)))
 
-    peaks_per_sp_segm = int(np.mean([t[1].shape[0] for t in spectra_sample])) / len(mz_buckets)
-    sp_indexes_brcast = sc.broadcast(ds.norm_img_pixel_inds)
-    sf_peak_df_brcast = sc.broadcast(sf_peak_df)  # TODO: replace broadcast variable with rdd and cogroup
-    iso_peak_images = (segm_spectra.flatMap(lambda (s_i, sp_segm):
-                                            _gen_iso_images(sp_segm, sp_indexes_brcast.value, sf_peak_df_brcast.value,
-                                                            nrows, ncols, ppm, peaks_per_sp_segm)))
+    peaks_per_sp_segm = int(np.mean([t[1].shape[0] for t in spectra_sample])) / len(mz_segments)
+    iso_peak_images = gen_iso_peak_images(sc, ds, sf_peak_df, segm_spectra, peaks_per_sp_segm, ppm)
+    iso_sf_images = gen_iso_sf_images(iso_peak_images, shape=ds.get_dims())
 
-    iso_sf_images = (iso_peak_images
-                     .groupByKey(numPartitions=256)
-                     .mapValues(lambda img_pairs_it: _img_pairs_to_list(list(img_pairs_it))))
     return iso_sf_images
+

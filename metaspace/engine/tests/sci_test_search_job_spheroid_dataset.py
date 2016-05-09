@@ -14,6 +14,18 @@ from sm.engine.db import DB
 from sm.engine.util import proj_root, SMConfig
 
 
+# def sm_config():
+#     with open(join(proj_root(), 'conf/config.json')) as f:
+#         return json.load(f)
+
+SMConfig.set_path(join(proj_root(), 'conf/config.json'))
+sm_config = SMConfig.get_conf()
+
+ds_name = 'sci_test_spheroid_12h'
+data_dir_path = join(SMConfig.get_conf()['fs']['base_path'], ds_name)
+input_dir_path = join(proj_root(), 'test/data/sci_test_search_job_spheroid_dataset')
+ds_config_path = join(input_dir_path, 'config.json')
+
 SEARCH_RES_SELECT = ("select sf, adduct, stats "
                      "from iso_image_metrics s "
                      "join formula_db sf_db on sf_db.id = s.db_id "
