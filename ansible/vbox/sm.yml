@@ -31,17 +31,8 @@
     - role: "spark"
       spark_version: "{{ spark.spark_version }}"
       spark_mirror: "{{ spark.spark_mirror }}"
-      spark_user: "ubuntu"
-      spark_user_groups: ["ubuntu"]
-      spark_src_dir: "/tmp"
-      spark_conf_dir: "/etc/spark"
-      spark_usr_parent_dir: "/usr/lib"  #this is the folder where the spark archive will be extracted
       spark_usr_dir: "{{ spark.spark_home }}"   #this is the symlink to the extracted/installed spark
       spark_lib_dir: "{{ spark.spark_home }}"
-      spark_log_dir: "/var/log/spark"
-      spark_run_dir: "/run/spark"
-      spark_env_extras: {}
-      spark_defaults_extras: {}
 
 
 - name: getting SM code and setting up

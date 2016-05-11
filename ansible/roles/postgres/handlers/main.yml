@@ -1,2 +1,2 @@
-- name: pg_hba_update
+- name: pg_conf_update
   service: name=postgresql state=restarted

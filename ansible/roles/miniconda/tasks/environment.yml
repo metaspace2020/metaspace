@@ -12,7 +12,7 @@
     creates: '{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}'
   register: miniconda_env_create
   when: "miniconda_env != '' and conda_env_list_out.stdout.find('{{ miniconda_env.name }}') == -1"
-  failed_when: "'failed' in miniconda_env_create.stderr"
+  failed_when: "'failed' in miniconda_env_create.stderr.lower()"
 
 - name: conda environment {{ miniconda_env.name }} is up-to-date
   command:

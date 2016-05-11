@@ -1,0 +1,47 @@
+---
+
+webserver_ip:
+master_ip:
+
+postgres_version: 9.3
+
+miniconda_version: latest
+miniconda_python: 2
+miniconda_prefix: "/opt/dev/miniconda"
+miniconda_env:
+  name: sm
+  dependencies:
+    - python=2
+    - numpy=1.10
+    - scipy=0.16
+    - matplotlib=1.5
+    - pandas=0.18
+    - cffi
+    - gcc
+    - psycopg2
+    - pip:
+      - pyMSpec
+      - cpyMSpec
+      - pyImagingMSpec
+      - cpyImagingMSpec
+      - requests
+      - mock
+      - py4j
+      - pyimzML
+      - pytest
+      - tornado
+      - tornpsql
+      - recommonmark
+      - boto3
+      - networkx
+      - fabric
+
+sm_branch: "master"
+sm_postgres_password: "1234"
+sm_home: "/opt/dev/sm"
+
+hmdb_url:
+
+spark_version: "1.6.0-bin-hadoop2.7.1"
+spark_mirror:
+spark_home: "/usr/lib/spark"

@@ -1,4 +1,7 @@
 .vagrant
 .idea
 *.retry
-group_vars/*.yml
+vbox/group_vars/*.yml
+aws/group_vars/*.yml
+aws/*.ini
+aws/*.py

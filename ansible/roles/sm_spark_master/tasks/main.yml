@@ -1,0 +1,53 @@
+---
+
+- name: Install system wide packages
+  become: yes
+  apt: name={{ item }} state=present
+  with_items:
+    - git
+#    - libpq-dev
+
+- name: Create /opt/dev directory
+  file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
+  become: yes
+
+- name: Clone SM git repository
+  git:
+    dest: "{{ sm_home }}"
+    repo: "https://github.com/SpatialMetabolomics/SM_distributed.git"
+    update: no
+    version: "{{ sm_branch }}"
+  
+- name: Create /opt/data/sm_data directory
+  file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
+  become: yes
+  
+- name: Create sm config files
+  shell: cp sm_log.cfg.template sm_log.cfg && cp config.json.template config.json
+  args:
+    chdir: "{{ sm_home }}/conf"
+    creates: sm_log.cfg config.json
+    
+- name: Put postgres user password into config.json
+  lineinfile:
+    dest: "{{ sm_home }}/conf/config.json"
+    regexp: '^\s+"password"'
+    line: '    "password": "{{ sm_postgres_password }}"'
+
+- name: Put postgres host into config.json
+  lineinfile:
+    dest: "{{ sm_home }}/conf/config.json"
+    regexp: '^\s+"host"'
+    line: '    "host": "{{ webserver_ip }}",'
+
+- name: Install SM into conda environment
+  args:
+    chdir: "{{ sm_home }}"
+    executable: /bin/bash
+  shell: "source {{ venv }}/bin/activate {{ conda_env }} && pip install ."
+
+- name: Put SPARK_HOME into update sm-env.sh scripts
+  template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
+
+- name: Ensure that scripts/run.sh is executable
+  file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755

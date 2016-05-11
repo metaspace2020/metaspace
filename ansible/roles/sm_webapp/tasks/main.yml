@@ -20,7 +20,7 @@
   become: yes
     
 - name: create sm postgres user
-  postgresql_user: name=sm password={{ postgres_sm_password }} role_attr_flags=CREATEDB
+  postgresql_user: name=sm password={{ sm_postgres_password }} role_attr_flags=CREATEDB
   become: yes
   become_user: postgres
   
@@ -48,10 +48,7 @@
   lineinfile:
     dest: /opt/dev/sm/conf/config.json
     regexp: '^\s+"password"'
-    line: '    "password": "{{ postgres_sm_password }}"'
-
-#- name: update ~/.bashrc file
-#  template: src=bashrc.j2 dest=/home/ubuntu/.bashrc owner=ubuntu group=ubuntu mode=0644
+    line: '    "password": "{{ sm_postgres_password }}"'
 
 - name: install SM into conda environment
   args:
@@ -59,8 +56,14 @@
     executable: /bin/bash
   shell: "source {{ venv }}/bin/activate {{ conda_env }} && pip install ."
 
-- name: put SPARK_HOME into update sm-env.sh scripts
-  template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
-
 - name: ensure that scripts/run.sh is executable
   file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755
+
+- name: download {{ hmdb_url }}
+  get_url: url={{ hmdb_url }} dest={{ sm_home }}/hmdb.csv
+
+- name: import HMDB molecule database
+  shell: source {{ venv }}/bin/activate {{ conda_env }} && python scripts/import_molecule_formula_db.py HMDB hmdb.csv --yes=False
+  args:
+    chdir: "{{ sm_home }}"
+    executable: /bin/bash

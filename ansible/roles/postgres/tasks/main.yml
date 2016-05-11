@@ -15,9 +15,19 @@
   ignore_errors: yes
 
 - name: replace posgres config file pg_hba.conf
-  template: src=pg_hba.conf dest=/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf owner=postgres group=postgres mode="u=rw,g=r"
+  copy: src=pg_hba.conf dest=/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf owner=postgres group=postgres mode="u=rw,g=r"
   notify:
-  - pg_hba_update
+    - pg_conf_update
+
+- name: make postgres listen to any ip address
+  lineinfile:
+    dest: /etc/postgresql/9.3/main/postgresql.conf
+    regexp: '^listen_addresses'
+    line: "listen_addresses = '*'"
+  notify:
+    - pg_conf_update
+
+- meta: flush_handlers
 
 - name: start postgres server
   service: name=postgresql state=running
