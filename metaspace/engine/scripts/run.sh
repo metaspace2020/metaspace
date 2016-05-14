@@ -3,4 +3,6 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 . $DIR/sm-env.sh
 
+. $SPARK_HOME/conf/spark-env.sh
+
 python $@
