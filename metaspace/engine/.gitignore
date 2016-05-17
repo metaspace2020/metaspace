@@ -5,6 +5,7 @@
 *.zip
 conf/*.json
 conf/*.cfg
+scripts/sm-env.sh
 data/*/*
 docs/_build
 docs/_static
