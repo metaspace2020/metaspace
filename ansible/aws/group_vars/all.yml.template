@@ -1,7 +1,9 @@
 ---
 
-webserver_ip:
-master_ip:
+spark_key_file:
+
+aws_access_key_id:
+aws_secret_access_key:
 
 postgres_version: 9.3
 

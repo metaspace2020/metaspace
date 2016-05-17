@@ -1,5 +1,5 @@
 ---
 
 dependencies:
-  - role: spark
-  - role: miniconda
+#  - { role: spark, become: yes }
+#  - { role: miniconda }

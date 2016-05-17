@@ -5,7 +5,7 @@
   apt: name={{ item }} state=present
   with_items:
     - git
-#    - libpq-dev
+    - zip
 
 - name: Create /opt/dev directory
   file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
@@ -17,28 +17,29 @@
     repo: "https://github.com/SpatialMetabolomics/SM_distributed.git"
     update: no
     version: "{{ sm_branch }}"
-  
+
 - name: Create /opt/data/sm_data directory
   file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
-  
+
 - name: Create sm config files
-  shell: cp sm_log.cfg.template sm_log.cfg && cp config.json.template config.json
+  shell: cp sm_log.cfg.template sm_log.cfg  #&& cp config.json.template config.json
   args:
     chdir: "{{ sm_home }}/conf"
     creates: sm_log.cfg config.json
-    
-- name: Put postgres user password into config.json
-  lineinfile:
-    dest: "{{ sm_home }}/conf/config.json"
-    regexp: '^\s+"password"'
-    line: '    "password": "{{ sm_postgres_password }}"'
 
-- name: Put postgres host into config.json
-  lineinfile:
-    dest: "{{ sm_home }}/conf/config.json"
-    regexp: '^\s+"host"'
-    line: '    "host": "{{ webserver_ip }}",'
+#- name: Put postgres user password into config.json
+#  lineinfile:
+#    dest: "{{ sm_home }}/conf/config.json"
+#    regexp: '^\s+"password"'
+#    line: '    "password": "{{ sm_postgres_password }}"'
+
+#- name: Put postgres host into config.json
+#  lineinfile:
+#    dest: "{{ sm_home }}/conf/config.json"
+#    regexp: '^\s+"host"'
+#    line: '    "host": "{{ item }}",'
+#  with_items: "{{ groups['tag_hostgroup_sm_webserver_aws'] }}"
 
 - name: Install SM into conda environment
   args:
@@ -49,5 +50,58 @@
 - name: Put SPARK_HOME into update sm-env.sh scripts
   template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
 
+- name: Put slave ip addresses into slaves file
+  become: yes
+  template: src=slaves.j2 dest="{{ spark_home }}/conf/slaves" owner=ubuntu group=ubuntu mode=0664
+
+- name: Start master and slaves
+  become: no
+  command: "{{ spark_home }}/sbin/start-all.sh"
+  register: command_result
+  changed_when: not ('Stop it first' in command_result.stdout)
+
+- name: Check that master daemon is up
+  command: jps -l
+  become: no
+  register: command_result
+  failed_when: not ('Master' in command_result.stdout)
+
+- name: Check that slave deamons are up
+  command: wget -O /tmp/{{ item }}.html {{ item }}:8081
+  with_items: "{{ groups['tag_hostgroup_sm_slave_aws'] }}"
+
 - name: Ensure that scripts/run.sh is executable
   file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755
+
+#- name: Add spark master address to SM config
+#  lineinfile:
+#    dest: "{{ sm_home }}/conf/config.json"
+#    regexp: '^\s+"master"'
+#    line: '    "master": "spark://{{ ansible_hostname }}:7077",'
+
+- name: Archive engine into a zip file
+  shell: zip -rq sm.zip sm
+  args:
+    chdir: "{{ sm_home }}"
+    creates: "{{ sm_home }}/sm.zip"
+
+- name: Make sure .aws directory exists
+  file: path=/home/{{ spark_user }}/.aws/
+        state=directory
+        owner={{ spark_user }}
+        group={{ spark_user }}
+        mode=0755
+
+- name: Put aws credentials file into the home dir
+  template: src=aws_credentials.j2
+            dest=/home/{{ spark_user }}/.aws/credentials
+            owner={{ spark_user }}
+            group={{ spark_user }}
+            mode=0600
+
+- name: Put SM config to {{ sm_home }}/conf/config.json
+  template: src=sm_config.json.j2
+            dest={{ sm_home }}/conf/config.json
+            owner={{ spark_user }}
+            group={{ spark_user }}
+            mode=0600

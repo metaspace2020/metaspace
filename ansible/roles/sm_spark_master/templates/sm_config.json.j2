@@ -1,0 +1,19 @@
+{
+  "db": {
+    "host": "{{ groups['tag_hostgroup_sm_webserver_aws'][0] }}",
+    "database": "sm",
+    "user": "sm",
+    "password": "{{ sm_postgres_password }}"
+  },
+  "fs": {
+    "base_path": "/opt/data/sm_data",
+    "s3_base_path": "s3a://sm-engine/data"
+  },
+  "spark": {
+    "master": "spark://{{ ansible_hostname }}:7077",
+    "spark.executor.memory": "2g",
+    "spark.driver.memory": "4g",
+    "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
+    "spark.kryoserializer.buffer.max": "128m"
+  }
+}

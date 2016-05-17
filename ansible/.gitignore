@@ -1,7 +1,7 @@
-.vagrant
-.idea
+.*
 *.retry
 vbox/group_vars/*.yml
 aws/group_vars/*.yml
 aws/*.ini
 aws/*.py
+*.ipynb

@@ -1,5 +1,32 @@
 ---
 
+- name: install ssh deamon
+  apt: name=ssh state=present
+
+- file: path=/home/{{ spark_user }}/.ssh state=directory mode=0700
+
+- name: check if spark keys have been already generated (local)
+  local_action: stat path={{ spark_key_file }}
+  become: no
+  register: key_file_st
+
+- name: generate a key pair for remote ubuntu user (locally)
+  become: no
+  local_action: shell ssh-keygen -f {{ spark_key_file }} -t rsa -N ''
+  when: key_file_st.stat.exists == False
+
+- name: add local key to authorized_keys file
+  authorized_key: user={{ spark_user }}
+                  key="{{ item }}"
+  with_file:
+    - "{{ spark_key_file }}.pub"
+
+- name: copy keys to the instance
+  copy: src={{ item.src }} dest={{ item.dest }} owner={{ spark_user }} group={{ spark_user }} mode={{ item.mode }}
+  with_items:
+    - { src: "{{ spark_key_file }}", dest: "/home/{{ spark_user }}/.ssh/id_rsa", mode: "u=rw,g=,o=" }
+    - { src: "{{ spark_key_file }}.pub", dest: "/home/{{ spark_user }}/.ssh/id_rsa.pub", mode: "u=rw,g=r,o=r" }
+
 - name: Ensure Spark configuration directory exists
   file: path="{{ spark_conf_dir }}"
         state=directory
@@ -56,4 +83,8 @@
   tags: ["config"]
 
 - name: Edit Spark log4j properties file
-  template: src=log4j.properties dest="{{ spark_usr_parent_dir }}/spark-{{ spark_version }}/conf/log4j.properties" owner=ubuntu group=ubuntu mode=0644
+  template: src=log4j.properties
+            dest="{{ spark_usr_parent_dir }}/spark-{{ spark_version }}/conf/log4j.properties"
+            owner={{ spark_user }}
+            group={{ spark_user }}
+            mode=0644

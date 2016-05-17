@@ -1,0 +1,9 @@
+---
+
+- hosts: localhost
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: Stopping SM cluster instances
+      shell: python manage_instances.py stop all
