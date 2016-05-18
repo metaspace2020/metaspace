@@ -1,5 +1,5 @@
 # A Spark Worker will be started on each of the machines listed below.
 
-{% for host in groups['tag_hostgroup_sm_slave_aws'] %}
+{% for host in slave_ips %}
    {{ hostvars[host].ec2_private_ip_address }}
 {% endfor %}

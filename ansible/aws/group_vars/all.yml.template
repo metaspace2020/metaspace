@@ -47,3 +47,15 @@ hmdb_url:
 spark_version: "1.6.0-bin-hadoop2.7.1"
 spark_mirror:
 spark_home: "/usr/lib/spark"
+
+spark_env_extras_slave:
+  SPARK_WORKER_DIR: "/tmp/spark"
+  SPARK_LOCAL_DIRS: "/tmp/spark"
+  PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
+
+spark_env_extras_master:
+  AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+  AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+  PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
+
+slave_ips: "{{ groups['tag_hostgroup_sm_slave_aws']}}"

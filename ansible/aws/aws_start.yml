@@ -4,6 +4,9 @@
   connection: local
   gather_facts: False
 
+  vars:
+    component: ''
+
   tasks:
     - name: Spinning up SM cluster instances
-      shell: python manage_instances.py start all
+      shell: python manage_instances.py start {{ component }}

@@ -4,6 +4,9 @@
   connection: local
   gather_facts: False
 
+  vars:
+    component: ''
+
   tasks:
     - name: Stopping SM cluster instances
-      shell: python manage_instances.py stop all
+      shell: python manage_instances.py stop {{ component }}

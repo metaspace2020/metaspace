@@ -13,5 +13,6 @@
   apt: name={{ item }} state=present
   with_items:
     - htop
+    - iotop
     - mc
     - gcc

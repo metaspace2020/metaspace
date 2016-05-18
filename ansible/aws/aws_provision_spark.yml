@@ -1,0 +1,37 @@
+---
+
+- name: SM spark slave instances configuration
+  hosts: tag_hostgroup_sm_slave_aws
+  user: ubuntu
+  gather_facts: true
+
+  roles:
+    - role: sm_spark_slave
+      venv: "{{ miniconda_prefix }}"
+      conda_env: "{{ miniconda_env.name }}"
+      spark_usr_dir: "{{ spark_home }}"
+      spark_env_extras: "{{ spark_env_extras_slave }}"
+      block_dev_labels: "{{ block_dev_labels_slave }}"
+  tags: ["slave"]
+
+- name: Update slaves file on master instance and start daemons
+  hosts: tag_hostgroup_sm_master_aws
+  user: ubuntu
+  gather_facts: true
+
+  roles:
+    - role: spark_master
+  tags: ["slave"]
+
+- name: SM spark master instance configuration
+  hosts: tag_hostgroup_sm_master_aws
+  user: ubuntu
+  gather_facts: true
+
+  roles:
+    - role: sm_spark_master
+      venv: "{{ miniconda_prefix }}"
+      conda_env: "{{ miniconda_env.name }}"
+      spark_usr_dir: "{{ spark_home }}"
+      spark_env_extras: "{{ spark_env_extras_master }}"
+  tags: ["master"]

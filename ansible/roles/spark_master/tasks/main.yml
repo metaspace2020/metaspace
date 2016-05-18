@@ -1,0 +1,19 @@
+- name: Put slave ip addresses into slaves file
+  become: yes
+  template: src=slaves.j2 dest="{{ spark_home }}/conf/slaves" owner=ubuntu group=ubuntu mode=0664
+
+- name: Start master and slaves
+  become: no
+  command: "{{ spark_home }}/sbin/start-all.sh"
+  register: command_result
+  changed_when: not ('Stop it first' in command_result.stdout)
+
+- name: Check that master daemon is up
+  command: jps -l
+  become: no
+  register: command_result
+  failed_when: not ('Master' in command_result.stdout)
+
+- name: Check that slave deamons are up
+  command: wget -O /tmp/{{ item }}.html {{ item }}:8081
+  with_items: "{{ slave_ips }}"
