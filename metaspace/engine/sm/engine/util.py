@@ -13,14 +13,15 @@ def proj_root():
     # return dirname(dirname(dirname(__file__)))
     return os.getcwd()
 
+sm_log_formatters = {
+    'SM': {
+        'format': '%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s'
+    }
+}
 
 dictConfig({
     'version': 1,
-    'formatters': {
-        'SM': {
-            'format': '%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s'
-        }
-    },
+    'formatters': sm_log_formatters,
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',

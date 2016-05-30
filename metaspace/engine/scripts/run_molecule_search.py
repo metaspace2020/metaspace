@@ -4,8 +4,9 @@ Script for running molecule search
 import argparse
 import time
 from pprint import pformat
+from logging import Formatter, FileHandler, DEBUG
 
-from sm.engine.util import SMConfig, logger
+from sm.engine.util import SMConfig, logger, sm_log_formatters
 from sm.engine.search_job import SearchJob
 
 if __name__ == "__main__":
@@ -20,6 +21,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     SMConfig.set_path(args.sm_config_path)
+
+    fileHandler = FileHandler(filename='logs/{}.log'.format(args.ds_name))
+    fileHandler.setLevel(DEBUG)
+    fileHandler.setFormatter(Formatter(sm_log_formatters['SM']['format']))
+    logger.addHandler(fileHandler)
+
     logger.debug('Using SM config:\n%s', pformat(SMConfig.get_conf()))
 
     logger.info("Processing...")
