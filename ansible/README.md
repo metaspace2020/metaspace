@@ -7,32 +7,32 @@ Make sure you have these tools installed
  - Vagrant 1.8.1 (https://www.vagrantup.com/downloads.html)
  - ansible 2.0.2 (http://docs.ansible.com/ansible/intro_installation.html#latest-releases-via-pip)
 
-git clone https://github.com/intsco/sm-engine-ansible.git
+`git clone https://github.com/intsco/sm-engine-ansible.git`
 
 ## Setting up Virtual Box single instance SM engine
 
-cp group_vars/sm-vbox.yml.template group_vars/sm-vbox.yml
+`cp group_vars/sm-vbox.yml.template group_vars/sm-vbox.yml`
 
 Put the SM engine version of interest into group_vars/sm-vbox.yml as value for the sm.sm_branch variable
 
-vagrant up --provision
+`vagrant up --provision`
 
-ansible-playbook -i hosts sm.yml
+`ansible-playbook -i hosts sm.yml`
 
 
 ## Run tests
 
 SSH into the virtual machine
  
-ssh -i ~/.ssh/id_rsa -p 2222 ubuntu@127.0.0.1
+`ssh -i ~/.ssh/id_rsa -p 2222 ubuntu@127.0.0.1`
  
 Initialize Miniconda virtual environment
 
-source /opt/dev/miniconda/bin/activate sm
+`source /opt/dev/miniconda/bin/activate sm`
 
 Run tests
 
-scripts/run.sh test_runner.py -u -r
+`scripts/run.sh test_runner.py -u -r`
 
 ## License
 
