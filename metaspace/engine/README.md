@@ -79,8 +79,7 @@ Install SM engine python dependencies
 	sudo pip install numpy==1.10.4
 	sudo pip install scipy==0.16.0 Fabric==1.10.2 lxml==3.3.3 pypng==0.0.18 matplotlib==1.5.0 mock==1.3.0 psycopg2==2.6.1 py4j==0.9 pytest==2.8.2 tornado==4.2.1 tornpsql==1.1.0
 	sudo pip install --no-deps pyimzML==1.0.1
-	sudo pip install pyMSpec pyImagingMSpec
-	sudo easy_install cpyMSpec cpyImagingMSpec
+	sudo pip install pyMSpec pyImagingMSpec cpyMSpec cpyImagingMSpec
 
 Postgres server setup for local use only
 
