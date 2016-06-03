@@ -127,7 +127,13 @@ class WorkDirManager(object):
     """
     def __init__(self, ds_name):
         self.sm_config = SMConfig.get_conf()
-        self.local_fs_only = 's3_base_path' not in self.sm_config['fs']
+
+        if 's3_base_path' not in self.sm_config['fs']:
+            self.local_fs_only = True
+        elif not self.sm_config['fs']['s3_base_path']:
+            self.local_fs_only = True
+        else:
+            self.local_fs_only = False
 
         self.s3 = boto3.session.Session().resource('s3')
         self.s3transfer = S3Transfer(boto3.client('s3', 'eu-west-1'))

@@ -46,7 +46,7 @@ instrument_modes = {
 
 
 mol_dbs = [
-    'HMDB'
+    'HMDB',
     'ChEBI'
 ]
 
