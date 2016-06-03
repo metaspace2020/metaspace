@@ -1,3 +1,6 @@
 sm_branch: master
 sm_home: /opt/dev/sm
 spark_user: ubuntu
+sm_s3_path: ""
+
+aws_setup_access: false

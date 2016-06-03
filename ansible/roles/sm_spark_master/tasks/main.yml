@@ -15,7 +15,7 @@
   git:
     dest: "{{ sm_home }}"
     repo: "https://github.com/SpatialMetabolomics/SM_distributed.git"
-    update: no
+    update: yes
     version: "{{ sm_branch }}"
 
 - name: Create /opt/data/sm_data directory
@@ -52,6 +52,7 @@
         owner={{ spark_user }}
         group={{ spark_user }}
         mode=0755
+  when: aws_setup_access
 
 - name: Put aws credentials file into the home dir
   template: src=aws_credentials.j2
@@ -59,6 +60,7 @@
             owner={{ spark_user }}
             group={{ spark_user }}
             mode=0600
+  when: aws_setup_access
 
 - name: Put SM config to {{ sm_home }}/conf/config.json
   template: src=sm_config.json.j2
@@ -66,3 +68,6 @@
             owner={{ spark_user }}
             group={{ spark_user }}
             mode=0600
+
+- name: Make sure that a directory for the SM logs exists
+  file: path={{ sm_home }}/logs state=directory mode=0755

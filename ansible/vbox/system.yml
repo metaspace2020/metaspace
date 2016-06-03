@@ -4,6 +4,9 @@
   hosts: default
   remote_user: vagrant
   become: yes
+
+  vars:
+    upload_key: true
         
   roles:
     - role: common

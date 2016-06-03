@@ -1,13 +1,13 @@
 {
   "db": {
-    "host": "{{ groups['tag_hostgroup_sm_webserver_aws'][0] }}",
+    "host": "{{ postgres_host }}",
     "database": "sm",
     "user": "sm",
     "password": "{{ sm_postgres_password }}"
   },
   "fs": {
     "base_path": "/opt/data/sm_data",
-    "s3_base_path": "s3a://sm-engine/data"
+    "s3_base_path": "{{ sm_s3_path }}"
   },
   "spark": {
     "master": "spark://{{ ansible_hostname }}:7077",

@@ -1,10 +1,6 @@
 ---
 
-spark_key_file:
-
-aws_access_key_id:
-aws_secret_access_key:
-
+postgres_host: localhost
 postgres_version: 9.3
 
 miniconda_version: latest
@@ -19,8 +15,6 @@ miniconda_env:
     - matplotlib=1.5
     - pandas=0.18
     - cffi
-    - gcc
-    - psycopg2
     - pip:
       - pyMSpec
       - cpyMSpec
@@ -28,6 +22,7 @@ miniconda_env:
       - cpyImagingMSpec
       - requests
       - mock
+      - psycopg2
       - py4j
       - pyimzML
       - pytest
@@ -37,23 +32,19 @@ miniconda_env:
       - boto3
       - networkx
       - fabric
+      - pypng
 
-sm_branch: "master"
+spark_version: "1.6.0-bin-hadoop2.7.1"
+spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
+spark_home: "/usr/lib/spark"
+spark_key_file: /home/intsco/.ssh/ubuntu_spark
+
+spark_env_extras_master:
+  PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
+
+
+sm_branch:
 sm_postgres_password: "1234"
 sm_home: "/opt/dev/sm"
 
-hmdb_url:
-
-spark_version: "1.6.0-bin-hadoop2.7.1"
-spark_mirror:
-spark_home: "/usr/lib/spark"
-
-spark_env_extras_slave:
-  SPARK_WORKER_DIR: "/tmp/spark"
-  SPARK_LOCAL_DIRS: "/tmp/spark"
-  PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
-
-spark_env_extras_master:
-  AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
-  AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
-  PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
+hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"

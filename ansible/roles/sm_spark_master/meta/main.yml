@@ -2,5 +2,5 @@
 
 dependencies:
   - { role: common, become: yes }
-  - { role: spark, become: yes }
+  - { role: spark_master, become: yes }
   - { role: miniconda }

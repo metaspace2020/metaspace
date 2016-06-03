@@ -1,49 +1,39 @@
 ---
 
-- name: installing postgres
+#- name: Installing postgres
+#  hosts: sm-vbox
+#  user: ubuntu
+#  become: yes
+#
+#  roles:
+#    - role: postgres
+#
+#
+#- name: Installing SM dependencies as miniconda distribution
+#  hosts: sm-vbox
+#  user: ubuntu
+#
+#  roles:
+#    - role: miniconda
+#
+#
+#- name: Installing SM web app
+#  hosts: sm-vbox
+#  user: ubuntu
+#
+#  roles:
+#    - role: sm_webapp
+#      venv: "{{ miniconda_prefix }}"
+#      conda_env: "{{ miniconda_env.name }}"
+
+
+- name: Installing SM engine
   hosts: sm-vbox
-  remote_user: ubuntu
-  become: yes
-  
-  roles:
-    - role: postgres
-      postgres_version: "{{ postgres.postgres_version }}"
-  
-  
-- name: installing SM dependencies as miniconda distribution
-  hosts: sm-vbox
-  remote_user: ubuntu
-  
-  roles:
-    - role: miniconda
-      miniconda_version: latest
-      miniconda_python: 2
-      miniconda_prefix: "{{ miniconda.miniconda_prefix }}"
-      miniconda_env: "{{ miniconda.miniconda_env }}"
-
-
-- name: installing spark
-  hosts: sm-vbox
-  remote_user: ubuntu
-  become: yes
-
-  roles:
-    - role: "spark"
-      spark_version: "{{ spark.spark_version }}"
-      spark_mirror: "{{ spark.spark_mirror }}"
-      spark_usr_dir: "{{ spark.spark_home }}"   #this is the symlink to the extracted/installed spark
-      spark_lib_dir: "{{ spark.spark_home }}"
-
-
-- name: getting SM code and setting up
-  hosts: sm-vbox
-  remote_user: ubuntu
+  user: ubuntu
 
   roles:
-    - role: sm
-      sm_branch: "{{ sm.sm_branch }}"
-      postgres_sm_password: "{{ sm.postgres_sm_password }}"
-      venv: "{{ miniconda.miniconda_prefix }}"
-      conda_env: "{{ miniconda.miniconda_env.name }}"
-      spark_home: "{{ spark.spark_home }}"
-      sm_home: "{{ sm.sm_home }}"
+    - role: sm_spark_master
+      venv: "{{ miniconda_prefix }}"
+      conda_env: "{{ miniconda_env.name }}"
+      spark_usr_dir: "{{ spark_home }}"
+      spark_env_extras: "{{ spark_env_extras_master }}"
