@@ -16,6 +16,7 @@ miniconda_env:
     - pandas=0.18
     - cffi
     - pip:
+      - pip
       - pyMSpec
       - cpyMSpec
       - pyImagingMSpec
@@ -42,6 +43,8 @@ spark_key_file: /home/intsco/.ssh/ubuntu_spark
 spark_env_extras_master:
   PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
+spark_slave_ips:
+  - localhost
 
 sm_branch:
 sm_postgres_password: "1234"

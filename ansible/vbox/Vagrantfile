@@ -19,6 +19,7 @@ Vagrant.configure(2) do |config|
   #config.ssh.username = "vagrant"
   
   config.vm.provider "virtualbox" do |v|
+    v.name = "sm-engine"
     v.memory = 4096
 	v.cpus = 4
   end

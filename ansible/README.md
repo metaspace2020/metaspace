@@ -3,9 +3,9 @@ Check https://github.com/SpatialMetabolomics/SM_distributed for more information
 
 ## Installation
 Make sure you have the following tools installed:
- - VirtualBox 5.0.12 (https://www.virtualbox.org/wiki/Downloads)
- - Vagrant 1.8.1 (https://www.vagrantup.com/downloads.html)
- - ansible 2.0.2 (http://docs.ansible.com/ansible/intro_installation.html#latest-releases-via-pip)
+* [VirtualBox 5.0.12](https://www.virtualbox.org/wiki/Downloads)
+* [Vagrant 1.8.1](https://www.vagrantup.com/downloads.html)
+* [ansible 2.0.2](http://docs.ansible.com/ansible/intro_installation.html#latest-releases-via-pip)
 
 `git clone https://github.com/intsco/sm-engine-ansible.git`
 
@@ -14,6 +14,10 @@ Make sure you have the following tools installed:
 `cp group_vars/all.yml.template group_vars/all.yml`
 
 Put the SM engine version of interest into group_vars/all.yml as value for the sm_branch variable
+
+Create a pair of keys if you do not have one. This installation imply the private key name to be `id_rsa`
+
+`ssh-keygen -t rsa`
 
 `vagrant up --provision`
 
@@ -27,6 +31,8 @@ SSH into the virtual machine
 `ssh -i ~/.ssh/id_rsa -p 2222 ubuntu@127.0.0.1`
  
 Initialize Miniconda virtual environment
+
+`cd /opt/dev/sm`
 
 `source /opt/dev/miniconda/bin/activate sm`
 
@@ -42,19 +48,19 @@ SSH into the virtual machine
  
 Initialize Miniconda virtual environment
 
-`source /opt/dev/miniconda/bin/activate sm`
-
 `cd /opt/dev/sm`
+
+`source /opt/dev/miniconda/bin/activate sm`
 
 `scripts/run.sh scripts/run_molecule_search.py spheroid /opt/dev/sm/tests/data/sci_test_search_job_spheroid_dataset/ /opt/dev/sm/tests/data/sci_test_search_job_spheroid_dataset/config.json`
 
-The first time it will run for quite some time. The progress can be tracked here http://localhost:4040/stages/ 
+The first time it will run for quite some time. The progress can be tracked here [http://localhost:4040/stages/](http://localhost:4040/stages/) 
 
 After molecule annotation job is finished run the SM web app
 
 `python sm/webapp/webserver.py --config /opt/dev/sm/conf/config.json --port 8090`
 
-Open http://localhost:8090 address in a browser and explore the results
+Open [http://localhost:8090](http://localhost:8090) address in a browser and explore the results
 
 ## License
 
