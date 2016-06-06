@@ -8,13 +8,10 @@
 import json
 import threading
 import Queue
-import operator
-import math
-from datetime import time, datetime
+from datetime import time
 
 import numpy as np
 from scipy.stats import mode
-from scipy import ndimage
 
 import tornado.ioloop
 import tornado.web
@@ -44,27 +41,6 @@ class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
-
-class SimpleHtmlHandlerWithId(tornado.web.RequestHandler):
-    """Tornado handler for an html file with a parameter."""
-
-    @gen.coroutine
-    def get(self, id):
-        my_print("Request: %s, Id: %s" % (self.request.uri, id))
-        self.render(html_pages.get(self.request.uri.split('/')[1], 'html/' + self.request.uri.split('/')[1] + ".html"),
-                    sparkactivated=args.spark)
-
-
-class SimpleHtmlHandler(tornado.web.RequestHandler):
-    """Tornado handler for an html file without parameters."""
-
-    @gen.coroutine
-    def get(self):
-        my_print("Request: %s" % self.request.uri)
-        self.render(html_pages.get(self.request.uri.split('/')[1], 'html/' + self.request.uri.split('/')[1] + ".html"),
-                    sparkactivated=args.spark)
-
-
 def fetch_sigma_charge_ptspermz(db, job_id):
     DS_CONF_SEL = 'SELECT config FROM dataset where id = %s'
     ds_config = db.query(DS_CONF_SEL, job_id)[0]['config']  # job_id for now is equal to ds_id
@@ -78,6 +54,7 @@ class SFPeakMZsHandler(tornado.web.RequestHandler):
                        FROM theor_peaks
                        WHERE db_id = %s AND sf_id = %s AND adduct = %s AND
                           ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s'''
+
     @property
     def db(self):
         return self.application.db
@@ -194,9 +171,3 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
                 'ints': self.to_str(prof_ints)
             }
         }))
-
-
-
-
-
-
