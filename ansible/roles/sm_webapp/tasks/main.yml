@@ -60,7 +60,9 @@
   file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755
 
 - name: download {{ hmdb_url }}
-  get_url: url={{ hmdb_url }} dest={{ sm_home }}/hmdb.csv
+  get_url: url={{ hmdb_url }}
+           dest={{ sm_home }}/hmdb.csv
+           timeout=1200
 
 - name: import HMDB molecule database
   shell: source {{ venv }}/bin/activate {{ conda_env }} && python scripts/import_molecule_formula_db.py HMDB hmdb.csv --yes=False

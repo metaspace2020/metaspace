@@ -1,12 +1,12 @@
 ---
 
 - name: miniconda installer is downloaded
-  get_url:
-    url="https://repo.continuum.io/miniconda/{{ miniconda_installer }}"
-    dest="/tmp/{{ miniconda_installer }}"
-    checksum="{{ miniconda_installer_checksum }}"
-    mode=0755
-    #force={{ 'yes' if miniconda_installer_checksum == '' else 'no' }}
+  get_url: url="https://repo.continuum.io/miniconda/{{ miniconda_installer }}"
+          dest="/tmp/{{ miniconda_installer }}"
+          checksum="{{ miniconda_installer_checksum }}"
+          mode=0755
+          timeout=1200
+  #force={{ 'yes' if miniconda_installer_checksum == '' else 'no' }}
     
 - name: directory {{ miniconda_prefix | dirname }} exists
   file:

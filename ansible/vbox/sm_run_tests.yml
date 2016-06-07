@@ -40,7 +40,9 @@
     #  debug: msg="{{ regr_tests.stdout_lines }}"
       
     - name: download {{ hmdb_url }}
-      get_url: url={{ hmdb_url }} dest={{ sm_home }}/hmdb.csv
+      get_url: url={{ hmdb_url }}
+               dest={{ sm_home }}/hmdb.csv
+               timeout=1200
       
     - name: import HMDB molecule database
       shell: source {{ venv }}/bin/activate {{ conda_env }} && python scripts/import_molecule_formula_db.py HMDB hmdb.csv --yes=False

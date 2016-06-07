@@ -38,7 +38,7 @@ miniconda_env:
 spark_version: "1.6.0-bin-hadoop2.7.1"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
-spark_key_file: /home/intsco/.ssh/ubuntu_spark
+spark_key_file: ~/.ssh/ubuntu_spark
 
 spark_env_extras_master:
   PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"

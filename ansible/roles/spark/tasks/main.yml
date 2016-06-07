@@ -45,7 +45,7 @@
 - name: Download Spark distribution
   get_url: url="{{ spark_mirror }}/spark-{{ spark_version }}.tar.gz"
            dest="{{ spark_src_dir }}/spark-{{ spark_version }}.tar.gz"
-           timeout=12000
+           timeout=1200
 
 - name: Extract Spark distribution
   unarchive: src="{{ spark_src_dir }}/spark-{{ spark_version }}.tar.gz"
