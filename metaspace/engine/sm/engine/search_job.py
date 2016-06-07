@@ -6,6 +6,8 @@
 """
 import json
 from os.path import join
+import sys
+import traceback
 from pprint import pformat
 from datetime import datetime
 
@@ -158,8 +160,9 @@ class SearchJob(object):
             search_results.nrows, search_results.ncols = self.ds.get_dims()
             search_results.store()
 
-        except Exception as e:
-            raise
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logger.error('\n'.join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
         finally:
             if self.sc:
                 # self.sc.show_profiles()

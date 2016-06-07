@@ -112,10 +112,13 @@ def _img_pairs_to_list(pairs, shape):
 def find_mz_segments(spectra, sf_peak_df, ppm):
     # spectra_sample = spectra.take(200)
     spectra_sample = spectra.takeSample(withReplacement=False, num=200)
+    peaks_per_sp = max(1, int(np.mean([t[1].shape[0] for t in spectra_sample])))
+
     mz_grid, workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10000)
-    mz_bounds = _find_mz_bounds(mz_grid, workload_per_mz, n=1024)
+    plan_mz_segm_n = max(64, int(peaks_per_sp / 100))
+    mz_bounds = _find_mz_bounds(mz_grid, workload_per_mz, n=plan_mz_segm_n)
     mz_segments = _create_mz_segments(mz_bounds, ppm=ppm)
-    return spectra_sample, mz_segments
+    return spectra_sample, mz_segments, peaks_per_sp
 
 
 def gen_iso_peak_images(sc, ds, sf_peak_df, segm_spectra, peaks_per_sp_segm, ppm):
@@ -146,12 +149,12 @@ def compute_sf_images(sc, ds, sf_peak_df, ppm):
     """
     spectra_rdd = ds.get_spectra()
 
-    spectra_sample, mz_segments = find_mz_segments(spectra_rdd, sf_peak_df, ppm)
+    spectra_sample, mz_segments, peaks_per_sp = find_mz_segments(spectra_rdd, sf_peak_df, ppm)
     segm_spectra = (spectra_rdd
                     .flatMap(lambda sp: _segment_spectrum(sp, mz_segments))
                     .groupByKey(numPartitions=len(mz_segments)))
 
-    peaks_per_sp_segm = int(np.mean([t[1].shape[0] for t in spectra_sample])) / len(mz_segments)
+    peaks_per_sp_segm = peaks_per_sp / len(mz_segments)
     iso_peak_images = gen_iso_peak_images(sc, ds, sf_peak_df, segm_spectra, peaks_per_sp_segm, ppm)
     iso_sf_images = gen_iso_sf_images(iso_peak_images, shape=ds.get_dims())
 
