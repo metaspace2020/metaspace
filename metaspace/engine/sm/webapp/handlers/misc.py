@@ -128,7 +128,7 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
         min_mz = min(centr_mzs) - 0.25
         max_mz = max(centr_mzs) + 0.25
 
-        sf = self.db.query("SELECT sf FROM agg_formula WHERE id=%s", sf_id)[0].sf
+        sf = self.db.query("SELECT sf FROM agg_formula WHERE db_id=%s AND id=%s", db_id, sf_id)[0].sf
         isotopes = IsotopePattern(str(sf + adduct)).charged(int(charge))
         fwhm = sigma * 2 * (2 * np.log(2)) ** 0.5
         resolution = isotopes.masses[0] / fwhm
