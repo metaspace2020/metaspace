@@ -9,6 +9,7 @@ from logging import Formatter, FileHandler, DEBUG
 from sm.engine.util import SMConfig, logger, sm_log_formatters
 from sm.engine.search_job import SearchJob
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='SM process dataset at a remote spark location.')
     parser.add_argument('ds_name', type=str, help='Dataset name')
@@ -22,7 +23,7 @@ if __name__ == "__main__":
 
     SMConfig.set_path(args.sm_config_path)
 
-    fileHandler = FileHandler(filename='logs/{}.log'.format(args.ds_name))
+    fileHandler = FileHandler(filename='logs/{}.log'.format(args.ds_name.replace('/', '_')))
     fileHandler.setLevel(DEBUG)
     fileHandler.setFormatter(Formatter(sm_log_formatters['SM']['format']))
     logger.addHandler(fileHandler)

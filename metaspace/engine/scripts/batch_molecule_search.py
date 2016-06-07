@@ -5,7 +5,15 @@ import os
 import argparse
 import yaml
 
-from sm.engine.util import cmd_check
+from sm.engine.util import cmd_check, logger
+
+
+def resolve_full_path(path):
+    if path.startswith('s3') or path.startswith('/'):
+        return path
+    else:
+        base_path = os.path.dirname(args.plan)
+        return os.path.join(base_path, path)
 
 
 if __name__ == "__main__":
@@ -18,11 +26,15 @@ if __name__ == "__main__":
     with open(args.plan) as f:
         plan = yaml.load(f)
 
-        base_path = os.path.dirname(args.plan)
-
         for job in plan['batch']:
-            cmd_check('python scripts/run_molecule_search.py {} {} {} --config {}',
-                      job['ds_name'],
-                      os.path.join(base_path, job['input_path']),
-                      os.path.join(base_path, job['ds_config']),
-                      args.config)
+            try:
+                inp_path = resolve_full_path(job['input_path'])
+                ds_conf_path = resolve_full_path(job['ds_config'])
+
+                cmd_check('python scripts/run_molecule_search.py {} {} {} --config {}',
+                          job['ds_name'],
+                          inp_path,
+                          ds_conf_path,
+                          args.config)
+            except Exception as e:
+                logger.error(e)

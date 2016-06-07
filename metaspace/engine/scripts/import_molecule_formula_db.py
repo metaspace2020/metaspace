@@ -53,7 +53,7 @@ def insert_agg_formulas(db, db_name):
                   'join formula_db db on db.id = f.db_id '
                   'where db.name = %s '
                   'group by db_id, sf)')
-    db.alter(agg_insert, args.db_name)
+    db.alter(agg_insert, db_name)
 
 
 if __name__ == "__main__":
@@ -64,10 +64,15 @@ if __name__ == "__main__":
     parser.add_argument('csv_file', type=str, help='Path to a database csv file')
     parser.add_argument('--sep', dest='sep', type=str, help='CSV file fields separator')
     parser.add_argument('--yes', dest='confirmed', type=bool, help='Don\'t ask for a confirmation')
+    parser.add_argument('--config', type=str, help='SM config path')
     parser.set_defaults(sep='\t', confirmed=False)
     args = parser.parse_args()
 
-    sm_config = json.load(open(path.join(proj_root(), 'conf/config.json')))
+    if args.config:
+        sm_config = json.load(open(args.config))
+    else:
+        sm_config = json.load(open(path.join(proj_root(), 'conf/config.json')))
+
     db = DB(sm_config['db'], autocommit=True)
 
     del_prev_formula_db(db, args.db_name, args.confirmed)
