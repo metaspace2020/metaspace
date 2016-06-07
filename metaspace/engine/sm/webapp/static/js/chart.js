@@ -29,7 +29,7 @@ function drawLineChart(job_id, db_id, sf_id, adduct) {
             font: {size: 16}
         };
 
-        var sampleData = centroidPlot(data['sample'])
+        var sampleData = centroidPlot(data['sample']);
 
         var plotData = [
             {
@@ -51,8 +51,8 @@ function drawLineChart(job_id, db_id, sf_id, adduct) {
                 type: 'scatter',
                 mode: 'lines'
             }
-        ]
+        ];
 
-        Plotly.newPlot('peaks-line-chart', plotData, layout)
+        Plotly.newPlot('peaks-line-chart', plotData, layout);
     });
 }
