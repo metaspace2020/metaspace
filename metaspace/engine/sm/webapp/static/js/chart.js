@@ -1,112 +1,58 @@
+function centroidPlot(data) {
+    var mzs = data['mzs'];
+    var ints = data['ints'];
+    var mzs2 = [];
+    var ints2 = [];
+    for (var i = 0; i < mzs.length; i++) {
+        mzs2.push(mzs[i] - 1e-6);
+        mzs2.push(mzs[i]);
+        mzs2.push(mzs[i] + 1e-6);
+        ints2.push(-1);
+        ints2.push(ints[i]);
+        ints2.push(-1);
+    }
+    return {'mzs': mzs2, 'ints': ints2};
+}
 
 function drawLineChart(job_id, db_id, sf_id, adduct) {
     var url = "/spectrum_line_chart_data/" + job_id + "/" + db_id + "/" + sf_id + "/" + adduct;
     $.getJSON(url, function( data ) {
         var min_mz = data["mz_grid"]["min_mz"];
         var max_mz = data["mz_grid"]["max_mz"];
-        var points_n = data["mz_grid"]["points_n"];
 
-        // create a grid
-        var grid = [];
-        var step = (max_mz - min_mz) / (points_n-1);
-        for (var i = 0; i < points_n; i++) {
-            grid.push((min_mz + i*step).toFixed(3));
-        }
+        var layout = {
+            xaxis: {'range': [min_mz, max_mz]},
+            yaxis: {title: 'Intensity (a. u.)', rangemode: 'nonnegative'},
+            legend: {x: 0.5, y: -0.2, xanchor: 'center', yanchor: 'top',
+                     orientation: 'h', traceorder: 'reversed'},
+            margin: {t: 20, b: 20},
+            font: {size: 16}
+        };
 
-        // create intensity series for profiles
-        var prof_int_series = [];
-        for (var i = 0; i < points_n; i++) {
-            prof_int_series[i] = 0;
-        }
-        for (var i = 0; i < data["theor"]["inds"].length; i++) {
-            var grid_ind = data["theor"]["inds"][i];
-            prof_int_series[grid_ind] = data["theor"]["ints"][i]
-        }
+        var sampleData = centroidPlot(data['sample']);
 
-        // create intensity series for centroids
-        var centr_int_series = [];
-        for (var i = 0; i < points_n; i++) {
-            centr_int_series[i] = 0;
-        }
-        for (var i = 0; i < data["sample"]["inds"].length; i++) {
-            var grid_ind = data["sample"]["inds"][i];
-            centr_int_series[grid_ind] = data["sample"]["ints"][i]
-        }
-
-        // prepare chart data structure
-        var chartData = [];
-        for (var i = 0; i < points_n; i++) {
-            chartData.push({"peak_mz": grid[i],
-                            "prof_peak_int": prof_int_series[i],
-                            "centr_peak_int": centr_int_series[i]});
-        }
-
-        // create guides from centroids
-        var guides = data["sample"]["inds"].map(function(grid_ind, ind, arr) {
-            return {"category" : grid[grid_ind],
-                    "boldLabel" : "True",
-                    "color" : "black",
-                    "dashLength" : 5,
-                    "lineAlpha" : 1,
-                    "label" : grid[grid_ind]}
-        });
-
-        AmCharts.makeChart("peaks-line-chart", {
-            type: "serial",
-            pathToImages: "http://sm-engine-webapp.s3-website-eu-west-1.amazonaws.com/js/amcharts/images/",
-            dataProvider: chartData,
-            categoryField: "peak_mz",
-
-            categoryAxis: {
-                dashLength: 1,
-                labelsEnabled: false,
-                fontSize: 14,
-                guides: guides,
+        var plotData = [
+            {
+                x: sampleData['mzs'],
+                y: sampleData['ints'],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Sample',
+                line: {color: 'red'},
+                fill: 'tozeroy',
+                fillcolor: 'red'
             },
+            {
+                name: 'Theoretical',
+                x: data['theor']['mzs'],
+                y: data['theor']['ints'],
+                line: {color: 'blue'},
+                opacity: 0.3,
+                type: 'scatter',
+                mode: 'lines'
+            }
+        ];
 
-            valueAxes: [{
-                id: "val_axis",
-                title: "Intensity (a.u.)",
-                fontSize: 14,
-                maximum: 120,
-                axisThickness: 1.5,
-                dashLength: 5,
-                gridCount: 10,
-                dashLength: 1,
-            }],
-
-            graphs: [{
-                id: "theor_int",
-                valueField: "prof_peak_int",
-                title: "Theoretical",
-                lineColor: "blue",
-                type: "smoothedLine",
-
-            },{
-                id: "sample_int",
-                valueField: "centr_peak_int",
-                title: "Sample",
-                lineColor: "red",
-                type: "column",
-                fixedColumnWidth: 5,
-                fillAlphas: 1,
-            }],
-
-            chartScrollbar : {
-                //updateOnReleaseOnly: true,
-            },
-
-            chartCursor: {
-                cursorPosition: "mouse",
-            },
-
-            legend: {
-              fontSize: 14,
-              markerSize: 15,
-              useGraphSettings: true,
-              position: "bottom",
-              align: "center",
-            },
-        });
+        Plotly.newPlot('peaks-line-chart', plotData, layout);
     });
 }

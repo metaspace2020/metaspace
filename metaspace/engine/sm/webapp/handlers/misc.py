@@ -5,16 +5,15 @@
 
 .. moduleauthor:: Sergey Nikolenko <snikolenko@gmail.com>
 """
+
+from cpyMSpec import IsotopePattern
+
 import json
 import threading
 import Queue
-import operator
-import math
-from datetime import time, datetime
+from datetime import time
 
 import numpy as np
-from scipy.stats import mode
-from scipy import ndimage
 
 import tornado.ioloop
 import tornado.web
@@ -44,27 +43,6 @@ class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
-
-class SimpleHtmlHandlerWithId(tornado.web.RequestHandler):
-    """Tornado handler for an html file with a parameter."""
-
-    @gen.coroutine
-    def get(self, id):
-        my_print("Request: %s, Id: %s" % (self.request.uri, id))
-        self.render(html_pages.get(self.request.uri.split('/')[1], 'html/' + self.request.uri.split('/')[1] + ".html"),
-                    sparkactivated=args.spark)
-
-
-class SimpleHtmlHandler(tornado.web.RequestHandler):
-    """Tornado handler for an html file without parameters."""
-
-    @gen.coroutine
-    def get(self):
-        my_print("Request: %s" % self.request.uri)
-        self.render(html_pages.get(self.request.uri.split('/')[1], 'html/' + self.request.uri.split('/')[1] + ".html"),
-                    sparkactivated=args.spark)
-
-
 def fetch_sigma_charge_ptspermz(db, job_id):
     DS_CONF_SEL = 'SELECT config FROM dataset where id = %s'
     ds_config = db.query(DS_CONF_SEL, job_id)[0]['config']  # job_id for now is equal to ds_id
@@ -78,6 +56,7 @@ class SFPeakMZsHandler(tornado.web.RequestHandler):
                        FROM theor_peaks
                        WHERE db_id = %s AND sf_id = %s AND adduct = %s AND
                           ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s'''
+
     @property
     def db(self):
         return self.application.db
@@ -110,8 +89,7 @@ class MinMaxIntHandler(tornado.web.RequestHandler):
 
 
 class SpectrumLineChartHandler(tornado.web.RequestHandler):
-    PEAK_PROFILE_SQL = '''SELECT centr_mzs, centr_ints, prof_mzs, prof_ints
-                          FROM theor_peaks
+    PEAK_MZS_SQL = '''SELECT centr_mzs FROM theor_peaks
                           WHERE db_id = %s AND sf_id = %s AND adduct = %s AND
                           ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s'''
 
@@ -124,38 +102,16 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
     def db(self):
         return self.application.db
 
-    @staticmethod
-    def find_closest_inds(mz_grid, mzs):
-        return map(lambda mz: (np.abs(mz_grid - mz)).argmin(), mzs)
-
-    @staticmethod
-    def to_str(list_of_numbers):
-        return map(lambda x: '%.3f' % x, list(list_of_numbers))
-
-    def convert_to_serial(self, centr_mzs, prof_mzs):
-        step = mode(np.diff(prof_mzs)).mode[0]
-        min_mz = prof_mzs[0] - 0.25
-        max_mz = prof_mzs[-1] + 0.25
-
-        points_n = int(np.round((max_mz - min_mz) / step)) + 1
-        mz_grid = np.linspace(min_mz, max_mz, points_n)
-
-        centr_inds = self.find_closest_inds(mz_grid, centr_mzs)
-        prof_inds = self.find_closest_inds(mz_grid, prof_mzs)
-
-        return min_mz, max_mz, points_n, centr_inds, prof_inds
-
     # TODO: move metric calculation logic to the engine
     @staticmethod
     def sample_centr_ints_norm(sample_ints_list):
         first_peak_inds = set(sample_ints_list[0]['pixel_inds'])
         sample_centr_ints = []
         for peak_d in sample_ints_list:
-            first_peak_inds_mask = np.array(map(lambda i: i in first_peak_inds, peak_d['pixel_inds']))
+            peak_int_sum = 0
+            first_peak_inds_mask = np.array([i in first_peak_inds for i in peak_d['pixel_inds']])
             if first_peak_inds_mask.size > 0:
                 peak_int_sum = np.array(peak_d['intensities'])[first_peak_inds_mask].sum()
-            else:
-                peak_int_sum = 0
             sample_centr_ints.append(peak_int_sum)
 
         sample_centr_ints = np.asarray(sample_centr_ints)
@@ -163,40 +119,42 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
-        res = self.db.query(self.PEAK_PROFILE_SQL, int(db_id), int(sf_id), adduct,
-                            *fetch_sigma_charge_ptspermz(self.db, job_id))
-        assert len(res) == 1
-        peaks_dict = res[0]
-        prof_mzs = np.array(peaks_dict['prof_mzs'])
-        prof_ints = np.array(peaks_dict['prof_ints'])
-        centr_mzs = np.array(peaks_dict['centr_mzs'])
+        params = fetch_sigma_charge_ptspermz(self.db, job_id)
+        sigma, charge, pts_per_mz = params
 
-        min_mz, max_mz, points_n, centr_inds, prof_inds = self.convert_to_serial(centr_mzs, prof_mzs)
+        centr_mzs = self.db.query(self.PEAK_MZS_SQL,
+                                  int(db_id), int(sf_id), adduct, *params)[0].centr_mzs
+        centr_mzs = np.array(centr_mzs)
+        min_mz = min(centr_mzs) - 0.25
+        max_mz = max(centr_mzs) + 0.25
 
-        sample_ints_list = self.db.query(self.SAMPLE_INTENS_SQL, int(job_id), int(db_id), int(sf_id), adduct)
+        sf = self.db.query("SELECT sf FROM agg_formula WHERE db_id=%s AND id=%s", db_id, sf_id)[0].sf
+        isotopes = IsotopePattern(str(sf + adduct)).charged(int(charge))
+        fwhm = sigma * 2 * (2 * np.log(2)) ** 0.5
+        resolution = isotopes.masses[0] / fwhm
+        prof_mzs = np.arange(min_mz, max_mz, 1.0 / pts_per_mz)
+        prof_ints = isotopes.envelope(resolution)(prof_mzs)
+        nnz_idx = prof_ints > 1e-9
+        prof_mzs = prof_mzs[nnz_idx]
+        prof_ints = prof_ints[nnz_idx]
+
+        sample_centr_ints_norm = []
+        sample_ints_list = self.db.query(self.SAMPLE_INTENS_SQL,
+                                         int(job_id), int(db_id), int(sf_id), adduct)
         if sample_ints_list:
             sample_centr_ints_norm = self.sample_centr_ints_norm(sample_ints_list)
-        else:
-            sample_centr_ints_norm = []
 
         self.write(json.dumps({
             'mz_grid': {
                 'min_mz': min_mz,
-                'max_mz': max_mz,
-                'points_n': points_n,
+                'max_mz': max_mz
             },
             'sample': {
-                'inds': centr_inds,
-                'ints': self.to_str(sample_centr_ints_norm)
+                'mzs': centr_mzs.tolist(),
+                'ints': sample_centr_ints_norm.tolist()
             },
             'theor': {
-                'inds': prof_inds,
-                'ints': self.to_str(prof_ints)
+                'mzs': prof_mzs.tolist(),
+                'ints': (prof_ints * 100.0).tolist()
             }
         }))
-
-
-
-
-
-
