@@ -54,5 +54,9 @@ function drawLineChart(job_id, db_id, sf_id, adduct) {
         ];
 
         Plotly.newPlot('peaks-line-chart', plotData, layout);
+
+        window.onresize = function() {
+            Plotly.Plots.resize($('#peaks-line-chart')[0]);
+        };
     });
 }
