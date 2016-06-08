@@ -59,6 +59,20 @@
 - name: ensure that scripts/run.sh is executable
   file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755
 
+- name: Create config directory for supervisor
+  become: yes
+  file: path=/etc/supervisor state=directory mode=0700 owner=ubuntu group=ubuntu
+
+- name: Copy supervisor config file
+  copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf mode=0600 owner=ubuntu group=ubuntu
+
+- name: Copy sm-web-app supervisor config file
+  template: src=sm-web-app.supervisor.j2
+            dest=/etc/supervisor/sm-web-app.supervisor
+            mode=0600
+            owner=ubuntu
+            group=ubuntu
+
 - name: download {{ hmdb_url }}
   get_url: url={{ hmdb_url }}
            dest={{ sm_home }}/hmdb.csv

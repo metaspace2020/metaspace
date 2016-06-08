@@ -1,6 +1,6 @@
 ---
 
-- name: Installing postgres
+- name: Installing Postgres
   hosts: sm-vbox
   user: ubuntu
   become: yes

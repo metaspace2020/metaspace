@@ -1,0 +1,9 @@
+---
+
+- name: Deploying SM web app code
+  hosts: sm-vbox
+  user: ubuntu
+  gather_facts: false
+
+  tasks:
+    - include: ../web_app_deploy_tasks.yml

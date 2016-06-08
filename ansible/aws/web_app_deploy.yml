@@ -1,0 +1,9 @@
+---
+
+- name: Deploying SM web app code
+  hosts: tag_hostgroup_sm_webserver_aws
+  user: ubuntu
+  gather_facts: false
+
+  tasks:
+    - include: ../web_app_deploy_tasks.yml

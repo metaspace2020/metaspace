@@ -34,6 +34,7 @@ miniconda_env:
       - networkx
       - fabric
       - pypng
+      - supervisor
 
 spark_version: "1.6.0-bin-hadoop2.7.1"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
@@ -51,3 +52,4 @@ sm_postgres_password: "1234"
 sm_home: "/opt/dev/sm"
 
 hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"
+activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
