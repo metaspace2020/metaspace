@@ -151,7 +151,7 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
             },
             'sample': {
                 'mzs': centr_mzs.tolist(),
-                'ints': sample_centr_ints_norm.tolist()
+                'ints': list(sample_centr_ints_norm)
             },
             'theor': {
                 'mzs': prof_mzs.tolist(),

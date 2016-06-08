@@ -111,7 +111,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         db_name = self.request.arguments['columns[0][search][value]'][0]
         ds_name = self.request.arguments['columns[1][search][value]'][0]
         adduct = self.request.arguments['columns[9][search][value]'][0]
-        sf = (self.request.arguments['columns[2][search][value]'][0]).upper()
+        sf = (self.request.arguments['columns[2][search][value]'][0])
         compound = (self.request.arguments['columns[3][search][value]'][0]).lower()
         comp_id = self.request.arguments['columns[4][search][value]'][0]
         min_msm = self.request.arguments['columns[8][search][value]'][0]

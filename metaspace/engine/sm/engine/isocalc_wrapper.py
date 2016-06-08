@@ -1,5 +1,5 @@
 from traceback import format_exc
-
+from collections import namedtuple
 import numpy as np
 from cpyMSpec.legacy_interface import complete_isodist
 from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
@@ -21,6 +21,8 @@ class IsocalcWrapper(object):
     isocalc_config : dict
         Dictionary representing isotope_generation section of a dataset config file
     """
+    Centroids = namedtuple('Centroids', ['mzs', 'ints'])
+
     def __init__(self, isocalc_config):
         self.charge = 0
         if 'polarity' in isocalc_config['charge']:
@@ -55,24 +57,18 @@ class IsocalcWrapper(object):
              - profile intensities
             In case of any errors returns a dict of empty lists.
         """
-        res_dict = {'centr_mzs': [], 'centr_ints': [], 'profile_mzs': [], 'profile_ints': []}
+        centroids = self.Centroids([], [])
         try:
             isotope_ms = self._isodist(sf + adduct)
-
-            centr_mzs, centr_ints = isotope_ms.get_spectrum(source='centroids')
-            res_dict['centr_mzs'] = centr_mzs
-            res_dict['centr_ints'] = centr_ints
-
-            profile_mzs, profile_ints = isotope_ms.get_spectrum(source='profile')
-            res_dict['profile_mzs'], res_dict['profile_ints'] = \
-                self._sample_profiles(centr_mzs, profile_mzs, profile_ints)
+            centroids = self.Centroids(*map(lambda l: l[:6],
+                                            isotope_ms.get_spectrum(source='centroids')))
         except InvalidFormulaError as e:
             logger.warning('(%s, %s) - %s', sf, adduct, e)
         except Exception as e:
             logger.error('(%s, %s) - %s', sf, adduct, e)
             logger.error(format_exc())
         finally:
-            return res_dict
+            return centroids
 
     @staticmethod
     def slice_array(mzs, lower, upper):
@@ -91,14 +87,14 @@ class IsocalcWrapper(object):
 
         return np.hstack(sampled_prof_mz_list), np.hstack(sampled_prof_int_list)
 
-    def _format_peak_str(self, db_id, sf_id, adduct, peak_dict):
+    def _format_peak_str(self, db_id, sf_id, adduct, centroids):
         return '%d\t%d\t%s\t%.6f\t%d\t%d\t{%s}\t{%s}\t{%s}\t{%s}' % (
             db_id, sf_id, adduct,
             round(self.sigma, 6), self.charge, self.pts_per_mz,
-            list_of_floats_to_str(peak_dict['centr_mzs']),
-            list_of_floats_to_str(peak_dict['centr_ints']),
-            list_of_floats_to_str(peak_dict['profile_mzs']),
-            list_of_floats_to_str(peak_dict['profile_ints'])
+            list_of_floats_to_str(centroids.mzs),
+            list_of_floats_to_str(centroids.ints),
+            '',
+            ''
         )
 
     def formatted_iso_peaks(self, db_id, sf_id, sf, adduct):
@@ -119,6 +115,6 @@ class IsocalcWrapper(object):
         : str
             A one line string with tab separated lists. Every list is a comma separated string.
         """
-        peak_dict = self.isotope_peaks(sf, adduct)
-        if np.all([len(v) > 0 for v in peak_dict.values()]):
-            yield self._format_peak_str(db_id, sf_id, adduct, peak_dict)
+        centroids = self.isotope_peaks(sf, adduct)
+        if len(centroids.mzs) > 0:
+            yield self._format_peak_str(db_id, sf_id, adduct, centroids)
