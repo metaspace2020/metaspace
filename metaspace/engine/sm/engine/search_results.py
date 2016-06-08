@@ -32,8 +32,8 @@ class SearchResults(object):
     db: engine.db.DB
     sm_config: dict
     """
-    def __init__(self, sf_db_id, ds_id, job_id, ds_name, sf_adduct_peaksn, db,
-                 sm_config, ds_config):
+    def __init__(self, sf_db_id, ds_id, job_id, ds_name,
+                 sf_adduct_peaksn, db, sm_config, ds_config):
         self.sf_db_id = sf_db_id
         self.ds_id = ds_id
         self.job_id = job_id
@@ -57,9 +57,9 @@ class SearchResults(object):
     @staticmethod
     def _metrics_table_row_gen(job_id, db_id, metr_df, sf_adduct_peaksn, metrics):
         for ind, r in metr_df.reset_index().iterrows():
-            metr_json = json.dumps(OrderedDict([(m, r[m]) for m in metrics]))
+            metr_json = json.dumps(OrderedDict([(m, float(r[m])) for m in metrics]))
             peaks_n = sf_adduct_peaksn[ind][2]
-            yield (job_id, db_id, r.sf_id, r.adduct, r.msm, r.fdr, metr_json, peaks_n)
+            yield (job_id, db_id, r.sf_id, r.adduct, float(r.msm), float(r.fdr), metr_json, peaks_n)
 
     def store_sf_img_metrics(self):
         """ Store formula image metrics in the database """

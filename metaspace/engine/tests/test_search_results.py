@@ -6,6 +6,7 @@ import pytest
 from fabric.api import local
 from mock import MagicMock
 from scipy.sparse.csr import csr_matrix
+import numpy as np
 
 from sm.engine.db import DB
 from sm.engine.search_results import SearchResults, METRICS_INS
@@ -76,3 +77,14 @@ def test_save_sf_iso_images_correct_db_call(spark_context, create_fill_sm_databa
         assert correct_rows == rows
     finally:
         db.close()
+
+
+def test_non_native_python_number_types_handled(search_results):
+    for col in ['chaos', 'spatial', 'spectral', 'msm', 'fdr']:
+        search_results.sf_metrics_df[col] = search_results.sf_metrics_df[col].astype(np.float64)
+
+        search_results.store_sf_img_metrics()
+
+        metrics_json = json.dumps(OrderedDict(zip(['chaos', 'spatial', 'spectral'], (0.9, 0.9, 0.9))))
+        correct_rows = [(0, 0, 1, '+H', 0.9 ** 3, 0.5, metrics_json, 2)]
+        db_mock.insert.assert_called_with(METRICS_INS, correct_rows)
