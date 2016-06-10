@@ -11,6 +11,8 @@ Make sure you have the following tools installed:
 
 ## Setting up single instance SM engine in Virtual Box
 
+`cd vbox`
+
 `cp group_vars/all.yml.template group_vars/all.yml`
 
 Put the SM engine version of interest into group_vars/all.yml as value for the sm_branch variable
@@ -24,7 +26,7 @@ Create a pair of keys if you do not have one. This installation imply the privat
 `ansible-playbook sm.yml`
 
 
-## Run tests
+### Run tests
 
 SSH into the virtual machine
  
@@ -40,7 +42,7 @@ Run tests
 
 `scripts/run.sh test_runner.py -u -r`
 
-## Start example molecule annotation job
+### Start example molecule annotation job <a id="example-job"></a>
 
 SSH into the virtual machine
  
@@ -61,6 +63,45 @@ After molecule annotation job is finished run the SM web app
 `python sm/webapp/webserver.py --config /opt/dev/sm/conf/config.json --port 8090`
 
 Open [http://localhost:8090](http://localhost:8090) address in a browser and explore the results
+
+## Setting up AWS based SM engine version
+
+`cd aws`
+
+`cp group_vars/all.yml.template group_vars/all.yml`
+
+Put the SM engine version and AWS user credentials into group_vars/all.yml.
+Ansible may have issues with AWS credentials containing / symbol so try to generate them without it.
+
+Create a pair of keys with help of AWS console. They will be used for ssh'ing to launched AWS instances
+
+Spin up all needed instances. You will need at least three: web app and db instance, spark master and spark slave ones.
+Check `manages_instances.py` script for parameters used for instances launching.
+
+`ansible-playbook aws_start.yml -e "component=all key_name=NAME_OF_YOUR_AWS_KEY"`
+
+Provision web application and database instance
+ 
+`ansible-playbook aws_provision_webserver.yml`
+
+If you gen the message "Failed to connect to the host via ssh." try to issue the command
+
+`ansible-playbook aws_clean_cache.yml`
+
+Provision Spark cluster instances
+ 
+`ansible-playbook aws_provision_spark.yml`
+
+Once provisioning process is finished successfully you can ssh to the Spark master instance (should has sm-dev-master name).
+Try to run the example molecule annotation job like [above](#example-job).
+
+To deploy and start the web app the command and open http://AWS_WEB_SERVER_IP_ADDRESS:8080
+
+`ansible-playbook web_app_deploy.yml`
+
+When you do not need the Spark cluster any more don't forget to stop it.
+
+`ansible-playbook aws_stop.yml -e "component=all key_name=NAME_OF_YOUR_AWS_KEY"`
 
 ## License
 
