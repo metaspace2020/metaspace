@@ -5,6 +5,7 @@ spark_key_file:
 aws_access_key_id:
 aws_secret_access_key:
 
+postgres_host:
 postgres_version: 9.3
 
 miniconda_version: latest
@@ -37,12 +38,14 @@ miniconda_env:
       - boto3
       - networkx
       - fabric
+      - supervisor
 
 sm_branch: "master"
 sm_postgres_password: "1234"
 sm_home: "/opt/dev/sm"
 
 hmdb_url:
+activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
 spark_version: "1.6.0-bin-hadoop2.7.1"
 spark_mirror:

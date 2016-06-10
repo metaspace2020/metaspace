@@ -59,6 +59,9 @@
 - name: ensure that scripts/run.sh is executable
   file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755
 
+- name: Make sure that a directory for the SM logs exists
+  file: path={{ sm_home }}/logs state=directory mode=0755
+
 - name: Create config directory for supervisor
   become: yes
   file: path=/etc/supervisor state=directory mode=0700 owner=ubuntu group=ubuntu

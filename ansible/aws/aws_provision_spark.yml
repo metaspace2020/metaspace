@@ -15,30 +15,39 @@
   tags: ["slave"]
 
 
-- name: Update slaves file on master instance and start daemons
-  hosts: tag_hostgroup_sm_master_aws
-  user: ubuntu
-  gather_facts: true
-
-  vars:
-    spark_slave_ips: []
-    #  spark_slave_ips: "{{ groups['tag_hostgroup_sm_slave_aws']}}"
-    #hostvars[host].ec2_private_ip_address
-
-  pre_tasks:
-    - name: Create a list of private ip addresses for the slave instances
-      - set_fact: spark_slave_ips="{{ spark_slave_ips }} + [ hostvars[host].ec2_private_ip_address ]"
-      with_items: "{{ groups['tag_hostgroup_sm_slave_aws']}}"
-
-  roles:
-    - role: spark_master
-  tags: ["slave"]
+#- name: Update slaves file on master instance and start daemons
+#  hosts: tag_hostgroup_sm_master_aws
+#  user: ubuntu
+#  gather_facts: true
+#
+#  vars:
+#    spark_slave_ips: []
+#    #  spark_slave_ips: "{{ groups['tag_hostgroup_sm_slave_aws']}}"
+#    #hostvars[host].ec2_private_ip_address
+#
+#  pre_tasks:
+#    - name: Create a list of private ip addresses for the slave instances
+#      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ec2_private_ip_address ] }}"
+#      with_items: "{{ groups['tag_hostgroup_sm_slave_aws']}}"
+#
+#  roles:
+#    - role: spark_master
+#  tags: ["slave"]
 
 
 - name: SM spark master instance configuration
   hosts: tag_hostgroup_sm_master_aws
   user: ubuntu
   gather_facts: true
+
+  vars:
+    spark_slave_ips: []
+    postgres_host: "{{ groups['tag_hostgroup_sm_webserver_aws'][0] }}"
+
+  pre_tasks:
+    - name: Create a list of private ip addresses for the slave instances
+      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ec2_private_ip_address ] }}"
+      with_items: "{{ groups['tag_hostgroup_sm_slave_aws']}}"
 
   roles:
     - role: sm_spark_master

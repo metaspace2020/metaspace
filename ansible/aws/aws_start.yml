@@ -6,7 +6,11 @@
 
   vars:
     component: ''
+    key_name: ''
 
   tasks:
+    - debug: var=component
+    - debug: var=key_name
+
     - name: Spinning up SM cluster instances
-      shell: python manage_instances.py start {{ component }}
+      shell: python manage_instances.py start {{ component }} {{ key_name }}

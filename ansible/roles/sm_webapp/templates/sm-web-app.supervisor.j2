@@ -2,7 +2,7 @@
 
 [program:sm-web-app]
 process_name = sm-web-app-%(process_num)s
-command = python {{ sm_home }}/sm/webapp/webserver.py --config {{ sm_home }}/conf/config.json --port=8090
+command = python {{ sm_home }}/sm/webapp/webserver.py --config {{ sm_home }}/conf/config.json --port=8080
 redirect_stderr=true
 stdout_logfile={{ sm_home }}/logs/sm-web-app.log
 # Increase numprocs to run multiple processes on different ports.

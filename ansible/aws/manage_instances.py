@@ -7,7 +7,7 @@ from time import sleep
 
 ec2 = boto3.resource('ec2')
 ec2_client = boto3.client('ec2')
-key_name = 'intsco_embl_aws'
+#key_name = 'intsco_embl_aws'
 image = 'ami-f9a62c8a'
 
 webserver_block_dev_maps = [
@@ -162,7 +162,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM AWS instances management tool')
     parser.add_argument('action', type=str, help='start|stop')
     parser.add_argument('component', type=str, help='all|web|spark')
+    parser.add_argument('key_name', type=str, help='AWS key name to use')
     args = parser.parse_args()
+
+    key_name = args.key_name
 
     web_name = 'sm-dev-webserver'
     master_name = 'sm-dev-master'
@@ -181,7 +184,7 @@ if __name__ == '__main__':
         if args.component in ['spark', 'all']:
             start_instances(master_name, master_inst_type, None, 1, 'eipalloc-0ff2426a',
                             'default', 'sm_master_aws', master_block_dev_maps)
-            start_instances(slave_name, slave_inst_type, 0.25, 1, None,
+            start_instances(slave_name, slave_inst_type, 0.5, 1, None,
                             'default', 'sm_slave_aws', slave_block_dev_maps)
 
     elif args.action == 'stop':
