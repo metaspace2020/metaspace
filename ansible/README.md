@@ -23,7 +23,7 @@ Create a pair of keys if you do not have one. This installation imply the privat
 
 `vagrant up --provision`
 
-`ansible-playbook sm.yml`
+`ansible-playbook provision.yml`
 
 
 ### Run tests
