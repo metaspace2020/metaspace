@@ -34,12 +34,12 @@
     executable: /bin/bash
   shell: "source {{ venv }}/bin/activate {{ conda_env }} && pip install ."
 
-- name: Put activate_conda_env.sh scripts to
-  template: src=sm_config.json.j2
-            dest={{ sm_home }}/conf/config.json
-            owner={{ spark_user }}
-            group={{ spark_user }}
-            mode=0600
+#- name: Put activate_conda_env.sh scripts to
+#  template: src=sm_config.json.j2
+#            dest={{ sm_home }}/conf/config.json
+#            owner={{ spark_user }}
+#            group={{ spark_user }}
+#            mode=0600
 
 - name: Put SPARK_HOME into update sm-env.sh scripts
   template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
