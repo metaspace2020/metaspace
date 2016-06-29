@@ -4,77 +4,54 @@ import tornado.web
 import tornado.httpserver
 from tornado import gen
 from time import time
+from elasticsearch import Elasticsearch
 
 
-RESULTS_COUNT_TPL = "SELECT COUNT(*) as count FROM ({}) t"
+es = Elasticsearch()
+
 RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids',
                   'chaos', 'image_corr', 'pattern_match', 'msm', 'adduct',
                   'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id', 'pass_fdr']
 
-RESULTS_SEL = 'SELECT * FROM results_table '
-FDR_THR_TPL = '''SELECT db_name, ds_name, sf, comp_names, comp_ids, chaos, image_corr, pattern_match, msm, adduct,
-                job_id, ds_id, sf_id, peaks, db_id,
-                CASE WHEN ROUND(fdr::numeric, 2) <= %s THEN 1 ELSE 0 END AS pass_fdr
-                FROM ({}) tt
-                '''
-# RESULTS_SEL = '''
-#     SELECT db_name, ds_name, sf, comp_names, comp_ids, chaos, image_corr, pattern_match, msm,
-#     adduct, job_id, ds_id, sf_id, peaks, db_id,
-#     CASE WHEN ROUND(fdr::numeric, 2) <= %s THEN 1 ELSE 0 END AS pass_fdr
-#     FROM results_table
-#     '''
-# RESULTS_SEL = '''
-#         SELECT * FROM (
-#         SELECT sf_db.name as db_name, ds.name as ds_name, f.sf as sf, f.names as comp_names, f.subst_ids as comp_ids,
-#             coalesce((m.stats->'chaos')::text::real, 0) AS chaos,
-#             coalesce((m.stats->'spatial')::text::real, 0) AS image_corr,
-#             coalesce((m.stats->'spectral')::text::real, 0) AS pattern_match,
-#             coalesce(msm, 0) as msm,
-#             a.adduct AS adduct,
-#             j.id AS job_id,
-#             ds.id AS ds_id,
-#             f.id AS sf_id,
-#             m.peaks_n as peaks,
-#             sf_db.id AS db_id,
-#             CASE WHEN ROUND(fdr::numeric, 2) <= %s THEN 1 ELSE 0 END AS pass_fdr
-#         FROM agg_formula f
-#         CROSS JOIN adduct a
-#         JOIN formula_db sf_db ON sf_db.id = f.db_id
-#         LEFT JOIN job j ON j.id = a.job_id
-#         LEFT JOIN dataset ds ON ds.id = j.ds_id
-#         LEFT JOIN iso_image_metrics m ON m.job_id = j.id AND m.db_id = sf_db.id AND m.sf_id = f.id AND m.adduct = a.adduct
-#         --ORDER BY sf
-#         ) tt
-#     '''
 
+def search(sf='', ds_name='', db_name='', adduct='', comp_name='', comp_id='',
+           min_msm=0.1, fdr_thr=0.1, orderby='msm', asc=False, offset=0, limit=500):
+    body = {
+        "query": {
+            "constant_score": {
+                "filter": {
+                    "bool": {
+                        "must": [
+                            { "prefix": { "sf": sf } },
+                            { "prefix": { "ds_name": ds_name } },
+                            { "prefix": { "db_name": db_name } },
+                            { "prefix": { "adduct": adduct } },
+                            { "wildcard": { "comp_names": '*{}*'.format(comp_name) } },
+                            { "prefix": { "comp_ids": comp_id } },
+                            { 'range': { 'msm': { 'gte': min_msm } } }
+                        ]
+                    }
+                }
+            }
+        },
+        'sort': [ { orderby: 'asc' if asc else 'desc' } ],
+        'from': offset,
+        'size': limit
+    }
 
-def select_results(query, where=None, orderby='msm', asc=False, limit=500, offset=0):
-    query_params = []
+    def format_annotation(a, fdr_thr):
+        a['comp_ids'] = a['comp_ids'].split(',')
+        a['comp_names'] = a['comp_names'].split(',')
+        a['pass_fdr'] = a['fdr'] <= fdr_thr
+        del a['fdr']
+        return a
 
-    where = filter(lambda d: d['value'], where)
-    if where:
-        conditions = ['{} {} %s'.format(d['field'], d['cond']) for d in where]
-        cond_vals = ['%{}%'.format(d['value']) if d['cond'] == 'like' else d['value'] for d in where]
+    results = [format_annotation(r['_source'], fdr_thr) for r in
+               es.search(index='annotation', body=body, _source=True)['hits']['hits']]
 
-        query += 'WHERE ' + ' and '.join(conditions) + '\n'
-        query_params.extend(cond_vals)
+    count = es.count(index='annotation', body=body)['count']
 
-    count_query = RESULTS_COUNT_TPL.format(query)
-
-    if orderby is not None:
-        query += 'ORDER BY {} {}\n'.format(orderby, 'ASC' if asc else 'DESC')
-
-    if limit > 0:
-        query += 'LIMIT {}\n'.format(limit)
-    else:
-        query += 'LIMIT 500\n'
-
-    if offset >= 0:
-        query += 'OFFSET {}'.format(offset)
-    else:
-        query += 'OFFSET 0'
-
-    return count_query, query, query_params
+    return count, results
 
 
 class ResultsTableHandler(tornado.web.RequestHandler):
@@ -114,28 +91,13 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         sf = (self.request.arguments['columns[2][search][value]'][0])
         compound = (self.request.arguments['columns[3][search][value]'][0]).lower()
         comp_id = self.request.arguments['columns[4][search][value]'][0]
-        min_msm = self.request.arguments['columns[8][search][value]'][0]
+        min_msm = self.request.arguments['columns[8][search][value]'][0] or 0
 
         orderby = RESULTS_FIELDS[int(self.get_argument('order[0][column]', 0))]
         order_asc = self.get_argument('order[0][dir]', 0) == 'asc'
 
-        where = [
-            {'field': 'db_name', 'value': db_name, 'cond': '='},
-            {'field': 'ds_name', 'value': ds_name, 'cond': '='},
-            {'field': 'adduct', 'value': adduct, 'cond': '='},
-            {'field': 'sf', 'value': sf, 'cond': 'like'},
-            {'field': "lower(array_to_string(comp_names, ','))", 'value': compound, 'cond': 'like'},
-            {'field': "array_to_string(comp_ids, ',')", 'value': comp_id, 'cond': 'like'},
-            {'field': 'msm', 'value': min_msm, 'cond': '>='},
-        ]
-        count_query, query, query_params = select_results(query=RESULTS_SEL, where=where,
-                                                          orderby=orderby, asc=order_asc,
-                                                          limit=limit, offset=offset)
-        count = int(self.db.query(count_query, *query_params)[0]['count'])
-
-        fdr_thr_query = FDR_THR_TPL.format(query)
-        query_params.insert(0, fdr_thr)
-        results = self.db.query(fdr_thr_query, *query_params)
+        count, results = search(sf, ds_name, db_name, adduct, compound, comp_id,
+                                min_msm, fdr_thr, orderby, order_asc, offset, limit)
 
         results_dict = self.make_datatable_dict(draw, count, [[row[x] for x in RESULTS_FIELDS] for row in results])
 
@@ -150,5 +112,4 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         self.write(json.dumps(results_dict))
 
         time_spent = time() - start
-        # print divmod(int(round(time_spent)), 60)
         print 'results_table post time = {} s'.format(time_spent)
