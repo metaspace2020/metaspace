@@ -36,12 +36,13 @@ ORDER BY COALESCE(m.msm, 0::real) DESC'''
 
 class ESExporter:
     def __init__(self, sm_config):
-        self.es = Elasticsearch(hosts=[{"host": sm_config['db']['host'], "port": 9200}])
+        self.es = Elasticsearch(hosts=[{"host": sm_config['elasticsearch']['host']}])
 
     def _index(self, annotations):
         to_index = []
         for r in annotations:
             d = dict(zip(COLUMNS, r))
+            # TODO: index the field as an array of strings
             d['comp_names'] = ','.join(d['comp_names']).replace('"', '')
             d['comp_ids'] = ','.join(d['comp_ids'])
             to_index.append( '{"index": {"_index" : "sm"}')
@@ -50,9 +51,9 @@ class ESExporter:
         if len(to_index) > 1:
             self.es.bulk(body='\n'.join(to_index), index='sm', doc_type='annotation', timeout='60s')
 
-    def _delete(self, name):
+    def _delete(self, ds_name, db_name):
         query = {
-            "query": {"term": {"ds_name": name}}
+            "query": {"term": {"ds_name": ds_name}, "term": {"db_name": db_name}}
         }
 
         bulk_deletes = []
@@ -70,7 +71,7 @@ class ESExporter:
 
     def index_ds(self, db, ds_name, db_name):
         logger.info('Deleting documents from the index: {}-{}'.format(ds_name, db_name))
-        self._delete(ds_name)
+        self._delete(ds_name, db_name)
 
         logger.info('Indexing documents: {}-{}'.format(ds_name, db_name))
         self._index(db.select(RESULTS_TABLE_SQL, ds_name, db_name))
