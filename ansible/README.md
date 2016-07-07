@@ -92,7 +92,7 @@ Provision Spark cluster instances
  
 `ansible-playbook aws_provision_spark.yml`
 
-Once provisioning process is finished successfully you can ssh to the Spark master instance (should has sm-dev-master name).
+Once provisioning process is finished successfully you can ssh to the Spark master instance (should have sm-spark-master name).
 Try to run the example molecule annotation job like [above](#example-job).
 
 To deploy and start the web app the command and open http://AWS_WEB_SERVER_IP_ADDRESS:8080

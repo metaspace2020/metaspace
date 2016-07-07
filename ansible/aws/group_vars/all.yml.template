@@ -1,5 +1,7 @@
 ---
 
+# SOFTWARE CONFIGURATION
+
 spark_key_file: ~/.ssh/ubuntu_spark
 
 aws_access_key_id:
@@ -38,6 +40,7 @@ miniconda_env:
       - networkx
       - fabric
       - supervisor
+      - pyyaml
 
 sm_branch: "master"
 sm_postgres_password: "1234"
@@ -60,3 +63,51 @@ spark_env_extras_master:
   AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
   AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
   PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
+
+# VIRTUAL MACHINES CONFIGURATION
+
+cluster_configuration:
+  base_image: ami-f9a62c8a
+
+  instances:
+    - group: sm-webserver
+      type: c4.large
+      n: 1
+      elipalloc: # mandatory
+      price:
+      sec_group: sm web app
+
+      block_dev_maps:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 100
+            DeleteOnTermination: True
+            VolumeType: gp2
+
+    - group: sm-spark-master
+      type: c4.xlarge
+      n: 1
+      elipalloc: # mandatory
+      price:
+      sec_group: default
+
+      block_dev_maps:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 500
+            DeleteOnTermination: True
+            VolumeType: gp2
+
+    - group: sm-spark-slave
+      type: c4.4xlarge
+      n: 3
+      elipalloc:
+      price: 0.5
+      sec_group: default
+
+      block_dev_maps:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 1000
+            DeleteOnTermination: True
+            VolumeType: gp2

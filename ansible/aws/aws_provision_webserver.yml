@@ -1,7 +1,7 @@
 ---
 
 - name: SM web app instance configuration
-  hosts: tag_hostgroup_sm_webserver_aws
+  hosts: tag_hostgroup_sm_webserver
   user: ubuntu
   gather_facts: true
 

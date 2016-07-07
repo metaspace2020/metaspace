@@ -4,52 +4,12 @@ import argparse
 import boto3
 from pprint import pprint
 from time import sleep
+from yaml import load
 
 ec2 = boto3.resource('ec2')
 ec2_client = boto3.client('ec2')
-#key_name = 'intsco_embl_aws'
-image = 'ami-f9a62c8a'
-
-webserver_block_dev_maps = [
-    {
-        'DeviceName': '/dev/sda1',
-        'Ebs': {
-            'VolumeSize': 100,
-            'DeleteOnTermination': True,
-            'VolumeType': 'gp2'
-        }
-    }
-]
-
-master_block_dev_maps = [
-    {
-        'DeviceName': '/dev/sda1',
-        'Ebs': {
-            'VolumeSize': 500,
-            'DeleteOnTermination': True,
-            'VolumeType': 'gp2',
-        }
-    }
-]
-
-slave_block_dev_maps = [
-    {
-        'DeviceName': '/dev/sda1',
-        'Ebs': {
-            'VolumeSize': 1000,
-            'DeleteOnTermination': True,
-            'VolumeType': 'gp2',
-        }
-    },
-    # {
-    #     'VirtualName': 'ephemeral0',
-    #     'DeviceName': '/dev/sdb',
-    # },
-    # {
-    #     'VirtualName': 'ephemeral1',
-    #     'DeviceName': '/dev/sdc',
-    # },
-]
+conf = load(open('group_vars/all.yml'))['cluster_configuration']
+print conf
 
 
 def find_inst_by_name(inst_name):
@@ -66,7 +26,7 @@ def launch_inst(inst_name, inst_type, spot_price, inst_n, el_ip_id, sec_group, h
         insts = ec2.create_instances(
             # DryRun=True,
             KeyName=key_name,
-            ImageId=image,
+            ImageId=conf['base_image'],
             MinCount=inst_n,
             MaxCount=inst_n,
             SecurityGroups=[sec_group],
@@ -80,7 +40,7 @@ def launch_inst(inst_name, inst_type, spot_price, inst_n, el_ip_id, sec_group, h
             InstanceCount=inst_n,
             Type='one-time',
             LaunchSpecification={
-                'ImageId': image,
+                'ImageId': conf['base_image'],
                 'KeyName': key_name,
                 'SecurityGroups': [
                     sec_group,
@@ -167,29 +127,15 @@ if __name__ == '__main__':
 
     key_name = args.key_name
 
-    web_name = 'sm-dev-webserver'
-    master_name = 'sm-dev-master'
-    slave_name = 'sm-dev-slave'
-
-    web_inst_type = 'c4.large'
-    master_inst_type = 'c4.xlarge'
-    # slave_inst_type = 'i2.2xlarge'
-    # slave_inst_type = 'c3.4xlarge'
-    slave_inst_type = 'c4.4xlarge'
-
     if args.action == 'start':
-        if args.component in ['web', 'all']:
-            start_instances(web_name, web_inst_type, None, 1, 'eipalloc-0c08df69',
-                            'sm web app', 'sm_webserver_aws', webserver_block_dev_maps)
-        if args.component in ['spark', 'all']:
-            start_instances(master_name, master_inst_type, None, 1, 'eipalloc-0ff2426a',
-                            'default', 'sm_master_aws', master_block_dev_maps)
-            start_instances(slave_name, slave_inst_type, 0.5, 1, None,
-                            'default', 'sm_slave_aws', slave_block_dev_maps)
+        for i in conf['instances']:
+            if args.component == 'all' or args.component in i['group']:
+                start_instances(i['group'], i['type'], i['price'], i['n'],
+                                i['elipalloc'], i['sec_group'], i['group'],
+                                i['block_dev_maps'])
 
     elif args.action == 'stop':
-        if args.component in ['web', 'all']:
-            stop_instance('sm-dev-webserver')
-        if args.component in ['spark', 'all']:
-            stop_instance('sm-dev-master')
-            stop_instance('sm-dev-slave', method='terminate')
+        for i in conf['instances']:
+            if args.component == 'all' or args.component in i['group']:
+                method = 'terminate' if 'slave' in i['group'] else 'stop'
+                stop_instance('sm-dev-slave', method=method)
