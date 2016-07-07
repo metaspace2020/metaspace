@@ -22,6 +22,7 @@ from sm.engine.search_results import SearchResults
 from sm.engine.theor_peaks_gen import TheorPeaksGenerator
 from sm.engine.util import local_path, proj_root, SMConfig, logger
 from sm.engine.work_dir import WorkDirManager
+from sm.engine.es_export import ESExporter
 
 
 DS_ID_SEL = "SELECT id FROM dataset WHERE name = %s"
@@ -115,7 +116,6 @@ class SearchJob(object):
             if clean:
                 self.wd_manager.clean()
 
-            # if not self.wd_manager.exists(self.wd_manager.txt_path):
             self.wd_manager.copy_input_data(input_path, ds_config_path)
 
             self._read_ds_config()
@@ -159,6 +159,9 @@ class SearchJob(object):
             search_results.metrics = search_alg.metrics
             search_results.nrows, search_results.ncols = self.ds.get_dims()
             search_results.store()
+
+            es = ESExporter(self.sm_config)
+            es.index_ds(self.db, self.ds_name, self.ds_config['database']['name'])
 
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()

@@ -42,14 +42,14 @@ def search(sf='', ds_name='', db_name='', adduct='', comp_name='', comp_id='',
     def format_annotation(a, fdr_thr):
         a['comp_ids'] = a['comp_ids'].split(',')
         a['comp_names'] = a['comp_names'].split(',')
-        a['pass_fdr'] = a['fdr'] <= fdr_thr
+        a['pass_fdr'] = a['fdr'] <= fdr_thr if a['fdr'] else False
         del a['fdr']
         return a
 
     results = [format_annotation(r['_source'], fdr_thr) for r in
-               es.search(index='annotation', body=body, _source=True)['hits']['hits']]
+               es.search(index='sm', body=body, _source=True)['hits']['hits']]
 
-    count = es.count(index='annotation', body=body)['count']
+    count = es.count(index='sm', body=body)['count']
 
     return count, results
 

@@ -67,9 +67,7 @@ class SearchResults(object):
         rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id,
                                                 self.sf_metrics_df, self.sf_adduct_peaksn,
                                                 self.metrics))
-        # TODO: for some unknown reason in some cases may be super slow (minutes)
         self.db.insert(METRICS_INS, rows)
-        self.db.alter(RESULTS_TABLE_VIEW_REFRESH)
 
     def store_sf_iso_images(self):
         """ Store formula images in the database
