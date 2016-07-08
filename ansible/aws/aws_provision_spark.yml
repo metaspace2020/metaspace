@@ -23,6 +23,7 @@
   vars:
     spark_slave_ips: []
     postgres_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
+    es_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
 
   pre_tasks:
     - name: Create a list of private ip addresses for the slave instances

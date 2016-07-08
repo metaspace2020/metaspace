@@ -41,6 +41,7 @@ miniconda_env:
       - fabric
       - supervisor
       - pyyaml
+      - elasticsearch
 
 sm_branch: "master"
 sm_postgres_password: "1234"
@@ -67,7 +68,6 @@ spark_env_extras_master:
 # VIRTUAL MACHINES CONFIGURATION
 
 cluster_configuration:
-  base_image: ami-f9a62c8a
 
   instances:
     - group: sm-webserver
@@ -76,6 +76,7 @@ cluster_configuration:
       elipalloc: # mandatory
       price:
       sec_group: sm web app
+      image: ami-f9a62c8a
 
       block_dev_maps:
         - DeviceName: /dev/sda1
@@ -90,6 +91,7 @@ cluster_configuration:
       elipalloc: # mandatory
       price:
       sec_group: default
+      image: ami-f9a62c8a
 
       block_dev_maps:
         - DeviceName: /dev/sda1
@@ -104,6 +106,7 @@ cluster_configuration:
       elipalloc:
       price: 0.5
       sec_group: default
+      image: ami-f9a62c8a
 
       block_dev_maps:
         - DeviceName: /dev/sda1

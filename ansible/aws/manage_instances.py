@@ -19,14 +19,14 @@ def find_inst_by_name(inst_name):
     return instances
 
 
-def launch_inst(inst_name, inst_type, spot_price, inst_n, el_ip_id, sec_group, host_group, block_dev_maps):
+def launch_inst(inst_name, inst_type, spot_price, inst_n, image, el_ip_id, sec_group, host_group, block_dev_maps):
     print 'Launching {} new instances...'.format(inst_n)
 
     if not spot_price:
         insts = ec2.create_instances(
             # DryRun=True,
             KeyName=key_name,
-            ImageId=conf['base_image'],
+            ImageId=image,
             MinCount=inst_n,
             MaxCount=inst_n,
             SecurityGroups=[sec_group],
@@ -40,7 +40,7 @@ def launch_inst(inst_name, inst_type, spot_price, inst_n, el_ip_id, sec_group, h
             InstanceCount=inst_n,
             Type='one-time',
             LaunchSpecification={
-                'ImageId': conf['base_image'],
+                'ImageId': image,
                 'KeyName': key_name,
                 'SecurityGroups': [
                     sec_group,
@@ -81,7 +81,7 @@ def launch_inst(inst_name, inst_type, spot_price, inst_n, el_ip_id, sec_group, h
     print 'Launched {}'.format(insts)
 
 
-def start_instances(inst_name, inst_type, spot_price, inst_n, el_ip_id, sec_group, host_group, block_dev_maps):
+def start_instances(inst_name, inst_type, spot_price, inst_n, image, el_ip_id, sec_group, host_group, block_dev_maps):
     print 'Start {} instance(s) of type {}, name={}'.format(inst_n, inst_type, inst_name)
 
     instances = find_inst_by_name(inst_name)
@@ -100,7 +100,7 @@ def start_instances(inst_name, inst_type, spot_price, inst_n, el_ip_id, sec_grou
                 raise BaseException('Wrong state: {}'.format(inst.state['Name']))
 
         if new_inst_n > 0:
-            launch_inst(inst_name, inst_type, spot_price, new_inst_n, el_ip_id, sec_group, host_group, block_dev_maps)
+            launch_inst(inst_name, inst_type, spot_price, new_inst_n, image, el_ip_id, sec_group, host_group, block_dev_maps)
 
     print 'Success'
 
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     if args.action == 'start':
         for i in conf['instances']:
             if args.component == 'all' or args.component in i['group']:
-                start_instances(i['group'], i['type'], i['price'], i['n'],
+                start_instances(i['group'], i['type'], i['price'], i['n'], i['image'],
                                 i['elipalloc'], i['sec_group'], i['group'],
                                 i['block_dev_maps'])
 
@@ -138,4 +138,4 @@ if __name__ == '__main__':
         for i in conf['instances']:
             if args.component == 'all' or args.component in i['group']:
                 method = 'terminate' if 'slave' in i['group'] else 'stop'
-                stop_instance('sm-dev-slave', method=method)
+                stop_instance(i['group'], method=method)

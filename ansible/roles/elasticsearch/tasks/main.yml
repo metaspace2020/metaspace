@@ -1,0 +1,25 @@
+---
+
+- name: Download ElasticSearch version={{ elasticsearch_version }}
+  get_url: url=https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/{{ elasticsearch_version }}/elasticsearch-{{ elasticsearch_version }}.deb
+           dest=/tmp/elasticsearch-{{ elasticsearch_version }}.deb
+
+- name: Install ElasticSearch
+  become: yes
+  command: dpkg -i /tmp/elasticsearch-{{ elasticsearch_version }}.deb
+
+- name: Make ElasticSearch listen to any ip address
+  lineinfile:
+    dest: /etc/elasticsearch/elasticsearch.yml
+    regexp: network.host
+    line: "network.host: 0.0.0.0"
+#  notify:
+#    - es_conf_update
+
+#- meta: flush_handlers
+
+- name: ES conf update restart
+  service: name=elasticsearch state=restarted
+
+- name: Start EleasticSearch service
+  service: name=elasticsearch state=running

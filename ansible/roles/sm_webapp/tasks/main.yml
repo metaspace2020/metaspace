@@ -3,7 +3,7 @@
 - name: install git
   apt: name=git state=present
   become: yes
-  
+
 - name: create /opt/dev directory
   file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
@@ -12,38 +12,38 @@
   git: >
     dest=/opt/dev/sm
     repo=https://github.com/SpatialMetabolomics/SM_distributed.git
-    update=no
+    update=yes
     version={{ sm_branch }}
 
 - name: install psycopg2 (required by ansible)
   apt: name=python-psycopg2 state=latest
   become: yes
-    
+
 - name: create sm postgres user
   postgresql_user: name=sm password={{ sm_postgres_password }} role_attr_flags=CREATEDB
   become: yes
   become_user: postgres
-  
+
 - name: create sm postgres database
   become: yes
   become_user: postgres
   postgresql_db: name=sm owner=sm
-  
+
 - name: create sm schema
   shell: psql -h localhost -U sm sm < /opt/dev/sm/scripts/create_schema.sql
   args:
     executable: /bin/bash
-  
+
 - name: create /opt/data/sm_data directory
   file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
-  
+
 - name: create sm config files
   shell: cp sm_log.cfg.template sm_log.cfg && cp config.json.template config.json
   args:
     chdir: /opt/dev/sm/conf
     creates: sm_log.cfg config.json
-    
+
 - name: put postgres user password into config.json
   lineinfile:
     dest: /opt/dev/sm/conf/config.json
@@ -83,6 +83,12 @@
 
 - name: import HMDB molecule database
   shell: source {{ venv }}/bin/activate {{ conda_env }} && python scripts/import_molecule_formula_db.py HMDB hmdb.csv --yes=False
+  args:
+    chdir: "{{ sm_home }}"
+    executable: /bin/bash
+
+- name: Create ElasticSearch index for the SM web app
+  shell: source {{ venv }}/bin/activate {{ conda_env }} && python scripts/create_es_index.py --host localhost
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash
