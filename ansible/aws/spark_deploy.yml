@@ -1,0 +1,9 @@
+---
+
+- name: Deploying SM engine code
+  hosts: tag_hostgroup_sm_spark_master
+  user: ubuntu
+  gather_facts: false
+
+  tasks:
+    - include: ../spark_deploy_tasks.yml
