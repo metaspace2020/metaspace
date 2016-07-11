@@ -1,4 +1,3 @@
-
 function initResultsTable() {
     return $('#results-table').DataTable( {
       ajax: {
@@ -76,7 +75,7 @@ function initResultsTable() {
         }, "targets": [4] },
         { "render": function ( data, type, row ) {
             return data;
-        }, "targets": [9] },
+        }, "targets": [9, 15] },
         { "visible": false,  "targets": [10, 11, 12, 13, 14] },
       ],
       initComplete : function(oSettings, json) {
@@ -86,10 +85,10 @@ function initResultsTable() {
         });
       },
       fnRowCallback: function( row, data, iDisplayIndex, iDisplayIndexFull ) {
-        if ( data[15] == "1" ) {
+        if ( data[16] == "1" ) {
             row.classList.add('correct');
         }
-        else if ( data[15] == "0" ) {
+        else if ( data[16] == "0" ) {
             row.classList.add('wrong');
         }
       }
@@ -175,6 +174,13 @@ function initColumnFilters(results_table) {
         filter_reset_button_text: false,
         filter_default_label: 'all'
       },
+      {
+        column_number: 15,
+        filter_type: "text",
+        filter_delay: 500,
+        filter_container_id: "fil-mz",
+        filter_reset_button_text: false
+      }
     ]);
 
     yadcf.exFilterColumn(results_table, [

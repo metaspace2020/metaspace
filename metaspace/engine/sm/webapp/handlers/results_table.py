@@ -5,13 +5,14 @@ import tornado.httpserver
 from tornado import gen
 from time import time
 from elasticsearch import Elasticsearch
+from math import floor
 
 
 es = Elasticsearch()
 
 RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids',
                   'chaos', 'image_corr', 'pattern_match', 'msm', 'adduct',
-                  'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id', 'pass_fdr']
+                  'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id', 'mz', 'pass_fdr']
 
 
 def search(sf='', ds_name='', db_name='', adduct='', comp_name='', comp_id='',
@@ -93,6 +94,14 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         comp_id = self.request.arguments['columns[4][search][value]'][0]
         min_msm = self.request.arguments['columns[8][search][value]'][0] or 0
 
+        mz_str = self.request.arguments['columns[15][search][value]'][0]
+        try:
+            mz = float(mz_str)
+            min_mz = floor(mz)
+            max_mz = min_mz + 1
+        except:
+            min_mz = max_mz = None
+
         orderby = RESULTS_FIELDS[int(self.get_argument('order[0][column]', 0))]
         order_asc = self.get_argument('order[0][dir]', 0) == 'asc'
 
@@ -108,6 +117,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         results_dict['yadcf_data_4'] = []
         results_dict['yadcf_data_8'] = ['0.1']
         results_dict['yadcf_data_9'] = self.adducts
+        results_dict['yadcf_data_15'] = []
 
         self.write(json.dumps(results_dict))
 

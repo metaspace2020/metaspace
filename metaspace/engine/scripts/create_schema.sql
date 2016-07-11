@@ -5,7 +5,6 @@ CREATE TABLE formula_db (
 	name	text
 );
 CREATE INDEX ind_formula_db_name ON formula_db (name);
---INSERT INTO formula_db (version, name) VALUES ('2015-01-01', 'HMDB'), ('2015-01-01', 'apple_db');
 
 DROP TABLE IF EXISTS formula CASCADE;
 CREATE TABLE formula (
