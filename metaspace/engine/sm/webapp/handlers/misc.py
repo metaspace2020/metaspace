@@ -43,12 +43,13 @@ class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
-def fetch_sigma_charge_ptspermz(db, job_id):
+def fetch_sigma_charge_ptspermz_ppm(db, job_id):
     DS_CONF_SEL = 'SELECT config FROM dataset where id = %s'
     ds_config = db.query(DS_CONF_SEL, job_id)[0]['config']  # job_id for now is equal to ds_id
     iso_gen_config = ds_config['isotope_generation']
     charge = '{}{}'.format(iso_gen_config['charge']['polarity'], iso_gen_config['charge']['n_charges'])
-    return iso_gen_config['isocalc_sigma'], charge, iso_gen_config['isocalc_pts_per_mz']
+    ppm = ds_config['image_generation']['ppm']
+    return iso_gen_config['isocalc_sigma'], charge, iso_gen_config['isocalc_pts_per_mz'], ppm
 
 
 class SFPeakMZsHandler(tornado.web.RequestHandler):
@@ -64,7 +65,7 @@ class SFPeakMZsHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
         peaks_dict = self.db.query(self.CENTR_MZS_SEL, int(db_id), int(sf_id), adduct,
-                                   *fetch_sigma_charge_ptspermz(self.db, job_id))[0]
+                                   *fetch_sigma_charge_ptspermz_ppm(self.db, job_id)[:-1])[0]
         centr_mzs = peaks_dict['centr_mzs']
         self.write(json.dumps(centr_mzs))
 
@@ -119,11 +120,11 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
-        params = fetch_sigma_charge_ptspermz(self.db, job_id)
-        sigma, charge, pts_per_mz = params
+        params = fetch_sigma_charge_ptspermz_ppm(self.db, job_id)
+        sigma, charge, pts_per_mz, ppm = params
 
         centr_mzs = self.db.query(self.PEAK_MZS_SQL,
-                                  int(db_id), int(sf_id), adduct, *params)[0].centr_mzs
+                                  int(db_id), int(sf_id), adduct, *params[:-1])[0].centr_mzs
         centr_mzs = np.array(centr_mzs)
         min_mz = min(centr_mzs) - 0.25
         max_mz = max(centr_mzs) + 0.25
@@ -145,6 +146,7 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
             sample_centr_ints_norm = self.sample_centr_ints_norm(sample_ints_list)
 
         self.write(json.dumps({
+            'ppm': ppm,
             'mz_grid': {
                 'min_mz': min_mz,
                 'max_mz': max_mz
