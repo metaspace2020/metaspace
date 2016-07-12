@@ -1,6 +1,6 @@
 import json
 from elasticsearch import Elasticsearch
-from elasticsearch.helpers import scan, bulk
+from elasticsearch.helpers import scan, bulk, BulkIndexError
 
 from sm.engine.util import logger
 
@@ -42,36 +42,36 @@ class ESExporter:
         to_index = []
         for r in annotations:
             d = dict(zip(COLUMNS, r))
-            # TODO: index the field as an array of strings
-            d['comp_names'] = ','.join(d['comp_names']).replace('"', '')
-            d['comp_ids'] = ','.join(d['comp_ids'])
-            to_index.append( '{"index": {"_index" : "sm"}')
-            to_index.append( json.dumps(d) )
+            d['comp_names'] = u','.join(d['comp_names']).replace(u'"', u'')
+            d['comp_ids'] = u','.join(d['comp_ids'])
 
-        if len(to_index) > 1:
-            self.es.bulk(body='\n'.join(to_index), index='sm', doc_type='annotation', timeout='60s')
+            to_index.append({
+                '_index': 'sm',
+                '_type': 'annotation',
+                '_id': '{}_{}_{}_{}'.format(d['ds_id'], d['db_id'], d['sf'], d['adduct']),
+                '_source': d
+            })
 
-    def _delete(self, ds_name, db_name):
-        query = {
-            "query": {"term": {"ds_name": ds_name}, "term": {"db_name": db_name}}
-        }
+        bulk(self.es, actions=to_index, timeout='60s')
 
-        bulk_deletes = []
-        for result in scan(self.es,
-                           query=query,
-                           index='sm',
-                           doc_type='annotation',
-                           _source=False,
-                           track_scores=False,
-                           scroll='5m'):
-            result['_op_type'] = 'delete'
-            bulk_deletes.append(result)
+    def _delete(self, annotations):
+        to_delete = []
+        for r in annotations:
+            d = dict(zip(COLUMNS, r))
+            to_delete.append({
+                '_op_type': 'delete',
+                '_index': 'sm',
+                '_type': 'annotation',
+                '_id': '{}_{}_{}_{}'.format(d['ds_id'], d['db_id'], d['sf'], d['adduct']),
+            })
 
-        bulk(self.es, bulk_deletes)
+        bulk(self.es, to_delete)
 
     def index_ds(self, db, ds_name, db_name):
+        annotations = db.select(RESULTS_TABLE_SQL, ds_name, db_name)
+
         logger.info('Deleting documents from the index: {}-{}'.format(ds_name, db_name))
-        self._delete(ds_name, db_name)
+        self._delete(annotations)
 
         logger.info('Indexing documents: {}-{}'.format(ds_name, db_name))
-        self._index(db.select(RESULTS_TABLE_SQL, ds_name, db_name))
+        self._index(annotations)
