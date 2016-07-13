@@ -15,7 +15,7 @@ RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids',
                   'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id', 'mz', 'pass_fdr']
 
 
-def search(sf='', ds_name='', db_name='', adduct='', comp_name='', comp_id='',
+def search(sf='', ds_name='', db_name='', adduct='', comp_name='', comp_id='', mz='',
            min_msm=0.1, fdr_thr=0.1, orderby='msm', asc=False, offset=0, limit=500):
     body = {
         "query": {
@@ -25,10 +25,11 @@ def search(sf='', ds_name='', db_name='', adduct='', comp_name='', comp_id='',
                         "must": [
                             { "prefix": { "sf": sf } },
                             { "prefix": { "ds_name": ds_name } },
-                            { "prefix": { "db_name": db_name } },
+                            { "term": { "db_name": db_name } } if db_name else {},
                             { "prefix": { "adduct": adduct } },
-                            { "wildcard": { "comp_names": '*{}*'.format(comp_name) } },
+                            { "wildcard": { "comp_names": '*{}*'.format(comp_name) } } if comp_name else {},
                             { "prefix": { "comp_ids": comp_id } },
+                            { "wildcard": { "mz": '*{}*'.format(mz) } } if mz else {},
                             { 'range': { 'msm': { 'gte': min_msm } } }
                         ]
                     }
@@ -45,6 +46,7 @@ def search(sf='', ds_name='', db_name='', adduct='', comp_name='', comp_id='',
         a['comp_names'] = a['comp_names'].split(',')
         a['pass_fdr'] = a['fdr'] <= fdr_thr if a['fdr'] else False
         del a['fdr']
+        a['mz'] = a['mz'].lstrip('0')
         return a
 
     results = [format_annotation(r['_source'], fdr_thr) for r in
@@ -93,19 +95,12 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         compound = (self.request.arguments['columns[3][search][value]'][0]).lower()
         comp_id = self.request.arguments['columns[4][search][value]'][0]
         min_msm = self.request.arguments['columns[8][search][value]'][0] or 0
-
         mz_str = self.request.arguments['columns[15][search][value]'][0]
-        try:
-            mz = float(mz_str)
-            min_mz = floor(mz)
-            max_mz = min_mz + 1
-        except:
-            min_mz = max_mz = None
 
         orderby = RESULTS_FIELDS[int(self.get_argument('order[0][column]', 0))]
         order_asc = self.get_argument('order[0][dir]', 0) == 'asc'
 
-        count, results = search(sf, ds_name, db_name, adduct, compound, comp_id,
+        count, results = search(sf, ds_name, db_name, adduct, compound, comp_id, mz_str,
                                 min_msm, fdr_thr, orderby, order_asc, offset, limit)
 
         results_dict = self.make_datatable_dict(draw, count, [[row[x] for x in RESULTS_FIELDS] for row in results])

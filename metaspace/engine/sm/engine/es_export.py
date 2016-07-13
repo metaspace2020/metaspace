@@ -7,11 +7,11 @@ psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
 from sm.engine.util import logger
 
-
 COLUMNS = ["db_name", "ds_name", "sf", "comp_names", "comp_ids", "chaos", "image_corr", "pattern_match", "msm",
-           "adduct", "job_id", "ds_id", "sf_id", "peaks", "db_id", "fdr"]
+           "adduct", "job_id", "ds_id", "sf_id", "peaks", "db_id", "fdr", "mz"]
 
-RESULTS_TABLE_SQL = '''SELECT sf_db.name AS db_name,
+RESULTS_TABLE_SQL = '''
+SELECT sf_db.name AS db_name,
     ds.name AS ds_name,
     f.sf,
     f.names AS comp_names,
@@ -26,15 +26,21 @@ RESULTS_TABLE_SQL = '''SELECT sf_db.name AS db_name,
     f.id AS sf_id,
     m.peaks_n AS peaks,
     sf_db.id AS db_id,
-    m.fdr as pass_fdr
+    m.fdr as pass_fdr,
+    tp.centr_mzs[1] AS mz
 FROM agg_formula f
 CROSS JOIN adduct a
 JOIN formula_db sf_db ON sf_db.id = f.db_id
 LEFT JOIN job j ON j.id = a.job_id
 LEFT JOIN dataset ds ON ds.id = j.ds_id
 LEFT JOIN iso_image_metrics m ON m.job_id = j.id AND m.db_id = sf_db.id AND m.sf_id = f.id AND m.adduct = a.adduct
+LEFT JOIN theor_peaks tp ON tp.db_id = sf_db.id AND tp.sf_id = f.id AND tp.adduct = a.adduct
+	AND tp.sigma::real = (ds.config->'isotope_generation'->>'isocalc_sigma')::real
+	AND tp.charge = (CASE WHEN ds.config->'isotope_generation'->'charge'->>'polarity' = '+' THEN 1 ELSE -1 END)
+	AND tp.pts_per_mz = (ds.config->'isotope_generation'->>'isocalc_pts_per_mz')::int
 WHERE ds.name = %s AND sf_db.name = %s
-ORDER BY COALESCE(m.msm, 0::real) DESC'''
+ORDER BY COALESCE(m.msm, 0::real) DESC
+'''
 
 
 class ESExporter:
@@ -48,6 +54,7 @@ class ESExporter:
             d = dict(zip(COLUMNS, r))
             d['comp_names'] = u','.join(d['comp_names']).replace(u'"', u'')
             d['comp_ids'] = u','.join(d['comp_ids'])
+            d['mz'] = '{:012.6f}'.format(d['mz'])
 
             to_index.append({
                 '_index': 'sm',
@@ -113,7 +120,8 @@ class ESExporter:
                         "pattern_match": {"type": "float", "index": "not_analyzed"},
                         "msm": {"type": "float", "index": "not_analyzed"},
                         "adduct": {"type": "string", "index": "not_analyzed"},
-                        "fdr": {"type": "float", "index": "not_analyzed"}
+                        "fdr": {"type": "float", "index": "not_analyzed"},
+                        "mz": {"type": "string", "index": "not_analyzed"}
                     }
                 }
             }
