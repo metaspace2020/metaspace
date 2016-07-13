@@ -1,7 +1,9 @@
-import json
 from elasticsearch import Elasticsearch
-from elasticsearch.helpers import scan, bulk, BulkIndexError
+from elasticsearch.helpers import bulk, BulkIndexError
 from elasticsearch.client import IndicesClient
+import psycopg2
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
 from sm.engine.util import logger
 
@@ -50,7 +52,7 @@ class ESExporter:
             to_index.append({
                 '_index': 'sm',
                 '_type': 'annotation',
-                '_id': '{}_{}_{}_{}'.format(d['ds_id'], d['db_id'], d['sf'], d['adduct']),
+                '_id': '{}_{}_{}_{}'.format(d['ds_name'], d['db_name'], d['sf'], d['adduct']),
                 '_source': d
             })
 
@@ -64,7 +66,7 @@ class ESExporter:
                 '_op_type': 'delete',
                 '_index': 'sm',
                 '_type': 'annotation',
-                '_id': '{}_{}_{}_{}'.format(d['ds_id'], d['db_id'], d['sf'], d['adduct']),
+                '_id': '{}_{}_{}_{}'.format(d['ds_name'], d['db_name'], d['sf'], d['adduct']),
             })
         try:
             bulk(self.es, to_delete)

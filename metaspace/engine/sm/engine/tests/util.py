@@ -72,8 +72,12 @@ def sm_config():
             "user": "sm",
             "password": "1321"
         },
+        "elasticsearch": {
+            "host": "localhost"
+        },
         "fs": {
-            "base_path": "/opt/data/sm_test_data"
+            "base_path": "/opt/data/sm_test_data",
+            "s3_base_path": ""
         },
         "spark": {
             "master": "local[2]",

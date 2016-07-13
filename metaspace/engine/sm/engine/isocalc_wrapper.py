@@ -8,6 +8,9 @@ from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 from sm.engine.util import logger
 
 
+Centroids = namedtuple('Centroids', ['mzs', 'ints'])
+
+
 def list_of_floats_to_str(l):
     return ','.join(map(lambda x: '{:.6f}'.format(x), l))
 
@@ -21,7 +24,6 @@ class IsocalcWrapper(object):
     isocalc_config : dict
         Dictionary representing isotope_generation section of a dataset config file
     """
-    Centroids = namedtuple('Centroids', ['mzs', 'ints'])
 
     def __init__(self, isocalc_config):
         self.charge = 0
@@ -31,7 +33,6 @@ class IsocalcWrapper(object):
         self.sigma = isocalc_config['isocalc_sigma']
         self.pts_per_mz = isocalc_config['isocalc_pts_per_mz']
         self.prof_pts_per_centr = 6
-        self.max_mz_dist_to_centr = 0.15
 
     def _isodist(self, sf_adduct):
         sf_adduct_obj = parseSumFormula(sf_adduct)
@@ -53,14 +54,12 @@ class IsocalcWrapper(object):
             A dict with keys:
              - centroid mzs
              - centroid intensities
-             - profile mzs
-             - profile intensities
             In case of any errors returns a dict of empty lists.
         """
-        centroids = self.Centroids([], [])
+        centroids = Centroids([], [])
         try:
             isotope_ms = self._isodist(sf + adduct)
-            centroids = self.Centroids(*map(lambda l: l[:6],
+            centroids = Centroids(*map(lambda l: l[:6],
                                             isotope_ms.get_spectrum(source='centroids')))
         except InvalidFormulaError as e:
             logger.warning('(%s, %s) - %s', sf, adduct, e)
@@ -73,19 +72,6 @@ class IsocalcWrapper(object):
     @staticmethod
     def slice_array(mzs, lower, upper):
         return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
-
-    def _sample_profiles(self, centr_mzs, profile_mzs, profile_ints):
-        sampled_prof_mz_list, sampled_prof_int_list = [], []
-
-        for cmz in centr_mzs:
-            centr_mask = np.abs(profile_mzs - cmz) <= self.max_mz_dist_to_centr
-            sample_step = max(1, len(profile_mzs[centr_mask]) / self.prof_pts_per_centr)
-
-            # take only N mz points for each centroid
-            sampled_prof_mz_list.append(profile_mzs[centr_mask][::sample_step])
-            sampled_prof_int_list.append(profile_ints[centr_mask][::sample_step])
-
-        return np.hstack(sampled_prof_mz_list), np.hstack(sampled_prof_int_list)
 
     def _format_peak_str(self, db_id, sf_id, adduct, centroids):
         return '%d\t%d\t%s\t%.6f\t%d\t%d\t{%s}\t{%s}\t{%s}\t{%s}' % (

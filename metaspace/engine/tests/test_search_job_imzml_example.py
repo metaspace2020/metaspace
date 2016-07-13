@@ -62,7 +62,7 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_
 
         assert len(rows) == 3 + len(DECOY_ADDUCTS)
         for r in rows:
-            assert r[3] and r[4] and r[5] and r[6]
+            assert r[3] and r[4]
 
         # image metrics asserts
         rows = db.select(('SELECT db_id, sf_id, adduct, peaks_n, stats FROM iso_image_metrics '

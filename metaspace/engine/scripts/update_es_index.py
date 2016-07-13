@@ -1,9 +1,6 @@
 import argparse
 import json
 from os.path import abspath
-import psycopg2
-psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
-psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
