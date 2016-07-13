@@ -1,56 +1,22 @@
 import argparse
-from elasticsearch import Elasticsearch
-from elasticsearch.client import IndicesClient
+from os.path import abspath
+import json
+
+from sm.engine.es_export import ESExporter
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create ElasticSearch indices')
-    parser.add_argument('--host', type=str, help='ElasticSearch host IP address')
+    parser.add_argument('--conf', default='conf/config.json', help="SM config path")
+    parser.add_argument('--drop', action='store_true', help='Delete index if exists')
 
     args = parser.parse_args()
 
-    ind_client = IndicesClient(Elasticsearch(hosts=[{'host': args.host}]))
-
     name = 'sm'
-    if not ind_client.exists(name):
-        body = {
-            'settings': {
-                "index": {
-                    'max_result_window': 2147483647,
-                    "analysis": {
-                        "analyzer": {
-                            "analyzer_keyword": {
-                                "tokenizer": "keyword",
-                                "filter": "lowercase"
-                            }
-                        }
-                    }
-                }
-            },
-            'mappings': {
-                "annotation": {
-                    "properties": {
-                        "db_name": {"type": "string", "index": "not_analyzed"},
-                        "ds_name": {"type": "string", "index": "not_analyzed"},
-                        "sf": {"type": "string", "index": "not_analyzed"},
-                        "comp_names": {
-                            "type": "string",
-                            "analyzer": "analyzer_keyword",
-                        },
-                        "comp_ids": {"type": "string", "index": "not_analyzed"},
-                        "chaos": {"type": "float", "index": "not_analyzed"},
-                        "image_corr": {"type": "float", "index": "not_analyzed"},
-                        "pattern_match": {"type": "float", "index": "not_analyzed"},
-                        "msm": {"type": "float", "index": "not_analyzed"},
-                        "adduct": {"type": "string", "index": "not_analyzed"},
-                        "fdr": {"type": "float", "index": "not_analyzed"}
-                    }
-                }
-            }
-        }
-        out = ind_client.create(index=name, body=body)
+    with open(abspath(args.conf)) as f:
+        es_exp = ESExporter(json.load(f))
 
-        print 'Index {} created\n{}'.format(name, out)
-    else:
-        print 'Index {} already exists'.format(name)
+        if args.drop:
+            es_exp.delete_index(name)
 
+        es_exp.create_index(name)

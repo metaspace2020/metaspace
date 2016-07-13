@@ -13,6 +13,9 @@ def reindex_all_results(conf):
     db = DB(conf['db'])
     es_exp = ESExporter(conf)
 
+    es_exp.delete_index(name='sm')
+    es_exp.create_index(name='sm')
+
     ds_db_pairs = db.select("select name, config -> 'database'::text -> 'name'::text from dataset")
 
     for ds_name, db_name in ds_db_pairs:

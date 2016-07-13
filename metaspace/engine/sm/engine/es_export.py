@@ -1,6 +1,7 @@
 import json
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import scan, bulk, BulkIndexError
+from elasticsearch.client import IndicesClient
 
 from sm.engine.util import logger
 
@@ -37,6 +38,7 @@ ORDER BY COALESCE(m.msm, 0::real) DESC'''
 class ESExporter:
     def __init__(self, sm_config):
         self.es = Elasticsearch(hosts=[{"host": sm_config['elasticsearch']['host']}])
+        self.ind_client = IndicesClient(self.es)
 
     def _index(self, annotations):
         to_index = []
@@ -64,8 +66,10 @@ class ESExporter:
                 '_type': 'annotation',
                 '_id': '{}_{}_{}_{}'.format(d['ds_id'], d['db_id'], d['sf'], d['adduct']),
             })
-
-        bulk(self.es, to_delete)
+        try:
+            bulk(self.es, to_delete)
+        except BulkIndexError as e:
+            logger.warn('{} - {}'.format(e.args[0], e.args[1][1]))
 
     def index_ds(self, db, ds_name, db_name):
         annotations = db.select(RESULTS_TABLE_SQL, ds_name, db_name)
@@ -75,3 +79,49 @@ class ESExporter:
 
         logger.info('Indexing documents: {}-{}'.format(ds_name, db_name))
         self._index(annotations)
+
+    def create_index(self, name='sm'):
+        body = {
+            'settings': {
+                "index": {
+                    'max_result_window': 2147483647,
+                    "analysis": {
+                        "analyzer": {
+                            "analyzer_keyword": {
+                                "tokenizer": "keyword",
+                                "filter": "lowercase"
+                            }
+                        }
+                    }
+                }
+            },
+            'mappings': {
+                "annotation": {
+                    "properties": {
+                        "db_name": {"type": "string", "index": "not_analyzed"},
+                        "ds_name": {"type": "string", "index": "not_analyzed"},
+                        "sf": {"type": "string", "index": "not_analyzed"},
+                        "comp_names": {
+                            "type": "string",
+                            "analyzer": "analyzer_keyword",
+                        },
+                        "comp_ids": {"type": "string", "index": "not_analyzed"},
+                        "chaos": {"type": "float", "index": "not_analyzed"},
+                        "image_corr": {"type": "float", "index": "not_analyzed"},
+                        "pattern_match": {"type": "float", "index": "not_analyzed"},
+                        "msm": {"type": "float", "index": "not_analyzed"},
+                        "adduct": {"type": "string", "index": "not_analyzed"},
+                        "fdr": {"type": "float", "index": "not_analyzed"}
+                    }
+                }
+            }
+        }
+        if not self.ind_client.exists(name):
+            out = self.ind_client.create(index=name, body=body)
+            logger.info('Index {} created\n{}'.format(name, out))
+        else:
+            logger.info('Index {} already exists'.format(name))
+
+    def delete_index(self, name='sm'):
+        out = self.ind_client.delete(name)
+        logger.info('Index {} deleted\n{}'.format(name, out))
