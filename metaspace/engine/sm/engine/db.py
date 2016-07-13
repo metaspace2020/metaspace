@@ -8,6 +8,8 @@ from functools import wraps
 from traceback import format_exc
 
 import psycopg2
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
+psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 import psycopg2.extras
 
 from sm.engine.util import logger
@@ -21,9 +23,9 @@ def db_decor(func):
         try:
             logger.debug(args[0])
             res = func(self, *args, **kwargs)
-        except psycopg2.Error as e:
+        except Exception as e:
             logger.error(format_exc())
-            logger.error('SQL: %s', args[0])
+            logger.error('SQL: %s\n%s', args[0], str(args[1:])[:1000])
         else:
             self.conn.commit()
         finally:
