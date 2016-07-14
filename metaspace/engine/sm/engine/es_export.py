@@ -51,7 +51,7 @@ class ESExporter:
             d = dict(zip(COLUMNS, r))
             d['comp_names'] = u','.join(d['comp_names']).replace(u'"', u'')
             d['comp_ids'] = u','.join(d['comp_ids'])
-            d['mz'] = '{:012.6f}'.format(d['mz'])
+            d['mz'] = '{:010.4f}'.format(d['mz'])
 
             to_index.append({
                 '_index': 'sm',
