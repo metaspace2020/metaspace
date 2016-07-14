@@ -9,7 +9,7 @@ from yaml import load
 ec2 = boto3.resource('ec2')
 ec2_client = boto3.client('ec2')
 conf = load(open('group_vars/all.yml'))['cluster_configuration']
-print conf
+pprint(conf)
 
 
 def find_inst_by_name(inst_name):

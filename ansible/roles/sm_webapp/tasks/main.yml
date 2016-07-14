@@ -54,7 +54,7 @@
   args:
     chdir: /opt/dev/sm
     executable: /bin/bash
-  shell: "source {{ venv }}/bin/activate {{ conda_env }} && pip install ."
+  shell: "source {{ venv }}/bin/activate {{ conda_env }} && pip install -U ."
 
 - name: ensure that scripts/run.sh is executable
   file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755
@@ -88,7 +88,7 @@
     executable: /bin/bash
 
 - name: Create ElasticSearch index for the SM web app
-  shell: source {{ venv }}/bin/activate {{ conda_env }} && python scripts/create_es_index.py --host localhost
+  shell: source {{ venv }}/bin/activate {{ conda_env }} && python scripts/create_es_index.py --drop
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash

@@ -2,6 +2,4 @@
 *.retry
 vbox/group_vars/*.yml
 aws/group_vars/*.yml
-aws/ec2.ini
-aws/ec2.py
 *.ipynb
