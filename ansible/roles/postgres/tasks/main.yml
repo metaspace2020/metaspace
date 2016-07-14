@@ -11,7 +11,7 @@
   user: name=postgres shell=/bin/bash
 
 - name: create postgrs cluster
-  command: pg_createcluster {{ postgres_version }} main
+  command: pg_createcluster {{ postgres_version }} main --locale en_US.UTF-8
   ignore_errors: yes
 
 - name: replace posgres config file pg_hba.conf
