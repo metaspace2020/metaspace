@@ -10,9 +10,9 @@ from math import floor
 
 es = Elasticsearch()
 
-RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids',
-                  'chaos', 'image_corr', 'pattern_match', 'msm', 'adduct',
-                  'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id', 'mz', 'pass_fdr']
+RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids', 'adduct', 'mz',
+                  'chaos', 'image_corr', 'pattern_match', 'msm',
+                  'job_id', 'ds_id', 'sf_id', 'peaks', 'db_id', 'pass_fdr']
 
 
 def search(sf='', ds_name='', db_name='', adduct='', comp_name='', comp_id='', mz='',
@@ -110,9 +110,9 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         results_dict['yadcf_data_2'] = []
         results_dict['yadcf_data_3'] = []
         results_dict['yadcf_data_4'] = []
-        results_dict['yadcf_data_8'] = ['0.1']
-        results_dict['yadcf_data_9'] = self.adducts
-        results_dict['yadcf_data_15'] = []
+        results_dict['yadcf_data_5'] = [self.adducts]
+        results_dict['yadcf_data_6'] = []
+        results_dict['yadcf_data_10'] = ['0.1']
 
         self.write(json.dumps(results_dict))
 

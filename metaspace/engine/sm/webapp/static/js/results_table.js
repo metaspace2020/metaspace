@@ -75,8 +75,8 @@ function initResultsTable() {
         }, "targets": [4] },
         { "render": function ( data, type, row ) {
             return data;
-        }, "targets": [9, 15] },
-        { "visible": false,  "targets": [10, 11, 12, 13, 14] },
+        }, "targets": [5, 16] },
+        { "visible": false,  "targets": [11, 12, 13, 14, 15, 16] }
       ],
       initComplete : function(oSettings, json) {
         $('#results-table').tooltip({
@@ -151,23 +151,8 @@ function initColumnFilters(results_table) {
         filter_container_id: "fil-id",
         filter_reset_button_text: false
       },
-//      {column_number : 5, filter_type: "lower_bound_number", filter_container_id: "fil-chaos",
-//        filter_reset_button_text: false, filter_default_label: ['&ge;']
-//      },
-//      {column_number : 6, filter_type: "lower_bound_number", filter_container_id: "fil-img-corr", filter_reset_button_text: false, filter_default_label: ['&ge;'] },
-//      {column_number : 7, filter_type: "lower_bound_number", filter_container_id: "fil-pat-match", filter_reset_button_text: false, filter_default_label: ['&ge;']},
       {
-        column_number : 8,
-//        filter_type: "lower_bound_number",
-        filter_type: "text",
-        filter_delay: 500,
-        filter_container_id: "fil-msm",
-        filter_reset_button_text: false,
-//        filter_default_label: ['&ge;']
-//        filter_default_label: ["0.5"]
-      },
-      {
-        column_number : 9,
+        column_number : 5,
         filter_type: "select",
         filter_delay: 500,
         filter_container_id: "fil-add",
@@ -175,15 +160,30 @@ function initColumnFilters(results_table) {
         filter_default_label: 'all'
       },
       {
-        column_number: 15,
+        column_number: 6,
         filter_type: "text",
         filter_delay: 500,
         filter_container_id: "fil-mz",
         filter_reset_button_text: false
+      },
+//      {column_number : 5, filter_type: "lower_bound_number", filter_container_id: "fil-chaos",
+//        filter_reset_button_text: false, filter_default_label: ['&ge;']
+//      },
+//      {column_number : 6, filter_type: "lower_bound_number", filter_container_id: "fil-img-corr", filter_reset_button_text: false, filter_default_label: ['&ge;'] },
+//      {column_number : 7, filter_type: "lower_bound_number", filter_container_id: "fil-pat-match", filter_reset_button_text: false, filter_default_label: ['&ge;']},
+      {
+        column_number : 10,
+//        filter_type: "lower_bound_number",
+        filter_type: "text",
+        filter_delay: 500,
+        filter_container_id: "fil-msm",
+        filter_reset_button_text: false
+//        filter_default_label: ['&ge;']
+//        filter_default_label: ["0.5"]
       }
     ]);
 
     yadcf.exFilterColumn(results_table, [
-        [8, "0.1"]
+        [10, "0.1"]
     ]);
 }

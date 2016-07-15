@@ -47,13 +47,13 @@ function on_select_row(data) {
         var sf = d[2];
         var subst_names = d[3];
         var subst_ids = d[4];
-        var adduct = d[9];
-        var job_id = d[10];
-        var dataset_id = d[11];
-        var sf_id = d[12];
-        var peaks_n = d[13];
-        var db_id = d[14];
-        var fdr_pass = d[15];
+        var adduct = d[5];
+        var job_id = d[11];
+        var dataset_id = d[12];
+        var sf_id = d[13];
+        var peaks_n = d[14];
+        var db_id = d[15];
+        var fdr_pass = d[16];
 
         $("#imagediv").empty();
         $("#imagediv").html("<h4 style='text-align:center'>...loading images...</h4>");
