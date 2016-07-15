@@ -90,12 +90,12 @@ class ResultsTableHandler(tornado.web.RequestHandler):
 
         db_name = self.request.arguments['columns[0][search][value]'][0]
         ds_name = self.request.arguments['columns[1][search][value]'][0]
-        adduct = self.request.arguments['columns[9][search][value]'][0]
+        adduct = self.request.arguments['columns[5][search][value]'][0]
         sf = (self.request.arguments['columns[2][search][value]'][0])
         compound = (self.request.arguments['columns[3][search][value]'][0]).lower()
         comp_id = self.request.arguments['columns[4][search][value]'][0]
-        min_msm = self.request.arguments['columns[8][search][value]'][0] or 0
-        mz_str = self.request.arguments['columns[15][search][value]'][0]
+        min_msm = self.request.arguments['columns[10][search][value]'][0] or 0
+        mz_str = self.request.arguments['columns[6][search][value]'][0]
 
         orderby = RESULTS_FIELDS[int(self.get_argument('order[0][column]', 0))]
         order_asc = self.get_argument('order[0][dir]', 0) == 'asc'
@@ -110,7 +110,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         results_dict['yadcf_data_2'] = []
         results_dict['yadcf_data_3'] = []
         results_dict['yadcf_data_4'] = []
-        results_dict['yadcf_data_5'] = [self.adducts]
+        results_dict['yadcf_data_5'] = self.adducts
         results_dict['yadcf_data_6'] = []
         results_dict['yadcf_data_10'] = ['0.1']
 

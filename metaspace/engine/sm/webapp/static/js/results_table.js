@@ -6,7 +6,7 @@ function initResultsTable() {
         data: function(data, settings) {
             data.fdr_thr = $("#fdr_thr_btn").text();
             return data
-        },
+        }
 //        dataFilter: function(data){
 //            var json = jQuery.parseJSON( data );
 //            json.recordsTotal = json.total;
@@ -30,7 +30,7 @@ function initResultsTable() {
       bSearchable: false,
       bStateSave: false,  // server side filtering doesn't work with bStateSave=true
 //      searching: false,
-      order: [[ 8, "desc" ]],
+      order: [[ 10, "desc" ]],
       fnInitComplete: function(oSettings, json) {
         $('#results-table tbody tr:eq(0)').click();
       },
