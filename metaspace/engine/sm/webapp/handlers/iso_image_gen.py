@@ -14,7 +14,7 @@ import png
 INTS_SQL = ('SELECT pixel_inds inds, intensities as ints '
             'FROM iso_image img '
             'JOIN job j ON img.job_id=j.id '
-            'WHERE j.id=%s AND img.sf_id=%s AND adduct=%s '
+            'WHERE j.id=%s AND img.db_id=%s AND img.sf_id=%s AND adduct=%s '
             'ORDER BY peak')
 PEAKS_N_SEL = 'SELECT peaks_n FROM iso_image_metrics WHERE sf_id=%s AND adduct=%s AND job_id=%s AND db_id=%s'
 BOUNDS_SEL = ('SELECT img_bounds '
@@ -48,8 +48,8 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "image/png")
         self.write(img_fp.getvalue())
 
-    def _get_intens_list(self, job_id, sf_id, adduct, nrows, ncols):
-        res_list_rows = self.db.query(INTS_SQL, job_id, sf_id, adduct)
+    def _get_intens_list(self, job_id, db_id, sf_id, adduct, nrows, ncols):
+        res_list_rows = self.db.query(INTS_SQL, job_id, db_id, sf_id, adduct)
         intens_list = []
         for res_row in res_list_rows:
             img_arr = np.zeros(nrows*ncols)
@@ -76,14 +76,14 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         pass
 
     # TODO: get rid of matplotlib
-    def _get_color_image_data(self, ds_id, job_id, sf_id, adduct):
+    def _get_color_image_data(self, ds_id, job_id, db_id, sf_id, adduct):
         coords_row = self.db.query(COORD_SEL % int(ds_id))[0]
         coords = np.array(zip(coords_row.xs, coords_row.ys))
         coords -= coords.min(axis=0)
         self.ncols, self.nrows = coords.max(axis=0) + 1
 
         mask = self._get_ds_mask(coords, self.nrows, self.ncols)
-        int_list = self._get_intens_list(job_id, sf_id, adduct, self.nrows, self.ncols)
+        int_list = self._get_intens_list(job_id, db_id, sf_id, adduct, self.nrows, self.ncols)
         if int_list.size > 0:
             visible_pixels = self.get_img_ints(int_list)
             normalizer = Normalize(vmin=np.min(visible_pixels), vmax=np.max(visible_pixels))
@@ -114,7 +114,7 @@ class IsoImgPngHandler(IsoImgBaseHandler):
     def get(self, db_id, ds_id, job_id, sf_id, sf, adduct, peak_id):
         self.peak_id = int(peak_id)
 
-        color_img_data = self._get_color_image_data(ds_id, job_id, sf_id, adduct)
+        color_img_data = self._get_color_image_data(ds_id, job_id, db_id, sf_id, adduct)
         if color_img_data[:,:,:3].sum() > 0:
             img_fp = self.gen_iso_img(int(ds_id), int(job_id), int(sf_id), adduct, color_img_data)
             self.send_img_response(img_fp)
@@ -131,12 +131,12 @@ class IsoImgPngHandler(IsoImgBaseHandler):
 class AggIsoImgPngHandler(IsoImgBaseHandler):
 
     @gen.coroutine
-    def get(self, ds_id, job_id, sf_id, sf, adduct):
+    def get(self, db_id, ds_id, job_id, sf_id, sf, adduct):
         ds_id = int(ds_id)
         job_id = int(job_id)
         sf_id = int(sf_id)
 
-        color_img_data = self._get_color_image_data(ds_id, job_id, sf_id, adduct)
+        color_img_data = self._get_color_image_data(ds_id, job_id, db_id, sf_id, adduct)
         if color_img_data[:,:,:3].sum() > 0:
             img_fp = self.gen_iso_img(ds_id, job_id, sf_id, adduct, color_img_data)
             self.send_img_response(img_fp)

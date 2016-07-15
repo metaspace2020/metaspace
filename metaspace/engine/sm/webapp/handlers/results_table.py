@@ -42,8 +42,8 @@ def search(sf='', ds_name='', db_name='', adduct='', comp_name='', comp_id='', m
     }
 
     def format_annotation(a, fdr_thr):
-        a['comp_ids'] = a['comp_ids'].split(',')
-        a['comp_names'] = a['comp_names'].split(',')
+        a['comp_ids'] = a['comp_ids'].split('|')
+        a['comp_names'] = a['comp_names'].split('|')
         a['pass_fdr'] = a['fdr'] <= fdr_thr if a['fdr'] else False
         del a['fdr']
         a['mz'] = a['mz'].lstrip('0')
