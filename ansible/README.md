@@ -78,11 +78,11 @@ Create a pair of keys with help of AWS console. They will be used for ssh'ing to
 Spin up all needed instances. You will need at least three: web app and db instance, spark master and spark slave ones.
 Check `manages_instances.py` script for parameters used for instances launching.
 
-`ansible-playbook aws_start.yml -e "component=all key_name=NAME_OF_YOUR_AWS_KEY"`
+`ansible-playbook -i ec2.py aws_start.yml -e "component=all key_name=NAME_OF_YOUR_AWS_KEY"`
 
 Provision web application and database instance
  
-`ansible-playbook aws_provision_webserver.yml`
+`ansible-playbook -i ec2.py aws_provision_webserver.yml`
 
 If you gen the message "Failed to connect to the host via ssh." try to issue the command
 
@@ -90,18 +90,18 @@ If you gen the message "Failed to connect to the host via ssh." try to issue the
 
 Provision Spark cluster instances
  
-`ansible-playbook aws_provision_spark.yml`
+`ansible-playbook -i ec2.py aws_provision_spark.yml`
 
 Once provisioning process is finished successfully you can ssh to the Spark master instance (should have sm-spark-master name).
 Try to run the example molecule annotation job like [above](#example-job).
 
 To deploy and start the web app the command and open http://AWS_WEB_SERVER_IP_ADDRESS:8080
 
-`ansible-playbook web_app_deploy.yml`
+`ansible-playbook -i ec2.py web_app_deploy.yml`
 
 When you do not need the Spark cluster any more don't forget to stop it.
 
-`ansible-playbook aws_stop.yml -e "component=all key_name=NAME_OF_YOUR_AWS_KEY"`
+`ansible-playbook -i ec2.py aws_stop.yml -e "component=all key_name=NAME_OF_YOUR_AWS_KEY"`
 
 ## License
 
