@@ -130,5 +130,6 @@ class ESExporter:
             logger.info('Index {} already exists'.format(name))
 
     def delete_index(self, name='sm'):
-        out = self.ind_client.delete(name)
-        logger.info('Index {} deleted\n{}'.format(name, out))
+        if self.ind_client.exists(name):
+	    out = self.ind_client.delete(name)
+            logger.info('Index {} deleted\n{}'.format(name, out))
