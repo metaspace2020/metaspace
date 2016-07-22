@@ -131,5 +131,5 @@ class ESExporter:
 
     def delete_index(self, name='sm'):
         if self.ind_client.exists(name):
-	    out = self.ind_client.delete(name)
+            out = self.ind_client.delete(name)
             logger.info('Index {} deleted\n{}'.format(name, out))
