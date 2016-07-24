@@ -6,4 +6,4 @@
   gather_facts: false
 
   tasks:
-    - include: ../spark_deploy_tasks.yml
+    - include: ../engine_deploy_tasks.yml

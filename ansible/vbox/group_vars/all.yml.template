@@ -3,6 +3,8 @@
 postgres_host: localhost
 postgres_version: 9.3
 
+es_host: localhost
+
 miniconda_version: latest
 miniconda_python: 2
 miniconda_prefix: "/opt/dev/miniconda"
@@ -35,6 +37,8 @@ miniconda_env:
       - fabric
       - pypng
       - supervisor
+      - pyyaml
+      - elasticsearch
 
 spark_version: "1.6.0-bin-hadoop2.7.1"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
@@ -47,7 +51,7 @@ spark_env_extras_master:
 spark_slave_ips:
   - localhost
 
-sm_branch:
+sm_branch: v0.4
 sm_postgres_password: "1234"
 sm_home: "/opt/dev/sm"
 

@@ -5,7 +5,6 @@
            dest=/tmp/elasticsearch-{{ elasticsearch_version }}.deb
 
 - name: Install ElasticSearch
-  become: yes
   command: dpkg -i /tmp/elasticsearch-{{ elasticsearch_version }}.deb
 
 - name: Make ElasticSearch listen to any ip address

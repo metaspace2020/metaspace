@@ -44,7 +44,7 @@ miniconda_env:
       - pyyaml
       - elasticsearch
 
-sm_branch: "master"
+sm_branch: v0.4
 sm_postgres_password: "1234"
 sm_home: "/opt/dev/sm"
 sm_s3_path: "s3a://sm-engine/data"

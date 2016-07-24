@@ -4,3 +4,5 @@ spark_user: ubuntu
 sm_s3_path: ""
 
 aws_setup_access: false
+aws_access_key_id:
+aws_secret_access_key:
