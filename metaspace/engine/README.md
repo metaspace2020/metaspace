@@ -63,6 +63,22 @@ Don't forget to restart the database server
 
     sudo service postgresql restart
 	
+### ElasticSearch Installation and Setup
+
+Download ElasticSearch deb package and install it
+
+`wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.3.3/elasticsearch-2.3.3.deb`
+`dpkg -i /tmp/elasticsearch-2.3.3.deb`
+
+Make ElasticSearch listen to any ip address
+
+`nano /etc/elasticsearch/elasticsearch.yml`
+set network.host: 0.0.0.0
+
+Restart ElasticSearch daemon
+
+`sudo service elasticsearch restart`
+
 ### SM Engine Installation and Setup
 
 Install git, pip and libffi
@@ -71,7 +87,7 @@ Install git, pip and libffi
 	
 Clone the latest "stable" **SM_distributed** repository branch into the home directory and rename it to **sm**
 	
-	git clone -b v0.3 --single-branch https://github.com/SpatialMetabolomics/SM_distributed.git
+	git clone -b v0.4 --single-branch https://github.com/SpatialMetabolomics/SM_distributed.git
 	mv SM_distributed sm
 
 Install SM engine python dependencies
@@ -93,6 +109,10 @@ SM engine schema creation
 
 	cd sm
 	psql -h localhost -U sm sm < scripts/create_schema.sql
+
+ElasticSearch index creation
+
+`python scripts/create_es_index.py --drop`
 
 Create data directory for SM engine. Don't forget to replace **USER:GROUP** with your linux user and group (id -un and id -gn)
 
