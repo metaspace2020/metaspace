@@ -103,7 +103,7 @@ cluster_configuration:
 
     - group: sm-spark-slave
       type: c4.4xlarge
-      n: 3
+      n: 1
       elipalloc:
       price: 0.5
       sec_group: default
