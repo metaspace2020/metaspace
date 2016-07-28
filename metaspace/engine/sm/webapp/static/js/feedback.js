@@ -19,10 +19,10 @@ function addRatingChangeHandler(results_table) {
             type: 'POST',
             contentType: 'application/x-www-form-urlencoded',
             data: {
-                'job_id': rowData[10],
-                'db_id': rowData[14],
-                'sf_id': rowData[12],
-                'adduct': rowData[9],
+                'job_id': rowData[12],
+                'db_id': rowData[15],
+                'sf_id': rowData[13],
+                'adduct': rowData[5],
                 'fdr_thr': $("#fdr_thr_btn").text(),
                 'rating': rating
             }
@@ -44,10 +44,10 @@ function addCommentSaveHandler(results_table) {
             type: 'POST',
             contentType: 'application/x-www-form-urlencoded',
             data: {
-                'job_id': rowData[10],
-                'db_id': rowData[14],
-                'sf_id': rowData[12],
-                'adduct': rowData[9],
+                'job_id': rowData[12],
+                'db_id': rowData[15],
+                'sf_id': rowData[13],
+                'adduct': rowData[5],
                 'fdr_thr': $("#fdr_thr_btn").text(),
                 'comment': comment
             }
