@@ -28,11 +28,12 @@ class Dataset(object):
     wd_manager : engine.local_dir.WorkDir
     db : engine.db.DB
     """
-    def __init__(self, sc, name, owner_email, ds_config, wd_manager, db):
+    def __init__(self, sc, name, owner_email, input_path, ds_config, wd_manager, db):
         self.db = db
         self.sc = sc
         self.name = name
         self.owner_email = owner_email
+        self.input_path = input_path
         self.ds_config = ds_config
         self.wd_manager = wd_manager
         self.sm_config = SMConfig.get_conf()
@@ -139,7 +140,7 @@ class Dataset(object):
             raise Exception("Could't find a user with email {}".format(self.owner_email))
 
         owner_id = owner_rs[0] if owner_rs else None
-        ds_row = [(self.name, owner_id, self.wd_manager.txt_path, img_bounds, ds_config_json)]
+        ds_row = [(self.name, owner_id, self.input_path, img_bounds, ds_config_json)]
         self.db.insert(DS_INSERT, ds_row)
 
         ds_id = self.db.select(DS_ID_SELECT, self.name)[0]

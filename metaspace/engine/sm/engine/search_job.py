@@ -134,7 +134,7 @@ class SearchJob(object):
                 if not self.wd_manager.local_fs_only:
                     self.wd_manager.upload_to_remote()
 
-            self.ds = Dataset(self.sc, self.ds_name, self.client_email, self.ds_config, self.wd_manager, self.db)
+            self.ds = Dataset(self.sc, self.ds_name, self.client_email, input_path, self.ds_config, self.wd_manager, self.db)
             self.ds.save_ds_meta()
 
             self.store_job_meta()

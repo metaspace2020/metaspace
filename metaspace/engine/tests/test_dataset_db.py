@@ -36,12 +36,12 @@ def test_save_ds_meta_ds_doesnt_exist(spark_context, create_test_db, drop_test_d
             '0,1,1\n',
             '1,100,200\n'])
 
-        dataset = Dataset(spark_context, 'ds_name', '', ds_config, work_dir_man_mock, DB(sm_config['db']))
+        dataset = Dataset(spark_context, 'ds_name', '', 'input_path', ds_config, work_dir_man_mock, DB(sm_config['db']))
         dataset.save_ds_meta()
 
     db = DB(sm_config['db'])
     ds_row = db.select_one('SELECT name, file_path, img_bounds, config from dataset')
-    assert ds_row == ('ds_name', '/txt_path',
+    assert ds_row == ('ds_name', 'input_path',
                       {u'x': {u'min': 1, u'max': 100}, u'y': {u'min': 1, u'max': 200}},
                       ds_config)
 
