@@ -17,3 +17,6 @@
     - iotop
     - mc
     - gcc
+
+- name: Add swap file
+  script: increase_swap.sh

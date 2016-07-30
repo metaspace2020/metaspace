@@ -5,18 +5,21 @@
 - name: Start master and slaves
   become: no
   command: "{{ spark_home }}/sbin/start-all.sh"
+  when: not ('localhost' in spark_slave_ips)
   register: command_result
   changed_when: not ('Stop it first' in command_result.stdout)
 
 - name: Check that master daemon is up
   command: jps -l
   become: no
+  when: not ('localhost' in spark_slave_ips)
   register: command_result
   failed_when: not ('Master' in command_result.stdout)
 
 - name: Wait for slave deamons to start up
   wait_for: host={{ item }} port=8081 delay=5
   with_items: "{{ spark_slave_ips }}"
+  when: not ('localhost' in spark_slave_ips)
 
 #- name: Check that slave deamons are up
 #  get_url: url=http://{{ item }}:8081 dest=/tmp/{{ item }}.html

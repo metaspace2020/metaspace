@@ -1,28 +1,31 @@
 ---
 
-- name: install postgres
+- name: Install postgres
   apt: name={{ item }} state=present
   with_items:
     - postgresql-{{ postgres_version }}
     - postgresql-contrib-{{ postgres_version }}
     - libpq-dev
 
-- name: create postgres user
+- name: Create postgres user
   user: name=postgres shell=/bin/bash
 
-- name: drop postgres cluster created by default  #FIXME
-  command: pg_dropcluster {{ postgres_version }} main --stop
+- name: Stop postgres server
+  service: name=postgresql state=stopped
 
-- name: create postgrs cluster
+- name: Drop postgres cluster created by default  #FIXME
+  command: pg_dropcluster {{ postgres_version }} main
+
+- name: Create postgrs cluster
   command: pg_createcluster {{ postgres_version }} main --locale en_US.UTF-8
   ignore_errors: yes
 
-- name: replace posgres config file pg_hba.conf
+- name: Replace posgres config file pg_hba.conf
   copy: src=pg_hba.conf dest=/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf owner=postgres group=postgres mode="u=rw,g=r"
   notify:
     - pg_conf_update
 
-- name: make postgres listen to any ip address
+- name: Make postgres listen to any ip address
   lineinfile:
     dest: /etc/postgresql/9.3/main/postgresql.conf
     regexp: '^listen_addresses'
@@ -32,5 +35,5 @@
 
 - meta: flush_handlers
 
-- name: start postgres server
+- name: Start postgres server
   service: name=postgresql state=running

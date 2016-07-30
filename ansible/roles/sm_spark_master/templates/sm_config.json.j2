@@ -13,7 +13,7 @@
     "s3_base_path": "{{ sm_s3_path }}"
   },
   "spark": {
-    "master": "spark://{{ ansible_hostname }}:7077",
+    "master": "{{ spark_master_host }}",
     "spark.executor.memory": "2g",
     "spark.driver.memory": "2g",
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",

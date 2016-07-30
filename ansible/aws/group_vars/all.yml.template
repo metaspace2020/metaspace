@@ -55,6 +55,7 @@ activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name 
 spark_version: "1.6.0-bin-hadoop2.7.1"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
+spark_master_host: "spark://{{ ansible_hostname }}:7077"
 
 spark_env_extras_slave:
   SPARK_WORKER_DIR: "/tmp/spark"

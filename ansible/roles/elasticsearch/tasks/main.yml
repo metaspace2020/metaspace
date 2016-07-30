@@ -22,3 +22,6 @@
 
 - name: Start EleasticSearch service
   service: name=elasticsearch state=running
+
+- name: Start EleasticSearch on boot
+  service: name=elasticsearch enabled=true
