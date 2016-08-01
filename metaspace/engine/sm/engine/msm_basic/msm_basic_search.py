@@ -28,4 +28,4 @@ class MSMBasicSearch(SearchAlgorithm):
         return sf_metrics_fdr_df
 
     def filter_sf_metrics(self, sf_metrics_df):
-        return sf_metrics_df[(sf_metrics_df.chaos > 0) | (sf_metrics_df.spatial > 0) | (sf_metrics_df.spectral > 0)]
+        return sf_metrics_df[sf_metrics_df.fdr <= 0.5]
