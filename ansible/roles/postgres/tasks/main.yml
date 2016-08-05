@@ -16,11 +16,11 @@
 - name: Drop postgres cluster created by default  #FIXME
   command: pg_dropcluster {{ postgres_version }} main
 
-- name: Create postgrs cluster
+- name: Create postgres cluster
   command: pg_createcluster {{ postgres_version }} main --locale en_US.UTF-8
   ignore_errors: yes
 
-- name: Replace posgres config file pg_hba.conf
+- name: Replace postgres config file pg_hba.conf
   copy: src=pg_hba.conf dest=/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf owner=postgres group=postgres mode="u=rw,g=r"
   notify:
     - pg_conf_update
