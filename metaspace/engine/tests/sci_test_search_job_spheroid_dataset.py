@@ -97,7 +97,7 @@ def run_search():
            join(proj_root(), 'scripts/run_molecule_search.py'),
            ds_name,
            input_dir_path,
-           ds_config_path]
+           '--ds-config', ds_config_path]
     check_call(cmd)
 
 

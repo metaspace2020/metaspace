@@ -9,6 +9,7 @@ class MSMBasicSearch(SearchAlgorithm):
     def __init__(self, sc, ds, formulas, fdr, ds_config):
         super(MSMBasicSearch, self).__init__(sc, ds, formulas, fdr, ds_config)
         self.metrics = ['chaos', 'spatial', 'spectral']
+        self.max_fdr = 0.5
 
     def search(self):
         logger.info('Running molecule search')
@@ -28,4 +29,4 @@ class MSMBasicSearch(SearchAlgorithm):
         return sf_metrics_fdr_df
 
     def filter_sf_metrics(self, sf_metrics_df):
-        return sf_metrics_df[sf_metrics_df.fdr <= 0.5]
+        return sf_metrics_df[sf_metrics_df.fdr <= self.max_fdr]

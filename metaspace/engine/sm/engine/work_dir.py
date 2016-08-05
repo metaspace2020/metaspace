@@ -197,7 +197,8 @@ class WorkDirManager(object):
             else:
                 self.local_dir.copy(input_data_path, self.local_dir.ds_path)
 
-        self.local_dir.copy(ds_config_path, self.local_dir.ds_config_path, is_file=True)
+        if ds_config_path:
+            self.local_dir.copy(ds_config_path, self.local_dir.ds_config_path, is_file=True)
 
     def clean(self):
         self.local_dir.clean()

@@ -37,9 +37,11 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
         db.close()
 
 
+@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
-def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_database, sm_config):
+def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metrics_mock, create_fill_sm_database, sm_config):
     get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
+    filter_sf_metrics_mock.side_effect = lambda x: x
 
     SMConfig._config_dict = sm_config
 
@@ -51,7 +53,7 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, create_fill_sm_
         # dataset meta asserts
         rows = db.select("SELECT name, file_path, img_bounds from dataset")
         img_bounds = {u'y': {u'max': 3, u'min': 1}, u'x': {u'max': 3, u'min': 1}}
-        file_path = 'file://' + join(data_dir_path, 'ds.txt')
+        file_path = join(dirname(__file__), 'data', 'imzml_example_ds')
         assert len(rows) == 1
         assert rows[0] == (test_ds_name, file_path, img_bounds)
 
