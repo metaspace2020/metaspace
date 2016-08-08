@@ -22,6 +22,9 @@ from tornado import gen
 from tornado.ioloop import IOLoop
 
 
+SF_ID_SELECT = "SELECT sf FROM agg_formula WHERE db_id=%s AND id=%s"
+
+
 @gen.coroutine
 def async_sleep(seconds):
     """Sleep for a given number of seconds."""
@@ -34,6 +37,13 @@ def call_in_background(f, *args):
     t = threading.Thread(target=lambda: result.put(f(*args)))
     t.start()
     return result
+
+
+def sf_isotope_patterns(sf, adduct, sigma, charge, profile=False):
+    isotopes = IsotopePattern(str(sf + adduct)).charged(int(charge))
+    fwhm = sigma * 2 * (2 * np.log(2)) ** 0.5
+    resolution = isotopes.masses[0] / fwhm
+    return isotopes.envelope(resolution) if profile else isotopes.centroids(resolution)
 
 
 class IndexHandler(tornado.web.RequestHandler):
@@ -53,20 +63,15 @@ def fetch_sigma_charge_ptspermz_ppm(db, job_id):
 
 
 class SFPeakMZsHandler(tornado.web.RequestHandler):
-    CENTR_MZS_SEL = '''SELECT centr_mzs
-                       FROM theor_peaks
-                       WHERE db_id = %s AND sf_id = %s AND adduct = %s AND
-                          ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s'''
-
     @property
     def db(self):
         return self.application.db
 
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
-        peaks_dict = self.db.query(self.CENTR_MZS_SEL, int(db_id), int(sf_id), adduct,
-                                   *fetch_sigma_charge_ptspermz_ppm(self.db, job_id)[:-1])[0]
-        centr_mzs = peaks_dict['centr_mzs']
+        sigma, charge, pts_per_mz, ppm = fetch_sigma_charge_ptspermz_ppm(self.db, job_id)
+        sf = self.db.query(SF_ID_SELECT, db_id, sf_id)[0].sf
+        centr_mzs = sf_isotope_patterns(sf, adduct, sigma, charge).masses
         self.write(json.dumps(centr_mzs))
 
 
@@ -90,10 +95,6 @@ class MinMaxIntHandler(tornado.web.RequestHandler):
 
 
 class SpectrumLineChartHandler(tornado.web.RequestHandler):
-    PEAK_MZS_SQL = '''SELECT centr_mzs FROM theor_peaks
-                          WHERE db_id = %s AND sf_id = %s AND adduct = %s AND
-                          ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s'''
-
     SAMPLE_INTENS_SQL = '''SELECT pixel_inds, intensities
                            FROM iso_image
                            WHERE job_id = %s and db_id = %s and sf_id = %s and adduct = %s
@@ -123,18 +124,13 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
         params = fetch_sigma_charge_ptspermz_ppm(self.db, job_id)
         sigma, charge, pts_per_mz, ppm = params
 
-        centr_mzs = self.db.query(self.PEAK_MZS_SQL,
-                                  int(db_id), int(sf_id), adduct, *params[:-1])[0].centr_mzs
-        centr_mzs = np.array(centr_mzs)
+        sf = self.db.query(SF_ID_SELECT, db_id, sf_id)[0].sf
+        centr_mzs = sf_isotope_patterns(sf, adduct, sigma, charge).masses
         min_mz = min(centr_mzs) - 0.25
         max_mz = max(centr_mzs) + 0.25
 
-        sf = self.db.query("SELECT sf FROM agg_formula WHERE db_id=%s AND id=%s", db_id, sf_id)[0].sf
-        isotopes = IsotopePattern(str(sf + adduct)).charged(int(charge))
-        fwhm = sigma * 2 * (2 * np.log(2)) ** 0.5
-        resolution = isotopes.masses[0] / fwhm
         prof_mzs = np.arange(min_mz, max_mz, 1.0 / pts_per_mz)
-        prof_ints = isotopes.envelope(resolution)(prof_mzs)
+        prof_ints = sf_isotope_patterns(sf, adduct, sigma, charge, profile=True)(prof_mzs)
         nnz_idx = prof_ints > 1e-9
         prof_mzs = prof_mzs[nnz_idx]
         prof_ints = prof_ints[nnz_idx]
@@ -152,7 +148,7 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
                 'max_mz': max_mz
             },
             'sample': {
-                'mzs': centr_mzs.tolist(),
+                'mzs': list(centr_mzs),
                 'ints': list(sample_centr_ints_norm)
             },
             'theor': {
