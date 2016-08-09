@@ -8,7 +8,7 @@ from scipy.sparse import coo_matrix
 
 def _estimate_mz_workload(spectra_sample, sf_peak_df, bins=1000):
     mz_arr = np.sort(np.concatenate(map(lambda sp: sp[1], spectra_sample)))
-    spectrum_mz_freq, mz_grid = np.histogram(mz_arr, bins=bins, range=(mz_arr.min(), mz_arr.max()))
+    spectrum_mz_freq, mz_grid = np.histogram(mz_arr, bins=bins, range=(np.nanmin(mz_arr), np.nanmax(mz_arr)))
     # sf_peak_mz_freq, _ = np.histogram(sf_peak_df.mz, bins=bins, range=(mz_arr.min(), mz_arr.max()))
     workload_per_mz = spectrum_mz_freq  # * sf_peak_mz_freq
     return mz_grid, workload_per_mz

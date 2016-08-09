@@ -90,7 +90,7 @@ class ImzmlTxtConverter(object):
         if self.preprocess:
             mzs, ints = preprocess_spectrum(mzs, ints)
 
-        self.txt_file.write(encode_data_line(i, mzs, ints, decimals=9) + '\n')
+        self.txt_file.write(encode_data_line(i, mzs[ints > 0], ints[ints > 0], decimals=9) + '\n')
         if self.coord_file:
             self.coord_file.write(encode_coord_line(i, x, y) + '\n')
 
