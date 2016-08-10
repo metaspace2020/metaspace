@@ -8,6 +8,7 @@ from operator import mul, add
 from pyImagingMSpec.image_measures import isotope_image_correlation, isotope_pattern_match
 # from pyImagingMSpec.image_measures import measure_of_chaos
 from cpyImagingMSpec import measure_of_chaos
+from pyImagingMSpec import smoothing
 
 
 class ImgMeasures(object):
@@ -55,11 +56,13 @@ class ImgMeasures(object):
             return self.chaos, self.image_corr, self.pattern_match
 
 
-def get_compute_img_metrics(empty_matrix, img_gen_conf):
+def get_compute_img_metrics(sample_area_mask, empty_matrix, img_gen_conf):
     """ Returns a function for computing isotope image metrics
 
     Args
     ------------
+    sample_area_mask: ndarray[bool]
+        mask for separating sampled pixels (True) from non-sampled (False)
     empty_matrix : ndarray
         empty matrix of the same shape as isotope images
     img_gen_conf : dict
@@ -73,7 +76,11 @@ def get_compute_img_metrics(empty_matrix, img_gen_conf):
         diff = len(sf_ints) - len(iso_images_sparse)
         iso_imgs = [empty_matrix if img is None else img.toarray()
                     for img in iso_images_sparse + [None] * diff]
-        iso_imgs_flat = [img.flat[:] for img in iso_imgs]
+        iso_imgs_flat = [img.flat[:][sample_area_mask] for img in iso_imgs]
+
+        if img_gen_conf['do_preprocessing']:
+            for img in iso_imgs_flat:
+                smoothing.hot_spot_removal(img)
 
         measures = ImgMeasures(0, 0, 0)
         if len(iso_imgs) > 0:
@@ -108,7 +115,7 @@ def sf_image_metrics(sf_images, sc, formulas, ds, ds_config):
     """
     nrows, ncols = ds.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
-    compute_metrics = get_compute_img_metrics(empty_matrix, ds_config['image_generation'])
+    compute_metrics = get_compute_img_metrics(ds.sample_area_mask, empty_matrix, ds_config['image_generation'])
     sf_add_ints_map_brcast = sc.broadcast(formulas.get_sf_peak_ints())
     # sf_peak_ints_brcast = sc.broadcast(formulas.get_sf_peak_ints())
 

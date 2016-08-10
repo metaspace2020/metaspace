@@ -4,7 +4,7 @@ from sm.engine.util import logger
 
 
 THEOR_PEAKS_TARGET_ADD_SEL = (
-    'SELECT sf_id, adduct, centr_mzs, centr_ints '
+    'SELECT sf_id, adduct, centr_mzs[1:%s], centr_ints[1:%s] '
     'FROM theor_peaks p '
     'JOIN formula_db db ON db.id = p.db_id '
     'WHERE db.id = %s AND adduct = ANY(%s) AND ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s '
@@ -13,7 +13,7 @@ THEOR_PEAKS_TARGET_ADD_SEL = (
 
 # TODO: target_decoy_add table is getting too big
 THEOR_PEAKS_DECOY_ADD_SEL = (
-    'SELECT DISTINCT p.sf_id, decoy_add as adduct, centr_mzs, centr_ints '
+    'SELECT DISTINCT p.sf_id, decoy_add as adduct, centr_mzs[1:%s], centr_ints[1:%s] '
     'FROM theor_peaks p '
     'JOIN formula_db db ON db.id = p.db_id '
     'JOIN target_decoy_add td on td.job_id = %s '
@@ -23,6 +23,7 @@ THEOR_PEAKS_DECOY_ADD_SEL = (
 
 
 class FormulasSegm(object):
+    ISOTOPIC_PEAK_N = 4
 
     def __init__(self, job_id, db_id, ds_config, db):
         self.job_id = job_id
@@ -30,12 +31,14 @@ class FormulasSegm(object):
         self.ppm = ds_config['image_generation']['ppm']
         iso_gen_conf = ds_config['isotope_generation']
         charge = '{}{}'.format(iso_gen_conf['charge']['polarity'], iso_gen_conf['charge']['n_charges'])
-        target_sf_peaks_rs = db.select(THEOR_PEAKS_TARGET_ADD_SEL, self.db_id,
+        target_sf_peaks_rs = db.select(THEOR_PEAKS_TARGET_ADD_SEL, self.ISOTOPIC_PEAK_N, self.ISOTOPIC_PEAK_N,
+                                       self.db_id,
                                        iso_gen_conf['adducts'], iso_gen_conf['isocalc_sigma'],
                                        iso_gen_conf['isocalc_pts_per_mz'], charge)
         assert target_sf_peaks_rs, 'No formulas matching the criteria were found in theor_peaks! (target)'
 
-        decoy_sf_peaks_rs = db.select(THEOR_PEAKS_DECOY_ADD_SEL, self.job_id, self.db_id,
+        decoy_sf_peaks_rs = db.select(THEOR_PEAKS_DECOY_ADD_SEL, self.ISOTOPIC_PEAK_N, self.ISOTOPIC_PEAK_N,
+                                      self.job_id, self.db_id,
                                       iso_gen_conf['isocalc_sigma'], iso_gen_conf['isocalc_pts_per_mz'], charge)
         assert decoy_sf_peaks_rs, 'No formulas matching the criteria were found in theor_peaks! (decoy)'
 

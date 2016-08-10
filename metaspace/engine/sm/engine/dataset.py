@@ -61,10 +61,13 @@ class Dataset(object):
         _coord = np.around(_coord, 5)  # correct for numerical precision
         _coord -= np.amin(_coord, axis=0)
 
-        ncols = self.max_x - self.min_x + 1
+        nrows, ncols = self.get_dims()
         pixel_indices = _coord[:, 1] * ncols + _coord[:, 0]
         pixel_indices = pixel_indices.astype(np.int32)
         self.norm_img_pixel_inds = pixel_indices
+
+        self.sample_area_mask = np.zeros(ncols*nrows).astype(bool)
+        self.sample_area_mask[pixel_indices] = True
 
     def get_norm_img_pixel_inds(self):
         """

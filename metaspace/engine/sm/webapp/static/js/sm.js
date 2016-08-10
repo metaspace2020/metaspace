@@ -1,4 +1,4 @@
-var max_peaks_to_show = 6;
+var max_peaks_to_show = 4;
 
 // Page initialisation
 $(document).ready(function() {

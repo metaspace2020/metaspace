@@ -22,7 +22,7 @@ from tornado import gen
 from tornado.ioloop import IOLoop
 
 
-SF_ID_SELECT = "SELECT sf FROM agg_formula WHERE db_id=%s AND id=%s"
+SF_SELECT = "SELECT sf FROM agg_formula WHERE db_id=%s AND id=%s"
 
 
 @gen.coroutine
@@ -70,7 +70,7 @@ class SFPeakMZsHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
         sigma, charge, pts_per_mz, ppm = fetch_sigma_charge_ptspermz_ppm(self.db, job_id)
-        sf = self.db.query(SF_ID_SELECT, db_id, sf_id)[0].sf
+        sf = self.db.query(SF_SELECT, db_id, sf_id)[0].sf
         centr_mzs = sf_isotope_patterns(sf, adduct, sigma, charge).masses
         self.write(json.dumps(centr_mzs))
 
@@ -124,11 +124,10 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
         params = fetch_sigma_charge_ptspermz_ppm(self.db, job_id)
         sigma, charge, pts_per_mz, ppm = params
 
-        sf = self.db.query(SF_ID_SELECT, db_id, sf_id)[0].sf
-        centr_mzs = sf_isotope_patterns(sf, adduct, sigma, charge).masses
+        sf = self.db.query(SF_SELECT, db_id, sf_id)[0].sf
+        centr_mzs = np.asarray(sf_isotope_patterns(sf, adduct, sigma, charge).masses[:4])
         min_mz = min(centr_mzs) - 0.25
         max_mz = max(centr_mzs) + 0.25
-
         prof_mzs = np.arange(min_mz, max_mz, 1.0 / pts_per_mz)
         prof_ints = sf_isotope_patterns(sf, adduct, sigma, charge, profile=True)(prof_mzs)
         nnz_idx = prof_ints > 1e-9
@@ -148,8 +147,8 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
                 'max_mz': max_mz
             },
             'sample': {
-                'mzs': list(centr_mzs),
-                'ints': list(sample_centr_ints_norm)
+                'mzs': centr_mzs.tolist(),
+                'ints': sample_centr_ints_norm.tolist()
             },
             'theor': {
                 'mzs': prof_mzs.tolist(),
