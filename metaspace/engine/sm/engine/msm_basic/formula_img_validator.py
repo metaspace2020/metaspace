@@ -115,7 +115,7 @@ def sf_image_metrics(sf_images, sc, formulas, ds, ds_config):
     """
     nrows, ncols = ds.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
-    compute_metrics = get_compute_img_metrics(ds.sample_area_mask, empty_matrix, ds_config['image_generation'])
+    compute_metrics = get_compute_img_metrics(ds.get_sample_area_mask(), empty_matrix, ds_config['image_generation'])
     sf_add_ints_map_brcast = sc.broadcast(formulas.get_sf_peak_ints())
     # sf_peak_ints_brcast = sc.broadcast(formulas.get_sf_peak_ints())
 

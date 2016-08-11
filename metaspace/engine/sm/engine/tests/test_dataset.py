@@ -4,7 +4,27 @@ from numpy.testing import assert_array_equal
 
 from sm.engine.dataset import Dataset
 from sm.engine.util import SMConfig
-#from sm.engine.work_dir import WorkDir
+from sm.engine.work_dir import WorkDirManager
+from sm.engine.tests.util import sm_config, ds_config, spark_context
+
+
+def test_get_sample_area_mask_correctness(sm_config, ds_config, spark_context):
+    work_dir_man_mock = MagicMock(WorkDirManager)
+    work_dir_man_mock.ds_coord_path = '/ds_path'
+    work_dir_man_mock.txt_path = '/txt_path'
+
+    SMConfig._config_dict = sm_config
+
+    with patch('sm.engine.tests.util.SparkContext.textFile') as m:
+        m.return_value = spark_context.parallelize([
+            '0,0,0\n',
+            '2,1,1\n'])
+
+        ds = Dataset(spark_context, 'ds_name', '', 'input_path', ds_config, work_dir_man_mock, None)
+
+        #ds.norm_img_pixel_inds = np.array([0, 3])
+
+        assert tuple(ds.get_sample_area_mask()) == (True, False, False, True)
 
 
 # def test_get_dims_2by3(spark_context, sm_config):

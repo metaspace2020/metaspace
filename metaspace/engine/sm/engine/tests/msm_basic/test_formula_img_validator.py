@@ -24,7 +24,7 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
         'q': 99.0
     }
     empty_matrix = np.zeros((2, 3))
-    compute_measures = get_compute_img_metrics(empty_matrix, img_gen_conf)
+    compute_measures = get_compute_img_metrics(np.ones(2*3).astype(bool), empty_matrix, img_gen_conf)
 
     sf_iso_images = [csr_matrix([[0., 100., 100.], [10., 0., 3.]]),
                      csr_matrix([[0., 50., 50.], [0., 20., 0.]])]
@@ -38,6 +38,7 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
 def ds_formulas_images_mock():
     ds_mock = MagicMock(spec=Dataset)
     ds_mock.get_dims.return_value = (2, 3)
+    ds_mock.get_sample_area_mask.return_value = np.ones(2*3).astype(bool)
 
     formulas_mock = MagicMock(spec=FormulasSegm)
     formulas_mock.get_sf_peak_ints.return_value = {(0, '+H'): [100, 10, 1], (1, '+H'): [100, 10, 1]}

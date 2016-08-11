@@ -50,7 +50,6 @@ def test_save_ds_meta_ds_doesnt_exist(spark_context, create_test_db, drop_test_d
 
     db.close()
 
-
 # def test_save_ds_meta_ds_exists(spark_context, create_test_db, fill_test_db, drop_test_db, sm_config, ds_config):
 #     work_dir_mock = MagicMock(WorkDir)
 #     work_dir_mock.ds_coord_path = '/new_ds_path'

@@ -66,9 +66,6 @@ class Dataset(object):
         pixel_indices = pixel_indices.astype(np.int32)
         self.norm_img_pixel_inds = pixel_indices
 
-        self.sample_area_mask = np.zeros(ncols*nrows).astype(bool)
-        self.sample_area_mask[pixel_indices] = True
-
     def get_norm_img_pixel_inds(self):
         """
         Returns
@@ -77,6 +74,18 @@ class Dataset(object):
             One-dimensional array of indexes for dataset pixels taken in row-wise manner
         """
         return self.norm_img_pixel_inds
+
+    def get_sample_area_mask(self):
+        """
+        Returns
+        -------
+        : ndarray
+            One-dimensional bool array of pixel indices where spectra were sampled
+        """
+        nrows, ncols = self.get_dims()
+        sample_area_mask = np.zeros(ncols * nrows).astype(bool)
+        sample_area_mask[self.norm_img_pixel_inds] = True
+        return sample_area_mask
 
     def get_dims(self):
         """

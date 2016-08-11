@@ -69,9 +69,12 @@ class SMConfig(object):
             SM engine configuration
         """
         if not cls._config_dict:
-            config_path = cls._path or join(proj_root(), 'conf', 'config.json')
-            with open(config_path) as f:
-                cls._config_dict = json.load(f)
+            try:
+                config_path = cls._path or join(proj_root(), 'conf', 'config.json')
+                with open(config_path) as f:
+                    cls._config_dict = json.load(f)
+            except IOError as e:
+                logger.warn(e)
         return cls._config_dict
 
 
