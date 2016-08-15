@@ -1,0 +1,11 @@
+
+- name: Restart all apps running under supervisor
+  shell: "{{ activate_venv }} && supervisorctl reread && supervisorctl update && supervisorctl restart all && supervisorctl status"
+  args:
+    executable: /bin/bash
+  register: command_result
+  failed_when:
+   - "'ERROR' in command_result.stdout"
+   - "'FATAL' in command_result.stdout"
+
+- debug: var=command_result

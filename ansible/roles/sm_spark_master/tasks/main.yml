@@ -23,35 +23,13 @@
   become: yes
 
 - name: Create sm config files
-  shell: cp sm_log.cfg.template sm_log.cfg  #&& cp config.json.template config.json
+  shell: cp sm_log.cfg.template sm_log.cfg
   args:
     chdir: "{{ sm_home }}/conf"
     creates: sm_log.cfg config.json
 
-#- name: Install SM into conda environment
-#  args:
-#    chdir: "{{ sm_home }}"
-#    executable: /bin/bash
-#  shell: "source {{ venv }}/bin/activate {{ conda_env }} && pip install ."
-
-##- name: Put activate_conda_env.sh scripts to
-##  template: src=sm_config.json.j2
-##            dest={{ sm_home }}/conf/config.json
-##            owner={{ spark_user }}
-##            group={{ spark_user }}
-##            mode=0600
-
 - name: Put SPARK_HOME into update sm-env.sh scripts
   template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
-
-#- name: Ensure that scripts/run.sh is executable
-#  file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755
-
-#- name: Archive engine into a zip file
-#  shell: zip -rq sm.zip sm
-#  args:
-#    chdir: "{{ sm_home }}"
-#    creates: "{{ sm_home }}/sm.zip"
 
 - name: Make sure .aws directory exists
   file: path=/home/{{ spark_user }}/.aws/
@@ -85,3 +63,7 @@
   with_items:
     - conda
     - activate
+
+- name: Copy sm-job-daemon supervisor config file
+  template: src=sm-job-daemon.supervisor.j2 dest=/etc/supervisor/sm-job-daemon.supervisor
+            mode=0600 owner=ubuntu group=ubuntu

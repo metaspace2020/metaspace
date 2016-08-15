@@ -1,23 +1,15 @@
 ---
 
-- name: Installing Postgres
-  hosts: sm-vbox
-  user: ubuntu
-  become: yes
-
-  roles:
-    - role: postgres
-
-
-- name: Installing SM dependencies as miniconda distribution
+- name: Set up SM queue
   hosts: sm-vbox
   user: ubuntu
 
   roles:
-    - role: miniconda
+    - role: rabbitmq
+      become: yes
 
 
-- name: Installing SM web app
+- name: Set up SM web app
   hosts: sm-vbox
   user: ubuntu
 
@@ -27,7 +19,7 @@
       conda_env: "{{ miniconda_env.name }}"
 
 
-- name: Installing SM engine
+- name: Set up SM engine
   hosts: sm-vbox
   user: ubuntu
 

@@ -5,6 +5,10 @@ postgres_version: 9.3
 
 es_host: localhost
 
+rabbitmq_host: localhost
+rabbitmq_user: sm
+rabbitmq_password: "1234"
+
 miniconda_version: latest
 miniconda_python: 2
 miniconda_prefix: "/opt/dev/miniconda"
@@ -36,9 +40,9 @@ miniconda_env:
       - networkx
       - fabric
       - pypng
-      - supervisor
       - pyyaml
       - elasticsearch
+      - pika
 
 spark_version: "1.6.0-bin-hadoop2.7.1"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"

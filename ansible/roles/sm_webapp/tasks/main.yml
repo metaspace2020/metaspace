@@ -1,87 +1,77 @@
 ---
 
-- name: install git
+- name: Install git
   apt: name=git state=present
   become: yes
 
-- name: create /opt/dev directory
+- name: Create /opt/dev directory
   file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
 
-- name: clone sm git repository
+- name: Clone sm git repository
   git: >
     dest=/opt/dev/sm
     repo=https://github.com/SpatialMetabolomics/SM_distributed.git
     update=yes
     version={{ sm_branch }}
 
-- name: install psycopg2 (required by ansible)
+- name: Install psycopg2 (required by ansible)
   apt: name=python-psycopg2 state=latest
   become: yes
 
-- name: create sm postgres user
+- name: Create sm postgres user
   postgresql_user: name=sm password={{ sm_postgres_password }} role_attr_flags=CREATEDB
   become: yes
   become_user: postgres
 
-- name: create sm postgres database
+- name: Create sm postgres database
   become: yes
   become_user: postgres
   postgresql_db: name=sm owner=sm encoding=UTF8
 
-- name: create sm schema
+- name: Create sm schema
   shell: psql -h localhost -U sm sm < /opt/dev/sm/scripts/create_schema.sql
   args:
     executable: /bin/bash
 
-- name: create /opt/data/sm_data directory
+- name: Create /opt/data/sm_data directory
   file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
 
-- name: create sm config files
+- name: Create sm config files
   shell: cp sm_log.cfg.template sm_log.cfg && cp config.json.template config.json
   args:
     chdir: /opt/dev/sm/conf
     creates: sm_log.cfg config.json
 
-- name: put postgres user password into config.json
+- name: Put postgres user password into config.json
   lineinfile:
     dest: /opt/dev/sm/conf/config.json
     regexp: '^\s+"password"'
     line: '    "password": "{{ sm_postgres_password }}"'
 
-- name: install SM into conda environment
+- name: Install SM into conda environment
   args:
     chdir: /opt/dev/sm
     executable: /bin/bash
   shell: "source {{ venv }}/bin/activate {{ conda_env }} && pip install -U ."
 
-- name: ensure that scripts/run.sh is executable
+- name: Ensure that scripts/run.sh is executable
   file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755
 
 - name: Make sure that a directory for the SM logs exists
   file: path={{ sm_home }}/logs state=directory mode=0755
 
-- name: Create config directory for supervisor
-  become: yes
-  file: path=/etc/supervisor state=directory mode=0700 owner=ubuntu group=ubuntu
-
-- name: Copy supervisor config file
-  copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf mode=0600 owner=ubuntu group=ubuntu
-
 - name: Copy sm-web-app supervisor config file
-  template: src=sm-web-app.supervisor.j2
-            dest=/etc/supervisor/sm-web-app.supervisor
-            mode=0600
-            owner=ubuntu
-            group=ubuntu
+  template: src=sm-web-app.supervisor.j2 dest=/etc/supervisor/sm-web-app.supervisor
+            mode=0600 owner=ubuntu group=ubuntu
 
-- name: download {{ hmdb_url }}
+- name: Download {{ hmdb_url }}
   get_url: url={{ hmdb_url }}
            dest={{ sm_home }}/hmdb.csv
            timeout=1200
 
-- name: import HMDB molecule database
+- name: Import HMDB molecule database
   shell: source {{ venv }}/bin/activate {{ conda_env }} && python scripts/import_molecule_formula_db.py HMDB hmdb.csv --yes=False
   args:
     chdir: "{{ sm_home }}"

@@ -8,6 +8,11 @@
   "elasticsearch": {
     "host": "{{ es_host }}"
   },
+  "rabbitmq": {
+    "host": "localhost",
+    "user": "sm",
+    "password": "{{ rabbitmq_password }}"
+  },
   "fs": {
     "base_path": "/opt/data/sm_data",
     "s3_base_path": "{{ sm_s3_path }}"

@@ -3,6 +3,8 @@
        dest={{ sm_home }}
        version={{ sm_branch }}
 
+- include: restart_supervisor.yml
+
 #    - name: Install all needed js libs
 #      shell: npm install
 #      args:
@@ -13,26 +15,4 @@
 #      args:
 #        chdir: "{{ project_path }}/webapp"
 
-- name: Check if supervisord daemon is running
-  shell: "{{ activate_venv }} && supervisorctl status"
-  args:
-    executable: /bin/bash
-  register: supervisorctl_status_out
 
-- debug: var=supervisorctl_status_out
-
-- name: Start supervisord daemon
-  shell: "{{ activate_venv }} && supervisord -c /etc/supervisor/supervisord.conf -l {{ sm_home }}/supervisord.log"
-  args:
-    executable: /bin/bash
-  when: "'no such file' in supervisorctl_status_out.stdout"
-
-- name: Restart the tornado web app running under supervisor
-  shell: "{{ activate_venv }} && supervisorctl restart all"
-  args:
-    executable: /bin/bash
-  when: "'sm-web-app' in supervisorctl_status_out.stdout"
-  register: command_result
-  failed_when: "'ERROR' in command_result.stdout"
-
-- debug: var=command_result

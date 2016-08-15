@@ -14,3 +14,5 @@
   shell: zip -rq sm.zip sm
   args:
     chdir: "{{ sm_home }}"
+
+- include: restart_supervisor.yml
