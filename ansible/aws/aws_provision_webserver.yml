@@ -6,17 +6,6 @@
   gather_facts: true
 
   roles:
-    - role: common
-      become: yes
-
-    - role: postgres
-      become: yes
-
-    - role: elasticsearch
-      become: yes
-
-    - role: miniconda
-
     - role: sm_webapp
       venv: "{{ miniconda_prefix }}"
       conda_env: "{{ miniconda_env.name }}"

@@ -55,7 +55,7 @@
             mode=0600
 
 - name: Make sure that a directory for the SM logs exists
-  file: path={{ sm_home }}/logs state=directory mode=0755
+  file: path={{ sm_home }}/logs/jobs state=directory mode=0755
 
 - name: Add Miniconda scripts to PATH as symlinks
   become: yes

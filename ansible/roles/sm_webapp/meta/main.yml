@@ -1,6 +1,9 @@
 ---
 
 dependencies:
+  - role: common
+    become: yes
+
   - role: postgres
     become: yes
 
