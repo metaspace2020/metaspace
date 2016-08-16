@@ -3,7 +3,7 @@
     "host": "localhost",
     "database": "sm",
     "user": "sm",
-    "password": "{{ postgres_sm_password }}"
+    "password": "{{ sm_postgres_password }}"
   },
   "elasticsearch": {
     "host": "localhost"
