@@ -25,7 +25,7 @@
     "spark.kryoserializer.buffer.max": "128m"
   },
   "slack": {
-    "channel": "",
-    "webhook_url": ""
+    "channel": "{{ slack_channel }}",
+    "webhook_url": "{{ slack_webhook_url }}"
   }
 }
