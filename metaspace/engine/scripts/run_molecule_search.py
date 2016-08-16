@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     SMConfig.set_path(args.sm_config_path)
 
-    fileHandler = FileHandler(filename='logs/{}.log'.format(args.ds_name.replace('/', '_')))
+    fileHandler = FileHandler(filename='logs/jobs/{}.log'.format(args.ds_name.replace('/', '_')))
     fileHandler.setLevel(DEBUG)
     fileHandler.setFormatter(Formatter(sm_log_formatters['SM']['format']))
     logger.addHandler(fileHandler)

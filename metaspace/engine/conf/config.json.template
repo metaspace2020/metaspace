@@ -23,5 +23,9 @@
     "spark.driver.memory": "4g",
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
     "spark.kryoserializer.buffer.max": "128m"
+  },
+  "slack": {
+    "channel": "",
+    "webhook_url": ""
   }
 }

@@ -3,19 +3,40 @@ import argparse
 import os
 import pika
 import json
-from subprocess import check_output
+from subprocess import check_call, STDOUT, CalledProcessError
+from requests import post
 
-from sm.engine.util import SMConfig
+from sm.engine.util import SMConfig, logger
+
+
+def post_to_slack(emoji, msg):
+    slack_conf = SMConfig.get_conf()['slack']
+
+    msg = {"channel": slack_conf['channel'],
+           "username": "webhookbot",
+           "text": ":{}:\n{}".format(emoji, msg),
+           "icon_emoji": ":robot_face:"}
+    post(slack_conf['webhook_url'], json=msg)
 
 
 def run_job_callback(ch, method, properties, body):
-    print(" [x] Received %r" % body)
+    msg = " [v] Received: {}".format(body)
+    logger.info(msg)
+    post_to_slack('new', msg)
 
-    job = json.loads(body)
-
-    print check_output(['scripts/run.sh', '{}/scripts/run_molecule_search.py'.format(os.getcwd()),
-                        job['ds_name'], job['input_path']],
-                       cwd=os.getcwd())
+    try:
+        job = json.loads(body)
+        FNULL = open(os.devnull, 'w')
+        check_call(['scripts/run.sh', '{}/scripts/run_molecule_search.py'.format(os.getcwd()),
+                    job['ds_name'], job['input_path']], cwd=os.getcwd(), stdout=FNULL, stderr=STDOUT)
+    except Exception:
+        msg = ' [x] Failed: {}'.format(body)
+        logger.error(msg)
+        post_to_slack('hankey', msg)
+    else:
+        msg = ' [v] Finished: {}'.format(body)
+        logger.info(msg)
+        post_to_slack('dart', msg)
 
 
 if __name__ == "__main__":
@@ -36,5 +57,5 @@ if __name__ == "__main__":
                      queue='sm_annotate',
                      no_ack=True)
 
-    print(' [*] Waiting for messages. To exit press CTRL+C')
+    logger.info(' [*] Waiting for messages...')
     ch.start_consuming()

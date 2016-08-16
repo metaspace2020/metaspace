@@ -56,7 +56,6 @@ class LocalWorkDir(object):
     def clean(self):
         try:
             cmd_check('rm -rf {}', self.ds_path)
-            # cmd_check("find {} -type f ! -name '*.json' -delete", self.ds_path)
         except CalledProcessError as e:
             logger.warning('Deleting interim local data files error: %s', e.message)
 
@@ -145,10 +144,6 @@ class WorkDirManager(object):
     @property
     def ds_config_path(self):
         return self.local_dir.ds_config_path
-        # if self.local_fs_only:
-        #     return self.local_dir.ds_config_path
-        # else:
-        #     return self.remote_dir.ds_config_path
 
     @property
     def txt_path(self):
@@ -217,14 +212,3 @@ class WorkDirManager(object):
             return self.local_dir.exists(path)
         else:
             return self.remote_dir.exists(path)
-
-    # def upload_data_to_hdfs(self):
-    #     """ If non local file system is used uploads plain text data files to it """
-    #     logger.info('Coping DS text file to HDFS...')
-    #     return_code = cmd(hdfs_prefix() + '-tests -e {}', hdfs_path(self.path))
-    #     if return_code:
-    #         cmd_check(hdfs_prefix() + '-mkdir -p {}', hdfs_path(self.path))
-    #         cmd_check(hdfs_prefix() + '-copyFromLocal {} {}',
-    #                   local_path(self.txt_path), hdfs_path(self.txt_path))
-    #         cmd_check(hdfs_prefix() + '-copyFromLocal {} {}',
-    #                   local_path(self.coord_path), hdfs_path(self.coord_path))

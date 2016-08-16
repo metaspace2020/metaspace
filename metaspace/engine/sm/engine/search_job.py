@@ -166,6 +166,9 @@ class SearchJob(object):
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.error('\n'.join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+            sys.exit(1)
+        else:
+            sys.exit()
         finally:
             if self.sc:
                 # self.sc.show_profiles()
