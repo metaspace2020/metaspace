@@ -47,12 +47,13 @@
             mode=0600
   when: aws_setup_access
 
+- name: Pull SM config from the remote host
+  fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
+         flat=yes fail_on_missing=yes
+
 - name: Put SM config to {{ sm_home }}/conf/config.json
-  template: src=sm_config.json.j2
-            dest={{ sm_home }}/conf/config.json
-            owner={{ spark_user }}
-            group={{ spark_user }}
-            mode=0600
+  template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
+            owner={{ spark_user }} group={{ spark_user }} mode=0600
 
 - name: Make sure that a directory for the SM logs exists
   file: path={{ sm_home }}/logs/jobs state=directory mode=0755

@@ -71,6 +71,9 @@ spark_env_extras_master:
   AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
   PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
+slack_channel:
+slack_webhook_url:
+
 # VIRTUAL MACHINES CONFIGURATION
 
 cluster_configuration:
