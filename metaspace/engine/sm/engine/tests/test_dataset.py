@@ -20,7 +20,7 @@ def test_get_sample_area_mask_correctness(sm_config, ds_config, spark_context):
             '0,0,0\n',
             '2,1,1\n'])
 
-        ds = Dataset(spark_context, 'ds_name', '', 'input_path', ds_config, work_dir_man_mock, None)
+        ds = Dataset(spark_context, 'ds_id', '', 'input_path', ds_config, work_dir_man_mock, None)
 
         #ds.norm_img_pixel_inds = np.array([0, 3])
 

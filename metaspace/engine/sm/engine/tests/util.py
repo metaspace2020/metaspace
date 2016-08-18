@@ -5,6 +5,7 @@ from pyspark import SparkContext, SparkConf
 
 from sm.engine.db import DB
 from sm.engine.util import proj_root
+from sm.engine.es_export import ESExporter
 
 
 @pytest.fixture(scope='module')
@@ -73,6 +74,7 @@ def sm_config():
             "password": "1321"
         },
         "elasticsearch": {
+            "index": "sm_test",
             "host": "localhost"
         },
         "fs": {
@@ -84,3 +86,10 @@ def sm_config():
             "executor.memory": "1g"
         }
     }
+
+
+@pytest.fixture()
+def create_sm_index(sm_config):
+    es_exp = ESExporter(sm_config)
+    es_exp.delete_index()
+    es_exp.create_index()

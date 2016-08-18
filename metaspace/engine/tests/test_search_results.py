@@ -24,7 +24,7 @@ def search_results(spark_context, sm_config, ds_config):
                                   columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm', 'fdr'])
     sf_adduct_peaksn = [(1, '+H', 2)]
 
-    res = SearchResults(0, 0, 0, 'ds_name', sf_adduct_peaksn, db_mock, sm_config, ds_config)
+    res = SearchResults(0, '2000-01-01_00h00m', 0, sf_adduct_peaksn, db_mock, sm_config, ds_config)
     res.sf_metrics_df = sf_metrics_df
     res.metrics = ['chaos', 'spatial', 'spectral']
     res.sf_iso_images = sf_iso_imgs
@@ -46,10 +46,10 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
 
     db = DB(sm_config['db'])
     try:
-        db.insert('INSERT INTO dataset VALUES (%s, %s, %s, %s, %s, %s)',
-                  [(0, 'name', 0, 'fpath', json.dumps({}), json.dumps({}))])
-        db.insert('INSERT INTO job VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
-                  [(0, 0, 0, '', 0, 0, None, None)])
+        db.insert('INSERT INTO dataset VALUES (%s, %s, %s, %s, %s)',
+                  [('2000-01-01_00:00', 'name', 'input_path', json.dumps({}), json.dumps({}))])
+        db.insert('INSERT INTO job VALUES (%s, %s, %s, %s, %s, %s)',
+                  [(0, 0, '2000-01-01_00:00', '', None, None)])
     except:
         raise
     finally:
@@ -61,7 +61,7 @@ def test_save_sf_iso_images_correct_db_call(spark_context, create_fill_sm_databa
                                              [csr_matrix([[100, 0, 0], [0, 0, 0]]),
                                               csr_matrix([[0, 0, 0], [0, 0, 10]])])])
     sf_adduct_peaksn = [(1, '+H', 2)]
-    res = SearchResults(0, 0, 0, 'ds_name', sf_adduct_peaksn, db_mock, sm_config, ds_config)
+    res = SearchResults(0, '2000-01-01_00h00m', 0, sf_adduct_peaksn, db_mock, sm_config, ds_config)
     res.sf_iso_images = sf_iso_imgs
     res.nrows, res.ncols = 2, 3
     res.store_sf_iso_images()

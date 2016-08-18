@@ -95,8 +95,8 @@ def zip_engine():
 def run_search():
     cmd = ['python',
            join(proj_root(), 'scripts/run_molecule_search.py'),
-           ds_name,
            input_dir_path,
+           '--ds-name', ds_name,
            '--ds-config', ds_config_path]
     check_call(cmd)
 

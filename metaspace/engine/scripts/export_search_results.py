@@ -26,7 +26,7 @@ EXPORT_SEL = ("SELECT sf_db.name, ds.name, sf, m.adduct, "
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Exporting search results into a csv file')
-    parser.add_argument('ds_name', type=str, help='Dataset name')
+    parser.add_argument('ds_id', type=str, help='Dataset name')
     parser.add_argument('csv_path', type=str, help='Path for the csv file')
     parser.add_argument('--config', dest='sm_config_path', type=str, help='SM config path')
     parser.set_defaults(sm_config_path=path.join(proj_root(), 'conf/config.json'))
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     export_rs = db.select(EXPORT_SEL, ds_config['database']['name'], args.ds_name,
                           isotope_gen_config['isocalc_sigma'], charge, isotope_gen_config['isocalc_pts_per_mz'])
 
-    header = ','.join(['formula_db', 'ds_name', 'sf', 'adduct', 'chaos', 'img_corr', 'pat_match',
+    header = ','.join(['formula_db', 'ds_id', 'sf', 'adduct', 'chaos', 'img_corr', 'pat_match',
                        'isocalc_sigma', 'isocalc_charge', 'isocalc_pts_per_mz', 'first_peak_mz']) + '\n'
     with open(args.csv_path, 'w') as f:
         f.write(header)

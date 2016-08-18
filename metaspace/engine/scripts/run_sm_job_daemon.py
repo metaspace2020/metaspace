@@ -14,7 +14,7 @@ def post_to_slack(emoji, msg):
 
     msg = {"channel": slack_conf['channel'],
            "username": "webhookbot",
-           "text": ":{}:\n{}".format(emoji, msg),
+           "text": ":{}:{}".format(emoji, msg),
            "icon_emoji": ":robot_face:"}
     post(slack_conf['webhook_url'], json=msg)
 

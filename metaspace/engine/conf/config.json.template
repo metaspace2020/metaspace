@@ -6,6 +6,7 @@
     "password": "{{ sm_postgres_password }}"
   },
   "elasticsearch": {
+    "index": "sm",
     "host": "{{ es_host }}"
   },
   "rabbitmq": {

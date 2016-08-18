@@ -25,11 +25,10 @@ from sm.engine.work_dir import WorkDirManager
 from sm.engine.es_export import ESExporter
 
 
-DS_ID_SEL = "SELECT id FROM dataset WHERE name = %s"
+JOB_ID_SEL = "SELECT id FROM job WHERE ds_id = %s"
 DB_ID_SEL = "SELECT id FROM formula_db WHERE name = %s"
 
-DEL_JOB_SQL = 'DELETE FROM job WHERE id = %s'
-JOB_INS = "INSERT INTO job VALUES (%s, %s, %s, 'SUCCEEDED', 0, 0, '2000-01-01 00:00:00', %s)"
+JOB_INS = "INSERT INTO job (db_id, ds_id, status, start, finish) VALUES (%s, %s, 'SUCCEEDED', %s, '2000-01-01 00:00:00')"
 ADDUCT_INS = 'INSERT INTO adduct VALUES (%s, %s)'
 
 
@@ -38,14 +37,15 @@ class SearchJob(object):
 
     Args
     ----------
+    ds_id : string
+        A technical identifier for the dataset
     ds_name : string
-        A dataset short name
+        A dataset name
     """
-    def __init__(self, client_email, ds_name):
+    def __init__(self, ds_id, ds_name):
         self.sm_config = SMConfig.get_conf()
-        self.client_email = client_email
+        self.ds_id = ds_id
         self.ds_name = ds_name
-        self.ds_id = None
         self.job_id = None
         self.sc = None
         self.db = None
@@ -71,7 +71,6 @@ class SearchJob(object):
             sconf.set("spark.hadoop.fs.s3a.secret.key", self.sm_config['aws']['aws_secret_access_key'])
             sconf.set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
 
-        # sconf.set("spark.python.profile", "true")
         self.sc = SparkContext(master=self.sm_config['spark']['master'], conf=sconf, appName='SM engine')
         if not self.sm_config['spark']['master'].startswith('local'):
             self.sc.addPyFile(join(local_path(proj_root()), 'sm.zip'))
@@ -85,11 +84,10 @@ class SearchJob(object):
     def store_job_meta(self):
         """ Store search job metadata in the database """
         logger.info('Storing job metadata')
-        self.ds_id = int(self.db.select_one(DS_ID_SEL, self.ds_name)[0])
-        self.job_id = self.ds_id
-        self.db.alter(DEL_JOB_SQL, self.job_id)
-        rows = [(self.job_id, self.sf_db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
+        rows = [(self.sf_db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self.db.insert(JOB_INS, rows)
+
+        self.job_id = self.db.select_one(JOB_ID_SEL, self.ds_id)[0]
 
         rows = [(self.job_id, adduct) for adduct in self.ds_config['isotope_generation']['adducts']]
         self.db.insert(ADDUCT_INS, rows)
@@ -112,7 +110,7 @@ class SearchJob(object):
             Clean all interim data files before starting molecule search
         """
         try:
-            self.wd_manager = WorkDirManager(self.ds_name)
+            self.wd_manager = WorkDirManager(self.ds_id)
             if clean:
                 self.wd_manager.clean()
 
@@ -125,7 +123,7 @@ class SearchJob(object):
             self._init_db()
 
             if not self.wd_manager.exists(self.wd_manager.txt_path):
-                imzml_converter = ImzmlTxtConverter(self.ds_name,
+                imzml_converter = ImzmlTxtConverter(self.ds_id,
                                                     self.wd_manager.local_dir.imzml_path,
                                                     self.wd_manager.local_dir.txt_path,
                                                     self.wd_manager.local_dir.coord_path)
@@ -134,7 +132,7 @@ class SearchJob(object):
                 if not self.wd_manager.local_fs_only:
                     self.wd_manager.upload_to_remote()
 
-            self.ds = Dataset(self.sc, self.ds_name, self.client_email, input_path, self.ds_config, self.wd_manager, self.db)
+            self.ds = Dataset(self.sc, self.ds_id, self.ds_name, input_path, self.ds_config, self.wd_manager, self.db)
             self.ds.save_ds_meta()
 
             self.store_job_meta()
@@ -151,7 +149,7 @@ class SearchJob(object):
             sf_metrics_df, sf_iso_images = search_alg.search()
 
             search_results = SearchResults(self.sf_db_id, self.ds_id, self.job_id,
-                                           self.ds_name, self.formulas.get_sf_adduct_peaksn(),
+                                           self.formulas.get_sf_adduct_peaksn(),
                                            self.db, self.sm_config, self.ds_config)
             # TODO: report number of molecule images saved to the DB
             search_results.sf_metrics_df = sf_metrics_df
@@ -161,14 +159,12 @@ class SearchJob(object):
             search_results.store()
 
             es = ESExporter(self.sm_config)
-            es.index_ds(self.db, self.ds_name, self.ds_config['database']['name'])
+            es.index_ds(self.db, self.ds_id)
 
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.error('\n'.join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
             sys.exit(1)
-        else:
-            sys.exit()
         finally:
             if self.sc:
                 # self.sc.show_profiles()

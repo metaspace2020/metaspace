@@ -1,5 +1,5 @@
-function drawLineChart(job_id, db_id, sf_id, adduct) {
-    var url = "/spectrum_line_chart_data/" + job_id + "/" + db_id + "/" + sf_id + "/" + adduct;
+function drawLineChart(ds_id, job_id, db_id, sf_id, adduct) {
+    var url = "/spectrum_line_chart_data/" + ds_id + "/" + job_id + "/" + db_id + "/" + sf_id + "/" + adduct;
     $.getJSON(url, function( data ) {
         var min_mz = data["mz_grid"]["min_mz"];
         var max_mz = data["mz_grid"]["max_mz"];

@@ -1,5 +1,5 @@
 from os.path import join, dirname
-
+from elasticsearch import Elasticsearch
 import pytest
 from fabric.api import local
 from fabric.context_managers import warn_only
@@ -9,7 +9,8 @@ from sm.engine.db import DB
 from sm.engine.search_job import SearchJob
 from sm.engine.util import SMConfig
 from sm.engine.fdr import DECOY_ADDUCTS
-from sm.engine.tests.util import create_test_db, drop_test_db, sm_config
+from sm.engine.es_export import ESExporter
+from sm.engine.tests.util import create_test_db, drop_test_db, sm_config, create_sm_index
 
 test_ds_name = 'imzml_example_ds'
 
@@ -20,7 +21,7 @@ ds_config_path = join(input_dir_path, 'config.json')
 
 
 @pytest.fixture()
-def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
+def create_fill_sm_database(create_test_db, drop_test_db, create_sm_index, sm_config):
     local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
 
     db = DB(sm_config['db'])
@@ -39,7 +40,8 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
 
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
-def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metrics_mock, create_fill_sm_database, sm_config):
+def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metrics_mock,
+                                  create_fill_sm_database, sm_config):
     get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
     filter_sf_metrics_mock.side_effect = lambda x: x
 
@@ -47,15 +49,15 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metri
 
     db = DB(sm_config['db'])
     try:
-        job = SearchJob(None, 'imzml_example_ds')
+        job = SearchJob('2000-01-01_00h00m', test_ds_name)
         job.run(input_dir_path, ds_config_path, clean=True)
 
         # dataset meta asserts
-        rows = db.select("SELECT name, file_path, img_bounds from dataset")
+        rows = db.select("SELECT id, name, input_path, img_bounds from dataset")
         img_bounds = {u'y': {u'max': 3, u'min': 1}, u'x': {u'max': 3, u'min': 1}}
-        file_path = join(dirname(__file__), 'data', 'imzml_example_ds')
+        input_path = join(dirname(__file__), 'data', test_ds_name)
         assert len(rows) == 1
-        assert rows[0] == (test_ds_name, file_path, img_bounds)
+        assert rows[0] == ('2000-01-01_00h00m', test_ds_name, input_path, img_bounds)
 
         # theoretical patterns asserts
         rows = db.select('SELECT db_id, sf_id, adduct, centr_mzs, centr_ints, prof_mzs, prof_ints '
@@ -86,6 +88,11 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metri
             max_int = max(max_int, r[-1])
             assert tuple(r[:2]) == (0, 10007)
         assert max_int
+
+        # ES asserts
+        es = Elasticsearch(hosts=[{"host": sm_config['elasticsearch']['host']}])
+        docs = es.search(index=sm_config['elasticsearch']['index'], body={"query" : {"match_all" : {}}})
+        assert ([d['_id'].startswith('2000-01-01_00h00m') for d in docs['hits']['hits']])
 
     finally:
         db.close()

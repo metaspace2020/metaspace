@@ -63,10 +63,9 @@ CREATE TABLE feedback (
 
 DROP TABLE IF EXISTS dataset CASCADE;
 CREATE TABLE dataset (
-	id	        serial,
-	name		text,
-	owner       decimal(21),
-	file_path   text,
+	id	        text,
+	name				text,
+	input_path  text,
 	img_bounds	json,
 	config      json,
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
@@ -75,7 +74,7 @@ CREATE INDEX ind_dataset_name ON dataset (name);
 
 DROP TABLE IF EXISTS coordinates;
 CREATE TABLE coordinates (
-	ds_id 	 int,
+	ds_id 	 text,
 	xs       int[],
 	ys       int[],
 	CONSTRAINT coord_ds_id_pk PRIMARY KEY(ds_id),
@@ -87,14 +86,12 @@ CREATE INDEX ind_coordinates_2 ON coordinates (ds_id);
 
 DROP TABLE IF EXISTS job CASCADE;
 CREATE TABLE job (
-	id 			int,
-	db_id       int,
-	ds_id	    int,
-	status		text,
-	tasks_done	int,
-	tasks_total	int,
-	start       timestamp,
-	finish      timestamp,
+	id serial NOT NULL,
+	db_id   int,
+	ds_id	  text,
+	status	text,
+	start   timestamp,
+	finish  timestamp,
 	CONSTRAINT job_id_pk PRIMARY KEY(id),
 	CONSTRAINT job_ds_id_fk FOREIGN KEY (ds_id)
       REFERENCES dataset (id) MATCH SIMPLE

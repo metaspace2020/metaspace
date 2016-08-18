@@ -53,9 +53,9 @@ class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
-def fetch_sigma_charge_ptspermz_ppm(db, job_id):
+def fetch_sigma_charge_ptspermz_ppm(db, ds_id):
     DS_CONF_SEL = 'SELECT config FROM dataset where id = %s'
-    ds_config = db.query(DS_CONF_SEL, job_id)[0]['config']  # job_id for now is equal to ds_id
+    ds_config = db.query(DS_CONF_SEL, ds_id)[0]['config']  # ds_id for now is equal to ds_id
     iso_gen_config = ds_config['isotope_generation']
     charge = '{}{}'.format(iso_gen_config['charge']['polarity'], iso_gen_config['charge']['n_charges'])
     ppm = ds_config['image_generation']['ppm']
@@ -68,8 +68,8 @@ class SFPeakMZsHandler(tornado.web.RequestHandler):
         return self.application.db
 
     @gen.coroutine
-    def get(self, job_id, db_id, sf_id, adduct):
-        sigma, charge, pts_per_mz, ppm = fetch_sigma_charge_ptspermz_ppm(self.db, job_id)
+    def get(self, ds_id, db_id, sf_id, adduct):
+        sigma, charge, pts_per_mz, ppm = fetch_sigma_charge_ptspermz_ppm(self.db, ds_id)
         sf = self.db.query(SF_SELECT, db_id, sf_id)[0].sf
         centr_mzs = sf_isotope_patterns(sf, adduct, sigma, charge).masses
         self.write(json.dumps(centr_mzs))
@@ -120,8 +120,8 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
         return sample_centr_ints / sample_centr_ints.max() * 100
 
     @gen.coroutine
-    def get(self, job_id, db_id, sf_id, adduct):
-        params = fetch_sigma_charge_ptspermz_ppm(self.db, job_id)
+    def get(self, ds_id, job_id, db_id, sf_id, adduct):
+        params = fetch_sigma_charge_ptspermz_ppm(self.db, ds_id)
         sigma, charge, pts_per_mz, ppm = params
 
         sf = self.db.query(SF_SELECT, db_id, sf_id)[0].sf

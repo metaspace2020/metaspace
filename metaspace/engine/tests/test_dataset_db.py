@@ -16,7 +16,7 @@ def fill_test_db(create_test_db, drop_test_db):
     try:
         db.alter('TRUNCATE dataset CASCADE')
         db.insert("INSERT INTO dataset VALUES (%s, %s, %s, %s, %s)",
-                  [(1, 'ds_name', '/ds_path', json.dumps({}), json.dumps({}))])
+                  [(1, 'ds_id', '/ds_path', json.dumps({}), json.dumps({}))])
         db.alter('TRUNCATE coordinates CASCADE')
     except:
         raise
@@ -36,12 +36,13 @@ def test_save_ds_meta_ds_doesnt_exist(spark_context, create_test_db, drop_test_d
             '0,1,1\n',
             '1,100,200\n'])
 
-        dataset = Dataset(spark_context, 'ds_name', '', 'input_path', ds_config, work_dir_man_mock, DB(sm_config['db']))
+        dataset = Dataset(spark_context, '2000-01-01_00:00', 'ds_id', 'input_path',
+                          ds_config, work_dir_man_mock, DB(sm_config['db']))
         dataset.save_ds_meta()
 
     db = DB(sm_config['db'])
-    ds_row = db.select_one('SELECT name, file_path, img_bounds, config from dataset')
-    assert ds_row == ('ds_name', 'input_path',
+    ds_row = db.select_one('SELECT id, name, input_path, img_bounds, config from dataset')
+    assert ds_row == ('2000-01-01_00:00', 'ds_id', 'input_path',
                       {u'x': {u'min': 1, u'max': 100}, u'y': {u'min': 1, u'max': 200}},
                       ds_config)
 
@@ -62,13 +63,13 @@ def test_save_ds_meta_ds_doesnt_exist(spark_context, create_test_db, drop_test_d
 #             '0,1,1\n',
 #             '1,100,200\n'])
 #
-#         dataset = Dataset(spark_context, 'ds_name', ds_config, work_dir_mock, DB(sm_config['db']))
+#         dataset = Dataset(spark_context, 'ds_id', ds_config, work_dir_mock, DB(sm_config['db']))
 #         dataset.save_ds_meta()
 #
 #     db = DB(sm_config['db'])
 #     ds_row = db.select('SELECT name, file_path, img_bounds, config from dataset')
 #     assert len(ds_row) == 1
-#     assert ds_row[0] == ('ds_name', '/ds_path', {}, {})
+#     assert ds_row[0] == ('ds_id', '/ds_path', {}, {})
 #
 #     coord_row = db.select('SELECT ds_id, xs, ys from coordinates')
 #     assert len(coord_row) == 0
