@@ -4,14 +4,15 @@
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
-import json
+import time
 from os.path import join
 import sys
 import traceback
 from pprint import pformat
 from datetime import datetime
-
 from pyspark import SparkContext, SparkConf
+from logging import Formatter, FileHandler, DEBUG
+
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
@@ -20,7 +21,7 @@ from sm.engine.formulas_segm import FormulasSegm
 from sm.engine.imzml_txt_converter import ImzmlTxtConverter
 from sm.engine.search_results import SearchResults
 from sm.engine.theor_peaks_gen import TheorPeaksGenerator
-from sm.engine.util import local_path, proj_root, SMConfig, logger
+from sm.engine.util import local_path, proj_root, SMConfig, logger, read_json, sm_log_formatters
 from sm.engine.work_dir import WorkDirManager
 from sm.engine.es_export import ESExporter
 
@@ -41,23 +42,32 @@ class SearchJob(object):
         A technical identifier for the dataset
     ds_name : string
         A dataset name
+    input_path : string
+            Path to the dataset folder with .imzML and .ibd files
     """
-    def __init__(self, ds_id, ds_name):
-        self.sm_config = SMConfig.get_conf()
+    def __init__(self, ds_id, ds_name, input_path, sm_config_path):
         self.ds_id = ds_id
         self.ds_name = ds_name
+        self.input_path = input_path
+
+        self.sm_config = None
+        self.ds_config = None
         self.job_id = None
         self.sc = None
         self.db = None
         self.ds = None
         self.fdr = None
         self.formulas = None
-        self.ds_config = None
         self.wd_manager = None
 
-    def _read_ds_config(self):
-        with open(self.wd_manager.ds_config_path) as f:
-            self.ds_config = json.load(f)
+        file_handler = FileHandler(filename='logs/jobs/{}.log'.format(self.ds_id))
+        file_handler.setLevel(DEBUG)
+        file_handler.setFormatter(Formatter(sm_log_formatters['sm']['format']))
+        logger.addHandler(file_handler)
+
+        SMConfig.set_path(sm_config_path)
+        self.sm_config = SMConfig.get_conf()
+        logger.debug('Using SM config:\n%s', pformat(self.sm_config))
 
     def _configure_spark(self):
         logger.info('Configuring Spark')
@@ -80,6 +90,10 @@ class SearchJob(object):
         self.db = DB(self.sm_config['db'])
         self.sf_db_id = self.db.select_one(DB_ID_SEL, self.ds_config['database']['name'])[0]
 
+        res = self.db.select('SELECT * FROM dataset WHERE id=%s', self.ds_id)
+        if res:
+            raise Exception('ds_id already exists: {}'.format(self.ds_id))
+
     # TODO: add tests
     def store_job_meta(self):
         """ Store search job metadata in the database """
@@ -92,7 +106,7 @@ class SearchJob(object):
         rows = [(self.job_id, adduct) for adduct in self.ds_config['isotope_generation']['adducts']]
         self.db.insert(ADDUCT_INS, rows)
 
-    def run(self, input_path, ds_config_path, clean=False):
+    def run(self, ds_config_path=None, clean=False):
         """ Entry point of the engine. Molecule search is completed in several steps:
          * Copying input data to the engine work dir
          * Conversion input data (imzML+ibd) to plain text format. One line - one spectrum data
@@ -102,21 +116,22 @@ class SearchJob(object):
 
         Args
         -------
-        input_path : string
-            Path to the dataset folder with .imzML and .ibd files
         ds_config_path: string
             Path to the dataset config file
         clean : bool
             Clean all interim data files before starting molecule search
         """
         try:
+            start = time.time()
+            logger.info("Processing...")
+
             self.wd_manager = WorkDirManager(self.ds_id)
             if clean:
                 self.wd_manager.clean()
 
-            self.wd_manager.copy_input_data(input_path, ds_config_path)
+            self.wd_manager.copy_input_data(self.input_path, ds_config_path)
 
-            self._read_ds_config()
+            self.ds_config = read_json(self.wd_manager.ds_config_path)
             logger.info('Dataset config:\n%s', pformat(self.ds_config))
 
             self._configure_spark()
@@ -131,7 +146,8 @@ class SearchJob(object):
                 if not self.wd_manager.local_fs_only:
                     self.wd_manager.upload_to_remote()
 
-            self.ds = Dataset(self.sc, self.ds_id, self.ds_name, input_path, self.ds_config, self.wd_manager, self.db)
+            self.ds = Dataset(self.sc, self.ds_id, self.ds_name, self.input_path,
+                              self.ds_config, self.wd_manager, self.db)
             self.ds.save_ds_meta()
 
             self.store_job_meta()
@@ -160,13 +176,16 @@ class SearchJob(object):
             es = ESExporter(self.sm_config)
             es.index_ds(self.db, self.ds_id)
 
+            logger.info("All done!")
+            time_spent = time.time() - start
+            logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
+
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logger.error('\n'.join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
             sys.exit(1)
         finally:
             if self.sc:
-                # self.sc.show_profiles()
                 self.sc.stop()
             if self.db:
                 self.db.close()

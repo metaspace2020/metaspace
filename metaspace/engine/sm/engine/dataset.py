@@ -2,10 +2,10 @@ import json
 
 import numpy as np
 
-from sm.engine.util import logger, SMConfig
+from sm.engine.util import logger, SMConfig, read_json
 
 
-DS_INSERT = "INSERT INTO dataset (id, name, input_path, img_bounds, config) VALUES (%s, %s, %s, %s, %s)"
+DS_INSERT = "INSERT INTO dataset (id, name, input_path, metadata, img_bounds, config) VALUES (%s, %s, %s,%s, %s, %s)"
 COORD_INSERT = "INSERT INTO coordinates VALUES (%s, %s, %s)"
 
 
@@ -28,13 +28,20 @@ class Dataset(object):
         self.db = db
         self.sc = sc
         self.id = id
-        self.name = name or id
+
+        self.wd_manager = wd_manager
+        self.metadata = read_json(self.wd_manager.ds_metadata_path)
+        self.name = self.choose_name(id, name, self.metadata)
+
         self.input_path = input_path
         self.ds_config = ds_config
-        self.wd_manager = wd_manager
         self.sm_config = SMConfig.get_conf()
 
         self._define_pixels_order()
+
+    @staticmethod
+    def choose_name(id, name, metadata):
+        return name or metadata.get('metaspace_options', {}).get('Dataset_Name', id)
 
     @staticmethod
     def _parse_coord_row(s):
@@ -113,9 +120,9 @@ class Dataset(object):
         """ Save dataset metadata (name, path, image bounds, coordinates) to the database """
         img_bounds = json.dumps({'x': {'min': self.min_x, 'max': self.max_x},
                                  'y': {'min': self.min_y, 'max': self.max_y}})
-        ds_config_json = json.dumps(self.ds_config)
 
-        ds_row = [(self.id, self.name, self.input_path, img_bounds, ds_config_json)]
+        ds_row = [(self.id, self.name, self.input_path,
+                   json.dumps(self.metadata), img_bounds, json.dumps(self.ds_config))]
         self.db.insert(DS_INSERT, ds_row)
 
         logger.info("Inserted into the dataset table: %s, %s", self.id, self.name)

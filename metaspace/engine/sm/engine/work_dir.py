@@ -10,7 +10,7 @@ from shutil import copytree, copy
 from subprocess import CalledProcessError
 
 import boto3
-import botocore
+from botocore.exceptions import ClientError
 from boto3.s3.transfer import S3Transfer
 
 from sm.engine.util import local_path, cmd_check, SMConfig, logger, s3_path
@@ -32,6 +32,10 @@ class LocalWorkDir(object):
     @property
     def ds_config_path(self):
         return join(self.ds_path, 'config.json')
+
+    @property
+    def ds_metadata_path(self):
+        return join(self.ds_path, 'meta.json')
 
     @property
     def imzml_path(self):
@@ -100,7 +104,7 @@ class S3WorkDir(object):
     def exists(self, path):
         try:
             self.s3.Object(*split_s3_path(path)).load()
-        except botocore.exceptions.ClientError as e:
+        except ClientError as e:
             if e.response['Error']['Code'] == "404":
                 return False
             else:
@@ -115,14 +119,12 @@ class S3WorkDir(object):
 
 
 class WorkDirManager(object):
-    """ Provides an access to a work directory for a processed dataset
+    """ Provides access to a work directory of the target dataset
 
     Args
     ----
     ds_name : str
         Dataset name (alias)
-    data_dir_path : str
-        Dataset config
     """
     def __init__(self, ds_name):
         self.sm_config = SMConfig.get_conf()
@@ -146,6 +148,10 @@ class WorkDirManager(object):
         return self.local_dir.ds_config_path
 
     @property
+    def ds_metadata_path(self):
+        return self.local_dir.ds_metadata_path
+
+    @property
     def txt_path(self):
         if self.local_fs_only:
             return self._spark_path(self.local_dir.txt_path)
@@ -166,17 +172,13 @@ class WorkDirManager(object):
             return s3_path(path)
 
     def copy_input_data(self, input_data_path, ds_config_path):
-        """ Copy imzML/ibd/config files from input path to a dataset work directory
+        """ Copy imzML/ibd/config/meta files from input path to a dataset work directory
 
         Args
         ----
         input_data_path : str
             Path to input files
         """
-        # if self.local_fs_only:
-        #     ex = self.local_dir.exists(self.local_dir.txt_path)
-        # else:
-        #     ex = self.remote_dir.exists(self.remote_dir.txt_path)
         if not self.local_dir.exists(self.local_dir.imzml_path):
             logger.info('Copying data from %s to %s', input_data_path, self.local_dir.ds_path)
 
@@ -203,7 +205,6 @@ class WorkDirManager(object):
     def upload_to_remote(self):
         self.remote_dir.copy(self.local_dir.coord_path, self.remote_dir.coord_path)
         self.remote_dir.copy(self.local_dir.txt_path, self.remote_dir.txt_path)
-        # self.remote_dir.copy(self.local_dir.ds_config_path, self.remote_dir.ds_config_path)
 
         self.local_dir.clean()
 

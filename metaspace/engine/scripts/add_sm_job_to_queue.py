@@ -2,6 +2,7 @@
 import argparse
 import pika
 import json
+from datetime import datetime as dt
 
 from sm.engine.util import SMConfig
 
@@ -23,6 +24,7 @@ if __name__ == "__main__":
     ch.queue_declare(queue='sm_annotate')
 
     m = {
+        'ds_id': dt.now().strftime("%Y-%m-%d_%Hh%Mm"),
         'ds_name': args.ds_name,
         'input_path': args.input_path
     }

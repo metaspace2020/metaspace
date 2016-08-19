@@ -1,9 +1,9 @@
 import json
 from collections import OrderedDict
 import numpy as np
+import logging
 
 from sm.engine.db import DB
-from sm.engine.util import logger
 
 
 METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
@@ -44,6 +44,9 @@ class SearchResults(object):
         self.ncols = None
         self.nrows = None
 
+        self.logger = logging.getLogger(name='sm-engine')
+        self.logger.setLevel(logging.WARNING)
+
     @staticmethod
     def _metrics_table_row_gen(job_id, db_id, metr_df, sf_adduct_peaksn, metrics):
         for ind, r in metr_df.reset_index().iterrows():
@@ -53,7 +56,7 @@ class SearchResults(object):
 
     def store_sf_img_metrics(self):
         """ Store formula image metrics in the database """
-        logger.info('Storing iso image metrics')
+        self.logger.info('Storing iso image metrics')
         rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id,
                                                 self.sf_metrics_df, self.sf_adduct_peaksn,
                                                 self.metrics))
@@ -94,12 +97,12 @@ class SearchResults(object):
             finally:
                 db.close()
 
-        logger.info('Storing iso images')
+        self.logger.info('Storing iso images')
 
         # self.sf_iso_images.flatMap(iso_img_row_gen).coalesce(32).foreachPartition(store_iso_img_rows)
         self.sf_iso_images.flatMap(iso_img_row_gen).foreachPartition(store_iso_img_rows)
 
     def store(self):
-        logger.info('Storing search results to the DB')
+        self.logger.info('Storing search results to the DB')
         self.store_sf_img_metrics()
         self.store_sf_iso_images()

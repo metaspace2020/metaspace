@@ -10,11 +10,10 @@ from os.path import join
 
 
 def proj_root():
-    # return dirname(dirname(dirname(__file__)))
     return os.getcwd()
 
 sm_log_formatters = {
-    'SM': {
+    'sm': {
         'format': '%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s'
     }
 }
@@ -25,7 +24,7 @@ dictConfig({
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
-            'formatter': 'SM',
+            'formatter': 'sm',
             'level': 'DEBUG',
         },
     },
@@ -34,13 +33,17 @@ dictConfig({
             'handlers': ['console'],
             'level': logging.DEBUG
         },
-        'SM': {
+        'sm-engine': {
+            'handlers': ['console'],
+            'level': logging.DEBUG
+        },
+        'sm-job-daemon': {
             'handlers': ['console'],
             'level': logging.DEBUG
         }
     }
 })
-logger = logging.getLogger(name='SM')
+logger = logging.getLogger(name='sm-engine')
 
 
 class SMConfig(object):
@@ -82,16 +85,8 @@ def local_path(path):
     return 'file://' + path
 
 
-# def hdfs_path(path):
-#     return 'hdfs://{}:9000{}'.format(SMConfig.get_conf()['hdfs']['namenode'], path)
-
-
 def s3_path(path):
     return 's3a://{}'.format(path)
-
-
-# def hdfs_prefix():
-#     return '{}/bin/hdfs dfs '.format(os.environ['HADOOP_HOME'])
 
 
 def _cmd(template, call_func, *args):
@@ -106,3 +101,14 @@ def cmd_check(template, *args):
 
 def cmd(template, *args):
     return _cmd(template, call, *args)
+
+
+def read_json(path):
+    res = {}
+    try:
+        with open(path) as f:
+            res = json.load(f)
+    except IOError as e:
+        logger.warn("Couldn't find %s file", path)
+    finally:
+        return res

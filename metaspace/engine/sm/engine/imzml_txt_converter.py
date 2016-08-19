@@ -49,7 +49,7 @@ def encode_coord_line(index, x, y):
 def get_track_progress(n_points, step, active=False):
     def track(i):
         if i % step == 0:
-            print("Wrote %.1f%% (%d of %d)" % (float(i) / n_points * 100, i, n_points))
+            logger.debug("Wrote %.1f%% (%d of %d)" % (float(i) / n_points * 100, i, n_points))
 
     def dont_track(i): pass
 

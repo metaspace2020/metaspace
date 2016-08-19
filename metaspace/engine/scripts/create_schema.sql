@@ -66,6 +66,7 @@ CREATE TABLE dataset (
 	id	        text,
 	name				text,
 	input_path  text,
+	metadata		json,
 	img_bounds	json,
 	config      json,
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)

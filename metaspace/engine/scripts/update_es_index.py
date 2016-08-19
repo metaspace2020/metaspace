@@ -10,13 +10,13 @@ def reindex_all_results(conf):
     db = DB(conf['db'])
     es_exp = ESExporter(conf)
 
-    es_exp.delete_index(name='sm')
-    es_exp.create_index(name='sm')
+    es_exp.delete_index()
+    es_exp.create_index()
 
-    ds_db_pairs = db.select("select name, config -> 'database'::text -> 'name'::text from dataset")
+    rows = db.select("select id from dataset")
 
-    for ds_name, db_name in ds_db_pairs:
-        es_exp.index_ds(db, ds_name, db_name)
+    for row in rows:
+        es_exp.index_ds(db, row[0])
 
 
 if __name__ == '__main__':

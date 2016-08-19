@@ -21,12 +21,12 @@ def test_index_ds_works(create_sm_index, sm_config):
 
     es = Elasticsearch()
 
-    d = es.get(index=sm_config['elasticsearch']['index'], id='2000-01-01_00h00m_H20_+H',
+    d = es.get(index=sm_config['elasticsearch']['index'], id='2000-01-01_00h00m_test_db_H20_+H',
                doc_type='annotation', _source=True)
     assert d['_source'] == {'ds_id': '2000-01-01_00h00m', 'db_name': 'test_db', 'sf': 'H20', 'adduct': '+H',
                             'comp_names': '', 'comp_ids': '', 'mz': '00100.0000'}
 
-    d = es.get(index=sm_config['elasticsearch']['index'], id='2000-01-01_00h00m_Au_+H',
+    d = es.get(index=sm_config['elasticsearch']['index'], id='2000-01-01_00h00m_test_db_Au_+H',
                doc_type='annotation', _source=True)
     assert d['_source'] == {'ds_id': '2000-01-01_00h00m', 'db_name': 'test_db', 'sf': 'Au', 'adduct': '+H',
                             'comp_names': '', 'comp_ids': '', 'mz': '00200.0000'}
