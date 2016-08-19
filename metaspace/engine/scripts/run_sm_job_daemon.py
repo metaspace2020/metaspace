@@ -5,6 +5,8 @@ import pika
 import json
 from subprocess import check_call, STDOUT, CalledProcessError
 from requests import post
+import traceback
+import sys
 
 from sm.engine.util import SMConfig, logger
 
@@ -12,11 +14,12 @@ from sm.engine.util import SMConfig, logger
 def post_to_slack(emoji, msg):
     slack_conf = SMConfig.get_conf()['slack']
 
-    msg = {"channel": slack_conf['channel'],
-           "username": "webhookbot",
-           "text": ":{}:{}".format(emoji, msg),
-           "icon_emoji": ":robot_face:"}
-    post(slack_conf['webhook_url'], json=msg)
+    if slack_conf['webhook_url']:
+        msg = {"channel": slack_conf['channel'],
+               "username": "webhookbot",
+               "text": ":{}:{}".format(emoji, msg),
+               "icon_emoji": ":robot_face:"}
+        post(slack_conf['webhook_url'], json=msg)
 
 
 def run_job_callback(ch, method, properties, body):
@@ -27,11 +30,14 @@ def run_job_callback(ch, method, properties, body):
     try:
         job = json.loads(body)
         FNULL = open(os.devnull, 'w')
-        check_call(['scripts/run.sh', '{}/scripts/run_molecule_search.py'.format(os.getcwd()),
-                    job['ds_name'], job['input_path']], cwd=os.getcwd(), stdout=FNULL, stderr=STDOUT)
-    except Exception:
+        cmd = ['scripts/run.sh', '{}/scripts/run_molecule_search.py'.format(os.getcwd()), job['input_path']]
+        if job['ds_name']:
+            cmd.extend(['--ds-name', job['ds_name']])
+        check_call(cmd, cwd=os.getcwd(), stdout=FNULL, stderr=STDOUT)
+    except Exception as e:
         msg = ' [x] Failed: {}'.format(body)
         logger.error(msg)
+        logger.error(''.join(traceback.format_exception(*sys.exc_info())))
         post_to_slack('hankey', msg)
     else:
         msg = ' [v] Finished: {}'.format(body)

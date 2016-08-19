@@ -123,8 +123,7 @@ class SearchJob(object):
             self._init_db()
 
             if not self.wd_manager.exists(self.wd_manager.txt_path):
-                imzml_converter = ImzmlTxtConverter(self.ds_id,
-                                                    self.wd_manager.local_dir.imzml_path,
+                imzml_converter = ImzmlTxtConverter(self.wd_manager.local_dir.imzml_path,
                                                     self.wd_manager.local_dir.txt_path,
                                                     self.wd_manager.local_dir.coord_path)
                 imzml_converter.convert()

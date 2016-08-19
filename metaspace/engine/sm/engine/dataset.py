@@ -28,7 +28,7 @@ class Dataset(object):
         self.db = db
         self.sc = sc
         self.id = id
-        self.name = name
+        self.name = name or id
         self.input_path = input_path
         self.ds_config = ds_config
         self.wd_manager = wd_manager

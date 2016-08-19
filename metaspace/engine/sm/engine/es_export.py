@@ -58,7 +58,7 @@ class ESExporter:
             to_index.append({
                 '_index': self.index,
                 '_type': 'annotation',
-                '_id': '{}_{}_{}'.format(d['ds_id'], d['sf'], d['adduct']),
+                '_id': '{}_{}_{}_{}'.format(d['ds_id'], d['db_name'], d['sf'], d['adduct']),
                 '_source': d
             })
 
@@ -87,6 +87,26 @@ class ESExporter:
 
         logger.info('Indexing documents: {}'.format(ds_id))
         self._index(annotations)
+
+    def delete_ds(self, ds_id):
+        body = {
+            "query": {
+                "constant_score": {
+                    "filter": {
+                        "bool": {
+                            "must": [
+                                {"term": {"ds_id": ds_id}}
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+        res = self.es.search(index=self.index, body=body, _source=False, size=10**9)['hits']['hits']
+        to_del = [{'_op_type': 'delete', '_index': 'sm', '_type': 'annotation', '_id': d['_id']} for d in res]
+
+        del_n, _ = bulk(self.es, to_del)
+        return del_n
 
     def create_index(self):
         body = {
