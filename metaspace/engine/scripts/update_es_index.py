@@ -1,7 +1,9 @@
 import argparse
 import json
 from os.path import abspath
+from logging.config import dictConfig
 
+from sm.engine.util import sm_log_config
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 
@@ -23,6 +25,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Reindex all dataset results')
     parser.add_argument('--conf', default='conf/config.json', help="SM config path")
     args = parser.parse_args()
+
+    dictConfig(sm_log_config)
 
     with open(abspath(args.conf)) as f:
         reindex_all_results(json.load(f))

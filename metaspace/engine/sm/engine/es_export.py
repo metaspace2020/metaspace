@@ -1,9 +1,10 @@
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk, BulkIndexError
 from elasticsearch.client import IndicesClient
+import logging
 
-from sm.engine.util import logger
 
+logger = logging.getLogger('sm-engine')
 
 COLUMNS = ["db_name", "ds_id", "ds_name", "sf", "comp_names", "comp_ids", "chaos", "image_corr", "pattern_match", "msm",
            "adduct", "job_id", "sf_id", "peaks", "db_id", "fdr", "mz"]
@@ -77,15 +78,15 @@ class ESExporter:
         try:
             bulk(self.es, to_delete)
         except BulkIndexError as e:
-            logger.warn('{} - {}'.format(e.args[0], e.args[1][1]))
+            logger.warning('{} - {}'.format(e.args[0], e.args[1][1]))
 
     def index_ds(self, db, ds_id):
         annotations = db.select(RESULTS_TABLE_SQL, ds_id)
 
-        logger.info('Deleting documents from the index: {}'.format(ds_id))
+        logger.info('Deleting {} documents from the index: {}'.format(len(annotations), ds_id))
         self._delete(annotations)
 
-        logger.info('Indexing documents: {}'.format(ds_id))
+        logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
         self._index(annotations)
 
     def delete_ds(self, ds_id):

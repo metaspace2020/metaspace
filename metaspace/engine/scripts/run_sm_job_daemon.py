@@ -7,9 +7,17 @@ from requests import post
 import traceback
 import sys
 import logging
+from logging import Formatter
+from logging.config import dictConfig
 
-from sm.engine.util import SMConfig
+from sm.engine.util import SMConfig, sm_log_formatters, sm_log_config
 from sm.engine.search_job import SearchJob
+
+
+def configure_loggers():
+    log_config = sm_log_config
+    log_config['loggers']['sm-engine']['handlers'] = ['console_warn', 'file']
+    dictConfig(log_config)
 
 
 def post_to_slack(emoji, msg):
@@ -24,30 +32,23 @@ def post_to_slack(emoji, msg):
 
 
 def run_job_callback(ch, method, properties, body):
-    msg = " [v] Received: {}".format(body)
-    logger.info(msg)
-    post_to_slack('new', msg)
+    log_msg = " [v] Received: {}".format(body)
+    daemon_logger.info(log_msg)
+    post_to_slack('new', log_msg)
 
     try:
         msg = json.loads(body)
-        # FNULL = open(os.devnull, 'w')
-        # cmd = ['scripts/run.sh', '{}/scripts/run_molecule_search.py'.format(os.getcwd()),
-        #        job['ds_id'], job['input_path']]
-        # if job['ds_name']:
-        #     cmd.extend(['--ds-name', job['ds_name']])
-        # check_call(cmd, cwd=os.getcwd(), stdout=FNULL, stderr=STDOUT)
-
         job = SearchJob(msg['ds_id'], msg['ds_name'], msg['input_path'], args.sm_config_path)
-        job.run(clean=True)
+        job.run()
 
     except BaseException as e:
         msg = ' [x] Failed: {}'.format(body)
-        logger.error(msg)
-        logger.error(''.join(traceback.format_exception(*sys.exc_info())))
+        daemon_logger.error(msg)
+        daemon_logger.error(''.join(traceback.format_exception(*sys.exc_info())))
         post_to_slack('hankey', msg)
     else:
         msg = ' [v] Finished: {}'.format(body)
-        logger.info(msg)
+        daemon_logger.info(msg)
         post_to_slack('dart', msg)
 
 
@@ -69,15 +70,8 @@ if __name__ == "__main__":
                      queue='sm_annotate',
                      no_ack=True)
 
-    sm_engine_logger = logging.getLogger(name='sm-engine')
-    for hdl in sm_engine_logger.handlers:
-        if type(hdl) is logging.StreamHandler:
-            hdl.setLevel(logging.ERROR)
+    configure_loggers()
+    daemon_logger = logging.getLogger('sm-job-daemon')
 
-    logger = logging.getLogger(name='sm-job-daemon')
-    hdl = logging.StreamHandler()
-    hdl.setLevel(logging.DEBUG)
-    logger.addHandler(hdl)
-
-    logger.info(' [*] Waiting for messages...')
+    daemon_logger.info(' [*] Waiting for messages...')
     ch.start_consuming()

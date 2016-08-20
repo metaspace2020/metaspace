@@ -6,6 +6,8 @@ import logging
 from sm.engine.db import DB
 
 
+logger = logging.getLogger('sm-engine')
+
 METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
 SF_ISO_IMGS_INS = 'INSERT INTO iso_image VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
 
@@ -44,8 +46,7 @@ class SearchResults(object):
         self.ncols = None
         self.nrows = None
 
-        self.logger = logging.getLogger(name='sm-engine')
-        self.logger.setLevel(logging.WARNING)
+        #self.logger = logging.getLogger(name='sm-engine')
 
     @staticmethod
     def _metrics_table_row_gen(job_id, db_id, metr_df, sf_adduct_peaksn, metrics):
@@ -56,7 +57,7 @@ class SearchResults(object):
 
     def store_sf_img_metrics(self):
         """ Store formula image metrics in the database """
-        self.logger.info('Storing iso image metrics')
+        logger.info('Storing iso image metrics')
         rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id,
                                                 self.sf_metrics_df, self.sf_adduct_peaksn,
                                                 self.metrics))
@@ -97,12 +98,12 @@ class SearchResults(object):
             finally:
                 db.close()
 
-        self.logger.info('Storing iso images')
+        logger.info('Storing iso images')
 
         # self.sf_iso_images.flatMap(iso_img_row_gen).coalesce(32).foreachPartition(store_iso_img_rows)
         self.sf_iso_images.flatMap(iso_img_row_gen).foreachPartition(store_iso_img_rows)
 
     def store(self):
-        self.logger.info('Storing search results to the DB')
+        logger.info('Storing search results to the DB')
         self.store_sf_img_metrics()
         self.store_sf_iso_images()

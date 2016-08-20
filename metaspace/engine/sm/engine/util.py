@@ -1,6 +1,3 @@
-from datetime import datetime, date, timedelta
-import numpy as np
-from os.path import realpath, dirname, join
 import os
 import json
 from subprocess import check_call, call
@@ -18,31 +15,43 @@ sm_log_formatters = {
     }
 }
 
-dictConfig({
+sm_log_config = {
     'version': 1,
     'formatters': sm_log_formatters,
     'handlers': {
-        'console': {
+        'console_warn': {
             'class': 'logging.StreamHandler',
             'formatter': 'sm',
-            'level': 'DEBUG',
+            'level': logging.WARNING,
         },
+        'console_debug': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'sm',
+            'level': logging.DEBUG,
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'formatter': 'sm',
+            'level': logging.DEBUG,
+            'filename': 'logs/sm-engine.log'
+        }
     },
     'loggers': {
-        'root': {
-            'handlers': ['console'],
-            'level': logging.DEBUG
-        },
+        # 'root': {
+        #     'handlers': ['console'],
+        #     'level': logging.DEBUG
+        # },
         'sm-engine': {
-            'handlers': ['console'],
+            'handlers': ['console_debug', 'file'],
             'level': logging.DEBUG
         },
         'sm-job-daemon': {
-            'handlers': ['console'],
+            'handlers': ['console_debug'],
             'level': logging.DEBUG
         }
     }
-})
+}
+
 logger = logging.getLogger(name='sm-engine')
 
 
@@ -77,7 +86,7 @@ class SMConfig(object):
                 with open(config_path) as f:
                     cls._config_dict = json.load(f)
             except IOError as e:
-                logger.warn(e)
+                logger.warning(e)
         return cls._config_dict
 
 
@@ -109,6 +118,6 @@ def read_json(path):
         with open(path) as f:
             res = json.load(f)
     except IOError as e:
-        logger.warn("Couldn't find %s file", path)
+        logger.warning("Couldn't find %s file", path)
     finally:
         return res

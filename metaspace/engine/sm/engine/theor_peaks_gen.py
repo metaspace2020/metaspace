@@ -1,12 +1,14 @@
 from os import makedirs
 from os.path import join, exists
+import logging
+from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 
 from sm.engine.db import DB
 from sm.engine.fdr import DECOY_ADDUCTS
-from sm.engine.util import logger
-from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
-
 from sm.engine.isocalc_wrapper import IsocalcWrapper
+
+
+logger = logging.getLogger('sm-engine')
 
 DB_ID_SEL = 'SELECT id FROM formula_db WHERE name = %s'
 AGG_FORMULA_SEL = 'SELECT id, sf FROM agg_formula where db_id = %s'

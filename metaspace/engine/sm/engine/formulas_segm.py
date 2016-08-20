@@ -1,7 +1,8 @@
 import pandas as pd
+import logging
 
-from sm.engine.util import logger
 
+logger = logging.getLogger('sm-engine')
 
 THEOR_PEAKS_TARGET_ADD_SEL = (
     'SELECT sf_id, adduct, centr_mzs[1:%s], centr_ints[1:%s] '

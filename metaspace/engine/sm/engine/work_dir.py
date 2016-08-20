@@ -8,12 +8,15 @@ import glob
 from os.path import exists, join, split
 from shutil import copytree, copy
 from subprocess import CalledProcessError
-
+import logging
 import boto3
 from botocore.exceptions import ClientError
 from boto3.s3.transfer import S3Transfer
 
-from sm.engine.util import local_path, cmd_check, SMConfig, logger, s3_path
+from sm.engine.util import local_path, cmd_check, SMConfig, s3_path
+
+
+logger = logging.getLogger('sm-engine')
 
 
 def split_s3_path(path):

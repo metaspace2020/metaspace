@@ -11,6 +11,7 @@ import traceback
 from pprint import pformat
 from datetime import datetime
 from pyspark import SparkContext, SparkConf
+import logging
 from logging import Formatter, FileHandler, DEBUG
 
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
@@ -21,10 +22,12 @@ from sm.engine.formulas_segm import FormulasSegm
 from sm.engine.imzml_txt_converter import ImzmlTxtConverter
 from sm.engine.search_results import SearchResults
 from sm.engine.theor_peaks_gen import TheorPeaksGenerator
-from sm.engine.util import local_path, proj_root, SMConfig, logger, read_json, sm_log_formatters
+from sm.engine.util import local_path, proj_root, SMConfig, read_json, sm_log_formatters
 from sm.engine.work_dir import WorkDirManager
 from sm.engine.es_export import ESExporter
 
+
+logger = logging.getLogger('sm-engine')
 
 JOB_ID_SEL = "SELECT id FROM job WHERE ds_id = %s"
 DB_ID_SEL = "SELECT id FROM formula_db WHERE name = %s"
@@ -43,7 +46,9 @@ class SearchJob(object):
     ds_name : string
         A dataset name
     input_path : string
-            Path to the dataset folder with .imzML and .ibd files
+        Path to the dataset folder with .imzML and .ibd files
+    sm_config_path : string
+        Path to the sm-engine config file
     """
     def __init__(self, ds_id, ds_name, input_path, sm_config_path):
         self.ds_id = ds_id
@@ -59,11 +64,6 @@ class SearchJob(object):
         self.fdr = None
         self.formulas = None
         self.wd_manager = None
-
-        file_handler = FileHandler(filename='logs/jobs/{}.log'.format(self.ds_id))
-        file_handler.setLevel(DEBUG)
-        file_handler.setFormatter(Formatter(sm_log_formatters['sm']['format']))
-        logger.addHandler(file_handler)
 
         SMConfig.set_path(sm_config_path)
         self.sm_config = SMConfig.get_conf()
@@ -106,7 +106,7 @@ class SearchJob(object):
         rows = [(self.job_id, adduct) for adduct in self.ds_config['isotope_generation']['adducts']]
         self.db.insert(ADDUCT_INS, rows)
 
-    def run(self, ds_config_path=None, clean=False):
+    def run(self, ds_config_path=None):
         """ Entry point of the engine. Molecule search is completed in several steps:
          * Copying input data to the engine work dir
          * Conversion input data (imzML+ibd) to plain text format. One line - one spectrum data
@@ -118,17 +118,13 @@ class SearchJob(object):
         -------
         ds_config_path: string
             Path to the dataset config file
-        clean : bool
-            Clean all interim data files before starting molecule search
         """
         try:
             start = time.time()
-            logger.info("Processing...")
+            logger.info("Processing ds_id: %s ...", self.ds_id)
 
             self.wd_manager = WorkDirManager(self.ds_id)
-            if clean:
-                self.wd_manager.clean()
-
+            self.wd_manager.clean()
             self.wd_manager.copy_input_data(self.input_path, ds_config_path)
 
             self.ds_config = read_json(self.wd_manager.ds_config_path)
@@ -166,7 +162,6 @@ class SearchJob(object):
             search_results = SearchResults(self.sf_db_id, self.ds_id, self.job_id,
                                            self.formulas.get_sf_adduct_peaksn(),
                                            self.db, self.sm_config, self.ds_config)
-            # TODO: report number of molecule images saved to the DB
             search_results.sf_metrics_df = sf_metrics_df
             search_results.sf_iso_images = sf_iso_images
             search_results.metrics = search_alg.metrics
@@ -179,11 +174,10 @@ class SearchJob(object):
             logger.info("All done!")
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
+            logger.info('*'*100)
 
         except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            logger.error('\n'.join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
-            sys.exit(1)
+            logger.error('Job failed', exc_info=True)
         finally:
             if self.sc:
                 self.sc.stop()

@@ -5,13 +5,16 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 from os.path import exists
-
+import logging
 import numpy as np
 import scipy.signal as signal
 from pyMSpec.centroid_detection import gradient
 from pyimzml.ImzMLParser import ImzMLParser
 
-from sm.engine.util import SMConfig, logger
+from sm.engine.util import SMConfig
+
+
+logger = logging.getLogger('sm-engine')
 
 
 def preprocess_spectrum(mzs, ints):

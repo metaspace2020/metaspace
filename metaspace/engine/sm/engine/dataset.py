@@ -1,9 +1,11 @@
 import json
-
 import numpy as np
+import logging
 
-from sm.engine.util import logger, SMConfig, read_json
+from sm.engine.util import SMConfig, read_json
 
+
+logger = logging.getLogger('sm-engine')
 
 DS_INSERT = "INSERT INTO dataset (id, name, input_path, metadata, img_bounds, config) VALUES (%s, %s, %s,%s, %s, %s)"
 COORD_INSERT = "INSERT INTO coordinates VALUES (%s, %s, %s)"

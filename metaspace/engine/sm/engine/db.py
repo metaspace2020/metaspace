@@ -12,8 +12,10 @@ import psycopg2.extensions
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 import psycopg2.extras
+import logging
 
-from sm.engine.util import logger
+
+logger = logging.getLogger('sm-engine')
 
 
 def db_decor(func):

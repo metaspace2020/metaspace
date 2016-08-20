@@ -4,9 +4,10 @@ import numpy as np
 from cpyMSpec.legacy_interface import complete_isodist
 from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
+import logging
 
-from sm.engine.util import logger
 
+logger = logging.getLogger('sm-engine')
 
 Centroids = namedtuple('Centroids', ['mzs', 'ints'])
 
