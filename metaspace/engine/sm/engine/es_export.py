@@ -30,7 +30,7 @@ SELECT
     tp.centr_mzs[1] AS mz
 FROM iso_image_metrics m
 JOIN formula_db sf_db ON sf_db.id = m.db_id
-JOIN agg_formula f ON m.db_id = f.db_id AND f.id = m.sf_id
+JOIN sum_formula f ON m.db_id = f.db_id AND f.id = m.sf_id
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
 JOIN theor_peaks tp ON tp.sf = f.sf AND tp.adduct = m.adduct

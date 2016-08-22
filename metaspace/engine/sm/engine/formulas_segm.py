@@ -7,7 +7,7 @@ logger = logging.getLogger('sm-engine')
 THEOR_PEAKS_TARGET_ADD_SEL = (
     'SELECT sf.id, adduct, centr_mzs[1:%s], centr_ints[1:%s] '
     'FROM theor_peaks p '
-    'JOIN agg_formula sf ON sf.sf = p.sf AND sf.db_id = %s '
+    'JOIN sum_formula sf ON sf.sf = p.sf AND sf.db_id = %s '
     'WHERE adduct = ANY(%s) AND ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s '
     'AND charge = %s '
     'ORDER BY sf.id, adduct')
@@ -16,7 +16,7 @@ THEOR_PEAKS_TARGET_ADD_SEL = (
 THEOR_PEAKS_DECOY_ADD_SEL = (
     'SELECT DISTINCT sf.id, decoy_add as adduct, centr_mzs[1:%s], centr_ints[1:%s] '
     'FROM theor_peaks p '
-    'JOIN agg_formula sf ON sf.sf = p.sf AND sf.db_id = %s '
+    'JOIN sum_formula sf ON sf.sf = p.sf AND sf.db_id = %s '
     'JOIN target_decoy_add td on td.job_id = %s '
     'AND td.db_id = sf.db_id AND td.sf_id = sf.id AND td.decoy_add = p.adduct '
     'WHERE ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s AND charge = %s '

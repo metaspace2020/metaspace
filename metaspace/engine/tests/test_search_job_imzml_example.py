@@ -30,7 +30,7 @@ def create_fill_sm_database(create_test_db, drop_test_db, create_sm_index, sm_co
                   [(0, '2016-01-01', 'HMDB')])
         db.insert('INSERT INTO formula VALUES (%s, %s, %s, %s, %s)',
                   [(100, 0, '00001', 'compound_name', 'C12H24O')])
-        db.insert('INSERT INTO agg_formula VALUES (%s, %s, %s, %s, %s)',
+        db.insert('INSERT INTO sum_formula VALUES (%s, %s, %s, %s, %s)',
                   [(10007, 0, 'C12H24O', ['00001'], ['compound_name'])])
     except:
         raise

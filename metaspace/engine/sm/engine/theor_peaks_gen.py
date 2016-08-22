@@ -12,7 +12,7 @@ from sm.engine.isocalc_wrapper import IsocalcWrapper
 logger = logging.getLogger('sm-engine')
 
 DB_ID_SEL = 'SELECT id FROM formula_db WHERE name = %s'
-AGG_FORMULA_SEL = 'SELECT sf FROM agg_formula where db_id = %s'
+SUM_FORMULA_SEL = 'SELECT sf FROM sum_formula where db_id = %s'
 SF_ADDUCT_SEL = ('SELECT sf, adduct FROM theor_peaks p '
                  'WHERE ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s')
 
@@ -60,7 +60,7 @@ class TheorPeaksGenerator(object):
         logger.info('Running theoretical peaks generation')
 
         db_id = self.db.select_one(DB_ID_SEL, self.ds_config['database']['name'])[0]
-        sf_list = [row[0] for row in self.db.select(AGG_FORMULA_SEL, db_id)]
+        sf_list = [row[0] for row in self.db.select(SUM_FORMULA_SEL, db_id)]
 
         stored_sf_adduct = self.db.select(SF_ADDUCT_SEL,
                                           self.isocalc_wrapper.sigma,
@@ -87,7 +87,7 @@ class TheorPeaksGenerator(object):
         : list
             List of (formula id, formula, adduct) triples which don't have theoretical patterns saved in the database
         """
-        assert sf_list, 'Emtpy agg_formula table!'
+        assert sf_list, 'Emtpy sum_formula table!'
         adducts = set(self.adducts) | set(DECOY_ADDUCTS)
         cand = [(sf, a) for sf in sf_list for a in adducts]
         return filter(lambda (sf, adduct): (sf, adduct) not in stored_sf_adduct, cand)
@@ -106,7 +106,6 @@ class TheorPeaksGenerator(object):
         """
         logger.info('Generating missing peaks')
         formatted_iso_peaks = self.isocalc_wrapper.formatted_iso_peaks
-        db_id = self.db.select_one(DB_ID_SEL, self.ds_config['database']['name'])[0]
         n = 10000
         for i in xrange(0, len(sf_adduct_cand), n):
             sf_adduct_cand_rdd = self.sc.parallelize(sf_adduct_cand[i:i+n], numSlices=128)

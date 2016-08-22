@@ -29,7 +29,7 @@ ds_config_path = join(input_dir_path, 'config.json')
 SEARCH_RES_SELECT = ("select sf, adduct, stats "
                      "from iso_image_metrics s "
                      "join formula_db sf_db on sf_db.id = s.db_id "
-                     "join agg_formula f on f.id = s.sf_id AND sf_db.id = f.db_id "
+                     "join sum_formula f on f.id = s.sf_id AND sf_db.id = f.db_id "
                      "join job j on j.id = s.job_id "
                      "join dataset ds on ds.id = j.ds_id "
                      "where ds.name = %s and sf_db.name = %s "

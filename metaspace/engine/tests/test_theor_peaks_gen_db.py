@@ -14,7 +14,7 @@ def create_fill_test_db(create_test_db, drop_test_db):
         db.alter('TRUNCATE formula_db CASCADE')
         db.insert('INSERT INTO formula_db VALUES (%s, %s, %s)', [(0, '2016-01-01', 'HMDB')])
         db.insert('INSERT INTO formula VALUES (%s, %s, %s, %s, %s)', [(9, 0, '04138', 'Au', 'Gold')])
-        db.insert('INSERT INTO agg_formula VALUES (%s, %s, %s, %s, %s)', [(9, 0, 'Au', ['04138'], ['Gold'])])
+        db.insert('INSERT INTO sum_formula VALUES (%s, %s, %s, %s, %s)', [(9, 0, 'Au', ['04138'], ['Gold'])])
         db.alter('TRUNCATE theor_peaks CASCADE')
         db.insert('INSERT INTO theor_peaks VALUES (%s, %s, %s, %s, %s, %s, %s)',
                   [('Au', '+H', 0.01, 1, 10000, [100, 200], [10, 1])])

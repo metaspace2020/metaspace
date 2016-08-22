@@ -22,7 +22,7 @@ from tornado import gen
 from tornado.ioloop import IOLoop
 
 
-SF_SELECT = "SELECT sf FROM agg_formula WHERE db_id=%s AND id=%s"
+SF_SELECT = "SELECT sf FROM sum_formula WHERE db_id=%s AND id=%s"
 
 
 @gen.coroutine
