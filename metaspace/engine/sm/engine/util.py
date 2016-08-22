@@ -52,6 +52,11 @@ sm_log_config = {
     }
 }
 
+
+def init_logger(log_config=None):
+    dictConfig(log_config if log_config else sm_log_config)
+
+
 logger = logging.getLogger(name='sm-engine')
 
 

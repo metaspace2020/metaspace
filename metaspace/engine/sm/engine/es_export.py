@@ -33,7 +33,7 @@ JOIN formula_db sf_db ON sf_db.id = m.db_id
 JOIN agg_formula f ON m.db_id = f.db_id AND f.id = m.sf_id
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
-JOIN theor_peaks tp ON tp.db_id = sf_db.id AND tp.sf_id = m.sf_id AND tp.adduct = m.adduct
+JOIN theor_peaks tp ON tp.sf = f.sf AND tp.adduct = m.adduct
 	AND tp.sigma::real = (ds.config->'isotope_generation'->>'isocalc_sigma')::real
 	AND tp.charge = (CASE WHEN ds.config->'isotope_generation'->'charge'->>'polarity' = '+' THEN 1 ELSE -1 END)
 	AND tp.pts_per_mz = (ds.config->'isotope_generation'->>'isocalc_pts_per_mz')::int

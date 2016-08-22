@@ -7,17 +7,15 @@ from requests import post
 import traceback
 import sys
 import logging
-from logging import Formatter
-from logging.config import dictConfig
 
-from sm.engine.util import SMConfig, sm_log_formatters, sm_log_config
+from sm.engine.util import SMConfig, sm_log_formatters, sm_log_config, init_logger
 from sm.engine.search_job import SearchJob
 
 
 def configure_loggers():
     log_config = sm_log_config
     log_config['loggers']['sm-engine']['handlers'] = ['console_warn', 'file']
-    dictConfig(log_config)
+    init_logger(log_config)
 
 
 def post_to_slack(emoji, msg):

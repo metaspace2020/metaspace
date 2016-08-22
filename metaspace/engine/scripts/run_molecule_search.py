@@ -3,10 +3,9 @@ Script for running molecule search
 """
 import argparse
 import sys
-from logging.config import dictConfig
 from datetime import datetime as dt
 
-from sm.engine.util import SMConfig, logger, sm_log_config
+from sm.engine.util import SMConfig, logger, sm_log_config, init_logger
 from sm.engine.search_job import SearchJob
 
 
@@ -19,7 +18,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    dictConfig(sm_log_config)
+    init_logger()
 
     ds_id = dt.now().strftime("%Y-%m-%d_%Hh%Mm")
     job = SearchJob(ds_id, args.ds_name, args.input_path, args.sm_config_path)

@@ -171,26 +171,20 @@ WITH (
   autovacuum_analyze_threshold=5000
 );
 
+
 DROP TABLE IF EXISTS theor_peaks;
 CREATE TABLE theor_peaks (
-  db_id       int,
-	sf_id			  int,
+  sf          text,
 	adduct		  text,
 	sigma       real,
 	charge      int,
 	pts_per_mz  int,
 	centr_mzs		double precision[],
 	centr_ints	double precision[],
-	prof_mzs		double precision[],
-	prof_ints		double precision[],
-	CONSTRAINT theor_peaks_sf_id_adduct_pk PRIMARY KEY(db_id, sf_id, adduct, sigma, charge, pts_per_mz),
-	CONSTRAINT theor_peaks_db_id_sf_id_fk FOREIGN KEY (db_id, sf_id)
-      REFERENCES agg_formula (db_id, id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE CASCADE
+	CONSTRAINT theor_peaks_sf_id_adduct_pk PRIMARY KEY(sf, adduct, sigma, charge, pts_per_mz)
 )
 WITH (
   autovacuum_enabled=true,
   autovacuum_vacuum_threshold=5000,
   autovacuum_analyze_threshold=5000
 );
-CREATE INDEX ind_theor_peaks_2 ON theor_peaks(db_id, sf_id);

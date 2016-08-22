@@ -5,12 +5,11 @@ import argparse
 import json
 from datetime import datetime as dt
 from os import path
-
 import pandas as pd
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 
 from sm.engine.db import DB
-from sm.engine.util import proj_root, logger
+from sm.engine.util import proj_root, logger, init_logger
 
 
 def del_prev_formula_db(db, db_name, confirmed=False):
@@ -67,6 +66,8 @@ if __name__ == "__main__":
     parser.add_argument('--config', type=str, help='SM config path')
     parser.set_defaults(sep='\t', confirmed=False)
     args = parser.parse_args()
+
+    init_logger()
 
     if args.config:
         sm_config = json.load(open(args.config))

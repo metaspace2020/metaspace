@@ -49,8 +49,8 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metri
 
     db = DB(sm_config['db'])
     try:
-        job = SearchJob('2000-01-01_00h00m', test_ds_name)
-        job.run(input_dir_path, ds_config_path, clean=True)
+        job = SearchJob('2000-01-01_00h00m', test_ds_name, input_dir_path, '')
+        job.run(ds_config_path)
 
         # dataset meta asserts
         rows = db.select("SELECT id, name, input_path, img_bounds from dataset")
@@ -60,13 +60,13 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metri
         assert rows[0] == ('2000-01-01_00h00m', test_ds_name, input_path, img_bounds)
 
         # theoretical patterns asserts
-        rows = db.select('SELECT db_id, sf_id, adduct, centr_mzs, centr_ints, prof_mzs, prof_ints '
+        rows = db.select('SELECT sf, adduct, centr_mzs, centr_ints '
                          'FROM theor_peaks '
                          'ORDER BY adduct')
 
         assert len(rows) == 3 + len(DECOY_ADDUCTS)
         for r in rows:
-            assert r[3] and r[4]
+            assert r[2] and r[3]
 
         # image metrics asserts
         rows = db.select(('SELECT db_id, sf_id, adduct, peaks_n, stats FROM iso_image_metrics '

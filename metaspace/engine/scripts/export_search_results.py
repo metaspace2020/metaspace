@@ -19,7 +19,7 @@ EXPORT_SEL = ("SELECT sf_db.name, ds.name, sf, m.adduct, "
               "JOIN agg_formula f ON f.id = m.sf_id AND sf_db.id = f.db_id "
               "JOIN job j ON j.id = m.job_id "
               "JOIN dataset ds ON ds.id = j.ds_id "
-              "JOIN theor_peaks tp ON tp.db_id = sf_db.id AND tp.sf_id = m.sf_id AND tp.adduct = m.adduct "
+              "JOIN theor_peaks tp ON tp.sf = f.sf AND tp.adduct = m.adduct "
               "WHERE sf_db.name = %s AND ds.name = %s "
               "AND ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s")
 

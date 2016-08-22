@@ -55,7 +55,7 @@ class IndexHandler(tornado.web.RequestHandler):
 
 def fetch_sigma_charge_ptspermz_ppm(db, ds_id):
     DS_CONF_SEL = 'SELECT config FROM dataset where id = %s'
-    ds_config = db.query(DS_CONF_SEL, ds_id)[0]['config']  # ds_id for now is equal to ds_id
+    ds_config = db.query(DS_CONF_SEL, ds_id)[0]['config']
     iso_gen_config = ds_config['isotope_generation']
     charge = '{}{}'.format(iso_gen_config['charge']['polarity'], iso_gen_config['charge']['n_charges'])
     ppm = ds_config['image_generation']['ppm']

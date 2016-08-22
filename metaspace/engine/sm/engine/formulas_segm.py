@@ -5,25 +5,37 @@ import logging
 logger = logging.getLogger('sm-engine')
 
 THEOR_PEAKS_TARGET_ADD_SEL = (
-    'SELECT sf_id, adduct, centr_mzs[1:%s], centr_ints[1:%s] '
+    'SELECT sf.id, adduct, centr_mzs[1:%s], centr_ints[1:%s] '
     'FROM theor_peaks p '
-    'JOIN formula_db db ON db.id = p.db_id '
-    'WHERE db.id = %s AND adduct = ANY(%s) AND ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s '
+    'JOIN agg_formula sf ON sf.sf = p.sf AND sf.db_id = %s '
+    'WHERE adduct = ANY(%s) AND ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s '
     'AND charge = %s '
-    'ORDER BY sf_id, adduct')
+    'ORDER BY sf.id, adduct')
 
-# TODO: target_decoy_add table is getting too big
+# FIXME: target_decoy_add table is getting too big
 THEOR_PEAKS_DECOY_ADD_SEL = (
-    'SELECT DISTINCT p.sf_id, decoy_add as adduct, centr_mzs[1:%s], centr_ints[1:%s] '
+    'SELECT DISTINCT sf.id, decoy_add as adduct, centr_mzs[1:%s], centr_ints[1:%s] '
     'FROM theor_peaks p '
-    'JOIN formula_db db ON db.id = p.db_id '
+    'JOIN agg_formula sf ON sf.sf = p.sf AND sf.db_id = %s '
     'JOIN target_decoy_add td on td.job_id = %s '
-    'AND td.db_id = p.db_id AND td.sf_id = p.sf_id AND td.decoy_add = p.adduct '
-    'WHERE db.id = %s AND ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s AND charge = %s '
-    'ORDER BY sf_id, adduct')
+    'AND td.db_id = sf.db_id AND td.sf_id = sf.id AND td.decoy_add = p.adduct '
+    'WHERE ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s AND charge = %s '
+    'ORDER BY sf.id, adduct')
 
 
+# TODO: add tests
 class FormulasSegm(object):
+    """ A class representing a molecule database to search through.
+        Provides several data structured used in the engine to speedup computation
+
+        Args
+        ----------
+        job_id: int
+        db_id: int
+        ds_config : dict
+            Dataset configuration
+        db : engine.db.DB
+        """
     ISOTOPIC_PEAK_N = 4
 
     def __init__(self, job_id, db_id, ds_config, db):
@@ -39,7 +51,7 @@ class FormulasSegm(object):
         assert target_sf_peaks_rs, 'No formulas matching the criteria were found in theor_peaks! (target)'
 
         decoy_sf_peaks_rs = db.select(THEOR_PEAKS_DECOY_ADD_SEL, self.ISOTOPIC_PEAK_N, self.ISOTOPIC_PEAK_N,
-                                      self.job_id, self.db_id,
+                                      self.db_id, self.job_id,
                                       iso_gen_conf['isocalc_sigma'], iso_gen_conf['isocalc_pts_per_mz'], charge)
         assert decoy_sf_peaks_rs, 'No formulas matching the criteria were found in theor_peaks! (decoy)'
 

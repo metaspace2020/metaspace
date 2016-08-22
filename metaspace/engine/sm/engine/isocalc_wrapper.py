@@ -74,24 +74,18 @@ class IsocalcWrapper(object):
     def slice_array(mzs, lower, upper):
         return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
 
-    def _format_peak_str(self, db_id, sf_id, adduct, centroids):
-        return '%d\t%d\t%s\t%.6f\t%d\t%d\t{%s}\t{%s}\t{%s}\t{%s}' % (
-            db_id, sf_id, adduct,
+    def _format_peak_str(self, sf, adduct, centroids):
+        return '%s\t%s\t%.6f\t%d\t%d\t{%s}\t{%s}' % (
+            sf, adduct,
             round(self.sigma, 6), self.charge, self.pts_per_mz,
             list_of_floats_to_str(centroids.mzs),
-            list_of_floats_to_str(centroids.ints),
-            '',
-            ''
+            list_of_floats_to_str(centroids.ints)
         )
 
-    def formatted_iso_peaks(self, db_id, sf_id, sf, adduct):
+    def formatted_iso_peaks(self, sf, adduct):
         """
         Args
         ----
-        db_id : int
-            Database id
-        sf_id : int
-            Sum formula id
         sf : str
             Sum formula
         adduct : str
@@ -104,4 +98,4 @@ class IsocalcWrapper(object):
         """
         centroids = self.isotope_peaks(sf, adduct)
         if len(centroids.mzs) > 0:
-            yield self._format_peak_str(db_id, sf_id, adduct, centroids)
+            yield self._format_peak_str(sf, adduct, centroids)

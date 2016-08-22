@@ -2,10 +2,16 @@ from os.path import join
 import pytest
 from fabric.api import local
 from pyspark import SparkContext, SparkConf
+from logging.config import dictConfig
 
 from sm.engine.db import DB
-from sm.engine.util import proj_root
+from sm.engine.util import proj_root, sm_log_config
 from sm.engine.es_export import ESExporter
+
+
+log_config = sm_log_config
+log_config['loggers']['sm-engine']['handlers'] = ['console_debug']
+dictConfig(log_config)
 
 
 @pytest.fixture(scope='module')
