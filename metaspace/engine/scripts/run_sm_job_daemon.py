@@ -38,11 +38,10 @@ def run_job_callback(ch, method, properties, body):
         msg = json.loads(body)
         job = SearchJob(msg['ds_id'], msg['ds_name'], msg['input_path'], args.sm_config_path)
         job.run()
-
     except BaseException as e:
         msg = ' [x] Failed: {}'.format(body)
         daemon_logger.error(msg)
-        daemon_logger.error(''.join(traceback.format_exception(*sys.exc_info())))
+        daemon_logger.error('', exc_info=True)
         post_to_slack('hankey', msg)
     else:
         msg = ' [v] Finished: {}'.format(body)

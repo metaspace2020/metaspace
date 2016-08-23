@@ -22,6 +22,9 @@ if __name__ == "__main__":
 
     ds_id = dt.now().strftime("%Y-%m-%d_%Hh%Mm")
     job = SearchJob(ds_id, args.ds_name, args.input_path, args.sm_config_path)
-    job.run(args.ds_config_path)
+    try:
+        job.run(args.ds_config_path)
+    except:
+        pass
 
     sys.exit()

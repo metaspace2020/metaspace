@@ -178,6 +178,7 @@ class SearchJob(object):
 
         except Exception:
             logger.error('Job failed', exc_info=True)
+            raise
         finally:
             if self.sc:
                 self.sc.stop()
