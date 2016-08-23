@@ -24,3 +24,9 @@
 #- name: Check that slave deamons are up
 #  get_url: url=http://{{ item }}:8081 dest=/tmp/{{ item }}.html
 #  with_items: "{{ spark_slave_ips }}"
+
+- name: Set log4j.rootCategory=ERROR
+  lineinfile:
+    dest: "{{ spark_home }}/conf/log4j.properties"
+    regexp: '^log4j\.rootCategory'
+    line: "log4j.rootCategory=ERROR, console"

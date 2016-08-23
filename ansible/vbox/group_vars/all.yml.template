@@ -1,5 +1,8 @@
 ---
 
+aws_access_key_id:
+aws_secret_access_key:
+
 postgres_host: localhost
 postgres_version: 9.3
 
@@ -63,3 +66,6 @@ sm_s3_path:
 
 hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"
 activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
+
+slack_channel:
+slack_webhook_url:
