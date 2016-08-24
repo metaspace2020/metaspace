@@ -5,10 +5,11 @@ import tornado.httpserver
 from tornado import gen
 from time import time
 from elasticsearch import Elasticsearch
-from math import floor
+import logging
 
 
 es = Elasticsearch()
+logger = logging.getLogger('sm-web-app')
 
 RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids', 'adduct', 'mz',
                   'chaos', 'image_corr', 'pattern_match', 'msm',
@@ -117,4 +118,4 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         self.write(json.dumps(results_dict))
 
         time_spent = time() - start
-        print 'results_table post time = {} s'.format(time_spent)
+        logger.info('results_table post time = {} s'.format(time_spent))

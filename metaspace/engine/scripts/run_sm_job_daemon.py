@@ -41,7 +41,6 @@ def run_job_callback(ch, method, properties, body):
     except BaseException as e:
         msg = ' [x] Failed: {}'.format(body)
         daemon_logger.error(msg)
-        daemon_logger.error('', exc_info=True)
         post_to_slack('hankey', msg)
     else:
         msg = ' [v] Finished: {}'.format(body)

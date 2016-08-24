@@ -11,7 +11,8 @@ import argparse
 import json
 from datetime import datetime, timedelta
 from os import path
-
+from logging.config import dictConfig
+import logging
 import tornado.httpserver
 import tornado.ioloop
 import tornado.web
@@ -22,6 +23,38 @@ from handlers import results_table, iso_image_gen, misc, auth, feedback
 # global variables
 args = None
 config = None
+
+
+def config_logger():
+    log_formatters = {
+        'sm': {
+            'format': '%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s'
+        }
+    }
+
+    log_config = {
+        'version': 1,
+        'formatters': log_formatters,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'sm',
+                'level': logging.DEBUG,
+            }
+        },
+        'loggers': {
+            'root': {
+                'handlers': ['console'],
+                'level': logging.ERROR
+            },
+            'sm-web-app': {
+                'handlers': ['console'],
+                'level': logging.DEBUG,
+                'propagate': False
+            }
+        }
+    }
+    dictConfig(log_config)
 
 
 class Application(tornado.web.Application):
@@ -76,16 +109,19 @@ def main():
     with open(args.config) as f:
         config = json.load(f)
 
+    config_logger()
+    logger = logging.getLogger('sm-web-app')
+
     port = args.port
     torn_app = Application(args.debug)
     http_server = tornado.httpserver.HTTPServer(torn_app)
     http_server.listen(port)
-    print "Starting server, listening to port %d..." % port
+    logger.info("Starting server, listening to port %d..." % port)
     try:
         # start loop
         tornado.ioloop.IOLoop.instance().start()
     except KeyboardInterrupt:
-        print '^C received, shutting down server'
+        logger.info('^C received, shutting down server')
         http_server.stop()
 
 

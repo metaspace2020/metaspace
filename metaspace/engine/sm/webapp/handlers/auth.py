@@ -5,10 +5,13 @@ import tornado.web
 from tornado import gen
 import json
 import requests
+import logging
 
 
 CLIENT_SEL = 'SELECT id FROM client WHERE id = %s'
 CLIENT_INS = 'INSERT INTO client VALUES (%s, %s, %s)'
+
+logger = logging.getLogger('sm-web-app')
 
 
 class AuthenticateClient(tornado.web.RequestHandler):
@@ -29,13 +32,13 @@ class AuthenticateClient(tornado.web.RequestHandler):
         if not self.application.db.query(CLIENT_SEL, client_id):
             self.application.db.query(CLIENT_INS, client_id, client_name, client_email)
 
-        print 'Signed in as {}'.format(client_name)
+        logger.debug('Signed in as {}'.format(client_name))
 
     def sign_out(self):
         client_id = self.get_secure_cookie('client_id')
         self.clear_cookie('client_id')
 
-        print 'User id {} signed out'.format(client_id)
+        logger.debug('User id {} signed out'.format(client_id))
 
     @gen.coroutine
     def post(self):
