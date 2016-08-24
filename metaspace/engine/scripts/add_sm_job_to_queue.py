@@ -21,7 +21,7 @@ if __name__ == "__main__":
     conn = pika.BlockingConnection(pika.ConnectionParameters(host=rabbit_config['host'], credentials=creds))
 
     ch = conn.channel()
-    ch.queue_declare(queue='sm_annotate')
+    ch.queue_declare(queue='sm_annotate', durable=True)
 
     m = {
         'ds_id': dt.now().strftime("%Y-%m-%d_%Hh%Mm"),
@@ -29,6 +29,11 @@ if __name__ == "__main__":
         'input_path': args.input_path
     }
 
-    ch.basic_publish(exchange='', routing_key='sm_annotate', body=json.dumps(m))
+    ch.basic_publish(exchange='',
+                     routing_key='sm_annotate',
+                     body=json.dumps(m),
+                     properties=pika.BasicProperties(
+                         delivery_mode=2,  # make message persistent
+                     ))
     print(" [v] Sent '{}'".format(json.dumps(m)))
     conn.close()

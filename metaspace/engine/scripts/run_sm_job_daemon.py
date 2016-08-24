@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import argparse
 import os
+import sys
 import pika
 import json
 from requests import post
-import traceback
-import sys
+import signal
 import logging
 
 from sm.engine.util import SMConfig, sm_log_formatters, sm_log_config, init_logger
@@ -43,6 +43,7 @@ def run_job_callback(ch, method, properties, body):
         daemon_logger.error(msg)
         post_to_slack('hankey', msg)
     else:
+        ch.basic_ack(delivery_tag=method.delivery_tag)
         msg = ' [v] Finished: {}'.format(body)
         daemon_logger.info(msg)
         post_to_slack('dart', msg)
@@ -57,17 +58,25 @@ if __name__ == "__main__":
     SMConfig.set_path(args.sm_config_path)
     rabbit_config = SMConfig.get_conf()['rabbitmq']
 
+    configure_loggers()
+    daemon_logger = logging.getLogger('sm-job-daemon')
+
     creds = pika.PlainCredentials(rabbit_config['user'], rabbit_config['password'])
     conn = pika.BlockingConnection(pika.ConnectionParameters(host=rabbit_config['host'], credentials=creds))
 
     ch = conn.channel()
-    ch.queue_declare(queue='sm_annotate')
+    ch.queue_declare(queue='sm_annotate', durable=True)
+    ch.basic_qos(prefetch_count=1)
     ch.basic_consume(run_job_callback,
-                     queue='sm_annotate',
-                     no_ack=True)
+                     queue='sm_annotate')
 
-    configure_loggers()
-    daemon_logger = logging.getLogger('sm-job-daemon')
+    def stop_consuming(signum, frame):
+        ch.stop_consuming()
+        daemon_logger.info(' [v] Stopped consuming')
+        sys.exit()
+
+    signal.signal(signal.SIGINT, stop_consuming)
+    signal.signal(signal.SIGTERM, stop_consuming)
 
     daemon_logger.info(' [*] Waiting for messages...')
     ch.start_consuming()
