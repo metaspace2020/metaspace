@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger('sm-engine')
 
 COLUMNS = ["db_name", "ds_id", "ds_name", "sf", "comp_names", "comp_ids", "chaos", "image_corr", "pattern_match", "msm",
-           "adduct", "job_id", "sf_id", "peaks", "db_id", "fdr", "mz"]
+           "adduct", "job_id", "sf_id", "peaks", "db_id", "fdr", "mz", "ds_meta"]
 
 RESULTS_TABLE_SQL = '''
 SELECT
@@ -27,7 +27,8 @@ SELECT
     m.peaks_n AS peaks,
     sf_db.id AS db_id,
     m.fdr as pass_fdr,
-    tp.centr_mzs[1] AS mz
+    tp.centr_mzs[1] AS mz,
+    ds.metadata as ds_meta
 FROM iso_image_metrics m
 JOIN formula_db sf_db ON sf_db.id = m.db_id
 JOIN sum_formula f ON m.db_id = f.db_id AND f.id = m.sf_id
