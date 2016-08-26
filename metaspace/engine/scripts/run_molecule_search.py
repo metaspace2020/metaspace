@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Script for running molecule search
 """
