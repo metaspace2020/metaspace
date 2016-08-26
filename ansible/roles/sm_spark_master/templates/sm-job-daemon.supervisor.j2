@@ -3,8 +3,9 @@
 [program:sm-job-daemon]
 process_name = sm-job-daemon-%(process_num)s
 directory = {{ sm_home }}
-command = bash {{ sm_home }}/scripts/run.sh {{ sm_home }}/scripts/run_sm_job_daemon.py --config {{ sm_home }}/conf/config.json
-redirect_stderr=true
-stdout_logfile={{ sm_home }}/logs/sm-job-daemon.log
+environment = SPARK_HOME="{{ spark_home }}",PYTHONPATH="{{ spark_home }}/python"
+command = bash scripts/run.sh scripts/run_sm_job_daemon.py
+redirect_stderr = true
+stdout_logfile = {{ sm_home }}/logs/sm-job-daemon.log
 numprocs = 1
 numprocs_start = 8000

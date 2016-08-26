@@ -4,8 +4,6 @@
   args:
     executable: /bin/bash
   register: command_result
-  failed_when:
-   - "'ERROR' in command_result.stdout"
-   - "'FATAL' in command_result.stdout"
 
 - debug: var=command_result
+  failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'

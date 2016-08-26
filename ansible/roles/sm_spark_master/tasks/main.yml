@@ -22,11 +22,11 @@
   file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
 
-- name: Create sm config files
-  shell: cp sm_log.cfg.template sm_log.cfg
-  args:
-    chdir: "{{ sm_home }}/conf"
-    creates: sm_log.cfg config.json
+#- name: Create sm config files
+#  shell: cp sm_log.cfg.template sm_log.cfg
+#  args:
+#    chdir: "{{ sm_home }}/conf"
+#    creates: sm_log.cfg config.json
 
 - name: Put SPARK_HOME into update sm-env.sh scripts
   template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
@@ -37,7 +37,7 @@
         owner={{ spark_user }}
         group={{ spark_user }}
         mode=0755
-  when: aws_setup_access
+  when: aws_access_key_id is defined
 
 - name: Put aws credentials file into the home dir
   template: src=aws_credentials.j2
@@ -45,7 +45,7 @@
             owner={{ spark_user }}
             group={{ spark_user }}
             mode=0600
-  when: aws_setup_access
+  when: aws_access_key_id is defined
 
 - name: Pull SM config from the remote host
   fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template

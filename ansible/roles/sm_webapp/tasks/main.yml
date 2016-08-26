@@ -52,8 +52,12 @@
     executable: /bin/bash
   shell: "source {{ venv }}/bin/activate {{ conda_env }} && pip install -U ."
 
-- name: Ensure that scripts/run.sh is executable
-  file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755
+- name: Add Miniconda scripts to PATH as symlinks
+  become: yes
+  file: src={{ miniconda_prefix }}/bin/{{ item }} dest=/usr/local/bin/{{ item }} state=link
+  with_items:
+    - conda
+    - activate
 
 - name: Make sure that a directory for the SM logs exists
   file: path={{ sm_home }}/logs state=directory mode=0755

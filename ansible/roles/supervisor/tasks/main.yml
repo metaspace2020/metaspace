@@ -17,6 +17,7 @@
   args:
     executable: /bin/bash
   register: supervisorctl_status_out
+  failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'
 
 - debug: var=supervisorctl_status_out
 
