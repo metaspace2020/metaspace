@@ -90,10 +90,6 @@ class SearchJob(object):
         self.db = DB(self.sm_config['db'])
         self.sf_db_id = self.db.select_one(DB_ID_SEL, self.ds_config['database']['name'])[0]
 
-        res = self.db.select('SELECT * FROM dataset WHERE id=%s', self.ds_id)
-        if res:
-            raise Exception('ds_id already exists: {}'.format(self.ds_id))
-
     # TODO: add tests
     def store_job_meta(self):
         """ Store search job metadata in the database """

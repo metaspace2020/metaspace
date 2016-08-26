@@ -39,7 +39,14 @@ class Dataset(object):
         self.ds_config = ds_config
         self.sm_config = SMConfig.get_conf()
 
+        self._delete_ds_if_exists()
         self._define_pixels_order()
+
+    def _delete_ds_if_exists(self):
+        res = self.db.select('SELECT * FROM dataset WHERE id=%s', self.id)
+        if res:
+            logger.warning('ds_id already exists: {}. Deleting'.format(self.id))
+            self.db.alter('DELETE FROM dataset WHERE id=%s', self.id)
 
     @staticmethod
     def choose_name(id, name, metadata):
