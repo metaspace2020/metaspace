@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 import argparse
-import os
-import sys
-import pika
 import json
 from requests import post
-import signal
 import logging
 
 from sm.engine.util import SMConfig, sm_log_formatters, sm_log_config, init_logger
 from sm.engine.search_job import SearchJob
+from sm.engine.queue import Queue
 
 
 def configure_loggers():
@@ -29,26 +26,6 @@ def post_to_slack(emoji, msg):
         post(slack_conf['webhook_url'], json=msg)
 
 
-def run_job_callback(ch, method, properties, body):
-    log_msg = " [v] Received: {}".format(body)
-    daemon_logger.info(log_msg)
-    post_to_slack('new', log_msg)
-
-    try:
-        msg = json.loads(body)
-        job = SearchJob(msg['ds_id'], msg['ds_name'], msg['input_path'], args.sm_config_path)
-        job.run()
-    except BaseException as e:
-        msg = ' [x] Failed: {}'.format(body)
-        daemon_logger.error(msg)
-        post_to_slack('hankey', msg)
-    else:
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-        msg = ' [v] Finished: {}'.format(body)
-        daemon_logger.info(msg)
-        post_to_slack('dart', msg)
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=('Daemon for reading messages from the '
                                                   'queue and starting annotation jobs'))
@@ -59,24 +36,26 @@ if __name__ == "__main__":
     rabbit_config = SMConfig.get_conf()['rabbitmq']
 
     configure_loggers()
-    daemon_logger = logging.getLogger('sm-job-daemon')
+    logger = logging.getLogger('sm-queue')
 
-    creds = pika.PlainCredentials(rabbit_config['user'], rabbit_config['password'])
-    conn = pika.BlockingConnection(pika.ConnectionParameters(host=rabbit_config['host'], credentials=creds))
+    def run_job_callback(ch, method, properties, body):
+        log_msg = " [v] Received: {}".format(body)
+        logger.info(log_msg)
+        post_to_slack('new', log_msg)
+        ch.basic_ack(delivery_tag=method.delivery_tag)
 
-    ch = conn.channel()
-    ch.queue_declare(queue='sm_annotate', durable=True)
-    ch.basic_qos(prefetch_count=1)
-    ch.basic_consume(run_job_callback,
-                     queue='sm_annotate')
+        try:
+            msg = json.loads(body)
+            job = SearchJob(msg['ds_id'], msg['ds_name'], msg['input_path'], args.sm_config_path)
+            job.run()
+        except BaseException as e:
+            msg = ' [x] Failed: {}'.format(body)
+            logger.error(msg)
+            post_to_slack('hankey', msg)
+        else:
+            msg = ' [v] Finished: {}'.format(body)
+            logger.info(msg)
+            post_to_slack('dart', msg)
 
-    def stop_consuming(signum, frame):
-        ch.stop_consuming()
-        daemon_logger.info(' [v] Stopped consuming')
-        sys.exit()
-
-    signal.signal(signal.SIGINT, stop_consuming)
-    signal.signal(signal.SIGTERM, stop_consuming)
-
-    daemon_logger.info(' [*] Waiting for messages...')
-    ch.start_consuming()
+    annotation_queue = Queue(rabbit_config, 'sm_annotate')
+    annotation_queue.start_consuming(run_job_callback)
