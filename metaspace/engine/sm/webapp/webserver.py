@@ -60,8 +60,9 @@ def config_logger():
 class Application(tornado.web.Application):
     """Main class of the tornado application."""
 
-    def __init__(self, debug=False):
+    def __init__(self, config, debug=False):
         """Initializes handlers, sets up database connection."""
+        self.config = config
 
         handlers = [
             (r"/", misc.IndexHandler),
@@ -113,7 +114,7 @@ def main():
     logger = logging.getLogger('sm-web-app')
 
     port = args.port
-    torn_app = Application(args.debug)
+    torn_app = Application(config, args.debug)
     http_server = tornado.httpserver.HTTPServer(torn_app)
     http_server.listen(port)
     logger.info("Starting server, listening to port %d..." % port)
