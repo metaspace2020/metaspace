@@ -120,7 +120,6 @@ class SearchJob(object):
             logger.info("Processing ds_id: %s ...", self.ds_id)
 
             self.wd_manager = WorkDirManager(self.ds_id)
-            self.wd_manager.clean()
             self.wd_manager.copy_input_data(self.input_path, ds_config_path)
 
             self.ds_config = read_json(self.wd_manager.ds_config_path)
@@ -166,6 +165,8 @@ class SearchJob(object):
 
             es = ESExporter(self.sm_config)
             es.index_ds(self.db, self.ds_id)
+
+            self.wd_manager.clean()
 
             logger.info("All done!")
             time_spent = time.time() - start

@@ -122,14 +122,14 @@ class S3WorkDir(object):
 
 
 class WorkDirManager(object):
-    """ Provides access to a work directory of the target dataset
+    """ Provides access to the work directory of the target dataset
 
     Args
     ----
-    ds_name : str
-        Dataset name (alias)
+    ds_id : str
+        Dataset unique id
     """
-    def __init__(self, ds_name):
+    def __init__(self, ds_id):
         self.sm_config = SMConfig.get_conf()
 
         if 's3_base_path' not in self.sm_config['fs']:
@@ -142,9 +142,9 @@ class WorkDirManager(object):
         self.s3 = boto3.session.Session().resource('s3')
         self.s3transfer = S3Transfer(boto3.client('s3', 'eu-west-1'))
 
-        self.local_dir = LocalWorkDir(self.sm_config['fs']['base_path'], ds_name)
+        self.local_dir = LocalWorkDir(self.sm_config['fs']['base_path'], ds_id)
         if not self.local_fs_only:
-            self.remote_dir = S3WorkDir(self.sm_config['fs']['s3_base_path'], ds_name, self.s3, self.s3transfer)
+            self.remote_dir = S3WorkDir(self.sm_config['fs']['s3_base_path'], ds_id, self.s3, self.s3transfer)
 
     @property
     def ds_config_path(self):
@@ -182,20 +182,20 @@ class WorkDirManager(object):
         input_data_path : str
             Path to input files
         """
-        if not self.local_dir.exists(self.local_dir.imzml_path):
-            logger.info('Copying data from %s to %s', input_data_path, self.local_dir.ds_path)
+        # if not self.local_dir.exists(self.local_dir.imzml_path):
+        logger.info('Copying data from %s to %s', input_data_path, self.local_dir.ds_path)
 
-            if input_data_path.startswith('s3a://'):
-                cmd_check('mkdir -p {}', self.local_dir.ds_path)
-                bucket_name, inp_path = split_s3_path(input_data_path)
+        if input_data_path.startswith('s3a://'):
+            cmd_check('mkdir -p {}', self.local_dir.ds_path)
+            bucket_name, inp_path = split_s3_path(input_data_path)
 
-                bucket = self.s3.Bucket(bucket_name)
-                for obj in bucket.objects.filter(Prefix=inp_path):
-                    if not obj.key.endswith('/'):
-                        path = join(self.local_dir.ds_path, obj.key.split('/')[-1])
-                        self.s3transfer.download_file(bucket_name, obj.key, path)
-            else:
-                self.local_dir.copy(input_data_path, self.local_dir.ds_path)
+            bucket = self.s3.Bucket(bucket_name)
+            for obj in bucket.objects.filter(Prefix=inp_path):
+                if not obj.key.endswith('/'):
+                    path = join(self.local_dir.ds_path, obj.key.split('/')[-1])
+                    self.s3transfer.download_file(bucket_name, obj.key, path)
+        else:
+            self.local_dir.copy(input_data_path, self.local_dir.ds_path)
 
         if ds_config_path:
             self.local_dir.copy(ds_config_path, self.local_dir.ds_config_path, is_file=True)
