@@ -1,6 +1,7 @@
 ---
 
-- hosts: localhost
+- name: Spinning up AWS instances
+  hosts: localhost
   connection: local
   gather_facts: False
 
@@ -14,6 +15,10 @@
 
     - name: Spinning up SM cluster instances
       shell: python manage_instances.py start {{ component }} {{ key_name }}
+
+
+- include: aws_clean_cache.yml
+
 
 - name: SM spark master initial setup (slaves file update)
   hosts: tag_hostgroup_sm_spark_master
