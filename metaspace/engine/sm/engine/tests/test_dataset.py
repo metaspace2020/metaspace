@@ -8,6 +8,7 @@ from sm.engine.work_dir import WorkDirManager
 from sm.engine.tests.util import sm_config, ds_config, spark_context
 
 
+@patch('sm.engine.dataset.Dataset._delete_ds_if_exists', lambda *args: None)
 def test_get_sample_area_mask_correctness(sm_config, ds_config, spark_context):
     work_dir_man_mock = MagicMock(WorkDirManager)
     work_dir_man_mock.ds_coord_path = '/ds_path'
@@ -27,6 +28,7 @@ def test_get_sample_area_mask_correctness(sm_config, ds_config, spark_context):
 
 @patch('sm.engine.dataset.Dataset._define_pixels_order')
 @patch('sm.engine.dataset.read_json')
+@patch('sm.engine.dataset.Dataset._delete_ds_if_exists', lambda *args: None)
 def test_choose_name_from_metadata(read_json_mock, _define_pixes_order_mock):
     read_json_mock.return_value = {'metaspace_options': {'Dataset_Name': 'foobar'}}
     _define_pixes_order_mock.return_value = None
