@@ -1,3 +1,4 @@
+from mock import MagicMock
 import json
 from os import listdir
 from os.path import join, basename
@@ -7,7 +8,7 @@ from fabric.api import local
 from fabric.context_managers import lcd, warn_only
 
 from sm.engine.util import SMConfig
-from sm.engine.work_dir import WorkDirManager
+from sm.engine.work_dir import WorkDirManager, S3WorkDir
 from sm.engine.tests.util import sm_config
 
 ds_id = '2000-01-01_00h00m'
@@ -45,6 +46,21 @@ def test_work_dir_copy_input_data_no_files_local_path(clear_files, sm_config):
     SMConfig._config_dict = sm_config
     work_dir_man = WorkDirManager('2000-01-01_00h00m')
     work_dir_man.copy_input_data(input_local_path, join(input_local_path, 'config.json'))
+
+    file_list = set(listdir(ds_path))
+    assert file_list == {'foo.imzML', 'foo.ibd', 'config.json', 'meta.json'}
+
+
+def test_work_dir_upload_to_remote_leaves_meta_config_files(clear_files, sm_config):
+    create_sample_files(input_local_path)
+
+    SMConfig._config_dict = sm_config
+    SMConfig._config_dict['fs']['s3_base_path'] = 's3://some-bucket/'
+    work_dir_man = WorkDirManager('2000-01-01_00h00m')
+    work_dir_man.remote_dir = MagicMock(S3WorkDir)
+
+    work_dir_man.copy_input_data(input_local_path, join(input_local_path, 'config.json'))
+    work_dir_man.upload_to_remote()
 
     file_list = set(listdir(ds_path))
     assert file_list == {'foo.imzML', 'foo.ibd', 'config.json', 'meta.json'}

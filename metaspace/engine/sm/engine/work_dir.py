@@ -209,8 +209,6 @@ class WorkDirManager(object):
         self.remote_dir.copy(self.local_dir.coord_path, self.remote_dir.coord_path)
         self.remote_dir.copy(self.local_dir.txt_path, self.remote_dir.txt_path)
 
-        self.local_dir.clean()
-
     def exists(self, path):
         if self.local_fs_only:
             return self.local_dir.exists(path)
