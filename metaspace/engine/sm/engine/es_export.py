@@ -66,26 +66,11 @@ class ESExporter:
 
         bulk(self.es, actions=to_index, timeout='60s')
 
-    def _delete(self, annotations):
-        to_delete = []
-        for r in annotations:
-            d = dict(zip(COLUMNS, r))
-            to_delete.append({
-                '_op_type': 'delete',
-                '_index': self.index,
-                '_type': 'annotation',
-                '_id': '{}_{}_{}_{}'.format(d['ds_id'], d['db_name'], d['sf'], d['adduct']),
-            })
-        try:
-            bulk(self.es, to_delete)
-        except BulkIndexError as e:
-            logger.warning('{} - {}'.format(e.args[0], e.args[1][1]))
-
     def index_ds(self, db, ds_id):
         annotations = db.select(RESULTS_TABLE_SQL, ds_id)
 
         logger.info('Deleting {} documents from the index: {}'.format(len(annotations), ds_id))
-        self._delete(annotations)
+        self.delete_ds(ds_id)
 
         logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
         self._index(annotations)
@@ -107,13 +92,19 @@ class ESExporter:
         res = self.es.search(index=self.index, body=body, _source=False, size=10**9)['hits']['hits']
         to_del = [{'_op_type': 'delete', '_index': 'sm', '_type': 'annotation', '_id': d['_id']} for d in res]
 
-        del_n, _ = bulk(self.es, to_del)
+        del_n = 0
+        try:
+            del_n, _ = bulk(self.es, to_del, timeout='60s')
+        except BulkIndexError as e:
+            logger.warning('{} - {}'.format(e.args[0], e.args[1][1]))
         return del_n
 
     def create_index(self):
         body = {
             "settings": {
                 "index": {
+                    "number_of_shards": 1,
+                    "number_of_replicas": 0,
                     "max_result_window": 2147483647,
                     "analysis": {
                         "analyzer": {
