@@ -5,9 +5,12 @@
   args:
     executable: /bin/bash
 
-- name: Create config directory for supervisor
+- name: Create config/log directory for supervisor
   become: yes
-  file: path=/etc/supervisor state=directory mode=0700 owner=ubuntu group=ubuntu
+  file: path={{ item }} state=directory mode=0700 owner=ubuntu group=ubuntu
+  with_items:
+    - /etc/supervisor
+    - /var/log/supervisor
 
 - name: Copy supervisor config file
   copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf mode=0600 owner=ubuntu group=ubuntu
@@ -17,9 +20,9 @@
   args:
     executable: /bin/bash
   register: supervisorctl_status_out
-  failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'
 
 - debug: var=supervisorctl_status_out
+#  failed_when: '"ERROR" in supervisorctl_status_out.stdout or "FATAL" in supervisorctl_status_out.stdout'
 
 - name: Make sure that a directory for the logs exists
   become: yes
