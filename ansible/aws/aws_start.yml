@@ -45,6 +45,8 @@
       register: command_result
       changed_when: not ('Stop it first' in command_result.stdout)
 
+    - debug: var=comand_results
+
     - name: Check that master daemon is up
       command: jps -l
       become: no
