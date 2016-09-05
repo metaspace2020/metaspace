@@ -1,6 +1,6 @@
 export PATH=~/miniconda2/bin:$PATH
 export SPARK_DIR=spark-1.6.0-bin-hadoop2.6
-source activate sm_distributed
+source activate sm_engine
 
 nohup postgres -D /usr/local/var/postgres >postgres.stdout 2>&1 &
 sleep 5

@@ -1,4 +1,4 @@
-name: sm_distributed
+name: sm_engine
 channels:
   - salford_systems
 dependencies:

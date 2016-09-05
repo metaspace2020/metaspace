@@ -1,4 +1,4 @@
-# Spatial Metabolomics Engine [![Build Status](https://travis-ci.org/SpatialMetabolomics/SM_distributed.svg?branch=master)](https://travis-ci.org/SpatialMetabolomics/SM_distributed) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest)
+# Spatial Metabolomics Engine [![Build Status](https://travis-ci.org/SpatialMetabolomics/sm-engine.svg?branch=master)](https://travis-ci.org/SpatialMetabolomics/sm-engine) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest)
 High throughput molecules annotation for imaging mass spectrometry datasets.
 
 ## Main Features
@@ -85,10 +85,10 @@ Install git, pip and libffi
 
 	sudo apt-get install git python-pip libffi-dev
 	
-Clone the latest "stable" **SM_distributed** repository branch into the home directory and rename it to **sm**
+Clone the latest "stable" **sm-engine** repository branch into the home directory and rename it to **sm**
 	
-	git clone -b v0.4 --single-branch https://github.com/SpatialMetabolomics/SM_distributed.git
-	mv SM_distributed sm
+	git clone -b v0.4 --single-branch https://github.com/SpatialMetabolomics/sm-engine.git
+	mv sm-engine sm
 
 Install SM engine python dependencies
 
