@@ -104,7 +104,15 @@ Postgres server setup for local use only
 	CREATE ROLE sm LOGIN CREATEDB NOSUPERUSER PASSWORD 'simple_pass';
 	CREATE DATABASE sm WITH OWNER sm;
 	\q  # exit
-	
+
+Create config files. For **conf/config.json** put values for needed parameters
+
+	cd sm/conf
+	cp sm_log.cfg.template sm_log.cfg
+	cp config.json.template config.json
+	nano config.json
+	# replace fs.data_dir with path to the data directory (e.g. /opt/data)
+
 SM engine schema creation
 
 	cd sm
@@ -117,14 +125,6 @@ ElasticSearch index creation
 Create data directory for SM engine. Don't forget to replace **USER:GROUP** with your linux user and group (id -un and id -gn)
 
 	sudo mkdir /opt/data && sudo chown USER:GROUP /opt/data
-
-Create config files. For **conf/config.json** put values for needed parameters
-
-	cd sm/conf
-	cp sm_log.cfg.template sm_log.cfg
-	cp config.json.template config.json
-	nano config.json
-	# replace fs.data_dir with path to the data directory (/opt/data)
 
 Add environment variables to .bashrc
 
