@@ -1,5 +1,8 @@
 ---
 
+- include: aws_clean_cache.yml
+
+
 - name: Spinning up AWS instances
   hosts: localhost
   connection: local
@@ -15,9 +18,6 @@
 
     - name: Spinning up SM cluster instances
       shell: python manage_instances.py start {{ component }} {{ key_name }}
-
-
-- include: aws_clean_cache.yml
 
 
 - name: SM spark master initial setup (slaves file update)
@@ -38,14 +38,14 @@
       template: src=../roles/spark_master/templates/slaves.j2 dest="{{ spark_home }}/conf/slaves"
                 owner=ubuntu group=ubuntu mode=0664
 
-    - name: Start master and slaves
-      become: no
+    - name: Restart master and slaves
       command: "{{ spark_home }}/sbin/start-all.sh"
       when: not ('localhost' in spark_slave_ips)
       register: command_result
       changed_when: not ('Stop it first' in command_result.stdout)
+      failed_when: ('timed out' in command_result.stdout)
 
-    - debug: var=comand_results
+    - debug: var=command_result
 
     - name: Check that master daemon is up
       command: jps -l

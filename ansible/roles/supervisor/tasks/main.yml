@@ -15,21 +15,20 @@
 - name: Copy supervisor config file
   copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf mode=0600 owner=ubuntu group=ubuntu
 
-- name: Check if supervisord daemon is running
-  shell: "{{ activate_venv }} && supervisorctl status"
-  args:
-    executable: /bin/bash
-  register: supervisorctl_status_out
+#- name: Check if supervisord daemon is running
+#  shell: "{{ activate_venv }} && supervisorctl status"
+#  args:
+#    executable: /bin/bash
+#  register: supervisorctl_status_out
 
-- debug: var=supervisorctl_status_out
-#  failed_when: '"ERROR" in supervisorctl_status_out.stdout or "FATAL" in supervisorctl_status_out.stdout'
+#- debug: var=supervisorctl_status_out
 
 - name: Make sure that a directory for the logs exists
   become: yes
   file: path={{ supervisor_log_dir }} state=directory mode=0755 owner=ubuntu group=ubuntu
 
-- name: Start supervisord daemon
-  shell: "{{ activate_venv }} && supervisord -c /etc/supervisor/supervisord.conf -l {{ supervisor_log_dir }}/supervisord.log"
-  args:
-    executable: /bin/bash
-  when: "'no such file' in supervisorctl_status_out.stdout"
+#- name: Start supervisord daemon
+#  shell: "{{ activate_venv }} && supervisord -c /etc/supervisor/supervisord.conf -l {{ supervisor_log_dir }}/supervisord.log"
+#  args:
+#    executable: /bin/bash
+#  when: "'no such file' in supervisorctl_status_out.stdout"
