@@ -4,26 +4,25 @@ import pandas as pd
 import numpy as np
 
 
-def get_response(host, dataset_name):
+def get_response(results_key):
+    host, dataset_name = results_key
     client = Elasticsearch(hosts=host)
     s = (Search(using=client, index="sm").query("match", ds_name=dataset_name))
     response = s.scan()
     return response
 
 
-def get_annotations_at_fdr(hosts, dataset_names, fdr=0.1):
-    if not len(hosts) == len(dataset_names):
-        raise ValueError('input lists must have same length')
-    annotations = []
-    for host, dataset_name in zip(hosts, dataset_names):
-        response = get_response(host, dataset_name)
-        annotations.append([(r.sf, r.adduct) for r in response if all([r.fdr, r.fdr <= fdr])])
+def get_annotations_at_fdr(results_key, fdr=0.1):
+    host, dataset_name = results_key
+    if fdr not in [0.05, 0.1, 0.2, 0.5]:
+        print('fdr request does not match default elastic search defaults')
+    response = get_response(results_key)
+    annotations = [(r.sf, r.adduct) for r in response if all([r.fdr, r.fdr <= fdr])]
     return annotations
 
 
-
 def get_remote_results(host, dataset_name):
-    response = get_response(host, dataset_name)
+    response = get_response((host, dataset_name))
     return pd.DataFrame([(r.sf, r.adduct, r.msm, r.chaos, r.image_corr, r.pattern_match) for r in response],
                        columns=['sf', 'adduct', 'msm', 'moc', 'spat', 'spec']).set_index(['sf', 'adduct'])
 
