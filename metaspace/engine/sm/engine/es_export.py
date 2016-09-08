@@ -118,16 +118,16 @@ class ESExporter:
             },
             "mappings": {
                 "annotation": {
-                    "dynamic_templates": [{
-                        "notanalyzed": {
-                            "match": "*",
-                            "match_mapping_type": "string",
-                            "mapping": {
-                                "type": "string",
-                                "index": "not_analyzed"
-                            }
-                        }
-                    }],
+                    # "dynamic_templates": [{
+                    #     "notanalyzed": {
+                    #         "match": "*",
+                    #         "match_mapping_type": "string",
+                    #         "mapping": {
+                    #             "type": "string",
+                    #             "index": "not_analyzed"
+                    #         }
+                    #     }
+                    # }],
                     "properties": {
                         "db_name": {"type": "string", "index": "not_analyzed"},
                         "ds_id": {"type": "string", "index": "not_analyzed"},
@@ -144,7 +144,11 @@ class ESExporter:
                         "msm": {"type": "float", "index": "not_analyzed"},
                         "adduct": {"type": "string", "index": "not_analyzed"},
                         "fdr": {"type": "float", "index": "not_analyzed"},
-                        "mz": {"type": "string", "index": "not_analyzed"}
+                        "mz": {"type": "string", "index": "not_analyzed"},
+                        # dataset metadata
+                        "ds_meta.Submitted_By.Submitter.Email": {"type": "string", "index": "not_analyzed"},
+                        "ds_meta.Sample_Preparation.MALDI_Matrix": {"type": "string", "index": "not_analyzed"},
+                        "ds_meta.Sample_Preparation.MALDI_Matrix_Application": {"type": "string", "index": "not_analyzed"},
                     }
                 }
             }
