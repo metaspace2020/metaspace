@@ -118,6 +118,16 @@ class ESExporter:
             },
             "mappings": {
                 "annotation": {
+                    "dynamic_templates": [{
+                        "notanalyzed": {
+                            "match": "*",
+                            "match_mapping_type": "string",
+                            "mapping": {
+                                "type": "string",
+                                "index": "not_analyzed"
+                            }
+                        }
+                    }],
                     "properties": {
                         "db_name": {"type": "string", "index": "not_analyzed"},
                         "ds_id": {"type": "string", "index": "not_analyzed"},
