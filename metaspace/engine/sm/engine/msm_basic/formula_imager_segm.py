@@ -100,7 +100,7 @@ def find_mz_segments(spectra, sf_peak_df, ppm):
     peaks_per_sp = max(1, int(np.mean([t[1].shape[0] for t in spectra_sample])))
 
     mz_grid, workload_per_mz, sp_workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10000)
-    plan_mz_segm_n = max(64, int(peaks_per_sp / 100))
+    plan_mz_segm_n = max(64, int(peaks_per_sp / 10))
     mz_bounds = _find_mz_bounds(mz_grid, workload_per_mz, sp_workload_per_mz, n=plan_mz_segm_n)
     mz_segments = _create_mz_segments(mz_bounds, ppm=ppm)
     return spectra_sample, mz_segments, peaks_per_sp
