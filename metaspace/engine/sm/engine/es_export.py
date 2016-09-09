@@ -154,6 +154,11 @@ class ESExporter:
                                             "properties": {
                                                 "Email": {"type": "string", "index": "not_analyzed"}
                                             }
+                                        },
+                                        "Principal_Investigator": {
+                                            "properties": {
+                                                "Email": {"type": "string", "index": "not_analyzed"}
+                                            }
                                         }
                                     }
                                 },
