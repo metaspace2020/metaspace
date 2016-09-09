@@ -49,7 +49,7 @@ function on_select_row(data) {
         var subst_ids = d[4];
         var adduct = d[5];
         var job_id = d[11];
-        var dataset_id = d[12];
+        var ds_id = d[12];
         var sf_id = d[13];
         var peaks_n = d[14];
         var db_id = d[15];
@@ -89,7 +89,7 @@ function on_select_row(data) {
         // total image
         var url = '/min_max_int/' + job_id + '/' + db_id + '/' + sf_id + '/' + adduct;
         $.getJSON(url, function( data ) {
-            var url_params = db_id + '/' + dataset_id + '/' + job_id + '/' + sf_id + '/' + sf + '/' + adduct;
+            var url_params = db_id + '/' + ds_id + '/' + job_id + '/' + sf_id + '/' + sf + '/' + adduct;
             $("#ionimage_total").html(
                 '<img src="/mzimage2/' + url_params + '" id="img-total">'
             );
@@ -99,7 +99,7 @@ function on_select_row(data) {
         })
 
         // images per adduct and peak
-        var url = '/sf_peak_mzs/' + job_id + '/' + db_id + '/' + sf_id + '/' + adduct;
+        var url = '/sf_peak_mzs/' + ds_id + '/' + db_id + '/' + sf_id + '/' + adduct;
         $.getJSON(url, function( data ) {
             var sf_mzs = data;
 
@@ -116,7 +116,7 @@ function on_select_row(data) {
                     + '<div class="row">';
                 to_append += '</div></div></div>';
                 $("#row-images").append(to_append);
-                var url = "/mzimage2/" + db_id + '/' + dataset_id + '/' + job_id + '/' +
+                var url = "/mzimage2/" + db_id + '/' + ds_id + '/' + job_id + '/' +
                             sf_id + '/' + sf + '/' + adduct + '/' + peak_id;
                 urls.push(url);
             }
@@ -141,6 +141,6 @@ function on_select_row(data) {
         initFeedbackComment(job_id, db_id, sf_id, adduct);
 
         // Bottom line chart generation
-        drawLineChart(job_id, db_id, sf_id, adduct);
+        drawLineChart(ds_id, job_id, db_id, sf_id, adduct);
     }
 }

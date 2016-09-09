@@ -19,25 +19,25 @@ CREATE TABLE formula (
         ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-DROP TABLE IF EXISTS agg_formula CASCADE;
-CREATE TABLE agg_formula (
+DROP TABLE IF EXISTS sum_formula CASCADE;
+CREATE TABLE sum_formula (
     id 		    int,
     db_id 		int,
 	sf 		    text,
 	subst_ids 	text[],
 	names 		text[],
-	CONSTRAINT agg_formula_db_id_id_pk PRIMARY KEY(db_id, id),
-	CONSTRAINT agg_formula_db_id_fk FOREIGN KEY (db_id)
+	CONSTRAINT sum_formula_db_id_id_pk PRIMARY KEY(db_id, id),
+	CONSTRAINT sum_formula_db_id_fk FOREIGN KEY (db_id)
       REFERENCES formula_db (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
-CREATE INDEX ind_agg_formulas_1 ON agg_formula (sf);
-CREATE INDEX ind_agg_formulas_2 ON agg_formula (id);
-CREATE INDEX ind_agg_formulas_3 ON agg_formula (id, sf);
-CREATE INDEX ind_agg_formulas_4 ON agg_formula (db_id, id, sf);
-CREATE INDEX agg_formula_names_ind ON agg_formula (names);
-CREATE INDEX agg_formula_ids_ind ON agg_formula (subst_ids);
+CREATE INDEX ind_sum_formulas_1 ON sum_formula (sf);
+CREATE INDEX ind_sum_formulas_2 ON sum_formula (id);
+CREATE INDEX ind_sum_formulas_3 ON sum_formula (id, sf);
+CREATE INDEX ind_sum_formulas_4 ON sum_formula (db_id, id, sf);
+CREATE INDEX sum_formula_names_ind ON sum_formula (names);
+CREATE INDEX sum_formula_ids_ind ON sum_formula (subst_ids);
 
 DROP TABLE IF EXISTS client CASCADE;
 CREATE TABLE client (
@@ -63,10 +63,10 @@ CREATE TABLE feedback (
 
 DROP TABLE IF EXISTS dataset CASCADE;
 CREATE TABLE dataset (
-	id	        serial,
-	name		text,
-	owner       decimal(21),
-	file_path   text,
+	id	        text,
+	name				text,
+	input_path  text,
+	metadata		json,
 	img_bounds	json,
 	config      json,
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
@@ -75,7 +75,7 @@ CREATE INDEX ind_dataset_name ON dataset (name);
 
 DROP TABLE IF EXISTS coordinates;
 CREATE TABLE coordinates (
-	ds_id 	 int,
+	ds_id 	 text,
 	xs       int[],
 	ys       int[],
 	CONSTRAINT coord_ds_id_pk PRIMARY KEY(ds_id),
@@ -87,14 +87,12 @@ CREATE INDEX ind_coordinates_2 ON coordinates (ds_id);
 
 DROP TABLE IF EXISTS job CASCADE;
 CREATE TABLE job (
-	id 			int,
-	db_id       int,
-	ds_id	    int,
-	status		text,
-	tasks_done	int,
-	tasks_total	int,
-	start       timestamp,
-	finish      timestamp,
+	id serial NOT NULL,
+	db_id   int,
+	ds_id	  text,
+	status	text,
+	start   timestamp,
+	finish  timestamp,
 	CONSTRAINT job_id_pk PRIMARY KEY(id),
 	CONSTRAINT job_ds_id_fk FOREIGN KEY (ds_id)
       REFERENCES dataset (id) MATCH SIMPLE
@@ -173,26 +171,20 @@ WITH (
   autovacuum_analyze_threshold=5000
 );
 
+
 DROP TABLE IF EXISTS theor_peaks;
 CREATE TABLE theor_peaks (
-  db_id       int,
-	sf_id			  int,
+  sf          text,
 	adduct		  text,
 	sigma       real,
 	charge      int,
 	pts_per_mz  int,
 	centr_mzs		double precision[],
 	centr_ints	double precision[],
-	prof_mzs		double precision[],
-	prof_ints		double precision[],
-	CONSTRAINT theor_peaks_sf_id_adduct_pk PRIMARY KEY(db_id, sf_id, adduct, sigma, charge, pts_per_mz),
-	CONSTRAINT theor_peaks_db_id_sf_id_fk FOREIGN KEY (db_id, sf_id)
-      REFERENCES agg_formula (db_id, id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE CASCADE
+	CONSTRAINT theor_peaks_sf_id_adduct_pk PRIMARY KEY(sf, adduct, sigma, charge, pts_per_mz)
 )
 WITH (
   autovacuum_enabled=true,
   autovacuum_vacuum_threshold=5000,
   autovacuum_analyze_threshold=5000
 );
-CREATE INDEX ind_theor_peaks_2 ON theor_peaks(db_id, sf_id);

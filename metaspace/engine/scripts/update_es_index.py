@@ -2,6 +2,7 @@ import argparse
 import json
 from os.path import abspath
 
+from sm.engine.util import sm_log_config, init_logger
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 
@@ -10,19 +11,21 @@ def reindex_all_results(conf):
     db = DB(conf['db'])
     es_exp = ESExporter(conf)
 
-    es_exp.delete_index(name='sm')
-    es_exp.create_index(name='sm')
+    es_exp.delete_index()
+    es_exp.create_index()
 
-    ds_db_pairs = db.select("select name, config -> 'database'::text -> 'name'::text from dataset")
+    rows = db.select("select id from dataset")
 
-    for ds_name, db_name in ds_db_pairs:
-        es_exp.index_ds(db, ds_name, db_name)
+    for row in rows:
+        es_exp.index_ds(db, row[0])
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Reindex all dataset results')
     parser.add_argument('--conf', default='conf/config.json', help="SM config path")
     args = parser.parse_args()
+
+    init_logger()
 
     with open(abspath(args.conf)) as f:
         reindex_all_results(json.load(f))

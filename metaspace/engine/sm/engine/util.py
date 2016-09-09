@@ -1,6 +1,3 @@
-from datetime import datetime, date, timedelta
-import numpy as np
-from os.path import realpath, dirname, join
 import os
 import json
 from subprocess import check_call, call
@@ -10,37 +7,57 @@ from os.path import join
 
 
 def proj_root():
-    # return dirname(dirname(dirname(__file__)))
     return os.getcwd()
 
 sm_log_formatters = {
-    'SM': {
+    'sm': {
         'format': '%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s'
     }
 }
 
-dictConfig({
+sm_log_config = {
     'version': 1,
     'formatters': sm_log_formatters,
     'handlers': {
-        'console': {
+        'console_warn': {
             'class': 'logging.StreamHandler',
-            'formatter': 'SM',
-            'level': 'DEBUG',
+            'formatter': 'sm',
+            'level': logging.WARNING,
         },
+        'console_debug': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'sm',
+            'level': logging.DEBUG,
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'formatter': 'sm',
+            'level': logging.DEBUG,
+            'filename': 'logs/sm-engine.log'
+        }
     },
     'loggers': {
-        'root': {
-            'handlers': ['console'],
+        # 'root': {
+        #     'handlers': ['console'],
+        #     'level': logging.DEBUG
+        # },
+        'sm-engine': {
+            'handlers': ['console_debug', 'file'],
             'level': logging.DEBUG
         },
-        'SM': {
-            'handlers': ['console'],
+        'sm-queue': {
+            'handlers': ['console_debug'],
             'level': logging.DEBUG
         }
     }
-})
-logger = logging.getLogger(name='SM')
+}
+
+
+def init_logger(log_config=None):
+    dictConfig(log_config if log_config else sm_log_config)
+
+
+logger = logging.getLogger(name='sm-engine')
 
 
 class SMConfig(object):
@@ -74,7 +91,7 @@ class SMConfig(object):
                 with open(config_path) as f:
                     cls._config_dict = json.load(f)
             except IOError as e:
-                logger.warn(e)
+                logger.warning(e)
         return cls._config_dict
 
 
@@ -82,16 +99,8 @@ def local_path(path):
     return 'file://' + path
 
 
-# def hdfs_path(path):
-#     return 'hdfs://{}:9000{}'.format(SMConfig.get_conf()['hdfs']['namenode'], path)
-
-
 def s3_path(path):
     return 's3a://{}'.format(path)
-
-
-# def hdfs_prefix():
-#     return '{}/bin/hdfs dfs '.format(os.environ['HADOOP_HOME'])
 
 
 def _cmd(template, call_func, *args):
@@ -106,3 +115,14 @@ def cmd_check(template, *args):
 
 def cmd(template, *args):
     return _cmd(template, call, *args)
+
+
+def read_json(path):
+    res = {}
+    try:
+        with open(path) as f:
+            res = json.load(f)
+    except IOError as e:
+        logger.warning("Couldn't find %s file", path)
+    finally:
+        return res

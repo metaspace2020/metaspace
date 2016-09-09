@@ -12,9 +12,8 @@ import json
 import threading
 import Queue
 from datetime import time
-
+import logging
 import numpy as np
-
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
@@ -22,7 +21,9 @@ from tornado import gen
 from tornado.ioloop import IOLoop
 
 
-SF_SELECT = "SELECT sf FROM agg_formula WHERE db_id=%s AND id=%s"
+SF_SELECT = "SELECT sf FROM sum_formula WHERE db_id=%s AND id=%s"
+
+logger = logging.getLogger('sm-web-app')
 
 
 @gen.coroutine
@@ -53,9 +54,9 @@ class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
-def fetch_sigma_charge_ptspermz_ppm(db, job_id):
+def fetch_sigma_charge_ptspermz_ppm(db, ds_id):
     DS_CONF_SEL = 'SELECT config FROM dataset where id = %s'
-    ds_config = db.query(DS_CONF_SEL, job_id)[0]['config']  # job_id for now is equal to ds_id
+    ds_config = db.query(DS_CONF_SEL, ds_id)[0]['config']
     iso_gen_config = ds_config['isotope_generation']
     charge = '{}{}'.format(iso_gen_config['charge']['polarity'], iso_gen_config['charge']['n_charges'])
     ppm = ds_config['image_generation']['ppm']
@@ -68,8 +69,8 @@ class SFPeakMZsHandler(tornado.web.RequestHandler):
         return self.application.db
 
     @gen.coroutine
-    def get(self, job_id, db_id, sf_id, adduct):
-        sigma, charge, pts_per_mz, ppm = fetch_sigma_charge_ptspermz_ppm(self.db, job_id)
+    def get(self, ds_id, db_id, sf_id, adduct):
+        sigma, charge, pts_per_mz, ppm = fetch_sigma_charge_ptspermz_ppm(self.db, ds_id)
         sf = self.db.query(SF_SELECT, db_id, sf_id)[0].sf
         centr_mzs = sf_isotope_patterns(sf, adduct, sigma, charge).masses
         self.write(json.dumps(centr_mzs))
@@ -86,9 +87,9 @@ class MinMaxIntHandler(tornado.web.RequestHandler):
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
         if self.current_user:
-            print 'USER_ID={} tries to access the DB'.format(self.current_user)
+            logger.debug('USER_ID={} tries to access the DB'.format(self.current_user))
         else:
-            print 'Not authenticated USER_ID tries to access the DB'
+            logger.debug('Not authenticated USER_ID tries to access the DB')
         min_max_rs = self.application.db.query(self.MIN_MAX_INT_SEL, int(job_id), int(db_id), int(sf_id), adduct)
         min_max_dict = min_max_rs[0] if min_max_rs else {'min_int': 0, 'max_int': 0}
         self.write(json.dumps(min_max_dict))
@@ -120,8 +121,8 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
         return sample_centr_ints / sample_centr_ints.max() * 100
 
     @gen.coroutine
-    def get(self, job_id, db_id, sf_id, adduct):
-        params = fetch_sigma_charge_ptspermz_ppm(self.db, job_id)
+    def get(self, ds_id, job_id, db_id, sf_id, adduct):
+        params = fetch_sigma_charge_ptspermz_ppm(self.db, ds_id)
         sigma, charge, pts_per_mz, ppm = params
 
         sf = self.db.query(SF_SELECT, db_id, sf_id)[0].sf

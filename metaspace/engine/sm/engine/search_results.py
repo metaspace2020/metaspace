@@ -1,16 +1,15 @@
 import json
 from collections import OrderedDict
 import numpy as np
+import logging
 
 from sm.engine.db import DB
-from sm.engine.util import logger
 
+
+logger = logging.getLogger('sm-engine')
 
 METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
 SF_ISO_IMGS_INS = 'INSERT INTO iso_image VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
-clear_iso_image_sql = 'DELETE FROM iso_image WHERE job_id = %s'
-clear_iso_image_metrics_sql = 'DELETE FROM iso_image_metrics WHERE job_id = %s'
-RESULTS_TABLE_VIEW_REFRESH = 'REFRESH MATERIALIZED VIEW results_table'
 
 
 class SearchResults(object):
@@ -20,8 +19,8 @@ class SearchResults(object):
     ----------
     sf_db_id : int
         Formula database id
-    ds_id : int
-        Dataset id
+    ds_id : str
+        Dataset unique identifier
     job_id : int
         Search job id
     sf_metrics_df : pandas.Dataframe
@@ -32,12 +31,11 @@ class SearchResults(object):
     db: engine.db.DB
     sm_config: dict
     """
-    def __init__(self, sf_db_id, ds_id, job_id, ds_name,
+    def __init__(self, sf_db_id, ds_id, job_id,
                  sf_adduct_peaksn, db, sm_config, ds_config):
         self.sf_db_id = sf_db_id
         self.ds_id = ds_id
         self.job_id = job_id
-        self.ds_name = ds_name
         self.db = db
         self.sm_config = sm_config
         self.ds_config = ds_config
@@ -48,11 +46,7 @@ class SearchResults(object):
         self.ncols = None
         self.nrows = None
 
-    def clear_old_results(self):
-        """ Clear all previous search results for the dataset from the database """
-        logger.info('Clearing old job results')
-        self.db.alter(clear_iso_image_sql, self.job_id)
-        self.db.alter(clear_iso_image_metrics_sql, self.job_id)
+        #self.logger = logging.getLogger(name='sm-engine')
 
     @staticmethod
     def _metrics_table_row_gen(job_id, db_id, metr_df, sf_adduct_peaksn, metrics):
@@ -111,6 +105,5 @@ class SearchResults(object):
 
     def store(self):
         logger.info('Storing search results to the DB')
-        self.clear_old_results()
         self.store_sf_img_metrics()
         self.store_sf_iso_images()

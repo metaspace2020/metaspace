@@ -5,4 +5,5 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 . $SPARK_HOME/conf/spark-env.sh
 
-python $@
+source activate sm
+exec $@

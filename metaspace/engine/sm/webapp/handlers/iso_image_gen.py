@@ -21,7 +21,7 @@ BOUNDS_SEL = ('SELECT img_bounds '
               'FROM job j '
               'JOIN dataset d on d.id=j.ds_id '
               'WHERE j.id=%s')
-COORD_SEL = 'SELECT xs, ys FROM coordinates WHERE ds_id=%s'
+COORD_SEL = "SELECT xs, ys FROM coordinates WHERE ds_id='%s'"
 
 
 class IsoImgBaseHandler(tornado.web.RequestHandler):
@@ -77,7 +77,7 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
 
     # TODO: get rid of matplotlib
     def _get_color_image_data(self, ds_id, job_id, db_id, sf_id, adduct):
-        coords_row = self.db.query(COORD_SEL % int(ds_id))[0]
+        coords_row = self.db.query(COORD_SEL % ds_id)[0]
         coords = np.array(zip(coords_row.xs, coords_row.ys))
         coords -= coords.min(axis=0)
         self.ncols, self.nrows = coords.max(axis=0) + 1
@@ -116,7 +116,7 @@ class IsoImgPngHandler(IsoImgBaseHandler):
 
         color_img_data = self._get_color_image_data(ds_id, job_id, db_id, sf_id, adduct)
         if color_img_data[:,:,:3].sum() > 0:
-            img_fp = self.gen_iso_img(int(ds_id), int(job_id), int(sf_id), adduct, color_img_data)
+            img_fp = self.gen_iso_img(ds_id, int(job_id), int(sf_id), adduct, color_img_data)
             self.send_img_response(img_fp)
         else:
             self.redirect('/static/iso_placeholder.png')
@@ -132,7 +132,6 @@ class AggIsoImgPngHandler(IsoImgBaseHandler):
 
     @gen.coroutine
     def get(self, db_id, ds_id, job_id, sf_id, sf, adduct):
-        ds_id = int(ds_id)
         job_id = int(job_id)
         sf_id = int(sf_id)
 
