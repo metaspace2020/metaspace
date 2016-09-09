@@ -146,9 +146,25 @@ class ESExporter:
                         "fdr": {"type": "float", "index": "not_analyzed"},
                         "mz": {"type": "string", "index": "not_analyzed"},
                         # dataset metadata
-                        "ds_meta.Submitted_By.Submitter.Email": {"type": "string", "index": "not_analyzed"},
-                        "ds_meta.Sample_Preparation.MALDI_Matrix": {"type": "string", "index": "not_analyzed"},
-                        "ds_meta.Sample_Preparation.MALDI_Matrix_Application": {"type": "string", "index": "not_analyzed"},
+                        "ds_meta": {
+                            "properties": {
+                                "Submitted_By": {
+                                    "properties": {
+                                        "Submitter": {
+                                            "properties": {
+                                                "Email": {"type": "string", "index": "not_analyzed"}
+                                            }
+                                        }
+                                    }
+                                },
+                                "Sample_Preparation": {
+                                    "properties": {
+                                        "MALDI_Matrix": {"type": "string", "index": "not_analyzed"},
+                                        "MALDI_Matrix_Application": {"type": "string", "index": "not_analyzed"}
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
