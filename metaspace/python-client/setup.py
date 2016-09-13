@@ -13,4 +13,5 @@ setup(name='sm_annotation_utils',
                          'pandas',
                          'plotly',
                          'numpy',
+                         'pyyaml',
             ])
