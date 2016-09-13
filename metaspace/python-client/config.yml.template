@@ -1,0 +1,10 @@
+plotly_user: 
+plotly_api_key: 
+
+elasticsearch_host: localhost
+
+postgres:
+  host: localhost
+  database: sm
+  user: sm
+  password: 
