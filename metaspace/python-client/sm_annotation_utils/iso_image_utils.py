@@ -29,12 +29,10 @@ order by m.msm DESC
 limit %s
 """
 
-
+config_fname = join(dirname(__file__), 'config.yml')
 class IsoImgReader(object):
-    
-    def __init__(self):
-        config = yaml.load(open(join(dirname(__file__), 'config.yml')))
-
+    def __init__(self, config_fname=config_fname):
+        config = yaml.load(open(config_fname))
         conn = psycopg2.connect(host=config['postgres']['host'],
                                 database=config['postgres']['database'],
                                 user=config['postgres']['user'],
