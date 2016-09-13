@@ -3,6 +3,12 @@
        dest={{ sm_home }}
        version={{ sm_branch }}
 
+- name: Install SM into conda environment
+  args:
+    chdir: "{{ sm_home }}"
+    executable: /bin/bash
+  shell: "{{ activate_venv }} && pip install . -U"
+
 - include: restart_supervisor.yml
 
 #    - name: Install all needed js libs
