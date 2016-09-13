@@ -40,7 +40,6 @@
         state=directory
   with_items:
     - "{{ spark_log_dir }}"
-    - "{{ spark_run_dir }}"
 
 - name: Download Spark distribution
   get_url: url="{{ spark_mirror }}/spark-{{ spark_version }}.tar.gz"

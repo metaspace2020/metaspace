@@ -14,7 +14,7 @@
 - name: Clone SM git repository
   git:
     dest: "{{ sm_home }}"
-    repo: "https://github.com/SpatialMetabolomics/SM_distributed.git"
+    repo: "https://github.com/SpatialMetabolomics/sm-engine.git"
     update: yes
     version: "{{ sm_branch }}"
 
@@ -22,36 +22,14 @@
   file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
 
-- name: Create sm config files
-  shell: cp sm_log.cfg.template sm_log.cfg  #&& cp config.json.template config.json
-  args:
-    chdir: "{{ sm_home }}/conf"
-    creates: sm_log.cfg config.json
-
-#- name: Install SM into conda environment
+#- name: Create sm config files
+#  shell: cp sm_log.cfg.template sm_log.cfg
 #  args:
-#    chdir: "{{ sm_home }}"
-#    executable: /bin/bash
-#  shell: "source {{ venv }}/bin/activate {{ conda_env }} && pip install ."
-
-##- name: Put activate_conda_env.sh scripts to
-##  template: src=sm_config.json.j2
-##            dest={{ sm_home }}/conf/config.json
-##            owner={{ spark_user }}
-##            group={{ spark_user }}
-##            mode=0600
+#    chdir: "{{ sm_home }}/conf"
+#    creates: sm_log.cfg config.json
 
 - name: Put SPARK_HOME into update sm-env.sh scripts
   template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
-
-#- name: Ensure that scripts/run.sh is executable
-#  file: path={{ sm_home }}/scripts/run.sh owner=ubuntu group=ubuntu mode=0755
-
-#- name: Archive engine into a zip file
-#  shell: zip -rq sm.zip sm
-#  args:
-#    chdir: "{{ sm_home }}"
-#    creates: "{{ sm_home }}/sm.zip"
 
 - name: Make sure .aws directory exists
   file: path=/home/{{ spark_user }}/.aws/
@@ -59,7 +37,7 @@
         owner={{ spark_user }}
         group={{ spark_user }}
         mode=0755
-  when: aws_setup_access
+  when: aws_access_key_id is defined
 
 - name: Put aws credentials file into the home dir
   template: src=aws_credentials.j2
@@ -67,14 +45,15 @@
             owner={{ spark_user }}
             group={{ spark_user }}
             mode=0600
-  when: aws_setup_access
+  when: aws_access_key_id is defined
+
+- name: Pull SM config from the remote host
+  fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
+         flat=yes fail_on_missing=yes
 
 - name: Put SM config to {{ sm_home }}/conf/config.json
-  template: src=sm_config.json.j2
-            dest={{ sm_home }}/conf/config.json
-            owner={{ spark_user }}
-            group={{ spark_user }}
-            mode=0600
+  template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
+            owner={{ spark_user }} group={{ spark_user }} mode=0600
 
 - name: Make sure that a directory for the SM logs exists
   file: path={{ sm_home }}/logs state=directory mode=0755
@@ -85,3 +64,7 @@
   with_items:
     - conda
     - activate
+
+- name: Copy sm-job-daemon supervisor config file
+  template: src=sm-job-daemon.supervisor.j2 dest=/etc/supervisor/sm-job-daemon.supervisor
+            mode=0600 owner=ubuntu group=ubuntu

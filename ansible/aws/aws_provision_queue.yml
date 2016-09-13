@@ -1,0 +1,13 @@
+---
+
+- name: SM queue instance configuration
+  hosts: tag_hostgroup_sm_queue
+  user: ubuntu
+  gather_facts: true
+
+  roles:
+    - role: common
+      become: yes
+
+    - role: rabbitmq
+      become: yes

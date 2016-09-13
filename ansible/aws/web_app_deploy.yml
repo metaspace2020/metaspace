@@ -5,7 +5,7 @@
 
   vars_prompt:
     - name: webserver_host
-      prompt: Enter webserver host name/ip address
+      prompt: Enter web server host name/ip address
       private: false
 
   tasks:

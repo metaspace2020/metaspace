@@ -1,5 +1,15 @@
 ---
 
 dependencies:
+  - role: common
+    become: yes
+
+  - role: postgres
+    become: yes
+
   - role: elasticsearch
     become: yes
+
+  - role: miniconda
+
+  - role: supervisor

@@ -1,0 +1,34 @@
+---
+
+- name: Install supervisor into conda env
+  shell: "{{ activate_venv }} && pip install -U supervisor"
+  args:
+    executable: /bin/bash
+
+- name: Create config/log directory for supervisor
+  become: yes
+  file: path={{ item }} state=directory mode=0700 owner=ubuntu group=ubuntu
+  with_items:
+    - /etc/supervisor
+    - /var/log/supervisor
+
+- name: Copy supervisor config file
+  copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf mode=0600 owner=ubuntu group=ubuntu
+
+#- name: Check if supervisord daemon is running
+#  shell: "{{ activate_venv }} && supervisorctl status"
+#  args:
+#    executable: /bin/bash
+#  register: supervisorctl_status_out
+
+#- debug: var=supervisorctl_status_out
+
+- name: Make sure that a directory for the logs exists
+  become: yes
+  file: path={{ supervisor_log_dir }} state=directory mode=0755 owner=ubuntu group=ubuntu
+
+#- name: Start supervisord daemon
+#  shell: "{{ activate_venv }} && supervisord -c /etc/supervisor/supervisord.conf -l {{ supervisor_log_dir }}/supervisord.log"
+#  args:
+#    executable: /bin/bash
+#  when: "'no such file' in supervisorctl_status_out.stdout"

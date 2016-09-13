@@ -121,7 +121,7 @@ def stop_instance(inst_name, method='stop'):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM AWS instances management tool')
     parser.add_argument('action', type=str, help='start|stop')
-    parser.add_argument('component', type=str, help='all|web|spark')
+    parser.add_argument('component', type=str, help='all|web|spark|queue')
     parser.add_argument('key_name', type=str, help='AWS key name to use')
     args = parser.parse_args()
 

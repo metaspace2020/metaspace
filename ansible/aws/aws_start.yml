@@ -1,6 +1,10 @@
 ---
 
-- hosts: localhost
+- include: aws_clean_cache.yml
+
+
+- name: Spinning up AWS instances
+  hosts: localhost
   connection: local
   gather_facts: False
 
@@ -14,3 +18,43 @@
 
     - name: Spinning up SM cluster instances
       shell: python manage_instances.py start {{ component }} {{ key_name }}
+
+
+- name: SM spark master initial setup (slaves file update)
+  hosts: tag_hostgroup_sm_spark_master
+  user: ubuntu
+  gather_facts: true
+
+  vars:
+    spark_slave_ips: []
+
+  tasks:
+    - name: Create a list of private ip addresses for the slave instances
+      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ec2_private_ip_address ] }}"
+      with_items: "{{ groups['tag_hostgroup_sm_spark_slave'] }}"
+
+    - name: Put slave ip addresses into slaves file
+      become: yes
+      template: src=../roles/spark_master/templates/slaves.j2 dest="{{ spark_home }}/conf/slaves"
+                owner=ubuntu group=ubuntu mode=0664
+
+    - name: Restart master and slaves
+      command: "{{ spark_home }}/sbin/start-all.sh"
+      when: not ('localhost' in spark_slave_ips)
+      register: command_result
+      changed_when: not ('Stop it first' in command_result.stdout)
+      failed_when: ('timed out' in command_result.stdout)
+
+    - debug: var=command_result
+
+    - name: Check that master daemon is up
+      command: jps -l
+      become: no
+      when: not ('localhost' in spark_slave_ips)
+      register: command_result
+      failed_when: not ('Master' in command_result.stdout)
+
+    - name: Wait for slave deamons to start up
+      wait_for: host={{ item }} port=8081 delay=5
+      with_items: "{{ spark_slave_ips }}"
+      when: not ('localhost' in spark_slave_ips)

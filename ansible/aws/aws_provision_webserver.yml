@@ -5,18 +5,12 @@
   user: ubuntu
   gather_facts: true
 
+  vars:
+    postgres_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
+    es_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
+    rabbitmq_host: "{{ groups.get('tag_hostgroup_sm_queue', ['localhost'])[0] }}"
+
   roles:
-    - role: common
-      become: yes
-
-    - role: postgres
-      become: yes
-
-    - role: elasticsearch
-      become: yes
-
-    - role: miniconda
-
     - role: sm_webapp
       venv: "{{ miniconda_prefix }}"
       conda_env: "{{ miniconda_env.name }}"

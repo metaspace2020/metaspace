@@ -1,5 +1,5 @@
 - name: Pull sources from the repository
-  git: repo=https://github.com/SpatialMetabolomics/SM_distributed.git
+  git: repo=https://github.com/SpatialMetabolomics/sm-engine.git
        dest={{ sm_home }}
        version={{ sm_branch }}
        update=yes
@@ -8,9 +8,11 @@
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash
-  shell: "source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }} && pip install . -U"
+  shell: "{{ activate_venv }} && pip install . -U"
 
 - name: Archive engine into a zip file
   shell: zip -rq sm.zip sm
   args:
     chdir: "{{ sm_home }}"
+
+- include: restart_supervisor.yml
