@@ -40,4 +40,6 @@ class Queue(object):
                                   delivery_mode=2,  # make message persistent
                               ))
         self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), self.qname))
+
+    def close(self):
         self.conn.close()

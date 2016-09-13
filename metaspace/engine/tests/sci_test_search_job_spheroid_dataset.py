@@ -144,6 +144,9 @@ if __name__ == '__main__':
     if args.run:
         try:
             sci_tester.run_search()
+        except Exception:
+            raise
+        else:
             sci_tester.run_sci_test()
         finally:
             sci_tester.clear_data_dirs()

@@ -27,6 +27,6 @@ if __name__ == "__main__":
     try:
         job.run(args.ds_config_path)
     except:
-        pass
+        sys.exit(1)
 
     sys.exit()
