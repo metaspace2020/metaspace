@@ -10,7 +10,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Script for adding messages to the job queue')
     parser.add_argument('input_path', type=str, help='Path to a dataset location')
     parser.add_argument('--ds-name', type=str, help='Dataset name')
-    parser.add_argument('--ds-id', type=str, help='Dataset id')
+    parser.add_argument('--drop', action='store_true', help='Drop all datasets with ds_name first')
     parser.add_argument('--config', dest='sm_config_path', default='conf/config.json', type=str, help='SM config path')
 
     init_logger()
@@ -21,8 +21,9 @@ if __name__ == "__main__":
 
     queue_writer = Queue(rabbit_config, 'sm_annotate')
     msg = {
-        'ds_id': args.ds_id or dt.now().strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+        'ds_id': dt.now().strftime("%Y-%m-%d_%Hh%Mm%Ss"),
         'ds_name': args.ds_name,
+        'drop': args.drop,
         'input_path': args.input_path
     }
     queue_writer.publish(msg)

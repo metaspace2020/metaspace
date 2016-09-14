@@ -26,7 +26,7 @@ class Dataset(object):
     wd_manager : engine.local_dir.WorkDir
     db : engine.db.DB
     """
-    def __init__(self, sc, id, name, input_path, ds_config, wd_manager, db):
+    def __init__(self, sc, id, name, drop, input_path, ds_config, wd_manager, db):
         self.db = db
         self.sc = sc
         self.id = id
@@ -39,14 +39,14 @@ class Dataset(object):
         self.ds_config = ds_config
         self.sm_config = SMConfig.get_conf()
 
-        self._delete_ds_if_exists()
+        if drop:
+            self._delete_ds_if_exists()
         self._define_pixels_order()
 
     def _delete_ds_if_exists(self):
-        res = self.db.select('SELECT * FROM dataset WHERE id=%s', self.id)
-        if res:
-            logger.warning('ds_id already exists: {}. Deleting'.format(self.id))
-            self.db.alter('DELETE FROM dataset WHERE id=%s', self.id)
+        for r in self.db.select('SELECT id FROM dataset WHERE name=%s', self.name):
+            logger.warning('ds_name already exists: {}. Deleting'.format(self.name))
+            self.db.alter('DELETE FROM dataset WHERE id=%s', r[0])
 
     @staticmethod
     def choose_name(id, name, metadata):

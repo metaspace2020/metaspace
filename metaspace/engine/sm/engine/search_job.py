@@ -50,9 +50,10 @@ class SearchJob(object):
     sm_config_path : string
         Path to the sm-engine config file
     """
-    def __init__(self, ds_id, ds_name, input_path, sm_config_path):
+    def __init__(self, ds_id, ds_name, drop, input_path, sm_config_path):
         self.ds_id = ds_id
         self.ds_name = ds_name
+        self.drop = drop
         self.input_path = input_path
 
         self.sm_config = None
@@ -137,7 +138,7 @@ class SearchJob(object):
                 if not self.wd_manager.local_fs_only:
                     self.wd_manager.upload_to_remote()
 
-            self.ds = Dataset(self.sc, self.ds_id, self.ds_name, self.input_path,
+            self.ds = Dataset(self.sc, self.ds_id, self.ds_name, self.drop, self.input_path,
                               self.ds_config, self.wd_manager, self.db)
             self.ds.save_ds_meta()
 

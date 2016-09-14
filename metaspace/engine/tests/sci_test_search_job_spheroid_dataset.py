@@ -121,6 +121,7 @@ class SciTester(object):
                join(proj_root(), 'scripts/run_molecule_search.py'),
                self.input_dir_path,
                '--ds-name', self.ds_name,
+               '--drop',
                '--ds-config', self.ds_config_path,
                '--config', self.sm_config_path]
         check_call(cmd)

@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
         try:
             msg = json.loads(body)
-            job = SearchJob(msg['ds_id'], msg['ds_name'], msg['input_path'], args.sm_config_path)
+            job = SearchJob(msg['ds_id'], msg['ds_name'], msg.get('drop', False), msg['input_path'], args.sm_config_path)
             job.run()
         except BaseException as e:
             msg = ' [x] Failed: {}'.format(body)
