@@ -1,10 +1,13 @@
-plotly_user: 
-plotly_api_key: 
+plotly_user:
+plotly_api_key:
 
-elasticsearch_host: localhost
+elasticsearch:
+  host: localhost
+  port: 9200
 
 postgres:
   host: localhost
+  port: 5432
   database: sm
   user: sm
-  password: 
+  password:
