@@ -159,13 +159,19 @@ class ESExporter:
                                             "properties": {
                                                 "Email": {"type": "string", "index": "not_analyzed"}
                                             }
-                                        }
+                                        },
+                                        "Institution": {"type": "string", "index": "not_analyzed"}
                                     }
                                 },
                                 "Sample_Preparation": {
                                     "properties": {
                                         "MALDI_Matrix": {"type": "string", "index": "not_analyzed"},
                                         "MALDI_Matrix_Application": {"type": "string", "index": "not_analyzed"}
+                                    }
+                                },
+                                "Sample_Information": {
+                                    "properties": {
+                                        "Organism": {"type": "string", "index": "not_analyzed"}
                                     }
                                 }
                             }
