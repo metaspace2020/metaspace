@@ -76,7 +76,7 @@ class DB(object):
             list of rows
         """
         self.curs = self.conn.cursor()
-        self.curs.execute(sql, args)
+        self.curs.execute(sql, args) if args else self.curs.execute(sql)
         return self.curs.fetchall()
 
     def select_one(self, sql, *args):
