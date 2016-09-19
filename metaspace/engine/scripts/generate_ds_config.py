@@ -51,56 +51,23 @@ mol_dbs = [
 ]
 
 
-resol_power_params = {
-    '70K': {
-        'fwhm': 0.00285714285,
-        'sigma': 0.006728,
-        'pts_per_mz': 1750
-    },
-    '100K': {
-        'fwhm': 0.002,
-        'sigma': 0.0047096,
-        'pts_per_mz': 2500
-    },
-    '140K': {
-        'fwhm': 0.00142857142,
-        'sigma': 0.003364,
-        'pts_per_mz': 3500
-    },
-    '250K': {
-        'fwhm': 0.0008,
-        'sigma': 0.00188384,
-        'pts_per_mz': 6250
-    },
-    '280K': {
-        'fwhm': 0.00071428571,
-        'sigma': 0.001682,
-        'pts_per_mz': 7000
-    },
-    '500K': {
-        'fwhm': 0.0004,
-        'sigma': 0.00094192,
-        'pts_per_mz': 12500
-    }
-}
-
-resol_power_params = {
-    '70K':   {'sigma': 0.0012133168575543126, 'fwhm': 0.002857142857142857, 'pts_per_mz': 2472},
-    '100K':  {'sigma': 0.0008493218002880188, 'fwhm': 0.002, 'pts_per_mz': 3532},
-    '140K':  {'sigma': 0.0006066584287771563, 'fwhm': 0.0014285714285714286, 'pts_per_mz': 4945},
-    '200K':  {'sigma': 0.0004246609001440094, 'fwhm': 0.001, 'pts_per_mz': 7064},
-    '250K':  {'sigma': 0.0003397287201152075, 'fwhm': 0.0008, 'pts_per_mz': 8830},
-    '280K':  {'sigma': 0.00030332921438857815, 'fwhm': 0.0007142857142857143, 'pts_per_mz': 9890},
-    '500K':  {'sigma': 0.00016986436005760375, 'fwhm': 0.0004, 'pts_per_mz': 17661},
-    '750K':  {'sigma': 0.00011324290670506918, 'fwhm': 0.0002666666666666667, 'pts_per_mz': 26491},
-    '1000K': {'sigma': 0.00008493218002880188, 'fwhm': 0.0002, 'pts_per_mz': 35322},
+resol_power_params = { # Resolving Power defined at m/z 200. Compromise values based on the average resolving power @m/z 500 of Orbitrap and FTICR instruments. #todo replace this with full instrument model
+    '70K': {'sigma': 0.00247585727028, 'fwhm': 0.00583019832869, 'pts_per_mz': 2019},
+    '100K': {'sigma': 0.0017331000892, 'fwhm': 0.00408113883008, 'pts_per_mz': 2885},
+    '140K': {'sigma': 0.00123792863514, 'fwhm': 0.00291509916435, 'pts_per_mz': 4039},
+    '200K': {'sigma': 0.000866550044598, 'fwhm': 0.00204056941504, 'pts_per_mz': 5770},
+    '250K': {'sigma': 0.000693240035678, 'fwhm': 0.00163245553203, 'pts_per_mz': 7212},
+    '280K': {'sigma': 0.00061896431757, 'fwhm': 0.00145754958217, 'pts_per_mz': 8078},
+    '500K': {'sigma': 0.000346620017839, 'fwhm': 0.000816227766017, 'pts_per_mz': 14425},
+    '750K': {'sigma': 0.000231080011893, 'fwhm': 0.000544151844011, 'pts_per_mz': 21637},
+    '1000K': {'sigma': 0.00017331000892, 'fwhm': 0.000408113883008, 'pts_per_mz': 28850},
 }
 
 
 def get_best_match(input, options):
     if len(options) == 1:
         return options[0]
-    match_opt_ind = np.argmax([SeqM(None, str(input), str(opt)).ratio() for opt in options])
+    match_opt_ind = np.argmax([SeqM(None, str(input), str(opt)).ratio() for opt in options})
     return options[match_opt_ind]
 
 
