@@ -36,8 +36,7 @@ CREATE INDEX ind_sum_formulas_1 ON sum_formula (sf);
 CREATE INDEX ind_sum_formulas_2 ON sum_formula (id);
 CREATE INDEX ind_sum_formulas_3 ON sum_formula (id, sf);
 CREATE INDEX ind_sum_formulas_4 ON sum_formula (db_id, id, sf);
-CREATE INDEX sum_formula_names_ind ON sum_formula (names);
-CREATE INDEX sum_formula_ids_ind ON sum_formula (subst_ids);
+CREATE UNIQUE INDEX ind_sum_formula__db_id__sf ON sum_formula USING BTREE (db_id, sf);
 
 DROP TABLE IF EXISTS client CASCADE;
 CREATE TABLE client (
