@@ -67,7 +67,7 @@ resol_power_params = { # Resolving Power defined at m/z 200. Compromise values b
 def get_best_match(input, options):
     if len(options) == 1:
         return options[0]
-    match_opt_ind = np.argmax([SeqM(None, str(input), str(opt)).ratio() for opt in options})
+    match_opt_ind = np.argmax([SeqM(None, str(input), str(opt)).ratio() for opt in options])
     return options[match_opt_ind]
 
 
