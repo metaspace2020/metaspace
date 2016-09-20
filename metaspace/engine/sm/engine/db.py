@@ -12,8 +12,10 @@ import psycopg2.extensions
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 import psycopg2.extras
+import logging
 
-from sm.engine.util import logger
+
+logger = logging.getLogger('sm-engine')
 
 
 def db_decor(func):
@@ -74,7 +76,7 @@ class DB(object):
             list of rows
         """
         self.curs = self.conn.cursor()
-        self.curs.execute(sql, args)
+        self.curs.execute(sql, args) if args else self.curs.execute(sql)
         return self.curs.fetchall()
 
     def select_one(self, sql, *args):

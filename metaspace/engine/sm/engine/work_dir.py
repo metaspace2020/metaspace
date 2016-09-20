@@ -8,12 +8,15 @@ import glob
 from os.path import exists, join, split
 from shutil import copytree, copy
 from subprocess import CalledProcessError
-
+import logging
 import boto3
-import botocore
+from botocore.exceptions import ClientError
 from boto3.s3.transfer import S3Transfer
 
-from sm.engine.util import local_path, cmd_check, SMConfig, logger, s3_path
+from sm.engine.util import local_path, cmd_check, SMConfig, s3_path
+
+
+logger = logging.getLogger('sm-engine')
 
 
 def split_s3_path(path):
@@ -32,6 +35,10 @@ class LocalWorkDir(object):
     @property
     def ds_config_path(self):
         return join(self.ds_path, 'config.json')
+
+    @property
+    def ds_metadata_path(self):
+        return join(self.ds_path, 'meta.json')
 
     @property
     def imzml_path(self):
@@ -56,7 +63,6 @@ class LocalWorkDir(object):
     def clean(self):
         try:
             cmd_check('rm -rf {}', self.ds_path)
-            # cmd_check("find {} -type f ! -name '*.json' -delete", self.ds_path)
         except CalledProcessError as e:
             logger.warning('Deleting interim local data files error: %s', e.message)
 
@@ -101,7 +107,7 @@ class S3WorkDir(object):
     def exists(self, path):
         try:
             self.s3.Object(*split_s3_path(path)).load()
-        except botocore.exceptions.ClientError as e:
+        except ClientError as e:
             if e.response['Error']['Code'] == "404":
                 return False
             else:
@@ -116,16 +122,14 @@ class S3WorkDir(object):
 
 
 class WorkDirManager(object):
-    """ Provides an access to a work directory for a processed dataset
+    """ Provides access to the work directory of the target dataset
 
     Args
     ----
-    ds_name : str
-        Dataset name (alias)
-    data_dir_path : str
-        Dataset config
+    ds_id : str
+        Dataset unique id
     """
-    def __init__(self, ds_name):
+    def __init__(self, ds_id):
         self.sm_config = SMConfig.get_conf()
 
         if 's3_base_path' not in self.sm_config['fs']:
@@ -138,17 +142,17 @@ class WorkDirManager(object):
         self.s3 = boto3.session.Session().resource('s3')
         self.s3transfer = S3Transfer(boto3.client('s3', 'eu-west-1'))
 
-        self.local_dir = LocalWorkDir(self.sm_config['fs']['base_path'], ds_name)
+        self.local_dir = LocalWorkDir(self.sm_config['fs']['base_path'], ds_id)
         if not self.local_fs_only:
-            self.remote_dir = S3WorkDir(self.sm_config['fs']['s3_base_path'], ds_name, self.s3, self.s3transfer)
+            self.remote_dir = S3WorkDir(self.sm_config['fs']['s3_base_path'], ds_id, self.s3, self.s3transfer)
 
     @property
     def ds_config_path(self):
         return self.local_dir.ds_config_path
-        # if self.local_fs_only:
-        #     return self.local_dir.ds_config_path
-        # else:
-        #     return self.remote_dir.ds_config_path
+
+    @property
+    def ds_metadata_path(self):
+        return self.local_dir.ds_metadata_path
 
     @property
     def txt_path(self):
@@ -171,31 +175,27 @@ class WorkDirManager(object):
             return s3_path(path)
 
     def copy_input_data(self, input_data_path, ds_config_path):
-        """ Copy imzML/ibd/config files from input path to a dataset work directory
+        """ Copy imzML/ibd/config/meta files from input path to a dataset work directory
 
         Args
         ----
         input_data_path : str
             Path to input files
         """
-        # if self.local_fs_only:
-        #     ex = self.local_dir.exists(self.local_dir.txt_path)
-        # else:
-        #     ex = self.remote_dir.exists(self.remote_dir.txt_path)
-        if not self.local_dir.exists(self.local_dir.imzml_path):
-            logger.info('Copying data from %s to %s', input_data_path, self.local_dir.ds_path)
+        # if not self.local_dir.exists(self.local_dir.imzml_path):
+        logger.info('Copying data from %s to %s', input_data_path, self.local_dir.ds_path)
 
-            if input_data_path.startswith('s3a://'):
-                cmd_check('mkdir -p {}', self.local_dir.ds_path)
-                bucket_name, inp_path = split_s3_path(input_data_path)
+        if input_data_path.startswith('s3a://'):
+            cmd_check('mkdir -p {}', self.local_dir.ds_path)
+            bucket_name, inp_path = split_s3_path(input_data_path)
 
-                bucket = self.s3.Bucket(bucket_name)
-                for obj in bucket.objects.filter(Prefix=inp_path):
-                    if not obj.key.endswith('/'):
-                        path = join(self.local_dir.ds_path, obj.key.split('/')[-1])
-                        self.s3transfer.download_file(bucket_name, obj.key, path)
-            else:
-                self.local_dir.copy(input_data_path, self.local_dir.ds_path)
+            bucket = self.s3.Bucket(bucket_name)
+            for obj in bucket.objects.filter(Prefix=inp_path):
+                if not obj.key.endswith('/'):
+                    path = join(self.local_dir.ds_path, obj.key.split('/')[-1])
+                    self.s3transfer.download_file(bucket_name, obj.key, path)
+        else:
+            self.local_dir.copy(input_data_path, self.local_dir.ds_path)
 
         if ds_config_path:
             self.local_dir.copy(ds_config_path, self.local_dir.ds_config_path, is_file=True)
@@ -208,23 +208,9 @@ class WorkDirManager(object):
     def upload_to_remote(self):
         self.remote_dir.copy(self.local_dir.coord_path, self.remote_dir.coord_path)
         self.remote_dir.copy(self.local_dir.txt_path, self.remote_dir.txt_path)
-        # self.remote_dir.copy(self.local_dir.ds_config_path, self.remote_dir.ds_config_path)
-
-        self.local_dir.clean()
 
     def exists(self, path):
         if self.local_fs_only:
             return self.local_dir.exists(path)
         else:
             return self.remote_dir.exists(path)
-
-    # def upload_data_to_hdfs(self):
-    #     """ If non local file system is used uploads plain text data files to it """
-    #     logger.info('Coping DS text file to HDFS...')
-    #     return_code = cmd(hdfs_prefix() + '-tests -e {}', hdfs_path(self.path))
-    #     if return_code:
-    #         cmd_check(hdfs_prefix() + '-mkdir -p {}', hdfs_path(self.path))
-    #         cmd_check(hdfs_prefix() + '-copyFromLocal {} {}',
-    #                   local_path(self.txt_path), hdfs_path(self.txt_path))
-    #         cmd_check(hdfs_prefix() + '-copyFromLocal {} {}',
-    #                   local_path(self.coord_path), hdfs_path(self.coord_path))

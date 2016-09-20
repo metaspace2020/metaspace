@@ -5,13 +5,16 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 from os.path import exists
-
+import logging
 import numpy as np
 import scipy.signal as signal
 from pyMSpec.centroid_detection import gradient
 from pyimzml.ImzMLParser import ImzMLParser
 
-from sm.engine.util import SMConfig, logger
+from sm.engine.util import SMConfig
+
+
+logger = logging.getLogger('sm-engine')
 
 
 def preprocess_spectrum(mzs, ints):
@@ -49,7 +52,7 @@ def encode_coord_line(index, x, y):
 def get_track_progress(n_points, step, active=False):
     def track(i):
         if i % step == 0:
-            print("Wrote %.1f%% (%d of %d)" % (float(i) / n_points * 100, i, n_points))
+            logger.debug("Wrote %.1f%% (%d of %d)" % (float(i) / n_points * 100, i, n_points))
 
     def dont_track(i): pass
 
@@ -61,8 +64,6 @@ class ImzmlTxtConverter(object):
 
     Args
     ----
-    ds_name : str
-        Dataset name (alias)
     imzml_path : str
         Path to an imzML file
     txt_path : str
@@ -70,8 +71,7 @@ class ImzmlTxtConverter(object):
     coord_path : str
         Path to store spectra coordinates in plain text format
     """
-    def __init__(self, ds_name, imzml_path, txt_path, coord_path=None):
-        self.ds_name = ds_name
+    def __init__(self, imzml_path, txt_path, coord_path=None):
         self.imzml_path = imzml_path
         self.preprocess = None
         self.sm_config = SMConfig.get_conf()

@@ -5,6 +5,7 @@ import tornado.web
 from tornado import gen
 import json
 import requests
+import logging
 
 
 FEEDBACK_INS = ("INSERT INTO feedback (client_id, job_id, db_id, sf_id, adduct, rating, comment, fdr_thr) "
@@ -15,6 +16,8 @@ COMMENT_UPD = ("UPDATE feedback SET comment = %s "
                "WHERE job_id=%s AND db_id=%s AND sf_id=%s AND adduct=%s AND fdr_thr=%s AND client_id=%s")
 FEEDBACK_SEL = ("SELECT rating, comment FROM feedback WHERE job_id=%s AND db_id=%s AND sf_id=%s AND adduct=%s "
                 "AND fdr_thr=%s AND client_id=%s")
+
+logger = logging.getLogger('sm-web-app')
 
 
 def arg_dict(args):
@@ -52,16 +55,16 @@ class FeedbackRating(tornado.web.RequestHandler):
         client_id = self.get_secure_cookie('client_id')
         if client_id:
             upsert_feedback(self.application.db, client_id, args)
-            print 'Saved {} rating from {} client'.format(args['rating'], client_id)
+            logger.debug('Saved {} rating from {} client'.format(args['rating'], client_id))
         else:
-            print 'Not authenticated user sent a rating'
+            logger.debug('Not authenticated user sent a rating')
 
     @gen.coroutine
     def get(self):
         client_id = self.get_secure_cookie('client_id')
         if not client_id:
             self.write({})
-            print 'Not authenticated get'.format()
+            logger.debug('Not authenticated get'.format())
             return
 
         args = arg_dict(self.request.arguments)
@@ -69,11 +72,11 @@ class FeedbackRating(tornado.web.RequestHandler):
                                             args['sf_id'], args['adduct'], args['fdr_thr'], client_id)
         if not feed_rs:
             self.write({})
-            print 'Sent empty feedback rating'.format()
+            logger.debug('Sent empty feedback rating'.format())
             return
 
         self.write(dict(rating=feed_rs[0]['rating']))
-        print 'Sent saved rating from {} user'.format(client_id)
+        logger.debug('Sent saved rating from {} user'.format(client_id))
 
 
 class FeedbackComment(tornado.web.RequestHandler):
@@ -84,16 +87,16 @@ class FeedbackComment(tornado.web.RequestHandler):
         client_id = self.get_secure_cookie('client_id')
         if client_id:
             upsert_feedback(self.application.db, client_id, args)
-            print 'Saved "{}" comment from {} client'.format(args['comment'], client_id)
+            logger.debug('Saved "{}" comment from {} client'.format(args['comment'], client_id))
         else:
-            print 'Not authenticated user sent a comment'
+            logger.debug('Not authenticated user sent a comment')
 
     @gen.coroutine
     def get(self):
         client_id = self.get_secure_cookie('client_id')
         if not client_id:
             self.write({})
-            print 'Not authenticated get'.format()
+            logger.debug('Not authenticated get'.format())
             return
 
         args = arg_dict(self.request.arguments)
@@ -101,8 +104,8 @@ class FeedbackComment(tornado.web.RequestHandler):
                                             args['sf_id'], args['adduct'], args['fdr_thr'], client_id)
         if not feed_rs:
             self.write({})
-            print 'Sent empty feedback comment'.format()
+            logger.debug('Sent empty feedback comment'.format())
             return
 
         self.write(dict(comment=feed_rs[0]['comment']))
-        print 'Sent saved comment from {} user'.format(client_id)
+        logger.debug('Sent saved comment from {} user'.format(client_id))

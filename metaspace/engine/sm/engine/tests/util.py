@@ -2,9 +2,16 @@ from os.path import join
 import pytest
 from fabric.api import local
 from pyspark import SparkContext, SparkConf
+from logging.config import dictConfig
 
 from sm.engine.db import DB
-from sm.engine.util import proj_root
+from sm.engine.util import proj_root, sm_log_config
+from sm.engine.es_export import ESExporter
+
+
+log_config = sm_log_config
+log_config['loggers']['sm-engine']['handlers'] = ['console_debug']
+dictConfig(log_config)
 
 
 @pytest.fixture(scope='module')
@@ -73,6 +80,7 @@ def sm_config():
             "password": "1321"
         },
         "elasticsearch": {
+            "index": "sm_test",
             "host": "localhost"
         },
         "fs": {
@@ -84,3 +92,10 @@ def sm_config():
             "executor.memory": "1g"
         }
     }
+
+
+@pytest.fixture()
+def create_sm_index(sm_config):
+    es_exp = ESExporter(sm_config)
+    es_exp.delete_index()
+    es_exp.create_index()

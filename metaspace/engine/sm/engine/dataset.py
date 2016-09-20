@@ -1,15 +1,13 @@
 import json
-
 import numpy as np
+import logging
 
-from sm.engine.util import logger, SMConfig
+from sm.engine.util import SMConfig, read_json
 
 
-DS_ID_SELECT = "SELECT id FROM dataset where name = %s"
-DS_DEL = "DELETE FROM dataset where name = %s"
-CLIENT_ID_SEL = "SELECT id FROM client where email = %s"
-# MAX_DS_ID_SELECT = "SELECT COALESCE(MAX(id), -1) FROM dataset"
-DS_INSERT = "INSERT INTO dataset (name, owner, file_path, img_bounds, config) VALUES (%s, %s, %s, %s, %s)"
+logger = logging.getLogger('sm-engine')
+
+DS_INSERT = "INSERT INTO dataset (id, name, input_path, metadata, img_bounds, config) VALUES (%s, %s, %s,%s, %s, %s)"
 COORD_INSERT = "INSERT INTO coordinates VALUES (%s, %s, %s)"
 
 
@@ -28,17 +26,31 @@ class Dataset(object):
     wd_manager : engine.local_dir.WorkDir
     db : engine.db.DB
     """
-    def __init__(self, sc, name, owner_email, input_path, ds_config, wd_manager, db):
+    def __init__(self, sc, id, name, drop, input_path, ds_config, wd_manager, db):
         self.db = db
         self.sc = sc
-        self.name = name
-        self.owner_email = owner_email
+        self.id = id
+
+        self.wd_manager = wd_manager
+        self.metadata = read_json(self.wd_manager.ds_metadata_path)
+        self.name = self.choose_name(id, name, self.metadata)
+
         self.input_path = input_path
         self.ds_config = ds_config
-        self.wd_manager = wd_manager
         self.sm_config = SMConfig.get_conf()
 
+        if drop:
+            self._delete_ds_if_exists()
         self._define_pixels_order()
+
+    def _delete_ds_if_exists(self):
+        for r in self.db.select('SELECT id FROM dataset WHERE name=%s', self.name):
+            logger.warning('ds_name already exists: {}. Deleting'.format(self.name))
+            self.db.alter('DELETE FROM dataset WHERE id=%s', r[0])
+
+    @staticmethod
+    def choose_name(id, name, metadata):
+        return name or metadata.get('metaspace_options', {}).get('Dataset_Name', id)
 
     @staticmethod
     def _parse_coord_row(s):
@@ -97,24 +109,6 @@ class Dataset(object):
         return (self.max_y - self.min_y + 1,
                 self.max_x - self.min_x + 1)
 
-    # @staticmethod
-    # def txt_to_spectrum(s):
-    #     """Converts a text string in the format to a spectrum in the form of two arrays:
-    #     array of m/z values and array of partial sums of intensities.
-    #
-    #     Args
-    #     ----------
-    #     s : String
-    #         id|mz1 mz2 ... mzN|int1 int2 ... intN
-    #     Returns
-    #     -------
-    #     : tuple
-    #         triple spectrum_id, mzs, cumulative sum of intensities
-    #     """
-    #     arr = s.strip().split("|")
-    #     intensities = np.fromstring("0 " + arr[2], sep=' ')
-    #     return int(arr[0]), np.fromstring(arr[1], sep=' '), np.cumsum(intensities)
-
     @staticmethod
     def txt_to_spectrum_non_cum(s):
         arr = s.strip().split("|")
@@ -128,36 +122,20 @@ class Dataset(object):
             Spark RDD with spectra. One spectrum per RDD entry.
         """
         txt_to_spectrum = self.txt_to_spectrum_non_cum
-        # if self.sm_config['fs']['local']:
         logger.info('Converting txt to spectrum rdd from %s', self.wd_manager.txt_path)
         return self.sc.textFile(self.wd_manager.txt_path,minPartitions=8).map(txt_to_spectrum)
-        # else:
-        #     logger.info('Converting txt to spectrum rdd from %s', hdfs_path(self.wd_manager.txt_path))
-        #     return self.sc.textFile(hdfs_path(self.wd_manager.txt_path), minPartitions=8).map(txt_to_spectrum)
 
     def save_ds_meta(self):
         """ Save dataset metadata (name, path, image bounds, coordinates) to the database """
-        # ds_id_row = self.db.select_one(DS_ID_SELECT, self.name)
-        # if not ds_id_row:
-        #     logger.info('No dataset with name %s found', self.name)
-
-        # ds_id = self.db.select_one(MAX_DS_ID_SELECT)[0] + 1
-        self.db.alter(DS_DEL, self.name)
         img_bounds = json.dumps({'x': {'min': self.min_x, 'max': self.max_x},
                                  'y': {'min': self.min_y, 'max': self.max_y}})
-        ds_config_json = json.dumps(self.ds_config)
 
-        owner_rs = self.db.select_one(CLIENT_ID_SEL, self.owner_email)
-        if self.owner_email and not owner_rs:
-            raise Exception("Could't find a user with email {}".format(self.owner_email))
-
-        owner_id = owner_rs[0] if owner_rs else None
-        ds_row = [(self.name, owner_id, self.input_path, img_bounds, ds_config_json)]
+        ds_row = [(self.id, self.name, self.input_path,
+                   json.dumps(self.metadata), img_bounds, json.dumps(self.ds_config))]
         self.db.insert(DS_INSERT, ds_row)
 
-        ds_id = self.db.select(DS_ID_SELECT, self.name)[0]
-        logger.info("Inserted into the dataset table: %s, %s", ds_id, self.name)
+        logger.info("Inserted into the dataset table: %s, %s", self.id, self.name)
 
         xs, ys = map(list, zip(*self.coords))
-        self.db.insert(COORD_INSERT, [(ds_id, xs, ys)])
+        self.db.insert(COORD_INSERT, [(self.id, xs, ys)])
         logger.info("Inserted to the coordinates table")

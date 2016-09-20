@@ -14,10 +14,10 @@ def create_fill_test_db(create_test_db, drop_test_db):
         db.alter('TRUNCATE formula_db CASCADE')
         db.insert('INSERT INTO formula_db VALUES (%s, %s, %s)', [(0, '2016-01-01', 'HMDB')])
         db.insert('INSERT INTO formula VALUES (%s, %s, %s, %s, %s)', [(9, 0, '04138', 'Au', 'Gold')])
-        db.insert('INSERT INTO agg_formula VALUES (%s, %s, %s, %s, %s)', [(9, 0, 'Au', ['04138'], ['Gold'])])
+        db.insert('INSERT INTO sum_formula VALUES (%s, %s, %s, %s, %s)', [(9, 0, 'Au', ['04138'], ['Gold'])])
         db.alter('TRUNCATE theor_peaks CASCADE')
-        db.insert('INSERT INTO theor_peaks VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
-                  [(0, 9, '+H', 0.01, 1, 10000, [100, 200], [10, 1], [], [])])
+        db.insert('INSERT INTO theor_peaks VALUES (%s, %s, %s, %s, %s, %s, %s)',
+                  [('Au', '+H', 0.01, 1, 10000, [100, 200], [10, 1])])
     except:
         raise
     finally:
@@ -31,14 +31,14 @@ def test_theor_peaks_generator_run_1(create_fill_test_db, spark_context, sm_conf
     theor_peaks_gen.run()
 
     db = DB(sm_config['db'])
-    rows = db.select(('SELECT db_id, sf_id, adduct, sigma, charge, pts_per_mz, centr_mzs, '
-                      'centr_ints, prof_mzs, prof_ints FROM theor_peaks ORDER BY sf_id, adduct'))
+    rows = db.select(('SELECT sf, adduct, sigma, charge, pts_per_mz, centr_mzs, centr_ints '
+                      'FROM theor_peaks ORDER BY sf, adduct'))
 
     assert len(rows) == 2 + 80
-    assert (filter(lambda r: r[2] == '+H', rows)[0] ==
-            (0, 9, '+H', 0.01, 1, 10000, [100., 200.], [10., 1.], [], []))
-    assert (filter(lambda r: r[2] == '+Na', rows)[0] ==
-            (0, 9, '+Na', 0.01, 1, 10000, [100., 200.], [10., 1.], [], []))
+    assert (filter(lambda r: r[1] == '+H', rows)[0] ==
+            ('Au', '+H', 0.01, 1, 10000, [100., 200.], [10., 1.]))
+    assert (filter(lambda r: r[1] == '+Na', rows)[0] ==
+            ('Au', '+Na', 0.01, 1, 10000, [100., 200.], [10., 1.]))
 
     db.close()
 

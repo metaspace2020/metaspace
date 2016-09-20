@@ -33,8 +33,8 @@ def test_formatted_iso_peaks_correct_input(iso_peaks_mock, ds_config):
 
     isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
 
-    assert list(isocalc_wrapper.formatted_iso_peaks(0, 9, 'Au', '+H'))[0] == \
-           '0\t9\t+H\t0.010000\t1\t10000\t{100.000000}\t{1000.000000}\t{}\t{}'
+    assert list(isocalc_wrapper.formatted_iso_peaks('Au', '+H'))[0] == \
+           'Au\t+H\t0.010000\t1\t10000\t{100.000000}\t{1000.000000}'
 
 
 @patch('sm.engine.theor_peaks_gen.DB')
@@ -53,20 +53,9 @@ def test_find_sf_adduct_cand(DECOY_ADDUCTS_mock, MockDB, spark_context, sm_confi
     DECOY_ADDUCTS_mock = []
 
     peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    sf_adduct_cand = peaks_gen.find_sf_adduct_cand([(0, 'He'), (9, 'Au')], {('He', '+H'), ('Au', '+H')})
+    sf_adduct_cand = peaks_gen.find_sf_adduct_cand(['He', 'Au'], {('He', '+H'), ('Au', '+H')})
 
-    assert sf_adduct_cand == [(0, 'He', '+Na'), (9, 'Au', '+Na')]
-
-
-@patch('sm.engine.theor_peaks_gen.DB')
-def test_apply_database_filters_organic_filter(MockDB, spark_context, sm_config, ds_config):
-    ds_config['isotope_generation']['adducts'] = ['+H']
-    ds_config['database']['filters'] = ["Organic"]
-
-    peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    sf_adduct_cand = peaks_gen.apply_database_filters([(0, 'He'), (9, 'CO2')])
-
-    assert sf_adduct_cand == [(9, 'CO2')]
+    assert sf_adduct_cand == [('He', '+Na'), ('Au', '+Na')]
 
 
 @patch('sm.engine.theor_peaks_gen.DB')
@@ -78,10 +67,8 @@ def test_generate_theor_peaks(mock_import_theor_peaks_to_db, mockDB, spark_conte
     peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
     peaks_gen.isocalc_wrapper.isotope_peaks = lambda *args: Centroids([100.], [1000.])
 
-    sf_adduct_cand = [(9, 'Au', '+Na')]
+    sf_adduct_cand = [('Au', '+Na')]
     peaks_gen.generate_theor_peaks(sf_adduct_cand)
 
-    mock_import_theor_peaks_to_db.assert_called_with([('0\t9\t+Na\t0.010000\t1\t10000\t'
-                                                       '{100.000000}\t{1000.000000}\t'
-                                                       '{}\t'
-                                                       '{}')])
+    mock_import_theor_peaks_to_db.assert_called_with([('Au\t+Na\t0.010000\t1\t10000\t'
+                                                       '{100.000000}\t{1000.000000}')])

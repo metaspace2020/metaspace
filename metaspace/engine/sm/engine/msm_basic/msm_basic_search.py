@@ -1,7 +1,10 @@
 from sm.engine.msm_basic.formula_imager_segm import compute_sf_images
 from sm.engine.msm_basic.formula_img_validator import sf_image_metrics, sf_image_metrics_est_fdr
 from sm.engine.search_algorithm import SearchAlgorithm
-from sm.engine.util import logger
+import logging
+
+
+logger = logging.getLogger('sm-engine')
 
 
 class MSMBasicSearch(SearchAlgorithm):

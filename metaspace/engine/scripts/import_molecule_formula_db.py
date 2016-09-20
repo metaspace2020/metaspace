@@ -5,12 +5,11 @@ import argparse
 import json
 from datetime import datetime as dt
 from os import path
-
 import pandas as pd
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 
 from sm.engine.db import DB
-from sm.engine.util import proj_root, logger
+from sm.engine.util import proj_root, logger, init_logger
 
 
 def del_prev_formula_db(db, db_name, confirmed=False):
@@ -46,8 +45,8 @@ def insert_new_formulas(db, db_name, csv_file, sep):
     db.insert("INSERT INTO formula (db_id, fid, name, sf) VALUES (%s, %s, %s, %s)", [tuple(r) for r in sf_df.values])
 
 
-def insert_agg_formulas(db, db_name):
-    agg_insert = ('insert into agg_formula ( '
+def insert_sum_formulas(db, db_name):
+    agg_insert = ('insert into sum_formula ( '
                   'select row_number() OVER () as id, db_id, sf, array_agg(fid), array_agg(f.name) '
                   'from formula f '
                   'join formula_db db on db.id = f.db_id '
@@ -68,6 +67,8 @@ if __name__ == "__main__":
     parser.set_defaults(sep='\t', confirmed=False)
     args = parser.parse_args()
 
+    init_logger()
+
     if args.config:
         sm_config = json.load(open(args.config))
     else:
@@ -78,4 +79,4 @@ if __name__ == "__main__":
     del_prev_formula_db(db, args.db_name, args.confirmed)
     insert_new_formula_db(db, args.db_name)
     insert_new_formulas(db, args.db_name, args.csv_file, args.sep.decode('string-escape'))
-    insert_agg_formulas(db, args.db_name)
+    insert_sum_formulas(db, args.db_name)

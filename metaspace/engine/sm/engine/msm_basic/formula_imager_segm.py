@@ -9,20 +9,22 @@ from scipy.sparse import coo_matrix
 def _estimate_mz_workload(spectra_sample, sf_peak_df, bins=1000):
     mz_arr = np.sort(np.concatenate(map(lambda sp: sp[1], spectra_sample)))
     spectrum_mz_freq, mz_grid = np.histogram(mz_arr, bins=bins, range=(np.nanmin(mz_arr), np.nanmax(mz_arr)))
-    # sf_peak_mz_freq, _ = np.histogram(sf_peak_df.mz, bins=bins, range=(mz_arr.min(), mz_arr.max()))
-    workload_per_mz = spectrum_mz_freq  # * sf_peak_mz_freq
-    return mz_grid, workload_per_mz
+    sf_peak_mz_freq, _ = np.histogram(sf_peak_df.mz, bins=bins, range=(mz_arr.min(), mz_arr.max()))
+    workload_per_mz = spectrum_mz_freq * sf_peak_mz_freq
+    return mz_grid, workload_per_mz, spectrum_mz_freq
 
 
-def _find_mz_bounds(mz_grid, workload_per_mz, n=32):
+def _find_mz_bounds(mz_grid, workload_per_mz, sp_workload_per_mz, n=32):
     segm_wl = workload_per_mz.sum() / n
+    segm_sp_wl = sp_workload_per_mz.sum() / n
 
     mz_bounds = []
-    wl_sum = 0
-    for mz, wl in zip(mz_grid[1:], workload_per_mz):
+    wl_sum = sp_wl_sum = 0
+    for mz, wl, sp_wl in zip(mz_grid[1:], workload_per_mz, sp_workload_per_mz):
         wl_sum += wl
-        if wl_sum > segm_wl:
-            wl_sum = 0
+        sp_wl_sum += sp_wl
+        if wl_sum > segm_wl or sp_wl_sum > segm_sp_wl:
+            wl_sum = sp_wl_sum = 0
             mz_bounds.append(mz)
     return mz_bounds
 
@@ -36,25 +38,11 @@ def _create_mz_segments(mz_bounds, ppm):
     return mz_buckets
 
 
-# def segment_sf_peaks(mz_buckets, sf_peak_df):
-#     return [(s_i, sf_peak_df[(sf_peak_df.mz >= l) & (sf_peak_df.mz <= r)])
-#     # return [(s_i, sf_peak_df)
-#             for s_i, (l, r) in enumerate(mz_buckets)]
-
-
 def _segment_spectrum(sp, mz_buckets):
     sp_id, mzs, ints = sp
     for s_i, (l, r) in enumerate(mz_buckets):
         smask = (mzs >= l) & (mzs <= r)
         yield s_i, (sp_id, mzs[smask], ints[smask])
-
-
-def _split_every(iterable, n):
-    i = iter(iterable)
-    piece = list(islice(i, n))
-    while piece:
-        yield piece
-        piece = list(islice(i, n))
 
 
 def _sp_df_gen(sp_it, sp_indexes):
@@ -65,31 +53,28 @@ def _sp_df_gen(sp_it, sp_indexes):
 
 def _gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, peaks_per_sp_segm, min_px=1):
     if len(sf_peak_df) > 0:
-        n = int(10**7 / peaks_per_sp_segm)  # to have < 100 MB spectrum data frames
-        for sp_list in _split_every(spectra_it, n):
+        # a bit slower than using pure numpy arrays but much shorter
+        # may leak memory because of https://github.com/pydata/pandas/issues/2659 or smth else
+        sp_df = pd.DataFrame(_sp_df_gen(spectra_it, sp_indexes),
+                             columns=['idx', 'mz', 'ints']).sort_values(by='mz')
+        # print sp_df.info()
 
-            # a bit slower than using pure numpy arrays but much shorter
-            # may leak memory because of https://github.com/pydata/pandas/issues/2659 or smth else
-            sp_df = pd.DataFrame(_sp_df_gen(sp_list, sp_indexes),
-                                 columns=['idx', 'mz', 'ints']).sort_values(by='mz')
-            # print sp_df.info()
+        # -1, + 1 are needed to extend sf_peak_mz range so that it covers 100% of spectra
+        sf_peak_df = sf_peak_df[(sf_peak_df.mz >= sp_df.mz.min()-1) & (sf_peak_df.mz <= sp_df.mz.max()+1)]
+        lower = sf_peak_df.mz.map(lambda mz: mz - mz*ppm*1e-6)
+        upper = sf_peak_df.mz.map(lambda mz: mz + mz*ppm*1e-6)
+        lower_idx = np.searchsorted(sp_df.mz, lower, 'l')
+        upper_idx = np.searchsorted(sp_df.mz, upper, 'r')
 
-            # -1, + 1 are needed to extend sf_peak_mz range so that it covers 100% of spectra
-            sf_peak_df = sf_peak_df[(sf_peak_df.mz >= sp_df.mz.min()-1) & (sf_peak_df.mz <= sp_df.mz.max()+1)]
-            lower = sf_peak_df.mz.map(lambda mz: mz - mz*ppm*1e-6)
-            upper = sf_peak_df.mz.map(lambda mz: mz + mz*ppm*1e-6)
-            lower_idx = np.searchsorted(sp_df.mz, lower, 'l')
-            upper_idx = np.searchsorted(sp_df.mz, upper, 'r')
-
-            for i, (l, u) in enumerate(zip(lower_idx, upper_idx)):
-                if u - l >= min_px:
-                    data = sp_df.ints[l:u].values
-                    if data.shape[0] > 0:
-                        idx = sp_df.idx[l:u].values
-                        row_inds = idx / ncols
-                        col_inds = idx % ncols
-                        yield (sf_peak_df.sf_id.iloc[i], sf_peak_df.adduct.iloc[i]),\
-                              (sf_peak_df.peak_i.iloc[i], coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols)))
+        for i, (l, u) in enumerate(zip(lower_idx, upper_idx)):
+            if u - l >= min_px:
+                data = sp_df.ints[l:u].values
+                if data.shape[0] > 0:
+                    idx = sp_df.idx[l:u].values
+                    row_inds = idx / ncols
+                    col_inds = idx % ncols
+                    yield (sf_peak_df.sf_id.iloc[i], sf_peak_df.adduct.iloc[i]),\
+                          (sf_peak_df.peak_i.iloc[i], coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols)))
 
 
 def _img_pairs_to_list(pairs, shape):
@@ -114,9 +99,9 @@ def find_mz_segments(spectra, sf_peak_df, ppm):
     spectra_sample = spectra.takeSample(withReplacement=False, num=200)
     peaks_per_sp = max(1, int(np.mean([t[1].shape[0] for t in spectra_sample])))
 
-    mz_grid, workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10000)
+    mz_grid, workload_per_mz, sp_workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10000)
     plan_mz_segm_n = max(64, int(peaks_per_sp / 10))
-    mz_bounds = _find_mz_bounds(mz_grid, workload_per_mz, n=plan_mz_segm_n)
+    mz_bounds = _find_mz_bounds(mz_grid, workload_per_mz, sp_workload_per_mz, n=plan_mz_segm_n)
     mz_segments = _create_mz_segments(mz_bounds, ppm=ppm)
     return spectra_sample, mz_segments, peaks_per_sp
 

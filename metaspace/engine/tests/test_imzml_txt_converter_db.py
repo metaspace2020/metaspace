@@ -15,7 +15,7 @@ def test_convert(MockImzMLParser, sm_config, ds_config):
 
     SMConfig._config_dict = sm_config
 
-    converter = ImzmlTxtConverter('test_ds', 'imzml_path', 'txt_path', 'coord_path')
+    converter = ImzmlTxtConverter('imzml_path', 'txt_path', 'coord_path')
     converter.save_ds_meta = lambda: 0
 
     with patch('sm.engine.imzml_txt_converter.open', create=True) as mock_open:

@@ -1,7 +1,9 @@
 import argparse
 from os.path import abspath
 import json
+from logging.config import dictConfig
 
+from sm.engine.util import sm_log_config
 from sm.engine.es_export import ESExporter
 
 
@@ -12,11 +14,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    name = 'sm'
+    dictConfig(sm_log_config)
+
     with open(abspath(args.conf)) as f:
         es_exp = ESExporter(json.load(f))
-
         if args.drop:
-            es_exp.delete_index(name)
-
-        es_exp.create_index(name)
+            es_exp.delete_index()
+        es_exp.create_index()

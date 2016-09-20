@@ -1,19 +1,19 @@
 # main container that runs the web interface on host port 8642
 web:
   #build: ./webapp
-  image: lomereiter/sm_distributed
+  image: lomereiter/sm_engine
   ports:
     - "8643:8080"
   volumes:
-    - ..:/code/SM_distributed
+    - ..:/code/sm-engine
     - ../tests/data/:/data # mount directory with datasets to /data
     - ./formula_dbs/:/databases
   links:
     - postgres # must be the host name in the config
-  working_dir: /code/SM_distributed
+  working_dir: /code/sm-engine
   restart: always
   # wait a few seconds for postgres to initialize and start web interface
-  command: bash -c 'sleep 10 && source docker/env.sh && python webapp/webserver.py --config /code/SM_distributed/docker/config.json'
+  command: bash -c 'sleep 10 && source docker/env.sh && python webapp/webserver.py --config /code/sm-engine/docker/config.json'
 
 # data-only container for storing the database
 dbdata:
