@@ -118,7 +118,6 @@ class SearchJob(object):
         """
         try:
             start = time.time()
-            logger.info("Processing ds_id: %s ...", self.ds_id)
 
             self.wd_manager = WorkDirManager(self.ds_id)
             self.wd_manager.copy_input_data(self.input_path, ds_config_path)
@@ -143,6 +142,8 @@ class SearchJob(object):
             self.ds.save_ds_meta()
 
             self.store_job_meta()
+
+            logger.info("Processing ds_id: %s, ds_name: %s ...", self.ds.id, self.ds.name)
 
             theor_peaks_gen = TheorPeaksGenerator(self.sc, self.sm_config, self.ds_config)
             theor_peaks_gen.run()
