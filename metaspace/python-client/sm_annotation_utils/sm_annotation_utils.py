@@ -4,9 +4,10 @@ import psycopg2
 import psycopg2.extras
 import pandas as pd
 import numpy as np
-import yaml
+import json
+import re
 
-from cpyMSpec import IsotopePattern
+from cpyMSpec import isotopePattern, InstrumentModel
 
 ISO_IMG_SEL = """select img.peak, img.pixel_inds, img.intensities, ds.img_bounds
 from iso_image img
@@ -55,7 +56,7 @@ class SMDataset(object):
         self._config = None
         self._db_cursor = db_cursor
         es_search = Search(using=es_client, index=index_name)
-        self._es_query = es_search.query('match', ds_name=dataset_name)
+        self._es_query = es_search.query('term', ds_name=dataset_name)
 
     @property
     def name(self):
@@ -67,12 +68,14 @@ class SMDataset(object):
     def annotations(self, fdr=0.1):
         if fdr not in [0.05, 0.1, 0.2, 0.5]:
             print('fdr request does not match default elastic search defaults')
-        response = self._es_query.scan()
+        fields = ['sf', 'adduct', 'fdr']
+        response = self._es_query.fields(fields).scan()
         annotations = [(r.sf, r.adduct) for r in response if all([r.fdr, r.fdr <= fdr])]
         return annotations
 
     def results(self):
-        response = self._es_query.scan()
+        fields = ['sf', 'adduct', 'fdr', 'msm', 'chaos', 'image_corr', 'pattern_match']
+        response = self._es_query.fields(fields).scan()
         return pd.DataFrame([(r.sf, r.adduct, r.msm, r.chaos, r.image_corr, r.pattern_match) for r in response],
                             columns=['sf', 'adduct', 'msm', 'moc', 'spat', 'spec'])\
                  .set_index(['sf', 'adduct'])
@@ -91,14 +94,14 @@ class SMDataset(object):
 
     def centroids(self, sf, adduct):
         charge = int(self.config['isotope_generation']['charge']['n_charges'])
-        isotopes = IsotopePattern(str(sf + adduct)).charged(int(charge))
+        isotopes = isotopePattern(str(sf + adduct))
         sigma = float(self.config['isotope_generation']['isocalc_sigma'])
         fwhm = sigma * 2 * (2 * np.log(2)) ** 0.5
         resolution = isotopes.masses[0] / fwhm
-        centroids = isotopes.centroids(resolution)
-        masses, abundances = np.array(centroids.masses), np.array(centroids.abundances)
-        order = masses.argsort()
-        return zip(masses[order], abundances[order])
+        instr = InstrumentModel('tof', resolution)
+        centroids = isotopes.centroids(instr).charged(int(charge))
+        centroids.sortByMass()
+        return zip(centroids.masses, centroids.intensities)
 
     def polarity(self):
         return self.config['isotope_generation']['charge']['polarity']
@@ -119,31 +122,63 @@ class SMDataset(object):
 
 class SMInstance(object):
     def __init__(self, config_filename):
-        config = yaml.load(open(config_filename, 'rb'))
+        config = json.load(open(config_filename, 'rb'))
         self._es_host = config['elasticsearch']['host']
-        self._es_port = config['elasticsearch']['port']
-        self._es_client = Elasticsearch(hosts=self._es_host, port=self._es_port)
+        self._es_index = config['elasticsearch']['index']
+        self._es_client = Elasticsearch(hosts=self._es_host, index=self._es_index)
 
-        self._db_host = config['postgres']['host']
-        self._db_port = config['postgres']['port']
+        self._db_host = config['db']['host']
+        self._db_database = config['db']['database']
 
         self._db_conn = psycopg2.connect(host=self._db_host,
-                                         port=self._db_port,
-                                         database=config['postgres']['database'],
-                                         user=config['postgres']['user'],
-                                         password=config['postgres']['password'])
+                                         database=self._db_database,
+                                         user=config['db']['user'],
+                                         password=config['db']['password'])
         self._db_cur = self._db_conn.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor)
 
     def __repr__(self):
-        return "SMInstance(DB {}:{}, ES {}:{})".format(self._db_host, self._db_port,
-                                                       self._es_host, self._es_port)
+        return "SMInstance(DB {}/{}, ES {}/{})".format(self._db_host, self._db_database,
+                                                       self._es_host, self._es_index)
 
     def dataset(self, dataset_name):
-        return SMDataset(dataset_name, self._db_cur, self._es_client, index_name='sm')
+        return SMDataset(dataset_name, self._db_cur, self._es_client, index_name=self._es_index)
 
-    def datasets(self):
-        self._db_cur.execute("select name from dataset")
+    def datasets(self, name_mask=''):
+        query = "select name from dataset"
+        if name_mask:
+            query += " where name like '%{}%'".format(name_mask)
+        self._db_cur.execute(query)
         return [self.dataset(name[0]) for name in self._db_cur.fetchall()]
+
+    def top_hits(self, datasets, adduct=None, size=100):
+        """
+        Returns (sum formula, adduct) pairs with highest average MSM scores across multiple datasets.
+        Looks for all adducts by default
+        """
+        s = Search(using=self._es_client, index=self._es_index)\
+            .filter('terms', ds_name=[d.name for d in datasets])
+
+        if adduct is not None:
+            s = s.filter('term', adduct=adduct)
+
+        s.aggs.bucket("per_sf_adduct", 'terms', field='sf_adduct', order={'msm_sum': 'desc'}, size=size)\
+            .metric('msm_sum', 'sum', field='msm')
+
+        buckets = s.execute().aggregations.per_sf_adduct.buckets
+        return [re.match(r'(.*?)([+-].*)', res.key).groups() for res in buckets]
+
+    def msm_scores(self, datasets, sf_adduct_pairs):
+        """
+        Returns a dataframe of MSM scores for multiple datasets and (sum formula, adduct) pairs.
+        """
+        s = Search(using=self._es_client, index=self._es_index)\
+            .filter('terms', ds_name=[d.name for d in datasets])\
+            .filter('terms', sf_adduct=[x[0] + x[1] for x in sf_adduct_pairs])\
+            .fields(['sf', 'adduct', 'msm', 'ds_name'])
+        results = list(s.scan())
+        return pd.DataFrame.from_records(((r.ds_name[0], r.sf[0], r.adduct[0], r.msm[0]) for r in results),
+                                         columns=['ds_name', 'sf', 'adduct', 'msm'])\
+                           .pivot_table('msm', index=['ds_name'], columns=['sf', 'adduct'], fill_value=0.0)
 
 def plot_diff(dist_df, ref_df, t="", xlabel='', ylabel=''):
     import plotly.graph_objs as go
