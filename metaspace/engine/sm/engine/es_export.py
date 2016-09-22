@@ -6,15 +6,16 @@ import logging
 
 logger = logging.getLogger('sm-engine')
 
-COLUMNS = ["db_name", "ds_id", "ds_name", "sf", "comp_names", "comp_ids", "chaos", "image_corr", "pattern_match", "msm",
+COLUMNS = ["db_name", "ds_id", "ds_name", "sf", "sf_adduct", "comp_names", "comp_ids", "chaos", "image_corr", "pattern_match", "msm",
            "adduct", "job_id", "sf_id", "peaks", "db_id", "fdr", "mz", "ds_meta"]
 
-RESULTS_TABLE_SQL = '''
+ANNOTATIONS_SEL = '''
 SELECT
     sf_db.name AS db_name,
     ds.id as ds_id,
     ds.name AS ds_name,
     f.sf,
+    CONCAT(f.sf, m.adduct) as sf_adduct,
     f.names AS comp_names,
     f.subst_ids AS comp_ids,
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
@@ -67,7 +68,7 @@ class ESExporter:
         bulk(self.es, actions=to_index, timeout='60s')
 
     def index_ds(self, db, ds_id):
-        annotations = db.select(RESULTS_TABLE_SQL, ds_id)
+        annotations = db.select(ANNOTATIONS_SEL, ds_id)
 
         logger.info('Deleting {} documents from the index: {}'.format(len(annotations), ds_id))
         self.delete_ds(ds_id)
@@ -132,8 +133,8 @@ class ESExporter:
                         "db_name": {"type": "string", "index": "not_analyzed"},
                         "ds_id": {"type": "string", "index": "not_analyzed"},
                         "ds_name": {"type": "string", "index": "not_analyzed"},
+                        "sf": {"type": "string", "index": "not_analyzed"},
                         "sf_adduct": {"type": "string", "index": "not_analyzed"},
-                        "sf": {"type": "string", "index": "not_analyzed", "copy_to": "sf_adduct"},
                         "comp_names": {
                             "type": "string",
                             "analyzer": "analyzer_keyword",
@@ -143,7 +144,7 @@ class ESExporter:
                         "image_corr": {"type": "float", "index": "not_analyzed"},
                         "pattern_match": {"type": "float", "index": "not_analyzed"},
                         "msm": {"type": "float", "index": "not_analyzed"},
-                        "adduct": {"type": "string", "index": "not_analyzed", "copy_to": "sf_adduct"},
+                        "adduct": {"type": "string", "index": "not_analyzed"},
                         "fdr": {"type": "float", "index": "not_analyzed"},
                         "mz": {"type": "string", "index": "not_analyzed"},
                         # dataset metadata
