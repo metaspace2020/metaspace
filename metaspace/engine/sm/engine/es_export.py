@@ -132,6 +132,7 @@ class ESExporter:
                         "db_name": {"type": "string", "index": "not_analyzed"},
                         "ds_id": {"type": "string", "index": "not_analyzed"},
                         "ds_name": {"type": "string", "index": "not_analyzed"},
+                        "sf_adduct": {"type": "string", "index": "not_analyzed"},
                         "sf": {"type": "string", "index": "not_analyzed", "copy_to": "sf_adduct"},
                         "comp_names": {
                             "type": "string",
