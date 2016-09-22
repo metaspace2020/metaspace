@@ -132,7 +132,7 @@ class ESExporter:
                         "db_name": {"type": "string", "index": "not_analyzed"},
                         "ds_id": {"type": "string", "index": "not_analyzed"},
                         "ds_name": {"type": "string", "index": "not_analyzed"},
-                        "sf": {"type": "string", "index": "not_analyzed"},
+                        "sf": {"type": "string", "index": "not_analyzed", "copy_to": "sf_adduct"},
                         "comp_names": {
                             "type": "string",
                             "analyzer": "analyzer_keyword",
@@ -142,7 +142,7 @@ class ESExporter:
                         "image_corr": {"type": "float", "index": "not_analyzed"},
                         "pattern_match": {"type": "float", "index": "not_analyzed"},
                         "msm": {"type": "float", "index": "not_analyzed"},
-                        "adduct": {"type": "string", "index": "not_analyzed"},
+                        "adduct": {"type": "string", "index": "not_analyzed", "copy_to": "sf_adduct"},
                         "fdr": {"type": "float", "index": "not_analyzed"},
                         "mz": {"type": "string", "index": "not_analyzed"},
                         # dataset metadata
