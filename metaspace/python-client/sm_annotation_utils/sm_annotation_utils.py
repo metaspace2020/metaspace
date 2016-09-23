@@ -62,6 +62,11 @@ class SMDataset(object):
     def name(self):
         return self._name
 
+    @property
+    def s3dir(self):
+        self._db_cursor.execute("select input_path from dataset where name = %s", [self._name])
+        return self._db_cursor.fetchone()[0]
+
     def __repr__(self):
         return "SMDataset({})".format(self._name)
 
@@ -99,7 +104,7 @@ class SMDataset(object):
         fwhm = sigma * 2 * (2 * np.log(2)) ** 0.5
         resolution = isotopes.masses[0] / fwhm
         instr = InstrumentModel('tof', resolution)
-        centroids = isotopes.centroids(instr).charged(int(charge))
+        centroids = isotopes.centroids(instr).charged(int(charge)).trimmed(4)
         centroids.sortByMass()
         return zip(centroids.masses, centroids.intensities)
 
@@ -150,6 +155,13 @@ class SMInstance(object):
         self._db_cur.execute(query)
         return [self.dataset(name[0]) for name in self._db_cur.fetchall()]
 
+    def database(self, database_name):
+        return MolecularDatabase(database_name, self._db_cur)
+
+    def databases(self):
+        self._db_cur.execute("select name from formula_db")
+        return [self.database(name[0]) for name in self._db_cur.fetchall()]
+
     def top_hits(self, datasets, adduct=None, size=100):
         """
         Returns (sum formula, adduct) pairs with highest average MSM scores across multiple datasets.
@@ -179,6 +191,30 @@ class SMInstance(object):
         return pd.DataFrame.from_records(((r.ds_name[0], r.sf[0], r.adduct[0], r.msm[0]) for r in results),
                                          columns=['ds_name', 'sf', 'adduct', 'msm'])\
                            .pivot_table('msm', index=['ds_name'], columns=['sf', 'adduct'], fill_value=0.0)
+
+
+class MolecularDatabase(object):
+    def __init__(self, name, db_cursor):
+        self._db_cur = db_cursor
+        self._name = name
+        self._db_cur.execute("select id from formula_db where name = %s", [self._name])
+        self._id = self._db_cur.fetchone()[0]
+        self._data = self._fetch_data()
+
+    @property
+    def name(self):
+        return self._name
+
+    def _fetch_data(self):
+        q = "select sf, names from sum_formula where db_id = %s"
+        self._db_cur.execute(q, [self._id])
+        return {x[0]: x[1] for x in self._db_cur.fetchall()}
+
+    def sum_formulas(self):
+        return self._data.keys()
+
+    def names(self, sum_formula):
+        return self._data.get(sum_formula, [])
 
 def plot_diff(dist_df, ref_df, t="", xlabel='', ylabel=''):
     import plotly.graph_objs as go
