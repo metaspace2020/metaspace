@@ -95,6 +95,7 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
     # TODO: get rid of matplotlib
     def _get_color_image_data(self, ds_id, job_id, db_id, sf_id, adduct):
         shape, mask, int_list = self._get_grayscale_image_data(ds_id, job_id, db_id, sf_id, adduct)
+        self.nrows, self.ncols = shape
         if int_list.size > 0:
             visible_pixels = self.get_img_ints(int_list)
             normalizer = Normalize(vmin=np.min(visible_pixels), vmax=np.max(visible_pixels))
