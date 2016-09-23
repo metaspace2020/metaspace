@@ -9,6 +9,7 @@ import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 import cStringIO
 import png
+from functools32 import lru_cache
 
 
 INTS_SQL = ('SELECT pixel_inds inds, intensities as ints '
@@ -48,11 +49,12 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "image/png")
         self.write(img_fp.getvalue())
 
-    def _get_intens_list(self, job_id, db_id, sf_id, adduct, nrows, ncols):
+    @lru_cache()
+    def _get_intens_list(self, job_id, db_id, sf_id, adduct, shape):
         res_list_rows = self.db.query(INTS_SQL, job_id, db_id, sf_id, adduct)
         intens_list = []
         for res_row in res_list_rows:
-            img_arr = np.zeros(nrows*ncols)
+            img_arr = np.zeros(shape[0] * shape[1])
             img_arr[res_row.inds] = res_row.ints
 
             # smoothing extreme values
@@ -61,35 +63,44 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
                 perc99_val = np.percentile(img_arr[non_zero_intens], 99)
                 img_arr[img_arr > perc99_val] = perc99_val
 
-            intens_list.append(img_arr.reshape(nrows, ncols))
+            intens_list.append(img_arr.reshape(shape))
 
         return np.array(intens_list)
 
     @staticmethod
-    def _get_ds_mask(coords, nrows, ncols):
+    def _get_ds_mask(coords, shape):
         rows = coords[:, 1]
         cols = coords[:, 0]
         data = np.ones(coords.shape[0])
-        return coo_matrix((data, (rows, cols)), shape=(nrows, ncols)).toarray() > 0
+        return coo_matrix((data, (rows, cols)), shape=shape).toarray() > 0
 
     def get_img_ints(self, ints_list):
         pass
 
-    # TODO: get rid of matplotlib
-    def _get_color_image_data(self, ds_id, job_id, db_id, sf_id, adduct):
+    @lru_cache()
+    def _get_coords(self, ds_id):
         coords_row = self.db.query(COORD_SEL % ds_id)[0]
         coords = np.array(zip(coords_row.xs, coords_row.ys))
         coords -= coords.min(axis=0)
-        self.ncols, self.nrows = coords.max(axis=0) + 1
+        shape = coords.max(axis=0) + 1
+        return coords, (shape[1], shape[0])
 
-        mask = self._get_ds_mask(coords, self.nrows, self.ncols)
-        int_list = self._get_intens_list(job_id, db_id, sf_id, adduct, self.nrows, self.ncols)
+    @lru_cache()
+    def _get_grayscale_image_data(self, ds_id, job_id, db_id, sf_id, adduct):
+        coords, shape = self._get_coords(ds_id)
+        mask = self._get_ds_mask(coords, shape)
+        int_list = self._get_intens_list(job_id, db_id, sf_id, adduct, shape)
+        return shape, mask, int_list
+
+    # TODO: get rid of matplotlib
+    def _get_color_image_data(self, ds_id, job_id, db_id, sf_id, adduct):
+        shape, mask, int_list = self._get_grayscale_image_data(ds_id, job_id, db_id, sf_id, adduct)
         if int_list.size > 0:
             visible_pixels = self.get_img_ints(int_list)
             normalizer = Normalize(vmin=np.min(visible_pixels), vmax=np.max(visible_pixels))
             color_img_data = self.viridis_cmap(normalizer(visible_pixels))
         else:
-            color_img_data = np.zeros(shape=(self.nrows, self.ncols, 4))
+            color_img_data = np.zeros(shape=(shape[0], shape[1], 4))
         color_img_data[:, :, 3] = mask
         return color_img_data
 
