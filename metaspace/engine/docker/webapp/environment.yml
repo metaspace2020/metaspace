@@ -32,4 +32,4 @@ dependencies:
     - supervisor
     - pyyaml
     - elasticsearch
-    - functools32
+    - cachetools

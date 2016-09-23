@@ -20,4 +20,4 @@ recommonmark
 pandas>=0.18
 boto3>=1.3.0
 networkx>=1.11
-functools32
+cachetools
