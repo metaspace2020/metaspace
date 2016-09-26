@@ -209,6 +209,15 @@ class SMInstance(object):
                                          columns=['ds_name', 'sf', 'adduct', 'msm'])\
                            .pivot_table('msm', index=['ds_name'], columns=['sf', 'adduct'], fill_value=0.0)
 
+    def metadata(self, datasets):
+        """
+        Pandas dataframe where rows are flattened metadata JSON objects
+        """
+        from pandas.io.json import json_normalize
+        df = json_normalize([d.metadata.json for d in datasets])
+        df.index = [d.name for d in datasets]
+        return df
+
 class MolecularDatabase(object):
     def __init__(self, name, db_cursor):
         self._db_cur = db_cursor
