@@ -53,10 +53,18 @@ class IsotopeImages(object):
 class SMDataset(object):
     def __init__(self, dataset_name, db_cursor, es_client, index_name):
         self._name = dataset_name
-        self._config = None
         self._db_cursor = db_cursor
         es_search = Search(using=es_client, index=index_name)
         self._es_query = es_search.query('term', ds_name=dataset_name)
+        self._properties = {}
+
+    def _db_fetch(self, prop):
+        if prop in self._properties:
+            return self._properties[prop]
+        self._db_cursor.execute("select " + prop + " from dataset where name = %s", [self._name])
+        value = self._db_cursor.fetchone()[0]
+        self._properties[prop] = value
+        return value
 
     @property
     def name(self):
@@ -64,8 +72,7 @@ class SMDataset(object):
 
     @property
     def s3dir(self):
-        self._db_cursor.execute("select input_path from dataset where name = %s", [self._name])
-        return self._db_cursor.fetchone()[0]
+        return self._db_fetch("input_path")
 
     def __repr__(self):
         return "SMDataset({})".format(self._name)
@@ -86,13 +93,12 @@ class SMDataset(object):
                  .set_index(['sf', 'adduct'])
 
     @property
+    def metadata(self):
+        return Metadata(self._db_fetch("metadata"))
+
+    @property
     def config(self):
-        if self._config:
-            return self._config
-        q = "select config from dataset where name = %s"
-        self._db_cursor.execute(q, [self._name])
-        self._config = self._db_cursor.fetchone()[0]
-        return self._config
+        return self._db_fetch("config")
 
     def adducts(self):
         return self.config['isotope_generation']['adducts']
@@ -124,6 +130,17 @@ class SMDataset(object):
             img[np.array(r.pixel_inds)] = np.array(r.intensities)
             images.append(img.reshape(rows, cols))
         return IsotopeImages(images, sf, adduct, self.centroids(sf, adduct))
+
+class Metadata(object):
+
+    _paths = {}
+
+    def __init__(self, json_metadata):
+        self._json = json_metadata
+
+    @property
+    def json(self):
+        return self._json
 
 class SMInstance(object):
     def __init__(self, config_filename):
@@ -192,7 +209,6 @@ class SMInstance(object):
                                          columns=['ds_name', 'sf', 'adduct', 'msm'])\
                            .pivot_table('msm', index=['ds_name'], columns=['sf', 'adduct'], fill_value=0.0)
 
-
 class MolecularDatabase(object):
     def __init__(self, name, db_cursor):
         self._db_cur = db_cursor
@@ -206,15 +222,24 @@ class MolecularDatabase(object):
         return self._name
 
     def _fetch_data(self):
-        q = "select sf, names from sum_formula where db_id = %s"
+        q = "select sf, id, name from formula where db_id = %s"
         self._db_cur.execute(q, [self._id])
-        return {x[0]: x[1] for x in self._db_cur.fetchall()}
+        data = {}
+        for sf, mol_id, mol_name in self._db_cur.fetchall():
+            if sf not in data:
+                data[sf] = {'ids': [], 'names': []}
+            data[sf]['ids'].append(mol_id)
+            data[sf]['names'].append(mol_name)
+        return data
 
     def sum_formulas(self):
         return self._data.keys()
 
     def names(self, sum_formula):
-        return self._data.get(sum_formula, [])
+        return self._data.get(sum_formula, {}).get('names', {})
+
+    def ids(self, sum_formula):
+        return self._data.get(sum_formula, {}).get('ids', {})
 
 def plot_diff(dist_df, ref_df, t="", xlabel='', ylabel=''):
     import plotly.graph_objs as go
@@ -268,3 +293,77 @@ def plot_diff(dist_df, ref_df, t="", xlabel='', ylabel=''):
     tmp_df = plot_df.dropna()
     print np.corrcoef(tmp_df['msm'].values, tmp_df['msm_ref'].values)
     return tmp_df
+
+
+class DataframeTree(object):
+    """
+    Class for hierarchical clustering of Pandas dataframes.
+
+    The intended usage is for making sense out of data returned by SMInstance.msm_scores
+    """
+    def __init__(self, df, method='ward', metric='euclidean'):
+        import scipy.cluster.hierarchy as sch
+        self._df = df
+        self._Z = sch.linkage(self._df, method=method, metric=metric)
+        self._root = DataframeNode(self._df, sch.to_tree(self._Z))
+
+    @property
+    def root(self):
+        return self._root
+
+    @property
+    def df(self):
+        """
+        Dataframe reordered according to pre-order tree traversal.
+        """
+        return self.root.df
+
+    @property
+    def left(self):
+        return self.root.left
+
+    @property
+    def right(self):
+        return self.root.right
+
+    def row_names(self):
+        return list(self.df.index)
+
+    def column_names(self):
+        return list(self.df.columns)
+
+class DataframeNode(object):
+    def __init__(self, df, node):
+        self._df = df
+        self._node = node
+        self._node_df = None
+        self._left_node = None
+        self._right_node = None
+
+    @property
+    def is_leaf(self):
+        return self._node.is_leaf()
+
+    @property
+    def left(self):
+        if self._left_node is None:
+            self._left_node = DataframeNode(self._df, self._node.get_left())
+        return self._left_node
+
+    @property
+    def right(self):
+        if self._right_node is None:
+            self._right_node = DataframeNode(self._df, self._node.get_right())
+        return self._right_node
+
+    @property
+    def df(self):
+        if self._node_df is None:
+            self._node_df = self._df.iloc[self._node.pre_order(lambda x: x.get_id())]
+        return self._node_df
+
+    def row_names(self):
+        return list(self.df.index)
+
+    def column_names(self):
+        return list(self.df.columns)
