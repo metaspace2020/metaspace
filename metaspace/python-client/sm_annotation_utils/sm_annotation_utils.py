@@ -7,8 +7,6 @@ import numpy as np
 import json
 import re
 
-from cpyMSpec import isotopePattern, InstrumentModel
-
 ISO_IMG_SEL = """select img.peak, img.pixel_inds, img.intensities, ds.img_bounds
 from iso_image img
 join job j on j.id = img.job_id and j.db_id = img.db_id
@@ -104,6 +102,7 @@ class SMDataset(object):
         return self.config['isotope_generation']['adducts']
 
     def centroids(self, sf, adduct):
+        from cpyMSpec import isotopePattern, InstrumentModel
         charge = int(self.config['isotope_generation']['charge']['n_charges'])
         isotopes = isotopePattern(str(sf + adduct))
         sigma = float(self.config['isotope_generation']['isocalc_sigma'])
