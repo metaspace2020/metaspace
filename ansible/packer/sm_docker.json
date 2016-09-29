@@ -1,0 +1,47 @@
+{
+    "builders": [{
+        "type": "docker",
+        "image": "williamyeh/ansible:ubuntu14.04-onbuild",
+        "export_path": "sm-docker.tar",
+        "run_command": [
+            "-h=smbox",
+            "-d",
+            "-i",
+            "-t",
+            "{{.Image}}",
+            "/bin/bash"
+        ]
+    }],
+
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "mkdir .ssh",
+                "adduser --disabled-password --gecos '' ubuntu",
+                "locale-gen en_US.UTF-8",
+                "update-locale LANG=en_US.UTF-8 LC_MESSAGES=POSIX",
+                "echo '%sudo    ALL=(ALL)  NOPASSWD:ALL' >> /etc/sudoers"
+            ]
+        },
+        {
+            "type": "ansible-local",
+            "playbook_file": "provision.yml",
+            "playbook_dir": "../",
+            "inventory_file": "hosts",
+            "inventory_groups": "sm-docker",
+            "group_vars": "group_vars",
+            "extra_arguments": [ "-e swapsize=0 -e traffic_forwarding_is_enabled=false" ]
+        }
+    ],
+
+    "post-processors": [
+    [
+      {
+        "type": "docker-import",
+        "repository": "sm-docker",
+        "tag": "queue"
+      }
+    ]
+  ]
+}

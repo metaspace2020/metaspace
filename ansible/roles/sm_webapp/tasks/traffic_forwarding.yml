@@ -1,0 +1,25 @@
+---
+
+- name: Enable ip traffic forwarding
+  become: yes
+  sysctl: name="net.ipv4.conf.eth0.forwarding" value=1 sysctl_set=yes
+
+- name: Forward traffic from 80 to 8080 port
+  become: yes
+  iptables: table=nat
+            chain=PREROUTING
+            in_interface=eth0
+            protocol=tcp
+            match=tcp
+            destination_port=80
+            jump=REDIRECT
+            to_ports=8080
+            comment="Redirect web traffic to port 9777"
+
+- name: Persist iptables rules
+  become: yes
+  command: sh -c "iptables-save > /etc/iptables.rules"
+
+- name: Put iptablesload script to /etc/network/if-pre-up.d
+  become: yes
+  copy: src=iptablesload dest=/etc/network/if-pre-up.d/iptablesload mode=0755

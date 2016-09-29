@@ -14,6 +14,9 @@
   notify:
   - restart rabbitmq
 
+- name: Restart rabbitmq
+  service: name=rabbitmq-server state=restarted
+
 - name: Add users
   rabbitmq_user: user={{rabbitmq_user}} password={{rabbitmq_password}} tags=administrator,{{rabbitmq_user}} vhost=/
                  configure_priv=.* write_priv=.* read_priv=.* state=present

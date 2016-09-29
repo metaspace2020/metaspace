@@ -1,0 +1,71 @@
+---
+
+aws_access_key_id:
+aws_secret_access_key:
+
+postgres_host: localhost
+postgres_version: 9.3
+
+es_host: localhost
+
+rabbitmq_host: localhost
+rabbitmq_user: sm
+rabbitmq_password: "1234"
+
+miniconda_version: latest
+miniconda_python: 2
+miniconda_prefix: "/opt/dev/miniconda"
+miniconda_env:
+  name: sm
+  dependencies:
+    - python=2
+    - numpy=1.10
+    - scipy=0.16
+    - matplotlib=1.5
+    - pandas=0.18
+    - cffi
+    - pip:
+      - pip
+      - pyMSpec==0.1
+      - cpyMSpec==0.1.4
+      - pyImagingMSpec==0.1.3
+      - cpyImagingMSpec==0.0.5
+      - requests
+      - mock
+      - psycopg2
+      - py4j
+      - pyimzML
+      - pytest
+      - tornado
+      - tornpsql
+      - recommonmark
+      - boto3
+      - networkx
+      - fabric
+      - pypng
+      - pyyaml
+      - elasticsearch
+      - pika
+
+spark_version: "1.6.0-bin-hadoop2.7.1"
+spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
+spark_home: "/usr/lib/spark"
+spark_key_file: ~/.ssh/ubuntu_spark
+spark_master_host: "local[4]"
+
+spark_env_extras_master:
+  PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
+
+spark_slave_ips:
+  - localhost
+
+sm_branch: v0.4
+sm_postgres_password: "1234"
+sm_home: "/opt/dev/sm"
+sm_s3_path:
+
+hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"
+activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
+
+slack_channel:
+slack_webhook_url:

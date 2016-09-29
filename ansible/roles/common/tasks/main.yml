@@ -2,14 +2,14 @@
 
 - name: Reconfigure buggy ubuntu locales
   template: src=locale dest=/etc/default/locale owner=root mode="u=rw,g=r,o=r" force=yes
-  
+
 - name: upload ssh key file "{{ pub_key_file }}"
   authorized_key: user=ubuntu key="{{ lookup('file', '{{ pub_key_file }}') }}"
   when: upload_key
 
 - name: Update apt cache
   apt: update_cache=yes
-  
+
 - name: Install misc packages
   apt: name={{ item }} state=present
   with_items:
@@ -17,6 +17,8 @@
     - iotop
     - mc
     - gcc
+    - software-properties-common
 
 - name: Add swap file
-  script: increase_swap.sh
+  script: increase_swap.sh {{ swapsize }}
+  when: swapsize|int > 0

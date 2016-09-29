@@ -1,0 +1,37 @@
+---
+
+- name: Prepare Ubuntu environment
+  hosts: sm-packer
+  user: ubuntu
+
+  roles:
+    - role: common
+      become: yes
+
+- name: Set up SM queue
+  hosts: sm-packer
+  user: ubuntu
+
+  roles:
+    - role: rabbitmq
+      become: yes
+
+- name: Set up SM web app
+  hosts: sm-packer
+  user: ubuntu
+
+  roles:
+    - role: sm_webapp
+      venv: "{{ miniconda_prefix }}"
+      conda_env: "{{ miniconda_env.name }}"
+
+- name: Set up SM engine
+  hosts: sm-packer
+  user: ubuntu
+
+  roles:
+    - role: sm_spark_master
+      venv: "{{ miniconda_prefix }}"
+      conda_env: "{{ miniconda_env.name }}"
+      spark_usr_dir: "{{ spark_home }}"
+      spark_env_extras: "{{ spark_env_extras_master }}"
