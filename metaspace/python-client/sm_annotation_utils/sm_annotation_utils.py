@@ -49,31 +49,32 @@ class IsotopeImages(object):
             plt.imshow(self._images[i], interpolation='none', cmap='viridis')
 
 class SMDataset(object):
-    def __init__(self, dataset_name, db_cursor, es_client, index_name):
-        self._name = dataset_name
+    def __init__(self, dataset_id, db_cursor, es_client, index_name):
+        self._id = dataset_id
         self._db_cursor = db_cursor
-        es_search = Search(using=es_client, index=index_name)
-        self._es_query = es_search.query('term', ds_name=dataset_name)
         self._properties = {}
+        self._name = self.name
+        es_search = Search(using=es_client, index=index_name)
+        self._es_query = es_search.query('term', ds_name=self._name)
 
     def _db_fetch(self, prop):
         if prop in self._properties:
             return self._properties[prop]
-        self._db_cursor.execute("select " + prop + " from dataset where name = %s", [self._name])
+        self._db_cursor.execute("select " + prop + " from dataset where id = %s", [self._id])
         value = self._db_cursor.fetchone()[0]
         self._properties[prop] = value
         return value
 
     @property
     def name(self):
-        return self._name
+        return self._db_fetch("name")
 
     @property
     def s3dir(self):
         return self._db_fetch("input_path")
 
     def __repr__(self):
-        return "SMDataset({})".format(self._name)
+        return "SMDataset({} | ID: {})".format(self._name, self._id)
 
     def annotations(self, fdr=0.1):
         if fdr not in [0.05, 0.1, 0.2, 0.5]:
@@ -162,14 +163,18 @@ class SMInstance(object):
                                                        self._es_host, self._es_index)
 
     def dataset(self, dataset_name):
-        return SMDataset(dataset_name, self._db_cur, self._es_client, index_name=self._es_index)
+        query = "select id from dataset where name = '{}'".format(dataset_name)
+        self._db_cur.execute(query)
+        dataset_id = self._db_cur.fetchone()[0]
+        return SMDataset(dataset_id, self._db_cur, self._es_client, index_name=self._es_index)
 
     def datasets(self, name_mask=''):
-        query = "select name from dataset"
+        query = "select id from dataset"
         if name_mask:
             query += " where name like '%{}%'".format(name_mask)
         self._db_cur.execute(query)
-        return [self.dataset(name[0]) for name in self._db_cur.fetchall()]
+        return [SMDataset(row[0], self._db_cur, self._es_client, index_name=self._es_index)
+                for row in self._db_cur.fetchall()]
 
     def database(self, database_name):
         return MolecularDatabase(database_name, self._db_cur)
