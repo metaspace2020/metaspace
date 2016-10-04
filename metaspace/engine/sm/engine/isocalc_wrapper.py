@@ -1,16 +1,67 @@
-from traceback import format_exc
-from collections import namedtuple
+from cpyMSpec import IsotopePattern
 import numpy as np
-from cpyMSpec.legacy_interface import complete_isodist
-from pyMSpec.pyisocalc.canopy.sum_formula_actions import InvalidFormulaError
-from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 import logging
-
 
 logger = logging.getLogger('sm-engine')
 
-Centroids = namedtuple('Centroids', ['mzs', 'ints'])
+ISOTOPIC_PEAK_N = 4
+SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
 
+def trim_centroids(mzs, intensities, k):
+    int_order = np.argsort(intensities)[::-1]
+    mzs = mzs[int_order][:k]
+    intensities = intensities[int_order][:k]
+    mz_order = np.argsort(mzs)
+    return mzs[mz_order], intensities[mz_order]
+
+class Centroids(object):
+    def __init__(self, isotope_pattern, resolving_power, pts_per_mz=None):
+        self._isotope_pattern = isotope_pattern
+        self._resolving_power = resolving_power
+        self._pts_per_mz = pts_per_mz
+
+        if isotope_pattern is not None:
+            centroids = isotope_pattern.centroids(resolving_power)
+            order = np.argsort(centroids.masses)
+            self.mzs = np.array(centroids.masses)[order]
+            self.ints = 100.0 * np.array(centroids.abundances)[order]
+
+            if pts_per_mz is None:
+                fwhm = self.mzs[0] / resolving_power
+                sigma = fwhm / SIGMA_TO_FWHM
+                self._pts_per_mz = 5.0 / sigma
+        else:
+            self.mzs = self.ints = []
+
+    @property
+    def _envelope(self):
+        return self._isotope_pattern.envelope(self._resolving_power)
+
+    def spectrum_chart(self, n_peaks=ISOTOPIC_PEAK_N):
+        centr_mzs = self.mzs[:n_peaks]
+        min_mz = min(centr_mzs) - 0.25
+        max_mz = max(centr_mzs) + 0.25
+        prof_mzs = np.arange(min_mz, max_mz, 1.0 / self._pts_per_mz)
+        prof_ints = self._envelope(prof_mzs)
+        nnz_idx = prof_ints > 1e-9
+        prof_mzs = prof_mzs[nnz_idx]
+        prof_ints = prof_ints[nnz_idx]
+
+        return {
+            'mz_grid': {
+                'min_mz': min_mz,
+                'max_mz': max_mz
+            },
+            'theor': {
+                'centroid_mzs': centr_mzs.tolist(),
+                'mzs': prof_mzs.tolist(),
+                'ints': (prof_ints * 100.0).tolist()
+            }
+        }
+
+    @property
+    def empty(self):
+        return (not self.mzs) and (not self.ints)
 
 def list_of_floats_to_str(l):
     return ','.join(map(lambda x: '{:.6f}'.format(x), l))
@@ -31,14 +82,8 @@ class IsocalcWrapper(object):
         if 'polarity' in isocalc_config['charge']:
             polarity = isocalc_config['charge']['polarity']
             self.charge = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
-        self.sigma = isocalc_config['isocalc_sigma']
-        self.pts_per_mz = isocalc_config['isocalc_pts_per_mz']
-        self.prof_pts_per_centr = 6
-
-    def _isodist(self, sf_adduct):
-        sf_adduct_obj = parseSumFormula(sf_adduct)
-        return complete_isodist(sf_adduct_obj, sigma=self.sigma, charge=self.charge, pts_per_mz=self.pts_per_mz,
-                                centroid_kwargs={'weighted_bins': 5})
+        self.sigma = float(isocalc_config['isocalc_sigma'])
+        self.pts_per_mz = int(isocalc_config['isocalc_pts_per_mz'])
 
     def isotope_peaks(self, sf, adduct):
         """
@@ -51,35 +96,30 @@ class IsocalcWrapper(object):
 
         Returns
         -------
-        : dict
-            A dict with keys:
-             - centroid mzs
-             - centroid intensities
-            In case of any errors returns a dict of empty lists.
+        : Centroids
+            In case of any errors returns object with empty 'mzs' and 'ints' fields
         """
-        centroids = Centroids([], [])
         try:
-            isotope_ms = self._isodist(sf + adduct)
-            centroids = Centroids(*map(lambda l: l[:6],
-                                            isotope_ms.get_spectrum(source='centroids')))
-        except InvalidFormulaError as e:
-            logger.warning('(%s, %s) - %s', sf, adduct, e)
+            isotopes = IsotopePattern(str(sf + adduct)).charged(int(self.charge))
+            fwhm = self.sigma * SIGMA_TO_FWHM
+            resolving_power = isotopes.masses[0] / fwhm
+            return Centroids(isotopes, resolving_power, self.pts_per_mz)
         except Exception as e:
-            logger.error('(%s, %s) - %s', sf, adduct, e)
-            logger.error(format_exc())
-        finally:
-            return centroids
+            logger.warning('(%s, %s) - %s', sf, adduct, e)
+            return Centroids(None, None)
 
     @staticmethod
     def slice_array(mzs, lower, upper):
         return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
 
     def _format_peak_str(self, sf, adduct, centroids):
+        # store only top 4 peaks in the database
+        mzs, ints = trim_centroids(centroids.mzs, centroids.ints, ISOTOPIC_PEAK_N)
         return '%s\t%s\t%.6f\t%d\t%d\t{%s}\t{%s}' % (
             sf, adduct,
             round(self.sigma, 6), self.charge, self.pts_per_mz,
-            list_of_floats_to_str(centroids.mzs),
-            list_of_floats_to_str(centroids.ints)
+            list_of_floats_to_str(mzs),
+            list_of_floats_to_str(ints)
         )
 
     def formatted_iso_peaks(self, sf, adduct):
@@ -96,6 +136,7 @@ class IsocalcWrapper(object):
         : str
             A one line string with tab separated lists. Every list is a comma separated string.
         """
+
         centroids = self.isotope_peaks(sf, adduct)
         if len(centroids.mzs) > 0:
             yield self._format_peak_str(sf, adduct, centroids)

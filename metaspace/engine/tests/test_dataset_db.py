@@ -40,7 +40,7 @@ def test_save_ds_meta_works(read_json_mock, spark_context, create_test_db, drop_
             '0,1,1\n',
             '1,100,200\n'])
 
-        dataset = Dataset(spark_context, '2000-01-01_00:00', 'ds_id', 'input_path',
+        dataset = Dataset(spark_context, '2000-01-01_00:00', 'ds_id', True, 'input_path',
                           ds_config, work_dir_man_mock, DB(sm_config['db']))
         dataset.save_ds_meta()
 

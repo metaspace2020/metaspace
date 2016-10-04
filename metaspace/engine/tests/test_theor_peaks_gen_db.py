@@ -24,29 +24,10 @@ def create_fill_test_db(create_test_db, drop_test_db):
         db.close()
 
 
-def test_theor_peaks_generator_run_1(create_fill_test_db, spark_context, sm_config, ds_config):
-    ds_config["isotope_generation"]["adducts"] = ["+H", "+Na"]
-    theor_peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    theor_peaks_gen.isocalc_wrapper.isotope_peaks = lambda *args: Centroids([100., 200.], [10., 1.])
-    theor_peaks_gen.run()
-
-    db = DB(sm_config['db'])
-    rows = db.select(('SELECT sf, adduct, sigma, charge, pts_per_mz, centr_mzs, centr_ints '
-                      'FROM theor_peaks ORDER BY sf, adduct'))
-
-    assert len(rows) == 2 + 80
-    assert (filter(lambda r: r[1] == '+H', rows)[0] ==
-            ('Au', '+H', 0.01, 1, 10000, [100., 200.], [10., 1.]))
-    assert (filter(lambda r: r[1] == '+Na', rows)[0] ==
-            ('Au', '+Na', 0.01, 1, 10000, [100., 200.], [10., 1.]))
-
-    db.close()
-
-
 def test_theor_peaks_generator_run_failed_iso_peaks(create_fill_test_db, spark_context, sm_config, ds_config):
     ds_config["isotope_generation"]["adducts"] = ["+Na"]
     theor_peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    theor_peaks_gen.isocalc_wrapper.isotope_peaks = lambda *args: Centroids([], [])
+    theor_peaks_gen.isocalc_wrapper.isotope_peaks = lambda *args: Centroids(None, None)
     theor_peaks_gen.run()
 
     db = DB(sm_config['db'])
