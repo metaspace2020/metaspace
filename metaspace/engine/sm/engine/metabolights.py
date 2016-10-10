@@ -131,7 +131,17 @@ class MetabolightsBatch(object):
             if 'profile' in imzml_fn:
                 continue  # skip non-centroided data
             ibd_fn = imzml_fn[:-5] + "ibd"
-            assert ibd_fn in filenames, ibd_fn + " is not found!"
+            if ibd_fn not in filenames:
+                print "skipping", imzml_fn, "because .ibd file is not found"
+                continue
+            if imzml_fn not in self._info:
+                # attempt to find metadata for profile data
+                profile_imzml_fn = imzml_fn.replace("centroid", "profile")
+                if profile_imzml_fn in self._info:
+                    self._info[imzml_fn] = self._info[profile_imzml_fn]
+                else:
+                    print "skipping", imzml_fn, "because no associated metadata was found"
+                    continue
             targets.append((imzml_fn, ibd_fn))
         return targets
 
