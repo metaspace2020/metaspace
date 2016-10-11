@@ -204,14 +204,26 @@ class SMInstance(object):
         """
         Returns a dataframe of MSM scores for multiple datasets and (sum formula, adduct) pairs.
         """
+        return self.get_tables(datasets, sf_adduct_pairs, ['msm'])['msm']
+
+    def get_tables(self, datasets, sf_adduct_pairs, fields=['msm', 'fdr']):
+        """
+        Returns dictionary with keys  dataframe of MSM scores for multiple datasets and (sum formula, adduct) pairs.
+        """
+        assert fields, "list of fields can't be empty"
+        fill_values = {'fdr': 1.0, 'msm': 0.0}
         s = Search(using=self._es_client, index=self._es_index)\
             .filter('terms', ds_name=[d.name for d in datasets])\
             .filter('terms', sf_adduct=[x[0] + x[1] for x in sf_adduct_pairs])\
-            .fields(['sf', 'adduct', 'msm', 'ds_name'])
+            .fields(['sf', 'adduct', 'ds_name'] + fields)
         results = list(s.scan())
-        return pd.DataFrame.from_records(((r.ds_name[0], r.sf[0], r.adduct[0], r.msm[0]) for r in results),
-                                         columns=['ds_name', 'sf', 'adduct', 'msm'])\
-                           .pivot_table('msm', index=['ds_name'], columns=['sf', 'adduct'], fill_value=0.0)
+        d = {}
+        for f in fields:
+            records = ((r.ds_name[0], r.sf[0], r.adduct[0], r[f][0]) for r in results)
+            d[f] = pd.DataFrame.from_records(records, columns=['ds_name', 'sf', 'adduct', f])\
+                               .pivot_table(f, index=['ds_name'], columns=['sf', 'adduct'],
+                                            fill_value=fill_values.get(f, 0.0))
+        return d
 
     def metadata(self, datasets):
         """
