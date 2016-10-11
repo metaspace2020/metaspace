@@ -38,7 +38,7 @@ class Centroids(object):
         return self._isotope_pattern.envelope(self._resolving_power)
 
     def spectrum_chart(self, n_peaks=ISOTOPIC_PEAK_N):
-        centr_mzs = self.mzs[:n_peaks]
+        centr_mzs, _ = trim_centroids(self.mzs, self.ints, n_peaks)
         min_mz = min(centr_mzs) - 0.25
         max_mz = max(centr_mzs) + 0.25
         prof_mzs = np.arange(min_mz, max_mz, 1.0 / self._pts_per_mz)
