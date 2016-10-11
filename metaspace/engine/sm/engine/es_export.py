@@ -173,7 +173,8 @@ class ESExporter:
                                 },
                                 "Sample_Information": {
                                     "properties": {
-                                        "Organism": {"type": "string", "index": "not_analyzed"}
+                                        "Organism": {"type": "string", "index": "not_analyzed"},
+                                        "Condition": {"type": "string", "index": "not_analyzed"}
                                     }
                                 }
                             }
