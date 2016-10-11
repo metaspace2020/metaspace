@@ -6,7 +6,7 @@
 .. moduleauthor:: Sergey Nikolenko <snikolenko@gmail.com>
 """
 
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.isocalc_wrapper import IsocalcWrapper, trim_centroids, ISOTOPIC_PEAK_N
 
 import json
 import logging
@@ -42,7 +42,8 @@ class SFPeakMZsHandler(tornado.web.RequestHandler):
         ds_config = dataset_config(self.db, ds_id)
         isocalc = IsocalcWrapper(ds_config['isotope_generation'])
         sf = self.db.query(SF_SELECT, db_id, sf_id)[0].sf
-        centr_mzs = isocalc.isotope_peaks(sf, adduct).mzs
+        centroids = isocalc.isotope_peaks(sf, adduct)
+        centr_mzs, _ = trim_centroids(centroids.mzs, centroids.ints, ISOTOPIC_PEAK_N)
         self.write(json.dumps(centr_mzs.tolist()))
 
 
