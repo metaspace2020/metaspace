@@ -9,7 +9,8 @@ import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 import cStringIO
 import png
-from cachetools import LRUCache, cached, hashkey
+from cachetools import LRUCache, cached
+from cachetools.keys import hashkey
 
 
 INTS_SQL = ('SELECT pixel_inds inds, intensities as ints '
