@@ -26,31 +26,40 @@ class Dataset(object):
     wd_manager : engine.local_dir.WorkDir
     db : engine.db.DB
     """
-    def __init__(self, sc, id, name, drop, input_path, ds_config, wd_manager, db):
+    def __init__(self, sc, id, name, drop, input_path, wd_manager, db):
         self.db = db
         self.sc = sc
-        self.id = id
-
         self.wd_manager = wd_manager
-        self.metadata = read_json(self.wd_manager.ds_metadata_path)
-        self.name = self.choose_name(id, name, self.metadata)
-
-        self.input_path = input_path
-        self.ds_config = ds_config
         self.sm_config = SMConfig.get_conf()
 
+        self.id = id
+        self.name = name
+        self.input_path = input_path
+
         if drop:
-            self._delete_ds_if_exists()
+            self._delete_ds_if_exists(self.name)
+
+    def read_ds_config_meta(self):
         self._define_pixels_order()
+        self._read_ds_config_metadata()
+        self._update_ds_meta()
 
-    def _delete_ds_if_exists(self):
-        for r in self.db.select('SELECT id FROM dataset WHERE name=%s', self.name):
-            logger.warning('ds_name already exists: {}. Deleting'.format(self.name))
+    def _read_ds_config_metadata(self):
+        ds_r = self.db.select('SELECT name, config, metadata FROM dataset WHERE id=%s', self.id)
+        if ds_r:
+            self.name, self.ds_config, self.metadata = ds_r[0]
+            logger.info("Dataset %s, %s already exists", self.id, self.name)
+        else:
+            self.ds_config = read_json(self.wd_manager.ds_config_path)
+            self.metadata = read_json(self.wd_manager.ds_metadata_path)
+
+            if not self.name:
+                self.name = self.metadata.get('metaspace_options', {}).get('Dataset_Name', self.id)
+
+    def _delete_ds_if_exists(self, name):
+        for r in self.db.select('SELECT id FROM dataset WHERE name=%s', name):
+            logger.warning('ds_name already exists: {}. Deleting'.format(name))
             self.db.alter('DELETE FROM dataset WHERE id=%s', r[0])
-
-    @staticmethod
-    def choose_name(id, name, metadata):
-        return name or metadata.get('metaspace_options', {}).get('Dataset_Name', id)
 
     @staticmethod
     def _parse_coord_row(s):
@@ -125,17 +134,20 @@ class Dataset(object):
         logger.info('Converting txt to spectrum rdd from %s', self.wd_manager.txt_path)
         return self.sc.textFile(self.wd_manager.txt_path,minPartitions=8).map(txt_to_spectrum)
 
-    def save_ds_meta(self):
+    def _update_ds_meta(self):
         """ Save dataset metadata (name, path, image bounds, coordinates) to the database """
-        img_bounds = json.dumps({'x': {'min': self.min_x, 'max': self.max_x},
-                                 'y': {'min': self.min_y, 'max': self.max_y}})
+        ds_r = self.db.select('SELECT id FROM dataset WHERE id=%s', self.id)
 
-        ds_row = [(self.id, self.name, self.input_path,
-                   json.dumps(self.metadata), img_bounds, json.dumps(self.ds_config))]
-        self.db.insert(DS_INSERT, ds_row)
+        if not ds_r:
+            img_bounds = json.dumps({'x': {'min': self.min_x, 'max': self.max_x},
+                                     'y': {'min': self.min_y, 'max': self.max_y}})
 
-        logger.info("Inserted into the dataset table: %s, %s", self.id, self.name)
+            ds_row = [(self.id, self.name, self.input_path,
+                       json.dumps(self.metadata), img_bounds, json.dumps(self.ds_config))]
+            self.db.insert(DS_INSERT, ds_row)
 
-        xs, ys = map(list, zip(*self.coords))
-        self.db.insert(COORD_INSERT, [(self.id, xs, ys)])
-        logger.info("Inserted to the coordinates table")
+            logger.info("Inserted into the dataset table: %s, %s", self.id, self.name)
+
+            xs, ys = map(list, zip(*self.coords))
+            self.db.insert(COORD_INSERT, [(self.id, xs, ys)])
+            logger.info("Inserted to the coordinates table")
