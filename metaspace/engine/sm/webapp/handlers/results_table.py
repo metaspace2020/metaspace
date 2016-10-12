@@ -4,11 +4,13 @@ import tornado.web
 import tornado.httpserver
 from tornado import gen
 from time import time
-from elasticsearch import Elasticsearch
 import logging
+import zlib
+import base64
+from StringIO import StringIO
+import csv
+from tornado.escape import url_escape, url_unescape
 
-
-es = Elasticsearch()
 logger = logging.getLogger('sm-web-app')
 
 RESULTS_FIELDS = ['db_name', 'ds_name', 'sf', 'comp_names', 'comp_ids', 'adduct', 'mz',
@@ -25,10 +27,13 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         self.adducts = self.application.adducts
         self.index = self.application.config['elasticsearch']['index']
 
-
     @property
     def db(self):
         return self.application.db
+
+    @property
+    def es(self):
+        return self.application.es
 
     def search(self, sf='', ds_name='', db_name='', adduct='', comp_name='', comp_id='', mz='',
                min_msm=0.1, fdr_thr=0.1, orderby='msm', asc=False, offset=0, limit=500):
@@ -65,9 +70,9 @@ class ResultsTableHandler(tornado.web.RequestHandler):
             return a
 
         results = [format_annotation(r['_source'], fdr_thr) for r in
-                   es.search(index=self.index, body=body, _source=True)['hits']['hits']]
+                   self.es.search(index=self.index, body=body, _source=True)['hits']['hits']]
 
-        count = es.count(index=self.index, body=body)['count']
+        count = self.es.count(index=self.index, body=body)['count']
 
         return count, results
 
@@ -79,31 +84,69 @@ class ResultsTableHandler(tornado.web.RequestHandler):
             "data": res
         }
 
-    @gen.coroutine
-    def post(self, *args):
-        start = time()
+    cookie_name = 'last_table_args'
 
-        draw = int(self.get_argument('draw', 0))
+    # compression is used in order to fit into 4096 bytes limit;
+    # observed typical size after all manipulations is currently about 800 bytes
+    def _encode(self, args):
+        return url_escape(base64.encodestring(zlib.compress(json.dumps(args))))
 
-        limit = int(self.get_argument('length', 500))
-        offset = int(self.get_argument('start', 0))
+    def _decode(self, args):
+        return json.loads(zlib.decompress(base64.decodestring(url_unescape(args))))
 
-        fdr_thr = float(self.get_argument('fdr_thr'))
+    def _fetch_results(self, args):
+        limit = int(args.get('length', [500])[0])
+        offset = int(args.get('start', [0])[0])
 
-        db_name = self.request.arguments['columns[0][search][value]'][0]
-        ds_name = self.request.arguments['columns[1][search][value]'][0]
-        adduct = self.request.arguments['columns[5][search][value]'][0]
-        sf = (self.request.arguments['columns[2][search][value]'][0])
-        compound = (self.request.arguments['columns[3][search][value]'][0]).lower()
-        comp_id = self.request.arguments['columns[4][search][value]'][0]
-        min_msm = self.request.arguments['columns[10][search][value]'][0] or 0
-        mz_str = self.request.arguments['columns[6][search][value]'][0]
+        fdr_thr = float(args['fdr_thr'][0])
 
-        orderby = RESULTS_FIELDS[int(self.get_argument('order[0][column]', 0))]
-        order_asc = self.get_argument('order[0][dir]', 0) == 'asc'
+        db_name = args['columns[0][search][value]'][0]
+        ds_name = args['columns[1][search][value]'][0]
+        adduct = args['columns[5][search][value]'][0]
+        sf = (args['columns[2][search][value]'][0])
+        compound = (args['columns[3][search][value]'][0]).lower()
+        comp_id = args['columns[4][search][value]'][0]
+        min_msm = args['columns[10][search][value]'][0] or 0
+        mz_str = args['columns[6][search][value]'][0]
+
+        orderby = RESULTS_FIELDS[int(args.get('order[0][column]', [0])[0])]
+        order_asc = args.get('order[0][dir]', [0])[0] == 'asc'
 
         count, results = self.search(sf, ds_name, db_name, adduct, compound, comp_id, mz_str,
                                      min_msm, fdr_thr, orderby, order_asc, offset, limit)
+        return count, results
+
+    @gen.coroutine
+    def get(self, *args):
+        cookie = self.get_cookie(self.cookie_name)
+        if not cookie:
+            self.write("Error: No cookie with name {} is set".format(self.cookie_name))
+            return
+        args = self._decode(cookie)
+        count, results = self._fetch_results(args)
+        csv_fields = ['db_name', 'ds_name', 'sf', 'adduct', 'mz',
+                      'chaos', 'image_corr', 'pattern_match', 'msm', 'pass_fdr']
+
+        out = StringIO()
+        writer = csv.DictWriter(out, fieldnames=csv_fields)
+        writer.writeheader()
+        for row in results:
+            writer.writerow({x: row[x] for x in csv_fields})
+        out.seek(0)
+        self.set_header("Content-Type", 'text/csv; charset="utf-8"')
+        self.set_header("Content-Disposition", "attachment; filename=sm_results.csv")
+        self.write(out.read())
+        out.close()
+
+    @gen.coroutine
+    def post(self, *args):
+        start = time()
+        logger.info("POST results_table/")
+
+        self.set_cookie(self.cookie_name, self._encode(self.request.arguments))
+
+        draw = int(self.get_argument('draw', 0))
+        count, results = self._fetch_results(self.request.arguments)
 
         results_dict = self.make_datatable_dict(draw, count, [[row[x] for x in RESULTS_FIELDS] for row in results])
 

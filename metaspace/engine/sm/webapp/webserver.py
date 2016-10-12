@@ -9,7 +9,7 @@
 """
 import argparse
 import json
-from datetime import datetime, timedelta
+from elasticsearch import Elasticsearch
 from os import path
 from logging.config import dictConfig
 import logging
@@ -90,9 +90,10 @@ class Application(tornado.web.Application):
         self.db = tornpsql.Connection(config_db['host'], config_db['database'], config_db['user'],
                                       config_db['password'], 5432)
 
+        self.es = Elasticsearch(host=config['elasticsearch']['host'])
+
         # hack needed to overcome sending expensive query every time results table is filtered or sorted
         self.adducts = [row['adduct'] for row in self.db.query('select distinct(target_add) as adduct from target_decoy_add')]
-
 
 def main():
     """Creates tornado application, handles keyboard interrupts (to release the http socket)."""
