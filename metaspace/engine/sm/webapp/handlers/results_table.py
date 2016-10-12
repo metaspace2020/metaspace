@@ -123,15 +123,25 @@ class ResultsTableHandler(tornado.web.RequestHandler):
             self.write("Error: No cookie with name {} is set".format(self.cookie_name))
             return
         args = self._decode(cookie)
+        args['length'] = [1000]
         count, results = self._fetch_results(args)
         csv_fields = ['db_name', 'ds_name', 'sf', 'adduct', 'mz',
                       'chaos', 'image_corr', 'pattern_match', 'msm', 'pass_fdr']
 
         out = StringIO()
-        writer = csv.DictWriter(out, fieldnames=csv_fields)
+        writer = csv.DictWriter(out, fieldnames=csv_fields + ["compound_names"])
         writer.writeheader()
         for row in results:
-            writer.writerow({x: row[x] for x in csv_fields})
+            d = {x: row[x] for x in csv_fields}
+            compound_names = []
+            for s in row['comp_names']:
+                try:
+                    s.decode('ascii')
+                    compound_names.append(s)
+                except UnicodeEncodeError:
+                    pass
+            d['compound_names'] = ", ".join(compound_names)
+            writer.writerow(d)
         out.seek(0)
         self.set_header("Content-Type", 'text/csv; charset="utf-8"')
         self.set_header("Content-Disposition", "attachment; filename=sm_results.csv")
