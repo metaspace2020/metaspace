@@ -12,7 +12,7 @@ from sm.engine.search_job import SearchJob
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='SM process dataset at a remote spark location.')
-    parser.add_argument('input_path', type=str, help='Path to a dataset location')
+    parser.add_argument('--input-path', type=str, help='Path to a dataset location')
     parser.add_argument('--ds-name', dest='ds_name', type=str, help='Dataset name')
     parser.add_argument('--drop', action='store_true', help='Drop all datasets with ds_name first')
     parser.add_argument('--ds-id', dest='ds_id', type=str, help='Dataset id')

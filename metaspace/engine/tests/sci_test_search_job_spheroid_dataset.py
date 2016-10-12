@@ -119,7 +119,7 @@ class SciTester(object):
     def run_search(self):
         cmd = ['python',
                join(proj_root(), 'scripts/run_molecule_search.py'),
-               self.input_dir_path,
+               '--input-path', self.input_dir_path,
                '--ds-name', self.ds_name,
                '--drop',
                '--ds-config', self.ds_config_path,

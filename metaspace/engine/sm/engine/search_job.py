@@ -113,22 +113,12 @@ class SearchJob(object):
             start = time.time()
 
             self.wd_manager = WorkDirManager(self.ds_id)
-            self.wd_manager.copy_input_data(self.input_path, ds_config_path)
-            if not self.wd_manager.exists(self.wd_manager.txt_path):
-                imzml_converter = ImzmlTxtConverter(self.wd_manager.local_dir.imzml_path,
-                                                    self.wd_manager.local_dir.txt_path,
-                                                    self.wd_manager.local_dir.coord_path)
-                imzml_converter.convert()
-
-                if not self.wd_manager.local_fs_only:
-                    self.wd_manager.upload_to_remote()
-
             self._configure_spark()
             self._init_db()
 
             self.ds = Dataset(self.sc, self.ds_id, self.ds_name, self.drop, self.input_path,
                               self.wd_manager, self.db)
-            self.ds.read_ds_config_meta()
+            self.ds.copy_read_data()
 
             logger.info('Dataset config:\n%s', pformat(self.ds.ds_config))
             self.sf_db_id = self.db.select_one(DB_ID_SEL, self.ds.ds_config['database']['name'])[0]
@@ -159,8 +149,6 @@ class SearchJob(object):
 
             es = ESExporter(self.sm_config)
             es.index_ds(self.db, self.ds_id)
-
-            self.wd_manager.clean()
 
             logger.info("All done!")
             time_spent = time.time() - start

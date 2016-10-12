@@ -42,7 +42,7 @@ def test_update_ds_meta_works(read_json_mock, spark_context, fill_test_db, sm_co
 
         dataset = Dataset(spark_context, '2000-01-01_00:00', 'ds_name', True, 'input_path',
                           work_dir_man_mock, DB(sm_config['db']))
-        dataset.read_ds_config_meta()
+        dataset.copy_read_data()
 
     db = DB(sm_config['db'])
     ds_row = db.select_one('SELECT id, name, input_path, metadata, img_bounds, config from dataset')
@@ -75,7 +75,7 @@ def test_metadata_not_updated_if_ds_id_is_provided(read_json_mock, spark_context
 
         dataset = Dataset(spark_context, '2000-01-01_00:00', 'ds_name', False, 'input_path',
                           work_dir_man_mock, DB(sm_config['db']))
-        dataset.read_ds_config_meta()
+        dataset.copy_read_data()
 
     db = DB(sm_config['db'])
     ds_row = db.select_one('SELECT id, name, input_path, metadata, img_bounds, config from dataset')
