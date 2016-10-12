@@ -31,8 +31,9 @@ class Dataset(object):
     wd_manager : engine.local_dir.WorkDir
     db : engine.db.DB
     """
-    def __init__(self, sc, id, name, drop, input_path, wd_manager, db):
+    def __init__(self, sc, id, name, drop, input_path, wd_manager, db, es):
         self.db = db
+        self.es = es
         self.sc = sc
         self.wd_manager = wd_manager
         self.sm_config = SMConfig.get_conf()
@@ -80,11 +81,13 @@ class Dataset(object):
         if name_res:
             logger.warning('ds_name already exists: {}. Deleting'.format(name))
             self.db.alter('DELETE FROM dataset WHERE id=%s', name_res[0][0])
+            self.es.delete_ds(name_res[0][0])
         else:
             id_res = self.db.select('SELECT id FROM dataset WHERE id=%s', id)
             if id_res:
                 logger.warning('ds_id already exists: {}. Deleting'.format(id))
                 self.db.alter('DELETE FROM dataset WHERE id=%s', id_res[0][0])
+                self.es.delete_ds(id_res[0][0])
 
     @staticmethod
     def _parse_coord_row(s):

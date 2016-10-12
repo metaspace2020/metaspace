@@ -115,9 +115,10 @@ class SearchJob(object):
             self.wd_manager = WorkDirManager(self.ds_id)
             self._configure_spark()
             self._init_db()
+            es = ESExporter(self.sm_config)
 
             self.ds = Dataset(self.sc, self.ds_id, self.ds_name, self.drop, self.input_path,
-                              self.wd_manager, self.db)
+                              self.wd_manager, self.db, es)
             self.ds.copy_read_data()
 
             logger.info('Dataset config:\n%s', pformat(self.ds.ds_config))
@@ -147,21 +148,22 @@ class SearchJob(object):
             search_results.nrows, search_results.ncols = self.ds.get_dims()
             search_results.store()
 
-            es = ESExporter(self.sm_config)
             es.index_ds(self.db, self.ds_id)
 
             logger.info("All done!")
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
-            logger.info('*'*100)
 
         except Exception:
             logger.error('Job failed', exc_info=True)
             raise
         finally:
+            if self.fdr:
+                self.fdr.clean_target_decoy_table()
             if self.sc:
                 self.sc.stop()
             if self.db:
                 self.db.close()
             if self.wd_manager:
                 self.wd_manager.clean()
+            logger.info('*' * 100)

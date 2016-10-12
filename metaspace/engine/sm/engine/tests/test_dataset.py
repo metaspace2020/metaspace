@@ -20,7 +20,7 @@ def test_get_sample_area_mask_correctness(sm_config, ds_config, spark_context):
             '0,0,0\n',
             '2,1,1\n'])
 
-        ds = Dataset(spark_context, 'ds_id', '', False, 'input_path', work_dir_man_mock, None)
+        ds = Dataset(spark_context, 'ds_id', '', False, 'input_path', work_dir_man_mock, None, None)
         ds._define_pixels_order()
 
         assert tuple(ds.get_sample_area_mask()) == (True, False, False, True)
@@ -36,7 +36,7 @@ def test_choose_name_from_metadata(read_json_mock):
     with patch('sm.engine.db.DB') as db_mock:
         db_mock.select.return_value = []
 
-        ds = Dataset(None, 'ds_id', None, False, '', work_dir_man_mock, db_mock)
+        ds = Dataset(None, 'ds_id', None, False, '', work_dir_man_mock, db_mock, None)
         ds._read_ds_config_metadata()
 
         assert ds.name == 'foobar'

@@ -91,7 +91,8 @@ class Application(tornado.web.Application):
                                       config_db['password'], 5432)
 
         # hack needed to overcome sending expensive query every time results table is filtered or sorted
-        self.adducts = [row['adduct'] for row in self.db.query('select distinct(target_add) as adduct from target_decoy_add')]
+        res = self.db.query("select ((config::json->'isotope_generation')->'adducts') from dataset as adducts")
+        self.adducts = list(set([add for row in res for add in row['?column?']]))
 
 
 def main():

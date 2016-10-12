@@ -4,6 +4,7 @@ from mock import patch, MagicMock
 
 from sm.engine.db import DB
 from sm.engine.dataset import Dataset
+from sm.engine.es_export import ESExporter
 from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
 from sm.engine.tests.util import spark_context, sm_config, ds_config, create_test_db, drop_test_db
@@ -33,6 +34,8 @@ def test_update_ds_meta_works(read_json_mock, spark_context, fill_test_db, sm_co
     work_dir_man_mock.txt_path = '/txt_path'
     work_dir_man_mock.ds_metadata_path = '/ds_meta_path'
 
+    es_mock = MagicMock(ESExporter)
+
     SMConfig._config_dict = sm_config
 
     with patch('sm.engine.tests.util.SparkContext.textFile') as m:
@@ -41,7 +44,7 @@ def test_update_ds_meta_works(read_json_mock, spark_context, fill_test_db, sm_co
             '1,100,200\n'])
 
         dataset = Dataset(spark_context, '2000-01-01_00:00', 'ds_name', True, 'input_path',
-                          work_dir_man_mock, DB(sm_config['db']))
+                          work_dir_man_mock, DB(sm_config['db']), es_mock)
         dataset.copy_read_data()
 
     db = DB(sm_config['db'])
@@ -66,6 +69,8 @@ def test_metadata_not_updated_if_ds_id_is_provided(read_json_mock, spark_context
     work_dir_man_mock.txt_path = '/txt_path'
     work_dir_man_mock.ds_metadata_path = '/ds_meta_path'
 
+    es_mock = MagicMock(ESExporter)
+
     SMConfig._config_dict = sm_config
 
     with patch('sm.engine.tests.util.SparkContext.textFile') as m:
@@ -74,7 +79,7 @@ def test_metadata_not_updated_if_ds_id_is_provided(read_json_mock, spark_context
             '1,100,200\n'])
 
         dataset = Dataset(spark_context, '2000-01-01_00:00', 'ds_name', False, 'input_path',
-                          work_dir_man_mock, DB(sm_config['db']))
+                          work_dir_man_mock, DB(sm_config['db']), es_mock)
         dataset.copy_read_data()
 
     db = DB(sm_config['db'])

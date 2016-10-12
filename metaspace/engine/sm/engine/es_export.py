@@ -3,10 +3,10 @@ from elasticsearch.helpers import bulk, BulkIndexError
 from elasticsearch.client import IndicesClient
 import logging
 
-
 logger = logging.getLogger('sm-engine')
 
-COLUMNS = ["db_name", "ds_id", "ds_name", "sf", "sf_adduct", "comp_names", "comp_ids", "chaos", "image_corr", "pattern_match", "msm",
+COLUMNS = ["db_name", "ds_id", "ds_name", "sf", "sf_adduct", "comp_names", "comp_ids", "chaos", "image_corr",
+           "pattern_match", "msm",
            "adduct", "job_id", "sf_id", "peaks", "db_id", "fdr", "mz", "ds_meta"]
 
 ANNOTATIONS_SEL = '''
