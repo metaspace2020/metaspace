@@ -66,7 +66,8 @@ class Dataset(object):
         ds_r = self.db.select('SELECT name, input_path, config, metadata FROM dataset WHERE id=%s', self.id)
         if ds_r:
             self.name, self.input_path, self.ds_config, self.metadata = ds_r[0]
-            logger.info("Dataset %s, %s already exists", self.id, self.name)
+            logger.info("Dataset %s, %s already exists. Deleting annotations only", self.id, self.name)
+            self._delete_ds_if_exists(id=self.id)
             self._copy_convert_input_data()
         else:
             self._copy_convert_input_data()

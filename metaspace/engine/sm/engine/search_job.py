@@ -64,6 +64,7 @@ class SearchJob(object):
         self.fdr = None
         self.formulas = None
         self.wd_manager = None
+        self.es = None
 
         SMConfig.set_path(sm_config_path)
         self.sm_config = SMConfig.get_conf()
@@ -96,6 +97,37 @@ class SearchJob(object):
         rows = [(self.sf_db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self.job_id = self.db.insert_return(JOB_INS, rows)[0]
 
+    def _run_job(self, sf_db_name):
+        self.sf_db_id = self.db.select_one(DB_ID_SEL, sf_db_name)[0]
+        self.store_job_meta()
+
+        logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s ...", self.ds.id, self.ds.name, sf_db_name)
+
+        theor_peaks_gen = TheorPeaksGenerator(self.sc, self.sm_config, self.ds.ds_config)
+        theor_peaks_gen.run()
+
+        target_adducts = self.ds.ds_config['isotope_generation']['adducts']
+        self.fdr = FDR(self.job_id, self.sf_db_id, decoy_sample_size=20, target_adducts=target_adducts, db=self.db)
+        self.fdr.decoy_adduct_selection()
+        self.formulas = FormulasSegm(self.job_id, self.sf_db_id, self.ds.ds_config, self.db)
+
+        search_alg = MSMBasicSearch(self.sc, self.ds, self.formulas, self.fdr, self.ds.ds_config)
+        sf_metrics_df, sf_iso_images = search_alg.search()
+
+        search_results = SearchResults(self.sf_db_id, self.ds_id, self.job_id,
+                                       self.formulas.get_sf_adduct_peaksn(),
+                                       self.db, self.sm_config, self.ds.ds_config)
+        search_results.sf_metrics_df = sf_metrics_df
+        search_results.sf_iso_images = sf_iso_images
+        search_results.metrics = search_alg.metrics
+        search_results.nrows, search_results.ncols = self.ds.get_dims()
+        search_results.store()
+
+        self.es.index_ds(self.db, self.ds_id)
+
+        self.db.alter('UPDATE job set finish=%s where id=%s',
+                      datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self.job_id)
+
     def run(self, ds_config_path=None):
         """ Entry point of the engine. Molecule search is completed in several steps:
          * Copying input data to the engine work dir
@@ -115,40 +147,16 @@ class SearchJob(object):
             self.wd_manager = WorkDirManager(self.ds_id)
             self._configure_spark()
             self._init_db()
-            es = ESExporter(self.sm_config)
+            self.es = ESExporter(self.sm_config)
 
             self.ds = Dataset(self.sc, self.ds_id, self.ds_name, self.drop, self.input_path,
-                              self.wd_manager, self.db, es)
+                              self.wd_manager, self.db, self.es)
             self.ds.copy_read_data()
 
             logger.info('Dataset config:\n%s', pformat(self.ds.ds_config))
-            self.sf_db_id = self.db.select_one(DB_ID_SEL, self.ds.ds_config['database']['name'])[0]
 
-            self.store_job_meta()
-
-            logger.info("Processing ds_id: %s, ds_name: %s ...", self.ds.id, self.ds.name)
-
-            theor_peaks_gen = TheorPeaksGenerator(self.sc, self.sm_config, self.ds.ds_config)
-            theor_peaks_gen.run()
-
-            target_adducts = self.ds.ds_config['isotope_generation']['adducts']
-            self.fdr = FDR(self.job_id, self.sf_db_id, decoy_sample_size=20, target_adducts=target_adducts, db=self.db)
-            self.fdr.decoy_adduct_selection()
-            self.formulas = FormulasSegm(self.job_id, self.sf_db_id, self.ds.ds_config, self.db)
-
-            search_alg = MSMBasicSearch(self.sc, self.ds, self.formulas, self.fdr, self.ds.ds_config)
-            sf_metrics_df, sf_iso_images = search_alg.search()
-
-            search_results = SearchResults(self.sf_db_id, self.ds_id, self.job_id,
-                                           self.formulas.get_sf_adduct_peaksn(),
-                                           self.db, self.sm_config, self.ds.ds_config)
-            search_results.sf_metrics_df = sf_metrics_df
-            search_results.sf_iso_images = sf_iso_images
-            search_results.metrics = search_alg.metrics
-            search_results.nrows, search_results.ncols = self.ds.get_dims()
-            search_results.store()
-
-            es.index_ds(self.db, self.ds_id)
+            for sf_db_name in {self.ds.ds_config['database']['name'], 'HMDB'}:
+                self._run_job(sf_db_name)
 
             logger.info("All done!")
             time_spent = time.time() - start
@@ -166,4 +174,4 @@ class SearchJob(object):
                 self.db.close()
             if self.wd_manager:
                 self.wd_manager.clean()
-            logger.info('*' * 100)
+            logger.info('*' * 150)

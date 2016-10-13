@@ -84,6 +84,7 @@ def test_metadata_not_updated_if_ds_id_is_provided(read_json_mock, spark_context
 
     db = DB(sm_config['db'])
     ds_row = db.select_one('SELECT id, name, input_path, metadata, img_bounds, config from dataset')
-    assert ds_row == ('2000-01-01_00:00', 'ds_name', '/ds_path', {}, {}, {})
+    assert ds_row == ('2000-01-01_00:00', 'ds_name', '/ds_path', {},
+                      {"y": {"max": 200, "min": 1}, "x": {"max": 100, "min": 1}}, {})
 
     db.close()
