@@ -206,7 +206,7 @@ class SMInstance(object):
         """
         return self.get_tables(datasets, sf_adduct_pairs, ['msm'])['msm']
 
-    def get_tables(self, datasets, sf_adduct_pairs, fields=['msm', 'fdr']):
+    def get_tables(self, datasets, sf_adduct_pairs, fields=['msm', 'fdr'], db_name='HMDB'):
         """
         Returns dictionary with keys  dataframe of MSM scores for multiple datasets and (sum formula, adduct) pairs.
         """
@@ -215,6 +215,7 @@ class SMInstance(object):
         s = Search(using=self._es_client, index=self._es_index)\
             .filter('terms', ds_name=[d.name for d in datasets])\
             .filter('terms', sf_adduct=[x[0] + x[1] for x in sf_adduct_pairs])\
+            .filter('term', db_name=db_name)\
             .fields(['sf', 'adduct', 'ds_name'] + fields)
         results = list(s.scan())
         d = {}
