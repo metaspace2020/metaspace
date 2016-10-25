@@ -100,8 +100,7 @@ class SearchResults(object):
 
         logger.info('Storing iso images')
 
-        # self.sf_iso_images.flatMap(iso_img_row_gen).coalesce(32).foreachPartition(store_iso_img_rows)
-        self.sf_iso_images.flatMap(iso_img_row_gen).foreachPartition(store_iso_img_rows)
+        self.sf_iso_images.flatMap(iso_img_row_gen).coalesce(32).foreachPartition(store_iso_img_rows)
 
     def store(self):
         logger.info('Storing search results to the DB')
