@@ -112,6 +112,28 @@ class DB(object):
         self.curs.executemany(sql, rows)
 
     @db_decor
+    def insert_return(self, sql, rows=None):
+        """ Execute insert query
+
+        Args
+        ------------
+        sql : string
+            sql insert query in INSERT INTO TABLE VALUES (%s,...) format
+        rows : list
+            list of tuples as table rows
+        Returns
+        ------------
+        : list
+            inserted ids
+        """
+        self.curs = self.conn.cursor()
+        ids = []
+        for row in rows:
+            self.curs.execute(sql, row)
+            ids.append(self.curs.fetchone()[0])
+        return ids
+
+    @db_decor
     def alter(self, sql, *args):
         """ Execute alter query
 

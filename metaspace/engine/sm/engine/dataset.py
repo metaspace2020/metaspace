@@ -2,6 +2,7 @@ import json
 import numpy as np
 import logging
 
+from sm.engine.imzml_txt_converter import ImzmlTxtConverter
 from sm.engine.util import SMConfig, read_json
 
 
@@ -19,38 +20,75 @@ class Dataset(object):
     ----------
     sc : pyspark.SparkContext
         Spark context object
+    id : String
+        Dataset id
     name : String
         Dataset name
-    ds_config : dict
-        Dataset config file
+    drop: Boolean
+        Drop dataset by name/id
+    input_path : str
+        Input path with imzml/ibd files
     wd_manager : engine.local_dir.WorkDir
     db : engine.db.DB
     """
-    def __init__(self, sc, id, name, drop, input_path, ds_config, wd_manager, db):
+    def __init__(self, sc, id, name, drop, input_path, wd_manager, db, es):
         self.db = db
+        self.es = es
         self.sc = sc
-        self.id = id
-
         self.wd_manager = wd_manager
-        self.metadata = read_json(self.wd_manager.ds_metadata_path)
-        self.name = self.choose_name(id, name, self.metadata)
-
-        self.input_path = input_path
-        self.ds_config = ds_config
         self.sm_config = SMConfig.get_conf()
 
+        self.id = id
+        self.name = name
+        self.input_path = input_path
+
         if drop:
-            self._delete_ds_if_exists()
+            self._delete_ds_if_exists(self.id, self.name)
+
+    def copy_read_data(self):
+        """ Read/convert input data. Read/update metadata/config if needed """
+        self._read_ds_config_metadata()
         self._define_pixels_order()
+        self._update_ds_meta()
 
-    def _delete_ds_if_exists(self):
-        for r in self.db.select('SELECT id FROM dataset WHERE name=%s', self.name):
-            logger.warning('ds_name already exists: {}. Deleting'.format(self.name))
-            self.db.alter('DELETE FROM dataset WHERE id=%s', r[0])
+    def _copy_convert_input_data(self):
+        self.wd_manager.copy_input_data(self.input_path, None)
+        if not self.wd_manager.exists(self.wd_manager.txt_path):
+            imzml_converter = ImzmlTxtConverter(self.wd_manager.local_dir.imzml_path,
+                                                self.wd_manager.local_dir.txt_path,
+                                                self.wd_manager.local_dir.coord_path)
+            imzml_converter.convert()
 
-    @staticmethod
-    def choose_name(id, name, metadata):
-        return name or metadata.get('metaspace_options', {}).get('Dataset_Name', id)
+            if not self.wd_manager.local_fs_only:
+                self.wd_manager.upload_to_remote()
+
+    def _read_ds_config_metadata(self):
+        ds_r = self.db.select('SELECT name, input_path, config, metadata FROM dataset WHERE id=%s', self.id)
+        if ds_r:
+            self.name, self.input_path, self.ds_config, self.metadata = ds_r[0]
+            logger.info("Dataset %s, %s already exists. Deleting annotations only", self.id, self.name)
+            self._delete_ds_if_exists(id=self.id)
+            self._copy_convert_input_data()
+        else:
+            self._copy_convert_input_data()
+            self.ds_config = read_json(self.wd_manager.ds_config_path)
+            self.metadata = read_json(self.wd_manager.ds_metadata_path)
+
+            if not self.name:
+                self.name = self.metadata.get('metaspace_options', {}).get('Dataset_Name', self.id)
+
+    def _delete_ds_if_exists(self, id=None, name=None):
+        name_res = self.db.select('SELECT id FROM dataset WHERE name=%s', name)
+        if name_res:
+            logger.warning('ds_name already exists: {}. Deleting'.format(name))
+            self.db.alter('DELETE FROM dataset WHERE id=%s', name_res[0][0])
+            self.es.delete_ds(name_res[0][0])
+        else:
+            id_res = self.db.select('SELECT id FROM dataset WHERE id=%s', id)
+            if id_res:
+                logger.warning('ds_id already exists: {}. Deleting'.format(id))
+                self.db.alter('DELETE FROM dataset WHERE id=%s', id_res[0][0])
+                self.es.delete_ds(id_res[0][0])
 
     @staticmethod
     def _parse_coord_row(s):
@@ -125,17 +163,20 @@ class Dataset(object):
         logger.info('Converting txt to spectrum rdd from %s', self.wd_manager.txt_path)
         return self.sc.textFile(self.wd_manager.txt_path,minPartitions=8).map(txt_to_spectrum)
 
-    def save_ds_meta(self):
+    def _update_ds_meta(self):
         """ Save dataset metadata (name, path, image bounds, coordinates) to the database """
-        img_bounds = json.dumps({'x': {'min': self.min_x, 'max': self.max_x},
-                                 'y': {'min': self.min_y, 'max': self.max_y}})
+        ds_r = self.db.select('SELECT id FROM dataset WHERE id=%s', self.id)
 
-        ds_row = [(self.id, self.name, self.input_path,
-                   json.dumps(self.metadata), img_bounds, json.dumps(self.ds_config))]
-        self.db.insert(DS_INSERT, ds_row)
+        if not ds_r:
+            img_bounds = json.dumps({'x': {'min': self.min_x, 'max': self.max_x},
+                                     'y': {'min': self.min_y, 'max': self.max_y}})
 
-        logger.info("Inserted into the dataset table: %s, %s", self.id, self.name)
+            ds_row = [(self.id, self.name, self.input_path,
+                       json.dumps(self.metadata), img_bounds, json.dumps(self.ds_config))]
+            self.db.insert(DS_INSERT, ds_row)
 
-        xs, ys = map(list, zip(*self.coords))
-        self.db.insert(COORD_INSERT, [(self.id, xs, ys)])
-        logger.info("Inserted to the coordinates table")
+            logger.info("Inserted into the dataset table: %s, %s", self.id, self.name)
+
+            xs, ys = map(list, zip(*self.coords))
+            self.db.insert(COORD_INSERT, [(self.id, xs, ys)])
+            logger.info("Inserted to the coordinates table")

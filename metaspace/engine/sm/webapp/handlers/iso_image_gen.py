@@ -9,6 +9,8 @@ import matplotlib.cm as cm
 from matplotlib.colors import Normalize
 import cStringIO
 import png
+from cachetools import LRUCache, cached
+from cachetools.keys import hashkey
 
 
 INTS_SQL = ('SELECT pixel_inds inds, intensities as ints '
@@ -23,6 +25,51 @@ BOUNDS_SEL = ('SELECT img_bounds '
               'WHERE j.id=%s')
 COORD_SEL = "SELECT xs, ys FROM coordinates WHERE ds_id='%s'"
 
+@cached(cache=LRUCache(maxsize=500), key=lambda db, *args: hashkey(*args))
+def _get_intens_list(db, job_id, db_id, sf_id, adduct, shape):
+    res_list_rows = db.query(INTS_SQL, job_id, db_id, sf_id, adduct)
+    intens_list = []
+    for res_row in res_list_rows:
+        img_arr = np.zeros(shape[0] * shape[1])
+        img_arr[res_row.inds] = res_row.ints
+
+        # smoothing extreme values
+        non_zero_intens = img_arr > 0
+        if any(non_zero_intens) > 0:
+            perc99_val = np.percentile(img_arr[non_zero_intens], 99)
+            img_arr[img_arr > perc99_val] = perc99_val
+
+        intens_list.append(img_arr.reshape(shape))
+
+    return np.array(intens_list)
+
+@cached(cache={}, key=lambda db, ds_id: hashkey(ds_id))
+def _get_coords(db, ds_id):
+    coords_row = db.query(COORD_SEL % ds_id)[0]
+    coords = np.array(zip(coords_row.xs, coords_row.ys))
+    coords -= coords.min(axis=0)
+    shape = coords.max(axis=0) + 1
+    shape = (shape[1], shape[0])
+
+    rows = coords[:, 1]
+    cols = coords[:, 0]
+    data = np.ones(coords.shape[0])
+    mask = coo_matrix((data, (rows, cols)), shape=shape).toarray() > 0
+
+    return coords, shape, mask
+
+@cached(cache={}, key=lambda db, job_id: hashkey(job_id))
+def _get_img_bounds(db, job_id):
+    img_bounds = db.query(BOUNDS_SEL, job_id)[0]['img_bounds']
+    nrows = img_bounds['y']['max'] - img_bounds['y']['min'] + 1
+    ncols = img_bounds['x']['max'] - img_bounds['x']['min'] + 1
+    return nrows, ncols
+
+@cached(cache=LRUCache(maxsize=500), key=lambda db, *args: hashkey(*args))
+def _get_grayscale_image_data(db, ds_id, job_id, db_id, sf_id, adduct):
+    coords, shape, mask = _get_coords(db, ds_id)
+    int_list = _get_intens_list(db, job_id, db_id, sf_id, adduct, shape)
+    return shape, mask, int_list
 
 class IsoImgBaseHandler(tornado.web.RequestHandler):
     # Viridis
@@ -48,55 +95,24 @@ class IsoImgBaseHandler(tornado.web.RequestHandler):
         self.set_header("Content-Type", "image/png")
         self.write(img_fp.getvalue())
 
-    def _get_intens_list(self, job_id, db_id, sf_id, adduct, nrows, ncols):
-        res_list_rows = self.db.query(INTS_SQL, job_id, db_id, sf_id, adduct)
-        intens_list = []
-        for res_row in res_list_rows:
-            img_arr = np.zeros(nrows*ncols)
-            img_arr[res_row.inds] = res_row.ints
-
-            # smoothing extreme values
-            non_zero_intens = img_arr > 0
-            if any(non_zero_intens) > 0:
-                perc99_val = np.percentile(img_arr[non_zero_intens], 99)
-                img_arr[img_arr > perc99_val] = perc99_val
-
-            intens_list.append(img_arr.reshape(nrows, ncols))
-
-        return np.array(intens_list)
-
-    @staticmethod
-    def _get_ds_mask(coords, nrows, ncols):
-        rows = coords[:, 1]
-        cols = coords[:, 0]
-        data = np.ones(coords.shape[0])
-        return coo_matrix((data, (rows, cols)), shape=(nrows, ncols)).toarray() > 0
-
     def get_img_ints(self, ints_list):
         pass
 
     # TODO: get rid of matplotlib
     def _get_color_image_data(self, ds_id, job_id, db_id, sf_id, adduct):
-        coords_row = self.db.query(COORD_SEL % ds_id)[0]
-        coords = np.array(zip(coords_row.xs, coords_row.ys))
-        coords -= coords.min(axis=0)
-        self.ncols, self.nrows = coords.max(axis=0) + 1
-
-        mask = self._get_ds_mask(coords, self.nrows, self.ncols)
-        int_list = self._get_intens_list(job_id, db_id, sf_id, adduct, self.nrows, self.ncols)
+        shape, mask, int_list = _get_grayscale_image_data(self.db, ds_id, job_id, db_id, sf_id, adduct)
+        self.nrows, self.ncols = shape
         if int_list.size > 0:
             visible_pixels = self.get_img_ints(int_list)
             normalizer = Normalize(vmin=np.min(visible_pixels), vmax=np.max(visible_pixels))
             color_img_data = self.viridis_cmap(normalizer(visible_pixels))
         else:
-            color_img_data = np.zeros(shape=(self.nrows, self.ncols, 4))
+            color_img_data = np.zeros(shape=(shape[0], shape[1], 4))
         color_img_data[:, :, 3] = mask
         return color_img_data
 
     def gen_iso_img(self, ds_id, job_id, sf_id, adduct, color_img_data):
-        img_bounds = self.db.query(BOUNDS_SEL, job_id)[0]['img_bounds']
-        nrows = img_bounds['y']['max'] - img_bounds['y']['min'] + 1
-        ncols = img_bounds['x']['max'] - img_bounds['x']['min'] + 1
+        nrows, ncols = _get_img_bounds(self.db, job_id)
 
         fp = cStringIO.StringIO()
         png_writer = png.Writer(width=ncols, height=nrows, alpha=True)
@@ -113,10 +129,12 @@ class IsoImgPngHandler(IsoImgBaseHandler):
     @gen.coroutine
     def get(self, db_id, ds_id, job_id, sf_id, sf, adduct, peak_id):
         self.peak_id = int(peak_id)
+        job_id = int(job_id)
+        sf_id = int(sf_id)
 
         color_img_data = self._get_color_image_data(ds_id, job_id, db_id, sf_id, adduct)
         if color_img_data[:,:,:3].sum() > 0:
-            img_fp = self.gen_iso_img(ds_id, int(job_id), int(sf_id), adduct, color_img_data)
+            img_fp = self.gen_iso_img(ds_id, job_id, sf_id, adduct, color_img_data)
             self.send_img_response(img_fp)
         else:
             self.redirect('/static/iso_placeholder.png')

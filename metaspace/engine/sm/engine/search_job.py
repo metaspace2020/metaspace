@@ -6,13 +6,10 @@
 """
 import time
 from os.path import join
-import sys
-import traceback
 from pprint import pformat
 from datetime import datetime
 from pyspark import SparkContext, SparkConf
 import logging
-from logging import Formatter, FileHandler, DEBUG
 
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
 from sm.engine.dataset import Dataset
@@ -32,7 +29,8 @@ logger = logging.getLogger('sm-engine')
 JOB_ID_SEL = "SELECT id FROM job WHERE ds_id = %s"
 DB_ID_SEL = "SELECT id FROM formula_db WHERE name = %s"
 
-JOB_INS = "INSERT INTO job (db_id, ds_id, status, start, finish) VALUES (%s, %s, 'SUCCEEDED', %s, '2000-01-01 00:00:00')"
+JOB_INS = ("""INSERT INTO job (db_id, ds_id, status, start, finish) """
+           """VALUES (%s, %s, 'SUCCEEDED', %s, '2000-01-01 00:00:00') RETURNING id""")
 ADDUCT_INS = 'INSERT INTO adduct VALUES (%s, %s)'
 
 
@@ -59,12 +57,14 @@ class SearchJob(object):
         self.sm_config = None
         self.ds_config = None
         self.job_id = None
+        self.sf_db_id = None
         self.sc = None
         self.db = None
         self.ds = None
         self.fdr = None
         self.formulas = None
         self.wd_manager = None
+        self.es = None
 
         SMConfig.set_path(sm_config_path)
         self.sm_config = SMConfig.get_conf()
@@ -89,19 +89,44 @@ class SearchJob(object):
     def _init_db(self):
         logger.info('Connecting to the DB')
         self.db = DB(self.sm_config['db'])
-        self.sf_db_id = self.db.select_one(DB_ID_SEL, self.ds_config['database']['name'])[0]
 
     # TODO: add tests
     def store_job_meta(self):
         """ Store search job metadata in the database """
         logger.info('Storing job metadata')
         rows = [(self.sf_db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
-        self.db.insert(JOB_INS, rows)
+        self.job_id = self.db.insert_return(JOB_INS, rows)[0]
 
-        self.job_id = self.db.select_one(JOB_ID_SEL, self.ds_id)[0]
+    def _run_job(self, sf_db_name):
+        self.sf_db_id = self.db.select_one(DB_ID_SEL, sf_db_name)[0]
+        self.store_job_meta()
 
-        rows = [(self.job_id, adduct) for adduct in self.ds_config['isotope_generation']['adducts']]
-        self.db.insert(ADDUCT_INS, rows)
+        logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s ...", self.ds.id, self.ds.name, sf_db_name)
+
+        theor_peaks_gen = TheorPeaksGenerator(self.sc, self.sm_config, self.ds.ds_config)
+        theor_peaks_gen.run()
+
+        target_adducts = self.ds.ds_config['isotope_generation']['adducts']
+        self.fdr = FDR(self.job_id, self.sf_db_id, decoy_sample_size=20, target_adducts=target_adducts, db=self.db)
+        self.fdr.decoy_adduct_selection()
+        self.formulas = FormulasSegm(self.job_id, self.sf_db_id, self.ds.ds_config, self.db)
+
+        search_alg = MSMBasicSearch(self.sc, self.ds, self.formulas, self.fdr, self.ds.ds_config)
+        sf_metrics_df, sf_iso_images = search_alg.search()
+
+        search_results = SearchResults(self.sf_db_id, self.ds_id, self.job_id,
+                                       self.formulas.get_sf_adduct_peaksn(),
+                                       self.db, self.sm_config, self.ds.ds_config)
+        search_results.sf_metrics_df = sf_metrics_df
+        search_results.sf_iso_images = sf_iso_images
+        search_results.metrics = search_alg.metrics
+        search_results.nrows, search_results.ncols = self.ds.get_dims()
+        search_results.store()
+
+        self.es.index_ds(self.db, self.ds_id)
+
+        self.db.alter('UPDATE job set finish=%s where id=%s',
+                      datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self.job_id)
 
     def run(self, ds_config_path=None):
         """ Entry point of the engine. Molecule search is completed in several steps:
@@ -118,67 +143,35 @@ class SearchJob(object):
         """
         try:
             start = time.time()
-            logger.info("Processing ds_id: %s ...", self.ds_id)
 
             self.wd_manager = WorkDirManager(self.ds_id)
-            self.wd_manager.copy_input_data(self.input_path, ds_config_path)
-
-            self.ds_config = read_json(self.wd_manager.ds_config_path)
-            logger.info('Dataset config:\n%s', pformat(self.ds_config))
-
             self._configure_spark()
             self._init_db()
-
-            if not self.wd_manager.exists(self.wd_manager.txt_path):
-                imzml_converter = ImzmlTxtConverter(self.wd_manager.local_dir.imzml_path,
-                                                    self.wd_manager.local_dir.txt_path,
-                                                    self.wd_manager.local_dir.coord_path)
-                imzml_converter.convert()
-
-                if not self.wd_manager.local_fs_only:
-                    self.wd_manager.upload_to_remote()
+            self.es = ESExporter(self.sm_config)
 
             self.ds = Dataset(self.sc, self.ds_id, self.ds_name, self.drop, self.input_path,
-                              self.ds_config, self.wd_manager, self.db)
-            self.ds.save_ds_meta()
+                              self.wd_manager, self.db, self.es)
+            self.ds.copy_read_data()
 
-            self.store_job_meta()
+            logger.info('Dataset config:\n%s', pformat(self.ds.ds_config))
 
-            theor_peaks_gen = TheorPeaksGenerator(self.sc, self.sm_config, self.ds_config)
-            theor_peaks_gen.run()
-
-            target_adducts = self.ds_config['isotope_generation']['adducts']
-            self.fdr = FDR(self.job_id, self.sf_db_id, decoy_sample_size=20, target_adducts=target_adducts, db=self.db)
-            self.fdr.decoy_adduct_selection()
-            self.formulas = FormulasSegm(self.job_id, self.sf_db_id, self.ds_config, self.db)
-
-            search_alg = MSMBasicSearch(self.sc, self.ds, self.formulas, self.fdr, self.ds_config)
-            sf_metrics_df, sf_iso_images = search_alg.search()
-
-            search_results = SearchResults(self.sf_db_id, self.ds_id, self.job_id,
-                                           self.formulas.get_sf_adduct_peaksn(),
-                                           self.db, self.sm_config, self.ds_config)
-            search_results.sf_metrics_df = sf_metrics_df
-            search_results.sf_iso_images = sf_iso_images
-            search_results.metrics = search_alg.metrics
-            search_results.nrows, search_results.ncols = self.ds.get_dims()
-            search_results.store()
-
-            es = ESExporter(self.sm_config)
-            es.index_ds(self.db, self.ds_id)
-
-            self.wd_manager.clean()
+            for sf_db_name in {self.ds.ds_config['database']['name'], 'HMDB'}:
+                self._run_job(sf_db_name)
 
             logger.info("All done!")
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
-            logger.info('*'*100)
 
         except Exception:
             logger.error('Job failed', exc_info=True)
             raise
         finally:
+            if self.fdr:
+                self.fdr.clean_target_decoy_table()
             if self.sc:
                 self.sc.stop()
             if self.db:
                 self.db.close()
+            if self.wd_manager:
+                self.wd_manager.clean()
+            logger.info('*' * 150)

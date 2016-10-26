@@ -6,46 +6,20 @@
 .. moduleauthor:: Sergey Nikolenko <snikolenko@gmail.com>
 """
 
-from cpyMSpec import IsotopePattern
+from sm.engine.isocalc_wrapper import IsocalcWrapper, trim_centroids, ISOTOPIC_PEAK_N
 
 import json
-import threading
-import Queue
-from datetime import time
 import logging
 import numpy as np
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
 from tornado import gen
-from tornado.ioloop import IOLoop
 
 
 SF_SELECT = "SELECT sf FROM sum_formula WHERE db_id=%s AND id=%s"
 
 logger = logging.getLogger('sm-web-app')
-
-
-@gen.coroutine
-def async_sleep(seconds):
-    """Sleep for a given number of seconds."""
-    yield gen.Task(IOLoop.instance().add_timeout, time.time() + seconds)
-
-
-def call_in_background(f, *args):
-    """Call function in background in a separate thread / coroutine"""
-    result = Queue.Queue(1)
-    t = threading.Thread(target=lambda: result.put(f(*args)))
-    t.start()
-    return result
-
-
-def sf_isotope_patterns(sf, adduct, sigma, charge, profile=False):
-    isotopes = IsotopePattern(str(sf + adduct)).charged(int(charge))
-    fwhm = sigma * 2 * (2 * np.log(2)) ** 0.5
-    resolution = isotopes.masses[0] / fwhm
-    return isotopes.envelope(resolution) if profile else isotopes.centroids(resolution)
-
 
 class IndexHandler(tornado.web.RequestHandler):
     """Tornado handler for the index page."""
@@ -54,14 +28,9 @@ class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.render("index.html")
 
-def fetch_sigma_charge_ptspermz_ppm(db, ds_id):
+def dataset_config(db, ds_id):
     DS_CONF_SEL = 'SELECT config FROM dataset where id = %s'
-    ds_config = db.query(DS_CONF_SEL, ds_id)[0]['config']
-    iso_gen_config = ds_config['isotope_generation']
-    charge = '{}{}'.format(iso_gen_config['charge']['polarity'], iso_gen_config['charge']['n_charges'])
-    ppm = ds_config['image_generation']['ppm']
-    return iso_gen_config['isocalc_sigma'], charge, iso_gen_config['isocalc_pts_per_mz'], ppm
-
+    return db.query(DS_CONF_SEL, ds_id)[0]['config']
 
 class SFPeakMZsHandler(tornado.web.RequestHandler):
     @property
@@ -70,10 +39,12 @@ class SFPeakMZsHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self, ds_id, db_id, sf_id, adduct):
-        sigma, charge, pts_per_mz, ppm = fetch_sigma_charge_ptspermz_ppm(self.db, ds_id)
+        ds_config = dataset_config(self.db, ds_id)
+        isocalc = IsocalcWrapper(ds_config['isotope_generation'])
         sf = self.db.query(SF_SELECT, db_id, sf_id)[0].sf
-        centr_mzs = sf_isotope_patterns(sf, adduct, sigma, charge).masses
-        self.write(json.dumps(centr_mzs))
+        centroids = isocalc.isotope_peaks(sf, adduct)
+        centr_mzs, _ = trim_centroids(centroids.mzs, centroids.ints, ISOTOPIC_PEAK_N)
+        self.write(json.dumps(centr_mzs.tolist()))
 
 
 class MinMaxIntHandler(tornado.web.RequestHandler):
@@ -122,18 +93,11 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self, ds_id, job_id, db_id, sf_id, adduct):
-        params = fetch_sigma_charge_ptspermz_ppm(self.db, ds_id)
-        sigma, charge, pts_per_mz, ppm = params
+        ds_config = dataset_config(self.db, ds_id)
+        isocalc = IsocalcWrapper(ds_config['isotope_generation'])
 
         sf = self.db.query(SF_SELECT, db_id, sf_id)[0].sf
-        centr_mzs = np.asarray(sf_isotope_patterns(sf, adduct, sigma, charge).masses[:4])
-        min_mz = min(centr_mzs) - 0.25
-        max_mz = max(centr_mzs) + 0.25
-        prof_mzs = np.arange(min_mz, max_mz, 1.0 / pts_per_mz)
-        prof_ints = sf_isotope_patterns(sf, adduct, sigma, charge, profile=True)(prof_mzs)
-        nnz_idx = prof_ints > 1e-9
-        prof_mzs = prof_mzs[nnz_idx]
-        prof_ints = prof_ints[nnz_idx]
+        chart = isocalc.isotope_peaks(sf, adduct).spectrum_chart()
 
         sample_centr_ints_norm = []
         sample_ints_list = self.db.query(self.SAMPLE_INTENS_SQL,
@@ -141,18 +105,10 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
         if sample_ints_list:
             sample_centr_ints_norm = self.sample_centr_ints_norm(sample_ints_list)
 
-        self.write(json.dumps({
-            'ppm': ppm,
-            'mz_grid': {
-                'min_mz': min_mz,
-                'max_mz': max_mz
-            },
-            'sample': {
-                'mzs': centr_mzs.tolist(),
-                'ints': sample_centr_ints_norm.tolist()
-            },
-            'theor': {
-                'mzs': prof_mzs.tolist(),
-                'ints': (prof_ints * 100.0).tolist()
-            }
-        }))
+        chart['ppm'] = ds_config['image_generation']['ppm']
+        chart['sample'] = {
+            'mzs': chart['theor']['centroid_mzs'],
+            'ints': sample_centr_ints_norm.tolist()
+        }
+
+        self.write(json.dumps(chart))

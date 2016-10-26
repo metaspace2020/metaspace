@@ -49,7 +49,7 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metri
 
     db = DB(sm_config['db'])
     try:
-        job = SearchJob('2000-01-01_00h00m', test_ds_name, input_dir_path, '')
+        job = SearchJob('2000-01-01_00h00m', test_ds_name, True, input_dir_path, '')
         job.run(ds_config_path)
 
         # dataset meta asserts

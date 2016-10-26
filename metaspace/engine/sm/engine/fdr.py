@@ -11,6 +11,7 @@ SF_LIST_SEL = ('SELECT af.id '
                'FROM sum_formula af '
                'JOIN formula_db db ON db.id = af.db_id '
                'WHERE db.id = %s')
+DELETE_TARGET_DECOY_ADD = 'DELETE FROM target_decoy_add where job_id = %s'
 
 
 class FDR(object):
@@ -39,6 +40,9 @@ class FDR(object):
         df.to_csv(buf, index=False, header=False)
         buf.seek(0)
         self.db.copy(buf, 'target_decoy_add', sep=',')
+
+    def clean_target_decoy_table(self):
+        self.db.alter(DELETE_TARGET_DECOY_ADD, self.job_id)
 
     def decoy_adduct_selection(self):
         sf_ids = [r[0] for r in self.db.select(SF_LIST_SEL, self.db_id)]

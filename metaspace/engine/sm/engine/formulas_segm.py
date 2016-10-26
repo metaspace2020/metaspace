@@ -5,7 +5,7 @@ import logging
 logger = logging.getLogger('sm-engine')
 
 THEOR_PEAKS_TARGET_ADD_SEL = (
-    'SELECT sf.id, adduct, centr_mzs[1:%s], centr_ints[1:%s] '
+    'SELECT sf.id, adduct, centr_mzs, centr_ints '
     'FROM theor_peaks p '
     'JOIN sum_formula sf ON sf.sf = p.sf AND sf.db_id = %s '
     'WHERE adduct = ANY(%s) AND ROUND(sigma::numeric, 6) = %s AND pts_per_mz = %s '
@@ -14,7 +14,7 @@ THEOR_PEAKS_TARGET_ADD_SEL = (
 
 # FIXME: target_decoy_add table is getting too big
 THEOR_PEAKS_DECOY_ADD_SEL = (
-    'SELECT DISTINCT sf.id, decoy_add as adduct, centr_mzs[1:%s], centr_ints[1:%s] '
+    'SELECT DISTINCT sf.id, decoy_add as adduct, centr_mzs, centr_ints '
     'FROM theor_peaks p '
     'JOIN sum_formula sf ON sf.sf = p.sf AND sf.db_id = %s '
     'JOIN target_decoy_add td on td.job_id = %s '
@@ -36,22 +36,18 @@ class FormulasSegm(object):
             Dataset configuration
         db : engine.db.DB
         """
-    ISOTOPIC_PEAK_N = 4
-
     def __init__(self, job_id, db_id, ds_config, db):
         self.job_id = job_id
         self.db_id = db_id
         self.ppm = ds_config['image_generation']['ppm']
         iso_gen_conf = ds_config['isotope_generation']
         charge = '{}{}'.format(iso_gen_conf['charge']['polarity'], iso_gen_conf['charge']['n_charges'])
-        target_sf_peaks_rs = db.select(THEOR_PEAKS_TARGET_ADD_SEL, self.ISOTOPIC_PEAK_N, self.ISOTOPIC_PEAK_N,
-                                       self.db_id,
+        target_sf_peaks_rs = db.select(THEOR_PEAKS_TARGET_ADD_SEL, self.db_id,
                                        iso_gen_conf['adducts'], iso_gen_conf['isocalc_sigma'],
                                        iso_gen_conf['isocalc_pts_per_mz'], charge)
         assert target_sf_peaks_rs, 'No formulas matching the criteria were found in theor_peaks! (target)'
 
-        decoy_sf_peaks_rs = db.select(THEOR_PEAKS_DECOY_ADD_SEL, self.ISOTOPIC_PEAK_N, self.ISOTOPIC_PEAK_N,
-                                      self.db_id, self.job_id,
+        decoy_sf_peaks_rs = db.select(THEOR_PEAKS_DECOY_ADD_SEL, self.db_id, self.job_id,
                                       iso_gen_conf['isocalc_sigma'], iso_gen_conf['isocalc_pts_per_mz'], charge)
         assert decoy_sf_peaks_rs, 'No formulas matching the criteria were found in theor_peaks! (decoy)'
 
@@ -93,4 +89,3 @@ class FormulasSegm(object):
         """
         # return zip(self.sf_ids, self.adducts, map(len, self.sf_theor_peaks))
         return zip(self.sf_df.sf_id, self.sf_df.adduct, self.sf_df.centr_mzs.map(len))
-

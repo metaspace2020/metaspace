@@ -19,7 +19,7 @@ dependencies:
   - pip:
     - pyMSpec
     - pyImagingMSpec
-    - cpyMSpec
+    - cpyMSpec==0.1.4
     - cpyImagingMSpec
     - py4j==0.9
     - tornado==4.2.1
@@ -32,3 +32,5 @@ dependencies:
     - supervisor
     - pyyaml
     - elasticsearch
+    - cachetools
+    - pypng
