@@ -5,17 +5,26 @@
     executable: /bin/bash
   register: supervisorctl_status_out
 
+
 - name: Start supervisord daemon
   shell: "{{ activate_venv }} && supervisord -c /etc/supervisor/supervisord.conf -l /var/log/supervisor/supervisord.log"
   args:
     executable: /bin/bash
+  register: command_result
   when: "'no such file' in supervisorctl_status_out.stdout"
+
+- debug: var=command_result
+  when: "'no such file' in supervisorctl_status_out.stdout"
+  failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'
+
 
 - name: Restart all apps running under supervisor
   shell: "{{ activate_venv }} && supervisorctl reread && supervisorctl update && supervisorctl restart all && supervisorctl status"
   args:
     executable: /bin/bash
   register: command_result
+  when: "'no such file' not in supervisorctl_status_out.stdout"
 
 - debug: var=command_result
+  when: "'no such file' not in supervisorctl_status_out.stdout"
   failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'
