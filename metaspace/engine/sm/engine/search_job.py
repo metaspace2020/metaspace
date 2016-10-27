@@ -48,10 +48,11 @@ class SearchJob(object):
     sm_config_path : string
         Path to the sm-engine config file
     """
-    def __init__(self, ds_id, ds_name, drop, input_path, sm_config_path):
+    def __init__(self, ds_id, ds_name, drop, input_path, no_clean, sm_config_path):
         self.ds_id = ds_id
         self.ds_name = ds_name
         self.drop = drop
+        self.no_clean = no_clean
         self.input_path = input_path
 
         self.sm_config = None
@@ -149,6 +150,8 @@ class SearchJob(object):
             self._init_db()
             self.es = ESExporter(self.sm_config)
 
+            if not self.no_clean:
+                self.wd_manager.clean()
             self.ds = Dataset(self.sc, self.ds_id, self.ds_name, self.drop, self.input_path,
                               self.wd_manager, self.db, self.es)
             self.ds.copy_read_data()
@@ -172,6 +175,6 @@ class SearchJob(object):
                 self.sc.stop()
             if self.db:
                 self.db.close()
-            if self.wd_manager:
+            if self.wd_manager and not self.no_clean:
                 self.wd_manager.clean()
             logger.info('*' * 150)

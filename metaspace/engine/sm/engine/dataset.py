@@ -52,8 +52,8 @@ class Dataset(object):
         self._update_ds_meta()
 
     def _copy_convert_input_data(self):
-        self.wd_manager.copy_input_data(self.input_path, None)
         if not self.wd_manager.exists(self.wd_manager.txt_path):
+            self.wd_manager.copy_input_data(self.input_path, None)
             imzml_converter = ImzmlTxtConverter(self.wd_manager.local_dir.imzml_path,
                                                 self.wd_manager.local_dir.txt_path,
                                                 self.wd_manager.local_dir.coord_path)
