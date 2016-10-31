@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 
 import argparse
+import boto.ec2
 import boto3
 from pprint import pprint
 from time import sleep
 from yaml import load
+from datetime import date, datetime, timedelta
+import pandas as pd
 
+
+region = 'eu-west-1'
 ec2 = boto3.resource('ec2')
 ec2_client = boto3.client('ec2')
 conf = load(open('group_vars/all.yml'))['cluster_configuration']
@@ -17,6 +22,20 @@ def find_inst_by_name(inst_name):
             Filters=[{'Name': 'tag:Name', 'Values': [inst_name]},
                      {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']}]))
     return instances
+
+
+def find_best_price_availability_zone(timerange_h, inst_type, platform='Linux/UNIX'):
+    ec2 = boto.ec2.connect_to_region(region)
+    price_hist = ec2.get_spot_price_history(
+        start_time=(datetime.now() - timedelta(hours=timerange_h)).isoformat(),
+        end_time=datetime.now().isoformat(),
+        instance_type=inst_type,
+        product_description=platform,
+        max_results=10000)
+    price_df = pd.DataFrame(map(lambda p: [p.availability_zone, p.region.name, p.price], price_hist),
+                            columns=['az', 'r', 'p'])
+    med_price_az_df = price_df.groupby('az').median()
+    return med_price_az_df.p.idxmin()
 
 
 def launch_inst(inst_name, inst_type, spot_price, inst_n, image, el_ip_id, sec_group, host_group, block_dev_maps):
@@ -34,6 +53,7 @@ def launch_inst(inst_name, inst_type, spot_price, inst_n, image, el_ip_id, sec_g
             BlockDeviceMappings=block_dev_maps
         )
     else:
+        best_price_az = find_best_price_availability_zone(3, inst_type)
         spot_resp = ec2_client.request_spot_instances(
             # DryRun=True|False,
             SpotPrice=str(spot_price),
@@ -46,6 +66,9 @@ def launch_inst(inst_name, inst_type, spot_price, inst_n, image, el_ip_id, sec_g
                     sec_group,
                 ],
                 'InstanceType': inst_type,
+                'Placement': {
+                    'AvailabilityZone': best_price_az
+                },
                 'BlockDeviceMappings': block_dev_maps
             }
         )
