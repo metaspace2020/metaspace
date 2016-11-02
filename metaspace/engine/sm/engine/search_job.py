@@ -48,7 +48,7 @@ class SearchJob(object):
     sm_config_path : string
         Path to the sm-engine config file
     """
-    def __init__(self, ds_id, ds_name, drop, input_path, no_clean, sm_config_path):
+    def __init__(self, ds_id, ds_name, drop, input_path, sm_config_path, no_clean=False):
         self.ds_id = ds_id
         self.ds_name = ds_name
         self.drop = drop
