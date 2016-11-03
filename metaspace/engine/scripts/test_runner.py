@@ -1,11 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 test_runner
 -----------
 A handy module for easy tests running
 """
 
-import os
+from os import path
 from fabric.api import local
 from fabric.context_managers import lcd
 import argparse
@@ -23,7 +23,7 @@ if __name__ == '__main__':
 
     py_test_cmd = 'py.test -x -v '
 
-    with lcd(os.path.dirname(__file__)):
+    with lcd(path.dirname(path.dirname(__file__))):
         # Engine unit tests
         if args.unit or args.all:
             local(py_test_cmd + 'sm/engine/tests')
