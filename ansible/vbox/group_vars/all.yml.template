@@ -12,17 +12,17 @@ rabbitmq_host: localhost
 rabbitmq_user: sm
 rabbitmq_password: "1234"
 
-miniconda_version: latest
+miniconda_version: 4.1.11
 miniconda_python: 2
 miniconda_prefix: "/opt/dev/miniconda"
 miniconda_env:
   name: sm
   dependencies:
     - python=2
-    - numpy=1.10
-    - scipy=0.16
+    - numpy=1.11
+    - scipy=0.18
     - matplotlib=1.5
-    - pandas=0.18
+    - pandas=0.19
     - cffi
     - pip:
       - pip
@@ -52,7 +52,7 @@ spark_version: "1.6.0-bin-hadoop2.7.1"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
 spark_key_file: ~/.ssh/ubuntu_spark
-spark_master_host: "local[4]"
+spark_master_host: "local[*]"
 
 spark_env_extras_master:
   PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
@@ -60,7 +60,7 @@ spark_env_extras_master:
 spark_slave_ips:
   - localhost
 
-sm_branch: v0.4
+sm_branch: v0.5.0
 sm_postgres_password: "1234"
 sm_home: "/opt/dev/sm"
 sm_s3_path:
