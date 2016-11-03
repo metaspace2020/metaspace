@@ -7,4 +7,4 @@ source docker/env.sh
 cp docker/config.json conf/config.json
 cp conf/sm_log.cfg.template conf/sm_log.cfg
 mkdir /code/sm-engine/logs
-python test_runner.py -u
+python scripts/test_runner.py -u
