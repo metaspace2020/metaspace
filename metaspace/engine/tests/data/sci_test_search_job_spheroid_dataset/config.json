@@ -3,18 +3,22 @@
     "name": "HMDB"
   },
   "isotope_generation": {
-    "adducts": ["+H","+Na","+K"],
+    "adducts": [
+      "+H",
+      "+Na",
+      "+K"
+    ],
     "charge": {
-        "polarity": "+",
-        "n_charges": 1
-	},
-    "isocalc_sigma": 0.01,
-    "isocalc_pts_per_mz": 10000
+      "polarity": "+",
+      "n_charges": 1
+    },
+    "isocalc_sigma": 0.000693,
+    "isocalc_pts_per_mz": 7212
   },
   "image_generation": {
-    "ppm": 2.0,
-    "nlevels": 30,
     "q": 99,
-    "do_preprocessing": false
+    "do_preprocessing": false,
+    "nlevels": 30,
+    "ppm": 3
   }
 }
