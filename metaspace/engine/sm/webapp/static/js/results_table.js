@@ -35,48 +35,72 @@ function initResultsTable() {
         $('#results-table tbody tr:eq(0)').click();
       },
       columnDefs: [
-        {"width": "15%", "targets": 3},
-        { "render": function ( data, type, row ) {
-          if (type === 'display') {
-            return sin_render_sf(data);
-          } else {
+        {
+          "width": "15%",
+          "targets": 3
+        },
+        {
+          "render": function ( data, type, row ) {
+            if (type === 'display') {
+              return sin_render_sf(data);
+            } else {
+              return data;
+            }
+          },
+          "targets": [2]
+        },
+        {
+          "render": function ( data, type, row ) {
+            if (type === 'filter' || type === 'sort') {
+              return data.join(" ");
+            }
+            if (data.length == 1) {
+              return sin_render_substance_small(row[4][0], data[0]);
+            }
+            res = '<span style="margin:0 0px; white-space: pre-line;" rel="tooltip" data-html="true" title="'
+              + data.join(", ") //.replace(/"/g, '\\"')
+              + '">' + data.length.toString() + ' metabolite';
+            if (data.length > 1) {
+              res += 's';
+            }
+            return res + '</span>';
+          },
+          "targets": [3]
+        },
+        {
+          "render": function ( data, type, row ) {
+            if (type === 'filter' || type === 'sort') {
+              return data.join(" ");
+            }
+            if (data.length == 1) {
+              return sin_render_substance_small(row[4][0], data[0]);
+            }
+            res = '<span style="margin:0 0px; white-space: pre-line;" rel="tooltip" data-html="true" title="'
+              + data.join(", ").replace(/"/g, '\\"')
+              + '">' + data.length.toString() + ' id';
+            if (data.length > 1) {
+              res += 's';
+            }
+            return res + '</span>';
+          },
+          "targets": [4]
+        },
+        {
+          "render": function ( data, type, row ) {
+            return "[M" + data + "]";
+          },
+          "targets": [5]
+        },
+        {
+          "render": function ( data, type, row ) {
             return data;
-          }
-        }, "targets": [2] },
-        { "render": function ( data, type, row ) {
-          if (type === 'filter' || type === 'sort') {
-            return data.join(" ");
-          }
-          if (data.length == 1) {
-            return sin_render_substance_small(row[4][0], data[0]);
-          }
-          res = '<span style="margin:0 0px; white-space: pre-line;" rel="tooltip" data-html="true" title="'
-            + data.join(", ") //.replace(/"/g, '\\"')
-            + '">' + data.length.toString() + ' metabolite';
-          if (data.length > 1) {
-            res += 's';
-          }
-          return res + '</span>';
-        }, "targets": [3] },
-        { "render": function ( data, type, row ) {
-          if (type === 'filter' || type === 'sort') {
-            return data.join(" ");
-          }
-          if (data.length == 1) {
-            return sin_render_substance_small(row[4][0], data[0]);
-          }
-          res = '<span style="margin:0 0px; white-space: pre-line;" rel="tooltip" data-html="true" title="'
-            + data.join(", ").replace(/"/g, '\\"')
-            + '">' + data.length.toString() + ' id';
-          if (data.length > 1) {
-            res += 's';
-          }
-          return res + '</span>';
-        }, "targets": [4] },
-        { "render": function ( data, type, row ) {
-            return data;
-        }, "targets": [5, 16] },
-        { "visible": false,  "targets": [11, 12, 13, 14, 15, 16] }
+          },
+          "targets": [16]
+        },
+        {
+          "visible": false,
+          "targets": [11, 12, 13, 14, 15, 16]
+        }
       ],
       initComplete : function(oSettings, json) {
         $('#results-table').tooltip({

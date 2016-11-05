@@ -1,4 +1,5 @@
 import json
+import traceback
 import tornado.ioloop
 import tornado.web
 import tornado.httpserver
@@ -9,6 +10,7 @@ import zlib
 import base64
 from StringIO import StringIO
 import csv
+import re
 from tornado.escape import url_escape, url_unescape
 
 logger = logging.getLogger('sm-web-app')
@@ -26,6 +28,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         self.datasets = [row['name'] for row in self.db.query('select name from dataset')]
         self.adducts = self.application.adducts
         self.index = self.application.config['elasticsearch']['index']
+        self.adduct_regex = re.compile('\[M(.*?)\]')
 
     @property
     def db(self):
@@ -35,7 +38,7 @@ class ResultsTableHandler(tornado.web.RequestHandler):
     def es(self):
         return self.application.es
 
-    def search(self, sf='', ds_name='', db_name='', adduct='', comp_name='', comp_id='', mz='',
+    def search(self, sf=None, ds_name=None, db_name=None, adduct=None, comp_name=None, comp_id=None, mz=None,
                min_msm=0.1, fdr_thr=0.1, orderby='msm', asc=False, offset=0, limit=500):
         body = {
             "query": {
@@ -43,13 +46,13 @@ class ResultsTableHandler(tornado.web.RequestHandler):
                     "filter": {
                         "bool": {
                             "must": [
-                                {"prefix": {"sf": sf}},
-                                {"prefix": {"ds_name": ds_name}},
-                                {"term": {"db_name": db_name}} if db_name else {},
-                                {"prefix": {"adduct": adduct}},
-                                {"wildcard": {"comp_names": '*{}*'.format(comp_name)}} if comp_name else {},
-                                {"prefix": {"comp_ids": comp_id}},
-                                {"wildcard": {"mz": '*{}*'.format(mz)}} if mz else {},
+                                {} if sf is None else {"prefix": {"sf": sf}},
+                                {} if ds_name is None else {"prefix": {"ds_name": ds_name}},
+                                {} if db_name is None else {"term": {"db_name": db_name}},
+                                {} if adduct is None else {"term": {"adduct": adduct}},
+                                {} if comp_name is None else {"wildcard": {"comp_names": '*{}*'.format(comp_name)}},
+                                {} if comp_id is None else {"prefix": {"comp_ids": comp_id}},
+                                {} if mz is None else {"wildcard": {"mz": '*{}*'.format(mz)}},
                                 {'range': {'msm': {'gte': min_msm}}}
                             ]
                         }
@@ -95,19 +98,24 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         return json.loads(zlib.decompress(base64.decodestring(url_unescape(args))))
 
     def _fetch_results(self, args):
+
+        def empty_to_none(v):
+            return None if v == '' else v
+
         limit = int(args.get('length', [500])[0])
         offset = int(args.get('start', [0])[0])
 
         fdr_thr = float(args['fdr_thr'][0])
 
-        db_name = args['columns[0][search][value]'][0]
-        ds_name = args['columns[1][search][value]'][0]
-        adduct = args['columns[5][search][value]'][0]
-        sf = (args['columns[2][search][value]'][0])
-        compound = (args['columns[3][search][value]'][0]).lower()
-        comp_id = args['columns[4][search][value]'][0]
-        min_msm = args['columns[10][search][value]'][0] or 0
-        mz_str = args['columns[6][search][value]'][0]
+        db_name = empty_to_none(args['columns[0][search][value]'][0])
+        ds_name = empty_to_none(args['columns[1][search][value]'][0])
+        adduct_filter_str = args['columns[5][search][value]'][0]
+        adduct = self.adduct_regex.search(adduct_filter_str).group(1) if adduct_filter_str != '' else None
+        sf = empty_to_none(args['columns[2][search][value]'][0])
+        compound = empty_to_none((args['columns[3][search][value]'][0]).lower())
+        comp_id = empty_to_none(args['columns[4][search][value]'][0])
+        min_msm = empty_to_none(args['columns[10][search][value]'][0]) or 0
+        mz_str = empty_to_none(args['columns[6][search][value]'][0])
 
         orderby = RESULTS_FIELDS[int(args.get('order[0][column]', [0])[0])]
         order_asc = args.get('order[0][dir]', [0])[0] == 'asc'
@@ -115,6 +123,9 @@ class ResultsTableHandler(tornado.web.RequestHandler):
         count, results = self.search(sf, ds_name, db_name, adduct, compound, comp_id, mz_str,
                                      min_msm, fdr_thr, orderby, order_asc, offset, limit)
         return count, results
+
+    def write_error(self, status_code, **kwargs):
+        logger.error('{} - {}'.format(status_code, ''.join(traceback.format_exception(*kwargs['exc_info']))))
 
     @gen.coroutine
     def get(self, *args):
