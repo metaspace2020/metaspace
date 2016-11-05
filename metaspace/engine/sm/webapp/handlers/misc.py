@@ -5,6 +5,7 @@
 
 .. moduleauthor:: Sergey Nikolenko <snikolenko@gmail.com>
 """
+import traceback
 
 from sm.engine.isocalc_wrapper import IsocalcWrapper, trim_centroids, ISOTOPIC_PEAK_N
 
@@ -20,6 +21,11 @@ from tornado import gen
 SF_SELECT = "SELECT sf FROM sum_formula WHERE db_id=%s AND id=%s"
 
 logger = logging.getLogger('sm-web-app')
+
+
+def clean_adduct(adduct):
+    return '' if adduct == 'None' else adduct
+
 
 class IndexHandler(tornado.web.RequestHandler):
     """Tornado handler for the index page."""
@@ -37,12 +43,15 @@ class SFPeakMZsHandler(tornado.web.RequestHandler):
     def db(self):
         return self.application.db
 
+    def write_error(self, status_code, **kwargs):
+        logger.error('{} - {}'.format(status_code, ''.join(traceback.format_exception(*kwargs['exc_info']))))
+
     @gen.coroutine
     def get(self, ds_id, db_id, sf_id, adduct):
         ds_config = dataset_config(self.db, ds_id)
         isocalc = IsocalcWrapper(ds_config['isotope_generation'])
         sf = self.db.query(SF_SELECT, db_id, sf_id)[0].sf
-        centroids = isocalc.isotope_peaks(sf, adduct)
+        centroids = isocalc.isotope_peaks(sf, clean_adduct(adduct))
         centr_mzs, _ = trim_centroids(centroids.mzs, centroids.ints, ISOTOPIC_PEAK_N)
         self.write(json.dumps(centr_mzs.tolist()))
 
@@ -52,16 +61,20 @@ class MinMaxIntHandler(tornado.web.RequestHandler):
                          FROM iso_image
                          WHERE job_id = %s and db_id = %s and sf_id = %s and adduct = %s;'''
 
+    def write_error(self, status_code, **kwargs):
+        logger.error('{} - {}'.format(status_code, ''.join(traceback.format_exception(*kwargs['exc_info']))))
+
     def get_current_user(self):
         return self.get_secure_cookie('client_id')
 
     @gen.coroutine
     def get(self, job_id, db_id, sf_id, adduct):
+        job_id, db_id, sf_id, adduct = int(job_id), int(db_id), int(sf_id), clean_adduct(adduct)
         if self.current_user:
             logger.debug('USER_ID={} tries to access the DB'.format(self.current_user))
         else:
             logger.debug('Not authenticated USER_ID tries to access the DB')
-        min_max_rs = self.application.db.query(self.MIN_MAX_INT_SEL, int(job_id), int(db_id), int(sf_id), adduct)
+        min_max_rs = self.application.db.query(self.MIN_MAX_INT_SEL, job_id, db_id, sf_id, adduct)
         min_max_dict = min_max_rs[0] if min_max_rs else {'min_int': 0, 'max_int': 0}
         self.write(json.dumps(min_max_dict))
 
@@ -71,6 +84,9 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
                            FROM iso_image
                            WHERE job_id = %s and db_id = %s and sf_id = %s and adduct = %s
                            ORDER by peak'''
+
+    def write_error(self, status_code, **kwargs):
+        logger.error('{} - {}'.format(status_code, ''.join(traceback.format_exception(*kwargs['exc_info']))))
 
     @property
     def db(self):
@@ -93,6 +109,7 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
 
     @gen.coroutine
     def get(self, ds_id, job_id, db_id, sf_id, adduct):
+        ds_id, job_id, db_id, sf_id, adduct = ds_id, int(job_id), int(db_id), int(sf_id), clean_adduct(adduct)
         ds_config = dataset_config(self.db, ds_id)
         isocalc = IsocalcWrapper(ds_config['isotope_generation'])
 
@@ -100,8 +117,7 @@ class SpectrumLineChartHandler(tornado.web.RequestHandler):
         chart = isocalc.isotope_peaks(sf, adduct).spectrum_chart()
 
         sample_centr_ints_norm = []
-        sample_ints_list = self.db.query(self.SAMPLE_INTENS_SQL,
-                                         int(job_id), int(db_id), int(sf_id), adduct)
+        sample_ints_list = self.db.query(self.SAMPLE_INTENS_SQL, job_id, db_id, sf_id, adduct)
         if sample_ints_list:
             sample_centr_ints_norm = self.sample_centr_ints_norm(sample_ints_list)
 

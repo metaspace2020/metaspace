@@ -86,24 +86,25 @@ function on_select_row(data) {
         $("#about-sf").html( '<div class="row">' + asf_html + '</div>' );
 
         // IMAGES
+        var add = adduct == "" ? "None" : adduct;
         // total image
-        var url = '/min_max_int/' + job_id + '/' + db_id + '/' + sf_id + '/' + adduct;
+        var url = '/min_max_int/' + job_id + '/' + db_id + '/' + sf_id + '/' + add;
         $.getJSON(url, function( data ) {
-            var url_params = db_id + '/' + ds_id + '/' + job_id + '/' + sf_id + '/' + sf + '/' + adduct;
+            var url_params = db_id + '/' + ds_id + '/' + job_id + '/' + sf_id + '/' + sf + '/' + add;
             $("#ionimage_total").html(
                 '<img src="/mzimage2/' + url_params + '" id="img-total">'
             );
 
             $("#ionimage_min_int").text(data['min_int']);
             $("#ionimage_max_int").text(data['max_int']);
-        })
+        });
 
         // images per adduct and peak
-        var url = '/sf_peak_mzs/' + ds_id + '/' + db_id + '/' + sf_id + '/' + adduct;
+        var url = '/sf_peak_mzs/' + ds_id + '/' + db_id + '/' + sf_id + '/' + add;
         $.getJSON(url, function( data ) {
             var sf_mzs = data;
 
-            var iso_img_n = Math.min(sf_mzs.length, max_peaks_to_show)
+            var iso_img_n = Math.min(sf_mzs.length, max_peaks_to_show);
             var col_w = Math.floor(12 / iso_img_n);
             var urls = [];
 
@@ -117,7 +118,7 @@ function on_select_row(data) {
                 to_append += '</div></div></div>';
                 $("#row-images").append(to_append);
                 var url = "/mzimage2/" + db_id + '/' + ds_id + '/' + job_id + '/' +
-                            sf_id + '/' + sf + '/' + adduct + '/' + peak_id;
+                            sf_id + '/' + sf + '/' + add + '/' + peak_id;
                 urls.push(url);
             }
 
@@ -134,7 +135,7 @@ function on_select_row(data) {
                     }
                 });
             }
-        })
+        });
 
         // Update feedback form content
         initFeedbackRating(job_id, db_id, sf_id, adduct);

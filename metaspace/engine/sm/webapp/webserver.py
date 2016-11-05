@@ -94,7 +94,7 @@ class Application(tornado.web.Application):
 
         # hack needed to overcome sending expensive query every time results table is filtered or sorted
         res = self.db.query("select ((config::json->'isotope_generation')->'adducts') from dataset as adducts")
-        self.adducts = list(set([add for row in res for add in row['?column?']]))
+        self.adducts = list(set(['[M{}]'.format(add) for row in res for add in row['?column?']]))
 
 def main():
     """Creates tornado application, handles keyboard interrupts (to release the http socket)."""

@@ -12,6 +12,12 @@ import png
 from cachetools import LRUCache, cached
 from cachetools.keys import hashkey
 
+from misc import clean_adduct
+
+import traceback
+import logging
+logger = logging.getLogger('sm-web-app')
+
 
 INTS_SQL = ('SELECT pixel_inds inds, intensities as ints '
             'FROM iso_image img '
@@ -126,8 +132,12 @@ class IsoImgPngHandler(IsoImgBaseHandler):
         super(IsoImgPngHandler, self).initialize()
         self.peak_id = None
 
+    def write_error(self, status_code, **kwargs):
+        logger.error('{} - {}'.format(status_code, ''.join(traceback.format_exception(*kwargs['exc_info']))))
+
     @gen.coroutine
     def get(self, db_id, ds_id, job_id, sf_id, sf, adduct, peak_id):
+        adduct = clean_adduct(adduct)
         self.peak_id = int(peak_id)
         job_id = int(job_id)
         sf_id = int(sf_id)
@@ -148,8 +158,12 @@ class IsoImgPngHandler(IsoImgBaseHandler):
 
 class AggIsoImgPngHandler(IsoImgBaseHandler):
 
+    def write_error(self, status_code, **kwargs):
+        logger.error('{} - {}'.format(status_code, ''.join(traceback.format_exception(*kwargs['exc_info']))))
+
     @gen.coroutine
     def get(self, db_id, ds_id, job_id, sf_id, sf, adduct):
+        adduct = clean_adduct(adduct)
         job_id = int(job_id)
         sf_id = int(sf_id)
 
