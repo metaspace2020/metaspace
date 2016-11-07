@@ -46,7 +46,7 @@ class AWSInstManager(object):
 
         if not spot_price:
             insts = self.ec2.create_instances(
-                DryRun=self.dry_run,
+                # DryRun=self.dry_run,
                 KeyName=self.key_name,
                 ImageId=image,
                 MinCount=inst_n,
@@ -58,7 +58,7 @@ class AWSInstManager(object):
         else:
             best_price_az = self.find_best_price_availability_zone(3, inst_type)
             spot_resp = self.ec2_client.request_spot_instances(
-                DryRun=self.dry_run,
+                # DryRun=self.dry_run,
                 SpotPrice=str(spot_price),
                 InstanceCount=inst_n,
                 Type='one-time',
@@ -109,39 +109,44 @@ class AWSInstManager(object):
     def start_instances(self, inst_name, inst_type, spot_price, inst_n, image, el_ip_id,
                         sec_group, host_group, block_dev_maps):
         print 'Start {} instance(s) of type {}, name={}'.format(inst_n, inst_type, inst_name)
-
         instances = self.find_inst_by_name(inst_name)
         new_inst_n = inst_n - len(instances)
 
         if len(instances) > inst_n:
             raise BaseException('More than {} instance with Name tag {} exist'.format(inst_n, inst_name))
         else:
-            for inst in instances:
-                if inst.state['Name'] in ['running', 'pending']:
-                    print 'Already running: {}'.format(inst)
-                elif inst.state['Name'] == 'stopped':
-                    print 'Stopped instance found. Starting...'
-                    self.ec2.instances.filter(InstanceIds=[inst.id]).start()
-                else:
-                    raise BaseException('Wrong state: {}'.format(inst.state['Name']))
+            if not self.dry_run:
+                for inst in instances:
+                    if inst.state['Name'] in ['running', 'pending']:
+                        print 'Already running: {}'.format(inst)
+                    elif inst.state['Name'] == 'stopped':
+                        print 'Stopped instance found. Starting...'
+                        self.ec2.instances.filter(InstanceIds=[inst.id]).start()
+                    else:
+                        raise BaseException('Wrong state: {}'.format(inst.state['Name']))
 
-            if new_inst_n > 0:
-                self.launch_inst(inst_name, inst_type, spot_price, new_inst_n, image, el_ip_id,
-                                 sec_group, host_group, block_dev_maps)
+                if new_inst_n > 0:
+                    self.launch_inst(inst_name, inst_type, spot_price, new_inst_n, image, el_ip_id,
+                                     sec_group, host_group, block_dev_maps)
+            else:
+                print 'DRY RUN!'
 
         print 'Success'
 
     def stop_instances(self, inst_name, method='stop'):
         instances = self.find_inst_by_name(inst_name)
 
-        for inst in instances:
-            if method == 'stop':
-                resp = inst.stop()
-            elif method == 'terminate':
-                resp = inst.terminate()
-            else:
-                raise BaseException('Unknown instance stop method: {}'.format(method))
-            pprint(resp)
+        if not self.dry_run:
+            for inst in instances:
+                if method == 'stop':
+                    resp = inst.stop()
+                elif method == 'terminate':
+                    resp = inst.terminate()
+                else:
+                    raise BaseException('Unknown instance stop method: {}'.format(method))
+                pprint(resp)
+        else:
+            print 'DRY RUN!'
 
     def start_all_instances(self, component):
         for i in self.conf['instances']:
