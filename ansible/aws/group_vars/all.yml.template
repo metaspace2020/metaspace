@@ -2,11 +2,10 @@
 
 # SOFTWARE CONFIGURATION
 
-spark_key_file: ~/.ssh/ubuntu_spark
-
 aws_access_key_id:
 aws_secret_access_key:
-ansible_ssh_private_key_file:
+aws_key_name:
+aws_region: eu-west-1
 
 postgres_version: 9.3
 elasticsearch_version: 2.4.0
@@ -50,7 +49,8 @@ miniconda_env:
       - pika
       - cachetools
 
-sm_branch: v0.4
+sm_repo_url: https://github.com/SpatialMetabolomics/sm-engine.git
+sm_branch: v0.5.1
 sm_postgres_password: "1234"
 sm_home: "/opt/dev/sm"
 sm_s3_path: "s3a://sm-engine/data"
@@ -58,10 +58,11 @@ sm_s3_path: "s3a://sm-engine/data"
 hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"
 activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
+spark_key_file: ~/.ssh/ubuntu_spark
 spark_version: "1.6.0-bin-hadoop2.7.1"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
-spark_master_host: "spark://{{ ansible_hostname }}:7077"
+spark_user: "ubuntu"
 
 spark_env_extras_slave:
   SPARK_WORKER_DIR: "/tmp/spark"
@@ -79,9 +80,9 @@ slack_webhook_url:
 # VIRTUAL MACHINES CONFIGURATION
 
 cluster_configuration:
-
   instances:
-    - group: sm-webserver
+    - hostgroup: # mandatory
+      role: web
       type: c4.large
       n: 1
       elipalloc: # mandatory
@@ -96,11 +97,12 @@ cluster_configuration:
             DeleteOnTermination: True
             VolumeType: gp2
 
-    - group: sm-spark-master
+    - hostgroup: # mandatory
+      role: master
       type: c4.xlarge
       n: 1
       elipalloc: # mandatory
-      price:
+      price: 0.6
       sec_group: default
       image: ami-f9a62c8a
 
@@ -111,11 +113,12 @@ cluster_configuration:
             DeleteOnTermination: True
             VolumeType: gp2
 
-    - group: sm-spark-slave
+    - group: # mandatory
+      role: slave
       type: c4.4xlarge
       n: 1
       elipalloc:
-      price: 0.5
+      price: 0.6
       sec_group: default
       image: ami-f9a62c8a
 
@@ -126,7 +129,8 @@ cluster_configuration:
             DeleteOnTermination: True
             VolumeType: gp2
 
-    - group: sm-queue
+    - group: # mandatory
+      role: queue
       type: t2.small
       n: 1
       elipalloc:

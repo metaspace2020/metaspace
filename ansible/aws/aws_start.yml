@@ -10,11 +10,11 @@
 
   vars:
     component: ''
-    key_name: ''
 
   tasks:
     - debug: var=component
-    - debug: var=key_name
+    - debug: var=aws_key_name
+    - debug: var=hostgroups
 
-    - name: Spinning up SM cluster instances
-      shell: python manage_instances.py start {{ component }} {{ key_name }}
+    - name: Spin up SM cluster instances
+      shell: python aws_instance_manager.py start {{ component }} {{ aws_key_name }}

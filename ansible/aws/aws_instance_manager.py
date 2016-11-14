@@ -12,14 +12,15 @@ import pandas as pd
 
 class AWSInstManager(object):
 
-    def __init__(self, key_name, conf, region='eu-west-1', dry_run=False):
+    def __init__(self, key_name, conf, region='eu-west-1', dry_run=False, verbose=False):
         self.key_name = key_name
         self.region = region
         self.dry_run = dry_run
-        self.ec2 = boto3.resource('ec2')
-        self.ec2_client = boto3.client('ec2')
+        self.ec2 = boto3.resource('ec2', region)
+        self.ec2_client = boto3.client('ec2', region)
         self.conf = conf
-        pprint(self.conf)
+        if verbose:
+            pprint(self.conf)
 
     def find_inst_by_name(self, inst_name):
         instances = list(self.ec2.instances.filter(
@@ -99,8 +100,8 @@ class AWSInstManager(object):
 
         if el_ip_id:
             if inst_n == 1:
-                webserver_address = self.ec2.VpcAddress(el_ip_id)
-                webserver_address.associate(InstanceId=insts[0].id)
+                elastic_ip = self.ec2.VpcAddress(el_ip_id)
+                elastic_ip.associate(InstanceId=insts[0].id)
             else:
                 print 'Wrong number of instances {} for just one IP address'.format(inst_n)
 
@@ -150,16 +151,16 @@ class AWSInstManager(object):
 
     def start_all_instances(self, component):
         for i in self.conf['instances']:
-            if component == 'all' or component in i['group']:
-                self.start_instances(i['group'], i['type'], i['price'], i['n'], i['image'],
-                                     i['elipalloc'], i['sec_group'], i['group'],
+            if component == 'all' or component in i['hostgroup']:
+                self.start_instances(i['hostgroup'], i['type'], i['price'], i['n'], i['image'],
+                                     i['elipalloc'], i['sec_group'], i['hostgroup'],
                                      i['block_dev_maps'])
 
     def stop_all_instances(self, component):
         for i in self.conf['instances']:
-            if component == 'all' or component in i['group']:
-                method = 'terminate' if 'slave' in i['group'] else 'stop'
-                self.stop_instances(i['group'], method=method)
+            if component == 'all' or component in i['hostgroup']:
+                # method = 'terminate' if 'slave' in i['hostgroup'] else 'stop'
+                self.stop_instances(i['hostgroup'], method='terminate')
 
 
 if __name__ == '__main__':
@@ -167,10 +168,14 @@ if __name__ == '__main__':
     parser.add_argument('action', type=str, help='start|stop')
     parser.add_argument('component', type=str, help='all|web|spark|queue')
     parser.add_argument('key_name', type=str, help='AWS key name to use')
+    parser.add_argument('--config', dest='config_path', default='group_vars/all.yml', type=str,
+                        help='Config file path')
+    parser.add_argument('--dry-run', dest='dry_run', action='store_true',
+                        help="Don't actually start/stop instances")
     args = parser.parse_args()
 
-    conf = load(open('group_vars/all.yml'))['cluster_configuration']
-    aws_inst_man = AWSInstManager(key_name=args.key_name, conf=conf)
+    conf = load(open(args.config_path))['cluster_configuration']
+    aws_inst_man = AWSInstManager(key_name=args.key_name, conf=conf, dry_run=args.dry_run, verbose=True)
     if args.action == 'start':
         aws_inst_man.start_all_instances(args.component)
     elif args.action == 'stop':

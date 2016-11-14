@@ -3,3 +3,4 @@
 vbox/group_vars/*.yml
 aws/group_vars/*.yml
 *.ipynb
+*.pyc
