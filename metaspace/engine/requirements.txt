@@ -1,7 +1,7 @@
 pyImagingMSpec
 cpyImagingMSpec
 pyMSpec
-cpyMSpec==0.1.4
+cpyMSpec==0.3.4
 requests
 numpy>=1.10.4
 Fabric>=1.10.2
