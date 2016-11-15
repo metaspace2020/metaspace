@@ -1,4 +1,4 @@
-from cpyMSpec import IsotopePattern
+from cpyMSpec import isotopePattern, InstrumentModel
 import numpy as np
 import logging
 
@@ -15,19 +15,19 @@ def trim_centroids(mzs, intensities, k):
     return mzs[mz_order], intensities[mz_order]
 
 class Centroids(object):
-    def __init__(self, isotope_pattern, resolving_power, pts_per_mz=None):
+    def __init__(self, isotope_pattern, instrument_model, pts_per_mz=None):
         self._isotope_pattern = isotope_pattern
-        self._resolving_power = resolving_power
+        self._instrument_model = instrument_model
         self._pts_per_mz = pts_per_mz
 
         if isotope_pattern is not None:
-            centroids = isotope_pattern.centroids(resolving_power)
+            centroids = isotope_pattern.centroids(instrument_model)
             order = np.argsort(centroids.masses)
             self.mzs = np.array(centroids.masses)[order]
-            self.ints = 100.0 * np.array(centroids.abundances)[order]
+            self.ints = 100.0 * np.array(centroids.intensities)[order]
 
             if pts_per_mz is None:
-                fwhm = self.mzs[0] / resolving_power
+                fwhm = self.mzs[0] / instrument_model.resolvingPowerAt(self.mzs[0])
                 sigma = fwhm / SIGMA_TO_FWHM
                 self._pts_per_mz = 5.0 / sigma
         else:
@@ -35,7 +35,7 @@ class Centroids(object):
 
     @property
     def _envelope(self):
-        return self._isotope_pattern.envelope(self._resolving_power)
+        return self._isotope_pattern.envelope(self._instrument_model)
 
     def spectrum_chart(self, n_peaks=ISOTOPIC_PEAK_N):
         centr_mzs, _ = trim_centroids(self.mzs, self.ints, n_peaks)
@@ -100,10 +100,12 @@ class IsocalcWrapper(object):
             In case of any errors returns object with empty 'mzs' and 'ints' fields
         """
         try:
-            isotopes = IsotopePattern(str(sf + adduct)).charged(int(self.charge))
+            isotopes = isotopePattern(str(sf + adduct))
+            isotopes.addCharge(int(self.charge))
             fwhm = self.sigma * SIGMA_TO_FWHM
             resolving_power = isotopes.masses[0] / fwhm
-            return Centroids(isotopes, resolving_power, self.pts_per_mz)
+            instrument_model = InstrumentModel('tof', resolving_power)
+            return Centroids(isotopes, instrument_model, self.pts_per_mz)
         except Exception as e:
             logger.warning('(%s, %s) - %s', sf, adduct, e)
             return Centroids(None, None)
