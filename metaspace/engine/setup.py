@@ -8,4 +8,11 @@ setup(name='sm',
       url='https://github.com/SpatialMetabolomics/sm-engine.git',
       author='Alexandrov Team, EMBL',
       author_email='vitaly.kovalev@embl.de',
-      packages=find_packages())
+      packages=find_packages(),
+      install_requires=[
+          "pyImagingMSpec==0.1.3",
+          "cpyImagingMSpec==0.2.2",
+          "pyMSpec==0.1",
+          "cpyMSpec==0.3.4",
+          "pyimzML==1.0.1"
+      ])
