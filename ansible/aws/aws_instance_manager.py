@@ -149,25 +149,24 @@ class AWSInstManager(object):
         else:
             print 'DRY RUN!'
 
-    def start_all_instances(self, component):
-        for i in self.conf['instances']:
-            if component == 'all' or component in i['hostgroup']:
-                self.start_instances(i['hostgroup'], i['type'], i['price'], i['n'], i['image'],
-                                     i['elipalloc'], i['sec_group'], i['hostgroup'],
-                                     i['block_dev_maps'])
+    def start_all_instances(self, components):
+        for component in components:
+            i = self.conf['instances'][component]
+            self.start_instances(i['hostgroup'], i['type'], i['price'], i['n'], i['image'],
+                                 i['elipalloc'], i['sec_group'], i['hostgroup'],
+                                 i['block_dev_maps'])
 
-    def stop_all_instances(self, component):
-        for i in self.conf['instances']:
-            if component == 'all' or component in i['hostgroup']:
-                # method = 'terminate' if 'slave' in i['hostgroup'] else 'stop'
-                self.stop_instances(i['hostgroup'], method='terminate')
+    def stop_all_instances(self, components):
+        for component in components:
+            i = self.conf['instances'][component]
+            self.stop_instances(i['hostgroup'], method='terminate')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM AWS instances management tool')
     parser.add_argument('action', type=str, help='start|stop')
-    parser.add_argument('component', type=str, help='all|web|spark|queue')
-    parser.add_argument('key_name', type=str, help='AWS key name to use')
+    parser.add_argument('--components', help='all,web,master,slave,queue')
+    parser.add_argument('--key-name', type=str, help='AWS key name to use')
     parser.add_argument('--config', dest='config_path', default='group_vars/all.yml', type=str,
                         help='Config file path')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
@@ -176,7 +175,12 @@ if __name__ == '__main__':
 
     conf = load(open(args.config_path))['cluster_configuration']
     aws_inst_man = AWSInstManager(key_name=args.key_name, conf=conf, dry_run=args.dry_run, verbose=True)
+
+    components = args.components.strip(' ').split(',')
+    if 'all' in components:
+        components = ['web', 'master', 'slave', 'queue']
+
     if args.action == 'start':
-        aws_inst_man.start_all_instances(args.component)
+        aws_inst_man.start_all_instances(components)
     elif args.action == 'stop':
-        aws_inst_man.stop_all_instances(args.component)
+        aws_inst_man.stop_all_instances(components)

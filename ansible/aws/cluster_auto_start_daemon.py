@@ -13,11 +13,8 @@ import boto3.ec2
 
 class ClusterDaemon(object):
 
-    def __init__(self, conf_path, ansible_config_path, aws_key_name=None, interval=600,
+    def __init__(self, ansible_config_path, aws_key_name=None, interval=600,
                  qname='sm_annotate', debug=False):
-
-        with open(conf_path) as fp:
-            self.sm_config = json.load(fp)
 
         with open(ansible_config_path) as fp:
             self.ansible_config = yaml.load(fp)
@@ -68,9 +65,9 @@ class ClusterDaemon(object):
             return resp.ok
 
     def queue_empty(self):
-        c = self.sm_config['rabbitmq']
-        creds = pika.PlainCredentials(c['user'], c['password'])
-        conn = pika.BlockingConnection(pika.ConnectionParameters(host=c['host'], credentials=creds))
+        creds = pika.PlainCredentials(self.ansible_config['rabbitmq_user'], self.ansible_config['rabbitmq_password'])
+        conn = pika.BlockingConnection(pika.ConnectionParameters(host=self.ansible_config['rabbitmq_host'],
+                                                                 credentials=creds))
         ch = conn.channel()
         m = ch.queue_declare(queue=self.qname, durable=True)
         self.logger.debug('Messages in the queue: {}'.format(m.method.message_count))
@@ -134,13 +131,10 @@ class ClusterDaemon(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Daemon for auto starting SM cluster')
-    parser.add_argument('--sm-config', dest='sm_config_path', default='sm_config.json', type=str,
-                        help='SM sm_config path')
     parser.add_argument('--ansible-config', dest='ansible_config_path', default='group_vars/all.yml', type=str,
                         help='Ansible config path')
     parser.add_argument('--debug', dest='debug', action='store_true', help="Run in debug mode")
     args = parser.parse_args()
 
-    cluster_daemon = ClusterDaemon(args.sm_config_path, args.ansible_config_path,
-                                   interval=15, qname='sm_annotate', debug=args.debug)
+    cluster_daemon = ClusterDaemon(args.ansible_config_path, interval=15, qname='sm_annotate', debug=args.debug)
     cluster_daemon.start()
