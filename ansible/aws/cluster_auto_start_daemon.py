@@ -29,7 +29,7 @@ class ClusterDaemon(object):
 
     def _resolve_spark_master(self):
         self.logger.debug('Resolving spark master ip...')
-        master_hostgroup = filter(lambda hgr: hgr['role'] == 'master',
+        master_hostgroup = filter(lambda hgr: hgr['component'] == 'master',
                                   self.ansible_config['cluster_configuration']['instances'])[0]['hostgroup']
         spark_master_instances = list(self.ec2.instances.filter(
             Filters=[{'Name': 'tag:Name', 'Values': [master_hostgroup]},

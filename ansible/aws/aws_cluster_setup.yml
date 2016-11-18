@@ -1,21 +1,18 @@
 ---
 
 - name: SM spark master initial setup (slaves file update)
-  hosts: tag_hostgroup_sm_spark_master
+  hosts: master
   user: ubuntu
   gather_facts: true
 
   vars:
-    postgres_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
-    es_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
-    rabbitmq_host: "{{ groups.get('tag_hostgroup_sm_queue', ['localhost'])[0] }}"
     spark_master_host: "spark://{{ ansible_hostname }}:7077"
     spark_slave_ips: []
 
   tasks:
     - name: Create a list of private ip addresses for the slave instances
-      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ec2_private_ip_address ] }}"
-      with_items: "{{ groups['tag_hostgroup_sm_spark_slave'] }}"
+      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
+      with_items: "{{ groups['slave'] }}"
 
     - name: Put slave ip addresses into the slaves file
       become: yes

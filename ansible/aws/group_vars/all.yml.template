@@ -8,9 +8,12 @@ aws_key_name:
 aws_region: eu-west-1
 
 postgres_version: 9.3
-elasticsearch_version: 2.4.0
+postgres_host: "{{ hostvars['web'].ansible_ssh_host }}"
 
-rabbitmq_host:
+elasticsearch_version: 2.4.0
+es_host: "{{ hostvars['web'].ansible_ssh_host }}"
+
+rabbitmq_host: "{{ hostvars['queue'].ansible_ssh_host }}"
 rabbitmq_user: sm
 rabbitmq_password: "1234"
 
@@ -81,8 +84,8 @@ slack_webhook_url:
 
 cluster_configuration:
   instances:
-    - hostgroup: # mandatory
-      role: web
+    web:
+      hostgroup: # mandatory
       type: c4.large
       n: 1
       elipalloc: # mandatory
@@ -97,8 +100,8 @@ cluster_configuration:
             DeleteOnTermination: True
             VolumeType: gp2
 
-    - hostgroup: # mandatory
-      role: master
+    master:
+      hostgroup: # mandatory
       type: c4.xlarge
       n: 1
       elipalloc: # mandatory
@@ -113,8 +116,8 @@ cluster_configuration:
             DeleteOnTermination: True
             VolumeType: gp2
 
-    - group: # mandatory
-      role: slave
+    slave:
+      hostgroup: # mandatory
       type: c4.4xlarge
       n: 1
       elipalloc:
@@ -128,9 +131,8 @@ cluster_configuration:
             VolumeSize: 1000
             DeleteOnTermination: True
             VolumeType: gp2
-
-    - group: # mandatory
-      role: queue
+    queue:
+      hostgroup: # mandatory
       type: t2.small
       n: 1
       elipalloc:
