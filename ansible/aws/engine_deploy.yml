@@ -1,7 +1,7 @@
 ---
 
 - name: Deploying SM engine code
-  hosts: tag_hostgroup_sm_spark_master
+  hosts: master
   user: ubuntu
   gather_facts: false
 

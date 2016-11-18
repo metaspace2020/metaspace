@@ -1,17 +1,18 @@
 ---
 
 - name: SM spark master initial setup (slaves file update)
-  hosts: tag_hostgroup_sm_spark_master
+  hosts: master
   user: ubuntu
   gather_facts: true
 
   vars:
+    spark_master_host: "spark://{{ ansible_hostname }}:7077"
     spark_slave_ips: []
 
   tasks:
     - name: Create a list of private ip addresses for the slave instances
-      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ec2_private_ip_address ] }}"
-      with_items: "{{ groups['tag_hostgroup_sm_spark_slave'] }}"
+      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
+      with_items: "{{ groups['slave'] }}"
 
     - name: Put slave ip addresses into the slaves file
       become: yes
@@ -38,3 +39,11 @@
       wait_for: host={{ item }} port=8081 delay=5
       with_items: "{{ spark_slave_ips }}"
       when: not ('localhost' in spark_slave_ips)
+
+    - name: Pull SM config from the remote host
+      fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
+             flat=yes fail_on_missing=yes
+
+    - name: "Put SM config to {{ sm_home }}/conf/config.json"
+      template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
+                owner={{ spark_user }} group={{ spark_user }} mode=0600

@@ -9,7 +9,7 @@
       private: false
 
   tasks:
-     - name: Add web server host to the hosts
+     - name: Add web server host to the inventory
        add_host: name='{{ webserver_host }}' group=dynamic
 
 

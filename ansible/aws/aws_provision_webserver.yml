@@ -1,14 +1,14 @@
 ---
 
 - name: SM web app instance configuration
-  hosts: tag_hostgroup_sm_webserver
+  hosts: web
   user: ubuntu
   gather_facts: true
 
-  vars:
-    postgres_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
-    es_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
-    rabbitmq_host: "{{ groups.get('tag_hostgroup_sm_queue', ['localhost'])[0] }}"
+#  vars:
+#    postgres_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
+#    es_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
+#    rabbitmq_host: "{{ groups.get('tag_hostgroup_sm_queue', ['localhost'])[0] }}"
 
   roles:
     - role: sm_webapp

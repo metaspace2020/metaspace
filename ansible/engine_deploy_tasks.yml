@@ -1,5 +1,5 @@
 - name: Pull sources from the repository
-  git: repo=https://github.com/SpatialMetabolomics/sm-engine.git
+  git: repo={{ sm_repo_url }}
        dest={{ sm_home }}
        version={{ sm_branch }}
        update=yes
