@@ -139,5 +139,5 @@ if __name__ == "__main__":
     parser.add_argument('--debug', dest='debug', action='store_true', help="Run in debug mode")
     args = parser.parse_args()
 
-    cluster_daemon = ClusterDaemon(args.ansible_config_path, interval=15, qname='sm_annotate', debug=args.debug)
+    cluster_daemon = ClusterDaemon(args.ansible_config_path, interval=120, qname='sm_annotate', debug=args.debug)
     cluster_daemon.start()

@@ -1,0 +1,12 @@
+---
+
+- name: Deploying cluster-auto-start
+  hosts: queue
+  user: ubuntu
+  gather_facts: false
+
+  vars:
+    activate_venv: "true"
+
+  tasks:
+    - include: ../restart_supervisor.yml

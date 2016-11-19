@@ -28,6 +28,10 @@
     update: yes
     version: "{{ sm_ansbile_branch }}"
 
+- name: Make sure {{ sm_ansible_home }}/aws/logs exists
+  become: yes
+  file: path={{ sm_ansible_home }}/aws/logs owner=ubuntu group=ubuntu state=directory mode=0755
+
 - name: Upload templated group_vars/all.yml
   template: src=group_vars/all.yml dest={{ sm_ansible_home }}/aws/group_vars/all.yml
             owner=ubuntu group=ubuntu mode=0600

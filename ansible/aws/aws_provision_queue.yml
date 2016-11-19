@@ -22,4 +22,3 @@
       become: yes
 
     - role: sm_cluster_autostart
-      become: yes
