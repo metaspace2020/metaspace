@@ -32,17 +32,10 @@
   become: yes
   file: path={{ sm_ansible_home }}/aws/logs owner=ubuntu group=ubuntu state=directory mode=0755
 
-- name: Upload templated group_vars/all.yml
-  template: src=group_vars/all.yml dest={{ sm_ansible_home }}/aws/group_vars/all.yml
-            owner=ubuntu group=ubuntu mode=0600
-
 - name: Templated supervisord config for the cluster_auto_start_daemon
   template: src=sm-cluster-autostart-daemon.supervisor.j2
             dest=/etc/supervisor/sm-cluster-autostart-daemon.supervisor
             owner=ubuntu group=ubuntu mode=0600
-
-- name: Copy inventory file
-  copy: src={{ inventory }} dest={{ sm_ansible_home }}/aws mode=0600 owner=ubuntu group=ubuntu
 
 - name: Copy private key for SSHing to the masters
   copy: src={{ spark_key_file }} dest="/home/ubuntu/.ssh/id_rsa" owner=ubuntu group=ubuntu mode="u=rw,g=,o="

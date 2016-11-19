@@ -9,4 +9,18 @@
     activate_venv: "true"
 
   tasks:
+    - name: Git clone sm-engine-ansible
+      git:
+        dest: "{{ sm_ansible_home }}"
+        repo: "{{ sm_ansible_url }}"
+        update: yes
+        version: "{{ sm_ansbile_branch }}"
+
+    - name: Upload templated group_vars/all.yml
+      template: src=group_vars/all.yml dest={{ sm_ansible_home }}/aws/group_vars/all.yml
+                owner=ubuntu group=ubuntu mode=0600
+
+    - name: Copy inventory file
+      copy: src=hosts dest={{ sm_ansible_home }}/aws mode=0600 owner=ubuntu group=ubuntu
+
     - include: ../restart_supervisor.yml
