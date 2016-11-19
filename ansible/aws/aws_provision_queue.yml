@@ -4,7 +4,15 @@
 - name: SM queue instance configuration
   hosts: queue
   user: ubuntu
-  gather_facts: true
+  gather_facts: no
+
+  vars:
+    activate_venv: !!null
+
+  pre_tasks:
+    - name: Install python-simplejson
+      become: yes
+      raw: apt-get install -y python-simplejson
 
   roles:
     - role: common
@@ -13,18 +21,5 @@
     - role: rabbitmq
       become: yes
 
-#  tasks:
-#    - name: Make sure /opt/dev/sm_cluster_daemon folder exists
-#      debug: var=cluster_configuration
-#
-#    - name: Install Ansible and its dependencies
-#
-#    - name: Git clone sm-engine-ansible
-#
-#    - name: Upload templated group_vars/all.yml
-#      template:
-#
-#    - name: Templated supervisord config for the cluster_auto_start_daemon
-#      template:
-#
-#    - name: Launch cluster_auto_start_daemon
+    - role: sm_cluster_autostart
+      become: yes

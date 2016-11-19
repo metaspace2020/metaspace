@@ -2,9 +2,9 @@
 
 # SOFTWARE CONFIGURATION
 
-aws_access_key_id:
-aws_secret_access_key:
-aws_key_name:
+aws_access_key_id: "{{ aws_access_key_id }}"
+aws_secret_access_key: "{{ aws_secret_access_key }}"
+aws_key_name: "{{ aws_key_name }}"
 aws_region: eu-west-1
 
 postgres_version: 9.3
@@ -53,6 +53,10 @@ sm_postgres_password: "1234"
 sm_home: "/opt/dev/sm"
 sm_s3_path: "s3a://sm-engine/data"
 
+sm_ansible_url: https://github.com/SpatialMetabolomics/sm-engine-ansible.git
+sm_ansbile_branch: rel-v0.5
+sm_ansible_home: /opt/dev/sm-engine-ansible
+
 hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"
 activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
@@ -72,8 +76,8 @@ spark_env_extras_master:
   AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
   PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
-slack_channel:
-slack_webhook_url:
+slack_channel: "{{ slack_channel }}"
+slack_webhook_url: "{{ slack_webhook_url }}"
 
 # VIRTUAL MACHINES CONFIGURATION
 

@@ -1,7 +1,5 @@
 ---
 
-- include: aws_clean_cache.yml
-
 
 - name: Spinning up AWS instances
   hosts: localhost
@@ -17,3 +15,6 @@
 
     - name: Spin up SM cluster instances
       shell: python aws_instance_manager.py start --key-name {{ aws_key_name }} --components {{ components }}
+
+    - name: Update the inventory file
+      shell: python update_inventory.py

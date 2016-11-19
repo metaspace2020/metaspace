@@ -29,8 +29,7 @@ class ClusterDaemon(object):
 
     def _resolve_spark_master(self):
         self.logger.debug('Resolving spark master ip...')
-        master_hostgroup = filter(lambda hgr: hgr['component'] == 'master',
-                                  self.ansible_config['cluster_configuration']['instances'])[0]['hostgroup']
+        master_hostgroup = self.ansible_config['cluster_configuration']['instances']['master']['hostgroup']
         spark_master_instances = list(self.ec2.instances.filter(
             Filters=[{'Name': 'tag:Name', 'Values': [master_hostgroup]},
                      {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']}]))
@@ -65,13 +64,17 @@ class ClusterDaemon(object):
             return resp.ok
 
     def queue_empty(self):
-        creds = pika.PlainCredentials(self.ansible_config['rabbitmq_user'], self.ansible_config['rabbitmq_password'])
-        conn = pika.BlockingConnection(pika.ConnectionParameters(host=self.ansible_config['rabbitmq_host'],
-                                                                 credentials=creds))
-        ch = conn.channel()
-        m = ch.queue_declare(queue=self.qname, durable=True)
-        self.logger.debug('Messages in the queue: {}'.format(m.method.message_count))
-        return m.method.message_count == 0
+        try:
+            creds = pika.PlainCredentials(self.ansible_config['rabbitmq_user'], self.ansible_config['rabbitmq_password'])
+            conn = pika.BlockingConnection(pika.ConnectionParameters(host=self.ansible_config['rabbitmq_host'],
+                                                                     credentials=creds))
+            ch = conn.channel()
+            m = ch.queue_declare(queue=self.qname, durable=True)
+            self.logger.debug('Messages in the queue: {}'.format(m.method.message_count))
+            return m.method.message_count == 0
+        except Exception as e:
+            self.logger.warning(e)
+            return True
 
     def cluster_up(self):
         return self._send_rest_request('http://{}:8080/api/v1/applications'.format(self.spark_master_public_ip))
@@ -91,12 +94,12 @@ class ClusterDaemon(object):
 
     def cluster_start(self):
         self.logger.info('Spinning up the cluster...')
-        self._fab_local("ansible-playbook -f 1 aws_start.yml -e 'component=spark'",
+        self._fab_local("ansible-playbook -f 1 aws_start.yml -e 'components=master,slave'",
                         'Cluster is spun up', 'Failed to spin up the cluster')
 
     def cluster_stop(self):
         self.logger.info('Stopping the cluster...')
-        self._fab_local("ansible-playbook -f 1 aws_stop.yml -e 'component=spark'",
+        self._fab_local("ansible-playbook -f 1 aws_stop.yml -e 'components=master,slave'",
                         'Cluster is stopped successfully', 'Failed to stop the cluster')
 
     def cluster_setup(self):

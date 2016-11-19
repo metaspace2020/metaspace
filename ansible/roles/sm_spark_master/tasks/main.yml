@@ -1,5 +1,10 @@
 ---
 
+- name: Add {{ spark_key_file }} to authorized_keys
+  authorized_key: user=ubuntu key="{{ item }}"
+  with_file:
+    - {{ spark_key_file }}
+
 - name: Install system wide packages
   become: yes
   apt: name={{ item }} state=present
@@ -21,12 +26,6 @@
 - name: Create /opt/data/sm_data directory
   file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
-
-#- name: Create sm config files
-#  shell: cp sm_log.cfg.template sm_log.cfg
-#  args:
-#    chdir: "{{ sm_home }}/conf"
-#    creates: sm_log.cfg config.json
 
 - name: Put SPARK_HOME into update sm-env.sh scripts
   template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
