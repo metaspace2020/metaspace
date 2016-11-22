@@ -20,6 +20,9 @@
       template: src=group_vars/all.yml dest={{ sm_ansible_home }}/aws/group_vars/all.yml
                 owner=ubuntu group=ubuntu mode=0600
 
+    - name: Update the inventory file
+      local_action: command python update_inventory.py
+
     - name: Copy inventory file
       copy: src=hosts dest={{ sm_ansible_home }}/aws mode=0600 owner=ubuntu group=ubuntu
 

@@ -21,7 +21,7 @@
       when: spark_volume_size is defined
 
     - name: Wait for instances to become available
-      pause: seconds=60
+      pause: seconds=20
 
     - name: Update the inventory file
       shell: python update_inventory.py
