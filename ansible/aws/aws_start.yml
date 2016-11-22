@@ -1,6 +1,5 @@
 ---
 
-
 - name: Spinning up AWS instances
   hosts: localhost
   connection: local
@@ -15,6 +14,14 @@
 
     - name: Spin up SM cluster instances
       shell: python aws_instance_manager.py start --key-name {{ aws_key_name }} --components {{ components }}
+      when: spark_volume_size is not defined
+
+    - name: Spin up SM cluster instances for creating a new AMI
+      shell: python aws_instance_manager.py start --key-name {{ aws_key_name }} --components {{ components }} --spark-volume-size {{ spark_volume_size }}
+      when: spark_volume_size is defined
+
+    - name: Wait for instances to become available
+      pause: seconds=60
 
     - name: Update the inventory file
       shell: python update_inventory.py

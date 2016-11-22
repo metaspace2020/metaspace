@@ -4,7 +4,7 @@
   shell: "{{ activate_venv }} && pip install -U supervisor"
   args:
     executable: /bin/bash
-  when: "{{ activate_venv }}"
+  when: activate_venv is defined
 
 - name: Install pip
   apt: name=python-pip state=present

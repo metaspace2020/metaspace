@@ -3,7 +3,7 @@
 - name: Add {{ spark_key_file }} to authorized_keys
   authorized_key: user=ubuntu key="{{ item }}"
   with_file:
-    - {{ spark_key_file }}
+    - "{{ spark_key_file }}.pub"
 
 - name: Install system wide packages
   become: yes

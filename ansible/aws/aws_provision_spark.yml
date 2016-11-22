@@ -21,6 +21,7 @@
   gather_facts: true
 
   vars:
+    spark_master_host: "spark://{{ ansible_hostname }}:7077"
     spark_slave_ips: []
 #    postgres_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
 #    es_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"

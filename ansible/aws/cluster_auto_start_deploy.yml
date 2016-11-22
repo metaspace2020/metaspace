@@ -6,7 +6,7 @@
   gather_facts: false
 
   vars:
-    activate_venv: "true"
+    activate_venv: "true" # fake shell command
 
   tasks:
     - name: Git clone sm-engine-ansible

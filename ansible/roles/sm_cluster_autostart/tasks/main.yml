@@ -1,4 +1,5 @@
 - name: Install sys libs needed for Ansible
+  become: yes
   apt: name={{ item }} state=present
   with_items:
     - python-dev
@@ -6,16 +7,20 @@
     - libssl-dev
 
 - name: Install Ansible
+  become: yes
   pip: name=ansible
 
 - name: Install sm-cluster-autostart dependencies
+  become: yes
   pip: name={{ item }} state=latest
   with_items:
     - pika
     - requests
     - pyyaml
     - fabric
+    - boto
     - boto3
+    - pandas
 
 - name: Make sure {{ sm_ansible_home }} exists
   become: yes
@@ -37,5 +42,17 @@
             dest=/etc/supervisor/sm-cluster-autostart-daemon.supervisor
             owner=ubuntu group=ubuntu mode=0600
 
-- name: Copy private key for SSHing to the masters
+- name: Copy private key for SSHing to the master
   copy: src={{ spark_key_file }} dest="/home/ubuntu/.ssh/id_rsa" owner=ubuntu group=ubuntu mode="u=rw,g=,o="
+
+- name: Make sure .aws directory exists
+  file: path=/home/ubuntu/.aws/
+        state=directory mode=0755
+        owner=ubuntu group=ubuntu
+  when: aws_access_key_id is defined
+
+- name: Put aws credentials file into the home dir
+  template: src=aws_credentials.j2
+            dest=/home/ubuntu/.aws/credentials mode=0600
+            owner=ubuntu group=ubuntu
+  when: aws_access_key_id is defined

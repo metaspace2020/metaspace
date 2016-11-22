@@ -7,7 +7,7 @@
   gather_facts: no
 
   vars:
-    activate_venv: !!null
+    activate_venv: "true" # fake shell command
 
   pre_tasks:
     - name: Install python-simplejson

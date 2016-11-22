@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 import argparse
 import boto.ec2
 import boto3
@@ -43,7 +43,11 @@ class AWSInstManager(object):
 
     def launch_inst(self, inst_name, inst_type, spot_price, inst_n, image, el_ip_id,
                     sec_group, host_group, block_dev_maps):
-        print 'Launching {} new instances...'.format(inst_n)
+        print('Launching {} new instances...'.format(inst_n))
+
+        if not image:
+            image = sorted(self.ec2.images.filter(Filters=[{'Name': 'tag:hostgroup', 'Values': [host_group]}]),
+                           key=lambda img: img.creation_date)[-1].id
 
         if not spot_price:
             insts = self.ec2.create_instances(
@@ -103,13 +107,13 @@ class AWSInstManager(object):
                 elastic_ip = self.ec2.VpcAddress(el_ip_id)
                 elastic_ip.associate(InstanceId=insts[0].id)
             else:
-                print 'Wrong number of instances {} for just one IP address'.format(inst_n)
+                print('Wrong number of instances {} for just one IP address'.format(inst_n))
 
-        print 'Launched {}'.format(insts)
+        print('Launched {}'.format(insts))
 
     def start_instances(self, inst_name, inst_type, spot_price, inst_n, image, el_ip_id,
                         sec_group, host_group, block_dev_maps):
-        print 'Start {} instance(s) of type {}, name={}'.format(inst_n, inst_type, inst_name)
+        print('Start {} instance(s) of type {}, name={}'.format(inst_n, inst_type, inst_name))
         instances = self.find_inst_by_name(inst_name)
         new_inst_n = inst_n - len(instances)
 
@@ -119,9 +123,9 @@ class AWSInstManager(object):
             if not self.dry_run:
                 for inst in instances:
                     if inst.state['Name'] in ['running', 'pending']:
-                        print 'Already running: {}'.format(inst)
+                        print('Already running: {}'.format(inst))
                     elif inst.state['Name'] == 'stopped':
-                        print 'Stopped instance found. Starting...'
+                        print('Stopped instance found. Starting...')
                         self.ec2.instances.filter(InstanceIds=[inst.id]).start()
                     else:
                         raise BaseException('Wrong state: {}'.format(inst.state['Name']))
@@ -130,9 +134,9 @@ class AWSInstManager(object):
                     self.launch_inst(inst_name, inst_type, spot_price, new_inst_n, image, el_ip_id,
                                      sec_group, host_group, block_dev_maps)
             else:
-                print 'DRY RUN!'
+                print('DRY RUN!')
 
-        print 'Success'
+        print('Success')
 
     def stop_instances(self, inst_name, method='stop'):
         instances = self.find_inst_by_name(inst_name)
@@ -147,7 +151,7 @@ class AWSInstManager(object):
                     raise BaseException('Unknown instance stop method: {}'.format(method))
                 pprint(resp)
         else:
-            print 'DRY RUN!'
+            print('DRY RUN!')
 
     def start_all_instances(self, components):
         for component in components:
@@ -162,11 +166,17 @@ class AWSInstManager(object):
             self.stop_instances(i['hostgroup'], method='terminate')
 
 
+def reduce_spark_instance_volume(conf, size):
+    print('Setting spark instnace volume size to ', size)
+    conf['instances']['master']['block_dev_maps'][0]['Ebs']['VolumeSize'] = int(size)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM AWS instances management tool')
     parser.add_argument('action', type=str, help='start|stop')
     parser.add_argument('--components', help='all,web,master,slave,queue')
     parser.add_argument('--key-name', type=str, help='AWS key name to use')
+    parser.add_argument('--spark-volume-size', type=str, help='Start spark instance(s) with reduced volume size in GB')
     parser.add_argument('--config', dest='config_path', default='group_vars/all.yml', type=str,
                         help='Config file path')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
@@ -174,9 +184,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     conf = load(open(args.config_path))['cluster_configuration']
+    if args.spark_volume_size:
+        reduce_spark_instance_volume(conf, args.spark_volume_size)
+
     aws_inst_man = AWSInstManager(key_name=args.key_name, conf=conf, dry_run=args.dry_run, verbose=True)
 
-    components = args.components.strip(' ').split(',')
+    components = filter(lambda x: x, args.components.strip(' ').split(','))
     if 'all' in components:
         components = ['web', 'master', 'slave', 'queue']
 
