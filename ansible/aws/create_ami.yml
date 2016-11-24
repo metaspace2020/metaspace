@@ -1,0 +1,50 @@
+---
+
+- name: Collect the Spark master facts for creating an AMI
+  hosts: master
+  user: ubuntu
+
+  tasks:
+    - name: Gather AWS instance facts
+      action: ec2_facts
+
+
+- name: Collect the Spark slave facts for creating an AMI
+  hosts: slave
+  user: ubuntu
+
+  tasks:
+    - name: Gather AWS instance facts
+      action: ec2_facts
+
+
+- name: Create new Spark master and slave AMIs
+  hosts: localhost
+
+  tasks:
+    - include_vars:
+        file: group_vars/create_ami_cluster_config.yml
+
+    - debug: var=ansible_date_time.iso8601
+    - debug: var=hostvars['master'].ansible_ec2_instance_id
+    - debug: var=hostvars['slave'].ansible_ec2_instance_id
+
+    - name: Create a master AMI
+      ec2_ami:
+        name: sm-spark-master-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}
+        instance_id: "{{ hostvars['master'].ansible_ec2_instance_id }}"
+        tags: {"hostgroup": "{{ cluster_configuration.instances.master.hostgroup}}" }
+        wait: yes
+      register: instance
+
+    - debug: var=instance
+
+    - name: Create a slave AMI
+      ec2_ami:
+        name: sm-spark-slave-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}
+        instance_id: "{{ hostvars['slave'].ansible_ec2_instance_id }}"
+        tags: {"hostgroup": "{{ cluster_configuration.instances.slave.hostgroup}}" }
+        wait: yes
+      register: instance
+
+    - debug: var=instance

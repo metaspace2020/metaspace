@@ -10,9 +10,4 @@
     executable: /bin/bash
   shell: "{{ activate_venv }} && pip install . -U"
 
-- name: Archive engine into a zip file
-  shell: zip -rq sm.zip sm
-  args:
-    chdir: "{{ sm_home }}"
-
 - include: restart_supervisor.yml

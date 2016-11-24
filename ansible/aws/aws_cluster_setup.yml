@@ -19,7 +19,7 @@
       template: src=../roles/spark_master/templates/slaves.j2 dest="{{ spark_home }}/conf/slaves"
                 owner=ubuntu group=ubuntu mode=0664
 
-    - name: Restart the master and slaves
+    - name: Restart the master and slave daemons
       command: "{{ spark_home }}/sbin/start-all.sh"
       when: not ('localhost' in spark_slave_ips)
       register: command_result

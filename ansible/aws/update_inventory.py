@@ -42,4 +42,3 @@ if __name__ == '__main__':
             c += 1
 
     inventory.write(open(INVENTORY_FILE, 'w'))
-

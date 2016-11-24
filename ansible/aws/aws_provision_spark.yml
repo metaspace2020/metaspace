@@ -1,9 +1,19 @@
 ---
 
+
+
 - name: SM spark slave instances configuration
   hosts: slave
   user: ubuntu
-  gather_facts: true
+  gather_facts: no
+
+  pre_tasks:
+    - name: Install python-simplejson
+      become: yes
+      raw: apt-get install -y python-simplejson
+
+    - name: Gather facts about the slave intances
+      setup:
 
   roles:
     - role: sm_spark_slave
@@ -18,16 +28,20 @@
 - name: SM spark master instance configuration
   hosts: master
   user: ubuntu
-  gather_facts: true
+  gather_facts: no
 
   vars:
     spark_master_host: "spark://{{ ansible_hostname }}:7077"
     spark_slave_ips: []
-#    postgres_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
-#    es_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
-#    rabbitmq_host: "{{ groups.get('tag_hostgroup_sm_queue', ['localhost'])[0] }}"
 
   pre_tasks:
+    - name: Install python-simplejson
+      become: yes
+      raw: apt-get install -y python-simplejson
+
+    - name: Gather facts about the master intance
+      setup:
+
     - name: Create a list of private ip addresses for the slave instances
       set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
       with_items: "{{ groups['slave'] }}"

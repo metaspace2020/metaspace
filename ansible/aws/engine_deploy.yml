@@ -1,9 +1,41 @@
 ---
 
-- name: Deploying SM engine code
+- name: Deploying SM engine code to the slaves
+  hosts: slave
+  user: ubuntu
+  gather_facts: false
+
+  tasks:
+    - name: Pull sources from the repository
+      git: repo={{ sm_repo_url }}
+           dest={{ sm_home }}
+           version={{ sm_branch }}
+           update=yes
+
+    - name: Install SM into conda environment
+      args:
+        chdir: "{{ sm_home }}"
+        executable: /bin/bash
+      shell: "{{ activate_venv }} && pip install . -U"
+
+
+- name: Deploying SM engine code to the master
   hosts: master
   user: ubuntu
   gather_facts: false
 
   tasks:
-    - include: ../engine_deploy_tasks.yml
+    - name: Pull sources from the repository
+      git: repo={{ sm_repo_url }}
+           dest={{ sm_home }}
+           version={{ sm_branch }}
+           update=yes
+
+    - name: Install SM into conda environment
+      args:
+        chdir: "{{ sm_home }}"
+        executable: /bin/bash
+      shell: "{{ activate_venv }} && pip install . -U"
+
+    - include: ../restart_supervisor.yml
+

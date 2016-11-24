@@ -8,6 +8,7 @@ from time import sleep
 from yaml import load
 from datetime import datetime, timedelta
 import pandas as pd
+from subprocess import check_output
 
 
 class AWSInstManager(object):
@@ -166,28 +167,22 @@ class AWSInstManager(object):
             self.stop_instances(i['hostgroup'], method='terminate')
 
 
-def reduce_spark_instance_volume(conf, size):
-    print('Setting spark instnace volume size to ', size)
-    conf['instances']['master']['block_dev_maps'][0]['Ebs']['VolumeSize'] = int(size)
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM AWS instances management tool')
     parser.add_argument('action', type=str, help='start|stop')
     parser.add_argument('--components', help='all,web,master,slave,queue')
     parser.add_argument('--key-name', type=str, help='AWS key name to use')
-    parser.add_argument('--spark-volume-size', type=str, help='Start spark instance(s) with reduced volume size in GB')
     parser.add_argument('--config', dest='config_path', default='group_vars/all.yml', type=str,
                         help='Config file path')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
                         help="Don't actually start/stop instances")
     args = parser.parse_args()
 
-    conf = load(open(args.config_path))['cluster_configuration']
-    if args.spark_volume_size:
-        reduce_spark_instance_volume(conf, args.spark_volume_size)
+    conf = load(open(args.config_path))
+    cluster_conf = conf['cluster_configuration']
 
-    aws_inst_man = AWSInstManager(key_name=args.key_name, conf=conf, dry_run=args.dry_run, verbose=True)
+    aws_inst_man = AWSInstManager(key_name=args.key_name or conf['aws_key_name'], conf=cluster_conf,
+                                  dry_run=args.dry_run, verbose=True)
 
     components = filter(lambda x: x, args.components.strip(' ').split(','))
     if 'all' in components:
@@ -197,3 +192,5 @@ if __name__ == '__main__':
         aws_inst_man.start_all_instances(components)
     elif args.action == 'stop':
         aws_inst_man.stop_all_instances(components)
+
+    print(check_output('python update_inventory.py'.split(' ')))
