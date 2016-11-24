@@ -1,6 +1,6 @@
 """
-.. module::
-    :synopsis:
+
+:synopsis: Molecular search job driver
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
@@ -38,7 +38,7 @@ class SearchJob(object):
     """ Main class responsible for molecule search. Uses other modules of the engine.
 
     Args
-    ----------
+    ----
     ds_id : string
         A technical identifier for the dataset
     ds_name : string

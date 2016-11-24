@@ -26,23 +26,24 @@ rtd_gen_docs.main()
 
 # see http://www.sphinx-doc.org/en/stable/ext/autodoc.html#confval-autodoc_mock_imports
 autodoc_mock_imports = ['fabfile',
-                        'matplotlib',
-                        'matplotlib.cm',
-                        'matplotlib.colors',
-                        'matplotlib.pyplot',
+                        'isatools.io.isatab_parser',
                         'mpl_toolkits.axes_grid1',
-                        'numpy',
+                        'networkx',
                         'pandas',
+                        'png',
                         'psycopg2',
+                        'psycopg2.extensions',
                         'psycopg2.extras',
-                        'pyimzML',
                         'pyspark',
+                        'requests',
                         'scipy',
                         'scipy.optimize',
                         'scipy.signal',
                         'scipy.sparse',
                         'scipy.stats',
-                        'tornpsql']
+                        'tornpsql',
+                        'cpyImagingMSpec',
+                        'cpyMSpec']
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -52,7 +53,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-# needs_sphinx = '1.0'
+needs_sphinx = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -60,7 +61,12 @@ sys.path.insert(0, os.path.abspath('..'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
+    'numpydoc'
 ]
+
+numpydoc_show_class_members = False
+numpydoc_show_inherited_class_members = False
+numpydoc_class_members_toctree = False
 
 source_parsers = {
     '.md': CommonMarkParser,
@@ -109,7 +115,7 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', '**tests**']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.

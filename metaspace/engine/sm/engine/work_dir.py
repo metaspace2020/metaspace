@@ -1,6 +1,6 @@
 """
-.. module::
-    :synopsis:
+
+:synopsis: Access to datasets stored in a local directory or on S3
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """

@@ -1,6 +1,6 @@
 """
-.. module::
-    :synopsis:
+
+:synopsis: Converter of ImzML into a text format accessible from pyspark
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
@@ -138,4 +138,3 @@ class ImzmlTxtConverter(object):
             logger.info("Conversion finished successfully")
         else:
             logger.info('File %s already exists', self.txt_path)
-
