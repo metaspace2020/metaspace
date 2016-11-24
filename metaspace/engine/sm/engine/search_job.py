@@ -84,8 +84,6 @@ class SearchJob(object):
             sconf.set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
 
         self.sc = SparkContext(master=self.sm_config['spark']['master'], conf=sconf, appName='SM engine')
-        if not self.sm_config['spark']['master'].startswith('local'):
-            self.sc.addPyFile(join(local_path(proj_root()), 'sm.zip'))
 
     def _init_db(self):
         logger.info('Connecting to the DB')
