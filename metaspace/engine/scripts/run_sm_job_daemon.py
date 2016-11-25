@@ -6,7 +6,7 @@ import logging
 
 from sm.engine.util import SMConfig, sm_log_formatters, sm_log_config, init_logger
 from sm.engine.search_job import SearchJob
-from sm.engine.queue import Queue
+from sm.engine.queue import QueueConsumer
 
 
 def configure_loggers():
@@ -38,26 +38,15 @@ if __name__ == "__main__":
     configure_loggers()
     logger = logging.getLogger('sm-queue')
 
-    def run_job_callback(ch, method, properties, body):
-        log_msg = " [v] Received: {}".format(body)
-        logger.info(log_msg)
-        post_to_slack('new', log_msg)
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+    def run_job_callback(msg):
+        post_to_slack('new', " [v] Received: {}".format(msg))
+        job = SearchJob(msg['ds_id'], msg.get('ds_name', None),
+                        msg.get('drop', False), msg.get('input_path', None),
+                        args.sm_config_path)
+        job.run()
 
-        try:
-            msg = json.loads(body)
-            job = SearchJob(msg['ds_id'], msg.get('ds_name', None),
-                            msg.get('drop', False), msg.get('input_path', None),
-                            args.sm_config_path)
-            job.run()
-        except BaseException as e:
-            msg = ' [x] Failed: {}'.format(body)
-            logger.error(msg)
-            post_to_slack('hankey', msg)
-        else:
-            msg = ' [v] Finished: {}'.format(body)
-            logger.info(msg)
-            post_to_slack('dart', msg)
-
-    annotation_queue = Queue(rabbit_config, 'sm_annotate')
-    annotation_queue.start_consuming(run_job_callback)
+    annotation_queue = QueueConsumer(rabbit_config, 'sm_annotate',
+                                     run_job_callback,
+                                     lambda log_msg: post_to_slack('hankey', log_msg),
+                                     lambda log_msg: post_to_slack('dart', log_msg))
+    annotation_queue.run()
