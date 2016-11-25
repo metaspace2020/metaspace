@@ -4,7 +4,7 @@ from datetime import datetime
 from ftplib import FTP
 import os.path
 
-from sm.engine.queue import Queue
+from sm.engine.queue import QueuePublisher
 from sm.engine.util import SMConfig
 
 import isatools.io.isatab_parser as ip
@@ -13,7 +13,7 @@ import boto3
 def setupQueue(sm_config_path):
     SMConfig.set_path(sm_config_path)
     rabbitmq_config = SMConfig.get_conf()['rabbitmq']
-    return Queue(rabbitmq_config, 'sm_annotate')
+    return QueuePublisher(rabbitmq_config, 'sm_annotate')
 
 RESOL_POWER_PARAMS = {
     '70K': {'sigma': 0.00247585727028, 'fwhm': 0.00583019832869, 'pts_per_mz': 2019},
