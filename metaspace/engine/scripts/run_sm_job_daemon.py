@@ -47,6 +47,6 @@ if __name__ == "__main__":
 
     annotation_queue = QueueConsumer(rabbit_config, 'sm_annotate',
                                      run_job_callback,
-                                     lambda log_msg: post_to_slack('hankey', log_msg),
-                                     lambda log_msg: post_to_slack('dart', log_msg))
+                                     lambda log_msg: post_to_slack('dart', log_msg),
+                                     lambda log_msg: post_to_slack('hankey', log_msg))
     annotation_queue.run()
