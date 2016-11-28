@@ -5,14 +5,14 @@ import logging
 from time import sleep
 import pika
 import requests
+from requests import ConnectionError
 import yaml
-from fabric.api import local
-from fabric.api import warn_only
+from subprocess import check_output
+from subprocess import CalledProcessError
 import boto3.ec2
 
 
 class ClusterDaemon(object):
-
     def __init__(self, ansible_config_path, aws_key_name=None, interval=600,
                  qname='sm_annotate', debug=False):
 
@@ -56,8 +56,11 @@ class ClusterDaemon(object):
     def _send_rest_request(self, address):
         try:
             resp = requests.get(address)
-        except Exception as e:
+        except ConnectionError as e:
             self.logger.debug('{} - {}'.format(address, e))
+            return False
+        except Exception as e:
+            self.logger.warning('{} - {}'.format(address, e))
             return False
         else:
             self.logger.debug(resp)
@@ -65,7 +68,8 @@ class ClusterDaemon(object):
 
     def queue_empty(self):
         try:
-            creds = pika.PlainCredentials(self.ansible_config['rabbitmq_user'], self.ansible_config['rabbitmq_password'])
+            creds = pika.PlainCredentials(self.ansible_config['rabbitmq_user'],
+                                          self.ansible_config['rabbitmq_password'])
             conn = pika.BlockingConnection(pika.ConnectionParameters(host=self.ansible_config['rabbitmq_host'],
                                                                      credentials=creds))
             ch = conn.channel()
@@ -73,7 +77,7 @@ class ClusterDaemon(object):
             self.logger.debug('Messages in the queue: {}'.format(m.method.message_count))
             return m.method.message_count == 0
         except Exception as e:
-            self.logger.warning(e)
+            self.logger.warning(e, exc_info=True)
             return True
 
     def cluster_up(self):
@@ -82,35 +86,45 @@ class ClusterDaemon(object):
     def job_running(self):
         return self._send_rest_request('http://{}:4040/api/v1/applications'.format(self.spark_master_public_ip))
 
-    def _fab_local(self, command, success_msg, failed_msg):
-        with warn_only():
-            res = local(command, capture=True)
-            self.logger.debug(res.stdout)
-
-        if res.return_code > 0:
-            self.logger.error(failed_msg)
-        else:
+    def _local(self, command, success_msg=None, failed_msg=None):
+        try:
+            res = check_output(command)
+            self.logger.debug(res)
             self.logger.info(success_msg)
+        except CalledProcessError as e:
+            self.logger.warning(e.output)
+            self.logger.error(failed_msg)
+            raise e
 
     def cluster_start(self):
         self.logger.info('Spinning up the cluster...')
-        self._fab_local("ansible-playbook -f 1 aws_start.yml -e 'components=master,slave'",
-                        'Cluster is spun up', 'Failed to spin up the cluster')
+        self._local(['ansible-playbook', '-f', '1', 'aws_start.yml', '-e components=master,slave'],
+                    'Cluster is spun up', 'Failed to spin up the cluster')
 
     def cluster_stop(self):
         self.logger.info('Stopping the cluster...')
-        self._fab_local("ansible-playbook -f 1 aws_stop.yml -e 'components=master,slave'",
-                        'Cluster is stopped successfully', 'Failed to stop the cluster')
+        self._local(['ansible-playbook', '-f', '1', 'aws_stop.yml', '-e', 'components=master,slave'],
+                    'Cluster is stopped successfully', 'Failed to stop the cluster')
 
     def cluster_setup(self):
         self.logger.info('Setting up the cluster...')
-        self._fab_local('ansible-playbook -f 1 aws_cluster_setup.yml',
-                        'Cluster setup is finished', 'Failed to set up the cluster')
+        self._local(['ansible-playbook', '-f', '1', 'aws_cluster_setup.yml'],
+                    'Cluster setup is finished', 'Failed to set up the cluster')
 
     def sm_engine_deploy(self):
         self.logger.info('Deploying SM engine code...')
-        self._fab_local('ansible-playbook -f 1 engine_deploy.yml',
-                        'The SM engine is deployed', 'Failed to deploy the SM engine')
+        self._local(['ansible-playbook', '-f', '1', 'engine_deploy.yml'],
+                    'The SM engine is deployed', 'Failed to deploy the SM engine')
+
+    def post_to_slack(self, emoji, msg):
+        if not self.debug and self.ansible_config['slack_webhook_url']:
+            msg = {
+                "channel": self.ansible_config['slack_channel'],
+                "username": "webhookbot",
+                "text": ":{}: {}".format(emoji, msg),
+                "icon_emoji": ":robot_face:"
+            }
+            requests.post(self.ansible_config['slack_webhook_url'], json=msg)
 
     def start(self):
         self.logger.info('Started the SM cluster auto-start daemon (interval=%dsec)...', self.interval)
@@ -123,6 +137,11 @@ class ClusterDaemon(object):
                     self.cluster_start()
                     self.cluster_setup()
                     self.sm_engine_deploy()
+                    m = {
+                        'master': self.ansible_config['cluster_configuration']['instances']['master'],
+                        'slave': self.ansible_config['cluster_configuration']['instances']['slave']
+                    }
+                    self.post_to_slack('rocket', "[v] Cluster started: {}".format(m))
                 else:
                     if not self.job_running():
                         self.logger.warning('Queue is not empty. Cluster is up. But no job is running!')
@@ -130,6 +149,7 @@ class ClusterDaemon(object):
                 if self.cluster_up() and not self.job_running():
                     self.logger.info('Queue is empty. No jobs running. Stopping the cluster...')
                     self.cluster_stop()
+                    self.post_to_slack('checkered_flag', "[v] Cluster stopped")
 
 
 if __name__ == "__main__":

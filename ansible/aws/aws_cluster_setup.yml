@@ -19,24 +19,28 @@
       template: src=../roles/spark_master/templates/slaves.j2 dest="{{ spark_home }}/conf/slaves"
                 owner=ubuntu group=ubuntu mode=0664
 
-    - name: Restart the master and slave daemons
-      command: "{{ spark_home }}/sbin/start-all.sh"
-      when: not ('localhost' in spark_slave_ips)
+    - name: Start the master daemon
+      command: "{{ spark_home }}/sbin/start-master.sh"
       register: command_result
       changed_when: not ('Stop it first' in command_result.stdout)
       failed_when: ('timed out' in command_result.stdout)
 
     - debug: var=command_result
 
-    - name: Check that master daemon is up
-      command: jps -l
-      become: no
-      when: not ('localhost' in spark_slave_ips)
-      register: command_result
-      failed_when: not ('Master' in command_result.stdout)
+    - name: Wait for the master deamon to start up
+      wait_for: host={{ ansible_ssh_host }} port=8080 delay=5 timeout=120
 
-    - name: Wait for slave deamons to start up
-      wait_for: host={{ item }} port=8081 delay=5
+    - name: Start the slave daemons
+      command: "{{ spark_home }}/sbin/start-slaves.sh"
+#      when: not ('localhost' in spark_slave_ips)
+      register: command_result
+      changed_when: not ('Stop it first' in command_result.stdout)
+      failed_when: ('timed out' in command_result.stdout)
+
+    - debug: var=command_result
+
+    - name: Wait for the slave deamons to start up
+      wait_for: host={{ item }} port=8081 delay=5 timeout=120
       with_items: "{{ spark_slave_ips }}"
       when: not ('localhost' in spark_slave_ips)
 

@@ -8,11 +8,15 @@
   gather_facts: no
 
   pre_tasks:
+    - name: Run apt-get update
+      become: yes
+      raw: apt-get update
+
     - name: Install python-simplejson
       become: yes
       raw: apt-get install -y python-simplejson
 
-    - name: Gather facts about the slave intances
+    - name: Gather facts about the slave instances
       setup:
 
   roles:
@@ -35,11 +39,15 @@
     spark_slave_ips: []
 
   pre_tasks:
+    - name: Run apt-get update
+      become: yes
+      raw: apt-get update
+
     - name: Install python-simplejson
       become: yes
       raw: apt-get install -y python-simplejson
 
-    - name: Gather facts about the master intance
+    - name: Gather facts about the master instance
       setup:
 
     - name: Create a list of private ip addresses for the slave instances
