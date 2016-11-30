@@ -10,17 +10,20 @@ import yaml
 from subprocess import check_output
 from subprocess import CalledProcessError
 import boto3.ec2
+import datetime as dt
 
 
 class ClusterDaemon(object):
-    def __init__(self, ansible_config_path, aws_key_name=None, interval=600,
+    def __init__(self, ansible_config_path, aws_key_name=None, interval=60,
                  qname='sm_annotate', debug=False):
 
         with open(ansible_config_path) as fp:
             self.ansible_config = yaml.load(fp)
 
-        self.interval = interval
+        self.interval = min(interval, 1200)
         self.aws_key_name = aws_key_name or self.ansible_config['aws_key_name']
+        self.master_hostgroup = self.ansible_config['cluster_configuration']['instances']['master']['hostgroup']
+        self.slave_hostgroup = self.ansible_config['cluster_configuration']['instances']['slave']['hostgroup']
         self.qname = qname
         self.debug = debug
 
@@ -29,9 +32,8 @@ class ClusterDaemon(object):
 
     def _resolve_spark_master(self):
         self.logger.debug('Resolving spark master ip...')
-        master_hostgroup = self.ansible_config['cluster_configuration']['instances']['master']['hostgroup']
         spark_master_instances = list(self.ec2.instances.filter(
-            Filters=[{'Name': 'tag:Name', 'Values': [master_hostgroup]},
+            Filters=[{'Name': 'tag:hostgroup', 'Values': [self.master_hostgroup]},
                      {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']}]))
         return spark_master_instances[0] if spark_master_instances else None
 
@@ -126,6 +128,15 @@ class ClusterDaemon(object):
             }
             requests.post(self.ansible_config['slack_webhook_url'], json=msg)
 
+    def _ec2_hour_over(self):
+        spark_instances = list(self.ec2.instances.filter(
+            Filters=[{'Name': 'tag:hostgroup', 'Values': [self.master_hostgroup, self.slave_hostgroup]},
+                     {'Name': 'instance-state-name', 'Values': ['running', 'pending']}]))
+        launch_time = min([i.launch_time for i in spark_instances])
+        now_time = dt.datetime.utcnow()
+        self.logger.debug('launch: {} now: {}'.format(launch_time, now_time))
+        return 0 < (60 + (launch_time.minute - now_time.minute)) % 60 <= max(5, 2 * self.interval / 60)
+
     def start(self):
         self.logger.info('Started the SM cluster auto-start daemon (interval=%dsec)...', self.interval)
         while True:
@@ -146,7 +157,7 @@ class ClusterDaemon(object):
                     if not self.job_running():
                         self.logger.warning('Queue is not empty. Cluster is up. But no job is running!')
             else:
-                if self.cluster_up() and not self.job_running():
+                if self.cluster_up() and not self.job_running() and self._ec2_hour_over():
                     self.logger.info('Queue is empty. No jobs running. Stopping the cluster...')
                     self.cluster_stop()
                     self.post_to_slack('checkered_flag', "[v] Cluster stopped")
@@ -156,8 +167,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Daemon for auto starting SM cluster')
     parser.add_argument('--ansible-config', dest='ansible_config_path', default='group_vars/all.yml', type=str,
                         help='Ansible config path')
-    parser.add_argument('--debug', dest='debug', action='store_true', help="Run in debug mode")
+    parser.add_argument('--interval', type=int, default=120, help='Cluster status check interval in sec (<1200)')
+    parser.add_argument('--debug', dest='debug', action='store_true', help='Run in debug mode')
     args = parser.parse_args()
 
-    cluster_daemon = ClusterDaemon(args.ansible_config_path, interval=120, qname='sm_annotate', debug=args.debug)
+    cluster_daemon = ClusterDaemon(args.ansible_config_path, interval=args.interval,
+                                   qname='sm_annotate', debug=args.debug)
     cluster_daemon.start()

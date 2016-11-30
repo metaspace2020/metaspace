@@ -15,3 +15,5 @@
     - name: Spin up SM cluster instances
       shell: python aws_instance_manager.py start --key-name {{ aws_key_name }} --components {{ components }}
       when: spark_volume_size is not defined
+
+    - wait_for: timeout=30
