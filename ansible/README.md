@@ -1,5 +1,5 @@
 # Ansible project for setting up machines running SM engine
-Check https://github.com/SpatialMetabolomics/sm-engine for more information about the SM engine
+Check https://github.com/METASPACE2020/sm-engine for more information about the SM engine
 
 ## Installation
 Make sure you have the following tools installed:
