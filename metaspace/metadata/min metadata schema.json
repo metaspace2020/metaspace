@@ -1,0 +1,243 @@
+{
+  "title": "Metadata Submission",
+  "type": "object",
+  "properties": {
+    "Sample_Information": {
+      "type": "object",
+      "required": ["Organism", "Organism_Part", "Condition"],
+      "properties": {
+        "Organism": {
+          "type": "string",
+          "enum": [
+            "Homo_sapiens_(Human)",
+            "Mus_musculus_(Mouse)",
+            "Rattus_norvegicus_(Rat)",
+            "Danio_rerio_(Zebrafish)",
+            "Arabidopsis_thaliana_(thale_cress)",
+            "Other => <free text>"
+          ]
+        },
+        "Organism_Part": {
+          "type": "string",
+          "enum": [
+            "Whole_Organism",
+            "Brain",
+            "Kidney",
+            "Eye",
+            "Liver",
+            "Ovary",
+            "Pancreas",
+            "Lung",
+            "Lymph_Node",
+            "Testis",
+            "Leaf",
+            "Stem",
+            "Root",
+            "Other = <free text>"
+          ]
+        },
+        "Condition": {
+          "type": "string",
+          "enum": [
+            "Wildtype",
+            "Diseased",
+            "Mutant",
+            "Drug_Treated",
+            "Other => <free text>"
+          ]
+        },
+        "Sample_Growth_Conditions": {
+          "type": "string",
+          "enum": [
+            "Cultured_2D",
+            "Cultured_3D",
+            "Caged",
+            "Other => <free text>"
+          ]
+        }
+      }
+    },
+    "Sample_Preparation": {
+      "type": "object",
+      "required": ["Sample_Stabilisation", "Tissue_Modification",
+                   "MALDI_Matrix", "MALDI_Matrix_Application"],
+      "properties": {
+        "Sample_Stabilisation": {
+          "type": "string",
+          "enum": [
+            "Fresh_Frozen",
+            "Formalin_Fixed",
+            "Formalin_Fixed_Paraffin_Embedded",
+            "Other => <free text>"
+          ]
+        },
+        "Tissue_Modification": {
+          "type": "string",
+          "enum": [
+            "none",
+            "Derivatisation",
+            "Trypsinisation",
+            "Other => <free text>"
+          ]
+        },
+        "MALDI_Matrix": {
+          "type": "string",
+          "enum": [
+            "none",
+            "2,5-dihydroxybenzoic_acid_(DHB)",
+            "2,5-dihydroxyacetophenone_(DHA)",
+            "9-aminoacridine_(9AA)",
+            "1,5-diaminonaphthalene_(DAN)",
+            "2,4,6-trihydroxyacetophenone_(THAP)",
+            "alpha-cyano-4-hydroxycinnamic_acid_(CHCA)",
+            "Other => <free text>"
+          ]
+        },
+        "MALDI_Matrix_Application": {
+          "type": "string",
+          "enum": [
+            "none",
+            "Spray_Robot",
+            "Airbrush",
+            "Sublimation",
+            "Micro_Spotting",
+            "Sieving",
+            "Other => <free text>"
+          ]
+        }
+      }
+    },
+    "MS_Analysis": {
+      "type": "object",
+      "required": ["Polarity", "Ionisation_Source", "Analyzer"],
+      "properties": {
+        "Polarity": {
+          "type": "string",
+          "enum": [
+            "Positive",
+            "Negative"
+          ]
+        },
+        "Ionisation_Source": {
+          "type": "string",
+          "enum": [
+            "MALDI",
+            "LDI",
+            "DESI",
+            "SIMS",
+            "LAESI",
+            "NIMS",
+            "Other => <free text>"
+          ]
+        },
+        "Analyzer": {
+          "type": "string",
+          "enum": [
+            "FTICR",
+            "Orbitrap",
+            "QTOF",
+            "TOF_Linear",
+            "TOF_Reflector",
+            "Other => <free text>"
+          ]
+        },
+        "Detector_Resolving_Power": {
+          "type": "object",
+          "title": "Detector Resolving Power",
+          "required": ["mz", "Resolving_Power"],
+          "properties": {
+            "mz": {
+              "type": "number",
+              "minimum": 50,
+              "maximum": 5000,
+              "default": 200
+            },
+            "Resolving_Power": {
+              "type": "number",
+              "minimum": 10000,
+              "maximum": 1000000
+            }
+          }
+        }
+      }
+    },
+    "Submitted_By": {
+      "type": "object",
+      "required": ["Institution"],
+      "properties": {
+        "Institution": {
+          "type": "string"
+        },
+        "Submitter": {
+          "type": "object",
+          "required": ["Surname", "First_Name", "Email"],
+          "properties": {
+            "Surname": {
+              "type": "string"
+            },
+            "First_Name": {
+              "type": "string"
+            },
+            "Email": {
+              "type": "string"
+            }
+          }
+        },
+        "Principal_Investigator": {
+          "type": "object",
+          "properties": {
+            "Surname": {
+              "type": "string"
+            },
+            "First_Name": {
+              "type": "string"
+            },
+            "Email": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "metaspace_options":{
+      "type": "object",
+      "required": ["Metabolite_Database", "Dataset_Name"],
+      "properties":{
+        "Metabolite_Database": {
+            "type": "string",
+            "enum": [
+                "ChEBI",
+                "HMDB",
+                "LIPID_MAPS",
+                "SwissLipids",
+                "DrugBank",
+                "Other => <free text>"
+            ]
+        },
+      "Dataset_Name":{
+          "type": "string"
+       }
+      }
+    },
+    "Additional_Information": {
+      "type": "object",
+      "properties": {
+        "Publication_DOI": {
+          "type": "string"
+        },
+        "Sample_Description_Freetext": {
+          "type": "string"
+        },
+        "Sample_Preparation_Freetext": {
+          "type": "string"
+        },
+        "Additional_Information_Freetext": {
+          "type": "string"
+        },
+        "Expected_Molecules_Freetext": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
