@@ -1,1 +1,2 @@
-elasticsearch_version: 2.3.3
+elasticsearch_version: 2.4.0
+kibana_version: 4.5.4

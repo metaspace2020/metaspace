@@ -1,13 +1,25 @@
 ---
 
+- name: Set virtual memory max map count variable to 262144
+  sysctl:
+    name: vm.max_map_count
+    value: 262144
+    state: present
+
 - name: Download ElasticSearch version={{ elasticsearch_version }}
   get_url: url=https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/{{ elasticsearch_version }}/elasticsearch-{{ elasticsearch_version }}.deb
            dest=/tmp/elasticsearch-{{ elasticsearch_version }}.deb
+  when: not "'{{ elasticsearch_version }}'.startswith('5.')"
+
+- name: Download ElasticSearch version={{ elasticsearch_version }}
+  get_url: url=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_version }}.deb
+           dest=/tmp/elasticsearch-{{ elasticsearch_version }}.deb
+  when: "'{{ elasticsearch_version }}'.startswith('5.')"
 
 - name: Install ElasticSearch
   command: dpkg -i /tmp/elasticsearch-{{ elasticsearch_version }}.deb
 
-- name: Make ElasticSearch listen to any ip address
+- name: Make ElasticSearch to listen to any ip address
   lineinfile:
     dest: /etc/elasticsearch/elasticsearch.yml
     regexp: network.host
@@ -25,3 +37,32 @@
 
 - name: Start EleasticSearch on boot
   service: name=elasticsearch enabled=true
+
+
+- name: Download Kibana version={{ kibana_version }}
+  get_url: url=https://download.elastic.co/kibana/kibana/kibana-{{ kibana_version }}-amd64.deb
+           dest=/tmp/kibana-{{ kibana_version }}.deb
+  when: not "'{{ kibana_version }}'.startswith('5.')"
+
+- name: Download Kibana version={{ kibana_version }}
+  get_url: url=https://artifacts.elastic.co/downloads/kibana/kibana-{{ kibana_version }}-amd64.deb
+           dest=/tmp/kibana-{{ kibana_version }}.deb
+  when: "'{{ kibana_version }}'.startswith('5.')"
+
+- name: Install Kibana
+  command: dpkg -i /tmp/kibana-{{ kibana_version }}.deb
+
+- name: Make Kibana to listen to any ip address
+  lineinfile:
+    dest: /etc/kibana/kibana.yml
+    regexp: server.host
+    line: "server.host: 0.0.0.0"
+
+- name: ES conf update restart
+  service: name=kibana state=restarted
+
+- name: Start EleasticSearch service
+  service: name=kibana state=running
+
+- name: Start EleasticSearch on boot
+  service: name=kibana enabled=true
