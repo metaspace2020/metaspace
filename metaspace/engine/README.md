@@ -207,4 +207,4 @@ Open [http://localhost:8090](http://localhost:8090) url address in a browser
 
 ## License
 
-This project is licensed under Apache 2.0 license.
+This project is licensed under the Apache 2.0 license.
