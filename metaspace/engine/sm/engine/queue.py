@@ -35,6 +35,7 @@ class QueueConsumer(object):
         except BaseException as e:
             log_msg = ' [x] Failed: {}'.format(body)
             self.logger.error(log_msg)
+            self.logger.error(e)
             self._on_failure(log_msg)
         else:
             log_msg = ' [v] Finished: {}'.format(body)
