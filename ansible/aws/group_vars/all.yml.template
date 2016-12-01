@@ -13,6 +13,7 @@ postgres_host: "{{ hostvars['web'].ansible_ssh_host }}"
 elasticsearch_version: 2.4.0
 es_host: "{{ hostvars['web'].ansible_ssh_host }}"
 
+rabbitmq_version: 3.6.5-1
 rabbitmq_host: "{{ hostvars['queue'].ansible_ssh_host }}"
 rabbitmq_user: sm
 rabbitmq_password: "1234"
@@ -24,10 +25,10 @@ miniconda_env:
   name: sm
   dependencies:
     - python=2
-    - numpy=1.11
-    - scipy=0.18
+    - numpy=1.11.2
+    - scipy=0.18.1
     - matplotlib=1.5
-    - pandas=0.19
+    - pandas=0.19.1
     - cffi
     - libgcc
     - psycopg2=2.6.1
@@ -42,6 +43,7 @@ miniconda_env:
       - boto3
       - networkx
       - fabric
+      - pypng
       - pyyaml
       - elasticsearch
       - pika
@@ -61,7 +63,7 @@ hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"
 activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
 spark_key_file: ~/.ssh/ubuntu_spark
-spark_version: "1.6.0-bin-hadoop2.7.1"
+spark_version: "2.0.2-bin-hadoop2.7"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
 spark_user: "ubuntu"
@@ -90,7 +92,7 @@ cluster_configuration:
       elipalloc: # mandatory
       price:
       sec_group: sm web app
-      image: ami-f9a62c8a
+      image: ami-f9a62c8a # public ubuntu 14.04
 
       block_dev_maps:
         - DeviceName: /dev/sda1
@@ -101,12 +103,12 @@ cluster_configuration:
 
     master:
       hostgroup: # mandatory
-      type: c4.xlarge
+      type: c4.large
       n: 1
       elipalloc: # mandatory
       price: 0.6
       sec_group: default
-      image: ami-f9a62c8a
+      image: # will fetch the most recent custom ami
 
       block_dev_maps:
         - DeviceName: /dev/sda1
@@ -122,7 +124,7 @@ cluster_configuration:
       elipalloc:
       price: 0.6
       sec_group: default
-      image: ami-f9a62c8a
+      image: # will fetch the most recent custom ami
 
       block_dev_maps:
         - DeviceName: /dev/sda1
@@ -137,7 +139,7 @@ cluster_configuration:
       elipalloc:
       price:
       sec_group: default
-      image: ami-f9a62c8a
+      image: ami-07174474 # public ubuntu 16.04
 
       block_dev_maps:
         - DeviceName: /dev/sda1
