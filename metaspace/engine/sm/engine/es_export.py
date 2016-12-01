@@ -54,8 +54,9 @@ class ESExporter:
         to_index = []
         for r in annotations:
             d = dict(zip(COLUMNS, r))
-            d['comp_names'] = u'|'.join(d['comp_names']).replace(u'"', u'')
-            d['comp_ids'] = u'|'.join(d['comp_ids'])
+            # trimming is needed for avoiding ES max_bytes_length_exceeded_exception
+            d['comp_names'] = u'|'.join(d['comp_names']).replace(u'"', u'')[:32766]
+            d['comp_ids'] = u'|'.join(d['comp_ids'])[:32766]
             d['mz'] = '{:010.4f}'.format(d['mz']) if d['mz'] else ''
 
             to_index.append({
