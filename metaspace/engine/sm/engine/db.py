@@ -1,6 +1,6 @@
 """
-.. module::
-    :synopsis:
+
+:synopsis: Database interface
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
