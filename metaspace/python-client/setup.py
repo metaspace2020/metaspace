@@ -9,10 +9,11 @@ setup(name='sm_annotation_utils',
       author='Alexandrov Team, EMBL',
       packages=find_packages(),
       install_requires=[
-          'elasticsearch',
-          'elasticsearch_dsl',
+          'elasticsearch==2.3.0',
+          'elasticsearch_dsl==2.2.0',
           'pandas',
           'plotly>=1.12',
           'numpy',
           'pyyaml',
+          'psycopg2'
       ])

@@ -1,3 +1,4 @@
+from __future__ import print_function
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 import psycopg2
@@ -84,9 +85,9 @@ class SMDataset(object):
         annotations = [(r.sf[0], r.adduct[0]) for r in response if all([r.fdr, r.fdr[0] <= fdr])]
         return annotations
 
-    def results(self):
+    def results(self, db_name='HMDB'):
         fields = ['sf', 'adduct', 'fdr', 'msm', 'chaos', 'image_corr', 'pattern_match']
-        response = self._es_query.fields(fields).scan()
+        response = self._es_query.fields(fields).query('term', db_name=db_name).scan()
         return pd.DataFrame([(r.sf, r.adduct, r.msm, r.chaos, r.image_corr, r.pattern_match) for r in response],
                             columns=['sf', 'adduct', 'msm', 'moc', 'spat', 'spec'])\
                  .set_index(['sf', 'adduct'])
@@ -144,7 +145,7 @@ class Metadata(object):
 
 class SMInstance(object):
     def __init__(self, config_filename):
-        config = json.load(open(config_filename, 'rb'))
+        config = json.load(open(config_filename, 'r'))
         self._es_host = config['elasticsearch']['host']
         self._es_index = config['elasticsearch']['index']
         self._es_client = Elasticsearch(hosts=self._es_host, index=self._es_index)
@@ -317,7 +318,7 @@ def plot_diff(dist_df, ref_df, t="", xlabel='', ylabel=''):
     ))
     iplot(fig, filename='ref_dist_msm_scatter')
     tmp_df = plot_df.dropna()
-    print np.corrcoef(tmp_df['msm'].values, tmp_df['msm_ref'].values)
+    print(np.corrcoef(tmp_df['msm'].values, tmp_df['msm_ref'].values))
     return tmp_df
 
 
