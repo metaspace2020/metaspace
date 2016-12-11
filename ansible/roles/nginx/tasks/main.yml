@@ -1,0 +1,15 @@
+---
+
+- name: Gather EC2 instance facts
+  ec2_facts:
+
+- name: Update repository cache and install Nginx package
+  apt: name=nginx state=present update_cache=yes
+
+- name: Create /etc/nginx/sites-available/default
+  template:
+    src=sites-available-default.j2 dest=/etc/nginx/sites-available/default
+    owner=ubuntu group=ubuntu mode=0644
+
+- name: Restart Nginx
+  service: name=nginx state=restarted

@@ -1,7 +1,8 @@
 ---
 
 - name: Reconfigure buggy ubuntu locales
-  template: src=locale dest=/etc/default/locale owner=root mode="u=rw,g=r,o=r" force=yes
+  template: src=../files/locale dest=/etc/default/locale
+    owner=root mode="u=rw,g=r,o=r" force=yes
 
 - name: Upload ssh key file "{{ pub_key_file }}"
   authorized_key: user=ubuntu key="{{ lookup('file', '{{ pub_key_file }}') }}"

@@ -1,0 +1,29 @@
+---
+
+- name: Download Kibana version={{ kibana_version }}
+  get_url: url=https://download.elastic.co/kibana/kibana/kibana-{{ kibana_version }}-amd64.deb
+           dest=/tmp/kibana-{{ kibana_version }}.deb
+  when: not "'{{ kibana_version }}'.startswith('5.')"
+
+- name: Download Kibana version={{ kibana_version }}
+  get_url: url=https://artifacts.elastic.co/downloads/kibana/kibana-{{ kibana_version }}-amd64.deb
+           dest=/tmp/kibana-{{ kibana_version }}.deb
+  when: "'{{ kibana_version }}'.startswith('5.')"
+
+- name: Install Kibana
+  command: dpkg -i /tmp/kibana-{{ kibana_version }}.deb
+
+- name: Make Kibana to listen to any ip address
+  lineinfile:
+    dest: /etc/kibana/kibana.yml
+    regexp: server.host
+    line: "server.host: 0.0.0.0"
+
+- name: ES conf update restart
+  service: name=kibana state=restarted
+
+- name: Start EleasticSearch service
+  service: name=kibana state=running
+
+- name: Start EleasticSearch on boot
+  service: name=kibana enabled=true
