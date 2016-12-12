@@ -1,0 +1,94 @@
+type Person {
+  name: String!
+  surname: String!
+  email: String!
+}
+
+enum Polarity {
+  POSITIVE
+  NEGATIVE
+}
+
+type Analyzer {
+  type: String!
+  resolvingPower(mz: Float!): Float!
+}
+
+enum AnnotationOrder {
+  ORDER_BY_MZ
+  ORDER_BY_MSM
+}
+
+type Dataset {
+  id: String!
+  name: String!
+
+  institution: String!
+  submitter: Person!
+  principalInvestigator: Person
+
+  polarity: Polarity!
+  ionisationSource: String!
+  analyzer: Analyzer!
+
+  annotations(orderBy: AnnotationOrder = ORDER_BY_MSM,
+              offset: Int = 0,
+              limit: Int = 10,
+              database: String = "HMDB",
+              mzFilter: NumericRange,
+              msmScoreFilter: NumericRange,
+              compoundNameContains: String,
+              fdrLevel: Float,
+              sumFormula: String,
+              adduct: String): [Annotation]
+}
+
+type Compound {
+  name: String!
+  # TODO: InChi/SMILES, image URL, ClassyFire results
+}
+
+type Spectrum {
+  mzs: [Float!]!
+  intensities: [Float!]!
+}
+
+type Annotation {
+  dataset: Dataset!
+  sumFormula: String!
+  adduct: String!
+  mz: Float!
+  possibleCompounds: [Compound!]!
+  fdrLevel: Float!
+  msmScore: Float!
+}
+
+# [min, max) interval
+input NumericRange {
+  min: Float!
+  max: Float!
+}
+
+type Query {
+  dataset(id: String!): Dataset
+  datasetByName(name: String!): Dataset
+
+  # Datasets sorted by name
+  allDatasets(offset: Int = 0, limit: Int = 10): [Dataset!]!
+
+  allAnnotations(orderBy: AnnotationOrder = ORDER_BY_MSM,
+                 offset: Int = 0,
+                 limit: Int = 10,
+                 database: String = "HMDB",
+                 datasetNamePrefix: String,
+                 mzFilter: NumericRange,
+                 msmScoreFilter: NumericRange,
+                 compoundNameContains: String,
+                 fdrLevel: Float,
+                 sumFormula: String,
+                 adduct: String): [Annotation]
+}
+
+schema {
+  query: Query
+}

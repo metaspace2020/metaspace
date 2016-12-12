@@ -1,0 +1,28 @@
+{
+  "name": "sm-graphql",
+  "version": "0.0.1",
+  "description": "sm-engine GraphQL interface",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Artem Tarasov <artem.tarasov@embl.de>",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "elasticsearch": "^12.1.0",
+    "express": "^4.14.0",
+    "graphql": "^0.8.2",
+    "graphql-server-express": "^0.4.3",
+    "graphql-tools": "^0.8.3",
+    "pg": "^6.1.0",
+    "pg-promise": "^5.4.7",
+    "sprintf-js": "^1.0.3"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.18.0",
+    "babel-preset-es2015": "^6.18.0",
+    "nodemon": "^1.11.0"
+  }
+}
