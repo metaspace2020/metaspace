@@ -23,9 +23,9 @@ class AWSInstManager(object):
         if verbose:
             pprint(self.conf)
 
-    def find_inst_by_name(self, inst_name):
+    def find_inst_by_hostgroup(self, inst_name):
         instances = list(self.ec2.instances.filter(
-                Filters=[{'Name': 'tag:Name', 'Values': [inst_name]},
+                Filters=[{'Name': 'tag:hostgroup', 'Values': [inst_name]},
                          {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']}]))
         return instances
 
@@ -115,7 +115,7 @@ class AWSInstManager(object):
     def start_instances(self, inst_name, inst_type, spot_price, inst_n, image, el_ip_id,
                         sec_group, host_group, block_dev_maps):
         print('Start {} instance(s) of type {}, name={}'.format(inst_n, inst_type, inst_name))
-        instances = self.find_inst_by_name(inst_name)
+        instances = self.find_inst_by_hostgroup(inst_name)
         new_inst_n = inst_n - len(instances)
 
         if len(instances) > inst_n:
@@ -140,7 +140,7 @@ class AWSInstManager(object):
         print('Success')
 
     def stop_instances(self, inst_name, method='stop'):
-        instances = self.find_inst_by_name(inst_name)
+        instances = self.find_inst_by_hostgroup(inst_name)
 
         if not self.dry_run:
             for inst in instances:

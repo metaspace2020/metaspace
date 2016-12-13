@@ -23,17 +23,21 @@
 
   tasks:
     - include_vars:
-        file: group_vars/create_ami_cluster_config.yml
+        file: ./group_vars/create_ami_cluster_config.yml
 
     - debug: var=ansible_date_time.iso8601
     - debug: var=hostvars['master'].ansible_ec2_instance_id
     - debug: var=hostvars['slave'].ansible_ec2_instance_id
 
+    - set_fact:
+        master_hostgroup: "{{ cluster_configuration.instances.master.hostgroup}}"
+        slave_hostgroup: "{{ cluster_configuration.instances.slave.hostgroup}}"
+
     - name: Create a master AMI
       ec2_ami:
-        name: sm-spark-master-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}
+        name: "{{ master_hostgroup }}-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}"
         instance_id: "{{ hostvars['master'].ansible_ec2_instance_id }}"
-        tags: {"hostgroup": "{{ cluster_configuration.instances.master.hostgroup}}" }
+        tags: {"hostgroup": "{{ master_hostgroup }}" }
         wait: yes
       register: instance
 
@@ -41,9 +45,9 @@
 
     - name: Create a slave AMI
       ec2_ami:
-        name: sm-spark-slave-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}
+        name: "{{ slave_hostgroup }}-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}"
         instance_id: "{{ hostvars['slave'].ansible_ec2_instance_id }}"
-        tags: {"hostgroup": "{{ cluster_configuration.instances.slave.hostgroup}}" }
+        tags: {"hostgroup": "{{ slave_hostgroup }}" }
         wait: yes
       register: instance
 
