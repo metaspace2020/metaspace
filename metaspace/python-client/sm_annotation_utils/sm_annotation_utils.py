@@ -80,9 +80,9 @@ class SMDataset(object):
     def annotations(self, fdr=0.1):
         if fdr not in [0.05, 0.1, 0.2, 0.5]:
             print('fdr request does not match default elastic search defaults')
-        fields = ['sf', 'adduct', 'fdr']
+        fields = ['sf', 'adduct', 'fdr', 'comp_names']
         response = self._es_query.fields(fields).scan()
-        annotations = [(r.sf[0], r.adduct[0]) for r in response if all([r.fdr, r.fdr[0] <= fdr])]
+        annotations = [(r.sf[0], r.adduct[0], r.comp_names[0].split("|")) for r in response if all([r.fdr, r.fdr[0] <= fdr])]
         return annotations
 
     def results(self, db_name='HMDB'):
