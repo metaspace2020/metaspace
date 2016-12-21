@@ -1,6 +1,25 @@
 {
+  "$schema": "http://json-schema.org/schema#",
+  "id": "https://raw.githubusercontent.com/METASPACE2020/metadata/master/min%20metadata%20schema.json",
   "title": "Metadata Submission",
   "type": "object",
+  "definitions": {
+    "person": {
+      "type": "object",
+      "required": ["Surname", "First_Name", "Email"],
+      "properties": {
+        "Surname": {
+          "type": "string"
+        },
+        "First_Name": {
+          "type": "string"
+        },
+        "Email": {
+          "type": "string"
+        }
+      }
+    }
+  },
   "properties": {
     "Sample_Information": {
       "type": "object",
@@ -78,39 +97,16 @@
     },
     "Submitted_By": {
       "type": "object",
-      "required": ["Institution"],
+      "required": ["Institution", "Submitter"],
       "properties": {
         "Institution": {
           "type": "string"
         },
         "Submitter": {
-          "type": "object",
-          "required": ["Surname", "First_Name", "Email"],
-          "properties": {
-            "Surname": {
-              "type": "string"
-            },
-            "First_Name": {
-              "type": "string"
-            },
-            "Email": {
-              "type": "string"
-            }
-          }
+          "$ref": "#/definitions/person"
         },
         "Principal_Investigator": {
-          "type": "object",
-          "properties": {
-            "Surname": {
-              "type": "string"
-            },
-            "First_Name": {
-              "type": "string"
-            },
-            "Email": {
-              "type": "string"
-            }
-          }
+          "$ref": "#/definitions/person"
         }
       }
     },
