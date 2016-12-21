@@ -1,7 +1,8 @@
 {
-  "$schema": "http://json-schema.org/schema#",
+  "$schema": "http://json-schema.org/draft-04/schema#",
   "id": "https://raw.githubusercontent.com/METASPACE2020/metadata/master/min%20metadata%20schema.json",
   "title": "Metadata Submission",
+  "description": "Minimal metadata for imaging mass spectrometry (imaging MS) as developed in the METASPACE project",
   "type": "object",
   "definitions": {
     "person": {
