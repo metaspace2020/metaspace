@@ -7,7 +7,6 @@
   "definitions": {
     "person": {
       "type": "object",
-      "required": ["Surname", "First_Name", "Email"],
       "properties": {
         "Surname": {
           "type": "string"
@@ -104,7 +103,8 @@
           "type": "string"
         },
         "Submitter": {
-          "$ref": "#/definitions/person"
+          "$ref": "#/definitions/person",
+          "required": ["Surname", "First_Name", "Email"]
         },
         "Principal_Investigator": {
           "$ref": "#/definitions/person"
@@ -116,11 +116,11 @@
       "required": ["Metabolite_Database", "Dataset_Name"],
       "properties":{
         "Metabolite_Database": {
-            "type": "string"
-        },
-      "Dataset_Name":{
           "type": "string"
-       }
+        },
+        "Dataset_Name":{
+          "type": "string"
+        }
       }
     },
     "Additional_Information": {
