@@ -10,3 +10,6 @@ before_script:
 
 script:
   - docker-compose run --rm web bash docker/run_unittests.sh
+
+after_success:
+  coveralls
