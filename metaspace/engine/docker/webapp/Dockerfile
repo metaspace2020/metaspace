@@ -11,8 +11,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends openjdk-7-jre-h
 ENV JAVA_HOME /usr/lib/jvm/java-7-openjdk-amd64
 
 # install Spark
-ENV SPARK_DIR spark-1.6.0-bin-hadoop2.6
-RUN wget -qO - http://apache.lauf-forum.at/spark/spark-1.6.0/$SPARK_DIR.tgz | tar xz
+ENV SPARK_DIR spark-2.0.2-bin-hadoop2.7
+RUN wget -qO - http://apache.lauf-forum.at/spark/spark-2.0.2/$SPARK_DIR.tgz | tar xz
 ENV SPARK_HOME /root/$SPARK_DIR
 
 # install Conda (sci-oriented package manager for Python)
