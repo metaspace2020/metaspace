@@ -16,10 +16,12 @@
 - name: Make Kibana to listen to any ip address
   lineinfile:
     dest: /etc/kibana/kibana.yml
+
     regexp: server.host
     line: "server.host: 0.0.0.0"
+  when: bound_to_any_host
 
-- name: ES conf update restart
+- name: Kibana conf update restart
   service: name=kibana state=restarted
 
 - name: Start EleasticSearch service

@@ -1,2 +1,2 @@
 elasticsearch_version: 2.4.0
-kibana_version: 4.5.4
+bound_to_any_host: true

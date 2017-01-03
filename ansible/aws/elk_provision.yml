@@ -1,0 +1,23 @@
+---
+
+- name: ELK instance configuration
+  hosts: elk
+  user: ubuntu
+  gather_facts: no
+
+  tasks:
+    - name: Install python-simplejson
+      become: yes
+      raw: apt-get update && apt-get install -y python-simplejson
+
+
+- name: Install and configure ES, Kibana, Nginx
+  hosts: elk
+  user: ubuntu
+  gather_facts: yes
+
+  roles:
+    - role: common
+      become: yes
+
+    - role: elk
