@@ -1,0 +1,33 @@
+---
+
+filebeat_config:
+  filebeat:
+    prospectors:
+      - input_type: log
+        paths: "{{ spark_master_filebeat_log_paths }}"
+        document_type: "{{ spark_master_filebeat_document_type }}"
+
+        multiline:
+          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}"
+          negate: "true"
+          match: after
+
+  output:
+    elasticsearch:
+      hosts: ["{{ elk_private_ip }}:9200"]
+      pipeline: "{{ spark_master_elk_es_ingest_node_pipeline_id }}"
+      #protocol: "https"
+      username: "{{ elk_es_user }}"
+      password: "{{ elk_es_password }}"
+
+ingest_node_pipelines:
+  - description: "Ingest node description for the sm engine log messages"
+    processors:
+      - grok:
+          field: "message"
+          patterns:
+            - "%{TIMESTAMP_ISO8601:timestamp} - %{LOGLEVEL:level} - %{NOTSPACE:component} - %{NOTSPACE:file_line} -%{GREEDYDATA:msg}"
+      - date:
+          field: "timestamp"
+          formats:
+            - "yyyy-MM-dd HH:mm:ss,SSS"
