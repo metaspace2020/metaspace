@@ -9,4 +9,4 @@ before_script:
   - cd docker && docker-compose build
 
 script:
-  - docker-compose run --rm web bash docker/run_unittests.sh
+  - docker-compose run -e KEY=$COVERALLS_REPO_TOKEN --rm web bash docker/run_unittests.sh
