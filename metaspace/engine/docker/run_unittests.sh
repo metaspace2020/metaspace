@@ -8,3 +8,4 @@ cp docker/config.json conf/config.json
 cp conf/sm_log.cfg.template conf/sm_log.cfg
 mkdir /code/sm-engine/logs
 coverage run --source=./sm/engine --omit=./sm/engine/tests/* -m py.test sm/engine/tests
+coveralls
