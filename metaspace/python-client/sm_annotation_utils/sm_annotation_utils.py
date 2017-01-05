@@ -55,8 +55,8 @@ class SMDataset(object):
         self._db_cursor = db_cursor
         self._properties = {}
         self._name = self.name
-        es_search = Search(using=es_client, index=index_name)
-        self._es_query = es_search.query('term', ds_name=self._name)
+        self.es_search = Search(using=es_client, index=index_name)
+        self._es_query = self.es_search.query('term', ds_name=self._name)
 
     def _db_fetch(self, prop):
         if prop in self._properties:
@@ -77,18 +77,21 @@ class SMDataset(object):
     def __repr__(self):
         return "SMDataset({} | ID: {})".format(self._name, self._id)
 
-    def annotations(self, fdr=0.1):
+    def annotations(self, fdr=0.1, database=None):
         if fdr not in [0.05, 0.1, 0.2, 0.5]:
             print('fdr request does not match default elastic search defaults')
-        fields = ['sf', 'adduct', 'fdr', 'comp_names']
-        response = self._es_query.fields(fields).scan()
-        annotations = [(r.sf[0], r.adduct[0], r.comp_names[0].split("|")) for r in response if all([r.fdr, r.fdr[0] <= fdr])]
+        fields = ['sf', 'adduct', 'fdr']
+        if not database:
+            response = self._es_query.scan()
+        else:
+            response = self.es_search.query('term', ds_name=self._name).query("match", db_name=database).scan()
+        annotations = [(r.sf, r.adduct) for r in response if all([r.fdr, r.fdr <= fdr])]
         return annotations
 
-    def results(self, db_name='HMDB'):
+    def results(self):
         fields = ['sf', 'adduct', 'fdr', 'msm', 'chaos', 'image_corr', 'pattern_match']
-        response = self._es_query.fields(fields).query('term', db_name=db_name).scan()
-        return pd.DataFrame([(r.sf, r.adduct, r.msm, r.chaos, r.image_corr, r.pattern_match) for r in response],
+        response = self._es_query.fields(fields).scan()
+        return pd.DataFrame([(r.sf[0], r.adduct[0], r.msm[0], r.chaos[0], r.image_corr[0], r.pattern_match[0]) for r in response],
                             columns=['sf', 'adduct', 'msm', 'moc', 'spat', 'spec'])\
                  .set_index(['sf', 'adduct'])
 
@@ -268,7 +271,7 @@ class MolecularDatabase(object):
     def ids(self, sum_formula):
         return self._data.get(sum_formula, {}).get('ids', {})
 
-def plot_diff(dist_df, ref_df, t="", xlabel='', ylabel=''):
+def plot_diff(ref_df, dist_df,  t="", xlabel='', ylabel='', col='msm'):
     import plotly.graph_objs as go
     from plotly.offline import iplot
     plot_df = dist_df.join(ref_df, rsuffix='_ref', how='inner').dropna()
@@ -289,8 +292,8 @@ def plot_diff(dist_df, ref_df, t="", xlabel='', ylabel=''):
             continue
 
         traces.append(go.Scatter(
-            x=df['msm_ref'],
-            y=df['msm'],
+            x=df['{}_ref'.format(col)],
+            y=df['{}'.format(col)],
             text=txt,
             mode='markers',
             name=adduct
@@ -301,16 +304,16 @@ def plot_diff(dist_df, ref_df, t="", xlabel='', ylabel=''):
         autosize=False,
         height=500,
         hovermode='closest',
-        title=t+' MSM values',
+        title=t+' \'{}\' values'.format(col),
         width=500,
         xaxis=go.XAxis(
-            autorange=True,
+            autorange=False,
             range=[-0.05675070028979684, 1.0323925590539844],
             title=xlabel,
             type='linear'
         ),
         yaxis=go.YAxis(
-            autorange=True,
+            autorange=False,
             range=[-0.0015978995361995152, 1.0312345837176764],
             title=ylabel,
             type='linear'
@@ -318,7 +321,11 @@ def plot_diff(dist_df, ref_df, t="", xlabel='', ylabel=''):
     ))
     iplot(fig, filename='ref_dist_msm_scatter')
     tmp_df = plot_df.dropna()
+<<<<<<< Updated upstream
     print(np.corrcoef(tmp_df['msm'].values, tmp_df['msm_ref'].values))
+=======
+    print np.corrcoef(tmp_df[col].values, tmp_df['{}_ref'.format(col)].values)
+>>>>>>> Stashed changes
     return tmp_df
 
 
