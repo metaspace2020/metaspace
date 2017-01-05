@@ -21,3 +21,4 @@
       become: yes
 
     - role: elk
+      nginx_server_name: "{{ ansible_ec2_public_ipv4 }}"
