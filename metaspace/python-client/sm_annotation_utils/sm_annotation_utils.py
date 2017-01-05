@@ -321,11 +321,6 @@ def plot_diff(ref_df, dist_df,  t="", xlabel='', ylabel='', col='msm'):
     ))
     iplot(fig, filename='ref_dist_msm_scatter')
     tmp_df = plot_df.dropna()
-<<<<<<< Updated upstream
-    print(np.corrcoef(tmp_df['msm'].values, tmp_df['msm_ref'].values))
-=======
-    print np.corrcoef(tmp_df[col].values, tmp_df['{}_ref'.format(col)].values)
->>>>>>> Stashed changes
     return tmp_df
 
 
