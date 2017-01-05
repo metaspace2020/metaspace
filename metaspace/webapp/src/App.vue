@@ -1,6 +1,10 @@
 <template>
   <div id="app">
-    <el-row :gutter="20">
+    <el-row>
+      <metaspace-header>
+      </metaspace-header>
+    </el-row>
+    <el-row id="main-content" :gutter="20">
       <el-col :span=12>
         <annotation-filter
             @change="updateTable"
@@ -24,6 +28,7 @@
  import AnnotationTable from './components/AnnotationTable.vue';
  import AnnotationFilter from './components/AnnotationFilter.vue';
  import AnnotationView from './components/AnnotationView.vue';
+ import MetaspaceHeader from './components/MetaspaceHeader.vue';
  import gql from 'graphql-tag';
 
  export default {
@@ -42,7 +47,8 @@
    components: {
      AnnotationTable,
      AnnotationFilter,
-     AnnotationView
+     AnnotationView,
+     MetaspaceHeader
    },
    methods: {
      updateTable (annotationFilter) {
@@ -102,6 +108,10 @@
      background-color: #3c82f7;
      color: #fff;
      box-shadow: 0 3px 0 #0f69ff;
+ }
+
+ #main-content {
+   padding-top: 62px;
  }
 
 </style>
