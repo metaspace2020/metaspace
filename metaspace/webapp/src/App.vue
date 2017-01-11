@@ -5,7 +5,7 @@
       </metaspace-header>
     </el-row>
     <el-row id="main-content" :gutter="20">
-      <el-col :span=12>
+      <el-col :xs="24" :sm="24" :md="24" :lg="12">
         <annotation-filter
             @change="updateTable"
             @fdrChange="updateFDRLevel">
@@ -16,7 +16,7 @@
         </annotation-table>
       </el-col>
 
-      <el-col :span=12>
+      <el-col :xs="24" :sm="24" :md="24" :lg="12">
         <annotation-view :annotation="selectedAnnotation">
         </annotation-view>
       </el-col>

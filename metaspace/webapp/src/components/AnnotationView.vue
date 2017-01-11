@@ -1,25 +1,17 @@
 <template>
   <el-row>
     <el-col v-if="annotation">
-      <div class="av-centered av-heading">
-        <span class="sf-big" v-html="formattedSumFormula"> </span>
-        <span class="mz-big">{{ annotation.mz.toFixed(4) }}</span>
-      </div>
-
       <el-collapse id="annot-content" v-model="activeSections">
-        <el-collapse-item title="Ion images" name="images" class="av-centered">
-          <el-radio v-model="showAllMzImages"
-                    :label="0">Principal peak</el-radio>
-          <el-radio v-model="showAllMzImages"
-                    :label="1">All isotopes</el-radio>
-          <div id="isotope-images-container" v-if="showAllMzImages">
-            <div class="small-peak-image" v-for="img in annotation.isotopeImages">
-            {{ img.mz.toFixed(4) }}<br/>
-            <img :src="img.url"
-                class="ion-image"/>
-            </div>
+
+        <div class="el-collapse-item">
+          <div class="el-collapse-item__header av-centered">
+            <span class="sf-big" v-html="formattedSumFormula"> </span>
+            <span class="mz-big">{{ annotation.mz.toFixed(4) }}</span>
           </div>
-          <div v-else style="margin-top: 10px;">
+        </div>
+
+        <el-collapse-item title="m/z image" name="images" class="av-centered">
+          <div style="margin-top: 10px;">
             <img :src="annotation.ionImage.url"
                  class="ion-image principal-peak-image"/>
           </div>
@@ -33,7 +25,7 @@
           </li>
         </ul>
         </el-collapse-item>
-        <el-collapse-item title="Scores" name="scores">
+        <el-collapse-item title="Diagnostics" name="scores">
           <table id="details-table">
             <tr>
               <td>MSM score</td>
@@ -52,6 +44,13 @@
               <td>{{ annotation.rhoChaos.toFixed(3) }} </td>
             </tr>
           </table>
+          <div id="isotope-images-container">
+            <div class="small-peak-image" v-for="img in annotation.isotopeImages">
+            {{ img.mz.toFixed(4) }}<br/>
+            <img :src="img.url"
+                class="ion-image"/>
+            </div>
+          </div>
         </el-collapse-item>
         <el-collapse-item title="Dataset info" name="metadata">
           <dataset-info :metadata="JSON.parse(annotation.dataset.metadataJson)">
@@ -74,7 +73,6 @@
    props: ['annotation'],
    data() {
      return {
-       showAllMzImages: 0,
        activeSections: ["images"]
      };
    },
@@ -131,11 +129,11 @@
 
  .sf-big {
    text-shadow : 0 0 0px #000;
-   font: 28px/40px 'Arvo', serif;
+   font: 24px 'Arvo', serif;
  }
 
  .mz-big {
-   font: 25px/40px 'Roboto';
+   font: 24px 'Roboto';
    padding: 0px 20px;
  }
 
@@ -173,14 +171,11 @@
  }
 
  .av-centered {
-   text-align: center;
+   text-align: center !important;
+   cursor: default !important;
  }
 
  .el-collapse-item__header {
    text-align: left;
- }
-
- .av-heading {
-   margin-bottom: 20px;
  }
 </style>

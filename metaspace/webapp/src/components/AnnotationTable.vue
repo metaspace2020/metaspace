@@ -7,6 +7,8 @@
               highlight-current-row
               width="100%"
               tabindex="1"
+              default-sort-order="descending"
+              default-sort-prop="msmScore"
               :row-class-name="getRowClass"
               @keyup.native="onKeyUp"
               @keydown.native="onKeyDown"
