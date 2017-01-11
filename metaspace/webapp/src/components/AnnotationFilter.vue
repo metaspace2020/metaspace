@@ -102,7 +102,6 @@
    },
    data () {
      return {
-       datasetNames: [],
        availableFdrLevels: [0.05, 0.1, 0.2, 0.5],
        fdrLevel: 0.1,
        filter: {
