@@ -25,6 +25,11 @@ enum DatasetOrderBy {
   ORDER_BY_NAME
 }
 
+enum AnnotationOrderBy {
+  ORDER_BY_MZ
+  ORDER_BY_MSM
+}
+
 enum SortingOrder {
   ASCENDING,
   DESCENDING
@@ -75,7 +80,6 @@ type MzImage {
 
 type Annotation {
   id: String!
-
   dataset: Dataset!
   sumFormula: String!
   adduct: String!
@@ -100,7 +104,7 @@ input NumericRange {
 
 input AnnotationFilter {
   database: String
-  datasetName: String
+  datasetNamePrefix: String
   mzFilter: NumericRange
   msmScoreFilter: NumericRange
   compoundQuery: String
