@@ -71,7 +71,6 @@
 </template>
 
 <script>
- import { Message } from 'element-ui';
  import gql from 'graphql-tag';
  import { renderSumFormula } from '../util.js';
  import Vue from 'vue';

@@ -4,24 +4,47 @@
       <a style="display: flex" href="http://metasp.eu">
         <img src="http://metasp.eu/files/logo.png"
              alt="Metaspace" title="Metaspace"
-             class="vert-centered"></img>
+             class="vc"></img>
       </a>
     </div>
 
-    <div class="header-item vert-centered">
-      <a class="btn-link vert-centered" href="http://upload.metasp.eu"
+    <div class="header-item vc">
+      <a class="btn-link vc" href="http://upload.metasp.eu"
           target="_blank">
         <el-button icon="upload">
           Upload a dataset
         </el-button>
       </a>
     </div>
+
+    <div v-for="page in pages"
+         class="header-item vc page-link"
+         v-bind:class="{active: value == page.id}"
+         @click="goto(page.id)">
+      <div class="vc">
+        {{ page.name }}
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
  export default {
-   name: 'metaspace-header'
+   name: 'metaspace-header',
+   props: ["value"],
+   data() {
+     return {
+       pages: [
+         {id: 'results', name: 'Results'},
+         {id: 'datasets', name: 'Datasets'}
+       ]
+     };
+   },
+   methods: {
+     goto(page) {
+       this.$emit('input', page);
+     }
+   }
  }
 </script>
 
@@ -42,17 +65,28 @@
    display: flex;
    float: left;
    border: none;
-   margin-left: 15px;
-   margin-right: 30px;
+   padding-left: 15px;
+   padding-right: 15px;
    height: 62px;
  }
 
- .vert-centered {
+ /* vertically centered */
+ .vc {
    align-self: center;
  }
 
  .btn-link {
    text-decoration: none;
    color: inherit;
+ }
+
+ .page-link {
+   text-align: center;
+   color: white;
+   cursor: pointer;
+ }
+
+ .page-link.active {
+   box-shadow: inset 0 0 0 1px #357,inset 0 5px 10px #234;
  }
 </style>

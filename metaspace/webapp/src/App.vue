@@ -1,10 +1,15 @@
 <template>
   <div id="app">
     <el-row>
-      <metaspace-header>
+      <metaspace-header v-model="page">
       </metaspace-header>
+
+      <div class="warning">
+        NOT PRODUCTION-READY! Known limitations: only annotations from <b>HMDB</b> are shown; <b>NO</b> CSV export; <b>NO</b> isotope pattern plot.
+      </div>
     </el-row>
-    <el-row id="main-content" :gutter="20">
+
+    <el-row id="main-content" :gutter="20" v-if="page == 'results'">
       <el-col :xs="24" :sm="24" :md="24" :lg="12">
         <annotation-filter
             @change="updateTable"
@@ -21,6 +26,10 @@
         </annotation-view>
       </el-col>
     </el-row>
+
+    <el-row id="main-content" v-if="page == 'datasets'">
+      <dataset-table></dataset-table>
+    </el-row>
   </div>
 </template>
 
@@ -28,6 +37,7 @@
  import AnnotationTable from './components/AnnotationTable.vue';
  import AnnotationFilter from './components/AnnotationFilter.vue';
  import AnnotationView from './components/AnnotationView.vue';
+ import DatasetTable from './components/DatasetTable.vue';
  import MetaspaceHeader from './components/MetaspaceHeader.vue';
  import gql from 'graphql-tag';
 
@@ -39,15 +49,14 @@
        annotationFilter: {datasetName: '', minMSM: 0.1},
        selectedAnnotation: null,
        fdrLevel: 0.1,
-       googleSignInParams: {
-         client_id: '268025466937-o15ia458d8lnuohj09slh1aqbl3ja33i.apps.googleusercontent.com'
-       }
+       page: "results"
      }
    },
    components: {
      AnnotationTable,
      AnnotationFilter,
      AnnotationView,
+     DatasetTable,
      MetaspaceHeader
    },
    methods: {
@@ -111,7 +120,18 @@
  }
 
  #main-content {
-   padding-top: 62px;
+   padding-top: 82px;
+ }
+
+ .warning {
+  position: fixed;
+  z-index: 1000;
+  top: 62px;
+  left: 0;
+  right: 0;
+  height: 28px;
+  text-align: center;
+  background-color: #fd8;
  }
 
 </style>
