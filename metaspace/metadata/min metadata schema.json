@@ -17,7 +17,7 @@
         },
         "Email": {
           "type": "string",
-          "description": "required so we can notify you when your dataset is processed"
+          "description": "an email address for contact"
         }
       }
     }
@@ -26,7 +26,7 @@
     "Sample_Information": {
       "type": "object",
       "required": ["Organism", "Organism_Part", "Condition"],
-      "description": "Information about the imaging sample.  Please select 'other' and enter '-' if not applicable",
+      "description": "Information about the sample that was imaged.",
       "properties": {
         "Organism": {
           "description": "species of organism",
@@ -47,7 +47,7 @@
       }
     },
     "Sample_Preparation": {
-      "description": "Information about the imaging sample. Please select 'other' and enter '-' if not applicable",
+      "description": "Information about how the sample was prepared for imaging",
       "type": "object",
       "required": ["Sample_Stabilisation", "Tissue_Modification",
                    "MALDI_Matrix", "MALDI_Matrix_Application"],
@@ -94,7 +94,7 @@
         "Detector_Resolving_Power": {
           "type": "object",
           "title": "Detector Resolving Power",
-          "description": "Accurate estimate of the resolving power for the dataset, and the m/z at which it was estimated",
+          "description": "Estimate of the resolving power within the dataset, and the m/z at which it was estimated",
           "required": ["mz", "Resolving_Power"],
           "properties": {
             "mz": {
@@ -137,11 +137,11 @@
       "required": ["Metabolite_Database", "Dataset_Name"],
       "properties":{
         "Metabolite_Database": {
-          "description": "Choose a metabolite database to use",
+          "description": "Metabolite database searched against",
           "type": "string"
         },
         "Dataset_Name":{
-          "description": "A name for your dataset",
+          "description": "Dataset name",
           "type": "string"
         }
       }
@@ -153,19 +153,19 @@
           "type": "string"
         },
         "Sample_Description_Freetext": {
-          "description": "Additional information about your sample (you can simply paste the relevant methods section from a publication)",
+          "description": "Additional sample information (e.g. relevant methods section from a publication)",
           "type": "string"
         },
         "Sample_Preparation_Freetext": {
-          "description": "Additional information about your sample preparation (you can simply paste the relevant methods section from a publication)",
+          "description": "Additional sample preparation information  (e.g. relevant methods section from a publication)",
           "type": "string"
         },
         "Additional_Information_Freetext": {
-          "description": "Additional information about your experiment (you can simply paste the methods section from a publication)",
+          "description": "Additional experimental information (e.g the methods section from a publication)",
           "type": "string"
         },
         "Expected_Molecules_Freetext": {
-          "description": "A \"|\" separated list of molecules or database ids that you know are present in the sample",
+          "description": "A \"|\" separated list of molecules or database ids that are known a priori to be present in the sample",
           "type": "string"
         }
       }
