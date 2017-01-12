@@ -7,6 +7,7 @@
   "definitions": {
     "person": {
       "type": "object",
+      "description": "Name and contact email for a human",
       "properties": {
         "Surname": {
           "type": "string"
@@ -15,7 +16,8 @@
           "type": "string"
         },
         "Email": {
-          "type": "string"
+          "type": "string",
+          "description": "an email address for contact"
         }
       }
     }
@@ -24,45 +26,57 @@
     "Sample_Information": {
       "type": "object",
       "required": ["Organism", "Organism_Part", "Condition"],
+      "description": "Information about the sample that was imaged.",
       "properties": {
         "Organism": {
+          "description": "species of organism",
           "type": "string"
         },
         "Organism_Part": {
+          "description": "part of the organism",
           "type": "string"
         },
         "Condition": {
+          "description": "treatment group or disease state of the organism",
           "type": "string"
         },
         "Sample_Growth_Conditions": {
+          "description": "How the organism was grown",
           "type": "string"
         }
       }
     },
     "Sample_Preparation": {
+      "description": "Information about how the sample was prepared for imaging",
       "type": "object",
       "required": ["Sample_Stabilisation", "Tissue_Modification",
                    "MALDI_Matrix", "MALDI_Matrix_Application"],
       "properties": {
         "Sample_Stabilisation": {
+          "description": "Quenching or preservation method used",
           "type": "string"
         },
         "Tissue_Modification": {
+          "description": "Post stabilisation tissue modification",
           "type": "string"
         },
         "MALDI_Matrix": {
+          "description": "The MALDI matrix used (if any)",
           "type": "string"
         },
         "MALDI_Matrix_Application": {
+          "description": "Method of MALDI matrix application (if any)",
           "type": "string"
         }
       }
     },
     "MS_Analysis": {
       "type": "object",
+      "description": "Details of the image acquisition",
       "required": ["Polarity", "Ionisation_Source", "Analyzer"],
       "properties": {
         "Polarity": {
+          "description": "Instrument polarity used",
           "type": "string",
           "enum": [
             "Positive",
@@ -70,23 +84,28 @@
           ]
         },
         "Ionisation_Source": {
+          "description": "Type of ionisation source used",
           "type": "string"
         },
         "Analyzer": {
+          "description": "Mass analyser used",
           "type": "string"
         },
         "Detector_Resolving_Power": {
           "type": "object",
           "title": "Detector Resolving Power",
+          "description": "Estimate of the resolving power within the dataset, and the m/z at which it was estimated",
           "required": ["mz", "Resolving_Power"],
           "properties": {
             "mz": {
+              "description": "m/z at which the resolving power was calculated (Orbitrap resolution is quoted at m/z=200)",
               "type": "number",
               "minimum": 50,
               "maximum": 5000,
               "default": 200
             },
             "Resolving_Power": {
+              "description": "Peak FWHM / m/z",
               "type": "number",
               "minimum": 10000,
               "maximum": 1000000
@@ -97,6 +116,7 @@
     },
     "Submitted_By": {
       "type": "object",
+      "description": "Information about the uploader",
       "required": ["Institution", "Submitter"],
       "properties": {
         "Institution": {
@@ -113,12 +133,15 @@
     },
     "metaspace_options":{
       "type": "object",
+      "description": "Processing options for the METASPACE engine",
       "required": ["Metabolite_Database", "Dataset_Name"],
       "properties":{
         "Metabolite_Database": {
+          "description": "Metabolite database searched against",
           "type": "string"
         },
         "Dataset_Name":{
+          "description": "Dataset name",
           "type": "string"
         }
       }
@@ -130,15 +153,19 @@
           "type": "string"
         },
         "Sample_Description_Freetext": {
+          "description": "Additional sample information (e.g. relevant methods section from a publication)",
           "type": "string"
         },
         "Sample_Preparation_Freetext": {
+          "description": "Additional sample preparation information  (e.g. relevant methods section from a publication)",
           "type": "string"
         },
         "Additional_Information_Freetext": {
+          "description": "Additional experimental information (e.g the methods section from a publication)",
           "type": "string"
         },
         "Expected_Molecules_Freetext": {
+          "description": "A \"|\" separated list of molecules or database ids that are known a priori to be present in the sample",
           "type": "string"
         }
       }
