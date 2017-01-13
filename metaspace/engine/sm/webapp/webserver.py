@@ -91,7 +91,7 @@ class Application(tornado.web.Application):
                                       config_db['password'], 5432)
 
         self.es = Elasticsearch(hosts=[{"host": config['elasticsearch']['host'],
-                                        "port": config['elasticsearch']['port']}])
+                                        "port": int(config['elasticsearch']['port'])}])
 
         # hack needed to overcome sending expensive query every time results table is filtered or sorted
         res = self.db.query("select ((config::json->'isotope_generation')->'adducts') from dataset as adducts")
