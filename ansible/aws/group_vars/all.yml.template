@@ -12,6 +12,7 @@ postgres_host: "{{ hostvars['web'].ansible_ssh_host }}"
 
 elasticsearch_version: 2.4.0
 es_host: "{{ hostvars['web'].ansible_ssh_host }}"
+es_port: 9200
 
 rabbitmq_version: 3.6.5-1
 rabbitmq_host: "{{ hostvars['queue'].ansible_ssh_host }}"
