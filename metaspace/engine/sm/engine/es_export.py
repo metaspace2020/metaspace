@@ -46,7 +46,8 @@ ORDER BY COALESCE(m.msm, 0::real) DESC
 
 class ESExporter:
     def __init__(self, sm_config):
-        self.es = Elasticsearch(hosts=[{"host": sm_config['elasticsearch']['host']}])
+        self.es = Elasticsearch(hosts=[{"host": sm_config['elasticsearch']['host'],
+                                        "port": sm_config['elasticsearch']['port']}])
         self.ind_client = IndicesClient(self.es)
         self.index = sm_config['elasticsearch']['index']
 
