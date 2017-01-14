@@ -126,39 +126,17 @@ WITH (
   autovacuum_analyze_threshold=5000
 );
 
-DROP TABLE IF EXISTS iso_image;
-CREATE TABLE iso_image (
-	job_id		int,
-	db_id		int,
-	sf_id		int,
-	adduct 		text,
-	peak		int,
-	pixel_inds  int[],
-	intensities	real[],
-	min_int		real,
-	max_int		real,
-	CONSTRAINT iso_image_id_pk PRIMARY KEY(job_id, db_id, sf_id, adduct, peak),
-	CONSTRAINT iso_image_job_id_fk FOREIGN KEY (job_id)
-      REFERENCES job (id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE CASCADE
-)
-WITH (
-  autovacuum_enabled=true,
-  autovacuum_vacuum_threshold=5000,
-  autovacuum_analyze_threshold=5000
-);
-
-
 DROP TABLE IF EXISTS iso_image_metrics;
 CREATE TABLE iso_image_metrics (
-	job_id		int,
-	db_id		int,
-	sf_id		int,
-	adduct 		text,
+	job_id	    int,
+	db_id		    int,
+	sf_id		    int,
+	adduct 	    text,
 	msm         real,
 	fdr         real,
-	stats 		json,
-	peaks_n		int,
+	stats 	    json,
+	peaks_n	    int,
+  iso_images  text[],
 	CONSTRAINT iso_image_metrics_id_pk PRIMARY KEY(job_id, db_id, sf_id, adduct),
 	CONSTRAINT iso_image_metrics_job_id_fk FOREIGN KEY (job_id)
       REFERENCES job (id) MATCH SIMPLE
