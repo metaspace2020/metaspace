@@ -43,11 +43,3 @@
       wait_for: host={{ item }} port=8081 delay=5 timeout=120
       with_items: "{{ spark_slave_ips }}"
       when: not ('localhost' in spark_slave_ips)
-
-    - name: Pull SM config from the remote host
-      fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
-             flat=yes fail_on_missing=yes
-
-    - name: "Put SM config to {{ sm_home }}/conf/config.json"
-      template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
-                owner={{ spark_user }} group={{ spark_user }} mode=0600
