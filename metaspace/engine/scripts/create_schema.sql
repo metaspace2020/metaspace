@@ -136,7 +136,7 @@ CREATE TABLE iso_image_metrics (
 	fdr         real,
 	stats 	    json,
 	peaks_n	    int,
-  iso_images  text[],
+  image_urls  text[],
 	CONSTRAINT iso_image_metrics_id_pk PRIMARY KEY(job_id, db_id, sf_id, adduct),
 	CONSTRAINT iso_image_metrics_job_id_fk FOREIGN KEY (job_id)
       REFERENCES job (id) MATCH SIMPLE
