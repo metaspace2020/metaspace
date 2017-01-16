@@ -1,40 +1,20 @@
 <template>
   <el-row>
-    <el-table id="dataset-table"
-              :data="datasets"
-              border
-              highlight-current-row
-              width="100%">
-      <el-table-column property="institution" label="Institution"
-        min-width="10">
-      </el-table-column>
-      <el-table-column property="name" label="Name" 
-        :formatter="formatDatasetName"
-        min-width="30">
-      </el-table-column>
-      <el-table-column property="submitter" label="Submitted by"
-        :formatter="formatSubmitter"
-        min-width="30">
-      </el-table-column>
-      <el-table-column property="polarity" label="Mode"
-        min-width="10">
-      </el-table-column>
-      <el-table-column property="ionisationSource" label="Source"
-        min-width="7">
-      </el-table-column>
-      <el-table-column property="analyzer.type" label="Analyzer"
-        min-width="10">
-      </el-table-column>
-      <el-table-column property="analyzer.resolvingPower" label="RP @ 400"
-        :formatter="formatResolvingPower"
-        min-width="10">
-      </el-table-column>
-    </el-table>
+    <div class="dataset-list">
+      <div style="font: 24px 'Roboto', sans-serif; padding: 5px;">
+        Recent uploads
+      </div>
+      <dataset-item v-for="(dataset, i) in datasets"
+                    :dataset="dataset"
+                    :class="[i%2 ? 'even': 'odd']">
+      </dataset-item>
+    </div>
   </el-row>
 </template>
 
 <script>
  import gql from 'graphql-tag';
+ import DatasetItem from './DatasetItem.vue';
 
  export default {
    name: 'dataset-table',
@@ -45,9 +25,12 @@
        recordsPerPage: 10
      }
    },
+   components: {
+     DatasetItem
+   },
    apollo: {
      datasets: {
-       query: gql`{allDatasets(offset: 0, limit: 1000) {
+       query: gql`{allDatasets(offset: 0, limit: 100) {
          id
          name
          institution
@@ -61,6 +44,7 @@
            type
            resolvingPower(mz: 400)
          }
+         metadataJson
        }}`,
        update: data => data.allDatasets
      }
@@ -68,10 +52,28 @@
    methods: {
      formatSubmitter: (row, col) =>
        row.submitter.name + " " + row.submitter.surname,
-     formatDatasetName: (row, col) => 
+     formatDatasetName: (row, col) =>
        row.name.split('//', 2)[1],
      formatResolvingPower: (row, col) =>
        (row.analyzer.resolvingPower / 1000).toFixed(0) * 1000
    }
  }
 </script>
+
+<style>
+ .dataset-list {
+   display: flex;
+   flex-direction: column;
+   height: 100%;
+   align-items: center;
+   justify-content: center;
+ }
+
+ .even {
+   background-color: #e6f1ff;
+ }
+
+ .odd {
+   background-color: white;
+ }
+</style>

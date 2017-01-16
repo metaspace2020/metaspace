@@ -105,7 +105,7 @@
        return {
          database: "HMDB",
          datasetNamePrefix: this.filter.datasetName,
-         msmScoreFilter: {min: this.filter.minMSM, max: 1.0},
+         msmScoreFilter: {min: this.filter.minMSM || 0.0, max: 1.0},
          compoundQuery: this.filter.compoundName,
          adduct: this.filter.adduct
        };
@@ -117,7 +117,8 @@
           countAnnotations(filter: $filter)
        }`,
        variables () { return this.queryVariables(); },
-       update: data => data.countAnnotations
+       update: data => data.countAnnotations,
+       debounce: 200
      },
      annotations: {
        query: gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
@@ -158,6 +159,7 @@
          return this.queryVariables();
        },
        update: data => data.allAnnotations,
+       debounce: 200,
        result (data) {
          // For whatever reason (could be a bug), vue-apollo seems to first refetch
          // data for the current page and only then fetch the updated data.
@@ -313,6 +315,10 @@
    height: 36px;
    display: flex;
    align-items: center;
+ }
+
+ #annot-table th > .cell{
+     height: 43px;
  }
 
  /* don't show long institution/dataset names */

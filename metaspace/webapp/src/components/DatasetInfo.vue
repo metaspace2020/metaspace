@@ -28,14 +28,12 @@
 
  export default {
    name: 'dataset-info',
-   props: ['metadata'],
+   props: ['metadata', 'expandedKeys'],
    data() {
      return {
        schema: metadataSchema,
        validator,
-       defaultExpandedKeys: [
-         'Sample information', 'Submitted by', 'Submitter'
-       ]
+       defaultExpandedKeys: this.expandedKeys
      }
    },
    computed: {

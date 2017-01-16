@@ -1,23 +1,21 @@
 <template>
-  <transition name="fade">
-    <div class="tf-outer">
-      <div class="tf-name">
-        {{ name }}:
-      </div>
-
-      <el-popover trigger="click"
-                  placement="top"
-                  width="300px">
-        <slot name="edit"></slot>
-        <div class="tf-value" slot="reference">
-          <slot name="show"></slot>
-        </div>
-      </el-popover>
-
-      <div class="tf-remove el-icon-circle-close"
-           @click="destroy"></div>
+  <div class="tf-outer">
+    <div class="tf-name">
+      {{ name }}:
     </div>
-  </transition>
+
+    <el-popover trigger="click"
+                placement="top"
+                width="300px">
+      <slot name="edit"></slot>
+      <div class="tf-value" slot="reference">
+        <slot name="show"></slot>
+      </div>
+    </el-popover>
+
+    <div class="tf-remove el-icon-circle-close"
+         @click="destroy"></div>
+  </div>
 </template>
 
 <script>
@@ -39,7 +37,7 @@
    text-align: center;
    border: 2px solid #3614CC;
    padding: 0px;
-   margin: 5px;
+   margin: 0px 5px 7px 5px;
    border-radius: 8px;
  }
 
@@ -74,6 +72,7 @@
    width: 100%;
  }
 
+ /*
  .fade-leave-active {
    animation: remove-filter-animation 0.1s linear forwards;
  }
@@ -89,4 +88,5 @@
      transform : translateY(30px);
    }
  }
+ */
 </style>

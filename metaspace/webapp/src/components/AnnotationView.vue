@@ -1,5 +1,6 @@
 <template>
   <el-row>
+    <router-view></router-view>
     <el-col v-if="annotation">
       <el-collapse id="annot-content" v-model="activeSections">
 
@@ -53,7 +54,8 @@
           </div>
         </el-collapse-item>
         <el-collapse-item title="Dataset info" name="metadata">
-          <dataset-info :metadata="JSON.parse(annotation.dataset.metadataJson)">
+          <dataset-info :metadata="JSON.parse(annotation.dataset.metadataJson)"
+                        :expandedKeys="['Sample information', 'Submitted by', 'Submitter']">
           </dataset-info>
         </el-collapse-item>
       </el-collapse>
@@ -129,7 +131,7 @@
 
  .sf-big {
    text-shadow : 0 0 0px #000;
-   font: 24px 'Arvo', serif;
+   font: 24px 'Roboto', sans-serif;
  }
 
  .mz-big {

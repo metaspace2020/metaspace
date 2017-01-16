@@ -8,43 +8,29 @@
       </a>
     </div>
 
-    <div class="header-item vc">
-      <a class="btn-link vc" href="http://upload.metasp.eu"
-          target="_blank">
-        <el-button icon="upload">
-          Upload a dataset
-        </el-button>
-      </a>
-    </div>
-
-    <div v-for="page in pages"
-         class="header-item vc page-link"
-         v-bind:class="{active: value == page.id}"
-         @click="goto(page.id)">
-      <div class="vc">
-        {{ page.name }}
+    <router-link tag="div" to="/upload">
+      <div class="header-item vc page-link">
+        <div class="vc">Upload</div>
       </div>
-    </div>
+    </router-link>
+
+    <router-link tag="div" to="/annotations">
+      <div class="header-item vc page-link">
+        <div class="vc">Annotations</div>
+      </div>
+    </router-link>
+
+    <router-link tag="div" to="/datasets">
+      <div class="header-item vc page-link">
+        <div class="vc">Datasets</div>
+      </div>
+    </router-link>
   </div>
 </template>
 
 <script>
  export default {
-   name: 'metaspace-header',
-   props: ["value"],
-   data() {
-     return {
-       pages: [
-         {id: 'results', name: 'Results'},
-         {id: 'datasets', name: 'Datasets'}
-       ]
-     };
-   },
-   methods: {
-     goto(page) {
-       this.$emit('input', page);
-     }
-   }
+   name: 'metaspace-header'
  }
 </script>
 
@@ -86,7 +72,7 @@
    cursor: pointer;
  }
 
- .page-link.active {
+ .router-link-active {
    box-shadow: inset 0 0 0 1px #357,inset 0 5px 10px #234;
  }
 </style>
