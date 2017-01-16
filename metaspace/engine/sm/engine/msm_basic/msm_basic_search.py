@@ -9,6 +9,7 @@ import png
 import requests
 import numpy as np
 from scipy.sparse import coo_matrix
+from requests.adapters import HTTPAdapter
 
 
 logger = logging.getLogger('sm-engine')
@@ -89,14 +90,13 @@ class PngGenerator(object):
         return fp
 
     def save_imgs_as_png(self, imgs):
-        imgs += map(lambda _: None, range(4 - len(imgs)))
+        imgs += [None] * (4 - len(imgs))
         uris = []
         for img in imgs:
             if img is None:
                 uris.append(None)
             else:
                 fp = self._generate_png(img.toarray())
-                from requests.adapters import HTTPAdapter
                 session = requests.Session()
                 session.mount(self.upload_uri, HTTPAdapter(max_retries=5))
                 r = session.post(self.upload_uri, files={'iso_image': fp})
@@ -114,20 +114,20 @@ class MSMBasicSearch(SearchAlgorithm):
 
     def search(self):
         logger.info('Running molecule search')
-        sf_images = compute_sf_images(self.sc, self.ds, self.formulas.get_sf_peak_df(),
+        ion_images = compute_sf_images(self.sc, self.ds, self.formulas.get_sf_peak_df(),
                                       self.ds_config['image_generation']['ppm'])
-        all_sf_metrics_df = self.calc_metrics(sf_images)
+        all_sf_metrics_df = self.calc_metrics(ion_images)
         sf_metrics_fdr_df = self.estimate_fdr(all_sf_metrics_df)
         sf_metrics_fdr_df = self.filter_sf_metrics(sf_metrics_fdr_df)
-        sf_images = self.filter_sf_images(sf_images, sf_metrics_fdr_df)
+        ion_images = self.filter_sf_images(ion_images, sf_metrics_fdr_df)
 
         png_generator = PngGenerator(self.ds.coords)
-        # ion_imgs_url_map = dict(iso_sf_images.mapValues(
-        #     lambda imgs: pgn_generator.save_imgs_as_png(imgs)).collect())
-        ion_imgs_url_map = dict(map(lambda (k, imgs): (k, png_generator.save_imgs_as_png(imgs)), sf_images.collect()))
-        return ion_imgs_url_map
+        ion_img_uris = dict(ion_images.mapValues(
+            lambda imgs: png_generator.save_imgs_as_png(imgs)).collect())
+        # ion_imgs_url_map = dict(map(lambda (k, imgs): (k, png_generator.save_imgs_as_png(imgs)), sf_images.collect()))
 
-        return sf_metrics_fdr_df,
+        # return ion_imgs_url_map
+        return sf_metrics_fdr_df, ion_img_uris
 
     def calc_metrics(self, sf_images):
         all_sf_metrics_df = sf_image_metrics(sf_images, self.sc, self.formulas, self.ds, self.ds_config)
