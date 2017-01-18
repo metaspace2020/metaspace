@@ -1,5 +1,6 @@
 <template>
-  <tag-filter :name="name" @destroy="destroy">
+  <tag-filter :name="name" :removable="removable"
+              @destroy="destroy">
     <el-select slot="edit"
                filterable clearable v-model="value2">
       <el-option v-for="item in options"
@@ -25,7 +26,8 @@
    components: {
      TagFilter
    },
-   props: ["name", "options", "value", "optionFormatter", "valueFormatter"],
+   props: ["name", "options", "value", "optionFormatter", "valueFormatter",
+           "removable"],
    data() {
      return {
        value2: this.value

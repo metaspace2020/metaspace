@@ -103,7 +103,7 @@
      gqlFilter () {
        this.currentPage = 0;
        return {
-         database: "HMDB",
+         database: this.filter.database,
          datasetNamePrefix: this.filter.datasetName,
          msmScoreFilter: {min: this.filter.minMSM || 0.0, max: 1.0},
          compoundQuery: this.filter.compoundName,

@@ -36,6 +36,7 @@
  }
 
  const DEFAULT_FILTER = {
+   database: 'HMDB',
    datasetName: undefined,
    minMSM: 0.1,
    compoundName: undefined,
@@ -45,6 +46,7 @@
  const DEFAULT_FDR = 0.1;
 
  const FILTER_TO_URL = {
+   database: 'db',
    datasetName: 'ds',
    minMSM: 'msmthr',
    compoundName: 'mol',

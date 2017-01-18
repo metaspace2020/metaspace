@@ -39,7 +39,7 @@
 </template>
 
 <script>
-import DatasetInfo from './DatasetInfo.vue';
+ import DatasetInfo from './DatasetInfo.vue';
 
  export default {
    name: 'dataset-item',

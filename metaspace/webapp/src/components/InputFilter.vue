@@ -1,5 +1,6 @@
 <template>
-  <tag-filter :name="name" @destroy="destroy">
+  <tag-filter :name="name" :removable="removable"
+              @destroy="destroy">
     <el-input slot="edit" :value="value" @change="onChange"></el-input>
 
     <span slot="show" class="tf-value-span">
@@ -19,7 +20,7 @@
    components: {
      TagFilter
    },
-   props: ["name", "options", "value"],
+   props: ["name", "options", "value", "removable"],
    methods: {
      onChange(val) {
        this.$emit('input', val);

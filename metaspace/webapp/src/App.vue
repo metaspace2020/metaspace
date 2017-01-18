@@ -5,7 +5,7 @@
       </metaspace-header>
 
       <div class="warning">
-        NOT PRODUCTION-READY! Known limitations: only annotations from <b>HMDB</b> are shown; <b>NO</b> CSV export; <b>NO</b> isotope pattern plot.
+        NOT PRODUCTION-READY! Known limitations: <b>NO</b> CSV export; <b>NO</b> isotope pattern plot; <b>NO</b> user profiles.
       </div>
     </el-row>
 

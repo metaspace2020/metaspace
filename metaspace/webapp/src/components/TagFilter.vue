@@ -14,6 +14,7 @@
     </el-popover>
 
     <div class="tf-remove el-icon-circle-close"
+         v-if="removable"
          @click="destroy"></div>
   </div>
 </template>
@@ -22,7 +23,7 @@
 
  export default {
    name: 'tag-filter',
-   props: ["name"],
+   props: {name: String, removable: {type: Boolean, default: true}},
    methods: {
      destroy() {
        this.$emit('destroy', this.name);
@@ -36,7 +37,7 @@
    display: inline-block;
    text-align: center;
    border: 2px solid #3614CC;
-   padding: 0px;
+   padding: 0px 5px 0px 0px;
    margin: 0px 5px 7px 5px;
    border-radius: 8px;
  }
@@ -61,7 +62,7 @@
  .tf-remove {
    display: inline-block;
    cursor: pointer;
-   padding: 7px 5px 7px 3px;
+   padding: 7px 0px 7px 3px;
  }
 
  .el-popover {

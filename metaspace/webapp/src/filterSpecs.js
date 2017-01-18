@@ -3,6 +3,7 @@ import InputFilter from './components/InputFilter.vue';
 import SingleSelectFilter from './components/SingleSelectFilter.vue';
 import MultiSelectFilter from './components/MultiSelectFilter.vue';
 
+// FIXME: hard-coded adducts
 const ADDUCT_POLARITY = {
   '+H': 'POSITIVE',
   '+Na': 'POSITIVE',
@@ -20,6 +21,17 @@ function formatAdduct (adduct) {
 }
 
 const FILTER_SPECIFICATIONS = {
+  database: {
+    type: SingleSelectFilter,
+    name: 'Database',
+    description: 'Select database',
+    initialValue: 'HMDB', // because we've agreed to process every dataset with it
+
+    // FIXME: hard-coded, should be taken from the server
+    options: ['HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids'],
+    removable: false
+  },
+
   datasetName: {
     type: SingleSelectFilter,
     name: 'Dataset',

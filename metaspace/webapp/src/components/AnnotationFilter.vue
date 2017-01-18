@@ -15,6 +15,7 @@
                :is="f.type"
                :name="f.name"
                :options="f.options"
+               :removable="f.removable"
                :optionFormatter="f.optionFormatter"
                :value="f.value"
                :valueFormatter="f.valueFormatter"

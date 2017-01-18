@@ -17,15 +17,25 @@
                  class="ion-image principal-peak-image"/>
           </div>
         </el-collapse-item>
+
         <el-collapse-item :title="compoundsTabLabel" name="compounds">
-        <div id="compound-list">
-          <div class="compound" v-for="compound in annotation.possibleCompounds">
-            <img :src="compound.imageURL" class="compound-thumbnail"/>
-            <br/>
-            {{ compound.name }}
-          </li>
-        </ul>
+          <div id="compound-list"
+               v-if="annotation.possibleCompounds[0].imageURL">
+            <div class="compound" v-for="compound in annotation.possibleCompounds">
+              <img :src="compound.imageURL" class="compound-thumbnail"/>
+              <br/>
+              {{ compound.name }}
+            </div>
+          </div>
+
+          <!-- FIXME: image links are available only for HMDB -->
+          <div style="font-size: 12px" v-else>
+            <p v-for="compound in annotation.possibleCompounds">
+              {{ compound.name }}
+            </p>
+          </div>
         </el-collapse-item>
+
         <el-collapse-item title="Diagnostics" name="scores">
           <table id="details-table">
             <tr>
