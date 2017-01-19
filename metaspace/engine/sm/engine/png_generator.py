@@ -19,7 +19,7 @@ class PngGenerator(object):
     def __init__(self, coords):
         sm_config = SMConfig.get_conf()
 
-        self._upload_uri = sm_config['services']['_upload_uri']
+        self._upload_uri = sm_config['services']['upload_url']
         self._session = requests.Session()
         self._session.mount(self._upload_uri, HTTPAdapter(max_retries=5))
 

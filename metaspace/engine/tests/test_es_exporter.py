@@ -19,7 +19,8 @@ def test_index_ds_works(create_sm_index, sm_config):
     es_exp = ESExporter(sm_config)
     es_exp.index_ds(db_mock, 'test_ds')
 
-    es = Elasticsearch()
+    es = Elasticsearch(hosts=["{}:{}".format(sm_config['elasticsearch']['host'],
+                                             sm_config['elasticsearch']['port'])])
 
     d = es.get(index=sm_config['elasticsearch']['index'], id='2000-01-01_00h00m_test_db_H20_+H',
                doc_type='annotation', _source=True)

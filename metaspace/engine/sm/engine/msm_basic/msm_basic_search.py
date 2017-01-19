@@ -14,6 +14,11 @@ class MSMBasicSearch(SearchAlgorithm):
         self.metrics = ['chaos', 'spatial', 'spectral']
         self.max_fdr = 0.5
 
+    def _post_images_to_annot_service(self, ion_images):
+        png_generator = PngGenerator(self.ds.coords)
+        return dict(ion_images.mapValues(
+            lambda imgs: png_generator.save_imgs_as_png(imgs)).collect())
+
     def search(self):
         """ Search for molecules in the dataset
 
@@ -29,10 +34,7 @@ class MSMBasicSearch(SearchAlgorithm):
         sf_metrics_fdr_df = self.estimate_fdr(all_sf_metrics_df)
         sf_metrics_fdr_df = self.filter_sf_metrics(sf_metrics_fdr_df)
         ion_images = self.filter_sf_images(ion_images, sf_metrics_fdr_df)
-
-        png_generator = PngGenerator(self.ds.coords)
-        ion_img_urls = dict(ion_images.mapValues(
-            lambda imgs: png_generator.save_imgs_as_png(imgs)).collect())
+        ion_img_urls = self._post_images_to_annot_service(ion_images)
 
         return sf_metrics_fdr_df, ion_img_urls
 

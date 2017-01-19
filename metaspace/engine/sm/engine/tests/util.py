@@ -81,7 +81,11 @@ def sm_config():
         },
         "elasticsearch": {
             "index": "sm_test",
-            "host": "localhost"
+            "host": "localhost",
+            "port": 9392
+        },
+        "services": {
+            "upload_url": "http://localhost/upload"
         },
         "fs": {
             "base_path": "/opt/data/sm_test_data",

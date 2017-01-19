@@ -38,12 +38,24 @@ def create_fill_sm_database(create_test_db, drop_test_db, create_sm_index, sm_co
         db.close()
 
 
+@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch._post_images_to_annot_service')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
 def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metrics_mock,
+                                  _post_images_to_annot_service_mock,
                                   create_fill_sm_database, sm_config):
     get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
     filter_sf_metrics_mock.side_effect = lambda x: x
+
+    url_dict = {
+        'ion_image_url': 'http://localhost/ion_image',
+        'iso_image_urls': ['http://localhost/iso_image_1', None, None, None]
+    }
+    _post_images_to_annot_service_mock.return_value = {
+        (10007, '+H'): url_dict,
+        (10007, '+Na'): url_dict,
+        (10007, '+K'): url_dict
+    }
 
     SMConfig._config_dict = sm_config
 
@@ -69,28 +81,20 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metri
             assert r[2] and r[3]
 
         # image metrics asserts
-        rows = db.select(('SELECT db_id, sf_id, adduct, peaks_n, stats FROM iso_image_metrics '
+        rows = db.select(('SELECT db_id, sf_id, adduct, peaks_n, stats, iso_image_urls, ion_image_url '
+                          'FROM iso_image_metrics '
                           'ORDER BY sf_id, adduct'))
 
         assert rows
         assert rows[0]
         assert tuple(rows[0][:2]) == (0, 10007)
         assert set(rows[0][4].keys()) == {'chaos', 'spatial', 'spectral'}
-
-        # image asserts
-        rows = db.select(('SELECT db_id, sf_id, adduct, peak, intensities, min_int, max_int '
-                          'FROM iso_image '
-                          'ORDER BY sf_id, adduct'))
-        assert rows
-
-        max_int = 0.0
-        for r in rows:
-            max_int = max(max_int, r[-1])
-            assert tuple(r[:2]) == (0, 10007)
-        assert max_int
+        assert rows[0][5] == ['http://localhost/iso_image_1', None, None, None]
+        assert rows[0][6] == 'http://localhost/ion_image'
 
         # ES asserts
-        es = Elasticsearch(hosts=[{"host": sm_config['elasticsearch']['host']}])
+        es = Elasticsearch(hosts=[{"host": sm_config['elasticsearch']['host'],
+                                   "port": int(sm_config['elasticsearch']['port'])}])
         docs = es.search(index=sm_config['elasticsearch']['index'], body={"query" : {"match_all" : {}}})
         assert ([d['_id'].startswith('2000-01-01_00h00m') for d in docs['hits']['hits']])
 
