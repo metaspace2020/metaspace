@@ -9,7 +9,7 @@ from sm.engine.db import DB
 
 logger = logging.getLogger('sm-engine')
 
-METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
+METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
 
 
 class SearchResults(object):
@@ -60,10 +60,10 @@ class SearchResults(object):
         for ind, r in metr_df.reset_index().iterrows():
             metr_json = json.dumps(OrderedDict([(m, float(r[m])) for m in metrics]))
             peaks_n = sf_adduct_peaksn[ind][2]
-            ion_img_urls = sf_iso_images[(r.sf_id, r.adduct)]
+            img_urls = sf_iso_images[(r.sf_id, r.adduct)]
             yield (job_id, db_id, r.sf_id, r.adduct,
                    float(r.msm), float(r.fdr), metr_json,
-                   peaks_n, ion_img_urls)
+                   peaks_n, img_urls['iso_image_urls'], img_urls['ion_image_url'])
 
     def store_sf_img_metrics(self):
         """ Store formula image metrics in the database """
