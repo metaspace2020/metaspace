@@ -1,7 +1,5 @@
 ---
 
-
-
 - name: SM spark slave instances configuration
   hosts: slave
   user: ubuntu

@@ -17,12 +17,16 @@
         chdir: "{{ sm_home }}"
         executable: /bin/bash
       shell: "{{ activate_venv }} && pip install . -U"
+  tags: [slave]
 
 
 - name: Deploying SM engine code to the master
   hosts: master
   user: ubuntu
-  gather_facts: false
+  gather_facts: true
+
+  vars:
+    spark_master_host: "spark://{{ ansible_hostname }}:7077"
 
   tasks:
     - name: Pull sources from the repository
@@ -46,4 +50,4 @@
                 owner={{ spark_user }} group={{ spark_user }} mode=0600
 
     - include: ../restart_supervisor.yml
-
+  tags: [master]
