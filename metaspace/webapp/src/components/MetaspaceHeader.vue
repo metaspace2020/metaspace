@@ -25,6 +25,7 @@
         <div class="vc">Datasets</div>
       </div>
     </router-link>
+
   </div>
 </template>
 
@@ -37,7 +38,7 @@
 <style>
  /* bits and pieces copy-pasted from metasp.eu */
  .b-header {
-   background-color: rgba(0, 105, 224, 0.9);
+   background-color: rgba(0, 105, 224, 0.85);
    position: fixed;
    z-index: 1000;
    top: 0;
@@ -75,4 +76,5 @@
  .router-link-active {
    box-shadow: inset 0 0 0 1px #357,inset 0 5px 10px #234;
  }
+
 </style>
