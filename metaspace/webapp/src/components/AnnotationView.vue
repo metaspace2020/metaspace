@@ -30,7 +30,7 @@
                       {{ compound.name }}
                       <br/>
                       <a :href="compound.information[0].url" target="_blank">
-                        Visit {{ compound.information[0].database }} website
+                        View on {{ compound.information[0].database }} website
                       </a>
                     </figcaption>
                     <img :src="compound.imageURL" class="compound-image"/>
