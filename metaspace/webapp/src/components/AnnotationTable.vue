@@ -57,7 +57,7 @@
     <el-pagination :total="totalCount"
                    :page-size="recordsPerPage"
                    @size-change="onPageSizeChange"
-                   :page-sizes="[15, 20, 25, 30]"
+                   :page-sizes="pageSizes"
                    :current-page="currentPage + 1"
                    @current-change="onPageChange"
                    layout="prev,pager,next,sizes">
@@ -90,6 +90,14 @@
        currentPage: 0,
        recordsPerPage: 15,
        greenCount: 0,
+       pageSizes: [15, 20, 25, 30]
+     }
+   },
+   mounted() {
+     var nCells = (window.innerHeight - 150) / 43;
+     var pageSizes = this.pageSizes.filter(n => nCells >= n).slice(-1);
+     if (pageSizes.length > 0) {
+       this.recordsPerPage = pageSizes[0];
      }
    },
    computed: {
@@ -150,6 +158,10 @@
             possibleCompounds {
               name
               imageURL
+              information {
+                database
+                url
+              }
             }
           }
 

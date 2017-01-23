@@ -79,13 +79,14 @@ if (env == 'development') {
   app.set('views', __dirname);
   app.engine('html', require('ejs').renderFile);
   app.set('view engine', 'html');
-  app.use(router);
 
 } else {
   var compression = require('compression');
   app.use(compression());
   app.use(express.static('.'));
 }
+
+app.use(router);
 
 app.listen(conf.PORT, () => {
   console.log(`listening on ${conf.PORT} port`);

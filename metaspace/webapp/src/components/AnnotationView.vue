@@ -19,20 +19,29 @@
         </el-collapse-item>
 
         <el-collapse-item :title="compoundsTabLabel" name="compounds">
-          <div id="compound-list"
-               v-if="annotation.possibleCompounds[0].imageURL">
+          <div id="compound-list">
             <div class="compound" v-for="compound in annotation.possibleCompounds">
-              <img :src="compound.imageURL" class="compound-thumbnail"/>
+              <el-popover placement="left" trigger="click">
+                <img :src="compound.imageURL" class="compound-thumbnail"
+                     slot="reference"/>
+                <div>
+                  <figure>
+                    <figcaption>
+                      {{ compound.name }}
+                      <br/>
+                      <a :href="compound.information[0].url" target="_blank">
+                        Visit {{ compound.information[0].database }} website
+                      </a>
+                    </figcaption>
+                    <img :src="compound.imageURL" class="compound-image"/>
+                  </figure>
+                </div>
+              </el-popover>
               <br/>
-              {{ compound.name }}
+              <span v-if="compound.name.length < 35">
+                {{ compound.name }}
+              </span>
             </div>
-          </div>
-
-          <!-- FIXME: image links are available only for HMDB -->
-          <div style="font-size: 12px" v-else>
-            <p v-for="compound in annotation.possibleCompounds">
-              {{ compound.name }}
-            </p>
           </div>
         </el-collapse-item>
 
@@ -170,7 +179,12 @@
  }
 
  .compound-thumbnail {
-   max-height: 200px;
+   max-height: 150px;
+   cursor: pointer;
+ }
+
+ .compound-image {
+   height: 700px;
  }
 
  #details-table {
@@ -190,4 +204,15 @@
  .el-collapse-item__header {
    text-align: left;
  }
+
+ figcaption {
+   font-size: 24px;
+   text-align: center;
+ }
+
+ figcaption a {
+   font-size: 20px;
+   text-align: center;
+ }
+
 </style>
