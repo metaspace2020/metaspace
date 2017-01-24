@@ -59,6 +59,10 @@ def send_email(email, subj, body):
 
 
 def on_job_succeeded(msg):
+    base_url = SMConfig.get_conf()['services']['web_app_url']
+    import urllib
+    url_params = urllib.quote(msg['ds_name'])
+    msg['web_app_link'] = '{}/#/annotations?ds={}'.format(base_url, url_params)
     post_to_slack('dart', ' [v] Finished: {}'.format(msg))
 
     ds_name, ds_meta = fetch_ds_metadata(json.loads(msg)['ds_id'])
