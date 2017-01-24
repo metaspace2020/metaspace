@@ -38,8 +38,18 @@
                 </div>
               </el-popover>
               <br/>
-              <span v-if="compound.name.length < 35">
-                {{ compound.name }}
+
+              <span v-if="compound.name.length <= 35">
+                <a :href="compound.information[0].url" target="_blank">
+                  {{ compound.name }}
+                </a>
+              </span>
+
+              <span v-else>
+                <a :href="compound.information[0].url" target="_blank"
+                   :title="compound.name">
+                  {{ compound.name.slice(0, 32) + '...' }}
+                </a>
               </span>
             </div>
           </div>
@@ -173,13 +183,13 @@
    vertical-align: top;
    min-width: 250px;
    font-size: 1rem;
-   height: 180px;
    margin: 10px;
    text-align: center;
  }
 
  .compound-thumbnail {
-   max-height: 150px;
+   height: 200px;
+   width: 200px;
    cursor: pointer;
  }
 

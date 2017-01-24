@@ -15,14 +15,23 @@
               @current-change="onCurrentRowChange"
               @sort-change="onSortChange">
       <el-table-column property="dataset.institution"
-                       label="Institution"
+                       label="Institution" v-if="!hidden('Institution')"
                        min-width="95">
       </el-table-column>
-      <el-table-column property="dataset.name"
-                       label="Dataset"
-                       :formatter="formatDatasetName"
+
+      <el-table-column inline-template
+                       property="dataset.name"
+                       label="Dataset" v-if="!hidden('Dataset')"
                        min-width="140">
+          <div class="cell-wrapper">
+              <span class="cell-span">
+                  {{ formatDatasetName(row) }}
+              </span>
+              <img src="../assets/filter-icon.png"
+                   @click="filterDataset(row)"/>
+          </div>
       </el-table-column>
+
       <el-table-column inline-template
                        label="Annotation"
                        min-width="120">
@@ -37,9 +46,17 @@
                     </li>
                 </ul>
             </div>
-            <span slot="reference" class="sf" v-html="renderSumFormula(row.sumFormula, row.adduct, row.dataset.polarity)"></span>
+
+            <div slot="reference" class="cell-wrapper">
+                <span class="sf cell-span"
+                      v-html="renderSumFormula(row.sumFormula, row.adduct, row.dataset.polarity)"></span>
+                <img src="../assets/filter-icon.png"
+                     v-if="!filter.compoundName"
+                     @click="filterSumFormula(row)"/>
+            </div>
         </el-popover>
       </el-table-column>
+
       <el-table-column property="mz"
                        label="m/z"
                        sortable
@@ -60,7 +77,7 @@
                    :page-sizes="pageSizes"
                    :current-page="currentPage + 1"
                    @current-change="onPageChange"
-                   layout="prev,pager,next,sizes">
+                   layout="pager,sizes">
     </el-pagination>
 
     <div style="padding-top: 10px">
@@ -81,7 +98,7 @@
 
  export default {
    name: 'annotation-table',
-   props: ["filter", "fdrLevel"],
+   props: ["filter", "fdrLevel", "hideColumns"],
    data () {
      return {
        annotations: [],
@@ -224,6 +241,10 @@
        };
      },
 
+     hidden (columnLabel) {
+       return this.hideColumns.indexOf(columnLabel) >= 0;
+     },
+
      renderSumFormula,
      getRowClass (row, col) { return row.fdrLevel <= this.fdrLevel ? 'fdr-pass' : 'fdr-reject'; },
      formatMSM: (row, col) => row.msmScore.toFixed(3),
@@ -310,6 +331,18 @@
          currentRow.classList.remove('current-row');
        // filed a bug: https://github.com/ElemeFE/element/issues/1890
        // TODO check if it's really fixed
+     },
+
+     filterDataset (row) {
+       let filter = Object.assign({}, this.filter,
+                                  {datasetName: row.dataset.name});
+       this.$emit('filterChange', filter);
+     },
+
+     filterSumFormula (row) {
+       let filter = Object.assign({}, this.filter,
+                                  {compoundName: row.sumFormula})
+       this.$emit('filterChange', filter);
      }
    }
  }
@@ -327,10 +360,11 @@
    height: 36px;
    display: flex;
    align-items: center;
+   padding: 0 0 0 10px;
  }
 
  #annot-table th > .cell{
-     height: 43px;
+   height: 43px;
  }
 
  /* don't show long institution/dataset names */
@@ -343,11 +377,11 @@
  }
 
  .el-table__body .fdr-pass>td {
-   background-color: #dfd;
+   background-color: #efe;
  }
 
  .el-table__body .fdr-reject>td {
-   background-color: #fdd;
+   background-color: #fee;
  }
 
  .el-table__body tr.fdr-pass.current-row > td {
@@ -356,6 +390,28 @@
 
  .el-table__body tr.fdr-reject.current-row > td {
    background-color: #faa;
+ }
+
+ .cell-wrapper {
+   width: 100%;
+   display: flex;
+   justify-content: space-between;
+ }
+
+ .cell-span {
+   width: 80%;
+ }
+
+ .cell-wrapper img {
+   display: none;
+ }
+
+ .cell-wrapper:hover img {
+   max-height: 20px;
+   box-shadow: 5px;
+   max-width: 20%;
+   display: inherit;
+   cursor: pointer;
  }
 
 </style>

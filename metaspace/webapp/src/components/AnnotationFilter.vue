@@ -93,6 +93,14 @@
      }
      this.activeKeys = active;
    },
+   watch: {
+     'filter': function(filter) {
+       // handle changes from outside
+       for (var key in filter)
+         if (filter[key] !== undefined && this.activeKeys.indexOf(key) == -1)
+           this.activeKeys.push(key);
+     }
+   },
    data () {
      return {
        availableFdrLevels: [0.05, 0.1, 0.2, 0.5],

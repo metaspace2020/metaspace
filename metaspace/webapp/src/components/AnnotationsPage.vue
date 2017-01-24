@@ -7,14 +7,17 @@
         @fdrChange="updateFDRLevel">
     </annotation-filter>
 
-    <el-col :xs="24" :sm="24" :md="24" :lg="12">
+    <el-col :xs="24" :sm="24" :md="24" :lg="tableWidth">
       <annotation-table :filter="annotationFilter"
                         :fdrLevel="fdrLevel"
+                        :hideColumns="hiddenColumns"
+                        ref="annotationTable"
+                        @filterChange="onFilterChange"
                         @annotationSelected="updateAnnotationView">
       </annotation-table>
     </el-col>
 
-    <el-col :xs="24" :sm="24" :md="24" :lg="12">
+    <el-col :xs="24" :sm="24" :md="24" :lg="24 - tableWidth">
       <annotation-view :annotation="selectedAnnotation">
       </annotation-view>
     </el-col>
@@ -62,6 +65,23 @@
        annotationFilter: DEFAULT_FILTER,
        selectedAnnotation: null,
        fdrLevel: DEFAULT_FDR
+     }
+   },
+   computed: {
+     hiddenColumns() {
+       const {institution, datasetName, database} = this.annotationFilter;
+       let hiddenColumns = [];
+       if (datasetName)
+         hiddenColumns.push('Dataset');
+       if (institution || datasetName)
+         hiddenColumns.push('Institution');
+       if (database)
+         hiddenColumns.push('Database');
+       return hiddenColumns;
+     },
+
+     tableWidth() {
+       return 14 - 2 * this.hiddenColumns.length;
      }
    },
    components: {
