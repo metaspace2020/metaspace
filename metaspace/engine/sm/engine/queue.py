@@ -28,15 +28,16 @@ class QueueConsumer(object):
 
     def on_message(self, ch, method, properties, body):
         self._ch.basic_ack(delivery_tag=method.delivery_tag)
+        msg = json.loads(body)
         try:
-            self._callback(json.loads(body))
+            self._callback(msg)
         except BaseException as e:
             self.logger.error(' [x] Failed: {}'.format(body))
             self.logger.error(e)
-            self._on_failure(body)
+            self._on_failure(msg)
         else:
             self.logger.info(' [v] Finished: {}'.format(body))
-            self._on_success(body)
+            self._on_success(msg)
 
     def stop_consuming(self, signum, frame):
         self._ch.stop_consuming()

@@ -59,13 +59,14 @@ def send_email(email, subj, body):
 
 
 def on_job_succeeded(msg):
+    ds_name, ds_meta = fetch_ds_metadata(msg['ds_id'])
+
     base_url = SMConfig.get_conf()['services']['web_app_url']
     import urllib
-    url_params = urllib.quote(msg['ds_name'])
+    url_params = urllib.quote(ds_name)
     msg['web_app_link'] = '{}/#/annotations?ds={}'.format(base_url, url_params)
-    post_to_slack('dart', ' [v] Finished: {}'.format(msg))
+    post_to_slack('dart', ' [v] Finished: {}'.format(json.dumps(msg)))
 
-    ds_name, ds_meta = fetch_ds_metadata(json.loads(msg)['ds_id'])
     submitter = ds_meta['Submitted_By']['Submitter']
     email_body = (
         'Dear {} {},\n\n'
@@ -84,9 +85,9 @@ def on_job_succeeded(msg):
 
 
 def on_job_failed(msg):
-    post_to_slack('hankey', ' [x] Failed: {}'.format(msg))
+    post_to_slack('hankey', ' [x] Failed: {}'.format(json.dumps(msg)))
 
-    ds_name, ds_meta = fetch_ds_metadata(json.loads(msg)['ds_id'])
+    ds_name, ds_meta = fetch_ds_metadata(msg['ds_id'])
     submitter = ds_meta['Submitted_By']['Submitter']
     email_body = (
         'Dear {} {},\n\n'
