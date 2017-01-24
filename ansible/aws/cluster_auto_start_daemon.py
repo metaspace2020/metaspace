@@ -151,9 +151,10 @@ class ClusterDaemon(object):
                         }
                         self.post_to_slack('rocket', "[v] Cluster started: {}".format(m))
 
-                    self.cluster_setup()
-                    self.sm_engine_deploy()
-                    self.post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
+                    if not self.job_running():
+                        self.cluster_setup()
+                        self.sm_engine_deploy()
+                        self.post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
                 else:
                     if self.cluster_up() and not self.job_running() and self._ec2_hour_over():
                         self.logger.info('Queue is empty. No jobs running. Stopping the cluster...')
