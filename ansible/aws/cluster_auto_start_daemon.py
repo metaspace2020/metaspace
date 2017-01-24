@@ -139,28 +139,30 @@ class ClusterDaemon(object):
 
     def start(self):
         self.logger.info('Started the SM cluster auto-start daemon (interval=%dsec)...', self.interval)
-        while True:
-            sleep(self.interval)
+        try:
+            while True:
+                if not self.queue_empty():
+                    if not self.cluster_up():
+                        self.logger.info('Queue is not empty. Starting the cluster...')
+                        self.cluster_start()
+                        m = {
+                            'master': self.ansible_config['cluster_configuration']['instances']['master'],
+                            'slave': self.ansible_config['cluster_configuration']['instances']['slave']
+                        }
+                        self.post_to_slack('rocket', "[v] Cluster started: {}".format(m))
 
-            if not self.queue_empty():
-                if not self.cluster_up():
-                    self.logger.info('Queue is not empty. Starting the cluster...')
-                    self.cluster_start()
                     self.cluster_setup()
                     self.sm_engine_deploy()
-                    m = {
-                        'master': self.ansible_config['cluster_configuration']['instances']['master'],
-                        'slave': self.ansible_config['cluster_configuration']['instances']['slave']
-                    }
-                    self.post_to_slack('rocket', "[v] Cluster started: {}".format(m))
+                    self.post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
                 else:
-                    if not self.job_running():
-                        self.logger.warning('Queue is not empty. Cluster is up. But no job is running!')
-            else:
-                if self.cluster_up() and not self.job_running() and self._ec2_hour_over():
-                    self.logger.info('Queue is empty. No jobs running. Stopping the cluster...')
-                    self.cluster_stop()
-                    self.post_to_slack('checkered_flag', "[v] Cluster stopped")
+                    if self.cluster_up() and not self.job_running() and self._ec2_hour_over():
+                        self.logger.info('Queue is empty. No jobs running. Stopping the cluster...')
+                        self.cluster_stop()
+                        self.post_to_slack('checkered_flag', "[v] Cluster stopped")
+
+                sleep(self.interval)
+        except Exception as e:
+            self.post_to_slack('sos', "[v] Failed to spin up cluster: {}".format(e))
 
 
 if __name__ == "__main__":
