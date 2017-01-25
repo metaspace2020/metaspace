@@ -43,7 +43,8 @@
    datasetName: undefined,
    minMSM: 0.1,
    compoundName: undefined,
-   adduct: undefined
+   adduct: undefined,
+   mz: undefined
  };
 
  const DEFAULT_FDR = 0.1;
@@ -53,7 +54,8 @@
    datasetName: 'ds',
    minMSM: 'msmthr',
    compoundName: 'mol',
-   adduct: 'add'
+   adduct: 'add',
+   mz: 'mz'
  };
 
  const URL_TO_FILTER = revMap(FILTER_TO_URL);

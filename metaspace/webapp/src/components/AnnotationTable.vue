@@ -56,12 +56,21 @@
         </el-popover>
       </el-table-column>
 
-      <el-table-column property="mz"
+      <el-table-column inline-template
+                       property="mz"
                        label="m/z"
                        sortable
-                       :formatter="formatMZ"
                        min-width="65">
+          <div class="cell-wrapper">
+              <span class="cell-span">
+                  {{ formatMZ(row) }}
+              </span>
+              <img src="../assets/filter-icon.png"
+                   @click="filterMZ(row)"
+                   title="Limit results to this m/z (with 5 ppm tolerance)"/>
+          </div>
       </el-table-column>
+
       <el-table-column property="msmScore"
                        label="MSM"
                        sortable
@@ -126,13 +135,27 @@
 
      gqlFilter () {
        this.currentPage = 0;
-       return {
+
+       const f = {
          database: this.filter.database,
          datasetNamePrefix: this.filter.datasetName,
-         msmScoreFilter: {min: this.filter.minMSM || 0.0, max: 1.0},
          compoundQuery: this.filter.compoundName,
          adduct: this.filter.adduct
        };
+
+       if (this.filter.minMSM)
+         f.msmScoreFilter = {min: this.filter.minMSM, max: 1.0};
+
+       if (this.filter.mz) {
+         // FIXME: hardcoded ppm
+         const ppm = 5, mz = this.filter.mz;
+         f.mzFilter = {
+           min: mz * (1.0 - ppm * 1e-6),
+           max: mz * (1.0 + ppm * 1e-6)
+         };
+       }
+
+       return f;
      }
    },
    apollo: {
@@ -341,6 +364,11 @@
      filterSumFormula (row) {
        let filter = Object.assign({}, this.filter,
                                   {compoundName: row.sumFormula})
+       this.$emit('filterChange', filter);
+     },
+
+     filterMZ (row) {
+       let filter = Object.assign({}, this.filter, {mz: row.mz});
        this.$emit('filterChange', filter);
      }
    }

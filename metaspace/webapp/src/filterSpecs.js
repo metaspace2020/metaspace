@@ -64,6 +64,13 @@ const FILTER_SPECIFICATIONS = {
     options: [null, '+H', '-H', '+Na', '+Cl', '+K'],
     optionFormatter: formatAdduct,
     valueFormatter: formatAdduct
+  },
+
+  mz: {
+    type: InputFilter,
+    name: 'm/z (±5 ppm)',
+    description: 'Search by m/z (±5 ppm)',
+    initialValue: ''
   }
 };
 
