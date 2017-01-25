@@ -13,8 +13,9 @@
 
         <el-collapse-item title="m/z image" name="images" class="av-centered">
           <div style="margin-top: 10px;">
-            <img :src="annotation.ionImage.url"
-                 class="ion-image principal-peak-image"/>
+            <image-loader :src="annotation.ionImage.url"
+                 class="ion-image principal-peak-image">
+            </image-loader>
           </div>
         </el-collapse-item>
 
@@ -101,6 +102,7 @@
 <script>
  import { renderSumFormula  } from '../util.js';
  import DatasetInfo from './DatasetInfo.vue';
+ import ImageLoader from './ImageLoader.vue';
 
  export default {
    name: 'annotation-view',
@@ -122,13 +124,14 @@
    },
 
    components: {
-     DatasetInfo
+     DatasetInfo,
+     ImageLoader
    }
  }
 </script>
 
 <style>
- .ion-image {
+ .ion-image > img {
    image-rendering: pixelated;
    image-rendering: -moz-crisp-edges;
  }
@@ -140,7 +143,7 @@
    margin-top: 10px;
  }
 
- .principal-peak-image {
+ .principal-peak-image > img {
    min-height: 500px;
    max-width: 100%;
    object-fit: contain;
