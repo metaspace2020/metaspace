@@ -85,7 +85,7 @@
                    :page-sizes="pageSizes"
                    :current-page="currentPage + 1"
                    @current-change="onPageChange"
-                   layout="pager,sizes">
+                   layout="prev,pager,next,sizes">
     </el-pagination>
 
     <div style="padding-top: 10px">
@@ -439,17 +439,6 @@
    max-width: 20%;
    display: inherit;
    cursor: pointer;
- }
-
- /* strange chinese developers intentionally set it to zero:
-    goo.gl/vN9m6A */
- .el-pager li {
-   border-right: 1px solid #d3dce6;
- }
-
- /* same with left border for next page */
- .el-pager li.active+li {
-   border-left: 1px solid #d3dce6;
  }
 
 </style>
