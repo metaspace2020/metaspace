@@ -28,7 +28,8 @@
                   {{ formatDatasetName(row) }}
               </span>
               <img src="../assets/filter-icon.png"
-                   @click="filterDataset(row)"/>
+                   @click="filterDataset(row)"
+                   title="Limit results to this dataset"/>
           </div>
       </el-table-column>
 
@@ -38,11 +39,8 @@
         <el-popover trigger="hover" placement="left">
             <div>Candidate compounds ({{ row.possibleCompounds.length }}):
                 <ul>
-                    <li v-for="comp in row.possibleCompounds.slice(0, -1)">
-                        {{ comp.name }},
-                    </li>
-                    <li>
-                        {{ row.possibleCompounds.slice(-1)[0].name }}
+                    <li v-for="comp in row.possibleCompounds">
+                        {{ comp.name }}
                     </li>
                 </ul>
             </div>
@@ -52,7 +50,8 @@
                       v-html="renderSumFormula(row.sumFormula, row.adduct, row.dataset.polarity)"></span>
                 <img src="../assets/filter-icon.png"
                      v-if="!filter.compoundName"
-                     @click="filterSumFormula(row)"/>
+                     @click="filterSumFormula(row)"
+                     title="Limit results to this sum formula"/>
             </div>
         </el-popover>
       </el-table-column>
@@ -81,7 +80,7 @@
     </el-pagination>
 
     <div style="padding-top: 10px">
-        <span style="background: #afa;">Rows with FDR &le; {{ fdrLevel }}:</span>
+        <span style="background: #efe;">Rows with FDR &le; {{ fdrLevel }}:</span>
         <span style="font-weight: bold; padding-left: 10px;">{{ greenCount }}</span>
     </div>
   </el-row>
@@ -412,6 +411,17 @@
    max-width: 20%;
    display: inherit;
    cursor: pointer;
+ }
+
+ /* strange chinese developers intentionally set it to zero:
+    goo.gl/vN9m6A */
+ .el-pager li {
+   border-right: 1px solid #d3dce6;
+ }
+
+ /* same with left border for next page */
+ .el-pager li.active+li {
+   border-left: 1px solid #d3dce6;
  }
 
 </style>

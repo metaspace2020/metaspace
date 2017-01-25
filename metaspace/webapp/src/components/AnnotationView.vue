@@ -4,8 +4,8 @@
     <el-col v-if="annotation">
       <el-collapse id="annot-content" v-model="activeSections">
 
-        <div class="el-collapse-item">
-          <div class="el-collapse-item__header av-centered">
+        <div class="el-collapse-item grey-bg">
+          <div class="el-collapse-item__header av-centered grey-bg">
             <span class="sf-big" v-html="formattedSumFormula"> </span>
             <span class="mz-big">{{ annotation.mz.toFixed(4) }}</span>
           </div>
@@ -89,8 +89,11 @@
         </el-collapse-item>
       </el-collapse>
     </el-col>
-    <el-col class="av-centered" v-else>
-      Select an annotation by clicking the table
+
+    <el-col class="av-centered no-selection" v-else>
+      <div style="align-self: center;">
+        Select an annotation by clicking the table
+      </div>
     </el-col>
   </el-row>
 </template>
@@ -153,9 +156,9 @@
  }
 
  .small-peak-image img {
-    min-height: 250px;
-    max-width: 95%;
-    object-fit: contain;
+   min-height: 250px;
+   max-width: 95%;
+   object-fit: contain;
  }
 
  .sf-big {
@@ -223,6 +226,17 @@
  figcaption a {
    font-size: 20px;
    text-align: center;
+ }
+
+ .grey-bg {
+   background-color: #f9fafc;
+ }
+
+ .no-selection {
+   height: 500px;
+   display: flex;
+   justify-content: center;
+   font-size: 18px;
  }
 
 </style>

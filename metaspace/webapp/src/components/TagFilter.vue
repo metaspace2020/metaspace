@@ -45,7 +45,7 @@
  .tf-name {
    display: inline-block;
    padding: 7px 5px 7px 5px;
-   background-color: #9740ff;
+   background-color: #0069e0;
    color: white;
  }
 

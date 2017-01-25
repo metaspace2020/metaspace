@@ -14,18 +14,17 @@
       </div>
     </router-link>
 
-    <router-link tag="div" to="/annotations">
-      <div class="header-item vc page-link">
-        <div class="vc">Annotations</div>
-      </div>
-    </router-link>
-
     <router-link tag="div" to="/datasets">
       <div class="header-item vc page-link">
         <div class="vc">Datasets</div>
       </div>
     </router-link>
 
+    <router-link tag="div" to="/annotations">
+      <div class="header-item vc page-link">
+        <div class="vc">Annotations</div>
+      </div>
+    </router-link>
   </div>
 </template>
 
@@ -69,12 +68,13 @@
 
  .page-link {
    text-align: center;
-   color: white;
+   color: #eee;
    cursor: pointer;
  }
 
- .router-link-active {
-   box-shadow: inset 0 0 0 1px #357,inset 0 5px 10px #234;
+ .router-link-active > .page-link > .vc {
+   font-weight: bold;
+   color: white;
  }
 
 </style>
