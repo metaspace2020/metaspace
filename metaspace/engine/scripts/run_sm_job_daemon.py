@@ -21,11 +21,11 @@ def post_to_slack(emoji, msg):
     slack_conf = SMConfig.get_conf()['slack']
 
     if slack_conf['webhook_url']:
-        msg = {"channel": slack_conf['channel'],
-               "username": "webhookbot",
-               "text": ":{}:{}".format(emoji, msg),
-               "icon_emoji": ":robot_face:"}
-        post(slack_conf['webhook_url'], json=msg)
+        m = {"channel": slack_conf['channel'],
+             "username": "webhookbot",
+             "text": ":{}:{}".format(emoji, msg),
+             "icon_emoji": ":robot_face:"}
+        post(slack_conf['webhook_url'], json=m)
 
 
 def fetch_ds_metadata(ds_id):
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     def run_job_callback(msg):
         log_msg = " [v] Received: {}".format(msg)
         logger.info(log_msg)
-        post_to_slack('new', " [v] Received: {}".format(msg))
+        post_to_slack('new', " [v] Received: {}".format(json.dumps(msg)))
         job = SearchJob(msg['ds_id'], msg.get('ds_name', None),
                         msg.get('drop', False), msg.get('input_path', None),
                         args.sm_config_path)
