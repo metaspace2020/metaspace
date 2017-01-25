@@ -21,17 +21,14 @@
 - name: Create new Spark master and slave AMIs
   hosts: localhost
 
-  tasks:
-    - include_vars:
-        file: ./group_vars/create_ami_cluster_config.yml
+  vars:
+    master_hostgroup: sm-spark-master
+    slave_hostgroup: sm-spark-slave
 
+  tasks:
     - debug: var=ansible_date_time.iso8601
     - debug: var=hostvars['master'].ansible_ec2_instance_id
     - debug: var=hostvars['slave'].ansible_ec2_instance_id
-
-    - set_fact:
-        master_hostgroup: "{{ cluster_configuration.instances.master.hostgroup}}"
-        slave_hostgroup: "{{ cluster_configuration.instances.slave.hostgroup}}"
 
     - name: Create a master AMI
       ec2_ami:

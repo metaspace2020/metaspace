@@ -12,10 +12,10 @@ INVENTORY_FILE = 'hosts'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Ansible inventory file updater')
-    parser.add_argument('--ansible-config', dest='ansible_config_path', default='group_vars/all.yml', type=str,
+    parser.add_argument('--config', dest='config_path', default='group_vars/all.yml', type=str,
                         help='Ansible config path')
     args = parser.parse_args()
-    config = yaml.load(open(args.ansible_config_path))
+    config = yaml.load(open(args.config_path))
 
     with open(INVENTORY_FILE, 'w') as fp:
         fp.write('')

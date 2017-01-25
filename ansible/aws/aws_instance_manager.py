@@ -193,4 +193,4 @@ if __name__ == '__main__':
     elif args.action == 'stop':
         aws_inst_man.stop_all_instances(components)
 
-    print(check_output('python update_inventory.py'.split(' ')))
+    print(check_output('python update_inventory.py --config {}'.format(args.config_path).split(' ')))
