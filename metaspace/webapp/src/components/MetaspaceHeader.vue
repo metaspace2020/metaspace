@@ -75,6 +75,7 @@
  .router-link-active > .page-link > .vc {
    font-weight: bold;
    color: white;
+   text-shadow: 0 0 10px #aaf, 0 0 20px #bbf, 0 0 30px #ddf, 0 0 40px #aaf;
  }
 
 </style>
