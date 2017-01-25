@@ -3,7 +3,7 @@ import VueRouter from 'vue-router'
 import App from './App.vue'
 import AnnotationTable from './components/AnnotationTable.vue'
 
-import { Row, Col, Select, Option, Table, TableColumn,
+import { Row, Col, Select, Option, Table, TableColumn, Loading,
          Input, InputNumber, Button, Tree, Radio, Scrollbar,
          Form, FormItem, Collapse, CollapseItem, Pagination, Popover,
          Dialog} from 'element-ui'
@@ -27,7 +27,7 @@ const apolloClient = new ApolloClient({
 // setting up Element-UI components
 // (they are imported individually to minimize bundle size)
 locale.use(lang);
-[Row, Col, Select, Option, Table, TableColumn,
+[Row, Col, Select, Option, Table, TableColumn, Loading,
  Input, InputNumber, Button, Form, FormItem, Radio, Scrollbar,
  Tree, Collapse, CollapseItem, Pagination, Popover, Dialog].forEach(component => Vue.use(component));
 

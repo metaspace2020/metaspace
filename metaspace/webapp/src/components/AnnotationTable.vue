@@ -4,6 +4,8 @@
               ref="table"
               :data="annotations"
               border
+              v-loading="isLoading"
+              element-loading-text="Loading results from the server..."
               highlight-current-row
               width="100%"
               tabindex="1"
@@ -14,6 +16,7 @@
               @keydown.native="onKeyDown"
               @current-change="onCurrentRowChange"
               @sort-change="onSortChange">
+
       <el-table-column property="dataset.institution"
                        label="Institution" v-if="!hidden('Institution')"
                        min-width="95">
@@ -115,7 +118,8 @@
        currentPage: 0,
        recordsPerPage: 15,
        greenCount: 0,
-       pageSizes: [15, 20, 25, 30]
+       pageSizes: [15, 20, 25, 30],
+       isLoading: false
      }
    },
    mounted() {
@@ -233,6 +237,9 @@
          }
 
          this.greenCount = data.countAnnotations;
+       },
+       loadingChangeCb (isLoading) {
+         this.isLoading = isLoading;
        }
      }
    },
