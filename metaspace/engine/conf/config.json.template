@@ -11,7 +11,7 @@
     "port": "{{ es_port }}"
   },
   "services": {
-    "web_app_url": "{{ web_app_url }}",
+    "web_app_url": "{{ web_app_url }}"
   },
   "rabbitmq": {
     "host": "{{ rabbitmq_host }}",
