@@ -172,4 +172,9 @@
    border-radius: 5px;
    padding: 5px;
  }
+
+ .el-loading-mask {
+   /* otherwise filter dropdowns are behind it */
+   z-index: 2000;
+ }
 </style>
