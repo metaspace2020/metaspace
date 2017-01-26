@@ -1,51 +1,45 @@
-# Caeli iungitur nimia celatos
+# METASPACE is here and now
 
-## Perque in novandum
+## METASPACE is an open platform for metabolite imaging mass spectrometry
 
-Lorem markdownum ante in rerum Lycidasque deprensus tectus fontes pacis ego
-inventa in ferox laevaque, mihi illa reddite. *Amore* madida et [pennis totas
-est](http://at-contentus.org/adest.html) tradit, si eripuit missae es dea: metus
-tibi mora.
+METASPACE hosts an engine for metabolite annotation of imaging mass spectrometry data
+and stores the metabolites found in public datasets uploaded by users.  
 
-Ipse Gradivus iussa fila docuisse sub diebus sine cursus; eam geminas exitus
-vertor populi, humo fremida. Tenues inpar rebus in quae agebat, passibus
-silvamque manus facit. Superatus hinc primus munera Troiae boum: semperque
-repens post, data deos habet in, est. Humo aere, tum viros quod iam. Pedes mare
-potest, cum est a solidam parientis abscidit tenuissimus iuncti.
+## Who developed it?
 
-## Clauserat bitumine vocassent res
+METASPACE platform is developed by the 
+[Alexandrov team at EMBL](http://www.embl.de/research/units/scb/alexandrov/) uniting analytical 
+and data scientists and reinforced by software engineers. This work is a part of the 
+[European project METASPACE](http://metaspace2020.eu).
 
-Gemitumque **ossa rima demurmurat** longa poenaeque, huic dulcis tamen, terras
-tellus dente aequora cogit cumque; otia se. Incola multaque amnes, praebentem
-sinunt lingua illic **feta** quamquam. Loco oppidaque auctor.
+## Open as public space
 
-> Et coniunx quae illi nec antiqui prope miratur pallidus; per mea caedis ista.
-> Cum hunc simul! Bustum **aurum spes** placidum, densis sedem, agat *artus*
-> Aeneae.
+We do not hide anything. All code is open-source, the input format is the [imzML](http://imzml.org/) 
+supported by all mass spec major vendors. If you think we can do something better, 
+please [let us know](mailto:contact@metaspace2020.eu).
 
-## Virilibus salus latosque inscripsere flectebat hae
+## Can I contribute?
 
-Non fines praeter pulchra verba, curvantur simul est, semper mecum tutus res
-quamvis omina pecori gramen cognovi. Vera cogitur tria levis, at quae reluxit
-Oceanus vulgaris exspectatas omen utroque, tractu. Pacis precibus temptat
-cervice laetum, diva fecere volantem mihi *ire*. Vis subponunt comes, duce unam
-in insidere flamma mihi mihi *obstitit*: ita!
+Please read and cite [our publication in Nature Methods](http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html), 
+follow us on [Twitter](http://twitter.com/metaspace2020), spread the word, and think of us while doing good deeds :)
 
-> Cantare augur. Vultu mihi et petiit mitto!
+- Are you a **mass spectrometrist** generating ultra-high resolution imaging mass spectrometry data? Please upload them; you will see, it is worth it
+- Are a **software developer** or **computer scientist**? Check out our [GitHub](https://github.com/METASPACE2020)
+- Are a **data scientist** interested to mine results from METASPACE? Please [contact us](mailto:contact@metaspace2020.eu) (export is around the corner)
 
-## Quo non cum
+For all other inquiries, please [contact us over email](mailto:contact@metaspace2020.eu).
 
-Ire oranti iura; ore procul atque imperat urbes voce ille salutant? Medicamine
-*sermonibus teneri* adsuetos suasit vulneribus obstipuit vidit; pestem cladis
-venturas [succedit](http://www.morte-stagni.com/fugiunt-senes)!
+## Who pays for it?
 
-- Erat futuri
-- Tyrannus furens deriguitque Ceyce adspexerit petii
-- Nisi Nili tibi deae ille arcana Dianae
-- Est adepta venti aeno teque
-- Cera sacraque pacis prodes moriens indignis lacerum
+Development of METASPACE engine and this platform and making it open for everyone
+is only possible thanks to the support by the European Union’s Horizon2020 program under 
+the grant agreement 634402. 
 
-Litusque radiorum, unda pelagi ripis fuerat primum in nitorem [equos inde
-litus](http://et-nec.com/). Suspicit *quoque alter laevo* unda stipite casias;
-laetis colle. Per inde Romana [nunc](http://hocilluc.net/), sed, variatis minus
-et filia.
+## How to stay in touch?
+
+Follow us on [Twitter](http://twitter.com/metaspace2020) or drop a line to [our email](mailto:contact@metaspace2020.eu), we will add you to our special list :)
+
+
+
+
+
