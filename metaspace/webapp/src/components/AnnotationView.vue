@@ -131,7 +131,7 @@
 </script>
 
 <style>
- .ion-image > img {
+ .ion-image > img, .small-peak-image img {
    image-rendering: pixelated;
    image-rendering: -moz-crisp-edges;
  }
