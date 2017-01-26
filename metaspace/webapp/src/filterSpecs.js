@@ -71,6 +71,16 @@ const FILTER_SPECIFICATIONS = {
     name: 'm/z (±5 ppm)',
     description: 'Search by m/z (±5 ppm)',
     initialValue: ''
+  },
+
+  fdrLevel: {
+    type: SingleSelectFilter,
+    name: 'FDR',
+    description: 'Select FDR level',
+    initialValue: 0.1,
+
+    options: ['0.05', '0.1', '0.2'],
+    filterable: false
   }
 };
 

@@ -8,6 +8,7 @@
               element-loading-text="Loading results from the server..."
               highlight-current-row
               width="100%"
+              stripe
               tabindex="1"
               default-sort-order="descending"
               default-sort-prop="msmScore"
@@ -16,6 +17,13 @@
               @keydown.native="onKeyDown"
               @current-change="onCurrentRowChange"
               @sort-change="onSortChange">
+
+      <el-table-column inline-template property="fdrLevel"
+                       label="FDR"
+                       class-name="fdr-cell"
+                       min-width="30">
+        <span class="fdr-span"> {{row.fdrLevel * 100}}% </span>
+      </el-table-column>
 
       <el-table-column property="dataset.institution"
                        label="Institution" v-if="!hidden('Institution')"
@@ -91,9 +99,17 @@
                    layout="prev,pager,next,sizes">
     </el-pagination>
 
-    <div style="padding-top: 10px">
+    <div style="padding-top: 10px; display: flex;">
+      <!--
         <span style="background: #efe;">Rows with FDR &le; {{ fdrLevel }}:</span>
         <span style="font-weight: bold; padding-left: 10px;">{{ greenCount }}</span>
+      -->
+
+        <div class="fdr-legend-header">FDR levels: </div>
+        <div class="fdr-legend fdr-5">5%</div>
+        <div class="fdr-legend fdr-10">10%</div>
+        <div class="fdr-legend fdr-20">20%</div>
+        <div class="fdr-legend fdr-50">50%</div>
     </div>
   </el-row>
 </template>
@@ -109,7 +125,7 @@
 
  export default {
    name: 'annotation-table',
-   props: ["filter", "fdrLevel", "hideColumns"],
+   props: ["filter", "hideColumns"],
    data () {
      return {
        annotations: [],
@@ -144,7 +160,8 @@
          database: this.filter.database,
          datasetNamePrefix: this.filter.datasetName,
          compoundQuery: this.filter.compoundName,
-         adduct: this.filter.adduct
+         adduct: this.filter.adduct,
+         fdrLevel: this.filter.fdrLevel
        };
 
        if (this.filter.minMSM)
@@ -173,7 +190,7 @@
      },
      annotations: {
        query: gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
-                                       $offset: Int, $limit: Int, $filter: AnnotationFilter, $fdrFilter: AnnotationFilter) {
+                                       $offset: Int, $limit: Int, $filter: AnnotationFilter) {
           allAnnotations(filter: $filter,
                          orderBy: $orderBy, sortingOrder: $sortingOrder,
                          offset: $offset, limit: $limit) {
@@ -208,7 +225,7 @@
             }
           }
 
-          countAnnotations(filter: $fdrFilter)
+          countAnnotations(filter: $filter)
         }`,
        variables() {
          return this.queryVariables();
@@ -257,12 +274,9 @@
      },
      queryVariables() {
        const filter = this.gqlFilter;
-       let fdrFilter = Object.assign({}, filter);
-       fdrFilter.fdrLevel = this.fdrLevel;
 
        return {
          filter,
-         fdrFilter,
          orderBy: this.orderBy,
          sortingOrder: this.sortingOrder,
          offset: this.currentPage * this.recordsPerPage,
@@ -275,7 +289,16 @@
      },
 
      renderSumFormula,
-     getRowClass (row, col) { return row.fdrLevel <= this.fdrLevel ? 'fdr-pass' : 'fdr-reject'; },
+     getRowClass (row, col) {
+       if (row.fdrLevel <= 0.051)
+         return 'fdr-5';
+       else if (row.fdrLevel <= 0.101)
+         return 'fdr-10';
+       else if (row.fdrLevel <= 0.201)
+         return 'fdr-20';
+       else
+         return 'fdr-50';
+     },
      formatMSM: (row, col) => row.msmScore.toFixed(3),
      formatMZ: (row, col) => row.mz.toFixed(4),
      formatDatasetName: (row, col) => row.dataset.name.split('//', 2)[1],
@@ -410,20 +433,36 @@
    background-color: transparent;
  }
 
- .el-table__body .fdr-pass>td {
+ .el-table__body tr.fdr-5 > td.fdr-cell, .fdr-legend.fdr-5 {
    background-color: #efe;
  }
 
- .el-table__body .fdr-reject>td {
+.el-table__body tr.fdr-10 > td.fdr-cell, .fdr-legend.fdr-10 {
+   background-color: #ffe;
+ }
+
+.el-table__body tr.fdr-20 > td.fdr-cell, .fdr-legend.fdr-20 {
+   background-color: #fff5e0;
+ }
+
+ .el-table__body tr.fdr-50 > td.fdr-cell, .fdr-legend.fdr-50 {
    background-color: #fee;
  }
 
- .el-table__body tr.fdr-pass.current-row > td {
-   background-color: #afa;
+ .el-table__body tr.fdr-5.current-row > td {
+   background-color: #afa !important;
  }
 
- .el-table__body tr.fdr-reject.current-row > td {
-   background-color: #faa;
+ .el-table__body tr.fdr-10.current-row > td {
+   background-color: #ffa !important;
+ }
+
+ .el-table__body tr.fdr-20.current-row > td {
+   background-color: #ffe5aa !important;
+ }
+
+ .el-table__body tr.fdr-50.current-row > td {
+   background-color: #faa !important;
  }
 
  .cell-wrapper {
@@ -446,6 +485,33 @@
    max-width: 20%;
    display: inherit;
    cursor: pointer;
+ }
+
+ .fdr-legend, .fdr-legend-header {
+   padding: 5px;
+   margin: 0px 0px 10px 0px;
+   display: inline-block;
+   float: left;
+   text-align: center;
+ }
+
+ .fdr-legend {
+ }
+
+ .fdr-legend.fdr-5 {
+   border-radius: 5px 0px 0px 5px;
+ }
+
+ .fdr-legend.fdr-50 {
+   border-radius: 0px 5px 5px 0px;
+ }
+
+ .fdr-span {
+   display: none;
+ }
+
+ .fdr-cell:hover > .cell > .fdr-span {
+   display: initial;
  }
 
 </style>

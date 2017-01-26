@@ -2,7 +2,7 @@
   <tag-filter :name="name" :removable="removable"
               @destroy="destroy">
     <el-select slot="edit"
-               filterable clearable v-model="value2">
+               :filterable="filterable" clearable v-model="value2">
       <el-option v-for="item in options"
                  :label="formatOption(item)" :value="item">
       </el-option>
@@ -27,7 +27,7 @@
      TagFilter
    },
    props: ["name", "options", "value", "optionFormatter", "valueFormatter",
-           "removable"],
+           "removable", "filterable"],
    data() {
      return {
        value2: this.value

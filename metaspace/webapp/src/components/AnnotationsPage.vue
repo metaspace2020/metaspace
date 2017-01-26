@@ -2,14 +2,11 @@
   <el-row id="main-content" :gutter="20">
     <annotation-filter
         :filter="annotationFilter"
-        :fdrLevel="fdrLevel"
-        @change="onFilterChange"
-        @fdrChange="updateFDRLevel">
+        @change="onFilterChange">
     </annotation-filter>
 
     <el-col :xs="24" :sm="24" :md="24" :lg="tableWidth">
       <annotation-table :filter="annotationFilter"
-                        :fdrLevel="fdrLevel"
                         :hideColumns="hiddenColumns"
                         ref="annotationTable"
                         @filterChange="onFilterChange"
@@ -44,10 +41,9 @@
    minMSM: 0.1,
    compoundName: undefined,
    adduct: undefined,
-   mz: undefined
+   mz: undefined,
+   fdrLevel: 0.1
  };
-
- const DEFAULT_FDR = 0.1;
 
  const FILTER_TO_URL = {
    database: 'db',
@@ -55,7 +51,8 @@
    minMSM: 'msmthr',
    compoundName: 'mol',
    adduct: 'add',
-   mz: 'mz'
+   mz: 'mz',
+   fdrLevel: 'fdrlvl'
  };
 
  const URL_TO_FILTER = revMap(FILTER_TO_URL);
@@ -65,8 +62,7 @@
    data () {
      return {
        annotationFilter: DEFAULT_FILTER,
-       selectedAnnotation: null,
-       fdrLevel: DEFAULT_FDR
+       selectedAnnotation: null
      }
    },
    computed: {
@@ -114,33 +110,32 @@
        this.redraw();
      },
 
-     updateFDRLevel (fdr) {
-       this.fdrLevel = fdr;
-       this.redraw();
-     },
-
      updateAnnotationView (annotation) {
        this.selectedAnnotation = annotation;
      },
 
      decodeParams(query) {
-       let filter = {};
-       for (var key in URL_TO_FILTER) {
-         if (query[key])
-           filter[URL_TO_FILTER[key]] = query[key];
+       let filter = Object.assign({}, DEFAULT_FILTER);
+       for (var key in query) {
+         const fKey = URL_TO_FILTER[key];
+         if (fKey) {
+           filter[fKey] = query[key];
+           // yes, I'm not fluent in all this null vs undefined bullshit
+           if (filter[fKey] === null)
+             filter[fKey] = undefined;
+         }
        }
-       this.annotationFilter = Object.assign({}, DEFAULT_FILTER, filter);
-       this.fdrLevel = query.fdrlvl || DEFAULT_FDR;
+       this.annotationFilter = filter;
      },
 
      encodeParams() {
        let q = {};
-       for (var key in FILTER_TO_URL)
+       for (var key in FILTER_TO_URL) {
+         const {initialValue} = FILTER_SPECIFICATIONS[key];
          if (this.annotationFilter[key] != DEFAULT_FILTER[key]) {
-           q[FILTER_TO_URL[key]] = this.annotationFilter[key] ||
-                                   FILTER_SPECIFICATIONS[key].initialValue;
+           q[FILTER_TO_URL[key]] = this.annotationFilter[key] || null;
          }
-       q.fdrlvl = this.fdrLevel;
+       }
        return q;
      }
    }

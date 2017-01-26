@@ -1,28 +1,5 @@
 <template>
   <el-row style="padding-left: 10px;">
-    <el-form inline label-width="100px" id="filter-form">
-      <el-form-item label="FDR level">
-        <el-select @change="onFdrLevelChange" v-model="selectedFdrLevel"
-                   style="max-width: 100px;">
-          <el-option v-for="fdr in availableFdrLevels"
-                     :value="fdr" :label="fdr">
-          </el-option>
-        </el-select>
-      </el-form-item>
-    </el-form>
-
-    <component v-for="f in activeFilters"
-               :is="f.type"
-               :name="f.name"
-               :options="f.options"
-               :removable="f.removable"
-               :optionFormatter="f.optionFormatter"
-               :value="f.value"
-               :valueFormatter="f.valueFormatter"
-               style="float: left;"
-               @change="f.onChange"
-               @destroy="f.onChange(undefined)">
-    </component>
 
     <el-select placeholder="Add filter"
                v-model="selectedFilterToAdd"
@@ -33,6 +10,19 @@
       </el-option>
     </el-select>
 
+    <component v-for="f in activeFilters"
+               :is="f.type"
+               :name="f.name"
+               :options="f.options"
+               :removable="f.removable"
+               :filterable="f.filterable"
+               :optionFormatter="f.optionFormatter"
+               :value="f.value"
+               :valueFormatter="f.valueFormatter"
+               style="float: left;"
+               @change="f.onChange"
+               @destroy="f.onChange(undefined)">
+    </component>
   </el-row>
 </template>
 
@@ -50,7 +40,7 @@
      SingleSelectFilter,
      MultiSelectFilter
    },
-   props: ["filter", "fdrLevel"],
+   props: ["filter"],
    apollo: {
      datasetInfo: {
        query: gql`{allDatasets(limit: 1000) {
@@ -103,17 +93,11 @@
    },
    data () {
      return {
-       availableFdrLevels: [0.05, 0.1, 0.2, 0.5],
-       selectedFdrLevel: this.fdrLevel,
        selectedFilterToAdd: null,
        activeKeys: []
      }
    },
    methods: {
-     onFdrLevelChange (fdr) {
-       this.$emit('fdrChange', fdr);
-     },
-
      makeFilter(filterKey) {
        const filterSpec = FILTER_SPECIFICATIONS[filterKey];
        let self = this;
