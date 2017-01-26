@@ -25,6 +25,12 @@
         <div class="vc">Annotations</div>
       </div>
     </router-link>
+
+    <router-link tag="div" to="/about">
+      <div class="header-item vc page-link">
+        <div class="vc">About</div>
+      </div>
+    </router-link>
   </div>
 </template>
 

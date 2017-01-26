@@ -56,8 +56,9 @@
                 </ul>
             </div>
 
-            <div slot="reference" class="cell-wrapper">
+            <div slot="reference" class="cell-wrapper-ib">
                 <span class="sf cell-span"
+                      style="display: inline-block;"
                       v-html="renderSumFormula(row.sumFormula, row.adduct, row.dataset.polarity)"></span>
                 <img src="../assets/filter-icon.png"
                      v-if="!filter.compoundName"
@@ -471,15 +472,20 @@
    justify-content: space-between;
  }
 
+ .cell-wrapper-ib {
+   width: 100%;
+   display: inline-block;
+ }
+
  .cell-span {
    width: 80%;
  }
 
- .cell-wrapper img {
+ .cell-wrapper img, .cell-wrapper-ib img{
    display: none;
  }
 
- .cell-wrapper:hover img {
+ .cell-wrapper:hover img, .cell-wrapper-ib:hover  img{
    max-height: 20px;
    box-shadow: 5px;
    max-width: 20%;

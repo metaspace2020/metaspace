@@ -38,13 +38,15 @@ Vue.use(VueLazyload);
 import AnnotationsPage from './components/AnnotationsPage.vue';
 import DatasetsPage from './components/DatasetsPage.vue';
 import UploadPage from './components/UploadPage.vue';
+import AboutPage from './components/AboutPage.vue';
 
 const router = new VueRouter({
   routes: [
     { path: '/', redirect: '/annotations' },
     { path: '/annotations', component: AnnotationsPage },
     { path: '/datasets', component: DatasetsPage },
-    { path: '/upload', component: UploadPage }
+    { path: '/upload', component: UploadPage },
+    { path: '/about', component: AboutPage }
   ]
 })
 

@@ -23,7 +23,8 @@
       </div>
     </el-row>
 
-    <router-view></router-view>
+    <router-view class="main-content">
+    </router-view>
   </div>
 </template>
 
@@ -135,7 +136,7 @@
    color: #42b983;
  }
 
- #main-content {
+ .main-content {
    padding-top: 82px;
  }
 

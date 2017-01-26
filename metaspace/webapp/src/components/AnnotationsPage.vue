@@ -1,5 +1,5 @@
 <template>
-  <el-row id="main-content" :gutter="20">
+  <el-row :gutter="20">
     <annotation-filter
         :filter="annotationFilter"
         @change="onFilterChange">

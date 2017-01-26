@@ -1,5 +1,5 @@
 <template>
-  <el-row id="main-content">
+  <el-row>
     <dataset-table></dataset-table>
   </el-row>
 </template>
