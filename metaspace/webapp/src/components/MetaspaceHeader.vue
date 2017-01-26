@@ -1,6 +1,6 @@
 <template>
   <div class="b-header">
-    <div class="header-item">
+    <div class="header-item" id="metasp-logo">
       <a style="display: flex" href="http://metasp.eu">
         <img src="http://metasp.eu/files/logo.png"
              alt="Metaspace" title="Metaspace"
@@ -51,8 +51,7 @@
    display: flex;
    float: left;
    border: none;
-   padding-left: 15px;
-   padding-right: 15px;
+   padding: 0px 20px;
    height: 62px;
  }
 
@@ -72,10 +71,30 @@
    cursor: pointer;
  }
 
- .router-link-active > .page-link > .vc {
-   font-weight: bold;
-   color: white;
-   text-shadow: 0 0 10px #aaf, 0 0 20px #bbf, 0 0 30px #ddf, 0 0 40px #aaf;
+ .router-link-active > .page-link, .page-link:hover {
+   background: rgba(0, 0, 0, 0.1);
+   outline-color: rgba(0, 0, 0, 0.3);
+   outline-style: solid;
+   outline-width: 1px;
  }
 
+ .page-link:hover {
+   background: rgba(0, 0, 0, 0.1);
+   outline-color: rgba(0, 0, 0, 0.3);
+   outline-style: solid;
+   outline-width: 1px;
+ }
+
+ .router-link-active > .page-link {
+   font-weight: 700;
+   color: white;
+ }
+
+ .page-link:hover > .vc {
+   color: white;
+ }
+
+ #metasp-logo {
+   padding-left: 15px;
+ }
 </style>
