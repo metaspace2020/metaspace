@@ -33,20 +33,21 @@
 </script>
 
 <style>
+
  .tf-outer {
    display: inline-block;
    text-align: center;
-   border: 2px solid #3614CC;
-   padding: 0px 5px 0px 0px;
-   margin: 0px 5px 7px 5px;
-   border-radius: 8px;
+   border: 2px solid rgb(38, 127, 228);
+   padding: 0 5px 0 0;
+   margin: 0 5px 7px;
+   border-radius: 5px;
  }
 
  .tf-name {
    display: inline-block;
-   padding: 7px 5px 7px 5px;
-   background-color: #0069e0;
-   color: white;
+   padding: 7px 5px;
+   background-color: rgb(38, 127, 228);
+   color: #fff;
  }
 
  .tf-value {

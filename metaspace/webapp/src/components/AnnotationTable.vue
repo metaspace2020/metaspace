@@ -18,13 +18,6 @@
               @current-change="onCurrentRowChange"
               @sort-change="onSortChange">
 
-      <el-table-column inline-template property="fdrLevel"
-                       label="FDR"
-                       class-name="fdr-cell"
-                       min-width="30">
-        <span class="fdr-span"> {{row.fdrLevel * 100}}% </span>
-      </el-table-column>
-
       <el-table-column property="dataset.institution"
                        label="Institution" v-if="!hidden('Institution')"
                        min-width="95">
@@ -56,9 +49,8 @@
                 </ul>
             </div>
 
-            <div slot="reference" class="cell-wrapper-ib">
+            <div slot="reference" class="cell-wrapper">
                 <span class="sf cell-span"
-                      style="display: inline-block;"
                       v-html="renderSumFormula(row.sumFormula, row.adduct, row.dataset.polarity)"></span>
                 <img src="../assets/filter-icon.png"
                      v-if="!filter.compoundName"
@@ -89,6 +81,14 @@
                        :formatter="formatMSM"
                        min-width="60">
       </el-table-column>
+
+      <el-table-column inline-template property="fdrLevel"
+                       label="FDR"
+                       class-name="fdr-cell"
+                       min-width="30">
+        <span class="fdr-span"> {{row.fdrLevel * 100}}% </span>
+      </el-table-column>
+
     </el-table>
 
     <el-pagination :total="totalCount"
@@ -101,16 +101,11 @@
     </el-pagination>
 
     <div style="padding-top: 10px; display: flex;">
-      <!--
-        <span style="background: #efe;">Rows with FDR &le; {{ fdrLevel }}:</span>
-        <span style="font-weight: bold; padding-left: 10px;">{{ greenCount }}</span>
-      -->
-
-        <div class="fdr-legend-header">FDR levels: </div>
-        <div class="fdr-legend fdr-5">5%</div>
-        <div class="fdr-legend fdr-10">10%</div>
-        <div class="fdr-legend fdr-20">20%</div>
-        <div class="fdr-legend fdr-50">50%</div>
+      <div class="fdr-legend-header">FDR levels: </div>
+      <div class="fdr-legend fdr-5">5%</div>
+      <div class="fdr-legend fdr-10">10%</div>
+      <div class="fdr-legend fdr-20">20%</div>
+      <div class="fdr-legend fdr-50">50%</div>
     </div>
   </el-row>
 </template>
@@ -472,20 +467,15 @@
    justify-content: space-between;
  }
 
- .cell-wrapper-ib {
-   width: 100%;
-   display: inline-block;
- }
-
  .cell-span {
    width: 80%;
  }
 
- .cell-wrapper img, .cell-wrapper-ib img{
+ .cell-wrapper img {
    display: none;
  }
 
- .cell-wrapper:hover img, .cell-wrapper-ib:hover  img{
+ .cell-wrapper:hover img {
    max-height: 20px;
    box-shadow: 5px;
    max-width: 20%;
@@ -501,9 +491,6 @@
    text-align: center;
  }
 
- .fdr-legend {
- }
-
  .fdr-legend.fdr-5 {
    border-radius: 5px 0px 0px 5px;
  }
@@ -514,6 +501,14 @@
 
  .fdr-span {
    display: none;
+ }
+
+ #annot-table th.fdr-cell > .cell {
+   padding: 0;
+ }
+
+ .fdr-cell > .cell {
+   justify-content: center;
  }
 
  .fdr-cell:hover > .cell > .fdr-span {
