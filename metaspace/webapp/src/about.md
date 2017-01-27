@@ -28,17 +28,17 @@ Interested to contribute more?
 
 For all other inquiries, please [contact us over email](mailto:contact@metaspace2020.eu).
 
-## How is METASPACE funded?
+## Please appreciate those who funded it
 
-Development of METASPACE engine and this platform and making it open for everyone
-is only possible thanks to the support by the European Union’s Horizon2020 program under 
+Development of the METASPACE platform and releasing it for free to the community is only 
+possible thanks to the support by the European Union’s Horizon2020 program under 
 the grant agreement 634402. 
 
 ## How to stay in touch?
 
 Follow us on [Twitter](http://twitter.com/metaspace2020) or drop a line to [our email](mailto:contact@metaspace2020.eu), we will add you to our special list :)
 
-
+Cheers
 
 
 
