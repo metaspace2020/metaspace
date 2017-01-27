@@ -1,11 +1,9 @@
-# METASPACE is here and now
+![METASPACE here and now](https://github.com/METASPACE2020/sm-webapp/blob/master/src/assets/METASPACE%20banner%20blue%20bg.jpg)
 
 ## METASPACE is an open platform for metabolite imaging mass spectrometry
 
-METASPACE hosts an engine for metabolite annotation of imaging mass spectrometry data
+METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data
 and stores the metabolites found in public datasets uploaded by users.  
-
-## Who developed it?
 
 METASPACE platform is developed by the 
 [Alexandrov team at EMBL](http://www.embl.de/research/units/scb/alexandrov/) uniting analytical 
@@ -23,13 +21,14 @@ please [let us know](mailto:contact@metaspace2020.eu).
 Please read and cite [our publication in Nature Methods](http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html), 
 follow us on [Twitter](http://twitter.com/metaspace2020), spread the word, and think of us while doing good deeds :)
 
+Interested to contribute more?
 - Are you a **mass spectrometrist** generating ultra-high resolution imaging mass spectrometry data? Please upload them; you will see, it is worth it
 - Are a **software developer** or **computer scientist**? Check out our [GitHub](https://github.com/METASPACE2020)
 - Are a **data scientist** interested to mine results from METASPACE? Please [contact us](mailto:contact@metaspace2020.eu) (export is around the corner)
 
 For all other inquiries, please [contact us over email](mailto:contact@metaspace2020.eu).
 
-## Who pays for it?
+## How is METASPACE funded?
 
 Development of METASPACE engine and this platform and making it open for everyone
 is only possible thanks to the support by the European Union’s Horizon2020 program under 
