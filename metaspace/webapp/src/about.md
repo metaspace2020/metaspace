@@ -1,4 +1,4 @@
-![METASPACE here and now](https://github.com/METASPACE2020/sm-webapp/blob/master/src/assets/METASPACE%20banner%20blue%20bg.jpg)
+![METASPACE here and now](https://github.com/METASPACE2020/sm-webapp/raw/master/src/assets/METASPACE%20banner%20blue%20bg.jpg)
 
 ## METASPACE is an open platform for metabolite imaging mass spectrometry
 
