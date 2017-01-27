@@ -38,7 +38,7 @@ the grant agreement 634402.
 
 Follow us on [Twitter](http://twitter.com/metaspace2020) or drop a line to [our email](mailto:contact@metaspace2020.eu), we will add you to our special list :)
 
-Cheers
+Cheers!
 
 
 
