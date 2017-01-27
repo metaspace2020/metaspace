@@ -430,35 +430,35 @@
  }
 
  .el-table__body tr.fdr-5 > td.fdr-cell, .fdr-legend.fdr-5 {
-   background-color: #efe;
+   background-color: #c8ffc8;
  }
 
 .el-table__body tr.fdr-10 > td.fdr-cell, .fdr-legend.fdr-10 {
-   background-color: #ffe;
+   background-color: #e0ffe0;
  }
 
 .el-table__body tr.fdr-20 > td.fdr-cell, .fdr-legend.fdr-20 {
-   background-color: #fff5e0;
+   background-color: #ffe;
  }
 
  .el-table__body tr.fdr-50 > td.fdr-cell, .fdr-legend.fdr-50 {
-   background-color: #fee;
+   background-color: #fff5e0;
  }
 
  .el-table__body tr.fdr-5.current-row > td {
-   background-color: #afa !important;
+   background-color: #8f8 !important;
  }
 
  .el-table__body tr.fdr-10.current-row > td {
-   background-color: #ffa !important;
+   background-color: #bfb !important;
  }
 
  .el-table__body tr.fdr-20.current-row > td {
-   background-color: #ffe5aa !important;
+   background-color: #ffa !important;
  }
 
  .el-table__body tr.fdr-50.current-row > td {
-   background-color: #faa !important;
+   background-color: #ffe5a0 !important;
  }
 
  .cell-wrapper {

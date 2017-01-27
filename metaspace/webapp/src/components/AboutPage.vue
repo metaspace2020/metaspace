@@ -21,7 +21,7 @@
    justify-content: center;
  }
 
- #about > div {
+ #about > div, #about img {
    max-width: 900px;
  }
 </style>
