@@ -22,6 +22,6 @@
  }
 
  #about > div {
-   max-width: 800px;
+   max-width: 900px;
  }
 </style>

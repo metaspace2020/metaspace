@@ -23,7 +23,10 @@
 
  export default {
    name: 'tag-filter',
-   props: {name: String, removable: {type: Boolean, default: true}},
+   props: {
+     name: String,
+     removable: {type: Boolean, default: true}
+   },
    methods: {
      destroy() {
        this.$emit('destroy', this.name);

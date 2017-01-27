@@ -26,8 +26,15 @@
    components: {
      TagFilter
    },
-   props: ["name", "options", "value", "optionFormatter", "valueFormatter",
-           "removable", "filterable"],
+   props: {
+     name: String,
+     options: Array,
+     value: String,
+     optionFormatter: Function,
+     valueFormatter: Function,
+     removable: {type: Boolean, default: true},
+     filterable: {type: Boolean, default: true}
+   },
    data() {
      return {
        value2: this.value
