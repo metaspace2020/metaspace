@@ -51,7 +51,7 @@
    },
    computed: {
      filter() {
-       return this.$store.state.filter;
+       return this.$store.getters.filter;
      },
 
      activeKeys() {
