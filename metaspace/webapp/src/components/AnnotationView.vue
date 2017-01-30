@@ -114,11 +114,13 @@
    },
    computed: {
      formattedSumFormula() {
+       if (!this.annotation) return '';
        const { sumFormula, adduct, dataset } = this.annotation;
        return renderSumFormula(sumFormula, adduct, dataset.polarity);
      },
 
      compoundsTabLabel() {
+       if (!this.annotation) return '';
        return "Compounds (" + this.annotation.possibleCompounds.length + ")";
      }
    },

@@ -36,7 +36,7 @@ const FILTER_SPECIFICATIONS = {
     type: SingleSelectFilter,
     name: 'Dataset',
     description: 'Select dataset',
-    initialValue: '',
+    initialValue: undefined,
 
     options: 'datasetNames' // take from Vue instance
   },
@@ -70,7 +70,7 @@ const FILTER_SPECIFICATIONS = {
     type: InputFilter,
     name: 'm/z (±5 ppm)',
     description: 'Search by m/z (±5 ppm)',
-    initialValue: ''
+    initialValue: undefined
   },
 
   fdrLevel: {
@@ -87,7 +87,7 @@ const FILTER_SPECIFICATIONS = {
     type: SingleSelectFilter,
     name: 'Institution',
     description: 'Select institution',
-    initialValue: '',
+    initialValue: undefined,
 
     options: 'institutionNames' // take from Vue instance
   }

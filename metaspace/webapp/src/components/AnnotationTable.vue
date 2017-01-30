@@ -128,13 +128,12 @@
  import { renderSumFormula } from '../util.js';
  import Vue from 'vue';
 
-
  // 38 = up, 40 = down, 74 = j, 75 = k
  const KEY_TO_ACTION = {38: 'up', 75: 'up', 40: 'down', 74: 'down'};
 
  export default {
    name: 'annotation-table',
-   props: ["filter", "hideColumns"],
+   props: ["hideColumns"],
    data () {
      return {
        annotations: [],
@@ -155,6 +154,10 @@
      }
    },
    computed: {
+     filter() {
+       return this.$store.state.filter;
+     },
+
      numberOfPages () {
        let n = this.totalCount / this.recordsPerPage;
        if (this.totalCount % this.recordsPerPage > 0)
@@ -341,7 +344,7 @@
 
      onCurrentRowChange (row) {
        if (row)
-         this.$emit('annotationSelected', row);
+         this.$store.commit('setAnnotation', row);
      },
 
      onKeyDown (event) {
@@ -403,27 +406,25 @@
        // TODO check if it's really fixed
      },
 
+     updateFilter (delta) {
+       let filter = Object.assign({}, this.filter, delta);
+       this.$store.commit('updateFilter', filter);
+     },
+
      filterInstitution (row) {
-       let filter = Object.assign({}, this.filter,
-                                  {institution: row.dataset.institution});
-       this.$emit('filterChange', filter);
+       this.updateFilter({institution: row.dataset.institution});
      },
 
      filterDataset (row) {
-       let filter = Object.assign({}, this.filter,
-                                  {datasetName: row.dataset.name});
-       this.$emit('filterChange', filter);
+       this.updateFilter({datasetName: row.dataset.name});
      },
 
      filterSumFormula (row) {
-       let filter = Object.assign({}, this.filter,
-                                  {compoundName: row.sumFormula})
-       this.$emit('filterChange', filter);
+       this.updateFilter({compoundName: row.sumFormula});
      },
 
      filterMZ (row) {
-       let filter = Object.assign({}, this.filter, {mz: row.mz});
-       this.$emit('filterChange', filter);
+       this.updateFilter({mz: row.mz});
      }
    }
  }

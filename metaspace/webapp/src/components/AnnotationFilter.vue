@@ -40,7 +40,6 @@
      SingleSelectFilter,
      MultiSelectFilter
    },
-   props: ["filter"],
    apollo: {
      datasetInfo: {
        query: gql`{allDatasets(limit: 1000) {
@@ -51,6 +50,14 @@
      }
    },
    computed: {
+     filter() {
+       return this.$store.state.filter;
+     },
+
+     activeKeys() {
+       return this.$store.state.orderedActiveFilters;
+     },
+
      institutionNames() {
        if (!this.datasetInfo)
          return [];
@@ -77,26 +84,9 @@
        return available;
      }
    },
-   created() {
-     let active = [];
-     for (var key in this.filter) {
-       if (this.filter[key] !== undefined)
-         active.push(key);
-     }
-     this.activeKeys = active;
-   },
-   watch: {
-     'filter': function(filter) {
-       // handle changes from outside
-       for (var key in filter)
-         if (filter[key] !== undefined && this.activeKeys.indexOf(key) == -1)
-           this.activeKeys.push(key);
-     }
-   },
    data () {
      return {
        selectedFilterToAdd: null,
-       activeKeys: []
      }
    },
    methods: {
@@ -107,10 +97,8 @@
          value: self.filter[filterKey],
          // passing the value of undefined destroys the tag element
          onChange(val) {
-           self.$emit('change',
-                      Object.assign(self.filter, {[filterKey]: val}));
-           if (val === undefined)
-             self.activeKeys = self.activeKeys.filter(k => k != filterKey);
+           self.$store.commit('updateFilter',
+                              Object.assign(self.filter, {[filterKey]: val}));
          }
        };
        let result = Object.assign({}, filterSpec, behaviour);
@@ -121,11 +109,8 @@
 
      addFilter(key) {
        if (key) {
-         const { initialValue } = FILTER_SPECIFICATIONS[key];
-         this.$emit('change',
-                    Object.assign(this.filter, {[key]: initialValue}));
          this.selectedFilterToAdd = null;
-         this.activeKeys.push(key);
+         this.$store.commit('addFilter', key);
        }
      }
    }
