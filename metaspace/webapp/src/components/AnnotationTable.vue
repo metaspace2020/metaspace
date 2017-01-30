@@ -85,7 +85,8 @@
       <el-table-column inline-template property="fdrLevel"
                        label="FDR"
                        class-name="fdr-cell"
-                       min-width="30">
+                       sortable
+                       min-width="40">
         <span class="fdr-span"> {{row.fdrLevel * 100}}% </span>
       </el-table-column>
 
@@ -99,6 +100,10 @@
                    @current-change="onPageChange"
                    layout="prev,pager,next,sizes">
     </el-pagination>
+
+    <div style="padding: 10px 0 0 5px;">
+      <b>{{ totalCount }}</b> matching {{ totalCount == 1 ? 'record': 'records' }}
+    </div>
 
     <div style="padding-top: 10px; display: flex;">
       <div class="fdr-legend-header">FDR levels: </div>
@@ -310,6 +315,8 @@
          this.orderBy = 'ORDER_BY_MSM';
        else if (event.prop == 'mz')
          this.orderBy = 'ORDER_BY_MZ';
+       else if (event.prop == 'fdrLevel')
+         this.orderBy = 'ORDER_BY_FDR_MSM';
        this.sortingOrder = event.order.toUpperCase();
      },
 
@@ -499,10 +506,6 @@
    border-radius: 0px 5px 5px 0px;
  }
 
- .fdr-span {
-   display: none;
- }
-
  #annot-table th.fdr-cell > .cell {
    padding: 0;
  }
@@ -511,8 +514,8 @@
    justify-content: center;
  }
 
- .fdr-cell:hover > .cell > .fdr-span {
-   display: initial;
+ .fdr-span {
+   padding-right: 6px;
  }
 
 </style>

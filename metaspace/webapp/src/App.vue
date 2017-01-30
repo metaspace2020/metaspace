@@ -118,7 +118,8 @@
  }
 </script>
 
-<style>
+<style lang="scss">
+
  #app {
    font-family: 'Roboto', Helvetica, sans-serif;
    -webkit-font-smoothing: antialiased;
