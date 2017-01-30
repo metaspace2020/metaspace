@@ -29,7 +29,7 @@
    props: {
      name: String,
      options: Array,
-     value: String,
+     value: String | Number,
      optionFormatter: Function,
      valueFormatter: Function,
      removable: {type: Boolean, default: true},

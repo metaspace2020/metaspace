@@ -81,6 +81,15 @@ const FILTER_SPECIFICATIONS = {
 
     options: ['0.05', '0.1', '0.2'],
     filterable: false
+  },
+
+  institution: {
+    type: SingleSelectFilter,
+    name: 'Institution',
+    description: 'Select institution',
+    initialValue: '',
+
+    options: 'institutionNames' // take from Vue instance
   }
 };
 

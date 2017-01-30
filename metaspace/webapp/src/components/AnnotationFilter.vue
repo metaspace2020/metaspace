@@ -54,7 +54,9 @@
      institutionNames() {
        if (!this.datasetInfo)
          return [];
-       return [...new Set(this.datasetInfo.map(x => x.institution))];
+       let names = [...new Set(this.datasetInfo.map(x => x.institution))];
+       names.sort();
+       return names;
      },
 
      datasetNames() {

@@ -37,6 +37,7 @@
 
  const DEFAULT_FILTER = {
    database: 'HMDB',
+   institution: undefined,
    datasetName: undefined,
    minMSM: 0.1,
    compoundName: undefined,
@@ -47,6 +48,7 @@
 
  const FILTER_TO_URL = {
    database: 'db',
+   institution: 'inst',
    datasetName: 'ds',
    minMSM: 'msmthr',
    compoundName: 'mol',

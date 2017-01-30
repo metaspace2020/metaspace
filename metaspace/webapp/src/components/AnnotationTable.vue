@@ -18,9 +18,17 @@
               @current-change="onCurrentRowChange"
               @sort-change="onSortChange">
 
-      <el-table-column property="dataset.institution"
+      <el-table-column inline-template
                        label="Institution" v-if="!hidden('Institution')"
                        min-width="95">
+        <div class="cell-wrapper">
+          <span class="cell-span">
+            {{ row.dataset.institution }}
+          </span>
+          <img src="../assets/filter-icon.png"
+               @click="filterInstitution(row)"
+               title="Limit results to this institution"/>
+        </div>
       </el-table-column>
 
       <el-table-column inline-template
@@ -165,6 +173,10 @@
          fdrLevel: this.filter.fdrLevel
        };
 
+       const df = {
+         institution: this.filter.institution
+       };
+
        if (this.filter.minMSM)
          f.msmScoreFilter = {min: this.filter.minMSM, max: 1.0};
 
@@ -177,13 +189,14 @@
          };
        }
 
-       return f;
+       return {annotationFilter: f, datasetFilter: df};
      }
    },
    apollo: {
      totalCount: {
-       query: gql`query GetCount($filter: AnnotationFilter) {
-          countAnnotations(filter: $filter)
+       query: gql`query GetCount($filter: AnnotationFilter,
+                                 $dFilter: DatasetFilter) {
+          countAnnotations(filter: $filter, datasetFilter: $dFilter)
        }`,
        variables () { return this.queryVariables(); },
        update: data => data.countAnnotations,
@@ -191,8 +204,9 @@
      },
      annotations: {
        query: gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
-                                       $offset: Int, $limit: Int, $filter: AnnotationFilter) {
+                                       $offset: Int, $limit: Int, $filter: AnnotationFilter, $dFilter: DatasetFilter) {
           allAnnotations(filter: $filter,
+                         datasetFilter: $dFilter,
                          orderBy: $orderBy, sortingOrder: $sortingOrder,
                          offset: $offset, limit: $limit) {
             sumFormula
@@ -226,7 +240,7 @@
             }
           }
 
-          countAnnotations(filter: $filter)
+          countAnnotations(filter: $filter, datasetFilter: $dFilter)
         }`,
        variables() {
          return this.queryVariables();
@@ -274,10 +288,11 @@
        this.recordsPerPage = newSize;
      },
      queryVariables() {
-       const filter = this.gqlFilter;
+       const {annotationFilter, datasetFilter} = this.gqlFilter;
 
        return {
-         filter,
+         filter: annotationFilter,
+         dFilter: datasetFilter,
          orderBy: this.orderBy,
          sortingOrder: this.sortingOrder,
          offset: this.currentPage * this.recordsPerPage,
@@ -386,6 +401,12 @@
          currentRow.classList.remove('current-row');
        // filed a bug: https://github.com/ElemeFE/element/issues/1890
        // TODO check if it's really fixed
+     },
+
+     filterInstitution (row) {
+       let filter = Object.assign({}, this.filter,
+                                  {institution: row.dataset.institution});
+       this.$emit('filterChange', filter);
      },
 
      filterDataset (row) {
