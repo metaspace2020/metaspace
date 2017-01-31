@@ -2,6 +2,7 @@ var express = require('express');
 var webpack = require('webpack');
 var passport = require('passport');
 var bodyParser = require('body-parser');
+var favicon = require('serve-favicon');
 
 var session = require('express-session');
 var GoogleAuth = require('google-auth-library');
@@ -23,6 +24,7 @@ app.use(session({
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 1 month
 }));
 
+app.use(favicon(__dirname + '/static/favicon.ico'))
 app.use(bodyParser.json());
 app.use(passport.initialize());
 app.use(passport.session());
