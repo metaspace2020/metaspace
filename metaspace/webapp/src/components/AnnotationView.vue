@@ -136,6 +136,7 @@
  .ion-image > img, .small-peak-image img {
    image-rendering: pixelated;
    image-rendering: -moz-crisp-edges;
+   -ms-interpolation-mode: nearest-neighbor;
  }
 
  #isotope-images-container {
