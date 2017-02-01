@@ -33,6 +33,14 @@
  import MultiSelectFilter from './MultiSelectFilter.vue';
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
 
+ function getUniqueValues(datasets, selector) {
+   if (!datasets)
+     return [];
+   let values = [...new Set(datasets.map(selector))];
+   values.sort();
+   return values;
+ }
+
  export default {
    name: 'filter-panel',
    props: ["level"],
@@ -46,6 +54,9 @@
        query: gql`{allDatasets(limit: 1000) {
            name
            institution
+           organism
+           ionisationSource
+           maldiMatrix
        }}`,
        update: data => data.allDatasets
      }
@@ -60,11 +71,19 @@
      },
 
      institutionNames() {
-       if (!this.datasetInfo)
-         return [];
-       let names = [...new Set(this.datasetInfo.map(x => x.institution))];
-       names.sort();
-       return names;
+       return getUniqueValues(this.datasetInfo, x => x.institution);
+     },
+
+     organisms() {
+       return getUniqueValues(this.datasetInfo, x => x.organism);
+     },
+
+     ionisationSources() {
+       return getUniqueValues(this.datasetInfo, x => x.ionisationSource);
+     },
+
+     maldiMatrices() {
+       return getUniqueValues(this.datasetInfo, x => x.maldiMatrix);
      },
 
      datasetNames() {
@@ -123,6 +142,10 @@
 <style>
  .el-form-item__content {
    text-align: left;
+ }
+
+ .el-select-dropdown__wrap {
+   max-height: 320px;
  }
 
  #filter-form {

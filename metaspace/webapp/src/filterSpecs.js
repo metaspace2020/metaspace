@@ -20,6 +20,36 @@ function formatAdduct (adduct) {
   }
 }
 
+/*
+   Introduction of a new filter requires:
+   * type (one of the suitable filter components)
+   * name: short name, will be shown on the 'tags'
+   * description: what will be shown as a select option
+   * levels: on which pages the filter makes sense;
+     currently 'annotation' and 'dataset' are used
+   * initialValue: what will be the filter value when it's created
+   * any required settings for the chosen filter component
+     (e.g. 'options' for SingleSelectFilter/MultipleSelectFilter)
+
+   In addition, there are some optional settings, such as
+   'removable' (applicable to every filter) or 'filterable'.
+
+   The specifications below describe only the presentation logic.
+   Once a filter is added to the specifications list, any pages
+   making use of it must also implement the data filtering logic,
+   e.g. adding GraphQL query variables and setting them accordingly.
+
+   Data filtering logic is currently concentrated in the store:
+   * add new fields to DEFAULT_FILTER and FILTER_TO_URL (for vue-router)
+   * edit gqlAnnotationFilter and gqlDatasetFilter getters
+
+   If options to a select are provided as a string, they are taken from
+   FilterPanel computed properties. When a new filter is added that uses
+   this feature, the GraphQL query in FilterPanel should be tweaked to
+   incorporate any extra fields that are needed to populate the options,
+   and a new computed property with the name must be added.
+*/
+
 const FILTER_SPECIFICATIONS = {
   database: {
     type: SingleSelectFilter,
@@ -40,7 +70,8 @@ const FILTER_SPECIFICATIONS = {
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
-    options: 'datasetNames' // take from Vue instance
+    // string instead of a list  means take from Vue instance
+    options: 'datasetNames'
   },
 
   minMSM: {
@@ -98,6 +129,48 @@ const FILTER_SPECIFICATIONS = {
     initialValue: undefined,
 
     options: 'institutionNames' // take from Vue instance
+  },
+
+  polarity: {
+    type: SingleSelectFilter,
+    name: 'Polarity',
+    description: 'Select polarity',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    // FIXME: this ideally should be taken straight from the JSON schema
+    options: ['Positive', 'Negative'],
+    filterable: false
+  },
+
+  organism: {
+    type: SingleSelectFilter,
+    name: 'Organism',
+    description: 'Select organism',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    options: 'organisms'
+  },
+
+  ionisationSource: {
+    type: SingleSelectFilter,
+    name: 'Source',
+    description: 'Select ionisation source',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    options: 'ionisationSources'
+  },
+
+  maldiMatrix: {
+    type: SingleSelectFilter,
+    name: 'Matrix',
+    description: 'Select MALDI matrix',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    options: 'maldiMatrices'
   }
 };
 

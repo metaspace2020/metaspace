@@ -51,10 +51,7 @@
        update: data => data.allDatasets,
        variables () {
          return {
-           dFilter: {
-             institution: this.$store.getters.filter.institution,
-             name: this.$store.getters.filter.datasetName
-           }
+           dFilter: this.$store.getters.gqlDatasetFilter
          }
        }
      }

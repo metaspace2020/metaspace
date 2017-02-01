@@ -13,7 +13,11 @@ const DEFAULT_FILTER = {
   compoundName: undefined,
   adduct: undefined,
   mz: undefined,
-  fdrLevel: 0.1
+  fdrLevel: 0.1,
+  polarity: undefined,
+  organism: undefined,
+  ionisationSource: undefined,
+  maldiMatrix: undefined
 };
 
 function revMap(d) {
@@ -32,7 +36,11 @@ const FILTER_TO_URL = {
   compoundName: 'mol',
   adduct: 'add',
   mz: 'mz',
-  fdrLevel: 'fdrlvl'
+  fdrLevel: 'fdrlvl',
+  polarity: 'mode',
+  organism: 'organism',
+  ionisationSource: 'src',
+  maldiMatrix: 'matrix'
 };
 
 const URL_TO_FILTER = revMap(FILTER_TO_URL);
@@ -106,6 +114,45 @@ const store = new Vuex.Store({
     filter(state) {
       return decodeParams(state.route);
     },
+
+    gqlAnnotationFilter(state, getters) {
+      const filter = getters.filter;
+      const f = {
+        database: filter.database,
+        datasetNamePrefix: filter.datasetName,
+        compoundQuery: filter.compoundName,
+        adduct: filter.adduct,
+        fdrLevel: filter.fdrLevel
+      };
+
+      if (filter.minMSM)
+        f.msmScoreFilter = {min: filter.minMSM, max: 1.0};
+
+      if (filter.mz) {
+        // FIXME: hardcoded ppm
+        const ppm = 5, mz = filter.mz;
+        f.mzFilter = {
+          min: mz * (1.0 - ppm * 1e-6),
+          max: mz * (1.0 + ppm * 1e-6)
+        };
+      }
+
+      return f;
+    },
+
+    gqlDatasetFilter(state, getters) {
+      const filter = getters.filter;
+      const {institution, datasetName, polarity, organism,
+             ionisationSource, maldiMatrix} = filter;
+      return {
+        institution,
+        name: datasetName,
+        organism,
+        ionisationSource,
+        maldiMatrix,
+        polarity: polarity ? polarity.toUpperCase() : null
+      }
+    }
   },
 
   mutations: {

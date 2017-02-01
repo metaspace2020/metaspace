@@ -166,33 +166,12 @@
      },
 
      gqlFilter () {
-       this.currentPage = 0;
+       this.currentPage = 0; // FIXME find a better way
 
-       const f = {
-         database: this.filter.database,
-         datasetNamePrefix: this.filter.datasetName,
-         compoundQuery: this.filter.compoundName,
-         adduct: this.filter.adduct,
-         fdrLevel: this.filter.fdrLevel
+       return {
+         annotationFilter: this.$store.getters.gqlAnnotationFilter,
+         datasetFilter: this.$store.getters.gqlDatasetFilter
        };
-
-       const df = {
-         institution: this.filter.institution
-       };
-
-       if (this.filter.minMSM)
-         f.msmScoreFilter = {min: this.filter.minMSM, max: 1.0};
-
-       if (this.filter.mz) {
-         // FIXME: hardcoded ppm
-         const ppm = 5, mz = this.filter.mz;
-         f.mzFilter = {
-           min: mz * (1.0 - ppm * 1e-6),
-           max: mz * (1.0 + ppm * 1e-6)
-         };
-       }
-
-       return {annotationFilter: f, datasetFilter: df};
      }
    },
    apollo: {
