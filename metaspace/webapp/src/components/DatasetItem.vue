@@ -65,7 +65,7 @@
      },
 
      formatDatasetName() {
-       return this.dataset.name.split('//', 2)[1]
+       return this.dataset.name.split('//', 2).pop();
      },
 
      uploadedDateTime() {
