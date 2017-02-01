@@ -14,9 +14,20 @@ type Analyzer {
   resolvingPower(mz: Float!): Float!
 }
 
-enum AnnotationOrder {
+enum AnnotationOrderBy {
   ORDER_BY_MZ
   ORDER_BY_MSM
+  ORDER_BY_FDR_MSM
+}
+
+enum DatasetOrderBy {
+  ORDER_BY_DATE
+  ORDER_BY_NAME
+}
+
+enum SortingOrder {
+  ASCENDING,
+  DESCENDING
 }
 
 type Dataset {
@@ -31,26 +42,35 @@ type Dataset {
   ionisationSource: String!
   analyzer: Analyzer!
 
-  annotations(orderBy: AnnotationOrder = ORDER_BY_MSM,
-              offset: Int = 0,
-              limit: Int = 10,
-              database: String = "HMDB",
-              mzFilter: NumericRange,
-              msmScoreFilter: NumericRange,
-              compoundNameContains: String,
-              fdrLevel: Float,
-              sumFormula: String,
-              adduct: String): [Annotation]
+  organism: String
+  maldiMatrix: String
+
+  # full metadata JSON conforming to schema published at
+  # https://github.com/metaspace2020/metadata
+  metadataJson: String!
+}
+
+type CompoundInfoEntry {
+  database: String!
+  url: String!
 }
 
 type Compound {
   name: String!
-  # TODO: InChi/SMILES, image URL, ClassyFire results
+  imageURL: String
+  information: [CompoundInfoEntry]
+  # TODO: InChi/SMILES, ClassyFire results
 }
 
 type Spectrum {
   mzs: [Float!]!
   intensities: [Float!]!
+}
+
+type MzImage {
+  mz: Float
+  data: String  # base64-encoded
+  url: String
 }
 
 type Annotation {
@@ -61,6 +81,11 @@ type Annotation {
   possibleCompounds: [Compound!]!
   fdrLevel: Float!
   msmScore: Float!
+  rhoSpatial: Float
+  rhoSpectral: Float
+  rhoChaos: Float
+  ionImage: MzImage!
+  isotopeImages: [MzImage!]!
 }
 
 # [min, max) interval
@@ -69,24 +94,45 @@ input NumericRange {
   max: Float!
 }
 
+input AnnotationFilter {
+  database: String
+  datasetNamePrefix: String
+  mzFilter: NumericRange
+  msmScoreFilter: NumericRange
+  compoundQuery: String
+  fdrLevel: Float
+  sumFormula: String
+  adduct: String
+}
+
+input DatasetFilter {
+  institution: String
+  name: String
+  submitter: String
+  polarity: Polarity
+  ionisationSource: String
+  analyzerType: String
+  maldiMatrix: String
+  organism: String
+}
+
 type Query {
   dataset(id: String!): Dataset
   datasetByName(name: String!): Dataset
 
-  # Datasets sorted by name
-  allDatasets(offset: Int = 0, limit: Int = 10): [Dataset!]!
+  allDatasets(orderBy: DatasetOrderBy = ORDER_BY_DATE,
+              sortingOrder: SortingOrder = DESCENDING,
+              filter: DatasetFilter = {},
+              offset: Int = 0, limit: Int = 10): [Dataset!]!
 
-  allAnnotations(orderBy: AnnotationOrder = ORDER_BY_MSM,
-                 offset: Int = 0,
-                 limit: Int = 10,
-                 database: String = "HMDB",
-                 datasetNamePrefix: String,
-                 mzFilter: NumericRange,
-                 msmScoreFilter: NumericRange,
-                 compoundNameContains: String,
-                 fdrLevel: Float,
-                 sumFormula: String,
-                 adduct: String): [Annotation]
+  allAnnotations(orderBy: AnnotationOrderBy = ORDER_BY_MSM,
+                 sortingOrder: SortingOrder = DESCENDING,
+                 offset: Int = 0, limit: Int = 10,
+                 filter: AnnotationFilter = {database: "HMDB"},
+                 datasetFilter: DatasetFilter = {}): [Annotation]
+
+  countAnnotations(filter: AnnotationFilter = {database: "HMDB"},
+                   datasetFilter: DatasetFilter = {}): Int!
 }
 
 schema {

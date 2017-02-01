@@ -1,17 +1,18 @@
-import express from 'express';
-
-import pgp from 'pg-promise';
-import elasticsearch from 'elasticsearch';
-
-import { makeExecutableSchema } from 'graphql-tools';
-import { graphqlExpress, graphiqlExpress } from 'graphql-server-express';
-import bodyParser from 'body-parser';
-
-import sprintf from 'sprintf-js'
-import capitalize from 'lodash/capitalize'
-
-import { readFile } from 'fs';
-import smEngineConfig from './config.json';
+const express = require('express'),
+      knex = require('knex'),
+      pgp = require('pg-promise'),
+      elasticsearch = require('elasticsearch'),
+      bodyParser = require('body-parser'),
+      cors = require('cors'),
+      compression = require('compression'),
+      sprintf = require('sprintf-js'),
+      capitalize = require('lodash/capitalize'),
+      fetch = require('node-fetch'),
+      readFile = require('fs').readFile,
+      smEngineConfig = require('./config.json'),
+      makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
+      graphqlExpress = require('graphql-server-express').graphqlExpress,
+      graphiqlExpress = require('graphql-server-express').graphiqlExpress;
 
 const dbConfig = () => {
   const {host, database, user, password} = smEngineConfig.db;
@@ -29,20 +30,115 @@ const esConfig = () => {
   }
 };
 
+const MOL_IMAGE_SERVER_IP = "52.51.114.30:3020";
+
 const esIndex = smEngineConfig.elasticsearch.index;
+
+var pg = require('knex')({
+  client: 'pg',
+  connection: dbConfig(),
+  searchPath: 'knex,public'
+});
 
 var db = pgp()(dbConfig());
 var es = new elasticsearch.Client(esConfig());
 
 function esFormatMz(mz) {
-  // according to sm.engine.es_export
+  // transform m/z into a string according to sm.engine.es_export
   return sprintf.sprintf("%010.4f", mz);
 }
 
+function esSort(orderBy, sortingOrder) {
+  let order = 'asc';
+  if (sortingOrder == 'DESCENDING')
+    order = 'desc';
+  else if (orderBy == 'ORDER_BY_MSM')
+    order = 'desc';
+
+  if (orderBy == 'ORDER_BY_MZ')
+    return [{'mz': order}];
+  else if (orderBy == 'ORDER_BY_MSM')
+    return [{'msm': order}];
+  else if (orderBy == 'ORDER_BY_FDR_MSM')
+    return [{'fdr': order}, {'msm': order == 'asc' ? 'desc' : 'asc'}];
+}
+
+class DatasetFilter {
+  constructor(options) {
+    this.options = options;
+  }
+
+  esFilter(value) {
+    const field = 'ds_meta.' + this.options.schemaPath;
+    if (this.options.preprocess)
+      value = this.options.preprocess(value);
+    if (this.options.match == 'exact')
+      return {term: {[field]: value}}
+    else
+      return {wildcard: {[field]: `*${value}*`}}
+  } 
+
+  pgFilter(q, value) {
+    if (this.options.preprocess)
+      value = this.options.preprocess(value);
+    const pathElements = this.options.schemaPath.replace(/\./g, ',');
+    const obj = "metadata#>>'{" + pathElements + "}'";
+
+    if (this.options.match == 'exact')
+      return q.whereRaw(obj + ' = ?', [value]);
+    else
+      return q.whereRaw(obj + ' LIKE ?', ['%' + value + '%']);
+  }
+}
+
+class PhraseMatchFilter extends DatasetFilter {
+  constructor(options) { super(options); }
+
+  esFilter(value) {
+    const field = 'ds_meta.' + this.options.schemaPath;
+    if (this.options.preprocess)
+      value = this.options.preprocess(value);
+    return {match: {[field]: {query: value, type: 'phrase'}}}
+  }
+}
+
+const datasetFilters = {
+  institution: new DatasetFilter({
+    schemaPath: 'Submitted_By.Institution',
+    match: 'exact',
+  }),
+
+  polarity: new PhraseMatchFilter({
+    schemaPath: 'MS_Analysis.Polarity',
+    match: 'exact',
+    preprocess: capitalize
+  }),
+
+  ionisationSource: new PhraseMatchFilter({
+    schemaPath: 'MS_Analysis.Ionisation_Source',
+    match: 'exact',
+  }),
+
+  analyzerType: new DatasetFilter({
+    schemaPath: 'MS_Analysis.Analyzer',
+    match: 'exact'
+  }),
+
+  organism: new DatasetFilter({
+    schemaPath: 'Sample_Information.Organism',
+    match: 'exact'
+  }),
+
+  maldiMatrix: new DatasetFilter({
+    schemaPath: 'Sample_Preparation.MALDI_Matrix',
+    match: 'exact'
+  })
+}
+
 function constructAnnotationQuery(args) {
-  const { orderBy, offset, limit, database } = args;
-  const order = orderBy == 'ORDER_BY_MSM' ? 'desc' : 'asc';
-  const sortField = orderBy == 'ORDER_BY_MSM' ? 'msm' : 'mz';
+  const { orderBy, sortingOrder, offset, limit, filter, datasetFilter } = args;
+  const { database, datasetId, datasetNamePrefix, mzFilter, msmScoreFilter,
+          fdrLevel, sumFormula, adduct, compoundQuery } = filter;
 
   var body = {
     query: {
@@ -51,7 +147,7 @@ function constructAnnotationQuery(args) {
           {term: {db_name: database}}]}}
       }
     },
-    sort: [{[sortField]: order}]
+    sort: esSort(orderBy, sortingOrder)
   };
 
   function addFilter(filter) {
@@ -67,30 +163,38 @@ function constructAnnotationQuery(args) {
     addFilter(filter);
   }
 
-  if (args.datasetId !== undefined)
-    addFilter({term: {ds_id: args.datasetId}});
+  if (datasetId)
+    addFilter({term: {ds_id: datasetId}});
 
-  if (args.mzFilter !== undefined)
-    addRangeFilter('mz', {min: esFormatMz(args.mzFilter.min),
-                          max: esFormatMz(args.mzFilter.max)});
+  if (mzFilter)
+    addRangeFilter('mz', {min: esFormatMz(mzFilter.min),
+                          max: esFormatMz(mzFilter.max)});
 
-  if (args.msmScoreFilter !== undefined)
-    addRangeFilter('msm', args.msmScoreFilter);
+  if (msmScoreFilter)
+    addRangeFilter('msm', msmScoreFilter);
 
-  if (args.fdrLevel !== undefined)
-    addRangeFilter('fdr', {min: 0, max: args.fdrLevel});
+  if (fdrLevel)
+    addRangeFilter('fdr', {min: 0, max: fdrLevel + 1e-3});
 
-  if (args.sumFormula !== undefined)
-    addFilter({term: {sf: args.sumFormula}});
+  if (sumFormula)
+    addFilter({term: {sf: sumFormula}});
 
-  if (args.adduct !== undefined)
-    addFilter({term: {adduct: args.adduct}});
+  if (typeof adduct === 'string')
+    addFilter({term: {adduct: adduct}});
 
-  if (args.datasetNamePrefix !== undefined)
-    addFilter({prefix: {ds_name: args.datasetNamePrefix}});
+  if (datasetNamePrefix)
+    addFilter({prefix: {ds_name: datasetNamePrefix}});
 
-  if (args.compoundNameContains !== undefined)
-    addFilter({wildcard: {comp_names: '*' + args.compoundNameContains + '*'}});
+  if (compoundQuery)
+      addFilter({or: [
+        { wildcard: {comp_names: `*${compoundQuery}*`}},
+        { term: {sf: compoundQuery }}]});
+
+  for (var key in datasetFilters) {
+    const val = datasetFilter[key];
+    if (val)
+      addFilter(datasetFilters[key].esFilter(val));
+  }
 
   return body;
 }
@@ -103,11 +207,25 @@ function esSearchResults(args) {
     from: args.offset,
     size: args.limit
   };
+  console.log(JSON.stringify(body));
+  console.time('esQuery');
   return es.search(request).then((resp) => {
+    console.timeEnd('esQuery');
     return resp.hits.hits.map((hit) => hit._source)
   }).catch((err) => {
     console.log(err);
     return [];
+  });
+}
+
+function esCountResults(args) {
+  const body = constructAnnotationQuery(args);
+  const request = { body, index: esIndex };
+  return es.count(request).then((resp) => {
+    return resp.count;
+  }).catch((err) => {
+    console.log(err);
+    return 0;
   });
 }
 
@@ -120,7 +238,7 @@ const Resolvers = {
 
   Query: {
     datasetByName(_, { name }) {
-      return db.any("select * from dataset where name = $1", [name])
+      return pg.select().from('dataset').where('name', '=', name)
         .then((data) => {
           return data.length > 0 ? data[0] : null;
         })
@@ -130,7 +248,7 @@ const Resolvers = {
     },
 
     dataset(_, { id }) {
-      return db.any("select * from dataset where id = $1", [id])
+      return pg.select().from('dataset').where('id', '=', id)
         .then((data) => {
           return data.length > 0 ? data[0] : null;
         })
@@ -139,14 +257,35 @@ const Resolvers = {
         });
     },
 
-    allDatasets(_, {offset, limit}) {
-      return db.any("select * from dataset order by name offset $1 limit $2",
-                    [offset, limit])
+    allDatasets(_, {orderBy, sortingOrder, offset, limit, filter}) {
+      let q = pg.select().from('dataset');
+
+      console.log(JSON.stringify(filter));
+
+      if (filter.name)
+        q = q.where("name", "=", filter.name);
+
+      for (var key in datasetFilters) {
+        const val = filter[key];
+        if (val)
+          q = datasetFilters[key].pgFilter(q, val);
+      }
+
+      const orderVar = orderBy == 'ORDER_BY_NAME' ? 'name' : 'id';
+      const ord = sortingOrder == 'ASCENDING' ? 'asc' : 'desc';
+
+      console.log(q.toString());
+
+      return q.orderBy(orderVar, ord).offset(offset).limit(limit)
         .catch((err) => { console.log(err); return []; });
     },
 
     allAnnotations(_, args) {
       return esSearchResults(args);
+    },
+
+    countAnnotations(_, args) {
+      return esCountResults(args);
     }
   },
 
@@ -164,12 +303,20 @@ const Resolvers = {
   },
 
   Dataset: {
+    metadataJson(ds) {
+      return JSON.stringify(ds.metadata);
+    },
+
     institution(ds) {
       return ds.metadata.Submitted_By.Institution;
     },
 
     submitter(ds) {
       return ds.metadata.Submitted_By.Submitter;
+    },
+
+    organism(ds) {
+      return ds.metadata.Sample_Information.Organism;
     },
 
     principalInvestigator(ds) {
@@ -184,6 +331,10 @@ const Resolvers = {
       return ds.metadata.MS_Analysis.Ionisation_Source;
     },
 
+    maldiMatrix(ds) {
+      return ds.metadata.Sample_Preparation.MALDI_Matrix;
+    },
+
     analyzer(ds) {
       const msInfo = ds.metadata.MS_Analysis;
       return {
@@ -192,10 +343,10 @@ const Resolvers = {
       };
     },
 
-    annotations(ds, args) {
-      args.datasetId = ds.id;
-      return esSearchResults(args);
-    }
+    /* annotations(ds, args) {
+       args.datasetId = ds.id;
+       return esSearchResults(args);
+       } */
   },
 
   Annotation: {
@@ -204,20 +355,45 @@ const Resolvers = {
     },
 
     possibleCompounds(hit) {
-      return hit.comp_names.split('|').map((n) => ({name: n}));
+      const ids = hit.comp_ids.split('|');
+      const names = hit.comp_names.split('|');
+      let compounds = [];
+      for (var i = 0; i < names.length; i++) {
+        let id = ids[i];
+        let infoURL;
+        if (hit.db_name == 'HMDB') {
+          id = sprintf.sprintf("HMDB%05d", id);
+          infoURL = `http://www.hmdb.ca/metabolites/${id}`;
+        } else if (hit.db_name == 'ChEBI') {
+          id = "CHEBI:" + id;
+          infoURL = `http://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}`;
+        } else if (hit.db_name == 'SwissLipids') {
+          id = sprintf.sprintf("SLM:%09d", id);
+          infoURL = `http://swisslipids.org/#/entity/${id}`;
+        } else if (hit.db_name == 'LIPID_MAPS') {
+          infoURL = `http://www.lipidmaps.org/data/LMSDRecord.php?LMID=${id}`;
+        }
+
+        compounds.push({
+          name: names[i],
+          imageURL: `http://${MOL_IMAGE_SERVER_IP}/mol-images/${hit.db_name}/${id}.svg`,
+          information: [{database: hit.db_name, url: infoURL}]
+        });
+      }
+      return compounds;
     },
 
-    mz(hit) {
-      return parseFloat(hit.mz);
-    },
+    mz: (hit) => parseFloat(hit.mz),
 
-    fdrLevel(hit) {
-      return hit.fdr;
-    },
+    fdrLevel: (hit) => hit.fdr,
 
-    msmScore(hit) {
-      return hit.msm
-    },
+    msmScore: (hit) => hit.msm,
+
+    rhoSpatial: (hit) => hit.image_corr,
+
+    rhoSpectral: (hit) => hit.pattern_match,
+
+    rhoChaos: (hit) => hit.chaos,
 
     dataset(hit) {
       return {
@@ -225,6 +401,27 @@ const Resolvers = {
         name: hit.ds_name,
         metadata: hit.ds_meta
       }
+    },
+
+    ionImage({ mz, db_id, ds_id, job_id, sf_id, sf, adduct }) {
+      return {
+        mz,
+        url:`http://alpha.metasp.eu/mzimage2/${db_id}/${ds_id}/${job_id}/${sf_id}/${sf}/${adduct}`
+      };
+    },
+
+    isotopeImages({ mz, db_id, ds_id, job_id, sf_id, sf, adduct }) {
+      return fetch(`http://alpha.metasp.eu/sf_peak_mzs/${ds_id}/${db_id}/${sf_id}/${adduct}`)
+          .then(res => res.json())
+          .then(function(centroids) {
+            let images = [];
+            for (let i = 0; i < 4; i++)
+              images.push({
+                mz: centroids[i],
+                url:`http://alpha.metasp.eu/mzimage2/${db_id}/${ds_id}/${job_id}/${sf_id}/${sf}/${adduct}/${i}`
+              });
+            return images;
+          });
     }
   }
 }
@@ -242,7 +439,9 @@ readFile('schema.graphql', 'utf8', (err, contents) => {
     logger
   })
 
-  app.use('/graphql', bodyParser.json(), graphqlExpress({ schema }))
+  app.use(cors());
+  app.use(compression());
+  app.use('/graphql', bodyParser.json({ type: '*/*' }), graphqlExpress({ schema }))
   app.use('/graphiql', graphiqlExpress({
     endpointURL: '/graphql'
   }));
