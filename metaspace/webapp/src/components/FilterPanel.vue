@@ -34,7 +34,8 @@
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
 
  export default {
-   name: 'annotation-filter',
+   name: 'filter-panel',
+   props: ["level"],
    components: {
      InputFilter,
      SingleSelectFilter,
@@ -77,6 +78,8 @@
      availableFilters() {
        let available = [];
        for (var key in FILTER_SPECIFICATIONS) {
+         if (FILTER_SPECIFICATIONS[key].levels.indexOf(this.level) == -1)
+           continue;
          if (this.activeKeys.indexOf(key) == -1)
            available.push({key,
                            description: FILTER_SPECIFICATIONS[key].description})

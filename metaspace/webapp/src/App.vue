@@ -18,9 +18,6 @@
         </div>
       </div>
 
-      <div class="warning">
-        NOT PRODUCTION-READY! Known limitations: <b>NO</b> CSV export; <b>NO</b> isotope pattern plot; <b>NO</b> user profiles.
-      </div>
     </el-row>
 
     <router-view class="main-content">
@@ -120,8 +117,11 @@
 
 <style lang="scss">
 
- #app {
+ html {
    font-family: 'Roboto', Helvetica, sans-serif;
+ }
+
+ #app {
    -webkit-font-smoothing: antialiased;
    -moz-osx-font-smoothing: grayscale;
    color: #2c3e50;
@@ -138,7 +138,7 @@
  }
 
  .main-content {
-   padding-top: 82px;
+   padding-top: 62px;
  }
 
  .warning {

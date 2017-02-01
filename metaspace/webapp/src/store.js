@@ -37,20 +37,39 @@ const FILTER_TO_URL = {
 
 const URL_TO_FILTER = revMap(FILTER_TO_URL);
 
-function encodeParams(filter) {
+const PATH_TO_LEVEL = {
+  '/annotations': 'annotation',
+  '/datasets': 'dataset'
+};
+
+function encodeParams(filter, path) {
+  const level = PATH_TO_LEVEL[path];
   let q = {};
   for (var key in FILTER_TO_URL) {
+    if (FILTER_SPECIFICATIONS[key].levels.indexOf(level) == -1)
+      continue;
+
     if (filter[key] != DEFAULT_FILTER[key]) {
       q[FILTER_TO_URL[key]] = filter[key] || null;
     }
   }
+  console.log(q);
   return q;
 }
 
-function decodeParams(query) {
-  let filter = Object.assign({}, DEFAULT_FILTER);
+function decodeParams({query, path}) {
+  const level = PATH_TO_LEVEL[path];
+
+  let filter = {};
+  for (var key in DEFAULT_FILTER)
+    if (FILTER_SPECIFICATIONS[key].levels.indexOf(level) != -1)
+      filter[key] = DEFAULT_FILTER[key];
+
   for (var key in query) {
     const fKey = URL_TO_FILTER[key];
+    if (FILTER_SPECIFICATIONS[fKey].levels.indexOf(level) == -1)
+      continue;
+
     if (fKey) {
       filter[fKey] = query[key];
       if (filter[fKey] === null)
@@ -60,19 +79,33 @@ function decodeParams(query) {
   return filter;
 }
 
+function replaceURL(state, filter) {
+  const query = encodeParams(filter, state.route.path);
+
+  state.lastUsedFilters[state.route.path] = {
+    filter,
+    query,
+    order: state.orderedActiveFilters
+  };
+
+  router.replace({query});
+}
+
 const store = new Vuex.Store({
   state: {
     // names of currently shown filters
     orderedActiveFilters: [],
 
     // currently selected annotation
-    annotation: undefined
+    annotation: undefined,
+
+    lastUsedFilters: {}
   },
 
   getters: {
     filter(state) {
-      return decodeParams(state.route.query);
-    }
+      return decodeParams(state.route);
+    },
   },
 
   mutations: {
@@ -93,17 +126,17 @@ const store = new Vuex.Store({
           active.push(key);
 
       state.orderedActiveFilters = active;
-      router.replace({query: encodeParams(filter)});
+      replaceURL(state, filter);
     },
 
     addFilter (state, name) {
       const {initialValue} = FILTER_SPECIFICATIONS[name];
       // FIXME: is there any way to access getters here?
-      let filter = Object.assign(decodeParams(state.route.query),
+      let filter = Object.assign(decodeParams(state.route),
                                  {name: initialValue});
 
       state.orderedActiveFilters.push(name);
-      router.replace({query: encodeParams(filter)});
+      replaceURL(state, filter);
     },
 
     setAnnotation(state, annotation) {

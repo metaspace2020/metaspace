@@ -30,7 +30,9 @@
    },
    apollo: {
      datasets: {
-       query: gql`{allDatasets(offset: 0, limit: 100) {
+       query: gql`query GetDatasets($dFilter: DatasetFilter) {
+           allDatasets(offset: 0, limit: 100,
+                       filter: $dFilter) {
          id
          name
          institution
@@ -46,7 +48,15 @@
          }
          metadataJson
        }}`,
-       update: data => data.allDatasets
+       update: data => data.allDatasets,
+       variables () {
+         return {
+           dFilter: {
+             institution: this.$store.getters.filter.institution,
+             name: this.$store.getters.filter.datasetName
+           }
+         }
+       }
      }
    },
    methods: {

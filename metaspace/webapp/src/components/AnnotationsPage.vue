@@ -1,6 +1,6 @@
 <template>
   <el-row :gutter="20">
-    <annotation-filter></annotation-filter>
+    <filter-panel level="annotation"></filter-panel>
 
     <el-col :xs="24" :sm="24" :md="24" :lg="tableWidth">
       <annotation-table :hideColumns="hiddenColumns">
@@ -16,8 +16,8 @@
 
 <script>
  import AnnotationTable from './AnnotationTable.vue';
- import AnnotationFilter from './AnnotationFilter.vue';
  import AnnotationView from './AnnotationView.vue';
+ import FilterPanel from './FilterPanel.vue';
  import {mapState, mapGetters} from 'vuex';
 
  export default {
@@ -43,14 +43,28 @@
      ...mapGetters({annotationFilter: 'filter'})
    },
    created() {
-     // this is needed only in order to show the filters
-     // that have been parsed out of the query string
-     this.$store.commit('updateFilter', this.annotationFilter);
+     const {path} = this.$store.state.route;
+     const lastParams = this.$store.state.lastUsedFilters[path];
+     if (lastParams) {
+       // returned to the page after first load:
+       // restore last used set of filters (= redirect)
+       let f = lastParams.filter;
+
+       const df = this.$store.state.lastUsedFilters['/datasets'];
+       if (df)
+         f = Object.assign({}, lastParams.filter, df.filter);
+
+       this.$store.commit('updateFilter', f);
+     } else {
+       // first page load:
+       // setup the store so that filters (parsed from the URL) are shown
+       this.$store.commit('updateFilter', this.annotationFilter);
+     }
    },
    components: {
      AnnotationTable,
-     AnnotationFilter,
-     AnnotationView
+     AnnotationView,
+     FilterPanel
    }
  }
 </script>

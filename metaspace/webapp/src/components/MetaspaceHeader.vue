@@ -36,7 +36,7 @@
 
 <script>
  export default {
-   name: 'metaspace-header'
+   name: 'metaspace-header',
  }
 </script>
 

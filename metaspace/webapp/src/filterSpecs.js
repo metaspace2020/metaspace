@@ -25,6 +25,7 @@ const FILTER_SPECIFICATIONS = {
     type: SingleSelectFilter,
     name: 'Database',
     description: 'Select database',
+    levels: ['annotation'],
     initialValue: 'HMDB', // because we've agreed to process every dataset with it
 
     // FIXME: hard-coded, should be taken from the server
@@ -36,6 +37,7 @@ const FILTER_SPECIFICATIONS = {
     type: SingleSelectFilter,
     name: 'Dataset',
     description: 'Select dataset',
+    levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
     options: 'datasetNames' // take from Vue instance
@@ -45,6 +47,7 @@ const FILTER_SPECIFICATIONS = {
     type: InputFilter,
     name: 'Min. MSM',
     description: 'Set minimum MSM score',
+    levels: ['annotation'],
     initialValue: 0.0
   },
 
@@ -52,6 +55,7 @@ const FILTER_SPECIFICATIONS = {
     type: InputFilter,
     name: 'Compound',
     description: 'Search compound',
+    levels: ['annotation'],
     initialValue: ''
   },
 
@@ -59,6 +63,7 @@ const FILTER_SPECIFICATIONS = {
     type: SingleSelectFilter,
     name: 'Adduct',
     description: 'Select adduct',
+    levels: ['annotation'],
     initialValue: null,
 
     options: [null, '+H', '-H', '+Na', '+Cl', '+K'],
@@ -70,6 +75,7 @@ const FILTER_SPECIFICATIONS = {
     type: InputFilter,
     name: 'm/z (±5 ppm)',
     description: 'Search by m/z (±5 ppm)',
+    levels: ['annotation'],
     initialValue: undefined
   },
 
@@ -77,6 +83,7 @@ const FILTER_SPECIFICATIONS = {
     type: SingleSelectFilter,
     name: 'FDR',
     description: 'Select FDR level',
+    levels: ['annotation'],
     initialValue: 0.1,
 
     options: ['0.05', '0.1', '0.2'],
@@ -87,6 +94,7 @@ const FILTER_SPECIFICATIONS = {
     type: SingleSelectFilter,
     name: 'Institution',
     description: 'Select institution',
+    levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
     options: 'institutionNames' // take from Vue instance
