@@ -63,76 +63,79 @@ function esSort(orderBy, sortingOrder) {
     return [{'fdr': order}, {'msm': order == 'asc' ? 'desc' : 'asc'}];
 }
 
-class DatasetFilter {
-  constructor(options) {
+class AbstractDatasetFilter {
+  constructor(schemaPath, options) {
+    this.schemaPath = schemaPath;
     this.options = options;
+
+    this.esField = 'ds_meta.' + this.schemaPath;
+
+    const pathElements = this.schemaPath.replace(/\./g, ',');
+    this.pgField = "metadata#>>'{" + pathElements + "}'";
+  }
+
+  preprocess(val) {
+    if (this.options.preprocess)
+      return this.options.preprocess(val);
+    return val;
+  }
+
+  esFilter(value) {}
+  pgFilter(q, value) {}
+}
+
+class ExactMatchFilter extends AbstractDatasetFilter {
+  constructor(schemaPath, options) {
+    super(schemaPath, options);
   }
 
   esFilter(value) {
-    const field = 'ds_meta.' + this.options.schemaPath;
-    if (this.options.preprocess)
-      value = this.options.preprocess(value);
-    if (this.options.match == 'exact')
-      return {term: {[field]: value}}
-    else
-      return {wildcard: {[field]: `*${value}*`}}
-  } 
+    return {term: {[this.esField]: this.preprocess(value)}}
+  }
 
   pgFilter(q, value) {
-    if (this.options.preprocess)
-      value = this.options.preprocess(value);
-    const pathElements = this.options.schemaPath.replace(/\./g, ',');
-    const obj = "metadata#>>'{" + pathElements + "}'";
-
-    if (this.options.match == 'exact')
-      return q.whereRaw(obj + ' = ?', [value]);
-    else
-      return q.whereRaw(obj + ' LIKE ?', ['%' + value + '%']);
+    return q.whereRaw(this.pgField + ' = ?', [this.preprocess(value)]);
   }
 }
 
-class PhraseMatchFilter extends DatasetFilter {
-  constructor(options) { super(options); }
+class SubstringMatchFilter extends AbstractDatasetFilter {
+  constructor(schemaPath, options) {
+    super(schemaPath, options);
+  }
 
   esFilter(value) {
-    const field = 'ds_meta.' + this.options.schemaPath;
-    if (this.options.preprocess)
-      value = this.options.preprocess(value);
-    return {match: {[field]: {query: value, type: 'phrase'}}}
+    return {wildcard: {[this.esField]: `*${this.preprocess(value)}*`}}
+  }
+
+  pgFilter(q, value) {
+    return q.whereRaw(this.pgField + ' LIKE ?', ['%' + this.preprocess(value) + '%']);
+  }
+}
+
+class PhraseMatchFilter extends SubstringMatchFilter {
+  constructor(schemaPath, options) {
+    super(schemaPath, options);
+  }
+
+  esFilter(value) {
+    return {match: {[this.esField]: {query: this.preprocess(value), type: 'phrase'}}}
   }
 }
 
 const datasetFilters = {
-  institution: new DatasetFilter({
-    schemaPath: 'Submitted_By.Institution',
-    match: 'exact',
-  }),
+  institution: new ExactMatchFilter('Submitted_By.Institution', {}),
+  polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
+  ionisationSource: new PhraseMatchFilter('MS_Analysis.Ionisation_Source', {}),
+  analyzerType: new ExactMatchFilter('MS_Analysis.Analyzer', {}),
+  organism: new ExactMatchFilter('Sample_Information.Organism', {}),
+  maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {})
+};
 
-  polarity: new PhraseMatchFilter({
-    schemaPath: 'MS_Analysis.Polarity',
-    match: 'exact',
-    preprocess: capitalize
-  }),
-
-  ionisationSource: new PhraseMatchFilter({
-    schemaPath: 'MS_Analysis.Ionisation_Source',
-    match: 'exact',
-  }),
-
-  analyzerType: new DatasetFilter({
-    schemaPath: 'MS_Analysis.Analyzer',
-    match: 'exact'
-  }),
-
-  organism: new DatasetFilter({
-    schemaPath: 'Sample_Information.Organism',
-    match: 'exact'
-  }),
-
-  maldiMatrix: new DatasetFilter({
-    schemaPath: 'Sample_Preparation.MALDI_Matrix',
-    match: 'exact'
-  })
+function dsField(pgDatasetRecord, alias) {
+  let info = pgDatasetRecord.metadata;
+  for (let field of datasetFilters[alias].schemaPath.split("."))
+    info = info[field];
+  return info;
 }
 
 function constructAnnotationQuery(args) {
@@ -307,32 +310,18 @@ const Resolvers = {
       return JSON.stringify(ds.metadata);
     },
 
-    institution(ds) {
-      return ds.metadata.Submitted_By.Institution;
-    },
+    institution(ds) { return dsField(ds, 'institution'); },
+    organism(ds) { return dsField(ds, 'organism'); },
+    polarity(ds) { return dsField(ds, 'polarity').toUpperCase(); },
+    ionisationSource(ds) { return dsField(ds, 'ionisationSource'); },
+    maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
 
     submitter(ds) {
       return ds.metadata.Submitted_By.Submitter;
     },
 
-    organism(ds) {
-      return ds.metadata.Sample_Information.Organism;
-    },
-
     principalInvestigator(ds) {
       return ds.metadata.Submitted_By.Principal_Investigator;
-    },
-
-    polarity(ds) {
-      return ds.metadata.MS_Analysis.Polarity.toUpperCase();
-    },
-
-    ionisationSource(ds) {
-      return ds.metadata.MS_Analysis.Ionisation_Source;
-    },
-
-    maldiMatrix(ds) {
-      return ds.metadata.Sample_Preparation.MALDI_Matrix;
     },
 
     analyzer(ds) {
@@ -406,7 +395,7 @@ const Resolvers = {
     ionImage({ mz, db_id, ds_id, job_id, sf_id, sf, adduct }) {
       return {
         mz,
-        url:`http://alpha.metasp.eu/mzimage2/${db_id}/${ds_id}/${job_id}/${sf_id}/${sf}/${adduct}`
+        url:`http://alpha.metasp.eu/mzimage2/${db_id}/${ds_id}/${job_id}/${sf_id}/${sf}/${adduct}/0`
       };
     },
 
