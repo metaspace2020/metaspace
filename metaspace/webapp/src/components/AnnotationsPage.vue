@@ -8,8 +8,16 @@
     </el-col>
 
     <el-col :xs="24" :sm="24" :md="24" :lg="24 - tableWidth">
-      <annotation-view :annotation="selectedAnnotation">
+      <annotation-view :annotation="selectedAnnotation"
+                       v-if="selectedAnnotation">
       </annotation-view>
+
+      <el-col class="av-centered no-selection" v-else>
+        <div style="align-self: center;">
+          Select an annotation by clicking the table
+        </div>
+      </el-col>
+
     </el-col>
   </el-row>
 </template>

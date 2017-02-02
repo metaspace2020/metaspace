@@ -1,7 +1,6 @@
 <template>
   <el-row>
-    <router-view></router-view>
-    <el-col v-if="annotation">
+    <el-col>
       <el-collapse id="annot-content" v-model="activeSections">
 
         <div class="el-collapse-item grey-bg">
@@ -57,31 +56,29 @@
         </el-collapse-item>
 
         <el-collapse-item title="Diagnostics" name="scores">
-          <table id="details-table">
-            <tr>
-              <td>MSM score</td>
-              <td> {{ annotation.msmScore.toFixed(3) }} </td>
-            </tr>
-            <tr>
-              <td> &rho;<sub>spatial</sub></td>
-              <td>{{ annotation.rhoSpatial.toFixed(3) }} </td>
-            </tr>
-            <tr>
-              <td> &rho;<sub>spectral</sub></td>
-              <td>{{ annotation.rhoSpectral.toFixed(3) }} </td>
-            </tr>
-            <tr>
-              <td> &rho;<sub>chaos</sub></td>
-              <td>{{ annotation.rhoChaos.toFixed(3) }} </td>
-            </tr>
-          </table>
-          <div id="isotope-images-container">
-            <div class="small-peak-image" v-for="img in annotation.isotopeImages">
-            {{ img.mz.toFixed(4) }}<br/>
-            <img :src="img.url"
-                class="ion-image"/>
-            </div>
-          </div>
+          <el-row id="scores-table">
+            MSM score =
+            <span>{{ annotation.msmScore.toFixed(3) }}</span> =
+            <span>{{ annotation.rhoSpatial.toFixed(3) }}</span>
+            (&rho;<sub>spatial</sub>) &times;
+            <span>{{ annotation.rhoSpectral.toFixed(3) }}</span>
+            (&rho;<sub>spectral</sub>) &times;
+            <span>{{ annotation.rhoChaos.toFixed(3) }}</span>
+            (&rho;<sub>chaos</sub>)
+          </el-row>
+          <el-row id="isotope-images-container">
+            <el-col :xs="24" :sm="12" :md="12" :lg="6" v-for="img in annotation.isotopeImages">
+              <div class="small-peak-image">
+                {{ img.mz.toFixed(4) }}<br/>
+                <img :src="img.url"
+                     class="ion-image"/>
+              </div>
+            </el-col>
+          </el-row>
+          <el-row>
+            <isotope-pattern-plot :data="JSON.parse(peakChartData)">
+            </isotope-pattern-plot>
+          </el-row>
         </el-collapse-item>
         <el-collapse-item title="Dataset info" name="metadata">
           <dataset-info :metadata="JSON.parse(annotation.dataset.metadataJson)"
@@ -90,12 +87,6 @@
         </el-collapse-item>
       </el-collapse>
     </el-col>
-
-    <el-col class="av-centered no-selection" v-else>
-      <div style="align-self: center;">
-        Select an annotation by clicking the table
-      </div>
-    </el-col>
   </el-row>
 </template>
 
@@ -103,6 +94,8 @@
  import { renderSumFormula  } from '../util.js';
  import DatasetInfo from './DatasetInfo.vue';
  import ImageLoader from './ImageLoader.vue';
+ import IsotopePatternPlot from './IsotopePatternPlot.vue';
+ import gql from 'graphql-tag';
 
  export default {
    name: 'annotation-view',
@@ -124,10 +117,27 @@
        return "Compounds (" + this.annotation.possibleCompounds.length + ")";
      }
    },
+   apollo: {
+     peakChartData: {
+       query: gql`query GetAnnotation($id: String!) {
+         annotation(id: $id) {
+           peakChartData
+         }
+       }`,
+       update: data => data.annotation.peakChartData,
+       variables() {
+         console.log(this.annotation);
+         return {
+           id: this.annotation.id
+         };
+       }
+     }
+   },
 
    components: {
      DatasetInfo,
-     ImageLoader
+     ImageLoader,
+     IsotopePatternPlot
    }
  }
 </script>
@@ -153,10 +163,8 @@
  }
 
  .small-peak-image {
-   display: inline-block;
    font-size: 1rem;
    vertical-align: top;
-   max-width: 45%;
    padding: 0 5px 0 5px;
    text-align: center;
  }
@@ -206,13 +214,16 @@
    height: 700px;
  }
 
- #details-table {
+ #scores-table {
    border-collapse: collapse;
+   border: 1px solid lightblue;
+   font-size: 16px;
+   text-align: center;
+   padding: 3px;
  }
 
- #details-table td {
-   border: 1px solid black;
-   padding: 5px;
+ #scores-table > span {
+   color: blue;
  }
 
  .av-centered {

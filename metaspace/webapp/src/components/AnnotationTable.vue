@@ -191,6 +191,7 @@
                          datasetFilter: $dFilter,
                          orderBy: $orderBy, sortingOrder: $sortingOrder,
                          offset: $offset, limit: $limit) {
+            id
             sumFormula
             adduct
             msmScore
