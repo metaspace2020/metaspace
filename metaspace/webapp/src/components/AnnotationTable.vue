@@ -93,7 +93,7 @@
       <el-table-column inline-template property="fdrLevel"
                        label="FDR"
                        class-name="fdr-cell"
-                       sortable
+                       sortable="custom"
                        min-width="40">
         <span class="fdr-span"> {{row.fdrLevel * 100}}% </span>
       </el-table-column>
