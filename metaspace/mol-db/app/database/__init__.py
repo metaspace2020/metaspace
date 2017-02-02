@@ -22,12 +22,12 @@ def get_engine(uri):
     return create_engine(uri, **options)
 
 
-db_session_factory = scoped_session(sessionmaker())
+db_session = scoped_session(sessionmaker())
 engine = get_engine(config.DATABASE_URL)
 
 
 def init_session():
-    db_session_factory.configure(bind=engine)
+    db_session.configure(bind=engine)
 
     from app.model.base import Base
     Base.metadata.create_all(engine)

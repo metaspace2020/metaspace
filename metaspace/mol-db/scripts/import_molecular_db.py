@@ -3,31 +3,92 @@ from datetime import datetime as dt
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 from csv import DictReader
 from sqlalchemy.orm import sessionmaker
+from openbabel import OBMol, OBConversion
+import pandas as pd
 
+from app.model import MolecularDBMolecule
 from app.model.molecular_db import MolecularDB
 from app.model.molecule import Molecule
-from app.database import init_session, db_session_factory
+from app.database import init_session, db_session
 from app.log import LOG
 
 
-def read_molecules(csv_file, delimiter):
+def parsable(sf):
+    try:
+        parseSumFormula(sf)
+        return True
+    except Exception as e:
+        LOG.warning(e)
+        return False
 
-    def parsable(sf):
+
+def get_inchikey_gen():
+    ob_conversion = OBConversion()
+    ob_conversion.SetInAndOutFormats("inchi", "inchi")
+    ob_conversion.SetOptions("K", ob_conversion.OUTOPTIONS)
+
+    # inchiset = set()
+
+    def get_inchikey(inchi):
         try:
-            # parseSumFormula(sf)
-            return True
+            if inchi is None or inchi == '':
+                raise Exception('Empty inchi')
+            # if inchi in inchiset:
+            #     raise Exception('Duplicated inchi={}'.format(inchi))
+            # inchiset.add(inchi)
+
+            mol = OBMol()
+            ob_conversion.ReadString(mol, inchi)
+            return ob_conversion.WriteString(mol).strip('\n')
         except Exception as e:
             LOG.warning(e)
-            return False
 
-    reader = DictReader(open(csv_file), delimiter=delimiter)
+    return get_inchikey
 
-    molecules = []
-    for d in reader:
-        if parsable(d['formula']):
-            molecules.append(Molecule(db_id=d['id'], name=d['name'], sf=d['formula']))
 
-    return molecules
+def get_or_create(session, model, query, **kwargs):
+    inst = query.first()
+    if inst:
+        return inst
+    else:
+        inst = model(**kwargs)
+        session.add(inst)
+        # session.commit()
+        return inst
+
+
+def get_or_create_molecule(session, model, **kwargs):
+    q = session.query(model).filter_by(inchikey=kwargs['inchikey'])
+    return get_or_create(session, model, query=q, **kwargs)
+
+
+def get_or_create_db_mol_assoc(session, model, **kwargs):
+    q = session.query(model).filter_by(db_id=kwargs['db_id'], inchikey=kwargs['inchikey'])
+    return get_or_create(session, model, query=q, **kwargs)
+
+
+def append_molecules(mol_db, csv_file, delimiter):
+    mol_db_df = pd.read_csv(open(csv_file), sep=delimiter)
+    assert {'id', 'inchi', 'name', 'formula'}.issubset(set(mol_db_df.columns))
+
+    mol_db_df = mol_db_df[mol_db_df.inchi.isnull() == False]
+    get_inchikey = get_inchikey_gen()
+    mol_db_df['inchikey'] = mol_db_df.inchi.map(get_inchikey)
+
+    # add molecules
+    new_inchikey = mol_db_df.inchikey.map(
+        lambda inchikey: db_session.query(Molecule).filter_by(inchikey=inchikey).first() is None)
+    new_molecules = mol_db_df[new_inchikey][['inchikey', 'inchi', 'formula']].drop_duplicates(subset='inchikey').apply(
+        lambda ser: Molecule(inchikey=ser['inchikey'], inchi=ser['inchi'], sf=ser['formula']), axis=1)
+    db_session.add_all(new_molecules)
+    db_session.commit()
+
+    # add molecular db <-> molecules associations
+    db_mol_assocs = mol_db_df[['id', 'name', 'inchikey']].apply(
+        lambda s: MolecularDBMolecule(mol_id=s['id'], db_id=mol_db.id,
+                                      inchikey=s['inchikey'], mol_name=s['name']), axis=1)
+    db_session.add_all(db_mol_assocs)
+    db_session.commit()
 
 
 def insert_sum_formulas(db, db_name):
@@ -41,7 +102,7 @@ def insert_sum_formulas(db, db_name):
 
 
 if __name__ == "__main__":
-    help_msg = ('Import a new molecular database')
+    help_msg = 'Import a new molecular database'
     parser = argparse.ArgumentParser(description=help_msg)
     parser.add_argument('name', type=str, help='Database name')
     parser.add_argument('version', type=str, help='Database version')
@@ -53,8 +114,11 @@ if __name__ == "__main__":
 
     init_session()
 
-    mol_db = MolecularDB(name=args.name, version=args.version)
-    mol_db.molecules = read_molecules(args.csv_file, args.sep)
+    mol_db = MolecularDB.find_by_name_version(db_session, args.name, args.version)
+    if not mol_db:
+        mol_db = MolecularDB(name=args.name, version=args.version)
+        db_session.add(mol_db)
+        db_session.commit()
 
-    db_session_factory.add(mol_db)
-    db_session_factory.commit()
+    append_molecules(mol_db, args.csv_file, args.sep)
+    db_session.commit()

@@ -21,6 +21,10 @@ class BaseModel(object):
         return session.query(cls).filter(cls.get_id() == id).one()
 
     @classmethod
+    def find_first(cls, session, id):
+        return session.query(cls).filter(cls.get_id() == id).first()
+
+    @classmethod
     def find_update(cls, session, id, args):
         return session.query(cls).filter(cls.get_id() == id).update(args, synchronize_session=False)
 

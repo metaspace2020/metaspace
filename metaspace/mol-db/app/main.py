@@ -2,7 +2,7 @@ import falcon
 
 from app import log
 from app.middleware import DatabaseSessionManager
-from app.database import db_session_factory, init_session
+from app.database import db_session, init_session
 
 from app.api import base
 from app.api import molecular_dbs
@@ -23,6 +23,9 @@ class App(falcon.API):
         self.add_route('/v1/databases', molecular_dbs.MolDBCollection())
         self.add_route('/v1/databases/{db_id}', molecular_dbs.MolDBItem())
         self.add_route('/v1/databases/{db_id}/sfs', molecular_dbs.SumFormulaCollection())
+        self.add_route('/v1/databases/{db_id}/molecules', molecular_dbs.MoleculeCollection())
+
+        self.add_route('/v1/molecules/{mol_id}', molecules.MoleculeItem())
 
         # self.add_route('/v1/sfs', formulae.SumFormulaCollection())
         # self.add_route('/v1/sfs/{sf}/molecules', formulae.SumFormulaCollection())
@@ -31,7 +34,7 @@ class App(falcon.API):
 init_session()
 middleware = [
     # AuthHandler(), JSONTranslator(),
-    DatabaseSessionManager(db_session_factory)
+    DatabaseSessionManager(db_session)
 ]
 application = App(middleware=middleware)
 

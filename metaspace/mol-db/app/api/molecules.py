@@ -14,34 +14,35 @@ from app.model import MolecularDB, Molecule
 LOG = log.get_logger()
 
 
-class Collection(BaseResource):
-    """
-    Handle for endpoint: /v1/databases/{db_id}/molecules
-    """
+# class MoleculeCollection(BaseResource):
+#     """
+#     Handle for endpoint: /v1/molecules
+#     """
+#
+#     # @falcon.before(auth_required)
+#     def on_get(self, req, res):
+#         db_session = req.context['session']
+#         req.param
+#         mol_db = db_session.query(MolecularDB).filter(MolecularDB.id == db_id).one()
+#         if mol_db:
+#             objs = [mol.to_dict() for mol in mol_db.molecules]
+#             self.on_success(res, objs)
+#         else:
+#             raise AppError()
 
+
+class MoleculeItem(BaseResource):
+    """
+    Handle for endpoint: /v1/molecules/{mol_id}
+    """
     # @falcon.before(auth_required)
-    def on_get(self, req, res, db_id):
+    def on_get(self, req, res, mol_id):
         db_session = req.context['session']
-        mol_db = db_session.query(MolecularDB).filter(MolecularDB.id == db_id).one()
-        if mol_db:
-            objs = [mol.to_dict() for mol in mol_db.molecules]
-            self.on_success(res, objs)
-        else:
-            raise AppError()
-
-
-class Item(BaseResource):
-    """
-    Handle for endpoint: /v1/databases/{db_id}
-    """
-    # @falcon.before(auth_required)
-    def on_get(self, req, res, db_id):
-        session = req.context['session']
         try:
-            user_db = MolecularDB.find_one(session, db_id)
-            self.on_success(res, user_db.to_dict())
+            molecule = db_session.query(Molecule).filter(Molecule.id == mol_id).one()
+            self.on_success(res, molecule.to_dict())
         except NoResultFound:
-            raise ObjectNotExistsError('user id: %s' % db_id)
+            raise ObjectNotExistsError('user id: %s' % mol_id)
 
 
 # class Self(BaseResource):

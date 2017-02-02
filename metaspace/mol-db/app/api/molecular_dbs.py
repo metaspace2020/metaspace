@@ -9,7 +9,7 @@ from app.api.base import BaseResource
 # from app.utils.hooks import auth_required
 # from app.utils.auth import encrypt_token, hash_password, verify_password, uuid
 from app.errors import AppError, InvalidParameterError, ObjectNotExistsError, PasswordNotMatch
-from app.model import MolecularDB
+from app.model import MolecularDB, Molecule
 
 LOG = log.get_logger()
 
@@ -55,6 +55,31 @@ LOG = log.get_logger()
 #             raise InvalidParameterError(v.errors)
 #     except ValidationError:
 #         raise InvalidParameterError('Invalid Request %s' % req.context)
+
+
+class MoleculeCollection(BaseResource):
+    """
+    Handle for endpoint: /v1/databases/{db_id}/molecules?sf=<SF>
+    """
+
+    # @falcon.before(auth_required)
+    def on_get(self, req, res, db_id):
+        db_session = req.context['session']
+        sf = req.params.get('sf', None)
+        if sf:
+            molecules = (db_session.query(Molecule)
+                         .filter(Molecule.sf == sf)
+                         .filter(MolecularDB.id == db_id)
+                         .all())
+        else:
+            molecules = (db_session.query(Molecule)
+                         .filter(MolecularDB.id == db_id)
+                         .all())
+        if molecules:
+            objs = [mol.to_dict() for mol in molecules]
+            self.on_success(res, objs)
+        else:
+            raise AppError()
 
 
 class SumFormulaCollection(BaseResource):
