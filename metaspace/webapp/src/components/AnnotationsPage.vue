@@ -80,8 +80,8 @@
 <style>
 
  #annot-table-column {
-   position: sticky; // FF, Chrome >= 56
-   position: -webkit-sticky; // Safari
+   position: sticky;
+   position: -webkit-sticky;
    top: 80px;
  }
 
