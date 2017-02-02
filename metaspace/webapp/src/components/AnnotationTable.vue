@@ -71,7 +71,7 @@
       <el-table-column inline-template
                        property="mz"
                        label="m/z"
-                       sortable
+                       sortable="custom"
                        min-width="65">
           <div class="cell-wrapper">
               <span class="cell-span">
@@ -85,7 +85,7 @@
 
       <el-table-column property="msmScore"
                        label="MSM"
-                       sortable
+                       sortable="custom"
                        :formatter="formatMSM"
                        min-width="60">
       </el-table-column>
