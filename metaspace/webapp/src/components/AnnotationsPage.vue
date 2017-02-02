@@ -2,7 +2,7 @@
   <el-row :gutter="20">
     <filter-panel level="annotation"></filter-panel>
 
-    <el-col :xs="24" :sm="24" :md="24" :lg="tableWidth">
+    <el-col id="annot-table-column" :xs="24" :sm="24" :md="24" :lg="tableWidth">
       <annotation-table :hideColumns="hiddenColumns">
       </annotation-table>
     </el-col>
@@ -76,3 +76,13 @@
    }
  }
 </script>
+
+<style>
+
+ #annot-table-column {
+   position: sticky; // FF, Chrome >= 56
+   position: -webkit-sticky; // Safari
+   top: 80px;
+ }
+
+</style>
