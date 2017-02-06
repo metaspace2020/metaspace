@@ -1,11 +1,9 @@
 import 'babel-polyfill';
 
 import Vue from 'vue';
-import { sync } from 'vuex-router-sync';
 
 import ApolloClient, { createNetworkInterface } from 'apollo-client';
 import VueApollo from 'vue-apollo';
-
 const apolloClient = new ApolloClient({
   networkInterface: createNetworkInterface({
     //uri: 'http://localhost:3010/graphql',
@@ -14,26 +12,21 @@ const apolloClient = new ApolloClient({
     transportBatching: true
   })
 });
+Vue.use(VueApollo, { apolloClient });
 
-import { Row, Col, Select, Option, Table, TableColumn, Loading,
-         Input, InputNumber, Button, Tree, Radio, Scrollbar,
-         Form, FormItem, Collapse, CollapseItem, Pagination, Popover,
-         Dialog} from 'element-ui';
+import ElementUI from 'element-ui';
+import 'element-ui/lib/theme-default/index.css'
 import lang from 'element-ui/lib/locale/lang/en';
 import locale from 'element-ui/lib/locale';
-
-// setting up Element-UI components
-// (they are imported individually to minimize bundle size)
 locale.use(lang);
-[Row, Col, Select, Option, Table, TableColumn, Loading,
- Input, InputNumber, Button, Form, FormItem, Radio, Scrollbar,
- Tree, Collapse, CollapseItem, Pagination, Popover, Dialog].forEach(component => Vue.use(component));
+Vue.use(ElementUI);
 
-Vue.use(VueApollo, { apolloClient });
+import VueSticky from 'vue-sticky-js';
+Vue.use(VueSticky.install);
 
 import store from './store.js';
 import router from './router.js';
-
+import { sync } from 'vuex-router-sync';
 sync(store, router);
 
 import App from './App.vue';

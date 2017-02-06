@@ -3,11 +3,17 @@ var webpack = require('webpack');
 
 
 module.exports = {
-  entry: './src/main.js',
+  entry: {
+    app: ['./src/main.js'],
+    vendor: ['ajv', 'babel-polyfill',
+             'vue', 'vuex', 'vue-router', 'vuex-router-sync',
+             'vue-apollo', 'apollo-client', 'graphql-tag',
+             'plotly.js/lib/core', 'element-ui']
+  },
   output: {
     path: path.resolve(__dirname, './dist'),
     publicPath: '/dist/',
-    filename: 'build.js'
+    filename: 'app.js'
   },
   module: {
     rules: [
@@ -60,7 +66,13 @@ module.exports = {
     historyApiFallback: true,
     noInfo: true
   },
-  devtool: '#eval-source-map'
+  devtool: '#eval-source-map',
+  plugins: [
+    new webpack.optimize.CommonsChunkPlugin({
+      name: "vendor",
+      filename: "vendor.bundle.js"
+    })
+  ]
 }
 
 if (process.env.NODE_ENV === 'production') {
