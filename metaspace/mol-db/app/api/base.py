@@ -21,6 +21,10 @@ class BaseResource(object):
         'database': '%s (%s)' % (engine.name, POSTGRES['host'])
     }
 
+    @classmethod
+    def field_selector(cls, fields):
+        return lambda d: {k: d[k] for k in fields if k in d}
+
     def to_json(self, body_dict):
         return json.dumps(body_dict)
 

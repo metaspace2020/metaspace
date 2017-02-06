@@ -10,6 +10,7 @@ from app.api.base import BaseResource
 # from app.utils.auth import encrypt_token, hash_password, verify_password, uuid
 from app.errors import AppError, InvalidParameterError, ObjectNotExistsError, PasswordNotMatch
 from app.model import MolecularDB, Molecule
+from app.model import MolecularDBMolecule
 
 LOG = log.get_logger()
 
@@ -66,20 +67,18 @@ class MoleculeCollection(BaseResource):
     def on_get(self, req, res, db_id):
         db_session = req.context['session']
         sf = req.params.get('sf', None)
+        limit = req.params.get('limit', 100)
+        q = db_session.query(MolecularDBMolecule).filter(MolecularDBMolecule.db_id == db_id)
         if sf:
-            molecules = (db_session.query(Molecule)
-                         .filter(Molecule.sf == sf)
-                         .filter(MolecularDB.id == db_id)
-                         .all())
+            tuples = (q.join(Molecule).filter(Molecule.sf == sf)
+                      .with_entities(MolecularDBMolecule, Molecule).all())
+
         else:
-            molecules = (db_session.query(Molecule)
-                         .filter(MolecularDB.id == db_id)
-                         .all())
-        if molecules:
-            objs = [mol.to_dict() for mol in molecules]
-            self.on_success(res, objs)
-        else:
-            raise AppError()
+            tuples = q.join(Molecule).with_entities(MolecularDBMolecule, Molecule).limit(limit).all()
+
+        objs = [{**assoc_mol.to_dict(), **{'sf': mol.sf}}
+                for assoc_mol, mol in tuples]
+        self.on_success(res, objs)
 
 
 class SumFormulaCollection(BaseResource):
