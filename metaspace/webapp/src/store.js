@@ -119,7 +119,7 @@ const store = new Vuex.Store({
       const filter = getters.filter;
       const f = {
         database: filter.database,
-        datasetNamePrefix: filter.datasetName,
+        datasetName: filter.datasetName,
         compoundQuery: filter.compoundName,
         adduct: filter.adduct,
         fdrLevel: filter.fdrLevel

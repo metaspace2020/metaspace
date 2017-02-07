@@ -10,10 +10,22 @@
           </div>
         </div>
 
-        <el-collapse-item title="m/z image" name="images" class="av-centered">
+        <el-collapse-item name="images" class="av-centered">
+          <span slot="title">
+            <span>m/z image</span>
+            <span style="margin-left: 100px;">Colormap:</span>
+            <span @click="$event.stopPropagation()">
+              <el-select v-model="colormap" filterable>
+                <el-option v-for="(_, scale) in plotlyScales"
+                           :value="scale" :label="scale">
+                </el-option>
+              </el-select>
+            </span>
+          </span>
           <div style="margin-top: 10px;">
             <image-loader :src="annotation.ionImage.url"
-                 class="ion-image principal-peak-image">
+                          :colormap="colormap"
+                          class="ion-image principal-peak-image">
             </image-loader>
           </div>
         </el-collapse-item>
@@ -97,12 +109,16 @@
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
  import gql from 'graphql-tag';
 
+ import Colorscale from 'plotly.js/src/components/colorscale';
+
  export default {
    name: 'annotation-view',
    props: ['annotation'],
    data() {
      return {
-       activeSections: ["images"]
+       activeSections: ["images"],
+       colormap: "Viridis",
+       plotlyScales: Colorscale.scales
      };
    },
    computed: {
