@@ -3,11 +3,10 @@ import falcon
 from app import log
 from app.middleware import DatabaseSessionManager
 from app.database import db_session, init_session
-
 from app.api import base
 from app.api import molecular_dbs
 from app.api import molecules
-from app.api import formulae
+from app.api import isotopic_pattern
 from app.errors import AppError
 
 LOG = log.get_logger()
@@ -26,6 +25,9 @@ class App(falcon.API):
         self.add_route('/v1/databases/{db_id}/molecules', molecular_dbs.MoleculeCollection())
 
         self.add_route('/v1/molecules/{mol_id}', molecules.MoleculeItem())
+
+        self.add_route('/v1/isotopic_pattern/{ion}/{instr}/{res_power}/{at_mz}/{charge}',
+                       isotopic_pattern.IsotopicPatternItem())
 
         # self.add_route('/v1/sfs', formulae.SumFormulaCollection())
         # self.add_route('/v1/sfs/{sf}/molecules', formulae.SumFormulaCollection())
