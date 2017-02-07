@@ -31,7 +31,7 @@ enum SortingOrder {
 }
 
 type Dataset {
-  id: String!
+  id: String
   name: String!
 
   institution: String!
@@ -74,6 +74,8 @@ type MzImage {
 }
 
 type Annotation {
+  id: String!
+
   dataset: Dataset!
   sumFormula: String!
   adduct: String!
@@ -86,6 +88,8 @@ type Annotation {
   rhoChaos: Float
   ionImage: MzImage!
   isotopeImages: [MzImage!]!
+
+  peakChartData: String  # JSON
 }
 
 # [min, max) interval
@@ -96,7 +100,7 @@ input NumericRange {
 
 input AnnotationFilter {
   database: String
-  datasetNamePrefix: String
+  datasetName: String
   mzFilter: NumericRange
   msmScoreFilter: NumericRange
   compoundQuery: String
@@ -133,6 +137,8 @@ type Query {
 
   countAnnotations(filter: AnnotationFilter = {database: "HMDB"},
                    datasetFilter: DatasetFilter = {}): Int!
+
+  annotation(id: String!): Annotation
 }
 
 schema {

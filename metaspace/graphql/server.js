@@ -32,6 +32,9 @@ const esConfig = () => {
 
 const MOL_IMAGE_SERVER_IP = "52.51.114.30:3020";
 
+// private EC2 IP with a few endpoints that are still used
+const OLD_WEBAPP_IP_PRIVATE = "172.31.47.69";
+
 const esIndex = smEngineConfig.elasticsearch.index;
 
 var pg = require('knex')({
@@ -140,7 +143,7 @@ function dsField(pgDatasetRecord, alias) {
 
 function constructAnnotationQuery(args) {
   const { orderBy, sortingOrder, offset, limit, filter, datasetFilter } = args;
-  const { database, datasetId, datasetNamePrefix, mzFilter, msmScoreFilter,
+  const { database, datasetId, datasetName, mzFilter, msmScoreFilter,
           fdrLevel, sumFormula, adduct, compoundQuery } = filter;
 
   var body = {
@@ -185,8 +188,8 @@ function constructAnnotationQuery(args) {
   if (typeof adduct === 'string')
     addFilter({term: {adduct: adduct}});
 
-  if (datasetNamePrefix)
-    addFilter({prefix: {ds_name: datasetNamePrefix}});
+  if (datasetName)
+    addFilter({term: {ds_name: datasetName}});
 
   if (compoundQuery)
       addFilter({or: [
@@ -214,7 +217,7 @@ function esSearchResults(args) {
   console.time('esQuery');
   return es.search(request).then((resp) => {
     console.timeEnd('esQuery');
-    return resp.hits.hits.map((hit) => hit._source)
+    return resp.hits.hits;
   }).catch((err) => {
     console.log(err);
     return [];
@@ -289,6 +292,15 @@ const Resolvers = {
 
     countAnnotations(_, args) {
       return esCountResults(args);
+    },
+
+    annotation(_, { id }) {
+      return es.get({index: esIndex, type: 'annotation', id})
+        .then((resp) => {
+          return resp;
+      }).catch((err) => {
+          return null;
+      });
     }
   },
 
@@ -339,68 +351,76 @@ const Resolvers = {
   },
 
   Annotation: {
+    id(hit) {
+      return hit._id;
+    },
+
     sumFormula(hit) {
-      return hit.sf;
+      return hit._source.sf;
     },
 
     possibleCompounds(hit) {
-      const ids = hit.comp_ids.split('|');
-      const names = hit.comp_names.split('|');
+      const ids = hit._source.comp_ids.split('|');
+      const names = hit._source.comp_names.split('|');
       let compounds = [];
       for (var i = 0; i < names.length; i++) {
         let id = ids[i];
         let infoURL;
-        if (hit.db_name == 'HMDB') {
+        if (hit._source.db_name == 'HMDB') {
           id = sprintf.sprintf("HMDB%05d", id);
           infoURL = `http://www.hmdb.ca/metabolites/${id}`;
-        } else if (hit.db_name == 'ChEBI') {
+        } else if (hit._source.db_name == 'ChEBI') {
           id = "CHEBI:" + id;
           infoURL = `http://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}`;
-        } else if (hit.db_name == 'SwissLipids') {
+        } else if (hit._source.db_name == 'SwissLipids') {
           id = sprintf.sprintf("SLM:%09d", id);
           infoURL = `http://swisslipids.org/#/entity/${id}`;
-        } else if (hit.db_name == 'LIPID_MAPS') {
+        } else if (hit._source.db_name == 'LIPID_MAPS') {
           infoURL = `http://www.lipidmaps.org/data/LMSDRecord.php?LMID=${id}`;
         }
 
         compounds.push({
           name: names[i],
-          imageURL: `http://${MOL_IMAGE_SERVER_IP}/mol-images/${hit.db_name}/${id}.svg`,
-          information: [{database: hit.db_name, url: infoURL}]
+          imageURL: `http://${MOL_IMAGE_SERVER_IP}/mol-images/${hit._source.db_name}/${id}.svg`,
+          information: [{database: hit._source.db_name, url: infoURL}]
         });
       }
       return compounds;
     },
 
-    mz: (hit) => parseFloat(hit.mz),
+    adduct: (hit) => hit._source.adduct,
 
-    fdrLevel: (hit) => hit.fdr,
+    mz: (hit) => parseFloat(hit._source.mz),
 
-    msmScore: (hit) => hit.msm,
+    fdrLevel: (hit) => hit._source.fdr,
 
-    rhoSpatial: (hit) => hit.image_corr,
+    msmScore: (hit) => hit._source.msm,
 
-    rhoSpectral: (hit) => hit.pattern_match,
+    rhoSpatial: (hit) => hit._source.image_corr,
 
-    rhoChaos: (hit) => hit.chaos,
+    rhoSpectral: (hit) => hit._source.pattern_match,
+
+    rhoChaos: (hit) => hit._source.chaos,
 
     dataset(hit) {
       return {
-        id: hit.ds_id,
-        name: hit.ds_name,
-        metadata: hit.ds_meta
+        id: hit._source.ds_id,
+        name: hit._source.ds_name,
+        metadata: hit._source.ds_meta
       }
     },
 
-    ionImage({ mz, db_id, ds_id, job_id, sf_id, sf, adduct }) {
+    ionImage(hit) {
+      const { mz, db_id, ds_id, job_id, sf_id, sf, adduct } = hit._source;
       return {
         mz,
         url:`http://alpha.metasp.eu/mzimage2/${db_id}/${ds_id}/${job_id}/${sf_id}/${sf}/${adduct}/0`
       };
     },
 
-    isotopeImages({ mz, db_id, ds_id, job_id, sf_id, sf, adduct }) {
-      return fetch(`http://alpha.metasp.eu/sf_peak_mzs/${ds_id}/${db_id}/${sf_id}/${adduct}`)
+    isotopeImages(hit) {
+      const { mz, db_id, ds_id, job_id, sf_id, sf, adduct } = hit._source;
+      return fetch(`http://${OLD_WEBAPP_IP_PRIVATE}/sf_peak_mzs/${ds_id}/${db_id}/${sf_id}/${adduct}`)
           .then(res => res.json())
           .then(function(centroids) {
             let images = [];
@@ -411,6 +431,14 @@ const Resolvers = {
               });
             return images;
           });
+    },
+
+    // fetches data without exposing database IDs to the client
+    peakChartData(hit) {
+      const {ds_id, job_id, db_id, sf_id, adduct} = hit._source;
+      const add = adduct == "" ? "None" : adduct;
+      const url = `http://${OLD_WEBAPP_IP_PRIVATE}/spectrum_line_chart_data/${ds_id}/${job_id}/${db_id}/${sf_id}/${add}`;
+      return fetch(url).then(res => res.json()).then(json => JSON.stringify(json));
     }
   }
 }
