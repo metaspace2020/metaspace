@@ -33,13 +33,7 @@ class BaseModel(object):
         pass
 
     def to_dict(self):
-        intersection = set(self.__table__.columns.keys()) & set(self.FIELDS)
-        return dict(map(
-            lambda key:
-                (key,
-                    (lambda value: self.FIELDS[key](value) if value else None)
-                    (getattr(self, key))),
-                intersection))
+        return {attr: getattr(self, attr) for attr in self.FIELDS}
 
     FIELDS = {
         # 'created': alchemy.datetime_to_timestamp,

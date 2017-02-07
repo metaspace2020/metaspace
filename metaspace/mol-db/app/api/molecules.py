@@ -39,10 +39,10 @@ class MoleculeItem(BaseResource):
     def on_get(self, req, res, mol_id):
         db_session = req.context['session']
         try:
-            molecule = db_session.query(Molecule).filter(Molecule.id == mol_id).one()
+            molecule = db_session.query(Molecule).filter(Molecule.mol_id == mol_id).one()
             self.on_success(res, molecule.to_dict())
         except NoResultFound:
-            raise ObjectNotExistsError('user id: %s' % mol_id)
+            raise ObjectNotExistsError('molecule id: %s' % mol_id)
 
 
 # class Self(BaseResource):

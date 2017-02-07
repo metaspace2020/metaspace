@@ -6,7 +6,6 @@ from sqlalchemy.orm import sessionmaker
 from openbabel import OBMol, OBConversion
 import pandas as pd
 
-from app.model import MolecularDBMolecule
 from app.model.molecular_db import MolecularDB
 from app.model.molecule import Molecule
 from app.database import init_session, db_session
@@ -75,20 +74,16 @@ def append_molecules(mol_db, csv_file, delimiter):
     get_inchikey = get_inchikey_gen()
     mol_db_df['inchikey'] = mol_db_df.inchi.map(get_inchikey)
 
-    # add molecules
-    new_inchikey = mol_db_df.inchikey.map(
-        lambda inchikey: db_session.query(Molecule).filter_by(inchikey=inchikey).first() is None)
-    new_molecules = mol_db_df[new_inchikey][['inchikey', 'inchi', 'formula']].drop_duplicates(subset='inchikey').apply(
-        lambda ser: Molecule(inchikey=ser['inchikey'], inchi=ser['inchi'], sf=ser['formula']), axis=1)
+    exist_inchikeys = set([row[0] for row in
+                           db_session.query(Molecule.inchikey).filter(Molecule.db_id == mol_db.id).all()])
+    new_inchikey_mask = mol_db_df.inchikey.isin(exist_inchikeys) == False
+    new_molecules = mol_db_df[new_inchikey_mask].drop_duplicates(subset='inchikey').apply(
+        lambda ser: Molecule(db_id=mol_db.id, inchikey=ser['inchikey'], inchi=ser['inchi'],
+                             sf=ser['formula'], mol_id=ser['id'], mol_name=ser['mol_name']), axis=1).values.tolist()
     db_session.add_all(new_molecules)
     db_session.commit()
 
-    # add molecular db <-> molecules associations
-    db_mol_assocs = mol_db_df[['id', 'name', 'inchikey']].apply(
-        lambda s: MolecularDBMolecule(mol_id=s['id'], db_id=mol_db.id,
-                                      inchikey=s['inchikey'], mol_name=s['name']), axis=1)
-    db_session.add_all(db_mol_assocs)
-    db_session.commit()
+    LOG.info('Inserted {} new molecules for {}'.format(len(new_molecules), mol_db))
 
 
 def insert_sum_formulas(db, db_name):

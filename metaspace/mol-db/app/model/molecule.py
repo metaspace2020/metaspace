@@ -1,31 +1,47 @@
-from sqlalchemy import Column
-from sqlalchemy import String, Integer, LargeBinary
+from sqlalchemy import MetaData, Table, Column, String, Integer, ForeignKey, join
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, column_property
 
 from app.model.base import Base
-from app.model import molecular_db_molecule
+
+
+moldb_mol_table = Table('molecular_db_molecule', Base.metadata,
+                        Column('db_id', Integer, ForeignKey('molecular_db.id'), primary_key=True),
+                        Column('inchikey', String, ForeignKey('molecule.inchikey'), primary_key=True),
+                        Column('mol_id', String, nullable=False),
+                        Column('mol_name', String))
+
+molecule_table = Table('molecule', Base.metadata,
+                       Column('inchikey', String, primary_key=True),
+                       Column('inchi', String, nullable=False),
+                       Column('sf', String, nullable=False))
+
+moldb_mol_join = join(moldb_mol_table, molecule_table)
 
 
 class Molecule(Base):
-    __tablename__ = 'molecule'
+    __table__ = moldb_mol_join
 
-    inchikey = Column(String, primary_key=True)
-    inchi = Column(String, nullable=False)
-    sf = Column(String, nullable=False)
-
-    assoc_molecular_dbs = relationship("MolecularDBMolecule", back_populates="molecule")
+    db_id = column_property(moldb_mol_table.c.db_id)
+    inchikey = column_property(moldb_mol_table.c.inchikey, molecule_table.c.inchikey)
+    inchi = molecule_table.c.inchi
+    mol_id = moldb_mol_table.c.mol_id
+    mol_name = moldb_mol_table.c.mol_name
+    sf = molecule_table.c.sf
 
     def __repr__(self):
-        return "<User(inchikey='{}', name = '{}', sf='{}')>".format(
-            self.inchikey, self.name, self.sf)
+        return "<Molecule(inchikey='{}', mol_id = '{}', mol_name = '{}', sf='{}', db_id='{}')>".format(
+            self.inchikey, self.mol_id, self.mol_name, self.sf, self.db_id)
 
     @classmethod
     def get_id(cls):
         return Molecule.inchikey
 
     FIELDS = {
+        'db_id': int,
+        'mol_id': str,
+        'mol_name': str,
         'inchikey': str,
         'inchi': str,
         'sf': str

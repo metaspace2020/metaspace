@@ -16,10 +16,8 @@ class MolecularDB(Base):
     name = Column(String, nullable=False)
     version = Column(String, nullable=False)
 
-    assoc_molecules = relationship("MolecularDBMolecule", back_populates="molecular_db")
-
     def __repr__(self):
-        return "<User(id='%s', name='%s', version='%s')>" % \
+        return "<MolecularDB(id='%s', name='%s', version='%s')>" % \
                (self.id, self.name, self.version)
 
     @classmethod
