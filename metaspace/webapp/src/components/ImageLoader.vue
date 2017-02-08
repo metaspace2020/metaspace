@@ -81,7 +81,6 @@
            ctx = canvas.getContext("2d"),
            parentWidth = this.$refs.parent.offsetWidth;
 
-       ctx.clearRect(0, 0, canvas.width, canvas.height);
        ctx.setTransform(1, 0, 0, 1, 0, 0);
 
        // scale up small images to use as much canvas as possible
@@ -114,18 +113,17 @@
 
        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
        var pixels = imageData.data;
-       var numPixels = pixels.length;
+       var numPixels = pixels.length / 4;
        var g = this.grayscaleData;
 
        for (let i = 0; i < numPixels; i++) {
-         if (g[i * 4] === undefined) break;
-
          let c = this.colors[g[i*4]];
          pixels[i*4] = c[0];
          pixels[i*4+1] = c[1];
          pixels[i*4+2] = c[2];
        }
 
+       ctx.clearRect(0, 0, canvas.width, canvas.height);
        ctx.putImageData(imageData, 0, 0);
      },
 

@@ -119,6 +119,13 @@
 
  html {
    font-family: 'Roboto', Helvetica, sans-serif;
+   overflow-y: scroll; /* always show the right scrollbar to avoid flickering */
+ }
+
+ /* fix for Firefox */
+ .el-scrollbar__wrap {
+   overflow-x: hidden;
+   overflow-y: auto;
  }
 
  #app {
