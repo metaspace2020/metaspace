@@ -5,15 +5,15 @@
       </metaspace-header>
 
       <div id="signin-div">
-        <span v-if="authenticated === true">{{ username }}</span>
+        <span v-if="this.$store.state.authenticated">{{ this.$store.state.user.name }}</span>
         <div ref="gSignIn"
-             v-show="authenticated === false"
+             v-show="this.$store.state.authenticated === false"
              id="google-signin-button">
           Sign in with Google
         </div>
 
         <div id="google-signout-button" @click="signOut"
-             v-if="authenticated === true">
+             v-if="this.$store.state.authenticated">
           Logout
         </div>
       </div>
@@ -38,9 +38,7 @@
      return {
        googleSignInParams: {
          client_id: "268025466937-o15ia458d8lnuohj09slh1aqbl3ja33i.apps.googleusercontent.com"
-       },
-       username: '',
-       authenticated: undefined
+       }
      };
    },
    components: {
@@ -54,10 +52,10 @@
          const currentUser = auth2.currentUser.get();
          if (currentUser && currentUser.getBasicProfile()) {
            // TODO communicate with the backend
-           this.username = currentUser.getBasicProfile().getName();
-           this.authenticated = true;
+           let username = currentUser.getBasicProfile().getName();
+           this.$store.commit('login', {name: username})
          } else {
-           this.authenticated = false;
+           this.$store.commit('logout');
          }
 
          this.setupSignInClickHandler(auth2);
@@ -83,8 +81,7 @@
        }).then(resp => resp.json()).then(resp => {
          if (resp.status == 'success') {
            console.log(`Signed in as ${name}`);
-           this.authenticated = true;
-           this.username = name;
+           this.$store.commit('login', {name});
          }
        });
      },
@@ -103,9 +100,7 @@
        auth2.signOut().then(() => {
          fetch('/googleSignOut',
                {method: 'POST', credentials: 'include'}).then((resp) => {
-           this.authenticated = false;
-           this.username = '';
-           console.log('Signed out');
+           this.$store.commit('logout')
 
            Vue.nextTick(() => this.setupSignInClickHandler(auth2));
          });

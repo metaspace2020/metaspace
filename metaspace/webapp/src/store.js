@@ -107,7 +107,10 @@ const store = new Vuex.Store({
     // currently selected annotation
     annotation: undefined,
 
-    lastUsedFilters: {}
+    lastUsedFilters: {},
+
+    authenticated: false,
+    user: null
   },
 
   getters: {
@@ -188,6 +191,16 @@ const store = new Vuex.Store({
 
     setAnnotation(state, annotation) {
       state.annotation = annotation;
+    },
+
+    login(state, user) {
+      state.authenticated = true;
+      state.user = user;
+    },
+
+    logout(state) {
+      state.authenticated = false;
+      state.user = null;
     }
   }
 })

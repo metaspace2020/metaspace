@@ -142,7 +142,6 @@
        }`,
        update: data => data.annotation.peakChartData,
        variables() {
-         console.log(this.annotation);
          return {
            id: this.annotation.id
          };
