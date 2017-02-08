@@ -2,10 +2,12 @@
  * Created by intsco on 1/11/17.
  */
 
-const pgp = require('pg-promise');
+const sprintf = require('sprintf-js');
 
-const smEngineConfig = require('./config.json'),
-  {esSearchResults, esCountResults} = require('./es_connector');
+const smEngineConfig = require('./sm_config.json'),
+  {esSearchResults, esCountResults} = require('./es_connector'),
+  {datasetFilters, dsField} = require('./ds_filters'),
+  config = require('./config');
 
 
 const dbConfig = () => {
@@ -22,82 +24,6 @@ var pg = require('knex')({
   connection: dbConfig(),
   searchPath: 'knex,public'
 });
-var db = pgp()(dbConfig());
-
-class AbstractDatasetFilter {
-  constructor(schemaPath, options) {
-    this.schemaPath = schemaPath;
-    this.options = options;
-    
-    this.esField = 'ds_meta.' + this.schemaPath;
-    
-    const pathElements = this.schemaPath.replace(/\./g, ',');
-    this.pgField = "metadata#>>'{" + pathElements + "}'";
-  }
-  
-  preprocess(val) {
-    if (this.options.preprocess)
-      return this.options.preprocess(val);
-    return val;
-  }
-  
-  esFilter(value) {}
-  pgFilter(q, value) {}
-}
-
-class ExactMatchFilter extends AbstractDatasetFilter {
-  constructor(schemaPath, options) {
-    super(schemaPath, options);
-  }
-  
-  esFilter(value) {
-    return {term: {[this.esField]: this.preprocess(value)}}
-  }
-  
-  pgFilter(q, value) {
-    return q.whereRaw(this.pgField + ' = ?', [this.preprocess(value)]);
-  }
-}
-
-class SubstringMatchFilter extends AbstractDatasetFilter {
-  constructor(schemaPath, options) {
-    super(schemaPath, options);
-  }
-  
-  esFilter(value) {
-    return {wildcard: {[this.esField]: `*${this.preprocess(value)}*`}}
-  }
-  
-  pgFilter(q, value) {
-    return q.whereRaw(this.pgField + ' LIKE ?', ['%' + this.preprocess(value) + '%']);
-  }
-}
-
-class PhraseMatchFilter extends SubstringMatchFilter {
-  constructor(schemaPath, options) {
-    super(schemaPath, options);
-  }
-  
-  esFilter(value) {
-    return {match: {[this.esField]: {query: this.preprocess(value), type: 'phrase'}}}
-  }
-}
-
-const datasetFilters = {
-  institution: new ExactMatchFilter('Submitted_By.Institution', {}),
-  polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
-  ionisationSource: new PhraseMatchFilter('MS_Analysis.Ionisation_Source', {}),
-  analyzerType: new ExactMatchFilter('MS_Analysis.Analyzer', {}),
-  organism: new ExactMatchFilter('Sample_Information.Organism', {}),
-  maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {})
-};
-
-function dsField(pgDatasetRecord, alias) {
-  let info = pgDatasetRecord.metadata;
-  for (let field of datasetFilters[alias].schemaPath.split("."))
-    info = info[field];
-  return info;
-}
 
 const Resolvers = {
   Person: {
@@ -245,7 +171,7 @@ const Resolvers = {
       
         compounds.push({
           name: names[i],
-          imageURL: `http://${MOL_IMAGE_SERVER_IP}/mol-images/${hit._source.db_name}/${id}.svg`,
+          imageURL: `http://${config.MOL_IMAGE_SERVER_IP}/mol-images/${hit._source.db_name}/${id}.svg`,
           information: [{database: hit._source.db_name, url: infoURL}]
         });
       }
@@ -276,8 +202,9 @@ const Resolvers = {
     
     ionImage(hit) {
       return {
-        mz,
-        url:`http://alpha.metasp.eu/mzimage2/${db_id}/${ds_id}/${job_id}/${sf_id}/${sf}/${adduct}/0`
+        // mz,
+        // url:`http://alpha.metasp.eu/mzimage2/${db_id}/${ds_id}/${job_id}/${sf_id}/${sf}/${adduct}/0`
+        url: hit._source.ion_image_url
       };
     },
   

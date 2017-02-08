@@ -51,7 +51,8 @@ jspm_packages
 
 .gitignore
 .idea/
-config.json
+sm_config.json
+config.js
 dist/
 node_modules/
 graphql.config.json

@@ -104,7 +104,7 @@ input NumericRange {
 
 input AnnotationFilter {
   database: String
-  datasetNamePrefix: String
+  datasetName: String
   mzFilter: NumericRange
   msmScoreFilter: NumericRange
   compoundQuery: String

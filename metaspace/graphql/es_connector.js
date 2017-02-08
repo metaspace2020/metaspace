@@ -4,7 +4,8 @@
 
 const elasticsearch = require('elasticsearch');
 
-const smEngineConfig = require('./config.json');
+const smEngineConfig = require('./sm_config.json'),
+  {datasetFilters, dsField} = require('./ds_filters');
 
 const esConfig = () => {
   return {

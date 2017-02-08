@@ -1,0 +1,11 @@
+/**
+ * Created by intsco on 2/8/17.
+ */
+
+var config = {};
+
+config.MOL_IMAGE_SERVER_IP = "";
+config.OLD_WEBAPP_IP_PRIVATE = "";
+config.PORT = "";
+
+module.exports = config;
