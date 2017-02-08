@@ -21,8 +21,8 @@ function addIsoImageProvider(app, uri) {
   app.post(uri, upload.single('iso_image'), function (req, res, next) {
     console.log(moment().format());
     console.log(req.file);
-    let uri = `http://${req.headers.host}${IMG_BASE_PATH}${req.file.filename}`;
-    res.status(201).json({file_uri: uri});
+    let image_url = `http://${req.headers.host}${IMG_BASE_PATH}${req.file.filename}`;
+    res.status(201).json({image_url: image_url});
   });
 }
 

@@ -8,7 +8,7 @@ const smEngineConfig = require('./config.json');
 
 const esConfig = () => {
   return {
-    hosts: [`${smEngineConfig.elasticsearch.host}:9200`],
+    hosts: [`${smEngineConfig.elasticsearch.host}:${smEngineConfig.elasticsearch.port}`],
     apiVersion: '2.4'
   }
 };
@@ -44,8 +44,13 @@ function constructAnnotationQuery(args) {
   var body = {
     query: {
       constant_score: {
-        filter: {bool: {must: [
-          {term: {db_name: database}}]}}
+        filter: {
+          bool: {
+            must: [
+              // {term: {db_name: database}}
+            ]
+          }
+        }
       }
     },
     sort: esSort(orderBy, sortingOrder)

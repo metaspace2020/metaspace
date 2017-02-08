@@ -74,8 +74,8 @@ type Spectrum {
 
 type MzImage {
   mz: Float
-  data: String  # base64-encoded
   url: String
+  #  data: String  # base64-encoded
 }
 
 type Annotation {

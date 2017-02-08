@@ -273,28 +273,12 @@ const Resolvers = {
         metadata: hit._source.ds_meta
       }
     },
-  
+    
     ionImage(hit) {
-      const { mz, db_id, ds_id, job_id, sf_id, sf, adduct } = hit._source;
       return {
         mz,
         url:`http://alpha.metasp.eu/mzimage2/${db_id}/${ds_id}/${job_id}/${sf_id}/${sf}/${adduct}/0`
       };
-    },
-  
-    isotopeImages(hit) {
-      const { mz, db_id, ds_id, job_id, sf_id, sf, adduct } = hit._source;
-      return fetch(`http://${OLD_WEBAPP_IP_PRIVATE}/sf_peak_mzs/${ds_id}/${db_id}/${sf_id}/${adduct}`)
-        .then(res => res.json())
-        .then(function(centroids) {
-          let images = [];
-          for (let i = 0; i < 4; i++)
-            images.push({
-              mz: centroids[i],
-              url:`http://alpha.metasp.eu/mzimage2/${db_id}/${ds_id}/${job_id}/${sf_id}/${sf}/${adduct}/${i}`
-            });
-          return images;
-        });
     },
   
     // fetches data without exposing database IDs to the client
@@ -303,6 +287,17 @@ const Resolvers = {
       const add = adduct == "" ? "None" : adduct;
       const url = `http://${OLD_WEBAPP_IP_PRIVATE}/spectrum_line_chart_data/${ds_id}/${job_id}/${db_id}/${sf_id}/${add}`;
       return fetch(url).then(res => res.json()).then(json => JSON.stringify(json));
+    },
+      
+    isotopeImages(hit) {
+      let image_objs = [];
+      for (url of hit.image_urls) {
+        image_objs.push({
+          url: url,
+          mz: 100500
+        })
+      }
+      return image_objs;
     }
   }
 };
