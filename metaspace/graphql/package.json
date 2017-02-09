@@ -22,6 +22,7 @@
     "graphql-server-express": "^0.4.3",
     "graphql-tools": "^0.8.3",
     "knex": "^0.12.6",
+    "lodash": "^4.17.4",
     "moment": "^2.17.1",
     "multer": "^1.2.1",
     "node-fetch": "^1.6.3",

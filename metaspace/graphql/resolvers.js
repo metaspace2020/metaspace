@@ -2,7 +2,9 @@
  * Created by intsco on 1/11/17.
  */
 
-const sprintf = require('sprintf-js');
+const sprintf = require('sprintf-js'),
+  lodash = require('lodash'),
+  fetch = require('node-fetch');
 
 const smEngineConfig = require('./sm_config.json'),
   {esSearchResults, esCountResults} = require('./es_connector'),
@@ -202,29 +204,31 @@ const Resolvers = {
     
     ionImage(hit) {
       return {
-        // mz,
-        // url:`http://alpha.metasp.eu/mzimage2/${db_id}/${ds_id}/${job_id}/${sf_id}/${sf}/${adduct}/0`
         url: hit._source.ion_image_url
       };
     },
   
     // fetches data without exposing database IDs to the client
     peakChartData(hit) {
-      const {ds_id, job_id, db_id, sf_id, adduct} = hit._source;
-      const add = adduct == "" ? "None" : adduct;
-      const url = `http://${OLD_WEBAPP_IP_PRIVATE}/spectrum_line_chart_data/${ds_id}/${job_id}/${db_id}/${sf_id}/${add}`;
+      const {sf_adduct, ds_meta} = hit._source;
+      const msInfo = ds_meta.MS_Analysis;
+      const host = config.MOLDB_SERVICE_HOST,
+        instr = lodash.toLower(msInfo.Analyzer),
+        rp = msInfo.Detector_Resolving_Power.Resolving_Power,
+        at_mz = msInfo.Detector_Resolving_Power.mz,
+        pol = lodash.toLower(msInfo.Polarity) == 'positive' ? '+1' : '-1';
+  
+      const url = `http://${host}/v1/isotopic_pattern/${sf_adduct}/${instr}/${rp}/${at_mz}/${pol}`;
       return fetch(url).then(res => res.json()).then(json => JSON.stringify(json));
     },
       
     isotopeImages(hit) {
-      let image_objs = [];
-      for (url of hit.image_urls) {
-        image_objs.push({
-          url: url,
-          mz: 100500
-        })
-      }
-      return image_objs;
+      const {iso_image_urls, centroid_mzs} = hit._source;
+      let objs = iso_image_urls.map((url, i) => ({
+        url: url,
+        mz: parseFloat(centroid_mzs[i])
+      }));
+      return objs;
     }
   }
 };
