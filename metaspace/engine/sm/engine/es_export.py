@@ -7,7 +7,7 @@ logger = logging.getLogger('sm-engine')
 
 COLUMNS = ["db_name", "ds_id", "ds_name", "sf", "sf_adduct", "comp_names", "comp_ids", "chaos", "image_corr",
            "pattern_match", "msm",
-           "adduct", "job_id", "sf_id", "peaks", "db_id", "fdr", "mz", "ds_meta", "ion_image_url", "iso_image_urls"]
+           "adduct", "job_id", "sf_id", "peaks", "db_id", "fdr", "centroid_mzs", "ds_meta", "ion_image_url", "iso_image_urls"]
 
 ANNOTATIONS_SEL = '''
 SELECT
@@ -28,7 +28,7 @@ SELECT
     m.peaks_n AS peaks,
     sf_db.id AS db_id,
     m.fdr as pass_fdr,
-    tp.centr_mzs[1] AS mz,
+    tp.centr_mzs AS centroid_mzs,
     ds.metadata as ds_meta,
     m.ion_image_url,
     m.iso_image_urls
@@ -60,7 +60,7 @@ class ESExporter:
             # trimming is needed for avoiding ES max_bytes_length_exceeded_exception
             d['comp_names'] = u'|'.join(d['comp_names']).replace(u'"', u'')[:32766]
             d['comp_ids'] = u'|'.join(d['comp_ids'])[:32766]
-            d['mz'] = '{:010.4f}'.format(d['mz']) if d['mz'] else ''
+            d['centroid_mzs'] = ['{:010.4f}'.format(mz) if mz else '' for mz in d['centroid_mzs']]
 
             to_index.append({
                 '_index': self.index,
@@ -150,7 +150,7 @@ class ESExporter:
                         "msm": {"type": "float", "index": "not_analyzed"},
                         "adduct": {"type": "string", "index": "not_analyzed"},
                         "fdr": {"type": "float", "index": "not_analyzed"},
-                        "mz": {"type": "string", "index": "not_analyzed"},
+                        "centroid_mzs": {"index": "not_analyzed"},
                         "ion_image_url": {"type": "string", "index": "not_analyzed"},
                         "iso_image_urls": {"type": "string", "index": "not_analyzed"},
                         # dataset metadata
