@@ -22,6 +22,7 @@
     "express-session": "^1.14.2",
     "google-auth-library": "^0.10.0",
     "isomorphic-fetch": "^2.2.1",
+    "jwt-simple": "^0.5.1",
     "knex": "^0.12.6",
     "lodash": "^4.17.4",
     "passport": "^0.3.2",

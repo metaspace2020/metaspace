@@ -15,6 +15,8 @@ var googleClient = new auth.OAuth2(conf.GOOGLE_CLIENT_ID, '', '');
 
 var app = express();
 
+var jwt = require('jwt-simple');
+
 app.use(session({
   store: new (require('connect-pg-simple')(session))({
     conString: conf.DB_CONN_STRING
@@ -59,6 +61,33 @@ router.post('/googleSignOut', (req, res, next) => {
     status: 'destroyed'
   });
 });
+
+function getRole(email) {
+  if (conf.ADMIN_EMAILS.indexOf(email) != -1)
+    return 'admin';
+  else
+    return 'user';
+}
+
+// Gives a one-time token, which expires in 60 seconds.
+// (this allows small time discrepancy between different servers)
+// If we want to use longer lifetimes we need to setup HTTPS on all servers.
+router.get('/getToken', (req, res, next) => {
+  console.log(req.session.client);
+  if (!req.session.client) {
+    res.sendStatus(403);
+    return;
+  }
+
+  var payload = {
+    'iss': 'METASPACE2020',
+    'sub': req.session.client.client_id,
+    'name': req.session.client.name,
+    'exp': Math.floor(Date.now() / 1000 + 60),
+    'role': getRole(req.session.client.email)
+  }
+  res.send(jwt.encode(payload, conf.JWT_SECRET));
+})
 
 if (env == 'development') {
   var webpackDevMiddleware = require('webpack-dev-middleware');

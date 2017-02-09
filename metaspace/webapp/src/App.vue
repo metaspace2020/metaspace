@@ -29,6 +29,7 @@
  import MetaspaceHeader from './components/MetaspaceHeader.vue';
  import Vue from 'vue'
  import fetch from 'isomorphic-fetch';
+ import {getJWT, decodePayload} from './util.js';
 
  import gql from 'graphql-tag';
 
@@ -53,7 +54,7 @@
          if (currentUser && currentUser.getBasicProfile()) {
            // TODO communicate with the backend
            let username = currentUser.getBasicProfile().getName();
-           this.$store.commit('login', {name: username})
+           this.login(username);
          } else {
            this.$store.commit('logout');
          }
@@ -80,9 +81,17 @@
          credentials: 'include' // send the cookies
        }).then(resp => resp.json()).then(resp => {
          if (resp.status == 'success') {
-           console.log(`Signed in as ${name}`);
-           this.$store.commit('login', {name});
+           this.login(name);
          }
+       });
+     },
+
+     login(username) {
+       getJWT().then(jwt => {
+         const {role} = decodePayload(jwt);
+         this.$store.commit('login', {name: username, role});
+
+         console.log(`Signed in as ${username} (role: ${role})`);
        });
      },
 

@@ -87,6 +87,8 @@
  import Ajv from 'ajv';
  import gql from 'graphql-tag';
  import merge from 'lodash/merge';
+ import fetch from 'isomorphic-fetch';
+ import {getJWT, decodePayload} from '../util.js';
 
  const ajv = new Ajv({allErrors: true});
  const validator = ajv.compile(metadataSchema);
@@ -105,6 +107,7 @@
    'Detector_Resolving_Power': 12,
    'mz': 12,
    'Resolving_Power': 12,
+   'Dataset_Name': 7
  };
 
  function objectFactory(schema) {
@@ -143,7 +146,7 @@
    let obj = Object.assign({}, value);
    for (var name in schema.properties) {
      const prop = schema.properties[name];
-     if (schema.required && schema.required.indexOf(name) == -1 && isEmpty(obj[name]))
+     if (isEmpty(obj[name]) && (!schema.required || schema.required.indexOf(name) == -1))
        delete obj[name];
      else
        obj[name] = trimEmptyFields(prop, obj[name]);
@@ -172,7 +175,7 @@
        },
        variables() {
          return {
-           id: this.$store.state.route.params.dataset_id
+           id: this.datasetId
          };
        }
      }
@@ -185,6 +188,10 @@
      }
    },
    computed: {
+     datasetId() {
+       return this.$store.state.route.params.dataset_id;
+     },
+
      loggedIn() {
        return this.$store.state.authenticated;
      },
@@ -254,12 +261,30 @@
            type: 'error'
          })
        } else {
-         // TODO: send updated value to the server
-         this.$message({
-           message: 'Metadata was successfully updated!',
-           type: 'success'
-         })
+         getJWT().then(jwt => this.updateMetadata(jwt, JSON.stringify(cleanValue)))
+           .then(() =>
+             this.$message({
+               message: 'Metadata was successfully updated!',
+               type: 'success'
+             })
+           )
+           .catch(err =>
+             this.$message({message: 'Couldn\'t save the form: ' + err.message, type: 'error'})
+           );
        }
+     },
+
+     updateMetadata(jwt, value) {
+       return this.$apollo.mutate({
+         mutation: gql`mutation ($jwt: String!, $dsId: String!, $value: String!) {
+           updateMetadata(jwt: $jwt, datasetId: $dsId, metadataJson: $value)
+         }`,
+         variables: {jwt, value, dsId: this.datasetId}
+       }).then(resp => resp.data.updateMetadata)
+         .then(status => {
+           if (status != 'success')
+             throw new Error(status);
+         });
      }
    }
  }
@@ -290,13 +315,11 @@
 
  .subfield {
    padding-right: 10px;
-   padding-top: 5px;
  }
 
  .subfield-label {
    font-size: 14px;
-   padding-top: 0px;
-   padding-left: 5px;
+   padding: 0px 0px 5px 5px;
  }
 
  .control {

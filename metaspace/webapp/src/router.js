@@ -16,7 +16,7 @@ const router = new VueRouter({
         { path: '/datasets', component: DatasetsPage },
         { path: '/upload', component: UploadPage },
         { path: '/about', component: AboutPage },
-        { path: '/edit-metadata/:dataset_id', component: MetadataEditor }
+        { path: '/edit-metadata/:dataset_id', component: MetadataEditor, name: 'edit-metadata' }
     ]
 })
 

@@ -34,6 +34,11 @@
                    title="Opens in a new tab">Browse annotations</router-link>
       <br/>
       <a @click="showMetadata" class="metadata-link">Show full metadata</a>
+
+      <br/>
+      <router-link v-if="haveEditAccess" :to="editHref">
+        Edit metadata
+      </router-link>
     </div>
   </div>
 </template>
@@ -119,6 +124,19 @@
          console.log(e);
          return '';
        }
+     },
+
+     haveEditAccess() {
+       // TODO: also check email match
+       const {user} = this.$store.state;
+       return user && user.role == 'admin';
+     },
+
+     editHref() {
+       return {
+         name: 'edit-metadata',
+         params: {dataset_id: this.dataset.id}
+       };
      }
    },
    data() {

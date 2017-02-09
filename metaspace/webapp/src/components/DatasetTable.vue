@@ -22,7 +22,8 @@
      return {
        datasets: [],
        currentPage: 0,
-       recordsPerPage: 10
+       recordsPerPage: 10,
+       isLoading: true
      }
    },
    components: {
@@ -48,7 +49,10 @@
          }
          metadataJson
        }}`,
-       update: data => data.allDatasets,
+       update(data) {
+         this.isLoading = false;
+         return data.allDatasets;
+       },
        variables () {
          return {
            dFilter: this.$store.getters.gqlDatasetFilter
