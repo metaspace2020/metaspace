@@ -7,7 +7,7 @@ logger = logging.getLogger('sm-engine')
 
 COLUMNS = ["db_name", "ds_id", "ds_name", "sf", "sf_adduct", "comp_names", "comp_ids", "chaos", "image_corr",
            "pattern_match", "msm",
-           "adduct", "job_id", "sf_id", "peaks", "db_id", "fdr", "mz", "ds_meta"]
+           "adduct", "job_id", "sf_id", "peaks", "db_id", "fdr", "mz", "ds_meta", "polarity"]
 
 ANNOTATIONS_SEL = '''
 SELECT
@@ -29,7 +29,8 @@ SELECT
     sf_db.id AS db_id,
     m.fdr as pass_fdr,
     tp.centr_mzs[1] AS mz,
-    ds.metadata as ds_meta
+    ds.metadata as ds_meta,
+    ds.config->'isotope_generation'->'charge'->'polarity' as polarity
 FROM iso_image_metrics m
 JOIN formula_db sf_db ON sf_db.id = m.db_id
 JOIN sum_formula f ON m.db_id = f.db_id AND f.id = m.sf_id
@@ -59,6 +60,7 @@ class ESExporter:
             d['comp_names'] = u'|'.join(d['comp_names']).replace(u'"', u'')[:32766]
             d['comp_ids'] = u'|'.join(d['comp_ids'])[:32766]
             d['mz'] = '{:010.4f}'.format(d['mz']) if d['mz'] else ''
+            d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])
 
             to_index.append({
                 '_index': self.index,
@@ -149,6 +151,7 @@ class ESExporter:
                         "adduct": {"type": "string", "index": "not_analyzed"},
                         "fdr": {"type": "float", "index": "not_analyzed"},
                         "mz": {"type": "string", "index": "not_analyzed"},
+                        "ion_add_pol": {"type": "string", "index": "not_analyzed"},
                         # dataset metadata
                         "ds_meta": {
                             "properties": {
@@ -176,6 +179,7 @@ class ESExporter:
                                 "Sample_Information": {
                                     "properties": {
                                         "Organism": {"type": "string", "index": "not_analyzed"},
+                                        "Organism_Part": {"type": "string", "index": "not_analyzed"},
                                         "Condition": {"type": "string", "index": "not_analyzed"}
                                     }
                                 }
