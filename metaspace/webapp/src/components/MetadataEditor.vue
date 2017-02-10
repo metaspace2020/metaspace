@@ -20,9 +20,19 @@
                 v-for="(prop, propName) in section.properties">
               <div class="field-label" v-html="prettify(propName, section)"></div>
 
-              <el-form-item class="control" v-if="prop.type == 'string'"
+              <el-form-item class="control" v-if="prop.type == 'string' && !loading"
                             :class="isError(sectionName, propName)">
-                <el-input v-if="!isFreeText(propName) && !prop.enum"
+
+                <el-autocomplete v-if="!isFreeText(propName) && !prop.enum && enableAutocomplete(propName)"
+                                 :trigger-on-focus="false"
+                                 class="md-ac"
+                                 v-model="value[sectionName][propName]"
+                                 :required="isRequired(propName, section)"
+                                 :fetch-suggestions="(q, cb) => getSuggestions(q, cb, sectionName, propName)"
+                                 :placeholder="prop.description">
+                </el-autocomplete>
+
+                <el-input v-if="!isFreeText(propName) && !prop.enum && !enableAutocomplete(propName)"
                           v-model="value[sectionName][propName]"
                           :required="isRequired(propName, section)"
                           :placeholder="prop.description">
@@ -54,6 +64,7 @@
                           v-for="(field, fieldName) in prop.properties">
 
                     <el-form-item :class="isError(sectionName, propName, fieldName)"
+                                  v-if="!loading"
                                   :required="isRequired(fieldName, prop)">
 
                       <el-input v-if="field.type == 'string'"
@@ -230,15 +241,23 @@
        return propName.endsWith('Freetext');
      },
 
+     enableAutocomplete(propName) {
+       return propName != 'Dataset_Name';
+     },
+
      isRequired(propName, parent) {
        return parent && parent.required && (parent.required.indexOf(propName) != -1);
      },
 
-     isError(...args) {
+     buildPath(...args) {
        let path = '';
        for (let arg of args)
          path += '.' + arg;
-       let msg = this.errorMessages[path];
+       return path;
+     },
+
+     isError(...args) {
+       let msg = this.errorMessages[this.buildPath(...args)];
        if (msg)
          return 'is-error';
        else
@@ -246,10 +265,7 @@
      },
 
      getErrorMessage(...args) {
-       let path = '';
-       for (let arg of args)
-         path += '.' + arg;
-       return this.errorMessages[path];
+       return this.errorMessages[this.buildPath(...args)];
      },
 
      cancel() {
@@ -293,6 +309,16 @@
            if (status != 'success')
              throw new Error(status);
          });
+     },
+
+     getSuggestions(query, callback, ...args) {
+       const path = this.buildPath(...args).slice(1);
+       this.$apollo.client.query({
+         query: gql`query suggestions($field: String!, $query: String!) {
+           metadataSuggestions(field: $field, query: $query)
+         }`,
+         variables: {field: path, query}
+       }).then(resp => callback(resp.data.metadataSuggestions.map(val => ({value: val}))));
      }
    }
  }
@@ -369,6 +395,10 @@
  #md-section-list {
    display: flex;
    flex-direction: column;
+ }
+
+ .md-ac {
+   width: 100%;
  }
 
 </style>
