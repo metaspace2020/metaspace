@@ -16,4 +16,20 @@
       shell: python aws_instance_manager.py start --key-name {{ aws_key_name }} --components {{ components }}
       when: spark_volume_size is not defined
 
-    - wait_for: timeout=30
+    - meta: refresh_inventory
+
+
+- name: Wait for SSH on the master to come up
+  hosts: localhost
+  user: ubuntu
+  gather_facts: True
+
+  tasks:
+    - debug: var=hostvars['master']['ansible_ssh_host']
+
+    - name: Wait for SSH on the master to come up
+      wait_for:
+        host: "{{ hostvars['master']['ansible_ssh_host'] }}"
+        port: 22
+        timeout: 300
+        state: started

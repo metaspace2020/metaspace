@@ -137,27 +137,35 @@ class ClusterDaemon(object):
         self.logger.debug('launch: {} now: {}'.format(launch_time, now_time))
         return 0 < (60 + (launch_time.minute - now_time.minute)) % 60 <= max(5, 2 * self.interval / 60)
 
+    def _try_start_setup_deploy(self, setup_failed_max=5):
+        setup_failed = 0
+        try:
+            self.logger.info('Queue is not empty. Starting the cluster...')
+            self.cluster_start()
+            m = {
+                'master': self.ansible_config['cluster_configuration']['instances']['master'],
+                'slave': self.ansible_config['cluster_configuration']['instances']['slave']
+            }
+            self.post_to_slack('rocket', "[v] Cluster started: {}".format(m))
+
+            self.cluster_setup()
+            self.sm_engine_deploy()
+            self.post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
+            sleep(60)
+        except Exception as e:
+            setup_failed += 1
+            if setup_failed > setup_failed_max:
+                raise e
+
     def start(self):
         self.logger.info('Started the SM cluster auto-start daemon (interval=%dsec)...', self.interval)
         try:
             while True:
                 if not self.queue_empty():
                     if not self.cluster_up():
-                        self.logger.info('Queue is not empty. Starting the cluster...')
-                        self.cluster_start()
-                        m = {
-                            'master': self.ansible_config['cluster_configuration']['instances']['master'],
-                            'slave': self.ansible_config['cluster_configuration']['instances']['slave']
-                        }
-                        self.post_to_slack('rocket', "[v] Cluster started: {}".format(m))
-
-                        self.cluster_setup()
-                        self.sm_engine_deploy()
-                        self.post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
-                        sleep(60)
-
-                    if not self.job_running():
-                        raise Exception('Cluster is up but no job is running')
+                        self._try_start_setup_deploy()
+                    # if not self.job_running():
+                    #     raise Exception('Cluster is up but no job is running')
                 else:
                     if self.cluster_up() and not self.job_running() and self._ec2_hour_over():
                         self.logger.info('Queue is empty. No jobs running. Stopping the cluster...')
@@ -166,7 +174,7 @@ class ClusterDaemon(object):
 
                 sleep(self.interval)
         except Exception as e:
-            self.post_to_slack('sos', "[v] Failed to spin up cluster: {}".format(e))
+            self.post_to_slack('sos', "[v] Something went wrong: {}".format(e))
 
 
 if __name__ == "__main__":
