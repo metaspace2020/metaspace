@@ -88,8 +88,8 @@
 
      login(username) {
        getJWT().then(jwt => {
-         const {role} = decodePayload(jwt);
-         this.$store.commit('login', {name: username, role});
+         const {email, role} = decodePayload(jwt);
+         this.$store.commit('login', {name: username, email, role});
 
          console.log(`Signed in as ${username} (role: ${role})`);
        });

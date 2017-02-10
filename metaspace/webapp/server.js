@@ -83,6 +83,7 @@ router.get('/getToken', (req, res, next) => {
     'iss': 'METASPACE2020',
     'sub': req.session.client.client_id,
     'name': req.session.client.name,
+    'email': req.session.client.email,
     'exp': Math.floor(Date.now() / 1000 + 60),
     'role': getRole(req.session.client.email)
   }

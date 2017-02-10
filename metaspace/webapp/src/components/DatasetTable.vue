@@ -1,5 +1,7 @@
 <template>
   <el-row>
+    <filter-panel level="dataset"></filter-panel>
+
     <div class="dataset-list">
       <div style="font: 24px 'Roboto', sans-serif; padding: 5px;">
         Recent uploads
@@ -15,6 +17,7 @@
 <script>
  import gql from 'graphql-tag';
  import DatasetItem from './DatasetItem.vue';
+ import FilterPanel from './FilterPanel.vue';
 
  export default {
    name: 'dataset-table',
@@ -27,7 +30,8 @@
      }
    },
    components: {
-     DatasetItem
+     DatasetItem,
+     FilterPanel
    },
    apollo: {
      datasets: {
@@ -40,6 +44,7 @@
          submitter {
            name
            surname
+           email
          }
          polarity
          ionisationSource

@@ -2,13 +2,14 @@
   <div id="md-editor-container">
     <div style="position: relative;">
       <div id="md-editor-submit">
+        <el-button @click="cancel">Cancel</el-button>
         <el-button type="primary" v-if="loggedIn" @click="submit">Submit</el-button>
         <el-button v-else type="primary" disabled title="You must be logged in to perform this operation">
           Submit
         </el-button>
       </div>
 
-      <div id="md-section-list">
+      <div id="md-section-list" v-loading="loading">
 
         <div class="metadata-section"
             v-for="(section, sectionName) in schema.properties">
@@ -171,6 +172,7 @@
          /* we want to have all nested fields to be present for convenience,
             that's what objectFactory essentially does */
          this.value = merge({}, defaultValue, value);
+         this.loading = false;
          return this.value;
        },
        variables() {
@@ -184,7 +186,8 @@
      return {
        schema: metadataSchema,
        value: objectFactory(metadataSchema),
-       validationErrors: []
+       validationErrors: [],
+       loading: true
      }
    },
    computed: {
@@ -201,17 +204,16 @@
        for (let err of this.validationErrors) {
          messages[err.dataPath] = err.message;
        }
-       console.log(messages);
        return messages;
      }
    },
    methods: {
      prettify(propName, parent) {
        let name = propName.toString()
-                            .replace(/_/g, ' ')
-                            .replace(/ [A-Z][a-z]/g, (x) => ' ' + x.slice(1).toLowerCase())
-                            .replace(/ freetext$/, '')
-                            .replace('metaspace', 'METASPACE');
+                          .replace(/_/g, ' ')
+                          .replace(/ [A-Z][a-z]/g, (x) => ' ' + x.slice(1).toLowerCase())
+                          .replace(/ freetext$/, '')
+                          .replace('metaspace', 'METASPACE');
 
        if (this.isRequired(propName, parent))
          name += '<span style="color: red">*</span>';
@@ -250,6 +252,10 @@
        return this.errorMessages[path];
      },
 
+     cancel() {
+       this.$router.go(-1);
+     },
+
      submit() {
        const cleanValue = trimEmptyFields(metadataSchema, this.value);
        validator(cleanValue);
@@ -262,12 +268,14 @@
          })
        } else {
          getJWT().then(jwt => this.updateMetadata(jwt, JSON.stringify(cleanValue)))
-           .then(() =>
+           .then(() => {
              this.$message({
                message: 'Metadata was successfully updated!',
                type: 'success'
-             })
-           )
+             });
+
+             this.$router.go(-1);
+           })
            .catch(err =>
              this.$message({message: 'Couldn\'t save the form: ' + err.message, type: 'error'})
            );
@@ -337,7 +345,8 @@
  }
 
  #md-editor-submit > button {
-   width: 120px;
+   width: 100px;
+   padding: 6px;
  }
 
  .control.el-form-item, .subfield > .el-form-item {

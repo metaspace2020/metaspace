@@ -127,9 +127,14 @@
      },
 
      haveEditAccess() {
-       // TODO: also check email match
        const {user} = this.$store.state;
-       return user && user.role == 'admin';
+       if (!user)
+         return false;
+       if (user.role == 'admin')
+         return true;
+       if (user.email == this.dataset.submitter.email)
+         return true;
+       return false;
      },
 
      editHref() {
