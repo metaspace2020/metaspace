@@ -8,6 +8,19 @@ from requests.adapters import HTTPAdapter
 from sm.engine.util import SMConfig
 
 
+class ImageStoreServiceWrapper(object):
+
+    def __init__(self, upload_url):
+        self._upload_url = upload_url
+        self._session = requests.Session()
+        self._session.mount(self._upload_url, HTTPAdapter(max_retries=5))
+
+    def post_image(self, fp):
+        r = self._session.post(self._upload_url, files={'iso_image': fp})
+        r.raise_for_status()
+        return r.json()['image_url']
+
+
 class PngGenerator(object):
     """ Generator of isotopic images as png files
 
@@ -16,12 +29,9 @@ class PngGenerator(object):
     coords : list[tuple]
         List of coordinates in (x, y) form
     """
-    def __init__(self, coords):
-        sm_config = SMConfig.get_conf()
-
-        self._upload_uri = sm_config['services']['upload_url']
-        self._session = requests.Session()
-        self._session.mount(self._upload_uri, HTTPAdapter(max_retries=5))
+    def __init__(self, coords, greyscale=True):
+        self._greyscale = greyscale
+        self._bitdepth = 16 if self._greyscale else 8
 
         colors = np.array(
             [(68, 1, 84), (68, 2, 85), (68, 3, 87), (69, 5, 88), (69, 6, 90), (69, 8, 91), (70, 9, 92), (70, 11, 94),
@@ -64,7 +74,7 @@ class PngGenerator(object):
              (202, 224, 30), (205, 224, 29), (207, 225, 28), (210, 225, 27), (212, 225, 26), (215, 226, 25),
              (218, 226, 24), (220, 226, 24), (223, 227, 24), (225, 227, 24), (228, 227, 24), (231, 228, 25),
              (233, 228, 25), (236, 228, 26), (238, 229, 27), (241, 229, 28), (243, 229, 30), (246, 230, 31),
-             (248, 230, 33), (250, 230, 34), (253, 231, 36)], dtype=np.float) / 256.0
+             (248, 230, 33), (250, 230, 34), (253, 231, 36)], dtype=np.float)
         self._colors = np.c_[colors, np.ones(colors.shape[0])]
 
         coords = np.array(coords)
@@ -76,53 +86,24 @@ class PngGenerator(object):
         data = np.ones(coords.shape[0])
         self._mask = coo_matrix((data, (rows, cols)), shape=self._shape).toarray() > 0
 
-    def _get_color_img_data(self, img):
-        xa = (((img - img.min()) / (img.max() - img.min())) * 256).astype(int)
-        rgba = np.empty(shape=xa.shape + (4,), dtype=self._colors.dtype)
-        self._colors.take(xa, axis=0, mode='clip', out=rgba)
-        rgba[:, :, 3] = self._mask
-        return rgba
+    def _get_img_data(self, img):
+        xa = ((img - img.min()) / (img.max() - img.min())) * (2 ** self._bitdepth - 1)
+        if self._greyscale:
+            grey = np.empty(shape=xa.shape + (2,), dtype=xa.dtype)
+            grey[:, :, 0] = xa.astype(np.uint16)
+            grey[:, :, 1] = self._mask * (2 ** self._bitdepth - 1)
+            return grey
+        else:
+            rgba = np.empty(shape=xa.shape + (4,), dtype=self._colors.dtype)
+            self._colors.take(xa.astype(np.uint8), axis=0, mode='clip', out=rgba)
+            rgba[:, :, 3] = self._mask * (2 ** self._bitdepth - 1)
+            return rgba
 
-    def _generate_png(self, img):
-        rgba = self._get_color_img_data(img)
+    def generate_png(self, img):
+        im = self._get_img_data(img)
         fp = cStringIO.StringIO()
-        png_writer = png.Writer(width=self._shape[1], height=self._shape[0], alpha=True)
-        png_writer.write(fp, rgba.reshape(self._shape[0], -1) * 255)
+        png_writer = png.Writer(width=self._shape[1], height=self._shape[0],
+                                alpha=True, greyscale=self._greyscale, bitdepth=self._bitdepth)
+        png_writer.write(fp, im.reshape(im.shape[0], im.shape[1] * im.shape[2]).tolist())
         fp.seek(0)
         return fp
-
-    def _post_image(self, fp):
-        r = self._session.post(self._upload_uri, files={'iso_image': fp})
-        r.raise_for_status()
-        return r.json()['image_url']
-
-    def save_imgs_as_png(self, imgs):
-        """ Save iso images in the external service as png files
-
-        Args
-        -------
-        imgs: list[np.array]
-            List of isotopic images stores as a list of 1-d numpy arrays
-
-        Returns
-        -------
-        : dict
-            {'ion_image_url': ion_image_url,
-            'iso_image_url': iso_image_urls}
-        """
-        imgs += [None] * (4 - len(imgs))
-        # ion image
-        fp = self._generate_png(sum(filter(lambda i: i is not None, imgs)).toarray())
-        ion_image_url = self._post_image(fp)
-        # isotopic images
-        iso_image_urls = []
-        for img in imgs:
-            if img is None:
-                iso_image_urls.append(None)
-            else:
-                fp = self._generate_png(img.toarray())
-                iso_image_urls.append(self._post_image(fp))
-        return {
-            'ion_image_url': ion_image_url,
-            'iso_image_urls': iso_image_urls
-        }

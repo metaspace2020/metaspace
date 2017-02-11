@@ -38,7 +38,7 @@ def create_fill_sm_database(create_test_db, drop_test_db, create_sm_index, sm_co
         db.close()
 
 
-@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch._post_images_to_annot_service')
+@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch._post_images_to_image_store')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
 def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metrics_mock,

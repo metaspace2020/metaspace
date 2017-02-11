@@ -150,7 +150,7 @@ class ESExporter:
                         "msm": {"type": "float", "index": "not_analyzed"},
                         "adduct": {"type": "string", "index": "not_analyzed"},
                         "fdr": {"type": "float", "index": "not_analyzed"},
-                        "centroid_mzs": {"index": "not_analyzed"},
+                        "centroid_mzs": {"type": "string", "index": "not_analyzed"},
                         "ion_image_url": {"type": "string", "index": "not_analyzed"},
                         "iso_image_urls": {"type": "string", "index": "not_analyzed"},
                         # dataset metadata

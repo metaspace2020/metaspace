@@ -1,3 +1,5 @@
+from sm.engine.util import SMConfig
+
 
 class SearchAlgorithm(object):
 
@@ -8,6 +10,7 @@ class SearchAlgorithm(object):
         self.fdr = fdr
         self.ds_config = ds_config
         self.metrics = []
+        self.sm_config = SMConfig.get_conf()
 
     def search(self):
         pass
