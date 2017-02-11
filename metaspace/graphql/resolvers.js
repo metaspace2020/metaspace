@@ -3,7 +3,6 @@
  */
 
 const sprintf = require('sprintf-js'),
-  lodash = require('lodash'),
   fetch = require('node-fetch');
 
 const smEngineConfig = require('./sm_config.json'),
@@ -213,10 +212,10 @@ const Resolvers = {
       const {sf_adduct, ds_meta} = hit._source;
       const msInfo = ds_meta.MS_Analysis;
       const host = config.MOLDB_SERVICE_HOST,
-        instr = lodash.toLower(msInfo.Analyzer),
+        instr = msInfo.Analyzer.toLowerCase(),
         rp = msInfo.Detector_Resolving_Power.Resolving_Power,
         at_mz = msInfo.Detector_Resolving_Power.mz,
-        pol = lodash.toLower(msInfo.Polarity) == 'positive' ? '+1' : '-1';
+        pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1';
   
       const url = `http://${host}/v1/isotopic_pattern/${sf_adduct}/${instr}/${rp}/${at_mz}/${pol}`;
       return fetch(url).then(res => res.json()).then(json => JSON.stringify(json));
