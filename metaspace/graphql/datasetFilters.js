@@ -4,7 +4,6 @@
 
 const capitalize = require('lodash/capitalize');
 
-
 class AbstractDatasetFilter {
   constructor(schemaPath, options) {
     this.schemaPath = schemaPath;
@@ -64,7 +63,7 @@ class PhraseMatchFilter extends SubstringMatchFilter {
   }
 }
 
-module.exports.datasetFilters = {
+const datasetFilters = {
   institution: new ExactMatchFilter('Submitted_By.Institution', {}),
   polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
   ionisationSource: new PhraseMatchFilter('MS_Analysis.Ionisation_Source', {}),
@@ -73,9 +72,19 @@ module.exports.datasetFilters = {
   maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {})
 };
 
-module.exports.dsField = function(pgDatasetRecord, alias) {
+function dsField(pgDatasetRecord, alias){
   let info = pgDatasetRecord.metadata;
   for (let field of datasetFilters[alias].schemaPath.split("."))
     info = info[field];
   return info;
+};
+
+module.exports = {
+  AbstractDatasetFilter,
+  ExactMatchFilter,
+  PhraseMatchFilter,
+  SubstringMatchFilter,
+
+  datasetFilters,
+  dsField
 };

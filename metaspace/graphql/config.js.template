@@ -15,6 +15,10 @@ config.MOLDB_SERVICE_HOST = "";
 /* Public IP of the server that hosts molecule images */
 config.MOL_IMAGE_SERVER_IP = "";
 
+/* Internal ad-hoc service with the only endpoint /reindex/:dataset_id
+   TODO: this should become part of the dataset service */
+config.ES_API = "";
+
 config.PORT = "";
 
 module.exports = config;

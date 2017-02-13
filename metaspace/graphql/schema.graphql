@@ -25,11 +25,6 @@ enum DatasetOrderBy {
   ORDER_BY_NAME
 }
 
-enum AnnotationOrderBy {
-  ORDER_BY_MZ
-  ORDER_BY_MSM
-}
-
 enum SortingOrder {
   ASCENDING,
   DESCENDING
@@ -75,11 +70,12 @@ type Spectrum {
 type MzImage {
   mz: Float
   url: String
-  #  data: String  # base64-encoded
+  totalIntensity: Float!  # FIXME: implement
 }
 
 type Annotation {
   id: String!
+
   dataset: Dataset!
   sumFormula: String!
   adduct: String!
@@ -143,8 +139,15 @@ type Query {
                    datasetFilter: DatasetFilter = {}): Int!
 
   annotation(id: String!): Annotation
+
+  metadataSuggestions(field: String!, query: String!): [String!]!
+}
+
+type Mutation {
+  updateMetadata(jwt: String!, datasetId: String!, metadataJson: String!): String
 }
 
 schema {
   query: Query
+  mutation: Mutation
 }

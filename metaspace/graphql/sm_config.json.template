@@ -7,6 +7,14 @@
   },
   "elasticsearch": {
     "index": "sm",
-    "host": "localhost"
+    "host": "localhost",
+    "port": 9200
+  },
+  "slack": {
+    "channel": "",
+    "webhook_url": ""
+  },
+  "jwt": {
+    "secret": "longSecretKey"
   }
 }
