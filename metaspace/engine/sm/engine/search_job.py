@@ -111,16 +111,13 @@ class SearchJob(object):
         self.formulas = FormulasSegm(self.job_id, self.sf_db_id, self.ds.ds_config, self.db)
 
         search_alg = MSMBasicSearch(self.sc, self.ds, self.formulas, self.fdr, self.ds.ds_config)
-        sf_metrics_df, sf_iso_images = search_alg.search()
+        ion_metrics_df, ion_iso_images = search_alg.search()
 
         search_results = SearchResults(self.sf_db_id, self.ds_id, self.job_id, search_alg.metrics,
-                                       self.formulas.get_sf_adduct_peaksn(),
-                                       self.db, self.sm_config, self.ds.ds_config)
-        search_results.set_metrics_images(sf_metrics_df, sf_iso_images)
-        search_results.store()
+                                       self.ds, self.db, self.ds.ds_config)
+        search_results.store(ion_metrics_df, ion_iso_images)
 
         self.es.index_ds(self.db, self.ds_id)
-
         self.db.alter('UPDATE job set finish=%s where id=%s',
                       datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self.job_id)
 

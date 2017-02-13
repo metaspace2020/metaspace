@@ -38,11 +38,11 @@ def create_fill_sm_database(create_test_db, drop_test_db, create_sm_index, sm_co
         db.close()
 
 
-@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch._post_images_to_image_store')
+@patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
 def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metrics_mock,
-                                  _post_images_to_annot_service_mock,
+                                  post_images_to_annot_service_mock,
                                   create_fill_sm_database, sm_config):
     get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
     filter_sf_metrics_mock.side_effect = lambda x: x
@@ -51,7 +51,7 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metri
         'ion_image_url': 'http://localhost/ion_image',
         'iso_image_urls': ['http://localhost/iso_image_1', None, None, None]
     }
-    _post_images_to_annot_service_mock.return_value = {
+    post_images_to_annot_service_mock.return_value = {
         (10007, '+H'): url_dict,
         (10007, '+Na'): url_dict,
         (10007, '+K'): url_dict

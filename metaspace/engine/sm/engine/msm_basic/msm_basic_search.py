@@ -15,37 +15,6 @@ class MSMBasicSearch(SearchAlgorithm):
         self.metrics = ['chaos', 'spatial', 'spectral']
         self.max_fdr = 0.5
 
-    def _get_post_images(self):
-        png_generator = PngGenerator(self.ds.coords, greyscale=True)
-        img_store = ImageStoreServiceWrapper(self.sm_config['services']['upload_url'])
-
-        def _post_images(imgs):
-            imgs += [None] * (4 - len(imgs))
-
-            # ion image
-            fp = png_generator.generate_png(sum(filter(lambda i: i is not None, imgs)).toarray())
-            ion_image_url = img_store.post_image(fp)
-
-            # isotopic images
-            iso_image_urls = []
-            for img in imgs:
-                if img is None:
-                    iso_image_urls.append(None)
-                else:
-                    fp = png_generator.generate_png(img.toarray())
-                    iso_image_urls.append(img_store.post_image(fp))
-            return {
-                'ion_image_url': ion_image_url,
-                'iso_image_urls': iso_image_urls
-            }
-        return _post_images
-
-    def _post_images_to_image_store(self, ion_images):
-        logger.info('Posting iso images to {}'.format(self.sm_config['services']['upload_url']))
-        post_images = self._get_post_images()
-        return dict(ion_images.mapValues(lambda imgs: post_images(imgs)).collect())
-        # return dict(map(lambda (_, imgs): post_images(imgs), ion_images.collect()))
-
     def search(self):
         """ Search for molecules in the dataset
 
@@ -61,9 +30,8 @@ class MSMBasicSearch(SearchAlgorithm):
         sf_metrics_fdr_df = self.estimate_fdr(all_sf_metrics_df)
         sf_metrics_fdr_df = self.filter_sf_metrics(sf_metrics_fdr_df)
         ion_images = self.filter_sf_images(ion_images, sf_metrics_fdr_df)
-        ion_img_urls = self._post_images_to_image_store(ion_images)
 
-        return sf_metrics_fdr_df, ion_img_urls
+        return sf_metrics_fdr_df, ion_images
 
     def calc_metrics(self, sf_images):
         all_sf_metrics_df = sf_image_metrics(sf_images, self.sc, self.formulas, self.ds, self.ds_config)

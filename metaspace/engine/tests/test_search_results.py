@@ -17,26 +17,22 @@ db_mock = MagicMock(spec=DB)
 
 @pytest.fixture
 def search_results(spark_context, sm_config, ds_config):
-    sf_iso_images = {(1, '+H'): {'iso_image_urls': ['http://localhost/iso_image_1', None, None, None],
-                                 'ion_image_url': 'http://localhost/ion_image'}}
-
-    sf_metrics_df = pd.DataFrame([(1, '+H', 0.9, 0.9, 0.9, 0.9**3, 0.5)],
-                                  columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm', 'fdr'])
-    sf_adduct_peaksn = [(1, '+H', 2)]
     metrics = ['chaos', 'spatial', 'spectral']
-
-    res = SearchResults(0, '2000-01-01_00h00m', 0, metrics, sf_adduct_peaksn, db_mock, sm_config, ds_config)
-    res.sf_metrics_df = sf_metrics_df
+    res = SearchResults(0, '2000-01-01_00h00m', 0, metrics, None, db_mock, ds_config)
     res.metrics = ['chaos', 'spatial', 'spectral']
-    res.sf_iso_images = sf_iso_images
     return res
 
 
 def test_save_sf_img_metrics_correct_db_call(search_results):
-    search_results.store_sf_img_metrics()
+    ion_img_urls = {(1, '+H'): {'iso_image_urls': ['http://localhost/iso_image_1', None, None, None],
+                                'ion_image_url': 'http://localhost/ion_image'}}
+    ion_metrics_df = pd.DataFrame([(1, '+H', 0.9, 0.9, 0.9, 0.9 ** 3, 0.5)],
+                                  columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm', 'fdr'])
+
+    search_results.store_ion_metrics(ion_metrics_df, ion_img_urls)
 
     metrics_json = json.dumps(OrderedDict(zip(['chaos', 'spatial', 'spectral'], (0.9, 0.9, 0.9))))
-    correct_rows = [(0, 0, 1, '+H', 0.9**3, 0.5, metrics_json, 2,
+    correct_rows = [(0, 0, 1, '+H', 0.9**3, 0.5, metrics_json, None,
                      ['http://localhost/iso_image_1', None, None, None], 'http://localhost/ion_image')]
     db_mock.insert.assert_called_with(METRICS_INS, correct_rows)
 
@@ -59,12 +55,17 @@ def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
 
 
 def test_non_native_python_number_types_handled(search_results):
-    for col in ['chaos', 'spatial', 'spectral', 'msm', 'fdr']:
-        search_results.sf_metrics_df[col] = search_results.sf_metrics_df[col].astype(np.float64)
+    ion_img_urls = {(1, '+H'): {'iso_image_urls': ['http://localhost/iso_image_1', None, None, None],
+                                'ion_image_url': 'http://localhost/ion_image'}}
+    ion_metrics_df = pd.DataFrame([(1, '+H', 0.9, 0.9, 0.9, 0.9 ** 3, 0.5)],
+                                  columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm', 'fdr'])
 
-        search_results.store_sf_img_metrics()
+    for col in ['chaos', 'spatial', 'spectral', 'msm', 'fdr']:
+        ion_metrics_df[col] = ion_metrics_df[col].astype(np.float64)
+
+        search_results.store_ion_metrics(ion_metrics_df, ion_img_urls)
 
         metrics_json = json.dumps(OrderedDict(zip(['chaos', 'spatial', 'spectral'], (0.9, 0.9, 0.9))))
-        correct_rows = [(0, 0, 1, '+H', 0.9 ** 3, 0.5, metrics_json, 2,
+        correct_rows = [(0, 0, 1, '+H', 0.9 ** 3, 0.5, metrics_json, None,
                          ['http://localhost/iso_image_1', None, None, None], 'http://localhost/ion_image')]
         db_mock.insert.assert_called_with(METRICS_INS, correct_rows)
