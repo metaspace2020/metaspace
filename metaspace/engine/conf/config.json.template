@@ -11,7 +11,7 @@
     "port": "{{ es_port }}"
   },
   "services": {
-    "upload_url": "http://localhost:3010/upload"
+    "iso_images": "http://localhost:3010/iso_images"
   },
   "rabbitmq": {
     "host": "{{ rabbitmq_host }}",

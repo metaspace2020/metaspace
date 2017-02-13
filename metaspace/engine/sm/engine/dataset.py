@@ -1,8 +1,10 @@
 import json
 import numpy as np
 import logging
+import os
 
 from sm.engine.imzml_txt_converter import ImzmlTxtConverter
+from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig, read_json
 
 
@@ -10,6 +12,11 @@ logger = logging.getLogger('sm-engine')
 
 DS_INSERT = "INSERT INTO dataset (id, name, input_path, metadata, img_bounds, config) VALUES (%s, %s, %s,%s, %s, %s)"
 COORD_INSERT = "INSERT INTO coordinates VALUES (%s, %s, %s)"
+IMG_URLS_SEL_BY_ID = ('SELECT iso_image_urls, ion_image_url '
+                      'FROM iso_image_metrics m '
+                      'JOIN job j ON j.id = m.job_id '
+                      'JOIN dataset d ON d.id = j.ds_id '
+                      'WHERE ds_id = %s')
 
 
 class Dataset(object):
@@ -43,7 +50,7 @@ class Dataset(object):
         self.input_path = input_path
 
         if drop:
-            self._delete_ds_if_exists(self.id, self.name)
+            self.delete_ds_if_exists()
 
     def copy_read_data(self):
         """ Read/convert input data. Read/update metadata/config if needed """
@@ -67,7 +74,7 @@ class Dataset(object):
         if ds_r:
             self.name, self.input_path, self.ds_config, self.metadata = ds_r[0]
             logger.info("Dataset %s, %s already exists. Deleting annotations only", self.id, self.name)
-            self._delete_ds_if_exists(id=self.id)
+            self.delete_ds_if_exists()
             self._copy_convert_input_data()
         else:
             self._copy_convert_input_data()
@@ -77,18 +84,32 @@ class Dataset(object):
             if not self.name:
                 self.name = self.metadata.get('metaspace_options', {}).get('Dataset_Name', self.id)
 
-    def _delete_ds_if_exists(self, id=None, name=None):
-        name_res = self.db.select('SELECT id FROM dataset WHERE name=%s', name)
-        if name_res:
-            logger.warning('ds_name already exists: {}. Deleting'.format(name))
-            self.db.alter('DELETE FROM dataset WHERE id=%s', name_res[0][0])
-            self.es.delete_ds(name_res[0][0])
+    def _del_iso_images(self, q):
+        img_store = ImageStoreServiceWrapper(self.sm_config['services']['iso_images'])
+        ds_img_urls = []
+        for iso_image_urls, ion_image_url in self.db.select(q, self.id):
+            ds_img_urls.append(ion_image_url)
+            for url in iso_image_urls:
+                ds_img_urls.append(url)
+
+        for url in ds_img_urls:
+            if url:
+                del_url = '{}/delete/{}'.format(self.sm_config['services']['iso_images'], os.path.split(url)[1])
+                img_store.delete_image(del_url)
+
+    def delete_ds_if_exists(self):
+        if self.id:
+            ds_id = self.id
         else:
-            id_res = self.db.select('SELECT id FROM dataset WHERE id=%s', id)
-            if id_res:
-                logger.warning('ds_id already exists: {}. Deleting'.format(id))
-                self.db.alter('DELETE FROM dataset WHERE id=%s', id_res[0][0])
-                self.es.delete_ds(id_res[0][0])
+            r = self.db.select_one('SELECT id FROM datasets WHERE name = %s', self.name)
+            ds_id = r[0] if r[0] else None
+
+        if ds_id:
+            logger.warning('ds_id already exists: {}. Deleting'.format(ds_id))
+            self._del_iso_images(IMG_URLS_SEL_BY_ID)
+            self.db.alter('DELETE FROM dataset WHERE id=%s', ds_id)
+            self.es.delete_ds(ds_id)
+
 
     @staticmethod
     def _parse_coord_row(s):

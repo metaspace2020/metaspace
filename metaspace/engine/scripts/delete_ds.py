@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 import argparse
+import logging
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
-from sm.engine.util import SMConfig, logger
+from sm.engine.util import SMConfig, init_logger
+from sm.engine.dataset import Dataset
 
 
 DS_ANNOTATIONS_COUNT = ('SELECT count(*) '
@@ -15,14 +17,8 @@ DS_ANNOTATIONS_COUNT = ('SELECT count(*) '
 
 def delete_dataset(id, name):
     logger.info('Deleting dataset id/name: {}/{}'.format(id, name))
-
-    n = db.select_one(DS_ANNOTATIONS_COUNT, id)[0]
-    db.alter('DELETE FROM dataset WHERE id=%s', id)
-    logger.info('Deleted {} rows from the database'.format(n))
-
-    n = es_exp.delete_ds(id)
-    logger.info('Deleted {} documents from the index'.format(n))
-
+    ds = Dataset(None, id, name, False, '', None, db, es_exp)
+    ds.delete_ds_if_exists()
 
 def match_and_delete_dataset(sql, arg):
     ds_to_del = db.select(sql, arg)
@@ -43,6 +39,9 @@ if __name__ == "__main__":
 
     SMConfig.set_path(args.sm_config_path)
     sm_config = SMConfig.get_conf()
+
+    init_logger()
+    logger = logging.getLogger('sm-engine')
 
     db = DB(sm_config['db'])
     es_exp = ESExporter(sm_config)

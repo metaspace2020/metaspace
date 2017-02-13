@@ -85,7 +85,7 @@ def sm_config():
             "port": 9392
         },
         "services": {
-            "upload_url": "http://localhost/upload"
+            "iso_images": "http://localhost:3010/iso_images"
         },
         "fs": {
             "base_path": "/opt/data/sm_test_data",

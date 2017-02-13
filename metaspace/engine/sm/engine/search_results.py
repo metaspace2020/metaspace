@@ -62,7 +62,7 @@ class SearchResults(object):
 
     def _get_post_images(self):
         png_generator = PngGenerator(self.ds.coords, greyscale=True)
-        img_store = ImageStoreServiceWrapper(self.sm_config['services']['upload_url'])
+        img_store = ImageStoreServiceWrapper(self.sm_config['services']['iso_images'])
 
         def _post_images(imgs):
             imgs += [None] * (4 - len(imgs))
@@ -87,7 +87,7 @@ class SearchResults(object):
         return _post_images
 
     def post_images_to_image_store(self, ion_iso_images):
-        logger.info('Posting iso images to {}'.format(self.sm_config['services']['upload_url']))
+        logger.info('Posting iso images to {}'.format(self.sm_config['services']['iso_images']))
         post_images = self._get_post_images()
         return dict(ion_iso_images.mapValues(lambda imgs: post_images(imgs)).collect())
 

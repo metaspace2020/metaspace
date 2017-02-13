@@ -4,21 +4,26 @@ import requests
 import numpy as np
 from scipy.sparse import coo_matrix
 from requests.adapters import HTTPAdapter
+from os.path import join
 
 from sm.engine.util import SMConfig
 
 
 class ImageStoreServiceWrapper(object):
 
-    def __init__(self, upload_url):
-        self._upload_url = upload_url
+    def __init__(self, iso_img_service_url):
+        self._iso_img_service_url = iso_img_service_url
         self._session = requests.Session()
-        self._session.mount(self._upload_url, HTTPAdapter(max_retries=5))
+        self._session.mount(self._iso_img_service_url, HTTPAdapter(max_retries=5))
 
     def post_image(self, fp):
-        r = self._session.post(self._upload_url, files={'iso_image': fp})
+        r = self._session.post(join(self._iso_img_service_url, 'upload'), files={'iso_image': fp})
         r.raise_for_status()
         return r.json()['image_url']
+
+    def delete_image(self, url):
+        r = self._session.delete(url)
+        r.raise_for_status()
 
 
 class PngGenerator(object):
