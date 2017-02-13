@@ -13,16 +13,16 @@ let storage = multer.diskStorage({
     cb(null, path.join(config.ISO_IMG_FS_PATH, config.IMG_BASE_PATH))
   }
 });
-let upload = multer({ storage: storage });
+let upload = multer({ storage });
 
 function addIsoImageProvider(app, uri) {
   app.use(express.static(config.ISO_IMG_FS_PATH));
   
-  app.post(uri, upload.single('iso_image'), function (req, res, next) {
+  app.post(uri, upload.single('iso_image'), (req, res, next) => {
     console.log(moment().format());
     console.log(req.file);
     let image_url = `http://${req.headers.host}${config.IMG_BASE_PATH}${req.file.filename}`;
-    res.status(201).json({image_url: image_url});
+    res.status(201).json({ image_url });
   });
 }
 

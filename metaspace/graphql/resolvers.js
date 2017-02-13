@@ -6,8 +6,8 @@ const sprintf = require('sprintf-js'),
   fetch = require('node-fetch');
 
 const smEngineConfig = require('./sm_config.json'),
-  {esSearchResults, esCountResults} = require('./es_connector'),
-  {datasetFilters, dsField} = require('./ds_filters'),
+  {esSearchResults, esCountResults} = require('./esConnector'),
+  {datasetFilters, dsField} = require('./datasetFilters'),
   config = require('./config');
 
 

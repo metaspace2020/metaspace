@@ -8,7 +8,7 @@ const express = require('express'),
       graphqlExpress = require('graphql-server-express').graphqlExpress,
       graphiqlExpress = require('graphql-server-express').graphiqlExpress;
 
-const addIsoImageProvider = require('./image_upload.js'),
+const addIsoImageProvider = require('./imageUpload.js'),
   Resolvers = require('./resolvers.js'),
   config = require('./config.js');
 

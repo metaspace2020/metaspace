@@ -5,11 +5,12 @@
 const elasticsearch = require('elasticsearch');
 
 const smEngineConfig = require('./sm_config.json'),
-  {datasetFilters, dsField} = require('./ds_filters');
+  {datasetFilters, dsField} = require('./datasetFilters.js');
 
 const esConfig = () => {
+  const {host, port} = smEngineConfig.elasticsearch;
   return {
-    hosts: [`${smEngineConfig.elasticsearch.host}:${smEngineConfig.elasticsearch.port}`],
+    hosts: [`${host}:${port}`],
     apiVersion: '2.4'
   }
 };
