@@ -8,7 +8,7 @@ from app import log
 from app.api.base import BaseResource
 # from app.utils.hooks import auth_required
 # from app.utils.auth import encrypt_token, hash_password, verify_password, uuid
-from app.errors import AppError, InvalidParameterError, ObjectNotExistsError, PasswordNotMatch
+from app.errors import AppError, InvalidParameterError, ObjectNotExistError, PasswordNotMatch
 from app.model import MolecularDB, Molecule
 
 LOG = log.get_logger()
@@ -42,7 +42,7 @@ class MoleculeItem(BaseResource):
             molecule = db_session.query(Molecule).filter(Molecule.mol_id == mol_id).one()
             self.on_success(res, molecule.to_dict())
         except NoResultFound:
-            raise ObjectNotExistsError('molecule id: %s' % mol_id)
+            raise ObjectNotExistError('molecule id: %s' % mol_id)
 
 
 # class Self(BaseResource):

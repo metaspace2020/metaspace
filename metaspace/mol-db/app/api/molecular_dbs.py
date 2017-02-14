@@ -2,11 +2,12 @@ import re
 import falcon
 
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy import desc
 # from cerberus import Validator, ValidationError
 
 from app import log
 from app.api.base import BaseResource
-from app.errors import AppError, InvalidParameterError, ObjectNotExistsError, PasswordNotMatch
+from app.errors import AppError, InvalidParameterError, ObjectNotExistError, PasswordNotMatch
 from app.model import MolecularDB, Molecule
 
 LOG = log.get_logger()
@@ -65,16 +66,24 @@ class MoleculeCollection(BaseResource):
         db_session = req.context['session']
         sf = req.params.get('sf', None)
         limit = req.params.get('limit', 100)
+        fields = req.params.get('fields', None)
 
         q = db_session.query(Molecule).filter(Molecule.db_id == db_id)
         if sf:
             molecules = q.filter(Molecule.sf == sf).all()
-
         else:
             molecules = q.limit(limit).all()
 
-        objs = [mol.to_dict() for mol in molecules]
-        self.on_success(res, objs)
+        if fields:
+            selector = self.field_selector(fields)
+            objs = [selector(mol.to_dict()) for mol in molecules]
+        else:
+            objs = [mol.to_dict() for mol in molecules]
+
+        if objs:
+            self.on_success(res, objs)
+        else:
+            raise ObjectNotExistError('db_id: {}, sf: {}'.format(db_id, sf))
 
 
 class SumFormulaCollection(BaseResource):
@@ -85,7 +94,9 @@ class SumFormulaCollection(BaseResource):
     # @falcon.before(auth_required)
     def on_get(self, req, res, db_id):
         db_session = req.context['session']
-        sf_tuples = db_session.query(Molecule.sf).distinct('sf').all()
+        sf_tuples = (db_session.query(Molecule.sf)
+                     .filter(Molecule.db_id == db_id)
+                     .distinct('sf').all())
 
         objs = [t[0] for t in sf_tuples]
         self.on_success(res, objs)
@@ -99,12 +110,21 @@ class MolDBCollection(BaseResource):
     # @falcon.before(auth_required)
     def on_get(self, req, res):
         db_session = req.context['session']
-        mol_dbs = db_session.query(MolecularDB).all()
+        name = req.params.get('name', None)
+        version = req.params.get('version', None)
+
+        q = db_session.query(MolecularDB)
+        if name:
+            q = q.filter(MolecularDB.name == name)
+        if version:
+            q = q.filter(MolecularDB.version == version)
+
+        mol_dbs = q.order_by(MolecularDB.name, desc(MolecularDB.version)).all()
         if mol_dbs:
             obj = [mol_db.to_dict() for mol_db in mol_dbs]
             self.on_success(res, obj)
         else:
-            raise AppError()
+            raise ObjectNotExistError('db_name: {}, db_version: {}'.format(name, version))
 
 
 class MolDBItem(BaseResource):
@@ -118,4 +138,4 @@ class MolDBItem(BaseResource):
             user_db = MolecularDB.find_one(session, db_id)
             self.on_success(res, user_db.to_dict())
         except NoResultFound:
-            raise ObjectNotExistsError('user id: %s' % db_id)
+            raise ObjectNotExistError('user id: %s' % db_id)

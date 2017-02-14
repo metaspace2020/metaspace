@@ -110,7 +110,7 @@ class NotSupportedError(AppError):
             self.error['description'] = 'method: %s, url: %s' % (method, url)
 
 
-class ObjectNotExistsError(AppError):
+class ObjectNotExistError(AppError):
     def __init__(self, description=None):
         super().__init__(ERR_OBJECT_NOT_EXISTS)
         self.error['description'] = description

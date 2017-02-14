@@ -23,6 +23,8 @@ class BaseResource(object):
 
     @classmethod
     def field_selector(cls, fields):
+        if type(fields) == str:
+            fields = [fields]
         return lambda d: {k: d[k] for k in fields if k in d}
 
     def to_json(self, body_dict):

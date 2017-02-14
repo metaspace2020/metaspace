@@ -3,7 +3,7 @@ from cpyMSpec import isotopePattern, InstrumentModel
 
 from app import log
 from app.api.base import BaseResource
-from app.errors import AppError, InvalidParameterError, ObjectNotExistsError
+from app.errors import AppError, InvalidParameterError, ObjectNotExistError
 
 
 LOG = log.get_logger()
@@ -12,10 +12,11 @@ SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
 
 
 class Centroids(object):
-    def __init__(self, isotope_pattern, instrument_model, pts_per_mz=None):
+    def __init__(self, isotope_pattern, instrument_model, pts_per_mz=None, n_peaks=ISOTOPIC_PEAK_N):
         self._isotope_pattern = isotope_pattern
         self._instrument_model = instrument_model
         self._pts_per_mz = pts_per_mz
+        self._n_peaks = n_peaks
 
         if isotope_pattern is not None:
             centroids = isotope_pattern.centroids(instrument_model)
@@ -42,8 +43,8 @@ class Centroids(object):
         mz_order = np.argsort(mzs)
         return mzs[mz_order], intensities[mz_order]
 
-    def spectrum_chart(self, n_peaks=ISOTOPIC_PEAK_N):
-        centr_mzs, _ = self._trim_centroids(self.mzs, self.ints, n_peaks)
+    def spectrum_chart(self):
+        centr_mzs, _ = self._trim_centroids(self.mzs, self.ints, self._n_peaks)
         min_mz = min(centr_mzs) - 0.25
         max_mz = max(centr_mzs) + 0.25
         prof_mzs = np.arange(min_mz, max_mz, 1.0 / self._pts_per_mz)
@@ -83,4 +84,3 @@ class IsotopicPatternItem(BaseResource):
             self.on_success(res, centroids.spectrum_chart())
         except Exception as e:
             LOG.warning('(%s, %s, %s, %s, %s) - %s', ion, instr, res_power, at_mz, charge, e)
-            return Centroids(None, None)
