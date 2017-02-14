@@ -97,7 +97,7 @@ def _calculate_msm(sf_metrics_df):
     return sf_metrics_df.chaos * sf_metrics_df.spatial * sf_metrics_df.spectral
 
 
-def sf_image_metrics(sf_images, sc, formulas, ds, ds_config):
+def sf_image_metrics(sf_images, sc, mol_db, ds, ds_config):
     """ Compute isotope image metrics for each formula
 
     Args
@@ -106,7 +106,7 @@ def sf_image_metrics(sf_images, sc, formulas, ds, ds_config):
     ds_config : dict
         dataset configuration
     ds : engine.dataset.Dataset
-    formulas : engine.formulas.Formulas
+    mol_db : engine.formulas.Formulas
     sf_images : pyspark.rdd.RDD
         RDD of (formula, list[images]) pairs
     Returns
@@ -116,7 +116,7 @@ def sf_image_metrics(sf_images, sc, formulas, ds, ds_config):
     nrows, ncols = ds.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
     compute_metrics = get_compute_img_metrics(ds.get_sample_area_mask(), empty_matrix, ds_config['image_generation'])
-    sf_add_ints_map_brcast = sc.broadcast(formulas.get_sf_peak_ints())
+    sf_add_ints_map_brcast = sc.broadcast(mol_db.get_sf_peak_ints())
     # sf_peak_ints_brcast = sc.broadcast(formulas.get_sf_peak_ints())
 
     sf_metrics = (sf_images
@@ -129,8 +129,8 @@ def sf_image_metrics(sf_images, sc, formulas, ds, ds_config):
     return sf_metrics_df
 
 
-def sf_image_metrics_est_fdr(sf_metrics_df, formulas, fdr):
-    sf_msm_df = formulas.get_sf_adduct_sorted_df()
+def sf_image_metrics_est_fdr(sf_metrics_df, mol_db, fdr):
+    sf_msm_df = mol_db.get_ion_sorted_df()
     sf_msm_df = sf_msm_df.join(sf_metrics_df.msm).fillna(0)
 
     sf_adduct_fdr = fdr.estimate_fdr(sf_msm_df)

@@ -31,10 +31,9 @@ class SearchResults(object):
     db: engine.db.DB
     ds_config: dict
     """
-    def __init__(self, sf_db_id, ds_id, job_id, metrics,
+    def __init__(self, sf_db_id, job_id, metrics,
                  ds, db, ds_config):
         self.sf_db_id = sf_db_id
-        self.ds_id = ds_id
         self.job_id = job_id
         self.metrics = metrics
         self.ds = ds

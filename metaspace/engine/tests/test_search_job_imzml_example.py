@@ -4,6 +4,7 @@ import pytest
 from fabric.api import local
 from fabric.context_managers import warn_only
 from mock import patch
+import time
 
 from sm.engine.db import DB
 from sm.engine.search_job import SearchJob
@@ -24,37 +25,29 @@ ds_config_path = join(input_dir_path, 'config.json')
 def create_fill_sm_database(create_test_db, drop_test_db, create_sm_index, sm_config):
     local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
 
-    db = DB(sm_config['db'])
-    try:
-        db.insert('INSERT INTO formula_db VALUES (%s, %s, %s)',
-                  [(0, '2016-01-01', 'HMDB')])
-        db.insert('INSERT INTO formula VALUES (%s, %s, %s, %s, %s)',
-                  [(100, 0, '00001', 'compound_name', 'C12H24O')])
-        db.insert('INSERT INTO sum_formula VALUES (%s, %s, %s, %s, %s)',
-                  [(10007, 0, 'C12H24O', ['00001'], ['compound_name'])])
-    except:
-        raise
-    finally:
-        db.close()
 
-
+@patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
 def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metrics_mock,
-                                  post_images_to_annot_service_mock,
-                                  create_fill_sm_database, sm_config):
+                                  post_images_to_annot_service_mock, MolDBServiceWrapperMock,
+                                  sm_config, create_fill_sm_database):
     get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
     filter_sf_metrics_mock.side_effect = lambda x: x
+    mol_db_mock = MolDBServiceWrapperMock()
+    mol_db_mock.find_db_by_name_version.return_value = [{'id': 0, 'name': 'HMDB', 'version': '2017-01'}]
+    mol_db_mock.fetch_db_sfs.return_value = ['C12H24O']
+    mol_db_mock.fetch_molecules.return_value = [{'mol_id': 'HMDB0001', 'mol_name': 'molecule name'}]
 
     url_dict = {
         'ion_image_url': 'http://localhost/ion_image',
         'iso_image_urls': ['http://localhost/iso_image_1', None, None, None]
     }
     post_images_to_annot_service_mock.return_value = {
-        (10007, '+H'): url_dict,
-        (10007, '+Na'): url_dict,
-        (10007, '+K'): url_dict
+        (1, '+H'): url_dict,
+        (1, '+Na'): url_dict,
+        (1, '+K'): url_dict
     }
 
     SMConfig._config_dict = sm_config
@@ -87,15 +80,16 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metri
 
         assert rows
         assert rows[0]
-        assert tuple(rows[0][:2]) == (0, 10007)
+        assert tuple(rows[0][:2]) == (0, 1)
         assert set(rows[0][4].keys()) == {'chaos', 'spatial', 'spectral'}
         assert rows[0][5] == ['http://localhost/iso_image_1', None, None, None]
         assert rows[0][6] == 'http://localhost/ion_image'
 
         # ES asserts
+        time.sleep(2)  # Waiting for ES
         es = Elasticsearch(hosts=[{"host": sm_config['elasticsearch']['host'],
                                    "port": int(sm_config['elasticsearch']['port'])}])
-        docs = es.search(index=sm_config['elasticsearch']['index'], body={"query" : {"match_all" : {}}})
+        docs = es.search(index=sm_config['elasticsearch']['index'], body={"query": {"match_all": {}}})
         assert ([d['_id'].startswith('2000-01-01_00h00m') for d in docs['hits']['hits']])
 
     finally:

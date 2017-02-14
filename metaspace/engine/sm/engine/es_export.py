@@ -5,19 +5,18 @@ import logging
 
 logger = logging.getLogger('sm-engine')
 
-COLUMNS = ["db_name", "ds_id", "ds_name", "sf", "sf_adduct", "comp_names", "comp_ids", "chaos", "image_corr",
+COLUMNS = ["ds_id", "ds_name", "sf", "sf_adduct", "chaos", "image_corr",
            "pattern_match", "msm",
-           "adduct", "job_id", "sf_id", "peaks", "db_id", "fdr", "centroid_mzs", "ds_meta", "ion_image_url", "iso_image_urls"]
+           "adduct", "job_id", "sf_id", "fdr", "centroid_mzs", "ds_meta", "ion_image_url", "iso_image_urls"]
 
 ANNOTATIONS_SEL = '''
 SELECT
-    sf_db.name AS db_name,
     ds.id as ds_id,
     ds.name AS ds_name,
     f.sf,
     CONCAT(f.sf, m.adduct) as sf_adduct,
-    f.names AS comp_names,
-    f.subst_ids AS comp_ids,
+    --f.names AS comp_names,
+    --f.subst_ids AS comp_ids,
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
     COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
     COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
@@ -25,23 +24,20 @@ SELECT
     m.adduct,
     j.id AS job_id,
     f.id AS sf_id,
-    m.peaks_n AS peaks,
-    sf_db.id AS db_id,
     m.fdr as pass_fdr,
     tp.centr_mzs AS centroid_mzs,
     ds.metadata as ds_meta,
     m.ion_image_url,
     m.iso_image_urls
 FROM iso_image_metrics m
-JOIN formula_db sf_db ON sf_db.id = m.db_id
-JOIN sum_formula f ON m.db_id = f.db_id AND f.id = m.sf_id
+JOIN sum_formula f ON f.id = m.sf_id
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
 JOIN theor_peaks tp ON tp.sf = f.sf AND tp.adduct = m.adduct
 	AND tp.sigma::real = (ds.config->'isotope_generation'->>'isocalc_sigma')::real
 	AND tp.charge = (CASE WHEN ds.config->'isotope_generation'->'charge'->>'polarity' = '+' THEN 1 ELSE -1 END)
 	AND tp.pts_per_mz = (ds.config->'isotope_generation'->>'isocalc_pts_per_mz')::int
-WHERE ds.id = %s
+WHERE ds.id = %s AND m.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC
 '''
 
@@ -53,32 +49,36 @@ class ESExporter:
         self.ind_client = IndicesClient(self.es)
         self.index = sm_config['elasticsearch']['index']
 
-    def _index(self, annotations):
+    def _index(self, annotations, mol_db):
         to_index = []
         for r in annotations:
             d = dict(zip(COLUMNS, r))
-            # trimming is needed for avoiding ES max_bytes_length_exceeded_exception
-            d['comp_names'] = u'|'.join(d['comp_names']).replace(u'"', u'')[:32766]
-            d['comp_ids'] = u'|'.join(d['comp_ids'])[:32766]
+            # trimming is needed to avoid ES max_bytes_length_exceeded_exception
+            # d['comp_names'] = u'|'.join(d['comp_names']).replace(u'"', u'')[:32766]
+            # d['comp_ids'] = u'|'.join(d['comp_ids'])[:32766]
+            df = mol_db.get_molecules(d['sf'])
+            d['comp_ids'] = df.mol_id.values.tolist()
+            d['comp_names'] = df.mol_name.values.tolist()
             d['centroid_mzs'] = ['{:010.4f}'.format(mz) if mz else '' for mz in d['centroid_mzs']]
 
             to_index.append({
                 '_index': self.index,
                 '_type': 'annotation',
-                '_id': '{}_{}_{}_{}'.format(d['ds_id'], d['db_name'], d['sf'], d['adduct']),
+                '_id': '{}_{}_{}_{}_{}'.format(d['ds_id'], mol_db.name, mol_db.version,
+                                               d['sf'], d['adduct']),
                 '_source': d
             })
 
         bulk(self.es, actions=to_index, timeout='60s')
 
-    def index_ds(self, db, ds_id):
-        annotations = db.select(ANNOTATIONS_SEL, ds_id)
+    def index_ds(self, db, mol_db, ds_id):
+        annotations = db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
 
         logger.info('Deleting {} documents from the index: {}'.format(len(annotations), ds_id))
         self.delete_ds(ds_id)
 
         logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
-        self._index(annotations)
+        self._index(annotations, mol_db)
 
     def delete_ds(self, ds_id):
         body = {

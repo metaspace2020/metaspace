@@ -12,6 +12,7 @@
   },
   "services": {
     "iso_images": "http://localhost:3010/iso_images"
+    "mol_db": "http://localhost:5000/v1"
   },
   "rabbitmq": {
     "host": "{{ rabbitmq_host }}",

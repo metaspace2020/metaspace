@@ -27,8 +27,9 @@ def db_decor(func):
             logger.debug(args[0])
             res = func(self, *args, **kwargs)
         except Exception as e:
-            logger.error(format_exc())
-            logger.error('SQL: %s\n%s', args[0], str(args[1:])[:1000])
+            # logger.error(format_exc())
+            logger.error('%s, SQL: %s\n%s', e, args[0], str(args[1:])[:1000])
+            raise e
         else:
             self.conn.commit()
         finally:

@@ -85,14 +85,15 @@ def sm_config():
             "port": 9392
         },
         "services": {
-            "iso_images": "http://localhost:3010/iso_images"
+            "iso_images": "http://localhost:3010/iso_images",
+            "mol_db": "http://localhost:5000/v1"
         },
         "fs": {
             "base_path": "/opt/data/sm_test_data",
             "s3_base_path": ""
         },
         "spark": {
-            "master": "local[2]",
+            "master": "local[*]",
             "executor.memory": "1g"
         }
     }

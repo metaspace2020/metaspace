@@ -7,18 +7,14 @@ import pandas as pd
 logger = logging.getLogger('sm-engine')
 
 DECOY_ADDUCTS = ['+He', '+Li', '+Be', '+B', '+C', '+N', '+O', '+F', '+Ne', '+Mg', '+Al', '+Si', '+P', '+S', '+Cl', '+Ar', '+Ca', '+Sc', '+Ti', '+V', '+Cr', '+Mn', '+Fe', '+Co', '+Ni', '+Cu', '+Zn', '+Ga', '+Ge', '+As', '+Se', '+Br', '+Kr', '+Rb', '+Sr', '+Y', '+Zr', '+Nb', '+Mo', '+Ru', '+Rh', '+Pd', '+Ag', '+Cd', '+In', '+Sn', '+Sb', '+Te', '+I', '+Xe', '+Cs', '+Ba', '+La', '+Ce', '+Pr', '+Nd', '+Sm', '+Eu', '+Gd', '+Tb', '+Dy', '+Ho', '+Ir', '+Th', '+Pt', '+Os', '+Yb', '+Lu', '+Bi', '+Pb', '+Re', '+Tl', '+Tm', '+U', '+W', '+Au', '+Er', '+Hf', '+Hg', '+Ta']
-SF_LIST_SEL = ('SELECT af.id '
-               'FROM sum_formula af '
-               'JOIN formula_db db ON db.id = af.db_id '
-               'WHERE db.id = %s')
 DELETE_TARGET_DECOY_ADD = 'DELETE FROM target_decoy_add where job_id = %s'
 
 
 class FDR(object):
 
-    def __init__(self, job_id, db_id, decoy_sample_size, target_adducts, db):
+    def __init__(self, job_id, mol_db, decoy_sample_size, target_adducts, db):
         self.job_id = job_id
-        self.db_id = db_id
+        self._mol_db = mol_db
         self.decoy_sample_size = decoy_sample_size
         self.db = db
         self.target_adducts = target_adducts
@@ -36,7 +32,7 @@ class FDR(object):
     def _save_target_decoy_df(self):
         buf = StringIO()
         df = self.td_df.copy()
-        df.insert(0, 'db_id', self.db_id)
+        df.insert(0, 'db_id', self._mol_db.id)
         df.insert(0, 'job_id', self.job_id)
         df.to_csv(buf, index=False, header=False)
         buf.seek(0)
@@ -46,7 +42,7 @@ class FDR(object):
         self.db.alter(DELETE_TARGET_DECOY_ADD, self.job_id)
 
     def decoy_adduct_selection(self):
-        sf_ids = [r[0] for r in self.db.select(SF_LIST_SEL, self.db_id)]
+        sf_ids = self._mol_db.sfs.keys()
         decoy_adduct_cand = list(set(DECOY_ADDUCTS) - set(self.target_adducts))
         self.td_df = pd.DataFrame(self._decoy_adduct_gen(sf_ids, self.target_adducts,
                                                          decoy_adduct_cand, self.decoy_sample_size),

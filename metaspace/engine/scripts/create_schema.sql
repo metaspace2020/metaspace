@@ -1,64 +1,12 @@
-DROP TABLE IF EXISTS formula_db CASCADE;
-CREATE TABLE formula_db (
-	id		serial PRIMARY KEY,
-	version	date,
-	name	text
-);
-CREATE INDEX ind_formula_db_name ON formula_db (name);
-
-DROP TABLE IF EXISTS formula CASCADE;
-CREATE TABLE formula (
-    id		serial PRIMARY KEY,
-	db_id	int,
-	fid 	text,
-	name	text,
-	sf 		text,
-	CONSTRAINT formula_id_sf_id_uniq UNIQUE(db_id, fid),
-	CONSTRAINT formula_id_fk FOREIGN KEY (db_id)
-        REFERENCES formula_db (id) MATCH SIMPLE
-        ON UPDATE NO ACTION ON DELETE CASCADE
-);
-
 DROP TABLE IF EXISTS sum_formula CASCADE;
 CREATE TABLE sum_formula (
-    id 		    int,
-    db_id 		int,
-	sf 		    text,
-	subst_ids 	text[],
-	names 		text[],
-	CONSTRAINT sum_formula_db_id_id_pk PRIMARY KEY(db_id, id),
-	CONSTRAINT sum_formula_db_id_fk FOREIGN KEY (db_id)
-      REFERENCES formula_db (id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE CASCADE
+	id 			serial NOT NULL,
+	db_id 	int,
+	sf 		  text,
+	CONSTRAINT sum_formula_id_pk PRIMARY KEY(id)
 );
-
 CREATE INDEX ind_sum_formulas_1 ON sum_formula (sf);
-CREATE INDEX ind_sum_formulas_2 ON sum_formula (id);
-CREATE INDEX ind_sum_formulas_3 ON sum_formula (id, sf);
-CREATE INDEX ind_sum_formulas_4 ON sum_formula (db_id, id, sf);
-CREATE UNIQUE INDEX ind_sum_formula__db_id__sf ON sum_formula USING BTREE (db_id, sf);
-
-DROP TABLE IF EXISTS client CASCADE;
-CREATE TABLE client (
-    id	        decimal(21),
-	name		text,
-	email       text,
-	CONSTRAINT user_id_pk PRIMARY KEY(id)
-);
-
-DROP TABLE IF EXISTS feedback CASCADE;
-CREATE TABLE feedback (
-    id	        serial,
-    client_id   decimal(21),
-    job_id      int,
-    db_id       int,
-    sf_id       int,
-    adduct      text,
-	rating		smallint,
-    comment     text,
-    fdr_thr     real,
-	CONSTRAINT feedback_id_pk PRIMARY KEY(id)
-);
+CREATE INDEX ind_sum_formulas_4 ON sum_formula (db_id);
 
 DROP TABLE IF EXISTS dataset CASCADE;
 CREATE TABLE dataset (

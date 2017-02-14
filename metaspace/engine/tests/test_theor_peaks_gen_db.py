@@ -27,7 +27,7 @@ def create_fill_test_db(create_test_db, drop_test_db):
 def test_theor_peaks_generator_run_failed_iso_peaks(create_fill_test_db, spark_context, sm_config, ds_config):
     ds_config["isotope_generation"]["adducts"] = ["+Na"]
     theor_peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
-    theor_peaks_gen.isocalc_wrapper.isotope_peaks = lambda *args: Centroids(None, None)
+    theor_peaks_gen._isocalc_wrapper.isotope_peaks = lambda *args: Centroids(None, None)
     theor_peaks_gen.run()
 
     db = DB(sm_config['db'])

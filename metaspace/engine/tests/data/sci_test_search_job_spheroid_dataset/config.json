@@ -1,7 +1,9 @@
 {
-  "database": {
-    "name": "HMDB"
-  },
+  "databases": [{
+    "name": "HMDB",
+    "version": "2017-01"
+    }
+  ],
   "isotope_generation": {
     "adducts": [
       "+H",

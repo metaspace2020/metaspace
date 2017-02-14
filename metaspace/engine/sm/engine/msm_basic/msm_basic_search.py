@@ -10,8 +10,8 @@ logger = logging.getLogger('sm-engine')
 
 class MSMBasicSearch(SearchAlgorithm):
 
-    def __init__(self, sc, ds, formulas, fdr, ds_config):
-        super(MSMBasicSearch, self).__init__(sc, ds, formulas, fdr, ds_config)
+    def __init__(self, sc, ds, mol_db, fdr, ds_config):
+        super(MSMBasicSearch, self).__init__(sc, ds, mol_db, fdr, ds_config)
         self.metrics = ['chaos', 'spatial', 'spectral']
         self.max_fdr = 0.5
 
@@ -24,8 +24,8 @@ class MSMBasicSearch(SearchAlgorithm):
             (ion metrics DataFrame, ion image urls dict)
         """
         logger.info('Running molecule search')
-        ion_images = compute_sf_images(self.sc, self.ds, self.formulas.get_sf_peak_df(),
-                                      self.ds_config['image_generation']['ppm'])
+        ion_images = compute_sf_images(self.sc, self.ds, self._mol_db.get_ion_peak_df(),
+                                       self.ds_config['image_generation']['ppm'])
         all_sf_metrics_df = self.calc_metrics(ion_images)
         sf_metrics_fdr_df = self.estimate_fdr(all_sf_metrics_df)
         sf_metrics_fdr_df = self.filter_sf_metrics(sf_metrics_fdr_df)
@@ -34,11 +34,11 @@ class MSMBasicSearch(SearchAlgorithm):
         return sf_metrics_fdr_df, ion_images
 
     def calc_metrics(self, sf_images):
-        all_sf_metrics_df = sf_image_metrics(sf_images, self.sc, self.formulas, self.ds, self.ds_config)
+        all_sf_metrics_df = sf_image_metrics(sf_images, self.sc, self._mol_db, self.ds, self.ds_config)
         return all_sf_metrics_df
 
     def estimate_fdr(self, all_sf_metrics_df):
-        sf_metrics_fdr_df = sf_image_metrics_est_fdr(all_sf_metrics_df, self.formulas, self.fdr)
+        sf_metrics_fdr_df = sf_image_metrics_est_fdr(all_sf_metrics_df, self._mol_db, self.fdr)
         return sf_metrics_fdr_df
 
     def filter_sf_metrics(self, sf_metrics_df):

@@ -15,23 +15,19 @@ from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.fdr import FDR
-from sm.engine.formulas_segm import FormulasSegm
-from sm.engine.imzml_txt_converter import ImzmlTxtConverter
 from sm.engine.search_results import SearchResults
 from sm.engine.theor_peaks_gen import TheorPeaksGenerator
 from sm.engine.util import local_path, proj_root, SMConfig, read_json, sm_log_formatters
 from sm.engine.work_dir import WorkDirManager
 from sm.engine.es_export import ESExporter
+from sm.engine.mol_db import MolecularDB
 
 
 logger = logging.getLogger('sm-engine')
 
 JOB_ID_SEL = "SELECT id FROM job WHERE ds_id = %s"
-DB_ID_SEL = "SELECT id FROM formula_db WHERE name = %s"
-
 JOB_INS = ("""INSERT INTO job (db_id, ds_id, status, start, finish) """
            """VALUES (%s, %s, 'SUCCEEDED', %s, '2000-01-01 00:00:00') RETURNING id""")
-ADDUCT_INS = 'INSERT INTO adduct VALUES (%s, %s)'
 
 
 class SearchJob(object):
@@ -55,71 +51,68 @@ class SearchJob(object):
         self.no_clean = no_clean
         self.input_path = input_path
 
-        self.sm_config = None
-        self.ds_config = None
-        self.job_id = None
-        self.sf_db_id = None
-        self.sc = None
-        self.db = None
-        self.ds = None
-        self.fdr = None
-        self.formulas = None
-        self.wd_manager = None
-        self.es = None
+        self._job_id = None
+        self._sc = None
+        self._db = None
+        self._ds = None
+        self._fdr = None
+        self._wd_manager = None
+        self._es = None
 
         SMConfig.set_path(sm_config_path)
-        self.sm_config = SMConfig.get_conf()
-        logger.debug('Using SM config:\n%s', pformat(self.sm_config))
+        self._sm_config = SMConfig.get_conf()
+        logger.debug('Using SM config:\n%s', pformat(self._sm_config))
 
     def _configure_spark(self):
         logger.info('Configuring Spark')
         sconf = SparkConf()
-        for prop, value in self.sm_config['spark'].iteritems():
+        for prop, value in self._sm_config['spark'].iteritems():
             if prop.startswith('spark.'):
                 sconf.set(prop, value)
 
-        if 'aws' in self.sm_config:
-            sconf.set("spark.hadoop.fs.s3a.access.key", self.sm_config['aws']['aws_access_key_id'])
-            sconf.set("spark.hadoop.fs.s3a.secret.key", self.sm_config['aws']['aws_secret_access_key'])
+        if 'aws' in self._sm_config:
+            sconf.set("spark.hadoop.fs.s3a.access.key", self._sm_config['aws']['aws_access_key_id'])
+            sconf.set("spark.hadoop.fs.s3a.secret.key", self._sm_config['aws']['aws_secret_access_key'])
             sconf.set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
 
-        self.sc = SparkContext(master=self.sm_config['spark']['master'], conf=sconf, appName='SM engine')
+        self._sc = SparkContext(master=self._sm_config['spark']['master'], conf=sconf, appName='SM engine')
 
     def _init_db(self):
         logger.info('Connecting to the DB')
-        self.db = DB(self.sm_config['db'])
+        self._db = DB(self._sm_config['db'])
 
     # TODO: add tests
-    def store_job_meta(self):
+    def store_job_meta(self, mol_db_id):
         """ Store search job metadata in the database """
         logger.info('Storing job metadata')
-        rows = [(self.sf_db_id, self.ds_id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
-        self.job_id = self.db.insert_return(JOB_INS, rows)[0]
+        rows = [(mol_db_id, self._ds.id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
+        self._job_id = self._db.insert_return(JOB_INS, rows)[0]
 
-    def _run_job(self, sf_db_name):
-        self.sf_db_id = self.db.select_one(DB_ID_SEL, sf_db_name)[0]
-        self.store_job_meta()
+    def _run_job(self, mol_db):
+        self.store_job_meta(mol_db.id)
+        mol_db.set_job_id(self._job_id)
 
-        logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s ...", self.ds.id, self.ds.name, sf_db_name)
+        logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s ...",
+                    self._ds.id, self._ds.name, mol_db.name, mol_db.version)
 
-        theor_peaks_gen = TheorPeaksGenerator(self.sc, self.sm_config, self.ds.ds_config)
+        theor_peaks_gen = TheorPeaksGenerator(self._sc, mol_db, self._ds.ds_config)
         theor_peaks_gen.run()
 
-        target_adducts = self.ds.ds_config['isotope_generation']['adducts']
-        self.fdr = FDR(self.job_id, self.sf_db_id, decoy_sample_size=20, target_adducts=target_adducts, db=self.db)
-        self.fdr.decoy_adduct_selection()
-        self.formulas = FormulasSegm(self.job_id, self.sf_db_id, self.ds.ds_config, self.db)
+        target_adducts = self._ds.ds_config['isotope_generation']['adducts']
+        self._fdr = FDR(self._job_id, mol_db,
+                        decoy_sample_size=20, target_adducts=target_adducts, db=self._db)
+        self._fdr.decoy_adduct_selection()
 
-        search_alg = MSMBasicSearch(self.sc, self.ds, self.formulas, self.fdr, self.ds.ds_config)
+        search_alg = MSMBasicSearch(self._sc, self._ds, mol_db, self._fdr, self._ds.ds_config)
         ion_metrics_df, ion_iso_images = search_alg.search()
 
-        search_results = SearchResults(self.sf_db_id, self.ds_id, self.job_id, search_alg.metrics,
-                                       self.ds, self.db, self.ds.ds_config)
+        search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics,
+                                       self._ds, self._db, self._ds.ds_config)
         search_results.store(ion_metrics_df, ion_iso_images)
 
-        self.es.index_ds(self.db, self.ds_id)
-        self.db.alter('UPDATE job set finish=%s where id=%s',
-                      datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self.job_id)
+        self._es.index_ds(self._db, mol_db, self.ds_id)
+        self._db.alter('UPDATE job set finish=%s where id=%s',
+                       datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
 
     def run(self, ds_config_path=None):
         """ Entry point of the engine. Molecule search is completed in several steps:
@@ -137,21 +130,22 @@ class SearchJob(object):
         try:
             start = time.time()
 
-            self.wd_manager = WorkDirManager(self.ds_id)
+            self._wd_manager = WorkDirManager(self.ds_id)
             self._configure_spark()
             self._init_db()
-            self.es = ESExporter(self.sm_config)
+            self._es = ESExporter(self._sm_config)
 
             if not self.no_clean:
-                self.wd_manager.clean()
-            self.ds = Dataset(self.sc, self.ds_id, self.ds_name, self.drop, self.input_path,
-                              self.wd_manager, self.db, self.es)
-            self.ds.copy_read_data()
+                self._wd_manager.clean()
+            self._ds = Dataset(self._sc, self.ds_id, self.ds_name, self.drop, self.input_path,
+                               self._wd_manager, self._db, self._es)
+            self._ds.copy_read_data()
 
-            logger.info('Dataset config:\n%s', pformat(self.ds.ds_config))
+            logger.info('Dataset config:\n%s', pformat(self._ds.ds_config))
 
-            for sf_db_name in {self.ds.ds_config['database']['name'], 'HMDB'}:
-                self._run_job(sf_db_name)
+            for mol_db_dict in self._ds.ds_config['databases']:
+                mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict['version'], self._ds.ds_config, self._db)
+                self._run_job(mol_db)
 
             logger.info("All done!")
             time_spent = time.time() - start
@@ -161,12 +155,12 @@ class SearchJob(object):
             logger.error('Job failed', exc_info=True)
             raise
         finally:
-            if self.fdr:
-                self.fdr.clean_target_decoy_table()
-            if self.sc:
-                self.sc.stop()
-            if self.db:
-                self.db.close()
-            if self.wd_manager and not self.no_clean:
-                self.wd_manager.clean()
+            if self._fdr:
+                self._fdr.clean_target_decoy_table()
+            if self._sc:
+                self._sc.stop()
+            if self._db:
+                self._db.close()
+            if self._wd_manager and not self.no_clean:
+                self._wd_manager.clean()
             logger.info('*' * 150)
