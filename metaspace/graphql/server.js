@@ -1,18 +1,26 @@
-const express = require('express'),
-      knex = require('knex'),
-      pgp = require('pg-promise'),
-      elasticsearch = require('elasticsearch'),
+const amqp = require('amqplib'),
+      AWS = require('aws-sdk'),
       bodyParser = require('body-parser'),
+      capitalize = require('lodash/capitalize'),
       cors = require('cors'),
       compression = require('compression'),
-      sprintf = require('sprintf-js'),
-      capitalize = require('lodash/capitalize'),
+      elasticsearch = require('elasticsearch'),
+      exec = require('child_process').exec,
+      express = require('express'),
       fetch = require('node-fetch'),
-      readFile = require('fs').readFile,
-      smEngineConfig = require('./config.json'),
-      makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
       graphqlExpress = require('graphql-server-express').graphqlExpress,
-      graphiqlExpress = require('graphql-server-express').graphiqlExpress;
+      graphiqlExpress = require('graphql-server-express').graphiqlExpress,
+      jsondiffpatch = require('jsondiffpatch'),
+      jwt = require('jwt-simple'),
+      knex = require('knex'),
+      makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
+      moment = require('moment'),
+      pgp = require('pg-promise'),
+      readFile = require('fs').readFile,
+      slack = require('node-slack'),
+      smEngineConfig = require('./config.json'),
+      sprintf = require('sprintf-js'),
+      utils = require('./utils.js');
 
 const dbConfig = () => {
   const {host, database, user, password} = smEngineConfig.db;
@@ -30,6 +38,46 @@ const esConfig = () => {
   }
 };
 
+const slackConn = new slack(smEngineConfig.slack.webhook_url);
+
+AWS.config.update({
+    accessKeyId: smEngineConfig.aws.aws_access_key_id,
+    secretAccessKey: smEngineConfig.aws.aws_secret_access_key,
+    region: "eu-west-1"
+});
+
+var s3 = new AWS.S3();
+
+function copyMetadata(path, metadataJson) {
+  // TODO: local storage support
+
+  const [bucket, dir] = path.match(/s3a:\/\/([^\/]+)\/(.*)/).slice(1);
+  console.log(bucket, dir);
+
+  return s3.putObject({
+    Bucket: bucket, Key: dir + '/meta.json',
+    Body: new Buffer(metadataJson)
+  }).promise().then(() => {
+    const config = utils.generateProcessingConfig(JSON.parse(metadataJson));
+    return s3.putObject({
+      Bucket: bucket, Key: dir + '/config.json',
+      Body: new Buffer(JSON.stringify(config, null, 2))
+    }).promise();
+  })
+}
+
+function sendMessageToRabbitMQ(message) {
+  const {host, user, password} = smEngineConfig.rabbitmq,
+        queueName = 'sm_annotate',
+        buf = new Buffer(message);
+
+  return amqp.connect(`amqp://${user}:${password}@${host}`)
+             .then(conn => conn.createChannel())
+             .then(ch => ch.assertQueue(queueName)
+                           .then(ok => ch.sendToQueue(queueName, buf)));
+}
+
+const ES_API = 'localhost:5123';
 const MOL_IMAGE_SERVER_IP = "52.51.114.30:3020";
 
 // private EC2 IP with a few endpoints that are still used
@@ -111,7 +159,7 @@ class SubstringMatchFilter extends AbstractDatasetFilter {
   }
 
   pgFilter(q, value) {
-    return q.whereRaw(this.pgField + ' LIKE ?', ['%' + this.preprocess(value) + '%']);
+    return q.whereRaw(this.pgField + ' ILIKE ?', ['%' + this.preprocess(value) + '%']);
   }
 }
 
@@ -301,6 +349,12 @@ const Resolvers = {
       }).catch((err) => {
           return null;
       });
+    },
+
+    metadataSuggestions(_, { field, query }) {
+      let f = new SubstringMatchFilter(field, {}),
+          q = pg.distinct(pg.raw(f.pgField + " as field")).select().from('dataset');
+      return f.pgFilter(q, query).then(results => results.map(row => row['field']));
     }
   },
 
@@ -439,6 +493,98 @@ const Resolvers = {
       const add = adduct == "" ? "None" : adduct;
       const url = `http://${OLD_WEBAPP_IP_PRIVATE}/spectrum_line_chart_data/${ds_id}/${job_id}/${db_id}/${sf_id}/${add}`;
       return fetch(url).then(res => res.json()).then(json => JSON.stringify(json));
+    }
+  },
+
+  Mutation: {
+    submitDataset(_, args) {
+      const {path, metadataJson} = args;
+      try {
+        const metadata = JSON.parse(metadataJson);
+
+        const message = {
+          ds_name: metadata.metaspace_options.Dataset_Name,
+          ds_id: moment().format("Y-MM-DD_HH[h]mm[m]ss[s]"),
+          input_path: path,
+          user_email: metadata.Submitted_By.Submitter.Email
+        };
+
+        copyMetadata(path, metadataJson).then(() => {
+          sendMessageToRabbitMQ(JSON.stringify(message));
+        });
+
+        return "success";
+      } catch (e) {
+        return e.message;
+      }
+    },
+
+    updateMetadata(_, args) {
+      const {datasetId, metadataJson} = args;
+      try {
+        const newMetadata = JSON.parse(metadataJson);
+        const payload = jwt.decode(args.jwt, smEngineConfig.jwt.secret);
+
+        return pg.select().from('dataset').where('id', '=', datasetId)
+          .then(records => {
+            const oldMetadata = records[0].metadata,
+                  datasetName = records[0].name;
+
+            // check if the user has permissions to modify the metadata
+            let allowUpdate = false;
+            if (payload.role == 'admin')
+              allowUpdate = true;
+            else if (payload.email == oldMetadata.Submitted_By.Submitter.Email)
+              allowUpdate = true;
+            if (!allowUpdate)
+              throw new Error("you don't have permissions to edit this dataset");
+
+            // update the database record
+            return pg('dataset').where('id', '=', datasetId).update({
+              metadata: metadataJson,
+              name: newMetadata.metaspace_options.Dataset_Name
+            }).then(_ => ({oldMetadata, oldDatasetName: datasetName}))
+          })
+          .then(({oldMetadata, oldDatasetName}) => {
+            // compute delta between old and new metadata
+            const delta = jsondiffpatch.diff(oldMetadata, newMetadata),
+                  diff = jsondiffpatch.formatters.jsonpatch.format(delta);
+
+            // run elasticsearch reindexing in the background mode
+            if (diff.length > 0) {
+              fetch(`http://${ES_API}/reindex/${datasetId}`, { method: 'POST'})
+                .then(resp => console.log(`reindexed ${datasetId}`))
+                .catch(err => console.log(err));
+            }
+
+            // determined if reprocessing is needed
+            const changedPaths = diff.map(item => item.path);
+            let needsReprocessing = false;
+            for (let path of changedPaths) {
+              if (path.startsWith('/MS_Analysis') && path != '/MS_Analysis/Ionisation_Source')
+                needsReprocessing = true;
+              if (path == '/metaspace_options/Metabolite_Database')
+                needsReprocessing = true;
+            }
+
+            // send a Slack notification about the change
+            let msg = slackConn.send({
+              text: `${payload.name} edited metadata of ${oldDatasetName} (id: ${datasetId})` +
+                "\nDifferences:\n" + JSON.stringify(diff, null, 2),
+              channel: smEngineConfig.slack.channel
+            });
+
+            if (needsReprocessing) {
+              // TODO: send message straight to the RabbitMQ
+              msg.then(() => { slackConn.send({
+                text: `@vitaly please reprocess ^`, channel: smEngineConfig.slack.channel
+              })});
+            }
+          })
+          .then(() => "success");
+      } catch (e) {
+        return e.message;
+      }
     }
   }
 }

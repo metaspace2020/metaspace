@@ -10,6 +10,8 @@
   "author": "Artem Tarasov <artem.tarasov@embl.de>",
   "license": "ISC",
   "dependencies": {
+    "amqplib": "^0.5.1",
+    "aws-sdk": "^2.13.0",
     "body-parser": "^1.15.2",
     "compression": "^1.6.2",
     "cors": "^2.8.1",
@@ -18,10 +20,15 @@
     "graphql": "^0.8.2",
     "graphql-server-express": "^0.4.3",
     "graphql-tools": "^0.8.3",
+    "jsondiffpatch": "^0.2.4",
+    "jwt-simple": "^0.5.1",
     "knex": "^0.12.6",
+    "moment": "^2.17.1",
     "node-fetch": "^1.6.3",
+    "node-slack": "0.0.7",
     "pg": "^6.1.0",
     "pg-promise": "^5.4.7",
+    "s3": "^4.4.0",
     "sprintf-js": "^1.0.3"
   },
   "devDependencies": {
