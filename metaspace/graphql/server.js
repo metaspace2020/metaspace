@@ -67,6 +67,13 @@ function copyMetadata(path, metadataJson) {
 }
 
 function sendMessageToRabbitMQ(message) {
+  slackConn.send({
+    text: ':email: [v] Sent: ' + message,
+    username: 'webhookbot',
+    channel: 'sm_daemon',
+    icon_emoji: ':robot_face:'
+  });
+
   const {host, user, password} = smEngineConfig.rabbitmq,
         queueName = 'sm_annotate',
         buf = new Buffer(message);
