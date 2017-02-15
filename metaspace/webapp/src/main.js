@@ -21,9 +21,6 @@ import locale from 'element-ui/lib/locale';
 locale.use(lang);
 Vue.use(ElementUI);
 
-import VueSticky from 'vue-sticky-js';
-Vue.use(VueSticky.install);
-
 import store from './store.js';
 import router from './router.js';
 import { sync } from 'vuex-router-sync';

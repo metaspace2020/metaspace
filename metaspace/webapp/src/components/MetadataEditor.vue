@@ -2,9 +2,9 @@
   <div id="md-editor-container">
     <div style="position: relative;">
       <div id="md-editor-submit">
-        <el-button @click="cancel">Cancel</el-button>
-        <el-button type="primary" v-if="loggedIn" @click="submit">Submit</el-button>
-        <el-button v-else type="primary" disabled title="You must be logged in to perform this operation">
+        <el-button @click="cancel" v-if="datasetId">Cancel</el-button>
+        <el-button type="primary" v-if="enableSubmit" @click="submit">Submit</el-button>
+        <el-button v-else type="primary" disabled :title="disabledSubmitMessage">
           Submit
         </el-button>
       </div>
@@ -95,12 +95,35 @@
 </template>
 
 <script>
+ /*
+    This component serves two purposes:
+    * editing metadata of existing datasets;
+    * providing metadata during the initial upload.
+
+    It has a few simplifying assumptions on the structure and types used:
+    * nesting is limited to 3 levels: section -> field -> subfield
+    * sections are assumed to be objects
+    * strings, numbers and enums are supported for fields
+      * anything with name ending in Free_Text renders as a textarea
+    * strings and numbers are supported for subfields
+
+    FIELD_WIDTH dictionary can be used to control field/subfield widths.
+
+    If datasetId is provided, the component fetches existing metadata for
+    that dataset from the GraphQL server so that it can be edited.
+    Autocompletion functionality also relies on the GraphQL server.
+
+    The other two props are for controlling the submit button behavior.
+
+    On submit button click, the form is checked for validity; if valid,
+    a submit event is emitted with dataset ID and stringified form value.
+ */
+
  import metadataSchema from '../assets/metadata_schema.json';
  import Ajv from 'ajv';
  import gql from 'graphql-tag';
  import merge from 'lodash/merge';
  import fetch from 'isomorphic-fetch';
- import {getJWT, decodePayload} from '../util.js';
 
  const ajv = new Ajv({allErrors: true});
  const validator = ajv.compile(metadataSchema);
@@ -166,32 +189,45 @@
    return obj;
  }
 
+ const LOCAL_STORAGE_KEY = 'latestMetadataSubmission';
+
  // TODO: fill in institution automatically when user profiles are added
 
  export default {
    name: 'metadata-editor',
-   apollo: {
-     currentValue: {
+   props: ['datasetId', 'enableSubmit', 'disabledSubmitMessage'],
+   created() {
+     // no datasetId means a new dataset => help filling out by loading the last submission
+     if (!this.datasetId) {
+       const defaultValue = objectFactory(metadataSchema);
+       let lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+       if (lastValue) {
+         lastValue.metaspace_options.Dataset_Name = ''; // different for each dataset
+
+         /* we want to have all nested fields to be present for convenience,
+          that's what objectFactory essentially does */
+         this.value = merge({}, defaultValue, lastValue);
+       } else {
+         this.value = defaultValue;
+       }
+       this.loading = false;
+       return;
+     }
+
+     // otherwise we need to fetch existing data from the server
+     this.$apollo.client.query({
        query: gql`query GetMetadataJSON($id: String!) {
          dataset(id: $id) {
            metadataJson
          }
        }`,
-       update(data) {
-         const defaultValue = objectFactory(metadataSchema),
-               value = JSON.parse(data.dataset.metadataJson);
-         /* we want to have all nested fields to be present for convenience,
-            that's what objectFactory essentially does */
-         this.value = merge({}, defaultValue, value);
-         this.loading = false;
-         return this.value;
-       },
-       variables() {
-         return {
-           id: this.datasetId
-         };
-       }
-     }
+       variables: { id: this.datasetId }
+     }).then(resp => {
+       const defaultValue = objectFactory(metadataSchema),
+             value = JSON.parse(resp.data.dataset.metadataJson);
+       this.value = merge({}, defaultValue, value);
+       this.loading = false;
+     });
    },
    data() {
      return {
@@ -202,14 +238,6 @@
      }
    },
    computed: {
-     datasetId() {
-       return this.$store.state.route.params.dataset_id;
-     },
-
-     loggedIn() {
-       return this.$store.state.authenticated;
-     },
-
      errorMessages() {
        let messages = {};
        for (let err of this.validationErrors) {
@@ -242,7 +270,7 @@
      },
 
      enableAutocomplete(propName) {
-       return propName != 'Dataset_Name';
+       return propName != 'Dataset_Name' && propName != 'Email';
      },
 
      isRequired(propName, parent) {
@@ -283,32 +311,11 @@
            type: 'error'
          })
        } else {
-         getJWT().then(jwt => this.updateMetadata(jwt, JSON.stringify(cleanValue)))
-           .then(() => {
-             this.$message({
-               message: 'Metadata was successfully updated!',
-               type: 'success'
-             });
+         const value = JSON.stringify(cleanValue);
+         if (!this.datasetId) localStorage.setItem(LOCAL_STORAGE_KEY, value);
 
-             this.$router.go(-1);
-           })
-           .catch(err =>
-             this.$message({message: 'Couldn\'t save the form: ' + err.message, type: 'error'})
-           );
+         this.$emit('submit', this.datasetId, value);
        }
-     },
-
-     updateMetadata(jwt, value) {
-       return this.$apollo.mutate({
-         mutation: gql`mutation ($jwt: String!, $dsId: String!, $value: String!) {
-           updateMetadata(jwt: $jwt, datasetId: $dsId, metadataJson: $value)
-         }`,
-         variables: {jwt, value, dsId: this.datasetId}
-       }).then(resp => resp.data.updateMetadata)
-         .then(status => {
-           if (status != 'success')
-             throw new Error(status);
-         });
      },
 
      getSuggestions(query, callback, ...args) {
@@ -319,6 +326,12 @@
          }`,
          variables: {field: path, query}
        }).then(resp => callback(resp.data.metadataSuggestions.map(val => ({value: val}))));
+     },
+
+     /* for outside access from the upload page, to autofill it with the filename */
+     suggestDatasetName(name) {
+       if (this.value.metaspace_options.Dataset_Name == '')
+         this.value.metaspace_options.Dataset_Name = name;
      }
    }
  }

@@ -5,7 +5,8 @@
       </metaspace-header>
 
       <div id="signin-div">
-        <span v-if="this.$store.state.authenticated">{{ this.$store.state.user.name }}</span>
+        <span style="padding-right: 7px;"
+              v-if="this.$store.state.authenticated">{{ this.$store.state.user.name }}</span>
         <div ref="gSignIn"
              v-show="this.$store.state.authenticated === false"
              id="google-signin-button">

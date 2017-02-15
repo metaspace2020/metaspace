@@ -1,4 +1,5 @@
 import fetch from 'isomorphic-fetch';
+import fuConfig from './fineUploaderConfig.json';
 
 function prettifySign(str) {
     return str.replace('-', ' – ').replace('+', ' + ');
@@ -21,7 +22,6 @@ function checkStatus(response) {
   }
 }
 
-
 function getJWT() {
   return fetch("/getToken", {credentials: 'include'})
          .then(checkStatus).then(resp => resp.text())
@@ -31,4 +31,16 @@ function decodePayload(jwt) {
   return JSON.parse(new Buffer(jwt.split('.')[1], 'base64').toString());
 }
 
-export { renderSumFormula, prettifySign, getJWT, decodePayload };
+function pathFromUUID(uuid) {
+  if (fuConfig.storage == 's3')
+    return 's3a://' + fuConfig.aws.s3_bucket + '/' + uuid;
+  // TODO: support local storage
+}
+
+export {
+  renderSumFormula,
+  prettifySign,
+  getJWT,
+  decodePayload,
+  pathFromUUID
+};

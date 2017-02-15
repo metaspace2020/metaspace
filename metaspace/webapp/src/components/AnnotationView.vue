@@ -15,7 +15,7 @@
             <span>m/z image</span>
             <span style="margin-left: 100px;">Colormap:</span>
             <span @click="$event.stopPropagation()">
-              <el-select v-model="colormap" filterable>
+              <el-select v-model="colormap">
                 <el-option v-for="(_, scale) in plotlyScales"
                            :value="scale" :label="scale">
                 </el-option>

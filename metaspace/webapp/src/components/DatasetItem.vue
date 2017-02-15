@@ -56,7 +56,7 @@
      resultsHref() {
        return {
          path: '/annotations',
-         query: {ds: this.dataset.name}
+         query: {ds: this.dataset.name, db: this.preferredDatabase}
        };
      },
 
@@ -95,6 +95,10 @@
        return JSON.parse(this.dataset.metadataJson);
      },
 
+     preferredDatabase() {
+       return this.metadata.metaspace_options.Metabolite_Database;
+     },
+
      formatResolvingPower() {
        const rp = this.metadata.MS_Analysis.Detector_Resolving_Power;
        const {mz, Resolving_Power} = rp;
@@ -103,8 +107,7 @@
 
      formatOrganismPart() {
        try {
-         const metadata = JSON.parse(this.dataset.metadataJson);
-         const info = metadata.Sample_Information;
+         const info = this.metadata.Sample_Information;
          const {Organism, Condition, Organism_Part} = info;
 
          let result = '';

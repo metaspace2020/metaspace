@@ -2,7 +2,7 @@
   <div class="b-header">
     <div class="header-item" id="metasp-logo">
       <a style="display: flex" href="http://metasp.eu">
-        <img src="http://metasp.eu/files/logo.png"
+        <img src="../assets/logo.png"
              alt="Metaspace" title="Metaspace"
              style="border: 0px;"
              class="vc"></img>

@@ -8,7 +8,17 @@ var session = require('express-session');
 var GoogleAuth = require('google-auth-library');
 
 var env = process.env.NODE_ENV || 'development';
-var conf = require('./conf.js');
+var conf;
+if (env == 'production')
+  conf = require('./conf.prod.js');
+else
+  conf = require('./conf.js');
+
+var fineUploaderMiddleware;
+if (conf.UPLOAD_DESTINATION != 'S3')
+  fineUploaderMiddleware = require('express-fineuploader-traditional-middleware');
+else
+  fineUploaderMiddleware = require('./fineUploaderS3Middleware.js');
 
 var auth = new GoogleAuth;
 var googleClient = new auth.OAuth2(conf.GOOGLE_CLIENT_ID, '', '');
@@ -90,6 +100,7 @@ router.get('/getToken', (req, res, next) => {
   res.send(jwt.encode(payload, conf.JWT_SECRET));
 })
 
+
 if (env == 'development') {
   var webpackDevMiddleware = require('webpack-dev-middleware');
   var webpackHotMiddleware = require('webpack-hot-middleware');
@@ -119,6 +130,7 @@ if (env == 'development') {
 }
 
 app.use(router);
+app.use('/upload', fineUploaderMiddleware());
 
 app.listen(conf.PORT, () => {
   console.log(`listening on ${conf.PORT} port`);
