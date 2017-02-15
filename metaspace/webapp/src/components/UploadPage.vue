@@ -21,8 +21,8 @@
       <metadata-editor ref="editor"
                        :enableSubmit="enableSubmit"
                        @submit="onFormSubmit"
-                       disabledSubmitMessage="Please wait until your files are uploaded"
-                       v-if="showForm"></metadata-editor>
+                       disabledSubmitMessage="Your files must be uploaded first">
+      </metadata-editor>
     </div>
   </div>
 </template>
@@ -43,7 +43,6 @@
    data() {
      return {
        fineUploaderConfig,
-       showForm: false,
        enableSubmit: false
      }
    },
@@ -53,7 +52,6 @@
    },
    methods: {
      onValid(filenames) {
-       this.showForm = true;
        const imzml = filenames.filter(f => f.toLowerCase().endsWith('imzml'))[0];
        Vue.nextTick(() => {
          this.$refs.editor.suggestDatasetName(imzml.slice(0, imzml.length - 6));
@@ -71,7 +69,6 @@
      onFormSubmit(_, formData) {
        const uuid = this.$refs.uploader.getUUID();
        this.submitDataset(uuid, formData).then(() => {
-         this.showForm = false;
          this.enableSubmit = false;
 
          this.$refs.uploader.reset();

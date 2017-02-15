@@ -201,7 +201,7 @@
      if (!this.datasetId) {
        const defaultValue = objectFactory(metadataSchema);
        let lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
-       if (lastValue) {
+       if (lastValue && lastValue.metaspace_options) {
          lastValue.metaspace_options.Dataset_Name = ''; // different for each dataset
 
          /* we want to have all nested fields to be present for convenience,
