@@ -1,23 +1,14 @@
 <template>
   <div>
-    <script type="text/template" id="qq-template-manual-trigger">
+    <script type="text/template" id="qq-template">
       <div class="qq-uploader-selector qq-uploader"
           qq-drop-area-text="Drop here the .imzML and .ibd files">
-        <div class="qq-total-progress-bar-container-selector qq-total-progress-bar-container">
-          <div role="progressbar"
-              aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"
-              class="qq-total-progress-bar-selector qq-progress-bar qq-total-progress-bar">
-          </div>
-        </div>
         <div class="qq-upload-drop-area-selector qq-upload-drop-area" qq-hide-dropzone>
           <span class="qq-upload-drop-area-text-selector"></span>
         </div>
         <div class="buttons">
           <button class="qq-upload-button-selector qq-upload-button metasp-button">
             Select files
-          </button>
-          <button type="button" id="trigger-upload" class="qq-upload-button metasp-button">
-            Upload
           </button>
         </div>
         <span class="qq-drop-processing-selector qq-drop-processing">
@@ -81,7 +72,7 @@
  import 'fine-uploader/s3.fine-uploader/fine-uploader-new.css';
 
  const basicOptions = {
-   template: 'qq-template-manual-trigger',
+   template: 'qq-template',
    autoUpload: false,
    iframeSupport: {localBlankPagePath: "/server/success.html"},
    multiple: true,
@@ -103,7 +94,8 @@
    data() {
      return {
        fineUploader: null,
-       uuid: ''
+       uuid: '',
+       uploadFilenames: []
      }
    },
 
@@ -112,14 +104,12 @@
    },
 
    methods: {
-     getFileNames() {
-       return this.fineUploader.getUploads().map(x => x.name);
-     },
+     uploadIfValid() {
+       const files = this.fineUploader.getUploads();
 
-     validate() {
-       let fnames = this.getFileNames();
+       let fnames = files.map(f => f.name);
        if (fnames.length < 2) {
-         throw new Error("Please choose 2 files for upload");
+         return;
        }
 
        const basename = fname => fname.split('.').slice(0, -1).join('.');
@@ -130,9 +120,19 @@
        let [fext, sext] = [first, second].map(extension);
        let [fbn, sbn] = [first, second].map(basename);
        if (fext == sext || fbn != sbn) {
-         throw new Error("Incompatible file names! Please select 2 files " +
-           "with the same name but different extension");
+         this.$message({
+           message: "Incompatible file names! Please select 2 files " +
+                    "with the same name but different extension",
+           type: 'error'
+         });
+
+         return;
        }
+
+       console.log(this.uuid);
+       this.$emit('upload', fnames);
+       this.fineUploader.uploadStoredFiles();
+       this.uploadFilenames = fnames;
      },
 
      reset() {
@@ -153,12 +153,13 @@
            onAllComplete: (succeeded, failed) => {
              if (failed.length == 0) {
                this.$message({message: 'All datasets have been uploaded', type: 'success'})
-               this.$emit('success', this.uploadFilenames());
+               this.$emit('success', this.uploadFilenames);
              } else {
                this.$message({message: 'Upload failed :(', type: 'error'})
                this.$emit('failure', failed);
              }
-           }
+           },
+           onValidateBatch: files => this.uploadIfValid(files)
          }
        });
 
@@ -182,21 +183,6 @@
 
          this.fineUploader = new qq.s3.FineUploader(options);
        }
-
-       document.getElementById('trigger-upload').onclick = () => {
-         try {
-           this.validate();
-
-           this.$emit('valid', this.uploadFilenames());
-           this.fineUploader.uploadStoredFiles();
-         } catch (e) {
-           this.$message({message: e.message, type: 'error'})
-         }
-       }
-     },
-
-     uploadFilenames() {
-       return this.fineUploader.getUploads().map(obj => obj.originalName);
      },
 
      getUUID() {

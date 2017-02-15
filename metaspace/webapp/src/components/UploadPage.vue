@@ -13,7 +13,7 @@
 
       <fine-uploader :config="fineUploaderConfig"
                      ref="uploader"
-                     @valid="onValid" @success="onSuccess" @failure="onFailure">
+                     @upload="onUpload" @success="onSuccess" @failure="onFailure">
       </fine-uploader>
     </div>
 
@@ -51,7 +51,7 @@
      MetadataEditor
    },
    methods: {
-     onValid(filenames) {
+     onUpload(filenames) {
        const imzml = filenames.filter(f => f.toLowerCase().endsWith('imzml'))[0];
        Vue.nextTick(() => {
          this.$refs.editor.suggestDatasetName(imzml.slice(0, imzml.length - 6));
