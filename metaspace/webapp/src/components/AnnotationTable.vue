@@ -244,10 +244,8 @@
          // if it was due to a click on a pagination button.
          if (this._onDataArrival && changed) {
            this._onDataArrival(data.allAnnotations);
-           this._onDataArrival = () => {
-             const store = this.$refs.table.store;
-             store.commit('setCurrentRow', null);
-             this.clearCurrentRow();
+           this._onDataArrival = (data) => {
+             Vue.nextTick(() => this.setRow(data, 0));
            };
          }
 
@@ -259,8 +257,7 @@
      }
    },
    created() {
-     // FIXME copy-paste
-     this._onDataArrival = function(data) {
+     this._onDataArrival = (data) => {
        Vue.nextTick(() => this.setRow(data, 0));
        document.getElementById('annot-table').focus();
      };
