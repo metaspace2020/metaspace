@@ -244,7 +244,7 @@
          // if it was due to a click on a pagination button.
          if (this._onDataArrival && changed) {
            this._onDataArrival(data.allAnnotations);
-           this._onDataArrival = function() {
+           this._onDataArrival = () => {
              const store = this.$refs.table.store;
              store.commit('setCurrentRow', null);
              this.clearCurrentRow();
@@ -260,15 +260,18 @@
    },
    created() {
      // FIXME copy-paste
-     this._onDataArrival = function() {
-       const store = this.$refs.table.store;
-       store.commit('setCurrentRow', null);
-       this.clearCurrentRow();
+     this._onDataArrival = function(data) {
+       Vue.nextTick(() => this.setRow(data, 0));
+       document.getElementById('annot-table').focus();
      };
    },
    methods: {
      onPageSizeChange(newSize) {
        this.recordsPerPage = newSize;
+     },
+     setRow(data, rowIndex) {
+       const store = this.$refs.table.store;
+       store.commit('setCurrentRow', data[rowIndex]);
      },
      queryVariables() {
        const {annotationFilter, datasetFilter} = this.gqlFilter;
@@ -304,7 +307,7 @@
 
      onSortChange (event) {
        if (!event.order) {
-        return;
+         return;
        }
 
        this.clearCurrentRow();
@@ -347,20 +350,10 @@
        const curRow = tblStore.states.currentRow;
        const curIdx = this.annotations.indexOf(curRow);
 
-       function setRow (vm, data, rowIndex) {
-         const store = vm.$refs.table.store;
-         store.commit('setCurrentRow', null);
-         store.commit('setData', data);
-         store.commit('setCurrentRow', data[rowIndex]);
-         vm.clearCurrentRow();
-       };
-
        if (action == 'up' && curIdx == 0) {
          if (this.currentPage == 0)
            return;
-         this._onDataArrival = function(data) {
-           setRow(this, data, data.length - 1);
-         };
+         this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, data.length - 1)); };
          this.currentPage = this.currentPage - 1;
          return;
        }
@@ -368,7 +361,7 @@
        if (action == 'down' && curIdx == this.annotations.length - 1) {
          if (this.currentPage == this.numberOfPages - 1)
            return;
-         this._onDataArrival = function(data) { setRow(this, data, 0); };
+         this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, 0)); };
          this.currentPage = this.currentPage + 1;
          return;
        }
