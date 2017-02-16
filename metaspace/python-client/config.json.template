@@ -7,7 +7,8 @@
   },
   "elasticsearch": {
     "index": "sm",
-    "host": "{{ es_host }}"
+    "host": "{{ es_host }}",
+    "port": "{{ es_port }}"
   },
   "rabbitmq": {
     "host": "{{ rabbitmq_host }}",
