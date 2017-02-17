@@ -56,7 +56,7 @@ class SMDataset(object):
         self._properties = {}
         self._name = self.name
         self.es_search = Search(using=es_client, index=index_name)
-        self._es_query = self.es_search.query('term', ds_name=self._name)
+        self._es_query = self.es_search.query('term', ds_id=self._id)
 
     def _db_fetch(self, prop):
         if prop in self._properties:
@@ -88,7 +88,7 @@ class SMDataset(object):
         if not database:
             response = self._es_query.scan()
         else:
-            response = (self.es_search.filter('term', ds_name=self._name)
+            response = (self.es_search.filter('term', ds_id=self._id)
                         .filter('term', db_name=database)
                         .filter("range", **{'fdr': {'to': fdr}})).scan()
         annotations = [(r.sf, r.adduct) for r in response if all([r.fdr, r.fdr <= fdr])]
@@ -159,16 +159,20 @@ class SMInstance(object):
         self._es_port = config['elasticsearch']['port']
         self._es_index = config['elasticsearch']['index']
         self._es_client = Elasticsearch(hosts=['{}:{}'.format(self._es_host, self._es_port)], index=self._es_index)
-
+        
+        self._config = config
         self._db_host = config['db']['host']
         self._db_database = config['db']['database']
 
+        self.reconnect()
+    
+    def reconnect(self):
         self._db_conn = psycopg2.connect(host=self._db_host,
                                          database=self._db_database,
-                                         user=config['db']['user'],
-                                         password=config['db']['password'])
+                                         user=self._config['db']['user'],
+                                         password=self._config['db']['password'])
         self._db_cur = self._db_conn.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor)
-
+    
     def __repr__(self):
         return "SMInstance(DB {}/{}, ES {}/{})".format(self._db_host, self._db_database,
                                                        self._es_host, self._es_index)
