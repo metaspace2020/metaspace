@@ -16,9 +16,9 @@ We do not hide anything. All code is open-source, the input format is the [imzML
 supported by all mass spec major vendors. If you think we can do something better,
 please [let us know](mailto:contact@metaspace2020.eu).
 
-## Can I contribute?
+## How can I contribute?
 
-Please read and cite [our publication in Nature Methods](http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html),
+Please read [our publication in Nature Methods](http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html),
 follow us on [Twitter](http://twitter.com/metaspace2020), spread the word, and think of us while doing good deeds :)
 
 Interested to contribute more?
@@ -27,6 +27,10 @@ Interested to contribute more?
 - Are a **data scientist** interested to mine results from METASPACE? Please [contact us](mailto:contact@metaspace2020.eu) (export is around the corner)
 
 For all other inquiries, please [contact us over email](mailto:contact@metaspace2020.eu).
+
+## How shall I cite it in a publication?
+
+Please cite our publication [(Palmer et al., 2016, Nature Methods)](http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html),
 
 ## Please appreciate those who funded it
 
