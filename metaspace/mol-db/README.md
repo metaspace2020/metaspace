@@ -15,6 +15,10 @@ CREATE ROLE sm LOGIN CREATEDB NOSUPERUSER PASSWORD 'simple_pass';
 CREATE DATABASE sm WITH OWNER sm;
 \q  # exit
 ```
+Install OpenBabel
+
+`sudo apt-get install openbabel`
+
 Python of at least 3.4 version is required
 ```bash
 sudo pip install -U pip
