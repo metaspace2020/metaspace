@@ -48,12 +48,8 @@ jspm_packages
 # Yarn Integrity file
 .yarn-integrity
 
-
-.gitignore
 .idea/
 sm_config.json
 config.js
 dist/
 node_modules/
-graphql.config.json
-graphql.schema.json
