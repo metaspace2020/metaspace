@@ -1,4 +1,4 @@
-# Molecular Database REST API Service
+# Molecular Database RESTful Web API
 
 HMDB, ChEBI and other molecular databases.
 
