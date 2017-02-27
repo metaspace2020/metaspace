@@ -14,12 +14,16 @@
           <span slot="title">
             <span>m/z image</span>
             <span style="margin: 0px 10px 0px 100px;">Colormap:</span>
-            <span @click="$event.stopPropagation()">
-              <el-select v-model="colormap">
+            <span id="colormap-select-span" @click="$event.stopPropagation()">
+              <el-select v-model="colormap" size="small">
                 <el-option v-for="(_, scale) in plotlyScales"
                            :value="scale" :label="scale">
+                  <colorbar style="height: 20px" :map="scale"></colorbar>
                 </el-option>
               </el-select>
+            </span>
+            <span>
+              <colorbar style="padding: 7px; height: 28px;" :map="colormap"></colorbar>
             </span>
           </span>
           <div style="margin-top: 10px;">
@@ -107,6 +111,7 @@
  import DatasetInfo from './DatasetInfo.vue';
  import ImageLoader from './ImageLoader.vue';
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
+ import Colorbar from './Colorbar.vue';
  import gql from 'graphql-tag';
 
  import Colorscale from 'plotly.js/src/components/colorscale';
@@ -152,7 +157,8 @@
    components: {
      DatasetInfo,
      ImageLoader,
-     IsotopePatternPlot
+     IsotopePatternPlot,
+     Colorbar
    }
  }
 </script>
@@ -272,6 +278,17 @@
  }
 
  #annot-img-collapse .el-collapse-item__header>span {
+   display: inline-flex;
+ }
+
+ #colormap-select-span {
+   display: inline-flex;
+   flex-direction: column;
+   justify-content: center;
+   height: 43px;
+ }
+
+ #colormap-select-span > .el-select {
    display: inline-flex;
  }
 

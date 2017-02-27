@@ -11,24 +11,7 @@
 <script>
  // uses loading directive from Element-UI
 
- import Colorscale from 'plotly.js/src/components/colorscale';
- import {scale} from 'd3';
-
- function createColormap(name) {
-   const {domain, range} = Colorscale.extractScale(Colorscale.getScale(name), 0, 1);
-   const sclFun = scale.linear().domain(domain).range(range).clamp(true);
-
-   let colors = [];
-   for (let i = 0; i < 256; i++) {
-     let c = sclFun(i / 255.0),
-         hex = parseInt(c.slice(1), 16),
-         r = hex >> 16,
-         g = hex >> 8 & 0xFF,
-         b = hex & 0xFF;
-     colors.push([r, g, b].map(Math.round));
-   }
-   return colors;
- }
+ import {createColormap} from '../util.js';
 
  export default {
    props: {
