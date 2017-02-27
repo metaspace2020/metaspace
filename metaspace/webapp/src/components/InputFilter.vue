@@ -31,6 +31,7 @@
 <script>
  import { mixin as clickaway } from 'vue-clickaway';
  import TagFilter from './TagFilter.vue';
+ import Vue from 'vue';
 
  export default {
    name: 'input-filter',
@@ -60,8 +61,7 @@
      enterEditMode() {
        this.editMode = true;
        Vue.nextTick(() => {
-         // FIXME: use of ElementUI internals
-         this.$refs.input.$refs.input.focus();
+         this.$refs.input.inputSelect();
        });
      },
      quitEditMode() { this.editMode = false; }
