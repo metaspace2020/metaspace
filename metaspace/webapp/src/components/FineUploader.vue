@@ -222,7 +222,7 @@
 
  #fu-container {
    max-width: 1000px;
-   padding: 50px;
+   padding: 5px;
  }
 
 </style>

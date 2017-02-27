@@ -106,20 +106,23 @@
 
 <style>
  #instructions {
-   padding: 0px 50px;
  }
 
  #upload-page {
    display: flex;
    flex-wrap: wrap;
+   flex-direction: row;
    justify-content: center;
  }
 
  #upload-left-pane {
-   max-width: 800px;
+   flex-basis: 700px;
+   flex-grow: 1;
+   max-width: 1000px;
+   padding: 20px;
  }
 
  #upload-right-pane {
-   min-width: 1000px;
+   flex-basis: 1000px;
  }
 </style>
