@@ -54,7 +54,6 @@
  }
 
  .tf-value {
-   padding: 7px 0px 7px 0px;
    display: inline-block;
  }
 
