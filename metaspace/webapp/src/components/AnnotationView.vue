@@ -10,10 +10,10 @@
           </div>
         </div>
 
-        <el-collapse-item name="images" class="av-centered">
+        <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
           <span slot="title">
             <span>m/z image</span>
-            <span style="margin-left: 100px;">Colormap:</span>
+            <span style="margin: 0px 10px 0px 100px;">Colormap:</span>
             <span @click="$event.stopPropagation()">
               <el-select v-model="colormap">
                 <el-option v-for="(_, scale) in plotlyScales"
@@ -269,6 +269,10 @@
    display: flex;
    justify-content: center;
    font-size: 18px;
+ }
+
+ #annot-img-collapse .el-collapse-item__header>span {
+   display: inline-flex;
  }
 
 </style>
