@@ -1,4 +1,4 @@
-import { renderSumFormula } from './util.js';
+import { renderMolFormula } from './util.js';
 import InputFilter from './components/InputFilter.vue';
 import SingleSelectFilter from './components/SingleSelectFilter.vue';
 import MultiSelectFilter from './components/MultiSelectFilter.vue';
@@ -16,7 +16,7 @@ function formatAdduct (adduct) {
   if (adduct === null)
     return '';
   else {
-    return renderSumFormula('M', adduct, ADDUCT_POLARITY[adduct])
+    return renderMolFormula('M', adduct, ADDUCT_POLARITY[adduct])
   }
 }
 

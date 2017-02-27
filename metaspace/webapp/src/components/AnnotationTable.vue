@@ -59,7 +59,7 @@
 
             <div slot="reference" class="cell-wrapper">
                 <span class="sf cell-span"
-                      v-html="renderSumFormula(row.sumFormula, row.adduct, row.dataset.polarity)"></span>
+                      v-html="renderMolFormula(row.sumFormula, row.adduct, row.dataset.polarity)"></span>
                 <img src="../assets/filter-icon.png"
                      v-if="!filter.compoundName"
                      @click="filterMolFormula(row)"
@@ -125,7 +125,7 @@
 
 <script>
  import gql from 'graphql-tag';
- import { renderSumFormula } from '../util.js';
+ import { renderMolFormula } from '../util.js';
  import Vue from 'vue';
 
  // 38 = up, 40 = down, 74 = j, 75 = k
@@ -287,7 +287,7 @@
        return this.hideColumns.indexOf(columnLabel) >= 0;
      },
 
-     renderSumFormula,
+     renderMolFormula,
      getRowClass (row, col) {
        if (row.fdrLevel <= 0.051)
          return 'fdr-5';
