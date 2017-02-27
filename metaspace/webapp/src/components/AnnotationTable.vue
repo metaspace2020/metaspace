@@ -62,8 +62,8 @@
                       v-html="renderSumFormula(row.sumFormula, row.adduct, row.dataset.polarity)"></span>
                 <img src="../assets/filter-icon.png"
                      v-if="!filter.compoundName"
-                     @click="filterSumFormula(row)"
-                     title="Limit results to this sum formula"/>
+                     @click="filterMolFormula(row)"
+                     title="Limit results to this molecular formula"/>
             </div>
         </el-popover>
       </el-table-column>
@@ -389,7 +389,7 @@
        this.updateFilter({datasetName: row.dataset.name});
      },
 
-     filterSumFormula (row) {
+     filterMolFormula (row) {
        this.updateFilter({compoundName: row.sumFormula});
      },
 

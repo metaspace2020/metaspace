@@ -5,7 +5,7 @@
 
         <div class="el-collapse-item grey-bg">
           <div class="el-collapse-item__header av-centered grey-bg">
-            <span class="sf-big" v-html="formattedSumFormula"> </span>
+            <span class="sf-big" v-html="formattedMolFormula"> </span>
             <span class="mz-big">{{ annotation.mz.toFixed(4) }}</span>
           </div>
         </div>
@@ -107,7 +107,7 @@
 </template>
 
 <script>
- import { renderSumFormula  } from '../util.js';
+ import { renderMolFormula  } from '../util.js';
  import DatasetInfo from './DatasetInfo.vue';
  import ImageLoader from './ImageLoader.vue';
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
@@ -127,10 +127,10 @@
      };
    },
    computed: {
-     formattedSumFormula() {
+     formattedMolFormula() {
        if (!this.annotation) return '';
        const { sumFormula, adduct, dataset } = this.annotation;
-       return renderSumFormula(sumFormula, adduct, dataset.polarity);
+       return renderMolFormula(sumFormula, adduct, dataset.polarity);
      },
 
      compoundsTabLabel() {

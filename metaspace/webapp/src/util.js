@@ -7,7 +7,7 @@ function prettifySign(str) {
     return str.replace('-', ' – ').replace('+', ' + ');
 }
 
-function renderSumFormula(sumFormula, adduct, polarity) {
+function renderMolFormula(sumFormula, adduct, polarity) {
   let result = `[${(sumFormula + adduct).replace(/(\d+)/g, "<sub>$1</sub>")}]`;
   result = prettifySign(result);
   result += {'POSITIVE': '⁺', 'NEGATIVE': '¯'}[polarity];
@@ -56,7 +56,7 @@ function createColormap(name) {
 }
 
 export {
-  renderSumFormula,
+  renderMolFormula,
   prettifySign,
   getJWT,
   decodePayload,
