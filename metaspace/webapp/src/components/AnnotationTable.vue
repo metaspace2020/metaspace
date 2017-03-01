@@ -49,7 +49,7 @@
                        label="Annotation"
                        min-width="120">
         <el-popover trigger="hover" placement="left">
-            <div>Candidate compounds ({{ row.possibleCompounds.length }}):
+            <div>Candidate molecules ({{ row.possibleCompounds.length }}):
                 <ul>
                     <li v-for="comp in row.possibleCompounds">
                         {{ comp.name }}

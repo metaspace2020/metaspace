@@ -135,7 +135,7 @@
 
      compoundsTabLabel() {
        if (!this.annotation) return '';
-       return "Compounds (" + this.annotation.possibleCompounds.length + ")";
+       return "Molecules (" + this.annotation.possibleCompounds.length + ")";
      }
    },
    apollo: {

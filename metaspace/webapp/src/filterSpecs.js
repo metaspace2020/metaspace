@@ -84,8 +84,8 @@ const FILTER_SPECIFICATIONS = {
 
   compoundName: {
     type: InputFilter,
-    name: 'Compound',
-    description: 'Search compound',
+    name: 'Molecule',
+    description: 'Search molecule',
     levels: ['annotation'],
     initialValue: ''
   },
