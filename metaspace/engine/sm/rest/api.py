@@ -36,7 +36,7 @@ def update_ds(ds_id):
 @post('/datasets/<ds_id>/delete')
 def delete_ds(ds_id):
     ds = Dataset.load_ds(ds_id, db)
-    ds_man.delete_ds(ds)
+    ds_man.delete_ds(ds, del_raw_data=True)
     return 'ok'
 
 if __name__ == '__main__':

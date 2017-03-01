@@ -18,7 +18,7 @@ def test_dataset_manager_add_ds_new_ds_id(create_test_db, drop_test_db, sm_confi
     qpub = MagicMock(QueuePublisher)
     try:
         ds = Dataset('new_ds_id', 'ds_name', 'input_path', {'meta': 'data'}, {'config': 0})
-        ds_man = DatasetManager(db, None, qpub)
+        ds_man = DatasetManager(db, None, qpub, None)
         ds_man.add_ds(ds)
 
         rows = db.select('SELECT * FROM dataset')
@@ -52,7 +52,7 @@ def test_dataset_manager_add_ds_ds_id_exists(ImageStoreServiceWrapperMock, creat
                   rows=[(0, 0, 1, '+H', 'ion_image_url', ['iso_image_url_0'])])
 
         ds = Dataset('ds_id', 'new_ds_name', 'input_path', {'meta': 'data'}, {'config': 0})
-        ds_man = DatasetManager(db, es, qpub)
+        ds_man = DatasetManager(db, es, qpub, None)
         ds_man.add_ds(ds)
 
         rows = db.select("SELECT * FROM dataset")
@@ -96,6 +96,7 @@ def test_dataset_manager_delete_ds_works(ImageStoreServiceWrapperMock, create_te
     db = DB(sm_config['db'])
     es = MagicMock(ESExporter())
     qpub = MagicMock(QueuePublisher)
+    wd_man = MagicMock(WorkDirManager)
     try:
         db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
                   rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', '{"config": 0}')])
@@ -105,12 +106,13 @@ def test_dataset_manager_delete_ds_works(ImageStoreServiceWrapperMock, create_te
                    "VALUES (%s, %s, %s, %s, %s, %s)"),
                   rows=[(0, 0, 1, '+H', 'ion_image_url', ['iso_image_url_0'])])
 
-        ds_man = DatasetManager(db, es, qpub)
-        ds = Dataset('ds_id')
-        ds_man.delete_ds(ds)
+        ds_man = DatasetManager(db, es, qpub, wd_man)
+        ds = Dataset.load_ds('ds_id', db)
+        ds_man.delete_ds(ds, del_raw_data=True)
 
         assert 0 == len(db.select('SELECT * FROM dataset WHERE id = %s', ds.id))
-        es.delete_ds.assert_called_once_with(ds.id)
+        es.delete_ds.assert_called_once_with('ds_id')
         assert 2 == img_store.delete_image.call_count
+        wd_man.del_input_data.assert_called_once_with('input_path')
     finally:
         db.close()

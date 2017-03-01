@@ -39,7 +39,6 @@ class Dataset(object):
         self.dims = None
         self.sample_area_mask = None
 
-
     @staticmethod
     def load_ds(ds_id, db):
         r = db.select_one(DS_SEL, ds_id)
@@ -68,11 +67,12 @@ class DatasetManager(object):
         id : String
             Dataset id
     """
-    def __init__(self, db, es, qpub):
+    def __init__(self, db, es, qpub, wd_man):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
         self._qpub = qpub
+        self._wd_man = wd_man
 
     def _reindex_ds(self, ds):
         for mol_db_dict in ds.config['databases']:
@@ -139,7 +139,7 @@ class DatasetManager(object):
                 del_url = '{}/delete/{}'.format(self._sm_config['services']['iso_images'], os.path.split(url)[1])
                 img_store.delete_image(del_url)
 
-    def delete_ds(self, ds):
+    def delete_ds(self, ds, del_raw_data=False):
         assert ds.id or ds.name
 
         if not ds.id:
@@ -151,5 +151,7 @@ class DatasetManager(object):
             self._del_iso_images(ds)
             self._es.delete_ds(ds.id)
             self._db.alter('DELETE FROM dataset WHERE id=%s', ds.id)
+            if del_raw_data:
+                self._wd_man.del_input_data(ds.input_path)
         else:
             logger.warning('No ds_id for ds_name: %s', ds.name)

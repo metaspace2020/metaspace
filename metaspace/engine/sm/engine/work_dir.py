@@ -20,6 +20,7 @@ logger = logging.getLogger('sm-engine')
 
 
 def split_s3_path(path):
+    """ Returns a pair (bucket, key) """
     return path.split('s3a://')[-1].split('/', 1)
 
 
@@ -27,18 +28,28 @@ def split_local_path(path):
     return path.split('file://')[-1]
 
 
+def delete_s3_path(bucket, path, s3):
+    try:
+        bucket_obj = s3.Bucket(bucket)
+        for obj in bucket_obj.objects.filter(Prefix=path):
+            s3.Object(bucket, obj.key).delete()
+        logger.info('Successfully deleted "%s"', path)
+    except CalledProcessError as e:
+        logger.warning('Deleting "%s" error: %s', path, e.message)
+
+
+def delete_local_path(path):
+    try:
+        cmd_check('rm -rf {}', path)
+        logger.info('Successfully deleted "%s"', path)
+    except CalledProcessError as e:
+        logger.warning('Deleting %s error: %s', path, e.message)
+
+
 class LocalWorkDir(object):
 
     def __init__(self, base_path, ds_id):
         self.ds_path = join(base_path, ds_id)
-
-    # @property
-    # def ds_config_path(self):
-    #     return join(self.ds_path, 'config.json')
-    #
-    # @property
-    # def ds_metadata_path(self):
-    #     return join(self.ds_path, 'meta.json')
 
     @property
     def imzml_path(self):
@@ -61,10 +72,7 @@ class LocalWorkDir(object):
             return False
 
     def clean(self):
-        try:
-            cmd_check('rm -rf {}', self.ds_path)
-        except CalledProcessError as e:
-            logger.warning('Deleting interim local data files error: %s', e.message)
+        delete_local_path(self.ds_path)
 
     def copy(self, source, dest, is_file=False):
         if is_file:
@@ -83,10 +91,6 @@ class S3WorkDir(object):
         self.bucket, path = split_s3_path(base_path)
         self.ds_path = join(path, ds_id)
 
-    # @property
-    # def ds_config_path(self):
-    #     return join(self.bucket, self.ds_path, 'config.json')
-
     @property
     def txt_path(self):
         return join(self.bucket, self.ds_path, 'ds.txt')
@@ -96,13 +100,7 @@ class S3WorkDir(object):
         return join(self.bucket, self.ds_path, 'ds_coord.txt')
 
     def clean(self):
-        try:
-            bucket_obj = self.s3.Bucket(self.bucket)
-            for obj in bucket_obj.objects.filter(Prefix=self.ds_path):
-                self.s3.Object(self.bucket, obj.key).delete()
-            logger.info('Successfully deleted interim data')
-        except CalledProcessError as e:
-            logger.warning('Deleting interim data files error: %s', e.message)
+        delete_s3_path(self.bucket, self.ds_path, self.s3)
 
     def exists(self, path):
         try:
@@ -154,14 +152,6 @@ class WorkDirManager(object):
         if not self.local_fs_only:
             self.remote_dir = S3WorkDir(self.sm_config['fs']['s3_base_path'], ds_id, self.s3, self.s3transfer)
 
-    # @property
-    # def ds_config_path(self):
-    #     return self.local_dir.ds_config_path
-
-    # @property
-    # def ds_metadata_path(self):
-    #     return self.local_dir.ds_metadata_path
-
     @property
     def txt_path(self):
         if self.local_fs_only:
@@ -182,7 +172,7 @@ class WorkDirManager(object):
         else:
             return s3_path(path)
 
-    def copy_input_data(self, input_data_path, ds_config_path):
+    def copy_input_data(self, input_data_path):
         """ Copy imzML/ibd files from input path to a dataset work directory
 
         Args
@@ -190,7 +180,6 @@ class WorkDirManager(object):
         input_data_path : str
             Path to input files
         """
-        # if not self.local_dir.exists(self.local_dir.imzml_path):
         logger.info('Copying data from %s to %s', input_data_path, self.local_dir.ds_path)
 
         if input_data_path.startswith('s3a://'):
@@ -205,8 +194,12 @@ class WorkDirManager(object):
         else:
             self.local_dir.copy(input_data_path, self.local_dir.ds_path)
 
-        # if ds_config_path:
-        #     self.local_dir.copy(ds_config_path, self.local_dir.ds_config_path, is_file=True)
+    def del_input_data(self, input_data_path):
+        if input_data_path.startswith('s3a://'):
+            bucket, path = split_s3_path(input_data_path)
+            delete_s3_path(bucket, path, self.s3)
+        else:
+            delete_local_path(input_data_path)
 
     def clean(self):
         self.local_dir.clean()
