@@ -13,17 +13,18 @@
         <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
           <span slot="title">
             <span>m/z image</span>
-            <span style="margin: 0px 10px 0px 100px;">Colormap:</span>
-            <span id="colormap-select-span" @click="$event.stopPropagation()">
-              <el-select v-model="colormap" size="small">
-                <el-option v-for="(_, scale) in plotlyScales"
-                           :value="scale" :label="scale">
-                  <colorbar style="height: 20px" :map="scale"></colorbar>
-                </el-option>
-              </el-select>
-            </span>
-            <span>
-              <colorbar style="padding: 7px; height: 28px;" :map="colormap"></colorbar>
+            <span style="display: inline-flex; padding: 0px 0px 0px 30px;">
+              <span>
+                <colorbar style="padding: 7px; height: 28px;" :map="colormap"></colorbar>
+              </span>
+              <span id="colormap-select-span" @click="$event.stopPropagation()">
+                <el-select v-model="colormap" size="small" style="width: 120px;" title="Colormap">
+                  <el-option v-for="scale in availableScales"
+                             :value="scale" :label="scale">
+                    <colorbar style="height: 20px" :map="scale" :title="scale"></colorbar>
+                  </el-option>
+                </el-select>
+              </span>
             </span>
           </span>
           <div style="margin-top: 10px;">
@@ -114,8 +115,6 @@
  import Colorbar from './Colorbar.vue';
  import gql from 'graphql-tag';
 
- import Colorscale from 'plotly.js/src/components/colorscale';
-
  export default {
    name: 'annotation-view',
    props: ['annotation'],
@@ -123,7 +122,7 @@
      return {
        activeSections: ["images"],
        colormap: "Viridis",
-       plotlyScales: Colorscale.scales
+       availableScales: ["Viridis", "Hot", "Greys", "Portland", "YlGnBl"]
      };
    },
    computed: {
