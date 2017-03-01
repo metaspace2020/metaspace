@@ -33,7 +33,7 @@ if __name__ == '__main__':
             local(py_test_cmd + 'tests/test_imzml_txt_converter_db.py')
             local(py_test_cmd + 'tests/test_theor_peaks_gen_db.py')
             local(py_test_cmd + 'tests/test_work_dir.py')
-            local(py_test_cmd + 'tests/test_dataset_db.py')
+            local(py_test_cmd + 'tests/test_dataset_manager.py')
             local(py_test_cmd + 'tests/test_search_results.py')
             local(py_test_cmd + 'tests/test_es_exporter.py')
             local(py_test_cmd + 'tests/test_search_job_imzml_example.py')

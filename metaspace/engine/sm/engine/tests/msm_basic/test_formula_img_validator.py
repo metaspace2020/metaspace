@@ -6,7 +6,7 @@ from numpy.testing import assert_array_almost_equal
 from pandas.util.testing import assert_frame_equal
 from scipy.sparse import csr_matrix
 
-from sm.engine.dataset import Dataset
+from sm.engine.dataset_manager import DatasetManager, Dataset
 from sm.engine.fdr import FDR
 from sm.engine.mol_db import MolecularDB
 from sm.engine.msm_basic.formula_img_validator import ImgMeasures, sf_image_metrics_est_fdr
@@ -36,27 +36,27 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
 
 @pytest.fixture(scope='module')
 def ds_formulas_images_mock():
-    ds_mock = MagicMock(spec=Dataset)
-    ds_mock.get_dims.return_value = (2, 3)
-    ds_mock.get_sample_area_mask.return_value = np.ones(2*3).astype(bool)
+    ds_mock = Dataset('ds_id')
+    ds_mock.dims = (2, 3)
+    ds_mock.sample_area_mask = np.ones(2*3).astype(bool)
 
-    formulas_mock = MagicMock(spec=MolecularDB)
-    formulas_mock.get_sf_peak_ints.return_value = {(0, '+H'): [100, 10, 1], (1, '+H'): [100, 10, 1]}
+    mol_db_mock = MagicMock(spec=MolecularDB)
+    mol_db_mock.get_sf_peak_ints.return_value = {(0, '+H'): [100, 10, 1], (1, '+H'): [100, 10, 1]}
 
     sf_iso_images = [((0, '+H'), [csr_matrix([[0, 100, 100], [10, 0, 3]]), csr_matrix([[0, 50, 50], [0, 20, 0]])]),
                      ((1, '+H'), [csr_matrix([[0, 100, 100], [10, 0, 3]]), csr_matrix([[0, 50, 50], [0, 20, 0]])])]
 
-    return ds_mock, formulas_mock, sf_iso_images
+    return ds_mock, mol_db_mock, sf_iso_images
 
 
 def test_sf_image_metrics(spark_context, ds_formulas_images_mock, ds_config):
     with patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics') as mock:
         mock.return_value = lambda *args: (0.9, 0.9, 0.9)
 
-        ds_mock, formulas_mock, ref_images = ds_formulas_images_mock
+        ds_mock, mol_db_mock, ref_images = ds_formulas_images_mock
         ref_images_rdd = spark_context.parallelize(ref_images)
 
-        metrics_df = sf_image_metrics(ref_images_rdd, spark_context, formulas_mock, ds_mock, ds_config)
+        metrics_df = sf_image_metrics(ref_images_rdd, spark_context, mol_db_mock, ds_mock, ds_config)
 
         exp_metrics_df = (pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, 0.9**3],
                                        [1, '+H', 0.9, 0.9, 0.9, 0.9**3]],

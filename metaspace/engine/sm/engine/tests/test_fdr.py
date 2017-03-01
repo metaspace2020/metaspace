@@ -4,14 +4,18 @@ from mock import MagicMock, patch
 from pandas.util.testing import assert_frame_equal
 
 from sm.engine.fdr import FDR
+from sm.engine import MolecularDB
 
 
 @patch('sm.engine.fdr.DECOY_ADDUCTS', ['+He', '+Li'])
 def test_fdr_decoy_adduct_selection_saves_corr():
     db_mock = MagicMock(DB)
     db_mock.select.return_value = [(1,)]
+    mol_db_mock = MagicMock(MolecularDB)
+    mol_db_mock.id.return_value = 0
+    mol_db_mock.sfs.return_value = {1: 'sf_1'}
 
-    fdr = FDR(0, 0, 2, ['+H', '+K'], db_mock)
+    fdr = FDR(0, mol_db_mock, 2, ['+H', '+K'], db_mock)
 
     def assert_df_values_equal(self, other):
         assert set(self) == set(other)
@@ -27,7 +31,7 @@ def test_fdr_decoy_adduct_selection_saves_corr():
 
 
 def test_estimate_fdr_returns_correct_df():
-    fdr = FDR(0, 0, 2, ['+H'], None)
+    fdr = FDR(0, None, 2, ['+H'], None)
     fdr.fdr_levels = [0.2, 0.8]
     fdr.td_df = pd.DataFrame([[1, '+H', '+Cu'],
                               [1, '+H', '+Co'],
@@ -49,7 +53,7 @@ def test_estimate_fdr_returns_correct_df():
 
 
 def test_estimate_fdr_digitize_works():
-    fdr = FDR(0, 0, 1, ['+H'], None)
+    fdr = FDR(0, None, 1, ['+H'], None)
     fdr.fdr_levels = [0.4, 0.8]
     fdr.td_df = pd.DataFrame([[1, '+H', '+Cu'],
                               [2, '+H', '+Ag'],

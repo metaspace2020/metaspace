@@ -29,6 +29,7 @@ def db_decor(func):
         except Exception as e:
             # logger.error(format_exc())
             logger.error('%s, SQL: %s\n%s', e, args[0], str(args[1:])[:1000])
+            self.conn.rollback()
             raise e
         else:
             self.conn.commit()

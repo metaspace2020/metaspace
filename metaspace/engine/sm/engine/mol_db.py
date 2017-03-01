@@ -3,6 +3,7 @@ import pandas as pd
 import logging
 import requests
 
+from sm.engine.db import DB
 from sm.engine.util import SMConfig
 
 
@@ -57,19 +58,18 @@ class MolecularDB(object):
 
         Args
         ----------
-        job_id: int
-        db_id: int
+        name: str
+        version: str
         ds_config : dict
             Dataset configuration
-        db : engine.db.DB
         """
-    def __init__(self, name, version, ds_config, db):
+    def __init__(self, name, version, ds_config):
         self._name = name
         self._version = version
         self._ds_config = ds_config
-        self._db = db
 
         sm_config = SMConfig.get_conf()
+        self._db = DB(sm_config['db'])
         self._mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
         self._id = self._mol_db_service.find_db_by_name_version(name, version)[0]['id']
 
@@ -93,6 +93,15 @@ class MolecularDB(object):
         self._job_id = job_id
 
     def get_molecules(self, sf):
+        """ Returns a dataframe with
+
+        Args
+        ----------
+        sf: str
+        Returns
+        ----------
+            pd.DataFrame
+        """
         return pd.DataFrame(self._mol_db_service.fetch_molecules(self.id, sf))
 
     @property

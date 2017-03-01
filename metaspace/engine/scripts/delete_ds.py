@@ -5,7 +5,7 @@ import logging
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.util import SMConfig, init_logger
-from sm.engine.dataset import Dataset
+from sm.engine import DatasetManager, Dataset
 
 
 DS_ANNOTATIONS_COUNT = ('SELECT count(*) '
@@ -17,8 +17,10 @@ DS_ANNOTATIONS_COUNT = ('SELECT count(*) '
 
 def delete_dataset(id, name):
     logger.info('Deleting dataset id/name: {}/{}'.format(id, name))
-    ds = Dataset(None, id, name, False, '', None, db, es_exp)
-    ds.delete_ds_if_exists()
+    ds = Dataset(None, id, name, False, '')
+    ds_man = DatasetManager(db, es_exp, None)
+    ds_man.delete_ds(ds)
+
 
 def match_and_delete_dataset(sql, arg):
     ds_to_del = db.select(sql, arg)
@@ -44,7 +46,7 @@ if __name__ == "__main__":
     logger = logging.getLogger('sm-engine')
 
     db = DB(sm_config['db'])
-    es_exp = ESExporter(sm_config)
+    es_exp = ESExporter()
 
     if args.ds_name:
         if args.ds_id:

@@ -11,14 +11,16 @@ from datetime import datetime
 from pyspark import SparkContext, SparkConf
 import logging
 
+from sm.engine import QueuePublisher
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
-from sm.engine.dataset import Dataset
+from sm.engine.dataset_manager import DatasetManager, Dataset
+from sm.engine.dataset_reader import DatasetReader
 from sm.engine.db import DB
 from sm.engine.fdr import FDR
 from sm.engine.search_results import SearchResults
 from sm.engine.theor_peaks_gen import TheorPeaksGenerator
-from sm.engine.util import local_path, proj_root, SMConfig, read_json, sm_log_formatters
-from sm.engine.work_dir import WorkDirManager
+from sm.engine.util import proj_root, SMConfig, read_json, sm_log_formatters
+from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB
 
@@ -133,18 +135,20 @@ class SearchJob(object):
             self._wd_manager = WorkDirManager(self.ds_id)
             self._configure_spark()
             self._init_db()
-            self._es = ESExporter(self._sm_config)
+            self._es = ESExporter()
 
             if not self.no_clean:
                 self._wd_manager.clean()
-            self._ds = Dataset(self._sc, self.ds_id, self.ds_name, self.drop, self.input_path,
-                               self._wd_manager, self._db, self._es)
-            self._ds.copy_read_data()
 
-            logger.info('Dataset config:\n%s', pformat(self._ds.ds_config))
+            ds_reader = DatasetReader(self.ds_id, self.input_path, self._sc, self._wd_manager)
+            ds_reader.copy_convert_input_data()
+            self._ds = Dataset.load_ds(self.ds_id, self._db)
+            self._ds.dims = ds_reader.get_dims()
 
-            for mol_db_dict in self._ds.ds_config['databases']:
-                mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict['version'], self._ds.ds_config, self._db)
+            logger.info('Dataset config:\n%s', pformat(self._ds.config))
+
+            for mol_db_dict in self._ds.config['databases']:
+                mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict['version'], self._ds.config)
                 self._run_job(mol_db)
 
             logger.info("All done!")

@@ -3,11 +3,15 @@ from elasticsearch.helpers import bulk, BulkIndexError
 from elasticsearch.client import IndicesClient
 import logging
 
+from sm.engine.util import SMConfig
+from sm.engine.db import DB
+
 logger = logging.getLogger('sm-engine')
 
-COLUMNS = ["ds_id", "ds_name", "sf", "sf_adduct", "chaos", "image_corr",
-           "pattern_match", "msm",
-           "adduct", "job_id", "sf_id", "fdr", "centroid_mzs", "ds_meta", "ion_image_url", "iso_image_urls"]
+COLUMNS = ["ds_id", "ds_name", "sf", "sf_adduct",
+           "chaos", "image_corr", "pattern_match", "msm",
+           "adduct", "job_id", "sf_id", "fdr",
+           "centroid_mzs", "ds_meta", "ion_image_url", "iso_image_urls"]
 
 ANNOTATIONS_SEL = '''
 SELECT
@@ -43,11 +47,13 @@ ORDER BY COALESCE(m.msm, 0::real) DESC
 
 
 class ESExporter:
-    def __init__(self, sm_config):
-        self.es = Elasticsearch(hosts=[{"host": sm_config['elasticsearch']['host'],
-                                        "port": int(sm_config['elasticsearch']['port'])}])
-        self.ind_client = IndicesClient(self.es)
-        self.index = sm_config['elasticsearch']['index']
+    def __init__(self):
+        self._sm_config = SMConfig.get_conf()
+        self._es = Elasticsearch(hosts=[{"host": self._sm_config['elasticsearch']['host'],
+                                        "port": int(self._sm_config['elasticsearch']['port'])}])
+        self._db = DB(self._sm_config['db'])
+        self._ind_client = IndicesClient(self._es)
+        self.index = self._sm_config['elasticsearch']['index']
 
     def _index(self, annotations, mol_db):
         to_index = []
@@ -69,10 +75,10 @@ class ESExporter:
                 '_source': d
             })
 
-        bulk(self.es, actions=to_index, timeout='60s')
+        bulk(self._es, actions=to_index, timeout='60s')
 
-    def index_ds(self, db, mol_db, ds_id):
-        annotations = db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
+    def index_ds(self, ds_id, mol_db):
+        annotations = self._db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
 
         logger.info('Deleting {} documents from the index: {}'.format(len(annotations), ds_id))
         self.delete_ds(ds_id)
@@ -94,12 +100,12 @@ class ESExporter:
                 }
             }
         }
-        res = self.es.search(index=self.index, body=body, _source=False, size=10**9)['hits']['hits']
+        res = self._es.search(index=self.index, body=body, _source=False, size=10 ** 9)['hits']['hits']
         to_del = [{'_op_type': 'delete', '_index': 'sm', '_type': 'annotation', '_id': d['_id']} for d in res]
 
         del_n = 0
         try:
-            del_n, _ = bulk(self.es, to_del, timeout='60s')
+            del_n, _ = bulk(self._es, to_del, timeout='60s')
         except BulkIndexError as e:
             logger.warning('{} - {}'.format(e.args[0], e.args[1][1]))
         return del_n
@@ -189,13 +195,13 @@ class ESExporter:
                 }
             }
         }
-        if not self.ind_client.exists(self.index):
-            out = self.ind_client.create(index=self.index, body=body)
+        if not self._ind_client.exists(self.index):
+            out = self._ind_client.create(index=self.index, body=body)
             logger.info('Index {} created\n{}'.format(self.index, out))
         else:
             logger.info('Index {} already exists'.format(self.index))
 
     def delete_index(self):
-        if self.ind_client.exists(self.index):
-            out = self.ind_client.delete(self.index)
+        if self._ind_client.exists(self.index):
+            out = self._ind_client.delete(self.index)
             logger.info('Index {} deleted\n{}'.format(self.index, out))

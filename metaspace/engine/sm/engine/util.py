@@ -95,14 +95,6 @@ class SMConfig(object):
         return cls._config_dict
 
 
-def local_path(path):
-    return 'file://' + path
-
-
-def s3_path(path):
-    return 's3a://{}'.format(path)
-
-
 def _cmd(template, call_func, *args):
     cmd_str = template.format(*args)
     logger.info('Call "%s"', cmd_str)

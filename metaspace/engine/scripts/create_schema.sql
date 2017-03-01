@@ -14,23 +14,22 @@ CREATE TABLE dataset (
 	name				text,
 	input_path  text,
 	metadata		json,
-	img_bounds	json,
 	config      json,
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
 );
 CREATE INDEX ind_dataset_name ON dataset (name);
 
-DROP TABLE IF EXISTS coordinates;
-CREATE TABLE coordinates (
-	ds_id 	 text,
-	xs       int[],
-	ys       int[],
-	CONSTRAINT coord_ds_id_pk PRIMARY KEY(ds_id),
-	CONSTRAINT coord_ds_id_fk FOREIGN KEY (ds_id)
-      REFERENCES dataset (id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE CASCADE
-);
-CREATE INDEX ind_coordinates_2 ON coordinates (ds_id);
+-- DROP TABLE IF EXISTS coordinates;
+-- CREATE TABLE coordinates (
+-- 	ds_id 	 text,
+-- 	xs       int[],
+-- 	ys       int[],
+-- 	CONSTRAINT coord_ds_id_pk PRIMARY KEY(ds_id),
+-- 	CONSTRAINT coord_ds_id_fk FOREIGN KEY (ds_id)
+--       REFERENCES dataset (id) MATCH SIMPLE
+--       ON UPDATE NO ACTION ON DELETE CASCADE
+-- );
+-- CREATE INDEX ind_coordinates_2 ON coordinates (ds_id);
 
 DROP TABLE IF EXISTS job CASCADE;
 CREATE TABLE job (

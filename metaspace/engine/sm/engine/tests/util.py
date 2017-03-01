@@ -5,7 +5,7 @@ from pyspark import SparkContext, SparkConf
 from logging.config import dictConfig
 
 from sm.engine.db import DB
-from sm.engine.util import proj_root, sm_log_config
+from sm.engine.util import proj_root, sm_log_config, SMConfig
 from sm.engine.es_export import ESExporter
 
 
@@ -101,6 +101,7 @@ def sm_config():
 
 @pytest.fixture()
 def create_sm_index(sm_config):
-    es_exp = ESExporter(sm_config)
+    SMConfig._config_dict = sm_config
+    es_exp = ESExporter()
     es_exp.delete_index()
     es_exp.create_index()

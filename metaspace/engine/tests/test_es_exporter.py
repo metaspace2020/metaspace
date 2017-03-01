@@ -1,6 +1,7 @@
 from mock import MagicMock, patch
 from elasticsearch import Elasticsearch
 
+from sm.engine import MolecularDB
 from sm.engine.es_export import ESExporter
 from sm.engine.db import DB
 from sm.engine.tests.util import sm_config, ds_config, create_sm_index
@@ -10,14 +11,20 @@ COLUMNS = ['ds_id', 'db_name', 'sf', 'adduct', 'comp_names', 'comp_ids', 'centro
 
 
 @patch('sm.engine.es_export.COLUMNS', COLUMNS)
-def test_index_ds_works(create_sm_index, sm_config):
+@patch('sm.engine.es_export.DB')
+def test_index_ds_works(DBMock, create_sm_index, sm_config):
     annotations = [('2000-01-01_00h00m', 'test_db', 'H20', '+H', [], [], [100, 110]),
                    ('2000-01-01_00h00m', 'test_db', 'Au', '+H', [], [], [200, 210])]
-    db_mock = MagicMock(DB)
+    db_mock = DBMock()
     db_mock.select.return_value = annotations
+    mol_db_mock = MagicMock(MolecularDB)
+    mol_db_mock.id = 0
+    mol_db_mock.name = 'db_name'
+    mol_db_mock.version = '2017'
+    # mol_db_mock.get_molecules.return_value =
 
-    es_exp = ESExporter(sm_config)
-    es_exp.index_ds(db_mock, 'test_ds')
+    es_exp = ESExporter()
+    es_exp.index_ds('ds_id', mol_db_mock)
 
     es = Elasticsearch(hosts=["{}:{}".format(sm_config['elasticsearch']['host'],
                                              sm_config['elasticsearch']['port'])])
