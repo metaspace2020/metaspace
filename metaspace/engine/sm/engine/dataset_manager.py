@@ -9,6 +9,7 @@ from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig, read_json
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
+from sm.engine.work_dir import WorkDirManager
 
 logger = logging.getLogger('sm-engine')
 
@@ -36,8 +37,7 @@ class Dataset(object):
         self.config = config
         self.name = name or (metadata.get('metaspace_options', {}).get('Dataset_Name', id) if metadata else None)
 
-        self.dims = None
-        self.sample_area_mask = None
+        self.reader = None
 
     @staticmethod
     def load_ds(ds_id, db):
@@ -64,15 +64,16 @@ class DatasetManager(object):
 
         Args
         ----------
-        id : String
-            Dataset id
+        db : sm.engine.DB
+        es: sm.engine.ESExporter
+        mode: str
+            'local' or 'queue'
     """
-    def __init__(self, db, es, qpub, wd_man):
+    def __init__(self, db, es, mode):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
-        self._qpub = qpub
-        self._wd_man = wd_man
+        self.mode = mode
 
     def _reindex_ds(self, ds):
         for mol_db_dict in ds.config['databases']:
@@ -88,7 +89,7 @@ class DatasetManager(object):
         email = ds.meta.get('Submitted_By', {}).get('Submitter', {}).get('Email')
         if email:
             msg['user_email'] = email.lower()
-        self._qpub.publish(msg)
+        QueuePublisher(self._sm_config['rabbitmq'], 'sm_annotate').publish(msg)
         logger.info('New job message posted: %s', msg)
 
     def _proc_params_changed(self, old_meta, meta):
@@ -115,7 +116,7 @@ class DatasetManager(object):
         """ Save dataset metadata (name, path, image bounds, coordinates) to the database.
         If the ds_id exists, delete the ds first
         """
-        assert (ds.id and ds.name and ds.input_path and ds.meta and ds.config)
+        assert (ds.id and ds.name and ds.input_path and ds.config)
 
         ds_row = [(ds.id, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config))]
         r = self._db.select_one(DS_SEL, ds.id)
@@ -125,7 +126,8 @@ class DatasetManager(object):
         self._db.insert(DS_INSERT, ds_row)
         logger.info("Inserted into dataset table: %s, %s", ds.id, ds.name)
 
-        self._post_new_job_msg(ds)
+        if self.mode == 'queue':
+            self._post_new_job_msg(ds)
 
     def _del_iso_images(self, ds):
         img_store = ImageStoreServiceWrapper(self._sm_config['services']['iso_images'])
@@ -152,6 +154,7 @@ class DatasetManager(object):
             self._es.delete_ds(ds.id)
             self._db.alter('DELETE FROM dataset WHERE id=%s', ds.id)
             if del_raw_data:
-                self._wd_man.del_input_data(ds.input_path)
+                wd_man = WorkDirManager(ds.id)
+                wd_man.del_input_data(ds.input_path)
         else:
             logger.warning('No ds_id for ds_name: %s', ds.name)

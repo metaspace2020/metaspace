@@ -11,16 +11,16 @@ from fabric.api import local
 from fabric.context_managers import warn_only
 
 from sm.engine.db import DB
+from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.util import proj_root, SMConfig
 
 
 SEARCH_RES_SELECT = ("select sf, adduct, stats "
-                     "from iso_image_metrics s "
-                     "join formula_db sf_db on sf_db.id = s.db_id "
-                     "join sum_formula f on f.id = s.sf_id AND sf_db.id = f.db_id "
-                     "join job j on j.id = s.job_id "
+                     "from iso_image_metrics m "
+                     "join sum_formula f on f.id = m.sf_id "
+                     "join job j on j.id = m.job_id "
                      "join dataset ds on ds.id = j.ds_id "
-                     "where ds.name = %s and sf_db.name = %s "
+                     "where f.db_id = %s AND ds.name = %s "
                      "ORDER BY sf, adduct ")
 
 
@@ -47,7 +47,9 @@ class SciTester(object):
             return {(r[0], r[1]): np.array(r[2:], dtype=float) for r in rows}
 
     def fetch_search_res(self):
-        rows = self.db.select(SEARCH_RES_SELECT, self.ds_name, 'HMDB')
+        mol_db_service = MolDBServiceWrapper(self.sm_config['services']['mol_db'])
+        mol_db_id = mol_db_service.find_db_by_name_version('HMDB', '2017-01')[0]['id']
+        rows = self.db.select(SEARCH_RES_SELECT, mol_db_id, self.ds_name)
         return {(r[0], r[1]): self.metr_dict_to_array(r[2]) for r in rows}
 
     def run_sci_test(self):
@@ -112,17 +114,12 @@ class SciTester(object):
             print "\nPAT_MATCH HISTOGRAM"
             self.print_metric_hist(metric_diffs[:, 2])
 
-    @staticmethod
-    def zip_engine():
-        local('cd {}; zip -rq sm.zip engine'.format(proj_root()))
-
     def run_search(self):
         cmd = ['python',
                join(proj_root(), 'scripts/run_molecule_search.py'),
                '--input-path', self.input_dir_path,
-               '--ds-name', self.ds_name,
-               '--drop',
                '--ds-config', self.ds_config_path,
+               '--ds-name', self.ds_name,
                '--config', self.sm_config_path]
         check_call(cmd)
 

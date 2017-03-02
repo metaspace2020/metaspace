@@ -18,7 +18,7 @@ db_mock = MagicMock(spec=DB)
 @pytest.fixture
 def search_results(spark_context, sm_config, ds_config):
     metrics = ['chaos', 'spatial', 'spectral']
-    res = SearchResults(0, '2000-01-01_00h00m', 0, metrics, None, db_mock, ds_config)
+    res = SearchResults(0, 0, metrics, None, db_mock)
     res.metrics = ['chaos', 'spatial', 'spectral']
     return res
 

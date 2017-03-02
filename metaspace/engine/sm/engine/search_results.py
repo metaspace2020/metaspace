@@ -29,17 +29,14 @@ class SearchResults(object):
         List of triples (formula id, adduct, number of theoretical peaks)
     ds: engine.dataset.Dataset
     db: engine.db.DB
-    ds_config: dict
     """
-    def __init__(self, sf_db_id, job_id, metrics,
-                 ds, db, ds_config):
+    def __init__(self, sf_db_id, job_id, metrics, ds, db):
         self.sf_db_id = sf_db_id
         self.job_id = job_id
         self.metrics = metrics
         self.ds = ds
         self.db = db
         self.sm_config = SMConfig.get_conf()
-        self.ds_config = ds_config
 
     @staticmethod
     def _metrics_table_row_gen(job_id, db_id, metr_df, ion_img_urls, metrics):
@@ -60,7 +57,7 @@ class SearchResults(object):
         self.db.insert(METRICS_INS, rows)
 
     def _get_post_images(self):
-        png_generator = PngGenerator(self.ds.coords, greyscale=True)
+        png_generator = PngGenerator(self.ds.reader.coord_pairs, greyscale=True)
         img_store = ImageStoreServiceWrapper(self.sm_config['services']['iso_images'])
 
         def _post_images(imgs):

@@ -118,9 +118,7 @@ if __name__ == "__main__":
         log_msg = " [v] Received: {}".format(msg)
         logger.info(log_msg)
         post_to_slack('new', " [v] Received: {}".format(msg))
-        job = SearchJob(msg['ds_id'], msg.get('ds_name', None),
-                        msg.get('drop', False), msg.get('input_path', None),
-                        args.sm_config_path)
+        job = SearchJob(msg['ds_id'], args.sm_config_path)
         job.run()
 
     annotation_queue = QueueConsumer(rabbit_config, 'sm_annotate',

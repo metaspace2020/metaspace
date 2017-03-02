@@ -1,5 +1,5 @@
+from __future__ import unicode_literals
 from os.path import join, dirname
-from elasticsearch import Elasticsearch
 import pytest
 from fabric.api import local
 from fabric.context_managers import warn_only
@@ -10,8 +10,8 @@ from sm.engine.db import DB
 from sm.engine.search_job import SearchJob
 from sm.engine.util import SMConfig
 from sm.engine.fdr import DECOY_ADDUCTS
-from sm.engine.es_export import ESExporter
-from sm.engine.tests.util import create_test_db, drop_test_db, sm_config, create_sm_index
+from sm.engine.dataset_manager import DS_INSERT
+from sm.engine.tests.util import create_test_db, drop_test_db, sm_config, create_sm_index, es_dsl_search
 
 test_ds_name = 'imzml_example_ds'
 
@@ -32,7 +32,7 @@ def create_fill_sm_database(create_test_db, drop_test_db, create_sm_index, sm_co
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
 def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metrics_mock,
                                   post_images_to_annot_service_mock, MolDBServiceWrapperMock,
-                                  sm_config, create_fill_sm_database):
+                                  sm_config, create_fill_sm_database, es_dsl_search):
     get_compute_img_measures_mock.return_value = lambda *args: (0.9, 0.9, 0.9)
     filter_sf_metrics_mock.side_effect = lambda x: x
     mol_db_mock = MolDBServiceWrapperMock()
@@ -51,18 +51,19 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metri
     }
 
     SMConfig._config_dict = sm_config
-
     db = DB(sm_config['db'])
     try:
-        job = SearchJob('2000-01-01_00h00m', test_ds_name, True, input_dir_path, '')
-        job.run(ds_config_path)
+        ds_config_str = open(ds_config_path).read()
+        db.insert(DS_INSERT, [('2000-01-01_00h00m', test_ds_name, input_dir_path, '{}', ds_config_str)])
+
+        job = SearchJob('2000-01-01_00h00m', '')
+        job.run()
 
         # dataset meta asserts
-        rows = db.select("SELECT id, name, input_path, img_bounds from dataset")
-        img_bounds = {u'y': {u'max': 3, u'min': 1}, u'x': {u'max': 3, u'min': 1}}
+        rows = db.select("SELECT id, name, input_path from dataset")
         input_path = join(dirname(__file__), 'data', test_ds_name)
         assert len(rows) == 1
-        assert rows[0] == ('2000-01-01_00h00m', test_ds_name, input_path, img_bounds)
+        assert rows[0] == ('2000-01-01_00h00m', test_ds_name, input_path)
 
         # theoretical patterns asserts
         rows = db.select('SELECT sf, adduct, centr_mzs, centr_ints '
@@ -74,23 +75,20 @@ def test_search_job_imzml_example(get_compute_img_measures_mock, filter_sf_metri
             assert r[2] and r[3]
 
         # image metrics asserts
-        rows = db.select(('SELECT db_id, sf_id, adduct, peaks_n, stats, iso_image_urls, ion_image_url '
+        rows = db.select(('SELECT db_id, sf_id, adduct, stats, iso_image_urls, ion_image_url '
                           'FROM iso_image_metrics '
                           'ORDER BY sf_id, adduct'))
 
-        assert rows
-        assert rows[0]
-        assert tuple(rows[0][:2]) == (0, 1)
-        assert set(rows[0][4].keys()) == {'chaos', 'spatial', 'spectral'}
-        assert rows[0][5] == ['http://localhost/iso_image_1', None, None, None]
-        assert rows[0][6] == 'http://localhost/ion_image'
+        assert rows[0] == (0, 1, '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9},
+                           ['http://localhost/iso_image_1', None, None, None], 'http://localhost/ion_image')
+        assert rows[1] == (0, 1, '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9},
+                           ['http://localhost/iso_image_1', None, None, None], 'http://localhost/ion_image')
 
         # ES asserts
-        time.sleep(2)  # Waiting for ES
-        es = Elasticsearch(hosts=[{"host": sm_config['elasticsearch']['host'],
-                                   "port": int(sm_config['elasticsearch']['port'])}])
-        docs = es.search(index=sm_config['elasticsearch']['index'], body={"query": {"match_all": {}}})
-        assert ([d['_id'].startswith('2000-01-01_00h00m') for d in docs['hits']['hits']])
+        time.sleep(1)  # Waiting for ES
+        docs = es_dsl_search.query().execute()['hits']['hits']
+        for doc in docs:
+            assert doc['_id'].startswith('2000-01-01_00h00m')
 
     finally:
         db.close()

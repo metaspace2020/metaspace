@@ -45,8 +45,6 @@ if __name__ == '__main__':
     SMConfig.set_path(CONFIG_PATH)
     CONFIG = SMConfig.get_conf()
     db = DB(CONFIG['db'])
-    ds_man = DatasetManager(db,
-                            ESExporter(),
-                            QueuePublisher(CONFIG['queue'], 'sm_annotate'))
+    ds_man = DatasetManager(db, ESExporter(), mode='queue')
 
     run(host='localhost', port=5123)

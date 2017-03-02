@@ -1,5 +1,4 @@
-import json
-import pytest
+from __future__ import unicode_literals
 from mock import patch, MagicMock
 
 from sm.engine.db import DB
@@ -11,21 +10,22 @@ from sm.engine.work_dir import WorkDirManager
 from sm.engine.tests.util import spark_context, sm_config, ds_config, create_test_db, drop_test_db
 
 
-def test_dataset_manager_add_ds_new_ds_id(create_test_db, drop_test_db, sm_config):
+@patch('sm.engine.dataset_manager.QueuePublisher')
+def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, create_test_db, drop_test_db, sm_config):
     SMConfig._config_dict = sm_config
+    qpub_mock = QueuePublisherMock()
 
     db = DB(sm_config['db'])
-    qpub = MagicMock(QueuePublisher)
     try:
         ds = Dataset('new_ds_id', 'ds_name', 'input_path', {'meta': 'data'}, {'config': 0})
-        ds_man = DatasetManager(db, None, qpub, None)
+        ds_man = DatasetManager(db, None, mode='queue')
         ds_man.add_ds(ds)
 
         rows = db.select('SELECT * FROM dataset')
         assert len(rows) == 1
         assert rows[0] == ('new_ds_id', 'ds_name', 'input_path', {'meta': 'data'}, {'config': 0})
 
-        qpub.publish.assert_called_once_with({
+        qpub_mock.publish.assert_called_once_with({
             'ds_id': 'new_ds_id',
             'ds_name': 'ds_name',
             'input_path': 'input_path'
@@ -35,13 +35,14 @@ def test_dataset_manager_add_ds_new_ds_id(create_test_db, drop_test_db, sm_confi
 
 
 @patch('sm.engine.dataset_manager.ImageStoreServiceWrapper')
-def test_dataset_manager_add_ds_ds_id_exists(ImageStoreServiceWrapperMock, create_test_db, drop_test_db, sm_config):
+@patch('sm.engine.dataset_manager.QueuePublisher')
+def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServiceWrapperMock,
+                                             create_test_db, drop_test_db, sm_config):
     SMConfig._config_dict = sm_config
-
+    qpub_mock = QueuePublisherMock()
     img_store = ImageStoreServiceWrapperMock()
     db = DB(sm_config['db'])
     es = MagicMock(ESExporter())
-    qpub = MagicMock(QueuePublisher)
     try:
         db.insert("INSERT INTO dataset VALUES (%s, %s, %s, %s, %s)",
                   rows=[('ds_id', 'ds_name', 'input_path', '{}', '{}')])
@@ -52,14 +53,14 @@ def test_dataset_manager_add_ds_ds_id_exists(ImageStoreServiceWrapperMock, creat
                   rows=[(0, 0, 1, '+H', 'ion_image_url', ['iso_image_url_0'])])
 
         ds = Dataset('ds_id', 'new_ds_name', 'input_path', {'meta': 'data'}, {'config': 0})
-        ds_man = DatasetManager(db, es, qpub, None)
+        ds_man = DatasetManager(db, es, mode='queue')
         ds_man.add_ds(ds)
 
         rows = db.select("SELECT * FROM dataset")
         assert len(rows) == 1
         assert rows[0] == ('ds_id', 'new_ds_name', 'input_path', {'meta': 'data'}, {'config': 0})
 
-        qpub.publish.assert_called_once_with({
+        qpub_mock.publish.assert_called_once_with({
             'ds_id': 'ds_id',
             'ds_name': 'new_ds_name',
             'input_path': 'input_path'
@@ -81,22 +82,22 @@ def test_dataset_load_ds_works(create_test_db, drop_test_db, sm_config):
 
         ds = Dataset.load_ds('ds_id', db)
 
-        assert (ds.id, ds.name, ds.input_path, ds.meta, ds.config ==
-                ('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', '{"config": 0}'))
-
+        assert ((ds.id, ds.name, ds.input_path, ds.meta, ds.config) ==
+                ('ds_id', 'ds_name', 'input_path', {"meta": "data"}, {"config": 0}))
     finally:
         db.close()
 
 
 @patch('sm.engine.dataset_manager.ImageStoreServiceWrapper')
-def test_dataset_manager_delete_ds_works(ImageStoreServiceWrapperMock, create_test_db, drop_test_db, sm_config):
+@patch('sm.engine.dataset_manager.WorkDirManager')
+def test_dataset_manager_delete_ds_works(WorkDirManagerMock, ImageStoreServiceWrapperMock,
+                                         create_test_db, drop_test_db, sm_config):
     SMConfig._config_dict = sm_config
 
     img_store = ImageStoreServiceWrapperMock()
     db = DB(sm_config['db'])
     es = MagicMock(ESExporter())
-    qpub = MagicMock(QueuePublisher)
-    wd_man = MagicMock(WorkDirManager)
+    wd_man = WorkDirManagerMock()
     try:
         db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
                   rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', '{"config": 0}')])
@@ -106,7 +107,7 @@ def test_dataset_manager_delete_ds_works(ImageStoreServiceWrapperMock, create_te
                    "VALUES (%s, %s, %s, %s, %s, %s)"),
                   rows=[(0, 0, 1, '+H', 'ion_image_url', ['iso_image_url_0'])])
 
-        ds_man = DatasetManager(db, es, qpub, wd_man)
+        ds_man = DatasetManager(db, es, mode='queue')
         ds = Dataset.load_ds('ds_id', db)
         ds_man.delete_ds(ds, del_raw_data=True)
 

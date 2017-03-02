@@ -46,12 +46,9 @@ class SearchJob(object):
     sm_config_path : string
         Path to the sm-engine config file
     """
-    def __init__(self, ds_id, ds_name, drop, input_path, sm_config_path, no_clean=False):
+    def __init__(self, ds_id, sm_config_path, no_clean=False):
         self.ds_id = ds_id
-        self.ds_name = ds_name
-        self.drop = drop
         self.no_clean = no_clean
-        self.input_path = input_path
 
         self._job_id = None
         self._sc = None
@@ -97,37 +94,31 @@ class SearchJob(object):
         logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s ...",
                     self._ds.id, self._ds.name, mol_db.name, mol_db.version)
 
-        theor_peaks_gen = TheorPeaksGenerator(self._sc, mol_db, self._ds.ds_config)
+        theor_peaks_gen = TheorPeaksGenerator(self._sc, mol_db, self._ds.config)
         theor_peaks_gen.run()
 
-        target_adducts = self._ds.ds_config['isotope_generation']['adducts']
+        target_adducts = self._ds.config['isotope_generation']['adducts']
         self._fdr = FDR(self._job_id, mol_db,
                         decoy_sample_size=20, target_adducts=target_adducts, db=self._db)
         self._fdr.decoy_adduct_selection()
 
-        search_alg = MSMBasicSearch(self._sc, self._ds, mol_db, self._fdr, self._ds.ds_config)
+        search_alg = MSMBasicSearch(self._sc, self._ds, mol_db, self._fdr, self._ds.config)
         ion_metrics_df, ion_iso_images = search_alg.search()
 
-        search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics,
-                                       self._ds, self._db, self._ds.ds_config)
+        search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics, self._ds, self._db)
         search_results.store(ion_metrics_df, ion_iso_images)
 
-        self._es.index_ds(self._db, mol_db, self.ds_id)
+        self._es.index_ds(self.ds_id, mol_db)
         self._db.alter('UPDATE job set finish=%s where id=%s',
                        datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
 
-    def run(self, ds_config_path=None):
+    def run(self):
         """ Entry point of the engine. Molecule search is completed in several steps:
          * Copying input data to the engine work dir
          * Conversion input data (imzML+ibd) to plain text format. One line - one spectrum data
          * Generation and saving to the database theoretical peaks for all formulas from the molecule database
          * Molecules search. The most compute intensive part. Spark is used to run it in distributed manner.
          * Saving results (isotope images and their metrics of quality for each putative molecule) to the database
-
-        Args
-        -------
-        ds_config_path: string
-            Path to the dataset config file
         """
         try:
             start = time.time()
@@ -140,10 +131,9 @@ class SearchJob(object):
             if not self.no_clean:
                 self._wd_manager.clean()
 
-            ds_reader = DatasetReader(self.ds_id, self.input_path, self._sc, self._wd_manager)
-            ds_reader.copy_convert_input_data()
             self._ds = Dataset.load_ds(self.ds_id, self._db)
-            self._ds.dims = ds_reader.get_dims()
+            self._ds.reader = DatasetReader(self.ds_id, self._ds.input_path, self._sc, self._wd_manager)
+            self._ds.reader.copy_convert_input_data()
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 

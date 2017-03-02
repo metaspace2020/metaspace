@@ -34,7 +34,6 @@ class DatasetReader(object):
         self._sc = sc
 
         self.coord_pairs = None
-        self._determine_pixel_order()
 
     @staticmethod
     def _parse_coord_row(s):
@@ -97,7 +96,7 @@ class DatasetReader(object):
 
     def copy_convert_input_data(self):
         if not self._wd_manager.exists(self._wd_manager.txt_path):
-            self._wd_manager.copy_input_data(self.input_path, None)
+            self._wd_manager.copy_input_data(self.input_path)
             imzml_converter = ImzmlTxtConverter(self._wd_manager.local_dir.imzml_path,
                                                 self._wd_manager.local_dir.txt_path,
                                                 self._wd_manager.local_dir.coord_path)
@@ -105,6 +104,8 @@ class DatasetReader(object):
 
             if not self._wd_manager.local_fs_only:
                 self._wd_manager.upload_to_remote()
+
+        self._determine_pixel_order()
 
     @staticmethod
     def txt_to_spectrum_non_cum(s):

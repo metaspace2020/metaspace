@@ -45,7 +45,7 @@ def test_work_dir_copy_input_data_no_files_local_path(clear_files, sm_config):
 
     SMConfig._config_dict = sm_config
     work_dir_man = WorkDirManager('2000-01-01_00h00m')
-    work_dir_man.copy_input_data(input_local_path, join(input_local_path, 'config.json'))
+    work_dir_man.copy_input_data(input_local_path)
 
     file_list = set(listdir(ds_path))
     assert file_list == {'foo.imzML', 'foo.ibd', 'config.json', 'meta.json'}
@@ -59,7 +59,7 @@ def test_work_dir_upload_to_remote_leaves_meta_config_files(clear_files, sm_conf
     work_dir_man = WorkDirManager('2000-01-01_00h00m')
     work_dir_man.remote_dir = MagicMock(S3WorkDir)
 
-    work_dir_man.copy_input_data(input_local_path, join(input_local_path, 'config.json'))
+    work_dir_man.copy_input_data(input_local_path)
     work_dir_man.upload_to_remote()
 
     file_list = set(listdir(ds_path))

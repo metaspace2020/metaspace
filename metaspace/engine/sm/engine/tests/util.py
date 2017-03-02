@@ -1,8 +1,12 @@
 from os.path import join
 import pytest
+from mock import patch
+from elasticsearch import Elasticsearch
+from elasticsearch_dsl import Search
 from fabric.api import local
 from pyspark import SparkContext, SparkConf
 from logging.config import dictConfig
+from mock import MagicMock
 
 from sm.engine.db import DB
 from sm.engine.util import proj_root, sm_log_config, SMConfig
@@ -84,6 +88,11 @@ def sm_config():
             "host": "localhost",
             "port": 9392
         },
+        "rabbitmq": {
+            "host": "localhost",
+            "user": "sm",
+            "password": "1321"
+        },
         "services": {
             "iso_images": "http://localhost:3010/iso_images",
             "mol_db": "http://localhost:5000/v1"
@@ -100,8 +109,16 @@ def sm_config():
 
 
 @pytest.fixture()
+def es_dsl_search(sm_config):
+    es = Elasticsearch(hosts=["{}:{}".format(sm_config['elasticsearch']['host'],
+                                             sm_config['elasticsearch']['port'])])
+    return Search(using=es, index=sm_config['elasticsearch']['index'])
+
+
+@pytest.fixture()
 def create_sm_index(sm_config):
     SMConfig._config_dict = sm_config
-    es_exp = ESExporter()
-    es_exp.delete_index()
-    es_exp.create_index()
+    with patch('sm.engine.es_export.DB') as DBMock:
+        es_exp = ESExporter()
+        es_exp.delete_index()
+        es_exp.create_index()

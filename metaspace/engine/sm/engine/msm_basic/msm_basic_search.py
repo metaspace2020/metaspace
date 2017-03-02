@@ -24,7 +24,7 @@ class MSMBasicSearch(SearchAlgorithm):
             (ion metrics DataFrame, ion image urls dict)
         """
         logger.info('Running molecule search')
-        ion_images = compute_sf_images(self.sc, self.ds, self._mol_db.get_ion_peak_df(),
+        ion_images = compute_sf_images(self.sc, self._ds, self._mol_db.get_ion_peak_df(),
                                        self.ds_config['image_generation']['ppm'])
         all_sf_metrics_df = self.calc_metrics(ion_images)
         sf_metrics_fdr_df = self.estimate_fdr(all_sf_metrics_df)
@@ -34,7 +34,7 @@ class MSMBasicSearch(SearchAlgorithm):
         return sf_metrics_fdr_df, ion_images
 
     def calc_metrics(self, sf_images):
-        all_sf_metrics_df = sf_image_metrics(sf_images, self.sc, self._mol_db, self.ds, self.ds_config)
+        all_sf_metrics_df = sf_image_metrics(sf_images, self._ds, self._mol_db, self.sc)
         return all_sf_metrics_df
 
     def estimate_fdr(self, all_sf_metrics_df):

@@ -36,7 +36,7 @@ if __name__ == '__main__':
             local(py_test_cmd + 'tests/test_dataset_manager.py')
             local(py_test_cmd + 'tests/test_search_results.py')
             local(py_test_cmd + 'tests/test_es_exporter.py')
-            local(py_test_cmd + 'tests/test_search_job_imzml_example.py')
+            local(py_test_cmd + 'tests/test_z_search_job_imzml_example.py')
 
         # Functional/scientific tests
         if args.sci or args.all:

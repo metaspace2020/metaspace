@@ -56,7 +56,7 @@ def test_sf_image_metrics(spark_context, ds_formulas_images_mock, ds_config):
         ds_mock, mol_db_mock, ref_images = ds_formulas_images_mock
         ref_images_rdd = spark_context.parallelize(ref_images)
 
-        metrics_df = sf_image_metrics(ref_images_rdd, spark_context, mol_db_mock, ds_mock, ds_config)
+        metrics_df = sf_image_metrics(ref_images_rdd, ds_mock, mol_db_mock, spark_context)
 
         exp_metrics_df = (pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, 0.9**3],
                                        [1, '+H', 0.9, 0.9, 0.9, 0.9**3]],
