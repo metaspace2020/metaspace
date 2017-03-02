@@ -145,7 +145,7 @@ class DatasetManager(object):
         assert ds.id or ds.name
 
         if not ds.id:
-            r = self._db.select_one('SELECT id FROM datasets WHERE name = %s', ds.name)
+            r = self._db.select_one('SELECT id FROM dataset WHERE name = %s', ds.name)
             ds.id = r[0] if r else None
 
         if ds.id:

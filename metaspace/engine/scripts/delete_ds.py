@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import logging
+from pprint import pformat
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
@@ -8,26 +9,21 @@ from sm.engine.util import SMConfig, init_logger
 from sm.engine import DatasetManager, Dataset
 
 
-DS_ANNOTATIONS_COUNT = ('SELECT count(*) '
-                        'FROM iso_image_metrics m '
-                        'JOIN job j ON j.id = m.job_id '
-                        'JOIN dataset ds on ds.id = j.ds_id '
-                        'WHERE ds.id = %s')
-
-
 def delete_dataset(id, name):
     logger.info('Deleting dataset id/name: {}/{}'.format(id, name))
-    ds = Dataset(None, id, name, False, '')
-    ds_man = DatasetManager(db, es_exp, None)
+    ds = Dataset(id, name)
+    ds_man = DatasetManager(db, es_exp, mode='local')
     ds_man.delete_ds(ds)
 
 
 def match_and_delete_dataset(sql, arg):
     ds_to_del = db.select(sql, arg)
     if ds_to_del:
-        if raw_input('Delete datasets: {}? (y/n)'.format(ds_to_del)) == 'y':
+        if raw_input('Delete datasets:\n{}? (y/n):'.format(pformat(ds_to_del))) == 'y':
             for id, name in ds_to_del:
                 delete_dataset(id, name)
+        else:
+            logger.info('Nothing was deleted')
     else:
         logger.info('No matching datasets to delete')
 
