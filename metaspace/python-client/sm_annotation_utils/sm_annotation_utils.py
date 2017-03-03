@@ -14,7 +14,7 @@ join job j on j.id = img.job_id and j.db_id = img.db_id
 join dataset ds on ds.id = j.ds_id
 join sum_formula sf on sf.db_id = img.db_id and sf.id = img.sf_id
 join formula_db fdb on fdb.id = img.db_id
-where ds.name = %s and sf.sf = %s and img.adduct = %s
+where ds.name = %s and sf.sf = %s and img.adduct = %s and fdb.name = %s
 order by img.peak
 """
 
@@ -56,7 +56,7 @@ class SMDataset(object):
         self._properties = {}
         self._name = self.name
         self.es_search = Search(using=es_client, index=index_name)
-        self._es_query = self.es_search.query('term', ds_name=self._name)
+        self._es_query = self.es_search.query('term', ds_id=self._id)
 
     def _db_fetch(self, prop):
         if prop in self._properties:
@@ -65,7 +65,11 @@ class SMDataset(object):
         value = self._db_cursor.fetchone()[0]
         self._properties[prop] = value
         return value
-
+    
+    @property
+    def id(self):
+        return self._id
+    
     @property
     def name(self):
         return self._db_fetch("name")
@@ -79,12 +83,14 @@ class SMDataset(object):
 
     def annotations(self, fdr=0.1, database=None):
         if fdr not in [0.05, 0.1, 0.2, 0.5]:
-            print('fdr request does not match default elastic search defaults')
+            print('fdr request does not match elastic search defaults')
         fields = ['sf', 'adduct', 'fdr']
         if not database:
             response = self._es_query.scan()
         else:
-            response = self.es_search.query('term', ds_name=self._name).query("match", db_name=database).scan()
+            response = (self.es_search.filter('term', ds_id=self._id)
+                        .filter('term', db_name=database)
+                        .filter("range", **{'fdr': {'to': fdr}})).scan()
         annotations = [(r.sf, r.adduct) for r in response if all([r.fdr, r.fdr <= fdr])]
         return annotations
 
@@ -116,7 +122,7 @@ class SMDataset(object):
         instr = InstrumentModel('tof', resolution)
         centroids = isotopes.centroids(instr).charged(int(charge)).trimmed(4)
         centroids.sortByMass()
-        return zip(centroids.masses, centroids.intensities)
+        return list(zip(centroids.masses, centroids.intensities))
 
     def polarity(self):
         return self.config['isotope_generation']['charge']['polarity']
@@ -125,14 +131,14 @@ class SMDataset(object):
         return self.config['database']['name']
 
     def isotope_images(self, sf, adduct):
-        self._db_cursor.execute(ISO_IMG_SEL, [self._name, sf, adduct])
-        images = []
+        self._db_cursor.execute(ISO_IMG_SEL, [self._name, sf, adduct, self.database()])
+        images = [None] * 4
         for r in self._db_cursor.fetchall():
             rows = r.img_bounds['y']['max'] - r.img_bounds['y']['min'] + 1
             cols = r.img_bounds['x']['max'] - r.img_bounds['x']['min'] + 1
             img = np.zeros(cols * rows)
             img[np.array(r.pixel_inds)] = np.array(r.intensities)
-            images.append(img.reshape(rows, cols))
+            images[r.peak] = img.reshape(rows, cols)
         return IsotopeImages(images, sf, adduct, self.centroids(sf, adduct))
 
 class Metadata(object):
@@ -150,18 +156,23 @@ class SMInstance(object):
     def __init__(self, config_filename):
         config = json.load(open(config_filename, 'r'))
         self._es_host = config['elasticsearch']['host']
+        self._es_port = config['elasticsearch']['port']
         self._es_index = config['elasticsearch']['index']
-        self._es_client = Elasticsearch(hosts=self._es_host, index=self._es_index)
-
+        self._es_client = Elasticsearch(hosts=['{}:{}'.format(self._es_host, self._es_port)], index=self._es_index)
+        
+        self._config = config
         self._db_host = config['db']['host']
         self._db_database = config['db']['database']
 
+        self.reconnect()
+    
+    def reconnect(self):
         self._db_conn = psycopg2.connect(host=self._db_host,
                                          database=self._db_database,
-                                         user=config['db']['user'],
-                                         password=config['db']['password'])
+                                         user=self._config['db']['user'],
+                                         password=self._config['db']['password'])
         self._db_cur = self._db_conn.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor)
-
+    
     def __repr__(self):
         return "SMInstance(DB {}/{}, ES {}/{})".format(self._db_host, self._db_database,
                                                        self._es_host, self._es_index)
@@ -179,7 +190,12 @@ class SMInstance(object):
         self._db_cur.execute(query)
         return [SMDataset(row[0], self._db_cur, self._es_client, index_name=self._es_index)
                 for row in self._db_cur.fetchall()]
-
+    
+    def all_adducts(self):
+        query = "select distinct adduct from iso_image_metrics m"
+        self._db_cur.execute(query)
+        return [row[0] for row in self._db_cur.fetchall()]
+    
     def database(self, database_name):
         return MolecularDatabase(database_name, self._db_cur)
 
