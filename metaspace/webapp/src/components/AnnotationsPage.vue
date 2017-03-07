@@ -14,7 +14,7 @@
 
       <el-col class="av-centered no-selection" v-else>
         <div style="align-self: center;">
-          Select an annotation by clicking the table
+          <i class="el-icon-loading" v-if="this.$store.state.tableIsLoading"></i>
         </div>
       </el-col>
 
@@ -52,6 +52,9 @@
    },
    created() {
      this.$store.commit('updateFilter', this.annotationFilter);
+   },
+   destroyed() {
+     this.$store.commit('setAnnotation', undefined);
    },
    components: {
      AnnotationTable,

@@ -27,6 +27,9 @@ const store = new Vuex.Store({
     // currently selected annotation
     annotation: undefined,
 
+    // is annotation table loading?
+    tableIsLoading: true,
+
     lastUsedFilters: {},
 
     authenticated: false,
@@ -111,6 +114,10 @@ const store = new Vuex.Store({
 
     setAnnotation(state, annotation) {
       state.annotation = annotation;
+    },
+
+    updateAnnotationTableStatus(state, isLoading) {
+      state.tableIsLoading = isLoading;
     },
 
     login(state, user) {

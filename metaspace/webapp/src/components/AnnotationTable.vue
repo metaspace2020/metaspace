@@ -142,8 +142,7 @@
        currentPage: 0,
        recordsPerPage: 15,
        greenCount: 0,
-       pageSizes: [15, 20, 25, 30],
-       isLoading: false
+       pageSizes: [15, 20, 25, 30]
      }
    },
    mounted() {
@@ -154,6 +153,10 @@
      }
    },
    computed: {
+     isLoading() {
+       return this.$store.state.tableIsLoading
+     },
+
      filter() {
        return this.$store.getters.filter;
      },
@@ -252,7 +255,7 @@
          this.greenCount = data.countAnnotations;
        },
        loadingChangeCb (isLoading) {
-         this.isLoading = isLoading;
+         this.$store.commit('updateAnnotationTableStatus', isLoading);
        }
      }
    },
