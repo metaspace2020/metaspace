@@ -1,6 +1,6 @@
 import FILTER_SPECIFICATIONS from './filterSpecs.js';
 
-const DEFAULT_FILTER = {
+export const DEFAULT_FILTER = {
   database: 'HMDB',
   institution: undefined,
   datasetName: undefined,

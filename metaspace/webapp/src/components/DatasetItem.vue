@@ -12,20 +12,34 @@
         <b>{{ formatDatasetName }}</b>
       </div>
 
-      <div style="color: darkblue;" >
-        {{ formatOrganismPart }}
+      <div style="color: darkblue;">
+        {{ formatCondition }}
+        <span class="ds-add-filter"
+              title="Filter by species"
+              @click="addFilter('organism')">
+          {{ formatOrganism }}</span>, {{ formatOrganismPart }}
       </div>
 
       <div>
-        {{ dataset.ionisationSource }} + {{ dataset.analyzer.type }},
-        {{ dataset.polarity.toLowerCase() }} mode,
+        <span class="ds-add-filter"
+              title="Filter by ionisation source"
+              @click="addFilter('ionisationSource')">
+          {{ dataset.ionisationSource }}</span> + {{ dataset.analyzer.type }},
+        <span class="ds-add-filter"
+              title="Filter by polarity"
+              @click="addFilter('polarity')">
+          {{ dataset.polarity.toLowerCase() }} mode
+        </span>,
         resolving power {{ formatResolvingPower }}
       </div>
 
       <div style="font-size: 15px;">
         Submitted <span class="s-bold">{{ formatDate }}</span>
         at {{ formatTime }} by {{ formatSubmitter }},
-        <span class="s-inst" v-html="formatInstitution"></span>
+        <span class="s-inst ds-add-filter"
+              v-html="formatInstitution"
+              title="Filter by this institution"
+              @click="addFilter('institution')"></span>
       </div>
     </div>
 
@@ -46,6 +60,7 @@
 
 <script>
  import DatasetInfo from './DatasetInfo.vue';
+ import capitalize from 'lodash/capitalize';
 
  export default {
    name: 'dataset-item',
@@ -100,34 +115,38 @@
        return this.metadata.metaspace_options.Metabolite_Database;
      },
 
+     organism() {
+       const species = this.metadata.Sample_Information.Organism || '';
+       if (species == '-')
+         return '';
+       return species;
+     },
+
+     condition() {
+       const cond = this.metadata.Sample_Information.Condition || '';
+       if (cond == '-')
+         return '';
+       return cond;
+     },
+
+     formatOrganism() {
+       return this.organism.replace(/_/g, ' ').toLowerCase();
+     },
+
+     formatCondition() {
+       return this.condition.replace(/_([A-Z])/g,
+                                     (_, s) => ' ' + s.toLowerCase());
+     },
+
+     formatOrganismPart() {
+       const part = this.metadata.Sample_Information.Organism_Part || '';
+       return part.replace(/_/g, ' ').toLowerCase();
+     },
+
      formatResolvingPower() {
        const rp = this.metadata.MS_Analysis.Detector_Resolving_Power;
        const {mz, Resolving_Power} = rp;
        return (Resolving_Power / 1000).toFixed(0) + 'k @ ' + mz;
-     },
-
-     formatOrganismPart() {
-       try {
-         const info = this.metadata.Sample_Information;
-         const {Organism, Condition, Organism_Part} = info;
-
-         let result = '';
-         if (Condition && Condition != '-')
-           result += Condition.replace(/_([A-Z])/g,
-                                       (_, s) => ' ' + s.toLowerCase()) + ' ';
-
-         if (!Organism || Organism == '-')
-           return '';
-         result += Organism.replace(/_/g, ' ').toLowerCase();
-
-         if (!Organism_Part || Organism_Part == '-')
-           return result;
-         result += ', ' + Organism_Part.replace(/_/g, ' ').toLowerCase();
-         return result;
-       } catch (e) {
-         console.log(e);
-         return '';
-       }
      },
 
      haveEditAccess() {
@@ -156,6 +175,15 @@
    methods: {
      showMetadata() {
        this.showMetadataDialog = true;
+     },
+
+     addFilter(field) {
+       let filter = Object.assign({}, this.$store.getters.filter);
+       if (field == 'polarity')
+         filter['polarity'] = capitalize(this.dataset.polarity);
+       else
+         filter[field] = this.dataset[field] || this[field];
+       this.$store.commit('updateFilter', filter);
      }
    }
  }
@@ -196,6 +224,10 @@
 
  .s-inst {
    color: sienna;
+ }
+
+ .ds-add-filter {
+   cursor: pointer;
  }
 
 </style>

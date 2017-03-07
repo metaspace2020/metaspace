@@ -37,7 +37,7 @@
 
 <script>
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
- import {encodeParams} from '../filterToUrl.js';
+ import {encodeParams, DEFAULT_FILTER} from '../filterToUrl.js';
 
  export default {
    name: 'metaspace-header',
@@ -55,7 +55,7 @@
        const path = '/annotations',
              lastParams = this.$store.state.lastUsedFilters[path];
        let f = lastParams ? lastParams.filter : {};
-       f = Object.assign({}, f, this.$store.getters.filter);
+       f = Object.assign({}, f, DEFAULT_FILTER, this.$store.getters.filter);
        const link = {
          path,
          query: encodeParams(f, '/annotations')
