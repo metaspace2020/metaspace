@@ -30,8 +30,7 @@
     </div>
 
     <div class="ds-actions">
-      <router-link :to="resultsHref" target="_blank"
-                   title="Opens in a new tab">Browse annotations</router-link>
+      <router-link :to="resultsHref" >Browse annotations</router-link>
       <br/>
       <a @click="showMetadata" class="metadata-link">Show full metadata</a>
 

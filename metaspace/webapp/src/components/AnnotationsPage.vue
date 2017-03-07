@@ -51,23 +51,7 @@
      ...mapGetters({annotationFilter: 'filter'})
    },
    created() {
-     const {path} = this.$store.state.route;
-     const lastParams = this.$store.state.lastUsedFilters[path];
-     if (lastParams) {
-       // returned to the page after first load:
-       // restore last used set of filters (= redirect)
-       let f = lastParams.filter;
-
-       const df = this.$store.state.lastUsedFilters['/datasets'];
-       if (df)
-         f = Object.assign({}, lastParams.filter, df.filter);
-
-       this.$store.commit('updateFilter', f);
-     } else {
-       // first page load:
-       // setup the store so that filters (parsed from the URL) are shown
-       this.$store.commit('updateFilter', this.annotationFilter);
-     }
+     this.$store.commit('updateFilter', this.annotationFilter);
    },
    components: {
      AnnotationTable,

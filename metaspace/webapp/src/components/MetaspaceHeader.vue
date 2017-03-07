@@ -9,25 +9,25 @@
       </a>
     </div>
 
-    <router-link tag="div" to="/upload">
+    <router-link to="/upload">
       <div class="header-item vc page-link">
         <div class="vc">Upload</div>
       </div>
     </router-link>
 
-    <router-link tag="div" to="/datasets">
+    <router-link :to="datasetsHref">
       <div class="header-item vc page-link">
         <div class="vc">Datasets</div>
       </div>
     </router-link>
 
-    <router-link tag="div" to="/annotations">
+    <router-link :to="annotationsHref">
       <div class="header-item vc page-link">
         <div class="vc">Annotations</div>
       </div>
     </router-link>
 
-    <router-link tag="div" to="/about">
+    <router-link to="/about">
       <div class="header-item vc page-link">
         <div class="vc">About</div>
       </div>
@@ -36,8 +36,33 @@
 </template>
 
 <script>
+ import FILTER_SPECIFICATIONS from '../filterSpecs.js';
+ import {encodeParams} from '../filterToUrl.js';
+
  export default {
    name: 'metaspace-header',
+   computed: {
+     datasetsHref() {
+       const path = '/datasets';
+       const link = {
+         path,
+         query: encodeParams(this.$store.getters.filter, '/datasets')
+       };
+       return link;
+     },
+
+     annotationsHref() {
+       const path = '/annotations',
+             lastParams = this.$store.state.lastUsedFilters[path];
+       let f = lastParams ? lastParams.filter : {};
+       f = Object.assign({}, f, this.$store.getters.filter);
+       const link = {
+         path,
+         query: encodeParams(f, '/annotations')
+       };
+       return link;
+     }
+   }
  }
 </script>
 
