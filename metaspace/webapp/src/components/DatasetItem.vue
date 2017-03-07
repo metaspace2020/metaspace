@@ -30,14 +30,16 @@
     </div>
 
     <div class="ds-actions">
+      <i class="el-icon-picture"></i>
       <router-link :to="resultsHref" >Browse annotations</router-link>
       <br/>
-      <a @click="showMetadata" class="metadata-link">Show full metadata</a>
 
+      <i class="el-icon-view"></i>
+      <a @click="showMetadata" class="metadata-link">Show full metadata</a>
       <br/>
-      <router-link v-if="haveEditAccess" :to="editHref">
-        Edit metadata
-      </router-link>
+
+      <i class="el-icon-edit" v-if="haveEditAccess"></i>
+      <router-link v-if="haveEditAccess" :to="editHref">Edit metadata</router-link>
     </div>
   </div>
 </template>
