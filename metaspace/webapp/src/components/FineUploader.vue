@@ -95,7 +95,8 @@
      return {
        fineUploader: null,
        uuid: '',
-       uploadFilenames: []
+       uploadFilenames: [],
+       valid: false
      }
    },
 
@@ -104,10 +105,11 @@
    },
 
    methods: {
-     uploadIfValid() {
+     validate() {
        const files = this.fineUploader.getUploads();
 
        let fnames = files.map(f => f.name);
+
        if (fnames.length < 2) {
          return;
        }
@@ -130,12 +132,25 @@
        }
 
        console.log(this.uuid);
-       this.$emit('upload', fnames);
-       this.fineUploader.uploadStoredFiles();
+       this.valid = true;
        this.uploadFilenames = fnames;
      },
 
+     uploadIfValid(id) {
+       if (!this.valid)
+         return;
+
+       // apparently that's the only way to check
+       // if both files are in fineUploader._storedIds already
+       if (id == 1) {
+         this.$emit('upload', this.uploadFilenames);
+         this.fineUploader.uploadStoredFiles();
+       }
+     },
+
      reset() {
+       this.uploadFilenames = [];
+       this.valid = false;
        this.uuid = uuid();
 
        let options = Object.assign({}, basicOptions, {
@@ -159,7 +174,8 @@
                this.$emit('failure', failed);
              }
            },
-           onValidateBatch: files => this.uploadIfValid(files)
+           onValidateBatch: () => this.validate(),
+           onSubmitted: id => this.uploadIfValid(id)
          }
        });
 

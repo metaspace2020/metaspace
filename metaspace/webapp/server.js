@@ -27,8 +27,15 @@ var app = express();
 
 var jwt = require('jwt-simple');
 
+var pg = require('pg');
+
+pg.on('error', function(error) {
+  console.log(error);
+});
+
 app.use(session({
   store: new (require('connect-pg-simple')(session))({
+    pg: pg,
     conString: conf.DB_CONN_STRING
   }),
   secret: conf.COOKIE_SECRET,
