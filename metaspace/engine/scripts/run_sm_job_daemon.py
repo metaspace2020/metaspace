@@ -71,7 +71,7 @@ def on_job_succeeded(msg):
         'METASPACE Team\n\n'
         '---\n'
         'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).'
-    ).format(submitter['First_Name'], submitter['Surname'], ds_name)
+    ).format(submitter.get('First_Name', 'Sir'), submitter.get('Surname', ''), ds_name)
 
     if 'Email' in submitter:
         send_email(submitter['Email'],
@@ -94,7 +94,7 @@ def on_job_failed(msg):
         'METASPACE Team\n\n'
         '---\n'
         'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).'
-    ).format(submitter['First_Name'], submitter['Surname'], ds_name)
+    ).format(submitter.get('First_Name', 'Sir'), submitter.get('Surname', ''), ds_name)
 
     if 'Email' in submitter:
         send_email(submitter['Email'],

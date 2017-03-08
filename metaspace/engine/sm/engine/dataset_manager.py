@@ -66,7 +66,7 @@ class DatasetManager(object):
         ----------
         db : sm.engine.DB
         es: sm.engine.ESExporter
-        mode: str
+        mode: unicode
             'local' or 'queue'
     """
     def __init__(self, db, es, mode):
@@ -86,9 +86,10 @@ class DatasetManager(object):
             'ds_name': ds.name,
             'input_path': ds.input_path,
         }
-        email = ds.meta.get('Submitted_By', {}).get('Submitter', {}).get('Email')
-        if email:
-            msg['user_email'] = email.lower()
+        if ds.meta:
+            email = ds.meta.get('Submitted_By', {}).get('Submitter', {}).get('Email')
+            if email:
+                msg['user_email'] = email.lower()
         QueuePublisher(self._sm_config['rabbitmq'], 'sm_annotate').publish(msg)
         logger.info('New job message posted: %s', msg)
 
@@ -98,18 +99,19 @@ class DatasetManager(object):
         changed_paths = set(old_meta_paths) - set(meta_paths)
         needsReproc = False
         for p in changed_paths:
-            if p.startsWith('/MS_Analysis') and not p.startsWith('/MS_Analysis/Ionisation_Source'):
+            if p.startswith('/MS_Analysis') and not p.startswith('/MS_Analysis/Ionisation_Source'):
                 needsReproc = True
-            if p.startsWith('/metaspace_options/Metabolite_Database'):
+            if p.startswith('/metaspace_options/Metabolite_Database'):
                 needsReproc = True
         return needsReproc
 
+    # TODO: make sure the config and metadata are compatible
     def update_ds(self, ds):
-        old_meta = self._db.select_one(DS_SEL, ds.id)[2]
-        if self._proc_params_changed(old_meta, ds.meta):
+        old_config = self._db.select_one(DS_SEL, ds.id)[3]
+        if old_config != ds.config:
             self.add_ds(ds)
         else:
-            self._db.alter(DS_UPD, ds.name, ds.input_path, ds.meta, ds.config)
+            self._db.alter(DS_UPD, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config), ds.id)
             self._reindex_ds(ds)
 
     def add_ds(self, ds):

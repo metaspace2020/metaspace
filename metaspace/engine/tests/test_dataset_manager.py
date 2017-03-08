@@ -72,6 +72,65 @@ def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServi
         db.close()
 
 
+@patch('sm.engine.dataset_manager.MolecularDB')
+def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, create_test_db, drop_test_db, sm_config):
+    SMConfig._config_dict = sm_config
+    moldb_mock = MolecularDBMock()
+
+    db = DB(sm_config['db'])
+    es = MagicMock(ESExporter())
+    try:
+        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
+                  rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}',
+                         '{"databases": [{"name": "HMDB", "version": "2017-01"}]}')])
+
+        ds = Dataset.load_ds('ds_id', db)
+        ds.meta = {'new': 'meta'}
+        ds_man = DatasetManager(db, es, mode='queue')
+        ds_man.update_ds(ds)
+
+        rows = db.select('SELECT * FROM dataset')
+        assert len(rows) == 1
+        assert rows[0] == ('ds_id', 'ds_name', 'input_path', {'new': 'meta'},
+                           {"databases": [{"name": "HMDB", "version": "2017-01"}]})
+
+        es.index_ds.assert_called_once_with('ds_id', moldb_mock)
+    finally:
+        db.close()
+
+
+@patch('sm.engine.dataset_manager.QueuePublisher')
+def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, create_test_db, drop_test_db, sm_config):
+    SMConfig._config_dict = sm_config
+
+    qpub_mock = QueuePublisherMock()
+    db = DB(sm_config['db'])
+    es = MagicMock(ESExporter())
+    try:
+        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
+                  rows=[('ds_id', 'ds_name', 'input_path',
+                         '{"metaspace_options": {"Metabolite_Database": "db"}}', '{"config": "value"}')])
+
+        ds = Dataset.load_ds('ds_id', db)
+        ds.config = {"config": "new_value"}
+        ds_man = DatasetManager(db, es, mode='queue')
+        ds_man.update_ds(ds)
+
+        rows = db.select('SELECT * FROM dataset')
+        assert len(rows) == 1
+        assert rows[0] == ('ds_id', 'ds_name', 'input_path',
+                           {"metaspace_options": {"Metabolite_Database": "db"}}, {"config": "new_value"})
+
+        msg = {
+            'ds_id': 'ds_id',
+            'ds_name': 'ds_name',
+            'input_path': 'input_path',
+        }
+        qpub_mock.publish.assert_called_once_with(msg)
+    finally:
+        db.close()
+
+
 def test_dataset_load_ds_works(create_test_db, drop_test_db, sm_config):
     SMConfig._config_dict = sm_config
 

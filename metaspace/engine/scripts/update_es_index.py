@@ -1,5 +1,4 @@
 import argparse
-
 import logging
 
 from sm.engine import MolecularDB

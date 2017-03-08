@@ -27,6 +27,7 @@ def test_dataset_reader_get_sample_area_mask_correctness(sm_config, spark_contex
             '2,1,1\n'])
 
         ds_reader = DatasetReader('ds_id', 'input_path', spark_context, work_dir_man_mock)
+        ds_reader._determine_pixel_order()
 
         assert tuple(ds_reader.get_sample_area_mask()) == (True, False, False, True)
 
@@ -39,8 +40,7 @@ def test_dataset_reader_get_spectra_works(sm_config, spark_context, create_drop_
     work_dir_man_mock.txt_path = '/txt_path'
 
     with patch('sm.engine.tests.util.SparkContext.textFile') as m:
-        m.side_effect = [spark_context.parallelize(['0,0,0\n', '2,1,1\n']),
-                         spark_context.parallelize(['0|100.0 200.0|1000.0 0\n', '2|200.0 300.0|10.0 20.0\n'])]
+        m.side_effect = [spark_context.parallelize(['0|100.0 200.0|1000.0 0\n', '2|200.0 300.0|10.0 20.0\n'])]
 
         ds_reader = DatasetReader('ds_id', 'input_path', spark_context, work_dir_man_mock)
         spectra_list = ds_reader.get_spectra().collect()

@@ -7,11 +7,12 @@ from pandas.util.testing import assert_frame_equal
 from scipy.sparse import csr_matrix
 
 from sm.engine.dataset_manager import DatasetManager, Dataset
+from sm.engine import DatasetReader
 from sm.engine.fdr import FDR
 from sm.engine.mol_db import MolecularDB
 from sm.engine.msm_basic.formula_img_validator import ImgMeasures, sf_image_metrics_est_fdr
 from sm.engine.msm_basic.formula_img_validator import sf_image_metrics, get_compute_img_metrics
-from sm.engine.tests.util import spark_context, ds_config
+from sm.engine.tests.util import spark_context, ds_config, sm_config
 
 
 @patch('sm.engine.msm_basic.formula_img_validator.isotope_pattern_match', return_value=0.95)
@@ -37,8 +38,10 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
 @pytest.fixture(scope='module')
 def ds_formulas_images_mock():
     ds_mock = Dataset('ds_id')
-    ds_mock.dims = (2, 3)
-    ds_mock.sample_area_mask = np.ones(2*3).astype(bool)
+    ds_mock.config = {'image_generation': {}}
+    ds_mock.reader = MagicMock(DatasetReader)
+    ds_mock.reader.get_dims.return_value = (2, 3)
+    ds_mock.reader.get_sample_area_mask.return_value = np.ones(2*3).astype(bool)
 
     mol_db_mock = MagicMock(spec=MolecularDB)
     mol_db_mock.get_sf_peak_ints.return_value = {(0, '+H'): [100, 10, 1], (1, '+H'): [100, 10, 1]}
