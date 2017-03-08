@@ -158,6 +158,8 @@ class ClusterDaemon(object):
                 setup_failed += 1
                 if setup_failed >= setup_failed_max:
                     raise e
+            else:
+                break
 
     def start(self):
         self.logger.info('Started the SM cluster auto-start daemon (interval=%dsec)...', self.interval)
