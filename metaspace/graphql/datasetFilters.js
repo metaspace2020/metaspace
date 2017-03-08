@@ -77,7 +77,7 @@ function dsField(pgDatasetRecord, alias){
   for (let field of datasetFilters[alias].schemaPath.split("."))
     info = info[field];
   return info;
-};
+}
 
 module.exports = {
   AbstractDatasetFilter,

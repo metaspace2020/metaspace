@@ -23,7 +23,7 @@ const dbConfig = () => {
   };
 };
 
-var pg = require('knex')({
+let pg = require('knex')({
   client: 'pg',
   connection: dbConfig(),
   searchPath: 'knex,public'
@@ -241,6 +241,28 @@ const Resolvers = {
   },
 
   Mutation: {
+    submitDataset(_, args) {
+      const {path, metadataJson} = args;
+      try {
+        const metadata = JSON.parse(metadataJson);
+      
+        const message = {
+          ds_name: metadata.metaspace_options.Dataset_Name,
+          ds_id: moment().format("Y-MM-DD_HH[h]mm[m]ss[s]"),
+          input_path: path,
+          user_email: metadata.Submitted_By.Submitter.Email
+        };
+      
+        copyMetadata(path, metadataJson).then(() => {
+          sendMessageToRabbitMQ(JSON.stringify(message));
+        });
+      
+        return "success";
+      } catch (e) {
+        return e.message;
+      }
+    },
+    
     updateMetadata(_, args) {
       const {datasetId, metadataJson} = args;
       try {
