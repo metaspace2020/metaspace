@@ -139,23 +139,25 @@ class ClusterDaemon(object):
 
     def _try_start_setup_deploy(self, setup_failed_max=5):
         setup_failed = 0
-        try:
-            self.logger.info('Queue is not empty. Starting the cluster...')
-            self.cluster_start()
-            m = {
-                'master': self.ansible_config['cluster_configuration']['instances']['master'],
-                'slave': self.ansible_config['cluster_configuration']['instances']['slave']
-            }
-            self.post_to_slack('rocket', "[v] Cluster started: {}".format(m))
+        while True:
+            try:
+                self.logger.info('Queue is not empty. Starting the cluster (%s attempt)...', setup_failed+1)
+                self.cluster_start()
+                m = {
+                    'master': self.ansible_config['cluster_configuration']['instances']['master'],
+                    'slave': self.ansible_config['cluster_configuration']['instances']['slave']
+                }
+                self.post_to_slack('rocket', "[v] Cluster started: {}".format(m))
 
-            self.cluster_setup()
-            self.sm_engine_deploy()
-            self.post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
-            sleep(60)
-        except Exception as e:
-            setup_failed += 1
-            if setup_failed > setup_failed_max:
-                raise e
+                self.cluster_setup()
+                self.sm_engine_deploy()
+                self.post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
+                sleep(60)
+            except Exception as e:
+                self.logger.warn('Failed to start/setup/deploy cluster: %s', e)
+                setup_failed += 1
+                if setup_failed >= setup_failed_max:
+                    raise e
 
     def start(self):
         self.logger.info('Started the SM cluster auto-start daemon (interval=%dsec)...', self.interval)

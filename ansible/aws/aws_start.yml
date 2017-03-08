@@ -33,3 +33,14 @@
         port: 22
         timeout: 300
         state: started
+
+    - debug: var=hostvars["{{ item }}"]['ansible_ssh_host']
+      with_items: "{{ groups['slave'] }}"
+
+    - name: Wait for SSH on the slaves to come up
+      wait_for:
+        host: "{{ hostvars[item]['ansible_ssh_host'] }}"
+        port: 22
+        timeout: 300
+        state: started
+      with_items: "{{ groups['slave'] }}"
