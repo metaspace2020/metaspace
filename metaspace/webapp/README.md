@@ -7,6 +7,8 @@ Web application for browsing results produced by [sm-engine](https://github.com/
 * Clone the repository with `--recursive` flag.
 * Run `npm install`
 * Create `conf.js` (for development) and `conf.prod.js` (for production) using the provided `conf.js.template`
+* Run `node deref_schema.js > src/assets/metadata_schema.json` (FIXME: do it through webpack)
+* Run `node generate_tours.js` (FIXME: do it through webpack)
 
 ## Running in development mode
 

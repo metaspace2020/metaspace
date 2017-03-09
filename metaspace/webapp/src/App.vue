@@ -28,11 +28,14 @@
 
 <script>
  import MetaspaceHeader from './components/MetaspaceHeader.vue';
- import Vue from 'vue'
+ import Vue from 'vue';
  import fetch from 'isomorphic-fetch';
  import {getJWT, decodePayload} from './util.js';
 
  import gql from 'graphql-tag';
+ import hopscotch from 'hopscotch';
+ import TourStep from './components/TourStep.vue';
+ import basicTour from './tours/basic.json';
 
  export default {
    name: 'app',
@@ -63,7 +66,10 @@
          this.setupSignInClickHandler(auth2);
        });
      });
+
+     setTimeout(this.startTour, 3000);
    },
+
    methods: {
      setupSignInClickHandler(auth2) {
        auth2.attachClickHandler(this.$refs.gSignIn, {},
@@ -115,6 +121,21 @@
            Vue.nextTick(() => this.setupSignInClickHandler(auth2));
          });
        });
+     },
+
+     startTour() {
+       function renderer({i18n, step, tour, buttons}) {
+         const Step = Vue.extend(TourStep);
+         const vm = new Step({
+           el: document.createElement('div'),
+           propsData: {i18n, step, tour, buttons}
+         });
+         return vm.$refs.hscontainer.innerHTML;
+       }
+
+       hopscotch.setRenderer(renderer);
+       hopscotch.startTour(basicTour);
+       return false;
      }
    }
  }

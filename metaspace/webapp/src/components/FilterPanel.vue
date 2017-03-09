@@ -1,5 +1,5 @@
 <template>
-  <el-row style="padding-left: 10px;">
+  <el-row id="filter-panel" style="padding-left: 10px;">
 
     <el-select placeholder="Add filter"
                v-model="selectedFilterToAdd"
