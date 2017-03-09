@@ -41,8 +41,11 @@ class MolDBServiceWrapper(object):
         r.raise_for_status()
         return r.json()['data']
 
-    def find_db_by_name_version(self, name, version):
-        return self._fetch('{}/databases?name={}&version={}'.format(self._service_url, name, version))
+    def find_db_by_name_version(self, name, version=None):
+        url = '{}/databases?name={}'.format(self._service_url, name)
+        if version:
+            url += '&version={}'.format(version)
+        return self._fetch(url)
 
     def fetch_db_sfs(self, db_id):
         return self._fetch('{}/databases/{}/sfs'.format(self._service_url, db_id))
@@ -60,6 +63,7 @@ class MolecularDB(object):
         ----------
         name: str
         version: str
+            If None the latest version will be used
         ds_config : dict
             Dataset configuration
         """

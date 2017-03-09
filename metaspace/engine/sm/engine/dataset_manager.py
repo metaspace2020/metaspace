@@ -77,7 +77,7 @@ class DatasetManager(object):
 
     def _reindex_ds(self, ds):
         for mol_db_dict in ds.config['databases']:
-            mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict['version'], ds.config)
+            mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict.get('version', None), ds.config)
             self._es.index_ds(ds.id, mol_db)
 
     def _post_new_job_msg(self, ds):
