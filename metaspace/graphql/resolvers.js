@@ -273,6 +273,9 @@ const Resolvers = {
         
         return pg.select().from('dataset').where('id', '=', datasetId)
           .then(records => {
+            if (records.length == 0)
+              throw new Error("no dataset with specified id");
+              
             oldMetadata = records[0].metadata;
           
             // check if the user has permissions to modify the metadata
@@ -306,6 +309,20 @@ const Resolvers = {
             }
           })
           .then(() => "success");
+      } catch (e) {
+        return e.message;
+      }
+    },
+    
+    deleteDataset(_, args) {
+      const {datasetId} = args;
+  
+      try {
+        // const payload = jwt.decode(args.jwt, smEngineConfig.jwt.secret);
+        
+        const url = `http://${config.SM_ENGINE_API_HOST}/datasets/${datasetId}/delete`;
+        return fetch(url, { method: 'POST' })
+          .then(res => res.statusText);
       } catch (e) {
         return e.message;
       }
