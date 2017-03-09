@@ -46,9 +46,9 @@ function generateProcessingConfig(meta_json) {
   else params = RESOL_POWER_PARAMS['1000K'];
 
   return {
-    "database": {
+    "databases": [{
       "name": meta_json['metaspace_options']['Metabolite_Database']
-    },
+    }],
     "isotope_generation": {
       "adducts": {'+': ['+H', '+K', '+Na'], '-': ['-H', '+Cl']}[polarity],
       "charge": {

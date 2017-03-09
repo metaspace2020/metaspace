@@ -11,6 +11,7 @@ const sprintf = require('sprintf-js'),
 const smEngineConfig = require('./sm_config.json'),
   {esSearchResults, esCountResults} = require('./esConnector'),
   {datasetFilters, dsField, SubstringMatchFilter} = require('./datasetFilters.js'),
+  generateProcessingConfig = require("./utils.js").generateProcessingConfig;
   config = require('./config');
 
 
@@ -29,7 +30,8 @@ let pg = require('knex')({
   searchPath: 'knex,public'
 });
 
-const slackConn = new slack(smEngineConfig.slack.webhook_url);
+
+const slackConn = config.SLACK_WEBHOOK_URL ? new slack(smEngineConfig.slack.webhook_url): null;
 
 const Resolvers = {
   Person: {
@@ -242,22 +244,21 @@ const Resolvers = {
 
   Mutation: {
     submitDataset(_, args) {
-      const {path, metadataJson} = args;
+      const {name, path, metadataJson} = args;
       try {
+        // const payload = jwt.decode(args.jwt, smEngineConfig.jwt.secret);
+        
         const metadata = JSON.parse(metadataJson);
-      
-        const message = {
-          ds_name: metadata.metaspace_options.Dataset_Name,
-          ds_id: moment().format("Y-MM-DD_HH[h]mm[m]ss[s]"),
+        const body = JSON.stringify({
+          name: name,
           input_path: path,
-          user_email: metadata.Submitted_By.Submitter.Email
-        };
-      
-        copyMetadata(path, metadataJson).then(() => {
-          sendMessageToRabbitMQ(JSON.stringify(message));
+          metadata: metadata,
+          config: generateProcessingConfig(metadata)
         });
-      
-        return "success";
+        
+        const url = `http://${config.SM_ENGINE_API_HOST}/datasets/add`;
+        return fetch(url, { method: 'POST', body: body })
+          .then(() => "success");
       } catch (e) {
         return e.message;
       }
@@ -266,14 +267,14 @@ const Resolvers = {
     updateMetadata(_, args) {
       const {datasetId, metadataJson} = args;
       try {
+        const payload = jwt.decode(args.jwt, config.JWT_SECRET);
         const newMetadata = JSON.parse(metadataJson);
-        const payload = jwt.decode(args.jwt, smEngineConfig.jwt.secret);
-
+        let oldMetadata = null;
+        
         return pg.select().from('dataset').where('id', '=', datasetId)
           .then(records => {
-            const oldMetadata = records[0].metadata,
-                  datasetName = records[0].name;
-
+            oldMetadata = records[0].metadata;
+          
             // check if the user has permissions to modify the metadata
             let allowUpdate = false;
             if (payload.role == 'admin')
@@ -282,48 +283,26 @@ const Resolvers = {
               allowUpdate = true;
             if (!allowUpdate)
               throw new Error("you don't have permissions to edit this dataset");
-
-            // update the database record
-            // FIXME: the rest of updateMetadata function should move into the dataset service
-            return pg('dataset').where('id', '=', datasetId).update({
-              metadata: metadataJson,
-              name: newMetadata.metaspace_options.Dataset_Name
-            }).then(_ => ({oldMetadata, oldDatasetName: datasetName}))
           })
-          .then(({oldMetadata, oldDatasetName}) => {
-            // compute delta between old and new metadata
-            const delta = jsondiffpatch.diff(oldMetadata, newMetadata),
-                  diff = jsondiffpatch.formatters.jsonpatch.format(delta);
-
-            // run elasticsearch reindexing in the background mode
-            if (diff.length > 0) {
-              fetch(`http://${config.ES_API}/reindex/${datasetId}`, { method: 'POST'})
-                .then(resp => console.log(`reindexed ${datasetId}`))
-                .catch(err => console.log(err));
-            }
-
-            // determined if reprocessing is needed
-            const changedPaths = diff.map(item => item.path);
-            let needsReprocessing = false;
-            for (let path of changedPaths) {
-              if (path.startsWith('/MS_Analysis') && path != '/MS_Analysis/Ionisation_Source')
-                needsReprocessing = true;
-              if (path == '/metaspace_options/Metabolite_Database')
-                needsReprocessing = true;
-            }
-
-            // send a Slack notification about the change
-            let msg = slackConn.send({
-              text: `${payload.name} edited metadata of ${oldDatasetName} (id: ${datasetId})` +
-                "\nDifferences:\n" + JSON.stringify(diff, null, 2),
-              channel: smEngineConfig.slack.channel
+          .then( () => {
+            const body = JSON.stringify({
+              metadata: newMetadata,
+              config: generateProcessingConfig(newMetadata)
             });
-
-            if (needsReprocessing) {
-              // TODO: send message straight to the RabbitMQ
-              msg.then(() => { slackConn.send({
-                text: `@vitaly please reprocess ^`, channel: smEngineConfig.slack.channel
-              })});
+            const url = `http://${config.SM_ENGINE_API_HOST}/datasets/${datasetId}/update`;
+            return fetch(url, { method: 'POST', body: body });
+          })
+          .then(() => {
+            const delta = jsondiffpatch.diff(oldMetadata, newMetadata),
+              diff = jsondiffpatch.formatters.jsonpatch.format(delta);
+  
+            // send a Slack notification about the change
+            if (slackConn) {
+              let msg = slackConn.send({
+                text: `${payload.name} edited metadata of ${oldDatasetName} (id: ${datasetId})` +
+                "\nDifferences:\n" + JSON.stringify(diff, null, 2),
+                channel: config.SLACK_CHANNEL
+              });
             }
           })
           .then(() => "success");
