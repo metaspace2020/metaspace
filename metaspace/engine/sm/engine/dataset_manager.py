@@ -10,6 +10,7 @@ from sm.engine.util import SMConfig, read_json
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.work_dir import WorkDirManager
+from sm.engine.errors import UnknownDSID
 
 logger = logging.getLogger('sm-engine')
 
@@ -42,8 +43,11 @@ class Dataset(object):
     @staticmethod
     def load_ds(ds_id, db):
         r = db.select_one(DS_SEL, ds_id)
-        ds = Dataset(ds_id)
-        ds.name, ds.input_path, ds.meta, ds.config = r
+        if r:
+            ds = Dataset(ds_id)
+            ds.name, ds.input_path, ds.meta, ds.config = r
+        else:
+            raise UnknownDSID('Dataset does not exist: {}'.format(ds_id))
         return ds
 
 
@@ -132,6 +136,8 @@ class DatasetManager(object):
             self._post_new_job_msg(ds)
 
     def _del_iso_images(self, ds):
+        logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
+
         img_store = ImageStoreServiceWrapper(self._sm_config['services']['iso_images'])
         ds_img_urls = []
         for iso_image_urls, ion_image_url in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):

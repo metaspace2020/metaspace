@@ -87,6 +87,7 @@ class ESExporter:
         self._index(annotations, mol_db)
 
     def delete_ds(self, ds_id):
+        logger.info('Deleting documents from ES: %s', ds_id)
         body = {
             "query": {
                 "constant_score": {
