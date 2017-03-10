@@ -11,8 +11,8 @@
     "port": "{{ es_port }}"
   },
   "services": {
-    "iso_images": "{{ iso_images_url }}"
-    "mol_db": "{{ mol_db_url }}"
+    "iso_images": "{{ iso_images_url }}",
+    "mol_db": "{{ mol_db_url }}",
     "web_app_url": "{{ web_app_url }}"
   },
   "rabbitmq": {
@@ -25,7 +25,7 @@
     "s3_base_path": "{{ sm_s3_path }}"
   },
   "spark": {
-    "master": "{{ spark_master_host }}",
+    "master": "{{ spark_master_host | default('local[*]') }}",
     "spark.executor.memory": "2g",
     "spark.driver.memory": "4g",
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
