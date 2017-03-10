@@ -14,7 +14,6 @@ const smEngineConfig = require('./sm_config.json'),
   generateProcessingConfig = require("./utils.js").generateProcessingConfig;
   config = require('./config');
 
-
 const dbConfig = () => {
   const {host, database, user, password} = smEngineConfig.db;
   return {
@@ -30,6 +29,22 @@ let pg = require('knex')({
   searchPath: 'knex,public'
 });
 
+function checkPermissions(datasetId, payload) {
+  return pg.select().from('dataset').where('id', '=', datasetId)
+    .then(records => {
+      if (records.length == 0)
+        throw new Error("no dataset with specified id");
+      metadata = records[0].metadata;
+
+      let allowUpdate = false;
+      if (payload.role == 'admin')
+        allowUpdate = true;
+      else if (payload.email == metadata.Submitted_By.Submitter.Email)
+        allowUpdate = true;
+      if (!allowUpdate)
+        throw new Error("you don't have permissions to edit this dataset");
+    });
+}
 
 const slackConn = config.SLACK_WEBHOOK_URL ? new slack(smEngineConfig.slack.webhook_url): null;
 
@@ -269,24 +284,8 @@ const Resolvers = {
       try {
         const payload = jwt.decode(args.jwt, config.JWT_SECRET);
         const newMetadata = JSON.parse(metadataJson);
-        let oldMetadata = null;
         
-        return pg.select().from('dataset').where('id', '=', datasetId)
-          .then(records => {
-            if (records.length == 0)
-              throw new Error("no dataset with specified id");
-              
-            oldMetadata = records[0].metadata;
-          
-            // check if the user has permissions to modify the metadata
-            let allowUpdate = false;
-            if (payload.role == 'admin')
-              allowUpdate = true;
-            else if (payload.email == oldMetadata.Submitted_By.Submitter.Email)
-              allowUpdate = true;
-            if (!allowUpdate)
-              throw new Error("you don't have permissions to edit this dataset");
-          })
+        return checkPermissions(datasetId, payload)
           .then( () => {
             const body = JSON.stringify({
               metadata: newMetadata,
@@ -296,17 +295,21 @@ const Resolvers = {
             return fetch(url, { method: 'POST', body: body });
           })
           .then(() => {
-            const delta = jsondiffpatch.diff(oldMetadata, newMetadata),
-              diff = jsondiffpatch.formatters.jsonpatch.format(delta);
-  
-            // send a Slack notification about the change
-            if (slackConn) {
-              let msg = slackConn.send({
-                text: `${payload.name} edited metadata of ${oldDatasetName} (id: ${datasetId})` +
-                "\nDifferences:\n" + JSON.stringify(diff, null, 2),
-                channel: config.SLACK_CHANNEL
+            return pg.select().from('dataset').where('id', '=', datasetId)
+              .then(records => {
+                const oldMetadata = records[0].metadata;
+                const delta = jsondiffpatch.diff(oldMetadata, newMetadata),
+                  diff = jsondiffpatch.formatters.jsonpatch.format(delta);
+
+                // send a Slack notification about the change
+                if (slackConn) {
+                  let msg = slackConn.send({
+                    text: `${payload.name} edited metadata of ${oldDatasetName} (id: ${datasetId})` +
+                    "\nDifferences:\n" + JSON.stringify(diff, null, 2),
+                    channel: config.SLACK_CHANNEL
+                  });
+                }
               });
-            }
           })
           .then(() => "success");
       } catch (e) {
@@ -318,11 +321,12 @@ const Resolvers = {
       const {datasetId} = args;
   
       try {
-        // const payload = jwt.decode(args.jwt, smEngineConfig.jwt.secret);
-        
-        const url = `http://${config.SM_ENGINE_API_HOST}/datasets/${datasetId}/delete`;
-        return fetch(url, { method: 'POST' })
-          .then(res => res.statusText);
+        const payload = jwt.decode(args.jwt, config.JWT_SECRET);
+        return checkPermissions(datasetId, payload)
+          .then( () => {
+            const url = `http://${config.SM_ENGINE_API_HOST}/datasets/${datasetId}/delete`;
+            return fetch(url, {method: 'POST'});
+          }).then(res => res.statusText);
       } catch (e) {
         return e.message;
       }
