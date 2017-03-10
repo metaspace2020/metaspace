@@ -11,7 +11,7 @@ logger = logging.getLogger('sm-engine')
 COLUMNS = ["ds_id", "ds_name", "sf", "sf_adduct",
            "chaos", "image_corr", "pattern_match", "msm",
            "adduct", "job_id", "sf_id", "fdr",
-           "centroid_mzs", "ds_meta", "ion_image_url", "iso_image_urls"]
+           "centroid_mzs", "ds_meta", "ion_image_url", "iso_image_urls", "polarity"]
 
 ANNOTATIONS_SEL = '''
 SELECT
@@ -33,6 +33,7 @@ SELECT
     ds.metadata as ds_meta,
     m.ion_image_url,
     m.iso_image_urls
+    ds.config->'isotope_generation'->'charge'->'polarity' as polarity
 FROM iso_image_metrics m
 JOIN sum_formula f ON f.id = m.sf_id
 JOIN job j ON j.id = m.job_id
@@ -59,13 +60,11 @@ class ESExporter:
         to_index = []
         for r in annotations:
             d = dict(zip(COLUMNS, r))
-            # trimming is needed to avoid ES max_bytes_length_exceeded_exception
-            # d['comp_names'] = u'|'.join(d['comp_names']).replace(u'"', u'')[:32766]
-            # d['comp_ids'] = u'|'.join(d['comp_ids'])[:32766]
             df = mol_db.get_molecules(d['sf'])
             d['comp_ids'] = df.mol_id.values.tolist()
             d['comp_names'] = df.mol_name.values.tolist()
             d['centroid_mzs'] = ['{:010.4f}'.format(mz) if mz else '' for mz in d['centroid_mzs']]
+            d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])
 
             to_index.append({
                 '_index': self.index,
@@ -160,6 +159,7 @@ class ESExporter:
                         "centroid_mzs": {"type": "string", "index": "not_analyzed"},
                         "ion_image_url": {"type": "string", "index": "not_analyzed"},
                         "iso_image_urls": {"type": "string", "index": "not_analyzed"},
+                        "ion_add_pol": {"type": "string", "index": "not_analyzed"},
                         # dataset metadata
                         "ds_meta": {
                             "properties": {
@@ -187,6 +187,7 @@ class ESExporter:
                                 "Sample_Information": {
                                     "properties": {
                                         "Organism": {"type": "string", "index": "not_analyzed"},
+                                        "Organism_Part": {"type": "string", "index": "not_analyzed"},
                                         "Condition": {"type": "string", "index": "not_analyzed"}
                                     }
                                 }

@@ -14,5 +14,5 @@ setup(name='sm',
           "cpyImagingMSpec==0.2.2",
           "pyMSpec==0.1",
           "cpyMSpec==0.3.4",
-          "pyimzML==1.0.1"
+          "pyimzML==1.2.0"
       ])

@@ -11,8 +11,9 @@
     "port": "{{ es_port }}"
   },
   "services": {
-    "iso_images": "http://localhost:3010/iso_images"
-    "mol_db": "http://localhost:5000/v1"
+    "iso_images": "{{ iso_images_url }}"
+    "mol_db": "{{ mol_db_url }}"
+    "web_app_url": "{{ web_app_url }}"
   },
   "rabbitmq": {
     "host": "{{ rabbitmq_host }}",
