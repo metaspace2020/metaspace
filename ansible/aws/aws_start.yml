@@ -13,7 +13,8 @@
     - debug: var=aws_key_name
 
     - name: Spin up SM cluster instances
-      shell: python aws_instance_manager.py start --key-name {{ aws_key_name }} --components {{ components }}
+      shell: python aws_instance_manager.py start --key-name {{ aws_key_name }}
+             --components {{ components }} --stage {{ stage }}
       when: spark_volume_size is not defined
 
     - meta: refresh_inventory

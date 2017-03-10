@@ -1,0 +1,139 @@
+---
+
+stage: dev
+
+# SOFTWARE CONFIGURATION
+
+aws_access_key_id: "{{ aws_access_key_id }}"
+aws_secret_access_key: "{{ aws_secret_access_key }}"
+aws_key_name: "{{ aws_key_name }}"
+aws_region: eu-west-1
+
+postgres_version: 9.3
+postgres_host: "{{ hostvars['web'].ansible_ssh_host }}"
+
+elasticsearch_version: 5.2.2
+es_host: "{{ hostvars['web'].ansible_ssh_host }}"
+es_port: 9200
+
+web_app_url: "http://localhost"
+
+rabbitmq_version: 3.6.5-1
+rabbitmq_host: "{{ hostvars['web'].ansible_ssh_host }}"
+rabbitmq_user: sm
+rabbitmq_password: "1234"
+
+miniconda_version: 4.1.11
+miniconda_python: 2
+miniconda_prefix: "/opt/dev/miniconda"
+miniconda_env:
+  name: sm
+  dependencies:
+    - python=2
+    - numpy=1.11.2
+    - scipy=0.18.1
+    - matplotlib=1.5
+    - pandas=0.19.1
+    - cffi
+    - libgcc
+    - psycopg2=2.6.1
+    - pip:
+      - requests
+      - mock
+      - py4j
+      - pytest
+      - tornado
+      - tornpsql
+      - recommonmark
+      - boto3
+      - networkx
+      - fabric
+      - pypng
+      - pyyaml
+      - elasticsearch
+      - pika
+      - cachetools
+
+sm_repo_url: https://github.com/SpatialMetabolomics/sm-engine.git
+sm_branch: v0.6
+sm_postgres_password: "1234"
+sm_home: "/opt/dev/sm"
+sm_s3_path: "s3a://sm-engine/data"
+
+sm_ansible_url: https://github.com/SpatialMetabolomics/sm-engine-ansible.git
+sm_ansbile_branch: rel-v0.6
+sm_ansible_home: /opt/dev/sm-engine-ansible
+
+hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"
+activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
+
+spark_key_file: ~/.ssh/ubuntu_spark
+spark_version: "2.0.2-bin-hadoop2.7"
+spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
+spark_home: "/usr/lib/spark"
+spark_user: "ubuntu"
+
+spark_env_extras_slave:
+  SPARK_WORKER_DIR: "/tmp/spark"
+  SPARK_LOCAL_DIRS: "/tmp/spark"
+  PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
+
+spark_env_extras_master:
+  AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+  AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+  PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
+
+slack_channel: "{{ slack_channel }}"
+slack_webhook_url: "{{ slack_webhook_url }}"
+
+# VIRTUAL MACHINES CONFIGURATION
+
+cluster_configuration:
+  instances:
+    web:
+      hostgroup: # mandatory
+      type: c4.large
+      n: 1
+      elipalloc: # mandatory
+      price:
+      sec_group: sm web app
+      image: ami-07174474 # public ubuntu 16.04
+
+      block_dev_maps:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 100
+            DeleteOnTermination: True
+            VolumeType: gp2
+
+    master:
+      hostgroup: # mandatory
+      type: c4.large
+      n: 1
+      elipalloc: # mandatory
+      price: 0.6
+      sec_group: default
+      image: # will fetch the most recent custom ami
+
+      block_dev_maps:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 500
+            DeleteOnTermination: True
+            VolumeType: gp2
+
+    slave:
+      hostgroup: # mandatory
+      type: c4.4xlarge
+      n: 1
+      elipalloc:
+      price: 0.6
+      sec_group: default
+      image: # will fetch the most recent custom ami
+
+      block_dev_maps:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 1000
+            DeleteOnTermination: True
+            VolumeType: gp2

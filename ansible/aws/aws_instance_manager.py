@@ -9,6 +9,7 @@ from yaml import load
 from datetime import datetime, timedelta
 import pandas as pd
 from subprocess import check_output
+from os import path
 
 
 class AWSInstManager(object):
@@ -170,15 +171,17 @@ class AWSInstManager(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM AWS instances management tool')
     parser.add_argument('action', type=str, help='start|stop')
-    parser.add_argument('--components', help='all,web,master,slave,queue')
+    parser.add_argument('--components', help='all,web,master,slave')
     parser.add_argument('--key-name', type=str, help='AWS key name to use')
-    parser.add_argument('--config', dest='config_path', default='group_vars/all.yml', type=str,
-                        help='Config file path')
+    parser.add_argument('--stage', dest='stage', default='dev', type=str, help='One of dev/stage/prod')
+    parser.add_argument('--create-ami', dest='create_ami', action='store_true')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
                         help="Don't actually start/stop instances")
     args = parser.parse_args()
 
-    conf = load(open(args.config_path))
+    conf_file = 'group_vars/all.yml' if not args.create_ami else 'group_vars/create_ami_cluster_config.yml'
+    config_path = path.join(args.stage, conf_file)
+    conf = load(open(config_path))
     cluster_conf = conf['cluster_configuration']
 
     aws_inst_man = AWSInstManager(key_name=args.key_name or conf['aws_key_name'], conf=cluster_conf,
@@ -186,11 +189,11 @@ if __name__ == '__main__':
 
     components = filter(lambda x: x, args.components.strip(' ').split(','))
     if 'all' in components:
-        components = ['web', 'master', 'slave', 'queue']
+        components = ['web', 'master', 'slave']
 
     if args.action == 'start':
         aws_inst_man.start_all_instances(components)
     elif args.action == 'stop':
         aws_inst_man.stop_all_instances(components)
 
-    print(check_output('python update_inventory.py --config {}'.format(args.config_path).split(' ')))
+    print(check_output('python update_inventory.py --stage {}'.format(args.stage).split(' ')))

@@ -5,22 +5,21 @@ import argparse
 import ConfigParser
 import boto3
 import yaml
-
-
-INVENTORY_FILE = 'hosts'
+from os import path
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Ansible inventory file updater')
-    parser.add_argument('--config', dest='config_path', default='group_vars/all.yml', type=str,
-                        help='Ansible config path')
+    parser.add_argument('--stage', dest='stage', default='dev', type=str, help='One of dev/stage/prod')
     args = parser.parse_args()
-    config = yaml.load(open(args.config_path))
+    config_path = path.join(args.stage, 'group_vars/all.yml')
+    config = yaml.load(open(config_path))
+    inv_file = path.join(args.stage, 'hosts')
 
-    with open(INVENTORY_FILE, 'w') as fp:
+    with open(inv_file, 'w') as fp:
         fp.write('')
     inventory = ConfigParser.RawConfigParser(allow_no_value=True)
-    inventory.readfp(open(INVENTORY_FILE))
+    inventory.readfp(open(inv_file))
 
     ec2 = boto3.resource('ec2', config['aws_region'])
 
@@ -41,4 +40,4 @@ if __name__ == '__main__':
             inventory.set(component, '{} ansible_ssh_host={}'.format(inst_name, inst.public_ip_address))
             c += 1
 
-    inventory.write(open(INVENTORY_FILE, 'w'))
+    inventory.write(open(inv_file, 'w'))
