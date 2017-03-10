@@ -117,9 +117,9 @@ class SciTester(object):
     def run_search(self):
         cmd = ['python',
                join(proj_root(), 'scripts/run_molecule_search.py'),
-               '--input-path', self.input_dir_path,
-               '--ds-config', self.ds_config_path,
+               '--ds-id', '2000-01-01-00_00_00',
                '--ds-name', self.ds_name,
+               '--input-path', self.input_dir_path,
                '--config', self.sm_config_path]
         check_call(cmd)
 

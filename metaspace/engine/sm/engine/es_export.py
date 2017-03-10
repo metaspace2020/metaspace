@@ -32,7 +32,7 @@ SELECT
     tp.centr_mzs AS centroid_mzs,
     ds.metadata as ds_meta,
     m.ion_image_url,
-    m.iso_image_urls
+    m.iso_image_urls,
     ds.config->'isotope_generation'->'charge'->'polarity' as polarity
 FROM iso_image_metrics m
 JOIN sum_formula f ON f.id = m.sf_id
