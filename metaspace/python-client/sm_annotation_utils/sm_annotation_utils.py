@@ -17,6 +17,9 @@ join formula_db fdb on fdb.id = img.db_id
 where ds.name = %s and sf.sf = %s and img.adduct = %s and fdb.name = %s
 order by img.peak
 """
+def ion(r):
+    from pyMSpec.pyisocalc.tools import normalise_sf
+    return (r.ds_id[0], normalise_sf(r.sf[0]), r.adduct[0], 1)
 
 class IsotopeImages(object):
     def __init__(self, images, sf, adduct, centroids):
@@ -248,12 +251,45 @@ class SMInstance(object):
 
     def metadata(self, datasets):
         """
-        Pandas dataframe where rows are flattened metadata JSON objects
+        Pandas dataframe for a subset of datasets where rows are flattened metadata JSON objects
         """
         from pandas.io.json import json_normalize
         df = json_normalize([d.metadata.json for d in datasets])
         df.index = [d.name for d in datasets]
         return df
+
+    def get_annotations(self, fdr=0.1, db_name='HMDB', timeout='240s'):
+        """
+        Returns a table of booleans indicating which ions were annotated in a particular dataset at the specified fdr
+        Known issue: only returns datasets with some anntotation at the given FDR level. Use in conjunction with get_metadata() to get a full dataset list
+        :param fdr: fdr level to export annotations at (should be one of [0.05, 0.1, 0.2, 0.5]
+        :param db_name: database to search against
+        :return: pandas dataframe index=dataset ids, columns(multindex) adduct / molecular formula
+        """
+        s = Search(using=self._es_client, index=self._es_index).params(timeout=timeout)\
+                    .filter('term', db_name=db_name)\
+                    .filter("range", **{'fdr': {'to': fdr}})\
+                    .fields(['sf', 'adduct', 'ds_id', ''])[:2147483647]
+        results = list(s.execute())
+        annotations = pd.DataFrame.pivot_table(
+            pd.DataFrame.from_records([ion(r) for r in results]), index=0, columns=[2, 1], values=3) \
+            .notnull()
+        return annotations
+
+    def get_metadata(self, db_table='dataset'):
+        """
+        Returns a complete dump of all the metadata available
+        :param db_table: database table to dump from
+        :return:
+        """
+        query = "SELECT * FROM {}".format(db_table)
+        self._db_cur.execute(query)
+        md_dump = self._db_cur.fetchall()
+        flattened = [pd.io.json.json_normalize(vars(r)) for r in md_dump]
+        metadata = pd.concat(flattened)
+        metadata = metadata.set_index('id')
+        metadata.columns = map(lambda x: x if not x.startswith('metadata') else x[9:], metadata.columns)
+        return metadata
 
 class MolecularDatabase(object):
     def __init__(self, name, db_cursor):
