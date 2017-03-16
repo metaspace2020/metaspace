@@ -11,8 +11,8 @@ Install and setup PostgreSQL ([LINK](https://www.howtoforge.com/tutorial/how-to-
 Create a user and database
 ```bash
 sudo -u postgres psql
-CREATE ROLE sm LOGIN CREATEDB NOSUPERUSER PASSWORD 'simple_pass';
-CREATE DATABASE sm WITH OWNER sm;
+CREATE ROLE mol_db LOGIN CREATEDB NOSUPERUSER PASSWORD 'simple_pass';
+CREATE DATABASE mol_db WITH OWNER sm;
 \q  # exit
 ```
 Install OpenBabel

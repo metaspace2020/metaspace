@@ -42,7 +42,6 @@ ERR_NOT_SUPPORTED = {
     'title': 'Not Supported'
 }
 
-
 ERR_OBJECT_NOT_EXISTS = {
     'status': falcon.HTTP_404,
     'code': 21,
