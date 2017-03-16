@@ -159,6 +159,8 @@
  }
 
  #filter-panel {
-   display: inline-block;
+   display: inline-flex;
+   align-items: flex-start;
+   flex-wrap: wrap;
  }
 </style>

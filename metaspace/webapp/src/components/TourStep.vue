@@ -83,7 +83,6 @@
    },
    methods: {
      nextStep() {
-       console.log('nextStep');
        this.stepNum += 1;
        if (this.tour.steps.length == this.stepNum) {
          this.close();
@@ -101,10 +100,29 @@
          router.push({path: this.lastRoute});
        }
 
+       const minTimeout = 20 /* ms */,
+             maxTimeout = 2000,
+             factor = 2;
+
+       let self = this,
+           timeout = minTimeout;
+
+       function showNextStep() {
+         let el = document.querySelector(self.step.target);
+         if (!el) {
+           timeout *= factor;
+           if (timeout > maxTimeout)
+             return;
+           window.setTimeout(showNextStep, timeout);
+           return;
+         }
+
+         self.popper = new Popper(el, self.$refs.container,
+                                  {placement: self.step.placement});
+       }
+
        Vue.nextTick(() => {
-         let el = document.querySelector(this.step.target);
-         this.popper = new Popper(el, this.$refs.container,
-                                  {placement: this.step.placement});
+         window.setTimeout(showNextStep, timeout);
        });
      },
 
