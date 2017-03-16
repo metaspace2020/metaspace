@@ -10,19 +10,19 @@
     </div>
 
     <router-link to="/upload">
-      <div class="header-item vc page-link">
+      <div class="header-item vc page-link" id='upload-link'>
         <div class="vc">Upload</div>
       </div>
     </router-link>
 
     <router-link :to="datasetsHref">
-      <div class="header-item vc page-link">
+      <div class="header-item vc page-link" id='datasets-link'>
         <div class="vc">Datasets</div>
       </div>
     </router-link>
 
     <router-link :to="annotationsHref">
-      <div class="header-item vc page-link">
+      <div class="header-item vc page-link" id='annotations-link'>
         <div class="vc">Annotations</div>
       </div>
     </router-link>
@@ -30,6 +30,12 @@
     <router-link to="/about">
       <div class="header-item vc page-link">
         <div class="vc">About</div>
+      </div>
+    </router-link>
+
+    <router-link to="/help">
+      <div class="header-item vc page-link">
+        <div class="vc">Help</div>
       </div>
     </router-link>
   </div>

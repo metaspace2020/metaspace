@@ -33,7 +33,9 @@ const store = new Vuex.Store({
     lastUsedFilters: {},
 
     authenticated: false,
-    user: null
+    user: null,
+
+    currentTour: null
   },
 
   getters: {
@@ -128,6 +130,14 @@ const store = new Vuex.Store({
     logout(state) {
       state.authenticated = false;
       state.user = null;
+    },
+
+    startTour(state, tourDescription) {
+      state.currentTour = tourDescription;
+    },
+
+    endTour(state) {
+      state.currentTour = null;
     }
   }
 })

@@ -1,77 +1,219 @@
 <template>
-  <div ref="hscontainer">
-    <div class="hopscotch-bubble-container" :style="bubbleStyle">
-      <span class="hopscotch-bubble-number" v-if="tour.isTour">
-        {{ i18n.stepNum }}
-      </span>
+  <div>
+    <div ref="container" class="ts-container" v-if="tour">
+      <div class="bubble-container">
+        <el-progress :percentage="100 * (stepNum + 1) / tour.steps.length"
+                     :stroke-width=10
+                     :show-text=false
+                     style="width: 350px;">
+        </el-progress>
 
-      <div class="hopscotch-bubble-content">
-        <h3 class="hopscotch-title" v-if="step.title !== ''">
-          {{ step.title }}
-        </h3>
-        <div class="hopscotch-content" v-if="step.content !== ''"
-             v-html="step.content">
+        <div class="bubble-content">
+          <h3 class="ts-title" v-if="step.title !== ''">
+            {{ step.title }}
+          </h3>
+          <div class="ts-content" v-if="step.content !== ''"
+               v-html="step.content">
+          </div>
         </div>
+
+        <div class="ts-actions">
+          <el-button size="small" type="primary" @click.native="nextStep">
+            {{ this.stepNum == this.tour.steps.length - 1 ? 'Done' : 'Next' }}
+          </el-button>
+        </div>
+
+        <i class="el-icon-circle-close ts-close" title="Close"
+           @click="close"></i>
       </div>
 
-      <div class="hopscotch-actions">
-        <button class="hopscotch-nav-button prev hopscotch-prev" v-if="buttons.showPrev">
-          {{ i18n.prevBtn }}
-        </button>
-        <button class="hopscotch-nav-button next hopscotch-cta" v-if="buttons.showCTA">
-          {{ buttons.ctaLabel }}
-        </button>
-        <el-button class="hopscotch-next" v-if="buttons.showNext"
-                   size="small" type="primary">
-          {{ i18n.nextBtn }}
-        </el-button>
-      </div>
-
-      <i class="el-icon-circle-close hopscotch-close" v-if="buttons.showClose"
-         :title="i18n.closeTooltip">
-      </i>
-    </div>
-
-    <div class="hopscotch-bubble-arrow-container hopscotch-arrow">
-      <div class="hopscotch-bubble-arrow-border"></div>
-      <div class="hopscotch-bubble-arrow"></div>
+      <div class="popper__arrow" x-arrow=''> </div>
     </div>
   </div>
 </template>
 
 <script>
+ import Vue from 'vue';
+ import Popper from 'popper.js';
+
+ import router from '../router.js';
+
+ const startingRoute = 'help';
+
  export default {
    name: 'tour-step',
-   props: ['i18n', 'step', 'tour', 'buttons'],
+   props: ['tour'],
+   data() {
+     return {
+       lastRoute: startingRoute,
+       stepNum: 0,
+       popper: null,
+       container: null,
+       routeTransition: false
+     };
+   },
    computed: {
-     bubbleStyle() {
-       return {
-         width: this.step.width + 'px',
-         padding: this.step.padding + 'px'
+     step() {
+       return this.tour.steps[this.stepNum];
+     }
+   },
+   created() {
+     router.beforeEach((to, from, next) => {
+       if (!this.tour || to.path == from.path) {
+         next();
+         return;
        }
+
+       if (this.routeTransition) {
+         this.routeTransition = false;
+         next();
+       } else {
+         this.close();
+         next();
+       }
+     });
+   },
+   mounted() {
+     if (this.tour)
+       this.render();
+   },
+   updated() {
+     if (this.tour)
+       this.render();
+   },
+   methods: {
+     nextStep() {
+       console.log('nextStep');
+       this.stepNum += 1;
+       if (this.tour.steps.length == this.stepNum) {
+         this.close();
+         return;
+       }
+
+       this.popper.destroy();
+       this.render();
+     },
+
+     render() {
+       if (this.step.route && this.lastRoute != this.step.route) {
+         this.lastRoute = this.step.route;
+         this.routeTransition = true;
+         router.push({path: this.lastRoute});
+       }
+
+       Vue.nextTick(() => {
+         let el = document.querySelector(this.step.target);
+         this.popper = new Popper(el, this.$refs.container,
+                                  {placement: this.step.placement});
+       });
+     },
+
+     close() {
+       if (this.popper)
+         this.popper.destroy();
+       this.stepNum = 0;
+       this.lastRoute = startingRoute;
+       this.routeTransition = false;
+       this.$store.commit('endTour');
      }
    }
  };
 </script>
 
-<style lang="less">
- @import "~hopscotch/src/less/util.less";
- @import "~hopscotch/src/less/vars.less";
+<style lang="scss">
 
- @borderColor: lightblue;
- @bubbleBorderWidth: 3px;
- @bubbleColor: #eff;
- @bubbleFontFamily: Roboto, Helvetica, Arial;
-
- @import "~hopscotch/src/less/fade.less";
- @import "~hopscotch/src/less/buttons.less";
- @import "~hopscotch/src/less/core.less";
-
- i.hopscotch-close {
-   position: absolute;
-   padding: 10px 10px 0 0;
-   top: 0;
-   right: 0;
+ .ts-actions {
+   display: flex;
+   justify-content: flex-end;
  }
 
+ $popper-background-color: rgba(250, 255, 240, 0.90);
+ $popper-border-color: #ddddce;
+ $popper-arrow-color: black;
+
+ .ts-container {
+   background: $popper-background-color;
+   color: black;
+   width: 400px;
+   padding: 10px;
+   border-radius: 3px;
+   z-index: 10100;
+   box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.1);
+   border: 2px solid $popper-border-color;
+   font-size: 14px;
+
+   .ts-close {
+     position: absolute;
+     top: 8px;
+     right: 8px;
+     color: black;
+     background: transparent;
+     border: none;
+
+     &:active,
+     &:focus {
+       outline: none;
+     }
+   }
+
+   .popper__arrow {
+     width: 0;
+     height: 0;
+     border-style: solid;
+     position: absolute;
+     margin: 5px;
+   }
+
+   &[x-placement^="top"] {
+     margin-bottom: 5px;
+
+     .popper__arrow {
+       border-width: 5px 5px 0 5px;
+       border-color: $popper-arrow-color transparent transparent transparent;
+       bottom: -5px;
+       left: calc(50% - 5px);
+       margin-top: 0;
+       margin-bottom: 0;
+     }
+   }
+
+   &[x-placement^="bottom"] {
+     margin-top: 5px;
+
+     .popper__arrow {
+       border-width: 0 5px 5px 5px;
+       border-color: transparent transparent $popper-arrow-color transparent;
+       top: -5px;
+       left: calc(50% - 5px);
+       margin-top: 0;
+       margin-bottom: 0;
+     }
+   }
+
+   &[x-placement^="right"] {
+     margin-left: 5px;
+
+     .popper__arrow {
+       border-width: 5px 5px 5px 0;
+       border-color: transparent $popper-arrow-color transparent transparent;
+       left: -5px;
+       top: calc(50% - 5px);
+       margin-left: 0;
+       margin-right: 0;
+     }
+   }
+
+   &[x-placement^="left"] {
+     margin-right: 5px;
+
+     .popper__arrow {
+       border-width: 5px 0 5px 5px;
+       border-color: transparent transparent transparent $popper-arrow-color;
+       right: -5px;
+       top: calc(50% - 5px);
+       margin-left: 0;
+       margin-right: 0;
+     }
+   }
+ }
 </style>

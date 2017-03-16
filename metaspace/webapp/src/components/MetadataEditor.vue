@@ -199,18 +199,7 @@
    created() {
      // no datasetId means a new dataset => help filling out by loading the last submission
      if (!this.datasetId) {
-       const defaultValue = objectFactory(metadataSchema);
-       let lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
-       if (lastValue && lastValue.metaspace_options) {
-         lastValue.metaspace_options.Dataset_Name = ''; // different for each dataset
-
-         /* we want to have all nested fields to be present for convenience,
-          that's what objectFactory essentially does */
-         this.value = merge({}, defaultValue, lastValue);
-       } else {
-         this.value = defaultValue;
-       }
-       this.loading = false;
+       this.loadLastSubmission();
        return;
      }
 
@@ -298,6 +287,25 @@
 
      cancel() {
        this.$router.go(-1);
+     },
+
+     loadLastSubmission() {
+       const defaultValue = objectFactory(metadataSchema);
+       let lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+       if (lastValue && lastValue.metaspace_options) {
+         lastValue.metaspace_options.Dataset_Name = ''; // different for each dataset
+
+         /* we want to have all nested fields to be present for convenience,
+          that's what objectFactory essentially does */
+         this.value = merge({}, defaultValue, lastValue);
+       } else {
+         this.value = defaultValue;
+       }
+       this.loading = false;
+     },
+
+     resetDatasetName() {
+       this.value.metaspace_options.Dataset_Name = '';
      },
 
      submit() {

@@ -23,19 +23,19 @@
 
     <router-view class="main-content">
     </router-view>
+
+    <tour-step ref="tour" :tour="this.$store.state.currentTour"></tour-step>
   </div>
 </template>
 
 <script>
- import MetaspaceHeader from './components/MetaspaceHeader.vue';
- import Vue from 'vue';
  import fetch from 'isomorphic-fetch';
- import {getJWT, decodePayload} from './util.js';
-
  import gql from 'graphql-tag';
- import hopscotch from 'hopscotch';
+ import Vue from 'vue';
+
+ import MetaspaceHeader from './components/MetaspaceHeader.vue';
  import TourStep from './components/TourStep.vue';
- import basicTour from './tours/basic.json';
+ import {getJWT, decodePayload} from './util.js';
 
  export default {
    name: 'app',
@@ -46,9 +46,12 @@
        }
      };
    },
+
    components: {
-     MetaspaceHeader
+     MetaspaceHeader,
+     TourStep
    },
+
    mounted() {
      window.gapi.load('auth2', () => {
        window.gapi.auth2.init({
@@ -66,8 +69,6 @@
          this.setupSignInClickHandler(auth2);
        });
      });
-
-     setTimeout(this.startTour, 3000);
    },
 
    methods: {
@@ -121,21 +122,6 @@
            Vue.nextTick(() => this.setupSignInClickHandler(auth2));
          });
        });
-     },
-
-     startTour() {
-       function renderer({i18n, step, tour, buttons}) {
-         const Step = Vue.extend(TourStep);
-         const vm = new Step({
-           el: document.createElement('div'),
-           propsData: {i18n, step, tour, buttons}
-         });
-         return vm.$refs.hscontainer.innerHTML;
-       }
-
-       hopscotch.setRenderer(renderer);
-       hopscotch.startTour(basicTour);
-       return false;
      }
    }
  }
@@ -167,7 +153,7 @@
  }
 
  a {
-   color: #42b983;
+   color: #428943;
  }
 
  .main-content {

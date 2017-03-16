@@ -72,6 +72,7 @@
          this.enableSubmit = false;
 
          this.$refs.uploader.reset();
+         this.$refs.editor.resetDatasetName();
          this.$message({
            message: 'Your dataset was successfully submitted!',
            type: 'success'

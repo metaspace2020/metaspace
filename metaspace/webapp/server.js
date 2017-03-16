@@ -114,6 +114,7 @@ if (env == 'development') {
 
   var config = require('./webpack.dev.config.js');
   config.plugins.push(new webpack.HotModuleReplacementPlugin());
+  config.plugins.push(new webpack.NoErrorsPlugin());
   var compiler = webpack(config);
 
   app.use(webpackDevMiddleware(compiler, {

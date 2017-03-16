@@ -1,17 +1,18 @@
 var path = require('path');
 var webpack = require('webpack');
 
-
 module.exports = {
   entry: {
     app: ['./src/main.js'],
     vendor: ['ajv', 'babel-polyfill',
              'vue', 'vuex', 'vue-router', 'vuex-router-sync',
              'vue-apollo', 'apollo-client', 'graphql-tag',
-             'plotly.js/lib/core', 'element-ui']
+             'plotly.js/lib/core',
+             'element-ui',
+             'webpack/hot/dev-server', 'webpack-hot-middleware/client']
   },
   output: {
-    path: path.resolve(__dirname, './dist'),
+    path: '/',
     publicPath: '/dist/',
     filename: 'app.js'
   },
@@ -68,7 +69,8 @@ module.exports = {
     }
   },
   devServer: {
-    historyApiFallback: true,
+    hot: true,
+    inline: true,
     noInfo: true
   },
   devtool: '#eval-source-map',
@@ -78,25 +80,4 @@ module.exports = {
       filename: "vendor.bundle.js"
     })
   ]
-}
-
-if (process.env.NODE_ENV === 'production') {
-  module.exports.devtool = '#source-map'
-  // http://vue-loader.vuejs.org/en/workflow/production.html
-  module.exports.plugins = (module.exports.plugins || []).concat([
-    new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: '"production"'
-      }
-    }),
-    new webpack.optimize.UglifyJsPlugin({
-      sourceMap: true,
-      compress: {
-        warnings: false
-      }
-    }),
-    new webpack.LoaderOptionsPlugin({
-      minimize: true
-    })
-  ])
 }

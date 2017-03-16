@@ -1,10 +1,12 @@
 <template>
-  <el-row id="filter-panel" style="padding-left: 10px;">
+  <el-row id="filter-panel-row" style="padding-left: 10px;">
+
+    <div id="filter-panel">
 
     <el-select placeholder="Add filter"
                v-model="selectedFilterToAdd"
                @change="addFilter"
-               style="float: left; width: 200px; margin-bottom: 10px;">
+               style="width: 200px; margin-bottom: 10px;">
       <el-option v-for="f in availableFilters"
                  :value="f.key" :label="f.description">
       </el-option>
@@ -19,10 +21,10 @@
                :optionFormatter="f.optionFormatter"
                :value="f.value"
                :valueFormatter="f.valueFormatter"
-               style="float: left;"
                @change="f.onChange"
                @destroy="f.onChange(undefined)">
     </component>
+    </div>
   </el-row>
 </template>
 
@@ -154,5 +156,9 @@
 
  #filter-form > .el-form-item {
    margin-bottom: 5px;
+ }
+
+ #filter-panel {
+   display: inline-block;
  }
 </style>
