@@ -16,16 +16,30 @@
 - name: Make Kibana to listen to any ip address
   lineinfile:
     dest: /etc/kibana/kibana.yml
-
     regexp: server.host
     line: "server.host: 0.0.0.0"
   when: bound_to_any_host
 
+- name: Specify Elasticsearch url
+  lineinfile:
+    dest: /etc/kibana/kibana.yml
+    regexp: elasticsearch.url
+    line: 'elasticsearch.url: "http://localhost:{{ es_port }}"'
+
 - name: Kibana conf update restart
   service: name=kibana state=restarted
 
-- name: Start EleasticSearch service
+- name: Start Kibana service
   service: name=kibana state=running
 
-- name: Start EleasticSearch on boot
+- name: Start Kibana on boot
   service: name=kibana enabled=true
+
+- name: Install Ansible htpasswd module dependencies
+  apt: name=python-passlib state=present update_cache=yes
+
+- name: Create a basic auth Kibana user
+  htpasswd:
+    path: /etc/nginx/passwdfile
+    name: "{{ kibana_user }}"
+    password: "{{ kibana_password }}"

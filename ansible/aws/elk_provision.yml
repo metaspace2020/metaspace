@@ -17,7 +17,7 @@
   gather_facts: yes
 
   roles:
-    - role: common
+    - role: base
       become: yes
 
     - role: elk

@@ -5,7 +5,7 @@
   user: ubuntu
 
   roles:
-    - role: common
+    - role: base
       become: yes
 
 - name: Set up SM queue

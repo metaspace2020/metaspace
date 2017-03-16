@@ -1,5 +1,13 @@
 ---
 
+- name: Run apt-get update
+  become: yes
+  raw: apt-get update
+
+- name: Install python-simplejson
+  become: yes
+  raw: apt-get install -y python-simplejson
+
 - name: Reconfigure buggy ubuntu locales
   template: src=../files/locale dest=/etc/default/locale
     owner=root mode="u=rw,g=r,o=r" force=yes

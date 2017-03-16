@@ -26,6 +26,12 @@
     line: "network.host: 0.0.0.0"
   when: bound_to_any_host
 
+- name: Specify a port for ElasticSearch
+  lineinfile:
+    dest: /etc/elasticsearch/elasticsearch.yml
+    regexp: http.port
+    line: "http.port: {{ elasticsearch_port }}"
+
 #  notify:
 #    - es_conf_update
 

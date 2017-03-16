@@ -1,9 +1,6 @@
 ---
 
-- name: Gather EC2 instance facts
-  ec2_facts:
-
-- name: Update repository cache and install Nginx package
+- name: Update repository cache and install Nginx packages
   apt: name=nginx state=present update_cache=yes
 
 - name: Create /etc/nginx/sites-available/default

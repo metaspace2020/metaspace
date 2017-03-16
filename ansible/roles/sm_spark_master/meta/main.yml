@@ -1,7 +1,7 @@
 ---
 
 dependencies:
-  - role: common
+  - role: base
     become: yes
 
   - role: spark_master

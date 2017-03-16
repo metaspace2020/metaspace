@@ -16,6 +16,9 @@ elasticsearch_version: 5.2.2
 es_host: "{{ hostvars['web'].ansible_ssh_host }}"
 es_port: 9200
 
+kibana_user: kibana
+kibana_password: 1234
+
 web_app_url: "http://localhost"
 
 rabbitmq_version: 3.6.5-1

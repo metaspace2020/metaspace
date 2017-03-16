@@ -3,19 +3,11 @@
 - name: SM spark slave instances configuration
   hosts: slave
   user: ubuntu
-  gather_facts: no
+  gather_facts: yes
 
-  pre_tasks:
-    - name: Run apt-get update
-      become: yes
-      raw: apt-get update
-
-    - name: Install python-simplejson
-      become: yes
-      raw: apt-get install -y python-simplejson
-
-    - name: Gather facts about the slave instances
-      setup:
+#  pre_tasks:
+#    - name: Gather facts about the slave instances
+#      setup:
 
   roles:
     - role: sm_spark_slave

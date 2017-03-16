@@ -1,13 +1,19 @@
 ---
 
 dependencies:
-  - role: common
+  - role: base
     become: yes
 
   - role: postgres
     become: yes
 
   - role: elasticsearch
+    become: yes
+
+  - role: kibana
+    become: yes
+
+  - role: nginx
     become: yes
 
   - role: miniconda

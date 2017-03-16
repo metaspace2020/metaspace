@@ -9,4 +9,4 @@
     upload_key: true
         
   roles:
-    - role: common
+    - role: base

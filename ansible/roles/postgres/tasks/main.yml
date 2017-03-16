@@ -27,7 +27,7 @@
 
 - name: Make postgres listen to any ip address
   lineinfile:
-    dest: /etc/postgresql/9.3/main/postgresql.conf
+    dest: /etc/postgresql/{{ postgres_version }}/main/postgresql.conf
     regexp: '^listen_addresses'
     line: "listen_addresses = '*'"
   notify:

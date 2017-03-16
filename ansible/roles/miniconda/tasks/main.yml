@@ -1,6 +1,6 @@
 ---
 
-- name: miniconda installer is downloaded
+- name: Download miniconda installer
   get_url: url="https://repo.continuum.io/miniconda/{{ miniconda_installer }}"
           dest="/tmp/{{ miniconda_installer }}"
           checksum="{{ miniconda_installer_checksum }}"

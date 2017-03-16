@@ -15,7 +15,7 @@
       raw: apt-get install -y python-simplejson
 
   roles:
-    - role: common
+    - role: base
       become: yes
 
     - role: rabbitmq

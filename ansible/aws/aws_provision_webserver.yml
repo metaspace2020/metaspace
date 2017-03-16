@@ -1,16 +1,41 @@
 ---
 
-- name: SM web app instance configuration
+- name: SM services instance basic configuration
   hosts: web
   user: ubuntu
-  gather_facts: true
-
-#  vars:
-#    postgres_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
-#    es_host: "{{ groups.get('tag_hostgroup_sm_webserver', ['localhost'])[0] }}"
-#    rabbitmq_host: "{{ groups.get('tag_hostgroup_sm_queue', ['localhost'])[0] }}"
+  gather_facts: no
 
   roles:
-    - role: sm_webapp
-      venv: "{{ miniconda_prefix }}"
-      conda_env: "{{ miniconda_env.name }}"
+    - role: base
+      become: yes
+
+
+- name: SM services instance configuration
+  hosts: web
+  user: ubuntu
+  gather_facts: yes
+
+  vars:
+    elasticsearch_port: "{{ es_port }}"
+    kibana_version: "{{ elasticsearch_version }}"
+    nginx_config: |
+      server {
+          listen 80;
+
+          location / {
+              auth_basic "Private Property";
+              auth_basic_user_file /etc/nginx/passwdfile;
+
+              proxy_pass http://localhost:5601;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection 'upgrade';
+              proxy_set_header Host $host;
+              proxy_cache_bypass $http_upgrade;
+          }
+      }
+    venv: "{{ miniconda_prefix }}"
+    conda_env: "{{ miniconda_env.name }}"
+
+  roles:
+    - role: sm_services

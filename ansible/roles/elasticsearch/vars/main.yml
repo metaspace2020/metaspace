@@ -1,6 +1,3 @@
 ---
 
-kibana_version: "{{ elk_version }}"
-elasticsearch_version: "{{ elk_version }}"
-bound_to_any_host: false
 

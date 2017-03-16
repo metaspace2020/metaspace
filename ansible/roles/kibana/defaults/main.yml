@@ -1,2 +1,2 @@
-kibana_version: 4.5.4
-bound_to_any_host: true
+kibana_version: 5.0.0
+bound_to_any_host: false
