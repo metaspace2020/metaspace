@@ -94,7 +94,7 @@
               </div>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row id="isotope-plot-container">
             <isotope-pattern-plot :data="JSON.parse(peakChartData)">
             </isotope-pattern-plot>
           </el-row>

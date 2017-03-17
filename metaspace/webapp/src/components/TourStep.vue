@@ -96,10 +96,16 @@
      },
 
      render() {
+       // FIXME: simplify the logic here and make it more universal
        if (this.step.route && this.lastRoute != this.step.route) {
          this.lastRoute = this.step.route;
          this.routeTransition = true;
-         router.push({path: this.lastRoute});
+         if (this.step.query)
+           router.push({path: this.lastRoute, query: this.step.query});
+         else
+           router.push({path: this.lastRoute});
+       } else if (this.step.query) {
+         router.replace({query: this.step.query});
        }
 
        const minTimeout = 20 /* ms */,
