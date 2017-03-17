@@ -1,14 +1,76 @@
 import FILTER_SPECIFICATIONS from './filterSpecs.js';
-import {encodeParams, decodeParams} from './filterToUrl.js';
+import {encodeParams, decodeParams, stripFilteringParams} from './filterToUrl.js';
 import router from './router.js';
 
 import Vue from 'vue';
 import Vuex from 'vuex';
 Vue.use(Vuex);
 
+const allSections = ['images', 'compounds', 'scores', 'metadata'].reverse();
 
-function replaceURL(state, filter) {
-  const query = encodeParams(filter, state.route.path);
+function decodeSections(number) {
+  number = number | 0;
+  let sections = [],
+      mask = number.toString(2);
+  for (let i = mask.length - 1; i >= 0; i--) {
+    if (mask[i] == '1') {
+      sections.push(allSections[allSections.length - mask.length + i]);
+    }
+  }
+  return sections;
+}
+
+function encodeSections(sections) {
+  let str = '';
+  for (let i = 0; i < allSections.length; i++) {
+    let found = sections.indexOf(allSections[i]) >= 0;
+    str += found ? '1' : '0';
+  }
+  return parseInt(str, 2);
+}
+
+function decodeSortOrder(str) {
+  const dir = str[0] == '-' ? 'DESCENDING' : 'ASCENDING';
+  if (str[0] == '-')
+    str = str.slice(1);
+  const by = 'ORDER_BY_' + str.toUpperCase();
+  return {by, dir};
+}
+
+function encodeSortOrder({by, dir}) {
+  let sort = dir == 'ASCENDING' ? '' : '-';
+  return sort + by.replace('ORDER_BY_', '').toLowerCase();
+}
+
+function decodeSettings({query, path}) {
+  let settings = {
+    table: {
+      currentPage: 0,
+      order: {
+        by: 'ORDER_BY_MSM',
+        dir: 'DESCENDING'
+      }
+    },
+
+    annotationView: {
+      activeSections: ['images'],
+      colormap: 'Viridis'
+    }
+  };
+
+  if (query.page)
+    settings.table.currentPage = query.page - 1;
+  if (query.sort)
+    settings.table.order = decodeSortOrder(query.sort);
+  if (query.cmap)
+    settings.annotationView.colormap = query.cmap;
+  if (query.show !== undefined)
+    settings.annotationView.activeSections = decodeSections(query.show);
+  return settings;
+}
+
+function updatedLocation(state, filter) {
+  let query = encodeParams(filter, state.route.path);
 
   state.lastUsedFilters[state.route.path] = {
     filter,
@@ -16,7 +78,21 @@ function replaceURL(state, filter) {
     order: state.orderedActiveFilters
   };
 
-  router.replace({query});
+  return {
+    query: Object.assign(query, stripFilteringParams(state.route.query))
+  };
+}
+
+function replaceURL(state, filter) {
+  router.replace(updatedLocation(state, filter));
+}
+
+function pushURL(state, filter) {
+  replaceURL(state, filter);
+  return;
+
+  // TODO: add router hook to update orderedActiveFilters
+  router.push(updatedLocation(state, filter));
 }
 
 const store = new Vuex.Store({
@@ -41,6 +117,10 @@ const store = new Vuex.Store({
   getters: {
     filter(state) {
       return decodeParams(state.route);
+    },
+
+    settings(state) {
+      return decodeSettings(state.route);
     },
 
     gqlAnnotationFilter(state, getters) {
@@ -100,8 +180,13 @@ const store = new Vuex.Store({
             active.indexOf(key) == -1)
           active.push(key);
 
+      const changedFilterSet = state.orderedActiveFilters != active;
+
       state.orderedActiveFilters = active;
-      replaceURL(state, filter);
+      if (changedFilterSet)
+        pushURL(state, filter);
+      else
+        replaceURL(state, filter);
     },
 
     addFilter (state, name) {
@@ -111,7 +196,7 @@ const store = new Vuex.Store({
                                  {name: initialValue});
 
       state.orderedActiveFilters.push(name);
-      replaceURL(state, filter);
+      pushURL(state, filter);
     },
 
     setAnnotation(state, annotation) {
@@ -138,6 +223,32 @@ const store = new Vuex.Store({
 
     endTour(state) {
       state.currentTour = null;
+    },
+
+    updateAnnotationViewSections(state, activeSections) {
+      let query = Object.assign({}, state.route.query, {
+        show: encodeSections(activeSections)
+      });
+      router.replace({query});
+    },
+
+    setColormap(state, colormap) {
+      let query = Object.assign({}, state.route.query, {
+        cmap: colormap
+      });
+      router.replace({query});
+    },
+
+    setCurrentPage(state, page) {
+      let query = Object.assign({}, state.route.query, {page: page + 1});
+      router.replace({query});
+    },
+
+    setSortOrder(state, sortOrder) {
+      let query = Object.assign({}, state.route.query, {
+        sort: encodeSortOrder(sortOrder)
+      });
+      router.replace({query});
     }
   }
 })

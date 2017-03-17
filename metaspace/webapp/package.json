@@ -17,7 +17,7 @@
     "connect-session-knex": "^1.3.0",
     "cookie-parser": "^1.4.3",
     "ejs": "^2.5.5",
-    "element-ui": "^1.1.2",
+    "element-ui": "^1.2.4",
     "express": "^4.14.0",
     "express-fineuploader-traditional-middleware": "^0.1.1",
     "express-session": "^1.14.2",

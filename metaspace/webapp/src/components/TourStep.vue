@@ -54,6 +54,8 @@
    },
    computed: {
      step() {
+       if (!this.tour)
+         return null;
        return this.tour.steps[this.stepNum];
      }
    },

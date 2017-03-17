@@ -62,7 +62,7 @@
        this.isLoading = false;
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d"),
-           parentWidth = this.$refs.parent.offsetWidth;
+           parentWidth = Math.max(this.$refs.parent.offsetWidth, 750);
 
        ctx.setTransform(1, 0, 0, 1, 0, 0);
 

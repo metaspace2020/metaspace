@@ -18,7 +18,8 @@
       <span class="tf-value-edit"
             v-on-clickaway="quitEditMode"
             v-if="editMode">
-        <el-input ref="input" :value="value" @change="onChange" size="small"></input>
+        <el-input ref="input" :value="value" @change="onChange" size="small"
+                  style="display:inline-flex;"></input>
       </span>
     </div>
 
@@ -68,9 +69,3 @@
    }
  }
 </script>
-
-<style>
- .tf-value-edit > .el-input {
-   display: inline-flex;
- }
-</style>

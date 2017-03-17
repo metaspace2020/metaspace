@@ -10,8 +10,7 @@
               width="100%"
               stripe
               tabindex="1"
-              default-sort-order="descending"
-              default-sort-prop="msmScore"
+              :default-sort="getDefaultSort"
               :row-class-name="getRowClass"
               @keyup.native="onKeyUp"
               @keydown.native="onKeyDown"
@@ -33,6 +32,7 @@
 
       <el-table-column inline-template
                        property="dataset.name"
+                       show-overflow-tooltip
                        label="Dataset" v-if="!hidden('Dataset')"
                        min-width="140">
           <div class="cell-wrapper">
@@ -137,8 +137,6 @@
    data () {
      return {
        annotations: [],
-       orderBy: 'ORDER_BY_MSM',
-       sortingOrder: 'DESCENDING',
        currentPage: 0,
        recordsPerPage: 15,
        greenCount: 0,
@@ -161,6 +159,27 @@
        return this.$store.getters.filter;
      },
 
+     orderBy() {
+       return this.$store.getters.settings.table.order.by;
+     },
+
+     sortingOrder() {
+       return this.$store.getters.settings.table.order.dir;
+     },
+
+     getDefaultSort() {
+       let by = this.orderBy,
+           order = this.sortingOrder.toLowerCase(),
+           prop = 'msmScore';
+       if (by == 'ORDER_BY_MZ')
+         prop = 'mz';
+       else if (by == 'ORDER_BY_MSM')
+         prop = 'msmScore';
+       else if (by == 'ORDER_BY_FDR_MSM')
+         prop = 'fdrLevel';
+       return {prop, order};
+     },
+
      numberOfPages () {
        let n = this.totalCount / this.recordsPerPage;
        if (this.totalCount % this.recordsPerPage > 0)
@@ -169,12 +188,14 @@
      },
 
      gqlFilter () {
-       this.currentPage = 0; // FIXME find a better way
-
        return {
          annotationFilter: this.$store.getters.gqlAnnotationFilter,
          datasetFilter: this.$store.getters.gqlDatasetFilter
        };
+     },
+
+     currentPage () {
+       return this.$store.getters.settings.table.currentPage;
      }
    },
    apollo: {
@@ -312,17 +333,24 @@
 
        this.clearCurrentRow();
 
+       let orderBy = this.orderBy;
        if (event.prop == 'msmScore')
-         this.orderBy = 'ORDER_BY_MSM';
+         orderBy = 'ORDER_BY_MSM';
        else if (event.prop == 'mz')
-         this.orderBy = 'ORDER_BY_MZ';
+         orderBy = 'ORDER_BY_MZ';
        else if (event.prop == 'fdrLevel')
-         this.orderBy = 'ORDER_BY_FDR_MSM';
-       this.sortingOrder = event.order.toUpperCase();
+         orderBy = 'ORDER_BY_FDR_MSM';
+       this.$store.commit('setSortOrder', {
+         by: orderBy, dir: event.order.toUpperCase()
+       });
+     },
+
+     setPage (page) {
+       this.$store.commit('setCurrentPage', page);
      },
 
      onPageChange (page) {
-       this.currentPage = page - 1;
+       this.setPage(page - 1);
      },
 
      onCurrentRowChange (row) {
@@ -354,7 +382,7 @@
          if (this.currentPage == 0)
            return;
          this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, data.length - 1)); };
-         this.currentPage = this.currentPage - 1;
+         this.setPage(this.currentPage - 1);
          return;
        }
 
@@ -362,7 +390,7 @@
          if (this.currentPage == this.numberOfPages - 1)
            return;
          this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, 0)); };
-         this.currentPage = this.currentPage + 1;
+         this.setPage(this.currentPage + 1);
          return;
        }
 

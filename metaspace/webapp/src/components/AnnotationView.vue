@@ -1,7 +1,8 @@
 <template>
   <el-row>
     <el-col>
-      <el-collapse id="annot-content" v-model="activeSections">
+      <el-collapse id="annot-content" :value="activeSections"
+                   @change="onSectionsChange">
 
         <div class="el-collapse-item grey-bg">
           <div class="el-collapse-item__header av-centered grey-bg">
@@ -18,7 +19,8 @@
                 <colorbar style="padding: 7px; height: 28px;" :map="colormap"></colorbar>
               </span>
               <span id="colormap-select-span" @click="$event.stopPropagation()">
-                <el-select v-model="colormap" size="small" style="width: 120px;" title="Colormap">
+                <el-select :value="colormap" size="small" style="width: 120px;" title="Colormap"
+                           @input="onColormapChange">
                   <el-option v-for="scale in availableScales"
                              :value="scale" :label="scale">
                     <colorbar style="height: 20px" :map="scale" :title="scale"></colorbar>
@@ -120,12 +122,18 @@
    props: ['annotation'],
    data() {
      return {
-       activeSections: ["images"],
-       colormap: "Viridis",
        availableScales: ["Viridis", "Hot", "Greys", "Portland", "YlGnBl"]
      };
    },
    computed: {
+     activeSections() {
+       return this.$store.getters.settings.annotationView.activeSections;
+     },
+
+     colormap() {
+       return this.$store.getters.settings.annotationView.colormap;
+     },
+
      formattedMolFormula() {
        if (!this.annotation) return '';
        const { sumFormula, adduct, dataset } = this.annotation;
@@ -153,6 +161,16 @@
      }
    },
 
+   methods: {
+     onSectionsChange(activeSections) {
+       this.$store.commit('updateAnnotationViewSections', activeSections)
+     },
+
+     onColormapChange(selection) {
+       this.$store.commit('setColormap', selection);
+     }
+   },
+
    components: {
      DatasetInfo,
      ImageLoader,
@@ -174,12 +192,6 @@
    text-align: left;
    font-size: 0;
    margin-top: 10px;
- }
-
- .principal-peak-image > img {
-   min-height: 500px;
-   max-width: 100%;
-   object-fit: contain;
  }
 
  .small-peak-image {

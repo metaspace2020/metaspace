@@ -59,6 +59,16 @@ export function encodeParams(filter, path) {
   return q;
 }
 
+export function stripFilteringParams(query) {
+  let q = {};
+  for (var key in query) {
+    const fKey = URL_TO_FILTER[key];
+    if (!fKey)
+      q[key] = query[key];
+  }
+  return q;
+}
+
 export function decodeParams({query, path}) {
   const level = PATH_TO_LEVEL[path];
 
@@ -69,14 +79,15 @@ export function decodeParams({query, path}) {
 
   for (var key in query) {
     const fKey = URL_TO_FILTER[key];
+    if (!fKey)
+      continue; // skip params unrelated to filtering
+
     if (FILTER_SPECIFICATIONS[fKey].levels.indexOf(level) == -1)
       continue;
 
-    if (fKey) {
-      filter[fKey] = query[key];
-      if (filter[fKey] === null)
-        filter[fKey] = undefined;
-    }
+    filter[fKey] = query[key];
+    if (filter[fKey] === null)
+      filter[fKey] = undefined;
   }
   return filter;
 }
