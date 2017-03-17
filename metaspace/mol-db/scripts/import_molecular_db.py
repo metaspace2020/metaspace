@@ -1,8 +1,9 @@
+import sys
+from os.path import dirname
+sys.path.append(dirname(dirname(__file__)))
+
 import argparse
-from datetime import datetime as dt
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
-from csv import DictReader
-from sqlalchemy.orm import sessionmaker
 from openbabel import OBMol, OBConversion
 import pandas as pd
 
