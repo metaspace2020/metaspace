@@ -94,3 +94,4 @@ ENV/
 .gitignore
 .idea/
 .mol_db_venv/
+conf/*.ini

@@ -3,7 +3,7 @@ import configparser
 from itertools import chain
 
 
-BRAND_NAME = 'Falcon REST API Template'
+BRAND_NAME = 'MolDB REST API'
 
 # SECRET_KEY =
 UUID_LEN = 10
