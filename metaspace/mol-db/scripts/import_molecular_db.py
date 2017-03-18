@@ -80,7 +80,7 @@ def append_molecules(mol_db, csv_file, delimiter):
     new_inchikey_mask = mol_db_df.inchikey.isin(exist_inchikeys) == False
     new_molecules = mol_db_df[new_inchikey_mask].drop_duplicates(subset='inchikey').apply(
         lambda ser: Molecule(db_id=mol_db.id, inchikey=ser['inchikey'], inchi=ser['inchi'],
-                             sf=ser['formula'], mol_id=ser['id'], mol_name=ser['mol_name']), axis=1).values.tolist()
+                             sf=ser['formula'], mol_id=ser['id'], mol_name=ser['name']), axis=1).values.tolist()
     db_session.add_all(new_molecules)
     db_session.commit()
 
