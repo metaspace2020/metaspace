@@ -68,7 +68,7 @@ def get_or_create_db_mol_assoc(session, model, **kwargs):
 
 
 def append_molecules(mol_db, csv_file, delimiter):
-    mol_db_df = pd.read_csv(open(csv_file), sep=delimiter)
+    mol_db_df = pd.read_csv(open(csv_file, encoding='utf8'), sep=delimiter)
     assert {'id', 'inchi', 'name', 'formula'}.issubset(set(mol_db_df.columns))
 
     mol_db_df = mol_db_df[mol_db_df.inchi.isnull() == False]
