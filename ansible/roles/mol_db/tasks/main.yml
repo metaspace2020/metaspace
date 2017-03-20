@@ -1,0 +1,64 @@
+---
+
+- name: Create MolDB postgres user
+  postgresql_user: name=mol_db password={{ sm_postgres_password }} role_attr_flags=CREATEDB
+  become: yes
+  become_user: postgres
+
+- name: Create MolDB postgres database
+  become: yes
+  become_user: postgres
+  postgresql_db: name=mol_db owner=mol_db encoding=UTF8
+
+- name: Clone MolDB git repository
+  git: >
+    dest=/opt/dev/mol_db
+    repo=https://github.com/METASPACE2020/sm-molecular-db.git
+    update=yes
+    version={{ sm_branch }}
+
+- name: Check if env already exists
+  args:
+    chdir: /opt/dev/mol_db
+    executable: /bin/bash
+  shell: "conda env list"
+  register: conda_envs
+
+- name: Create conda environment (from environment.yml file) if it doesn't exist
+  args:
+    chdir: /opt/dev/mol_db
+    executable: /bin/bash
+  shell: "conda env create"
+  when: not ('mol_db' in conda_envs.stdout)
+
+- name: Update conda environment (from environment.yml file) if it exists
+  args:
+    chdir: /opt/dev/mol_db
+    executable: /bin/bash
+  shell: "conda env update"
+  when: ('mol_db' in conda_envs.stdout)
+
+- name: Install OpenBabel
+  apt: name=openbabel state=latest
+  become: yes
+
+- name: Install openbabel into conda environment
+  args:
+    chdir: /opt/dev/mol_db
+    executable: /bin/bash
+  shell: "source {{ venv }}/bin/activate mol_db && conda install -c openbabel openbabel"
+
+#- name: Pull MolDB config from the remote host
+#  fetch: src={{ mol_db_home }}/conf/local.ini.template dest=/tmp/local.ini.template
+#         flat=yes fail_on_missing=yes
+#
+#- name: Put MolDB config to ./conf/local.ini
+#  template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
+#            owner=ubuntu group=ubuntu mode=0600
+
+- name: Make sure that the logs directory exists
+  file: path={{ mol_db_home }}/logs state=directory mode=0755
+
+- name: Copy supervisor config file
+  template: src=mol-db-api.supervisor.j2 dest=/etc/supervisor/mol-db-api.supervisor
+            mode=0600 owner=ubuntu group=ubuntu

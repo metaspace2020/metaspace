@@ -1,20 +1,10 @@
 ---
 
-- name: Install supervisor into conda env
-  shell: "{{ activate_venv }} && pip install -U supervisor"
-  args:
-    executable: /bin/bash
-  when: activate_venv is defined
-
 - name: Install pip
   apt: name=python-pip state=present
-  when: not "{{ activate_venv }}"
 
 - name: Install supervisor into system python site
-  shell: "pip install -U supervisor"
-  args:
-    executable: /bin/bash
-  when: not "{{ activate_venv }}"
+  pip: name=supervisor state=latest
 
 - name: Create config/log directory for supervisor
   become: yes

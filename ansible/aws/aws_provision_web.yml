@@ -1,13 +1,13 @@
 ---
 
-- name: SM services instance basic configuration
-  hosts: web
-  user: ubuntu
-  gather_facts: no
-
-  roles:
-    - role: base
-      become: yes
+#- name: SM services instance basic configuration
+#  hosts: web
+#  user: ubuntu
+#  gather_facts: no
+#
+#  roles:
+#    - role: base
+#      become: yes
 
 
 - name: SM services instance configuration
@@ -38,4 +38,9 @@
     conda_env: "{{ miniconda_env.name }}"
 
   roles:
-    - role: sm_services
+    - role: base
+      become: yes
+
+    - role: mol_db
+
+    - role: sm_api

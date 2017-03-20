@@ -1,14 +1,15 @@
 ---
 
-#- name: Install git
-#  apt: name=git state=present
-#  become: yes
-#
+- name: Put aws credentials file into the home dir
+  template: src=aws_credentials.j2 dest=/home/ubuntu/.aws/credentials
+            owner=ubuntu group=ubuntu mode=0600
+  when: aws_access_key_id is defined
+
 #- name: Create /opt/dev directory
 #  file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
 #  become: yes
 #
-#- name: Clone sm git repository
+#- name: Clone SM engine git repository
 #  git: >
 #    dest=/opt/dev/sm
 #    repo=https://github.com/SpatialMetabolomics/sm-engine.git
@@ -71,6 +72,6 @@
 #  args:
 #    chdir: "{{ sm_home }}"
 #    executable: /bin/bash
-
+#
 ##- include: traffic_forwarding.yml
 ##  when: traffic_forwarding_is_enabled

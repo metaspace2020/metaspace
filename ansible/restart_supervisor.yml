@@ -1,13 +1,13 @@
 
 - name: Check if supervisord daemon is running
-  shell: "{{ activate_venv }} && supervisorctl status"
+  shell: supervisorctl status
   args:
     executable: /bin/bash
   register: supervisorctl_status_out
 
 
 - name: Start supervisord daemon
-  shell: "{{ activate_venv }} && supervisord -c /etc/supervisor/supervisord.conf -l /var/log/supervisor/supervisord.log"
+  shell: supervisord -c /etc/supervisor/supervisord.conf -l /var/log/supervisor/supervisord.log
   args:
     executable: /bin/bash
   register: command_result
@@ -19,7 +19,7 @@
 
 
 - name: Restart all apps running under supervisor
-  shell: "{{ activate_venv }} && supervisorctl reread && supervisorctl update && supervisorctl restart all && supervisorctl status"
+  shell: supervisorctl reread && supervisorctl update && supervisorctl restart all && supervisorctl status
   args:
     executable: /bin/bash
   register: command_result

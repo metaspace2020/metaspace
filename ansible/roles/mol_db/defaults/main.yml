@@ -1,0 +1,3 @@
+mol_db_home: /opt/dev/mol_db
+miniconda_env:
+  name: mol_db

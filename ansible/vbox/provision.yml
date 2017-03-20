@@ -14,7 +14,7 @@
   user: ubuntu
 
   roles:
-    - role: sm_services
+    - role: sm_api
       venv: "{{ miniconda_prefix }}"
       conda_env: "{{ miniconda_env.name }}"
 

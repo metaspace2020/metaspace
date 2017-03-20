@@ -1,11 +1,11 @@
 ---
 
+# should be run with 'become: yes'
+
 - name: Run apt-get update
-  become: yes
   raw: apt-get update
 
 - name: Install python-simplejson
-  become: yes
   raw: apt-get install -y python-simplejson
 
 - name: Reconfigure buggy ubuntu locales
@@ -26,7 +26,14 @@
     - iotop
     - mc
     - gcc
+    - git
     - software-properties-common
+    - python-pip
+
+- name: Update pip
+  pip:
+    name: pip
+    state: latest
 
 - name: Add swap file
   script: increase_swap.sh {{ swapsize }}
