@@ -63,7 +63,7 @@ def on_job_succeeded(msg):
 
     base_url = SMConfig.get_conf()['services']['web_app_url']
     import urllib
-    url_params = urllib.quote(ds_name)
+    url_params = urllib.quote(msg['ds_id'])
     msg['web_app_link'] = '{}/#/annotations?ds={}'.format(base_url, url_params)
     post_to_slack('dart', ' [v] Finished: {}'.format(json.dumps(msg)))
 
