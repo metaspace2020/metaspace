@@ -32,11 +32,12 @@
    name: 'annotations-page',
    computed: {
      hiddenColumns() {
-       const {institution, datasetName, database} = this.annotationFilter;
+       const {institution, database, datasetIds} = this.filter;
        let hiddenColumns = [];
-       if (datasetName)
+       const singleDatasetSelected = datasetIds && datasetIds.length == 1;
+       if (singleDatasetSelected)
          hiddenColumns.push('Dataset');
-       if (institution || datasetName)
+       if (institution || singleDatasetSelected)
          hiddenColumns.push('Institution');
        if (database)
          hiddenColumns.push('Database');
@@ -48,10 +49,10 @@
      },
 
      ...mapState({selectedAnnotation: 'annotation'}),
-     ...mapGetters({annotationFilter: 'filter'})
+     ...mapGetters({filter: 'filter'})
    },
    created() {
-     this.$store.commit('updateFilter', this.annotationFilter);
+     this.$store.commit('updateFilter', this.filter);
    },
    destroyed() {
      this.$store.commit('setAnnotation', undefined);

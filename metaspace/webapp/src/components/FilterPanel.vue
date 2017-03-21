@@ -16,6 +16,8 @@
                :is="f.type"
                :name="f.name"
                :options="f.options"
+               :labels="f.labels"
+               :clearable="f.clearable"
                :removable="f.removable"
                :filterable="f.filterable"
                :optionFormatter="f.optionFormatter"
@@ -53,7 +55,8 @@
    },
    apollo: {
      datasetInfo: {
-       query: gql`{allDatasets(limit: 1000) {
+       query: gql`{allDatasets(limit: 2000) {
+           id
            name
            institution
            organism
@@ -92,6 +95,10 @@
        return this.datasetInfo ? this.datasetInfo.map(x => x.name) : [];
      },
 
+     datasetIds() {
+       return this.datasetInfo ? this.datasetInfo.map(x => x.id) : [];
+     },
+
      activeFilters() {
        return this.activeKeys.map(this.makeFilter);
      },
@@ -128,6 +135,8 @@
        let result = Object.assign({}, filterSpec, behaviour);
        if (typeof result.options === 'string')
          result.options = self[result.options];
+       if (typeof result.labels === 'string')
+         result.labels = self[result.labels];
        return result;
      },
 

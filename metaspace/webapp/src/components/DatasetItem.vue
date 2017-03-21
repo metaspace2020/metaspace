@@ -72,7 +72,7 @@
      resultsHref() {
        return {
          path: '/annotations',
-         query: {ds: this.dataset.name, db: this.preferredDatabase}
+         query: {ds: JSON.stringify([this.dataset.id]), db: this.preferredDatabase}
        };
      },
 

@@ -127,7 +127,6 @@ const store = new Vuex.Store({
       const filter = getters.filter;
       const f = {
         database: filter.database,
-        datasetName: filter.datasetName,
         compoundQuery: filter.compoundName,
         adduct: filter.adduct,
         fdrLevel: filter.fdrLevel
@@ -150,11 +149,14 @@ const store = new Vuex.Store({
 
     gqlDatasetFilter(state, getters) {
       const filter = getters.filter;
-      const {institution, datasetName, polarity, organism,
+      const {institution, datasetIds, polarity, organism,
              ionisationSource, maldiMatrix} = filter;
       return {
         institution,
-        name: datasetName,
+
+        // temporary workaround because of array-related bugs in apollo-client
+        ids: datasetIds ? datasetIds.join("|") : null,
+
         organism,
         ionisationSource,
         maldiMatrix,

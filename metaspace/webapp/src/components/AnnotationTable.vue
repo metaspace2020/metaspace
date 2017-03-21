@@ -6,6 +6,7 @@
               border
               v-loading="isLoading"
               element-loading-text="Loading results from the server..."
+              empty-text="No annotations were found"
               highlight-current-row
               width="100%"
               stripe
@@ -137,6 +138,7 @@
    data () {
      return {
        annotations: [],
+       loadedData: false,
        currentPage: 0,
        recordsPerPage: 15,
        greenCount: 0,
@@ -152,7 +154,7 @@
    },
    computed: {
      isLoading() {
-       return this.$store.state.tableIsLoading
+       return this.$store.state.tableIsLoading || !this.loadedData
      },
 
      filter() {
@@ -225,6 +227,7 @@
             fdrLevel
             mz
             dataset {
+              id
               institution
               name
               polarity
@@ -276,6 +279,7 @@
          this.greenCount = data.countAnnotations;
        },
        loadingChangeCb (isLoading) {
+         this.loadedData = true;
          this.$store.commit('updateAnnotationTableStatus', isLoading);
        }
      }
@@ -417,7 +421,7 @@
      },
 
      filterDataset (row) {
-       this.updateFilter({datasetName: row.dataset.name});
+       this.updateFilter({datasetIds: [row.dataset.id]});
      },
 
      filterMolFormula (row) {

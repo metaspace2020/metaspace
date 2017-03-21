@@ -3,7 +3,7 @@ import FILTER_SPECIFICATIONS from './filterSpecs.js';
 export const DEFAULT_FILTER = {
   database: 'HMDB',
   institution: undefined,
-  datasetName: undefined,
+  datasetIds: undefined,
   minMSM: 0.1,
   compoundName: undefined,
   adduct: undefined,
@@ -26,12 +26,12 @@ function revMap(d) {
 const FILTER_TO_URL = {
   database: 'db',
   institution: 'inst',
-  datasetName: 'ds',
-  minMSM: 'msmthr',
+  datasetIds: 'ds',
+  minMSM: 'msm',
   compoundName: 'mol',
   adduct: 'add',
   mz: 'mz',
-  fdrLevel: 'fdrlvl',
+  fdrLevel: 'fdr',
   polarity: 'mode',
   organism: 'organism',
   ionisationSource: 'src',
@@ -53,7 +53,10 @@ export function encodeParams(filter, path) {
       continue;
 
     if (filter[key] != DEFAULT_FILTER[key]) {
-      q[FILTER_TO_URL[key]] = filter[key] || null;
+      if (FILTER_SPECIFICATIONS[key].encoding == 'json')
+        q[FILTER_TO_URL[key]] = JSON.stringify(filter[key]) || null;
+      else
+        q[FILTER_TO_URL[key]] = filter[key] || null;
     }
   }
   return q;
@@ -85,7 +88,17 @@ export function decodeParams({query, path}) {
     if (FILTER_SPECIFICATIONS[fKey].levels.indexOf(level) == -1)
       continue;
 
-    filter[fKey] = query[key];
+    if (FILTER_SPECIFICATIONS[fKey].encoding == 'json') {
+      if ('[{'.indexOf(query[key][0]) == -1) {
+        // assume non-JSON means array of one element
+        filter[fKey] = [query[key]];
+      } else {
+        filter[fKey] = JSON.parse(query[key]);
+      }
+    } else {
+      filter[fKey] = query[key];
+    }
+
     if (filter[fKey] === null)
       filter[fKey] = undefined;
   }

@@ -2,7 +2,7 @@
   <tag-filter :name="name" :removable="removable"
               @destroy="destroy">
     <el-select slot="edit"
-               :filterable="filterable" clearable v-model="value2">
+               :filterable="filterable" :clearable="clearable" v-model="value2">
       <el-option v-for="item in options"
                  :label="formatOption(item)" :value="item">
       </el-option>
@@ -32,6 +32,7 @@
      value: String | Number,
      optionFormatter: Function,
      valueFormatter: Function,
+     clearable: {type: Boolean, default: false},
      removable: {type: Boolean, default: true},
      filterable: {type: Boolean, default: true}
    },

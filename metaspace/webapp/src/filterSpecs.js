@@ -63,15 +63,19 @@ const FILTER_SPECIFICATIONS = {
     removable: false
   },
 
-  datasetName: {
-    type: SingleSelectFilter,
+  datasetIds: {
+    type: MultiSelectFilter,
     name: 'Dataset',
     description: 'Select dataset',
     levels: ['annotation', 'dataset'],
-    initialValue: undefined,
+    initialValue: [],
 
-    // string instead of a list  means take from Vue instance
-    options: 'datasetNames'
+    // string instead of a list means take from Vue instance
+    options: 'datasetIds',
+    labels: 'datasetNames',
+
+    // json encoding is assumed to be used for objects or arrays only
+    encoding: 'json'
   },
 
   minMSM: {
