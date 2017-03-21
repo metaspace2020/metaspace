@@ -4,18 +4,18 @@
 
 const elasticsearch = require('elasticsearch');
 
-const smEngineConfig = require('./sm_config.json'),
+const config = require('./config.js'),
   {datasetFilters, dsField} = require('./datasetFilters.js');
 
 const esConfig = () => {
-  const {host, port} = smEngineConfig.elasticsearch;
+  const {host, port} = config.elasticsearch;
   return {
     hosts: [`${host}:${port}`],
-    apiVersion: '2.4'
+    apiVersion: '5.0'
   }
 };
 
-const esIndex = smEngineConfig.elasticsearch.index;
+const esIndex = config.elasticsearch.index;
 const es = new elasticsearch.Client(esConfig());
 
 function esFormatMz(mz) {

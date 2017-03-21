@@ -8,14 +8,13 @@ const sprintf = require('sprintf-js'),
   jwt = require('jwt-simple'),
   slack = require('node-slack');
 
-const smEngineConfig = require('./sm_config.json'),
+const config = require('./config'),
   {esSearchResults, esCountResults} = require('./esConnector'),
   {datasetFilters, dsField, SubstringMatchFilter} = require('./datasetFilters.js'),
   generateProcessingConfig = require("./utils.js").generateProcessingConfig;
-  config = require('./config');
 
 const dbConfig = () => {
-  const {host, database, user, password} = smEngineConfig.db;
+  const {host, database, user, password} = config.db;
   return {
     host, database, user, password,
     max: 10, // client pool size
@@ -46,7 +45,7 @@ function checkPermissions(datasetId, payload) {
     });
 }
 
-const slackConn = config.SLACK_WEBHOOK_URL ? new slack(smEngineConfig.slack.webhook_url): null;
+const slackConn = config.SLACK_WEBHOOK_URL ? new slack(config.slack.webhook_url): null;
 
 const Resolvers = {
   Person: {
@@ -261,7 +260,7 @@ const Resolvers = {
     submitDataset(_, args) {
       const {name, path, metadataJson} = args;
       try {
-        // const payload = jwt.decode(args.jwt, smEngineConfig.jwt.secret);
+        // const payload = jwt.decode(args.jwt, config.jwt.secret);
         
         const metadata = JSON.parse(metadataJson);
         const body = JSON.stringify({

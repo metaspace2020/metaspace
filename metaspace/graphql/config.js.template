@@ -23,4 +23,22 @@ config.MOL_IMAGE_SERVER_IP = "";
 /* Internal ad-hoc service with the only endpoint /reindex/:dataset_id */
 config.SM_ENGINE_API_HOST = "";
 
+config.db = {};
+config.db.host = "localhost";
+config.db.database = "sm";
+config.db.user = "sm";
+config.db.password = "1234";
+
+config.elasticsearch = {};
+config.elasticsearch.index = "sm";
+config.elasticsearch.host = "localhost";
+config.elasticsearch.port = 9200;
+
+config.slack = {};
+config.slack.webhook_url = "";
+config.slack.channel = "";
+
+config.jwt = {};
+config.jwt.secret = "longSecretKey";
+
 module.exports = config;
