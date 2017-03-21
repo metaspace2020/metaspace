@@ -33,7 +33,6 @@
 
       <el-table-column inline-template
                        property="dataset.name"
-                       show-overflow-tooltip
                        label="Dataset" v-if="!hidden('Dataset')"
                        min-width="140">
           <div class="cell-wrapper">
