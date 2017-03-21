@@ -1,4 +1,3 @@
 sm_branch: master
 sm_home: /opt/dev/sm
-traffic_forwarding_is_enabled: true
 spark_master_host: local[*]

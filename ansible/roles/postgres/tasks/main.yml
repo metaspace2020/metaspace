@@ -28,8 +28,16 @@
 - name: Make postgres listen to any ip address
   lineinfile:
     dest: /etc/postgresql/{{ postgres_version }}/main/postgresql.conf
-    regexp: '^listen_addresses'
+    regexp: 'listen_addresses = '
     line: "listen_addresses = '*'"
+  notify:
+    - pg_conf_update
+
+- name: Specify the postgres port
+  lineinfile:
+    dest: /etc/postgresql/{{ postgres_version }}/main/postgresql.conf
+    regexp: 'port ='
+    line: "port = {{ postgres_port }}"
   notify:
     - pg_conf_update
 
@@ -37,3 +45,6 @@
 
 - name: Start postgres server
   service: name=postgresql state=running
+
+- name: Start postgres server on reboot
+  service: name=postgresql enabled=yes

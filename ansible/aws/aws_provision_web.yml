@@ -41,6 +41,28 @@
     - role: base
       become: yes
 
+    - role: postgres
+      become: yes
+
+    - role: elasticsearch
+      become: yes
+
+    - role: kibana
+      become: yes
+
+    - role: nginx
+      become: yes
+
+    - role: miniconda
+
+    - role: supervisor
+
     - role: mol_db
+      mol_db_postgres_pass: "{{ sm_postgres_password }}"
+      miniconda_env:
+        name: mol_db
 
     - role: sm_api
+
+  tasks:
+    - include: ../restart_supervisor.yml

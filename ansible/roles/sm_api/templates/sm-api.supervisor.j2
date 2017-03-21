@@ -1,0 +1,11 @@
+# -*- conf -*-
+
+[program:sm-api]
+process_name = sm-api-%(process_num)s
+environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin"
+directory = {{ sm_home }}
+command = {{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python sm/rest/api.py
+redirect_stderr = true
+stdout_logfile = {{ sm_home }}/logs/sm-api.log
+numprocs = 1
+numprocs_start = 8000

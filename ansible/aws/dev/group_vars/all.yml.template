@@ -11,6 +11,7 @@ aws_region: eu-west-1
 
 postgres_version: 9.3
 postgres_host: "{{ hostvars['web'].ansible_ssh_host }}"
+postgres_port: 5432
 
 elasticsearch_version: 5.2.2
 es_host: "{{ hostvars['web'].ansible_ssh_host }}"
@@ -56,6 +57,7 @@ miniconda_env:
       - elasticsearch
       - pika
       - cachetools
+      - bottle
 
 sm_repo_url: https://github.com/SpatialMetabolomics/sm-engine.git
 sm_branch: v0.6

@@ -1,7 +1,7 @@
 ---
 
 - name: Create MolDB postgres user
-  postgresql_user: name=mol_db password={{ sm_postgres_password }} role_attr_flags=CREATEDB
+  postgresql_user: name=mol_db password={{ mol_db_postgres_pass }} role_attr_flags=CREATEDB
   become: yes
   become_user: postgres
 
@@ -48,13 +48,13 @@
     executable: /bin/bash
   shell: "source {{ venv }}/bin/activate mol_db && conda install -c openbabel openbabel"
 
-#- name: Pull MolDB config from the remote host
-#  fetch: src={{ mol_db_home }}/conf/local.ini.template dest=/tmp/local.ini.template
-#         flat=yes fail_on_missing=yes
-#
-#- name: Put MolDB config to ./conf/local.ini
-#  template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
-#            owner=ubuntu group=ubuntu mode=0600
+- name: Pull MolDB config from the remote host
+  fetch: src={{ mol_db_home }}/conf/local.ini.template dest=/tmp/local.ini.template
+         flat=yes fail_on_missing=yes
+
+- name: Put MolDB config to ./conf/local.ini
+  template: src=/tmp/local.ini.template dest={{ mol_db_home }}/conf/local.ini
+            owner=ubuntu group=ubuntu mode=0600
 
 - name: Make sure that the logs directory exists
   file: path={{ mol_db_home }}/logs state=directory mode=0755
