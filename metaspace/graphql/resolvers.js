@@ -199,7 +199,7 @@ const Resolvers = {
 
         compounds.push({
           name: names[i],
-          imageURL: `http://${config.MOL_IMAGE_SERVER_IP}/mol-images/${hit._source.db_name}/${id}.svg`,
+          imageURL: `http://${config.services.mol_image_server_host}/mol-images/${hit._source.db_name}/${id}.svg`,
           information: [{database: hit._source.db_name, url: infoURL}]
         });
       }
@@ -237,7 +237,7 @@ const Resolvers = {
     peakChartData(hit) {
       const {sf_adduct, ds_meta} = hit._source;
       const msInfo = ds_meta.MS_Analysis;
-      const host = config.MOLDB_SERVICE_HOST,
+      const host = config.services.moldb_service_host,
         instr = msInfo.Analyzer.toLowerCase(),
         rp = msInfo.Detector_Resolving_Power.Resolving_Power,
         at_mz = msInfo.Detector_Resolving_Power.mz,
@@ -270,7 +270,7 @@ const Resolvers = {
           config: generateProcessingConfig(metadata)
         });
         
-        const url = `http://${config.SM_ENGINE_API_HOST}/datasets/add`;
+        const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
         return fetch(url, { method: 'POST', body: body })
           .then(() => "success");
       } catch (e) {
@@ -290,7 +290,7 @@ const Resolvers = {
               metadata: newMetadata,
               config: generateProcessingConfig(newMetadata)
             });
-            const url = `http://${config.SM_ENGINE_API_HOST}/datasets/${datasetId}/update`;
+            const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/update`;
             return fetch(url, { method: 'POST', body: body });
           })
           .then(() => {
@@ -323,7 +323,7 @@ const Resolvers = {
         const payload = jwt.decode(args.jwt, config.JWT_SECRET);
         return checkPermissions(datasetId, payload)
           .then( () => {
-            const url = `http://${config.SM_ENGINE_API_HOST}/datasets/${datasetId}/delete`;
+            const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/delete`;
             return fetch(url, {method: 'POST'});
           }).then(res => res.statusText);
       } catch (e) {
