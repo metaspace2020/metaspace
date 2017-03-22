@@ -1,3 +1,4 @@
 mol_db_home: /opt/dev/mol_db
+mol_db_branch: master
 miniconda_env:
   name: mol_db

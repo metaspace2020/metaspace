@@ -1,13 +1,13 @@
 ---
 
-#- name: SM services instance basic configuration
-#  hosts: web
-#  user: ubuntu
-#  gather_facts: no
-#
-#  roles:
-#    - role: base
-#      become: yes
+- name: SM services instance basic configuration
+  hosts: web
+  user: ubuntu
+  gather_facts: no
+
+  roles:
+    - role: base
+      become: yes
 
 
 - name: SM services instance configuration
@@ -63,6 +63,12 @@
         name: mol_db
 
     - role: sm_api
+
+    - role: sm_graphql
+      sm_database_password: "{{ sm_postgres_password }}"
+      slack_webhook_url: "{{ sm_graphql_slack_webhook_url }}"
+      slack_channel: "{{ sm_graphql_slack_channel }}"
+      jwt_secret: "{{ sm_graphql_jwt_secret }}"
 
   tasks:
     - include: ../restart_supervisor.yml
