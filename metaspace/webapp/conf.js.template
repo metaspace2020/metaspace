@@ -1,0 +1,13 @@
+exports.PORT = 8082;
+exports.GOOGLE_CLIENT_ID = "";
+exports.COOKIE_SECRET = "";
+exports.DB_CONN_STRING = "postgres://user:password@host/database";
+exports.JWT_SECRET = "";
+
+exports.ADMIN_EMAILS = [
+];
+
+exports.AWS_ACCESS_KEY_ID = "";
+exports.AWS_SECRET_ACCESS_KEY = "";
+
+exports.UPLOAD_DESTINATION = "S3";
