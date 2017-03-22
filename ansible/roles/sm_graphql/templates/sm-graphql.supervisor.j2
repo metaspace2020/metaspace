@@ -1,0 +1,11 @@
+# -*- conf -*-
+
+[program:sm-graphql]
+process_name = sm-graphql-%(process_num)s
+environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin"
+directory = {{ sm_graphql_home }}
+command = nodejs server.js
+redirect_stderr = true
+stdout_logfile = {{ sm_graphql_home }}/logs/sm-graphql.log
+numprocs = 1
+numprocs_start = 8000
