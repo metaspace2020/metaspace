@@ -37,7 +37,7 @@ readFile('schema.graphql', 'utf8', (err, contents) => {
     endpointURL: '/graphql'
   }));
   
-  addIsoImageProvider(app, config.IMG_BASE_PATH);
+  addIsoImageProvider(app);
 
   app.listen(config.PORT);
 });

@@ -16,17 +16,18 @@ let storage = multer.diskStorage({
 });
 let upload = multer({ storage });
 
-function addIsoImageProvider(app, base_uri) {
-  app.use(express.static(base_uri));
+function addIsoImageProvider(app) {
+  app.use(express.static(config.img_upload.img_base_path));
   
-  app.post(path.join(base_uri, 'upload'), upload.single('iso_image'), function (req, res, next) {
-    console.log(moment().format());
-    console.log(req.file);
-    let image_url = `http://${req.headers.host}${config.img_upload.img_base_path}${req.file.filename}`;
-    res.status(201).json({ image_url });
-  });
+  app.post(path.join(config.img_upload.img_base_path, 'upload'), upload.single('iso_image'),
+    function (req, res, next) {
+      console.log(moment().format());
+      console.log(req.file);
+      let image_url = `http://${req.headers.host}${config.img_upload.img_base_path}${req.file.filename}`;
+      res.status(201).json({ image_url });
+    });
   
-  app.delete(path.join(base_uri, 'delete', ":img_id"), function (req, res, next) {
+  app.delete(path.join(config.img_upload.img_base_path, 'delete', ":img_id"), function (req, res, next) {
     const img_path = path.join(config.img_upload.iso_img_fs_path, config.img_upload.img_base_path, req.params.img_id);
     fs.unlink(img_path, function (err) {
       if (err)
