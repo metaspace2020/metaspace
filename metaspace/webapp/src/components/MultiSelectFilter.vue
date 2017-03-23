@@ -33,7 +33,14 @@
    props: ["name", "options", "value", "labels"],
    data() {
      return {
+       // horrible workaround
+       // FIXME: submit an issue to ElementUI bugtracker
        value2: this.value || []
+     }
+   },
+   watch: {
+     value(newValue) {
+       this.value2 = newValue;
      }
    },
    computed: {
