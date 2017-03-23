@@ -35,14 +35,14 @@
  import Vue from 'vue';
  import gql from 'graphql-tag';
 
- import fineUploaderConfig from '../fineUploaderConfig.json';
+ import config from '../clientConfig.json';
  import {pathFromUUID} from '../util.js';
 
  export default {
    name: 'upload-page',
    data() {
      return {
-       fineUploaderConfig,
+       fineUploaderConfig: config.fineUploader,
        enableSubmit: false
      }
    },

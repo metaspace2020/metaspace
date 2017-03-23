@@ -7,7 +7,7 @@ Web application for browsing results produced by [sm-engine](https://github.com/
 * Clone the repository with `--recursive` flag.
 * Run `npm install`
 * Create `conf.js` using the provided `conf.js.template` (used by the backend, all secrets are kept here)
-* Create `src/fineUploaderConfig.json` using the provided template (this is used by the frontend)
+* Create `src/clientConfig.json` using the provided template (this is used by the frontend)
 * Run `node deref_schema.js > src/assets/metadata_schema.json` (FIXME: do it through webpack)
 
 ## Running in development mode

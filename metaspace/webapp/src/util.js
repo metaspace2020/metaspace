@@ -1,7 +1,9 @@
 import fetch from 'isomorphic-fetch';
-import fuConfig from './fineUploaderConfig.json';
+import config from './clientConfig.json';
 import Colorscale from 'plotly.js/src/components/colorscale';
 import {scale} from 'd3';
+
+const fuConfig = config.fineUploader;
 
 function prettifySign(str) {
     return str.replace('-', ' – ').replace('+', ' + ');

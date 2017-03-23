@@ -4,11 +4,11 @@ import Vue from 'vue';
 
 import ApolloClient, { createNetworkInterface } from 'apollo-client';
 import VueApollo from 'vue-apollo';
+import config from './clientConfig.json';
+
 const apolloClient = new ApolloClient({
   networkInterface: createNetworkInterface({
-    //uri: 'http://localhost:3010/graphql',
-    //uri: 'http://fed4d9a9.ngrok.io/graphql',
-      uri: 'http://52.51.114.30:3010/graphql',
+    uri: config.graphqlUrl,
     transportBatching: true
   })
 });
