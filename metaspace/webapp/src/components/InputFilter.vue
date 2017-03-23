@@ -19,7 +19,7 @@
             v-on-clickaway="quitEditMode"
             v-if="editMode">
         <el-input ref="input" :value="value" @change="onChange" size="small"
-                  style="display:inline-flex;"></input>
+                  style="display:inline-flex;"></el-input>
       </span>
     </div>
 
