@@ -48,7 +48,7 @@ class IsotopeImages(object):
             n_images = len(self)
         for i in range(n_images):
             plt.subplot(1, len(self._images), i + 1)
-            plt.title(round(self.peak(i)[0], 3))
+            plt.title(round(self.peak(i)[0], 4))
             plt.axis('off')
             plt.imshow(self._images[i], interpolation='none', cmap='viridis')
 
@@ -68,11 +68,11 @@ class SMDataset(object):
         value = self._db_cursor.fetchone()[0]
         self._properties[prop] = value
         return value
-    
+
     @property
     def id(self):
         return self._id
-    
+
     @property
     def name(self):
         return self._db_fetch("name")
@@ -135,13 +135,20 @@ class SMDataset(object):
 
     def isotope_images(self, sf, adduct):
         self._db_cursor.execute(ISO_IMG_SEL, [self._name, sf, adduct, self.database()])
-        images = [None] * 4
-        for r in self._db_cursor.fetchall():
-            rows = r.img_bounds['y']['max'] - r.img_bounds['y']['min'] + 1
-            cols = r.img_bounds['x']['max'] - r.img_bounds['x']['min'] + 1
+        db_rows = list(self._db_cursor.fetchall())
+        assert len(db_rows) > 0
+
+        def span(axis):
+            return axis['max'] - axis['min'] + 1
+
+        rows, cols = span(db_rows[0].img_bounds['y']), span(db_rows[0].img_bounds['x'])
+        images = [np.zeros((rows, cols))] * 4
+
+        for r in db_rows:
             img = np.zeros(cols * rows)
             img[np.array(r.pixel_inds)] = np.array(r.intensities)
             images[r.peak] = img.reshape(rows, cols)
+
         return IsotopeImages(images, sf, adduct, self.centroids(sf, adduct))
 
 class Metadata(object):
@@ -162,20 +169,20 @@ class SMInstance(object):
         self._es_port = config['elasticsearch']['port']
         self._es_index = config['elasticsearch']['index']
         self._es_client = Elasticsearch(hosts=['{}:{}'.format(self._es_host, self._es_port)], index=self._es_index)
-        
+
         self._config = config
         self._db_host = config['db']['host']
         self._db_database = config['db']['database']
 
         self.reconnect()
-    
+
     def reconnect(self):
         self._db_conn = psycopg2.connect(host=self._db_host,
                                          database=self._db_database,
                                          user=self._config['db']['user'],
                                          password=self._config['db']['password'])
         self._db_cur = self._db_conn.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor)
-    
+
     def __repr__(self):
         return "SMInstance(DB {}/{}, ES {}/{})".format(self._db_host, self._db_database,
                                                        self._es_host, self._es_index)
@@ -193,12 +200,12 @@ class SMInstance(object):
         self._db_cur.execute(query)
         return [SMDataset(row[0], self._db_cur, self._es_client, index_name=self._es_index)
                 for row in self._db_cur.fetchall()]
-    
+
     def all_adducts(self):
         query = "select distinct adduct from iso_image_metrics m"
         self._db_cur.execute(query)
         return [row[0] for row in self._db_cur.fetchall()]
-    
+
     def database(self, database_name):
         return MolecularDatabase(database_name, self._db_cur)
 
