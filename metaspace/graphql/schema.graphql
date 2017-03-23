@@ -110,6 +110,8 @@ input AnnotationFilter {
 }
 
 input DatasetFilter {
+  ids: String
+
   institution: String
   name: String
   submitter: String
