@@ -6,7 +6,6 @@
               border
               v-loading="isLoading"
               element-loading-text="Loading results from the server..."
-              empty-text="No annotations were found"
               highlight-current-row
               width="100%"
               stripe
@@ -17,6 +16,26 @@
               @keydown.native="onKeyDown"
               @current-change="onCurrentRowChange"
               @sort-change="onSortChange">
+
+      <p slot="empty" v-if="singleDatasetSelected && filter.fdrLevel <= 0.2 && ((filter.minMSM || 0) <= 0.2)"
+         style="text-align: left;">
+        No annotations were found for this dataset at {{ filter.fdrLevel * 100 }}% FDR. This might be because of:
+        <ul>
+          <li>Incorrect database setting</li>
+          <li>Calibration issues</li>
+          <li>Wrong polarity provided during upload</li>
+        </ul>
+
+        You should:
+        <ul>
+          <li>Select another database <br/>(HMDB is always applicable)</li>
+          <li>Relax the FDR filter</li>
+          <li>Look for missing pixels/stripes: <br/>these indicate calibration issues</li>
+      </p>
+
+      <p slot="empty" v-else>
+        No annotations were found
+      </p>
 
       <el-table-column inline-template
                        label="Institution" v-if="!hidden('Institution')"
@@ -158,6 +177,19 @@
 
      filter() {
        return this.$store.getters.filter;
+     },
+
+     singleDatasetSelected() {
+       let isSimple = true;
+       for (var key in this.filter) {
+         if (!this.filter[key])
+           continue;
+         if (['fdrLevel', 'minMSM', 'database', 'datasetIds'].indexOf(key) == -1) {
+           isSimple = false;
+           break;
+         }
+       }
+       return isSimple && this.filter.datasetIds && this.filter.datasetIds.length == 1;
      },
 
      orderBy() {
@@ -542,6 +574,10 @@
 
  .fdr-span {
    padding-right: 6px;
+ }
+
+ .el-table__empty-block {
+   min-height: 300px;
  }
 
 </style>

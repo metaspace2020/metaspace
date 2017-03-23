@@ -8,7 +8,7 @@ export const DEFAULT_FILTER = {
   compoundName: undefined,
   adduct: undefined,
   mz: undefined,
-  fdrLevel: 0.2,
+  fdrLevel: 0.1,
   polarity: undefined,
   organism: undefined,
   ionisationSource: undefined,
