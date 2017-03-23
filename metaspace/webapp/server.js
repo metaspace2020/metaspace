@@ -22,18 +22,10 @@ var googleClient = new auth.OAuth2(conf.GOOGLE_CLIENT_ID, '', '');
 var app = express();
 
 var jwt = require('jwt-simple');
-
-var pg = require('pg');
-
-pg.on('error', function(error) {
-  console.log(error);
-});
+var RedisStore = require('connect-redis')(session);
 
 app.use(session({
-  store: new (require('connect-pg-simple')(session))({
-    pg: pg,
-    conString: conf.DB_CONN_STRING
-  }),
+  store: new RedisStore(conf.REDIS_CONFIG),
   secret: conf.COOKIE_SECRET,
   resave: false,
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 1 month

@@ -1,7 +1,6 @@
 exports.PORT = "{{ port }}";
 exports.GOOGLE_CLIENT_ID = "{{ google_client_id }}";
 exports.COOKIE_SECRET = "{{ cookie_secret }}";
-exports.DB_CONN_STRING = "postgres://user:password@host/database";
 exports.JWT_SECRET = "{{ jwt_secret }}";
 
 exports.ADMIN_EMAILS = "{{ admin_emails }}";
@@ -10,3 +9,8 @@ exports.AWS_ACCESS_KEY_ID = "{{ aws_access_key_id }}";
 exports.AWS_SECRET_ACCESS_KEY = "{{ aws_secret_access_key }}";
 
 exports.UPLOAD_DESTINATION = "S3";
+
+exports.REDIS_CONFIG = {
+  host: "{{ redis_host }}"
+  port: "{{ redis_port }}"
+}
