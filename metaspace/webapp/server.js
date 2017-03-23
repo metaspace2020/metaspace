@@ -8,11 +8,7 @@ var session = require('express-session');
 var GoogleAuth = require('google-auth-library');
 
 var env = process.env.NODE_ENV || 'development';
-var conf;
-if (env == 'production')
-  conf = require('./conf.prod.js');
-else
-  conf = require('./conf.js');
+var conf = require('./conf.js');
 
 var fineUploaderMiddleware;
 if (conf.UPLOAD_DESTINATION != 'S3')
