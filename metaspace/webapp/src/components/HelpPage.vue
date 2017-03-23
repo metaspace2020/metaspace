@@ -41,7 +41,6 @@
 </template>
 
 <script>
- import hopscotch from 'hopscotch';
  import Vue from 'vue';
 
  import introTour from '../tours/intro.tour';
