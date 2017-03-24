@@ -115,7 +115,7 @@ class ClusterDaemon(object):
 
     def sm_engine_deploy(self):
         self.logger.info('Deploying SM engine code...')
-        self._local(['ansible-playbook', '-f', '1', 'engine_deploy.yml'],
+        self._local(['ansible-playbook', '-f', '1', 'deploy/engine.yml'],
                     'The SM engine is deployed', 'Failed to deploy the SM engine')
 
     def post_to_slack(self, emoji, msg):
@@ -183,7 +183,7 @@ class ClusterDaemon(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Daemon for auto starting SM cluster')
-    parser.add_argument('--ansible-config', dest='ansible_config_path', default='group_vars/all.yml', type=str,
+    parser.add_argument('--ansible-config', dest='ansible_config_path', default='dev/group_vars/all.yml', type=str,
                         help='Ansible config path')
     parser.add_argument('--interval', type=int, default=120, help='Cluster status check interval in sec (<1200)')
     parser.add_argument('--debug', dest='debug', action='store_true', help='Run in debug mode')

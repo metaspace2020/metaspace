@@ -31,7 +31,7 @@
     dest: "{{ sm_ansible_home }}"
     repo: "{{ sm_ansible_url }}"
     update: yes
-    version: "{{ sm_ansbile_branch }}"
+    version: "{{ sm_ansible_branch }}"
 
 - name: Make sure {{ sm_ansible_home }}/aws/logs exists
   become: yes

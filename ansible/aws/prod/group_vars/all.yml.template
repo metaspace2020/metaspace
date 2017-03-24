@@ -61,7 +61,7 @@ sm_home: "/opt/dev/sm"
 sm_s3_path: "s3a://sm-engine/data"
 
 sm_ansible_url: https://github.com/SpatialMetabolomics/sm-engine-ansible.git
-sm_ansbile_branch: rel-v0.5
+sm_ansible_branch: rel-v0.5
 sm_ansible_home: /opt/dev/sm-engine-ansible
 
 hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"

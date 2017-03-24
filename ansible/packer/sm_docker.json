@@ -30,7 +30,7 @@
             "playbook_dir": "../",
             "inventory_file": "hosts",
             "inventory_groups": "sm-docker",
-            "group_vars": "group_vars",
+            "group_vars": "dev/group_vars",
             "extra_arguments": [ "-e swapsize=0 -e traffic_forwarding_is_enabled=false" ]
         }
     ],

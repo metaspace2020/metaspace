@@ -79,7 +79,7 @@ sm_webapp_aws_secret_access_key:
 sm_webapp_s3_bucket:
 
 sm_ansible_url: https://github.com/SpatialMetabolomics/sm-engine-ansible.git
-sm_ansbile_branch: master
+sm_ansible_branch: master
 sm_ansible_home: /opt/dev/sm-engine-ansible
 
 activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
