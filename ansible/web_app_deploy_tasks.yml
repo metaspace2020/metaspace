@@ -1,27 +1,31 @@
 
+- name: Clone sm-web-app git repository
+  git:
+    dest: "{{ sm_webapp_home }}"
+    repo: https://github.com/METASPACE2020/sm-webapp.git
+    update: yes
+    force: yes
+    recursive: yes
+    version: "{{ sm_webapp_branch }}"
+  register: git_deploy
+  until: git_deploy | succeeded
 
+- name: Install sm-web-app dependencies
+  shell: npm install
+  args:
+    chdir: "{{ sm_webapp_home }}"
+    executable: /bin/bash
 
-#- name: Pull sources from the repository
-#  git: repo=https://github.com/SpatialMetabolomics/sm-engine.git
-#       dest={{ sm_home }}
-#       version={{ sm_branch }}
-#
-#- name: Install SM into conda environment
-#  args:
-#    chdir: "{{ sm_home }}"
-#    executable: /bin/bash
-#  shell: "{{ activate_venv }} && pip install . -U"
-#
-#- include: restart_supervisor.yml
-#
-##    - name: Install all needed js libs
-##      shell: npm install
-##      args:
-##        chdir: "{{ project_path }}/webapp"
-#
-##    - name: Compile static resources
-##      shell: npm run build
-##      args:
-##        chdir: "{{ project_path }}/webapp"
+- name: Dereference metadata schema
+  shell: node deref_schema.js > src/assets/metadata_schema.json
+  args:
+    chdir: "{{ sm_webapp_home }}"
+    executable: /bin/bash
 
+- name: Run build app
+  shell: npm run build
+  args:
+    chdir: "{{ sm_webapp_home }}"
+    executable: /bin/bash
 
+- include: restart_supervisor.yml

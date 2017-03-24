@@ -67,7 +67,4 @@
       aws_access_key_id: "{{ sm_webapp_aws_access_key_id }}"
       aws_secret_access_key: "{{ sm_webapp_aws_secret_access_key }}"
       s3_bucket: "{{ sm_webapp_s3_bucket }}"
-      graphql_url: "{{ sm_graphql_url }}"
-
-  tasks:
-    - include: ../../restart_supervisor.yml
+      graphql_url: "{{ sm_graphql_public_url }}"
