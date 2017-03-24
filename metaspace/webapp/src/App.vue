@@ -36,13 +36,14 @@
  import MetaspaceHeader from './components/MetaspaceHeader.vue';
  import TourStep from './components/TourStep.vue';
  import {getJWT, decodePayload} from './util.js';
+ import config from './clientConfig.json';
 
  export default {
    name: 'app',
    data() {
      return {
        googleSignInParams: {
-         client_id: "268025466937-o15ia458d8lnuohj09slh1aqbl3ja33i.apps.googleusercontent.com"
+         client_id: config.google_client_id
        }
      };
    },

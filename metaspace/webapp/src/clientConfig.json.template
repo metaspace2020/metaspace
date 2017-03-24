@@ -1,6 +1,8 @@
 {
   "graphqlUrl": "{{ graphql_url }}",
 
+  "google_client_id": "{{ google_client_id }}",
+
   "fineUploader": {
     "aws": {
       "access_key_id": "{{ aws_access_key_id }}",
