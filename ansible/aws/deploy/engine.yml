@@ -49,5 +49,5 @@
       template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
                 owner={{ spark_user }} group={{ spark_user }} mode=0600
 
-    - include: ../restart_supervisor.yml
+    - include: ../../restart_supervisor.yml
   tags: [master]

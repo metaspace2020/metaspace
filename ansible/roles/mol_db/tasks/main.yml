@@ -19,23 +19,23 @@
 
 - name: Check if env already exists
   args:
-    chdir: /opt/dev/mol_db
+    chdir: "{{ mol_db_home }}"
     executable: /bin/bash
   shell: "conda env list"
   register: conda_envs
 
 - name: Create conda environment (from environment.yml file) if it doesn't exist
   args:
-    chdir: {{ mol_db_home }}
+    chdir: "{{ mol_db_home }}"
     executable: /bin/bash
   shell: "conda env create"
   when: not ('mol_db' in conda_envs.stdout)
 
 - name: Update conda environment (from environment.yml file) if it exists
   args:
-    chdir: {{ mol_db_home }}
+    chdir: "{{ mol_db_home }}"
     executable: /bin/bash
-  shell: "conda env update"
+  shell: "conda env update -f environment.yml"
   when: ('mol_db' in conda_envs.stdout)
 
 - name: Install OpenBabel
@@ -44,7 +44,7 @@
 
 - name: Install openbabel into conda environment
   args:
-    chdir: {{ mol_db_home }}
+    chdir: "{{ mol_db_home }}"
     executable: /bin/bash
   shell: "source {{ venv }}/bin/activate mol_db && conda install -c openbabel openbabel"
 

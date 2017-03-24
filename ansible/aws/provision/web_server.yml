@@ -1,13 +1,13 @@
 ---
 
-#- name: SM services instance basic configuration
-#  hosts: web
-#  user: ubuntu
-#  gather_facts: no
-#
-#  roles:
-#    - role: base
-#      become: yes
+- name: SM services instance basic configuration
+  hosts: web
+  user: ubuntu
+  gather_facts: no
+
+  roles:
+    - role: base
+      become: yes
 
 
 - name: SM services instance configuration
@@ -18,56 +18,46 @@
   vars:
     elasticsearch_port: "{{ es_port }}"
     kibana_version: "{{ elasticsearch_version }}"
-    nginx_config: |
-      server {
-          listen 80;
-
-          location / {
-              auth_basic "Private Property";
-              auth_basic_user_file /etc/nginx/passwdfile;
-
-              proxy_pass http://localhost:5601;
-              proxy_http_version 1.1;
-              proxy_set_header Upgrade $http_upgrade;
-              proxy_set_header Connection 'upgrade';
-              proxy_set_header Host $host;
-              proxy_cache_bypass $http_upgrade;
-          }
-      }
+    nginx_vhosts:
+      - listen: 8080
+        auth_basic: yes
+        proxy_pass_port: 5601
+      - listen: 80
+        proxy_pass_port: 8082
     venv: "{{ miniconda_prefix }}"
     conda_env: "{{ miniconda_env.name }}"
 
   roles:
-#    - role: postgres
-#      become: yes
-#
-#    - role: elasticsearch
-#      become: yes
-#
-#    - role: kibana
-#      become: yes
-#
-#    - role: nginx
-#      become: yes
-#
-#    - role: miniconda
-#
-#    - role: supervisor
-#
-#    - role: mol_db
-#      mol_db_postgres_pass: "{{ sm_postgres_password }}"
-#      miniconda_env:
-#        name: mol_db
-#
-#    - role: sm_api
-#
-#    - role: nodejs
-#
-#    - role: sm_graphql
-#      sm_database_password: "{{ sm_postgres_password }}"
-#      slack_webhook_url: "{{ sm_graphql_slack_webhook_url }}"
-#      slack_channel: "{{ sm_graphql_slack_channel }}"
-#      jwt_secret: "{{ sm_graphql_jwt_secret }}"
+    - role: postgres
+      become: yes
+
+    - role: elasticsearch
+      become: yes
+
+    - role: kibana
+      become: yes
+
+    - role: nginx
+      become: yes
+
+    - role: miniconda
+
+    - role: supervisor
+
+    - role: mol_db
+      mol_db_postgres_pass: "{{ sm_postgres_password }}"
+      miniconda_env:
+        name: mol_db
+
+    - role: sm_api
+
+    - role: nodejs
+
+    - role: sm_graphql
+      sm_database_password: "{{ sm_postgres_password }}"
+      slack_webhook_url: "{{ sm_graphql_slack_webhook_url }}"
+      slack_channel: "{{ sm_graphql_slack_channel }}"
+      jwt_secret: "{{ sm_graphql_jwt_secret }}"
 
     - role: sm_web_app
       port: "{{ sm_webapp_port }}"
@@ -80,4 +70,4 @@
       graphql_url: "{{ sm_graphql_url }}"
 
   tasks:
-    - include: ../restart_supervisor.yml
+    - include: ../../restart_supervisor.yml
