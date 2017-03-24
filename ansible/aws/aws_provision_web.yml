@@ -64,11 +64,23 @@
 
     - role: sm_api
 
+    - role: nodejs
+
     - role: sm_graphql
       sm_database_password: "{{ sm_postgres_password }}"
       slack_webhook_url: "{{ sm_graphql_slack_webhook_url }}"
       slack_channel: "{{ sm_graphql_slack_channel }}"
       jwt_secret: "{{ sm_graphql_jwt_secret }}"
+
+    - role: sm_web_app
+      port: "{{ sm_webapp_port }}"
+      cookie_secret: "{{ sm_webapp_cookie_secret }}"
+      jwt_secret: "{{ sm_graphql_jwt_secret }}"
+      admin_emails: "{{ sm_webapp_admin_emails }}"
+      aws_access_key_id: "{{ sm_webapp_aws_access_key_id }}"
+      aws_secret_access_key: "{{ sm_webapp_aws_secret_access_key }}"
+      s3_bucket: "{{ sm_webapp_s3_bucket }}"
+      graphql_url: "{{ sm_graphql_url }}"
 
   tasks:
     - include: ../restart_supervisor.yml

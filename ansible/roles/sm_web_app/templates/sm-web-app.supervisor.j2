@@ -2,9 +2,10 @@
 
 [program:sm-web-app]
 process_name = sm-web-app-%(process_num)s
-directory = /opt/dev/sm
-command = bash scripts/run_web.sh sm/webapp/webserver.py --config conf/config.json --port=8080
+directory = {{ sm_web_app_home }}
+environment = NODE_ENV=production
+command = node server.js
 redirect_stderr = true
-stdout_logfile = {{ sm_home }}/logs/sm-web-app.log
+stdout_logfile = {{ sm_web_app_home }}/logs/sm-web-app.log
 numprocs = 1
 numprocs_start = 8000

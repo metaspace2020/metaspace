@@ -1,0 +1,54 @@
+---
+
+- name: Install Redis
+  become: yes
+  apt: name=redis-server state=latest
+
+- name: Clone sm-web-app git repository
+  git: >
+    dest={{ sm_web_app_home }}
+    repo=https://github.com/METASPACE2020/sm-webapp.git
+    update=yes
+    recursive=yes
+    version={{ sm_web_app_branch }}
+
+- name: Install sm-web-app dependencies
+  shell: npm install
+  args:
+    chdir: "{{ sm_web_app_home }}"
+    executable: /bin/bash
+
+- name: Pull config template from the remote host
+  fetch: src={{ sm_web_app_home }}/conf.js.template dest=/tmp/conf.js.template
+         flat=yes fail_on_missing=yes
+
+- name: Save config as ./conf.js
+  template: src=/tmp/conf.js.template dest={{ sm_web_app_home }}/conf.js
+            owner=ubuntu group=ubuntu mode=0600
+
+- name: Pull client config template from the remote host
+  fetch: src={{ sm_web_app_home }}/src/clientConfig.json.template dest=/tmp/clientConfig.json.template
+         flat=yes fail_on_missing=yes
+
+- name: Save client config as ./src/clientConfig.json
+  template: src=/tmp/clientConfig.json.template dest={{ sm_web_app_home }}/src/clientConfig.json
+            owner=ubuntu group=ubuntu mode=0600
+
+- name: Dereference metadata schema
+  shell: node deref_schema.js > src/assets/metadata_schema.json
+  args:
+    chdir: "{{ sm_web_app_home }}"
+    executable: /bin/bash
+
+- name: Run build app
+  shell: npm run build
+  args:
+    chdir: "{{ sm_web_app_home }}"
+    executable: /bin/bash
+
+- name: Make sure that the logs directory exists
+  file: path={{ sm_web_app_home }}/logs state=directory mode=0755
+
+- name: Copy supervisor config file
+  template: src=sm-web-app.supervisor.j2 dest=/etc/supervisor/sm-web-app.supervisor
+            mode=0600 owner=ubuntu group=ubuntu

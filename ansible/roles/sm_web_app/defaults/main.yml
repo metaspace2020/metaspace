@@ -1,0 +1,5 @@
+sm_web_app_home: /opt/dev/sm-web-app
+sm_web_app_branch: master
+
+redis_host: localhost
+redis_port: 6379

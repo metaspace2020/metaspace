@@ -1,24 +1,5 @@
 ---
 
-- name: Install software-properties-common
-  apt: name=software-properties-common state=present
-
-- name: Download NodeJS installation setup script
-  get_url:
-    url: https://deb.nodesource.com/setup_7.x
-    dest: /tmp/nodejs_setup.sh
-    mode: 0744
-
-- name: Run NodeJS setup script
-  shell: /tmp/nodejs_setup.sh
-  become: yes
-  args:
-    executable: /bin/bash
-
-- name: Install NodeJS
-  become: yes
-  apt: name=nodejs=7.* state=present
-
 - name: Clone sm-graphql git repository
   git: >
     dest={{ sm_graphql_home }}

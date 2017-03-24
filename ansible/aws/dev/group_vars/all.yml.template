@@ -4,30 +4,30 @@ stage: dev
 
 # SOFTWARE CONFIGURATION
 
+google_client_id:
+
 aws_access_key_id: "{{ aws_access_key_id }}"
 aws_secret_access_key: "{{ aws_secret_access_key }}"
 aws_key_name: "{{ aws_key_name }}"
 aws_region: eu-west-1
 
-postgres_version: 9.3
+postgres_version: 9.5
 postgres_host: "{{ hostvars['web'].ansible_ssh_host }}"
 postgres_port: 5432
 
 elasticsearch_version: 5.2.2
-es_host: "{{ hostvars['web'].ansible_ssh_host }}"
+es_host: localhost
 es_port: 9200
 
 kibana_user: kibana
-kibana_password: 1234
-
-web_app_url: "http://localhost"
+kibana_password: kibana
 
 rabbitmq_version: 3.6.5-1
 rabbitmq_host: "{{ hostvars['web'].ansible_ssh_host }}"
 rabbitmq_user: sm
 rabbitmq_password: "1234"
 
-miniconda_version: 4.1.11
+miniconda_version: latest
 miniconda_python: 2
 miniconda_prefix: "/opt/dev/miniconda"
 miniconda_env:
@@ -60,16 +60,28 @@ miniconda_env:
       - bottle
 
 sm_repo_url: https://github.com/SpatialMetabolomics/sm-engine.git
-sm_branch: v0.6
+sm_branch: master
 sm_postgres_password: "1234"
 sm_home: "/opt/dev/sm"
 sm_s3_path: "s3a://sm-engine/data"
 
+sm_graphql_slack_webhook_url: ""
+sm_graphql_slack_channel: ""
+sm_graphql_jwt_secret: "reallyLongSecret"
+sm_graphql_url: localhost:3010/graphql
+
+sm_webapp_port: 8082
+sm_webapp_cookie_secret:
+sm_webapp_admin_emails:
+  - admin@example.com
+sm_webapp_aws_access_key_id:
+sm_webapp_aws_secret_access_key:
+sm_webapp_s3_bucket:
+
 sm_ansible_url: https://github.com/SpatialMetabolomics/sm-engine-ansible.git
-sm_ansbile_branch: rel-v0.6
+sm_ansbile_branch: master
 sm_ansible_home: /opt/dev/sm-engine-ansible
 
-hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"
 activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
 spark_key_file: ~/.ssh/ubuntu_spark
@@ -77,6 +89,17 @@ spark_version: "2.0.2-bin-hadoop2.7"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
 spark_user: "ubuntu"
+spark_master_filebeat_log_paths:
+  - "{{ sm_home }}/logs/sm-engine.log"
+spark_master_filebeat_document_type: sm_engine
+spark_master_filebeat_version: 5.1.1
+spark_master_elk_es_ingest_node_pipeline_id: sm_engine_log_extract
+
+elk_private_ip:
+elk_es_user: elastic
+elk_es_password: elastic
+elk_kibana_user: kibana
+elk_kibana_password: kibana
 
 spark_env_extras_slave:
   SPARK_WORKER_DIR: "/tmp/spark"
