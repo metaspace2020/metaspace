@@ -1,20 +1,20 @@
 ---
 
 dependencies:
-  - role: base
-    become: yes
+#  - role: base
+#    become: yes
+#
+#  - role: spark_master
+#    become: yes
+#
+#  - role: miniconda
+#
+#  - role: supervisor
 
-  - role: spark_master
-    become: yes
-
-  - role: miniconda
-
-  - role: supervisor
-
-  - role: filebeat
-    become: yes
-    filebeat_version: "{{ spark_master_filebeat_version }}"
-    es_private_ip: "{{ elk_private_ip }}"
-    es_user: "{{ elk_es_user }}"
-    es_password: "{{ elk_es_password }}"
-    ingest_node_pipeline_id: "{{ spark_master_elk_es_ingest_node_pipeline_id }}"
+#  - role: filebeat
+#    become: yes
+#    filebeat_version: "{{ spark_master_filebeat_version }}"
+#    es_private_ip: "{{ elk_private_ip }}"
+#    es_user: "{{ elk_es_user }}"
+#    es_password: "{{ elk_es_password }}"
+#    ingest_node_pipeline_id: "{{ spark_master_elk_es_ingest_node_pipeline_id }}"

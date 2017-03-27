@@ -22,7 +22,7 @@ es_port: 9200
 kibana_user: kibana
 kibana_password: kibana
 
-rabbitmq_version: 3.6.5-1
+rabbitmq_version: 3.6.8-1
 rabbitmq_host: "{{ hostvars['web'].ansible_ssh_host }}"
 rabbitmq_user: sm
 rabbitmq_password: "1234"

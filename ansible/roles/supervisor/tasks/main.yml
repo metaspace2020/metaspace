@@ -1,9 +1,11 @@
 ---
 
 - name: Install pip
+  become: yes
   apt: name=python-pip state=present
 
 - name: Install supervisor into system python site
+  become: yes
   pip: name=supervisor state=latest
 
 - name: Create config/log directory for supervisor

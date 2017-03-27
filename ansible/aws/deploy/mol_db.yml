@@ -1,0 +1,8 @@
+---
+
+- name: Deploying Molecular DB code
+  user: ubuntu
+  hosts: web
+
+  tasks:
+    - include: ../../mol_db_deploy_tasks.yml

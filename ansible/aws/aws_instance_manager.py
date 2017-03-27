@@ -165,7 +165,8 @@ class AWSInstManager(object):
     def stop_all_instances(self, components):
         for component in components:
             i = self.conf['instances'][component]
-            self.stop_instances(i['hostgroup'], method='terminate')
+            method = 'stop' if i['price'] is None else 'terminate'
+            self.stop_instances(i['hostgroup'], method=method)
 
 
 if __name__ == '__main__':

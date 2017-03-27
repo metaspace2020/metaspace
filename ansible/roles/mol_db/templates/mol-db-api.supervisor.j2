@@ -1,11 +1,11 @@
 # -*- conf -*-
 
-[program:mol-db-api]
-process_name = mol-db-api-%(process_num)s
+[program:sm-mol-db-api]
+process_name = sm-mol-db-api-%(process_num)s
 environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin"
 directory = {{ mol_db_home }}
 command = {{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/gunicorn -b 0.0.0.0:5000 app.main:application --reload
 redirect_stderr = true
-stdout_logfile = {{ mol_db_home }}/logs/mol-db-api.log
+stdout_logfile = {{ mol_db_home }}/logs/sm-mol-db-api.log
 numprocs = 1
 numprocs_start = 8000

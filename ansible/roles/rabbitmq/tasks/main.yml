@@ -1,27 +1,34 @@
 ---
 
 - name: Ensure python-software-properties is installed
+  become: yes
   apt: pkg=python-software-properties state=installed
 
 - name: Add rabbitmq official apt repository
+  become: yes
   apt_repository: repo='deb http://www.rabbitmq.com/debian/ testing main' state=present
 
 - name: Install rabbitmq
-  apt: pkg=rabbitmq-server={{rabbitmq_version}} state=installed force=yes
+  become: yes
+  apt: pkg=rabbitmq-server state=installed force=yes
 
 - name: Enable rabbitmq plugins
+  become: yes
   rabbitmq_plugin: names=rabbitmq_management,rabbitmq_tracing,rabbitmq_federation state=enabled
   notify:
   - restart rabbitmq
 
 - name: Restart rabbitmq
+  become: yes
   service: name=rabbitmq-server state=restarted
 
 - name: Add users
+  become: yes
   rabbitmq_user: user={{rabbitmq_user}} password={{rabbitmq_password}} tags=administrator,{{rabbitmq_user}} vhost=/
                  configure_priv=.* write_priv=.* read_priv=.* state=present
 
 - name: Remove default guest user
+  become: yes
   rabbitmq_user: user=guest state=absent
 
 #- name: Ensure vhost /test is present

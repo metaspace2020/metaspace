@@ -22,8 +22,8 @@
   hosts: localhost
 
   vars:
-    master_hostgroup: sm-spark-master
-    slave_hostgroup: sm-spark-slave
+    master_hostgroup: "{{ cluster_configuration.instances.master.hostgroup }}"
+    slave_hostgroup: "{{ cluster_configuration.instances.slave.hostgroup }}"
 
   tasks:
     - debug: var=ansible_date_time.iso8601

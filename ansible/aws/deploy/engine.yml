@@ -27,6 +27,7 @@
 
   vars:
     spark_master_host: "spark://{{ ansible_hostname }}:7077"
+    sm_web_app_url: "{{ sm_webapp_url }}"
 
   tasks:
     - name: Pull sources from the repository

@@ -23,6 +23,13 @@
     creates: "{{ miniconda_prefix }}"
     executable: /bin/bash
 
+- name: Add Miniconda scripts to PATH as symlinks
+  become: yes
+  file: src={{ miniconda_prefix }}/bin/{{ item }} dest=/usr/local/bin/{{ item }} state=link
+  with_items:
+    - conda
+    - activate
+
 - name: miniconda is up-to-date
   command: '"{{ miniconda_prefix }}/bin/conda" update conda -y -q'
   register: miniconda_update
@@ -37,3 +44,4 @@
 
 - include: environment.yml
   when: miniconda_env != ''
+

@@ -5,11 +5,12 @@
   user: ubuntu
   gather_facts: yes
 
-#  pre_tasks:
-#    - name: Gather facts about the slave instances
-#      setup:
-
   roles:
+    - role: base
+      become: yes
+
+    - role: miniconda
+
     - role: sm_spark_slave
       venv: "{{ miniconda_prefix }}"
       conda_env: "{{ miniconda_env.name }}"
@@ -22,32 +23,40 @@
 - name: SM spark master instance configuration
   hosts: master
   user: ubuntu
-  gather_facts: no
+  gather_facts: yes
 
   vars:
     spark_master_host: "spark://{{ ansible_hostname }}:7077"
     spark_slave_ips: []
 
   pre_tasks:
-    - name: Run apt-get update
-      become: yes
-      raw: apt-get update
-
-    - name: Install python-simplejson
-      become: yes
-      raw: apt-get install -y python-simplejson
-
-    - name: Gather facts about the master instance
-      setup:
-
     - name: Create a list of private ip addresses for the slave instances
       set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
       with_items: "{{ groups['slave'] }}"
 
   roles:
+    - role: base
+      become: yes
+
+    - role: spark_master
+      become: yes
+
+    - role: miniconda
+
+    - role: supervisor
+
+    - role: filebeat
+      become: yes
+      filebeat_version: "{{ spark_master_filebeat_version }}"
+      es_private_ip: "{{ elk_private_ip }}"
+      es_user: "{{ elk_es_user }}"
+      es_password: "{{ elk_es_password }}"
+      ingest_node_pipeline_id: "{{ spark_master_elk_es_ingest_node_pipeline_id }}"
+
     - role: sm_spark_master
       venv: "{{ miniconda_prefix }}"
       conda_env: "{{ miniconda_env.name }}"
       spark_usr_dir: "{{ spark_home }}"
       spark_env_extras: "{{ spark_env_extras_master }}"
+      sm_web_app_url: "{{ sm_webapp_url }}"
   tags: ["master"]

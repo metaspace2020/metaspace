@@ -1,5 +1,9 @@
 ---
 
+- name: Install psycopg2 into the system Python site, so that Ansible modules can use it
+  become: yes
+  pip: name=psycopg2 state=present
+
 - name: Create MolDB postgres user
   postgresql_user: name=mol_db password={{ mol_db_postgres_pass }} role_attr_flags=CREATEDB
   become: yes
@@ -60,5 +64,5 @@
   file: path={{ mol_db_home }}/logs state=directory mode=0755
 
 - name: Copy supervisor config file
-  template: src=mol-db-api.supervisor.j2 dest=/etc/supervisor/mol-db-api.supervisor
+  template: src=mol-db-api.supervisor.j2 dest=/etc/supervisor/sm-mol-db-api.supervisor
             mode=0600 owner=ubuntu group=ubuntu
