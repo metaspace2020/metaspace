@@ -4,7 +4,7 @@ export const DEFAULT_FILTER = {
   database: 'HMDB',
   institution: undefined,
   datasetIds: undefined,
-  minMSM: 0.1,
+  minMSM: undefined,
   compoundName: undefined,
   adduct: undefined,
   mz: undefined,

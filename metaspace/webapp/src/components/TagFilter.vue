@@ -5,8 +5,8 @@
     </div>
 
     <el-popover trigger="click"
-                placement="top"
-                width="300px">
+                placement="bottom"
+                :width="width">
       <slot name="edit"></slot>
       <div class="tf-value" slot="reference">
         <slot name="show"></slot>
@@ -25,7 +25,8 @@
    name: 'tag-filter',
    props: {
      name: String,
-     removable: {type: Boolean, default: true}
+     removable: {type: Boolean, default: true},
+     width: {type: Number, default: 300}
    },
    methods: {
      destroy() {
@@ -66,10 +67,6 @@
    display: inline-block;
    cursor: pointer;
    padding: 7px 0px 7px 3px;
- }
-
- .el-popover {
-   min-width: 440px;
  }
 
  .el-popover > .el-select {

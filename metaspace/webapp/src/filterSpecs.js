@@ -2,6 +2,7 @@ import { renderMolFormula } from './util.js';
 import InputFilter from './components/InputFilter.vue';
 import SingleSelectFilter from './components/SingleSelectFilter.vue';
 import MultiSelectFilter from './components/MultiSelectFilter.vue';
+import DatasetNameFilter from './components/DatasetNameFilter.vue';
 
 // FIXME: hard-coded adducts
 const ADDUCT_POLARITY = {
@@ -64,17 +65,13 @@ const FILTER_SPECIFICATIONS = {
   },
 
   datasetIds: {
-    type: MultiSelectFilter,
+    type: DatasetNameFilter,
     name: 'Dataset',
     description: 'Select dataset',
     levels: ['annotation', 'dataset'],
     initialValue: [],
 
-    // string instead of a list means take from Vue instance
-    options: 'datasetIds',
-    labels: 'datasetNames',
-
-    // json encoding is assumed to be used for objects or arrays only
+    // json encoding (for URL) is assumed to be used for objects or arrays only
     encoding: 'json'
   },
 

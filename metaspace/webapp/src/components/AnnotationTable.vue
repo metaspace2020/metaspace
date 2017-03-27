@@ -26,7 +26,7 @@
           <li>Wrong polarity provided during upload</li>
         </ul>
 
-        You should:
+        Please:
         <ul>
           <li>Select another database <br/>(HMDB is always applicable)</li>
           <li>Relax the FDR filter</li>
@@ -579,6 +579,10 @@
 
  .el-table__empty-block {
    min-height: 300px;
+ }
+
+ #annot-table > .el-loading-mask {
+   background-color: white;
  }
 
 </style>

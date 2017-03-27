@@ -23,6 +23,7 @@
                :optionFormatter="f.optionFormatter"
                :value="f.value"
                :valueFormatter="f.valueFormatter"
+               :width="f.width"
                @change="f.onChange"
                @destroy="f.onChange(undefined)">
     </component>
@@ -35,15 +36,8 @@
  import InputFilter from './InputFilter.vue';
  import SingleSelectFilter from './SingleSelectFilter.vue';
  import MultiSelectFilter from './MultiSelectFilter.vue';
+ import DatasetNameFilter from './DatasetNameFilter.vue';
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
-
- function getUniqueValues(datasets, selector) {
-   if (!datasets)
-     return [];
-   let values = [...new Set(datasets.map(selector))];
-   values.sort();
-   return values;
- }
 
  export default {
    name: 'filter-panel',
@@ -51,19 +45,18 @@
    components: {
      InputFilter,
      SingleSelectFilter,
-     MultiSelectFilter
+     MultiSelectFilter,
+     DatasetNameFilter
    },
    apollo: {
-     datasetInfo: {
-       query: gql`{allDatasets(limit: 2000) {
-           id
-           name
-           institution
-           organism
-           ionisationSource
-           maldiMatrix
-       }}`,
-       update: data => data.allDatasets
+     optionLists: {
+       query: gql`{
+         institutionNames: metadataSuggestions(field: "Submitted_By.Institution", query: "")
+         organisms: metadataSuggestions(field: "Sample_Information.Organism", query: "")
+         ionisationSources: metadataSuggestions(field: "MS_Analysis.Ionisation_Source", query: "")
+         maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "")
+       }`,
+       update: data => data
      }
    },
    computed: {
@@ -73,30 +66,6 @@
 
      activeKeys() {
        return this.$store.state.orderedActiveFilters;
-     },
-
-     institutionNames() {
-       return getUniqueValues(this.datasetInfo, x => x.institution);
-     },
-
-     organisms() {
-       return getUniqueValues(this.datasetInfo, x => x.organism);
-     },
-
-     ionisationSources() {
-       return getUniqueValues(this.datasetInfo, x => x.ionisationSource);
-     },
-
-     maldiMatrices() {
-       return getUniqueValues(this.datasetInfo, x => x.maldiMatrix);
-     },
-
-     datasetNames() {
-       return this.datasetInfo ? this.datasetInfo.map(x => x.name) : [];
-     },
-
-     datasetIds() {
-       return this.datasetInfo ? this.datasetInfo.map(x => x.id) : [];
      },
 
      activeFilters() {
@@ -133,10 +102,10 @@
          }
        };
        let result = Object.assign({}, filterSpec, behaviour);
+       if (!self.optionLists)
+         return result;
        if (typeof result.options === 'string')
-         result.options = self[result.options];
-       if (typeof result.labels === 'string')
-         result.labels = self[result.labels];
+         result.options = self.optionLists[result.options];
        return result;
      },
 
@@ -153,10 +122,6 @@
 <style>
  .el-form-item__content {
    text-align: left;
- }
-
- .el-select-dropdown__wrap {
-   max-height: 320px;
  }
 
  #filter-form {
