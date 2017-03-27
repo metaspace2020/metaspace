@@ -44,8 +44,11 @@
 
    data() {
      return {
-       optionsQuery: gql`query DatasetFilterOptions($q: String) {
-         options: allDatasets(filter: {name: $q}, limit: 10) {
+       optionsQuery: gql`query DatasetFilterOptions($df: DatasetFilter,
+                                                    $orderBy: DatasetOrderBy,
+                                                    $sortDir: SortingOrder) {
+         options: allDatasets(filter: $df,
+                              orderBy: $orderBy, sortingOrder: $sortDir, limit: 20) {
            value: id
            label: name
          }
@@ -58,6 +61,7 @@
        }`,
        loading: false,
        options: [],
+       cachedOptions: [],
        currentLabel: '',
        value2: this.value || []
      }
@@ -77,6 +81,28 @@
    },
 
    methods: {
+     joinOptions() {
+       // adds/moves selected values to the top of the options list
+
+       let valueToLabel = {};
+       for (let {value, currentLabel} of this.cachedOptions)
+         valueToLabel[value] = currentLabel;
+
+       let options = this.value2.map(value => ({value, label: valueToLabel[value]}));
+       let values = [...this.value2];
+
+       // add currently selected values to the list
+       for (let i = 0; i < this.options.length; i++) {
+         const item = this.options[i];
+         if (values.indexOf(item.value) == -1) {
+           values.push(item.value);
+           options.push(item);
+         }
+       }
+
+       this.options = options;
+     },
+
      fetchNames(ids) {
        this.$apollo.query({
          query: this.namesQuery,
@@ -88,19 +114,35 @@
          this.$refs.select.cachedOptions = data.options;
          this.$refs.select.setSelected();
 
+         this.cachedOptions = data.options;
+         this.joinOptions();
          if (ids.length == 1) {
            this.currentLabel = data.options[0].currentLabel;
          }
        }).catch((err) => {/* TODO: more error reporting */});
      },
+
      fetchOptions(query) {
        this.loading = true;
+
+       let orderBy = 'ORDER_BY_NAME', sortDir = 'ASCENDING';
+       if (query.length == 0) {
+         // show most recent datasets for an empty query
+         orderBy = 'ORDER_BY_DATE';
+         sortDir = 'DESCENDING';
+       }
+
+       // take current dataset filter from the store and adjust it
+       const df = Object.assign({name: query}, this.$store.getters.gqlDatasetFilter);
+       delete df.ids;
+
        this.$apollo.query({
          query: this.optionsQuery,
-         variables: {q: query}
+         variables: {df, orderBy, sortDir}
        }).then(({data}) => {
          this.loading = false;
-         this.options = data.options;
+         this.options = data.options.sort();
+         this.joinOptions();
        }).catch((err) => {
          // TODO: more error reporting
          this.options = [];
@@ -116,3 +158,9 @@
    }
  }
 </script>
+
+<style>
+ .el-select-dropdown.is-multiple .el-select-dropdown__wrap {
+   max-height: 600px;
+ }
+</style>
