@@ -11,8 +11,11 @@ export const DEFAULT_FILTER = {
   fdrLevel: 0.1,
   polarity: undefined,
   organism: undefined,
+  organismPart: undefined,
+  condition: undefined,
   ionisationSource: undefined,
-  maldiMatrix: undefined
+  maldiMatrix: undefined,
+  analyzerType: undefined
 };
 
 function revMap(d) {
@@ -25,7 +28,7 @@ function revMap(d) {
 
 const FILTER_TO_URL = {
   database: 'db',
-  institution: 'inst',
+  institution: 'lab',
   datasetIds: 'ds',
   minMSM: 'msm',
   compoundName: 'mol',
@@ -34,8 +37,11 @@ const FILTER_TO_URL = {
   fdrLevel: 'fdr',
   polarity: 'mode',
   organism: 'organism',
+  organismPart: 'part',
+  condition: 'cond',
   ionisationSource: 'src',
-  maldiMatrix: 'matrix'
+  maldiMatrix: 'matrix',
+  analyzerType: 'instr'
 };
 
 const URL_TO_FILTER = revMap(FILTER_TO_URL);

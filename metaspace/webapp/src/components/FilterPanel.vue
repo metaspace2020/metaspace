@@ -53,8 +53,11 @@
        query: gql`{
          institutionNames: metadataSuggestions(field: "Submitted_By.Institution", query: "")
          organisms: metadataSuggestions(field: "Sample_Information.Organism", query: "")
+         organismParts: metadataSuggestions(field: "Sample_Information.Organism_Part", query: "")
+         conditions: metadataSuggestions(field: "Sample_Information.Condition", query: "")
          ionisationSources: metadataSuggestions(field: "MS_Analysis.Ionisation_Source", query: "")
          maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "")
+         analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "")
        }`,
        update: data => data
      }

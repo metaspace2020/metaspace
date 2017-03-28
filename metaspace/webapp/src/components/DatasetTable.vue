@@ -3,9 +3,21 @@
     <filter-panel level="dataset"></filter-panel>
 
     <div class="dataset-list">
-      <div style="font: 24px 'Roboto', sans-serif; padding: 5px;">
-        Recent uploads
+      <div v-if="noFilters"
+           style="font: 24px 'Roboto', sans-serif; padding: 5px;">
+        <span v-if="noFilters">
+          Recent uploads
+        </span>
       </div>
+
+      <div v-else
+           style="font: 18px 'Roboto', sans-serif; padding: 5px;">
+        <span v-if="datasets.length > 0">
+          Search results in reverse chronological order
+        </span>
+        <span v-else>No datasets found</span>
+      </div>
+
       <dataset-item v-for="(dataset, i) in datasets"
                     :dataset="dataset"
                     :class="[i%2 ? 'even': 'odd']">
@@ -33,6 +45,16 @@
      DatasetItem,
      FilterPanel
    },
+
+   computed: {
+     noFilters() {
+       const df = this.$store.getters.filter;
+       for (var key in df)
+         if (df[key]) return false;
+       return true;
+     }
+   },
+
    apollo: {
      datasets: {
        query: gql`query GetDatasets($dFilter: DatasetFilter) {
@@ -52,6 +74,9 @@
            type
            resolvingPower(mz: 400)
          }
+         organism
+         organismPart
+         condition
          metadataJson
        }}`,
        update(data) {

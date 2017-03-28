@@ -149,8 +149,9 @@ const store = new Vuex.Store({
 
     gqlDatasetFilter(state, getters) {
       const filter = getters.filter;
-      const {institution, datasetIds, polarity, organism,
-             ionisationSource, maldiMatrix} = filter;
+      const {institution, datasetIds, polarity,
+             organism, organismPart, condition,
+             ionisationSource, analyzerType, maldiMatrix} = filter;
       return {
         institution,
 
@@ -158,8 +159,11 @@ const store = new Vuex.Store({
         ids: datasetIds ? datasetIds.join("|") : null,
 
         organism,
+        organismPart,
+        condition,
         ionisationSource,
         maldiMatrix,
+        analyzerType,
         polarity: polarity ? polarity.toUpperCase() : null
       }
     }

@@ -13,18 +13,30 @@
       </div>
 
       <div style="color: darkblue;">
-        {{ formatCondition }}
         <span class="ds-add-filter"
               title="Filter by species"
               @click="addFilter('organism')">
-          {{ formatOrganism }}</span>, {{ formatOrganismPart }}
+          {{ formatOrganism }}</span>,
+        <span class="ds-add-filter"
+              title="Filter by organism part"
+              @click="addFilter('organismPart')">
+          {{ formatOrganismPart }}</span>
+
+        <span class="ds-add-filter"
+              title="Filter by condition"
+              @click="addFilter('condition')">
+          ({{ formatCondition }})</span>
       </div>
 
       <div>
         <span class="ds-add-filter"
               title="Filter by ionisation source"
               @click="addFilter('ionisationSource')">
-          {{ dataset.ionisationSource }}</span> + {{ dataset.analyzer.type }},
+          {{ dataset.ionisationSource }}</span> +
+        <span class="ds-add-filter"
+              title="Filter by analyzer type"
+              @click="addFilter('analyzerType')">
+          {{ dataset.analyzer.type }}</span>,
         <span class="ds-add-filter"
               title="Filter by polarity"
               @click="addFilter('polarity')">
@@ -38,7 +50,7 @@
         at {{ formatTime }} by {{ formatSubmitter }},
         <span class="s-inst ds-add-filter"
               v-html="formatInstitution"
-              title="Filter by this institution"
+              title="Filter by this lab"
               @click="addFilter('institution')"></span>
       </div>
     </div>
@@ -61,6 +73,10 @@
 <script>
  import DatasetInfo from './DatasetInfo.vue';
  import capitalize from 'lodash/capitalize';
+
+ function removeUnderscores(str) {
+   return str.replace(/_/g, ' ');
+ }
 
  export default {
    name: 'dataset-item',
@@ -89,6 +105,10 @@
        return this.dataset.name.split('//', 2).pop();
      },
 
+     analyzerType() {
+       return this.dataset.analyzer.type;
+     },
+
      uploadedDateTime() {
        const fields = this.dataset.id.split('_');
        const date = fields[0];
@@ -115,32 +135,16 @@
        return this.metadata.metaspace_options.Metabolite_Database;
      },
 
-     organism() {
-       const species = this.metadata.Sample_Information.Organism || '';
-       if (species == '-')
-         return '';
-       return species;
-     },
-
-     condition() {
-       const cond = this.metadata.Sample_Information.Condition || '';
-       if (cond == '-')
-         return '';
-       return cond;
-     },
-
      formatOrganism() {
-       return this.organism.replace(/_/g, ' ').toLowerCase();
+       return removeUnderscores(this.dataset.organism);
      },
 
      formatCondition() {
-       return this.condition.replace(/_([A-Z])/g,
-                                     (_, s) => ' ' + s.toLowerCase());
+       return removeUnderscores(this.dataset.condition).toLowerCase();
      },
 
      formatOrganismPart() {
-       const part = this.metadata.Sample_Information.Organism_Part || '';
-       return part.replace(/_/g, ' ').toLowerCase();
+       return removeUnderscores(this.dataset.organismPart).toLowerCase();
      },
 
      formatResolvingPower() {

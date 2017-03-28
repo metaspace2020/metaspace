@@ -40,9 +40,11 @@ function formatAdduct (adduct) {
    making use of it must also implement the data filtering logic,
    e.g. adding GraphQL query variables and setting them accordingly.
 
-   Data filtering logic is currently concentrated in the store:
-   * add new fields to DEFAULT_FILTER and FILTER_TO_URL (for vue-router)
-   * edit gqlAnnotationFilter and gqlDatasetFilter getters
+   Data filtering logic is currently located in two places:
+   * filterToUrl.js
+     add new fields to DEFAULT_FILTER and FILTER_TO_URL (for vue-router)
+   * store.js
+     edit gqlAnnotationFilter and gqlDatasetFilter getters
 
    If options to a select are provided as a string, they are taken from
    FilterPanel computed properties. When a new filter is added that uses
@@ -124,8 +126,8 @@ const FILTER_SPECIFICATIONS = {
 
   institution: {
     type: SingleSelectFilter,
-    name: 'Institution',
-    description: 'Select institution',
+    name: 'Lab',
+    description: 'Select lab',
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
 
@@ -154,6 +156,26 @@ const FILTER_SPECIFICATIONS = {
     options: 'organisms'
   },
 
+  organismPart: {
+    type: SingleSelectFilter,
+    name: 'Organism part',
+    description: 'Select organism part',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    options: 'organismParts'
+  },
+
+  condition: {
+    type: SingleSelectFilter,
+    name: 'Organism condition',
+    description: 'Select organism condition',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    options: 'conditions'
+  },
+
   ionisationSource: {
     type: SingleSelectFilter,
     name: 'Source',
@@ -172,6 +194,16 @@ const FILTER_SPECIFICATIONS = {
     initialValue: undefined,
 
     options: 'maldiMatrices'
+  },
+
+  analyzerType: {
+    type: SingleSelectFilter,
+    name: 'Analyzer type',
+    description: 'Select analyzer',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    options: 'analyzerTypes'
   }
 };
 

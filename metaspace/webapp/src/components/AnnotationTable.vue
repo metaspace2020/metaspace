@@ -39,7 +39,7 @@
       </p>
 
       <el-table-column inline-template
-                       label="Institution" v-if="!hidden('Institution')"
+                       label="Lab" v-if="!hidden('Institution')"
                        min-width="95">
         <div class="cell-wrapper">
           <span class="cell-span">
@@ -47,7 +47,7 @@
           </span>
           <img src="../assets/filter-icon.png"
                @click="filterInstitution(row)"
-               title="Limit results to this institution"/>
+               title="Limit results to this lab"/>
         </div>
       </el-table-column>
 
