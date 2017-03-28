@@ -18,6 +18,8 @@ enum AnnotationOrderBy {
   ORDER_BY_MZ
   ORDER_BY_MSM
   ORDER_BY_FDR_MSM
+  ORDER_BY_DATASET
+  ORDER_BY_FORMULA
 }
 
 enum DatasetOrderBy {
@@ -31,7 +33,7 @@ enum SortingOrder {
 }
 
 type Dataset {
-  id: String
+  id: String!
   name: String!
 
   institution: String!
@@ -43,6 +45,8 @@ type Dataset {
   analyzer: Analyzer!
 
   organism: String
+  organismPart: String
+  condition: String
   maldiMatrix: String
 
   # full metadata JSON conforming to schema published at
@@ -110,16 +114,37 @@ input AnnotationFilter {
 }
 
 input DatasetFilter {
+  # list of IDs separated by '|'
   ids: String
 
+  # exact match
   institution: String
+
+  # substring match
   name: String
+
+  # not yet implemented
   submitter: String
+
   polarity: Polarity
+
+  # exact match
   ionisationSource: String
+
+  # exact match
   analyzerType: String
+
+  # exact match
   maldiMatrix: String
+
+  # exact match
   organism: String
+
+  # exact match
+  organismPart: String
+
+  # exact match
+  condition: String
 }
 
 type Query {

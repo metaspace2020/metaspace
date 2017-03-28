@@ -5,10 +5,10 @@ class AbstractDatasetFilter {
     this.schemaPath = schemaPath;
     this.options = options;
 
-    this.esField = 'ds_meta.' + this.schemaPath;
+    this.esField = options.esField || ('ds_meta.' + this.schemaPath);
 
     const pathElements = this.schemaPath.replace(/\./g, ',');
-    this.pgField = "metadata#>>'{" + pathElements + "}'";
+    this.pgField = options.pgField || ("metadata#>>'{" + pathElements + "}'");
   }
 
   preprocess(val) {
@@ -45,7 +45,7 @@ class SubstringMatchFilter extends AbstractDatasetFilter {
   }
 
   pgFilter(q, value) {
-    return q.whereRaw(this.pgField + ' LIKE ?', ['%' + this.preprocess(value) + '%']);
+    return q.whereRaw(this.pgField + ' ILIKE ?', ['%' + this.preprocess(value) + '%']);
   }
 }
 
@@ -86,7 +86,10 @@ const datasetFilters = {
   ionisationSource: new PhraseMatchFilter('MS_Analysis.Ionisation_Source', {}),
   analyzerType: new ExactMatchFilter('MS_Analysis.Analyzer', {}),
   organism: new ExactMatchFilter('Sample_Information.Organism', {}),
+  organismPart: new ExactMatchFilter('Sample_Information.Organism_Part', {}),
+  condition: new ExactMatchFilter('Sample_Information.Condition', {}),
   maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {}),
+  name: new SubstringMatchFilter('', {esField: 'ds_name', pgField: 'name'}),
   ids: new DatasetIdFilter()
 };
 

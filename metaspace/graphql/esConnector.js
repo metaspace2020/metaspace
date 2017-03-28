@@ -40,11 +40,15 @@ function esSort(orderBy, sortingOrder) {
     return [{'msm': order}];
   else if (orderBy == 'ORDER_BY_FDR_MSM')
     return [{'fdr': order}, {'msm': order == 'asc' ? 'desc' : 'asc'}];
+  else if (orderBy == 'ORDER_BY_DATASET')
+    return [{'ds_name': order}, {'mz': order}];
+  else if (orderBy == 'ORDER_BY_FORMULA')
+    return [{'sf': order}, {'adduct': order}, {'fdr': order}];
 }
 
 function constructAnnotationQuery(args) {
   const { orderBy, sortingOrder, offset, limit, filter, datasetFilter } = args;
-  const { database, datasetId, datasetName, mzFilter, msmScoreFilter,
+  const { database, datasetName, mzFilter, msmScoreFilter,
     fdrLevel, sumFormula, adduct, compoundQuery } = filter;
 
   var body = {
@@ -74,9 +78,6 @@ function constructAnnotationQuery(args) {
     };
     addFilter(filter);
   }
-
-  if (datasetId)
-    addFilter({term: {ds_id: datasetId}});
 
   if (mzFilter)
     addRangeFilter('mz', {min: esFormatMz(mzFilter.min),
