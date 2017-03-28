@@ -84,7 +84,7 @@ const datasetFilters = {
   institution: new ExactMatchFilter('Submitted_By.Institution', {}),
   polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
   ionisationSource: new PhraseMatchFilter('MS_Analysis.Ionisation_Source', {}),
-  analyzerType: new ExactMatchFilter('MS_Analysis.Analyzer', {}),
+  analyzerType: new PhraseMatchFilter('MS_Analysis.Analyzer', {}),
   organism: new ExactMatchFilter('Sample_Information.Organism', {}),
   organismPart: new ExactMatchFilter('Sample_Information.Organism_Part', {}),
   condition: new ExactMatchFilter('Sample_Information.Condition', {}),
