@@ -138,7 +138,7 @@ class SearchJob(object):
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
             for mol_db_dict in self._ds.config['databases']:
-                mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict['version'], self._ds.config)
+                mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict.get('version', None), self._ds.config)
                 self._run_job(mol_db)
 
             logger.info("All done!")
