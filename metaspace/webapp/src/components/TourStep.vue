@@ -18,7 +18,7 @@
         </div>
 
         <div class="ts-actions">
-          <el-button v-if="this.stepNum > 0" size="small" type="primary"
+          <el-button v-if="this.stepNum > 0" size="small"
                      @click.native="prevStep">
             Back
           </el-button>
