@@ -1,4 +1,3 @@
----
 
 - name: Clone sm-graphql git repository
   git: >
@@ -21,15 +20,4 @@
   template: src=/tmp/config.js.template dest={{ sm_graphql_home }}/config.js
             owner=ubuntu group=ubuntu mode=0600
 
-- name: Create a folder for isotopic images
-  file:
-    path: /opt/data/sm_data/public/iso_images
-    state: directory
-    mode: 0755
-
-- name: Make sure that the logs directory exists
-  file: path={{ sm_graphql_home }}/logs state=directory mode=0755
-
-- name: Copy supervisor config file
-  template: src=sm-graphql.supervisor.j2 dest=/etc/supervisor/sm-graphql.supervisor
-            mode=0600 owner=ubuntu group=ubuntu
+- include: restart_supervisor.yml

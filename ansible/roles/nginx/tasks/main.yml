@@ -8,5 +8,15 @@
     src=sites-available-default.j2 dest=/etc/nginx/sites-available/default
     owner=ubuntu group=ubuntu mode=0644
 
+- name: Install Ansible htpasswd module dependencies
+  apt: name=python-passlib state=present update_cache=yes
+
+- name: Create basic auth users
+  htpasswd:
+    path: /etc/nginx/passwdfile
+    name: "{{ item.user }}"
+    password: "{{ item.password }}"
+  with_items: "{{ basic_auth_users }}"
+
 - name: Restart Nginx
   service: name=nginx state=restarted

@@ -9,14 +9,16 @@
     - role: base
       become: yes
 
-    - role: miniconda
+    - role: spark
+      become: yes
+      spark_env_extras: "{{ spark_env_extras_slave }}"
 
     - role: sm_spark_slave
       venv: "{{ miniconda_prefix }}"
       conda_env: "{{ miniconda_env.name }}"
       spark_usr_dir: "{{ spark_home }}"
-      spark_env_extras: "{{ spark_env_extras_slave }}"
-      block_dev_labels: "{{ block_dev_labels_slave }}"
+
+    - role: miniconda
   tags: ["slave"]
 
 
@@ -38,6 +40,10 @@
     - role: base
       become: yes
 
+    - role: spark
+      become: yes
+      spark_env_extras: "{{ spark_env_extras_master }}"
+
     - role: spark_master
       become: yes
 
@@ -57,6 +63,5 @@
       venv: "{{ miniconda_prefix }}"
       conda_env: "{{ miniconda_env.name }}"
       spark_usr_dir: "{{ spark_home }}"
-      spark_env_extras: "{{ spark_env_extras_master }}"
       sm_web_app_url: "{{ sm_webapp_url }}"
   tags: ["master"]

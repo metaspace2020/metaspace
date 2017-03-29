@@ -77,9 +77,15 @@
             dest="{{ spark_usr_parent_dir }}/spark-{{ spark_version }}/conf/spark-env.sh"
   tags: ["config"]
 
+- name: Make "{{ spark_usr_parent_dir }}/spark-{{ spark_version }}/conf/spark-env.sh" executable
+  file: dest="{{ spark_usr_parent_dir }}/spark-{{ spark_version }}/conf/spark-env.sh"
+        mode=u=rwx,g=rx,o=rx owner={{ spark_user }} group={{ spark_user }}
+  tags: ["config"]
+
 - name: Configure Spark defaults config file
   template: src=spark-defaults.conf.j2
             dest="{{ spark_usr_parent_dir }}/spark-{{ spark_version }}/conf/spark-defaults.conf"
+            owner={{ spark_user }} group={{ spark_user }}
   tags: ["config"]
 
 - name: Edit Spark log4j properties file

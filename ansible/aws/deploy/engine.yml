@@ -26,7 +26,7 @@
   gather_facts: true
 
   vars:
-    spark_master_host: "spark://{{ ansible_hostname }}:7077"
+    spark_master_host: "spark://{{ ansible_hostname }}.{{ aws_region }}.compute.internal:7077"
     sm_web_app_url: "{{ sm_webapp_url }}"
 
   tasks:
@@ -35,6 +35,18 @@
            dest={{ sm_home }}
            version={{ sm_branch }}
            update=yes
+      when: local_deploy is not defined
+
+    - name: Upload local files
+      synchronize:
+        src: "{{ sm_home }}/{{ item }}/"
+        dest: "{{ sm_home }}/{{ item }}/"
+        rsync_opts:
+          - "--exclude=*.sh"
+      with_items:
+        - scripts
+        - sm
+      when: local_deploy is defined
 
     - name: Install SM into conda environment
       args:

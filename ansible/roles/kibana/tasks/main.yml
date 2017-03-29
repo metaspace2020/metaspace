@@ -35,11 +35,11 @@
 - name: Start Kibana on boot
   service: name=kibana enabled=true
 
-- name: Install Ansible htpasswd module dependencies
-  apt: name=python-passlib state=present update_cache=yes
+#- name: Install Ansible htpasswd module dependencies
+#  apt: name=python-passlib state=present update_cache=yes
 
-- name: Create a basic auth Kibana user
-  htpasswd:
-    path: /etc/nginx/passwdfile
-    name: "{{ kibana_user }}"
-    password: "{{ kibana_password }}"
+#- name: Create a basic auth Kibana user
+#  htpasswd:
+#    path: /etc/nginx/passwdfile
+#    name: "{{ kibana_user }}"
+#    password: "{{ kibana_password }}"

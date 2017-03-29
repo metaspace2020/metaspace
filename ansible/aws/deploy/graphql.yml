@@ -1,0 +1,14 @@
+---
+
+- name: Deploying SM GraphQL code
+  user: ubuntu
+  hosts: web
+
+  vars:
+    sm_database_password: "{{ sm_postgres_password }}"
+    slack_webhook_url: "{{ sm_graphql_slack_webhook_url }}"
+    slack_channel: "{{ sm_graphql_slack_channel }}"
+    jwt_secret: "{{ sm_graphql_jwt_secret }}"
+
+  tasks:
+    - include: ../../graphql_deploy_tasks.yml
