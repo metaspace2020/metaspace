@@ -178,8 +178,8 @@ const Resolvers = {
     },
 
     possibleCompounds(hit) {
-      const ids = hit._source.comp_ids.split('|');
-      const names = hit._source.comp_names.split('|');
+      const ids = hit._source.comp_ids;
+      const names = hit._source.comp_names;
       let compounds = [];
       for (var i = 0; i < names.length; i++) {
         let id = ids[i];
@@ -274,6 +274,7 @@ const Resolvers = {
         return fetch(url, { method: 'POST', body: body })
           .then(() => "success");
       } catch (e) {
+        console.log(e);
         return e.message;
       }
     },
@@ -281,7 +282,7 @@ const Resolvers = {
     updateMetadata(_, args) {
       const {datasetId, metadataJson} = args;
       try {
-        const payload = jwt.decode(args.jwt, config.JWT_SECRET);
+        const payload = jwt.decode(args.jwt, config.jwt.secret);
         const newMetadata = JSON.parse(metadataJson);
         
         return checkPermissions(datasetId, payload)
@@ -312,6 +313,7 @@ const Resolvers = {
           })
           .then(() => "success");
       } catch (e) {
+        console.log(e);
         return e.message;
       }
     },
@@ -320,13 +322,14 @@ const Resolvers = {
       const {datasetId} = args;
   
       try {
-        const payload = jwt.decode(args.jwt, config.JWT_SECRET);
+        const payload = jwt.decode(args.jwt, config.jwt.secret);
         return checkPermissions(datasetId, payload)
           .then( () => {
             const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/delete`;
             return fetch(url, {method: 'POST'});
           }).then(res => res.statusText);
       } catch (e) {
+        console.log(e);
         return e.message;
       }
     }
