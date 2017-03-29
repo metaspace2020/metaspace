@@ -7,8 +7,7 @@ module.exports = {
     vendor: ['ajv', 'babel-polyfill',
              'vue', 'vuex', 'vue-router', 'vuex-router-sync',
              'vue-apollo', 'apollo-client', 'graphql-tag',
-             'plotly.js/lib/core',
-             'element-ui',
+             'plotly.js/lib/core', 'element-ui', 'fine-uploader/lib/all',
              'webpack/hot/dev-server', 'webpack-hot-middleware/client']
   },
   output: {
