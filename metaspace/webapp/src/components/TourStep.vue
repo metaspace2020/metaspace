@@ -18,6 +18,11 @@
         </div>
 
         <div class="ts-actions">
+          <el-button v-if="this.stepNum > 0" size="small" type="primary"
+                     @click.native="prevStep">
+            Back
+          </el-button>
+
           <el-button size="small" type="primary" @click.native="nextStep">
             {{ this.stepNum == this.tour.steps.length - 1 ? 'Done' : 'Next' }}
           </el-button>
@@ -95,6 +100,14 @@
        this.render();
      },
 
+     prevStep() {
+       if (this.stepNum == 0)
+         return; // shouldn't happen
+       this.stepNum -= 1;
+       this.popper.destroy();
+       this.render();
+     },
+
      render() {
        // FIXME: simplify the logic here and make it more universal
        if (this.step.route && this.lastRoute != this.step.route) {
@@ -115,13 +128,13 @@
        let self = this,
            timeout = minTimeout;
 
-       function showNextStep() {
+       function showStep() {
          let el = document.querySelector(self.step.target);
          if (!el) {
            timeout *= factor;
            if (timeout > maxTimeout)
              return;
-           window.setTimeout(showNextStep, timeout);
+           window.setTimeout(showStep, timeout);
            return;
          }
 
@@ -130,7 +143,7 @@
        }
 
        Vue.nextTick(() => {
-         window.setTimeout(showNextStep, timeout);
+         window.setTimeout(showStep, timeout);
        });
      },
 
@@ -153,7 +166,7 @@
    justify-content: flex-end;
  }
 
- $popper-background-color: rgba(250, 255, 240, 0.90);
+ $popper-background-color: rgba(250, 250, 250, 0.95);
  $popper-border-color: #ddddce;
  $popper-arrow-color: black;
 
