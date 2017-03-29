@@ -49,12 +49,13 @@ ORDER BY COALESCE(m.msm, 0::real) DESC
 
 class ESExporter:
     def __init__(self):
-        self._sm_config = SMConfig.get_conf()
-        self._es = Elasticsearch(hosts=[{"host": self._sm_config['elasticsearch']['host'],
-                                        "port": int(self._sm_config['elasticsearch']['port'])}])
-        self._db = DB(self._sm_config['db'])
+        es_config = SMConfig.get_conf()['elasticsearch']
+        hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
+        http_auth = (es_config['user'], es_config['password']) if 'user' in es_config else None
+        self._es = Elasticsearch(hosts=hosts, http_auth=http_auth)
+        self._db = DB(SMConfig.get_conf()['db'])
         self._ind_client = IndicesClient(self._es)
-        self.index = self._sm_config['elasticsearch']['index']
+        self.index = es_config['index']
 
     def _index(self, annotations, mol_db):
         to_index = []
