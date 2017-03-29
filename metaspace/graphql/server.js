@@ -40,4 +40,6 @@ readFile('schema.graphql', 'utf8', (err, contents) => {
   addIsoImageProvider(app);
 
   app.listen(config.PORT);
+  
+  logger.log('SM GraphQL is running...');
 });
