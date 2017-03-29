@@ -21,7 +21,7 @@ config.services.mol_image_server_host = "localhost:3020";
 config.services.sm_engine_api_host = "localhost:5123";
 
 config.db = {};
-config.db.host = "{{ sm_database_host }}";
+config.db.host = "{{ sm_database_host | default('localhost') }}";
 config.db.database = "sm";
 config.db.user = "sm";
 config.db.password = "{{ sm_database_password }}";
