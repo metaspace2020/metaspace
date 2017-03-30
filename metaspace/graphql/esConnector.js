@@ -99,9 +99,9 @@ function constructAnnotationQuery(args) {
     addFilter({term: {ds_name: datasetName}});
 
   if (compoundQuery)
-    addFilter({or: [
+    addFilter({bool: {should: [
       { wildcard: {comp_names: `*${compoundQuery}*`}},
-      { term: {sf: compoundQuery }}]});
+      { term: {sf: compoundQuery }}]}});
 
   for (var key in datasetFilters) {
     const val = datasetFilter[key];

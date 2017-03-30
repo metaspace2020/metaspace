@@ -69,7 +69,7 @@ class DatasetIdFilter extends AbstractDatasetFilter {
     ids = ids.split("|");
 
     if (ids.length > 0)
-      return {or: ids.map(id => ({term: {ds_id: id}}))};
+      return {terms: {ds_id: ids}};
     else
       return {};
   }
