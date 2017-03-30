@@ -120,33 +120,53 @@
 
     </el-table>
 
-    <el-pagination :total="totalCount"
-                   :page-size="recordsPerPage"
-                   @size-change="onPageSizeChange"
-                   :page-sizes="pageSizes"
-                   :current-page="currentPage + 1"
-                   @current-change="onPageChange"
-                   layout="prev,pager,next,sizes">
-    </el-pagination>
+    <div style="display: flex; flex-direction: row; justify-content: space-between;">
+      <div>
+        <el-pagination :total="totalCount"
+                       :page-size="recordsPerPage"
+                       @size-change="onPageSizeChange"
+                       :page-sizes="pageSizes"
+                       :current-page="currentPage + 1"
+                       @current-change="onPageChange"
+                       layout="prev,pager,next,sizes">
+        </el-pagination>
 
-    <div style="padding: 10px 0 0 5px;">
-      <b>{{ totalCount }}</b> matching {{ totalCount == 1 ? 'record': 'records' }}
-    </div>
+        <div style="padding: 10px 0 0 5px;">
+          <b>{{ totalCount }}</b> matching {{ totalCount == 1 ? 'record': 'records' }}
+        </div>
 
-    <div style="padding-top: 10px; display: flex;">
-      <div class="fdr-legend-header">FDR levels: </div>
-      <div class="fdr-legend fdr-5">5%</div>
-      <div class="fdr-legend fdr-10">10%</div>
-      <div class="fdr-legend fdr-20">20%</div>
-      <div class="fdr-legend fdr-50">50%</div>
+        <div style="padding-top: 10px;">
+          <div class="fdr-legend-header">FDR levels: </div>
+          <div class="fdr-legend fdr-5">5%</div>
+          <div class="fdr-legend fdr-10">10%</div>
+          <div class="fdr-legend fdr-20">20%</div>
+          <div class="fdr-legend fdr-50">50%</div>
+        </div>
+      </div>
+
+      <div>
+        <progress-button v-if="isExporting && totalCount > 5000" @click="abortExport"
+                         class="export-btn"
+                         :width=150 :height=36
+                         :percentage="exportProgress * 100">
+          Cancel
+        </progress-button>
+
+        <el-button v-else class="export-btn" @click="startExport">
+          Export to CSV
+        </el-button>
+      </div>
     </div>
   </el-row>
 </template>
 
 <script>
- import gql from 'graphql-tag';
  import { renderMolFormula } from '../util.js';
+ import ProgressButton from './ProgressButton.vue';
+
+ import gql from 'graphql-tag';
  import Vue from 'vue';
+ import FileSaver from 'file-saver';
 
  // 38 = up, 40 = down, 74 = j, 75 = k
  const KEY_TO_ACTION = {38: 'up', 75: 'up', 40: 'down', 74: 'down'};
@@ -154,6 +174,7 @@
  export default {
    name: 'annotation-table',
    props: ["hideColumns"],
+   components: {ProgressButton},
    data () {
      return {
        annotations: [],
@@ -161,7 +182,9 @@
        currentPage: 0,
        recordsPerPage: 15,
        greenCount: 0,
-       pageSizes: [15, 20, 25, 30]
+       pageSizes: [15, 20, 25, 30],
+       isExporting: false,
+       exportProgress: 0
      }
    },
    mounted() {
@@ -215,10 +238,7 @@
      },
 
      numberOfPages () {
-       let n = this.totalCount / this.recordsPerPage;
-       if (this.totalCount % this.recordsPerPage > 0)
-         n += 1;
-       return n;
+       return Math.ceil(this.totalCount / this.recordsPerPage);
      },
 
      gqlFilter () {
@@ -462,6 +482,98 @@
 
      filterMZ (row) {
        this.updateFilter({mz: row.mz});
+     },
+
+     startExport () {
+       let q = gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
+                                $offset: Int, $limit: Int, $filter: AnnotationFilter, $dFilter: DatasetFilter) {
+             annotations: allAnnotations(filter: $filter, datasetFilter: $dFilter,
+                                         orderBy: $orderBy, sortingOrder: $sortingOrder,
+                                         offset: $offset, limit: $limit) {
+               id
+               sumFormula
+               adduct
+               msmScore
+               rhoSpatial
+               rhoSpectral
+               rhoChaos
+               fdrLevel
+               mz
+               dataset {
+                 id
+                 institution
+                 name
+               }
+               ionImage {
+                 url
+               }
+               possibleCompounds {
+                 name
+               }
+             }
+           }`,
+           v = this.queryVariables(),
+           chunkSize = 1000,
+           chunks = [],
+           offset = 0;
+
+       this.isExporting = true;
+
+       v.limit = chunkSize;
+       let k = Math.ceil(this.totalCount / chunkSize),
+           client = this.$apollo.client,
+           self = this,
+           csv = ['institution', 'datasetName', 'formula', 'adduct', 'mz',
+                  'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
+                  'moleculeNames'].join(',') + "\n";
+
+       function formatRow(row) {
+         const {sumFormula, adduct, msmScore, mz,
+                rhoSpatial, rhoSpectral, rhoChaos, fdrLevel} = row;
+         return [
+           row.dataset.institution, row.dataset.name, sumFormula, adduct, mz,
+           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
+           '"' + row.possibleCompounds.map(m => m.name).join(', ') + '"'
+         ].join(',');
+       }
+
+       function writeCsvChunk(rows) {
+         for (let row of rows) {
+           csv += formatRow(row) + "\n";
+         }
+       }
+
+       function finish() {
+         if (!self.isExporting)
+           return;
+
+         self.isExporting = false;
+         self.exportProgress = 0;
+
+         let blob = new Blob([csv], {type: 'text/csv; charset="utf-8"'});
+         FileSaver.saveAs(blob, "sm_results.csv");
+       }
+
+       function runExport() {
+         const variables = Object.assign({offset}, v);
+         client.query({query: q, variables}).then(resp => {
+           self.exportProgress = offset / self.totalCount;
+           offset += chunkSize;
+           writeCsvChunk(resp.data.annotations);
+           if (!self.isExporting || offset >= self.totalCount) {
+             finish();
+           } else {
+             window.setTimeout(runExport, 50);
+           }
+         })
+       }
+
+       runExport();
+     },
+
+     abortExport() {
+       this.isExporting = false;
+       this.exportProgress = 0;
      }
    }
  }
@@ -583,6 +695,12 @@
 
  #annot-table > .el-loading-mask {
    background-color: white;
+ }
+
+ .export-btn {
+   margin-top: 7px;
+   width: 150px;
+   height: 36px;
  }
 
 </style>

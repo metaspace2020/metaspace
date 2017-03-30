@@ -70,7 +70,7 @@
        var scale1 = parentWidth / this.image.width;
        var scale2 = this.maxHeight / this.image.height;
        this.scaleFactor = Math.max(1, Math.min(scale1, scale2));
-       console.log(scale1, scale2, this.scaleFactor);
+       //console.log(scale1, scale2, this.scaleFactor);
        canvas.width = this.image.width * this.scaleFactor;
        canvas.height = this.image.height * this.scaleFactor;
        ctx.scale(this.scaleFactor, this.scaleFactor);
