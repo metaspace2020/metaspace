@@ -7,10 +7,7 @@ route: upload
 
 This is the place to go when you acquire a new dataset.
 
-We have very few requirements:
-
-- it must be in the [imzML](https://ms-imaging.org/wp/introduction/) format
-- it should be high-resolution data
-- it should be well calibrated
-
-(Tip: first, select the files for upload to save some time!)
+To submit a dataset for annotation:
+- drag-and-drop a [centroided imzML](http://metaspace2020.eu/imzml) dataset into the box
+- fill out the metdata whilst it's uploading
+- hit submit

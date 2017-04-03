@@ -5,11 +5,10 @@ placement: bottom
 query: {show: 4}
 ---
 
-Metabolite-spectrum match score is currently computed in a relatively simple manner.
-Namely, it multiplies together a few heuristic scores:
+The metabolite-spectrum match (MSM) score quantifies our confidence in an annotation (the closer to 1, the better). It evaluates the degree to which signals in the data match the theoretical isotope pattern for the molecular formula.
 
-- &rho;<sub>spatial</sub> measures weighted average of spatial correlations
-between principal peak image and the rest, where weights are the corresponding theoretical abundances
-- &rho;<sub>spectral</sub> throws away all spatial information and compares only total intensities
-of isotopic peaks with predicted ratios
-- &rho;<sub>chaos</sub> measures how chaotic the principal peak image is
+It is composed from the following measures:
+- &rho;<sub>spatial</sub> quantifies the correlation between ion images of the isotope peaks. The score compares the principal peak against all others, weighted by the theoretical abundances
+- &rho;<sub>spectral</sub> compares the average image intensity for each ion image against the theoretical abundances (considering only pixels where the principal peak is present).
+- &rho;<sub>chaos</sub> estimates how spatially informative the principal peak ion image is.
+See the [About](./about) section for more details.

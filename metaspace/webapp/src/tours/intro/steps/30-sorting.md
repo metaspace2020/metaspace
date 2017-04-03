@@ -5,4 +5,4 @@ placement: bottom
 nextOnTargetClick: true
 ---
 
-By default, records are sorted by MSM score, but you can also sort them by m/z
+By default, records are sorted by MSM score, but you can also sort them by m/z or FDR

@@ -5,6 +5,6 @@ placement: right
 route: annotations
 ---
 
-Here you can find basic information about the molecular formulae discovered by our engine.
+Annotations are the core of the METASPACE platform and this table lets you browse and search them. 
 
-By default records are sorted by MSM ('metabolite spectrum match') score, i.e. best matches are shown at the top. You can also sort them by m/z and drill down to specific annotations using filtering.
+Each row in the table represents one molecular formula annotation within one dataset. Try hovering over an Annotation to get more molecular information.

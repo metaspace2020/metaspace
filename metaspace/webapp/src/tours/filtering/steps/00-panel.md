@@ -1,12 +1,9 @@
 ---
-title: Filter panel
+title: Filters
 target: '#filter-panel'
 placement: bottom
 route: annotations
 ---
+Filtering is the core method for navigating through the annotations. You can see the currently applied filters here at the top. Each filter focuses the annotations shown in the table to help you to dig down to the information content of your datasets.
 
-All applied filters and their settings are shown here.
-
-By default we show only molecular formulae annotated at FDR=0.1 (that is, our estimate is that 10% of these are wrong).
-
-Another default setting is the chosen molecular database, which is currently HMDB.
+The default filters mean you are currently looking at only molecular formulae annotated at FDR=0.1 from a search against the HMDB database (to find out how we calculate this check the [About](/about) page).

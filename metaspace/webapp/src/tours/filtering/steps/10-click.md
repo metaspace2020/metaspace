@@ -5,6 +5,5 @@ placement: top
 nextOnTargetClick: true
 ---
 
-The easiest way to add filters is this: simply hover over a cell and click on the appearing
-<img src="/dist/filter-icon.png" width="20px" alt="filter"></img> icon.
-This will limit results to those with the same cell value.
+Hover over a cell you will see the filter icon
+<img src="/dist/filter-icon.png" width="20px" alt="filter"></img>. Click on it to instantly add a filter based on the column and value selected.
