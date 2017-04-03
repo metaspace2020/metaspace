@@ -2,14 +2,7 @@ var path = require('path');
 var webpack = require('webpack');
 
 module.exports = {
-  entry: {
-    app: ['./src/main.js'],
-    vendor: ['ajv', 'babel-polyfill',
-             'vue', 'vuex', 'vue-router', 'vuex-router-sync',
-             'vue-apollo', 'apollo-client', 'graphql-tag',
-             'plotly.js/lib/core', 'element-ui', 'fine-uploader/lib/all',
-             'webpack/hot/dev-server', 'webpack-hot-middleware/client']
-  },
+  entry: './src/main.js',
   output: {
     path: '/',
     publicPath: '/dist/',
@@ -69,14 +62,8 @@ module.exports = {
   },
   devServer: {
     hot: true,
-    inline: true,
-    noInfo: true
   },
-  devtool: '#eval-source-map',
+  devtool: '#cheap-module-eval-source-map',
   plugins: [
-    new webpack.optimize.CommonsChunkPlugin({
-      name: "vendor",
-      filename: "vendor.bundle.js"
-    })
   ]
 }

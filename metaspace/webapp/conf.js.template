@@ -1,5 +1,9 @@
 exports.PORT = "{{ port }}";
+
 exports.GOOGLE_CLIENT_ID = "{{ google_client_id }}";
+exports.GOOGLE_CLIENT_SECRET = "{{ google_client_secret }}"
+exports.GOOGLE_CALLBACK_URL = "{{ google_callback_url }}"
+
 exports.COOKIE_SECRET = "{{ cookie_secret }}";
 exports.JWT_SECRET = "{{ jwt_secret }}";
 

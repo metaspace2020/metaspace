@@ -13,7 +13,7 @@ Vue.use(VueRouter);
 
 const router = new VueRouter({
     routes: [
-        { path: '/', redirect: '/annotations' },
+        { path: '/', redirect: '/about' },
         { path: '/annotations', component: AnnotationsPage },
         { path: '/datasets',
           component: DatasetsPage,

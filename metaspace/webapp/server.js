@@ -5,7 +5,8 @@ var bodyParser = require('body-parser');
 var favicon = require('serve-favicon');
 
 var session = require('express-session');
-var GoogleAuth = require('google-auth-library');
+
+var GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 var env = process.env.NODE_ENV || 'development';
 var conf = require('./conf.js');
@@ -16,13 +17,47 @@ if (conf.UPLOAD_DESTINATION != 'S3')
 else
   fineUploaderMiddleware = require('./fineUploaderS3Middleware.js');
 
-var auth = new GoogleAuth;
-var googleClient = new auth.OAuth2(conf.GOOGLE_CLIENT_ID, '', '');
-
 var app = express();
 
 var jwt = require('jwt-simple');
 var RedisStore = require('connect-redis')(session);
+
+var knex = require('knex')({
+  // FIXME: this is a temporary solution, use Postgres in the future
+  client: 'sqlite3',
+  connection: {
+    filename: './db.sqlite'
+  },
+  useNullAsDefault: true
+});
+
+knex.schema.createTableIfNotExists('users', (table) => {
+  table.increments();
+  table.string('name');
+  table.string('email');
+  table.string('googleId');
+}).then(() => {});
+
+function Users() {
+  return knex('users');
+}
+
+function findUserByGoogleId(googleId) {
+  return Users().where({googleId}).first();
+}
+
+function findOrCreate(user, cb) {
+  findUserByGoogleId(user.googleId).then(resp => {
+    if (resp)
+      cb(null, resp);
+    else
+      Users().insert(user)
+             .then(ids => {
+               cb(null, Object.assign({id: ids[0]}, user));
+             });
+    return null;
+  }).catch((err) => cb(err, null));
+}
 
 app.use(session({
   store: new RedisStore(conf.REDIS_CONFIG),
@@ -36,36 +71,46 @@ app.use(bodyParser.json());
 app.use(passport.initialize());
 app.use(passport.session());
 
+passport.use(new GoogleStrategy({
+    clientID: conf.GOOGLE_CLIENT_ID,
+    clientSecret: conf.GOOGLE_CLIENT_SECRET,
+    callbackURL: conf.GOOGLE_CALLBACK_URL
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    findOrCreate({
+      googleId: profile.id,
+      name: profile.displayName,
+      email: profile.emails[0].value
+    }, cb);
+  }
+));
+
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
+});
+
+passport.deserializeUser(function(id, done) {
+  Users().where('id', '=', id).first()
+         .then(user => done(null, user))
+         .catch(err => done(err, null));
+});
+
+app.get('/auth/google',
+  passport.authenticate('google', {scope: ['profile', 'email']})
+);
+
+app.get('/auth/google/callback',
+  passport.authenticate('google', {
+    successRedirect: '/#/datasets',
+    failureRedirect: '/#/help'
+}));
+
+app.get('/logout', function(req, res, next) {
+  req.logout();
+  next();
+});
+
 var router = express.Router();
-router.post('/googleSignIn', (req, res, next) => {
-  const callback = (err, login) => {
-    if (err) {
-      res.json({
-        status: 'failure'
-      })
-    } else {
-      var payload = login.getPayload();
-      var userId = payload['sub'];
-      req.session.client = {
-        client_id: userId,
-        name: payload['name'],
-        email: payload['email']
-      };
-      res.json({
-        status: 'success'
-      });
-    }
-  };
-
-  googleClient.verifyIdToken(req.body.id_token, conf.GOOGLE_CLIENT_ID, callback);
-});
-
-router.post('/googleSignOut', (req, res, next) => {
-  req.session.destroy();
-  res.json({
-    status: 'destroyed'
-  });
-});
 
 function getRole(email) {
   if (conf.ADMIN_EMAILS.indexOf(email) != -1)
@@ -78,23 +123,24 @@ function getRole(email) {
 // (this allows small time discrepancy between different servers)
 // If we want to use longer lifetimes we need to setup HTTPS on all servers.
 router.get('/getToken', (req, res, next) => {
-  console.log(req.session.client);
-  if (!req.session.client) {
+  if (!req.user) {
     res.sendStatus(403);
     return;
   }
 
   var payload = {
     'iss': 'METASPACE2020',
-    'sub': req.session.client.client_id,
-    'name': req.session.client.name,
-    'email': req.session.client.email,
+    'sub': req.user.id,
+    'name': req.user.name,
+    'email': req.user.email,
     'exp': Math.floor(Date.now() / 1000 + 60),
-    'role': getRole(req.session.client.email)
+    'role': getRole(req.user.email)
   }
   res.send(jwt.encode(payload, conf.JWT_SECRET));
-})
+});
 
+router.get('/', (req, res, next) =>
+  res.sendFile(__dirname + '/index.html'));
 
 if (env == 'development') {
   var webpackDevMiddleware = require('webpack-dev-middleware');
@@ -114,7 +160,6 @@ if (env == 'development') {
     log: console.log
   }));
 
-  router.get('/', (req, res, next) => res.render('index.html'));
   app.set('views', __dirname);
   app.engine('html', require('ejs').renderFile);
   app.set('view engine', 'html');
@@ -122,7 +167,7 @@ if (env == 'development') {
 } else {
   var compression = require('compression');
   app.use(compression());
-  app.use(express.static('.'));
+  app.use('/dist', express.static('dist'));
 }
 
 app.use(router);

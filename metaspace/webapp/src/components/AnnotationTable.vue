@@ -68,7 +68,7 @@
       <el-table-column inline-template
                        label="Annotation"
                        min-width="120">
-        <el-popover trigger="hover" placement="left">
+        <el-popover trigger="hover" placement="right">
             <div>Candidate molecules ({{ row.possibleCompounds.length }}):
                 <ul>
                     <li v-for="comp in row.possibleCompounds">
@@ -152,7 +152,8 @@
           Cancel
         </progress-button>
 
-        <el-button v-else class="export-btn" @click="startExport">
+        <el-button v-else class="export-btn" @click="startExport"
+                   :disabled="isExporting">
           Export to CSV
         </el-button>
       </div>
