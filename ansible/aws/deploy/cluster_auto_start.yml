@@ -1,12 +1,12 @@
 ---
 
 - name: Deploying cluster-auto-start
-  hosts: queue
+  hosts: web
   user: ubuntu
   gather_facts: false
 
-  vars:
-    activate_venv: "true" # fake shell command
+#  vars:
+#    activate_venv: "true" # fake shell command
 
   tasks:
     - name: Git clone sm-engine-ansible
@@ -17,13 +17,15 @@
         version: "{{ sm_ansible_branch }}"
 
     - name: Upload templated group_vars/all.yml
-      template: src={{ stage }}/group_vars/all.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all.yml
+      template: src=../{{ stage }}/group_vars/all.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all.yml
                 owner=ubuntu group=ubuntu mode=0600
 
     - name: Update the inventory file
-      local_action: command python update_inventory.py --stage {{ stage }}
+      command: python update_inventory.py --stage {{ stage }}
+      args:
+        chdir: "{{ sm_ansible_home }}/aws"
 
-    - name: Copy inventory file
-      copy: src={{ stage }}/hosts dest={{ sm_ansible_home }}/aws/{{ stage }} mode=0600 owner=ubuntu group=ubuntu
+#    - name: Copy inventory file
+#      copy: src={{ stage }}/hosts dest={{ sm_ansible_home }}/aws/{{ stage }} mode=0600 owner=ubuntu group=ubuntu
 
-    - include: ../restart_supervisor.yml
+    - include: ../../restart_supervisor.yml

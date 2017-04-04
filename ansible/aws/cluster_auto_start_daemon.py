@@ -24,6 +24,7 @@ class ClusterDaemon(object):
         self.aws_key_name = aws_key_name or self.ansible_config['aws_key_name']
         self.master_hostgroup = self.ansible_config['cluster_configuration']['instances']['master']['hostgroup']
         self.slave_hostgroup = self.ansible_config['cluster_configuration']['instances']['slave']['hostgroup']
+        self.stage = self.ansible_config['stage']
         self.qname = qname
         self.debug = debug
 
@@ -100,22 +101,22 @@ class ClusterDaemon(object):
 
     def cluster_start(self):
         self.logger.info('Spinning up the cluster...')
-        self._local(['ansible-playbook', '-f', '1', 'aws_start.yml', '-e components=master,slave'],
+        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_start.yml', '-e components=master,slave'],
                     'Cluster is spun up', 'Failed to spin up the cluster')
 
     def cluster_stop(self):
         self.logger.info('Stopping the cluster...')
-        self._local(['ansible-playbook', '-f', '1', 'aws_stop.yml', '-e', 'components=master,slave'],
+        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_stop.yml', '-e', 'components=master,slave'],
                     'Cluster is stopped successfully', 'Failed to stop the cluster')
 
     def cluster_setup(self):
         self.logger.info('Setting up the cluster...')
-        self._local(['ansible-playbook', '-f', '1', 'aws_cluster_setup.yml'],
+        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_cluster_setup.yml'],
                     'Cluster setup is finished', 'Failed to set up the cluster')
 
     def sm_engine_deploy(self):
         self.logger.info('Deploying SM engine code...')
-        self._local(['ansible-playbook', '-f', '1', 'deploy/engine.yml'],
+        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'deploy/engine.yml'],
                     'The SM engine is deployed', 'Failed to deploy the SM engine')
 
     def post_to_slack(self, emoji, msg):
