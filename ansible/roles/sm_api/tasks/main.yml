@@ -1,5 +1,17 @@
 ---
 
+- name: Make sure .aws directory exists
+  file: path=/home/ubuntu/.aws/
+        state=directory mode=0755
+        owner=ubuntu group=ubuntu
+  when: aws_access_key_id is defined
+
+- name: Put aws credentials file into the home dir
+  template: src=aws_credentials.j2
+            dest=/home/ubuntu/.aws/credentials mode=0600
+            owner=ubuntu group=ubuntu
+  when: aws_access_key_id is defined
+
 - name: Create /opt/dev directory
   file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes

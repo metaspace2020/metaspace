@@ -5,6 +5,15 @@
     repo=https://github.com/METASPACE2020/sm-graphql.git
     update=yes
     version={{ sm_graphql_branch }}
+  when: local_deploy is not defined
+
+- name: Upload local files
+  synchronize:
+    src: "{{ sm_graphql_home }}/"
+    dest: "{{ sm_graphql_home }}/"
+    rsync_opts:
+      - "--exclude='config.js' --exclude='dist/*' --exclude='node_modules/*'"
+  when: local_deploy is defined
 
 - name: Install sm-graphql dependencies
   shell: npm install

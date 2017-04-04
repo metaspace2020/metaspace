@@ -1,1 +1,1 @@
-inventory: ../aws/hosts
+inventory: ../aws/dev/hosts

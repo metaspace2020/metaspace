@@ -9,6 +9,7 @@
     slack_webhook_url: "{{ sm_graphql_slack_webhook_url }}"
     slack_channel: "{{ sm_graphql_slack_channel }}"
     jwt_secret: "{{ sm_graphql_jwt_secret }}"
+    mol_image_host: "{{ sm_graphql_mol_image_host }}"
 
   tasks:
     - include: ../../graphql_deploy_tasks.yml

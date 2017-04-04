@@ -70,6 +70,7 @@
       slack_webhook_url: "{{ sm_graphql_slack_webhook_url }}"
       slack_channel: "{{ sm_graphql_slack_channel }}"
       jwt_secret: "{{ sm_graphql_jwt_secret }}"
+      mol_image_host: "{{ sm_graphql_mol_image_host }}"
 
     - role: sm_web_app
       port: "{{ sm_webapp_port }}"
@@ -80,3 +81,5 @@
       aws_secret_access_key: "{{ sm_webapp_aws_secret_access_key }}"
       s3_bucket: "{{ sm_webapp_s3_bucket }}"
       graphql_url: "{{ sm_graphql_public_url }}"
+
+    - role: sm_cluster_autostart
