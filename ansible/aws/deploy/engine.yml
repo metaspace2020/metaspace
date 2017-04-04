@@ -35,6 +35,7 @@
            dest={{ sm_home }}
            version={{ sm_branch }}
            update=yes
+           force=yes
       when: local_deploy is not defined
 
     - name: Upload local files
