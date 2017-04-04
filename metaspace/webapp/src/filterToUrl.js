@@ -1,5 +1,7 @@
 import FILTER_SPECIFICATIONS from './filterSpecs.js';
 
+import { invert } from 'lodash';
+
 export const DEFAULT_FILTER = {
   database: 'HMDB',
   institution: undefined,
@@ -17,14 +19,6 @@ export const DEFAULT_FILTER = {
   maldiMatrix: undefined,
   analyzerType: undefined
 };
-
-function revMap(d) {
-  let revd = {};
-  for (var key in d)
-    if (d.hasOwnProperty(key))
-    revd[d[key]] = key;
-  return revd;
-}
 
 const FILTER_TO_URL = {
   database: 'db',
@@ -44,7 +38,7 @@ const FILTER_TO_URL = {
   analyzerType: 'instr'
 };
 
-const URL_TO_FILTER = revMap(FILTER_TO_URL);
+const URL_TO_FILTER = invert(FILTER_TO_URL);
 
 const PATH_TO_LEVEL = {
   '/annotations': 'annotation',

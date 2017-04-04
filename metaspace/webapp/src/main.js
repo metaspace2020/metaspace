@@ -28,6 +28,8 @@ sync(store, router);
 
 import App from './App.vue';
 
+//Vue.config.performance = true;
+
 new Vue({
   el: '#app',
   render: h => h(App),

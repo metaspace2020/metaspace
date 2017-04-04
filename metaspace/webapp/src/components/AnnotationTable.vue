@@ -180,7 +180,6 @@
      return {
        annotations: [],
        loadedData: false,
-       currentPage: 0,
        recordsPerPage: 15,
        greenCount: 0,
        pageSizes: [15, 20, 25, 30],
@@ -528,13 +527,16 @@
                   'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
                   'moleculeNames'].join(',') + "\n";
 
+       function quoted(s) { return '"' + s + '"'; }
+
        function formatRow(row) {
          const {sumFormula, adduct, msmScore, mz,
                 rhoSpatial, rhoSpectral, rhoChaos, fdrLevel} = row;
          return [
-           row.dataset.institution, row.dataset.name, sumFormula, adduct, mz,
+           row.dataset.institution, row.dataset.name,
+           sumFormula, quoted(adduct), mz,
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
-           '"' + row.possibleCompounds.map(m => m.name).join(', ') + '"'
+           quoted(row.possibleCompounds.map(m => m.name).join(', '))
          ].join(',');
        }
 

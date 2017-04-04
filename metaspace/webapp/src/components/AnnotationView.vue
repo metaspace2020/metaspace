@@ -12,8 +12,14 @@
         </div>
 
         <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
-          <span slot="title">
-            <span>m/z image</span>
+          <span slot="title">m/z image</span>
+
+          <div style="margin-top: 10px;">
+            <image-loader :src="annotation.ionImage.url"
+                          :colormap="colormap"
+                          class="ion-image principal-peak-image">
+            </image-loader>
+
             <span style="display: inline-flex; padding: 0px 0px 0px 30px;">
               <span>
                 <colorbar style="padding: 7px; height: 28px;" :map="colormap"></colorbar>
@@ -22,18 +28,12 @@
                 <el-select :value="colormap" size="small" style="width: 120px;" title="Colormap"
                            @input="onColormapChange">
                   <el-option v-for="scale in availableScales"
-                             :value="scale" :label="scale">
+                             :value="scale" :label="scale" :key="scale">
                     <colorbar style="height: 20px" :map="scale" :title="scale"></colorbar>
                   </el-option>
                 </el-select>
               </span>
             </span>
-          </span>
-          <div style="margin-top: 10px;">
-            <image-loader :src="annotation.ionImage.url"
-                          :colormap="colormap"
-                          class="ion-image principal-peak-image">
-            </image-loader>
           </div>
         </el-collapse-item>
 
@@ -89,13 +89,16 @@
             <el-col :xs="24" :sm="12" :md="12" :lg="6" v-for="img in annotation.isotopeImages">
               <div class="small-peak-image">
                 {{ img.mz.toFixed(4) }}<br/>
-                <img :src="img.url"
-                     class="ion-image"/>
+                <image-loader :src="img.url"
+                              :colormap="colormap"
+                              class="ion-image">
+                </image-loader>
               </div>
             </el-col>
           </el-row>
           <el-row id="isotope-plot-container">
-            <isotope-pattern-plot :data="JSON.parse(peakChartData)">
+            <isotope-pattern-plot :data="JSON.parse(peakChartData)"
+                                  v-if="activeSections.indexOf('scores') !== -1">
             </isotope-pattern-plot>
           </el-row>
         </el-collapse-item>
@@ -122,7 +125,7 @@
    props: ['annotation'],
    data() {
      return {
-       availableScales: ["Viridis", "Hot", "Greys", "Portland", "YlGnBl"]
+       availableScales: ["Viridis", "Hot", "Greys", "Portland", "YlGnBu"]
      };
    },
    computed: {

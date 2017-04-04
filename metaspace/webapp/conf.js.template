@@ -2,6 +2,9 @@ exports.PORT = "{{ port }}";
 
 exports.GOOGLE_CLIENT_ID = "{{ google_client_id }}";
 exports.GOOGLE_CLIENT_SECRET = "{{ google_client_secret }}"
+
+/* add this callback URL in Google developer console;
+   you must also enable Google+ API for the project */
 exports.GOOGLE_CALLBACK_URL = "{{ google_callback_url }}"
 
 exports.COOKIE_SECRET = "{{ cookie_secret }}";

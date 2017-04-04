@@ -5,11 +5,13 @@
 
 <script>
  import fetch from 'isomorphic-fetch';
- import Plotly from 'plotly.js/lib/core';
 
  function plotChart(data, element) {
    if (!element)
      return;
+   if (!data) {
+     return;
+   }
    const sampleData = data.sample;
 
    const plotData = [
@@ -73,8 +75,12 @@
      plot_bgcolor: 'rgba(0,0,0,0)'
    };
 
-   Plotly.newPlot(element, plotData, layout);
-   window.onresize = () => Plotly.Plots.resize(element);
+
+   require.ensure(['plotly.js/lib/core', 'd3'], (require) => {
+     const Plotly = require('plotly.js/lib/core');
+     Plotly.newPlot(element, plotData, layout);
+     window.onresize = () => Plotly.Plots.resize(element);
+   });
  }
 
  export default {
@@ -82,11 +88,16 @@
    props: ['data'],
    watch: {
      'data': function(d) {
-       plotChart(d, this.$refs.peakChart);
+       this.plot(d);
      }
    },
-   created() {
-     plotChart(this.data, this.$refs.peakChart);
+   mounted() {
+     this.plot(this.data);
+   },
+   methods: {
+     plot(data) {
+       plotChart(data, this.$refs.peakChart);
+     }
    }
  }
 

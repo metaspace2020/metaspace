@@ -8,7 +8,9 @@ module.exports = {
     vendor: ['ajv', 'babel-polyfill',
              'vue', 'vuex', 'vue-router', 'vuex-router-sync',
              'vue-apollo', 'apollo-client', 'graphql-tag',
-             'plotly.js/lib/core', 'element-ui', 'fine-uploader/lib/all']
+             'lodash',
+             'element-ui',
+    ]
   },
   output: {
     path: path.resolve(__dirname, './dist'),

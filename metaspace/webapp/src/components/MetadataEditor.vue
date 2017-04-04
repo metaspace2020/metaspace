@@ -12,12 +12,14 @@
       <div id="md-section-list" v-loading="loading">
 
         <div class="metadata-section"
-            v-for="(section, sectionName) in schema.properties">
+             v-for="(section, sectionName) in schema.properties"
+             :key="sectionName">
           <div class="heading" v-html="prettify(sectionName)"></div>
 
           <el-form>
             <el-col :span="getWidth(propName)"
-                v-for="(prop, propName) in section.properties">
+                    v-for="(prop, propName) in section.properties"
+                    :key="propName">
               <div class="field-label" v-html="prettify(propName, section)"></div>
 
               <el-form-item class="control" v-if="prop.type == 'string' && !loading"
@@ -41,7 +43,7 @@
                 <el-select v-if="!isFreeText(propName) && prop.enum"
                           :required="isRequired(propName, section)"
                           v-model="value[sectionName][propName]">
-                  <el-option v-for="opt in prop.enum" :value="opt" :label="opt">
+                  <el-option v-for="opt in prop.enum" :value="opt" :label="opt" :key="opt">
                   </el-option>
                 </el-select>
 
@@ -61,7 +63,7 @@
                 <el-row>
                   <el-col :span="getWidth(fieldName)"
                           class="subfield"
-                          v-for="(field, fieldName) in prop.properties">
+                          v-for="(field, fieldName) in prop.properties" :key="fieldName">
 
                     <el-form-item :class="isError(sectionName, propName, fieldName)"
                                   v-if="!loading"

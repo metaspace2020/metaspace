@@ -75,8 +75,8 @@
        canvas.height = this.image.height * this.scaleFactor;
        ctx.scale(this.scaleFactor, this.scaleFactor);
 
-       ctx.webkitImageSmoothingEnabled = false;
-       ctx.mozImageSmoothingEnabled = false;
+       //ctx.webkitImageSmoothingEnabled = false;
+       //ctx.mozImageSmoothingEnabled = false;
        ctx.msImageSmoothingEnabled = false;
        ctx.imageSmoothingEnabled = false;
        ctx.drawImage(this.image, 0, 0);

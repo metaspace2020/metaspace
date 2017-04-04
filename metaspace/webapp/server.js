@@ -1,12 +1,12 @@
-var express = require('express');
-var webpack = require('webpack');
-var passport = require('passport');
-var bodyParser = require('body-parser');
-var favicon = require('serve-favicon');
-
-var session = require('express-session');
-
-var GoogleStrategy = require('passport-google-oauth20').Strategy;
+var AWS = require('aws-sdk'),
+    express = require('express'),
+    webpack = require('webpack'),
+    passport = require('passport'),
+    passwordless = require('passwordless'),
+    bodyParser = require('body-parser'),
+    favicon = require('serve-favicon'),
+    session = require('express-session'),
+    GoogleStrategy = require('passport-google-oauth20').Strategy;
 
 var env = process.env.NODE_ENV || 'development';
 var conf = require('./conf.js');
@@ -95,6 +95,54 @@ passport.deserializeUser(function(id, done) {
          .catch(err => done(err, null));
 });
 
+var plRedisStore = require('passwordless-redisstore-bcryptjs');
+passwordless.init(new plRedisStore(conf.REDIS_CONFIG.port, conf.REDIS_CONFIG.host));
+
+AWS.config.update({
+  accessKeyId: conf.AWS_ACCESS_KEY_ID,
+  secretAccessKey: conf.AWS_SECRET_ACCESS_KEY,
+  region: 'eu-west-1'
+});
+
+var ses = new AWS.SES();
+
+passwordless.addDelivery((token, uid, recipient, callback, req) => {
+  const host = 'localhost:8082';
+  const text = 'Greetings!\nVisit this link to login: http://'
+             + host + '?token=' + token + '&uid='
+             + encodeURIComponent(uid) + '\n\n\n---\nMETASPACE team'
+
+  ses.sendEmail({
+    Source: 'contact@metaspace2020.eu',
+    Destination: { ToAddresses: [recipient] },
+    Message: {
+      Subject: {Data: 'METASPACE login link'},
+      Body: {Text: {Data: text}}
+    }
+  }, (err, data) => {
+    if (err) console.log(err);
+    console.log('Sent login link to ' + recipient);
+    callback(err);
+  });
+});
+
+app.use(passwordless.sessionSupport());
+app.use(passwordless.acceptToken({ successRedirect: '/'}));
+
+app.get('/sendToken/',
+  passwordless.requestToken((user, delivery, callback, req) => {
+    Users().where({email: user}).first()
+           .then(record => {
+             if (record)
+               callback(null, record.id);
+             else
+               callback(null, null);
+           })
+  }, {allowGet: true}),
+  (req, res) => {
+    res.send('OK');
+  });
+
 app.get('/auth/google',
   passport.authenticate('google', {scope: ['profile', 'email']})
 );
@@ -106,8 +154,10 @@ app.get('/auth/google/callback',
 }));
 
 app.get('/logout', function(req, res, next) {
+  passwordless.logout()(req, res, next);
   req.logout();
-  next();
+  req.session.destroy();
+  res.send('Logged out');
 });
 
 var router = express.Router();
@@ -128,15 +178,26 @@ router.get('/getToken', (req, res, next) => {
     return;
   }
 
-  var payload = {
-    'iss': 'METASPACE2020',
-    'sub': req.user.id,
-    'name': req.user.name,
-    'email': req.user.email,
-    'exp': Math.floor(Date.now() / 1000 + 60),
-    'role': getRole(req.user.email)
+  function mintJWT(user) {
+    var payload = {
+      'iss': 'METASPACE2020',
+      'sub': user.id,
+      'name': user.name,
+      'email': user.email,
+      'exp': Math.floor(Date.now() / 1000 + 60),
+      'role': getRole(user.email)
+    };
+    return jwt.encode(payload, conf.JWT_SECRET);
   }
-  res.send(jwt.encode(payload, conf.JWT_SECRET));
+
+  if (typeof req.user === 'string') {
+    // FIXME: refactor into a middleware
+    Users().where('id', '=', req.user).first().then(user => {
+      res.send(mintJWT(user));
+    }).catch(err => res.sendStatus(403));
+  } else {
+    res.send(mintJWT(req.user));
+  }
 });
 
 router.get('/', (req, res, next) =>

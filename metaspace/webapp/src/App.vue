@@ -60,7 +60,7 @@
      },
 
      logout() {
-       fetch('/logout').then(() => {
+       fetch('/logout', {credentials: 'include'}).then(() => {
          this.$store.commit('logout');
        });
      }

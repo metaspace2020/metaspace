@@ -5,7 +5,7 @@
                :multiple-limit=10
                v-model="value2" @change="onChange">
       <el-option v-for="(item, idx) in options"
-                 :label="labels ? labels[idx] : item" :value="item">
+                 :label="labels ? labels[idx] : item" :value="item" :key="item">
       </el-option>
     </el-select>
 
