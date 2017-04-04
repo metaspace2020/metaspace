@@ -62,16 +62,19 @@ class ESExporter:
         for r in annotations:
             d = dict(zip(COLUMNS, r))
             df = mol_db.get_molecules(d['sf'])
+            d['db_name'] = mol_db.name
+            d['db_version'] = mol_db.version
             d['comp_ids'] = df.mol_id.values.tolist()
             d['comp_names'] = df.mol_name.values.tolist()
             d['centroid_mzs'] = ['{:010.4f}'.format(mz) if mz else '' for mz in d['centroid_mzs']]
             d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])
 
+            add_str = d['adduct'].replace('+', 'plus_').replace('-', 'minus_')
             to_index.append({
                 '_index': self.index,
                 '_type': 'annotation',
                 '_id': '{}_{}_{}_{}_{}'.format(d['ds_id'], mol_db.name, mol_db.version,
-                                               d['sf'], d['adduct']),
+                                               d['sf'], add_str),
                 '_source': d
             })
 

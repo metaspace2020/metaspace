@@ -28,24 +28,27 @@ if __name__ == "__main__":
 
     init_logger()
     SMConfig.set_path(args.sm_config_path)
-
-    ds_id = args.ds_id or dt.now().strftime("%Y-%m-%d_%Hh%Mm%Ss")
-
     sm_config = SMConfig.get_conf()
     db = DB(sm_config['db'])
     ds_man = DatasetManager(db, ESExporter(), mode=u'local')
 
-    meta_path = join(args.input_path, 'meta.json')
-    if exists(meta_path):
-        metadata = json.load(open(meta_path))
+    if args.ds_id:
+        ds = Dataset.load_ds(args.ds_id, db)
+        ds_man.delete_ds(ds)
     else:
-        metadata = {}
+        ds_id = dt.now().strftime("%Y-%m-%d_%Hh%Mm%Ss")
+        meta_path = join(args.input_path, 'meta.json')
+        if exists(meta_path):
+            metadata = json.load(open(meta_path))
+        else:
+            metadata = {}
+        ds_config = json.load(open(join(args.input_path, 'config.json')))
 
-    ds_config = json.load(open(join(args.input_path, 'config.json')))
-    ds = Dataset(ds_id, args.ds_name, args.input_path, metadata, ds_config)
+        ds = Dataset(ds_id, args.ds_name, args.input_path, metadata, ds_config)
+
     ds_man.add_ds(ds)
 
-    job = SearchJob(ds_id, args.sm_config_path, args.no_clean)
+    job = SearchJob(ds.id, args.sm_config_path, args.no_clean)
     try:
         job.run()
     except:
