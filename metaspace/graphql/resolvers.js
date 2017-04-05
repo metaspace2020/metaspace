@@ -9,7 +9,7 @@ const sprintf = require('sprintf-js'),
   slack = require('node-slack');
 
 const config = require('./config'),
-  {esSearchResults, esCountResults} = require('./esConnector'),
+  {esSearchResults, esCountResults, esAnnotationByID} = require('./esConnector'),
   {datasetFilters, dsField, SubstringMatchFilter} = require('./datasetFilters.js'),
   generateProcessingConfig = require("./utils.js").generateProcessingConfig;
 
@@ -104,12 +104,7 @@ const Resolvers = {
     },
 
     annotation(_, { id }) {
-      return es.get({index: esIndex, type: 'annotation', id})
-        .then((resp) => {
-          return resp;
-        }).catch((err) => {
-          return null;
-        });
+      return esAnnotationByID(id);
     },
 
     metadataSuggestions(_, { field, query }) {
@@ -208,7 +203,7 @@ const Resolvers = {
 
     adduct: (hit) => hit._source.adduct,
 
-    mz: (hit) => parseFloat(hit._source.mz),
+    mz: (hit) => parseFloat(hit._source.centroid_mzs[0]),
 
     fdrLevel: (hit) => hit._source.fdr,
 

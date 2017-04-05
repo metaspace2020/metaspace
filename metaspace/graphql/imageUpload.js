@@ -17,7 +17,8 @@ let storage = multer.diskStorage({
 let upload = multer({ storage });
 
 function addIsoImageProvider(app) {
-  app.use(express.static(config.img_upload.img_base_path));
+  express.static.mime.default_type = "image/png";
+  app.use(express.static(config.img_upload.iso_img_fs_path));
   
   app.post(path.join(config.img_upload.img_base_path, 'upload'), upload.single('iso_image'),
     function (req, res, next) {

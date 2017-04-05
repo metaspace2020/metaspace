@@ -16,7 +16,7 @@ config.services = {};
 /* Molecular database service, used only for internal purposes (peakChartData query) */
 config.services.moldb_service_host = "localhost:5000";
 /* Public IP of the server that hosts molecule images */
-config.services.mol_image_server_host = "localhost:3020";
+config.services.mol_image_server_host = "{{ mol_image_host }}";
 /* Internal ad-hoc service with the only endpoint /reindex/:dataset_id */
 config.services.sm_engine_api_host = "localhost:5123";
 

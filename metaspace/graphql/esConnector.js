@@ -141,3 +141,13 @@ module.exports.esCountResults = function(args) {
     return 0;
   });
 };
+
+module.exports.esAnnotationByID = function(id) {
+  return es.get({index: esIndex, type: 'annotation', id})
+    .then((resp) => {
+      return resp;
+    }).catch((err) => {
+      console.log(err);
+      return null;
+    });
+};
