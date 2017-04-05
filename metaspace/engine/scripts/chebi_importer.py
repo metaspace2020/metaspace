@@ -49,7 +49,8 @@ class ChebiOntology(object):
         logging.info('Updating CheBI ontology...')
 
         # https://www.gnu.org/software/wget/manual/html_node/Time_002dStamping-Usage.html
-        cmd = "wget -N ftp://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi.obo"
+        # cmd = "wget -N ftp://ftp.ebi.ac.uk/pub/databases/chebi/ontology/chebi.obo"
+        cmd = "wget -N ftp://ftp.ebi.ac.uk/pub/databases/chebi/archive/rel138/ontology/chebi.obo"
         subprocess.check_call(cmd, shell=True)
         self.filename = "chebi.obo"
 
@@ -88,8 +89,10 @@ class ChebiOntology(object):
                         term['_sf'] = sf
                     except:
                         pass
-
-                    break
+                elif 'RELATED InChI ' in synonym:
+                    term['InChI'] = synonym.split('"')[1]
+                elif 'RELATED InChIKey' in synonym:
+                    term['InChIKey'] = synonym.split('"')[1]
 
             self._nodes_by_id[term['id']] = term
             self._ids_by_name[term['name']] = term['id']
