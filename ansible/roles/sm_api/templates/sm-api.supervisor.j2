@@ -1,7 +1,7 @@
 # -*- conf -*-
 
 [program:sm-api]
-process_name = sm-api-%(process_num)s
+process_name = sm-api
 environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin"
 directory = {{ sm_home }}
 command = {{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python sm/rest/api.py

@@ -1,7 +1,7 @@
 # -*- conf -*-
 
-[program:sm-mol-db-api]
-process_name = sm-mol-db-api-%(process_num)s
+[program:sm-mol-db]
+process_name = sm-mol-db
 environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin"
 directory = {{ mol_db_home }}
 command = {{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/gunicorn -b 0.0.0.0:5000 app.main:application --reload

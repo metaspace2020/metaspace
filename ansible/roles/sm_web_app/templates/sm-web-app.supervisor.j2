@@ -1,7 +1,7 @@
 # -*- conf -*-
 
 [program:sm-web-app]
-process_name = sm-web-app-%(process_num)s
+process_name = sm-web-app
 directory = {{ sm_webapp_home }}
 environment = NODE_ENV=production
 command = node server.js

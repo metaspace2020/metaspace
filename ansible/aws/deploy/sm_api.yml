@@ -1,0 +1,47 @@
+---
+
+- name: Deploying SM engine API code
+  hosts: web
+  user: ubuntu
+  gather_facts: true
+
+  vars:
+    sm_web_app_url: ""
+
+  tasks:
+    - name: Pull sources from the repository
+      git: repo={{ sm_repo_url }}
+           dest={{ sm_home }}
+           version={{ sm_branch }}
+           update=yes
+           force=yes
+      when: local_deploy is not defined
+      register: git_deploy
+      until: git_deploy | succeeded
+
+    - name: Upload local files
+      synchronize:
+        src: "{{ sm_home }}/{{ item }}/"
+        dest: "{{ sm_home }}/{{ item }}/"
+        rsync_opts:
+          - "--exclude=*.sh"
+      with_items:
+        - scripts
+        - sm
+      when: local_deploy is defined
+
+    - name: Install SM into conda environment
+      args:
+        chdir: "{{ sm_home }}"
+        executable: /bin/bash
+      shell: "{{ activate_venv }} && pip install . -U"
+
+    - name: Pull SM config from the remote host
+      fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
+             flat=yes fail_on_missing=yes
+
+    - name: "Put SM config to {{ sm_home }}/conf/config.json"
+      template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
+                owner={{ spark_user }} group={{ spark_user }} mode=0600
+
+    - include: ../../restart_supervisor.yml

@@ -1,7 +1,7 @@
 # -*- conf -*-
 
 [program:sm-job-daemon]
-process_name = sm-job-daemon-%(process_num)s
+process_name = sm-job-daemon
 directory = {{ sm_home }}
 environment = SPARK_HOME="{{ spark_home }}",PYTHONPATH="{{ spark_home }}/python"
 command = bash scripts/run.sh scripts/run_sm_job_daemon.py

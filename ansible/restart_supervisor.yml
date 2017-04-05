@@ -18,8 +18,8 @@
   failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'
 
 
-- name: Restart all apps running under supervisor
-  shell: supervisorctl reread && supervisorctl update && supervisorctl restart all && supervisorctl status
+- name: "Restart {{ supervisor_app | default('all') }} app(s) running under supervisor"
+  shell: supervisorctl reread && supervisorctl update && supervisorctl restart {{ supervisor_app | default("all") }} && supervisorctl status
   args:
     executable: /bin/bash
   register: command_result
