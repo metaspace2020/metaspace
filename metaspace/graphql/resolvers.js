@@ -230,16 +230,39 @@ const Resolvers = {
     },
 
     peakChartData(hit) {
-      const {sf_adduct, ds_meta} = hit._source;
+      const {sf_adduct, ds_meta, mz} = hit._source;
       const msInfo = ds_meta.MS_Analysis;
       const host = config.services.moldb_service_host,
+        pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1',
+    /*
+      // sm-engine doesn't use instrument model yet, so disable it here
+
         instr = msInfo.Analyzer.toLowerCase(),
         rp = msInfo.Detector_Resolving_Power.Resolving_Power,
         at_mz = msInfo.Detector_Resolving_Power.mz,
-        pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1';
+        url = `http://${host}/v1/isotopic_pattern/${sf_adduct}/${instr}/${rp}/${at_mz}/${pol}`;
 
-      const url = `http://${host}/v1/isotopic_pattern/${sf_adduct}/${instr}/${rp}/${at_mz}/${pol}`;
       return fetch(url).then(res => res.json()).then(json => JSON.stringify(json.data));
+    */
+        ds_config = pg.select('config').from('dataset').where('id', '=', ds_id).first();
+      // FIXME: export dataset config to ES
+
+      return ds_config.then(row => {
+        const {config} = row;
+        let rp = mz / (config.isotope_generation.isocalc_sigma * 2.35482),
+            ppm = config.image_generation.ppm,
+            theorData = fetch(`http://${host}/v1/isotopic_pattern/${sf_adduct}/tof/${rp}/400/${pol}`);
+
+        return theorData.then(res => res.json()).then(json => {
+          let {data} = json;
+          data.ppm = ppm;
+          data.sample = {
+            mzs: centroid_mzs,
+            ints: [1, 1, 1, 1] // FIXME: save sample centroid intensities to Postgres & ES
+          };
+          return JSON.stringify(data);
+        });
+      });
     },
 
     isotopeImages(hit) {
