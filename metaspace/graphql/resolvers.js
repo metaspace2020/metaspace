@@ -80,9 +80,6 @@ const Resolvers = {
 
       console.log(JSON.stringify(filter));
 
-      if (filter.name)
-        q = q.where("name", "=", filter.name);
-
       for (var key in datasetFilters) {
         const val = filter[key];
         if (val)
@@ -118,7 +115,8 @@ const Resolvers = {
     metadataSuggestions(_, { field, query }) {
       let f = new SubstringMatchFilter(field, {}),
           q = pg.distinct(pg.raw(f.pgField + " as field")).select().from('dataset');
-      return f.pgFilter(q, query).then(results => results.map(row => row['field']));
+      return f.pgFilter(q, query).orderBy('field', 'asc')
+              .then(results => results.map(row => row['field']));
     }
   },
 
@@ -142,6 +140,8 @@ const Resolvers = {
 
     institution(ds) { return dsField(ds, 'institution'); },
     organism(ds) { return dsField(ds, 'organism'); },
+    organismPart(ds) { return dsField(ds, 'organismPart'); },
+    condition(ds) { return dsField(ds, 'condition'); },
     polarity(ds) { return dsField(ds, 'polarity').toUpperCase(); },
     ionisationSource(ds) { return dsField(ds, 'ionisationSource'); },
     maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
