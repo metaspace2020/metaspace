@@ -111,7 +111,11 @@
      },
 
      onFail () {
-       this.message = "Oops, something went wrong :-("
+       let canvas = this.$refs.canvas,
+           ctx = canvas.getContext("2d");
+       ctx.clearRect(0, 0, canvas.width, canvas.height);
+       canvas.width = canvas.height = 0;
+       this.isLoading = false;
      }
    }
  }

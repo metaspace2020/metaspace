@@ -140,4 +140,8 @@
    align-items: flex-start;
    flex-wrap: wrap;
  }
+
+ .el-select-dropdown__wrap {
+    max-height: 500px;
+ }
 </style>
