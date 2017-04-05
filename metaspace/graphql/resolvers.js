@@ -239,7 +239,7 @@ const Resolvers = {
         pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1';
 
       const url = `http://${host}/v1/isotopic_pattern/${sf_adduct}/${instr}/${rp}/${at_mz}/${pol}`;
-      return fetch(url).then(res => res.json()).then(json => JSON.stringify(json));
+      return fetch(url).then(res => res.json()).then(json => JSON.stringify(json.data));
     },
 
     isotopeImages(hit) {
