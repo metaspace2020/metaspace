@@ -230,7 +230,7 @@ const Resolvers = {
     },
 
     peakChartData(hit) {
-      const {sf_adduct, ds_meta, mz} = hit._source;
+      const {sf_adduct, ds_meta, ds_id, mz} = hit._source;
       const msInfo = ds_meta.MS_Analysis;
       const host = config.services.moldb_service_host,
         pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1',
