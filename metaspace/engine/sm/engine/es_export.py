@@ -58,6 +58,7 @@ class ESExporter:
         self.index = es_config['index']
 
     def _index(self, annotations, mol_db):
+        n = 100
         to_index = []
         for r in annotations:
             d = dict(zip(COLUMNS, r))
@@ -67,6 +68,7 @@ class ESExporter:
             d['comp_ids'] = df.mol_id.values.tolist()
             d['comp_names'] = df.mol_name.values.tolist()
             d['centroid_mzs'] = ['{:010.4f}'.format(mz) if mz else '' for mz in d['centroid_mzs']]
+            d['mz'] = d['centroid_mzs'][0]
             d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])
 
             add_str = d['adduct'].replace('+', 'plus_').replace('-', 'minus_')
@@ -77,6 +79,10 @@ class ESExporter:
                                                d['sf'], add_str),
                 '_source': d
             })
+
+            if len(to_index) >= n:
+                bulk(self._es, actions=to_index, timeout='60s')
+                to_index = []
 
         bulk(self._es, actions=to_index, timeout='60s')
 
@@ -161,6 +167,7 @@ class ESExporter:
                         "adduct": {"type": "string", "index": "not_analyzed"},
                         "fdr": {"type": "float", "index": "not_analyzed"},
                         "centroid_mzs": {"type": "string", "index": "not_analyzed"},
+                        "mz": {"type": "string", "index": "not_analyzed"},
                         "ion_image_url": {"type": "string", "index": "not_analyzed"},
                         "iso_image_urls": {"type": "string", "index": "not_analyzed"},
                         "ion_add_pol": {"type": "string", "index": "not_analyzed"},

@@ -20,7 +20,7 @@ def reindex_results(ds_mask):
     for ds_id, ds_name, ds_config in rows:
         try:
             for mol_db_dict in ds_config['databases']:
-                mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict['version'], ds_config)
+                mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict.get('version', None), ds_config)
                 es_exp.index_ds(ds_id, mol_db)
         except Exception as e:
             logger.warn('Failed to reindex(ds_id=%s, ds_name=%s): %s', ds_id, ds_name, e)
