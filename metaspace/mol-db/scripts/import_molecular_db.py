@@ -1,14 +1,14 @@
 import sys
 from os.path import dirname
 sys.path.append(dirname(dirname(__file__)))
-
+from sqlalchemy import select
 import argparse
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 from openbabel import OBMol, OBConversion
 import pandas as pd
 
 from app.model.molecular_db import MolecularDB
-from app.model.molecule import Molecule
+from app.model.molecule import molecule_table, moldb_mol_table
 from app.database import init_session, db_session
 from app.log import LOG
 
@@ -71,20 +71,27 @@ def append_molecules(mol_db, csv_file, delimiter):
     mol_db_df = pd.read_csv(open(csv_file, encoding='utf8'), sep=delimiter)
     assert {'id', 'inchi', 'name', 'formula'}.issubset(set(mol_db_df.columns))
 
-    mol_db_df = mol_db_df[mol_db_df.inchi.isnull() == False]
-    get_inchikey = get_inchikey_gen()
-    mol_db_df['inchikey'] = mol_db_df.inchi.map(get_inchikey)
+    if 'inchikey' not in mol_db_df.columns:
+        get_inchikey = get_inchikey_gen()
+        mol_db_df['inchikey'] = mol_db_df.inchi.map(get_inchikey)
 
-    exist_inchikeys = set([row[0] for row in
-                           db_session.query(Molecule.inchikey).filter(Molecule.db_id == mol_db.id).all()])
-    new_inchikey_mask = mol_db_df.inchikey.isin(exist_inchikeys) == False
-    new_molecules = mol_db_df[new_inchikey_mask].drop_duplicates(subset='inchikey').apply(
-        lambda ser: Molecule(db_id=mol_db.id, inchikey=ser['inchikey'], inchi=ser['inchi'],
-                             sf=ser['formula'], mol_id=ser['id'], mol_name=ser['name']), axis=1).values.tolist()
-    db_session.add_all(new_molecules)
+    mol_db_df = mol_db_df[mol_db_df.inchikey.isnull() == False]
+
+    sel = select([molecule_table.c.inchikey])
+    exist_inchikeys = set(map(lambda _: _[0], db_session.execute(sel).fetchall()))
+    new_mol_df = mol_db_df[mol_db_df.inchikey.isin(exist_inchikeys) == False][['inchikey', 'inchi', 'formula']]
+    new_mol_df.columns = ['inchikey', 'inchi', 'sf']
+    db_session.execute(molecule_table.insert(),
+                       list(new_mol_df.to_dict(orient='index').values()))
+
+    new_db_mol_df = mol_db_df[['inchikey', 'id', 'name']]
+    new_db_mol_df.insert(0, 'db_id', mol_db.id)
+    new_db_mol_df.columns = ['db_id', 'inchikey', 'mol_id', 'mol_name']
+    db_session.execute(moldb_mol_table.insert(),
+                       list(new_db_mol_df.to_dict(orient='index').values()))
+
     db_session.commit()
-
-    LOG.info('Inserted {} new molecules for {}'.format(len(new_molecules), mol_db))
+    LOG.info('Inserted {} new molecules for {}'.format(len(mol_db_df), mol_db))
 
 
 def insert_sum_formulas(db, db_name):
