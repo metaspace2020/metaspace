@@ -12,7 +12,8 @@
    if (!data) {
      return;
    }
-   const sampleData = data.sample;
+   const sampleData = {mzs: data.theor.centroid_mzs, ints: [100, 10, 1, 0.1]};//data.sample;
+   data.ppm = 3;
 
    const plotData = [
      {
@@ -88,14 +89,15 @@
    props: ['data'],
    watch: {
      'data': function(d) {
-       this.plot(d);
+       if (d) this.plot(d);
      }
    },
    mounted() {
-     this.plot(this.data);
+     if (this.data)
+       this.plot(this.data);
    },
    methods: {
-     plot(data) {
+     plot({data}) {
        plotChart(data, this.$refs.peakChart);
      }
    }

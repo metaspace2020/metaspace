@@ -128,7 +128,7 @@
                        :page-sizes="pageSizes"
                        :current-page="currentPage + 1"
                        @current-change="onPageChange"
-                       layout="prev,pager,next,sizes">
+                       :layout="paginationLayout">
         </el-pagination>
 
         <div style="padding: 10px 0 0 5px;">
@@ -179,7 +179,6 @@
    data () {
      return {
        annotations: [],
-       loadedData: false,
        recordsPerPage: 15,
        greenCount: 0,
        pageSizes: [15, 20, 25, 30],
@@ -196,7 +195,7 @@
    },
    computed: {
      isLoading() {
-       return this.$store.state.tableIsLoading || !this.loadedData
+       return this.$store.state.tableIsLoading;
      },
 
      filter() {
@@ -250,6 +249,15 @@
 
      currentPage () {
        return this.$store.getters.settings.table.currentPage;
+     },
+
+     paginationLayout() {
+       const {datasetIds} = this.filter,
+             limitedSpace = datasetIds && datasetIds.length == 1;
+       if (limitedSpace)
+         return "pager";
+
+       return "prev,pager,next,sizes";
      }
    },
    apollo: {
@@ -309,7 +317,10 @@
        },
        update: data => data.allAnnotations,
        debounce: 200,
-       result (data) {
+       result ({data}) {
+         if (!data)
+           return;
+
          // For whatever reason (could be a bug), vue-apollo seems to first refetch
          // data for the current page and only then fetch the updated data.
          // Checking if the data has been actually changed is easiest by comparing
@@ -330,8 +341,7 @@
 
          this.greenCount = data.countAnnotations;
        },
-       loadingChangeCb (isLoading) {
-         this.loadedData = true;
+       watchLoading (isLoading) {
          this.$store.commit('updateAnnotationTableStatus', isLoading);
        }
      }
@@ -521,7 +531,6 @@
 
        v.limit = chunkSize;
        let k = Math.ceil(this.totalCount / chunkSize),
-           client = this.$apollo.client,
            self = this,
            csv = ['institution', 'datasetName', 'formula', 'adduct', 'mz',
                   'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
@@ -559,7 +568,7 @@
 
        function runExport() {
          const variables = Object.assign({offset}, v);
-         client.query({query: q, variables}).then(resp => {
+         self.$apollo.query({query: q, variables}).then(resp => {
            self.exportProgress = offset / self.totalCount;
            offset += chunkSize;
            writeCsvChunk(resp.data.annotations);
@@ -702,7 +711,7 @@
 
  .export-btn {
    margin-top: 7px;
-   width: 150px;
+   width: 135px;
    height: 36px;
  }
 

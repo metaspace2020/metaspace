@@ -41,7 +41,7 @@
           <div id="compound-list">
             <div class="compound" v-for="compound in annotation.possibleCompounds">
               <el-popover placement="left" trigger="click">
-                <img :src="compound.imageURL" class="compound-thumbnail"
+                <img :src="compound.imageURL.replace('52.19.27.255', '52.51.114.30')" class="compound-thumbnail"
                      slot="reference"/>
                 <div>
                   <figure>
@@ -52,7 +52,7 @@
                         View on {{ compound.information[0].database }} website
                       </a>
                     </figcaption>
-                    <img :src="compound.imageURL" class="compound-image"/>
+                    <img :src="compound.imageURL.replace('52.19.27.255', '52.51.114.30')" class="compound-image"/>
                   </figure>
                 </div>
               </el-popover>
@@ -97,9 +97,9 @@
             </el-col>
           </el-row>
           <el-row id="isotope-plot-container">
-            <isotope-pattern-plot :data="JSON.parse(peakChartData)"
+            <!--isotope-pattern-plot :data="JSON.parse(peakChartData)"
                                   v-if="activeSections.indexOf('scores') !== -1">
-            </isotope-pattern-plot>
+            </isotope-pattern-plot-->
           </el-row>
         </el-collapse-item>
         <el-collapse-item title="Dataset info" name="metadata">
@@ -163,7 +163,6 @@
        }
      }
    },
-
    methods: {
      onSectionsChange(activeSections) {
        this.$store.commit('updateAnnotationViewSections', activeSections)

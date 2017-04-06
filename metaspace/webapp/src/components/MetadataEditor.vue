@@ -206,7 +206,7 @@
      }
 
      // otherwise we need to fetch existing data from the server
-     this.$apollo.client.query({
+     this.$apollo.query({
        query: gql`query GetMetadataJSON($id: String!) {
          dataset(id: $id) {
            metadataJson
@@ -330,7 +330,7 @@
 
      getSuggestions(query, callback, ...args) {
        const path = this.buildPath(...args).slice(1);
-       this.$apollo.client.query({
+       this.$apollo.query({
          query: gql`query suggestions($field: String!, $query: String!) {
            metadataSuggestions(field: $field, query: $query)
          }`,

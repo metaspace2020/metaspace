@@ -12,7 +12,11 @@ const apolloClient = new ApolloClient({
     transportBatching: true
   })
 });
-Vue.use(VueApollo, { apolloClient });
+Vue.use(VueApollo);
+
+const apolloProvider = new VueApollo({
+  defaultClient: apolloClient,
+})
 
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-default/index.css'
@@ -33,6 +37,10 @@ import App from './App.vue';
 new Vue({
   el: '#app',
   render: h => h(App),
+  renderError (h, err) {
+    return h('pre', { style: { color: 'red' }}, err.stack)
+  },
   store,
-  router
+  router,
+  apolloProvider
 })

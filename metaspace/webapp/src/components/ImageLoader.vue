@@ -16,8 +16,7 @@
  export default {
    props: {
      src: {
-       type: String,
-       required: true
+       type: String
      },
      maxHeight: {
        type: Number,
@@ -42,14 +41,14 @@
      this.image.onload = this.onLoad.bind(this);
      this.image.onerror = this.image.onabort = this.onFail.bind(this);
      this.image.crossOrigin = "Anonymous";
-     this.image.src = this.src.replace('alpha.metasp.eu', '52.51.114.30:4800');
+     this.image.src = this.src;
 
      this.isLoading = true;
    },
    watch: {
      'src' (url) {
        this.image.crossOrigin = "Anonymous";
-       this.image.src = url.replace('alpha.metasp.eu', '52.51.114.30:4800');
+       this.image.src = url;
        this.isLoading = true;
      },
      'colormap' (name) {
