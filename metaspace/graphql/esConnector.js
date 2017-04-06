@@ -2,7 +2,8 @@
  * Created by intsco on 1/11/17.
  */
 
-const elasticsearch = require('elasticsearch');
+const elasticsearch = require('elasticsearch'),
+  sprintf = require('sprintf-js');
 
 const config = require('./config.js'),
   {datasetFilters, dsField} = require('./datasetFilters.js');
