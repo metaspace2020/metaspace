@@ -86,7 +86,7 @@ def sm_config():
         "elasticsearch": {
             "index": "sm_test",
             "host": "localhost",
-            "port": 9392
+            "port": 9200
         },
         "rabbitmq": {
             "host": "localhost",

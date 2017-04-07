@@ -105,7 +105,7 @@ class SearchJob(object):
         search_alg = MSMBasicSearch(self._sc, self._ds, mol_db, self._fdr, self._ds.config)
         ion_metrics_df, ion_iso_images = search_alg.search()
 
-        search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics, self._ds, self._db)
+        search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys(), self._ds, self._db)
         search_results.store(ion_metrics_df, ion_iso_images)
 
         self._es.index_ds(self.ds_id, mol_db)
@@ -137,6 +137,7 @@ class SearchJob(object):
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
+            # self._ds.config['databases'].update({'name': 'HMDB', 'version': '2016'})
             for mol_db_dict in self._ds.config['databases']:
                 mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict.get('version', None), self._ds.config)
                 self._run_job(mol_db)

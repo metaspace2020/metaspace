@@ -9,7 +9,7 @@ from sm.engine.db import DB
 logger = logging.getLogger('sm-engine')
 
 COLUMNS = ["ds_id", "ds_name", "sf", "sf_adduct",
-           "chaos", "image_corr", "pattern_match", "msm",
+           "chaos", "image_corr", "pattern_match", "total_iso_ints", "msm",
            "adduct", "job_id", "sf_id", "fdr",
            "centroid_mzs", "ds_meta", "ion_image_url", "iso_image_urls", "polarity"]
 
@@ -24,6 +24,7 @@ SELECT
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
     COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
     COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
+    (m.stats -> 'total_iso_ints'::text) AS total_iso_ints,
     COALESCE(m.msm, 0::real) AS msm,
     m.adduct,
     j.id AS job_id,
@@ -163,6 +164,7 @@ class ESExporter:
                         "chaos": {"type": "float", "index": "not_analyzed"},
                         "image_corr": {"type": "float", "index": "not_analyzed"},
                         "pattern_match": {"type": "float", "index": "not_analyzed"},
+                        "total_iso_ints": {"type": "float", "index": "not_analyzed"},
                         "msm": {"type": "float", "index": "not_analyzed"},
                         "adduct": {"type": "string", "index": "not_analyzed"},
                         "fdr": {"type": "float", "index": "not_analyzed"},

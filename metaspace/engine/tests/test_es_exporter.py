@@ -31,12 +31,14 @@ def test_index_ds_works(DBMock, es_dsl_search, create_sm_index, sm_config):
     sleep(2)
 
     d1 = es_dsl_search.filter('term', sf='H2O').execute()['hits']['hits'][0]['_source']
-    assert d1.to_dict() == {'ds_id': '2000-01-01_00h00m', 'db_name': 'test_db', 'sf': 'H2O', 'adduct': '+H',
+    assert d1.to_dict() == {'ds_id': '2000-01-01_00h00m', 'db_name': 'db_name', 'db_version': '2017',
+                            'sf': 'H2O', 'adduct': '+H',
                             'comp_names': ['mol_name'], 'comp_ids': ['mol_id'],
-                            'centroid_mzs': ['00100.0000', '00110.0000'],
+                            'centroid_mzs': ['00100.0000', '00110.0000'], 'mz': '00100.0000',
                             'polarity': '+', 'ion_add_pol': '[M+H]+'}
     d2 = es_dsl_search.filter('term', sf='Au').execute()['hits']['hits'][0]['_source']
-    assert d2.to_dict() == {'ds_id': '2000-01-01_00h00m', 'db_name': 'test_db', 'sf': 'Au', 'adduct': '+H',
+    assert d2.to_dict() == {'ds_id': '2000-01-01_00h00m', 'db_name': 'db_name', 'db_version': '2017',
+                            'sf': 'Au', 'adduct': '+H',
                             'comp_names': ['mol_name'], 'comp_ids': ['mol_id'],
-                            'centroid_mzs': ['00200.0000', '00210.0000'],
+                            'centroid_mzs': ['00200.0000', '00210.0000'], 'mz': '00200.0000',
                             'polarity': '+', 'ion_add_pol': '[M+H]+'}
