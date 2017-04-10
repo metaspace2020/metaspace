@@ -4,8 +4,9 @@
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
-import glob
 from os.path import exists, join, split
+from os import listdir
+import re
 from shutil import copytree, copy
 from subprocess import CalledProcessError
 import logging
@@ -42,8 +43,8 @@ class LocalWorkDir(object):
 
     @property
     def imzml_path(self):
-        path = glob.glob(join(self.ds_path, '*.imzML'))
-        return path[0] if path else ''
+        imzmls = [fn for fn in listdir(self.ds_path) if re.search(r'\.imzml$', fn, re.IGNORECASE)]
+        return join(self.ds_path, imzmls[0]) if imzmls else ''
 
     @property
     def txt_path(self):
