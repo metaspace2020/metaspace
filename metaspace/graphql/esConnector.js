@@ -9,9 +9,8 @@ const config = require('./config.js'),
   {datasetFilters, dsField} = require('./datasetFilters.js');
 
 const esConfig = () => {
-  const {host, port} = config.elasticsearch;
   return {
-    hosts: [`${host}:${port}`],
+    host: [config.elasticsearch],
     apiVersion: '5.0'
   }
 };
@@ -54,21 +53,17 @@ function constructAnnotationQuery(args) {
 
   var body = {
     query: {
-      constant_score: {
-        filter: {
-          bool: {
-            must: [
-              {term: {db_name: database}}
-            ]
-          }
-        }
+      bool: {
+        filter: [
+          {term: {db_name: database}}
+        ]
       }
     },
     sort: esSort(orderBy, sortingOrder)
   };
 
   function addFilter(filter) {
-    body.query.constant_score.filter.bool.must.push(filter);
+    body.query.bool.filter.push(filter);
   }
 
   function addRangeFilter(field, interval) {

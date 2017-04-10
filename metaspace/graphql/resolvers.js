@@ -257,10 +257,6 @@ const Resolvers = {
         return theorData.then(res => res.json()).then(json => {
           let {data} = json;
           data.ppm = ppm;
-          data.sample = {
-            mzs: centroid_mzs,
-            ints: [1, 1, 1, 1] // FIXME: save sample centroid intensities to Postgres & ES
-          };
           return JSON.stringify(data);
         });
       });
