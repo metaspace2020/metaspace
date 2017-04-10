@@ -55,11 +55,22 @@ function createColormap(name) {
   return colors;
 }
 
+function mzFilterPrecision(value) {
+  const splitVal = (value + '').split('.');
+  if (splitVal.length == 1) {
+    return 0.5;
+  } else {
+    const k = splitVal[1].length;
+    return (0.5 * Math.pow(0.1, k)).toFixed(k + 1);
+  }
+}
+
 export {
   renderMolFormula,
   prettifySign,
   getJWT,
   decodePayload,
   pathFromUUID,
-  createColormap
+  createColormap,
+  mzFilterPrecision
 };

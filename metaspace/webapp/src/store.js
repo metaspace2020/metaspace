@@ -1,6 +1,7 @@
 import FILTER_SPECIFICATIONS from './filterSpecs.js';
 import {encodeParams, decodeParams, stripFilteringParams} from './filterToUrl.js';
 import router from './router.js';
+import {mzFilterPrecision} from './util.js';
 
 import Vue from 'vue';
 import Vuex from 'vuex';
@@ -136,11 +137,11 @@ const store = new Vuex.Store({
         f.msmScoreFilter = {min: filter.minMSM, max: 1.0};
 
       if (filter.mz) {
-        // FIXME: hardcoded ppm
-        const ppm = 5, mz = filter.mz;
+        const mz = parseFloat(filter.mz),
+              deltamz = parseFloat(mzFilterPrecision(mz));
         f.mzFilter = {
-          min: mz * (1.0 - ppm * 1e-6),
-          max: mz * (1.0 + ppm * 1e-6)
+          min: mz - deltamz,
+          max: mz + deltamz
         };
       }
 

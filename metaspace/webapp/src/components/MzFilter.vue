@@ -7,6 +7,8 @@
     <tf-input-box @change="onChange" :value="value">
     </tf-input-box>
 
+    <span>± {{ precision }}</span>
+
     <div class="tf-remove el-icon-circle-close"
          v-if="removable"
          @click="destroy"></div>
@@ -15,6 +17,7 @@
 
 <script>
  import TagFilterInputBox from './TagFilterInputBox.vue';
+ import {mzFilterPrecision} from '../util.js';
 
  export default {
    name: 'input-filter',
@@ -26,6 +29,11 @@
      options: Object,
      value: [String, Number],
      removable: {type: Boolean, default: true}
+   },
+   computed: {
+     precision() {
+       return mzFilterPrecision(this.value);
+     }
    },
    methods: {
      onChange(val) {

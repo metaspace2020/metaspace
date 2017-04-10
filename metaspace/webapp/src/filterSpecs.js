@@ -3,6 +3,7 @@ import InputFilter from './components/InputFilter.vue';
 import SingleSelectFilter from './components/SingleSelectFilter.vue';
 import MultiSelectFilter from './components/MultiSelectFilter.vue';
 import DatasetNameFilter from './components/DatasetNameFilter.vue';
+import MzFilter from './components/MzFilter.vue';
 
 // FIXME: hard-coded adducts
 const ADDUCT_POLARITY = {
@@ -106,9 +107,9 @@ const FILTER_SPECIFICATIONS = {
   },
 
   mz: {
-    type: InputFilter,
-    name: 'm/z (±5 ppm)',
-    description: 'Search by m/z (±5 ppm)',
+    type: MzFilter,
+    name: 'm/z',
+    description: 'Search by m/z',
     levels: ['annotation'],
     initialValue: undefined
   },

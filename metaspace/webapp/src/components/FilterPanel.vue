@@ -37,6 +37,7 @@
  import SingleSelectFilter from './SingleSelectFilter.vue';
  import MultiSelectFilter from './MultiSelectFilter.vue';
  import DatasetNameFilter from './DatasetNameFilter.vue';
+ import MzFilter from './MzFilter.vue';
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
 
  export default {
@@ -46,7 +47,8 @@
      InputFilter,
      SingleSelectFilter,
      MultiSelectFilter,
-     DatasetNameFilter
+     DatasetNameFilter,
+     MzFilter
    },
    apollo: {
      optionLists: {
