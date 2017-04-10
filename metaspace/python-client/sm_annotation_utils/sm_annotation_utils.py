@@ -133,8 +133,10 @@ class SMDataset(object):
     def database(self):
         return self.config['database']['name']
 
-    def isotope_images(self, sf, adduct):
-        self._db_cursor.execute(ISO_IMG_SEL, [self._name, sf, adduct, self.database()])
+    def isotope_images(self, sf, adduct, database=None):
+        if not database:
+            database = self.database()
+        self._db_cursor.execute(ISO_IMG_SEL, [self._name, sf, adduct, database])
         db_rows = list(self._db_cursor.fetchall())
         assert len(db_rows) > 0
 
@@ -292,7 +294,7 @@ class SMInstance(object):
         query = "SELECT * FROM {}".format(db_table)
         self._db_cur.execute(query)
         md_dump = self._db_cur.fetchall()
-        flattened = [pd.io.json.json_normalize(vars(r)) for r in md_dump]
+        flattened = [pd.io.json.json_normalize({'id': r.id, "name": r.name, "input_path": r.input_path, 'metadata': r.metadata}) for r in md_dump]
         metadata = pd.concat(flattened)
         metadata = metadata.set_index('id')
         metadata.columns = map(lambda x: x if not x.startswith('metadata') else x[9:], metadata.columns)
