@@ -225,7 +225,8 @@ const Resolvers = {
 
     ionImage(hit) {
       return {
-        url: hit._source.ion_image_url
+        url: hit._source.ion_image_url,
+        totalIntensity: hit._source.total_iso_ints.reduce((x,y) => x+y, 0)
       };
     },
 
@@ -266,10 +267,11 @@ const Resolvers = {
     },
 
     isotopeImages(hit) {
-      const {iso_image_urls, centroid_mzs} = hit._source;
+      const {iso_image_urls, centroid_mzs, total_iso_ints} = hit._source;
       return iso_image_urls.map((url, i) => ({
         url,
-        mz: parseFloat(centroid_mzs[i])
+        mz: parseFloat(centroid_mzs[i]),
+        totalIntensity: total_iso_ints[i]
       }));
     }
   },
@@ -278,10 +280,11 @@ const Resolvers = {
     submitDataset(_, args) {
       const {name, path, metadataJson} = args;
       try {
-        // const payload = jwt.decode(args.jwt, config.jwt.secret);
+        const payload = jwt.decode(args.jwt, config.jwt.secret);
         
         const metadata = JSON.parse(metadataJson);
         const body = JSON.stringify({
+          id: args.id,
           name: name,
           input_path: path,
           metadata: metadata,
