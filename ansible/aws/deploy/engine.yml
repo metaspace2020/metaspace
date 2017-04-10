@@ -7,12 +7,27 @@
 
   tasks:
     - name: Pull sources from the repository
-      git: repo={{ sm_repo_url }}
-           dest={{ sm_home }}
-           version={{ sm_branch }}
-           update=yes
+      git: >
+        repo={{ sm_repo_url }}
+        dest={{ sm_home }}
+        version={{ sm_branch }}
+        update=yes
+        force=yes
+      when: local_deploy is not defined
+      register: git_deploy
+      until: git_deploy | succeeded
 
-    - name: Install SM into conda environment
+   - name: Upload local files
+      synchronize:
+        src: "{{ sm_home }}/{{ item }}/"
+        dest: "{{ sm_home }}/{{ item }}/"
+        rsync_opts:
+          - "--exclude=*.sh"
+      with_items:
+        - sm
+      when: local_deploy is defined
+
+  - name: Install SM into conda environment
       args:
         chdir: "{{ sm_home }}"
         executable: /bin/bash
@@ -31,12 +46,15 @@
 
   tasks:
     - name: Pull sources from the repository
-      git: repo={{ sm_repo_url }}
-           dest={{ sm_home }}
-           version={{ sm_branch }}
-           update=yes
-           force=yes
+      git: >
+        repo={{ sm_repo_url }}
+        dest={{ sm_home }}
+        version={{ sm_branch }}
+        update=yes
+        force=yes
       when: local_deploy is not defined
+      register: git_deploy
+      until: git_deploy | succeeded
 
     - name: Upload local files
       synchronize:

@@ -7,6 +7,7 @@
 
   vars:
     sm_web_app_url: ""
+    supervisor_app: "sm-api"
 
   tasks:
     - name: Pull sources from the repository

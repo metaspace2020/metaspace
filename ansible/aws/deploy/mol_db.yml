@@ -5,4 +5,12 @@
   hosts: web
 
   tasks:
-    - include: ../../mol_db_deploy_tasks.yml
+    - name: Clone MolDB git repository
+      git:
+        dest: "{{ sm_mol_db_home }}"
+        repo: https://github.com/METASPACE2020/sm-molecular-db.git
+        update: yes
+        force: yes
+        version: "{{ sm_mol_db_branch }}"
+
+    - include: ../../restart_supervisor.yml supervisor_app=sm-mol-db

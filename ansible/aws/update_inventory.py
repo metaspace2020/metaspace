@@ -32,12 +32,17 @@ if __name__ == '__main__':
         instances = list(ec2.instances.filter(
             Filters=[{'Name': 'tag:hostgroup', 'Values': [spec['hostgroup']]},
                      {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']}]))
-        c = 0
-        for inst in instances:
-            print(inst.public_ip_address)
-            inst_name = component if c == 0 else component + str(c)
 
-            inventory.set(component, '{} ansible_ssh_host={}'.format(inst_name, inst.public_ip_address))
-            c += 1
+        if len(instances) == 1:
+            print(instances[0].public_ip_address)
+            inst_name = component
+            inventory.set(component, '{} ansible_ssh_host={}'.format(inst_name, instances[0].public_ip_address))
+        else:
+            c = 1
+            for inst in instances:
+                print(inst.public_ip_address)
+                inst_name = component + str(c)
+                inventory.set(component, '{} ansible_ssh_host={}'.format(inst_name, inst.public_ip_address))
+                c += 1
 
     inventory.write(open(inv_file, 'w'))

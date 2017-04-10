@@ -10,7 +10,6 @@
     slack_channel: "{{ sm_graphql_slack_channel }}"
     jwt_secret: "{{ sm_graphql_jwt_secret }}"
     mol_image_host: "{{ sm_graphql_mol_image_host }}"
-    supervisor_app: "sm-graphql"
 
   tasks:
     - name: Clone sm-graphql git repository
@@ -46,4 +45,4 @@
       template: src=/tmp/config.js.template dest={{ sm_graphql_home }}/config.js
                 owner=ubuntu group=ubuntu mode=0600
 
-    - include: ../../restart_supervisor.yml
+    - include: ../../restart_supervisor.yml supervisor_app=sm-graphql
