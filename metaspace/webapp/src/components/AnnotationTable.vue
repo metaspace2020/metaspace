@@ -299,6 +299,7 @@
             isotopeImages {
               mz
               url
+              totalIntensity
             }
             possibleCompounds {
               name

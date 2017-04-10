@@ -12,8 +12,10 @@
    if (!data) {
      return;
    }
-   const sampleData = {mzs: data.theor.centroid_mzs, ints: [100, 10, 1, 0.1]};//data.sample;
-   data.ppm = 3;
+
+   let {sampleData} = data;
+   const maxIntensity = sampleData.ints.reduce((a, b) => Math.max(a, b));
+   sampleData.ints = sampleData.ints.map(i => i / maxIntensity * 100.0);
 
    const plotData = [
      {
@@ -97,7 +99,7 @@
        this.plot(this.data);
    },
    methods: {
-     plot({data}) {
+     plot(data) {
        plotChart(data, this.$refs.peakChart);
      }
    }

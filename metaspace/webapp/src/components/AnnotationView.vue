@@ -97,9 +97,9 @@
             </el-col>
           </el-row>
           <el-row id="isotope-plot-container">
-            <!--isotope-pattern-plot :data="JSON.parse(peakChartData)"
+            <isotope-pattern-plot :data="peakChartData"
                                   v-if="activeSections.indexOf('scores') !== -1">
-            </isotope-pattern-plot-->
+            </isotope-pattern-plot>
           </el-row>
         </el-collapse-item>
         <el-collapse-item title="Dataset info" name="metadata">
@@ -153,9 +153,20 @@
        query: gql`query GetAnnotation($id: String!) {
          annotation(id: $id) {
            peakChartData
+           isotopeImages {
+             mz
+             totalIntensity
+           }
          }
        }`,
-       update: data => data.annotation.peakChartData,
+       update: ({annotation}) => {
+         let chart = JSON.parse(annotation.peakChartData);
+         chart.sampleData = {
+           mzs: annotation.isotopeImages.map(im => im.mz),
+           ints: annotation.isotopeImages.map(im => im.totalIntensity),
+         };
+         return chart;
+       },
        variables() {
          return {
            id: this.annotation.id
