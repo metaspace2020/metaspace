@@ -17,6 +17,7 @@
           <div style="margin-top: 10px;">
             <image-loader :src="annotation.ionImage.url"
                           :colormap="colormap"
+                          :max-height=500
                           class="ion-image principal-peak-image">
             </image-loader>
 
@@ -93,6 +94,7 @@
                 {{ img.mz.toFixed(4) }}<br/>
                 <image-loader :src="img.url"
                               :colormap="colormap"
+                              :max-height=250
                               class="ion-image">
                 </image-loader>
               </div>
@@ -214,12 +216,6 @@
    vertical-align: top;
    padding: 0 5px 0 5px;
    text-align: center;
- }
-
- .small-peak-image img {
-   min-height: 250px;
-   max-width: 95%;
-   object-fit: contain;
  }
 
  .sf-big {
