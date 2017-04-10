@@ -183,10 +183,8 @@ const Resolvers = {
           id = sprintf.sprintf("HMDB%05d", id);
           infoURL = `http://www.hmdb.ca/metabolites/${id}`;
         } else if (hit._source.db_name == 'ChEBI') {
-          id = "CHEBI:" + id;
           infoURL = `http://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}`;
         } else if (hit._source.db_name == 'SwissLipids') {
-          id = sprintf.sprintf("SLM:%09d", id);
           infoURL = `http://swisslipids.org/#/entity/${id}`;
         } else if (hit._source.db_name == 'LIPID_MAPS') {
           infoURL = `http://www.lipidmaps.org/data/LMSDRecord.php?LMID=${id}`;
