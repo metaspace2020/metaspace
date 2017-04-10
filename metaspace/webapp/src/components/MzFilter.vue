@@ -4,7 +4,7 @@
       {{ name }}:
     </div>
 
-    <tf-input-box @change="onChange" :value="value">
+    <tf-input-box mode="number" @change="onChange" :value="value">
     </tf-input-box>
 
     <span>± {{ precision }}</span>

@@ -4,7 +4,7 @@
       {{ name }}:
     </div>
 
-    <tf-input-box @change="onChange" :value="value">
+    <tf-input-box :mode="mode" @change="onChange" :value="value">
     </tf-input-box>
 
     <div class="tf-remove el-icon-circle-close"
@@ -25,7 +25,8 @@
      name: String,
      options: Object,
      value: [String, Number],
-     removable: {type: Boolean, default: true}
+     removable: {type: Boolean, default: true},
+     mode: {type: String, default: 'text'}
    },
    methods: {
      onChange(val) {

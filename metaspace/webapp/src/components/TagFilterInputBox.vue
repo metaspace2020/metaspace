@@ -13,9 +13,13 @@
     <span class="tf-value-edit"
           v-on-clickaway="quitEditMode"
           v-if="editMode">
-      <input ref="input"
+      <input ref="input" v-if="mode == 'number'"
              class="tf-value-input" type="number" step="0.0001"
              maxlength="10" :value="value" @input="onChange($event.target.value)">
+
+      <input ref="input" v-else
+             class="tf-value-input" type="text"
+             :value="value" @input="onChange($event.target.value)">
     </span>
   </div>
 </template>
@@ -28,7 +32,8 @@
    name: 'tf-input-box',
    mixins: [clickaway],
    props: {
-     value: [String, Number]
+     value: [String, Number],
+     mode: String
    },
    data() {
      return {
