@@ -81,14 +81,16 @@ def append_molecules(mol_db, csv_file, delimiter):
     exist_inchikeys = set(map(lambda _: _[0], db_session.execute(sel).fetchall()))
     new_mol_df = mol_db_df[mol_db_df.inchikey.isin(exist_inchikeys) == False][['inchikey', 'inchi', 'formula']]
     new_mol_df.columns = ['inchikey', 'inchi', 'sf']
-    db_session.execute(molecule_table.insert(),
-                       list(new_mol_df.to_dict(orient='index').values()))
+    if not new_mol_df.empty:
+        db_session.execute(molecule_table.insert(),
+                           list(new_mol_df.to_dict(orient='index').values()))
 
     new_db_mol_df = mol_db_df[['inchikey', 'id', 'name']]
     new_db_mol_df.insert(0, 'db_id', mol_db.id)
     new_db_mol_df.columns = ['db_id', 'inchikey', 'mol_id', 'mol_name']
-    db_session.execute(moldb_mol_table.insert(),
-                       list(new_db_mol_df.to_dict(orient='index').values()))
+    if not new_db_mol_df.empty:
+        db_session.execute(moldb_mol_table.insert(),
+                           list(new_db_mol_df.to_dict(orient='index').values()))
 
     db_session.commit()
     LOG.info('Inserted {} new molecules for {}'.format(len(mol_db_df), mol_db))
