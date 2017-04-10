@@ -75,9 +75,9 @@
      font: {size: 16},
      shapes,
      paper_bgcolor: 'rgba(0,0,0,0)',
-     plot_bgcolor: 'rgba(0,0,0,0)'
+     plot_bgcolor: 'rgba(0,0,0,0)',
+     hovermode: 'closest'
    };
-
 
    require.ensure(['plotly.js/lib/core', 'd3'], (require) => {
      const Plotly = require('plotly.js/lib/core');

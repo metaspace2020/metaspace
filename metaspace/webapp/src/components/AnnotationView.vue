@@ -86,7 +86,9 @@
             (&rho;<sub>chaos</sub>)
           </el-row>
           <el-row id="isotope-images-container">
-            <el-col :xs="24" :sm="12" :md="12" :lg="6" v-for="img in annotation.isotopeImages">
+            <el-col :xs="24" :sm="12" :md="12" :lg="6"
+                    v-for="(img, idx) in annotation.isotopeImages.filter(img => img.url !== null)"
+                    :key="idx">
               <div class="small-peak-image">
                 {{ img.mz.toFixed(4) }}<br/>
                 <image-loader :src="img.url"
