@@ -19,8 +19,9 @@ const esIndex = config.elasticsearch.index;
 const es = new elasticsearch.Client(esConfig());
 
 function esFormatMz(mz) {
-  // transform m/z into a string according to sm.engine.es_export
-  return sprintf.sprintf("%010.4f", mz);
+  // transform m/z into a string according to sm.engine.es_export;
+  // add extra 2 digits after decimal place for search queries
+  return sprintf.sprintf("%012.6f", mz);
 }
 
 function esSort(orderBy, sortingOrder) {
