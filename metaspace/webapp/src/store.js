@@ -7,7 +7,7 @@ import Vue from 'vue';
 import Vuex from 'vuex';
 Vue.use(Vuex);
 
-const allSections = ['images', 'compounds', 'scores', 'metadata'].reverse();
+const allSections = ['images', 'compounds', 'scores', 'metadata', 'adducts'].reverse();
 
 function decodeSections(number) {
   number = number | 0;
@@ -65,8 +65,8 @@ function decodeSettings({query, path}) {
     settings.table.order = decodeSortOrder(query.sort);
   if (query.cmap)
     settings.annotationView.colormap = query.cmap;
-  if (query.show !== undefined)
-    settings.annotationView.activeSections = decodeSections(query.show);
+  if (query.sections !== undefined)
+    settings.annotationView.activeSections = decodeSections(query.sections);
   return settings;
 }
 
@@ -112,7 +112,7 @@ const store = new Vuex.Store({
     authenticated: false,
     user: null,
 
-    currentTour: null
+    currentTour: null,
   },
 
   getters: {
@@ -234,7 +234,7 @@ const store = new Vuex.Store({
 
     updateAnnotationViewSections(state, activeSections) {
       let query = Object.assign({}, state.route.query, {
-        show: encodeSections(activeSections)
+        sections: encodeSections(activeSections)
       });
       router.replace({query});
     },

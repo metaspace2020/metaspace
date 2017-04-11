@@ -106,10 +106,17 @@
             </isotope-pattern-plot>
           </el-row>
         </el-collapse-item>
+
         <el-collapse-item title="Dataset info" name="metadata">
           <dataset-info :metadata="JSON.parse(annotation.dataset.metadataJson)"
                         :expandedKeys="['Sample information', 'Submitted by', 'Submitter']">
           </dataset-info>
+        </el-collapse-item>
+
+        <el-collapse-item title="Adducts" name="adducts">
+          <adducts-info :annotation="annotation"
+                        :database="this.$store.getters.filter.database">
+          </adducts-info>
         </el-collapse-item>
       </el-collapse>
     </el-col>
@@ -119,6 +126,7 @@
 <script>
  import { renderMolFormula  } from '../util.js';
  import DatasetInfo from './DatasetInfo.vue';
+ import AdductsInfo from './AdductsInfo.vue';
  import ImageLoader from './ImageLoader.vue';
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
  import Colorbar from './Colorbar.vue';
@@ -190,6 +198,7 @@
 
    components: {
      DatasetInfo,
+     AdductsInfo,
      ImageLoader,
      IsotopePatternPlot,
      Colorbar
