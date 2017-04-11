@@ -114,7 +114,8 @@
         </el-collapse-item>
 
         <el-collapse-item title="Related annotations" name="adducts">
-          <adducts-info :annotation="annotation"
+          <adducts-info v-if="activeSections.indexOf('adducts') !== -1"
+                        :annotation="annotation"
                         :database="this.$store.getters.filter.database">
           </adducts-info>
         </el-collapse-item>
