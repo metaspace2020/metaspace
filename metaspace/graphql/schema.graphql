@@ -49,6 +49,7 @@ type Dataset {
   condition: String
   maldiMatrix: String
 
+  configJson: String!
   # full metadata JSON conforming to schema published at
   # https://github.com/metaspace2020/metadata
   metadataJson: String!
@@ -74,7 +75,9 @@ type Spectrum {
 type MzImage {
   mz: Float
   url: String
-  totalIntensity: Float!  # FIXME: implement
+  totalIntensity: Float!
+  minIntensity: Float!,
+  maxIntensity: Float!
 }
 
 type Annotation {
@@ -90,7 +93,6 @@ type Annotation {
   rhoSpatial: Float
   rhoSpectral: Float
   rhoChaos: Float
-  ionImage: MzImage!
   isotopeImages: [MzImage!]!
 
   peakChartData: String  # JSON

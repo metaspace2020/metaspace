@@ -129,6 +129,10 @@ const Resolvers = {
   },
 
   Dataset: {
+    configJson(ds) {
+      return JSON.stringify(ds.config);
+    },
+    
     metadataJson(ds) {
       return JSON.stringify(ds.metadata);
     },
@@ -180,7 +184,6 @@ const Resolvers = {
         let id = ids[i];
         let infoURL;
         if (hit._source.db_name == 'HMDB') {
-          id = sprintf.sprintf("HMDB%05d", id);
           infoURL = `http://www.hmdb.ca/metabolites/${id}`;
         } else if (hit._source.db_name == 'ChEBI') {
           infoURL = `http://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}`;
@@ -221,13 +224,6 @@ const Resolvers = {
       }
     },
 
-    ionImage(hit) {
-      return {
-        url: hit._source.ion_image_url,
-        totalIntensity: hit._source.total_iso_ints.reduce((x,y) => x+y, 0)
-      };
-    },
-
     peakChartData(hit) {
       const {sf_adduct, ds_meta, ds_id, mz} = hit._source;
       const msInfo = ds_meta.MS_Analysis;
@@ -261,11 +257,13 @@ const Resolvers = {
     },
 
     isotopeImages(hit) {
-      const {iso_image_urls, centroid_mzs, total_iso_ints} = hit._source;
+      const {iso_image_urls, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints} = hit._source;
       return iso_image_urls.map((url, i) => ({
         url,
         mz: parseFloat(centroid_mzs[i]),
-        totalIntensity: total_iso_ints[i]
+        totalIntensity: total_iso_ints[i],
+        minIntensity: min_iso_ints[i],
+        maxIntensity: max_iso_ints[i]
       }));
     }
   },
