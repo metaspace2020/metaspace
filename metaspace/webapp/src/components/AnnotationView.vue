@@ -113,7 +113,7 @@
           </dataset-info>
         </el-collapse-item>
 
-        <el-collapse-item title="Adducts" name="adducts">
+        <el-collapse-item title="Related annotations" name="adducts">
           <adducts-info :annotation="annotation"
                         :database="this.$store.getters.filter.database">
           </adducts-info>

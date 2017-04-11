@@ -1,19 +1,24 @@
 <template>
-  <div class="adduct-info-container">
-    <el-col v-for="(other, idx) in sameAdductAnnotations" :key="idx"
-            :xs="24" :sm="8" :md="8" :lg="8">
-      <div class="small-peak-image" style="max-width: %">
-        {{ showAdduct(other.adduct) }}<br/>
-        {{  other.mz.toFixed(4) }}<br/>
-        <image-loader :src="other.ionImage.url"
-                      :colormap="colormap"
-                      :max-height=250
-                      class="ion-image">
-        </image-loader>
-        MSM score: {{ other.msmScore.toFixed(3) }}<br/>
-        Annotated @ {{ other.fdrLevel }} FDR
-      </div>
-    </el-col>
+  <div>
+    <span style="font-size: 16px; padding-left: 20px;">
+      All adducts for this annotation in the same dataset
+    </span>
+    <div class="adduct-info-container">
+      <el-col v-for="(other, idx) in sameAdductAnnotations" :key="idx"
+              :xs="24" :sm="8" :md="8" :lg="8">
+        <div class="small-peak-image" style="max-width: %">
+          <span v-html="showAdduct(other.adduct)"></span><br/>
+          {{  other.mz.toFixed(4) }}<br/>
+          <image-loader :src="other.ionImage.url"
+                        :colormap="colormap"
+                        :max-height=250
+                        class="ion-image">
+          </image-loader>
+          MSM score: {{ other.msmScore.toFixed(3) }}<br/>
+          Annotated @ {{ other.fdrLevel }} FDR
+        </div>
+      </el-col>
+    </div>
   </div>
 </template>
 
@@ -62,7 +67,7 @@
    },
    methods: {
      showAdduct(adduct) {
-       return renderMolFormula('M', adduct, this.annotation.dataset.polarity);
+       return renderMolFormula(this.annotation.sumFormula, adduct, this.annotation.dataset.polarity);
      }
    }
  }
