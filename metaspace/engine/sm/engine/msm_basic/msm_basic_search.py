@@ -14,7 +14,10 @@ class MSMBasicSearch(SearchAlgorithm):
 
     def __init__(self, sc, ds, mol_db, fdr, ds_config):
         super(MSMBasicSearch, self).__init__(sc, ds, mol_db, fdr, ds_config)
-        self.metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('total_iso_ints', [0, 0, 0, 0])])
+        self.metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0),
+                                    ('total_iso_ints', [0, 0, 0, 0]),
+                                    ('min_iso_ints', [0, 0, 0, 0]),
+                                    ('max_iso_ints', [0, 0, 0, 0])])
         self.max_fdr = 0.5
 
     def search(self):

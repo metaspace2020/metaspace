@@ -88,8 +88,10 @@ def get_compute_img_metrics(metrics, sample_area_mask, empty_matrix, img_gen_con
             m.map['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=sf_ints[1:])
             moc = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'])
             m.map['chaos'] = 0 if np.isclose(moc, 1.0) else moc
-            m.map['total_iso_ints'] = [img.sum() for img in iso_imgs]
 
+            m.map['total_iso_ints'] = [img.sum() for img in iso_imgs]
+            m.map['min_iso_ints'] = [img.min() for img in iso_imgs]
+            m.map['max_iso_ints'] = [img.max() for img in iso_imgs]
         return m.to_tuple()
 
     return compute

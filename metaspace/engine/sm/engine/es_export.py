@@ -9,9 +9,9 @@ from sm.engine.db import DB
 logger = logging.getLogger('sm-engine')
 
 COLUMNS = ["ds_id", "ds_name", "sf", "sf_adduct",
-           "chaos", "image_corr", "pattern_match", "total_iso_ints", "msm",
+           "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
            "adduct", "job_id", "sf_id", "fdr",
-           "centroid_mzs", "ds_meta", "ion_image_url", "iso_image_urls", "polarity"]
+           "centroid_mzs", "ds_config", "ds_meta", "ion_image_url", "iso_image_urls", "polarity"]
 
 ANNOTATIONS_SEL = '''
 SELECT
@@ -25,12 +25,15 @@ SELECT
     COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
     COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
     (m.stats -> 'total_iso_ints'::text) AS total_iso_ints,
+    (m.stats -> 'min_iso_ints'::text) AS min_iso_ints,
+    (m.stats -> 'max_iso_ints'::text) AS max_iso_ints,
     COALESCE(m.msm, 0::real) AS msm,
     m.adduct,
     j.id AS job_id,
     f.id AS sf_id,
     m.fdr as pass_fdr,
     tp.centr_mzs AS centroid_mzs,
+    ds.config as ds_config,
     ds.metadata as ds_meta,
     m.ion_image_url,
     m.iso_image_urls,
@@ -165,6 +168,8 @@ class ESExporter:
                         "image_corr": {"type": "float", "index": "not_analyzed"},
                         "pattern_match": {"type": "float", "index": "not_analyzed"},
                         "total_iso_ints": {"type": "float", "index": "not_analyzed"},
+                        "min_iso_ints": {"type": "float", "index": "not_analyzed"},
+                        "max_iso_ints": {"type": "float", "index": "not_analyzed"},
                         "msm": {"type": "float", "index": "not_analyzed"},
                         "adduct": {"type": "string", "index": "not_analyzed"},
                         "fdr": {"type": "float", "index": "not_analyzed"},
@@ -173,6 +178,7 @@ class ESExporter:
                         "ion_image_url": {"type": "string", "index": "not_analyzed"},
                         "iso_image_urls": {"type": "string", "index": "not_analyzed"},
                         "ion_add_pol": {"type": "string", "index": "not_analyzed"},
+                        "ds_config": {"type": "string", "index": "not_analyzed"},
                         # dataset metadata
                         "ds_meta": {
                             "properties": {
