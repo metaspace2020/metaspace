@@ -22,10 +22,24 @@
                     :key="propName">
               <div class="field-label" v-html="prettify(propName, section)"></div>
 
-              <el-form-item class="control" v-if="prop.type == 'string' && !loading"
+              <el-form-item class="control" v-if="prop.type == 'string' && !loading && isFreeText(propName)"
+                            :class="isError(sectionName, propName)">
+                <!-- keeping the whole form item separate fixes a weird bug with inputs losing focus -->
+                <el-input type="textarea"
+                          :required="isRequired(propName, section)"
+                          v-model="value[sectionName][propName]"
+                          :placeholder="prop.description">
+                </el-input>
+
+                <span class="error-msg" v-if="isError(sectionName, propName)">
+                  {{ getErrorMessage(sectionName, propName) }}
+                </span>
+              </el-form-item>
+
+              <el-form-item class="control" v-if="prop.type == 'string' && !loading && !isFreeText(propName)"
                             :class="isError(sectionName, propName)">
 
-                <el-autocomplete v-if="!isFreeText(propName) && !prop.enum && enableAutocomplete(propName)"
+                <el-autocomplete v-if="!prop.enum && enableAutocomplete(propName)"
                                  :trigger-on-focus="false"
                                  class="md-ac"
                                  v-model="value[sectionName][propName]"
@@ -34,25 +48,18 @@
                                  :placeholder="prop.description">
                 </el-autocomplete>
 
-                <el-input v-if="!isFreeText(propName) && !prop.enum && !enableAutocomplete(propName)"
+                <el-input v-if="!prop.enum && !enableAutocomplete(propName)"
                           v-model="value[sectionName][propName]"
                           :required="isRequired(propName, section)"
                           :placeholder="prop.description">
                 </el-input>
 
-                <el-select v-if="!isFreeText(propName) && prop.enum"
+                <el-select v-if="prop.enum"
                           :required="isRequired(propName, section)"
                           v-model="value[sectionName][propName]">
                   <el-option v-for="opt in prop.enum" :value="opt" :label="opt" :key="opt">
                   </el-option>
                 </el-select>
-
-                <el-input v-if="isFreeText(propName)"
-                          type="textarea"
-                          :required="isRequired(propName, section)"
-                          v-model="value[sectionName][propName]"
-                          :placeholder="prop.description">
-                </el-input>
 
                 <span class="error-msg" v-if="isError(sectionName, propName)">
                   {{ getErrorMessage(sectionName, propName) }}
@@ -209,9 +216,11 @@
      }
 
      // otherwise we need to fetch existing data from the server
+     this.loading = true;
      this.$apollo.query({
        query: fetchMetadataQuery,
-       variables: { id: this.datasetId }
+       variables: { id: this.datasetId },
+       fetchPolicy: 'network-only'
      }).then(resp => {
        const defaultValue = objectFactory(metadataSchema),
              value = JSON.parse(resp.data.dataset.metadataJson);

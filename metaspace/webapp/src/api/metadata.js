@@ -1,7 +1,7 @@
 import gql from 'graphql-tag';
 
 export const fetchMetadataQuery =
-  gql`query GetMetadataJSON($id: String!) {
+  gql`query fetchMetadataQuery($id: String!) {
     dataset(id: $id) {
       metadataJson
     }
