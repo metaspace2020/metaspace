@@ -36,7 +36,7 @@ class SearchResults(object):
 
     def _metrics_table_row_gen(self, job_id, db_id, metr_df, ion_img_urls):
         for ind, r in metr_df.reset_index().iterrows():
-            m = dict((name, r[name]) for name in self.metric_names)
+            m = OrderedDict((name, r[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
             urls = ion_img_urls[(r.sf_id, r.adduct)]
             yield (job_id, db_id, r.sf_id, r.adduct,

@@ -178,7 +178,6 @@ class ESExporter:
                         "ion_image_url": {"type": "string", "index": "not_analyzed"},
                         "iso_image_urls": {"type": "string", "index": "not_analyzed"},
                         "ion_add_pol": {"type": "string", "index": "not_analyzed"},
-                        "ds_config": {"type": "string", "index": "not_analyzed"},
                         # dataset metadata
                         "ds_meta": {
                             "properties": {

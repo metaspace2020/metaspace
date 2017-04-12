@@ -27,7 +27,10 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
         'q': 99.0
     }
     empty_matrix = np.zeros((2, 3))
-    metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('total_iso_ints', [0, 0, 0, 0])])
+    metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0),
+                           ('total_iso_ints', [0, 0, 0, 0]),
+                           ('min_iso_ints', [0, 0, 0, 0]),
+                           ('max_iso_ints', [0, 0, 0, 0])])
     compute_measures = get_compute_img_metrics(metrics, np.ones(2*3).astype(bool),
                                                empty_matrix, img_gen_conf)
 
@@ -36,7 +39,7 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
     sf_intensity = [100., 10., 1.]
 
     measures = compute_measures(sf_iso_images, sf_intensity)
-    assert measures == (0.99, 0.8, 0.95, [213., 120., 0.])
+    assert measures == (0.99, 0.8, 0.95, [213., 120., 0.], [0, 0, 0], [100., 50., 0.])
 
 
 @pytest.fixture(scope='module')
@@ -58,18 +61,21 @@ def ds_formulas_images_mock():
 
 def test_sf_image_metrics(spark_context, ds_formulas_images_mock, ds_config):
     with patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics') as mock:
-        mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100., 10.])
+        mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.])
 
         ds_mock, mol_db_mock, ref_images = ds_formulas_images_mock
         ref_images_rdd = spark_context.parallelize(ref_images)
 
-        metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('total_iso_ints', [0, 0, 0, 0])])
+        metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0),
+                               ('total_iso_ints', [0, 0, 0, 0]),
+                               ('min_iso_ints', [0, 0, 0, 0]),
+                               ('max_iso_ints', [0, 0, 0, 0])])
         metrics_df = sf_image_metrics(ref_images_rdd, metrics, ds_mock, mol_db_mock, spark_context)
 
-        exp_metrics_df = (pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, [100., 10.], 0.9**3],
-                                       [1, '+H', 0.9, 0.9, 0.9, [100., 10.], 0.9**3]],
-                                       columns=['sf_id', 'adduct', 'chaos', 'spatial',
-                                                'spectral', 'total_iso_ints', 'msm'])
+        exp_metrics_df = (pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.], 0.9**3],
+                                       [1, '+H', 0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.], 0.9**3]],
+                                       columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral',
+                                                'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'msm'])
                           .set_index(['sf_id', 'adduct']))
         assert_frame_equal(metrics_df, exp_metrics_df)
 

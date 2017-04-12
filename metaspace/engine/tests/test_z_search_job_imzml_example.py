@@ -33,7 +33,7 @@ def create_fill_sm_database(create_test_db, drop_test_db, create_sm_index, sm_co
 def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metrics_mock,
                                   post_images_to_annot_service_mock, MolDBServiceWrapperMock,
                                   sm_config, create_fill_sm_database, es_dsl_search):
-    get_compute_img_metrics_mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100.])
+    get_compute_img_metrics_mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100.], [0], [10.])
     filter_sf_metrics_mock.side_effect = lambda x: x
     mol_db_mock = MolDBServiceWrapperMock()
     mol_db_mock.find_db_by_name_version.return_value = [{'id': 0, 'name': 'HMDB', 'version': '2017-01'}]
@@ -79,9 +79,11 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
                           'FROM iso_image_metrics '
                           'ORDER BY sf_id, adduct'))
 
-        assert rows[0] == (0, 1, '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'total_iso_ints': [100.]},
+        assert rows[0] == (0, 1, '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
+                                        'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
                            ['http://localhost/iso_image_1', None, None, None], 'http://localhost/ion_image')
-        assert rows[1] == (0, 1, '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'total_iso_ints': [100.]},
+        assert rows[1] == (0, 1, '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
+                                         'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
                            ['http://localhost/iso_image_1', None, None, None], 'http://localhost/ion_image')
 
         # ES asserts
