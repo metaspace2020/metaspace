@@ -125,13 +125,13 @@
 </template>
 
 <script>
- import { renderMolFormula  } from '../util.js';
+ import { renderMolFormula } from '../util.js';
  import DatasetInfo from './DatasetInfo.vue';
  import AdductsInfo from './AdductsInfo.vue';
  import ImageLoader from './ImageLoader.vue';
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
  import Colorbar from './Colorbar.vue';
- import gql from 'graphql-tag';
+ import {annotationQuery} from '../api/annotation.js';
 
  export default {
    name: 'annotation-view',
@@ -163,15 +163,7 @@
    },
    apollo: {
      peakChartData: {
-       query: gql`query GetAnnotation($id: String!) {
-         annotation(id: $id) {
-           peakChartData
-           isotopeImages {
-             mz
-             totalIntensity
-           }
-         }
-       }`,
+       query: annotationQuery,
        update: ({annotation}) => {
          let chart = JSON.parse(annotation.peakChartData);
          chart.sampleData = {

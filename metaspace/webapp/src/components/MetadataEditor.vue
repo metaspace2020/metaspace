@@ -123,9 +123,12 @@
 
  import metadataSchema from '../assets/metadata_schema.json';
  import Ajv from 'ajv';
- import gql from 'graphql-tag';
  import merge from 'lodash/merge';
  import fetch from 'isomorphic-fetch';
+ import {
+   fetchAutocompleteSuggestionsQuery,
+   fetchMetadataQuery
+ } from '../api/metadata.js';
 
  const ajv = new Ajv({allErrors: true});
  const validator = ajv.compile(metadataSchema);
@@ -207,11 +210,7 @@
 
      // otherwise we need to fetch existing data from the server
      this.$apollo.query({
-       query: gql`query GetMetadataJSON($id: String!) {
-         dataset(id: $id) {
-           metadataJson
-         }
-       }`,
+       query: fetchMetadataQuery,
        variables: { id: this.datasetId }
      }).then(resp => {
        const defaultValue = objectFactory(metadataSchema),
@@ -331,9 +330,7 @@
      getSuggestions(query, callback, ...args) {
        const path = this.buildPath(...args).slice(1);
        this.$apollo.query({
-         query: gql`query suggestions($field: String!, $query: String!) {
-           metadataSuggestions(field: $field, query: $query)
-         }`,
+         query: fetchAutocompleteSuggestionsQuery,
          variables: {field: path, query}
        }).then(resp => callback(resp.data.metadataSuggestions.map(val => ({value: val}))));
      },

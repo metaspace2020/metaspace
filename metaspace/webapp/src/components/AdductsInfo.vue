@@ -23,9 +23,9 @@
 </template>
 
 <script>
- import gql from 'graphql-tag';
  import {renderMolFormula} from '../util.js';
  import ImageLoader from './ImageLoader.vue';
+ import {allAdductsQuery} from '../api/annotation.js';
 
  export default {
    props: ['annotation', 'database'],
@@ -37,24 +37,7 @@
    },
    apollo: {
      sameAdductAnnotations: {
-       query: gql`query GetAdductData($datasetId: String!,
-                                      $molFormula: String!,
-                                      $db: String!) {
-          allAnnotations(datasetFilter: {
-            ids: $datasetId
-          }, filter: {
-            sumFormula: $molFormula, database: $db
-          }) {
-            mz
-            adduct
-            msmScore
-            rhoSpatial
-            rhoSpectral
-            rhoChaos
-            fdrLevel
-            isotopeImages { url }
-          }
-       }`,
+       query: allAdductsQuery,
        variables() {
          return {
            db: this.database,

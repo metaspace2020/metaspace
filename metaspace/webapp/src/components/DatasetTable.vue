@@ -28,7 +28,7 @@
 </template>
 
 <script>
- import gql from 'graphql-tag';
+ import {datasetListQuery} from '../api/dataset';
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
 
@@ -58,28 +58,7 @@
 
    apollo: {
      datasets: {
-       query: gql`query GetDatasets($dFilter: DatasetFilter) {
-           allDatasets(offset: 0, limit: 100,
-                       filter: $dFilter) {
-         id
-         name
-         institution
-         submitter {
-           name
-           surname
-           email
-         }
-         polarity
-         ionisationSource
-         analyzer {
-           type
-           resolvingPower(mz: 400)
-         }
-         organism
-         organismPart
-         condition
-         metadataJson
-       }}`,
+       query: datasetListQuery,
        update(data) {
          this.isLoading = false;
          return data.allDatasets;

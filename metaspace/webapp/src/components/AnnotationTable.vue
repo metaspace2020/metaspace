@@ -164,8 +164,11 @@
 <script>
  import { renderMolFormula } from '../util.js';
  import ProgressButton from './ProgressButton.vue';
+ import {
+   annotationListQuery,
+   tableExportQuery
+ } from '../api/annotation.js';
 
- import gql from 'graphql-tag';
  import Vue from 'vue';
  import FileSaver from 'file-saver';
 
@@ -183,7 +186,8 @@
        greenCount: 0,
        pageSizes: [15, 20, 25, 30],
        isExporting: false,
-       exportProgress: 0
+       exportProgress: 0,
+       totalCount: 0
      }
    },
    mounted() {
@@ -261,55 +265,8 @@
      }
    },
    apollo: {
-     totalCount: {
-       query: gql`query GetCount($filter: AnnotationFilter,
-                                 $dFilter: DatasetFilter) {
-          countAnnotations(filter: $filter, datasetFilter: $dFilter)
-       }`,
-       variables () { return this.queryVariables(); },
-       update: data => data.countAnnotations,
-       debounce: 200
-     },
      annotations: {
-       query: gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
-                                       $offset: Int, $limit: Int, $filter: AnnotationFilter, $dFilter: DatasetFilter) {
-          allAnnotations(filter: $filter,
-                         datasetFilter: $dFilter,
-                         orderBy: $orderBy, sortingOrder: $sortingOrder,
-                         offset: $offset, limit: $limit) {
-            id
-            sumFormula
-            adduct
-            msmScore
-            rhoSpatial
-            rhoSpectral
-            rhoChaos
-            fdrLevel
-            mz
-            dataset {
-              id
-              institution
-              name
-              polarity
-              metadataJson
-            }
-            isotopeImages {
-              mz
-              url
-              totalIntensity
-            }
-            possibleCompounds {
-              name
-              imageURL
-              information {
-                database
-                url
-              }
-            }
-          }
-
-          countAnnotations(filter: $filter, datasetFilter: $dFilter)
-        }`,
+       query: annotationListQuery,
        variables() {
          return this.queryVariables();
        },
@@ -337,7 +294,7 @@
            };
          }
 
-         this.greenCount = data.countAnnotations;
+         this.totalCount = data.countAnnotations;
        },
        watchLoading (isLoading) {
          this.$store.commit('updateAnnotationTableStatus', isLoading);
@@ -493,41 +450,8 @@
      },
 
      startExport () {
-       let q = gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
-                                $offset: Int, $limit: Int, $filter: AnnotationFilter, $dFilter: DatasetFilter) {
-             annotations: allAnnotations(filter: $filter, datasetFilter: $dFilter,
-                                         orderBy: $orderBy, sortingOrder: $sortingOrder,
-                                         offset: $offset, limit: $limit) {
-               id
-               sumFormula
-               adduct
-               msmScore
-               rhoSpatial
-               rhoSpectral
-               rhoChaos
-               fdrLevel
-               mz
-               dataset {
-                 id
-                 institution
-                 name
-               }
-               possibleCompounds {
-                 name
-               }
-             }
-           }`,
-           v = this.queryVariables(),
-           chunkSize = 1000,
-           chunks = [],
-           offset = 0;
-
-       this.isExporting = true;
-
-       v.limit = chunkSize;
-       let k = Math.ceil(this.totalCount / chunkSize),
-           self = this,
-           csv = ['institution', 'datasetName', 'formula', 'adduct', 'mz',
+       const chunkSize = 1000;
+       let csv = ['institution', 'datasetName', 'formula', 'adduct', 'mz',
                   'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
                   'moleculeNames'].join(',') + "\n";
 
@@ -550,6 +474,9 @@
          }
        }
 
+       this.isExporting = true;
+       let self = this;
+
        function finish() {
          if (!self.isExporting)
            return;
@@ -561,9 +488,16 @@
          FileSaver.saveAs(blob, "sm_results.csv");
        }
 
+       let v = this.queryVariables(),
+           chunks = [],
+           offset = 0;
+
+       v.limit = chunkSize;
+
        function runExport() {
          const variables = Object.assign({offset}, v);
-         self.$apollo.query({query: q, variables}).then(resp => {
+         self.$apollo.query({query: tableExportQuery, variables})
+             .then(resp => {
            self.exportProgress = offset / self.totalCount;
            offset += chunkSize;
            writeCsvChunk(resp.data.annotations);

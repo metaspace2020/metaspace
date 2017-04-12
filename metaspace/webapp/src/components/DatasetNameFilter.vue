@@ -35,6 +35,23 @@
  import TagFilter from './TagFilter.vue';
  import gql from 'graphql-tag';
 
+ const optionsQuery =
+  gql`query DatasetFilterOptions($df: DatasetFilter, $orderBy: DatasetOrderBy,
+                                 $sortDir: SortingOrder) {
+  options: allDatasets(filter: $df,
+    orderBy: $orderBy, sortingOrder: $sortDir, limit: 20) {
+      value: id
+      label: name
+    }
+  }`;
+
+ const namesQuery = gql`query DatasetNames($ids: String) {
+   options: allDatasets(filter: {ids: $ids}) {
+     value: id
+     currentLabel: name
+   }
+ }`;
+
  export default {
    name: 'dataset-name-filter',
    components: {
@@ -44,21 +61,6 @@
 
    data() {
      return {
-       optionsQuery: gql`query DatasetFilterOptions($df: DatasetFilter,
-                                                    $orderBy: DatasetOrderBy,
-                                                    $sortDir: SortingOrder) {
-         options: allDatasets(filter: $df,
-                              orderBy: $orderBy, sortingOrder: $sortDir, limit: 20) {
-           value: id
-           label: name
-         }
-       }`,
-       namesQuery: gql`query DatasetNames($ids: String) {
-         options: allDatasets(filter: {ids: $ids}) {
-           value: id
-           currentLabel: name
-         }
-       }`,
        loading: false,
        options: [],
        cachedOptions: [],
@@ -105,7 +107,7 @@
 
      fetchNames(ids) {
        this.$apollo.query({
-         query: this.namesQuery,
+         query: namesQuery,
 
          // TODO update when we make GraphQL accept an array
          variables: {ids: ids.join('|')}
@@ -137,7 +139,7 @@
        delete df.ids;
 
        this.$apollo.query({
-         query: this.optionsQuery,
+         query: optionsQuery,
          variables: {df, orderBy, sortDir}
        }).then(({data}) => {
          this.loading = false;

@@ -8,8 +8,8 @@
 
 <script>
  import MetadataEditor from './MetadataEditor.vue';
- import gql from 'graphql-tag';
  import {getJWT} from '../util.js';
+ import updateMetadataQuery from '../api/metadata.js';
 
  export default {
    name: 'metadata-edit-page',
@@ -41,9 +41,7 @@
 
      updateMetadata(jwt, dsId, value) {
        return this.$apollo.mutate({
-         mutation: gql`mutation ($jwt: String!, $dsId: String!, $value: String!) {
-           updateMetadata(jwt: $jwt, datasetId: $dsId, metadataJson: $value)
-         }`,
+         mutation: updateMetadataQuery,
          variables: {jwt, dsId, value}
        }).then(resp => resp.data.updateMetadata)
          .then(status => {

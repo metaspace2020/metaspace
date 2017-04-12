@@ -33,10 +33,10 @@
  import FineUploader from './FineUploader.vue';
  import MetadataEditor from './MetadataEditor.vue';
  import Vue from 'vue';
- import gql from 'graphql-tag';
 
  import config from '../clientConfig.json';
  import {pathFromUUID} from '../util.js';
+ import {submitDatasetQuery} from '../api/dataset.js';
 
  export default {
    name: 'upload-page',
@@ -91,9 +91,7 @@
      submitDataset(uuid, formData) {
        console.log("submitting " + uuid);
        return this.$apollo.mutate({
-         mutation: gql`mutation ($path: String!, $value: String!) {
-           submitDataset(path: $path, metadataJson: $value)
-         }`,
+         mutation: submitDatasetQuery,
          variables: {path: pathFromUUID(uuid), value: formData}
        }).then(resp => resp.data.submitDataset)
          .then(status => {

@@ -91,12 +91,11 @@
 
    computed: {
      datasetsHref() {
-       const path = '/datasets';
-       const link = {
-         path,
-         query: encodeParams(this.$store.getters.filter, '/datasets')
-       };
-       return link;
+       return this.href('/datasets');
+     },
+
+     annotationsHref() {
+       return this.href('/annotations');
      },
 
      userNameOrEmail() {
@@ -104,18 +103,6 @@
        if (!user)
          return '';
        return user.name || user.email;
-     },
-
-     annotationsHref() {
-       const path = '/annotations',
-             lastParams = this.$store.state.lastUsedFilters[path];
-       let f = lastParams ? lastParams.filter : {};
-       f = Object.assign({}, f, DEFAULT_FILTER, this.$store.getters.filter);
-       const link = {
-         path,
-         query: encodeParams(f, '/annotations')
-       };
-       return link;
      }
    },
 
@@ -130,6 +117,17 @@
    },
 
    methods: {
+     href(path) {
+       const lastParams = this.$store.state.lastUsedFilters[path];
+       let f = lastParams ? lastParams.filter : {}
+       f = Object.assign({}, DEFAULT_FILTER, f, this.$store.getters.filter)
+       const link = {
+         path,
+         query: encodeParams(f, path)
+       };
+       return link;
+     },
+
      sendLoginLink() {
        fetch('/sendToken?user=' + this.loginEmail)
          .then((res) => {

@@ -32,13 +32,13 @@
 </template>
 
 <script>
- import gql from 'graphql-tag';
  import InputFilter from './InputFilter.vue';
  import SingleSelectFilter from './SingleSelectFilter.vue';
  import MultiSelectFilter from './MultiSelectFilter.vue';
  import DatasetNameFilter from './DatasetNameFilter.vue';
  import MzFilter from './MzFilter.vue';
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
+ import {fetchOptionListsQuery} from '../api/metadata.js';
 
  export default {
    name: 'filter-panel',
@@ -52,15 +52,7 @@
    },
    apollo: {
      optionLists: {
-       query: gql`{
-         institutionNames: metadataSuggestions(field: "Submitted_By.Institution", query: "")
-         organisms: metadataSuggestions(field: "Sample_Information.Organism", query: "")
-         organismParts: metadataSuggestions(field: "Sample_Information.Organism_Part", query: "")
-         conditions: metadataSuggestions(field: "Sample_Information.Condition", query: "")
-         ionisationSources: metadataSuggestions(field: "MS_Analysis.Ionisation_Source", query: "")
-         maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "")
-         analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "")
-       }`,
+       query: fetchOptionListsQuery,
        update: data => data
      }
    },
