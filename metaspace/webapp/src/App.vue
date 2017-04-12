@@ -3,21 +3,6 @@
     <el-row>
       <metaspace-header>
       </metaspace-header>
-
-      <div id="signin-div">
-        <span style="padding-right: 7px;"
-              v-if="this.$store.state.authenticated">{{ this.$store.state.user.name }}</span>
-        <a v-show="this.$store.state.authenticated === false"
-           href="/auth/google" class="signin-button">
-          Sign in with Google
-        </a>
-
-        <div class="signout-button" @click="logout"
-             v-if="this.$store.state.authenticated">
-          Logout
-        </div>
-      </div>
-
     </el-row>
 
     <router-view class="main-content">
@@ -28,42 +13,15 @@
 </template>
 
 <script>
- import fetch from 'isomorphic-fetch';
- import gql from 'graphql-tag';
- import Vue from 'vue';
 
  import MetaspaceHeader from './components/MetaspaceHeader.vue';
  import TourStep from './components/TourStep.vue';
- import {getJWT, decodePayload} from './util.js';
- import config from './clientConfig.json';
 
  export default {
    name: 'app',
-
    components: {
      MetaspaceHeader,
      TourStep
-   },
-
-   mounted() {
-     this.login();
-   },
-
-   methods: {
-     login() {
-       getJWT().then(jwt => {
-         const {name, email, role} = decodePayload(jwt);
-         this.$store.commit('login', {name, email, role});
-
-         console.log(`Signed in as ${name} (role: ${role})`);
-       }).catch(err => console.log(err))
-     },
-
-     logout() {
-       fetch('/logout', {credentials: 'include'}).then(() => {
-         this.$store.commit('logout');
-       });
-     }
    }
  }
 </script>
@@ -109,6 +67,7 @@
  #signin-div {
    position: fixed;
    align-self: center;
+   display: none;
    top: 18px;
    font-size: 18px;
    right: 81px;

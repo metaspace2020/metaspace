@@ -15,7 +15,7 @@
           <span slot="title">m/z image</span>
 
           <div style="margin-top: 10px;">
-            <image-loader :src="annotation.ionImage.url"
+            <image-loader :src="annotation.isotopeImages[0].url"
                           :colormap="colormap"
                           :max-height=500
                           class="ion-image principal-peak-image">

@@ -293,9 +293,6 @@
               polarity
               metadataJson
             }
-            ionImage {
-              url
-            }
             isotopeImages {
               mz
               url
@@ -514,9 +511,6 @@
                  id
                  institution
                  name
-               }
-               ionImage {
-                 url
                }
                possibleCompounds {
                  name

@@ -9,7 +9,7 @@
         <div class="small-peak-image" style="max-width: %">
           <span v-html="showAdduct(other.adduct)"></span><br/>
           {{  other.mz.toFixed(4) }}<br/>
-          <image-loader :src="other.ionImage.url"
+          <image-loader :src="other.isotopeImages[0].url"
                         :colormap="colormap"
                         :max-height=250
                         class="ion-image">
@@ -52,7 +52,7 @@
             rhoSpectral
             rhoChaos
             fdrLevel
-            ionImage { url }
+            isotopeImages { url }
           }
        }`,
        variables() {

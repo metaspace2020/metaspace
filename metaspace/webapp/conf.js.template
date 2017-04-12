@@ -21,3 +21,5 @@ exports.REDIS_CONFIG = {
   host: "{{ redis_host }}",
   port: "{{ redis_port }}"
 }
+
+exports.HOST_NAME = "annotate.metaspace2020.eu";

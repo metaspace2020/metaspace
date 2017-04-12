@@ -107,7 +107,7 @@ AWS.config.update({
 var ses = new AWS.SES();
 
 passwordless.addDelivery((token, uid, recipient, callback, req) => {
-  const host = 'localhost:8082';
+  const host = conf.HOST_NAME;
   const text = 'Greetings!\nVisit this link to login: http://'
              + host + '?token=' + token + '&uid='
              + encodeURIComponent(uid) + '\n\n\n---\nMETASPACE team'
@@ -131,12 +131,17 @@ app.use(passwordless.acceptToken({ successRedirect: '/'}));
 
 app.get('/sendToken/',
   passwordless.requestToken((user, delivery, callback, req) => {
+    console.log(user);
     Users().where({email: user}).first()
            .then(record => {
-             if (record)
+             if (record) {
                callback(null, record.id);
-             else
-               callback(null, null);
+             } else {
+               Users().insert({email: user, name: '', googleId: null}).then(() => {
+                 Users().where({email: user}).first()
+                        .then(record => callback(null, record.id));
+               });
+             }
            })
   }, {allowGet: true}),
   (req, res) => {
@@ -153,12 +158,11 @@ app.get('/auth/google/callback',
     failureRedirect: '/#/help'
 }));
 
-app.get('/logout', function(req, res, next) {
-  passwordless.logout()(req, res, next);
-  req.logout();
-  req.session.destroy();
-  res.send('Logged out');
-});
+app.get('/logout', passwordless.logout(),
+        function(req, res, next) {
+          req.logout();
+          res.send('OK');
+        });
 
 var router = express.Router();
 

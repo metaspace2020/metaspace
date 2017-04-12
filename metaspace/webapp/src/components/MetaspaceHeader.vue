@@ -1,52 +1,94 @@
 <template>
   <div class="b-header">
-    <div class="header-item" id="metasp-logo">
-      <a style="display: flex" href="http://metasp.eu">
-        <img src="../assets/logo.png"
-             alt="Metaspace" title="Metaspace"
-             style="border: 0px;"
-             class="vc"></img>
-      </a>
+    <div>
+      <div class="header-item" id="metasp-logo">
+        <a style="display: flex" href="http://metasp.eu">
+          <img src="../assets/logo.png"
+              alt="Metaspace" title="Metaspace"
+              style="border: 0px;"
+              class="vc"></img>
+        </a>
+      </div>
+
+      <router-link to="/upload">
+        <div class="header-item vc page-link" id='upload-link'>
+          <div class="vc">Upload</div>
+        </div>
+      </router-link>
+
+      <router-link :to="datasetsHref">
+        <div class="header-item vc page-link" id='datasets-link'>
+          <div class="vc">Datasets</div>
+        </div>
+      </router-link>
+
+      <router-link :to="annotationsHref">
+        <div class="header-item vc page-link" id='annotations-link'>
+          <div class="vc">Annotations</div>
+        </div>
+      </router-link>
+
+      <router-link to="/about">
+        <div class="header-item vc page-link">
+          <div class="vc">About</div>
+        </div>
+      </router-link>
+
+      <router-link to="/help">
+        <div class="header-item vc page-link">
+          <div class="vc">Help</div>
+        </div>
+      </router-link>
     </div>
 
-    <router-link to="/upload">
-      <div class="header-item vc page-link" id='upload-link'>
-        <div class="vc">Upload</div>
+    <el-popover ref="login-popover"
+                placement="bottom"
+                trigger="click"
+                style="text-align:center;">
+      <div id="email-link-container">
+        <el-button type="primary" @click="sendLoginLink">Send a link to</el-button>
+        <span>
+          <el-input v-model="loginEmail"
+                    placeholder="e-mail address">
+          </el-input>
+        </span>
       </div>
-    </router-link>
 
-    <router-link :to="datasetsHref">
-      <div class="header-item vc page-link" id='datasets-link'>
-        <div class="vc">Datasets</div>
+      <div style="text-align: center;">
+        <div style="margin: 10px; font-size: 18px;">or</div>
+        <a href="/auth/google">
+          <el-button>Sign in with Google</el-button>
+        </a>
       </div>
-    </router-link>
+    </el-popover>
 
-    <router-link :to="annotationsHref">
-      <div class="header-item vc page-link" id='annotations-link'>
-        <div class="vc">Annotations</div>
-      </div>
-    </router-link>
+    <div v-show="!this.$store.state.authenticated"
+         class="header-item vc page-link" v-popover:login-popover>
+      <div class="vc">Sign in</div>
+    </div>
 
-    <router-link to="/about">
-      <div class="header-item vc page-link">
-        <div class="vc">About</div>
+    <div v-show="this.$store.state.authenticated">
+      <div class="header-item vc">
+        <div class="vc" style="color: white;">
+          {{ userNameOrEmail }}
+        </div>
       </div>
-    </router-link>
-
-    <router-link to="/help">
-      <div class="header-item vc page-link">
-        <div class="vc">Help</div>
+      <div class="header-item vc page-link" @click="logout">
+        <div class="vc">Sign out</div>
       </div>
-    </router-link>
+    </div>
   </div>
 </template>
 
 <script>
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
  import {encodeParams, DEFAULT_FILTER} from '../filterToUrl.js';
+ import {getJWT, decodePayload} from '../util.js';
+ import fetch from 'isomorphic-fetch';
 
  export default {
    name: 'metaspace-header',
+
    computed: {
      datasetsHref() {
        const path = '/datasets';
@@ -55,6 +97,13 @@
          query: encodeParams(this.$store.getters.filter, '/datasets')
        };
        return link;
+     },
+
+     userNameOrEmail() {
+       const {user} = this.$store.state;
+       if (!user)
+         return '';
+       return user.name || user.email;
      },
 
      annotationsHref() {
@@ -67,6 +116,52 @@
          query: encodeParams(f, '/annotations')
        };
        return link;
+     }
+   },
+
+   data() {
+     return {
+       loginEmail: (this.$store.state.user ? this.$store.state.user.email : '')
+     };
+   },
+
+   mounted() {
+     this.login();
+   },
+
+   methods: {
+     sendLoginLink() {
+       fetch('/sendToken?user=' + this.loginEmail)
+         .then((res) => {
+           if (res.ok)
+             this.$notify({
+               title: 'Check your mailbox!',
+               type: 'success',
+               message: "We've sent you an e-mail with the link to log in"
+             });
+           else
+             this.$notify({
+               title: 'Error ' + res.status,
+               type: 'error',
+               message: res.statusText
+             });
+         });
+     },
+
+     login() {
+       getJWT().then(jwt => {
+         const {name, email, role} = decodePayload(jwt);
+         this.$store.commit('login', {name, email, role});
+
+         console.log(`Signed in as ${name} (role: ${role})`);
+       }).catch(err => console.log(err))
+     },
+
+     logout() {
+       console.log('logout');
+       fetch('/logout', {credentials: 'include'}).then(() => {
+         this.$store.commit('logout');
+       });
      }
    }
  }
@@ -83,6 +178,7 @@
    right: 0;
    height: 62px;
    display: flex;
+   justify-content: space-between;
  }
 
  .header-item {
@@ -134,5 +230,9 @@
 
  #metasp-logo {
    padding-left: 15px;
+ }
+
+ #email-link-container {
+   display: inline-flex;
  }
 </style>
