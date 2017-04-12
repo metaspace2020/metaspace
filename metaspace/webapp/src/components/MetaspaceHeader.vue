@@ -82,7 +82,7 @@
 
 <script>
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
- import {encodeParams, DEFAULT_FILTER} from '../filterToUrl.js';
+ import {encodeParams, DEFAULT_FILTER} from '../url.js';
  import {getJWT, decodePayload} from '../util.js';
  import fetch from 'isomorphic-fetch';
 

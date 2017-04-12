@@ -104,3 +104,66 @@ export function decodeParams({query, path}) {
   }
   return filter;
 }
+
+const allSections = ['images', 'compounds', 'scores', 'metadata', 'adducts'].reverse();
+
+function decodeSections(number) {
+  number = number | 0;
+  let sections = [],
+      mask = number.toString(2);
+  for (let i = mask.length - 1; i >= 0; i--) {
+    if (mask[i] == '1') {
+      sections.push(allSections[allSections.length - mask.length + i]);
+    }
+  }
+  return sections;
+}
+
+export function encodeSections(sections) {
+  let str = '';
+  for (let i = 0; i < allSections.length; i++) {
+    let found = sections.indexOf(allSections[i]) >= 0;
+    str += found ? '1' : '0';
+  }
+  return parseInt(str, 2);
+}
+
+function decodeSortOrder(str) {
+  const dir = str[0] == '-' ? 'DESCENDING' : 'ASCENDING';
+  if (str[0] == '-')
+    str = str.slice(1);
+  const by = 'ORDER_BY_' + str.toUpperCase();
+  return {by, dir};
+}
+
+export function encodeSortOrder({by, dir}) {
+  let sort = dir == 'ASCENDING' ? '' : '-';
+  return sort + by.replace('ORDER_BY_', '').toLowerCase();
+}
+
+export function decodeSettings({query, path}) {
+  let settings = {
+    table: {
+      currentPage: 0,
+      order: {
+        by: 'ORDER_BY_MSM',
+        dir: 'DESCENDING'
+      }
+    },
+
+    annotationView: {
+      activeSections: ['images'],
+      colormap: 'Viridis'
+    }
+  };
+
+  if (query.page)
+    settings.table.currentPage = query.page - 1;
+  if (query.sort)
+    settings.table.order = decodeSortOrder(query.sort);
+  if (query.cmap)
+    settings.annotationView.colormap = query.cmap;
+  if (query.sections !== undefined)
+    settings.annotationView.activeSections = decodeSections(query.sections);
+  return settings;
+}

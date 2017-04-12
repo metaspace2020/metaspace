@@ -25,8 +25,8 @@ import locale from 'element-ui/lib/locale';
 locale.use(lang);
 Vue.use(ElementUI);
 
-import store from './store.js';
-import router from './router.js';
+import store from './store';
+import router from './router';
 import { sync } from 'vuex-router-sync';
 sync(store, router);
 
