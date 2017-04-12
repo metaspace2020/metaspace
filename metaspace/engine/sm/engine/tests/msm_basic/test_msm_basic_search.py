@@ -26,9 +26,10 @@ def test_filter_sf_images(spark_context):
 
 
 def test_add_sf_image_est_fdr():
-    sf_metrics_df = (pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, [100.], 0.9**3],
-                                  [1, '+H', 0.5, 0.5, 0.5, [100.], 0.5**3]],
-                                  columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'total_iso_ints', 'msm'])
+    sf_metrics_df = (pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, [100.], [0], [10.], 0.9**3],
+                                  [1, '+H', 0.5, 0.5, 0.5, [100.], [0], [10.], 0.5**3]],
+                                  columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral',
+                                           'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'msm'])
                      .set_index(['sf_id', 'adduct']))
 
     mol_db_mock = MagicMock(spec=MolecularDB)
@@ -43,8 +44,9 @@ def test_add_sf_image_est_fdr():
     search_alg._mol_db = mol_db_mock
     res_metrics_df = search_alg.estimate_fdr(sf_metrics_df)
 
-    exp_col_list = ['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'total_iso_ints', 'msm', 'fdr']
-    exp_metrics_df = pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, [100.], 0.9**3, 0.99],
-                                   [1, '+H', 0.5, 0.5, 0.5, [100.], 0.5**3, 0.5]],
+    exp_col_list = ['sf_id', 'adduct', 'chaos', 'spatial', 'spectral',
+                    'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'msm', 'fdr']
+    exp_metrics_df = pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, [100.], [0], [10.], 0.9**3, 0.99],
+                                   [1, '+H', 0.5, 0.5, 0.5, [100.], [0], [10.], 0.5**3, 0.5]],
                                   columns=exp_col_list).set_index(['sf_id', 'adduct'])
     assert_frame_equal(res_metrics_df, exp_metrics_df)
