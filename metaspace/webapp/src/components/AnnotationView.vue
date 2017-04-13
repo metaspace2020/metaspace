@@ -12,7 +12,19 @@
         </div>
 
         <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
-          <span slot="title">m/z image</span>
+          <span slot="title">
+            <span style="padding-right: 20px">
+              m/z image
+            </span>
+
+            <el-popover placement="left" trigger="click">
+              <ion-image-settings></ion-image-settings>
+
+              <div slot="reference" @click="$event.stopPropagation()">
+                <i class="el-icon-setting" style="font-size: 20px; padding-top: 11px;"></i>
+              </div>
+            </el-popover>
+          </span>
 
           <div class="main-ion-image-container">
             <image-loader :src="annotation.isotopeImages[0].url"
@@ -22,25 +34,10 @@
             </image-loader>
 
             <div class="colorbar-container">
-              <el-popover placement="left" trigger="click">
-                <span id="colormap-select-span" @click="$event.stopPropagation()">
-                  <el-select :value="colormap" size="small"
-                             style="width: 120px;"
-                             title="Colormap"
-                             @input="onColormapChange">
-                    <el-option v-for="scale in availableScales"
-                               :value="scale" :label="scale" :key="scale">
-                      <colorbar direction="right"
-                                style="width: 100px; height: 20px;"
-                                :map="scale"></colorbar>
-                    </el-option>
-                  </el-select>
-                </span>
+              <colorbar style="width: 20px; height: 160px;"
+                        direction="top" :map="colormap">
+              </colorbar>
 
-                <colorbar slot="reference" style="width: 20px; height: 500px;"
-                          direction="top" :map="colormap">
-                </colorbar>
-              </el-popover>
             </div>
           </div>
         </el-collapse-item>
@@ -136,6 +133,7 @@
  import DatasetInfo from './DatasetInfo.vue';
  import AdductsInfo from './AdductsInfo.vue';
  import ImageLoader from './ImageLoader.vue';
+ import IonImageSettings from './IonImageSettings.vue';
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
  import Colorbar from './Colorbar.vue';
  import {annotationQuery} from '../api/annotation.js';
@@ -143,11 +141,6 @@
  export default {
    name: 'annotation-view',
    props: ['annotation'],
-   data() {
-     return {
-       availableScales: ["Viridis", "Hot", "Greys", "Portland", "YlGnBu"]
-     };
-   },
    computed: {
      activeSections() {
        return this.$store.getters.settings.annotationView.activeSections;
@@ -189,10 +182,6 @@
    methods: {
      onSectionsChange(activeSections) {
        this.$store.commit('updateAnnotationViewSections', activeSections)
-     },
-
-     onColormapChange(selection) {
-       this.$store.commit('setColormap', selection);
      }
    },
 
@@ -200,6 +189,7 @@
      DatasetInfo,
      AdductsInfo,
      ImageLoader,
+     IonImageSettings,
      IsotopePatternPlot,
      Colorbar
    }
@@ -312,16 +302,6 @@
    display: inline-flex;
  }
 
- #colormap-select-span {
-   display: inline-flex;
-   flex-direction: column;
-   justify-content: center;
-   height: 43px;
- }
-
- #colormap-select-span > .el-select {
-   display: inline-flex;
- }
 
  .main-ion-image-container {
    display: flex;
@@ -335,7 +315,6 @@
    justify-content: flex-end;
    padding-left: 10px;
    padding-bottom: 6px;
-   cursor: pointer;
  }
 
 </style>

@@ -35,11 +35,12 @@
        isLoading: false,
        message: '',
        dataURI: '',
+       hotspotRemovalQuantile: 0.99
      }
    },
    created() {
      this.colors = createColormap(this.colormap);
-     this.image.onload = this.onLoad.bind(this);
+     this.image.onload = this.redraw.bind(this);
      this.image.onerror = this.image.onabort = this.onFail.bind(this);
      this.image.crossOrigin = "Anonymous";
      this.image.src = this.src;
@@ -64,18 +65,30 @@
      },
      'colormap' (name) {
        this.colors = createColormap(name);
-       this.drawImage();
-     }
+       this.applyColormap();
+     },
    },
    methods: {
-     onLoad (res) {
-       this.isLoading = false;
+     computeQuantile () {
+       let canvas = this.$refs.canvas,
+           ctx = canvas.getContext("2d");
+       ctx.drawImage(this.image, 0, 0);
+
+       let data = [],
+           imageData = ctx.getImageData(0, 0, canvas.width, canvas.height),
+           grayscaleData = imageData.data;
+
+       for (let i = 0; i < grayscaleData.length; i += 4)
+         if (grayscaleData[i] > 0)
+           data.push(grayscaleData[i])
+
+       return quantile(data, this.hotspotRemovalQuantile);
+     },
+
+     scaleToViewport() {
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d"),
            parentWidth = Math.max(this.$refs.parent.offsetWidth, 750);
-
-       ctx.setTransform(1, 0, 0, 1, 0, 0);
-
        // scale up small images to use as much canvas as possible
        const scale1 = parentWidth / this.image.width,
              scale2 = this.maxHeight / this.image.height,
@@ -83,41 +96,51 @@
        canvas.width = this.image.width * scaleFactor;
        canvas.height = this.image.height * scaleFactor;
        ctx.scale(scaleFactor, scaleFactor);
+     },
+
+     removeHotspots(imageData, q) {
+       let grayscaleData = imageData.data;
+
+       if (this.hotspotRemovalQuantile < 1) {
+         for (let i = 0; i < grayscaleData.length; i += 4) {
+           let value = 255;
+           if (grayscaleData[i] < q)
+             value = Math.floor(grayscaleData[i] * 255 / q);
+
+           // set r,g,b channels
+           grayscaleData[i] = value;
+           grayscaleData[i + 1] = value;
+           grayscaleData[i + 2] = value;
+         }
+       }
+
+       this.grayscaleData = grayscaleData;
+     },
+
+     redraw () {
+       this.isLoading = false;
+       let canvas = this.$refs.canvas,
+           ctx = canvas.getContext("2d"),
+           parentWidth = Math.max(this.$refs.parent.offsetWidth, 750);
+
+       ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+       const q = this.computeQuantile();
+       this.scaleToViewport();
 
        //ctx.webkitImageSmoothingEnabled = false;
        //ctx.mozImageSmoothingEnabled = false;
        ctx.msImageSmoothingEnabled = false;
        ctx.imageSmoothingEnabled = false;
        ctx.drawImage(this.image, 0, 0);
-
-       var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-       var grayscaleData = imageData.data;
-       this.grayscaleData = grayscaleData;
-
-       let data = [];
-       for (let i = 0; i < grayscaleData.length; i += 4)
-         if (grayscaleData[i] > 0)
-           data.push(grayscaleData[i]);
-
-       // FIXME: compute on unscaled data
-       const q = quantile(data, 0.99);
-       for (let i = 0; i < grayscaleData.length; i += 4) {
-         let value = 255;
-         if (grayscaleData[i] < q)
-           value = Math.floor(grayscaleData[i] * 255 / q);
-
-         // set r,g,b channels
-         grayscaleData[i] = value;
-         grayscaleData[i + 1] = value;
-         grayscaleData[i + 2] = value;
-       }
-
+       let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+       this.removeHotspots(imageData, q);
        ctx.putImageData(imageData, 0, 0);
 
-       this.drawImage();
+       this.applyColormap();
      },
 
-     drawImage() {
+     applyColormap() {
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d");
 
