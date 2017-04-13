@@ -48,7 +48,7 @@ function checkPermissions(datasetId, payload) {
 const slackConn = config.SLACK_WEBHOOK_URL ? new slack(config.slack.webhook_url): null;
 
 function baseDatasetQuery() {
-  return pg.select('dataset.id', 'name', 'status', 'metadata', 'config')
+  return pg.select('dataset.id', 'name', 'status', 'finish', 'metadata', 'config')
            .from('dataset')
            .leftOuterJoin('job', 'dataset.id', 'job.ds_id');
 }
@@ -91,7 +91,7 @@ const Resolvers = {
           q = datasetFilters[key].pgFilter(q, val);
       }
 
-      const orderVar = orderBy == 'ORDER_BY_NAME' ? 'name' : 'id';
+      const orderVar = orderBy == 'ORDER_BY_NAME' ? 'name' : 'finish';
       const ord = sortingOrder == 'ASCENDING' ? 'asc' : 'desc';
 
       console.log(q.toString());
@@ -167,6 +167,7 @@ const Resolvers = {
     },
 
     status(ds) {
+      console.log(ds.status)
       if (ds.status === undefined)
         return null;
       return ds.status || 'QUEUED';

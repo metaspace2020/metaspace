@@ -156,6 +156,8 @@ input DatasetFilter {
 
   # exact match
   condition: String
+
+  status: JobStatus
 }
 
 type Query {

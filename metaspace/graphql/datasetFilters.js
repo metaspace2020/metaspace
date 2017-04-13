@@ -80,6 +80,20 @@ class DatasetIdFilter extends AbstractDatasetFilter {
   }
 }
 
+class JobStatusFilter extends AbstractDatasetFilter {
+  constructor() {
+    super('', {});
+  }
+
+  // esFilter doesn't make sense (always FINISHED)
+  pgFilter(q, status) {
+    if (status == 'QUEUED')
+      return q.whereNull('status');
+    else
+      return q.where('status', '=', status);
+  }
+}
+
 const datasetFilters = {
   institution: new ExactMatchFilter('Submitted_By.Institution', {}),
   polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
@@ -90,7 +104,8 @@ const datasetFilters = {
   condition: new ExactMatchFilter('Sample_Information.Condition', {}),
   maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {}),
   name: new SubstringMatchFilter('', {esField: 'ds_name', pgField: 'name'}),
-  ids: new DatasetIdFilter()
+  ids: new DatasetIdFilter(),
+  status: new JobStatusFilter()
 };
 
 function dsField(pgDatasetRecord, alias){
