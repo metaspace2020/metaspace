@@ -8,7 +8,7 @@ import {rgb} from 'd3-color';
 const fuConfig = config.fineUploader;
 
 function prettifySign(str) {
-    return str.replace('-', ' – ').replace('+', ' + ');
+  return str.replace('-', ' – ').replace('+', ' + ');
 }
 
 function renderMolFormula(sumFormula, adduct, polarity) {
@@ -43,8 +43,12 @@ function pathFromUUID(uuid) {
   // TODO: support local storage
 }
 
+function getColorScale(name) {
+  return extractScale(scales[name], 0, 1);
+}
+
 function createColormap(name) {
-  const {domain, range} = extractScale(scales[name], 0, 1);
+  const {domain, range} = getColorScale(name);
   const sclFun = scaleLinear().domain(domain).range(range).clamp(true);
 
   let colors = [];
@@ -71,6 +75,7 @@ export {
   getJWT,
   decodePayload,
   pathFromUUID,
+  getColorScale,
   createColormap,
   mzFilterPrecision
 };

@@ -14,27 +14,34 @@
         <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
           <span slot="title">m/z image</span>
 
-          <div style="margin-top: 10px;">
+          <div class="main-ion-image-container">
             <image-loader :src="annotation.isotopeImages[0].url"
                           :colormap="colormap"
                           :max-height=500
                           class="ion-image principal-peak-image">
             </image-loader>
 
-            <span style="display: inline-flex; padding: 0px 0px 0px 30px;">
-              <span>
-                <colorbar style="padding: 7px; height: 28px;" :map="colormap"></colorbar>
-              </span>
-              <span id="colormap-select-span" @click="$event.stopPropagation()">
-                <el-select :value="colormap" size="small" style="width: 120px;" title="Colormap"
-                           @input="onColormapChange">
-                  <el-option v-for="scale in availableScales"
-                             :value="scale" :label="scale" :key="scale">
-                    <colorbar style="height: 20px" :map="scale" :title="scale"></colorbar>
-                  </el-option>
-                </el-select>
-              </span>
-            </span>
+            <div class="colorbar-container">
+              <el-popover placement="left" trigger="click">
+                <span id="colormap-select-span" @click="$event.stopPropagation()">
+                  <el-select :value="colormap" size="small"
+                             style="width: 120px;"
+                             title="Colormap"
+                             @input="onColormapChange">
+                    <el-option v-for="scale in availableScales"
+                               :value="scale" :label="scale" :key="scale">
+                      <colorbar direction="right"
+                                style="width: 100px; height: 20px;"
+                                :map="scale"></colorbar>
+                    </el-option>
+                  </el-select>
+                </span>
+
+                <colorbar slot="reference" style="width: 20px; height: 500px;"
+                          direction="top" :map="colormap">
+                </colorbar>
+              </el-popover>
+            </div>
           </div>
         </el-collapse-item>
 
@@ -314,6 +321,21 @@
 
  #colormap-select-span > .el-select {
    display: inline-flex;
+ }
+
+ .main-ion-image-container {
+   display: flex;
+   flex-direction: row;
+   justify-content: center;
+ }
+
+ .colorbar-container {
+   display: flex;
+   flex-direction: column;
+   justify-content: flex-end;
+   padding-left: 10px;
+   padding-bottom: 6px;
+   cursor: pointer;
  }
 
 </style>
