@@ -47,6 +47,12 @@ function checkPermissions(datasetId, payload) {
 
 const slackConn = config.SLACK_WEBHOOK_URL ? new slack(config.slack.webhook_url): null;
 
+function baseDatasetQuery() {
+  return pg.select('dataset.id', 'name', 'status', 'metadata', 'config')
+           .from('dataset')
+           .leftOuterJoin('job', 'dataset.id', 'job.ds_id');
+}
+
 const Resolvers = {
   Person: {
     name(obj) { return obj.First_Name; },
@@ -56,7 +62,7 @@ const Resolvers = {
 
   Query: {
     datasetByName(_, { name }) {
-      return pg.select().from('dataset').where('name', '=', name)
+      return baseDatasetQuery().where('name', '=', name)
         .then((data) => {
           return data.length > 0 ? data[0] : null;
         })
@@ -66,7 +72,7 @@ const Resolvers = {
     },
 
     dataset(_, { id }) {
-      return pg.select().from('dataset').where('id', '=', id)
+      return baseDatasetQuery().where('id', '=', id)
         .then((data) => {
           return data.length > 0 ? data[0] : null;
         })
@@ -76,8 +82,7 @@ const Resolvers = {
     },
 
     allDatasets(_, {orderBy, sortingOrder, offset, limit, filter}) {
-      let q = pg.select().from('dataset');
-
+      let q = baseDatasetQuery();
       console.log(JSON.stringify(filter));
 
       for (var key in datasetFilters) {
@@ -132,7 +137,7 @@ const Resolvers = {
     configJson(ds) {
       return JSON.stringify(ds.config);
     },
-    
+
     metadataJson(ds) {
       return JSON.stringify(ds.metadata);
     },
@@ -160,6 +165,12 @@ const Resolvers = {
         'rp': msInfo.Detector_Resolving_Power
       };
     },
+
+    status(ds) {
+      if (ds.status === undefined)
+        return null;
+      return ds.status || 'QUEUED';
+    }
 
     /* annotations(ds, args) {
      args.datasetId = ds.id;
@@ -273,7 +284,7 @@ const Resolvers = {
       const {name, path, metadataJson} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
-        
+
         const metadata = JSON.parse(metadataJson);
         const body = JSON.stringify({
           id: args.id,
@@ -282,7 +293,7 @@ const Resolvers = {
           metadata: metadata,
           config: generateProcessingConfig(metadata)
         });
-        
+
         const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
         return fetch(url, { method: 'POST', body: body })
           .then(() => "success");
@@ -291,13 +302,13 @@ const Resolvers = {
         return e.message;
       }
     },
-    
+
     updateMetadata(_, args) {
       const {datasetId, metadataJson} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
         const newMetadata = JSON.parse(metadataJson);
-        
+
         return checkPermissions(datasetId, payload)
           .then( () => {
             const body = JSON.stringify({
@@ -330,10 +341,10 @@ const Resolvers = {
         return e.message;
       }
     },
-    
+
     deleteDataset(_, args) {
       const {datasetId} = args;
-  
+
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
         return checkPermissions(datasetId, payload)

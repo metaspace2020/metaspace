@@ -32,6 +32,13 @@ enum SortingOrder {
   DESCENDING
 }
 
+enum JobStatus {
+  QUEUED,
+  STARTED,
+  FINISHED,
+  FAILED
+}
+
 type Dataset {
   id: String!
   name: String!
@@ -53,6 +60,8 @@ type Dataset {
   # full metadata JSON conforming to schema published at
   # https://github.com/metaspace2020/metadata
   metadataJson: String!
+
+  status: JobStatus
 }
 
 type CompoundInfoEntry {
