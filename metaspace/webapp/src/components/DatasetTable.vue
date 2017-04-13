@@ -18,10 +18,22 @@
         <span v-else>No datasets found</span>
       </div>
 
-      <dataset-item v-for="(dataset, i) in datasets"
+      <dataset-item v-for="(dataset, i) in started"
                     :dataset="dataset"
                     :key="dataset.id"
                     :class="[i%2 ? 'even': 'odd']">
+      </dataset-item>
+
+      <dataset-item v-for="(dataset, i) in queued"
+                    :dataset="dataset"
+                    :key="dataset.id"
+                    :class="[(i + started.length)%2 ? 'even': 'odd']">
+      </dataset-item>
+
+      <dataset-item v-for="(dataset, i) in finished"
+                    :dataset="dataset"
+                    :key="dataset.id"
+                    :class="[(i + started.length + queued.length)%2 ? 'even': 'odd']">
       </dataset-item>
     </div>
   </el-row>
@@ -38,8 +50,7 @@
      return {
        datasets: [],
        currentPage: 0,
-       recordsPerPage: 10,
-       isLoading: true
+       recordsPerPage: 10
      }
    },
    components: {
@@ -53,21 +64,50 @@
        for (var key in df)
          if (df[key]) return false;
        return true;
-     }
+     },
    },
 
    apollo: {
-     datasets: {
+     started: {
        query: datasetListQuery,
        update(data) {
-         this.isLoading = false;
          return data.allDatasets;
        },
        variables () {
          return {
-           dFilter: this.$store.getters.gqlDatasetFilter
+           dFilter: Object.assign({status: 'STARTED'},
+                                  this.$store.getters.gqlDatasetFilter)
          }
-       }
+       },
+       pollInterval: 30000
+     },
+
+     queued: {
+       query: datasetListQuery,
+       update(data) {
+         return data.allDatasets;
+       },
+       variables () {
+         return {
+           dFilter: Object.assign({status: 'QUEUED'},
+                                  this.$store.getters.gqlDatasetFilter)
+         }
+       },
+       pollInterval: 30000
+     },
+
+     finished: {
+       query: datasetListQuery,
+       update(data) {
+         return data.allDatasets;
+       },
+       variables () {
+         return {
+           dFilter: Object.assign({status: 'FINISHED'},
+                                  this.$store.getters.gqlDatasetFilter)
+         }
+       },
+       pollInterval: 30000
      }
    },
    methods: {

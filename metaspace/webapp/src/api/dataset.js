@@ -21,10 +21,11 @@ export const datasetListQuery =
       organismPart
       condition
       metadataJson
+      status
     }
   }`;
 
 export const submitDatasetQuery =
-  gql`mutation ($path: String!, $value: String!) {
-    submitDataset(path: $path, metadataJson: $value)
+  gql`mutation ($jwt: String!, $path: String!, $value: String!) {
+    submitDataset(jwt: $jwt, path: $path, metadataJson: $value)
   }`;

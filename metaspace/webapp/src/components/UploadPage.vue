@@ -35,7 +35,7 @@
  import Vue from 'vue';
 
  import config from '../clientConfig.json';
- import {pathFromUUID} from '../util.js';
+ import {getJWT, pathFromUUID} from '../util.js';
  import {submitDatasetQuery} from '../api/dataset.js';
 
  export default {
@@ -90,13 +90,19 @@
 
      submitDataset(uuid, formData) {
        console.log("submitting " + uuid);
-       return this.$apollo.mutate({
-         mutation: submitDatasetQuery,
-         variables: {path: pathFromUUID(uuid), value: formData}
-       }).then(resp => resp.data.submitDataset)
+       return getJWT()
+         .then(jwt => this.$apollo.mutate({
+           mutation: submitDatasetQuery,
+           variables: {
+             path: pathFromUUID(uuid),
+             value: formData,
+             jwt
+           }}))
+         .then(resp => resp.data.submitDataset)
          .then(status => {
            if (status != 'success')
              throw new Error(status);
+           return status;
          });
      }
    }

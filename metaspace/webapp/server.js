@@ -178,7 +178,10 @@ function getRole(email) {
 // If we want to use longer lifetimes we need to setup HTTPS on all servers.
 router.get('/getToken', (req, res, next) => {
   if (!req.user) {
-    res.sendStatus(403);
+    res.send(jwt.encode({
+      'iss': 'METASPACE2020',
+      'role': 'anonymous'
+    }, conf.JWT_SECRET));
     return;
   }
 

@@ -149,9 +149,10 @@
      login() {
        getJWT().then(jwt => {
          const {name, email, role} = decodePayload(jwt);
-         this.$store.commit('login', {name, email, role});
-
-         console.log(`Signed in as ${name} (role: ${role})`);
+         if (role != 'anonymous') {
+           this.$store.commit('login', {name, email, role});
+           console.log(`Signed in as ${name} (role: ${role})`);
+         }
        }).catch(err => console.log(err))
      },
 

@@ -7,6 +7,17 @@
       </dataset-info>
     </el-dialog>
 
+    <div class="ds-status">
+      <i class="el-icon-loading" v-if="dataset.status == 'QUEUED'"
+         style="color: blue;" />
+      <i class="el-icon-circle-check" v-if="dataset.status == 'FINISHED'"
+         style="color: green;" />
+      <i class="el-icon-warning" v-if="dataset.status == 'FAILED'"
+         style="color: red;" />
+      <i class="el-icon-loading" v-if="dataset.status == 'STARTED'"
+         style="color: darkgreen;"/>
+    </div>
+
     <div class="ds-info">
       <div>
         <b>{{ formatDatasetName }}</b>
@@ -201,17 +212,25 @@
    margin: 3px;
    padding: 0px;
    border: 1px solid #cce4ff;
+   display: flex;
+   flex-direction: row;
+   justify-content: space-between;
+ }
+
+ .ds-status {
+   display: flex;
+   padding-left: 5px;
+   flex-direction: column;
+   justify-content: center;
  }
 
  .ds-info {
-   display: inline-block;
    padding: 10px;
    margin: 0px;
    width: 72%;
  }
 
  .ds-actions {
-   display: inline-block;
    padding: 10px 0px 10px 0px;
    margin: 0px;
    width: 25%;

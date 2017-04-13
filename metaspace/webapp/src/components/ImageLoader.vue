@@ -72,7 +72,6 @@
      computeQuantile () {
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d");
-       ctx.drawImage(this.image, 0, 0);
 
        let data = [],
            imageData = ctx.getImageData(0, 0, canvas.width, canvas.height),
@@ -125,8 +124,9 @@
 
        ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-       const q = this.computeQuantile();
        this.scaleToViewport();
+       ctx.drawImage(this.image, 0, 0);
+       const q = this.computeQuantile();
 
        //ctx.webkitImageSmoothingEnabled = false;
        //ctx.mozImageSmoothingEnabled = false;
