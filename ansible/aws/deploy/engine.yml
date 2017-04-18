@@ -17,7 +17,7 @@
       register: git_deploy
       until: git_deploy | succeeded
 
-   - name: Upload local files
+    - name: Upload local files
       synchronize:
         src: "{{ sm_home }}/{{ item }}/"
         dest: "{{ sm_home }}/{{ item }}/"
@@ -27,7 +27,7 @@
         - sm
       when: local_deploy is defined
 
-  - name: Install SM into conda environment
+    - name: Install SM into conda environment
       args:
         chdir: "{{ sm_home }}"
         executable: /bin/bash
