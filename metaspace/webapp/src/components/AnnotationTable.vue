@@ -272,10 +272,7 @@
        },
        update: data => data.allAnnotations,
        debounce: 200,
-       result ({data}) {
-         if (!data)
-           return;
-
+       result (data) {
          // For whatever reason (could be a bug), vue-apollo seems to first refetch
          // data for the current page and only then fetch the updated data.
          // Checking if the data has been actually changed is easiest by comparing
@@ -296,7 +293,7 @@
 
          this.totalCount = data.countAnnotations;
        },
-       watchLoading (isLoading) {
+       loadingChangeCb (isLoading) {
          this.$store.commit('updateAnnotationTableStatus', isLoading);
        }
      }

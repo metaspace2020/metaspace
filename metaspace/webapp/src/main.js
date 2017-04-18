@@ -12,11 +12,7 @@ const apolloClient = new ApolloClient({
     batchInterval: 10
   })
 });
-Vue.use(VueApollo);
-
-const apolloProvider = new VueApollo({
-  defaultClient: apolloClient,
-})
+Vue.use(VueApollo, {apolloClient});
 
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-default/index.css'
@@ -41,6 +37,5 @@ new Vue({
     return h('pre', { style: { color: 'red' }}, err.stack)
   },
   store,
-  router,
-  apolloProvider
+  router
 })

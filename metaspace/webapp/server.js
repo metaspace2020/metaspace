@@ -109,7 +109,7 @@ var ses = new AWS.SES();
 passwordless.addDelivery((token, uid, recipient, callback, req) => {
   const host = conf.HOST_NAME;
   const text = 'Greetings!\nVisit this link to login: http://'
-             + host + '?token=' + token + '&uid='
+             + host + '/?token=' + token + '&uid='
              + encodeURIComponent(uid) + '\n\n\n---\nMETASPACE team'
 
   ses.sendEmail({
@@ -221,6 +221,7 @@ if (env == 'development') {
 
   app.use(webpackDevMiddleware(compiler, {
     publicPath: config.output.publicPath,
+    noInfo: true,
     stats: {colors: true}
   }));
 
