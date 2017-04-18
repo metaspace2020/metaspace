@@ -34,10 +34,12 @@
             </image-loader>
 
             <div class="colorbar-container">
-              <colorbar style="width: 20px; height: 160px;"
-                        direction="top" :map="colormap">
+              {{ annotation.isotopeImages[0].maxIntensity.toExponential(2) }}
+              <colorbar style="width: 20px; height: 160px; align-self: center;"
+                        direction="top" :map="colormap"
+                        slot="reference">
               </colorbar>
-
+              {{ annotation.isotopeImages[0].minIntensity.toExponential(2) }}
             </div>
           </div>
         </el-collapse-item>

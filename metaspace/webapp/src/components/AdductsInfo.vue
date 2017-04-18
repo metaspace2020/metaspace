@@ -15,7 +15,8 @@
                         class="ion-image">
           </image-loader>
           MSM score: {{ other.msmScore.toFixed(3) }}<br/>
-          Annotated @ {{ other.fdrLevel }} FDR
+          Annotated @ {{ other.fdrLevel }} FDR<br/>
+          Max. intensity: {{ other.isotopeImages[0].maxIntensity.toExponential(2) }}
         </div>
       </el-col>
     </div>

@@ -27,6 +27,8 @@ export const annotationListQuery =
         isotopeImages {
           mz
           url
+          minIntensity
+          maxIntensity
           totalIntensity
         }
         possibleCompounds {
@@ -94,6 +96,9 @@ export const allAdductsQuery =
       rhoSpectral
       rhoChaos
       fdrLevel
-      isotopeImages { url }
+      isotopeImages {
+        url
+        maxIntensity
+      }
     }
   }`;
