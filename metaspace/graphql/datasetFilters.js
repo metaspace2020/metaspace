@@ -76,7 +76,7 @@ class DatasetIdFilter extends AbstractDatasetFilter {
 
   pgFilter(q, ids) {
     ids = ids.split("|");
-    return q.whereIn('id', ids);
+    return q.whereIn('dataset.id', ids);
   }
 }
 

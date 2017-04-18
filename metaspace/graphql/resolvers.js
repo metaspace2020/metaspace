@@ -72,7 +72,7 @@ const Resolvers = {
     },
 
     dataset(_, { id }) {
-      return baseDatasetQuery().where('id', '=', id)
+      return baseDatasetQuery().where('dataset.id', '=', id)
         .then((data) => {
           return data.length > 0 ? data[0] : null;
         })
@@ -167,7 +167,6 @@ const Resolvers = {
     },
 
     status(ds) {
-      console.log(ds.status)
       if (ds.status === undefined)
         return null;
       return ds.status || 'QUEUED';
