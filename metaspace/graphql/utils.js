@@ -44,10 +44,16 @@ function generateProcessingConfig(meta_json) {
   else if (rp200 < 625000) params = RESOL_POWER_PARAMS['500K'];
   else if (rp200 < 875000) params = RESOL_POWER_PARAMS['750K'];
   else params = RESOL_POWER_PARAMS['1000K'];
-
+  
+  let m_opts = meta_json['metaspace_options'];
+  let ppm = 3.0;
+  if ('ppm' in m_opts) {
+    ppm = m_opts['ppm']
+  }
+  
   return {
     "databases": [{
-      "name": meta_json['metaspace_options']['Metabolite_Database']
+      "name": m_opts['Metabolite_Database']
     }],
     "isotope_generation": {
       "adducts": {'+': ['+H', '+K', '+Na'], '-': ['-H', '+Cl']}[polarity],
@@ -59,7 +65,7 @@ function generateProcessingConfig(meta_json) {
       "isocalc_pts_per_mz": params['pts_per_mz']
     },
     "image_generation": {
-      "ppm": 3.0,
+      "ppm": ppm,
       "nlevels": 30,
       "q": 99,
       "do_preprocessing": false
