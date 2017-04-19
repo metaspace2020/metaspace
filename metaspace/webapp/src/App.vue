@@ -8,6 +8,9 @@
     <router-view class="main-content">
     </router-view>
 
+    <metaspace-footer>
+    </metaspace-footer>
+
     <tour-step ref="tour" :tour="this.$store.state.currentTour"></tour-step>
   </div>
 </template>
@@ -15,12 +18,14 @@
 <script>
 
  import MetaspaceHeader from './components/MetaspaceHeader.vue';
+ import MetaspaceFooter from './components/MetaspaceFooter.vue';
  import TourStep from './components/TourStep.vue';
 
  export default {
    name: 'app',
    components: {
      MetaspaceHeader,
+     MetaspaceFooter,
      TourStep
    }
  }
