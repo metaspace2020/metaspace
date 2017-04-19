@@ -4,11 +4,9 @@ stage: dev
 
 # SOFTWARE CONFIGURATION
 
-google_client_id:
-
-aws_access_key_id: "{{ aws_access_key_id }}"
-aws_secret_access_key: "{{ aws_secret_access_key }}"
-aws_key_name: "{{ aws_key_name }}"
+aws_access_key_id: ""
+aws_secret_access_key: ""
+aws_key_name: ""
 aws_region: eu-west-1
 
 postgres_version: 9.5
@@ -16,16 +14,18 @@ postgres_host: "{{ hostvars['web'].ansible_ssh_host }}"
 postgres_port: 5432
 
 elasticsearch_version: 5.2.2
-es_host: localhost
+es_host: "{{ hostvars['web'].ansible_ssh_host }}"
 es_port: 9200
+es_user: elastic
+es_password:
 
 kibana_user: kibana
-kibana_password: kibana
+kibana_password:
 
 rabbitmq_version: 3.6.8-1
 rabbitmq_host: "{{ hostvars['web'].ansible_ssh_host }}"
 rabbitmq_user: sm
-rabbitmq_password: "1234"
+rabbitmq_password:
 
 miniconda_version: latest
 miniconda_python: 2
@@ -59,21 +59,28 @@ miniconda_env:
       - cachetools
       - bottle
 
-sm_repo_url: https://github.com/SpatialMetabolomics/sm-engine.git
+sm_repo_url: https://github.com/METASPACE2020/sm-engine
 sm_branch: master
-sm_postgres_password: "1234"
+sm_postgres_password:
 sm_home: "/opt/dev/sm"
 sm_s3_path: "s3a://sm-engine/data"
-sm_iso_images_url: "http://localhost:3010/iso_images"
-sm_mol_db_url: "http://localhost:5000/v1"
+sm_iso_images_url: "http://{{ hostvars['web'].ansible_ssh_host }}:3010/iso_images"
 
+sm_mol_db_home: /opt/dev/sm-mol-db
+sm_mol_db_branch: master
+sm_mol_db_url: "http://{{ hostvars['web'].ansible_ssh_host }}:5000/v1"
+
+sm_graphql_home: /opt/dev/sm-graphql
+sm_graphql_branch: master
 sm_graphql_slack_webhook_url: ""
 sm_graphql_slack_channel: ""
 sm_graphql_jwt_secret: "reallyLongSecret"
 sm_graphql_url: "http://{{ hostvars['web'].ansible_ssh_host }}:3010/graphql"
+sm_graphql_mol_image_host: "{{ hostvars['web'].ansible_ssh_host }}:3020"
 
 sm_webapp_url: "http://{{ hostvars['web'].ansible_ssh_host }}"
 sm_webapp_home: /opt/dev/sm-web-app
+sm_webapp_branch: master
 sm_webapp_port: 8082
 sm_webapp_cookie_secret:
 sm_webapp_admin_emails:
@@ -81,8 +88,11 @@ sm_webapp_admin_emails:
 sm_webapp_aws_access_key_id:
 sm_webapp_aws_secret_access_key:
 sm_webapp_s3_bucket:
+sm_webapp_hostname:
+sm_webapp_google_client_id: ""
+sm_webapp_google_client_secret: ""
 
-sm_ansible_url: https://github.com/SpatialMetabolomics/sm-engine-ansible.git
+sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
 sm_ansible_branch: master
 sm_ansible_home: /opt/dev/sm-engine-ansible
 
@@ -96,14 +106,14 @@ spark_user: "ubuntu"
 spark_master_filebeat_log_paths:
   - "{{ sm_home }}/logs/sm-engine.log"
 spark_master_filebeat_document_type: sm_engine
-spark_master_filebeat_version: 5.1.1
+spark_master_filebeat_version: 5.2
 spark_master_elk_es_ingest_node_pipeline_id: sm_engine_log_extract
 
 elk_private_ip:
 elk_es_user: elastic
-elk_es_password: elastic
+elk_es_password:
 elk_kibana_user: kibana
-elk_kibana_password: kibana
+elk_kibana_password:
 
 spark_env_extras_slave:
   SPARK_WORKER_DIR: "/tmp/spark"
@@ -134,7 +144,7 @@ cluster_configuration:
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 100
+            VolumeSize: 200
             DeleteOnTermination: True
             VolumeType: gp2
 
@@ -156,7 +166,7 @@ cluster_configuration:
 
     slave:
       hostgroup: # mandatory
-      type: c4.4xlarge
+      type: c4.2xlarge
       n: 1
       elipalloc:
       price: 0.6
@@ -169,3 +179,6 @@ cluster_configuration:
             VolumeSize: 1000
             DeleteOnTermination: True
             VolumeType: gp2
+
+    elk:
+      hostgroup: elk
