@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="metaspace-footer">
     <div id="footer-contents">
       <img class="footer-logo" src="../assets/eu_flag.jpg"></img>
       <div id="footer-text">
@@ -17,13 +17,19 @@
 </script>
 
 <style>
+ #metaspace-footer {
+   background: #eee;
+   margin-top: 85px;
+   position: absolute;
+   height: 52px;
+   bottom: 0;
+   width: 100%;
+ }
+
  #footer-contents {
    display: flex;
    flex-direction: row;
-   margin-top: 85px;
-   padding-top: 5px;
    border-top: solid purple 1px;
-   width: 100%;
    justify-content: space-between;
  }
 
@@ -37,5 +43,6 @@
  .footer-logo {
    height: 40px;
    width: auto;
+   margin: 5px;
  }
 </style>

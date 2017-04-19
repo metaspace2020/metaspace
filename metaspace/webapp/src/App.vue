@@ -1,9 +1,7 @@
 <template>
   <div id="app">
-    <el-row>
-      <metaspace-header>
-      </metaspace-header>
-    </el-row>
+    <metaspace-header>
+    </metaspace-header>
 
     <router-view class="main-content">
     </router-view>
@@ -38,12 +36,20 @@
    overflow-y: scroll; /* always show the right scrollbar to avoid flickering */
  }
 
+ /* http://matthewjamestaylor.com/blog/keeping-footers-at-the-bottom-of-the-page */
+ html, body {
+   height: 100%;
+   margin: 0;
+   padding: 0;
+ }
+
  #app {
    -webkit-font-smoothing: antialiased;
    -moz-osx-font-smoothing: grayscale;
    color: #2c3e50;
-   margin-top: 0px;
-   padding: 3px;
+   margin: 0;
+   min-height: 100%;
+   position: relative;
  }
 
  h1, h2 {
@@ -55,7 +61,8 @@
  }
 
  .main-content {
-   padding-top: 62px;
+   padding-top: 70px;     /* see MetaspaceHeader.vue: 70 = 62 height + 8 margin */
+   padding-bottom: 137px; /* see MetaspaceFooter.vue: 137 = 52 height + 85 margin */
  }
 
  .warning {

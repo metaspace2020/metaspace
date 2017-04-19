@@ -1,8 +1,5 @@
 <template>
-  <el-row id="filter-panel-row" style="padding-left: 10px;">
-
-    <div id="filter-panel">
-
+  <div class="filter-panel">
     <el-select placeholder="Add filter"
                v-model="selectedFilterToAdd"
                @change="addFilter"
@@ -27,8 +24,7 @@
                @change="f.onChange"
                @destroy="f.onChange(undefined)">
     </component>
-    </div>
-  </el-row>
+  </div>
 </template>
 
 <script>
@@ -117,21 +113,10 @@
 </script>
 
 <style>
- .el-form-item__content {
-   text-align: left;
- }
-
- #filter-form {
-   float: left;
- }
-
- #filter-form > .el-form-item {
-   margin-bottom: 5px;
- }
-
- #filter-panel {
+ .filter-panel {
    display: inline-flex;
    align-items: flex-start;
    flex-wrap: wrap;
+   padding: 0px 4px;
  }
 </style>
