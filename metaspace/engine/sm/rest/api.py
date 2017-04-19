@@ -56,8 +56,10 @@ def update_ds(ds_id):
 @post('/datasets/<ds_id>/delete')
 def delete_ds(ds_id):
     try:
+        params = json.load(req.body)
+        del_raw = params.get('del_raw', False)
         ds = Dataset.load_ds(ds_id, db)
-        ds_man.delete_ds(ds, del_raw_data=True)
+        ds_man.delete_ds(ds, del_raw_data=del_raw)
         return OK['title']
     except UnknownDSID:
         resp.status = ERR_OBJECT_NOT_EXISTS['status']
