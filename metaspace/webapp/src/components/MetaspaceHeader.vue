@@ -5,7 +5,7 @@
         <a style="display: flex" href="http://metasp.eu">
           <img src="../assets/logo.png"
               alt="Metaspace" title="Metaspace"
-              style="border: 0px; height: 53px;"
+              style="border: 0px;"
               class="vc"></img>
         </a>
       </div>

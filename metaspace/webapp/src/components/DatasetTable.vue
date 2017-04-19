@@ -74,7 +74,6 @@
        for (let category of this.categories)
          if (this[category])
            list = list.concat(this[category]);
-       console.log(list);
        return list;
      }
    },
