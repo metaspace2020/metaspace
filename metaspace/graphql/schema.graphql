@@ -187,7 +187,7 @@ type Mutation {
   # FIXME: require a valid token for submissions as well as updates
   submitDataset(jwt: String!, id: String, name: String, path: String!, metadataJson: String!): String
   updateMetadata(jwt: String!, datasetId: String!, metadataJson: String!): String
-  deleteDataset(jwt: String!, datasetId: String!): String
+  deleteDataset(jwt: String!, datasetId: String!, delRawData: Boolean): String
 }
 
 schema {

@@ -343,14 +343,19 @@ const Resolvers = {
     },
 
     deleteDataset(_, args) {
-      const {datasetId} = args;
+      const {datasetId, delRawData} = args;
 
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
         return checkPermissions(datasetId, payload)
           .then( () => {
             const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/delete`;
-            return fetch(url, {method: 'POST'});
+            let body;
+            if (delRawData != undefined || delRawData == false)
+              body = JSON.stringify({ "del_raw": true });
+            else
+              body = JSON.stringify({});
+            return fetch(url, {method: 'POST', body: body});
           }).then(res => res.statusText);
       } catch (e) {
         console.log(e);
