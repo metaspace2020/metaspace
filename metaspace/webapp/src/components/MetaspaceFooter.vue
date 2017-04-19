@@ -3,7 +3,7 @@
     <div id="footer-contents">
       <img class="footer-logo" src="../assets/eu_flag.jpg" style="padding-right: 52px;"></img>
       <div id="footer-text">
-        This project has been made possible thanks to funding from the European Union's Horizon 2020 research and innovation programme through the Horizon2020 Program under the agreement No 642976
+        This project has been made possible thanks to funding from the European Union's Horizon 2020 research and innovation programme through the Horizon2020 Program under the agreement No 634402
       </div>
       <img class="footer-logo" src="../assets/aws_logo.png" style="padding-left: 52px;"></img>
     </div>
