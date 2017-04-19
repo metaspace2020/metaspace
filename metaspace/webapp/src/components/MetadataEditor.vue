@@ -396,7 +396,7 @@
  #md-editor-submit {
    position: absolute;
    right: 5px;
-   top: -7px;
+   top: -3px;
  }
 
  #md-editor-submit > button {
