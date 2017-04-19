@@ -28,4 +28,4 @@
 #    - name: Copy inventory file
 #      copy: src={{ stage }}/hosts dest={{ sm_ansible_home }}/aws/{{ stage }} mode=0600 owner=ubuntu group=ubuntu
 
-    - include: ../../restart_supervisor.yml
+    - include: ../../restart_supervisor.yml  supervisor_app=sm-cluster-autostart
