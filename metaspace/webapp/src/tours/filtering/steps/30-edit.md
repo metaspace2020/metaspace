@@ -1,6 +1,6 @@
 ---
 title: Editing filters
-target: '#filter-panel .tf-outer:nth-last-child(1)'
+target: '.filter-panel .tf-outer:nth-last-child(1)'
 placement: bottom
 ---
 

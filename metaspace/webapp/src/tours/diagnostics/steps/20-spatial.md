@@ -1,6 +1,6 @@
 ---
 title: Ion images of each isotope peak
-query: {show: 4}
+query: {sections: 4}
 target: '#isotope-images-container'
 placement: left
 ---

@@ -1,6 +1,6 @@
 ---
 title: Filters
-target: '#filter-panel'
+target: '.filter-panel'
 placement: bottom
 route: annotations
 ---
