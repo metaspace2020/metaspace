@@ -1,11 +1,11 @@
 <template>
   <div id="metaspace-footer">
     <div id="footer-contents">
-      <img class="footer-logo" src="../assets/eu_flag.jpg"></img>
+      <img class="footer-logo" src="../assets/eu_flag.jpg" style="padding-right: 52px;"></img>
       <div id="footer-text">
-        This project has been made possible thanks to funding from the European Union's Horizon 2020 research and innovation programme through the Horizon2020 Program under the agreement No 642976 and AWS Cloud Credits for Research
+        This project has been made possible thanks to funding from the European Union's Horizon 2020 research and innovation programme through the Horizon2020 Program under the agreement No 642976
       </div>
-      <img class="footer-logo" src="../assets/aws_logo.png"></img>
+      <img class="footer-logo" src="../assets/aws_logo.png" style="padding-left: 52px;"></img>
     </div>
   </div>
 </template>
@@ -21,7 +21,7 @@
    background: #eee;
    margin-top: 85px;
    position: absolute;
-   height: 52px;
+   height: 60px;
    bottom: 0;
    width: 100%;
  }
@@ -41,7 +41,8 @@
  }
 
  .footer-logo {
-   height: 40px;
+   /* at least 52 is needed according to 8.d of https://aws.amazon.com/trademark-guidelines/ */
+   height: 52px;
    width: auto;
    margin: 5px;
  }
