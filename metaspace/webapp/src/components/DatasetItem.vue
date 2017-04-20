@@ -121,7 +121,14 @@
      },
 
      uploadedDateTime() {
+       const unknown = {date: '????-??-??', time: '??:??'};
+       if (!this.dataset.id)
+         return unknown;
+
        const fields = this.dataset.id.split('_');
+       if (fields.length < 2)
+         return unknown;
+
        const date = fields[0];
        const time = fields[1].split('m')[0].replace('h', ':');
        return {

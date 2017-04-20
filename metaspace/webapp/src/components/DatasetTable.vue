@@ -43,13 +43,15 @@
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
 
+ const processingStages = ['started', 'queued', 'finished'];
+
  export default {
    name: 'dataset-table',
    data () {
      return {
        currentPage: 0,
        recordsPerPage: 10,
-       categories: ['started', 'queued', 'finished']
+       categories: processingStages
      }
    },
    components: {
@@ -71,8 +73,8 @@
 
      datasets() {
        let list = [];
-       for (let category of this.categories)
-         if (this[category])
+       for (let category of processingStages)
+         if (this.categories.indexOf(category) >= 0 && this[category])
            list = list.concat(this[category]);
        return list;
      }
