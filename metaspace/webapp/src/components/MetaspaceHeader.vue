@@ -2,12 +2,12 @@
   <div class="b-header">
     <div>
       <div class="header-item" id="metasp-logo">
-        <a style="display: flex" href="http://metasp.eu">
+        <router-link to="/" style="display: flex">
           <img src="../assets/logo.png"
               alt="Metaspace" title="Metaspace"
               style="border: 0px;"
               class="vc"></img>
-        </a>
+        </router-link>
       </div>
 
       <router-link to="/upload">
