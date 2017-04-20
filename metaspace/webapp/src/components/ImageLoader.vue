@@ -43,9 +43,10 @@
      this.image.onload = this.redraw.bind(this);
      this.image.onerror = this.image.onabort = this.onFail.bind(this);
      this.image.crossOrigin = "Anonymous";
-     this.image.src = this.src;
-
-     this.isLoading = true;
+     if (this.src) {
+       this.image.src = this.src;
+       this.isLoading = true;
+     }
    },
    computed: {
      imageStyle() {
@@ -81,7 +82,10 @@
          if (grayscaleData[i] > 0)
            data.push(grayscaleData[i])
 
-       return quantile(data, this.hotspotRemovalQuantile);
+       if (data.length > 0)
+         return quantile(data, this.hotspotRemovalQuantile);
+       else
+         return 0;
      },
 
      scaleToViewport() {

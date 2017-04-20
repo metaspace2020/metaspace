@@ -120,7 +120,7 @@
 
     </el-table>
 
-    <div style="display: flex; flex-direction: row; justify-content: space-between;">
+    <div id="annot-table-controls">
       <div>
         <el-pagination :total="totalCount"
                        :page-size="recordsPerPage"
@@ -131,7 +131,7 @@
                        :layout="paginationLayout">
         </el-pagination>
 
-        <div style="padding: 10px 0 0 5px;">
+        <div id="annot-count">
           <b>{{ totalCount }}</b> matching {{ totalCount == 1 ? 'record': 'records' }}
         </div>
 
@@ -641,4 +641,13 @@
    height: 36px;
  }
 
+ #annot-table-controls {
+   display: flex;
+   flex-direction: row;
+   justify-content: space-between;
+ }
+
+ #annot-count {
+   padding: 10px 0 0 5px;
+ }
 </style>

@@ -38,3 +38,6 @@ jspm_packages
 
 # Passwords and other sensitive data
 conf.js
+
+# Screenshots taken by testcafe
+tests/e2e/screenshots
