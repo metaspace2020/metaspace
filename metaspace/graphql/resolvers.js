@@ -281,13 +281,13 @@ const Resolvers = {
 
   Mutation: {
     submitDataset(_, args) {
-      const {name, path, metadataJson} = args;
+      const {name, path, metadataJson, datasetId} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
 
         const metadata = JSON.parse(metadataJson);
         const body = JSON.stringify({
-          id: args.id,
+          id: datasetId,
           name: name,
           input_path: path,
           metadata: metadata,
