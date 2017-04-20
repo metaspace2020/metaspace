@@ -51,10 +51,14 @@ function generateProcessingConfig(meta_json) {
     ppm = m_opts['ppm']
   }
   
+  let mdb = m_opts['Metabolite_Database'];
+  let mdb_list = [{ "name": mdb }];
+  if (mdb != "HMDB") {
+    mdb_list.push({ "name": "HMDB", "version": "2016" });
+  }
+  
   return {
-    "databases": [{
-      "name": m_opts['Metabolite_Database']
-    }],
+    "databases": mdb_list,
     "isotope_generation": {
       "adducts": {'+': ['+H', '+K', '+Na'], '-': ['-H', '+Cl']}[polarity],
       "charge": {
