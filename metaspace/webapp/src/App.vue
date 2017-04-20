@@ -6,8 +6,8 @@
     <router-view class="main-content">
     </router-view>
 
-    <metaspace-footer>
-    </metaspace-footer>
+    <!--metaspace-footer>
+    </metaspace-footer-->
 
     <tour-step ref="tour" :tour="this.$store.state.currentTour"></tour-step>
   </div>
@@ -62,7 +62,7 @@
 
  .main-content {
    padding-top: 70px;     /* see MetaspaceHeader.vue: 70 = 62 height + 8 margin */
-   padding-bottom: 130px; /* see MetaspaceFooter.vue: 130 = 30 height + 100 margin */
+   /* padding-bottom: 130px; see MetaspaceFooter.vue: 130 = 30 height + 100 margin */
  }
 
  .warning {
