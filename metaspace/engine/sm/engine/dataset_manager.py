@@ -162,6 +162,7 @@ class DatasetManager(object):
             self._es.delete_ds(ds.id)
             self._db.alter('DELETE FROM dataset WHERE id=%s', ds.id)
             if del_raw_data:
+                logger.warning('Deleting raw data: {}'.format(ds.input_path))
                 wd_man = WorkDirManager(ds.id)
                 wd_man.del_input_data(ds.input_path)
         else:
