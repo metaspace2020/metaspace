@@ -12,6 +12,7 @@ from sm.engine import DB
 from sm.engine import Dataset
 from sm.engine import DatasetManager
 from sm.engine import ESExporter
+from sm.engine.errors import UnknownDSID
 from sm.engine.util import SMConfig, logger, sm_log_config, init_logger
 from sm.engine.search_job import SearchJob
 
@@ -32,11 +33,14 @@ if __name__ == "__main__":
     db = DB(sm_config['db'])
     ds_man = DatasetManager(db, ESExporter(), mode=u'local')
 
-    if args.ds_id:
+    ds_id = args.ds_id or dt.now().strftime("%Y-%m-%d_%Hh%Mm%Ss")
+
+    try:
         ds = Dataset.load_ds(args.ds_id, db)
         ds_man.delete_ds(ds)
-    else:
-        ds_id = dt.now().strftime("%Y-%m-%d_%Hh%Mm%Ss")
+    except UnknownDSID as e:
+        logger.warn(e.msg)
+
         meta_path = join(args.input_path, 'meta.json')
         if exists(meta_path):
             metadata = json.load(open(meta_path))

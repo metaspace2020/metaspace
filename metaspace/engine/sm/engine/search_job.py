@@ -5,13 +5,12 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 import time
-from os.path import join
+import sys
 from pprint import pformat
 from datetime import datetime
 from pyspark import SparkContext, SparkConf
 import logging
 
-from sm.engine import QueuePublisher
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
 from sm.engine.dataset_manager import DatasetManager, Dataset
 from sm.engine.dataset_reader import DatasetReader
@@ -111,9 +110,9 @@ class SearchJob(object):
 
             self._es.index_ds(self.ds_id, mol_db)
         except Exception as e:
-            logger.error('Job failed (MolDB name={}, version={})'.format(mol_db.name, mol_db.version), exc_info=True)
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
-            raise
+            new_msg = 'Job failed (MolDB name={}, version={})'.format(mol_db.name, mol_db.version)
+            raise Exception(new_msg), None, sys.exc_info()[2]
         else:
             self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
 
@@ -150,6 +149,8 @@ class SearchJob(object):
             logger.info("All done!")
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
+        except Exception as e:
+            logger.error(e, exc_info=True)
         finally:
             if self._fdr:
                 self._fdr.clean_target_decoy_table()

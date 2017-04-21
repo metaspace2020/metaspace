@@ -208,6 +208,11 @@ class ESExporter:
                                         "Organism_Part": {"type": "string", "index": "not_analyzed"},
                                         "Condition": {"type": "string", "index": "not_analyzed"}
                                     }
+                                },
+                                "MS_Analysis": {
+                                    "properties": {
+                                        "Analyzer": {"type": "string", "index": "not_analyzed"}
+                                    }
                                 }
                             }
                         }
