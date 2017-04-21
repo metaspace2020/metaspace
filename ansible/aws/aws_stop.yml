@@ -9,4 +9,5 @@
 
   tasks:
     - name: Stopping SM cluster instances
-      shell: python aws_instance_manager.py stop --key-name {{ aws_key_name }} --components {{ components }}
+      shell: python aws_instance_manager.py stop --key-name {{ aws_key_name }}
+             --components {{ components }} --stage {{ stage }}

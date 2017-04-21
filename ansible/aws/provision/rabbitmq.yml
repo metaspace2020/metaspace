@@ -1,0 +1,8 @@
+
+- name: SM services instance rabbitmq configuration
+  hosts: web
+  user: ubuntu
+  gather_facts: yes
+
+  roles:
+    - role: rabbitmq
