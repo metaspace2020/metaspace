@@ -111,7 +111,7 @@ class SearchJob(object):
             self._es.index_ds(self.ds_id, mol_db)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
-            new_msg = 'Job failed (MolDB name={}, version={})'.format(mol_db.name, mol_db.version)
+            new_msg = 'Job failed (MolDB name={}, version={}): {}'.format(mol_db.name, mol_db.version, e.message)
             raise Exception(new_msg), None, sys.exc_info()[2]
         else:
             self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
@@ -149,6 +149,7 @@ class SearchJob(object):
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
         except Exception as e:
+            logger.error(e, exc_info=True)
             raise
         finally:
             if self._fdr:

@@ -26,4 +26,4 @@ def test_find_sf_adduct_cand(DECOY_ADDUCTS_mock, MockDB, spark_context, sm_confi
     peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
     sf_adduct_cand = peaks_gen.find_sf_adduct_cand(['He', 'Au'], {('He', '+H'), ('Au', '+H')})
 
-    assert sf_adduct_cand == [('He', '+Na'), ('Au', '+Na')]
+    assert set(sf_adduct_cand) == {('He', '+Na'), ('Au', '+Na')}

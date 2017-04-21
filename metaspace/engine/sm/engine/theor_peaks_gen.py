@@ -67,9 +67,11 @@ class TheorPeaksGenerator(object):
         : list
             List of (formula id, formula, adduct) triples which don't have theoretical patterns saved in the database
         """
-        assert sf_list, 'Emtpy sum formula, adduct list!'
+        assert sf_list, 'Empty sum formula, adduct list!'
+        if self._ds_config['isotope_generation']['charge']['polarity'] == '-':
+            sf_list = filter(lambda sf: 'H' in sf, sf_list)
         adducts = set(self._adducts) | set(DECOY_ADDUCTS)
-        return set(product(sf_list, adducts)) - stored_sf_adduct
+        return list(set(product(sf_list, adducts)) - stored_sf_adduct)
 
     def generate_theor_peaks(self, sf_adduct_cand):
         """
