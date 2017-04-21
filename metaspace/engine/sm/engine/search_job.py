@@ -141,7 +141,6 @@ class SearchJob(object):
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
-            # self._ds.config['databases'].update({'name': 'HMDB', 'version': '2016'})
             for mol_db_dict in self._ds.config['databases']:
                 mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict.get('version', None), self._ds.config)
                 self._run_job(mol_db)
@@ -150,7 +149,7 @@ class SearchJob(object):
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
         except Exception as e:
-            logger.error(e, exc_info=True)
+            raise
         finally:
             if self._fdr:
                 self._fdr.clean_target_decoy_table()

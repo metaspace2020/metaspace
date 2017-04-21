@@ -55,7 +55,8 @@ if __name__ == "__main__":
     job = SearchJob(ds.id, args.sm_config_path, args.no_clean)
     try:
         job.run()
-    except:
+    except Exception as e:
+        logger.error(e, exc_info=True)
         sys.exit(1)
 
     sys.exit()
