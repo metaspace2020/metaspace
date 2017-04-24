@@ -40,7 +40,7 @@ jobs:
           command: |
             apt-get update
             apt-get install -y postgresql
-            sh .circleci/populate_pg_es.sh
+            cd .circleci && bash populate_pg_es.sh
       - run:
           name: Run tests
           command: |

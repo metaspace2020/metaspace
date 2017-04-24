@@ -9,5 +9,4 @@ gunzip -f sm_index_settings.json.gz
 curl -s -XPUT http://localhost:9200/sm -d @sm_index_settings.json
 
 wget -qN $DUMPS/sm_index_data.json.gz
-zcat sm_index_data.json.gz | elasticdump --input=$ --output=http://localhost:9200/sm --type=$x >> es_import.log
-head es_import.log
+zcat sm_index_data.json.gz | elasticdump --input=$ --output=http://localhost:9200/sm --type=$x
