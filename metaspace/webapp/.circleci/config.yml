@@ -46,4 +46,5 @@ jobs:
           command: |
             export NPM_CONFIG_LOGLEVEL=warn
             npm install testcafe-browser-provider-saucelabs
+            cp tests/e2e/conf.js conf.js
             testcafe "saucelabs:Chrome@beta:Windows 10" tests/e2e/annotations.js --app "npm run dev" --no-color
