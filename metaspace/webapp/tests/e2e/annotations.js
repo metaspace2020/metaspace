@@ -2,7 +2,7 @@ import config from '../../conf';
 
 import {Selector} from 'testcafe';
 
-const DATA_WAIT = 3000;
+const DATA_WAIT = 5000;
 
 fixture `Annotations page`
   .page `http://${config.HOST_NAME}:${config.PORT}/#/annotations`;
