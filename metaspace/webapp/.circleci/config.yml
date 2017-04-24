@@ -19,12 +19,19 @@ jobs:
     working_directory: /tmp/webapp
     steps:
       - checkout
+      - restore_cache:
+          keys:
+            - node-modules-{{ .Branch }}-{{checksum "package.json"}}
       - run:
           name: Install npm packages
           command: |
             export NPM_CONFIG_LOGLEVEL=warn
             npm install
             npm install -g testcafe elasticdump forever
+      - save_cache:
+          key: node-modules-{{ .Branch }}-{{checksum "package.json"}}
+          paths:
+            - /tmp/webapp/node_modules
       - run:
           name: Start GraphQL server and service mocks
           command: |
