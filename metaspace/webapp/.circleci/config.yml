@@ -1,0 +1,49 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: node:7.9.0 # not alpine because saucelabs binary requires glibc
+
+      - image: postgres:9.4-alpine # same version as in debian:jessie
+        environment:
+          POSTGRES_USER: sm
+          POSTGRES_PASSWORD: password
+
+      - image: elasticsearch:5.1.1
+        environment:
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+        command: [elasticsearch, -Etransport.host=127.0.0.1]
+
+      - image: redis:3.2-alpine
+
+    working_directory: /tmp/webapp
+    steps:
+      - checkout
+      - run:
+          name: Install npm packages
+          command: |
+            export NPM_CONFIG_LOGLEVEL=warn
+            npm install
+            npm install -g testcafe elasticdump forever
+      - run:
+          name: Start GraphQL server and service mocks
+          command: |
+            rm -rf sm-graphql
+            git clone https://github.com/metaspace2020/sm-graphql --branch rel-v0.6
+            export NPM_CONFIG_LOGLEVEL=warn
+            cd sm-graphql && npm install && cd ..
+            cp sm-graphql/tests/mock_config.js sm-graphql/config.js
+            forever start sm-graphql/tests/api_mocks.js
+            cd sm-graphql && forever start server.js
+      - run:
+          name: Load test data into the database and ElasticSearch
+          command: |
+            apt-get update
+            apt-get install -y postgresql
+            sh .circleci/populate_pg_es.sh
+      - run:
+          name: Run tests
+          command: |
+            export NPM_CONFIG_LOGLEVEL=warn
+            npm install testcafe-browser-provider-saucelabs
+            testcafe "saucelabs:Chrome@beta:Windows 10" tests/e2e/annotations.js --app "npm run dev" --no-color

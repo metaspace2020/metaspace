@@ -2,6 +2,8 @@ import config from '../../conf';
 
 import {Selector} from 'testcafe';
 
+const INITIAL_WAIT = 10000;
+
 fixture `Annotations page`
   .page `http://${config.HOST_NAME}:${config.PORT}/#/annotations`;
 
@@ -34,7 +36,7 @@ function findSortIcon(colIndex, direction) {
 }
 
 test('table is not empty', async t => {
-  await t.wait(3000); // wait until the data loads
+  await t.wait(INITIAL_WAIT); // wait until the data loads
   const rowCount = await table.find('tbody>tr').count;
   await t
     .expect(rowCount >= 10).ok();
@@ -46,6 +48,7 @@ test('total number of matching entries is shown', async t => {
 });
 
 test('there are 6 columns initially', async t => {
+  await t.wait(INITIAL_WAIT);
   const firstRow = await rows.nth(0);
   await t.expect(firstRow.find('td').count).eql(6);
 });
@@ -70,7 +73,7 @@ test('single-click dataset filtering works', async t => {
 });
 
 test('sorting works', async t => {
-  await t.wait(3000); // wait for handlers to get attached
+  await t.wait(INITIAL_WAIT); // wait for handlers to get attached
 
   for (let colIndex of [3, 4]) {
     for (let direction of ['ascending', 'descending']) {
