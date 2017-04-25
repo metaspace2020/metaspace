@@ -16,7 +16,7 @@
           </image-loader>
           <div class="rel-annot-details">
           MSM score: {{ other.msmScore.toFixed(3) }}<br/>
-          Annotated @ {{ other.fdrLevel }} FDR<br/>
+          Annotated @ {{ other.fdrLevel * 100 }}% FDR<br/>
           Max. intensity: {{ other.isotopeImages[0].maxIntensity.toExponential(2) }}
           </div>
         </div>
