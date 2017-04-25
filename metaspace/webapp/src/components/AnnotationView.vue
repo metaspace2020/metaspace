@@ -319,4 +319,8 @@
    padding-bottom: 6px;
  }
 
+ #isotope-plot-container text {
+    font-family: "Roboto" !important;
+ }
+
 </style>
