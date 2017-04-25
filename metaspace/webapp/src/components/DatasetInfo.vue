@@ -60,7 +60,7 @@
          const data = obj[key];
          isLeaf = false;
          const childSchema = schema.properties[key];
-         if (!data)
+         if (!data || key == 'Email') // hide e-mails from the interface
            continue;
          const child = this.objToTreeNode(key, data, childSchema);
          if (child.children && child.children.length == 0)
