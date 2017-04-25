@@ -29,6 +29,7 @@ logger = logging.getLogger('sm-engine')
 JOB_ID_SEL = "SELECT id FROM job WHERE ds_id = %s"
 JOB_INS = "INSERT INTO job (db_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
 JOB_UPD = "UPDATE job set status=%s, finish=%s where id=%s"
+DELETE_TARGET_DECOY_ADD = 'DELETE FROM target_decoy_add where job_id = %s'
 
 
 class SearchJob(object):
@@ -86,6 +87,9 @@ class SearchJob(object):
         rows = [(mol_db_id, self._ds.id, 'STARTED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self._job_id = self._db.insert_return(JOB_INS, rows)[0]
 
+    def clean_target_decoy_table(self):
+        self._db.alter(DELETE_TARGET_DECOY_ADD, self._job_id)
+
     def _run_job(self, mol_db):
         try:
             self.store_job_meta(mol_db.id)
@@ -111,7 +115,7 @@ class SearchJob(object):
             self._es.index_ds(self.ds_id, mol_db)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
-            new_msg = 'Job failed (MolDB name={}, version={}): {}'.format(mol_db.name, mol_db.version, e.message)
+            new_msg = 'Job failed (MolDB: ): {}'.format(mol_db, e)
             raise Exception(new_msg), None, sys.exc_info()[2]
         else:
             self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
@@ -152,11 +156,10 @@ class SearchJob(object):
             logger.error(e, exc_info=True)
             raise
         finally:
-            if self._fdr:
-                self._fdr.clean_target_decoy_table()
             if self._sc:
                 self._sc.stop()
             if self._db:
+                self.clean_target_decoy_table()
                 self._db.close()
             if self._wd_manager and not self.no_clean:
                 self._wd_manager.clean()

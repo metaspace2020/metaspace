@@ -7,7 +7,6 @@ import pandas as pd
 logger = logging.getLogger('sm-engine')
 
 DECOY_ADDUCTS = ['+He', '+Li', '+Be', '+B', '+C', '+N', '+O', '+F', '+Ne', '+Mg', '+Al', '+Si', '+P', '+S', '+Cl', '+Ar', '+Ca', '+Sc', '+Ti', '+V', '+Cr', '+Mn', '+Fe', '+Co', '+Ni', '+Cu', '+Zn', '+Ga', '+Ge', '+As', '+Se', '+Br', '+Kr', '+Rb', '+Sr', '+Y', '+Zr', '+Nb', '+Mo', '+Ru', '+Rh', '+Pd', '+Ag', '+Cd', '+In', '+Sn', '+Sb', '+Te', '+I', '+Xe', '+Cs', '+Ba', '+La', '+Ce', '+Pr', '+Nd', '+Sm', '+Eu', '+Gd', '+Tb', '+Dy', '+Ho', '+Ir', '+Th', '+Pt', '+Os', '+Yb', '+Lu', '+Bi', '+Pb', '+Re', '+Tl', '+Tm', '+U', '+W', '+Au', '+Er', '+Hf', '+Hg', '+Ta']
-DELETE_TARGET_DECOY_ADD = 'DELETE FROM target_decoy_add where job_id = %s'
 
 
 class FDR(object):
@@ -37,9 +36,6 @@ class FDR(object):
         df.to_csv(buf, index=False, header=False)
         buf.seek(0)
         self.db.copy(buf, 'target_decoy_add', sep=',')
-
-    def clean_target_decoy_table(self):
-        self.db.alter(DELETE_TARGET_DECOY_ADD, self.job_id)
 
     def decoy_adduct_selection(self):
         sf_ids = self._mol_db.sfs.keys()

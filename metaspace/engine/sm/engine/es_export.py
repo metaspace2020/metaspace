@@ -69,8 +69,8 @@ class ESExporter:
             df = mol_db.get_molecules(d['sf'])
             d['db_name'] = mol_db.name
             d['db_version'] = mol_db.version
-            d['comp_ids'] = df.mol_id.values.tolist()
-            d['comp_names'] = df.mol_name.values.tolist()
+            d['comp_ids'] = df.mol_id.values.tolist()[:50]  # to prevent ES 413 Request Entity Too Large error
+            d['comp_names'] = df.mol_name.values.tolist()[:50]
             d['centroid_mzs'] = ['{:010.4f}'.format(mz) if mz else '' for mz in d['centroid_mzs']]
             d['mz'] = d['centroid_mzs'][0]
             d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])
@@ -94,22 +94,24 @@ class ESExporter:
         annotations = self._db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
 
         logger.info('Deleting {} documents from the index: {}'.format(len(annotations), ds_id))
-        self.delete_ds(ds_id)
+        self.delete_ds(ds_id, mol_db)
 
         logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
         self._index(annotations, mol_db)
 
-    def delete_ds(self, ds_id):
-        logger.info('Deleting documents from ES: %s', ds_id)
+    # TODO: add a test
+    def delete_ds(self, ds_id, mol_db=None):
+        logger.info('Deleting documents from ES: %s, %s', ds_id, mol_db)
+
+        must = [{'term': {'ds_id': ds_id}}]
+        if mol_db:
+            must.append({'term': {'db_name': mol_db.name}})
+            must.append({'term': {'db_version': mol_db.version}})
         body = {
-            "query": {
-                "constant_score": {
-                    "filter": {
-                        "bool": {
-                            "must": [
-                                {"term": {"ds_id": ds_id}}
-                            ]
-                        }
+            'query': {
+                'constant_score': {
+                    'filter': {
+                        'bool': {'must': must}
                     }
                 }
             }

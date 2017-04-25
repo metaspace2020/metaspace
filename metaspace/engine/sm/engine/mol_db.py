@@ -82,6 +82,9 @@ class MolecularDB(object):
         self._job_id = None
         self._sfs = None
 
+    def __str__(self):
+        return '{} {}'.format(self.name, self.version)
+
     @property
     def id(self):
         return self._id

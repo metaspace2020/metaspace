@@ -60,7 +60,6 @@ if __name__ == "__main__":
     try:
         job.run()
     except Exception as e:
-        logger.error(e, exc_info=True)
         sys.exit(1)
 
     sys.exit()
