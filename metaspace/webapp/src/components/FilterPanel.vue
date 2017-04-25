@@ -36,6 +36,24 @@
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
  import {fetchOptionListsQuery} from '../api/metadata.js';
 
+ const filterKeys = [
+   'database',
+   'fdrLevel',
+   'institution',
+   'datasetIds',
+   'compoundName',
+   'mz',
+   'polarity',
+   'adduct',
+   'organism',
+   'organismPart',
+   'condition',
+   'analyzerType',
+   'ionisationSource',
+   'maldiMatrix',
+   'minMSM'
+ ];
+
  export default {
    name: 'filter-panel',
    props: ["level"],
@@ -67,7 +85,7 @@
 
      availableFilters() {
        let available = [];
-       for (var key in FILTER_SPECIFICATIONS) {
+       for (let key of filterKeys) {
          if (FILTER_SPECIFICATIONS[key].levels.indexOf(this.level) == -1)
            continue;
          if (this.activeKeys.indexOf(key) == -1)
@@ -118,5 +136,10 @@
    align-items: flex-start;
    flex-wrap: wrap;
    padding: 0px 4px;
+ }
+
+ .el-select-dropdown__wrap {
+   /* so that no scrolling is necessary */
+   max-height: 480px;
  }
 </style>

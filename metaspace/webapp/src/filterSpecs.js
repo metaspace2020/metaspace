@@ -51,6 +51,9 @@ function formatFDR (fdr) {
    * store/getters.js
      edit gqlAnnotationFilter and gqlDatasetFilter getters
 
+   You must also add the filter key to filterKeys array in FilterPanel.vue:
+   this controls the order of the filters in the dropdown list.
+
    If options to a select are provided as a string, they are taken from
    FilterPanel computed properties. When a new filter is added that uses
    this feature, the GraphQL query in FilterPanel should be tweaked to
