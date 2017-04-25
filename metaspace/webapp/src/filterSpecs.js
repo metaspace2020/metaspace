@@ -22,6 +22,10 @@ function formatAdduct (adduct) {
   }
 }
 
+function formatFDR (fdr) {
+  return fdr ? Math.round(fdr * 100) + '%' : null;
+}
+
 /*
    Introduction of a new filter requires:
    * type (one of the suitable filter components)
@@ -42,9 +46,9 @@ function formatAdduct (adduct) {
    e.g. adding GraphQL query variables and setting them accordingly.
 
    Data filtering logic is currently located in two places:
-   * filterToUrl.js
+   * url.js
      add new fields to DEFAULT_FILTER and FILTER_TO_URL (for vue-router)
-   * store.js
+   * store/getters.js
      edit gqlAnnotationFilter and gqlDatasetFilter getters
 
    If options to a select are provided as a string, they are taken from
@@ -121,7 +125,9 @@ const FILTER_SPECIFICATIONS = {
     levels: ['annotation'],
     initialValue: 0.1,
 
-    options: ['0.05', '0.1', '0.2', '0.5'],
+    options: [0.05, 0.1, 0.2, 0.5],
+    optionFormatter: formatFDR,
+    valueFormatter: formatFDR,
     filterable: false
   },
 

@@ -61,7 +61,7 @@ export default {
     const {initialValue} = FILTER_SPECIFICATIONS[name];
     // FIXME: is there any way to access getters here?
     let filter = Object.assign(decodeParams(state.route),
-                               {name: initialValue});
+                               {[name]: initialValue});
 
     state.orderedActiveFilters.push(name);
     pushURL(state, filter);
