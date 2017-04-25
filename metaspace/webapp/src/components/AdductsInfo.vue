@@ -14,9 +14,11 @@
                         :max-height=250
                         class="ion-image">
           </image-loader>
+          <div class="rel-annot-details">
           MSM score: {{ other.msmScore.toFixed(3) }}<br/>
           Annotated @ {{ other.fdrLevel }} FDR<br/>
           Max. intensity: {{ other.isotopeImages[0].maxIntensity.toExponential(2) }}
+          </div>
         </div>
       </el-col>
     </div>
@@ -61,5 +63,9 @@
  .adduct-info-container {
    display: flex;
    flex-direction: row;
+ }
+
+ .rel-annot-details {
+   font-size: smaller;
  }
 </style>

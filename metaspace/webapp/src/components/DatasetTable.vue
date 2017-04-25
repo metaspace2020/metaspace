@@ -5,7 +5,7 @@
         <filter-panel level="dataset"></filter-panel>
 
         <el-checkbox-group v-model="categories" :min=1 style="padding: 4px;">
-          <el-checkbox label="started">In progress {{ count('started') }}</el-checkbox>
+          <el-checkbox label="started">Processing {{ count('started') }}</el-checkbox>
           <el-checkbox label="queued">Queued {{ count('queued') }}</el-checkbox>
           <el-checkbox label="finished">Finished</el-checkbox>
         </el-checkbox-group>
