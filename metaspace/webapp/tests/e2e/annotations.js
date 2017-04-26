@@ -8,6 +8,7 @@ fixture `Annotations page`
   .page `http://${config.HOST_NAME}:${config.PORT}/#/annotations`;
 
 const table = new Selector('#annot-table');
+const filterPanel = new Selector('#annot-page .filter-panel');
 
 const tableBody = table.find('tbody').addCustomMethods({
   column: (tbl, columnIndex) =>
@@ -85,4 +86,17 @@ test('sorting works', async t => {
       await t.expect(values).eql(expected);
     }
   }
+});
+
+// regression
+test('user can add molecule filter after dataset filter', async t => {
+  const datasetCell = await rows.nth(0).find('td').nth(1);
+  const filterIcon = await datasetCell.find('img').nth(0);
+  await t.hover(datasetCell, cellHoverOptions).click(filterIcon);
+
+  await t.click(filterPanel.find('.el-select'));
+  await t.click(new Selector('.el-select-dropdown__item span').withText('Search molecule'));
+
+  // database, FDR, dataset, molecule
+  await t.expect(filterPanel.find('.tf-outer').count).eql(4);
 });

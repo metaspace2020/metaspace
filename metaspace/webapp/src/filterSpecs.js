@@ -98,7 +98,7 @@ const FILTER_SPECIFICATIONS = {
     name: 'Molecule',
     description: 'Search molecule',
     levels: ['annotation'],
-    initialValue: ''
+    initialValue: undefined
   },
 
   adduct: {
