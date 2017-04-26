@@ -67,9 +67,9 @@ def on_job_succeeded(msg):
     msg['web_app_link'] = '{}/#/annotations?ds={}'.format(base_url, url_params)
     post_to_slack('dart', ' [v] Finished: {}'.format(json.dumps(msg)))
 
-    submitter = ds_meta['Submitted_By']['Submitter']
+    submitter = ds_meta['Submitted_By'].get('Submitter', '')
 
-    if 'Email' in submitter and ds_meta['metaspace_options']['notify_submitter']:
+    if 'Email' in submitter and ds_meta['metaspace_options'].get('notify_submitter', True):
         email_body = (
             'Dear {} {},\n\n'
             'Thank you for uploading the dataset {} to the METASPACE  annotation service. '
@@ -88,9 +88,9 @@ def on_job_failed(msg):
     post_to_slack('hankey', ' [x] Failed: {}'.format(json.dumps(msg)))
 
     ds_name, ds_meta = fetch_ds_metadata(msg['ds_id'])
-    submitter = ds_meta['Submitted_By']['Submitter']
+    submitter = ds_meta['Submitted_By'].get('Submitter', '')
 
-    if 'Email' in submitter and ds_meta['metaspace_options']['notify_submitter']:
+    if 'Email' in submitter and ds_meta['metaspace_options'].get('notify_submitter', True):
         email_body = (
             'Dear {} {},\n\n'
             'Thank you for uploading the dataset "{}" to the METASPACE  annotation service. '
