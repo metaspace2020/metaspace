@@ -9,7 +9,7 @@ from sm.engine.util import SMConfig
 from sm.engine.png_generator import PngGenerator, ImageStoreServiceWrapper
 
 logger = logging.getLogger('sm-engine')
-METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)'
+METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
 
 
 class SearchResults(object):
@@ -19,41 +19,36 @@ class SearchResults(object):
     ----------
     sf_db_id : int
         Formula database id
-    ds_id : str
-        Dataset unique identifier
     job_id : int
         Search job id
     metrics: list
         Metric names
-    sf_adduct_peaksn : list
-        List of triples (formula id, adduct, number of theoretical peaks)
     ds: engine.dataset.Dataset
     db: engine.db.DB
     """
-    def __init__(self, sf_db_id, job_id, metrics, ds, db):
+    def __init__(self, sf_db_id, job_id, metric_names, ds, db):
         self.sf_db_id = sf_db_id
         self.job_id = job_id
-        self.metrics = metrics
+        self.metric_names = metric_names
         self.ds = ds
         self.db = db
         self.sm_config = SMConfig.get_conf()
 
-    @staticmethod
-    def _metrics_table_row_gen(job_id, db_id, metr_df, ion_img_urls, metrics):
+    def _metrics_table_row_gen(self, job_id, db_id, metr_df, ion_img_urls):
         for ind, r in metr_df.reset_index().iterrows():
-            metr_json = json.dumps(OrderedDict([(m, float(r[m])) for m in metrics]))
+            m = OrderedDict((name, r[name]) for name in self.metric_names)
+            metr_json = json.dumps(m)
             urls = ion_img_urls[(r.sf_id, r.adduct)]
             yield (job_id, db_id, r.sf_id, r.adduct,
                    float(r.msm), float(r.fdr), metr_json,
-                   None, urls['iso_image_urls'], urls['ion_image_url'])
+                   urls['iso_image_urls'], urls['ion_image_url'])
 
     def store_ion_metrics(self, ion_metrics_df, ion_img_urls):
         """ Store formula image metrics in the database """
         logger.info('Storing iso image metrics')
 
         rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id,
-                                                ion_metrics_df, ion_img_urls,
-                                                self.metrics))
+                                                ion_metrics_df, ion_img_urls))
         self.db.insert(METRICS_INS, rows)
 
     def _get_post_images(self):

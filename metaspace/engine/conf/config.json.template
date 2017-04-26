@@ -8,7 +8,9 @@
   "elasticsearch": {
     "index": "sm",
     "host": "{{ es_host }}",
-    "port": "{{ es_port }}"
+    "port": "{{ es_port }}",
+    "user": "{{ es_user }}",
+    "password": "{{ es_password }}"
   },
   "services": {
     "iso_images": "{{ sm_iso_images_url }}",

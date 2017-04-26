@@ -5,13 +5,12 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 import time
-from os.path import join
+import sys
 from pprint import pformat
 from datetime import datetime
 from pyspark import SparkContext, SparkConf
 import logging
 
-from sm.engine import QueuePublisher
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
 from sm.engine.dataset_manager import DatasetManager, Dataset
 from sm.engine.dataset_reader import DatasetReader
@@ -28,8 +27,9 @@ from sm.engine.mol_db import MolecularDB
 logger = logging.getLogger('sm-engine')
 
 JOB_ID_SEL = "SELECT id FROM job WHERE ds_id = %s"
-JOB_INS = ("""INSERT INTO job (db_id, ds_id, status, start, finish) """
-           """VALUES (%s, %s, 'SUCCEEDED', %s, '2000-01-01 00:00:00') RETURNING id""")
+JOB_INS = "INSERT INTO job (db_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
+JOB_UPD = "UPDATE job set status=%s, finish=%s where id=%s"
+DELETE_TARGET_DECOY_ADD = 'DELETE FROM target_decoy_add where job_id = %s'
 
 
 class SearchJob(object):
@@ -84,33 +84,41 @@ class SearchJob(object):
     def store_job_meta(self, mol_db_id):
         """ Store search job metadata in the database """
         logger.info('Storing job metadata')
-        rows = [(mol_db_id, self._ds.id, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
+        rows = [(mol_db_id, self._ds.id, 'STARTED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self._job_id = self._db.insert_return(JOB_INS, rows)[0]
 
+    def clean_target_decoy_table(self):
+        self._db.alter(DELETE_TARGET_DECOY_ADD, self._job_id)
+
     def _run_job(self, mol_db):
-        self.store_job_meta(mol_db.id)
-        mol_db.set_job_id(self._job_id)
+        try:
+            self.store_job_meta(mol_db.id)
+            mol_db.set_job_id(self._job_id)
 
-        logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s ...",
-                    self._ds.id, self._ds.name, mol_db.name, mol_db.version)
+            logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s ...",
+                        self._ds.id, self._ds.name, mol_db.name, mol_db.version)
 
-        theor_peaks_gen = TheorPeaksGenerator(self._sc, mol_db, self._ds.config)
-        theor_peaks_gen.run()
+            theor_peaks_gen = TheorPeaksGenerator(self._sc, mol_db, self._ds.config)
+            theor_peaks_gen.run()
 
-        target_adducts = self._ds.config['isotope_generation']['adducts']
-        self._fdr = FDR(self._job_id, mol_db,
-                        decoy_sample_size=20, target_adducts=target_adducts, db=self._db)
-        self._fdr.decoy_adduct_selection()
+            target_adducts = self._ds.config['isotope_generation']['adducts']
+            self._fdr = FDR(self._job_id, mol_db,
+                            decoy_sample_size=20, target_adducts=target_adducts, db=self._db)
+            self._fdr.decoy_adduct_selection()
 
-        search_alg = MSMBasicSearch(self._sc, self._ds, mol_db, self._fdr, self._ds.config)
-        ion_metrics_df, ion_iso_images = search_alg.search()
+            search_alg = MSMBasicSearch(self._sc, self._ds, mol_db, self._fdr, self._ds.config)
+            ion_metrics_df, ion_iso_images = search_alg.search()
 
-        search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics, self._ds, self._db)
-        search_results.store(ion_metrics_df, ion_iso_images)
+            search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys(), self._ds, self._db)
+            search_results.store(ion_metrics_df, ion_iso_images)
 
-        self._es.index_ds(self.ds_id, mol_db)
-        self._db.alter('UPDATE job set finish=%s where id=%s',
-                       datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
+            self._es.index_ds(self.ds_id, mol_db)
+        except Exception as e:
+            self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
+            new_msg = 'Job failed (MolDB: ): {}'.format(mol_db, e)
+            raise Exception(new_msg), None, sys.exc_info()[2]
+        else:
+            self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
 
     def run(self):
         """ Entry point of the engine. Molecule search is completed in several steps:
@@ -138,22 +146,20 @@ class SearchJob(object):
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
             for mol_db_dict in self._ds.config['databases']:
-                mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict['version'], self._ds.config)
+                mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict.get('version', None), self._ds.config)
                 self._run_job(mol_db)
 
             logger.info("All done!")
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
-
-        except Exception:
-            logger.error('Job failed', exc_info=True)
+        except Exception as e:
+            logger.error(e, exc_info=True)
             raise
         finally:
-            if self._fdr:
-                self._fdr.clean_target_decoy_table()
             if self._sc:
                 self._sc.stop()
             if self._db:
+                self.clean_target_decoy_table()
                 self._db.close()
             if self._wd_manager and not self.no_clean:
                 self._wd_manager.clean()

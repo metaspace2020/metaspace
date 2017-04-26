@@ -25,6 +25,12 @@ ERR_OBJECT_NOT_EXISTS = {
 }
 
 
+def _create_db_conn():
+    SMConfig.set_path(CONFIG_PATH)
+    config = SMConfig.get_conf()
+    return DB(config['db'])
+
+
 @post('/datasets/add')
 def add_ds():
     params = json.load(req.body)
@@ -33,7 +39,10 @@ def add_ds():
                  params.get('input_path'),
                  params.get('metadata', None),
                  params.get('config'))
+    db = _create_db_conn()
+    ds_man = DatasetManager(db, ESExporter(), mode='queue')
     ds_man.add_ds(ds)
+    db.close()
     return OK['title']
 
 
@@ -41,12 +50,16 @@ def add_ds():
 def update_ds(ds_id):
     try:
         params = json.load(req.body)
+        db = _create_db_conn()
         ds = Dataset.load_ds(ds_id, db)
         ds.name = params.get('name', ds.name)
         ds.input_path = params.get('input_path', ds.input_path)
         ds.meta = params.get('metadata', ds.meta)
         ds.config = params.get('config', ds.config)
+
+        ds_man = DatasetManager(db, ESExporter(), mode='queue')
         ds_man.update_ds(ds)
+        db.close()
         return OK['title']
     except UnknownDSID:
         resp.status = ERR_OBJECT_NOT_EXISTS['status']
@@ -56,20 +69,20 @@ def update_ds(ds_id):
 @post('/datasets/<ds_id>/delete')
 def delete_ds(ds_id):
     try:
+        params = json.load(req.body)
+        del_raw = params.get('del_raw', False)
+
+        db = _create_db_conn()
         ds = Dataset.load_ds(ds_id, db)
-        ds_man.delete_ds(ds, del_raw_data=True)
+
+        ds_man = DatasetManager(db, ESExporter(), mode='queue')
+        ds_man.delete_ds(ds, del_raw_data=del_raw)
+        db.close()
         return OK['title']
     except UnknownDSID:
         resp.status = ERR_OBJECT_NOT_EXISTS['status']
         return ERR_OBJECT_NOT_EXISTS['title']
 
-
 if __name__ == '__main__':
     init_logger()
-
-    SMConfig.set_path(CONFIG_PATH)
-    CONFIG = SMConfig.get_conf()
-    db = DB(CONFIG['db'])
-    ds_man = DatasetManager(db, ESExporter(), mode='queue')
-
     run(host='localhost', port=5123)

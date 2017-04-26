@@ -4,12 +4,12 @@ from sm.engine.util import SMConfig
 class SearchAlgorithm(object):
 
     def __init__(self, sc, ds, mol_db, fdr, ds_config):
-        self.sc = sc
+        self._sc = sc
         self._ds = ds
         self._mol_db = mol_db
-        self.fdr = fdr
+        self._fdr = fdr
         self.ds_config = ds_config
-        self.metrics = []
+        self.metrics = None
         self.sm_config = SMConfig.get_conf()
 
     def search(self):

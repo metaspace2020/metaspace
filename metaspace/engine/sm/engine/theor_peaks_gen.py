@@ -3,8 +3,9 @@ from os.path import join, exists
 import logging
 from StringIO import StringIO
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
-from sm.engine.util import SMConfig
+from itertools import product
 
+from sm.engine.util import SMConfig
 from sm.engine.db import DB
 from sm.engine.fdr import DECOY_ADDUCTS
 from sm.engine.isocalc_wrapper import IsocalcWrapper
@@ -57,7 +58,7 @@ class TheorPeaksGenerator(object):
         Args
         ----
         sf_list : list
-            List of pairs (id, sum formula) to search through
+            List of molecular formulae to search through
         stored_sf_adduct : set
             Set of (formula, adduct) pairs which have theoretical patterns saved in the database
 
@@ -66,10 +67,11 @@ class TheorPeaksGenerator(object):
         : list
             List of (formula id, formula, adduct) triples which don't have theoretical patterns saved in the database
         """
-        assert sf_list, 'Emtpy sum formula, adduct list!'
+        assert sf_list, 'Empty sum formula, adduct list!'
+        if self._ds_config['isotope_generation']['charge']['polarity'] == '-':
+            sf_list = filter(lambda sf: 'H' in sf, sf_list)
         adducts = set(self._adducts) | set(DECOY_ADDUCTS)
-        cand = [(sf, a) for sf in sf_list for a in adducts]
-        return filter(lambda (sf, adduct): (sf, adduct) not in stored_sf_adduct, cand)
+        return list(set(product(sf_list, adducts)) - stored_sf_adduct)
 
     def generate_theor_peaks(self, sf_adduct_cand):
         """

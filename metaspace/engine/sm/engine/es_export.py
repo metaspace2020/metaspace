@@ -9,9 +9,9 @@ from sm.engine.db import DB
 logger = logging.getLogger('sm-engine')
 
 COLUMNS = ["ds_id", "ds_name", "sf", "sf_adduct",
-           "chaos", "image_corr", "pattern_match", "msm",
+           "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
            "adduct", "job_id", "sf_id", "fdr",
-           "centroid_mzs", "ds_meta", "ion_image_url", "iso_image_urls", "polarity"]
+           "centroid_mzs", "ds_config", "ds_meta", "ion_image_url", "iso_image_urls", "polarity"]
 
 ANNOTATIONS_SEL = '''
 SELECT
@@ -24,12 +24,16 @@ SELECT
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
     COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
     COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
+    (m.stats -> 'total_iso_ints'::text) AS total_iso_ints,
+    (m.stats -> 'min_iso_ints'::text) AS min_iso_ints,
+    (m.stats -> 'max_iso_ints'::text) AS max_iso_ints,
     COALESCE(m.msm, 0::real) AS msm,
     m.adduct,
     j.id AS job_id,
     f.id AS sf_id,
     m.fdr as pass_fdr,
     tp.centr_mzs AS centroid_mzs,
+    ds.config as ds_config,
     ds.metadata as ds_meta,
     m.ion_image_url,
     m.iso_image_urls,
@@ -49,30 +53,40 @@ ORDER BY COALESCE(m.msm, 0::real) DESC
 
 class ESExporter:
     def __init__(self):
-        self._sm_config = SMConfig.get_conf()
-        self._es = Elasticsearch(hosts=[{"host": self._sm_config['elasticsearch']['host'],
-                                        "port": int(self._sm_config['elasticsearch']['port'])}])
-        self._db = DB(self._sm_config['db'])
+        es_config = SMConfig.get_conf()['elasticsearch']
+        hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
+        http_auth = (es_config['user'], es_config['password']) if 'user' in es_config else None
+        self._es = Elasticsearch(hosts=hosts, http_auth=http_auth)
+        self._db = DB(SMConfig.get_conf()['db'])
         self._ind_client = IndicesClient(self._es)
-        self.index = self._sm_config['elasticsearch']['index']
+        self.index = es_config['index']
 
     def _index(self, annotations, mol_db):
+        n = 100
         to_index = []
         for r in annotations:
             d = dict(zip(COLUMNS, r))
             df = mol_db.get_molecules(d['sf'])
-            d['comp_ids'] = df.mol_id.values.tolist()
-            d['comp_names'] = df.mol_name.values.tolist()
+            d['db_name'] = mol_db.name
+            d['db_version'] = mol_db.version
+            d['comp_ids'] = df.mol_id.values.tolist()[:50]  # to prevent ES 413 Request Entity Too Large error
+            d['comp_names'] = df.mol_name.values.tolist()[:50]
             d['centroid_mzs'] = ['{:010.4f}'.format(mz) if mz else '' for mz in d['centroid_mzs']]
+            d['mz'] = d['centroid_mzs'][0]
             d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])
 
+            add_str = d['adduct'].replace('+', 'plus_').replace('-', 'minus_')
             to_index.append({
                 '_index': self.index,
                 '_type': 'annotation',
                 '_id': '{}_{}_{}_{}_{}'.format(d['ds_id'], mol_db.name, mol_db.version,
-                                               d['sf'], d['adduct']),
+                                               d['sf'], add_str),
                 '_source': d
             })
+
+            if len(to_index) >= n:
+                bulk(self._es, actions=to_index, timeout='60s')
+                to_index = []
 
         bulk(self._es, actions=to_index, timeout='60s')
 
@@ -80,22 +94,24 @@ class ESExporter:
         annotations = self._db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
 
         logger.info('Deleting {} documents from the index: {}'.format(len(annotations), ds_id))
-        self.delete_ds(ds_id)
+        self.delete_ds(ds_id, mol_db)
 
         logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
         self._index(annotations, mol_db)
 
-    def delete_ds(self, ds_id):
-        logger.info('Deleting documents from ES: %s', ds_id)
+    # TODO: add a test
+    def delete_ds(self, ds_id, mol_db=None):
+        logger.info('Deleting documents from ES: %s, %s', ds_id, mol_db)
+
+        must = [{'term': {'ds_id': ds_id}}]
+        if mol_db:
+            must.append({'term': {'db_name': mol_db.name}})
+            must.append({'term': {'db_version': mol_db.version}})
         body = {
-            "query": {
-                "constant_score": {
-                    "filter": {
-                        "bool": {
-                            "must": [
-                                {"term": {"ds_id": ds_id}}
-                            ]
-                        }
+            'query': {
+                'constant_score': {
+                    'filter': {
+                        'bool': {'must': must}
                     }
                 }
             }
@@ -153,10 +169,14 @@ class ESExporter:
                         "chaos": {"type": "float", "index": "not_analyzed"},
                         "image_corr": {"type": "float", "index": "not_analyzed"},
                         "pattern_match": {"type": "float", "index": "not_analyzed"},
+                        "total_iso_ints": {"type": "float", "index": "not_analyzed"},
+                        "min_iso_ints": {"type": "float", "index": "not_analyzed"},
+                        "max_iso_ints": {"type": "float", "index": "not_analyzed"},
                         "msm": {"type": "float", "index": "not_analyzed"},
                         "adduct": {"type": "string", "index": "not_analyzed"},
                         "fdr": {"type": "float", "index": "not_analyzed"},
                         "centroid_mzs": {"type": "string", "index": "not_analyzed"},
+                        "mz": {"type": "string", "index": "not_analyzed"},
                         "ion_image_url": {"type": "string", "index": "not_analyzed"},
                         "iso_image_urls": {"type": "string", "index": "not_analyzed"},
                         "ion_add_pol": {"type": "string", "index": "not_analyzed"},
@@ -189,6 +209,11 @@ class ESExporter:
                                         "Organism": {"type": "string", "index": "not_analyzed"},
                                         "Organism_Part": {"type": "string", "index": "not_analyzed"},
                                         "Condition": {"type": "string", "index": "not_analyzed"}
+                                    }
+                                },
+                                "MS_Analysis": {
+                                    "properties": {
+                                        "Analyzer": {"type": "string", "index": "not_analyzed"}
                                     }
                                 }
                             }

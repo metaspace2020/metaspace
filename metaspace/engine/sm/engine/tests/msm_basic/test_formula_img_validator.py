@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -10,7 +12,7 @@ from sm.engine.dataset_manager import DatasetManager, Dataset
 from sm.engine import DatasetReader
 from sm.engine.fdr import FDR
 from sm.engine.mol_db import MolecularDB
-from sm.engine.msm_basic.formula_img_validator import ImgMeasures, sf_image_metrics_est_fdr
+from sm.engine.msm_basic.formula_img_validator import ImgMetrics
 from sm.engine.msm_basic.formula_img_validator import sf_image_metrics, get_compute_img_metrics
 from sm.engine.tests.util import spark_context, ds_config, sm_config
 
@@ -25,14 +27,19 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
         'q': 99.0
     }
     empty_matrix = np.zeros((2, 3))
-    compute_measures = get_compute_img_metrics(np.ones(2*3).astype(bool), empty_matrix, img_gen_conf)
+    metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0),
+                           ('total_iso_ints', [0, 0, 0, 0]),
+                           ('min_iso_ints', [0, 0, 0, 0]),
+                           ('max_iso_ints', [0, 0, 0, 0])])
+    compute_measures = get_compute_img_metrics(metrics, np.ones(2*3).astype(bool),
+                                               empty_matrix, img_gen_conf)
 
     sf_iso_images = [csr_matrix([[0., 100., 100.], [10., 0., 3.]]),
                      csr_matrix([[0., 50., 50.], [0., 20., 0.]])]
     sf_intensity = [100., 10., 1.]
 
     measures = compute_measures(sf_iso_images, sf_intensity)
-    assert_array_almost_equal(measures, [0.99, 0.8, 0.95])
+    assert measures == (0.99, 0.8, 0.95, [213., 120., 0.], [0, 0, 0], [100., 50., 0.])
 
 
 @pytest.fixture(scope='module')
@@ -54,45 +61,28 @@ def ds_formulas_images_mock():
 
 def test_sf_image_metrics(spark_context, ds_formulas_images_mock, ds_config):
     with patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics') as mock:
-        mock.return_value = lambda *args: (0.9, 0.9, 0.9)
+        mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.])
 
         ds_mock, mol_db_mock, ref_images = ds_formulas_images_mock
         ref_images_rdd = spark_context.parallelize(ref_images)
 
-        metrics_df = sf_image_metrics(ref_images_rdd, ds_mock, mol_db_mock, spark_context)
+        metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0),
+                               ('total_iso_ints', [0, 0, 0, 0]),
+                               ('min_iso_ints', [0, 0, 0, 0]),
+                               ('max_iso_ints', [0, 0, 0, 0])])
+        metrics_df = sf_image_metrics(ref_images_rdd, metrics, ds_mock, mol_db_mock, spark_context)
 
-        exp_metrics_df = (pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, 0.9**3],
-                                       [1, '+H', 0.9, 0.9, 0.9, 0.9**3]],
-                                       columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm'])
+        exp_metrics_df = (pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.], 0.9**3],
+                                       [1, '+H', 0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.], 0.9**3]],
+                                       columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral',
+                                                'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'msm'])
                           .set_index(['sf_id', 'adduct']))
         assert_frame_equal(metrics_df, exp_metrics_df)
 
 
-def test_add_sf_image_est_fdr():
-    sf_metrics_df = (pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, 0.9**3],
-                                  [1, '+H', 0.5, 0.5, 0.5, 0.5**3]],
-                                  columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm'])
-                     .set_index(['sf_id', 'adduct']))
-
-    formulas_mock = MagicMock(spec=MolecularDB)
-    formulas_mock.sf_df = pd.DataFrame([[0, '+H'], [1, '+H']], columns=['sf_id', 'adduct'])
-
-    fdr_mock = MagicMock(spec=FDR)
-    fdr_mock.estimate_fdr.return_value = pd.DataFrame([[0, '+H', 0.99], [1, '+H', 0.5]],
-                                                      columns=['sf_id', 'adduct', 'fdr']).set_index(['sf_id', 'adduct'])
-
-    res_metrics_df = sf_image_metrics_est_fdr(sf_metrics_df, formulas_mock, fdr_mock)
-
-    exp_col_list = ['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm', 'fdr']
-    exp_metrics_df = pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, 0.9**3, 0.99],
-                                   [1, '+H', 0.5, 0.5, 0.5, 0.5**3, 0.5]],
-                                  columns=exp_col_list).set_index(['sf_id', 'adduct'])
-    assert_frame_equal(res_metrics_df, exp_metrics_df)
-
-
 @pytest.mark.parametrize("nan_value", [None, np.NaN, np.NAN, np.inf])
 def test_img_measures_replace_invalid_measure_values(nan_value):
-    invalid_img_measures = ImgMeasures(nan_value, nan_value, nan_value)
+    invalid_img_measures = ImgMetrics(OrderedDict([('chaos', None), ('spatial', np.NAN), ('spectral', np.inf)]))
     assert invalid_img_measures.to_tuple(replace_nan=True) == (0., 0., 0.)
 
 

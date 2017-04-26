@@ -17,13 +17,15 @@ def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, create_test_db, dr
 
     db = DB(sm_config['db'])
     try:
-        ds = Dataset('new_ds_id', 'ds_name', 'input_path', {'meta': 'data'}, {'config': 0})
+        ds = Dataset('new_ds_id', 'ds_name', 'input_path',
+                     {'metaspace_options': {'notify_submitter': False}}, {'config': 0})
         ds_man = DatasetManager(db, None, mode='queue')
         ds_man.add_ds(ds)
 
         rows = db.select('SELECT * FROM dataset')
         assert len(rows) == 1
-        assert rows[0] == ('new_ds_id', 'ds_name', 'input_path', {'meta': 'data'}, {'config': 0})
+        assert rows[0] == ('new_ds_id', 'ds_name', 'input_path',
+                           {'metaspace_options': {'notify_submitter': False}}, {'config': 0})
 
         qpub_mock.publish.assert_called_once_with({
             'ds_id': 'new_ds_id',
@@ -52,13 +54,15 @@ def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServi
                    "VALUES (%s, %s, %s, %s, %s, %s)"),
                   rows=[(0, 0, 1, '+H', 'ion_image_url', ['iso_image_url_0'])])
 
-        ds = Dataset('ds_id', 'new_ds_name', 'input_path', {'meta': 'data'}, {'config': 0})
+        ds = Dataset('ds_id', 'new_ds_name', 'input_path',
+                     {'metaspace_options': {'notify_submitter': False}}, {'config': 0})
         ds_man = DatasetManager(db, es, mode='queue')
         ds_man.add_ds(ds)
 
         rows = db.select("SELECT * FROM dataset")
         assert len(rows) == 1
-        assert rows[0] == ('ds_id', 'new_ds_name', 'input_path', {'meta': 'data'}, {'config': 0})
+        assert rows[0] == ('ds_id', 'new_ds_name', 'input_path',
+                           {'metaspace_options': {'notify_submitter': False}}, {'config': 0})
 
         qpub_mock.publish.assert_called_once_with({
             'ds_id': 'ds_id',

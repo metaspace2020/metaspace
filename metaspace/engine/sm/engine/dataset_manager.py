@@ -90,8 +90,8 @@ class DatasetManager(object):
             'ds_name': ds.name,
             'input_path': ds.input_path,
         }
-        if ds.meta:
-            email = ds.meta.get('Submitted_By', {}).get('Submitter', {}).get('Email')
+        if ds.meta and ds.meta.get('metaspace_options').get('notify_submitter', True):
+            email = ds.meta.get('Submitted_By', {}).get('Submitter', {}).get('Email', None)
             if email:
                 msg['user_email'] = email.lower()
         QueuePublisher(self._sm_config['rabbitmq'], 'sm_annotate').publish(msg)
@@ -162,6 +162,7 @@ class DatasetManager(object):
             self._es.delete_ds(ds.id)
             self._db.alter('DELETE FROM dataset WHERE id=%s', ds.id)
             if del_raw_data:
+                logger.warning('Deleting raw data: {}'.format(ds.input_path))
                 wd_man = WorkDirManager(ds.id)
                 wd_man.del_input_data(ds.input_path)
         else:

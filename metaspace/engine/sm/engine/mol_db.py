@@ -75,11 +75,15 @@ class MolecularDB(object):
         sm_config = SMConfig.get_conf()
         self._db = DB(sm_config['db'])
         self._mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
-        self._id = self._mol_db_service.find_db_by_name_version(name, version)[0]['id']
+        mol_db_data = self._mol_db_service.find_db_by_name_version(name, version)[0]
+        self._id, self._version = mol_db_data['id'], mol_db_data['version']
 
         self._sf_df = None
         self._job_id = None
         self._sfs = None
+
+    def __str__(self):
+        return '{} {}'.format(self.name, self.version)
 
     @property
     def id(self):
