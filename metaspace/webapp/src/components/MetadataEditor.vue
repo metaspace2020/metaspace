@@ -397,6 +397,7 @@
    position: absolute;
    right: 5px;
    top: -3px;
+   z-index: 10
  }
 
  #md-editor-submit > button {
