@@ -1,36 +1,34 @@
 ![METASPACE here and now](./assets/METASPACE_banner_blue_bg.jpg)
 
-## METASPACE is an open platform for metabolite imaging mass spectrometry
+## METASPACE provides an open platform for metabolite imaging mass spectrometry
 
 METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data
-and stores the metabolites found in public datasets uploaded by users.
+as well as a spatial metabolite knowledgebase of the metabolites from hundreds of public datasets
+provided by the community.
 
-METASPACE platform is developed by the
-[Alexandrov team at EMBL](http://www.embl.de/research/units/scb/alexandrov/) uniting analytical
-and data scientists and reinforced by software engineers. This work is a part of the
-[European project METASPACE](http://metaspace2020.eu).
+METASPACE platform is developed by software engineers, data scientists and mass spectrometrists
+from the [Alexandrov team at EMBL](http://www.embl.de/research/units/scb/alexandrov/).
+This work is a part of the [European project METASPACE](http://metaspace2020.eu).
 
 ## Open as public space
 
 We do not hide anything. All code is open-source, the input format is the [imzML](http://imzml.org/)
-supported by all mass spec major vendors. If you think we can do something better,
-please [let us know](mailto:contact@metaspace2020.eu).
+supported by all mass spec major vendors, the metabolite annotations from the community datasets are public
+and can be browsed or exported.
 
 ## How can I contribute?
 
 Please read [our publication in Nature Methods](http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html),
 follow us on [Twitter](http://twitter.com/metaspace2020), spread the word, and think of us while doing good deeds :)
 
-Interested to contribute more?
-- Are you a **mass spectrometrist** generating ultra-high resolution imaging mass spectrometry data? Please upload them; you will see, it is worth it
-- Are a **software developer** or **computer scientist**? Check out our [GitHub](https://github.com/METASPACE2020)
-- Are a **data scientist** interested to mine results from METASPACE? Please [contact us](mailto:contact@metaspace2020.eu) (export is around the corner)
+- **Have high-resolution imaging mass spectrometry data**? Please consider uploading them.
+- **Are you a data scientist**? Please feel free to the export the metabolite annotations to mine thousands of metabolites found in hundreds of community-provided datasets.
 
-For all other inquiries, please [contact us over email](mailto:contact@metaspace2020.eu).
 
-## How shall I cite it in a publication?
 
-Please cite our publication [(Palmer et al., 2016, Nature Methods)](http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html),
+## How shall I cite METASPACE in a publication?
+
+Please cite our publication [(Palmer et al., 2016, Nature Methods)](http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html) and refer to [http://annotate.metaspace2020.eu](http://annotate.metaspace2020.eu).
 
 ## Please appreciate those who funded it
 
@@ -46,5 +44,7 @@ Please cite our publication [(Palmer et al., 2016, Nature Methods)](http://www.n
 ## How to stay in touch?
 
 Follow us on [Twitter](http://twitter.com/metaspace2020) or drop a line to [our email](mailto:contact@metaspace2020.eu), we will add you to our special list :)
+
+For all other inquiries or questions, please [contact us over email](mailto:contact@metaspace2020.eu).
 
 Cheers!
