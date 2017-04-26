@@ -75,7 +75,7 @@ function generateProcessingConfig(meta_json) {
   };
 }
 
-function metadataChangeSlackNotify(oldMetadata, newMetadata) {
+function metadataChangeSlackNotify(user, datasetId, oldMetadata, newMetadata) {
   const delta = jsondiffpatch.diff(oldMetadata, newMetadata),
     diff = jsondiffpatch.formatters.jsonpatch.format(delta);
   
@@ -83,7 +83,7 @@ function metadataChangeSlackNotify(oldMetadata, newMetadata) {
   if (slackConn) {
     let oldDSName = oldMetadata.metaspace_options.Dataset_Name || "";
     let msg = slackConn.send({
-      text: `${payload.name} edited metadata of ${oldDSName} (id: ${datasetId})` +
+      text: `${user} edited metadata of ${oldDSName} (id: ${datasetId})` +
       "\nDifferences:\n" + JSON.stringify(diff, null, 2),
       channel: config.slack.channel
     });

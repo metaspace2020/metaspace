@@ -310,7 +310,7 @@ const Resolvers = {
             return pg.select().from('dataset').where('id', '=', datasetId)
               .then(records => {
                 const oldMetadata = records[0].metadata;
-                metadataChangeSlackNotify(oldMetadata, newMetadata);
+                metadataChangeSlackNotify(payload.name, datasetId, oldMetadata, newMetadata);
               });
           })
           .then( () => {
