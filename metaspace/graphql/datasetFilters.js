@@ -76,7 +76,7 @@ class DatasetIdFilter extends AbstractDatasetFilter {
 
   pgFilter(q, ids) {
     ids = ids.split("|");
-    return q.whereIn('dataset.id', ids);
+    return q.whereIn('id', ids);
   }
 }
 
@@ -86,11 +86,23 @@ class JobStatusFilter extends AbstractDatasetFilter {
   }
 
   // esFilter doesn't make sense (always FINISHED)
+
   pgFilter(q, status) {
+    // FIXME: move the logic into baseDatasetQuery?
+    if (status == 'STARTED')
+      return q.whereRaw("status @> ARRAY['STARTED']");
     if (status == 'QUEUED')
-      return q.whereNull('status');
-    else
-      return q.where('status', '=', status);
+      return q.whereRaw("TRUE = ANY (SELECT unnest(status) IS NULL) AND NOT (status @> ARRAY['STARTED'])");
+    if (status == 'FINISHED')
+      return q.whereRaw("(status @> ARRAY['FINISHED']) " +
+                        "AND NOT (status @> ARRAY['STARTED']) " +
+                        "AND TRUE = ALL(SELECT unnest(status) IS NOT NULL)");
+    if (status == 'FAILED')
+      return q.whereRaw("(status @> ARRAY['FAILED']) " +
+                        "AND NOT (status @> ARRAY['FINISHED']) " +
+                        "AND NOT (status @> ARRAY['STARTED']) " +
+                        "AND TRUE = ALL(SELECT unnest(status) IS NOT NULL)");
+    return q;
   }
 }
 

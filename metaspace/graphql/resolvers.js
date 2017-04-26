@@ -44,9 +44,15 @@ function checkPermissions(datasetId, payload) {
 }
 
 function baseDatasetQuery() {
-  return pg.select('dataset.id', 'name', 'status', 'finish', 'metadata', 'config')
-           .from('dataset')
-           .leftOuterJoin('job', 'dataset.id', 'job.ds_id');
+  return pg.from(function() {
+    this.select(pg.raw('dataset.id as id'),
+                'name',
+                pg.raw('max(finish) as last_finished'),
+                pg.raw('array_agg(status) as status'),
+                'metadata', 'config')
+        .from('dataset').leftOuterJoin('job', 'dataset.id', 'job.ds_id')
+        .groupBy('dataset.id').as('tmp');
+  }).select('*');
 }
 
 const Resolvers = {
@@ -68,7 +74,7 @@ const Resolvers = {
     },
 
     dataset(_, { id }) {
-      return baseDatasetQuery().where('dataset.id', '=', id)
+      return baseDatasetQuery().where('id', '=', id)
         .then((data) => {
           return data.length > 0 ? data[0] : null;
         })
@@ -87,13 +93,15 @@ const Resolvers = {
           q = datasetFilters[key].pgFilter(q, val);
       }
 
-      const orderVar = orderBy == 'ORDER_BY_NAME' ? 'name' : 'finish';
+      const orderVar = orderBy == 'ORDER_BY_NAME' ? 'name' : 'last_finished';
       const ord = sortingOrder == 'ASCENDING' ? 'asc' : 'desc';
 
       console.log(q.toString());
+      console.time('pgQuery');
 
       return q.orderBy(orderVar, ord).offset(offset).limit(limit)
-        .catch((err) => { console.log(err); return []; });
+              .then(result => { console.timeEnd('pgQuery'); return result; })
+              .catch((err) => { console.log(err); return []; });
     },
 
     allAnnotations(_, args) {
@@ -164,8 +172,14 @@ const Resolvers = {
 
     status(ds) {
       if (ds.status === undefined)
-        return null;
-      return ds.status || 'QUEUED';
+        return null; // ES records
+      if (ds.status.indexOf('STARTED') >= 0)
+        return 'STARTED';
+      if (ds.status.indexOf(null) >= 0)
+        return 'QUEUED';
+      if (ds.status.indexOf('FAILED') >= 0)
+        return 'FAILED';
+      return 'FINISHED';
     }
 
     /* annotations(ds, args) {
