@@ -72,13 +72,13 @@ def on_job_succeeded(msg):
     if 'Email' in submitter and ds_meta['metaspace_options'].get('notify_submitter', True):
         email_body = (
             'Dear {} {},\n\n'
-            'Thank you for uploading the dataset {} to the METASPACE  annotation service. '
-            'We are pleased to inform you that the dataset has been processed and is available on alpha.metaspace2020.eu.\n\n'
+            'Thank you for uploading dataset {} to the METASPACE annotation service. '
+            'We are pleased to inform you that the dataset has been processed and is available at {}.\n\n'
             'Best regards,\n'
             'METASPACE Team\n\n'
             '---\n'
             'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).'
-        ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name)
+        ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name, msg['web_app_link'])
         send_email(submitter['Email'],
                    'METASPACE service notification (SUCCESS)',
                    email_body)
@@ -93,7 +93,7 @@ def on_job_failed(msg):
     if 'Email' in submitter and ds_meta['metaspace_options'].get('notify_submitter', True):
         email_body = (
             'Dear {} {},\n\n'
-            'Thank you for uploading the dataset "{}" to the METASPACE  annotation service. '
+            'Thank you for uploading dataset "{}" to the METASPACE annotation service. '
             'We are sorry to inform you that there were issues with processing your dataset. '
             'We are already working on it. '
             'In case you have any questions, please do not hesitate to write us at contact@metaspace2020.eu\n\n'
