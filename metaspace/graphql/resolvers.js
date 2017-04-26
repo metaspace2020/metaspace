@@ -4,14 +4,12 @@
 
 const sprintf = require('sprintf-js'),
   fetch = require('node-fetch'),
-  jsondiffpatch = require('jsondiffpatch'),
-  jwt = require('jwt-simple'),
-  slack = require('node-slack');
+  jwt = require('jwt-simple');
 
 const config = require('./config'),
   {esSearchResults, esCountResults, esAnnotationByID} = require('./esConnector'),
   {datasetFilters, dsField, SubstringMatchFilter} = require('./datasetFilters.js'),
-  generateProcessingConfig = require("./utils.js").generateProcessingConfig;
+  {generateProcessingConfig, metadataChangeSlackNotify} = require("./utils.js");
 
 const dbConfig = () => {
   const {host, database, user, password} = config.db;
@@ -44,8 +42,6 @@ function checkPermissions(datasetId, payload) {
         throw new Error("you don't have permissions to edit this dataset");
     });
 }
-
-const slackConn = config.SLACK_WEBHOOK_URL ? new slack(config.slack.webhook_url): null;
 
 function baseDatasetQuery() {
   return pg.select('dataset.id', 'name', 'status', 'finish', 'metadata', 'config')
@@ -310,6 +306,13 @@ const Resolvers = {
         const newMetadata = JSON.parse(metadataJson);
 
         return checkPermissions(datasetId, payload)
+          .then(() => {
+            return pg.select().from('dataset').where('id', '=', datasetId)
+              .then(records => {
+                const oldMetadata = records[0].metadata;
+                metadataChangeSlackNotify(oldMetadata, newMetadata);
+              });
+          })
           .then( () => {
             const body = JSON.stringify({
               metadata: newMetadata,
@@ -318,23 +321,6 @@ const Resolvers = {
             });
             const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/update`;
             return fetch(url, { method: 'POST', body: body });
-          })
-          .then(() => {
-            return pg.select().from('dataset').where('id', '=', datasetId)
-              .then(records => {
-                const oldMetadata = records[0].metadata;
-                const delta = jsondiffpatch.diff(oldMetadata, newMetadata),
-                  diff = jsondiffpatch.formatters.jsonpatch.format(delta);
-
-                // send a Slack notification about the change
-                if (slackConn) {
-                  let msg = slackConn.send({
-                    text: `${payload.name} edited metadata of ${oldDatasetName} (id: ${datasetId})` +
-                    "\nDifferences:\n" + JSON.stringify(diff, null, 2),
-                    channel: config.SLACK_CHANNEL
-                  });
-                }
-              });
           })
           .then(() => "success");
       } catch (e) {

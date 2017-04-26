@@ -1,11 +1,8 @@
-/*
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *                         LEGACY                        *
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *
- * FIXME: the proper way is to completely ditch config.json
- * and use only meta.json as the input to the engine.
- */
+
+const slack = require('node-slack'),
+  jsondiffpatch = require('jsondiffpatch');
+
+const config = require('./config');
 
 const RESOL_POWER_PARAMS = {
     '70K': {sigma: 0.00247585727028, fwhm: 0.00583019832869, pts_per_mz: 2019},
@@ -19,6 +16,7 @@ const RESOL_POWER_PARAMS = {
     '1000K': {sigma: 0.00017331000892, fwhm: 0.000408113883008, pts_per_mz: 28850},
 };
 
+// FIXME: the proper way is to completely ditch config.json and use only meta.json as the input to the engine.
 function generateProcessingConfig(meta_json) {
   const polarity_dict = {'Positive': '+', 'Negative': '-'},
         polarity = polarity_dict[meta_json['MS_Analysis']['Polarity']],
@@ -77,6 +75,22 @@ function generateProcessingConfig(meta_json) {
   };
 }
 
+function metadataChangeSlackNotify(oldMetadata, newMetadata) {
+  const delta = jsondiffpatch.diff(oldMetadata, newMetadata),
+    diff = jsondiffpatch.formatters.jsonpatch.format(delta);
+  
+  const slackConn = config.slack.webhook_url ? new slack(config.slack.webhook_url): null;
+  if (slackConn) {
+    let oldDSName = oldMetadata.metaspace_options.Dataset_Name || "";
+    let msg = slackConn.send({
+      text: `${payload.name} edited metadata of ${oldDSName} (id: ${datasetId})` +
+      "\nDifferences:\n" + JSON.stringify(diff, null, 2),
+      channel: config.slack.channel
+    });
+  }
+}
+
 module.exports = {
-  generateProcessingConfig
+  generateProcessingConfig,
+  metadataChangeSlackNotify
 };
