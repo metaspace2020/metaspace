@@ -67,15 +67,17 @@
     </div>
 
     <div class="ds-actions">
-      <i class="el-icon-picture"></i>
-      <router-link :to="resultsHref" >Browse annotations</router-link>
+      <span v-if="dataset.status == 'FINISHED'">
+        <i class="el-icon-picture"></i>
+        <router-link :to="resultsHref" >Browse annotations</router-link>
+      </span>
       <br/>
 
       <i class="el-icon-view"></i>
       <a @click="showMetadata" class="metadata-link">Show full metadata</a>
       <br/>
 
-      <i class="el-icon-edit" v-if="haveEditAccess"></i>
+      <i class="el-icon-edit" v-if="haveEditAccess && dataset.status != 'STARTED'"></i>
       <router-link v-if="haveEditAccess" :to="editHref">Edit metadata</router-link>
     </div>
   </div>
