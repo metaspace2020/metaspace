@@ -313,7 +313,8 @@ const Resolvers = {
           .then( () => {
             const body = JSON.stringify({
               metadata: newMetadata,
-              config: generateProcessingConfig(newMetadata)
+              config: generateProcessingConfig(newMetadata),
+              name: newMetadata.metaspace_options.Dataset_Name || ""
             });
             const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/update`;
             return fetch(url, { method: 'POST', body: body });
