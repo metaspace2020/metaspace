@@ -59,8 +59,9 @@ const cellHoverOptions = {offsetX: -10, offsetY: 10};
 test('single-click lab filtering works', async t => {
   const labCell = await rows.nth(0).find('td').nth(0);
   const filterIcon = await labCell.find('img').nth(0);
+  await t.hover(labCell, cellHoverOptions);
+  await filterIcon.visible;
   await t
-    .hover(labCell, cellHoverOptions)
     .click(filterIcon)
     .expect(rows.nth(0).find('td').count).eql(5);
 });
@@ -68,8 +69,9 @@ test('single-click lab filtering works', async t => {
 test('single-click dataset filtering works', async t => {
   const datasetCell = await rows.nth(0).find('td').nth(1);
   const filterIcon = await datasetCell.find('img').nth(0);
+  await t.hover(datasetCell, cellHoverOptions);
+  await filterIcon.visible;
   await t
-    .hover(datasetCell, cellHoverOptions)
     .click(filterIcon)
     .expect(rows.nth(0).find('td').count).eql(4);
 });
