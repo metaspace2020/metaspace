@@ -81,8 +81,7 @@ const FILTER_SPECIFICATIONS = {
     levels: ['annotation', 'dataset'],
     initialValue: [],
 
-    // json encoding (for URL) is assumed to be used for objects or arrays only
-    encoding: 'json'
+    encoding: 'list'
   },
 
   minMSM: {

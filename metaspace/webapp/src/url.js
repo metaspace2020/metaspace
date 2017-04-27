@@ -49,12 +49,15 @@ export function encodeParams(filter, path) {
   const level = PATH_TO_LEVEL[path];
   let q = {};
   for (var key in FILTER_TO_URL) {
-    if (FILTER_SPECIFICATIONS[key].levels.indexOf(level) == -1)
+    const {levels, encoding} = FILTER_SPECIFICATIONS[key];
+    if (levels.indexOf(level) == -1)
       continue;
 
     if (filter[key] != DEFAULT_FILTER[key]) {
-      if (FILTER_SPECIFICATIONS[key].encoding == 'json')
+      if (encoding == 'json')
         q[FILTER_TO_URL[key]] = JSON.stringify(filter[key]) || null;
+      else if (encoding == 'list')
+        q[FILTER_TO_URL[key]] = filter[key].join(',');
       else
         q[FILTER_TO_URL[key]] = filter[key] || null;
     }
@@ -85,16 +88,20 @@ export function decodeParams({query, path}) {
     if (!fKey)
       continue; // skip params unrelated to filtering
 
-    if (FILTER_SPECIFICATIONS[fKey].levels.indexOf(level) == -1)
+    const {levels, encoding} = FILTER_SPECIFICATIONS[fKey];
+
+    if (levels.indexOf(level) == -1)
       continue;
 
-    if (FILTER_SPECIFICATIONS[fKey].encoding == 'json') {
+    if (encoding == 'json') {
       if ('[{'.indexOf(query[key][0]) == -1) {
         // assume non-JSON means array of one element
         filter[fKey] = [query[key]];
       } else {
         filter[fKey] = JSON.parse(query[key]);
       }
+    } else if (encoding == 'list') {
+      filter[fKey] = query[key].split(',');
     } else {
       filter[fKey] = query[key];
     }
