@@ -97,7 +97,7 @@ function constructAnnotationQuery(args) {
 
   if (compoundQuery)
     addFilter({bool: {should: [
-      { wildcard: {comp_names: `*${compoundQuery}*`}},
+      { wildcard: {comp_names: `*${compoundQuery.toLowerCase()}*`}},
       { term: {sf: compoundQuery }}]}});
 
   for (var key in datasetFilters) {
