@@ -7,17 +7,6 @@
       </dataset-info>
     </el-dialog>
 
-    <div class="ds-status">
-      <i class="el-icon-loading" v-if="dataset.status == 'QUEUED'"
-         style="color: blue;" />
-      <i class="el-icon-circle-check" v-if="dataset.status == 'FINISHED'"
-         style="color: green;" />
-      <i class="el-icon-warning" v-if="dataset.status == 'FAILED'"
-         style="color: red;" />
-      <i class="el-icon-loading" v-if="dataset.status == 'STARTED'"
-         style="color: darkgreen;"/>
-    </div>
-
     <div class="ds-info">
       <div>
         <b>{{ formatDatasetName }}</b>
@@ -70,8 +59,16 @@
       <span v-if="dataset.status == 'FINISHED'">
         <i class="el-icon-picture"></i>
         <router-link :to="resultsHref" >Browse annotations</router-link>
+        <br/>
       </span>
-      <br/>
+
+      <span v-if="dataset.status == 'STARTED'">
+        <div class="striped-progressbar processing" title="Processing is under way"></div>
+      </span>
+
+      <span v-if="dataset.status == 'QUEUED'">
+        <div class="striped-progressbar queued" title="Waiting in the queue"></div>
+      </span>
 
       <i class="el-icon-view"></i>
       <a @click="showMetadata" class="metadata-link">Show full metadata</a>
@@ -101,7 +98,7 @@
      resultsHref() {
        return {
          path: '/annotations',
-         query: {ds: JSON.stringify([this.dataset.id]), db: this.preferredDatabase}
+         query: {ds: this.dataset.id, db: this.preferredDatabase}
        };
      },
 
@@ -240,9 +237,8 @@
  }
 
  .ds-actions {
-   padding: 10px 0px 10px 0px;
+   padding: 10px 15px 10px 0px;
    margin: 0px;
-   width: 25%;
  }
 
  .metadata-link {
@@ -260,6 +256,32 @@
 
  .ds-add-filter {
    cursor: pointer;
+ }
+
+ .striped-progressbar {
+   height: 12px;
+   border-radius: 2px;
+   margin-bottom: 3px;
+   width: 100%;
+   background-size: 30px 30px;
+   background-image: linear-gradient(135deg,
+     rgba(255, 255, 255, .30) 25%, transparent 25%, transparent 50%,
+     rgba(255, 255, 255, .30) 50%,
+     rgba(255, 255, 255, .30) 75%, transparent 75%, transparent);
+
+   animation: animate-stripes 3s linear infinite;
+ }
+
+ @keyframes animate-stripes {
+   0% {background-position: 0 0;} 100% {background-position: 60px 0;}
+ }
+
+ .processing {
+   background-color: lightgreen;
+ }
+
+ .queued {
+   background-color: lightblue;
  }
 
 </style>
