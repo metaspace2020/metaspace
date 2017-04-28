@@ -72,10 +72,11 @@
 
       <i class="el-icon-view"></i>
       <a @click="showMetadata" class="metadata-link">Show full metadata</a>
-      <br/>
 
-      <i class="el-icon-edit" v-if="haveEditAccess && dataset.status != 'STARTED'"></i>
-      <router-link v-if="haveEditAccess" :to="editHref">Edit metadata</router-link>
+      <div v-if="haveEditAccess && dataset.status != 'STARTED'">
+        <i class="el-icon-edit"></i>
+        <router-link :to="editHref">Edit metadata</router-link>
+      </div>
     </div>
   </div>
 </template>
