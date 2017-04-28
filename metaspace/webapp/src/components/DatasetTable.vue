@@ -5,8 +5,8 @@
         <filter-panel level="dataset"></filter-panel>
 
         <el-checkbox-group v-model="categories" :min=1 style="padding: 4px;">
-          <el-checkbox label="started">Processing {{ count('started') }}</el-checkbox>
-          <el-checkbox label="queued">Queued {{ count('queued') }}</el-checkbox>
+          <el-checkbox class="cb-started" label="started">Processing {{ count('started') }}</el-checkbox>
+          <el-checkbox class="cb-queued" label="queued">Queued {{ count('queued') }}</el-checkbox>
           <el-checkbox label="finished">Finished</el-checkbox>
         </el-checkbox-group>
 
@@ -176,5 +176,13 @@
    flex-direction: row;
    flex-wrap: wrap;
    align-items: center;
+ }
+
+ .cb-started .el-checkbox__input.is-checked .el-checkbox__inner {
+   background: #5eed5e;
+ }
+
+ .cb-queued .el-checkbox__input.is-checked .el-checkbox__inner {
+   background: #72c8e5;
  }
 </style>
