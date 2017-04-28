@@ -175,6 +175,8 @@ type Query {
                  filter: AnnotationFilter = {database: "HMDB"},
                  datasetFilter: DatasetFilter = {}): [Annotation]
 
+  countDatasets(filter: DatasetFilter = {}): Int!
+
   countAnnotations(filter: AnnotationFilter = {database: "HMDB"},
                    datasetFilter: DatasetFilter = {}): Int!
 

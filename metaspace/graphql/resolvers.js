@@ -52,7 +52,7 @@ function baseDatasetQuery() {
                 'metadata', 'config')
         .from('dataset').leftOuterJoin('job', 'dataset.id', 'job.ds_id')
         .groupBy('dataset.id').as('tmp');
-  }).select('*');
+  });
 }
 
 const Resolvers = {
@@ -64,7 +64,7 @@ const Resolvers = {
 
   Query: {
     datasetByName(_, { name }) {
-      return baseDatasetQuery().where('name', '=', name)
+      return baseDatasetQuery().select('*').where('name', '=', name)
         .then((data) => {
           return data.length > 0 ? data[0] : null;
         })
@@ -74,7 +74,7 @@ const Resolvers = {
     },
 
     dataset(_, { id }) {
-      return baseDatasetQuery().where('id', '=', id)
+      return baseDatasetQuery().select('*').where('id', '=', id)
         .then((data) => {
           return data.length > 0 ? data[0] : null;
         })
@@ -99,13 +99,25 @@ const Resolvers = {
       console.log(q.toString());
       console.time('pgQuery');
 
-      return q.orderBy(orderVar, ord).offset(offset).limit(limit)
+      return q.orderBy(orderVar, ord).offset(offset).limit(limit).select('*')
               .then(result => { console.timeEnd('pgQuery'); return result; })
               .catch((err) => { console.log(err); return []; });
     },
 
     allAnnotations(_, args) {
       return esSearchResults(args);
+    },
+
+    countDatasets(_, {filter}) {
+      let q = baseDatasetQuery();
+      for (var key in datasetFilters) {
+        const val = filter[key];
+        if (val)
+          q = datasetFilters[key].pgFilter(q, val);
+      }
+      return q.count('id')
+              .then(result => parseInt(result[0].count))
+              .catch((err) => { console.log(err); return 0; });
     },
 
     countAnnotations(_, args) {
