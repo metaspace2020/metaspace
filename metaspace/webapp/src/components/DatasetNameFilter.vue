@@ -134,7 +134,8 @@
        }
 
        // take current dataset filter from the store and adjust it
-       const df = Object.assign({name: query}, this.$store.getters.gqlDatasetFilter);
+       const df = Object.assign({name: query, status: 'FINISHED'},
+                                this.$store.getters.gqlDatasetFilter);
        delete df.ids;
 
        this.$apollo.query({

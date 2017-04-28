@@ -79,7 +79,7 @@ const FILTER_SPECIFICATIONS = {
     name: 'Dataset',
     description: 'Select dataset',
     levels: ['annotation', 'dataset'],
-    initialValue: [],
+    initialValue: undefined,
 
     encoding: 'list'
   },
