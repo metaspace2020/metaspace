@@ -65,6 +65,9 @@ CREATE TABLE iso_image_metrics (
 	CONSTRAINT iso_image_metrics_id_pk PRIMARY KEY(job_id, db_id, sf_id, adduct),
 	CONSTRAINT iso_image_metrics_job_id_fk FOREIGN KEY (job_id)
       REFERENCES job (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE,
+	CONSTRAINT iso_image_metrics_sum_formula_id_fk FOREIGN KEY (sf_id)
+      REFERENCES sum_formula(id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE
 )
 WITH (

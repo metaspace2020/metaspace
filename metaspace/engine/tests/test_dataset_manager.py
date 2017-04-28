@@ -50,6 +50,8 @@ def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServi
                   rows=[('ds_id', 'ds_name', 'input_path', '{}', '{}')])
         db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
                   rows=[(0, 0, 'ds_id')])
+        db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
+                  rows=[(1, 0, 'H20')])
         db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, ion_image_url, iso_image_urls) "
                    "VALUES (%s, %s, %s, %s, %s, %s)"),
                   rows=[(0, 0, 1, '+H', 'ion_image_url', ['iso_image_url_0'])])
@@ -166,6 +168,8 @@ def test_dataset_manager_delete_ds_works(WorkDirManagerMock, ImageStoreServiceWr
                   rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', '{"config": 0}')])
         db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
                   rows=[(0, 0, 'ds_id')])
+        db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
+                  rows=[(1, 0, 'H20')])
         db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, ion_image_url, iso_image_urls) "
                    "VALUES (%s, %s, %s, %s, %s, %s)"),
                   rows=[(0, 0, 1, '+H', 'ion_image_url', ['iso_image_url_0'])])
