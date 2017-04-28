@@ -7,7 +7,7 @@
         <el-checkbox-group v-model="categories" :min=1 style="padding: 4px;">
           <el-checkbox class="cb-started" label="started">Processing {{ count('started') }}</el-checkbox>
           <el-checkbox class="cb-queued" label="queued">Queued {{ count('queued') }}</el-checkbox>
-          <el-checkbox label="finished">Finished</el-checkbox>
+          <el-checkbox label="finished">Finished {{ count('finished') }}</el-checkbox>
         </el-checkbox-group>
 
         <div v-if="noFilters"
@@ -38,7 +38,7 @@
 </template>
 
 <script>
- import {datasetListQuery} from '../api/dataset';
+ import {datasetListQuery, datasetCountQuery} from '../api/dataset';
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
 
@@ -82,9 +82,7 @@
    apollo: {
      started: {
        query: datasetListQuery,
-       update(data) {
-         return data.allDatasets;
-       },
+       update: data => data.allDatasets,
        variables () {
          return {
            dFilter: Object.assign({status: 'STARTED'},
@@ -96,9 +94,7 @@
 
      queued: {
        query: datasetListQuery,
-       update(data) {
-         return data.allDatasets;
-       },
+       update: data => data.allDatasets,
        variables () {
          return {
            dFilter: Object.assign({status: 'QUEUED'},
@@ -110,9 +106,19 @@
 
      finished: {
        query: datasetListQuery,
-       update(data) {
-         return data.allDatasets;
+       update: data => data.allDatasets,
+       variables () {
+         return {
+           dFilter: Object.assign({status: 'FINISHED'},
+                                  this.$store.getters.gqlDatasetFilter)
+         }
        },
+       pollInterval: 30000
+     },
+
+     finishedCount: {
+       query: datasetCountQuery,
+       update: data => data.countDatasets,
        variables () {
          return {
            dFilter: Object.assign({status: 'FINISHED'},
@@ -122,6 +128,7 @@
        pollInterval: 30000
      }
    },
+
    methods: {
      formatSubmitter: (row, col) =>
        row.submitter.name + " " + row.submitter.surname,
@@ -131,6 +138,8 @@
        (row.analyzer.resolvingPower / 1000).toFixed(0) * 1000,
 
      count(stage) {
+       if (stage == 'finished')
+         return this.finishedCount ? '(' + this.finishedCount + ')' : '';
        if (!this[stage])
          return '';
        return '(' + this[stage].length + ')';

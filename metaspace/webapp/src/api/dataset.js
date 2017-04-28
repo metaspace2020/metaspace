@@ -25,6 +25,11 @@ export const datasetListQuery =
     }
   }`;
 
+export const datasetCountQuery =
+  gql`query CountDatasets($dFilter: DatasetFilter) {
+    countDatasets(filter: $dFilter)
+  }`;
+
 export const submitDatasetQuery =
   gql`mutation ($jwt: String!, $path: String!, $value: String!) {
     submitDataset(jwt: $jwt, path: $path, metadataJson: $value)
