@@ -130,7 +130,8 @@ const FILTER_SPECIFICATIONS = {
     options: [0.05, 0.1, 0.2, 0.5],
     optionFormatter: formatFDR,
     valueFormatter: formatFDR,
-    filterable: false
+    filterable: false,
+    removable: false
   },
 
   institution: {

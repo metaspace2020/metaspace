@@ -6,4 +6,4 @@ placement: bottom
 
 Click on the <i class="el-icon-circle-close"></i> icon to disable the filter.
 
-(Database selection is required, so you can't remove it.)
+(Database and FDR level selection are required, so you can't remove these.)
