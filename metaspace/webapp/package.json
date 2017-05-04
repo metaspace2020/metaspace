@@ -39,7 +39,6 @@
     "passwordless": "^1.1.2",
     "passwordless-redisstore-bcryptjs": "0.0.2",
     "pg": "^6.1.2",
-    "plotly.js": "^1.22.0",
     "popper.js": "1.0.8",
     "serve-favicon": "^2.3.2",
     "simple-statistics": "^3.0.0",
