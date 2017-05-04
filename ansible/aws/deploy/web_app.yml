@@ -4,21 +4,8 @@
   user: ubuntu
   hosts: web
 
-  vars:
-    port: "{{ sm_webapp_port }}"
-    cookie_secret: "{{ sm_webapp_cookie_secret }}"
-    jwt_secret: "{{ sm_graphql_jwt_secret }}"
-    admin_emails: "{{ sm_webapp_admin_emails }}"
-    aws_access_key_id: "{{ sm_webapp_aws_access_key_id }}"
-    aws_secret_access_key: "{{ sm_webapp_aws_secret_access_key }}"
-    s3_bucket: "{{ sm_webapp_s3_bucket }}"
-    graphql_url: "{{ sm_graphql_public_url }}"
-    hostname: "{{ sm_webapp_hostname }}"
-    google_client_id: "{{ sm_webapp_google_client_id }}"
-    google_client_secret: "{{ sm_webapp_google_client_secret }}"
-    google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
-    redis_host: localhost
-    redis_port: 6379
+  vars_files:
+    - ../vars/web_app.yml
 
   tasks:
     - name: Clone sm-web-app git repository
