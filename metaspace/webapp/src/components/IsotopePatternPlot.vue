@@ -6,8 +6,14 @@
 <script>
  import fetch from 'isomorphic-fetch';
 
- import * as d3 from 'd3';
+ import {extent, max, zip} from 'd3-array';
+ import {axisBottom, axisLeft} from 'd3-axis';
+ import {brushX} from 'd3-brush';
+ import {scaleLinear, scaleOrdinal} from 'd3-scale';
+ import {select, selectAll, attr, event} from 'd3-selection';
+ import {line} from 'd3-shape';
  import {legendColor} from 'd3-svg-legend';
+ import {transition, duration} from 'd3-transition';
 
  function plotChart(data, element) {
    if (!element) return;
@@ -19,28 +25,28 @@
 
    const ppm = data.ppm;
 
-   d3.select(element).select('svg').remove();
+   select(element).select('svg').remove();
 
    const margin = {top: 10, right: 5, bottom: 80, left: 40},
          width = element.clientWidth - margin.left - margin.right,
          height = element.clientHeight - margin.top - margin.bottom;
-   const [minMz, maxMz] = d3.extent(sampleData['mzs']),
+   const [minMz, maxMz] = extent(sampleData['mzs']),
          xDomain = [minMz - 0.1, maxMz + 0.1],
          yDomain = [0, 100];
-   let xScale = d3.scaleLinear().range([0, width]).domain(xDomain);
-   let yScale = d3.scaleLinear().range([height, 0]).domain(yDomain);
+   let xScale = scaleLinear().range([0, width]).domain(xDomain);
+   let yScale = scaleLinear().range([height, 0]).domain(yDomain);
 
-   let xAxis = d3.axisBottom(xScale).ticks(5);
-   let yAxis = d3.axisLeft(yScale).ticks(5).tickPadding(5);
+   let xAxis = axisBottom(xScale).ticks(5);
+   let yAxis = axisLeft(yScale).ticks(5).tickPadding(5);
 
-   let points = d3.zip(sampleData['mzs'], sampleData['ints']);
-   let theorPoints = d3.zip(data.theor.mzs, data.theor.ints);
+   let points = zip(sampleData['mzs'], sampleData['ints']);
+   let theorPoints = zip(data.theor.mzs, data.theor.ints);
 
    const dblClickTimeout = 400; // milliseconds
    let idleTimeout;
 
    function brushHandler() {
-     const s = d3.event.selection;
+     const s = event.selection;
 
      if (!s) { // click event
        if (!idleTimeout) // not double click => wait for the second click
@@ -57,11 +63,11 @@
            .filter(d => d[0] >= mzRange[0] && d[0] <= mzRange[1])
            .map(d => d[1]);
          if (intensities.length > 0)
-           return d3.max(intensities);
+           return max(intensities);
          return 0;
        }
 
-       const intensityRange = [0, d3.max([calcMaxIntensity(points),
+       const intensityRange = [0, max([calcMaxIntensity(points),
                                           calcMaxIntensity(theorPoints)])];
        xScale.domain(mzRange);
        yScale.domain(intensityRange);
@@ -75,7 +81,7 @@
      update(t);
    }
 
-   let container = d3.select(element).append('svg')
+   let container = select(element).append('svg')
                      .attr('width', width + margin.left + margin.right)
                      .attr('height', height + margin.top + margin.bottom);
 
@@ -129,10 +135,10 @@
      .attr('transform',
            `translate(${margin.left + width / 2 - legendItemWidth - 10}, ${height + margin.top + 50})`);
 
-   let brush = d3.brushX().extent([[0, 0], [width, height]]).on('end', brushHandler);
+   let brush = brushX().extent([[0, 0], [width, height]]).on('end', brushHandler);
    let brushLayer = svg.append('g').call(brush);
 
-   const types = d3.scaleOrdinal()
+   const types = scaleOrdinal()
                    .domain(['Sample', 'Theoretical'])
                    .range(['red', 'blue']);
 
@@ -160,8 +166,8 @@
      l.attr('x1', d => xScale(d[0])).attr('x2', d => xScale(d[0]))
       .attr('y1', d => yScale(d[1])).attr('y2', d => yScale(0));
 
-     const line =  d3.line().x(d => xScale(d[0])).y(d => yScale(d[1]));
-     gr.attr('d', line(theorPoints));
+     const drawPath =  line().x(d => xScale(d[0])).y(d => yScale(d[1]));
+     gr.attr('d', drawPath(theorPoints));
    }
 
    update();
