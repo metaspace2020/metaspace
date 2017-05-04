@@ -45,7 +45,7 @@
     "simple-statistics": "^3.0.0",
     "sqlite3": "^3.1.8",
     "uuid": "^3.0.1",
-    "vue": "^2.2.6",
+    "vue": "~2.2.6",
     "vue-apollo": "1.4.0",
     "vue-clickaway": "^2.1.0",
     "vue-lazyload": "^1.0.0-rc5",
