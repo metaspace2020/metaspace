@@ -101,7 +101,7 @@ export function decodeParams({query, path}) {
         filter[fKey] = JSON.parse(query[key]);
       }
     } else if (encoding == 'list') {
-      filter[fKey] = query[key].split(',');
+      filter[fKey] = query[key] ? query[key].split(',') : [];
     } else {
       filter[fKey] = query[key];
     }
