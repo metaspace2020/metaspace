@@ -1,6 +1,6 @@
 import FILTER_SPECIFICATIONS from './filterSpecs.js';
 
-import { invert } from 'lodash';
+import invert from 'lodash/invert';
 
 export const DEFAULT_FILTER = {
   database: 'HMDB',
