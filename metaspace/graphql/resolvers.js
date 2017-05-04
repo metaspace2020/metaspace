@@ -333,22 +333,24 @@ const Resolvers = {
 
         return checkPermissions(datasetId, payload)
           .then(() => {
-            return pg.select().from('dataset').where('id', '=', datasetId)
-              .then(records => {
-                const oldMetadata = records[0].metadata;
-                metadataChangeSlackNotify(payload.name, datasetId, oldMetadata, newMetadata);
-              });
-          })
-          .then( () => {
             const body = JSON.stringify({
               metadata: newMetadata,
               config: generateProcessingConfig(newMetadata),
               name: newMetadata.metaspace_options.Dataset_Name || ""
             });
+
+            // perform ES re-indexing in the background
             const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/update`;
-            return fetch(url, { method: 'POST', body: body });
-          })
-          .then(() => "success");
+            fetch(url, { method: 'POST', body: body })
+              .catch(err => console.log(`metadata update error: ${err}`));
+
+            return pg.select().from('dataset').where('id', '=', datasetId)
+              .then(records => {
+                const oldMetadata = records[0].metadata;
+                metadataChangeSlackNotify(payload.name, datasetId, oldMetadata, newMetadata);
+              })
+              .then(() => "success");
+          });
       } catch (e) {
         console.log(e);
         return e.message;
