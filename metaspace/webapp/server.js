@@ -92,7 +92,10 @@ passport.serializeUser(function(user, done) {
 passport.deserializeUser(function(id, done) {
   Users().where('id', '=', id).first()
          .then(user => done(null, user))
-         .catch(err => done(err, null));
+         .catch(err => {
+           console.log(err);
+           done(null, false);
+         });
 });
 
 var plRedisStore = require('passwordless-redisstore-bcryptjs');
