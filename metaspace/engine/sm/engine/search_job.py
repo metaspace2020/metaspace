@@ -115,7 +115,7 @@ class SearchJob(object):
             self._es.index_ds(self.ds_id, mol_db)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
-            new_msg = 'Job failed (MolDB: ): {}'.format(mol_db, e)
+            new_msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, e)
             raise Exception(new_msg), None, sys.exc_info()[2]
         else:
             self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
