@@ -80,7 +80,7 @@
        }).catch(err => {
          console.log(err.message);
          this.$message({
-           message: 'Metadata submission failed :( Contact us: alexandrov-group@embl.de',
+           message: 'Metadata submission failed :( Contact us: contact@metaspace2020.eu',
            type: 'error',
            duration: 0,
            showClose: true
