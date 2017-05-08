@@ -54,12 +54,10 @@ test('there are 6 columns initially', async t => {
   await t.expect(firstRow.find('td').count).eql(6);
 });
 
-const cellHoverOptions = {offsetX: -50, offsetY: 20};
-
 test('single-click lab filtering works', async t => {
   const labCell = await rows.nth(0).find('td').nth(0);
   const filterIcon = await labCell.find('img').nth(0);
-  await t.hover(labCell, cellHoverOptions);
+  await t.hover(labCell);
   await filterIcon.visible;
   await t
     .click(filterIcon)
@@ -69,7 +67,7 @@ test('single-click lab filtering works', async t => {
 test('single-click dataset filtering works', async t => {
   const datasetCell = await rows.nth(0).find('td').nth(1);
   const filterIcon = await datasetCell.find('img').nth(0);
-  await t.hover(datasetCell, cellHoverOptions);
+  await t.hover(datasetCell);
   await filterIcon.visible;
   await t
     .click(filterIcon)
@@ -94,7 +92,7 @@ test('sorting works', async t => {
 test('user can add molecule filter after dataset filter', async t => {
   const datasetCell = await rows.nth(0).find('td').nth(1);
   const filterIcon = await datasetCell.find('img').nth(0);
-  await t.hover(datasetCell, cellHoverOptions).click(filterIcon);
+  await t.hover(datasetCell).click(filterIcon);
 
   await t.click(filterPanel.find('.el-select'));
   await t.click(new Selector('.el-select-dropdown__item span').withText('Search molecule'));
