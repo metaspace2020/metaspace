@@ -54,7 +54,7 @@ test('there are 6 columns initially', async t => {
   await t.expect(firstRow.find('td').count).eql(6);
 });
 
-const cellHoverOptions = {offsetX: -10, offsetY: 10};
+const cellHoverOptions = {offsetX: -50, offsetY: 20};
 
 test('single-click lab filtering works', async t => {
   const labCell = await rows.nth(0).find('td').nth(0);
