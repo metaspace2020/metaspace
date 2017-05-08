@@ -66,7 +66,7 @@ type Dataset {
 
 type CompoundInfoEntry {
   database: String!
-  url: String!
+  url: String
 }
 
 type Compound {
@@ -172,12 +172,12 @@ type Query {
   allAnnotations(orderBy: AnnotationOrderBy = ORDER_BY_MSM,
                  sortingOrder: SortingOrder = DESCENDING,
                  offset: Int = 0, limit: Int = 10,
-                 filter: AnnotationFilter = {database: "HMDB"},
+                 filter: AnnotationFilter = {},
                  datasetFilter: DatasetFilter = {}): [Annotation]
 
   countDatasets(filter: DatasetFilter = {}): Int!
 
-  countAnnotations(filter: AnnotationFilter = {database: "HMDB"},
+  countAnnotations(filter: AnnotationFilter = {},
                    datasetFilter: DatasetFilter = {}): Int!
 
   annotation(id: String!): Annotation

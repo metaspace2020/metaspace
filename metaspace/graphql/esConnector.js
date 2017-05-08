@@ -1,6 +1,7 @@
 /**
  * Created by intsco on 1/11/17.
  */
+const ES_LIMIT_MAX = 50000;
 
 const elasticsearch = require('elasticsearch'),
   sprintf = require('sprintf-js');
@@ -55,14 +56,16 @@ function constructAnnotationQuery(args) {
   var body = {
     query: {
       bool: {
-        filter: [
-          {term: {db_name: database}}
-        ]
+        filter: []
       }
     },
     sort: esSort(orderBy, sortingOrder)
   };
-
+  
+  if (database) {
+    addFilter({term: {db_name: database}});
+  }
+  
   function addFilter(filter) {
     body.query.bool.filter.push(filter);
   }
@@ -110,6 +113,10 @@ function constructAnnotationQuery(args) {
 }
 
 module.exports.esSearchResults = function(args) {
+  if (args.limit > ES_LIMIT_MAX) {
+    return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
+  }
+  
   const body = constructAnnotationQuery(args);
   const request = {
     body,
@@ -119,12 +126,13 @@ module.exports.esSearchResults = function(args) {
   };
   console.log(JSON.stringify(body));
   console.time('esQuery');
+  
   return es.search(request).then((resp) => {
     console.timeEnd('esQuery');
     return resp.hits.hits;
-  }).catch((err) => {
-    console.log(err);
-    return [];
+  }).catch((e) => {
+    console.log(e);
+    return e.message;
   });
 };
 
