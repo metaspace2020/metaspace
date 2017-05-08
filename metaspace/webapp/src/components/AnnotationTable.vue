@@ -492,7 +492,7 @@
        v.limit = chunkSize;
 
        function runExport() {
-         const variables = Object.assign({offset}, v);
+         const variables = Object.assign(v, {offset});
          self.$apollo.query({query: tableExportQuery, variables})
              .then(resp => {
            self.exportProgress = offset / self.totalCount;
