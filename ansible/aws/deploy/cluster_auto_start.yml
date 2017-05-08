@@ -16,6 +16,14 @@
         update: yes
         version: "{{ sm_ansible_branch }}"
 
+    - name: Upload local files
+      synchronize:
+        src: "{{ sm_ansible_home }}
+        dest: "{{ sm_ansible_home }}
+      with_items:
+        - sm
+      when: local_deploy is defined
+
     - name: Upload templated group_vars/all.yml
       template: src=../{{ stage }}/group_vars/all.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all.yml
                 owner=ubuntu group=ubuntu mode=0600

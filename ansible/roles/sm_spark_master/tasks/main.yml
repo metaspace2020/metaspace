@@ -22,6 +22,9 @@
     repo: "https://github.com/SpatialMetabolomics/sm-engine.git"
     update: yes
     version: "{{ sm_branch }}"
+    force: yes
+  register: git_deploy
+  until: git_deploy | succeeded
 
 - name: Create /opt/data/sm_data directory
   file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
