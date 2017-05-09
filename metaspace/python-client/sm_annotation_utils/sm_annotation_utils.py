@@ -19,7 +19,7 @@ order by img.peak
 """
 def ion(r):
     from pyMSpec.pyisocalc.tools import normalise_sf
-    return (r.ds_id[0], normalise_sf(r.sf[0]), r.adduct[0], 1)
+    return (r.ds_id, normalise_sf(r.sf), r.adduct, 1)
 
 class IsotopeImages(object):
     def __init__(self, images, sf, adduct, centroids):
@@ -99,7 +99,7 @@ class SMDataset(object):
 
     def results(self):
         fields = ['sf', 'adduct', 'fdr', 'msm', 'chaos', 'image_corr', 'pattern_match']
-        response = self._es_query.fields(fields).scan()
+        response = self._es_query.source(fields).scan()
         return pd.DataFrame([(r.sf[0], r.adduct[0], r.msm[0], r.chaos[0], r.image_corr[0], r.pattern_match[0]) for r in response],
                             columns=['sf', 'adduct', 'msm', 'moc', 'spat', 'spec'])\
                  .set_index(['sf', 'adduct'])
@@ -138,7 +138,8 @@ class SMDataset(object):
             database = self.database()
         self._db_cursor.execute(ISO_IMG_SEL, [self._name, sf, adduct, database])
         db_rows = list(self._db_cursor.fetchall())
-        assert len(db_rows) > 0
+        if not len(db_rows) > 0:
+            return None
 
         def span(axis):
             return axis['max'] - axis['min'] + 1
@@ -170,7 +171,9 @@ class SMInstance(object):
         self._es_host = config['elasticsearch']['host']
         self._es_port = config['elasticsearch']['port']
         self._es_index = config['elasticsearch']['index']
-        self._es_client = Elasticsearch(hosts=['{}:{}'.format(self._es_host, self._es_port)], index=self._es_index)
+        self._es_user = config['elasticsearch']['user'] or ''
+        self._es_secret = config['elasticsearch']['password'] or ''
+        self._es_client = Elasticsearch(hosts=['{}:{}'.format(self._es_host, self._es_port), ], http_auth=(self._es_user, self._es_secret), index=self._es_index)
 
         self._config = config
         self._db_host = config['db']['host']
@@ -189,8 +192,11 @@ class SMInstance(object):
         return "SMInstance(DB {}/{}, ES {}/{})".format(self._db_host, self._db_database,
                                                        self._es_host, self._es_index)
 
-    def dataset(self, dataset_name):
-        query = "select id from dataset where name = '{}'".format(dataset_name)
+    def dataset(self, dataset_name=None, dataset_id=None):
+        if dataset_name:
+            query = "select id from dataset where name = '{}'".format(dataset_name)
+        if dataset_id:
+            query = "select id from dataset where id = '{}'".format(dataset_id)
         self._db_cur.execute(query)
         dataset_id = self._db_cur.fetchone()[0]
         return SMDataset(dataset_id, self._db_cur, self._es_client, index_name=self._es_index)
@@ -248,7 +254,7 @@ class SMInstance(object):
             .filter('terms', ds_name=[d.name for d in datasets])\
             .filter('terms', sf_adduct=[x[0] + x[1] for x in sf_adduct_pairs])\
             .filter('term', db_name=db_name)\
-            .fields(['sf', 'adduct', 'ds_name'] + fields)
+            .source(['sf', 'adduct', 'ds_name'] + fields)
         results = list(s.scan())
         d = {}
         for f in fields:
@@ -267,7 +273,7 @@ class SMInstance(object):
         df.index = [d.name for d in datasets]
         return df
 
-    def get_annotations(self, fdr=0.1, db_name='HMDB', timeout='240s'):
+    def get_annotations(self, fdr=0.1, db_name='HMDB', timeout='100s'):
         """
         Returns a table of booleans indicating which ions were annotated in a particular dataset at the specified fdr
         Known issue: only returns datasets with some anntotation at the given FDR level. Use in conjunction with get_metadata() to get a full dataset list
@@ -275,10 +281,11 @@ class SMInstance(object):
         :param db_name: database to search against
         :return: pandas dataframe index=dataset ids, columns(multindex) adduct / molecular formula
         """
-        s = Search(using=self._es_client, index=self._es_index).params(timeout=timeout)\
+        s = Search(using=self._es_client, index=self._es_index).params(timeout=timeout, request_timeout=30)\
                     .filter('term', db_name=db_name)\
                     .filter("range", **{'fdr': {'to': fdr}})\
-                    .fields(['sf', 'adduct', 'ds_id', ''])[:2147483647]
+                    .source(['sf', 'adduct', 'ds_name', 'ds_id'])[:2147483647]
+
         results = list(s.execute())
         annotations = pd.DataFrame.pivot_table(
             pd.DataFrame.from_records([ion(r) for r in results]), index=0, columns=[2, 1], values=3) \
