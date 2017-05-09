@@ -459,7 +459,7 @@
                 rhoSpatial, rhoSpectral, rhoChaos, fdrLevel} = row;
          return [
            row.dataset.institution, row.dataset.name,
-           sumFormula, quoted(adduct), mz,
+           sumFormula, quoted("M" + adduct), mz,
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
            quoted(row.possibleCompounds.map(m => m.name).join(', '))
          ].join(',');
