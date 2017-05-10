@@ -8,6 +8,7 @@ const elasticsearch = require('elasticsearch'),
 
 const config = require('./config.js'),
   {datasetFilters, dsField} = require('./datasetFilters.js');
+  logger = require('./utils').logger;
 
 const esConfig = () => {
   return {
@@ -124,14 +125,14 @@ module.exports.esSearchResults = function(args) {
     from: args.offset,
     size: args.limit
   };
-  console.log(JSON.stringify(body));
+  logger.info(JSON.stringify(body));
   console.time('esQuery');
   
   return es.search(request).then((resp) => {
     console.timeEnd('esQuery');
     return resp.hits.hits;
   }).catch((e) => {
-    console.log(e);
+    logger.error(e);
     return e.message;
   });
 };
@@ -141,9 +142,9 @@ module.exports.esCountResults = function(args) {
   const request = { body, index: esIndex };
   return es.count(request).then((resp) => {
     return resp.count;
-  }).catch((err) => {
-    console.log(err);
-    return 0;
+  }).catch((e) => {
+    logger.error(e);
+    return e.message;
   });
 };
 
@@ -151,8 +152,8 @@ module.exports.esAnnotationByID = function(id) {
   return es.get({index: esIndex, type: 'annotation', id})
     .then((resp) => {
       return resp;
-    }).catch((err) => {
-      console.log(err);
+    }).catch((e) => {
+      logger.error(e);
       return null;
     });
 };

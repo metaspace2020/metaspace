@@ -16,10 +16,7 @@ const bodyParser = require('body-parser'),
   readFile = require('fs').readFile,
   slack = require('node-slack'),
   sprintf = require('sprintf-js'),
-  utils = require('./utils.js');
-
-
-const logger = { log: (e) => console.log(e) };
+  logger = require('./utils.js').logger;
 
 let app = express();
 
@@ -38,8 +35,17 @@ readFile('schema.graphql', 'utf8', (err, contents) => {
   }));
   
   addIsoImageProvider(app);
-
-  app.listen(config.PORT);
   
-  logger.log('SM GraphQL is running...');
+  app.use(function (err, req, res, next) {
+    res.status(err.status || 500);
+    logger.error(err.stack);
+    res.json({
+      message: err.message
+    });
+  });
+  
+  app.listen(config.PORT);
+  logger.info('SM GraphQL is running...');
 });
+
+module.exports = app; // for testing

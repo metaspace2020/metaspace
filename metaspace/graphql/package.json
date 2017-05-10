@@ -9,7 +9,8 @@
     "build": "webpack -p",
     "build-dev": "webpack -d",
     "dev": "webpack -d -w",
-    "watch": "webpack -p -w"
+    "watch": "webpack -p -w",
+    "test": "mocha --timeout 1000"
   },
   "license": "ISC",
   "dependencies": {
@@ -34,11 +35,15 @@
     "pg": "^6.1.0",
     "pg-promise": "^5.4.7",
     "s3": "^4.4.0",
-    "sprintf-js": "^1.0.3"
+    "sprintf-js": "^1.0.3",
+    "winston": "^2.3.1"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
     "babel-preset-es2015": "^6.18.0",
+    "chai": "^3.5.0",
+    "chai-http": "^2.0.1",
+    "mocha": "^2.5.3",
     "nodemon": "^1.11.0"
   }
 }

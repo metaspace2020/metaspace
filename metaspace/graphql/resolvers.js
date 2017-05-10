@@ -4,12 +4,13 @@
 
 const sprintf = require('sprintf-js'),
   fetch = require('node-fetch'),
-  jwt = require('jwt-simple');
+  jwt = require('jwt-simple'),
+  {UserError} = require('graphql-errors');
 
 const config = require('./config'),
   {esSearchResults, esCountResults, esAnnotationByID} = require('./esConnector'),
   {datasetFilters, dsField, SubstringMatchFilter} = require('./datasetFilters.js'),
-  {generateProcessingConfig, metadataChangeSlackNotify} = require("./utils.js");
+  {generateProcessingConfig, metadataChangeSlackNotify, logger} = require("./utils.js");
 
 const dbConfig = () => {
   const {host, database, user, password} = config.db;
@@ -30,7 +31,7 @@ function checkPermissions(datasetId, payload) {
   return pg.select().from('dataset').where('id', '=', datasetId)
     .then(records => {
       if (records.length == 0)
-        throw new Error("no dataset with specified id");
+        throw new UserError(`No dataset with specified id: ${datasetId}`);
       metadata = records[0].metadata;
 
       let allowUpdate = false;
@@ -39,7 +40,7 @@ function checkPermissions(datasetId, payload) {
       else if (payload.email == metadata.Submitted_By.Submitter.Email)
         allowUpdate = true;
       if (!allowUpdate)
-        throw new Error("you don't have permissions to edit this dataset");
+        throw new UserError(`You don't have permissions to edit the dataset: ${datasetId}`);
     });
 }
 
@@ -69,7 +70,7 @@ const Resolvers = {
           return data.length > 0 ? data[0] : null;
         })
         .catch((err) => {
-          console.log(err); return null;
+          logger.error(err); return null;
         });
     },
 
@@ -79,15 +80,15 @@ const Resolvers = {
           return data.length > 0 ? data[0] : null;
         })
         .catch((err) => {
-          console.log(err); return null;
+          logger.error(err); return null;
         });
     },
 
     allDatasets(_, {orderBy, sortingOrder, offset, limit, filter}) {
       let q = baseDatasetQuery();
-      console.log(JSON.stringify(filter));
+      logger.info(JSON.stringify(filter));
 
-      for (var key in datasetFilters) {
+      for (let key in datasetFilters) {
         const val = filter[key];
         if (val)
           q = datasetFilters[key].pgFilter(q, val);
@@ -95,13 +96,13 @@ const Resolvers = {
 
       const orderVar = orderBy == 'ORDER_BY_NAME' ? 'name' : 'last_finished';
       const ord = sortingOrder == 'ASCENDING' ? 'asc' : 'desc';
-
-      console.log(q.toString());
+  
+      logger.info(q.toString());
       console.time('pgQuery');
 
       return q.orderBy(orderVar, ord).offset(offset).limit(limit).select('*')
-              .then(result => { console.timeEnd('pgQuery'); return result; })
-              .catch((err) => { console.log(err); return []; });
+        .then(result => { console.timeEnd('pgQuery'); return result; })
+        .catch((e) => { logger.error(e); return []; });
     },
 
     allAnnotations(_, args) {
@@ -117,7 +118,7 @@ const Resolvers = {
       }
       return q.count('id')
               .then(result => parseInt(result[0].count))
-              .catch((err) => { console.log(err); return 0; });
+              .catch((e) => { logger.error(e); return 0; });
     },
 
     countAnnotations(_, args) {
@@ -258,35 +259,20 @@ const Resolvers = {
     },
 
     peakChartData(hit) {
-      const {sf_adduct, ds_meta, ds_id, mz} = hit._source;
+      const {sf_adduct, ds_meta, ds_config, ds_id, mz} = hit._source;
       const msInfo = ds_meta.MS_Analysis;
       const host = config.services.moldb_service_host,
-        pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1',
-    /*
-      // sm-engine doesn't use instrument model yet, so disable it here
+        pol = msInfo.Polarity.toLowerCase() == 'positive' ? '+1' : '-1';
 
-        instr = msInfo.Analyzer.toLowerCase(),
-        rp = msInfo.Detector_Resolving_Power.Resolving_Power,
-        at_mz = msInfo.Detector_Resolving_Power.mz,
-        url = `http://${host}/v1/isotopic_pattern/${sf_adduct}/${instr}/${rp}/${at_mz}/${pol}`;
+      let rp = mz / (ds_config.isotope_generation.isocalc_sigma * 2.35482),
+        ppm = ds_config.image_generation.ppm,
+        theorData = fetch(`http://${host}/v1/isotopic_pattern/${sf_adduct}/tof/${rp}/400/${pol}`);
 
-      return fetch(url).then(res => res.json()).then(json => JSON.stringify(json.data));
-    */
-        ds_config = pg.select('config').from('dataset').where('id', '=', ds_id).first();
-      // FIXME: export dataset config to ES
-
-      return ds_config.then(row => {
-        const {config} = row;
-        let rp = mz / (config.isotope_generation.isocalc_sigma * 2.35482),
-            ppm = config.image_generation.ppm,
-            theorData = fetch(`http://${host}/v1/isotopic_pattern/${sf_adduct}/tof/${rp}/400/${pol}`);
-
-        return theorData.then(res => res.json()).then(json => {
-          let {data} = json;
-          data.ppm = ppm;
-          return JSON.stringify(data);
-        });
-      });
+      return theorData.then(res => res.json()).then(json => {
+        let {data} = json;
+        data.ppm = ppm;
+        return JSON.stringify(data);
+      }).catch(e => logger.error(e));
     },
 
     isotopeImages(hit) {
@@ -318,9 +304,13 @@ const Resolvers = {
 
         const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
         return fetch(url, { method: 'POST', body: body })
-          .then(() => "success");
+          .then(() => "success")
+          .catch(e => {
+            logger.error(`${e.message}\n`);
+            return e.message
+          });
       } catch (e) {
-        console.log(e);
+        logger.error(e);
         return e.message;
       }
     },
@@ -342,7 +332,7 @@ const Resolvers = {
             // perform ES re-indexing in the background
             const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/update`;
             fetch(url, { method: 'POST', body: body })
-              .catch(err => console.log(`metadata update error: ${err}`));
+              .catch(e => logger.error(`metadata update error: ${e.message}\n${e.stack}`));
 
             return pg.select().from('dataset').where('id', '=', datasetId)
               .then(records => {
@@ -350,9 +340,13 @@ const Resolvers = {
                 metadataChangeSlackNotify(payload.name, datasetId, oldMetadata, newMetadata);
               })
               .then(() => "success");
+          })
+          .catch(e => {
+            logger.error(e.message);
+            return e.message;
           });
       } catch (e) {
-        console.log(e);
+        logger.error(e);
         return e.message;
       }
     },
@@ -365,15 +359,20 @@ const Resolvers = {
         return checkPermissions(datasetId, payload)
           .then( () => {
             const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/delete`;
-            let body;
-            if (delRawData != undefined || delRawData == false)
-              body = JSON.stringify({ "del_raw": true });
-            else
-              body = JSON.stringify({});
-            return fetch(url, {method: 'POST', body: body});
-          }).then(res => res.statusText);
+            let body = {};
+            // if (delRawData != undefined || delRawData == false)
+            //   body = JSON.stringify({});
+            // else
+            //   body = JSON.stringify({ "del_raw": true });
+            return fetch(url, {method: "POST", body: body});
+          })
+          .then(res => res.statusText)
+          .catch(e => {
+            logger.error(e.message);
+            return e.message
+          });
       } catch (e) {
-        console.log(e);
+        logger.error(e.message);
         return e.message;
       }
     }
