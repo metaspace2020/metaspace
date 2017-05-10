@@ -93,7 +93,6 @@ class ESExporter:
     def index_ds(self, ds_id, mol_db):
         annotations = self._db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
 
-        logger.info('Deleting {} documents from the index: {}'.format(len(annotations), ds_id))
         self.delete_ds(ds_id, mol_db)
 
         logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
@@ -101,8 +100,6 @@ class ESExporter:
 
     # TODO: add a test
     def delete_ds(self, ds_id, mol_db=None):
-        logger.info('Deleting documents from ES: %s, %s', ds_id, mol_db)
-
         must = [{'term': {'ds_id': ds_id}}]
         if mol_db:
             must.append({'term': {'db_name': mol_db.name}})
@@ -118,6 +115,8 @@ class ESExporter:
         }
         res = self._es.search(index=self.index, body=body, _source=False, size=10 ** 9)['hits']['hits']
         to_del = [{'_op_type': 'delete', '_index': 'sm', '_type': 'annotation', '_id': d['_id']} for d in res]
+
+        logger.info('Deleting %s documents from ES: %s, %s', len(to_del ), ds_id, mol_db)
 
         del_n = 0
         try:
