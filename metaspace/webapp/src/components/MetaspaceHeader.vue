@@ -186,6 +186,14 @@
    border: none;
    padding: 0px 20px;
    height: 62px;
+   font-size: 16px;
+ }
+
+ @media (max-width: 1000px) {
+   .header-item {
+     padding: 0px 10px;
+     font-size: 14px;
+   }
  }
 
  /* vertically centered */
