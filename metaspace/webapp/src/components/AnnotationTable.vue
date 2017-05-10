@@ -588,15 +588,19 @@
  }
 
  .cell-wrapper img {
-   display: none;
+   /*
+      don't use display:none because of a TestCafe bug:
+      https://github.com/DevExpress/testcafe/issues/1426
+   */
+   opacity: 0;
+   max-height: 20px;
+   max-width: 20%;
  }
 
  .cell-wrapper:hover img {
-   max-height: 20px;
-   box-shadow: 5px;
-   max-width: 20%;
    display: inherit;
    cursor: pointer;
+   opacity: 1;
  }
 
  .fdr-legend, .fdr-legend-header {
