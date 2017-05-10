@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: node:7.9.0
+      - image: lomereiter/sm-webapp:0.6
 
       - image: postgres:9.4-alpine # same version as in debian:jessie
         environment:
@@ -27,7 +27,6 @@ jobs:
           command: |
             export NPM_CONFIG_LOGLEVEL=warn
             npm install
-            npm install -g testcafe elasticdump forever
       - save_cache:
           key: node-modules-{{ .Branch }}-{{checksum "package.json"}}
           paths:
@@ -45,8 +44,6 @@ jobs:
       - run:
           name: Load test data into the database and ElasticSearch
           command: |
-            apt-get update
-            apt-get install -y postgresql xvfb firefox-esr
             cd .circleci && bash populate_pg_es.sh
       - run:
           name: Run tests
