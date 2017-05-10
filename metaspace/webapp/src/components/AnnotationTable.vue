@@ -482,7 +482,7 @@
          self.exportProgress = 0;
 
          let blob = new Blob([csv], {type: 'text/csv; charset="utf-8"'});
-         FileSaver.saveAs(blob, "sm_results.csv");
+         FileSaver.saveAs(blob, "metaspace_annotations.csv");
        }
 
        let v = this.queryVariables(),
