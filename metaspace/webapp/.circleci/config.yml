@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: lomereiter/sm-webapp:0.6.1
+      - image: lomereiter/sm-webapp:0.6.1.1
 
       - image: postgres:9.6-alpine
         environment:
