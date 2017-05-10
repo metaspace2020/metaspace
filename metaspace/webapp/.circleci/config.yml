@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: node:7.9.0 # not alpine because saucelabs binary requires glibc
+      - image: node:7.9.0
 
       - image: postgres:9.4-alpine # same version as in debian:jessie
         environment:
@@ -46,13 +46,14 @@ jobs:
           name: Load test data into the database and ElasticSearch
           command: |
             apt-get update
-            apt-get install -y postgresql
+            apt-get install -y postgresql xvfb firefox-esr
             cd .circleci && bash populate_pg_es.sh
       - run:
           name: Run tests
           command: |
             export NPM_CONFIG_LOGLEVEL=warn
-            npm install testcafe-browser-provider-saucelabs
             cp tests/e2e/conf.js conf.js
             cp tests/e2e/clientConfig.json src/
-            testcafe "saucelabs:Chrome@beta:Windows 10" tests/e2e/annotations.js --app "npm run dev" --no-color --app-init-delay=10000
+            Xvfb :99 -screen 0 1280x1024x24 &
+            export DISPLAY=:99
+            testcafe firefox tests/e2e/annotations.js --app "npm run dev" --no-color --app-init-delay=10000

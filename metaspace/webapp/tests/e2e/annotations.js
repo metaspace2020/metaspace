@@ -77,7 +77,7 @@ test('sorting works', async t => {
 
   for (let colIndex of [3, 4]) {
     for (let direction of ['ascending', 'descending']) {
-      await t.click(findSortIcon(colIndex, direction)).wait(500);
+      await t.click(findSortIcon(colIndex, direction)).wait(1000);
 
       const values = await tableBody.column(colIndex);
       const expected = await tableBody.sortedColumn(colIndex, direction);
