@@ -53,4 +53,5 @@ jobs:
             cp tests/e2e/clientConfig.json src/
             Xvfb :99 -screen 0 1280x1024x24 &
             export DISPLAY=:99
+            stty cols 80  # https://github.com/DevExpress/testcafe/issues/1469
             testcafe firefox tests/e2e/annotations.js --app "npm run dev" --no-color --app-init-delay=10000
