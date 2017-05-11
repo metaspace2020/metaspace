@@ -9,7 +9,7 @@ jobs:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
 
-      - image: elasticsearch:5.1.1
+      - image: elasticsearch:5.4.0-alpine
         environment:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
         command: [elasticsearch, -Etransport.host=127.0.0.1]
