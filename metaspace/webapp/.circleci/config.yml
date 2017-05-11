@@ -1,0 +1,57 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: lomereiter/sm-webapp:0.6.1.1
+
+      - image: postgres:9.6-alpine
+        environment:
+          POSTGRES_USER: sm
+          POSTGRES_PASSWORD: password
+
+      - image: elasticsearch:5.1.1
+        environment:
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+        command: [elasticsearch, -Etransport.host=127.0.0.1]
+
+      - image: redis:3.2-alpine
+
+    working_directory: /tmp/webapp
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - node-modules-{{ .Branch }}-{{checksum "package.json"}}
+      - run:
+          name: Install npm packages
+          command: |
+            export NPM_CONFIG_LOGLEVEL=warn
+            npm install
+      - save_cache:
+          key: node-modules-{{ .Branch }}-{{checksum "package.json"}}
+          paths:
+            - /tmp/webapp/node_modules
+      - run:
+          name: Start GraphQL server and service mocks
+          command: |
+            rm -rf sm-graphql
+            git clone https://github.com/metaspace2020/sm-graphql --branch rel-v0.6
+            export NPM_CONFIG_LOGLEVEL=warn
+            cd sm-graphql && npm install && cd ..
+            cp sm-graphql/tests/mock_config.js sm-graphql/config.js
+            forever start sm-graphql/tests/api_mocks.js
+            cd sm-graphql && forever start server.js
+      - run:
+          name: Load test data into the database and ElasticSearch
+          command: |
+            cd .circleci && bash populate_pg_es.sh
+      - run:
+          name: Run tests
+          command: |
+            export NPM_CONFIG_LOGLEVEL=warn
+            cp tests/e2e/conf.js conf.js
+            cp tests/e2e/clientConfig.json src/
+            Xvfb :99 -screen 0 1280x1024x24 &
+            export DISPLAY=:99
+            stty cols 80  # https://github.com/DevExpress/testcafe/issues/1469
+            testcafe firefox tests/e2e/annotations.js --app "npm run dev" --no-color --app-init-delay=10000

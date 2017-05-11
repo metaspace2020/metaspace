@@ -2,17 +2,17 @@ import 'babel-polyfill';
 
 import Vue from 'vue';
 
-import ApolloClient, { createNetworkInterface } from 'apollo-client';
+import ApolloClient, { createBatchingNetworkInterface } from 'apollo-client';
 import VueApollo from 'vue-apollo';
 import config from './clientConfig.json';
 
 const apolloClient = new ApolloClient({
-  networkInterface: createNetworkInterface({
+  networkInterface: createBatchingNetworkInterface({
     uri: config.graphqlUrl,
-    transportBatching: true
+    batchInterval: 10
   })
 });
-Vue.use(VueApollo, { apolloClient });
+Vue.use(VueApollo, {apolloClient});
 
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-default/index.css'
@@ -21,8 +21,8 @@ import locale from 'element-ui/lib/locale';
 locale.use(lang);
 Vue.use(ElementUI);
 
-import store from './store.js';
-import router from './router.js';
+import store from './store';
+import router from './router';
 import { sync } from 'vuex-router-sync';
 sync(store, router);
 
@@ -33,6 +33,9 @@ import App from './App.vue';
 new Vue({
   el: '#app',
   render: h => h(App),
+  renderError (h, err) {
+    return h('pre', { style: { color: 'red' }}, err.stack)
+  },
   store,
   router
 })

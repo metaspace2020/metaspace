@@ -1,6 +1,6 @@
 ---
 title: Other filters
-target: '#filter-panel > .el-select'
+target: '.filter-panel > .el-select'
 placement: right
 ---
 

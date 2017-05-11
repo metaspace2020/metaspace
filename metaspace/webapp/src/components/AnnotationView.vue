@@ -12,28 +12,35 @@
         </div>
 
         <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
-          <span slot="title">m/z image</span>
+          <span slot="title">
+            <span style="padding-right: 20px">
+              m/z image
+            </span>
 
-          <div style="margin-top: 10px;">
-            <image-loader :src="annotation.ionImage.url"
+            <el-popover placement="left" trigger="click">
+              <ion-image-settings></ion-image-settings>
+
+              <div slot="reference" @click="$event.stopPropagation()">
+                <i class="el-icon-setting" style="font-size: 20px; padding-top: 11px;"></i>
+              </div>
+            </el-popover>
+          </span>
+
+          <div class="main-ion-image-container">
+            <image-loader :src="annotation.isotopeImages[0].url"
                           :colormap="colormap"
+                          :max-height=500
                           class="ion-image principal-peak-image">
             </image-loader>
 
-            <span style="display: inline-flex; padding: 0px 0px 0px 30px;">
-              <span>
-                <colorbar style="padding: 7px; height: 28px;" :map="colormap"></colorbar>
-              </span>
-              <span id="colormap-select-span" @click="$event.stopPropagation()">
-                <el-select :value="colormap" size="small" style="width: 120px;" title="Colormap"
-                           @input="onColormapChange">
-                  <el-option v-for="scale in availableScales"
-                             :value="scale" :label="scale" :key="scale">
-                    <colorbar style="height: 20px" :map="scale" :title="scale"></colorbar>
-                  </el-option>
-                </el-select>
-              </span>
-            </span>
+            <div class="colorbar-container">
+              {{ annotation.isotopeImages[0].maxIntensity.toExponential(2) }}
+              <colorbar style="width: 20px; height: 160px; align-self: center;"
+                        direction="top" :map="colormap"
+                        slot="reference">
+              </colorbar>
+              {{ annotation.isotopeImages[0].minIntensity.toExponential(2) }}
+            </div>
           </div>
         </el-collapse-item>
 
@@ -41,7 +48,7 @@
           <div id="compound-list">
             <div class="compound" v-for="compound in annotation.possibleCompounds">
               <el-popover placement="left" trigger="click">
-                <img :src="compound.imageURL" class="compound-thumbnail"
+                <img :src="compound.imageURL.replace('52.19.27.255', '52.51.114.30')" class="compound-thumbnail"
                      slot="reference"/>
                 <div>
                   <figure>
@@ -52,7 +59,7 @@
                         View on {{ compound.information[0].database }} website
                       </a>
                     </figcaption>
-                    <img :src="compound.imageURL" class="compound-image"/>
+                    <img :src="compound.imageURL.replace('52.19.27.255', '52.51.114.30')" class="compound-image"/>
                   </figure>
                 </div>
               </el-popover>
@@ -86,26 +93,37 @@
             (&rho;<sub>chaos</sub>)
           </el-row>
           <el-row id="isotope-images-container">
-            <el-col :xs="24" :sm="12" :md="12" :lg="6" v-for="img in annotation.isotopeImages">
+            <el-col :xs="24" :sm="12" :md="12" :lg="6"
+                    v-for="(img, idx) in annotation.isotopeImages.filter(img => img.url !== null)"
+                    :key="idx">
               <div class="small-peak-image">
                 {{ img.mz.toFixed(4) }}<br/>
                 <image-loader :src="img.url"
                               :colormap="colormap"
+                              :max-height=250
                               class="ion-image">
                 </image-loader>
               </div>
             </el-col>
           </el-row>
           <el-row id="isotope-plot-container">
-            <isotope-pattern-plot :data="JSON.parse(peakChartData)"
+            <isotope-pattern-plot :data="peakChartData"
                                   v-if="activeSections.indexOf('scores') !== -1">
             </isotope-pattern-plot>
           </el-row>
         </el-collapse-item>
+
         <el-collapse-item title="Dataset info" name="metadata">
           <dataset-info :metadata="JSON.parse(annotation.dataset.metadataJson)"
                         :expandedKeys="['Sample information', 'Submitted by', 'Submitter']">
           </dataset-info>
+        </el-collapse-item>
+
+        <el-collapse-item title="Related annotations" name="adducts">
+          <adducts-info v-if="activeSections.indexOf('adducts') !== -1"
+                        :annotation="annotation"
+                        :database="this.$store.getters.filter.database">
+          </adducts-info>
         </el-collapse-item>
       </el-collapse>
     </el-col>
@@ -113,21 +131,18 @@
 </template>
 
 <script>
- import { renderMolFormula  } from '../util.js';
+ import { renderMolFormula } from '../util.js';
  import DatasetInfo from './DatasetInfo.vue';
+ import AdductsInfo from './AdductsInfo.vue';
  import ImageLoader from './ImageLoader.vue';
+ import IonImageSettings from './IonImageSettings.vue';
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
  import Colorbar from './Colorbar.vue';
- import gql from 'graphql-tag';
+ import {annotationQuery} from '../api/annotation.js';
 
  export default {
    name: 'annotation-view',
    props: ['annotation'],
-   data() {
-     return {
-       availableScales: ["Viridis", "Hot", "Greys", "Portland", "YlGnBu"]
-     };
-   },
    computed: {
      activeSections() {
        return this.$store.getters.settings.annotationView.activeSections;
@@ -150,12 +165,15 @@
    },
    apollo: {
      peakChartData: {
-       query: gql`query GetAnnotation($id: String!) {
-         annotation(id: $id) {
-           peakChartData
-         }
-       }`,
-       update: data => data.annotation.peakChartData,
+       query: annotationQuery,
+       update: ({annotation}) => {
+         let chart = JSON.parse(annotation.peakChartData);
+         chart.sampleData = {
+           mzs: annotation.isotopeImages.map(im => im.mz),
+           ints: annotation.isotopeImages.map(im => im.totalIntensity),
+         };
+         return chart;
+       },
        variables() {
          return {
            id: this.annotation.id
@@ -163,20 +181,17 @@
        }
      }
    },
-
    methods: {
      onSectionsChange(activeSections) {
        this.$store.commit('updateAnnotationViewSections', activeSections)
-     },
-
-     onColormapChange(selection) {
-       this.$store.commit('setColormap', selection);
      }
    },
 
    components: {
      DatasetInfo,
+     AdductsInfo,
      ImageLoader,
+     IonImageSettings,
      IsotopePatternPlot,
      Colorbar
    }
@@ -202,12 +217,6 @@
    vertical-align: top;
    padding: 0 5px 0 5px;
    text-align: center;
- }
-
- .small-peak-image img {
-   min-height: 250px;
-   max-width: 95%;
-   object-fit: contain;
  }
 
  .sf-big {
@@ -295,15 +304,23 @@
    display: inline-flex;
  }
 
- #colormap-select-span {
-   display: inline-flex;
-   flex-direction: column;
+
+ .main-ion-image-container {
+   display: flex;
+   flex-direction: row;
    justify-content: center;
-   height: 43px;
  }
 
- #colormap-select-span > .el-select {
-   display: inline-flex;
+ .colorbar-container {
+   display: flex;
+   flex-direction: column;
+   justify-content: flex-end;
+   padding-left: 10px;
+   padding-bottom: 6px;
+ }
+
+ #isotope-plot-container text {
+    font-family: "Roboto" !important;
  }
 
 </style>

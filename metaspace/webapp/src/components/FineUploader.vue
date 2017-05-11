@@ -7,9 +7,9 @@
           <span class="qq-upload-drop-area-text-selector"></span>
         </div>
         <div class="buttons">
-          <button class="qq-upload-button-selector qq-upload-button metasp-button">
+          <div class="qq-upload-button-selector qq-upload-button metasp-button" role="button">
             Select files
-          </button>
+          </div>
         </div>
         <span class="qq-drop-processing-selector qq-drop-processing">
           <span>Processing dropped files...</span>

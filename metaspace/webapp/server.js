@@ -92,7 +92,10 @@ passport.serializeUser(function(user, done) {
 passport.deserializeUser(function(id, done) {
   Users().where('id', '=', id).first()
          .then(user => done(null, user))
-         .catch(err => done(err, null));
+         .catch(err => {
+           console.log(err);
+           done(null, false);
+         });
 });
 
 var plRedisStore = require('passwordless-redisstore-bcryptjs');
@@ -107,9 +110,9 @@ AWS.config.update({
 var ses = new AWS.SES();
 
 passwordless.addDelivery((token, uid, recipient, callback, req) => {
-  const host = 'localhost:8082';
+  const host = conf.HOST_NAME;
   const text = 'Greetings!\nVisit this link to login: http://'
-             + host + '?token=' + token + '&uid='
+             + host + '/?token=' + token + '&uid='
              + encodeURIComponent(uid) + '\n\n\n---\nMETASPACE team'
 
   ses.sendEmail({
@@ -131,12 +134,17 @@ app.use(passwordless.acceptToken({ successRedirect: '/'}));
 
 app.get('/sendToken/',
   passwordless.requestToken((user, delivery, callback, req) => {
+    console.log(user);
     Users().where({email: user}).first()
            .then(record => {
-             if (record)
+             if (record) {
                callback(null, record.id);
-             else
-               callback(null, null);
+             } else {
+               Users().insert({email: user, name: '', googleId: null}).then(() => {
+                 Users().where({email: user}).first()
+                        .then(record => callback(null, record.id));
+               });
+             }
            })
   }, {allowGet: true}),
   (req, res) => {
@@ -153,12 +161,11 @@ app.get('/auth/google/callback',
     failureRedirect: '/#/help'
 }));
 
-app.get('/logout', function(req, res, next) {
-  passwordless.logout()(req, res, next);
-  req.logout();
-  req.session.destroy();
-  res.send('Logged out');
-});
+app.get('/logout', passwordless.logout(),
+        function(req, res, next) {
+          req.logout();
+          res.send('OK');
+        });
 
 var router = express.Router();
 
@@ -174,7 +181,10 @@ function getRole(email) {
 // If we want to use longer lifetimes we need to setup HTTPS on all servers.
 router.get('/getToken', (req, res, next) => {
   if (!req.user) {
-    res.sendStatus(403);
+    res.send(jwt.encode({
+      'iss': 'METASPACE2020',
+      'role': 'anonymous'
+    }, conf.JWT_SECRET));
     return;
   }
 
@@ -214,6 +224,7 @@ if (env == 'development') {
 
   app.use(webpackDevMiddleware(compiler, {
     publicPath: config.output.publicPath,
+    noInfo: true,
     stats: {colors: true}
   }));
 

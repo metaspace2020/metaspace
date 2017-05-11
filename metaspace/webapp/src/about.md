@@ -2,12 +2,12 @@
 
 ## METASPACE provides an open platform for metabolite imaging mass spectrometry
 
-METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data 
-as well as a spatial metabolite knowledgebase of the metabolites from hundreds of public datasets 
+METASPACE platform hosts an engine for metabolite annotation of imaging mass spectrometry data
+as well as a spatial metabolite knowledgebase of the metabolites from hundreds of public datasets
 provided by the community.
 
 METASPACE platform is developed by software engineers, data scientists and mass spectrometrists
-from the [Alexandrov team at EMBL](http://www.embl.de/research/units/scb/alexandrov/). 
+from the [Alexandrov team at EMBL](http://www.embl.de/research/units/scb/alexandrov/).
 This work is a part of the [European project METASPACE](http://metaspace2020.eu).
 
 ## Open as public space
@@ -32,8 +32,14 @@ Please cite our publication [(Palmer et al., 2016, Nature Methods)](http://www.n
 
 ## Please appreciate those who funded it
 
-Development of the METASPACE platform and releasing it for free to the community is only possible thanks 
-to the support by the European Union’s Horizon2020 program under the grant agreement 634402.
+<div style="display:flex;">
+  <div style="padding-right: 20px;">
+    <img src="./assets/eu_flag.jpg" alt="EU" style="height:60px;"></img>
+  </div>
+  <div style="display:flex; flex-direction:column; justify-content: center;">
+    This website is part of a project that has received funding from the European Union's Horizon 2020 research and innovation programme under grant agreement No 634402.
+  </div>
+</div>
 
 ## How to stay in touch?
 

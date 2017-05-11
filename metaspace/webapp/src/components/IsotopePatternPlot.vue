@@ -1,86 +1,176 @@
 <template>
-  <div ref="peakChart">
+  <div ref="peakChart" style="height: 300px;">
   </div>
 </template>
 
 <script>
  import fetch from 'isomorphic-fetch';
 
+ import {extent, max, zip} from 'd3-array';
+ import {axisBottom, axisLeft} from 'd3-axis';
+ import {brushX} from 'd3-brush';
+ import {scaleLinear, scaleOrdinal} from 'd3-scale';
+ import {select, selectAll, attr, event} from 'd3-selection';
+ import {line} from 'd3-shape';
+ import {legendColor} from 'd3-svg-legend';
+ import {transition, duration} from 'd3-transition';
+
  function plotChart(data, element) {
-   if (!element)
-     return;
-   if (!data) {
-     return;
-   }
-   const sampleData = data.sample;
+   if (!element) return;
+   if (!data) return;
 
-   const plotData = [
-     {
-       name: 'Theoretical',
-       x: data.theor.mzs,
-       y: data.theor.ints,
-       line: {color: 'blue'},
-       opacity: 0.3,
-       type: 'scatter',
-       mode: 'lines'
-     },
-     {
-       name: 'Sample',
-       x: sampleData.mzs,
-       y: sampleData.ints,
-       type: 'scatter',
-       mode: 'markers',
-       line: {color: 'red'}
-     }
-   ];
+   let {sampleData} = data;
+   const maxIntensity = sampleData.ints.reduce((a, b) => Math.max(a, b));
+   sampleData.ints = sampleData.ints.map(i => i / maxIntensity * 100.0);
 
-   let shapes = [];
-   for (let i = 0; i < sampleData['mzs'].length; i++) {
-     shapes.push({
-       type: 'line',
-       x0: sampleData['mzs'][i],
-       y0: 0,
-       x1: sampleData['mzs'][i],
-       y1: sampleData['ints'][i],
-       line: {
-         color: 'red',
-         width: 2
+   const ppm = data.ppm;
+
+   select(element).select('svg').remove();
+
+   const margin = {top: 10, right: 5, bottom: 80, left: 40},
+         width = element.clientWidth - margin.left - margin.right,
+         height = element.clientHeight - margin.top - margin.bottom;
+   const [minMz, maxMz] = extent(sampleData['mzs']),
+         xDomain = [minMz - 0.1, maxMz + 0.1],
+         yDomain = [0, 100];
+   let xScale = scaleLinear().range([0, width]).domain(xDomain);
+   let yScale = scaleLinear().range([height, 0]).domain(yDomain);
+
+   let xAxis = axisBottom(xScale).ticks(5);
+   let yAxis = axisLeft(yScale).ticks(5).tickPadding(5);
+
+   let points = zip(sampleData['mzs'], sampleData['ints']);
+   let theorPoints = zip(data.theor.mzs, data.theor.ints);
+
+   const dblClickTimeout = 400; // milliseconds
+   let idleTimeout;
+
+   function brushHandler() {
+     const s = event.selection;
+
+     if (!s) { // click event
+       if (!idleTimeout) // not double click => wait for the second click
+         return idleTimeout = setTimeout(() => { idleTimeout = null; },
+                                         dblClickTimeout);
+       // double click => reset axes
+       xScale.domain(xDomain);
+       yScale.domain(yDomain);
+     } else {
+       const mzRange = s.map(xScale.invert, xScale)
+
+       function calcMaxIntensity(pts) {
+         const intensities = pts
+           .filter(d => d[0] >= mzRange[0] && d[0] <= mzRange[1])
+           .map(d => d[1]);
+         if (intensities.length > 0)
+           return max(intensities);
+         return 0;
        }
-     });
 
-     shapes.push({
-       type: 'rect',
-       xref: 'x',
-       yref: 'paper',
-       x0: sampleData['mzs'][i] * (1.0 - 1e-6 * data.ppm),
-       y0: 0,
-       x1: sampleData['mzs'][i] * (1.0 + 1e-6 * data.ppm),
-       y1: 1,
-       line: {width: 0},
-       fillcolor: 'grey',
-       opacity: 0.1
-     });
+       const intensityRange = [0, max([calcMaxIntensity(points),
+                                          calcMaxIntensity(theorPoints)])];
+       xScale.domain(mzRange);
+       yScale.domain(intensityRange);
+       brushLayer.call(brush.move, null); // remove the selection
+     }
+
+     const t = svg.transition().duration(300);
+     gX.transition(t).call(xAxis);
+     gY.transition(t).call(yAxis);
+
+     update(t);
    }
 
-   const {minMz, maxMz} = data.mz_grid;
-   var layout = {
-     xaxis: {'range': [minMz, maxMz]},
-     yaxis: {title: 'Intensity', rangemode: 'nonnegative'},
-     legend: {x: 0.5, y: -0.2, xanchor: 'center', yanchor: 'top',
-              orientation: 'h', traceorder: 'reversed'},
-     margin: {t: 20, b: 20},
-     font: {size: 16},
-     shapes,
-     paper_bgcolor: 'rgba(0,0,0,0)',
-     plot_bgcolor: 'rgba(0,0,0,0)'
-   };
+   let container = select(element).append('svg')
+                     .attr('width', width + margin.left + margin.right)
+                     .attr('height', height + margin.top + margin.bottom);
 
+   let svg = container.append('g')
+                      .attr('transform',
+                            `translate(${margin.left}, ${margin.top})`);
 
-   require.ensure(['plotly.js/lib/core', 'd3'], (require) => {
-     const Plotly = require('plotly.js/lib/core');
-     Plotly.newPlot(element, plotData, layout);
-     window.onresize = () => Plotly.Plots.resize(element);
-   });
+   let gX = svg.append('g')
+               .attr('transform', `translate(0, ${height})`)
+               .call(xAxis);
+
+   let gY = svg.append('g').call(yAxis);
+
+   let circles = svg.selectAll('circle')
+                    .data(points).enter()
+                    .append('circle')
+                    .attr('r', 3)
+                    .style('fill', 'red');
+
+   let lines = svg.append('g').selectAll('line')
+                  .data(points).enter().append('line')
+                  .attr('stroke', 'red')
+                  .attr('stroke-width', 2);
+
+   let ppmRectangles = svg.append('g').selectAll('rect')
+                          .data(points).enter()
+                          .append('rect')
+                          .attr('opacity', 0.1)
+                          .attr('fill', 'grey')
+                          .attr('height', yScale(0))
+                          .attr('y', 0);
+
+   let theorGraph = svg.append('path')
+                       .attr('class', 'line')
+                       .attr('stroke', 'blue')
+                       .attr('stroke-width', 1)
+                       .attr('opacity', 0.6)
+                       .attr('fill', 'none');
+
+   svg.append('text')
+      .text('Intensity').style('text-anchor', 'middle')
+      .attr('transform', `translate(-30, ${height/2}) rotate(-90)`);
+
+   svg.append('text')
+      .text('m/z').style('text-anchor', 'middle')
+      .attr('transform', `translate(${width / 2}, ${height +  30}) `);
+
+   let legendItemWidth = 65;
+   let legend = container
+     .append('g')
+     .attr('transform',
+           `translate(${margin.left + width / 2 - legendItemWidth - 10}, ${height + margin.top + 50})`);
+
+   let brush = brushX().extent([[0, 0], [width, height]]).on('end', brushHandler);
+   let brushLayer = svg.append('g').call(brush);
+
+   const types = scaleOrdinal()
+                   .domain(['Sample', 'Theoretical'])
+                   .range(['red', 'blue']);
+
+   let drawLegend = legendColor()
+     .orient('horizontal')
+     .shape('line').shapeWidth(legendItemWidth).shapePadding(20).scale(types);
+   legend.call(drawLegend);
+
+   function update(t) {
+     let r = ppmRectangles, c = circles, l = lines, gr = theorGraph;
+     if (t) {
+       r = r.transition(t);
+       c = c.transition(t);
+       l = l.transition(t);
+       gr = theorGraph.transition(t);
+     }
+
+     r.attr('width',
+            d => xScale(d[0] * (1 + 1e-6 * ppm)) - xScale(d[0] * (1 - 1e-6 * ppm)))
+      .attr('x', d => xScale(d[0] * (1 - 1e-6 * ppm)));
+
+     c.attr('cx', d => xScale(d[0]))
+      .attr('cy', d => yScale(d[1]));
+
+     l.attr('x1', d => xScale(d[0])).attr('x2', d => xScale(d[0]))
+      .attr('y1', d => yScale(d[1])).attr('y2', d => yScale(0));
+
+     const drawPath =  line().x(d => xScale(d[0])).y(d => yScale(d[1]));
+     gr.attr('d', drawPath(theorPoints));
+   }
+
+   update();
  }
 
  export default {
@@ -88,11 +178,15 @@
    props: ['data'],
    watch: {
      'data': function(d) {
-       this.plot(d);
+       if (d) this.plot(d);
      }
    },
    mounted() {
-     this.plot(this.data);
+     if (this.data)
+       this.plot(this.data);
+
+     if (window)
+       window.addEventListener('resize', () => this.plot(this.data));
    },
    methods: {
      plot(data) {

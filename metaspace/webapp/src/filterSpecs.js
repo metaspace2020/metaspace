@@ -3,6 +3,7 @@ import InputFilter from './components/InputFilter.vue';
 import SingleSelectFilter from './components/SingleSelectFilter.vue';
 import MultiSelectFilter from './components/MultiSelectFilter.vue';
 import DatasetNameFilter from './components/DatasetNameFilter.vue';
+import MzFilter from './components/MzFilter.vue';
 
 // FIXME: hard-coded adducts
 const ADDUCT_POLARITY = {
@@ -19,6 +20,10 @@ function formatAdduct (adduct) {
   else {
     return renderMolFormula('M', adduct, ADDUCT_POLARITY[adduct])
   }
+}
+
+function formatFDR (fdr) {
+  return fdr ? Math.round(fdr * 100) + '%' : null;
 }
 
 /*
@@ -41,10 +46,13 @@ function formatAdduct (adduct) {
    e.g. adding GraphQL query variables and setting them accordingly.
 
    Data filtering logic is currently located in two places:
-   * filterToUrl.js
+   * url.js
      add new fields to DEFAULT_FILTER and FILTER_TO_URL (for vue-router)
-   * store.js
+   * store/getters.js
      edit gqlAnnotationFilter and gqlDatasetFilter getters
+
+   You must also add the filter key to filterKeys array in FilterPanel.vue:
+   this controls the order of the filters in the dropdown list.
 
    If options to a select are provided as a string, they are taken from
    FilterPanel computed properties. When a new filter is added that uses
@@ -71,10 +79,9 @@ const FILTER_SPECIFICATIONS = {
     name: 'Dataset',
     description: 'Select dataset',
     levels: ['annotation', 'dataset'],
-    initialValue: [],
+    initialValue: undefined,
 
-    // json encoding (for URL) is assumed to be used for objects or arrays only
-    encoding: 'json'
+    encoding: 'list'
   },
 
   minMSM: {
@@ -90,7 +97,7 @@ const FILTER_SPECIFICATIONS = {
     name: 'Molecule',
     description: 'Search molecule',
     levels: ['annotation'],
-    initialValue: ''
+    initialValue: undefined
   },
 
   adduct: {
@@ -106,9 +113,9 @@ const FILTER_SPECIFICATIONS = {
   },
 
   mz: {
-    type: InputFilter,
-    name: 'm/z (±5 ppm)',
-    description: 'Search by m/z (±5 ppm)',
+    type: MzFilter,
+    name: 'm/z',
+    description: 'Search by m/z',
     levels: ['annotation'],
     initialValue: undefined
   },
@@ -120,8 +127,11 @@ const FILTER_SPECIFICATIONS = {
     levels: ['annotation'],
     initialValue: 0.1,
 
-    options: ['0.05', '0.1', '0.2'],
-    filterable: false
+    options: [0.05, 0.1, 0.2, 0.5],
+    optionFormatter: formatFDR,
+    valueFormatter: formatFDR,
+    filterable: false,
+    removable: false
   },
 
   institution: {

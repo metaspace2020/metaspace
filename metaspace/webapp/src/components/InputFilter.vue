@@ -4,24 +4,8 @@
       {{ name }}:
     </div>
 
-    <div class="tf-value">
-      <span class="tf-value-span"
-            @click="enterEditMode"
-            v-if="!editMode">
-        <span v-if="value">
-          {{ value }}
-        </span>
-        <span style="display:inline-block; width: 15px;" v-else>
-        </span>
-      </span>
-
-      <span class="tf-value-edit"
-            v-on-clickaway="quitEditMode"
-            v-if="editMode">
-        <el-input ref="input" :value="value" @change="onChange" size="small"
-                  style="display:inline-flex;"></el-input>
-      </span>
-    </div>
+    <tf-input-box :mode="mode" @change="onChange" :value="value">
+    </tf-input-box>
 
     <div class="tf-remove el-icon-circle-close"
          v-if="removable"
@@ -30,26 +14,19 @@
 </template>
 
 <script>
- import { mixin as clickaway } from 'vue-clickaway';
- import TagFilter from './TagFilter.vue';
- import Vue from 'vue';
+ import TagFilterInputBox from './TagFilterInputBox.vue';
 
  export default {
    name: 'input-filter',
-   mixins: [clickaway],
    components: {
-     TagFilter
+     'tf-input-box': TagFilterInputBox
    },
    props: {
      name: String,
      options: Object,
      value: [String, Number],
-     removable: {type: Boolean, default: true}
-   },
-   data() {
-     return {
-       editMode: false
-     };
+     removable: {type: Boolean, default: true},
+     mode: {type: String, default: 'text'}
    },
    methods: {
      onChange(val) {
@@ -58,14 +35,7 @@
      },
      destroy() {
        this.$emit('destroy', this.name);
-     },
-     enterEditMode() {
-       this.editMode = true;
-       Vue.nextTick(() => {
-         this.$refs.input.inputSelect();
-       });
-     },
-     quitEditMode() { this.editMode = false; }
-   }
+     }
+  }
  }
 </script>

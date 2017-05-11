@@ -120,7 +120,7 @@
 
     </el-table>
 
-    <div style="display: flex; flex-direction: row; justify-content: space-between;">
+    <div id="annot-table-controls">
       <div>
         <el-pagination :total="totalCount"
                        :page-size="recordsPerPage"
@@ -128,10 +128,10 @@
                        :page-sizes="pageSizes"
                        :current-page="currentPage + 1"
                        @current-change="onPageChange"
-                       layout="prev,pager,next,sizes">
+                       :layout="paginationLayout">
         </el-pagination>
 
-        <div style="padding: 10px 0 0 5px;">
+        <div id="annot-count">
           <b>{{ totalCount }}</b> matching {{ totalCount == 1 ? 'record': 'records' }}
         </div>
 
@@ -164,8 +164,11 @@
 <script>
  import { renderMolFormula } from '../util.js';
  import ProgressButton from './ProgressButton.vue';
+ import {
+   annotationListQuery,
+   tableExportQuery
+ } from '../api/annotation.js';
 
- import gql from 'graphql-tag';
  import Vue from 'vue';
  import FileSaver from 'file-saver';
 
@@ -179,12 +182,12 @@
    data () {
      return {
        annotations: [],
-       loadedData: false,
        recordsPerPage: 15,
        greenCount: 0,
        pageSizes: [15, 20, 25, 30],
        isExporting: false,
-       exportProgress: 0
+       exportProgress: 0,
+       totalCount: 0
      }
    },
    mounted() {
@@ -196,7 +199,7 @@
    },
    computed: {
      isLoading() {
-       return this.$store.state.tableIsLoading || !this.loadedData
+       return this.$store.state.tableIsLoading;
      },
 
      filter() {
@@ -250,60 +253,20 @@
 
      currentPage () {
        return this.$store.getters.settings.table.currentPage;
+     },
+
+     paginationLayout() {
+       const {datasetIds} = this.filter,
+             limitedSpace = datasetIds && datasetIds.length == 1;
+       if (limitedSpace)
+         return "pager";
+
+       return "prev,pager,next,sizes";
      }
    },
    apollo: {
-     totalCount: {
-       query: gql`query GetCount($filter: AnnotationFilter,
-                                 $dFilter: DatasetFilter) {
-          countAnnotations(filter: $filter, datasetFilter: $dFilter)
-       }`,
-       variables () { return this.queryVariables(); },
-       update: data => data.countAnnotations,
-       debounce: 200
-     },
      annotations: {
-       query: gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
-                                       $offset: Int, $limit: Int, $filter: AnnotationFilter, $dFilter: DatasetFilter) {
-          allAnnotations(filter: $filter,
-                         datasetFilter: $dFilter,
-                         orderBy: $orderBy, sortingOrder: $sortingOrder,
-                         offset: $offset, limit: $limit) {
-            id
-            sumFormula
-            adduct
-            msmScore
-            rhoSpatial
-            rhoSpectral
-            rhoChaos
-            fdrLevel
-            mz
-            dataset {
-              id
-              institution
-              name
-              polarity
-              metadataJson
-            }
-            ionImage {
-              url
-            }
-            isotopeImages {
-              mz
-              url
-            }
-            possibleCompounds {
-              name
-              imageURL
-              information {
-                database
-                url
-              }
-            }
-          }
-
-          countAnnotations(filter: $filter, datasetFilter: $dFilter)
-        }`,
+       query: annotationListQuery,
        variables() {
          return this.queryVariables();
        },
@@ -328,10 +291,9 @@
            };
          }
 
-         this.greenCount = data.countAnnotations;
+         this.totalCount = data.countAnnotations;
        },
        loadingChangeCb (isLoading) {
-         this.loadedData = true;
          this.$store.commit('updateAnnotationTableStatus', isLoading);
        }
      }
@@ -485,45 +447,8 @@
      },
 
      startExport () {
-       let q = gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
-                                $offset: Int, $limit: Int, $filter: AnnotationFilter, $dFilter: DatasetFilter) {
-             annotations: allAnnotations(filter: $filter, datasetFilter: $dFilter,
-                                         orderBy: $orderBy, sortingOrder: $sortingOrder,
-                                         offset: $offset, limit: $limit) {
-               id
-               sumFormula
-               adduct
-               msmScore
-               rhoSpatial
-               rhoSpectral
-               rhoChaos
-               fdrLevel
-               mz
-               dataset {
-                 id
-                 institution
-                 name
-               }
-               ionImage {
-                 url
-               }
-               possibleCompounds {
-                 name
-               }
-             }
-           }`,
-           v = this.queryVariables(),
-           chunkSize = 1000,
-           chunks = [],
-           offset = 0;
-
-       this.isExporting = true;
-
-       v.limit = chunkSize;
-       let k = Math.ceil(this.totalCount / chunkSize),
-           client = this.$apollo.client,
-           self = this,
-           csv = ['institution', 'datasetName', 'formula', 'adduct', 'mz',
+       const chunkSize = 1000;
+       let csv = ['institution', 'datasetName', 'formula', 'adduct', 'mz',
                   'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
                   'moleculeNames'].join(',') + "\n";
 
@@ -534,7 +459,7 @@
                 rhoSpatial, rhoSpectral, rhoChaos, fdrLevel} = row;
          return [
            row.dataset.institution, row.dataset.name,
-           sumFormula, quoted(adduct), mz,
+           sumFormula, quoted("M" + adduct), mz,
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
            quoted(row.possibleCompounds.map(m => m.name).join(', '))
          ].join(',');
@@ -546,6 +471,9 @@
          }
        }
 
+       this.isExporting = true;
+       let self = this;
+
        function finish() {
          if (!self.isExporting)
            return;
@@ -554,12 +482,19 @@
          self.exportProgress = 0;
 
          let blob = new Blob([csv], {type: 'text/csv; charset="utf-8"'});
-         FileSaver.saveAs(blob, "sm_results.csv");
+         FileSaver.saveAs(blob, "metaspace_annotations.csv");
        }
 
+       let v = this.queryVariables(),
+           chunks = [],
+           offset = 0;
+
+       v.limit = chunkSize;
+
        function runExport() {
-         const variables = Object.assign({offset}, v);
-         client.query({query: q, variables}).then(resp => {
+         const variables = Object.assign(v, {offset});
+         self.$apollo.query({query: tableExportQuery, variables})
+             .then(resp => {
            self.exportProgress = offset / self.totalCount;
            offset += chunkSize;
            writeCsvChunk(resp.data.annotations);
@@ -653,15 +588,19 @@
  }
 
  .cell-wrapper img {
-   display: none;
+   /*
+      don't use display:none because of a TestCafe bug:
+      https://github.com/DevExpress/testcafe/issues/1426
+   */
+   opacity: 0;
+   max-height: 20px;
+   max-width: 20%;
  }
 
  .cell-wrapper:hover img {
-   max-height: 20px;
-   box-shadow: 5px;
-   max-width: 20%;
    display: inherit;
    cursor: pointer;
+   opacity: 1;
  }
 
  .fdr-legend, .fdr-legend-header {
@@ -702,8 +641,17 @@
 
  .export-btn {
    margin-top: 7px;
-   width: 150px;
+   width: 135px;
    height: 36px;
  }
 
+ #annot-table-controls {
+   display: flex;
+   flex-direction: row;
+   justify-content: space-between;
+ }
+
+ #annot-count {
+   padding: 10px 0 0 5px;
+ }
 </style>

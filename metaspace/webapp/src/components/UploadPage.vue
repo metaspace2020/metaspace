@@ -33,10 +33,10 @@
  import FineUploader from './FineUploader.vue';
  import MetadataEditor from './MetadataEditor.vue';
  import Vue from 'vue';
- import gql from 'graphql-tag';
 
  import config from '../clientConfig.json';
- import {pathFromUUID} from '../util.js';
+ import {getJWT, pathFromUUID} from '../util.js';
+ import {submitDatasetQuery} from '../api/dataset.js';
 
  export default {
    name: 'upload-page',
@@ -80,7 +80,7 @@
        }).catch(err => {
          console.log(err.message);
          this.$message({
-           message: 'Metadata submission failed :( Contact us: alexandrov-group@embl.de',
+           message: 'Metadata submission failed :( Contact us: contact@metaspace2020.eu',
            type: 'error',
            duration: 0,
            showClose: true
@@ -90,15 +90,19 @@
 
      submitDataset(uuid, formData) {
        console.log("submitting " + uuid);
-       return this.$apollo.mutate({
-         mutation: gql`mutation ($path: String!, $value: String!) {
-           submitDataset(path: $path, metadataJson: $value)
-         }`,
-         variables: {path: pathFromUUID(uuid), value: formData}
-       }).then(resp => resp.data.submitDataset)
+       return getJWT()
+         .then(jwt => this.$apollo.mutate({
+           mutation: submitDatasetQuery,
+           variables: {
+             path: pathFromUUID(uuid),
+             value: formData,
+             jwt
+           }}))
+         .then(resp => resp.data.submitDataset)
          .then(status => {
            if (status != 'success')
              throw new Error(status);
+           return status;
          });
      }
    }

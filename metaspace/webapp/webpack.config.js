@@ -8,7 +8,6 @@ module.exports = {
     vendor: ['ajv', 'babel-polyfill',
              'vue', 'vuex', 'vue-router', 'vuex-router-sync',
              'vue-apollo', 'apollo-client', 'graphql-tag',
-             'lodash',
              'element-ui',
     ]
   },

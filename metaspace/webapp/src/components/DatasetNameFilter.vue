@@ -12,8 +12,7 @@
                v-model="value2" @change="onChange">
       <el-option v-for="item in options"
                  :label="item.label"
-                 :value="item.value"
-                 :key="item.value">
+                 :value="item.value">
       </el-option>
     </el-select>
 
@@ -35,6 +34,23 @@
  import TagFilter from './TagFilter.vue';
  import gql from 'graphql-tag';
 
+ const optionsQuery =
+  gql`query DatasetFilterOptions($df: DatasetFilter, $orderBy: DatasetOrderBy,
+                                 $sortDir: SortingOrder) {
+  options: allDatasets(filter: $df,
+    orderBy: $orderBy, sortingOrder: $sortDir, limit: 20) {
+      value: id
+      label: name
+    }
+  }`;
+
+ const namesQuery = gql`query DatasetNames($ids: String) {
+   options: allDatasets(filter: {ids: $ids}) {
+     value: id
+     currentLabel: name
+   }
+ }`;
+
  export default {
    name: 'dataset-name-filter',
    components: {
@@ -44,21 +60,6 @@
 
    data() {
      return {
-       optionsQuery: gql`query DatasetFilterOptions($df: DatasetFilter,
-                                                    $orderBy: DatasetOrderBy,
-                                                    $sortDir: SortingOrder) {
-         options: allDatasets(filter: $df,
-                              orderBy: $orderBy, sortingOrder: $sortDir, limit: 20) {
-           value: id
-           label: name
-         }
-       }`,
-       namesQuery: gql`query DatasetNames($ids: String) {
-         options: allDatasets(filter: {ids: $ids}) {
-           value: id
-           currentLabel: name
-         }
-       }`,
        loading: false,
        options: [],
        cachedOptions: [],
@@ -105,7 +106,7 @@
 
      fetchNames(ids) {
        this.$apollo.query({
-         query: this.namesQuery,
+         query: namesQuery,
 
          // TODO update when we make GraphQL accept an array
          variables: {ids: ids.join('|')}
@@ -133,11 +134,12 @@
        }
 
        // take current dataset filter from the store and adjust it
-       const df = Object.assign({name: query}, this.$store.getters.gqlDatasetFilter);
+       const df = Object.assign({name: query, status: 'FINISHED'},
+                                this.$store.getters.gqlDatasetFilter);
        delete df.ids;
 
        this.$apollo.query({
-         query: this.optionsQuery,
+         query: optionsQuery,
          variables: {df, orderBy, sortDir}
        }).then(({data}) => {
          this.loading = false;

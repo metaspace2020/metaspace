@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/METASPACE2020/sm-webapp/tree/rel-v0.6.svg?style=svg)](https://circleci.com/gh/METASPACE2020/sm-webapp/tree/rel-v0.6)
+
 # sm-webapp
 
 Web application for browsing results produced by [sm-engine](https://github.com/metaspace2020/sm-engine).

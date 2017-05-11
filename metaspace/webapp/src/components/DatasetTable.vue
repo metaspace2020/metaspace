@@ -1,45 +1,56 @@
 <template>
-  <el-row>
-    <filter-panel level="dataset"></filter-panel>
+  <div id="dataset-page">
+    <div id="dataset-page-contents">
+      <div id="dataset-page-head">
+        <filter-panel level="dataset"></filter-panel>
 
-    <div class="dataset-list">
-      <div v-if="noFilters"
-           style="font: 24px 'Roboto', sans-serif; padding: 5px;">
-        <span v-if="noFilters">
-          Recent uploads
-        </span>
+        <el-checkbox-group v-model="categories" :min=1 style="padding: 4px;">
+          <el-checkbox class="cb-started" label="started">Processing {{ count('started') }}</el-checkbox>
+          <el-checkbox class="cb-queued" label="queued">Queued {{ count('queued') }}</el-checkbox>
+          <el-checkbox label="finished">Finished {{ count('finished') }}</el-checkbox>
+        </el-checkbox-group>
+
+        <div v-if="noFilters"
+             style="font: 24px 'Roboto', sans-serif; padding: 5px;">
+          <span v-if="noFilters">
+            Recent uploads
+          </span>
+        </div>
+
+        <div v-else
+             style="font: 18px 'Roboto', sans-serif; padding: 5px;">
+          <span v-if="nonEmpty">
+            Search results in reverse chronological order
+          </span>
+          <span v-else>No datasets found</span>
+        </div>
+
       </div>
 
-      <div v-else
-           style="font: 18px 'Roboto', sans-serif; padding: 5px;">
-        <span v-if="datasets.length > 0">
-          Search results in reverse chronological order
-        </span>
-        <span v-else>No datasets found</span>
+      <div class="dataset-list">
+        <dataset-item v-for="(dataset, i) in datasets"
+                      :dataset="dataset"
+                      :class="[i%2 ? 'even': 'odd']">
+        </dataset-item>
       </div>
-
-      <dataset-item v-for="(dataset, i) in datasets"
-                    :dataset="dataset"
-                    :key="dataset.id"
-                    :class="[i%2 ? 'even': 'odd']">
-      </dataset-item>
     </div>
-  </el-row>
+  </div>
 </template>
 
 <script>
- import gql from 'graphql-tag';
+ import {datasetListQuery, datasetCountQuery} from '../api/dataset';
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
+
+ const processingStages = ['started', 'queued', 'finished'];
 
  export default {
    name: 'dataset-table',
    data () {
      return {
-       datasets: [],
        currentPage: 0,
        recordsPerPage: 10,
-       isLoading: true
+       categories: processingStages
      }
    },
    components: {
@@ -53,62 +64,101 @@
        for (var key in df)
          if (df[key]) return false;
        return true;
+     },
+
+     nonEmpty() {
+       return this.datasets.length > 0;
+     },
+
+     datasets() {
+       let list = [];
+       for (let category of processingStages)
+         if (this.categories.indexOf(category) >= 0 && this[category])
+           list = list.concat(this[category]);
+       return list;
      }
    },
 
    apollo: {
-     datasets: {
-       query: gql`query GetDatasets($dFilter: DatasetFilter) {
-           allDatasets(offset: 0, limit: 100,
-                       filter: $dFilter) {
-         id
-         name
-         institution
-         submitter {
-           name
-           surname
-           email
-         }
-         polarity
-         ionisationSource
-         analyzer {
-           type
-           resolvingPower(mz: 400)
-         }
-         organism
-         organismPart
-         condition
-         metadataJson
-       }}`,
-       update(data) {
-         this.isLoading = false;
-         return data.allDatasets;
-       },
+     started: {
+       query: datasetListQuery,
+       update: data => data.allDatasets,
        variables () {
          return {
-           dFilter: this.$store.getters.gqlDatasetFilter
+           dFilter: Object.assign({status: 'STARTED'},
+                                  this.$store.getters.gqlDatasetFilter)
          }
-       }
+       },
+       pollInterval: 30000
+     },
+
+     queued: {
+       query: datasetListQuery,
+       update: data => data.allDatasets,
+       variables () {
+         return {
+           dFilter: Object.assign({status: 'QUEUED'},
+                                  this.$store.getters.gqlDatasetFilter)
+         }
+       },
+       pollInterval: 30000
+     },
+
+     finished: {
+       query: datasetListQuery,
+       update: data => data.allDatasets,
+       variables () {
+         return {
+           dFilter: Object.assign({status: 'FINISHED'},
+                                  this.$store.getters.gqlDatasetFilter)
+         }
+       },
+       pollInterval: 30000
+     },
+
+     finishedCount: {
+       query: datasetCountQuery,
+       update: data => data.countDatasets,
+       variables () {
+         return {
+           dFilter: Object.assign({status: 'FINISHED'},
+                                  this.$store.getters.gqlDatasetFilter)
+         }
+       },
+       pollInterval: 30000
      }
    },
+
    methods: {
      formatSubmitter: (row, col) =>
        row.submitter.name + " " + row.submitter.surname,
      formatDatasetName: (row, col) =>
        row.name.split('//', 2)[1],
      formatResolvingPower: (row, col) =>
-       (row.analyzer.resolvingPower / 1000).toFixed(0) * 1000
+       (row.analyzer.resolvingPower / 1000).toFixed(0) * 1000,
+
+     count(stage) {
+       if (stage == 'finished')
+         return this.finishedCount ? '(' + this.finishedCount + ')' : '';
+       if (!this[stage])
+         return '';
+       return '(' + this[stage].length + ')';
+     }
    }
  }
 </script>
 
 <style>
- .dataset-list {
+
+ #dataset-page {
    display: flex;
-   flex-direction: column;
-   height: 100%;
-   align-items: center;
    justify-content: center;
+ }
+
+ /* 1 dataset per row by default*/
+ #dataset-page-contents {
+   display: inline-block;
+   width: 820px;
  }
 
  .even {
@@ -117,5 +167,31 @@
 
  .odd {
    background-color: white;
+ }
+
+ /* 2 datasets per row on wide screens */
+ @media (min-width: 1650px) {
+   #dataset-page-contents {
+     width: 1620px;
+   }
+
+   .even {
+     background-color: white !important;
+   }
+ }
+
+ .dataset-list {
+   display: flex;
+   flex-direction: row;
+   flex-wrap: wrap;
+   align-items: center;
+ }
+
+ .cb-started .el-checkbox__input.is-checked .el-checkbox__inner {
+   background: #5eed5e;
+ }
+
+ .cb-queued .el-checkbox__input.is-checked .el-checkbox__inner {
+   background: #72c8e5;
  }
 </style>

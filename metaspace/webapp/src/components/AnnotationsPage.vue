@@ -1,25 +1,26 @@
 <template>
-  <el-row :gutter="20">
+  <div id="annot-page">
     <filter-panel level="annotation"></filter-panel>
 
-    <el-col id="annot-table-column" :xs="24" :sm="24" :md="24" :lg="tableWidth">
-      <annotation-table :hideColumns="hiddenColumns">
-      </annotation-table>
-    </el-col>
-
-    <el-col :xs="24" :sm="24" :md="24" :lg="24 - tableWidth">
-      <annotation-view :annotation="selectedAnnotation"
-                       v-if="selectedAnnotation">
-      </annotation-view>
-
-      <el-col class="av-centered no-selection" v-else>
-        <div style="align-self: center;">
-          <i class="el-icon-loading" v-if="this.$store.state.tableIsLoading"></i>
-        </div>
+    <el-row>
+      <el-col id="annot-table-container" :xs="24" :sm="24" :md="24" :lg="tableWidth">
+        <annotation-table :hideColumns="hiddenColumns">
+        </annotation-table>
       </el-col>
 
-    </el-col>
-  </el-row>
+      <el-col :xs="24" :sm="24" :md="24" :lg="24 - tableWidth" id="annot-view-container">
+        <annotation-view :annotation="selectedAnnotation"
+                        v-if="selectedAnnotation">
+        </annotation-view>
+
+        <el-col class="av-centered no-selection" v-else>
+          <div style="align-self: center;">
+            <i class="el-icon-loading" v-if="this.$store.state.tableIsLoading"></i>
+          </div>
+        </el-col>
+      </el-col>
+    </el-row>
+  </div>
 </template>
 
 <script>
@@ -67,10 +68,18 @@
 
 <style>
 
- #annot-table-column {
-   position: sticky;
-   position: -webkit-sticky;
+ #annot-table-container {
    top: 80px;
  }
 
+ @media (min-width: 1200px) {
+   #annot-table-container {
+     position: sticky;
+     position: -webkit-sticky;
+   }
+ }
+
+ #annot-table-container, #annot-view-container {
+   padding: 0px 5px;
+ }
 </style>

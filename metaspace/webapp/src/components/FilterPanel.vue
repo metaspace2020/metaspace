@@ -1,8 +1,5 @@
 <template>
-  <el-row id="filter-panel-row" style="padding-left: 10px;">
-
-    <div id="filter-panel">
-
+  <div class="filter-panel">
     <el-select placeholder="Add filter"
                v-model="selectedFilterToAdd"
                @change="addFilter"
@@ -27,17 +24,35 @@
                @change="f.onChange"
                @destroy="f.onChange(undefined)">
     </component>
-    </div>
-  </el-row>
+  </div>
 </template>
 
 <script>
- import gql from 'graphql-tag';
  import InputFilter from './InputFilter.vue';
  import SingleSelectFilter from './SingleSelectFilter.vue';
  import MultiSelectFilter from './MultiSelectFilter.vue';
  import DatasetNameFilter from './DatasetNameFilter.vue';
+ import MzFilter from './MzFilter.vue';
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
+ import {fetchOptionListsQuery} from '../api/metadata.js';
+
+ const filterKeys = [
+   'database',
+   'fdrLevel',
+   'institution',
+   'datasetIds',
+   'compoundName',
+   'mz',
+   'polarity',
+   'adduct',
+   'organism',
+   'organismPart',
+   'condition',
+   'analyzerType',
+   'ionisationSource',
+   'maldiMatrix',
+   'minMSM'
+ ];
 
  export default {
    name: 'filter-panel',
@@ -46,19 +61,12 @@
      InputFilter,
      SingleSelectFilter,
      MultiSelectFilter,
-     DatasetNameFilter
+     DatasetNameFilter,
+     MzFilter
    },
    apollo: {
      optionLists: {
-       query: gql`{
-         institutionNames: metadataSuggestions(field: "Submitted_By.Institution", query: "")
-         organisms: metadataSuggestions(field: "Sample_Information.Organism", query: "")
-         organismParts: metadataSuggestions(field: "Sample_Information.Organism_Part", query: "")
-         conditions: metadataSuggestions(field: "Sample_Information.Condition", query: "")
-         ionisationSources: metadataSuggestions(field: "MS_Analysis.Ionisation_Source", query: "")
-         maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "")
-         analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "")
-       }`,
+       query: fetchOptionListsQuery,
        update: data => data
      }
    },
@@ -77,7 +85,7 @@
 
      availableFilters() {
        let available = [];
-       for (var key in FILTER_SPECIFICATIONS) {
+       for (let key of filterKeys) {
          if (FILTER_SPECIFICATIONS[key].levels.indexOf(this.level) == -1)
            continue;
          if (this.activeKeys.indexOf(key) == -1)
@@ -123,22 +131,16 @@
 </script>
 
 <style>
- .el-form-item__content {
-   text-align: left;
- }
-
- #filter-form {
-   float: left;
- }
-
- #filter-form > .el-form-item {
-   margin-bottom: 5px;
- }
-
- #filter-panel {
+ .filter-panel {
    display: inline-flex;
    align-items: flex-start;
    flex-wrap: wrap;
+   padding: 0px 4px;
+ }
+
+ .el-select-dropdown__wrap {
+   /* so that no scrolling is necessary */
+   max-height: 480px;
  }
 
  .el-select-dropdown__wrap {

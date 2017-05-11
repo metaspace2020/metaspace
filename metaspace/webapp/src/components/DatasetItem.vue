@@ -56,16 +56,27 @@
     </div>
 
     <div class="ds-actions">
-      <i class="el-icon-picture"></i>
-      <router-link :to="resultsHref" >Browse annotations</router-link>
-      <br/>
+      <span v-if="dataset.status == 'FINISHED'">
+        <i class="el-icon-picture"></i>
+        <router-link :to="resultsHref" >Browse annotations</router-link>
+        <br/>
+      </span>
+
+      <span v-if="dataset.status == 'STARTED'">
+        <div class="striped-progressbar processing" title="Processing is under way"></div>
+      </span>
+
+      <span v-if="dataset.status == 'QUEUED'">
+        <div class="striped-progressbar queued" title="Waiting in the queue"></div>
+      </span>
 
       <i class="el-icon-view"></i>
       <a @click="showMetadata" class="metadata-link">Show full metadata</a>
-      <br/>
 
-      <i class="el-icon-edit" v-if="haveEditAccess"></i>
-      <router-link v-if="haveEditAccess" :to="editHref">Edit metadata</router-link>
+      <div v-if="haveEditAccess && dataset.status != 'STARTED'">
+        <i class="el-icon-edit"></i>
+        <router-link :to="editHref">Edit metadata</router-link>
+      </div>
     </div>
   </div>
 </template>
@@ -88,7 +99,7 @@
      resultsHref() {
        return {
          path: '/annotations',
-         query: {ds: JSON.stringify([this.dataset.id]), db: this.preferredDatabase}
+         query: {ds: this.dataset.id, db: this.preferredDatabase}
        };
      },
 
@@ -110,7 +121,14 @@
      },
 
      uploadedDateTime() {
+       const unknown = {date: '????-??-??', time: '??:??'};
+       if (!this.dataset.id)
+         return unknown;
+
        const fields = this.dataset.id.split('_');
+       if (fields.length < 2)
+         return unknown;
+
        const date = fields[0];
        const time = fields[1].split('m')[0].replace('h', ':');
        return {
@@ -201,20 +219,27 @@
    margin: 3px;
    padding: 0px;
    border: 1px solid #cce4ff;
+   display: flex;
+   flex-direction: row;
+   justify-content: space-between;
+ }
+
+ .ds-status {
+   display: flex;
+   padding-left: 5px;
+   flex-direction: column;
+   justify-content: center;
  }
 
  .ds-info {
-   display: inline-block;
    padding: 10px;
    margin: 0px;
    width: 72%;
  }
 
  .ds-actions {
-   display: inline-block;
-   padding: 10px 0px 10px 0px;
+   padding: 10px 15px 10px 0px;
    margin: 0px;
-   width: 25%;
  }
 
  .metadata-link {
@@ -232,6 +257,32 @@
 
  .ds-add-filter {
    cursor: pointer;
+ }
+
+ .striped-progressbar {
+   height: 12px;
+   border-radius: 2px;
+   margin-bottom: 3px;
+   width: 100%;
+   background-size: 30px 30px;
+   background-image: linear-gradient(135deg,
+     rgba(255, 255, 255, .30) 25%, transparent 25%, transparent 50%,
+     rgba(255, 255, 255, .30) 50%,
+     rgba(255, 255, 255, .30) 75%, transparent 75%, transparent);
+
+   animation: animate-stripes 3s linear infinite;
+ }
+
+ @keyframes animate-stripes {
+   0% {background-position: 0 0;} 100% {background-position: 60px 0;}
+ }
+
+ .processing {
+   background-color: lightgreen;
+ }
+
+ .queued {
+   background-color: lightblue;
  }
 
 </style>

@@ -63,7 +63,7 @@ module.exports = {
   devServer: {
     hot: true,
   },
-  devtool: '#cheap-module-eval-source-map',
+  devtool: '#source-map',
   plugins: [
   ]
 }
