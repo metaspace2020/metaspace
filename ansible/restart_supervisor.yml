@@ -19,7 +19,11 @@
 
 
 - name: "Restart {{ supervisor_app | default('all') }} app(s) running under supervisor"
-  shell: supervisorctl reread && supervisorctl update && supervisorctl restart {{ supervisor_app | default("all") }} && supervisorctl status
+  shell: >
+    supervisorctl reread
+    && supervisorctl update
+    && supervisorctl restart {{ supervisor_app | default("all") }}
+    && supervisorctl status {{ supervisor_app | default("all") }}
   args:
     executable: /bin/bash
   register: command_result

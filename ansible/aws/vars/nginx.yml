@@ -1,0 +1,21 @@
+#upstream_hosts:
+#  - name: web_server
+#    server: 127.0.0.1
+#  - name: mol_image_server
+#    server: 127.0.0.1
+
+nginx_sites:
+  - listen: 8080
+#    location: |
+    proxy_pass_port: 5601
+  - listen: 80
+    proxy_pass_port: 8082
+  - listen: "{{ es_port }}"
+    auth_basic: yes
+    proxy_pass_port: 9200
+
+basic_auth_users:
+  - user: "{{ es_user }}"
+    password: "{{ es_password }}"
+  - user: "{{ kibana_user }}"
+    password: "{{ kibana_password }}"
