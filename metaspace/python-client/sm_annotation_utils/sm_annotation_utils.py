@@ -18,6 +18,8 @@ class GraphQLClient(object):
     def query(self, query, variables={}):
         res = requests.post(self.url,
                             json={'query': query, 'variables': variables})
+        if res.headers.get('Content-Type') != 'application/json':
+            raise Exception(res.text)
         res_json = res.json()
         if 'data' in res_json:
             return res.json()['data']
