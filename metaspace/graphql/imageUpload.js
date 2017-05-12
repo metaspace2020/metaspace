@@ -23,7 +23,7 @@ function addIsoImageProvider(app) {
   app.post(path.join(config.img_upload.img_base_path, 'upload'), upload.single('iso_image'),
     function (req, res, next) {
       logger.debug(req.file);
-      let image_url = `http://${req.headers.host}${config.img_upload.img_base_path}${req.file.filename}`;
+      let image_url = `http://${config.img_upload.host}${config.img_upload.img_base_path}${req.file.filename}`;
       res.status(201).json({ image_url });
     });
   

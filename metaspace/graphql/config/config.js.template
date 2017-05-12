@@ -11,6 +11,7 @@ config.port = 3010;
 config.img_upload = {};
 config.img_upload.iso_img_fs_path = "/opt/data/sm_data/public/";
 config.img_upload.img_base_path = "/iso_images/";
+config.img_upload.host = "{{ img_upload_host }}";
 
 config.services = {};
 /* Molecular database service, used only for internal purposes (peakChartData query) */
