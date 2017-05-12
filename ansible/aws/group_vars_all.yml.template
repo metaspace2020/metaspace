@@ -77,6 +77,7 @@ sm_graphql_slack_channel: ""
 sm_graphql_jwt_secret: "reallyLongSecret"
 sm_graphql_url: "http://{{ hostvars['web'].ansible_ssh_host }}:3010/graphql"
 sm_graphql_mol_image_host: "{{ hostvars['web'].ansible_ssh_host }}:3020"
+sm_graphql_img_upload_host: "{{ hostvars['web'].ansible_ssh_host }}"
 
 sm_webapp_url: "http://{{ hostvars['web'].ansible_ssh_host }}"
 sm_webapp_home: /opt/dev/sm-web-app

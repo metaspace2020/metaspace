@@ -10,6 +10,7 @@
     slack_channel: "{{ sm_graphql_slack_channel }}"
     jwt_secret: "{{ sm_graphql_jwt_secret }}"
     mol_image_host: "{{ sm_graphql_mol_image_host }}"
+    img_upload_host: "{{ sm_graphql_img_upload_host }}"
 
   tasks:
     - name: Clone sm-graphql git repository
@@ -28,7 +29,7 @@
         src: "{{ sm_graphql_home }}/"
         dest: "{{ sm_graphql_home }}/"
         rsync_opts:
-          - "--exclude='config/*' --exclude='dist/*' --exclude='node_modules/*'"
+          - "--exclude='config/*' --exclude='dist/*' --exclude='node_modules/*' --exclude='.*'"
       when: local_deploy is defined
 
     - name: Install sm-graphql dependencies
