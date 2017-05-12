@@ -29,6 +29,7 @@
 
     - role: elasticsearch
       become: yes
+      elasticsearch_port: "{{ es_port }}"
 
     - role: kibana
       become: yes
