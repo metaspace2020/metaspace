@@ -2,7 +2,7 @@ const bodyParser = require('body-parser'),
   compression = require('compression'),
   addIsoImageProvider = require('./imageUpload.js'),
   Resolvers = require('./resolvers.js'),
-  config = require('./config.js'),
+  config = require('config'),
   express = require('express'),
   fetch = require('node-fetch'),
   graphqlExpress = require('graphql-server-express').graphqlExpress,
@@ -44,8 +44,8 @@ readFile('schema.graphql', 'utf8', (err, contents) => {
     });
   });
   
-  app.listen(config.PORT);
-  logger.info('SM GraphQL is running...');
+  app.listen(config.port);
+  logger.info(`SM GraphQL is running on ${config.port} port...`);
 });
 
 module.exports = app; // for testing

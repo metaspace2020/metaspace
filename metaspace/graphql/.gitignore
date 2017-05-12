@@ -30,7 +30,7 @@ coverage
 build/Release
 
 # Dependency directories
-node_modules
+node_modules/
 jspm_packages
 
 # Optional npm cache directory
@@ -49,6 +49,6 @@ jspm_packages
 .yarn-integrity
 
 .idea/
-config.js
+config/*.js
+!config/test.js
 dist/
-node_modules/

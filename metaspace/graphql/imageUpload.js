@@ -6,7 +6,7 @@ const express = require('express'),
   path = require('path'),
   fs = require('fs');
 
-const config = require('./config'),
+const config = require('config'),
   logger = require('./utils.js').logger;
 
 let storage = multer.diskStorage({

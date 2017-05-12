@@ -6,7 +6,7 @@ const ES_LIMIT_MAX = 50000;
 const elasticsearch = require('elasticsearch'),
   sprintf = require('sprintf-js');
 
-const config = require('./config.js'),
+const config = require('config'),
   {datasetFilters, dsField} = require('./datasetFilters.js');
   logger = require('./utils').logger;
 

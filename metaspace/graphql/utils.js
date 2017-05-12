@@ -4,7 +4,7 @@ const slack = require('node-slack'),
   winston = require('winston'),
   moment = require('moment');
 
-const config = require('./config');
+const config = require('config');
 
 const RESOL_POWER_PARAMS = {
     '70K': {sigma: 0.00247585727028, fwhm: 0.00583019832869, pts_per_mz: 2019},

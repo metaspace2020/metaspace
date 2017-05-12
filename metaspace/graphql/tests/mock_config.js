@@ -1,5 +1,5 @@
 const config = {
-  PORT: 3010,
+  port: 3010,
 
   img_upload: {
     iso_img_fs_path: "/opt/data/sm_data/public/",

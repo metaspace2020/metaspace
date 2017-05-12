@@ -1,6 +1,6 @@
 {
   "name": "sm-graphql",
-  "version": "0.0.1",
+  "version": "0.6.0",
   "description": "sm-engine GraphQL interface",
   "main": "server.js",
   "author": "Artem Tarasov <artem.tarasov@embl.de>",
@@ -10,7 +10,8 @@
     "build-dev": "webpack -d",
     "dev": "webpack -d -w",
     "watch": "webpack -p -w",
-    "test": "mocha --timeout 1000"
+    "test": "mocha --timeout 2000",
+    "test-integration": "mocha --timeout 3000 tests/*RegrTest.js"
   },
   "license": "ISC",
   "dependencies": {
@@ -18,6 +19,7 @@
     "aws-sdk": "^2.13.0",
     "body-parser": "^1.15.2",
     "compression": "^1.6.2",
+    "config": "^1.26.1",
     "cors": "^2.8.1",
     "elasticsearch": "^12.1.0",
     "express": "^4.14.0",
@@ -44,6 +46,9 @@
     "chai": "^3.5.0",
     "chai-http": "^2.0.1",
     "mocha": "^2.5.3",
-    "nodemon": "^1.11.0"
+    "nodemon": "^1.11.0",
+    "request-promise": "^4.2.1",
+    "sinon": "^2.2.0",
+    "sinon-chai": "^2.10.0"
   }
 }

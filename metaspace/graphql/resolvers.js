@@ -7,7 +7,7 @@ const sprintf = require('sprintf-js'),
   jwt = require('jwt-simple'),
   {UserError} = require('graphql-errors');
 
-const config = require('./config'),
+const config = require('config'),
   {esSearchResults, esCountResults, esAnnotationByID} = require('./esConnector'),
   {datasetFilters, dsField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {generateProcessingConfig, metadataChangeSlackNotify, logger} = require("./utils.js");
