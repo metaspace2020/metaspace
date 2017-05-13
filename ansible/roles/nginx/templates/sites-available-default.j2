@@ -1,20 +1,24 @@
-{% for vhost in nginx_vhosts %}
+log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+        '$status $body_bytes_sent "$http_referer" '
+        '"$http_user_agent" "$http_x_forwarded_for"';
+proxy_cache_path /tmp/nginx levels=1:2 keys_zone=my_zone:2000m inactive=168h;
+
+{% for host in nginx_upstream_hosts %}
+upstream {{ host.name }} {
+    server {{ host.server }};
+}
+{% endfor %}
+
+{% for site in nginx_sites %}
 server {
-    listen {{ vhost.listen }};
-
-    location / {
-{% if vhost.auth_basic is defined %}
-        auth_basic "Private Property";
-        auth_basic_user_file /etc/nginx/passwdfile;
-
-{% endif %}
-        proxy_pass http://localhost:{{ vhost.proxy_pass_port }};
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
+    listen {{ site.listen }};
+{% for location in site.locations %}
+    location {{ location.path }} {
+{% for item in location.params %}
+        {{ item }}
+{% endfor %}
     }
+{% endfor %}
 }
 
 {% endfor %}

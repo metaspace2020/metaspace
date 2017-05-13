@@ -4,9 +4,5 @@
   user: ubuntu
   gather_facts: yes
 
-  vars_files:
-    - ../vars/nginx.yml
-
   roles:
     - role: nginx
-      become: yes

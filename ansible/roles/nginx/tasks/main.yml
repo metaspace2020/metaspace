@@ -1,17 +1,27 @@
 ---
 
 - name: Update repository cache and install Nginx packages
+  become: yes
   apt: name=nginx state=present update_cache=yes
 
+- name: Create /etc/nginx/proxy-params.conf
+  become: yes
+  copy:
+    src=proxy-params.conf dest=/etc/nginx/proxy-params.conf
+    owner=ubuntu group=ubuntu mode=0644
+
 - name: Create /etc/nginx/sites-available/default
+  become: yes
   template:
     src=sites-available-default.j2 dest=/etc/nginx/sites-available/default
     owner=ubuntu group=ubuntu mode=0644
 
 - name: Install Ansible htpasswd module dependencies
+  become: yes
   apt: name=python-passlib state=present update_cache=yes
 
 - name: Create basic auth users
+  become: yes
   htpasswd:
     path: /etc/nginx/passwdfile
     name: "{{ item.user }}"
@@ -19,4 +29,5 @@
   with_items: "{{ basic_auth_users }}"
 
 - name: Restart Nginx
+  become: yes
   service: name=nginx state=restarted

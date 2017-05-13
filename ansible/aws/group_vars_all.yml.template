@@ -15,7 +15,7 @@ postgres_port: 5432
 
 elasticsearch_version: 5.2.2
 es_host: "{{ hostvars['web'].ansible_ssh_host }}"
-es_port: 9200
+es_port: 9300
 es_user: elastic
 es_password:
 
@@ -60,11 +60,11 @@ miniconda_env:
       - bottle
 
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
-sm_branch: master
+sm_branch: rel-v0.6
 sm_postgres_password:
 sm_home: "/opt/dev/sm"
 sm_s3_path: "s3a://sm-engine/data"
-sm_iso_images_url: "http://{{ hostvars['web'].ansible_ssh_host }}:3010/iso_images"
+sm_iso_images_url: "http://{{ hostvars['web'].ansible_ssh_host }}/iso_images"
 
 sm_mol_db_home: /opt/dev/sm-mol-db
 sm_mol_db_branch: master
@@ -75,13 +75,14 @@ sm_graphql_branch: master
 sm_graphql_slack_webhook_url: ""
 sm_graphql_slack_channel: ""
 sm_graphql_jwt_secret: "reallyLongSecret"
-sm_graphql_url: "http://{{ hostvars['web'].ansible_ssh_host }}:3010/graphql"
-sm_graphql_mol_image_host: "{{ hostvars['web'].ansible_ssh_host }}:3020"
+sm_graphql_public_url: "http://{{ hostvars['web'].ansible_ssh_host }}/graphql"
+sm_graphql_mol_image_host: "{{ hostvars['web'].ansible_ssh_host }}"
 sm_graphql_img_upload_host: "{{ hostvars['web'].ansible_ssh_host }}"
+sm_graphql_moldb_service_host: localhost/mol_db
 
 sm_webapp_url: "http://{{ hostvars['web'].ansible_ssh_host }}"
 sm_webapp_home: /opt/dev/sm-web-app
-sm_webapp_branch: master
+sm_webapp_branch: rel-v0.6
 sm_webapp_port: 8082
 sm_webapp_cookie_secret:
 sm_webapp_admin_emails:
@@ -94,7 +95,7 @@ sm_webapp_google_client_id: ""
 sm_webapp_google_client_secret: ""
 
 sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
-sm_ansible_branch: master
+sm_ansible_branch: rel-v0.6
 sm_ansible_home: /opt/dev/sm-engine-ansible
 
 activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
@@ -128,6 +129,73 @@ spark_env_extras_master:
 
 slack_channel: "{{ slack_channel }}"
 slack_webhook_url: "{{ slack_webhook_url }}"
+
+nginx_upstream_hosts:
+  - name: web_server
+    server: 127.0.0.1:{{ sm_webapp_port }}
+  - name: mol_image_server
+    server: 127.0.0.1:3020
+  - name: isotope_image_server
+    server: 127.0.0.1:3010
+  - name: graphql_server
+    server: 127.0.0.1:3010
+  - name: moldb_server
+    server: 127.0.0.1:5001
+  - name: kibana_server
+    server: 127.0.0.1:5601
+  - name: elasticsearch_server
+    server: 127.0.0.1:9200
+
+nginx_sites:
+  - listen: 8080
+    locations:
+      - path: /
+        params:
+          - auth_basic "Private Property";
+          - auth_basic_user_file /etc/nginx/passwdfile;
+          - proxy_pass http://kibana_server;
+          - include proxy-params.conf;
+  - listen: 80
+    locations:
+      - path: /
+        params:
+          - proxy_pass http://web_server;
+      - path: /mol-images/
+        params:
+          - proxy_pass http://mol_image_server/mol-images/;
+      - path: /iso_images/
+        params:
+          - proxy_pass http://isotope_image_server/iso_images/;
+      - path: /graphql
+        params:
+          - proxy_pass http://graphql_server/graphql;
+          - include proxy-params.conf;
+      - path: /graphiql
+        params:
+          - proxy_pass http://graphql_server/graphiql;
+          - include proxy-params.conf;
+      - path: /mol_db
+        params:
+          - proxy_pass http://moldb_server;
+          - proxy_cache my_zone;
+          - add_header X-Proxy-Cache $upstream_cache_status;
+          - proxy_cache_key "$scheme$request_method$host$request_uri";
+          - proxy_cache_valid 200 168h;
+          - include proxy-params.conf;
+  - listen: "{{ es_port }}"
+    locations:
+      - path: /
+        params:
+        - auth_basic "Private Property";
+        - auth_basic_user_file /etc/nginx/passwdfile;
+        - proxy_pass http://elasticsearch_server;
+        - include proxy-params.conf;
+
+basic_auth_users:
+  - user: "{{ es_user }}"
+    password: "{{ es_password }}"
+  - user: "{{ kibana_user }}"
+    password: "{{ kibana_password }}"
 
 # VIRTUAL MACHINES CONFIGURATION
 
