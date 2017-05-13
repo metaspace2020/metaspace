@@ -68,7 +68,7 @@ sm_iso_images_url: "http://{{ hostvars['web'].ansible_ssh_host }}/iso_images"
 
 sm_mol_db_home: /opt/dev/sm-mol-db
 sm_mol_db_branch: master
-sm_mol_db_url: "http://{{ hostvars['web'].ansible_ssh_host }}:5000/v1"
+sm_mol_db_url: "http://{{ hostvars['web'].ansible_ssh_host }}/mol_db/v1"
 
 sm_graphql_home: /opt/dev/sm-graphql
 sm_graphql_branch: master
@@ -174,9 +174,9 @@ nginx_sites:
         params:
           - proxy_pass http://graphql_server/graphiql;
           - include proxy-params.conf;
-      - path: /mol_db
+      - path: /mol_db/
         params:
-          - proxy_pass http://moldb_server;
+          - proxy_pass http://moldb_server/;
           - proxy_cache my_zone;
           - add_header X-Proxy-Cache $upstream_cache_status;
           - proxy_cache_key "$scheme$request_method$host$request_uri";
