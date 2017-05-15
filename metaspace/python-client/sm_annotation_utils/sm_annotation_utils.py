@@ -7,8 +7,19 @@ import re
 from copy import deepcopy
 from io import BytesIO
 
+def _extract_data(res):
+    if not res.headers.get('Content-Type').startswith('application/json'):
+        raise Exception(res.text)
+    res_json = res.json()
+    if 'data' in res_json:
+        return res.json()['data']
+    else:
+        raise Exception(res.json()['errors'][0]['message'])
+
+
 DEFAULT_CONFIG = {
-    'graphql_url': 'http://annotate.metaspace2020.eu:3010/graphql'
+    'graphql_url': 'http://annotate.metaspace2020.eu:3010/graphql',
+    'moldb_url': 'http://annotate.metaspace2020.eu:5001/v1'
 }
 
 class GraphQLClient(object):
@@ -18,13 +29,7 @@ class GraphQLClient(object):
     def query(self, query, variables={}):
         res = requests.post(self.url,
                             json={'query': query, 'variables': variables})
-        if res.headers.get('Content-Type') != 'application/json':
-            raise Exception(res.text)
-        res_json = res.json()
-        if 'data' in res_json:
-            return res.json()['data']
-        else:
-            raise Exception(res.json()['errors'][0]['message'])
+        return _extract_data(res)
 
     def iterQuery(self, query, variables={}, batch_size=50000):
         """
@@ -156,6 +161,46 @@ class GraphQLClient(object):
           }
         }"""
         return self.listQuery('allDatasets', query, {'filter': datasetFilter})
+
+
+class MolDBClient:
+    def __init__(self, config):
+        self._url = config['moldb_url']
+        self._mol_formula_lists = {}
+
+    def getDatabase(self, name, version=None):
+        url = self._url + '/databases?name={}'.format(name)
+        if version:
+            url += '&version=' + version
+        db_list = _extract_data(requests.get(url))
+        return MolecularDatabase(db_list[0], self)
+
+    def getDatabaseList(self):
+        url = self._url + '/databases'
+        db_list = _extract_data(requests.get(url))
+        return [MolecularDatabase(db, self) for db in db_list]
+
+    def getMolFormulaList(self, dbId):
+        if dbId in self._mol_formula_lists:
+            return self._mol_formula_lists[dbId]
+        url = self._url + '/databases/{}/sfs'.format(dbId)
+        self._mol_formula_lists[dbId] = _extract_data(requests.get(url))
+        return self._mol_formula_lists[dbId]
+
+    def getMolFormulaNames(self, dbId, molFormula):
+        url = '{}/databases/{}/molecules?sf={}'.format(
+            self._url, dbId, molFormula
+        ) + '&limit=100&fields=mol_name'
+        return [m['mol_name'] for m in _extract_data(requests.get(url))]
+
+    def getMolFormulaIds(self, dbId, molFormula):
+        url = '{}/databases/{}/molecules?sf={}'.format(
+            self._url, dbId, molFormula
+        ) + '&limit=100&fields=mol_id'
+        return [m['mol_id'] for m in _extract_data(requests.get(url))]
+
+    def clearCache(self):
+        self._mol_formula_lists = {}
 
 
 def ion(r):
@@ -323,6 +368,10 @@ class SMInstance(object):
     def reconnect(self):
         self._gqclient = GraphQLClient(self._config['graphql_url'])
         self._es_client = None
+        self._moldb_client = None
+
+        if self._config['moldb_url']:
+            self._moldb_client = MolDBClient(self._config)
 
         es_config = self._config.get('elasticsearch', None)
         if es_config:
@@ -356,10 +405,12 @@ class SMInstance(object):
         raise NYI
 
     def database(self, name, version=None):
-        raise NYI
+        assert self._moldb_client, 'provide moldb_url in the config'
+        return self._moldb_client.getDatabase(name, version)
 
     def databases(self):
-        raise NYI
+        assert self._moldb_client, 'provide moldb_url in the config'
+        return self._moldb_client.getDatabaseList()
 
     def metadata(self, datasets):
         """
@@ -472,37 +523,31 @@ class SMInstance(object):
         return d
 
 
-class MolecularDatabase(object):
-    def __init__(self, name, db_cursor):
-        self._db_cur = db_cursor
-        self._name = name
-        self._db_cur.execute("select id from formula_db where name = %s", [self._name])
-        self._id = self._db_cur.fetchone()[0]
-        self._data = self._fetch_data()
+class MolecularDatabase:
+    def __init__(self, metadata, client):
+        self._metadata = metadata
+        self._id = self._metadata['id']
+        self._client = client
 
     @property
     def name(self):
-        return self._name
+        return self._metadata['name']
 
-    def _fetch_data(self):
-        q = "select sf, id, name from formula where db_id = %s"
-        self._db_cur.execute(q, [self._id])
-        data = {}
-        for sf, mol_id, mol_name in self._db_cur.fetchall():
-            if sf not in data:
-                data[sf] = {'ids': [], 'names': []}
-            data[sf]['ids'].append(mol_id)
-            data[sf]['names'].append(mol_name)
-        return data
+    @property
+    def version(self):
+        return self._metadata['version']
+
+    def __repr__(self):
+        return "MolDB({} [{}])".format(self.name, self.version)
 
     def sum_formulas(self):
-        return self._data.keys()
+        return self._client.getMolFormulaList(self._id)
 
     def names(self, sum_formula):
-        return self._data.get(sum_formula, {}).get('names', {})
+        return self._client.getMolFormulaNames(self._id, sum_formula)
 
     def ids(self, sum_formula):
-        return self._data.get(sum_formula, {}).get('ids', {})
+        return self._client.getMolFormulaIds(self._id, sum_formula)
 
 
 def plot_diff(ref_df, dist_df, t='', xlabel='', ylabel='', col='msm'):
