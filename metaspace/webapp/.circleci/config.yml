@@ -38,7 +38,7 @@ jobs:
             git clone https://github.com/metaspace2020/sm-graphql --branch rel-v0.6
             export NPM_CONFIG_LOGLEVEL=warn
             cd sm-graphql && npm install && cd ..
-            cp sm-graphql/tests/mock_config.js sm-graphql/config.js
+            cp sm-graphql/tests/mock_config.js sm-graphql/config/default.js
             forever start sm-graphql/tests/api_mocks.js
             cd sm-graphql && forever start server.js
       - run:
