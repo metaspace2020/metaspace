@@ -18,8 +18,8 @@
 
     - name: Upload local files
       synchronize:
-        src: "{{ sm_ansible_home }}
-        dest: "{{ sm_ansible_home }}
+        src: "{{ sm_ansible_home }}"
+        dest: "{{ sm_ansible_home }}"
       with_items:
         - sm
       when: local_deploy is defined
