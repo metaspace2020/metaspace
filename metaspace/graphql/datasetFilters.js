@@ -122,8 +122,11 @@ const datasetFilters = {
 
 function dsField(pgDatasetRecord, alias){
   let info = pgDatasetRecord.metadata;
-  for (let field of datasetFilters[alias].schemaPath.split("."))
+  for (let field of datasetFilters[alias].schemaPath.split(".")) {
     info = info[field];
+    if (!info)
+      return info;
+  }
   return info;
 }
 
