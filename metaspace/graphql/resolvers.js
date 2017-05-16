@@ -277,9 +277,9 @@ const Resolvers = {
 
     isotopeImages(hit) {
       const {iso_image_urls, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints} = hit._source;
-      return iso_image_urls.map((url, i) => ({
-        url,
-        mz: parseFloat(centroid_mzs[i]),
+      return centroid_mzs.map((mz, i) => ({
+        url: iso_image_urls[i],
+        mz: parseFloat(mz),
         totalIntensity: total_iso_ints[i],
         minIntensity: min_iso_ints[i],
         maxIntensity: max_iso_ints[i]
