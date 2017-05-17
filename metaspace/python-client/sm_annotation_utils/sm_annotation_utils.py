@@ -189,10 +189,11 @@ class SMInstance(object):
         return "SMInstance(DB {}/{}, ES {}/{})".format(self._db_host, self._db_database,
                                                        self._es_host, self._es_index)
 
-    def dataset(self, dataset_name):
-        query = "select id from dataset where name = '{}'".format(dataset_name)
-        self._db_cur.execute(query)
-        dataset_id = self._db_cur.fetchone()[0]
+    def dataset(self, dataset_name=None, dataset_id=None):
+        if not dataset_id:
+            query = "select id from dataset where name = '{}'".format(dataset_name)
+            self._db_cur.execute(query)
+            dataset_id = self._db_cur.fetchone()[0]
         return SMDataset(dataset_id, self._db_cur, self._es_client, index_name=self._es_index)
 
     def datasets(self, name_mask=''):
