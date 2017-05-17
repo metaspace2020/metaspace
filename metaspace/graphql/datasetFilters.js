@@ -109,7 +109,7 @@ class JobStatusFilter extends AbstractDatasetFilter {
 const datasetFilters = {
   institution: new ExactMatchFilter('Submitted_By.Institution', {}),
   polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
-  ionisationSource: new PhraseMatchFilter('MS_Analysis.Ionisation_Source', {}),
+  ionisationSource: new ExactMatchFilter('MS_Analysis.Ionisation_Source', {}),
   analyzerType: new PhraseMatchFilter('MS_Analysis.Analyzer', {}),
   organism: new ExactMatchFilter('Sample_Information.Organism', {}),
   organismPart: new ExactMatchFilter('Sample_Information.Organism_Part', {}),
