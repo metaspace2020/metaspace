@@ -50,7 +50,7 @@ function baseDatasetQuery() {
                 'name',
                 pg.raw('max(finish) as last_finished'),
                 pg.raw('array_agg(status) as status'),
-                'metadata', 'config')
+                'metadata', 'config', 'input_path')
         .from('dataset').leftOuterJoin('job', 'dataset.id', 'job.ds_id')
         .groupBy('dataset.id').as('tmp');
   });
@@ -193,6 +193,10 @@ const Resolvers = {
       if (ds.status.indexOf('FAILED') >= 0)
         return 'FAILED';
       return 'FINISHED';
+    },
+
+    inputPath(ds) {
+      return ds.input_path;
     }
 
     /* annotations(ds, args) {

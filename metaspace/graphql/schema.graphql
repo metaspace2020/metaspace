@@ -62,6 +62,7 @@ type Dataset {
   metadataJson: String!
 
   status: JobStatus
+  inputPath: String
 }
 
 type CompoundInfoEntry {
