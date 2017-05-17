@@ -35,7 +35,8 @@
        isLoading: false,
        message: '',
        dataURI: '',
-       hotspotRemovalQuantile: 0.99
+       hotspotRemovalQuantile: 0.99,
+       isLCMS: false
      }
    },
    created() {
@@ -51,11 +52,17 @@
    computed: {
      imageStyle() {
        // assume the allocated screen space has width > height
-       return {
-         width: '100%',                       // maximize width
-         'max-height': this.maxHeight + 'px', // limit height
-         'object-fit': 'contain'              // keep aspect ratio
-       };
+       if (!this.isLCMS)
+        return {
+          width: '100%',                       // maximize width
+          'max-height': this.maxHeight + 'px', // limit height
+          'object-fit': 'contain'              // keep aspect ratio
+        };
+       else // LC-MS data (1 x number of time points)
+         return {
+           width: '100%',
+           height: Math.min(100, this.maxHeight) + 'px',
+         };
      }
    },
    watch: {
@@ -122,6 +129,7 @@
 
      redraw () {
        this.isLoading = false;
+       this.isLCMS = this.image.height == 1;
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d"),
            parentWidth = Math.max(this.$refs.parent.offsetWidth, 750);
