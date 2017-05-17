@@ -83,6 +83,7 @@ class GraphQLClient(object):
         configJson
         metadataJson
         status
+        inputPath
     """
 
     ANNOTATION_FIELDS = """
@@ -268,7 +269,7 @@ class SMDataset(object):
 
     @property
     def s3dir(self):
-        raise NYI
+        return self._info['inputPath']
 
     def __repr__(self):
         return "SMDataset({} | ID: {})".format(self.name, self.id)
