@@ -15,13 +15,14 @@
         repo: "{{ sm_ansible_url }}"
         update: yes
         version: "{{ sm_ansible_branch }}"
+      when: local_deploy is not defined
 
     - name: Upload local files
       synchronize:
-        src: "{{ sm_ansible_home }}"
-        dest: "{{ sm_ansible_home }}"
-      with_items:
-        - sm
+        src: "{{ sm_ansible_home }}/"
+        dest: "{{ sm_ansible_home }}/"
+#        rsync_opts:
+#          - "--exclude=aws/prod"
       when: local_deploy is defined
 
     - name: Upload templated group_vars/all.yml
@@ -32,8 +33,5 @@
       command: python update_inventory.py --stage {{ stage }}
       args:
         chdir: "{{ sm_ansible_home }}/aws"
-
-#    - name: Copy inventory file
-#      copy: src={{ stage }}/hosts dest={{ sm_ansible_home }}/aws/{{ stage }} mode=0600 owner=ubuntu group=ubuntu
 
     - include: ../../restart_supervisor.yml  supervisor_app=sm-cluster-autostart

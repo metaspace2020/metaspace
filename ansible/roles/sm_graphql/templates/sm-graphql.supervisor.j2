@@ -2,7 +2,7 @@
 
 [program:sm-graphql]
 process_name = sm-graphql
-environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin",NODE_ENV="production"
+environment = NODE_ENV="production"
 directory = {{ sm_graphql_home }}
 command = nodejs server.js
 redirect_stderr = true
