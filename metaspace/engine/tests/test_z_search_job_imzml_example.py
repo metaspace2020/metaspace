@@ -3,10 +3,11 @@ from os.path import join, dirname
 import pytest
 from fabric.api import local
 from fabric.context_managers import warn_only
-from mock import patch
+from mock import patch, MagicMock
 import time
 
 from sm.engine.db import DB
+from sm.engine.mol_db import MolDBServiceWrapper, MolecularDB
 from sm.engine.search_job import SearchJob
 from sm.engine.util import SMConfig
 from sm.engine.fdr import DECOY_ADDUCTS
@@ -26,19 +27,15 @@ def create_fill_sm_database(create_test_db, drop_test_db, create_sm_index, sm_co
     local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
 
 
-@patch('sm.engine.mol_db.MolDBServiceWrapper')
+# @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
 def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metrics_mock,
-                                  post_images_to_annot_service_mock, MolDBServiceWrapperMock,
+                                  post_images_to_annot_service_mock,
                                   sm_config, create_fill_sm_database, es_dsl_search):
     get_compute_img_metrics_mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100.], [0], [10.])
     filter_sf_metrics_mock.side_effect = lambda x: x
-    mol_db_mock = MolDBServiceWrapperMock()
-    mol_db_mock.find_db_by_name_version.return_value = [{'id': 0, 'name': 'HMDB', 'version': '2017-01'}]
-    mol_db_mock.fetch_db_sfs.return_value = ['C12H24O']
-    mol_db_mock.fetch_molecules.return_value = [{'mol_id': 'HMDB0001', 'mol_name': 'molecule name'}]
 
     url_dict = {
         'ion_image_url': 'http://localhost/ion_image',
@@ -52,12 +49,20 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
 
     SMConfig._config_dict = sm_config
     db = DB(sm_config['db'])
+
+    mol_db_wrapper_mock = MagicMock(MolDBServiceWrapper)
+    mol_db_wrapper_mock.find_db_by_id.return_value = {'id': 0, 'name': 'HMDB', 'version': '2017-01'}
+    mol_db_wrapper_mock.fetch_db_sfs.return_value = ['C12H24O']
+    mol_db_wrapper_mock.fetch_molecules.return_value = [{'mol_id': 'HMDB0001', 'mol_name': 'molecule name'}]
+    MolecularDB.mol_db_service = mol_db_wrapper_mock
+    MolecularDB.sm_config = sm_config
+
     try:
         ds_config_str = open(ds_config_path).read()
         db.insert(DS_INSERT, [('2000-01-01_00h00m', test_ds_name, input_dir_path, '{}', ds_config_str)])
 
-        job = SearchJob('2000-01-01_00h00m', '')
-        job.run()
+        job = SearchJob('')
+        job.run('2000-01-01_00h00m')
 
         # dataset meta asserts
         rows = db.select("SELECT id, name, input_path from dataset")

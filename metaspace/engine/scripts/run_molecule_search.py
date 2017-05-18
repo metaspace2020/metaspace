@@ -56,9 +56,9 @@ if __name__ == "__main__":
     ds = create_ds_from_files(ds_id)
     ds_man.add_ds(ds)
 
-    job = SearchJob(ds.id, args.sm_config_path, args.no_clean)
+    job = SearchJob(args.sm_config_path, args.no_clean)
     try:
-        job.run()
+        job.run(ds.id)
     except Exception as e:
         sys.exit(1)
 

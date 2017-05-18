@@ -53,9 +53,10 @@ def drop_test_db(request):
 @pytest.fixture()
 def ds_config():
     return {
-        "database": {
+        "databases": [{
             "name": "HMDB",
-        },
+            "version": "2016"
+        }],
         "isotope_generation": {
             "adducts": ["+H", "+Na"],
             "charge": {

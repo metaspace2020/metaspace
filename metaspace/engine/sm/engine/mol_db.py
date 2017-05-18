@@ -41,6 +41,10 @@ class MolDBServiceWrapper(object):
         r.raise_for_status()
         return r.json()['data']
 
+    def find_db_by_id(self, id):
+        url = '{}/databases/{}'.format(self._service_url, id)
+        return self._fetch(url)
+
     def find_db_by_name_version(self, name, version=None):
         url = '{}/databases?name={}'.format(self._service_url, name)
         if version:
@@ -67,20 +71,25 @@ class MolecularDB(object):
         ds_config : dict
             Dataset configuration
         """
-    def __init__(self, name, version, ds_config):
-        self._name = name
-        self._version = version
-        self._ds_config = ds_config
+    sm_config = SMConfig.get_conf()
+    mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
 
-        sm_config = SMConfig.get_conf()
-        self._db = DB(sm_config['db'])
-        self._mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
-        mol_db_data = self._mol_db_service.find_db_by_name_version(name, version)[0]
-        self._id, self._version = mol_db_data['id'], mol_db_data['version']
+    def __init__(self, id=None, name=None, version=None, ds_config=None):
+        assert ds_config
+        self.ds_config = ds_config
 
+        if id is not None:
+            data = self.mol_db_service.find_db_by_id(id)
+        elif name is not None:
+            data = self.mol_db_service.find_db_by_name_version(name, version)[0]
+        else:
+            raise Exception('MolDB id or name should be provided')
+
+        self._id, self._name, self._version = data['id'], data['name'], data['version']
         self._sf_df = None
         self._job_id = None
         self._sfs = None
+        self._db = DB(self.sm_config['db'])
 
     def __str__(self):
         return '{} {}'.format(self.name, self.version)
@@ -100,6 +109,7 @@ class MolecularDB(object):
     def set_job_id(self, job_id):
         self._job_id = job_id
 
+    # TODO: store molecule ids/names in the database
     def get_molecules(self, sf):
         """ Returns a dataframe with
 
@@ -110,12 +120,12 @@ class MolecularDB(object):
         ----------
             pd.DataFrame
         """
-        return pd.DataFrame(self._mol_db_service.fetch_molecules(self.id, sf))
+        return pd.DataFrame(self.mol_db_service.fetch_molecules(self.id, sf))
 
     @property
     def sfs(self):
         if not self._sfs:
-            sfs = self._mol_db_service.fetch_db_sfs(self.id)
+            sfs = self.mol_db_service.fetch_db_sfs(self.id)
             if self._db.select_one(SF_COUNT, self._id)[0] == 0:
                 rows = map(lambda sf: (self._id, sf), list(sfs))
                 self._db.insert(SF_INS, rows)
@@ -125,7 +135,7 @@ class MolecularDB(object):
     @property
     def sf_df(self):
         if self._sf_df is None:
-            iso_gen_conf = self._ds_config['isotope_generation']
+            iso_gen_conf = self.ds_config['isotope_generation']
             charge = '{}{}'.format(iso_gen_conf['charge']['polarity'], iso_gen_conf['charge']['n_charges'])
             target_sf_peaks_rs = self._db.select(THEOR_PEAKS_TARGET_ADD_SEL, self._id,
                                                  iso_gen_conf['adducts'], iso_gen_conf['isocalc_sigma'],
@@ -141,7 +151,7 @@ class MolecularDB(object):
                            .sort_values(['sf_id', 'adduct']))
             self._check_formula_uniqueness(self._sf_df)
 
-            logger.info('Loaded %s sum formula, adduct combinations from the DB', self.sf_df.shape[0])
+            logger.info('Loaded %s sum formula, adduct combinations from the DB', self._sf_df.shape[0])
         return self._sf_df
 
     @staticmethod
