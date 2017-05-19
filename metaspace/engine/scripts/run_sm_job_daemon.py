@@ -6,9 +6,9 @@ import logging
 import boto3
 
 from sm.engine.util import SMConfig, sm_log_formatters, sm_log_config, init_logger
-from sm.engine.search_job import SearchJob
-from sm.engine.queue import QueueConsumer
-from sm.engine.db import DB
+from sm.engine import SearchJob
+from sm.engine import QueueConsumer
+from sm.engine import DB
 
 
 def configure_loggers():
