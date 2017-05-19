@@ -69,10 +69,7 @@ describe('GraphQL integration: Dataset type', () => {
         done();
       })
       .catch((err) => {
-        const delta = jsondiffpatch.diff(err.actual, err.expected),
-          diff = jsondiffpatch.formatters.jsonpatch.format(delta);
-        console.log(diff);
-        throw err;
+        done(err);
       });
   });
   

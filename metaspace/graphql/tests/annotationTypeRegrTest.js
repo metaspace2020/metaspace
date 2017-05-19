@@ -77,7 +77,7 @@ describe('GraphQL integration: Annotation type', () => {
         done();
       })
       .catch((err) => {
-        throw err;
+        done(err);
       });
   });
   
