@@ -9,7 +9,7 @@ const chai = require('chai'),
 
 const server = require('../server'),
   config = require('config'),
-  {graphqlQuery} = require('./utils');
+  {graphqlQuery} = require('./testingUtils');
 
 describe('GraphQL integration: Dataset type', () => {
   it('datasetByName should return correct document', (done) => {

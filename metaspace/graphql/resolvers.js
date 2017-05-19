@@ -363,7 +363,7 @@ const Resolvers = {
         return checkPermissions(datasetId, payload)
           .then( () => {
             const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/delete`;
-            let body = {};
+            let body = JSON.stringify({});
             // if (delRawData != undefined || delRawData == false)
             //   body = JSON.stringify({});
             // else

@@ -8,7 +8,7 @@ const chai = require('chai'),
 
 const server = require('../server'),
   config = require('config'),
-  {graphqlQuery, stripUrls} = require('./utils');
+  {graphqlQuery, stripUrls} = require('./testingUtils');
 
 describe('GraphQL integration: Annotation type', () => {
   it('allAnnotations should return correct array', (done) => {

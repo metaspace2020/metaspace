@@ -18,7 +18,6 @@ const RESOL_POWER_PARAMS = {
     '1000K': {sigma: 0.00017331000892, fwhm: 0.000408113883008, pts_per_mz: 28850},
 };
 
-// FIXME: the proper way is to completely ditch config.json and use only meta.json as the input to the engine.
 function generateProcessingConfig(meta_json) {
   const polarity_dict = {'Positive': '+', 'Negative': '-'},
         polarity = polarity_dict[meta_json['MS_Analysis']['Polarity']],
@@ -48,14 +47,19 @@ function generateProcessingConfig(meta_json) {
   let m_opts = meta_json['metaspace_options'];
   let ppm = 3.0;
   if ('ppm' in m_opts) {
-    ppm = m_opts['ppm']
+    ppm = m_opts['ppm'];
   }
   
-  let mdb = m_opts['Metabolite_Database'];
-  let mdb_list = [{ "name": mdb }];
-  if (mdb != "HMDB") {
+  // TODO: move to proper metadata format supporting multiple molecular databases
+  let mdb_list;
+  let mdb_names = m_opts['Metabolite_Database'];
+  if (!Array.isArray(mdb_names))
+    mdb_list = [{'name': mdb_names}];
+  else
+    mdb_list = mdb_names.map( (name) => ({'name': name}) );
+  
+  if (mdb_list.filter( mdb => mdb.name == 'HMDB').length == 0)
     mdb_list.push({ "name": "HMDB", "version": "2016" });
-  }
   
   return {
     "databases": mdb_list,
