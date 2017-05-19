@@ -4,6 +4,7 @@
   hosts: default
   remote_user: vagrant
   become: yes
+  gather_facts: no
 
   vars:
     upload_key: true
