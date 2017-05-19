@@ -21,7 +21,7 @@ from sm.engine.theor_peaks_gen import TheorPeaksGenerator
 from sm.engine.util import proj_root, SMConfig, read_json, sm_log_formatters
 from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
-from sm.engine.mol_db import MolecularDB
+from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 
 logger = logging.getLogger('sm-engine')
 
@@ -115,11 +115,12 @@ class SearchJob(object):
             self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
 
     def prepare_moldb_id_list(self):
+        moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
         finished_job_moldb_ids = [r[1] for r in self._db.select(JOB_ID_MOLDB_ID_SEL, self._ds.id)]
         moldb_id_list = []
         for mol_db_dict in self._ds.config['databases']:
-            data = MolecularDB.mol_db_service.find_db_by_name_version(mol_db_dict['name'],
-                                                                      mol_db_dict.get('version', None))
+            data = moldb_service.find_db_by_name_version(mol_db_dict['name'],
+                                                         mol_db_dict.get('version', None))
             if data:
                 mol_db_id = data[0]['id']
                 if mol_db_id not in finished_job_moldb_ids:

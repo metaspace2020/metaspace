@@ -71,12 +71,13 @@ class MolecularDB(object):
         ds_config : dict
             Dataset configuration
         """
-    sm_config = SMConfig.get_conf()
-    mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
 
     def __init__(self, id=None, name=None, version=None, ds_config=None):
         assert ds_config
         self.ds_config = ds_config
+
+        sm_config = SMConfig.get_conf()
+        self.mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
 
         if id is not None:
             data = self.mol_db_service.find_db_by_id(id)
@@ -89,7 +90,7 @@ class MolecularDB(object):
         self._sf_df = None
         self._job_id = None
         self._sfs = None
-        self._db = DB(self.sm_config['db'])
+        self._db = DB(sm_config['db'])
 
     def __str__(self):
         return '{} {}'.format(self.name, self.version)
