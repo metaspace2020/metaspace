@@ -319,6 +319,39 @@ const Resolvers = {
       }
     },
 
+    resubmitDataset(_, args) {
+      const {datasetId} = args;
+      try {
+        const payload = jwt.decode(args.jwt, config.jwt.secret);
+
+        return checkPermissions(datasetId, payload)
+          .then(() => {
+            return pg.select().from('dataset').where('id', '=', datasetId)
+              .then(records => {
+                const ds = records[0];
+                const body = JSON.stringify({
+                  id: ds.id,
+                  name: ds.name,
+                  input_path: ds.input_path,
+                  metadata: ds.metadata,
+                  config: ds.config
+                });
+
+                const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
+                return fetch(url, { method: 'POST', body: body })
+              });
+          })
+          .then(() => "success")
+          .catch(e => {
+            logger.error(`${e.stack}\n`);
+            return e.message;
+          });
+      } catch (e) {
+        logger.error(e);
+        return e.message;
+      }
+    },
+
     updateMetadata(_, args) {
       const {datasetId, metadataJson} = args;
       try {
