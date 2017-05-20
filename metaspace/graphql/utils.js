@@ -60,11 +60,18 @@ function generateProcessingConfig(meta_json) {
   
   if (mdb_list.filter( mdb => mdb.name == 'HMDB').length == 0)
     mdb_list.push({ "name": "HMDB", "version": "2016" });
+
+  // TODO: metadata format should support adduct specification
+  let adducts;
+  if (m_opts.hasOwnProperty('Adducts'))
+    adducts = m_opts['Adducts'];
+  else
+    adducts = {'+': ['+H', '+K', '+Na'], '-': ['-H', '+Cl']}[polarity];
   
   return {
     "databases": mdb_list,
     "isotope_generation": {
-      "adducts": {'+': ['+H', '+K', '+Na'], '-': ['-H', '+Cl']}[polarity],
+      "adducts": adducts,
       "charge": {
         "polarity": polarity,
         "n_charges": 1
