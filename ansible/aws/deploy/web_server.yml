@@ -1,0 +1,7 @@
+---
+
+- include: mol_db.yml
+- include: sm_api.yml
+- include: graphql.yml
+- include: web_app.yml
+- include: cluster_auto_start.yml
