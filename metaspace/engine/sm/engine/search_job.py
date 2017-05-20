@@ -21,12 +21,11 @@ from sm.engine.theor_peaks_gen import TheorPeaksGenerator
 from sm.engine.util import proj_root, SMConfig, read_json, sm_log_formatters
 from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
-from sm.engine.mol_db import MolecularDB
-
+from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 
 logger = logging.getLogger('sm-engine')
 
-JOB_ID_SEL = "SELECT id FROM job WHERE ds_id = %s"
+JOB_ID_MOLDB_ID_SEL = "SELECT id, db_id FROM job WHERE ds_id = %s"
 JOB_INS = "INSERT INTO job (db_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
 JOB_UPD = "UPDATE job set status=%s, finish=%s where id=%s"
 DELETE_TARGET_DECOY_ADD = 'DELETE FROM target_decoy_add where job_id = %s'
@@ -37,17 +36,12 @@ class SearchJob(object):
 
     Args
     ----
-    ds_id : string
-        A technical identifier for the dataset
-    ds_name : string
-        A dataset name
-    input_path : string
-        Path to the dataset folder with .imzML and .ibd files
     sm_config_path : string
         Path to the sm-engine config file
+    no_clean : bool
+        Don't delete interim data files
     """
-    def __init__(self, ds_id, sm_config_path, no_clean=False):
-        self.ds_id = ds_id
+    def __init__(self, sm_config_path, no_clean=False):
         self.no_clean = no_clean
 
         self._job_id = None
@@ -112,7 +106,7 @@ class SearchJob(object):
             search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys(), self._ds, self._db)
             search_results.store(ion_metrics_df, ion_iso_images)
 
-            self._es.index_ds(self.ds_id, mol_db)
+            self._es.index_ds(self._ds.id, mol_db)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
             new_msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, e)
@@ -120,18 +114,36 @@ class SearchJob(object):
         else:
             self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
 
-    def run(self):
+    def prepare_moldb_id_list(self):
+        moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
+        finished_job_moldb_ids = [r[1] for r in self._db.select(JOB_ID_MOLDB_ID_SEL, self._ds.id)]
+        moldb_id_list = []
+        for mol_db_dict in self._ds.config['databases']:
+            data = moldb_service.find_db_by_name_version(mol_db_dict['name'],
+                                                         mol_db_dict.get('version', None))
+            if data:
+                mol_db_id = data[0]['id']
+                if mol_db_id not in finished_job_moldb_ids:
+                    moldb_id_list.append(mol_db_id)
+        return moldb_id_list
+
+    def run(self, ds_id):
         """ Entry point of the engine. Molecule search is completed in several steps:
          * Copying input data to the engine work dir
          * Conversion input data (imzML+ibd) to plain text format. One line - one spectrum data
          * Generation and saving to the database theoretical peaks for all formulas from the molecule database
          * Molecules search. The most compute intensive part. Spark is used to run it in distributed manner.
          * Saving results (isotope images and their metrics of quality for each putative molecule) to the database
+
+        Args
+        ----
+        ds_id : string
+            A technical identifier for the dataset
         """
         try:
             start = time.time()
 
-            self._wd_manager = WorkDirManager(self.ds_id)
+            self._wd_manager = WorkDirManager(ds_id)
             self._configure_spark()
             self._init_db()
             self._es = ESExporter()
@@ -139,15 +151,14 @@ class SearchJob(object):
             if not self.no_clean:
                 self._wd_manager.clean()
 
-            self._ds = Dataset.load_ds(self.ds_id, self._db)
-            self._ds.reader = DatasetReader(self.ds_id, self._ds.input_path, self._sc, self._wd_manager)
+            self._ds = Dataset.load_ds(ds_id, self._db)
+            self._ds.reader = DatasetReader(ds_id, self._ds.input_path, self._sc, self._wd_manager)
             self._ds.reader.copy_convert_input_data()
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
-            for mol_db_dict in self._ds.config['databases']:
-                mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict.get('version', None), self._ds.config)
-                self._run_job(mol_db)
+            for mol_db_id in self.prepare_moldb_id_list():
+                self._run_job(MolecularDB(id=mol_db_id, ds_config=self._ds.config))
 
             logger.info("All done!")
             time_spent = time.time() - start

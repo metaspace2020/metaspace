@@ -6,9 +6,9 @@ import logging
 import boto3
 
 from sm.engine.util import SMConfig, sm_log_formatters, sm_log_config, init_logger
-from sm.engine.search_job import SearchJob
-from sm.engine.queue import QueueConsumer
-from sm.engine.db import DB
+from sm.engine import SearchJob
+from sm.engine import QueueConsumer
+from sm.engine import DB
 
 
 def configure_loggers():
@@ -123,8 +123,8 @@ if __name__ == "__main__":
         log_msg = " [v] Received: {}".format(msg)
         logger.info(log_msg)
         post_to_slack('new', " [v] Received: {}".format(json.dumps(msg)))
-        job = SearchJob(msg['ds_id'], args.sm_config_path)
-        job.run()
+        job = SearchJob(args.sm_config_path)
+        job.run(msg['ds_id'])
 
     annotation_queue = QueueConsumer(rabbit_config, 'sm_annotate',
                                      run_job_callback, on_job_succeeded, on_job_failed)

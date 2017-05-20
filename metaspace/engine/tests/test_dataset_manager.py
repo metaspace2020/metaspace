@@ -2,11 +2,10 @@ from __future__ import unicode_literals
 from mock import patch, MagicMock
 
 from sm.engine.db import DB
-from sm.engine.dataset_manager import DatasetManager, Dataset
+from sm.engine.dataset_manager import DatasetManager, Dataset, ConfigDiff
 from sm.engine.es_export import ESExporter
-from sm.engine.queue import QueuePublisher
 from sm.engine.util import SMConfig
-from sm.engine.work_dir import WorkDirManager
+from copy import deepcopy
 from sm.engine.tests.util import spark_context, sm_config, ds_config, create_test_db, drop_test_db
 
 
@@ -184,3 +183,23 @@ def test_dataset_manager_delete_ds_works(WorkDirManagerMock, ImageStoreServiceWr
         wd_man.del_input_data.assert_called_once_with('input_path')
     finally:
         db.close()
+
+
+def test_compare_configs_returns_equal(ds_config):
+    old_config = deepcopy(ds_config)
+    new_config = deepcopy(ds_config)
+    assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.EQUAL
+
+
+def test_compare_configs_returns_inst_params_diff(ds_config):
+    old_config = deepcopy(ds_config)
+    new_config = deepcopy(ds_config)
+    new_config['isotope_generation']['isocalc_sigma'] = 0.03
+    assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.INSTR_PARAMS_DIFF
+
+
+def test_compare_configs_returns_new_mol_db(ds_config):
+    old_config = deepcopy(ds_config)
+    new_config = deepcopy(ds_config)
+    new_config['databases'] = [{'name': 'ChEBI'}]
+    assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.NEW_MOL_DB

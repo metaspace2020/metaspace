@@ -63,6 +63,29 @@ def dict_to_paths(d):
     return list(map(lambda (k, v): k + '/' + v, flatten(d.items())))
 
 
+class ConfigDiff:
+    EQUAL, NEW_MOL_DB, INSTR_PARAMS_DIFF = range(3)
+
+    @staticmethod
+    def compare_configs(old, new):
+        def mol_dbs_to_set(mol_dbs):
+            return set((mol_db['name'], mol_db.get('version', None)) for mol_db in mol_dbs)
+
+        res = ConfigDiff.EQUAL
+        if old != new:
+            old_rest, new_rest = old.copy(), new.copy()
+            old_rest.pop('databases', None)
+            new_rest.pop('databases', None)
+            if old_rest != new_rest:
+                res = ConfigDiff.INSTR_PARAMS_DIFF
+            else:
+                old_mol_dbs = mol_dbs_to_set(old.get('databases', []))
+                new_mol_dbs = mol_dbs_to_set(new.get('databases', []))
+                if len(new_mol_dbs - old_mol_dbs) > 0:
+                    res = ConfigDiff.NEW_MOL_DB
+        return res
+
+
 class DatasetManager(object):
     """ Class for dataset data management in the engine
 
@@ -81,21 +104,24 @@ class DatasetManager(object):
 
     def _reindex_ds(self, ds):
         for mol_db_dict in ds.config['databases']:
-            mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict.get('version', None), ds.config)
+            mol_db = MolecularDB(name=mol_db_dict['name'],
+                                 version=mol_db_dict.get('version', None),
+                                 ds_config=ds.config)
             self._es.index_ds(ds.id, mol_db)
 
     def _post_new_job_msg(self, ds):
-        msg = {
-            'ds_id': ds.id,
-            'ds_name': ds.name,
-            'input_path': ds.input_path,
-        }
-        if ds.meta and ds.meta.get('metaspace_options').get('notify_submitter', True):
-            email = ds.meta.get('Submitted_By', {}).get('Submitter', {}).get('Email', None)
-            if email:
-                msg['user_email'] = email.lower()
-        QueuePublisher(self._sm_config['rabbitmq'], 'sm_annotate').publish(msg)
-        logger.info('New job message posted: %s', msg)
+        if self.mode == 'queue':
+            msg = {
+                'ds_id': ds.id,
+                'ds_name': ds.name,
+                'input_path': ds.input_path,
+            }
+            if ds.meta and ds.meta.get('metaspace_options').get('notify_submitter', True):
+                email = ds.meta.get('Submitted_By', {}).get('Submitter', {}).get('Email', None)
+                if email:
+                    msg['user_email'] = email.lower()
+            QueuePublisher(self._sm_config['rabbitmq'], 'sm_annotate').publish(msg)
+            logger.info('New job message posted: %s', msg)
 
     def _proc_params_changed(self, old_meta, meta):
         old_meta_paths = dict_to_paths(old_meta)
@@ -112,11 +138,16 @@ class DatasetManager(object):
     # TODO: make sure the config and metadata are compatible
     def update_ds(self, ds):
         old_config = self._db.select_one(DS_SEL, ds.id)[3]
-        if old_config != ds.config:
-            self.add_ds(ds)
-        else:
+        config_diff = ConfigDiff.compare_configs(old_config, ds.config)
+
+        if config_diff == ConfigDiff.EQUAL:
             self._db.alter(DS_UPD, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config), ds.id)
             self._reindex_ds(ds)
+        elif config_diff == ConfigDiff.NEW_MOL_DB:
+            self._db.alter(DS_UPD, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config), ds.id)
+            self._post_new_job_msg(ds)
+        elif config_diff == ConfigDiff.INSTR_PARAMS_DIFF:
+            self.add_ds(ds)
 
     def add_ds(self, ds):
         """ Save dataset metadata (name, path, image bounds, coordinates) to the database.
@@ -131,9 +162,7 @@ class DatasetManager(object):
 
         self._db.insert(DS_INSERT, ds_row)
         logger.info("Inserted into dataset table: %s, %s", ds.id, ds.name)
-
-        if self.mode == 'queue':
-            self._post_new_job_msg(ds)
+        self._post_new_job_msg(ds)
 
     def _del_iso_images(self, ds):
         logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)

@@ -200,7 +200,8 @@ class ESExporter:
                                 "Sample_Preparation": {
                                     "properties": {
                                         "MALDI_Matrix": {"type": "string", "index": "not_analyzed"},
-                                        "MALDI_Matrix_Application": {"type": "string", "index": "not_analyzed"}
+                                        "MALDI_Matrix_Application": {"type": "string", "index": "not_analyzed"},
+                                        "Sample_Stabilisation":  {"type": "string", "index": "not_analyzed"}
                                     }
                                 },
                                 "Sample_Information": {
