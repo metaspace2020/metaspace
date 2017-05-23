@@ -58,7 +58,9 @@ def init_es_conn(es_config):
 
 
 class ESIndexManager(object):
-    def __init__(self, es_config):
+    def __init__(self, es_config=None):
+        if not es_config:
+            es_config = SMConfig.get_conf()['elasticsearch']
         self._es = init_es_conn(es_config)
         self._ind_client = IndicesClient(self._es)
 
