@@ -99,7 +99,7 @@ def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, create_test_db,
         assert rows[0] == ('ds_id', 'ds_name', 'input_path', {'new': 'meta'},
                            {"databases": [{"name": "HMDB", "version": "2017-01"}]})
 
-        es.index_ds.assert_called_once_with('ds_id', moldb_mock)
+        es.index_ds.assert_called_once_with('ds_id', moldb_mock, del_first=True)
     finally:
         db.close()
 

@@ -1,38 +1,63 @@
 import argparse
 import logging
+import sys
+from copy import deepcopy
 
 from sm.engine import MolecularDB
 from sm.engine.util import sm_log_config, init_logger, SMConfig
-from sm.engine.db import DB
-from sm.engine.es_export import ESExporter
+from sm.engine import DB
+from sm.engine import ESExporter, ESIndexManager
+
+
+def _reindex_all(conf):
+    es_config = conf['elasticsearch']
+    alias = es_config['index']
+    es_man = ESIndexManager(es_config)
+    new_index = es_man.another_index_name(es_man.internal_index_name(alias))
+    es_man.create_index(new_index)
+
+    tmp_es_config = deepcopy(es_config)
+    tmp_es_config['index'] = new_index
+    es_exp = ESExporter(tmp_es_config)
+
+    db = DB(conf['db'])
+    rows = db.select('select id, name, config from dataset')
+    _reindex_datasets(rows, es_exp)
+
+    es_man.remap_alias(tmp_es_config['index'], alias=alias)
+
+
+def _reindex_datasets(rows, es_exp):
+    logger.info('Reindexing %s dataset(s)', len(rows))
+    for ds_id, ds_name, ds_config in rows:
+        try:
+            for mol_db_dict in ds_config['databases']:
+                mol_db = MolecularDB(name=mol_db_dict['name'], version=mol_db_dict.get('version', None),
+                                     ds_config=ds_config)
+                es_exp.index_ds(ds_id, mol_db, del_first=True)
+        except Exception as e:
+            new_msg = 'Failed to reindex(ds_id={}, ds_name={}): {}'.format(ds_id, ds_name, e)
+            raise Exception(new_msg), None, sys.exc_info()[2]
 
 
 def reindex_results(ds_id, ds_mask):
     assert ds_id or ds_mask
 
     conf = SMConfig.get_conf()
-    db = DB(conf['db'])
-    es_exp = ESExporter()
-
     if ds_mask == '_all_':
-        es_exp.delete_index()
-        es_exp.create_index()
-        rows = db.select("select id, name, config from dataset")
-    elif ds_id:
-        rows = db.select("select id, name, config from dataset where id = '{}'".format(ds_id))
-    elif ds_mask:
-        rows = db.select("select id, name, config from dataset where name like '{}%'".format(ds_mask))
+        _reindex_all(conf)
     else:
-        rows = []
+        db = DB(conf['db'])
+        es_exp = ESExporter()
 
-    logger.info('Reindexing %s dataset(s)', len(rows))
-    for ds_id, ds_name, ds_config in rows:
-        try:
-            for mol_db_dict in ds_config['databases']:
-                mol_db = MolecularDB(mol_db_dict['name'], mol_db_dict.get('version', None), ds_config)
-                es_exp.index_ds(ds_id, mol_db)
-        except Exception as e:
-            logger.warn('Failed to reindex(ds_id=%s, ds_name=%s): %s', ds_id, ds_name, e, exc_info=True)
+        if ds_id:
+            rows = db.select("select id, name, config from dataset where id = '{}'".format(ds_id))
+        elif ds_mask:
+            rows = db.select("select id, name, config from dataset where name like '{}%'".format(ds_mask))
+        else:
+            rows = []
+
+        _reindex_datasets(rows, es_exp)
 
 
 if __name__ == '__main__':

@@ -10,7 +10,7 @@ from mock import MagicMock
 
 from sm.engine.db import DB
 from sm.engine.util import proj_root, sm_log_config, SMConfig
-from sm.engine.es_export import ESExporter
+from sm.engine import ESExporter, ESIndexManager
 
 
 log_config = sm_log_config
@@ -117,9 +117,15 @@ def es_dsl_search(sm_config):
 
 
 @pytest.fixture()
-def create_sm_index(sm_config):
+def sm_index(sm_config, request):
     SMConfig._config_dict = sm_config
+    es_config = sm_config['elasticsearch']
     with patch('sm.engine.es_export.DB') as DBMock:
-        es_exp = ESExporter()
-        es_exp.delete_index()
-        es_exp.create_index()
+        es_man = ESIndexManager(es_config)
+        es_man.delete_index(es_config['index'])
+        es_man.create_index(es_config['index'])
+
+    def fin():
+        es_man = ESIndexManager(es_config)
+        es_man.delete_index(sm_config['elasticsearch']['index'])
+    request.addfinalizer(fin)

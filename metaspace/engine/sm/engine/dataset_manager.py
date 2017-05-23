@@ -107,7 +107,7 @@ class DatasetManager(object):
             mol_db = MolecularDB(name=mol_db_dict['name'],
                                  version=mol_db_dict.get('version', None),
                                  ds_config=ds.config)
-            self._es.index_ds(ds.id, mol_db)
+            self._es.index_ds(ds.id, mol_db, del_first=True)
 
     def _post_new_job_msg(self, ds):
         if self.mode == 'queue':

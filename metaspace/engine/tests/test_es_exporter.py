@@ -4,9 +4,9 @@ import pandas as pd
 from time import sleep
 
 from sm.engine import MolecularDB
-from sm.engine.es_export import ESExporter
-from sm.engine.db import DB
-from sm.engine.tests.util import sm_config, ds_config, create_sm_index, es_dsl_search
+from sm.engine import ESExporter, ESIndexManager
+from sm.engine import DB
+from sm.engine.tests.util import sm_config, ds_config, sm_index, es_dsl_search, create_test_db, drop_test_db
 
 
 COLUMNS = ['ds_id', 'db_name', 'sf', 'adduct', 'comp_names', 'comp_ids', 'centroid_mzs', 'polarity']
@@ -14,7 +14,7 @@ COLUMNS = ['ds_id', 'db_name', 'sf', 'adduct', 'comp_names', 'comp_ids', 'centro
 
 @patch('sm.engine.es_export.COLUMNS', COLUMNS)
 @patch('sm.engine.es_export.DB')
-def test_index_ds_works(DBMock, es_dsl_search, create_sm_index, sm_config):
+def test_index_ds_works(DBMock, es_dsl_search, sm_index, sm_config):
     annotations = [('2000-01-01_00h00m', 'test_db', 'H2O', '+H', ['mol_id'], ['mol_name'], [100, 110], '+'),
                    ('2000-01-01_00h00m', 'test_db', 'Au', '+H', ['mol_id'], ['mol_name'], [200, 210], '+')]
     db_mock = DBMock()
@@ -26,7 +26,7 @@ def test_index_ds_works(DBMock, es_dsl_search, create_sm_index, sm_config):
     mol_db_mock.get_molecules.return_value = pd.DataFrame([('mol_id', 'mol_name')], columns=['mol_id', 'mol_name'])
 
     es_exp = ESExporter()
-    es_exp.index_ds('ds_id', mol_db_mock)
+    es_exp.index_ds('ds_id', mol_db_mock, del_first=True)
 
     sleep(2)
 
@@ -42,3 +42,31 @@ def test_index_ds_works(DBMock, es_dsl_search, create_sm_index, sm_config):
                             'comp_names': ['mol_name'], 'comp_ids': ['mol_id'],
                             'centroid_mzs': ['00200.0000', '00210.0000'], 'mz': '00200.0000',
                             'polarity': '+', 'ion_add_pol': '[M+H]+'}
+
+
+def test_rename_index_works(create_test_db, drop_test_db, sm_config):
+    es_config = sm_config['elasticsearch']
+    alias = es_config['index']
+    es_man = ESIndexManager(es_config)
+
+    es_man.create_index('{}-yin'.format(alias))
+    es_man.remap_alias('{}-yin'.format(alias), alias=alias)
+
+    assert es_man.exists_index(alias)
+    assert es_man.exists_index('{}-yin'.format(alias))
+    assert not es_man.exists_index('{}-yang'.format(alias))
+
+    es_man.create_index('{}-yang'.format(alias))
+    es_man.remap_alias('{}-yang'.format(alias), alias=alias)
+
+    assert es_man.exists_index(alias)
+    assert es_man.exists_index('{}-yang'.format(alias))
+    assert not es_man.exists_index('{}-yin'.format(alias))
+
+
+def test_internal_index_name_return_valid_values(sm_config):
+    es_config = sm_config['elasticsearch']
+    alias = es_config['index']
+    es_man = ESIndexManager(es_config)
+
+    assert es_man.internal_index_name(alias) in ['{}-yin'.format(alias), '{}-yang'.format(alias)]

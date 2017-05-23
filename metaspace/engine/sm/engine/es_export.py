@@ -51,17 +51,114 @@ ORDER BY COALESCE(m.msm, 0::real) DESC
 '''
 
 
-class ESExporter:
-    def __init__(self):
-        es_config = SMConfig.get_conf()['elasticsearch']
-        hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
-        http_auth = (es_config['user'], es_config['password']) if 'user' in es_config else None
-        self._es = Elasticsearch(hosts=hosts, http_auth=http_auth)
-        self._db = DB(SMConfig.get_conf()['db'])
+def init_es_conn(es_config):
+    hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
+    http_auth = (es_config['user'], es_config['password']) if 'user' in es_config else None
+    return Elasticsearch(hosts=hosts, http_auth=http_auth)
+
+
+class ESIndexManager(object):
+    def __init__(self, es_config):
+        self._es = init_es_conn(es_config)
         self._ind_client = IndicesClient(self._es)
+
+    def internal_index_name(self, alias):
+        yin, yang = '{}-yin'.format(alias), '{}-yang'.format(alias)
+        assert not (self.exists_index(yin) and self.exists_index(yang)), \
+            'Only one of {} and {} should exist'.format(yin, yang)
+
+        if self.exists_index(yin):
+            return yin
+        elif self.exists_index(yang):
+            return yang
+        else:
+            return yin
+
+    def create_index(self, index):
+        body = {
+            "settings": {
+                "index": {
+                    "number_of_shards": 1,
+                    "number_of_replicas": 0,
+                    "max_result_window": 2147483647,
+                    "analysis": {
+                        "analyzer": {
+                            "analyzer_keyword": {
+                                "tokenizer": "keyword",
+                                "filter": "lowercase"}}}}},
+            "mappings": {
+                "annotation": {
+                    "dynamic_templates": [{
+                        "strings": {
+                            "match_mapping_type": "string",
+                            "mapping": {
+                                "type": "keyword"}}}],
+                    "properties": {
+                        "ds_id": {"type": "keyword"},
+                        "comp_names": {
+                            "type": "text",
+                            "analyzer": "analyzer_keyword"},
+                        "chaos": {"type": "float"},
+                        "image_corr": {"type": "float"},
+                        "pattern_match": {"type": "float", },
+                        "total_iso_ints": {"type": "float", },
+                        "min_iso_ints": {"type": "float", },
+                        "max_iso_ints": {"type": "float"},
+                        "msm": {"type": "float"},
+                        "fdr": {"type": "float"}}}}}
+
+        if not self._ind_client.exists(index):
+            out = self._ind_client.create(index=index, body=body)
+            logger.info('Index {} created\n{}'.format(index, out))
+        else:
+            logger.info('Index {} already exists'.format(index))
+
+    def delete_index(self, index):
+        if self._ind_client.exists(index):
+            out = self._ind_client.delete(index)
+            logger.info('Index {} deleted\n{}'.format(index, out))
+
+    def exists_index(self, index):
+        return self._ind_client.exists(index)
+
+    def another_index_name(self, index):
+        assert index.endswith('yin') or index.endswith('yang')
+
+        if index.endswith('yin'):
+            return index.replace('yin', 'yang')
+        else:
+            return index.replace('yang', 'yin')
+
+    def remap_alias(self, new_index, alias='sm'):
+        old_index = self.another_index_name(new_index)
+        logger.info('Remapping {} alias: {} -> {}'.format(alias, old_index, new_index))
+
+        self._ind_client.update_aliases({
+            "actions": [{"add": {"index": new_index, "alias": alias}}]
+        })
+        if self._ind_client.exists_alias(old_index, alias):
+            self._ind_client.update_aliases({
+                "actions": [{"remove": {"index": old_index, "alias": alias}}]
+            })
+            out = self._ind_client.delete(index=old_index)
+            logger.info('Index {} deleted:\n{}'.format(old_index, out))
+
+
+class ESExporter(object):
+    def __init__(self, es_config=None):
+        if not es_config:
+            es_config = SMConfig.get_conf()['elasticsearch']
+        self._es = init_es_conn(es_config)
+        self._db = DB(SMConfig.get_conf()['db'])
         self.index = es_config['index']
 
-    def _index(self, annotations, mol_db):
+    def index_ds(self, ds_id, mol_db, del_first=False):
+        if del_first:
+            self.delete_ds(ds_id, mol_db)
+
+        annotations = self._db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
+        logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
+
         n = 100
         to_index = []
         for r in annotations:
@@ -90,14 +187,6 @@ class ESExporter:
 
         bulk(self._es, actions=to_index, timeout='60s')
 
-    def index_ds(self, ds_id, mol_db):
-        annotations = self._db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
-
-        self.delete_ds(ds_id, mol_db)
-
-        logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
-        self._index(annotations, mol_db)
-
     # TODO: add a test
     def delete_ds(self, ds_id, mol_db=None):
         must = [{'term': {'ds_id': ds_id}}]
@@ -108,15 +197,12 @@ class ESExporter:
             'query': {
                 'constant_score': {
                     'filter': {
-                        'bool': {'must': must}
-                    }
-                }
-            }
+                        'bool': {'must': must}}}}
         }
         res = self._es.search(index=self.index, body=body, _source=False, size=10 ** 9)['hits']['hits']
         to_del = [{'_op_type': 'delete', '_index': 'sm', '_type': 'annotation', '_id': d['_id']} for d in res]
 
-        logger.info('Deleting %s documents from ES: %s, %s', len(to_del ), ds_id, mol_db)
+        logger.info('Deleting %s documents from ES: %s, %s', len(to_del), ds_id, mol_db)
 
         del_n = 0
         try:
@@ -124,111 +210,3 @@ class ESExporter:
         except BulkIndexError as e:
             logger.warning('{} - {}'.format(e.args[0], e.args[1][1]))
         return del_n
-
-    def create_index(self):
-        body = {
-            "settings": {
-                "index": {
-                    "number_of_shards": 1,
-                    "number_of_replicas": 0,
-                    "max_result_window": 2147483647,
-                    "analysis": {
-                        "analyzer": {
-                            "analyzer_keyword": {
-                                "tokenizer": "keyword",
-                                "filter": "lowercase"
-                            }
-                        }
-                    }
-                }
-            },
-            "mappings": {
-                "annotation": {
-                    # "dynamic_templates": [{
-                    #     "notanalyzed": {
-                    #         "match": "*",
-                    #         "match_mapping_type": "string",
-                    #         "mapping": {
-                    #             "type": "string",
-                    #             "index": "not_analyzed"
-                    #         }
-                    #     }
-                    # }],
-                    "properties": {
-                        "db_name": {"type": "string", "index": "not_analyzed"},
-                        "ds_id": {"type": "string", "index": "not_analyzed"},
-                        "ds_name": {"type": "string", "index": "not_analyzed"},
-                        "sf": {"type": "string", "index": "not_analyzed"},
-                        "sf_adduct": {"type": "string", "index": "not_analyzed"},
-                        "comp_names": {
-                            "type": "string",
-                            "analyzer": "analyzer_keyword",
-                        },
-                        "comp_ids": {"type": "string", "index": "not_analyzed"},
-                        "chaos": {"type": "float", "index": "not_analyzed"},
-                        "image_corr": {"type": "float", "index": "not_analyzed"},
-                        "pattern_match": {"type": "float", "index": "not_analyzed"},
-                        "total_iso_ints": {"type": "float", "index": "not_analyzed"},
-                        "min_iso_ints": {"type": "float", "index": "not_analyzed"},
-                        "max_iso_ints": {"type": "float", "index": "not_analyzed"},
-                        "msm": {"type": "float", "index": "not_analyzed"},
-                        "adduct": {"type": "string", "index": "not_analyzed"},
-                        "fdr": {"type": "float", "index": "not_analyzed"},
-                        "centroid_mzs": {"type": "string", "index": "not_analyzed"},
-                        "mz": {"type": "string", "index": "not_analyzed"},
-                        "ion_image_url": {"type": "string", "index": "not_analyzed"},
-                        "iso_image_urls": {"type": "string", "index": "not_analyzed"},
-                        "ion_add_pol": {"type": "string", "index": "not_analyzed"},
-                        # dataset metadata
-                        "ds_meta": {
-                            "properties": {
-                                "Submitted_By": {
-                                    "properties": {
-                                        "Submitter": {
-                                            "properties": {
-                                                "Email": {"type": "string", "index": "not_analyzed"}
-                                            }
-                                        },
-                                        "Principal_Investigator": {
-                                            "properties": {
-                                                "Email": {"type": "string", "index": "not_analyzed"}
-                                            }
-                                        },
-                                        "Institution": {"type": "string", "index": "not_analyzed"}
-                                    }
-                                },
-                                "Sample_Preparation": {
-                                    "properties": {
-                                        "MALDI_Matrix": {"type": "string", "index": "not_analyzed"},
-                                        "MALDI_Matrix_Application": {"type": "string", "index": "not_analyzed"},
-                                        "Sample_Stabilisation":  {"type": "string", "index": "not_analyzed"}
-                                    }
-                                },
-                                "Sample_Information": {
-                                    "properties": {
-                                        "Organism": {"type": "string", "index": "not_analyzed"},
-                                        "Organism_Part": {"type": "string", "index": "not_analyzed"},
-                                        "Condition": {"type": "string", "index": "not_analyzed"}
-                                    }
-                                },
-                                "MS_Analysis": {
-                                    "properties": {
-                                        "Analyzer": {"type": "string", "index": "not_analyzed"}
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        if not self._ind_client.exists(self.index):
-            out = self._ind_client.create(index=self.index, body=body)
-            logger.info('Index {} created\n{}'.format(self.index, out))
-        else:
-            logger.info('Index {} already exists'.format(self.index))
-
-    def delete_index(self):
-        if self._ind_client.exists(self.index):
-            out = self._ind_client.delete(self.index)
-            logger.info('Index {} deleted\n{}'.format(self.index, out))
