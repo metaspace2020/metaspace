@@ -5,9 +5,6 @@
   user: ubuntu
   gather_facts: false
 
-#  vars:
-#    activate_venv: "true" # fake shell command
-
   tasks:
     - name: Git clone sm-engine-ansible
       git:
@@ -16,6 +13,8 @@
         update: yes
         version: "{{ sm_ansible_branch }}"
       when: local_deploy is not defined
+      register: git_deploy
+      until: git_deploy | succeeded
 
     - name: Upload local files
       synchronize:
