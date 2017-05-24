@@ -1,4 +1,5 @@
 from cpyMSpec import isotopePattern, InstrumentModel
+from pyMSpec.pyisocalc import pyisocalc
 import numpy as np
 import logging
 
@@ -7,12 +8,14 @@ logger = logging.getLogger('sm-engine')
 ISOTOPIC_PEAK_N = 4
 SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}
 
+
 def trim_centroids(mzs, intensities, k):
     int_order = np.argsort(intensities)[::-1]
     mzs = mzs[int_order][:k]
     intensities = intensities[int_order][:k]
     mz_order = np.argsort(mzs)
     return mzs[mz_order], intensities[mz_order]
+
 
 class Centroids(object):
     def __init__(self, isotope_pattern, instrument_model, pts_per_mz=None):
@@ -34,34 +37,9 @@ class Centroids(object):
             self.mzs = self.ints = []
 
     @property
-    def _envelope(self):
-        return self._isotope_pattern.envelope(self._instrument_model)
-
-    def spectrum_chart(self, n_peaks=ISOTOPIC_PEAK_N):
-        centr_mzs, _ = trim_centroids(self.mzs, self.ints, n_peaks)
-        min_mz = min(centr_mzs) - 0.25
-        max_mz = max(centr_mzs) + 0.25
-        prof_mzs = np.arange(min_mz, max_mz, 1.0 / self._pts_per_mz)
-        prof_ints = self._envelope(prof_mzs)
-        nnz_idx = prof_ints > 1e-9
-        prof_mzs = prof_mzs[nnz_idx]
-        prof_ints = prof_ints[nnz_idx]
-
-        return {
-            'mz_grid': {
-                'min_mz': min_mz,
-                'max_mz': max_mz
-            },
-            'theor': {
-                'centroid_mzs': centr_mzs.tolist(),
-                'mzs': prof_mzs.tolist(),
-                'ints': (prof_ints * 100.0).tolist()
-            }
-        }
-
-    @property
     def empty(self):
         return (not self.mzs) and (not self.ints)
+
 
 def list_of_floats_to_str(l):
     return ','.join(map(lambda x: '{:.6f}'.format(x), l))
@@ -100,6 +78,7 @@ class IsocalcWrapper(object):
             In case of any errors returns object with empty 'mzs' and 'ints' fields
         """
         try:
+            pyisocalc.parseSumFormula(sf + adduct)  # tests is the sf and adduct compatible
             isotopes = isotopePattern(str(sf + adduct))
             isotopes.addCharge(int(self.charge))
             fwhm = self.sigma * SIGMA_TO_FWHM

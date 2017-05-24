@@ -12,7 +12,7 @@ setup(name='sm',
       install_requires=[
           "pyImagingMSpec==0.1.3",
           "cpyImagingMSpec==0.2.2",
-          "pyMSpec==0.1",
+          "pyMSpec==0.1.2",
           "cpyMSpec==0.3.4",
           "pyimzML==1.2.0"
       ])
