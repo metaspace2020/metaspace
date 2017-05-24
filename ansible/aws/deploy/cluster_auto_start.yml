@@ -24,6 +24,9 @@
 #          - "--exclude=aws/prod"
       when: local_deploy is defined
 
+    - name: Make sure a folder for the config file exists
+      file: path={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/ state=directory mode=0755
+
     - name: Upload templated group_vars/all.yml
       template: src=../{{ stage }}/group_vars/all.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all.yml
                 owner=ubuntu group=ubuntu mode=0600

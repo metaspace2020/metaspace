@@ -207,7 +207,7 @@ cluster_configuration:
       n: 1
       elipalloc: # mandatory
       price:
-      sec_group: sm web app
+      sec_group: sm services
       image: ami-07174474 # public ubuntu 16.04
 
       block_dev_maps:
@@ -221,7 +221,7 @@ cluster_configuration:
       hostgroup: # mandatory
       type: c4.large
       n: 1
-      elipalloc: # mandatory
+      elipalloc:
       price: 0.6
       sec_group: default
       image: # will fetch the most recent custom ami

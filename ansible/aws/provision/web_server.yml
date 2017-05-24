@@ -30,7 +30,6 @@
 
     - role: elasticsearch
       become: yes
-      elasticsearch_port: "{{ es_port }}"
 
     - role: kibana
       become: yes
@@ -51,7 +50,7 @@
         name: mol_db
 
     - role: sm_api
-      sm_web_app_url: "{{ sm_mol_db_url }}"
+      sm_web_app_url: "{{ sm_webapp_url }}"
 
     - role: nodejs
 

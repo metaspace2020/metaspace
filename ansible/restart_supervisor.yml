@@ -7,15 +7,17 @@
 
 
 - name: Start supervisord daemon
-  shell: supervisord -c /etc/supervisor/supervisord.conf -l /var/log/supervisor/supervisord.log
+  shell: >
+    supervisord -c /etc/supervisor/supervisord.conf -l /var/log/supervisor/supervisord.log
+    && supervisorctl stop all
   args:
     executable: /bin/bash
   register: command_result
   when: "'no such file' in supervisorctl_status_out.stdout"
 
-- debug: var=command_result
-  when: "'no such file' in supervisorctl_status_out.stdout"
-  failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'
+#- debug: var=command_result
+#  when: "'no such file' in supervisorctl_status_out.stdout"
+#  failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'
 
 
 - name: "Restart {{ supervisor_app | default('all') }} app(s) running under supervisor"
@@ -23,12 +25,14 @@
     supervisorctl reread
     && supervisorctl update
     && supervisorctl restart {{ supervisor_app | default("all") }}
-    && supervisorctl status {{ supervisor_app | default("all") }}
+  args:
+    executable: /bin/bash
+
+- name: Check {{ supervisor_app | default('all') }} app(s) status
+  shell: supervisorctl status {{ supervisor_app | default("all") }}
   args:
     executable: /bin/bash
   register: command_result
-  when: "'no such file' not in supervisorctl_status_out.stdout"
 
 - debug: var=command_result
-  when: "'no such file' not in supervisorctl_status_out.stdout"
   failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'
