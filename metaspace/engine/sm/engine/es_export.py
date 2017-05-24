@@ -118,7 +118,7 @@ class ESIndexManager(object):
     def delete_index(self, index):
         if self._ind_client.exists(index):
             out = self._ind_client.delete(index)
-            logger.info('Index {} deleted\n{}'.format(index, out))
+            logger.info('Index {} deleted: {}'.format(index, out))
 
     def exists_index(self, index):
         return self._ind_client.exists(index)
@@ -143,7 +143,7 @@ class ESIndexManager(object):
                 "actions": [{"remove": {"index": old_index, "alias": alias}}]
             })
             out = self._ind_client.delete(index=old_index)
-            logger.info('Index {} deleted:\n{}'.format(old_index, out))
+            logger.info('Index {} deleted: {}'.format(old_index, out))
 
 
 class ESExporter(object):

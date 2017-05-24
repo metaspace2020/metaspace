@@ -18,8 +18,10 @@ if __name__ == '__main__':
 
     es_config = SMConfig.get_conf()['elasticsearch']
     es_man = ESIndexManager(es_config)
-    index = es_man.internal_index_name(es_config['index'])
+    alias = es_config['index']
+    index = es_man.internal_index_name(alias)
 
     if args.drop:
         es_man.delete_index(index)
     es_man.create_index(index)
+    es_man.remap_alias(index, alias)
