@@ -137,6 +137,7 @@
    fetchAutocompleteSuggestionsQuery,
    fetchMetadataQuery
  } from '../api/metadata.js';
+ import gql from 'graphql-tag';
 
  const ajv = new Ajv({allErrors: true});
 
@@ -209,7 +210,13 @@
    name: 'metadata-editor',
    props: ['datasetId', 'enableSubmit', 'disabledSubmitMessage'],
    created() {
-     this.validator = ajv.compile(metadataSchema);
+     this.loading = true;
+     this.$apollo.query({query: gql`{molecularDatabases{name}}`}).then(response => {
+       this.schema.properties.metaspace_options.properties.Metabolite_Database.enum =
+         response.data.molecularDatabases.map(d => d.name);
+       this.validator = ajv.compile(this.schema);
+       this.loading = false;
+     });
 
      // no datasetId means a new dataset => help filling out by loading the last submission
      if (!this.datasetId) {
