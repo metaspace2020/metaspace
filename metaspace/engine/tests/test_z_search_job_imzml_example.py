@@ -12,7 +12,7 @@ from sm.engine.search_job import SearchJob
 from sm.engine.util import SMConfig
 from sm.engine.fdr import DECOY_ADDUCTS
 from sm.engine.dataset_manager import DS_INSERT
-from sm.engine.tests.util import create_test_db, drop_test_db, sm_config, sm_index, es_dsl_search
+from sm.engine.tests.util import test_db, sm_config, sm_index, es_dsl_search
 
 test_ds_name = 'imzml_example_ds'
 
@@ -23,7 +23,7 @@ ds_config_path = join(input_dir_path, 'config.json')
 
 
 @pytest.fixture()
-def create_fill_sm_database(create_test_db, drop_test_db, sm_index, sm_config):
+def create_fill_sm_database(test_db, sm_index, sm_config):
     local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
 
 

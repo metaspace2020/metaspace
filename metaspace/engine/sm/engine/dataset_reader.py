@@ -28,8 +28,6 @@ class DatasetReader(object):
         self.ds_id = ds_id
         self.input_path = input_path
 
-        self.sm_config = SMConfig.get_conf()
-        self._db = DB(self.sm_config['db'])
         self._wd_manager = wd_manager
         self._sc = sc
 

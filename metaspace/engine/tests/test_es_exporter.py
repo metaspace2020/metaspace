@@ -6,7 +6,7 @@ from time import sleep
 from sm.engine import MolecularDB
 from sm.engine import ESExporter, ESIndexManager
 from sm.engine import DB
-from sm.engine.tests.util import sm_config, ds_config, sm_index, es_dsl_search, create_test_db, drop_test_db
+from sm.engine.tests.util import sm_config, ds_config, sm_index, es_dsl_search, test_db
 
 
 COLUMNS = ['ds_id', 'db_name', 'sf', 'adduct', 'comp_names', 'comp_ids', 'centroid_mzs', 'polarity']
@@ -44,7 +44,7 @@ def test_index_ds_works(DBMock, es_dsl_search, sm_index, sm_config):
                             'polarity': '+', 'ion_add_pol': '[M+H]+'}
 
 
-def test_rename_index_works(create_test_db, drop_test_db, sm_config):
+def test_rename_index_works(test_db, sm_config):
     es_config = sm_config['elasticsearch']
     alias = es_config['index']
     es_man = ESIndexManager(es_config)

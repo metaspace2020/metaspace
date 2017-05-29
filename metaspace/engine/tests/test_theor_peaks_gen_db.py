@@ -5,11 +5,11 @@ from sm.engine import MolecularDB
 from sm.engine.db import DB
 from sm.engine.theor_peaks_gen import TheorPeaksGenerator
 from sm.engine.isocalc_wrapper import Centroids
-from sm.engine.tests.util import create_test_db, drop_test_db, spark_context, sm_config, ds_config
+from sm.engine.tests.util import test_db, spark_context, sm_config, ds_config
 
 
 @pytest.fixture()
-def create_fill_test_db(create_test_db, drop_test_db):
+def create_fill_test_db(test_db):
     db_config = dict(database='sm_test', user='sm', host='localhost', password='1321')
     db = DB(db_config)
     try:

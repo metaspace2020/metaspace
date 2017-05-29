@@ -3,11 +3,11 @@ from mock import patch
 from sm.engine import DB
 from sm.engine import SearchJob
 from sm.engine import Dataset
-from sm.engine.tests.util import create_test_db, drop_test_db, sm_config
+from sm.engine.tests.util import test_db, sm_config
 
 
 @patch('sm.engine.search_job.MolDBServiceWrapper.find_db_by_name_version')
-def test_prepare_moldb_list_returns_correct_list(find_db_by_name_version, sm_config, create_test_db, drop_test_db):
+def test_prepare_moldb_list_returns_correct_list(find_db_by_name_version, sm_config, test_db):
     find_db_by_name_version.side_effect = [[{'id': 0, 'name': 'HMDB'}], [{'id': 1, 'name': 'ChEBI'}]]
     ds = Dataset(id='ds_id', config={'databases': [{'name': 'HMDB'}, {'name': 'ChEBI'}]})
     db = DB(sm_config['db'])

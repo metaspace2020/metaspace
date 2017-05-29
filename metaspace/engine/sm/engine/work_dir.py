@@ -139,7 +139,7 @@ class WorkDirManager(object):
     def __init__(self, ds_id):
         self.sm_config = SMConfig.get_conf()
 
-        if 's3_base_path' not in self.sm_config['fs']:
+        if not self.sm_config['fs'].get('s3_base_path', None):
             self.local_fs_only = True
         elif not self.sm_config['fs']['s3_base_path']:
             self.local_fs_only = True

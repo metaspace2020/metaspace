@@ -18,10 +18,12 @@ log_config = sm_log_config
 log_config['loggers']['sm-engine']['handlers'] = ['console_debug']
 dictConfig(log_config)
 
+
 @pytest.fixture(scope='session')
 def sm_config():
     SMConfig.set_path(join(proj_root(), 'conf', 'test_config.json'))
     return SMConfig.get_conf()
+
 
 @pytest.fixture(scope='module')
 def spark_context(request):
@@ -35,9 +37,10 @@ def spark_context(request):
 
 
 @pytest.fixture()
-def create_test_db(sm_config):
+def test_db(sm_config, request):
     db_config = dict(**sm_config['db'])
     db_config['database'] = 'postgres'
+
     db = DB(db_config, autocommit=True)
     db.alter('DROP DATABASE IF EXISTS sm_test')
     db.alter('CREATE DATABASE sm_test')
@@ -47,11 +50,8 @@ def create_test_db(sm_config):
         sm_config['db']['host'], sm_config['db']['user'],
         join(proj_root(), 'scripts/create_schema.sql')))
 
-
-@pytest.fixture()
-def drop_test_db(sm_config, request):
     def fin():
-        db = DB(sm_config['db'], autocommit=True)
+        db = DB(db_config, autocommit=True)
         db.alter('DROP DATABASE IF EXISTS sm_test')
         db.close()
     request.addfinalizer(fin)

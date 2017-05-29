@@ -10,7 +10,7 @@ import numpy as np
 
 from sm.engine.db import DB
 from sm.engine.search_results import SearchResults, METRICS_INS
-from sm.engine.tests.util import spark_context, sm_config, ds_config, create_test_db, drop_test_db
+from sm.engine.tests.util import spark_context, sm_config, ds_config, test_db
 
 db_mock = MagicMock(spec=DB)
 
@@ -42,7 +42,7 @@ def test_save_sf_img_metrics_correct_db_call(search_results):
 
 
 @pytest.fixture()
-def create_fill_sm_database(create_test_db, drop_test_db, sm_config):
+def create_fill_sm_database(test_db, sm_config):
     proj_dir_path = dirname(dirname(__file__))
     local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
 

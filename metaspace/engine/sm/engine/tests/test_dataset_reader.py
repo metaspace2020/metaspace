@@ -8,6 +8,7 @@ from sm.engine.work_dir import WorkDirManager
 from sm.engine.util import SMConfig
 from sm.engine.tests.util import sm_config, ds_config, spark_context
 
+
 def test_dataset_reader_get_sample_area_mask_correctness(sm_config, spark_context):
     work_dir_man_mock = MagicMock(WorkDirManager)
     work_dir_man_mock.ds_coord_path = '/ds_path'

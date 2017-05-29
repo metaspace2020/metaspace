@@ -6,11 +6,11 @@ from sm.engine.dataset_manager import DatasetManager, Dataset, ConfigDiff
 from sm.engine.es_export import ESExporter
 from sm.engine.util import SMConfig
 from copy import deepcopy
-from sm.engine.tests.util import spark_context, sm_config, ds_config, create_test_db, drop_test_db
+from sm.engine.tests.util import spark_context, sm_config, ds_config, test_db
 
 
 @patch('sm.engine.dataset_manager.QueuePublisher')
-def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, create_test_db, drop_test_db, sm_config):
+def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, test_db, sm_config):
     SMConfig._config_dict = sm_config
     qpub_mock = QueuePublisherMock()
 
@@ -38,7 +38,7 @@ def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, create_test_db, dr
 @patch('sm.engine.dataset_manager.ImageStoreServiceWrapper')
 @patch('sm.engine.dataset_manager.QueuePublisher')
 def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServiceWrapperMock,
-                                             create_test_db, drop_test_db, sm_config):
+                                             test_db, sm_config):
     SMConfig._config_dict = sm_config
     qpub_mock = QueuePublisherMock()
     img_store = ImageStoreServiceWrapperMock()
@@ -78,7 +78,7 @@ def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServi
 
 
 @patch('sm.engine.dataset_manager.MolecularDB')
-def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, create_test_db, drop_test_db, sm_config):
+def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_config):
     SMConfig._config_dict = sm_config
     moldb_mock = MolecularDBMock()
 
@@ -105,7 +105,7 @@ def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, create_test_db,
 
 
 @patch('sm.engine.dataset_manager.QueuePublisher')
-def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, create_test_db, drop_test_db, sm_config):
+def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, test_db, sm_config):
     SMConfig._config_dict = sm_config
 
     qpub_mock = QueuePublisherMock()
@@ -136,7 +136,7 @@ def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, create_
         db.close()
 
 
-def test_dataset_load_ds_works(create_test_db, drop_test_db, sm_config):
+def test_dataset_load_ds_works(test_db, sm_config):
     SMConfig._config_dict = sm_config
 
     db = DB(sm_config['db'])
@@ -155,7 +155,7 @@ def test_dataset_load_ds_works(create_test_db, drop_test_db, sm_config):
 @patch('sm.engine.dataset_manager.ImageStoreServiceWrapper')
 @patch('sm.engine.dataset_manager.WorkDirManager')
 def test_dataset_manager_delete_ds_works(WorkDirManagerMock, ImageStoreServiceWrapperMock,
-                                         create_test_db, drop_test_db, sm_config):
+                                         test_db, sm_config):
     SMConfig._config_dict = sm_config
 
     img_store = ImageStoreServiceWrapperMock()
