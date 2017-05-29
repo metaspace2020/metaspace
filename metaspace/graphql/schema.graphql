@@ -90,6 +90,12 @@ type MzImage {
   maxIntensity: Float!
 }
 
+type MolecularDatabase {
+  id: Int!,
+  name: String!,
+  version: String!
+}
+
 type Annotation {
   id: String!
 
@@ -184,6 +190,8 @@ type Query {
   annotation(id: String!): Annotation
 
   metadataSuggestions(field: String!, query: String!): [String!]!
+
+  molecularDatabases: [MolecularDatabase!]
 }
 
 type Mutation {

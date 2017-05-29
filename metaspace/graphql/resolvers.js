@@ -134,6 +134,14 @@ const Resolvers = {
           q = pg.distinct(pg.raw(f.pgField + " as field")).select().from('dataset');
       return f.pgFilter(q, query).orderBy('field', 'asc')
               .then(results => results.map(row => row['field']));
+    },
+    
+    molecularDatabases(_, args) {
+      const host = config.services.moldb_service_host;
+      return fetch(`http://${host}/v1/databases`)
+        .then(res => res.json())
+        .then(body => body['data'])
+        .catch((e) => { logger.error(e); return null; })
     }
   },
 
