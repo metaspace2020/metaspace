@@ -6,12 +6,14 @@ WORKDIR /root
 # use bash as default shell
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 
-# install Java, wget, and postgres client
+# install Java, wget, and postgres client;
+# also: bzip2 to unpack miniconda; git to run coveralls
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       openjdk-8-jre-headless \
       wget \
       bzip2 \
+      git \
       postgresql-client \
     && apt-get clean
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
