@@ -102,9 +102,9 @@ class ESIndexManager(object):
                             "analyzer": "analyzer_keyword"},
                         "chaos": {"type": "float"},
                         "image_corr": {"type": "float"},
-                        "pattern_match": {"type": "float", },
-                        "total_iso_ints": {"type": "float", },
-                        "min_iso_ints": {"type": "float", },
+                        "pattern_match": {"type": "float"},
+                        "total_iso_ints": {"type": "float"},
+                        "min_iso_ints": {"type": "float"},
                         "max_iso_ints": {"type": "float"},
                         "msm": {"type": "float"},
                         "fdr": {"type": "float"}}}}}
