@@ -12,7 +12,7 @@
     <component v-for="f in activeFilters"
                :is="f.type"
                :name="f.name"
-               :options="f.options"
+               :options="getFilterOptions(f)"
                :labels="f.labels"
                :clearable="f.clearable"
                :removable="f.removable"
@@ -95,11 +95,13 @@
        return available;
      }
    },
+
    data () {
      return {
        selectedFilterToAdd: null,
      }
    },
+
    methods: {
      makeFilter(filterKey) {
        const filterSpec = FILTER_SPECIFICATIONS[filterKey];
@@ -113,10 +115,6 @@
          }
        };
        let result = Object.assign({}, filterSpec, behaviour);
-       if (!self.optionLists)
-         return result;
-       if (typeof result.options === 'string')
-         result.options = self.optionLists[result.options];
        return result;
      },
 
@@ -124,6 +122,20 @@
        if (key) {
          this.selectedFilterToAdd = null;
          this.$store.commit('addFilter', key);
+       }
+     },
+
+     getFilterOptions(filter) {
+       // dynamically generated options are supported:
+       // either specify a function of optionLists or one of its field names
+       if (typeof filter.options === 'array')
+         return filter.options;
+       if (!this.optionLists)
+         return [];
+       if (typeof filter.options === 'string')
+         return this.optionLists[result.options];
+       else if (typeof filter.options === 'function') {
+         return filter.options(this.optionLists);
        }
      }
    }

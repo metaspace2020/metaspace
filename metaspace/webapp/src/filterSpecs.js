@@ -69,8 +69,7 @@ const FILTER_SPECIFICATIONS = {
     levels: ['annotation'],
     initialValue: 'HMDB', // because we've agreed to process every dataset with it
 
-    // FIXME: hard-coded, should be taken from the server
-    options: ['HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids'],
+    options: lists => lists.molecularDatabases.map(d => d.name),
     removable: false
   },
 
