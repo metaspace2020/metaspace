@@ -139,7 +139,6 @@
  } from '../api/metadata.js';
 
  const ajv = new Ajv({allErrors: true});
- const validator = ajv.compile(metadataSchema);
 
  const FIELD_WIDTH = {
    'Institution': 6,
@@ -210,6 +209,8 @@
    name: 'metadata-editor',
    props: ['datasetId', 'enableSubmit', 'disabledSubmitMessage'],
    created() {
+     this.validator = ajv.compile(metadataSchema);
+
      // no datasetId means a new dataset => help filling out by loading the last submission
      if (!this.datasetId) {
        this.loadLastSubmission();
@@ -321,8 +322,8 @@
 
      submit() {
        const cleanValue = trimEmptyFields(metadataSchema, this.value);
-       validator(cleanValue);
-       this.validationErrors = validator.errors || [];
+       this.validator(cleanValue);
+       this.validationErrors = this.validator.errors || [];
 
        if (this.validationErrors.length > 0) {
          this.$message({
