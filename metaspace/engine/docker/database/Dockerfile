@@ -3,7 +3,7 @@ FROM postgres:latest
 MAINTAINER Artem Tarasov <artem.tarasov@embl.de>
 
 # config file 'db' section
-ENV POSTGRES_DB sm
+ENV POSTGRES_DB sm_test
 ENV POSTGRES_USER sm
 ENV POSTGRES_PASSWORD securepassword
 

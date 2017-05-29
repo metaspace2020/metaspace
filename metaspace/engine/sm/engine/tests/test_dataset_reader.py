@@ -4,22 +4,15 @@ from mock import patch, MagicMock
 from numpy.testing import assert_array_equal
 
 from sm.engine import DatasetReader, DB
-from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
-from sm.engine.tests.util import sm_config, ds_config, spark_context, create_test_db, drop_test_db
+from sm.engine.util import SMConfig
+from sm.engine.tests.util import sm_config, ds_config, spark_context
 
-
-@pytest.fixture()
-def create_drop_db(create_test_db, drop_test_db):
-    pass
-
-
-def test_dataset_reader_get_sample_area_mask_correctness(sm_config, spark_context, create_drop_db):
-    SMConfig._config_dict = sm_config
-
+def test_dataset_reader_get_sample_area_mask_correctness(sm_config, spark_context):
     work_dir_man_mock = MagicMock(WorkDirManager)
     work_dir_man_mock.ds_coord_path = '/ds_path'
     work_dir_man_mock.txt_path = '/txt_path'
+    SMConfig._config_dict = sm_config
 
     with patch('sm.engine.tests.util.SparkContext.textFile') as m:
         m.return_value = spark_context.parallelize([
@@ -32,12 +25,11 @@ def test_dataset_reader_get_sample_area_mask_correctness(sm_config, spark_contex
         assert tuple(ds_reader.get_sample_area_mask()) == (True, False, False, True)
 
 
-def test_dataset_reader_get_spectra_works(sm_config, spark_context, create_drop_db):
-    SMConfig._config_dict = sm_config
-
+def test_dataset_reader_get_spectra_works(sm_config, spark_context):
     work_dir_man_mock = MagicMock(WorkDirManager)
     work_dir_man_mock.ds_coord_path = '/ds_path'
     work_dir_man_mock.txt_path = '/txt_path'
+    SMConfig._config_dict = sm_config
 
     with patch('sm.engine.tests.util.SparkContext.textFile') as m:
         m.side_effect = [spark_context.parallelize(['0|100.0 200.0|1000.0 0\n', '2|200.0 300.0|10.0 20.0\n'])]

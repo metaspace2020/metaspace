@@ -11,12 +11,17 @@ from mock import MagicMock
 from sm.engine.db import DB
 from sm.engine.util import proj_root, sm_log_config, SMConfig
 from sm.engine import ESExporter, ESIndexManager
+from os.path import join
 
 
 log_config = sm_log_config
 log_config['loggers']['sm-engine']['handlers'] = ['console_debug']
 dictConfig(log_config)
 
+@pytest.fixture(scope='session')
+def sm_config():
+    SMConfig.set_path(join(proj_root(), 'conf', 'test_config.json'))
+    return SMConfig.get_conf()
 
 @pytest.fixture(scope='module')
 def spark_context(request):
@@ -30,21 +35,23 @@ def spark_context(request):
 
 
 @pytest.fixture()
-def create_test_db():
-    db_config = dict(database='postgres', user='sm', host='localhost')
+def create_test_db(sm_config):
+    db_config = dict(**sm_config['db'])
+    db_config['database'] = 'postgres'
     db = DB(db_config, autocommit=True)
     db.alter('DROP DATABASE IF EXISTS sm_test')
     db.alter('CREATE DATABASE sm_test')
     db.close()
 
-    local('psql -h localhost -U sm sm_test < {}'.format(join(proj_root(), 'scripts/create_schema.sql')))
+    local('psql -h {} -U {} sm_test < {}'.format(
+        sm_config['db']['host'], sm_config['db']['user'],
+        join(proj_root(), 'scripts/create_schema.sql')))
 
 
 @pytest.fixture()
-def drop_test_db(request):
+def drop_test_db(sm_config, request):
     def fin():
-        db_config = dict(database='postgres', user='sm', host='localhost', password='1321')
-        db = DB(db_config, autocommit=True)
+        db = DB(sm_config['db'], autocommit=True)
         db.alter('DROP DATABASE IF EXISTS sm_test')
         db.close()
     request.addfinalizer(fin)
@@ -76,40 +83,6 @@ def ds_config():
 
 
 @pytest.fixture()
-def sm_config():
-    return {
-        "db": {
-            "host": "localhost",
-            "database": "sm_test",
-            "user": "sm",
-            "password": "1321"
-        },
-        "elasticsearch": {
-            "index": "sm_test",
-            "host": "localhost",
-            "port": 9200
-        },
-        "rabbitmq": {
-            "host": "localhost",
-            "user": "sm",
-            "password": "1321"
-        },
-        "services": {
-            "iso_images": "http://localhost:3010/iso_images",
-            "mol_db": "http://localhost:5001/v1"
-        },
-        "fs": {
-            "base_path": "/opt/data/sm_test_data",
-            "s3_base_path": ""
-        },
-        "spark": {
-            "master": "local[*]",
-            "executor.memory": "1g"
-        }
-    }
-
-
-@pytest.fixture()
 def es_dsl_search(sm_config):
     es = Elasticsearch(hosts=["{}:{}".format(sm_config['elasticsearch']['host'],
                                              sm_config['elasticsearch']['port'])])
@@ -118,7 +91,6 @@ def es_dsl_search(sm_config):
 
 @pytest.fixture()
 def sm_index(sm_config, request):
-    SMConfig._config_dict = sm_config
     es_config = sm_config['elasticsearch']
     with patch('sm.engine.es_export.DB') as DBMock:
         es_man = ESIndexManager(es_config)

@@ -2,30 +2,37 @@ name: sm_engine
 channels:
   - salford_systems
 dependencies:
-  - python=2.7
-  - pip
+  - python=2
   - numpy=1.10
-  - scipy=0.17.0
-  - numba=0.24.0
-  - pandas=0.18.0
+  - scipy=0.16
   - matplotlib-nogui
-  - mock=1.3.0
-  - Fabric=1.10.2
-  - pytest
+  - pandas=0.18
+  - numba=0.24.0
+  - cffi
   - lxml
   - libgcc
   - psycopg2=2.6.1
-  - cffi
+  - pytest
+  - fabric
   - pip:
-    - py4j==0.9
-    - tornado==4.2.1
-    - tornpsql==1.1.0
+    - pyMSpec==0.1
+    - cpyMSpec==0.1.4
+    - pyImagingMSpec==0.1.3
+    - cpyImagingMSpec==0.0.5
     - requests
+    - mock
+    - py4j
+    - pyimzML
+    - tornado
+    - tornpsql
     - recommonmark
-    - boto3==1.3.0
+    - boto3
     - networkx
     - supervisor
     - pyyaml
     - elasticsearch
-    - cachetools
+    - elasticsearch_dsl
+    - pika
+    - coverage
+    - coveralls
     - pypng

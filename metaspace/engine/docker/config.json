@@ -1,18 +1,30 @@
 {
   "db": {
     "host": "postgres",
-    "database": "sm",
+    "database": "sm_test",
     "user": "sm",
     "password": "securepassword"
   },
-  "fs": {
-    "base_path": "/opt/data/sm_data"
+  "elasticsearch": {
+    "index": "sm_test",
+    "host": "localhost",
+    "port": 9200
   },
-  "hdfs": {
-    "namenode": "localhost"
+  "rabbitmq": {
+    "host": "localhost",
+    "user": "sm",
+    "password": "1321"
+  },
+  "services": {
+    "iso_images": "http://localhost:3010/iso_images",
+    "mol_db": "http://localhost:5001/v1"
+  },
+  "fs": {
+    "base_path": "/opt/data/sm_test_data",
+    "s3_base_path": ""
   },
   "spark": {
-    "master": "local[8]",
-    "executor.memory": "1g"
+    "master": "local[2]",
+    "executor.memory": "2g"
   }
 }
