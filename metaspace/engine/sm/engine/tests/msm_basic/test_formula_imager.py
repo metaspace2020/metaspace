@@ -3,7 +3,7 @@ from mock import MagicMock
 from numpy.testing import assert_array_almost_equal
 
 from sm.engine.dataset_manager import DatasetManager
-from sm.engine.formulas_segm import FormulasSegm
+#from sm.engine.formulas_segm import FormulasSegm
 from sm.engine.msm_basic.formula_imager import sample_spectra, compute_sf_peak_images, compute_sf_images
 from sm.engine.tests.util import spark_context
 
