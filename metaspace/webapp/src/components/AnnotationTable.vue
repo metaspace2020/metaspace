@@ -342,7 +342,7 @@
      },
      formatMSM: (row, col) => row.msmScore.toFixed(3),
      formatMZ: (row, col) => row.mz.toFixed(4),
-     formatDatasetName: (row, col) => row.dataset.name.split('//', 2).pop(),
+     formatDatasetName: (row, col) => row.dataset.name,
 
      onSortChange (event) {
        if (!event.order) {

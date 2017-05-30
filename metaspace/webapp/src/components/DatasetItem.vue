@@ -113,7 +113,7 @@
      },
 
      formatDatasetName() {
-       return this.dataset.name.split('//', 2).pop();
+       return this.dataset.name;
      },
 
      analyzerType() {
