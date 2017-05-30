@@ -128,15 +128,16 @@
      getFilterOptions(filter) {
        // dynamically generated options are supported:
        // either specify a function of optionLists or one of its field names
-       if (typeof filter.options === 'array')
+       if (typeof filter.options === 'object')
          return filter.options;
        if (!this.optionLists)
          return [];
        if (typeof filter.options === 'string')
-         return this.optionLists[result.options];
+         return this.optionLists[filter.options];
        else if (typeof filter.options === 'function') {
          return filter.options(this.optionLists);
        }
+       return [];
      }
    }
  }
