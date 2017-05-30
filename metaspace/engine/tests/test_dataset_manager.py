@@ -24,7 +24,7 @@ def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, test_db, sm_config
         rows = db.select('SELECT * FROM dataset')
         assert len(rows) == 1
         assert rows[0] == ('new_ds_id', 'ds_name', 'input_path',
-                           {'metaspace_options': {'notify_submitter': False}}, {'config': 0})
+                           {'metaspace_options': {'notify_submitter': False}}, {'config': 0}, 'QUEUED')
 
         qpub_mock.publish.assert_called_once_with({
             'ds_id': 'new_ds_id',
@@ -63,7 +63,7 @@ def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServi
         rows = db.select("SELECT * FROM dataset")
         assert len(rows) == 1
         assert rows[0] == ('ds_id', 'new_ds_name', 'input_path',
-                           {'metaspace_options': {'notify_submitter': False}}, {'config': 0})
+                           {'metaspace_options': {'notify_submitter': False}}, {'config': 0}, 'QUEUED')
 
         qpub_mock.publish.assert_called_once_with({
             'ds_id': 'ds_id',
@@ -97,7 +97,8 @@ def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_con
         rows = db.select('SELECT * FROM dataset')
         assert len(rows) == 1
         assert rows[0] == ('ds_id', 'ds_name', 'input_path', {'new': 'meta'},
-                           {"databases": [{"name": "HMDB", "version": "2017-01"}]})
+                           {"databases": [{"name": "HMDB", "version": "2017-01"}]},
+                           'FINISHED')
 
         es.index_ds.assert_called_once_with('ds_id', moldb_mock, del_first=True)
     finally:
@@ -124,7 +125,7 @@ def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, test_db
         rows = db.select('SELECT * FROM dataset')
         assert len(rows) == 1
         assert rows[0] == ('ds_id', 'ds_name', 'input_path',
-                           {"metaspace_options": {"Metabolite_Database": "db"}}, {"config": "new_value"})
+                           {"metaspace_options": {"Metabolite_Database": "db"}}, {"config": "new_value"}, 'QUEUED')
 
         msg = {
             'ds_id': 'ds_id',

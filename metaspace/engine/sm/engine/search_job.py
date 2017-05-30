@@ -4,6 +4,7 @@
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
+from __future__ import unicode_literals
 import time
 import sys
 from pprint import pformat
@@ -22,6 +23,7 @@ from sm.engine.util import proj_root, SMConfig, read_json, sm_log_formatters
 from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
+from sm.engine.errors import JobFailedError
 
 logger = logging.getLogger('sm-engine')
 
@@ -48,6 +50,7 @@ class SearchJob(object):
         self._sc = None
         self._db = None
         self._ds = None
+        self._ds_man = None
         self._fdr = None
         self._wd_manager = None
         self._es = None
@@ -109,8 +112,8 @@ class SearchJob(object):
             self._es.index_ds(self._ds.id, mol_db)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
-            new_msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, e)
-            raise Exception(new_msg), None, sys.exc_info()[2]
+            new_msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, e.message)
+            raise JobFailedError(new_msg), None, sys.exc_info()[2]
         else:
             self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
 
@@ -143,15 +146,18 @@ class SearchJob(object):
         try:
             start = time.time()
 
+            self._init_db()
+            self._ds = Dataset.load_ds(ds_id, self._db)
+            self._ds_man = DatasetManager(self._db, self._es, 'queue')
+            self._ds_man.set_ds_status(self._ds, 'STARTED')
+
             self._wd_manager = WorkDirManager(ds_id)
             self._configure_spark()
-            self._init_db()
             self._es = ESExporter()
 
             if not self.no_clean:
                 self._wd_manager.clean()
 
-            self._ds = Dataset.load_ds(ds_id, self._db)
             self._ds.reader = DatasetReader(ds_id, self._ds.input_path, self._sc, self._wd_manager)
             self._ds.reader.copy_convert_input_data()
 
@@ -160,10 +166,14 @@ class SearchJob(object):
             for mol_db_id in self.prepare_moldb_id_list():
                 self._run_job(MolecularDB(id=mol_db_id, ds_config=self._ds.config))
 
+            self._ds_man.set_ds_status(self._ds, 'FINISHED')
+
             logger.info("All done!")
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
         except Exception as e:
+            if self._ds_man:
+                self._ds_man.set_ds_status(self._ds, 'FAILED')
             logger.error(e, exc_info=True)
             raise
         finally:

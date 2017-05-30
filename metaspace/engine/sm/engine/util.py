@@ -78,14 +78,14 @@ class SMConfig(object):
         cls._path = path
 
     @classmethod
-    def get_conf(cls):
+    def get_conf(cls, update=False):
         """
         Returns
         -------
         : dict
             SM engine configuration
         """
-        if not cls._config_dict:
+        if update or not cls._config_dict:
             try:
                 config_path = cls._path or join(proj_root(), 'conf', 'config.json')
                 with open(config_path) as f:

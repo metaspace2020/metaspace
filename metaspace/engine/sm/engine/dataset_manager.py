@@ -1,25 +1,20 @@
 import json
 import logging
 import os
-from datetime import datetime as dt
 
 from sm.engine.queue import QueuePublisher
 from sm.engine.mol_db import MolecularDB
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.util import SMConfig, read_json
-from sm.engine.db import DB
-from sm.engine.es_export import ESExporter
+from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
 from sm.engine.errors import UnknownDSID
 
 logger = logging.getLogger('sm-engine')
 
 DS_SEL = 'SELECT name, input_path, metadata, config FROM dataset WHERE id = %s'
-DS_UPD = 'UPDATE dataset set name=%s, input_path=%s, metadata=%s, config=%s where id=%s'
-DS_INSERT = "INSERT INTO dataset (id, name, input_path, metadata, config) VALUES (%s, %s, %s, %s, %s)"
-
-# COORD_SEL = 'SELECT xs, ys FROM coordinates WHERE ds_id = %s'
-# COORD_INSERT = "INSERT INTO coordinates VALUES (%s, %s, %s)"
+DS_UPD = 'UPDATE dataset set name=%s, input_path=%s, metadata=%s, config=%s, status=%s where id=%s'
+DS_UPD_STATUS = 'UPDATE dataset set status=%s where id=%s'
+DS_INSERT = "INSERT INTO dataset (id, name, input_path, metadata, config, status) VALUES (%s, %s, %s, %s, %s, %s)"
 
 IMG_URLS_BY_ID_SEL = ('SELECT iso_image_urls, ion_image_url '
                       'FROM iso_image_metrics m '
@@ -108,6 +103,7 @@ class DatasetManager(object):
                                  version=mol_db_dict.get('version', None),
                                  ds_config=ds.config)
             self._es.index_ds(ds.id, mol_db, del_first=True)
+        self.set_ds_status(ds, 'FINISHED')
 
     def _post_new_job_msg(self, ds):
         if self.mode == 'queue':
@@ -141,10 +137,10 @@ class DatasetManager(object):
         config_diff = ConfigDiff.compare_configs(old_config, ds.config)
 
         if config_diff == ConfigDiff.EQUAL:
-            self._db.alter(DS_UPD, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config), ds.id)
+            self._db.alter(DS_UPD, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config), 'INDEXING', ds.id)
             self._reindex_ds(ds)
         elif config_diff == ConfigDiff.NEW_MOL_DB:
-            self._db.alter(DS_UPD, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config), ds.id)
+            self._db.alter(DS_UPD, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config), 'QUEUED', ds.id)
             self._post_new_job_msg(ds)
         elif config_diff == ConfigDiff.INSTR_PARAMS_DIFF:
             self.add_ds(ds)
@@ -155,7 +151,7 @@ class DatasetManager(object):
         """
         assert (ds.id and ds.name and ds.input_path and ds.config)
 
-        ds_row = [(ds.id, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config))]
+        ds_row = [(ds.id, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config), 'QUEUED')]
         r = self._db.select_one(DS_SEL, ds.id)
         if r:
             self.delete_ds(ds)
@@ -196,3 +192,6 @@ class DatasetManager(object):
                 wd_man.del_input_data(ds.input_path)
         else:
             logger.warning('No ds_id for ds_name: %s', ds.name)
+
+    def set_ds_status(self, ds, status):
+        self._db.alter(DS_UPD_STATUS, status, ds.id)

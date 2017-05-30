@@ -15,6 +15,7 @@ CREATE TABLE dataset (
 	input_path  text,
 	metadata		json,
 	config      json,
+	status			text,
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
 );
 CREATE INDEX ind_dataset_name ON dataset (name);

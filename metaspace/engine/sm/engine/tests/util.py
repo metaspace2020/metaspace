@@ -22,7 +22,7 @@ dictConfig(log_config)
 @pytest.fixture(scope='session')
 def sm_config():
     SMConfig.set_path(join(proj_root(), 'conf', 'test_config.json'))
-    return SMConfig.get_conf()
+    return SMConfig.get_conf(update=True)
 
 
 @pytest.fixture(scope='module')

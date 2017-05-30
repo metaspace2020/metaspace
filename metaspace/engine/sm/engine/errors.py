@@ -1,7 +1,12 @@
 
 class SMError(Exception):
     def __init__(self, msg=None):
-        self.msg = msg
+        self.message = msg
+
+
+class JobFailedError(SMError):
+    def __init__(self, msg):
+        super(JobFailedError, self).__init__(msg)
 
 
 class UnknownDSID(SMError):
