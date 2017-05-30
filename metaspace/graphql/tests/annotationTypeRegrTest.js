@@ -15,6 +15,7 @@ describe('GraphQL integration: Annotation type', () => {
     const query = `{
       allAnnotations(
         filter: {
+          database: "HMDB",
           datasetName: "untreated_test",
           sumFormula: "C8H20NO6P",
           adduct: "+K"

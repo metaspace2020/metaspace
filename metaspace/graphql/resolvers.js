@@ -49,7 +49,7 @@ function baseDatasetQuery() {
     this.select(pg.raw('dataset.id as id'),
                 'name',
                 pg.raw('max(finish) as last_finished'),
-                pg.raw('array_agg(status) as status'),
+                pg.raw('dataset.status as status'),
                 'metadata', 'config', 'input_path')
         .from('dataset').leftOuterJoin('job', 'dataset.id', 'job.ds_id')
         .groupBy('dataset.id').as('tmp');
@@ -192,15 +192,7 @@ const Resolvers = {
     },
 
     status(ds) {
-      if (ds.status === undefined)
-        return null; // ES records
-      if (ds.status.indexOf('STARTED') >= 0)
-        return 'STARTED';
-      if (ds.status.indexOf(null) >= 0)
-        return 'QUEUED';
-      if (ds.status.indexOf('FAILED') >= 0)
-        return 'FAILED';
-      return 'FINISHED';
+      return ds.status
     },
 
     inputPath(ds) {
