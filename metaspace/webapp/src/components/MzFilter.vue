@@ -26,7 +26,6 @@
    },
    props: {
      name: String,
-     options: Object,
      value: [String, Number],
      removable: {type: Boolean, default: true}
    },
