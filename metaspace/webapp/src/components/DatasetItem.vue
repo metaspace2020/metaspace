@@ -58,7 +58,17 @@
     <div class="ds-actions">
       <span v-if="dataset.status == 'FINISHED'">
         <i class="el-icon-picture"></i>
-        <router-link :to="resultsHref" >Browse annotations</router-link>
+        <el-popover trigger="hover" placement="top">
+          <div class="db-link-list">
+            Select a database:
+            <div v-for="database in metaboliteDatabases" >
+              <router-link :to="resultsHref(database)">
+                {{ database }}
+              </router-link>
+            </div>
+          </div>
+          <a slot="reference">Browse annotations</a>
+        </el-popover>
         <br/>
       </span>
 
@@ -96,13 +106,6 @@
      DatasetInfo
    },
    computed: {
-     resultsHref() {
-       return {
-         path: '/annotations',
-         query: {ds: this.dataset.id, db: this.preferredDatabase}
-       };
-     },
-
      formatSubmitter() {
        const { name, surname } = this.dataset.submitter;
        return name + " " + surname;
@@ -149,8 +152,12 @@
        return JSON.parse(this.dataset.metadataJson);
      },
 
-     preferredDatabase() {
-       return this.metadata.metaspace_options.Metabolite_Database;
+     metaboliteDatabases() {
+       const dbs = this.metadata.metaspace_options.Metabolite_Database;
+       if (typeof dbs === 'string')
+         return [dbs];
+       else
+         return dbs;
      },
 
      formatOrganism() {
@@ -195,6 +202,13 @@
      };
    },
    methods: {
+     resultsHref(databaseName) {
+       return {
+         path: '/annotations',
+         query: {ds: this.dataset.id, db: databaseName}
+       };
+     },
+
      showMetadata() {
        this.showMetadataDialog = true;
      },
@@ -283,6 +297,10 @@
 
  .queued {
    background-color: lightblue;
+ }
+
+ .db-link-list {
+   font-size: initial;
  }
 
 </style>
