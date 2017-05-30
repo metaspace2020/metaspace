@@ -90,8 +90,9 @@ const datasetFilters = {
   condition: new ExactMatchFilter('Sample_Information.Condition', {}),
   maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {}),
   name: new SubstringMatchFilter('', {esField: 'ds_name', pgField: 'name'}),
-  ids: new DatasetIdFilter()
-};
+  ids: new DatasetIdFilter(),
+  status: new ExactMatchFilter('', {pgField: 'status'})
+}
 
 function dsField(pgDatasetRecord, alias){
   let info = pgDatasetRecord.metadata;

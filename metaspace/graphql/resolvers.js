@@ -1,7 +1,3 @@
-/**
- * Created by intsco on 1/11/17.
- */
-
 const sprintf = require('sprintf-js'),
   fetch = require('node-fetch'),
   jwt = require('jwt-simple'),
@@ -96,7 +92,7 @@ const Resolvers = {
 
       const orderVar = orderBy == 'ORDER_BY_NAME' ? 'name' : 'last_finished';
       const ord = sortingOrder == 'ASCENDING' ? 'asc' : 'desc';
-  
+
       logger.info(q.toString());
       console.time('pgQuery');
 
@@ -135,7 +131,7 @@ const Resolvers = {
       return f.pgFilter(q, query).orderBy('field', 'asc')
               .then(results => results.map(row => row['field']));
     },
-    
+
     molecularDatabases(_, args) {
       const host = config.services.moldb_service_host;
       return fetch(`http://${host}/v1/databases`)
@@ -192,7 +188,7 @@ const Resolvers = {
     },
 
     status(ds) {
-      return ds.status
+      return ds.status;
     },
 
     inputPath(ds) {
