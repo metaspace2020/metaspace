@@ -67,6 +67,19 @@
                 </span>
               </el-form-item>
 
+              <div class="control" v-if="prop.type === 'array'">
+                <!-- so far it's only for Metabolite_Database  -->
+                <div>
+                  <el-select v-if="prop.items.enum"
+                             :required="isRequired(propName, section)"
+                             multiple
+                             v-model="value[sectionName][propName]">
+                    <el-option v-for="opt in prop.items.enum" :value="opt" :label="opt" :key="opt">
+                    </el-option>
+                  </el-select>
+                </div>
+              </div>
+
               <div class="control" v-if="prop.type == 'object'" >
                 <el-row>
                   <el-col :span="getWidth(fieldName)"
@@ -138,6 +151,7 @@
    fetchMetadataQuery
  } from '../api/metadata.js';
  import gql from 'graphql-tag';
+ import Vue from 'vue';
 
  const ajv = new Ajv({allErrors: true});
 
@@ -170,7 +184,8 @@
  const factories = {
    'string': schema => schema.default || '',
    'number': schema => schema.default || 0,
-   'object': objectFactory
+   'object': objectFactory,
+   'array': schema => schema.default || []
  }
 
  function isEmpty(obj) {
@@ -212,8 +227,9 @@
    created() {
      this.loading = true;
      this.$apollo.query({query: gql`{molecularDatabases{name}}`}).then(response => {
-       this.schema.properties.metaspace_options.properties.Metabolite_Database.enum =
-         response.data.molecularDatabases.map(d => d.name);
+       Vue.set(this.schema.properties.metaspace_options.properties.Metabolite_Database.items,
+               'enum',
+               response.data.molecularDatabases.map(d => d.name));
        this.validator = ajv.compile(this.schema);
        this.loading = false;
      });

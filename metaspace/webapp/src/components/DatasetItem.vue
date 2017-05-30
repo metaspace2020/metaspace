@@ -3,7 +3,7 @@
 
     <el-dialog title="Provided metadata" v-model="showMetadataDialog">
       <dataset-info :metadata="metadata"
-        expandedKeys="['Sample information', 'Sample preparation']">
+        :expandedKeys="['Sample information', 'Sample preparation']">
       </dataset-info>
     </el-dialog>
 
