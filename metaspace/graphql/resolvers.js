@@ -51,7 +51,7 @@ function baseDatasetQuery() {
                 pg.raw('max(finish) as last_finished'),
                 pg.raw('dataset.status as status'),
                 'metadata', 'config', 'input_path')
-        .from('dataset').leftOuterJoin('job', 'dataset.id', 'job.ds_id')
+        .from('dataset').leftJoin('job', 'dataset.id', 'job.ds_id')
         .groupBy('dataset.id').as('tmp');
   });
 }
@@ -69,8 +69,8 @@ const Resolvers = {
         .then((data) => {
           return data.length > 0 ? data[0] : null;
         })
-        .catch((err) => {
-          logger.error(err); return null;
+        .catch((e) => {
+          logger.error(e.message); return null;
         });
     },
 
@@ -79,8 +79,8 @@ const Resolvers = {
         .then((data) => {
           return data.length > 0 ? data[0] : null;
         })
-        .catch((err) => {
-          logger.error(err); return null;
+        .catch((e) => {
+          logger.error(e.message); return null;
         });
     },
 
@@ -102,7 +102,7 @@ const Resolvers = {
 
       return q.orderBy(orderVar, ord).offset(offset).limit(limit).select('*')
         .then(result => { console.timeEnd('pgQuery'); return result; })
-        .catch((e) => { logger.error(e); return []; });
+        .catch((e) => { logger.error(e.message); return []; });
     },
 
     allAnnotations(_, args) {
@@ -118,7 +118,7 @@ const Resolvers = {
       }
       return q.count('id')
               .then(result => parseInt(result[0].count))
-              .catch((e) => { logger.error(e); return 0; });
+              .catch((e) => { logger.error(e.message); return 0; });
     },
 
     countAnnotations(_, args) {

@@ -80,32 +80,6 @@ class DatasetIdFilter extends AbstractDatasetFilter {
   }
 }
 
-class JobStatusFilter extends AbstractDatasetFilter {
-  constructor() {
-    super('', {});
-  }
-
-  // esFilter doesn't make sense (always FINISHED)
-
-  pgFilter(q, status) {
-    // FIXME: move the logic into baseDatasetQuery?
-    if (status == 'STARTED')
-      return q.whereRaw("status @> ARRAY['STARTED']");
-    if (status == 'QUEUED')
-      return q.whereRaw("TRUE = ANY (SELECT unnest(status) IS NULL) AND NOT (status @> ARRAY['STARTED'])");
-    if (status == 'FINISHED')
-      return q.whereRaw("(status @> ARRAY['FINISHED']) " +
-                        "AND NOT (status @> ARRAY['STARTED']) " +
-                        "AND TRUE = ALL(SELECT unnest(status) IS NOT NULL)");
-    if (status == 'FAILED')
-      return q.whereRaw("(status @> ARRAY['FAILED']) " +
-                        "AND NOT (status @> ARRAY['FINISHED']) " +
-                        "AND NOT (status @> ARRAY['STARTED']) " +
-                        "AND TRUE = ALL(SELECT unnest(status) IS NOT NULL)");
-    return q;
-  }
-}
-
 const datasetFilters = {
   institution: new ExactMatchFilter('Submitted_By.Institution', {}),
   polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
@@ -116,8 +90,7 @@ const datasetFilters = {
   condition: new ExactMatchFilter('Sample_Information.Condition', {}),
   maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {}),
   name: new SubstringMatchFilter('', {esField: 'ds_name', pgField: 'name'}),
-  ids: new DatasetIdFilter(),
-  status: new JobStatusFilter()
+  ids: new DatasetIdFilter()
 };
 
 function dsField(pgDatasetRecord, alias){
