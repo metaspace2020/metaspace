@@ -156,13 +156,11 @@
       "properties":{
         "Metabolite_Database": {
           "description": "Metabolite database searched against",
-          "type": "string",
-          "enum": [
-            "HMDB",
-            "ChEBI",
-            "LIPID_MAPS",
-            "SwissLipids"
-          ]
+          "type": "array",
+          "minItems": 1,
+          "default": ["HMDB"],
+          "items": { "type": "string" },
+          "uniqueItems": true
         },
         "Dataset_Name":{
           "description": "Dataset name",
