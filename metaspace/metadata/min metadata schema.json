@@ -26,6 +26,7 @@
       }
     }
   },
+  "required": ["Sample_Information", "Sample_Preparation", "Submitted_By", "MS_Analysis", "metaspace_options"],
   "properties": {
     "Sample_Information": {
       "type": "object",
