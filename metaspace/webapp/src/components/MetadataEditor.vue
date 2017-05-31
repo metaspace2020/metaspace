@@ -67,18 +67,20 @@
                 </span>
               </el-form-item>
 
-              <div class="control" v-if="prop.type === 'array'">
+              <el-form-item class="control" v-if="prop.type == 'array' && !loading"
+                            :class="isError(sectionName, propName)">
                 <!-- so far it's only for Metabolite_Database  -->
-                <div>
-                  <el-select v-if="prop.items.enum"
-                             :required="isRequired(propName, section)"
-                             multiple
-                             v-model="value[sectionName][propName]">
-                    <el-option v-for="opt in prop.items.enum" :value="opt" :label="opt" :key="opt">
-                    </el-option>
-                  </el-select>
-                </div>
-              </div>
+                <el-select v-if="prop.items.enum"
+                           :required="isRequired(propName, section)"
+                           multiple
+                           v-model="value[sectionName][propName]">
+                  <el-option v-for="opt in prop.items.enum" :value="opt" :label="opt" :key="opt">
+                  </el-option>
+                </el-select>
+                <span class="error-msg" v-if="isError(sectionName, propName)">
+                  {{ getErrorMessage(sectionName, propName) }}
+                </span>
+              </el-form-item>
 
               <div class="control" v-if="prop.type == 'object'" >
                 <el-row>
@@ -104,6 +106,10 @@
                       </el-input-number>
 
                       <div class="subfield-label" v-html="prettify(fieldName, prop).toLowerCase()"></div>
+
+                      <span class="error-msg" v-if="isError(sectionName, propName, fieldName)">
+                        {{ getErrorMessage(sectionName, propName, fieldName) }}
+                      </span>
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -205,6 +211,8 @@
 
  function trimEmptyFields(schema, value) {
    if (!(value instanceof Object))
+     return value;
+   if (Array.isArray(value))
      return value;
    let obj = Object.assign({}, value);
    for (var name in schema.properties) {
@@ -345,6 +353,7 @@
 
      submit() {
        const cleanValue = trimEmptyFields(metadataSchema, this.value);
+
        this.validator(cleanValue);
        this.validationErrors = this.validator.errors || [];
 

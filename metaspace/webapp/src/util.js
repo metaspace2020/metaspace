@@ -40,7 +40,9 @@ function decodePayload(jwt) {
 function pathFromUUID(uuid) {
   if (fuConfig.storage == 's3')
     return 's3a://' + fuConfig.aws.s3_bucket + '/' + uuid;
-  // TODO: support local storage
+  else
+    // TODO: properly support local storage
+    return `file:///tmp/uploads/final/${uuid[0]}/${uuid[1]}/${uuid[2]}/${uuid[3]}/${uuid}`;
 }
 
 function getColorScale(name) {
