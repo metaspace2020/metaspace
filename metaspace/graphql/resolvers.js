@@ -6,7 +6,8 @@ const sprintf = require('sprintf-js'),
 const config = require('config'),
   {esSearchResults, esCountResults, esAnnotationByID} = require('./esConnector'),
   {datasetFilters, dsField, SubstringMatchFilter} = require('./datasetFilters.js'),
-  {generateProcessingConfig, metadataChangeSlackNotify, logger} = require("./utils.js");
+  {generateProcessingConfig, metadataChangeSlackNotify,
+    metadataUpdateFailedSlackNotify, logger} = require("./utils.js");
 
 const dbConfig = () => {
   const {host, database, user, password} = config.db;
@@ -353,6 +354,7 @@ const Resolvers = {
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
         const newMetadata = JSON.parse(metadataJson);
+        const user = payload.name || payload.email;
 
         return checkPermissions(datasetId, payload)
           .then(() => {
@@ -362,15 +364,19 @@ const Resolvers = {
               name: newMetadata.metaspace_options.Dataset_Name || ""
             });
 
-            // perform ES re-indexing in the background
-            const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/update`;
-            fetch(url, { method: 'POST', body: body })
-              .catch(e => logger.error(`metadata update error: ${e.message}\n${e.stack}`));
-
             return pg.select().from('dataset').where('id', '=', datasetId)
               .then(records => {
                 const oldMetadata = records[0].metadata;
-                metadataChangeSlackNotify(payload.name || payload.email, datasetId, oldMetadata, newMetadata);
+                metadataChangeSlackNotify(user, datasetId, oldMetadata, newMetadata);
+              })
+              .then(() => {
+                // perform ES re-indexing in the background
+                const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/update`;
+                fetch(url, { method: 'POST', body: body })
+                  .catch( e => {
+                    logger.error(`metadata update error: ${e.message}\n${e.stack}`);
+                    metadataUpdateFailedSlackNotify(user, datasetId, e.message);
+                  });
               })
               .then(() => "success");
           })

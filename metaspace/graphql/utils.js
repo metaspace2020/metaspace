@@ -103,6 +103,16 @@ function metadataChangeSlackNotify(user, datasetId, oldMetadata, newMetadata) {
   }
 }
 
+function metadataUpdateFailedSlackNotify(user, datasetId, e_msg) {
+  const slackConn = config.slack.webhook_url ? new slack(config.slack.webhook_url): null;
+  if (slackConn) {
+    let msg = slackConn.send({
+      text: `${user} tried to edit metadata (ds_id=${datasetId})\nError: ${e_msg}`,
+      channel: config.slack.channel
+    });
+  }
+}
+
 const logger = new (winston.Logger)({
   transports: [
     new (winston.transports.Console)({
@@ -121,5 +131,6 @@ const logger = new (winston.Logger)({
 module.exports = {
   generateProcessingConfig,
   metadataChangeSlackNotify,
+  metadataUpdateFailedSlackNotify,
   logger
 };
