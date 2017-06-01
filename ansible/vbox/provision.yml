@@ -1,31 +1,50 @@
 ---
 
-- name: Set up SM queue
-  hosts: sm-vbox
+- name: SM services instance configuration
+  hosts: web
   user: ubuntu
 
+  vars_files:
+    - vars/web_app.yml
+    - vars/graphql.yml
+
+  vars:
+    kibana_version: "{{ elasticsearch_version }}"
+    venv: "{{ miniconda_prefix }}"
+    conda_env: "{{ miniconda_env.name }}"
+
   roles:
-    - role: rabbitmq
+    - role: postgres
       become: yes
 
+    - role: elasticsearch
+      become: yes
 
-- name: Set up SM web app
-  hosts: sm-vbox
-  user: ubuntu
+    #- role: kibana
+    #  become: yes
+    #  es_port: 9300
 
-  roles:
+    - role: nginx
+
+    - role: rabbitmq
+
+    - role: miniconda
+
+    - role: supervisor
+
+    - role: mol_db
+      mol_db_home: "{{ sm_mol_db_home }}"
+      mol_db_postgres_pass: "{{ sm_postgres_password }}"
+      miniconda_env:
+        name: mol_db
+
     - role: sm_api
-      venv: "{{ miniconda_prefix }}"
-      conda_env: "{{ miniconda_env.name }}"
+      sm_web_app_url: "{{ sm_webapp_url }}"
 
+    - role: nodejs
 
-- name: Set up SM engine
-  hosts: sm-vbox
-  user: ubuntu
+    - role: sm_graphql
 
-  roles:
-    - role: sm_spark_master
-      venv: "{{ miniconda_prefix }}"
-      conda_env: "{{ miniconda_env.name }}"
-      spark_usr_dir: "{{ spark_home }}"
-      spark_env_extras: "{{ spark_env_extras_master }}"
+    - role: sm_web_app
+
+    #- role: sm_cluster_autostart

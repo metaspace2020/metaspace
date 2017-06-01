@@ -4,30 +4,49 @@
 Vagrant.require_version ">= 1.7.0"
 
 Vagrant.configure(2) do |config|
-  
-  config.vm.box = "ubuntu/trusty64"
-  #config.vm.box = "ubuntu/xenial64"
-  
+
+  # why not ubuntu/xenial64?
+  # https://bugs.launchpad.net/cloud-images/+bug/1569237
+
+  config.vm.box = "bento/ubuntu-16.04"
+
+  # web application
+  config.vm.network "forwarded_port", guest: 80, host: 8999
+
+  # Spark UI
   config.vm.network "forwarded_port", guest: 4040, host: 4041
+
   config.vm.network "forwarded_port", guest: 8080, host: 8081
   config.vm.network "forwarded_port", guest: 8090, host: 8091
-  config.vm.network "forwarded_port", guest: 9200, host: 9201
+
+  # GraphQL server / GraphiQL web interface
+  config.vm.network "forwarded_port", guest: 3010, host: 13010
+
+  # ElasticSearch behind nginx
+  config.vm.network "forwarded_port", guest: 9700, host: 9701
+
+  # kibana
   config.vm.network "forwarded_port", guest: 5601, host: 5602
+
+  # rabbitmq
   config.vm.network "forwarded_port", guest: 5672, host: 5672
   config.vm.network "forwarded_port", guest: 15672, host: 15672
 
   # Disable the new default behavior introduced in Vagrant 1.7, to
   # ensure that all Vagrant machines will use the same SSH key pair.
   # See https://github.com/mitchellh/vagrant/issues/5005
-  #config.ssh.insert_key = false
-  #config.ssh.username = "vagrant"
+  config.ssh.insert_key = false
 
   #config.vm.synced_folder "/opt/data", "/data"
-  
+
   config.vm.provider "virtualbox" do |v|
     v.name = "sm-engine"
     v.memory = 4096
-	v.cpus = 4
+
+    # bento is also not perfect: https://github.com/chef/bento/issues/694
+    # another solution is to upgrade VirtualBox, but it's easier to add a line here
+    v.customize ["modifyvm", :id, "--cableconnected1", "on"]
+  v.cpus = 4
   end
 
   config.vm.provision :ansible do |ansible|

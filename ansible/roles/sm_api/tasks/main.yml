@@ -72,5 +72,3 @@
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash
-
-

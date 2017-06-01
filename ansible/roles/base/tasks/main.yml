@@ -12,6 +12,12 @@
   template: src=../files/locale dest=/etc/default/locale
     owner=root mode="u=rw,g=r,o=r" force=yes
 
+- name: Create ubuntu user
+  user:
+    name: ubuntu
+    shell: /bin/bash
+    groups: sudo
+
 - name: Upload ssh key file "{{ pub_key_file }}"
   authorized_key: user=ubuntu key="{{ lookup('file', '{{ pub_key_file }}') }}"
   when: upload_key
