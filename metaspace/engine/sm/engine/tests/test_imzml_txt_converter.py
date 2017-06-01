@@ -1,4 +1,4 @@
-from cStringIO import StringIO
+from io import StringIO
 
 import numpy as np
 from sm.engine.util import SMConfig

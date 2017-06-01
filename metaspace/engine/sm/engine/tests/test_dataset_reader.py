@@ -38,7 +38,7 @@ def test_dataset_reader_get_spectra_works(sm_config, spark_context):
         ds_reader = DatasetReader('ds_id', 'input_path', spark_context, work_dir_man_mock)
         spectra_list = ds_reader.get_spectra().collect()
 
-        assert map(lambda t: t[0], spectra_list) == [0, 2]
+        assert [t[0] for t in spectra_list] == [0, 2]
         first_spectra = spectra_list[0]
         assert_array_equal(first_spectra[1], np.array([100.0, 200.0]))
         assert_array_equal(first_spectra[2], np.array([1000.0, 0]))

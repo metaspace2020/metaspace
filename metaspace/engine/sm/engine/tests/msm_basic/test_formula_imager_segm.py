@@ -23,4 +23,4 @@ def test_gen_iso_sf_images(spark_context):
             if em is None:
                 assert m is None
             else:
-                assert (m == em).toarray().all()
+                assert (m.toarray() == em.toarray()).all()
