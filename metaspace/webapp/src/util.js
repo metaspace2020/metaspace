@@ -42,7 +42,7 @@ function pathFromUUID(uuid) {
     return 's3a://' + fuConfig.aws.s3_bucket + '/' + uuid;
   else
     // TODO: properly support local storage
-    return `file:///tmp/uploads/final/${uuid[0]}/${uuid[1]}/${uuid[2]}/${uuid[3]}/${uuid}`;
+    return '/tmp/uploads/' + uuid + '/';
 }
 
 function getColorScale(name) {

@@ -1,6 +1,6 @@
 {
   "name": "sm-webapp-ng",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "dependencies": {
     "@types/async": {
       "version": "2.0.40",
@@ -545,6 +545,18 @@
       "version": "1.0.1",
       "from": "compare-oriented-cell@>=1.0.1 <2.0.0",
       "resolved": "https://registry.npmjs.org/compare-oriented-cell/-/compare-oriented-cell-1.0.1.tgz"
+    },
+    "concat-files": {
+      "version": "0.1.1",
+      "from": "concat-files@latest",
+      "resolved": "https://registry.npmjs.org/concat-files/-/concat-files-0.1.1.tgz",
+      "dependencies": {
+        "async": {
+          "version": "0.2.10",
+          "from": "async@>=0.2.6 <0.3.0",
+          "resolved": "https://registry.npmjs.org/async/-/async-0.2.10.tgz"
+        }
+      }
     },
     "concat-map": {
       "version": "0.0.1",

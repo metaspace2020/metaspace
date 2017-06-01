@@ -11,12 +11,6 @@ var AWS = require('aws-sdk'),
 var env = process.env.NODE_ENV || 'development';
 var conf = require('./conf.js');
 
-var fineUploaderMiddleware;
-if (conf.UPLOAD_DESTINATION != 'S3')
-  fineUploaderMiddleware = require('express-fineuploader-traditional-middleware');
-else
-  fineUploaderMiddleware = require('./fineUploaderS3Middleware.js');
-
 var app = express();
 
 var jwt = require('jwt-simple');
@@ -247,7 +241,12 @@ if (env == 'development') {
 }
 
 app.use(router);
-app.use('/upload', fineUploaderMiddleware());
+
+if (conf.UPLOAD_DESTINATION == 'S3') {
+  app.use('/upload', require('./fineUploaderS3Middleware.js')());
+} else {
+  app.use('/upload', require('./fineUploaderLocalMiddleware.js')());
+}
 
 app.listen(conf.PORT, () => {
   console.log(`listening on ${conf.PORT} port`);
