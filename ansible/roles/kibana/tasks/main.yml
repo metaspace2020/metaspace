@@ -24,7 +24,7 @@
   lineinfile:
     dest: /etc/kibana/kibana.yml
     regexp: elasticsearch.url
-    line: 'elasticsearch.url: "http://localhost:{{ es_port }}"'
+    line: 'elasticsearch.url: "http://localhost:{{ kibana_es_port }}"'
 
 - name: Kibana conf update restart
   service: name=kibana state=restarted

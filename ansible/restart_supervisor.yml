@@ -35,5 +35,4 @@
   register: command_result
 
 - debug: var=command_result
-  failed_when: >
-    ('"ERROR" in command_result.stdout or "FATAL" in command_result.stdout' or "BACKOFF" in command_result.stdout)
+  failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'

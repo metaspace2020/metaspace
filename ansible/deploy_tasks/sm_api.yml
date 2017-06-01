@@ -1,4 +1,4 @@
-- name: Pull sources from the repository
+- name: Pull sm-engine sources from the repository
   git: repo={{ sm_repo_url }}
        dest={{ sm_home }}
        version={{ sm_branch }}

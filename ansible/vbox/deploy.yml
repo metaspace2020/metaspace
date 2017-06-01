@@ -5,11 +5,13 @@
   user: ubuntu
 
   vars_files:
-    - ../vars/graphql.yml
     - ../vars/web_app.yml
+    - ../vars/graphql.yml
+    - ../vars/sm_api.yml
+    - ../vars/mol_db.yml
 
-  vars:
-    sm_web_app_url: "{{ sm_webapp_url }}"
+#  vars:
+#    sm_web_app_url: "{{ sm_webapp_url }}"
 
   tasks:
     - include: ../deploy_tasks/graphql.yml
