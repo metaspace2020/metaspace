@@ -1,0 +1,34 @@
+- name: Clone sm-graphql git repository
+  git: >
+    dest={{ sm_graphql_home }}
+    repo=https://github.com/METASPACE2020/sm-graphql.git
+    update=yes
+    force=yes
+    version={{ sm_graphql_branch }}
+  when: local_deploy is not defined
+  register: git_deploy
+  until: git_deploy | succeeded
+
+- name: Upload local files
+  synchronize:
+    src: "{{ sm_graphql_home }}/"
+    dest: "{{ sm_graphql_home }}/"
+    rsync_opts:
+      - "--exclude='config/*' --exclude='dist/*' --exclude='node_modules/*' --exclude='.*'"
+  when: local_deploy is defined
+
+- name: Install sm-graphql dependencies
+  shell: npm install
+  args:
+    chdir: "{{ sm_graphql_home }}"
+    executable: /bin/bash
+
+- name: Pull config from the remote host
+  fetch: src={{ sm_graphql_home }}/config/config.js.template dest=/tmp/config.js.template
+         flat=yes fail_on_missing=yes
+
+- name: Save config as ./config/production.js
+  template: src=/tmp/config.js.template dest={{ sm_graphql_home }}/config/production.js
+            owner=ubuntu group=ubuntu mode=0600
+
+- include: ../restart_supervisor.yml supervisor_app=sm-graphql
