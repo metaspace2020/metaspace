@@ -40,15 +40,19 @@ class DatasetReader(object):
         if len(row) > 0:
             vals = row.split(',')
             if len(vals) > 0:
-                res = map(int, vals)[1:]
+                res = [int(v) for v in vals[1:]]
         return res
+
+    @staticmethod
+    def _is_valid_coord_row(fields):
+        return len(fields) == 2
 
     def _determine_pixel_order(self):
         coord_path = self._wd_manager.coord_path
 
         self.coord_pairs = (self._sc.textFile(coord_path)
                             .map(self._parse_coord_row)
-                            .filter(lambda t: len(t) == 2).collect())
+                            .filter(self._is_valid_coord_row).collect())
         self.min_x, self.min_y = np.amin(np.asarray(self.coord_pairs), axis=0)
         self.max_x, self.max_y = np.amax(np.asarray(self.coord_pairs), axis=0)
 

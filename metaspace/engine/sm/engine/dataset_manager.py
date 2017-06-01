@@ -55,7 +55,8 @@ def dict_to_paths(d):
                     yield key + subkey, subval
             else:
                 yield key,  str(value)
-    return list(map(lambda (k, v): k + '/' + v, flatten(d.items())))
+
+    return [k + '/' + v for k, v in flatten(d.items())]
 
 
 class ConfigDiff:

@@ -8,7 +8,7 @@ from bottle import response as resp
 from sm.engine import DB, ESExporter
 from sm.engine import DatasetManager, Dataset
 from sm.engine.util import SMConfig
-from sm.engine.util import init_logger
+from sm.engine.util import init_logger, logger
 from sm.engine.errors import UnknownDSID
 
 
@@ -30,10 +30,14 @@ def _create_db_conn():
     config = SMConfig.get_conf()
     return DB(config['db'])
 
+def _json_params(req):
+    b = req.body.getvalue()
+    return json.loads(b.decode('utf-8'))
+
 
 @post('/datasets/add')
 def add_ds():
-    params = json.load(req.body)
+    params = _json_params(req)
     ds = Dataset(params.get('id', None) or dt.now().strftime("%Y-%m-%d_%Hh%Mm%Ss"),
                  params.get('name', None),
                  params.get('input_path'),
@@ -49,7 +53,7 @@ def add_ds():
 @post('/datasets/<ds_id>/update')
 def update_ds(ds_id):
     try:
-        params = json.load(req.body)
+        params = _json_params(req)
         db = _create_db_conn()
         ds = Dataset.load_ds(ds_id, db)
         ds.name = params.get('name', ds.name)
@@ -69,7 +73,7 @@ def update_ds(ds_id):
 @post('/datasets/<ds_id>/delete')
 def delete_ds(ds_id):
     try:
-        params = json.load(req.body)
+        params = _json_params(req)
         del_raw = params.get('del_raw', False)
 
         db = _create_db_conn()

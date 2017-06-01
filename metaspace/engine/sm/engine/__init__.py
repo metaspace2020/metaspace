@@ -8,8 +8,8 @@ from .mol_db import MolecularDB
 try:
     import pyspark
 except ImportError:
-    import util
-    util.init_logger()
-    util.logger.warn('pyspark is not on PYTHONPATH')
+    from .util import init_logger, logger
+    init_logger()
+    logger.warn('pyspark is not on PYTHONPATH')
 else:
     from .search_job import SearchJob

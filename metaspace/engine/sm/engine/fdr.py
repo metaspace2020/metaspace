@@ -1,4 +1,4 @@
-from cStringIO import StringIO
+from io import StringIO
 import logging
 import numpy as np
 import pandas as pd
@@ -74,7 +74,9 @@ class FDR(object):
 
             msm_fdr_list = []
             for i in range(self.decoy_sample_size):
-                sf_da_list = map(tuple, self.td_df[self.td_df.ta == ta][['sf_id', 'da']][i::self.decoy_sample_size].values)
+                full_decoy_df = self.td_df[self.td_df.ta == ta][['sf_id', 'da']]
+                decoy_subset_df = full_decoy_df[i::self.decoy_sample_size]
+                sf_da_list = [tuple(row) for row in decoy_subset_df.values]
                 decoy_msm = msm_df.loc[sf_da_list]
                 msm_fdr = self._msm_fdr_map(target_msm, decoy_msm)
                 msm_fdr_list.append(msm_fdr)

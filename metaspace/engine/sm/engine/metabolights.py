@@ -219,7 +219,7 @@ class MetabolightsBatch(object):
 
         self._ftp = self._ftpConnection()
         filenames = []
-        self._ftp.retrlines('NLST', lambda x: filenames.append(x))
+        self._ftp.retrlines('NLST', filenames.append)
 
         for fn in filenames:
             if fn.endswith(".txt"):

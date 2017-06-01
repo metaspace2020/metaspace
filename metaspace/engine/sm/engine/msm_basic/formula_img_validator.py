@@ -122,11 +122,13 @@ def sf_image_metrics(sf_images, metrics, ds, mol_db, sc):
                                               empty_matrix, ds.config['image_generation'])
     sf_add_ints_map_brcast = sc.broadcast(mol_db.get_sf_peak_ints())
 
-    sf_metrics = (sf_images
-                  .map(lambda ((sf, adduct), imgs):
-                      (sf, adduct) + compute_metrics(imgs, sf_add_ints_map_brcast.value[(sf, adduct)]))
-                  ).collect()
-    sf_metrics_df = (pd.DataFrame(sf_metrics, columns=['sf_id', 'adduct'] + metrics.keys())
-                     .set_index(['sf_id', 'adduct']))
+    def calculate_ion_metrics(item):
+        ion, images = item  # ion = (sf, adduct) tuple
+        return ion + compute_metrics(images, sf_add_ints_map_brcast.value[ion])
+
+    sf_metrics = sf_images.map(calculate_ion_metrics).collect()
+    index_columns = ['sf_id', 'adduct']
+    columns = index_columns + list(metrics.keys())
+    sf_metrics_df = pd.DataFrame(sf_metrics, columns=columns).set_index(index_columns)
     sf_metrics_df['msm'] = _calculate_msm(sf_metrics_df)
     return sf_metrics_df

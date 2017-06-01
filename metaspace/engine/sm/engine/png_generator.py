@@ -1,4 +1,4 @@
-import cStringIO
+from io import BytesIO
 import png
 import requests
 import numpy as np
@@ -106,7 +106,7 @@ class PngGenerator(object):
 
     def generate_png(self, img):
         im = self._get_img_data(img)
-        fp = cStringIO.StringIO()
+        fp = BytesIO()
         png_writer = png.Writer(width=self._shape[1], height=self._shape[0],
                                 alpha=True, greyscale=self._greyscale, bitdepth=self._bitdepth)
         png_writer.write(fp, im.reshape(im.shape[0], im.shape[1] * im.shape[2]).tolist())

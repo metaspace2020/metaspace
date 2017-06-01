@@ -46,7 +46,8 @@ class MSMBasicSearch(SearchAlgorithm):
         sf_msm_df = self._mol_db.get_ion_sorted_df()
         sf_msm_df = sf_msm_df.join(all_sf_metrics_df.msm).fillna(0)
         sf_adduct_fdr = self._fdr.estimate_fdr(sf_msm_df)
-        sf_metrics_fdr_df = all_sf_metrics_df.join(sf_adduct_fdr, how='inner')[self.metrics.keys() + ['msm', 'fdr']]
+        columns = list(self.metrics.keys()) + ['msm', 'fdr']
+        sf_metrics_fdr_df = all_sf_metrics_df.join(sf_adduct_fdr, how='inner')[columns]
         return sf_metrics_fdr_df
 
     def filter_sf_metrics(self, sf_metrics_df):
