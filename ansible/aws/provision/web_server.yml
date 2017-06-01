@@ -16,8 +16,8 @@
   gather_facts: yes
 
   vars_files:
-    - ../vars/web_app.yml
-    - ../vars/graphql.yml
+    - ../../vars/web_app.yml
+    - ../../vars/graphql.yml
 
   vars:
     kibana_version: "{{ elasticsearch_version }}"

@@ -46,8 +46,9 @@ Vagrant.configure(2) do |config|
     # bento is also not perfect: https://github.com/chef/bento/issues/694
     # another solution is to upgrade VirtualBox, but it's easier to add a line here
     v.customize ["modifyvm", :id, "--cableconnected1", "on"]
-  v.cpus = 4
   end
+
+  #config.vm.provision "file", source: "keys/public", destination: "~/.ssh/authorized_keys"
 
   config.vm.provision :ansible do |ansible|
     ansible.verbose = "vv"

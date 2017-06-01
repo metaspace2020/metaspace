@@ -5,23 +5,4 @@
   hosts: web
 
   tasks:
-    - name: Clone MolDB git repository
-      git: >
-        dest={{ sm_mol_db_home }}
-        repo=https://github.com/METASPACE2020/sm-molecular-db.git
-        update=yes
-        force=yes
-        version={{ sm_mol_db_branch }}
-      when: local_deploy is not defined
-      register: git_deploy
-      until: git_deploy | succeeded
-
-    - name: Upload local files
-      synchronize:
-        src: "{{ sm_mol_db_home }}/"
-        dest: "{{ sm_mol_db_home }}/"
-        rsync_opts:
-          - "--exclude='conf/*' --exclude='logs' --exclude='.*'"
-      when: local_deploy is defined
-
-    - include: ../../restart_supervisor.yml supervisor_app=sm-mol-db
+    - include: ../../deploy_tasks/mol_db.yml

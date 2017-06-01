@@ -1,12 +1,12 @@
 ---
 
-- name: SM services instance configuration
+- name: Set up all SM platform components
   hosts: web
   user: ubuntu
 
   vars_files:
-    - vars/web_app.yml
-    - vars/graphql.yml
+    - ../vars/web_app.yml
+    - ../vars/graphql.yml
 
   vars:
     kibana_version: "{{ elasticsearch_version }}"
@@ -20,9 +20,9 @@
     - role: elasticsearch
       become: yes
 
-    #- role: kibana
-    #  become: yes
-    #  es_port: 9300
+    - role: kibana
+      become: yes
+      es_port: 9200
 
     - role: nginx
 
@@ -46,5 +46,3 @@
     - role: sm_graphql
 
     - role: sm_web_app
-
-    #- role: sm_cluster_autostart

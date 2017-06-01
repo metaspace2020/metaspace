@@ -1,18 +1,18 @@
 ---
 
-- name: Deploying SM engine code
+- name: Deploying SM platform components
   hosts: sm-vbox
   user: ubuntu
-  gather_facts: false
+
+  vars_files:
+    - ../vars/graphql.yml
+    - ../vars/web_app.yml
+
+  vars:
+    sm_web_app_url: "{{ sm_webapp_url }}"
 
   tasks:
-    - include: ../engine_deploy_tasks.yml
-
-
-- name: Deploying SM web app code
-  hosts: sm-vbox
-  user: ubuntu
-  gather_facts: false
-
-  tasks:
-    - include: ../web_app_deploy_tasks.yml
+    - include: ../deploy_tasks/graphql.yml
+    - include: ../deploy_tasks/mol_db.yml
+    - include: ../deploy_tasks/sm_api.yml
+    - include: ../deploy_tasks/web_app.yml
