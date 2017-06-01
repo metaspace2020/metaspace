@@ -1,34 +1,30 @@
 name: sm_engine
 channels:
   - salford_systems
+  - conda-forge
 dependencies:
-  - python=2
-  - numpy=1.10
-  - scipy=0.16
+  - python>=3.4
+  - nomkl
+  - numpy=1.11
+  - scipy=0.17
   - matplotlib-nogui
-  - pandas=0.18
-  - numba=0.24.0
+  - pandas=0.19.2
   - cffi
+  - cryptography
   - lxml
   - libgcc
   - psycopg2=2.6.1
   - pytest
-  - fabric
   - pip:
-    - pyMSpec==0.1
-    - cpyMSpec==0.1.4
-    - pyImagingMSpec==0.1.3
-    - cpyImagingMSpec==0.0.5
+    - Fabric3
     - requests
     - mock
     - py4j
-    - pyimzML
     - tornado
     - tornpsql
     - recommonmark
     - boto3
     - networkx
-    - supervisor
     - pyyaml
     - elasticsearch
     - elasticsearch_dsl
