@@ -304,7 +304,12 @@ const Resolvers = {
         });
 
         const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
-        return fetch(url, { method: 'POST', body: body })
+        return fetch(url, {
+             method: 'POST',
+             body: body,
+             headers: {
+                "Content-Type": "application/json"
+             }})
           .then(() => "success")
           .catch(e => {
             logger.error(`${e.message}\n`);
@@ -335,7 +340,9 @@ const Resolvers = {
                 });
 
                 const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
-                return fetch(url, { method: 'POST', body: body })
+                return fetch(url, { method: 'POST', body: body, headers: {
+                  "Content-Type": "application/json"
+                }});
               });
           })
           .then(() => "success")
@@ -372,7 +379,9 @@ const Resolvers = {
               .then(() => {
                 // perform ES re-indexing in the background
                 const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/update`;
-                fetch(url, { method: 'POST', body: body })
+                fetch(url, { method: 'POST', body: body, headers: {
+                    "Content-Type": "application/json"
+                  }})
                   .catch( e => {
                     logger.error(`metadata update error: ${e.message}\n${e.stack}`);
                     metadataUpdateFailedSlackNotify(user, datasetId, e.message);
