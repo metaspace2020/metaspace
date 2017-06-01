@@ -1,4 +1,4 @@
-- Web application upload: support local folder
+- Web application upload: support local folder [done]
 - Spark cluster: start locally and not on spot instances
   - job daemon simply needs to run all the time
   - no need for cluster_auto_start_daemon
@@ -23,7 +23,7 @@ export PYTHONPATH=`pwd`/sm:`pwd`/$SPARK_DIR/python:$PYTHONPATH
   - use UPLOAD_DESTINATION="local"
     - also in clientConfig
   - graphql port on the client must be set to web_app_host_port
-    - image links also need to be tweaked the same way
+    - image links also need to be tweaked the same way (config.img_upload_host)
   - run web app in NODE_ENV=production (developers can ssh to change it)
   - configure storage (default is /tmp/ which might not have enough disk space)
     - hardcoded paths in fineuploaderlocalmiddleware and src/util.js need to be taken from configs
@@ -31,6 +31,9 @@ export PYTHONPATH=`pwd`/sm:`pwd`/$SPARK_DIR/python:$PYTHONPATH
 - databases need to be loaded (at least HMDB)
   - ideally the ansible script would take a list of dicts with csv locations, names and versions
   - molecular images should be generated with OpenBabel on insertion
+  
+- SM job daemon:
+  - don't send emails if AWS credentials are lacking (currently the daemon dies when trying to send emails)
 
 - pandas 0.19.2 is necessary
   https://github.com/pandas-dev/pandas/issues/16519
