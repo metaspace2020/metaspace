@@ -2,9 +2,9 @@
 
 [program:sm-mol-db]
 process_name = sm-mol-db
-environment = PATH="{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin"
+environment = PATH="{{ miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}/bin"
 directory = {{ mol_db_home }}
-command = {{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/gunicorn -b 0.0.0.0:{{ mol_db_port }} app.main:application --reload
+command = {{ miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}/bin/gunicorn -b 0.0.0.0:{{ mol_db_port }} app.main:application --reload
 redirect_stderr = true
 stdout_logfile = {{ mol_db_home }}/logs/sm-mol-db-api.log
 numprocs = 1

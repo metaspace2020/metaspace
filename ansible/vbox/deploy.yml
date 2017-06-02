@@ -1,6 +1,6 @@
 ---
 
-- name: Deploying SM platform components
+- name: Deploy SM platform components
   hosts: sm-vbox
   user: ubuntu
 
@@ -10,11 +10,18 @@
     - ../vars/sm_api.yml
     - ../vars/mol_db.yml
 
-#  vars:
-#    sm_web_app_url: "{{ sm_webapp_url }}"
-
   tasks:
     - include: ../deploy_tasks/graphql.yml
+      tags: [graphql]
+
     - include: ../deploy_tasks/mol_db.yml
+      tags: [mol_db]
+
     - include: ../deploy_tasks/sm_api.yml
+      tags: [sm_api]
+
     - include: ../deploy_tasks/web_app.yml
+      tags: [web_app]
+
+    - include: ../deploy_tasks/engine.yml
+      tags: [engine]

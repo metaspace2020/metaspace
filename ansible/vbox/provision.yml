@@ -1,6 +1,6 @@
 ---
 
-- name: Set up all SM platform components
+- name: Set up SM services
   hosts: web
   user: ubuntu
 
@@ -41,3 +41,25 @@
     - role: sm_graphql
 
     - role: sm_web_app
+
+
+- name: Set up SM engine
+  hosts: web
+  user: ubuntu
+
+  vars_files:
+    - ../vars/sm_spark_master.yml
+
+  vars:
+    spark_master_host: local[*]
+    spark_slave_ips: [localhost]
+
+  roles:
+    - role: spark
+      become: yes
+      spark_env_extras: "{{ spark_env_extras_master }}"
+
+    - role: spark_master
+      become: yes
+
+    - role: sm_spark_master

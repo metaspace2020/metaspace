@@ -1,34 +1,45 @@
 ---
 
+# SOFTWARE CONFIGURATION
+
 aws_access_key_id:
 aws_secret_access_key:
+aws_key_name:
+aws_region:
 
-postgres_host: localhost
-postgres_version: 9.3
+postgres_version: 9.5
+postgres_host: "{{ hostvars['web'].ansible_ssh_host }}"
+postgres_port: 5432
 
-es_host: localhost
+elasticsearch_version: 5.2.2
 
-rabbitmq_host: localhost
+kibana_version: "{{ elasticsearch_version }}"
+kibana_user: kibana
+kibana_password: kibana
+kibana_es_port: 9200
+
+rabbitmq_version: 3.6.8-1
+rabbitmq_host: "{{ hostvars['web'].ansible_ssh_host }}"
 rabbitmq_user: sm
-rabbitmq_password: "1234"
+rabbitmq_password: password
 
-miniconda_version: 4.1.11
+miniconda_version: latest
 miniconda_python: 2
 miniconda_prefix: "/opt/dev/miniconda"
 miniconda_env:
   name: sm
   dependencies:
     - python=2
-    - numpy=1.11
-    - scipy=0.18
+    - numpy=1.11.2
+    - scipy=0.18.1
     - matplotlib=1.5
-    - pandas=0.19
+    - pandas=0.19.1
     - cffi
+    - libgcc
+    - psycopg2=2.6.1
     - pip:
-      - pip
       - requests
       - mock
-      - psycopg2
       - py4j
       - pytest
       - tornado
@@ -42,26 +53,134 @@ miniconda_env:
       - elasticsearch
       - pika
       - cachetools
+      - bottle
 
-spark_version: "1.6.0-bin-hadoop2.7.1"
+sm_repo_url: https://github.com/METASPACE2020/sm-engine
+sm_branch: master
+sm_postgres_password: password
+sm_home: "/opt/dev/sm"
+sm_s3_path: ""
+sm_iso_images_url: "http://{{ hostvars['web'].ansible_ssh_host }}/iso_images"
+sm_es_host: "{{ hostvars['web'].ansible_ssh_host }}"
+sm_es_port: 9700  # cannot be 9200 (nginx proxied)
+sm_es_user: elastic
+sm_es_password: elastic
+sm_send_email: false
+
+sm_mol_db_home: /opt/dev/sm-mol-db
+sm_mol_db_branch: master
+sm_mol_db_url: "http://{{ hostvars['web'].ansible_ssh_host }}/mol_db/v1"
+
+sm_graphql_home: /opt/dev/sm-graphql
+sm_graphql_branch: master
+sm_graphql_slack_webhook_url:
+sm_graphql_slack_channel:
+sm_graphql_jwt_secret: "secret"
+sm_graphql_mol_image_host: "{{ hostvars['web'].ansible_ssh_host }}8999"
+sm_graphql_moldb_service_host: localhost/mol_db
+
+sm_webapp_home: /opt/dev/sm-web-app
+sm_webapp_branch: master
+sm_webapp_port: 8082
+sm_webapp_cookie_secret: "secret"
+sm_webapp_admin_emails:
+sm_webapp_aws_access_key_id:
+sm_webapp_aws_secret_access_key:
+sm_webapp_s3_bucket:
+sm_webapp_graphql_url: "/graphql"
+sm_webapp_hostname: "{{ hostvars['web'].ansible_ssh_host }}"
+sm_webapp_url: "http://{{ sm_webapp_hostname }}:8999"
+sm_webapp_google_client_id:
+sm_webapp_google_client_secret:
+
+sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
+sm_ansible_branch: master
+sm_ansible_home: /opt/dev/sm-engine-ansible
+
+activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
+
+spark_key_file: ~/.ssh/ubuntu_spark
+spark_version: "2.0.2-bin-hadoop2.7"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
-spark_key_file: ~/.ssh/ubuntu_spark
-spark_master_host: "local[*]"
+spark_user: "ubuntu"
 
-spark_env_extras_master:
+spark_env_extras_slave:
+  SPARK_WORKER_DIR: "/tmp/spark"
+  SPARK_LOCAL_DIRS: "/tmp/spark"
   PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
-spark_slave_ips:
-  - localhost
-
-sm_branch: v0.5.0
-sm_postgres_password: "1234"
-sm_home: "/opt/dev/sm"
-sm_s3_path:
-
-hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"
-activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
+spark_env_extras_master:
+  AWS_ACCESS_KEY_ID: "{{ aws_access_key_id }}"
+  AWS_SECRET_ACCESS_KEY: "{{ aws_secret_access_key }}"
+  PYSPARK_PYTHON: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
 slack_channel:
 slack_webhook_url:
+
+nginx_upstream_hosts:
+  - name: web_server
+    server: 127.0.0.1:{{ sm_webapp_port }}
+  - name: mol_image_server
+    server: 172.31.8.94:3020
+  - name: isotope_image_server
+    server: 127.0.0.1:3010
+  - name: graphql_server
+    server: 127.0.0.1:3010
+  - name: moldb_server
+    server: 127.0.0.1:5001
+  - name: kibana_server
+    server: 127.0.0.1:5601
+  - name: elasticsearch_server
+    server: 127.0.0.1:9200
+
+nginx_sites:
+  - listen: 8080
+    locations:
+      - path: /
+        params:
+          - auth_basic "Private Property";
+          - auth_basic_user_file /etc/nginx/passwdfile;
+          - proxy_pass http://kibana_server;
+          - include proxy-params.conf;
+  - listen: 80
+    locations:
+      - path: /
+        params:
+          - proxy_pass http://web_server;
+      - path: /mol-images/
+        params:
+          - proxy_pass http://mol_image_server/mol-images/;
+      - path: /iso_images/
+        params:
+          - proxy_pass http://isotope_image_server/iso_images/;
+      - path: /graphql
+        params:
+          - proxy_pass http://graphql_server/graphql;
+          - include proxy-params.conf;
+      - path: /graphiql
+        params:
+          - proxy_pass http://graphql_server/graphiql;
+          - include proxy-params.conf;
+      - path: /mol_db/
+        params:
+          - proxy_pass http://moldb_server/;
+          - proxy_cache my_zone;
+          - add_header X-Proxy-Cache $upstream_cache_status;
+          - proxy_cache_key "$scheme$request_method$host$request_uri";
+          - proxy_cache_valid 200 168h;
+          - include proxy-params.conf;
+  - listen: "{{ sm_es_port }}"
+    locations:
+      - path: /
+        params:
+        - auth_basic "Private Property";
+        - auth_basic_user_file /etc/nginx/passwdfile;
+        - proxy_pass http://elasticsearch_server;
+        - include proxy-params.conf;
+
+basic_auth_users:
+  - user: "{{ sm_es_user }}"
+    password: "{{ sm_es_password }}"
+  - user: "{{ kibana_user }}"
+    password: "{{ kibana_password }}"
