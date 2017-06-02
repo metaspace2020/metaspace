@@ -19,7 +19,7 @@ class ImageStoreServiceWrapper(object):
     def post_image(self, fp):
         r = self._session.post(join(self._iso_img_service_url, 'upload'), files={'iso_image': fp})
         r.raise_for_status()
-        return r.json()['image_url']
+        return r.json()['image_id']
 
     def delete_image(self, url):
         r = self._session.delete(url)

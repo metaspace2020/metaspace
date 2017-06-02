@@ -11,7 +11,7 @@ logger = logging.getLogger('sm-engine')
 COLUMNS = ["ds_id", "ds_name", "sf", "sf_adduct",
            "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
            "adduct", "job_id", "sf_id", "fdr",
-           "centroid_mzs", "ds_config", "ds_meta", "ion_image_url", "iso_image_urls", "polarity"]
+           "centroid_mzs", "ds_config", "ds_meta", "iso_image_ids", "polarity"]
 
 ANNOTATIONS_SEL = '''
 SELECT
@@ -35,8 +35,7 @@ SELECT
     tp.centr_mzs AS centroid_mzs,
     ds.config as ds_config,
     ds.metadata as ds_meta,
-    m.ion_image_url,
-    m.iso_image_urls,
+    m.iso_image_urls as iso_image_ids,
     ds.config->'isotope_generation'->'charge'->'polarity' as polarity
 FROM iso_image_metrics m
 JOIN sum_formula f ON f.id = m.sf_id

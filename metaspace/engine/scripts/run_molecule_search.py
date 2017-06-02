@@ -49,7 +49,7 @@ if __name__ == "__main__":
             _ds = Dataset.load_ds(args.ds_id, db)
             ds_man.delete_ds(_ds)
         except UnknownDSID as e:
-            logger.warn(e.msg)
+            logger.warn(e.message)
     else:
         ds_id = dt.now().strftime("%Y-%m-%d_%Hh%Mm%Ss")
 

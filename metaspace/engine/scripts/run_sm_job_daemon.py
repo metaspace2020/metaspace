@@ -69,7 +69,9 @@ def on_job_succeeded(msg):
 
     submitter = ds_meta['Submitted_By'].get('Submitter', '')
 
-    if 'Email' in submitter and ds_meta['metaspace_options'].get('notify_submitter', True):
+    if (sm_config['services']['send_email']
+        and 'Email' in submitter
+        and ds_meta['metaspace_options'].get('notify_submitter', True)):
         email_body = (
             'Dear {} {},\n\n'
             'Thank you for uploading dataset {} to the METASPACE annotation service. '
@@ -90,7 +92,9 @@ def on_job_failed(msg):
     ds_name, ds_meta = fetch_ds_metadata(msg['ds_id'])
     submitter = ds_meta['Submitted_By'].get('Submitter', '')
 
-    if 'Email' in submitter and ds_meta['metaspace_options'].get('notify_submitter', True):
+    if (sm_config['services']['send_email']
+        and 'Email' in submitter
+        and ds_meta['metaspace_options'].get('notify_submitter', True)):
         email_body = (
             'Dear {} {},\n\n'
             'Thank you for uploading dataset "{}" to the METASPACE annotation service. '
@@ -114,7 +118,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     SMConfig.set_path(args.sm_config_path)
-    rabbit_config = SMConfig.get_conf()['rabbitmq']
+    sm_config = SMConfig.get_conf()
+    rabbit_config = sm_config['rabbitmq']
 
     configure_loggers()
     logger = logging.getLogger('sm-queue')

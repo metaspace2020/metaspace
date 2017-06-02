@@ -21,7 +21,7 @@ class SearchResults(object):
         Formula database id
     job_id : int
         Search job id
-    metrics: list
+    metric_names: list
         Metric names
     ds: engine.dataset.Dataset
     db: engine.db.DB
@@ -34,21 +34,21 @@ class SearchResults(object):
         self.db = db
         self.sm_config = SMConfig.get_conf()
 
-    def _metrics_table_row_gen(self, job_id, db_id, metr_df, ion_img_urls):
+    def _metrics_table_row_gen(self, job_id, db_id, metr_df, ion_img_ids):
         for ind, r in metr_df.reset_index().iterrows():
             m = OrderedDict((name, r[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
-            urls = ion_img_urls[(r.sf_id, r.adduct)]
+            ids = ion_img_ids[(r.sf_id, r.adduct)]
             yield (job_id, db_id, r.sf_id, r.adduct,
                    float(r.msm), float(r.fdr), metr_json,
-                   urls['iso_image_urls'], urls['ion_image_url'])
+                   ids['iso_image_ids'], None)
 
-    def store_ion_metrics(self, ion_metrics_df, ion_img_urls):
+    def store_ion_metrics(self, ion_metrics_df, ion_img_ids):
         """ Store formula image metrics in the database """
         logger.info('Storing iso image metrics')
 
         rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id,
-                                                ion_metrics_df, ion_img_urls))
+                                                ion_metrics_df, ion_img_ids))
         self.db.insert(METRICS_INS, rows)
 
     def _get_post_images(self):
@@ -58,21 +58,13 @@ class SearchResults(object):
         def _post_images(imgs):
             imgs += [None] * (4 - len(imgs))
 
-            # ion image
-            fp = png_generator.generate_png(sum(filter(lambda i: i is not None, imgs)).toarray())
-            ion_image_url = img_store.post_image(fp)
-
-            # isotopic images
-            iso_image_urls = []
+            iso_image_ids = [None] * 4
             for img in imgs:
-                if img is None:
-                    iso_image_urls.append(None)
-                else:
+                if img is not None:
                     fp = png_generator.generate_png(img.toarray())
-                    iso_image_urls.append(img_store.post_image(fp))
+                    iso_image_ids.append(img_store.post_image(fp))
             return {
-                'ion_image_url': ion_image_url,
-                'iso_image_urls': iso_image_urls
+                'iso_image_ids': iso_image_ids
             }
 
         return _post_images
@@ -80,9 +72,9 @@ class SearchResults(object):
     def post_images_to_image_store(self, ion_iso_images):
         logger.info('Posting iso images to {}'.format(self.sm_config['services']['iso_images']))
         post_images = self._get_post_images()
-        return dict(ion_iso_images.mapValues(lambda imgs: post_images(imgs)).collect())
+        return dict(ion_iso_images.mapValues(post_images).collect())
 
     def store(self, ion_metrics_df, ion_iso_images):
         logger.info('Storing search results to the DB')
-        ion_img_urls = self.post_images_to_image_store(ion_iso_images)
-        self.store_ion_metrics(ion_metrics_df, ion_img_urls)
+        ion_img_ids = self.post_images_to_image_store(ion_iso_images)
+        self.store_ion_metrics(ion_metrics_df, ion_img_ids)

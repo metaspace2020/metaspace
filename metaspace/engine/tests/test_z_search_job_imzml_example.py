@@ -50,8 +50,7 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
     filter_sf_metrics_mock.side_effect = lambda x: x
 
     url_dict = {
-        'ion_image_url': 'http://localhost/ion_image',
-        'iso_image_urls': ['http://localhost/iso_image_1', None, None, None]
+        'iso_image_ids': ['iso_image_1', None, None, None]
     }
     post_images_to_annot_service_mock.return_value = {
         (1, '+H'): url_dict,
@@ -98,10 +97,10 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
 
         assert rows[0] == (0, 1, '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
                                         'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
-                           ['http://localhost/iso_image_1', None, None, None], 'http://localhost/ion_image')
+                           ['iso_image_1', None, None, None], None)
         assert rows[1] == (0, 1, '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
                                          'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
-                           ['http://localhost/iso_image_1', None, None, None], 'http://localhost/ion_image')
+                           ['iso_image_1', None, None, None], None)
 
         # ES asserts
         time.sleep(1)  # Waiting for ES
@@ -121,8 +120,9 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
 def test_search_job_imzml_example_fails(get_compute_img_metrics_mock, filter_sf_metrics_mock,
-                                  post_images_to_annot_service_mock, MolDBServiceWrapperMock, MolDBServiceWrapperMock2,
-                                  sm_config, create_fill_sm_database, es_dsl_search):
+                                        post_images_to_annot_service_mock,
+                                        MolDBServiceWrapperMock, MolDBServiceWrapperMock2,
+                                        sm_config, create_fill_sm_database, es_dsl_search):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock2)
 
@@ -132,8 +132,7 @@ def test_search_job_imzml_example_fails(get_compute_img_metrics_mock, filter_sf_
     filter_sf_metrics_mock.side_effect = lambda x: x
 
     url_dict = {
-        'ion_image_url': 'http://localhost/ion_image',
-        'iso_image_urls': ['http://localhost/iso_image_1', None, None, None]
+        'iso_image_ids': ['iso_image_1', None, None, None]
     }
     post_images_to_annot_service_mock.return_value = {
         (1, '+H'): url_dict,

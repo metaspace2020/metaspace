@@ -24,21 +24,19 @@ def search_results(spark_context, sm_config, ds_config):
 
 
 def test_save_sf_img_metrics_correct_db_call(search_results):
-    ion_img_urls = {(1, '+H'): {'iso_image_urls': ['http://localhost/iso_image_1', None, None, None],
-                                'ion_image_url': 'http://localhost/ion_image'}}
+    ion_img_ids = {(1, '+H'): {'iso_image_ids': ['iso_image_1', None, None, None]}}
     ion_metrics_df = pd.DataFrame([(1, '+H', 0.9, 0.9, 0.9,
                                     [100, 10], [0, 0], [10, 1],
                                     0.9 ** 3, 0.5)],
                                   columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral',
                                            'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'msm', 'fdr'])
 
-    search_results.store_ion_metrics(ion_metrics_df, ion_img_urls)
+    search_results.store_ion_metrics(ion_metrics_df, ion_img_ids)
 
     metrics_json = json.dumps(OrderedDict(zip(['chaos', 'spatial', 'spectral', 'total_iso_ints', 'min_iso_ints', 'max_iso_ints'],
                                               (0.9, 0.9, 0.9, [100, 10], [0, 0], [10, 1]))))
-    correct_rows = [(0, 0, 1, '+H', 0.9**3, 0.5, metrics_json,
-                     ['http://localhost/iso_image_1', None, None, None], 'http://localhost/ion_image')]
-    db_mock.insert.assert_called_with(METRICS_INS, correct_rows)
+    exp_rows = [(0, 0, 1, '+H', 0.9**3, 0.5, metrics_json, ['iso_image_1', None, None, None], None)]
+    db_mock.insert.assert_called_with(METRICS_INS, exp_rows)
 
 
 @pytest.fixture()
@@ -59,8 +57,7 @@ def create_fill_sm_database(test_db, sm_config):
 
 
 def test_non_native_python_number_types_handled(search_results):
-    ion_img_urls = {(1, '+H'): {'iso_image_urls': ['http://localhost/iso_image_1', None, None, None],
-                                'ion_image_url': 'http://localhost/ion_image'}}
+    ion_img_ids = {(1, '+H'): {'iso_image_ids': ['iso_image_1', None, None, None]}}
     ion_metrics_df = pd.DataFrame([(1, '+H', 0.9, 0.9, 0.9,
                                     [100, 10], [0, 0], [10, 1],
                                     0.9 ** 3, 0.5)],
@@ -70,10 +67,10 @@ def test_non_native_python_number_types_handled(search_results):
     for col in ['chaos', 'spatial', 'spectral', 'msm', 'fdr']:
         ion_metrics_df[col] = ion_metrics_df[col].astype(np.float64)
 
-        search_results.store_ion_metrics(ion_metrics_df, ion_img_urls)
+        search_results.store_ion_metrics(ion_metrics_df, ion_img_ids)
 
         metrics_json = json.dumps(OrderedDict(zip(['chaos', 'spatial', 'spectral', 'total_iso_ints', 'min_iso_ints', 'max_iso_ints'],
                                                   (0.9, 0.9, 0.9, [100, 10], [0, 0], [10, 1]))))
-        correct_rows = [(0, 0, 1, '+H', 0.9 ** 3, 0.5, metrics_json,
-                         ['http://localhost/iso_image_1', None, None, None], 'http://localhost/ion_image')]
-        db_mock.insert.assert_called_with(METRICS_INS, correct_rows)
+        exp_rows = [(0, 0, 1, '+H', 0.9 ** 3, 0.5, metrics_json,
+                         ['iso_image_1', None, None, None], None)]
+        db_mock.insert.assert_called_with(METRICS_INS, exp_rows)

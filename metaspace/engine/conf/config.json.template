@@ -15,7 +15,8 @@
   "services": {
     "iso_images": "{{ sm_iso_images_url }}",
     "mol_db": "{{ sm_mol_db_url }}",
-    "web_app_url": "{{ sm_web_app_url }}"
+    "web_app_url": "{{ sm_web_app_url }}",
+    "send_email": {{ sm_send_email | to_json }}
   },
   "rabbitmq": {
     "host": "{{ rabbitmq_host }}",
