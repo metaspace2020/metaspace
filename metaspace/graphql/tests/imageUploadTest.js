@@ -22,7 +22,7 @@ const server = require('../server');
 let image_id;
 
 describe('POST /iso_images/upload', () => {
-  it('should store the image and respond with a new iso image url', (done) => {
+  it('should store the image and respond with a new iso image id', (done) => {
     chai.request(server)
       .post('/iso_images/upload')
       .attach('iso_image', fs.readFileSync('tests/test_iso_image.png'), 'test_iso_image.png')
@@ -33,9 +33,9 @@ describe('POST /iso_images/upload', () => {
         res.status.should.equal(201);
         // the response should be JSON
         res.type.should.equal("application/json");
-        res.body.should.have.property("image_url");
+        res.body.should.have.property("image_id");
         
-        image_id = res.body.image_url.split("/").slice(-1).pop();
+        image_id = res.body.image_id;
         console.log(image_id);
         done();
       });
