@@ -242,7 +242,7 @@ if (env == 'development') {
 
 app.use(router);
 
-if (conf.UPLOAD_DESTINATION == 'S3') {
+if (conf.UPLOAD_DESTINATION == 's3') {
   app.use('/upload', require('./fineUploaderS3Middleware.js')());
 } else {
   app.use('/upload', require('./fineUploaderLocalMiddleware.js')());

@@ -178,7 +178,7 @@
          }
        });
 
-       if (this.config.storage == 'local') {
+       if (this.config.storage != 's3') {
          options.request = {
            endpoint: '/upload',
            params: {

@@ -15,7 +15,7 @@ exports.ADMIN_EMAILS = "{{ admin_emails }}";
 exports.AWS_ACCESS_KEY_ID = "{{ aws_access_key_id }}";
 exports.AWS_SECRET_ACCESS_KEY = "{{ aws_secret_access_key }}";
 
-exports.UPLOAD_DESTINATION = "S3";
+exports.UPLOAD_DESTINATION = "{{ upload_destination }}";
 
 exports.REDIS_CONFIG = {
   host: "{{ redis_host }}",
