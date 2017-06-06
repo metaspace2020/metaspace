@@ -149,6 +149,8 @@ nginx_sites:
       - path: /
         params:
           - proxy_pass http://web_server;
+          # local uploads require increasing body size limit
+          - client_max_body_size 5M;
       - path: /mol-images/
         params:
           - proxy_pass http://mol_image_server/mol-images/;
