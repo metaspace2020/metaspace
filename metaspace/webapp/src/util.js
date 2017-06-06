@@ -41,8 +41,7 @@ function pathFromUUID(uuid) {
   if (fuConfig.storage == 's3')
     return 's3a://' + fuConfig.aws.s3_bucket + '/' + uuid;
   else
-    // TODO: properly support local storage
-    return '/tmp/uploads/' + uuid + '/';
+    return fuConfig.storage + '/' + uuid + '/';
 }
 
 function getColorScale(name) {

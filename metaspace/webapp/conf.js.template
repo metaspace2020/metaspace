@@ -15,6 +15,8 @@ exports.ADMIN_EMAILS = "{{ admin_emails }}";
 exports.AWS_ACCESS_KEY_ID = "{{ aws_access_key_id }}";
 exports.AWS_SECRET_ACCESS_KEY = "{{ aws_secret_access_key }}";
 
+// either 's3' or the destination directory
+// must match 'storage' value in src/clientConfig.js
 exports.UPLOAD_DESTINATION = "{{ upload_destination }}";
 
 exports.REDIS_CONFIG = {

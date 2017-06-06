@@ -7,7 +7,7 @@ const config = require('./conf.js'),
       bodyParser = require('body-parser');
 
 function directory(req) {
-  return `/tmp/uploads/${req.body.uuid}`;
+  return `${config.UPLOAD_DESTINATION}/${req.body.uuid}`;
 }
 
 function filename(req, i) {
