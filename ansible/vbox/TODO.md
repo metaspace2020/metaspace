@@ -32,8 +32,5 @@ export PYTHONPATH=`pwd`/sm:`pwd`/$SPARK_DIR/python:$PYTHONPATH
   - ideally the ansible script would take a list of dicts with csv locations, names and versions
   - molecular images should be generated with OpenBabel on insertion
   
-- SM job daemon:
-  - don't send emails if AWS credentials are lacking (currently the daemon dies when trying to send emails)
-
 - pandas 0.19.2 is necessary
   https://github.com/pandas-dev/pandas/issues/16519

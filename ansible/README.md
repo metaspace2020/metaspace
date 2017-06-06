@@ -11,7 +11,7 @@ Make sure you have the following tools installed:
 
 ## Setting up single instance SM engine in Virtual Box
 
-`cd vbox`
+`cd sm-engine-ansible/vbox`
 
 `cp group_vars/all.yml.template group_vars/all.yml`
 
