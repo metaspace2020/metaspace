@@ -24,19 +24,22 @@ rabbitmq_user: sm
 rabbitmq_password: password
 
 miniconda_version: latest
-miniconda_python: 2
+miniconda_python: 3
 miniconda_prefix: "/opt/dev/miniconda"
 miniconda_env:
   name: sm
+  channels:
+    - salford_systems
   dependencies:
-    - python=2
+    - nomkl
+    - python=3.5
     - numpy=1.11.2
     - scipy=0.18.1
-    - matplotlib=1.5
+    - matplotlib-nogui
     - pandas=0.19.1
     - cffi
     - libgcc
-    - psycopg2=2.6.1
+    - psycopg2
     - pip:
       - requests
       - mock
@@ -56,7 +59,7 @@ miniconda_env:
       - bottle
 
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
-sm_branch: master
+sm_branch: py3
 sm_postgres_password: password
 sm_home: "/opt/dev/sm"
 sm_s3_path: ""
@@ -70,13 +73,20 @@ sm_send_email: false
 sm_mol_db_home: /opt/dev/sm-mol-db
 sm_mol_db_branch: master
 sm_mol_db_url: "http://{{ hostvars['web'].ansible_ssh_host }}/mol_db/v1"
+sm_mol_db_image_dir: /var/www/mol-images
+sm_mol_db_image_archives:
+  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-hmdb.tar.xz
+sm_mol_db_imports:
+  - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/hmdb_2016_v2.csv
+    name: HMDB
+    version: 2016
 
 sm_graphql_home: /opt/dev/sm-graphql
 sm_graphql_branch: master
 sm_graphql_slack_webhook_url:
 sm_graphql_slack_channel:
 sm_graphql_jwt_secret: "secret"
-sm_graphql_mol_image_host: "{{ hostvars['web'].ansible_ssh_host }}8999"
+sm_graphql_mol_image_host: "{{ hostvars['web'].ansible_ssh_host }}:8999"
 sm_graphql_moldb_service_host: localhost/mol_db
 
 sm_webapp_home: /opt/dev/sm-web-app
@@ -122,8 +132,6 @@ slack_webhook_url:
 nginx_upstream_hosts:
   - name: web_server
     server: 127.0.0.1:{{ sm_webapp_port }}
-  - name: mol_image_server
-    server: 172.31.8.94:3020
   - name: isotope_image_server
     server: 127.0.0.1:3010
   - name: graphql_server
@@ -149,11 +157,10 @@ nginx_sites:
       - path: /
         params:
           - proxy_pass http://web_server;
-          # local uploads require increasing body size limit
           - client_max_body_size 5M;
       - path: /mol-images/
         params:
-          - proxy_pass http://mol_image_server/mol-images/;
+          - root /var/www/;
       - path: /iso_images/
         params:
           - proxy_pass http://isotope_image_server/iso_images/;
