@@ -70,14 +70,19 @@ class MolecularDB(object):
             If None the latest version will be used
         ds_config : dict
             Dataset configuration
+        mol_db_service : object
+            Molecular database ID/name resolver
+        db : DB
+            Database connector
         """
 
-    def __init__(self, id=None, name=None, version=None, ds_config=None):
+    def __init__(self, id=None, name=None, version=None, ds_config=None,
+            mol_db_service=None, db=None):
         assert ds_config
         self.ds_config = ds_config
 
         sm_config = SMConfig.get_conf()
-        self.mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
+        self.mol_db_service = mol_db_service or MolDBServiceWrapper(sm_config['services']['mol_db'])
 
         if id is not None:
             data = self.mol_db_service.find_db_by_id(id)
@@ -90,7 +95,7 @@ class MolecularDB(object):
         self._sf_df = None
         self._job_id = None
         self._sfs = None
-        self._db = DB(sm_config['db'])
+        self._db = db or DB(sm_config['db'])
 
     def __str__(self):
         return '{} {}'.format(self.name, self.version)
@@ -175,4 +180,4 @@ class MolecularDB(object):
         return self.sf_df[['sf_id', 'adduct']].copy().set_index(['sf_id', 'adduct']).sort_index()
 
     def get_sf_peak_ints(self):
-        return dict(zip(zip(self.sf_df.sf_id, self.sf_df.adduct), self.sf_df.centr_ints))
+        return {(r.sf_id, r.adduct) : r.centr_ints for r in self.sf_df.itertuples()}
