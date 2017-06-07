@@ -50,7 +50,7 @@ miniconda_env:
       - recommonmark
       - boto3
       - networkx
-      - fabric
+      - fabric3
       - pypng
       - pyyaml
       - elasticsearch
