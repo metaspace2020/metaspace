@@ -157,7 +157,7 @@ class MolecularDB(object):
 
     @staticmethod
     def _check_formula_uniqueness(sf_df):
-        uniq_sf_adducts = pd.unique(sf_df[['sf_id', 'adduct']].values).shape[0]
+        uniq_sf_adducts = len({(r.sf_id, r.adduct) for r in sf_df.itertuples()})
         assert uniq_sf_adducts == sf_df.shape[0],\
             'Not unique formula-adduct combinations {} != {}'.format(uniq_sf_adducts, sf_df.shape[0])
 
