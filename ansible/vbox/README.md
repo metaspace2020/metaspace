@@ -1,11 +1,11 @@
-Steps to get a working installation inside VirtualBox (should take about half an hour with good internet connection):
+Steps to get a working installation inside VirtualBox (should take about 10 minutes with good internet connection):
 
 1. Copy `group_vars/all.yml.template` to `group_vars/all.yml` and tweak it as needed
 2. Install Vagrant and Ansible
-3. Run `vagrant up` (~5 minutes first time)
+3. Run `vagrant up`
 4. Run `eval $(ssh-agent)` and then `ssh-add` to avoid entering password every time
-5. Run `ansible-playbook provision.yml` (~20 minutes)
-6. Run `ansible-playbook deploy.yml` (~5 minutes)
+5. Run `ansible-playbook provision.yml`
+6. Run `ansible-playbook deploy.yml`
 
 Individual components can later be re-deployed by running `ansible-playbook deploy.yml` with appropriate `--tags` flag.
 
