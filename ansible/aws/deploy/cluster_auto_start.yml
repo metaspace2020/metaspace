@@ -1,39 +1,33 @@
 ---
 
-- name: Deploying cluster-auto-start
-  hosts: web
-  user: ubuntu
-  gather_facts: false
+- name: Git clone sm-engine-ansible
+  git:
+    dest: "{{ sm_ansible_home }}"
+    repo: "{{ sm_ansible_url }}"
+    update: yes
+    version: "{{ sm_ansible_branch }}"
+  when: local_deploy is not defined
+  register: git_deploy
+  until: git_deploy | succeeded
 
-  tasks:
-    - name: Git clone sm-engine-ansible
-      git:
-        dest: "{{ sm_ansible_home }}"
-        repo: "{{ sm_ansible_url }}"
-        update: yes
-        version: "{{ sm_ansible_branch }}"
-      when: local_deploy is not defined
-      register: git_deploy
-      until: git_deploy | succeeded
-
-    - name: Upload local files
-      synchronize:
-        src: "{{ sm_ansible_home }}/"
-        dest: "{{ sm_ansible_home }}/"
+- name: Upload local files
+  synchronize:
+    src: "{{ sm_ansible_home }}/"
+    dest: "{{ sm_ansible_home }}/"
 #        rsync_opts:
 #          - "--exclude=aws/prod"
-      when: local_deploy is defined
+  when: local_deploy is defined
 
-    - name: Make sure a folder for the config file exists
-      file: path={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/ state=directory mode=0755
+- name: Make sure a folder for the config file exists
+  file: path={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/ state=directory mode=0755
 
-    - name: Upload templated group_vars/all.yml
-      template: src=../{{ stage }}/group_vars/all.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all.yml
-                owner=ubuntu group=ubuntu mode=0600
+- name: Upload templated group_vars/all.yml
+  template: src=../{{ stage }}/group_vars/all.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all.yml
+            owner=ubuntu group=ubuntu mode=0600
 
-    - name: Update the inventory file
-      command: python update_inventory.py --stage {{ stage }}
-      args:
-        chdir: "{{ sm_ansible_home }}/aws"
+- name: Update the inventory file
+  command: python update_inventory.py --stage {{ stage }}
+  args:
+    chdir: "{{ sm_ansible_home }}/aws"
 
-    - include: ../../restart_supervisor.yml  supervisor_app=sm-cluster-autostart
+- include: ../../restart_supervisor.yml  supervisor_app=sm-cluster-autostart

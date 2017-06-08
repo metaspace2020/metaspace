@@ -1,7 +1,26 @@
 ---
 
-- include: mol_db.yml
-- include: sm_api.yml
-- include: graphql.yml
-- include: web_app.yml
-- include: cluster_auto_start.yml
+- name: Deploying SM web app code
+  user: ubuntu
+  hosts: web
+
+  vars_files:
+    - ../../vars/graphql.yml
+    - ../../vars/web_app.yml
+
+  tasks:
+    - include: ../../deploy_tasks/mol_db.yml
+      tags: [mol_db]
+
+    - include: ../../deploy_tasks/sm_api.yml
+      sm_web_app_url: ""
+      tags: [sm_api]
+
+    - include: ../../deploy_tasks/graphql.yml
+      tags: [graphql]
+
+    - include: ../../deploy_tasks/web_app.yml
+      tags: [web_app]
+
+    - include: cluster_auto_start.yml
+      tags: [cluster_auto_start]

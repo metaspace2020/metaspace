@@ -92,6 +92,7 @@ sm_webapp_hostname: "{{ hostvars['web'].ansible_ssh_host }}"
 sm_webapp_url: "http://{{ sm_webapp_hostname }}:8999"
 sm_webapp_google_client_id:
 sm_webapp_google_client_secret:
+sm_webapp_upload_destination: /opt/sm-data/uploads
 
 sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
 sm_ansible_branch: master

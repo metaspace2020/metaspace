@@ -12,3 +12,4 @@ google_client_secret: "{{ sm_webapp_google_client_secret }}"
 google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
 redis_host: localhost
 redis_port: 6379
+upload_destination: "{{ sm_webapp_upload_destination }}"
