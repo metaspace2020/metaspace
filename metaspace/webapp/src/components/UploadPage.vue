@@ -23,7 +23,6 @@
 
           <p>To start the submission, just drop the files into the box below, fill in the metadata form, and click the Submit button.</p>
           <p>Have fun using METASPACE!</p>
-          </div>
         </div>
       </div>
 
