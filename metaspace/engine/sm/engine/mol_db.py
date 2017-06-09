@@ -70,14 +70,19 @@ class MolecularDB(object):
             If None the latest version will be used
         ds_config : dict
             Dataset configuration
+        mol_db_service : object
+            Molecular database ID/name resolver
+        db : DB
+            Database connector
         """
 
-    def __init__(self, id=None, name=None, version=None, ds_config=None):
+    def __init__(self, id=None, name=None, version=None, ds_config=None,
+            mol_db_service=None, db=None):
         assert ds_config
         self.ds_config = ds_config
 
         sm_config = SMConfig.get_conf()
-        self.mol_db_service = MolDBServiceWrapper(sm_config['services']['mol_db'])
+        self.mol_db_service = mol_db_service or MolDBServiceWrapper(sm_config['services']['mol_db'])
 
         if id is not None:
             data = self.mol_db_service.find_db_by_id(id)
@@ -90,7 +95,7 @@ class MolecularDB(object):
         self._sf_df = None
         self._job_id = None
         self._sfs = None
-        self._db = DB(sm_config['db'])
+        self._db = db or DB(sm_config['db'])
 
     def __str__(self):
         return '{} {}'.format(self.name, self.version)
@@ -128,7 +133,7 @@ class MolecularDB(object):
         if not self._sfs:
             sfs = self.mol_db_service.fetch_db_sfs(self.id)
             if self._db.select_one(SF_COUNT, self._id)[0] == 0:
-                rows = map(lambda sf: (self._id, sf), list(sfs))
+                rows = [(self._id, sf) for sf in sfs]
                 self._db.insert(SF_INS, rows)
             self._sfs = OrderedDict(self._db.select(SF_SELECT, self._id))
         return self._sfs
@@ -157,7 +162,7 @@ class MolecularDB(object):
 
     @staticmethod
     def _check_formula_uniqueness(sf_df):
-        uniq_sf_adducts = pd.unique(sf_df[['sf_id', 'adduct']].values).shape[0]
+        uniq_sf_adducts = len({(r.sf_id, r.adduct) for r in sf_df.itertuples()})
         assert uniq_sf_adducts == sf_df.shape[0],\
             'Not unique formula-adduct combinations {} != {}'.format(uniq_sf_adducts, sf_df.shape[0])
 
@@ -175,4 +180,4 @@ class MolecularDB(object):
         return self.sf_df[['sf_id', 'adduct']].copy().set_index(['sf_id', 'adduct']).sort_index()
 
     def get_sf_peak_ints(self):
-        return dict(zip(zip(self.sf_df.sf_id, self.sf_df.adduct), self.sf_df.centr_ints))
+        return {(r.sf_id, r.adduct) : r.centr_ints for r in self.sf_df.itertuples()}

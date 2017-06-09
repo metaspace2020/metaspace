@@ -59,10 +59,10 @@ class SearchResults(object):
             imgs += [None] * (4 - len(imgs))
 
             iso_image_ids = [None] * 4
-            for img in imgs:
+            for k, img in enumerate(imgs):
                 if img is not None:
                     fp = png_generator.generate_png(img.toarray())
-                    iso_image_ids.append(img_store.post_image(fp))
+                    iso_image_ids[k] = img_store.post_image(fp)
             return {
                 'iso_image_ids': iso_image_ids
             }

@@ -6,7 +6,7 @@ import logging
 import boto3
 
 from sm.engine.util import SMConfig, sm_log_formatters, sm_log_config, init_logger
-from sm.engine import SearchJob
+from sm.engine.search_job import SearchJob
 from sm.engine import QueueConsumer
 from sm.engine import DB
 
@@ -62,8 +62,8 @@ def on_job_succeeded(msg):
     ds_name, ds_meta = fetch_ds_metadata(msg['ds_id'])
 
     base_url = SMConfig.get_conf()['services']['web_app_url']
-    import urllib
-    url_params = urllib.quote(msg['ds_id'])
+    import urllib.parse
+    url_params = urllib.parse.quote(msg['ds_id'])
     msg['web_app_link'] = '{}/#/annotations?ds={}'.format(base_url, url_params)
     post_to_slack('dart', ' [v] Finished: {}'.format(json.dumps(msg)))
 

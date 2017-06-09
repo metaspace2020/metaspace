@@ -28,7 +28,7 @@ class QueueConsumer(object):
 
     def on_message(self, ch, method, properties, body):
         self._ch.basic_ack(delivery_tag=method.delivery_tag)
-        msg = json.loads(body)
+        msg = json.loads(body.decode('utf-8'))
         try:
             self._callback(msg)
         except BaseException as e:

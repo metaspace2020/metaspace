@@ -1,7 +1,7 @@
 # main container that runs the web interface on host port 8642
 web:
   #build: ./webapp
-  image: lomereiter/sm_engine:0.6
+  image: lomereiter/sm_engine:0.7-py3
   ports:
     - "8643:8080"
   volumes:

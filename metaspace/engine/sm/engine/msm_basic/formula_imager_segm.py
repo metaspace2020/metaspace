@@ -1,13 +1,13 @@
 import sys
 from collections import defaultdict
 import pandas as pd
-from itertools import izip, repeat, islice
+from itertools import repeat, islice
 import numpy as np
 from scipy.sparse import coo_matrix
 
 
 def _estimate_mz_workload(spectra_sample, sf_peak_df, bins=1000):
-    mz_arr = np.sort(np.concatenate(map(lambda sp: sp[1], spectra_sample)))
+    mz_arr = np.sort(np.concatenate([sp[1] for sp in spectra_sample]))
     spectrum_mz_freq, mz_grid = np.histogram(mz_arr, bins=bins, range=(np.nanmin(mz_arr), np.nanmax(mz_arr)))
     sf_peak_mz_freq, _ = np.histogram(sf_peak_df.mz, bins=bins, range=(mz_arr.min(), mz_arr.max()))
     workload_per_mz = spectrum_mz_freq * sf_peak_mz_freq
@@ -47,7 +47,7 @@ def _segment_spectrum(sp, mz_buckets):
 
 def _sp_df_gen(sp_it, sp_indexes):
     for sp_id, mzs, intensities in sp_it:
-        for mz, ints in izip(mzs, intensities):
+        for mz, ints in zip(mzs, intensities):
             yield sp_indexes[sp_id], mz, ints
 
 
@@ -110,9 +110,11 @@ def gen_iso_peak_images(sc, ds, sf_peak_df, segm_spectra, peaks_per_sp_segm, ppm
     sp_indexes_brcast = sc.broadcast(ds.reader.get_norm_img_pixel_inds())
     sf_peak_df_brcast = sc.broadcast(sf_peak_df)  # TODO: replace broadcast variable with rdd and cogroup
     nrows, ncols = ds.reader.get_dims()
-    iso_peak_images = (segm_spectra.flatMap(lambda (s_i, sp_segm):
-                                            _gen_iso_images(sp_segm, sp_indexes_brcast.value, sf_peak_df_brcast.value,
-                                                            nrows, ncols, ppm, peaks_per_sp_segm)))
+    def generate_images_for_segment(item):
+        _, sp_segm = item
+        return _gen_iso_images(sp_segm, sp_indexes_brcast.value, sf_peak_df_brcast.value,
+                               nrows, ncols, ppm, peaks_per_sp_segm)
+    iso_peak_images = segm_spectra.flatMap(generate_images_for_segment)
     return iso_peak_images
 
 

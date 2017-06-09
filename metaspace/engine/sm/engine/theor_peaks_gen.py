@@ -1,7 +1,7 @@
 from os import makedirs
 from os.path import join, exists
 import logging
-from StringIO import StringIO
+from io import StringIO
 from pyMSpec.pyisocalc.pyisocalc import parseSumFormula
 from itertools import product
 
@@ -69,7 +69,7 @@ class TheorPeaksGenerator(object):
         """
         assert sf_list, 'Empty sum formula, adduct list!'
         if self._ds_config['isotope_generation']['charge']['polarity'] == '-':
-            sf_list = filter(lambda sf: 'H' in sf, sf_list)
+            sf_list = [sf for sf in sf_list if 'H' in sf]
         adducts = set(self._adducts) | set(DECOY_ADDUCTS)
         return list(set(product(sf_list, adducts)) - stored_sf_adduct)
 
@@ -88,11 +88,13 @@ class TheorPeaksGenerator(object):
         logger.info('Generating missing peaks')
         formatted_iso_peaks = self._isocalc_wrapper.formatted_iso_peaks
         n = 10000
-        for i in xrange(0, len(sf_adduct_cand), n):
+        def format_peaks(ion):
+            sf, adduct = ion
+            return formatted_iso_peaks(sf, adduct)
+
+        for i in range(0, len(sf_adduct_cand), n):
             sf_adduct_cand_rdd = self._sc.parallelize(sf_adduct_cand[i:i + n], numSlices=128)
-            peak_lines = (sf_adduct_cand_rdd
-                          .flatMap(lambda (sf, adduct): formatted_iso_peaks(sf, adduct))
-                          .collect())
+            peak_lines = sf_adduct_cand_rdd.flatMap(format_peaks).collect()
             self._import_theor_peaks_to_db(peak_lines)
 
     def _import_theor_peaks_to_db(self, peak_lines):

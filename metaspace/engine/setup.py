@@ -10,8 +10,8 @@ setup(name='sm',
       author_email='vitaly.kovalev@embl.de',
       packages=find_packages(),
       install_requires=[
-          "pyImagingMSpec==0.1.3",
-          "cpyImagingMSpec==0.2.3",
+          "pyImagingMSpec==0.1.4",
+          "cpyImagingMSpec==0.2.4",
           "pyMSpec==0.1.2",
           "cpyMSpec==0.3.5",
           "pyimzML==1.2.0"

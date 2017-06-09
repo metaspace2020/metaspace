@@ -24,11 +24,12 @@ RUN wget -qO - http://apache.lauf-forum.at/spark/spark-2.0.2/$SPARK_DIR.tgz | ta
 ENV SPARK_HOME /root/$SPARK_DIR
 
 # install Conda (sci-oriented package manager for Python)
-RUN wget -q http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh &&\
-    bash Miniconda-latest-Linux-x86_64.sh -b -p /miniconda &&\
-    rm Miniconda-latest-Linux-x86_64.sh
+RUN wget -q http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh &&\
+    bash Miniconda3-latest-Linux-x86_64.sh -b -p /miniconda &&\
+    rm Miniconda3-latest-Linux-x86_64.sh
 ENV PATH /miniconda/bin:$PATH
 
 # install necessary Python packages
 COPY environment.yml /root/environment.yml
+RUN conda install -y nomkl
 RUN conda env create

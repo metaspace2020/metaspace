@@ -3,7 +3,7 @@ Functions for creating isotope images from a mass spectrometry dataset
 """
 import numpy as np
 import scipy.sparse
-from itertools import izip, repeat
+from itertools import repeat
 
 
 def _get_nonzero_ints(sp, lower, upper):
@@ -34,8 +34,8 @@ def _sample_spectrum(sp, peak_bounds, sf_peak_map):
     sf_inds = sf_peak_map[:, 0][non_zero_int_inds]
     peak_inds = sf_peak_map[:, 1][non_zero_int_inds]
 
-    return zip(izip(sf_inds, peak_inds),
-               izip(repeat(sp_i), non_zero_ints))
+    return list(zip(zip(sf_inds, peak_inds),
+                zip(repeat(sp_i), non_zero_ints)))
 
 
 def _coord_list_to_matrix(sp_iter, norm_img_pixel_inds, nrows, ncols):
@@ -79,7 +79,6 @@ def sample_spectra(sc, ds, formulas):
                     .flatMap(lambda sp: _sample_spectrum(sp, mz_bounds_cand_brcast.value, sf_peak_map_brcast.value)))
     return sf_sp_intens
 
-
 def compute_sf_peak_images(ds, sf_sp_intens):
     """ Combine all pixel intensities for the same formula into isotope images represented as sparse matrices
 
@@ -96,10 +95,13 @@ def compute_sf_peak_images(ds, sf_sp_intens):
     """
     nrows, ncols = ds.get_dims()
     norm_img_pixel_inds = ds.get_norm_img_pixel_inds()
-    sf_peak_imgs = (sf_sp_intens
-                    .groupByKey()
-                    .map(lambda ((sf_i, p_i), spectrum_it):
-                         (sf_i, (p_i, _coord_list_to_matrix(spectrum_it, norm_img_pixel_inds, nrows, ncols)))))
+
+    def _isotope_peak_image(item):
+        key, value = item
+        sf_index, peak_index = key
+        return (sf_index, (peak_index, _coord_list_to_matrix(value, norm_img_pixel_inds, nrows, ncols)))
+
+    sf_peak_imgs = sf_sp_intens.groupByKey().map(_isotope_peak_image)
     return sf_peak_imgs
 
 

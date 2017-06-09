@@ -5,10 +5,12 @@ from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 from fabric.api import local
 from pyspark import SparkContext, SparkConf
+import pandas as pd
 from logging.config import dictConfig
 from mock import MagicMock
 
 from sm.engine.db import DB
+from sm.engine.mol_db import MolecularDB
 from sm.engine.util import proj_root, sm_log_config, SMConfig
 from sm.engine import ESExporter, ESIndexManager
 from os.path import join
@@ -101,3 +103,21 @@ def sm_index(sm_config, request):
         es_man = ESIndexManager(es_config)
         es_man.delete_index(sm_config['elasticsearch']['index'])
     request.addfinalizer(fin)
+
+@pytest.fixture()
+def mol_db(sm_config, ds_config):
+    data = {'id': 1, 'name': 'HMDB', 'version': '2016'}
+    service = MagicMock()
+    db = MagicMock()
+    service.find_db_by_id.return_value = data
+    service.find_db_by_name_version.return_value = data
+    SMConfig._config_dict = sm_config
+
+    mol_db = MolecularDB(1, None, None, ds_config, mol_db_service=service, db=db)
+    mol_db._sf_df = pd.DataFrame(dict(
+        sf_id=[1, 2, 3],
+        adduct=['+H', '+Na', '+H'],
+        mzs=[[100, 101, 102], [200], [150, 151]],
+        centr_ints=[[1, 0.1, 0.05], [1], [1, 0.3]]
+    ), columns=['sf_id', 'adduct', 'mzs', 'centr_ints'])
+    return mol_db

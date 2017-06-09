@@ -41,8 +41,8 @@ class Centroids(object):
         return (not self.mzs) and (not self.ints)
 
 
-def list_of_floats_to_str(l):
-    return ','.join(map(lambda x: '{:.6f}'.format(x), l))
+def list_of_floats_to_str(xs):
+    return ','.join('{:.6f}'.format(x) for x in xs)
 
 
 class IsocalcWrapper(object):
@@ -91,7 +91,7 @@ class IsocalcWrapper(object):
 
     @staticmethod
     def slice_array(mzs, lower, upper):
-        return np.hstack(map(lambda (l, u): mzs[l:u], zip(lower, upper)))
+        return np.hstack([mzs[l:u] for l, u in zip(lower, upper)])
 
     def _format_peak_str(self, sf, adduct, centroids):
         # store only top 4 peaks in the database

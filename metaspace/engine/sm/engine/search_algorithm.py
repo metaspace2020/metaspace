@@ -25,4 +25,7 @@ class SearchAlgorithm(object):
         return sf_metrics_df[sf_metrics_df.msm > 0]
 
     def filter_sf_images(self, sf_images, sf_metrics_df):
-        return sf_images.filter(lambda (sf_i, _): sf_i in sf_metrics_df.index)
+        def has_metrics(item):
+            ion = item[0]
+            return ion in sf_metrics_df.index
+        return sf_images.filter(has_metrics)

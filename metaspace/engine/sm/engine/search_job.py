@@ -62,7 +62,7 @@ class SearchJob(object):
     def _configure_spark(self):
         logger.info('Configuring Spark')
         sconf = SparkConf()
-        for prop, value in self._sm_config['spark'].iteritems():
+        for prop, value in self._sm_config['spark'].items():
             if prop.startswith('spark.'):
                 sconf.set(prop, value)
 
@@ -112,8 +112,8 @@ class SearchJob(object):
             self._es.index_ds(self._ds.id, mol_db)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
-            new_msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, e.message)
-            raise JobFailedError(new_msg), None, sys.exc_info()[2]
+            new_msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
+            raise JobFailedError(new_msg) from e
         else:
             self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
 
