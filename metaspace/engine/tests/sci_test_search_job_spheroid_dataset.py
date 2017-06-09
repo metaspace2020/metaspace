@@ -34,7 +34,7 @@ class SciTester(object):
         self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_12h_search_res.csv')
         self.ds_name = 'sci_test_spheroid_12h'
         self.data_dir_path = join(self.sm_config['fs']['base_path'], self.ds_name)
-        self.input_dir_path = join(proj_root(), 'tests/data/sci_test_search_job_spheroid_dataset')
+        self.input_dir_path = join(proj_root(), 'tests/data/untreated')
         self.ds_config_path = join(self.input_dir_path, 'config.json')
         self.metrics = ['chaos', 'spatial', 'spectral']
 
