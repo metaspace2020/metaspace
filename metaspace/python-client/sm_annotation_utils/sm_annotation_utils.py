@@ -448,7 +448,13 @@ class SMInstance(object):
 
     def get_metadata(self):
         datasets = self._gqclient.getDatasets()
-        return pd.io.json.json_normalize(datasets).set_index('id')
+        df = pd.concat([
+            pd.DataFrame(pd.io.json.json_normalize(json.loads(dataset['metadataJson'])))
+            for dataset in datasets ])
+        df.index = [dataset['id'] for dataset in datasets]
+        return df
+        #return pd.DataFrame.from_records([pd.io.json.json_normalize(json.loads(dataset['metadataJson'])) for dataset in datasets])
+
 
     def _get_tables1(self, dataset, sf_adduct_pairs, fields, db_name):
         results = dataset.results(database=db_name).reset_index()
