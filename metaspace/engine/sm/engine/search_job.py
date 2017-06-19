@@ -13,7 +13,7 @@ from pyspark import SparkContext, SparkConf
 import logging
 
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
-from sm.engine.dataset_manager import DatasetManager, Dataset
+from sm.engine.dataset_manager import DatasetManager, Dataset, DatasetStatus
 from sm.engine.dataset_reader import DatasetReader
 from sm.engine.db import DB
 from sm.engine.fdr import FDR
@@ -149,7 +149,7 @@ class SearchJob(object):
             self._init_db()
             self._ds = Dataset.load_ds(ds_id, self._db)
             self._ds_man = DatasetManager(self._db, self._es, 'queue')
-            self._ds_man.set_ds_status(self._ds, 'STARTED')
+            self._ds_man.set_ds_status(self._ds, DatasetStatus.STARTED)
 
             self._wd_manager = WorkDirManager(ds_id)
             self._configure_spark()
@@ -166,14 +166,14 @@ class SearchJob(object):
             for mol_db_id in self.prepare_moldb_id_list():
                 self._run_job(MolecularDB(id=mol_db_id, ds_config=self._ds.config))
 
-            self._ds_man.set_ds_status(self._ds, 'FINISHED')
+            self._ds_man.set_ds_status(self._ds, DatasetStatus.FINISHED)
 
             logger.info("All done!")
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
         except Exception as e:
             if self._ds_man:
-                self._ds_man.set_ds_status(self._ds, 'FAILED')
+                self._ds_man.set_ds_status(self._ds, DatasetStatus.FAILED)
             logger.error(e, exc_info=True)
             raise
         finally:

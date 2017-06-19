@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from enum import Enum
 
 from sm.engine.queue import QueuePublisher
 from sm.engine.mol_db import MolecularDB
@@ -13,7 +14,6 @@ logger = logging.getLogger('sm-engine')
 
 DS_SEL = 'SELECT name, input_path, metadata, config FROM dataset WHERE id = %s'
 DS_UPD = 'UPDATE dataset set name=%s, input_path=%s, metadata=%s, config=%s, status=%s where id=%s'
-DS_UPD_STATUS = 'UPDATE dataset set status=%s where id=%s'
 DS_INSERT = "INSERT INTO dataset (id, name, input_path, metadata, config, status) VALUES (%s, %s, %s, %s, %s, %s)"
 
 IMG_URLS_BY_ID_SEL = ('SELECT iso_image_urls, ion_image_url '
@@ -22,6 +22,21 @@ IMG_URLS_BY_ID_SEL = ('SELECT iso_image_urls, ion_image_url '
                       'JOIN dataset d ON d.id = j.ds_id '
                       'WHERE ds_id = %s')
 
+class DatasetStatus(Enum):
+    """ The dataset is queued for processing """
+    QUEUED = 1
+
+    """ The processing is in progress """
+    STARTED = 2
+
+    """ The processing finished successfully """
+    FINISHED = 3
+
+    """ An error occurred during processing """
+    FAILED = 4
+
+    """ The records are being updated because of changed metadata """
+    INDEXING = 5
 
 class Dataset(object):
     """ Model class for representing a dataset """
@@ -31,6 +46,7 @@ class Dataset(object):
         self.input_path = input_path
         self.meta = metadata
         self.config = config
+        self.status = None
         self.name = name or (metadata.get('metaspace_options', {}).get('Dataset_Name', id) if metadata else None)
 
         self.reader = None
@@ -44,6 +60,19 @@ class Dataset(object):
         else:
             raise UnknownDSID('Dataset does not exist: {}'.format(ds_id))
         return ds
+
+    def is_stored(self, db):
+        r = db.select_one(DS_SEL, self.id)
+        return True if r else False
+
+    def save(self, db):
+        assert status is not None
+        rows = [(self.id, self.name, self.input_path, json.dumps(self.meta), json.dumps(self.config), self.status.name)]
+        if not self.is_stored(db):
+            db.insert(DS_INSERT, rows)
+        else:
+            row = rows[0]
+            db.alter(DS_UPD, *(row[1:] + row[:1]))
 
 
 def dict_to_paths(d):
@@ -99,14 +128,16 @@ class DatasetManager(object):
         self.mode = mode
 
     def _reindex_ds(self, ds):
+        self.set_ds_status(ds, DatasetStatus.INDEXING)
         for mol_db_dict in ds.config['databases']:
             mol_db = MolecularDB(name=mol_db_dict['name'],
                                  version=mol_db_dict.get('version', None),
                                  ds_config=ds.config)
             self._es.index_ds(ds.id, mol_db, del_first=True)
-        self.set_ds_status(ds, 'FINISHED')
+        self.set_ds_status(ds, DatasetStatus.FINISHED)
 
     def _post_new_job_msg(self, ds):
+        self.set_ds_status(ds, DatasetStatus.QUEUED)
         if self.mode == 'queue':
             msg = {
                 'ds_id': ds.id,
@@ -138,11 +169,10 @@ class DatasetManager(object):
         config_diff = ConfigDiff.compare_configs(old_config, ds.config)
 
         if config_diff == ConfigDiff.EQUAL:
-            self._db.alter(DS_UPD, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config), 'INDEXING', ds.id)
             self._reindex_ds(ds)
         elif config_diff == ConfigDiff.NEW_MOL_DB:
-            self._db.alter(DS_UPD, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config), 'QUEUED', ds.id)
-            self._post_new_job_msg(ds)
+            # TODO use molecular database diff to avoid reprocessing
+            self.add_ds(ds)
         elif config_diff == ConfigDiff.INSTR_PARAMS_DIFF:
             self.add_ds(ds)
 
@@ -152,14 +182,11 @@ class DatasetManager(object):
         """
         assert (ds.id and ds.name and ds.input_path and ds.config)
 
-        ds_row = [(ds.id, ds.name, ds.input_path, json.dumps(ds.meta), json.dumps(ds.config), 'QUEUED')]
-        r = self._db.select_one(DS_SEL, ds.id)
-        if r:
+        if ds.is_stored(self._db):
             self.delete_ds(ds)
 
-        self._db.insert(DS_INSERT, ds_row)
-        logger.info("Inserted into dataset table: %s, %s", ds.id, ds.name)
         self._post_new_job_msg(ds)
+        logger.info("Inserted into dataset table: %s, %s", ds.id, ds.name)
 
     def _del_iso_images(self, ds):
         logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
@@ -195,4 +222,5 @@ class DatasetManager(object):
             logger.warning('No ds_id for ds_name: %s', ds.name)
 
     def set_ds_status(self, ds, status):
-        self._db.alter(DS_UPD_STATUS, status, ds.id)
+        ds.status = status
+        ds.save(self._db)
