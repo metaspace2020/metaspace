@@ -8,4 +8,7 @@ cp docker/config.json conf/test_config.json
 cp conf/sm_log.cfg.template conf/sm_log.cfg
 mkdir -p /code/sm-engine/logs
 
+echo 'postgres:5432:sm_test:sm:securepassword\n' > ~/.pgpass
+chmod 0600 ~/.pgpass
+
 coverage run --source=./sm/engine --omit=./sm/engine/tests/* -m py.test sm/engine/tests tests && coveralls
