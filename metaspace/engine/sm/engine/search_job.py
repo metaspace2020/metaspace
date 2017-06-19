@@ -164,7 +164,7 @@ class SearchJob(object):
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
             for mol_db_id in self.prepare_moldb_id_list():
-                self._run_job(MolecularDB(id=mol_db_id, ds_config=self._ds.config))
+                self._run_job(MolecularDB(id=mol_db_id, iso_gen_config=self._ds.config['isotope_generation']))
 
             self._ds_man.set_ds_status(self._ds, DatasetStatus.FINISHED)
 

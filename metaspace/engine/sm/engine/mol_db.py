@@ -68,18 +68,18 @@ class MolecularDB(object):
         name: str
         version: str
             If None the latest version will be used
-        ds_config : dict
-            Dataset configuration
+        iso_gen_config : dict
+            Isotope generator configuration
         mol_db_service : object
             Molecular database ID/name resolver
         db : DB
             Database connector
         """
 
-    def __init__(self, id=None, name=None, version=None, ds_config=None,
+    def __init__(self, id=None, name=None, version=None, iso_gen_config=None,
             mol_db_service=None, db=None):
-        assert ds_config
-        self.ds_config = ds_config
+        assert iso_gen_config
+        self._iso_gen_config = iso_gen_config
 
         sm_config = SMConfig.get_conf()
         self.mol_db_service = mol_db_service or MolDBServiceWrapper(sm_config['services']['mol_db'])
@@ -141,7 +141,7 @@ class MolecularDB(object):
     @property
     def sf_df(self):
         if self._sf_df is None:
-            iso_gen_conf = self.ds_config['isotope_generation']
+            iso_gen_conf = self._iso_gen_config
             charge = '{}{}'.format(iso_gen_conf['charge']['polarity'], iso_gen_conf['charge']['n_charges'])
             target_sf_peaks_rs = self._db.select(THEOR_PEAKS_TARGET_ADD_SEL, self._id,
                                                  iso_gen_conf['adducts'], iso_gen_conf['isocalc_sigma'],

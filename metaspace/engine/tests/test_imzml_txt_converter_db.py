@@ -20,9 +20,7 @@ def test_convert(MockImzMLParser, sm_config, ds_config):
 
     with patch('sm.engine.imzml_txt_converter.open', create=True) as mock_open:
         converter.convert()
-
-        print mock_open.mock_calls
-        mock_open_write_args = map(lambda x: x[1][0], filter(lambda x: x[1], mock_open.mock_calls))
+        mock_open_write_args = [args[0] for _, args, kw_args in mock_open.mock_calls if args]
 
         assert '0|100.0 200.0|100.0 10.0\n' in mock_open_write_args
         assert '1|100.0 200.0|100.0 10.0\n' in mock_open_write_args

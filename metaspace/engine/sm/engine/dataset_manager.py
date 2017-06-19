@@ -66,26 +66,13 @@ class Dataset(object):
         return True if r else False
 
     def save(self, db):
-        assert status is not None
+        assert self.status is not None
         rows = [(self.id, self.name, self.input_path, json.dumps(self.meta), json.dumps(self.config), self.status.name)]
         if not self.is_stored(db):
             db.insert(DS_INSERT, rows)
         else:
             row = rows[0]
             db.alter(DS_UPD, *(row[1:] + row[:1]))
-
-
-def dict_to_paths(d):
-    def flatten(pairs):
-        for key, value in pairs:
-            key = '/' + key
-            if isinstance(value, dict):
-                for subkey, subval in flatten(value.items()):
-                    yield key + subkey, subval
-            else:
-                yield key,  str(value)
-
-    return [k + '/' + v for k, v in flatten(d.items())]
 
 
 class ConfigDiff:
@@ -108,6 +95,7 @@ class ConfigDiff:
                 new_mol_dbs = mol_dbs_to_set(new.get('databases', []))
                 if len(new_mol_dbs - old_mol_dbs) > 0:
                     res = ConfigDiff.NEW_MOL_DB
+                # TODO: if some databases got removed from the list we need to delete these results
         return res
 
 
@@ -132,7 +120,7 @@ class DatasetManager(object):
         for mol_db_dict in ds.config['databases']:
             mol_db = MolecularDB(name=mol_db_dict['name'],
                                  version=mol_db_dict.get('version', None),
-                                 ds_config=ds.config)
+                                 iso_gen_config=ds.config['isotope_generation'])
             self._es.index_ds(ds.id, mol_db, del_first=True)
         self.set_ds_status(ds, DatasetStatus.FINISHED)
 
@@ -151,20 +139,11 @@ class DatasetManager(object):
             QueuePublisher(self._sm_config['rabbitmq'], 'sm_annotate').publish(msg)
             logger.info('New job message posted: %s', msg)
 
-    def _proc_params_changed(self, old_meta, meta):
-        old_meta_paths = dict_to_paths(old_meta)
-        meta_paths = dict_to_paths(meta)
-        changed_paths = set(old_meta_paths) - set(meta_paths)
-        needsReproc = False
-        for p in changed_paths:
-            if p.startswith('/MS_Analysis') and not p.startswith('/MS_Analysis/Ionisation_Source'):
-                needsReproc = True
-            if p.startswith('/metaspace_options/Metabolite_Database'):
-                needsReproc = True
-        return needsReproc
-
     # TODO: make sure the config and metadata are compatible
     def update_ds(self, ds):
+        """
+        Updates the database record and launches re-indexing or re-processing if necessary.
+        """
         old_config = self._db.select_one(DS_SEL, ds.id)[3]
         config_diff = ConfigDiff.compare_configs(old_config, ds.config)
 

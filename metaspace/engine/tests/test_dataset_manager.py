@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from mock import patch, MagicMock
+import json
 
 from sm.engine.db import DB
 from sm.engine.dataset_manager import DatasetManager, Dataset, ConfigDiff
@@ -10,21 +11,21 @@ from sm.engine.tests.util import spark_context, sm_config, ds_config, test_db
 
 
 @patch('sm.engine.dataset_manager.QueuePublisher')
-def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, test_db, sm_config):
+def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, test_db, sm_config, ds_config):
     SMConfig._config_dict = sm_config
     qpub_mock = QueuePublisherMock()
 
     db = DB(sm_config['db'])
     try:
         ds = Dataset('new_ds_id', 'ds_name', 'input_path',
-                     {'metaspace_options': {'notify_submitter': False}}, {'config': 0})
+                     {'metaspace_options': {'notify_submitter': False}}, ds_config)
         ds_man = DatasetManager(db, None, mode='queue')
         ds_man.add_ds(ds)
 
         rows = db.select('SELECT * FROM dataset')
         assert len(rows) == 1
         assert rows[0] == ('new_ds_id', 'ds_name', 'input_path',
-                           {'metaspace_options': {'notify_submitter': False}}, {'config': 0}, 'QUEUED')
+                           {'metaspace_options': {'notify_submitter': False}}, ds_config, 'QUEUED')
 
         qpub_mock.publish.assert_called_once_with({
             'ds_id': 'new_ds_id',
@@ -34,11 +35,10 @@ def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, test_db, sm_config
     finally:
         db.close()
 
-
 @patch('sm.engine.dataset_manager.ImageStoreServiceWrapper')
 @patch('sm.engine.dataset_manager.QueuePublisher')
 def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServiceWrapperMock,
-                                             test_db, sm_config):
+                                             test_db, sm_config, ds_config):
     SMConfig._config_dict = sm_config
     qpub_mock = QueuePublisherMock()
     img_store = ImageStoreServiceWrapperMock()
@@ -56,14 +56,14 @@ def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServi
                   rows=[(0, 0, 1, '+H', 'ion_image_url', ['iso_image_url_0'])])
 
         ds = Dataset('ds_id', 'new_ds_name', 'input_path',
-                     {'metaspace_options': {'notify_submitter': False}}, {'config': 0})
+                     {'metaspace_options': {'notify_submitter': False}}, ds_config)
         ds_man = DatasetManager(db, es, mode='queue')
         ds_man.add_ds(ds)
 
         rows = db.select("SELECT * FROM dataset")
         assert len(rows) == 1
         assert rows[0] == ('ds_id', 'new_ds_name', 'input_path',
-                           {'metaspace_options': {'notify_submitter': False}}, {'config': 0}, 'QUEUED')
+                           {'metaspace_options': {'notify_submitter': False}}, ds_config, 'QUEUED')
 
         qpub_mock.publish.assert_called_once_with({
             'ds_id': 'ds_id',
@@ -78,7 +78,7 @@ def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServi
 
 
 @patch('sm.engine.dataset_manager.MolecularDB')
-def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_config):
+def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_config, ds_config):
     SMConfig._config_dict = sm_config
     moldb_mock = MolecularDBMock()
 
@@ -86,8 +86,7 @@ def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_con
     es = MagicMock(ESExporter())
     try:
         db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
-                  rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}',
-                         '{"databases": [{"name": "HMDB", "version": "2017-01"}]}')])
+                  rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', json.dumps(ds_config))])
 
         ds = Dataset.load_ds('ds_id', db)
         ds.meta = {'new': 'meta'}
@@ -96,8 +95,7 @@ def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_con
 
         rows = db.select('SELECT * FROM dataset')
         assert len(rows) == 1
-        assert rows[0] == ('ds_id', 'ds_name', 'input_path', {'new': 'meta'},
-                           {"databases": [{"name": "HMDB", "version": "2017-01"}]},
+        assert rows[0] == ('ds_id', 'ds_name', 'input_path', {'new': 'meta'}, ds_config,
                            'FINISHED')
 
         es.index_ds.assert_called_once_with('ds_id', moldb_mock, del_first=True)
@@ -106,7 +104,7 @@ def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_con
 
 
 @patch('sm.engine.dataset_manager.QueuePublisher')
-def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, test_db, sm_config):
+def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, test_db, sm_config, ds_config):
     SMConfig._config_dict = sm_config
 
     qpub_mock = QueuePublisherMock()
@@ -115,17 +113,19 @@ def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, test_db
     try:
         db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
                   rows=[('ds_id', 'ds_name', 'input_path',
-                         '{"metaspace_options": {"Metabolite_Database": "db"}}', '{"config": "value"}')])
+                         '{"metaspace_options": {"Metabolite_Database": "db"}}', json.dumps(ds_config))])
 
         ds = Dataset.load_ds('ds_id', db)
-        ds.config = {"config": "new_value"}
+        new_ds_config = deepcopy(ds_config)
+        new_ds_config['databases'].append({'name': 'ChEBI', 'version': '2008'})
+        ds.config = new_ds_config
         ds_man = DatasetManager(db, es, mode='queue')
         ds_man.update_ds(ds)
 
         rows = db.select('SELECT * FROM dataset')
         assert len(rows) == 1
         assert rows[0] == ('ds_id', 'ds_name', 'input_path',
-                           {"metaspace_options": {"Metabolite_Database": "db"}}, {"config": "new_value"}, 'QUEUED')
+                           {"metaspace_options": {"Metabolite_Database": "db"}}, new_ds_config, 'QUEUED')
 
         msg = {
             'ds_id': 'ds_id',
@@ -137,18 +137,18 @@ def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, test_db
         db.close()
 
 
-def test_dataset_load_ds_works(test_db, sm_config):
+def test_dataset_load_ds_works(test_db, sm_config, ds_config):
     SMConfig._config_dict = sm_config
 
     db = DB(sm_config['db'])
     try:
         db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
-                  rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', '{"config": 0}')])
+                  rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', json.dumps(ds_config))])
 
         ds = Dataset.load_ds('ds_id', db)
 
         assert ((ds.id, ds.name, ds.input_path, ds.meta, ds.config) ==
-                ('ds_id', 'ds_name', 'input_path', {"meta": "data"}, {"config": 0}))
+                ('ds_id', 'ds_name', 'input_path', {"meta": "data"}, ds_config))
     finally:
         db.close()
 
@@ -156,7 +156,7 @@ def test_dataset_load_ds_works(test_db, sm_config):
 @patch('sm.engine.dataset_manager.ImageStoreServiceWrapper')
 @patch('sm.engine.dataset_manager.WorkDirManager')
 def test_dataset_manager_delete_ds_works(WorkDirManagerMock, ImageStoreServiceWrapperMock,
-                                         test_db, sm_config):
+                                         test_db, sm_config, ds_config):
     SMConfig._config_dict = sm_config
 
     img_store = ImageStoreServiceWrapperMock()
@@ -165,7 +165,7 @@ def test_dataset_manager_delete_ds_works(WorkDirManagerMock, ImageStoreServiceWr
     wd_man = WorkDirManagerMock()
     try:
         db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
-                  rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', '{"config": 0}')])
+                  rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', json.dumps(ds_config))])
         db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
                   rows=[(0, 0, 'ds_id')])
         db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
