@@ -9,4 +9,4 @@ before_script:
   - cd docker && docker-compose build
 
 script:
-  - docker-compose run -e COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN --rm web bash docker/run_unittests.sh
+  - docker-compose run -e COVERALLS_REPO_TOKEN=$COVERALLS_REPO_TOKEN --rm web bash docker/run_tests.sh
