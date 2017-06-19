@@ -499,10 +499,10 @@ def venn4_square(data=None, names=None, fill="number", show_names=True, show_plo
     pylab.text(100 + height, 100 + height, "{}".format(np.max(labels.values())), fontsize=16, **alignment)
 
     # names of different groups
-    pylab.text(100+width/2., 100+height+width/3., names[0], fontsize=16, **alignment)
-    pylab.text(100+width, 100+height+width/3., names[1], fontsize=16, **alignment)
-    pylab.text(100+height+width/3., 100+width, names[2], fontsize=16, **alignment)
-    pylab.text(100+height+width/3., 100+width/2., names[3], fontsize=16, **alignment)
+    pylab.text(90, 90 + height, names[0], fontsize=16, rotation=27, ha='left', va='bottom')
+    pylab.text(90+width/2., 90+height, names[1], fontsize=16, rotation=27, ha='left', va='bottom')
+    pylab.text(100+height, 95+3./2.*width, names[2], fontsize=16, rotation=-63, ha='left', va='top')
+    pylab.text(100+height, 95+width, names[3], fontsize=16,rotation=-63, ha='left', va='top')
 
 
 
