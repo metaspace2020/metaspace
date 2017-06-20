@@ -1,6 +1,6 @@
 {
   "db": {
-    "host": "postgres",
+    "host": "localhost",
     "database": "sm_test",
     "user": "sm",
     "password": "securepassword"

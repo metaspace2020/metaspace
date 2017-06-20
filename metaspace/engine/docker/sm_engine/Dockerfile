@@ -19,8 +19,8 @@ RUN apt-get update && \
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 
 # install Spark
-ENV SPARK_DIR spark-2.0.2-bin-hadoop2.7
-RUN wget -qO - http://apache.lauf-forum.at/spark/spark-2.0.2/$SPARK_DIR.tgz | tar xz
+ENV SPARK_DIR spark-2.1.1-bin-hadoop2.7
+RUN wget -qO - http://s3-eu-west-1.amazonaws.com/sm-engine/dev/$SPARK_DIR.tar.gz | tar xz
 ENV SPARK_HOME /root/$SPARK_DIR
 
 # install Conda (sci-oriented package manager for Python)
@@ -31,5 +31,4 @@ ENV PATH /miniconda/bin:$PATH
 
 # install necessary Python packages
 COPY environment.yml /root/environment.yml
-RUN conda install -y nomkl
-RUN conda env create
+RUN conda install -y nomkl && conda env create && conda clean -y --all

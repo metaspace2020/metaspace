@@ -1,0 +1,40 @@
+version: 2
+jobs:
+  build:
+    docker:
+      # includes:
+      #   - miniconda with all packages required for sm-engine
+      #   - pyspark installation
+      - image: lomereiter/sm_engine:0.7-py3
+
+      - image: postgres:9.6-alpine
+        environment:
+          POSTGRES_USER: sm
+          POSTGRES_DB: sm_test
+          POSTGRES_PASSWORD: password
+
+      - image: elasticsearch:5.4.0-alpine
+        environment:
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+        command: [elasticsearch, -Etransport.host=127.0.0.1]
+
+      - image: rabbitmq:3.6-alpine
+        environment:
+          RABBITMQ_DEFAULT_USER: sm
+          RABBITMQ_DEFAULT_PASS: 1321
+
+    working_directory: /code/sm-engine
+    steps:
+      - checkout
+      - run:
+          name: Setup configuration files
+          command: |
+            cp conf/sm_log.cfg.template conf/sm_log.cfg
+            mkdir -p logs
+            echo 'localhost:5432:sm_test:securepassword\n' > ~/.pgpass
+            chmod 0600 ~/.pgpass
+      - run:
+          name: Run tests
+          command: |
+            source docker/env.sh
+            coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests && coveralls

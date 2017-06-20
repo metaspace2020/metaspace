@@ -1,13 +1,11 @@
 name: sm_engine
 channels:
-  - salford_systems
   - conda-forge
 dependencies:
   - python>=3.4
   - nomkl
   - numpy=1.11
   - scipy=0.17
-  - matplotlib-nogui
   - pandas=0.19.2
   - cffi
   - cryptography
