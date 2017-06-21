@@ -17,6 +17,10 @@ Please visit the help page of our web application running on AWS:
 
 [http://annotate.metasp.eu/#/help](http://annotate.metasp.eu/#/help) 
 
+## Running sm-engine tests
+
+Install [CircleCI CLI tool](https://circleci.com/docs/2.0/local-jobs/) and run `circleci build` from the project root.
+
 ## License
 
 This project is licensed under the Apache 2.0 license.
