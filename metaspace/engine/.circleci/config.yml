@@ -37,4 +37,5 @@ jobs:
           name: Run tests
           command: |
             source docker/env.sh
+            pip install pysparkling
             coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests && coveralls

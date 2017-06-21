@@ -4,7 +4,11 @@ from mock import patch
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 from fabric.api import local
-from pyspark import SparkContext, SparkConf
+
+#from pyspark import SparkContext, SparkConf
+# lots of patch calls rely on SparkContext name
+from pysparkling import Context as SparkContext
+
 import pandas as pd
 from logging.config import dictConfig
 from mock import MagicMock
@@ -29,14 +33,8 @@ def sm_config():
 
 @pytest.fixture(scope='module')
 def spark_context(request):
-    sc = SparkContext(master='local[2]', conf=SparkConf())
-
-    def fin():
-        sc.stop()
-    request.addfinalizer(fin)
-
-    return sc
-
+    return SparkContext()
+    
 
 @pytest.fixture()
 def test_db(sm_config, request):
@@ -122,15 +120,3 @@ def mol_db(sm_config, ds_config):
         centr_ints=[[1, 0.1, 0.05], [1], [1, 0.3]]
     ), columns=['sf_id', 'adduct', 'mzs', 'centr_ints'])
     return mol_db
-
-class ImageStoreMock(object):
-    def __init__(self, sc):
-        self.post_image_return_value = None
-        self.post_image_call_count = sc.accumulator(0)
-
-    def post_image(self, fp):
-        self.post_image_call_count.add(1)
-        return self.post_image_return_value
-
-    def reset_mock(self, sc):
-        self.post_image_call_count = sc.accumulator(0)
