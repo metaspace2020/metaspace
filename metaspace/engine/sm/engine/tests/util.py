@@ -122,3 +122,15 @@ def mol_db(sm_config, ds_config):
         centr_ints=[[1, 0.1, 0.05], [1], [1, 0.3]]
     ), columns=['sf_id', 'adduct', 'mzs', 'centr_ints'])
     return mol_db
+
+class ImageStoreMock(object):
+    def __init__(self, sc):
+        self.post_image_return_value = None
+        self.post_image_call_count = sc.accumulator(0)
+
+    def post_image(self, fp):
+        self.post_image_call_count.add(1)
+        return self.post_image_return_value
+
+    def reset_mock(self, sc):
+        self.post_image_call_count = sc.accumulator(0)

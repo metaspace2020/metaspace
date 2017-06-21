@@ -44,8 +44,8 @@ class SearchResults(object):
                                                 ion_metrics_df, ion_img_ids))
         db.insert(METRICS_INS, rows)
 
-    def _image_inserter(self, img_store):
-        png_generator = PngGenerator(self._mask, greyscale=True)
+    def _image_inserter(self, img_store, alpha_channel):
+        png_generator = PngGenerator(alpha_channel, greyscale=True)
 
         def _post_images(imgs):
             imgs += [None] * (4 - len(imgs))
@@ -74,7 +74,7 @@ class SearchResults(object):
         ion_metrics_df : pandas.Dataframe
             sf_id, adduct, msm, fdr, individual metrics
         ion_iso_images : pyspark.RDD
-            values must be lists of 2d intensity arrays
+            values must be lists of 2d intensity arrays (in coo_matrix format)
         alpha_channel : numpy.array
             Image alpha channel (2D, 0..1)
         db : sm.engine.DB
