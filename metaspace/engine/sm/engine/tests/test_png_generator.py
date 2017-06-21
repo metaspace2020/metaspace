@@ -6,7 +6,8 @@ from sm.engine.png_generator import PngGenerator
 
 
 def test_png_gen_greyscale_works():
-    gen = PngGenerator([(0, 0), (1, 0), (2, 0)], greyscale=True)
+    alpha_ch = np.array([[1, 1, 1]])
+    gen = PngGenerator(alpha_ch, greyscale=True)
 
     img_data = np.array([[0., 5., 10.]])
     norm_img_data = (img_data - img_data.min()) / (img_data.max() - img_data.min())

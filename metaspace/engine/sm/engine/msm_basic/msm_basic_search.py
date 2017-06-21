@@ -4,7 +4,6 @@ from sm.engine.util import SMConfig
 from sm.engine.msm_basic.formula_imager_segm import compute_sf_images
 from sm.engine.msm_basic.formula_img_validator import sf_image_metrics
 from sm.engine.search_algorithm import SearchAlgorithm
-from sm.engine.png_generator import PngGenerator, ImageStoreServiceWrapper
 
 import logging
 logger = logging.getLogger('sm-engine')

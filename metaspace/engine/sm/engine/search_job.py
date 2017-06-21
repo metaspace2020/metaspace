@@ -24,6 +24,7 @@ from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 from sm.engine.errors import JobFailedError
+from sm.engine.png_generator import ImageStoreServiceWrapper
 
 logger = logging.getLogger('sm-engine')
 
@@ -106,8 +107,10 @@ class SearchJob(object):
             search_alg = MSMBasicSearch(self._sc, self._ds, mol_db, self._fdr, self._ds.config)
             ion_metrics_df, ion_iso_images = search_alg.search()
 
-            search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys(), self._ds, self._db)
-            search_results.store(ion_metrics_df, ion_iso_images)
+            mz_img_store = ImageStoreServiceWrapper(self._sm_config['services']['iso_images'])
+            search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys())
+            mask = self._ds.reader.get_2d_sample_area_mask()
+            search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, mz_img_store)
 
             self._es.index_ds(self._ds.id, mol_db)
         except Exception as e:

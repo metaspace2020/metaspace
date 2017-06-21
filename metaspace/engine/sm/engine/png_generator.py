@@ -25,18 +25,23 @@ class ImageStoreServiceWrapper(object):
         r = self._session.delete(url)
         r.raise_for_status()
 
+    def __str__(self):
+        return self._iso_img_service_url
+
 
 class PngGenerator(object):
     """ Generator of isotopic images as png files
 
     Args
     ----------
-    coords : list[tuple]
-        List of coordinates in (x, y) form
+    mask : numpy.array
+        Alpha channel (2D, 0..1)
     """
-    def __init__(self, coords, greyscale=True):
+    def __init__(self, mask, greyscale=True):
         self._greyscale = greyscale
         self._bitdepth = 16 if self._greyscale else 8
+        self._mask = mask
+        self._shape = mask.shape
 
         colors = np.array(
             [(68, 1, 84), (68, 2, 85), (68, 3, 87), (69, 5, 88), (69, 6, 90), (69, 8, 91), (70, 9, 92), (70, 11, 94),
@@ -81,15 +86,6 @@ class PngGenerator(object):
              (233, 228, 25), (236, 228, 26), (238, 229, 27), (241, 229, 28), (243, 229, 30), (246, 230, 31),
              (248, 230, 33), (250, 230, 34), (253, 231, 36)], dtype=np.float)
         self._colors = np.c_[colors, np.ones(colors.shape[0])]
-
-        coords = np.array(coords)
-        coords -= coords.min(axis=0)
-        _ = coords.max(axis=0) + 1
-        self._shape = (_[1], _[0])
-        rows = coords[:, 1]
-        cols = coords[:, 0]
-        data = np.ones(coords.shape[0])
-        self._mask = coo_matrix((data, (rows, cols)), shape=self._shape).toarray() > 0
 
     def _get_img_data(self, img):
         xa = ((img - img.min()) / (img.max() - img.min())) * (2 ** self._bitdepth - 1)

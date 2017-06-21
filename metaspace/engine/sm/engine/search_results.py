@@ -4,9 +4,7 @@ import numpy as np
 import logging
 import requests
 
-from sm.engine.db import DB
-from sm.engine.util import SMConfig
-from sm.engine.png_generator import PngGenerator, ImageStoreServiceWrapper
+from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('sm-engine')
 METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
@@ -23,16 +21,11 @@ class SearchResults(object):
         Search job id
     metric_names: list
         Metric names
-    ds: engine.dataset.Dataset
-    db: engine.db.DB
     """
-    def __init__(self, sf_db_id, job_id, metric_names, ds, db):
+    def __init__(self, sf_db_id, job_id, metric_names):
         self.sf_db_id = sf_db_id
         self.job_id = job_id
         self.metric_names = metric_names
-        self.ds = ds
-        self.db = db
-        self.sm_config = SMConfig.get_conf()
 
     def _metrics_table_row_gen(self, job_id, db_id, metr_df, ion_img_ids):
         for ind, r in metr_df.reset_index().iterrows():
@@ -43,17 +36,16 @@ class SearchResults(object):
                    float(r.msm), float(r.fdr), metr_json,
                    ids['iso_image_ids'], None)
 
-    def store_ion_metrics(self, ion_metrics_df, ion_img_ids):
-        """ Store formula image metrics in the database """
+    def store_ion_metrics(self, ion_metrics_df, ion_img_ids, db):
+        """ Store formula image metrics and image ids in the database """
         logger.info('Storing iso image metrics')
 
         rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id,
                                                 ion_metrics_df, ion_img_ids))
-        self.db.insert(METRICS_INS, rows)
+        db.insert(METRICS_INS, rows)
 
-    def _get_post_images(self):
-        png_generator = PngGenerator(self.ds.reader.coord_pairs, greyscale=True)
-        img_store = ImageStoreServiceWrapper(self.sm_config['services']['iso_images'])
+    def _image_inserter(self, img_store):
+        png_generator = PngGenerator(self._mask, greyscale=True)
 
         def _post_images(imgs):
             imgs += [None] * (4 - len(imgs))
@@ -69,12 +61,27 @@ class SearchResults(object):
 
         return _post_images
 
-    def post_images_to_image_store(self, ion_iso_images):
-        logger.info('Posting iso images to {}'.format(self.sm_config['services']['iso_images']))
-        post_images = self._get_post_images()
+    def post_images_to_image_store(self, ion_iso_images, alpha_channel, img_store):
+        logger.info('Posting iso images to {}'.format(img_store))
+        post_images = self._image_inserter(img_store, alpha_channel)
         return dict(ion_iso_images.mapValues(post_images).collect())
 
-    def store(self, ion_metrics_df, ion_iso_images):
+    def store(self, ion_metrics_df, ion_iso_images, alpha_channel, db, img_store):
+        """ Save metrics and images
+
+        Args
+        ---------
+        ion_metrics_df : pandas.Dataframe
+            sf_id, adduct, msm, fdr, individual metrics
+        ion_iso_images : pyspark.RDD
+            values must be lists of 2d intensity arrays
+        alpha_channel : numpy.array
+            Image alpha channel (2D, 0..1)
+        db : sm.engine.DB
+            database connection
+        img_store : sm.engine.png_generator.ImageStoreServiceWrapper
+            m/z image store
+        """
         logger.info('Storing search results to the DB')
-        ion_img_ids = self.post_images_to_image_store(ion_iso_images)
-        self.store_ion_metrics(ion_metrics_df, ion_img_ids)
+        ion_img_ids = self.post_images_to_image_store(ion_iso_images, alpha_channel, img_store)
+        self.store_ion_metrics(ion_metrics_df, ion_img_ids, db)

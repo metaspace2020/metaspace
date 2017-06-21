@@ -96,6 +96,9 @@ class DatasetReader(object):
         return (self.max_y - self.min_y + 1,
                 self.max_x - self.min_x + 1)
 
+    def get_2d_sample_area_mask(self):
+        return self.get_sample_area_mask().reshape(self.get_dims())
+
     def copy_convert_input_data(self):
         if not self._wd_manager.exists(self._wd_manager.txt_path):
             self._wd_manager.copy_input_data(self.input_path)
