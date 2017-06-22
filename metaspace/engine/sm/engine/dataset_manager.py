@@ -3,7 +3,7 @@ import logging
 import os
 from enum import Enum
 
-from sm.engine.queue import QueuePublisher
+from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.mol_db import MolecularDB
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig
@@ -23,13 +23,15 @@ IMG_URLS_BY_ID_SEL = ('SELECT iso_image_urls, ion_image_url '
                       'WHERE ds_id = %s')
 
 class DatasetStatus(Enum):
+    """ Stage of dataset lifecycle """
+
     """ The dataset is queued for processing """
     QUEUED = 1
 
     """ The processing is in progress """
     STARTED = 2
 
-    """ The processing finished successfully """
+    """ The processing/reindexing finished successfully (most common) """
     FINISHED = 3
 
     """ An error occurred during processing """
@@ -38,10 +40,12 @@ class DatasetStatus(Enum):
     """ The records are being updated because of changed metadata """
     INDEXING = 5
 
+    """ The dataset has been deleted """
+    DELETED = 6
+
 class Dataset(object):
     """ Model class for representing a dataset """
     def __init__(self, id=None, name=None, input_path=None, metadata=None, config=None):
-        self._sm_config = SMConfig.get_conf()
         self.id = id
         self.input_path = input_path
         self.meta = metadata
@@ -109,12 +113,16 @@ class DatasetManager(object):
         es: sm.engine.ESExporter
         mode: unicode
             'local' or 'queue'
+        queue_publisher: sm.engine.queue.QueuePublisher
     """
-    def __init__(self, db, es, mode):
+    def __init__(self, db, es, mode, queue_publisher=None):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
         self.mode = mode
+        self._queue = queue_publisher
+        if self.mode == 'queue':
+            assert self._queue
 
     def _reindex_ds(self, ds, update_status=True):
         if update_status:
@@ -141,7 +149,7 @@ class DatasetManager(object):
                 email = ds.meta.get('Submitted_By', {}).get('Submitter', {}).get('Email', None)
                 if email:
                     msg['user_email'] = email.lower()
-            QueuePublisher(self._sm_config['rabbitmq'], 'sm_annotate').publish(msg)
+            self._queue.publish(msg, SM_ANNOTATE)
             logger.info('New job message posted: %s', msg)
 
     # TODO: make sure the config and metadata are compatible
@@ -202,9 +210,13 @@ class DatasetManager(object):
                 logger.warning('Deleting raw data: {}'.format(ds.input_path))
                 wd_man = WorkDirManager(ds.id)
                 wd_man.del_input_data(ds.input_path)
+            if self.mode == 'queue':
+                self._queue.publish({'ds_id': ds.id, 'status': DatasetStatus.DELETED.name}, SM_DS_STATUS)
         else:
             logger.warning('No ds_id for ds_name: %s', ds.name)
 
     def set_ds_status(self, ds, status):
         ds.status = status
         ds.save(self._db, self._es)
+        if self.mode == 'queue':
+            self._queue.publish({'ds_id': ds.id, 'status': status.name}, SM_DS_STATUS)

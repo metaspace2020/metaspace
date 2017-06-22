@@ -5,22 +5,22 @@ import json
 from sm.engine.db import DB
 from sm.engine.dataset_manager import DatasetManager, Dataset, ConfigDiff
 from sm.engine.es_export import ESExporter
+from sm.engine.queue import QueuePublisher, SM_ANNOTATE
 from sm.engine.util import SMConfig
 from copy import deepcopy
 from sm.engine.tests.util import spark_context, sm_config, ds_config, test_db
 
 
-@patch('sm.engine.dataset_manager.QueuePublisher')
-def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, test_db, sm_config, ds_config):
+def test_dataset_manager_add_ds_new_ds_id(test_db, sm_config, ds_config):
     SMConfig._config_dict = sm_config
-    qpub_mock = QueuePublisherMock()
+    qpub_mock = MagicMock(spec=QueuePublisher)
 
     db = DB(sm_config['db'])
     es = MagicMock(spec=ESExporter)
     try:
         ds = Dataset('new_ds_id', 'ds_name', 'input_path',
                      {'metaspace_options': {'notify_submitter': False}}, ds_config)
-        ds_man = DatasetManager(db, es, mode='queue')
+        ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
         ds_man.add_ds(ds)
 
         rows = db.select('SELECT * FROM dataset')
@@ -28,20 +28,19 @@ def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, test_db, sm_config
         assert rows[0] == ('new_ds_id', 'ds_name', 'input_path',
                            {'metaspace_options': {'notify_submitter': False}}, ds_config, 'QUEUED')
 
-        qpub_mock.publish.assert_called_once_with({
+        qpub_mock.publish.assert_any_call({
             'ds_id': 'new_ds_id',
             'ds_name': 'ds_name',
             'input_path': 'input_path'
-        })
+        }, SM_ANNOTATE)
     finally:
         db.close()
 
 @patch('sm.engine.dataset_manager.ImageStoreServiceWrapper')
-@patch('sm.engine.dataset_manager.QueuePublisher')
-def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServiceWrapperMock,
+def test_dataset_manager_add_ds_ds_id_exists(ImageStoreServiceWrapperMock,
                                              test_db, sm_config, ds_config):
     SMConfig._config_dict = sm_config
-    qpub_mock = QueuePublisherMock()
+    qpub_mock = MagicMock(spec=QueuePublisher)
     img_store = ImageStoreServiceWrapperMock()
     db = DB(sm_config['db'])
     es = MagicMock(spec=ESExporter)
@@ -58,7 +57,7 @@ def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServi
 
         ds = Dataset('ds_id', 'new_ds_name', 'input_path',
                      {'metaspace_options': {'notify_submitter': False}}, ds_config)
-        ds_man = DatasetManager(db, es, mode='queue')
+        ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
         ds_man.add_ds(ds)
 
         rows = db.select("SELECT * FROM dataset")
@@ -66,11 +65,11 @@ def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServi
         assert rows[0] == ('ds_id', 'new_ds_name', 'input_path',
                            {'metaspace_options': {'notify_submitter': False}}, ds_config, 'QUEUED')
 
-        qpub_mock.publish.assert_called_once_with({
+        qpub_mock.publish.assert_any_call({
             'ds_id': 'ds_id',
             'ds_name': 'new_ds_name',
             'input_path': 'input_path'
-        })
+        }, SM_ANNOTATE)
 
         es.delete_ds.assert_called_once_with('ds_id')
         assert 2 == img_store.delete_image.call_count
@@ -91,7 +90,7 @@ def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_con
 
         ds = Dataset.load_ds('ds_id', db)
         ds.meta = {'new': 'meta'}
-        ds_man = DatasetManager(db, es, mode='queue')
+        ds_man = DatasetManager(db, es, mode='local')
         ds_man.update_ds(ds)
 
         rows = db.select('SELECT * FROM dataset')
@@ -104,11 +103,10 @@ def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_con
         db.close()
 
 
-@patch('sm.engine.dataset_manager.QueuePublisher')
-def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, test_db, sm_config, ds_config):
+def test_dataset_manager_update_ds_new_job_submitted(test_db, sm_config, ds_config):
     SMConfig._config_dict = sm_config
 
-    qpub_mock = QueuePublisherMock()
+    qpub_mock = MagicMock(spec=QueuePublisher)
     db = DB(sm_config['db'])
     es = MagicMock(spec=ESExporter)
     try:
@@ -120,7 +118,7 @@ def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, test_db
         new_ds_config = deepcopy(ds_config)
         new_ds_config['databases'].append({'name': 'ChEBI', 'version': '2008'})
         ds.config = new_ds_config
-        ds_man = DatasetManager(db, es, mode='queue')
+        ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
         ds_man.update_ds(ds)
 
         rows = db.select('SELECT * FROM dataset')
@@ -133,7 +131,7 @@ def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, test_db
             'ds_name': 'ds_name',
             'input_path': 'input_path',
         }
-        qpub_mock.publish.assert_called_once_with(msg)
+        qpub_mock.publish.assert_any_call(msg, SM_ANNOTATE)
     finally:
         db.close()
 
@@ -175,7 +173,7 @@ def test_dataset_manager_delete_ds_works(WorkDirManagerMock, ImageStoreServiceWr
                    "VALUES (%s, %s, %s, %s, %s, %s)"),
                   rows=[(0, 0, 1, '+H', 'ion_image_url', ['iso_image_url_0'])])
 
-        ds_man = DatasetManager(db, es, mode='queue')
+        ds_man = DatasetManager(db, es, mode='local')
         ds = Dataset.load_ds('ds_id', db)
         ds_man.delete_ds(ds, del_raw_data=True)
 
