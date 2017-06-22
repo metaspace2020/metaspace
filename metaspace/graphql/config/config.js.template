@@ -31,6 +31,11 @@ config.elasticsearch.index = "sm";
 config.elasticsearch.host = "localhost";
 config.elasticsearch.port = 9200;
 
+config.rabbitmq = {};
+config.rabbitmq.host = "{{ rabbitmq_host }}";
+config.rabbitmq.user = "{{ rabbitmq_user }}";
+config.rabbitmq.password = "{{ rabbitmq_password }}";
+
 config.slack = {};
 config.slack.webhook_url = "{{ slack_webhook_url }}";
 config.slack.channel = "{{ slack_channel }}";

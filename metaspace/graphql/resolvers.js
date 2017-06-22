@@ -24,6 +24,20 @@ let pg = require('knex')({
   searchPath: 'knex,public'
 });
 
+let queue = require('amqplib').connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`);
+let rabbitmqChannel = 'sm_dataset_status';
+queue.then(function(conn) {
+  return conn.createChannel();
+}).then(function(ch) {
+  return ch.assertQueue(rabbitmqChannel).then(function(ok) {
+    return ch.consume(rabbitmqChannel, function(msg) {
+      const {ds_id, status} = JSON.parse(msg.content.toString());
+      console.log(`[DATASET STATUS CHANGED] ${ds_id} -> ${status}`);
+      ch.ack(msg);
+    });
+  });
+}).catch(console.warn);
+
 function checkPermissions(datasetId, payload) {
   return pg.select().from('dataset').where('id', '=', datasetId)
     .then(records => {
