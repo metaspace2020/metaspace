@@ -37,7 +37,7 @@ def _reindex_datasets(rows, es_exp, del_first=True):
                 es_exp.index_ds(ds_id, mol_db, del_first=del_first)
         except Exception as e:
             new_msg = 'Failed to reindex(ds_id={}, ds_name={}): {}'.format(ds_id, ds_name, e)
-            raise Exception(new_msg), None, sys.exc_info()[2]
+            raise Exception(new_msg) from e
 
 
 def reindex_results(ds_id, ds_mask):
