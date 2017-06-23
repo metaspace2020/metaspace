@@ -1,5 +1,6 @@
 {
   "graphqlUrl": "{{ graphql_url }}",
+  "wsGraphqlUrl": "{{ graphql_ws_public_endpoint }}",
 
   "google_client_id": "{{ google_client_id }}",
 
