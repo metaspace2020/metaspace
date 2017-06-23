@@ -29,7 +29,16 @@ const config = {
 
   jwt: {
     secret: "jwtsecret"
-  }
+  },
+
+  rabbitmq: {
+    host: 'localhost',
+    port: 5672,
+    user: 'sm',
+    password: 'password'
+  },
+
+  websocket_public_url: 'ws://localhost:5000/graphql'
 };
 
 module.exports = config;
