@@ -90,7 +90,24 @@
            }
          }`,
          result(data) {
-           // const {datasetId, status} = data.datasetStatusUpdated;
+           const {datasetId, status} = data.datasetStatusUpdated;
+           const statusMap = {
+             FINISHED: 'success',
+             QUEUED: 'info',
+             STARTED: 'info',
+             FAILED: 'warning'
+           };
+           let message = '';
+           if (status == 'FINISHED')
+             message = `Processing of dataset ${datasetId} is finished!`;
+           else if (status == 'FAILED')
+             message = `Something went wrong with dataset ${datasetId} :(`;
+           else if (status == 'QUEUED')
+             message = `Dataset ${datasetId} has been added to the queue`;
+           else if (status == 'STARTED')
+             message = `Started processing dataset ${datasetId}`;
+           this.$notify({ message, type: statusMap[status] });
+
            this.$apollo.queries.started.refresh();
            this.$apollo.queries.queued.refresh();
            this.$apollo.queries.finished.refresh();
