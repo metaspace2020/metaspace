@@ -41,6 +41,7 @@
  import {datasetListQuery, datasetCountQuery} from '../api/dataset';
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
+ import gql from 'graphql-tag';
 
  const processingStages = ['started', 'queued', 'finished'];
 
@@ -80,7 +81,26 @@
    },
 
    apollo: {
+     $subscribe: {
+       datasetListUpdated: {
+         query: gql`subscription DS {
+           datasetStatusUpdated {
+             datasetId
+             status
+           }
+         }`,
+         result(data) {
+           // const {datasetId, status} = data.datasetStatusUpdated;
+           this.$apollo.queries.started.refresh();
+           this.$apollo.queries.queued.refresh();
+           this.$apollo.queries.finished.refresh();
+           this.$apollo.queries.finishedCount.refresh();
+         }
+       }
+     },
+
      started: {
+       forceFetch: true,
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
@@ -88,11 +108,11 @@
            dFilter: Object.assign({status: 'STARTED'},
                                   this.$store.getters.gqlDatasetFilter)
          }
-       },
-       pollInterval: 30000
+       }
      },
 
      queued: {
+       forceFetch: true,
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
@@ -100,11 +120,11 @@
            dFilter: Object.assign({status: 'QUEUED'},
                                   this.$store.getters.gqlDatasetFilter)
          }
-       },
-       pollInterval: 30000
+       }
      },
 
      finished: {
+       forceFetch: true,
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
@@ -112,11 +132,11 @@
            dFilter: Object.assign({status: 'FINISHED'},
                                   this.$store.getters.gqlDatasetFilter)
          }
-       },
-       pollInterval: 30000
+       }
      },
 
      finishedCount: {
+       forceFetch: true,
        query: datasetCountQuery,
        update: data => data.countDatasets,
        variables () {
@@ -124,9 +144,8 @@
            dFilter: Object.assign({status: 'FINISHED'},
                                   this.$store.getters.gqlDatasetFilter)
          }
-       },
-       pollInterval: 30000
-     }
+       }
+     },
    },
 
    methods: {

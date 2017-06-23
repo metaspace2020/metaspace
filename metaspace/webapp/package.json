@@ -47,6 +47,7 @@
     "serve-favicon": "^2.3.2",
     "simple-statistics": "^3.0.0",
     "sqlite3": "^3.1.8",
+    "subscriptions-transport-ws": "^0.7.3",
     "uuid": "^3.0.1",
     "vue": "~2.2.6",
     "vue-apollo": "1.4.0",
