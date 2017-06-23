@@ -38,7 +38,7 @@ const config = {
     password: 'password'
   },
 
-  websocket_public_url: 'ws://localhost:5000/graphql'
+  websocket_public_url: 'ws://localhost:5666/graphql'
 };
 
 module.exports = config;
