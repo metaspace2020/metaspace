@@ -18,7 +18,16 @@ const bodyParser = require('body-parser'),
   sprintf = require('sprintf-js'),
   logger = require('./utils.js').logger;
 
+// subscriptions setup
+const http = require('http'),
+      { execute, subscribe } = require('graphql'),
+      { SubscriptionServer } = require('subscriptions-transport-ws');
+
 let app = express();
+let wsServer = http.createServer((req, res) => {
+  res.writeHead(404);
+  res.end();
+});
 
 readFile('schema.graphql', 'utf8', (err, contents) => {
   const schema = makeExecutableSchema({
@@ -31,11 +40,12 @@ readFile('schema.graphql', 'utf8', (err, contents) => {
   app.use(compression());
   app.use('/graphql', bodyParser.json({ type: '*/*' }), graphqlExpress({ schema }));
   app.use('/graphiql', graphiqlExpress({
-    endpointURL: '/graphql'
+    endpointURL: '/graphql',
+    subscriptionsEndpoint: config.websocket_public_url,
   }));
-  
+
   addIsoImageProvider(app);
-  
+
   app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     logger.error(err.stack);
@@ -43,8 +53,16 @@ readFile('schema.graphql', 'utf8', (err, contents) => {
       message: err.message
     });
   });
-  
+
   app.listen(config.port);
+
+  wsServer.listen(5000, () => {
+    SubscriptionServer.create({ execute, subscribe, schema }, {
+      server: wsServer,
+      path: '/graphql',
+    });
+  });
+
   logger.info(`SM GraphQL is running on ${config.port} port...`);
 });
 

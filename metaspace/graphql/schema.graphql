@@ -215,7 +215,17 @@ type Mutation {
   deleteDataset(jwt: String!, datasetId: String!, delRawData: Boolean): String
 }
 
+type DatasetStatusUpdate {
+  datasetId: String!
+  status: JobStatus!
+}
+
+type Subscription {
+  datasetStatusUpdated: DatasetStatusUpdate
+}
+
 schema {
   query: Query
   mutation: Mutation
+  subscription: Subscription
 }

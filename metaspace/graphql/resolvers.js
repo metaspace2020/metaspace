@@ -7,7 +7,7 @@ const config = require('config'),
   {esSearchResults, esCountResults, esAnnotationByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {generateProcessingConfig, metadataChangeSlackNotify,
-    metadataUpdateFailedSlackNotify, logger} = require("./utils.js");
+    metadataUpdateFailedSlackNotify, logger, pubsub} = require("./utils.js");
 
 const dbConfig = () => {
   const {host, database, user, password} = config.db;
@@ -32,7 +32,8 @@ queue.then(function(conn) {
   return ch.assertQueue(rabbitmqChannel).then(function(ok) {
     return ch.consume(rabbitmqChannel, function(msg) {
       const {ds_id, status} = JSON.parse(msg.content.toString());
-      console.log(`[DATASET STATUS CHANGED] ${ds_id} -> ${status}`);
+      if (['QUEUED', 'STARTED', 'FINISHED', 'FAILED'].indexOf(status) >= 0)
+        pubsub.publish('datasetStatusUpdated', {datasetId: ds_id, status});
       ch.ack(msg);
     });
   });
@@ -452,6 +453,15 @@ const Resolvers = {
       } catch (e) {
         logger.error(e.message);
         return e.message;
+      }
+    }
+  },
+
+  Subscription: {
+    datasetStatusUpdated: {
+      subscribe: () => pubsub.asyncIterator('datasetStatusUpdated'),
+      resolve: payload => {
+        return payload;
       }
     }
   }

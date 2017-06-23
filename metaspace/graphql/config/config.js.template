@@ -36,6 +36,8 @@ config.rabbitmq.host = "{{ rabbitmq_host }}";
 config.rabbitmq.user = "{{ rabbitmq_user }}";
 config.rabbitmq.password = "{{ rabbitmq_password }}";
 
+config.websocket_public_url = "{{ graphql_ws_public_endpoint }}"
+
 config.slack = {};
 config.slack.webhook_url = "{{ slack_webhook_url }}";
 config.slack.channel = "{{ slack_channel }}";

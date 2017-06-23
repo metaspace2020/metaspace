@@ -1,10 +1,11 @@
-
 const slack = require('node-slack'),
   jsondiffpatch = require('jsondiffpatch'),
   winston = require('winston'),
-  moment = require('moment');
+  moment = require('moment'),
+  { PubSub } = require('graphql-subscriptions');
 
 const config = require('config');
+
 
 const RESOL_POWER_PARAMS = {
     '70K': {sigma: 0.00247585727028, fwhm: 0.00583019832869, pts_per_mz: 2019},
@@ -43,13 +44,13 @@ function generateProcessingConfig(meta_json) {
   else if (rp200 < 625000) params = RESOL_POWER_PARAMS['500K'];
   else if (rp200 < 875000) params = RESOL_POWER_PARAMS['750K'];
   else params = RESOL_POWER_PARAMS['1000K'];
-  
+
   let m_opts = meta_json['metaspace_options'];
   let ppm = 3.0;
   if ('ppm' in m_opts) {
     ppm = m_opts['ppm'];
   }
-  
+
   // TODO: move to proper metadata format supporting multiple molecular databases
   let mdb_list;
   let mdb_names = m_opts['Metabolite_Database'];
@@ -57,7 +58,7 @@ function generateProcessingConfig(meta_json) {
     mdb_list = [{'name': mdb_names}];
   else
     mdb_list = mdb_names.map( (name) => ({'name': name}) );
-  
+
   if (mdb_list.filter( mdb => mdb.name == 'HMDB').length == 0)
     mdb_list.push({ "name": "HMDB", "version": "2016" });
 
@@ -67,7 +68,7 @@ function generateProcessingConfig(meta_json) {
     adducts = m_opts['Adducts'];
   else
     adducts = {'+': ['+H', '+K', '+Na'], '-': ['-H', '+Cl']}[polarity];
-  
+
   return {
     "databases": mdb_list,
     "isotope_generation": {
@@ -91,7 +92,7 @@ function generateProcessingConfig(meta_json) {
 function metadataChangeSlackNotify(user, datasetId, oldMetadata, newMetadata) {
   const delta = jsondiffpatch.diff(oldMetadata, newMetadata),
     diff = jsondiffpatch.formatters.jsonpatch.format(delta);
-  
+
   const slackConn = config.slack.webhook_url ? new slack(config.slack.webhook_url): null;
   if (slackConn) {
     let oldDSName = oldMetadata.metaspace_options.Dataset_Name || "";
@@ -128,9 +129,12 @@ const logger = new (winston.Logger)({
   ]
 });
 
+const pubsub = new PubSub();
+
 module.exports = {
   generateProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
-  logger
+  logger,
+  pubsub
 };
