@@ -326,7 +326,7 @@ class SMDataset(object):
 
     def isotope_images(self, sf, adduct):
         records = self._gqclient.getAnnotations(
-            dict(sumFormula=sf, adduct=adduct),
+            dict(sumFormula=sf, adduct=adduct, database=None),
             dict(ids=self.id)
         )
 
