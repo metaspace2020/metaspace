@@ -128,7 +128,8 @@ const Resolvers = {
 
     metadataSuggestions(_, { field, query }) {
       let f = new SubstringMatchFilter(field, {}),
-          q = pg.distinct(pg.raw(f.pgField + " as field")).select().from('dataset');
+          q = pg.select(pg.raw(f.pgField + " as field")).select().from('dataset')
+                .groupBy('field').orderByRaw('count(*) desc');
       return f.pgFilter(q, query).orderBy('field', 'asc')
               .then(results => results.map(row => row['field']));
     },
