@@ -40,6 +40,7 @@
    'database',
    'fdrLevel',
    'institution',
+   'submitter',
    'datasetIds',
    'compoundName',
    'mz',

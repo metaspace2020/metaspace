@@ -36,11 +36,12 @@ export default {
 
   gqlDatasetFilter(state, getters) {
     const filter = getters.filter;
-    const {institution, datasetIds, polarity,
+    const {institution, submitter, datasetIds, polarity,
            organism, organismPart, condition,
            ionisationSource, analyzerType, maldiMatrix} = filter;
     return {
       institution,
+      submitter,
 
       // temporary workaround because of array-related bugs in apollo-client
       ids: datasetIds ? datasetIds.join("|") : null,

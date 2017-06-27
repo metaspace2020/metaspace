@@ -143,6 +143,22 @@ const FILTER_SPECIFICATIONS = {
     options: 'institutionNames' // take from Vue instance
   },
 
+  submitter: {
+    type: SingleSelectFilter,
+    name: 'Submitter',
+    description: 'Select submitter',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    encoding: 'json',
+    options: lists => lists.submitterNames.map(x => {
+      const {name, surname} = x;
+      return {name, surname};
+    }),
+    optionFormatter: ({name, surname}) => name + ' ' + surname,
+    valueFormatter: ({name, surname}) => name + ' ' + surname
+  },
+
   polarity: {
     type: SingleSelectFilter,
     name: 'Polarity',

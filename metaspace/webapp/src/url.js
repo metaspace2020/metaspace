@@ -5,6 +5,7 @@ import invert from 'lodash/invert';
 export const DEFAULT_FILTER = {
   database: 'HMDB',
   institution: undefined,
+  submitter: undefined,
   datasetIds: undefined,
   minMSM: undefined,
   compoundName: undefined,
@@ -23,6 +24,7 @@ export const DEFAULT_FILTER = {
 const FILTER_TO_URL = {
   database: 'db',
   institution: 'lab',
+  submitter: 'subm',
   datasetIds: 'ds',
   minMSM: 'msm',
   compoundName: 'mol',

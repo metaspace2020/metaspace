@@ -47,7 +47,12 @@
 
       <div style="font-size: 15px;">
         Submitted <span class="s-bold">{{ formatDate }}</span>
-        at {{ formatTime }} by {{ formatSubmitter }},
+        at {{ formatTime }} by
+        <span class="ds-add-filter"
+              title="Filter by submitter"
+              @click="addFilter('submitter')">
+              {{ formatSubmitter }}
+        </span>,
         <span class="s-inst ds-add-filter"
               v-html="formatInstitution"
               title="Filter by this lab"
@@ -194,7 +199,7 @@
          name: 'edit-metadata',
          params: {dataset_id: this.dataset.id}
        };
-     }
+     },
    },
    data() {
      return {
@@ -217,7 +222,10 @@
        let filter = Object.assign({}, this.$store.getters.filter);
        if (field == 'polarity')
          filter['polarity'] = capitalize(this.dataset.polarity);
-       else
+       else if (field == 'submitter') {
+         const {name, surname} = this.dataset.submitter;
+         filter[field] = {name, surname};
+       } else
          filter[field] = this.dataset[field] || this[field];
        this.$store.commit('updateFilter', filter);
      }

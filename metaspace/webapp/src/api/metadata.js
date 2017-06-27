@@ -25,5 +25,9 @@ export const fetchOptionListsQuery = gql`{
   ionisationSources: metadataSuggestions(field: "MS_Analysis.Ionisation_Source", query: "")
   maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "")
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "")
-  molecularDatabases: molecularDatabases{name}
+  molecularDatabases: molecularDatabases{name},
+  submitterNames: peopleSuggestions(role: SUBMITTER, query: "") {
+    name
+    surname
+  }
 }`;
