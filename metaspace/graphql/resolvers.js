@@ -126,10 +126,10 @@ const Resolvers = {
       return esAnnotationByID(id);
     },
 
-    metadataSuggestions(_, { field, query }) {
+    metadataSuggestions(_, { field, query, limit }) {
       let f = new SubstringMatchFilter(field, {}),
           q = pg.select(pg.raw(f.pgField + " as field")).select().from('dataset')
-                .groupBy('field').orderByRaw('count(*) desc');
+                .groupBy('field').orderByRaw('count(*) desc').limit(limit);
       return f.pgFilter(q, query).orderBy('field', 'asc')
               .then(results => results.map(row => row['field']));
     },

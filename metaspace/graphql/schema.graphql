@@ -199,7 +199,7 @@ type Query {
 
   annotation(id: String!): Annotation
 
-  metadataSuggestions(field: String!, query: String!): [String!]!
+  metadataSuggestions(field: String!, query: String!, limit: Int = 10): [String!]!
 
   peopleSuggestions(role: PersonRole!, query: String!): [Person!]!
 

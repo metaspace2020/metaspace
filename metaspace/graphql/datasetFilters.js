@@ -93,8 +93,8 @@ class PersonFilter extends AbstractDatasetFilter {
   esFilter({name, surname}) {
     return [
       // TODO: make these not_analyzed
-      {term: {[this.esField + '.First_Name']: name.toLowerCase()}},
-      {term: {[this.esField + '.Surname']: surname.toLowerCase()}}
+      {term: {[this.esField + '.First_Name']: name}},
+      {term: {[this.esField + '.Surname']: surname}}
     ];
   }
 
