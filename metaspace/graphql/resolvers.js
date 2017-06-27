@@ -5,7 +5,7 @@ const sprintf = require('sprintf-js'),
 
 const config = require('config'),
   {esSearchResults, esCountResults, esAnnotationByID} = require('./esConnector'),
-  {datasetFilters, dsField, SubstringMatchFilter} = require('./datasetFilters.js'),
+  {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {generateProcessingConfig, metadataChangeSlackNotify,
     metadataUpdateFailedSlackNotify, logger} = require("./utils.js");
 
@@ -131,6 +131,19 @@ const Resolvers = {
           q = pg.distinct(pg.raw(f.pgField + " as field")).select().from('dataset');
       return f.pgFilter(q, query).orderBy('field', 'asc')
               .then(results => results.map(row => row['field']));
+    },
+
+    peopleSuggestions(_, { role, query }) {
+      const schemaPath = 'Submitted_By.' + (role == 'PI' ? 'Principal_Investigator' : 'Submitter');
+      const p1 = schemaPath + '.First_Name',
+            p2 = schemaPath + '.Surname',
+            f1 = getPgField(p1),
+            f2 = getPgField(p2);
+      const q = pg.distinct(pg.raw(`${f1} as name, ${f2} as surname`)).select().from('dataset')
+                  .whereRaw(`${f1} ILIKE ? OR ${f2} ILIKE ?`, ['%' + query + '%', '%' + query + '%']);
+      logger.info(q.toString());
+      return q.orderBy('name', 'asc').orderBy('surname', 'asc')
+              .then(results => results.map(r => ({First_Name: r.name, Surname: r.surname, Email: ''})))
     },
 
     molecularDatabases(_, args) {

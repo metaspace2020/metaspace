@@ -4,6 +4,11 @@ type Person {
   email: String!
 }
 
+enum PersonRole {
+  SUBMITTER,
+  PI
+}
+
 enum Polarity {
   POSITIVE
   NEGATIVE
@@ -195,6 +200,8 @@ type Query {
   annotation(id: String!): Annotation
 
   metadataSuggestions(field: String!, query: String!): [String!]!
+
+  peopleSuggestions(role: PersonRole!, query: String!): [Person!]!
 
   molecularDatabases: [MolecularDatabase!]
 }

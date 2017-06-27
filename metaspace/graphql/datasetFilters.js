@@ -138,5 +138,6 @@ module.exports = {
   PersonFilter,
 
   datasetFilters,
-  dsField
+  dsField,
+  getPgField
 };
