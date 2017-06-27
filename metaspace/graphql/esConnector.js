@@ -106,8 +106,14 @@ function constructAnnotationQuery(args) {
 
   for (var key in datasetFilters) {
     const val = datasetFilter[key];
-    if (val)
-      addFilter(datasetFilters[key].esFilter(val));
+    if (val) {
+      const f = datasetFilters[key].esFilter(val);
+      if (Array.isArray(f))
+        for (let x of f)
+          addFilter(x);
+      else
+        addFilter(f);
+    }
   }
 
   return body;

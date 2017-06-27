@@ -1,14 +1,17 @@
 const capitalize = require('lodash/capitalize');
 
+function getPgField(schemaPath) {
+  const pathElements = schemaPath.replace(/\./g, ',');
+  return "metadata#>>'{" + pathElements + "}'";
+}
+
 class AbstractDatasetFilter {
   constructor(schemaPath, options) {
     this.schemaPath = schemaPath;
     this.options = options;
 
     this.esField = options.esField || ('ds_meta.' + this.schemaPath);
-
-    const pathElements = this.schemaPath.replace(/\./g, ',');
-    this.pgField = options.pgField || ("metadata#>>'{" + pathElements + "}'");
+    this.pgField = options.pgField || getPgField(this.schemaPath);
   }
 
   preprocess(val) {
@@ -80,6 +83,27 @@ class DatasetIdFilter extends AbstractDatasetFilter {
   }
 }
 
+class PersonFilter extends AbstractDatasetFilter {
+  constructor(schemaPath) {
+    super(schemaPath, {});
+    this.pgNameField = getPgField(schemaPath + '.First_Name');
+    this.pgSurnameField = getPgField(schemaPath + '.Surname');
+  }
+
+  esFilter({name, surname}) {
+    return [
+      // TODO: make these not_analyzed
+      {term: {[this.esField + '.First_Name']: name.toLowerCase()}},
+      {term: {[this.esField + '.Surname']: surname.toLowerCase()}}
+    ];
+  }
+
+  pgFilter(q, {name, surname}) {
+    return q.whereRaw(`${this.pgNameField} = ? AND ${this.pgSurnameField} = ?`,
+        [name, surname]);
+  }
+}
+
 const datasetFilters = {
   institution: new ExactMatchFilter('Submitted_By.Institution', {}),
   polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
@@ -91,7 +115,8 @@ const datasetFilters = {
   maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {}),
   name: new SubstringMatchFilter('', {esField: 'ds_name', pgField: 'name'}),
   ids: new DatasetIdFilter(),
-  status: new ExactMatchFilter('', {pgField: 'status'})
+  status: new ExactMatchFilter('', {pgField: 'status'}),
+  submitter: new PersonFilter('Submitted_By.Submitter')
 }
 
 function dsField(pgDatasetRecord, alias){
@@ -110,6 +135,7 @@ module.exports = {
   PhraseMatchFilter,
   SubstringMatchFilter,
   DatasetIdFilter,
+  PersonFilter,
 
   datasetFilters,
   dsField
