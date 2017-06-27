@@ -36,7 +36,7 @@
 
                 <div>
                   <el-autocomplete v-if="!prop.enum && enableAutocomplete(propName) && !isFreeText(propName)"
-                                   :trigger-on-focus="false"
+                                   :trigger-on-focus="true"
                                    class="md-ac"
                                    v-model="value[sectionName][propName]"
                                    :required="isRequired(propName, section)"

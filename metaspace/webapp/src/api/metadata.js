@@ -9,7 +9,7 @@ export const fetchMetadataQuery =
 
 export const fetchAutocompleteSuggestionsQuery =
   gql`query suggestions($field: String!, $query: String!) {
-    metadataSuggestions(field: $field, query: $query)
+    metadataSuggestions(field: $field, query: $query, limit: 5)
   }`;
 
 export const updateMetadataQuery =
