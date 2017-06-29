@@ -32,9 +32,15 @@ function molecularDatabaseService(port) {
     }
   };
 
+  const databases = {
+    data: [{name: 'HMDB', version: '2016'}],
+    meta: { message: 'OK', code: 200 }
+  };
+
   let app = express();
   app.get('/v1/isotopic_pattern/:sf_adduct/:instrument/:rp/:at_mz/:polarity',
           function (req, res) { res.json(result); });
+  app.get('/v1/databases', function (req, res) { res.json(databases); });
   app.listen(port);
   return app;
 }
