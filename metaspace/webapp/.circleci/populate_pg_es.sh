@@ -1,7 +1,7 @@
 mkdir -p tmp
 cd tmp
 
-DUMPS=https://s3-eu-west-1.amazonaws.com/embl-sm-testing/dumps/2017-04-21
+DUMPS=https://s3-eu-west-1.amazonaws.com/embl-sm-testing/dumps/2017-06-29
 curl -s $DUMPS/pg_dump | PGPASSWORD=password pg_restore -U sm -h localhost --dbname=sm
 
 wget -q $DUMPS/sm_index_settings.json.gz;

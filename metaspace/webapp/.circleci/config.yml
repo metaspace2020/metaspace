@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: lomereiter/sm-webapp:0.6.1.1
 
-      - image: postgres:9.6-alpine
+      - image: postgres:9.5-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
