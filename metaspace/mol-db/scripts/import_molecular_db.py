@@ -125,5 +125,7 @@ if __name__ == "__main__":
         db_session.add(mol_db)
         db_session.commit()
 
-    append_molecules(mol_db, args.csv_file, args.sep)
-    db_session.commit()
+        append_molecules(mol_db, args.csv_file, args.sep)
+        db_session.commit()
+    else:
+        LOG.info('Molecular DB already exists: {} {}'.format(args.name, args.version))
