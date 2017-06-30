@@ -40,7 +40,7 @@ jobs:
           name: Start GraphQL server and service mocks
           command: |
             rm -rf sm-graphql
-            git clone https://github.com/metaspace2020/sm-graphql --branch pubsub
+            git clone https://github.com/metaspace2020/sm-graphql --branch master
             export NPM_CONFIG_LOGLEVEL=warn
             cd sm-graphql && npm install && cd ..
             cp sm-graphql/tests/mock_config.js sm-graphql/config/default.js
