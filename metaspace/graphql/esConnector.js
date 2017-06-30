@@ -50,7 +50,7 @@ function esSort(orderBy, sortingOrder) {
 }
 
 function constructAnnotationQuery(args) {
-  const { orderBy, sortingOrder, offset, limit, filter, datasetFilter } = args;
+  const { orderBy, sortingOrder, offset, limit, filter, datasetFilter, simpleQuery } = args;
   const { database, datasetName, mzFilter, msmScoreFilter,
     fdrLevel, sumFormula, adduct, compoundQuery } = filter;
 
@@ -103,6 +103,11 @@ function constructAnnotationQuery(args) {
     addFilter({bool: {should: [
       { wildcard: {comp_names: `*${compoundQuery.toLowerCase()}*`}},
       { term: {sf: compoundQuery }}]}});
+
+  if (simpleQuery)
+    addFilter({simple_query_string: {
+      query: simpleQuery, fields: ["_all"], default_operator: "and"
+   }});
 
   for (var key in datasetFilters) {
     const val = datasetFilter[key];

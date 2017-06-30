@@ -190,7 +190,8 @@ type Query {
                  sortingOrder: SortingOrder = DESCENDING,
                  offset: Int = 0, limit: Int = 10,
                  filter: AnnotationFilter = {},
-                 datasetFilter: DatasetFilter = {}): [Annotation]
+                 datasetFilter: DatasetFilter = {},
+                 simpleQuery: String): [Annotation]
 
   countDatasets(filter: DatasetFilter = {}): Int!
 
