@@ -35,6 +35,10 @@
 - name: Make sure that the logs directory exists
   file: path={{ sm_webapp_home }}/logs state=directory mode=0755
 
+- name: Create upload directory
+  file: path={{ upload_destination }} state=directory mode=0755
+  when: upload_destination != 's3'
+
 - name: Copy supervisor config file
   template: src=sm-web-app.supervisor.j2 dest=/etc/supervisor/sm-web-app.supervisor
             mode=0600 owner=ubuntu group=ubuntu

@@ -95,6 +95,7 @@ sm_webapp_hostname:
 sm_webapp_google_client_id: ""
 sm_webapp_google_client_secret: ""
 sm_webapp_upload_destination: s3
+sm_webapp_graphql_ws_url: "http://{{ hostvars['web'].ansible_ssh_host }}/ws"
 
 sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
 sm_ansible_branch: rel-v0.6
@@ -141,6 +142,8 @@ nginx_upstream_hosts:
     server: 127.0.0.1:3010
   - name: graphql_server
     server: 127.0.0.1:3010
+  - name: graphql_ws_server
+    server: 127.0.0.1:5666
   - name: moldb_server
     server: 127.0.0.1:5001
   - name: kibana_server
@@ -175,6 +178,10 @@ nginx_sites:
       - path: /graphiql
         params:
           - proxy_pass http://graphql_server/graphiql;
+          - include proxy-params.conf;
+      - path: /ws
+        params:
+          - proxy_pass http://grapqhl_ws_server/graphql;
           - include proxy-params.conf;
       - path: /mol_db/
         params:

@@ -102,7 +102,8 @@ sm_webapp_hostname: "{{ hostvars['web'].ansible_ssh_host }}"
 sm_webapp_url: "http://{{ sm_webapp_hostname }}:8999"
 sm_webapp_google_client_id:
 sm_webapp_google_client_secret:
-sm_webapp_upload_destination: /opt/sm-data/uploads
+sm_webapp_upload_destination: "/opt/sm-data/uploads"
+sm_webapp_graphql_ws_url: "http://{{ sm_webapp_hostname }}:8999/ws"
 
 sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
 sm_ansible_branch: master
@@ -111,7 +112,7 @@ sm_ansible_home: /opt/dev/sm-engine-ansible
 activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
 spark_key_file: ~/.ssh/ubuntu_spark
-spark_version: "2.0.2-bin-hadoop2.7"
+spark_version: "2.1.1-bin-hadoop2.7"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
 spark_user: "ubuntu"
@@ -136,6 +137,8 @@ nginx_upstream_hosts:
     server: 127.0.0.1:3010
   - name: graphql_server
     server: 127.0.0.1:3010
+  - name: graphql_ws_server
+    server: 127.0.0.1:5666
   - name: moldb_server
     server: 127.0.0.1:5001
   - name: kibana_server
@@ -171,6 +174,10 @@ nginx_sites:
       - path: /graphiql
         params:
           - proxy_pass http://graphql_server/graphiql;
+          - include proxy-params.conf;
+      - path: /ws
+        params:
+          - proxy_pass http://grapqhl_ws_server/graphql;
           - include proxy-params.conf;
       - path: /mol_db/
         params:

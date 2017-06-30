@@ -14,3 +14,4 @@ google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
 redis_host: localhost
 redis_port: 6379
 upload_destination: "{{ sm_webapp_upload_destination }}"
+graphql_ws_public_endpoint: "{{ sm_webapp_graphql_ws_url }}"
