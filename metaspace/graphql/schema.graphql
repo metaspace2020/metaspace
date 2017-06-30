@@ -196,7 +196,8 @@ type Query {
   countDatasets(filter: DatasetFilter = {}): Int!
 
   countAnnotations(filter: AnnotationFilter = {},
-                   datasetFilter: DatasetFilter = {}): Int!
+                   datasetFilter: DatasetFilter = {},
+                   simpleQuery: String): Int!
 
   annotation(id: String!): Annotation
 
