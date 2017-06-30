@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 import argparse
-import ConfigParser
+from configparser import ConfigParser
 import boto3
 import yaml
 from os import path
@@ -18,8 +17,8 @@ if __name__ == '__main__':
 
     with open(inv_file, 'w') as fp:
         fp.write('')
-    inventory = ConfigParser.RawConfigParser(allow_no_value=True)
-    inventory.readfp(open(inv_file))
+    inventory = ConfigParser(allow_no_value=True)
+    inventory.read_file(open(inv_file))
 
     ec2 = boto3.resource('ec2', config['aws_region'])
 
@@ -33,16 +32,11 @@ if __name__ == '__main__':
             Filters=[{'Name': 'tag:hostgroup', 'Values': [spec['hostgroup']]},
                      {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']}]))
 
-        if len(instances) == 1:
-            print(instances[0].public_ip_address)
-            inst_name = component
-            inventory.set(component, '{} ansible_ssh_host={}'.format(inst_name, instances[0].public_ip_address))
-        else:
-            c = 1
-            for inst in instances:
-                print(inst.public_ip_address)
-                inst_name = component + str(c)
-                inventory.set(component, '{} ansible_ssh_host={}'.format(inst_name, inst.public_ip_address))
-                c += 1
+        c = 1
+        for inst in instances:
+            print(inst.public_ip_address)
+            inst_name = '{}-{}'.format(component, str(c))
+            inventory.set(component, '{} ansible_ssh_host={}'.format(inst_name, inst.public_ip_address))
+            c += 1
 
     inventory.write(open(inv_file, 'w'))

@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import argparse
-import boto.ec2
 import boto3
 from pprint import pprint
 from time import sleep
@@ -31,17 +29,15 @@ class AWSInstManager(object):
         return instances
 
     def find_best_price_availability_zone(self, timerange_h, inst_type, platform='Linux/UNIX'):
-        ec2 = boto.ec2.connect_to_region(self.region)
-        price_hist = ec2.get_spot_price_history(
-            start_time=(datetime.now() - timedelta(hours=timerange_h)).isoformat(),
-            end_time=datetime.now().isoformat(),
-            instance_type=inst_type,
-            product_description=platform,
-            max_results=10000)
-        price_df = pd.DataFrame(map(lambda p: [p.availability_zone, p.region.name, p.price], price_hist),
-                                columns=['az', 'r', 'p'])
-        med_price_az_df = price_df.groupby('az').mean()
-        return med_price_az_df.p.idxmin()
+        price_hist = self.ec2_client.describe_spot_price_history(
+            StartTime=(datetime.now() - timedelta(hours=timerange_h)).isoformat(),
+            EndTime=datetime.now().isoformat(),
+            InstanceTypes=[inst_type],
+            ProductDescriptions=[platform],
+            MaxResults=10000)
+        price_df = pd.DataFrame([(p['AvailabilityZone'], p['SpotPrice']) for p in price_hist['SpotPriceHistory']],
+                                columns=['az', 'p'])
+        return price_df.az.loc[price_df.p.idxmin()]
 
     def launch_inst(self, inst_name, inst_type, spot_price, inst_n, image, el_ip_id,
                     sec_group, host_group, block_dev_maps):
@@ -180,7 +176,7 @@ if __name__ == '__main__':
                         help="Don't actually start/stop instances")
     args = parser.parse_args()
 
-    conf_file = 'group_vars/all.yml' if not args.create_ami else 'group_vars/create_ami_cluster_config.yml'
+    conf_file = 'group_vars/all.yml' if not args.create_ami else 'group_vars/create_ami_config.yml'
     config_path = path.join(args.stage, conf_file)
     conf = load(open(config_path))
     cluster_conf = conf['cluster_configuration']
@@ -188,7 +184,7 @@ if __name__ == '__main__':
     aws_inst_man = AWSInstManager(key_name=args.key_name or conf['aws_key_name'], conf=cluster_conf,
                                   dry_run=args.dry_run, verbose=True)
 
-    components = filter(lambda x: x, args.components.strip(' ').split(','))
+    components = args.components.strip(' ').split(',')
     if 'all' in components:
         components = ['web', 'master', 'slave']
 
@@ -197,4 +193,7 @@ if __name__ == '__main__':
     elif args.action == 'stop':
         aws_inst_man.stop_all_instances(components)
 
-    print(check_output('python update_inventory.py --stage {}'.format(args.stage).split(' ')))
+    cmd = '{}/envs/{}/bin/python update_inventory.py --stage {}'.format(conf['miniconda_prefix'],
+                                                                        conf['miniconda_env_name'],
+                                                                        args.stage).split(' ')
+    print(check_output(cmd, universal_newlines=True))
