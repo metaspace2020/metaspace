@@ -10,6 +10,10 @@ export default {
     return decodeSettings(state.route);
   },
 
+  ftsQuery(state, getters) {
+    return getters.filter.simpleQuery;
+  },
+
   gqlAnnotationFilter(state, getters) {
     const filter = getters.filter;
     const f = {

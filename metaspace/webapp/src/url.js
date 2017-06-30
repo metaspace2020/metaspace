@@ -18,7 +18,8 @@ export const DEFAULT_FILTER = {
   condition: undefined,
   ionisationSource: undefined,
   maldiMatrix: undefined,
-  analyzerType: undefined
+  analyzerType: undefined,
+  simpleQuery: ''
 };
 
 const FILTER_TO_URL = {
@@ -37,7 +38,8 @@ const FILTER_TO_URL = {
   condition: 'cond',
   ionisationSource: 'src',
   maldiMatrix: 'matrix',
-  analyzerType: 'instr'
+  analyzerType: 'instr',
+  simpleQuery: 'q'
 };
 
 const URL_TO_FILTER = invert(FILTER_TO_URL);

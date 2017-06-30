@@ -33,6 +33,7 @@
  import MultiSelectFilter from './MultiSelectFilter.vue';
  import DatasetNameFilter from './DatasetNameFilter.vue';
  import MzFilter from './MzFilter.vue';
+ import SearchBox from './SearchBox.vue';
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
  import {fetchOptionListsQuery} from '../api/metadata.js';
 
@@ -52,18 +53,21 @@
    'analyzerType',
    'ionisationSource',
    'maldiMatrix',
-   'minMSM'
+   'minMSM',
+   'simpleQuery'
  ];
 
  export default {
    name: 'filter-panel',
    props: ["level"],
    components: {
+     // TODO: fetch these from filterSpecs.js
      InputFilter,
      SingleSelectFilter,
      MultiSelectFilter,
      DatasetNameFilter,
-     MzFilter
+     MzFilter,
+     SearchBox
    },
    apollo: {
      optionLists: {
