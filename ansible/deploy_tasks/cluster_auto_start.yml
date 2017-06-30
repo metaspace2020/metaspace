@@ -14,8 +14,8 @@
   synchronize:
     src: "{{ sm_ansible_home }}/"
     dest: "{{ sm_ansible_home }}/"
-#        rsync_opts:
-#          - "--exclude=aws/prod"
+    rsync_opts:
+      - "--exclude=.*"
   when: local_deploy is defined
 
 - name: Make sure a folder for the config file exists

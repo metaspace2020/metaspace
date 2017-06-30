@@ -40,10 +40,9 @@
   user: ubuntu
   gather_facts: true
 
-  vars:
-    spark_master_host: "spark://{{ ansible_hostname }}.{{ aws_region }}.compute.internal:7077"
-    sm_web_app_url: "{{ sm_webapp_url }}"
+  vars_files:
+    - ../../vars/engine.yml
 
   tasks:
-    - include: ../deploy_tasks/engine.yml
+    - include: ../../deploy_tasks/engine.yml
   tags: [master]

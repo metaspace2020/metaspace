@@ -1,0 +1,2 @@
+spark_master_host: "spark://{{ ansible_hostname }}.{{ aws_region }}.compute.internal:7077"
+sm_web_app_url: "{{ sm_webapp_url }}"

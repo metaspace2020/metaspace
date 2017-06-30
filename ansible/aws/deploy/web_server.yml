@@ -1,19 +1,21 @@
 ---
 
-- name: Deploying SM web app code
+- name: Deploying SM services code
   user: ubuntu
   hosts: web
 
   vars_files:
     - ../../vars/graphql.yml
     - ../../vars/web_app.yml
+    - ../../vars/sm_api.yml
+    - ../../vars/mol_db.yml
 
   tasks:
     - include: ../../deploy_tasks/mol_db.yml
       tags: [mol_db]
 
     - include: ../../deploy_tasks/sm_api.yml
-      sm_web_app_url: ""
+#      sm_web_app_url: ""
       tags: [sm_api]
 
     - include: ../../deploy_tasks/graphql.yml
@@ -22,5 +24,5 @@
     - include: ../../deploy_tasks/web_app.yml
       tags: [web_app]
 
-    - include: cluster_auto_start.yml
+    - include: ../../deploy_tasks/cluster_auto_start.yml
       tags: [cluster_auto_start]

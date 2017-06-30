@@ -1,3 +1,5 @@
+---
+
 - name: Pull sources from the repository
   git: >
     repo={{ sm_repo_url }}
@@ -16,6 +18,7 @@
     rsync_opts:
       - "--exclude=*.sh"
       - "--exclude=*.json"
+      - "--exclude=.*"
   with_items:
     - scripts
     - conf
@@ -31,9 +34,6 @@
 - name: Pull SM config from the remote host
   fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
          flat=yes fail_on_missing=yes
-
-- name: Debugging sm_send_email
-  debug: var=sm_send_email verbosity=4
 
 - name: "Put SM config to {{ sm_home }}/conf/config.json"
   template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
