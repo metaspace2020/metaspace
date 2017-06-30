@@ -59,7 +59,7 @@ miniconda_env:
       - bottle
 
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
-sm_branch: py3
+sm_branch: master
 sm_postgres_password: password
 sm_home: "/opt/dev/sm"
 sm_s3_path: ""
