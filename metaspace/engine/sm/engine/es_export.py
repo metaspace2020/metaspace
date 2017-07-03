@@ -233,7 +233,7 @@ class ESExporter(object):
     def delete_ds(self, ds_id, mol_db=None):
         try:
             if mol_db:
-                self._remove_mol_db_from_dataset(self, ds_id, mol_db)
+                self._remove_mol_db_from_dataset(ds_id, mol_db)
             else:
                 self._es.delete(id=ds_id, doc_type='dataset', index=self.index)
         except NotFoundError:
