@@ -1,7 +1,8 @@
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, NotFoundError
 from elasticsearch.helpers import bulk, BulkIndexError
 from elasticsearch.client import IndicesClient
 import logging
+from collections import defaultdict
 
 from sm.engine.util import SMConfig
 from sm.engine.db import DB
@@ -49,6 +50,9 @@ WHERE ds.id = %s AND m.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC
 '''
 
+DATASET_SEL = '''SELECT name, config, metadata FROM dataset WHERE id = %s'''
+
+DATASET_COLUMNS = ('ds_name', 'ds_config', 'ds_meta')
 
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
@@ -76,6 +80,12 @@ class ESIndexManager(object):
             return yin
 
     def create_index(self, index):
+        dynamic_templates = [{
+            "strings": {
+                "match_mapping_type": "string",
+                    "mapping": {
+                        "type": "keyword"}}
+        }]
         body = {
             "settings": {
                 "index": {
@@ -88,12 +98,14 @@ class ESIndexManager(object):
                                 "tokenizer": "keyword",
                                 "filter": "lowercase"}}}}},
             "mappings": {
+                "dataset": {
+                    "dynamic_templates": dynamic_templates,
+                    "properties": {
+                        "ds_id": {"type": "keyword"}
+                    }
+                },
                 "annotation": {
-                    "dynamic_templates": [{
-                        "strings": {
-                            "match_mapping_type": "string",
-                            "mapping": {
-                                "type": "keyword"}}}],
+                    "dynamic_templates": dynamic_templates,
                     "properties": {
                         "ds_id": {"type": "keyword"},
                         "comp_names": {
@@ -153,9 +165,27 @@ class ESExporter(object):
         self._db = DB(SMConfig.get_conf()['db'])
         self.index = es_config['index']
 
+    def _remove_mol_db_from_dataset(self, ds_id, mol_db):
+        dataset = self._es.get(self.index, id=ds_id, doc_type='dataset')
+        dataset['annotation_counts'] = \
+            [entry for entry in dataset['annotation_counts']
+                   if not (entry['db']['name'] == mol_db.name and
+                           entry['db']['version'] == mol_db.version)]
+        self._es.update(self.index, id=ds_id, body=dataset, doc_type='dataset')
+        return dataset
+
     def index_ds(self, ds_id, mol_db, del_first=False):
         if del_first:
             self.delete_ds(ds_id, mol_db)
+
+        try:
+            dataset = self._remove_mol_db_from_dataset(ds_id, mol_db)
+        except NotFoundError:
+            dataset = dict(zip(DATASET_COLUMNS, self._db.select(DATASET_SEL, ds_id)[0]))
+            dataset['annotation_counts'] = []
+
+        annotation_counts = defaultdict(int)
+        fdr_levels = [5, 10, 20, 50]
 
         annotations = self._db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
         logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
@@ -173,6 +203,10 @@ class ESExporter(object):
             d['mz'] = d['centroid_mzs'][0]
             d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])
 
+            fdr = round(d['fdr'] * 100, 2)
+            # assert fdr in fdr_levels
+            annotation_counts[fdr] += 1
+
             add_str = d['adduct'].replace('+', 'plus_').replace('-', 'minus_')
             to_index.append({
                 '_index': self.index,
@@ -187,9 +221,24 @@ class ESExporter(object):
                 to_index = []
 
         bulk(self._es, actions=to_index, timeout='60s')
+        for i, level in enumerate(fdr_levels[1:]):
+            annotation_counts[level] += annotation_counts[fdr_levels[i]]
+        dataset['annotation_counts'].append({
+            'db': {'name': mol_db.name, 'version': mol_db.version},
+            'counts': [{'level': level, 'n': annotation_counts[level]} for level in fdr_levels]
+        })
+        self._es.index(self.index, doc_type='dataset', body=dataset, id=ds_id)
 
     # TODO: add a test
     def delete_ds(self, ds_id, mol_db=None):
+        try:
+            if mol_db:
+                self._remove_mol_db_from_dataset(self, ds_id, mol_db)
+            else:
+                self._es.delete(id=ds_id, doc_type='dataset', index=self.index)
+        except NotFoundError:
+            pass
+
         must = [{'term': {'ds_id': ds_id}}]
         if mol_db:
             must.append({'term': {'db_name': mol_db.name}})
@@ -204,7 +253,6 @@ class ESExporter(object):
         to_del = [{'_op_type': 'delete', '_index': 'sm', '_type': 'annotation', '_id': d['_id']} for d in res]
 
         logger.info('Deleting %s documents from ES: %s, %s', len(to_del), ds_id, mol_db)
-
         del_n = 0
         try:
             del_n, _ = bulk(self._es, to_del, timeout='60s')
