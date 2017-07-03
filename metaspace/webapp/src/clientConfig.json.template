@@ -1,17 +1,17 @@
 {
-  "graphqlUrl": "{{ graphql_url }}",
-  "wsGraphqlUrl": "{{ graphql_ws_public_endpoint }}",
+  "graphqlUrl": "{{ sm_webapp_graphql_url }}",
+  "wsGraphqlUrl": "{{ sm_webapp_graphql_ws_public_endpoint }}",
 
-  "google_client_id": "{{ google_client_id }}",
+  "google_client_id": "{{ sm_webapp_google_client_id }}",
 
   "fineUploader": {
     "aws": {
-      "access_key_id": "{{ aws_access_key_id }}",
-      "region": "{{ aws_region }}",
-      "s3_bucket": "{{ s3_bucket }}",
+      "access_key_id": "{{ sm_webapp_aws_access_key_id }}",
+      "region": "{{ sm_webapp_aws_region }}",
+      "s3_bucket": "{{ sm_webapp_s3_bucket }}",
       "s3_signature_endpoint": "/upload/s3/sign",
       "s3_signature_version": 2
     },
-    "storage": "{{ upload_destination }}"
+    "storage": "{{ sm_webapp_upload_destination }}"
   }
 }
