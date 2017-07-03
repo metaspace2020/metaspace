@@ -9,14 +9,14 @@ from sm.engine import DB
 from sm.engine.tests.util import sm_config, ds_config, sm_index, es_dsl_search, test_db
 
 
-COLUMNS = ['ds_id', 'db_name', 'sf', 'adduct', 'comp_names', 'comp_ids', 'centroid_mzs', 'polarity']
+COLUMNS = ['ds_id', 'db_name', 'sf', 'adduct', 'comp_names', 'comp_ids', 'centroid_mzs', 'polarity', 'fdr']
 
 
 @patch('sm.engine.es_export.COLUMNS', COLUMNS)
 @patch('sm.engine.es_export.DB')
 def test_index_ds_works(DBMock, es_dsl_search, sm_index, sm_config):
-    annotations = [('2000-01-01_00h00m', 'test_db', 'H2O', '+H', ['mol_id'], ['mol_name'], [100, 110], '+'),
-                   ('2000-01-01_00h00m', 'test_db', 'Au', '+H', ['mol_id'], ['mol_name'], [200, 210], '+')]
+    annotations = [('2000-01-01_00h00m', 'test_db', 'H2O', '+H', ['mol_id'], ['mol_name'], [100, 110], '+', 0.1),
+                   ('2000-01-01_00h00m', 'test_db', 'Au', '+H', ['mol_id'], ['mol_name'], [200, 210], '+', 0.05)]
     db_mock = DBMock()
     db_mock.select.return_value = annotations
     mol_db_mock = MagicMock(MolecularDB)
@@ -32,13 +32,13 @@ def test_index_ds_works(DBMock, es_dsl_search, sm_index, sm_config):
 
     d1 = es_dsl_search.filter('term', sf='H2O').execute()['hits']['hits'][0]['_source']
     assert d1.to_dict() == {'ds_id': '2000-01-01_00h00m', 'db_name': 'db_name', 'db_version': '2017',
-                            'sf': 'H2O', 'adduct': '+H',
+                            'sf': 'H2O', 'adduct': '+H', 'fdr': 0.1,
                             'comp_names': ['mol_name'], 'comp_ids': ['mol_id'],
                             'centroid_mzs': ['00100.0000', '00110.0000'], 'mz': '00100.0000',
                             'polarity': '+', 'ion_add_pol': '[M+H]+'}
     d2 = es_dsl_search.filter('term', sf='Au').execute()['hits']['hits'][0]['_source']
     assert d2.to_dict() == {'ds_id': '2000-01-01_00h00m', 'db_name': 'db_name', 'db_version': '2017',
-                            'sf': 'Au', 'adduct': '+H',
+                            'sf': 'Au', 'adduct': '+H', 'fdr': 0.05,
                             'comp_names': ['mol_name'], 'comp_ids': ['mol_id'],
                             'centroid_mzs': ['00200.0000', '00210.0000'], 'mz': '00200.0000',
                             'polarity': '+', 'ion_add_pol': '[M+H]+'}
