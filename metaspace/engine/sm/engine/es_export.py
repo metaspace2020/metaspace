@@ -50,9 +50,9 @@ WHERE ds.id = %s AND m.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC
 '''
 
-DATASET_SEL = '''SELECT name, config, metadata FROM dataset WHERE id = %s'''
+DATASET_SEL = '''SELECT name, config, metadata, input_path, status FROM dataset WHERE id = %s'''
 
-DATASET_COLUMNS = ('ds_name', 'ds_config', 'ds_meta')
+DATASET_COLUMNS = ('ds_name', 'ds_config', 'ds_meta', 'ds_input_path', 'ds_status')
 
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
@@ -173,6 +173,13 @@ class ESExporter(object):
                            entry['db']['version'] == mol_db.version)]
         self._es.update(self.index, id=ds_id, body=dataset, doc_type='dataset')
         return dataset
+
+    def sync_dataset(self, ds_id):
+        dataset = dict(zip(DATASET_COLUMNS, self._db.select(DATASET_SEL, ds_id)[0]))
+        if self._es.exists(index=self.index, doc_type='dataset', id=ds_id):
+            self._es.update(index=self.index, id=ds_id, doc_type='dataset', body=dataset)
+        else:
+            self._es.index(index=self.index, id=ds_id, doc_type='dataset', body=dataset)
 
     def index_ds(self, ds_id, mol_db, del_first=False):
         if del_first:

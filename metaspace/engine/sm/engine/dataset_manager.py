@@ -65,7 +65,7 @@ class Dataset(object):
         r = db.select_one(DS_SEL, self.id)
         return True if r else False
 
-    def save(self, db):
+    def save(self, db, es):
         assert self.status is not None
         rows = [(self.id, self.name, self.input_path, json.dumps(self.meta), json.dumps(self.config), self.status.name)]
         if not self.is_stored(db):
@@ -73,6 +73,7 @@ class Dataset(object):
         else:
             row = rows[0]
             db.alter(DS_UPD, *(row[1:] + row[:1]))
+        es.sync_dataset(self.id)
 
 
 class ConfigDiff:
@@ -115,14 +116,18 @@ class DatasetManager(object):
         self._es = es
         self.mode = mode
 
-    def _reindex_ds(self, ds):
-        self.set_ds_status(ds, DatasetStatus.INDEXING)
+    def _reindex_ds(self, ds, update_status=True):
+        if update_status:
+            self.set_ds_status(ds, DatasetStatus.INDEXING)
+
         for mol_db_dict in ds.config['databases']:
             mol_db = MolecularDB(name=mol_db_dict['name'],
                                  version=mol_db_dict.get('version', None),
                                  iso_gen_config=ds.config['isotope_generation'])
             self._es.index_ds(ds.id, mol_db, del_first=True)
-        self.set_ds_status(ds, DatasetStatus.FINISHED)
+
+        if update_status:
+            self.set_ds_status(ds, DatasetStatus.FINISHED)
 
     def _post_new_job_msg(self, ds):
         self.set_ds_status(ds, DatasetStatus.QUEUED)
@@ -202,4 +207,4 @@ class DatasetManager(object):
 
     def set_ds_status(self, ds, status):
         ds.status = status
-        ds.save(self._db)
+        ds.save(self._db, self._es)
