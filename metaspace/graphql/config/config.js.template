@@ -14,17 +14,17 @@ config.img_upload.img_base_path = "/iso_images/";
 
 config.services = {};
 /* Molecular database service, used only for internal purposes (peakChartData query) */
-config.services.moldb_service_host = "{{ moldb_service_host }}";
+config.services.moldb_service_host = "{{ sm_graphql_moldb_service_host }}";
 /* Public IP of the server that hosts molecule images */
-config.services.mol_image_server_host = "{{ mol_image_host }}";
+config.services.mol_image_server_host = "{{ sm_graphql_mol_image_host }}";
 /* Internal ad-hoc service with the only endpoint /reindex/:dataset_id */
 config.services.sm_engine_api_host = "localhost:5123";
 
 config.db = {};
-config.db.host = "{{ sm_database_host | default('localhost') }}";
+config.db.host = "{{ sm_graphql_database_host | default('localhost') }}";
 config.db.database = "sm";
 config.db.user = "sm";
-config.db.password = "{{ sm_database_password }}";
+config.db.password = "{{ sm_graphql_database_password }}";
 
 config.elasticsearch = {};
 config.elasticsearch.index = "sm";
@@ -32,17 +32,17 @@ config.elasticsearch.host = "localhost";
 config.elasticsearch.port = 9200;
 
 config.rabbitmq = {};
-config.rabbitmq.host = "{{ rabbitmq_host }}";
-config.rabbitmq.user = "{{ rabbitmq_user }}";
-config.rabbitmq.password = "{{ rabbitmq_password }}";
+config.rabbitmq.host = "{{ sm_graphql_rabbitmq_host }}";
+config.rabbitmq.user = "{{ sm_graphql_rabbitmq_user }}";
+config.rabbitmq.password = "{{ sm_graphql_rabbitmq_password }}";
 
-config.websocket_public_url = "{{ graphql_ws_public_endpoint }}"
+config.websocket_public_url = "{{ sm_graphql_ws_public_endpoint }}"
 
 config.slack = {};
-config.slack.webhook_url = "{{ slack_webhook_url }}";
-config.slack.channel = "{{ slack_channel }}";
+config.slack.webhook_url = "{{ sm_graphql_slack_webhook_url }}";
+config.slack.channel = "{{ sm_graphql_slack_channel }}";
 
 config.jwt = {};
-config.jwt.secret = "{{ jwt_secret }}";
+config.jwt.secret = "{{ sm_graphql_jwt_secret }}";
 
 module.exports = config;
