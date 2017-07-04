@@ -183,7 +183,7 @@ type Query {
 
   allDatasets(orderBy: DatasetOrderBy = ORDER_BY_DATE,
               sortingOrder: SortingOrder = DESCENDING,
-              filter: DatasetFilter = {},
+              filter: DatasetFilter = {}, simpleQuery: String,
               offset: Int = 0, limit: Int = 10): [Dataset!]!
 
   allAnnotations(orderBy: AnnotationOrderBy = ORDER_BY_MSM,
@@ -193,7 +193,7 @@ type Query {
                  datasetFilter: DatasetFilter = {},
                  simpleQuery: String): [Annotation]
 
-  countDatasets(filter: DatasetFilter = {}): Int!
+  countDatasets(filter: DatasetFilter = {}, simpleQuery: String): Int!
 
   countAnnotations(filter: AnnotationFilter = {},
                    datasetFilter: DatasetFilter = {},

@@ -29,7 +29,7 @@ function esFormatMz(mz) {
 function esSort(orderBy, sortingOrder) {
   // default order
   let order = 'asc';
-  if (orderBy == 'ORDER_BY_MSM')
+  if (orderBy == 'ORDER_BY_MSM' || orderBy == 'ORDER_BY_DATE')
     order = 'desc';
 
   if (sortingOrder == 'DESCENDING')
@@ -37,6 +37,7 @@ function esSort(orderBy, sortingOrder) {
   else if (sortingOrder == 'ASCENDING')
     order = 'asc';
 
+  // annotation orderings
   if (orderBy == 'ORDER_BY_MZ')
     return [{'mz': order}];
   else if (orderBy == 'ORDER_BY_MSM')
@@ -47,9 +48,14 @@ function esSort(orderBy, sortingOrder) {
     return [{'ds_name': order}, {'mz': order}];
   else if (orderBy == 'ORDER_BY_FORMULA')
     return [{'sf': order}, {'adduct': order}, {'fdr': order}];
+  // dataset orderings
+  else if (orderBy == 'ORDER_BY_DATE')
+    return [{'ds_last_finished': order}];
+  else if (orderBy == 'ORDER_BY_NAME')
+    return [{'ds_name': order}];
 }
 
-function constructAnnotationQuery(args) {
+function constructAnnotationQuery(args, docType) {
   const { orderBy, sortingOrder, offset, limit, filter, datasetFilter, simpleQuery } = args;
   const { database, datasetName, mzFilter, msmScoreFilter,
     fdrLevel, sumFormula, adduct, compoundQuery } = filter;
@@ -59,9 +65,11 @@ function constructAnnotationQuery(args) {
       bool: {
         filter: []
       }
-    },
-    sort: esSort(orderBy, sortingOrder)
+    }
   };
+
+  if (orderBy)
+    body.sort = esSort(orderBy, sortingOrder);
   
   if (database) {
     addFilter({term: {db_name: database}});
@@ -79,6 +87,8 @@ function constructAnnotationQuery(args) {
     };
     addFilter(filter);
   }
+
+  addFilter({term: {_type: docType}});
 
   if (mzFilter)
     addRangeFilter('mz', {min: esFormatMz(mzFilter.min),
@@ -124,12 +134,12 @@ function constructAnnotationQuery(args) {
   return body;
 }
 
-module.exports.esSearchResults = function(args) {
+module.exports.esSearchResults = function(args, docType) {
   if (args.limit > ES_LIMIT_MAX) {
     return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
   
-  const body = constructAnnotationQuery(args);
+  const body = constructAnnotationQuery(args, docType);
   const request = {
     body,
     index: esIndex,
@@ -148,8 +158,8 @@ module.exports.esSearchResults = function(args) {
   });
 };
 
-module.exports.esCountResults = function(args) {
-  const body = constructAnnotationQuery(args);
+module.exports.esCountResults = function(args, docType) {
+  const body = constructAnnotationQuery(args, docType);
   const request = { body, index: esIndex };
   return es.count(request).then((resp) => {
     return resp.count;
@@ -159,12 +169,20 @@ module.exports.esCountResults = function(args) {
   });
 };
 
+function getById(docType, id) {
+  return es.get({index: esIndex, type: docType, id})
+  .then((resp) => {
+    return resp;
+  }).catch((e) => {
+    logger.error(e);
+    return null;
+  });
+}
+
 module.exports.esAnnotationByID = function(id) {
-  return es.get({index: esIndex, type: 'annotation', id})
-    .then((resp) => {
-      return resp;
-    }).catch((e) => {
-      logger.error(e);
-      return null;
-    });
+  return getById('annotation', id);
+};
+
+module.exports.esDatasetByID = function(id) {
+  return getById('dataset', id);
 };

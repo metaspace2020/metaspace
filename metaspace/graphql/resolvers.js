@@ -4,7 +4,8 @@ const sprintf = require('sprintf-js'),
   {UserError} = require('graphql-errors');
 
 const config = require('config'),
-  {esSearchResults, esCountResults, esAnnotationByID} = require('./esConnector'),
+  {esSearchResults, esCountResults,
+   esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {generateProcessingConfig, metadataChangeSlackNotify,
     metadataUpdateFailedSlackNotify, logger, pubsub} = require("./utils.js");
@@ -87,54 +88,27 @@ const Resolvers = {
     },
 
     dataset(_, { id }) {
-      return baseDatasetQuery().select('*').where('id', '=', id)
-        .then((data) => {
-          return data.length > 0 ? data[0] : null;
-        })
-        .catch((e) => {
-          logger.error(e.message); return null;
-        });
+      return result = esDatasetByID(id);
     },
 
-    allDatasets(_, {orderBy, sortingOrder, offset, limit, filter}) {
-      let q = baseDatasetQuery();
-      logger.info(JSON.stringify(filter));
-
-      for (let key in datasetFilters) {
-        const val = filter[key];
-        if (val)
-          q = datasetFilters[key].pgFilter(q, val);
-      }
-
-      const orderVar = orderBy == 'ORDER_BY_NAME' ? 'name' : 'last_finished';
-      const ord = sortingOrder == 'ASCENDING' ? 'asc' : 'desc';
-
-      logger.info(q.toString());
-      console.time('pgQuery');
-
-      return q.orderBy(orderVar, ord).offset(offset).limit(limit).select('*')
-        .then(result => { console.timeEnd('pgQuery'); return result; })
-        .catch((e) => { logger.error(e.message); return []; });
+    allDatasets(_, args) {
+      args.datasetFilter = args.filter;
+      args.filter = {};
+      return esSearchResults(args, 'dataset');
     },
 
     allAnnotations(_, args) {
-      return esSearchResults(args);
+      return esSearchResults(args, 'annotation');
     },
 
-    countDatasets(_, {filter}) {
-      let q = baseDatasetQuery();
-      for (var key in datasetFilters) {
-        const val = filter[key];
-        if (val)
-          q = datasetFilters[key].pgFilter(q, val);
-      }
-      return q.count('id')
-              .then(result => parseInt(result[0].count))
-              .catch((e) => { logger.error(e.message); return 0; });
+    countDatasets(_, args) {
+      args.datasetFilter = args.filter;
+      args.filter = {};
+      return esCountResults(args, 'dataset');
     },
 
     countAnnotations(_, args) {
-      return esCountResults(args);
+      return esCountResults(args, 'annotation');
     },
 
     annotation(_, { id }) {
@@ -185,12 +159,20 @@ const Resolvers = {
   },
 
   Dataset: {
+    id(ds) {
+      return ds._source.ds_id;
+    },
+
+    name(ds) {
+      return ds._source.ds_name;
+    },
+
     configJson(ds) {
-      return JSON.stringify(ds.config);
+      return JSON.stringify(ds._source.ds_config);
     },
 
     metadataJson(ds) {
-      return JSON.stringify(ds.metadata);
+      return JSON.stringify(ds._source.ds_meta);
     },
 
     institution(ds) { return dsField(ds, 'institution'); },
@@ -202,15 +184,15 @@ const Resolvers = {
     maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
 
     submitter(ds) {
-      return ds.metadata.Submitted_By.Submitter;
+      return ds._source.ds_meta.Submitted_By.Submitter;
     },
 
     principalInvestigator(ds) {
-      return ds.metadata.Submitted_By.Principal_Investigator;
+      return ds._source.ds_meta.Submitted_By.Principal_Investigator;
     },
 
     analyzer(ds) {
-      const msInfo = ds.metadata.MS_Analysis;
+      const msInfo = ds._source.ds_meta.MS_Analysis;
       return {
         'type': msInfo.Analyzer,
         'rp': msInfo.Detector_Resolving_Power
@@ -218,17 +200,12 @@ const Resolvers = {
     },
 
     status(ds) {
-      return ds.status;
+      return ds._source.ds_status;
     },
 
     inputPath(ds) {
-      return ds.input_path;
+      return ds._source.ds_input_path;
     }
-
-    /* annotations(ds, args) {
-     args.datasetId = ds.id;
-     return esSearchResults(args);
-     } */
   },
 
   Annotation: {
@@ -281,11 +258,7 @@ const Resolvers = {
     rhoChaos: (hit) => hit._source.chaos,
 
     dataset(hit) {
-      return {
-        id: hit._source.ds_id,
-        name: hit._source.ds_name,
-        metadata: hit._source.ds_meta
-      }
+      return Object.assign({_id: hit._source.ds_id}, hit);
     },
 
     peakChartData(hit) {

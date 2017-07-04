@@ -115,12 +115,12 @@ const datasetFilters = {
   maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {}),
   name: new SubstringMatchFilter('', {esField: 'ds_name', pgField: 'name'}),
   ids: new DatasetIdFilter(),
-  status: new ExactMatchFilter('', {pgField: 'status'}),
+  status: new ExactMatchFilter('', {esField: 'ds_status', pgField: 'status'}),
   submitter: new PersonFilter('Submitted_By.Submitter')
 }
 
-function dsField(pgDatasetRecord, alias){
-  let info = pgDatasetRecord.metadata;
+function dsField(hit, alias){
+  let info = hit._source.ds_meta;
   for (let field of datasetFilters[alias].schemaPath.split(".")) {
     info = info[field];
     if (!info)
