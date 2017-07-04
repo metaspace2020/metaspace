@@ -50,9 +50,19 @@ WHERE ds.id = %s AND m.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC
 '''
 
-DATASET_SEL = '''SELECT name, config, metadata, input_path, status FROM dataset WHERE id = %s'''
+DATASET_SEL = '''SELECT
+    name,
+    config,
+    metadata,
+    input_path,
+    dataset.status,
+    max(finish)
+FROM dataset JOIN job ON job.ds_id = dataset.id
+WHERE dataset.id = %s
+GROUP BY dataset.id
+'''
 
-DATASET_COLUMNS = ('ds_name', 'ds_config', 'ds_meta', 'ds_input_path', 'ds_status')
+DATASET_COLUMNS = ('ds_name', 'ds_config', 'ds_meta', 'ds_input_path', 'ds_status', 'ds_last_finished')
 
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
