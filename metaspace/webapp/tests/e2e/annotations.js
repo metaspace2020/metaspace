@@ -95,6 +95,6 @@ test('user can add molecule filter after dataset filter', async t => {
   await t.click(filterPanel.find('.el-select'));
   await t.click(new Selector('.el-select-dropdown__item span').withText('Search molecule'));
 
-  // database, FDR, dataset, molecule
-  await t.expect(filterPanel.find('.tf-outer').count).eql(4);
+  // database, FDR, dataset, molecule, search box
+  await t.expect(filterPanel.find('.tf-outer').count).eql(5);
 });

@@ -25,8 +25,6 @@
             <span class="qq-upload-spinner-selector qq-upload-spinner"></span>
             <img class="qq-thumbnail-selector" qq-max-size="100" qq-server-scale>
             <span class="qq-upload-file-selector qq-upload-file"></span>
-            <span class="qq-edit-filename-icon-selector qq-edit-filename-icon" aria-label="Edit filename"></span>
-            <input class="qq-edit-filename-selector qq-edit-filename" tabindex="0" type="text">
             <span class="qq-upload-size-selector qq-upload-size"></span>
             <button type="button" class="qq-btn qq-upload-cancel-selector qq-upload-cancel">Cancel</button>
             <button type="button" class="qq-btn qq-upload-retry-selector qq-upload-retry">Retry</button>
@@ -79,7 +77,8 @@
    cors: {expected: true},
    chunking: {
      enabled: true,
-     concurrent: {enabled: true}
+     mandatory: true,
+     concurrent: {enabled: true},
    },
    resume: {enabled: true},
    validation: {
@@ -179,14 +178,21 @@
          }
        });
 
-       if (this.config.storage == 'local') {
+       if (this.config.storage != 's3') {
          options.request = {
            endpoint: '/upload',
-           params: {'session_id': sessionStorage.getItem('session_id')}
+           params: {
+             'session_id': sessionStorage.getItem('session_id'),
+             'uuid': this.uuid
+           }
          };
 
          // FIXME: move into fineUploaderConfig.json
-         options.chunking.success = {endpoint: '/upload/success'};
+         options.chunking.success = {
+           endpoint: '/upload/success',
+           mandatory: true, // to make life easier
+           params: {'uuid': this.uuid}
+         };
 
          this.fineUploader = new qq.FineUploader(options);
        } else {

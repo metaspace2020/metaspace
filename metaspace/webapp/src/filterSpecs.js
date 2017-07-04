@@ -4,6 +4,7 @@ import SingleSelectFilter from './components/SingleSelectFilter.vue';
 import MultiSelectFilter from './components/MultiSelectFilter.vue';
 import DatasetNameFilter from './components/DatasetNameFilter.vue';
 import MzFilter from './components/MzFilter.vue';
+import SearchBox from './components/SearchBox.vue';
 
 // FIXME: hard-coded adducts
 const ADDUCT_POLARITY = {
@@ -69,8 +70,7 @@ const FILTER_SPECIFICATIONS = {
     levels: ['annotation'],
     initialValue: 'HMDB', // because we've agreed to process every dataset with it
 
-    // FIXME: hard-coded, should be taken from the server
-    options: ['HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids'],
+    options: lists => lists.molecularDatabases.map(d => d.name),
     removable: false
   },
 
@@ -144,6 +144,22 @@ const FILTER_SPECIFICATIONS = {
     options: 'institutionNames' // take from Vue instance
   },
 
+  submitter: {
+    type: SingleSelectFilter,
+    name: 'Submitter',
+    description: 'Select submitter',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    encoding: 'json',
+    options: lists => lists.submitterNames.map(x => {
+      const {name, surname} = x;
+      return {name, surname};
+    }),
+    optionFormatter: ({name, surname}) => name + ' ' + surname,
+    valueFormatter: ({name, surname}) => name + ' ' + surname
+  },
+
   polarity: {
     type: SingleSelectFilter,
     name: 'Polarity',
@@ -214,6 +230,15 @@ const FILTER_SPECIFICATIONS = {
     initialValue: undefined,
 
     options: 'analyzerTypes'
+  },
+
+  simpleQuery: {
+    type: SearchBox,
+    name: 'Simple query',
+    description: 'Search anything',
+    levels: ['annotation'],
+    initialValue: undefined,
+    removable: false
   }
 };
 

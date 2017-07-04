@@ -4,7 +4,7 @@ jobs:
     docker:
       - image: lomereiter/sm-webapp:0.6.1.1
 
-      - image: postgres:9.6-alpine
+      - image: postgres:9.5-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
@@ -15,6 +15,11 @@ jobs:
         command: [elasticsearch, -Etransport.host=127.0.0.1]
 
       - image: redis:3.2-alpine
+
+      - image: rabbitmq:3.6-alpine
+        environment:
+          RABBITMQ_DEFAULT_USER: sm
+          RABBITMQ_DEFAULT_PASS: password
 
     working_directory: /tmp/webapp
     steps:
@@ -35,7 +40,7 @@ jobs:
           name: Start GraphQL server and service mocks
           command: |
             rm -rf sm-graphql
-            git clone https://github.com/metaspace2020/sm-graphql --branch rel-v0.6
+            git clone https://github.com/metaspace2020/sm-graphql --branch master
             export NPM_CONFIG_LOGLEVEL=warn
             cd sm-graphql && npm install && cd ..
             cp sm-graphql/tests/mock_config.js sm-graphql/config/default.js

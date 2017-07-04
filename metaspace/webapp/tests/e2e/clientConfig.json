@@ -1,5 +1,6 @@
 {
   "graphqlUrl": "http://localhost:3010/graphql",
+  "wsGraphqlUrl": "ws://localhost:5666/graphql",
 
   "google_client_id": "clientid",
 

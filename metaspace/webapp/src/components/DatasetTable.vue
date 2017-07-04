@@ -41,6 +41,7 @@
  import {datasetListQuery, datasetCountQuery} from '../api/dataset';
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
+ import gql from 'graphql-tag';
 
  const processingStages = ['started', 'queued', 'finished'];
 
@@ -80,7 +81,43 @@
    },
 
    apollo: {
+     $subscribe: {
+       datasetListUpdated: {
+         query: gql`subscription DS {
+           datasetStatusUpdated {
+             datasetId
+             status
+           }
+         }`,
+         result(data) {
+           const {datasetId, status} = data.datasetStatusUpdated;
+           const statusMap = {
+             FINISHED: 'success',
+             QUEUED: 'info',
+             STARTED: 'info',
+             FAILED: 'warning'
+           };
+           let message = '';
+           if (status == 'FINISHED')
+             message = `Processing of dataset ${datasetId} is finished!`;
+           else if (status == 'FAILED')
+             message = `Something went wrong with dataset ${datasetId} :(`;
+           else if (status == 'QUEUED')
+             message = `Dataset ${datasetId} has been added to the queue`;
+           else if (status == 'STARTED')
+             message = `Started processing dataset ${datasetId}`;
+           this.$notify({ message, type: statusMap[status] });
+
+           this.$apollo.queries.started.refresh();
+           this.$apollo.queries.queued.refresh();
+           this.$apollo.queries.finished.refresh();
+           this.$apollo.queries.finishedCount.refresh();
+         }
+       }
+     },
+
      started: {
+       forceFetch: true,
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
@@ -88,11 +125,11 @@
            dFilter: Object.assign({status: 'STARTED'},
                                   this.$store.getters.gqlDatasetFilter)
          }
-       },
-       pollInterval: 30000
+       }
      },
 
      queued: {
+       forceFetch: true,
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
@@ -100,11 +137,11 @@
            dFilter: Object.assign({status: 'QUEUED'},
                                   this.$store.getters.gqlDatasetFilter)
          }
-       },
-       pollInterval: 30000
+       }
      },
 
      finished: {
+       forceFetch: true,
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
@@ -112,11 +149,11 @@
            dFilter: Object.assign({status: 'FINISHED'},
                                   this.$store.getters.gqlDatasetFilter)
          }
-       },
-       pollInterval: 30000
+       }
      },
 
      finishedCount: {
+       forceFetch: true,
        query: datasetCountQuery,
        update: data => data.countDatasets,
        variables () {
@@ -124,9 +161,8 @@
            dFilter: Object.assign({status: 'FINISHED'},
                                   this.$store.getters.gqlDatasetFilter)
          }
-       },
-       pollInterval: 30000
-     }
+       }
+     },
    },
 
    methods: {

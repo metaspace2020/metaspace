@@ -2,16 +2,8 @@ import 'babel-polyfill';
 
 import Vue from 'vue';
 
-import ApolloClient, { createBatchingNetworkInterface } from 'apollo-client';
 import VueApollo from 'vue-apollo';
-import config from './clientConfig.json';
-
-const apolloClient = new ApolloClient({
-  networkInterface: createBatchingNetworkInterface({
-    uri: config.graphqlUrl,
-    batchInterval: 10
-  })
-});
+import apolloClient from './graphqlClient';
 Vue.use(VueApollo, {apolloClient});
 
 import ElementUI from 'element-ui';

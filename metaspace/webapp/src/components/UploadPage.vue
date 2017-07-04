@@ -2,13 +2,28 @@
   <div id="upload-page">
     <div id="upload-left-pane">
       <div id="instructions">
-        <p>Welcome to the upload interface for the <a href="http://metaspace2020.eu">METASPACE</a> annotation engine!</p>
-        <p>
-          Datasets can be uploaded in the <a href="http://imzml.org">imzML</a> format as <b>centroided</b> spectra.
-          Please check out our <a href="http://metaspace2020.eu/imzml">instructions</a> for converting datasets into this format:
-          If you are experiencing difficulties in the conversion, please contact your instrument vendor.
+
+        <p style="font-size: 18px" v-if="introIsHidden">
+          <span>Submitting for the first time?</span>
+          <a style="cursor: pointer;" @click="introIsHidden = false">Show instructions</a>
         </p>
-        <p>After processing your annotations will be visible online through our <a href="/#/annotations">results browsing interface</a>.</p>
+
+        <div v-show="!introIsHidden">
+          <p>Thank you for considering submitting your data to METASPACE! Here are the key points you need to know:</p>
+
+          <p><b>Public results, private data</b><br/> Annotation results for all data submitted to METASPACE become public. The submitted data does not become public but you give us a permission to store and process it as well as publicly show and share the annotation results. At any point of time you can request to delete your data or the annotation results.</p>
+
+           <p><b>Type of MS:</b> We can annotate only FTICR- or Orbitrap- imaging MS data.</p>
+
+          <p><b>Format:</b> We can receive only data in the imzML centroided format. Please check out <a href="http://metaspace2020.eu/imzml">our instructions</a> for converting datasets into this format. If you are experiencing difficulties, please contact your instrument vendor.</p>
+
+          <p><b>Step-by-step tutorial:</b> Please read our <a href="https://www.slideshare.net/Metaspace2020/metaspace-training-2017">training guide slides</a> providing an introduction to METASPACE as well as a step-by-step tutorial with screenshots.</p>
+
+          <p><b>Questions or requests?</b> Please email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>. Also, we are always happy to receive your feedback, both positive and negative.</p>
+
+          <p>To start the submission, just drop the files into the box below, fill in the metadata form, and click the Submit button.</p>
+          <p>Have fun using METASPACE!</p>
+        </div>
       </div>
 
       <fine-uploader :config="fineUploaderConfig"
@@ -43,7 +58,8 @@
    data() {
      return {
        fineUploaderConfig: config.fineUploader,
-       enableSubmit: false
+       enableSubmit: false,
+       introIsHidden: true
      }
    },
    components: {

@@ -40,7 +40,8 @@ function decodePayload(jwt) {
 function pathFromUUID(uuid) {
   if (fuConfig.storage == 's3')
     return 's3a://' + fuConfig.aws.s3_bucket + '/' + uuid;
-  // TODO: support local storage
+  else
+    return fuConfig.storage + '/' + uuid + '/';
 }
 
 function getColorScale(name) {
@@ -62,10 +63,10 @@ function createColormap(name) {
 function mzFilterPrecision(value) {
   const splitVal = (value + '').split('.');
   if (splitVal.length == 1) {
-    return 0.5;
+    return 1.0;
   } else {
     const k = splitVal[1].length;
-    return (0.5 * Math.pow(0.1, k)).toFixed(k + 1);
+    return (1.0 * Math.pow(0.1, k)).toFixed(k);
   }
 }
 

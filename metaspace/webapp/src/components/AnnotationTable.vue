@@ -247,7 +247,8 @@
      gqlFilter () {
        return {
          annotationFilter: this.$store.getters.gqlAnnotationFilter,
-         datasetFilter: this.$store.getters.gqlDatasetFilter
+         datasetFilter: this.$store.getters.gqlDatasetFilter,
+         ftsQuery: this.$store.getters.ftsQuery
        };
      },
 
@@ -313,11 +314,12 @@
        store.commit('setCurrentRow', data[rowIndex]);
      },
      queryVariables() {
-       const {annotationFilter, datasetFilter} = this.gqlFilter;
+       const {annotationFilter, datasetFilter, ftsQuery} = this.gqlFilter;
 
        return {
          filter: annotationFilter,
          dFilter: datasetFilter,
+         query: ftsQuery,
          orderBy: this.orderBy,
          sortingOrder: this.sortingOrder,
          offset: this.currentPage * this.recordsPerPage,
@@ -342,7 +344,7 @@
      },
      formatMSM: (row, col) => row.msmScore.toFixed(3),
      formatMZ: (row, col) => row.mz.toFixed(4),
-     formatDatasetName: (row, col) => row.dataset.name.split('//', 2).pop(),
+     formatDatasetName: (row, col) => row.dataset.name,
 
      onSortChange (event) {
        if (!event.order) {

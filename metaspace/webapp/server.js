@@ -11,12 +11,6 @@ var AWS = require('aws-sdk'),
 var env = process.env.NODE_ENV || 'development';
 var conf = require('./conf.js');
 
-var fineUploaderMiddleware;
-if (conf.UPLOAD_DESTINATION != 'S3')
-  fineUploaderMiddleware = require('express-fineuploader-traditional-middleware');
-else
-  fineUploaderMiddleware = require('./fineUploaderS3Middleware.js');
-
 var app = express();
 
 var jwt = require('jwt-simple');
@@ -42,23 +36,6 @@ function Users() {
   return knex('users');
 }
 
-function findUserByGoogleId(googleId) {
-  return Users().where({googleId}).first();
-}
-
-function findOrCreate(user, cb) {
-  findUserByGoogleId(user.googleId).then(resp => {
-    if (resp)
-      cb(null, resp);
-    else
-      Users().insert(user)
-             .then(ids => {
-               cb(null, Object.assign({id: ids[0]}, user));
-             });
-    return null;
-  }).catch((err) => cb(err, null));
-}
-
 app.use(session({
   store: new RedisStore(conf.REDIS_CONFIG),
   secret: conf.COOKIE_SECRET,
@@ -68,66 +45,98 @@ app.use(session({
 
 app.use(favicon(__dirname + '/static/favicon.ico'))
 app.use(bodyParser.json());
-app.use(passport.initialize());
-app.use(passport.session());
 
-passport.use(new GoogleStrategy({
-    clientID: conf.GOOGLE_CLIENT_ID,
-    clientSecret: conf.GOOGLE_CLIENT_SECRET,
-    callbackURL: conf.GOOGLE_CALLBACK_URL
-  },
-  function(accessToken, refreshToken, profile, cb) {
-    findOrCreate({
-      googleId: profile.id,
-      name: profile.displayName,
-      email: profile.emails[0].value
-    }, cb);
+if (conf.GOOGLE_CLIENT_ID) {
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  function findUserByGoogleId(googleId) {
+    return Users().where({googleId}).first();
   }
-));
 
-passport.serializeUser(function(user, done) {
-  done(null, user.id);
-});
+  function findOrCreate(user, cb) {
+    findUserByGoogleId(user.googleId).then(resp => {
+      if (resp)
+        cb(null, resp);
+      else
+        Users().insert(user)
+               .then(ids => {
+                 cb(null, Object.assign({id: ids[0]}, user));
+               });
+      return null;
+    }).catch((err) => cb(err, null));
+  }
 
-passport.deserializeUser(function(id, done) {
-  Users().where('id', '=', id).first()
-         .then(user => done(null, user))
-         .catch(err => {
-           console.log(err);
-           done(null, false);
-         });
-});
+  passport.use(new GoogleStrategy({
+      clientID: conf.GOOGLE_CLIENT_ID,
+      clientSecret: conf.GOOGLE_CLIENT_SECRET,
+      callbackURL: conf.GOOGLE_CALLBACK_URL
+    },
+    function(accessToken, refreshToken, profile, cb) {
+      findOrCreate({
+        googleId: profile.id,
+        name: profile.displayName,
+        email: profile.emails[0].value
+      }, cb);
+    }
+  ));
+
+  passport.serializeUser(function(user, done) {
+    done(null, user.id);
+  });
+
+  passport.deserializeUser(function(id, done) {
+    Users().where('id', '=', id).first()
+           .then(user => done(null, user))
+           .catch(err => {
+             console.log(err);
+             done(null, false);
+           });
+  });
+
+  app.get('/auth/google',
+    passport.authenticate('google', {scope: ['profile', 'email']})
+  );
+
+  app.get('/auth/google/callback',
+    passport.authenticate('google', {
+      successRedirect: '/#/datasets',
+      failureRedirect: '/#/help'
+  }));
+}
 
 var plRedisStore = require('passwordless-redisstore-bcryptjs');
 passwordless.init(new plRedisStore(conf.REDIS_CONFIG.port, conf.REDIS_CONFIG.host));
 
-AWS.config.update({
-  accessKeyId: conf.AWS_ACCESS_KEY_ID,
-  secretAccessKey: conf.AWS_SECRET_ACCESS_KEY,
-  region: 'eu-west-1'
-});
-
-var ses = new AWS.SES();
-
-passwordless.addDelivery((token, uid, recipient, callback, req) => {
-  const host = conf.HOST_NAME;
-  const text = 'Greetings!\nVisit this link to login: http://'
-             + host + '/?token=' + token + '&uid='
-             + encodeURIComponent(uid) + '\n\n\n---\nMETASPACE team'
-
-  ses.sendEmail({
-    Source: 'contact@metaspace2020.eu',
-    Destination: { ToAddresses: [recipient] },
-    Message: {
-      Subject: {Data: 'METASPACE login link'},
-      Body: {Text: {Data: text}}
-    }
-  }, (err, data) => {
-    if (err) console.log(err);
-    console.log('Sent login link to ' + recipient);
-    callback(err);
+if (conf.AWS_ACCESS_KEY_ID) {
+  AWS.config.update({
+    accessKeyId: conf.AWS_ACCESS_KEY_ID,
+    secretAccessKey: conf.AWS_SECRET_ACCESS_KEY,
+    region: 'eu-west-1'
   });
-});
+
+  var ses = new AWS.SES();
+
+  passwordless.addDelivery((token, uid, recipient, callback, req) => {
+    const host = conf.HOST_NAME;
+    const text = 'Greetings!\nVisit this link to login: http://'
+               + host + '/?token=' + token + '&uid='
+               + encodeURIComponent(uid) + '\n\n\n---\nMETASPACE team'
+
+    ses.sendEmail({
+      Source: 'contact@metaspace2020.eu',
+      Destination: { ToAddresses: [recipient] },
+      Message: {
+        Subject: {Data: 'METASPACE login link'},
+        Body: {Text: {Data: text}}
+      }
+    }, (err, data) => {
+      if (err) console.log(err);
+      console.log('Sent login link to ' + recipient);
+      callback(err);
+    });
+  });
+}
 
 app.use(passwordless.sessionSupport());
 app.use(passwordless.acceptToken({ successRedirect: '/'}));
@@ -150,17 +159,6 @@ app.get('/sendToken/',
   (req, res) => {
     res.send('OK');
   });
-
-app.get('/auth/google',
-  passport.authenticate('google', {scope: ['profile', 'email']})
-);
-
-app.get('/auth/google/callback',
-  passport.authenticate('google', {
-    successRedirect: '/#/datasets',
-    failureRedirect: '/#/help'
-}));
-
 app.get('/logout', passwordless.logout(),
         function(req, res, next) {
           req.logout();
@@ -243,7 +241,12 @@ if (env == 'development') {
 }
 
 app.use(router);
-app.use('/upload', fineUploaderMiddleware());
+
+if (conf.UPLOAD_DESTINATION == 's3') {
+  app.use('/upload', require('./fineUploaderS3Middleware.js')());
+} else {
+  app.use('/upload', require('./fineUploaderLocalMiddleware.js')());
+}
 
 app.listen(conf.PORT, () => {
   console.log(`listening on ${conf.PORT} port`);

@@ -3,7 +3,7 @@
 
     <el-dialog title="Provided metadata" v-model="showMetadataDialog">
       <dataset-info :metadata="metadata"
-        expandedKeys="['Sample information', 'Sample preparation']">
+        :expandedKeys="['Sample information', 'Sample preparation']">
       </dataset-info>
     </el-dialog>
 
@@ -47,7 +47,12 @@
 
       <div style="font-size: 15px;">
         Submitted <span class="s-bold">{{ formatDate }}</span>
-        at {{ formatTime }} by {{ formatSubmitter }},
+        at {{ formatTime }} by
+        <span class="ds-add-filter"
+              title="Filter by submitter"
+              @click="addFilter('submitter')">
+              {{ formatSubmitter }}
+        </span>,
         <span class="s-inst ds-add-filter"
               v-html="formatInstitution"
               title="Filter by this lab"
@@ -58,7 +63,17 @@
     <div class="ds-actions">
       <span v-if="dataset.status == 'FINISHED'">
         <i class="el-icon-picture"></i>
-        <router-link :to="resultsHref" >Browse annotations</router-link>
+        <el-popover trigger="hover" placement="top">
+          <div class="db-link-list">
+            Select a database:
+            <div v-for="database in metaboliteDatabases" >
+              <router-link :to="resultsHref(database)">
+                {{ database }}
+              </router-link>
+            </div>
+          </div>
+          <a slot="reference">Browse annotations</a>
+        </el-popover>
         <br/>
       </span>
 
@@ -96,13 +111,6 @@
      DatasetInfo
    },
    computed: {
-     resultsHref() {
-       return {
-         path: '/annotations',
-         query: {ds: this.dataset.id, db: this.preferredDatabase}
-       };
-     },
-
      formatSubmitter() {
        const { name, surname } = this.dataset.submitter;
        return name + " " + surname;
@@ -113,7 +121,7 @@
      },
 
      formatDatasetName() {
-       return this.dataset.name.split('//', 2).pop();
+       return this.dataset.name;
      },
 
      analyzerType() {
@@ -149,8 +157,12 @@
        return JSON.parse(this.dataset.metadataJson);
      },
 
-     preferredDatabase() {
-       return this.metadata.metaspace_options.Metabolite_Database;
+     metaboliteDatabases() {
+       const dbs = this.metadata.metaspace_options.Metabolite_Database;
+       if (typeof dbs === 'string')
+         return [dbs];
+       else
+         return dbs;
      },
 
      formatOrganism() {
@@ -187,7 +199,7 @@
          name: 'edit-metadata',
          params: {dataset_id: this.dataset.id}
        };
-     }
+     },
    },
    data() {
      return {
@@ -195,6 +207,13 @@
      };
    },
    methods: {
+     resultsHref(databaseName) {
+       return {
+         path: '/annotations',
+         query: {ds: this.dataset.id, db: databaseName}
+       };
+     },
+
      showMetadata() {
        this.showMetadataDialog = true;
      },
@@ -203,7 +222,10 @@
        let filter = Object.assign({}, this.$store.getters.filter);
        if (field == 'polarity')
          filter['polarity'] = capitalize(this.dataset.polarity);
-       else
+       else if (field == 'submitter') {
+         const {name, surname} = this.dataset.submitter;
+         filter[field] = {name, surname};
+       } else
          filter[field] = this.dataset[field] || this[field];
        this.$store.commit('updateFilter', filter);
      }
@@ -283,6 +305,10 @@
 
  .queued {
    background-color: lightblue;
+ }
+
+ .db-link-list {
+   font-size: initial;
  }
 
 </style>

@@ -36,7 +36,7 @@
 
                 <div>
                   <el-autocomplete v-if="!prop.enum && enableAutocomplete(propName) && !isFreeText(propName)"
-                                   :trigger-on-focus="false"
+                                   :trigger-on-focus="true"
                                    class="md-ac"
                                    v-model="value[sectionName][propName]"
                                    :required="isRequired(propName, section)"
@@ -67,6 +67,21 @@
                 </span>
               </el-form-item>
 
+              <el-form-item class="control" v-if="prop.type == 'array' && !loading"
+                            :class="isError(sectionName, propName)">
+                <!-- so far it's only for Metabolite_Database  -->
+                <el-select v-if="prop.items.enum"
+                           :required="isRequired(propName, section)"
+                           multiple
+                           v-model="value[sectionName][propName]">
+                  <el-option v-for="opt in prop.items.enum" :value="opt" :label="opt" :key="opt">
+                  </el-option>
+                </el-select>
+                <span class="error-msg" v-if="isError(sectionName, propName)">
+                  {{ getErrorMessage(sectionName, propName) }}
+                </span>
+              </el-form-item>
+
               <div class="control" v-if="prop.type == 'object'" >
                 <el-row>
                   <el-col :span="getWidth(fieldName)"
@@ -91,6 +106,10 @@
                       </el-input-number>
 
                       <div class="subfield-label" v-html="prettify(fieldName, prop).toLowerCase()"></div>
+
+                      <span class="error-msg" v-if="isError(sectionName, propName, fieldName)">
+                        {{ getErrorMessage(sectionName, propName, fieldName) }}
+                      </span>
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -137,9 +156,10 @@
    fetchAutocompleteSuggestionsQuery,
    fetchMetadataQuery
  } from '../api/metadata.js';
+ import gql from 'graphql-tag';
+ import Vue from 'vue';
 
  const ajv = new Ajv({allErrors: true});
- const validator = ajv.compile(metadataSchema);
 
  const FIELD_WIDTH = {
    'Institution': 6,
@@ -170,7 +190,8 @@
  const factories = {
    'string': schema => schema.default || '',
    'number': schema => schema.default || 0,
-   'object': objectFactory
+   'object': objectFactory,
+   'array': schema => schema.default || []
  }
 
  function isEmpty(obj) {
@@ -191,6 +212,8 @@
  function trimEmptyFields(schema, value) {
    if (!(value instanceof Object))
      return value;
+   if (Array.isArray(value))
+     return value;
    let obj = Object.assign({}, value);
    for (var name in schema.properties) {
      const prop = schema.properties[name];
@@ -210,6 +233,15 @@
    name: 'metadata-editor',
    props: ['datasetId', 'enableSubmit', 'disabledSubmitMessage'],
    created() {
+     this.loading = true;
+     this.$apollo.query({query: gql`{molecularDatabases{name}}`}).then(response => {
+       Vue.set(this.schema.properties.metaspace_options.properties.Metabolite_Database.items,
+               'enum',
+               response.data.molecularDatabases.map(d => d.name));
+       this.validator = ajv.compile(this.schema);
+       this.loading = false;
+     });
+
      // no datasetId means a new dataset => help filling out by loading the last submission
      if (!this.datasetId) {
        this.loadLastSubmission();
@@ -321,8 +353,9 @@
 
      submit() {
        const cleanValue = trimEmptyFields(metadataSchema, this.value);
-       validator(cleanValue);
-       this.validationErrors = validator.errors || [];
+
+       this.validator(cleanValue);
+       this.validationErrors = this.validator.errors || [];
 
        if (this.validationErrors.length > 0) {
          this.$message({

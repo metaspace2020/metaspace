@@ -1,13 +1,13 @@
 <template>
   <div class="tf-outer">
     <div class="tf-name">
-      {{ name }}:
+      <i class="el-icon-search" style="color: white"></i>
     </div>
 
-    <tf-input-box mode="number" @change="onChange" :value="value">
-    </tf-input-box>
-
-    <span>± {{ precision }}</span>
+    <input ref="input"
+           class="tf-value-input" type="text"
+           placeholder="enter any keywords"
+           :value="value" @input="onChange($event.target.value)">
 
     <div class="tf-remove el-icon-circle-close"
          v-if="removable"
@@ -16,23 +16,12 @@
 </template>
 
 <script>
- import TagFilterInputBox from './TagFilterInputBox.vue';
- import {mzFilterPrecision} from '../util.js';
 
  export default {
-   name: 'input-filter',
-   components: {
-     'tf-input-box': TagFilterInputBox
-   },
+   name: 'search-box',
    props: {
-     name: String,
      value: [String, Number],
      removable: {type: Boolean, default: true}
-   },
-   computed: {
-     precision() {
-       return mzFilterPrecision(this.value);
-     }
    },
    methods: {
      onChange(val) {

@@ -12,7 +12,7 @@
     <component v-for="f in activeFilters"
                :is="f.type"
                :name="f.name"
-               :options="f.options"
+               :options="getFilterOptions(f)"
                :labels="f.labels"
                :clearable="f.clearable"
                :removable="f.removable"
@@ -33,6 +33,7 @@
  import MultiSelectFilter from './MultiSelectFilter.vue';
  import DatasetNameFilter from './DatasetNameFilter.vue';
  import MzFilter from './MzFilter.vue';
+ import SearchBox from './SearchBox.vue';
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
  import {fetchOptionListsQuery} from '../api/metadata.js';
 
@@ -40,6 +41,7 @@
    'database',
    'fdrLevel',
    'institution',
+   'submitter',
    'datasetIds',
    'compoundName',
    'mz',
@@ -51,18 +53,21 @@
    'analyzerType',
    'ionisationSource',
    'maldiMatrix',
-   'minMSM'
+   'minMSM',
+   'simpleQuery'
  ];
 
  export default {
    name: 'filter-panel',
    props: ["level"],
    components: {
+     // TODO: fetch these from filterSpecs.js
      InputFilter,
      SingleSelectFilter,
      MultiSelectFilter,
      DatasetNameFilter,
-     MzFilter
+     MzFilter,
+     SearchBox
    },
    apollo: {
      optionLists: {
@@ -95,11 +100,13 @@
        return available;
      }
    },
+
    data () {
      return {
        selectedFilterToAdd: null,
      }
    },
+
    methods: {
      makeFilter(filterKey) {
        const filterSpec = FILTER_SPECIFICATIONS[filterKey];
@@ -113,10 +120,6 @@
          }
        };
        let result = Object.assign({}, filterSpec, behaviour);
-       if (!self.optionLists)
-         return result;
-       if (typeof result.options === 'string')
-         result.options = self.optionLists[result.options];
        return result;
      },
 
@@ -125,6 +128,21 @@
          this.selectedFilterToAdd = null;
          this.$store.commit('addFilter', key);
        }
+     },
+
+     getFilterOptions(filter) {
+       // dynamically generated options are supported:
+       // either specify a function of optionLists or one of its field names
+       if (typeof filter.options === 'object')
+         return filter.options;
+       if (!this.optionLists)
+         return [];
+       if (typeof filter.options === 'string')
+         return this.optionLists[filter.options];
+       else if (typeof filter.options === 'function') {
+         return filter.options(this.optionLists);
+       }
+       return [];
      }
    }
  }
