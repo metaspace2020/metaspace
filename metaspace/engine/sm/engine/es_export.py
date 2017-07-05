@@ -51,6 +51,7 @@ ORDER BY COALESCE(m.msm, 0::real) DESC
 '''
 
 DATASET_SEL = '''SELECT
+    dataset.id,
     name,
     config,
     metadata,
@@ -62,7 +63,7 @@ WHERE dataset.id = %s
 GROUP BY dataset.id
 '''
 
-DATASET_COLUMNS = ('ds_name', 'ds_config', 'ds_meta', 'ds_input_path', 'ds_status', 'ds_last_finished')
+DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path', 'ds_status', 'ds_last_finished')
 
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
