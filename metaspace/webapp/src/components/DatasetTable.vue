@@ -123,7 +123,8 @@
        variables () {
          return {
            dFilter: Object.assign({status: 'STARTED'},
-                                  this.$store.getters.gqlDatasetFilter)
+                                  this.$store.getters.gqlDatasetFilter),
+           query: this.$store.getters.ftsQuery
          }
        }
      },
@@ -135,7 +136,8 @@
        variables () {
          return {
            dFilter: Object.assign({status: 'QUEUED'},
-                                  this.$store.getters.gqlDatasetFilter)
+                                  this.$store.getters.gqlDatasetFilter),
+           query: this.$store.getters.ftsQuery
          }
        }
      },
@@ -147,7 +149,8 @@
        variables () {
          return {
            dFilter: Object.assign({status: 'FINISHED'},
-                                  this.$store.getters.gqlDatasetFilter)
+                                  this.$store.getters.gqlDatasetFilter),
+           query: this.$store.getters.ftsQuery
          }
        }
      },
@@ -159,7 +162,8 @@
        variables () {
          return {
            dFilter: Object.assign({status: 'FINISHED'},
-                                  this.$store.getters.gqlDatasetFilter)
+                                  this.$store.getters.gqlDatasetFilter),
+           query: this.$store.getters.ftsQuery
          }
        }
      },
@@ -178,6 +182,8 @@
          return this.finishedCount ? '(' + this.finishedCount + ')' : '';
        if (!this[stage])
          return '';
+       // assume not too many items are queued/being processed
+       // so they are all visible in the web app
        return '(' + this[stage].length + ')';
      }
    }
