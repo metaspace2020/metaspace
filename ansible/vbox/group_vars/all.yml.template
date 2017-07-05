@@ -70,13 +70,13 @@ sm_es_user: elastic
 sm_es_password: elastic
 sm_send_email: false
 
-sm_mol_db_home: /opt/dev/sm-mol-db
-sm_mol_db_branch: master
-sm_mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
-sm_mol_db_image_dir: /var/www/mol-images
-sm_mol_db_image_archives:
+mol_db_home: /opt/dev/sm-mol-db
+mol_db_branch: master
+mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
+mol_db_image_dir: /var/www/mol-images
+mol_db_image_archives:
   - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-hmdb.tar.xz
-sm_mol_db_imports:
+mol_db_imports:
   - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/hmdb_2016_v2.csv
     name: HMDB
     version: 2016

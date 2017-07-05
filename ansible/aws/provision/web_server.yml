@@ -16,9 +16,7 @@
   gather_facts: yes
 
   vars_files:
-    - ../../vars/graphql.yml
     - ../../vars/sm_api.yml
-    - ../../vars/mol_db.yml
 
   roles:
     - role: postgres
@@ -39,6 +37,7 @@
     - role: supervisor
 
     - role: mol_db
+      tags: [mol_db]
 
     - role: sm_api
 
