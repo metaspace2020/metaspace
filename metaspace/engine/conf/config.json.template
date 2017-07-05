@@ -1,21 +1,21 @@
 {
   "db": {
-    "host": "{{ postgres_host }}",
+    "host": "{{ sm_postgres_host }}",
     "database": "sm",
     "user": "sm",
     "password": "{{ sm_postgres_password }}"
   },
   "elasticsearch": {
     "index": "sm",
-    "host": "{{ es_host }}",
-    "port": "{{ es_port }}",
-    "user": "{{ es_user }}",
-    "password": "{{ es_password }}"
+    "host": "{{ sm_es_host }}",
+    "port": "{{ sm_es_port }}",
+    "user": "{{ sm_es_user }}",
+    "password": "{{ sm_es_password }}"
   },
   "services": {
     "iso_images": "{{ sm_iso_images_url }}",
-    "mol_db": "{{ sm_mol_db_url }}",
-    "web_app_url": "{{ sm_web_app_url }}",
+    "mol_db": "{{ mol_db_url }}",
+    "web_app_url": "{{ sm_webapp_url }}",
     "send_email": {{ sm_send_email | to_json }}
   },
   "rabbitmq": {
