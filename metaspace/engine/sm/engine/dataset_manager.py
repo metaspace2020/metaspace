@@ -191,7 +191,7 @@ class DatasetManager(object):
 
         for url in ds_img_urls:
             if url:
-                del_url = '{}/delete/{}'.format(self._sm_config['services']['iso_images'], os.path.split(url)[1])
+                del_url = '{}/delete/{}'.format(self._sm_config['services']['iso_images'], url)
                 img_store.delete_image(del_url)
 
     def delete_ds(self, ds, del_raw_data=False):

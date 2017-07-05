@@ -276,5 +276,5 @@ class ESExporter(object):
         try:
             del_n, _ = bulk(self._es, to_del, timeout='60s')
         except BulkIndexError as e:
-            logger.warning('{} - {}'.format(e.args[0], e.args[1][1]))
+            logger.warning(e.args)
         return del_n
