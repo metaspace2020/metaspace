@@ -219,8 +219,14 @@ type DatasetStatusUpdate {
   dataset: Dataset!
 }
 
+type DatasetDeleteNotification {
+  datasetId: String!
+}
+
 type Subscription {
   datasetStatusUpdated: DatasetStatusUpdate
+
+  datasetDeleted: DatasetDeleteNotification
 }
 
 schema {

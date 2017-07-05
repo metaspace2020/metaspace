@@ -26,15 +26,25 @@ let pg = require('knex')({
 });
 
 function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
+  // wait until updates are reflected in ES so that clients don't have to care
   const maxAttempts = 5;
-  esDatasetByID(ds_id).then(ds => {
-    if (ds === null && attempt <= maxAttempts)
+  esDatasetByID(ds_id).then(function(ds) {
+    if (attempt > maxAttempts) {
+      console.warn(`Failed to propagate dataset update for ${ds_id}`);
+      return;
+    }
+    console.log(attempt, status, ds === null);
+
+    if (ds === null && status == 'DELETED') {
+      setTimeout(() => { pubsub.publish('datasetDeleted', {datasetId: ds_id}); }, 1000);
+    } else if (ds !== null && status != 'DELETED') {
+      const dataset = Object.assign({}, ds, {status});
+      pubsub.publish('datasetStatusUpdated', {dataset});
+    } else {
       setTimeout(publishDatasetStatusUpdate,
                  50 * attempt * attempt,
                  ds_id, status, attempt + 1);
-
-    const dataset = Object.assign({}, ds, {status});
-    pubsub.publish('datasetStatusUpdated', {dataset})
+    }
   });
 }
 
@@ -46,7 +56,7 @@ queue.then(function(conn) {
   return ch.assertQueue(rabbitmqChannel).then(function(ok) {
     return ch.consume(rabbitmqChannel, function(msg) {
       const {ds_id, status} = JSON.parse(msg.content.toString());
-      if (['QUEUED', 'STARTED', 'FINISHED', 'FAILED'].indexOf(status) >= 0)
+      if (['QUEUED', 'STARTED', 'FINISHED', 'FAILED', 'DELETED'].indexOf(status) >= 0)
         publishDatasetStatusUpdate(ds_id, status);
       ch.ack(msg);
     });
@@ -429,7 +439,9 @@ const Resolvers = {
             //   body = JSON.stringify({});
             // else
             //   body = JSON.stringify({ "del_raw": true });
-            return fetch(url, {method: "POST", body: body});
+            return fetch(url, {method: "POST", body: body, headers: {
+                    "Content-Type": "application/json"
+            }});
           })
           .then(res => res.statusText)
           .catch(e => {
@@ -446,9 +458,12 @@ const Resolvers = {
   Subscription: {
     datasetStatusUpdated: {
       subscribe: () => pubsub.asyncIterator('datasetStatusUpdated'),
-      resolve: payload => {
-        return payload;
-      }
+      resolve: payload => { return payload; }
+    },
+
+    datasetDeleted: {
+      subscribe: () => pubsub.asyncIterator('datasetDeleted'),
+      resolve: payload => { return payload; }
     }
   }
 };
