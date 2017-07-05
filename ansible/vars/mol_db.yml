@@ -1,2 +1,0 @@
-mol_db_home: "{{ sm_mol_db_home }}"
-mol_db_postgres_pass: "{{ sm_postgres_password }}"

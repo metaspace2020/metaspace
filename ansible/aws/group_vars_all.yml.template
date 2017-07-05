@@ -69,15 +69,28 @@ sm_es_user: elastic
 sm_es_password: elastic_password
 sm_send_email: true
 
-sm_mol_db_home: /opt/dev/sm-mol-db
-sm_mol_db_branch: rel-v0.7
-sm_mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
-sm_mol_db_image_dir: /var/www/mol-images
-sm_mol_db_image_archives:
+mol_db_home: /opt/dev/sm-mol-db
+mol_db_branch: rel-v0.7
+mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
+mol_db_postgres_pass: postgres_password
+mol_db_image_dir: /var/www/mol-images
+mol_db_image_archives:
   - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-hmdb.tar.xz
-sm_mol_db_imports:
+  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-chebi.tar.xz
+  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-lipid-maps.tar.xz
+  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-swiss-lipids.tar.xz
+mol_db_imports:
   - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/hmdb_2016_v2.csv
     name: HMDB
+    version: 2016
+  - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/chebi_2016_v2.csv
+    name: ChEBI
+    version: 2016
+  - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/lipid_maps_2016.csv
+    name: LIPID_MAPS
+    version: 2016
+  - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/swiss_lipids_2016.csv
+    name: SwissLipids
     version: 2016
 
 sm_graphql_home: /opt/dev/sm-graphql
@@ -109,6 +122,7 @@ sm_webapp_aws_secret_access_key:
 sm_webapp_s3_bucket: bucket-name
 sm_webapp_google_client_id: ""
 sm_webapp_google_client_secret: ""
+sm_webapp_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
 sm_webapp_graphql_url: /graphql
 sm_webapp_upload_destination: s3
 sm_webapp_graphql_ws_public_endpoint: "{{ sm_graphql_ws_public_endpoint }}"
@@ -181,12 +195,12 @@ nginx_sites:
           - include proxy-params.conf;
   - listen: 80
     locations:
+      - path: /mol-images/
+        params:
+          - root /var/www;
       - path: /
         params:
           - proxy_pass http://web_server;
-      - path: /mol-images/
-        params:
-          - proxy_pass http://mol_image_server/mol-images/;
       - path: /iso_images/
         params:
           - proxy_pass http://isotope_image_server/iso_images/;

@@ -68,3 +68,35 @@
 - name: Copy supervisor config file
   template: src=mol-db-api.supervisor.j2 dest=/etc/supervisor/sm-mol-db-api.supervisor
             mode=0600 owner=ubuntu group=ubuntu
+
+- name: Copy database import files
+  get_url:
+    url: "{{ item.url }}"
+    dest: "/tmp/{{ item.url | basename }}"
+  with_items: "{{ mol_db_imports }}"
+
+- name: Import databases
+  shell: |
+    source activate mol_db && \
+    cd {{ mol_db_home }} && \
+    python scripts/import_molecular_db.py \
+      {{ item.name }} \
+      {{ item.version }} \
+      /tmp/{{ item.url | basename }}
+  args:
+    executable: /bin/bash
+  with_items: "{{ mol_db_imports }}"
+
+- name: Create directory for molecular structure images
+  become: yes
+  file: path={{ mol_db_image_dir }} state=directory owner=ubuntu group=ubuntu
+
+- name: Copy molecular structure images
+  become: yes
+  unarchive:
+    src: "{{ item }}"
+    dest: "{{ mol_db_image_dir }}"
+    remote_src: True
+    owner: ubuntu
+    group: ubuntu
+  with_items: "{{ mol_db_image_archives }}"
