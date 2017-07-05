@@ -34,3 +34,8 @@ export const submitDatasetQuery =
   gql`mutation ($jwt: String!, $path: String!, $value: String!) {
     submitDataset(jwt: $jwt, path: $path, metadataJson: $value)
   }`;
+
+export const deleteDatasetQuery =
+  gql`mutation ($jwt: String!, $id: String!) {
+    deleteDataset(jwt: $jwt, datasetId: $id)
+  }`;

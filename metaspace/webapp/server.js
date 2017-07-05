@@ -11,6 +11,8 @@ var AWS = require('aws-sdk'),
 var env = process.env.NODE_ENV || 'development';
 var conf = require('./conf.js');
 
+const LOCAL_SETUP = conf.UPLOAD_DESTINATION != 's3';
+
 var app = express();
 
 var jwt = require('jwt-simple');
@@ -178,6 +180,17 @@ function getRole(email) {
 // (this allows small time discrepancy between different servers)
 // If we want to use longer lifetimes we need to setup HTTPS on all servers.
 router.get('/getToken', (req, res, next) => {
+
+  // basic support for local installations: no authentication, everyone is admin
+  if (!req.user && LOCAL_SETUP) {
+    res.send(jwt.encode({
+      'iss': 'METASPACE2020',
+      'role': 'admin',
+      'email': 'admin@localhost'
+    }, conf.JWT_SECRET));
+    return;
+  }
+
   if (!req.user) {
     res.send(jwt.encode({
       'iss': 'METASPACE2020',

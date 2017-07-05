@@ -29,7 +29,7 @@
 
       <div class="dataset-list">
         <dataset-item v-for="(dataset, i) in datasets"
-                      :dataset="dataset"
+                      :dataset="dataset" :key="dataset.id"
                       :class="[i%2 ? 'even': 'odd']">
         </dataset-item>
       </div>
@@ -82,7 +82,17 @@
 
    apollo: {
      $subscribe: {
-       datasetListUpdated: {
+       datasetDeleted: {
+         query: gql`subscription DD {
+           datasetDeleted { datasetId }
+         }`,
+         result(data) {
+           console.log(data);
+           this.refetchList();
+         }
+       },
+
+       datasetStatusUpdated: {
          query: gql`subscription DS {
            datasetStatusUpdated {
              dataset {
@@ -98,6 +108,7 @@
            }
          }`,
          result(data) {
+           console.log(data);
            const {
              id, name, status, submitter, institution
            } = data.datasetStatusUpdated.dataset;
@@ -119,10 +130,7 @@
              message = `Started processing dataset ${name}`;
            this.$notify({ message, type: statusMap[status] });
 
-           this.$apollo.queries.started.refresh();
-           this.$apollo.queries.queued.refresh();
-           this.$apollo.queries.finished.refresh();
-           this.$apollo.queries.finishedCount.refresh();
+           this.refetchList();
          }
        }
      },
@@ -196,6 +204,13 @@
        // assume not too many items are queued/being processed
        // so they are all visible in the web app
        return '(' + this[stage].length + ')';
+     },
+
+     refetchList() {
+       this.$apollo.queries.started.refresh();
+       this.$apollo.queries.queued.refresh();
+       this.$apollo.queries.finished.refresh();
+       this.$apollo.queries.finishedCount.refresh();
      }
    }
  }
