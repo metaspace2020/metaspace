@@ -85,12 +85,23 @@
        datasetListUpdated: {
          query: gql`subscription DS {
            datasetStatusUpdated {
-             datasetId
-             status
+             dataset {
+               id
+               name
+               status
+               submitter {
+                 name
+                 surname
+               }
+               institution
+             }
            }
          }`,
          result(data) {
-           const {datasetId, status} = data.datasetStatusUpdated;
+           const {
+             id, name, status, submitter, institution
+           } = data.datasetStatusUpdated.dataset;
+           const who = `${submitter.name} ${submitter.surname} (${institution})`;
            const statusMap = {
              FINISHED: 'success',
              QUEUED: 'info',
@@ -99,13 +110,13 @@
            };
            let message = '';
            if (status == 'FINISHED')
-             message = `Processing of dataset ${datasetId} is finished!`;
+             message = `Processing of dataset ${name} is finished!`;
            else if (status == 'FAILED')
-             message = `Something went wrong with dataset ${datasetId} :(`;
+             message = `Something went wrong with dataset ${name} :(`;
            else if (status == 'QUEUED')
-             message = `Dataset ${datasetId} has been added to the queue`;
+             message = `Dataset ${name} has been submitted by ${who}`;
            else if (status == 'STARTED')
-             message = `Started processing dataset ${datasetId}`;
+             message = `Started processing dataset ${name}`;
            this.$notify({ message, type: statusMap[status] });
 
            this.$apollo.queries.started.refresh();
