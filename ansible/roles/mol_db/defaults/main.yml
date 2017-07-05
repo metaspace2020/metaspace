@@ -3,3 +3,4 @@ mol_db_branch: master
 mol_db_port: 5001
 mol_db_miniconda_env:
   name: mol_db
+mol_db_miniconda_prefix: /opt/dev/miniconda3

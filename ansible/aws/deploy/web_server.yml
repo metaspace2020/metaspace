@@ -5,8 +5,6 @@
   hosts: web
 
   vars_files:
-    - ../../vars/graphql.yml
-    - ../../vars/web_app.yml
     - ../../vars/sm_api.yml
     - ../../vars/mol_db.yml
 

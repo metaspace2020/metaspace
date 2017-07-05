@@ -1,32 +1,33 @@
 ---
 
-# should be run with 'become: yes'
-
 - name: Run apt-get update
+  become: yes
   raw: apt-get update
 
 - name: Install python-simplejson
+  become: yes
   raw: apt-get install -y python-simplejson
 
 - name: Reconfigure buggy ubuntu locales
+  become: yes
   template: src=../files/locale dest=/etc/default/locale
     owner=root mode="u=rw,g=r,o=r" force=yes
 
 - name: Create ubuntu user
+  become: yes
   user:
     name: ubuntu
     shell: /bin/bash
     groups: sudo
 
 - name: Upload ssh key file "{{ pub_key_file }}"
+  become: yes
   authorized_key: user=ubuntu key="{{ lookup('file', '{{ pub_key_file }}') }}"
   when: upload_key
 
-- name: Update apt cache
-  apt: update_cache=yes
-
 - name: Install misc packages
-  apt: name={{ item }} state=present
+  become: yes
+  apt: name={{ item }} state=present update_cache=yes
   with_items:
     - htop
     - iotop
@@ -35,12 +36,15 @@
     - git
     - software-properties-common
     - python-pip
+    - libssl-dev
 
 - name: Update pip
+  become: yes
   pip:
     name: pip
     state: latest
 
 - name: Add swap file
+  become: yes
   script: increase_swap.sh {{ swapsize }}
   when: swapsize|int > 0

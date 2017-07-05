@@ -16,13 +16,9 @@
   gather_facts: yes
 
   vars_files:
-    - ../../vars/web_app.yml
     - ../../vars/graphql.yml
-
-  vars:
-    kibana_version: "{{ elasticsearch_version }}"
-    venv: "{{ miniconda_prefix }}"
-    conda_env: "{{ miniconda_env.name }}"
+    - ../../vars/sm_api.yml
+    - ../../vars/mol_db.yml
 
   roles:
     - role: postgres
@@ -33,7 +29,6 @@
 
     - role: kibana
       become: yes
-      es_port: 9200
 
     - role: nginx
 
@@ -44,13 +39,8 @@
     - role: supervisor
 
     - role: mol_db
-      mol_db_home: "{{ sm_mol_db_home }}"
-      mol_db_postgres_pass: "{{ sm_postgres_password }}"
-      miniconda_env:
-        name: mol_db
 
     - role: sm_api
-      sm_web_app_url: "{{ sm_webapp_url }}"
 
     - role: nodejs
 

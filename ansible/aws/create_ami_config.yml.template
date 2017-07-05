@@ -4,7 +4,8 @@ aws_region: eu-west-1
 aws_key_name:  # should be provided
 
 miniconda_prefix: /opt/dev/miniconda3
-miniconda_env_name: sm
+miniconda_env:
+  name: sm
 
 cluster_configuration:
   instances:

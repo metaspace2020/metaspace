@@ -50,7 +50,9 @@
   args:
     chdir: "{{ mol_db_home }}"
     executable: /bin/bash
-  shell: "source {{ venv }}/bin/activate mol_db && conda install -c openbabel openbabel"
+  shell: >
+    source {{ mol_db_miniconda_prefix }}/bin/activate {{ mol_db_miniconda_env.name }}
+    && conda install -c openbabel openbabel
 
 - name: Pull MolDB config from the remote host
   fetch: src={{ mol_db_home }}/conf/local.ini.template dest=/tmp/local.ini.template

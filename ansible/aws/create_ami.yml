@@ -27,13 +27,13 @@
 
   tasks:
     - debug: var=ansible_date_time.iso8601
-    - debug: var=hostvars['master'].ansible_ec2_instance_id
-    - debug: var=hostvars['slave'].ansible_ec2_instance_id
+    - debug: var=hostvars['master-1'].ansible_ec2_instance_id
+    - debug: var=hostvars['slave-1'].ansible_ec2_instance_id
 
     - name: Create a master AMI
       ec2_ami:
         name: "{{ master_hostgroup }}-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}"
-        instance_id: "{{ hostvars['master'].ansible_ec2_instance_id }}"
+        instance_id: "{{ hostvars['master-1'].ansible_ec2_instance_id }}"
         tags: {"hostgroup": "{{ master_hostgroup }}" }
         wait: yes
       register: instance
@@ -43,7 +43,7 @@
     - name: Create a slave AMI
       ec2_ami:
         name: "{{ slave_hostgroup }}-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}"
-        instance_id: "{{ hostvars['slave'].ansible_ec2_instance_id }}"
+        instance_id: "{{ hostvars['slave-1'].ansible_ec2_instance_id }}"
         tags: {"hostgroup": "{{ slave_hostgroup }}" }
         wait: yes
       register: instance

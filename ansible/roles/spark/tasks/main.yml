@@ -49,8 +49,7 @@
 - name: Extract Spark distribution
   unarchive: src="{{ spark_src_dir }}/spark-{{ spark_version }}.tar.gz"
              dest="{{ spark_usr_parent_dir }}"
-             copy=no
-             creates="{{ spark_usr_parent_dir }}/spark-{{ spark_version }}"
+             remote_src=yes
 
 - name: Setup Spark distribution symlinks
   file: src="{{ item.src }}"
