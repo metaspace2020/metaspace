@@ -56,8 +56,8 @@ DATASET_SEL = '''SELECT
     metadata,
     input_path,
     dataset.status,
-    max(finish)
-FROM dataset JOIN job ON job.ds_id = dataset.id
+    to_char(max(finish), 'YYYY-MM-DD HH:MI:SS')
+FROM dataset LEFT JOIN job ON job.ds_id = dataset.id
 WHERE dataset.id = %s
 GROUP BY dataset.id
 '''
@@ -168,26 +168,26 @@ class ESIndexManager(object):
 
 
 class ESExporter(object):
-    def __init__(self, es_config=None):
+    def __init__(self, db, es_config=None):
         if not es_config:
             es_config = SMConfig.get_conf()['elasticsearch']
         self._es = init_es_conn(es_config)
-        self._db = DB(SMConfig.get_conf()['db'])
+        self._db = db
         self.index = es_config['index']
 
     def _remove_mol_db_from_dataset(self, ds_id, mol_db):
-        dataset = self._es.get(self.index, id=ds_id, doc_type='dataset')
+        dataset = self._es.get_source(self.index, id=ds_id, doc_type='dataset')
         dataset['annotation_counts'] = \
-            [entry for entry in dataset['annotation_counts']
+            [entry for entry in dataset.get('annotation_counts', [])
                    if not (entry['db']['name'] == mol_db.name and
                            entry['db']['version'] == mol_db.version)]
-        self._es.update(self.index, id=ds_id, body=dataset, doc_type='dataset')
+        self._es.update(self.index, id=ds_id, body={'doc': dataset}, doc_type='dataset')
         return dataset
 
     def sync_dataset(self, ds_id):
         dataset = dict(zip(DATASET_COLUMNS, self._db.select(DATASET_SEL, ds_id)[0]))
         if self._es.exists(index=self.index, doc_type='dataset', id=ds_id):
-            self._es.update(index=self.index, id=ds_id, doc_type='dataset', body=dataset)
+            self._es.update(index=self.index, id=ds_id, doc_type='dataset', body={'doc': dataset})
         else:
             self._es.index(index=self.index, id=ds_id, doc_type='dataset', body=dataset)
 
@@ -199,6 +199,7 @@ class ESExporter(object):
             dataset = self._remove_mol_db_from_dataset(ds_id, mol_db)
         except NotFoundError:
             dataset = dict(zip(DATASET_COLUMNS, self._db.select(DATASET_SEL, ds_id)[0]))
+        if 'annotation_counts' not in dataset:
             dataset['annotation_counts'] = []
 
         annotation_counts = defaultdict(int)

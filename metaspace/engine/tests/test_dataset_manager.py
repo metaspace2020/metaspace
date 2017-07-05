@@ -16,10 +16,11 @@ def test_dataset_manager_add_ds_new_ds_id(QueuePublisherMock, test_db, sm_config
     qpub_mock = QueuePublisherMock()
 
     db = DB(sm_config['db'])
+    es = MagicMock(spec=ESExporter)
     try:
         ds = Dataset('new_ds_id', 'ds_name', 'input_path',
                      {'metaspace_options': {'notify_submitter': False}}, ds_config)
-        ds_man = DatasetManager(db, None, mode='queue')
+        ds_man = DatasetManager(db, es, mode='queue')
         ds_man.add_ds(ds)
 
         rows = db.select('SELECT * FROM dataset')
@@ -43,7 +44,7 @@ def test_dataset_manager_add_ds_ds_id_exists(QueuePublisherMock, ImageStoreServi
     qpub_mock = QueuePublisherMock()
     img_store = ImageStoreServiceWrapperMock()
     db = DB(sm_config['db'])
-    es = MagicMock(ESExporter())
+    es = MagicMock(spec=ESExporter)
     try:
         db.insert("INSERT INTO dataset VALUES (%s, %s, %s, %s, %s)",
                   rows=[('ds_id', 'ds_name', 'input_path', '{}', '{}')])
@@ -83,7 +84,7 @@ def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_con
     moldb_mock = MolecularDBMock()
 
     db = DB(sm_config['db'])
-    es = MagicMock(ESExporter())
+    es = MagicMock(spec=ESExporter)
     try:
         db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
                   rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', json.dumps(ds_config))])
@@ -109,7 +110,7 @@ def test_dataset_manager_update_ds_new_job_submitted(QueuePublisherMock, test_db
 
     qpub_mock = QueuePublisherMock()
     db = DB(sm_config['db'])
-    es = MagicMock(ESExporter())
+    es = MagicMock(spec=ESExporter)
     try:
         db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
                   rows=[('ds_id', 'ds_name', 'input_path',
@@ -161,7 +162,7 @@ def test_dataset_manager_delete_ds_works(WorkDirManagerMock, ImageStoreServiceWr
 
     img_store = ImageStoreServiceWrapperMock()
     db = DB(sm_config['db'])
-    es = MagicMock(ESExporter())
+    es = MagicMock(spec=ESExporter)
     wd_man = WorkDirManagerMock()
     try:
         db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',

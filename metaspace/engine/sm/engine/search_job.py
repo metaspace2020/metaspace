@@ -150,13 +150,13 @@ class SearchJob(object):
             start = time.time()
 
             self._init_db()
+            self._es = ESExporter(self._db)
             self._ds = Dataset.load_ds(ds_id, self._db)
             self._ds_man = DatasetManager(self._db, self._es, 'queue')
             self._ds_man.set_ds_status(self._ds, DatasetStatus.STARTED)
 
             self._wd_manager = WorkDirManager(ds_id)
             self._configure_spark()
-            self._es = ESExporter()
 
             if not self.no_clean:
                 self._wd_manager.clean()

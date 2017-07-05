@@ -44,7 +44,7 @@ def add_ds():
                  params.get('metadata', None),
                  params.get('config'))
     db = _create_db_conn()
-    ds_man = DatasetManager(db, ESExporter(), mode='queue')
+    ds_man = DatasetManager(db, ESExporter(db), mode='queue')
     ds_man.add_ds(ds)
     db.close()
     return OK['title']
@@ -61,7 +61,7 @@ def update_ds(ds_id):
         ds.meta = params.get('metadata', ds.meta)
         ds.config = params.get('config', ds.config)
 
-        ds_man = DatasetManager(db, ESExporter(), mode='queue')
+        ds_man = DatasetManager(db, ESExporter(db), mode='queue')
         ds_man.update_ds(ds)
         db.close()
         return OK['title']
@@ -79,7 +79,7 @@ def delete_ds(ds_id):
         db = _create_db_conn()
         ds = Dataset.load_ds(ds_id, db)
 
-        ds_man = DatasetManager(db, ESExporter(), mode='queue')
+        ds_man = DatasetManager(db, ESExporter(db), mode='queue')
         ds_man.delete_ds(ds, del_raw_data=del_raw)
         db.close()
         return OK['title']

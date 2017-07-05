@@ -42,7 +42,7 @@ if __name__ == "__main__":
     logger = logging.getLogger('sm-engine')
 
     db = DB(sm_config['db'])
-    es_exp = ESExporter()
+    es_exp = ESExporter(db)
 
     if args.ds_name:
         if args.ds_id:
