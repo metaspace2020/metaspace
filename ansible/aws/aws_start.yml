@@ -27,11 +27,11 @@
   gather_facts: True
 
   tasks:
-    - debug: var=hostvars['master']['ansible_ssh_host']
+    - debug: var=hostvars['master-1']['ansible_ssh_host']
 
     - name: Wait for SSH on the master to come up
       wait_for:
-        host: "{{ hostvars['master']['ansible_ssh_host'] }}"
+        host: "{{ hostvars['master-1']['ansible_ssh_host'] }}"
         port: 22
         timeout: 300
         state: started

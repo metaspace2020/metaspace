@@ -54,11 +54,18 @@
   template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
             owner=ubuntu group=ubuntu mode=0600
 
+- name: Uninstall SM from conda environment
+  args:
+    chdir: "{{ sm_home }}"
+    executable: /bin/bash
+  shell: "{{ activate_venv }} && pip uninstall -y sm"
+  ignore_errors: yes
+
 - name: Install SM into conda environment
   args:
-    chdir: /opt/dev/sm
+    chdir: "{{ sm_home }}"
     executable: /bin/bash
-  shell: "source {{ venv }}/bin/activate {{ conda_env }} && pip install -U ."
+  shell: "{{ activate_venv }} && pip install ."
 
 - name: Make sure that a directory for the SM logs exists
   file: path={{ sm_home }}/logs state=directory mode=0755
@@ -68,7 +75,7 @@
             mode=0600 owner=ubuntu group=ubuntu
 
 - name: Create SM ElasticSearch index
-  shell: source {{ venv }}/bin/activate {{ conda_env }} && python scripts/create_es_index.py --drop
+  shell: source {{ miniconda_prefix }}/bin/activate {{ conda_env }} && python scripts/create_es_index.py --drop
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash

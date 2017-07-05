@@ -26,7 +26,7 @@
             owner=ubuntu group=ubuntu mode=0600
 
 - name: Update the inventory file
-  command: python update_inventory.py --stage {{ stage }}
+  command: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python update_inventory.py --stage {{ stage }}"
   args:
     chdir: "{{ sm_ansible_home }}/aws"
 

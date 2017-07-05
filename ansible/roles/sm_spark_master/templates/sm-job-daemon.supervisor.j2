@@ -3,7 +3,7 @@
 [program:sm-job-daemon]
 process_name = sm-job-daemon
 directory = {{ sm_home }}
-environment = SPARK_HOME="{{ spark_home }}",PYTHONPATH="{{ spark_home }}/python",PYSPARK_PYTHON="{{ venv }}/envs/sm/bin/python"
+environment = SPARK_HOME="{{ spark_home }}",PYTHONPATH="{{ spark_home }}/python",PYSPARK_PYTHON="{{ miniconda_prefix }}/envs/sm/bin/python"
 command = bash scripts/run.sh scripts/run_sm_job_daemon.py
 redirect_stderr = true
 stdout_logfile = {{ sm_home }}/logs/sm-job-daemon.log

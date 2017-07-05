@@ -1,2 +1,6 @@
 spark_master_host: "spark://{{ ansible_hostname }}.{{ aws_region }}.compute.internal:7077"
 sm_web_app_url: "{{ sm_webapp_url }}"
+es_host: "{{ sm_es_host }}"
+es_port: "{{ sm_es_port }}"
+es_user: "{{ sm_es_user }}"
+es_password: "{{ sm_es_password }}"
