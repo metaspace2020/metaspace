@@ -216,8 +216,7 @@ type Mutation {
 }
 
 type DatasetStatusUpdate {
-  datasetId: String!
-  status: JobStatus!
+  dataset: Dataset!
 }
 
 type Subscription {

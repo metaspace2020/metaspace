@@ -25,6 +25,19 @@ let pg = require('knex')({
   searchPath: 'knex,public'
 });
 
+function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
+  const maxAttempts = 5;
+  esDatasetByID(ds_id).then(ds => {
+    if (ds === null && attempt <= maxAttempts)
+      setTimeout(publishDatasetStatusUpdate,
+                 50 * attempt * attempt,
+                 ds_id, status, attempt + 1);
+
+    const dataset = Object.assign({}, ds, {status});
+    pubsub.publish('datasetStatusUpdated', {dataset})
+  });
+}
+
 let queue = require('amqplib').connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`);
 let rabbitmqChannel = 'sm_dataset_status';
 queue.then(function(conn) {
@@ -34,7 +47,7 @@ queue.then(function(conn) {
     return ch.consume(rabbitmqChannel, function(msg) {
       const {ds_id, status} = JSON.parse(msg.content.toString());
       if (['QUEUED', 'STARTED', 'FINISHED', 'FAILED'].indexOf(status) >= 0)
-        pubsub.publish('datasetStatusUpdated', {datasetId: ds_id, status});
+        publishDatasetStatusUpdate(ds_id, status);
       ch.ack(msg);
     });
   });
