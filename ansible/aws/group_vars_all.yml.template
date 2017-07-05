@@ -182,6 +182,9 @@ nginx_sites:
       - path: /ws
         params:
           - proxy_pass http://grapqhl_ws_server/graphql;
+          - proxy_http_version 1.1;
+          - proxy_set_header Upgrade $http_upgrade;
+          - proxy_set_header Connection "upgrade";
           - include proxy-params.conf;
       - path: /mol_db/
         params:
