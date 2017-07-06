@@ -133,6 +133,7 @@ const Resolvers = {
     countDatasetsPerGroup(_, {query}) {
       const args = {
         datasetFilter: query.filter,
+        simpleQuery: query.simpleQuery,
         filter: {},
         groupingFields: query.fields
       };

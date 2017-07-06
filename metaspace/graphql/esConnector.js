@@ -238,8 +238,12 @@ module.exports.esCountGroupedResults = function(args, docType) {
   const body = addTermAggregations(q, args.groupingFields);
   logger.info(body);
   const request = { body, index: esIndex, size: 0 };
+  console.time('esAgg');
   return es.search(request)
-    .then(resp => flattenAggResponse(args.groupingFields, resp.aggregations, 0))
+    .then(resp => {
+      console.timeEnd('esAgg');
+      return flattenAggResponse(args.groupingFields, resp.aggregations, 0);
+    })
     .catch((e) => {
       logger.error(e);
       return e.message;

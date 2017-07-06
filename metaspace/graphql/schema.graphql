@@ -194,6 +194,7 @@ input DatasetFilter {
 input DatasetCountPerGroupInput {
   fields: [DatasetAggField!]!
   filter: DatasetFilter = {}
+  simpleQuery: String
 }
 
 type DatasetCountPerGroupListElement {
