@@ -5,10 +5,7 @@
   user: ubuntu
 
   vars_files:
-    - ../vars/web_app.yml
-    - ../vars/graphql.yml
     - ../vars/sm_api.yml
-    - ../vars/mol_db.yml
 
   tasks:
     - include: ../deploy_tasks/graphql.yml

@@ -200,6 +200,7 @@ nginx_sites:
       - path: /
         params:
           - proxy_pass http://web_server;
+          - client_max_body_size 5M;
       - path: /iso_images/
         params:
           - proxy_pass http://isotope_image_server/iso_images/;

@@ -1,18 +1,11 @@
 ---
 
 - name: Set up SM services
-  hosts: web
+  hosts: sm-vbox
   user: ubuntu
 
   vars_files:
-    - ../vars/web_app.yml
-    - ../vars/graphql.yml
     - ../vars/sm_api.yml
-    - ../vars/mol_db.yml
-
-  vars:
-    venv: "{{ miniconda_prefix }}"
-    conda_env: "{{ miniconda_env.name }}"
 
   roles:
     - role: postgres
@@ -44,7 +37,7 @@
 
 
 - name: Set up SM engine
-  hosts: web
+  hosts: sm-vbox
   user: ubuntu
 
   vars_files:

@@ -36,7 +36,8 @@
   file: path={{ sm_webapp_home }}/logs state=directory mode=0755
 
 - name: Create upload directory
-  file: path={{ sm_webapp_upload_destination }} state=directory mode=0755
+  become: yes
+  file: path={{ sm_webapp_upload_destination }} state=directory mode=0755 owner=ubuntu group=ubuntu
   when: sm_webapp_upload_destination != 's3'
 
 - name: Copy supervisor config file
