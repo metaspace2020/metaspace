@@ -70,6 +70,20 @@ type Dataset {
   inputPath: String
 }
 
+# fields of categorical type
+enum DatasetAggField {
+  DF_INSTITUTION,
+  DF_SUBMITTER_FIRST_NAME,
+  DF_SUBMITTER_SURNAME,
+  DF_POLARITY,
+  DF_ION_SOURCE,
+  DF_ANALYZER_TYPE,
+  DF_ORGANISM,
+  DF_ORGANISM_PART,
+  DF_CONDITION,
+  DF_MALDI_MATRIX
+}
+
 type CompoundInfoEntry {
   database: String!
   url: String
@@ -177,6 +191,20 @@ input DatasetFilter {
   status: JobStatus
 }
 
+input DatasetCountPerGroupInput {
+  fields: [DatasetAggField!]!
+  filter: DatasetFilter = {}
+}
+
+type DatasetCountPerGroupListElement {
+  fieldValues: [String!]!  # corresponding to input fields
+  count: Int!
+}
+
+type DatasetCountPerGroup {
+  counts: [DatasetCountPerGroupListElement]
+}
+
 type Query {
   dataset(id: String!): Dataset
   datasetByName(name: String!): Dataset
@@ -194,6 +222,8 @@ type Query {
                  simpleQuery: String): [Annotation]
 
   countDatasets(filter: DatasetFilter = {}, simpleQuery: String): Int!
+
+  countDatasetsPerGroup(query: DatasetCountPerGroupInput!): DatasetCountPerGroup!
 
   countAnnotations(filter: AnnotationFilter = {},
                    datasetFilter: DatasetFilter = {},

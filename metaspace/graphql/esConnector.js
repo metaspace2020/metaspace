@@ -169,6 +169,70 @@ module.exports.esCountResults = function(args, docType) {
   });
 };
 
+const fieldEnumToSchemaPath = {
+  DF_INSTITUTION: datasetFilters.institution.esField,
+  DF_SUBMITTER_FIRST_NAME: datasetFilters.submitter.esField + '.First_Name',
+  DF_SUBMITTER_SURNAME: datasetFilters.submitter.esField + '.Surname',
+  DF_POLARITY: datasetFilters.polarity.esField,
+  DF_ION_SOURCE: datasetFilters.ionisationSource.esField,
+  DF_ANALYZER_TYPE: datasetFilters.analyzerType.esField,
+  DF_ORGANISM: datasetFilters.organism.esField,
+  DF_ORGANISM_PART: datasetFilters.organismPart.esField,
+  DF_CONDITION: datasetFilters.condition.esField,
+  DF_MALDI_MATRIX: datasetFilters.maldiMatrix.esField
+};
+
+function addTermAggregations(requestBody, fields) {
+  const esFields = fields.map(f => fieldEnumToSchemaPath[f]);
+  let aggregations = null;
+  for (let i = fields.length - 1; i >= 0; --i) {
+    const f = fields[i], ef = esFields[i];
+    let tmp = { aggs: { [f]: { terms: { field: ef } } } };
+
+    if (aggregations)
+      tmp.aggs[f] = Object.assign(aggregations, tmp.aggs[f]);
+    aggregations = tmp;
+  }
+  requestBody = Object.assign(aggregations, requestBody);
+  return requestBody;
+}
+
+function flattenAggResponse(fields, aggs, idx) {
+  const {buckets} = aggs[fields[idx]];
+  let counts = [];
+  for (let bucket of buckets) {
+    const {key, doc_count} = bucket;
+
+    // handle base case
+    if (idx + 1 == fields.length) {
+      counts.push({fieldValues: [key], count: doc_count});
+      continue;
+    }
+
+    const nextField = fields[idx + 1],
+          subAggs = {[nextField]: bucket[nextField]},
+          nextCounts = flattenAggResponse(fields, subAggs, idx + 1).counts;
+
+    for (let {fieldValues, count} of nextCounts)
+      counts.push({fieldValues: [key].concat(fieldValues), count});
+  }
+
+  return { counts };
+}
+
+module.exports.esCountGroupedResults = function(args, docType) {
+  const q = constructAnnotationQuery(args, docType);
+  const body = addTermAggregations(q, args.groupingFields);
+  logger.info(body);
+  const request = { body, index: esIndex, size: 0 };
+  return es.search(request)
+    .then(resp => flattenAggResponse(args.groupingFields, resp.aggregations, 0))
+    .catch((e) => {
+      logger.error(e);
+      return e.message;
+    });
+}
+
 function getById(docType, id) {
   return es.get({index: esIndex, type: docType, id})
   .then((resp) => {

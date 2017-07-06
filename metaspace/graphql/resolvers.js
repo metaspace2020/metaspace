@@ -4,7 +4,7 @@ const sprintf = require('sprintf-js'),
   {UserError} = require('graphql-errors');
 
 const config = require('config'),
-  {esSearchResults, esCountResults,
+  {esSearchResults, esCountResults, esCountGroupedResults,
    esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {generateProcessingConfig, metadataChangeSlackNotify,
@@ -128,6 +128,15 @@ const Resolvers = {
       args.datasetFilter = args.filter;
       args.filter = {};
       return esCountResults(args, 'dataset');
+    },
+
+    countDatasetsPerGroup(_, {query}) {
+      const args = {
+        datasetFilter: query.filter,
+        filter: {},
+        groupingFields: query.fields
+      };
+      return esCountGroupedResults(args, 'dataset');
     },
 
     countAnnotations(_, args) {
