@@ -16,7 +16,6 @@ postgres_port: 5432
 elasticsearch_version: 5.2.2
 
 kibana_version: "{{ elasticsearch_version }}"
-kibana_version: "{{ elasticsearch_version }}"
 kibana_user: kibana
 kibana_password: kibana_password
 kibana_es_port: 9200

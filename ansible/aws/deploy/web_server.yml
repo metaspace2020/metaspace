@@ -6,14 +6,12 @@
 
   vars_files:
     - ../../vars/sm_api.yml
-    - ../../vars/mol_db.yml
 
   tasks:
     - include: ../../deploy_tasks/mol_db.yml
       tags: [mol_db]
 
     - include: ../../deploy_tasks/sm_api.yml
-#      sm_web_app_url: ""
       tags: [sm_api]
 
     - include: ../../deploy_tasks/graphql.yml

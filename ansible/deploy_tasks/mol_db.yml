@@ -4,7 +4,7 @@
     repo=https://github.com/METASPACE2020/sm-molecular-db.git
     update=yes
     force=yes
-    version={{ sm_mol_db_branch }}
+    version={{ mol_db_branch }}
   when: local_deploy is not defined
   register: git_deploy
   until: git_deploy | succeeded
