@@ -222,6 +222,19 @@ function flattenAggResponse(fields, aggs, idx) {
 
 module.exports.esCountGroupedResults = function(args, docType) {
   const q = constructAnnotationQuery(args, docType);
+
+  if (args.groupingFields.length == 0) {
+    // handle case of no grouping for convenience
+    logger.info(q);
+    const request = { body: q, index: esIndex };
+    return es.count(request).then((resp) => {
+      return {counts: [{fieldValues: [], count: resp.count}]};
+    }).catch((e) => {
+      logger.error(e);
+      return e.message;
+    });
+  }
+
   const body = addTermAggregations(q, args.groupingFields);
   logger.info(body);
   const request = { body, index: esIndex, size: 0 };
