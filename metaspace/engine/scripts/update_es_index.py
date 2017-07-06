@@ -33,7 +33,7 @@ def _reindex_datasets(rows, es_exp, del_first=True):
         try:
             for mol_db_dict in ds_config['databases']:
                 mol_db = MolecularDB(name=mol_db_dict['name'], version=mol_db_dict.get('version', None),
-                                     ds_config=ds_config)
+                                     iso_gen_config=ds_config['isotope_generation'])
                 es_exp.index_ds(ds_id, mol_db, del_first=del_first)
         except Exception as e:
             new_msg = 'Failed to reindex(ds_id={}, ds_name={}): {}'.format(ds_id, ds_name, e)
