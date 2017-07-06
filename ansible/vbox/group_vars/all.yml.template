@@ -177,7 +177,7 @@ nginx_sites:
           - include proxy-params.conf;
       - path: /ws
         params:
-          - proxy_pass http://grapqhl_ws_server/graphql;
+          - proxy_pass http://graphql_ws_server/graphql;
           - proxy_http_version 1.1;
           - proxy_set_header Upgrade $http_upgrade;
           - proxy_set_header Connection "upgrade";
