@@ -46,6 +46,7 @@
 
         <div v-else>
           <mass-spec-setup-plot></mass-spec-setup-plot>
+          <submitter-summary-plot></submitter-summary-plot>
         </div>
       </div>
     </div>
@@ -57,6 +58,7 @@
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
  import MassSpecSetupPlot from './plots/MSSetupSummaryPlot.vue';
+ import SubmitterSummaryPlot from './plots/SubmitterSummaryPlot.vue';
  import gql from 'graphql-tag';
 
  const processingStages = ['started', 'queued', 'finished'];
@@ -73,7 +75,8 @@
    components: {
      DatasetItem,
      FilterPanel,
-     MassSpecSetupPlot
+     MassSpecSetupPlot,
+     SubmitterSummaryPlot
    },
 
    computed: {
