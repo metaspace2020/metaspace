@@ -154,19 +154,19 @@
           .selectAll('text')
               .attr("transform", 'rotate(-80) translate(5, -20)')
               .style("text-anchor", "start")
-              .style('font-size', '20px')
+              .style('font-size', '14px')
               .style('fill', 'blue')
 
       const axisTitles = svg.append('g');
       axisTitles.append('text').text('Datasets')
           .attr('transform', `translate(-50, ${height/4}) rotate(-90)`)
           .attr('text-anchor', 'middle')
-          .style('font-size', '18px')
+          .style('font-size', '12px')
                 
       axisTitles.append('text').text('Contributors')
           .attr('transform', `translate(-50, ${height*3.0/4}) rotate(-90)`)
           .attr('text-anchor', 'middle')
-          .style('font-size', '18px')
+          .style('font-size', '12px')
               
       addMainTitle(svg, geometry, 'Contributing labs').style('font-size', '20px');
     }
