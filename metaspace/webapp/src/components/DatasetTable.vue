@@ -4,34 +4,49 @@
       <div id="dataset-page-head">
         <filter-panel level="dataset"></filter-panel>
 
-        <el-checkbox-group v-model="categories" :min=1 style="padding: 4px;">
-          <el-checkbox class="cb-started" label="started">Processing {{ count('started') }}</el-checkbox>
-          <el-checkbox class="cb-queued" label="queued">Queued {{ count('queued') }}</el-checkbox>
-          <el-checkbox label="finished">Finished {{ count('finished') }}</el-checkbox>
-        </el-checkbox-group>
+        <div>
+          <el-form :inline="true" style="display: inline-flex">
+            <el-radio-group v-model="displayMode" size="small">
+              <el-radio-button label="List"></el-radio-button>
+              <el-radio-button label="Summary"></el-radio-button>
+            </el-radio-group>
 
-        <div v-if="noFilters"
-             style="font: 24px 'Roboto', sans-serif; padding: 5px;">
-          <span v-if="noFilters">
-            Recent uploads
-          </span>
+            <el-checkbox-group v-model="categories" :min=1 style="padding: 5px 20px;"
+                               v-if="displayMode == 'List'">
+              <el-checkbox class="cb-started" label="started">Processing {{ count('started') }}</el-checkbox>
+              <el-checkbox class="cb-queued" label="queued">Queued {{ count('queued') }}</el-checkbox>
+              <el-checkbox label="finished">Finished {{ count('finished') }}</el-checkbox>
+            </el-checkbox-group>
+          </el-form>
         </div>
 
-        <div v-else
-             style="font: 18px 'Roboto', sans-serif; padding: 5px;">
-          <span v-if="nonEmpty">
-            Search results in reverse chronological order
-          </span>
-          <span v-else>No datasets found</span>
+        <div v-if="displayMode == 'List'">
+          <div v-if="noFilters"
+               style="font: 24px 'Roboto', sans-serif; padding: 5px;">
+            <span v-if="noFilters">
+              Recent uploads
+            </span>
+          </div>
+
+          <div v-else
+               style="font: 18px 'Roboto', sans-serif; padding: 5px;">
+            <span v-if="nonEmpty">
+              Search results in reverse chronological order
+            </span>
+            <span v-else>No datasets found</span>
+          </div>
+
+          <div class="dataset-list">
+            <dataset-item v-for="(dataset, i) in datasets"
+                          :dataset="dataset" :key="dataset.id"
+                          :class="[i%2 ? 'even': 'odd']">
+            </dataset-item>
+          </div>
         </div>
 
-      </div>
-
-      <div class="dataset-list">
-        <dataset-item v-for="(dataset, i) in datasets"
-                      :dataset="dataset" :key="dataset.id"
-                      :class="[i%2 ? 'even': 'odd']">
-        </dataset-item>
+        <div v-else>
+          <mass-spec-setup-plot></mass-spec-setup-plot>
+        </div>
       </div>
     </div>
   </div>
@@ -41,6 +56,7 @@
  import {datasetListQuery, datasetCountQuery} from '../api/dataset';
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
+ import MassSpecSetupPlot from './plots/MSSetupSummaryPlot.vue';
  import gql from 'graphql-tag';
 
  const processingStages = ['started', 'queued', 'finished'];
@@ -56,7 +72,8 @@
    },
    components: {
      DatasetItem,
-     FilterPanel
+     FilterPanel,
+     MassSpecSetupPlot
    },
 
    computed: {
@@ -77,6 +94,15 @@
          if (this.categories.indexOf(category) >= 0 && this[category])
            list = list.concat(this[category]);
        return list;
+     },
+
+     displayMode: {
+       get() {
+         return this.$store.getters.settings.datasets.tab;
+       },
+       set(value) {
+         this.$store.commit('setCurrentTab', value);
+       }
      }
    },
 
