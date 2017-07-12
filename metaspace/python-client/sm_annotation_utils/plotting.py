@@ -24,12 +24,13 @@ def rarefaction_curve(df, granularity=20, n_reps=2, plot_args={}):
 def bar_attributes(an, me, columns, fdr):
     me['n_annotations'] = an.apply(np.sum, axis=1)
     me = me[columns + ['n_annotations',]]
-    pd.pivot_table(me, index=columns[0], columns=columns[1:], values = 'n_annotations', aggfunc='mean')\
-        .plot.bar(
+    pt = pd.pivot_table(me, index=columns[0], columns=columns[1:], values = 'n_annotations', aggfunc='mean')
+    pt.plot.bar(
             yerr=pd.pivot_table(me, index=columns[0], columns=columns[1:], values = 'n_annotations', aggfunc='std'),
         )\
         .legend(bbox_to_anchor=(1., 0.5))
     plt.title('Annotations per dataset at fdr {} '.format(fdr))
+    return pt
 
 def bar_and_pie(classannotations_df, class_names, sort=False, min_pct=None):
     if isinstance(classannotations_df, pd.DataFrame):
