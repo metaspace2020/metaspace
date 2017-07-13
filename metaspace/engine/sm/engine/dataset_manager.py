@@ -22,6 +22,7 @@ IMG_URLS_BY_ID_SEL = ('SELECT iso_image_urls, ion_image_url '
                       'JOIN dataset d ON d.id = j.ds_id '
                       'WHERE ds_id = %s')
 
+
 class DatasetStatus(Enum):
     """ Stage of dataset lifecycle """
 
@@ -42,6 +43,7 @@ class DatasetStatus(Enum):
 
     """ The dataset has been deleted """
     DELETED = 6
+
 
 class Dataset(object):
     """ Model class for representing a dataset """

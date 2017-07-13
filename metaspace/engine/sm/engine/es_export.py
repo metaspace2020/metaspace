@@ -3,6 +3,7 @@ from elasticsearch.helpers import bulk, BulkIndexError
 from elasticsearch.client import IndicesClient
 import logging
 from collections import defaultdict
+import pandas as pd
 
 from sm.engine.util import SMConfig
 from sm.engine.db import DB
@@ -192,6 +193,13 @@ class ESExporter(object):
         else:
             self._es.index(index=self.index, id=ds_id, doc_type='dataset', body=dataset)
 
+    def _get_mol_by_sf_df(self, mol_db):
+        by_sf = mol_db.get_molecules().groupby('sf')
+        mol_by_sf_df = pd.concat([by_sf.apply(lambda df: df.mol_id.values),
+                                  by_sf.apply(lambda df: df.mol_name.values)], axis=1)
+        mol_by_sf_df.columns = ['mol_ids', 'mol_names']
+        return mol_by_sf_df
+
     def index_ds(self, ds_id, mol_db, del_first=False):
         if del_first:
             self.delete_ds(ds_id, mol_db)
@@ -211,13 +219,14 @@ class ESExporter(object):
 
         n = 100
         to_index = []
+        mol_by_sf_df = self._get_mol_by_sf_df(mol_db)
         for r in annotations:
             d = dict(zip(COLUMNS, r))
-            df = mol_db.get_molecules(d['sf'])
             d['db_name'] = mol_db.name
             d['db_version'] = mol_db.version
-            d['comp_ids'] = df.mol_id.values.tolist()[:50]  # to prevent ES 413 Request Entity Too Large error
-            d['comp_names'] = df.mol_name.values.tolist()[:50]
+            sf = d['sf']
+            d['comp_ids'] = mol_by_sf_df.mol_ids.loc[sf][:50].tolist()  # to prevent ES 413 Request Entity Too Large error
+            d['comp_names'] = mol_by_sf_df.mol_names.loc[sf][:50].tolist()
             d['centroid_mzs'] = ['{:010.4f}'.format(mz) if mz else '' for mz in d['centroid_mzs']]
             d['mz'] = d['centroid_mzs'][0]
             d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])

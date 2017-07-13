@@ -23,7 +23,8 @@ def test_index_ds_works(DBMock, es_dsl_search, sm_index, sm_config):
     mol_db_mock.id = 0
     mol_db_mock.name = 'db_name'
     mol_db_mock.version = '2017'
-    mol_db_mock.get_molecules.return_value = pd.DataFrame([('mol_id', 'mol_name')], columns=['mol_id', 'mol_name'])
+    mol_db_mock.get_molecules.return_value = pd.DataFrame([('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
+                                                          columns=['sf', 'mol_id', 'mol_name'])
 
     es_exp = ESExporter(db_mock)
     es_exp.index_ds('ds_id', mol_db_mock, del_first=True)

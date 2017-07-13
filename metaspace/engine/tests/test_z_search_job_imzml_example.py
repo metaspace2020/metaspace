@@ -32,7 +32,8 @@ def init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock):
     mol_db_wrapper_mock.find_db_by_name_version.return_value = [{'id': 0, 'name': 'HMDB', 'version': '2016'}]
     mol_db_wrapper_mock.find_db_by_id.return_value = {'id': 0, 'name': 'HMDB', 'version': '2016'}
     mol_db_wrapper_mock.fetch_db_sfs.return_value = ['C12H24O']
-    mol_db_wrapper_mock.fetch_molecules.return_value = [{'mol_id': 'HMDB0001', 'mol_name': 'molecule name'}]
+    mol_db_wrapper_mock.fetch_molecules.return_value = [{'sf': 'C12H24O', 'mol_id': 'HMDB0001',
+                                                         'mol_name': 'molecule name'}]
 
 
 @patch('sm.engine.search_job.MolDBServiceWrapper')

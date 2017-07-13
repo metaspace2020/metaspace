@@ -52,6 +52,7 @@ class SearchJob(object):
         self._sc = None
         self._db = None
         self._ds = None
+        self._qpub = None
         self._ds_man = None
         self._fdr = None
         self._wd_manager = None
