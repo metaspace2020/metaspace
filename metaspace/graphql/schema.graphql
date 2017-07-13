@@ -89,7 +89,7 @@ type Spectrum {
 
 type MzImage {
   mz: Float
-  url: String!
+  url: String
   totalIntensity: Float!
   minIntensity: Float!
   maxIntensity: Float!
