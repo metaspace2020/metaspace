@@ -39,12 +39,17 @@ class SciTester(object):
         self.metrics = ['chaos', 'spatial', 'spectral']
 
     def metr_dict_to_array(self, metr_d):
-        return np.array([metr_d[m] for m in self.metrics])
+        metric_array = np.array([metr_d[m] for m in self.metrics])
+        return np.hstack([metric_array, metric_array.prod()])
 
     def read_base_search_res(self):
+        def prep_metric_arrays(a):
+            b = np.array(a, dtype=float)
+            return np.hstack([b, b.prod()])
+
         with open(self.base_search_res_path) as f:
             rows = map(lambda line: line.strip('\n').split('\t'), f.readlines()[1:])
-            return {(r[0], r[1]): np.array(r[2:], dtype=float) for r in rows}
+            return {(r[0], r[1]):  prep_metric_arrays(r[2:]) for r in rows}
 
     def fetch_search_res(self):
         mol_db_service = MolDBServiceWrapper(self.sm_config['services']['mol_db'])
@@ -66,7 +71,7 @@ class SciTester(object):
     @staticmethod
     def print_metric_hist(metric_arr, bins=10):
         metric_freq, metric_interv = np.histogram(metric_arr, bins=np.linspace(-1, 1, 21))
-        metric_interv = [round(x, 2) for x in  metric_interv]
+        metric_interv = [round(x, 2) for x in metric_interv]
         pprint(list(zip(zip(metric_interv[:-1], metric_interv[1:]), metric_freq)))
 
     def compare_search_results(self, base_search_res, search_res):
@@ -85,7 +90,7 @@ class SciTester(object):
             print("\nPAT_MATCH HISTOGRAM")
             self.print_metric_hist(missed_sf_base_metrics[:, 2])
             print("\nMSM HISTOGRAM")
-            self.print_metric_hist([a * b * c for a, b, c in missed_sf_base_metrics])
+            self.print_metric_hist(missed_sf_base_metrics[:, 3])
 
         new_sf_adduct = set(search_res.keys()).difference(set(base_search_res.keys()))
         print('\nFALSE DISCOVERY: {:.1f}%'.format(len(new_sf_adduct) / len(base_search_res) * 100))
@@ -113,6 +118,8 @@ class SciTester(object):
             self.print_metric_hist(metric_diffs[:, 1])
             print("\nPAT_MATCH HISTOGRAM")
             self.print_metric_hist(metric_diffs[:, 2])
+            print("\nMSM HISTOGRAM")
+            self.print_metric_hist(metric_diffs[:, 3])
 
     def run_search(self):
         cmd = [executable,
