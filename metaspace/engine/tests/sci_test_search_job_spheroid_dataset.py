@@ -1,10 +1,10 @@
-from __future__ import division
-
 import argparse
+from functools import reduce
 from operator import mul
 from os.path import join
 from pprint import pprint
 from subprocess import check_call
+from sys import executable
 
 import numpy as np
 from fabric.api import local
@@ -31,8 +31,8 @@ class SciTester(object):
         self.sm_config = SMConfig.get_conf()
         self.db = DB(self.sm_config['db'])
 
-        self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_12h_search_res.csv')
-        self.ds_name = 'sci_test_spheroid_12h'
+        self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv')
+        self.ds_name = 'sci_test_spheroid_untreated'
         self.data_dir_path = join(self.sm_config['fs']['base_path'], self.ds_name)
         self.input_dir_path = join(proj_root(), 'tests/data/untreated')
         self.ds_config_path = join(self.input_dir_path, 'config.json')
@@ -58,64 +58,64 @@ class SciTester(object):
     def save_sci_test_report(self):
         with open(self.base_search_res_path, 'w') as f:
             f.write('\t'.join(['sf', 'adduct'] + self.metrics) + '\n')
-            for (sf, adduct), metrics in sorted(self.fetch_search_res().iteritems()):
+            for (sf, adduct), metrics in sorted(self.fetch_search_res().items()):
                 f.write('\t'.join([sf, adduct] + metrics.astype(str).tolist()) + '\n')
 
-        print 'Successfully saved sample dataset search report'
+        print('Successfully saved sample dataset search report')
 
     @staticmethod
     def print_metric_hist(metric_arr, bins=10):
         metric_freq, metric_interv = np.histogram(metric_arr, bins=np.linspace(-1, 1, 21))
-        metric_interv = map(lambda x: round(x, 2), metric_interv)
-        pprint(zip(zip(metric_interv[:-1], metric_interv[1:]), metric_freq))
+        metric_interv = [round(x, 2) for x in  metric_interv]
+        pprint(list(zip(zip(metric_interv[:-1], metric_interv[1:]), metric_freq)))
 
     def compare_search_results(self, base_search_res, search_res):
         missed_sf_adduct = set(base_search_res.keys()).difference(set(search_res.keys()))
-        print 'MISSED FORMULAS: {:.1f}%'.format(len(missed_sf_adduct) / len(base_search_res) * 100)
+        print('MISSED FORMULAS: {:.1f}%'.format(len(missed_sf_adduct) / len(base_search_res) * 100))
         if missed_sf_adduct:
-            print list(missed_sf_adduct)
+            print(list(missed_sf_adduct))
 
         if missed_sf_adduct:
             missed_sf_base_metrics = np.array([np.array(base_search_res[k]) for k in missed_sf_adduct])
 
-            print "\nCHAOS HISTOGRAM"
+            print("\nCHAOS HISTOGRAM")
             self.print_metric_hist(missed_sf_base_metrics[:, 0])
-            print "\nIMG_CORR HISTOGRAM"
+            print("\nIMG_CORR HISTOGRAM")
             self.print_metric_hist(missed_sf_base_metrics[:, 1])
-            print "\nPAT_MATCH HISTOGRAM"
+            print("\nPAT_MATCH HISTOGRAM")
             self.print_metric_hist(missed_sf_base_metrics[:, 2])
-            print "\nMSM HISTOGRAM"
+            print("\nMSM HISTOGRAM")
             self.print_metric_hist([a * b * c for a, b, c in missed_sf_base_metrics])
 
         new_sf_adduct = set(search_res.keys()).difference(set(base_search_res.keys()))
-        print '\nFALSE DISCOVERY: {:.1f}%'.format(len(new_sf_adduct) / len(base_search_res) * 100)
+        print('\nFALSE DISCOVERY: {:.1f}%'.format(len(new_sf_adduct) / len(base_search_res) * 100))
 
         for sf_adduct in new_sf_adduct:
             metrics = search_res[sf_adduct]
             msm = reduce(mul, map(lambda m: m if m >= 0 else 0, metrics))
-            print '{} metrics = {}, MSM = {}'.format(sf_adduct, metrics, msm)
+            print('{} metrics = {}, MSM = {}'.format(sf_adduct, metrics, msm))
 
-        print '\nDIFFERENCE IN METRICS'
+        print('\nDIFFERENCE IN METRICS')
         metric_diffs = []
-        for b_sf_add, b_metr in base_search_res.iteritems():
+        for b_sf_add, b_metr in base_search_res.items():
             if b_sf_add in search_res.keys():
                 metr = search_res[b_sf_add]
                 diff = b_metr - metr
                 if np.any(np.abs(diff) > 1e-6):
                     metric_diffs.append(diff)
-                    print '{} metrics diff = {}'.format(b_sf_add, diff)
+                    print('{} metrics diff = {}'.format(b_sf_add, diff))
 
         if metric_diffs:
             metric_diffs = np.asarray(metric_diffs)
-            print "\nCHAOS HISTOGRAM"
+            print("\nCHAOS HISTOGRAM")
             self.print_metric_hist(metric_diffs[:, 0])
-            print "\nIMG_CORR HISTOGRAM"
+            print("\nIMG_CORR HISTOGRAM")
             self.print_metric_hist(metric_diffs[:, 1])
-            print "\nPAT_MATCH HISTOGRAM"
+            print("\nPAT_MATCH HISTOGRAM")
             self.print_metric_hist(metric_diffs[:, 2])
 
     def run_search(self):
-        cmd = ['python',
+        cmd = [executable,
                join(proj_root(), 'scripts/run_molecule_search.py'),
                '--ds-id', '2000-01-01-00_00_00',
                '--ds-name', self.ds_name,
@@ -149,7 +149,7 @@ if __name__ == '__main__':
         finally:
             sci_tester.clear_data_dirs()
     elif args.save:
-        resp = raw_input('You are going to replace the reference values. Are you sure? (y/n): ')
+        resp = input('You are going to replace the reference values. Are you sure? (y/n): ')
         if resp == 'y':
             sci_tester.save_sci_test_report()
     else:
