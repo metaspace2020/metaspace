@@ -43,13 +43,9 @@ class SciTester(object):
         return np.hstack([metric_array, metric_array.prod()])
 
     def read_base_search_res(self):
-        def prep_metric_arrays(a):
-            b = np.array(a, dtype=float)
-            return np.hstack([b, b.prod()])
-
         with open(self.base_search_res_path) as f:
             rows = map(lambda line: line.strip('\n').split('\t'), f.readlines()[1:])
-            return {(r[0], r[1]):  prep_metric_arrays(r[2:]) for r in rows}
+            return {(r[0], r[1]):  np.array(r[2:], dtype=float) for r in rows}
 
     def fetch_search_res(self):
         mol_db_service = MolDBServiceWrapper(self.sm_config['services']['mol_db'])

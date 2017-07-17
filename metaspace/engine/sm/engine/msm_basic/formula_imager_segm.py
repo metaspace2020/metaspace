@@ -98,7 +98,7 @@ def find_mz_segments(spectra, sf_peak_df, ppm):
     if first_spectrum[1].shape[0] > 10**5:
         spectra_sample = [first_spectrum]
     else:
-        n = min(200, spectra.count() // 10)
+        n = min(200, max(1, spectra.count() // 10))
         spectra_sample = spectra.takeSample(withReplacement=False, num=n)
     peaks_per_sp = max(1, int(np.mean([mzs.shape[0] for (sp_id, mzs, ints) in spectra_sample])))
 
