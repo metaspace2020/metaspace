@@ -1,6 +1,7 @@
 let config = {};
 
 config.port = 3011;
+config.ws_port = 5667;
 
 config.img_upload = {};
 config.img_upload.iso_img_fs_path = '/opt/data/sm_data/public/';
@@ -23,6 +24,11 @@ config.elasticsearch = {};
 config.elasticsearch.index = "sm";
 config.elasticsearch.host = "localhost";
 config.elasticsearch.port = 9200;
+
+config.rabbitmq = {};
+config.rabbitmq.host = "localhost";
+config.rabbitmq.user = "sm";
+config.rabbitmq.password = "1321";
 
 config.slack = {};
 config.slack.webhook_url = "";

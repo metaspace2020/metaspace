@@ -56,7 +56,7 @@ readFile('schema.graphql', 'utf8', (err, contents) => {
 
   app.listen(config.port);
 
-  wsServer.listen(5666, () => {
+  wsServer.listen(config.ws_port, () => {
     SubscriptionServer.create({ execute, subscribe, schema }, {
       server: wsServer,
       path: '/graphql',

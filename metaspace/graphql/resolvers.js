@@ -315,7 +315,7 @@ const Resolvers = {
       const {iso_image_ids, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints} = hit._source;
       return centroid_mzs.map(function(mz, i) {
         return {
-          url: config.img_upload.img_base_path + iso_image_ids[i],
+          url: iso_image_ids[i] !== null ? config.img_upload.img_base_path + iso_image_ids[i] : null,
           mz: parseFloat(mz),
           totalIntensity: total_iso_ints[i],
           minIntensity: min_iso_ints[i],

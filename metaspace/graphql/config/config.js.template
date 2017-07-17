@@ -36,7 +36,7 @@ config.rabbitmq.host = "{{ sm_graphql_rabbitmq_host }}";
 config.rabbitmq.user = "{{ sm_graphql_rabbitmq_user }}";
 config.rabbitmq.password = "{{ sm_graphql_rabbitmq_password }}";
 
-config.websocket_public_url = "{{ sm_graphql_ws_public_endpoint }}"
+config.websocket_public_url = "{{ sm_graphql_ws_public_endpoint }}";
 
 config.slack = {};
 config.slack.webhook_url = "{{ sm_graphql_slack_webhook_url }}";
