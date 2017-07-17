@@ -165,8 +165,7 @@ class DatasetManager(object):
         if config_diff == ConfigDiff.EQUAL:
             self._reindex_ds(ds)
         elif config_diff == ConfigDiff.NEW_MOL_DB:
-            # TODO use molecular database diff to avoid reprocessing
-            self.add_ds(ds)
+            self._post_new_job_msg(ds)
         elif config_diff == ConfigDiff.INSTR_PARAMS_DIFF:
             self.add_ds(ds)
 
