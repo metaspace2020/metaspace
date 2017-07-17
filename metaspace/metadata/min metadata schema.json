@@ -8,20 +8,25 @@
     "person": {
       "type": "object",
       "description": "Name and contact email for a human",
+      "required": ["First_Name", "Surname", "Email"],
       "properties": {
-        "Surname": {
-          "type": "string"
-        },
         "First_Name": {
-          "type": "string"
+          "type": "string",
+          "minLength": 2
+        },
+        "Surname": {
+          "type": "string",
+          "minLength": 2
         },
         "Email": {
           "type": "string",
-          "description": "an email address for contact"
+          "description": "an email address for contact",
+          "format": "email"
         }
       }
     }
   },
+  "required": ["Sample_Information", "Sample_Preparation", "Submitted_By", "MS_Analysis", "metaspace_options"],
   "properties": {
     "Sample_Information": {
       "type": "object",
@@ -30,11 +35,13 @@
       "properties": {
         "Organism": {
           "description": "species of organism",
-          "type": "string"
+          "type": "string",
+          "minLength": 3
         },
         "Organism_Part": {
           "description": "part of the organism",
-          "type": "string"
+          "type": "string",
+          "minLength": 3
         },
         "Condition": {
           "description": "disease state of the organism",
@@ -54,19 +61,31 @@
       "properties": {
         "Sample_Stabilisation": {
           "description": "Quenching or preservation method used",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "Tissue_Modification": {
           "description": "Post stabilisation tissue modification",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "MALDI_Matrix": {
           "description": "The MALDI matrix used (if any)",
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "default": "none"
+        },
+        "Solvent": {
+          "description": "Solvent used for extract (e.g. for DESI or MALDI matrix solution)",
+          "type": "string",
+          "minLength": 1,
+          "default": "none"
         },
         "MALDI_Matrix_Application": {
           "description": "Method of MALDI matrix application (if any)",
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "default": "none"
         }
       }
     },
@@ -85,11 +104,13 @@
         },
         "Ionisation_Source": {
           "description": "Type of ionisation source used",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "Analyzer": {
           "description": "Mass analyser used",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "Detector_Resolving_Power": {
           "type": "object",
@@ -108,7 +129,8 @@
               "description": "Peak FWHM / m/z",
               "type": "number",
               "minimum": 10000,
-              "maximum": 1000000
+              "maximum": 1000000,
+              "default": 140000
             }
           }
         }
@@ -120,7 +142,9 @@
       "required": ["Institution", "Submitter"],
       "properties": {
         "Institution": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
         },
         "Submitter": {
           "$ref": "#/definitions/person",
@@ -138,11 +162,16 @@
       "properties":{
         "Metabolite_Database": {
           "description": "Metabolite database searched against",
-          "type": "string"
+          "type": "array",
+          "minItems": 1,
+          "default": ["HMDB"],
+          "items": { "type": "string" },
+          "uniqueItems": true
         },
         "Dataset_Name":{
           "description": "Dataset name",
-          "type": "string"
+          "type": "string",
+          "minLength": 5
         }
       }
     },
