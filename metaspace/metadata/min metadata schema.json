@@ -44,14 +44,13 @@
           "minLength": 3
         },
         "Condition": {
-          "description": "treatment group or disease state of the organism",
-          "type": "string",
-          "minLength": 1
+          "description": "disease state of the organism",
+          "type": "string"
         },
         "Sample_Growth_Conditions": {
-          "description": "How the organism was grown",
+          "description": "intervention, treatment group or growth conditions",
           "type": "string"
-        }
+        },
       }
     },
     "Sample_Preparation": {
