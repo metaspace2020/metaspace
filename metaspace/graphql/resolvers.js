@@ -7,22 +7,7 @@ const config = require('config'),
   {esSearchResults, esCountResults, esAnnotationByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {generateProcessingConfig, metadataChangeSlackNotify,
-    metadataUpdateFailedSlackNotify, logger, pubsub} = require("./utils.js");
-
-const dbConfig = () => {
-  const {host, database, user, password} = config.db;
-  return {
-    host, database, user, password,
-    max: 10, // client pool size
-    idleTimeoutMillis: 30000
-  };
-};
-
-let pg = require('knex')({
-  client: 'pg',
-  connection: dbConfig(),
-  searchPath: 'knex,public'
-});
+    metadataUpdateFailedSlackNotify, logger, pubsub, pg} = require("./utils.js");
 
 let queue = require('amqplib').connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`);
 let rabbitmqChannel = 'sm_dataset_status';

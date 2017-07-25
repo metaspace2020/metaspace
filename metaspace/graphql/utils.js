@@ -131,10 +131,26 @@ const logger = new (winston.Logger)({
 
 const pubsub = new PubSub();
 
+const dbConfig = () => {
+  const {host, database, user, password} = config.db;
+  return {
+    host, database, user, password,
+    max: 10, // client pool size
+    idleTimeoutMillis: 30000
+  };
+};
+
+let pg = require('knex')({
+  client: 'pg',
+  connection: dbConfig(),
+  searchPath: 'knex,public'
+});
+
 module.exports = {
   generateProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
   logger,
-  pubsub
+  pubsub,
+  pg
 };
