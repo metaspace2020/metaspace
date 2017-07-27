@@ -55,9 +55,7 @@ class QueueConsumer(object):
 
 class QueuePublisher(object):
 
-    def __init__(self, config, qname):
-        self.qname = qname
-
+    def __init__(self, config):
         creds = pika.PlainCredentials(config['user'], config['password'])
         conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat_interval=0)
         self._conn = pika.BlockingConnection(conn_params)
@@ -65,11 +63,15 @@ class QueuePublisher(object):
 
         self.logger = logging.getLogger('sm-queue')
 
-    def publish(self, msg):
+    def publish(self, msg, queue_name):
         self._ch.basic_publish(exchange='',
-                               routing_key=self.qname,
+                               routing_key=queue_name,
                                body=json.dumps(msg),
                                properties=pika.BasicProperties(
                                    delivery_mode=2,  # make message persistent
                                ))
-        self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), self.qname))
+        self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), queue_name))
+
+SM_ANNOTATE = 'sm_annotate'
+
+SM_DS_STATUS = 'sm_dataset_status'

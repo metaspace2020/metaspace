@@ -9,6 +9,7 @@ from sm.engine.util import SMConfig, sm_log_formatters, sm_log_config, init_logg
 from sm.engine.search_job import SearchJob
 from sm.engine import QueueConsumer
 from sm.engine import DB
+from sm.engine.errors import UnknownDSID
 
 
 def configure_loggers():
@@ -129,7 +130,11 @@ if __name__ == "__main__":
         logger.info(log_msg)
         post_to_slack('new', " [v] Received: {}".format(json.dumps(msg)))
         job = SearchJob(args.sm_config_path)
-        job.run(msg['ds_id'])
+        try:
+            job.run(msg['ds_id'])
+        except UnknownDSID:
+            log_msg = " [x] Dataset {} is not in the table (was deleted?)".format(msg['ds_id'])
+            logger.info(log_msg)
 
     annotation_queue = QueueConsumer(rabbit_config, 'sm_annotate',
                                      run_job_callback, on_job_succeeded, on_job_failed)

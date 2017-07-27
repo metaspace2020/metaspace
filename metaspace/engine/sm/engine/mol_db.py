@@ -6,7 +6,6 @@ import requests
 from sm.engine.db import DB
 from sm.engine.util import SMConfig
 
-
 logger = logging.getLogger('sm-engine')
 
 SF_INS = 'INSERT INTO sum_formula (db_id, sf) values (%s, %s)'
@@ -54,14 +53,19 @@ class MolDBServiceWrapper(object):
     def fetch_db_sfs(self, db_id):
         return self._fetch('{}/databases/{}/sfs'.format(self._service_url, db_id))
 
-    def fetch_molecules(self, db_id, sf):
-        url = '{}/databases/{}/molecules?sf={}&fields=mol_id,mol_name'
-        return self._fetch(url.format(self._service_url, db_id, sf))
+    def fetch_molecules(self, db_id, sf=None):
+        if sf:
+            url = '{}/databases/{}/molecules?sf={}&fields=mol_id,mol_name'
+            return self._fetch(url.format(self._service_url, db_id, sf))
+        else:
+            # TODO: replace one large request with several smaller ones
+            url = '{}/databases/{}/molecules?fields=sf,mol_id,mol_name&limit=10000000'
+            return self._fetch(url.format(self._service_url, db_id))
 
 
 class MolecularDB(object):
     """ A class representing a molecule database to search through.
-        Provides several data structured used in the engine to speedup computation
+        Provides several data structures used in the engine to speed up computation
 
         Args
         ----------
@@ -70,14 +74,14 @@ class MolecularDB(object):
             If None the latest version will be used
         iso_gen_config : dict
             Isotope generator configuration
-        mol_db_service : object
+        mol_db_service : sm.engine.MolDBServiceWrapper
             Molecular database ID/name resolver
         db : DB
             Database connector
         """
 
     def __init__(self, id=None, name=None, version=None, iso_gen_config=None,
-            mol_db_service=None, db=None):
+                 mol_db_service=None, db=None):
         assert iso_gen_config
         self._iso_gen_config = iso_gen_config
 
@@ -115,9 +119,8 @@ class MolecularDB(object):
     def set_job_id(self, job_id):
         self._job_id = job_id
 
-    # TODO: store molecule ids/names in the database
-    def get_molecules(self, sf):
-        """ Returns a dataframe with
+    def get_molecules(self, sf=None):
+        """ Returns a dataframe with (mol_id, mol_name) or (sf, mol_id, mol_name) rows
 
         Args
         ----------
@@ -126,7 +129,7 @@ class MolecularDB(object):
         ----------
             pd.DataFrame
         """
-        return pd.DataFrame(self.mol_db_service.fetch_molecules(self.id, sf))
+        return pd.DataFrame(self.mol_db_service.fetch_molecules(self.id, sf=sf))
 
     @property
     def sfs(self):
@@ -149,7 +152,8 @@ class MolecularDB(object):
             assert target_sf_peaks_rs, 'No formulas matching the criteria were found in theor_peaks! (target)'
 
             decoy_sf_peaks_rs = self._db.select(THEOR_PEAKS_DECOY_ADD_SEL, self._id, self._job_id,
-                                                iso_gen_conf['isocalc_sigma'], iso_gen_conf['isocalc_pts_per_mz'], charge)
+                                                iso_gen_conf['isocalc_sigma'], iso_gen_conf['isocalc_pts_per_mz'],
+                                                charge)
             assert decoy_sf_peaks_rs, 'No formulas matching the criteria were found in theor_peaks! (decoy)'
 
             sf_peak_rs = target_sf_peaks_rs + decoy_sf_peaks_rs
@@ -163,7 +167,7 @@ class MolecularDB(object):
     @staticmethod
     def _check_formula_uniqueness(sf_df):
         uniq_sf_adducts = len({(r.sf_id, r.adduct) for r in sf_df.itertuples()})
-        assert uniq_sf_adducts == sf_df.shape[0],\
+        assert uniq_sf_adducts == sf_df.shape[0], \
             'Not unique formula-adduct combinations {} != {}'.format(uniq_sf_adducts, sf_df.shape[0])
 
     @staticmethod
@@ -180,4 +184,4 @@ class MolecularDB(object):
         return self.sf_df[['sf_id', 'adduct']].copy().set_index(['sf_id', 'adduct']).sort_index()
 
     def get_sf_peak_ints(self):
-        return {(r.sf_id, r.adduct) : r.centr_ints for r in self.sf_df.itertuples()}
+        return {(r.sf_id, r.adduct): r.centr_ints for r in self.sf_df.itertuples()}

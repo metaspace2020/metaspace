@@ -25,6 +25,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 from sm.engine.errors import JobFailedError
 from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.queue import QueuePublisher
 
 logger = logging.getLogger('sm-engine')
 
@@ -51,6 +52,7 @@ class SearchJob(object):
         self._sc = None
         self._db = None
         self._ds = None
+        self._qpub = None
         self._ds_man = None
         self._fdr = None
         self._wd_manager = None
@@ -150,13 +152,14 @@ class SearchJob(object):
             start = time.time()
 
             self._init_db()
+            self._es = ESExporter(self._db)
             self._ds = Dataset.load_ds(ds_id, self._db)
-            self._ds_man = DatasetManager(self._db, self._es, 'queue')
+            self._qpub = QueuePublisher(self._sm_config['rabbitmq'])
+            self._ds_man = DatasetManager(self._db, self._es, 'queue', self._qpub)
             self._ds_man.set_ds_status(self._ds, DatasetStatus.STARTED)
 
             self._wd_manager = WorkDirManager(ds_id)
             self._configure_spark()
-            self._es = ESExporter()
 
             if not self.no_clean:
                 self._wd_manager.clean()

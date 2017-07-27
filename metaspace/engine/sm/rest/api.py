@@ -7,6 +7,7 @@ from bottle import response as resp
 
 from sm.engine import DB, ESExporter
 from sm.engine import DatasetManager, Dataset
+from sm.engine.queue import QueuePublisher
 from sm.engine.util import SMConfig
 from sm.engine.util import init_logger, logger
 from sm.engine.errors import UnknownDSID
@@ -24,16 +25,25 @@ ERR_OBJECT_NOT_EXISTS = {
     'title': 'Object Not Exists'
 }
 
-
-def _create_db_conn():
+def _read_config():
     SMConfig.set_path(CONFIG_PATH)
     config = SMConfig.get_conf()
+    return config
+
+def _create_db_conn():
+    config = _read_config()
     return DB(config['db'])
 
 def _json_params(req):
     b = req.body.getvalue()
     return json.loads(b.decode('utf-8'))
 
+def _create_queue_publisher():
+    config = _read_config()
+    return QueuePublisher(config['rabbitmq'])
+
+def _create_dataset_manager(db):
+    return DatasetManager(db, ESExporter(db), mode='queue', queue_publisher=_create_queue_publisher())
 
 @post('/datasets/add')
 def add_ds():
@@ -44,7 +54,7 @@ def add_ds():
                  params.get('metadata', None),
                  params.get('config'))
     db = _create_db_conn()
-    ds_man = DatasetManager(db, ESExporter(), mode='queue')
+    ds_man = _create_dataset_manager(db)
     ds_man.add_ds(ds)
     db.close()
     return OK['title']
@@ -61,7 +71,7 @@ def update_ds(ds_id):
         ds.meta = params.get('metadata', ds.meta)
         ds.config = params.get('config', ds.config)
 
-        ds_man = DatasetManager(db, ESExporter(), mode='queue')
+        ds_man = _create_dataset_manager(db)
         ds_man.update_ds(ds)
         db.close()
         return OK['title']
@@ -79,7 +89,7 @@ def delete_ds(ds_id):
         db = _create_db_conn()
         ds = Dataset.load_ds(ds_id, db)
 
-        ds_man = DatasetManager(db, ESExporter(), mode='queue')
+        ds_man = _create_dataset_manager(db)
         ds_man.delete_ds(ds, del_raw_data=del_raw)
         db.close()
         return OK['title']

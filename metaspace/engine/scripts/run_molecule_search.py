@@ -31,7 +31,7 @@ if __name__ == "__main__":
     SMConfig.set_path(args.sm_config_path)
     sm_config = SMConfig.get_conf()
     db = DB(sm_config['db'])
-    ds_man = DatasetManager(db, ESExporter(), mode=u'local')
+    ds_man = DatasetManager(db, ESExporter(db), mode=u'local')
 
     def create_ds_from_files(ds_id):
         meta_path = join(args.input_path, 'meta.json')

@@ -18,9 +18,9 @@ def _reindex_all(conf):
 
     tmp_es_config = deepcopy(es_config)
     tmp_es_config['index'] = new_index
-    es_exp = ESExporter(tmp_es_config)
 
     db = DB(conf['db'])
+    es_exp = ESExporter(db, tmp_es_config)
     rows = db.select('select id, name, config from dataset')
     _reindex_datasets(rows, es_exp, del_first=False)
 
@@ -48,7 +48,7 @@ def reindex_results(ds_id, ds_mask):
         _reindex_all(conf)
     else:
         db = DB(conf['db'])
-        es_exp = ESExporter()
+        es_exp = ESExporter(db)
 
         if ds_id:
             rows = db.select("select id, name, config from dataset where id = '{}'".format(ds_id))
