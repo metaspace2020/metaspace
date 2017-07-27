@@ -19,7 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--all', action='store_true', help='run all tests')
 
     args = parser.parse_args()
-    print args
+    print(args)
 
     py_test_cmd = 'py.test -x -v '
 
@@ -33,6 +33,8 @@ if __name__ == '__main__':
             local(py_test_cmd + 'tests/test_imzml_txt_converter_db.py')
             local(py_test_cmd + 'tests/test_theor_peaks_gen_db.py')
             local(py_test_cmd + 'tests/test_work_dir.py')
+            # TODO: include the test in CI
+            # local(py_test_cmd + 'tests/test_search_job.py')
             local(py_test_cmd + 'tests/test_dataset_manager.py')
             local(py_test_cmd + 'tests/test_search_results.py')
             local(py_test_cmd + 'tests/test_es_exporter.py')
@@ -43,6 +45,6 @@ if __name__ == '__main__':
             local('python tests/sci_test_search_job_spheroid_dataset.py --run')
 
         if args.unit or args.all or args.regr or args.sci:
-            print 'ALL TESTS FINISHED SUCCESSFULLY'
+            print('ALL TESTS FINISHED SUCCESSFULLY')
         else:
             parser.print_help()
