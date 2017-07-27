@@ -44,8 +44,7 @@ class SciTester(object):
 
     def read_base_search_res(self):
         def prep_metric_arrays(a):
-            b = np.array(a, dtype=float)
-            return np.hstack([b, b.prod()])
+            return np.array(a, dtype=float)
 
         with open(self.base_search_res_path) as f:
             rows = map(lambda line: line.strip('\n').split('\t'), f.readlines()[1:])
@@ -53,7 +52,7 @@ class SciTester(object):
 
     def fetch_search_res(self):
         mol_db_service = MolDBServiceWrapper(self.sm_config['services']['mol_db'])
-        mol_db_id = mol_db_service.find_db_by_name_version('HMDB', '2017-01')[0]['id']
+        mol_db_id = mol_db_service.find_db_by_name_version('HMDB', '2016')[0]['id']
         rows = self.db.select(SEARCH_RES_SELECT, mol_db_id, self.ds_name)
         return {(r[0], r[1]): self.metr_dict_to_array(r[2]) for r in rows}
 
@@ -139,7 +138,9 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scientific tests runner')
     parser.add_argument('-r', '--run', action='store_true', help='compare current search results with previous')
     parser.add_argument('-s', '--save', action='store_true', help='store current search results')
-    parser.add_argument('--sm-config', dest='sm_config_path', default='conf/config.json', help='path to sm config file')
+    parser.add_argument('--sm-config', dest='sm_config_path',
+                        default=join(proj_root(), 'conf/config.json'),
+                        help='path to sm config file')
     args = parser.parse_args()
 
     SMConfig.set_path(args.sm_config_path)

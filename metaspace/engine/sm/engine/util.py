@@ -3,7 +3,7 @@ import json
 from subprocess import check_call, call
 import logging
 from logging.config import dictConfig
-from os.path import join
+from os import path
 
 
 def proj_root():
@@ -33,14 +33,10 @@ sm_log_config = {
             'class': 'logging.FileHandler',
             'formatter': 'sm',
             'level': logging.DEBUG,
-            'filename': 'logs/sm-engine.log'
+            'filename': path.join(proj_root(), 'logs/sm-engine.log')
         }
     },
     'loggers': {
-        # 'root': {
-        #     'handlers': ['console'],
-        #     'level': logging.DEBUG
-        # },
         'sm-engine': {
             'handlers': ['console_debug', 'file'],
             'level': logging.DEBUG
@@ -87,7 +83,7 @@ class SMConfig(object):
         """
         if update or not cls._config_dict:
             try:
-                config_path = cls._path or join(proj_root(), 'conf', 'config.json')
+                config_path = path.realpath(cls._path) or path.join(proj_root(), 'conf', 'config.json')
                 with open(config_path) as f:
                     cls._config_dict = json.load(f)
             except IOError as e:

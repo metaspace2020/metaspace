@@ -19,6 +19,7 @@
         "isocalc_pts_per_mz": 8078
     }, 
     "databases": [{
-        "name": "HMDB"
+        "name": "HMDB",
+        "version": "2016"
     }]
 }

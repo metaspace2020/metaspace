@@ -42,9 +42,9 @@ if __name__ == '__main__':
 
         # Functional/scientific tests
         if args.sci or args.all:
-            local('python tests/sci_test_search_job_spheroid_dataset.py --run')
+            local('python tests/sci_test_spheroid.py --run')
 
-        if args.unit or args.all or args.regr or args.sci:
+        if args.unit or args.all or args.regr:
             print('ALL TESTS FINISHED SUCCESSFULLY')
         else:
             parser.print_help()
