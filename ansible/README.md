@@ -15,9 +15,7 @@ Make sure you have the following tools installed:
 
 `cp group_vars/all.yml.template group_vars/all.yml`
 
-Put the SM engine version of interest into group_vars/all.yml as value for the sm_branch variable
-
-Create a pair of keys if you do not have one. This installation imply the private key name to be `~/.ssh/id_rsa`
+Create a pair of keys if you do not have one. This installation imply the public key name to be `~/.ssh/id_rsa.pub`
 
 `ssh-keygen -t rsa` # generate a key pair
 
