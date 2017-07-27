@@ -29,7 +29,7 @@ function addIsoImageProvider(app) {
         })
         .catch((e) => {
           logger.error(e.message);
-          res.send('Not found');
+          res.status(404).send('Not found');
         });
     });
   
@@ -52,12 +52,16 @@ function addIsoImageProvider(app) {
     });
   
   app.delete(path.join(config.img_upload.img_base_path, 'delete', ":img_id"), function (req, res, next) {
-    const img_path = path.join(config.img_upload.iso_img_fs_path, config.img_upload.img_base_path, req.params.img_id);
-    fs.unlink(img_path, function (err) {
-      if (err)
-        logger.warn(`${err} (image id = ${req.params.img_id})`);
-    });
-    res.status(200).json();
+    pg.del().from('iso_image')
+      .where('id', '=', req.params.img_id)
+      .then((m) => {
+        logger.debug(m);
+        res.status(204).json();
+      })
+      .catch((e) => {
+        logger.error(e.message);
+        res.status(500).json('Failed to delete image');
+      })
   });
 }
 

@@ -150,6 +150,7 @@ module.exports = {
   generateProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
+  config,
   logger,
   pubsub,
   pg
