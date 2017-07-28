@@ -1,15 +1,40 @@
 import sys
 from collections import defaultdict
 import pandas as pd
-from itertools import repeat, islice
 import numpy as np
 from scipy.sparse import coo_matrix
+
+from sm.engine.errors import JobFailedError
+
+MAX_MZ_VALUE = 10**5
+MAX_INTENS_VALUE = 10**9
+
+
+def _check_spectra_quality(spectra_sample):
+    err_msgs = []
+
+    mz_arr = np.concatenate([sp[1] for sp in spectra_sample])
+    wrong_mz_n = mz_arr[(mz_arr < 0) | (mz_arr > MAX_MZ_VALUE)].shape[0]
+    if wrong_mz_n > 0:
+        err_msgs.append('Sample mz arrays contain {} values outside of allowed range [0, {}]'\
+                        .format(wrong_mz_n, MAX_MZ_VALUE))
+
+    int_arr = np.concatenate([sp[2] for sp in spectra_sample])
+    wrong_int_n = mz_arr[(int_arr < 0) | (int_arr > MAX_INTENS_VALUE)].shape[0]
+    if wrong_int_n > 0:
+        err_msgs.append('Sample intensity arrays contain {} values outside of allowed range [0, {}]'\
+                        .format(wrong_int_n, MAX_INTENS_VALUE))
+
+    if len(err_msgs) > 0:
+        raise JobFailedError(' '.join(err_msgs))
 
 
 def _estimate_mz_workload(spectra_sample, sf_peak_df, bins=1000):
     mz_arr = np.sort(np.concatenate([sp[1] for sp in spectra_sample]))
-    spectrum_mz_freq, mz_grid = np.histogram(mz_arr, bins=bins, range=(np.nanmin(mz_arr), np.nanmax(mz_arr)))
-    sf_peak_mz_freq, _ = np.histogram(sf_peak_df.mz, bins=bins, range=(mz_arr.min(), mz_arr.max()))
+    mz_arr = mz_arr[(np.isfinite(mz_arr)) & (np.isnan(mz_arr) == False)]
+    mz_range = (mz_arr.min(), mz_arr.max())
+    spectrum_mz_freq, mz_grid = np.histogram(mz_arr, bins=bins, range=mz_range)
+    sf_peak_mz_freq, _ = np.histogram(sf_peak_df.mz, bins=bins, range=mz_range)
     workload_per_mz = spectrum_mz_freq * sf_peak_mz_freq
     return mz_grid, workload_per_mz, spectrum_mz_freq
 
@@ -101,6 +126,8 @@ def define_mz_segments(spectra, sf_peak_df, ppm):
     else:
         n = min(200, max(1, spectra_n // 10))
         spectra_sample = spectra.takeSample(withReplacement=False, num=n)
+    _check_spectra_quality(spectra_sample)
+
     peaks_per_sp = max(1, int(np.mean([mzs.shape[0] for (sp_id, mzs, ints) in spectra_sample])))
     plan_mz_segm_n = (spectra_n * peaks_per_sp) // 10**6  # 1M peaks per segment
     plan_mz_segm_n = np.clip(plan_mz_segm_n, 32, 2048)
