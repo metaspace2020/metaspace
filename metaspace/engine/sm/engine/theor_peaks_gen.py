@@ -87,7 +87,7 @@ class TheorPeaksGenerator(object):
         """
         logger.info('Generating missing peaks')
         formatted_iso_peaks = self._isocalc_wrapper.formatted_iso_peaks
-        n = 10000
+        n = 2**16
         def format_peaks(ion):
             sf, adduct = ion
             return formatted_iso_peaks(sf, adduct)

@@ -32,7 +32,9 @@
     "spark.executor.memory": "2g",
     "spark.driver.memory": "4g",
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
-    "spark.kryoserializer.buffer.max": "128m"
+    "spark.kryoserializer.buffer.max": "128m",
+    "spark.python.worker.memory": "512m",
+    "spark.rdd.compress": true
   },
   "aws": {
     "aws_access_key_id": "{{ aws_access_key_id }}",

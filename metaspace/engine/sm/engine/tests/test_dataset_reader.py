@@ -33,7 +33,7 @@ def test_dataset_reader_get_spectra_works(sm_config, spark_context):
     SMConfig._config_dict = sm_config
 
     with patch('sm.engine.tests.util.SparkContext.textFile') as m:
-        m.side_effect = [spark_context.parallelize(['0|100.0 200.0|1000.0 0\n', '2|200.0 300.0|10.0 20.0\n'])]
+        m.side_effect = [spark_context.parallelize([b'0|100.0 200.0|1000.0 0\n', b'2|200.0 300.0|10.0 20.0\n'])]
 
         ds_reader = DatasetReader('ds_id', 'input_path', spark_context, work_dir_man_mock)
         spectra_list = ds_reader.get_spectra().collect()

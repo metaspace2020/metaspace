@@ -114,7 +114,7 @@ class DatasetReader(object):
 
     @staticmethod
     def txt_to_spectrum_non_cum(s):
-        arr = s.strip().split("|")
+        arr = s.strip().split(b'|')
         return int(arr[0]), np.fromstring(arr[1], sep=' ').astype('float32'), np.fromstring(arr[2], sep=' ')
 
     def get_spectra(self):
@@ -122,8 +122,8 @@ class DatasetReader(object):
         Returns
         -------
         : pyspark.rdd.RDD
-            Spark RDD with spectra. One spectrum per RDD entry.
+            Spark RDD with spectra. One spectrum as a triple (int, np.ndarray, np.ndarray) per RDD entry.
         """
         txt_to_spectrum = self.txt_to_spectrum_non_cum
         logger.info('Converting txt to spectrum rdd from %s', self._wd_manager.txt_path)
-        return self._sc.textFile(self._wd_manager.txt_path, minPartitions=8).map(txt_to_spectrum)
+        return self._sc.textFile(self._wd_manager.txt_path, minPartitions=16, use_unicode=False).map(txt_to_spectrum)

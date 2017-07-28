@@ -32,7 +32,7 @@ logger = logging.getLogger('sm-engine')
 JOB_ID_MOLDB_ID_SEL = "SELECT id, db_id FROM job WHERE ds_id = %s"
 JOB_INS = "INSERT INTO job (db_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
 JOB_UPD = "UPDATE job set status=%s, finish=%s where id=%s"
-DELETE_TARGET_DECOY_ADD = 'DELETE FROM target_decoy_add where job_id = %s'
+TARGET_DECOY_ADD_DEL = 'DELETE FROM target_decoy_add tda WHERE tda.job_id IN (SELECT id FROM job WHERE ds_id = %s)'
 
 
 class SearchJob(object):
@@ -87,8 +87,9 @@ class SearchJob(object):
         rows = [(mol_db_id, self._ds.id, 'STARTED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self._job_id = self._db.insert_return(JOB_INS, rows)[0]
 
+    # TODO: stop storing target-decoy adduct combinations in the database
     def clean_target_decoy_table(self):
-        self._db.alter(DELETE_TARGET_DECOY_ADD, self._job_id)
+        self._db.alter(TARGET_DECOY_ADD_DEL, self._ds.id)
 
     def _run_job(self, mol_db):
         try:
