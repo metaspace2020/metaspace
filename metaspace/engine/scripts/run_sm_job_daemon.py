@@ -115,7 +115,7 @@ def on_job_failed(msg):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=('Daemon for reading messages from the '
                                                   'queue and starting annotation jobs'))
-    parser.add_argument('--config', dest='sm_config_path', type=str, help='SM config path')
+    parser.add_argument('--config', dest='sm_config_path', default='conf/config.json', type=str, help='SM config path')
 
     args = parser.parse_args()
     SMConfig.set_path(args.sm_config_path)
