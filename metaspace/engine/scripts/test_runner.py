@@ -46,5 +46,7 @@ if __name__ == '__main__':
 
         if args.unit or args.all or args.regr:
             print('ALL TESTS FINISHED SUCCESSFULLY')
+        elif args.sci:
+            print('SCI TEST FINISHED')
         else:
             parser.print_help()
