@@ -306,7 +306,7 @@ const Resolvers = {
 
   Mutation: {
     submitDataset(_, args) {
-      const {name, path, metadataJson, datasetId} = args;
+      const {name, path, metadataJson, datasetId, priority} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
 
@@ -316,7 +316,8 @@ const Resolvers = {
           name: name,
           input_path: path,
           metadata: metadata,
-          config: generateProcessingConfig(metadata)
+          config: generateProcessingConfig(metadata),
+          priority: priority !== undefined ? priority : 0
         });
 
         const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
@@ -338,7 +339,7 @@ const Resolvers = {
     },
 
     resubmitDataset(_, args) {
-      const {datasetId} = args;
+      const {datasetId, priority} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
 
@@ -352,7 +353,8 @@ const Resolvers = {
                   name: ds.name,
                   input_path: ds.input_path,
                   metadata: ds.metadata,
-                  config: ds.config
+                  config: ds.config,
+                  priority: priority !== undefined ? priority : 0
                 });
 
                 const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
@@ -373,7 +375,7 @@ const Resolvers = {
     },
 
     updateMetadata(_, args) {
-      const {datasetId, metadataJson} = args;
+      const {datasetId, metadataJson, priority} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
         const newMetadata = JSON.parse(metadataJson);
@@ -384,7 +386,8 @@ const Resolvers = {
             const body = JSON.stringify({
               metadata: newMetadata,
               config: generateProcessingConfig(newMetadata),
-              name: newMetadata.metaspace_options.Dataset_Name || ""
+              name: newMetadata.metaspace_options.Dataset_Name || "",
+              priority: priority !== undefined ? priority : 0
             });
 
             return pg.select().from('dataset').where('id', '=', datasetId)
