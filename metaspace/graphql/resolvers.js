@@ -335,7 +335,7 @@ const Resolvers = {
           priority: priority !== undefined ? priority : 0
         });
 
-        const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
+        const url = `http://${config.services.sm_engine_api_host}/v1/datasets/add`;
         return fetch(url, {
              method: 'POST',
              body: body,
@@ -372,7 +372,7 @@ const Resolvers = {
                   priority: priority !== undefined ? priority : 0
                 });
 
-                const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
+                const url = `http://${config.services.sm_engine_api_host}/v1/datasets/add`;
                 return fetch(url, { method: 'POST', body: body, headers: {
                   "Content-Type": "application/json"
                 }});
@@ -412,7 +412,7 @@ const Resolvers = {
               })
               .then(() => {
                 // perform ES re-indexing in the background
-                const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/update`;
+                const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/update`;
                 fetch(url, { method: 'POST', body: body, headers: {
                     "Content-Type": "application/json"
                   }})
@@ -440,7 +440,7 @@ const Resolvers = {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
         return checkPermissions(datasetId, payload)
           .then( () => {
-            const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/delete`;
+            const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/delete`;
             let body = JSON.stringify({});
             // if (delRawData != undefined || delRawData == false)
             //   body = JSON.stringify({});
