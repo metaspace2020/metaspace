@@ -77,7 +77,7 @@ class ClusterDaemon(object):
         if resp['ResponseMetadata']['HTTPStatusCode'] == 200:
             self.logger.info('Email with "{}" subject was sent to {}'.format(subj, email))
         else:
-            self.logger.warn('SEM failed to send email to {}'.format(email))
+            self.logger.warning('SEM failed to send email to {}'.format(email))
 
     def _send_rest_request(self, address):
         try:
@@ -99,7 +99,7 @@ class ClusterDaemon(object):
             conn = pika.BlockingConnection(pika.ConnectionParameters(host=self.ansible_config['rabbitmq_host'],
                                                                      credentials=creds))
             ch = conn.channel()
-            m = ch.queue_declare(queue=self.qname, durable=True)
+            m = ch.queue_declare(queue=self.qname, durable=True, arguments={'x-max-priority': 3})
             self.logger.debug('Messages in the queue: {}'.format(m.method.message_count))
             return m.method.message_count == 0
         except Exception as e:
@@ -178,7 +178,7 @@ class ClusterDaemon(object):
                 self._post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
                 sleep(60)
             except Exception as e:
-                self.logger.warn('Failed to start/setup/deploy cluster: %s', e)
+                self.logger.warning('Failed to start/setup/deploy cluster: %s', e)
                 setup_failed += 1
                 if setup_failed >= setup_failed_max:
                     raise e
@@ -192,8 +192,6 @@ class ClusterDaemon(object):
                 if not self.queue_empty():
                     if not self.cluster_up():
                         self._try_start_setup_deploy()
-                    # if not self.job_running():
-                    #     raise Exception('Cluster is up but no job is running')
                 else:
                     if self.cluster_up() and not self.job_running() and self._ec2_hour_over():
                         self.logger.info('Queue is empty. No jobs running. Stopping the cluster...')
