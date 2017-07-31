@@ -209,9 +209,9 @@ type Query {
 }
 
 type Mutation {
-  submitDataset(jwt: String!, datasetId: String, name: String, path: String!, metadataJson: String!): String
-  resubmitDataset(jwt: String!, datasetId: String!): String
-  updateMetadata(jwt: String!, datasetId: String!, metadataJson: String!): String
+  submitDataset(jwt: String!, datasetId: String, name: String, path: String!, metadataJson: String!, priority: Int): String
+  resubmitDataset(jwt: String!, datasetId: String!, priority: Int): String
+  updateMetadata(jwt: String!, datasetId: String!, metadataJson: String!, priority: Int): String
   deleteDataset(jwt: String!, datasetId: String!, delRawData: Boolean): String
 }
 
