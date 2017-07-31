@@ -9,7 +9,7 @@ from requests import ConnectionError
 import yaml
 from subprocess import check_output
 from subprocess import CalledProcessError
-import boto3.ec2
+import boto3
 import datetime as dt
 
 
@@ -55,6 +55,29 @@ class ClusterDaemon(object):
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
+
+    def _send_email(self, email, subj, body):
+        ses = boto3.client('ses', 'eu-west-1')
+        resp = ses.send_email(
+            Source='contact@metaspace2020.eu',
+            Destination={
+                'ToAddresses': [email]
+            },
+            Message={
+                'Subject': {
+                    'Data': subj
+                },
+                'Body': {
+                    'Text': {
+                        'Data': body
+                    }
+                }
+            }
+        )
+        if resp['ResponseMetadata']['HTTPStatusCode'] == 200:
+            self.logger.info('Email with "{}" subject was sent to {}'.format(subj, email))
+        else:
+            self.logger.warn('SEM failed to send email to {}'.format(email))
 
     def _send_rest_request(self, address):
         try:
@@ -119,7 +142,7 @@ class ClusterDaemon(object):
         self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'deploy/engine.yml'],
                     'The SM engine is deployed', 'Failed to deploy the SM engine')
 
-    def post_to_slack(self, emoji, msg):
+    def _post_to_slack(self, emoji, msg):
         if not self.debug and self.ansible_config['slack_webhook_url']:
             msg = {
                 "channel": self.ansible_config['slack_channel'],
@@ -148,11 +171,11 @@ class ClusterDaemon(object):
                     'master': self.ansible_config['cluster_configuration']['instances']['master'],
                     'slave': self.ansible_config['cluster_configuration']['instances']['slave']
                 }
-                self.post_to_slack('rocket', "[v] Cluster started: {}".format(m))
+                self._post_to_slack('rocket', "[v] Cluster started: {}".format(m))
 
                 self.cluster_setup()
                 self.sm_engine_deploy()
-                self.post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
+                self._post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
                 sleep(60)
             except Exception as e:
                 self.logger.warn('Failed to start/setup/deploy cluster: %s', e)
@@ -175,11 +198,12 @@ class ClusterDaemon(object):
                     if self.cluster_up() and not self.job_running() and self._ec2_hour_over():
                         self.logger.info('Queue is empty. No jobs running. Stopping the cluster...')
                         self.cluster_stop()
-                        self.post_to_slack('checkered_flag', "[v] Cluster stopped")
+                        self._post_to_slack('checkered_flag', "[v] Cluster stopped")
 
                 sleep(self.interval)
         except Exception as e:
-            self.post_to_slack('sos', "[v] Something went wrong: {}".format(e))
+            self._post_to_slack('sos', "[v] Something went wrong: {}".format(e))
+            self._send_email('kovalev@embl.de', 'Cluster auto start daemon failed', e)
 
 
 if __name__ == "__main__":
