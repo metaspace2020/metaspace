@@ -139,7 +139,7 @@ class DatasetManager(object):
         if update_status:
             self.set_ds_status(ds, DatasetStatus.FINISHED)
 
-    def _post_new_job_msg(self, ds):
+    def _post_new_job_msg(self, ds, priority=0):
         self.set_ds_status(ds, DatasetStatus.QUEUED)
         if self.mode == 'queue':
             msg = {
@@ -151,11 +151,11 @@ class DatasetManager(object):
                 email = ds.meta.get('Submitted_By', {}).get('Submitter', {}).get('Email', None)
                 if email:
                     msg['user_email'] = email.lower()
-            self._queue.publish(msg, SM_ANNOTATE)
+            self._queue.publish(msg, SM_ANNOTATE, priority)
             logger.info('New job message posted: %s', msg)
 
     # TODO: make sure the config and metadata are compatible
-    def update_ds(self, ds):
+    def update_ds(self, ds, priority=0):
         """
         Updates the database record and launches re-indexing or re-processing if necessary.
         """
@@ -165,11 +165,11 @@ class DatasetManager(object):
         if config_diff == ConfigDiff.EQUAL:
             self._reindex_ds(ds)
         elif config_diff == ConfigDiff.NEW_MOL_DB:
-            self._post_new_job_msg(ds)
+            self._post_new_job_msg(ds, priority)
         elif config_diff == ConfigDiff.INSTR_PARAMS_DIFF:
             self.add_ds(ds)
 
-    def add_ds(self, ds):
+    def add_ds(self, ds, priority=0):
         """ Save dataset metadata (name, path, image bounds, coordinates) to the database.
         If the ds_id exists, delete the ds first
         """
@@ -178,7 +178,7 @@ class DatasetManager(object):
         if ds.is_stored(self._db):
             self.delete_ds(ds)
 
-        self._post_new_job_msg(ds)
+        self._post_new_job_msg(ds, priority)
         logger.info("Inserted into dataset table: %s, %s", ds.id, ds.name)
 
     def _del_iso_images(self, ds):

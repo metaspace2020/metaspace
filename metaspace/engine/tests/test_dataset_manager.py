@@ -21,7 +21,7 @@ def test_dataset_manager_add_ds_new_ds_id(test_db, sm_config, ds_config):
         ds = Dataset('new_ds_id', 'ds_name', 'input_path',
                      {'metaspace_options': {'notify_submitter': False}}, ds_config)
         ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
-        ds_man.add_ds(ds)
+        ds_man.add_ds(ds, priority=1)
 
         rows = db.select('SELECT * FROM dataset')
         assert len(rows) == 1
@@ -32,9 +32,10 @@ def test_dataset_manager_add_ds_new_ds_id(test_db, sm_config, ds_config):
             'ds_id': 'new_ds_id',
             'ds_name': 'ds_name',
             'input_path': 'input_path'
-        }, SM_ANNOTATE)
+        }, SM_ANNOTATE, 1)
     finally:
         db.close()
+
 
 @patch('sm.engine.dataset_manager.ImageStoreServiceWrapper')
 def test_dataset_manager_add_ds_ds_id_exists(ImageStoreServiceWrapperMock,
@@ -58,7 +59,7 @@ def test_dataset_manager_add_ds_ds_id_exists(ImageStoreServiceWrapperMock,
         ds = Dataset('ds_id', 'new_ds_name', 'input_path',
                      {'metaspace_options': {'notify_submitter': False}}, ds_config)
         ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
-        ds_man.add_ds(ds)
+        ds_man.add_ds(ds, priority=1)
 
         rows = db.select("SELECT * FROM dataset")
         assert len(rows) == 1
@@ -69,7 +70,7 @@ def test_dataset_manager_add_ds_ds_id_exists(ImageStoreServiceWrapperMock,
             'ds_id': 'ds_id',
             'ds_name': 'new_ds_name',
             'input_path': 'input_path'
-        }, SM_ANNOTATE)
+        }, SM_ANNOTATE, 1)
 
         es.delete_ds.assert_called_once_with('ds_id')
         assert 2 == img_store.delete_image.call_count
@@ -119,7 +120,7 @@ def test_dataset_manager_update_ds_new_job_submitted(test_db, sm_config, ds_conf
         new_ds_config['databases'].append({'name': 'ChEBI', 'version': '2008'})
         ds.config = new_ds_config
         ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
-        ds_man.update_ds(ds)
+        ds_man.update_ds(ds, priority=2)
 
         rows = db.select('SELECT * FROM dataset')
         assert len(rows) == 1
@@ -131,7 +132,7 @@ def test_dataset_manager_update_ds_new_job_submitted(test_db, sm_config, ds_conf
             'ds_name': 'ds_name',
             'input_path': 'input_path',
         }
-        qpub_mock.publish.assert_any_call(msg, SM_ANNOTATE)
+        qpub_mock.publish.assert_any_call(msg, SM_ANNOTATE, 2)
     finally:
         db.close()
 

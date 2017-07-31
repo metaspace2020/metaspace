@@ -55,7 +55,7 @@ def add_ds():
                  params.get('config'))
     db = _create_db_conn()
     ds_man = _create_dataset_manager(db)
-    ds_man.add_ds(ds)
+    ds_man.add_ds(ds, params.get('priority', 0))
     db.close()
     return OK['title']
 
@@ -72,7 +72,7 @@ def update_ds(ds_id):
         ds.config = params.get('config', ds.config)
 
         ds_man = _create_dataset_manager(db)
-        ds_man.update_ds(ds)
+        ds_man.update_ds(ds, params.get('priority', 0))
         db.close()
         return OK['title']
     except UnknownDSID:

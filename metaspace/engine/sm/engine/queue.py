@@ -17,7 +17,7 @@ class QueueConsumer(object):
         conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat_interval=0)
         self._conn = pika.BlockingConnection(conn_params)
         self._ch = self._conn.channel()
-        self._ch.queue_declare(queue=qname, durable=True)
+        self._ch.queue_declare(queue=qname, durable=True, arguments={'x-max-priority': 3})
         self._ch.basic_qos(prefetch_count=1)
 
         self.logger = logging.getLogger('sm-queue')
@@ -63,14 +63,15 @@ class QueuePublisher(object):
 
         self.logger = logging.getLogger('sm-queue')
 
-    def publish(self, msg, queue_name):
+    def publish(self, msg, qname, priority=0):
         self._ch.basic_publish(exchange='',
-                               routing_key=queue_name,
+                               routing_key=qname,
                                body=json.dumps(msg),
                                properties=pika.BasicProperties(
                                    delivery_mode=2,  # make message persistent
+                                   priority=priority
                                ))
-        self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), queue_name))
+        self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), qname))
 
 SM_ANNOTATE = 'sm_annotate'
 
