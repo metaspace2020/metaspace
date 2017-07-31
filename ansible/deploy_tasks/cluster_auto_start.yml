@@ -5,6 +5,7 @@
     dest: "{{ sm_ansible_home }}"
     repo: "{{ sm_ansible_url }}"
     update: yes
+    force: yes
     version: "{{ sm_ansible_branch }}"
   when: local_deploy is not defined
   register: git_deploy

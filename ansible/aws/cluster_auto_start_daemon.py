@@ -201,7 +201,7 @@ class ClusterDaemon(object):
                 sleep(self.interval)
         except Exception as e:
             self._post_to_slack('sos', "[v] Something went wrong: {}".format(e))
-            self._send_email('kovalev@embl.de', 'Cluster auto start daemon failed', e)
+            self._send_email('kovalev@embl.de', 'Cluster auto start daemon ({}) failed'.format(self.stage), str(e))
 
 
 if __name__ == "__main__":
