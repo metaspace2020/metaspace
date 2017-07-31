@@ -25,27 +25,33 @@ ERR_OBJECT_NOT_EXISTS = {
     'title': 'Object Not Exists'
 }
 
+
 def _read_config():
     SMConfig.set_path(CONFIG_PATH)
     config = SMConfig.get_conf()
     return config
 
+
 def _create_db_conn():
     config = _read_config()
     return DB(config['db'])
+
 
 def _json_params(req):
     b = req.body.getvalue()
     return json.loads(b.decode('utf-8'))
 
+
 def _create_queue_publisher():
     config = _read_config()
     return QueuePublisher(config['rabbitmq'])
 
+
 def _create_dataset_manager(db):
     return DatasetManager(db, ESExporter(db), mode='queue', queue_publisher=_create_queue_publisher())
 
-@post('/datasets/add')
+
+@post('/v1/datasets/add')
 def add_ds():
     params = _json_params(req)
     ds = Dataset(params.get('id', None) or dt.now().strftime("%Y-%m-%d_%Hh%Mm%Ss"),
@@ -60,7 +66,7 @@ def add_ds():
     return OK['title']
 
 
-@post('/datasets/<ds_id>/update')
+@post('/v1/datasets/<ds_id>/update')
 def update_ds(ds_id):
     try:
         params = _json_params(req)
@@ -80,7 +86,7 @@ def update_ds(ds_id):
         return ERR_OBJECT_NOT_EXISTS['title']
 
 
-@post('/datasets/<ds_id>/delete')
+@post('/v1/datasets/<ds_id>/delete')
 def delete_ds(ds_id):
     try:
         params = _json_params(req)
