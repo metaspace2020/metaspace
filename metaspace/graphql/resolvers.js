@@ -327,7 +327,7 @@ const Resolvers = {
 
   Mutation: {
     submitDataset(_, args) {
-      const {name, path, metadataJson, datasetId} = args;
+      const {name, path, metadataJson, datasetId, priority, sync} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
 
@@ -337,21 +337,27 @@ const Resolvers = {
           name: name,
           input_path: path,
           metadata: metadata,
-          config: generateProcessingConfig(metadata)
+          config: generateProcessingConfig(metadata),
+          priority: priority
         });
 
-        const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
-        return fetch(url, {
+        const url = `http://${config.services.sm_engine_api_host}/v1/datasets/add`;
+        let smAPIPromise = fetch(url, {
              method: 'POST',
              body: body,
              headers: {
                 "Content-Type": "application/json"
              }})
-          .then(() => "success")
+          .then(() => {
+            logger.info(`submitDataset success: ${datasetId} ${name}`);
+            return "success"
+          })
           .catch(e => {
-            logger.error(`${e.message}\n`);
+            logger.error(`submitDataset error: ${e.message}\n`);
             return e.message
           });
+        if (sync)
+          return smAPIPromise;
       } catch (e) {
         logger.error(e);
         return e.message;
@@ -359,7 +365,7 @@ const Resolvers = {
     },
 
     resubmitDataset(_, args) {
-      const {datasetId} = args;
+      const {datasetId, priority, sync} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
 
@@ -373,20 +379,25 @@ const Resolvers = {
                   name: ds.name,
                   input_path: ds.input_path,
                   metadata: ds.metadata,
-                  config: ds.config
+                  config: ds.config,
+                  priority: priority
                 });
 
-                const url = `http://${config.services.sm_engine_api_host}/datasets/add`;
-                return fetch(url, { method: 'POST', body: body, headers: {
-                  "Content-Type": "application/json"
-                }});
+                const url = `http://${config.services.sm_engine_api_host}/v1/datasets/add`;
+                let smAPIPromise = fetch(url, { method: 'POST', body: body, headers: {
+                  "Content-Type": "application/json"}})
+                  .then(() => {
+                    logger.info(`resubmitDataset success: ${ds.id} ${ds.name}`);
+                    return "success";
+                  })
+                  .catch(e => {
+                    logger.error(`resubmitDataset error: ${e.message}\n`);
+                    return e.message
+                  });
+                if (sync)
+                  return smAPIPromise;
               });
           })
-          .then(() => "success")
-          .catch(e => {
-            logger.error(`${e.stack}\n`);
-            return e.message;
-          });
       } catch (e) {
         logger.error(e);
         return e.message;
@@ -394,7 +405,7 @@ const Resolvers = {
     },
 
     updateMetadata(_, args) {
-      const {datasetId, metadataJson} = args;
+      const {datasetId, metadataJson, priority, sync} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
         const newMetadata = JSON.parse(metadataJson);
@@ -405,7 +416,8 @@ const Resolvers = {
             const body = JSON.stringify({
               metadata: newMetadata,
               config: generateProcessingConfig(newMetadata),
-              name: newMetadata.metaspace_options.Dataset_Name || ""
+              name: newMetadata.metaspace_options.Dataset_Name || "",
+              priority: priority
             });
 
             return pg.select().from('dataset').where('id', '=', datasetId)
@@ -414,22 +426,22 @@ const Resolvers = {
                 metadataChangeSlackNotify(user, datasetId, oldMetadata, newMetadata);
               })
               .then(() => {
-                // perform ES re-indexing in the background
-                const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/update`;
-                fetch(url, { method: 'POST', body: body, headers: {
+                const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/update`;
+                let smAPIPromise = fetch(url, { method: 'POST', body: body, headers: {
                     "Content-Type": "application/json"
                   }})
+                  .then(() => {
+                    logger.info(`updateMetadata success: ${datasetId}`);
+                    return "success";
+                  })
                   .catch( e => {
-                    logger.error(`metadata update error: ${e.message}\n${e.stack}`);
+                    logger.error(`updateMetadata error: ${e.message}\n${e.stack}`);
                     metadataUpdateFailedSlackNotify(user, datasetId, e.message);
                   });
+                if (sync)
+                  return smAPIPromise;
               })
-              .then(() => "success");
           })
-          .catch(e => {
-            logger.error(e.message);
-            return e.message;
-          });
       } catch (e) {
         logger.error(e);
         return e.message;
@@ -437,27 +449,29 @@ const Resolvers = {
     },
 
     deleteDataset(_, args) {
-      const {datasetId, delRawData} = args;
+      const {datasetId, delRawData, sync} = args;
 
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
         return checkPermissions(datasetId, payload)
           .then( () => {
-            const url = `http://${config.services.sm_engine_api_host}/datasets/${datasetId}/delete`;
+            const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/delete`;
             let body = JSON.stringify({});
             // if (delRawData != undefined || delRawData == false)
             //   body = JSON.stringify({});
             // else
             //   body = JSON.stringify({ "del_raw": true });
-            return fetch(url, {method: "POST", body: body, headers: {
-                    "Content-Type": "application/json"
-            }});
+            let smAPIPromise = fetch(url, {method: "POST", body: body})
+              .catch( e => {
+                logger.error(`deleteDataset error: ${e.message}\n${e.stack}`);
+              });
+            if (sync)
+              return smAPIPromise;
           })
-          .then(res => res.statusText)
-          .catch(e => {
-            logger.error(e.message);
-            return e.message
-          });
+          .then(res => {
+            logger.info(`deleteDataset success: ${datasetId}`);
+            return "success";
+          })
       } catch (e) {
         logger.error(e.message);
         return e.message;
