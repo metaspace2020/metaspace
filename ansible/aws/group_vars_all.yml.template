@@ -193,6 +193,8 @@ nginx_sites:
           - proxy_pass http://kibana_server;
           - include proxy-params.conf;
   - listen: 80
+    proxy_read_timeout: 300
+    send_timeout: 300
     locations:
       - path: /mol-images/
         params:
