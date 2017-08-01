@@ -342,9 +342,12 @@ const Resolvers = {
              headers: {
                 "Content-Type": "application/json"
              }})
-          .then(() => "success")
+          .then(() => {
+            logger.info(`submitDataset success: ${datasetId} ${name}`);
+            return "success"
+          })
           .catch(e => {
-            logger.error(`${e.message}\n`);
+            logger.error(`submitDataset error: ${e.message}\n`);
             return e.message
           });
         if (sync)
@@ -376,17 +379,19 @@ const Resolvers = {
 
                 const url = `http://${config.services.sm_engine_api_host}/v1/datasets/add`;
                 let smAPIPromise = fetch(url, { method: 'POST', body: body, headers: {
-                  "Content-Type": "application/json"
-                }});
+                  "Content-Type": "application/json"}})
+                  .then(() => {
+                    logger.info(`resubmitDataset success: ${ds.id} ${ds.name}`);
+                    return "success";
+                  })
+                  .catch(e => {
+                    logger.error(`resubmitDataset error: ${e.message}\n`);
+                    return e.message
+                  });
                 if (sync)
                   return smAPIPromise;
               });
           })
-          .then(() => "success")
-          .catch(e => {
-            logger.error(`${e.stack}\n`);
-            return e.message;
-          });
       } catch (e) {
         logger.error(e);
         return e.message;
@@ -415,24 +420,22 @@ const Resolvers = {
                 metadataChangeSlackNotify(user, datasetId, oldMetadata, newMetadata);
               })
               .then(() => {
-                // perform ES re-indexing in the background
                 const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/update`;
                 let smAPIPromise = fetch(url, { method: 'POST', body: body, headers: {
                     "Content-Type": "application/json"
                   }})
+                  .then(() => {
+                    logger.info(`updateMetadata success: ${datasetId}`);
+                    return "success";
+                  })
                   .catch( e => {
-                    logger.error(`metadata update error: ${e.message}\n${e.stack}`);
+                    logger.error(`updateMetadata error: ${e.message}\n${e.stack}`);
                     metadataUpdateFailedSlackNotify(user, datasetId, e.message);
                   });
                 if (sync)
                   return smAPIPromise;
               })
-              .then(() => "success");
           })
-          .catch(e => {
-            logger.error(e.message);
-            return e.message;
-          });
       } catch (e) {
         logger.error(e);
         return e.message;
@@ -452,15 +455,17 @@ const Resolvers = {
             //   body = JSON.stringify({});
             // else
             //   body = JSON.stringify({ "del_raw": true });
-            let smAPIPromise = fetch(url, {method: "POST", body: body});
+            let smAPIPromise = fetch(url, {method: "POST", body: body})
+              .catch( e => {
+                logger.error(`deleteDataset error: ${e.message}\n${e.stack}`);
+              });
             if (sync)
               return smAPIPromise;
           })
-          .then(res => res.statusText)
-          .catch(e => {
-            logger.error(e.message);
-            return e.message
-          });
+          .then(res => {
+            logger.info(`deleteDataset success: ${datasetId}`);
+            return "success";
+          })
       } catch (e) {
         logger.error(e.message);
         return e.message;
