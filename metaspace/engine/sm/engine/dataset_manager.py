@@ -16,7 +16,7 @@ DS_SEL = 'SELECT name, input_path, metadata, config FROM dataset WHERE id = %s'
 DS_UPD = 'UPDATE dataset set name=%s, input_path=%s, metadata=%s, config=%s, status=%s where id=%s'
 DS_INSERT = "INSERT INTO dataset (id, name, input_path, metadata, config, status) VALUES (%s, %s, %s, %s, %s, %s)"
 
-IMG_URLS_BY_ID_SEL = ('SELECT iso_image_urls, ion_image_url '
+IMG_URLS_BY_ID_SEL = ('SELECT iso_image_urls '
                       'FROM iso_image_metrics m '
                       'JOIN job j ON j.id = m.job_id '
                       'JOIN dataset d ON d.id = j.ds_id '
@@ -185,14 +185,13 @@ class DatasetManager(object):
         logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
 
         img_store = ImageStoreServiceWrapper(self._sm_config['services']['iso_images'])
-        ds_img_urls = []
-        for iso_image_urls, ion_image_url in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
-            ds_img_urls.append(ion_image_url)
-            ds_img_urls.extend(iso_image_urls)
+        ds_iso_img_ids = []
+        for iso_image_ids in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
+            ds_iso_img_ids.extend(iso_image_ids)
 
-        for url in ds_img_urls:
-            if url:
-                del_url = '{}/delete/{}'.format(self._sm_config['services']['iso_images'], url)
+        for id in ds_iso_img_ids:
+            if id:
+                del_url = '{}/delete/{}'.format(self._sm_config['services']['iso_images'], id)
                 img_store.delete_image(del_url)
 
     def delete_ds(self, ds, del_raw_data=False):
