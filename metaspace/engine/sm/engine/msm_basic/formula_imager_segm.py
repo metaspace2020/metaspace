@@ -7,7 +7,7 @@ from scipy.sparse import coo_matrix
 from sm.engine.errors import JobFailedError
 
 MAX_MZ_VALUE = 10**5
-MAX_INTENS_VALUE = 10**9
+MAX_INTENS_VALUE = 10**12
 
 
 def _check_spectra_quality(spectra_sample):
