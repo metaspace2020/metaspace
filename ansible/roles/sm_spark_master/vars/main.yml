@@ -2,15 +2,7 @@
 
 filebeat_config:
   filebeat:
-    prospectors:
-      - input_type: log
-        paths: "{{ spark_master_filebeat_log_paths }}"
-        document_type: "{{ spark_master_filebeat_document_type }}"
-
-        multiline:
-          pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}"
-          negate: "true"
-          match: after
+    prospectors: "{{ spark_master_filebeat_prospectors }}"
 
   output:
     elasticsearch:
@@ -27,6 +19,7 @@ ingest_node_pipelines:
           field: "message"
           patterns:
             - "%{TIMESTAMP_ISO8601:timestamp} - %{LOGLEVEL:level} - %{NOTSPACE:component} - %{NOTSPACE:file_line} -%{GREEDYDATA:msg}"
+          ignore_missing: true
       - date:
           field: "timestamp"
           formats:

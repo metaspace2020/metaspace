@@ -10,7 +10,6 @@ aws_key_name: ""
 aws_region: eu-west-1
 
 postgres_version: 9.5
-postgres_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 postgres_port: 5432
 
 elasticsearch_version: 5.2.2
@@ -58,6 +57,7 @@ miniconda_env:
 
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
 sm_branch: rel-v0.7
+sm_postgres_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_postgres_password: postgres_password
 sm_home: "/opt/dev/sm"
 sm_s3_path: "s3a://bucket-name/data"
@@ -140,11 +140,17 @@ spark_version: "2.1.1-bin-hadoop2.7"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
 spark_user: "ubuntu"
-spark_master_filebeat_log_paths:
-  - "{{ sm_home }}/logs/sm-engine.log"
-spark_master_filebeat_document_type: sm_engine
-spark_master_filebeat_version: "{{ elasticsearch_version }}"
 spark_master_elk_es_ingest_node_pipeline_id: sm_engine_log_extract
+spark_master_filebeat_version: "{{ elasticsearch_version }}"
+spark_master_filebeat_prospectors:
+  - input_type: log
+    paths: ["{{ sm_home }}/logs/sm-engine.log"]
+    document_type: "sm_engine"
+    multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
+  - input_type: log
+    paths: ["{{ sm_home }}/logs/sm-job-daemon.log"]
+    document_type: "sm_job_daemon"
+    multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
 
 elk_private_ip:
 elk_es_user: elastic
