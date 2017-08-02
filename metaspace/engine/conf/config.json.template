@@ -34,7 +34,8 @@
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
     "spark.kryoserializer.buffer.max": "128m",
     "spark.python.worker.memory": "512m",
-    "spark.rdd.compress": true
+    "spark.rdd.compress": true,
+    "spark.ui.showConsoleProgress": false
   },
   "aws": {
     "aws_access_key_id": "{{ aws_access_key_id }}",
