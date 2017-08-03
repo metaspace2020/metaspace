@@ -54,7 +54,7 @@ def test_dataset_manager_add_ds_ds_id_exists(ImageStoreServiceWrapperMock,
                   rows=[(1, 0, 'H20')])
         db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, ion_image_url, iso_image_urls) "
                    "VALUES (%s, %s, %s, %s, %s, %s)"),
-                  rows=[(0, 0, 1, '+H', 'ion_image_url', ['iso_image_url_0'])])
+                  rows=[(0, 0, 1, '+H', None, ['iso_image_1_url', 'iso_image_2_url'])])
 
         ds = Dataset('ds_id', 'new_ds_name', 'input_path',
                      {'metaspace_options': {'notify_submitter': False}}, ds_config)
@@ -172,7 +172,7 @@ def test_dataset_manager_delete_ds_works(WorkDirManagerMock, ImageStoreServiceWr
                   rows=[(1, 0, 'H20')])
         db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, ion_image_url, iso_image_urls) "
                    "VALUES (%s, %s, %s, %s, %s, %s)"),
-                  rows=[(0, 0, 1, '+H', 'ion_image_url', ['iso_image_url_0'])])
+                  rows=[(0, 0, 1, '+H', None, ['iso_image_1_url', 'iso_image_2_url'])])
 
         ds_man = DatasetManager(db, es, mode='local')
         ds = Dataset.load_ds('ds_id', db)

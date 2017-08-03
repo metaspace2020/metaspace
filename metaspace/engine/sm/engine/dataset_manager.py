@@ -185,14 +185,12 @@ class DatasetManager(object):
         logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
 
         img_store = ImageStoreServiceWrapper(self._sm_config['services']['iso_images'])
-        ds_iso_img_ids = []
-        for iso_image_ids in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
-            ds_iso_img_ids.extend(iso_image_ids)
-
-        for id in ds_iso_img_ids:
-            if id:
-                del_url = '{}/delete/{}'.format(self._sm_config['services']['iso_images'], id)
-                img_store.delete_image(del_url)
+        for row in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
+            iso_image_ids = row[0]
+            for id in iso_image_ids:
+                if id:
+                    del_url = '{}/delete/{}'.format(self._sm_config['services']['iso_images'], id)
+                    img_store.delete_image(del_url)
 
     def delete_ds(self, ds, del_raw_data=False):
         assert ds.id or ds.name
