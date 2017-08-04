@@ -67,13 +67,8 @@ function generateProcessingConfig(meta_json) {
   if (m_opts.hasOwnProperty('Adducts'))
     adducts = m_opts['Adducts'];
   else
-    adducts = {
-      // [M+H]+, [M+Na]+, [M+K]+, [M+NH4]+, [M+H-H2O]+, [M+C2H3N+H]+
-      '+': ['+H', '+Na', '+K', '+NH4', '+H-H2O', '+C2H3N+H'],
-      // [M-H]-, [M+Na-2H]-, [M+K-2H]-, [M-H2O-H]-, [M+CH2O2-H]+, [M+C2H4O2-H]+, [M+Cl]-, [M+Br]-
-      '-': ['-H', '+Na-2H', '+K-2H', '-H2O-H', '+CH2O2-H', '+C2H4O2-H', '+Cl', '+Br']
-    }[polarity];
-  
+    adducts = config.default_adducts[polarity];
+
   return {
     "databases": mdb_list,
     "isotope_generation": {

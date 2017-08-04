@@ -3,6 +3,11 @@ let config = {};
 config.port = 3011;
 config.ws_port = 5667;
 
+config.default_adducts = {
+  "+": ["+H", "+K", "+Na"],
+  "-": ["-H", "+Cl"]
+};
+
 config.img_upload = {};
 config.img_upload.iso_img_fs_path = '/opt/data/sm_data/public/';
 config.img_upload.img_base_path = '/iso_images/';
