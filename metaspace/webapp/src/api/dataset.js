@@ -32,7 +32,7 @@ export const datasetCountQuery =
 
 export const submitDatasetQuery =
   gql`mutation ($jwt: String!, $path: String!, $value: String!) {
-    submitDataset(jwt: $jwt, path: $path, metadataJson: $value)
+    submitDataset(jwt: $jwt, path: $path, metadataJson: $value, priority: 1)
   }`;
 
 export const deleteDatasetQuery =

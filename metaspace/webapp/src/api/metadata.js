@@ -14,7 +14,7 @@ export const fetchAutocompleteSuggestionsQuery =
 
 export const updateMetadataQuery =
   gql`mutation ($jwt: String!, $dsId: String!, $value: String!) {
-    updateMetadata(jwt: $jwt, datasetId: $dsId, metadataJson: $value)
+    updateMetadata(jwt: $jwt, datasetId: $dsId, metadataJson: $value, priority: 1)
   }`;
 
 export const fetchOptionListsQuery = gql`{
