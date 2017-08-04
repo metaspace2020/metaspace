@@ -38,6 +38,7 @@ const config = {
     password: 'password'
   },
 
+  ws_port: 5666,
   websocket_public_url: 'ws://localhost:5666/graphql'
 };
 
