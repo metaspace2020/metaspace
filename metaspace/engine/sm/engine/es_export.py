@@ -188,7 +188,7 @@ class ESExporter(object):
             dataset['ds_submitter'] = submitter['First_Name'] + ' ' + submitter['Surname']
 
         # TODO take datetime from a dedicated column once it's introduced
-        dataset['ds_upload_date'] = dataset['ds_id']
+        dataset['ds_upload_date'] = dataset['ds_id'].replace('_', 'T').replace('h', ':').replace('m', ':').replace('s', 'Z')
 
     def _ds_get_by_id(self, ds_id):
         dataset = dict(zip(DATASET_COLUMNS, self._db.select(DATASET_SEL, ds_id)[0]))
