@@ -10,15 +10,13 @@ from sm.engine.db import DB
 
 logger = logging.getLogger('sm-engine')
 
-COLUMNS = ["ds_id", "ds_name", "sf", "sf_adduct",
+COLUMNS = ["sf", "sf_adduct",
            "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
            "adduct", "job_id", "sf_id", "fdr",
-           "centroid_mzs", "ds_config", "ds_meta", "iso_image_ids", "polarity"]
+           "centroid_mzs", "iso_image_ids", "polarity"]
 
 ANNOTATIONS_SEL = '''
 SELECT
-    ds.id as ds_id,
-    ds.name AS ds_name,
     f.sf,
     CONCAT(f.sf, m.adduct) as sf_adduct,
     --f.names AS comp_names,
@@ -35,8 +33,6 @@ SELECT
     f.id AS sf_id,
     m.fdr as pass_fdr,
     tp.centr_mzs AS centroid_mzs,
-    ds.config as ds_config,
-    ds.metadata as ds_meta,
     m.iso_image_urls as iso_image_ids,
     ds.config->'isotope_generation'->'charge'->'polarity' as polarity
 FROM iso_image_metrics m
@@ -186,8 +182,20 @@ class ESExporter(object):
         self._es.update(self.index, id=ds_id, body={'doc': dataset}, doc_type='dataset')
         return dataset
 
-    def sync_dataset(self, ds_id):
+    def _ds_add_derived_fields(self, dataset):
+        submitter = dataset['ds_meta']['Submitted_By']['Submitter']
+        dataset['ds_submitter'] = submitter['First_Name'] + ' ' + submitter['Surname']
+
+        # TODO take datetime from a dedicated column once it's introduced
+        dataset['ds_upload_date'] = dataset['ds_id']
+
+    def _ds_get_by_id(self, ds_id):
         dataset = dict(zip(DATASET_COLUMNS, self._db.select(DATASET_SEL, ds_id)[0]))
+        self._ds_add_derived_fields(dataset)
+        return dataset
+
+    def sync_dataset(self, ds_id):
+        dataset = self._ds_get_by_id(ds_id)
         if self._es.exists(index=self.index, doc_type='dataset', id=ds_id):
             self._es.update(index=self.index, id=ds_id, doc_type='dataset', body={'doc': dataset})
         else:
@@ -207,7 +215,7 @@ class ESExporter(object):
         try:
             dataset = self._remove_mol_db_from_dataset(ds_id, mol_db)
         except NotFoundError:
-            dataset = dict(zip(DATASET_COLUMNS, self._db.select(DATASET_SEL, ds_id)[0]))
+            dataset = self._ds_get_by_id(ds_id)
         if 'annotation_counts' not in dataset:
             dataset['annotation_counts'] = []
 
@@ -222,6 +230,7 @@ class ESExporter(object):
         mol_by_sf_df = self._get_mol_by_sf_df(mol_db)
         for r in annotations:
             d = dict(zip(COLUMNS, r))
+            d.update(dataset)  # include all dataset fields (prefixed with 'ds_')
             d['db_name'] = mol_db.name
             d['db_version'] = mol_db.version
             sf = d['sf']
