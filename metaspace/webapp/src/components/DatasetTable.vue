@@ -47,6 +47,7 @@
         <div v-else>
           <mass-spec-setup-plot></mass-spec-setup-plot>
           <submitter-summary-plot></submitter-summary-plot>
+          <upload-timeline-plot></upload-timeline-plot>
         </div>
       </div>
     </div>
@@ -59,6 +60,7 @@
  import FilterPanel from './FilterPanel.vue';
  import MassSpecSetupPlot from './plots/MSSetupSummaryPlot.vue';
  import SubmitterSummaryPlot from './plots/SubmitterSummaryPlot.vue';
+ import UploadTimelinePlot from './plots/DatasetUploadTimeline.vue';
  import gql from 'graphql-tag';
 
  const processingStages = ['started', 'queued', 'finished'];
@@ -76,7 +78,8 @@
      DatasetItem,
      FilterPanel,
      MassSpecSetupPlot,
-     SubmitterSummaryPlot
+     SubmitterSummaryPlot,
+     UploadTimelinePlot
    },
 
    computed: {
