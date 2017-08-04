@@ -223,6 +223,10 @@ const Resolvers = {
 
     inputPath(ds) {
       return ds._source.ds_input_path;
+    },
+
+    uploadDate(ds) {
+      return ds._source.ds_upload_date;
     }
   },
 
