@@ -183,8 +183,9 @@ class ESExporter(object):
         return dataset
 
     def _ds_add_derived_fields(self, dataset):
-        submitter = dataset['ds_meta']['Submitted_By']['Submitter']
-        dataset['ds_submitter'] = submitter['First_Name'] + ' ' + submitter['Surname']
+        submitter = dataset.get('ds_meta', {}).get('Submitted_By', {}).get('Submitter', None)
+        if submitter:
+            dataset['ds_submitter'] = submitter['First_Name'] + ' ' + submitter['Surname']
 
         # TODO take datetime from a dedicated column once it's introduced
         dataset['ds_upload_date'] = dataset['ds_id']
