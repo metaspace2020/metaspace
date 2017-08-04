@@ -29,7 +29,7 @@ function esFormatMz(mz) {
 function esSort(orderBy, sortingOrder) {
   // default order
   let order = 'asc';
-  if (orderBy == 'ORDER_BY_MSM')
+  if (orderBy == 'ORDER_BY_MSM' || orderBy == 'ORDER_BY_DATE')
     order = 'desc';
 
   if (sortingOrder == 'DESCENDING')
@@ -37,6 +37,7 @@ function esSort(orderBy, sortingOrder) {
   else if (sortingOrder == 'ASCENDING')
     order = 'asc';
 
+  // annotation orderings
   if (orderBy == 'ORDER_BY_MZ')
     return [{'mz': order}];
   else if (orderBy == 'ORDER_BY_MSM')
@@ -47,9 +48,14 @@ function esSort(orderBy, sortingOrder) {
     return [{'ds_name': order}, {'mz': order}];
   else if (orderBy == 'ORDER_BY_FORMULA')
     return [{'sf': order}, {'adduct': order}, {'fdr': order}];
+  // dataset orderings
+  else if (orderBy == 'ORDER_BY_DATE')
+    return [{'ds_last_finished': order}];
+  else if (orderBy == 'ORDER_BY_NAME')
+    return [{'ds_name': order}];
 }
 
-function constructAnnotationQuery(args) {
+function constructAnnotationQuery(args, docType) {
   const { orderBy, sortingOrder, offset, limit, filter, datasetFilter, simpleQuery } = args;
   const { database, datasetName, mzFilter, msmScoreFilter,
     fdrLevel, sumFormula, adduct, compoundQuery } = filter;
@@ -59,9 +65,11 @@ function constructAnnotationQuery(args) {
       bool: {
         filter: []
       }
-    },
-    sort: esSort(orderBy, sortingOrder)
+    }
   };
+
+  if (orderBy)
+    body.sort = esSort(orderBy, sortingOrder);
   
   if (database) {
     addFilter({term: {db_name: database}});
@@ -79,6 +87,8 @@ function constructAnnotationQuery(args) {
     };
     addFilter(filter);
   }
+
+  addFilter({term: {_type: docType}});
 
   if (mzFilter)
     addRangeFilter('mz', {min: esFormatMz(mzFilter.min),
@@ -124,12 +134,12 @@ function constructAnnotationQuery(args) {
   return body;
 }
 
-module.exports.esSearchResults = function(args) {
+module.exports.esSearchResults = function(args, docType) {
   if (args.limit > ES_LIMIT_MAX) {
     return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
   
-  const body = constructAnnotationQuery(args);
+  const body = constructAnnotationQuery(args, docType);
   const request = {
     body,
     index: esIndex,
@@ -148,8 +158,8 @@ module.exports.esSearchResults = function(args) {
   });
 };
 
-module.exports.esCountResults = function(args) {
-  const body = constructAnnotationQuery(args);
+module.exports.esCountResults = function(args, docType) {
+  const body = constructAnnotationQuery(args, docType);
   const request = { body, index: esIndex };
   return es.count(request).then((resp) => {
     return resp.count;
@@ -159,12 +169,101 @@ module.exports.esCountResults = function(args) {
   });
 };
 
-module.exports.esAnnotationByID = function(id) {
-  return es.get({index: esIndex, type: 'annotation', id})
-    .then((resp) => {
-      return resp;
+const fieldEnumToSchemaPath = {
+  DF_INSTITUTION: datasetFilters.institution.esField,
+  DF_SUBMITTER_FIRST_NAME: datasetFilters.submitter.esField + '.First_Name',
+  DF_SUBMITTER_SURNAME: datasetFilters.submitter.esField + '.Surname',
+  DF_POLARITY: datasetFilters.polarity.esField,
+  DF_ION_SOURCE: datasetFilters.ionisationSource.esField,
+  DF_ANALYZER_TYPE: datasetFilters.analyzerType.esField,
+  DF_ORGANISM: datasetFilters.organism.esField,
+  DF_ORGANISM_PART: datasetFilters.organismPart.esField,
+  DF_CONDITION: datasetFilters.condition.esField,
+  DF_MALDI_MATRIX: datasetFilters.maldiMatrix.esField
+};
+
+function addTermAggregations(requestBody, fields) {
+  const esFields = fields.map(f => fieldEnumToSchemaPath[f]);
+  let aggregations = null;
+  for (let i = fields.length - 1; i >= 0; --i) {
+    const f = fields[i], ef = esFields[i];
+    let tmp = { aggs: { [f]: { terms: { field: ef } } } };
+
+    if (aggregations)
+      tmp.aggs[f] = Object.assign(aggregations, tmp.aggs[f]);
+    aggregations = tmp;
+  }
+  requestBody = Object.assign(aggregations, requestBody);
+  return requestBody;
+}
+
+function flattenAggResponse(fields, aggs, idx) {
+  const {buckets} = aggs[fields[idx]];
+  let counts = [];
+  for (let bucket of buckets) {
+    const {key, doc_count} = bucket;
+
+    // handle base case
+    if (idx + 1 == fields.length) {
+      counts.push({fieldValues: [key], count: doc_count});
+      continue;
+    }
+
+    const nextField = fields[idx + 1],
+          subAggs = {[nextField]: bucket[nextField]},
+          nextCounts = flattenAggResponse(fields, subAggs, idx + 1).counts;
+
+    for (let {fieldValues, count} of nextCounts)
+      counts.push({fieldValues: [key].concat(fieldValues), count});
+  }
+
+  return { counts };
+}
+
+module.exports.esCountGroupedResults = function(args, docType) {
+  const q = constructAnnotationQuery(args, docType);
+
+  if (args.groupingFields.length == 0) {
+    // handle case of no grouping for convenience
+    logger.info(q);
+    const request = { body: q, index: esIndex };
+    return es.count(request).then((resp) => {
+      return {counts: [{fieldValues: [], count: resp.count}]};
     }).catch((e) => {
       logger.error(e);
-      return null;
+      return e.message;
     });
+  }
+
+  const body = addTermAggregations(q, args.groupingFields);
+  logger.info(body);
+  const request = { body, index: esIndex, size: 0 };
+  console.time('esAgg');
+  return es.search(request)
+    .then(resp => {
+      console.timeEnd('esAgg');
+      return flattenAggResponse(args.groupingFields, resp.aggregations, 0);
+    })
+    .catch((e) => {
+      logger.error(e);
+      return e.message;
+    });
+}
+
+function getById(docType, id) {
+  return es.get({index: esIndex, type: docType, id})
+  .then((resp) => {
+    return resp;
+  }).catch((e) => {
+    logger.error(e);
+    return null;
+  });
+}
+
+module.exports.esAnnotationByID = function(id) {
+  return getById('annotation', id);
+};
+
+module.exports.esDatasetByID = function(id) {
+  return getById('dataset', id);
 };

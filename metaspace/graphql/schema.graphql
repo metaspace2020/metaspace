@@ -70,6 +70,20 @@ type Dataset {
   inputPath: String
 }
 
+# fields of categorical type
+enum DatasetAggField {
+  DF_INSTITUTION,
+  DF_SUBMITTER_FIRST_NAME,
+  DF_SUBMITTER_SURNAME,
+  DF_POLARITY,
+  DF_ION_SOURCE,
+  DF_ANALYZER_TYPE,
+  DF_ORGANISM,
+  DF_ORGANISM_PART,
+  DF_CONDITION,
+  DF_MALDI_MATRIX
+}
+
 type CompoundInfoEntry {
   database: String!
   url: String
@@ -177,13 +191,28 @@ input DatasetFilter {
   status: JobStatus
 }
 
+input DatasetCountPerGroupInput {
+  fields: [DatasetAggField!]!
+  filter: DatasetFilter = {}
+  simpleQuery: String
+}
+
+type DatasetCountPerGroupListElement {
+  fieldValues: [String!]!  # corresponding to input fields
+  count: Int!
+}
+
+type DatasetCountPerGroup {
+  counts: [DatasetCountPerGroupListElement]
+}
+
 type Query {
   dataset(id: String!): Dataset
   datasetByName(name: String!): Dataset
 
   allDatasets(orderBy: DatasetOrderBy = ORDER_BY_DATE,
               sortingOrder: SortingOrder = DESCENDING,
-              filter: DatasetFilter = {},
+              filter: DatasetFilter = {}, simpleQuery: String,
               offset: Int = 0, limit: Int = 10): [Dataset!]!
 
   allAnnotations(orderBy: AnnotationOrderBy = ORDER_BY_MSM,
@@ -193,7 +222,9 @@ type Query {
                  datasetFilter: DatasetFilter = {},
                  simpleQuery: String): [Annotation]
 
-  countDatasets(filter: DatasetFilter = {}): Int!
+  countDatasets(filter: DatasetFilter = {}, simpleQuery: String): Int!
+
+  countDatasetsPerGroup(query: DatasetCountPerGroupInput!): DatasetCountPerGroup!
 
   countAnnotations(filter: AnnotationFilter = {},
                    datasetFilter: DatasetFilter = {},
@@ -220,12 +251,17 @@ type Mutation {
 }
 
 type DatasetStatusUpdate {
+  dataset: Dataset!
+}
+
+type DatasetDeleteNotification {
   datasetId: String!
-  status: JobStatus!
 }
 
 type Subscription {
   datasetStatusUpdated: DatasetStatusUpdate
+
+  datasetDeleted: DatasetDeleteNotification
 }
 
 schema {
