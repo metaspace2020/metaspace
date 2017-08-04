@@ -14,7 +14,7 @@
     src: "{{ sm_graphql_home }}/"
     dest: "{{ sm_graphql_home }}/"
     rsync_opts:
-      - "--exclude='config/*' --exclude='dist/*' --exclude='node_modules/*' --exclude='.*'"
+      - "--exclude='config/*.js' --exclude='logs/*' --exclude='dist/*' --exclude='node_modules/*' --exclude='.*'"
   when: local_deploy is defined
 
 - name: Install sm-graphql dependencies
