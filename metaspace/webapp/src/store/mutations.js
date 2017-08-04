@@ -117,5 +117,10 @@ export default {
       sort: encodeSortOrder(sortOrder)
     });
     router.replace({query});
+  },
+
+  setCurrentTab(state, tab) {
+    let query = Object.assign({}, state.route.query, {tab});
+    router.replace({query});
   }
 };

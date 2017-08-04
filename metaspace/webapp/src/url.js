@@ -165,6 +165,10 @@ export function decodeSettings({query, path}) {
     annotationView: {
       activeSections: ['images'],
       colormap: 'Viridis'
+    },
+
+    datasets: {
+      tab: 'List'
     }
   };
 
@@ -176,5 +180,7 @@ export function decodeSettings({query, path}) {
     settings.annotationView.colormap = query.cmap;
   if (query.sections !== undefined)
     settings.annotationView.activeSections = decodeSections(query.sections);
+  if (query.tab !== undefined)
+    settings.datasets.tab = query.tab;
   return settings;
 }

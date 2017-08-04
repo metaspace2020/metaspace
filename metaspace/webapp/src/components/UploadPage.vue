@@ -55,6 +55,11 @@
 
  export default {
    name: 'upload-page',
+   mounted() {
+     const {query} = this.$store.state.route;
+     if (query['first-time'] !== undefined)
+       this.introIsHidden = false;
+   },
    data() {
      return {
        fineUploaderConfig: config.fineUploader,

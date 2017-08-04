@@ -1,8 +1,8 @@
 import gql from 'graphql-tag';
 
 export const datasetListQuery =
-  gql`query GetDatasets($dFilter: DatasetFilter) {
-    allDatasets(offset: 0, limit: 100, filter: $dFilter) {
+  gql`query GetDatasets($dFilter: DatasetFilter, $query: String) {
+    allDatasets(offset: 0, limit: 100, filter: $dFilter, simpleQuery: $query) {
       id
       name
       institution
@@ -26,11 +26,16 @@ export const datasetListQuery =
   }`;
 
 export const datasetCountQuery =
-  gql`query CountDatasets($dFilter: DatasetFilter) {
-    countDatasets(filter: $dFilter)
+  gql`query CountDatasets($dFilter: DatasetFilter, $query: String) {
+    countDatasets(filter: $dFilter, simpleQuery: $query)
   }`;
 
 export const submitDatasetQuery =
   gql`mutation ($jwt: String!, $path: String!, $value: String!) {
     submitDataset(jwt: $jwt, path: $path, metadataJson: $value)
+  }`;
+
+export const deleteDatasetQuery =
+  gql`mutation ($jwt: String!, $id: String!) {
+    deleteDataset(jwt: $jwt, datasetId: $id)
   }`;

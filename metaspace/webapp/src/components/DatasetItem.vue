@@ -1,5 +1,5 @@
 <template>
-  <div class="dataset-item">
+  <div class="dataset-item" :class="disabledClass">
 
     <el-dialog title="Provided metadata" v-model="showMetadataDialog">
       <dataset-info :metadata="metadata"
@@ -92,6 +92,12 @@
         <i class="el-icon-edit"></i>
         <router-link :to="editHref">Edit metadata</router-link>
       </div>
+
+      <div v-if="haveEditAccess && dataset.status != 'STARTED'"
+           class="ds-delete">
+        <i class="el-icon-delete"></i>
+        <a @click="openDeleteDialog">Delete dataset</a>
+      </div>
     </div>
   </div>
 </template>
@@ -99,6 +105,8 @@
 <script>
  import DatasetInfo from './DatasetInfo.vue';
  import capitalize from 'lodash/capitalize';
+ import {deleteDatasetQuery} from '../api/dataset.js';
+ import {getJWT} from '../util.js';
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');
@@ -200,10 +208,15 @@
          params: {dataset_id: this.dataset.id}
        };
      },
+
+     disabledClass() {
+       return this.disabled ? "ds-item-disabled" : "";
+     }
    },
    data() {
      return {
-       showMetadataDialog: false
+       showMetadataDialog: false,
+       disabled: false
      };
    },
    methods: {
@@ -228,6 +241,34 @@
        } else
          filter[field] = this.dataset[field] || this[field];
        this.$store.commit('updateFilter', filter);
+     },
+
+     openDeleteDialog() {
+       this.$confirm("Are you sure you want to delete " +
+                     this.formatDatasetName + "?")
+         .then(_ => {
+           getJWT().then(jwt => {
+             this.disabled = true;
+             return this.$apollo.mutate({
+               mutation: deleteDatasetQuery,
+               variables: {
+                 jwt,
+                 id: this.dataset.id
+             }});
+           })
+           .then(resp => resp.data.deleteDataset)
+           .then(status => {
+             if (status != 'OK') {
+               this.$message({
+                 message: "Deletion failed :( Contact us: contact@metaspace2020.eu" + "(error: " + status + ")",
+                 type: 'error',
+                 duration: 0,
+                 showClose: true
+               });
+               this.disabled = false;
+             }
+           });
+         }).catch(_ => {});
      }
    }
  }
@@ -309,6 +350,20 @@
 
  .db-link-list {
    font-size: initial;
+ }
+
+ .ds-delete, .ds-delete > a {
+   color: #a00;
+ }
+
+ .ds-delete > a {
+   text-decoration: underline;
+   cursor: pointer;
+ }
+
+ .ds-item-disabled {
+   pointer-events: none;
+   opacity: 0.5;
  }
 
 </style>

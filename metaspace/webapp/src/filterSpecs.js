@@ -236,7 +236,7 @@ const FILTER_SPECIFICATIONS = {
     type: SearchBox,
     name: 'Simple query',
     description: 'Search anything',
-    levels: ['annotation'],
+    levels: ['annotation', 'dataset'],
     initialValue: undefined,
     removable: false
   }
