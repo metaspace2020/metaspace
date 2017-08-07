@@ -21,22 +21,23 @@
         </div>
 
         <div v-if="displayMode == 'List'">
-          <div v-if="noFilters"
-               style="font: 24px 'Roboto', sans-serif; padding: 5px;">
-            <span v-if="noFilters">
-              Recent uploads
-            </span>
-          </div>
+          <div id="dataset-list-header">
+            <div v-if="noFilters" style="font: 24px 'Roboto', sans-serif; padding: 5px;">
+              <span v-if="noFilters">
+                Recent uploads
+              </span>
+            </div>
 
-          <div v-else
-               style="font: 18px 'Roboto', sans-serif; padding: 5px;">
-            <span v-if="nonEmpty">
-              Search results in reverse chronological order
-            </span>
+            <div v-else style="font: 18px 'Roboto', sans-serif; padding: 5px;">
+              <span v-if="nonEmpty">
+                Search results in reverse chronological order
+              </span>
+              <span v-else>No datasets found</span>
+            </div>
+
             <el-button v-if="nonEmpty" :disabled="isExporting" @click="startExport" class="export-btn">
               Export to CSV
             </el-button>
-            <span v-else>No datasets found</span>
           </div>
 
           <div class="dataset-list">
@@ -369,5 +370,10 @@
    flex-flow: row wrap;
    display: flex;
    justify-content: space-around;
+ }
+
+ #dataset-list-header {
+   display: flex;
+   align-items: baseline;
  }
 </style>
