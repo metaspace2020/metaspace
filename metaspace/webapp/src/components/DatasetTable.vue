@@ -44,10 +44,11 @@
           </div>
         </div>
 
-        <div v-else>
+        <div v-else id="dataset-summary-charts">
           <mass-spec-setup-plot></mass-spec-setup-plot>
           <submitter-summary-plot></submitter-summary-plot>
           <upload-timeline-plot></upload-timeline-plot>
+          <organism-summary-plot></organism-summary-plot>
         </div>
       </div>
     </div>
@@ -59,6 +60,7 @@
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
  import MassSpecSetupPlot from './plots/MSSetupSummaryPlot.vue';
+ import OrganismSummaryPlot from './plots/OrganismSummaryPlot.vue';
  import SubmitterSummaryPlot from './plots/SubmitterSummaryPlot.vue';
  import UploadTimelinePlot from './plots/DatasetUploadTimeline.vue';
  import gql from 'graphql-tag';
@@ -78,6 +80,7 @@
      DatasetItem,
      FilterPanel,
      MassSpecSetupPlot,
+     OrganismSummaryPlot,
      SubmitterSummaryPlot,
      UploadTimelinePlot
    },
@@ -293,5 +296,11 @@
 
  .cb-queued .el-checkbox__input.is-checked .el-checkbox__inner {
    background: #72c8e5;
+ }
+
+ #dataset-summary-charts {
+   flex-flow: row wrap;
+   display: flex;
+   justify-content: space-around;
  }
 </style>
