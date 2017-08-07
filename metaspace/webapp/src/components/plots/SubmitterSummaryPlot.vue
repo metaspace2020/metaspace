@@ -141,7 +141,7 @@
           .attr('fill', '#ccc')
           
       function drawYAxis(scale) {
-          svg.append('g').call(d3.axisLeft(scale).tickSizeInner(-width).ticks(scale.domain()[1]))
+          svg.append('g').call(d3.axisLeft(scale).tickSizeInner(-width).ticks(Math.min(10, scale.domain()[1])))
           .selectAll('.tick > line').style('opacity', 0.2).attr('stroke-dasharray', '5, 5')
       }
 
@@ -168,7 +168,7 @@
           .attr('text-anchor', 'middle')
           .style('font-size', '12px')
               
-      addMainTitle(svg, geometry, 'Contributing labs').style('font-size', '20px');
+      addMainTitle(svg, geometry, 'Contributing labs').style('font-size', '16px');
     }
   }
  }

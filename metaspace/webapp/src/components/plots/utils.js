@@ -100,8 +100,7 @@ function pieScatterPlot(svg, data, config) {
     }
     
     addMainTitle(svg, geometry, mainTitle)
-        .attr('font-size', '20px')
-        .attr('font-family', 'Sans');
+        .attr('font-size', '16px');
     
     addAxes(svg, geometry, {x: xScale, y: yScale});
 

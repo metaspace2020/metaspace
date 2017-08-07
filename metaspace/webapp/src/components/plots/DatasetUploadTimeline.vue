@@ -58,7 +58,7 @@
       setTickSize('12px');
 
       addMainTitle(svg, geometry, 'Number of datasets uploaded to METASPACE')
-          .attr('font-size', '14px');
+          .attr('font-size', '16px');
     }
   }
  }
