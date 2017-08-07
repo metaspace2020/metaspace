@@ -70,6 +70,10 @@ function mzFilterPrecision(value) {
   }
 }
 
+function csvExportHeader() {
+  return '# Generated at ' + new Date().toString() + '\n# URL: ' + window.location.href + '\n';
+}
+
 export {
   renderMolFormula,
   prettifySign,
@@ -78,5 +82,6 @@ export {
   pathFromUUID,
   getColorScale,
   createColormap,
-  mzFilterPrecision
+  mzFilterPrecision,
+  csvExportHeader
 };

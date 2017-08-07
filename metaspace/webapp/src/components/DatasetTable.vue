@@ -68,6 +68,7 @@
  import OrganismSummaryPlot from './plots/OrganismSummaryPlot.vue';
  import SubmitterSummaryPlot from './plots/SubmitterSummaryPlot.vue';
  import UploadTimelinePlot from './plots/DatasetUploadTimeline.vue';
+ import {csvExportHeader} from '../util';
  import gql from 'graphql-tag';
  import FileSaver from 'file-saver';
 
@@ -252,6 +253,8 @@
                   'PI', 'organism', 'organismPart', 'condition', 'ionisationSource',
                   'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDate'
                   ].join(',') + "\n";
+
+       csv += csvExportHeader();
 
        function person(p) { return p ? p.name + ' ' + p.surname : ''; }
 

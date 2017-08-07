@@ -162,7 +162,7 @@
 </template>
 
 <script>
- import { renderMolFormula } from '../util.js';
+ import { renderMolFormula, csvExportHeader } from '../util.js';
  import ProgressButton from './ProgressButton.vue';
  import {
    annotationListQuery,
@@ -453,6 +453,8 @@
        let csv = ['institution', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
                   'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
                   'moleculeNames'].join(',') + "\n";
+
+       csv += csvExportHeader();
 
        function quoted(s) { return '"' + s + '"'; }
 
