@@ -450,7 +450,7 @@
 
      startExport () {
        const chunkSize = 1000;
-       let csv = ['institution', 'datasetName', 'formula', 'adduct', 'mz',
+       let csv = ['institution', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
                   'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
                   'moleculeNames'].join(',') + "\n";
 
@@ -460,7 +460,7 @@
          const {sumFormula, adduct, msmScore, mz,
                 rhoSpatial, rhoSpectral, rhoChaos, fdrLevel} = row;
          return [
-           row.dataset.institution, row.dataset.name,
+           row.dataset.institution, row.dataset.name, row.dataset.id,
            sumFormula, quoted("M" + adduct), mz,
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
            quoted(row.possibleCompounds.map(m => m.name).join(', '))

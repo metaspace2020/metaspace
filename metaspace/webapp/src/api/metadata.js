@@ -31,3 +31,33 @@ export const fetchOptionListsQuery = gql`{
     surname
   }
 }`;
+
+export const metadataExportQuery = gql`
+  query MetadataExport($dFilter: DatasetFilter, $offset: Int, $limit: Int,
+                       $query: String) {
+    datasets: allDatasets(filter: $dFilter, simpleQuery: $query,
+                          offset: $offset, limit: $limit) {
+      id
+      name
+      institution
+      submitter {
+        name
+        surname
+      }
+      principalInvestigator {
+        name
+        surname
+      }
+      organism
+      organismPart
+      condition
+      ionisationSource
+      maldiMatrix
+      analyzer {
+        type
+        resolvingPower(mz: 400)
+      }
+      polarity
+      uploadDate
+    }
+  } `;

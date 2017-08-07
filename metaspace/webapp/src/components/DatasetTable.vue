@@ -33,6 +33,9 @@
             <span v-if="nonEmpty">
               Search results in reverse chronological order
             </span>
+            <el-button v-if="nonEmpty" :disabled="isExporting" @click="startExport" class="export-btn">
+              Export to CSV
+            </el-button>
             <span v-else>No datasets found</span>
           </div>
 
@@ -57,6 +60,7 @@
 
 <script>
  import {datasetListQuery, datasetCountQuery} from '../api/dataset';
+ import {metadataExportQuery} from '../api/metadata';
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
  import MassSpecSetupPlot from './plots/MSSetupSummaryPlot.vue';
@@ -64,6 +68,7 @@
  import SubmitterSummaryPlot from './plots/SubmitterSummaryPlot.vue';
  import UploadTimelinePlot from './plots/DatasetUploadTimeline.vue';
  import gql from 'graphql-tag';
+ import FileSaver from 'file-saver';
 
  const processingStages = ['started', 'queued', 'finished'];
 
@@ -73,7 +78,8 @@
      return {
        currentPage: 0,
        recordsPerPage: 10,
-       categories: processingStages
+       categories: processingStages,
+       isExporting: false
      }
    },
    components: {
@@ -175,11 +181,7 @@
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
-         return {
-           dFilter: Object.assign({status: 'STARTED'},
-                                  this.$store.getters.gqlDatasetFilter),
-           query: this.$store.getters.ftsQuery
-         }
+         return this.queryVariables('STARTED');
        }
      },
 
@@ -188,11 +190,7 @@
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
-         return {
-           dFilter: Object.assign({status: 'QUEUED'},
-                                  this.$store.getters.gqlDatasetFilter),
-           query: this.$store.getters.ftsQuery
-         }
+         return this.queryVariables('QUEUED');
        }
      },
 
@@ -201,11 +199,7 @@
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
-         return {
-           dFilter: Object.assign({status: 'FINISHED'},
-                                  this.$store.getters.gqlDatasetFilter),
-           query: this.$store.getters.ftsQuery
-         }
+         return this.queryVariables('FINISHED');
        }
      },
 
@@ -214,11 +208,7 @@
        query: datasetCountQuery,
        update: data => data.countDatasets,
        variables () {
-         return {
-           dFilter: Object.assign({status: 'FINISHED'},
-                                  this.$store.getters.gqlDatasetFilter),
-           query: this.$store.getters.ftsQuery
-         }
+         return this.queryVariables('FINISHED');
        }
      },
    },
@@ -230,6 +220,13 @@
        row.name.split('//', 2)[1],
      formatResolvingPower: (row, col) =>
        (row.analyzer.resolvingPower / 1000).toFixed(0) * 1000,
+
+     queryVariables(status) {
+       return {
+         dFilter: Object.assign({status}, this.$store.getters.gqlDatasetFilter),
+         query: this.$store.getters.ftsQuery
+       }
+     },
 
      count(stage) {
        if (stage == 'finished')
@@ -246,6 +243,76 @@
        this.$apollo.queries.queued.refresh();
        this.$apollo.queries.finished.refresh();
        this.$apollo.queries.finishedCount.refresh();
+     },
+
+     startExport() {
+       const chunkSize = 1000;
+       let csv = ['datasetId', 'datasetName', 'institution', 'submitter',
+                  'PI', 'organism', 'organismPart', 'condition', 'ionisationSource',
+                  'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDate'
+                  ].join(',') + "\n";
+
+       function person(p) { return p ? p.name + ' ' + p.surname : ''; }
+
+       function formatRow(row) {
+         return [
+           row.id,
+           row.name,
+           row.institution,
+           person(row.submitter),
+           person(row.principalInvestigator),
+           row.organism,
+           row.organismPart,
+           row.condition,
+           row.ionisationSource,
+           row.maldiMatrix,
+           row.analyzer.type,
+           Math.round(row.analyzer.resolvingPower),
+           row.polarity.toLowerCase(),
+           row.uploadDate
+         ].join(',');
+       }
+
+       function writeCsvChunk(rows) {
+         for (let row of rows) {
+           csv += formatRow(row) + "\n";
+         }
+       }
+
+       this.isExporting = true;
+       let self = this;
+
+       function finish() {
+         if (!self.isExporting)
+           return;
+
+         self.isExporting = false;
+
+         let blob = new Blob([csv], {type: 'text/csv; charset="utf-8"'});
+         FileSaver.saveAs(blob, "metaspace_datasets.csv");
+       }
+
+       let v = this.queryVariables('FINISHED'),
+           chunks = [],
+           offset = 0;
+
+       v.limit = chunkSize;
+
+       function runExport() {
+         const variables = Object.assign(v, {offset});
+         self.$apollo.query({query: metadataExportQuery, variables})
+             .then(resp => {
+           offset += chunkSize;
+           writeCsvChunk(resp.data.datasets);
+           if (!self.isExporting || offset >= self.finishedCount) {
+             finish();
+           } else {
+             window.setTimeout(runExport, 50);
+           }
+         })
+       }
+
+       runExport();
      }
    }
  }
