@@ -139,10 +139,11 @@
       const inverted = {'Positive': 'Negative', 'Negative': 'Positive'}
 
       for (let entry of this.counts) {
-        if (entry.fieldValues.indexOf('N/A') >= 0)
-          continue;
-
         const [analyzer, source, matrix, polarity] = entry.fieldValues;
+        if (analyzer == 'N/A' || source == 'N/A')
+          continue;
+        if (source == 'MALDI' && matrix == 'N/A')
+          continue;
 
         const datum = {
           analyzer,
