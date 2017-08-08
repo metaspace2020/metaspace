@@ -70,11 +70,11 @@ function constructAnnotationQuery(args, docType) {
 
   if (orderBy)
     body.sort = esSort(orderBy, sortingOrder);
-  
+
   if (database) {
     addFilter({term: {db_name: database}});
   }
-  
+
   function addFilter(filter) {
     body.query.bool.filter.push(filter);
   }
@@ -138,7 +138,7 @@ module.exports.esSearchResults = function(args, docType) {
   if (args.limit > ES_LIMIT_MAX) {
     return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
-  
+
   const body = constructAnnotationQuery(args, docType);
   const request = {
     body,
@@ -148,7 +148,7 @@ module.exports.esSearchResults = function(args, docType) {
   };
   logger.info(JSON.stringify(body));
   console.time('esQuery');
-  
+
   return es.search(request).then((resp) => {
     console.timeEnd('esQuery');
     return resp.hits.hits;
@@ -179,6 +179,7 @@ const fieldEnumToSchemaPath = {
   DF_ORGANISM: datasetFilters.organism.esField,
   DF_ORGANISM_PART: datasetFilters.organismPart.esField,
   DF_CONDITION: datasetFilters.condition.esField,
+  DF_GROWTH_CONDITIONS: datasetFilters.growthConditions.esField,
   DF_MALDI_MATRIX: datasetFilters.maldiMatrix.esField
 };
 

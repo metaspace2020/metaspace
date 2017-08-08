@@ -197,6 +197,7 @@ const Resolvers = {
     organism(ds) { return dsField(ds, 'organism'); },
     organismPart(ds) { return dsField(ds, 'organismPart'); },
     condition(ds) { return dsField(ds, 'condition'); },
+    growthConditions(ds) { return dsField(ds, 'growthConditions'); },
     polarity(ds) { return dsField(ds, 'polarity').toUpperCase(); },
     ionisationSource(ds) { return dsField(ds, 'ionisationSource'); },
     maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
