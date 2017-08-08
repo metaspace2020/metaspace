@@ -57,9 +57,8 @@ function formatFDR (fdr) {
 
    If options to a select are provided as a string, they are taken from
    FilterPanel computed properties. When a new filter is added that uses
-   this feature, the GraphQL query in FilterPanel should be tweaked to
-   incorporate any extra fields that are needed to populate the options,
-   and a new computed property with the name must be added.
+   this feature, fetchOptionListsQuery in api/metadata.js should be tweaked to
+   incorporate any extra fields that are needed to populate the options.
 */
 
 const FILTER_SPECIFICATIONS = {
@@ -200,6 +199,16 @@ const FILTER_SPECIFICATIONS = {
     initialValue: undefined,
 
     options: 'conditions'
+  },
+
+  growthConditions: {
+    type: SingleSelectFilter,
+    name: 'Sample growth conditions',
+    description: 'Select sample growth conditions',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+
+    options: 'growthConditions'
   },
 
   ionisationSource: {

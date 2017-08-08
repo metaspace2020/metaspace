@@ -20,6 +20,7 @@ export const datasetListQuery =
       organism
       organismPart
       condition
+      growthConditions
       metadataJson
       status
     }

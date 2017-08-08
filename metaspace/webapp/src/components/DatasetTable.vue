@@ -250,7 +250,7 @@
      startExport() {
        const chunkSize = 1000;
        let csv = ['datasetId', 'datasetName', 'institution', 'submitter',
-                  'PI', 'organism', 'organismPart', 'condition', 'ionisationSource',
+                  'PI', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource',
                   'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDate'
                   ].join(',') + "\n";
 
@@ -268,6 +268,7 @@
            row.organism,
            row.organismPart,
            row.condition,
+           row.growthConditions,
            row.ionisationSource,
            row.maldiMatrix,
            row.analyzer.type,

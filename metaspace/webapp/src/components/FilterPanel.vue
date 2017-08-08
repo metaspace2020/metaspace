@@ -50,6 +50,7 @@
    'organism',
    'organismPart',
    'condition',
+   'growthConditions',
    'analyzerType',
    'ionisationSource',
    'maldiMatrix',

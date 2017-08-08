@@ -22,6 +22,7 @@ export const fetchOptionListsQuery = gql`{
   organisms: metadataSuggestions(field: "Sample_Information.Organism", query: "")
   organismParts: metadataSuggestions(field: "Sample_Information.Organism_Part", query: "")
   conditions: metadataSuggestions(field: "Sample_Information.Condition", query: "")
+  growthConditions: metadataSuggestions(field: "Sample_Information.Sample_Growth_Conditions", query: "")
   ionisationSources: metadataSuggestions(field: "MS_Analysis.Ionisation_Source", query: "")
   maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "")
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "")
@@ -51,6 +52,7 @@ export const metadataExportQuery = gql`
       organism
       organismPart
       condition
+      growthConditions
       ionisationSource
       maldiMatrix
       analyzer {

@@ -41,7 +41,7 @@ export default {
   gqlDatasetFilter(state, getters) {
     const filter = getters.filter;
     const {institution, submitter, datasetIds, polarity,
-           organism, organismPart, condition,
+           organism, organismPart, condition, growthConditions,
            ionisationSource, analyzerType, maldiMatrix} = filter;
     return {
       institution,
@@ -53,6 +53,7 @@ export default {
       organism,
       organismPart,
       condition,
+      growthConditions,
       ionisationSource,
       maldiMatrix,
       analyzerType,
