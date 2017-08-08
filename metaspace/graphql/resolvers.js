@@ -85,18 +85,8 @@ const Resolvers = {
   },
 
   Query: {
-    datasetByName(_, { name }) {
-      return baseDatasetQuery().select('*').where('name', '=', name)
-        .then((data) => {
-          return data.length > 0 ? data[0] : null;
-        })
-        .catch((e) => {
-          logger.error(e.message); return null;
-        });
-    },
-
     dataset(_, { id }) {
-      return result = esDatasetByID(id);
+      return esDatasetByID(id);
     },
 
     allDatasets(_, args) {

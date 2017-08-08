@@ -33,7 +33,7 @@ describe('GraphQL integration: Annotation type', () => {
       allAnnotations(
         filter: {
           database: "HMDB",
-          datasetName: "untreated_test",
+          datasetName: "sci_test_spheroid_untreated",
           sumFormula: "C8H20NO6P",
           adduct: "+K"
         }
@@ -63,7 +63,7 @@ describe('GraphQL integration: Annotation type', () => {
     
     const expected = {
       "dataset": {
-        "name": "untreated_test"
+        "name": "sci_test_spheroid_untreated"
       },
       "sumFormula": "C8H20NO6P",
       "possibleCompounds": [
