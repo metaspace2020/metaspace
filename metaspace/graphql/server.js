@@ -13,57 +13,72 @@ const bodyParser = require('body-parser'),
   knex = require('knex'),
   makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
   moment = require('moment'),
-  readFile = require('fs').readFile,
+  Promise = require("bluebird"),
   slack = require('node-slack'),
   sprintf = require('sprintf-js'),
-  logger = require('./utils.js').logger;
+  logger = require('./utils.js').logger,
+  readFile = Promise.promisify(require("fs").readFile);
 
 // subscriptions setup
 const http = require('http'),
       { execute, subscribe } = require('graphql'),
       { SubscriptionServer } = require('subscriptions-transport-ws');
 
-let app = express();
 let wsServer = http.createServer((req, res) => {
   res.writeHead(404);
   res.end();
 });
 
-readFile('schema.graphql', 'utf8', (err, contents) => {
-  const schema = makeExecutableSchema({
-    typeDefs: contents,
-    resolvers: Resolvers,
-    logger
-  });
+function createHttpServer(config) {
+  let app = express();
+  let httpServer = http.createServer(app);
 
-  app.use(cors());
-  app.use(compression());
-  app.use('/graphql', bodyParser.json({ type: '*/*' }), graphqlExpress({ schema }));
-  app.use('/graphiql', graphiqlExpress({
-    endpointURL: '/graphql',
-    subscriptionsEndpoint: config.websocket_public_url,
-  }));
+  return readFile('schema.graphql', 'utf8')
+    .then((contents) => {
+      const schema = makeExecutableSchema({
+        typeDefs: contents,
+        resolvers: Resolvers,
+        logger
+      });
 
-  addIsoImageProvider(app);
+      app.use(cors());
+      app.use(compression());
+      app.use('/graphql', bodyParser.json({type: '*/*'}), graphqlExpress({schema}));
+      app.use('/graphiql', graphiqlExpress({
+        endpointURL: '/graphql',
+        subscriptionsEndpoint: config.websocket_public_url,
+      }));
 
-  app.use(function (err, req, res, next) {
-    res.status(err.status || 500);
-    logger.error(err.stack);
-    res.json({
-      message: err.message
-    });
-  });
+      addIsoImageProvider(app);
 
-  app.listen(config.port);
+      app.use(function (err, req, res, next) {
+        res.status(err.status || 500);
+        logger.error(err.stack);
+        res.json({
+          message: err.message
+        });
+      });
 
-  wsServer.listen(config.ws_port, () => {
-    SubscriptionServer.create({ execute, subscribe, schema }, {
-      server: wsServer,
-      path: '/graphql',
-    });
-  });
+      httpServer.listen(config.port);
 
-  logger.info(`SM GraphQL is running on ${config.port} port...`);
-});
+      wsServer.listen(config.ws_port, () => {
+        SubscriptionServer.create({execute, subscribe, schema}, {
+          server: wsServer,
+          path: '/graphql',
+        });
+      });
 
-module.exports = app; // for testing
+      logger.info(`SM GraphQL is running on ${config.port} port...`);
+
+      return httpServer;
+    })
+    .catch((err) => {
+      logger.error(`Failed to init http server: ${err}`);
+    })
+}
+
+if (process.argv[1].endsWith('server.js')) {
+  createHttpServer(config);
+}
+
+module.exports = {createHttpServer, wsServer}; // for testing

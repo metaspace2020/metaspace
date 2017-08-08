@@ -6,81 +6,102 @@ process.env.NODE_ENV = 'test';
 const chai = require('chai'),
   should = chai.should(),
   chaiHttp = require('chai-http'),
-  fs = require('fs');
+  fs = require('fs'),
+  logger = require('../utils.js').logger,
+  createHttpServer = require('../server').createHttpServer;
+
 chai.use(chaiHttp);
 
-const server = require('../server');
+// let server;
 
-// describe('routes : iso_images', () => {
-//
-//   beforeEach((done) => {});
-//
-//   afterEach((done) => {});
-//
-// });
+describe('imageUploadTest with fs and db backends', () => {
+  const configSets = [
+    {backend: 'db'},
+    {backend: 'fs'}
+  ];
 
-let image_id;
+  configSets.forEach( (cs) => {
 
-describe('POST /iso_images/upload', () => {
-  it('should store the image and respond with a new iso image id', (done) => {
-    chai.request(server)
-      .post('/iso_images/upload')
-      .attach('iso_image', fs.readFileSync('tests/test_iso_image.png'), 'test_iso_image.png')
-      .end((err, res) => {
-        // there should be no errors
-        should.not.exist(err);
-        // there should be a 200 status code
-        res.status.should.equal(201);
-        // the response should be JSON
-        res.type.should.equal("application/json");
-        res.body.should.have.property("image_id");
-        
-        image_id = res.body.image_id;
-        console.log(image_id);
-        done();
+    describe(`${cs.backend} backend`, () => {
+      // let app, wsServer;
+      let server;
+
+      before((done) => {
+        let config = require('config');
+        config.img_upload.backend = cs.backend;
+        createHttpServer(config)
+          .then((srv) => {
+            server = srv;
+            done();
+          });
       });
-  });
-});
 
-describe('GET /iso_images/:id', () => {
-  it('should respond with the iso image', (done) => {
-    chai.request(server)
-      .get(`/iso_images/${image_id}`)
-      .end((err, res) => {
-        // there should be no errors
-        should.not.exist(err);
-        // there should be a 200 status code
-        res.status.should.equal(200);
-        // the response should be PNG
-        res.type.should.equal("image/png");
-        // res.body.status.should.have.property("image_url");
-        done();
+      after((done) => {
+        server.close(() => {
+          logger.debug('GraphQL server closed');
+          done();
+        });
+        // wsServer.close(() => console.log('WS server closed!') );
       });
-  });
-});
 
-describe('DELETE /iso_images/delete/:id', () => {
-  it('should delete the iso image', (done) => {
-    chai.request(server)
-      .delete(`/iso_images/delete/${image_id}`)
-      .end((err, res) => {
-        // there should be no errors
-        should.not.exist(err);
-        // there should be a 200 status code
-        res.status.should.equal(200);
-        done();
-      });
-  });
-});
+      it(`POST /iso_images/upload should store the image and respond with a new iso image id`, (done) => {
+        chai.request(server)
+          .post('/iso_images/upload')
+          .attach('iso_image', fs.readFileSync('tests/test_iso_image.png'), 'test_iso_image.png')
+          .end((err, res) => {
+            // there should be no errors
+            should.not.exist(err);
+            // there should be a 201 status code
+            res.status.should.equal(201);
+            // the response should be JSON
+            res.type.should.equal("application/json");
+            res.body.should.have.property("image_id");
 
-describe('GET /iso_images/:id', () => {
-  it('should respond with 404 as the image is deleted', (done) => {
-    chai.request(server)
-      .get(`/iso_images/${image_id}`)
-      .end((err, res) => {
-        // there should be a 200 status code
-        res.status.should.equal(404);
-        done();
+            image_id = res.body.image_id;
+            logger.debug(image_id);
+            done();
+          });
       });
+
+      it('GET /iso_images/:id should respond with the iso image', (done) => {
+        chai.request(server)
+          .get(`/iso_images/${image_id}`)
+          .end((err, res) => {
+            // there should be no errors
+            should.not.exist(err);
+            // there should be a 200 status code
+            res.status.should.equal(200);
+            // the response should be PNG
+            res.type.should.equal("image/png");
+            // res.body.status.should.have.property("image_url");
+            done();
+          });
+      });
+      it('DELETE /iso_images/delete/:id should delete the iso image', (done) => {
+        chai.request(server)
+
+          .delete(`/iso_images/delete/${image_id}`)
+          .end((err, res) => {
+            // there should be no errors
+            should.not.exist(err);
+            // there should be a 202 status code
+            res.status.should.equal(202);
+            done();
+          });
+      });
+
+      it('GET /iso_images/:id should respond with 404 as the image is deleted', (done) => {
+        chai.request(server)
+          .get(`/iso_images/${image_id}`)
+          .end((err, res) => {
+            // there should be a 200 status code
+            res.status.should.equal(404);
+            done();
+          });
+      });
+
+    });
+
   });
+
 });

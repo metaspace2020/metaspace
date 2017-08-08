@@ -6,17 +6,34 @@ process.env.NODE_ENV = 'test';
 const chai = require('chai'),
   expect = chai.expect;
 
-const server = require('../server'),
-  config = require('config'),
-  {graphqlQuery, stripUrls} = require('./testingUtils');
+const  config = require('config'),
+  logger = require('../utils').logger,
+  {graphqlQuery, stripUrls} = require('./testingUtils'),
+  createHttpServer = require('../server').createHttpServer;
 
 describe('GraphQL integration: Annotation type', () => {
+  let server;
+
+  before((done) => {
+    createHttpServer(config).then((srv) => {
+      server = srv;
+      done();
+    });
+  });
+
+  after((done) => {
+    server.close(() => {
+      logger.debug('HTTP Server closed');
+      done();
+    });
+  });
+
   it('allAnnotations should return correct array', (done) => {
     const query = `{
       allAnnotations(
         filter: {
           database: "HMDB",
-          datasetName: "untreated_test",
+          datasetName: "sci_test_spheroid_untreated",
           sumFormula: "C8H20NO6P",
           adduct: "+K"
         }
@@ -46,7 +63,7 @@ describe('GraphQL integration: Annotation type', () => {
     
     const expected = {
       "dataset": {
-        "name": "untreated_test"
+        "name": "sci_test_spheroid_untreated"
       },
       "sumFormula": "C8H20NO6P",
       "possibleCompounds": [

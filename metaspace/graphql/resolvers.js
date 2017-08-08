@@ -8,22 +8,7 @@ const config = require('config'),
    esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {generateProcessingConfig, metadataChangeSlackNotify,
-    metadataUpdateFailedSlackNotify, logger, pubsub} = require("./utils.js");
-
-const dbConfig = () => {
-  const {host, database, user, password} = config.db;
-  return {
-    host, database, user, password,
-    max: 10, // client pool size
-    idleTimeoutMillis: 30000
-  };
-};
-
-let pg = require('knex')({
-  client: 'pg',
-  connection: dbConfig(),
-  searchPath: 'knex,public'
-});
+    metadataUpdateFailedSlackNotify, logger, pubsub, pg} = require("./utils.js");
 
 function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
   // wait until updates are reflected in ES so that clients don't have to care
@@ -100,18 +85,8 @@ const Resolvers = {
   },
 
   Query: {
-    datasetByName(_, { name }) {
-      return baseDatasetQuery().select('*').where('name', '=', name)
-        .then((data) => {
-          return data.length > 0 ? data[0] : null;
-        })
-        .catch((e) => {
-          logger.error(e.message); return null;
-        });
-    },
-
     dataset(_, { id }) {
-      return result = esDatasetByID(id);
+      return esDatasetByID(id);
     },
 
     allDatasets(_, args) {
@@ -212,6 +187,7 @@ const Resolvers = {
     organism(ds) { return dsField(ds, 'organism'); },
     organismPart(ds) { return dsField(ds, 'organismPart'); },
     condition(ds) { return dsField(ds, 'condition'); },
+    growthConditions(ds) { return dsField(ds, 'growthConditions'); },
     polarity(ds) { return dsField(ds, 'polarity').toUpperCase(); },
     ionisationSource(ds) { return dsField(ds, 'ionisationSource'); },
     maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
@@ -238,6 +214,10 @@ const Resolvers = {
 
     inputPath(ds) {
       return ds._source.ds_input_path;
+    },
+
+    uploadDate(ds) {
+      return ds._source.ds_upload_date;
     }
   },
 
@@ -461,7 +441,9 @@ const Resolvers = {
             //   body = JSON.stringify({});
             // else
             //   body = JSON.stringify({ "del_raw": true });
-            let smAPIPromise = fetch(url, {method: "POST", body: body})
+            let smAPIPromise = fetch(url, {method: "POST", body: body, headers: {
+                "Content-Type": "application/json"
+              }})
               .catch( e => {
                 logger.error(`deleteDataset error: ${e.message}\n${e.stack}`);
               });

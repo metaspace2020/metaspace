@@ -112,6 +112,7 @@ const datasetFilters = {
   organism: new ExactMatchFilter('Sample_Information.Organism', {}),
   organismPart: new ExactMatchFilter('Sample_Information.Organism_Part', {}),
   condition: new ExactMatchFilter('Sample_Information.Condition', {}),
+  growthConditions: new ExactMatchFilter('Sample_Information.Sample_Growth_Conditions', {}),
   maldiMatrix: new ExactMatchFilter('Sample_Preparation.MALDI_Matrix', {}),
   name: new SubstringMatchFilter('', {esField: 'ds_name', pgField: 'name'}),
   ids: new DatasetIdFilter(),

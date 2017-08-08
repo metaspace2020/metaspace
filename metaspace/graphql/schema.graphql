@@ -59,6 +59,7 @@ type Dataset {
   organism: String
   organismPart: String
   condition: String
+  growthConditions: String
   maldiMatrix: String
 
   configJson: String!
@@ -68,6 +69,7 @@ type Dataset {
 
   status: JobStatus
   inputPath: String
+  uploadDate: String
 }
 
 # fields of categorical type
@@ -81,6 +83,7 @@ enum DatasetAggField {
   DF_ORGANISM,
   DF_ORGANISM_PART,
   DF_CONDITION,
+  DF_GROWTH_CONDITIONS,
   DF_MALDI_MATRIX
 }
 
@@ -187,6 +190,9 @@ input DatasetFilter {
 
   # exact match
   condition: String
+
+  # exact match
+  growthConditions: String
 
   status: JobStatus
 }

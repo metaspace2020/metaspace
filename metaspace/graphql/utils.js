@@ -67,7 +67,7 @@ function generateProcessingConfig(meta_json) {
   if (m_opts.hasOwnProperty('Adducts'))
     adducts = m_opts['Adducts'];
   else
-    adducts = {'+': ['+H', '+K', '+Na'], '-': ['-H', '+Cl']}[polarity];
+    adducts = config.default_adducts[polarity];
 
   return {
     "databases": mdb_list,
@@ -117,6 +117,7 @@ function metadataUpdateFailedSlackNotify(user, datasetId, e_msg) {
 const logger = new (winston.Logger)({
   transports: [
     new (winston.transports.Console)({
+      level: config.log.level,
       timestamp: function() {
         return moment().format();
       },
@@ -131,10 +132,27 @@ const logger = new (winston.Logger)({
 
 const pubsub = new PubSub();
 
+const dbConfig = () => {
+  const {host, database, user, password} = config.db;
+  return {
+    host, database, user, password,
+    max: 10, // client pool size
+    idleTimeoutMillis: 30000
+  };
+};
+
+let pg = require('knex')({
+  client: 'pg',
+  connection: dbConfig(),
+  searchPath: 'knex,public'
+});
+
 module.exports = {
   generateProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
+  config,
   logger,
-  pubsub
+  pubsub,
+  pg
 };
