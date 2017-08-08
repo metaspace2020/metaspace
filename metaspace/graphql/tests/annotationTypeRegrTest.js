@@ -6,11 +6,28 @@ process.env.NODE_ENV = 'test';
 const chai = require('chai'),
   expect = chai.expect;
 
-const server = require('../server'),
-  config = require('config'),
-  {graphqlQuery, stripUrls} = require('./testingUtils');
+const  config = require('config'),
+  logger = require('../utils').logger,
+  {graphqlQuery, stripUrls} = require('./testingUtils'),
+  createHttpServer = require('../server').createHttpServer;
 
 describe('GraphQL integration: Annotation type', () => {
+  let server;
+
+  before((done) => {
+    createHttpServer(config).then((srv) => {
+      server = srv;
+      done();
+    });
+  });
+
+  after((done) => {
+    server.close(() => {
+      logger.debug('HTTP Server closed');
+      done();
+    });
+  });
+
   it('allAnnotations should return correct array', (done) => {
     const query = `{
       allAnnotations(

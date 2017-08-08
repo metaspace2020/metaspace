@@ -117,6 +117,7 @@ function metadataUpdateFailedSlackNotify(user, datasetId, e_msg) {
 const logger = new (winston.Logger)({
   transports: [
     new (winston.transports.Console)({
+      level: config.log.level,
       timestamp: function() {
         return moment().format();
       },

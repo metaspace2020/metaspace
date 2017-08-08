@@ -7,11 +7,27 @@ const chai = require('chai'),
   expect = chai.expect,
   jsondiffpatch = require('jsondiffpatch');
 
-const server = require('../server'),
-  config = require('config'),
-  {graphqlQuery} = require('./testingUtils');
+const config = require('config'),
+  {graphqlQuery} = require('./testingUtils'),
+  createHttpServer = require('../server').createHttpServer;
 
 describe('GraphQL integration: Dataset type', () => {
+  let server;
+
+  before((done) => {
+    createHttpServer(config).then((srv) => {
+      server = srv;
+      done();
+    });
+  });
+
+  after((done) => {
+    server.close(() => {
+      logger.debug('HTTP Server closed');
+      done();
+    });
+  });
+
   it('datasetByName should return correct document', (done) => {
     const query = `{
       datasetByName(name: "untreated_test") {
