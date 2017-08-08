@@ -75,13 +75,28 @@ def append_molecules(mol_db, csv_file, delimiter):
         get_inchikey = get_inchikey_gen()
         mol_db_df['inchikey'] = mol_db_df.inchi.map(get_inchikey)
 
-    mol_db_df = mol_db_df[mol_db_df.inchikey.isnull() == False]
+    invalid_inchikey = mol_db_df.inchikey.isnull()
+    LOG.warning("{} invalid records (InChI key couldn't be generated)".format(invalid_inchikey.sum()))
+    mol_db_df = mol_db_df[~invalid_inchikey]
 
     sel = select([molecule_table.c.inchikey])
-    exist_inchikeys = set(map(lambda _: _[0], db_session.execute(sel).fetchall()))
-    new_mol_df = mol_db_df[mol_db_df.inchikey.isin(exist_inchikeys) == False][['inchikey', 'inchi', 'formula']]
-    new_mol_df.columns = ['inchikey', 'inchi', 'sf']
-    if not new_mol_df.empty:
+    existing_inchikeys = {x[0] for x in db_session.execute(sel).fetchall()}
+
+    ids_to_insert = set()
+    for inchikey, g in mol_db_df.groupby('inchikey'):
+        if inchikey in existing_inchikeys:
+            continue
+        if len(g) > 1:
+            LOG.warning("{} molecules have the same InChI key {}: {} - taking only the first one"\
+                        .format(len(g), inchikey, list(g['id'])))
+        row = g.iloc[0]
+        ids_to_insert.add(g.iloc[0].id)
+
+    mol_db_df = mol_db_df[mol_db_df['id'].isin(ids_to_insert)]
+
+    if not mol_db_df.empty:
+        new_mol_df = mol_db_df[['inchikey', 'inchi', 'formula']]
+        new_mol_df.columns = ['inchikey', 'inchi', 'sf']
         db_session.execute(molecule_table.insert(),
                            list(new_mol_df.to_dict(orient='index').values()))
 
