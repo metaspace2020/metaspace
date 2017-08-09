@@ -10,17 +10,15 @@ from sm.engine.db import DB
 
 logger = logging.getLogger('sm-engine')
 
-COLUMNS = ["sf", "sf_adduct",
-           "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
-           "adduct", "job_id", "sf_id", "fdr",
-           "centroid_mzs", "iso_image_ids", "polarity"]
+ANNOTATION_COLUMNS = ["sf", "sf_adduct",
+                      "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
+                      "adduct", "job_id", "sf_id", "fdr",
+                      "centroid_mzs", "iso_image_ids", "polarity"]
 
 ANNOTATIONS_SEL = '''
 SELECT
     f.sf,
     CONCAT(f.sf, m.adduct) as sf_adduct,
-    --f.names AS comp_names,
-    --f.subst_ids AS comp_ids,
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
     COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
     COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
@@ -230,7 +228,7 @@ class ESExporter(object):
         to_index = []
         mol_by_sf_df = self._get_mol_by_sf_df(mol_db)
         for r in annotations:
-            d = dict(zip(COLUMNS, r))
+            d = dict(zip(ANNOTATION_COLUMNS, r))
             d.update(dataset)  # include all dataset fields (prefixed with 'ds_')
             d['db_name'] = mol_db.name
             d['db_version'] = mol_db.version
