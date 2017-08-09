@@ -122,12 +122,12 @@ class GraphQLClient(object):
     def getDatasetByName(self, datasetName):
         query = """
         query datasetInfo($name: String!) {
-          datasetByName(name: $name) {
+          allDatasets(filter: {name: $name}) {
         """ + self.DATASET_FIELDS + """
           }
         }
         """
-        return self.query(query, {'name': datasetName})['datasetByName']
+        return self.query(query, {'name': datasetName})['allDatasets'][0]
 
     def getAnnotations(self, annotationFilter={}, datasetFilter={}):
         query = """
