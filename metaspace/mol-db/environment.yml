@@ -1,4 +1,4 @@
-name: mol_db
+name: mol-db
 channels: !!python/tuple
 - !!python/unicode
   'defaults'

@@ -67,51 +67,61 @@ def get_or_create_db_mol_assoc(session, model, **kwargs):
     return get_or_create(session, model, query=q, **kwargs)
 
 
-def append_molecules(mol_db, csv_file, delimiter):
-    mol_db_df = pd.read_csv(open(csv_file, encoding='utf8'), sep=delimiter)
-    assert {'id', 'inchi', 'name', 'formula'}.issubset(set(mol_db_df.columns))
-
-    if 'inchikey' not in mol_db_df.columns:
-        get_inchikey = get_inchikey_gen()
-        mol_db_df['inchikey'] = mol_db_df.inchi.map(get_inchikey)
-
+def remove_invalid_inchikey_molecules(mol_db_df):
     invalid_inchikey = mol_db_df.inchikey.isnull()
     n_invalid = invalid_inchikey.sum()
     if n_invalid > 0:
         LOG.warning("{} invalid records (InChI key couldn't be generated)".format(n_invalid))
-    mol_db_df = mol_db_df[~invalid_inchikey]
+    return mol_db_df[~invalid_inchikey]
 
-    sel = select([molecule_table.c.inchikey])
-    existing_inchikeys = {x[0] for x in db_session.execute(sel).fetchall()}
 
+def remove_duplicated_inchikey_molecules(mol_db_df):
     ids_to_insert = set()
     for inchikey, g in mol_db_df.groupby('inchikey'):
         if len(g) > 1:
-            LOG.warning("{} molecules have the same InChI key {}: {} - taking only the first one"\
+            LOG.warning("{} molecules have the same InChI key {}: {} - taking only the first one" \
                         .format(len(g), inchikey, list(g['id'])))
-        row = g.iloc[0]
         ids_to_insert.add(g.iloc[0].id)
-
     # remove duplicates
-    mol_db_df = mol_db_df[mol_db_df['id'].isin(ids_to_insert)]
+    return mol_db_df[mol_db_df['id'].isin(ids_to_insert)]
 
+
+def append_molecules(mol_db, csv_file, delimiter):
+    mol_db_df = pd.read_csv(open(csv_file, encoding='utf8'), sep=delimiter).fillna('')
+    assert {'id', 'inchi', 'name', 'formula'}.issubset(set(mol_db_df.columns))
+
+    get_inchikey = get_inchikey_gen()
+    if 'inchikey' not in mol_db_df.columns:
+        mol_db_df['inchikey'] = mol_db_df.inchi.map(get_inchikey)
+    else:
+        mol_db_df['inchikey'] = mol_db_df.apply(
+            lambda s: get_inchikey(s.inchi) if s.inchikey == '' else s.inchikey, axis=1)
+
+    mol_db_df = remove_invalid_inchikey_molecules(mol_db_df)
+
+    mol_db_df = remove_duplicated_inchikey_molecules(mol_db_df)
+
+    LOG.info('{} new rows to insert into molecule table'.format(mol_db_df.shape[0]))
     if not mol_db_df.empty:
+        sel = select([molecule_table.c.inchikey])
+        existing_inchikeys = {x[0] for x in db_session.execute(sel).fetchall()}
         # add molecules with new inchikeys
-        new_mol_df = mol_db_df[['inchikey', 'inchi', 'formula']]
-        new_mol_df = new_mol_df[~new_mol_df['inchikey'].isin(existing_inchikeys)]
-        new_mol_df.columns = ['inchikey', 'inchi', 'sf']
-        db_session.execute(molecule_table.insert(),
-                           list(new_mol_df.to_dict(orient='index').values()))
+        new_molecule_df = mol_db_df[['inchikey', 'inchi', 'formula']]
+        new_molecule_df = new_molecule_df[~new_molecule_df['inchikey'].isin(existing_inchikeys)]
+        new_molecule_df.columns = ['inchikey', 'inchi', 'sf']
+        if new_molecule_df.shape[0] > 0:
+            db_session.execute(molecule_table.insert(),
+                               list(new_molecule_df.to_dict(orient='index').values()))
 
-    new_db_mol_df = mol_db_df[['inchikey', 'id', 'name']]
-    new_db_mol_df.insert(0, 'db_id', mol_db.id)
-    new_db_mol_df.columns = ['db_id', 'inchikey', 'mol_id', 'mol_name']
-    if not new_db_mol_df.empty:
-        # here we must add records for both new and already present inchikeys
-        db_session.execute(moldb_mol_table.insert(),
-                           list(new_db_mol_df.to_dict(orient='index').values()))
-
-    db_session.commit()
+        new_moldb_molecule_df = mol_db_df[['inchikey', 'id', 'name']]
+        new_moldb_molecule_df.insert(0, 'db_id', mol_db.id)
+        new_moldb_molecule_df.columns = ['db_id', 'inchikey', 'mol_id', 'mol_name']
+        LOG.info('{} new rows to insert into molecular_db_molecule table'.format(new_moldb_molecule_df.shape[0]))
+        if not new_moldb_molecule_df.empty:
+            # here we must add records for both new and already present inchikeys
+            db_session.execute(moldb_mol_table.insert(),
+                               list(new_moldb_molecule_df.to_dict(orient='index').values()))
+        db_session.commit()
     LOG.info('Inserted {} new molecules for {}'.format(len(mol_db_df), mol_db))
 
 
