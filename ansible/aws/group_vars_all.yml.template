@@ -234,10 +234,6 @@ nginx_sites:
       - path: /mol_db/
         params:
           - proxy_pass http://moldb_server/;
-          - proxy_cache my_zone;
-          - add_header X-Proxy-Cache $upstream_cache_status;
-          - proxy_cache_key "$scheme$request_method$host$request_uri";
-          - proxy_cache_valid 200 168h;
           - include proxy-params.conf;
   - listen: "{{ sm_es_port }}"
     locations:
