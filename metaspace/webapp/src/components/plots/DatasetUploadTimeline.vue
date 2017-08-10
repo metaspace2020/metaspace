@@ -13,7 +13,7 @@
  const query =
   gql`query GetUploadTimes($filter: DatasetFilter, $query: String) {
      allDatasets(filter: $filter, simpleQuery: $query, limit: 50000) {
-			 uploadDate
+			 uploadDateTime
 		 }
   }`;
 
