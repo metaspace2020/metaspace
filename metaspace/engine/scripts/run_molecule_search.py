@@ -5,7 +5,7 @@ Script for running molecule search
 import argparse
 import json
 import sys
-from datetime import datetime as dt
+from datetime import datetime as dt, datetime
 from os.path import join, exists
 
 from sm.engine import DB
@@ -41,7 +41,7 @@ if __name__ == "__main__":
             metadata = {}
         ds_config = json.load(open(join(args.input_path, 'config.json')))
 
-        return Dataset(ds_id, args.ds_name, args.input_path, metadata, ds_config)
+        return Dataset(ds_id, args.ds_name, args.input_path, datetime.now(), metadata, ds_config)
 
     if args.ds_id:
         ds_id = args.ds_id

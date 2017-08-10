@@ -12,9 +12,11 @@ from sm.engine.errors import UnknownDSID
 
 logger = logging.getLogger('sm-engine')
 
-DS_SEL = 'SELECT name, input_path, metadata, config FROM dataset WHERE id = %s'
-DS_UPD = 'UPDATE dataset set name=%s, input_path=%s, metadata=%s, config=%s, status=%s where id=%s'
-DS_INSERT = "INSERT INTO dataset (id, name, input_path, metadata, config, status) VALUES (%s, %s, %s, %s, %s, %s)"
+DS_SEL = 'SELECT name, input_path, upload_dt, metadata, config, status FROM dataset WHERE id = %s'
+DS_CONFIG_SEL = 'SELECT config FROM dataset WHERE id = %s'
+DS_UPD = 'UPDATE dataset set name=%s, input_path=%s, upload_dt=%s, metadata=%s, config=%s, status=%s where id=%s'
+DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status) '
+             'VALUES (%s, %s, %s, %s, %s, %s, %s)')
 
 IMG_URLS_BY_ID_SEL = ('SELECT iso_image_urls '
                       'FROM iso_image_metrics m '
@@ -23,36 +25,41 @@ IMG_URLS_BY_ID_SEL = ('SELECT iso_image_urls '
                       'WHERE ds_id = %s')
 
 
-class DatasetStatus(Enum):
+class DatasetStatus(object):
     """ Stage of dataset lifecycle """
 
+    """ The dataset is just saved to the db """
+    NEW = 'NEW'
+
     """ The dataset is queued for processing """
-    QUEUED = 1
+    QUEUED = 'QUEUED'
 
     """ The processing is in progress """
-    STARTED = 2
+    STARTED = 'STARTED'
 
     """ The processing/reindexing finished successfully (most common) """
-    FINISHED = 3
+    FINISHED = 'FINISHED'
 
     """ An error occurred during processing """
-    FAILED = 4
+    FAILED = 'FAILED'
 
     """ The records are being updated because of changed metadata """
-    INDEXING = 5
+    INDEXING = 'INDEXING'
 
     """ The dataset has been deleted """
-    DELETED = 6
+    DELETED = 'DELETED'
 
 
 class Dataset(object):
     """ Model class for representing a dataset """
-    def __init__(self, id=None, name=None, input_path=None, metadata=None, config=None):
+    def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
+                 metadata=None, config=None, status=DatasetStatus.NEW):
         self.id = id
         self.input_path = input_path
+        self.upload_dt = upload_dt
         self.meta = metadata
         self.config = config
-        self.status = None
+        self.status = status
         self.name = name or (metadata.get('metaspace_options', {}).get('Dataset_Name', id) if metadata else None)
 
         self.reader = None
@@ -62,7 +69,7 @@ class Dataset(object):
         r = db.select_one(DS_SEL, ds_id)
         if r:
             ds = Dataset(ds_id)
-            ds.name, ds.input_path, ds.meta, ds.config = r
+            ds.name, ds.input_path, ds.upload_dt, ds.meta, ds.config, ds.status = r
         else:
             raise UnknownDSID('Dataset does not exist: {}'.format(ds_id))
         return ds
@@ -73,7 +80,8 @@ class Dataset(object):
 
     def save(self, db, es):
         assert self.status is not None
-        rows = [(self.id, self.name, self.input_path, json.dumps(self.meta), json.dumps(self.config), self.status.name)]
+        rows = [(self.id, self.name, self.input_path, self.upload_dt.isoformat(' '),
+                 json.dumps(self.meta), json.dumps(self.config), self.status)]
         if not self.is_stored(db):
             db.insert(DS_INSERT, rows)
         else:
@@ -126,9 +134,8 @@ class DatasetManager(object):
         if self.mode == 'queue':
             assert self._queue
 
-    def _reindex_ds(self, ds, update_status=True):
-        if update_status:
-            self.set_ds_status(ds, DatasetStatus.INDEXING)
+    def _reindex_ds(self, ds):
+        self.set_ds_status(ds, DatasetStatus.INDEXING)
 
         for mol_db_dict in ds.config['databases']:
             mol_db = MolecularDB(name=mol_db_dict['name'],
@@ -136,11 +143,9 @@ class DatasetManager(object):
                                  iso_gen_config=ds.config['isotope_generation'])
             self._es.index_ds(ds.id, mol_db, del_first=True)
 
-        if update_status:
-            self.set_ds_status(ds, DatasetStatus.FINISHED)
+        self.set_ds_status(ds, DatasetStatus.FINISHED)
 
     def _post_new_job_msg(self, ds, priority=0):
-        self.set_ds_status(ds, DatasetStatus.QUEUED)
         if self.mode == 'queue':
             msg = {
                 'ds_id': ds.id,
@@ -153,13 +158,14 @@ class DatasetManager(object):
                     msg['user_email'] = email.lower()
             self._queue.publish(msg, SM_ANNOTATE, priority)
             logger.info('New job message posted: %s', msg)
+        self.set_ds_status(ds, DatasetStatus.QUEUED)
 
     # TODO: make sure the config and metadata are compatible
     def update_ds(self, ds, priority=0):
         """
         Updates the database record and launches re-indexing or re-processing if necessary.
         """
-        old_config = self._db.select_one(DS_SEL, ds.id)[3]
+        old_config = self._db.select_one(DS_CONFIG_SEL, ds.id)[0]
         config_diff = ConfigDiff.compare_configs(old_config, ds.config)
 
         if config_diff == ConfigDiff.EQUAL:
@@ -173,10 +179,11 @@ class DatasetManager(object):
         """ Save dataset metadata (name, path, image bounds, coordinates) to the database.
         If the ds_id exists, delete the ds first
         """
-        assert (ds.id and ds.name and ds.input_path and ds.config)
+        assert (ds.id and ds.name and ds.input_path and ds.upload_dt and ds.config)
 
         if ds.is_stored(self._db):
             self.delete_ds(ds)
+        ds.save(self._db, self._es)
 
         self._post_new_job_msg(ds, priority)
         logger.info("Inserted into dataset table: %s, %s", ds.id, ds.name)
@@ -209,7 +216,7 @@ class DatasetManager(object):
                 wd_man = WorkDirManager(ds.id)
                 wd_man.del_input_data(ds.input_path)
             if self.mode == 'queue':
-                self._queue.publish({'ds_id': ds.id, 'status': DatasetStatus.DELETED.name}, SM_DS_STATUS)
+                self._queue.publish({'ds_id': ds.id, 'status': DatasetStatus.DELETED}, SM_DS_STATUS)
         else:
             logger.warning('No ds_id for ds_name: %s', ds.name)
 
@@ -217,4 +224,4 @@ class DatasetManager(object):
         ds.status = status
         ds.save(self._db, self._es)
         if self.mode == 'queue':
-            self._queue.publish({'ds_id': ds.id, 'status': status.name}, SM_DS_STATUS)
+            self._queue.publish({'ds_id': ds.id, 'status': status}, SM_DS_STATUS)

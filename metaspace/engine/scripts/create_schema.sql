@@ -13,6 +13,7 @@ CREATE TABLE dataset (
 	id	        text,
 	name				text,
 	input_path  text,
+	upload_dt		timestamp,
 	metadata		json,
 	config      json,
 	status			text,

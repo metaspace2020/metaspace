@@ -51,6 +51,7 @@ DATASET_SEL = '''SELECT
     config,
     metadata,
     input_path,
+    upload_dt,
     dataset.status,
     to_char(max(finish), 'YYYY-MM-DD HH:MI:SS')
 FROM dataset LEFT JOIN job ON job.ds_id = dataset.id
@@ -58,7 +59,9 @@ WHERE dataset.id = %s
 GROUP BY dataset.id
 '''
 
-DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path', 'ds_status', 'ds_last_finished')
+DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path',
+                   'ds_upload_dt', 'ds_status', 'ds_last_finished')
+
 
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
@@ -184,9 +187,6 @@ class ESExporter(object):
         submitter = dataset.get('ds_meta', {}).get('Submitted_By', {}).get('Submitter', None)
         if submitter:
             dataset['ds_submitter'] = submitter['First_Name'] + ' ' + submitter['Surname']
-
-        # TODO take datetime from a dedicated column once it's introduced
-        dataset['ds_upload_date'] = dataset['ds_id'].replace('_', 'T').replace('h', ':').replace('m', ':').replace('s', 'Z')
 
     def _ds_get_by_id(self, ds_id):
         dataset = dict(zip(DATASET_COLUMNS, self._db.select(DATASET_SEL, ds_id)[0]))

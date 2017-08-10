@@ -5,13 +5,13 @@ from fabric.api import local
 from fabric.context_managers import warn_only
 from mock import patch, MagicMock
 import time
+from datetime import datetime
 
 from sm.engine.db import DB
 from sm.engine.errors import JobFailedError
 from sm.engine.search_job import SearchJob
-from sm.engine.util import SMConfig
 from sm.engine.fdr import DECOY_ADDUCTS
-from sm.engine.dataset_manager import DS_INSERT
+from sm.engine.dataset_manager import DS_INSERT, DatasetStatus
 from sm.engine.tests.util import test_db, sm_config, sm_index, es_dsl_search
 
 test_ds_name = 'imzml_example_ds'
@@ -63,17 +63,19 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
 
     try:
         ds_config_str = open(ds_config_path).read()
-        db.insert(DS_INSERT, [('2000-01-01_00h00m', test_ds_name, input_dir_path, '{}', ds_config_str, 'QUEUED')])
+        upload_dt = datetime.now()
+        ds_id = '2000-01-01_00h00m'
+        db.insert(DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt,
+                               '{}', ds_config_str, DatasetStatus.QUEUED)])
 
         job = SearchJob('conf/test_config.json')
-
-        job.run('2000-01-01_00h00m')
+        job.run(ds_id)
 
         # dataset table asserts
-        rows = db.select("SELECT id, name, input_path, status from dataset")
+        rows = db.select("SELECT id, name, input_path, upload_dt, status from dataset")
         input_path = join(dirname(__file__), 'data', test_ds_name)
         assert len(rows) == 1
-        assert rows[0] == ('2000-01-01_00h00m', test_ds_name, input_path, 'FINISHED')
+        assert rows[0] == (ds_id, test_ds_name, input_path, upload_dt, DatasetStatus.FINISHED)
 
         # job table asserts
         rows = db.select("SELECT db_id, ds_id, status, start, finish from job")
@@ -103,11 +105,14 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
                                          'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
                            ['iso_image_1', None, None, None], None)
 
-        # ES asserts
         time.sleep(1)  # Waiting for ES
-        docs = es_dsl_search.query().execute()['hits']['hits']
-        for doc in docs:
-            assert doc['_id'].startswith('2000-01-01_00h00m')
+        # ES asserts
+        ds_docs = es_dsl_search.query('term', _type='dataset').execute().to_dict()['hits']['hits']
+        assert 1 == len(ds_docs)
+        ann_docs = es_dsl_search.query('term', _type='annotation').execute().to_dict()['hits']['hits']
+        assert len(ann_docs) == len(rows)
+        for doc in ann_docs:
+            assert doc['_id'].startswith(ds_id)
 
     finally:
         db.close()
@@ -144,11 +149,14 @@ def test_search_job_imzml_example_fails(get_compute_img_metrics_mock, filter_sf_
     db = DB(sm_config['db'])
 
     try:
+        ds_id = '2000-01-01_00h00m'
+        upload_dt = datetime.now()
         ds_config_str = open(ds_config_path).read()
-        db.insert(DS_INSERT, [('2000-01-01_00h00m', test_ds_name, input_dir_path, '{}', ds_config_str, 'QUEUED')])
+        db.insert(DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt.isoformat(' '),
+                               '{}', ds_config_str, DatasetStatus.QUEUED)])
 
         job = SearchJob('conf/test_config.json')
-        job.run('2000-01-01_00h00m')
+        job.run(ds_id)
     except JobFailedError as e:
         assert e
         # dataset table asserts

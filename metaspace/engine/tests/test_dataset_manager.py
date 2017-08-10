@@ -1,9 +1,10 @@
 from __future__ import unicode_literals
 from mock import patch, MagicMock
 import json
+from datetime import datetime
 
 from sm.engine.db import DB
-from sm.engine.dataset_manager import DatasetManager, Dataset, ConfigDiff
+from sm.engine.dataset_manager import DatasetManager, Dataset, DatasetStatus, ConfigDiff, DS_SEL
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE
 from sm.engine.util import SMConfig
@@ -18,15 +19,15 @@ def test_dataset_manager_add_ds_new_ds_id(test_db, sm_config, ds_config):
     db = DB(sm_config['db'])
     es = MagicMock(spec=ESExporter)
     try:
-        ds = Dataset('new_ds_id', 'ds_name', 'input_path',
+        upload_dt = datetime.now()
+        ds = Dataset('new_ds_id', 'ds_name', 'input_path', upload_dt,
                      {'metaspace_options': {'notify_submitter': False}}, ds_config)
         ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
         ds_man.add_ds(ds, priority=1)
 
-        rows = db.select('SELECT * FROM dataset')
-        assert len(rows) == 1
-        assert rows[0] == ('new_ds_id', 'ds_name', 'input_path',
-                           {'metaspace_options': {'notify_submitter': False}}, ds_config, 'QUEUED')
+        row = db.select_one(DS_SEL, 'new_ds_id')
+        assert row == ('ds_name', 'input_path', upload_dt,
+                       {'metaspace_options': {'notify_submitter': False}}, ds_config, DatasetStatus.QUEUED)
 
         qpub_mock.publish.assert_any_call({
             'ds_id': 'new_ds_id',
@@ -46,8 +47,11 @@ def test_dataset_manager_add_ds_ds_id_exists(ImageStoreServiceWrapperMock,
     db = DB(sm_config['db'])
     es = MagicMock(spec=ESExporter)
     try:
-        db.insert("INSERT INTO dataset VALUES (%s, %s, %s, %s, %s)",
-                  rows=[('ds_id', 'ds_name', 'input_path', '{}', '{}')])
+        upload_dt = datetime.now()
+        db.insert("INSERT INTO dataset VALUES (%s, %s, %s, %s, %s, %s, %s)",
+                  rows=[('ds_id', 'ds_name', 'input_path', upload_dt.isoformat(' '),
+                         json.dumps({'metaspace_options': {'notify_submitter': False}}),
+                         json.dumps(ds_config), DatasetStatus.FINISHED)])
         db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
                   rows=[(0, 0, 'ds_id')])
         db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
@@ -56,15 +60,14 @@ def test_dataset_manager_add_ds_ds_id_exists(ImageStoreServiceWrapperMock,
                    "VALUES (%s, %s, %s, %s, %s, %s)"),
                   rows=[(0, 0, 1, '+H', None, ['iso_image_1_url', 'iso_image_2_url'])])
 
-        ds = Dataset('ds_id', 'new_ds_name', 'input_path',
+        ds = Dataset('ds_id', 'new_ds_name', 'input_path', upload_dt,
                      {'metaspace_options': {'notify_submitter': False}}, ds_config)
         ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
         ds_man.add_ds(ds, priority=1)
 
-        rows = db.select("SELECT * FROM dataset")
-        assert len(rows) == 1
-        assert rows[0] == ('ds_id', 'new_ds_name', 'input_path',
-                           {'metaspace_options': {'notify_submitter': False}}, ds_config, 'QUEUED')
+        row = db.select_one(DS_SEL, 'ds_id')
+        assert row == ('new_ds_name', 'input_path', upload_dt,
+                       {'metaspace_options': {'notify_submitter': False}}, ds_config, DatasetStatus.QUEUED)
 
         qpub_mock.publish.assert_any_call({
             'ds_id': 'ds_id',
@@ -86,18 +89,18 @@ def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_con
     db = DB(sm_config['db'])
     es = MagicMock(spec=ESExporter)
     try:
-        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
-                  rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', json.dumps(ds_config))])
+        upload_dt = datetime.now()
+        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s, %s, %s)',
+                  rows=[('ds_id', 'ds_name', 'input_path', upload_dt.isoformat(' '),
+                         '{"meta": "data"}', json.dumps(ds_config), DatasetStatus.FINISHED)])
 
         ds = Dataset.load_ds('ds_id', db)
         ds.meta = {'new': 'meta'}
         ds_man = DatasetManager(db, es, mode='local')
         ds_man.update_ds(ds)
 
-        rows = db.select('SELECT * FROM dataset')
-        assert len(rows) == 1
-        assert rows[0] == ('ds_id', 'ds_name', 'input_path', {'new': 'meta'}, ds_config,
-                           'FINISHED')
+        row = db.select_one(DS_SEL, 'ds_id')
+        assert row == ('ds_name', 'input_path', upload_dt, {'new': 'meta'}, ds_config, DatasetStatus.FINISHED)
 
         es.index_ds.assert_called_once_with('ds_id', moldb_mock, del_first=True)
     finally:
@@ -111,9 +114,11 @@ def test_dataset_manager_update_ds_new_job_submitted(test_db, sm_config, ds_conf
     db = DB(sm_config['db'])
     es = MagicMock(spec=ESExporter)
     try:
-        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
-                  rows=[('ds_id', 'ds_name', 'input_path',
-                         '{"metaspace_options": {"Metabolite_Database": "db"}}', json.dumps(ds_config))])
+        upload_dt = datetime.now()
+        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s, %s, %s)',
+                  rows=[('ds_id', 'ds_name', 'input_path', upload_dt,
+                         '{"metaspace_options": {"Metabolite_Database": "db"}}',
+                         json.dumps(ds_config), DatasetStatus.FINISHED)])
 
         ds = Dataset.load_ds('ds_id', db)
         new_ds_config = deepcopy(ds_config)
@@ -122,15 +127,15 @@ def test_dataset_manager_update_ds_new_job_submitted(test_db, sm_config, ds_conf
         ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
         ds_man.update_ds(ds, priority=2)
 
-        rows = db.select('SELECT * FROM dataset')
-        assert len(rows) == 1
-        assert rows[0] == ('ds_id', 'ds_name', 'input_path',
-                           {"metaspace_options": {"Metabolite_Database": "db"}}, new_ds_config, 'QUEUED')
+        row = db.select_one(DS_SEL, 'ds_id')
+        assert row == ('ds_name', 'input_path', upload_dt,
+                       {"metaspace_options": {"Metabolite_Database": "db"}},
+                       new_ds_config, DatasetStatus.QUEUED)
 
         msg = {
             'ds_id': 'ds_id',
             'ds_name': 'ds_name',
-            'input_path': 'input_path',
+            'input_path': 'input_path'
         }
         qpub_mock.publish.assert_any_call(msg, SM_ANNOTATE, 2)
     finally:
@@ -142,13 +147,15 @@ def test_dataset_load_ds_works(test_db, sm_config, ds_config):
 
     db = DB(sm_config['db'])
     try:
-        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
-                  rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', json.dumps(ds_config))])
+        upload_dt = datetime.now()
+        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s, %s, %s)',
+                  rows=[('ds_id', 'ds_name', 'input_path', upload_dt,
+                         '{"meta": "data"}', json.dumps(ds_config), DatasetStatus.FINISHED)])
 
         ds = Dataset.load_ds('ds_id', db)
 
-        assert ((ds.id, ds.name, ds.input_path, ds.meta, ds.config) ==
-                ('ds_id', 'ds_name', 'input_path', {"meta": "data"}, ds_config))
+        assert ((ds.id, ds.name, ds.input_path, ds.upload_dt, ds.meta, ds.config, ds.status) ==
+                ('ds_id', 'ds_name', 'input_path', upload_dt, {"meta": "data"}, ds_config, DatasetStatus.FINISHED))
     finally:
         db.close()
 
@@ -164,21 +171,23 @@ def test_dataset_manager_delete_ds_works(WorkDirManagerMock, ImageStoreServiceWr
     es = MagicMock(spec=ESExporter)
     wd_man = WorkDirManagerMock()
     try:
-        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s)',
-                  rows=[('ds_id', 'ds_name', 'input_path', '{"meta": "data"}', json.dumps(ds_config))])
+        upload_dt = datetime.now()
+        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s, %s, %s)',
+                  rows=[('ds_id', 'ds_name', 'input_path', upload_dt,
+                         '{"meta": "data"}', json.dumps(ds_config), DatasetStatus.FINISHED)])
         db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
                   rows=[(0, 0, 'ds_id')])
         db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
                   rows=[(1, 0, 'H20')])
-        db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, ion_image_url, iso_image_urls) "
-                   "VALUES (%s, %s, %s, %s, %s, %s)"),
-                  rows=[(0, 0, 1, '+H', None, ['iso_image_1_url', 'iso_image_2_url'])])
+        db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, iso_image_urls) "
+                   "VALUES (%s, %s, %s, %s, %s)"),
+                  rows=[(0, 0, 1, '+H', ['iso_image_1_url', 'iso_image_2_url'])])
 
         ds_man = DatasetManager(db, es, mode='local')
         ds = Dataset.load_ds('ds_id', db)
         ds_man.delete_ds(ds, del_raw_data=True)
 
-        assert 0 == len(db.select('SELECT * FROM dataset WHERE id = %s', ds.id))
+        assert 0 == len(db.select(DS_SEL, ds.id))
         es.delete_ds.assert_called_once_with('ds_id')
         assert 2 == img_store.delete_image.call_count
         wd_man.del_input_data.assert_called_once_with('input_path')

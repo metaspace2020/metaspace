@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 import json
-from datetime import datetime as dt
+from datetime import datetime
 from bottle import post, run
 from bottle import request as req
 from bottle import response as resp
@@ -54,9 +54,11 @@ def _create_dataset_manager(db):
 @post('/v1/datasets/add')
 def add_ds():
     params = _json_params(req)
-    ds = Dataset(params.get('id', None) or dt.now().strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+    now = datetime.now()
+    ds = Dataset(params.get('id', None) or now.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
                  params.get('name', None),
                  params.get('input_path'),
+                 params.get('upload_dt', now),
                  params.get('metadata', None),
                  params.get('config'))
     db = _create_db_conn()
