@@ -13,10 +13,14 @@ class ImageStoreServiceWrapper(object):
 
     def __init__(self, iso_img_service_url):
         self._iso_img_service_url = iso_img_service_url
-        self._session = requests.Session()
-        self._session.mount(self._iso_img_service_url, HTTPAdapter(max_retries=5))
+        # empty URL is used for testing purposes
+        if self._iso_img_service_url:
+            self._session = requests.Session()
+            self._session.mount(self._iso_img_service_url, HTTPAdapter(max_retries=5))
 
     def post_image(self, fp):
+        if not self._iso_img_service_url:
+            return 'XXX'
         r = self._session.post(join(self._iso_img_service_url, 'upload'), files={'iso_image': fp})
         r.raise_for_status()
         return r.json()['image_id']

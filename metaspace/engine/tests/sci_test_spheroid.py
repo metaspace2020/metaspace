@@ -56,9 +56,6 @@ class SciTester(object):
         rows = self.db.select(SEARCH_RES_SELECT, mol_db_id, self.ds_name)
         return {(r[0], r[1]): self.metr_dict_to_array(r[2]) for r in rows}
 
-    def run_sci_test(self):
-        self.compare_search_results(self.read_base_search_res(), self.fetch_search_res())
-
     def save_sci_test_report(self):
         with open(self.base_search_res_path, 'w') as f:
             f.write('\t'.join(['sf', 'adduct'] + self.metrics) + '\n')
@@ -73,52 +70,56 @@ class SciTester(object):
         metric_interv = [round(x, 2) for x in metric_interv]
         pprint(list(zip(zip(metric_interv[:-1], metric_interv[1:]), metric_freq)))
 
-    def compare_search_results(self, base_search_res, search_res):
-        missed_sf_adduct = set(base_search_res.keys()).difference(set(search_res.keys()))
-        print('MISSED FORMULAS: {:.1f}%'.format(len(missed_sf_adduct) / len(base_search_res) * 100))
+    def report_metric_differences(self, metrics_array):
+        metrics_array = np.array(metrics_array)
+        print("\nCHAOS HISTOGRAM")
+        self.print_metric_hist(metrics_array[:, 0])
+        print("\nIMG_CORR HISTOGRAM")
+        self.print_metric_hist(metrics_array[:, 1])
+        print("\nPAT_MATCH HISTOGRAM")
+        self.print_metric_hist(metrics_array[:, 2])
+        print("\nMSM HISTOGRAM")
+        self.print_metric_hist(metrics_array[:, 3])
+
+    def _missed_formulae(self, old, new):
+        missed_sf_adduct = set(old.keys()) - set(new.keys())
+        print('MISSED FORMULAE: {:.1f}%'.format(len(missed_sf_adduct) / len(old) * 100))
         if missed_sf_adduct:
-            print(list(missed_sf_adduct))
+            missed_sf_base_metrics = np.array([old[k] for k in missed_sf_adduct])
+            self.report_metric_differences(missed_sf_base_metrics)
+        return bool(missed_sf_adduct)
 
-        if missed_sf_adduct:
-            missed_sf_base_metrics = np.array([np.array(base_search_res[k]) for k in missed_sf_adduct])
+    def _false_discovery(self, old, new):
+        new_sf_adduct = set(new.keys()) - set(old.keys())
+        print('\nFALSE DISCOVERY: {:.1f}%'.format(len(new_sf_adduct) / len(old) * 100))
 
-            print("\nCHAOS HISTOGRAM")
-            self.print_metric_hist(missed_sf_base_metrics[:, 0])
-            print("\nIMG_CORR HISTOGRAM")
-            self.print_metric_hist(missed_sf_base_metrics[:, 1])
-            print("\nPAT_MATCH HISTOGRAM")
-            self.print_metric_hist(missed_sf_base_metrics[:, 2])
-            print("\nMSM HISTOGRAM")
-            self.print_metric_hist(missed_sf_base_metrics[:, 3])
+        if new_sf_adduct:
+            for sf_adduct in new_sf_adduct:
+                metrics = new[sf_adduct]
+                print('{} metrics = {}'.format(sf_adduct, metrics))
+        return bool(new_sf_adduct)
 
-        new_sf_adduct = set(search_res.keys()).difference(set(base_search_res.keys()))
-        print('\nFALSE DISCOVERY: {:.1f}%'.format(len(new_sf_adduct) / len(base_search_res) * 100))
-
-        for sf_adduct in new_sf_adduct:
-            metrics = search_res[sf_adduct]
-            msm = reduce(mul, map(lambda m: m if m >= 0 else 0, metrics))
-            print('{} metrics = {}, MSM = {}'.format(sf_adduct, metrics, msm))
-
-        print('\nDIFFERENCE IN METRICS')
+    def _metrics_diff(self, old, new):
+        print('\nDIFFERENCE IN METRICS:')
         metric_diffs = []
-        for b_sf_add, b_metr in base_search_res.items():
-            if b_sf_add in search_res.keys():
-                metr = search_res[b_sf_add]
+        for b_sf_add, b_metr in old.items():
+            if b_sf_add in new.keys():
+                metr = new[b_sf_add]
                 diff = b_metr - metr
                 if np.any(np.abs(diff) > 1e-6):
                     metric_diffs.append(diff)
                     print('{} metrics diff = {}'.format(b_sf_add, diff))
 
         if metric_diffs:
-            metric_diffs = np.asarray(metric_diffs)
-            print("\nCHAOS HISTOGRAM")
-            self.print_metric_hist(metric_diffs[:, 0])
-            print("\nIMG_CORR HISTOGRAM")
-            self.print_metric_hist(metric_diffs[:, 1])
-            print("\nPAT_MATCH HISTOGRAM")
-            self.print_metric_hist(metric_diffs[:, 2])
-            print("\nMSM HISTOGRAM")
-            self.print_metric_hist(metric_diffs[:, 3])
+            self.report_metric_differences(metric_diffs)
+        return bool(metric_diffs)
+
+    def search_results_are_different(self):
+        old_search_res = self.read_base_search_res()
+        search_res = self.fetch_search_res()
+        return (self._missed_formulae(old_search_res, search_res) or
+                self._false_discovery(old_search_res, search_res) or
+                self._metrics_diff(old_search_res, search_res))
 
     def run_search(self):
         cmd = [executable,
@@ -148,17 +149,24 @@ if __name__ == '__main__':
     sci_tester = SciTester(args.sm_config_path)
 
     if args.run:
+        run_search_successful = True
+        search_results_different = False
         try:
             sci_tester.run_search()
-        except Exception:
-            raise
-        else:
-            sci_tester.run_sci_test()
+            search_results_different = sci_tester.search_results_are_different()
+        except Exception as e:
+            print(e)
+            run_search_successful = False
         finally:
             sci_tester.clear_data_dirs()
+
+        if not run_search_successful:
+            raise Exception('Search was not successful!')
+        elif search_results_different:
+            raise Exception('Search was successful but the results are different!')
+
     elif args.save:
-        resp = input('You are going to replace the reference values. Are you sure? (y/n): ')
-        if resp == 'y':
+        if 'y' == input('You are going to replace the reference values. Are you sure? (y/n): '):
             sci_tester.save_sci_test_report()
     else:
         parser.print_help()
