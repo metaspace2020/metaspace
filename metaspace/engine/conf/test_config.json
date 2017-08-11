@@ -12,8 +12,8 @@
   },
   "rabbitmq": {
     "host": "localhost",
-    "user": "sm",
-    "password": "1321"
+    "user": "sm_test",
+    "password": "password"
   },
   "services": {
     "iso_images": "http://localhost:3010/iso_images",

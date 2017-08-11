@@ -69,6 +69,8 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
                                '{}', ds_config_str, DatasetStatus.QUEUED)])
 
         job = SearchJob('conf/test_config.json')
+        job._sm_config['rabbitmq'] = {}
+
         job.run(ds_id)
 
         # dataset table asserts
