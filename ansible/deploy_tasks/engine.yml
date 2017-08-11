@@ -38,3 +38,5 @@
     chdir: "{{ sm_home }}"
     executable: /bin/bash
   shell: "{{ activate_venv }} && pip install ."
+
+- include: ../restart_supervisor.yml supervisor_app=sm-job-daemon
