@@ -60,6 +60,6 @@ export const metadataExportQuery = gql`
         resolvingPower(mz: 400)
       }
       polarity
-      uploadDate
+      uploadDateTime
     }
   } `;

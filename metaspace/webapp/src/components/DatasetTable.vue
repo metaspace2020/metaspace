@@ -251,7 +251,7 @@
        const chunkSize = 1000;
        let csv = ['datasetId', 'datasetName', 'institution', 'submitter',
                   'PI', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource',
-                  'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDate'
+                  'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime'
                   ].join(',') + "\n";
 
        csv += csvExportHeader();
@@ -274,7 +274,7 @@
            row.analyzer.type,
            Math.round(row.analyzer.resolvingPower),
            row.polarity.toLowerCase(),
-           row.uploadDate
+           row.uploadDateTime
          ].join(',');
        }
 

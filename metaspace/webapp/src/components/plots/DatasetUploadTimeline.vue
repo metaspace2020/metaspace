@@ -32,7 +32,7 @@
         };
       },
       update(data) {
-        return data.allDatasets.map(d => d.uploadDate);
+        return data.allDatasets.map(d => d.uploadDateTime);
       }
     }
   },
