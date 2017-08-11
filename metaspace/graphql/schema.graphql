@@ -69,7 +69,7 @@ type Dataset {
 
   status: JobStatus
   inputPath: String
-  uploadDate: String
+  uploadDateTime: String
 }
 
 # fields of categorical type
