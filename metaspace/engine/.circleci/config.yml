@@ -46,14 +46,14 @@ jobs:
             wget -qN https://s3-eu-west-1.amazonaws.com/embl-sm-testing/dumps/2017-08-09/theor_peaks-hmdb.pgdump
             pg_restore -U sm -h localhost --no-owner --role=sm -d sm annotate-moldb.pgdump
             cp docker/mol_db_conf.ini /root/sm-molecular-db/conf/local.ini
-            cd /root/sm-molecular-db
-            source activate mol_db
-            python app/main.py &  # run in background
-            cd /code/sm-engine
             psql -U sm -h localhost < scripts/create_schema.sql
             pg_restore -a -U sm -h localhost -d sm theor_peaks-hmdb.pgdump
       - run:
           name: Run scientific test
           command: |
+            cd /root/sm-molecular-db
+            source activate mol_db
+            python app/main.py &  # run in background
+            cd /code/sm-engine
             source docker/env.sh
             python tests/sci_test_spheroid.py -r
