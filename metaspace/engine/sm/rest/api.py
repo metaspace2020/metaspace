@@ -6,7 +6,7 @@ from bottle import request as req
 from bottle import response as resp
 
 from sm.engine import DB, ESExporter
-from sm.engine import DatasetManager, Dataset
+from sm.engine import SMapiDatasetManager, Dataset, DatasetActionPriority
 from sm.engine.queue import QueuePublisher
 from sm.engine.util import SMConfig
 from sm.engine.util import init_logger, logger
@@ -48,7 +48,7 @@ def _create_queue_publisher():
 
 
 def _create_dataset_manager(db):
-    return DatasetManager(db, ESExporter(db), mode='queue', queue_publisher=_create_queue_publisher())
+    return SMapiDatasetManager(db, ESExporter(db), mode='queue', queue_publisher=_create_queue_publisher())
 
 
 @post('/v1/datasets/add')
@@ -63,7 +63,7 @@ def add_ds():
                  params.get('config'))
     db = _create_db_conn()
     ds_man = _create_dataset_manager(db)
-    ds_man.add_ds(ds, params.get('priority', 0))
+    ds_man.add(ds, params.get('priority', DatasetActionPriority.DEFAULT))
     db.close()
     return OK['title']
 
@@ -73,14 +73,14 @@ def update_ds(ds_id):
     try:
         params = _json_params(req)
         db = _create_db_conn()
-        ds = Dataset.load_ds(ds_id, db)
+        ds = Dataset.load(ds_id, db)
         ds.name = params.get('name', ds.name)
         ds.input_path = params.get('input_path', ds.input_path)
         ds.meta = params.get('metadata', ds.meta)
         ds.config = params.get('config', ds.config)
 
         ds_man = _create_dataset_manager(db)
-        ds_man.update_ds(ds, params.get('priority', 0))
+        ds_man.update(ds, params.get('priority', DatasetActionPriority.DEFAULT))
         db.close()
         return OK['title']
     except UnknownDSID:
@@ -95,10 +95,10 @@ def delete_ds(ds_id):
         del_raw = params.get('del_raw', False)
 
         db = _create_db_conn()
-        ds = Dataset.load_ds(ds_id, db)
+        ds = Dataset.load(ds_id, db)
 
         ds_man = _create_dataset_manager(db)
-        ds_man.delete_ds(ds, del_raw_data=del_raw)
+        ds_man.delete(ds, del_raw_data=del_raw)
         db.close()
         return OK['title']
     except UnknownDSID:

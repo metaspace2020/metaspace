@@ -17,15 +17,12 @@ class DatasetReader(object):
 
     Args
     ----------
-    id : String
-        Dataset id
     input_path : str
         Input path with imzml/ibd files
     sc : pyspark.SparkContext
         Spark context object
     """
-    def __init__(self, ds_id, input_path, sc, wd_manager):
-        self.ds_id = ds_id
+    def __init__(self, input_path, sc, wd_manager):
         self.input_path = input_path
 
         self._wd_manager = wd_manager

@@ -56,7 +56,6 @@ logger = logging.getLogger(name='sm-engine')
 
 
 class SMConfig(object):
-
     """ Engine configuration manager """
 
     _path = None

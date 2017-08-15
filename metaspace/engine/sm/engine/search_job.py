@@ -13,7 +13,7 @@ from pyspark import SparkContext, SparkConf
 import logging
 
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
-from sm.engine.dataset_manager import DatasetManager, Dataset, DatasetStatus
+from sm.engine.dataset import DatasetStatus
 from sm.engine.dataset_reader import DatasetReader
 from sm.engine.db import DB
 from sm.engine.fdr import FDR
@@ -52,8 +52,8 @@ class SearchJob(object):
         self._sc = None
         self._db = None
         self._ds = None
-        self._qpub = None
-        self._ds_man = None
+        self._ds_reader = None
+        self._queue = None
         self._fdr = None
         self._wd_manager = None
         self._es = None
@@ -80,7 +80,6 @@ class SearchJob(object):
         logger.info('Connecting to the DB')
         self._db = DB(self._sm_config['db'])
 
-    # TODO: add tests
     def store_job_meta(self, mol_db_id):
         """ Store search job metadata in the database """
         logger.info('Storing job metadata')
@@ -112,7 +111,7 @@ class SearchJob(object):
 
             mz_img_store = ImageStoreServiceWrapper(self._sm_config['services']['iso_images'])
             search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys())
-            mask = self._ds.reader.get_2d_sample_area_mask()
+            mask = self._ds_reader.get_2d_sample_area_mask()
             search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, mz_img_store)
 
             self._es.index_ds(self._ds.id, mol_db)
@@ -136,55 +135,53 @@ class SearchJob(object):
                     moldb_id_list.append(mol_db_id)
         return moldb_id_list
 
-    def run(self, ds_id):
+    def run(self, ds):
         """ Entry point of the engine. Molecule search is completed in several steps:
-         * Copying input data to the engine work dir
-         * Conversion input data (imzML+ibd) to plain text format. One line - one spectrum data
-         * Generation and saving to the database theoretical peaks for all formulas from the molecule database
-         * Molecules search. The most compute intensive part. Spark is used to run it in distributed manner.
-         * Saving results (isotope images and their metrics of quality for each putative molecule) to the database
+            * Copying input data to the engine work dir
+            * Conversion input data (imzML+ibd) to plain text format. One line - one spectrum data
+            * Generation and saving to the database theoretical peaks for all formulas from the molecule database
+            * Molecules search. The most compute intensive part. Spark is used to run it in distributed manner.
+            * Saving results (isotope images and their metrics of quality for each putative molecule) to the database
 
         Args
         ----
-        ds_id : string
-            A technical identifier for the dataset
+            ds : sm.engine.dataset_manager.Dataset
         """
         try:
             start = time.time()
 
             self._init_db()
             self._es = ESExporter(self._db)
-            self._ds = Dataset.load_ds(ds_id, self._db)
-            if self._sm_config['rabbitmq']:
-                self._qpub = QueuePublisher(self._sm_config['rabbitmq'])
-                self._ds_man = DatasetManager(self._db, self._es, 'queue', self._qpub)
-            else:
-                self._qpub = None
-                self._ds_man = DatasetManager(self._db, self._es, 'local')
-            self._ds_man.set_ds_status(self._ds, DatasetStatus.STARTED)
+            self._ds = ds
+            ds.set_status(self._db, self._es, self._queue, DatasetStatus.STARTED)
 
-            self._wd_manager = WorkDirManager(ds_id)
+            if self._sm_config['rabbitmq']:
+                self._queue = QueuePublisher(self._sm_config['rabbitmq'])
+            else:
+                self._queue = None
+
+            self._wd_manager = WorkDirManager(ds.id)
             self._configure_spark()
 
             if not self.no_clean:
                 self._wd_manager.clean()
 
-            self._ds.reader = DatasetReader(ds_id, self._ds.input_path, self._sc, self._wd_manager)
-            self._ds.reader.copy_convert_input_data()
+            self._ds_reader = DatasetReader(self._ds.input_path, self._sc, self._wd_manager)
+            self._ds_reader.copy_convert_input_data()
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
             for mol_db_id in self.prepare_moldb_id_list():
                 self._run_job(MolecularDB(id=mol_db_id, iso_gen_config=self._ds.config['isotope_generation']))
 
-            self._ds_man.set_ds_status(self._ds, DatasetStatus.FINISHED)
+            ds.set_status(self._db, self._es, self._queue, DatasetStatus.FINISHED)
 
             logger.info("All done!")
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
         except Exception as e:
-            if self._ds_man:
-                self._ds_man.set_ds_status(self._ds, DatasetStatus.FAILED)
+            if self._ds:
+                ds.set_status(self._db, self._es, self._queue, DatasetStatus.FAILED)
             logger.error(e, exc_info=True)
             raise
         finally:

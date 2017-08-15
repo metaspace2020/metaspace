@@ -1,215 +1,150 @@
-from __future__ import unicode_literals
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, call
 import json
 from datetime import datetime
 
-from sm.engine.db import DB
-from sm.engine.dataset_manager import DatasetManager, Dataset, DatasetStatus, ConfigDiff, DS_SEL
-from sm.engine.es_export import ESExporter
-from sm.engine.queue import QueuePublisher, SM_ANNOTATE
-from sm.engine.util import SMConfig
 from copy import deepcopy
+from pytest import fixture
+
+from sm.engine import DB, ESExporter, QueuePublisher
+from sm.engine.dataset_manager import SMapiDatasetManager, SMDaemonDatasetManager, ConfigDiff
+from sm.engine.dataset_manager import Dataset, DatasetActionPriority, DatasetAction, DatasetStatus
+from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.tests.util import spark_context, sm_config, ds_config, test_db
 
 
-def test_dataset_manager_add_ds_new_ds_id(test_db, sm_config, ds_config):
-    SMConfig._config_dict = sm_config
-    qpub_mock = MagicMock(spec=QueuePublisher)
-
+@fixture
+def fill_db(test_db, sm_config, ds_config):
+    upload_dt = '2000-01-01 00:00:00'
+    ds_id = '2000-01-01'
+    meta = {"meta": "data"}
     db = DB(sm_config['db'])
-    es = MagicMock(spec=ESExporter)
-    try:
-        upload_dt = datetime.now()
-        ds = Dataset('new_ds_id', 'ds_name', 'input_path', upload_dt,
-                     {'metaspace_options': {'notify_submitter': False}}, ds_config)
-        ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
-        ds_man.add_ds(ds, priority=1)
-
-        row = db.select_one(DS_SEL, 'new_ds_id')
-        assert row == ('ds_name', 'input_path', upload_dt,
-                       {'metaspace_options': {'notify_submitter': False}}, ds_config, DatasetStatus.QUEUED)
-
-        qpub_mock.publish.assert_any_call({
-            'ds_id': 'new_ds_id',
-            'ds_name': 'ds_name',
-            'input_path': 'input_path'
-        }, SM_ANNOTATE, 1)
-    finally:
-        db.close()
+    db.insert('INSERT INTO dataset values (%s, %s, %s, %s, %s, %s, %s)',
+              rows=[(ds_id, 'ds_name', 'input_path', upload_dt,
+                     json.dumps(meta), json.dumps(ds_config), DatasetStatus.FINISHED)])
+    db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
+              rows=[(0, 0, ds_id)])
+    db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
+              rows=[(1, 0, 'H20')])
+    db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, ion_image_url, iso_image_urls) "
+               "VALUES (%s, %s, %s, %s, %s, %s)"),
+              rows=[(0, 0, 1, '+H', None, ['iso_image_1_id', 'iso_image_2_id'])])
 
 
-@patch('sm.engine.dataset_manager.ImageStoreServiceWrapper')
-def test_dataset_manager_add_ds_ds_id_exists(ImageStoreServiceWrapperMock,
-                                             test_db, sm_config, ds_config):
-    SMConfig._config_dict = sm_config
-    qpub_mock = MagicMock(spec=QueuePublisher)
-    img_store = ImageStoreServiceWrapperMock()
+def create_ds_man(sm_config, sm_api=False):
     db = DB(sm_config['db'])
-    es = MagicMock(spec=ESExporter)
-    try:
-        upload_dt = datetime.now()
-        db.insert("INSERT INTO dataset VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                  rows=[('ds_id', 'ds_name', 'input_path', upload_dt.isoformat(' '),
-                         json.dumps({'metaspace_options': {'notify_submitter': False}}),
-                         json.dumps(ds_config), DatasetStatus.FINISHED)])
-        db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
-                  rows=[(0, 0, 'ds_id')])
-        db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
-                  rows=[(1, 0, 'H20')])
-        db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, ion_image_url, iso_image_urls) "
-                   "VALUES (%s, %s, %s, %s, %s, %s)"),
-                  rows=[(0, 0, 1, '+H', None, ['iso_image_1_url', 'iso_image_2_url'])])
-
-        ds = Dataset('ds_id', 'new_ds_name', 'input_path', upload_dt,
-                     {'metaspace_options': {'notify_submitter': False}}, ds_config)
-        ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
-        ds_man.add_ds(ds, priority=1)
-
-        row = db.select_one(DS_SEL, 'ds_id')
-        assert row == ('new_ds_name', 'input_path', upload_dt,
-                       {'metaspace_options': {'notify_submitter': False}}, ds_config, DatasetStatus.QUEUED)
-
-        qpub_mock.publish.assert_any_call({
-            'ds_id': 'ds_id',
-            'ds_name': 'new_ds_name',
-            'input_path': 'input_path'
-        }, SM_ANNOTATE, 1)
-
-        es.delete_ds.assert_called_once_with('ds_id')
-        assert 2 == img_store.delete_image.call_count
-    finally:
-        db.close()
+    es_mock = MagicMock(spec=ESExporter)
+    queue_mock = MagicMock(spec=QueuePublisher)
+    if sm_api:
+        return db, es_mock, queue_mock, SMapiDatasetManager(db, es_mock, 'queue', queue_mock)
+    else:
+        return db, es_mock, queue_mock, SMDaemonDatasetManager(db, es_mock, 'queue', queue_mock)
 
 
-@patch('sm.engine.dataset_manager.MolecularDB')
-def test_dataset_manager_update_ds_reindex_only(MolecularDBMock, test_db, sm_config, ds_config):
-    SMConfig._config_dict = sm_config
-    moldb_mock = MolecularDBMock()
-
-    db = DB(sm_config['db'])
-    es = MagicMock(spec=ESExporter)
-    try:
-        upload_dt = datetime.now()
-        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s, %s, %s)',
-                  rows=[('ds_id', 'ds_name', 'input_path', upload_dt.isoformat(' '),
-                         '{"meta": "data"}', json.dumps(ds_config), DatasetStatus.FINISHED)])
-
-        ds = Dataset.load_ds('ds_id', db)
-        ds.meta = {'new': 'meta'}
-        ds_man = DatasetManager(db, es, mode='local')
-        ds_man.update_ds(ds)
-
-        row = db.select_one(DS_SEL, 'ds_id')
-        assert row == ('ds_name', 'input_path', upload_dt, {'new': 'meta'}, ds_config, DatasetStatus.FINISHED)
-
-        es.index_ds.assert_called_once_with('ds_id', moldb_mock, del_first=True)
-    finally:
-        db.close()
+def create_ds(ds_config):
+    upload_dt = datetime.now()
+    ds_id = '2000-01-01'
+    return ds_id, upload_dt, Dataset(ds_id, 'ds_name', 'input_path', upload_dt, {}, ds_config)
 
 
-def test_dataset_manager_update_ds_new_job_submitted(test_db, sm_config, ds_config):
-    SMConfig._config_dict = sm_config
+class TestConfigDiff:
 
-    qpub_mock = MagicMock(spec=QueuePublisher)
-    db = DB(sm_config['db'])
-    es = MagicMock(spec=ESExporter)
-    try:
-        upload_dt = datetime.now()
-        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s, %s, %s)',
-                  rows=[('ds_id', 'ds_name', 'input_path', upload_dt,
-                         '{"metaspace_options": {"Metabolite_Database": "db"}}',
-                         json.dumps(ds_config), DatasetStatus.FINISHED)])
+    def test_compare_configs_returns_equal(self, ds_config):
+        old_config = deepcopy(ds_config)
+        new_config = deepcopy(ds_config)
+        assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.EQUAL
 
-        ds = Dataset.load_ds('ds_id', db)
-        new_ds_config = deepcopy(ds_config)
-        new_ds_config['databases'].append({'name': 'ChEBI', 'version': '2008'})
-        ds.config = new_ds_config
-        ds_man = DatasetManager(db, es, mode='queue', queue_publisher=qpub_mock)
-        ds_man.update_ds(ds, priority=2)
+    def test_compare_configs_returns_inst_params_diff(self, ds_config):
+        old_config = deepcopy(ds_config)
+        new_config = deepcopy(ds_config)
+        new_config['isotope_generation']['isocalc_sigma'] = 0.03
+        assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.INSTR_PARAMS_DIFF
 
-        row = db.select_one(DS_SEL, 'ds_id')
-        assert row == ('ds_name', 'input_path', upload_dt,
-                       {"metaspace_options": {"Metabolite_Database": "db"}},
-                       new_ds_config, DatasetStatus.QUEUED)
-
-        msg = {
-            'ds_id': 'ds_id',
-            'ds_name': 'ds_name',
-            'input_path': 'input_path'
-        }
-        qpub_mock.publish.assert_any_call(msg, SM_ANNOTATE, 2)
-    finally:
-        db.close()
+    def test_compare_configs_returns_new_mol_db(self, ds_config):
+        old_config = deepcopy(ds_config)
+        new_config = deepcopy(ds_config)
+        new_config['databases'] = [{'name': 'ChEBI'}]
+        assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.NEW_MOL_DB
 
 
-def test_dataset_load_ds_works(test_db, sm_config, ds_config):
-    SMConfig._config_dict = sm_config
+class TestSMapiDatasetManager:
 
-    db = DB(sm_config['db'])
-    try:
-        upload_dt = datetime.now()
-        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s, %s, %s)',
-                  rows=[('ds_id', 'ds_name', 'input_path', upload_dt,
-                         '{"meta": "data"}', json.dumps(ds_config), DatasetStatus.FINISHED)])
+    def test_add_new_ds(self, test_db, sm_config, ds_config):
+        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=True)
+        ds_id, upload_dt, ds = create_ds(ds_config)
 
-        ds = Dataset.load_ds('ds_id', db)
+        ds_man.add(ds, DatasetActionPriority.HIGH)
 
-        assert ((ds.id, ds.name, ds.input_path, ds.upload_dt, ds.meta, ds.config, ds.status) ==
-                ('ds_id', 'ds_name', 'input_path', upload_dt, {"meta": "data"}, ds_config, DatasetStatus.FINISHED))
-    finally:
-        db.close()
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.ADD}
+        queue_mock.publish.assert_has_calls([call(msg, SM_ANNOTATE, DatasetActionPriority.HIGH)])
 
+    def test_delete_ds(self, test_db, sm_config, ds_config):
+        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=True)
+        ds_id, upload_dt, ds = create_ds(ds_config)
 
-@patch('sm.engine.dataset_manager.ImageStoreServiceWrapper')
-@patch('sm.engine.dataset_manager.WorkDirManager')
-def test_dataset_manager_delete_ds_works(WorkDirManagerMock, ImageStoreServiceWrapperMock,
-                                         test_db, sm_config, ds_config):
-    SMConfig._config_dict = sm_config
+        ds_man.delete(ds)
 
-    img_store = ImageStoreServiceWrapperMock()
-    db = DB(sm_config['db'])
-    es = MagicMock(spec=ESExporter)
-    wd_man = WorkDirManagerMock()
-    try:
-        upload_dt = datetime.now()
-        db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s, %s, %s)',
-                  rows=[('ds_id', 'ds_name', 'input_path', upload_dt,
-                         '{"meta": "data"}', json.dumps(ds_config), DatasetStatus.FINISHED)])
-        db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
-                  rows=[(0, 0, 'ds_id')])
-        db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
-                  rows=[(1, 0, 'H20')])
-        db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, iso_image_urls) "
-                   "VALUES (%s, %s, %s, %s, %s)"),
-                  rows=[(0, 0, 1, '+H', ['iso_image_1_url', 'iso_image_2_url'])])
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.DELETE}
+        queue_mock.publish.assert_has_calls([call(msg, SM_ANNOTATE, DatasetActionPriority.HIGH)])
 
-        ds_man = DatasetManager(db, es, mode='local')
-        ds = Dataset.load_ds('ds_id', db)
-        ds_man.delete_ds(ds, del_raw_data=True)
+    def test_update_ds_configs_equal(self, fill_db, sm_config, ds_config):
+        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=True)
+        ds_id, upload_dt, ds = create_ds(ds_config)
 
-        assert 0 == len(db.select(DS_SEL, ds.id))
-        es.delete_ds.assert_called_once_with('ds_id')
-        assert 2 == img_store.delete_image.call_count
-        wd_man.del_input_data.assert_called_once_with('input_path')
-    finally:
-        db.close()
+        ds_man.update(ds)
 
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.UPDATE}
+        queue_mock.publish.assert_has_calls([call(msg, SM_ANNOTATE, DatasetActionPriority.HIGH)])
 
-def test_compare_configs_returns_equal(ds_config):
-    old_config = deepcopy(ds_config)
-    new_config = deepcopy(ds_config)
-    assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.EQUAL
+    def test_update_ds_new_mol_db(self, fill_db, sm_config, ds_config):
+        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=True)
+        ds_id, upload_dt, ds = create_ds(ds_config)
+
+        ds.config['databases'] = [{'name': 'HMDB'}, {'name': 'ChEBI'}]
+        ds_man.update(ds)
+
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.ADD}
+        queue_mock.publish.assert_has_calls([call(msg, SM_ANNOTATE, DatasetActionPriority.DEFAULT)])
+
+    def test_update_ds_instr_param_diff(self, fill_db, sm_config, ds_config):
+        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=True)
+        ds_id, upload_dt, ds = create_ds(ds_config)
+
+        ds.config['isotope_generation']['isocalc_sigma'] *= 2
+        ds_man.update(ds)
+
+        queue_mock.publish.assert_has_calls([
+            call({'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.DELETE},
+                 SM_ANNOTATE, DatasetActionPriority.HIGH),
+            call({'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.ADD},
+                 SM_ANNOTATE, DatasetActionPriority.DEFAULT)
+        ], any_order=True)
 
 
-def test_compare_configs_returns_inst_params_diff(ds_config):
-    old_config = deepcopy(ds_config)
-    new_config = deepcopy(ds_config)
-    new_config['isotope_generation']['isocalc_sigma'] = 0.03
-    assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.INSTR_PARAMS_DIFF
+class TestSMDaemonDatasetManager:
 
+    def test_update_ds(self, fill_db, sm_config, ds_config):
+        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=False)
+        ds_id, upload_dt, ds = create_ds(ds_config)
 
-def test_compare_configs_returns_new_mol_db(ds_config):
-    old_config = deepcopy(ds_config)
-    new_config = deepcopy(ds_config)
-    new_config['databases'] = [{'name': 'ChEBI'}]
-    assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.NEW_MOL_DB
+        with patch('sm.engine.dataset_manager.MolecularDB') as MolecularDB:
+            mol_db_mock = MolecularDB.return_value
+            mol_db_mock.name = 'HMDB'
+
+            ds_man.update(ds)
+
+            es_mock.index_ds.assert_called_with(ds_id, mol_db_mock, del_first=True)
+
+    def test_delete_ds(self, fill_db, sm_config, ds_config):
+        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=False)
+        ds_id, upload_dt, ds = create_ds(ds_config)
+
+        with patch('sm.engine.dataset_manager.ImageStoreServiceWrapper') as ImageStoreServiceWrapper:
+            img_store_service_mock = ImageStoreServiceWrapper.return_value
+
+            ds_man.delete(ds)
+
+            urls = ['{}/delete/{}'.format(sm_config['services']['iso_images'], 'iso_image_{}_id'.format(id))
+                    for id in range(1, 3)]
+            img_store_service_mock.delete_image.assert_has_calls([call(urls[0]), call(urls[1])])
+            es_mock.delete_ds.assert_called_with(ds_id)
+            assert db.select_one('SELECT * FROM dataset WHERE id = %s', ds_id) == []

@@ -55,7 +55,6 @@ def test_db(sm_config, request):
         db.alter('DROP DATABASE IF EXISTS sm_test')
         db.close()
     request.addfinalizer(fin)
-    return db
 
 
 @pytest.fixture()
