@@ -1,4 +1,4 @@
-from mock import patch
+from unittest.mock import patch
 
 from sm.engine import DB
 from sm.engine import SearchJob

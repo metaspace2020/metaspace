@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from numpy.testing import assert_array_equal
 
 from sm.engine import DatasetReader, DB

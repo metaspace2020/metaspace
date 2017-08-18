@@ -1,4 +1,4 @@
-from mock import MagicMock
+from unittest.mock import MagicMock
 from pandas.util.testing import assert_frame_equal
 from scipy.sparse import csr_matrix
 import pandas as pd

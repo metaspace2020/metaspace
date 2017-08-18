@@ -1,4 +1,4 @@
-from mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock, call
 import json
 from datetime import datetime
 

@@ -1,6 +1,6 @@
 import pandas as pd
 from sm.engine.db import DB
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 from pandas.util.testing import assert_frame_equal
 
 from sm.engine.fdr import FDR

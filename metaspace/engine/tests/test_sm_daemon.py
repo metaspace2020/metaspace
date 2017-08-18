@@ -3,7 +3,7 @@ from datetime import datetime
 from os.path import join
 from threading import Thread
 import time
-from mock import MagicMock
+from unittest.mock import MagicMock
 from pytest import fixture, raises
 
 from sm.engine.dataset_manager import SMDaemonDatasetManager, DatasetActionPriority

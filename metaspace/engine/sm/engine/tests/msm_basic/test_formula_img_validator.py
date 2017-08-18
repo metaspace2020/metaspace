@@ -3,7 +3,7 @@ from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import pytest
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from numpy.testing import assert_array_almost_equal
 from pandas.util.testing import assert_frame_equal
 from scipy.sparse import csr_matrix

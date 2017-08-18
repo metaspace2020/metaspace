@@ -1,7 +1,7 @@
 from threading import Thread
 import time
 from pytest import fixture
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from sm.engine import QueuePublisher
 from sm.engine.queue import QueueConsumer

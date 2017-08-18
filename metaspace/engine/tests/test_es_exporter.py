@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from datetime import datetime
 
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 import pandas as pd
 from time import sleep
 

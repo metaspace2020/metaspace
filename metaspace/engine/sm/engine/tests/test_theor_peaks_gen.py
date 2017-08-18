@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from numpy.testing import assert_array_almost_equal
 from pyMSpec.mass_spectrum import MassSpectrum
 

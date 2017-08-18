@@ -2,7 +2,7 @@ from sm.engine.mol_db import MolecularDB
 from sm.engine.tests.util import mol_db, sm_config, ds_config
 import pandas as pd
 import numpy.testing as npt
-from mock import MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 def test_peak_generator(mol_db):
     expected_peak_df = pd.DataFrame(dict(

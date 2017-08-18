@@ -1,6 +1,6 @@
 from os.path import join
 import pytest
-from mock import patch
+from unittest.mock import patch
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 from fabric.api import local
@@ -11,7 +11,7 @@ from pysparkling import Context as SparkContext
 
 import pandas as pd
 from logging.config import dictConfig
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from sm.engine.db import DB
 from sm.engine.mol_db import MolecularDB

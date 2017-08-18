@@ -1,6 +1,6 @@
 from datetime import datetime
 import json
-from mock import MagicMock
+from unittest.mock import MagicMock
 from pytest import fixture
 
 from sm.engine import DatasetStatus, Dataset, DB, ESExporter, QueuePublisher

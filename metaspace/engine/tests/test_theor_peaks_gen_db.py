@@ -1,5 +1,5 @@
 import pytest
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from sm.engine import MolecularDB
 from sm.engine.db import DB

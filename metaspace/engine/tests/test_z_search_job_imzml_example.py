@@ -3,7 +3,7 @@ from os.path import join, dirname
 import pytest
 from fabric.api import local
 from fabric.context_managers import warn_only
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 import time
 from datetime import datetime
 

@@ -3,7 +3,7 @@ from collections import OrderedDict
 from os.path import join, dirname
 import pandas as pd
 import pytest
-from mock import MagicMock
+from unittest.mock import MagicMock
 import numpy as np
 
 from sm.engine.db import DB

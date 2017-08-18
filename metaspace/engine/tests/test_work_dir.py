@@ -1,4 +1,4 @@
-from mock import MagicMock
+from unittest.mock import MagicMock
 import json
 from os import listdir
 from os.path import join, basename

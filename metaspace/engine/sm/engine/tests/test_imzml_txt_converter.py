@@ -2,7 +2,7 @@ from io import StringIO
 
 import numpy as np
 from sm.engine.util import SMConfig
-from mock import patch
+from unittest.mock import patch
 
 from sm.engine.imzml_txt_converter import ImzmlTxtConverter, encode_coord_line, encode_data_line
 from sm.engine.tests.util import sm_config, ds_config
