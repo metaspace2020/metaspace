@@ -40,7 +40,7 @@ sm_log_config = {
             'handlers': ['console_debug', 'file'],
             'level': logging.DEBUG
         },
-        'sm-queue': {
+        'sm-daemon': {
             'handlers': ['console_debug'],
             'level': logging.DEBUG
         }

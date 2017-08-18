@@ -45,7 +45,7 @@ class SearchJob(object):
     no_clean : bool
         Don't delete interim data files
     """
-    def __init__(self, sm_config_path, no_clean=False):
+    def __init__(self, no_clean=False):
         self.no_clean = no_clean
 
         self._job_id = None
@@ -58,7 +58,6 @@ class SearchJob(object):
         self._wd_manager = None
         self._es = None
 
-        SMConfig.set_path(sm_config_path)
         self._sm_config = SMConfig.get_conf()
         logger.debug('Using SM config:\n%s', pformat(self._sm_config))
 

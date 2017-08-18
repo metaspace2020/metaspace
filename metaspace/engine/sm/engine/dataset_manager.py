@@ -69,7 +69,7 @@ class DatasetManager(object):
             'local' or 'queue'
         queue_publisher: sm.engine.queue.QueuePublisher
     """
-    def __init__(self, db, es, mode, queue_publisher=None):
+    def __init__(self, db=None, es=None, mode=None, queue_publisher=None):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
@@ -100,9 +100,8 @@ class SMDaemonDatasetManager(DatasetManager):
             self.update(ds)
         elif action == DatasetAction.DELETE:
             self.delete(ds, **kwargs)
-
-    def _set_status(self, ds, status):
-        ds.set_status(self._db, self._es, self._queue, status)
+        else:
+            raise Exception('Wrong action: {}'.format(action))
 
     def add(self, ds, search_job=None):
         """ Run an annotation job for the dataset """
@@ -149,14 +148,15 @@ class SMDaemonDatasetManager(DatasetManager):
 
 class SMapiDatasetManager(DatasetManager):
 
-    def __init__(self, db, es, mode, queue_publisher=None):
+    def __init__(self, qname, db, es, mode, queue_publisher=None):
+        self.qname = qname
         DatasetManager.__init__(self, db=db, es=es, mode=mode, queue_publisher=queue_publisher)
 
     def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT):
         if self.mode == 'queue':
             msg = ds.to_queue_message()
             msg['action'] = action
-            self._queue.publish(msg, SM_ANNOTATE, priority)
+            self._queue.publish(msg, self.qname, priority)
             logger.info('New job message posted: %s', msg)
         ds.set_status(self._db, self._es, self._queue, DatasetStatus.QUEUED)
 
@@ -173,8 +173,8 @@ class SMapiDatasetManager(DatasetManager):
 
     def update(self, ds, priority=DatasetActionPriority.DEFAULT):
         """ Send update or add message to the queue """
-        old_config = Dataset.load(self._db, ds.id).config
-        config_diff = ConfigDiff.compare_configs(old_config, ds.config)
+        old_ds = Dataset.load(self._db, ds.id)
+        config_diff = ConfigDiff.compare_configs(old_ds.config, ds.config)
 
         priority = min(priority, DatasetActionPriority.HIGH)
         if config_diff == ConfigDiff.EQUAL:

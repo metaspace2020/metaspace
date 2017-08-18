@@ -102,6 +102,7 @@ def sm_index(sm_config, request):
         es_man.delete_index(sm_config['elasticsearch']['index'])
     request.addfinalizer(fin)
 
+
 @pytest.fixture()
 def mol_db(sm_config, ds_config):
     data = {'id': 1, 'name': 'HMDB', 'version': '2016'}

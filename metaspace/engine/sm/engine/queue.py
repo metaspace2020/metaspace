@@ -26,6 +26,8 @@ class QueueConsumer(object):
         self.exchange_type = 'direct'
         self.routing_key = None
         self.qname = qname
+        self.queue_durable = True
+        self.queue_args = {'x-max-priority': 3}
 
         self._callback = callback
         self._on_success = on_success
@@ -182,7 +184,8 @@ class QueueConsumer(object):
 
         """
         self.logger.info('Declaring queue %s', queue_name)
-        self._channel.queue_declare(self.on_queue_declareok, queue_name)
+        self._channel.queue_declare(self.on_queue_declareok, queue_name,
+                                    durable=self.queue_durable, arguments=self.queue_args)
 
     def on_queue_declareok(self, method_frame):
         """Method invoked by pika when the Queue.Declare RPC call made in
