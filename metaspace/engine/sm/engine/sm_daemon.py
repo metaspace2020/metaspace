@@ -3,19 +3,10 @@ from requests import post
 import logging
 import boto3
 
-from sm.engine.util import SMConfig, sm_log_formatters, sm_log_config, init_logger
-from sm.engine import QueueConsumer, SMDaemonDatasetManager, ESExporter, QueuePublisher, Dataset, SearchJob
+from sm.engine.util import SMConfig, sm_log_config, init_logger
+from sm.engine import QueueConsumer, ESExporter, QueuePublisher, Dataset, SearchJob
 from sm.engine import DB
-from sm.engine.queue import SM_ANNOTATE
 
-
-def configure_loggers():
-    log_config = sm_log_config
-    log_config['loggers']['sm-engine']['handlers'] = ['console_warn', 'file']
-    init_logger(log_config)
-
-
-configure_loggers()
 logger = logging.getLogger('sm-daemon')
 
 
@@ -139,7 +130,7 @@ class SMDaemon(object):
     def start(self):
         self._sm_queue_consumer = QueueConsumer(self._sm_config['rabbitmq'], self._qname,
                                                 self.callback, self.on_job_succeeded, self.on_job_failed)
-        self._sm_queue_consumer.run()
+        self._sm_queue_consumer.run()  # starts IOLoop to block and allow pika handle events
 
     def stop(self):
         self._sm_queue_consumer.stop()

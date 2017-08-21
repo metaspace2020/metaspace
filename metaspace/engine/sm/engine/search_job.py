@@ -105,7 +105,7 @@ class SearchJob(object):
                             decoy_sample_size=20, target_adducts=target_adducts, db=self._db)
             self._fdr.decoy_adduct_selection()
 
-            search_alg = MSMBasicSearch(self._sc, self._ds, mol_db, self._fdr, self._ds.config)
+            search_alg = MSMBasicSearch(self._sc, self._ds, self._ds_reader, mol_db, self._fdr, self._ds.config)
             ion_metrics_df, ion_iso_images = search_alg.search()
 
             mz_img_store = ImageStoreServiceWrapper(self._sm_config['services']['iso_images'])

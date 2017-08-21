@@ -223,6 +223,7 @@ class QueueConsumer(object):
         """
         self.logger.info('Issuing consumer related RPC commands')
         self.add_on_cancel_callback()
+        self.logger.info(' [*] Waiting for messages...')
         self._consumer_tag = self._channel.basic_consume(self.on_message, self.qname)
 
     def add_on_cancel_callback(self):
@@ -336,7 +337,7 @@ class QueueConsumer(object):
         self._closing = True
         self.stop_consuming()
         self._connection.ioloop.start()
-        self.logger.info('Stopped')
+        self.logger.info(' [v] Stopped consuming')
 
     def close_connection(self):
         """This method closes the connection to RabbitMQ."""

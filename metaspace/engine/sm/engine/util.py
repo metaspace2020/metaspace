@@ -1,8 +1,12 @@
 import os
 import json
+from datetime import datetime
 from subprocess import check_call, call
 import logging
 from logging.config import dictConfig
+from os.path import join, exists
+
+from sm.engine import Dataset
 
 
 def proj_root():
@@ -113,3 +117,14 @@ def read_json(path):
         logger.warning("Couldn't find %s file", path)
     finally:
         return res
+
+
+def create_ds_from_files(ds_id, ds_name, ds_input_path):
+    meta_path = join(ds_input_path, 'meta.json')
+    if exists(meta_path):
+        metadata = json.load(open(meta_path))
+    else:
+        metadata = {}
+    ds_config = json.load(open(join(ds_input_path, 'config.json')))
+
+    return Dataset(ds_id, ds_name, ds_input_path, datetime.now(), metadata, ds_config)

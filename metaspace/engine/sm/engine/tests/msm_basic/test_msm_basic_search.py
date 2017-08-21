@@ -19,7 +19,7 @@ def test_filter_sf_images(spark_context):
                                   columns=['sf_id', 'adduct', 'chaos', 'spatial', 'spectral', 'msm'])
                      .set_index(['sf_id', 'adduct']))
 
-    search_alg = MSMBasicSearch(None, None, None, None, None)
+    search_alg = MSMBasicSearch(None, None, None, None, None, None)
     flt_iso_images = search_alg.filter_sf_images(sf_iso_images, sf_metrics_df)
 
     assert dict(flt_iso_images.take(1)).keys() == dict(sf_iso_images.take(1)).keys()
@@ -39,7 +39,7 @@ def test_add_sf_image_est_fdr():
     fdr_mock.estimate_fdr.return_value = pd.DataFrame([[0, '+H', 0.99], [1, '+H', 0.5]],
                                                       columns=['sf_id', 'adduct', 'fdr']).set_index(['sf_id', 'adduct'])
 
-    search_alg = MSMBasicSearch(None, None, None, None, None)
+    search_alg = MSMBasicSearch(None, None, None, None, None, None)
     search_alg._fdr = fdr_mock
     search_alg._mol_db = mol_db_mock
     res_metrics_df = search_alg.estimate_fdr(sf_metrics_df)

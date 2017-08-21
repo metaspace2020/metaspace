@@ -35,7 +35,7 @@ def create_ds_man(sm_config, sm_api=False):
     es_mock = MagicMock(spec=ESExporter)
     queue_mock = MagicMock(spec=QueuePublisher)
     if sm_api:
-        return db, es_mock, queue_mock, SMapiDatasetManager(db, es_mock, 'queue', queue_mock)
+        return db, es_mock, queue_mock, SMapiDatasetManager(SM_ANNOTATE, db, es_mock, 'queue', queue_mock)
     else:
         return db, es_mock, queue_mock, SMDaemonDatasetManager(db, es_mock, 'queue', queue_mock)
 

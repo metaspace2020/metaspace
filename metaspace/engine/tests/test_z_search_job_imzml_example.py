@@ -11,7 +11,8 @@ from sm.engine.db import DB
 from sm.engine.errors import JobFailedError
 from sm.engine.search_job import SearchJob
 from sm.engine.fdr import DECOY_ADDUCTS
-from sm.engine.dataset_manager import DS_INSERT, DatasetStatus
+from sm.engine.dataset import Dataset
+from sm.engine.dataset_manager import DatasetStatus
 from sm.engine.tests.util import test_db, sm_config, sm_index, es_dsl_search
 
 test_ds_name = 'imzml_example_ds'
@@ -65,13 +66,14 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
         ds_config_str = open(ds_config_path).read()
         upload_dt = datetime.now()
         ds_id = '2000-01-01_00h00m'
-        db.insert(DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt,
-                               '{}', ds_config_str, DatasetStatus.QUEUED)])
+        db.insert(Dataset.DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt,
+                                       '{}', ds_config_str, DatasetStatus.QUEUED)])
 
-        job = SearchJob('conf/test_config.json')
-        job._sm_config['rabbitmq'] = {}
+        job = SearchJob()
+        job._sm_config['rabbitmq'] = {}  # avoid talking to RabbitMQ during the test
 
-        job.run(ds_id)
+        ds = Dataset.load(db, ds_id)
+        job.run(ds)
 
         # dataset table asserts
         rows = db.select("SELECT id, name, input_path, upload_dt, status from dataset")
@@ -154,11 +156,12 @@ def test_search_job_imzml_example_fails(get_compute_img_metrics_mock, filter_sf_
         ds_id = '2000-01-01_00h00m'
         upload_dt = datetime.now()
         ds_config_str = open(ds_config_path).read()
-        db.insert(DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt.isoformat(' '),
-                               '{}', ds_config_str, DatasetStatus.QUEUED)])
+        db.insert(Dataset.DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt.isoformat(' '),
+                                       '{}', ds_config_str, DatasetStatus.QUEUED)])
 
-        job = SearchJob('conf/test_config.json')
-        job.run(ds_id)
+        job = SearchJob()
+        ds = Dataset.load(db, ds_id)
+        job.run(ds)
     except JobFailedError as e:
         assert e
         # dataset table asserts

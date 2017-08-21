@@ -46,9 +46,10 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
 def ds_formulas_images_mock():
     ds_mock = Dataset('ds_id')
     ds_mock.config = {'image_generation': {}}
-    ds_mock.reader = MagicMock(DatasetReader)
-    ds_mock.reader.get_dims.return_value = (2, 3)
-    ds_mock.reader.get_sample_area_mask.return_value = np.ones(2*3).astype(bool)
+
+    ds_reader_mock = MagicMock(spec=DatasetReader)
+    ds_reader_mock.get_dims.return_value = (2, 3)
+    ds_reader_mock.get_sample_area_mask.return_value = np.ones(2*3).astype(bool)
 
     mol_db_mock = MagicMock(spec=MolecularDB)
     mol_db_mock.get_sf_peak_ints.return_value = {(0, '+H'): [100, 10, 1], (1, '+H'): [100, 10, 1]}
@@ -56,21 +57,21 @@ def ds_formulas_images_mock():
     sf_iso_images = [((0, '+H'), [csr_matrix([[0, 100, 100], [10, 0, 3]]), csr_matrix([[0, 50, 50], [0, 20, 0]])]),
                      ((1, '+H'), [csr_matrix([[0, 100, 100], [10, 0, 3]]), csr_matrix([[0, 50, 50], [0, 20, 0]])])]
 
-    return ds_mock, mol_db_mock, sf_iso_images
+    return ds_mock, ds_reader_mock, mol_db_mock, sf_iso_images
 
 
 def test_sf_image_metrics(spark_context, ds_formulas_images_mock, ds_config):
     with patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics') as mock:
         mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.])
 
-        ds_mock, mol_db_mock, ref_images = ds_formulas_images_mock
+        ds_mock, ds_reader_mock, mol_db_mock, ref_images = ds_formulas_images_mock
         ref_images_rdd = spark_context.parallelize(ref_images)
 
         metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0),
                                ('total_iso_ints', [0, 0, 0, 0]),
                                ('min_iso_ints', [0, 0, 0, 0]),
                                ('max_iso_ints', [0, 0, 0, 0])])
-        metrics_df = sf_image_metrics(ref_images_rdd, metrics, ds_mock, mol_db_mock, spark_context)
+        metrics_df = sf_image_metrics(ref_images_rdd, metrics, ds_mock, ds_reader_mock, mol_db_mock, spark_context)
 
         exp_metrics_df = (pd.DataFrame([[0, '+H', 0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.], 0.9**3],
                                        [1, '+H', 0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.], 0.9**3]],

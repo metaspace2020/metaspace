@@ -56,7 +56,7 @@ class Dataset(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    def set_status(self, db, es, queue, status):
+    def set_status(self, db, es, queue=None, status=None):
         self.status = status
         self.save(db, es, queue)
 
@@ -74,7 +74,7 @@ class Dataset(object):
         r = db.select_one(self.DS_SEL, self.id)
         return True if r else False
 
-    def save(self, db, es, queue):
+    def save(self, db, es, queue=None):
         assert self.id and self.name and self.input_path and self.upload_dt and self.config and self.status
         row = (self.id, self.name, self.input_path, self.upload_dt.isoformat(' '),
                json.dumps(self.meta), json.dumps(self.config), self.status)
@@ -85,7 +85,8 @@ class Dataset(object):
         logger.info("Inserted into dataset table: %s, %s", self.id, self.name)
 
         es.sync_dataset(self.id)
-        queue.publish({'ds_id': self.id, 'status': self.status}, SM_DS_STATUS)
+        if queue:
+            queue.publish({'ds_id': self.id, 'status': self.status}, SM_DS_STATUS)
 
     def to_queue_message(self):
         msg = {

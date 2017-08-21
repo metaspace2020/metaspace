@@ -3,9 +3,10 @@ from sm.engine.util import SMConfig
 
 class SearchAlgorithm(object):
 
-    def __init__(self, sc, ds, mol_db, fdr, ds_config):
+    def __init__(self, sc, ds, ds_reader, mol_db, fdr, ds_config):
         self._sc = sc
         self._ds = ds
+        self._ds_reader = ds_reader
         self._mol_db = mol_db
         self._fdr = fdr
         self.ds_config = ds_config

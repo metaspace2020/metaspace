@@ -101,7 +101,7 @@ def _calculate_msm(sf_metrics_df):
     return sf_metrics_df.chaos * sf_metrics_df.spatial * sf_metrics_df.spectral
 
 
-def sf_image_metrics(sf_images, metrics, ds, mol_db, sc):
+def sf_image_metrics(sf_images, metrics, ds, ds_reader, mol_db, sc):
     """ Compute isotope image metrics for each formula
 
     Args
@@ -116,9 +116,9 @@ def sf_image_metrics(sf_images, metrics, ds, mol_db, sc):
     ------------
     : pandas.DataFrame
     """
-    nrows, ncols = ds.reader.get_dims()
+    nrows, ncols = ds_reader.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
-    compute_metrics = get_compute_img_metrics(metrics, ds.reader.get_sample_area_mask(),
+    compute_metrics = get_compute_img_metrics(metrics, ds_reader.get_sample_area_mask(),
                                               empty_matrix, ds.config['image_generation'])
     sf_add_ints_map_brcast = sc.broadcast(mol_db.get_sf_peak_ints())
 

@@ -3,17 +3,21 @@ from functools import reduce
 from operator import mul
 from os.path import join
 from pprint import pprint
-from subprocess import check_call
+from subprocess import check_call, check_output, STDOUT
 from sys import executable
 
 import numpy as np
 from fabric.api import local
 from fabric.context_managers import warn_only
 
+from sm.engine import Dataset
+from sm.engine import ESExporter
+from sm.engine import SMDaemonDatasetManager
+from sm.engine import SearchJob
 from sm.engine.db import DB
+from sm.engine.errors import UnknownDSID
 from sm.engine.mol_db import MolDBServiceWrapper
-from sm.engine.util import proj_root, SMConfig
-
+from sm.engine.util import proj_root, SMConfig, create_ds_from_files
 
 SEARCH_RES_SELECT = ("select sf, adduct, stats "
                      "from iso_image_metrics m "
@@ -31,11 +35,12 @@ class SciTester(object):
         self.sm_config = SMConfig.get_conf()
         self.db = DB(self.sm_config['db'])
 
+        self.ds_id = '2000-01-01-00_00_00'
         self.base_search_res_path = join(proj_root(), 'tests/reports', 'spheroid_untreated_search_res.csv')
         self.ds_name = 'sci_test_spheroid_untreated'
         self.data_dir_path = join(self.sm_config['fs']['base_path'], self.ds_name)
-        self.input_dir_path = join(proj_root(), 'tests/data/untreated')
-        self.ds_config_path = join(self.input_dir_path, 'config.json')
+        self.input_path = join(proj_root(), 'tests/data/untreated')
+        self.ds_config_path = join(self.input_path, 'config.json')
         self.metrics = ['chaos', 'spatial', 'spectral']
 
     def metr_dict_to_array(self, metr_d):
@@ -122,13 +127,14 @@ class SciTester(object):
                 self._metrics_diff(old_search_res, search_res))
 
     def run_search(self):
-        cmd = [executable,
-               join(proj_root(), 'scripts/run_molecule_search.py'),
-               '--ds-id', '2000-01-01-00_00_00',
-               '--ds-name', self.ds_name,
-               '--input-path', self.input_dir_path,
-               '--config', self.sm_config_path]
-        check_call(cmd)
+        ds_man = SMDaemonDatasetManager(self.db, ESExporter(self.db), mode='local')
+        try:
+            ds = Dataset.load(self.db, self.ds_id)
+            ds_man.delete(ds)
+        except UnknownDSID:
+            print('Test dataset {}/{} does not exist'.format(self.ds_id, self.ds_name))
+            ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
+        ds_man.add(ds, SearchJob())
 
     def clear_data_dirs(self):
         with warn_only():
@@ -149,21 +155,19 @@ if __name__ == '__main__':
     sci_tester = SciTester(args.sm_config_path)
 
     if args.run:
-        run_search_successful = True
+        run_search_successful = False
         search_results_different = False
         try:
             sci_tester.run_search()
+            run_search_successful = True
             search_results_different = sci_tester.search_results_are_different()
         except Exception as e:
-            print(e)
-            run_search_successful = False
+            if not run_search_successful:
+                raise Exception('Search was not successful!') from e
+            elif search_results_different:
+                raise Exception('Search was successful but the results are different!') from e
         finally:
             sci_tester.clear_data_dirs()
-
-        if not run_search_successful:
-            raise Exception('Search was not successful!')
-        elif search_results_different:
-            raise Exception('Search was successful but the results are different!')
 
     elif args.save:
         if 'y' == input('You are going to replace the reference values. Are you sure? (y/n): '):

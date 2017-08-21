@@ -138,10 +138,10 @@ def define_mz_segments(spectra, sf_peak_df, ppm):
     return mz_segments
 
 
-def gen_iso_peak_images(sc, ds, sf_peak_df, segm_spectra, ppm):
-    sp_indexes_brcast = sc.broadcast(ds.reader.get_norm_img_pixel_inds())
+def gen_iso_peak_images(sc, ds_reader, sf_peak_df, segm_spectra, ppm):
+    sp_indexes_brcast = sc.broadcast(ds_reader.get_norm_img_pixel_inds())
     sf_peak_df_brcast = sc.broadcast(sf_peak_df)  # TODO: replace broadcast variable with rdd and cogroup
-    nrows, ncols = ds.reader.get_dims()
+    nrows, ncols = ds_reader.get_dims()
 
     def generate_images_for_segment(item):
         _, sp_segm = item
@@ -159,7 +159,7 @@ def gen_iso_sf_images(iso_peak_images, shape):
 
 
 # TODO: add tests
-def compute_sf_images(sc, ds, sf_peak_df, ppm):
+def compute_sf_images(sc, ds_reader, sf_peak_df, ppm):
     """ Compute isotopic images for all formulae
 
     Returns
@@ -167,15 +167,15 @@ def compute_sf_images(sc, ds, sf_peak_df, ppm):
     : pyspark.rdd.RDD
         RDD of sum formula, list[sparse matrix of intensities]
     """
-    spectra_rdd = ds.reader.get_spectra()
+    spectra_rdd = ds_reader.get_spectra()
 
     mz_segments = define_mz_segments(spectra_rdd, sf_peak_df, ppm)
     segm_spectra = (spectra_rdd
                     .flatMap(lambda sp: _segment_spectrum(sp, mz_segments))
                     .groupByKey(numPartitions=len(mz_segments)))
 
-    iso_peak_images = gen_iso_peak_images(sc, ds, sf_peak_df, segm_spectra, ppm)
-    iso_sf_images = gen_iso_sf_images(iso_peak_images, shape=ds.reader.get_dims())
+    iso_peak_images = gen_iso_peak_images(sc, ds_reader, sf_peak_df, segm_spectra, ppm)
+    iso_sf_images = gen_iso_sf_images(iso_peak_images, shape=ds_reader.get_dims())
 
     return iso_sf_images
 
