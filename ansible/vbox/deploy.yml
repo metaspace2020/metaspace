@@ -22,3 +22,6 @@
 
     - include: ../deploy_tasks/engine.yml
       tags: [engine]
+
+    - include: ../restart_supervisor.yml supervisor_app=sm-job-daemon
+      tags: [engine]
