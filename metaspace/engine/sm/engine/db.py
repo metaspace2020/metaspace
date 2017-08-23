@@ -30,7 +30,7 @@ def db_decor(func):
             # logger.error(format_exc())
             logger.error('%s, SQL: %s\n%s', e, args[0], str(args[1:])[:1000])
             self.conn.rollback()
-            raise e
+            raise
         else:
             self.conn.commit()
         finally:

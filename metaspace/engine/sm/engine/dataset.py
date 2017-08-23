@@ -94,7 +94,7 @@ class Dataset(object):
             'ds_name': self.name,
             'input_path': self.input_path
         }
-        if self.meta and self.meta.get('metaspace_options').get('notify_submitter', True):
+        if self.meta and self.meta.get('metaspace_options', {}).get('notify_submitter', True):
             email = self.meta.get('Submitted_By', {}).get('Submitter', {}).get('Email', None)
             if email:
                 msg['user_email'] = email.lower()

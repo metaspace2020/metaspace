@@ -134,7 +134,7 @@ class SciTester(object):
         except UnknownDSID:
             print('Test dataset {}/{} does not exist'.format(self.ds_id, self.ds_name))
             ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
-        ds_man.add(ds, SearchJob())
+        ds_man.add(ds, SearchJob, del_first=True)
 
     def clear_data_dirs(self):
         with warn_only():

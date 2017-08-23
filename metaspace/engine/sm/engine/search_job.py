@@ -4,9 +4,7 @@
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
-from __future__ import unicode_literals
 import time
-import sys
 from pprint import pformat
 from datetime import datetime
 from pyspark import SparkContext, SparkConf

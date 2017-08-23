@@ -40,7 +40,7 @@ def create_ds(ds_id=None, upload_dt=None, input_path=None, meta=None, ds_config=
     ds_id = ds_id or '2000-01-01'
     upload_dt = upload_dt or datetime.now()
     input_path = input_path or join(proj_root(), 'tests/data/imzml_example_ds')
-    meta = meta or {'metaspace_options': {}}
+    meta = meta or {"meta": "data"}
     return Dataset(ds_id, 'imzml_example', input_path, upload_dt, meta, ds_config)
 
 
@@ -106,27 +106,24 @@ def test_sm_daemon_receive_message(sm_config, clean_ds_man_mock, clean_rabbitmq)
 
 class TestSMDaemonSingleEventCases:
 
-    def test_add__ds_exists(self, fill_db, clean_ds_man_mock, clean_rabbitmq, ds_config, sm_config):
+    def test_add__ds_exists__del_first(self, fill_db, clean_ds_man_mock, clean_rabbitmq, ds_config, sm_config):
         ds = create_ds(ds_config=ds_config)
         api_ds_man = create_api_ds_man(sm_config=sm_config)
 
-        api_ds_man.add(ds, priority=DatasetActionPriority.HIGH)
+        api_ds_man.add(ds, del_first=True, priority=DatasetActionPriority.HIGH)
 
         run_sm_daemon_thread()
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
-        assert method == 'delete'
-        assert _ds.id == ds.id
-        assert not _kwargs.get('del_raw_data', None)
-
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[1]
         assert method == 'add'
         assert _ds.id == ds.id
-        assert type(_kwargs['search_job']) == SearchJob
+        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['del_first'] == True
 
     def test_update(self, fill_db, clean_ds_man_mock, clean_rabbitmq, ds_config, sm_config):
-        ds = create_ds(ds_config=ds_config)
         api_ds_man = create_api_ds_man(sm_config=sm_config)
+        ds = create_ds(ds_config=ds_config)
+        ds.meta = {'new': 'meta'}
 
         api_ds_man.update(ds)
 
@@ -135,7 +132,6 @@ class TestSMDaemonSingleEventCases:
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
         assert method == 'update'
         assert _ds.id == ds.id
-        assert _kwargs == {}
 
     def test_delete(self, fill_db, clean_ds_man_mock, clean_rabbitmq, ds_config, sm_config):
         ds = create_ds(ds_config=ds_config)
@@ -183,19 +179,18 @@ class TestSMDaemonTwoEventsCases:
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
         assert method == 'add'
         assert _ds.id == ds_pri.id
-        assert type(_kwargs['search_job']) == SearchJob
+        assert _kwargs['search_job_factory'] == SearchJob
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[1]
         assert method == 'add'
         assert _ds.id == ds.id
-        assert type(_kwargs['search_job']) == SearchJob
+        assert _kwargs['search_job_factory'] == SearchJob
 
     def test_add_update_ds__new_meta__update_goes_first(self, test_db, sm_config, ds_config,
                                                         clean_rabbitmq, clean_ds_man_mock):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
         ds = create_ds(ds_config=ds_config)
         api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
-        # ds.config['isotope_generation']['isocalc_sigma'] *= 2
         ds.meta['new_field'] = 'value'
         api_ds_man.update(ds, priority=DatasetActionPriority.DEFAULT)
 
@@ -204,12 +199,12 @@ class TestSMDaemonTwoEventsCases:
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
         assert method == 'update'
         assert _ds.id == ds.id
-        assert _kwargs == {}
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[1]
         assert method == 'add'
         assert _ds.id == ds.id
-        assert type(_kwargs['search_job']) == SearchJob
+        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['del_first'] == False
 
     def test_add_update_ds__new_moldb(self, test_db, sm_config, ds_config, clean_ds_man_mock, clean_rabbitmq):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
@@ -224,32 +219,35 @@ class TestSMDaemonTwoEventsCases:
         assert method == 'add'
         assert _ds.id == ds.id
         assert _ds.config == ds.config
-        assert type(_kwargs['search_job']) == SearchJob
+        assert _kwargs['search_job_factory'] == SearchJob
 
     def test_add_update_ds__new_config(self, test_db, sm_config, ds_config, clean_ds_man_mock, clean_rabbitmq):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
         ds = create_ds(ds_config=ds_config)
         api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
         ds.config['isotope_generation']['isocalc_sigma'] *= 2
-        api_ds_man.update(ds, priority=DatasetActionPriority.DEFAULT)
+        api_ds_man.update(ds)
 
         run_sm_daemon_thread()
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
-        assert method == 'delete'
+        assert method == 'add'
         assert _ds.id == ds.id
-        assert not _kwargs.get('del_raw_data', None)
+        assert _ds.config == ds.config
+        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['del_first'] == False
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[1]
         assert method == 'add'
         assert _ds.id == ds.id
         assert _ds.config == ds.config
-        assert type(_kwargs['search_job']) == SearchJob
+        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['del_first'] == True
 
     def test_add_delete_ds(self, test_db, sm_config, ds_config, clean_ds_man_mock, clean_rabbitmq):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
         ds = create_ds(ds_config=ds_config)
-        api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
+        api_ds_man.add(ds)
         api_ds_man.delete(ds)
 
         run_sm_daemon_thread()
@@ -257,4 +255,4 @@ class TestSMDaemonTwoEventsCases:
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
         assert method == 'delete'
         assert _ds.id == ds.id
-        assert not _kwargs.get('del_raw_data', None)
+        assert not _kwargs.get('del_raw_data', False)

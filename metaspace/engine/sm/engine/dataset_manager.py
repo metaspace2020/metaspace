@@ -1,8 +1,7 @@
 import logging
-from enum import Enum
 
-from sm.engine.search_job import SearchJob
 from sm.engine.dataset import DatasetStatus, Dataset
+from sm.engine.errors import DSIDExists
 from sm.engine.mol_db import MolecularDB
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
@@ -78,7 +77,10 @@ class DatasetManager(object):
         if self.mode == 'queue':
             assert self._queue
 
-    def update(self, ds):
+    def process(self, ds, action, **kwargs):
+        raise NotImplemented
+
+    def update(self, ds, **kwargs):
         raise NotImplemented
 
     def add(self, ds, **kwargs):
@@ -97,19 +99,22 @@ class SMDaemonDatasetManager(DatasetManager):
         if action == DatasetAction.ADD:
             self.add(ds, **kwargs)
         elif action == DatasetAction.UPDATE:
-            self.update(ds)
+            self.update(ds, **kwargs)
         elif action == DatasetAction.DELETE:
             self.delete(ds, **kwargs)
         else:
             raise Exception('Wrong action: {}'.format(action))
 
-    def add(self, ds, search_job=None):
-        """ Run an annotation job for the dataset """
-        assert search_job
+    def add(self, ds, search_job_factory=None, del_first=False, **kwargs):
+        """ Run an annotation job for the dataset. If del_first provided, delete first """
+        if del_first:
+            self.delete(ds)
+        elif ds.is_stored(self._db):
+            raise DSIDExists('{} - {}'.format(ds.id, ds.name))
         ds.save(self._db, self._es)
-        search_job.run(ds)
+        search_job_factory().run(ds)
 
-    def update(self, ds):
+    def update(self, ds, **kwargs):
         """ Reindex all dataset results """
         ds.set_status(self._db, self._es, self._queue, DatasetStatus.INDEXING)
 
@@ -132,7 +137,7 @@ class SMDaemonDatasetManager(DatasetManager):
                     del_url = '{}/delete/{}'.format(self._sm_config['services']['iso_images'], id)
                     img_store.delete_image(del_url)
 
-    def delete(self, ds, del_raw_data=False):
+    def delete(self, ds, del_raw_data=False, **kwargs):
         """ Delete all dataset related data from the DB """
         logger.warning('ds_id already exists: {}. Deleting'.format(ds.id))
         self._del_iso_images(ds)
@@ -152,34 +157,36 @@ class SMapiDatasetManager(DatasetManager):
         self.qname = qname
         DatasetManager.__init__(self, db=db, es=es, mode=mode, queue_publisher=queue_publisher)
 
-    def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT):
+    def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT, **kwargs):
         if self.mode == 'queue':
             msg = ds.to_queue_message()
             msg['action'] = action
+            msg.update(kwargs)
             self._queue.publish(msg, self.qname, priority)
-            logger.info('New job message posted: %s', msg)
+            logger.info('New message posted to %s: %s', self._queue, msg)
         ds.set_status(self._db, self._es, self._queue, DatasetStatus.QUEUED)
 
-    def add(self, ds, priority=DatasetActionPriority.DEFAULT):
-        """ Send add message to the queue. If dataset exists, send delete message first """
-        if ds.is_stored(self._db):
-            self.delete(ds)
-        priority = min(priority, DatasetActionPriority.HIGH)
-        self._post_sm_msg(ds=ds, action=DatasetAction.ADD, priority=priority)
+    def add(self, ds, del_first=False, priority=DatasetActionPriority.DEFAULT):
+        """ Send add message to the queue. If dataset exists, raise an exception """
+        if not del_first and ds.is_stored(self._db):
+            raise DSIDExists('{} - {}'.format(ds.id, ds.name))
+        self._post_sm_msg(ds=ds, action=DatasetAction.ADD, priority=priority, del_first=del_first)
 
     def delete(self, ds, del_raw_data=False):
         """ Send delete message to the queue """
         self._post_sm_msg(ds=ds, action=DatasetAction.DELETE, priority=DatasetActionPriority.HIGH)
 
     def update(self, ds, priority=DatasetActionPriority.DEFAULT):
-        """ Send update or add message to the queue """
+        """ Send update or add message to the queue or do nothing """
         old_ds = Dataset.load(self._db, ds.id)
         config_diff = ConfigDiff.compare_configs(old_ds.config, ds.config)
+        meta_diff = old_ds.meta != ds.meta
 
-        priority = min(priority, DatasetActionPriority.HIGH)
-        if config_diff == ConfigDiff.EQUAL:
-            self._post_sm_msg(ds=ds, action=DatasetAction.UPDATE, priority=DatasetActionPriority.HIGH)
+        if config_diff == ConfigDiff.INSTR_PARAMS_DIFF:
+            self._post_sm_msg(ds=ds, action=DatasetAction.ADD, priority=priority, del_first=True)
         elif config_diff == ConfigDiff.NEW_MOL_DB:
             self._post_sm_msg(ds=ds, action=DatasetAction.ADD, priority=priority)
-        elif config_diff == ConfigDiff.INSTR_PARAMS_DIFF:
-            self.add(ds, priority=priority)
+        elif config_diff == ConfigDiff.EQUAL and meta_diff:
+            self._post_sm_msg(ds=ds, action=DatasetAction.UPDATE, priority=DatasetActionPriority.HIGH)
+        else:
+            logger.info('Nothing to update: %s %s', ds.id, ds.name)

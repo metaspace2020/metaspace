@@ -1,18 +1,18 @@
 from unittest.mock import patch, MagicMock, call
 import json
 from datetime import datetime
-
 from copy import deepcopy
-from pytest import fixture
+import pytest
 
 from sm.engine import DB, ESExporter, QueuePublisher
 from sm.engine.dataset_manager import SMapiDatasetManager, SMDaemonDatasetManager, ConfigDiff
 from sm.engine.dataset_manager import Dataset, DatasetActionPriority, DatasetAction, DatasetStatus
+from sm.engine.errors import DSIDExists
 from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.tests.util import spark_context, sm_config, ds_config, test_db
 
 
-@fixture
+@pytest.fixture()
 def fill_db(test_db, sm_config, ds_config):
     upload_dt = '2000-01-01 00:00:00'
     ds_id = '2000-01-01'
@@ -28,22 +28,23 @@ def fill_db(test_db, sm_config, ds_config):
     db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, ion_image_url, iso_image_urls) "
                "VALUES (%s, %s, %s, %s, %s, %s)"),
               rows=[(0, 0, 1, '+H', None, ['iso_image_1_id', 'iso_image_2_id'])])
+    db.close()
 
 
-def create_ds_man(sm_config, sm_api=False):
-    db = DB(sm_config['db'])
-    es_mock = MagicMock(spec=ESExporter)
-    queue_mock = MagicMock(spec=QueuePublisher)
+def create_ds_man(sm_config, db=None, es=None, queue=None, sm_api=False):
+    db = db or DB(sm_config['db'])
+    es_mock = es or MagicMock(spec=ESExporter)
+    queue_mock = queue or MagicMock(spec=QueuePublisher)
     if sm_api:
-        return db, es_mock, queue_mock, SMapiDatasetManager(SM_ANNOTATE, db, es_mock, 'queue', queue_mock)
+        return SMapiDatasetManager(SM_ANNOTATE, db, es_mock, 'queue', queue_mock)
     else:
-        return db, es_mock, queue_mock, SMDaemonDatasetManager(db, es_mock, 'queue', queue_mock)
+        return SMDaemonDatasetManager(db, es_mock, 'queue', queue_mock)
 
 
-def create_ds(ds_config):
-    upload_dt = datetime.now()
-    ds_id = '2000-01-01'
-    return ds_id, upload_dt, Dataset(ds_id, 'ds_name', 'input_path', upload_dt, {}, ds_config)
+def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
+              metadata=None, ds_config=None, status=DatasetStatus.NEW):
+    upload_dt = upload_dt or datetime.now()
+    return Dataset(ds_id, ds_name, input_path, upload_dt, metadata or {}, ds_config or {}, status=status)
 
 
 class TestConfigDiff:
@@ -69,62 +70,134 @@ class TestConfigDiff:
 class TestSMapiDatasetManager:
 
     def test_add_new_ds(self, test_db, sm_config, ds_config):
-        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=True)
-        ds_id, upload_dt, ds = create_ds(ds_config)
+        queue_mock = MagicMock(spec=QueuePublisher)
+        ds_man = create_ds_man(sm_config, queue=queue_mock, sm_api=True)
 
-        ds_man.add(ds, DatasetActionPriority.HIGH)
+        ds_id = '2000-01-01'
+        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
 
-        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.ADD}
+        ds_man.add(ds, priority=DatasetActionPriority.HIGH)
+
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path',
+               'action': DatasetAction.ADD, 'del_first': False}
         queue_mock.publish.assert_has_calls([call(msg, SM_ANNOTATE, DatasetActionPriority.HIGH)])
 
     def test_delete_ds(self, test_db, sm_config, ds_config):
-        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=True)
-        ds_id, upload_dt, ds = create_ds(ds_config)
+        queue_mock = MagicMock(spec=QueuePublisher)
+        ds_man = create_ds_man(sm_config, queue=queue_mock, sm_api=True)
+
+        ds_id = '2000-01-01'
+        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
 
         ds_man.delete(ds)
 
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.DELETE}
         queue_mock.publish.assert_has_calls([call(msg, SM_ANNOTATE, DatasetActionPriority.HIGH)])
 
-    def test_update_ds_configs_equal(self, fill_db, sm_config, ds_config):
-        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=True)
-        ds_id, upload_dt, ds = create_ds(ds_config)
+    def test_update_ds__configs_equal_metadata_diff(self, fill_db, sm_config, ds_config):
+        queue_mock = MagicMock(spec=QueuePublisher)
+        ds_man = create_ds_man(sm_config, queue=queue_mock, sm_api=True)
+
+        ds_id = '2000-01-01'
+        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
+        ds.meta = {'new': 'metadata'}
 
         ds_man.update(ds)
 
-        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.UPDATE}
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path',
+               'action': DatasetAction.UPDATE}
         queue_mock.publish.assert_has_calls([call(msg, SM_ANNOTATE, DatasetActionPriority.HIGH)])
 
+    def test_update_ds__configs_metadata_equal__do_nothing(self, fill_db, sm_config, ds_config):
+        queue_mock = MagicMock(spec=QueuePublisher)
+        ds_man = create_ds_man(sm_config, queue=queue_mock, sm_api=True)
+
+        ds_id = '2000-01-01'
+        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
+
+        ds_man.update(ds)
+
+        queue_mock.assert_not_called()
+
     def test_update_ds_new_mol_db(self, fill_db, sm_config, ds_config):
-        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=True)
-        ds_id, upload_dt, ds = create_ds(ds_config)
+        queue_mock = MagicMock(spec=QueuePublisher)
+        ds_man = create_ds_man(sm_config, queue=queue_mock, sm_api=True)
+
+        ds_id = '2000-01-01'
+        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
 
         ds.config['databases'] = [{'name': 'HMDB'}, {'name': 'ChEBI'}]
         ds_man.update(ds)
 
-        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.ADD}
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path',
+               'action': DatasetAction.ADD}
         queue_mock.publish.assert_has_calls([call(msg, SM_ANNOTATE, DatasetActionPriority.DEFAULT)])
 
-    def test_update_ds_instr_param_diff(self, fill_db, sm_config, ds_config):
-        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=True)
-        ds_id, upload_dt, ds = create_ds(ds_config)
+    def test_update_ds__instr_param_diff(self, fill_db, sm_config, ds_config):
+        queue_mock = MagicMock(spec=QueuePublisher)
+        ds_man = create_ds_man(sm_config, queue=queue_mock, sm_api=True)
+
+        ds_id = '2000-01-01'
+        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
 
         ds.config['isotope_generation']['isocalc_sigma'] *= 2
         ds_man.update(ds)
 
-        queue_mock.publish.assert_has_calls([
-            call({'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.DELETE},
-                 SM_ANNOTATE, DatasetActionPriority.HIGH),
-            call({'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path', 'action': DatasetAction.ADD},
-                 SM_ANNOTATE, DatasetActionPriority.DEFAULT)
-        ], any_order=True)
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path',
+               'action': DatasetAction.ADD, 'del_first': True}
+        queue_mock.publish.assert_has_calls([call(msg, SM_ANNOTATE, DatasetActionPriority.DEFAULT)])
 
 
 class TestSMDaemonDatasetManager:
 
+    class SearchJob():
+        def run(self, *args):
+            pass
+
+    def test_add_ds(self, test_db, sm_config, ds_config):
+        queue_mock = MagicMock(spec=QueuePublisher)
+        es_mock = MagicMock(spec=ESExporter)
+        db = DB(sm_config['db'])
+        try:
+            ds_man = create_ds_man(sm_config, db=db, es=es_mock, queue=queue_mock, sm_api=False)
+
+            ds_id = '2000-01-01'
+            ds_name = 'ds_name'
+            input_path = 'input_path'
+            upload_dt = datetime.now()
+            metadata = {}
+            ds = create_ds(ds_id=ds_id, ds_name=ds_name, input_path=input_path, upload_dt=upload_dt,
+                           metadata=metadata, ds_config=ds_config)
+
+            ds_man.add(ds, search_job_factory=self.SearchJob)
+
+            DS_SEL = 'select name, input_path, upload_dt, metadata, config from dataset where id=%s'
+            assert (db.select_one(DS_SEL, ds_id) == (ds_name, input_path, upload_dt, metadata, ds_config))
+        finally:
+            db.close()
+
+    def test_add_ds__already_exists(self, fill_db, sm_config, ds_config):
+        queue_mock = MagicMock(spec=QueuePublisher)
+        es_mock = MagicMock(spec=ESExporter)
+        db = DB(sm_config['db'])
+        try:
+            ds_man = create_ds_man(sm_config, db=db, es=es_mock, queue=queue_mock, sm_api=False)
+
+            ds_id = '2000-01-01'
+            ds = create_ds(ds_id=ds_id, ds_config=ds_config)
+
+            with pytest.raises(DSIDExists):
+                ds_man.add(ds, search_job_factory=self.SearchJob)
+        finally:
+            db.close()
+
     def test_update_ds(self, fill_db, sm_config, ds_config):
-        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=False)
-        ds_id, upload_dt, ds = create_ds(ds_config)
+        queue_mock = MagicMock(spec=QueuePublisher)
+        es_mock = MagicMock(spec=ESExporter)
+        ds_man = create_ds_man(sm_config, es=es_mock, queue=queue_mock, sm_api=False)
+
+        ds_id = '2000-01-01'
+        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
 
         with patch('sm.engine.dataset_manager.MolecularDB') as MolecularDB:
             mol_db_mock = MolecularDB.return_value
@@ -135,8 +208,13 @@ class TestSMDaemonDatasetManager:
             es_mock.index_ds.assert_called_with(ds_id, mol_db_mock, del_first=True)
 
     def test_delete_ds(self, fill_db, sm_config, ds_config):
-        db, es_mock, queue_mock, ds_man = create_ds_man(sm_config, sm_api=False)
-        ds_id, upload_dt, ds = create_ds(ds_config)
+        db = DB(sm_config['db'])
+        queue_mock = MagicMock(spec=QueuePublisher)
+        es_mock = MagicMock(spec=ESExporter)
+        ds_man = create_ds_man(sm_config, db=db, es=es_mock, queue=queue_mock, sm_api=False)
+
+        ds_id = '2000-01-01'
+        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
 
         with patch('sm.engine.dataset_manager.ImageStoreServiceWrapper') as ImageStoreServiceWrapper:
             img_store_service_mock = ImageStoreServiceWrapper.return_value
