@@ -260,7 +260,7 @@ class QueueConsumer(object):
         :param str|byte body: The message body
 
         """
-        self.logger.info('Received message # %s from %s: %s', basic_deliver.delivery_tag, properties.app_id, body)
+        self.logger.info(' [v] Received message # %s from %s: %s', basic_deliver.delivery_tag, properties.app_id, body)
         self.acknowledge_message(basic_deliver.delivery_tag)
         msg = None
         try:
@@ -272,7 +272,7 @@ class QueueConsumer(object):
             self.logger.error(e)
             self._on_failure(msg or body)
         else:
-            self.logger.info(' [v] Finished: {}'.format(body))
+            self.logger.info(' [v] Succeeded: {}'.format(body))
             self._on_success(msg)
 
     def acknowledge_message(self, delivery_tag):

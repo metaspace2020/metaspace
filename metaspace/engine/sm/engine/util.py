@@ -44,6 +44,10 @@ sm_log_config = {
             'handlers': ['console_debug', 'file'],
             'level': logging.DEBUG
         },
+        'sm-api': {
+            'handlers': ['console_debug'],
+            'level': logging.DEBUG
+        },
         'sm-daemon': {
             'handlers': ['console_debug'],
             'level': logging.DEBUG

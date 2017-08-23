@@ -1,8 +1,10 @@
 import json
+import urllib.parse
 from requests import post
 import logging
 import boto3
 
+from sm.engine.dataset_manager import DatasetAction
 from sm.engine.util import SMConfig, sm_log_config, init_logger
 from sm.engine import QueueConsumer, ESExporter, QueuePublisher, Dataset, SearchJob
 from sm.engine import DB
@@ -19,9 +21,9 @@ class SMDaemon(object):
         self._sm_config = SMConfig.get_conf()
 
     def post_to_slack(self, emoji, msg):
-        slack_conf = SMConfig.get_conf()['slack']
+        slack_conf = SMConfig.get_conf().get('slack', {})
 
-        if slack_conf:
+        if slack_conf.get('webhook_url', None):
             m = {"channel": slack_conf['channel'],
                  "username": "webhookbot",
                  "text": ":{}:{}".format(emoji, msg),
@@ -30,7 +32,8 @@ class SMDaemon(object):
 
     def fetch_ds_metadata(self, ds_id):
         db = DB(SMConfig.get_conf()['db'])
-        return db.select_one('SELECT name, metadata FROM dataset WHERE id = %s', ds_id)
+        res = db.select_one('SELECT name, metadata FROM dataset WHERE id = %s', ds_id)
+        return res or ('', {})
 
     def send_email(self, email, subj, body):
         ses = boto3.client('ses', 'eu-west-1')
@@ -58,24 +61,21 @@ class SMDaemon(object):
 
     def is_possible_send_email(self, ds_meta):
         submitter = ds_meta.get('Submitted_By', {}).get('Submitter', None)
-        sm_config = SMConfig.get_conf()
-        return (sm_config['services']['send_email']
+        return (self._sm_config['services']['send_email']
                 and submitter
                 and 'Email' in submitter
                 and ds_meta['metaspace_options'].get('notify_submitter', True))
 
-    def on_job_succeeded(self, msg):
+    def on_succeeded(self, msg):
         ds_name, ds_meta = self.fetch_ds_metadata(msg['ds_id'])
 
-        sm_config = SMConfig.get_conf()
-        base_url = sm_config['services']['web_app_url']
-        import urllib.parse
+        base_url = self._sm_config['services']['web_app_url']
         url_params = urllib.parse.quote(msg['ds_id'])
         msg['web_app_link'] = '{}/#/annotations?ds={}'.format(base_url, url_params)
-        self.post_to_slack('dart', ' [v] Finished: {}'.format(json.dumps(msg)))
+        self.post_to_slack('dart', ' [v] Succeeded: {}'.format(json.dumps(msg)))
 
-        if self.is_possible_send_email(ds_meta):
-            submitter = ds_meta.get('Submitted_By', {}).get('Submitter', '')
+        if msg['action'] == DatasetAction.ADD and self.is_possible_send_email(ds_meta):
+            submitter = ds_meta.get('Submitted_By', {}).get('Submitter', {})
             email_body = (
                 'Dear {} {},\n\n'
                 'Thank you for uploading dataset {} to the METASPACE annotation service. '
@@ -85,17 +85,14 @@ class SMDaemon(object):
                 '---\n'
                 'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).'
             ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name, msg['web_app_link'])
-            self.send_email(submitter['Email'],
-                       'METASPACE service notification (SUCCESS)',
-                       email_body)
+            self.send_email(submitter['Email'], 'METASPACE service notification (SUCCESS)', email_body)
 
-    def on_job_failed(self, msg):
+    def on_failed(self, msg):
         self.post_to_slack('hankey', ' [x] Failed: {}'.format(json.dumps(msg)))
-
         ds_name, ds_meta = self.fetch_ds_metadata(msg['ds_id'])
-        submitter = ds_meta['Submitted_By'].get('Submitter', '')
 
-        if self.is_possible_send_email(ds_meta):
+        if msg['action'] == DatasetAction.ADD and self.is_possible_send_email(ds_meta):
+            submitter = ds_meta['Submitted_By'].get('Submitter', '')
             email_body = (
                 'Dear {} {},\n\n'
                 'Thank you for uploading dataset "{}" to the METASPACE annotation service. '
@@ -107,12 +104,10 @@ class SMDaemon(object):
                 '---\n'
                 'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).'
             ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name)
-            self.send_email(submitter['Email'],
-                       'METASPACE service notification (FAILED)',
-                       email_body)
+            self.send_email(submitter['Email'], 'METASPACE service notification (FAILED)', email_body)
 
     def callback(self, msg):
-        log_msg = " [v] Received: {}".format(msg)
+        log_msg = " SM daemon received a message: {}".format(msg)
         logger.info(log_msg)
         self.post_to_slack('new', " [v] Received: {}".format(json.dumps(msg)))
 
@@ -122,14 +117,15 @@ class SMDaemon(object):
                                          queue_publisher=QueuePublisher(self._sm_config['rabbitmq']))
             ds_man.process(ds=Dataset.load(db, msg['ds_id']),
                            action=msg['action'],
-                           search_job=SearchJob())
+                           search_job_factory=SearchJob,
+                           del_first=msg.get('del_first', False))
         finally:
             if db:
                 db.close()
 
     def start(self):
         self._sm_queue_consumer = QueueConsumer(self._sm_config['rabbitmq'], self._qname,
-                                                self.callback, self.on_job_succeeded, self.on_job_failed)
+                                                self.callback, self.on_succeeded, self.on_failed)
         self._sm_queue_consumer.run()  # starts IOLoop to block and allow pika handle events
 
     def stop(self):

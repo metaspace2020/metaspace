@@ -1,5 +1,6 @@
 from .dataset import Dataset, DatasetStatus
 from .dataset_reader import DatasetReader
+from .dataset_manager import SMapiDatasetManager, SMDaemonDatasetManager, DatasetActionPriority
 from .es_export import ESExporter, ESIndexManager
 from .queue import QueueConsumer, QueuePublisher
 from .db import DB
@@ -13,4 +14,3 @@ except ImportError:
     logger.warn('pyspark is not on PYTHONPATH')
 else:
     from .search_job import SearchJob
-    from .dataset_manager import SMapiDatasetManager, SMDaemonDatasetManager, DatasetActionPriority

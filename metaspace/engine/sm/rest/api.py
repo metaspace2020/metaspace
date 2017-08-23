@@ -1,15 +1,15 @@
-from __future__ import unicode_literals
 import json
 from datetime import datetime
+import logging
 from bottle import post, run
 from bottle import request as req
 from bottle import response as resp
 
 from sm.engine import DB, ESExporter
-from sm.engine import SMapiDatasetManager, Dataset, DatasetActionPriority
-from sm.engine.queue import QueuePublisher
+from sm.engine import Dataset, SMapiDatasetManager, DatasetActionPriority
+from sm.engine.queue import QueuePublisher, SM_ANNOTATE
 from sm.engine.util import SMConfig
-from sm.engine.util import init_logger, logger
+from sm.engine.util import init_logger
 from sm.engine.errors import UnknownDSID
 
 
@@ -48,12 +48,14 @@ def _create_queue_publisher():
 
 
 def _create_dataset_manager(db):
-    return SMapiDatasetManager(db, ESExporter(db), mode='queue', queue_publisher=_create_queue_publisher())
+    return SMapiDatasetManager(SM_ANNOTATE, db, ESExporter(db),
+                               mode='queue', queue_publisher=_create_queue_publisher())
 
 
 @post('/v1/datasets/add')
 def add_ds():
     params = _json_params(req)
+    logger.info('Received ADD request: %s', params)
     now = datetime.now()
     ds = Dataset(params.get('id', None) or now.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
                  params.get('name', None),
@@ -72,6 +74,7 @@ def add_ds():
 def update_ds(ds_id):
     try:
         params = _json_params(req)
+        logger.info('Received UPDATE request: %s', params)
         db = _create_db_conn()
         ds = Dataset.load(ds_id, db)
         ds.name = params.get('name', ds.name)
@@ -92,6 +95,7 @@ def update_ds(ds_id):
 def delete_ds(ds_id):
     try:
         params = _json_params(req)
+        logger.info('Received DELETE request: %s', params)
         del_raw = params.get('del_raw', False)
 
         db = _create_db_conn()
@@ -107,4 +111,5 @@ def delete_ds(ds_id):
 
 if __name__ == '__main__':
     init_logger()
+    logger = logging.getLogger(name='sm-api')
     run(host='localhost', port=5123)

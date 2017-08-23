@@ -94,8 +94,8 @@ def test_sm_daemon_receive_message(sm_config, clean_ds_man_mock, clean_rabbitmq)
 
     sm_daemon = SMDaemon(QNAME, SMDaemonDatasetManagerMock)
     sm_daemon.callback = callback
-    sm_daemon.on_job_succeeded = on_success
-    sm_daemon.on_job_failed = on_failure
+    sm_daemon.on_succeeded = on_success
+    sm_daemon.on_failed = on_failure
 
     run_sm_daemon_thread(sm_daemon)
 

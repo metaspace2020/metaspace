@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse
 import logging
+import signal
 
 from sm.engine.dataset_manager import SMDaemonDatasetManager
 from sm.engine.sm_daemon import SMDaemon
@@ -25,6 +26,10 @@ if __name__ == "__main__":
 
     SMConfig.set_path(args.sm_config_path)
     daemon = SMDaemon(SM_ANNOTATE, SMDaemonDatasetManager)
+
+    signal.signal(signal.SIGINT, lambda *args: daemon.stop())
+    signal.signal(signal.SIGTERM, lambda *args: daemon.stop())
+
     try:
         daemon.start()
     finally:
