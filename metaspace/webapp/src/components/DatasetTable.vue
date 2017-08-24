@@ -249,12 +249,13 @@
 
      startExport() {
        const chunkSize = 1000;
-       let csv = ['datasetId', 'datasetName', 'institution', 'submitter',
-                  'PI', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource',
-                  'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime'
-                  ].join(',') + "\n";
 
-       csv += csvExportHeader();
+       let csv = csvExportHeader();
+
+       csv += ['datasetId', 'datasetName', 'institution', 'submitter',
+               'PI', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource',
+               'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime'
+       ].join(',') + "\n";
 
        function person(p) { return p ? p.name + ' ' + p.surname : ''; }
 
