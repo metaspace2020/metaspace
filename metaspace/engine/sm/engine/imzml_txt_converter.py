@@ -4,6 +4,7 @@
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
+from collections import Counter
 from os.path import exists
 import logging
 import numpy as np
@@ -49,10 +50,12 @@ def encode_coord_line(index, x, y):
     return "%d,%d,%d" % (index, x, y)
 
 
-def get_track_progress(n_points, step, active=False):
+def get_track_progress(points_n, steps_n, active=False):
+    every_n = max(1, points_n // steps_n)
+
     def track(i):
-        if i % step == 0:
-            logger.debug("Wrote %.1f%% (%d of %d)" % (float(i) / n_points * 100, i, n_points))
+        if i % every_n == 0:
+            print("Wrote %.1f%% (%d of %d)" % (i / points_n * 100, i, points_n))
 
     def dont_track(i): pass
 
@@ -75,7 +78,6 @@ class ImzmlTxtConverter(object):
         self.imzml_path = imzml_path
         self.preprocess = None
         self.sm_config = SMConfig.get_conf()
-        self.coord_set = set()
 
         self.txt_path = txt_path
         self.coord_path = coord_path
@@ -94,12 +96,13 @@ class ImzmlTxtConverter(object):
         if self.coord_file:
             self.coord_file.write(encode_coord_line(i, x, y) + '\n')
 
-    def _uniq_coord(self, x, y):
-        if (x, y) in self.coord_set:
-            logger.warning('Duplicated x,y = ({},{}) pair'.format(x, y))
-            return False
-        self.coord_set.add((x, y))
-        return True
+    @staticmethod
+    def _check_coord_duplicates(coordinates):
+        top_n_coord_counts = Counter(coordinates).most_common(100)
+        most_common_coord_count = top_n_coord_counts[0][1]
+        if most_common_coord_count > 1:
+            coord_counts = {coo: cnt for coo, cnt in top_n_coord_counts if cnt > 1}
+            logger.warning('Duplicated coordinates in ((x,y), n) format: {}'.format(coord_counts)[:1000])
 
     def convert(self, preprocess=False, print_progress=True):
         """
@@ -113,7 +116,7 @@ class ImzmlTxtConverter(object):
         print_progress : bool
             Whether or not to print progress information to stdout
         """
-        logger.info("ImzML -> Txt conversion...")
+        logger.info("ImzML -> Txt conversion")
         self.preprocess = preprocess
 
         if not exists(self.txt_path):
@@ -121,15 +124,20 @@ class ImzmlTxtConverter(object):
             self.coord_file = open(self.coord_path, 'w') if self.coord_path else None
 
             self.parser = ImzMLParser(self.imzml_path)
+            coordinates = [coo[:2] for coo in self.parser.coordinates]
+            self._check_coord_duplicates(coordinates)
 
-            n_pixels = len(self.parser.coordinates)
-            track_progress = get_track_progress(n_pixels, max(n_pixels / 100, 100), print_progress)
+            pixels_n = len(coordinates)
+            track_progress = get_track_progress(points_n=pixels_n, steps_n=10, active=print_progress)
 
-            for i, coord in enumerate(self.parser.coordinates):
-                x, y = coord[:2]
-                self._uniq_coord(x, y)
-                self.parse_save_spectrum(i, x, y)
-                track_progress(i)
+            logger.info('Converting %s spectra ...', pixels_n)
+            for i, (x, y) in enumerate(coordinates):
+                try:
+                    self.parse_save_spectrum(i, x, y)
+                    track_progress(i)
+                except Exception as e:
+                    logger.error('Spectrum parsing failed i=%s, x=%s y=%s: %s', i, x, y, e)
+                    raise
 
             self.txt_file.close()
             if self.coord_file:
