@@ -19,8 +19,8 @@ jobs:
 
       - image: rabbitmq:3.6-alpine
         environment:
-          RABBITMQ_DEFAULT_USER: sm
-          RABBITMQ_DEFAULT_PASS: 1321
+          RABBITMQ_DEFAULT_USER: sm_test
+          RABBITMQ_DEFAULT_PASS: password
 
     working_directory: /code/sm-engine
     steps:
