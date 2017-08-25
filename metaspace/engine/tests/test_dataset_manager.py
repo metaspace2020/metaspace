@@ -82,6 +82,21 @@ class TestSMapiDatasetManager:
                'action': DatasetAction.ADD, 'del_first': False}
         queue_mock.publish.assert_has_calls([call(msg, SM_ANNOTATE, DatasetActionPriority.HIGH)])
 
+    def test_add_ds__already_exists(self, fill_db, sm_config, ds_config):
+        queue_mock = MagicMock(spec=QueuePublisher)
+        es_mock = MagicMock(spec=ESExporter)
+        db = DB(sm_config['db'])
+        try:
+            ds_man = create_ds_man(sm_config, db=db, es=es_mock, queue=queue_mock, sm_api=True)
+
+            ds_id = '2000-01-01'
+            ds = create_ds(ds_id=ds_id, ds_config=ds_config)
+
+            with pytest.raises(DSIDExists):
+                ds_man.add(ds)
+        finally:
+            db.close()
+
     def test_delete_ds(self, test_db, sm_config, ds_config):
         queue_mock = MagicMock(spec=QueuePublisher)
         ds_man = create_ds_man(sm_config, queue=queue_mock, sm_api=True)
@@ -173,21 +188,6 @@ class TestSMDaemonDatasetManager:
 
             DS_SEL = 'select name, input_path, upload_dt, metadata, config from dataset where id=%s'
             assert (db.select_one(DS_SEL, ds_id) == (ds_name, input_path, upload_dt, metadata, ds_config))
-        finally:
-            db.close()
-
-    def test_add_ds__already_exists(self, fill_db, sm_config, ds_config):
-        queue_mock = MagicMock(spec=QueuePublisher)
-        es_mock = MagicMock(spec=ESExporter)
-        db = DB(sm_config['db'])
-        try:
-            ds_man = create_ds_man(sm_config, db=db, es=es_mock, queue=queue_mock, sm_api=False)
-
-            ds_id = '2000-01-01'
-            ds = create_ds(ds_id=ds_id, ds_config=ds_config)
-
-            with pytest.raises(DSIDExists):
-                ds_man.add(ds, search_job_factory=self.SearchJob)
         finally:
             db.close()
 

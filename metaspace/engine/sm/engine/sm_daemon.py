@@ -19,8 +19,9 @@ class SMDaemon(object):
         self._qname = qname
         self._sm_queue_consumer = None
         self._sm_config = SMConfig.get_conf()
+        self.stopped = False
 
-    def post_to_slack(self, emoji, msg):
+    def _post_to_slack(self, emoji, msg):
         slack_conf = SMConfig.get_conf().get('slack', {})
 
         if slack_conf.get('webhook_url', None):
@@ -30,14 +31,14 @@ class SMDaemon(object):
                  "icon_emoji": ":robot_face:"}
             post(slack_conf['webhook_url'], json=m)
 
-    def fetch_ds_metadata(self, ds_id):
+    def _fetch_ds_metadata(self, ds_id):
         db = DB(SMConfig.get_conf()['db'])
         res = db.select_one('SELECT name, metadata FROM dataset WHERE id = %s', ds_id)
         return res or ('', {})
 
-    def send_email(self, email, subj, body):
+    def _send_email(self, email, subj, body):
         ses = boto3.client('ses', 'eu-west-1')
-        resp = ses.send_email(
+        resp = ses._send_email(
             # Source='metaspace2020@gmail.com',
             Source='contact@metaspace2020.eu',
             Destination={
@@ -59,22 +60,22 @@ class SMDaemon(object):
         else:
             logger.warning('SEM failed to send email to {}'.format(email))
 
-    def is_possible_send_email(self, ds_meta):
+    def _is_possible_send_email(self, ds_meta):
         submitter = ds_meta.get('Submitted_By', {}).get('Submitter', None)
         return (self._sm_config['services']['send_email']
                 and submitter
                 and 'Email' in submitter
                 and ds_meta['metaspace_options'].get('notify_submitter', True))
 
-    def on_succeeded(self, msg):
-        ds_name, ds_meta = self.fetch_ds_metadata(msg['ds_id'])
+    def _on_success(self, msg):
+        ds_name, ds_meta = self._fetch_ds_metadata(msg['ds_id'])
 
         base_url = self._sm_config['services']['web_app_url']
         url_params = urllib.parse.quote(msg['ds_id'])
         msg['web_app_link'] = '{}/#/annotations?ds={}'.format(base_url, url_params)
-        self.post_to_slack('dart', ' [v] Succeeded: {}'.format(json.dumps(msg)))
+        self._post_to_slack('dart', ' [v] Succeeded: {}'.format(json.dumps(msg)))
 
-        if msg['action'] == DatasetAction.ADD and self.is_possible_send_email(ds_meta):
+        if msg['action'] == DatasetAction.ADD and self._is_possible_send_email(ds_meta):
             submitter = ds_meta.get('Submitted_By', {}).get('Submitter', {})
             email_body = (
                 'Dear {} {},\n\n'
@@ -85,13 +86,13 @@ class SMDaemon(object):
                 '---\n'
                 'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).'
             ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name, msg['web_app_link'])
-            self.send_email(submitter['Email'], 'METASPACE service notification (SUCCESS)', email_body)
+            self._send_email(submitter['Email'], 'METASPACE service notification (SUCCESS)', email_body)
 
-    def on_failed(self, msg):
-        self.post_to_slack('hankey', ' [x] Failed: {}'.format(json.dumps(msg)))
-        ds_name, ds_meta = self.fetch_ds_metadata(msg['ds_id'])
+    def _on_failure(self, msg):
+        self._post_to_slack('hankey', ' [x] Failed: {}'.format(json.dumps(msg)))
+        ds_name, ds_meta = self._fetch_ds_metadata(msg['ds_id'])
 
-        if msg['action'] == DatasetAction.ADD and self.is_possible_send_email(ds_meta):
+        if msg['action'] == DatasetAction.ADD and self._is_possible_send_email(ds_meta):
             submitter = ds_meta['Submitted_By'].get('Submitter', '')
             email_body = (
                 'Dear {} {},\n\n'
@@ -104,12 +105,12 @@ class SMDaemon(object):
                 '---\n'
                 'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).'
             ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name)
-            self.send_email(submitter['Email'], 'METASPACE service notification (FAILED)', email_body)
+            self._send_email(submitter['Email'], 'METASPACE service notification (FAILED)', email_body)
 
-    def callback(self, msg):
+    def _callback(self, msg):
         log_msg = " SM daemon received a message: {}".format(msg)
         logger.info(log_msg)
-        self.post_to_slack('new', " [v] Received: {}".format(json.dumps(msg)))
+        self._post_to_slack('new', " [v] Received: {}".format(json.dumps(msg)))
 
         db = DB(self._sm_config['db'])
         try:
@@ -124,9 +125,12 @@ class SMDaemon(object):
                 db.close()
 
     def start(self):
+        self.stopped = False
         self._sm_queue_consumer = QueueConsumer(self._sm_config['rabbitmq'], self._qname,
-                                                self.callback, self.on_succeeded, self.on_failed)
+                                                self._callback, self._on_success, self._on_failure)
         self._sm_queue_consumer.run()  # starts IOLoop to block and allow pika handle events
 
     def stop(self):
-        self._sm_queue_consumer.stop()
+        if not self.stopped:
+            self._sm_queue_consumer.stop()
+            self.stopped = True

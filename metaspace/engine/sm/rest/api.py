@@ -65,7 +65,8 @@ def add_ds():
                  params.get('config'))
     db = _create_db_conn()
     ds_man = _create_dataset_manager(db)
-    ds_man.add(ds, params.get('priority', DatasetActionPriority.DEFAULT))
+    ds_man.add(ds, del_first=params.get('del_first', False),
+               priority=params.get('priority', DatasetActionPriority.DEFAULT))
     db.close()
     return OK['title']
 
@@ -76,14 +77,14 @@ def update_ds(ds_id):
         params = _json_params(req)
         logger.info('Received UPDATE request: %s', params)
         db = _create_db_conn()
-        ds = Dataset.load(ds_id, db)
+        ds = Dataset.load(db=db, ds_id=ds_id)
         ds.name = params.get('name', ds.name)
         ds.input_path = params.get('input_path', ds.input_path)
         ds.meta = params.get('metadata', ds.meta)
         ds.config = params.get('config', ds.config)
 
         ds_man = _create_dataset_manager(db)
-        ds_man.update(ds, params.get('priority', DatasetActionPriority.DEFAULT))
+        ds_man.update(ds, priority=params.get('priority', DatasetActionPriority.DEFAULT))
         db.close()
         return OK['title']
     except UnknownDSID:
@@ -99,7 +100,7 @@ def delete_ds(ds_id):
         del_raw = params.get('del_raw', False)
 
         db = _create_db_conn()
-        ds = Dataset.load(ds_id, db)
+        ds = Dataset.load(db=db, ds_id=ds_id)
 
         ds_man = _create_dataset_manager(db)
         ds_man.delete(ds, del_raw_data=del_raw)

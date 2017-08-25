@@ -109,8 +109,6 @@ class SMDaemonDatasetManager(DatasetManager):
         """ Run an annotation job for the dataset. If del_first provided, delete first """
         if del_first:
             self.delete(ds)
-        elif ds.is_stored(self._db):
-            raise DSIDExists('{} - {}'.format(ds.id, ds.name))
         ds.save(self._db, self._es)
         search_job_factory().run(ds)
 

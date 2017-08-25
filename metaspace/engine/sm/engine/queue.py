@@ -28,6 +28,7 @@ class QueueConsumer(object):
         self.qname = qname
         self.queue_durable = True
         self.queue_args = {'x-max-priority': 3}
+        self.no_ack = False  # messages get redelivered with no_ack=False
 
         self._callback = callback
         self._on_success = on_success
@@ -39,7 +40,7 @@ class QueueConsumer(object):
         self._channel = None
         self._closing = False
         self._consumer_tag = None
-        self._url = "amqp://{}:{}@{}:5672/%2F".format(config['user'], config['password'], config['host'])
+        self._url = "amqp://{}:{}@{}:5672/%2F?heartbeat=0".format(config['user'], config['password'], config['host'])
 
     def connect(self):
         """This method connects to RabbitMQ, returning the connection handle.
@@ -129,6 +130,7 @@ class QueueConsumer(object):
         self.logger.info('Channel opened')
         self._channel = channel
         self.add_on_channel_close_callback()
+        self._channel.basic_qos(prefetch_count=1)
         self.setup_exchange(self.exchange)
 
     def add_on_channel_close_callback(self):
@@ -224,7 +226,8 @@ class QueueConsumer(object):
         self.logger.info('Issuing consumer related RPC commands')
         self.add_on_cancel_callback()
         self.logger.info(' [*] Waiting for messages...')
-        self._consumer_tag = self._channel.basic_consume(self.on_message, self.qname)
+        self._consumer_tag = self._channel.basic_consume(self.on_message, self.qname,
+                                                         no_ack=self.no_ack, exclusive=True)
 
     def add_on_cancel_callback(self):
         """Add a callback that will be invoked if RabbitMQ cancels the consumer
@@ -268,8 +271,7 @@ class QueueConsumer(object):
             msg = json.loads(body)
             self._callback(msg)
         except BaseException as e:
-            self.logger.error(' [x] Failed: {}'.format(body))
-            self.logger.error(e)
+            self.logger.error(' [x] Failed: {}'.format(body), exc_info=True)
             self._on_failure(msg or body)
         else:
             self.logger.info(' [v] Succeeded: {}'.format(body))
