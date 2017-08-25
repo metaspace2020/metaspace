@@ -307,7 +307,7 @@ const Resolvers = {
 
   Mutation: {
     submitDataset(_, args) {
-      const {name, path, metadataJson, datasetId, priority, sync} = args;
+      const {name, path, metadataJson, datasetId, delFirst, priority, sync} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
 
@@ -318,7 +318,8 @@ const Resolvers = {
           input_path: path,
           metadata: metadata,
           config: generateProcessingConfig(metadata),
-          priority: priority
+          priority: priority,
+          del_first: delFirst
         });
 
         const url = `http://${config.services.sm_engine_api_host}/v1/datasets/add`;
