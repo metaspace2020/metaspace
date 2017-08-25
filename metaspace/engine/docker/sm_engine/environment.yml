@@ -26,7 +26,7 @@ dependencies:
     - pyyaml
     - elasticsearch
     - elasticsearch_dsl
-    - pika
+    - pika>=0.11.0b1
     - coverage
     - coveralls
     - pypng
