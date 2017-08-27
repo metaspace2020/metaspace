@@ -1,7 +1,7 @@
 {
   "db": {
     "host": "localhost",
-    "database": "sm",
+    "database": "sm_test",
     "user": "sm",
     "password": "password"
   },
@@ -12,8 +12,8 @@
   },
   "rabbitmq": {
     "host": "localhost",
-    "user": "sm",
-    "password": "1321"
+    "user": "sm_test",
+    "password": "password"
   },
   "services": {
     "iso_images": "",

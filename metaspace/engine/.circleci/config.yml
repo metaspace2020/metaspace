@@ -41,14 +41,15 @@ jobs:
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests --ignore=tests/test_queue.py --ignore=tests/test_sm_daemon.py && coveralls
       - run:
-          name: Initialize molecular database
+          name: Create and prefill the database
           command: |
             wget -qN https://s3-eu-west-1.amazonaws.com/embl-sm-testing/dumps/2017-08-09/annotate-moldb.pgdump
             wget -qN https://s3-eu-west-1.amazonaws.com/embl-sm-testing/dumps/2017-08-09/theor_peaks-hmdb.pgdump
-            pg_restore -U sm -h localhost --no-owner --role=sm -d sm annotate-moldb.pgdump
+            createdb -h localhost -U postgres sm_test
+            psql -U sm -h localhost -d sm_test < scripts/create_schema.sql
+            pg_restore -a -U sm -h localhost -d sm_test theor_peaks-hmdb.pgdump
+            pg_restore -U sm -h localhost --no-owner --role=sm -d sm_test annotate-moldb.pgdump
             cp docker/mol_db_conf.ini /root/sm-molecular-db/conf/local.ini
-            psql -U sm -h localhost < scripts/create_schema.sql
-            pg_restore -a -U sm -h localhost -d sm theor_peaks-hmdb.pgdump
       - run:
           name: Run scientific test
           command: |
