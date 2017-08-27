@@ -41,7 +41,6 @@ miniconda_env:
     - psycopg2=2.7.1
     - pip:
       - requests
-      - mock
       - py4j
       - pytest
       - recommonmark

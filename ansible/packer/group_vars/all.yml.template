@@ -31,7 +31,6 @@ miniconda_env:
       - pyImagingMSpec==0.1.3
       - cpyImagingMSpec==0.0.5
       - requests
-      - mock
       - psycopg2
       - py4j
       - pyimzML
