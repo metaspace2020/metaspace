@@ -83,9 +83,13 @@ def ds_config():
 
 
 @pytest.fixture()
-def es_dsl_search(sm_config):
-    es = Elasticsearch(hosts=["{}:{}".format(sm_config['elasticsearch']['host'],
-                                             sm_config['elasticsearch']['port'])])
+def es(sm_config):
+    return Elasticsearch(hosts=["{}:{}".format(sm_config['elasticsearch']['host'],
+                                               sm_config['elasticsearch']['port'])])
+
+
+@pytest.fixture()
+def es_dsl_search(es, sm_config):
     return Search(using=es, index=sm_config['elasticsearch']['index'])
 
 

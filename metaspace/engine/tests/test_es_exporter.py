@@ -1,18 +1,19 @@
-from __future__ import unicode_literals
-
 from datetime import datetime
-
 from unittest.mock import MagicMock, patch
 import pandas as pd
-from time import sleep
+import time
 
 from sm.engine import MolecularDB
 from sm.engine.es_export import ESExporter, ESIndexManager, DATASET_SEL, ANNOTATIONS_SEL
 from sm.engine import DB
 from sm.engine.util import logger, init_logger
-from sm.engine.tests.util import sm_config, ds_config, sm_index, es_dsl_search, test_db
+from sm.engine.tests.util import sm_config, ds_config, sm_index, es, es_dsl_search, test_db
 
 init_logger()
+
+
+def wait_for_es(sec=1):
+    time.sleep(sec)
 
 
 def test_index_ds_works(es_dsl_search, sm_index, sm_config):
@@ -48,7 +49,7 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
     es_exp = ESExporter(db_mock)
     es_exp.index_ds(ds_id, mol_db_mock, del_first=True)
 
-    sleep(2)
+    wait_for_es(sec=1)
 
     ann_1_d = es_dsl_search.filter('term', sf='H2O').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_1_d == {
@@ -79,6 +80,42 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
                                'counts': [{'level': 5, 'n': 1}, {'level': 10, 'n': 2},
                                           {'level': 20, 'n': 2}, {'level': 50, 'n': 2}]}]
     }
+
+
+def test_delete_ds_works(es, sm_index, sm_config):
+    index = sm_config['elasticsearch']['index']
+    es.create(index=index, doc_type='annotation', id='id1',
+              body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
+    es.create(index=index, doc_type='annotation', id='id2',
+              body={'ds_id': 'dataset1', 'db_name': 'ChEBI', 'db_version': '2016'})
+    es.create(index=index, doc_type='annotation', id='id3',
+              body={'ds_id': 'dataset2', 'db_name': 'HMDB', 'db_version': '2016'})
+
+    wait_for_es(sec=1)
+
+    db_mock = MagicMock(spec=DB)
+    moldb_mock = MagicMock(spec=MolecularDB)
+    moldb_mock.name = 'HMDB'
+    moldb_mock.version = '2016'
+
+    es_exporter = ESExporter(db_mock)
+    es_exporter.delete_ds(ds_id='dataset1', mol_db=moldb_mock)
+
+    wait_for_es(sec=1)
+
+    body = {
+        'query': {
+            'bool': {
+                'filter': []
+            }
+        }
+    }
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'HMDB'}}]
+    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'ChEBI'}}]
+    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset2'}}, {'term': {'db_name': 'HMDB'}}]
+    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
 
 
 def test_rename_index_works(test_db, sm_config):

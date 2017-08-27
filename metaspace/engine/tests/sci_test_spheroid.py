@@ -1,11 +1,6 @@
 import argparse
-from functools import reduce
-from operator import mul
 from os.path import join
 from pprint import pprint
-from subprocess import check_call, check_output, STDOUT
-from sys import executable
-
 import numpy as np
 from fabric.api import local
 from fabric.context_managers import warn_only
@@ -17,7 +12,7 @@ from sm.engine import SearchJob
 from sm.engine.db import DB
 from sm.engine.errors import UnknownDSID
 from sm.engine.mol_db import MolDBServiceWrapper
-from sm.engine.util import proj_root, SMConfig, create_ds_from_files
+from sm.engine.util import proj_root, SMConfig, create_ds_from_files, init_logger
 
 SEARCH_RES_SELECT = ("select sf, adduct, stats "
                      "from iso_image_metrics m "
@@ -149,8 +144,8 @@ if __name__ == '__main__':
                         default=join(proj_root(), 'conf/config.json'),
                         help='path to sm config file')
     args = parser.parse_args()
-
     SMConfig.set_path(args.sm_config_path)
+    init_logger()
 
     sci_tester = SciTester(args.sm_config_path)
 

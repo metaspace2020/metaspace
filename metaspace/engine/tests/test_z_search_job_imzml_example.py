@@ -1,4 +1,3 @@
-from __future__ import unicode_literals
 from os.path import join, dirname
 import pytest
 from fabric.api import local
@@ -13,7 +12,7 @@ from sm.engine.search_job import SearchJob
 from sm.engine.fdr import DECOY_ADDUCTS
 from sm.engine.dataset import Dataset
 from sm.engine.dataset_manager import DatasetStatus
-from sm.engine.tests.util import test_db, sm_config, sm_index, es_dsl_search
+from sm.engine.tests.util import test_db, sm_config, sm_index, es, es_dsl_search
 
 test_ds_name = 'imzml_example_ds'
 

@@ -19,7 +19,6 @@ THEOR_PEAKS_TARGET_ADD_SEL = (
     'AND charge = %s '
     'ORDER BY sf.id, adduct')
 
-# FIXME: target_decoy_add table is getting too big
 THEOR_PEAKS_DECOY_ADD_SEL = (
     'SELECT DISTINCT sf.id, decoy_add as adduct, centr_mzs, centr_ints '
     'FROM theor_peaks p '
@@ -82,9 +81,7 @@ class MolecularDB(object):
 
     def __init__(self, id=None, name=None, version=None, iso_gen_config=None,
                  mol_db_service=None, db=None):
-        assert iso_gen_config
         self._iso_gen_config = iso_gen_config
-
         sm_config = SMConfig.get_conf()
         self.mol_db_service = mol_db_service or MolDBServiceWrapper(sm_config['services']['mol_db'])
 

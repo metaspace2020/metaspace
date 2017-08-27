@@ -1,4 +1,4 @@
-from elasticsearch import Elasticsearch, NotFoundError
+from elasticsearch import Elasticsearch, NotFoundError, ElasticsearchException
 from elasticsearch.helpers import bulk, BulkIndexError
 from elasticsearch.client import IndicesClient
 import logging
@@ -265,8 +265,12 @@ class ESExporter(object):
         })
         self._es.index(self.index, doc_type='dataset', body=dataset, id=ds_id)
 
-    # TODO: add a test
     def delete_ds(self, ds_id, mol_db=None):
+        """
+        :param ds_id: str
+        :param mol_db: sm.engine.MolecularDB
+        :return:
+        """
         try:
             if mol_db:
                 self._remove_mol_db_from_dataset(ds_id, mol_db)
@@ -285,13 +289,11 @@ class ESExporter(object):
                     'filter': {
                         'bool': {'must': must}}}}
         }
-        res = self._es.search(index=self.index, body=body, _source=False, size=10 ** 9)['hits']['hits']
-        to_del = [{'_op_type': 'delete', '_index': 'sm', '_type': 'annotation', '_id': d['_id']} for d in res]
 
-        logger.info('Deleting %s documents from ES: %s, %s', len(to_del), ds_id, mol_db)
-        del_n = 0
+        logger.info('Deleting dataset documents from ES: %s, %s', ds_id, mol_db)
+
         try:
-            del_n, _ = bulk(self._es, to_del, timeout='60s')
-        except BulkIndexError as e:
-            logger.warning(e.args)
-        return del_n
+            resp = self._es.delete_by_query(index=self.index, body=body)
+            logger.debug(resp)
+        except ElasticsearchException as e:
+            logger.warning('Deletion failed: %s', e)
