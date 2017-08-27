@@ -1,6 +1,7 @@
-import pika
 import logging
 import json
+import pika
+from pika.exceptions import AMQPError
 
 
 class QueueConsumer(object):
@@ -349,16 +350,19 @@ class QueueConsumer(object):
 
 class QueuePublisher(object):
 
-    def __init__(self, config):
+    def __init__(self, config, logger_name='sm-api'):
         creds = pika.PlainCredentials(config['user'], config['password'])
         conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat_interval=0)
         self._conn = pika.BlockingConnection(conn_params)
         self._ch = self._conn.channel()
 
-        self.logger = logging.getLogger('sm-queue')
+        self.logger = logging.getLogger(logger_name)
 
     def queue_purge(self, qname):
-        self._ch.queue_purge(queue=qname)
+        try:
+            self._ch.queue_purge(queue=qname)
+        except AMQPError as e:
+            logging.warning('Queue purging failed: %s', e)
 
     def publish(self, msg, qname, priority=0):
         self._ch.basic_publish(exchange='',
