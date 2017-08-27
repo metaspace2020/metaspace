@@ -8,8 +8,6 @@ from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
 
-logger = logging.getLogger('sm-engine')
-
 IMG_URLS_BY_ID_SEL = ('SELECT iso_image_urls '
                       'FROM iso_image_metrics m '
                       'JOIN job j ON j.id = m.job_id '
@@ -68,7 +66,7 @@ class DatasetManager(object):
             'local' or 'queue'
         queue_publisher: sm.engine.queue.QueuePublisher
     """
-    def __init__(self, db=None, es=None, mode=None, queue_publisher=None):
+    def __init__(self, db=None, es=None, mode=None, queue_publisher=None, logger_name=None):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
@@ -76,6 +74,7 @@ class DatasetManager(object):
         self._queue = queue_publisher
         if self.mode == 'queue':
             assert self._queue
+        self.logger = logging.getLogger(logger_name)
 
     def process(self, ds, action, **kwargs):
         raise NotImplemented
@@ -93,7 +92,8 @@ class DatasetManager(object):
 class SMDaemonDatasetManager(DatasetManager):
 
     def __init__(self, db, es, mode, queue_publisher=None):
-        DatasetManager.__init__(self, db=db, es=es, mode=mode, queue_publisher=queue_publisher)
+        DatasetManager.__init__(self, db=db, es=es, mode=mode,
+                                queue_publisher=queue_publisher, logger_name='sm-daemon')
 
     def process(self, ds, action, **kwargs):
         if action == DatasetAction.ADD:
@@ -125,7 +125,7 @@ class SMDaemonDatasetManager(DatasetManager):
         ds.set_status(self._db, self._es, self._queue, DatasetStatus.FINISHED)
 
     def _del_iso_images(self, ds):
-        logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
+        self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
 
         img_store = ImageStoreServiceWrapper(self._sm_config['services']['iso_images'])
         for row in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
@@ -137,12 +137,12 @@ class SMDaemonDatasetManager(DatasetManager):
 
     def delete(self, ds, del_raw_data=False, **kwargs):
         """ Delete all dataset related data from the DB """
-        logger.warning('ds_id already exists: {}. Deleting'.format(ds.id))
+        self.logger.warning('ds_id already exists: {}. Deleting'.format(ds.id))
         self._del_iso_images(ds)
         self._es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', ds.id)
         if del_raw_data:
-            logger.warning('Deleting raw data: {}'.format(ds.input_path))
+            self.logger.warning('Deleting raw data: {}'.format(ds.input_path))
             wd_man = WorkDirManager(ds.id)
             wd_man.del_input_data(ds.input_path)
         if self.mode == 'queue':
@@ -153,7 +153,8 @@ class SMapiDatasetManager(DatasetManager):
 
     def __init__(self, qname, db, es, mode, queue_publisher=None):
         self.qname = qname
-        DatasetManager.__init__(self, db=db, es=es, mode=mode, queue_publisher=queue_publisher)
+        DatasetManager.__init__(self, db=db, es=es, mode=mode,
+                                queue_publisher=queue_publisher, logger_name='sm-api')
 
     def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT, **kwargs):
         if self.mode == 'queue':
@@ -161,7 +162,7 @@ class SMapiDatasetManager(DatasetManager):
             msg['action'] = action
             msg.update(kwargs)
             self._queue.publish(msg, self.qname, priority)
-            logger.info('New message posted to %s: %s', self._queue, msg)
+            self.logger.info('New message posted to %s: %s', self._queue, msg)
         ds.set_status(self._db, self._es, self._queue, DatasetStatus.QUEUED)
 
     def add(self, ds, del_first=False, priority=DatasetActionPriority.DEFAULT):
@@ -187,4 +188,4 @@ class SMapiDatasetManager(DatasetManager):
         elif config_diff == ConfigDiff.EQUAL and meta_diff:
             self._post_sm_msg(ds=ds, action=DatasetAction.UPDATE, priority=DatasetActionPriority.HIGH)
         else:
-            logger.info('Nothing to update: %s %s', ds.id, ds.name)
+            self.logger.info('Nothing to update: %s %s', ds.id, ds.name)
