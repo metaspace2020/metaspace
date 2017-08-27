@@ -154,7 +154,7 @@ spark_master_filebeat_prospectors:
     document_type: "sm_engine"
     multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
   - input_type: log
-    paths: ["{{ sm_home }}/logs/sm-job-daemon.log"]
+    paths: ["{{ sm_home }}/logs/sm-daemon.log"]
     document_type: "sm_job_daemon"
     multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
 

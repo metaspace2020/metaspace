@@ -1,12 +1,12 @@
 # -*- conf -*-
 
-[program:sm-job-daemon]
-process_name = sm-job-daemon
+[program:sm-daemon]
+process_name = sm-daemon
 directory = {{ sm_home }}
 environment = SPARK_HOME="{{ spark_home }}",PYTHONPATH="{{ spark_home }}/python",PYSPARK_PYTHON="{{ miniconda_prefix }}/envs/sm/bin/python"
-command = bash scripts/run.sh scripts/run_sm_job_daemon.py
+command = bash scripts/run.sh scripts/run_sm_daemon.py
 redirect_stderr = true
-stdout_logfile = {{ sm_home }}/logs/sm-job-daemon.log
+stdout_logfile = {{ sm_home }}/logs/sm-daemon.log
 numprocs = 1
 numprocs_start = 8000
 startretries=5
