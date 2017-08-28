@@ -258,7 +258,7 @@
            })
            .then(resp => resp.data.deleteDataset)
            .then(status => {
-             if (status != 'OK') {
+             if (status != 'success') {
                this.$message({
                  message: "Deletion failed :( Contact us: contact@metaspace2020.eu" + "(error: " + status + ")",
                  type: 'error',
