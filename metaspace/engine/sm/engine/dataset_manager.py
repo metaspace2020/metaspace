@@ -8,7 +8,7 @@ from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
 
-IMG_URLS_BY_ID_SEL = ('SELECT iso_image_urls '
+IMG_URLS_BY_ID_SEL = ('SELECT iso_image_ids '
                       'FROM iso_image_metrics m '
                       'JOIN job j ON j.id = m.job_id '
                       'JOIN dataset d ON d.id = j.ds_id '

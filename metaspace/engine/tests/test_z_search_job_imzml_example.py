@@ -97,16 +97,16 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
             assert r[2] and r[3]
 
         # image metrics asserts
-        rows = db.select(('SELECT db_id, sf_id, adduct, stats, iso_image_urls, ion_image_url '
+        rows = db.select(('SELECT db_id, sf_id, adduct, stats, iso_image_ids '
                           'FROM iso_image_metrics '
                           'ORDER BY sf_id, adduct'))
 
         assert rows[0] == (0, 1, '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
                                         'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
-                           ['iso_image_1', None, None, None], None)
+                           ['iso_image_1', None, None, None])
         assert rows[1] == (0, 1, '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
                                          'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
-                           ['iso_image_1', None, None, None], None)
+                           ['iso_image_1', None, None, None])
 
         time.sleep(1)  # Waiting for ES
         # ES asserts

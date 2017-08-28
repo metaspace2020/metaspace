@@ -7,7 +7,7 @@ import requests
 from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('sm-engine')
-METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)'
+METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
 
 
 class SearchResults(object):
@@ -34,7 +34,7 @@ class SearchResults(object):
             ids = ion_img_ids[(r.sf_id, r.adduct)]
             yield (job_id, db_id, r.sf_id, r.adduct,
                    float(r.msm), float(r.fdr), metr_json,
-                   ids['iso_image_ids'], None)
+                   ids['iso_image_ids'])
 
     def store_ion_metrics(self, ion_metrics_df, ion_img_ids, db):
         """ Store formula image metrics and image ids in the database """

@@ -25,9 +25,9 @@ def fill_db(test_db, sm_config, ds_config):
               rows=[(0, 0, ds_id)])
     db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
               rows=[(1, 0, 'H20')])
-    db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, ion_image_url, iso_image_urls) "
-               "VALUES (%s, %s, %s, %s, %s, %s)"),
-              rows=[(0, 0, 1, '+H', None, ['iso_image_1_id', 'iso_image_2_id'])])
+    db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, iso_image_ids) "
+               "VALUES (%s, %s, %s, %s, %s)"),
+              rows=[(0, 0, 1, '+H', ['iso_image_1_id', 'iso_image_2_id'])])
     db.close()
 
 

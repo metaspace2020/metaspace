@@ -62,8 +62,7 @@ CREATE TABLE iso_image_metrics (
 	msm         real,
 	fdr         real,
 	stats 	    json,
-  iso_image_urls  text[],
-	ion_image_url text,
+  iso_image_ids  text[],
 	CONSTRAINT iso_image_metrics_id_pk PRIMARY KEY(job_id, db_id, sf_id, adduct),
 	CONSTRAINT iso_image_metrics_job_id_fk FOREIGN KEY (job_id)
       REFERENCES job (id) MATCH SIMPLE

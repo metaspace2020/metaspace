@@ -31,7 +31,7 @@ SELECT
     f.id AS sf_id,
     m.fdr as pass_fdr,
     tp.centr_mzs AS centroid_mzs,
-    m.iso_image_urls as iso_image_ids,
+    m.iso_image_ids as iso_image_ids,
     ds.config->'isotope_generation'->'charge'->'polarity' as polarity
 FROM iso_image_metrics m
 JOIN sum_formula f ON f.id = m.sf_id
