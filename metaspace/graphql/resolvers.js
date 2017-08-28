@@ -361,7 +361,8 @@ const Resolvers = {
                   input_path: ds.input_path,
                   metadata: ds.metadata,
                   config: ds.config,
-                  priority: priority
+                  priority: priority,
+                  del_first: true
                 });
 
                 const url = `http://${config.services.sm_engine_api_host}/v1/datasets/add`;
