@@ -34,7 +34,7 @@ def test_save_sf_img_metrics_correct_db_call(search_results):
 
     metrics_json = json.dumps(OrderedDict(zip(['chaos', 'spatial', 'spectral', 'total_iso_ints', 'min_iso_ints', 'max_iso_ints'],
                                               (0.9, 0.9, 0.9, [100, 10], [0, 0], [10, 1]))))
-    exp_rows = [(0, 0, 1, '+H', 0.9**3, 0.5, metrics_json, ['iso_image_1', None, None, None], None)]
+    exp_rows = [(0, 0, 1, '+H', 0.9**3, 0.5, metrics_json, ['iso_image_1', None, None, None])]
     db_mock.insert.assert_called_with(METRICS_INS, exp_rows)
 
 
@@ -70,5 +70,5 @@ def test_non_native_python_number_types_handled(search_results):
         metrics_json = json.dumps(OrderedDict(zip(['chaos', 'spatial', 'spectral', 'total_iso_ints', 'min_iso_ints', 'max_iso_ints'],
                                                   (0.9, 0.9, 0.9, [100, 10], [0, 0], [10, 1]))))
         exp_rows = [(0, 0, 1, '+H', 0.9 ** 3, 0.5, metrics_json,
-                         ['iso_image_1', None, None, None], None)]
+                         ['iso_image_1', None, None, None])]
         db_mock.insert.assert_called_with(METRICS_INS, exp_rows)
