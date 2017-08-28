@@ -1,5 +1,13 @@
 <template>
-  <div id="upload-page">
+  <div id="upload-page" v-if="!enableUploads">
+    <div id="maintenance-message">
+      Uploading is temporarily disabled so that we can safely update the website.
+      <br/>
+      Please wait a few hours and reload the page. Thank you for understanding!
+    </div>
+  </div>
+
+  <div id="upload-page" v-else>
     <div id="upload-left-pane">
       <div id="instructions">
 
@@ -64,7 +72,8 @@
      return {
        fineUploaderConfig: config.fineUploader,
        enableSubmit: false,
-       introIsHidden: true
+       introIsHidden: true,
+       enableUploads: config.enableUploads
      }
    },
    components: {
@@ -134,7 +143,7 @@
  #instructions {
  }
 
- #upload-page {
+ #upload-page, #maintenance-message {
    display: flex;
    flex-wrap: wrap;
    flex-direction: row;
@@ -150,5 +159,15 @@
 
  #upload-right-pane {
    flex-basis: 1000px;
+ }
+
+ #maintenance-message {
+   font-size: 22px;
+   color: #e44;
+   max-width: 900px;
+   margin: 30px;
+   border: dotted #a00;
+   padding: 10px;
+   text-align: center;
  }
 </style>
