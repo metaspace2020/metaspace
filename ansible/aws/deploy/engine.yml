@@ -35,5 +35,9 @@
     - name: Create folder for logs
       file: path="{{ sm_home }}/logs" state=directory
 
+    - name: Restart Filebeat to avoid issues with old logs
+      become: yes
+      systemd: name=filebeat state=restarted
+
     - include: ../../restart_supervisor.yml supervisor_app=sm-daemon
   tags: [master]
