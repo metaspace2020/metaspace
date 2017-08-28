@@ -3,7 +3,7 @@
   "wsGraphqlUrl": "{{ sm_webapp_graphql_ws_public_endpoint }}",
 
   "google_client_id": "{{ sm_webapp_google_client_id }}",
-  "enableUploads": true,
+  "enableUploads": {{ sm_webapp_enable_uploads }},
 
   "fineUploader": {
     "aws": {
