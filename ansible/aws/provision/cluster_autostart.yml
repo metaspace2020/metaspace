@@ -1,8 +1,0 @@
-
-- name: SM services instance sm_cluster_autostart configuration
-  hosts: web
-  user: ubuntu
-  gather_facts: yes
-
-  roles:
-    - role: sm_cluster_autostart

@@ -1,8 +1,0 @@
-
-- name: SM services instance nginx configuration
-  hosts: web
-  user: ubuntu
-  gather_facts: yes
-
-  roles:
-    - role: nginx
