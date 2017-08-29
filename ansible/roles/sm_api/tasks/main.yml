@@ -41,6 +41,7 @@
   shell: psql -h localhost -U sm sm < /opt/dev/sm/scripts/create_schema.sql
   args:
     executable: /bin/bash
+  when: sm_create_schema
 
 - name: Create /opt/data/sm_data directory
   file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
@@ -58,14 +59,14 @@
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash
-  shell: "{{ activate_venv }} && pip uninstall -y sm"
+  shell: "{{ sm_activate_venv }} && pip uninstall -y sm"
   ignore_errors: yes
 
 - name: Install SM into conda environment
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash
-  shell: "{{ activate_venv }} && pip install ."
+  shell: "{{ sm_activate_venv }} && pip install ."
 
 - name: Make sure that a directory for the SM logs exists
   file: path={{ sm_home }}/logs state=directory mode=0755
@@ -75,7 +76,8 @@
             mode=0600 owner=ubuntu group=ubuntu
 
 - name: Create SM ElasticSearch index
-  shell: source {{ miniconda_prefix }}/bin/activate {{ conda_env }} && python scripts/create_es_index.py --drop
+  shell: "{{ sm_activate_venv }} && python scripts/create_es_index.py --drop"
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash
+  when: sm_create_es_index
