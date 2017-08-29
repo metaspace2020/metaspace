@@ -54,7 +54,7 @@ miniconda_env:
       - pyyaml
       - elasticsearch
       - elasticsearch_dsl
-      - pika
+      - pika>=0.11.0b1
       - bottle
       - pysparkling
 

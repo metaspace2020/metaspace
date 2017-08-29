@@ -44,7 +44,7 @@ miniconda_env:
       - pypng
       - pyyaml
       - elasticsearch
-      - pika
+      - pika>=0.11.0b1
 
 spark_version: "1.6.0-bin-hadoop2.7.1"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
