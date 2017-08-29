@@ -70,4 +70,4 @@
             mode=0600 owner=ubuntu group=ubuntu
 
 - include: import_mol_databases.yml
-  when: import_mol_databases
+  when: mol_db_import_databases

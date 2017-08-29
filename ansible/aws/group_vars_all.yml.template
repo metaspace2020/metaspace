@@ -78,7 +78,7 @@ mol_db_branch: rel-v0.7
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
 mol_db_postgres_pass: postgres_password
 mol_db_image_dir: /var/www/mol-images
-import_mol_databases: false
+mol_db_import_databases: false
 mol_db_image_archives:
   - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-hmdb.tar.xz
   - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-chebi.tar.xz
