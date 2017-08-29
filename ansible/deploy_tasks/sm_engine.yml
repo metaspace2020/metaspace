@@ -30,11 +30,11 @@
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash
-  shell: "{{ activate_venv }} && pip uninstall -y sm"
+  shell: "{{ sm_activate_venv }} && pip uninstall -y sm"
   ignore_errors: yes
 
 - name: Install SM into conda environment
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash
-  shell: "{{ activate_venv }} && pip install ."
+  shell: "{{ sm_activate_venv }} && pip install ."

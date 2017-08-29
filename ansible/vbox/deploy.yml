@@ -8,19 +8,19 @@
     - ../vars/sm_api.yml
 
   tasks:
-    - include: ../deploy_tasks/graphql.yml
+    - include: ../deploy_tasks/sm_graphql.yml
       tags: [graphql]
 
-    - include: ../deploy_tasks/mol_db.yml
+    - include: ../deploy_tasks/sm_mol_db.yml
       tags: [mol_db]
 
     - include: ../deploy_tasks/sm_api.yml
       tags: [sm_api]
 
-    - include: ../deploy_tasks/web_app.yml
+    - include: ../deploy_tasks/sm_web_app.yml
       tags: [web_app]
 
-    - include: ../deploy_tasks/engine.yml
+    - include: ../deploy_tasks/sm_engine.yml
       tags: [engine]
 
     - include: ../restart_supervisor.yml supervisor_app=sm-daemon

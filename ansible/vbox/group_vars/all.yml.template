@@ -124,7 +124,7 @@ sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
 sm_ansible_branch: rel-v0.7
 sm_ansible_home: /opt/dev/sm-engine-ansible
 
-activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
+sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
 spark_key_file: ~/.ssh/ubuntu_spark
 spark_version: "2.1.1-bin-hadoop2.7"

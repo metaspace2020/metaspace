@@ -4,21 +4,18 @@
   user: ubuntu
   hosts: web
 
-  vars_files:
-    - ../../vars/sm_api.yml
-
   tasks:
-    - include: ../../deploy_tasks/mol_db.yml
-      tags: [mol_db]
+    - include: ../../deploy_tasks/sm_mol_db.yml
+      tags: [sm_mol_db]
 
     - include: ../../deploy_tasks/sm_api.yml
       tags: [sm_api]
 
-    - include: ../../deploy_tasks/graphql.yml
-      tags: [graphql]
+    - include: ../../deploy_tasks/sm_graphql.yml
+      tags: [sm_graphql]
 
-    - include: ../../deploy_tasks/web_app.yml
-      tags: [web_app]
+    - include: ../../deploy_tasks/sm_web_app.yml
+      tags: [sm_web_app]
 
-    - include: ../../deploy_tasks/cluster_auto_start.yml
-      tags: [cluster_auto_start]
+    - include: ../../deploy_tasks/sm_cluster_autostart.yml
+      tags: [sm_cluster_autostart]

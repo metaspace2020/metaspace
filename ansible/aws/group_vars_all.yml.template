@@ -11,6 +11,7 @@ aws_region: eu-west-1
 
 postgres_version: 9.5
 postgres_port: 5432
+postgres_drop_create: false
 
 elasticsearch_version: 5.2.2
 
@@ -69,12 +70,15 @@ sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
 sm_es_password: elastic_password
 sm_send_email: true
+sm_create_schema: false
+sm_create_es_index: false
 
 mol_db_home: /opt/dev/sm-mol-db
 mol_db_branch: rel-v0.7
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
 mol_db_postgres_pass: postgres_password
 mol_db_image_dir: /var/www/mol-images
+import_mol_databases: false
 mol_db_image_archives:
   - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-hmdb.tar.xz
   - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-chebi.tar.xz
@@ -139,7 +143,7 @@ sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
 sm_ansible_branch: rel-v0.7
 sm_ansible_home: /opt/dev/sm-engine-ansible
 
-activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
+sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
 spark_key_file: ~/.ssh/ubuntu_spark
 spark_version: "2.1.1-bin-hadoop2.7"

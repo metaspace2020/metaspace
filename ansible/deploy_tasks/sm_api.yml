@@ -23,14 +23,14 @@
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash
-  shell: "{{ activate_venv }} && pip uninstall -y sm"
+  shell: "{{ sm_activate_venv }} && pip uninstall -y sm"
   ignore_errors: yes
 
 - name: Install SM into conda environment
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash
-  shell: "{{ activate_venv }} && pip install ."
+  shell: "{{ sm_activate_venv }} && pip install ."
 
 - name: Pull SM config from the remote host
   fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
