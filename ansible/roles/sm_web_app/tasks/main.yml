@@ -4,8 +4,8 @@
   become: yes
   apt: name=redis-server state=latest
 
-- name: Clean sm-web-app folder
-  file: name={{ sm_webapp_home}} state=absent
+#- name: Clean sm-web-app folder
+#  file: name={{ sm_webapp_home}} state=absent
 
 - name: Clone sm-web-app git repository
   git:

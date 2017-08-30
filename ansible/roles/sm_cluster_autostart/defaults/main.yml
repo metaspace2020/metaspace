@@ -1,1 +1,2 @@
 inventory: ../aws/dev/hosts
+sm_cluster_autostart_python: /opt/dev/miniconda3/sm/envs/sm/bin/python

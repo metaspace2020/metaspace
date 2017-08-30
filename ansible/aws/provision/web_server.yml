@@ -9,6 +9,7 @@
     - role: base
       become: yes
       swapsize: 16384
+      tags: [base]
 
 
 - name: SM services instance configuration

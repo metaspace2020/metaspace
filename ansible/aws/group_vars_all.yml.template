@@ -73,6 +73,8 @@ sm_send_email: true
 sm_create_schema: false
 sm_create_es_index: false
 
+sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
+
 mol_db_home: /opt/dev/sm-mol-db
 mol_db_branch: rel-v0.7
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
