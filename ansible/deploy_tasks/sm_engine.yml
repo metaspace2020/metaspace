@@ -38,3 +38,6 @@
     chdir: "{{ sm_home }}"
     executable: /bin/bash
   shell: "{{ sm_activate_venv }} && pip install ."
+
+- name: Set timezone  # remove after a new sm engine AMI is created
+  timezone: name={{ time_zone_name }}
