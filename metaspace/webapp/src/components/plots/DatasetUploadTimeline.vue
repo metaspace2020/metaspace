@@ -1,7 +1,7 @@
 <template>
-	<div>
-		<svg ref="upload_by_date_plot"></svg>
-	</div>
+  <div>
+    <svg ref="upload_by_date_plot"></svg>
+  </div>
 </template>
 
 <script>
@@ -13,11 +13,11 @@
  const query =
   gql`query GetUploadTimes($filter: DatasetFilter, $query: String) {
      allDatasets(filter: $filter, simpleQuery: $query, limit: 50000) {
-			 uploadDateTime
-		 }
+       uploadDateTime
+     }
   }`;
 
- const geometry = {margin: {top: 30, bottom: 30, left: 70, right: 40}, width: 500, height: 300};
+ const geometry = {margin: {top: 30, bottom: 100, left: 70, right: 40}, width: 600, height: 350};
 
  export default {
   name: 'upload-timeline-plot',
@@ -39,7 +39,7 @@
 
   watch: {
     uploadDates() {
-      const dates = this.uploadDates.map(d3.utcParse("%Y-%m-%dT%H:%M:%SZ"));
+      const dates = this.uploadDates.map(x => d3.utcParse("%Y-%m-%dT%H:%M:%S")(x.split('.')[0]));
       dates.sort((a, b) => a - b);
 
       const elem = d3.select(this.$refs.upload_by_date_plot);
@@ -54,7 +54,7 @@
       svg.append('g').append('path')
           .attr('d', d3.line().x(d => xScale(d)).y((d, i) => yScale(i))(dates))
           .attr('stroke', 'blue').attr('stroke-width', 2).attr('fill', 'none');
-          
+
       setTickSize('12px');
 
       addMainTitle(svg, geometry, 'Number of datasets uploaded to METASPACE')
