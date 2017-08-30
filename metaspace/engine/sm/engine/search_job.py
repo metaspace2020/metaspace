@@ -150,12 +150,12 @@ class SearchJob(object):
             self._init_db()
             self._es = ESExporter(self._db)
             self._ds = ds
-            ds.set_status(self._db, self._es, self._queue, DatasetStatus.STARTED)
 
             if self._sm_config['rabbitmq']:
                 self._queue = QueuePublisher(self._sm_config['rabbitmq'])
             else:
                 self._queue = None
+            ds.set_status(self._db, self._es, self._queue, DatasetStatus.STARTED)
 
             self._wd_manager = WorkDirManager(ds.id)
             self._configure_spark()
