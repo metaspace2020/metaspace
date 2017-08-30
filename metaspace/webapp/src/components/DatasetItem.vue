@@ -40,8 +40,7 @@
         <span class="ds-add-filter"
               title="Filter by polarity"
               @click="addFilter('polarity')">
-          {{ dataset.polarity.toLowerCase() }} mode
-        </span>,
+          {{ dataset.polarity.toLowerCase() }} mode</span>,
         resolving power {{ formatResolvingPower }}
       </div>
 
@@ -51,8 +50,7 @@
         <span class="ds-add-filter"
               title="Filter by submitter"
               @click="addFilter('submitter')">
-              {{ formatSubmitter }}
-        </span>,
+          {{ formatSubmitter }}</span>,
         <span class="s-inst ds-add-filter"
               v-html="formatInstitution"
               title="Filter by this lab"
