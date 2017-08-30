@@ -21,7 +21,7 @@
    gql`query GetMSSetupCounts($filter: DatasetFilter, $query: String) {
       countDatasetsPerGroup(query: {
         fields: [DF_ANALYZER_TYPE, DF_ION_SOURCE, DF_MALDI_MATRIX, DF_POLARITY],
-				filter: $filter,
+        filter: $filter,
         simpleQuery: $query
       }) {
         counts {
@@ -41,30 +41,30 @@
      bottom: 190
    },
    height: 300,
-   width: 500,
+   width: 600,
    pie: {
-     maxRadius: 40
+     maxRadius: 35
    }
  };
-    
+
  const config = {
    geometry,
-   
+
    mainTitle: 'Number of datasets per analyzer/ion source/matrix',
-   
+
    variables: {
      x: d => d.source,
      y: d => d.analyzer,
      count: d => d.totalCount
    },
-   
+
    showSideHistograms: {
      x: true,
      y: true
    },
-   
+
    sideHistogramColor: '#ded',
-   
+
    pie: {
      showCounts: true,
      sectors: [
@@ -107,14 +107,14 @@
      .attr('transform', `translate(${maldiWidth / 2}, 25)`)
      .attr('text-anchor', 'middle')
      .text('MALDI');
-   
+
    return maldiBrace;
  }
 
  export default {
   name: 'mass-spec-setup-plot',
 
-	apollo: {
+  apollo: {
     counts: {
       query: query,
       variables() {
@@ -127,7 +127,7 @@
         return data.countDatasetsPerGroup.counts;
       }
     }
-	},
+  },
 
   computed: {
     data() {
@@ -143,6 +143,8 @@
         if (analyzer == 'N/A' || source == 'N/A')
           continue;
         if (source == 'MALDI' && matrix == 'N/A')
+          continue;
+        if (entry.count < minGroupSize)
           continue;
 
         const datum = {
@@ -188,13 +190,13 @@
 
       const brace = drawMaldiCurlyBrace(svg, this.data, scales.x);
       if (brace)
-        brace.attr('transform', function() { 
-          return this.getAttribute('transform') + ` translate(0, ${geometry.height + 50})`;
+        brace.attr('transform', function() {
+          return this.getAttribute('transform') + ` translate(0, ${geometry.height + 100})`;
         });
 
       const polarities = config.pie.sectors.map(d => d.label + ' mode');
       addLegend(svg, polarities, d3.scaleOrdinal(config.pie.sectors.map(d => d.color)).domain(polarities))
-         .attr('transform', `translate(-100, ${geometry.height + 70})`);
+         .attr('transform', `translate(${10-geometry.margin.left}, ${geometry.height + 80})`);
 
       setTickSize('12px');
     }

@@ -10,7 +10,12 @@ function configureSvg(svgElement, geometry) {
 
 function addAxes(svg, geometry, scales) {
     svg.append('g').attr('transform', `translate(0, ${geometry.height})`)
-        .call(d3.axisBottom(scales.x));
+       .call(d3.axisBottom(scales.x))
+        .selectAll('text')
+          .style('text-anchor', 'end')
+            .attr('dx', '-.8em')
+            .attr('dy', '.15em')
+            .attr('transform', 'rotate(-75)');
     svg.append('g').call(d3.axisLeft(scales.y));
 }
 
@@ -27,20 +32,20 @@ function setTickSize(fontSize) {
 function pieScatterPlot(svg, data, config) {
     const {variables, pie, geometry, mainTitle} = config;
     const {margin, height, width} = geometry;
-    
+
     const colors = d3.scaleOrdinal()
         .domain(pie.sectors.map(s => s.label))
         .range(pie.sectors.map(s => s.color));
 
     const xScale = d3.scaleBand().domain(data.map(variables.x)).rangeRound([0, width]);
     const yScale = d3.scaleBand().domain(data.map(variables.y)).rangeRound([height, 0]);
-    
+
     const calcX = d => xScale(variables.x(d));
     const calcY = d => yScale(variables.y(d));
-    
+
     const circle = svg.selectAll('g.pie').data(data).enter()
         .append("g").attr('class', 'pie')
-          .attr("transform", 
+          .attr("transform",
                 d => `translate(${calcX(d) + xScale.bandwidth() / 2},
                                 ${calcY(d) + yScale.bandwidth() / 2})`);
 
@@ -62,7 +67,7 @@ function pieScatterPlot(svg, data, config) {
     if (pie.showCounts)
         circle.selectAll("text").data(calcPie).enter()
             .append("text")
-            .attr("transform", function(d, i) { 
+            .attr("transform", function(d, i) {
                 const radius = calcRadius(d3.select(this.parentNode).datum());
                 //const arc = d3.arc().innerRadius(radius).outerRadius(radius);
                 //return "translate(" + arc.centroid(d) + ")";
@@ -70,38 +75,41 @@ function pieScatterPlot(svg, data, config) {
             })
             //.attr("text-anchor", function(d) { return (d.endAngle + d.startAngle)/2 > Math.PI ? "end" : "start"; })
             .text(d => d.data == 0 ? '' : d.data).style('fill', (d, i) => colors(pie.sectors[i].label));
-    
+
     if (config.showSideHistograms) {
         if (config.showSideHistograms.x) {
             const xData = d3.nest().key(variables.y).entries(data)
                 .map(({key, values}) => ({ key, count: values.map(variables.count).reduce((x, y) => x + y)}));
-            
-            const xL = d3.scaleLinear().domain([0, d3.max(xData.map(d => d.count))]).range([0, -margin.left]);
+
+            const xL = d3.scaleLinear().domain([0, d3.max(xData.map(d => d.count))]).range([0, -margin.left + 1]);
             const yL = d3.scaleBand().domain(xData.map(d => d.key)).rangeRound([height, 0]);
             svg.append('g').selectAll('rect.lhist').data(xData).enter()
                 .append('rect').attr('class', 'lhist').attr('x', d => xL(d.count)).attr('y', d => yL(d.key))
                 .attr('width', d => -xL(d.count))
-                .attr('height', yL.bandwidth() - 5)
-                .attr('fill', config.sideHistogramColor);
+                .attr('height', yL.bandwidth() - 1)
+                .attr('fill', config.sideHistogramColor)
+                .style('stroke', '#888');
         }
-        
+
         if (config.showSideHistograms.y) {
             const yData = d3.nest().key(variables.x).entries(data)
                 .map(({key, values}) => ({ key, count: values.map(variables.count).reduce((x, y) => x + y)}));
-            
-            const yL = d3.scaleLinear().domain([0, d3.max(yData.map(d => d.count))]).range([height, height + margin.bottom]);
+
+            const yL = d3.scaleLinear().domain([0, d3.max(yData.map(d => d.count))]).range([height, height + margin.bottom - 1]);
             const xL = d3.scaleBand().domain(yData.map(d => d.key)).rangeRound([0, width]);
             svg.append('g').selectAll('rect.bhist').data(yData).enter()
                 .append('rect').attr('class', 'bhist').attr('y', yL(0)).attr('x', d => xL(d.key))
-                .attr('width', d => xL.bandwidth() - 3)
+                .attr('width', d => xL.bandwidth() - 1)
                 .attr('height', d => yL(d.count) - yL(0))
-                .attr('fill', config.sideHistogramColor);   
+                .attr('fill', config.sideHistogramColor)
+                .style('stroke', '#888');
+
         }
     }
-    
+
     addMainTitle(svg, geometry, mainTitle)
         .attr('font-size', '16px');
-    
+
     addAxes(svg, geometry, {x: xScale, y: yScale});
 
     return {
@@ -115,10 +123,10 @@ function pieScatterPlot(svg, data, config) {
 
 function addLegend(svg, labels, colorScale) {
     const legend = svg.append("g");
-    let itemHeight = 30, 
+    let itemHeight = 30,
         fontHeight = Math.round(itemHeight * 0.6);
     legend.append('rect')
-        .attr('width', fontHeight * 1 * d3.max(labels.map(d => d.length)))
+        .attr('width', fontHeight * 0.8 * d3.max(labels.map(d => d.length)))
         .attr('height', itemHeight * labels.length + 10 * 2)
         .attr('fill', 'none')
         .attr('stroke', 'black');
@@ -130,15 +138,15 @@ function addLegend(svg, labels, colorScale) {
             .attr('r', 10).attr('cx', 10).attr('cy', -itemHeight/4);
         item.append('text').text(label).attr('x', 30).attr('font-size', fontHeight + 'px');
         k += 1;
-    }   
+    }
     return legend;
 }
 
 export {
-	addAxes,
-	addLegend,
-	addMainTitle,
-	configureSvg,
-	pieScatterPlot,
-	setTickSize
+  addAxes,
+  addLegend,
+  addMainTitle,
+  configureSvg,
+  pieScatterPlot,
+  setTickSize
 }

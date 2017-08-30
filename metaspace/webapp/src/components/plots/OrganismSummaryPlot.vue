@@ -15,7 +15,7 @@
    gql`query GetOrganismOrganCounts($filter: DatasetFilter, $query: String) {
       countDatasetsPerGroup(query: {
         fields: [DF_ORGANISM, DF_ORGANISM_PART],
-				filter: $filter,
+        filter: $filter,
         simpleQuery: $query
       }) {
         counts {
@@ -29,36 +29,36 @@
 
  const geometry = {
    margin: {
-     left: 150,
+     left: 200,
      top: 80,
      right: 20,
-     bottom: 190
+     bottom: 200
    },
-   height: 300,
-   width: 500,
+   height: 350,
+   width: 600,
    pie: {
-     maxRadius: 20
+     maxRadius: 10
    }
  };
-  
+
  const config = {
      geometry,
-     
+
      mainTitle: 'Number of datasets per species/organ type',
-     
+
      variables: {
          x: d => d.organism,
          y: d => d.organismPart,
          count: d => d.totalCount
      },
-     
+
      showSideHistograms: {
          x: true,
          y: true
      },
-     
+
      sideHistogramColor: '#ded',
-     
+
      pie: {
          showCounts: true,
          sectors: [
@@ -69,12 +69,12 @@
              }
          ]
      }
- };  
+ };
 
  export default {
   name: 'organism-summary-plot',
 
-	apollo: {
+  apollo: {
     counts: {
       query: query,
       variables() {
@@ -87,7 +87,7 @@
         return data.countDatasetsPerGroup.counts;
       }
     }
-	},
+  },
 
   computed: {
     data() {
@@ -98,6 +98,8 @@
 
       for (let entry of this.counts) {
         if (entry.fieldValues.indexOf('N/A') >= 0)
+          continue;
+        if (entry.count < minGroupSize)
           continue;
 
         const [organism, organismPart] = entry.fieldValues;
