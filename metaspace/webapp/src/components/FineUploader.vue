@@ -80,6 +80,9 @@
      mandatory: true,
      concurrent: {enabled: true},
    },
+   retry: {
+     enableAuto: true
+   },
    resume: {enabled: true},
    validation: {
      itemLimit: 2,
