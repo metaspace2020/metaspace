@@ -312,15 +312,16 @@ class SMDataset(object):
         records = self._gqclient.getAnnotations(annotationFilter, {'ids': self.id})
         df = pd.io.json.json_normalize(records)
         return pd.DataFrame(dict(
-            sf=df['sumFormula'],
+            formula=df['sumFormula'],
             adduct=df['adduct'],
             msm=df['msmScore'],
             moc=df['rhoChaos'],
-            spat=df['rhoSpatial'],
-            spec=df['rhoSpectral'],
+            rhoSpatial=df['rhoSpatial'],
+            rhoSpectral=df['rhoSpectral'],
             fdr=df['fdrLevel'],
-            comp_names=[[item['name'] for item in lst] for lst in df['possibleCompounds']]
-        )).set_index(['sf', 'adduct'])
+            mz=df['mz'],
+            moleculeNames=[[item['name'] for item in lst] for lst in df['possibleCompounds']]
+        )).set_index(['formula', 'adduct'])
 
     @property
     def metadata(self):
@@ -346,6 +347,10 @@ class SMDataset(object):
     def database(self):
         return self.databases[0]
 
+    @property
+    def status(self):
+        return self._info['status']
+
     def isotope_images(self, sf, adduct):
         records = self._gqclient.getAnnotations(
             dict(sumFormula=sf, adduct=adduct, database=None),
@@ -357,6 +362,8 @@ class SMDataset(object):
         def fetchImage(url):
             if not url:
                 return None
+
+            url = self._gqclient.url.rsplit("/",1)[0]+url
             im = mpimg.imread(BytesIO(requests.get(url).content))
             mask = im[:, :, 3]
             data = im[:, :, 0]
@@ -444,7 +451,7 @@ class SMInstance(object):
         df.index = [d.name for d in datasets]
         return df
 
-    def get_annotations(self, fdr=0.1, db_name='HMDB'):
+    def get_annotations(self, fdr=0.1, db_name='HMDB', datasetFilter = {}):
         """
         Returns: a table of booleans indicating which ions were annotated in a
         particular dataset at the specified fdr.
@@ -455,6 +462,27 @@ class SMInstance(object):
         :return: pandas dataframe indexed by dataset ids,
                  with multi-index adduct / molecular formula on columns
         """
+        records = self._gqclient.getAnnotations(
+            annotationFilter = {'database': db_name, 'fdrLevel': fdr},
+            datasetFilter = datasetFilter
+            )
+        df = pd.io.json.json_normalize(records)
+        return pd.DataFrame(dict(
+            formula=df['sumFormula'],
+            adduct=df['adduct'],
+            msm=df['msmScore'],
+            moc=df['rhoChaos'],
+            rhoSpatial=df['rhoSpatial'],
+            rhoSpectral=df['rhoSpectral'],
+            fdr=df['fdrLevel'],
+            mz=df['mz'],
+            dataset_id = df['dataset.id'],
+            dataset_name = df['dataset.name'],
+            moleculeNames=[[item['name'] for item in lst] for lst in df['possibleCompounds']]
+
+        ))
+
+        records = self._gqclient.getAnnotations(dict(database=db_name, fdrLevel=fdr))
         results = pd.io.json.json_normalize(records)
         results = pd.DataFrame({
             'sf': results['sumFormula'],
