@@ -510,6 +510,7 @@ class SMInstance(object):
 
     def _get_tables1(self, dataset, sf_adduct_pairs, fields, db_name):
         results = dataset.results(database=db_name).reset_index()
+        print(results.columns)
         results['sf_adduct'] = results['formula'] + results['adduct']
         query = [sf + adduct for sf, adduct in sf_adduct_pairs]
         results = results[results['sf_adduct'].isin(query)]
