@@ -5,3 +5,4 @@ mol_db_miniconda_env:
   name: mol-db
 mol_db_miniconda_prefix: /opt/dev/miniconda3
 mol_db_import_databases: false
+mol_db_import_mol_images: false

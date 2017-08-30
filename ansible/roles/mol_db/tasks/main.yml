@@ -71,3 +71,6 @@
 
 - include: import_mol_databases.yml
   when: mol_db_import_databases
+
+- include: import_mol_images.yml
+  when: mol_db_import_mol_images
