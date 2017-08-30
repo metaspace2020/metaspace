@@ -111,13 +111,14 @@ class SearchJob(object):
             mask = self._ds_reader.get_2d_sample_area_mask()
             search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, mz_img_store)
 
-            self._es.index_ds(self._ds.id, mol_db)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
             new_msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
             raise JobFailedError(new_msg) from e
         else:
             self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
+        finally:
+            self._es.index_ds(self._ds.id, mol_db)
 
     def prepare_moldb_id_list(self):
         moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
