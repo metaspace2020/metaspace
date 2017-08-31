@@ -53,7 +53,7 @@ DATASET_SEL = '''SELECT
     input_path,
     upload_dt,
     dataset.status,
-    to_char(max(finish), 'YYYY-MM-DD HH:MI:SS')
+    to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS')
 FROM dataset LEFT JOIN job ON job.ds_id = dataset.id
 WHERE dataset.id = %s
 GROUP BY dataset.id
