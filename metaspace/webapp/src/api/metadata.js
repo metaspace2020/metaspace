@@ -17,15 +17,16 @@ export const updateMetadataQuery =
     updateMetadata(jwt: $jwt, datasetId: $dsId, metadataJson: $value, priority: 1)
   }`;
 
+// TODO: use autocompletion for filter values, same as on the upload page
 export const fetchOptionListsQuery = gql`{
-  institutionNames: metadataSuggestions(field: "Submitted_By.Institution", query: "")
-  organisms: metadataSuggestions(field: "Sample_Information.Organism", query: "")
-  organismParts: metadataSuggestions(field: "Sample_Information.Organism_Part", query: "")
-  conditions: metadataSuggestions(field: "Sample_Information.Condition", query: "")
-  growthConditions: metadataSuggestions(field: "Sample_Information.Sample_Growth_Conditions", query: "")
-  ionisationSources: metadataSuggestions(field: "MS_Analysis.Ionisation_Source", query: "")
-  maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "")
-  analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "")
+  institutionNames: metadataSuggestions(field: "Submitted_By.Institution", query: "", limit: 1000)
+  organisms: metadataSuggestions(field: "Sample_Information.Organism", query: "", limit: 1000)
+  organismParts: metadataSuggestions(field: "Sample_Information.Organism_Part", query: "", limit: 1000)
+  conditions: metadataSuggestions(field: "Sample_Information.Condition", query: "", limit: 1000)
+  growthConditions: metadataSuggestions(field: "Sample_Information.Sample_Growth_Conditions", query: "", limit: 1000)
+  ionisationSources: metadataSuggestions(field: "MS_Analysis.Ionisation_Source", query: "", limit: 1000)
+  maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "", limit: 1000)
+  analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
   molecularDatabases: molecularDatabases{name},
   submitterNames: peopleSuggestions(role: SUBMITTER, query: "") {
     name
