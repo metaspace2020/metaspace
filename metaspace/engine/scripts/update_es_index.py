@@ -22,19 +22,20 @@ def _reindex_all(conf):
     db = DB(conf['db'])
     es_exp = ESExporter(db, tmp_es_config)
     rows = db.select('select id, name, config from dataset')
-    _reindex_datasets(rows, es_exp, del_first=False)
+    _reindex_datasets(rows, es_exp)
 
     es_man.remap_alias(tmp_es_config['index'], alias=alias)
 
 
-def _reindex_datasets(rows, es_exp, del_first=True):
+def _reindex_datasets(rows, es_exp):
     logger.info('Reindexing %s dataset(s)', len(rows))
     for ds_id, ds_name, ds_config in rows:
         try:
+            es_exp.delete_ds(ds_id)
             for mol_db_dict in ds_config['databases']:
                 mol_db = MolecularDB(name=mol_db_dict['name'], version=mol_db_dict.get('version', None),
                                      iso_gen_config=ds_config['isotope_generation'])
-                es_exp.index_ds(ds_id, mol_db, del_first=del_first)
+                es_exp.index_ds(ds_id, mol_db)
         except Exception as e:
             new_msg = 'Failed to reindex(ds_id={}, ds_name={}): {}'.format(ds_id, ds_name, e)
             raise Exception(new_msg) from e

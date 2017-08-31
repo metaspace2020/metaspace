@@ -207,10 +207,7 @@ class ESExporter(object):
         mol_by_sf_df.columns = ['mol_ids', 'mol_names']
         return mol_by_sf_df
 
-    def index_ds(self, ds_id, mol_db, del_first=False):
-        if del_first:
-            self.delete_ds(ds_id, mol_db)
-
+    def index_ds(self, ds_id, mol_db):
         try:
             dataset = self._remove_mol_db_from_dataset(ds_id, mol_db)
         except NotFoundError:
@@ -267,22 +264,15 @@ class ESExporter(object):
 
     def delete_ds(self, ds_id, mol_db=None):
         """
+        If mol_db passed, only annotation statistics are updated in the dataset document. DS document won't be deleted
+
         :param ds_id: str
         :param mol_db: sm.engine.MolecularDB
         :return:
         """
-        try:
-            if mol_db:
-                self._remove_mol_db_from_dataset(ds_id, mol_db)
-            else:
-                self._es.delete(id=ds_id, doc_type='dataset', index=self.index)
-        except NotFoundError:
-            pass
+        logger.info('Deleting or updating dataset document in ES: %s, %s', ds_id, mol_db)
 
         must = [{'term': {'ds_id': ds_id}}]
-        if mol_db:
-            must.append({'term': {'db_name': mol_db.name}})
-            must.append({'term': {'db_version': mol_db.version}})
         body = {
             'query': {
                 'constant_score': {
@@ -290,10 +280,22 @@ class ESExporter(object):
                         'bool': {'must': must}}}}
         }
 
-        logger.info('Deleting dataset documents from ES: %s, %s', ds_id, mol_db)
+        try:
+            if mol_db:
+                self._remove_mol_db_from_dataset(ds_id, mol_db)
+            else:
+                self._es.delete_by_query(index=self.index, doc_type='dataset', body=body)
+        except ElasticsearchException as e:
+            logger.warning('Dataset deletion failed: %s', e)
+
+        logger.info('Deleting annotation documents from ES: %s, %s', ds_id, mol_db)
+
+        if mol_db:
+            must.append({'term': {'db_name': mol_db.name}})
+            must.append({'term': {'db_version': mol_db.version}})
 
         try:
-            resp = self._es.delete_by_query(index=self.index, body=body)
+            resp = self._es.delete_by_query(index=self.index, body=body, doc_type='annotation')
             logger.debug(resp)
         except ElasticsearchException as e:
-            logger.warning('Deletion failed: %s', e)
+            logger.warning('Annotation deletion failed: %s', e)

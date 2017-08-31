@@ -205,7 +205,8 @@ class TestSMDaemonDatasetManager:
 
             ds_man.update(ds)
 
-            es_mock.index_ds.assert_called_with(ds_id, mol_db_mock, del_first=True)
+            es_mock.delete_ds.assert_called_with(ds_id)
+            es_mock.index_ds.assert_called_with(ds_id, mol_db_mock)
 
     def test_delete_ds(self, fill_db, sm_config, ds_config):
         db = DB(sm_config['db'])

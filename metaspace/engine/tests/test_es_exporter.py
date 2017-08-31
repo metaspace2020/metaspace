@@ -20,11 +20,13 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
     ds_id = '2000-01-01_00h00m'
     upload_dt = datetime.now().isoformat(' ')
     mol_db_id = 0
+    last_finished = '2017-01-01T18:00:00'
 
     def db_sel_side_effect(*args):
         if args == (DATASET_SEL, ds_id):
             # ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path', 'ds_status', 'ds_last_finished')
-            return [(ds_id, 'ds_name', 'ds_config', {}, 'ds_input_path', upload_dt, 'ds_status', 'ds_last_finished')]
+            return [(ds_id, 'ds_name', 'ds_config', {}, 'ds_input_path', upload_dt, 'ds_status',
+                     datetime.strptime(last_finished, '%Y-%m-%dT%H:%M:%S'))]
         elif args == (ANNOTATIONS_SEL, ds_id, mol_db_id):
             # "sf", "sf_adduct",
             # "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
@@ -47,7 +49,8 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
     mol_db_mock.get_molecules.return_value = pd.DataFrame([('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
                                                           columns=['sf', 'mol_id', 'mol_name'])
     es_exp = ESExporter(db_mock)
-    es_exp.index_ds(ds_id, mol_db_mock, del_first=True)
+    es_exp.delete_ds(ds_id)
+    es_exp.index_ds(ds_id, mol_db_mock)
 
     wait_for_es(sec=1)
 
@@ -59,7 +62,7 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         'adduct': '+H', 'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
         'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': '00100.0000', 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
-        'ds_upload_dt': upload_dt, 'ds_last_finished': 'ds_last_finished'
+        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished
     }
     ann_2_d = es_dsl_search.filter('term', sf='Au').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_2_d == {
@@ -69,11 +72,11 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         'adduct': '+H',  'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
         'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': '00100.0000', 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
-        'ds_upload_dt': upload_dt, 'ds_last_finished': 'ds_last_finished'
+        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished
     }
     ds_d = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']
     assert ds_d == {
-        'ds_last_finished': 'ds_last_finished', 'ds_config': 'ds_config', 'ds_meta': {},
+        'ds_last_finished': last_finished, 'ds_config': 'ds_config', 'ds_meta': {},
         'ds_status': 'ds_status', 'ds_name': 'ds_name', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
         'ds_upload_dt': upload_dt,
         'annotation_counts': [{'db': {'name': 'db_name', 'version': '2017'},
@@ -82,7 +85,7 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
     }
 
 
-def test_delete_ds_works(es, sm_index, sm_config):
+def test_delete_ds__one_db_ann_only(es, sm_index, sm_config):
     index = sm_config['elasticsearch']['index']
     es.create(index=index, doc_type='annotation', id='id1',
               body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
@@ -90,6 +93,8 @@ def test_delete_ds_works(es, sm_index, sm_config):
               body={'ds_id': 'dataset1', 'db_name': 'ChEBI', 'db_version': '2016'})
     es.create(index=index, doc_type='annotation', id='id3',
               body={'ds_id': 'dataset2', 'db_name': 'HMDB', 'db_version': '2016'})
+    es.create(index=index, doc_type='dataset', id='id4',
+              body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
 
     wait_for_es(sec=1)
 
@@ -116,6 +121,45 @@ def test_delete_ds_works(es, sm_index, sm_config):
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
     body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset2'}}, {'term': {'db_name': 'HMDB'}}]
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'_type': 'dataset'}}]
+    assert es.count(index=index, doc_type='dataset', body=body)['count'] == 1
+
+
+def test_delete_ds__completely(es, sm_index, sm_config):
+    index = sm_config['elasticsearch']['index']
+    es.create(index=index, doc_type='annotation', id='id1',
+              body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
+    es.create(index=index, doc_type='annotation', id='id2',
+              body={'ds_id': 'dataset1', 'db_name': 'ChEBI', 'db_version': '2016'})
+    es.create(index=index, doc_type='annotation', id='id3',
+              body={'ds_id': 'dataset2', 'db_name': 'HMDB', 'db_version': '2016'})
+    es.create(index=index, doc_type='dataset', id='id4',
+              body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
+
+    wait_for_es(sec=1)
+
+    db_mock = MagicMock(spec=DB)
+
+    es_exporter = ESExporter(db_mock)
+    es_exporter.delete_ds(ds_id='dataset1')
+
+    wait_for_es(sec=1)
+
+    body = {
+        'query': {
+            'bool': {
+                'filter': []
+            }
+        }
+    }
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'HMDB'}}]
+    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'db_name': 'ChEBI'}}]
+    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 0
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset2'}}, {'term': {'db_name': 'HMDB'}}]
+    assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
+    body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'_type': 'dataset'}}]
+    assert es.count(index=index, doc_type='dataset', body=body)['count'] == 0
 
 
 def test_rename_index_works(test_db, sm_config):

@@ -116,11 +116,12 @@ class SMDaemonDatasetManager(DatasetManager):
         """ Reindex all dataset results """
         ds.set_status(self._db, self._es, self._queue, DatasetStatus.INDEXING)
 
+        self._es.delete_ds(ds.id)
         for mol_db_dict in ds.config['databases']:
             mol_db = MolecularDB(name=mol_db_dict['name'],
                                  version=mol_db_dict.get('version', None),
                                  iso_gen_config=ds.config['isotope_generation'])
-            self._es.index_ds(ds.id, mol_db, del_first=True)
+            self._es.index_ds(ds.id, mol_db)
 
         ds.set_status(self._db, self._es, self._queue, DatasetStatus.FINISHED)
 
