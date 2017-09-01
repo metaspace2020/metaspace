@@ -4,25 +4,22 @@ from unittest.mock import patch
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 from fabric.api import local
-
 #from pyspark import SparkContext, SparkConf
 # lots of patch calls rely on SparkContext name
 from pysparkling import Context as SparkContext
-
 import pandas as pd
 from logging.config import dictConfig
 from unittest.mock import MagicMock
 
 from sm.engine.db import DB
 from sm.engine.mol_db import MolecularDB
-from sm.engine.util import proj_root, sm_log_config, SMConfig
+from sm.engine.util import proj_root, sm_log_config, SMConfig, init_logger, logger
 from sm.engine import ESExporter, ESIndexManager
 from os.path import join
 
-
 log_config = sm_log_config
 log_config['loggers']['sm-engine']['handlers'] = ['console_debug']
-dictConfig(log_config)
+init_logger(log_config)
 
 
 @pytest.fixture(scope='session')
@@ -52,8 +49,12 @@ def test_db(sm_config, request):
 
     def fin():
         db = DB(db_config, autocommit=True)
-        db.alter('DROP DATABASE IF EXISTS sm_test')
-        db.close()
+        try:
+            db.alter('DROP DATABASE IF EXISTS sm_test')
+        except Exception as e:
+            logger.warning('Drop sm_test database failed: %s', e)
+        finally:
+            db.close()
     request.addfinalizer(fin)
 
 

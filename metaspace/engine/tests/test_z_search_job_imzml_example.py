@@ -7,7 +7,7 @@ import time
 from datetime import datetime
 
 from sm.engine.db import DB
-from sm.engine.errors import JobFailedError
+from sm.engine.errors import JobFailedError, ESExportFailedError
 from sm.engine.search_job import SearchJob
 from sm.engine.fdr import DECOY_ADDUCTS
 from sm.engine.dataset import Dataset
@@ -128,10 +128,10 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
-def test_search_job_imzml_example_fails(get_compute_img_metrics_mock, filter_sf_metrics_mock,
-                                        post_images_to_annot_service_mock,
-                                        MolDBServiceWrapperMock, MolDBServiceWrapperMock2,
-                                        sm_config, create_fill_sm_database, es_dsl_search):
+def test_search_job_imzml_example_annotation_job_fails(get_compute_img_metrics_mock, filter_sf_metrics_mock,
+                                                       post_images_to_annot_service_mock,
+                                                       MolDBServiceWrapperMock, MolDBServiceWrapperMock2,
+                                                       sm_config, create_fill_sm_database, es_dsl_search):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock2)
 
@@ -164,11 +164,65 @@ def test_search_job_imzml_example_fails(get_compute_img_metrics_mock, filter_sf_
     except JobFailedError as e:
         assert e
         # dataset table asserts
-        rows = db.select("SELECT status from dataset")
-        assert len(rows) == 1
-        assert rows[0][0] == 'FAILED'
+        row = db.select_one("SELECT status from dataset")
+        assert row[0] == 'FAILED'
     else:
         raise AssertionError('JobFailedError should be raised')
+    finally:
+        db.close()
+        with warn_only():
+            local('rm -rf {}'.format(data_dir_path))
+
+
+@patch('sm.engine.search_job.MolDBServiceWrapper')
+@patch('sm.engine.mol_db.MolDBServiceWrapper')
+@patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
+@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
+@patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
+def test_search_job_imzml_example_es_export_fails(get_compute_img_metrics_mock, filter_sf_metrics_mock,
+                                                  post_images_to_annot_service_mock,
+                                                  MolDBServiceWrapperMock, MolDBServiceWrapperMock2,
+                                                  sm_config, create_fill_sm_database, es_dsl_search):
+    init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
+    init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock2)
+
+    get_compute_img_metrics_mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100.], [0], [10.])
+    filter_sf_metrics_mock.side_effect = lambda x: x
+
+    url_dict = {
+        'iso_image_ids': ['iso_image_1', None, None, None]
+    }
+    post_images_to_annot_service_mock.return_value = {
+        (1, '+H'): url_dict,
+        (1, '+Na'): url_dict,
+        (1, '+K'): url_dict
+    }
+
+    db = DB(sm_config['db'])
+
+    def throw_exception_function(*args):
+        raise Exception('Test')
+
+    try:
+        ds_id = '2000-01-01_00h00m'
+        upload_dt = datetime.now()
+        ds_config_str = open(ds_config_path).read()
+        db.insert(Dataset.DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt.isoformat(' '),
+                                       '{}', ds_config_str, DatasetStatus.QUEUED)])
+
+        with patch('sm.engine.search_job.ESExporter.index_ds') as index_ds_mock:
+            index_ds_mock.side_effect = throw_exception_function
+
+            job = SearchJob()
+            ds = Dataset.load(db, ds_id)
+            job.run(ds)
+    except ESExportFailedError as e:
+        assert e
+        # dataset table asserts
+        row = db.select_one("SELECT status from dataset")
+        assert row[0] == 'FAILED'
+    else:
+        raise AssertionError('ESExportFailedError should be raised')
     finally:
         db.close()
         with warn_only():

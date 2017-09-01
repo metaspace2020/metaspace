@@ -21,7 +21,7 @@ from sm.engine.util import proj_root, SMConfig, read_json, sm_log_formatters
 from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
-from sm.engine.errors import JobFailedError
+from sm.engine.errors import JobFailedError, ESExportFailedError
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher
 
@@ -85,7 +85,7 @@ class SearchJob(object):
     def clean_target_decoy_table(self):
         self._db.alter(TARGET_DECOY_ADD_DEL, self._ds.id)
 
-    def _run_job(self, mol_db):
+    def _run_annotation_job(self, mol_db):
         try:
             self.store_job_meta(mol_db.id)
             mol_db.set_job_id(self._job_id)
@@ -108,12 +108,20 @@ class SearchJob(object):
             search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys())
             mask = self._ds_reader.get_2d_sample_area_mask()
             search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, mz_img_store)
+        except Exception as e:
+            self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
+            msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
+            raise JobFailedError(msg) from e
+        else:
+            self._export_search_results_to_es(mol_db)
 
+    def _export_search_results_to_es(self, mol_db):
+        try:
             self._es.index_ds(self._ds.id, mol_db)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
-            new_msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
-            raise JobFailedError(new_msg) from e
+            msg = 'Export to ES failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
+            raise ESExportFailedError(msg) from e
         else:
             self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
 
@@ -167,7 +175,7 @@ class SearchJob(object):
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
             for mol_db_id in self.prepare_moldb_id_list():
-                self._run_job(MolecularDB(id=mol_db_id, iso_gen_config=self._ds.config['isotope_generation']))
+                self._run_annotation_job(MolecularDB(id=mol_db_id, iso_gen_config=self._ds.config['isotope_generation']))
 
             ds.set_status(self._db, self._es, self._queue, DatasetStatus.FINISHED)
 

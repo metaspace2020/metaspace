@@ -15,7 +15,7 @@ def test_prepare_moldb_list_returns_correct_list(find_db_by_name_version, sm_con
         db.insert('INSERT INTO dataset (id) values(%s)', rows=[('ds_id',)])
         db.insert('INSERT INTO job (id, db_id, ds_id) values(%s, %s, %s)', rows=[(10, 0, 'ds_id')])
 
-        search_job = SearchJob('/tmp')
+        search_job = SearchJob()
         search_job._ds = ds
         search_job._db = db
         moldb_id_list = search_job.prepare_moldb_id_list()

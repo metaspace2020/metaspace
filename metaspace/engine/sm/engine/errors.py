@@ -9,6 +9,11 @@ class JobFailedError(SMError):
         super().__init__(msg)
 
 
+class ESExportFailedError(SMError):
+    def __init__(self, msg):
+        super().__init__(msg)
+
+
 class UnknownDSID(SMError):
     def __init__(self, msg):
         super().__init__(msg)
