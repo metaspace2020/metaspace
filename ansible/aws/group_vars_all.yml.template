@@ -262,6 +262,7 @@ basic_auth_users:
     password: "{{ kibana_password }}"
 
 # VIRTUAL MACHINES CONFIGURATION
+# no ansible vars are allowed below, used by python scripts
 
 cluster_configuration:
   instances:
