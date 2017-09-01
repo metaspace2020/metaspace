@@ -38,7 +38,7 @@ class SMDaemon(object):
 
     def _send_email(self, email, subj, body):
         ses = boto3.client('ses', 'eu-west-1')
-        resp = ses._send_email(
+        resp = ses.send_email(
             # Source='metaspace2020@gmail.com',
             Source='contact@metaspace2020.eu',
             Destination={
