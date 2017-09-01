@@ -83,12 +83,13 @@ class MolecularDB(object):
                  mol_db_service=None, db=None):
         self._iso_gen_config = iso_gen_config
         sm_config = SMConfig.get_conf()
-        self.mol_db_service = mol_db_service or MolDBServiceWrapper(sm_config['services']['mol_db'])
+        self._mol_db_service = mol_db_service or MolDBServiceWrapper(sm_config['services']['mol_db'])
+        self._db = db
 
         if id is not None:
-            data = self.mol_db_service.find_db_by_id(id)
+            data = self._mol_db_service.find_db_by_id(id)
         elif name is not None:
-            data = self.mol_db_service.find_db_by_name_version(name, version)[0]
+            data = self._mol_db_service.find_db_by_name_version(name, version)[0]
         else:
             raise Exception('MolDB id or name should be provided')
 
@@ -96,7 +97,6 @@ class MolecularDB(object):
         self._sf_df = None
         self._job_id = None
         self._sfs = None
-        self._db = db or DB(sm_config['db'])
 
     def __str__(self):
         return '{} {}'.format(self.name, self.version)
@@ -126,12 +126,12 @@ class MolecularDB(object):
         ----------
             pd.DataFrame
         """
-        return pd.DataFrame(self.mol_db_service.fetch_molecules(self.id, sf=sf))
+        return pd.DataFrame(self._mol_db_service.fetch_molecules(self.id, sf=sf))
 
     @property
     def sfs(self):
         if not self._sfs:
-            sfs = self.mol_db_service.fetch_db_sfs(self.id)
+            sfs = self._mol_db_service.fetch_db_sfs(self.id)
             if self._db.select_one(SF_COUNT, self._id)[0] == 0:
                 rows = [(self._id, sf) for sf in sfs]
                 self._db.insert(SF_INS, rows)

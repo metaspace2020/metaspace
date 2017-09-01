@@ -93,7 +93,7 @@ class SearchJob(object):
             logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s ...",
                         self._ds.id, self._ds.name, mol_db.name, mol_db.version)
 
-            theor_peaks_gen = TheorPeaksGenerator(self._sc, mol_db, self._ds.config)
+            theor_peaks_gen = TheorPeaksGenerator(self._sc, mol_db, self._ds.config, db=self._db)
             theor_peaks_gen.run()
 
             target_adducts = self._ds.config['isotope_generation']['adducts']
@@ -175,7 +175,8 @@ class SearchJob(object):
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
             for mol_db_id in self.prepare_moldb_id_list():
-                self._run_annotation_job(MolecularDB(id=mol_db_id, iso_gen_config=self._ds.config['isotope_generation']))
+                mol_db = MolecularDB(id=mol_db_id, iso_gen_config=self._ds.config['isotope_generation'], db=self._db)
+                self._run_annotation_job(mol_db)
 
             ds.set_status(self._db, self._es, self._queue, DatasetStatus.FINISHED)
 

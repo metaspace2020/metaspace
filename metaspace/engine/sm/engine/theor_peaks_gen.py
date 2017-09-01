@@ -26,13 +26,13 @@ class TheorPeaksGenerator(object):
     ds_config : dict
         Dataset config
     """
-    def __init__(self, sc, mol_db, ds_config):
+    def __init__(self, sc, mol_db, ds_config, db=None):
         sm_config = SMConfig.get_conf()
         self._ds_config = ds_config
         self._adducts = self._ds_config['isotope_generation']['adducts']
 
         self._sc = sc
-        self._db = DB(sm_config['db'])
+        self._db = db
         self._mol_db = mol_db
         self._isocalc_wrapper = IsocalcWrapper(self._ds_config['isotope_generation'])
 
