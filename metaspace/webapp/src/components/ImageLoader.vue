@@ -3,7 +3,7 @@
        v-loading="isLoading"
        ref="parent"
        :element-loading-text="message">
-    <img :src="dataURI" :style="imageStyle" />
+    <img :src="dataURI" :style="imageStyle" v-on:click="onClick"/>
 
     <canvas ref="canvas" style="display:none;"></canvas>
   </div>
@@ -27,6 +27,10 @@
      colormap: {
        type: String,
        default: 'Viridis'
+     },
+     alpha: {
+       type: Number,
+       default: 255
      }
    },
    data () {
@@ -36,7 +40,9 @@
        message: '',
        dataURI: '',
        hotspotRemovalQuantile: 0.99,
-       isLCMS: false
+       isLCMS: false,
+       scaleFactor: 1,
+       events: []
      }
    },
    created() {
@@ -52,13 +58,20 @@
    computed: {
      imageStyle() {
        // assume the allocated screen space has width > height
-       if (!this.isLCMS)
-        return {
-          width: '100%',                       // maximize width
-          'max-height': this.maxHeight + 'px', // limit height
-          'object-fit': 'contain'              // keep aspect ratio
-        };
-       else // LC-MS data (1 x number of time points)
+       if (!this.isLCMS) {
+         console.log(this.scaleFactor);
+         if (this.scaleFactor <= 1)
+           return {
+             width: '100%',                       // maximize width
+             'max-height': this.maxHeight + 'px', // limit height
+             'object-fit': 'contain'              // keep aspect ratio
+           };
+         else
+           return {
+             'width': this.image.naturalWidth * this.scaleFactor + 'px',
+             'height': this.image.naturalHeight * this.scaleFactor + 'px'
+           };
+       } else // LC-MS data (1 x number of time points)
          return {
            width: '100%',
            height: Math.min(100, this.maxHeight) + 'px',
@@ -95,7 +108,7 @@
          return 0;
      },
 
-     scaleToViewport() {
+     determineScaleFactor() {
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d"),
            parentWidth = Math.max(this.$refs.parent.offsetWidth, 750);
@@ -103,9 +116,7 @@
        const scale1 = parentWidth / this.image.width,
              scale2 = this.maxHeight / this.image.height,
              scaleFactor = Math.max(1, Math.min(scale1, scale2));
-       canvas.width = this.image.width * scaleFactor;
-       canvas.height = this.image.height * scaleFactor;
-       ctx.scale(scaleFactor, scaleFactor);
+       this.scaleFactor = scaleFactor;
      },
 
      removeHotspots(imageData, q) {
@@ -128,15 +139,18 @@
      },
 
      redraw () {
+       console.time('redraw w/o colormapping');
        this.isLoading = false;
        this.isLCMS = this.image.height == 1;
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d"),
            parentWidth = Math.max(this.$refs.parent.offsetWidth, 750);
 
+       this.determineScaleFactor();
+       ctx.canvas.height = this.image.naturalHeight;
+       ctx.canvas.width = this.image.naturalWidth;
        ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-       this.scaleToViewport();
        ctx.drawImage(this.image, 0, 0);
        const q = this.computeQuantile();
 
@@ -148,11 +162,13 @@
        let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
        this.removeHotspots(imageData, q);
        ctx.putImageData(imageData, 0, 0);
+       console.timeEnd('redraw w/o colormapping');
 
        this.applyColormap();
      },
 
      applyColormap() {
+       console.time('applying colormap');
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d");
 
@@ -166,11 +182,14 @@
          pixels[i*4] = c[0];
          pixels[i*4+1] = c[1];
          pixels[i*4+2] = c[2];
+         if (pixels[i*4 + 3] != 0)
+           pixels[i*4+3] = this.alpha;
        }
 
        ctx.clearRect(0, 0, canvas.width, canvas.height);
        ctx.putImageData(imageData, 0, 0);
        this.dataURI = canvas.toDataURL('image/png');
+       console.timeEnd('applying colormap');
      },
 
      onFail () {
@@ -180,6 +199,18 @@
        ctx.clearRect(0, 0, canvas.width, canvas.height);
        this.isLoading = false;
        this.dataURI = '';
+     },
+
+     onClick (event) {
+       const rect = event.target.getBoundingClientRect();
+       this.$emit('click', {
+         x: Math.floor((event.clientX - rect.left) / this.scaleFactor),
+         y: Math.floor((event.clientY - rect.top) / this.scaleFactor)
+       });
+     },
+
+     getImage() {
+       return this.image;
      }
    }
  }
