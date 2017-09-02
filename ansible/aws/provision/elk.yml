@@ -18,7 +18,9 @@
 
   roles:
     - role: base
-      become: yes
+      tags: [base]
 
     - role: elk
       nginx_server_name: "{{ ansible_ec2_public_ipv4 }}"
+      basic_auth_users: "{{ elk_basic_auth_users }}"
+      tags: [elk]

@@ -1,7 +1,13 @@
 ---
 
 dependencies:
+  - role: elasticsearch
+    tags: [elasticsearch]
+
   - role: kibana
+    tags: [kibana]
+
+  #TODO: automate letsecrypt installation
 
   - role: nginx
-    become: yes
+    tags: [nginx]

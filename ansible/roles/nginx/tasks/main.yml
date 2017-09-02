@@ -13,8 +13,16 @@
 - name: Create /etc/nginx/sites-available/default
   become: yes
   template:
+    src=sites-available-default-raw.j2 dest=/etc/nginx/sites-available/default
+    owner=ubuntu group=ubuntu mode=0644
+  when: nginx_raw_config is defined
+
+- name: Create /etc/nginx/sites-available/default
+  become: yes
+  template:
     src=sites-available-default.j2 dest=/etc/nginx/sites-available/default
     owner=ubuntu group=ubuntu mode=0644
+  when: nginx_raw_config is not defined
 
 - name: Install Ansible htpasswd module dependencies
   become: yes

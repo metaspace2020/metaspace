@@ -1,19 +1,38 @@
 ---
 
-- name: Download Kibana version={{ kibana_version }}
+- name: Kibana version
+  debug: var=kibana_version
+
+- name: Download Kibana
   get_url: url=https://download.elastic.co/kibana/kibana/kibana-{{ kibana_version }}-amd64.deb
            dest=/tmp/kibana-{{ kibana_version }}.deb
   when: not "'{{ kibana_version }}'.startswith('5.')"
 
-- name: Download Kibana version={{ kibana_version }}
+- name: Download Kibana
   get_url: url=https://artifacts.elastic.co/downloads/kibana/kibana-{{ kibana_version }}-amd64.deb
            dest=/tmp/kibana-{{ kibana_version }}.deb
   when: "'{{ kibana_version }}'.startswith('5.')"
 
+#- name: Check if kibana.yml exists
+#  stat: path=/etc/kibana/kibana.yml
+#  register: kibana_yml
+#
+#- name: Backup old kibana.yml
+#  become: yes
+#  command: mv /etc/kibana/kibana.yml /etc/kibana/.kibana.yml
+#  when: kibana_yml.stat.exists
+
+- name: Remove Kibana
+  become: yes
+  apt: name=kibana state=absent
+
 - name: Install Kibana
-  command: dpkg -i /tmp/kibana-{{ kibana_version }}.deb
+  become: yes
+  apt:
+    deb: /tmp/kibana-{{ kibana_version }}.deb
 
 - name: Make Kibana to listen to any ip address
+  become: yes
   lineinfile:
     dest: /etc/kibana/kibana.yml
     regexp: server.host
@@ -21,16 +40,20 @@
   when: bound_to_any_host
 
 - name: Specify Elasticsearch url
+  become: yes
   lineinfile:
     dest: /etc/kibana/kibana.yml
     regexp: elasticsearch.url
     line: 'elasticsearch.url: "http://localhost:{{ kibana_es_port }}"'
 
 - name: Kibana conf update restart
+  become: yes
   service: name=kibana state=restarted
 
 - name: Start Kibana service
-  service: name=kibana state=running
+  become: yes
+  service: name=kibana state=started
 
 - name: Start Kibana on boot
+  become: yes
   service: name=kibana enabled=true

@@ -17,9 +17,12 @@
   when: "'{{ elasticsearch_version }}'.startswith('5.')"
 
 - name: Install ElasticSearch
-  command: dpkg -i /tmp/elasticsearch-{{ elasticsearch_version }}.deb
+  become: yes
+  apt:
+    deb: /tmp/elasticsearch-{{ elasticsearch_version }}.deb
 
 - name: Make ElasticSearch to listen to any ip address
+  become: yes
   lineinfile:
     dest: /etc/elasticsearch/elasticsearch.yml
     regexp: network.host
@@ -27,6 +30,7 @@
   when: bound_to_any_host
 
 - name: Specify a port for ElasticSearch
+  become: yes
   lineinfile:
     dest: /etc/elasticsearch/elasticsearch.yml
     regexp: http.port
@@ -38,10 +42,13 @@
 #- meta: flush_handlers
 
 - name: ES conf update restart
+  become: yes
   service: name=elasticsearch state=restarted
 
 - name: Start EleasticSearch service
-  service: name=elasticsearch state=running
+  become: yes
+  service: name=elasticsearch state=started
 
 - name: Start EleasticSearch on boot
+  become: yes
   service: name=elasticsearch enabled=true

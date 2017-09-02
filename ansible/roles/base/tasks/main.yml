@@ -50,4 +50,5 @@
   when: swapsize|int > 0
 
 - name: Set timezone
+  become: yes
   timezone: name={{ time_zone_name }}

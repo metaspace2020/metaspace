@@ -57,6 +57,7 @@
       es_user: "{{ elk_es_user }}"
       es_password: "{{ elk_es_password }}"
       ingest_node_pipeline_id: "{{ spark_master_elk_es_ingest_node_pipeline_id }}"
+      tags: [filebeat]
 
     - role: sm_spark_master
       venv: "{{ miniconda_prefix }}"
