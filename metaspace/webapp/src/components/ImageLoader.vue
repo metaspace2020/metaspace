@@ -3,7 +3,8 @@
        v-loading="isLoading"
        ref="parent"
        :element-loading-text="message">
-    <img :src="dataURI" :style="imageStyle" v-on:click="onClick"/>
+    <img :src="dataURI" :style="imageStyle" v-on:click="onClick" ref="visibleImage"
+         class="isotope-image"/>
 
     <canvas ref="canvas" style="display:none;"></canvas>
   </div>
@@ -59,7 +60,6 @@
      imageStyle() {
        // assume the allocated screen space has width > height
        if (!this.isLCMS) {
-         console.log(this.scaleFactor);
          if (this.scaleFactor <= 1)
            return {
              width: '100%',                       // maximize width
@@ -88,6 +88,9 @@
        this.colors = createColormap(name);
        this.applyColormap();
      },
+     'alpha' (alpha) {
+       this.applyColormap();
+     }
    },
    methods: {
      computeQuantile () {
@@ -139,7 +142,6 @@
      },
 
      redraw () {
-       console.time('redraw w/o colormapping');
        this.isLoading = false;
        this.isLCMS = this.image.height == 1;
        let canvas = this.$refs.canvas,
@@ -162,13 +164,12 @@
        let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
        this.removeHotspots(imageData, q);
        ctx.putImageData(imageData, 0, 0);
-       console.timeEnd('redraw w/o colormapping');
 
        this.applyColormap();
+
      },
 
      applyColormap() {
-       console.time('applying colormap');
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d");
 
@@ -189,7 +190,14 @@
        ctx.clearRect(0, 0, canvas.width, canvas.height);
        ctx.putImageData(imageData, 0, 0);
        this.dataURI = canvas.toDataURL('image/png');
-       console.timeEnd('applying colormap');
+
+       this.$refs.visibleImage.onload = () => {
+         this.$emit('redraw', {
+           width: this.$refs.visibleImage.width,
+           height: this.$refs.visibleImage.height,
+           scaleFactor: this.scaleFactor
+         });
+       }
      },
 
      onFail () {
@@ -211,7 +219,18 @@
 
      getImage() {
        return this.image;
+     },
+
+     getScaleFactor() {
+       return this.scaleFactor;
      }
    }
  }
 </script>
+
+<style>
+ .isotope-image {
+   image-rendering: pixelated;
+   image-rendering: -moz-crisp-edges;
+ }
+</style>
