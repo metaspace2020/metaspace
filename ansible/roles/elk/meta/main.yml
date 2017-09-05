@@ -1,6 +1,7 @@
 ---
 
 dependencies:
+  # TODO: setup ingest node pipeline for filebeat
   - role: elasticsearch
     tags: [elasticsearch]
 

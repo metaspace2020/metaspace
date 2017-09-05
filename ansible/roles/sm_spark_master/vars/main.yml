@@ -22,5 +22,6 @@ ingest_node_pipelines:
           ignore_missing: true
       - date:
           field: "timestamp"
+          timezone: "Europe/Berlin"
           formats:
             - "yyyy-MM-dd HH:mm:ss,SSS"
