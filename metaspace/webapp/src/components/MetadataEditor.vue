@@ -256,7 +256,7 @@
        fetchPolicy: 'network-only'
      }).then(resp => {
        const defaultValue = objectFactory(metadataSchema),
-             value = JSON.parse(resp.data.dataset.metadataJson);
+             value = this.fixEntries(JSON.parse(resp.data.dataset.metadataJson));
        this.value = merge({}, defaultValue, value);
        this.loading = false;
      });
@@ -332,6 +332,17 @@
        this.$router.go(-1);
      },
 
+     fixEntries(oldValue) {
+       let value = oldValue;
+       if (value.metaspace_options) {
+         const databases = value.metaspace_options.Metabolite_Database;
+         if (!Array.isArray(databases))
+           value = merge({}, value,
+                         {'metaspace_options': {'Metabolite_Database': [databases]}});
+       }
+       return value;
+     },
+
      loadLastSubmission() {
        const defaultValue = objectFactory(metadataSchema);
        let lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
@@ -340,7 +351,7 @@
 
          /* we want to have all nested fields to be present for convenience,
           that's what objectFactory essentially does */
-         this.value = merge({}, defaultValue, lastValue);
+         this.value = merge({}, defaultValue, this.fixEntries(lastValue));
        } else {
          this.value = defaultValue;
        }
