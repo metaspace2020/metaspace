@@ -1,8 +1,8 @@
 <template>
   <div>
     <div>
-      <span>Opaqueness:</span>
-      <span> <el-slider :min=0 :max=255 v-model="alpha"></el-slider></span>
+      <span>Opacity:</span>
+      <span> <el-slider :min=0 :max=1 :step=0.01 v-model="opacity"></el-slider></span>
     </div>
 
     <div class="image-alignment-box"
@@ -12,7 +12,7 @@
            width="100%"
            ref="scan"
            @load="onOpticalImageLoad"
-           style="z-index: 1; position: absolute;" />
+           :style="opticalImageStyle"/>
 
       <svg ref="handles"
            :width="opticalImageWidth + 2 * margin"
@@ -28,7 +28,6 @@
       </svg>
 
       <image-loader
-          :alpha="alpha"
           :src="massSpecSrc"
           ref="annotImage"
           :style="annotImageStyle"
@@ -43,7 +42,7 @@
 <script>
  import Vue from 'vue';
  import ImageLoader from './ImageLoader.vue';
- import {lusolve} from 'mathjs';
+ import {inv, transpose, lusolve} from 'mathjs';
 
  export default {
    name: 'image-aligner',
@@ -64,9 +63,13 @@
      return {
        width: 0,
        height: 0,
-       alpha: 128,
+       naturalWidth: 0,
+       naturalHeight: 0,
+       opacity: 0.5,
        opticalImageWidth: 0,
        opticalImageHeight: 0,
+       opticalImageNaturalWidth: 0,
+       opticalImageNaturalHeight: 0,
        margin: 10,
        handlePositions: [{x: 0, y: 0}, {x: 0, y: 0}, {x: 0, y: 0}, {x: 0, y: 0}],
        draggedHandle: null, // index of the handle being dragged
@@ -103,6 +106,9 @@
      onOpticalImageLoad() {
        this.opticalImageWidth = this.$refs.scan.width;
        this.opticalImageHeight = this.$refs.scan.height;
+       this.opticalImageNaturalWidth = this.$refs.scan.naturalWidth;
+       this.opticalImageNaturalHeight = this.$refs.scan.naturalHeight;
+       this.recomputeTransform();
      },
 
      onResize() {
@@ -112,20 +118,23 @@
        this.resizeThrottled = true;
        setTimeout(() => { this.resizeThrottled = false; }, 50);
 
+       if (!this.$refs.scan)
+         return;
        const newWidth = this.$refs.scan.width;
        const newHeight = this.$refs.scan.height;
-       if (this.opticalImageWidth > 0) {
-         const scaleX = newWidth / this.opticalImageWidth,
-               scaleY = newHeight / this.opticalImageHeight;
-         this.handlePositions = this.handlePositions.map(pos => ({
-           x: pos.x * scaleX,
-           y: pos.y * scaleY
-         }));
-         this.recomputeTransform();
-       }
+
+       const scaleX = newWidth / this.opticalImageWidth,
+             scaleY = newHeight / this.opticalImageHeight;
+
+       this.handlePositions = this.handlePositions.map(pos => ({
+         x: pos.x * scaleX,
+         y: pos.y * scaleY
+       }));
 
        this.opticalImageWidth = newWidth;
        this.opticalImageHeight = newHeight;
+
+       this.recomputeTransform();
      },
 
      onLoad({width, height}) {
@@ -133,7 +142,10 @@
          return; // ignore all but the first redraw of the IMS image
        this.width = width;
        this.height = height;
+       this.naturalWidth = this.$refs.annotImage.getImage().naturalWidth;
+       this.naturalHeight = this.$refs.annotImage.getImage().naturalHeight;
        this.handlePositions = this.originalHandlePositions();
+       this.recomputeTransform();
      },
 
      onMouseDown(event, handleIndex) {
@@ -216,6 +228,33 @@
        this.handleStartX = this.handlePositions[0].x;
        this.handleStartY = this.handlePositions[0].y;
        document.addEventListener('mouseup', this.onMouseUp);
+     },
+
+     /*
+        the transform sending an IMS image to the optical image, using natural dimensions for both
+     */
+     getNormalizedTransform() {
+       let scaleXfwd = this.width / this.naturalWidth,
+           scaleYfwd = this.height / this.naturalHeight,
+           scaleXrev = this.opticalImageNaturalWidth / this.opticalImageWidth,
+           scaleYrev = this.opticalImageNaturalHeight / this.opticalImageHeight;
+       let scaleX = scaleXfwd * scaleXrev,
+           scaleY = scaleYfwd * scaleYrev;
+
+       return [[coeffs[0] * scaleX, coeffs[3] * scaleX, coeffs[6] * scaleXfwd],
+               [coeffs[1] * scaleY, coeffs[4] * scaleY, coeffs[7] * scaleYfwd],
+               [coeffs[2] * scaleXrev, coeffs[5] * scaleYrev, 1]];
+     },
+
+     /*
+        the transform sending the optical image to an IMS image, using natural dimensions for both
+     */
+     getInvertedNormalizedTransform() {
+       let inverted = inv(this.getNormalizedTransform());
+       for (let i = 0; i < 3; i++)
+         for (let j = 0; j < 3; j++)
+           inverted[i][j] /= inverted[2][2];
+       return inverted;
      }
    },
    computed: {
@@ -233,8 +272,18 @@
                               ${a[1][0]}, ${a[1][1]}, 0, ${a[1][2]},
                                        0,          0, 1,          0,
                               ${a[2][0]}, ${a[2][1]}, 0, ${a[2][2]})`,
-         'transform-origin': '0 0'
+         'transform-origin': '0 0',
+         opacity: this.opacity
        }
+     },
+
+     opticalImageStyle() {
+       return {
+         'z-index': 1,
+         position: 'absolute',
+         left: this.margin + 'px',
+         top: this.margin + 'px'
+       };
      },
 
      boxStyle() {

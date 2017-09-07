@@ -28,10 +28,6 @@
      colormap: {
        type: String,
        default: 'Viridis'
-     },
-     alpha: {
-       type: Number,
-       default: 255
      }
    },
    data () {
@@ -50,11 +46,8 @@
      this.colors = createColormap(this.colormap);
      this.image.onload = this.redraw.bind(this);
      this.image.onerror = this.image.onabort = this.onFail.bind(this);
-     this.image.crossOrigin = "Anonymous";
-     if (this.src) {
-       this.image.src = this.src;
-       this.isLoading = true;
-     }
+     if (this.src)
+       this.loadImage(this.src);
    },
    computed: {
      imageStyle() {
@@ -80,19 +73,20 @@
    },
    watch: {
      'src' (url) {
-       this.image.crossOrigin = "Anonymous";
-       this.image.src = url;
-       this.isLoading = true;
+       this.loadImage(url);
      },
      'colormap' (name) {
        this.colors = createColormap(name);
        this.applyColormap();
-     },
-     'alpha' (alpha) {
-       this.applyColormap();
      }
    },
    methods: {
+     loadImage(url) {
+       this.image.crossOrigin = "Anonymous";
+       this.image.src = url;
+       this.isLoading = true;
+     },
+
      computeQuantile () {
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d");
@@ -183,8 +177,6 @@
          pixels[i*4] = c[0];
          pixels[i*4+1] = c[1];
          pixels[i*4+2] = c[2];
-         if (pixels[i*4 + 3] != 0)
-           pixels[i*4+3] = this.alpha;
        }
 
        ctx.clearRect(0, 0, canvas.width, canvas.height);
