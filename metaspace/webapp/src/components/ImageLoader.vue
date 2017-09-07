@@ -3,8 +3,15 @@
        v-loading="isLoading"
        ref="parent"
        :element-loading-text="message">
-    <img :src="dataURI" :style="imageStyle" v-on:click="onClick" ref="visibleImage"
-         class="isotope-image"/>
+    <div>
+      <img :src="dataURI" :style="imageStyle" v-on:click="onClick" ref="visibleImage"
+          class="isotope-image"/>
+    </div>
+
+    <div>
+      <img v-if="opticalSrc"
+          :src="opticalSrc" class="optical-image" :style="opticalImageStyle" />
+    </div>
 
     <canvas ref="canvas" style="display:none;"></canvas>
   </div>
@@ -28,6 +35,14 @@
      colormap: {
        type: String,
        default: 'Viridis'
+     },
+     opticalSrc: {
+       type: String,
+       default: null
+     },
+     opticalImageOpacity: {
+       type: Number,
+       default: 0.5
      }
    },
    data () {
@@ -39,7 +54,7 @@
        hotspotRemovalQuantile: 0.99,
        isLCMS: false,
        scaleFactor: 1,
-       events: []
+       visibleImageHeight: 0,
      }
    },
    created() {
@@ -69,6 +84,15 @@
            width: '100%',
            height: Math.min(100, this.maxHeight) + 'px',
          };
+     },
+
+     opticalImageStyle() {
+       const style = this.imageStyle;
+       return Object.assign({}, style, {
+         'margin-top': (-this.visibleImageHeight) + 'px',
+         'vertical-align': 'top',
+         'opacity': this.opticalImageOpacity
+       });
      }
    },
    watch: {
@@ -108,11 +132,11 @@
      determineScaleFactor() {
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d"),
-           parentWidth = Math.max(this.$refs.parent.offsetWidth, 750);
+           parentWidth = this.$refs.parent.offsetWidth;
        // scale up small images to use as much canvas as possible
-       const scale1 = parentWidth / this.image.width,
-             scale2 = this.maxHeight / this.image.height,
-             scaleFactor = Math.max(1, Math.min(scale1, scale2));
+       const scale1 = parentWidth / this.image.naturalWidth,
+             scale2 = this.maxHeight / this.image.naturalHeight,
+             scaleFactor = Math.min(scale1, scale2);
        this.scaleFactor = scaleFactor;
      },
 
@@ -139,8 +163,7 @@
        this.isLoading = false;
        this.isLCMS = this.image.height == 1;
        let canvas = this.$refs.canvas,
-           ctx = canvas.getContext("2d"),
-           parentWidth = Math.max(this.$refs.parent.offsetWidth, 750);
+           ctx = canvas.getContext("2d");
 
        this.determineScaleFactor();
        ctx.canvas.height = this.image.naturalHeight;
@@ -150,17 +173,12 @@
        ctx.drawImage(this.image, 0, 0);
        const q = this.computeQuantile();
 
-       //ctx.webkitImageSmoothingEnabled = false;
-       //ctx.mozImageSmoothingEnabled = false;
-       ctx.msImageSmoothingEnabled = false;
-       ctx.imageSmoothingEnabled = false;
        ctx.drawImage(this.image, 0, 0);
        let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
        this.removeHotspots(imageData, q);
        ctx.putImageData(imageData, 0, 0);
 
        this.applyColormap();
-
      },
 
      applyColormap() {
@@ -181,15 +199,17 @@
 
        ctx.clearRect(0, 0, canvas.width, canvas.height);
        ctx.putImageData(imageData, 0, 0);
-       this.dataURI = canvas.toDataURL('image/png');
 
        this.$refs.visibleImage.onload = () => {
+         this.visibleImageHeight = this.$refs.visibleImage.height;
          this.$emit('redraw', {
            width: this.$refs.visibleImage.width,
            height: this.$refs.visibleImage.height,
            scaleFactor: this.scaleFactor
          });
        }
+
+       this.dataURI = canvas.toDataURL('image/png');
      },
 
      onFail () {
@@ -224,5 +244,13 @@
  .isotope-image {
    image-rendering: pixelated;
    image-rendering: -moz-crisp-edges;
+ }
+
+ .image-loader {
+   width: 100%;
+   line-height: 0px;
+   display: flex;
+   flex-direction: column;
+   align-self: center;
  }
 </style>

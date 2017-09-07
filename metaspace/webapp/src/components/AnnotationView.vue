@@ -28,12 +28,28 @@
 
           <div class="main-ion-image-container">
             <image-loader :src="annotation.isotopeImages[0].url"
+                          :optical-src="opticalImageUrl"
+                          :optical-image-opacity="1.0 - annotImageOpacity"
                           :colormap="colormap"
                           :max-height=500
                           class="ion-image principal-peak-image">
             </image-loader>
 
             <div class="colorbar-container">
+              <div v-if="opticalImageUrl">
+                Opacity:
+                <el-slider
+                    vertical
+                    height="150px"
+                    v-model="annotImageOpacity"
+                    :min=0
+                    :max=1
+                    :step=0.01
+                    style="margin-bottom: 30px;"
+                >
+                </el-slider>
+              </div>
+
               {{ annotation.isotopeImages[0].maxIntensity.toExponential(2) }}
               <colorbar style="width: 20px; height: 160px; align-self: center;"
                         direction="top" :map="colormap"
@@ -99,6 +115,8 @@
               <div class="small-peak-image">
                 {{ img.mz.toFixed(4) }}<br/>
                 <image-loader :src="img.url"
+                              :optical-src="opticalImageUrl"
+                              :optical-image-opacity="1.0 - annotImageOpacity"
                               :colormap="colormap"
                               :max-height=250
                               class="ion-image">
@@ -161,6 +179,15 @@
      compoundsTabLabel() {
        if (!this.annotation) return '';
        return "Molecules (" + this.annotation.possibleCompounds.length + ")";
+     },
+
+     opticalImageUrl() {
+       return null;
+     }
+   },
+   data() {
+     return {
+       annotImageOpacity: 0.5
      }
    },
    apollo: {
