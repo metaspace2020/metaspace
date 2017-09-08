@@ -3,12 +3,12 @@
        v-loading="isLoading"
        ref="parent"
        :element-loading-text="message">
-    <div>
+    <div style="text-align: left;">
       <img :src="dataURI" :style="imageStyle" v-on:click="onClick" ref="visibleImage"
           class="isotope-image"/>
     </div>
 
-    <div>
+    <div style="text-align: left;">
       <img v-if="opticalSrc"
           :src="opticalSrc" class="optical-image" :style="opticalImageStyle" />
     </div>
@@ -55,6 +55,8 @@
        isLCMS: false,
        scaleFactor: 1,
        visibleImageHeight: 0,
+       visibleImageWidth: 0,
+       parentDivWidth: 0
      }
    },
    created() {
@@ -64,25 +66,30 @@
      if (this.src)
        this.loadImage(this.src);
    },
+   mounted: function() {
+     this.parentDivWidth = this.$refs.parent.clientWidth;
+     window.addEventListener('resize', this.onResize);
+   },
+   beforeDestroy: function() {
+     window.removeEventListener('resize', this.onResize);
+   },
    computed: {
      imageStyle() {
        // assume the allocated screen space has width > height
        if (!this.isLCMS) {
-         if (this.scaleFactor <= 1)
-           return {
-             width: '100%',                       // maximize width
-             'max-height': this.maxHeight + 'px', // limit height
-             'object-fit': 'contain'              // keep aspect ratio
-           };
-         else
-           return {
-             'width': this.image.naturalWidth * this.scaleFactor + 'px',
-             'height': this.image.naturalHeight * this.scaleFactor + 'px'
-           };
+         const width = this.image.naturalWidth * this.scaleFactor;
+         const xOffset = (this.parentDivWidth - width) / 2,
+               transform = `translate(${xOffset}px, 0px)`;
+
+         return {
+           'width': this.image.naturalWidth * this.scaleFactor + 'px',
+           'height': this.image.naturalHeight * this.scaleFactor + 'px',
+           transform
+         };
        } else // LC-MS data (1 x number of time points)
          return {
            width: '100%',
-           height: Math.min(100, this.maxHeight) + 'px',
+           height: Math.min(100, this.maxHeight) + 'px'
          };
      },
 
@@ -105,6 +112,14 @@
      }
    },
    methods: {
+     onResize() {
+       this.parentDivWidth = this.$refs.parent.clientWidth;
+       this.determineScaleFactor();
+       this.$nextTick(() => {
+         this.updateDimensions();
+       });
+     },
+
      loadImage(url) {
        this.image.crossOrigin = "Anonymous";
        this.image.src = url;
@@ -130,11 +145,8 @@
      },
 
      determineScaleFactor() {
-       let canvas = this.$refs.canvas,
-           ctx = canvas.getContext("2d"),
-           parentWidth = this.$refs.parent.offsetWidth;
        // scale up small images to use as much canvas as possible
-       const scale1 = parentWidth / this.image.naturalWidth,
+       const scale1 = this.parentDivWidth / this.image.naturalWidth,
              scale2 = this.maxHeight / this.image.naturalHeight,
              scaleFactor = Math.min(scale1, scale2);
        this.scaleFactor = scaleFactor;
@@ -200,16 +212,18 @@
        ctx.clearRect(0, 0, canvas.width, canvas.height);
        ctx.putImageData(imageData, 0, 0);
 
-       this.$refs.visibleImage.onload = () => {
-         this.visibleImageHeight = this.$refs.visibleImage.height;
-         this.$emit('redraw', {
-           width: this.$refs.visibleImage.width,
-           height: this.$refs.visibleImage.height,
-           scaleFactor: this.scaleFactor
-         });
-       }
-
+       this.$refs.visibleImage.onload = this.updateDimensions;
        this.dataURI = canvas.toDataURL('image/png');
+     },
+
+     updateDimensions() {
+       this.visibleImageHeight = this.$refs.visibleImage.height;
+       this.visibleImageWidth = this.$refs.visibleImage.width;
+       this.$emit('redraw', {
+         width: this.$refs.visibleImage.width,
+         height: this.$refs.visibleImage.height,
+         scaleFactor: this.scaleFactor
+       });
      },
 
      onFail () {

@@ -211,6 +211,10 @@
    methods: {
      onSectionsChange(activeSections) {
        this.$store.commit('updateAnnotationViewSections', activeSections)
+
+       // this is the easiest way to tell child elements about the need to recompute widths/heights
+       // until ResizeObserver is available in browsers (applies to ImageLoader component)
+       this.$nextTick(() => {window.dispatchEvent(new Event('resize'));});
      }
    },
 
