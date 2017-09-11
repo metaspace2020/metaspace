@@ -29,9 +29,14 @@
           <div class="main-ion-image-container">
             <image-loader :src="annotation.isotopeImages[0].url"
                           :optical-src="opticalImageUrl"
-                          :optical-image-opacity="1.0 - annotImageOpacity"
+                          :annot-image-opacity="opticalImageUrl ? annotImageOpacity : 1.0"
                           :colormap="colormap"
                           :max-height=500
+                          :zoom="zoom"
+                          :x-offset="xOffset"
+                          :y-offset="yOffset"
+                          @zoom="onImageZoom"
+                          @move="onImageMove"
                           class="ion-image principal-peak-image">
             </image-loader>
 
@@ -116,9 +121,12 @@
                 {{ img.mz.toFixed(4) }}<br/>
                 <image-loader :src="img.url"
                               :optical-src="opticalImageUrl"
-                              :optical-image-opacity="1.0 - annotImageOpacity"
+                              :annot-image-opacity="opticalImageUrl ? annotImageOpacity : 1.0"
                               :colormap="colormap"
                               :max-height=250
+                              :zoom="zoom"
+                              :x-offset="xOffset"
+                              :y-offset="yOffset"
                               class="ion-image">
                 </image-loader>
               </div>
@@ -187,7 +195,10 @@
    },
    data() {
      return {
-       annotImageOpacity: 0.5
+       annotImageOpacity: 0.5,
+       zoom: 1,
+       xOffset: 0,
+       yOffset: 0
      }
    },
    apollo: {
@@ -210,11 +221,22 @@
    },
    methods: {
      onSectionsChange(activeSections) {
-       this.$store.commit('updateAnnotationViewSections', activeSections)
+       // FIXME: this is a hack to make isotope images redraw
+       // so that they pick up the changes in parent div widths
+       this.$nextTick(() => {
+         window.dispatchEvent(new Event('resize'));
+       });
 
-       // this is the easiest way to tell child elements about the need to recompute widths/heights
-       // until ResizeObserver is available in browsers (applies to ImageLoader component)
-       this.$nextTick(() => {window.dispatchEvent(new Event('resize'));});
+       this.$store.commit('updateAnnotationViewSections', activeSections)
+     },
+
+     onImageZoom({zoom}) {
+       this.zoom = zoom;
+     },
+
+     onImageMove({xOffset, yOffset}) {
+       this.xOffset = xOffset;
+       this.yOffset = yOffset;
      }
    },
 

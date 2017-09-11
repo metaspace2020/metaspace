@@ -2,13 +2,14 @@
   <div class="image-loader"
        v-loading="isLoading"
        ref="parent"
+       v-resize.debounce.50="onResize"
        :element-loading-text="message">
-    <div style="text-align: left;">
+    <div style="text-align: left; z-index: 2;">
       <img :src="dataURI" :style="imageStyle" v-on:click="onClick" ref="visibleImage"
           class="isotope-image"/>
     </div>
 
-    <div style="text-align: left;">
+    <div style="text-align: left; z-index: 1;">
       <img v-if="opticalSrc"
           :src="opticalSrc" class="optical-image" :style="opticalImageStyle" />
     </div>
@@ -22,8 +23,12 @@
 
  import {createColormap} from '../util.js';
  import {quantile} from 'simple-statistics';
+ import resize from 'vue-resize-directive';
 
  export default {
+   directives: {
+     resize
+   },
    props: {
      src: {
        type: String
@@ -40,9 +45,21 @@
        type: String,
        default: null
      },
-     opticalImageOpacity: {
+     annotImageOpacity: {
        type: Number,
        default: 0.5
+     },
+     zoom: {
+       type: Number,
+       default: 1
+     },
+     xOffset: { // in natural IMS image pixels
+       type: Number,
+       default: 0
+     },
+     yOffset: {
+       type: Number,
+       default: 0
      }
    },
    data () {
@@ -54,9 +71,16 @@
        hotspotRemovalQuantile: 0.99,
        isLCMS: false,
        scaleFactor: 1,
-       visibleImageHeight: 0,
+
+       visibleImageHeight: 0, // in CSS pixels
        visibleImageWidth: 0,
-       parentDivWidth: 0
+       parentDivWidth: 0,
+
+       dragStartX: 0,
+       dragStartY: 0,
+       dragXOffset: 0, // starting position
+       dragYOffset: 0,
+       dragThrottled: false
      }
    },
    created() {
@@ -68,6 +92,8 @@
    },
    mounted: function() {
      this.parentDivWidth = this.$refs.parent.clientWidth;
+     this.$refs.visibleImage.addEventListener('mousedown', this.onMouseDown);
+     this.$refs.visibleImage.addEventListener('wheel', this.onWheel);
      window.addEventListener('resize', this.onResize);
    },
    beforeDestroy: function() {
@@ -77,28 +103,37 @@
      imageStyle() {
        // assume the allocated screen space has width > height
        if (!this.isLCMS) {
-         const width = this.image.naturalWidth * this.scaleFactor;
-         const xOffset = (this.parentDivWidth - width) / 2,
-               transform = `translate(${xOffset}px, 0px)`;
+         const width = this.image.naturalWidth * this.scaleFactor,
+               height = this.image.naturalHeight * this.scaleFactor,
+               centeringOffset = (this.parentDivWidth - width) / 2,
+               dx = this.xOffset * this.scaleFactor * this.zoom,
+               dy = this.yOffset * this.scaleFactor * this.zoom,
+               transform = `scale(${this.zoom}, ${this.zoom})` +
+                           `translate(${-dx / this.zoom + centeringOffset / this.zoom}px, ${-dy / this.zoom}px)`,
+               clipPathOffsets = [dy, (width * (this.zoom - 1) - dx), (height * (this.zoom - 1) - dy), dx],
+               clipPath = 'inset(' + clipPathOffsets.map(x => x / this.zoom + 'px').join(' ') + ')';
 
          return {
-           'width': this.image.naturalWidth * this.scaleFactor + 'px',
-           'height': this.image.naturalHeight * this.scaleFactor + 'px',
-           transform
+           'width': width + 'px',
+           'height': height + 'px',
+           transform,
+           'transform-origin': '0 0',
+           clipPath,
+           opacity: this.annotImageOpacity
          };
        } else // LC-MS data (1 x number of time points)
-         return {
-           width: '100%',
-           height: Math.min(100, this.maxHeight) + 'px'
-         };
+       return {
+         width: '100%',
+         height: Math.min(100, this.maxHeight) + 'px'
+       };
      },
 
      opticalImageStyle() {
        const style = this.imageStyle;
        return Object.assign({}, style, {
+         'opacity': 1.0 - style.opacity,
          'margin-top': (-this.visibleImageHeight) + 'px',
-         'vertical-align': 'top',
-         'opacity': this.opticalImageOpacity
+         'vertical-align': 'top'
        });
      }
    },
@@ -118,6 +153,55 @@
        this.$nextTick(() => {
          this.updateDimensions();
        });
+     },
+
+     onWheel(event) {
+       event.preventDefault();
+       let sY = 0;
+       if ('detail'      in event) { sY = event.detail; }
+       if ('wheelDelta'  in event) { sY = -event.wheelDelta / 120; }
+
+       const newZoom = Math.max(1, this.zoom - sY / 10.0);
+       const rect = event.target.getBoundingClientRect(),
+             x = (event.clientX - rect.left) / this.scaleFactor / this.zoom,
+             y = (event.clientY - rect.top) / this.scaleFactor / this.zoom,
+             xOffset = -(this.zoom / newZoom - 1) * x + this.zoom / newZoom * this.xOffset,
+             yOffset = -(this.zoom / newZoom - 1) * y + this.zoom / newZoom * this.yOffset;
+
+       this.$emit('zoom', {zoom: newZoom});
+       this.$emit('move', {xOffset, yOffset});
+     },
+
+     onMouseDown(event) {
+       event.preventDefault();
+       this.dragStartX = event.clientX;
+       this.dragStartY = event.clientY;
+       this.dragXOffset = this.xOffset;
+       this.dragYOffset = this.yOffset;
+       document.addEventListener('mouseup', this.onMouseUp);
+       document.addEventListener('mousemove', this.onMouseMove);
+     },
+
+     onMouseUp(event) {
+       this.dragThrottled = false;
+       const xOffset = this.dragXOffset - (event.clientX - this.dragStartX) / this.scaleFactor / this.zoom,
+             yOffset = this.dragYOffset - (event.clientY - this.dragStartY) / this.scaleFactor / this.zoom;
+       this.$emit('move', {xOffset: this.xOffset, yOffset: this.yOffset});
+       document.removeEventListener('mouseup', this.onMouseUp);
+       document.removeEventListener('mousemove', this.onMouseMove);
+       this.dragStartX = this.dragStartY = null;
+     },
+
+     onMouseMove(event) {
+       if (this.dragStartX === null || this.dragThrottled)
+         return;
+
+       this.dragThrottled = true;
+       setTimeout(() => { this.dragThrottled = false; }, 40);
+
+       const xOffset = this.dragXOffset - (event.clientX - this.dragStartX) / this.scaleFactor / this.zoom,
+             yOffset = this.dragYOffset - (event.clientY - this.dragStartY) / this.scaleFactor / this.zoom;
+       this.$emit('move', {xOffset, yOffset});
      },
 
      loadImage(url) {
@@ -178,6 +262,7 @@
            ctx = canvas.getContext("2d");
 
        this.determineScaleFactor();
+       this.updateDimensions();
        ctx.canvas.height = this.image.naturalHeight;
        ctx.canvas.width = this.image.naturalWidth;
        ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -212,11 +297,20 @@
        ctx.clearRect(0, 0, canvas.width, canvas.height);
        ctx.putImageData(imageData, 0, 0);
 
-       this.$refs.visibleImage.onload = this.updateDimensions;
        this.dataURI = canvas.toDataURL('image/png');
      },
 
      updateDimensions() {
+       // FIXME: this logic should be in AnnotationView (?)
+       const oldHeight = this.visibleImageHeight,
+             oldWidth = this.visibleImageWidth;
+       if (oldHeight == this.$refs.visibleImage.height &&
+           oldWidth == this.$refs.visibleImage.width)
+         return;
+
+       this.$emit('zoom', {zoom: 1});
+       this.$emit('move', {xOffset: 0, yOffset: 0});
+
        this.visibleImageHeight = this.$refs.visibleImage.height;
        this.visibleImageWidth = this.$refs.visibleImage.width;
        this.$emit('redraw', {
