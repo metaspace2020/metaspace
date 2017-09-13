@@ -1,41 +1,41 @@
 <template>
-  <div>
-    <div>
-      <span>Opacity:</span>
-      <span> <el-slider :min=0 :max=1 :step=0.01 v-model="opacity"></el-slider></span>
+  <div class="image-alignment-box"
+        :style="boxStyle"
+        @mousemove="onMouseMove">
+
+    <div class="optical-img-container">
+      <img :src="opticalSrc"
+            ref="scan"
+            @load="onOpticalImageLoad"
+            :style="opticalImageStyle"/>
     </div>
 
-    <div class="image-alignment-box"
-         :style="boxStyle"
-         @mousemove="onMouseMove">
-      <img :src="opticalSrc"
-           width="100%"
-           ref="scan"
-           @load="onOpticalImageLoad"
-           :style="opticalImageStyle"/>
-
+    <div class="handles-container">
       <svg ref="handles"
-           :width="opticalImageWidth + 2 * margin"
-           :height="opticalImageHeight + 2 * margin"
-           style="position: absolute; z-index: 10; pointer-events: none;">
+            :width="svgWidth"
+            :height="svgHeight"
+            :style="handleLayerStyle">
         <g :transform="layerTransform">
           <circle class="handle"
                   v-for="(pos, idx) in handlePositions"
-                  :cx="pos.x" :cy="pos.y" r="7"
+                  :cx="pos.x + padding" :cy="pos.y + padding" r="7"
                   @mousedown="onMouseDown($event, idx)">
           </circle>
         </g>
       </svg>
-
-      <image-loader
-          :src="massSpecSrc"
-          ref="annotImage"
-          :style="annotImageStyle"
-          @mousedown.native="onImageMouseDown"
-          style="z-index: 5;"
-          @redraw="onLoad">
-      </image-loader>
     </div>
+
+    <image-loader
+        :src="massSpecSrc"
+        ref="annotImage"
+        :style="annotImageStyle"
+        @mousedown.native="onImageMouseDown"
+        style="z-index: 5;"
+        :max-height=100500
+        :annot-image-opacity="annotImageOpacity"
+        @redraw="onLoad">
+    </image-loader>
+
   </div>
 </template>
 
@@ -57,6 +57,14 @@
      massSpecSrc: {
        // URL of a grayscale image
        type: String
+     },
+     annotImageOpacity: {
+       type: Number,
+       default: 0.5
+     },
+     padding: {
+       type: Number,
+       default: 100
      }
    },
    data() {
@@ -65,12 +73,10 @@
        height: 0,
        naturalWidth: 0,
        naturalHeight: 0,
-       opacity: 0.5,
        opticalImageWidth: 0,
        opticalImageHeight: 0,
        opticalImageNaturalWidth: 0,
        opticalImageNaturalHeight: 0,
-       margin: 10,
        handlePositions: [{x: 0, y: 0}, {x: 0, y: 0}, {x: 0, y: 0}, {x: 0, y: 0}],
        draggedHandle: null, // index of the handle being dragged
        handleStartX: null,  // position of the dragged handle center when drag starts
@@ -138,12 +144,14 @@
      },
 
      onLoad({width, height}) {
-       if (this.width * this.height > 0)
-         return; // ignore all but the first redraw of the IMS image
+       const oldWidth = this.width,
+             oldHeight = this.height;
        this.width = width;
        this.height = height;
        this.naturalWidth = this.$refs.annotImage.getImage().naturalWidth;
        this.naturalHeight = this.$refs.annotImage.getImage().naturalHeight;
+
+       // FIXME browser zoom causes a resize event, so handles move to the original position
        this.handlePositions = this.originalHandlePositions();
        this.recomputeTransform();
      },
@@ -259,36 +267,55 @@
    },
    computed: {
      layerTransform() {
-       return `translate(${this.margin}, ${this.margin})`;
+       return 'translate(0, 0)';
      },
 
      annotImageStyle() {
        const a = this.transform;
        return {
-         position: 'absolute',
-         left: this.margin + 'px',
-         top: this.margin + 'px',
          transform: `matrix3d(${a[0][0]}, ${a[0][1]}, 0, ${a[0][2]},
                               ${a[1][0]}, ${a[1][1]}, 0, ${a[1][2]},
                                        0,          0, 1,          0,
                               ${a[2][0]}, ${a[2][1]}, 0, ${a[2][2]})`,
          'transform-origin': '0 0',
-         opacity: this.opacity
+         'margin-top': (-this.svgHeight + this.padding) + 'px',
+         'margin-left': this.padding + 'px',
+         'vertical-align': 'top',
+         width: '500px', // fixed width to simplify calculations
+         'z-index': 8
        }
      },
 
      opticalImageStyle() {
        return {
          'z-index': 1,
-         position: 'absolute',
-         left: this.margin + 'px',
-         top: this.margin + 'px'
+         'margin': this.padding + 'px',
+         'width': `calc(100% - ${this.padding * 2}px)`
        };
      },
 
      boxStyle() {
        return {
-         height: this.opticalImageHeight + this.margin * 2 + 'px'
+         height: this.opticalImageHeight + this.padding * 2 + 'px',
+         border: 'solid #ddf 1px'
+       }
+     },
+
+     svgWidth() {
+       return this.opticalImageWidth + 2 * this.padding;
+     },
+
+     svgHeight() {
+       return this.opticalImageHeight + 2 * this.padding;
+     },
+
+     handleLayerStyle() {
+       return {
+         'z-index': 10,
+         'pointer-events': 'none', // pass mouse events to the lower levels
+         'vertical-align': 'top',
+         'position': 'relative',
+         'margin-top': (-this.opticalImageHeight - this.padding * 2) + 'px',
        }
      }
    }
@@ -296,12 +323,6 @@
 </script>
 
 <style>
- .image-alignment-box {
-   position: relative;
-   left: 10px;
-   top: 10px;
- }
-
  circle.handle {
    cursor: move;
    stroke-width: 4px;
@@ -310,5 +331,9 @@
 
    /* we want the unpainted interior to respond to hover */
    pointer-events: all;
+ }
+
+ .optical-img-container, .handles-container {
+   line-height: 0;
  }
 </style>

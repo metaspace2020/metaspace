@@ -22,6 +22,13 @@ import App from './App.vue';
 
 //Vue.config.performance = true;
 
+if (module.hot) {
+  module.hot.accept();
+  module.hot.dispose(function() {
+    clearInterval(timer);
+  });
+}
+
 new Vue({
   el: '#app',
   render: h => h(App),

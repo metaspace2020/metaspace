@@ -5,6 +5,7 @@ import DatasetTable from './components/DatasetTable.vue';
 import MetadataEditPage from './components/MetadataEditPage.vue';
 //import UploadPage from './components/UploadPage.vue';
 import HelpPage from './components/HelpPage.vue';
+import ImageAlignmentPage from './components/ImageAlignmentPage.vue';
 
 import Vue from 'vue';
 import VueRouter from 'vue-router';
@@ -32,7 +33,8 @@ const router = new VueRouter({
       }
     },
     { path: '/about', component: AboutPage },
-    { path: '/help', component: HelpPage }
+    { path: '/help', component: HelpPage },
+    { path: '/align/:dataset_id', component: ImageAlignmentPage }
   ]
 })
 

@@ -119,7 +119,7 @@
            transform,
            'transform-origin': '0 0',
            clipPath,
-           opacity: this.annotImageOpacity
+           //opacity: this.annotImageOpacity
          };
        } else // LC-MS data (1 x number of time points)
        return {
@@ -131,7 +131,7 @@
      opticalImageStyle() {
        const style = this.imageStyle;
        return Object.assign({}, style, {
-         'opacity': 1.0 - style.opacity,
+         //'opacity': 1.0 - style.opacity,
          'margin-top': (-this.visibleImageHeight) + 'px',
          'vertical-align': 'top'
        });
@@ -143,6 +143,9 @@
      },
      'colormap' (name) {
        this.colors = createColormap(name);
+       this.applyColormap();
+     },
+     'annotImageOpacity' (opacity) {
        this.applyColormap();
      }
    },
@@ -287,11 +290,15 @@
        var numPixels = pixels.length / 4;
        var g = this.grayscaleData;
 
+       // TODO experiment with different functions
+       const f = (x) => 1;
+
        for (let i = 0; i < numPixels; i++) {
          let c = this.colors[g[i*4]];
          pixels[i*4] = c[0];
          pixels[i*4+1] = c[1];
          pixels[i*4+2] = c[2];
+         pixels[i*4+3] = g[i*4+3] == 0 ? 0 : this.annotImageOpacity * 255 * f(g[i*4] / 255);
        }
 
        ctx.clearRect(0, 0, canvas.width, canvas.height);
