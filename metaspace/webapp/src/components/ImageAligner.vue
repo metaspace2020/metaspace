@@ -42,7 +42,7 @@
 <script>
  import Vue from 'vue';
  import ImageLoader from './ImageLoader.vue';
- import {inv, transpose, lusolve} from 'mathjs';
+ import {inv, dot} from 'numeric';
 
  export default {
    name: 'image-aligner',
@@ -212,7 +212,7 @@
          b.push(dst[i].y);
        }
 
-       const coeffs = lusolve(A, b).map(x => x[0]);
+       const coeffs = dot(inv(A), b);
 
        this.transform = [[coeffs[0], coeffs[3], coeffs[6]],
                          [coeffs[1], coeffs[4], coeffs[7]],
@@ -248,10 +248,11 @@
            scaleYrev = this.opticalImageNaturalHeight / this.opticalImageHeight;
        let scaleX = scaleXfwd * scaleXrev,
            scaleY = scaleYfwd * scaleYrev;
+       let a = this.transform;
 
-       return [[coeffs[0] * scaleX, coeffs[3] * scaleX, coeffs[6] * scaleXfwd],
-               [coeffs[1] * scaleY, coeffs[4] * scaleY, coeffs[7] * scaleYfwd],
-               [coeffs[2] * scaleXrev, coeffs[5] * scaleYrev, 1]];
+       return [[a[0][0] * scaleX, a[0][1] * scaleX, a[0][2] * scaleXfwd],
+               [a[1][0] * scaleY, a[1][1] * scaleY, a[1][2] * scaleYfwd],
+               [a[2][0] * scaleXrev, a[2][1] * scaleYrev, 1]];
      },
 
      /*

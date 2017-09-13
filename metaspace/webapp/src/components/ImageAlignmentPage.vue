@@ -52,6 +52,7 @@
 
     <image-aligner
         v-if="opticalImgUrl"
+        ref="aligner"
         :annotImageOpacity="annotImageOpacity"
         :opticalSrc="opticalImgUrl"
         :massSpecSrc="massSpecSrc">
@@ -157,6 +158,7 @@
      },
      submit() {
        // TODO
+       console.log(this.$refs.aligner.getNormalizedTransform());
      }
    }
  }
