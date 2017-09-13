@@ -6,6 +6,8 @@ import json
 import re
 from copy import deepcopy
 from io import BytesIO
+import os
+import boto3
 
 def _extract_data(res):
     if not res.headers.get('Content-Type').startswith('application/json'):
@@ -19,12 +21,14 @@ def _extract_data(res):
 
 DEFAULT_CONFIG = {
     'graphql_url': 'http://annotate.metaspace2020.eu:3010/graphql',
-    'moldb_url': 'http://annotate.metaspace2020.eu:5001/v1'
+    'moldb_url': 'http://annotate.metaspace2020.eu:5001/v1',
+    'jwt': None
 }
 
 class GraphQLClient(object):
-    def __init__(self, url):
+    def __init__(self, url, jwt=""):
         self.url = url
+        self.jwt=jwt
 
     def query(self, query, variables={}):
         res = requests.post(self.url,
@@ -166,6 +170,24 @@ class GraphQLClient(object):
           }
         }"""
         return self.listQuery('allDatasets', query, {'filter': datasetFilter})
+
+
+
+    def submitDataset(self, data_path, metadata, priority):
+        if self.jwt == None:
+            raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
+
+        query = """
+                mutation customSubmitDataset ($jwt: String!, $path: String!, $metadata: String!, $priority: Int) {
+                      submitDataset(jwt: $jwt,
+                        path: $path,
+                        metadataJson: $metadata,
+                        priority: $priority
+                      )
+                 }
+                """
+        variables = {'jwt': self.jwt, 'path': data_path, 'metadata': metadata, 'priority': priority}
+        return self.query(query, variables)
 
 
 class MolDBClient:
@@ -371,7 +393,7 @@ class SMInstance(object):
         return "SMInstance({})".format(self._config['graphql_url'])
 
     def reconnect(self):
-        self._gqclient = GraphQLClient(self._config['graphql_url'])
+        self._gqclient = GraphQLClient(self._config['graphql_url'], self._config['jwt'])
         self._es_client = None
         self._moldb_client = None
 
@@ -437,7 +459,6 @@ class SMInstance(object):
         :return: pandas dataframe indexed by dataset ids,
                  with multi-index adduct / molecular formula on columns
         """
-        records = self._gqclient.getAnnotations(dict(database=db_name, fdrLevel=fdr))
         results = pd.io.json.json_normalize(records)
         results = pd.DataFrame({
             'sf': results['sumFormula'],
@@ -532,6 +553,29 @@ class SMInstance(object):
                                             fill_value=fill_values.get(f, 0.0))
         return d
 
+    def submit_dataset(self, imzml_fn, ibd_fn, metadata, folder_uuid = None, s3bucket ='sm-external-export', priority=0):
+        """
+        Submit a dataset for processing on the SM Instance
+        :param imzml_fn: file path to imzml
+        :param ibd_fn: file path to ibd
+        :param metadata: a properly formatted metadata json string
+        :param s3bucket: this should be a bucket that both the user has write permission to and METASPACE can access 
+        :param folder_uuid: a unique key for the dataset
+        :return: 
+        """
+        s3 = boto3.client('s3')
+        buckets = s3.list_buckets()
+        if not s3bucket in [b['Name'] for b in buckets['Buckets']]:
+            s3.create_bucket(Bucket=s3bucket, CreateBucketConfiguration={
+                                                    'LocationConstraint': 'eu-west-1'})
+        if not folder_uuid:
+            import uuid
+            folder_uuid = str(uuid.uuid4())
+        for fn in [imzml_fn, ibd_fn]:
+            key = "{}/{}".format(folder_uuid, os.path.split(fn)[1])
+            s3.upload_file(fn, s3bucket, key)
+        folder = "s3a://" + s3bucket + "/" + folder_uuid
+        return self._gqclient.submitDataset(folder, metadata, priority)
 
 class MolecularDatabase:
     def __init__(self, metadata, client):

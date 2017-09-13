@@ -13,15 +13,16 @@ from cpyMSpec import InstrumentModel, isotopePattern
 
 import boto3
 import numpy as np
+import json
 
 import os
 
 _s3 = boto3.resource('s3')
 
-def _download(sm_instance, ds_name, tmp_dir, max_size):
-    fn_pref = ds_name.replace('//', '#').replace(' ', '_')
+def _download(sm_instance, ds_id, tmp_dir, max_size):
+    fn_pref = ds_id
     download_dir = tmp_dir
-    location = sm_instance.dataset(ds_name).s3dir
+    location = sm_instance.dataset(id=ds_id).s3dir
     bucket, key = location[6:].split('/', 1)
     bucket = _s3.Bucket(bucket)
     imzml_fn = imzb_fn = None
@@ -55,8 +56,10 @@ class LocalDataset(object):
     * runs DBSCAN clustering algorithm on centroid m/z values.
     """
 
-    def __init__(self, sm_instance, ds_name, tmp_dir="/tmp", max_size=100e9):
-        self.imzml_fn, self.imzb_fn = _download(sm_instance, ds_name, tmp_dir, max_size)
+    def __init__(self, sm_instance, ds_name=None, ds_id=None, tmp_dir="/tmp", max_size=100e9):
+        ds_id = ds_id or sm_instance.dataset(name=ds_name).id
+        ds_name = ds_name or sm_instance.dataset(id=ds_id).name
+        self.imzml_fn, self.imzb_fn = _download(sm_instance, ds_id, tmp_dir, max_size)
         self.imzb = ImzbReader(self.imzb_fn)
         img = self.imzb.get_mz_image(0, 0)
 
@@ -65,12 +68,16 @@ class LocalDataset(object):
         self._first_row = min(np.where(img.sum(axis=1) > -img.shape[1])[0])
 
         self._bins = None
-        self._meta = sm_instance.dataset(ds_name).metadata.json
+        self._meta = json.loads(sm_instance.dataset(id=ds_id).metadata.json)
         rp = self._meta['MS_Analysis']['Detector_Resolving_Power']
-        self._instrument = InstrumentModel(self.analyzer.lower(),
+        analyzer = self.analyzer.lower()
+        if 'orbitrap' in analyzer:
+            analyzer = 'orbitrap'
+        self._instrument = InstrumentModel(analyzer,
                                            float(rp['Resolving_Power']), float(rp['mz']))
         self._sm = sm_instance
         self._name = ds_name
+        self._id = ds_id
 
     @property
     def name(self):
@@ -128,7 +135,7 @@ class LocalDataset(object):
         """
         Set of (sum formula, adduct) pairs with asked FDR level.
         """
-        return set(self._sm.dataset(self._name).annotations(fdr=fdr))
+        return set(self._sm.dataset(id=self._id).annotations(fdr=fdr))
 
     def estimate_mz_shift(self, true_mz):
         """
