@@ -16,5 +16,6 @@ setup(name='sm_annotation_utils',
           'numpy',
           'pyyaml',
           'psycopg2',
-          'pyMSpec'
+          'pyMSpec',
+          'matplotlib'
       ])
