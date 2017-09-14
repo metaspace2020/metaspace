@@ -8,6 +8,7 @@
 
       <div class="image-alignment-settings">
         <div>
+          <p style="margin: 5px;">Dataset: {{ datasetName }}</p>
           <label class="optical-image-select el-button">
             <input type="file"
                   style="display: none;"
@@ -49,7 +50,12 @@
               :total="this.annotations ? this.annotations.length : 0"
               :page-size=1
               @current-change="updateIndex">
-            <div class="annotation-short-info" v-html="currentSumFormula"></div>
+            <el-select v-model="annotationIndex" filterable class="annotation-short-info">
+              <el-option v-for="(annot, i) in annotations"
+                         :value="i" :label="renderLabel(annot)">
+                <span v-html="renderAnnotation(annot)"></span>
+              </el-option>
+            </el-select>
           </el-pagination>
         </div>
 
@@ -87,7 +93,8 @@
 <script>
  import ImageAligner from './ImageAligner.vue';
  import {annotationListQuery} from '../api/annotation.js';
- import {renderMolFormula} from '../util.js';
+ import {renderMolFormula, prettifySign} from '../util.js';
+ import gql from 'graphql-tag';
 
  export default {
    name: 'image-alignment-page',
@@ -128,6 +135,14 @@
          };
        },
        update: data => data.allAnnotations
+     },
+
+     datasetName: {
+       query: gql`query getDatasetName($id: String!) { dataset(id: $id) { name } }`,
+       variables() {
+         return {id: this.datasetId};
+       },
+       update: data => data.dataset.name
      }
    },
 
@@ -152,8 +167,7 @@
          return 'loading...';
        if (this.annotations.length == 0)
          return 'no results';
-       const {sumFormula, adduct, dataset} = this.currentAnnotation;
-       return renderMolFormula(sumFormula, adduct, dataset.polarity);
+       return this.renderAnnotation(this.currentAnnotation);
      },
 
      opticalImageFilename() {
@@ -161,6 +175,19 @@
      }
    },
    methods: {
+     renderAnnotation(annotation) {
+       const {sumFormula, adduct, dataset} = annotation;
+       return renderMolFormula(sumFormula, adduct, dataset.polarity);
+     },
+
+     renderLabel(annotation) {
+       const {sumFormula, adduct, dataset} = annotation;
+       let result = `[${sumFormula + adduct}]`;
+       result = prettifySign(result);
+       result += {'POSITIVE': '⁺', 'NEGATIVE': '¯'}[dataset.polarity];
+       return result;
+     },
+
      onFileChange(event) {
        const file = event.target.files[0];
 
@@ -240,8 +267,12 @@
    border-left: solid lightgrey 1px;
    border-right: solid lightgrey 1px;
    padding: 0px 10px;
-   min-width: 150px;
+   min-width: 180px;
    text-align: center;
+ }
+
+ .el-pagination .annotation-short-info .el-input {
+   width: 180px;
  }
 
  .optical-image-submit {
