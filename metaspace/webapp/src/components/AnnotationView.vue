@@ -37,6 +37,7 @@
                           :y-offset="yOffset"
                           @zoom="onImageZoom"
                           @move="onImageMove"
+                          :opacity-mode="imageOpacityMode"
                           class="ion-image principal-peak-image">
             </image-loader>
 
@@ -127,6 +128,7 @@
                               :zoom="zoom"
                               :x-offset="xOffset"
                               :y-offset="yOffset"
+                              :opacity-mode="imageOpacityMode"
                               class="ion-image">
                 </image-loader>
               </div>
@@ -191,6 +193,10 @@
 
      opticalImageUrl() {
        return null;
+     },
+
+     imageOpacityMode() {
+       return this.opticalImageUrl ? 'linear' : 'constant';
      }
    },
    data() {

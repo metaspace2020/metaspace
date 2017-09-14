@@ -74,6 +74,14 @@ function csvExportHeader() {
   return '# Generated at ' + new Date().toString() + '\n# URL: ' + window.location.href + '\n';
 }
 
+function scrollDistance(event) {
+  let sY = 0;
+  if ('detail'      in event) { sY = event.detail; }
+  if ('wheelDelta'  in event) { sY = -event.wheelDelta / 120; }
+  if (('deltaY' in event) && !sY) { sY = (event.deltaY < 1) ? -1 : 1; }
+  return sY;
+}
+
 export {
   renderMolFormula,
   prettifySign,
@@ -83,5 +91,6 @@ export {
   getColorScale,
   createColormap,
   mzFilterPrecision,
-  csvExportHeader
+  csvExportHeader,
+  scrollDistance
 };

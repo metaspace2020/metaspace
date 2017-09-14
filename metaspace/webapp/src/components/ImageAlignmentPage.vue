@@ -1,60 +1,84 @@
 <template>
   <div id="alignment-page">
 
-    <div class="image-alignment-header">
-      Align ion images to the optical image and press 'Submit' button to save the transformation and upload the image to the server.
-    </div>
+    <div class="image-alignment-top">
+      <div class="image-alignment-header">
+        Align ion images to the optical image and press 'Submit' button to save the transformation and upload the image to the server.
+      </div>
 
-    <div class="image-alignment-settings">
-      <div>
-        <label class="optical-image-select el-button">
-          <input type="file"
-                 style="display: none;"
-                 @change="onFileChange"
-                 accept=".png, .jpg, .jpeg"/>
-            Select optical image
-        </label>
+      <div class="image-alignment-settings">
+        <div>
+          <label class="optical-image-select el-button">
+            <input type="file"
+                  style="display: none;"
+                  @change="onFileChange"
+                  accept=".png, .jpg, .jpeg"/>
+              Select optical image
+          </label>
 
-        <div style="padding: 3px; font-size: small;">
-        {{ opticalImageFilename }}
+          <div style="padding: 3px; font-size: small;">
+          {{ opticalImageFilename }}
+          </div>
+
+          <div class="el-upload__tip" slot="tip">
+            JPEG/PNG file less than {{ limitMB }}MB in size
+          </div>
         </div>
 
-        <div class="el-upload__tip" slot="tip">
-          JPEG/PNG file less than {{ limitMB }}MB in size
+        <div class="sliders-box">
+          IMS image opacity:
+          <el-slider :min=0 :max=1 :step=0.01 v-model="annotImageOpacity">
+          </el-slider>
+
+          Optical image padding, px:
+          <el-slider :min=0 :max=500 :step=10 v-model="padding">
+          </el-slider>
+        </div>
+
+        <div class="annotation-selection">
+          <el-form :inline="true">
+            <el-form-item label="Angle (°):" style="margin-bottom:5px;">
+              <el-input-number :min=-180 :max=180 :step=1 v-model="angle" size="small">
+              </el-input-number>
+            </el-form-item>
+          </el-form>
+
+          <span style="font-size: 14px; margin-bottom: 5px;" >Annotation:</span>
+          <el-pagination
+              layout="prev,slot,next"
+              :total="this.annotations ? this.annotations.length : 0"
+              :page-size=1
+              @current-change="updateIndex">
+            <div class="annotation-short-info" v-html="currentSumFormula"></div>
+          </el-pagination>
+        </div>
+
+        <div class="optical-image-submit">
+          <div style="display: inline-block;">
+            <el-button @click="reset"
+                       v-show="opticalImgUrl"
+                       style="margin-bottom: 10px;">
+              Reset
+            </el-button>
+
+            <el-button type="primary"
+                       @click="submit"
+                       :disabled="!opticalImgUrl">
+              Submit
+            </el-button>
+          </div>
         </div>
       </div>
-
-      <div class="opacity-slider">
-        IMS image opacity:
-        <el-slider :min=0 :max=1 :step=0.01 v-model="annotImageOpacity">
-        </el-slider>
-      </div>
-
-      <div class="annotation-selection">
-        <el-pagination
-            layout="prev,slot,next"
-            :total="this.annotations ? this.annotations.length : 0"
-            :page-size=1
-            @current-change="updateIndex">
-          <div class="annotation-short-info" v-html="currentSumFormula"></div>
-        </el-pagination>
-      </div>
-
-      <div class="optical-image-submit">
-        <el-button type="primary"
-                   @click="submit"
-                   :disabled="!opticalImgUrl">
-          Submit
-        </el-button>
-      </div>
-
     </div>
 
     <image-aligner
         v-if="opticalImgUrl"
         ref="aligner"
+        style="position:relative;top:200px;z-index:1;"
         :annotImageOpacity="annotImageOpacity"
         :opticalSrc="opticalImgUrl"
+        :padding="padding"
+        :rotationAngleDegrees="angle"
         :massSpecSrc="massSpecSrc">
     </image-aligner>
   </div>
@@ -80,10 +104,12 @@
 
    data() {
      return {
-       annotImageOpacity: 0.5,
+       annotImageOpacity: 1,
        annotationIndex: 0,
        file: null,
-       opticalImgUrl: null
+       opticalImgUrl: null,
+       padding: 100,
+       angle: 0
      }
    },
 
@@ -159,6 +185,10 @@
      submit() {
        // TODO
        console.log(this.$refs.aligner.getNormalizedTransform());
+     },
+     reset() {
+       this.$refs.aligner.reset();
+       this.angle = 0;
      }
    }
  }
@@ -171,7 +201,7 @@
    width: 100%;
    font-size: 14px;
    margin-bottom: 10px;
-   padding-bottom: 10px;
+   padding: 10px;
    border-bottom: dotted lightblue 1px;
  }
 
@@ -183,15 +213,25 @@
    justify-content: space-around;
  }
 
+ .image-alignment-top {
+   position: fixed;
+   left: 0px;
+   top: 62px;
+   z-index: 500;
+   width: 100%;
+   background-color: white;
+ }
+
  #alignment-page {
    margin: 20px;
  }
 
- .opacity-slider {
+ .sliders-box {
    min-width: 150px;
    margin: 0px 20px;
    padding: 0px 20px;
    border-left: solid #eef 2px;
+   font-size: 14px;
  }
 
  .annotation-short-info {
@@ -206,7 +246,7 @@
 
  .optical-image-submit {
    margin-left: 30px;
-   }
+ }
 
  .optical-image-submit, .annotation-selection {
    display: flex;

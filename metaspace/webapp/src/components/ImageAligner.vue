@@ -3,7 +3,7 @@
         :style="boxStyle"
         @mousemove="onMouseMove">
 
-    <div class="optical-img-container">
+    <div class="optical-img-container" style="height: calc(100%);">
       <img :src="opticalSrc"
             ref="scan"
             @load="onOpticalImageLoad"
@@ -15,10 +15,10 @@
             :width="svgWidth"
             :height="svgHeight"
             :style="handleLayerStyle">
-        <g :transform="layerTransform">
+        <g :transform="layerTransform" v-if="!isNaN(scaleX * scaleY)">
           <circle class="handle"
                   v-for="(pos, idx) in handlePositions"
-                  :cx="pos.x + padding" :cy="pos.y + padding" r="7"
+                  :cx="pos.x * scaleX + padding" :cy="pos.y * scaleY + padding" r="7"
                   @mousedown="onMouseDown($event, idx)">
           </circle>
         </g>
@@ -32,7 +32,10 @@
         @mousedown.native="onImageMouseDown"
         style="z-index: 5;"
         :max-height=100500
+        @wheel.native="onWheel"
         :annot-image-opacity="annotImageOpacity"
+        opacity-mode="linear"
+        :transform="annotImageTransformCSS"
         @redraw="onLoad">
     </image-loader>
 
@@ -42,7 +45,40 @@
 <script>
  import Vue from 'vue';
  import ImageLoader from './ImageLoader.vue';
- import {inv, dot} from 'numeric';
+ import {inv, dot, diag, getDiag} from 'numeric';
+ import {scrollDistance} from '../util.js';
+
+ function computeTransform(src, dst) {
+   // http://franklinta.com/2014/09/08/computing-css-matrix3d-transforms/
+   let A = [];
+   let b = [];
+   for (let i = 0; i < 4; i++) {
+     A.push([src[i].x, src[i].y, 1, 0, 0, 0, -src[i].x * dst[i].x, -src[i].y * dst[i].x]);
+     b.push(dst[i].x);
+     A.push([0, 0, 0, src[i].x, src[i].y, 1, -src[i].x * dst[i].y, -src[i].y * dst[i].y]);
+     b.push(dst[i].y);
+   }
+
+   const coeffs = dot(inv(A), b);
+
+   return [
+     [coeffs[0], coeffs[1], coeffs[2]],
+     [coeffs[3], coeffs[4], coeffs[5]],
+     [coeffs[6], coeffs[7], 1]
+   ];
+ }
+
+ function computeHandlePositions(transformationMatrix, src) {
+   function transformFunc({x, y}) {
+     const a = transformationMatrix,
+           w = a[2][0] * x + a[2][1] * y + a[2][2],
+           x_ = (a[0][0] * x + a[0][1] * y + a[0][2]) / w,
+           y_ = (a[1][0] * x + a[1][1] * y + a[1][2]) / w;
+     return {x: x_, y: y_};
+   }
+
+   return src.map(transformFunc);
+ }
 
  export default {
    name: 'image-aligner',
@@ -60,11 +96,15 @@
      },
      annotImageOpacity: {
        type: Number,
-       default: 0.5
+       default: 1
      },
      padding: {
        type: Number,
        default: 100
+     },
+     rotationAngleDegrees: {
+       type: Number,
+       default: 0
      }
    },
    data() {
@@ -77,7 +117,6 @@
        opticalImageHeight: 0,
        opticalImageNaturalWidth: 0,
        opticalImageNaturalHeight: 0,
-       handlePositions: [{x: 0, y: 0}, {x: 0, y: 0}, {x: 0, y: 0}, {x: 0, y: 0}],
        draggedHandle: null, // index of the handle being dragged
        handleStartX: null,  // position of the dragged handle center when drag starts
        handleStartY: null,
@@ -85,10 +124,11 @@
        dragStartY: null,
        dragThrottled: false,
        resizeThrottled: false,
-       transform: [[1, 0, 0],
-                   [0, 1, 0],
-                   [0, 0, 1]]
-     }
+       normalizedTransform: [[1, 0, 0],
+                             [0, 1, 0],
+                             [0, 0, 1]],
+       lastRotationAngle: this.rotationAngleDegrees
+     };
    },
 
    mounted: function() {
@@ -103,9 +143,9 @@
      originalHandlePositions() {
        return [
          {x: 0, y: 0},
-         {x: 0, y: this.height},
-         {x: this.width, y: 0},
-         {x: this.width, y: this.height}
+         {x: 0, y: this.naturalHeight},
+         {x: this.naturalWidth, y: 0},
+         {x: this.naturalWidth, y: this.naturalHeight}
        ];
      },
 
@@ -114,7 +154,6 @@
        this.opticalImageHeight = this.$refs.scan.height;
        this.opticalImageNaturalWidth = this.$refs.scan.naturalWidth;
        this.opticalImageNaturalHeight = this.$refs.scan.naturalHeight;
-       this.recomputeTransform();
      },
 
      onResize() {
@@ -126,21 +165,9 @@
 
        if (!this.$refs.scan)
          return;
-       const newWidth = this.$refs.scan.width;
-       const newHeight = this.$refs.scan.height;
 
-       const scaleX = newWidth / this.opticalImageWidth,
-             scaleY = newHeight / this.opticalImageHeight;
-
-       this.handlePositions = this.handlePositions.map(pos => ({
-         x: pos.x * scaleX,
-         y: pos.y * scaleY
-       }));
-
-       this.opticalImageWidth = newWidth;
-       this.opticalImageHeight = newHeight;
-
-       this.recomputeTransform();
+       this.opticalImageWidth = this.$refs.scan.width;
+       this.opticalImageHeight = this.$refs.scan.height;
      },
 
      onLoad({width, height}) {
@@ -152,8 +179,8 @@
        this.naturalHeight = this.$refs.annotImage.getImage().naturalHeight;
 
        // FIXME browser zoom causes a resize event, so handles move to the original position
-       this.handlePositions = this.originalHandlePositions();
-       this.recomputeTransform();
+       if (this.scaleX > 0 && this.scaleY > 0)
+         this.reset();
      },
 
      onMouseDown(event, handleIndex) {
@@ -166,26 +193,40 @@
        document.addEventListener('mouseup', this.onMouseUp);
      },
 
+     onWheel(event) {
+       event.preventDefault();
+
+       const zoom = 1 - scrollDistance(event) / 30.0;
+       const rect = this.$refs.scan.getBoundingClientRect(),
+             x = (event.clientX - rect.left) / this.scaleX,
+             y = (event.clientY - rect.top) / this.scaleY,
+             m = [[zoom, 0, -(zoom - 1)*x],
+                  [0, zoom, -(zoom - 1)*y],
+                  [0, 0, 1]];
+       this.normalizedTransform = dot(m, this.normalizedTransform);
+     },
+
      updateHandlePosition(event) {
+       let pos = this.handlePositions.slice();
+
        if (this.draggedHandle !== null) { // dragging one handle
-         Vue.set(this.handlePositions, this.draggedHandle, {
-           x: this.handleStartX + event.clientX - this.dragStartX,
-           y: this.handleStartY + event.clientY - this.dragStartY
-         });
+         pos[this.draggedHandle] = {
+           x: this.handleStartX + (event.clientX - this.dragStartX) / this.scaleX,
+           y: this.handleStartY + (event.clientY - this.dragStartY) / this.scaleY
+         };
        } else { // dragging the image
-         let newHandlePositions = [];
-         newHandlePositions.push({
-           x: this.handleStartX + event.clientX - this.dragStartX,
-           y: this.handleStartY + event.clientY - this.dragStartY
-         });
-         let p = newHandlePositions[0];
+         pos[0] = {
+           x: this.handleStartX + (event.clientX - this.dragStartX) / this.scaleX,
+           y: this.handleStartY + (event.clientY - this.dragStartY) / this.scaleY
+         };
          for (let i = 1; i < 4; i++)
-           newHandlePositions.push({
-             x: this.handlePositions[i].x - this.handlePositions[0].x + p.x,
-             y: this.handlePositions[i].y - this.handlePositions[0].y + p.y
-           });
-         this.handlePositions = newHandlePositions;
+           pos[i] = {
+             x: this.handlePositions[i].x - this.handlePositions[0].x + pos[0].x,
+             y: this.handlePositions[i].y - this.handlePositions[0].y + pos[0].y
+           };
        }
+
+       this.normalizedTransform = computeTransform(this.originalHandlePositions(), pos);
      },
 
      onMouseUp(event) {
@@ -194,29 +235,6 @@
        this.dragThrottled = false;
        document.removeEventListener('mouseup', this.onMouseUp);
        this.dragStartX = this.dragStartY = null;
-
-       this.recomputeTransform();
-     },
-
-     recomputeTransform() {
-       let src = this.originalHandlePositions(),
-           dst = this.handlePositions;
-
-       // http://franklinta.com/2014/09/08/computing-css-matrix3d-transforms/
-       let A = [];
-       let b = [];
-       for (let i = 0; i < 4; i++) {
-         A.push([src[i].x, src[i].y, 1, 0, 0, 0, -src[i].x * dst[i].x, -src[i].y * dst[i].x]);
-         b.push(dst[i].x);
-         A.push([0, 0, 0, src[i].x, src[i].y, 1, -src[i].x * dst[i].y, -src[i].y * dst[i].y]);
-         b.push(dst[i].y);
-       }
-
-       const coeffs = dot(inv(A), b);
-
-       this.transform = [[coeffs[0], coeffs[3], coeffs[6]],
-                         [coeffs[1], coeffs[4], coeffs[7]],
-                         [coeffs[2], coeffs[5], 1]];
      },
 
      onMouseMove(event) {
@@ -224,9 +242,8 @@
          return;
 
        this.dragThrottled = true;
-       setTimeout(() => { this.dragThrottled = false; }, 20);
+       setTimeout(() => { this.dragThrottled = false; }, 30);
        this.updateHandlePosition(event);
-       this.recomputeTransform();
      },
 
      onImageMouseDown(event) {
@@ -238,32 +255,22 @@
        document.addEventListener('mouseup', this.onMouseUp);
      },
 
-     /*
-        the transform sending an IMS image to the optical image, using natural dimensions for both
-     */
-     getNormalizedTransform() {
-       let scaleXfwd = this.width / this.naturalWidth,
-           scaleYfwd = this.height / this.naturalHeight,
-           scaleXrev = this.opticalImageNaturalWidth / this.opticalImageWidth,
-           scaleYrev = this.opticalImageNaturalHeight / this.opticalImageHeight;
-       let scaleX = scaleXfwd * scaleXrev,
-           scaleY = scaleYfwd * scaleYrev;
-       let a = this.transform;
-
-       return [[a[0][0] * scaleX, a[0][1] * scaleX, a[0][2] * scaleXfwd],
-               [a[1][0] * scaleY, a[1][1] * scaleY, a[1][2] * scaleYfwd],
-               [a[2][0] * scaleXrev, a[2][1] * scaleYrev, 1]];
+     reset() {
+       this.normalizedTransform = dot(diag([
+         (this.width / this.naturalWidth) / this.scaleX,
+         (this.height / this.naturalHeight) / this.scaleY,
+         1
+       ]), this.rotationMatrix(this.rotationAngleDegrees));
      },
 
-     /*
-        the transform sending the optical image to an IMS image, using natural dimensions for both
-     */
-     getInvertedNormalizedTransform() {
-       let inverted = inv(this.getNormalizedTransform());
-       for (let i = 0; i < 3; i++)
-         for (let j = 0; j < 3; j++)
-           inverted[i][j] /= inverted[2][2];
-       return inverted;
+     rotationMatrix(degrees) {
+       const c = Math.cos(degrees / 180 * Math.PI),
+             s = Math.sin(degrees / 180 * Math.PI),
+             x = -this.naturalWidth / 2,
+             y = -this.naturalHeight / 2;
+       return [[c, -s, (c-1) * x - s * y],
+               [s, c, (c-1) * y + s * x],
+               [0, 0, 1]];
      }
    },
    computed: {
@@ -271,14 +278,43 @@
        return 'translate(0, 0)';
      },
 
-     annotImageStyle() {
+     transform() {
+       const scaleAnnot = diag([
+         this.naturalWidth / this.width,
+         this.naturalHeight / this.height,
+         1
+       ]);
+       const scaleOptical = diag([
+         this.opticalImageWidth / this.opticalImageNaturalWidth,
+         this.opticalImageHeight / this.opticalImageNaturalHeight,
+         1
+       ]);
+
+       return dot(scaleOptical, dot(this.normalizedTransform, scaleAnnot));
+     },
+
+     handlePositions() {
+       // in original optical image dimensions
+       return computeHandlePositions(this.normalizedTransform, this.originalHandlePositions());
+     },
+
+     scaleX() {
+       return this.opticalImageWidth / this.opticalImageNaturalWidth;
+     },
+
+     scaleY() {
+       return this.opticalImageHeight / this.opticalImageNaturalHeight;
+     },
+     annotImageTransformCSS() {
        const a = this.transform;
+       return `matrix3d(${a[0][0]}, ${a[1][0]}, 0, ${a[2][0]},
+                        ${a[0][1]}, ${a[1][1]}, 0, ${a[2][1]},
+                                 0,          0, 1,          0,
+                        ${a[0][2]}, ${a[1][2]}, 0, ${a[2][2]})`;
+     },
+
+     annotImageStyle() {
        return {
-         transform: `matrix3d(${a[0][0]}, ${a[0][1]}, 0, ${a[0][2]},
-                              ${a[1][0]}, ${a[1][1]}, 0, ${a[1][2]},
-                                       0,          0, 1,          0,
-                              ${a[2][0]}, ${a[2][1]}, 0, ${a[2][2]})`,
-         'transform-origin': '0 0',
          'margin-top': (-this.svgHeight + this.padding) + 'px',
          'margin-left': this.padding + 'px',
          'vertical-align': 'top',
@@ -318,6 +354,22 @@
          'position': 'relative',
          'margin-top': (-this.opticalImageHeight - this.padding * 2) + 'px',
        }
+     }
+   },
+
+   watch: {
+     padding() {
+       this.$nextTick(() => {
+         this.onResize();
+       });
+     },
+
+     rotationAngleDegrees(deg) {
+       this.normalizedTransform = dot(
+         this.normalizedTransform,
+         this.rotationMatrix(deg - this.lastRotationAngle)
+       );
+       this.lastRotationAngle = deg;
      }
    }
  }

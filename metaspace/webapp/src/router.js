@@ -21,7 +21,16 @@ const router = new VueRouter({
       component: DatasetsPage,
       children: [
         {path: '', component: DatasetTable},
-        {path: 'edit/:dataset_id', component: MetadataEditPage, name: 'edit-metadata'}
+        {path: 'edit/:dataset_id', component: MetadataEditPage, name: 'edit-metadata'},
+        {
+          path: ':dataset_id/add-optical-image',
+          name: 'add-optical-image',
+          component: function (resolve) {
+            require.ensure(['./components/ImageAlignmentPage.vue'], () => {
+              resolve(require('./components/ImageAlignmentPage.vue'))
+            });
+          }
+        }
       ]
     },
     {
@@ -33,15 +42,7 @@ const router = new VueRouter({
       }
     },
     { path: '/about', component: AboutPage },
-    { path: '/help', component: HelpPage },
-    {
-      path: '/align/:dataset_id',
-      component: function (resolve) {
-        require.ensure(['./components/ImageAlignmentPage.vue'], () => {
-          resolve(require('./components/ImageAlignmentPage.vue'))
-        });
-      }
-    }
+    { path: '/help', component: HelpPage }
   ]
 })
 

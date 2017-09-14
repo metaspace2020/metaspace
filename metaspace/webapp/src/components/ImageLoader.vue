@@ -21,9 +21,15 @@
 <script>
  // uses loading directive from Element-UI
 
- import {createColormap} from '../util.js';
+ import {createColormap, scrollDistance} from '../util.js';
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
+
+ const OPACITY_MAPPINGS = {
+   'constant': (x) => 1,
+   'linear': (x) => x,
+   'quadratic': (x) => 1 - (1-x)*(1-x)
+ };
 
  export default {
    directives: {
@@ -60,6 +66,14 @@
      yOffset: {
        type: Number,
        default: 0
+     },
+     opacityMode: {
+       type: String,
+       default: 'constant'
+     },
+     transform: {
+       type: String,
+       default: ''
      }
    },
    data () {
@@ -110,13 +124,16 @@
                dy = this.yOffset * this.scaleFactor * this.zoom,
                transform = `scale(${this.zoom}, ${this.zoom})` +
                            `translate(${-dx / this.zoom + centeringOffset / this.zoom}px, ${-dy / this.zoom}px)`,
-               clipPathOffsets = [dy, (width * (this.zoom - 1) - dx), (height * (this.zoom - 1) - dy), dx],
-               clipPath = 'inset(' + clipPathOffsets.map(x => x / this.zoom + 'px').join(' ') + ')';
+               clipPathOffsets = [dy, (width * (this.zoom - 1) - dx), (height * (this.zoom - 1) - dy), dx];
+
+         let clipPath = null;
+         if (dx != 0 || dy != 0 || this.zoom != 1)
+           clipPath = 'inset(' + clipPathOffsets.map(x => x / this.zoom + 'px').join(' ') + ')';
 
          return {
            'width': width + 'px',
            'height': height + 'px',
-           transform,
+           transform: transform + ' ' + this.transform,
            'transform-origin': '0 0',
            clipPath,
            //opacity: this.annotImageOpacity
@@ -160,9 +177,7 @@
 
      onWheel(event) {
        event.preventDefault();
-       let sY = 0;
-       if ('detail'      in event) { sY = event.detail; }
-       if ('wheelDelta'  in event) { sY = -event.wheelDelta / 120; }
+       const sY = scrollDistance(event);
 
        const newZoom = Math.max(1, this.zoom - sY / 10.0);
        const rect = event.target.getBoundingClientRect(),
@@ -291,7 +306,7 @@
        var g = this.grayscaleData;
 
        // TODO experiment with different functions
-       const f = (x) => 1;
+       const f = OPACITY_MAPPINGS[this.opacityMode];
 
        for (let i = 0; i < numPixels; i++) {
          let c = this.colors[g[i*4]];
