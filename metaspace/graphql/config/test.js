@@ -2,7 +2,7 @@ let config = {};
 
 config.port = 3011;
 config.ws_port = 5667;
-config.iso_img_port = 4201;
+config.img_storage_port = 4201;
 
 config.log = {};
 config.log.level = 'debug';
@@ -14,7 +14,7 @@ config.default_adducts = {
 
 config.img_upload = {};
 config.img_upload.iso_img_fs_path = '/opt/data/sm_data/public/';
-config.img_upload.img_base_path = '/iso_images/';
+config.img_upload.categories = {iso_image: {type: 'image/png', path: '/iso_images/'}};
 // config.img_upload.backend = "fs"; // "fs" or "db"
 
 config.services = {};

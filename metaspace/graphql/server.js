@@ -1,6 +1,6 @@
 const bodyParser = require('body-parser'),
   compression = require('compression'),
-  createIsoImgServerAsync = require('./imageUpload.js'),
+  createImgServerAsync = require('./imageUpload.js'),
   Resolvers = require('./resolvers.js'),
   config = require('config'),
   express = require('express'),
@@ -77,7 +77,7 @@ function createHttpServerAsync(config) {
 
 if (process.argv[1].endsWith('server.js')) {
   createHttpServerAsync(config);
-  createIsoImgServerAsync(config);
+  createImgServerAsync(config);
 }
 
 module.exports = {createHttpServerAsync, wsServer}; // for testing
