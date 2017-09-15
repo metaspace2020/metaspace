@@ -1,9 +1,16 @@
 const config = {
   port: 3010,
 
+  log: {
+    level: 'info'
+  },
+
+  default_adducts: {'+': ['+H', '+Na', '+K'], '-': ['-H', '+Cl']},
+
   img_upload: {
     iso_img_fs_path: "/opt/data/sm_data/public/",
-    img_base_path: "/iso_images/"
+    img_base_path: "/iso_images/",
+    backend: 'fs'
   },
 
   services: {
