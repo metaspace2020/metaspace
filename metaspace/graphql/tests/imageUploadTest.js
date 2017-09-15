@@ -8,7 +8,7 @@ const chai = require('chai'),
   chaiHttp = require('chai-http'),
   fs = require('fs'),
   logger = require('../utils.js').logger,
-  createHttpServer = require('../server').createHttpServer;
+  createIsoImgServer = require('../imageUpload');
 
 chai.use(chaiHttp);
 
@@ -23,22 +23,24 @@ describe('imageUploadTest with fs and db backends', () => {
   configSets.forEach( (cs) => {
 
     describe(`${cs.backend} backend`, () => {
-      // let app, wsServer;
       let server;
 
       before((done) => {
         let config = require('config');
         config.img_upload.backend = cs.backend;
-        createHttpServer(config)
+        createIsoImgServer(config)
           .then((srv) => {
             server = srv;
             done();
+          })
+          .catch((err) => {
+            logger.error(err);
           });
       });
 
       after((done) => {
         server.close(() => {
-          logger.debug('GraphQL server closed');
+          logger.debug('Iso image server closed');
           done();
         });
         // wsServer.close(() => console.log('WS server closed!') );
@@ -79,7 +81,6 @@ describe('imageUploadTest with fs and db backends', () => {
       });
       it('DELETE /iso_images/delete/:id should delete the iso image', (done) => {
         chai.request(server)
-
           .delete(`/iso_images/delete/${image_id}`)
           .end((err, res) => {
             // there should be no errors

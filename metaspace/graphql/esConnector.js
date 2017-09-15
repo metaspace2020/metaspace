@@ -55,6 +55,7 @@ function esSort(orderBy, sortingOrder) {
     return [{'ds_name': order}];
 }
 
+// consider renaming the function as it handles not only annotations but datasets as well
 function constructAnnotationQuery(args, docType) {
   const { orderBy, sortingOrder, offset, limit, filter, datasetFilter, simpleQuery } = args;
   const { database, datasetName, mzFilter, msmScoreFilter,
