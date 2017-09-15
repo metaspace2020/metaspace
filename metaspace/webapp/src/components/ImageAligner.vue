@@ -21,6 +21,18 @@
                   :cx="pos.x * scaleX + padding" :cy="pos.y * scaleY + padding" r="7"
                   @mousedown="onMouseDown($event, idx)">
           </circle>
+
+          <!-- draw a cross showing the center of the original image -->
+          <line :x1="centerPosition.x * scaleX + padding - 10"
+                :x2="centerPosition.x * scaleX + padding + 10"
+                :y1="centerPosition.y * scaleY + padding + 10"
+                :y2="centerPosition.y * scaleY + padding - 10"
+                class="cross"></line>
+          <line :x1="centerPosition.x * scaleX + padding - 10"
+                :x2="centerPosition.x * scaleX + padding + 10"
+                :y1="centerPosition.y * scaleY + padding - 10"
+                :y2="centerPosition.y * scaleY + padding + 10"
+                class="cross"></line>
         </g>
       </svg>
     </div>
@@ -298,6 +310,12 @@
        return computeHandlePositions(this.normalizedTransform, this.originalHandlePositions());
      },
 
+     centerPosition() {
+       return computeHandlePositions(this.normalizedTransform,
+                                     [{x: this.naturalWidth / 2,
+                                       y: this.naturalHeight / 2}])[0];
+     },
+
      scaleX() {
        return this.opticalImageWidth / this.opticalImageNaturalWidth;
      },
@@ -384,6 +402,11 @@
 
    /* we want the unpainted interior to respond to hover */
    pointer-events: all;
+ }
+
+ line.cross {
+   stroke: #f0fff0;
+   stroke-width: 2
  }
 
  .optical-img-container, .handles-container {

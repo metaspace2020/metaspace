@@ -38,7 +38,7 @@
 
         <div class="annotation-selection">
           <el-form :inline="true">
-            <el-form-item label="Angle (°):" style="margin-bottom:5px;">
+            <el-form-item label="Angle, °:" style="margin-bottom:5px;">
               <el-input-number :min=-180 :max=180 :step=1 v-model="angle" size="small">
               </el-input-number>
             </el-form-item>
