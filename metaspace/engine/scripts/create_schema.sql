@@ -21,6 +21,16 @@ CREATE TABLE dataset (
 );
 CREATE INDEX ind_dataset_name ON dataset (name);
 
+DROP TABLE IF EXISTS optical_image;
+CREATE TABLE optical_image (
+  id      text PRIMARY KEY,
+  ds_id   text,
+  zoom    int,
+  CONSTRAINT opt_img_ds_id_fk FOREIGN KEY (ds_id)
+      REFERENCES dataset (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
 DROP TABLE IF EXISTS job CASCADE;
 CREATE TABLE job (
 	id serial NOT NULL,

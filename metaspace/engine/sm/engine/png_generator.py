@@ -11,17 +11,19 @@ from sm.engine.util import SMConfig
 
 class ImageStoreServiceWrapper(object):
 
-    def __init__(self, iso_img_service_url):
-        self._iso_img_service_url = iso_img_service_url
+    def __init__(self, img_service_url, field_name='iso_image'):
+        self._img_service_url = img_service_url
+        self._field_name = field_name
         # empty URL is used for testing purposes
-        if self._iso_img_service_url:
+        if self._img_service_url:
             self._session = requests.Session()
-            self._session.mount(self._iso_img_service_url, HTTPAdapter(max_retries=5))
+            self._session.mount(self._img_service_url, HTTPAdapter(max_retries=5))
 
     def post_image(self, fp):
-        if not self._iso_img_service_url:
+        if not self._img_service_url:
             return 'XXX'
-        r = self._session.post(join(self._iso_img_service_url, 'upload'), files={'iso_image': fp})
+        r = self._session.post(join(self._img_service_url, 'upload'),
+                files={self._field_name: fp})
         r.raise_for_status()
         return r.json()['image_id']
 
@@ -29,8 +31,12 @@ class ImageStoreServiceWrapper(object):
         r = self._session.delete(url)
         r.raise_for_status()
 
+    def delete_image_by_id(self, id):
+        del_url = '{}/delete/{}'.format(self._img_service_url, id)
+        self.delete_image(del_url)
+
     def __str__(self):
-        return self._iso_img_service_url
+        return self._img_service_url
 
 
 class PngGenerator(object):
