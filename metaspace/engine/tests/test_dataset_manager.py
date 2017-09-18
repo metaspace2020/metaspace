@@ -222,8 +222,7 @@ class TestSMDaemonDatasetManager:
 
             ds_man.delete(ds)
 
-            urls = ['{}/delete/{}'.format(sm_config['services']['iso_images'], 'iso_image_{}_id'.format(id))
-                    for id in range(1, 3)]
-            img_store_service_mock.delete_image.assert_has_calls([call(urls[0]), call(urls[1])])
+            ids = ['iso_image_{}_id'.format(id) for id in range(1, 3)]
+            img_store_service_mock.delete_image_by_id.assert_has_calls([call(ids[0]), call(ids[1])])
             es_mock.delete_ds.assert_called_with(ds_id)
             assert db.select_one('SELECT * FROM dataset WHERE id = %s', ds_id) == []
