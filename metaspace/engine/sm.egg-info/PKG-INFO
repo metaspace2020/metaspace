@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: sm
+Version: 0.6.1
+Summary: High throughput molecules annotation for imaging mass spectrometry data sets
+Home-page: https://github.com/SpatialMetabolomics/sm-engine.git
+Author: Alexandrov Team, EMBL
+Author-email: vitaly.kovalev@embl.de
+License: UNKNOWN
+Description: UNKNOWN
+Platform: UNKNOWN
