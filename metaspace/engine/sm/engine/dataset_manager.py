@@ -217,21 +217,20 @@ class SMapiDatasetManager(DatasetManager):
     def _transform_scan(self, scan, transform_, dims, zoom):
         transform = np.array(transform_)
         assert transform.shape == (3, 3)
-        transform /= transform[2, 2]
+        transform = transform / transform[2, 2]
         transform[:, :2] /= zoom
         coeffs = transform.flat[:8]
         return scan.transform((dims[0] * zoom, dims[1] * zoom),
                               Image.PERSPECTIVE, coeffs, Image.BICUBIC)
 
-    def add_optical_image(self, ds, url, transform, **kwargs):
+    def add_optical_image(self, ds, optical_scan, transform, zoom_levels=[1, 2, 4, 8], **kwargs):
         """ Generate scaled and transformed versions of the provided optical image """
 
         dims = self._annotation_image_shape(ds.id)
-        optical_scan = Image.open(requests.get(url, stream=True).raw)
         img_store = self._optical_img_store()
 
         rows = []
-        for zoom in [1, 2, 4, 8]:
+        for zoom in zoom_levels:
             img = self._transform_scan(optical_scan, transform, dims, zoom)
             buf = io.BytesIO()
             img.save(buf, format='jpeg', quality=81)
