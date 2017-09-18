@@ -11,11 +11,11 @@ const express = require('express'),
 
 const {logger, pg} = require('./utils.js');
 
-function imageProviderDBBackend(app, fieldName, mimeType, path) {
+function imageProviderDBBackend(app, fieldName, mimeType, basePath) {
   /**
      @param {string} fieldName - field name / database table name
      @param {string} mimeType - e.g. 'image/png' or 'image/jpeg'
-     @param {string} path - URL base path, e.g. '/iso_images/'
+     @param {string} basePath - URL base path, e.g. '/iso_images/'
   **/
   let storage = multer.memoryStorage();
   let upload = multer({ storage: storage });
@@ -24,7 +24,7 @@ function imageProviderDBBackend(app, fieldName, mimeType, path) {
     table.text('id');
     table.binary('data');
   }).then(() => {
-    app.get(path.join(path, ":img_id"),
+    app.get(path.join(basePath, ":img_id"),
       function (req, res) {
         pg.select(pg.raw('data'))
           .from(fieldName)
@@ -43,7 +43,7 @@ function imageProviderDBBackend(app, fieldName, mimeType, path) {
           });
       });
 
-    app.post(path.join(path, 'upload'), upload.single(fieldName),
+    app.post(path.join(basePath, 'upload'), upload.single(fieldName),
       function (req, res, next) {
         logger.debug(req.file.originalname);
         let img_id = crypto.randomBytes(16).toString('hex');
@@ -61,7 +61,7 @@ function imageProviderDBBackend(app, fieldName, mimeType, path) {
           });
       });
 
-    app.delete(path.join(path, 'delete', ":img_id"),
+    app.delete(path.join(basePath, 'delete', ":img_id"),
       function (req, res, next) {
         pg.del().from(fieldName)
           .where('id', '=', req.params.img_id)

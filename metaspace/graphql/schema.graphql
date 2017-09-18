@@ -212,6 +212,16 @@ type DatasetCountPerGroup {
   counts: [DatasetCountPerGroupListElement]
 }
 
+input AddOpticalImageInput {
+  jwt: String!
+  datasetId: String!
+  imageUrl: String!
+
+  # 3x3 transformation matrix in row-major order
+  # (acting in homogeneous coordinates)
+  transform: [[Float]]!
+}
+
 type Query {
   dataset(id: String!): Dataset
   datasetByName(name: String!): Dataset
@@ -243,18 +253,25 @@ type Query {
   peopleSuggestions(role: PersonRole!, query: String!): [Person!]!
 
   molecularDatabases: [MolecularDatabase!]
+
+  opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 }
 
 type Mutation {
   submitDataset(jwt: String!, datasetId: String, name: String,
     path: String!, metadataJson: String!,
     priority: Int=0, sync: Boolean=true, delFirst: Boolean=false): String
+
   resubmitDataset(jwt: String!, datasetId: String!,
     priority: Int=0, sync: Boolean=true): String
+
   updateMetadata(jwt: String!, datasetId: String!, metadataJson: String!,
     priority: Int=0, sync: Boolean=true): String
+
   deleteDataset(jwt: String!, datasetId: String!,
     delRawData: Boolean, sync: Boolean=true): String
+
+  addOpticalImage(input: AddOpticalImageInput!): String
 }
 
 type DatasetStatusUpdate {

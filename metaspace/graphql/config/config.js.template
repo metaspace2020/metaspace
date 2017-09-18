@@ -22,6 +22,14 @@ config.img_upload = {
     iso_image: {
       type: 'image/png',
       path: '/iso_images/'
+    },
+    optical_image: {
+      type: 'image/jpeg',
+      path: '/optical_images/'
+    },
+    raw_optical_image: {
+      type: 'image/jpeg',
+      path: '/raw_optical_images/'
     }
   }
 };

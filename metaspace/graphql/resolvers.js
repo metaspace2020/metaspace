@@ -150,6 +150,19 @@ const Resolvers = {
         .then(res => res.json())
         .then(body => body['data'])
         .catch((e) => { logger.error(e); return null; })
+    },
+
+    opticalImageUrl(_, {datasetId, zoom}) {
+      const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
+      return pg.select().from('optical_image')
+               .where('ds_id', '=', datasetId)
+               .where('zoom', '=', intZoom)
+               .then(records => {
+                 if (records.length > 0)
+                   return '/optical_images/' + records[0].id;
+                 else
+                   return null;
+               });
     }
   },
 
@@ -295,7 +308,7 @@ const Resolvers = {
       const {iso_image_ids, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints} = hit._source;
       return centroid_mzs.map(function(mz, i) {
         return {
-          url: iso_image_ids[i] !== null ? config.img_upload.img_base_path + iso_image_ids[i] : null,
+          url: iso_image_ids[i] !== null ? config.img_upload.categories.iso_image.path + iso_image_ids[i] : null,
           mz: parseFloat(mz),
           totalIntensity: total_iso_ints[i],
           minIntensity: min_iso_ints[i],
@@ -456,6 +469,25 @@ const Resolvers = {
             logger.info(`deleteDataset success: ${datasetId}`);
             return "success";
           })
+      } catch (e) {
+        logger.error(e.message);
+        return e.message;
+      }
+    },
+
+    async addOpticalImage(_, {input}) {
+      const {datasetId, imageUrl, transform} = input;
+      const payload = jwt.decode(input.jwt, config.jwt.secret);
+      try {
+        logger.info(input);
+        await checkPermissions(datasetId, payload);
+        const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/add-optical-image`;
+        const body = {url: imageUrl, transform};
+        await fetch(url, {
+          method: 'POST',
+          body: JSON.stringify(body),
+          headers: {'Content-Type': 'application/json'}});
+        return 'success';
       } catch (e) {
         logger.error(e.message);
         return e.message;
