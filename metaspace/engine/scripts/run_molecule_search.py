@@ -3,16 +3,11 @@
 Script for running molecule search
 """
 import argparse
-import json
 import sys
-from datetime import datetime as dt, datetime
-from os.path import join, exists
 
 from sm.engine import DB
-from sm.engine import Dataset
 from sm.engine import ESExporter
 from sm.engine import SMDaemonDatasetManager
-from sm.engine.errors import UnknownDSID
 from sm.engine.util import SMConfig, logger, sm_log_config, init_logger, create_ds_from_files
 from sm.engine.search_job import SearchJob
 
@@ -24,7 +19,8 @@ if __name__ == "__main__":
     parser.add_argument('--input-path', type=str, help='Path to a dataset location')
     parser.add_argument('--no-clean', dest='no_clean', action='store_true',
                         help="Don't clean dataset txt files after job is finished")
-    parser.add_argument('--config', dest='sm_config_path', type=str, help='SM config path')
+    parser.add_argument('--config', dest='sm_config_path', default='conf/config.json',
+                        type=str, help='SM config path')
     args = parser.parse_args()
 
     init_logger()
@@ -33,23 +29,11 @@ if __name__ == "__main__":
     db = DB(sm_config['db'])
     ds_man = SMDaemonDatasetManager(db, ESExporter(db), mode='local')
 
-    ds = None
-    if args.ds_id:
-        ds_id = args.ds_id
-        try:
-            ds = Dataset.load(db, ds_id)
-            ds_man.delete(ds)
-        except UnknownDSID as e:
-            logger.warning(e.message)
-    else:
-        ds_id = dt.now().strftime("%Y-%m-%d_%Hh%Mm%Ss")
-
     try:
-        if ds is None:
-            ds = create_ds_from_files(ds_id, args.ds_name, args.input_path)
-        search_job = SearchJob(no_clean=args.no_clean)
-        ds_man.add(ds, search_job)
+        ds = create_ds_from_files(args.ds_id, args.ds_name, args.input_path)
+        ds_man.add(ds, SearchJob, del_first=True)
     except Exception as e:
+        logger.error(e)
         sys.exit(1)
 
     sys.exit()
