@@ -3,6 +3,7 @@ import json
 from datetime import datetime
 from copy import deepcopy
 import pytest
+from PIL import Image
 
 from sm.engine import DB, ESExporter, QueuePublisher
 from sm.engine.dataset_manager import SMapiDatasetManager, SMDaemonDatasetManager, ConfigDiff
@@ -10,6 +11,7 @@ from sm.engine.dataset_manager import Dataset, DatasetActionPriority, DatasetAct
 from sm.engine.errors import DSIDExists
 from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.tests.util import spark_context, sm_config, ds_config, test_db
+from sm.engine.png_generator import ImageStoreServiceWrapper
 
 
 @pytest.fixture()
@@ -226,3 +228,28 @@ class TestSMDaemonDatasetManager:
             img_store_service_mock.delete_image_by_id.assert_has_calls([call(ids[0]), call(ids[1])])
             es_mock.delete_ds.assert_called_with(ds_id)
             assert db.select_one('SELECT * FROM dataset WHERE id = %s', ds_id) == []
+
+    def test_add_optical_image(self, fill_db, sm_config, ds_config):
+        db = DB(sm_config['db'])
+        queue_mock = MagicMock(spec=QueuePublisher)
+        es_mock = MagicMock(spec=ESExporter)
+        ds_man = create_ds_man(sm_config, db=db, es=es_mock, queue=queue_mock, sm_api=True)
+
+        ds_man._annotation_image_shape = MagicMock(return_value=(100, 100))
+
+        iso_img_store_mock = MagicMock(ImageStoreServiceWrapper)
+        opt_img_store_mock = MagicMock(ImageStoreServiceWrapper)
+        opt_img_store_mock.post_image.side_effect = ['opt_img_id1', 'opt_img_id2', 'opt_img_id3']
+        ds_man._iso_img_store = MagicMock(return_value=iso_img_store_mock)
+        ds_man._optical_img_store = MagicMock(return_value=opt_img_store_mock)
+
+        ds_id = '2000-01-01'
+        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
+
+        optical_image = Image.new('RGB', (100, 100))
+        zoom_levels = [1, 2, 3]
+        ds_man.add_optical_image(ds, optical_image, [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+                                 zoom_levels=zoom_levels)
+        assert db.select('SELECT * FROM optical_image') == [
+                ('opt_img_id{}'.format(i + 1), ds.id, zoom)
+                for i, zoom in enumerate(zoom_levels)]

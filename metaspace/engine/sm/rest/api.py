@@ -1,9 +1,11 @@
 import json
 from datetime import datetime
 import logging
+import requests
 from bottle import post, run
 from bottle import request as req
 from bottle import response as resp
+from PIL import Image
 
 from sm.engine import DB, ESExporter
 from sm.engine import Dataset, SMapiDatasetManager, DatasetActionPriority
@@ -111,7 +113,8 @@ def delete_ds(ds_man, ds, params):
 @post('/v1/datasets/<ds_id>/add-optical-image')
 @sm_modify_dataset('ADD_OPTICAL_IMAGE')
 def add_optical_image(ds_man, ds, params):
-    ds_man.add_optical_image(ds, params['url'], params['transform'])
+    image = Image.open(requests.get(params['url'], stream=True).raw)
+    ds_man.add_optical_image(ds, image, params['transform'])
 
 if __name__ == '__main__':
     init_logger()
