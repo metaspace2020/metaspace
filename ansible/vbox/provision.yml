@@ -4,9 +4,6 @@
   hosts: sm-vbox
   user: ubuntu
 
-  vars_files:
-    - ../vars/sm_api.yml
-
   roles:
     - role: postgres
       become: yes
@@ -18,6 +15,7 @@
       become: yes
 
     - role: nginx
+      tags: [nginx]
 
     - role: rabbitmq
 
@@ -61,3 +59,4 @@
       become: yes
 
     - role: sm_spark_master
+      tags: [sm_spark_master]
