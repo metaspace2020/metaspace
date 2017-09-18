@@ -51,4 +51,4 @@
 
 - name: Set timezone
   become: yes
-  timezone: name={{ time_zone_name }}
+  timezone: name={{ time_zone_name | default('UTC') }}
