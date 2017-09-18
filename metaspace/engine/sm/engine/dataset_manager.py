@@ -1,4 +1,8 @@
+import io
 import logging
+import requests
+import numpy as np
+from PIL import Image
 
 from sm.engine.dataset import DatasetStatus, Dataset
 from sm.engine.errors import DSIDExists
@@ -13,6 +17,10 @@ IMG_URLS_BY_ID_SEL = ('SELECT iso_image_ids '
                       'JOIN job j ON j.id = m.job_id '
                       'JOIN dataset d ON d.id = j.ds_id '
                       'WHERE ds_id = %s')
+
+INS_OPTICAL_IMAGE = 'INSERT INTO optical_image (id, ds_id, zoom) VALUES (%s, %s, %s)'
+SEL_OPTICAL_IMAGE = 'SELECT id FROM optical_image WHERE ds_id = %s'
+DEL_OPTICAL_IMAGE = 'DELETE FROM optical_image WHERE ds_id = %s'
 
 
 class DatasetAction(object):
@@ -88,6 +96,17 @@ class DatasetManager(object):
     def delete(self, ds, **kwargs):
         raise NotImplemented
 
+    def add_optical_image(self, ds, url, transform, **kwargs):
+        raise NotImplemented
+
+    def _iso_img_store(self):
+        return ImageStoreServiceWrapper(self._sm_config['services']['iso_images'],
+                                        field_name='iso_image')
+
+    def _optical_img_store(self):
+        return ImageStoreServiceWrapper(self._sm_config['services']['optical_images'],
+                                        field_name='optical_image')
+
 
 class SMDaemonDatasetManager(DatasetManager):
 
@@ -128,13 +147,12 @@ class SMDaemonDatasetManager(DatasetManager):
     def _del_iso_images(self, ds):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
 
-        img_store = ImageStoreServiceWrapper(self._sm_config['services']['iso_images'])
+        img_store = self._iso_img_store()
         for row in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
             iso_image_ids = row[0]
             for id in iso_image_ids:
                 if id:
-                    del_url = '{}/delete/{}'.format(self._sm_config['services']['iso_images'], id)
-                    img_store.delete_image(del_url)
+                    img_store.delete_image_by_id(id)
 
     def delete(self, ds, del_raw_data=False, **kwargs):
         """ Delete all dataset related data from the DB """
@@ -190,3 +208,38 @@ class SMapiDatasetManager(DatasetManager):
             self._post_sm_msg(ds=ds, action=DatasetAction.UPDATE, priority=DatasetActionPriority.HIGH)
         else:
             self.logger.info('Nothing to update: %s %s', ds.id, ds.name)
+
+    def _annotation_image_shape(self, ds_id):
+        ion_img_id = self._db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', ds_id)[0][0][0]
+        ion_img_url = self._sm_config['services']['iso_images'] + '/' + ion_img_id
+        return Image.open(requests.get(ion_img_url, stream=True).raw).size
+
+    def _transform_scan(self, scan, transform_, dims, zoom):
+        transform = np.array(transform_)
+        assert transform.shape == (3, 3)
+        transform /= transform[2, 2]
+        transform[:, :2] /= zoom
+        coeffs = transform.flat[:8]
+        return scan.transform((dims[0] * zoom, dims[1] * zoom),
+                              Image.PERSPECTIVE, coeffs, Image.BICUBIC)
+
+    def add_optical_image(self, ds, url, transform, **kwargs):
+        """ Generate scaled and transformed versions of the provided optical image """
+
+        dims = self._annotation_image_shape(ds.id)
+        optical_scan = Image.open(requests.get(url, stream=True).raw)
+        img_store = self._optical_img_store()
+
+        rows = []
+        for zoom in [1, 2, 4, 8]:
+            img = self._transform_scan(optical_scan, transform, dims, zoom)
+            buf = io.BytesIO()
+            img.save(buf, format='jpeg', quality=81)
+            buf.seek(0)
+            img_id = img_store.post_image(buf)
+            rows.append((img_id, ds.id, zoom))
+
+        for row in self._db.select(SEL_OPTICAL_IMAGE, ds.id):
+            img_store.delete_image_by_id(row[0])
+        self._db.alter(DEL_OPTICAL_IMAGE, ds.id)
+        self._db.insert(INS_OPTICAL_IMAGE, rows)

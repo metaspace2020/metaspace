@@ -71,44 +71,47 @@ def add_ds():
     return OK['title']
 
 
+def sm_modify_dataset(request_name):
+    def _modify(handler):
+        def _func(ds_id):
+            try:
+                params = _json_params(req)
+                logger.info('Received %s request: %s', request_name, params)
+                db = _create_db_conn()
+                ds = Dataset.load(db=db, ds_id=ds_id)
+                ds_man = _create_dataset_manager(db)
+
+                handler(ds_man, ds, params)
+
+                db.close()
+                return OK['title']
+            except UnknownDSID:
+                resp.status = ERR_OBJECT_NOT_EXISTS['status']
+                return ERR_OBJECT_NOT_EXISTS['title']
+        return _func
+    return _modify
+
+
 @post('/v1/datasets/<ds_id>/update')
-def update_ds(ds_id):
-    try:
-        params = _json_params(req)
-        logger.info('Received UPDATE request: %s', params)
-        db = _create_db_conn()
-        ds = Dataset.load(db=db, ds_id=ds_id)
-        ds.name = params.get('name', ds.name)
-        ds.input_path = params.get('input_path', ds.input_path)
-        ds.meta = params.get('metadata', ds.meta)
-        ds.config = params.get('config', ds.config)
+@sm_modify_dataset('UPDATE')
+def update_ds(ds_man, ds, params):
+    ds.name = params.get('name', ds.name)
+    ds.input_path = params.get('input_path', ds.input_path)
+    ds.meta = params.get('metadata', ds.meta)
+    ds.config = params.get('config', ds.config)
 
-        ds_man = _create_dataset_manager(db)
-        ds_man.update(ds, priority=params.get('priority', DatasetActionPriority.DEFAULT))
-        db.close()
-        return OK['title']
-    except UnknownDSID:
-        resp.status = ERR_OBJECT_NOT_EXISTS['status']
-        return ERR_OBJECT_NOT_EXISTS['title']
-
+    ds_man.update(ds, priority=params.get('priority', DatasetActionPriority.DEFAULT))
 
 @post('/v1/datasets/<ds_id>/delete')
-def delete_ds(ds_id):
-    try:
-        params = _json_params(req)
-        logger.info('Received DELETE request: %s', params)
-        del_raw = params.get('del_raw', False)
+@sm_modify_dataset('DELETE')
+def delete_ds(ds_man, ds, params):
+    del_raw = params.get('del_raw', False)
+    ds_man.delete(ds, del_raw_data=del_raw)
 
-        db = _create_db_conn()
-        ds = Dataset.load(db=db, ds_id=ds_id)
-
-        ds_man = _create_dataset_manager(db)
-        ds_man.delete(ds, del_raw_data=del_raw)
-        db.close()
-        return OK['title']
-    except UnknownDSID:
-        resp.status = ERR_OBJECT_NOT_EXISTS['status']
-        return ERR_OBJECT_NOT_EXISTS['title']
+@post('/v1/datasets/<ds_id>/add-optical-image')
+@sm_modify_dataset('ADD_OPTICAL_IMAGE')
+def add_optical_image(ds_man, ds, params):
+    ds_man.add_optical_image(ds, params['url'], params['transform'])
 
 if __name__ == '__main__':
     init_logger()
