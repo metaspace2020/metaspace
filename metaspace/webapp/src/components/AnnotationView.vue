@@ -167,6 +167,7 @@
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
  import Colorbar from './Colorbar.vue';
  import {annotationQuery} from '../api/annotation.js';
+ import {opticalImageQuery} from '../api/dataset.js';
 
  export default {
    name: 'annotation-view',
@@ -191,17 +192,13 @@
        return "Molecules (" + this.annotation.possibleCompounds.length + ")";
      },
 
-     opticalImageUrl() {
-       return null;
-     },
-
      imageOpacityMode() {
        return this.opticalImageUrl ? 'linear' : 'constant';
      }
    },
    data() {
      return {
-       annotImageOpacity: 0.5,
+       annotImageOpacity: 1,
        zoom: 1,
        xOffset: 0,
        yOffset: 0
@@ -223,6 +220,18 @@
            id: this.annotation.id
          };
        }
+     },
+
+     opticalImageUrl: {
+       query: opticalImageQuery,
+       variables() {
+         return {
+           datasetId: this.annotation.dataset.id,
+           zoom: this.zoom * 2 // load higher-resolution image
+         }
+       },
+       // assumes both image server and webapp are routed via nginx
+       update: data => data.opticalImageUrl
      }
    },
    methods: {

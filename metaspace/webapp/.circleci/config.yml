@@ -28,11 +28,10 @@ jobs:
           keys:
             - node-modules-{{ .Branch }}-{{checksum "package.json"}}
       - run:
-          name: Install npm packages
+          name: Install node packages
           command: |
             yarn install
-            npm rebuild node-sass
-            npm run build
+            yarn run build
       - save_cache:
           key: node-modules-{{ .Branch }}-{{checksum "package.json"}}
           paths:
@@ -61,4 +60,4 @@ jobs:
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             export DISPLAY=:99
             stty cols 80  # https://github.com/DevExpress/testcafe/issues/1469
-            testcafe firefox tests/e2e/annotations.js --app "npm run dev" --no-color --app-init-delay=10000
+            testcafe firefox tests/e2e/annotations.js --app "yarn run dev" --no-color --app-init-delay=10000

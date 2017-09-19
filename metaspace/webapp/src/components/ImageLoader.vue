@@ -164,6 +164,9 @@
      },
      'annotImageOpacity' (opacity) {
        this.applyColormap();
+     },
+     'opticalSrc' (url) {
+       this.applyColormap();
      }
    },
    methods: {

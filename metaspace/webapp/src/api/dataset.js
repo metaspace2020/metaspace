@@ -40,3 +40,15 @@ export const deleteDatasetQuery =
   gql`mutation ($jwt: String!, $id: String!) {
     deleteDataset(jwt: $jwt, datasetId: $id)
   }`;
+
+export const addOpticalImageQuery =
+  gql`mutation ($jwt: String!, $imageUrl: String!,
+                $datasetId: String!, $transform: [[Float]]!) {
+    addOpticalImage(input: {jwt: $jwt, datasetId: $datasetId,
+                            imageUrl: $imageUrl, transform: $transform})
+  }`;
+
+export const opticalImageQuery =
+  gql`query ($datasetId: String!, $zoom: Float!) {
+    opticalImageUrl(datasetId: $datasetId, zoom: $zoom)
+  }`;

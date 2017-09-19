@@ -13,7 +13,7 @@
             <input type="file"
                   style="display: none;"
                   @change="onFileChange"
-                  accept=".png, .jpg, .jpeg"/>
+                  accept=".jpg, .jpeg"/>
               Select optical image
           </label>
 
@@ -22,7 +22,7 @@
           </div>
 
           <div class="el-upload__tip" slot="tip">
-            JPEG/PNG file less than {{ limitMB }}MB in size
+            JPEG file less than {{ limitMB }}MB in size
           </div>
         </div>
 
@@ -93,7 +93,8 @@
 <script>
  import ImageAligner from './ImageAligner.vue';
  import {annotationListQuery} from '../api/annotation.js';
- import {renderMolFormula, prettifySign} from '../util.js';
+ import {addOpticalImageQuery} from '../api/dataset.js';
+ import {renderMolFormula, prettifySign, getJWT} from '../util.js';
  import gql from 'graphql-tag';
 
  export default {
@@ -106,6 +107,12 @@
      limitMB: {
        type: Number,
        default: 25
+     },
+
+     // service for storing raw optical images
+     imageStorageUrl: {
+       type: String,
+       default: '/raw_optical_images'
      }
    },
 
@@ -159,7 +166,7 @@
 
      massSpecSrc() {
        const url = this.currentAnnotation ? this.currentAnnotation.isotopeImages[0].url : null;
-       return url ? 'http://annotate.metasp.eu' + url : null;
+       return url ? url : null;
      },
 
      currentSumFormula() {
@@ -210,9 +217,41 @@
        this.annotationIndex = newIdx - 1;
      },
      submit() {
-       // TODO
-       console.log(this.$refs.aligner.getNormalizedTransform());
+       const uri = this.imageStorageUrl + "/upload/";
+       let xhr = new XMLHttpRequest(),
+           fd = new FormData();
+       xhr.open("POST", uri, true);
+       xhr.responseType = 'json';
+       xhr.onreadystatechange = () => {
+         if (xhr.readyState == 4 && xhr.status == 201) {
+           const imageId = xhr.response.image_id,
+                 imageUrl = this.imageStorageUrl + '/' + imageId;
+           this.addOpticalImage(imageUrl);
+         }
+       };
+       fd.append('raw_optical_image', this.file);
+       xhr.send(fd);
      },
+
+     addOpticalImage(imageUrl) {
+       getJWT()
+         .then(jwt =>
+           this.$apollo.mutate({
+             mutation: addOpticalImageQuery,
+             variables: {
+               jwt,
+               datasetId: this.datasetId,
+               imageUrl,
+               transform: this.$refs.aligner.normalizedTransform
+             }}))
+         .then(resp => resp.data.addOpticalImage)
+         .then(status => {
+           if (status != 'success')
+             throw new Error(status);
+           return status;
+         });
+     },
+
      reset() {
        this.$refs.aligner.reset();
        this.angle = 0;
