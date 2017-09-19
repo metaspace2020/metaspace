@@ -5,6 +5,10 @@
   hosts: web
 
   tasks:
+    - name: Gather EC2 instance facts
+      ec2_facts:
+      tags: [sm_mol_db, sm_api, sm_graphql, sm_web_app, sm_cluster_autostart]
+
     - include: ../../deploy_tasks/sm_mol_db.yml
       tags: [sm_mol_db]
 
