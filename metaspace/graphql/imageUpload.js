@@ -2,15 +2,16 @@
  * Created by intsco on 1/10/17.
  */
 const express = require('express'),
+  http = require("http"),
   multer = require('multer'),
   path = require('path'),
   crypto = require('crypto'),
-  fs = require("fs");
+  fs = require('fs'),
+  Promise = require('promise');
 
-const config = require('config'),
-  {logger, pg} = require('./utils.js');
+const {logger, pg} = require('./utils.js');
 
-function imageProviderDBBackend(app) {
+function imageProviderDBBackend(app, config) {
   let storage = multer.memoryStorage();
   let upload = multer({ storage: storage });
 
@@ -70,7 +71,7 @@ function imageProviderDBBackend(app) {
     });
 }
 
-function imageProviderFSBackend(app) {
+function imageProviderFSBackend(app, config) {
   let storage = multer.diskStorage({
     destination: function (req, file, cb) {
       cb(null, path.join(config.img_upload.iso_img_fs_path, config.img_upload.img_base_path))
@@ -98,17 +99,28 @@ function imageProviderFSBackend(app) {
     });
 }
 
-function addIsoImageProvider(app) {
+function createIsoImgServerAsync(config) {
+  const app = express();
+
   express.static.mime.default_type = "image/png";
   if (config.img_upload.backend === "fs") {
-    imageProviderFSBackend(app);
+    imageProviderFSBackend(app, config);
   }
   else if (config.img_upload.backend === "db") {
-    imageProviderDBBackend(app);
+    imageProviderDBBackend(app, config);
   }
   else {
     logger.error(`Unknown image upload backend: ${config.img_upload.backend}`)
   }
+
+  let httpServer = http.createServer(app);
+  httpServer.listen(config.iso_img_port, (err) => {
+    if (err) {
+      logger.error('Could not start iso image server', err)
+    }
+    logger.info(`Iso image server is listening on ${config.iso_img_port} port...`)
+  });
+  return Promise.resolve(httpServer);
 }
 
-module.exports = addIsoImageProvider;
+module.exports = createIsoImgServerAsync;

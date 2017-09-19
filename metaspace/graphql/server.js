@@ -1,6 +1,6 @@
 const bodyParser = require('body-parser'),
   compression = require('compression'),
-  addIsoImageProvider = require('./imageUpload.js'),
+  createIsoImgServerAsync = require('./imageUpload.js'),
   Resolvers = require('./resolvers.js'),
   config = require('config'),
   express = require('express'),
@@ -29,7 +29,7 @@ let wsServer = http.createServer((req, res) => {
   res.end();
 });
 
-function createHttpServer(config) {
+function createHttpServerAsync(config) {
   let app = express();
   let httpServer = http.createServer(app);
 
@@ -48,8 +48,6 @@ function createHttpServer(config) {
         endpointURL: '/graphql',
         subscriptionsEndpoint: config.websocket_public_url,
       }));
-
-      addIsoImageProvider(app);
 
       app.use(function (err, req, res, next) {
         res.status(err.status || 500);
@@ -78,7 +76,8 @@ function createHttpServer(config) {
 }
 
 if (process.argv[1].endsWith('server.js')) {
-  createHttpServer(config);
+  createHttpServerAsync(config);
+  createIsoImgServerAsync(config);
 }
 
-module.exports = {createHttpServer, wsServer}; // for testing
+module.exports = {createHttpServerAsync, wsServer}; // for testing
