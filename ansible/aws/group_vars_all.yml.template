@@ -1,6 +1,6 @@
 ---
 
-stage:
+stage: STAGE_NAME  # prod/stage/dev
 
 # SOFTWARE CONFIGURATION
 
@@ -15,15 +15,15 @@ postgres_version: 9.5
 postgres_port: 5432
 postgres_drop_create: false
 
-elasticsearch_version: 5.2.2
+elasticsearch_version: 5.5.2
 
 kibana_version: "{{ elasticsearch_version }}"
 kibana_user: kibana
 kibana_password: kibana_password
-kibana_es_port: 9200
+kibana_es_port: 9200  # kibana runs on the same host and connects to ES directly
 
 rabbitmq_version: 3.6.8-1
-rabbitmq_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
+rabbitmq_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 rabbitmq_user: sm
 rabbitmq_password:
 
@@ -32,10 +32,7 @@ miniconda_python: 3
 miniconda_prefix: /opt/dev/miniconda3
 miniconda_env:
   name: sm
-  channels:
-    - salford_systems
   dependencies:
-    - nomkl
     - python=3.6
     - numpy=1.11.2
     - scipy=0.18.1
@@ -50,7 +47,6 @@ miniconda_env:
       - pytest
       - recommonmark
       - boto3
-      - networkx
       - fabric3
       - pypng
       - pyyaml
@@ -62,12 +58,12 @@ miniconda_env:
 
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
 sm_branch: rel-v0.7
-sm_postgres_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
+sm_postgres_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 sm_postgres_password: postgres_password
-sm_home: "/opt/dev/sm"
+sm_home: /opt/dev/sm
 sm_s3_path: "s3a://bucket-name/data"
-sm_iso_images_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/iso_images"
-sm_es_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
+sm_iso_images_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:4201/iso_images"
+sm_es_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
 sm_es_password: elastic_password
@@ -111,14 +107,14 @@ sm_graphql_jwt_secret: "reallyLongSecret"
 sm_graphql_public_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/graphql"
 sm_graphql_mol_image_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_graphql_img_upload_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
-sm_graphql_moldb_service_host: localhost/mol_db
+sm_graphql_moldb_service_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}/mol_db"
 sm_graphql_database_password: "{{ sm_postgres_password }}"
 sm_graphql_rabbitmq_host: "{{ rabbitmq_host }}"
 sm_graphql_rabbitmq_user: "{{ rabbitmq_user }}"
 sm_graphql_rabbitmq_password: "{{ rabbitmq_password }}"
-sm_graphql_ws_public_endpoint: "ws://{{ hostvars['web-1'].ansible_ssh_host }}/ws"
+sm_graphql_ws_public_endpoint: "ws://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}/ws"
 sm_graphql_default_adducts:
-  "+": ["+H", "+K", "+Na"]
+  "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
 sm_graphql_img_storage_backend: fs
 
@@ -132,7 +128,7 @@ sm_webapp_admin_emails:
 sm_webapp_aws_region: "{{ aws_region }}"
 sm_webapp_aws_access_key_id:
 sm_webapp_aws_secret_access_key:
-sm_webapp_s3_bucket: bucket-name
+sm_webapp_s3_bucket: BUCKET-NAME
 sm_webapp_google_client_id: ""
 sm_webapp_google_client_secret: ""
 sm_webapp_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
@@ -156,7 +152,7 @@ spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
 spark_user: "ubuntu"
 spark_master_elk_es_ingest_node_pipeline_id: sm_engine_log_extract
-spark_master_filebeat_version: "{{ elasticsearch_version }}"
+spark_master_filebeat_version: "{{ elk_version }}"
 spark_master_filebeat_prospectors:
   - input_type: log
     paths: ["{{ sm_home }}/logs/sm-engine.log"]
@@ -164,7 +160,7 @@ spark_master_filebeat_prospectors:
     multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
   - input_type: log
     paths: ["{{ sm_home }}/logs/sm-daemon.log"]
-    document_type: "sm_job_daemon"
+    document_type: "sm_daemon"
     multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
 
 elk_private_ip:
@@ -192,7 +188,7 @@ nginx_upstream_hosts:
   - name: mol_image_server
     server: 127.0.0.1:3020
   - name: isotope_image_server
-    server: 127.0.0.1:3010
+    server: 127.0.0.1:4201
   - name: graphql_server
     server: 127.0.0.1:3010
   - name: graphql_ws_server
@@ -227,6 +223,7 @@ nginx_sites:
       - path: /iso_images/
         params:
           - proxy_pass http://isotope_image_server/iso_images/;
+          - limit_except GET {deny all;}
       - path: /graphql
         params:
           - proxy_pass http://graphql_server/graphql;
@@ -267,13 +264,13 @@ basic_auth_users:
 cluster_configuration:
   instances:
     web:
-      hostgroup: # mandatory
+      hostgroup: WEB_HOSTGROUP
       type: c4.large
       n: 1
-      elipalloc: # mandatory
+      elipalloc: ELIPALLOC
       price:
-      sec_group: sm services
-      image: ami-07174474 # public ubuntu 16.04
+      sec_group: WEB_SEC_GROUP_NAME
+      image: ami-07174474  # public ubuntu 16.04
 
       block_dev_maps:
         - DeviceName: /dev/sda1
@@ -283,13 +280,13 @@ cluster_configuration:
             VolumeType: gp2
 
     master:
-      hostgroup: # mandatory
+      hostgroup: MASTER_HOSTGROUP
       type: c4.large
       n: 1
       elipalloc:
       price: 0.6
       sec_group: default
-      image: # will fetch the most recent custom ami
+      image: ami-07174474  # public ubuntu 16.04
 
       block_dev_maps:
         - DeviceName: /dev/sda1
@@ -299,13 +296,13 @@ cluster_configuration:
             VolumeType: gp2
 
     slave:
-      hostgroup: # mandatory
+      hostgroup: SLAVE_HOSTGROUP
       type: c4.2xlarge
       n: 1
       elipalloc:
       price: 0.6
       sec_group: default
-      image: # will fetch the most recent custom ami
+      image: ami-07174474  # public ubuntu 16.04
 
       block_dev_maps:
         - DeviceName: /dev/sda1
@@ -316,3 +313,4 @@ cluster_configuration:
 
     elk:
       hostgroup: elk
+      sec_group: elk
