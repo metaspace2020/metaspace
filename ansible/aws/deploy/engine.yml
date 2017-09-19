@@ -5,7 +5,7 @@
   user: ubuntu
   tasks:
     - action: ec2_facts
-  tags: [slave, master]
+  tags: [always]
 
 
 - name: Deploying SM engine code to the slaves
