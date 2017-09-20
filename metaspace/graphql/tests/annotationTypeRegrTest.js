@@ -9,13 +9,13 @@ const chai = require('chai'),
 const  config = require('config'),
   logger = require('../utils').logger,
   {graphqlQuery, stripUrls} = require('./testingUtils'),
-  createHttpServer = require('../server').createHttpServer;
+  {createHttpServerAsync} = require('../server');
 
 describe('GraphQL integration: Annotation type', () => {
   let server;
 
   before((done) => {
-    createHttpServer(config).then((srv) => {
+    createHttpServerAsync(config).then((srv) => {
       server = srv;
       done();
     });
