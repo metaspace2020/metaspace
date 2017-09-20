@@ -11,13 +11,14 @@ aws_region:
 
 postgres_version: 9.5
 postgres_port: 5432
+postgres_drop_create: false
 
-elasticsearch_version: 5.2.2
+elasticsearch_version: 5.5.2
 
 kibana_version: "{{ elasticsearch_version }}"
 kibana_user: kibana
 kibana_password: kibana
-kibana_es_port: 9200
+kibana_es_port: 9200  # kibana runs on the same host and connects to ES directly
 
 rabbitmq_version: 3.6.8-1
 rabbitmq_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
@@ -29,11 +30,8 @@ miniconda_python: 3
 miniconda_prefix: /opt/dev/miniconda3
 miniconda_env:
   name: sm
-  channels:
-    - salford_systems
   dependencies:
-    - nomkl
-    - python=3.5
+    - python=3.6
     - numpy=1.11.2
     - scipy=0.18.1
     - matplotlib-nogui
@@ -60,14 +58,18 @@ sm_repo_url: https://github.com/METASPACE2020/sm-engine
 sm_branch: rel-v0.7
 sm_postgres_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_postgres_password: password
-sm_home: "/opt/dev/sm"
+sm_home: /opt/dev/sm
 sm_s3_path: ""
-sm_iso_images_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/iso_images"
+sm_iso_images_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}:4201/iso_images"  # used in the engine for adding/deleting iso images, direct port access is needed
 sm_es_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
-sm_es_port: 9700  # cannot be 9200 (nginx proxied)
+sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
 sm_es_password: elastic
 sm_send_email: false
+sm_create_schema: false
+sm_create_es_index: false
+
+sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
 mol_db_home: /opt/dev/sm-mol-db
 mol_db_branch: rel-v0.7
@@ -98,7 +100,7 @@ sm_graphql_rabbitmq_user: "{{ rabbitmq_user }}"
 sm_graphql_rabbitmq_password: "{{ rabbitmq_password }}"
 sm_graphql_ws_public_endpoint: "ws://{{ hostvars['web-1'].ansible_ssh_host }}/ws"
 sm_graphql_default_adducts:
-  "+": ["+H", "+K", "+Na"]
+  "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
 sm_graphql_img_storage_backend: fs
 
@@ -113,16 +115,16 @@ sm_webapp_aws_region: "{{ aws_region }}"
 sm_webapp_aws_access_key_id:
 sm_webapp_aws_secret_access_key:
 sm_webapp_s3_bucket:
-sm_webapp_graphql_url: /graphql
-sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_webapp_google_client_id:
 sm_webapp_google_client_secret:
 sm_webapp_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
+sm_webapp_graphql_url: /graphql
 sm_webapp_upload_destination: "/opt/sm-data/uploads"
 sm_webapp_graphql_ws_public_endpoint: "{{ sm_graphql_ws_public_endpoint }}"
 sm_webapp_jwt_secret: "{{ sm_graphql_jwt_secret }}"
 sm_webapp_redis_host: localhost
 sm_webapp_redis_port: 6379
+sm_webapp_enable_uploads: true
 
 sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
 sm_ansible_branch: rel-v0.7
@@ -155,7 +157,7 @@ nginx_upstream_hosts:
   - name: mol_image_server
     server: 127.0.0.1:3020
   - name: isotope_image_server
-    server: 127.0.0.1:3010
+    server: 127.0.0.1:4201
   - name: graphql_server
     server: 127.0.0.1:3010
   - name: graphql_ws_server
@@ -190,6 +192,7 @@ nginx_sites:
       - path: /iso_images/
         params:
           - proxy_pass http://isotope_image_server/iso_images/;
+          - limit_except GET {deny all;}
       - path: /graphql
         params:
           - proxy_pass http://graphql_server/graphql;
