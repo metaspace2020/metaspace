@@ -9,7 +9,13 @@
     - role: base
       become: yes
       swapsize: 16384
-      tags: [base]
+
+  tasks:
+    - name: Add spark master public key to authorized_keys
+      authorized_key: user=ubuntu key="{{ item }}"
+      with_file:
+        - "{{ spark_key_file }}.pub"
+  tags: [base]
 
 
 - name: SM services instance configuration

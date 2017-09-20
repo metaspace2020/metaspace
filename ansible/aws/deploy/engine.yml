@@ -1,5 +1,13 @@
 ---
 
+- name: Gather AWS web instance facts
+  hosts: web
+  user: ubuntu
+  tasks:
+    - action: ec2_facts
+  tags: [always]
+
+
 - name: Deploying SM engine code to the slaves
   hosts: slave
   user: ubuntu
