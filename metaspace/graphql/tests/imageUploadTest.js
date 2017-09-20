@@ -6,9 +6,10 @@ process.env.NODE_ENV = 'test';
 const chai = require('chai'),
   should = chai.should(),
   chaiHttp = require('chai-http'),
-  fs = require('fs'),
-  logger = require('../utils.js').logger,
-  createIsoImgServer = require('../imageUpload');
+  fs = require('fs');
+
+const {logger, pg} = require('../utils.js'),
+  {createImgServerAsync, IMG_TABLE_NAME} = require('../imageUpload');
 
 chai.use(chaiHttp);
 
@@ -28,7 +29,7 @@ describe('imageUploadTest with fs and db backends', () => {
       before((done) => {
         let config = require('config');
         config.img_upload.backend = cs.backend;
-        createIsoImgServer(config)
+        createImgServerAsync(config)
           .then((srv) => {
             server = srv;
             done();
@@ -41,7 +42,16 @@ describe('imageUploadTest with fs and db backends', () => {
       after((done) => {
         server.close(() => {
           logger.debug('Iso image server closed');
-          done();
+          if (cs === 'db') {
+            pg.schema.dropTableIfExists(IMG_TABLE_NAME)
+              .then(() => done())
+              .catch((e) => {
+                logger.error(e.message);
+              });
+          }
+          else {
+            done();
+          }
         });
         // wsServer.close(() => console.log('WS server closed!') );
       });

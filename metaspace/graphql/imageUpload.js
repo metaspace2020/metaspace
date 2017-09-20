@@ -10,7 +10,8 @@ const express = require('express'),
   fs = require('fs'),
   Promise = require('promise');
 
-const {logger, pg} = require('./utils.js');
+const {logger, pg} = require('./utils.js'),
+  IMG_TABLE_NAME = 'image';
 
 function imageProviderDBBackend(pg) {
   return (app, fieldName, mimeType, basePath) => {
@@ -22,14 +23,15 @@ function imageProviderDBBackend(pg) {
     let storage = multer.memoryStorage();
     let upload = multer({ storage: storage });
 
-    pg.schema.createTableIfNotExists(fieldName, function (table) {
+    pg.schema.createTableIfNotExists(IMG_TABLE_NAME, function (table) {
       table.text('id');
+      table.text('category');
       table.binary('data');
     }).then(() => {
       app.get(path.join(basePath, ":img_id"),
         function (req, res) {
           pg.select(pg.raw('data'))
-            .from(fieldName)
+            .from(IMG_TABLE_NAME)
             .where('id', '=', req.params.img_id)
             .first()
             .then((row) => {
@@ -48,14 +50,13 @@ function imageProviderDBBackend(pg) {
       app.post(path.join(basePath, 'upload'), upload.single(fieldName),
         function (req, res, next) {
           logger.debug(req.file.originalname);
-          let img_id = crypto.randomBytes(16).toString('hex');
+          let imgID = crypto.randomBytes(16).toString('hex');
 
-          let img_buf = req.file.buffer;
-          pg.insert({'id': img_id, 'data': img_buf})
-            .into(fieldName)
+          pg.insert({'id': imgID, 'category': fieldName, 'data': req.file.buffer})
+            .into(IMG_TABLE_NAME)
             .then((m) => {
               logger.debug(`${m}`);
-              res.status(201).json({ image_id: img_id });
+              res.status(201).json({ image_id: imgID });
             })
             .catch((e) => {
               logger.error(e.message);
@@ -65,7 +66,7 @@ function imageProviderDBBackend(pg) {
 
       app.delete(path.join(basePath, 'delete', ":img_id"),
         function (req, res, next) {
-          pg.del().from(fieldName)
+          pg.del().from(IMG_TABLE_NAME)
             .where('id', '=', req.params.img_id)
             .catch((e) => {
               logger.error(e.message);
@@ -79,13 +80,11 @@ function imageProviderDBBackend(pg) {
   }
 }
 
-function imageProviderFSBackend(storage_root_dir) {
+function imageProviderFSBackend(storageRootDir) {
   return (app, fieldName, mimeType, basePath) => {
-    const url_base_path = basePath;
-
     let storage = multer.diskStorage({
       destination: function (req, file, cb) {
-        cb(null, path.join(storage_root_dir, url_base_path))
+        cb(null, path.join(storageRootDir, basePath))
       }
     });
     let upload = multer({ storage });
@@ -95,19 +94,19 @@ function imageProviderFSBackend(storage_root_dir) {
         res.type(mimeType);
       }
     };
-    app.use(express.static(storage_root_dir, options));
+    app.use(express.static(storageRootDir, options));
 
-    app.post(path.join(url_base_path, 'upload'), upload.single(fieldName),
+    app.post(path.join(basePath, 'upload'), upload.single(fieldName),
       function (req, res, next) {
         let image_id = req.file.filename;
         logger.debug(image_id, req.file.originalname);
         res.status(201).json({ image_id });
       });
 
-    app.delete(path.join(url_base_path, 'delete', ":img_id"),
+    app.delete(path.join(basePath, 'delete', ":img_id"),
       function (req, res, next) {
-        const img_path = path.join(storage_root_dir, url_base_path, req.params.img_id);
-        fs.unlink(img_path, function (err) {
+        const imgPath = path.join(storageRootDir, basePath, req.params.img_id);
+        fs.unlink(imgPath, function (err) {
           if (err)
             logger.warn(`${err} (image id = ${req.params.img_id})`);
         });
@@ -126,7 +125,7 @@ function createImgServerAsync(config) {
   }[config.img_upload.backend];
 
   if (backend === undefined) {
-    logger.error(`Unknown image upload backend: ${config.img_upload.backend}`)
+    logger.error(`Unknown image upload backend: ${config.img_upload.backend}`);
   } else {
     Object.keys(config.img_upload.categories).forEach(category => {
       const {type, path} = config.img_upload.categories[category];
@@ -137,11 +136,11 @@ function createImgServerAsync(config) {
   let httpServer = http.createServer(app);
   httpServer.listen(config.img_storage_port, (err) => {
     if (err) {
-      logger.error('Could not start iso image server', err)
+      logger.error('Could not start iso image server', err);
     }
-    logger.info(`Image server is listening on ${config.img_storage_port} port...`)
+    logger.info(`Image server is listening on ${config.img_storage_port} port...`);
   });
   return Promise.resolve(httpServer);
 }
 
-module.exports = createImgServerAsync;
+module.exports = {createImgServerAsync, IMG_TABLE_NAME};
