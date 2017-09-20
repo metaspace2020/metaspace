@@ -20,8 +20,8 @@ def _extract_data(res):
 
 
 DEFAULT_CONFIG = {
-    'graphql_url': 'http://annotate.metaspace2020.eu:3010/graphql',
-    'moldb_url': 'http://annotate.metaspace2020.eu:5001/v1',
+    'graphql_url': 'http://annotate.metaspace2020.eu/graphql',
+    'moldb_url': 'http://annotate.metaspace2020.eu/mol_db/v1',
     'jwt': None
 }
 
