@@ -1,2 +1,13 @@
-# {{ ansible_managed }}
-{{ filebeat_config | to_yaml }}
+filebeat:
+  prospectors:
+{% for prosp in filebeat_prospectors %}
+    - {{ prosp | to_yaml | indent(width=6, indentfirst=False) }}
+{% endfor %}
+
+output:
+  elasticsearch:
+    hosts: ["{{ es_host }}:9200"]
+    index: "filebeat-%{+yyyy}"
+    pipeline: "{{ ingest_node_pipeline_id }}"
+    username: "{{ es_user }}"
+    password: "{{ es_password }}"

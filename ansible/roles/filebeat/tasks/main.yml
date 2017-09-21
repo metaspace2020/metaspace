@@ -12,19 +12,18 @@
 
 - name: Create Elasticsearch ingest node pipelines
   uri:
-    url: http://{{ es_private_ip }}:9200/_ingest/pipeline/{{ ingest_node_pipeline_id }}
+    url: http://{{ es_host }}:9200/_ingest/pipeline/{{ ingest_node_pipeline_id }}
     method: PUT
     user: "{{ es_user }}"
     password: "{{ es_password }}"
-    body: "{{ item | to_json }}"
+    body: "{{ ingest_node_pipeline | to_json }}"
     body_format: json
-  with_items: "{{ ingest_node_pipelines }}"
 
 - name: Filebeat conf update restart
   service: name=filebeat state=restarted
 
 - name: Start Filebeat service
-  service: name=filebeat state=running
+  service: name=filebeat state=started
 
 - name: Start Filebeat on boot
   service: name=filebeat enabled=true
