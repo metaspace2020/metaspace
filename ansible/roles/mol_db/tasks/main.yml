@@ -22,25 +22,23 @@
     version={{ mol_db_branch }}
 
 - name: Check if env already exists
-  args:
-    chdir: "{{ mol_db_home }}"
-    executable: /bin/bash
-  shell: "conda env list"
-  register: conda_envs
+  stat:
+    path: "{{ mol_db_miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}"
+  register: env_status
 
 - name: Create conda environment (from environment.yml file) if it doesn't exist
   args:
     chdir: "{{ mol_db_home }}"
     executable: /bin/bash
   shell: "conda env create"
-  when: not ('mol_db' in conda_envs.stdout)
+  when: not env_status.stat.exists
 
 - name: Update conda environment (from environment.yml file) if it exists
   args:
     chdir: "{{ mol_db_home }}"
     executable: /bin/bash
   shell: "conda env update -f environment.yml"
-  when: ('mol_db' in conda_envs.stdout)
+  when: env_status.stat.exists
 
 - name: Install OpenBabel
   apt: name=openbabel state=latest

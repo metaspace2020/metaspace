@@ -24,6 +24,7 @@
     - role: supervisor
 
     - role: mol_db
+      tags: [mol_db]
 
     - role: sm_api
 
