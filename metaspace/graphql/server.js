@@ -1,6 +1,6 @@
 const bodyParser = require('body-parser'),
   compression = require('compression'),
-  createImgServerAsync = require('./imageUpload.js'),
+  {createImgServerAsync} = require('./imageUpload.js'),
   Resolvers = require('./resolvers.js'),
   config = require('config'),
   express = require('express'),
