@@ -142,19 +142,30 @@ if __name__ == "__main__":
     parser.add_argument('version', type=str, help='Database version')
     parser.add_argument('csv_file', type=str, help='Path to a database csv file')
     parser.add_argument('--sep', dest='sep', type=str, help='CSV file fields delimiter')
-    parser.add_argument('--yes', dest='confirmed', type=bool, help='Don\'t ask for a confirmation')
+    parser.add_argument('--yes', dest='confirmed', type=bool, help='Don\'t ask for a confirmation')  # TODO: remove
+    parser.add_argument('--drop', action='store_true',
+                        help='Drop molecular database before importing? (destructive, use with caution!)')
     parser.set_defaults(sep='\t', confirmed=False)
     args = parser.parse_args()
 
     init_session()
 
     mol_db = MolecularDB.find_by_name_version(db_session, args.name, args.version)
-    if not mol_db:
-        mol_db = MolecularDB(name=args.name, version=args.version)
+    if mol_db and not args.drop:
+        LOG.info('Molecular DB already exists: {} {}'.format(args.name, args.version))
+    else:
+        if mol_db:
+            LOG.info('Deleting molecular DB: {} {}'.format(args.name, args.version))
+            db_session.delete(mol_db)
+            db_session.commit()
+
+            mol_db = MolecularDB(id=mol_db.id, name=args.name, version=args.version)
+        else:
+            mol_db = MolecularDB(name=args.name, version=args.version)
+
         db_session.add(mol_db)
         db_session.commit()
 
+        LOG.info('Appending molecules to Mol DB: {} {}'.format(args.name, args.version))
         append_molecules(mol_db, args.csv_file, args.sep)
         db_session.commit()
-    else:
-        LOG.info('Molecular DB already exists: {} {}'.format(args.name, args.version))

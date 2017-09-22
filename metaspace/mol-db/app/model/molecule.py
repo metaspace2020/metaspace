@@ -7,8 +7,8 @@ from app.model.base import Base
 
 
 moldb_mol_table = Table('molecular_db_molecule', Base.metadata,
-                        Column('db_id', Integer, ForeignKey('molecular_db.id'), primary_key=True),
-                        Column('inchikey', String, ForeignKey('molecule.inchikey'), primary_key=True),
+                        Column('db_id', Integer, ForeignKey('molecular_db.id', ondelete="CASCADE"), primary_key=True),
+                        Column('inchikey', String, ForeignKey('molecule.inchikey', ondelete="CASCADE"), primary_key=True),
                         Column('mol_id', String, nullable=False),
                         Column('mol_name', String))
 
