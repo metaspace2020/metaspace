@@ -130,15 +130,15 @@
 <script>
  /*
     This component serves two purposes:
-    * editing metadata of existing datasets;
-    * providing metadata during the initial upload.
+  * editing metadata of existing datasets;
+  * providing metadata during the initial upload.
 
     It has a few simplifying assumptions on the structure and types used:
-    * nesting is limited to 3 levels: section -> field -> subfield
-    * sections are assumed to be objects
-    * strings, numbers and enums are supported for fields
-      * anything with name ending in Free_Text renders as a textarea
-    * strings and numbers are supported for subfields
+  * nesting is limited to 3 levels: section -> field -> subfield
+  * sections are assumed to be objects
+  * strings, numbers and enums are supported for fields
+  * anything with name ending in Free_Text renders as a textarea
+  * strings and numbers are supported for subfields
 
     FIELD_WIDTH dictionary can be used to control field/subfield widths.
 
@@ -150,7 +150,7 @@
 
     On submit button click, the form is checked for validity; if valid,
     a submit event is emitted with dataset ID and stringified form value.
- */
+  */
 
  import metadataSchema from '../assets/metadata_schema.json';
  import Ajv from 'ajv';
@@ -243,28 +243,35 @@
                'enum',
                response.data.molecularDatabases.map(d => d.name));
        this.validator = ajv.compile(this.schema);
-       this.loading = false;
+       this.setLoadingStatus(false);
+     }).catch(err => {
+       console.log("Error fetching list of metabolite databases: ", err);
      });
+   },
 
+   mounted() {
      // no datasetId means a new dataset => help filling out by loading the last submission
      if (!this.datasetId) {
        this.loadLastSubmission();
        return;
      }
 
-     // otherwise we need to fetch existing data from the server
      this.loading = true;
+     // otherwise we need to fetch existing data from the server
      this.$apollo.query({
        query: fetchMetadataQuery,
        variables: { id: this.datasetId },
        fetchPolicy: 'network-only'
      }).then(resp => {
        const defaultValue = objectFactory(metadataSchema),
-             value = JSON.parse(resp.data.dataset.metadataJson);
+             value = this.fixEntries(JSON.parse(resp.data.dataset.metadataJson));
        this.value = merge({}, defaultValue, value);
-       this.loading = false;
+       this.setLoadingStatus(false);
+     }).catch(err => {
+       console.log("Error fetching current metadata: ", err);
      });
    },
+
    data() {
      return {
        schema: metadataSchema,
@@ -343,6 +350,16 @@
        this.$router.go(-1);
      },
 
+     fixEntries(oldValue) {
+       let value = oldValue;
+       if (value.metaspace_options) {
+         const databases = value.metaspace_options.Metabolite_Database;
+         if (!Array.isArray(databases))
+           value = merge({}, value,
+                         {'metaspace_options': {'Metabolite_Database': [databases]}});
+       }
+       return value;
+     },
 
      loadLastSubmission() {
        const defaultValue = objectFactory(metadataSchema);
@@ -351,12 +368,17 @@
          lastValue.metaspace_options.Dataset_Name = ''; // different for each dataset
 
          /* we want to have all nested fields to be present for convenience,
-          that's what objectFactory essentially does */
-         this.value = merge({}, defaultValue, lastValue);
+            that's what objectFactory essentially does */
+         this.value = merge({}, defaultValue, this.fixEntries(lastValue));
        } else {
          this.value = defaultValue;
        }
-       this.loading = false;
+       this.setLoadingStatus(false);
+     },
+
+     setLoadingStatus(value) {
+       // https://github.com/ElemeFE/element/issues/4834
+       this.$nextTick(() => { this.loading = value; });
      },
 
      resetDatasetName() {
