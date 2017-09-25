@@ -56,7 +56,7 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/lib/hadoop/lib/native
 export SPARK_LOG_DIR=${SPARK_LOG_DIR:-{{ spark_log_dir }}}
 export SPARK_PID_DIR=${SPARK_PID_DIR:-{{ spark_run_dir }}}
 
-{% for key, value in spark_env_extras.iteritems() | sort %}
+{% for key, value in spark_env_extras.items() | sort %}
 export {{ key }}="{{ value }}"
 {% endfor %}
 

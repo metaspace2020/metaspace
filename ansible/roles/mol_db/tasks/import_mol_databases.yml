@@ -6,7 +6,7 @@
 
 - name: Import databases
   shell: |
-    source activate mol_db && \
+    source activate {{ mol_db_miniconda_env.name }} && \
     cd {{ mol_db_home }} && \
     python scripts/import_molecular_db.py \
       {{ item.name }} \

@@ -9,6 +9,6 @@
 # spark.driver.memory              5g
 # spark.executor.extraJavaOptions  -XX:+PrintGCDetails -Dkey=value -Dnumbers="one two three"
 
-{% for key, value in spark_defaults_extras.iteritems() | sort %}
+{% for key, value in spark_defaults_extras.items() | sort %}
 {{ key }} {{ value }}
 {% endfor %}

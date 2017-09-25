@@ -36,7 +36,7 @@ miniconda_env:
     - python=3.6
     - numpy=1.11.2
     - scipy=0.18.1
-    - matplotlib-nogui
+    - matplotlib=2
     - pandas=0.19.1
     - cffi
     - libgcc

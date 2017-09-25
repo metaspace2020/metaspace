@@ -37,7 +37,7 @@
 - meta: flush_handlers
 
 - name: Start postgres server
-  service: name=postgresql state=running
+  service: name=postgresql state=started
 
 - name: Start postgres server on reboot
   service: name=postgresql enabled=yes

@@ -7,6 +7,7 @@
   roles:
     - role: postgres
       become: yes
+      tags: [postgres]
 
     - role: elasticsearch
       become: yes
@@ -20,6 +21,7 @@
     - role: rabbitmq
 
     - role: miniconda
+      tags: [miniconda]
 
     - role: supervisor
 
