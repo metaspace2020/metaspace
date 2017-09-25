@@ -257,7 +257,7 @@
      this.$apollo.query({
        query: fetchMetadataQuery,
        variables: { id: this.datasetId },
-       fetchPolicy: 'network-only'
+       forceFetch: true
      }).then(resp => {
        const defaultValue = objectFactory(metadataSchema),
              value = this.fixEntries(JSON.parse(resp.data.dataset.metadataJson));
