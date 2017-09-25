@@ -133,7 +133,7 @@ def test_delete_ds__completely(es, sm_index, sm_config):
               body={'ds_id': 'dataset1', 'db_name': 'ChEBI', 'db_version': '2016'})
     es.create(index=index, doc_type='annotation', id='id3',
               body={'ds_id': 'dataset2', 'db_name': 'HMDB', 'db_version': '2016'})
-    es.create(index=index, doc_type='dataset', id='id4',
+    es.create(index=index, doc_type='dataset', id='dataset1',
               body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
 
     wait_for_es(sec=1)

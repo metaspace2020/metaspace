@@ -284,7 +284,7 @@ class ESExporter(object):
             if mol_db:
                 self._remove_mol_db_from_dataset(ds_id, mol_db)
             else:
-                self._es.delete_by_query(index=self.index, doc_type='dataset', body=body)
+                self._es.delete(id=ds_id, index=self.index, doc_type='dataset')
         except ElasticsearchException as e:
             logger.warning('Dataset deletion failed: %s', e)
 
