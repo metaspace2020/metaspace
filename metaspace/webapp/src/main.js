@@ -4,7 +4,10 @@ import Vue from 'vue';
 
 import VueApollo from 'vue-apollo';
 import apolloClient from './graphqlClient';
-Vue.use(VueApollo, {apolloClient});
+Vue.use(VueApollo);
+const apolloProvider = new VueApollo({
+  defaultClient: apolloClient
+})
 
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-default/index.css'
@@ -36,5 +39,6 @@ new Vue({
     return h('pre', { style: { color: 'red' }}, err.stack)
   },
   store,
-  router
+  router,
+  apolloProvider
 })

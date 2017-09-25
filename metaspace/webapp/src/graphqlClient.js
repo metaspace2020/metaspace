@@ -1,4 +1,4 @@
-import ApolloClient, { createBatchingNetworkInterface } from 'apollo-client';
+import {ApolloClient, createBatchingNetworkInterface } from 'apollo-client';
 import {SubscriptionClient, addGraphQLSubscriptions} from 'subscriptions-transport-ws';
 
 import config from './clientConfig.json';

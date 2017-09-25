@@ -28,45 +28,21 @@
     d3-collection "1"
     d3-interpolate "1"
 
-"@types/async@^2.0.31":
-  version "2.0.40"
-  resolved "https://registry.yarnpkg.com/@types/async/-/async-2.0.40.tgz#ac02de68e66c004a61b7cb16df8b1db3a254cca9"
-
-"@types/chai@^3.4.32":
-  version "3.5.2"
-  resolved "https://registry.yarnpkg.com/@types/chai/-/chai-3.5.2.tgz#c11cd2817d3a401b7ba0f5a420f35c56139b1c1e"
-
 "@types/d3-selection@1.0.10":
   version "1.0.10"
   resolved "https://registry.yarnpkg.com/@types/d3-selection/-/d3-selection-1.0.10.tgz#dcfb0ddfcdfb1ad26aea4351323771e1aea96e84"
+
+"@types/graphql@0.10.2":
+  version "0.10.2"
+  resolved "https://registry.yarnpkg.com/@types/graphql/-/graphql-0.10.2.tgz#d7c79acbaa17453b6681c80c34b38fcb10c4c08c"
 
 "@types/graphql@^0.9.1":
   version "0.9.3"
   resolved "https://registry.yarnpkg.com/@types/graphql/-/graphql-0.9.3.tgz#4a2a888e110c796eb7671bf8f9ecef229ad67749"
 
-"@types/isomorphic-fetch@0.0.30":
-  version "0.0.30"
-  resolved "https://registry.yarnpkg.com/@types/isomorphic-fetch/-/isomorphic-fetch-0.0.30.tgz#a21717624cde9a48c2db53a4e500fc5c32a99bbc"
-
-"@types/lodash@^4.14.34":
-  version "4.14.68"
-  resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.68.tgz#754fbab68bd2bbb69547dc8ce7574f7012eed7f6"
-
-"@types/node@*", "@types/node@^6.0.38":
+"@types/node@*":
   version "6.0.79"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.79.tgz#5efe7d4a6d8c453c7e9eaf55d931f4a22fac5169"
-
-"@types/promises-a-plus@0.0.26":
-  version "0.0.26"
-  resolved "https://registry.yarnpkg.com/@types/promises-a-plus/-/promises-a-plus-0.0.26.tgz#64d992f8e715dc6bb975766391eae54985fa4fe2"
-
-"@types/redux@^3.5.29":
-  version "3.6.31"
-  resolved "https://registry.yarnpkg.com/@types/redux/-/redux-3.6.31.tgz#40eafa7575db36b912ce0059b85de98c205b0708"
-
-"@types/sinon@^1.16.29":
-  version "1.16.36"
-  resolved "https://registry.yarnpkg.com/@types/sinon/-/sinon-1.16.36.tgz#74bb6ed7928597c1b3fb1b009005e94dc6eae357"
 
 "@types/ws@^3.0.0":
   version "3.0.0"
@@ -205,26 +181,27 @@ ap@~0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/ap/-/ap-0.2.0.tgz#ae0942600b29912f0d2b14ec60c45e8f330b6110"
 
-apollo-client@^0.5.0:
-  version "0.5.26"
-  resolved "https://registry.yarnpkg.com/apollo-client/-/apollo-client-0.5.26.tgz#5448942a9086ffd3e6913565a8e223748c41a5ab"
+apollo-client@^1.0.1:
+  version "1.9.3"
+  resolved "https://registry.yarnpkg.com/apollo-client/-/apollo-client-1.9.3.tgz#37000b3c801f4571b7b089739e696a158896aeab"
   dependencies:
-    graphql-anywhere "^1.0.0"
-    graphql-tag "^1.1.1"
-    lodash "^4.17.2"
-    redux "^3.3.1"
+    apollo-link-core "^0.5.0"
+    graphql "^0.10.0"
+    graphql-anywhere "^3.0.1"
+    graphql-tag "^2.0.0"
+    redux "^3.4.0"
     symbol-observable "^1.0.2"
     whatwg-fetch "^2.0.0"
   optionalDependencies:
-    "@types/async" "^2.0.31"
-    "@types/chai" "^3.4.32"
-    "@types/isomorphic-fetch" "0.0.30"
-    "@types/lodash" "^4.14.34"
-    "@types/node" "^6.0.38"
-    "@types/promises-a-plus" "0.0.26"
-    "@types/redux" "^3.5.29"
-    "@types/sinon" "^1.16.29"
-    typed-graphql "1.0.2"
+    "@types/graphql" "0.10.2"
+
+apollo-link-core@^0.5.0:
+  version "0.5.4"
+  resolved "https://registry.yarnpkg.com/apollo-link-core/-/apollo-link-core-0.5.4.tgz#8efd4cd747959872a32f313f0ccfc2a76b396668"
+  dependencies:
+    graphql "^0.10.3"
+    graphql-tag "^2.4.2"
+    zen-observable-ts "^0.4.4"
 
 append-field@^0.1.0:
   version "0.1.0"
@@ -1682,7 +1659,7 @@ css-color-names@0.0.4:
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/css-color-names/-/css-color-names-0.0.4.tgz#808adc2e79cf84738069b646cb20ec27beb629e0"
 
-css-element-queries@0.4.0, css-element-queries@^0.4.0:
+css-element-queries@^0.4.0:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/css-element-queries/-/css-element-queries-0.4.0.tgz#cb5bcde9d980ac3699e7471f798e70600088d3de"
 
@@ -3458,9 +3435,9 @@ graceful-fs@^4.1.2:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/graceful-readlink/-/graceful-readlink-1.0.1.tgz#4cafad76bc62f02fa039b2f94e9a3dd3a391a725"
 
-graphql-anywhere@^1.0.0:
-  version "1.1.2"
-  resolved "https://registry.yarnpkg.com/graphql-anywhere/-/graphql-anywhere-1.1.2.tgz#897d2868d35723ce7d8b4ead3455c285ea51a2d2"
+graphql-anywhere@^3.0.1:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/graphql-anywhere/-/graphql-anywhere-3.1.0.tgz#3ea0d8e8646b5cee68035016a9a7557c15c21e96"
 
 graphql-subscriptions@^0.4.3:
   version "0.4.3"
@@ -3470,17 +3447,19 @@ graphql-subscriptions@^0.4.3:
     es6-promise "^4.0.5"
     iterall "^1.1.1"
 
-graphql-tag@^0.1.15:
-  version "0.1.17"
-  resolved "https://registry.yarnpkg.com/graphql-tag/-/graphql-tag-0.1.17.tgz#1dfd6f2310d395b309a1077bc8cdc5d6604c5e89"
-
-graphql-tag@^1.1.1, graphql-tag@^1.3.2:
+graphql-tag@^1.3.2:
   version "1.3.2"
   resolved "https://registry.yarnpkg.com/graphql-tag/-/graphql-tag-1.3.2.tgz#7abb3a8fd9f3415d07163314ed237061c785b759"
 
-graphql-tag@^2.0.0:
+graphql-tag@^2.0.0, graphql-tag@^2.4.2:
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/graphql-tag/-/graphql-tag-2.4.2.tgz#6a63297d8522d03a2b72d26f1b239aab343840cd"
+
+graphql@^0.10.0:
+  version "0.10.5"
+  resolved "https://registry.yarnpkg.com/graphql/-/graphql-0.10.5.tgz#c9be17ca2bdfdbd134077ffd9bbaa48b8becd298"
+  dependencies:
+    iterall "^1.1.0"
 
 graphql@^0.10.3:
   version "0.10.3"
@@ -6070,9 +6049,9 @@ reduce-simplicial-complex@^1.0.0:
     compare-cell "^1.0.0"
     compare-oriented-cell "^1.0.1"
 
-redux@^3.3.1:
-  version "3.7.1"
-  resolved "https://registry.yarnpkg.com/redux/-/redux-3.7.1.tgz#bfc535c757d3849562ead0af18ac52122cd7268e"
+redux@^3.4.0:
+  version "3.7.2"
+  resolved "https://registry.yarnpkg.com/redux/-/redux-3.7.2.tgz#06b73123215901d25d065be342eb026bc1c8537b"
   dependencies:
     lodash "^4.2.1"
     lodash-es "^4.2.1"
@@ -7127,10 +7106,6 @@ type-is@^1.6.4, type-is@~1.6.15:
     media-typer "0.3.0"
     mime-types "~2.1.15"
 
-typed-graphql@1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/typed-graphql/-/typed-graphql-1.0.2.tgz#4c0f788775d552df4d4ec3d73f25469252f40fb8"
-
 typedarray-pool@^1.0.0, typedarray-pool@^1.0.2, typedarray-pool@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/typedarray-pool/-/typedarray-pool-1.1.0.tgz#d114f484801489f53ecab5e8088aa23044f498d9"
@@ -7382,11 +7357,10 @@ vt-pbf@^2.0.2:
     point-geometry "0.0.0"
     vector-tile "^1.1.3"
 
-vue-apollo@1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/vue-apollo/-/vue-apollo-1.4.0.tgz#f307f51e197d48b708d15c493342ba3b0ba7af60"
+vue-apollo@^2.1.0-beta.9:
+  version "2.1.0-rc.5"
+  resolved "https://registry.yarnpkg.com/vue-apollo/-/vue-apollo-2.1.0-rc.5.tgz#bde347716f752cf433521a8213a7763a6af70d8d"
   dependencies:
-    graphql-tag "^0.1.15"
     lodash.debounce "^4.0.8"
     lodash.omit "^4.5.0"
     lodash.throttle "^4.1.1"
@@ -7422,7 +7396,7 @@ vue-loader@~11.0.0:
     vue-style-loader "^2.0.0"
     vue-template-es2015-compiler "^1.2.2"
 
-vue-resize-directive@1.0.0:
+vue-resize-directive@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/vue-resize-directive/-/vue-resize-directive-1.0.0.tgz#e1197131390ac8d5e20116198679b06eb6cec985"
   dependencies:
@@ -7743,6 +7717,10 @@ yargs@~3.10.0:
     cliui "^2.1.0"
     decamelize "^1.0.0"
     window-size "0.1.0"
+
+zen-observable-ts@^0.4.4:
+  version "0.4.4"
+  resolved "https://registry.yarnpkg.com/zen-observable-ts/-/zen-observable-ts-0.4.4.tgz#c244c71eaebef79a985ccf9895bc90307a6e9712"
 
 zero-crossings@^1.0.0:
   version "1.0.1"

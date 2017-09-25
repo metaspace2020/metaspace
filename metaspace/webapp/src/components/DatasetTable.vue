@@ -179,7 +179,7 @@
      },
 
      started: {
-       forceFetch: true,
+       fetchPolicy: 'cache-and-network',
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
@@ -188,7 +188,7 @@
      },
 
      queued: {
-       forceFetch: true,
+       fetchPolicy: 'cache-and-network',
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
@@ -197,7 +197,7 @@
      },
 
      finished: {
-       forceFetch: true,
+       fetchPolicy: 'cache-and-network',
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
@@ -206,7 +206,7 @@
      },
 
      finishedCount: {
-       forceFetch: true,
+       fetchPolicy: 'cache-and-network',
        query: datasetCountQuery,
        update: data => data.countDatasets,
        variables () {
