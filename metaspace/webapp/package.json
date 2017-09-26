@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development node --max_old_space_size=4096 server.js",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
-    "build-quiet": "cross-env NODE_ENV=production webpack --hide-modules"
+    "build-ci": "cross-env NODE_ENV=production webpack --hide-modules"
   },
   "dependencies": {
     "ajv": "^4.10.0",

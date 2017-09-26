@@ -31,7 +31,9 @@ jobs:
           name: Install node packages
           command: |
             yarn install
-            yarn run build
+            cp tests/e2e/conf.js conf.js
+            cp tests/e2e/clientConfig.json src/
+            yarn run build-ci
       - save_cache:
           key: node-modules-{{ .Branch }}-{{checksum "package.json"}}
           paths:
@@ -54,8 +56,6 @@ jobs:
           name: Run tests
           command: |
             export NPM_CONFIG_LOGLEVEL=warn
-            cp tests/e2e/conf.js conf.js
-            cp tests/e2e/clientConfig.json src/
             Xvfb :99 -screen 0 1280x1024x24 &
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             export DISPLAY=:99
