@@ -26,19 +26,20 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - node-modules-{{ .Branch }}-{{checksum "package.json"}}
+            - yarn-cache-{{ .Branch }}-{{checksum "yarn.lock"}}
       - run:
           name: Install node packages
           command: |
+            yarn global add yarn
             yarn install
             npm rebuild node-sass  # https://github.com/sass/node-sass/issues/1804
             cp tests/e2e/conf.js conf.js
             cp tests/e2e/clientConfig.json src/
             yarn run build-ci
       - save_cache:
-          key: node-modules-{{ .Branch }}-{{checksum "package.json"}}
+          key: yarn-cache-{{ .Branch }}-{{checksum "yarn.lock"}}
           paths:
-            - /tmp/webapp/node_modules
+            - /usr/local/share/.cache/yarn
       - run:
           name: Start GraphQL server and service mocks
           command: |
