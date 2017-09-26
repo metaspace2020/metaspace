@@ -227,7 +227,7 @@
        variables() {
          return {
            datasetId: this.annotation.dataset.id,
-           zoom: this.zoom * 2 // load higher-resolution image
+           zoom: this.zoom
          }
        },
        // assumes both image server and webapp are routed via nginx

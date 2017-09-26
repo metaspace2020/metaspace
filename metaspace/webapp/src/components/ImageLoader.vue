@@ -307,6 +307,8 @@
        var pixels = imageData.data;
        var numPixels = pixels.length / 4;
        var g = this.grayscaleData;
+       if (g === undefined)
+         return;
 
        // TODO experiment with different functions
        const f = OPACITY_MAPPINGS[this.opacityMode];
