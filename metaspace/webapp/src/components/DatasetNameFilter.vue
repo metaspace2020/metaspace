@@ -33,6 +33,7 @@
 <script>
  import TagFilter from './TagFilter.vue';
  import gql from 'graphql-tag';
+ import deepcopy from 'deepcopy';
 
  const optionsQuery =
   gql`query DatasetFilterOptions($df: DatasetFilter, $orderBy: DatasetOrderBy,
@@ -111,11 +112,11 @@
          // TODO update when we make GraphQL accept an array
          variables: {ids: ids.join('|')}
        }).then(({data}) => {
+         this.cachedOptions = deepcopy(data.options);
          /* hack to make it show dataset names instead of ids */
-         this.$refs.select.cachedOptions = data.options;
+         this.$refs.select.cachedOptions = this.cachedOptions;
          this.$refs.select.setSelected();
 
-         this.cachedOptions = data.options;
          this.joinOptions();
          if (ids.length == 1) {
            this.currentLabel = data.options[0].currentLabel;

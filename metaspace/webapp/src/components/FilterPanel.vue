@@ -36,6 +36,7 @@
  import SearchBox from './SearchBox.vue';
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
  import {fetchOptionListsQuery} from '../api/metadata.js';
+ import deepcopy from 'deepcopy';
 
  const filterKeys = [
    'database',
@@ -71,9 +72,13 @@
      SearchBox
    },
    apollo: {
-     optionLists: {
+     optionLists_: {
        query: fetchOptionListsQuery,
-       update: data => data
+       update: data => data,
+       result({data}) {
+         if (data)
+           this.optionLists = deepcopy(data)
+       }
      }
    },
    computed: {
@@ -105,6 +110,7 @@
    data () {
      return {
        selectedFilterToAdd: null,
+       optionLists: null
      }
    },
 

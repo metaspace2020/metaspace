@@ -6,7 +6,8 @@
   "private": true,
   "scripts": {
     "dev": "cross-env NODE_ENV=development node --max_old_space_size=4096 server.js",
-    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules"
+    "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
+    "build-quiet": "cross-env NODE_ENV=production webpack --hide-modules"
   },
   "dependencies": {
     "ajv": "^4.10.0",
@@ -23,8 +24,9 @@
     "d3-color": "^1.0.3",
     "d3-scale": "^1.0.5",
     "d3-svg-legend": "^2.24.0",
+    "deepcopy": "^0.6.3",
     "ejs": "^2.5.5",
-    "element-ui": "~1.2.7",
+    "element-ui": "1.4.5",
     "express": "^4.14.0",
     "express-session": "^1.14.2",
     "file-saver": "^1.3.3",
@@ -52,7 +54,7 @@
     "sqlite3": "3.1.11",
     "subscriptions-transport-ws": "^0.7.3",
     "uuid": "^3.0.1",
-    "vue": "~2.2.6",
+    "vue": "~2.3.0",
     "vue-apollo": "^2.1.0-beta.9",
     "vue-clickaway": "^2.1.0",
     "vue-lazyload": "^1.0.0-rc5",
@@ -84,7 +86,7 @@
     "sass-loader": "~4.1.1",
     "style-loader": "~0.13.1",
     "vue-loader": "~11.0.0",
-    "vue-template-compiler": "~2.2.0",
+    "vue-template-compiler": "~2.3.0",
     "webpack": "~2.5.0",
     "webpack-dev-middleware": "1.9.0",
     "webpack-dev-server": "~2.1.0-beta.9",

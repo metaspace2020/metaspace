@@ -273,7 +273,7 @@
        },
        update: data => data.allAnnotations,
        debounce: 200,
-       result (data) {
+       result ({data}) {
          // For whatever reason (could be a bug), vue-apollo seems to first refetch
          // data for the current page and only then fetch the updated data.
          // Checking if the data has been actually changed is easiest by comparing
@@ -288,19 +288,21 @@
          if (this._onDataArrival && changed) {
            this._onDataArrival(data.allAnnotations);
            this._onDataArrival = (data) => {
-             Vue.nextTick(() => this.setRow(data, 0));
+             if (data)
+               Vue.nextTick(() => this.setRow(data, 0));
            };
          }
 
          this.totalCount = data.countAnnotations;
        },
-       loadingChangeCb (isLoading) {
+       watchLoading (isLoading) {
          this.$store.commit('updateAnnotationTableStatus', isLoading);
        }
      }
    },
    created() {
      this._onDataArrival = (data) => {
+       if (!data) return;
        Vue.nextTick(() => this.setRow(data, 0));
        document.getElementById('annot-table').focus();
      };
