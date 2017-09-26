@@ -226,7 +226,23 @@
          if (xhr.readyState == 4 && xhr.status == 201) {
            const imageId = xhr.response.image_id,
                  imageUrl = this.imageStorageUrl + '/' + imageId;
-           this.addOpticalImage(imageUrl);
+           this.addOpticalImage(imageUrl).then(() => {
+             this.$message({
+               type: 'success',
+               message: 'The image and alignment were successfully saved!'
+             });
+           }).catch((e) => {
+             console.log(e);
+             this.$message({
+               type: 'error',
+               message: 'Internal server error'
+             });
+           });
+         } else if (xhr.readyState == 4) {
+           this.$message({
+             type: 'error',
+             message: "Couldn't upload the optical image due to server error"
+           });
          }
        };
        fd.append('raw_optical_image', this.file);
@@ -234,7 +250,7 @@
      },
 
      addOpticalImage(imageUrl) {
-       getJWT()
+       return getJWT()
          .then(jwt =>
            this.$apollo.mutate({
              mutation: addOpticalImageQuery,
