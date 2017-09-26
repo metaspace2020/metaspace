@@ -3,7 +3,6 @@
 # SOFTWARE CONFIGURATION
 
 time_zone_name: UTC
-time_zone_name: UTC
 
 aws_access_key_id:
 aws_secret_access_key:
@@ -12,7 +11,7 @@ aws_region:
 
 postgres_version: 9.5
 postgres_port: 5432
-postgres_drop_create: false
+postgres_drop_create: true
 
 elasticsearch_version: 5.5.2
 
@@ -55,30 +54,34 @@ miniconda_env:
       - bottle
       - pysparkling
 
+web_host_internal_address: "{{ hostvars['web-1'].ansible_ssh_host }}"
+web_host_external_address: "localhost:8999" # mapping of internal 80 port
+
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
 sm_branch: rel-v0.7
 sm_postgres_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_postgres_password: password
 sm_home: /opt/dev/sm
 sm_s3_path: ""
-sm_iso_images_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}:4201/iso_images"  # used in the engine for adding/deleting iso images, direct port access is needed
+sm_iso_images_url: "http://{{ web_host_internal_address }}:4201/iso_images"  # used in the engine for adding/deleting iso images, direct port access is needed
+sm_optical_images_url: "http://{{ web_host_internal_address }}:4201/optical_images"
 sm_es_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
 sm_es_password: elastic
 sm_send_email: false
-sm_create_schema: false
-sm_create_es_index: false
+sm_create_schema: true
+sm_create_es_index: true
 
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
 mol_db_home: /opt/dev/sm-mol-db
 mol_db_branch: rel-v0.7
-mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
+mol_db_url: "http://{{ web_host_internal_address }}/mol_db/v1"
 mol_db_postgres_pass: postgres_password
 mol_db_image_dir: /var/www/mol-images
-mol_db_import_databases: false
-mol_db_import_mol_images: false
+mol_db_import_databases: true
+mol_db_import_mol_images: true
 mol_db_image_archives:
   - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-hmdb.tar.xz
 mol_db_imports:
@@ -91,21 +94,21 @@ sm_graphql_branch: rel-v0.7
 sm_graphql_slack_webhook_url:
 sm_graphql_slack_channel:
 sm_graphql_jwt_secret: "secret"
-sm_graphql_public_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/graphql"
-sm_graphql_mol_image_host: "{{ hostvars['web-1'].ansible_ssh_host }}:8999"
-sm_graphql_img_upload_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
-sm_graphql_moldb_service_host: localhost/mol_db
+sm_graphql_public_url: "http://{{ web_host_external_address }}/graphql"
+sm_graphql_mol_image_host: "{{ web_host_external_address }}"
+sm_graphql_img_upload_host: "{{ web_host_external_address }}"
+sm_graphql_moldb_service_host: "{{ web_host_internal_address }}/mol_db"
 sm_graphql_database_password: "{{ sm_postgres_password }}"
 sm_graphql_rabbitmq_host: "{{ rabbitmq_host }}"
 sm_graphql_rabbitmq_user: "{{ rabbitmq_user }}"
 sm_graphql_rabbitmq_password: "{{ rabbitmq_password }}"
-sm_graphql_ws_public_endpoint: "ws://{{ hostvars['web-1'].ansible_ssh_host }}/ws"
+sm_graphql_ws_public_endpoint: "ws://{{ web_host_external_address }}/ws"
 sm_graphql_default_adducts:
   "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
 sm_graphql_img_storage_backend: fs
 
-sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"
+sm_webapp_hostname: "{{ web_host_external_address }}"
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"
 sm_webapp_home: /opt/dev/sm-web-app
 sm_webapp_branch: rel-v0.7
@@ -194,6 +197,14 @@ nginx_sites:
         params:
           - proxy_pass http://isotope_image_server/iso_images/;
           - limit_except GET {deny all;}
+      - path: /optical_images/
+        params:
+          - proxy_pass http://isotope_image_server/optical_images/;
+          - limit_except GET {deny all;}
+      - path: /raw_optical_images/
+        params:
+          - proxy_pass http://isotope_image_server/raw_optical_images/;
+          - client_max_body_size 25M;
       - path: /graphql
         params:
           - proxy_pass http://graphql_server/graphql;
