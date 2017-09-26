@@ -476,7 +476,17 @@ const Resolvers = {
     },
 
     async addOpticalImage(_, {input}) {
-      const {datasetId, imageUrl, transform} = input;
+      let {datasetId, imageUrl, transform} = input;
+      if (imageUrl[0] == '/') {
+        // imageUrl comes from the web application and should not include host/port.
+        //
+        // This is necessary for a Virtualbox installation because of port mapping,
+        // and preferred for AWS installation because we're not charged for downloads
+        // if internal network is used.
+        //
+        // TODO support image storage running on a separate host
+        imageUrl = 'http://localhost:' + config.img_storage_port + imageUrl;
+      }
       const payload = jwt.decode(input.jwt, config.jwt.secret);
       try {
         logger.info(input);
