@@ -215,6 +215,16 @@ class SMapiDatasetManager(DatasetManager):
         return Image.open(requests.get(ion_img_url, stream=True).raw).size
 
     def _transform_scan(self, scan, transform_, dims, zoom):
+        # zoom is relative to the web application viewport size and not to the ion image dimensions,
+        # i.e. zoom = 1 is what the user sees by default, and zooming into the image triggers
+        # fetching higher-resolution images from the server
+
+        # TODO: adjust when everyone owns a Retina display
+        VIEWPORT_WIDTH = 1000.0
+        VIEWPORT_HEIGHT = 500.0
+
+        zoom = int(round(zoom * min(VIEWPORT_WIDTH / dims[0], VIEWPORT_HEIGHT / dims[1])))
+
         transform = np.array(transform_)
         assert transform.shape == (3, 3)
         transform = transform / transform[2, 2]
@@ -222,6 +232,12 @@ class SMapiDatasetManager(DatasetManager):
         coeffs = transform.flat[:8]
         return scan.transform((dims[0] * zoom, dims[1] * zoom),
                               Image.PERSPECTIVE, coeffs, Image.BICUBIC)
+
+    def _save_jpeg(self, img):
+        buf = io.BytesIO()
+        img.save(buf, 'jpeg', quality=90)
+        buf.seek(0)
+        return buf
 
     def add_optical_image(self, ds, optical_scan, transform, zoom_levels=[1, 2, 4, 8], **kwargs):
         """ Generate scaled and transformed versions of the provided optical image """
@@ -232,9 +248,7 @@ class SMapiDatasetManager(DatasetManager):
         rows = []
         for zoom in zoom_levels:
             img = self._transform_scan(optical_scan, transform, dims, zoom)
-            buf = io.BytesIO()
-            img.save(buf, format='jpeg', quality=81)
-            buf.seek(0)
+            buf = self._save_jpeg(img)
             img_id = img_store.post_image(buf)
             rows.append((img_id, ds.id, zoom))
 
