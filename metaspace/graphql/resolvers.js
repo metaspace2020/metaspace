@@ -263,7 +263,7 @@ const Resolvers = {
         compounds.push({
           name: names[i],
           imageURL: `http://${config.services.mol_image_server_host}/mol-images/${hit._source.db_name}/${id}.svg`,
-          information: [{database: hit._source.db_name, url: infoURL}]
+          information: [{database: hit._source.db_name, url: infoURL, databaseId: id}]
         });
       }
       return compounds;
