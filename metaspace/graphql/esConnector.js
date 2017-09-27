@@ -189,7 +189,8 @@ function addTermAggregations(requestBody, fields) {
   let aggregations = null;
   for (let i = fields.length - 1; i >= 0; --i) {
     const f = fields[i], ef = esFields[i];
-    let tmp = { aggs: { [f]: { terms: { field: ef } } } };
+    // TODO introduce max number of groups and use sum_other_doc_count?
+    let tmp = { aggs: { [f]: { terms: { field: ef, size: 1000 } } } };
 
     if (aggregations)
       tmp.aggs[f] = Object.assign(aggregations, tmp.aggs[f]);
