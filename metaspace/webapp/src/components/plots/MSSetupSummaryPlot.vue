@@ -11,7 +11,7 @@
  import gql from 'graphql-tag';
 
  function matrixName(matrix) {
-   const match = matrix.replace('_', ' ').match(/\((\w+)\)/);
+   const match = matrix.replace('_', ' ').match(/\(([A-Z0-9]{2,10})\)/);
    if (match)
        return match[1];
    return matrix;
