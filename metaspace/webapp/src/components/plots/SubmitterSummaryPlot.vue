@@ -24,8 +24,6 @@
       }
   }`;
 
- const minNumDatasetsPerLab = 2;
-
  const geometry = {
    margin: {
      left: 150,
@@ -90,6 +88,8 @@
           numSubmitters: (new Set(fullNames)).size
         });
       }
+
+      const minNumDatasetsPerLab = result.map(x => x.numDatasets).sort((a, b) => b - a)[9] || 0;
 
       for (let x of result) {
         if (x.numDatasets < minNumDatasetsPerLab) {
