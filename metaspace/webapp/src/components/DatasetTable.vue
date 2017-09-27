@@ -49,9 +49,9 @@
         </div>
 
         <div v-else id="dataset-summary-charts">
-          <mass-spec-setup-plot></mass-spec-setup-plot>
-          <submitter-summary-plot></submitter-summary-plot>
           <upload-timeline-plot></upload-timeline-plot>
+          <submitter-summary-plot></submitter-summary-plot>
+          <mass-spec-setup-plot></mass-spec-setup-plot>
           <organism-summary-plot></organism-summary-plot>
         </div>
       </div>
@@ -375,6 +375,7 @@
    flex-flow: row wrap;
    display: flex;
    justify-content: space-around;
+   padding-bottom: 50px;
  }
 
  #dataset-list-header {

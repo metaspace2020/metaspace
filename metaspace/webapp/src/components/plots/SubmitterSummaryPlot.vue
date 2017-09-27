@@ -14,7 +14,7 @@
    gql`query GetSubmitterCounts($filter: DatasetFilter, $query: String) {
       countDatasetsPerGroup(query: {
         fields: [DF_INSTITUTION, DF_SUBMITTER_FIRST_NAME, DF_SUBMITTER_SURNAME],
-				filter: $filter,
+        filter: $filter,
         simpleQuery: $query
       }) {
         counts {
@@ -43,7 +43,7 @@
  export default {
   name: 'submitter-summary-plot',
 
-	apollo: {
+  apollo: {
     counts: {
       query: query,
       variables() {
@@ -56,7 +56,7 @@
         return data.countDatasetsPerGroup.counts;
       }
     }
-	},
+  },
 
   computed: {
     data() {
@@ -66,20 +66,20 @@
       let result = [];
 
       const OTHER = '(Other)';
-			let submitters = {[OTHER]: []};
-			let numDatasets = {[OTHER]: 0};
-			let numSubmitters = {[OTHER]: 0};
-			for (let entry of this.counts) {
+      let submitters = {};
+      let numDatasets = {[OTHER]: 0};
+      let numSubmitters = {[OTHER]: 0};
+      for (let entry of this.counts) {
         const lab = entry.fieldValues[0];
-				submitters[lab] = [];
-				numDatasets[lab] = 0;
-				numSubmitters[lab] = 0;
-			}
+        submitters[lab] = [];
+        numDatasets[lab] = 0;
+        numSubmitters[lab] = 0;
+      }
 
       for (let entry of this.counts) {
         let [lab, name, surname] = entry.fieldValues;
-				submitters[lab].push([name.toLowerCase(), surname.toLowerCase()]);
-				numDatasets[lab] += entry.count;
+        submitters[lab].push([name.toLowerCase(), surname.toLowerCase()]);
+        numDatasets[lab] += entry.count;
       }
 
       for (let lab of Object.keys(submitters)) {
@@ -94,7 +94,7 @@
       for (let x of result) {
         if (x.numDatasets < minNumDatasetsPerLab) {
           numDatasets[OTHER] += x.numDatasets;
-          numSubmitters[OTHER] += x.numDatasets;
+          numSubmitters[OTHER] += x.numSubmitters;
           x.numDatasets = x.numSubmitters = 0;
         }
       }
@@ -105,7 +105,7 @@
         numSubmitters: numSubmitters[OTHER]
       });
 
-      result.sort((a, b) => a.numDatasets - b.numDatasets);
+      result.sort((a, b) => b.numDatasets - a.numDatasets);
       return result.filter(a => a.numDatasets > 0);
     }
   },

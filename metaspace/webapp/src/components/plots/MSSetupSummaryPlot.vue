@@ -167,16 +167,6 @@
         }
       }
 
-      result.sort((a, b) => {
-        if (a.sourceType != b.sourceType) {
-          if (a.sourceType == 'MALDI')
-            return 1;
-          if (b.sourceType == 'MALDI')
-            return -1;
-        }
-        return a.totalCount - b.totalCount;
-      });
-
       return result;
     }
   },
@@ -186,7 +176,26 @@
       const elem = d3.select(this.$refs.mass_spec_setup_plot);
       elem.selectAll('*').remove();
       const svg = configureSvg(elem, geometry);
-      const {scales} = pieScatterPlot(svg, this.data, config);
+
+      const xData =
+        d3.nest().key(d => d.sourceType + '@@' + d.source)
+          .entries(this.data)
+          .map(({key, values}) => ({
+             key: key.split('@@')[1],
+             sourceType: key.split('@@')[0],
+             count: values.map(d => d.totalCount).reduce((x, y) => x + y)
+           }))
+          .sort((a, b) => {
+            if (a.sourceType != b.sourceType) {
+              if (a.sourceType == 'MALDI')
+                return 1;
+              if (b.sourceType == 'MALDI')
+                return -1;
+            }
+            return b.count - a.count;
+          });
+
+      const {scales} = pieScatterPlot(svg, this.data, config, xData);
 
       const brace = drawMaldiCurlyBrace(svg, this.data, scales.x);
       if (brace)

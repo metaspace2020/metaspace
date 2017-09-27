@@ -15,7 +15,7 @@ function addAxes(svg, geometry, scales) {
           .style('text-anchor', 'end')
             .attr('dx', '-.8em')
             .attr('dy', '.15em')
-            .attr('transform', 'rotate(-75)');
+            .attr('transform', 'rotate(-45)');
     svg.append('g').call(d3.axisLeft(scales.y));
 }
 
@@ -29,7 +29,7 @@ function setTickSize(fontSize) {
     d3.selectAll('.tick > text').style('font-size', fontSize);
 }
 
-function pieScatterPlot(svg, data, config) {
+function pieScatterPlot(svg, data, config, xData_=null, yData_=null) {
     const {variables, pie, geometry, mainTitle} = config;
     const {margin, height, width} = geometry;
 
@@ -37,8 +37,19 @@ function pieScatterPlot(svg, data, config) {
         .domain(pie.sectors.map(s => s.label))
         .range(pie.sectors.map(s => s.color));
 
-    const xScale = d3.scaleBand().domain(data.map(variables.x)).rangeRound([0, width]);
-    const yScale = d3.scaleBand().domain(data.map(variables.y)).rangeRound([height, 0]);
+    const defaultXSort = (a, b) => b.count - a.count;
+    const defaultYSort = (a, b) => a.count - b.count;
+
+    const xData = xData_ || d3.nest().key(variables.x).entries(data)
+      .map(({key, values}) => ({ key, count: values.map(variables.count).reduce((x, y) => x + y)}))
+      .sort(defaultXSort)
+
+    const yData = yData_ || d3.nest().key(variables.y).entries(data)
+      .map(({key, values}) => ({ key, count: values.map(variables.count).reduce((x, y) => x + y)}))
+      .sort(defaultYSort);
+
+    const xScale = d3.scaleBand().domain(xData.map(x => x.key)).rangeRound([0, width]);
+    const yScale = d3.scaleBand().domain(yData.map(x => x.key)).rangeRound([height, 0]);
 
     const calcX = d => xScale(variables.x(d));
     const calcY = d => yScale(variables.y(d));
@@ -78,12 +89,9 @@ function pieScatterPlot(svg, data, config) {
 
     if (config.showSideHistograms) {
         if (config.showSideHistograms.x) {
-            const xData = d3.nest().key(variables.y).entries(data)
-                .map(({key, values}) => ({ key, count: values.map(variables.count).reduce((x, y) => x + y)}));
-
-            const xL = d3.scaleLinear().domain([0, d3.max(xData.map(d => d.count))]).range([0, -margin.left + 1]);
-            const yL = d3.scaleBand().domain(xData.map(d => d.key)).rangeRound([height, 0]);
-            svg.append('g').selectAll('rect.lhist').data(xData).enter()
+            const xL = d3.scaleLinear().domain([0, d3.max(yData.map(d => d.count))]).range([0, -margin.left / 3 + 1]);
+            const yL = d3.scaleBand().domain(yData.map(d => d.key)).rangeRound([height, 0]);
+            svg.append('g').selectAll('rect.lhist').data(yData).enter()
                 .append('rect').attr('class', 'lhist').attr('x', d => xL(d.count)).attr('y', d => yL(d.key))
                 .attr('width', d => -xL(d.count))
                 .attr('height', yL.bandwidth() - 1)
@@ -92,12 +100,9 @@ function pieScatterPlot(svg, data, config) {
         }
 
         if (config.showSideHistograms.y) {
-            const yData = d3.nest().key(variables.x).entries(data)
-                .map(({key, values}) => ({ key, count: values.map(variables.count).reduce((x, y) => x + y)}));
-
-            const yL = d3.scaleLinear().domain([0, d3.max(yData.map(d => d.count))]).range([height, height + margin.bottom - 1]);
-            const xL = d3.scaleBand().domain(yData.map(d => d.key)).rangeRound([0, width]);
-            svg.append('g').selectAll('rect.bhist').data(yData).enter()
+            const yL = d3.scaleLinear().domain([0, d3.max(xData.map(d => d.count))]).range([height, height + margin.bottom / 3 - 1]);
+            const xL = d3.scaleBand().domain(xData.map(d => d.key)).rangeRound([0, width]);
+            svg.append('g').selectAll('rect.bhist').data(xData).enter()
                 .append('rect').attr('class', 'bhist').attr('y', yL(0)).attr('x', d => xL(d.key))
                 .attr('width', d => xL.bandwidth() - 1)
                 .attr('height', d => yL(d.count) - yL(0))
