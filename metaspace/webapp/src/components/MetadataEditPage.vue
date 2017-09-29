@@ -8,8 +8,8 @@
 
 <script>
  import MetadataEditor from './MetadataEditor.vue';
- import {getJWT} from '../util.js';
- import {updateMetadataQuery} from '../api/metadata.js';
+ import {getJWT} from '../util';
+ import {updateMetadataQuery} from '../api/metadata';
 
  export default {
    name: 'metadata-edit-page',

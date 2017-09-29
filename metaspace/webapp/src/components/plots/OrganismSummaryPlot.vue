@@ -7,7 +7,7 @@
 
 <script>
 
- import {configureSvg, addLegend, pieScatterPlot, setTickSize} from './utils.js';
+ import {configureSvg, addLegend, pieScatterPlot, setTickSize} from './utils';
  import * as d3 from 'd3';
  import gql from 'graphql-tag';
 

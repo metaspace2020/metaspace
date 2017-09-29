@@ -103,8 +103,8 @@
 <script>
  import DatasetInfo from './DatasetInfo.vue';
  import capitalize from 'lodash/capitalize';
- import {deleteDatasetQuery} from '../api/dataset.js';
- import {getJWT} from '../util.js';
+ import {deleteDatasetQuery} from '../api/dataset';
+ import {getJWT} from '../util';
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');

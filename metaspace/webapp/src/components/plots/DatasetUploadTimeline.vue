@@ -7,7 +7,7 @@
 <script>
  import * as d3 from 'd3';
  import gql from 'graphql-tag';
- import {configureSvg, addAxes, addMainTitle, setTickSize} from './utils.js';
+ import {configureSvg, addAxes, addMainTitle, setTickSize} from './utils';
 
  // TODO: when number of datasets becomes too large, perform aggregation on the server side
  const query =
@@ -39,7 +39,8 @@
 
   watch: {
     uploadDates() {
-      const dates = this.uploadDates.map(x => d3.utcParse("%Y-%m-%dT%H:%M:%S")(x.split('.')[0]));
+      const dates = this.uploadDates.filter(x => x !== null)
+                        .map(x => d3.utcParse("%Y-%m-%dT%H:%M:%S")(x.split('.')[0]));
       dates.sort((a, b) => a - b);
 
       const elem = d3.select(this.$refs.upload_by_date_plot);

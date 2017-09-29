@@ -4,8 +4,6 @@
 </template>
 
 <script>
- import fetch from 'isomorphic-fetch';
-
  import {extent, max, zip} from 'd3-array';
  import {axisBottom, axisLeft} from 'd3-axis';
  import {brushX} from 'd3-brush';

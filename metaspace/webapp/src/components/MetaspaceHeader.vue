@@ -83,8 +83,7 @@
 <script>
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
  import {encodeParams, DEFAULT_FILTER} from '../url.js';
- import {getJWT, decodePayload} from '../util.js';
- import fetch from 'isomorphic-fetch';
+ import {getJWT, decodePayload} from '../util';
 
  export default {
    name: 'metaspace-header',

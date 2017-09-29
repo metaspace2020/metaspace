@@ -159,15 +159,15 @@
 </template>
 
 <script>
- import { renderMolFormula } from '../util.js';
+ import { renderMolFormula } from '../util';
  import DatasetInfo from './DatasetInfo.vue';
  import AdductsInfo from './AdductsInfo.vue';
  import ImageLoader from './ImageLoader.vue';
  import IonImageSettings from './IonImageSettings.vue';
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
  import Colorbar from './Colorbar.vue';
- import {annotationQuery} from '../api/annotation.js';
- import {opticalImageQuery} from '../api/dataset.js';
+ import {annotationQuery} from '../api/annotation';
+ import {opticalImageQuery} from '../api/dataset';
 
  export default {
    name: 'annotation-view',

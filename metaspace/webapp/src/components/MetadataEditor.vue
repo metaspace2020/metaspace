@@ -155,11 +155,10 @@
  import metadataSchema from '../assets/metadata_schema.json';
  import Ajv from 'ajv';
  import merge from 'lodash/merge';
- import fetch from 'isomorphic-fetch';
  import {
    fetchAutocompleteSuggestionsQuery,
    fetchMetadataQuery
- } from '../api/metadata.js';
+ } from '../api/metadata';
  import gql from 'graphql-tag';
  import Vue from 'vue';
 

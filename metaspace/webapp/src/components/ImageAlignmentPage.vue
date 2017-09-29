@@ -92,9 +92,9 @@
 
 <script>
  import ImageAligner from './ImageAligner.vue';
- import {annotationListQuery} from '../api/annotation.js';
- import {addOpticalImageQuery} from '../api/dataset.js';
- import {renderMolFormula, prettifySign, getJWT} from '../util.js';
+ import {annotationListQuery} from '../api/annotation';
+ import {addOpticalImageQuery} from '../api/dataset';
+ import {renderMolFormula, prettifySign, getJWT} from '../util';
  import gql from 'graphql-tag';
 
  export default {

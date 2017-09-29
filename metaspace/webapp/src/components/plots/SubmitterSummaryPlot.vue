@@ -6,7 +6,7 @@
 
 <script>
 
- import {configureSvg, addMainTitle} from './utils.js';
+ import {configureSvg, addMainTitle} from './utils';
  import * as d3 from 'd3';
  import gql from 'graphql-tag';
 

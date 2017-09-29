@@ -57,9 +57,9 @@
  import MetadataEditor from './MetadataEditor.vue';
  import Vue from 'vue';
 
- import config from '../clientConfig.json';
- import {getJWT, pathFromUUID} from '../util.js';
- import {submitDatasetQuery} from '../api/dataset.js';
+ import * as config from '../clientConfig.json';
+ import {getJWT, pathFromUUID} from '../util';
+ import {submitDatasetQuery} from '../api/dataset';
 
  export default {
    name: 'upload-page',

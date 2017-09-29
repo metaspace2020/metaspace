@@ -1,82 +1,91 @@
-import fetch from 'isomorphic-fetch';
-import config from './clientConfig.json';
-import scales from 'plotly.js/src/components/colorscale/scales.js';
-import extractScale from 'plotly.js/src/components/colorscale/extract_scale.js';
+import * as config from './clientConfig.json';
+import * as scales from 'plotly.js/src/components/colorscale/scales.js';
+import * as extractScale from 'plotly.js/src/components/colorscale/extract_scale.js';
 import {scaleLinear} from 'd3-scale';
-import {rgb} from 'd3-color';
+import {rgb, RGBColor} from 'd3-color';
 
 const fuConfig = config.fineUploader;
 
-function prettifySign(str) {
+function prettifySign(str: string): string {
   return str.replace('-', ' – ').replace('+', ' + ');
 }
 
-function renderMolFormula(sumFormula, adduct, polarity) {
+interface StringDictionary {
+  [x: string]: string
+}
+
+type JWT = string;
+
+function renderMolFormula(sumFormula: string, adduct: string, polarity: string): string {
   let result = `[${(sumFormula + adduct).replace(/(\d+)/g, "<sub>$1</sub>")}]`;
-  result = prettifySign(result);
-  result += {'POSITIVE': '⁺', 'NEGATIVE': '¯'}[polarity];
+  const shorten: StringDictionary = {'POSITIVE': '⁺', 'NEGATIVE': '¯'};
+  result = prettifySign(result) + shorten[polarity];
   return result;
 }
 
-function checkStatus(response) {
+function checkStatus(response: Response): Response {
   if (response.status >= 200 && response.status < 300) {
     return response
   } else {
     var error = new Error(response.statusText);
-    error.response = response
     throw error;
   }
 }
 
-function getJWT() {
+function getJWT(): Promise<JWT> {
   return fetch("/getToken", {credentials: 'include'})
          .then(checkStatus).then(resp => resp.text())
 }
 
-function decodePayload(jwt) {
+function decodePayload(jwt: JWT) {
   return JSON.parse(new Buffer(jwt.split('.')[1], 'base64').toString());
 }
 
-function pathFromUUID(uuid) {
+function pathFromUUID(uuid: string): string {
   if (fuConfig.storage == 's3')
     return 's3a://' + fuConfig.aws.s3_bucket + '/' + uuid;
   else
     return fuConfig.storage + '/' + uuid + '/';
 }
 
-function getColorScale(name) {
+interface ColorScale {
+  domain: number[]
+  range: RGBColor[]
+}
+
+function getColorScale(name: string): ColorScale {
   return extractScale(scales[name], 0, 1);
 }
 
-function createColormap(name) {
+function createColormap(name: string): number[][] {
   const {domain, range} = getColorScale(name);
-  const sclFun = scaleLinear().domain(domain).range(range).clamp(true);
+  const sclFun = scaleLinear<RGBColor>().domain(domain).range(range).clamp(true);
 
   let colors = [];
   for (let i = 0; i < 256; i++) {
-    const {r, g, b} = rgb(sclFun(i / 255.0));
-    colors.push([r, g, b].map(Math.round));
+    const color = rgb(sclFun(i / 255.0));
+    colors.push([color.r, color.g, color.b].map(Math.round));
   }
   return colors;
 }
 
-function mzFilterPrecision(value) {
+function mzFilterPrecision(value: number): string {
   const splitVal = (value + '').split('.');
   if (splitVal.length == 1) {
-    return 1.0;
+    return '1';
   } else {
     const k = splitVal[1].length;
     return (1.0 * Math.pow(0.1, k)).toFixed(k);
   }
 }
 
-function csvExportHeader() {
+function csvExportHeader(): string {
   return '# Generated at ' + new Date().toString() + '\n# URL: ' + window.location.href + '\n';
 }
 
-function scrollDistance(event) {
+function scrollDistance(event: MouseWheelEvent) {
   let sY = 0;
-  if ('detail'      in event) { sY = event.detail; }
+  if ('detail'      in event) { sY = event.detail * 2; }
   if ('wheelDelta'  in event) { sY = -event.wheelDelta / 120; }
   if (('deltaY' in event) && !sY) { sY = (event.deltaY < 1) ? -1 : 1; }
   return sY;

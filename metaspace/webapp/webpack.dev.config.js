@@ -4,7 +4,7 @@ var webpack = require('webpack');
 module.exports = {
   entry: [
     'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000',
-    './src/main.js'
+    './src/main.ts'
   ],
   output: {
     path: '/',
@@ -24,14 +24,17 @@ module.exports = {
             'scss': 'vue-style-loader!css-loader!postcss-loader!sass-loader',
             'sass': 'vue-style-loader!css-loader!postcss-loader!sass-loader?indentedSyntax',
             'less': 'vue-style-loader!css-loader!postcss-loader!less-loader'
-          }
-          // other vue-loader options go here
+          },
+          esModule: true
         }
       },
       {
-        test: /\.js$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/
+        test: /\.(t|j)s$/,
+        loader: 'ts-loader',
+        exclude: /node_modules/,
+        options: {
+          appendTsSuffixTo: [/\.vue$/, /\.json$/],
+        }
       },
       {
         test: /\.(png|jpg|gif|svg)$/,
@@ -59,14 +62,15 @@ module.exports = {
     ]
   },
   resolve: {
+    extensions: ['.ts', '.js', '.vue', '.json'],
     alias: {
-      'vue$': 'vue/dist/vue.common.js'
+      'vue$': 'vue/dist/vue.esm.js',
     }
   },
   devServer: {
     hot: true,
   },
-  devtool: '#source-map',
+  devtool: '#eval-source-map',
   plugins: [
   ]
 }

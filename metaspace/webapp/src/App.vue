@@ -29,7 +29,7 @@
  }
 </script>
 
-<style lang="scss">
+<style>
 
  html {
    font-family: 'Roboto', Helvetica, sans-serif;

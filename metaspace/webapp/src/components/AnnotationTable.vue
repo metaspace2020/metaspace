@@ -162,12 +162,12 @@
 </template>
 
 <script>
- import { renderMolFormula, csvExportHeader } from '../util.js';
+ import { renderMolFormula, csvExportHeader } from '../util';
  import ProgressButton from './ProgressButton.vue';
  import {
    annotationListQuery,
    tableExportQuery
- } from '../api/annotation.js';
+ } from '../api/annotation';
 
  import Vue from 'vue';
  import FileSaver from 'file-saver';
@@ -288,6 +288,7 @@
          if (this._onDataArrival && changed) {
            this._onDataArrival(data.allAnnotations);
            this._onDataArrival = (data) => {
+             this.clearCurrentRow();
              if (data)
                Vue.nextTick(() => this.setRow(data, 0));
            };

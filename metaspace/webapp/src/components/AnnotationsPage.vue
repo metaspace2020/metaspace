@@ -49,8 +49,13 @@
        return 14 - 2 * this.hiddenColumns.length;
      },
 
-     ...mapState({selectedAnnotation: 'annotation'}),
-     ...mapGetters({filter: 'filter'})
+     selectedAnnotation() {
+       return this.$store.state.annotation;
+     },
+
+     filter() {
+       return this.$store.getters.filter;
+     }
    },
    created() {
      this.$store.commit('updateFilter', this.filter);

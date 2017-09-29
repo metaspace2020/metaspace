@@ -15,12 +15,21 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+ import Vue, {ComponentOptions} from 'vue';
+
+ interface SearchBox extends Vue {
+   name: string
+   value: string
+   removable: boolean
+   onChange(val: string): void
+   destroy(): void
+ }
 
  export default {
    name: 'search-box',
    props: {
-     value: [String, Number],
+     value: String,
      removable: {type: Boolean, default: true}
    },
    methods: {
@@ -32,5 +41,5 @@
        this.$emit('destroy', this.name);
      }
   }
- }
+ } as ComponentOptions<SearchBox>
 </script>

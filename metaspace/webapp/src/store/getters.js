@@ -1,4 +1,4 @@
-import {mzFilterPrecision} from '../util.js';
+import {mzFilterPrecision} from '../util';
 import {decodeParams, decodeSettings} from '../url.js';
 
 export default {

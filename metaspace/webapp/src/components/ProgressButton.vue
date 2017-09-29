@@ -5,7 +5,19 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+
+ import Vue, { ComponentOptions } from 'vue';
+
+ interface ProgressButton extends Vue {
+   width: number
+   height: number
+   percentage: number
+   buttonStyle(): CSSRule
+   textStyle(): CSSRule
+   progressStyle(): CSSRule
+ }
+
  export default {
    name: 'progress-button',
    props: ['width', 'height', 'percentage'],
@@ -36,6 +48,5 @@
        };
      }
    }
-
- }
+ } as ComponentOptions<ProgressButton>
 </script>

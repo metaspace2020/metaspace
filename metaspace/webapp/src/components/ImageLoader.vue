@@ -21,7 +21,7 @@
 <script>
  // uses loading directive from Element-UI
 
- import {createColormap, scrollDistance} from '../util.js';
+ import {createColormap, scrollDistance} from '../util';
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
 
@@ -292,10 +292,11 @@
        const q = this.computeQuantile();
 
        ctx.drawImage(this.image, 0, 0);
+       if (canvas.width == 0)
+         return;
        let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
        this.removeHotspots(imageData, q);
        ctx.putImageData(imageData, 0, 0);
-
        this.applyColormap();
      },
 
@@ -303,12 +304,13 @@
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d");
 
+       var g = this.grayscaleData;
+       if (g === undefined || canvas.width == 0)
+         return;
+
        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
        var pixels = imageData.data;
        var numPixels = pixels.length / 4;
-       var g = this.grayscaleData;
-       if (g === undefined)
-         return;
 
        // TODO experiment with different functions
        const f = OPACITY_MAPPINGS[this.opacityMode];

@@ -4,9 +4,8 @@ var webpack = require('webpack');
 
 module.exports = {
   entry: {
-    app: ['./src/main.js'],
-    vendor: ['ajv', 'babel-polyfill',
-             'vue', 'vuex', 'vue-router', 'vuex-router-sync',
+    app: ['./src/main.ts'],
+    vendor: ['ajv', 'vue', 'vuex', 'vue-router', 'vuex-router-sync',
              'vue-apollo', 'apollo-client', 'graphql-tag',
              'element-ui',
     ]
@@ -28,15 +27,19 @@ module.exports = {
             // other preprocessors should work out of the box, no loader config like this nessessary.
             'scss': 'vue-style-loader!css-loader!postcss-loader!sass-loader',
             'sass': 'vue-style-loader!css-loader!postcss-loader!sass-loader?indentedSyntax',
-            'less': 'vue-style-loader!css-loader!postcss-loader!less-loader'
-          }
-          // other vue-loader options go here
+            'less': 'vue-style-loader!css-loader!postcss-loader!less-loader',
+            'js': 'babel-loader'
+          },
+          esModule: true
         }
       },
       {
-        test: /\.js$/,
-        loader: 'babel-loader',
-        exclude: /node_modules/
+        test: /\.(t|j)s$/,
+        loader: 'ts-loader',
+        exclude: /node_modules/,
+        options: {
+          appendTsSuffixTo: [/\.vue$/, /\.json$/],
+        }
       },
       {
         test: /\.(png|jpg|gif|svg)$/,
@@ -64,8 +67,9 @@ module.exports = {
     ]
   },
   resolve: {
+    extensions: ['.ts', '.js', '.vue', '.json'],
     alias: {
-      'vue$': 'vue/dist/vue.common.js'
+      'vue$': 'vue/dist/vue.esm.js'
     }
   },
   devServer: {

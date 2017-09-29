@@ -34,8 +34,8 @@
  import DatasetNameFilter from './DatasetNameFilter.vue';
  import MzFilter from './MzFilter.vue';
  import SearchBox from './SearchBox.vue';
- import FILTER_SPECIFICATIONS from '../filterSpecs.js';
- import {fetchOptionListsQuery} from '../api/metadata.js';
+ import FILTER_SPECIFICATIONS from '../filterSpecs';
+ import {fetchOptionListsQuery} from '../api/metadata';
  import deepcopy from 'deepcopy';
 
  const filterKeys = [

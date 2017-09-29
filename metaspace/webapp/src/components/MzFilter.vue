@@ -15,18 +15,27 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+ import Vue, { ComponentOptions } from 'vue'
  import TagFilterInputBox from './TagFilterInputBox.vue';
- import {mzFilterPrecision} from '../util.js';
+ import {mzFilterPrecision} from '../util';
+
+ interface MzFilter extends Vue {
+   name: string
+   value: number
+   removable: boolean
+   onChange(val: number): void
+   destroy(): void
+ }
 
  export default {
-   name: 'input-filter',
+   name: 'mz-filter',
    components: {
      'tf-input-box': TagFilterInputBox
    },
    props: {
      name: String,
-     value: [String, Number],
+     value: Number,
      removable: {type: Boolean, default: true}
    },
    computed: {
@@ -42,6 +51,6 @@
      destroy() {
        this.$emit('destroy', this.name);
      }
-  }
- }
+   }
+ } as ComponentOptions<MzFilter>
 </script>

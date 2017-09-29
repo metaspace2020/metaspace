@@ -1,7 +1,6 @@
 import {ApolloClient, createBatchingNetworkInterface } from 'apollo-client';
 import {SubscriptionClient, addGraphQLSubscriptions} from 'subscriptions-transport-ws';
-
-import config from './clientConfig.json';
+import * as config from './clientConfig.json';
 
 const networkInterface = createBatchingNetworkInterface({
   uri: config.graphqlUrl,
@@ -17,7 +16,7 @@ const networkInterfaceWithSubscriptions = addGraphQLSubscriptions(
   wsClient
 );
 
-const apolloClient = new ApolloClient({
+const apolloClient: ApolloClient = new ApolloClient({
   networkInterface: networkInterfaceWithSubscriptions
 });
 

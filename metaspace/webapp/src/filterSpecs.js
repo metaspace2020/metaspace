@@ -1,4 +1,4 @@
-import { renderMolFormula } from './util.js';
+import { renderMolFormula } from './util';
 import InputFilter from './components/InputFilter.vue';
 import SingleSelectFilter from './components/SingleSelectFilter.vue';
 import MultiSelectFilter from './components/MultiSelectFilter.vue';

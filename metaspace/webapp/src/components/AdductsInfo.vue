@@ -26,9 +26,9 @@
 </template>
 
 <script>
- import {renderMolFormula} from '../util.js';
+ import {renderMolFormula} from '../util';
  import ImageLoader from './ImageLoader.vue';
- import {allAdductsQuery} from '../api/annotation.js';
+ import {allAdductsQuery} from '../api/annotation';
 
  export default {
    props: ['annotation', 'database'],

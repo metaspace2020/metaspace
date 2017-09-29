@@ -19,7 +19,15 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+ import Vue, { ComponentOptions } from 'vue';
+
+ interface TagFilter extends Vue {
+   name: string
+   removable: boolean
+   width: number
+   destroy(): void
+ }
 
  export default {
    name: 'tag-filter',
@@ -33,7 +41,7 @@
        this.$emit('destroy', this.name);
      }
    }
- }
+ } as ComponentOptions<TagFilter>
 </script>
 
 <style>

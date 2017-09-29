@@ -4,7 +4,7 @@
 </template>
 
 <script>
- import {getColorScale} from '../util.js';
+ import {getColorScale} from '../util';
 
  export default {
    props: {
