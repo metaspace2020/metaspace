@@ -6,9 +6,9 @@ stage: STAGE_NAME  # prod/stage/dev
 
 time_zone_name: UTC
 
-aws_access_key_id: ""
-aws_secret_access_key: ""
-aws_key_name: ""
+aws_access_key_id: AWS_ACCESS_KEY_ID
+aws_secret_access_key: AWS_SECRET_ACCESS_KEY
+aws_key_name: AWS_KEY_NAME
 aws_region: eu-west-1
 
 postgres_version: 9.5
@@ -19,13 +19,13 @@ elasticsearch_version: 5.5.2
 
 kibana_version: "{{ elasticsearch_version }}"
 kibana_user: kibana
-kibana_password: kibana_password
+kibana_password: KIBANA_PASSWORD
 kibana_es_port: 9200  # kibana runs on the same host and connects to ES directly
 
 rabbitmq_version: 3.6.8-1
 rabbitmq_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 rabbitmq_user: sm
-rabbitmq_password:
+rabbitmq_password: RABBITMQ_PASSWORD
 
 miniconda_version: latest
 miniconda_python: 3
@@ -59,14 +59,14 @@ miniconda_env:
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
 sm_branch: rel-v0.7
 sm_postgres_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
-sm_postgres_password: postgres_password
+sm_postgres_password: POSTGRES_PASSWORD
 sm_home: /opt/dev/sm
-sm_s3_path: "s3a://bucket-name/data"
+sm_s3_path: ENGINE_BUCKET_NAME  # bucket for sm engine tmp data in "s3a://bucket-name/data" form
 sm_iso_images_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:4201/iso_images"
 sm_es_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
-sm_es_password: elastic_password
+sm_es_password: ELASTIC_PASSWORD
 sm_send_email: true
 sm_create_schema: false
 sm_create_es_index: false
@@ -76,7 +76,7 @@ sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name 
 mol_db_home: /opt/dev/sm-mol-db
 mol_db_branch: rel-v0.7
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
-mol_db_postgres_pass: postgres_password
+mol_db_postgres_pass: POSTGRES_PASSWORD
 mol_db_image_dir: /var/www/mol-images
 mol_db_import_databases: false
 mol_db_import_mol_images: false
@@ -103,7 +103,7 @@ sm_graphql_home: /opt/dev/sm-graphql
 sm_graphql_branch: rel-v0.7
 sm_graphql_slack_webhook_url: ""
 sm_graphql_slack_channel: ""
-sm_graphql_jwt_secret: "reallyLongSecret"
+sm_graphql_jwt_secret: REALLY_LONG_JWT_SECRET
 sm_graphql_public_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/graphql"
 sm_graphql_mol_image_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_graphql_img_upload_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
@@ -128,7 +128,7 @@ sm_webapp_admin_emails:
 sm_webapp_aws_region: "{{ aws_region }}"
 sm_webapp_aws_access_key_id:
 sm_webapp_aws_secret_access_key:
-sm_webapp_s3_bucket: BUCKET-NAME
+sm_webapp_s3_bucket: BUCKET-NAME-UPLOAD  # just plain bucket name
 sm_webapp_google_client_id: ""
 sm_webapp_google_client_secret: ""
 sm_webapp_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
