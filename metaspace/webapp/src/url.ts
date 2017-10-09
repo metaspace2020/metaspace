@@ -1,8 +1,13 @@
 import FILTER_SPECIFICATIONS from './filterSpecs.js';
 
-import {invert} from 'lodash';
+import { invert } from 'lodash';
+import { Location } from 'vue-router';
 
-export const DEFAULT_FILTER = {
+interface Map<T> {
+  [key: string]: T;
+}
+
+export const DEFAULT_FILTER: Map<any> = {
   database: 'HMDB',
   institution: undefined,
   submitter: undefined,
@@ -23,7 +28,7 @@ export const DEFAULT_FILTER = {
   simpleQuery: ''
 };
 
-const FILTER_TO_URL = {
+const FILTER_TO_URL: Map<string> = {
   database: 'db',
   institution: 'lab',
   submitter: 'subm',
@@ -44,16 +49,16 @@ const FILTER_TO_URL = {
   simpleQuery: 'q'
 };
 
-const URL_TO_FILTER = invert(FILTER_TO_URL);
+const URL_TO_FILTER: Map<string> = invert(FILTER_TO_URL);
 
-const PATH_TO_LEVEL = {
+const PATH_TO_LEVEL: Map<string> = {
   '/annotations': 'annotation',
   '/datasets': 'dataset'
 };
 
-export function encodeParams(filter, path) {
+export function encodeParams(filter: any, path: string): Map<string | null> {
   const level = PATH_TO_LEVEL[path];
-  let q = {};
+  let q: Map<string | null> = {};
   for (var key in FILTER_TO_URL) {
     const {levels, encoding} = FILTER_SPECIFICATIONS[key];
     if (levels.indexOf(level) == -1)
@@ -71,8 +76,8 @@ export function encodeParams(filter, path) {
   return q;
 }
 
-export function stripFilteringParams(query) {
-  let q = {};
+export function stripFilteringParams(query: Map<string>): Map<string> {
+  let q: Map<string> = {};
   for (var key in query) {
     const fKey = URL_TO_FILTER[key];
     if (!fKey)
@@ -81,10 +86,15 @@ export function stripFilteringParams(query) {
   return q;
 }
 
-export function decodeParams({query, path}) {
+export function decodeParams(location: Location): any {
+  const {query, path} = location;
+
+  if (!path || !query)
+    return {};
+
   const level = PATH_TO_LEVEL[path];
 
-  let filter = {};
+  let filter: any = {};
   for (var key in DEFAULT_FILTER)
     if (FILTER_SPECIFICATIONS[key].levels.indexOf(level) != -1)
       filter[key] = DEFAULT_FILTER[key];
@@ -120,10 +130,9 @@ export function decodeParams({query, path}) {
 
 const allSections = ['images', 'compounds', 'scores', 'metadata', 'adducts'].reverse();
 
-function decodeSections(number) {
-  number = number | 0;
+function decodeSections(number: string): string[] {
   let sections = [],
-      mask = number.toString(2);
+      mask = parseInt(number).toString(2);
   for (let i = mask.length - 1; i >= 0; i--) {
     if (mask[i] == '1') {
       sections.push(allSections[allSections.length - mask.length + i]);
@@ -132,7 +141,7 @@ function decodeSections(number) {
   return sections;
 }
 
-export function encodeSections(sections) {
+export function encodeSections(sections: string[]) {
   let str = '';
   for (let i = 0; i < allSections.length; i++) {
     let found = sections.indexOf(allSections[i]) >= 0;
@@ -141,7 +150,7 @@ export function encodeSections(sections) {
   return parseInt(str, 2);
 }
 
-function decodeSortOrder(str) {
+function decodeSortOrder(str: string) {
   const dir = str[0] == '-' ? 'DESCENDING' : 'ASCENDING';
   if (str[0] == '-')
     str = str.slice(1);
@@ -149,12 +158,21 @@ function decodeSortOrder(str) {
   return {by, dir};
 }
 
-export function encodeSortOrder({by, dir}) {
-  let sort = dir == 'ASCENDING' ? '' : '-';
-  return sort + by.replace('ORDER_BY_', '').toLowerCase();
+interface SortSettings {
+  by: string
+  dir: string
 }
 
-export function decodeSettings({query, path}) {
+export function encodeSortOrder(settings: SortSettings): string {
+  let sort = settings.dir == 'ASCENDING' ? '' : '-';
+  return sort + settings.by.replace('ORDER_BY_', '').toLowerCase();
+}
+
+export function decodeSettings(location: Location): any {
+  const {query, path} = location;
+  if (!query || !path)
+    return undefined;
+
   let settings = {
     table: {
       currentPage: 0,
@@ -175,7 +193,7 @@ export function decodeSettings({query, path}) {
   };
 
   if (query.page)
-    settings.table.currentPage = query.page - 1;
+    settings.table.currentPage = parseInt(query.page) - 1;
   if (query.sort)
     settings.table.order = decodeSortOrder(query.sort);
   if (query.cmap)

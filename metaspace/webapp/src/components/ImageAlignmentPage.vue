@@ -52,6 +52,7 @@
               @current-change="updateIndex">
             <el-select v-model="annotationIndex" filterable class="annotation-short-info">
               <el-option v-for="(annot, i) in annotations"
+                         :key="annot.id"
                          :value="i" :label="renderLabel(annot)">
                 <span v-html="renderAnnotation(annot)"></span>
               </el-option>

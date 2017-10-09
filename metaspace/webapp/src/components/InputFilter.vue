@@ -13,8 +13,19 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
  import TagFilterInputBox from './TagFilterInputBox.vue';
+ import Vue, { ComponentOptions } from 'vue';
+
+ interface InputFilter extends Vue {
+   name: string
+   value: string | number
+   removable: boolean
+   mode: string
+
+   onChange(val: string | number): void
+   destroy(): void
+ }
 
  export default {
    name: 'input-filter',
@@ -36,5 +47,5 @@
        this.$emit('destroy', this.name);
      }
   }
- }
+ } as ComponentOptions<InputFilter>;
 </script>

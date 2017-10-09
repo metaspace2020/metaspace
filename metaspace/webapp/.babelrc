@@ -2,11 +2,13 @@
   "presets": [
     ["es2015", {"modules": false}]
   ],
-  "plugins": [["component", [{
-    "libraryName": "element-ui",
-    "styleLibraryName": "theme-default"
+  "plugins": [
+    ["component", [{
+      "libraryName": "element-ui",
+      "styleLibraryName": "theme-default"
     }]],
     "transform-object-rest-spread",
-    "transform-runtime"
+    "transform-runtime",
+    "syntax-dynamic-import"
   ]
 }

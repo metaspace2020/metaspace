@@ -82,7 +82,7 @@
 
 <script>
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
- import {encodeParams, DEFAULT_FILTER} from '../url.js';
+ import {encodeParams, DEFAULT_FILTER} from '../url';
  import {getJWT, decodePayload} from '../util';
 
  export default {

@@ -234,6 +234,22 @@
   dependencies:
     "@types/d3" "*"
 
+"@types/vue-router@2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@types/vue-router/-/vue-router-2.0.0.tgz#81094f2107e766a11b20af7fa0f34bec1f321e28"
+  dependencies:
+    vue-router "*"
+
+"@types/vue@2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@types/vue/-/vue-2.0.0.tgz#ec77b3d89591deb9ca5cb052368aa9c32be088e7"
+  dependencies:
+    vue "*"
+
+"@types/webpack-env@1.13.1":
+  version "1.13.1"
+  resolved "https://registry.yarnpkg.com/@types/webpack-env/-/webpack-env-1.13.1.tgz#b45c222e24301bd006e3edfc762cc6b51bda236a"
+
 "@types/ws@3.0.2":
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/@types/ws/-/ws-3.0.2.tgz#b538b6a16daee454ac04054991271f3da38772de"
@@ -767,6 +783,10 @@ babel-plugin-check-es2015-constants@^6.22.0:
 babel-plugin-component@^0.6.0:
   version "0.6.0"
   resolved "https://registry.yarnpkg.com/babel-plugin-component/-/babel-plugin-component-0.6.0.tgz#a2e27361c8848919e85b5e3f246c0f6194710fa3"
+
+babel-plugin-syntax-dynamic-import@6.18.0:
+  version "6.18.0"
+  resolved "https://registry.yarnpkg.com/babel-plugin-syntax-dynamic-import/-/babel-plugin-syntax-dynamic-import-6.18.0.tgz#8d6a26229c83745a9982a441051572caa179b1da"
 
 babel-plugin-syntax-object-rest-spread@^6.8.0:
   version "6.13.0"
@@ -8293,7 +8313,7 @@ vue-resize-directive@^1.0.0:
     css-element-queries "^0.4.0"
     lodash.debounce "^4.0.8"
 
-vue-router@^2.1.1:
+vue-router@*, vue-router@^2.1.1:
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/vue-router/-/vue-router-2.7.0.tgz#16d424493aa51c3c8cce8b7c7210ea4c3a89aff1"
 
@@ -8315,7 +8335,7 @@ vue-template-es2015-compiler@^1.2.2:
   version "1.5.3"
   resolved "https://registry.yarnpkg.com/vue-template-es2015-compiler/-/vue-template-es2015-compiler-1.5.3.tgz#22787de4e37ebd9339b74223bc467d1adee30545"
 
-vue@~2.4.0:
+vue@*, vue@~2.4.0:
   version "2.4.4"
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.4.4.tgz#ea9550b96a71465fd2b8b17b61673b3561861789"
 

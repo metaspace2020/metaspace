@@ -1,5 +1,5 @@
 import {mzFilterPrecision} from '../util';
-import {decodeParams, decodeSettings} from '../url.js';
+import {decodeParams, decodeSettings} from '../url';
 
 export default {
   filter(state) {

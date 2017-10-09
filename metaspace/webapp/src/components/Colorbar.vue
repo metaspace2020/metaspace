@@ -3,8 +3,16 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
  import {getColorScale} from '../util';
+ import Vue, { ComponentOptions } from 'vue';
+
+ interface Colorbar extends Vue {
+   map: string
+   direction: string
+
+   style: CSSRule
+ }
 
  export default {
    props: {
@@ -24,5 +32,5 @@
        };
      }
    }
- }
+ } as ComponentOptions<Colorbar>;
 </script>

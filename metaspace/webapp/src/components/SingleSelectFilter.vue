@@ -19,8 +19,30 @@
   </tag-filter>
 </template>
 
-<script>
+<script lang="ts">
  import TagFilter from './TagFilter.vue';
+ import Vue, { ComponentOptions } from 'vue';
+
+ type Option = string | number;
+
+ interface SingleSelectFilter extends Vue {
+   name: string
+   options: Option[]
+   value: Option
+   value2: Option
+
+   optionFormatter: (_: Option) => string
+   valueFormatter: (_: Option) => string
+
+   clearable: boolean
+   removable: boolean
+   filterable: boolean
+
+   formatOption(option: Option): string
+   formatValue(value: Option): string
+   destroy(): void
+ }
+
  export default {
    name: 'single-select-filter',
    components: {
@@ -29,7 +51,7 @@
    props: {
      name: String,
      options: Array,
-     value: String | Number,
+     value: [String, Number],
      optionFormatter: Function,
      valueFormatter: Function,
      clearable: {type: Boolean, default: false},
@@ -60,12 +82,12 @@
        if (this.valueFormatter)
          return this.valueFormatter(value);
        else
-         return value;
+         return value + '';
      },
 
      destroy() {
        this.$emit('destroy');
      }
    }
- }
+ } as ComponentOptions<SingleSelectFilter>;
 </script>
