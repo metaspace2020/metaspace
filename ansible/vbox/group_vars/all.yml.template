@@ -3,7 +3,6 @@
 # SOFTWARE CONFIGURATION
 
 time_zone_name: UTC
-time_zone_name: UTC
 
 aws_access_key_id:
 aws_secret_access_key:
@@ -12,13 +11,13 @@ aws_region:
 
 postgres_version: 9.5
 postgres_port: 5432
-postgres_drop_create: false
+postgres_drop_create: true  # if true will drop current Postgres cluster and create a new one
 
 elasticsearch_version: 5.5.2
 
 kibana_version: "{{ elasticsearch_version }}"
 kibana_user: kibana
-kibana_password: kibana
+kibana_password: password
 kibana_es_port: 9200  # kibana runs on the same host and connects to ES directly
 
 rabbitmq_version: 3.6.8-1
@@ -67,18 +66,18 @@ sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
 sm_es_password: elastic
 sm_send_email: false
-sm_create_schema: false
-sm_create_es_index: false
+sm_create_schema: true  # if true will destruct main database 'sm'
+sm_create_es_index: true  # if true Elasticsearch index will be dropped and recreated
 
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
 mol_db_home: /opt/dev/sm-mol-db
 mol_db_branch: rel-v0.7
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
-mol_db_postgres_pass: postgres_password
+mol_db_postgres_pass: password
 mol_db_image_dir: /var/www/mol-images
-mol_db_import_databases: false
-mol_db_import_mol_images: false
+mol_db_import_databases: true  # if true will dropp all molecular databases and re-import them
+mol_db_import_mol_images: true
 mol_db_image_archives:
   - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-hmdb.tar.xz
 mol_db_imports:
@@ -90,7 +89,7 @@ sm_graphql_home: /opt/dev/sm-graphql
 sm_graphql_branch: rel-v0.7
 sm_graphql_slack_webhook_url:
 sm_graphql_slack_channel:
-sm_graphql_jwt_secret: "secret"
+sm_graphql_jwt_secret: secret
 sm_graphql_public_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/graphql"
 sm_graphql_mol_image_host: "{{ hostvars['web-1'].ansible_ssh_host }}:8999"
 sm_graphql_img_upload_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
@@ -110,7 +109,7 @@ sm_webapp_url: "http://{{ sm_webapp_hostname }}"
 sm_webapp_home: /opt/dev/sm-web-app
 sm_webapp_branch: rel-v0.7
 sm_webapp_port: 8082
-sm_webapp_cookie_secret: "secret"
+sm_webapp_cookie_secret: secret
 sm_webapp_admin_emails:
 sm_webapp_aws_region: "{{ aws_region }}"
 sm_webapp_aws_access_key_id:
@@ -120,7 +119,7 @@ sm_webapp_google_client_id:
 sm_webapp_google_client_secret:
 sm_webapp_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
 sm_webapp_graphql_url: /graphql
-sm_webapp_upload_destination: "/opt/sm-data/uploads"
+sm_webapp_upload_destination: /opt/sm-data/uploads
 sm_webapp_graphql_ws_public_endpoint: "{{ sm_graphql_ws_public_endpoint }}"
 sm_webapp_jwt_secret: "{{ sm_graphql_jwt_secret }}"
 sm_webapp_redis_host: localhost
@@ -136,8 +135,8 @@ sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.na
 spark_key_file: ~/.ssh/ubuntu_spark
 spark_version: "2.1.1-bin-hadoop2.7"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
-spark_home: "/usr/lib/spark"
-spark_user: "ubuntu"
+spark_home: /usr/lib/spark
+spark_user: ubuntu
 
 spark_env_extras_slave:
   SPARK_WORKER_DIR: "/tmp/spark"
