@@ -8,6 +8,12 @@
           <div class="el-collapse-item__header av-centered grey-bg">
             <span class="sf-big" v-html="formattedMolFormula"> </span>
             <span class="mz-big">{{ annotation.mz.toFixed(4) }}</span>
+            <span>
+              <router-link target="_blank"
+                           style="font-size: 20px"
+                           title="Link to this annotation (opens in a new tab)"
+                           :to="permalinkHref">¶</router-link>
+            </span>
           </div>
         </div>
 
@@ -158,7 +164,7 @@
   </el-row>
 </template>
 
-<script>
+<script lang="ts">
  import { renderMolFormula } from '../util';
  import DatasetInfo from './DatasetInfo.vue';
  import AdductsInfo from './AdductsInfo.vue';
@@ -168,6 +174,37 @@
  import Colorbar from './Colorbar.vue';
  import {annotationQuery} from '../api/annotation';
  import {opticalImageQuery} from '../api/dataset';
+ import { encodeParams } from '../url';
+
+ import Vue, { ComponentOptions } from 'vue';
+ import { Location } from 'vue-router';
+
+ interface AnnotationView extends Vue {
+   // props
+   annotation: any
+
+   // computed
+   activeSections: string[]
+   colormap: string
+   formattedMolFormula: string
+   compoundsTabLabel: string
+   imageOpacityMode: 'linear' | 'constant'
+   permalinkHref: Location
+
+   // data
+   annotImageOpacity: number
+   zoom: number
+   xOffset: number
+   yOffset: number
+
+   // apollo
+   peakChartData: any
+   opticalImageUrl: string
+
+   onSectionsChange(sections: string[]): void
+
+   $store: any
+ }
 
  export default {
    name: 'annotation-view',
@@ -194,6 +231,20 @@
 
      imageOpacityMode() {
        return this.opticalImageUrl ? 'linear' : 'constant';
+     },
+
+     permalinkHref() {
+       const filter: any = {
+         datasetIds: [this.annotation.dataset.id],
+         compoundName: this.annotation.sumFormula,
+         adduct: this.annotation.adduct,
+         fdrLevel: this.annotation.fdrLevel,
+         database: this.$store.getters.filter.database,
+         simpleQuery: ''
+       };
+       const path = '/annotations';
+       const q = encodeParams(filter, path)
+       return {query: q, path};
      }
    },
    data() {
@@ -207,15 +258,16 @@
    apollo: {
      peakChartData: {
        query: annotationQuery,
-       update: ({annotation}) => {
+       update: (data: any) => {
+         const {annotation} = data;
          let chart = JSON.parse(annotation.peakChartData);
          chart.sampleData = {
-           mzs: annotation.isotopeImages.map(im => im.mz),
-           ints: annotation.isotopeImages.map(im => im.totalIntensity),
+           mzs: annotation.isotopeImages.map((im: any) => im.mz),
+           ints: annotation.isotopeImages.map((im: any) => im.totalIntensity),
          };
          return chart;
        },
-       variables() {
+       variables(this: any): any {
          return {
            id: this.annotation.id
          };
@@ -224,18 +276,18 @@
 
      opticalImageUrl: {
        query: opticalImageQuery,
-       variables() {
+       variables(this: any): any {
          return {
            datasetId: this.annotation.dataset.id,
            zoom: this.zoom
          }
        },
        // assumes both image server and webapp are routed via nginx
-       update: data => data.opticalImageUrl
+       update: (data: any) => data.opticalImageUrl
      }
    },
    methods: {
-     onSectionsChange(activeSections) {
+     onSectionsChange(activeSections: string[]) {
        // FIXME: this is a hack to make isotope images redraw
        // so that they pick up the changes in parent div widths
        this.$nextTick(() => {
@@ -245,13 +297,13 @@
        this.$store.commit('updateAnnotationViewSections', activeSections)
      },
 
-     onImageZoom({zoom}) {
-       this.zoom = zoom;
+     onImageZoom(event: any) {
+       this.zoom = event.zoom;
      },
 
-     onImageMove({xOffset, yOffset}) {
-       this.xOffset = xOffset;
-       this.yOffset = yOffset;
+     onImageMove(event: any) {
+       this.xOffset = event.xOffset;
+       this.yOffset = event.yOffset;
      }
    },
 
@@ -263,7 +315,7 @@
      IsotopePatternPlot,
      Colorbar
    }
- }
+ } as ComponentOptions<AnnotationView>;
 </script>
 
 <style>
