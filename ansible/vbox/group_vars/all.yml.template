@@ -54,13 +54,16 @@ miniconda_env:
       - bottle
       - pysparkling
 
+web_host_internal_address: "{{ hostvars['web-1'].ansible_ssh_host }}"
+web_host_external_address: "localhost:8999"  # mapping of internal 80 port
+
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
 sm_branch: rel-v0.7
 sm_postgres_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_postgres_password: password
 sm_home: /opt/dev/sm
 sm_s3_path: ""
-sm_iso_images_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}:4201/iso_images"  # used in the engine for adding/deleting iso images, direct port access is needed
+sm_iso_images_url: "http://{{ web_host_internal_address }}:4201/iso_images"  # used in the engine for adding/deleting iso images, direct port access is needed
 sm_es_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
@@ -73,7 +76,7 @@ sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name 
 
 mol_db_home: /opt/dev/sm-mol-db
 mol_db_branch: rel-v0.7
-mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
+mol_db_url: "http://{{ web_host_internal_address }}/mol_db/v1"
 mol_db_postgres_pass: password
 mol_db_image_dir: /var/www/mol-images
 mol_db_import_databases: true  # if true will dropp all molecular databases and re-import them
@@ -90,21 +93,21 @@ sm_graphql_branch: rel-v0.7
 sm_graphql_slack_webhook_url:
 sm_graphql_slack_channel:
 sm_graphql_jwt_secret: secret
-sm_graphql_public_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/graphql"
-sm_graphql_mol_image_host: "{{ hostvars['web-1'].ansible_ssh_host }}:8999"
-sm_graphql_img_upload_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
-sm_graphql_moldb_service_host: localhost/mol_db
+sm_graphql_public_url: "http://{{ web_host_external_address }}/graphql"
+sm_graphql_mol_image_host: "{{ web_host_external_address }}:8999"
+sm_graphql_img_upload_host: "{{ web_host_external_address }}"
+sm_graphql_moldb_service_host: "{{ web_host_internal_address }}/mol_db"
 sm_graphql_database_password: "{{ sm_postgres_password }}"
 sm_graphql_rabbitmq_host: "{{ rabbitmq_host }}"
 sm_graphql_rabbitmq_user: "{{ rabbitmq_user }}"
 sm_graphql_rabbitmq_password: "{{ rabbitmq_password }}"
-sm_graphql_ws_public_endpoint: "ws://{{ hostvars['web-1'].ansible_ssh_host }}/ws"
+sm_graphql_ws_public_endpoint: "ws://{{ web_host_external_address }}/ws"
 sm_graphql_default_adducts:
   "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
 sm_graphql_img_storage_backend: fs
 
-sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"
+sm_webapp_hostname: "{{ web_host_external_address }}"
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"
 sm_webapp_home: /opt/dev/sm-web-app
 sm_webapp_branch: rel-v0.7
