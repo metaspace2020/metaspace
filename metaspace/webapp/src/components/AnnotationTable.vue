@@ -66,7 +66,9 @@
       </el-table-column>
 
       <el-table-column inline-template
+                       property="sumFormula"
                        label="Annotation"
+                       sortable="custom"
                        min-width="120">
         <el-popover trigger="hover" placement="right">
             <div>Candidate molecules ({{ row.possibleCompounds.length }}):
@@ -363,6 +365,8 @@
          orderBy = 'ORDER_BY_MZ';
        else if (event.prop == 'fdrLevel')
          orderBy = 'ORDER_BY_FDR_MSM';
+       else if (event.prop == 'sumFormula')
+         orderBy = 'ORDER_BY_FORMULA';
        this.$store.commit('setSortOrder', {
          by: orderBy, dir: event.order.toUpperCase()
        });
