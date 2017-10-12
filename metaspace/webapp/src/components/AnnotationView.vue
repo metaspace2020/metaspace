@@ -34,16 +34,11 @@
 
           <div class="main-ion-image-container">
             <image-loader :src="annotation.isotopeImages[0].url"
-                          :optical-src="opticalImageUrl"
-                          :annot-image-opacity="opticalImageUrl ? annotImageOpacity : 1.0"
                           :colormap="colormap"
                           :max-height=500
-                          :zoom="zoom"
-                          :x-offset="xOffset"
-                          :y-offset="yOffset"
+                          v-bind="imageLoaderSettings"
                           @zoom="onImageZoom"
                           @move="onImageMove"
-                          :opacity-mode="imageOpacityMode"
                           class="ion-image principal-peak-image">
             </image-loader>
 
@@ -53,7 +48,7 @@
                 <el-slider
                     vertical
                     height="150px"
-                    v-model="annotImageOpacity"
+                    v-model="opacity"
                     :min=0
                     :max=1
                     :step=0.01
@@ -127,14 +122,9 @@
               <div class="small-peak-image">
                 {{ img.mz.toFixed(4) }}<br/>
                 <image-loader :src="img.url"
-                              :optical-src="opticalImageUrl"
-                              :annot-image-opacity="opticalImageUrl ? annotImageOpacity : 1.0"
                               :colormap="colormap"
                               :max-height=250
-                              :zoom="zoom"
-                              :x-offset="xOffset"
-                              :y-offset="yOffset"
-                              :opacity-mode="imageOpacityMode"
+                              v-bind="imageLoaderSettings"
                               class="ion-image">
                 </image-loader>
               </div>
@@ -156,7 +146,8 @@
         <el-collapse-item title="Related annotations" name="adducts">
           <adducts-info v-if="activeSections.indexOf('adducts') !== -1"
                         :annotation="annotation"
-                        :database="this.$store.getters.filter.database">
+                        :database="this.$store.getters.filter.database"
+                        :image-loader-settings="imageLoaderSettings">
           </adducts-info>
         </el-collapse-item>
       </el-collapse>
@@ -179,6 +170,20 @@
  import Vue, { ComponentOptions } from 'vue';
  import { Location } from 'vue-router';
 
+ type ImagePosition = {
+   zoom: number
+   xOffset: number
+   yOffset: number
+ }
+
+ type ImageSettings = {
+   annotImageOpacity: number
+   opticalSrc: string
+   opacityMode: 'linear' | 'constant'
+ }
+
+ type ImageLoaderSettings = ImagePosition & ImageSettings;
+
  interface AnnotationView extends Vue {
    // props
    annotation: any
@@ -190,12 +195,11 @@
    compoundsTabLabel: string
    imageOpacityMode: 'linear' | 'constant'
    permalinkHref: Location
+   imageLoaderSettings: ImageLoaderSettings
 
    // data
-   annotImageOpacity: number
-   zoom: number
-   xOffset: number
-   yOffset: number
+   opacity: number
+   imagePosition: ImagePosition
 
    // apollo
    peakChartData: any
@@ -245,14 +249,24 @@
        const path = '/annotations';
        const q = encodeParams(filter, path)
        return {query: q, path};
+     },
+
+     imageLoaderSettings() {
+       return Object.assign({}, this.imagePosition, {
+         annotImageOpacity: this.opticalImageUrl ? this.opacity : 1.0,
+         opticalSrc: this.opticalImageUrl,
+         opacityMode: this.imageOpacityMode
+       });
      }
    },
    data() {
      return {
-       annotImageOpacity: 1,
-       zoom: 1,
-       xOffset: 0,
-       yOffset: 0
+       opacity: 1.0,
+       imagePosition: {
+         zoom: 1,
+         xOffset: 0,
+         yOffset: 0
+       }
      }
    },
    apollo: {
@@ -279,7 +293,7 @@
        variables(this: any): any {
          return {
            datasetId: this.annotation.dataset.id,
-           zoom: this.zoom
+           zoom: this.imageLoaderSettings.zoom
          }
        },
        // assumes both image server and webapp are routed via nginx
@@ -298,12 +312,12 @@
      },
 
      onImageZoom(event: any) {
-       this.zoom = event.zoom;
+       this.imagePosition.zoom = event.zoom;
      },
 
      onImageMove(event: any) {
-       this.xOffset = event.xOffset;
-       this.yOffset = event.yOffset;
+       this.imagePosition.xOffset = event.xOffset;
+       this.imagePosition.yOffset = event.yOffset;
      }
    },
 

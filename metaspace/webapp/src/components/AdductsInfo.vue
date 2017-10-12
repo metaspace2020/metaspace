@@ -10,6 +10,7 @@
           <span v-html="showAdduct(other.adduct)"></span><br/>
           {{  other.mz.toFixed(4) }}<br/>
           <image-loader :src="other.isotopeImages[0].url"
+                        v-bind="imageLoaderSettings"
                         :colormap="colormap"
                         :max-height=250
                         class="ion-image">
@@ -31,7 +32,7 @@
  import {allAdductsQuery} from '../api/annotation';
 
  export default {
-   props: ['annotation', 'database'],
+   props: ['annotation', 'database', 'imageLoaderSettings'],
    components: {ImageLoader},
    computed: {
      colormap() {
