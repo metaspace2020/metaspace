@@ -20,15 +20,7 @@
  import TagFilterInputBox from './TagFilterInputBox.vue';
  import {mzFilterPrecision} from '../util';
 
- interface MzFilter extends Vue {
-   name: string
-   value: number
-   removable: boolean
-   onChange(val: number): void
-   destroy(): void
- }
-
- export default {
+ export default Vue.extend({
    name: 'mz-filter',
    components: {
      'tf-input-box': TagFilterInputBox
@@ -39,18 +31,18 @@
      removable: {type: Boolean, default: true}
    },
    computed: {
-     precision() {
+     precision(): string {
        return mzFilterPrecision(this.value);
      }
    },
    methods: {
-     onChange(val) {
+     onChange(val: number): void {
        this.$emit('input', val);
        this.$emit('change', val);
      },
-     destroy() {
+     destroy(): void {
        this.$emit('destroy', this.name);
      }
    }
- } as ComponentOptions<MzFilter>
+ })
 </script>

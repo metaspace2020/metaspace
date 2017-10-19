@@ -25,25 +25,7 @@
 
  type Option = string | number;
 
- interface SingleSelectFilter extends Vue {
-   name: string
-   options: Option[]
-   value: Option
-   value2: Option
-
-   optionFormatter: (_: Option) => string
-   valueFormatter: (_: Option) => string
-
-   clearable: boolean
-   removable: boolean
-   filterable: boolean
-
-   formatOption(option: Option): string
-   formatValue(value: Option): string
-   destroy(): void
- }
-
- export default {
+ export default Vue.extend({
    name: 'single-select-filter',
    components: {
      TagFilter
@@ -71,23 +53,23 @@
      }
    },
    methods: {
-     formatOption(option) {
+     formatOption(option: Option): string {
        if (this.optionFormatter)
          return this.optionFormatter(option);
        else
-         return option;
+         return option + '';
      },
 
-     formatValue(value) {
+     formatValue(value: Option): string {
        if (this.valueFormatter)
          return this.valueFormatter(value);
        else
          return value + '';
      },
 
-     destroy() {
+     destroy(): void {
        this.$emit('destroy');
      }
    }
- } as ComponentOptions<SingleSelectFilter>;
+ })
 </script>

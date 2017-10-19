@@ -15,8 +15,8 @@ declare module 'element-ui' {
 }
 
 declare module 'vue/types/vue' {
-  namespace Vue {
-    const $message: any
+  interface VueConstructor {
+    $message: any
   }
 }
 

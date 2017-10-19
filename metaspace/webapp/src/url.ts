@@ -3,11 +3,11 @@ import FILTER_SPECIFICATIONS from './filterSpecs.js';
 import { invert } from 'lodash';
 import { Location } from 'vue-router';
 
-interface Map<T> {
+interface Dictionary<T> {
   [key: string]: T;
 }
 
-export const DEFAULT_FILTER: Map<any> = {
+export const DEFAULT_FILTER: Dictionary<any> = {
   database: 'HMDB',
   institution: undefined,
   submitter: undefined,
@@ -28,7 +28,7 @@ export const DEFAULT_FILTER: Map<any> = {
   simpleQuery: ''
 };
 
-const FILTER_TO_URL: Map<string> = {
+const FILTER_TO_URL: Dictionary<string> = {
   database: 'db',
   institution: 'lab',
   submitter: 'subm',
@@ -49,16 +49,16 @@ const FILTER_TO_URL: Map<string> = {
   simpleQuery: 'q'
 };
 
-const URL_TO_FILTER: Map<string> = invert(FILTER_TO_URL);
+const URL_TO_FILTER: Dictionary<string> = invert(FILTER_TO_URL);
 
-const PATH_TO_LEVEL: Map<string> = {
+const PATH_TO_LEVEL: Dictionary<string> = {
   '/annotations': 'annotation',
   '/datasets': 'dataset'
 };
 
-export function encodeParams(filter: any, path: string): Map<string | null> {
+export function encodeParams(filter: any, path: string): Dictionary<string> {
   const level = PATH_TO_LEVEL[path];
-  let q: Map<string | null> = {};
+  let q: Dictionary<string> = {};
   for (var key in FILTER_TO_URL) {
     const {levels, encoding} = FILTER_SPECIFICATIONS[key];
     if (levels.indexOf(level) == -1)
@@ -66,18 +66,18 @@ export function encodeParams(filter: any, path: string): Map<string | null> {
 
     if (filter[key] != DEFAULT_FILTER[key]) {
       if (encoding == 'json')
-        q[FILTER_TO_URL[key]] = JSON.stringify(filter[key]) || null;
+        q[FILTER_TO_URL[key]] = JSON.stringify(filter[key]);
       else if (encoding == 'list')
         q[FILTER_TO_URL[key]] = filter[key].join(',');
       else
-        q[FILTER_TO_URL[key]] = filter[key] || null;
+        q[FILTER_TO_URL[key]] = filter[key];
     }
   }
   return q;
 }
 
-export function stripFilteringParams(query: Map<string>): Map<string> {
-  let q: Map<string> = {};
+export function stripFilteringParams(query: Dictionary<string>): Dictionary<string> {
+  let q: Dictionary<string> = {};
   for (var key in query) {
     const fKey = URL_TO_FILTER[key];
     if (!fKey)
@@ -86,7 +86,7 @@ export function stripFilteringParams(query: Map<string>): Map<string> {
   return q;
 }
 
-export function decodeParams(location: Location): any {
+export function decodeParams(location: Location): Object {
   const {query, path} = location;
 
   if (!path || !query)
@@ -184,7 +184,7 @@ export function decodeSettings(location: Location): any {
 
     annotationView: {
       activeSections: ['images'],
-      colormap: 'Viridis'
+      colorDictionary: 'Viridis'
     },
 
     datasets: {
@@ -196,8 +196,8 @@ export function decodeSettings(location: Location): any {
     settings.table.currentPage = parseInt(query.page) - 1;
   if (query.sort)
     settings.table.order = decodeSortOrder(query.sort);
-  if (query.cmap)
-    settings.annotationView.colormap = query.cmap;
+  if (query.cDictionary)
+    settings.annotationView.colorDictionary = query.cDictionary;
   if (query.sections !== undefined)
     settings.annotationView.activeSections = decodeSections(query.sections);
   if (query.tab !== undefined)

@@ -7,29 +7,24 @@
 
 <script lang="ts">
 
- import Vue, { ComponentOptions } from 'vue';
+ import Vue from 'vue';
 
- interface ProgressButton extends Vue {
-   width: number
-   height: number
-   percentage: number
-   buttonStyle(): CSSRule
-   textStyle(): CSSRule
-   progressStyle(): CSSRule
- }
-
- export default {
+ export default Vue.extend({
    name: 'progress-button',
-   props: ['width', 'height', 'percentage'],
+   props: {
+     width: Number,
+     height: Number,
+     percentage: Number
+   },
    computed: {
-     buttonStyle() {
+     buttonStyle(): Object {
        return {
          width: this.width + 'px',
          height: this.height + 'px',
          padding: 0,
        };
      },
-     textStyle() {
+     textStyle(): Object {
        return Object.assign({
          'z-index': 2,
          'position': 'absolute',
@@ -38,7 +33,7 @@
          'justify-content': 'center'
        }, this.buttonStyle);
      },
-     progressStyle() {
+     progressStyle(): Object {
        return {
          'background-color': 'rgb(152, 255, 152)',
          'width': ((this.width - 2) * this.percentage / 100.0) + 'px',
@@ -48,5 +43,5 @@
        };
      }
    }
- } as ComponentOptions<ProgressButton>
+ })
 </script>

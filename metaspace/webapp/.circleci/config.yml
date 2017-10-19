@@ -30,7 +30,6 @@ jobs:
       - run:
           name: Install node packages
           command: |
-            yarn global add yarn
             yarn install
             npm rebuild node-sass  # https://github.com/sass/node-sass/issues/1804
             cp tests/e2e/conf.js conf.js

@@ -7,20 +7,13 @@
  import {getColorScale} from '../util';
  import Vue, { ComponentOptions } from 'vue';
 
- interface Colorbar extends Vue {
-   map: string
-   direction: string
-
-   style: CSSRule
- }
-
- export default {
+ export default Vue.extend({
    props: {
      map: {type: String, default: 'Viridis'},
      direction: {type: String, default: 'right'}
    },
    computed: {
-     style() {
+     style(): Object {
        const {domain, range} = getColorScale(this.map);
        let colors = [];
        for (let i = 0; i < domain.length; i++)
@@ -32,5 +25,5 @@
        };
      }
    }
- } as ComponentOptions<Colorbar>;
+ })
 </script>
