@@ -21,9 +21,17 @@
   template: src=/tmp/config.js.template dest={{ sm_graphql_home }}/config/production.js
             owner=ubuntu group=ubuntu mode=0600
 
-- name: Create a folder for isotopic images
+- name: Create folders for images
   file:
     path: /opt/data/sm_data/public/iso_images
+    state: directory
+    mode: 0755
+  file:
+    path: /opt/data/sm_data/public/optical_images
+    state: directory
+    mode: 0755
+  file:
+    path: /opt/data/sm_data/public/raw_optical_images
     state: directory
     mode: 0755
 

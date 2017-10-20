@@ -64,6 +64,7 @@ sm_postgres_password: password
 sm_home: /opt/dev/sm
 sm_s3_path: ""
 sm_iso_images_url: "http://{{ web_host_internal_address }}:4201/iso_images"  # used in the engine for adding/deleting iso images, direct port access is needed
+sm_optical_images_url: "http://{{ web_host_internal_address }}:4201/optical_images"
 sm_es_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
@@ -79,7 +80,7 @@ mol_db_branch: rel-v0.7
 mol_db_url: "http://{{ web_host_internal_address }}/mol_db/v1"
 mol_db_postgres_pass: password
 mol_db_image_dir: /var/www/mol-images
-mol_db_import_databases: true  # if true will dropp all molecular databases and re-import them
+mol_db_import_databases: true  # if true will drop all molecular databases and re-import them
 mol_db_import_mol_images: true
 mol_db_image_archives:
   - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-hmdb.tar.xz
@@ -196,6 +197,14 @@ nginx_sites:
         params:
           - proxy_pass http://isotope_image_server/iso_images/;
           - limit_except GET {deny all;}
+      - path: /optical_images/
+        params:
+          - proxy_pass http://isotope_image_server/optical_images/;
+          - limit_except GET {deny all;}
+      - path: /raw_optical_images/
+        params:
+          - proxy_pass http://isotope_image_server/raw_optical_images/;
+          - client_max_body_size 25M;
       - path: /graphql
         params:
           - proxy_pass http://graphql_server/graphql;

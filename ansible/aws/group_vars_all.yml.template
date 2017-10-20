@@ -63,6 +63,7 @@ sm_postgres_password: POSTGRES_PASSWORD
 sm_home: /opt/dev/sm
 sm_s3_path: ENGINE_BUCKET_NAME  # bucket for sm engine tmp data in "s3a://bucket-name/data" form
 sm_iso_images_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:4201/iso_images"
+sm_optical_images_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:4201/optical_images"
 sm_es_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
@@ -224,6 +225,14 @@ nginx_sites:
         params:
           - proxy_pass http://isotope_image_server/iso_images/;
           - limit_except GET {deny all;}
+      - path: /optical_images/
+        params:
+          - proxy_pass http://isotope_image_server/optical_images/;
+          - limit_except GET {deny all;}
+      - path: /raw_optical_images/
+        params:
+          - proxy_pass http://isotope_image_server/raw_optical_images/;
+          - client_max_body_size 25M;
       - path: /graphql
         params:
           - proxy_pass http://graphql_server/graphql;
