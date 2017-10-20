@@ -1,8 +1,7 @@
 import * as config from './clientConfig.json';
 import * as scales from 'plotly.js/src/components/colorscale/scales.js';
 import * as extractScale from 'plotly.js/src/components/colorscale/extract_scale.js';
-import {scaleLinear} from 'd3-scale';
-import {rgb, RGBColor} from 'd3-color';
+import * as d3 from 'd3';
 
 const fuConfig = config.fineUploader;
 
@@ -50,7 +49,7 @@ function pathFromUUID(uuid: string): string {
 
 interface ColorScale {
   domain: number[]
-  range: RGBColor[]
+  range: d3.RGBColor[]
 }
 
 function getColorScale(name: string): ColorScale {
@@ -59,11 +58,11 @@ function getColorScale(name: string): ColorScale {
 
 function createColormap(name: string): number[][] {
   const {domain, range} = getColorScale(name);
-  const sclFun = scaleLinear<RGBColor>().domain(domain).range(range).clamp(true);
+  const sclFun = d3.scaleLinear<d3.RGBColor>().domain(domain).range(range).clamp(true);
 
   let colors = [];
   for (let i = 0; i < 256; i++) {
-    const color = rgb(sclFun(i / 255.0));
+    const color = d3.rgb(sclFun(i / 255.0));
     colors.push([color.r, color.g, color.b].map(Math.round));
   }
   return colors;

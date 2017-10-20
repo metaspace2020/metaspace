@@ -7,7 +7,7 @@ module.exports = {
     app: ['./src/main.ts'],
     vendor: ['ajv', 'vue', 'vuex', 'vue-router', 'vuex-router-sync',
              'vue-apollo', 'apollo-client', 'graphql-tag',
-             'element-ui',
+             'element-ui', 'd3', 'lodash'
     ]
   },
   output: {
