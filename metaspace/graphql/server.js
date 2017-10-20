@@ -59,7 +59,11 @@ function createHttpServerAsync(config) {
 
       httpServer.listen(config.port);
 
-      wsServer.listen(config.ws_port, () => {
+      wsServer.listen(config.ws_port, (err) => {
+        if (err) {
+          logger.error('Could not start WebSocket server', err)
+        }
+        logger.info(`WebSocket server is running on ${config.ws_port} port...`);
         SubscriptionServer.create({execute, subscribe, schema}, {
           server: wsServer,
           path: '/graphql',

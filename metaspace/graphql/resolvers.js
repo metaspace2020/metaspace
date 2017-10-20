@@ -148,7 +148,11 @@ const Resolvers = {
       const host = config.services.moldb_service_host;
       return fetch(`http://${host}/v1/databases`)
         .then(res => res.json())
-        .then(body => body['data'])
+        .then((body) => {
+          let mol_dbs = body['data'];
+          logger.debug(`Molecular databases: ` + JSON.stringify(mol_dbs));
+          return mol_dbs;
+        })
         .catch((e) => { logger.error(e); return null; })
     },
 
