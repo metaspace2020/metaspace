@@ -50,7 +50,7 @@
         "Sample_Growth_Conditions": {
           "description": "intervention, treatment group or growth conditions",
           "type": "string"
-        },
+        }
       }
     },
     "Sample_Preparation": {
