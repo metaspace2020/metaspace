@@ -1,8 +1,6 @@
 import config from '../../conf';
 
-import {Selector} from 'testcafe';
-
-const DATA_WAIT = 15000;
+import {ClientFunction, Selector} from 'testcafe';
 
 fixture `Annotations page`
   .page `http://${config.HOST_NAME}:${config.PORT}/#/annotations`;
@@ -10,7 +8,7 @@ fixture `Annotations page`
 const table = new Selector('#annot-table');
 const filterPanel = new Selector('#annot-page .filter-panel');
 
-const tableBody = table.find('tbody').addCustomMethods({
+const tableMethods = {
   column: (tbl, columnIndex) =>
     Array.prototype.slice.call(tbl.rows, 0)
          .map(row => row.cells[columnIndex].innerText.trim()),
@@ -26,10 +24,22 @@ const tableBody = table.find('tbody').addCustomMethods({
       compare = (a, b) => b - a;
     return values.slice().sort(compare);
   }
+};
+
+const tableBody = table.find('tbody').addCustomMethods(tableMethods);
+
+const checkSortingOrder = ClientFunction((colIndex, direction) => {
+  const tbl = tableBody();
+  const values = tableMethods.column(tbl, colIndex);
+  const expected = tableMethods.sortedColumn(tbl, colIndex, direction);
+  return values.length == expected.length && values.every((v, i) => v == expected[i]);
+},
+{
+  dependencies: { tableBody, tableMethods }
 });
 
-const rows = table.find('tbody>tr');
-const header = table.find('thead>tr').nth(0);
+const rows = table.find('.el-table__body tr');
+const header = table.find('.el-table__header tr').nth(0);
 
 function findSortIcon(colIndex, direction) {
   return header.find('th').nth(colIndex)
@@ -37,24 +47,23 @@ function findSortIcon(colIndex, direction) {
 }
 
 test('table is not empty', async t => {
-  await t.wait(DATA_WAIT); // wait until the data loads
-  const rowCount = await table.find('tbody>tr').count;
-  await t
-    .expect(rowCount >= 10).ok();
+  await t.expect(rows.exists).ok();
+  await t.expect(rows.count).gt(10);
 });
 
 test('total number of matching entries is shown', async t => {
   const count = await new Selector('#annot-count b').textContent;
-  await t.expect(count != '').ok();
+  await t.expect(count).notEql('');
 });
 
 test('there are 6 columns initially', async t => {
-  await t.wait(DATA_WAIT);
+  await t.expect(rows.exists).ok();
   const firstRow = await rows.nth(0);
   await t.expect(firstRow.find('td').count).eql(6);
 });
 
 test('single-click lab filtering works', async t => {
+  await t.expect(rows.exists).ok();
   const labCell = await rows.nth(0).find('td').nth(0);
   const filterIcon = await labCell.find('img').nth(0);
   await t.hover(labCell);
@@ -64,6 +73,7 @@ test('single-click lab filtering works', async t => {
 });
 
 test('single-click dataset filtering works', async t => {
+  await t.expect(rows.exists).ok();
   const datasetCell = await rows.nth(0).find('td').nth(1);
   const filterIcon = await datasetCell.find('img').nth(0);
   await t.hover(datasetCell);
@@ -73,15 +83,13 @@ test('single-click dataset filtering works', async t => {
 });
 
 test('sorting works', async t => {
-  await t.wait(DATA_WAIT); // wait for handlers to get attached
+  await t.expect(rows.exists).ok();
 
   for (let colIndex of [3, 4]) {
     for (let direction of ['ascending', 'descending']) {
-      await t.click(findSortIcon(colIndex, direction)).wait(1000);
-
-      const values = await tableBody.column(colIndex);
-      const expected = await tableBody.sortedColumn(colIndex, direction);
-      await t.expect(values).eql(expected);
+      await t.click(findSortIcon(colIndex, direction));
+      const result = checkSortingOrder(colIndex, direction);
+      await t.expect(result).ok();
     }
   }
 });
