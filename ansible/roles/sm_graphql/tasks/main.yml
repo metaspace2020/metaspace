@@ -23,17 +23,13 @@
 
 - name: Create folders for images
   file:
-    path: /opt/data/sm_data/public/iso_images
+    path: /opt/data/sm_data/public/{{ item }}
     state: directory
     mode: 0755
-  file:
-    path: /opt/data/sm_data/public/optical_images
-    state: directory
-    mode: 0755
-  file:
-    path: /opt/data/sm_data/public/raw_optical_images
-    state: directory
-    mode: 0755
+  with_items:
+     - optical_images
+     - raw_optical_images
+     - iso_images
 
 - name: Make sure that the logs directory exists
   file: path={{ sm_graphql_home }}/logs state=directory mode=0755

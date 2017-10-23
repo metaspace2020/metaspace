@@ -21,6 +21,7 @@
     dest=/opt/dev/sm
     repo=https://github.com/SpatialMetabolomics/sm-engine.git
     update=yes
+    force=yes
     version={{ sm_branch }}
 
 - name: Install psycopg2 (required by ansible)

@@ -5,6 +5,7 @@
     update: yes
     force: yes
     recursive: yes
+    track_submodules: yes
     version: "{{ sm_webapp_branch }}"
   register: git_deploy
   until: git_deploy | succeeded

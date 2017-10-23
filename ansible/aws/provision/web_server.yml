@@ -23,6 +23,11 @@
   user: ubuntu
   gather_facts: yes
 
+  pre_tasks:
+    - name: Gather EC2 instance facts
+      ec2_facts:
+      tags: [always]
+
   roles:
     - role: postgres
       become: yes
