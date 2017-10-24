@@ -166,7 +166,10 @@ const Resolvers = {
                    return '/optical_images/' + records[0].id;
                  else
                    return null;
-               });
+               })
+               .catch((e) => {
+                 logger.error(e);
+               })
     }
   },
 
