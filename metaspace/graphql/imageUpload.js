@@ -36,7 +36,7 @@ function imageProviderDBBackend(pg) {
             .first()
             .then((row) => {
               if (row === undefined)
-                throw ({message: `Image with id=${image_id} does not exist`});
+                throw ({message: `Image with id=${req.params.img_id} does not exist`});
               let img_buf = row.data;
               res.type(mimeType);
               res.end(img_buf, 'binary');
