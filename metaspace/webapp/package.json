@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development node --max_old_space_size=4096 server.js",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
-    "build-ci": "cross-env NODE_ENV=production webpack --hide-modules"
+    "build-ci": "cross-env NODE_ENV=production webpack --hide-modules",
+    "test": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=10000 --quarantine-mode"
   },
   "dependencies": {
     "ajv": "^4.10.0",
@@ -94,6 +95,7 @@
     "postcss-loader": "~1.2.2",
     "source-map-loader": "0.2.1",
     "style-loader": "~0.13.1",
+    "testcafe": "^0.18.1",
     "typescript": "2.5.3",
     "vue-class-component": "6.0.0",
     "vue-loader": "~11.0.0",

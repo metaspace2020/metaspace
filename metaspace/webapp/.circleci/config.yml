@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: lomereiter/sm-webapp:0.7
+      - image: lomereiter/sm-webapp:0.7.1
 
       - image: postgres:9.5-alpine
         environment:
@@ -57,8 +57,6 @@ jobs:
           name: Run tests
           command: |
             export NPM_CONFIG_LOGLEVEL=warn
-            Xvfb :99 -screen 0 1280x1024x24 &
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
-            export DISPLAY=:99
             stty cols 80  # https://github.com/DevExpress/testcafe/issues/1469
-            testcafe firefox tests/e2e/annotations.js --app "yarn run dev" --no-color --app-init-delay=10000
+            yarn run test
