@@ -110,7 +110,13 @@ if (conf.GOOGLE_CLIENT_ID) {
 var plRedisStore = require('passwordless-redisstore-bcryptjs');
 passwordless.init(new plRedisStore(conf.REDIS_CONFIG.port, conf.REDIS_CONFIG.host));
 
-if (conf.AWS_ACCESS_KEY_ID) {
+function loginLink(token, uid) {
+  return `http://${conf.HOST_NAME}/?token=${token}&uid=${encodeURIComponent(uid)}`;
+}
+
+if (conf.AWS_ACCESS_KEY_ID && env != 'development') {
+  // in staging/production we deliver the login link by email, using AWS SES
+
   AWS.config.update({
     accessKeyId: conf.AWS_ACCESS_KEY_ID,
     secretAccessKey: conf.AWS_SECRET_ACCESS_KEY,
@@ -119,11 +125,10 @@ if (conf.AWS_ACCESS_KEY_ID) {
 
   var ses = new AWS.SES();
 
-  passwordless.addDelivery((token, uid, recipient, callback, req) => {
+  passwordless.addDelivery('email', (token, uid, recipient, callback, req) => {
     const host = conf.HOST_NAME;
-    const text = 'Greetings!\nVisit this link to login: http://'
-               + host + '/?token=' + token + '&uid='
-               + encodeURIComponent(uid) + '\n\n\n---\nMETASPACE team'
+    const text = 'Greetings!\nVisit this link to login: ' + loginLink(token, uid)
+               + '\n\n\n---\nMETASPACE team'
 
     ses.sendEmail({
       Source: 'contact@metaspace2020.eu',
@@ -137,6 +142,22 @@ if (conf.AWS_ACCESS_KEY_ID) {
       console.log('Sent login link to ' + recipient);
       callback(err);
     });
+  });
+}
+
+if (env == 'development') {
+  // in development the login link is simply stored in Redis
+
+  var Redis = require('ioredis');
+  var redis = new Redis({
+    keyPrefix: 'login-link:',
+    showFriendlyErrorStack: true // NB. not to be used in production!
+  });
+
+  passwordless.addDelivery((token, uid, recipient, callback) => {
+    redis.set(recipient, loginLink(token, uid))
+         .then(() => { console.log(`Stored login link for ${recipient} in Redis`); callback(null); })
+         .catch(err => { callback(err); });
   });
 }
 
