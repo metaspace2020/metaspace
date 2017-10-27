@@ -315,8 +315,8 @@
        this.recordsPerPage = newSize;
      },
      setRow(data, rowIndex) {
-       const store = this.$refs.table.store;
-       store.commit('setCurrentRow', data[rowIndex]);
+       this.$refs.table.setCurrentRow(null);
+       this.$refs.table.setCurrentRow(data[rowIndex]);
      },
      queryVariables() {
        const {annotationFilter, datasetFilter, ftsQuery} = this.gqlFilter;
