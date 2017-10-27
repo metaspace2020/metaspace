@@ -38,6 +38,14 @@
                    title="Reset image zoom and offsets"
                    @click="resetViewport"/>
             </span>
+
+            <span v-if="opticalImageUrl">
+              <img class="show-optical-image-icon"
+                   :class="showOpticalImage ? '' : 'png-icon-disabled'"
+                   src="../assets/microscope-icon.png"
+                   title="Show/hide optical image"
+                   @click="toggleOpticalImage"/>
+            </span>
           </span>
 
           <div class="main-ion-image-container">
@@ -292,11 +300,15 @@
    font-family: "Roboto" !important;
  }
 
- .reset-image-icon {
+ .reset-image-icon, .show-optical-image-icon {
    width: 24px;
    padding-left: 20px;
    vertical-align: middle;
    cursor: pointer;
+ }
+
+ .png-icon-disabled {
+   opacity: 0.3;
  }
 
 </style>

@@ -78,6 +78,7 @@
 
    peakChartData: any
    opticalImageUrl: string
+   showOpticalImage: boolean = true
 
    get activeSections(): string[] {
      return this.$store.getters.settings.annotationView.activeSections;
@@ -107,7 +108,7 @@
    }
 
    get imageOpacityMode(): 'linear' | 'constant' {
-     return this.opticalImageUrl ? 'linear' : 'constant';
+     return (this.showOpticalImage && this.opticalImageUrl) ? 'linear' : 'constant';
    }
 
    get permalinkHref(): Location {
@@ -126,8 +127,8 @@
 
    get imageLoaderSettings(): ImageLoaderSettings {
      return Object.assign({}, this.imagePosition, {
-       annotImageOpacity: this.opticalImageUrl ? this.opacity : 1.0,
-       opticalSrc: this.opticalImageUrl,
+       annotImageOpacity: (this.showOpticalImage && this.opticalImageUrl) ? this.opacity : 1.0,
+       opticalSrc: this.showOpticalImage ? this.opticalImageUrl : '',
        opacityMode: this.imageOpacityMode
      });
    }
@@ -165,4 +166,9 @@
      this.imagePosition.yOffset = 0;
      this.imagePosition.zoom = 1;
    }
-}
+
+   toggleOpticalImage(event: any): void {
+     event.stopPropagation();
+     this.showOpticalImage = !this.showOpticalImage
+   }
+ }
