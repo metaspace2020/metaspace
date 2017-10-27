@@ -5,6 +5,7 @@
 
 <script>
  import * as d3 from 'd3';
+ import {legendColor} from 'd3-svg-legend';
 
  function plotChart(data, element) {
    if (!element) return;
@@ -133,7 +134,7 @@
                    .domain(['Sample', 'Theoretical'])
                    .range(['red', 'blue']);
 
-   let drawLegend = d3.legendColor()
+   let drawLegend = legendColor()
      .orient('horizontal')
      .shape('line').shapeWidth(legendItemWidth).shapePadding(20).scale(types);
    legend.call(drawLegend);
