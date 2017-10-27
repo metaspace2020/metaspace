@@ -87,6 +87,14 @@
      return this.$store.getters.settings.annotationView.colormap;
    }
 
+   get colormapName(): string {
+     return this.colormap.replace('-', '');
+   }
+
+   get colorbarDirection(): string {
+     return this.colormap[0] == '-' ? 'bottom' : 'top';
+   }
+
    get formattedMolFormula(): string {
      if (!this.annotation) return '';
      const { sumFormula, adduct, dataset } = this.annotation;

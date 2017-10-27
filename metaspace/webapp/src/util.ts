@@ -53,7 +53,10 @@ interface ColorScale {
 }
 
 function getColorScale(name: string): ColorScale {
-  return extractScale(scales[name], 0, 1);
+  if (name[0] != '-')
+    return extractScale(scales[name], 0, 1); // normal
+  else
+    return extractScale(scales[name.slice(1)], 1, 0); // inverted
 }
 
 function createColormap(name: string): number[][] {

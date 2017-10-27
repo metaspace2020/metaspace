@@ -2,7 +2,7 @@
   <span id="ion-image-settings">
     <el-form>
       <el-form-item label="Colormap">
-        <el-select :value="colormap"
+        <el-select :value="colormapName"
                    style="width: 120px;"
                    title="Colormap"
                    @input="onColormapChange">
@@ -13,6 +13,9 @@
                       :map="scale"></colorbar>
           </el-option>
         </el-select>
+        <el-form-item>
+          <el-checkbox :checked="inverted" @input="onInvertChange">Invert</el-checkbox>
+        </el-form-item>
       </el-form-item>
     </el-form>
   </span>
@@ -25,6 +28,12 @@
    computed: {
      colormap() {
        return this.$store.getters.settings.annotationView.colormap;
+     },
+     colormapName() {
+       return this.colormap.replace('-', '');
+     },
+     inverted() {
+       return this.colormap[0] == '-';
      }
    },
    data() {
@@ -34,7 +43,11 @@
    },
    methods: {
      onColormapChange(selection) {
-       this.$store.commit('setColormap', selection);
+       this.$store.commit('setColormap', (this.inverted ? '-' : '') + selection);
+     },
+
+     onInvertChange(invert) {
+       this.$store.commit('setColormap', (invert ? '-' : '') + this.colormapName);
      }
    },
  }

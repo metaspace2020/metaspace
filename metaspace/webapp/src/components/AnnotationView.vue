@@ -60,7 +60,7 @@
 
               {{ annotation.isotopeImages[0].maxIntensity.toExponential(2) }}
               <colorbar style="width: 20px; height: 160px; align-self: center;"
-                        direction="top" :map="colormap"
+                        :direction="colorbarDirection" :map="colormapName"
                         slot="reference">
               </colorbar>
               {{ annotation.isotopeImages[0].minIntensity.toExponential(2) }}
