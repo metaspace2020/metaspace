@@ -12,7 +12,8 @@
               <router-link target="_blank"
                            style="font-size: 20px"
                            title="Link to this annotation (opens in a new tab)"
-                           :to="permalinkHref">¶</router-link>
+                           :to="permalinkHref"><img src="../assets/share-icon.png" width="18px">
+              </router-link>
             </span>
           </div>
         </div>
