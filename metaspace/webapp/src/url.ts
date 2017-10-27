@@ -184,7 +184,7 @@ export function decodeSettings(location: Location): any {
 
     annotationView: {
       activeSections: ['images'],
-      colorDictionary: 'Viridis'
+      colormap: 'Viridis'
     },
 
     datasets: {
@@ -196,8 +196,8 @@ export function decodeSettings(location: Location): any {
     settings.table.currentPage = parseInt(query.page) - 1;
   if (query.sort)
     settings.table.order = decodeSortOrder(query.sort);
-  if (query.cDictionary)
-    settings.annotationView.colorDictionary = query.cDictionary;
+  if (query.cmap)
+    settings.annotationView.colormap = query.cmap;
   if (query.sections !== undefined)
     settings.annotationView.activeSections = decodeSections(query.sections);
   if (query.tab !== undefined)
