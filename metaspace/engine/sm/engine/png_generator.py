@@ -1,29 +1,27 @@
 from io import BytesIO
+from PIL import Image
+from os import path
 import png
 import requests
 import numpy as np
-from scipy.sparse import coo_matrix
 from requests.adapters import HTTPAdapter
-from os.path import join
-
-from sm.engine.util import SMConfig
 
 
 class ImageStoreServiceWrapper(object):
 
-    def __init__(self, img_service_url, field_name='iso_image'):
+    def __init__(self, img_service_url):
         self._img_service_url = img_service_url
-        self._field_name = field_name
         # empty URL is used for testing purposes
         if self._img_service_url:
             self._session = requests.Session()
             self._session.mount(self._img_service_url, HTTPAdapter(max_retries=5))
 
-    def post_image(self, fp):
-        if not self._img_service_url:
-            return 'XXX'
-        r = self._session.post(join(self._img_service_url, 'upload'),
-                files={self._field_name: fp})
+    def _format_url(self, img_type, method='', img_id=''):
+        return path.join(self._img_service_url, img_type + 's', method, img_id)
+
+    def post_image(self, img_type, fp):
+        url = self._format_url(img_type=img_type, method='upload')
+        r = self._session.post(url, files={img_type: fp})
         r.raise_for_status()
         return r.json()['image_id']
 
@@ -31,9 +29,13 @@ class ImageStoreServiceWrapper(object):
         r = self._session.delete(url)
         r.raise_for_status()
 
-    def delete_image_by_id(self, id):
-        del_url = '{}/delete/{}'.format(self._img_service_url, id)
-        self.delete_image(del_url)
+    def get_image_by_id(self, img_type, img_id):
+        url = self._format_url(img_type=img_type, img_id=img_id)
+        return Image.open(self._session.get(url, stream=True).raw)
+
+    def delete_image_by_id(self, img_type, img_id):
+        url = self._format_url(img_type=img_type, method='delete', img_id=img_id)
+        self.delete_image(url)
 
     def __str__(self):
         return self._img_service_url

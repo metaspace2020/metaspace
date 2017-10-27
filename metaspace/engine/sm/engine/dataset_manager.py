@@ -12,6 +12,9 @@ from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
 
+SEL_DATASET_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
+UPD_DATASET_OPTICAL_IMAGE = 'update dataset set optical_image = %s WHERE id = %s'
+
 IMG_URLS_BY_ID_SEL = ('SELECT iso_image_ids '
                       'FROM iso_image_metrics m '
                       'JOIN job j ON j.id = m.job_id '
@@ -99,13 +102,8 @@ class DatasetManager(object):
     def add_optical_image(self, ds, url, transform, **kwargs):
         raise NotImplemented
 
-    def _iso_img_store(self):
-        return ImageStoreServiceWrapper(self._sm_config['services']['iso_images'],
-                                        field_name='iso_image')
-
-    def _optical_img_store(self):
-        return ImageStoreServiceWrapper(self._sm_config['services']['optical_images'],
-                                        field_name='optical_image')
+    def _img_store(self):
+        return ImageStoreServiceWrapper(self._sm_config['services']['img_service_url'])
 
 
 class SMDaemonDatasetManager(DatasetManager):
@@ -147,12 +145,12 @@ class SMDaemonDatasetManager(DatasetManager):
     def _del_iso_images(self, ds):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
 
-        img_store = self._iso_img_store()
+        img_store = self._img_store()
         for row in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
             iso_image_ids = row[0]
-            for id in iso_image_ids:
-                if id:
-                    img_store.delete_image_by_id(id)
+            for img_id in iso_image_ids:
+                if img_id:
+                    img_store.delete_image_by_id('iso_image', img_id)
 
     def delete(self, ds, del_raw_data=False, **kwargs):
         """ Delete all dataset related data from the DB """
@@ -209,10 +207,9 @@ class SMapiDatasetManager(DatasetManager):
         else:
             self.logger.info('Nothing to update: %s %s', ds.id, ds.name)
 
-    def _annotation_image_shape(self, ds_id):
+    def _annotation_image_shape(self, img_store, ds_id):
         ion_img_id = self._db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', ds_id)[0][0][0]
-        ion_img_url = self._sm_config['services']['iso_images'] + '/' + ion_img_id
-        return Image.open(requests.get(ion_img_url, stream=True).raw).size
+        return img_store.get_image_by_id('iso_image', ion_img_id).size
 
     def _transform_scan(self, scan, transform_, dims, zoom):
         # zoom is relative to the web application viewport size and not to the ion image dimensions,
@@ -239,20 +236,32 @@ class SMapiDatasetManager(DatasetManager):
         buf.seek(0)
         return buf
 
-    def add_optical_image(self, ds, optical_scan, transform, zoom_levels=[1, 2, 4, 8], **kwargs):
-        """ Generate scaled and transformed versions of the provided optical image """
+    def _add_raw_optical_image(self, ds, optical_scan):
+        img_store = self._img_store()
+        row = self._db.select_one(SEL_DATASET_OPTICAL_IMAGE, ds.id)
+        if row and row[0]:
+            img_store.delete_image_by_id('raw_optical_image', row[0])
+        buf = self._save_jpeg(optical_scan)
+        img_id = img_store.post_image('raw_optical_image', buf)
+        self._db.alter(UPD_DATASET_OPTICAL_IMAGE, img_id, ds.id)
 
-        dims = self._annotation_image_shape(ds.id)
-        img_store = self._optical_img_store()
-
+    def _add_zoom_optical_images(self, ds, optical_scan, transform, zoom_levels):
+        img_store = self._img_store()
+        dims = self._annotation_image_shape(img_store, ds.id)
         rows = []
         for zoom in zoom_levels:
             img = self._transform_scan(optical_scan, transform, dims, zoom)
             buf = self._save_jpeg(img)
-            img_id = img_store.post_image(buf)
+            img_id = img_store.post_image('optical_image', buf)
             rows.append((img_id, ds.id, zoom))
 
         for row in self._db.select(SEL_OPTICAL_IMAGE, ds.id):
-            img_store.delete_image_by_id(row[0])
+            img_store.delete_image_by_id('optical_image', row[0])
         self._db.alter(DEL_OPTICAL_IMAGE, ds.id)
         self._db.insert(INS_OPTICAL_IMAGE, rows)
+
+    def add_optical_image(self, ds, optical_scan, transform, zoom_levels=[1, 2, 4, 8], **kwargs):
+        """ Generate scaled and transformed versions of the provided optical image """
+        self._add_raw_optical_image(ds, optical_scan)
+        self._add_zoom_optical_images(ds, optical_scan, transform, zoom_levels)
+

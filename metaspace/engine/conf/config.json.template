@@ -13,8 +13,7 @@
     "password": "{{ sm_es_password }}"
   },
   "services": {
-    "iso_images": "{{ sm_iso_images_url }}",
-    "optical_images": "{{ sm_optical_images_url }}",
+    "img_service_url": "{{ sm_img_service_url }}",
     "mol_db": "{{ mol_db_url }}",
     "web_app_url": "{{ sm_webapp_url }}",
     "send_email": {{ sm_send_email | to_json }}

@@ -295,7 +295,8 @@ class ESExporter(object):
             must.append({'term': {'db_version': mol_db.version}})
 
         try:
-            resp = self._es.delete_by_query(index=self.index, body=body, doc_type='annotation')
+            resp = self._es.delete_by_query(index=self.index, body=body,
+                                            doc_type='annotation', conflicts='proceed')
             logger.debug(resp)
         except ElasticsearchException as e:
             logger.warning('Annotation deletion failed: %s', e)

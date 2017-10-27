@@ -10,13 +10,14 @@ CREATE INDEX ind_sum_formulas_4 ON sum_formula (db_id);
 
 DROP TABLE IF EXISTS dataset CASCADE;
 CREATE TABLE dataset (
-	id	        text,
-	name				text,
-	input_path  text,
-	upload_dt		timestamp,
-	metadata		json,
-	config      json,
-	status			text,
+	id	        	text,
+	name					text,
+	input_path  	text,
+	upload_dt			timestamp,
+	metadata			json,
+	config      	json,
+	status				text,
+	optical_image text,
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
 );
 CREATE INDEX ind_dataset_name ON dataset (name);
