@@ -159,6 +159,13 @@ if (env == 'development') {
          .then(() => { console.log(`Stored login link for ${recipient} in Redis`); callback(null); })
          .catch(err => { callback(err); });
   });
+
+  // expose the link to outside to enable testing even when the webapp is inside virtualbox/docker
+  app.get('/getLoginLink/:email', function (req, res) {
+    redis.get(req.params.email)
+         .then(link => res.send(link))
+         .catch((e) => { res.status(400); });
+  });
 }
 
 app.use(passwordless.sessionSupport());

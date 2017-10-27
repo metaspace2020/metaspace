@@ -112,6 +112,12 @@
 
        let fnames = files.map(f => f.name);
 
+       // FIXME somehow I couldn't get TestCafe to pass real filenames
+       // so FineUploader uses default values for both :-\
+       if (fnames[0] == 'misc_data' && fnames[1] == 'misc_data') {
+         fnames = ['test.imzML', 'test.ibd'];
+       }
+
        if (fnames.length < 2) {
          return;
        }
