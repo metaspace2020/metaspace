@@ -61,19 +61,30 @@
         </div>
 
         <div class="optical-image-submit">
-          <div style="display: inline-block;">
-            <el-button @click="reset"
-                       v-show="opticalImgUrl"
-                       style="margin-bottom: 10px;">
-              Reset
-            </el-button>
+          <el-row :gutter="20" style="margin-bottom: 10px">
+            <el-col :span="12" :offset="12">
+              <el-button @click="cancel">
+                Cancel
+              </el-button>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <el-button @click="reset"
+                         v-show="opticalImgUrl"
+                         style="margin-bottom: 10px;">
+                Reset
+              </el-button>
+            </el-col>
 
-            <el-button type="primary"
-                       @click="submit"
-                       :disabled="!opticalImgUrl">
-              Submit
-            </el-button>
-          </div>
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
+              <el-button type="primary"
+                         @click="submit"
+                         :disabled="!opticalImgUrl">
+                Submit
+              </el-button>
+            </el-col>
+          </el-row>
         </div>
       </div>
     </div>
@@ -232,6 +243,7 @@
                type: 'success',
                message: 'The image and alignment were successfully saved!'
              });
+             this.$router.go(-1);
            }).catch((e) => {
              console.log(e);
              this.$message({
@@ -272,6 +284,10 @@
      reset() {
        this.$refs.aligner.reset();
        this.angle = 0;
+     },
+
+     cancel() {
+       this.$router.go(-1);
      }
    }
  }
