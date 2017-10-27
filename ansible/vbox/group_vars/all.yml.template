@@ -63,8 +63,7 @@ sm_postgres_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_postgres_password: password
 sm_home: /opt/dev/sm
 sm_s3_path: ""
-sm_iso_images_url: "http://{{ web_host_internal_address }}:4201/iso_images"  # used in the engine for adding/deleting iso images, direct port access is needed
-sm_optical_images_url: "http://{{ web_host_internal_address }}:4201/optical_images"
+sm_img_service_url: "http://{{ web_host_internal_address }}:4201"  # used in the engine for adding/deleting iso images, direct port access is needed
 sm_es_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
