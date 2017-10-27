@@ -158,4 +158,11 @@
      this.imagePosition.xOffset = event.xOffset;
      this.imagePosition.yOffset = event.yOffset;
    }
+
+   resetViewport(event: any): void {
+     event.stopPropagation();
+     this.imagePosition.xOffset = 0;
+     this.imagePosition.yOffset = 0;
+     this.imagePosition.zoom = 1;
+   }
 }

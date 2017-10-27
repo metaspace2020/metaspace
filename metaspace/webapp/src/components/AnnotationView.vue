@@ -28,9 +28,16 @@
               <ion-image-settings></ion-image-settings>
 
               <div slot="reference" @click="$event.stopPropagation()">
-                <i class="el-icon-setting" style="font-size: 20px; padding-top: 11px;"></i>
+                <i class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i>
               </div>
             </el-popover>
+
+            <span>
+              <img class="reset-image-icon"
+                   src="../assets/reset-image-icon.png"
+                   title="Reset image zoom and offsets"
+                   @click="resetViewport"/>
+            </span>
           </span>
 
           <div class="main-ion-image-container">
@@ -53,7 +60,7 @@
                     :min=0
                     :max=1
                     :step=0.01
-                    style="margin-bottom: 30px;"
+                    style="margin: 10px 0px 30px 0px;"
                 >
                 </el-slider>
               </div>
@@ -282,7 +289,14 @@
  }
 
  #isotope-plot-container text {
-    font-family: "Roboto" !important;
+   font-family: "Roboto" !important;
+ }
+
+ .reset-image-icon {
+   width: 24px;
+   padding-left: 20px;
+   vertical-align: middle;
+   cursor: pointer;
  }
 
 </style>
