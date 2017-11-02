@@ -39,10 +39,16 @@
   },
   "aws": {
     "aws_access_key_id": "{{ aws_access_key_id }}",
-    "aws_secret_access_key": "{{ aws_secret_access_key }}"
+    "aws_secret_access_key": "{{ aws_secret_access_key }}",
+    "geo_preference": "eu-west-1"
   },
   "slack": {
     "channel": "{{ slack_channel }}",
     "webhook_url": "{{ slack_webhook_url }}"
+  },
+  "ms_files": {
+    "extensions": ['imzML', 'ibd']
+    "parser_factory": "pyimzml.ImzMLParser.ImzMLParser",
+    "acq_geometry_factory": "sm.engine.ims_geometry_factory.ImsGeometryFactory"
   }
 }

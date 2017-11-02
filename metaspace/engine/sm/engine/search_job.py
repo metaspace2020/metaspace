@@ -171,6 +171,7 @@ class SearchJob(object):
 
             self._ds_reader = DatasetReader(self._ds.input_path, self._sc, self._wd_manager)
             self._ds_reader.copy_convert_input_data()
+            self._ds.save_acq_geometry_from_file(self._db, self._wd_manager.local_dir.ms_file_path)
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 

@@ -33,6 +33,14 @@ CREATE TABLE optical_image (
       ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
+DROP TABLE IF EXISTS acquisition_geometry;
+CREATE TABLE acquisition_geometry (
+	id			serial PRIMARY KEY,
+	data		json,
+	ds_id 		text NOT NULL REFERENCES dataset(id)
+				ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
 DROP TABLE IF EXISTS job CASCADE;
 CREATE TABLE job (
 	id serial NOT NULL,

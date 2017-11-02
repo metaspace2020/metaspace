@@ -53,9 +53,11 @@ class LocalWorkDir(object):
         self.ds_path = join(base_path, ds_id)
 
     @property
-    def imzml_path(self):
-        imzmls = [fn for fn in listdir(self.ds_path) if re.search(r'\.imzml$', fn, re.IGNORECASE)]
-        return join(self.ds_path, imzmls[0]) if imzmls else ''
+    def ms_file_path(self):
+        ms_file_extension = SMConfig.get_conf()['ms_files'][0]
+        ms_file_names = [fn for fn in listdir(self.ds_path) \
+            if re.search(r'\.{}$'.format(ms_file_extension), fn, re.IGNORECASE)]
+        return join(self.ds_path, ms_file_names[0]) if ms_file_names else ''
 
     @property
     def txt_path(self):
@@ -147,7 +149,7 @@ class WorkDirManager(object):
             self.local_fs_only = False
 
         self.s3 = boto3.session.Session().resource('s3')
-        self.s3transfer = S3Transfer(boto3.client('s3', 'eu-west-1'))
+        self.s3transfer = S3Transfer(boto3.client('s3', self.sm_config['aws']['geo_preference']))
 
         self.local_dir = LocalWorkDir(self.sm_config['fs']['base_path'], ds_id)
         if not self.local_fs_only:
@@ -174,7 +176,7 @@ class WorkDirManager(object):
             return s3_path(path)
 
     def copy_input_data(self, input_data_path):
-        """ Copy imzML/ibd files from input path to a dataset work directory
+        """ Copy mass spec files from input path to a dataset work directory
 
         Args
         ----

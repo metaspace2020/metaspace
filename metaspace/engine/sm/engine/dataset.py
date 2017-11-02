@@ -1,7 +1,7 @@
 import json
 import logging
 
-from sm.engine.errors import UnknownDSID
+from sm.engine.errors import SMError, UnknownDSID
 from sm.engine.queue import SM_DS_STATUS
 
 logger = logging.getLogger('sm-engine')
@@ -40,8 +40,17 @@ class Dataset(object):
     DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status) '
                  'VALUES (%s, %s, %s, %s, %s, %s, %s)')
 
+    ACQ_GEOMETRY_SEL = 'SELECT data FROM acquisition_geometry WHERE ds_id = %s'
+    ACQ_GEOMETRY_INS = 'INSERT INTO acquisition_geometry (data, ds_id) VALUES (%s, %s)'
+    ACQ_GEOMETRY_DEL = 'DELETE FROM acquisition_geometry WHERE ds_id = %s'
+
+    acq_geometry_factory = None
+
     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
                  metadata=None, config=None, status=DatasetStatus.NEW):
+        if Dataset.acq_geometry_factory is None:
+            raise SMError('Mass spec acquisition geometry factory is not specified in sm-engine config.')
+
         self.id = id
         self.input_path = input_path
         self.upload_dt = upload_dt
@@ -87,6 +96,13 @@ class Dataset(object):
         es.sync_dataset(self.id)
         if queue:
             queue.publish({'ds_id': self.id, 'status': self.status}, SM_DS_STATUS)
+
+    def save_acq_geometry_from_file(self, db, ms_file_path):
+        r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, self.id)
+        if r:
+            db.alter(Dataset.ACQ_GEOMETRY_DEL, self.id)
+        acq_geometry = Dataset.acq_geometry_factory(ms_file_path).create()
+        db.insert(self.ACQ_GEOMETRY_INS, [acq_geometry, self.id])
 
     def to_queue_message(self):
         msg = {

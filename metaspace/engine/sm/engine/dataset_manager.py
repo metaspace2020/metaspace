@@ -11,6 +11,7 @@ from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
+from sm.engine.ims_geometry_factory import ImsGeometryFactory
 
 SEL_DATASET_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
 UPD_DATASET_OPTICAL_IMAGE = 'update dataset set optical_image = %s, transform = %s WHERE id = %s'
