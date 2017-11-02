@@ -213,6 +213,11 @@ type DatasetCountPerGroup {
   counts: [DatasetCountPerGroupListElement]
 }
 
+type RawOpticalImage {
+    url: String
+    transform: [[Float]]
+}
+
 input AddOpticalImageInput {
   jwt: String!
   datasetId: String!
@@ -256,6 +261,8 @@ type Query {
   molecularDatabases: [MolecularDatabase!]
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
+
+  rawOpticalImageUrl(datasetId: String!): RawOpticalImage
 }
 
 type Mutation {

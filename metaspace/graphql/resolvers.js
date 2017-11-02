@@ -170,6 +170,23 @@ const Resolvers = {
                .catch((e) => {
                  logger.error(e);
                })
+    },
+
+    rawOpticalImage(_, {datasetId}) {
+      return pg.select().from('dataset')
+        .where('id', '=', datasetId)
+        .then(records => {
+          if (records.length > 0)
+            return {
+              url: '/raw_optical_images/' + records[0].optical_image,
+              transform: records[0].transform
+            };
+          else
+            return null;
+        })
+        .catch((e) => {
+          logger.error(e);
+        })
     }
   },
 
