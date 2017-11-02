@@ -13,6 +13,9 @@
  import { Store } from 'vuex';
  import { Component, Prop } from 'vue-property-decorator';
  import { Location } from 'vue-router';
+ import { saveAs } from 'file-saver';
+
+ import * as domtoimage from 'dom-to-image';
 
  type ImagePosition = {
    zoom: number
@@ -72,6 +75,7 @@
  })
  export default class AnnotationView extends Vue {
    $store: Store<any>
+   $refs: any
 
    @Prop()
    annotation: any
@@ -170,5 +174,22 @@
    toggleOpticalImage(event: any): void {
      event.stopPropagation();
      this.showOpticalImage = !this.showOpticalImage
+   }
+
+   saveImage(event: any): void {
+     let node = this.$refs.imageLoader.getContainer();
+
+     domtoimage
+       .toBlob(node, {
+         width: this.$refs.imageLoader.imageWidth,
+         height: this.$refs.imageLoader.imageHeight
+       })
+       .then(blob => {
+         saveAs(blob, `${this.annotation.id}.png`);
+       })
+   }
+
+   get browserSupportsDomToImage(): boolean {
+     return window.navigator.userAgent.includes('Chrome');
    }
  }

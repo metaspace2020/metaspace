@@ -52,6 +52,8 @@
             <image-loader :src="annotation.isotopeImages[0].url"
                           :colormap="colormap"
                           :max-height=500
+                          id="annot-view-main-image-loader"
+                          ref="imageLoader"
                           v-bind="imageLoaderSettings"
                           @zoom="onImageZoom"
                           @move="onImageMove"
@@ -79,6 +81,14 @@
                         slot="reference">
               </colorbar>
               {{ annotation.isotopeImages[0].minIntensity.toExponential(2) }}
+
+              <div class="annot-view__image-download" v-if="browserSupportsDomToImage">
+                <!-- see https://github.com/tsayen/dom-to-image/issues/155 -->
+                <img src="../assets/download-icon.png"
+                     width="32px"
+                     title="Save visible region in PNG format"
+                     @click="saveImage"/>
+              </div>
             </div>
           </div>
         </el-collapse-item>
@@ -309,6 +319,11 @@
 
  .png-icon-disabled {
    opacity: 0.3;
+ }
+
+ .annot-view__image-download {
+   margin-top: 20px;
+   cursor: pointer;
  }
 
 </style>

@@ -24,6 +24,7 @@
     "d3-scale": "^1.0.5",
     "d3-svg-legend": "^2.24.0",
     "deepcopy": "^0.6.3",
+    "dom-to-image": "2.6.0",
     "ejs": "^2.5.5",
     "element-ui": "1.4.7",
     "express": "^4.14.0",
@@ -67,6 +68,7 @@
   },
   "devDependencies": {
     "@types/d3": "4.10.1",
+    "@types/file-saver": "0.0.1",
     "@types/lodash": "4.14.76",
     "@types/node": "8.0.31",
     "@types/node-fetch": "1.6.7",

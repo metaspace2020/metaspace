@@ -4,14 +4,20 @@
        ref="parent"
        v-resize.debounce.50="onResize"
        :element-loading-text="message">
-    <div style="text-align: left; z-index: 2;">
-      <img :src="dataURI" :style="imageStyle" v-on:click="onClick" ref="visibleImage"
-          class="isotope-image"/>
-    </div>
 
-    <div style="text-align: left; z-index: 1;">
-      <img v-if="opticalSrc"
-          :src="opticalSrc" class="optical-image" :style="opticalImageStyle" />
+    <div :style="imageContainerStyle" class="image-loader__container"
+         ref="container">
+      <div style="text-align: left; z-index: 2; position: relative">
+        <img :src="dataURI" :style="imageStyle" v-on:click="onClick" ref="visibleImage"
+             class="isotope-image"/>
+      </div>
+
+      <div style="text-align: left; z-index: 1; position: relative">
+        <img v-if="opticalSrc"
+             :src="opticalImageUrl"
+             class="optical-image"
+             :style="opticalImageStyle" />
+      </div>
     </div>
 
     <canvas ref="canvas" style="display:none;"></canvas>
@@ -24,6 +30,7 @@
  import {createColormap, scrollDistance} from '../util';
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
+ import config from '../clientConfig.json';
 
  const OPACITY_MAPPINGS = {
    'constant': (x) => 1,
@@ -114,16 +121,23 @@
      window.removeEventListener('resize', this.onResize);
    },
    computed: {
+     imageWidth() {
+       return this.image.naturalWidth * this.scaleFactor;
+     },
+
+     imageHeight() {
+       return this.image.naturalHeight * this.scaleFactor;
+     },
+
      imageStyle() {
        // assume the allocated screen space has width > height
        if (!this.isLCMS) {
-         const width = this.image.naturalWidth * this.scaleFactor,
-               height = this.image.naturalHeight * this.scaleFactor,
-               centeringOffset = (this.parentDivWidth - width) / 2,
+         const width = this.imageWidth,
+               height = this.imageHeight,
                dx = this.xOffset * this.scaleFactor * this.zoom,
                dy = this.yOffset * this.scaleFactor * this.zoom,
                transform = `scale(${this.zoom}, ${this.zoom})` +
-                           `translate(${-dx / this.zoom + centeringOffset / this.zoom}px, ${-dy / this.zoom}px)`,
+                           `translate(${-dx / this.zoom}px, ${-dy / this.zoom}px)`,
                clipPathOffsets = [dy, (width * (this.zoom - 1) - dx), (height * (this.zoom - 1) - dy), dx];
 
          let clipPath = null;
@@ -145,6 +159,13 @@
        };
      },
 
+     imageContainerStyle() {
+       return {
+         width: this.imageWidth + 'px',
+         'align-self': 'center'
+       }
+     },
+
      opticalImageStyle() {
        const style = this.imageStyle;
        return Object.assign({}, style, {
@@ -152,6 +173,10 @@
          'margin-top': (-this.visibleImageHeight) + 'px',
          'vertical-align': 'top'
        });
+     },
+
+     opticalImageUrl() {
+       return (config.imageStorage || '') + this.opticalSrc;
      }
    },
    watch: {
@@ -227,7 +252,7 @@
 
      loadImage(url) {
        this.image.crossOrigin = "Anonymous";
-       this.image.src = url;
+       this.image.src = (config.imageStorage || '') + url;
        this.isLoading = true;
      },
 
@@ -372,6 +397,10 @@
 
      getScaleFactor() {
        return this.scaleFactor;
+     },
+
+     getContainer() {
+       return this.$refs.container;
      }
    }
  }
