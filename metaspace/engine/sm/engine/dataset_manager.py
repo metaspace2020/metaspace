@@ -122,12 +122,12 @@ class SMDaemonDatasetManager(DatasetManager):
         else:
             raise Exception('Wrong action: {}'.format(action))
 
-    def add(self, ds, search_job_factory=None, del_first=False, **kwargs):
+    def add(self, ds, search_job=None, del_first=False, **kwargs):
         """ Run an annotation job for the dataset. If del_first provided, delete first """
         if del_first:
             self.delete(ds)
         ds.save(self._db, self._es)
-        search_job_factory().run(ds)
+        search_job.run(ds)
 
     def update(self, ds, **kwargs):
         """ Reindex all dataset results """

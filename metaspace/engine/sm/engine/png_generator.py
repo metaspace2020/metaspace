@@ -11,10 +11,8 @@ class ImageStoreServiceWrapper(object):
 
     def __init__(self, img_service_url):
         self._img_service_url = img_service_url
-        # empty URL is used for testing purposes
-        if self._img_service_url:
-            self._session = requests.Session()
-            self._session.mount(self._img_service_url, HTTPAdapter(max_retries=5))
+        self._session = requests.Session()
+        self._session.mount(self._img_service_url, HTTPAdapter(max_retries=5))
 
     def _format_url(self, img_type, method='', img_id=''):
         return path.join(self._img_service_url, img_type + 's', method, img_id)

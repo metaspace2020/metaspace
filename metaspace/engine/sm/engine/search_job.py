@@ -41,8 +41,9 @@ class SearchJob(object):
     no_clean : bool
         Don't delete interim data files
     """
-    def __init__(self, no_clean=False):
+    def __init__(self, img_store=None, no_clean=False):
         self.no_clean = no_clean
+        self._img_store = img_store
 
         self._job_id = None
         self._sc = None
@@ -104,10 +105,9 @@ class SearchJob(object):
             search_alg = MSMBasicSearch(self._sc, self._ds, self._ds_reader, mol_db, self._fdr, self._ds.config)
             ion_metrics_df, ion_iso_images = search_alg.search()
 
-            img_store = ImageStoreServiceWrapper(self._sm_config['services']['img_service_url'])
             search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys())
             mask = self._ds_reader.get_2d_sample_area_mask()
-            search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, img_store)
+            search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, self._img_store)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
             msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
