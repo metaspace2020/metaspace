@@ -18,6 +18,7 @@ CREATE TABLE dataset (
 	config      	json,
 	status				text,
 	optical_image text,
+	transform			float[],
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
 );
 CREATE INDEX ind_dataset_name ON dataset (name);

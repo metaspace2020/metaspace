@@ -13,7 +13,7 @@ from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
 
 SEL_DATASET_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
-UPD_DATASET_OPTICAL_IMAGE = 'update dataset set optical_image = %s WHERE id = %s'
+UPD_DATASET_OPTICAL_IMAGE = 'update dataset set optical_image = %s, transform = %s WHERE id = %s'
 
 IMG_URLS_BY_ID_SEL = ('SELECT iso_image_ids '
                       'FROM iso_image_metrics m '
@@ -236,14 +236,14 @@ class SMapiDatasetManager(DatasetManager):
         buf.seek(0)
         return buf
 
-    def _add_raw_optical_image(self, ds, optical_scan):
+    def _add_raw_optical_image(self, ds, optical_scan, transform):
         img_store = self._img_store()
         row = self._db.select_one(SEL_DATASET_OPTICAL_IMAGE, ds.id)
         if row and row[0]:
             img_store.delete_image_by_id('raw_optical_image', row[0])
         buf = self._save_jpeg(optical_scan)
         img_id = img_store.post_image('raw_optical_image', buf)
-        self._db.alter(UPD_DATASET_OPTICAL_IMAGE, img_id, ds.id)
+        self._db.alter(UPD_DATASET_OPTICAL_IMAGE, img_id, transform, ds.id)
 
     def _add_zoom_optical_images(self, ds, optical_scan, transform, zoom_levels):
         img_store = self._img_store()
@@ -262,6 +262,7 @@ class SMapiDatasetManager(DatasetManager):
 
     def add_optical_image(self, ds, optical_scan, transform, zoom_levels=[1, 2, 4, 8], **kwargs):
         """ Generate scaled and transformed versions of the provided optical image """
-        self._add_raw_optical_image(ds, optical_scan)
+        self.logger.info('Adding optical image to "%s" dataset', ds.id)
+        self._add_raw_optical_image(ds, optical_scan, transform)
         self._add_zoom_optical_images(ds, optical_scan, transform, zoom_levels)
 
