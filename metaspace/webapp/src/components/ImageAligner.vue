@@ -117,6 +117,10 @@
      rotationAngleDegrees: {
        type: Number,
        default: 0
+     },
+     initialTransform: {
+       type: Array,
+       default: [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
      }
    },
    data() {
@@ -136,9 +140,7 @@
        dragStartY: null,
        dragThrottled: false,
        resizeThrottled: false,
-       normalizedTransform: [[1, 0, 0],
-                             [0, 1, 0],
-                             [0, 0, 1]],
+       normalizedTransform: this.initialTransform,
        lastRotationAngle: this.rotationAngleDegrees
      };
    },
@@ -166,6 +168,7 @@
        this.opticalImageHeight = this.$refs.scan.height;
        this.opticalImageNaturalWidth = this.$refs.scan.naturalWidth;
        this.opticalImageNaturalHeight = this.$refs.scan.naturalHeight;
+       this.normalizedTransform = this.initialTransform;
      },
 
      onResize() {
@@ -189,10 +192,6 @@
        this.height = height;
        this.naturalWidth = this.$refs.annotImage.getImage().naturalWidth;
        this.naturalHeight = this.$refs.annotImage.getImage().naturalHeight;
-
-       // FIXME browser zoom causes a resize event, so handles move to the original position
-       if (this.scaleX > 0 && this.scaleY > 0)
-         this.reset();
      },
 
      onMouseDown(event, handleIndex) {
@@ -388,6 +387,11 @@
          this.rotationMatrix(deg - this.lastRotationAngle)
        );
        this.lastRotationAngle = deg;
+     },
+
+     initialTransform() {
+       console.log(this.initialTransform);
+       this.normalizedTransform = this.initialTransform;
      }
    }
  }

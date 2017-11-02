@@ -95,6 +95,7 @@
         style="position:relative;top:200px;z-index:1;"
         :annotImageOpacity="annotImageOpacity"
         :opticalSrc="opticalImgUrl"
+        :initialTransform="initialTransform"
         :padding="padding"
         :rotationAngleDegrees="angle"
         :massSpecSrc="massSpecSrc">
@@ -134,9 +135,32 @@
        annotationIndex: 0,
        file: null,
        opticalImgUrl: null,
+       alreadyUploaded: false,
+       initialTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
        padding: 100,
        angle: 0
      }
+   },
+
+   mounted() {
+     this.$apollo.query({
+       query: gql`query Q($ds_id: String!) {
+         rawOpticalImage(datasetId: $ds_id) {
+           url
+           transform
+         }
+       }`,
+       variables: {ds_id: this.datasetId},
+       fetchPolicy: 'network-only'
+     }).then(({data}) => {
+       const {url, transform} = data.rawOpticalImage;
+       if (transform != null) {
+         this.opticalImgUrl = url;
+         this.initialTransform = transform;
+         this.angle = 0;
+         this.alreadyUploaded = true;
+       }
+     });
    },
 
    apollo: {
@@ -224,11 +248,31 @@
        window.URL.revokeObjectURL(this.opticalImgUrl);
        this.file = file;
        this.opticalImgUrl = window.URL.createObjectURL(this.file);
+       this.angle = 0;
+       this.initialTransform = [[1,0,0],[0,1,0],[0,0,1]];
+       this.alreadyUploaded = false;
      },
      updateIndex(newIdx) {
        this.annotationIndex = newIdx - 1;
      },
      submit() {
+       if (this.alreadyUploaded) {
+         this.addOpticalImage(this.opticalImgUrl).then(() => {
+           this.$message({
+             type: 'success',
+             message: 'The alignment has been updated'
+           });
+           this.$router.go(-1);
+         }).catch((e) => {
+           console.log(e);
+           this.$message({
+             type: 'error',
+             message: 'Internal server error'
+           });
+         });
+         return;
+       }
+
        const uri = this.imageStorageUrl + "/upload/";
        let xhr = new XMLHttpRequest(),
            fd = new FormData();
