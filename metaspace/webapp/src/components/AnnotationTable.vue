@@ -457,13 +457,17 @@
 
      startExport () {
        const chunkSize = 1000;
-       let csv = ['institution', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
-                  'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
-                  'moleculeNames'].join(',') + "\n";
+       let csv = csvExportHeader();
 
-       csv += csvExportHeader();
+       csv += ['institution', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
+               'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
+               'moleculeNames', 'moleculeIds'].join(',') + "\n";
 
        function quoted(s) { return '"' + s + '"'; }
+
+       function databaseId(compound) {
+         return compound.information[0].databaseId;
+       }
 
        function formatRow(row) {
          const {sumFormula, adduct, msmScore, mz,
@@ -472,7 +476,8 @@
            row.dataset.institution, row.dataset.name, row.dataset.id,
            sumFormula, quoted("M" + adduct), mz,
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
-           quoted(row.possibleCompounds.map(m => m.name).join(', '))
+           quoted(row.possibleCompounds.map(m => m.name).join(', ')),
+           quoted(row.possibleCompounds.map(databaseId).join(', '))
          ].join(',');
        }
 

@@ -67,6 +67,9 @@ export const tableExportQuery =
       }
       possibleCompounds {
         name
+        information {
+          databaseId
+        }
       }
     }
   }`;
