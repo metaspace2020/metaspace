@@ -17,4 +17,4 @@
       - "--exclude='conf/*' --exclude='logs' --exclude='.*'"
   when: local_deploy is defined
 
-- include: ../restart_supervisor.yml supervisor_app=sm-mol-db
+- import_tasks: ../restart_supervisor.yml supervisor_app=sm-mol-db

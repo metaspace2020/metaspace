@@ -31,4 +31,4 @@
   template: src=/tmp/config.js.template dest={{ sm_graphql_home }}/config/production.js
             owner=ubuntu group=ubuntu mode=0600
 
-- include: ../restart_supervisor.yml supervisor_app=sm-graphql
+- import_tasks: ../restart_supervisor.yml supervisor_app=sm-graphql

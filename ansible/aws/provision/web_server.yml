@@ -25,7 +25,7 @@
 
   pre_tasks:
     - name: Gather EC2 instance facts
-      ec2_facts:
+      ec2_metadata_facts:
       tags: [always]
 
   roles:

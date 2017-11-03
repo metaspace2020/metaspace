@@ -5,8 +5,8 @@
   apt: update_cache=yes
   when: update_apt_cache
 
-- include: "openjdk.yml"
+- import_tasks: "openjdk.yml"
   when: java_flavor == "openjdk"
 
-- include: "oracle.yml"
+- import_tasks: "oracle.yml"
   when: java_flavor == "oracle"

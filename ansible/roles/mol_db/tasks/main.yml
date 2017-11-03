@@ -67,8 +67,8 @@
   template: src=mol-db-api.supervisor.j2 dest=/etc/supervisor/sm-mol-db-api.supervisor
             mode=0600 owner=ubuntu group=ubuntu
 
-- include: import_mol_databases.yml
+- import_tasks: import_mol_databases.yml
   when: mol_db_import_databases
 
-- include: import_mol_images.yml
+- import_tasks: import_mol_images.yml
   when: mol_db_import_mol_images

@@ -5,20 +5,20 @@
   user: ubuntu
 
   tasks:
-    - include: ../deploy_tasks/sm_graphql.yml
+    - import_tasks: ../deploy_tasks/sm_graphql.yml
       tags: [sm_graphql]
 
-    - include: ../deploy_tasks/sm_mol_db.yml
+    - import_tasks: ../deploy_tasks/sm_mol_db.yml
       tags: [sm_mol_db]
 
-    - include: ../deploy_tasks/sm_api.yml
+    - import_tasks: ../deploy_tasks/sm_api.yml
       tags: [sm_api]
 
-    - include: ../deploy_tasks/sm_web_app.yml
+    - import_tasks: ../deploy_tasks/sm_web_app.yml
       tags: [sm_web_app]
 
-    - include: ../deploy_tasks/sm_engine.yml
+    - import_tasks: ../deploy_tasks/sm_engine.yml
       tags: [sm_engine]
 
-    - include: ../restart_supervisor.yml supervisor_app=sm-daemon
+    - import_tasks: ../restart_supervisor.yml supervisor_app=sm-daemon
       tags: [sm_engine]

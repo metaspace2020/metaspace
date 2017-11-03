@@ -10,7 +10,7 @@
 - name: Create postgres user
   user: name=postgres shell=/bin/bash
 
-- include: drop_create.yml
+- import_tasks: drop_create.yml
   when: postgres_drop_create
 
 - name: Replace postgres config file pg_hba.conf

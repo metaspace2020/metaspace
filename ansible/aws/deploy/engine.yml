@@ -4,7 +4,7 @@
   hosts: web
   user: ubuntu
   tasks:
-    - action: ec2_facts
+    - action: ec2_metadata_facts
   tags: [always]
 
 
@@ -14,7 +14,7 @@
   gather_facts: false
 
   tasks:
-    - include: ../../deploy_tasks/sm_engine.yml
+    - import_tasks: ../../deploy_tasks/sm_engine.yml
   tags: [slave]
 
 
@@ -32,7 +32,7 @@
     es_password: "{{ sm_es_password }}"
 
   tasks:
-    - include: ../../deploy_tasks/sm_engine.yml
+    - import_tasks: ../../deploy_tasks/sm_engine.yml
 
     - name: Pull SM config from the remote host
       fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
@@ -52,5 +52,5 @@
       become: yes
       systemd: name=filebeat state=restarted
 
-    - include: ../../restart_supervisor.yml supervisor_app=sm-daemon
+    - import_tasks: ../../restart_supervisor.yml supervisor_app=sm-daemon
   tags: [master]

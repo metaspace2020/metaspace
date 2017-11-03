@@ -44,4 +44,4 @@
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash
 
-- include: ../restart_supervisor.yml supervisor_app=sm-web-app
+- import_tasks: ../restart_supervisor.yml supervisor_app=sm-web-app

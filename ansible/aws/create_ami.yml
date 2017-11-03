@@ -6,7 +6,7 @@
 
   tasks:
     - name: Gather AWS instance facts
-      action: ec2_facts
+      action: ec2_metadata_facts
 
 
 - name: Collect the Spark slave facts for creating an AMI
@@ -15,7 +15,7 @@
 
   tasks:
     - name: Gather AWS instance facts
-      action: ec2_facts
+      action: ec2_metadata_facts
 
 
 - name: Create new Spark master and slave AMIs

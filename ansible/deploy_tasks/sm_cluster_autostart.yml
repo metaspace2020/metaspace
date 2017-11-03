@@ -31,4 +31,4 @@
   args:
     chdir: "{{ sm_ansible_home }}/aws"
 
-- include: ../../restart_supervisor.yml  supervisor_app=sm-cluster-autostart
+- import_tasks: ../../restart_supervisor.yml  supervisor_app=sm-cluster-autostart
