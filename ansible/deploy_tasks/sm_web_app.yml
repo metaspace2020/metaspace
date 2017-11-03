@@ -27,7 +27,7 @@
             owner=ubuntu group=ubuntu mode=0600
 
 - name: Install sm-web-app dependencies
-  shell: npm install
+  shell: yarn install
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash
@@ -39,7 +39,7 @@
     executable: /bin/bash
 
 - name: Run build app
-  shell: npm run build
+  shell: yarn run build
   args:
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash

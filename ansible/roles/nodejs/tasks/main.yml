@@ -4,7 +4,7 @@
   become: yes
   apt: name=software-properties-common state=present
 
-- name: Download NodeJS installation setup script
+- name: Download Node.js installation setup script
   get_url:
     url: https://deb.nodesource.com/setup_{{ nodejs_version | replace('*', 'x') }}
     dest: /tmp/nodejs_setup.sh
@@ -20,3 +20,21 @@
 - name: Install NodeJS
   become: yes
   apt: name=nodejs state=latest
+
+- name: Add Yarn apt key
+  become: yes
+  apt_key:
+    url: https://dl.yarnpkg.com/debian/pubkey.gpg
+
+- name: Add Yarn repository
+  become: yes
+  apt_repository:
+    repo: deb https://dl.yarnpkg.com/debian/ stable main
+    state: present
+
+- name: Install Yarn apt package
+  become: yes
+  apt:
+    name: yarn
+    state: present
+    update_cache: yes

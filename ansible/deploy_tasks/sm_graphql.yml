@@ -18,7 +18,7 @@
   when: local_deploy is defined
 
 - name: Install sm-graphql dependencies
-  shell: npm install
+  shell: yarn install
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
