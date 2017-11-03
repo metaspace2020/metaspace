@@ -9,6 +9,7 @@
     url: https://deb.nodesource.com/setup_{{ nodejs_version | replace('*', 'x') }}
     dest: /tmp/nodejs_setup.sh
     mode: 0744
+    force: yes
 
 - name: Run NodeJS setup script
   become: yes
@@ -18,4 +19,4 @@
 
 - name: Install NodeJS
   become: yes
-  apt: name=nodejs={{ nodejs_version }} state=present
+  apt: name=nodejs state=latest

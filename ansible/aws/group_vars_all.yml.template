@@ -99,6 +99,8 @@ mol_db_imports:
     name: SwissLipids
     version: 2016
 
+nodejs_version: 8.*
+
 sm_graphql_home: /opt/dev/sm-graphql
 sm_graphql_branch: rel-v0.7
 sm_graphql_slack_webhook_url: ""
