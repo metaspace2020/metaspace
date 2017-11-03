@@ -6,6 +6,7 @@
 
     <input ref="input"
            class="tf-value-input" type="text"
+           style="display: inline-block;"
            placeholder="enter any keywords"
            :value="value" @input="onChange($event.target.value)">
 

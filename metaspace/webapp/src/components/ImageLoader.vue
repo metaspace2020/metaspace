@@ -253,6 +253,10 @@
      loadImage(url) {
        this.image.crossOrigin = "Anonymous";
        this.image.src = (config.imageStorage || '') + url;
+
+       if (window.navigator.userAgent.includes("Trident"))
+         return; // in IE11 something is fucked up as usual
+
        this.isLoading = true;
      },
 
@@ -302,7 +306,7 @@
      },
 
      redraw () {
-       this.isLoading = false;
+       console.log('redraw ' + this.image.src);
        this.isLCMS = this.image.height == 1;
        let canvas = this.$refs.canvas,
            ctx = canvas.getContext("2d");
@@ -323,6 +327,8 @@
        this.removeHotspots(imageData, q);
        ctx.putImageData(imageData, 0, 0);
        this.applyColormap();
+
+       this.isLoading = false;
      },
 
      applyColormap() {

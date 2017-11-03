@@ -303,8 +303,11 @@
    margin: 0px;
  }
 
- .metadata-link {
+ .metadata-link, .ds-delete > a {
    text-decoration: underline;
+ }
+
+ .metadata-link, .ds-add-filter, .ds-delete > a {
    cursor: pointer;
  }
 
@@ -314,10 +317,6 @@
 
  .s-inst {
    color: sienna;
- }
-
- .ds-add-filter {
-   cursor: pointer;
  }
 
  .striped-progressbar {
@@ -352,11 +351,6 @@
 
  .ds-delete, .ds-delete > a {
    color: #a00;
- }
-
- .ds-delete > a {
-   text-decoration: underline;
-   cursor: pointer;
  }
 
  .ds-item-disabled {
