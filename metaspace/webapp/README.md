@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/METASPACE2020/sm-webapp/tree/rel-v0.6.svg?style=svg)](https://circleci.com/gh/METASPACE2020/sm-webapp/tree/rel-v0.6)
+[![CircleCI](https://circleci.com/gh/METASPACE2020/sm-webapp/tree/master.svg?style=svg)](https://circleci.com/gh/METASPACE2020/sm-webapp/tree/master)
 
 # sm-webapp
 
