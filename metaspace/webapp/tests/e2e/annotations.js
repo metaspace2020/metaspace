@@ -43,7 +43,7 @@ const header = table.find('.el-table__header tr').nth(0);
 
 function findSortIcon(colIndex, direction) {
   return header.find('th').nth(colIndex)
-               .find('i.sort-caret.' + direction);
+               .find('span.sort-caret.' + direction);
 }
 
 test('table is not empty', async t => {

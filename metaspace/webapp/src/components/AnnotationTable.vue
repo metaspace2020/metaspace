@@ -549,7 +549,7 @@
 
  /* fix cell height and align text in the center */
  #annot-table .cell {
-   height: 24;
+   height: 24px;
    display: flex;
    align-items: center;
    padding: 0 0 0 10px;
