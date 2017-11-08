@@ -17,7 +17,7 @@ class DatasetReader(object):
     Args
     ----------
     input_path : str
-        Input path with imzml/ibd files
+        Input path with mass spec files
     sc : pyspark.SparkContext
         Spark context object
     """

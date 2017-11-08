@@ -4,7 +4,7 @@ import numpy as np
 from sm.engine.util import SMConfig
 from unittest.mock import patch
 
-from sm.engine.imzml_txt_converter import ImzmlTxtConverter, encode_coord_line, encode_data_line
+from sm.engine.ms_txt_converter import MsTxtConverter, encode_coord_line, encode_data_line
 from sm.engine.tests.util import sm_config, ds_config
 
 
@@ -18,7 +18,7 @@ def test_encode_coord_line():
     assert encode_coord_line(-99, -500, -100) == '-99,-500,-100'
 
 
-@patch('sm.engine.imzml_txt_converter.ImzMLParser')
+@patch('sm.engine.ms_txt_converter.MsTxtConverter.parser_factory')
 def test_imzml_txt_converter_parse_save_spectrum(MockImzMLParser, sm_config, ds_config):
     mock_parser = MockImzMLParser.return_value
     mock_parser.coordinates = [[1, 1], [1, 2]]
@@ -27,7 +27,7 @@ def test_imzml_txt_converter_parse_save_spectrum(MockImzMLParser, sm_config, ds_
 
     SMConfig._config_dic = sm_config
 
-    converter = ImzmlTxtConverter('test_ds', '', '')
+    converter = MsTxtConverter('test_ds', '', '')
     converter.parser = mock_parser
     converter.txt_file = StringIO()
     converter.coord_file = StringIO()
@@ -42,4 +42,3 @@ def test_imzml_txt_converter_parse_save_spectrum(MockImzMLParser, sm_config, ds_
     coord_lines = converter.coord_file.getvalue().split('\n')
     assert coord_lines[0] == '0,1,1'
     assert coord_lines[1] == '1,1,2'
-

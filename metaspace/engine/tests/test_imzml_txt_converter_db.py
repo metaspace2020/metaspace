@@ -1,12 +1,12 @@
 import numpy as np
 from unittest.mock import patch
 
-from sm.engine.imzml_txt_converter import ImzmlTxtConverter
+from sm.engine.ms_txt_converter import MsTxtConverter
 from sm.engine.util import SMConfig
 from sm.engine.tests.util import sm_config, ds_config
 
 
-@patch('sm.engine.imzml_txt_converter.ImzMLParser')
+@patch('sm.engine.ms_txt_converter.MsTxtConverter.parser_factory')
 def test_convert(MockImzMLParser, sm_config):
     mock_parser = MockImzMLParser.return_value
     mock_parser.coordinates = [(1, 1), (1, 2)]
@@ -15,7 +15,7 @@ def test_convert(MockImzMLParser, sm_config):
 
     SMConfig._config_dict = sm_config
 
-    converter = ImzmlTxtConverter('imzml_path', 'txt_path', 'coord_path')
+    converter = MsTxtConverter('imzml_path', 'txt_path', 'coord_path')
 
     with patch('sm.engine.imzml_txt_converter.open', create=True) as mock_open:
         converter.convert()

@@ -149,7 +149,7 @@ class WorkDirManager(object):
             self.local_fs_only = False
 
         self.s3 = boto3.session.Session().resource('s3')
-        self.s3transfer = S3Transfer(boto3.client('s3', self.sm_config['aws']['geo_preference']))
+        self.s3transfer = S3Transfer(boto3.client('s3', self.sm_config['aws']['aws_region']))
 
         self.local_dir = LocalWorkDir(self.sm_config['fs']['base_path'], ds_id)
         if not self.local_fs_only:

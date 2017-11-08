@@ -56,10 +56,6 @@ class AcqGeometryFactory(object):
             }
         return self.geometry
 
-    def _is_regular_grid(self):
-        """ Boolean flag signifying wheather the acquisition grid is regular and rectangular """
-        raise NotImplementedError
-
     def _acquisition_grid(self):
         """ Object with the following structure:
         if @self._is_regular_grid == True:
@@ -80,10 +76,6 @@ class AcqGeometryFactory(object):
             AcqGridSection.PIXEL_CORRD_LIST : [(x, y)]
         }
         """
-        raise NotImplementedError
-
-    def _is_regular_pixel_shape(self):
-        """ Boolean flag signifying wheather pixel size was constant during the acquisition """
         raise NotImplementedError
 
     def _pixel_shape(self):

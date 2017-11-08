@@ -97,7 +97,7 @@ class Dataset(object):
         if queue:
             queue.publish({'ds_id': self.id, 'status': self.status}, SM_DS_STATUS)
 
-    def save_acq_geometry_from_file(self, db, ms_file_path):
+    def import_acq_geometry_from_file(self, db, ms_file_path):
         r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, self.id)
         if r:
             db.alter(Dataset.ACQ_GEOMETRY_DEL, self.id)
