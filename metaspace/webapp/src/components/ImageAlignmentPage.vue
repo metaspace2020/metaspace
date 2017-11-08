@@ -2,13 +2,35 @@
   <div id="alignment-page">
 
     <div class="image-alignment-top">
-      <div class="image-alignment-header">
-        Align ion images to the optical image and press 'Submit' button to save the transformation and upload the image to the server.
+      <div class="image-alignment-header" style="text-align: left">
+        <h3 style="margin: 5px; align-content: left">Dataset: {{ datasetName }}</h3>
+        <h4>Align the dataset with an optical image </h4>
+
+        <div id="hints" v-if="showHints.status === true">
+          <p>
+            Follow three easy steps:
+        </p><ol>
+          <li> Select an optical image file </li>
+          <li> Move the annotation ion image until it matches the optical image </li>
+          <li> Press 'submit' to upload the aligned images </li>
+        </ol>
+          Hints:
+          <ul>
+          <li> Click and drag the annotation image to move it </li>
+          <li> Change the angle to rotate the annotation image</li>
+          <li> Use the scroll wheel on your mouse to zoom in and out</li>
+          <li> Select an annotation image that has recognisable spatial distribution</li>
+          <li> Click and drag the orange corners for fine tuning of the alignment</li>
+        </ul>
+
+        </div>
+        <el-button @click="toggleHints" id="hintsButton">
+          {{ showHints.text }}
+        </el-button>
       </div>
 
       <div class="image-alignment-settings">
         <div>
-          <p style="margin: 5px;">Dataset: {{ datasetName }}</p>
           <label class="optical-image-select el-button">
             <input type="file"
                   style="display: none;"
@@ -27,23 +49,15 @@
         </div>
 
         <div class="sliders-box">
-          IMS image opacity:
-          <el-slider :min=0 :max=1 :step=0.01 v-model="annotImageOpacity">
-          </el-slider>
-
           Optical image padding, px:
           <el-slider :min=0 :max=500 :step=10 v-model="padding">
+          </el-slider>
+          IMS image opacity:
+          <el-slider :min=0 :max=1 :step=0.01 v-model="annotImageOpacity">
           </el-slider>
         </div>
 
         <div class="annotation-selection">
-          <el-form :inline="true">
-            <el-form-item label="Angle, °:" style="margin-bottom:5px;">
-              <el-input-number :min=-180 :max=180 :step=1 v-model="angle" size="small">
-              </el-input-number>
-            </el-form-item>
-          </el-form>
-
           <span style="font-size: 14px; margin-bottom: 5px;" >Annotation:</span>
           <el-pagination
               layout="prev,slot,next"
@@ -58,6 +72,13 @@
               </el-option>
             </el-select>
           </el-pagination>
+
+          <el-form :inline="true">
+            <el-form-item label="Angle, °:" style="margin-bottom:5px;">
+              <el-input-number :min=-180 :max=180 :step=1 v-model="angle" size="small">
+              </el-input-number>
+            </el-form-item>
+          </el-form>
         </div>
 
         <div class="optical-image-submit">
@@ -138,7 +159,11 @@
        alreadyUploaded: false,
        initialTransform: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
        padding: 100,
-       angle: 0
+       angle: 0,
+       showHints: {
+         status: true,
+         text: 'Hide hints'
+       }
      }
    },
 
@@ -217,6 +242,7 @@
        return this.file ? this.file.name : '';
      }
    },
+
    methods: {
      renderAnnotation(annotation) {
        const {sumFormula, adduct, dataset} = annotation;
@@ -281,7 +307,7 @@
        xhr.onreadystatechange = () => {
          if (xhr.readyState == 4 && xhr.status == 201) {
            const imageId = xhr.response.image_id,
-                 imageUrl = this.imageStorageUrl + '/' + imageId;
+               imageUrl = this.imageStorageUrl + '/' + imageId;
            this.addOpticalImage(imageUrl).then(() => {
              this.$message({
                type: 'success',
@@ -308,21 +334,22 @@
 
      addOpticalImage(imageUrl) {
        return getJWT()
-         .then(jwt =>
-           this.$apollo.mutate({
-             mutation: addOpticalImageQuery,
-             variables: {
-               jwt,
-               datasetId: this.datasetId,
-               imageUrl,
-               transform: this.$refs.aligner.normalizedTransform
-             }}))
-         .then(resp => resp.data.addOpticalImage)
-         .then(status => {
-           if (status != 'success')
-             throw new Error(status);
-           return status;
-         });
+           .then(jwt =>
+               this.$apollo.mutate({
+                 mutation: addOpticalImageQuery,
+                 variables: {
+                   jwt,
+                   datasetId: this.datasetId,
+                   imageUrl,
+                   transform: this.$refs.aligner.normalizedTransform
+                 }
+               }))
+           .then(resp => resp.data.addOpticalImage)
+           .then(status => {
+             if (status != 'success')
+               throw new Error(status);
+             return status;
+           });
      },
 
      reset() {
@@ -332,9 +359,20 @@
 
      cancel() {
        this.$router.go(-1);
+     },
+
+     toggleHints() {
+       this.showHints.status = !this.showHints.status;
+
+       if (this.showHints.status) {
+         this.showHints.text = "Hide hints";
+       } else {
+         this.showHints.text = "Show hints";
+       }
      }
-   }
+   },
  }
+
 </script>
 
 <style>
