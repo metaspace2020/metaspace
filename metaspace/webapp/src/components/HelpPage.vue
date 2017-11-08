@@ -7,21 +7,21 @@
 
       <div class="tour-panel">
         <div class="tour-block">
-          <el-button icon='caret-right' @click='intro'>Introduction</el-button>
+          <el-button icon='el-icon-caret-right' @click='intro'>Introduction</el-button>
           <p>
             Just enough to get you started
           </p>
         </div>
 
         <div class="tour-block">
-          <el-button icon='caret-right' @click='filtering'>Filtering</el-button>
+          <el-button icon='el-icon-caret-right' @click='filtering'>Filtering</el-button>
           <p>
             Learn to steer snappily through<br/> the sea of molecular annotations!
           </p>
         </div>
 
         <div class="tour-block">
-          <el-button icon='caret-right' @click='diagnostics'>Diagnostic plots</el-button>
+          <el-button icon='el-icon-caret-right' @click='diagnostics'>Diagnostic plots</el-button>
           <p>
             Get better insight into how scores are assigned to molecular formulae
           </p>

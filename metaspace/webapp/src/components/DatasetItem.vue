@@ -1,7 +1,7 @@
 <template>
   <div class="dataset-item" :class="disabledClass">
 
-    <el-dialog title="Provided metadata" v-model="showMetadataDialog">
+    <el-dialog title="Provided metadata" :visible.sync="showMetadataDialog">
       <dataset-info :metadata="metadata"
         :expandedKeys="['Sample information', 'Sample preparation']">
       </dataset-info>

@@ -3,6 +3,7 @@
     <el-table id="annot-table"
               ref="table"
               :data="annotations"
+              size="mini"
               border
               v-loading="isLoading"
               element-loading-text="Loading results from the server..."
@@ -38,42 +39,44 @@
         No annotations were found
       </p>
 
-      <el-table-column inline-template
-                       label="Lab" v-if="!hidden('Institution')"
+      <el-table-column label="Lab" v-if="!hidden('Institution')"
                        min-width="95">
-        <div class="cell-wrapper">
-          <span class="cell-span">
-            {{ row.dataset.institution }}
-          </span>
-          <img src="../assets/filter-icon.png"
-               @click="filterInstitution(row)"
-               title="Limit results to this lab"/>
-        </div>
+        <template slot-scope="props">
+          <div class="cell-wrapper">
+            <span class="cell-span">
+              {{ props.row.dataset.institution }}
+            </span>
+            <img src="../assets/filter-icon.png"
+                 @click="filterInstitution(props.row)"
+                 title="Limit results to this lab"/>
+          </div>
+        </template>
       </el-table-column>
 
-      <el-table-column inline-template
-                       property="dataset.name"
+      <el-table-column property="dataset.name"
                        label="Dataset" v-if="!hidden('Dataset')"
                        min-width="140">
+        <template slot-scope="props">
           <div class="cell-wrapper">
               <span class="cell-span">
-                  {{ formatDatasetName(row) }}
+                  {{ formatDatasetName(props.row) }}
               </span>
               <img src="../assets/filter-icon.png"
-                   @click="filterDataset(row)"
+                   @click="filterDataset(props.row)"
                    title="Limit results to this dataset"/>
           </div>
+        </template>
       </el-table-column>
 
-      <el-table-column inline-template
-                       property="sumFormula"
+      <el-table-column property="sumFormula"
                        label="Annotation"
                        sortable="custom"
                        min-width="120">
+        <template slot-scope="props">
         <el-popover trigger="hover" placement="right">
-            <div>Candidate molecules ({{ row.possibleCompounds.length }}):
+            <div>Candidate molecules ({{ props.row.possibleCompounds.length }}):
                 <ul>
-                    <li v-for="comp in row.possibleCompounds">
+                    <li v-for="comp in props.row.possibleCompounds">
                         {{ comp.name }}
                     </li>
                 </ul>
@@ -81,28 +84,30 @@
 
             <div slot="reference" class="cell-wrapper">
                 <span class="sf cell-span"
-                      v-html="renderMolFormula(row.sumFormula, row.adduct, row.dataset.polarity)"></span>
+                      v-html="renderMolFormula(props.row.sumFormula, props.row.adduct, props.row.dataset.polarity)"></span>
                 <img src="../assets/filter-icon.png"
                      v-if="!filter.compoundName"
-                     @click="filterMolFormula(row)"
+                     @click="filterMolFormula(props.row)"
                      title="Limit results to this molecular formula"/>
             </div>
         </el-popover>
+        </template>
       </el-table-column>
 
-      <el-table-column inline-template
-                       property="mz"
+      <el-table-column property="mz"
                        label="m/z"
                        sortable="custom"
                        min-width="65">
+        <template slot-scope="props">
           <div class="cell-wrapper">
               <span class="cell-span">
-                  {{ formatMZ(row) }}
+                  {{ formatMZ(props.row) }}
               </span>
               <img src="../assets/filter-icon.png"
-                   @click="filterMZ(row)"
+                   @click="filterMZ(props.row)"
                    title="Limit results to this m/z (with 5 ppm tolerance)"/>
           </div>
+        </template>
       </el-table-column>
 
       <el-table-column property="msmScore"
@@ -112,12 +117,14 @@
                        min-width="60">
       </el-table-column>
 
-      <el-table-column inline-template property="fdrLevel"
+      <el-table-column property="fdrLevel"
                        label="FDR"
                        class-name="fdr-cell"
                        sortable="custom"
                        min-width="40">
-        <span class="fdr-span"> {{row.fdrLevel * 100}}% </span>
+        <template slot-scope="props">
+          <span class="fdr-span"> {{props.row.fdrLevel * 100}}% </span>
+        </template>
       </el-table-column>
 
     </el-table>
@@ -337,7 +344,7 @@
      },
 
      renderMolFormula,
-     getRowClass (row, col) {
+     getRowClass ({row}) {
        if (row.fdrLevel <= 0.051)
          return 'fdr-5';
        else if (row.fdrLevel <= 0.101)
@@ -542,14 +549,15 @@
 
  /* fix cell height and align text in the center */
  #annot-table .cell {
-   height: 36px;
+   height: 24;
    display: flex;
    align-items: center;
    padding: 0 0 0 10px;
  }
 
  #annot-table th > .cell{
-   height: 43px;
+   height: 30px;
+   font-size: 14px;
  }
 
  /* don't show long institution/dataset names */

@@ -20,7 +20,7 @@
              :key="sectionName">
           <div class="heading" v-html="prettify(sectionName)"></div>
 
-          <el-form>
+          <el-form size="medium">
             <el-col :span="getWidth(propName)"
                     v-for="(prop, propName) in section.properties"
                     :key="sectionName + propName">
@@ -178,7 +178,7 @@
    'Detector_Resolving_Power': 12,
    'mz': 12,
    'Resolving_Power': 12,
-   'Dataset_Name': 7
+   'Dataset_Name': 7,
  };
 
  function objectFactory(schema) {
