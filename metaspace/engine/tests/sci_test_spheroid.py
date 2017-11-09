@@ -4,6 +4,7 @@ from pprint import pprint
 import numpy as np
 from fabric.api import local
 from fabric.context_managers import warn_only
+from mock import MagicMock
 
 from sm.engine import Dataset
 from sm.engine import ESExporter
@@ -121,15 +122,27 @@ class SciTester(object):
                 self._false_discovery(old_search_res, search_res) or
                 self._metrics_diff(old_search_res, search_res))
 
+    def _create_img_store_mock(self):
+
+        class ImageStoreMock(object):
+            def post_image(self, *args):
+                return None
+
+            def delete_image_by_id(self, *args):
+                return None
+
+        return ImageStoreMock()
+
     def run_search(self):
         ds_man = SMDaemonDatasetManager(self.db, ESExporter(self.db), mode='local')
         try:
             ds = Dataset.load(self.db, self.ds_id)
-            ds_man.delete(ds)
         except UnknownDSID:
             print('Test dataset {}/{} does not exist'.format(self.ds_id, self.ds_name))
             ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
-        ds_man.add(ds, SearchJob, del_first=True)
+
+        search_job = SearchJob(img_store=self._create_img_store_mock())
+        ds_man.add(ds, search_job, del_first=True)
 
     def clear_data_dirs(self):
         with warn_only():

@@ -209,7 +209,7 @@ class TestSMDaemonDatasetManager:
             ds = create_ds(ds_id=ds_id, ds_name=ds_name, input_path=input_path, upload_dt=upload_dt,
                            metadata=metadata, ds_config=ds_config)
 
-            ds_man.add(ds, search_job_factory=self.SearchJob)
+            ds_man.add(ds, search_job=self.SearchJob())
 
             DS_SEL = 'select name, input_path, upload_dt, metadata, config from dataset where id=%s'
             assert (db.select_one(DS_SEL, ds_id) == (ds_name, input_path, upload_dt, metadata, ds_config))

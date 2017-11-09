@@ -16,7 +16,7 @@
     "password": "password"
   },
   "services": {
-    "iso_images": "",
+    "img_service_url": "",
     "mol_db": "http://localhost:5001/v1"
   },
   "fs": {
