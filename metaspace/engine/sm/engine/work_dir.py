@@ -54,7 +54,7 @@ class LocalWorkDir(object):
 
     @property
     def ms_file_path(self):
-        ms_file_extension = SMConfig.get_conf()['ms_files'][0]
+        ms_file_extension = SMConfig.get_conf()['ms_files']['extensions'][0]
         ms_file_names = [fn for fn in listdir(self.ds_path) \
             if re.search(r'\.{}$'.format(ms_file_extension), fn, re.IGNORECASE)]
         return join(self.ds_path, ms_file_names[0]) if ms_file_names else ''

@@ -17,7 +17,7 @@ def test_convert(MockImzMLParser, sm_config):
 
     converter = MsTxtConverter('imzml_path', 'txt_path', 'coord_path')
 
-    with patch('sm.engine.imzml_txt_converter.open', create=True) as mock_open:
+    with patch('sm.engine.ms_txt_converter.open', create=True) as mock_open:
         converter.convert()
         mock_open_write_args = [args[0] for _, args, kw_args in mock_open.mock_calls if args]
 

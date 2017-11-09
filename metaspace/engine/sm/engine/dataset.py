@@ -102,7 +102,7 @@ class Dataset(object):
         if r:
             db.alter(Dataset.ACQ_GEOMETRY_DEL, self.id)
         acq_geometry = Dataset.acq_geometry_factory(ms_file_path).create()
-        db.insert(self.ACQ_GEOMETRY_INS, [acq_geometry, self.id])
+        db.insert(self.ACQ_GEOMETRY_INS, [(json.dumps(acq_geometry), self.id)])
 
     def to_queue_message(self):
         msg = {

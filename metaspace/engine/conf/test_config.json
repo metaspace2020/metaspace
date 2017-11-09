@@ -29,5 +29,21 @@
     "master": "local[4]",
     "executor.memory": "2g"
   },
-  "slack": {}
+  "slack": {},
+  "aws": {
+    "aws_access_key_id": "",
+    "aws_secret_access_key": "",
+    "aws_region": "eu-west-1"
+  },
+  "ms_files": {
+    "extensions": ["imzML", "ibd"],
+    "parser_factory": {
+      "name": "ImzMLParser",
+      "path": "pyimzml.ImzMLParser"
+    },
+    "acq_geometry_factory": {
+      "name": "ImsGeometryFactory",
+      "path": "sm.engine.ims_geometry_factory"
+    }
+  }
 }
