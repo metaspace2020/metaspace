@@ -8,6 +8,7 @@ from .db import DB
 from .mol_db import MolecularDB
 from .ms_txt_converter import MsTxtConverter
 from .util import SMConfig
+from ..rest.api import CONFIG_PATH
 
 try:
     import pyspark
@@ -18,5 +19,10 @@ except ImportError:
 else:
     from .search_job import SearchJob
 
-MsTxtConverter.parser_factory = import_module(SMConfig.get_conf()['ms_files']['parser_factory'])
-Dataset.acq_geometry_factory = import_module(SMConfig.get_conf()['ms_files']['acq_geometry_factory'])
+SMConfig.set_path(CONFIG_PATH)
+
+ms_parser_factory_module = SMConfig.get_conf()['ms_files']['parser_factory']
+MsTxtConverter.parser_factory = getattr(import_module(ms_parser_factory_module['path']), ms_parser_factory_module['name'])
+
+acq_geometry_factory_module = SMConfig.get_conf()['ms_files']['acq_geometry_factory']
+Dataset.acq_geometry_factory = getattr(import_module(acq_geometry_factory_module['path']), acq_geometry_factory_module['name'])

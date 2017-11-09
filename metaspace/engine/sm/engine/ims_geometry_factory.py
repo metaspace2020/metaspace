@@ -1,5 +1,5 @@
 from pyimzml.ImzMLParser import ImzMLParser
-from acq_geometry_factory import AcqGeometryFactory, ACQ_GEOMETRY_KEYS
+from sm.engine.acq_geometry_factory import AcqGeometryFactory, ACQ_GEOMETRY_KEYS
 
 class ImsGeometryFactory(AcqGeometryFactory):
     def __init__(self, ms_file_path):

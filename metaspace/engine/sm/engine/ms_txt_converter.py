@@ -9,7 +9,7 @@ from os.path import exists
 import logging
 import numpy as np
 import scipy.signal as signal
-from errors import SMError
+from sm.engine.errors import SMError
 from pyMSpec.centroid_detection import gradient
 
 from sm.engine.util import SMConfig

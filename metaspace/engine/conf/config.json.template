@@ -47,8 +47,14 @@
     "webhook_url": "{{ slack_webhook_url }}"
   },
   "ms_files": {
-    "extensions": ['imzML', 'ibd']
-    "parser_factory": "pyimzml.ImzMLParser.ImzMLParser",
-    "acq_geometry_factory": "sm.engine.ims_geometry_factory.ImsGeometryFactory"
+    "extensions": ["imzML", "ibd"],
+    "parser_factory": {
+      "name": "ImzMLParser",
+      "path": "pyimzml.ImzMLParser"
+    },
+    "acq_geometry_factory": {
+      "name": "ImsGeometryFactory",
+      "path": "sm.engine.ims_geometry_factory"
+    }
   }
 }
