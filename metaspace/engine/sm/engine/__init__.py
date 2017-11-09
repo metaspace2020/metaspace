@@ -1,5 +1,4 @@
 from importlib import import_module
-from .util import SMConfig
 from .dataset import Dataset, DatasetStatus
 from .dataset_reader import DatasetReader
 from .dataset_manager import SMapiDatasetManager, SMDaemonDatasetManager, DatasetActionPriority
@@ -8,6 +7,7 @@ from .queue import QueueConsumer, QueuePublisher
 from .db import DB
 from .mol_db import MolecularDB
 from .ms_txt_converter import MsTxtConverter
+from .util import SMConfig
 
 try:
     import pyspark
