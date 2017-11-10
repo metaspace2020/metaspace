@@ -26,7 +26,7 @@
     "express": "^4.14.0",
     "graphql": "^0.10.5",
     "graphql-errors": "^2.1.0",
-    "graphql-server-express": "^0.8",
+    "apollo-server-express": "1.2.0",
     "graphql-subscriptions": "^0.4.3",
     "graphql-tools": "^0.11.0",
     "jsondiffpatch": "^0.2.4",
