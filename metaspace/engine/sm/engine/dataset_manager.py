@@ -77,10 +77,11 @@ class DatasetManager(object):
             'local' or 'queue'
         queue_publisher: sm.engine.queue.QueuePublisher
     """
-    def __init__(self, db=None, es=None, mode=None, queue_publisher=None, logger_name=None):
+    def __init__(self, db=None, es=None, img_store=None, mode=None, queue_publisher=None, logger_name=None):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
+        self._img_store = img_store
         self.mode = mode
         self._queue = queue_publisher
         if self.mode == 'queue':
@@ -108,8 +109,8 @@ class DatasetManager(object):
 
 class SMDaemonDatasetManager(DatasetManager):
 
-    def __init__(self, db, es, mode, queue_publisher=None):
-        DatasetManager.__init__(self, db=db, es=es, mode=mode,
+    def __init__(self, db, es, img_store, mode, queue_publisher=None):
+        DatasetManager.__init__(self, db=db, es=es, img_store=img_store, mode=mode,
                                 queue_publisher=queue_publisher, logger_name='sm-daemon')
 
     def process(self, ds, action, **kwargs):
@@ -122,12 +123,13 @@ class SMDaemonDatasetManager(DatasetManager):
         else:
             raise Exception('Wrong action: {}'.format(action))
 
-    def add(self, ds, search_job=None, del_first=False, **kwargs):
-        """ Run an annotation job for the dataset. If del_first provided, delete first """
+    def add(self, ds, search_job_factory=None, del_first=False, **kwargs):
+        """ Run an annotation job for the dataset. If del_first provided, delete first
+        """
         if del_first:
             self.delete(ds)
         ds.save(self._db, self._es)
-        search_job.run(ds)
+        search_job_factory(img_store=self._img_store).run(ds)
 
     def update(self, ds, **kwargs):
         """ Reindex all dataset results """
@@ -145,12 +147,11 @@ class SMDaemonDatasetManager(DatasetManager):
     def _del_iso_images(self, ds):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
 
-        img_store = self._img_store()
         for row in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
             iso_image_ids = row[0]
             for img_id in iso_image_ids:
                 if img_id:
-                    img_store.delete_image_by_id('iso_image', img_id)
+                    self._img_store.delete_image_by_id('iso_image', img_id)
 
     def delete(self, ds, del_raw_data=False, **kwargs):
         """ Delete all dataset related data from the DB """
