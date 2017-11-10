@@ -134,9 +134,13 @@ class SciTester(object):
 
         return ImageStoreMock()
 
-    def run_search(self):
+    def run_search(self, mock_img_store=False):
+        if mock_img_store:
+            img_store = self._create_img_store_mock()
+        else:
+            img_store = ImageStoreServiceWrapper(self.sm_config['services']['img_service_url'])
         ds_man = SMDaemonDatasetManager(db=self.db, es=ESExporter(self.db),
-                                        img_store=self._create_img_store_mock(), mode='local')
+                                        img_store=img_store, mode='local')
         try:
             ds = Dataset.load(self.db, self.ds_id)
         except UnknownDSID:
@@ -157,6 +161,7 @@ if __name__ == '__main__':
     parser.add_argument('--sm-config', dest='sm_config_path',
                         default=join(proj_root(), 'conf/config.json'),
                         help='path to sm config file')
+    parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')
     args = parser.parse_args()
     SMConfig.set_path(args.sm_config_path)
     init_logger()
@@ -167,7 +172,7 @@ if __name__ == '__main__':
         run_search_successful = False
         search_results_different = False
         try:
-            sci_tester.run_search()
+            sci_tester.run_search(args.mock_img_store)
             run_search_successful = True
             search_results_different = sci_tester.search_results_are_different()
         except Exception as e:

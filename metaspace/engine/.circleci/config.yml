@@ -58,4 +58,4 @@ jobs:
             python app/main.py &  # run in background
             cd /code/sm-engine
             source docker/env.sh
-            python tests/sci_test_spheroid.py -r
+            python tests/sci_test_spheroid.py -r --mock-img-store

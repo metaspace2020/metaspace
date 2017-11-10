@@ -33,14 +33,16 @@ def fill_db(test_db, sm_config, ds_config):
     db.close()
 
 
-def create_ds_man(sm_config, db=None, es=None, queue=None, sm_api=False):
+def create_ds_man(sm_config, db=None, es=None, img_store=None, queue=None, sm_api=False):
     db = db or DB(sm_config['db'])
     es_mock = es or MagicMock(spec=ESExporter)
     queue_mock = queue or MagicMock(spec=QueuePublisher)
+    img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
     if sm_api:
         return SMapiDatasetManager(SM_ANNOTATE, db, es_mock, 'queue', queue_mock)
     else:
-        return SMDaemonDatasetManager(db, es_mock, 'queue', queue_mock)
+        return SMDaemonDatasetManager(db=db, es=es_mock, img_store=img_store_mock,
+                                      mode='queue', queue_publisher=queue_mock)
 
 
 def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
@@ -240,18 +242,17 @@ class TestSMDaemonDatasetManager:
         db = DB(sm_config['db'])
         queue_mock = MagicMock(spec=QueuePublisher)
         es_mock = MagicMock(spec=ESExporter)
-        ds_man = create_ds_man(sm_config, db=db, es=es_mock, queue=queue_mock, sm_api=False)
+        img_store_service_mock = MagicMock(spec=ImageStoreServiceWrapper)
+        ds_man = create_ds_man(sm_config, db=db, es=es_mock, img_store=img_store_service_mock,
+                               queue=queue_mock, sm_api=False)
 
         ds_id = '2000-01-01'
         ds = create_ds(ds_id=ds_id, ds_config=ds_config)
 
-        with patch('sm.engine.dataset_manager.ImageStoreServiceWrapper') as ImageStoreServiceWrapper:
-            img_store_service_mock = ImageStoreServiceWrapper.return_value
+        ds_man.delete(ds)
 
-            ds_man.delete(ds)
-
-            ids = ['iso_image_{}_id'.format(id) for id in range(1, 3)]
-            img_store_service_mock.delete_image_by_id.assert_has_calls(
-                [call('iso_image', ids[0]), call('iso_image', ids[1])])
-            es_mock.delete_ds.assert_called_with(ds_id)
-            assert db.select_one('SELECT * FROM dataset WHERE id = %s', ds_id) == []
+        ids = ['iso_image_{}_id'.format(id) for id in range(1, 3)]
+        img_store_service_mock.delete_image_by_id.assert_has_calls(
+            [call('iso_image', ids[0]), call('iso_image', ids[1])])
+        es_mock.delete_ds.assert_called_with(ds_id)
+        assert db.select_one('SELECT * FROM dataset WHERE id = %s', ds_id) == []
