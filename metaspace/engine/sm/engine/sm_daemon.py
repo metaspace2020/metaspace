@@ -5,6 +5,7 @@ import logging
 import boto3
 
 from sm.engine.dataset_manager import DatasetAction
+from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig, sm_log_config, init_logger
 from sm.engine import QueueConsumer, ESExporter, QueuePublisher, Dataset, SearchJob
 from sm.engine import DB
@@ -14,8 +15,8 @@ logger = logging.getLogger('sm-daemon')
 
 class SMDaemon(object):
 
-    def __init__(self, qname, DatasetManager):
-        self.DatasetManager = DatasetManager
+    def __init__(self, qname, dataset_manager_factory):
+        self._dataset_manager_factory = dataset_manager_factory
         self._qname = qname
         self._sm_queue_consumer = None
         self._sm_config = SMConfig.get_conf()
@@ -114,8 +115,11 @@ class SMDaemon(object):
 
         db = DB(self._sm_config['db'])
         try:
-            ds_man = self.DatasetManager(db, ESExporter(db), mode='queue',
-                                         queue_publisher=QueuePublisher(self._sm_config['rabbitmq']))
+            ds_man = self._dataset_manager_factory(
+                db=db, es=ESExporter(db),
+                img_store=ImageStoreServiceWrapper(self._sm_config['services']['img_service_url']),
+                mode='queue', queue_publisher=QueuePublisher(self._sm_config['rabbitmq'])
+            )
             ds_man.process(ds=Dataset.load(db, msg['ds_id']),
                            action=msg['action'],
                            search_job_factory=SearchJob,
