@@ -43,7 +43,11 @@ function createHttpServerAsync(config) {
 
       app.use(cors());
       app.use(compression());
-      app.use('/graphql', bodyParser.json({type: '*/*'}), graphqlExpress({schema}));
+      app.use('/graphql',
+          bodyParser.json({type: '*/*'}),
+          graphqlExpress(request => ({schema,
+             context: { auth: request.header('Authorization') }
+          })));
       app.use('/graphiql', graphiqlExpress({
         endpointURL: '/graphql',
         subscriptionsEndpoint: config.websocket_public_url,
