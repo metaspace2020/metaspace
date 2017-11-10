@@ -5,6 +5,7 @@ from fabric.context_managers import warn_only
 from unittest.mock import patch, MagicMock
 import time
 from datetime import datetime
+import json
 
 from sm.engine.db import DB
 from sm.engine.errors import JobFailedError, ESExportFailedError
@@ -13,6 +14,7 @@ from sm.engine.fdr import DECOY_ADDUCTS
 from sm.engine.dataset import Dataset
 from sm.engine.dataset_manager import DatasetStatus
 from sm.engine.tests.util import test_db, sm_config, sm_index, es, es_dsl_search
+from sm.engine.acq_geometry_factory import ACQ_GEOMETRY_KEYS
 
 test_ds_name = 'imzml_example_ds'
 
@@ -79,6 +81,25 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
         input_path = join(dirname(__file__), 'data', test_ds_name)
         assert len(rows) == 1
         assert rows[0] == (ds_id, test_ds_name, input_path, upload_dt, DatasetStatus.FINISHED)
+
+        # ms acquisition geometry asserts
+        rows = db.select("SELECT data from acquisition_geometry")
+        assert len(rows) == 1
+        assert json.loads(rows[0][0]) == {
+            ACQ_GEOMETRY_KEYS.LENGTH_UNIT: 'nm',
+            ACQ_GEOMETRY_KEYS.AcqGridSection.section_name: {
+                ACQ_GEOMETRY_KEYS.AcqGridSection.REGULAR_GRID: True,
+                ACQ_GEOMETRY_KEYS.AcqGridSection.PIXEL_COUNT_X : 3,
+                ACQ_GEOMETRY_KEYS.AcqGridSection.PIXEL_COUNT_Y : 3,
+                ACQ_GEOMETRY_KEYS.AcqGridSection.PIXEL_SPACING_X : 100,
+                ACQ_GEOMETRY_KEYS.AcqGridSection.PIXEL_SPACING_Y : 100
+            },
+            ACQ_GEOMETRY_KEYS.PixelSizeSection.section_name: {
+                ACQ_GEOMETRY_KEYS.PixelSizeSection.REGULAR_SIZE: True,
+                ACQ_GEOMETRY_KEYS.PixelSizeSection.PIXEL_SIZE_X : 100,
+                ACQ_GEOMETRY_KEYS.PixelSizeSection.PIXEL_SIZE_Y : 100
+            }
+        }
 
         # job table asserts
         rows = db.select("SELECT db_id, ds_id, status, start, finish from job")
