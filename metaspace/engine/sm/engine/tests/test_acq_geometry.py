@@ -22,12 +22,15 @@ class TestGeometryVariants(object):
     }
     empty = {}
 
+PROJ_DIR_PATH = dirname(dirname(dirname(dirname(__file__))))
 
 def test_ims_geometry_factory():
     imzml_parser_mock = MagicMock(ImzMLParser)
     imzml_parser_mock.imzmldict = TestGeometryVariants.regular
 
-    factory_reg_geom = ImsGeometryFactory('mocked_file')
+    ims_file_path = join(PROJ_DIR_PATH, 'tests/data/imzml_example_ds/Example_Continuous.imzML')
+
+    factory_reg_geom = ImsGeometryFactory(ims_file_path)
     factory_reg_geom.parser = imzml_parser_mock
 
     assert factory_reg_geom.create() == {
@@ -47,7 +50,7 @@ def test_ims_geometry_factory():
     }
 
     imzml_parser_mock.imzmldict = TestGeometryVariants.pix_count_only
-    factory_pix_count_geom = ImsGeometryFactory('mocked_file')
+    factory_pix_count_geom = ImsGeometryFactory(ims_file_path)
     factory_pix_count_geom.parser = imzml_parser_mock
 
     assert factory_pix_count_geom.create() == {
@@ -67,7 +70,7 @@ def test_ims_geometry_factory():
     }
 
     imzml_parser_mock.imzmldict = TestGeometryVariants.empty
-    factory_empty_geom = ImsGeometryFactory('mocked_file')
+    factory_empty_geom = ImsGeometryFactory(ims_file_path)
     factory_empty_geom.parser = imzml_parser_mock
 
     assert factory_empty_geom.create() == {
@@ -87,9 +90,8 @@ def test_ims_geometry_factory():
     }
 
 def test_lcms_geometry_factory():
-    proj_dir_path = dirname(dirname(dirname(__file__)))
-    lcms_file_path = join(proj_dir_path, 'tests/data/lcms_acq_geometry_example/apple_surface_swab.mzML')
-    factory = LcmsGeometryFactory(lcms_file_path)
+    lcms_file_path = join(PROJ_DIR_PATH, 'tests/data/lcms_acq_geometry_example/apple_surface_swab.mzML')
+    factory = LcmsGeometryFactory(lcms_file_path.encode())
 
     geometry = factory.create()
     assert geometry[ACQ_GEOMETRY_KEYS.LENGTH_UNIT] == 's'

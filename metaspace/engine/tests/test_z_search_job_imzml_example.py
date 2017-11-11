@@ -5,10 +5,9 @@ from fabric.context_managers import warn_only
 from unittest.mock import patch, MagicMock
 import time
 from datetime import datetime
-import json
 
 from sm.engine.db import DB
-from sm.engine.errors import JobFailedError, ESExportFailedError
+from sm.engine.errors import SMError, JobFailedError, ESExportFailedError
 from sm.engine.search_job import SearchJob
 from sm.engine.fdr import DECOY_ADDUCTS
 from sm.engine.dataset import Dataset
@@ -85,7 +84,8 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
         # ms acquisition geometry asserts
         rows = db.select("SELECT data from acquisition_geometry")
         assert len(rows) == 1
-        assert json.loads(rows[0][0]) == {
+        assert rows[0][0] == ds.get_acq_geometry(db)
+        assert rows[0][0] == {
             ACQ_GEOMETRY_KEYS.LENGTH_UNIT: 'nm',
             ACQ_GEOMETRY_KEYS.AcqGridSection.section_name: {
                 ACQ_GEOMETRY_KEYS.AcqGridSection.REGULAR_GRID: True,
@@ -181,6 +181,15 @@ def test_search_job_imzml_example_annotation_job_fails(get_compute_img_metrics_m
 
         job = SearchJob()
         ds = Dataset.load(db, ds_id)
+
+        try:
+            ds.get_acq_geometry(db)
+        except SMError as e:
+            row = db.select_one('SELECT data FROM acquisition_geometry')
+            assert len(row) == 0
+        else:
+            raise AssertionError('SMError should be raised')
+
         job.run(ds)
     except JobFailedError as e:
         assert e

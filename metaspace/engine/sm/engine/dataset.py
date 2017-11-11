@@ -97,6 +97,12 @@ class Dataset(object):
         if queue:
             queue.publish({'ds_id': self.id, 'status': self.status}, SM_DS_STATUS)
 
+    def get_acq_geometry(self, db):
+        r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, self.id)
+        if not r:
+            raise SMError('MS acquisition geometry is not stored for dataset: {}'.format(self.id))
+        return r[0]
+
     def import_acq_geometry_from_file(self, db, ms_file_path):
         r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, self.id)
         if r:

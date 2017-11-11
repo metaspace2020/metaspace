@@ -1,4 +1,4 @@
-from acq_geometry_factory import AcqGeometryFactory, ACQ_GEOMETRY_KEYS
+from sm.engine.acq_geometry_factory import AcqGeometryFactory, ACQ_GEOMETRY_KEYS
 import pyopenms as ms
 
 class LcmsGeometryFactory(AcqGeometryFactory):
