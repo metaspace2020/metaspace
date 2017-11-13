@@ -125,7 +125,7 @@ if (conf.AWS_ACCESS_KEY_ID && env != 'development') {
 
   var ses = new AWS.SES();
 
-  passwordless.addDelivery('email', (token, uid, recipient, callback, req) => {
+  passwordless.addDelivery((token, uid, recipient, callback, req) => {
     const host = conf.HOST_NAME;
     const text = 'Greetings!\nVisit this link to login: ' + loginLink(token, uid)
                + '\n\n\n---\nMETASPACE team'
