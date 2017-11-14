@@ -46,20 +46,23 @@ ORDER BY COALESCE(m.msm, 0::real) DESC
 '''
 
 DATASET_SEL = '''SELECT
-    dataset.id,
-    name,
-    config,
-    metadata,
-    input_path,
-    upload_dt,
-    dataset.status,
-    to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS')
-FROM dataset LEFT JOIN job ON job.ds_id = dataset.id
-WHERE dataset.id = %s
-GROUP BY dataset.id
+    d.id,
+    d.name,
+    d.config,
+    d.metadata,
+    COALESCE(ag.data, '{}'),
+    d.input_path,
+    d.upload_dt,
+    d.status,
+    to_char(max(j.finish), 'YYYY-MM-DD HH24:MI:SS')
+FROM dataset AS d
+    LEFT JOIN job AS j ON j.ds_id = d.id
+    LEFT JOIN acquisition_geometry AS ag ON ag.ds_id = d.id
+WHERE d.id = %s
+GROUP BY d.id
 '''
 
-DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path',
+DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_acq_geometry', 'ds_input_path',
                    'ds_upload_dt', 'ds_status', 'ds_last_finished')
 
 
