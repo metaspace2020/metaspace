@@ -50,7 +50,7 @@ DATASET_SEL = '''SELECT
     d.name,
     d.config,
     d.metadata,
-    COALESCE(ag.data, '{}'),
+    COALESCE(MIN(ag.data::text), '{}'),
     d.input_path,
     d.upload_dt,
     d.status,
