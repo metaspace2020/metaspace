@@ -3,12 +3,15 @@ from collections import defaultdict
 import pandas as pd
 import numpy as np
 from scipy.sparse import coo_matrix
+import logging
 
 from sm.engine.errors import JobFailedError
 
 MAX_MZ_VALUE = 10**5
 MAX_INTENS_VALUE = 10**12
+ABS_MZ_TOLERANCE_DA = 0.002
 
+logger = logging.getLogger('sm-engine')
 
 def _check_spectra_quality(spectra_sample):
     err_msgs = []
@@ -85,8 +88,8 @@ def _gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, min_p
 
         # -1, + 1 are needed to extend sf_peak_mz range so that it covers 100% of spectra
         sf_peak_df = sf_peak_df[(sf_peak_df.mz >= sp_df.mz.min()-1) & (sf_peak_df.mz <= sp_df.mz.max()+1)]
-        lower = sf_peak_df.mz.map(lambda mz: mz - mz*ppm*1e-6)
-        upper = sf_peak_df.mz.map(lambda mz: mz + mz*ppm*1e-6)
+        lower = sf_peak_df.mz.map(lambda mz: mz - ABS_MZ_TOLERANCE_DA)
+        upper = sf_peak_df.mz.map(lambda mz: mz + ABS_MZ_TOLERANCE_DA)
         lower_idx = np.searchsorted(sp_df.mz, lower, 'l')
         upper_idx = np.searchsorted(sp_df.mz, upper, 'r')
 
@@ -128,13 +131,15 @@ def define_mz_segments(spectra, sf_peak_df, ppm):
         spectra_sample = spectra.takeSample(withReplacement=False, num=n)
     _check_spectra_quality(spectra_sample)
 
-    peaks_per_sp = max(1, int(np.mean([mzs.shape[0] for (sp_id, mzs, ints) in spectra_sample])))
-    plan_mz_segm_n = (spectra_n * peaks_per_sp) // 10**6  # 1M peaks per segment
-    plan_mz_segm_n = np.clip(plan_mz_segm_n, 32, 2048)
+#    peaks_per_sp = max(1, int(np.mean([mzs.shape[0] for (sp_id, mzs, ints) in spectra_sample])))
+#    plan_mz_segm_n = (spectra_n * peaks_per_sp) // 10**6  # 1M peaks per segment
+#    plan_mz_segm_n = np.clip(plan_mz_segm_n, 32, 2048)
+    plan_mz_segm_n = 1
 
     mz_grid, workload_per_mz, sp_workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10**4)
     mz_bounds = _define_mz_bounds(mz_grid, workload_per_mz, sp_workload_per_mz, n=plan_mz_segm_n)
     mz_segments = _create_mz_segments(mz_bounds, ppm=ppm)
+    logger.info('Generated m/z segments: %s', mz_segments)
     return mz_segments
 
 

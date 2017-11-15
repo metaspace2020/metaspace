@@ -16,6 +16,7 @@ setup(name='sm',
           "cpyMSpec==0.3.5",
           "pyimzML==1.2.1",
           # TODO: consider installing with Ansible
+          "pyopenms==2.2.0",
           "Pillow==4.2.1",
           "pyopenms==2.2.0"
       ])
