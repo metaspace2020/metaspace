@@ -1,6 +1,6 @@
 ---
 
-- name: install ssh deamon
+- name: install ssh daemon
   apt: name=ssh state=present
 
 - file: path=/home/{{ spark_user }}/.ssh state=directory mode=0700

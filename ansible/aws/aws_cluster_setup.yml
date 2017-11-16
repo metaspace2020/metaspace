@@ -27,7 +27,7 @@
 
     - debug: var=command_result
 
-    - name: Wait for the master deamon to start up
+    - name: Wait for the master daemon to start up
       wait_for: host={{ ansible_ssh_host }} port=8080 delay=5 timeout=120
 
     - name: Start the slave daemons
@@ -39,7 +39,7 @@
 
     - debug: var=command_result
 
-    - name: Wait for the slave deamons to start up
+    - name: Wait for the slave daemons to start up
       wait_for: host={{ item }} port=8081 delay=5 timeout=120
       with_items: "{{ spark_slave_ips }}"
       when: not ('localhost' in spark_slave_ips)
