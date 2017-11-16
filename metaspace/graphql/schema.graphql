@@ -66,6 +66,7 @@ type Dataset {
   # full metadata JSON conforming to schema published at
   # https://github.com/metaspace2020/metadata
   metadataJson: String!
+  acquisitionGeometry: String!
 
   status: JobStatus
   inputPath: String

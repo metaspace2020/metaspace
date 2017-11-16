@@ -220,6 +220,10 @@ const Resolvers = {
       return JSON.stringify(ds._source.ds_meta);
     },
 
+    acquisitionGeometry(ds) {
+      return JSON.stringify(ds._source.ds_acq_geometry);
+    },
+
     institution(ds) { return dsField(ds, 'institution'); },
     organism(ds) { return dsField(ds, 'organism'); },
     organismPart(ds) { return dsField(ds, 'organismPart'); },
