@@ -2,17 +2,17 @@
   <div>
     <script type="text/template" id="qq-template">
       <div class="qq-uploader-selector qq-uploader"
-          qq-drop-area-text="Drop here the .imzML and .ibd files">
+          qq-drop-area-text="Drop file in mzML format here">
         <div class="qq-upload-drop-area-selector qq-upload-drop-area" qq-hide-dropzone>
           <span class="qq-upload-drop-area-text-selector"></span>
         </div>
         <div class="buttons">
           <div class="qq-upload-button-selector qq-upload-button metasp-button" role="button">
-            Select files
+            Select file
           </div>
         </div>
         <span class="qq-drop-processing-selector qq-drop-processing">
-          <span>Processing dropped files...</span>
+          <span>Processing dropped file...</span>
           <span class="qq-drop-processing-spinner-selector qq-drop-processing-spinner"></span>
         </span>
         <ul class="qq-upload-list-selector qq-upload-list" aria-live="polite" aria-relevant="additions removals">
@@ -73,7 +73,7 @@
    template: 'qq-template',
    autoUpload: false,
    iframeSupport: {localBlankPagePath: "/server/success.html"},
-   multiple: true,
+   multiple: false,
    cors: {expected: true},
    chunking: {
      enabled: true,
@@ -85,8 +85,8 @@
    },
    resume: {enabled: true},
    validation: {
-     itemLimit: 2,
-     allowedExtensions: ["imzML", "ibd"]
+     itemLimit: 1,
+     allowedExtensions: ["mzML"]
    },
  };
 
@@ -118,24 +118,7 @@
          fnames = ['test.imzML', 'test.ibd'];
        }
 
-       if (fnames.length < 2) {
-         return;
-       }
-
-       const basename = fname => fname.split('.').slice(0, -1).join('.');
-       const extension = fname => fname.split('.').slice(-1)[0];
-
-       // consider only the last two selected files
-       let [first, second] = [fnames.slice(-2)[0], fnames.slice(-1)[0]];
-       let [fext, sext] = [first, second].map(extension);
-       let [fbn, sbn] = [first, second].map(basename);
-       if (fext == sext || fbn != sbn) {
-         this.$message({
-           message: "Incompatible file names! Please select 2 files " +
-                    "with the same name but different extension",
-           type: 'error'
-         });
-
+       if (fnames.length != 1) {
          return;
        }
 
@@ -145,12 +128,7 @@
      },
 
      uploadIfValid(id) {
-       if (!this.valid)
-         return;
-
-       // apparently that's the only way to check
-       // if both files are in fineUploader._storedIds already
-       if (id == 1) {
+       if (this.valid) {
          this.$emit('upload', this.uploadFilenames);
          this.fineUploader.uploadStoredFiles();
        }

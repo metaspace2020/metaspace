@@ -6,7 +6,7 @@
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
  import Colorbar from './Colorbar.vue';
  import {annotationQuery} from '../api/annotation';
- import {opticalImageQuery} from '../api/dataset';
+ import {opticalImageQuery, msAcqGeometryQuery} from '../api/dataset';
  import { encodeParams } from '../url';
 
  import Vue, { ComponentOptions } from 'vue';
@@ -70,6 +70,16 @@
        },
        // assumes both image server and webapp are routed via nginx
        update: (data: any) => data.opticalImageUrl
+     },
+
+     msAcqGeometry: {
+       query: msAcqGeometryQuery,
+       variables(this: any): any {
+         return {
+          datasetId: this.annotation.dataset.id
+         }
+       },
+       update: (data: any) => JSON.parse(data.msAcqGeometry)
      }
    }
  })
@@ -80,6 +90,7 @@
    @Prop()
    annotation: any
 
+   msAcqGeometry: any
    peakChartData: any
    opticalImageUrl: string
    showOpticalImage: boolean = true

@@ -1,3 +1,6 @@
+/dist
+clientConfig.json
+
 # Logs
 logs
 *.log

@@ -82,9 +82,10 @@
    },
    methods: {
      onUpload(filenames) {
-       const imzml = filenames.filter(f => f.toLowerCase().endsWith('imzml'))[0];
+       const targetFileExt = '.mzml';
+       const files = filenames.filter(f => f.toLowerCase().endsWith(targetFileExt))[0];
        Vue.nextTick(() => {
-         this.$refs.editor.suggestDatasetName(imzml.slice(0, imzml.length - 6));
+         this.$refs.editor.suggestDatasetName(files.slice(0, files.length - targetFileExt.length));
        });
      },
 

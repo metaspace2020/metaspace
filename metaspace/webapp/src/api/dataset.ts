@@ -52,3 +52,10 @@ export const opticalImageQuery =
   gql`query ($datasetId: String!, $zoom: Float!) {
     opticalImageUrl(datasetId: $datasetId, zoom: $zoom)
   }`;
+
+export const msAcqGeometryQuery =
+  gql`query ($datasetId: String!) {
+    dataset(id: $datasetId) {
+      acquisitionGeometry
+    }
+  }`;
