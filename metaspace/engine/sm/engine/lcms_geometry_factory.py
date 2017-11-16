@@ -8,7 +8,7 @@ class LcmsGeometryFactory(AcqGeometryFactory):
     def _acquisition_grid(self):
         ms_experiment = ms.MSExperiment()
         file_handler = ms.FileHandler()
-        file_handler.loadExperiment(self.ms_file_path, ms_experiment)
+        file_handler.loadExperiment(self.ms_file_path.encode(), ms_experiment)
         pixel_coords = [(spec.getRT(), 0.0) for spec in ms_experiment]
         return {
             ACQ_GEOMETRY_KEYS.AcqGridSection.REGULAR_GRID: False,
