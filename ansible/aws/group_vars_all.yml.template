@@ -75,7 +75,7 @@ sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name 
 
 mol_db_home: /opt/dev/sm-mol-db
 mol_db_branch: rel-v0.7
-mol_db_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/mol_db/v1"
+mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}/mol_db/v1"
 mol_db_postgres_pass: POSTGRES_PASSWORD
 mol_db_image_dir: /var/www/mol-images
 mol_db_import_databases: false
