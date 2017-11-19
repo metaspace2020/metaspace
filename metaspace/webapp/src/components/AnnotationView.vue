@@ -21,7 +21,7 @@
         <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
           <span slot="title">
             <span style="padding-right: 20px">
-              m/z image
+              Extracted ion chromatogram
             </span>
 
             <el-popover placement="left" trigger="click">
@@ -48,6 +48,13 @@
             </span>
           </span>
 
+          <el-row id="xic-plot-container">
+            <xic-plot :intensityImgUrl="annotation.isotopeImages[0].url"
+                      :maxAbsoluteIntensity="annotation.isotopeImages[0].maxIntensity"
+                      :acquisitionGeometry="msAcqGeometry">
+            </xic-plot>
+          </el-row>
+<!--
           <div class="main-ion-image-container">
             <image-loader :src="annotation.isotopeImages[0].url"
                           :colormap="colormap"
@@ -83,7 +90,6 @@
               {{ annotation.isotopeImages[0].minIntensity.toExponential(2) }}
 
               <div class="annot-view__image-download" v-if="browserSupportsDomToImage">
-                <!-- see https://github.com/tsayen/dom-to-image/issues/155 -->
                 <img src="../assets/download-icon.png"
                      width="32px"
                      title="Save visible region in PNG format"
@@ -91,6 +97,7 @@
               </div>
             </div>
           </div>
+          -->
         </el-collapse-item>
 
         <el-collapse-item :title="compoundsTabLabel" name="compounds">

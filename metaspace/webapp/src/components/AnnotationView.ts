@@ -4,6 +4,7 @@
  import ImageLoader from './ImageLoader.vue';
  import IonImageSettings from './IonImageSettings.vue';
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
+ import XicPlot from './XicPlot.vue';
  import Colorbar from './Colorbar.vue';
  import {annotationQuery} from '../api/annotation';
  import {opticalImageQuery, msAcqGeometryQuery} from '../api/dataset';
@@ -39,6 +40,7 @@
      ImageLoader,
      IonImageSettings,
      IsotopePatternPlot,
+     XicPlot,
      Colorbar
    },
    apollo: {
@@ -79,7 +81,8 @@
           datasetId: this.annotation.dataset.id
          }
        },
-       update: (data: any) => JSON.parse(data.msAcqGeometry)
+       // for some reason single call of `JSON.parse` returns string
+       update: (data: any) => JSON.parse(JSON.parse(data['dataset']['acquisitionGeometry']))
      }
    }
  })
