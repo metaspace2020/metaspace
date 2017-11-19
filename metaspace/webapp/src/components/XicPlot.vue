@@ -39,12 +39,12 @@
    });
  }
 
- async function plotChart(intensityImgUrl, maxAbsoluteIntensity, timeSeq, timeUnitName, element) {
+ function plotChart(intensityImgUrl, maxAbsoluteIntensity, timeSeq, timeUnitName, element) {
    if (!element) {
      return;
    }
 
-   let intensities = await imageToIntensity(intensityImgUrl, maxAbsoluteIntensity, 'intensity-image');
+   imageToIntensity(intensityImgUrl, maxAbsoluteIntensity, 'intensity-image').then((intensities) => {
 
    d3.select(element).select('svg').remove();
 
@@ -148,6 +148,7 @@
    }
 
    update();
+   });
  }
 
  export default {
