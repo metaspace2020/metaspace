@@ -13,6 +13,7 @@ from sm.engine import SearchJob
 from sm.engine.db import DB
 from sm.engine.errors import UnknownDSID
 from sm.engine.mol_db import MolDBServiceWrapper
+from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root, SMConfig, create_ds_from_files, init_logger
 
 SEARCH_RES_SELECT = ("select sf, adduct, stats "
@@ -133,16 +134,20 @@ class SciTester(object):
 
         return ImageStoreMock()
 
-    def run_search(self):
-        ds_man = SMDaemonDatasetManager(self.db, ESExporter(self.db), mode='local')
+    def run_search(self, mock_img_store=False):
+        if mock_img_store:
+            img_store = self._create_img_store_mock()
+        else:
+            img_store = ImageStoreServiceWrapper(self.sm_config['services']['img_service_url'])
+        ds_man = SMDaemonDatasetManager(db=self.db, es=ESExporter(self.db),
+                                        img_store=img_store, mode='local')
         try:
             ds = Dataset.load(self.db, self.ds_id)
         except UnknownDSID:
             print('Test dataset {}/{} does not exist'.format(self.ds_id, self.ds_name))
             ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
 
-        search_job = SearchJob(img_store=self._create_img_store_mock())
-        ds_man.add(ds, search_job, del_first=True)
+        ds_man.add(ds, search_job_factory=SearchJob, del_first=True)
 
     def clear_data_dirs(self):
         with warn_only():
@@ -156,6 +161,7 @@ if __name__ == '__main__':
     parser.add_argument('--sm-config', dest='sm_config_path',
                         default=join(proj_root(), 'conf/config.json'),
                         help='path to sm config file')
+    parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')
     args = parser.parse_args()
     SMConfig.set_path(args.sm_config_path)
     init_logger()
@@ -166,7 +172,7 @@ if __name__ == '__main__':
         run_search_successful = False
         search_results_different = False
         try:
-            sci_tester.run_search()
+            sci_tester.run_search(args.mock_img_store)
             run_search_successful = True
             search_results_different = sci_tester.search_results_are_different()
         except Exception as e:
