@@ -10,7 +10,6 @@ from sm.engine.dataset_manager import SMDaemonDatasetManager, DatasetActionPrior
 from sm.engine.errors import UnknownDSID
 from sm.engine.util import proj_root
 from sm.engine.sm_daemon import SMDaemon
-from sm.engine.search_job import SearchJob
 from sm.engine import DB, ESExporter, QueuePublisher, Dataset, SMapiDatasetManager, DatasetStatus
 from sm.engine.tests.util import test_db, sm_config, ds_config
 
@@ -117,7 +116,7 @@ class TestSMDaemonSingleEventCases:
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
         assert method == 'add'
         assert _ds.id == ds.id
-        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['search_job_factory'].__name__ == 'SearchJob'
         assert _kwargs['del_first'] == True
 
     def test_update(self, fill_db, clean_ds_man_mock, clean_rabbitmq, ds_config, sm_config):
@@ -179,12 +178,12 @@ class TestSMDaemonTwoEventsCases:
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
         assert method == 'add'
         assert _ds.id == ds_pri.id
-        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['search_job_factory'].__name__ == 'SearchJob'
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[1]
         assert method == 'add'
         assert _ds.id == ds.id
-        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['search_job_factory'].__name__ == 'SearchJob'
 
     def test_add_update_ds__new_meta__update_goes_first(self, test_db, sm_config, ds_config,
                                                         clean_rabbitmq, clean_ds_man_mock):
@@ -203,7 +202,7 @@ class TestSMDaemonTwoEventsCases:
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[1]
         assert method == 'add'
         assert _ds.id == ds.id
-        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['search_job_factory'].__name__ == 'SearchJob'
         assert _kwargs['del_first'] == False
 
     def test_add_update_ds__new_moldb(self, test_db, sm_config, ds_config, clean_ds_man_mock, clean_rabbitmq):
@@ -219,7 +218,7 @@ class TestSMDaemonTwoEventsCases:
         assert method == 'add'
         assert _ds.id == ds.id
         assert _ds.config == ds.config
-        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['search_job_factory'].__name__ == 'SearchJob'
 
     def test_add_update_ds__new_config(self, test_db, sm_config, ds_config, clean_ds_man_mock, clean_rabbitmq):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
@@ -234,14 +233,14 @@ class TestSMDaemonTwoEventsCases:
         assert method == 'add'
         assert _ds.id == ds.id
         assert _ds.config == ds.config
-        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['search_job_factory'].__name__ == 'SearchJob'
         assert _kwargs['del_first'] == False
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[1]
         assert method == 'add'
         assert _ds.id == ds.id
         assert _ds.config == ds.config
-        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['search_job_factory'].__name__ == 'SearchJob'
         assert _kwargs['del_first'] == True
 
     def test_add_delete_ds(self, test_db, sm_config, ds_config, clean_ds_man_mock, clean_rabbitmq):

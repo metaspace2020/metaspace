@@ -18,7 +18,7 @@ def test_encode_coord_line():
     assert encode_coord_line(-99, -500, -100) == '-99,-500,-100'
 
 
-@patch('sm.engine.ms_txt_converter.MsTxtConverter.parser_factory')
+@patch('sm.engine.ms_txt_converter.MsTxtConverter._parser_factory')
 def test_imzml_txt_converter_parse_save_spectrum(MockImzMLParser, sm_config, ds_config):
     mock_parser = MockImzMLParser.return_value
     mock_parser.coordinates = [[1, 1], [1, 2]]

@@ -6,7 +6,7 @@ from sm.engine.util import SMConfig
 from sm.engine.tests.util import sm_config, ds_config
 
 
-@patch('sm.engine.ms_txt_converter.MsTxtConverter.parser_factory')
+@patch('sm.engine.ms_txt_converter.MsTxtConverter._parser_factory')
 def test_convert(MockImzMLParser, sm_config):
     mock_parser = MockImzMLParser.return_value
     mock_parser.coordinates = [(1, 1), (1, 2)]

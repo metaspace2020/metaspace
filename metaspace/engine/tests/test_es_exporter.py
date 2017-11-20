@@ -25,7 +25,7 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
     def db_sel_side_effect(*args):
         if args == (DATASET_SEL, ds_id):
             # ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path', 'ds_status', 'ds_last_finished')
-            return [(ds_id, 'ds_name', 'ds_config', {}, 'ds_input_path', upload_dt, 'ds_status',
+            return [(ds_id, 'ds_name', 'ds_config', {}, {}, 'ds_input_path', upload_dt, 'ds_status',
                      datetime.strptime(last_finished, '%Y-%m-%dT%H:%M:%S'))]
         elif args == (ANNOTATIONS_SEL, ds_id, mol_db_id):
             # "sf", "sf_adduct",
@@ -62,7 +62,7 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         'adduct': '+H', 'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
         'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': '00100.0000', 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
-        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished
+        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished, 'ds_acq_geometry': {}
     }
     ann_2_d = es_dsl_search.filter('term', sf='Au').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_2_d == {
@@ -72,7 +72,7 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         'adduct': '+H',  'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
         'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': '00100.0000', 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
-        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished
+        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished, 'ds_acq_geometry': {}
     }
     ds_d = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']
     assert ds_d == {
@@ -81,7 +81,8 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         'ds_upload_dt': upload_dt,
         'annotation_counts': [{'db': {'name': 'db_name', 'version': '2017'},
                                'counts': [{'level': 5, 'n': 1}, {'level': 10, 'n': 2},
-                                          {'level': 20, 'n': 2}, {'level': 50, 'n': 2}]}]
+                                          {'level': 20, 'n': 2}, {'level': 50, 'n': 2}]}],
+        'ds_acq_geometry': {}
     }
 
 

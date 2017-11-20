@@ -44,13 +44,8 @@ class Dataset(object):
     ACQ_GEOMETRY_INS = 'INSERT INTO acquisition_geometry (data, ds_id) VALUES (%s, %s)'
     ACQ_GEOMETRY_DEL = 'DELETE FROM acquisition_geometry WHERE ds_id = %s'
 
-    acq_geometry_factory = None
-
     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
                  metadata=None, config=None, status=DatasetStatus.NEW):
-        if Dataset.acq_geometry_factory is None:
-            raise SMError('Mass spec acquisition geometry factory is not specified in sm-engine config.')
-
         self.id = id
         self.input_path = input_path
         self.upload_dt = upload_dt
@@ -103,11 +98,10 @@ class Dataset(object):
             raise SMError('MS acquisition geometry is not stored for dataset: {}'.format(self.id))
         return r[0]
 
-    def import_acq_geometry_from_file(self, db, ms_file_path):
+    def save_acq_geometry(self, db, acq_geometry):
         r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, self.id)
         if r:
             db.alter(Dataset.ACQ_GEOMETRY_DEL, self.id)
-        acq_geometry = Dataset.acq_geometry_factory(ms_file_path).create()
         db.insert(self.ACQ_GEOMETRY_INS, [(json.dumps(acq_geometry), self.id)])
 
     def to_queue_message(self):

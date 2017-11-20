@@ -5,6 +5,7 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 from collections import Counter
+from importlib import import_module
 from os.path import exists
 import logging
 import numpy as np
@@ -75,15 +76,18 @@ class MsTxtConverter(object):
     coord_path : str
         Path to store spectra coordinates in plain text format
     """
-    parser_factory = None
+    _parser_factory = None
 
     def __init__(self, ms_file_path, txt_path, coord_path=None):
-        if MsTxtConverter.parser_factory is None:
-            raise SMError('Mass spec file parser factory is not specified in sm-engine config.')
+        self.sm_config = SMConfig.get_conf()
+
+        if self._parser_factory is None:
+            ms_parser_factory_module = self.sm_config['ms_files']['parser_factory']
+            self._parser_factory = getattr(import_module(ms_parser_factory_module['path']),
+                                           ms_parser_factory_module['name'])
 
         self.ms_file_path = ms_file_path
         self.preprocess = None
-        self.sm_config = SMConfig.get_conf()
 
         self.txt_path = txt_path
         self.coord_path = coord_path
@@ -129,7 +133,7 @@ class MsTxtConverter(object):
             self.txt_file = open(self.txt_path, 'w')
             self.coord_file = open(self.coord_path, 'w') if self.coord_path else None
 
-            self.parser = MsTxtConverter.parser_factory(self.ms_file_path)
+            self.parser = self._parser_factory(self.ms_file_path)
             coordinates = [coo[:2] for coo in self.parser.coordinates]
             self._check_coord_duplicates(coordinates)
 

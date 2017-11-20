@@ -5,6 +5,7 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 import time
+from importlib import import_module
 from pprint import pformat
 from datetime import datetime
 from pyspark import SparkContext, SparkConf
@@ -41,6 +42,9 @@ class SearchJob(object):
     no_clean : bool
         Don't delete interim data files
     """
+    # TODO: move it to another class that operates with datasets not jobs
+    _acq_geometry_factory = None
+
     def __init__(self, img_store=None, no_clean=False):
         self.no_clean = no_clean
         self._img_store = img_store
@@ -56,6 +60,11 @@ class SearchJob(object):
         self._es = None
 
         self._sm_config = SMConfig.get_conf()
+        if self._acq_geometry_factory is None:
+            acq_geometry_factory_module = self._sm_config['ms_files']['acq_geometry_factory']
+            self._acq_geometry_factory = getattr(import_module(acq_geometry_factory_module['path']),
+                                                 acq_geometry_factory_module['name'])
+
         logger.debug('Using SM config:\n%s', pformat(self._sm_config))
 
     def _configure_spark(self):
@@ -171,7 +180,8 @@ class SearchJob(object):
 
             self._ds_reader = DatasetReader(self._ds.input_path, self._sc, self._wd_manager)
             self._ds_reader.copy_convert_input_data()
-            self._ds.import_acq_geometry_from_file(self._db, self._wd_manager.local_dir.ms_file_path)
+            acq_geometry = self._acq_geometry_factory(self._wd_manager.local_dir.ms_file_path).create()
+            self._ds.save_acq_geometry(self._db, acq_geometry)
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
