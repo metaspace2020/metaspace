@@ -19,6 +19,7 @@ CREATE TABLE dataset (
 	status				text,
 	optical_image text,
 	transform			float[],
+	acq_geometry	json,
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
 );
 CREATE INDEX ind_dataset_name ON dataset (name);
@@ -31,14 +32,6 @@ CREATE TABLE optical_image (
   CONSTRAINT opt_img_ds_id_fk FOREIGN KEY (ds_id)
       REFERENCES dataset (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE
-);
-
-DROP TABLE IF EXISTS acquisition_geometry;
-CREATE TABLE acquisition_geometry (
-	id			serial PRIMARY KEY,
-	data		json,
-	ds_id 		text NOT NULL REFERENCES dataset(id)
-				ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 DROP TABLE IF EXISTS job CASCADE;

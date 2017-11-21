@@ -1,7 +1,7 @@
 import json
 import logging
 
-from sm.engine.errors import SMError, UnknownDSID
+from sm.engine.errors import UnknownDSID
 from sm.engine.queue import SM_DS_STATUS
 
 logger = logging.getLogger('sm-engine')
@@ -40,9 +40,8 @@ class Dataset(object):
     DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status) '
                  'VALUES (%s, %s, %s, %s, %s, %s, %s)')
 
-    ACQ_GEOMETRY_SEL = 'SELECT data FROM acquisition_geometry WHERE ds_id = %s'
-    ACQ_GEOMETRY_INS = 'INSERT INTO acquisition_geometry (data, ds_id) VALUES (%s, %s)'
-    ACQ_GEOMETRY_DEL = 'DELETE FROM acquisition_geometry WHERE ds_id = %s'
+    ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
+    ACQ_GEOMETRY_UPD = 'UPDATE dataset SET acq_geometry = %s WHERE id = %s'
 
     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
                  metadata=None, config=None, status=DatasetStatus.NEW):
@@ -95,14 +94,11 @@ class Dataset(object):
     def get_acq_geometry(self, db):
         r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, self.id)
         if not r:
-            raise SMError('MS acquisition geometry is not stored for dataset: {}'.format(self.id))
+            raise UnknownDSID('Dataset does not exist: {}'.format(self.id))
         return r[0]
 
     def save_acq_geometry(self, db, acq_geometry):
-        r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, self.id)
-        if r:
-            db.alter(Dataset.ACQ_GEOMETRY_DEL, self.id)
-        db.insert(self.ACQ_GEOMETRY_INS, [(json.dumps(acq_geometry), self.id)])
+        db.alter(self.ACQ_GEOMETRY_UPD, json.dumps(acq_geometry), self.id)
 
     def to_queue_message(self):
         msg = {

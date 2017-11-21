@@ -82,7 +82,7 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
         assert rows[0] == (ds_id, test_ds_name, input_path, upload_dt, DatasetStatus.FINISHED)
 
         # ms acquisition geometry asserts
-        rows = db.select("SELECT data from acquisition_geometry")
+        rows = db.select("SELECT acq_geometry from dataset")
         assert len(rows) == 1
         assert rows[0][0] == ds.get_acq_geometry(db)
         assert rows[0][0] == {
@@ -182,13 +182,10 @@ def test_search_job_imzml_example_annotation_job_fails(get_compute_img_metrics_m
         job = SearchJob()
         ds = Dataset.load(db, ds_id)
 
-        try:
-            ds.get_acq_geometry(db)
-        except SMError as e:
-            row = db.select_one('SELECT data FROM acquisition_geometry')
-            assert len(row) == 0
-        else:
-            raise AssertionError('SMError should be raised')
+        acq_geom = ds.get_acq_geometry(db)
+        assert acq_geom is None
+        row = db.select_one('SELECT acq_geometry FROM dataset WHERE acq_geometry IS NOT NULL')
+        assert len(row) == 0
 
         job.run(ds)
     except JobFailedError as e:
