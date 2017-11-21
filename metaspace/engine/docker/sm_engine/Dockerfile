@@ -15,6 +15,7 @@ RUN apt-get update && \
       bzip2 \
       git \
       postgresql-client \
+      libglib2.0-0 \
     && apt-get clean
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 

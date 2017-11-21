@@ -50,16 +50,15 @@ DATASET_SEL = '''SELECT
     d.name,
     d.config,
     d.metadata,
-    COALESCE(ag.data, '{}'),
+    d.acq_geometry,
     d.input_path,
     d.upload_dt,
     d.status,
     to_char(max(j.finish), 'YYYY-MM-DD HH24:MI:SS')
 FROM dataset AS d
     LEFT JOIN job AS j ON j.ds_id = d.id
-    LEFT JOIN acquisition_geometry AS ag ON ag.ds_id = d.id
 WHERE d.id = %s
-GROUP BY d.id, ag.id
+GROUP BY d.id
 '''
 
 DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_acq_geometry', 'ds_input_path',

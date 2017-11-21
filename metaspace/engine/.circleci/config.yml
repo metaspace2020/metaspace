@@ -5,7 +5,7 @@ jobs:
       # includes:
       #   - miniconda with all packages required for sm-engine
       #   - pyspark installation
-      - image: lomereiter/sm_engine:0.7.1-py3
+      - image: iprotsyuk/sm-engine
 
       - image: postgres:9.5-alpine
         environment:
