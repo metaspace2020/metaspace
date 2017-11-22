@@ -3,17 +3,18 @@ Easy access to datasets by downloading them from S3.
 Works best on Amazon EC2 (eu-west-1 region).
 
 Requirements:
- - cpyMSpec, cpyImagingMSpec, sm_annotation_utils
+ - cpyMSpec, cpyImagingMSpec>=0.3.0, sm_annotation_utils
  - installed boto3, .aws/credentials file
  - installed ims-cpp conda package (conda install -c lomereiter ims-cpp)
 """
 
-from cpyImagingMSpec import ImzbReader
+from cpyImagingMSpec import ImzbReader, convert_imzml_to_imzb
 from cpyMSpec import InstrumentModel, isotopePattern
 
 import boto3
 import numpy as np
 import json
+from tempfile import gettempdir
 
 import os
 
@@ -41,8 +42,7 @@ def _download(sm_instance, ds_id, tmp_dir, max_size):
     if imzml_fn is not None:
         imzb_fn = imzml_fn[:-5] + "imzb"
         if not os.path.exists(imzb_fn):
-            # TODO: throw an error if the tool is unavailable
-            os.system("ims convert " + imzml_fn + " " + imzb_fn)
+            convert_imzml_to_imzb(imzml_fn, imzb_fn)
     return imzml_fn, imzb_fn
 
 class LocalDataset(object):
@@ -56,7 +56,7 @@ class LocalDataset(object):
     * runs DBSCAN clustering algorithm on centroid m/z values.
     """
 
-    def __init__(self, sm_instance, ds_name=None, ds_id=None, tmp_dir="/tmp", max_size=100e9):
+    def __init__(self, sm_instance, ds_name=None, ds_id=None, tmp_dir=gettempdir(), max_size=100e9):
         ds_id = ds_id or sm_instance.dataset(name=ds_name).id
         ds_name = ds_name or sm_instance.dataset(id=ds_id).name
         self.imzml_fn, self.imzb_fn = _download(sm_instance, ds_id, tmp_dir, max_size)
