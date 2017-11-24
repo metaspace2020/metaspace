@@ -49,6 +49,7 @@ jspm_packages
 .yarn-integrity
 
 .idea/
+.vscode/
 config/*.js
 !config/test.js
 dist/

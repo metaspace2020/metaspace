@@ -8,7 +8,7 @@ const chai = require('chai'),
   chaiHttp = require('chai-http'),
   fs = require('fs');
 
-const {logger, pg} = require('../utils.js'),
+const {logger, db} = require('../utils.js'),
   {createImgServerAsync, IMG_TABLE_NAME} = require('../imageUpload');
 
 chai.use(chaiHttp);
@@ -43,7 +43,7 @@ describe('imageUploadTest with fs and db backends', () => {
         server.close(() => {
           logger.debug('Iso image server closed');
           if (cs === 'db') {
-            pg.schema.dropTableIfExists(IMG_TABLE_NAME)
+            db.schema.dropTableIfExists(IMG_TABLE_NAME)
               .then(() => done())
               .catch((e) => {
                 logger.error(e.message);

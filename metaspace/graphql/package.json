@@ -16,6 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "amqplib": "^0.5.1",
+    "apollo-server-express": "1.2.0",
     "aws-sdk": "^2.13.0",
     "bluebird": "3.5.0",
     "body-parser": "^1.15.2",
@@ -24,9 +25,9 @@
     "cors": "^2.8.1",
     "elasticsearch": "^12.1.0",
     "express": "^4.14.0",
+    "get-pixels": "^3.3.0",
     "graphql": "^0.10.5",
     "graphql-errors": "^2.1.0",
-    "apollo-server-express": "1.2.0",
     "graphql-subscriptions": "^0.4.3",
     "graphql-tools": "^0.11.0",
     "jsondiffpatch": "^0.2.4",
@@ -39,11 +40,11 @@
     "node-slack": "0.0.7",
     "pg": "^6.1.0",
     "pg-promise": "^5.4.7",
+    "promise": "latest",
     "s3": "^4.4.0",
     "sprintf-js": "^1.0.3",
     "subscriptions-transport-ws": "^0.7.3",
-    "winston": "^2.3.1",
-    "promise": "latest"
+    "winston": "^2.3.1"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
