@@ -8,7 +8,7 @@ const config = require('config'),
    esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {generateProcessingConfig, metadataChangeSlackNotify,
-    metadataUpdateFailedSlackNotify, logger, pubsub, pg} = require("./utils.js");
+    metadataUpdateFailedSlackNotify, logger, pubsub, db} = require("./utils.js");
 
 function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
   // wait until updates are reflected in ES so that clients don't have to care
@@ -49,7 +49,7 @@ queue.then(function(conn) {
 }).catch(console.warn);
 
 function checkPermissions(datasetId, payload) {
-  return pg.select().from('dataset').where('id', '=', datasetId)
+  return db.select().from('dataset').where('id', '=', datasetId)
     .then(records => {
       if (records.length == 0)
         throw new UserError(`No dataset with specified id: ${datasetId}`);
@@ -66,11 +66,11 @@ function checkPermissions(datasetId, payload) {
 }
 
 function baseDatasetQuery() {
-  return pg.from(function() {
-    this.select(pg.raw('dataset.id as id'),
+  return db.from(function() {
+    this.select(db.raw('dataset.id as id'),
                 'name',
-                pg.raw('max(finish) as last_finished'),
-                pg.raw('dataset.status as status'),
+                db.raw('max(finish) as last_finished'),
+                db.raw('dataset.status as status'),
                 'metadata', 'config', 'input_path')
         .from('dataset').leftJoin('job', 'dataset.id', 'job.ds_id')
         .groupBy('dataset.id').as('tmp');
@@ -125,7 +125,7 @@ const Resolvers = {
 
     metadataSuggestions(_, { field, query, limit }) {
       let f = new SubstringMatchFilter(field, {}),
-          q = pg.select(pg.raw(f.pgField + " as field")).select().from('dataset')
+          q = db.select(db.raw(f.pgField + " as field")).select().from('dataset')
                 .groupBy('field').orderByRaw('count(*) desc').limit(limit);
       return f.pgFilter(q, query).orderBy('field', 'asc')
               .then(results => results.map(row => row['field']));
@@ -137,7 +137,7 @@ const Resolvers = {
             p2 = schemaPath + '.Surname',
             f1 = getPgField(p1),
             f2 = getPgField(p2);
-      const q = pg.distinct(pg.raw(`${f1} as name, ${f2} as surname`)).select().from('dataset')
+      const q = db.distinct(db.raw(`${f1} as name, ${f2} as surname`)).select().from('dataset')
                   .whereRaw(`${f1} ILIKE ? OR ${f2} ILIKE ?`, ['%' + query + '%', '%' + query + '%']);
       logger.info(q.toString());
       return q.orderBy('name', 'asc').orderBy('surname', 'asc')
@@ -158,7 +158,7 @@ const Resolvers = {
 
     opticalImageUrl(_, {datasetId, zoom}) {
       const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
-      return pg.select().from('optical_image')
+      return db.select().from('optical_image')
                .where('ds_id', '=', datasetId)
                .where('zoom', '=', intZoom)
                .then(records => {
@@ -173,7 +173,7 @@ const Resolvers = {
     },
 
     rawOpticalImage(_, {datasetId}) {
-      return pg.select().from('dataset')
+      return db.select().from('dataset')
         .where('id', '=', datasetId)
         .then(records => {
           if (records.length > 0)
@@ -393,7 +393,7 @@ const Resolvers = {
 
         return checkPermissions(datasetId, payload)
           .then(() => {
-            return pg.select().from('dataset').where('id', '=', datasetId)
+            return db.select().from('dataset').where('id', '=', datasetId)
               .then(records => {
                 const ds = records[0];
                 const body = JSON.stringify({
@@ -443,7 +443,7 @@ const Resolvers = {
               priority: priority
             });
 
-            return pg.select().from('dataset').where('id', '=', datasetId)
+            return db.select().from('dataset').where('id', '=', datasetId)
               .then(records => {
                 const oldMetadata = records[0].metadata;
                 metadataChangeSlackNotify(user, datasetId, oldMetadata, newMetadata);
