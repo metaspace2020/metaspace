@@ -96,6 +96,8 @@
        visibleImageHeight: 0, // in CSS pixels
        visibleImageWidth: 0,
        parentDivWidth: 0,
+       imageWidth: 0,
+       imageHeight: 0,
 
        dragStartX: 0,
        dragStartY: 0,
@@ -121,14 +123,6 @@
      window.removeEventListener('resize', this.onResize);
    },
    computed: {
-     imageWidth() {
-       return this.image.naturalWidth * this.scaleFactor;
-     },
-
-     imageHeight() {
-       return this.image.naturalHeight * this.scaleFactor;
-     },
-
      imageStyle() {
        // assume the allocated screen space has width > height
        if (!this.isLCMS) {
@@ -284,6 +278,8 @@
              scale2 = this.maxHeight / this.image.naturalHeight,
              scaleFactor = Math.min(scale1, scale2);
        this.scaleFactor = scaleFactor;
+       this.imageWidth = this.image.naturalWidth * this.scaleFactor;
+       this.imageHeight = this.image.naturalHeight * this.scaleFactor;
      },
 
      removeHotspots(imageData, q) {
