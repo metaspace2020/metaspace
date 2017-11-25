@@ -81,8 +81,7 @@
           datasetId: this.annotation.dataset.id
          }
        },
-       // for some reason single call of `JSON.parse` returns string
-       update: (data: any) => JSON.parse(JSON.parse(data['dataset']['acquisitionGeometry']))
+       update: (data: any) => JSON.parse(data['dataset']['acquisitionGeometry'])
      }
    }
  })

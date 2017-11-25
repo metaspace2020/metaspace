@@ -1,50 +1,42 @@
 <template>
   <div ref="xicChart" style="height: 300px;">
-    <canvas id="intensity-image" hidden>
-    </canvas>
   </div>
 </template>
 
 <script>
  import * as d3 from 'd3';
- import {legendColor} from 'd3-svg-legend';
  import {HOST_NAME, PORT} from '../../conf';
 
- function imageToIntensity(intensityImgUrl, maxIntensity, canvasId) {
+ function imageToIntensity(intensityImgUrl, maxIntensity) {
    return new Promise((resolve, reject) => {
-     // IE 11
-     if (window.navigator.userAgent.includes("Trident"))
-       return;
-
-     let intensityImage = new Image();
-     intensityImage.onload = function() {
-        const drawingContext = document.getElementById(canvasId).getContext('2d');
-        drawingContext.drawImage(this, 0, 0, this.width, this.height);
-        const imgData = drawingContext.getImageData(0, 0, this.width, this.height).data;
-
-        let intensities = [];
-        for (let i = 0; i < imgData.length; i += 4) {
-            if (imgData[i] > 0) {
-              console.log(imgData[i]);
-            } else if (imgData[i + 1] > 0 || imgData[i + 2] > 0) {
-              console.log(imgData.slice(i, i + 3));
-            }
-            intensities.push(maxIntensity * imgData[i] / 255);
-        }
-        resolve(intensities);
-     }.bind(intensityImage);
-     intensityImage.onerror = () => reject();
-     intensityImage.crossOrigin = "Anonymous";
-     intensityImage.src = `http://${HOST_NAME}${intensityImgUrl}`;
+     const xhr = new XMLHttpRequest();
+     xhr.open("GET", `http://${HOST_NAME}${intensityImgUrl}`);
+     xhr.overrideMimeType('application/octet-stream');
+     xhr.responseType = 'arraybuffer';
+     xhr.onload = () => {
+       if (xhr.status == 200) {
+         let pixelArray = new Uint8Array(xhr.response);
+         let result = new Float32Array(pixelArray.length);
+         for (let i = 0, pixCount = pixelArray.length; i < pixCount; ++i) {
+           result[i] = maxIntensity * pixelArray[i] / 255;
+         }
+         resolve(result);
+       } else {
+         reject(xhr.statusText);
+       }
+     };
+     xhr.onerror = () => reject(xhr.statusText);
+     xhr.send();
    });
  }
 
- function plotChart(intensityImgUrl, maxAbsoluteIntensity, timeSeq, timeUnitName, element) {
+ function plotChart(intensities, timeSeq, timeUnitName, element) {
    if (!element) {
      return;
    }
-
-   imageToIntensity(intensityImgUrl, maxAbsoluteIntensity, 'intensity-image').then((intensities) => {
+   // IE 11
+   if (window.navigator.userAgent.includes("Trident"))
+     return;
 
    d3.select(element).select('svg').remove();
 
@@ -148,7 +140,6 @@
    }
 
    update();
-   });
  }
 
  export default {
@@ -169,7 +160,12 @@
        if (this.intensityImgUrl && this.acquisitionGeometry) {
          const timeSeq = this.acquisitionGeometry.acquisition_grid.coord_list.map((pixel) => pixel[0]);
          const timeUnitName = this.acquisitionGeometry.length_unit;
-         plotChart(this.intensityImgUrl, this.maxAbsoluteIntensity, timeSeq, timeUnitName, this.$refs.xicChart);
+
+         imageToIntensity(this.intensityImgUrl, this.maxAbsoluteIntensity).then((intensities) => {
+           plotChart(intensities, timeSeq, timeUnitName, this.$refs.xicChart);
+         }).catch((e) => {
+           console.log(e);
+         });
        }
      }
    }

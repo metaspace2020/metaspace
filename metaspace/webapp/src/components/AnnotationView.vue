@@ -54,50 +54,6 @@
                       :acquisitionGeometry="msAcqGeometry">
             </xic-plot>
           </el-row>
-<!--
-          <div class="main-ion-image-container">
-            <image-loader :src="annotation.isotopeImages[0].url"
-                          :colormap="colormap"
-                          :max-height=500
-                          id="annot-view-main-image-loader"
-                          ref="imageLoader"
-                          v-bind="imageLoaderSettings"
-                          @zoom="onImageZoom"
-                          @move="onImageMove"
-                          class="ion-image principal-peak-image">
-            </image-loader>
-
-            <div class="colorbar-container">
-              <div v-if="opticalImageUrl">
-                Opacity:
-                <el-slider
-                    vertical
-                    height="150px"
-                    v-model="opacity"
-                    :min=0
-                    :max=1
-                    :step=0.01
-                    style="margin: 10px 0px 30px 0px;"
-                >
-                </el-slider>
-              </div>
-
-              {{ annotation.isotopeImages[0].maxIntensity.toExponential(2) }}
-              <colorbar style="width: 20px; height: 160px; align-self: center;"
-                        :direction="colorbarDirection" :map="colormapName"
-                        slot="reference">
-              </colorbar>
-              {{ annotation.isotopeImages[0].minIntensity.toExponential(2) }}
-
-              <div class="annot-view__image-download" v-if="browserSupportsDomToImage">
-                <img src="../assets/download-icon.png"
-                     width="32px"
-                     title="Save visible region in PNG format"
-                     @click="saveImage"/>
-              </div>
-            </div>
-          </div>
-          -->
         </el-collapse-item>
 
         <el-collapse-item :title="compoundsTabLabel" name="compounds">
@@ -154,12 +110,10 @@
                     :key="idx">
               <div class="small-peak-image">
                 {{ img.mz.toFixed(4) }}<br/>
-                <image-loader :src="img.url"
-                              :colormap="colormap"
-                              :max-height=250
-                              v-bind="imageLoaderSettings"
-                              class="ion-image">
-                </image-loader>
+                <xic-plot :intensityImgUrl="img.url"
+                          :maxAbsoluteIntensity="img.maxIntensity"
+                          :acquisitionGeometry="msAcqGeometry">
+                </xic-plot>
               </div>
             </el-col>
           </el-row>
