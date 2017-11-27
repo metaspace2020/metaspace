@@ -49,8 +49,7 @@
           </span>
 
           <el-row id="xic-plot-container">
-            <xic-plot :intensityImgUrl="annotation.isotopeImages[0].url"
-                      :maxAbsoluteIntensity="annotation.isotopeImages[0].maxIntensity"
+            <xic-plot :intensityImgs="[annotation.isotopeImages[0]]"
                       :acquisitionGeometry="msAcqGeometry">
             </xic-plot>
           </el-row>
@@ -104,18 +103,23 @@
             <span>{{ annotation.rhoChaos.toFixed(3) }}</span>
             (&rho;<sub>chaos</sub>)
           </el-row>
+          <el-row class="diagnostics-section-title">
+            <span>Isotope chromatographic profiles</span>
+          </el-row>
           <el-row id="isotope-images-container">
             <el-col :xs="24" :sm="12" :md="12" :lg="6"
                     v-for="(img, idx) in annotation.isotopeImages.filter(img => img.url !== null)"
                     :key="idx">
               <div class="small-peak-image">
-                {{ img.mz.toFixed(4) }}<br/>
-                <xic-plot :intensityImgUrl="img.url"
-                          :maxAbsoluteIntensity="img.maxIntensity"
+                <i>m/z</i> {{ img.mz.toFixed(4) }}<br/>
+                <xic-plot :intensityImgs="[img]"
                           :acquisitionGeometry="msAcqGeometry">
                 </xic-plot>
               </div>
             </el-col>
+          </el-row>
+          <el-row class="diagnostics-section-title">
+            <span>Isotope integral intensity</span>
           </el-row>
           <el-row id="isotope-plot-container">
             <isotope-pattern-plot :data="peakChartData"
@@ -154,14 +158,24 @@
  }
 
  #isotope-images-container {
-   margin: 0 auto;
+   margin: 10px auto;
    text-align: left;
    font-size: 0;
-   margin-top: 10px;
+ }
+
+ .diagnostics-section-title {
+   margin: 10px auto;
+   text-align: center;
+   font-size: 16px;
+ }
+
+ #xic-plot-container {
+   font-size: 1rem;
+   text-align: center;
  }
 
  .small-peak-image {
-   font-size: 1rem;
+   font-size: 13px;
    vertical-align: top;
    padding: 0 5px 0 5px;
    text-align: center;
