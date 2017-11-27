@@ -1,23 +1,18 @@
 # sm-analytics-python
 
-Python module that provides high-level interface to [`sm-engine`](https://github.com/SpatialMetabolomics/sm-engine) installation
-
-## Objectives
-
-`sm-engine` has grown into a considerable set of services, which are at the moment:
-* PostgreSQL database
-* Elasticsearch server
-* RabbitMQ for task queueing
-* ...
-
-This package attempts to:
-* provide a layer of abstraction on top of these;
-* make this layer convenient enough to be used interactively in Jupyter notebooks
-
-It's recommended to use it in the same network where the database and ES are located, as the package is not optimized for high latency.
+Python module that provides programmatic access to a running instance of [`METASPACE`](https://github.com/METASPACE2020/) platform
 
 ## Applications
 
 * Running batch jobs
 * Exploratory analysis of submitted data
 * Quick access to things hidden from web interface (such as location of files on S3 and other metadata)
+
+## Installation
+
+You need Python 3 to use this library.
+
+`pip install git+https://github.com/metaspace2020/sm-analytics-python`
+
+## Which branch to use
+If you are trying to access annotations from the main public metaspace instance then make sure you are on branch [rel-v0.7](https://github.com/METASPACE2020/sm-analytics-python/tree/rel-v0.7/).
