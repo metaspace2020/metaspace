@@ -50,7 +50,8 @@
 
           <el-row id="xic-plot-container">
             <xic-plot :intensityImgs="[annotation.isotopeImages[0]]"
-                      :acquisitionGeometry="msAcqGeometry">
+                      :acquisitionGeometry="msAcqGeometry"
+                      :logIntensity="false">
             </xic-plot>
           </el-row>
         </el-collapse-item>
@@ -97,7 +98,7 @@
             MSM score =
             <span>{{ annotation.msmScore.toFixed(3) }}</span> =
             <span>{{ annotation.rhoSpatial.toFixed(3) }}</span>
-            (&rho;<sub>spatial</sub>) &times;
+            (&rho;<sub>chromatography</sub>) &times;
             <span>{{ annotation.rhoSpectral.toFixed(3) }}</span>
             (&rho;<sub>spectral</sub>) &times;
             <span>{{ annotation.rhoChaos.toFixed(3) }}</span>
@@ -107,16 +108,10 @@
             <span>Isotope chromatographic profiles</span>
           </el-row>
           <el-row id="isotope-images-container">
-            <el-col :xs="24" :sm="12" :md="12" :lg="6"
-                    v-for="(img, idx) in annotation.isotopeImages.filter(img => img.url !== null)"
-                    :key="idx">
-              <div class="small-peak-image">
-                <i>m/z</i> {{ img.mz.toFixed(4) }}<br/>
-                <xic-plot :intensityImgs="[img]"
-                          :acquisitionGeometry="msAcqGeometry">
-                </xic-plot>
-              </div>
-            </el-col>
+            <xic-plot :intensityImgs="annotation.isotopeImages"
+                      :acquisitionGeometry="msAcqGeometry"
+                      :logIntensity="true">
+            </xic-plot>
           </el-row>
           <el-row class="diagnostics-section-title">
             <span>Isotope integral intensity</span>
@@ -159,8 +154,8 @@
 
  #isotope-images-container {
    margin: 10px auto;
-   text-align: left;
-   font-size: 0;
+   text-align: center;
+   font-size: 13px;
  }
 
  .diagnostics-section-title {
@@ -171,13 +166,6 @@
 
  #xic-plot-container {
    font-size: 1rem;
-   text-align: center;
- }
-
- .small-peak-image {
-   font-size: 13px;
-   vertical-align: top;
-   padding: 0 5px 0 5px;
    text-align: center;
  }
 
