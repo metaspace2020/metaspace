@@ -105,7 +105,7 @@
             (&rho;<sub>chaos</sub>)
           </el-row>
           <el-row class="diagnostics-section-title">
-            <span>Isotope chromatographic profiles</span>
+            <span>Isotope XICs</span>
           </el-row>
           <el-row id="isotope-images-container">
             <xic-plot :intensityImgs="annotation.isotopeImages"

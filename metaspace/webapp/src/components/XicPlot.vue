@@ -144,7 +144,7 @@
    }
 
    svg.append('text')
-      .text('Extracted ion intensity').style('text-anchor', 'middle')
+      .text(`Extracted ion intensity${logIntensity ? ' (log)': ''}`).style('text-anchor', 'middle')
       .attr('transform', `translate(-30, ${height/2}) rotate(-90)`);
 
    svg.append('text')
@@ -214,7 +214,7 @@
    },
    methods: {
      reloadPlot() {
-       if (this.intensityImgs && this.acquisitionGeometry && this.$refs.xicChart.clientHeight) {
+       if (this.intensityImgs && this.acquisitionGeometry && this.$refs.xicChart && this.$refs.xicChart.clientHeight) {
          Promise.all(this.intensityImgs.map((intImg => imageToIntensity(intImg.url, intImg.maxIntensity))))
          .then((intensities) => {
            this.currentIntensities = intensities;
