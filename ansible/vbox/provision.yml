@@ -11,6 +11,7 @@
 
     - role: elasticsearch
       become: yes
+      tags: [elasticsearch]
 
     - role: kibana
       become: yes
@@ -32,6 +33,7 @@
       tags: [sm_api]
 
     - role: nodejs
+      tags: [nodejs]
 
     - role: sm_graphql
       tags: [sm_graphql]
@@ -46,14 +48,6 @@
   vars:
     spark_master_host: local[*]
     spark_slave_ips: [localhost]
-    venv: "{{ miniconda_prefix }}"
-    conda_env: "{{ miniconda_env.name }}"
-    spark_usr_dir: "{{ spark_home }}"
-    sm_web_app_url: "{{ sm_webapp_url }}"
-    es_host: "{{ sm_es_host }}"
-    es_port: "{{ sm_es_port }}"
-    es_user: "{{ sm_es_user }}"
-    es_password: "{{ sm_es_password }}"
 
   roles:
     - role: spark
@@ -64,4 +58,4 @@
       become: yes
 
     - role: sm_spark_master
-      tags: [sm_spark_master]
+  tags: [sm-engine]

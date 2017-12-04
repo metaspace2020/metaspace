@@ -1,14 +1,22 @@
 ---
 
+- name: SM master,slave instances basic configuration
+  hosts: master, slave
+  user: ubuntu
+  gather_facts: no
+
+  roles:
+    - role: base
+      become: yes
+      swapsize: 16384
+  tags: [base, master, slave]
+
 - name: SM spark slave instances configuration
   hosts: slave
   user: ubuntu
   gather_facts: yes
 
   roles:
-    - role: base
-      become: yes
-
     - role: spark
       become: yes
       spark_env_extras: "{{ spark_env_extras_slave }}"
@@ -19,8 +27,16 @@
       spark_usr_dir: "{{ spark_home }}"
 
     - role: miniconda
-  tags: ["slave"]
+  tags: [slave]
 
+- name: Collect the Web server facts
+  hosts: web
+  user: ubuntu
+
+  tasks:
+    - name: Gather AWS instance facts
+      action: ec2_metadata_facts
+  tags: [always]
 
 - name: SM spark master instance configuration
   hosts: master
@@ -37,8 +53,6 @@
       with_items: "{{ groups['slave'] }}"
 
   roles:
-    - role: base
-
     - role: spark
       become: yes
       spark_env_extras: "{{ spark_env_extras_master }}"
@@ -66,4 +80,4 @@
       conda_env: "{{ miniconda_env.name }}"
       spark_usr_dir: "{{ spark_home }}"
       sm_web_app_url: "{{ sm_webapp_url }}"
-  tags: ["master"]
+  tags: [master]

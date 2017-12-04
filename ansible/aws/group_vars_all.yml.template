@@ -153,17 +153,32 @@ spark_version: "2.1.1-bin-hadoop2.7"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
 spark_user: "ubuntu"
-spark_master_elk_es_ingest_node_pipeline_id: sm_engine_log_extract
-spark_master_filebeat_version: "{{ elk_version }}"
-spark_master_filebeat_prospectors:
-  - input_type: log
-    paths: ["{{ sm_home }}/logs/sm-engine.log"]
-    document_type: "sm_engine"
-    multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
-  - input_type: log
-    paths: ["{{ sm_home }}/logs/sm-daemon.log"]
-    document_type: "sm_daemon"
-    multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
+spark_master_filebeat:
+  version: "{{ elk_version }}"
+  es_host: "{{ elk_private_ip }}"
+  es_user: elastic
+  es_password: CopySourceIfNoneMatch16
+  prospectors:
+    - input_type: log
+      paths: ["{{ sm_home }}/logs/sm-engine.log"]
+      multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
+    - input_type: log
+      paths: ["{{ sm_home }}/logs/sm-daemon.log"]
+      multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
+  ingest_node_pipeline_id: sm_engine_log_extract
+  ingest_node_pipeline:
+    description: "Ingest node description for the log messages dispatched by filebeat"
+    processors:
+      - grok:
+          field: "message"
+          patterns:
+            - "%{TIMESTAMP_ISO8601:timestamp} - %{LOGLEVEL:level} - %{NOTSPACE:component} - %{NOTSPACE:file_line} -%{GREEDYDATA:msg}"
+          ignore_missing: true
+      - date:
+          field: "timestamp"
+          timezone: "{{ time_zone_name }}"
+          formats:
+            - "yyyy-MM-dd HH:mm:ss,SSS"
 
 elk_private_ip:
 elk_es_user: elastic
