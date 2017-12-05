@@ -144,7 +144,7 @@
    }
 
    svg.append('text')
-      .text(`Extracted ion intensity${logIntensity ? ' (log)': ''}`).style('text-anchor', 'middle')
+      .text(`Ion intensity${logIntensity ? ' (log)': ''}`).style('text-anchor', 'middle')
       .attr('transform', `translate(-30, ${height/2}) rotate(-90)`);
 
    svg.append('text')

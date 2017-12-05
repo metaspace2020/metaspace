@@ -23,29 +23,6 @@
             <span style="padding-right: 20px">
               Extracted ion chromatogram
             </span>
-
-            <el-popover placement="left" trigger="click">
-              <ion-image-settings></ion-image-settings>
-
-              <div slot="reference" @click="$event.stopPropagation()">
-                <i class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i>
-              </div>
-            </el-popover>
-
-            <span>
-              <img class="reset-image-icon"
-                   src="../assets/reset-image-icon.png"
-                   title="Reset image zoom and offsets"
-                   @click="resetViewport"/>
-            </span>
-
-            <span v-if="opticalImageUrl">
-              <img class="show-optical-image-icon"
-                   :class="showOpticalImage ? '' : 'png-icon-disabled'"
-                   src="../assets/microscope-icon.png"
-                   title="Show/hide optical image"
-                   @click="toggleOpticalImage"/>
-            </span>
           </span>
 
           <el-row id="xic-plot-container">
