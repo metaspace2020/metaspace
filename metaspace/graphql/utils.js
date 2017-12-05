@@ -144,8 +144,7 @@ const dbConfig = () => {
 let db = require('knex')({
   client: 'pg',
   connection: dbConfig(),
-  searchPath: 'knex,public',
-  debug: true
+  searchPath: 'knex,public'
 });
 
 module.exports = {
