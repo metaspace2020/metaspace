@@ -14,6 +14,7 @@ exports.ADMIN_EMAILS = "{{ sm_webapp_admin_emails }}";
 
 exports.AWS_ACCESS_KEY_ID = "{{ sm_webapp_aws_access_key_id }}";
 exports.AWS_SECRET_ACCESS_KEY = "{{ sm_webapp_aws_secret_access_key }}";
+exports.AWS_REGION = "{{ sm_webapp_aws_region }}";
 
 // either 's3' or the destination directory
 // must match 'storage' value in src/clientConfig.js
