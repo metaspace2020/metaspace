@@ -11,7 +11,7 @@
  function imageToIntensity(intensityImgUrl, maxIntensity) {
    return new Promise((resolve, reject) => {
      const xhr = new XMLHttpRequest();
-     xhr.open("GET", `http://${HOST_NAME}${intensityImgUrl}`);
+     xhr.open("GET", intensityImgUrl);
      xhr.overrideMimeType('application/octet-stream');
      xhr.responseType = 'arraybuffer';
      xhr.onload = () => {
