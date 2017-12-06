@@ -20,8 +20,6 @@ config.img_upload.categories = {iso_image: {type: 'image/png', path: '/iso_image
 config.services = {};
 /* Molecular database service, used only for internal purposes (peakChartData query) */
 config.services.moldb_service_host = "localhost";
-/* Public IP of the server that hosts molecule images */
-config.services.mol_image_server_host = "localhost";
 config.services.sm_engine_api_host = "localhost";
 
 config.db = {};
