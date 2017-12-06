@@ -37,7 +37,9 @@ class SMDaemon(object):
         return res or ('', {})
 
     def _send_email(self, email, subj, body):
-        ses = boto3.client('ses', 'eu-west-1')
+        cred_dict = dict(aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+                         aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
+        ses = boto3.client('ses', 'eu-west-1', **cred_dict)
         resp = ses.send_email(
             # Source='metaspace2020@gmail.com',
             Source='contact@metaspace2020.eu',
