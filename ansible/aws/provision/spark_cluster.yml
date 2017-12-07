@@ -64,16 +64,16 @@
 
     - role: supervisor
 
-#    - role: filebeat
-#      become: yes
-#      filebeat_prospectors: "{{ spark_master_filebeat.prospectors }}"
-#      filebeat_version: "{{ spark_master_filebeat.version }}"
-#      es_host: "{{ spark_master_filebeat.es_host }}"
-#      es_user: "{{ spark_master_filebeat.es_user }}"
-#      es_password: "{{ spark_master_filebeat.es_password }}"
-#     ingest_node_pipeline_id: "{{ spark_master_filebeat.ingest_node_pipeline_id }}"
-#      ingest_node_pipeline: "{{ spark_master_filebeat.ingest_node_pipeline }}"
-#      tags: [filebeat]
+    - role: filebeat
+      become: yes
+      filebeat_prospectors: "{{ spark_master_filebeat.prospectors }}"
+      filebeat_version: "{{ spark_master_filebeat.version }}"
+      es_host: "{{ spark_master_filebeat.es_host }}"
+      es_user: "{{ spark_master_filebeat.es_user }}"
+      es_password: "{{ spark_master_filebeat.es_password }}"
+      ingest_node_pipeline_id: "{{ spark_master_filebeat.ingest_node_pipeline_id }}"
+      ingest_node_pipeline: "{{ spark_master_filebeat.ingest_node_pipeline }}"
+      tags: [filebeat]
 
     - role: sm_spark_master
       venv: "{{ miniconda_prefix }}"

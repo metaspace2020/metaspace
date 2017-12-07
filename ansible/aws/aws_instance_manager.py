@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 from subprocess import check_output
 from os import path
+from sys import version_info
 
 
 class AWSInstManager(object):
@@ -194,8 +195,10 @@ if __name__ == '__main__':
     elif args.action == 'stop':
         aws_inst_man.stop_all_instances(components)
 
-    cmd = '{}/envs/{}/bin/python update_inventory.py --stage {}'.format(conf['miniconda_prefix'],
-                                                                        conf['miniconda_env']['name'],
-                                                                        args.stage).split(' ')
-#   cmd = 'python update_inventory.py --stage {}'.format(args.stage).split(' ')
+    if version_info[0] < 3:
+        cmd = '{}/envs/{}/bin/python update_inventory.py --stage {}'.format(conf['miniconda_prefix'],
+                                                                            conf['miniconda_env']['name'],
+                                                                            args.stage).split(' ')
+    else:
+        cmd = 'python update_inventory.py --stage {}'.format(args.stage).split(' ')
     print(check_output(cmd, universal_newlines=True))
