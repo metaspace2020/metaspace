@@ -94,7 +94,6 @@ sm_graphql_slack_webhook_url:
 sm_graphql_slack_channel:
 sm_graphql_jwt_secret: secret
 sm_graphql_public_url: "http://{{ web_host_external_address }}/graphql"
-sm_graphql_mol_image_host: "{{ web_host_external_address }}"
 sm_graphql_img_upload_host: "{{ web_host_external_address }}"
 sm_graphql_moldb_service_host: "{{ web_host_internal_address }}/mol_db"
 sm_graphql_database_password: "{{ sm_postgres_password }}"

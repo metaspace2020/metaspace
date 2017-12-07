@@ -128,7 +128,10 @@ sm_webapp_branch: rel-v0.8
 sm_webapp_port: 8082
 sm_webapp_cookie_secret:
 sm_webapp_admin_emails: [admin@mail.de]
-sm_webapp_aws_region: "{{ aws_region }}"
+# The region should satisfy the following requirements:
+#  - AWS SES endpoints are available there
+#  - AWS authentication protocol V2 is supported
+sm_webapp_aws_region: "eu-west-1"
 sm_webapp_aws_access_key_id:
 sm_webapp_aws_secret_access_key:
 sm_webapp_s3_bucket: BUCKET-NAME-UPLOAD  # just plain bucket name

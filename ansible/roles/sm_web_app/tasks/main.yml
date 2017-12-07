@@ -10,7 +10,7 @@
 - name: Clone sm-web-app git repository
   git:
     dest: "{{ sm_webapp_home }}"
-    repo: https://github.com/METASPACE2020/sm-webapp.git
+    repo: https://github.com/iprotsyuk/sm-webapp.git
     update: yes
     force: yes
     recursive: yes
