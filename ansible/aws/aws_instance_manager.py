@@ -194,8 +194,8 @@ if __name__ == '__main__':
     elif args.action == 'stop':
         aws_inst_man.stop_all_instances(components)
 
-#    cmd = '{}/envs/{}/bin/python update_inventory.py --stage {}'.format(conf['miniconda_prefix'],
-#                                                                        conf['miniconda_env']['name'],
-#                                                                        args.stage).split(' ')
-    cmd = 'python update_inventory.py --stage {}'.format(args.stage).split(' ')
+    cmd = '{}/envs/{}/bin/python update_inventory.py --stage {}'.format(conf['miniconda_prefix'],
+                                                                        conf['miniconda_env']['name'],
+                                                                        args.stage).split(' ')
+#   cmd = 'python update_inventory.py --stage {}'.format(args.stage).split(' ')
     print(check_output(cmd, universal_newlines=True))
