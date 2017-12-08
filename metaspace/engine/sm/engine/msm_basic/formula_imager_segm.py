@@ -131,10 +131,9 @@ def define_mz_segments(spectra, sf_peak_df, ppm):
         spectra_sample = spectra.takeSample(withReplacement=False, num=n)
     _check_spectra_quality(spectra_sample)
 
-#    peaks_per_sp = max(1, int(np.mean([mzs.shape[0] for (sp_id, mzs, ints) in spectra_sample])))
-#    plan_mz_segm_n = (spectra_n * peaks_per_sp) // 10**6  # 1M peaks per segment
-#    plan_mz_segm_n = np.clip(plan_mz_segm_n, 32, 2048)
-    plan_mz_segm_n = 1
+    peaks_per_sp = max(1, int(np.mean([mzs.shape[0] for (sp_id, mzs, ints) in spectra_sample])))
+    plan_mz_segm_n = (spectra_n * peaks_per_sp) // 10**6  # 1M peaks per segment
+    plan_mz_segm_n = np.clip(plan_mz_segm_n, 32, 2048)
 
     mz_grid, workload_per_mz, sp_workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10**4)
     mz_bounds = _define_mz_bounds(mz_grid, workload_per_mz, sp_workload_per_mz, n=plan_mz_segm_n)
