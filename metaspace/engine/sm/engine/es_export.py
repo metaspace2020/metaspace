@@ -223,7 +223,7 @@ class ESExporter(object):
         annotations = self._db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
         logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
 
-        n = 100
+        n = 30
         to_index = []
         mol_by_sf_df = self._get_mol_by_sf_df(mol_db)
         for r in annotations:
