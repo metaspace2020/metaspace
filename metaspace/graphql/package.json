@@ -24,6 +24,7 @@
     "cors": "^2.8.1",
     "elasticsearch": "^12.1.0",
     "express": "^4.14.0",
+    "fs-extra": "^4.0.3",
     "graphql": "^0.10.5",
     "graphql-errors": "^2.1.0",
     "graphql-server-express": "^0.8",
@@ -34,16 +35,16 @@
     "knex": "^0.12.6",
     "lodash": "^4.17.4",
     "moment": "^2.17.1",
-    "multer": "^1.2.1",
+    "multer": "^1.3",
     "node-fetch": "^1.6.3",
     "node-slack": "0.0.7",
     "pg": "^6.1.0",
     "pg-promise": "^5.4.7",
+    "promise": "latest",
     "s3": "^4.4.0",
     "sprintf-js": "^1.0.3",
     "subscriptions-transport-ws": "^0.7.3",
-    "winston": "^2.3.1",
-    "promise": "latest"
+    "winston": "^2.3.1"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",

@@ -6,7 +6,7 @@ const express = require('express'),
   multer = require('multer'),
   path = require('path'),
   crypto = require('crypto'),
-  fs = require('fs'),
+  fs = require('fs-extra'),
   Promise = require('promise');
 
 const {logger, pg} = require('./utils.js');
@@ -73,29 +73,55 @@ function imageProviderDBBackend(app, config) {
 
 function imageProviderFSBackend(app, config) {
   let storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, path.join(config.img_upload.iso_img_fs_path, config.img_upload.img_base_path))
+    destination: async function (req, file, cb) {
+      try {
+        let subdir = crypto.randomBytes(2).toString('hex').slice(1),  // 3 letter sub-folder name
+          dest = path.join(config.img_upload.iso_img_fs_path, config.img_upload.img_base_path, subdir);
+        await fs.ensureDir(dest);
+        cb(null, dest);
+      }
+      catch(e) {
+        logger.warn(e);
+      }
+    },
+    filename: function (req, file, cb) {
+      let fname = crypto.randomBytes(15).toString('hex').slice(1);  // 29 letter file name
+      cb(null, fname);
     }
   });
   let upload = multer({ storage });
+
+  app.get(path.join(config.img_upload.img_base_path, ':image_id'),
+    function (req, res, next) {
+      let subdir = req.params.image_id.slice(0, 3),
+        fname = req.params.image_id.slice(3);
+      req.url = path.join(config.img_upload.img_base_path, subdir, fname);
+      next();
+    });
 
   app.use(express.static(config.img_upload.iso_img_fs_path));
 
   app.post(path.join(config.img_upload.img_base_path, 'upload'), upload.single('iso_image'),
     function (req, res, next) {
-      logger.debug(req.file.originalname);
-      let image_id = req.file.filename;
+      let image_id = path.basename(req.file.destination) + req.file.filename;
+      logger.debug(req.file);
       res.status(201).json({ image_id });
     });
 
-  app.delete(path.join(config.img_upload.img_base_path, 'delete', ":img_id"),
-    function (req, res, next) {
-      const img_path = path.join(config.img_upload.iso_img_fs_path, config.img_upload.img_base_path, req.params.img_id);
-      fs.unlink(img_path, function (err) {
-        if (err)
-          logger.warn(`${err} (image id = ${req.params.img_id})`);
-      });
-      res.status(202).json();
+  app.delete(path.join(config.img_upload.img_base_path, 'delete', ':image_id'),
+    async function (req, res, next) {
+      try {
+        let subdir = req.params.image_id.slice(0, 3),
+          fname = req.params.image_id.slice(3);
+        const imgPath = path.join(config.img_upload.iso_img_fs_path,
+                                  config.img_upload.img_base_path,
+                                  subdir, fname);
+        await fs.unlink(imgPath);
+        res.status(202).json();
+      }
+      catch (e) {
+        logger.warn(`${e} (image id = ${req.params.image_id})`);
+      }
     });
 }
 
