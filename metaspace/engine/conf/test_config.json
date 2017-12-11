@@ -29,5 +29,9 @@
     "master": "local[4]",
     "executor.memory": "2g"
   },
+  "aws": {
+    "aws_access_key_id": "",
+    "aws_secret_access_key": ""
+  },
   "slack": {}
 }
