@@ -2,7 +2,7 @@ let config = {};
 
 config.port = 3011;
 config.ws_port = 5667;
-config.img_storage_port = 4201;
+config.iso_img_port = 4202;
 
 config.log = {};
 config.log.level = 'debug';

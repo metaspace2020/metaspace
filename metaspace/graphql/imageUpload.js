@@ -7,7 +7,7 @@ const express = require('express'),
   path = require('path'),
   cors = require('cors'),
   crypto = require('crypto'),
-  fs = require('fs'),
+  fs = require('fs-extra'),
   Promise = require('promise');
 
 const {logger, pg} = require('./utils.js'),
@@ -83,11 +83,31 @@ function imageProviderDBBackend(pg) {
 function imageProviderFSBackend(storageRootDir) {
   return (app, fieldName, mimeType, basePath) => {
     let storage = multer.diskStorage({
-      destination: function (req, file, cb) {
-        cb(null, path.join(storageRootDir, basePath))
+      destination: async (req, file, cb) => {
+        try {
+          let subdir = crypto.randomBytes(2).toString('hex').slice(1),  // 3 letter sub-folder name
+            dest = path.join(storageRootDir, basePath, subdir);
+          await fs.ensureDir(dest);
+          cb(null, dest);
+        }
+        catch (e) {
+          logger.warn(e);
+        }
+      },
+      filename: (req, file, cb) => {
+        let fname = crypto.randomBytes(15).toString('hex').slice(1);  // 29 letter file name
+        cb(null, fname);
       }
     });
-    let upload = multer({ storage });
+    let upload = multer({storage});
+
+    app.get(path.join(basePath, ':image_id'),
+      function (req, res, next) {
+        let subdir = req.params.image_id.slice(0, 3),
+          fname = req.params.image_id.slice(3);
+        req.url = path.join(basePath, subdir, fname);
+        next();
+      });
 
     const options = {
       setHeaders: (res) => {
@@ -98,19 +118,23 @@ function imageProviderFSBackend(storageRootDir) {
 
     app.post(path.join(basePath, 'upload'), upload.single(fieldName),
       function (req, res, next) {
-        let image_id = req.file.filename;
-        logger.debug(image_id, req.file.originalname);
-        res.status(201).json({ image_id });
+        let imageID = path.basename(req.file.destination) + req.file.filename;
+        logger.debug(req.file);
+        res.status(201).json({'image_id': imageID});
       });
 
-    app.delete(path.join(basePath, 'delete', ":img_id"),
-      function (req, res, next) {
-        const imgPath = path.join(storageRootDir, basePath, req.params.img_id);
-        fs.unlink(imgPath, function (err) {
-          if (err)
-            logger.warn(`${err} (image id = ${req.params.img_id})`);
-        });
-        res.status(202).json();
+    app.delete(path.join(basePath, 'delete', ":image_id"),
+      async (req, res, next) => {
+        try {
+          let subdir = req.params.image_id.slice(0, 3),
+            fname = req.params.image_id.slice(3);
+          const imgPath = path.join(storageRootDir, basePath, subdir, fname);
+          await fs.unlink(imgPath);
+          res.status(202).json();
+        }
+        catch (e) {
+          logger.warn(`${e} (image id = ${req.params.image_id})`);
+        }
       });
   }
 }
