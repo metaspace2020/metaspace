@@ -134,6 +134,7 @@ function imageProviderFSBackend(storageRootDir) {
         }
         catch (e) {
           logger.warn(`${e} (image id = ${req.params.image_id})`);
+          res.status(404).json()
         }
       });
   }
