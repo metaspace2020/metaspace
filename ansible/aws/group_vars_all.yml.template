@@ -180,11 +180,13 @@ spark_master_filebeat:
           formats:
             - "yyyy-MM-dd HH:mm:ss,SSS"
 
+elk_version: 5.5.2
 elk_private_ip:
-elk_es_user: elastic
-elk_es_password:
-elk_kibana_user: kibana
-elk_kibana_password:
+elk_basic_auth_users:
+  - user: elastic
+    password:
+  - user: kibana
+    password:
 
 spark_env_extras_slave:
   SPARK_WORKER_DIR: "/tmp/spark"
@@ -218,64 +220,68 @@ nginx_upstream_hosts:
     server: 127.0.0.1:9200
 
 nginx_sites:
-  - listen: 8080
-    locations:
-      - path: /
+  - name: default  # only default is supported by the role
+    servers:
+      - server_name: default;
         params:
-          - auth_basic "Private Property";
-          - auth_basic_user_file /etc/nginx/passwdfile;
-          - proxy_pass http://kibana_server;
-          - include proxy-params.conf;
-  - listen: 80
-    proxy_read_timeout: 300
-    send_timeout: 300
-    locations:
-      - path: /mol-images/
+          - listen 8080;
+        locations:
+          - path: /
+            params:
+              - auth_basic "Private Property";
+              - auth_basic_user_file /etc/nginx/passwdfile;
+              - proxy_pass http://kibana_server;
+              - include proxy-params.conf;
+      - server_name: annotate.metasp.eu annotate.metaspace2020.eu;
         params:
-          - root /var/www;
-      - path: /
+          - listen 80;
+          - rewrite ^/(.*)$ http://metaspace2020.eu/$1 permanent;
+      - server_name: metasp.eu metaspace2020.eu;
         params:
-          - proxy_pass http://web_server;
-          - client_max_body_size 5M;
-      - path: /iso_images/
+          - listen 80;
+          - proxy_read_timeout 300;
+          - send_timeout 300;
+        locations:
+          - path: /mol-images/
+            params:
+              - root /var/www;
+          - path: /
+            params:
+              - proxy_pass http://web_server;
+              - client_max_body_size 5M;
+          - path: /iso_images/
+            params:
+              - proxy_pass http://isotope_image_server/iso_images/;
+              - limit_except GET {deny all;}
+          - path: /graphql
+            params:
+              - proxy_pass http://graphql_server/graphql;
+              - include proxy-params.conf;
+          - path: /graphiql
+            params:
+              - proxy_pass http://graphql_server/graphiql;
+              - include proxy-params.conf;
+          - path: /ws
+            params:
+              - proxy_pass http://graphql_ws_server/graphql;
+              - proxy_http_version 1.1;
+              - proxy_set_header Upgrade $http_upgrade;
+              - proxy_set_header Connection "upgrade";
+              - include proxy-params.conf;
+          - path: /mol_db/
+            params:
+              - proxy_pass http://moldb_server/;
+              - include proxy-params.conf;
+      - server_name: default;
         params:
-          - proxy_pass http://isotope_image_server/iso_images/;
-          - limit_except GET {deny all;}
-      - path: /optical_images/
-        params:
-          - proxy_pass http://isotope_image_server/optical_images/;
-          - limit_except GET {deny all;}
-      - path: /raw_optical_images/
-        params:
-          - proxy_pass http://isotope_image_server/raw_optical_images/;
-          - client_max_body_size 25M;
-      - path: /graphql
-        params:
-          - proxy_pass http://graphql_server/graphql;
-          - include proxy-params.conf;
-      - path: /graphiql
-        params:
-          - proxy_pass http://graphql_server/graphiql;
-          - include proxy-params.conf;
-      - path: /ws
-        params:
-          - proxy_pass http://graphql_ws_server/graphql;
-          - proxy_http_version 1.1;
-          - proxy_set_header Upgrade $http_upgrade;
-          - proxy_set_header Connection "upgrade";
-          - include proxy-params.conf;
-      - path: /mol_db/
-        params:
-          - proxy_pass http://moldb_server/;
-          - include proxy-params.conf;
-  - listen: "{{ sm_es_port }}"
-    locations:
-      - path: /
-        params:
-        - auth_basic "Private Property";
-        - auth_basic_user_file /etc/nginx/passwdfile;
-        - proxy_pass http://elasticsearch_server;
-        - include proxy-params.conf;
+          - listen {{ sm_es_port }};
+        locations:
+          - path: /
+            params:
+            - auth_basic "Private Property";
+            - auth_basic_user_file /etc/nginx/passwdfile;
+            - proxy_pass http://elasticsearch_server;
+            - include proxy-params.conf;
 
 basic_auth_users:
   - user: "{{ sm_es_user }}"

@@ -9,10 +9,13 @@ upstream {{ host.name }} {
 }
 {% endfor %}
 
-{% for site in nginx_sites %}
+{% for srv in nginx_sites[0].servers %}
 server {
-    listen {{ site.listen }};
-{% for location in site.locations %}
+    server_name {{ srv.server_name }}
+{% for par in srv.params %}
+    {{ par }}
+{% endfor %}
+{% for location in srv.locations | default([]) %}
     location {{ location.path }} {
 {% for item in location.params %}
         {{ item }}
