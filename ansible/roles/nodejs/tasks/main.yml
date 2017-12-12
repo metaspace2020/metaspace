@@ -1,5 +1,11 @@
 ---
 
+#- name: Set kernel inotify watch limit to 524288
+#  sysctl:
+#    name: fs.inotify.max_user_watches
+#    value: 524288
+#    state: present
+
 - name: Install software-properties-common
   become: yes
   apt: name=software-properties-common state=present
