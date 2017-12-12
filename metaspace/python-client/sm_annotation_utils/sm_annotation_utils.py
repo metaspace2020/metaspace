@@ -20,8 +20,8 @@ def _extract_data(res):
 
 
 DEFAULT_CONFIG = {
-    'graphql_url': 'http://annotate.metaspace2020.eu/graphql',
-    'moldb_url': 'http://annotate.metaspace2020.eu/mol_db/v1',
+    'graphql_url': 'http://metaspace2020.eu/graphql',
+    'moldb_url': 'http://metaspace2020.eu/mol_db/v1',
     'jwt': None
 }
 
@@ -310,7 +310,7 @@ class SMDataset(object):
         datasetFilter = {'ids': self.id}
 
         records = self._gqclient.getAnnotations(annotationFilter, datasetFilter)
-        return [(r['sumFormula'], r['adduct']) for r in records]
+        return [(r['sumFormula'], r['adduct'], r['mz']) for r in records]
 
     def results(self, database=None):
         annotationFilter = {}
@@ -503,8 +503,8 @@ class SMInstance(object):
         ).notnull()
         return annotations
 
-    def get_metadata(self):
-        datasets = self._gqclient.getDatasets()
+    def get_metadata(self, datasetFilter={}):
+        datasets = self._gqclient.getDatasets(datasetFilter=datasetFilter)
         df = pd.concat([
             pd.DataFrame(pd.io.json.json_normalize(json.loads(dataset['metadataJson'])))
             for dataset in datasets ])
