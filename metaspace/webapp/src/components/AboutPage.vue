@@ -41,7 +41,7 @@
           community.</p>
         <p>The METASPACE platform is developed by software engineers, data scientists and mass spectrometrists from the <a
           href="http://www.embl.de/research/units/scb/alexandrov/">Alexandrov team at EMBL</a>. This work is a part of the
-          <a href="http://metaspace2020.eu">European project METASPACE</a>.</p>
+          <a href="http://project.metaspace2020.eu">European project METASPACE</a>.</p>
       </el-row>
       <el-row id="A public space">
         <h2 id="open-as-public-space">Open as public space</h2>
