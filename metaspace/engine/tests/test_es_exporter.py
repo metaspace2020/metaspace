@@ -62,7 +62,7 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         'adduct': '+H', 'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
         'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': '00100.0000', 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
-        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished, 'ds_acq_geometry': {}
+        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished
     }
     ann_2_d = es_dsl_search.filter('term', sf='Au').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_2_d == {
@@ -72,7 +72,7 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         'adduct': '+H',  'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
         'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': '00100.0000', 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
-        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished, 'ds_acq_geometry': {}
+        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished
     }
     ds_d = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']
     assert ds_d == {
