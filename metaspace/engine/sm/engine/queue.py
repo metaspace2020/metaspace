@@ -347,25 +347,29 @@ class QueueConsumer(object):
         self.logger.info('Closing connection')
         self._connection.close()
 
-
+# TODO: Currently, a new connection with the queue is created for every queue action.
+# Though it's fine for the actual SM use-cases, where messages are published not frequently,
+# it can be a bottleneck in the future. To overcome this, the code below and annotation job
+# should be rewritten in asyncronous fashion
 class QueuePublisher(object):
 
     def __init__(self, config, logger_name='sm-api'):
         creds = pika.PlainCredentials(config['user'], config['password'])
-        conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat_interval=0)
-        self._conn = pika.BlockingConnection(conn_params)
-        self._ch = self._conn.channel()
+        self._conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat_interval=0)
 
         self.logger = logging.getLogger(logger_name)
 
     def queue_purge(self, qname):
         try:
-            self._ch.queue_purge(queue=qname)
+            conn = pika.BlockingConnection(self._conn_params)
+            conn.channel().queue_purge(queue=qname)
+            conn.close()
         except AMQPError as e:
             logging.warning('Queue purging failed: %s', e)
 
     def publish(self, msg, qname, priority=0):
-        self._ch.basic_publish(exchange='',
+        conn = pika.BlockingConnection(self._conn_params)
+        conn.channel().basic_publish(exchange='',
                                routing_key=qname,
                                body=json.dumps(msg),
                                properties=pika.BasicProperties(
@@ -373,6 +377,7 @@ class QueuePublisher(object):
                                    priority=priority
                                ))
         self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), qname))
+        conn.close()
 
 SM_ANNOTATE = 'sm_annotate'
 
