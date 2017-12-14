@@ -20,7 +20,7 @@
             <li> <img class="mouse-hint-icon"
                       src="../assets/rotate-icon.png"
                       title="Show/hide optical image"
-            /> Drag the angle slider to rotate the annotation image</li>
+            /> Right-click and drag to rotate the annotation image</li>
             <li> <img class="mouse-hint-icon"
                       src="../assets/images-icon.png"
                       title="Show/hide optical image"
@@ -28,7 +28,7 @@
             <li> <img class="mouse-hint-icon"
                       src="../assets/corners-icon.jpg"
                       title="Show/hide optical image"
-            /> Fine tune by moving the orange circles</li>
+            /> Double click the annotation image to enable fine tuning</li>
           </ul>
         </div>
       </div>
@@ -118,7 +118,8 @@
               :initialTransform="initialTransform"
               :padding="padding"
               :rotationAngleDegrees="angle"
-              :massSpecSrc="massSpecSrc">
+              :massSpecSrc="massSpecSrc"
+              @updateRotationAngle="updateAngle">
       </image-aligner>
     </div>
   </div>
@@ -245,6 +246,16 @@
    },
 
    methods: {
+     updateAngle(v){
+       if (v<-180){
+         v = 360+v
+       }
+       else if (v>180) {
+         v = v-360
+       }
+       this.angle=v
+     },
+
      renderAnnotation(annotation) {
        const {sumFormula, adduct, dataset} = annotation;
        return renderMolFormula(sumFormula, adduct, dataset.polarity);
