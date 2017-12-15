@@ -203,6 +203,7 @@
    },
    data() {
      return {
+       validIntImages: [],
        currentIntensities: []
      }
    },
@@ -214,8 +215,9 @@
    },
    methods: {
      reloadPlot() {
-       if (this.intensityImgs && this.acquisitionGeometry && this.$refs.xicChart && this.$refs.xicChart.clientHeight) {
-         Promise.all(this.intensityImgs.map((intImg => imageToIntensity(intImg.url, intImg.maxIntensity))))
+       this.validIntImages = this.intensityImgs.filter(intImg => intImg.url);
+       if (this.validIntImages && this.acquisitionGeometry && this.$refs.xicChart && this.$refs.xicChart.clientHeight) {
+         Promise.all(this.validIntImages.map((intImg => imageToIntensity(intImg.url, intImg.maxIntensity))))
          .then((intensities) => {
            this.currentIntensities = intensities;
            this.updatePlot();
@@ -228,13 +230,13 @@
        if (this.currentIntensities) {
          const timeSeq = this.acquisitionGeometry.acquisition_grid.coord_list.map((pixel) => pixel[0]);
          const timeUnitName = this.acquisitionGeometry.length_unit;
-         const lowerLogIntThreshold = this.intensityImgs[0].maxIntensity * 0.01;
+         const lowerLogIntThreshold = this.validIntImages[0].maxIntensity * 0.01;
          const intensitiesToPlot = this.logIntensity
                                     ? this.currentIntensities
                                       .map(arr => arr.map(i => i < lowerLogIntThreshold ? lowerLogIntThreshold : i))
                                     : this.currentIntensities;
          plotChart(intensitiesToPlot, timeSeq, timeUnitName, this.logIntensity,
-                   this.intensityImgs.map(im => `m/z ${im.mz.toString()}`), this.$refs.xicChart);
+                   this.validIntImages.map(im => `m/z ${im.mz.toString()}`), this.$refs.xicChart);
        } else {
          throw 'XIC data not loaded';
        }
