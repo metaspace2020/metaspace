@@ -176,13 +176,13 @@ class SMapiDatasetManager(DatasetManager):
                                 queue_publisher=queue_publisher, logger_name='sm-api')
 
     def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT, **kwargs):
+        ds.set_status(self._db, self._es, self._queue, DatasetStatus.QUEUED)
         if self.mode == 'queue':
             msg = ds.to_queue_message()
             msg['action'] = action
             msg.update(kwargs)
             self._queue.publish(msg, self.qname, priority)
             self.logger.info('New message posted to %s: %s', self._queue, msg)
-        ds.set_status(self._db, self._es, self._queue, DatasetStatus.QUEUED)
 
     def add(self, ds, del_first=False, priority=DatasetActionPriority.DEFAULT):
         """ Send add message to the queue. If dataset exists, raise an exception """
