@@ -24,7 +24,9 @@ def db_decor(func):
     def wrapper(self, *args, **kwargs):
         res = []
         try:
-            logger.debug(args[0])
+            # for cases when SQL queries are written to StringIO
+            value_getter = getattr(args[0], 'getvalue', None)
+            logger.debug(args[0] if not value_getter else value_getter())
             res = func(self, *args, **kwargs)
         except Exception as e:
             # logger.error(format_exc())
