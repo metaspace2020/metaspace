@@ -5,7 +5,6 @@
 
 <script>
  import * as d3 from 'd3';
- import {legendColor} from 'd3-svg-legend';
  import {HOST_NAME, PORT} from '../../conf';
 
  function imageToIntensity(intensityImgUrl, maxIntensity) {
@@ -48,9 +47,7 @@
 
    d3.select(element).select('svg').remove();
 
-   const legendShown = intensities.length > 1,
-         legendOffset = legendShown ? 45 : 0,
-         margin = {top: 20, right: 40, bottom: 40 + legendOffset, left: 50},
+   const margin = {top: 20, right: 40, bottom: 40, left: 50},
          width = element.clientWidth - margin.left - margin.right,
          height = element.clientHeight - margin.top - margin.bottom,
          originTranslation = {x: 20, y: -5},
@@ -138,7 +135,7 @@
      graphs.push(gGraph.append('path')
             .attr('class', 'line')
             .attr('stroke', graphColors[i])
-            .attr('stroke-width', 1)
+            .attr('stroke-width', 2)
             .attr('opacity', 1)
             .attr('fill', 'none'));
    }
@@ -155,25 +152,6 @@
                  .extent([[originTranslation.x, 2 * originTranslation.y], [width, height + originTranslation.y]])
                  .on('end', brushHandler);
    let brushLayer = svg.append('g').call(brush);
-
-   if (legendShown) {
-      let legendItemWidth = 65;
-      let legendItemPadding = 40;
-      let legend = container.append('g')
-        .attr('transform', `translate(${margin.left + width / 2
-                                                    - legendItemWidth * graphNames.length / 2
-                                                    - legendItemPadding * (graphNames.length - 1) / 2 },
-                                      ${height + margin.top + 50})`);
-
-      const types = d3.scaleOrdinal()
-                        .domain(graphNames)
-                        .range(d3.schemeCategory10.slice(0, graphNames.length));
-
-      let drawLegend = legendColor()
-        .orient('horizontal')
-        .shape('line').shapeWidth(legendItemWidth).shapePadding(legendItemPadding).scale(types);
-      legend.call(drawLegend);
-   }
 
    function update(t) {
      let gs = graphs;
@@ -236,7 +214,7 @@
                                       .map(arr => arr.map(i => i < lowerLogIntThreshold ? lowerLogIntThreshold : i))
                                     : this.currentIntensities;
          plotChart(intensitiesToPlot, timeSeq, timeUnitName, this.logIntensity,
-                   this.validIntImages.map(im => `m/z ${im.mz.toString()}`), this.$refs.xicChart);
+                   this.validIntImages.map(im => `${im.mz.toString()}`), this.$refs.xicChart);
        } else {
          throw 'XIC data not loaded';
        }

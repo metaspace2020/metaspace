@@ -5,6 +5,7 @@
  import IonImageSettings from './IonImageSettings.vue';
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
  import XicPlot from './XicPlot.vue';
+ import PlotLegend from './PlotLegend.vue';
  import Colorbar from './Colorbar.vue';
  import {annotationQuery} from '../api/annotation';
  import {opticalImageQuery, msAcqGeometryQuery} from '../api/dataset';
@@ -15,6 +16,7 @@
  import { Component, Prop } from 'vue-property-decorator';
  import { Location } from 'vue-router';
  import { saveAs } from 'file-saver';
+ import { schemeCategory10 as LegendColors } from 'd3';
 
  import * as domtoimage from 'dom-to-image';
 
@@ -41,6 +43,7 @@
      IonImageSettings,
      IsotopePatternPlot,
      XicPlot,
+     PlotLegend,
      Colorbar
    },
    apollo: {
@@ -96,6 +99,19 @@
    peakChartData: any
    opticalImageUrl: string
    showOpticalImage: boolean = true
+
+   get isotopeLegendItems(): any[] {
+     return this.annotation ? this.annotation.isotopeImages.map((img: any, idx: number) => {
+                                return {
+                                  name: img.mz,
+                                  color: idx < LegendColors.length ? LegendColors[idx] : 'black'
+                                }
+                              }) : [];
+   }
+
+   get theorIntensityLegendItem(): any {
+     return {name: 'Theoretical', color: '#7D5BA6'};
+   }
 
    get activeSections(): string[] {
      return this.$store.getters.settings.annotationView.activeSections;

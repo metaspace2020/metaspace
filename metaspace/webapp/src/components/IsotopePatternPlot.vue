@@ -5,9 +5,8 @@
 
 <script>
  import * as d3 from 'd3';
- import {legendColor} from 'd3-svg-legend';
 
- function plotChart(data, element) {
+ function plotChart(data, isotopeColors, theorColor, element) {
    if (!element) return;
    if (!data) return;
 
@@ -19,7 +18,7 @@
 
    d3.select(element).select('svg').remove();
 
-   const margin = {top: 10, right: 5, bottom: 80, left: 40},
+   const margin = {top: 10, right: 40, bottom: 50, left: 40},
          width = element.clientWidth - margin.left - margin.right,
          height = element.clientHeight - margin.top - margin.bottom;
    const [minMz, maxMz] = d3.extent(sampleData['mzs']),
@@ -90,26 +89,26 @@
    let circles = svg.selectAll('circle')
                     .data(points).enter()
                     .append('circle')
-                    .attr('r', 3)
-                    .style('fill', 'red');
+                    .attr('r', 4)
+                    .style('fill', (d, i) => isotopeColors[i]);
 
    let lines = svg.append('g').selectAll('line')
                   .data(points).enter().append('line')
-                  .attr('stroke', 'red')
-                  .attr('stroke-width', 2);
+                  .attr('stroke', (d, i) => isotopeColors[i])
+                  .attr('stroke-width', 3);
 
    let ppmRectangles = svg.append('g').selectAll('rect')
                           .data(points).enter()
                           .append('rect')
-                          .attr('opacity', 0.1)
+                          .attr('opacity', 0.2)
                           .attr('fill', 'grey')
                           .attr('height', yScale(0))
                           .attr('y', 0);
 
    let theorGraph = svg.append('path')
                        .attr('class', 'line')
-                       .attr('stroke', 'blue')
-                       .attr('stroke-width', 1)
+                       .attr('stroke', theorColor)
+                       .attr('stroke-width', 2)
                        .attr('opacity', 0.6)
                        .attr('fill', 'none');
 
@@ -121,23 +120,8 @@
       .text('m/z').style('text-anchor', 'middle')
       .attr('transform', `translate(${width / 2}, ${height +  30}) `);
 
-   let legendItemWidth = 65;
-   let legend = container
-     .append('g')
-     .attr('transform',
-           `translate(${margin.left + width / 2 - legendItemWidth - 10}, ${height + margin.top + 50})`);
-
    let brush = d3.brushX().extent([[0, 0], [width, height]]).on('end', brushHandler);
    let brushLayer = svg.append('g').call(brush);
-
-   const types = d3.scaleOrdinal()
-                   .domain(['Sample', 'Theoretical'])
-                   .range(['red', 'blue']);
-
-   let drawLegend = legendColor()
-     .orient('horizontal')
-     .shape('line').shapeWidth(legendItemWidth).shapePadding(20).scale(types);
-   legend.call(drawLegend);
 
    function update(t) {
      let r = ppmRectangles, c = circles, l = lines, gr = theorGraph;
@@ -167,7 +151,7 @@
 
  export default {
    name: 'isotope-pattern-plot',
-   props: ['data'],
+   props: ['data', 'isotopeColors', 'theorColor'],
    watch: {
      'data': function(d) {
        if (d) this.plot(d);
@@ -182,7 +166,7 @@
    },
    methods: {
      plot(data) {
-       plotChart(data, this.$refs.peakChart);
+       plotChart(data, this.isotopeColors, this.theorColor, this.$refs.peakChart);
      }
    }
  }

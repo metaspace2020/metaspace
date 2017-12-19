@@ -95,8 +95,14 @@
           </el-row>
           <el-row id="isotope-plot-container">
             <isotope-pattern-plot :data="peakChartData"
+                                  :isotopeColors="isotopeLegendItems.map(i => i.color)"
+                                  :theorColor="theorIntensityLegendItem.color"
                                   v-if="activeSections.indexOf('scores') !== -1">
             </isotope-pattern-plot>
+          </el-row>
+          <el-row id="diagnostics-plot-legend">
+            <plot-legend :items="isotopeLegendItems.concat(theorIntensityLegendItem)">
+            </plot-legend>
           </el-row>
         </el-collapse-item>
 
