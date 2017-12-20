@@ -433,11 +433,17 @@ class SMInstance(object):
         else:
             raise Exception("either name or id must be provided")
 
-    def datasets(self, nameMask=''):
-        return [
-            SMDataset(info, self._gqclient)
-            for info in self._gqclient.getDatasets(dict(name=nameMask))
-        ]
+    def datasets(self, nameMask='', idMask=''):
+        if not nameMask == '':
+            return [
+                SMDataset(info, self._gqclient)
+                for info in self._gqclient.getDatasets(dict(name=nameMask))
+            ]
+        else:
+            return [
+                SMDataset(info, self._gqclient)
+                for info in self._gqclient.getDatasets(dict(ids="|".join(idMask)))
+            ]
 
     def all_adducts(self):
         raise NYI
