@@ -8,29 +8,28 @@
  import {HOST_NAME, PORT} from '../../conf';
 
  function imageToIntensity(intensityImgUrl, maxIntensity) {
-   return new Promise((resolve, reject) => {
-     const xhr = new XMLHttpRequest();
-     xhr.open("GET", intensityImgUrl);
-     xhr.overrideMimeType('application/octet-stream');
-     xhr.responseType = 'arraybuffer';
-     xhr.onload = () => {
-       if (xhr.status == 200) {
-         let pixelArray = new Uint8Array(xhr.response);
-         let result = new Float32Array(pixelArray.length);
-         for (let i = 0, pixCount = pixelArray.length; i < pixCount; ++i) {
-           result[i] = maxIntensity * pixelArray[i] / 255;
-         }
-         resolve(result);
-       } else {
-         reject(xhr.statusText);
-       }
-     };
-     xhr.onerror = () => reject(xhr.statusText);
-     xhr.send();
+   const requestParams = {
+     method: 'GET',
+     cache: 'force-cache'
+   };
+
+   return fetch(intensityImgUrl, requestParams).then(response => {
+     if (!response.ok) {
+       throw response.statusText;
+     } else {
+       return response.arrayBuffer();
+     }
+   }).then(buf => {
+     let pixelArray = new Uint8Array(buf);
+     let result = new Float32Array(pixelArray.length);
+     for (let i = 0, pixCount = pixelArray.length; i < pixCount; ++i) {
+       result[i] = maxIntensity * pixelArray[i] / 255;
+     }
+     return result;
    });
  }
 
- function plotChart(intensities, timeSeq, timeUnitName, logIntensity, graphNames, element) {
+ function plotChart(intensities, timeSeq, timeUnitName, logIntensity, isotopeColors, element) {
    if (!element || element.clientHeight == 0) {
      return;
    }
@@ -40,9 +39,10 @@
      return;
    }
 
-   if (intensities.length > 10) {
-     console.log(`${intensities.length} graphs are requested. Plotting only 10 first...`);
-     intensities = intensities.slice(0, 10);
+   if (intensities.length > isotopeColors.length) {
+     console.log(`Mismatch between number of XIC plots (${intensities.length}) and their colors (${isotopeColors.length}).`
+                  + ' Failed to render XIC plot.');
+     return;
    }
 
    d3.select(element).select('svg').remove();
@@ -129,12 +129,11 @@
 
    let gGraph = svg.append('g')
                     .attr('clip-path', 'url(#plot-clip)');
-   const graphColors = d3.schemeCategory10;
    let graphs = [];
    for (let i = 0; i < intensities.length; ++i) {
      graphs.push(gGraph.append('path')
             .attr('class', 'line')
-            .attr('stroke', graphColors[i])
+            .attr('stroke', isotopeColors[i])
             .attr('stroke-width', 2)
             .attr('opacity', 1)
             .attr('fill', 'none'));
@@ -173,11 +172,17 @@
 
  export default {
    name: 'xic-plot',
-   props: ['intensityImgs', 'acquisitionGeometry', 'logIntensity'],
+   props: ['intensityImgs', 'isotopeColors', 'acquisitionGeometry', 'logIntensity'],
    watch: {
      'intensityImgs': function () { this.reloadPlot(); },
      'acquisitionGeometry': function () { this.reloadPlot(); },
-     'logIntensity': function () { this.updatePlot(); }
+     'logIntensity': function() {
+       if (this.currentIntensities) {
+         this.updatePlot();
+       } else {
+         this.reloadPlot();
+       }
+     }
    },
    data() {
      return {
@@ -205,19 +210,17 @@
        }
      },
      updatePlot() {
-       if (this.currentIntensities) {
-         const timeSeq = this.acquisitionGeometry.acquisition_grid.coord_list.map((pixel) => pixel[0]);
-         const timeUnitName = this.acquisitionGeometry.length_unit;
-         const lowerLogIntThreshold = this.validIntImages[0].maxIntensity * 0.01;
-         const intensitiesToPlot = this.logIntensity
-                                    ? this.currentIntensities
-                                      .map(arr => arr.map(i => i < lowerLogIntThreshold ? lowerLogIntThreshold : i))
-                                    : this.currentIntensities;
-         plotChart(intensitiesToPlot, timeSeq, timeUnitName, this.logIntensity,
-                   this.validIntImages.map(im => `${im.mz.toString()}`), this.$refs.xicChart);
-       } else {
+       if (!this.currentIntensities) {
          throw 'XIC data not loaded';
        }
+       const timeSeq = this.acquisitionGeometry.acquisition_grid.coord_list.map((pixel) => pixel[0]);
+       const timeUnitName = this.acquisitionGeometry.length_unit;
+       const lowerLogIntThreshold = this.validIntImages[0].maxIntensity * 0.01;
+       const intensitiesToPlot = this.logIntensity
+                                 ? this.currentIntensities
+                                   .map(arr => arr.map(i => i < lowerLogIntThreshold ? lowerLogIntThreshold : i))
+                                 : this.currentIntensities;
+       plotChart(intensitiesToPlot, timeSeq, timeUnitName, this.logIntensity, this.isotopeColors, this.$refs.xicChart);
      }
    }
  }
