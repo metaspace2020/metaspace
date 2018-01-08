@@ -23,9 +23,9 @@
 
            <p><b>Type of MS:</b> We can annotate only FTICR- or Orbitrap- imaging MS data.</p>
 
-          <p><b>Format:</b> We can receive only data in the imzML centroided format. Please check out <a href="http://metaspace2020.eu/imzml">our instructions</a> for converting datasets into this format. If you are experiencing difficulties, please contact your instrument vendor.</p>
+          <p><b>Format:</b> We can receive only data in the imzML centroided format. Please check out <a href="http://project.metaspace2020.eu/imzml">our instructions</a> for converting datasets into this format. If you are experiencing difficulties, please contact your instrument vendor.</p>
 
-          <p><b>Step-by-step tutorial:</b> Please read our <a href="https://www.slideshare.net/Metaspace2020/metaspace-training-2017">training guide slides</a> providing an introduction to METASPACE as well as a step-by-step tutorial with screenshots.</p>
+          <p><b>Step-by-step tutorial:</b> Please read our <a href="https://www.slideshare.net/Metaspace2020/metaspace-training-course-ourcon-v-2017">training guide slides</a> providing an introduction to METASPACE as well as a step-by-step tutorial with screenshots.</p>
 
           <p><b>Questions or requests?</b> Please email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>. Also, we are always happy to receive your feedback, both positive and negative.</p>
 
