@@ -41,7 +41,7 @@
           community.</p>
         <p>The METASPACE platform is developed by software engineers, data scientists and mass spectrometrists from the <a
           href="http://www.embl.de/research/units/scb/alexandrov/">Alexandrov team at EMBL</a>. This work is a part of the
-          <a href="http://metaspace2020.eu">European project METASPACE</a>.</p>
+          <a href="http://project.metaspace2020.eu">European project METASPACE</a>.</p>
       </el-row>
       <el-row id="A public space">
         <h2 id="open-as-public-space">Open as public space</h2>
@@ -66,12 +66,13 @@
          <p>Please cite our publication <a
         href="http://www.nature.com/nmeth/journal/v14/n1/full/nmeth.4072.html">(Palmer et al., 2016, Nature Methods)</a>
         and
-        refer to <a href="http://annotate.metaspace2020.eu">http://annotate.metaspace2020.eu</a>.</p>
+        refer to <a href="http://metaspace2020.eu">http://metaspace2020.eu</a>.</p>
       </el-row>
       <el-row id="contact">
         <h2 id="how-to-stay-in-touch-">How to stay in touch?</h2>
         <p>Follow us on <a href="http://twitter.com/metaspace2020">Twitter</a> or drop a line to <a
           href="mailto:contact@metaspace2020.eu">our email</a>, we will add you to our special list :)</p>
+        <p> Find out more about the METASPACE consortium at the <a href="http://project.metaspace2020.eu/">project website</a> </p>
         <p>For all other inquiries or questions, please <a href="mailto:contact@metaspace2020.eu">contact us over
           email</a>.
         </p>
@@ -89,6 +90,7 @@
           </div>
         </div>
       </el-row>
+      
     </el-row>
     </div>
   </div>
