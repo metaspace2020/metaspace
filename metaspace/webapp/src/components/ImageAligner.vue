@@ -17,6 +17,7 @@
             :style="handleLayerStyle">
         <g :transform="layerTransform" v-if="!isNaN(scaleX * scaleY)">
           <circle class="handle"
+                  v-if="fineTune"
                   v-for="(pos, idx) in handlePositions"
                   :cx="pos.x * scaleX + padding" :cy="pos.y * scaleY + padding" r="7"
                   @mousedown="onMouseDown($event, idx)">
@@ -41,7 +42,9 @@
         :src="massSpecSrc"
         ref="annotImage"
         :style="annotImageStyle"
+        @dblclick.native="onDoubleClick"
         @mousedown.native="onImageMouseDown"
+        @contextmenu.native="onImageRightMouseDown"
         style="z-index: 5;"
         :max-height=100500
         @wheel.native="onWheel"
@@ -141,7 +144,10 @@
        dragThrottled: false,
        resizeThrottled: false,
        normalizedTransform: this.initialTransform,
-       lastRotationAngle: this.rotationAngleDegrees
+       lastRotationAngle: this.rotationAngleDegrees,
+       startRotationAngle: null,
+       fineTune: false,
+       imageDrag: true, // or rotate if false
      };
    },
 
@@ -240,7 +246,12 @@
        this.normalizedTransform = computeTransform(this.originalHandlePositions(), pos);
      },
 
+     updateRotation(event){
+       //console.log(event)
+     },
+
      onMouseUp(event) {
+       console.log('left mouse up');
        this.updateHandlePosition(event);
        this.draggedHandle = null;
        this.dragThrottled = false;
@@ -248,7 +259,27 @@
        this.dragStartX = this.dragStartY = null;
      },
 
+     onRightMouseUp(event) {
+       console.log('right mouse up');
+       this.updateRotation(event);
+       this.draggedHandle = null;
+       this.dragThrottled = false;
+       document.removeEventListener('mouseup', this.onRightMouseUp);
+       this.dragStartX = this.dragStartY = null;
+       this.imageDrag = true
+
+     },
+
      onMouseMove(event) {
+       if (this.imageDrag === true){
+         this.onImageDrag(event)
+       }
+       else {
+         this.onImageRotate(event)
+       }
+     },
+
+     onImageDrag(event){
        if (this.dragStartX === null || this.dragThrottled)
          return;
 
@@ -257,13 +288,59 @@
        this.updateHandlePosition(event);
      },
 
+     onImageRotate(event){
+       if (this.dragStartX === null || this.dragThrottled)
+         return;
+       this.dragThrottled = true;
+       setTimeout(() => { this.dragThrottled = false; }, 30);
+       let cp = {
+         x: this.centerPosition.x * this.scaleX + this.padding,
+         y: this.centerPosition.x * this.scaleX + this.padding,
+        };
+       const rect = this.$refs.scan.getBoundingClientRect();
+
+       let a = {
+         x: (this.dragStartX- rect.left) / this.scaleX,
+         y: (this.dragStartY- rect.top) / this.scaleY,
+       };
+       let b = {
+         x: (event.clientX - rect.left) / this.scaleX,
+         y: (event.clientY - rect.top) / this.scaleY,
+
+       };
+
+       let a1 = Math.atan2(a.x-cp.x, a.y-cp.y);
+       let a2 = Math.atan2(b.x-cp.x, b.y-cp.y);
+       let deltaAngle = (360.0 / Math.PI) * (a1 - a2);
+
+       this.$emit('updateRotationAngle', this.startRotationAngle + deltaAngle);
+       },
+
      onImageMouseDown(event) {
+       console.log('left mouse down');
        event.preventDefault();
        this.dragStartX = event.clientX;
        this.dragStartY = event.clientY;
        this.handleStartX = this.handlePositions[0].x;
        this.handleStartY = this.handlePositions[0].y;
        document.addEventListener('mouseup', this.onMouseUp);
+     },
+
+     onImageRightMouseDown(event) {
+       console.log('right mouse down');
+       event.preventDefault();
+       this.imageDrag=false;
+       this.startRotationAngle = this.rotationAngleDegrees;
+       document.removeEventListener('mouseup', this.onMouseUp);
+       this.dragStartX = event.clientX;
+       this.dragStartY = event.clientY;
+       this.handleStartX = this.handlePositions[0].x;
+       this.handleStartY = this.handlePositions[0].y;
+       document.addEventListener('mouseup', this.onRightMouseUp);
+     },
+
+     onDoubleClick(event){
+       this.fineTune = !this.fineTune;
      },
 
      reset() {

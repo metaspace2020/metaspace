@@ -247,7 +247,6 @@
      loadImage(url) {
        this.image.crossOrigin = "Anonymous";
        this.image.src = (config.imageStorage || '') + url;
-
        if (window.navigator.userAgent.includes("Trident"))
          return; // in IE11 something is fucked up as usual
 
