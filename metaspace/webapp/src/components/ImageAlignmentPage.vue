@@ -2,8 +2,8 @@
   <div id="alignment-page">
     <div class="image-alignment-top">
       <div class="image-alignment-header" style="text-align: left">
-        <h3 style="margin: 5px; align-content: left">Align an optical image for  <i>{{ datasetName }}</i></h3>
-        <p> <b>Upload</b> an optical image, <b>align</b> the annotation image to align then <b>submit</b>.</p>
+        <h3 style="margin: 5px; align-content: left">Optical image alignment for: <i>{{ datasetName }}</i></h3>
+        <p> <b>upload</b> an optical image, <b>align</b> an annotation image then <b>submit</b></p>
         <el-button @click="toggleHints" id="hintsButton">
           {{ showHints.text }}
         </el-button>
