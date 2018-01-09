@@ -27,7 +27,7 @@
 
           <el-row id="xic-plot-container">
             <xic-plot :intensityImgs="[annotation.isotopeImages[0]]"
-                      :isotopeColors="[isotopeLegendItems[0].color]"
+                      :graphColors="[isotopeLegendItems[0].color]"
                       :acquisitionGeometry="msAcqGeometry"
                       :logIntensity="false">
             </xic-plot>
@@ -87,7 +87,7 @@
           </el-row>
           <el-row id="isotope-images-container">
             <xic-plot :intensityImgs="annotation.isotopeImages"
-                      :isotopeColors="isotopeLegendItems.map(i => i.color)"
+                      :graphColors="isotopeLegendItems.map(i => i.color)"
                       :acquisitionGeometry="msAcqGeometry"
                       :logIntensity="true">
             </xic-plot>
@@ -102,7 +102,7 @@
                                   v-if="activeSections.indexOf('scores') !== -1">
             </isotope-pattern-plot>
           </el-row>
-          <el-row id="diagnostics-plot-legend">
+          <el-row>
             <plot-legend :items="isotopeLegendItems.concat(theorIntensityLegendItem)">
             </plot-legend>
           </el-row>
@@ -118,7 +118,7 @@
           <adducts-info v-if="activeSections.indexOf('adducts') !== -1"
                         :annotation="annotation"
                         :database="this.$store.getters.filter.database"
-                        :image-loader-settings="imageLoaderSettings">
+                        :acquisitionGeometry="msAcqGeometry">
           </adducts-info>
         </el-collapse-item>
       </el-collapse>

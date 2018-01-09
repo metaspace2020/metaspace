@@ -29,7 +29,7 @@
    });
  }
 
- function plotChart(intensities, timeSeq, timeUnitName, logIntensity, isotopeColors, element) {
+ function plotChart(intensities, timeSeq, timeUnitName, logIntensity, graphColors, element) {
    if (!element || element.clientHeight == 0) {
      return;
    }
@@ -39,8 +39,8 @@
      return;
    }
 
-   if (intensities.length > isotopeColors.length) {
-     console.log(`Mismatch between number of XIC plots (${intensities.length}) and their colors (${isotopeColors.length}).`
+   if (intensities.length > graphColors.length) {
+     console.log(`Mismatch between number of XIC plots (${intensities.length}) and their colors (${graphColors.length}).`
                   + ' Failed to render XIC plot.');
      return;
    }
@@ -133,7 +133,7 @@
    for (let i = 0; i < intensities.length; ++i) {
      graphs.push(gGraph.append('path')
             .attr('class', 'line')
-            .attr('stroke', isotopeColors[i])
+            .attr('stroke', graphColors[i])
             .attr('stroke-width', 2)
             .attr('opacity', 1)
             .attr('fill', 'none'));
@@ -172,7 +172,7 @@
 
  export default {
    name: 'xic-plot',
-   props: ['intensityImgs', 'isotopeColors', 'acquisitionGeometry', 'logIntensity'],
+   props: ['intensityImgs', 'graphColors', 'acquisitionGeometry', 'logIntensity'],
    watch: {
      'intensityImgs': function () { this.reloadPlot(); },
      'acquisitionGeometry': function () { this.reloadPlot(); },
@@ -220,7 +220,7 @@
                                  ? this.currentIntensities
                                    .map(arr => arr.map(i => i < lowerLogIntThreshold ? lowerLogIntThreshold : i))
                                  : this.currentIntensities;
-       plotChart(intensitiesToPlot, timeSeq, timeUnitName, this.logIntensity, this.isotopeColors, this.$refs.xicChart);
+       plotChart(intensitiesToPlot, timeSeq, timeUnitName, this.logIntensity, this.graphColors, this.$refs.xicChart);
      }
    }
  }

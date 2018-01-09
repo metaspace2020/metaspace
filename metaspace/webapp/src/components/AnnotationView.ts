@@ -1,6 +1,6 @@
  import { renderMolFormula } from '../util';
  import DatasetInfo from './DatasetInfo.vue';
- import AdductsInfo from './AdductsInfo.vue';
+ import AdductsInfo from './AdductsInfoLc.vue';
  import ImageLoader from './ImageLoader.vue';
  import IonImageSettings from './IonImageSettings.vue';
  import IsotopePatternPlot from './IsotopePatternPlot.vue';
@@ -104,13 +104,14 @@
      return this.annotation ? this.annotation.isotopeImages.map((img: any, idx: number) => {
                                 return {
                                   name: img.mz,
-                                  color: idx < LegendColors.length ? LegendColors[idx] : 'black'
+                                  color: idx < LegendColors.length ? LegendColors[idx] : 'black',
+                                  opacity: 1
                                 }
                               }) : [];
    }
 
    get theorIntensityLegendItem(): any {
-     return {name: 'Theoretical', color: '#7D5BA6'};
+     return {name: 'Theoretical', color: '#7D5BA6', opacity: 0.6};
    }
 
    get activeSections(): string[] {
