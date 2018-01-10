@@ -213,8 +213,11 @@
        if (!this.currentIntensities) {
          throw 'XIC data not loaded';
        }
-       const timeSeq = this.acquisitionGeometry.acquisition_grid.coord_list.map((pixel) => pixel[0]);
-       const timeUnitName = this.acquisitionGeometry.length_unit;
+       if (this.acquisitionGeometry.length_unit !== 's') {
+         console.log(`Unexpected LC time unit: ${this.acquisitionGeometry.length_unit}`);
+       }
+       const timeUnitName = 'min';
+       const timeSeq = this.acquisitionGeometry.acquisition_grid.coord_list.map((pixel) => pixel[0] / 60);
        const lowerLogIntThreshold = this.validIntImages[0].maxIntensity * 0.01;
        const intensitiesToPlot = this.logIntensity
                                  ? this.currentIntensities

@@ -1,16 +1,16 @@
 <template>
   <div>
-    <span style="font-size: 16px; padding-left: 20px;">
-      All adducts for this annotation in the same dataset
-    </span>
-        <xic-plot v-if="sameAdductAnnotations"
-                    :intensityImgs="sameAdductAnnotations.map(a => a.isotopeImages[0])"
-                    :graphColors="adductColors"
-                    :acquisitionGeometry="acquisitionGeometry"
-                    :logIntensity="true">
-        </xic-plot>
-        <plot-legend :items="adductLegendItems">
-        </plot-legend>
+    <el-row style="font-size: 16px; text-align: center; margin: 10px auto;">
+      <span>All adducts for this annotation in the same dataset</span>
+    </el-row>
+    <xic-plot v-if="sameAdductAnnotations"
+                :intensityImgs="sameAdductAnnotations.map(a => a.isotopeImages[0])"
+                :graphColors="adductColors"
+                :acquisitionGeometry="acquisitionGeometry"
+                :logIntensity="true">
+    </xic-plot>
+    <plot-legend :items="adductLegendItems">
+    </plot-legend>
   </div>
 </template>
 
@@ -76,9 +76,3 @@
    }
  }
 </script>
-
-<style>
- .rel-annot-details {
-   font-size: smaller;
- }
-</style>
