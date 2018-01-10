@@ -1,11 +1,13 @@
 <template>
   <div ref="xicChart" style="height: 300px;">
+    <el-button v-if="showLogIntSwitch" class="log-scale-switch"
+               @click="setLogIntensity(!internalLogIntensity)"
+               type="primary" plain>{{internalLogIntensity ? 'Log' : 'Linear'}}</el-button>
   </div>
 </template>
 
 <script>
  import * as d3 from 'd3';
- import {HOST_NAME, PORT} from '../../conf';
 
  function imageToIntensity(intensityImgUrl, maxIntensity) {
    const requestParams = {
@@ -172,22 +174,37 @@
 
  export default {
    name: 'xic-plot',
-   props: ['intensityImgs', 'graphColors', 'acquisitionGeometry', 'logIntensity'],
+   props: {
+     'intensityImgs': {
+       type: Array,
+       required: true
+     }, 'graphColors': {
+       type: Array,
+       required: true
+     }, 'acquisitionGeometry': {
+       required: true
+     }, 'logIntensity': {
+       type: Boolean,
+       default: false
+     }, 'showLogIntSwitch': {
+       type: Boolean,
+       default: false
+     }
+   },
    watch: {
      'intensityImgs': function () { this.reloadPlot(); },
      'acquisitionGeometry': function () { this.reloadPlot(); },
      'logIntensity': function() {
-       if (this.currentIntensities) {
-         this.updatePlot();
-       } else {
-         this.reloadPlot();
+       if (this.logIntensity != this.internalLogIntensity) {
+         setLogIntensity(this.logIntensity);
        }
      }
    },
    data() {
      return {
        validIntImages: [],
-       currentIntensities: []
+       currentIntensities: [],
+       internalLogIntensity: this.logIntensity
      }
    },
    mounted() {
@@ -197,6 +214,14 @@
      }
    },
    methods: {
+     setLogIntensity(enabled) {
+       this.internalLogIntensity = enabled;
+       if (this.currentIntensities) {
+         this.updatePlot();
+       } else {
+         this.reloadPlot();
+       }
+     },
      reloadPlot() {
        this.validIntImages = this.intensityImgs.filter(intImg => intImg.url);
        if (this.validIntImages && this.acquisitionGeometry && this.$refs.xicChart && this.$refs.xicChart.clientHeight) {
@@ -219,13 +244,23 @@
        const timeUnitName = 'min';
        const timeSeq = this.acquisitionGeometry.acquisition_grid.coord_list.map((pixel) => pixel[0] / 60);
        const lowerLogIntThreshold = this.validIntImages[0].maxIntensity * 0.01;
-       const intensitiesToPlot = this.logIntensity
+       const intensitiesToPlot = this.internalLogIntensity
                                  ? this.currentIntensities
                                    .map(arr => arr.map(i => i < lowerLogIntThreshold ? lowerLogIntThreshold : i))
                                  : this.currentIntensities;
-       plotChart(intensitiesToPlot, timeSeq, timeUnitName, this.logIntensity, this.graphColors, this.$refs.xicChart);
+       plotChart(intensitiesToPlot, timeSeq, timeUnitName, this.internalLogIntensity, this.graphColors, this.$refs.xicChart);
      }
    }
  }
 
 </script>
+
+<style>
+.log-scale-switch {
+  padding: 2px;
+  position: absolute;
+  left: 1em;
+  bottom: 0.1em;
+  font-size: inherit;
+}
+</style>

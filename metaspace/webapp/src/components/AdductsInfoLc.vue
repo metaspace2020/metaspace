@@ -3,12 +3,15 @@
     <el-row style="font-size: 16px; text-align: center; margin: 10px auto;">
       <span>All adducts for this annotation in the same dataset</span>
     </el-row>
-    <xic-plot v-if="sameAdductAnnotations"
-                :intensityImgs="sameAdductAnnotations.map(a => a.isotopeImages[0])"
-                :graphColors="adductColors"
-                :acquisitionGeometry="acquisitionGeometry"
-                :logIntensity="true">
-    </xic-plot>
+    <el-row>
+      <xic-plot v-if="sameAdductAnnotations"
+                  :intensityImgs="sameAdductAnnotations.map(a => a.isotopeImages[0])"
+                  :graphColors="adductColors"
+                  :acquisitionGeometry="acquisitionGeometry"
+                  :logIntensity="true"
+                  :showLogIntSwitch="true">
+      </xic-plot>
+    </el-row>
     <plot-legend :items="adductLegendItems">
     </plot-legend>
   </div>

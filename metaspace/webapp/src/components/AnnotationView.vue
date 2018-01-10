@@ -28,8 +28,7 @@
           <el-row id="xic-plot-container">
             <xic-plot :intensityImgs="[annotation.isotopeImages[0]]"
                       :graphColors="[isotopeLegendItems[0].color]"
-                      :acquisitionGeometry="msAcqGeometry"
-                      :logIntensity="false">
+                      :acquisitionGeometry="msAcqGeometry">
             </xic-plot>
           </el-row>
         </el-collapse-item>
@@ -89,7 +88,8 @@
             <xic-plot :intensityImgs="annotation.isotopeImages"
                       :graphColors="isotopeLegendItems.map(i => i.color)"
                       :acquisitionGeometry="msAcqGeometry"
-                      :logIntensity="true">
+                      :logIntensity="true"
+                      :showLogIntSwitch="true">
             </xic-plot>
           </el-row>
           <el-row class="diagnostics-section-title">
