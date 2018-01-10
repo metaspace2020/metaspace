@@ -3,7 +3,7 @@
     <div class="image-alignment-top">
       <div class="image-alignment-header" style="text-align: left">
         <h3 style="margin: 5px; align-content: left">Optical image alignment for: <i>{{ datasetName }}</i></h3>
-        <p> <b>upload</b> an optical image, <b>align</b> an annotation image then <b>submit</b></p>
+        <p> <b>upload</b> an optical image, <b>align</b> an annotation image, then <b>submit</b></p>
         <el-button @click="toggleHints" id="hintsButton">
           {{ showHints.text }}
         </el-button>
@@ -109,19 +109,20 @@
           </el-row>
         </div>
       </div>
-      <image-aligner
-              v-if="opticalImgUrl"
-              ref="aligner"
-              style="position:relative;top:0px;z-index:1;"
-              :annotImageOpacity="annotImageOpacity"
-              :opticalSrc="opticalImgUrl"
-              :initialTransform="initialTransform"
-              :padding="padding"
-              :rotationAngleDegrees="angle"
-              :massSpecSrc="massSpecSrc"
-              @updateRotationAngle="updateAngle">
-      </image-aligner>
     </div>
+    <image-aligner
+            v-if="opticalImgUrl"
+            ref="aligner"
+            style="position:relative;top:0px;z-index:1;"
+            :annotImageOpacity="annotImageOpacity"
+            :opticalSrc="opticalImgUrl"
+            :initialTransform="initialTransform"
+            :padding="padding"
+            :rotationAngleDegrees="angle"
+            :massSpecSrc="massSpecSrc"
+            @updateRotationAngle="updateAngle">
+    </image-aligner>
+
   </div>
 
 </template>
@@ -407,7 +408,6 @@
   }
 
   .image-alignment-top {
-    position: fixed;
     left: 0px;
     top: 62px;
     z-index: 500;
