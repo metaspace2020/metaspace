@@ -193,6 +193,7 @@
    },
    watch: {
      'intensityImgs': function () { this.reloadPlot(); },
+     'graphColors': function () { this.reloadPlot(); },
      'acquisitionGeometry': function () { this.reloadPlot(); },
      'logIntensity': function() {
        if (this.logIntensity != this.internalLogIntensity) {
@@ -216,13 +217,12 @@
    methods: {
      setLogIntensity(enabled) {
        this.internalLogIntensity = enabled;
-       if (this.currentIntensities) {
-         this.updatePlot();
-       } else {
-         this.reloadPlot();
-       }
+       this.reloadPlot();
      },
      reloadPlot() {
+       if (this.intensityImgs.length != this.graphColors.length) {
+         return;
+       }
        this.validIntImages = this.intensityImgs.filter(intImg => intImg.url);
        if (this.validIntImages && this.acquisitionGeometry && this.$refs.xicChart && this.$refs.xicChart.clientHeight) {
          Promise.all(this.validIntImages.map((intImg => imageToIntensity(intImg.url, intImg.maxIntensity))))
@@ -248,7 +248,8 @@
                                  ? this.currentIntensities
                                    .map(arr => arr.map(i => i < lowerLogIntThreshold ? lowerLogIntThreshold : i))
                                  : this.currentIntensities;
-       plotChart(intensitiesToPlot, timeSeq, timeUnitName, this.internalLogIntensity, this.graphColors, this.$refs.xicChart);
+       plotChart(intensitiesToPlot, timeSeq, timeUnitName, this.internalLogIntensity,
+                 this.graphColors.slice(0, intensitiesToPlot.length), this.$refs.xicChart);
      }
    }
  }
