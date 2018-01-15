@@ -17,7 +17,7 @@ config.default_adducts = {{ sm_graphql_default_adducts | to_json }};
    It's currently co-hosted with the GraphQL server. */
 config.img_upload = {
   iso_img_fs_path: "/opt/data/sm_data/public/",
-  backend: "{{ sm_graphql_img_storage_backend }}", // "fs or "db"
+  storage_types: ["db", "fs"],
   categories: {
     iso_image: {
       type: 'image/png',
