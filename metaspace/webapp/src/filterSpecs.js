@@ -67,7 +67,7 @@ const FILTER_SPECIFICATIONS = {
     name: 'Database',
     description: 'Select database',
     levels: ['annotation'],
-    initialValue: 'HMDB', // because we've agreed to process every dataset with it
+    initialValue: 'HMDB-v2.5', // because we've agreed to process every dataset with it
 
     options: lists => lists.molecularDatabases.map(d => d.name),
     removable: false
