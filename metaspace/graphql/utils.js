@@ -59,8 +59,8 @@ function generateProcessingConfig(meta_json) {
   else
     mdb_list = mdb_names.map( (name) => ({'name': name}) );
 
-  if (mdb_list.filter( mdb => mdb.name == 'HMDB').length == 0)
-    mdb_list.push({ "name": "HMDB", "version": "2016" });
+  if (mdb_list.filter( mdb => mdb.name == 'HMDB-v2.5').length == 0)
+    mdb_list.push({ "name": "HMDB-v2.5", "version": "2016-01-01" });
 
   // TODO: metadata format should support adduct specification
   let adducts;
