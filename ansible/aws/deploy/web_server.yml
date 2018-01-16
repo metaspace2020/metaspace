@@ -10,16 +10,16 @@
       tags: [always]
 
     - import_tasks: ../../deploy_tasks/sm_mol_db.yml
-      tags: [sm_mol_db]
+      tags: [sm-moldb]
 
     - import_tasks: ../../deploy_tasks/sm_api.yml
-      tags: [sm_api]
+      tags: [sm-api]
 
     - import_tasks: ../../deploy_tasks/sm_graphql.yml
-      tags: [sm_graphql]
+      tags: [sm-graphql]
 
     - import_tasks: ../../deploy_tasks/sm_web_app.yml
-      tags: [sm_web_app]
+      tags: [sm-webapp]
 
     - import_tasks: ../../deploy_tasks/sm_cluster_autostart.yml
-      tags: [sm_cluster_autostart]
+      tags: [sm-cluster-autostart]

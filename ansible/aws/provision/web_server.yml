@@ -57,16 +57,16 @@
       tags: [nodejs]
 
     - role: mol_db
-      tags: [mol_db]
+      tags: [mol-db]
 
     - role: sm_api
-      tags: [sm_api]
+      tags: [sm-api]
 
     - role: sm_graphql
-      tags: [sm_graphql]
+      tags: [sm-graphql]
 
     - role: sm_web_app
-      tags: [sm_web_app]
+      tags: [sm-webapp]
 
     - role: sm_cluster_autostart
-      tags: [sm_cluster_autostart]
+      tags: [sm-cluster-autostart]
