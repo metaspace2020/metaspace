@@ -119,7 +119,6 @@ sm_graphql_ws_public_endpoint: "ws://{{ sm_graphql_hostname }}/ws"
 sm_graphql_default_adducts:
   "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
-sm_graphql_img_storage_backend: fs
 
 sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually for production
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"

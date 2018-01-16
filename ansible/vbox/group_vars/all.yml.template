@@ -104,7 +104,6 @@ sm_graphql_ws_public_endpoint: "ws://{{ web_host_external_address }}/ws"
 sm_graphql_default_adducts:
   "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
-sm_graphql_img_storage_backend: fs
 
 sm_webapp_hostname: "{{ web_host_external_address }}"
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"
