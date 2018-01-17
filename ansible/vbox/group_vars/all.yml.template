@@ -190,9 +190,13 @@ nginx_sites:
         params:
           - proxy_pass http://web_server;
           - client_max_body_size 5M;
-      - path: /iso_images/
+      - path: /db/iso_images/
         params:
-          - proxy_pass http://isotope_image_server/iso_images/;
+          - proxy_pass http://isotope_image_server/db/iso_images/;
+          - limit_except GET {deny all;}
+      - path: /fs/iso_images/
+        params:
+          - proxy_pass http://isotope_image_server/fs/iso_images/;
           - limit_except GET {deny all;}
       - path: /optical_images/
         params:
