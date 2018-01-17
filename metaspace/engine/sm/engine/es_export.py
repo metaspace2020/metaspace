@@ -52,6 +52,7 @@ DATASET_SEL = '''SELECT
     d.metadata,
     d.acq_geometry,
     d.input_path,
+    d.ion_img_storage_type,
     d.upload_dt,
     d.status,
     to_char(max(j.finish), 'YYYY-MM-DD HH24:MI:SS')
@@ -62,7 +63,7 @@ GROUP BY d.id
 '''
 
 DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_acq_geometry', 'ds_input_path',
-                   'ds_upload_dt', 'ds_status', 'ds_last_finished')
+                   'ds_ion_img_storage', 'ds_upload_dt', 'ds_status', 'ds_last_finished')
 DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry')
 
 

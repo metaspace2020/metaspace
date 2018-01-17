@@ -4,7 +4,7 @@ from datetime import datetime
 from subprocess import check_call, call
 import logging
 from logging.config import dictConfig
-from os.path import join, exists
+from os.path import basename, join, exists, splitext
 
 from sm.engine import Dataset
 
@@ -96,6 +96,22 @@ class SMConfig(object):
             except IOError as e:
                 logger.warning(e)
         return cls._config_dict
+
+    @classmethod
+    def get_ms_file_handler(cls, ms_file_path):
+        """
+        Parameters
+        ----------
+        ms_file_path : String
+
+        Returns
+        -------
+        : dict
+            SM configuration for handling specific type of MS data
+        """
+        conf = cls.get_conf()
+        ms_file_extension = splitext(basename(ms_file_path))[1][1:] # skip the leading "."
+        return next((h for h in conf['ms_file_handlers'] if ms_file_extension in h['extensions']), None)
 
 
 def _cmd(template, call_func, *args):
