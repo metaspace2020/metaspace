@@ -258,7 +258,7 @@ class SMapiDatasetManager(DatasetManager):
         self._db.alter(UPD_DATASET_OPTICAL_IMAGE, img_id, transform, ds.id)
 
     def _add_zoom_optical_images(self, ds, optical_scan, transform, zoom_levels):
-        dims = self._annotation_image_shape(self._img_store, ds.id)
+        dims = self._annotation_image_shape(self._img_store, ds)
         rows = []
         for zoom in zoom_levels:
             img = self._transform_scan(optical_scan, transform, dims, zoom)

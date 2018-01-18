@@ -18,8 +18,9 @@ class ImageStoreServiceWrapper(object):
         self.storage_type = None
 
     def _format_url(self, img_type, method='', img_id=''):
-        return path.join(self._img_service_url, self.storage_type, img_type + 's', method, img_id) if self.storage_type \
-               else path.join(self._img_service_url, img_type + 's', method, img_id)
+        if not self.storage_type:
+            raise ValueError('Image service storage type is "{}". Unable to generate service URL.')
+        return path.join(self._img_service_url, self.storage_type, img_type + 's', method, img_id)
 
     def post_image(self, img_type, fp):
         url = self._format_url(img_type=img_type, method='upload')

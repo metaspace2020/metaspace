@@ -53,6 +53,7 @@ def _create_queue_publisher():
 def _create_dataset_manager(db):
     config = _read_config()
     img_store = ImageStoreServiceWrapper(config['services']['img_service_url'])
+    img_store.storage_type = 'fs'
     return SMapiDatasetManager(SM_ANNOTATE, db, ESExporter(db), img_store,
                                mode='queue', queue_publisher=_create_queue_publisher())
 
