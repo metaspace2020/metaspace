@@ -25,6 +25,7 @@ class ClusterDaemon(object):
         self.master_hostgroup = self.ansible_config['cluster_configuration']['instances']['master']['hostgroup']
         self.slave_hostgroup = self.ansible_config['cluster_configuration']['instances']['slave']['hostgroup']
         self.stage = self.ansible_config['stage']
+        self.admin_email = self.ansible_config['notification_email']
         self.qname = qname
         self.debug = debug
 
@@ -201,7 +202,7 @@ class ClusterDaemon(object):
                 sleep(self.interval)
         except Exception as e:
             self._post_to_slack('sos', "[v] Something went wrong: {}".format(e))
-            self._send_email('protsyuk@embl.de', 'Cluster auto start daemon ({}) failed'.format(self.stage), str(e))
+            self._send_email(self.admin_email, 'Cluster auto start daemon ({}) failed'.format(self.stage), str(e))
 
 
 if __name__ == "__main__":

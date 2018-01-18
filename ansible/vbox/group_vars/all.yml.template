@@ -9,6 +9,8 @@ aws_secret_access_key:
 aws_key_name:
 aws_region:
 
+notification_email: SM-ADMIN@EXAMPLE.COM
+
 postgres_version: 9.5
 postgres_port: 5432
 postgres_drop_create: true  # if true will drop current Postgres cluster and create a new one
@@ -74,8 +76,9 @@ sm_create_es_index: true  # if true Elasticsearch index will be dropped and recr
 
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
-mol_db_home: /opt/dev/sm-mol-db
+mol_db_repo_url: https://github.com/METASPACE2020/sm-molecular-db.git
 mol_db_branch: rel-v0.7
+mol_db_home: /opt/dev/sm-mol-db
 mol_db_url: "http://{{ web_host_internal_address }}/mol_db/v1"
 mol_db_postgres_pass: password
 mol_db_image_dir: /var/www/mol-images
@@ -88,8 +91,9 @@ mol_db_imports:
     name: HMDB
     version: 2016
 
-sm_graphql_home: /opt/dev/sm-graphql
+sm_graphql_repo_url: https://github.com/METASPACE2020/sm-graphql.git
 sm_graphql_branch: rel-v0.7
+sm_graphql_home: /opt/dev/sm-graphql
 sm_graphql_slack_webhook_url:
 sm_graphql_slack_channel:
 sm_graphql_jwt_secret: secret
@@ -105,10 +109,11 @@ sm_graphql_default_adducts:
   "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
 
+sm_webapp_repo_url: https://github.com/METASPACE2020/sm-webapp.git
+sm_webapp_branch: rel-v0.7
 sm_webapp_hostname: "{{ web_host_external_address }}"
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"
 sm_webapp_home: /opt/dev/sm-web-app
-sm_webapp_branch: rel-v0.7
 sm_webapp_port: 8082
 sm_webapp_cookie_secret: secret
 sm_webapp_admin_emails:

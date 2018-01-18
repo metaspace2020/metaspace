@@ -10,17 +10,17 @@
   become: yes
   pip: name=ansible version={{ sm_cluster_autostart_ansible_version }} state=present
 
-- name: Install sm-cluster-autostart dependencies
-  become: yes
-  pip: name={{ item }} state=latest
-  with_items:
-    - pika
-    - requests
-    - pyyaml
-    - fabric
-    - boto
-    - boto3
-    - pandas
+#- name: Install sm-cluster-autostart dependencies
+#  become: yes
+#  pip: name={{ item }} state=latest
+#  with_items:
+#    - pika
+#    - requests
+#    - pyyaml
+#    - fabric
+#    - boto
+#    - boto3
+#    - pandas
 
 - name: Make sure {{ sm_ansible_home }} exists
   become: yes
