@@ -203,13 +203,13 @@ nginx_sites:
         params:
           - proxy_pass http://isotope_image_server/fs/iso_images/;
           - limit_except GET {deny all;}
-      - path: /optical_images/
+      - path: /fs/optical_images/
         params:
-          - proxy_pass http://isotope_image_server/optical_images/;
+          - proxy_pass http://isotope_image_server/fs/optical_images/;
           - limit_except GET {deny all;}
-      - path: /raw_optical_images/
+      - path: /fs/raw_optical_images/
         params:
-          - proxy_pass http://isotope_image_server/raw_optical_images/;
+          - proxy_pass http://isotope_image_server/fs/raw_optical_images/;
           - client_max_body_size 25M;
       - path: /graphql
         params:
