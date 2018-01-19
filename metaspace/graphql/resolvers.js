@@ -163,7 +163,7 @@ const Resolvers = {
                .where('zoom', '=', intZoom)
                .then(records => {
                  if (records.length > 0)
-                   return '/optical_images/' + records[0].id;
+                   return '/fs/optical_images/' + records[0].id;
                  else
                    return null;
                })
@@ -178,7 +178,7 @@ const Resolvers = {
         .then(records => {
           if (records.length > 0)
             return {
-              url: '/raw_optical_images/' + records[0].optical_image,
+              url: '/fs/raw_optical_images/' + records[0].optical_image,
               transform: records[0].transform
             };
           else
@@ -513,7 +513,7 @@ const Resolvers = {
         // if internal network is used.
         //
         // TODO support image storage running on a separate host
-        imageUrl = 'http://localhost:' + config.img_storage_port + imageUrl;
+        imageUrl = `http://localhost:${config.img_storage_port}${imageUrl}`;
       }
       const payload = jwt.decode(input.jwt, config.jwt.secret);
       try {
