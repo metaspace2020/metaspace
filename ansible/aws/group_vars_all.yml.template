@@ -101,7 +101,7 @@ mol_db_imports:
 
 nodejs_version: 8.*
 
-sm_graphql_hostname: HOSTNAME
+sm_graphql_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually for production
 sm_graphql_home: /opt/dev/sm-graphql
 sm_graphql_branch: rel-v0.8
 sm_graphql_slack_webhook_url: ""
@@ -121,10 +121,10 @@ sm_graphql_default_adducts:
   "-": ["-H", "+Cl"]
 sm_graphql_img_storage_backend: fs
 
-sm_webapp_hostname: HOSTNAME
+sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually for production
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"
 sm_webapp_home: /opt/dev/sm-web-app
-sm_webapp_branch: rel-v0.7
+sm_webapp_branch: rel-v0.8
 sm_webapp_port: 8082
 sm_webapp_cookie_secret:
 sm_webapp_admin_emails: [admin@mail.de]
