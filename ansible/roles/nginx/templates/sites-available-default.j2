@@ -9,9 +9,8 @@ upstream {{ host.name }} {
 }
 {% endfor %}
 
-{% for srv in nginx_sites[0].servers %}
+{% for srv in nginx_servers %}
 server {
-    server_name {{ srv.server_name }}
 {% for par in srv.params %}
     {{ par }}
 {% endfor %}

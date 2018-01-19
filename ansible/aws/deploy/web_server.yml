@@ -10,7 +10,7 @@
       tags: [always]
 
     - import_tasks: ../../deploy_tasks/sm_mol_db.yml
-      tags: [sm-moldb]
+      tags: [sm-mol-db]
 
     - import_tasks: ../../deploy_tasks/sm_api.yml
       tags: [sm-api]
@@ -19,7 +19,7 @@
       tags: [sm-graphql]
 
     - import_tasks: ../../deploy_tasks/sm_web_app.yml
-      tags: [sm-webapp]
+      tags: [sm-web-app]
 
     - import_tasks: ../../deploy_tasks/sm_cluster_autostart.yml
       tags: [sm-cluster-autostart]

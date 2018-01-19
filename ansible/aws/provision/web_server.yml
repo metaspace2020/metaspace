@@ -57,7 +57,7 @@
       tags: [nodejs]
 
     - role: mol_db
-      tags: [mol-db]
+      tags: [sm-mol-db]
 
     - role: sm_api
       tags: [sm-api]
@@ -66,7 +66,7 @@
       tags: [sm-graphql]
 
     - role: sm_web_app
-      tags: [sm-webapp]
+      tags: [sm-web-app]
 
     - role: sm_cluster_autostart
       tags: [sm-cluster-autostart]

@@ -57,7 +57,7 @@ miniconda_env:
       - pysparkling
 
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
-sm_branch: rel-v0.7
+sm_branch: rel-v0.8
 sm_postgres_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 sm_postgres_password: POSTGRES_PASSWORD
 sm_home: /opt/dev/sm
@@ -74,7 +74,7 @@ sm_create_es_index: false
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
 mol_db_home: /opt/dev/sm-mol-db
-mol_db_branch: rel-v0.7
+mol_db_branch: rel-v0.8
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}/mol_db/v1"
 mol_db_postgres_pass: POSTGRES_PASSWORD
 mol_db_image_dir: /var/www/mol-images
@@ -101,12 +101,13 @@ mol_db_imports:
 
 nodejs_version: 8.*
 
+sm_graphql_hostname: HOSTNAME
 sm_graphql_home: /opt/dev/sm-graphql
-sm_graphql_branch: rel-v0.7
+sm_graphql_branch: rel-v0.8
 sm_graphql_slack_webhook_url: ""
 sm_graphql_slack_channel: ""
-sm_graphql_jwt_secret: REALLY_LONG_JWT_SECRET
-sm_graphql_public_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}/graphql"
+sm_graphql_jwt_secret: JWT_SECRET
+sm_graphql_public_url: "http://{{ sm_graphql_hostname }}/graphql"
 sm_graphql_mol_image_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_graphql_img_upload_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_graphql_moldb_service_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}/mol_db"
@@ -114,19 +115,19 @@ sm_graphql_database_password: "{{ sm_postgres_password }}"
 sm_graphql_rabbitmq_host: "{{ rabbitmq_host }}"
 sm_graphql_rabbitmq_user: "{{ rabbitmq_user }}"
 sm_graphql_rabbitmq_password: "{{ rabbitmq_password }}"
-sm_graphql_ws_public_endpoint: "ws://{{ hostvars['web-1'].ansible_ssh_host }}/ws"
+sm_graphql_ws_public_endpoint: "ws://{{ sm_graphql_hostname }}/ws"
 sm_graphql_default_adducts:
   "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
 sm_graphql_img_storage_backend: fs
 
-sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"
+sm_webapp_hostname: HOSTNAME
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"
 sm_webapp_home: /opt/dev/sm-web-app
 sm_webapp_branch: rel-v0.7
 sm_webapp_port: 8082
 sm_webapp_cookie_secret:
-sm_webapp_admin_emails:
+sm_webapp_admin_emails: [admin@mail.de]
 sm_webapp_aws_region: "{{ aws_region }}"
 sm_webapp_aws_access_key_id:
 sm_webapp_aws_secret_access_key:
@@ -143,7 +144,7 @@ sm_webapp_redis_port: 6379
 sm_webapp_enable_uploads: true
 
 sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
-sm_ansible_branch: rel-v0.7
+sm_ansible_branch: rel-v0.8
 sm_ansible_home: /opt/dev/sm-engine-ansible
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
@@ -219,69 +220,74 @@ nginx_upstream_hosts:
   - name: elasticsearch_server
     server: 127.0.0.1:9200
 
-nginx_sites:
-  - name: default  # only default is supported by the role
-    servers:
-      - server_name: default;
+nginx_servers:
+  - desc: Kibana redirect
+    params:
+      - listen 8080;
+    locations:
+      - path: /
         params:
-          - listen 8080;
-        locations:
-          - path: /
-            params:
-              - auth_basic "Private Property";
-              - auth_basic_user_file /etc/nginx/passwdfile;
-              - proxy_pass http://kibana_server;
-              - include proxy-params.conf;
-      - server_name: annotate.metasp.eu annotate.metaspace2020.eu;
+          - auth_basic "Private Property";
+          - auth_basic_user_file /etc/nginx/passwdfile;
+          - proxy_pass http://kibana_server;
+          - include proxy-params.conf;
+
+  - desc: Endpoint for Web App, GraphQL, GraphQL WebSocket, ion images, mol images, and MolDB
+    params:
+      - server_name {{ sm_webapp_hostname }};
+      - listen 80;
+      - proxy_read_timeout 300;
+      - send_timeout 300;
+    locations:
+      - path: /mol-images/
         params:
-          - listen 80;
-          - rewrite ^/(.*)$ http://metaspace2020.eu/$1 permanent;
-      - server_name: metasp.eu metaspace2020.eu;
+          - root /var/www;
+      - path: /
         params:
-          - listen 80;
-          - proxy_read_timeout 300;
-          - send_timeout 300;
-        locations:
-          - path: /mol-images/
-            params:
-              - root /var/www;
-          - path: /
-            params:
-              - proxy_pass http://web_server;
-              - client_max_body_size 5M;
-          - path: /iso_images/
-            params:
-              - proxy_pass http://isotope_image_server/iso_images/;
-              - limit_except GET {deny all;}
-          - path: /graphql
-            params:
-              - proxy_pass http://graphql_server/graphql;
-              - include proxy-params.conf;
-          - path: /graphiql
-            params:
-              - proxy_pass http://graphql_server/graphiql;
-              - include proxy-params.conf;
-          - path: /ws
-            params:
-              - proxy_pass http://graphql_ws_server/graphql;
-              - proxy_http_version 1.1;
-              - proxy_set_header Upgrade $http_upgrade;
-              - proxy_set_header Connection "upgrade";
-              - include proxy-params.conf;
-          - path: /mol_db/
-            params:
-              - proxy_pass http://moldb_server/;
-              - include proxy-params.conf;
-      - server_name: default;
+          - proxy_pass http://web_server;
+          - client_max_body_size 5M;
+      - path: /iso_images/
         params:
-          - listen {{ sm_es_port }};
-        locations:
-          - path: /
-            params:
-            - auth_basic "Private Property";
-            - auth_basic_user_file /etc/nginx/passwdfile;
-            - proxy_pass http://elasticsearch_server;
-            - include proxy-params.conf;
+          - proxy_pass http://isotope_image_server/iso_images/;
+          - limit_except GET {deny all;}
+      - path: /optical_images/
+        params:
+          - proxy_pass http://isotope_image_server/optical_images/;
+          - limit_except GET {deny all;}
+      - path: /raw_optical_images/
+        params:
+          - proxy_pass http://isotope_image_server/raw_optical_images/;
+          - client_max_body_size 25M;
+      - path: /graphql
+        params:
+          - proxy_pass http://graphql_server/graphql;
+          - include proxy-params.conf;
+      - path: /graphiql
+        params:
+          - proxy_pass http://graphql_server/graphiql;
+          - include proxy-params.conf;
+      - path: /ws
+        params:
+          - proxy_pass http://graphql_ws_server/graphql;
+          - proxy_http_version 1.1;
+          - proxy_set_header Upgrade $http_upgrade;
+          - proxy_set_header Connection "upgrade";
+          - include proxy-params.conf;
+      - path: /mol_db/
+        params:
+          - proxy_pass http://moldb_server/;
+          - include proxy-params.conf;
+
+  - desc: Elasticsearch redirect
+    params:
+      - listen {{ sm_es_port }};
+    locations:
+      - path: /
+        params:
+        - auth_basic "Private Property";
+        - auth_basic_user_file /etc/nginx/passwdfile;
+        - proxy_pass http://elasticsearch_server;
+        - include proxy-params.conf;
 
 basic_auth_users:
   - user: "{{ sm_es_user }}"
@@ -296,7 +302,7 @@ cluster_configuration:
   instances:
     web:
       hostgroup: WEB_HOSTGROUP
-      type: c4.large
+      type: r4.large
       n: 1
       elipalloc: ELIPALLOC
       price:
@@ -312,7 +318,7 @@ cluster_configuration:
 
     master:
       hostgroup: MASTER_HOSTGROUP
-      type: c4.large
+      type: c4.xlarge
       n: 1
       elipalloc:
       price: 0.6
