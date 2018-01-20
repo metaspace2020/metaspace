@@ -169,9 +169,9 @@ class SMDaemonDatasetManager(DatasetManager):
 
 class SMapiDatasetManager(DatasetManager):
 
-    def __init__(self, qname, db, es, mode, queue_publisher=None):
+    def __init__(self, qname, db, es, image_store, mode, queue_publisher=None):
         self.qname = qname
-        DatasetManager.__init__(self, db=db, es=es, mode=mode,
+        DatasetManager.__init__(self, db=db, es=es, img_store=image_store, mode=mode,
                                 queue_publisher=queue_publisher, logger_name='sm-api')
 
     def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT, **kwargs):
@@ -238,26 +238,24 @@ class SMapiDatasetManager(DatasetManager):
         return buf
 
     def _add_raw_optical_image(self, ds, optical_scan, transform):
-        img_store = self._img_store()
         row = self._db.select_one(SEL_DATASET_OPTICAL_IMAGE, ds.id)
         if row and row[0]:
-            img_store.delete_image_by_id('raw_optical_image', row[0])
+            self._img_store.delete_image_by_id('raw_optical_image', row[0])
         buf = self._save_jpeg(optical_scan)
-        img_id = img_store.post_image('raw_optical_image', buf)
+        img_id = self._img_store.post_image('raw_optical_image', buf)
         self._db.alter(UPD_DATASET_OPTICAL_IMAGE, img_id, transform, ds.id)
 
     def _add_zoom_optical_images(self, ds, optical_scan, transform, zoom_levels):
-        img_store = self._img_store()
-        dims = self._annotation_image_shape(img_store, ds.id)
+        dims = self._annotation_image_shape(self._img_store, ds.id)
         rows = []
         for zoom in zoom_levels:
             img = self._transform_scan(optical_scan, transform, dims, zoom)
             buf = self._save_jpeg(img)
-            img_id = img_store.post_image('optical_image', buf)
+            img_id = self._img_store.post_image('optical_image', buf)
             rows.append((img_id, ds.id, zoom))
 
         for row in self._db.select(SEL_OPTICAL_IMAGE, ds.id):
-            img_store.delete_image_by_id('optical_image', row[0])
+            self._img_store.delete_image_by_id('optical_image', row[0])
         self._db.alter(DEL_OPTICAL_IMAGE, ds.id)
         self._db.insert(INS_OPTICAL_IMAGE, rows)
 
