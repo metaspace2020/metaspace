@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 from sm.engine.dataset import DatasetStatus, Dataset
-from sm.engine.errors import DSIDExists
+from sm.engine.errors import DSIDExists, UnknownDSID
 from sm.engine.mol_db import MolecularDB
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
@@ -149,13 +149,15 @@ class SMDaemonDatasetManager(DatasetManager):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
 
         prev_storage_type = self._img_store.storage_type
-        self._img_store.storage_type = ds.get_ion_img_storage_type(self._db)
         try:
+            self._img_store.storage_type = ds.get_ion_img_storage_type(self._db)
             for row in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
                 iso_image_ids = row[0]
                 for img_id in iso_image_ids:
                     if img_id:
                         self._img_store.delete_image_by_id('iso_image', img_id)
+        except UnknownDSID:
+            self.logger.warn('Attempt to delete isotopic images of non-existing dataset. Skipping...')
         finally:
             self._img_store.storage_type = prev_storage_type
 
