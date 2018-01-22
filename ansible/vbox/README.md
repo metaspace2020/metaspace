@@ -13,7 +13,7 @@ System and software requirements for the host machine:
 Should take about 10 minutes with a good internet connection.
 
 * Install Vagrant and Ansible
-* `git clone -b rel-v0.7 https://github.com/METASPACE2020/sm-engine-ansible.git` rel-v0.7 is the branch for installing the most recent version of SM Platform
+* `git clone -b rel-v0.8 https://github.com/METASPACE2020/sm-engine-ansible.git` rel-v0.8 is the branch for installing the most recent version of SM Platform
 * `cd vbox/`
 * `cp group_vars/all.yml.template group_vars/all.yml`
 * `vagrant up`
