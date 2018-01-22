@@ -39,7 +39,8 @@ def create_ds_man(sm_config, db=None, es=None, img_store=None, queue=None, sm_ap
     queue_mock = queue or MagicMock(spec=QueuePublisher)
     img_store_mock = img_store or MagicMock(spec=ImageStoreServiceWrapper)
     if sm_api:
-        return SMapiDatasetManager(SM_ANNOTATE, db, es_mock, 'queue', queue_mock)
+        return SMapiDatasetManager(qname=SM_ANNOTATE, db=db, es=es_mock, mode='queue',
+                                   image_store=img_store_mock, queue_publisher=queue_mock)
     else:
         return SMDaemonDatasetManager(db=db, es=es_mock, img_store=img_store_mock,
                                       mode='queue', queue_publisher=queue_mock)
@@ -170,13 +171,11 @@ class TestSMapiDatasetManager:
         db = DB(sm_config['db'])
         queue_mock = MagicMock(spec=QueuePublisher)
         es_mock = MagicMock(spec=ESExporter)
-        ds_man = create_ds_man(sm_config, db=db, es=es_mock, queue=queue_mock, sm_api=True)
-
-        ds_man._annotation_image_shape = MagicMock(return_value=(100, 100))
-
         img_store_mock = MagicMock(ImageStoreServiceWrapper)
         img_store_mock.post_image.side_effect = ['raw_opt_imgs_id', 'opt_img_id1', 'opt_img_id2', 'opt_img_id3']
-        ds_man._img_store = MagicMock(return_value=img_store_mock)
+        ds_man = create_ds_man(sm_config=sm_config, db=db, es=es_mock,
+                               img_store=img_store_mock, queue=queue_mock, sm_api=True)
+        ds_man._annotation_image_shape = MagicMock(return_value=(100, 100))
 
         ds_id = '2000-01-01'
         ds = create_ds(ds_id=ds_id, ds_config=ds_config)

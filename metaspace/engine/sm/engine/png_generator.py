@@ -6,6 +6,8 @@ import requests
 import numpy as np
 from requests.adapters import HTTPAdapter
 
+from sm.engine.util import logger
+
 
 class ImageStoreServiceWrapper(object):
 
@@ -25,7 +27,8 @@ class ImageStoreServiceWrapper(object):
 
     def delete_image(self, url):
         r = self._session.delete(url)
-        r.raise_for_status()
+        if r.status_code != 202:
+            logger.warn('Failed to delete: {}'.format(url))
 
     def get_image_by_id(self, img_type, img_id):
         url = self._format_url(img_type=img_type, img_id=img_id)

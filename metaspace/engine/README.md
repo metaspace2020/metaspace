@@ -15,7 +15,7 @@ Please check the [sm-engine-ansible](https://github.com/METASPACE2020/sm-engine-
 ## Uploading Dataset and Browsing Results
 Please visit the help page of our web application running on AWS:
 
-[http://annotate.metasp.eu/#/help](http://annotate.metasp.eu/#/help) 
+[http://metasp.eu/#/help](http://metasp.eu/#/help) 
 
 ## Running sm-engine tests
 
