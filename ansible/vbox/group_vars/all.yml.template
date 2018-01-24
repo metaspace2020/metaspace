@@ -175,8 +175,10 @@ nginx_upstream_hosts:
   - name: elasticsearch_server
     server: 127.0.0.1:9200
 
-nginx_sites:
-  - listen: 8080
+nginx_servers:
+  - desc: Kibana redirect
+    params:
+      - listen 8080;
     locations:
       - path: /
         params:
@@ -184,9 +186,13 @@ nginx_sites:
           - auth_basic_user_file /etc/nginx/passwdfile;
           - proxy_pass http://kibana_server;
           - include proxy-params.conf;
-  - listen: 80
-    proxy_read_timeout: 300
-    send_timeout: 300
+
+  - desc: Endpoint for Web App, GraphQL, GraphQL WebSocket, ion images, mol images, and MolDB
+    params:
+      - server_name {{ sm_webapp_hostname }};
+      - listen 80;
+      - proxy_read_timeout 300;
+      - send_timeout 300;
     locations:
       - path: /mol-images/
         params:
@@ -230,7 +236,10 @@ nginx_sites:
         params:
           - proxy_pass http://moldb_server/;
           - include proxy-params.conf;
-  - listen: "{{ sm_es_port }}"
+
+  - desc: Elasticsearch redirect
+    params:
+      - listen {{ sm_es_port }};
     locations:
       - path: /
         params:
