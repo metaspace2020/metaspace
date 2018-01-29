@@ -1,5 +1,7 @@
 /dist
 clientConfig.json
+db.sqlite
+.vscode
 
 # Logs
 logs

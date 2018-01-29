@@ -149,7 +149,7 @@
      // service for storing raw optical images
      imageStorageUrl: {
        type: String,
-       default: '/raw_optical_images'
+       default: '/fs/raw_optical_images'
      }
    },
 
