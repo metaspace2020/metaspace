@@ -5,7 +5,6 @@ from pprint import pprint
 from time import sleep
 from yaml import load
 from datetime import datetime, timedelta
-import pandas as pd
 from subprocess import check_output
 from os import path
 
@@ -35,9 +34,9 @@ class AWSInstManager(object):
             InstanceTypes=[inst_type],
             ProductDescriptions=[platform],
             MaxResults=10000)
-        price_df = pd.DataFrame([(p['AvailabilityZone'], p['SpotPrice']) for p in price_hist['SpotPriceHistory']],
-                                columns=['az', 'p'])
-        return price_df.az.loc[price_df.p.idxmin()]
+        prices = [(p['AvailabilityZone'], p['SpotPrice']) for p in price_hist['SpotPriceHistory']]
+        sorted_prices = sorted(prices, key=lambda t: t[1])
+        return sorted_prices[0][0]
 
     def launch_inst(self, inst_name, inst_type, spot_price, inst_n, image, el_ip_id,
                     sec_group, host_group, block_dev_maps):
