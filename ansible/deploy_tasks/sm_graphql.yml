@@ -1,7 +1,7 @@
 - name: Clone sm-graphql git repository
   git: >
     dest={{ sm_graphql_home }}
-    repo=https://github.com/METASPACE2020/sm-graphql.git
+    repo={{ sm_graphql_repo_url }}
     update=yes
     force=yes
     version={{ sm_graphql_branch }}

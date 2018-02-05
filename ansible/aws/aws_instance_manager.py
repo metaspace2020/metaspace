@@ -8,16 +8,17 @@ from datetime import datetime, timedelta
 import pandas as pd
 from subprocess import check_output
 from os import path
+from sys import version_info
 
 
 class AWSInstManager(object):
 
-    def __init__(self, key_name, conf, region='eu-west-1', dry_run=False, verbose=False):
+    def __init__(self, key_name, conf, region, dry_run=False, verbose=False):
         self.key_name = key_name
         self.region = region
         self.dry_run = dry_run
-        self.ec2 = boto3.resource('ec2', region)
-        self.ec2_client = boto3.client('ec2', region)
+        self.ec2 = boto3.resource('ec2', region_name=region)
+        self.ec2_client = boto3.client('ec2', region_name=region)
         self.conf = conf
         if verbose:
             pprint(self.conf)
@@ -35,7 +36,7 @@ class AWSInstManager(object):
             InstanceTypes=[inst_type],
             ProductDescriptions=[platform],
             MaxResults=10000)
-        price_df = pd.DataFrame([(p['AvailabilityZone'], p['SpotPrice']) for p in price_hist['SpotPriceHistory']],
+        price_df = pd.DataFrame([(p['AvailabilityZone'], float(p['SpotPrice'])) for p in price_hist['SpotPriceHistory']],
                                 columns=['az', 'p'])
         return price_df.az.loc[price_df.p.idxmin()]
 
@@ -174,6 +175,7 @@ if __name__ == '__main__':
     parser.add_argument('--create-ami', dest='create_ami', action='store_true')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
                         help="Don't actually start/stop instances")
+    parser.add_argument('--region', dest='region', type=str, help='AWS region to spin up instances at')
     args = parser.parse_args()
 
     conf_file = 'group_vars/all.yml' if not args.create_ami else 'group_vars/create_ami_config.yml'
@@ -181,7 +183,7 @@ if __name__ == '__main__':
     conf = load(open(config_path))
     cluster_conf = conf['cluster_configuration']
 
-    aws_inst_man = AWSInstManager(key_name=args.key_name or conf['aws_key_name'], conf=cluster_conf,
+    aws_inst_man = AWSInstManager(key_name=args.key_name or conf['aws_key_name'], conf=cluster_conf, region=args.region,
                                   dry_run=args.dry_run, verbose=True)
 
     components = args.components.strip(' ').split(',')
@@ -193,7 +195,10 @@ if __name__ == '__main__':
     elif args.action == 'stop':
         aws_inst_man.stop_all_instances(components)
 
-    cmd = '{}/envs/{}/bin/python update_inventory.py --stage {}'.format(conf['miniconda_prefix'],
-                                                                        conf['miniconda_env']['name'],
-                                                                        args.stage).split(' ')
+    if version_info[0] < 3:
+        cmd = '{}/envs/{}/bin/python update_inventory.py --stage {}'.format(conf['miniconda_prefix'],
+                                                                            conf['miniconda_env']['name'],
+                                                                            args.stage).split(' ')
+    else:
+        cmd = 'python update_inventory.py --stage {}'.format(args.stage).split(' ')
     print(check_output(cmd, universal_newlines=True))

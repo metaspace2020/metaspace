@@ -12,12 +12,12 @@
 - name: Create MolDB postgres database
   become: yes
   become_user: postgres
-  postgresql_db: name=mol_db owner=mol_db encoding=UTF8
+  postgresql_db: name=mol_db owner=mol_db encoding=UTF8 template=template0
 
 - name: Clone MolDB git repository
   git: >
     dest={{ mol_db_home }}
-    repo=https://github.com/METASPACE2020/sm-molecular-db.git
+    repo={{ mol_db_repo_url }}
     update=yes
     version={{ mol_db_branch }}
 
