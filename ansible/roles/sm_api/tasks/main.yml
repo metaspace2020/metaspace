@@ -36,7 +36,7 @@
 - name: Create sm postgres database
   become: yes
   become_user: postgres
-  postgresql_db: name=sm owner=sm encoding=UTF8
+  postgresql_db: name=sm owner=sm encoding=UTF8 template=template0
 
 - name: Create sm schema
   shell: psql -h localhost -U sm sm < /opt/dev/sm/scripts/create_schema.sql

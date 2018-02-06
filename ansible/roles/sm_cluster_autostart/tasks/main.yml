@@ -5,6 +5,7 @@
     - python-dev
     - libffi-dev
     - libssl-dev
+#    - python3-pip
 
 - name: Install Ansible
   become: yes
@@ -12,15 +13,14 @@
 
 #- name: Install sm-cluster-autostart dependencies
 #  become: yes
-#  pip: name={{ item }} state=latest
+#  pip:
+#    name: "{{ item }}"
+#    state: latest
+#    executable: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/pip"
 #  with_items:
 #    - pika
 #    - requests
-#    - pyyaml
-#    - fabric
-#    - boto
 #    - boto3
-#    - pandas
 
 - name: Make sure {{ sm_ansible_home }} exists
   become: yes

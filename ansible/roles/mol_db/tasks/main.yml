@@ -12,7 +12,7 @@
 - name: Create MolDB postgres database
   become: yes
   become_user: postgres
-  postgresql_db: name=mol_db owner=mol_db encoding=UTF8
+  postgresql_db: name=mol_db owner=mol_db encoding=UTF8 template=template0
 
 - name: Clone MolDB git repository
   git: >

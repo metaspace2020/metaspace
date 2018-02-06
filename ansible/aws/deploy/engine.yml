@@ -51,6 +51,7 @@
     - name: Restart Filebeat to avoid issues with old logs
       become: yes
       systemd: name=filebeat state=restarted
+      when: elk_enable
 
     - import_tasks: ../../restart_supervisor.yml supervisor_app=sm-daemon
   tags: [master]

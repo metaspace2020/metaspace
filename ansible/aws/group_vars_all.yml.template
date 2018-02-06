@@ -4,7 +4,7 @@ stage: STAGE_NAME  # prod/stage/dev
 
 # SOFTWARE CONFIGURATION
 
-time_zone_name: UTC
+time_zone_name: UTC  # Ubuntu timezone name
 
 aws_access_key_id: AWS_ACCESS_KEY_ID
 aws_secret_access_key: AWS_SECRET_ACCESS_KEY
@@ -61,15 +61,15 @@ sm_branch: rel-v0.8
 sm_postgres_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 sm_postgres_password: POSTGRES_PASSWORD
 sm_home: /opt/dev/sm
-sm_s3_path: ENGINE_BUCKET_NAME  # bucket for sm engine tmp data in "s3a://bucket-name/data" form
+sm_s3_path: ENGINE_BUCKET_NAME  # bucket for sm engine tmp data in "s3a://bucket-name/tmp" form
 sm_img_service_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:4201"
 sm_es_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
 sm_es_password: ELASTIC_PASSWORD
 sm_send_email: true
-sm_create_schema: false
-sm_create_es_index: false
+sm_create_schema: true  # set to false to avoid database dropping
+sm_create_es_index: true  # set to false to avoid Elasticsearch index dropping
 
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
@@ -78,30 +78,32 @@ mol_db_branch: rel-v0.8
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}/mol_db/v1"
 mol_db_postgres_pass: POSTGRES_PASSWORD
 mol_db_image_dir: /var/www/mol-images
-mol_db_import_databases: false
-mol_db_import_mol_images: false
+mol_db_import_databases: true  # set to false to avoid dropping MolDB database
+mol_db_import_mol_images: true  # set to false to avoid reimporting all molecular images
 mol_db_image_archives:
   - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-hmdb.tar.xz
-  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-chebi.tar.xz
-  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-lipid-maps.tar.xz
-  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-swiss-lipids.tar.xz
+# uncomment below for other databases
+#  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-chebi.tar.xz
+#  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-lipid-maps.tar.xz
+#  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-swiss-lipids.tar.xz
 mol_db_imports:
   - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/hmdb_2016_v2.csv
     name: HMDB
     version: 2016
-  - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/chebi_2016_v2.csv
-    name: ChEBI
-    version: 2016
-  - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/lipid_maps_2016.csv
-    name: LIPID_MAPS
-    version: 2016
-  - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/swiss_lipids_2016.csv
-    name: SwissLipids
-    version: 2016
+# uncomment below for other databases
+#  - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/chebi_2016_v2.csv
+#    name: ChEBI
+#    version: 2016
+#  - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/lipid_maps_2016.csv
+#    name: LIPID_MAPS
+#    version: 2016
+#  - url: https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/swiss_lipids_2016.csv
+#    name: SwissLipids
+#    version: 2016
 
 nodejs_version: 8.*
 
-sm_graphql_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually for production
+sm_graphql_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually in production
 sm_graphql_home: /opt/dev/sm-graphql
 sm_graphql_branch: rel-v0.8
 sm_graphql_slack_webhook_url: ""
@@ -121,16 +123,16 @@ sm_graphql_default_adducts:
   "-": ["-H", "+Cl"]
 sm_graphql_img_storage_backend: fs
 
-sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually for production
+sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually in production
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"
 sm_webapp_home: /opt/dev/sm-web-app
 sm_webapp_branch: rel-v0.8
 sm_webapp_port: 8082
-sm_webapp_cookie_secret:
+sm_webapp_cookie_secret: COOKIE_SECRET
 sm_webapp_admin_emails: [admin@mail.de]
 sm_webapp_aws_region: "{{ aws_region }}"
-sm_webapp_aws_access_key_id:
-sm_webapp_aws_secret_access_key:
+sm_webapp_aws_access_key_id: WEBAPP_AWS_ACCESS_KEY_ID
+sm_webapp_aws_secret_access_key: WEBAPP_AWS_SECRET_ACCESS_KEY
 sm_webapp_s3_bucket: BUCKET-NAME-UPLOAD  # just plain bucket name
 sm_webapp_google_client_id: ""
 sm_webapp_google_client_secret: ""
@@ -154,40 +156,8 @@ spark_version: "2.1.1-bin-hadoop2.7"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
 spark_user: "ubuntu"
-spark_master_filebeat:
-  version: "{{ elk_version }}"
-  es_host: "{{ elk_private_ip }}"
-  es_user: elastic
-  es_password: CopySourceIfNoneMatch16
-  prospectors:
-    - input_type: log
-      paths: ["{{ sm_home }}/logs/sm-engine.log"]
-      multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
-    - input_type: log
-      paths: ["{{ sm_home }}/logs/sm-daemon.log"]
-      multiline: {pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}", negate: "true", match: after}
-  ingest_node_pipeline_id: sm_engine_log_extract
-  ingest_node_pipeline:
-    description: "Ingest node description for the log messages dispatched by filebeat"
-    processors:
-      - grok:
-          field: "message"
-          patterns:
-            - "%{TIMESTAMP_ISO8601:timestamp} - %{LOGLEVEL:level} - %{NOTSPACE:component} - %{NOTSPACE:file_line} -%{GREEDYDATA:msg}"
-          ignore_missing: true
-      - date:
-          field: "timestamp"
-          timezone: "{{ time_zone_name }}"
-          formats:
-            - "yyyy-MM-dd HH:mm:ss,SSS"
 
-elk_version: 5.5.2
-elk_private_ip:
-elk_basic_auth_users:
-  - user: elastic
-    password:
-  - user: kibana
-    password:
+elk_enable: false  # set "true" to enable logs aggregation in ELK
 
 spark_env_extras_slave:
   SPARK_WORKER_DIR: "/tmp/spark"
@@ -301,12 +271,12 @@ basic_auth_users:
 cluster_configuration:
   instances:
     web:
-      hostgroup: WEB_HOSTGROUP
+      hostgroup: WEB_HOSTGROUP  # specify a custom name for the group of hosts
       type: r4.large
       n: 1
-      elipalloc: ELIPALLOC
-      price:
-      sec_group: WEB_SEC_GROUP_NAME
+      elipalloc:  # create manually in AWS console and put the id here to use static IP address
+      price:  # put price to use spot instances
+      sec_group: default  # update for better security
       image: ami-07174474  # public ubuntu 16.04
 
       block_dev_maps:
@@ -317,13 +287,13 @@ cluster_configuration:
             VolumeType: gp2
 
     master:
-      hostgroup: MASTER_HOSTGROUP
+      hostgroup: MASTER_HOSTGROUP  # specify a custom name for the group of hosts
       type: c4.xlarge
       n: 1
       elipalloc:
       price: 0.6
       sec_group: default
-      image: ami-07174474  # public ubuntu 16.04
+      image: ami-07174474  # public ubuntu 16.04, create custom AMI and put its id here
 
       block_dev_maps:
         - DeviceName: /dev/sda1
@@ -333,13 +303,13 @@ cluster_configuration:
             VolumeType: gp2
 
     slave:
-      hostgroup: SLAVE_HOSTGROUP
+      hostgroup: SLAVE_HOSTGROUP  # specify a custom name for the group of hosts
       type: c4.2xlarge
       n: 1
       elipalloc:
       price: 0.6
       sec_group: default
-      image: ami-07174474  # public ubuntu 16.04
+      image: ami-07174474  # public ubuntu 16.04, create custom AMI and put its id here
 
       block_dev_maps:
         - DeviceName: /dev/sda1
@@ -347,7 +317,7 @@ cluster_configuration:
             VolumeSize: 1000
             DeleteOnTermination: True
             VolumeType: gp2
-
-    elk:
-      hostgroup: elk
-      sec_group: elk
+# uncomment below if you want to use Elasticsearch for logs aggregation
+#    elk:
+#      hostgroup: elk
+#      sec_group: elk

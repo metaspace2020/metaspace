@@ -52,6 +52,11 @@
       set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
       with_items: "{{ groups['slave'] }}"
 
+    - name: Load variables for Filebeat role
+      include_vars:
+        file: elk_vars.yml
+      when: elk_enable
+
   roles:
     - role: spark
       become: yes
@@ -73,6 +78,7 @@
       es_password: "{{ spark_master_filebeat.es_password }}"
       ingest_node_pipeline_id: "{{ spark_master_filebeat.ingest_node_pipeline_id }}"
       ingest_node_pipeline: "{{ spark_master_filebeat.ingest_node_pipeline }}"
+      when: spark_master_filebeat is defined
       tags: [filebeat]
 
     - role: sm_spark_master
@@ -80,4 +86,5 @@
       conda_env: "{{ miniconda_env.name }}"
       spark_usr_dir: "{{ spark_home }}"
       sm_web_app_url: "{{ sm_webapp_url }}"
+      tags: [sm-spark-master]
   tags: [master]
