@@ -144,7 +144,7 @@
     "metaspace_options":{
       "type": "object",
       "description": "Processing options for the METASPACE engine",
-      "required": ["Metabolite_Database", "Dataset_Name"],
+      "required": ["Metabolite_Database", "Dataset_Name", "Adducts"],
       "properties":{
         "Metabolite_Database": {
           "description": "Metabolite database searched against",
