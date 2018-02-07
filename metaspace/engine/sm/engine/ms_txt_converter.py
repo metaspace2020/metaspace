@@ -79,14 +79,11 @@ class MsTxtConverter(object):
     _parser_factory = None
 
     def __init__(self, ms_file_path, txt_path, coord_path=None):
-        self.sm_config = SMConfig.get_conf()
+        self.ms_file_path = ms_file_path
 
         if self._parser_factory is None:
-            ms_parser_factory_module = self.sm_config['ms_files']['parser_factory']
-            self._parser_factory = getattr(import_module(ms_parser_factory_module['path']),
-                                           ms_parser_factory_module['name'])
+            self._init_ms_parser_factory()
 
-        self.ms_file_path = ms_file_path
         self.preprocess = None
 
         self.txt_path = txt_path
@@ -105,6 +102,11 @@ class MsTxtConverter(object):
         self.txt_file.write(encode_data_line(i, mzs[ints > 0], ints[ints > 0], decimals=9) + '\n')
         if self.coord_file:
             self.coord_file.write(encode_coord_line(i, x, y) + '\n')
+
+    def _init_ms_parser_factory(self):
+        ms_file_type_config = SMConfig.get_ms_file_handler(self.ms_file_path)
+        ms_parser_factory_module = ms_file_type_config['parser_factory']
+        self._parser_factory = getattr(import_module(ms_parser_factory_module['path']), ms_parser_factory_module['name'])
 
     @staticmethod
     def _check_coord_duplicates(coordinates):

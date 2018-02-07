@@ -8,6 +8,7 @@ from pytest import fixture, raises
 
 from sm.engine.dataset_manager import SMDaemonDatasetManager, DatasetActionPriority
 from sm.engine.errors import UnknownDSID
+from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root
 from sm.engine.sm_daemon import SMDaemon
 from sm.engine import DB, ESExporter, QueuePublisher, Dataset, SMapiDatasetManager, DatasetStatus
@@ -28,11 +29,13 @@ def fill_db(test_db, sm_config, ds_config):
                      json.dumps(meta), json.dumps(ds_config), DatasetStatus.FINISHED)])
 
 
-def create_api_ds_man(db=None, es=None, queue_pub=None, sm_config=None):
+def create_api_ds_man(db=None, es=None, img_store=None, queue_pub=None, sm_config=None):
     db = db or DB(sm_config['db'])
     es = es or ESExporter(db)
+    img_store = img_store or MagicMock(spec=ImageStoreServiceWrapper)
     queue_pub = queue_pub or QueuePublisher(sm_config['rabbitmq'])
-    return SMapiDatasetManager(qname=QNAME, db=db, es=es, mode='queue', queue_publisher=queue_pub)
+    return SMapiDatasetManager(qname=QNAME, db=db, es=es,
+                               image_store=img_store, mode='queue', queue_publisher=queue_pub)
 
 
 def create_ds(ds_id=None, upload_dt=None, input_path=None, meta=None, ds_config=None):

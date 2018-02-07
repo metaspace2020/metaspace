@@ -52,6 +52,7 @@ DATASET_SEL = '''SELECT
     d.metadata,
     d.acq_geometry,
     d.input_path,
+    d.ion_img_storage_type,
     d.upload_dt,
     d.status,
     to_char(max(j.finish), 'YYYY-MM-DD HH24:MI:SS')
@@ -62,7 +63,8 @@ GROUP BY d.id
 '''
 
 DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_acq_geometry', 'ds_input_path',
-                   'ds_upload_dt', 'ds_status', 'ds_last_finished')
+                   'ds_ion_img_storage', 'ds_upload_dt', 'ds_status', 'ds_last_finished')
+DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry')
 
 
 def init_es_conn(es_config):
@@ -209,6 +211,11 @@ class ESExporter(object):
         mol_by_sf_df.columns = ['mol_ids', 'mol_names']
         return mol_by_sf_df
 
+    def _add_ds_attrs_to_ann(self, ann, ds_attrs):
+        for a in ds_attrs:
+            if not a in DS_COLUMNS_TO_SKIP_IN_ANN:
+                ann[a] = ds_attrs[a]
+
     def index_ds(self, ds_id, mol_db):
         try:
             dataset = self._remove_mol_db_from_dataset(ds_id, mol_db)
@@ -228,7 +235,7 @@ class ESExporter(object):
         mol_by_sf_df = self._get_mol_by_sf_df(mol_db)
         for r in annotations:
             d = dict(zip(ANNOTATION_COLUMNS, r))
-            d.update(dataset)  # include all dataset fields (prefixed with 'ds_')
+            self._add_ds_attrs_to_ann(d, dataset)
             d['db_name'] = mol_db.name
             d['db_version'] = mol_db.version
             sf = d['sf']

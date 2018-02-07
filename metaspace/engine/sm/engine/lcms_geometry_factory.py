@@ -1,14 +1,12 @@
 from sm.engine.acq_geometry_factory import AcqGeometryFactory, ACQ_GEOMETRY_KEYS
-import pyopenms as ms
+from sm.engine.mzml_reading import read_ms1_experiment
 
 class LcmsGeometryFactory(AcqGeometryFactory):
     def __init__(self, ms_file_path):
         super(LcmsGeometryFactory, self).__init__(ms_file_path)
 
     def _acquisition_grid(self):
-        ms_experiment = ms.MSExperiment()
-        file_handler = ms.FileHandler()
-        file_handler.loadExperiment(self.ms_file_path, ms_experiment)
+        ms_experiment = read_ms1_experiment(self.ms_file_path)
         pixel_coords = [(spec.getRT(), 0.0) for spec in ms_experiment]
         return {
             ACQ_GEOMETRY_KEYS.AcqGridSection.REGULAR_GRID: False,

@@ -51,13 +51,26 @@ class LocalWorkDir(object):
 
     def __init__(self, base_path, ds_id):
         self.ds_path = join(base_path, ds_id)
+        self._ms_file_path = None
 
     @property
     def ms_file_path(self):
-        ms_file_extension = SMConfig.get_conf()['ms_files']['extensions'][0]
-        ms_file_names = [fn for fn in listdir(self.ds_path) \
-            if re.search(r'\.{}$'.format(ms_file_extension), fn, re.IGNORECASE)]
-        return join(self.ds_path, ms_file_names[0]) if ms_file_names else ''
+        if self._ms_file_path:
+            return self._ms_file_path
+
+        file_handlers = SMConfig.get_conf()['ms_file_handlers']
+        for handler in file_handlers:
+            ms_file_extension = handler['extensions'][0]
+            logger.info('"%s" file handler is looking for files with "%s" extension \
+                        in the input directory...',  handler['type'], ms_file_extension)
+            ms_file_path = next((fn for fn in listdir(self.ds_path) \
+                if re.search(r'\.{}$'.format(ms_file_extension), fn, re.IGNORECASE)), None)
+            if ms_file_path:
+                logger.info('"%s" file handler has found "%s" in the input directory...',\
+                            handler['type'], ms_file_path)
+                self._ms_file_path = join(self.ds_path, ms_file_path)
+                break
+        return self._ms_file_path if self._ms_file_path else ''
 
     @property
     def txt_path(self):
@@ -148,8 +161,11 @@ class WorkDirManager(object):
         else:
             self.local_fs_only = False
 
-        self.s3 = boto3.session.Session().resource('s3')
-        self.s3transfer = S3Transfer(boto3.client('s3', self.sm_config['aws']['aws_region']))
+        cred_dict = dict(aws_access_key_id=self.sm_config['aws']['aws_access_key_id'],
+                         aws_secret_access_key=self.sm_config['aws']['aws_secret_access_key'])
+        session = boto3.session.Session(**cred_dict)
+        self.s3 = session.resource('s3')
+        self.s3transfer = S3Transfer(boto3.client('s3', 'eu-west-1', **cred_dict))
 
         self.local_dir = LocalWorkDir(self.sm_config['fs']['base_path'], ds_id)
         if not self.local_fs_only:

@@ -9,6 +9,7 @@ from PIL import Image
 
 from sm.engine import DB, ESExporter
 from sm.engine import Dataset, SMapiDatasetManager, DatasetActionPriority
+from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE
 from sm.engine.util import SMConfig
 from sm.engine.util import init_logger
@@ -50,7 +51,10 @@ def _create_queue_publisher():
 
 
 def _create_dataset_manager(db):
-    return SMapiDatasetManager(SM_ANNOTATE, db, ESExporter(db),
+    config = _read_config()
+    img_store = ImageStoreServiceWrapper(config['services']['img_service_url'])
+    img_store.storage_type = 'fs'
+    return SMapiDatasetManager(SM_ANNOTATE, db, ESExporter(db), img_store,
                                mode='queue', queue_publisher=_create_queue_publisher())
 
 

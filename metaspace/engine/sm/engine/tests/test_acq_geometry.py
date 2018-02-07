@@ -96,7 +96,7 @@ def test_lcms_geometry_factory():
     geometry = factory.create()
     assert geometry[ACQ_GEOMETRY_KEYS.LENGTH_UNIT] == 's'
     assert not geometry[ACQ_GEOMETRY_KEYS.AcqGridSection.section_name][ACQ_GEOMETRY_KEYS.AcqGridSection.REGULAR_GRID]
-    assert len(geometry[ACQ_GEOMETRY_KEYS.AcqGridSection.section_name][ACQ_GEOMETRY_KEYS.AcqGridSection.PIXEL_CORRD_LIST]) == 1590
+    assert len(geometry[ACQ_GEOMETRY_KEYS.AcqGridSection.section_name][ACQ_GEOMETRY_KEYS.AcqGridSection.PIXEL_CORRD_LIST]) == 285
     assert geometry[ACQ_GEOMETRY_KEYS.PixelSizeSection.section_name] == {
         ACQ_GEOMETRY_KEYS.PixelSizeSection.REGULAR_SIZE: True,
         ACQ_GEOMETRY_KEYS.PixelSizeSection.PIXEL_SIZE_X : 0,

@@ -23,7 +23,6 @@ from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 from sm.engine.errors import JobFailedError, ESExportFailedError
-from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher
 
 logger = logging.getLogger('sm-engine')
@@ -42,8 +41,6 @@ class SearchJob(object):
     no_clean : bool
         Don't delete interim data files
     """
-    # TODO: move it to another class that operates with datasets not jobs
-    _acq_geometry_factory = None
 
     def __init__(self, img_store=None, no_clean=False):
         self.no_clean = no_clean
@@ -60,10 +57,6 @@ class SearchJob(object):
         self._es = None
 
         self._sm_config = SMConfig.get_conf()
-        if self._acq_geometry_factory is None:
-            acq_geometry_factory_module = self._sm_config['ms_files']['acq_geometry_factory']
-            self._acq_geometry_factory = getattr(import_module(acq_geometry_factory_module['path']),
-                                                 acq_geometry_factory_module['name'])
 
         logger.debug('Using SM config:\n%s', pformat(self._sm_config))
 
@@ -78,6 +71,7 @@ class SearchJob(object):
             sconf.set("spark.hadoop.fs.s3a.access.key", self._sm_config['aws']['aws_access_key_id'])
             sconf.set("spark.hadoop.fs.s3a.secret.key", self._sm_config['aws']['aws_secret_access_key'])
             sconf.set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+            sconf.set("spark.hadoop.fs.s3a.endpoint", "s3.{}.amazonaws.com".format(self._sm_config['aws']['aws_region']))
 
         self._sc = SparkContext(master=self._sm_config['spark']['master'], conf=sconf, appName='SM engine')
 
@@ -147,6 +141,17 @@ class SearchJob(object):
                     moldb_id_list.append(mol_db_id)
         return moldb_id_list
 
+    def _save_data_from_raw_ms_file(self):
+        ms_file_type_config = SMConfig.get_ms_file_handler(self._wd_manager.local_dir.ms_file_path)
+        acq_geometry_factory_module = ms_file_type_config['acq_geometry_factory']
+        acq_geometry_factory = getattr(import_module(acq_geometry_factory_module['path']),
+                                                acq_geometry_factory_module['name'])
+
+        acq_geometry = acq_geometry_factory(self._wd_manager.local_dir.ms_file_path).create()
+        self._ds.save_acq_geometry(self._db, acq_geometry)
+
+        self._ds.save_ion_img_storage_type(self._db, ms_file_type_config['img_storage_type'])
+
     def run(self, ds):
         """ Entry point of the engine. Molecule search is completed in several steps:
             * Copying input data to the engine work dir
@@ -180,8 +185,9 @@ class SearchJob(object):
 
             self._ds_reader = DatasetReader(self._ds.input_path, self._sc, self._wd_manager)
             self._ds_reader.copy_convert_input_data()
-            acq_geometry = self._acq_geometry_factory(self._wd_manager.local_dir.ms_file_path).create()
-            self._ds.save_acq_geometry(self._db, acq_geometry)
+
+            self._save_data_from_raw_ms_file()
+            self._img_store.storage_type = self._ds.get_ion_img_storage_type(self._db)
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 

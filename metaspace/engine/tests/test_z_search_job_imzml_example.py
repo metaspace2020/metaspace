@@ -14,6 +14,7 @@ from sm.engine.dataset import Dataset
 from sm.engine.dataset_manager import DatasetStatus
 from sm.engine.tests.util import test_db, sm_config, sm_index, es, es_dsl_search
 from sm.engine.acq_geometry_factory import ACQ_GEOMETRY_KEYS
+from sm.engine.png_generator import ImageStoreServiceWrapper
 
 test_ds_name = 'imzml_example_ds'
 
@@ -69,7 +70,8 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
         db.insert(Dataset.DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt,
                                        '{}', ds_config_str, DatasetStatus.QUEUED)])
 
-        job = SearchJob()
+        img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
+        job = SearchJob(img_store=img_store)
         job._sm_config['rabbitmq'] = {}  # avoid talking to RabbitMQ during the test
 
         ds = Dataset.load(db, ds_id)
@@ -179,7 +181,8 @@ def test_search_job_imzml_example_annotation_job_fails(get_compute_img_metrics_m
         db.insert(Dataset.DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt.isoformat(' '),
                                        '{}', ds_config_str, DatasetStatus.QUEUED)])
 
-        job = SearchJob()
+        img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
+        job = SearchJob(img_store=img_store)
         ds = Dataset.load(db, ds_id)
 
         acq_geom = ds.get_acq_geometry(db)
@@ -240,7 +243,8 @@ def test_search_job_imzml_example_es_export_fails(get_compute_img_metrics_mock, 
         with patch('sm.engine.search_job.ESExporter.index_ds') as index_ds_mock:
             index_ds_mock.side_effect = throw_exception_function
 
-            job = SearchJob()
+            img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
+            job = SearchJob(img_store=img_store)
             ds = Dataset.load(db, ds_id)
             job.run(ds)
     except ESExportFailedError as e:

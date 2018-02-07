@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 from sm.engine.dataset import DatasetStatus, Dataset
-from sm.engine.errors import DSIDExists
+from sm.engine.errors import DSIDExists, UnknownDSID
 from sm.engine.mol_db import MolecularDB
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
@@ -148,11 +148,18 @@ class SMDaemonDatasetManager(DatasetManager):
     def _del_iso_images(self, ds):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
 
-        for row in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
-            iso_image_ids = row[0]
-            for img_id in iso_image_ids:
-                if img_id:
-                    self._img_store.delete_image_by_id('iso_image', img_id)
+        prev_storage_type = self._img_store.storage_type
+        try:
+            self._img_store.storage_type = ds.get_ion_img_storage_type(self._db)
+            for row in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
+                iso_image_ids = row[0]
+                for img_id in iso_image_ids:
+                    if img_id:
+                        self._img_store.delete_image_by_id('iso_image', img_id)
+        except UnknownDSID:
+            self.logger.warning('Attempt to delete isotopic images of non-existing dataset. Skipping...')
+        finally:
+            self._img_store.storage_type = prev_storage_type
 
     def delete(self, ds, del_raw_data=False, **kwargs):
         """ Delete all dataset related data from the DB """
@@ -170,19 +177,19 @@ class SMDaemonDatasetManager(DatasetManager):
 
 class SMapiDatasetManager(DatasetManager):
 
-    def __init__(self, qname, db, es, mode, queue_publisher=None):
+    def __init__(self, qname, db, es, image_store, mode, queue_publisher=None):
         self.qname = qname
-        DatasetManager.__init__(self, db=db, es=es, mode=mode,
+        DatasetManager.__init__(self, db=db, es=es, img_store=image_store, mode=mode,
                                 queue_publisher=queue_publisher, logger_name='sm-api')
 
     def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT, **kwargs):
+        ds.set_status(self._db, self._es, self._queue, DatasetStatus.QUEUED)
         if self.mode == 'queue':
             msg = ds.to_queue_message()
             msg['action'] = action
             msg.update(kwargs)
             self._queue.publish(msg, self.qname, priority)
             self.logger.info('New message posted to %s: %s', self._queue, msg)
-        ds.set_status(self._db, self._es, self._queue, DatasetStatus.QUEUED)
 
     def add(self, ds, del_first=False, priority=DatasetActionPriority.DEFAULT):
         """ Send add message to the queue. If dataset exists, raise an exception """
@@ -209,9 +216,15 @@ class SMapiDatasetManager(DatasetManager):
         else:
             self.logger.info('Nothing to update: %s %s', ds.id, ds.name)
 
-    def _annotation_image_shape(self, img_store, ds_id):
-        ion_img_id = self._db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', ds_id)[0][0][0]
-        return img_store.get_image_by_id('iso_image', ion_img_id).size
+    def _annotation_image_shape(self, img_store, ds):
+        ion_img_id = self._db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', ds.id)[0][0][0]
+        prev_storage_type = img_store.storage_type
+        img_store.storage_type = ds.get_ion_img_storage_type(self._db)
+        try:
+            result = img_store.get_image_by_id('iso_image', ion_img_id).size
+        finally:
+            img_store.storage_type = prev_storage_type
+        return result
 
     def _transform_scan(self, scan, transform_, dims, zoom):
         # zoom is relative to the web application viewport size and not to the ion image dimensions,
@@ -239,26 +252,24 @@ class SMapiDatasetManager(DatasetManager):
         return buf
 
     def _add_raw_optical_image(self, ds, optical_scan, transform):
-        img_store = self._img_store()
         row = self._db.select_one(SEL_DATASET_OPTICAL_IMAGE, ds.id)
         if row and row[0]:
-            img_store.delete_image_by_id('raw_optical_image', row[0])
+            self._img_store.delete_image_by_id('raw_optical_image', row[0])
         buf = self._save_jpeg(optical_scan)
-        img_id = img_store.post_image('raw_optical_image', buf)
+        img_id = self._img_store.post_image('raw_optical_image', buf)
         self._db.alter(UPD_DATASET_OPTICAL_IMAGE, img_id, transform, ds.id)
 
     def _add_zoom_optical_images(self, ds, optical_scan, transform, zoom_levels):
-        img_store = self._img_store()
-        dims = self._annotation_image_shape(img_store, ds.id)
+        dims = self._annotation_image_shape(self._img_store, ds)
         rows = []
         for zoom in zoom_levels:
             img = self._transform_scan(optical_scan, transform, dims, zoom)
             buf = self._save_jpeg(img)
-            img_id = img_store.post_image('optical_image', buf)
+            img_id = self._img_store.post_image('optical_image', buf)
             rows.append((img_id, ds.id, zoom))
 
         for row in self._db.select(SEL_OPTICAL_IMAGE, ds.id):
-            img_store.delete_image_by_id('optical_image', row[0])
+            self._img_store.delete_image_by_id('optical_image', row[0])
         self._db.alter(DEL_OPTICAL_IMAGE, ds.id)
         self._db.insert(INS_OPTICAL_IMAGE, rows)
 
