@@ -15,7 +15,6 @@ const config = {
 
   services: {
     moldb_service_host: "localhost:5000",
-    mol_image_server_host: "localhost:5100",
     sm_engine_api_host: "localhost:5123"
   },
 
