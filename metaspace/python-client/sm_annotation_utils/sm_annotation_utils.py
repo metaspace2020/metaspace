@@ -8,6 +8,8 @@ from copy import deepcopy
 from io import BytesIO
 import os
 import boto3
+from PIL import Image
+
 
 def _extract_data(res):
     if not res.headers.get('Content-Type').startswith('application/json'):
@@ -29,6 +31,13 @@ class GraphQLClient(object):
     def __init__(self, url, jwt=""):
         self.url = url
         self.jwt=jwt
+        # Great big hacking hacks
+        # TODO: fix this once the LC fork is merged
+        if "metaspace2020.eu" in url:
+            self.dstype = 'imaging'
+            self.DATASET_FIELDS = self.DATASET_FIELDS.replace("acquisitionGeometry","")
+        else:
+            self.dstype = 'lc'
 
     def query(self, query, variables={}):
         res = requests.post(self.url,
@@ -88,6 +97,7 @@ class GraphQLClient(object):
         metadataJson
         status
         inputPath
+        acquisitionGeometry
     """
 
     ANNOTATION_FIELDS = """
@@ -174,7 +184,26 @@ class GraphQLClient(object):
         }"""
         return self.listQuery('allDatasets', query, {'filter': datasetFilter})
 
+    def getRawOpticalImage(self, dsid):
+        query= """
+            query getRawOpticalImages($datasetId: String!){ 
+                rawOpticalImage(datasetId: $datasetId) 
+                {
+                    url, transform
+                }
+            }
+        """
+        variables = {"datasetId": dsid}
+        return self.query(query, variables)
 
+    def getRegisteredImage(self, dsid, zoom_level = 8):
+        query= """
+            query getRawOpticalImages($datasetId: String!, $zoom: Int){ 
+                rawOpticalImage(datasetId: $datasetId) 
+            }
+        """
+        variables = {"datasetId": dsid}
+        return self.query(query, variables)
 
     def submitDataset(self, data_path, metadata, priority):
         if self.jwt == None:
@@ -238,11 +267,12 @@ def ion(r):
     return (r.ds_id, normalise_sf(r.sf), r.adduct, 1)
 
 class IsotopeImages(object):
-    def __init__(self, images, sf, adduct, centroids):
+    def __init__(self, images, sf, adduct, centroids, urls):
         self._images = images
         self._sf = sf
         self._adduct = adduct
         self._centroids = centroids
+        self._urls = urls
 
     def __getitem__(self, index):
         return self._images[index]
@@ -268,6 +298,43 @@ class IsotopeImages(object):
             plt.axis('off')
             plt.imshow(self._images[i], interpolation='none', cmap='viridis')
 
+class OpticalImage(object):
+    def __init__(self, image, registered_image):
+        self._images = [image, ]
+        self._transforms = [registered_image,]
+        self._itransforms = [np.linalg.inv(t) for t in self._transforms]
+
+    def __getitem__(self, index):
+        return self._images[index]
+
+    def __len__(self):
+        return len(self._images)
+
+    def _tform_to_tuple(self, tform):
+        return (tform[0, 0], tform[0, 1], tform[0, 2], tform[1, 0], tform[1, 1], tform[1, 2])
+
+    def _to_rgb(self, image):
+        return Image.fromarray(255 * image / image.max()).convert('RGB')
+
+    def _transform(self, image, transform, target_image_shape):
+        """
+        :param image:
+        :param transform:
+        :return:
+        """
+        im_t = image.transform(
+            target_image_shape,
+            Image.AFFINE,
+            self._tform_to_tuple(transform),
+            resample=Image.NEAREST
+        )
+        return im_t
+
+    def to_ion_image(self, index, ion_image_shape):
+        return self._transform(Image.fromarray(self[index]), self._transforms[index], (ion_image_shape[1], ion_image_shape[0]))
+
+    def ion_image_to_optical(self, ion_image, index=0):
+        return self._transform(self._to_rgb(ion_image), self._itransforms[index], (self._images[index].shape[1], self._images[index].shape[0]))
 
 class Metadata(object):
     def __init__(self, json_metadata):
@@ -300,17 +367,21 @@ class SMDataset(object):
     def s3dir(self):
         return self._info['inputPath']
 
+    @property
+    def acquisitionGrid(self):
+        return np.asarray(json.loads(self._info['acquisitionGeometry'])['acquisition_grid']['coord_list'])
+
     def __repr__(self):
         return "SMDataset({} | ID: {})".format(self.name, self.id)
 
-    def annotations(self, fdr=0.1, database=None):
+    def annotations(self, fdr=0.1, database=None, return_vals = ['sumFormula', 'adduct', 'mz']):
         annotationFilter = {'fdrLevel': fdr}
         if database:
             annotationFilter['database'] = database
         datasetFilter = {'ids': self.id}
 
         records = self._gqclient.getAnnotations(annotationFilter, datasetFilter)
-        return [(r['sumFormula'], r['adduct'], r['mz']) for r in records]
+        return [list(r[val] for val in return_vals) for r in records]
 
     def results(self, database=None):
         annotationFilter = {}
@@ -359,6 +430,10 @@ class SMDataset(object):
     def status(self):
         return self._info['status']
 
+    @property
+    def _baseurl(self):
+        return self._gqclient.url.rsplit("/", 1)[0]
+
     def isotope_images(self, sf, adduct):
         records = self._gqclient.getAnnotations(
             dict(sumFormula=sf, adduct=adduct, database=None),
@@ -370,7 +445,6 @@ class SMDataset(object):
         def fetchImage(url):
             if not url:
                 return None
-
             url = self._gqclient.url.rsplit("/",1)[0]+url
             im = mpimg.imread(BytesIO(requests.get(url).content))
             mask = im[:, :, 3]
@@ -379,12 +453,22 @@ class SMDataset(object):
             assert data.max() <= 1
             return data
 
-        images = [None, None, None, None]
+        def fetchTrace(url):
+            if not url:
+                return None
+            url = self._baseurl + url
+            bytes = BytesIO(requests.get(url).content)
+            return np.fromstring(bytes.read(), dtype=np.uint8).astype(float)
+
+        images = []
         image_metadata = None
         if records:
             image_metadata = records[0]['isotopeImages']
-            images = [fetchImage(r.get('url')) for r in image_metadata]
-
+            #print(self._gqclient.dstype)
+            if self._gqclient.dstype == 'imaging':
+                images = [fetchImage(r.get('url')) for r in image_metadata]
+            elif self._gqclient.dstype == 'lc':
+                images = [fetchTrace(r.get('url')) for r in image_metadata]
         non_empty_images = [i for i in images if i is not None]
         shape = non_empty_images[0].shape
         for i in range(len(images)):
@@ -393,7 +477,19 @@ class SMDataset(object):
             else:
                 images[i] *= image_metadata[i]['maxIntensity']
 
-        return IsotopeImages(images, sf, adduct, [r['mz'] for r in image_metadata])
+        return IsotopeImages(images, sf, adduct, [r['mz'] for r in image_metadata], [r['url'] for r in image_metadata])
+
+    def optical_images(self):
+        def fetch_image(url):
+            from PIL import Image
+            if not url:
+                return None
+            url = self._baseurl + url
+            im = Image.open(BytesIO(requests.get(url).content))
+            return np.asarray(im)
+        raw_im = self._gqclient.getRawOpticalImage(self.id)['rawOpticalImage']
+        return OpticalImage(fetch_image(raw_im['url']), np.asarray(raw_im['transform']))
+
 
 class SMInstance(object):
     def __init__(self, config=DEFAULT_CONFIG):
@@ -573,7 +669,7 @@ class SMInstance(object):
         # special case: if there's only one dataset, use GraphQL
         if len(datasets) == 1 and not self._es_client:
             return self._get_tables1(datasets[0], sf_adduct_pairs, fields, db_name)
-
+        #TODO: use graphql for all queries
         assert self._es_client, "You must provide ElasticSearch connection settings!"
         from elasticsearch_dsl import Search
         fill_values = {'fdr': 1.0, 'msm': 0.0}
