@@ -7,7 +7,7 @@ const path = require('path');
 const minSchemaPath = "metadata/min metadata schema.json";
 const specializedSchemasDir = "metadata/specialised metadata";
 const metadataFileExtension = '.json';
-
+const metadataRegistryFilename = 'metadataRegistry.js';
 
 function readJsonSchema(filePath) {
     const schema = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -35,14 +35,21 @@ if (!fs.existsSync(outputDir)) {
 
 const minMetadata = readJsonSchema(minSchemaPath);
 
+const metadataFiles = {}
 const dirFiles = fs.readdirSync(specializedSchemasDir);
 for (const filename of dirFiles) {
     const filePath = path.join(specializedSchemasDir, filename);
     const fileStat = fs.lstatSync(filePath);
     if (!fileStat.isDirectory() && fileHasExtension(filename, metadataFileExtension)) {
         const specMetadata = readJsonSchema(filePath);
+        const mdType = specMetadata['properties']['Data_Type']['enum'][0];
         const fullSchema = {};
         mergeWith(fullSchema, minMetadata, specMetadata, mergeCustomizer);
         fs.writeFileSync(path.join(outputDir, filename), JSON.stringify(fullSchema));
+        metadataFiles[mdType] = filename;
     }
 }
+
+// create unified metadata registry
+const registryExportStmt = `export default ${JSON.stringify(metadataFiles)};`;
+fs.writeFileSync(path.join(outputDir, metadataRegistryFilename), registryExportStmt);

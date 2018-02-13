@@ -9,6 +9,10 @@
 
   <div id="upload-page" v-else>
     <div id="upload-left-pane">
+      <div id="filter-panel-container">
+        <filter-panel level="upload"></filter-panel>
+      </div>
+
       <div id="instructions">
 
         <p style="font-size: 18px" v-if="introIsHidden">
@@ -54,6 +58,7 @@
  // TODO: try https://github.com/FineUploader/vue-fineuploader once it's ready for production
 
  import FineUploader from './FineUploader.vue';
+ import FilterPanel from './FilterPanel.vue';
  import MetadataEditor from './MetadataEditor.vue';
  import Vue from 'vue';
 
@@ -63,6 +68,9 @@
 
  export default {
    name: 'upload-page',
+   created() {
+     this.$store.commit('updateFilter', this.$store.getters.filter);
+   },
    mounted() {
      const {query} = this.$store.state.route;
      if (query['first-time'] !== undefined)
@@ -78,7 +86,8 @@
    },
    components: {
      FineUploader,
-     MetadataEditor
+     MetadataEditor,
+     FilterPanel
    },
    methods: {
      onUpload(filenames) {
@@ -142,6 +151,11 @@
 
 <style>
  #instructions {
+   padding-left: 5px;
+ }
+
+ #filter-panel-container > * {
+   padding-left: 0;
  }
 
  #upload-page, #maintenance-message {

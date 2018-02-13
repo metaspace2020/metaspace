@@ -1,16 +1,5 @@
 <template>
   <el-row>
-    <div v-if="!valid">
-      <span class="invalid">
-      Metadata does not conform to the schema:
-      </span>
-      <ul>
-        <li v-for="error in validationErrors">
-          {{ error.dataPath }}: {{ error.message }}
-        </li>
-      </ul>
-    </div>
-
     <el-tree :data="treeData"
              id="metadata-tree"
              node-key="id"
@@ -20,25 +9,20 @@
 </template>
 
 <script>
- import metadataSchema from '../assets/metadata_schema.json';
- import Ajv from 'ajv';
-
- const ajv = new Ajv();
- const validator = ajv.compile(metadataSchema);
+ import metadataRegistry from '../assets/metadataRegistry';
 
  export default {
    name: 'dataset-info',
    props: ['metadata', 'expandedKeys'],
    data() {
+     const mdFilename = metadataRegistry[this.$store.getters.filter.metadataType];
+     const metadataSchema = require(`../assets/${mdFilename}`);
      return {
        schema: metadataSchema,
-       validator,
        defaultExpandedKeys: this.expandedKeys
      }
    },
    computed: {
-     valid () { return validator(this.metadata); },
-     validationErrors() { return validator.errors; },
      treeData() {
        return this.objToTreeNode(null, this.metadata, this.schema);
      }
@@ -83,14 +67,6 @@
 </script>
 
 <style>
- .valid {
-   background-color: #afa
- }
-
- .invalid {
-   background-color: #a88
- }
-
  #metadata-tree {
    text-align: left;
  }

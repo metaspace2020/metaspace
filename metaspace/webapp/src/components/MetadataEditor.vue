@@ -1,6 +1,6 @@
 <template>
   <div id="md-editor-container">
-    <div style="position: relative;">
+    <div style="position: relative;" v-if="!loading">
       <div id="md-editor-submit">
         <router-link :to="opticalImageAlignmentHref" v-if="datasetId"
                      style="width: 150px; margin-right: 50px;">
@@ -13,11 +13,11 @@
         </el-button>
       </div>
 
-      <div id="md-section-list" v-loading="loading">
-
+      <div id="md-section-list">
+        <!-- Hardcoded "Data_Type" property of the metadata schema. Not supposed to be changed by user. -->
         <div class="metadata-section"
-             v-for="(section, sectionName) in schema.properties"
-             :key="sectionName">
+             v-for="(section, sectionName) in schema.properties" :key="sectionName"
+                v-if="sectionName != 'Data_Type'">
           <div class="heading" v-html="prettify(sectionName)"></div>
 
           <el-form size="medium">
@@ -58,8 +58,10 @@
                 </div>
 
                 <div>
+                  <!-- Custom event handler for polarity selector, as available adduct list should be updated -->
                   <el-select v-if="prop.enum"
                              :required="isRequired(propName, section)"
+                             @change="propName == 'Polarity' ? onPolarityChange(): null"
                              v-model="value[sectionName][propName]">
                     <el-option v-for="opt in prop.enum" :value="opt" :label="opt" :key="opt">
                     </el-option>
@@ -124,6 +126,8 @@
         </div>
       </div>
     </div>
+    <div id="load-indicator" v-else v-loading="true">
+    </div>
   </div>
 </template>
 
@@ -152,17 +156,26 @@
     a submit event is emitted with dataset ID and stringified form value.
   */
 
- import metadataSchema from '../assets/metadata_schema.json';
+ import metadataRegistry from '../assets/metadataRegistry';
  import Ajv from 'ajv';
  import merge from 'lodash/merge';
  import {
    fetchAutocompleteSuggestionsQuery,
-   fetchMetadataQuery
+   fetchMetadataQuery,
+   metadataOptionsQuery
  } from '../api/metadata';
- import gql from 'graphql-tag';
- import Vue from 'vue';
+  import Vue from 'vue';
+
+ const metadataSchemas = {};
+ for (const mdType of Object.keys(metadataRegistry)) {
+   const mdFilename = metadataRegistry[mdType];
+   metadataSchemas[mdType] = require(`../assets/${mdFilename}`);
+ }
 
  const ajv = new Ajv({allErrors: true});
+ // clear schema cache
+ ajv.removeSchema();
+ const schemaValidators = {};
 
  const FIELD_WIDTH = {
    'Institution': 6,
@@ -235,51 +248,74 @@
  export default {
    name: 'metadata-editor',
    props: ['datasetId', 'enableSubmit', 'disabledSubmitMessage'],
-   created() {
-     this.loading = true;
-     this.$apollo.query({query: gql`{molecularDatabases{name}}`}).then(response => {
-       Vue.set(this.schema.properties.metaspace_options.properties.Metabolite_Database.items,
-               'enum',
-               response.data.molecularDatabases.map(d => d.name));
-       this.validator = ajv.compile(this.schema);
-       this.setLoadingStatus(false);
-     }).catch(err => {
-       console.log("Error fetching list of metabolite databases: ", err);
-     });
+   apollo: {
+     metadataSelectorOptions: {
+       query: metadataOptionsQuery,
+       update(data) {
+         this._possibleAdducts = {
+           'Positive': data.adducts.filter(a => a.charge > 0).map(a => a.adduct),
+           'Negative': data.adducts.filter(a => a.charge < 0).map(a => a.adduct)
+         };
+         this._molecularDatabases = data.molecularDatabases.map(d => d.name);
+       },
+       loadingKey: 'loading'
+     },
+     existingMetadata: {
+       query: fetchMetadataQuery,
+       variables() {
+         return { id: this.datasetId };
+       },
+       fetchPolicy: 'network-only',
+       skip() {
+         return !this.datasetId;
+       },
+       update(data) {
+         this.value = this.fixEntries(JSON.parse(data.dataset.metadataJson));
+         this._datasetMdType = this.value.Data_Type;
+         const defaultValue = objectFactory(this.schema);
+         this.value = merge({}, defaultValue, this.value);
+       },
+       loadingKey: 'loading'
+     }
    },
 
    mounted() {
      // no datasetId means a new dataset => help filling out by loading the last submission
      if (!this.datasetId) {
        this.loadLastSubmission();
-       return;
      }
-
-     this.loading = true;
-     // otherwise we need to fetch existing data from the server
-     this.$apollo.query({
-       query: fetchMetadataQuery,
-       variables: { id: this.datasetId },
-       fetchPolicy: 'network-only'
-     }).then(resp => {
-       const defaultValue = objectFactory(metadataSchema),
-             value = this.fixEntries(JSON.parse(resp.data.dataset.metadataJson));
-       this.value = merge({}, defaultValue, value);
-       this.setLoadingStatus(false);
-     }).catch(err => {
-       console.log("Error fetching current metadata: ", err);
-     });
    },
 
    data() {
+     // some default value before we download metadata
+     this._datasetMdType = Object.keys(metadataRegistry)[0];
      return {
-       schema: metadataSchema,
-       value: objectFactory(metadataSchema),
+       // for existing dataset we can't predict metadata type before we download metadata
+       value: objectFactory(metadataSchemas[this.datasetId ? this._datasetMdType : this.$store.getters.filter.metadataType]),
        validationErrors: [],
-       loading: true
+       loading: 0
      }
    },
+
    computed: {
+     schema() {
+       const schema = metadataSchemas[this.currentMetadataType()];
+       this.updateSchemaOptions(schema);
+       const curDataType = schema.properties.Data_Type.enum[0];
+       if (this.value.Data_Type != curDataType) {
+         this.value.Data_Type = curDataType;
+       }
+       return schema;
+     },
+
+     validator() {
+       const currentMdType = this.currentMetadataType();
+       if (!(currentMdType in schemaValidators)) {
+         schemaValidators[currentMdType] = ajv.compile(metadataSchemas[currentMdType]);
+       }
+       return schemaValidators[currentMdType];
+     },
+
      errorMessages() {
        let messages = {};
        for (let err of this.validationErrors) {
@@ -293,9 +329,13 @@
          name: 'add-optical-image',
          params: {dataset_id: this.datasetId}
        };
-     },
+     }
    },
    methods: {
+     currentMetadataType() {
+       return this.datasetId ? this._datasetMdType : this.$store.getters.filter.metadataType;
+     },
+
      prettify(propName, parent) {
        let name = propName.toString()
                           .replace(/_/g, ' ')
@@ -361,7 +401,7 @@
      },
 
      loadLastSubmission() {
-       const defaultValue = objectFactory(metadataSchema);
+       const defaultValue = objectFactory(this.schema);
        let lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
        if (lastValue && lastValue.metaspace_options) {
          lastValue.metaspace_options.Dataset_Name = ''; // different for each dataset
@@ -372,7 +412,26 @@
        } else {
          this.value = defaultValue;
        }
-       this.setLoadingStatus(false);
+     },
+
+     updateSchemaOptions(schema) {
+       if (!this.schemaHasMolDbOptions(schema) && this._molecularDatabases) {
+         schema.properties.metaspace_options.properties.Metabolite_Database.items['enum'] = this._molecularDatabases;
+
+         const selectedPolarity = this.value.MS_Analysis.Polarity;
+         schema.properties.metaspace_options.properties.Adducts.items['enum'] = selectedPolarity ? this._possibleAdducts[selectedPolarity] : [];
+       }
+     },
+
+     schemaHasMolDbOptions(schema) {
+       return 'enum' in schema.properties.metaspace_options.properties.Metabolite_Database.items;
+     },
+
+     onPolarityChange() {
+       this.value.metaspace_options.Adducts = [];
+       Vue.set(this.schema.properties.metaspace_options.properties.Adducts.items,
+               'enum',
+               this._possibleAdducts[this.value.MS_Analysis.Polarity]);
      },
 
      setLoadingStatus(value) {
@@ -385,7 +444,7 @@
      },
 
      submit() {
-       const cleanValue = trimEmptyFields(metadataSchema, this.value);
+       const cleanValue = trimEmptyFields(this.schema, this.value);
 
        this.validator(cleanValue);
        this.validationErrors = this.validator.errors || [];
@@ -496,6 +555,10 @@
 
  .md-ac {
    width: 100%;
+ }
+
+ #load-indicator {
+   min-height: 300px;
  }
 
 </style>

@@ -64,7 +64,7 @@
         <el-popover trigger="hover" placement="top">
           <div class="db-link-list">
             Select a database:
-            <div v-for="database in metaboliteDatabases" >
+            <div v-for="database in metaboliteDatabases" :key="database" >
               <router-link :to="resultsHref(database)">
                 {{ database }}
               </router-link>
@@ -221,7 +221,7 @@
      resultsHref(databaseName) {
        return {
          path: '/annotations',
-         query: {ds: this.dataset.id, db: databaseName}
+         query: {ds: this.dataset.id, db: databaseName, mdtype: this.dataset.metadataType}
        };
      },
 

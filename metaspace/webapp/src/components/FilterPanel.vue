@@ -1,15 +1,16 @@
 <template>
   <div class="filter-panel">
-    <el-select placeholder="Add filter"
+    <el-select v-if="anyOptionalFilterPresent"
+               placeholder="Add filter"
                v-model="selectedFilterToAdd"
                @change="addFilter"
                style="width: 200px; margin-bottom: 10px;">
-      <el-option v-for="f in availableFilters"
+      <el-option v-for="f in availableFilters" :key="f.key"
                  :value="f.key" :label="f.description">
       </el-option>
     </el-select>
 
-    <component v-for="f in activeFilters"
+    <component v-for="f in activeFilters" :key="f.name"
                :is="f.type"
                :name="f.name"
                :options="getFilterOptions(f)"
@@ -56,7 +57,8 @@
    'ionisationSource',
    'maldiMatrix',
    'minMSM',
-   'simpleQuery'
+   'simpleQuery',
+   'metadataType'
  ];
 
  export default {
@@ -104,6 +106,15 @@
                            description: FILTER_SPECIFICATIONS[key].description})
        }
        return available;
+     },
+
+     anyOptionalFilterPresent() {
+       for (const filter of this.availableFilters) {
+         if (!('removable' in FILTER_SPECIFICATIONS[filter.key]) || FILTER_SPECIFICATIONS[filter.key]['removable']) {
+           return true;
+         }
+       }
+       return false;
      }
    },
 

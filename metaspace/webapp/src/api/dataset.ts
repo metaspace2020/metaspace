@@ -23,6 +23,7 @@ export const datasetListQuery =
       growthConditions
       metadataJson
       status
+      metadataType
     }
   }`;
 

@@ -5,15 +5,14 @@ import MultiSelectFilter from './components/MultiSelectFilter.vue';
 import DatasetNameFilter from './components/DatasetNameFilter.vue';
 import MzFilter from './components/MzFilter.vue';
 import SearchBox from './components/SearchBox.vue';
+import * as assert from 'assert';
+import metadataRegistry from './assets/metadataRegistry';
 
-// FIXME: hard-coded adducts
-const ADDUCT_POLARITY = {
-  '+H': 'POSITIVE',
-  '+Na': 'POSITIVE',
-  '+K': 'POSITIVE',
-  '-H': 'NEGATIVE',
-  '+Cl': 'NEGATIVE',
-};
+const defaultMetadataType = 'Imaging MS';
+assert(defaultMetadataType in metadataRegistry);
+
+// Filled during the initialization of adduct filter below
+const ADDUCT_POLARITY = {};
 
 function formatAdduct (adduct) {
   if (adduct === null)
@@ -104,9 +103,12 @@ const FILTER_SPECIFICATIONS = {
     name: 'Adduct',
     description: 'Select adduct',
     levels: ['annotation'],
-    initialValue: null,
-
-    options: [null, '+H', '-H', '+Na', '+Cl', '+K'],
+    initialValue: undefined,
+    options: lists => lists.adducts.map(d => {
+      const {adduct, charge} = d;
+      ADDUCT_POLARITY[adduct] = charge > 0 ? 'POSITIVE' : 'NEGATIVE';
+      return adduct;
+    }),
     optionFormatter: formatAdduct,
     valueFormatter: formatAdduct
   },
@@ -248,6 +250,16 @@ const FILTER_SPECIFICATIONS = {
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
     removable: false
+  },
+
+  metadataType: {
+    type: SingleSelectFilter,
+    name: 'Data type',
+    description: 'Select data type',
+    levels: ['annotation', 'dataset', 'upload'],
+    initialValue: defaultMetadataType,
+    removable: false,
+    options: Object.keys(metadataRegistry)
   }
 };
 

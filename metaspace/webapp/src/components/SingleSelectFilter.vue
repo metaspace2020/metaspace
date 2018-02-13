@@ -3,15 +3,13 @@
               @destroy="destroy">
     <el-select slot="edit"
                :filterable="filterable" :clearable="clearable" v-model="value2">
-      <el-option v-for="item in options"
-                 :label="formatOption(item)" :value="item" :key="item">
+      <el-option v-for="(item, idx) in options"
+                 v-html="formatOption(item)" :value="item" :key="idx">
       </el-option>
     </el-select>
 
     <span slot="show" class="tf-value-span">
-      <span v-if="value" >
-        {{ formatValue(value) }}
-      </span>
+      <span v-if="value" v-html="formatValue(value)"></span>
       <span v-else>
         (any)
       </span>
@@ -33,7 +31,7 @@
    props: {
      name: String,
      options: Array,
-     value: [String, Number],
+     value: [String, Number, Object],
      optionFormatter: Function,
      valueFormatter: Function,
      clearable: {type: Boolean, default: false},
