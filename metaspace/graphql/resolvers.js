@@ -131,6 +131,14 @@ const Resolvers = {
               .then(results => results.map(row => row['field']));
     },
 
+    adductSuggestions() {
+      return config.default_adducts['-'].map(a => {
+        return {adduct: a, charge: -1};
+      }).concat(config.default_adducts['+'].map(a => {
+        return {adduct: a, charge: 1};
+      }));
+    },
+
     peopleSuggestions(_, { role, query }) {
       const schemaPath = 'Submitted_By.' + (role == 'PI' ? 'Principal_Investigator' : 'Submitter');
       const p1 = schemaPath + '.First_Name',
@@ -232,6 +240,7 @@ const Resolvers = {
     polarity(ds) { return dsField(ds, 'polarity').toUpperCase(); },
     ionisationSource(ds) { return dsField(ds, 'ionisationSource'); },
     maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
+    metadataType(ds) { return dsField(ds, 'metadataType'); },
 
     submitter(ds) {
       return ds._source.ds_meta.Submitted_By.Submitter;
