@@ -5,6 +5,7 @@ from subprocess import check_call, call
 import logging
 from logging.config import dictConfig
 from os.path import basename, join, exists, splitext
+from pathlib import Path
 
 from sm.engine import Dataset
 
@@ -140,11 +141,18 @@ def read_json(path):
 
 
 def create_ds_from_files(ds_id, ds_name, ds_input_path):
-    meta_path = join(ds_input_path, 'meta.json')
-    if exists(meta_path):
-        metadata = json.load(open(meta_path))
+    base_dir = Path(ds_input_path)
+
+    meta_path = base_dir.joinpath('meta.json')
+    if meta_path.exists():
+        metadata = json.load(open(str(meta_path)))
     else:
         metadata = {}
-    ds_config = json.load(open(join(ds_input_path, 'config.json')))
+    ds_config = json.load(open(str(ds_input_path.joinpath('config.json'))))
 
-    return Dataset(ds_id, ds_name, ds_input_path, datetime.now(), metadata, ds_config)
+    imzml_path = next(base_dir.glob('.imzML'))
+    ms_file_type_config = SMConfig.get_ms_file_handler(str(imzml_path))
+    img_storage_type = ms_file_type_config['img_storage_type']
+
+    return Dataset(id=ds_id, name=ds_name, input_path=ds_input_path, img_storage_type=img_storage_type,
+                   upload_dt=datetime.now(), metadata=metadata, config=ds_config)

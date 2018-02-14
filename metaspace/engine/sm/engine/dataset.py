@@ -46,14 +46,14 @@ class Dataset(object):
     IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
 
     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
-                 metadata=None, config=None, status=DatasetStatus.NEW):
+                 metadata=None, config=None, img_storage_type=None, status=DatasetStatus.NEW):
         self.id = id
         self.input_path = input_path
         self.upload_dt = upload_dt
         self.meta = metadata
         self.config = config
         self.status = status
-        self.ion_img_storage_type = None
+        self.ion_img_storage_type = img_storage_type or 'fs'
         self.name = name or (metadata.get('metaspace_options', {}).get('Dataset_Name', id) if metadata else None)
 
     def __str__(self):

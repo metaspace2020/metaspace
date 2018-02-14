@@ -15,15 +15,14 @@ class ImageStoreServiceWrapper(object):
         self._img_service_url = img_service_url
         self._session = requests.Session()
         self._session.mount(self._img_service_url, HTTPAdapter(max_retries=5))
-        self.storage_type = None
 
-    def _format_url(self, img_type, method='', img_id=''):
-        if not self.storage_type:
-            raise ValueError('Image service storage type is "{}". Unable to generate service URL.')
-        return path.join(self._img_service_url, self.storage_type, img_type + 's', method, img_id)
+    def _format_url(self, storage_type, img_type, method='', img_id=''):
+        assert storage_type, 'Wrong storage_type: %s' % storage_type
+        assert img_type, 'Wrong img_type: %s' % img_type
+        return path.join(self._img_service_url, storage_type, img_type + 's', method, img_id)
 
-    def post_image(self, img_type, fp):
-        url = self._format_url(img_type=img_type, method='upload')
+    def post_image(self, storage_type, img_type, fp):
+        url = self._format_url(storage_type=storage_type, img_type=img_type, method='upload')
         r = self._session.post(url, files={img_type: fp})
         r.raise_for_status()
         return r.json()['image_id']
@@ -33,12 +32,12 @@ class ImageStoreServiceWrapper(object):
         if r.status_code != 202:
             logger.warn('Failed to delete: {}'.format(url))
 
-    def get_image_by_id(self, img_type, img_id):
-        url = self._format_url(img_type=img_type, img_id=img_id)
+    def get_image_by_id(self, storage_type, img_type, img_id):
+        url = self._format_url(storage_type=storage_type, img_type=img_type, img_id=img_id)
         return Image.open(self._session.get(url, stream=True).raw)
 
-    def delete_image_by_id(self, img_type, img_id):
-        url = self._format_url(img_type=img_type, method='delete', img_id=img_id)
+    def delete_image_by_id(self, storage_type, img_type, img_id):
+        url = self._format_url(storage_type=storage_type, img_type=img_type, method='delete', img_id=img_id)
         self.delete_image(url)
 
     def __str__(self):

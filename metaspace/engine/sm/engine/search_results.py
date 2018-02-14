@@ -44,7 +44,7 @@ class SearchResults(object):
                                                 ion_metrics_df, ion_img_ids))
         db.insert(METRICS_INS, rows)
 
-    def _image_inserter(self, img_store, alpha_channel):
+    def _image_inserter(self, img_store, img_store_type, alpha_channel):
         png_generator = PngGenerator(alpha_channel, greyscale=True)
 
         def _post_images(imgs):
@@ -54,19 +54,19 @@ class SearchResults(object):
             for k, img in enumerate(imgs):
                 if img is not None:
                     fp = png_generator.generate_png(img.toarray())
-                    iso_image_ids[k] = img_store.post_image('iso_image', fp)
+                    iso_image_ids[k] = img_store.post_image(img_store_type, 'iso_image', fp)
             return {
                 'iso_image_ids': iso_image_ids
             }
 
         return _post_images
 
-    def post_images_to_image_store(self, ion_iso_images, alpha_channel, img_store):
+    def post_images_to_image_store(self, ion_iso_images, alpha_channel, img_store_type, img_store):
         logger.info('Posting iso images to {}'.format(img_store))
-        post_images = self._image_inserter(img_store, alpha_channel)
+        post_images = self._image_inserter(img_store, img_store_type, alpha_channel)
         return dict(ion_iso_images.mapValues(post_images).collect())
 
-    def store(self, ion_metrics_df, ion_iso_images, alpha_channel, db, img_store):
+    def store(self, ion_metrics_df, ion_iso_images, alpha_channel, db, img_store, img_store_type):
         """ Save metrics and images
 
         Args
@@ -83,5 +83,5 @@ class SearchResults(object):
             m/z image store
         """
         logger.info('Storing search results to the DB')
-        ion_img_ids = self.post_images_to_image_store(ion_iso_images, alpha_channel, img_store)
+        ion_img_ids = self.post_images_to_image_store(ion_iso_images, alpha_channel, img_store_type, img_store)
         self.store_ion_metrics(ion_metrics_df, ion_img_ids, db)

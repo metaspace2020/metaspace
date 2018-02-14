@@ -110,7 +110,8 @@ class SearchJob(object):
 
             search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys())
             mask = self._ds_reader.get_2d_sample_area_mask()
-            search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, self._img_store)
+            img_store_type = self._ds.get_ion_img_storage_type(self._db)
+            search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, self._img_store, img_store_type)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
             msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
