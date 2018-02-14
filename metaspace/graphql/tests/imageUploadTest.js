@@ -6,29 +6,24 @@ process.env.NODE_ENV = 'test';
 const chai = require('chai'),
   should = chai.should(),
   chaiHttp = require('chai-http'),
-  fs = require('fs');
+  fs = require('fs'),
+  config = require('config');
 
 const {logger, db} = require('../utils.js'),
   {createImgServerAsync, IMG_TABLE_NAME} = require('../imageUpload');
 
 chai.use(chaiHttp);
 
-// let server;
+let img_storage_types = [{type: 'image/png', storage_type: 'fs'},
+                         {type: 'application/octet-stream', storage_type: 'db'}];
 
 describe('imageUploadTest with fs and db backends', () => {
-  const configSets = [
-    {backend: 'db'},
-    {backend: 'fs'}
-  ];
+  img_storage_types.forEach( ({storage_type, type}) => {
 
-  configSets.forEach( (cs) => {
-
-    describe(`${cs.backend} backend`, () => {
+    describe(`${storage_type} storage type`, () => {
       let server;
 
       before((done) => {
-        let config = require('config');
-        config.img_upload.backend = cs.backend;
         createImgServerAsync(config)
           .then((srv) => {
             server = srv;
@@ -42,7 +37,7 @@ describe('imageUploadTest with fs and db backends', () => {
       after((done) => {
         server.close(() => {
           logger.debug('Iso image server closed');
-          if (cs === 'db') {
+          if (storage_type === 'db') {
             db.schema.dropTableIfExists(IMG_TABLE_NAME)
               .then(() => done())
               .catch((e) => {
@@ -56,9 +51,11 @@ describe('imageUploadTest with fs and db backends', () => {
         // wsServer.close(() => console.log('WS server closed!') );
       });
 
-      it(`POST /iso_images/upload should store the image and respond with a new iso image id`, (done) => {
+      let image_id;
+
+      it(`POST /${storage_type}/iso_images/upload should store the image and respond with a new iso image id`, (done) => {
         chai.request(server)
-          .post('/iso_images/upload')
+          .post(`/${storage_type}/iso_images/upload`)
           .attach('iso_image', fs.readFileSync('tests/test_iso_image.png'), 'test_iso_image.png')
           .end((err, res) => {
             // there should be no errors
@@ -75,23 +72,24 @@ describe('imageUploadTest with fs and db backends', () => {
           });
       });
 
-      it('GET /iso_images/:id should respond with the iso image', (done) => {
+      it(`GET /${storage_type}/iso_images/:image_id should respond with the iso image`, async (done) => {
         chai.request(server)
-          .get(`/iso_images/${image_id}`)
+          .get(`/${storage_type}/iso_images/${image_id}`)
           .end((err, res) => {
             // there should be no errors
             should.not.exist(err);
             // there should be a 200 status code
             res.status.should.equal(200);
             // the response should be PNG
-            res.type.should.equal("image/png");
+            res.type.should.equal(type);
             // res.body.status.should.have.property("image_url");
             done();
           });
       });
-      it('DELETE /iso_images/delete/:id should delete the iso image', (done) => {
+
+      it(`DELETE /${storage_type}/iso_images/delete/${image_id} should delete the iso image`, (done) => {
         chai.request(server)
-          .delete(`/iso_images/delete/${image_id}`)
+          .delete(`/${storage_type}/iso_images/delete/${image_id}`)
           .end((err, res) => {
             // there should be no errors
             should.not.exist(err);
@@ -101,9 +99,9 @@ describe('imageUploadTest with fs and db backends', () => {
           });
       });
 
-      it('GET /iso_images/:id should respond with 404 as the image is deleted', (done) => {
+      it(`GET /${storage_type}/iso_images/:image_id should respond with 404 as the image is deleted`, (done) => {
         chai.request(server)
-          .get(`/iso_images/${image_id}`)
+          .get(`/${storage_type}/iso_images/${image_id}`)
           .end((err, res) => {
             // there should be a 200 status code
             res.status.should.equal(404);

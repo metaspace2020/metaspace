@@ -2,12 +2,12 @@
  * Created by intsco on 1/10/17.
  */
 const express = require('express'),
-  http = require("http"),
+  http = require('http'),
   multer = require('multer'),
   path = require('path'),
   cors = require('cors'),
   crypto = require('crypto'),
-  fs = require('fs'),
+  fs = require('fs-extra'),
   getPixels = require('get-pixels'),
   Promise = require('promise');
 
@@ -18,9 +18,9 @@ function imageProviderDBBackend(db) {
   /**
     @param {object} db - knex database handler
   **/
-  return async function(app, fieldName, mimeType, basePath, categoryPath) {
+  return async function(app, category, mimeType, basePath, categoryPath) {
     /**
-       @param {string} fieldName - field name / database table name
+       @param {string} category - field name / database table name
        @param {string} mimeType - e.g. 'image/png' or 'image/jpeg'
        @param {string} basePath - base URL path to the backend, e.g. '/db/'
        @param {string} categoryPath - URL path to the backend serving the given category of images, e.g. '/iso_images/'
@@ -45,12 +45,13 @@ function imageProviderDBBackend(db) {
       });
     }
 
-    app.get(path.join(basePath, categoryPath, ":img_id"),
+    let uri = path.join(basePath, categoryPath, ':image_id');
+    app.get(uri,
       async function (req, res) {
-        const row = await db.select(db.raw('data')).from(IMG_TABLE_NAME).where('id', '=', req.params.img_id).first();
+        const row = await db.select(db.raw('data')).from(IMG_TABLE_NAME).where('id', '=', req.params.image_id).first();
         try {
           if (row === undefined) {
-            throw ({message: `Image with id=${req.params.img_id} does not exist`});
+            throw ({message: `Image with id=${req.params.image_id} does not exist`});
           }
           const imgBuf = row.data;
           res.type('application/octet-stream');
@@ -60,39 +61,46 @@ function imageProviderDBBackend(db) {
           res.status(404).send('Not found');
         }
       });
+    logger.debug(`Accepting GET on ${uri}`);
 
-    app.post(path.join(basePath, categoryPath, 'upload'), upload.single(fieldName),
+    uri = path.join(basePath, categoryPath, 'upload');
+    app.post(uri, upload.single(category),
       function (req, res) {
         logger.debug(req.file.originalname);
         let imgID = crypto.randomBytes(16).toString('hex');
 
-        getPixels(req.file.buffer, mimeType, async function(err, pixels) {
+        getPixels(req.file.buffer, mimeType, async function (err, pixels) {
           if (err) {
-            logger.error(err);
+            logger.error(err.message);
             res.status(500).send('Failed to parse image');
           }
-
-          const m = await db.insert({'id': imgID, 'category': fieldName, 'data': pixelsToBinary(pixels)}).into(IMG_TABLE_NAME);
-          try {
-            logger.debug(`${m}`);
-            res.status(201).json({ image_id: imgID });
-          } catch (e) {
-            logger.error(e.message);
-            res.status(500).send('Failed to store image');
+          else {
+            try {
+              let row = {'id': imgID, 'category': category, 'data': pixelsToBinary(pixels)};
+              const m = await db.insert(row).into(IMG_TABLE_NAME);
+              logger.debug(`${m}`);
+              res.status(201).json({image_id: imgID});
+            } catch (e) {
+              logger.error(e.message);
+              res.status(500).send('Failed to store image');
+            }
           }
         });
       });
+    logger.debug(`Accepting POST on ${uri}`);
 
-    app.delete(path.join(basePath, categoryPath, 'delete', ":img_id"),
+    uri = path.join(basePath, categoryPath, 'delete', ':image_id');
+    app.delete(uri,
       async function (req, res) {
         try {
-          const m = await db.del().from(IMG_TABLE_NAME).where('id', '=', req.params.img_id);
+          const m = await db.del().from(IMG_TABLE_NAME).where('id', '=', req.params.image_id);
           logger.debug(`${m}`);
           res.status(202).end();
         } catch (e) {
           logger.error(e.message);
         }
       });
+    logger.debug(`Accepting DELETE on ${uri}`);
   }
 }
 
@@ -100,7 +108,7 @@ function imageProviderFSBackend(storageRootDir) {
   /**
     @param {string} storageRootDir - path to a folder where images will be stored, e.g '/opt/data/'
   **/
-  return (app, fieldName, mimeType, basePath, categoryPath) => {
+  return async (app, category, mimeType, basePath, categoryPath) => {
     let storage = multer.diskStorage({
       destination: async (req, file, cb) => {
         try {
@@ -120,29 +128,33 @@ function imageProviderFSBackend(storageRootDir) {
     });
     let upload = multer({storage});
 
-    app.get(path.join(basePath, ':image_id'),
+    let uri = path.join(basePath, categoryPath, ':image_id');
+    app.get(uri,
       function (req, res, next) {
         let subdir = req.params.image_id.slice(0, 3),
           fname = req.params.image_id.slice(3);
         req.url = path.join(basePath, subdir, fname);
         next();
       });
-
     const options = {
       setHeaders: (res) => {
         res.type(mimeType);
       }
     };
-    app.use(basePath, express.static(storageRootDir, options));
+    app.use(express.static(storageRootDir, options));
+    logger.debug(`Accepting GET on ${uri}`);
 
-    app.post(path.join(basePath, categoryPath, 'upload'), upload.single(fieldName),
+    uri = path.join(basePath, categoryPath, 'upload');
+    app.post(uri, upload.single(category),
       function (req, res, next) {
         let imageID = path.basename(req.file.destination) + req.file.filename;
         logger.debug(req.file);
         res.status(201).json({'image_id': imageID});
       });
+    logger.debug(`Accepting POST on ${uri}`);
 
-    app.delete(path.join(basePath, 'delete', ":image_id"),
+    uri = path.join(basePath, categoryPath, 'delete', ':image_id');
+    app.delete(uri,
       async (req, res, next) => {
         try {
           let subdir = req.params.image_id.slice(0, 3),
@@ -156,42 +168,63 @@ function imageProviderFSBackend(storageRootDir) {
           res.status(404).json()
         }
       });
+    logger.debug(`Accepting DELETE on ${uri}`);
   }
 }
 
-function createCategoryBackend(app, config, category, storage_type, backendFactory) {
-  const {type, path} = config.img_upload.categories[category];
-  return backendFactory(app, category, type, `/${storage_type}/`, path);
+async function createCategoryBackend(app, config, category, catSettings, backendFactories) {
+  const {type, path, storage_type} = catSettings;
+  let factory = backendFactories[storage_type];
+  return factory(app, category, type, `/${storage_type}/`, path);
 }
 
-function createImgServerAsync(config) {
-  const app = express();
-  app.use(cors());
+async function setRouteHandlers(config) {
+  try {
+    const app = express();
+    app.use(cors());
 
-  const backendFactories = {
-    'fs': imageProviderFSBackend(config.img_upload.iso_img_fs_path),
-    'db': imageProviderDBBackend(db)
-  };
+    const backendFactories = {
+      'fs': imageProviderFSBackend(config.img_upload.iso_img_fs_path),
+      'db': imageProviderDBBackend(db)
+    };
 
-  for (const storageType of config.img_upload.storage_types) {
-    if (!(storageType in backendFactories)) {
-      logger.error(`Unknown image upload backend: ${storageType}`);
-    } else {
-      Object.keys(config.img_upload.categories).reduce(async (accum, category) => {
-        await accum;
-        return createCategoryBackend(app, config, category, storageType, backendFactories[storageType]);
-      }, Promise.resolve());
+    for (const category of Object.keys(config.img_upload.categories)) {
+      if (category === 'iso_image') {
+        for (const data_type of Object.keys(config.img_upload.categories[category])) {
+          const catSettings = config.img_upload.categories[category][data_type];
+          await createCategoryBackend(app, config, category, catSettings, backendFactories);
+        }
+      }
+      else {
+        const catSettings = config.img_upload.categories[category];
+        await createCategoryBackend(app, config, category, catSettings, backendFactories);
+      }
     }
+
+    return app;
   }
+  catch (e) {
+    logger.error(`${e.stack}`);
+  }
+}
 
-  let httpServer = http.createServer(app);
-  httpServer.listen(config.img_storage_port, (err) => {
-    if (err) {
-      logger.error('Could not start iso image server', err);
-    }
-    logger.info(`Image server is listening on ${config.img_storage_port} port...`);
-  });
-  return Promise.resolve(httpServer);
+async function createImgServerAsync(config) {
+  try {
+    let app = await setRouteHandlers(config);
+    // logger.debug(app._router.stack.map((obj) => obj.route ? obj.route.path : undefined));
+
+    let httpServer = http.createServer(app);
+    httpServer.listen(config.img_storage_port, (err) => {
+      if (err) {
+        logger.error('Could not start iso image server', err);
+      }
+      logger.info(`Image server is listening on ${config.img_storage_port} port...`);
+    });
+    return httpServer;
+  }
+  catch (e) {
+    logger.error(`${e.stack}`);
+  }
 }
 
 module.exports = {createImgServerAsync, IMG_TABLE_NAME};
