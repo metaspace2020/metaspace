@@ -7,6 +7,7 @@ from yaml import load
 from datetime import datetime, timedelta
 from subprocess import check_output
 from os import path
+import sys
 
 
 class AWSInstManager(object):
@@ -192,5 +193,5 @@ if __name__ == '__main__':
     elif args.action == 'stop':
         aws_inst_man.stop_all_instances(components)
 
-    cmd = '{} update_inventory.py --stage {}'.format(conf['sm_cluster_autostart_python'], args.stage).split(' ')
+    cmd = '{} update_inventory.py --stage {}'.format(sys.executable, args.stage).split(' ')
     print(check_output(cmd, universal_newlines=True))
