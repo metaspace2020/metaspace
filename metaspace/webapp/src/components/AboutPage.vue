@@ -90,7 +90,12 @@
           </div>
         </div>
       </el-row>
-      
+      <el-row id="acknowledgement">
+        <h2>acknowledgements</h2>
+        <p>
+          Icons by <a href="http://www.freepik.com/">Freepik</a> from <a href="www.flaticon.com">www.flaticon.com</a>
+        </p>
+      </el-row>
     </el-row>
     </div>
   </div>
