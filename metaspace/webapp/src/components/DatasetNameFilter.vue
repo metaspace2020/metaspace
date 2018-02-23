@@ -10,9 +10,10 @@
                no-match-text="No matches"
                :multiple-limit=10
                v-model="value2" @change="onChange">
-      <el-option v-for="item in options"
+      <el-option v-for="(item, idx) in options"
                  :label="item.label"
-                 :value="item.value">
+                 :value="item.value"
+                 :key="idx">
       </el-option>
     </el-select>
 

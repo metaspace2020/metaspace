@@ -1,24 +1,14 @@
  import { renderMolFormula } from '../util';
  import DatasetInfo from './DatasetInfo.vue';
- import AdductsInfo from './AdductsInfoLc.vue';
- import ImageLoader from './ImageLoader.vue';
- import IonImageSettings from './IonImageSettings.vue';
- import IsotopePatternPlot from './IsotopePatternPlot.vue';
- import XicPlot from './XicPlot.vue';
- import PlotLegend from './PlotLegend.vue';
- import Colorbar from './Colorbar.vue';
- import {annotationQuery} from '../api/annotation';
- import {opticalImageQuery, msAcqGeometryQuery} from '../api/dataset';
+ import { annotationQuery } from '../api/annotation';
+ import { msAcqGeometryQuery, opticalImageQuery } from '../api/dataset';
  import { encodeParams } from '../url';
+ import annotationWidgets from './annotation-widgets/index'
 
- import Vue, { ComponentOptions } from 'vue';
+ import Vue from 'vue';
  import { Store } from 'vuex';
  import { Component, Prop } from 'vue-property-decorator';
  import { Location } from 'vue-router';
- import { saveAs } from 'file-saver';
- import { schemeCategory10 as LegendColors } from 'd3';
-
- import * as domtoimage from 'dom-to-image';
 
  type ImagePosition = {
    zoom: number
@@ -34,18 +24,20 @@
 
  type ImageLoaderSettings = ImagePosition & ImageSettings;
 
+ const metadataDependentComponents: any = {};
+ const componentsToRegister: any = { DatasetInfo };
+ for (let category of Object.keys(annotationWidgets)) {
+   metadataDependentComponents[category] = {};
+   for (let mdType of Object.keys(annotationWidgets[category])) {
+     const component = annotationWidgets[category][mdType];
+     metadataDependentComponents[category][mdType] = component;
+     componentsToRegister[`${category}-${mdType}`] = component;
+   }
+ }
+
  @Component({
    name: 'annotation-view',
-   components: {
-     DatasetInfo,
-     AdductsInfo,
-     ImageLoader,
-     IonImageSettings,
-     IsotopePatternPlot,
-     XicPlot,
-     PlotLegend,
-     Colorbar
-   },
+   components: componentsToRegister,
    apollo: {
      peakChartData: {
        query: annotationQuery,
@@ -90,7 +82,6 @@
  })
  export default class AnnotationView extends Vue {
    $store: Store<any>
-   $refs: any
 
    @Prop()
    annotation: any
@@ -100,18 +91,10 @@
    opticalImageUrl: string
    showOpticalImage: boolean = true
 
-   get isotopeLegendItems(): any[] {
-     return this.annotation ? this.annotation.isotopeImages.map((img: any, idx: number) => {
-                                return {
-                                  name: img.mz,
-                                  color: idx < LegendColors.length ? LegendColors[idx] : 'black',
-                                  opacity: 1
-                                }
-                              }) : [];
-   }
-
-   get theorIntensityLegendItem(): any {
-     return {name: 'Theoretical', color: '#7D5BA6', opacity: 0.6};
+   metadataDependentComponent(category: string): any {
+     const currentMdType: string = this.$store.getters.filter.metadataType;
+     const componentKey: string = currentMdType in metadataDependentComponents[category] ? currentMdType : 'default';
+     return metadataDependentComponents[category][componentKey];
    }
 
    get activeSections(): string[] {
@@ -124,10 +107,6 @@
 
    get colormapName(): string {
      return this.colormap.replace('-', '');
-   }
-
-   get colorbarDirection(): string {
-     return this.colormap[0] == '-' ? 'bottom' : 'top';
    }
 
    get formattedMolFormula(): string {
@@ -163,7 +142,9 @@
      return Object.assign({}, this.imagePosition, {
        annotImageOpacity: (this.showOpticalImage && this.opticalImageUrl) ? this.opacity : 1.0,
        opticalSrc: this.showOpticalImage ? this.opticalImageUrl : '',
-       opacityMode: this.imageOpacityMode
+       opacity: this.opacity,
+       opacityMode: this.imageOpacityMode,
+       showOpticalImage: this.showOpticalImage
      });
    }
 
@@ -204,22 +185,5 @@
    toggleOpticalImage(event: any): void {
      event.stopPropagation();
      this.showOpticalImage = !this.showOpticalImage
-   }
-
-   saveImage(event: any): void {
-     let node = this.$refs.imageLoader.getContainer();
-
-     domtoimage
-       .toBlob(node, {
-         width: this.$refs.imageLoader.imageWidth,
-         height: this.$refs.imageLoader.imageHeight
-       })
-       .then(blob => {
-         saveAs(blob, `${this.annotation.id}.png`);
-       })
-   }
-
-   get browserSupportsDomToImage(): boolean {
-     return window.navigator.userAgent.includes('Chrome');
    }
  }

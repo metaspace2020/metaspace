@@ -214,6 +214,12 @@
        window.addEventListener('resize', () => this.reloadPlot());
      }
    },
+   computed: {
+     isReady() {
+       return this.validIntImages && this.acquisitionGeometry && 'coord_list' in this.acquisitionGeometry.acquisition_grid
+              && this.$refs.xicChart && this.$refs.xicChart.clientHeight;
+     }
+   },
    methods: {
      setLogIntensity(enabled) {
        this.internalLogIntensity = enabled;
@@ -224,7 +230,7 @@
          return;
        }
        this.validIntImages = this.intensityImgs.filter(intImg => intImg.url);
-       if (this.validIntImages && this.acquisitionGeometry && this.$refs.xicChart && this.$refs.xicChart.clientHeight) {
+       if (this.isReady) {
          Promise.all(this.validIntImages.map((intImg => imageToIntensity(intImg.url, intImg.maxIntensity))))
          .then((intensities) => {
            this.currentIntensities = intensities;

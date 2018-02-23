@@ -1,7 +1,6 @@
 import { renderMolFormula } from './util';
 import InputFilter from './components/InputFilter.vue';
 import SingleSelectFilter from './components/SingleSelectFilter.vue';
-import MultiSelectFilter from './components/MultiSelectFilter.vue';
 import DatasetNameFilter from './components/DatasetNameFilter.vue';
 import MzFilter from './components/MzFilter.vue';
 import SearchBox from './components/SearchBox.vue';

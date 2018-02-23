@@ -1,15 +1,12 @@
 <template>
   <div>
-    <el-row style="font-size: 16px; text-align: center; margin: 10px auto;">
-      <span>All adducts for this annotation in the same dataset</span>
-    </el-row>
     <el-row>
       <xic-plot v-if="sameAdductAnnotations"
-                  :intensityImgs="sameAdductAnnotations.map(a => a.isotopeImages[0])"
-                  :graphColors="adductColors"
-                  :acquisitionGeometry="acquisitionGeometry"
-                  :logIntensity="true"
-                  :showLogIntSwitch="true">
+                :intensityImgs="sameAdductAnnotations.map(a => a.isotopeImages[0])"
+                :graphColors="adductColors"
+                :acquisitionGeometry="acquisitionGeometry"
+                :logIntensity="true"
+                :showLogIntSwitch="true">
       </xic-plot>
     </el-row>
     <plot-legend :items="adductLegendItems">
@@ -19,14 +16,17 @@
 
 <script>
  import { schemeCategory10 as graphColors } from 'd3';
- import {renderMolFormula} from '../util';
- import XicPlot from './XicPlot.vue';
- import PlotLegend from './PlotLegend.vue';
- import {allAdductsQuery} from '../api/annotation';
+ import { renderMolFormula } from '../../../util';
+ import XicPlot from '../../XicPlot.vue';
+ import PlotLegend from '../../PlotLegend.vue';
+ import { allAdductsQuery } from '../../../api/annotation';
 
  export default {
    props: ['annotation', 'database', 'acquisitionGeometry'],
-   components: {XicPlot, PlotLegend},
+   components: {
+     PlotLegend,
+     XicPlot
+   },
    apollo: {
      sameAdductAnnotations: {
        query: allAdductsQuery,

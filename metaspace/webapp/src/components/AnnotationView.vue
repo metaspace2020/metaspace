@@ -19,23 +19,27 @@
         </div>
 
         <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
-          <span slot="title">
-            <span style="padding-right: 20px">
-              Extracted ion chromatogram
-            </span>
-          </span>
-
-          <el-row id="xic-plot-container">
-            <xic-plot :intensityImgs="[annotation.isotopeImages[0]]"
-                      :graphColors="[isotopeLegendItems[0].color]"
-                      :acquisitionGeometry="msAcqGeometry">
-            </xic-plot>
-          </el-row>
+          <component :is="metadataDependentComponent('main-image-header')"
+                     :annotation="annotation"
+                     :imageLoaderSettings="imageLoaderSettings"
+                     :resetViewport="resetViewport"
+                     :toggleOpticalImage="toggleOpticalImage"
+                     slot="title">
+          </component>
+          <component :is="metadataDependentComponent('main-image')"
+                     :annotation="annotation"
+                     :colormap="colormap"
+                     :colormapName="colormapName"
+                     :imageLoaderSettings="imageLoaderSettings"
+                     :onImageZoom="onImageZoom"
+                     :onImageMove="onImageMove"
+                     :acquisitionGeometry="msAcqGeometry">
+          </component>
         </el-collapse-item>
 
         <el-collapse-item :title="compoundsTabLabel" name="compounds">
           <div id="compound-list">
-            <div class="compound" v-for="compound in annotation.possibleCompounds">
+            <div class="compound" v-for="(compound, idx) in annotation.possibleCompounds" :key="idx">
               <el-popover placement="left" trigger="click">
                 <img :src="compound.imageURL" class="compound-thumbnail"
                      slot="reference"/>
@@ -71,41 +75,14 @@
         </el-collapse-item>
 
         <el-collapse-item title="Diagnostics" name="scores">
-          <el-row id="scores-table">
-            MSM score =
-            <span>{{ annotation.msmScore.toFixed(3) }}</span> =
-            <span>{{ annotation.rhoSpatial.toFixed(3) }}</span>
-            (&rho;<sub>chromatography</sub>) &times;
-            <span>{{ annotation.rhoSpectral.toFixed(3) }}</span>
-            (&rho;<sub>spectral</sub>) &times;
-            <span>{{ annotation.rhoChaos.toFixed(3) }}</span>
-            (&rho;<sub>chaos</sub>)
-          </el-row>
-          <el-row class="diagnostics-section-title">
-            <span>Isotope XICs</span>
-          </el-row>
-          <el-row id="isotope-images-container">
-            <xic-plot :intensityImgs="annotation.isotopeImages"
-                      :graphColors="isotopeLegendItems.map(i => i.color)"
-                      :acquisitionGeometry="msAcqGeometry"
-                      :logIntensity="true"
-                      :showLogIntSwitch="true">
-            </xic-plot>
-          </el-row>
-          <el-row class="diagnostics-section-title">
-            <span>Isotope integral intensity</span>
-          </el-row>
-          <el-row id="isotope-plot-container">
-            <isotope-pattern-plot :data="peakChartData"
-                                  :isotopeColors="isotopeLegendItems.map(i => i.color)"
-                                  :theorColor="theorIntensityLegendItem.color"
-                                  v-if="activeSections.indexOf('scores') !== -1">
-            </isotope-pattern-plot>
-          </el-row>
-          <el-row>
-            <plot-legend :items="isotopeLegendItems.concat(theorIntensityLegendItem)">
-            </plot-legend>
-          </el-row>
+          <component v-if="activeSections.indexOf('scores') !== -1"
+                     :is="metadataDependentComponent('diagnostics')"
+                     :annotation="annotation"
+                     :colormap="colormap"
+                     :imageLoaderSettings="imageLoaderSettings"
+                     :peakChartData="peakChartData"
+                     :acquisitionGeometry="msAcqGeometry">
+          </component>
         </el-collapse-item>
 
         <el-collapse-item title="Dataset info" name="metadata">
@@ -115,11 +92,16 @@
         </el-collapse-item>
 
         <el-collapse-item title="Related annotations" name="adducts">
-          <adducts-info v-if="activeSections.indexOf('adducts') !== -1"
-                        :annotation="annotation"
-                        :database="this.$store.getters.filter.database"
-                        :acquisitionGeometry="msAcqGeometry">
-          </adducts-info>
+          <el-row style="font-size: 16px; text-align: center; margin: 10px auto;">
+            <span>All adducts for this annotation in the same dataset</span>
+          </el-row>
+          <component v-if="activeSections.indexOf('adducts') !== -1"
+                     :is="metadataDependentComponent('adducts-info')"
+                     :annotation="annotation"
+                     :database="this.$store.getters.filter.database"
+                     :acquisitionGeometry="msAcqGeometry"
+                     :image-loader-settings="imageLoaderSettings">
+          </component>
         </el-collapse-item>
       </el-collapse>
     </el-col>
@@ -127,33 +109,10 @@
 </template>
 
 <script lang="ts">
- export * from './AnnotationView.ts';
+ export * from './AnnotationView';
 </script>
 
 <style>
- .ion-image > img, .small-peak-image img {
-   image-rendering: pixelated;
-   image-rendering: -moz-crisp-edges;
-   -ms-interpolation-mode: nearest-neighbor;
- }
-
- #isotope-images-container {
-   margin: 10px auto;
-   text-align: center;
-   font-size: 13px;
- }
-
- .diagnostics-section-title {
-   margin: 10px auto;
-   text-align: center;
-   font-size: 16px;
- }
-
- #xic-plot-container {
-   font-size: 1rem;
-   text-align: center;
- }
-
  .sf-big {
    text-shadow : 0 0 0px #000;
    font: 24px 'Roboto', sans-serif;
@@ -193,18 +152,6 @@
    height: 700px;
  }
 
- #scores-table {
-   border-collapse: collapse;
-   border: 1px solid lightblue;
-   font-size: 16px;
-   text-align: center;
-   padding: 3px;
- }
-
- #scores-table > span {
-   color: blue;
- }
-
  .av-centered {
    text-align: center !important;
    cursor: default !important;
@@ -237,41 +184,6 @@
 
  #annot-img-collapse .el-collapse-item__header>span {
    display: inline-flex;
- }
-
-
- .main-ion-image-container {
-   display: flex;
-   flex-direction: row;
-   justify-content: center;
- }
-
- .colorbar-container {
-   display: flex;
-   flex-direction: column;
-   justify-content: flex-end;
-   padding-left: 10px;
-   padding-bottom: 6px;
- }
-
- #isotope-plot-container text {
-   font-family: "Roboto" !important;
- }
-
- .reset-image-icon, .show-optical-image-icon {
-   width: 24px;
-   padding-left: 20px;
-   vertical-align: middle;
-   cursor: pointer;
- }
-
- .png-icon-disabled {
-   opacity: 0.3;
- }
-
- .annot-view__image-download {
-   margin-top: 20px;
-   cursor: pointer;
  }
 
 </style>
