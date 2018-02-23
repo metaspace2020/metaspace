@@ -44,7 +44,7 @@
                                    class="md-ac"
                                    v-model="value[sectionName][propName]"
                                    :required="isRequired(propName, section)"
-                                   :fetch-suggestions="(q, cb) => getSuggestions(q, cb, sectionName, propName)"
+                                   :fetch-suggestions="(q, cb) => getSuggestions(q ? q: '', cb, sectionName, propName)"
                                    :placeholder="prop.description">
                   </el-autocomplete>
                 </div>
