@@ -11,15 +11,15 @@
     "Sample_Preparation": {
       "description": "Information about how the sample was prepared for LC-MS",
       "type": "object",
-      "required": ["LC_Column", "Solvents"],
+      "required": ["LC_Column", "Solvents_Freetext"],
       "properties": {
         "LC_Column": {
           "description": "Type of LC column used",
           "type": "string",
           "minLength": 1
         },
-        "Solvents": {
-          "description": "LC buffers components",
+        "Solvents_Freetext": {
+          "description": "A semicolon-separated list of LC buffers components",
           "type": "string",
           "minLength": 1
         }
