@@ -66,7 +66,7 @@
       tags: [sm-graphql]
 
     - role: sm_web_app
-      tags: [sm-web-app]
+      tags: [sm-webapp]
 
     - role: sm_cluster_autostart
       tags: [sm-cluster-autostart]
