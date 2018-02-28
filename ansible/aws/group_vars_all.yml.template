@@ -129,7 +129,6 @@ sm_graphql_default_adducts:
 sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually for production
 sm_webapp_repo_url: https://github.com/METASPACE2020/sm-webapp.git
 sm_webapp_branch: rel-v0.8
-sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"
 sm_webapp_home: /opt/dev/sm-web-app
 sm_webapp_port: 8082
