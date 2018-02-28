@@ -1,18 +1,17 @@
 <template>
   <div>
     <script type="text/template" id="qq-template">
-      <div class="qq-uploader-selector qq-uploader"
-          qq-drop-area-text="Drop file in mzML format here">
+      <div id="upload-area-container" class="qq-uploader-selector qq-uploader">
         <div class="qq-upload-drop-area-selector qq-upload-drop-area" qq-hide-dropzone>
           <span class="qq-upload-drop-area-text-selector"></span>
         </div>
         <div class="buttons">
-          <div class="qq-upload-button-selector qq-upload-button metasp-button" role="button">
-            Select file
+          <div id="select-files-button" class="qq-upload-button-selector qq-upload-button metasp-button" role="button">
+            Select files
           </div>
         </div>
         <span class="qq-drop-processing-selector qq-drop-processing">
-          <span>Processing dropped file...</span>
+          <span>Processing dropped files...</span>
           <span class="qq-drop-processing-spinner-selector qq-drop-processing-spinner"></span>
         </span>
         <ul class="qq-upload-list-selector qq-upload-list" aria-live="polite" aria-relevant="additions removals">
@@ -73,7 +72,6 @@
    template: 'qq-template',
    autoUpload: false,
    iframeSupport: {localBlankPagePath: "/server/success.html"},
-   multiple: false,
    cors: {expected: true},
    chunking: {
      enabled: true,
@@ -83,16 +81,12 @@
    retry: {
      enableAuto: true
    },
-   resume: {enabled: true},
-   validation: {
-     itemLimit: 1,
-     allowedExtensions: ["mzML"]
-   },
+   resume: {enabled: true}
  };
 
  export default {
    name: 'fine-uploader',
-   props: ['config'],
+   props: ['config', 'dataTypeConfig'],
    data() {
      return {
        fineUploader: null,
@@ -104,9 +98,28 @@
 
    mounted() {
      this.reset();
+     this.onDataTypeConfigUpdate();
+   },
+
+   watch: {
+     'dataTypeConfig': function() {
+       this.reset();
+       this.onDataTypeConfigUpdate();
+     }
    },
 
    methods: {
+     // FineUploader template initialization prevents from using Vue.js template features
+     // had to access DOM directly in this method
+     onDataTypeConfigUpdate() {
+       const multipleFilesAllowed = this.dataTypeConfig.maxFiles > 1;
+       const fileExtensions = this.dataTypeConfig.fileExtensions;
+       const formattedFileTypes = fileExtensions.length > 1 ? `${fileExtensions.slice(0, -1).join(', ')} and ${fileExtensions[fileExtensions.length - 1]}`
+                                                            : fileExtensions[0];
+       document.getElementById('upload-area-container').setAttribute('qq-drop-area-text',
+         `Drop ${formattedFileTypes} file${multipleFilesAllowed ? 's' : ''} here`);
+     },
+
      validate() {
        const files = this.fineUploader.getUploads();
 
@@ -118,7 +131,7 @@
          fnames = ['test.imzML', 'test.ibd'];
        }
 
-       if (fnames.length != 1) {
+       if (!this.dataTypeConfig.nameValidator.bind(this)(fnames)) {
          return;
        }
 
@@ -140,6 +153,11 @@
        this.uuid = uuid();
 
        let options = Object.assign({}, basicOptions, {
+         validation: {
+           allowedExtensions: this.dataTypeConfig.fileExtensions,
+           itemLimit: this.dataTypeConfig.maxFiles
+         },
+         multiple: this.dataTypeConfig.maxFiles > 1,
          element: this.$refs.fu,
          objectProperties: {
            key: (id) => `${this.uuid}/${this.fineUploader.getFile(id).name}`

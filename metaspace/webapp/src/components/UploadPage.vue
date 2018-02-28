@@ -25,20 +25,21 @@
 
           <p><b>Public results, private data</b><br/> Annotation results for all data submitted to METASPACE become public. The submitted data does not become public but you give us a permission to store and process it as well as publicly show and share the annotation results. At any point of time you can request to delete your data or the annotation results.</p>
 
-           <p><b>Type of MS:</b> We can annotate only FTICR- or Orbitrap- imaging MS data.</p>
+           <p><b>Type of MS:</b> We can annotate only FTICR- or Orbitrap- MS data.</p>
 
-          <p><b>Format:</b> We can receive only data in the imzML centroided format. Please check out <a href="http://project.metaspace2020.eu/imzml">our instructions</a> for converting datasets into this format. If you are experiencing difficulties, please contact your instrument vendor.</p>
+          <p><b>Format:</b> We can receive only data in the imzML (imaging MS) or mzML (LC-MS) centroided format. Please check out <a href="http://project.metaspace2020.eu/imzml">our instructions</a> for converting datasets into these formats. If you are experiencing difficulties, please contact your instrument vendor.</p>
 
           <p><b>Step-by-step tutorial:</b> Please read our <a href="https://www.slideshare.net/Metaspace2020/metaspace-training-course-ourcon-v-2017">training guide slides</a> providing an introduction to METASPACE as well as a step-by-step tutorial with screenshots.</p>
 
           <p><b>Questions or requests?</b> Please email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>. Also, we are always happy to receive your feedback, both positive and negative.</p>
 
-          <p>To start the submission, just drop the files into the box below, fill in the metadata form, and click the Submit button.</p>
+          <p>To start the submission, just drop the file(s) into the box below, fill in the metadata form, and click the Submit button.</p>
           <p>Have fun using METASPACE!</p>
         </div>
       </div>
 
       <fine-uploader :config="fineUploaderConfig"
+                     :dataTypeConfig="fineUploaderDataTypeConfig"
                      ref="uploader"
                      @upload="onUpload" @success="onSuccess" @failure="onFailure">
       </fine-uploader>
@@ -61,10 +62,48 @@
  import FilterPanel from './FilterPanel.vue';
  import MetadataEditor from './MetadataEditor.vue';
  import Vue from 'vue';
+ import * as assert from 'assert';
 
  import * as config from '../clientConfig.json';
  import {getJWT, pathFromUUID} from '../util';
  import {submitDatasetQuery} from '../api/dataset';
+
+ const DataTypeConfig = {
+   'LC-MS': {
+     fileExtensions: ['mzML'],
+     maxFiles: 1,
+     nameValidator(fileNames) {
+       return fileNames.length == 1;
+     }
+   },
+   default: {
+     fileExtensions: ['imzML', 'ibd'],
+     maxFiles: 2,
+     nameValidator(fileNames) {
+       if (fileNames.length < 2) {
+         return false;
+       }
+
+       const basename = fname => fname.split('.').slice(0, -1).join('.');
+       const extension = fname => fname.split('.').slice(-1)[0];
+
+       // consider only the last two selected files
+       const fileCount = fileNames.length;
+       let [first, second] = [fileNames[fileCount - 2], fileNames[fileCount - 1]];
+       let [fext, sext] = [first, second].map(extension);
+       let [fbn, sbn] = [first, second].map(basename);
+       if (fext == sext || fbn != sbn) {
+         this.$message({
+           message: "Incompatible file names! Please select 2 files " +
+                    "with the same name but different extension",
+           type: 'error'
+         });
+         return false;
+       }
+       return true;
+     }
+   }
+ }
 
  export default {
    name: 'upload-page',
@@ -89,12 +128,30 @@
      MetadataEditor,
      FilterPanel
    },
+   computed: {
+     fineUploaderDataTypeConfig() {
+       const activeDataType = this.$store.getters.filter.metadataType;
+       return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig['default'];
+     }
+   },
    methods: {
      onUpload(filenames) {
-       const targetFileExt = '.mzml';
-       const files = filenames.filter(f => f.toLowerCase().endsWith(targetFileExt))[0];
+       const allowedExts = this.fineUploaderDataTypeConfig.fileExtensions.map(ext => `.${ext.toLowerCase()}`);
+       let fileName = '';
+       let fileExt = '';
+       for (const ext of allowedExts) {
+         for (const f of filenames) {
+           if (f.toLowerCase().endsWith(ext)) {
+             fileName = f;
+             fileExt = ext;
+             break;
+           }
+         }
+       }
+       assert(fileName && fileExt);
+       const dsName = fileName.slice(0, fileName.length - fileExt.length);
        Vue.nextTick(() => {
-         this.$refs.editor.suggestDatasetName(files.slice(0, files.length - targetFileExt.length));
+         this.$refs.editor.fillDatasetName(dsName);
        });
      },
 

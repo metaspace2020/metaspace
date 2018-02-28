@@ -2,7 +2,7 @@
   <div id="md-editor-container">
     <div style="position: relative;" v-if="!loading">
       <div id="md-editor-submit">
-        <router-link :to="opticalImageAlignmentHref" v-if="datasetId"
+        <router-link :to="opticalImageAlignmentHref" v-if="isOpticalImageSupported"
                      style="width: 150px; margin-right: 50px;">
           Add optical image...
         </router-link>
@@ -164,7 +164,8 @@
    fetchMetadataQuery,
    metadataOptionsQuery
  } from '../api/metadata';
-  import Vue from 'vue';
+ import {mdTypeSupportsOpticalImages} from '../util';
+ import Vue from 'vue';
 
  const metadataSchemas = {};
  for (const mdType of Object.keys(metadataRegistry)) {
@@ -329,6 +330,10 @@
          name: 'add-optical-image',
          params: {dataset_id: this.datasetId}
        };
+     },
+
+     isOpticalImageSupported() {
+       return this.datasetId && mdTypeSupportsOpticalImages(this.currentMetadataType());
      }
    },
    methods: {
@@ -471,9 +476,8 @@
      },
 
      /* for outside access from the upload page, to autofill it with the filename */
-     suggestDatasetName(name) {
-       if (this.value.metaspace_options.Dataset_Name == '')
-         this.value.metaspace_options.Dataset_Name = name;
+     fillDatasetName(name) {
+       this.value.metaspace_options.Dataset_Name = name;
      }
    }
  }
