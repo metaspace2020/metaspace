@@ -63,7 +63,7 @@ def init_logger(log_config=None):
     if not logs_dir.exists():
         logs_dir.mkdir()
 
-    sm_log_config['handlers']['file']['filename'] = logs_dir.joinpath('sm-engine.log')
+    sm_log_config['handlers']['file']['filename'] = str(logs_dir.joinpath('sm-engine.log'))
     dictConfig(log_config if log_config else sm_log_config)
 
 

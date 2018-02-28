@@ -25,10 +25,8 @@ class TheorPeaksGenerator(object):
     ds_config : dict
         Dataset config
     """
-    def __init__(self, sc, mol_db, ds_config, db=None):
-        self._ds_config = ds_config
-        self._adducts = self._ds_config['isotope_generation']['adducts']
-
+    def __init__(self, sc, mol_db, adducts, db=None):
+        self._adducts = adducts
         self._sc = sc
         self._db = db
         self._mol_db = mol_db
@@ -48,10 +46,8 @@ class TheorPeaksGenerator(object):
             List of (formula id, formula, adduct) triples which don't have theoretical patterns saved in the database
         """
         assert sf_list, 'Empty sum formula, adduct list!'
-        if self._ds_config['isotope_generation']['charge']['polarity'] == '-':
-            sf_list = [sf for sf in sf_list if 'H' in sf]
-        adducts = set(self._adducts) | set(DECOY_ADDUCTS)
-        return list(set(product(sf_list, adducts)) - set(stored_sf_adduct))
+        all_adducts = set(self._adducts) | set(DECOY_ADDUCTS)
+        return list(set(product(sf_list, all_adducts)) - set(stored_sf_adduct))
 
     def _import_theor_peaks_to_db(self, peak_lines):
         logger.info('Saving new peaks to the DB')
@@ -102,13 +98,11 @@ class TheorPeaksGenerator(object):
                                .collect())
             return ion_centr_lines
 
-    def run(self):
+    def run(self, isocalc):
         """ Starts peaks generation. Checks all formula peaks saved in the database and
             generates peaks only for new ones
         """
         logger.info('Running theoretical peaks generation')
-
-        isocalc = IsocalcWrapper(self._ds_config['isotope_generation'])
 
         sf_list = self._mol_db.sfs.values()
         stored_sf_adduct = self._db.select(SF_ADDUCT_SEL,

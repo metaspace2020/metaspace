@@ -10,6 +10,7 @@ from datetime import datetime
 from pyspark import SparkContext, SparkConf
 import logging
 
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
 from sm.engine.dataset import DatasetStatus
 from sm.engine.dataset_reader import DatasetReader
@@ -94,8 +95,11 @@ class SearchJob(object):
             logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s ...",
                         self._ds.id, self._ds.name, mol_db.name, mol_db.version)
 
-            theor_peaks_gen = TheorPeaksGenerator(self._sc, mol_db, self._ds.config, db=self._db)
-            theor_peaks_gen.run()
+            theor_peaks_gen = TheorPeaksGenerator(sc=self._sc, mol_db=mol_db,
+                                                  adducts=self._ds.config['isotope_generation']['adducts'],
+                                                  db=self._db)
+            isocalc = IsocalcWrapper(self._ds.config['isotope_generation'])
+            theor_peaks_gen.run(isocalc)
 
             target_adducts = self._ds.config['isotope_generation']['adducts']
             self._fdr = FDR(self._job_id, mol_db,
