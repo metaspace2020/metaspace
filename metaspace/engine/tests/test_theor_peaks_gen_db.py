@@ -39,3 +39,12 @@ def test_theor_peaks_generator_run_failed_iso_peaks(create_fill_test_db, spark_c
     assert len(rows) == 1
 
     db.close()
+
+
+def test_generate_theor_peaks(spark_context, sm_config, ds_config):
+    peaks_gen = TheorPeaksGenerator(spark_context, sm_config, ds_config)
+    ion_centr_lines = peaks_gen.generate_theor_peaks([('He', '+Na'), ('Au', '+Na')])
+
+    assert len(ion_centr_lines) == 2
+    pass
+

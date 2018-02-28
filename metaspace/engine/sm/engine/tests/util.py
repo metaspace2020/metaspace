@@ -6,7 +6,7 @@ from elasticsearch_dsl import Search
 from fabric.api import local
 #from pyspark import SparkContext, SparkConf
 # lots of patch calls rely on SparkContext name
-from pysparkling import Context as SparkContext
+from pysparkling import Context
 import pandas as pd
 from logging.config import dictConfig
 from unittest.mock import MagicMock
@@ -26,6 +26,11 @@ init_logger(log_config)
 def sm_config():
     SMConfig.set_path(join(proj_root(), 'conf', 'test_config.json'))
     return SMConfig.get_conf(update=True)
+
+
+class SparkContext(Context):
+    def parallelize(self, x, numSlices=None):
+        return super().parallelize(x, numPartitions=numSlices)
 
 
 @pytest.fixture(scope='module')

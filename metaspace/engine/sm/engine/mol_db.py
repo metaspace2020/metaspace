@@ -131,8 +131,8 @@ class MolecularDB(object):
     @property
     def sfs(self):
         if not self._sfs:
-            sfs = self._mol_db_service.fetch_db_sfs(self.id)
             if self._db.select_one(SF_COUNT, self._id)[0] == 0:
+                sfs = self._mol_db_service.fetch_db_sfs(self.id)
                 rows = [(self._id, sf) for sf in sfs]
                 self._db.insert(SF_INS, rows)
             self._sfs = OrderedDict(self._db.select(SF_SELECT, self._id))
