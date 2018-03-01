@@ -288,7 +288,8 @@ cluster_configuration:
       elipalloc:  # create manually in AWS console and put the id here to use static IP address
       price:  # put price to use spot instances
       sec_group: default  # update for better security
-      image: ami-07174474  # public ubuntu 16.04
+      image: ami-07174474  # public ubuntu 16.04 at eu-west-1
+                           # ami-4d6c0e22 is for eu-central-1
 
       block_dev_maps:
         - DeviceName: /dev/sda1
