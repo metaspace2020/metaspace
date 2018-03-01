@@ -84,18 +84,18 @@ def bar_by_ds(classannotations_df, metadata_df, class_names, meta_to_group, fdr,
     plt.show()
     return g, f
 
-# Credit: https://github.com/ksahlin/pyinfor/blob/master/venn.py
-import pylab
-from matplotlib.patches import Circle, Ellipse, Rectangle, Polygon
-from itertools import chain
-from collections import Iterable
-from matplotlib_venn import venn3
-
 #--------------------------------------------------------------------
 alignment = {'horizontalalignment':'center', 'verticalalignment':'center'}
 
 #--------------------------------------------------------------------
 def venn(data, names=None, fill="number", show_names=True, show_plot=True, **kwds):
+    # Credit: https://github.com/ksahlin/pyinfor/blob/master/venn.py
+    import pylab
+    from matplotlib.patches import Circle, Ellipse, Rectangle, Polygon
+    from itertools import chain
+    from collections import Iterable
+    from matplotlib_venn import venn3
+
     """
     data: a list
     names: names of groups in data
@@ -513,3 +513,151 @@ def venn4_square(data=None, names=None, fill="number", show_names=True, show_plo
     if show_plot:
         pylab.show()
     return fig, ax
+
+def clustermap(data_array, row_labels=[], intensity_title=None, title=None, column_labels=[], colorscale='RdBu'):
+    import plotly.graph_objs as go
+    import plotly.figure_factory as FF
+    import plotly
+
+    if len(column_labels) == 0:
+        column_labels = ["{}".format(ii) for ii in range(data_array.shape[1])]
+    if len(row_labels) == 0:
+        row_labels = ["{}".format(ii) for ii in range(data_array.shape[0])]
+
+    print("data shape: {}, column_shape: {}, row_shape".format(data_array.shape, len(column_labels), len(row_labels)))
+    # Initialize figure by creating upper dendrogram
+    figure = plotly.tools.make_subplots(rows=1, cols=1)
+
+    dendro_top = FF.create_dendrogram(data_array.T, orientation='bottom')
+    for i in range(len(dendro_top['data'])):
+        dendro_top['data'][i]['xaxis'] = 'x1'
+        dendro_top['data'][i]['yaxis'] = 'y2'
+
+    # Create Side Dendrogram
+    dendro_side = FF.create_dendrogram(data_array, orientation='right')
+    for i in range(len(dendro_side['data'])):
+        dendro_side['data'][i]['xaxis'] = 'x3'
+        dendro_side['data'][i]['yaxis'] = 'y1'
+
+    # Create Heatmap
+    dendro_leaves_row = dendro_side['layout']['yaxis']['ticktext']
+    dendro_leaves_row = list(map(int, dendro_leaves_row))
+    dendro_leaves_col = dendro_top['layout']['xaxis']['ticktext']
+    dendro_leaves_col = list(map(int, dendro_leaves_col))
+
+    heat_data = data_array
+    heat_data = heat_data[dendro_leaves_row,:]
+    heat_data = heat_data[:,dendro_leaves_col]
+    v = np.max(np.abs(heat_data))
+    heatmap = go.Data([
+        go.Heatmap(
+            x = np.zeros(heat_data.shape[0]),
+            y = np.arange(0, heat_data.shape[0]),
+            z = heat_data,
+            zmin=-1*v,
+            zmax=v,
+            colorscale = colorscale,
+            text=[np.asarray(column_labels)[dendro_leaves_col] for ii in range(len(dendro_leaves_row))],
+            colorbar=go.ColorBar(
+                title=intensity_title,
+                len=0.2,
+                y=1.,
+                x=0.01,
+            ),
+        )
+    ])
+    #heatmap[0]['x'] = dendro_top['layout']['xaxis']['tickvals']
+    heatmap[0]['x'] = np.linspace(
+        np.min(dendro_top['layout']['xaxis']['tickvals']),
+        np.max(dendro_top['layout']['xaxis']['tickvals']),
+        heat_data.shape[1])
+    heatmap[0]['y'] = np.linspace(
+        np.min(dendro_side['layout']['yaxis']['tickvals']),
+        np.max(dendro_side['layout']['yaxis']['tickvals']),
+        heat_data.shape[0])
+    heatmap[0]['xaxis'] = 'x1'
+    heatmap[0]['yaxis'] = 'y1'
+    heatmap[0]['hoverinfo'] = 'text'
+
+
+    # Add row labels to Figure
+    lut = dict(zip(np.unique(row_labels), np.arange(np.unique(row_labels).shape[0])))
+    row_colors = pd.Series(np.asarray(row_labels)[dendro_leaves_row]).map(lut)
+
+    rowlabels = go.Data([
+        go.Heatmap(
+            x = np.zeros(heat_data.shape[0]),
+            y = np.arange(0, heat_data.shape[0]),
+            z = row_colors,
+            colorscale='Dark2',
+            text=np.asarray(row_labels)[dendro_leaves_row]
+        )
+    ])
+
+    rowlabels[0]['y'] = np.linspace(
+        np.min(dendro_side['layout']['yaxis']['tickvals']),
+        np.max(dendro_side['layout']['yaxis']['tickvals']),
+        len(row_colors))
+    rowlabels[0]['xaxis']='x2'
+    rowlabels[0]['yaxis'] = 'y1'
+    rowlabels[0]['showscale'] = False
+    rowlabels[0]['hoverinfo'] = 'text'
+
+    # Add Side Dendrogram Data to Figure
+    figure['data'].extend(dendro_top['data'])
+    figure['data'].extend(dendro_side['data'])
+    # Add Rowlabels Data to Figure
+    figure['data'].extend(go.Data(rowlabels))
+    # Add Heatmap Data to Figure
+    figure['data'].extend(go.Data(heatmap))
+
+    # Edit Layout
+    figure['layout'].update({
+        #'width':1000, 'height':800,
+        'showlegend':False, 'hovermode': 'closest',
+        'title': title,
+                             })
+
+    # Edit xaxis
+    figure['layout'].update({'xaxis1':{'domain': [.13, 1],
+                                      'mirror': False,
+                                      'showgrid': False,
+                                      'showline': False,
+                                      'zeroline': False,
+                                      'ticks':""}})
+    # Edit xaxis2
+    figure['layout'].update({'xaxis2': {'domain': [.1, .13],
+                                       'mirror': False,
+                                       'showgrid': False,
+                                       'showline': False,
+                                       'zeroline': False,
+                                       'showticklabels': False,
+                                       'ticks':""}})
+    # Edit xaxis3
+    figure['layout'].update({'xaxis3': {'domain': [.0, .1],
+                                       'mirror': False,
+                                       'showgrid': False,
+                                       'showline': False,
+                                       'zeroline': False,
+                                       'showticklabels': False,
+                                       'ticks':""}})
+
+    # Edit yaxis
+    figure['layout'].update({'yaxis1':{'domain': [0, .85],
+                                      'mirror': False,
+                                      'showgrid': False,
+                                      'showline': False,
+                                      'zeroline': False,
+                                      'showticklabels': False,
+                                      'ticks': ""}})
+    # Edit yaxis2
+    figure['layout'].update({'yaxis2':{'domain':[.85, 0.95],
+                                       'mirror': False,
+                                       'showgrid': False,
+                                       'showline': False,
+                                       'zeroline': False,
+                                       'showticklabels': False,
+                                       'ticks':""}})
+    # Plot!
+    # py.iplot(figure)
+    return figure

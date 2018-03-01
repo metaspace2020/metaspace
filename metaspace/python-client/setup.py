@@ -15,6 +15,8 @@ setup(name='sm_annotation_utils',
           'plotly>=1.12',
           'numpy',
           'pyyaml',
+          'psycopg2',
+          'matplotlib',
           'pyMSpec',
-          'boto3'
+          'boto3',
       ])
