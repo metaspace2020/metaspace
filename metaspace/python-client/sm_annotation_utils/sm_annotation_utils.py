@@ -362,7 +362,7 @@ class SMDataset(object):
     def __repr__(self):
         return "SMDataset({} | ID: {})".format(self.name, self.id)
 
-    def annotations(self, fdr=0.1, database=None, return_vals = ['sumFormula', 'adduct']):
+    def annotations(self, fdr=0.1, database=None, return_vals = ('sumFormula', 'adduct')):
         annotationFilter = {'fdrLevel': fdr}
         if database:
             annotationFilter['database'] = database
