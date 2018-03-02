@@ -5,6 +5,7 @@ import numpy as np
 from fabric.api import local
 from fabric.context_managers import warn_only
 from mock import MagicMock
+from pathlib import Path
 
 from sm.engine import Dataset
 from sm.engine import ESExporter
@@ -145,7 +146,7 @@ class SciTester(object):
             ds = Dataset.load(self.db, self.ds_id)
         except UnknownDSID:
             print('Test dataset {}/{} does not exist'.format(self.ds_id, self.ds_name))
-            ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
+            ds = create_ds_from_files(self.ds_id, self.ds_name, Path(self.input_path))
 
         ds_man.add(ds, search_job_factory=SearchJob, del_first=True)
 
