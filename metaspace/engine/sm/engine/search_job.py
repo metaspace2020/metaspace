@@ -176,7 +176,6 @@ class SearchJob(object):
                 self._queue = QueuePublisher(self._sm_config['rabbitmq'])
             else:
                 self._queue = None
-            ds.set_status(self._db, self._es, self._queue, DatasetStatus.STARTED)
 
             self._wd_manager = WorkDirManager(ds.id)
             self._configure_spark()
@@ -189,6 +188,8 @@ class SearchJob(object):
 
             self._save_data_from_raw_ms_file()
             self._img_store.storage_type = self._ds.get_ion_img_storage_type(self._db)
+
+            ds.set_status(self._db, self._es, self._queue, DatasetStatus.STARTED)
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
