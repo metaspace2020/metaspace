@@ -14,15 +14,9 @@ import boto3
 from botocore.exceptions import ClientError
 from boto3.s3.transfer import S3Transfer
 
-from sm.engine.util import cmd_check, SMConfig
-
+from sm.engine.util import cmd_check, SMConfig, split_s3_path
 
 logger = logging.getLogger('sm-engine')
-
-
-def split_s3_path(path):
-    """ Returns a pair (bucket, key) """
-    return path.split('s3a://')[-1].split('/', 1)
 
 
 def split_local_path(path):

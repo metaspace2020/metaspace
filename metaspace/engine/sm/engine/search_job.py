@@ -15,9 +15,9 @@ from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
 from sm.engine.dataset import DatasetStatus
 from sm.engine.dataset_reader import DatasetReader
 from sm.engine.db import DB
-from sm.engine.fdr import FDR
+from sm.engine.fdr import FDR, DECOY_ADDUCTS
 from sm.engine.search_results import SearchResults
-from sm.engine.theor_peaks_gen import TheorPeaksGenerator
+from sm.engine.ion_centroids_gen import IonCentroidsGenerator
 from sm.engine.util import proj_root, SMConfig, read_json, sm_log_formatters
 from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
@@ -83,10 +83,6 @@ class SearchJob(object):
         rows = [(mol_db_id, self._ds.id, 'STARTED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self._job_id = self._db.insert_return(JOB_INS, rows)[0]
 
-    # TODO: stop storing target-decoy adduct combinations in the database
-    def clean_target_decoy_table(self):
-        self._db.alter(TARGET_DECOY_ADD_DEL, self._ds.id)
-
     def _run_annotation_job(self, mol_db):
         try:
             self.store_job_meta(mol_db.id)
@@ -95,18 +91,21 @@ class SearchJob(object):
             logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s ...",
                         self._ds.id, self._ds.name, mol_db.name, mol_db.version)
 
-            theor_peaks_gen = TheorPeaksGenerator(sc=self._sc, mol_db=mol_db,
-                                                  adducts=self._ds.config['isotope_generation']['adducts'],
-                                                  db=self._db)
+            self._fdr = FDR(job_id=self._job_id,
+                            decoy_sample_size=20,
+                            target_adducts=self._ds.config['isotope_generation']['adducts'],
+                            db=self._db)
+            self._fdr.decoy_adducts_selection(mol_db.sfs.values())
+
             isocalc = IsocalcWrapper(self._ds.config['isotope_generation'])
-            theor_peaks_gen.run(isocalc)
+            centroids_gen = IonCentroidsGenerator(sc=self._sc, moldb_name=mol_db.name, isocalc=isocalc)
+            centroids_gen.generate_if_not_exist(isocalc=isocalc,
+                                                sfs=mol_db.sfs.values(),
+                                                adducts=self._fdr.all_adducts())
 
-            target_adducts = self._ds.config['isotope_generation']['adducts']
-            self._fdr = FDR(self._job_id, mol_db,
-                            decoy_sample_size=20, target_adducts=target_adducts, db=self._db)
-            self._fdr.decoy_adduct_selection()
-
-            search_alg = MSMBasicSearch(self._sc, self._ds, self._ds_reader, mol_db, self._fdr, self._ds.config)
+            search_alg = MSMBasicSearch(sc=self._sc, ds=self._ds, ds_reader=self._ds_reader,
+                                        mol_db=mol_db, centr_gen=centroids_gen,
+                                        fdr=self._fdr, ds_config=self._ds.config)
             ion_metrics_df, ion_iso_images = search_alg.search()
 
             search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys())
@@ -117,11 +116,11 @@ class SearchJob(object):
             msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
             raise JobFailedError(msg) from e
         else:
-            self._export_search_results_to_es(mol_db)
+            self._export_search_results_to_es(mol_db, centroids_gen)
 
-    def _export_search_results_to_es(self, mol_db):
+    def _export_search_results_to_es(self, mol_db, centroids_gen):
         try:
-            self._es.index_ds(self._ds.id, mol_db)
+            self._es.index_ds(self._ds.id, mol_db, centroids_gen)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
             msg = 'Export to ES failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
@@ -196,7 +195,6 @@ class SearchJob(object):
             if self._sc:
                 self._sc.stop()
             if self._db:
-                self.clean_target_decoy_table()
                 self._db.close()
             if self._wd_manager and not self.no_clean:
                 self._wd_manager.clean()

@@ -139,3 +139,9 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
     ds_config = json.load(open(join(ds_input_path, 'config.json')))
 
     return Dataset(ds_id, ds_name, ds_input_path, datetime.now(), metadata, ds_config)
+
+
+def split_s3_path(path):
+    """ Returns a pair (bucket, key) """
+    return path.split('s3a://')[-1].split('/', 1)
+

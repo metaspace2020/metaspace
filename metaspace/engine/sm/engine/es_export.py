@@ -12,13 +12,13 @@ logger = logging.getLogger('sm-engine')
 
 ANNOTATION_COLUMNS = ["sf", "sf_adduct",
                       "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
-                      "adduct", "job_id", "sf_id", "fdr",
-                      "centroid_mzs", "iso_image_ids", "polarity"]
+                      "adduct", "job_id", "fdr",
+                      "iso_image_ids", "polarity"]
 
 ANNOTATIONS_SEL = '''
 SELECT
-    f.sf,
-    CONCAT(f.sf, m.adduct) as sf_adduct,
+    m.sf,
+    CONCAT(m.sf, m.adduct) as sf_adduct,
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
     COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
     COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
@@ -28,19 +28,19 @@ SELECT
     COALESCE(m.msm, 0::real) AS msm,
     m.adduct,
     j.id AS job_id,
-    f.id AS sf_id,
+--    f.id AS sf_id,
     m.fdr as pass_fdr,
-    tp.centr_mzs AS centroid_mzs,
+--    tp.centr_mzs AS centroid_mzs,
     m.iso_image_ids as iso_image_ids,
     ds.config->'isotope_generation'->'charge'->'polarity' as polarity
 FROM iso_image_metrics m
-JOIN sum_formula f ON f.id = m.sf_id
+--JOIN sum_formula f ON f.id = m.sf_id
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
-JOIN theor_peaks tp ON tp.sf = f.sf AND tp.adduct = m.adduct
-	AND tp.sigma::real = (ds.config->'isotope_generation'->>'isocalc_sigma')::real
-	AND tp.charge = (CASE WHEN ds.config->'isotope_generation'->'charge'->>'polarity' = '+' THEN 1 ELSE -1 END)
-	AND tp.pts_per_mz = (ds.config->'isotope_generation'->>'isocalc_pts_per_mz')::int
+-- JOIN theor_peaks tp ON tp.sf = f.sf AND tp.adduct = m.adduct
+-- 	AND tp.sigma::real = (ds.config->'isotope_generation'->>'isocalc_sigma')::real
+-- 	AND tp.charge = (CASE WHEN ds.config->'isotope_generation'->'charge'->>'polarity' = '+' THEN 1 ELSE -1 END)
+-- 	AND tp.pts_per_mz = (ds.config->'isotope_generation'->>'isocalc_pts_per_mz')::int
 WHERE ds.id = %s AND m.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC
 '''
@@ -207,7 +207,7 @@ class ESExporter(object):
         mol_by_sf_df.columns = ['mol_ids', 'mol_names']
         return mol_by_sf_df
 
-    def index_ds(self, ds_id, mol_db):
+    def index_ds(self, ds_id, mol_db, centr_gen):
         try:
             dataset = self._remove_mol_db_from_dataset(ds_id, mol_db)
         except NotFoundError:
@@ -224,6 +224,7 @@ class ESExporter(object):
         n = 100
         to_index = []
         mol_by_sf_df = self._get_mol_by_sf_df(mol_db)
+        sf_adduct_centroids_df = centr_gen.sf_adduct_centroids_df()
         for r in annotations:
             d = dict(zip(ANNOTATION_COLUMNS, r))
             d.update(dataset)  # include all dataset fields (prefixed with 'ds_')
@@ -232,8 +233,9 @@ class ESExporter(object):
             sf = d['sf']
             d['comp_ids'] = mol_by_sf_df.mol_ids.loc[sf][:50].tolist()  # to prevent ES 413 Request Entity Too Large error
             d['comp_names'] = mol_by_sf_df.mol_names.loc[sf][:50].tolist()
-            d['centroid_mzs'] = ['{:010.4f}'.format(mz) if mz else '' for mz in d['centroid_mzs']]
-            d['mz'] = d['centroid_mzs'][0]
+            mzs = sorted(sf_adduct_centroids_df.loc[(d['sf'], d['adduct'])].sort_values(by='peak_i').mz)
+            d['centroid_mzs'] = mzs
+            d['mz'] = mzs[0]
             d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])
 
             fdr = round(d['fdr'] * 100, 2)

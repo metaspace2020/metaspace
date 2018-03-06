@@ -10,7 +10,7 @@ from sm.engine.dataset_manager import SMapiDatasetManager, SMDaemonDatasetManage
 from sm.engine.dataset_manager import Dataset, DatasetActionPriority, DatasetAction, DatasetStatus
 from sm.engine.errors import DSIDExists
 from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
-from sm.engine.tests.util import spark_context, sm_config, ds_config, test_db
+from sm.engine.tests.util import pysparkling_context, sm_config, ds_config, test_db
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
 
@@ -26,10 +26,10 @@ def fill_db(test_db, sm_config, ds_config):
     db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
               rows=[(0, 0, ds_id)])
     db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
-              rows=[(1, 0, 'H20')])
-    db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf_id, adduct, iso_image_ids) "
+              rows=[(1, 0, 'H2O')])
+    db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, iso_image_ids) "
                "VALUES (%s, %s, %s, %s, %s)"),
-              rows=[(0, 0, 1, '+H', ['iso_image_1_id', 'iso_image_2_id'])])
+              rows=[(0, 0, 'H2O', '+H', ['iso_image_1_id', 'iso_image_2_id'])])
     db.close()
 
 

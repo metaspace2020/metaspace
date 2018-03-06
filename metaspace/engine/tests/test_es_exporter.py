@@ -6,6 +6,7 @@ import time
 from sm.engine import MolecularDB
 from sm.engine.es_export import ESExporter, ESIndexManager, DATASET_SEL, ANNOTATIONS_SEL
 from sm.engine import DB
+from sm.engine.ion_centroids_gen import IonCentroidsGenerator
 from sm.engine.util import logger, init_logger
 from sm.engine.tests.util import sm_config, ds_config, sm_index, es, es_dsl_search, test_db
 
@@ -30,12 +31,12 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         elif args == (ANNOTATIONS_SEL, ds_id, mol_db_id):
             # "sf", "sf_adduct",
             # "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
-            # "adduct", "job_id", "sf_id", "fdr",
-            # "centroid_mzs", "iso_image_ids", "polarity"
-            return [('H2O', 'H2O+H', 1, 1, 1, 100, 0, 100, 1, '+H', 1, 'sf_0', 0.1,
-                     [100, 200], ['iso_img_id_1', 'iso_img_id_2'], '+'),
-                    ('Au', 'Au+H', 1, 1, 1, 100, 0, 100, 1, '+H', 1, 'sf_1', 0.05,
-                     [100, 200], ['iso_img_id_1', 'iso_img_id_2'], '+')]
+            # "adduct", "job_id", "fdr",
+            # "iso_image_ids", "polarity"
+            return [('H2O', 'H2O+H', 1, 1, 1, 100, 0, 100, 1, '+H', 1, 0.1,
+                     ['iso_img_id_1', 'iso_img_id_2'], '+'),
+                    ('Au', 'Au+H', 1, 1, 1, 100, 0, 100, 1, '+H', 1, 0.05,
+                     ['iso_img_id_1', 'iso_img_id_2'], '+')]
         else:
             logger.error('Wrong db_sel_side_effect arguments: ', args)
 
@@ -48,29 +49,37 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
     mol_db_mock.version = '2017'
     mol_db_mock.get_molecules.return_value = pd.DataFrame([('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
                                                           columns=['sf', 'mol_id', 'mol_name'])
+
+    centr_gen_mock = MagicMock(IonCentroidsGenerator)
+    centr_gen_mock.sf_adduct_centroids_df.return_value = (pd.DataFrame({
+        'sf': ['H2O', 'H2O', 'Au', 'Au'],
+        'adduct': ['+H', '+H', '+H', '+H'],
+        'peak_i': [0, 1, 0, 1],
+        'mz': [100., 200., 10., 20.]}).set_index(['sf', 'adduct']))
+
     es_exp = ESExporter(db_mock)
     es_exp.delete_ds(ds_id)
-    es_exp.index_ds(ds_id, mol_db_mock)
+    es_exp.index_ds(ds_id=ds_id, mol_db=mol_db_mock, centr_gen=centr_gen_mock)
 
     wait_for_es(sec=1)
 
     ann_1_d = es_dsl_search.filter('term', sf='H2O').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_1_d == {
-        'pattern_match': 1, 'image_corr': 1, 'fdr': 0.1, 'chaos': 1, 'sf': 'H2O', 'sf_id': 'sf_0', 'min_iso_ints': 0,
-        'msm': 1, 'sf_adduct': 'H2O+H', 'total_iso_ints': 100, 'centroid_mzs': ['00100.0000', '00200.0000'],
+        'pattern_match': 1, 'image_corr': 1, 'fdr': 0.1, 'chaos': 1, 'sf': 'H2O', 'min_iso_ints': 0,
+        'msm': 1, 'sf_adduct': 'H2O+H', 'total_iso_ints': 100, 'centroid_mzs': [100., 200.],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'], 'polarity': '+', 'job_id': 1, 'max_iso_ints': 100,
         'adduct': '+H', 'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
-        'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': '00100.0000', 'ds_meta': {},
+        'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 100., 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
         'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished
     }
     ann_2_d = es_dsl_search.filter('term', sf='Au').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_2_d == {
-        'pattern_match': 1, 'image_corr': 1, 'fdr': 0.05, 'chaos': 1, 'sf': 'Au', 'sf_id': 'sf_1', 'min_iso_ints': 0,
-        'msm': 1, 'sf_adduct': 'Au+H', 'total_iso_ints': 100, 'centroid_mzs': ['00100.0000', '00200.0000'],
+        'pattern_match': 1, 'image_corr': 1, 'fdr': 0.05, 'chaos': 1, 'sf': 'Au', 'min_iso_ints': 0,
+        'msm': 1, 'sf_adduct': 'Au+H', 'total_iso_ints': 100, 'centroid_mzs': [10., 20.],
         'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'], 'polarity': '+', 'job_id': 1, 'max_iso_ints': 100,
         'adduct': '+H',  'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
-        'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': '00100.0000', 'ds_meta': {},
+        'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 10., 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
         'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished
     }

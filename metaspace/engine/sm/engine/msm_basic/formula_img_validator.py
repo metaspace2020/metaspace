@@ -101,7 +101,7 @@ def _calculate_msm(sf_metrics_df):
     return sf_metrics_df.chaos * sf_metrics_df.spatial * sf_metrics_df.spectral
 
 
-def sf_image_metrics(sf_images, metrics, ds, ds_reader, mol_db, sc):
+def sf_image_metrics(sf_images, metrics, ds, ds_reader, ion_centr_ints, sc):
     """ Compute isotope image metrics for each formula
 
     Args
@@ -109,7 +109,7 @@ def sf_image_metrics(sf_images, metrics, ds, ds_reader, mol_db, sc):
     metrics: OrderedDict
     sc : pyspark.SparkContext
     ds : engine.dataset.Dataset
-    mol_db : engine.formulas.Formulas
+    ion_centr_ints: dict
     sf_images : pyspark.rdd.RDD
         RDD of (formula, list[images]) pairs
     Returns
@@ -120,14 +120,14 @@ def sf_image_metrics(sf_images, metrics, ds, ds_reader, mol_db, sc):
     empty_matrix = np.zeros((nrows, ncols))
     compute_metrics = get_compute_img_metrics(metrics, ds_reader.get_sample_area_mask(),
                                               empty_matrix, ds.config['image_generation'])
-    sf_add_ints_map_brcast = sc.broadcast(mol_db.get_sf_peak_ints())
+    sf_add_ints_map_brcast = sc.broadcast(ion_centr_ints)
 
     def calculate_ion_metrics(item):
-        ion, images = item  # ion = (sf, adduct) tuple
-        return ion + compute_metrics(images, sf_add_ints_map_brcast.value[ion])
+        ion, images = item
+        return (ion,) + compute_metrics(images, sf_add_ints_map_brcast.value[ion])
 
     sf_metrics = sf_images.map(calculate_ion_metrics).collect()
-    index_columns = ['sf_id', 'adduct']
+    index_columns = ['ion_i']
     columns = index_columns + list(metrics.keys())
     sf_metrics_df = pd.DataFrame(sf_metrics, columns=columns).set_index(index_columns)
     sf_metrics_df['msm'] = _calculate_msm(sf_metrics_df)

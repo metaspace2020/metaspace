@@ -5,7 +5,7 @@ from pytest import fixture
 
 from sm.engine import DatasetStatus, Dataset, DB, ESExporter, QueuePublisher
 from sm.engine.queue import SM_DS_STATUS
-from sm.engine.tests.util import spark_context, sm_config, ds_config, test_db
+from sm.engine.tests.util import pysparkling_context, sm_config, ds_config, test_db
 
 
 @fixture

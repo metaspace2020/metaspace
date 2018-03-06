@@ -44,5 +44,8 @@
   "slack": {
     "channel": "{{ slack_channel }}",
     "webhook_url": "{{ slack_webhook_url }}"
+  },
+  "isotope_storage": {
+    "path": "{{ isotope_storage_path }}"
   }
 }

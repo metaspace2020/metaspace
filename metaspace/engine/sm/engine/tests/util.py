@@ -34,8 +34,16 @@ class SparkContext(Context):
 
 
 @pytest.fixture(scope='module')
-def spark_context(request):
+def pysparkling_context(request):
     return SparkContext()
+
+
+@pytest.fixture(scope='module')
+def pyspark_context(request):
+    from pyspark import SparkContext
+    sc = SparkContext(master='local[2]')
+    request.addfinalizer(lambda: sc.stop())
+    return sc
     
 
 @pytest.fixture()

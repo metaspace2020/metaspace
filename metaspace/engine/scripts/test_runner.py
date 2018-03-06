@@ -31,7 +31,7 @@ if __name__ == '__main__':
         # Regression tests
         if args.regr or args.all:
             local(py_test_cmd + 'tests/test_imzml_txt_converter_db.py')
-            local(py_test_cmd + 'tests/test_theor_peaks_gen_db.py')
+            local(py_test_cmd + 'tests/test_ion_centroids_gen.py')
             local(py_test_cmd + 'tests/test_work_dir.py')
             # TODO: include the test in CI
             # local(py_test_cmd + 'tests/test_search_job.py')
