@@ -73,6 +73,8 @@ def get_compute_img_metrics(metrics, sample_area_mask, empty_matrix, img_gen_con
         function that returns tuples of metrics for every list of isotope images
     """
     def compute(iso_images_sparse, sf_ints):
+        np.seterr(invalid='ignore')  # to ignore division by zero warnings
+
         diff = len(sf_ints) - len(iso_images_sparse)
         iso_imgs = [empty_matrix if img is None else img.toarray()
                     for img in iso_images_sparse + [None] * diff]

@@ -26,8 +26,8 @@ class IonCentroidsGenerator(object):
         self._moldb_name = moldb_name
         self._isocalc = isocalc
         self._sm_config = SMConfig.get_conf()
-        self._parquet_chunks_n = 8
-        self._iso_gen_part_n = 256
+        self._parquet_chunks_n = 64
+        self._iso_gen_part_n = 512
 
         self._spark_session = SparkSession(self._sc)
         self._ion_centroids_path = '{}/{}/{}/{}'.format(self._sm_config['isotope_storage']['path'],
@@ -52,7 +52,7 @@ class IonCentroidsGenerator(object):
             else:
                 return True
         else:
-            return Path(self._ion_centroids_path).exists()
+            return Path(self._ion_centroids_path + '/ions/_SUCCESS').exists()
 
     def generate(self, isocalc, sfs, adducts):
         """ Generate isotopic peaks

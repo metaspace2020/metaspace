@@ -27,7 +27,8 @@
   },
   "spark": {
     "master": "local[4]",
-    "executor.memory": "2g"
+    "executor.memory": "2g",
+    "spark.sql.execution.arrow.enabled": true
   },
   "aws": {
     "aws_access_key_id": "",
