@@ -352,28 +352,39 @@ class QueuePublisher(object):
 
     def __init__(self, config, logger_name='sm-api'):
         creds = pika.PlainCredentials(config['user'], config['password'])
-        conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat_interval=0)
-        self._conn = pika.BlockingConnection(conn_params)
-        self._ch = self._conn.channel()
-
+        self.conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat_interval=0)
+        self.conn = None
         self.logger = logging.getLogger(logger_name)
 
     def queue_purge(self, qname):
         try:
-            self._ch.queue_purge(queue=qname)
+            self.conn = pika.BlockingConnection(self.conn_params)
+            ch = self.conn.channel()
+            ch.queue_purge(queue=qname)
         except AMQPError as e:
-            logging.warning('Queue purging failed: %s', e)
+            logging.warning('Queue purging failed: %s - %s', qname, e)
+        finally:
+            self.conn.close()
 
     def publish(self, msg, qname, priority=0):
-        self._ch.basic_publish(exchange='',
-                               routing_key=qname,
-                               body=json.dumps(msg),
-                               properties=pika.BasicProperties(
-                                   delivery_mode=2,  # make message persistent
-                                   priority=priority
-                               ))
-        self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), qname))
+        try:
+            conn = pika.BlockingConnection(self.conn_params)
+            ch = conn.channel()
+            ch.queue_declare(queue=qname, durable=True)
+            ch.basic_publish(exchange='',
+                             routing_key=qname,
+                             body=json.dumps(msg),
+                             properties=pika.BasicProperties(
+                                 delivery_mode=2,  # make message persistent
+                                 priority=priority
+                             ))
+            self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), qname))
+        except Exception as e:
+            logging.warning('Failed to publish a message: %s - %s', msg, e)
+        finally:
+            if self.conn:
+                self.conn.close()
+
 
 SM_ANNOTATE = 'sm_annotate'
-
 SM_DS_STATUS = 'sm_dataset_status'
