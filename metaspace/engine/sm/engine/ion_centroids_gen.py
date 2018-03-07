@@ -11,9 +11,6 @@ from sm.engine.isocalc_wrapper import IsocalcWrapper
 
 logger = logging.getLogger('sm-engine')
 
-# SF_ADDUCT_SEL = ('SELECT sf, adduct FROM theor_peaks p '
-#                  'WHERE ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s')
-
 
 class IonCentroidsGenerator(object):
     """ Generator of theoretical isotope peaks for all molecules in a database.
@@ -49,7 +46,7 @@ class IonCentroidsGenerator(object):
             bucket, key = split_s3_path(self._ion_centroids_path)
             s3 = boto3.client('s3', **cred_dict)
             try:
-                s3.head_object(Bucket=bucket, Key=key)
+                s3.head_object(Bucket=bucket, Key=key + '/ions/_SUCCESS')
             except ClientError:
                 return False
             else:
@@ -104,12 +101,16 @@ class IonCentroidsGenerator(object):
     def save(self):
         """ Save isotopic peaks
         """
+        logger.info('Saving peaks...')
+
         centr_spark_df = self._spark_session.createDataFrame(self.ion_centroids_df.reset_index())
         centr_spark_df.write.parquet(self._ion_centroids_path + '/ion_centroids', mode='overwrite')
         ion_spark_df = self._spark_session.createDataFrame(self.ion_df.reset_index())
         ion_spark_df.write.parquet(self._ion_centroids_path + '/ions', mode='overwrite')
 
     def restore(self):
+        logger.info('Restoring peaks...')
+
         self.ion_df = self._spark_session.read.parquet(
             self._ion_centroids_path + '/ions').toPandas().set_index('ion_i')
         self.ion_centroids_df = self._spark_session.read.parquet(

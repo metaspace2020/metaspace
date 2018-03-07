@@ -7,7 +7,10 @@ import requests
 from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('sm-engine')
-METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
+METRICS_INS = '''
+INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, msm, fdr, stats, iso_image_ids)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+'''
 
 
 class SearchResults(object):
