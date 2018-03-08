@@ -9,7 +9,6 @@ from mock import MagicMock
 from sm.engine import Dataset
 from sm.engine import ESExporter
 from sm.engine import SMDaemonDatasetManager
-from sm.engine import SearchJob
 from sm.engine.db import DB
 from sm.engine.errors import UnknownDSID
 from sm.engine.mol_db import MolDBServiceWrapper
@@ -143,6 +142,7 @@ class SciTester(object):
 
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
         ds_man.delete(ds)
+        from sm.engine import SearchJob
         ds_man.add(ds, search_job_factory=SearchJob, del_first=True)
 
     def clear_data_dirs(self):
