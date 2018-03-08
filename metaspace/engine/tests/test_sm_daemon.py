@@ -12,10 +12,16 @@ from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root
 from sm.engine.sm_daemon import SMDaemon
 from sm.engine.search_job import SearchJob
-from sm.engine import DB, ESExporter, QueuePublisher, Dataset, SMapiDatasetManager, DatasetStatus
+from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
+from sm.engine import DB, ESExporter, QueuePublisher, Dataset, SMapiDatasetManager, DatasetStatus, QueueConsumer
 from sm.engine.tests.util import test_db, sm_config, ds_config
 
-QNAME = 'sm_test'
+ACTION_QDESC = SM_ANNOTATE
+ACTION_QDESC['name'] = 'sm_test'
+
+STATUS_QDESC = SM_DS_STATUS
+STATUS_QDESC['name'] = 'sm_status_test'
+
 SM_CONFIG_PATH = join(proj_root(), 'conf/test_config.json')
 
 
@@ -30,13 +36,14 @@ def fill_db(test_db, sm_config, ds_config):
                      json.dumps(meta), json.dumps(ds_config), DatasetStatus.FINISHED)])
 
 
-def create_api_ds_man(db=None, es=None, img_store=None, queue_pub=None, sm_config=None):
+def create_api_ds_man(db=None, es=None, img_store=None, action_queue=None, sm_config=None):
     db = db or DB(sm_config['db'])
     es = es or ESExporter(db)
     img_store = img_store or MagicMock(spec=ImageStoreServiceWrapper)
-    queue_pub = queue_pub or QueuePublisher(sm_config['rabbitmq'])
-    return SMapiDatasetManager(qname=QNAME, db=db, es=es,
-                               image_store=img_store, mode='queue', queue_publisher=queue_pub)
+    action_queue = action_queue or QueuePublisher(sm_config['rabbitmq'], ACTION_QDESC)
+    action_queue.queue_args = {'x-max-priority': 3}
+    return SMapiDatasetManager(db=db, es=es, image_store=img_store,
+                               mode='queue', action_queue=action_queue)
 
 
 def create_ds(ds_id=None, upload_dt=None, input_path=None, meta=None, ds_config=None):
@@ -61,9 +68,10 @@ class SMDaemonDatasetManagerMock(SMDaemonDatasetManager):
 
 
 @fixture
-def clean_rabbitmq(sm_config):
-    queue_pub = QueuePublisher(sm_config['rabbitmq'])
-    queue_pub.queue_purge(QNAME)
+def delete_queue(sm_config):
+    for qdesc in [ACTION_QDESC, STATUS_QDESC]:
+        queue_pub = QueuePublisher(sm_config['rabbitmq'], qdesc)
+        queue_pub.delete_queue()
 
 
 @fixture
@@ -74,7 +82,7 @@ def clean_ds_man_mock(request):
 
 
 def run_sm_daemon_thread(sm_daemon=None, wait=2):
-    daemon = sm_daemon or SMDaemon(QNAME, SMDaemonDatasetManagerMock)
+    daemon = sm_daemon or SMDaemon(ACTION_QDESC, SMDaemonDatasetManagerMock)
     t = Thread(target=daemon.start)
     t.start()
     time.sleep(wait)  # let the consumer fetch and process all messages
@@ -82,10 +90,10 @@ def run_sm_daemon_thread(sm_daemon=None, wait=2):
     t.join()
 
 
-def test_sm_daemon_receive_message(sm_config, clean_ds_man_mock, clean_rabbitmq):
-    queue_pub = QueuePublisher(sm_config['rabbitmq'])
+def test_sm_daemon_receive_message(sm_config, clean_ds_man_mock, delete_queue):
+    queue_pub = QueuePublisher(sm_config['rabbitmq'], ACTION_QDESC)
     msg = {'test': 'message'}
-    queue_pub.publish(msg, qname=QNAME)
+    queue_pub.publish(msg)
 
     def callback_side_effect(*args):
         print('WITHIN CALLBACK: ', args)
@@ -95,11 +103,12 @@ def test_sm_daemon_receive_message(sm_config, clean_ds_man_mock, clean_rabbitmq)
     on_success = MagicMock()
     on_failure = MagicMock()
 
-    sm_daemon = SMDaemon(QNAME, SMDaemonDatasetManagerMock)
+    sm_daemon = SMDaemon(ACTION_QDESC, SMDaemonDatasetManagerMock)
     sm_daemon._callback = callback
     sm_daemon._on_success = on_success
     sm_daemon._on_failure = on_failure
-
+    sm_daemon._action_queue_consumer = QueueConsumer(sm_config['rabbitmq'], ACTION_QDESC,
+                                                     callback, on_success, on_failure)
     run_sm_daemon_thread(sm_daemon)
 
     callback.assert_called_once_with(msg)
@@ -109,13 +118,13 @@ def test_sm_daemon_receive_message(sm_config, clean_ds_man_mock, clean_rabbitmq)
 
 class TestSMDaemonSingleEventCases:
 
-    def test_add__ds_exists__del_first(self, fill_db, clean_ds_man_mock, clean_rabbitmq, ds_config, sm_config):
+    def test_add__ds_exists__del_first(self, fill_db, clean_ds_man_mock, delete_queue, ds_config, sm_config):
         ds = create_ds(ds_config=ds_config)
         api_ds_man = create_api_ds_man(sm_config=sm_config)
 
         api_ds_man.add(ds, del_first=True, priority=DatasetActionPriority.HIGH)
 
-        run_sm_daemon_thread()
+        run_sm_daemon_thread(SMDaemon(ACTION_QDESC, SMDaemonDatasetManagerMock))
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
         assert method == 'add'
@@ -123,7 +132,7 @@ class TestSMDaemonSingleEventCases:
         assert _kwargs['search_job_factory'] == SearchJob
         assert _kwargs['del_first'] == True
 
-    def test_update(self, fill_db, clean_ds_man_mock, clean_rabbitmq, ds_config, sm_config):
+    def test_update(self, fill_db, clean_ds_man_mock, delete_queue, ds_config, sm_config):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
         ds = create_ds(ds_config=ds_config)
         ds.meta = {'new': 'meta'}
@@ -136,7 +145,7 @@ class TestSMDaemonSingleEventCases:
         assert method == 'update'
         assert _ds.id == ds.id
 
-    def test_delete(self, fill_db, clean_ds_man_mock, clean_rabbitmq, ds_config, sm_config):
+    def test_delete(self, fill_db, clean_ds_man_mock, delete_queue, ds_config, sm_config):
         ds = create_ds(ds_config=ds_config)
         api_ds_man = create_api_ds_man(sm_config=sm_config)
 
@@ -149,7 +158,7 @@ class TestSMDaemonSingleEventCases:
         assert _ds.id == ds.id
         assert not _kwargs.get('del_raw_data', None)
 
-    def test_update__does_not_exist_raises_exception(self, test_db, clean_ds_man_mock, clean_rabbitmq,
+    def test_update__does_not_exist_raises_exception(self, test_db, clean_ds_man_mock, delete_queue,
                                                      ds_config, sm_config):
         ds = create_ds(ds_config=ds_config)
         api_ds_man = create_api_ds_man(sm_config=sm_config)
@@ -157,7 +166,7 @@ class TestSMDaemonSingleEventCases:
         with raises(UnknownDSID):
             api_ds_man.update(ds)
 
-    def test_delete__does_not_exist__raises_exception(self, test_db, clean_ds_man_mock, clean_rabbitmq,
+    def test_delete__does_not_exist__raises_exception(self, test_db, clean_ds_man_mock, delete_queue,
                                                       ds_config, sm_config):
         ds = create_ds(ds_config=ds_config)
         api_ds_man = create_api_ds_man(sm_config=sm_config)
@@ -169,8 +178,8 @@ class TestSMDaemonSingleEventCases:
 class TestSMDaemonTwoEventsCases:
 
     def test_add_two_ds__second_with_high_priority__second_goes_first(self, test_db, sm_config, ds_config,
-                                                                      clean_rabbitmq, clean_ds_man_mock):
-        ds = create_ds(ds_config=ds_config)
+                                                                      delete_queue, clean_ds_man_mock):
+        ds = create_ds(ds_id='2000-01-01', ds_config=ds_config)
         ds_pri = create_ds(ds_id='2000-01-02', ds_config=ds_config)
         api_ds_man = create_api_ds_man(sm_config=sm_config)
 
@@ -190,7 +199,7 @@ class TestSMDaemonTwoEventsCases:
         assert _kwargs['search_job_factory'] == SearchJob
 
     def test_add_update_ds__new_meta__update_goes_first(self, test_db, sm_config, ds_config,
-                                                        clean_rabbitmq, clean_ds_man_mock):
+                                                        delete_queue, clean_ds_man_mock):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
         ds = create_ds(ds_config=ds_config)
         api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
@@ -209,7 +218,7 @@ class TestSMDaemonTwoEventsCases:
         assert _kwargs['search_job_factory'] == SearchJob
         assert _kwargs['del_first'] == False
 
-    def test_add_update_ds__new_moldb(self, test_db, sm_config, ds_config, clean_ds_man_mock, clean_rabbitmq):
+    def test_add_update_ds__new_moldb(self, test_db, sm_config, ds_config, clean_ds_man_mock, delete_queue):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
         ds = create_ds(ds_config=ds_config)
         api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
@@ -224,7 +233,7 @@ class TestSMDaemonTwoEventsCases:
         assert _ds.config == ds.config
         assert _kwargs['search_job_factory'] == SearchJob
 
-    def test_add_update_ds__new_config(self, test_db, sm_config, ds_config, clean_ds_man_mock, clean_rabbitmq):
+    def test_add_update_ds__new_config(self, test_db, sm_config, ds_config, clean_ds_man_mock, delete_queue):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
         ds = create_ds(ds_config=ds_config)
         api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
@@ -247,7 +256,7 @@ class TestSMDaemonTwoEventsCases:
         assert _kwargs['search_job_factory'] == SearchJob
         assert _kwargs['del_first'] == True
 
-    def test_add_delete_ds(self, test_db, sm_config, ds_config, clean_ds_man_mock, clean_rabbitmq):
+    def test_add_delete_ds(self, test_db, sm_config, ds_config, clean_ds_man_mock, delete_queue):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
         ds = create_ds(ds_config=ds_config)
         api_ds_man.add(ds)

@@ -6,6 +6,7 @@ import boto3
 
 from sm.engine.dataset_manager import DatasetAction
 from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.queue import SM_DS_STATUS
 from sm.engine.util import SMConfig, sm_log_config, init_logger
 from sm.engine import QueueConsumer, ESExporter, QueuePublisher, Dataset, SearchJob
 from sm.engine import DB
@@ -15,12 +16,12 @@ logger = logging.getLogger('sm-daemon')
 
 class SMDaemon(object):
 
-    def __init__(self, qname, dataset_manager_factory):
+    def __init__(self, qdesc, dataset_manager_factory):
         self._dataset_manager_factory = dataset_manager_factory
-        self._qname = qname
-        self._sm_queue_consumer = None
         self._sm_config = SMConfig.get_conf()
-        self.stopped = False
+        self._stopped = False
+        self._action_queue_consumer = QueueConsumer(self._sm_config['rabbitmq'], qdesc,
+                                                    self._callback, self._on_success, self._on_failure)
 
     def _post_to_slack(self, emoji, msg):
         slack_conf = SMConfig.get_conf().get('slack', {})
@@ -120,7 +121,8 @@ class SMDaemon(object):
             ds_man = self._dataset_manager_factory(
                 db=db, es=ESExporter(db),
                 img_store=ImageStoreServiceWrapper(self._sm_config['services']['img_service_url']),
-                mode='queue', queue_publisher=QueuePublisher(self._sm_config['rabbitmq'])
+                mode='queue',
+                status_queue=QueuePublisher(self._sm_config['rabbitmq'], qdesc=SM_DS_STATUS)
             )
             ds_man.process(ds=Dataset.load(db, msg['ds_id']),
                            action=msg['action'],
@@ -131,12 +133,10 @@ class SMDaemon(object):
                 db.close()
 
     def start(self):
-        self.stopped = False
-        self._sm_queue_consumer = QueueConsumer(self._sm_config['rabbitmq'], self._qname,
-                                                self._callback, self._on_success, self._on_failure)
-        self._sm_queue_consumer.run()  # starts IOLoop to block and allow pika handle events
+        self._stopped = False
+        self._action_queue_consumer.run()  # starts IOLoop to block and allow pika handle events
 
     def stop(self):
-        if not self.stopped:
-            self._sm_queue_consumer.stop()
-            self.stopped = True
+        if not self._stopped:
+            self._action_queue_consumer.stop()
+            self._stopped = True

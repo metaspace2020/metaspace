@@ -168,8 +168,9 @@ class ESIndexManager(object):
 
 class ESExporter(object):
     def __init__(self, db, es_config=None):
+        self.sm_config = SMConfig.get_conf()
         if not es_config:
-            es_config = SMConfig.get_conf()['elasticsearch']
+            es_config = self.sm_config['elasticsearch']
         self._es = init_es_conn(es_config)
         self._db = db
         self.index = es_config['index']
@@ -207,7 +208,7 @@ class ESExporter(object):
         mol_by_sf_df.columns = ['mol_ids', 'mol_names']
         return mol_by_sf_df
 
-    def index_ds(self, ds_id, mol_db, centr_gen):
+    def index_ds(self, ds_id, mol_db, isocalc):
         try:
             dataset = self._remove_mol_db_from_dataset(ds_id, mol_db)
         except NotFoundError:
@@ -224,7 +225,6 @@ class ESExporter(object):
         n = 100
         to_index = []
         mol_by_sf_df = self._get_mol_by_sf_df(mol_db)
-        sf_adduct_centroids_df = centr_gen.sf_adduct_centroids_df()
         for r in annotations:
             d = dict(zip(ANNOTATION_COLUMNS, r))
             d.update(dataset)  # include all dataset fields (prefixed with 'ds_')
@@ -233,8 +233,8 @@ class ESExporter(object):
             sf = d['sf']
             d['comp_ids'] = mol_by_sf_df.mol_ids.loc[sf][:50].tolist()  # to prevent ES 413 Request Entity Too Large error
             d['comp_names'] = mol_by_sf_df.mol_names.loc[sf][:50].tolist()
-            mzs = sorted(sf_adduct_centroids_df.loc[(d['sf'], d['adduct'])].sort_values(by='peak_i').mz)
-            d['centroid_mzs'] = mzs
+            mzs, _ = isocalc.ion_centroids(d['sf'], d['adduct'])
+            d['centroid_mzs'] = mzs.tolist()
             d['mz'] = mzs[0]
             d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])
 

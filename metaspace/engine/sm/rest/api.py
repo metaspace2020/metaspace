@@ -107,17 +107,20 @@ def update_ds(ds_man, ds, params):
 
     ds_man.update(ds, priority=params.get('priority', DatasetActionPriority.DEFAULT))
 
+
 @post('/v1/datasets/<ds_id>/delete')
 @sm_modify_dataset('DELETE')
 def delete_ds(ds_man, ds, params):
     del_raw = params.get('del_raw', False)
     ds_man.delete(ds, del_raw_data=del_raw)
 
+
 @post('/v1/datasets/<ds_id>/add-optical-image')
 @sm_modify_dataset('ADD_OPTICAL_IMAGE')
 def add_optical_image(ds_man, ds, params):
     image = Image.open(requests.get(params['url'], stream=True).raw)
     ds_man.add_optical_image(ds, image, params['transform'])
+
 
 if __name__ == '__main__':
     init_logger()

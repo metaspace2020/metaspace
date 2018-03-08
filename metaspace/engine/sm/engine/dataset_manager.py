@@ -6,9 +6,9 @@ from PIL import Image
 
 from sm.engine.dataset import DatasetStatus, Dataset
 from sm.engine.errors import DSIDExists
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
 
@@ -75,17 +75,17 @@ class DatasetManager(object):
         es: sm.engine.ESExporter
         mode: unicode
             'local' or 'queue'
-        queue_publisher: sm.engine.queue.QueuePublisher
+        status_queue: sm.engine.queue.QueuePublisher
+        logger_name: str
     """
-    def __init__(self, db=None, es=None, img_store=None, mode=None, queue_publisher=None, logger_name=None):
+    def __init__(self, db=None, es=None, img_store=None, mode=None,
+                 status_queue=None, logger_name=None):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
         self._img_store = img_store
         self.mode = mode
-        self._queue = queue_publisher
-        if self.mode == 'queue':
-            assert self._queue
+        self._status_queue = status_queue
         self.logger = logging.getLogger(logger_name)
 
     def process(self, ds, action, **kwargs):
@@ -109,9 +109,9 @@ class DatasetManager(object):
 
 class SMDaemonDatasetManager(DatasetManager):
 
-    def __init__(self, db, es, img_store, mode, queue_publisher=None):
+    def __init__(self, db, es, img_store, mode=None, status_queue=None):
         DatasetManager.__init__(self, db=db, es=es, img_store=img_store, mode=mode,
-                                queue_publisher=queue_publisher, logger_name='sm-daemon')
+                                status_queue=status_queue, logger_name='sm-daemon')
 
     def process(self, ds, action, **kwargs):
         if action == DatasetAction.ADD:
@@ -133,16 +133,17 @@ class SMDaemonDatasetManager(DatasetManager):
 
     def update(self, ds, **kwargs):
         """ Reindex all dataset results """
-        ds.set_status(self._db, self._es, self._queue, DatasetStatus.INDEXING)
+        ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.INDEXING)
 
         self._es.delete_ds(ds.id)
         for mol_db_dict in ds.config['databases']:
             mol_db = MolecularDB(name=mol_db_dict['name'],
                                  version=mol_db_dict.get('version', None),
                                  iso_gen_config=ds.config['isotope_generation'])
-            self._es.index_ds(ds.id, mol_db)
+            isocalc = IsocalcWrapper(ds.config['isotope_generation'])
+            self._es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
 
-        ds.set_status(self._db, self._es, self._queue, DatasetStatus.FINISHED)
+        ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.FINISHED)
 
     def _del_iso_images(self, ds):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
@@ -164,24 +165,25 @@ class SMDaemonDatasetManager(DatasetManager):
             wd_man = WorkDirManager(ds.id)
             wd_man.del_input_data(ds.input_path)
         if self.mode == 'queue':
-            self._queue.publish({'ds_id': ds.id, 'status': DatasetStatus.DELETED}, SM_DS_STATUS)
+            self._status_queue.publish({'ds_id': ds.id, 'status': DatasetStatus.DELETED})
 
 
 class SMapiDatasetManager(DatasetManager):
 
-    def __init__(self, qname, db, es, image_store, mode, queue_publisher=None):
-        self.qname = qname
+    def __init__(self, db, es, image_store, mode, action_queue=None, status_queue=None):
         DatasetManager.__init__(self, db=db, es=es, img_store=image_store, mode=mode,
-                                queue_publisher=queue_publisher, logger_name='sm-api')
+                                status_queue=status_queue, logger_name='sm-api')
+        self._action_queue = action_queue
 
     def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT, **kwargs):
         if self.mode == 'queue':
             msg = ds.to_queue_message()
             msg['action'] = action
             msg.update(kwargs)
-            self._queue.publish(msg, self.qname, priority)
-            self.logger.info('New message posted to %s: %s', self._queue, msg)
-        ds.set_status(self._db, self._es, self._queue, DatasetStatus.QUEUED)
+            self._action_queue.publish(msg, priority)
+            self.logger.info('New message posted to %s: %s', self._action_queue, msg)
+
+            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.QUEUED)
 
     def add(self, ds, del_first=False, priority=DatasetActionPriority.DEFAULT):
         """ Send add message to the queue. If dataset exists, raise an exception """

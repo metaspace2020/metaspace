@@ -16,7 +16,7 @@ class QueueConsumer(object):
     If the channel is closed, it will indicate a problem with one of the
     commands that were issued and that should surface in the output as well.
     """
-    def __init__(self, config, qname, callback, on_success, on_failure):
+    def __init__(self, config, qdesc, callback, on_success, on_failure):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
 
@@ -26,9 +26,8 @@ class QueueConsumer(object):
         self.exchange = 'sm'  # default exchange ("") cannot be used here
         self.exchange_type = 'direct'
         self.routing_key = None
-        self.qname = qname
-        self.queue_durable = True
-        self.queue_args = {'x-max-priority': 3}
+        self.qdesc = qdesc
+        self.qname = self.qdesc['name']
         self.no_ack = False  # messages get redelivered with no_ack=False
 
         self._callback = callback
@@ -188,7 +187,7 @@ class QueueConsumer(object):
         """
         self.logger.info('Declaring queue %s', queue_name)
         self._channel.queue_declare(self.on_queue_declareok, queue_name,
-                                    durable=self.queue_durable, arguments=self.queue_args)
+                                    durable=self.qdesc['durable'], arguments=self.qdesc['arguments'])
 
     def on_queue_declareok(self, method_frame):
         """Method invoked by pika when the Queue.Declare RPC call made in
@@ -350,41 +349,56 @@ class QueueConsumer(object):
 
 class QueuePublisher(object):
 
-    def __init__(self, config, logger_name='sm-api'):
+    def __init__(self, config, qdesc, logger_name='sm-api'):
         creds = pika.PlainCredentials(config['user'], config['password'])
+        self.qdesc = qdesc
+        self.qname = qdesc['name']
         self.conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat_interval=0)
         self.conn = None
         self.logger = logging.getLogger(logger_name)
 
-    def queue_purge(self, qname):
+    def __str__(self):
+        return '<QueuePublisher:{}>'.format(self.qname)
+
+    def delete_queue(self):
         try:
             self.conn = pika.BlockingConnection(self.conn_params)
             ch = self.conn.channel()
-            ch.queue_purge(queue=qname)
+            ch.queue_delete(self.qname)
         except AMQPError as e:
-            logging.warning('Queue purging failed: %s - %s', qname, e)
+            self.logger.error('Queue delete failed: %s - %s', self.qname, e)
         finally:
             self.conn.close()
 
-    def publish(self, msg, qname, priority=0):
+    def publish(self, msg, priority=0):
         try:
             conn = pika.BlockingConnection(self.conn_params)
             ch = conn.channel()
-            ch.queue_declare(queue=qname, durable=True)
+            ch.queue_declare(queue=self.qname, durable=self.qdesc['durable'], arguments=self.qdesc['arguments'])
             ch.basic_publish(exchange='',
-                             routing_key=qname,
+                             routing_key=self.qname,
                              body=json.dumps(msg),
                              properties=pika.BasicProperties(
                                  delivery_mode=2,  # make message persistent
                                  priority=priority
                              ))
-            self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), qname))
+            self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), self.qname))
         except Exception as e:
-            logging.warning('Failed to publish a message: %s - %s', msg, e)
+            self.logger.error('Failed to publish a message: %s - %s', msg, e)
         finally:
             if self.conn:
                 self.conn.close()
 
 
-SM_ANNOTATE = 'sm_annotate'
-SM_DS_STATUS = 'sm_dataset_status'
+SM_ANNOTATE = {
+    'name': 'sm_annotate',
+    'durable': True,
+    'arguments': {
+        'x-max-priority': 3
+    }
+}
+SM_DS_STATUS = {
+    'name': 'sm_dataset_status',
+    'durable': True,
+    'arguments': None
+}

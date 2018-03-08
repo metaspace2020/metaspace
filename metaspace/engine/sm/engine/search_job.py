@@ -24,7 +24,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 from sm.engine.errors import JobFailedError, ESExportFailedError
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.queue import QueuePublisher
+from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS
 
 logger = logging.getLogger('sm-engine')
 
@@ -51,7 +51,7 @@ class SearchJob(object):
         self._db = None
         self._ds = None
         self._ds_reader = None
-        self._queue = None
+        self._status_queue = None
         self._fdr = None
         self._wd_manager = None
         self._es = None
@@ -116,11 +116,11 @@ class SearchJob(object):
             msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
             raise JobFailedError(msg) from e
         else:
-            self._export_search_results_to_es(mol_db, centroids_gen)
+            self._export_search_results_to_es(mol_db, isocalc)
 
-    def _export_search_results_to_es(self, mol_db, centroids_gen):
+    def _export_search_results_to_es(self, mol_db, isocalc):
         try:
-            self._es.index_ds(self._ds.id, mol_db, centroids_gen)
+            self._es.index_ds(self._ds.id, mol_db, isocalc)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
             msg = 'Export to ES failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
@@ -161,10 +161,10 @@ class SearchJob(object):
             self._ds = ds
 
             if self._sm_config['rabbitmq']:
-                self._queue = QueuePublisher(self._sm_config['rabbitmq'])
+                self._status_queue = QueuePublisher(config=self._sm_config['rabbitmq'], qdesc=SM_DS_STATUS)
             else:
-                self._queue = None
-            ds.set_status(self._db, self._es, self._queue, DatasetStatus.STARTED)
+                self._status_queue = None
+            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.STARTED)
 
             self._wd_manager = WorkDirManager(ds.id)
             self._configure_spark()
@@ -181,14 +181,14 @@ class SearchJob(object):
                 mol_db = MolecularDB(id=mol_db_id, iso_gen_config=self._ds.config['isotope_generation'], db=self._db)
                 self._run_annotation_job(mol_db)
 
-            ds.set_status(self._db, self._es, self._queue, DatasetStatus.FINISHED)
+            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.FINISHED)
 
             logger.info("All done!")
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
         except Exception as e:
             if self._ds:
-                ds.set_status(self._db, self._es, self._queue, DatasetStatus.FAILED)
+                ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.FAILED)
             logger.error(e, exc_info=True)
             raise
         finally:

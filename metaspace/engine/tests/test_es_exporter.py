@@ -7,6 +7,7 @@ from sm.engine import MolecularDB
 from sm.engine.es_export import ESExporter, ESIndexManager, DATASET_SEL, ANNOTATIONS_SEL
 from sm.engine import DB
 from sm.engine.ion_centroids_gen import IonCentroidsGenerator
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.util import logger, init_logger
 from sm.engine.tests.util import sm_config, ds_config, sm_index, es, es_dsl_search, test_db
 
@@ -50,16 +51,15 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
     mol_db_mock.get_molecules.return_value = pd.DataFrame([('H2O', 'mol_id', 'mol_name'), ('Au', 'mol_id', 'mol_name')],
                                                           columns=['sf', 'mol_id', 'mol_name'])
 
-    centr_gen_mock = MagicMock(IonCentroidsGenerator)
-    centr_gen_mock.sf_adduct_centroids_df.return_value = (pd.DataFrame({
-        'sf': ['H2O', 'H2O', 'Au', 'Au'],
-        'adduct': ['+H', '+H', '+H', '+H'],
-        'peak_i': [0, 1, 0, 1],
-        'mz': [100., 200., 10., 20.]}).set_index(['sf', 'adduct']))
+    isocalc_mock = MagicMock(IsocalcWrapper)
+    isocalc_mock.ion_centroids = lambda sf, adduct: {
+        ('H2O', '+H'): ([100., 200.], None),
+        ('Au', '+H'): ([10., 20.], None)
+    }[(sf, adduct)]
 
     es_exp = ESExporter(db_mock)
     es_exp.delete_ds(ds_id)
-    es_exp.index_ds(ds_id=ds_id, mol_db=mol_db_mock, centr_gen=centr_gen_mock)
+    es_exp.index_ds(ds_id=ds_id, mol_db=mol_db_mock, isocalc=isocalc_mock)
 
     wait_for_es(sec=1)
 

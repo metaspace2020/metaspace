@@ -13,7 +13,7 @@ setup(name='sm',
           "pyImagingMSpec==0.1.4",
           "cpyImagingMSpec==0.2.4",
           "pyMSpec==0.1.2",
-          "cpyMSpec==0.3.5",
+          "cpyMSpec==0.3.5",  # drop all isotopic patterns if updated
           "pyimzML==1.2.1",
           "Pillow==4.2.1"
       ])
