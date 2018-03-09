@@ -86,7 +86,7 @@ class Dataset(object):
 
         es.sync_dataset(self.id)
         if status_queue:
-            status_queue.publish({'ds_id': self.id, 'status': self.status}, SM_DS_STATUS)
+            status_queue.publish({'ds_id': self.id, 'status': self.status})
 
     def to_queue_message(self):
         msg = {
