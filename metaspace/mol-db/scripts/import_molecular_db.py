@@ -18,21 +18,20 @@ def get_inchikey_gen():
     ob_conversion.SetInAndOutFormats("inchi", "inchi")
     ob_conversion.SetOptions("K", ob_conversion.OUTOPTIONS)
 
-    # inchiset = set()
-
-    def get_inchikey(inchi):
+    def get_inchikey(ser):
         try:
-            if inchi is None or inchi == '':
+            if 'inchikey' in ser:
+                return ser.inchikey
+
+            if ser.inchi is None or ser.inchi == '':
                 raise Exception('Empty inchi')
-            # if inchi in inchiset:
-            #     raise Exception('Duplicated inchi={}'.format(inchi))
-            # inchiset.add(inchi)
 
             mol = OBMol()
-            ob_conversion.ReadString(mol, inchi)
+            ob_conversion.ReadString(mol, ser.inchi)
             return ob_conversion.WriteString(mol).strip('\n')
         except Exception as e:
             LOG.warning(e)
+            return '{}-{}-{}'.format(ser.formula, ser['name'], ser['id'])
 
     return get_inchikey
 
@@ -77,19 +76,10 @@ def remove_duplicated_inchikey_molecules(mol_db_df):
     return mol_db_df[mol_db_df['id'].isin(ids_to_insert)]
 
 
-def get_inchikeys(mol_db_df):
-    get_inchikey = get_inchikey_gen()
-    if 'inchikey' not in mol_db_df.columns:
-        return mol_db_df.inchi.map(get_inchikey)
-    else:
-        return mol_db_df.apply(
-            lambda s: get_inchikey(s.inchi) if s.inchikey == '' else s.inchikey, axis=1)
-
-
 def save_molecules(mol_db, mol_db_df):
-    new_molecule_df = mol_db_df[['inchikey', 'inchi', 'id', 'name', 'formula']]
+    new_molecule_df = mol_db_df[['inchikey', 'inchi', 'id', 'name', 'formula']].copy()
     new_molecule_df.columns = ['inchikey', 'inchi', 'mol_id', 'mol_name', 'sf']
-    new_molecule_df.loc[:,'db_id'] = mol_db.id
+    new_molecule_df['db_id'] = mol_db.id
     if new_molecule_df.shape[0] > 0:
         db_session.bulk_insert_mappings(Molecule, new_molecule_df.to_dict(orient='record'))
 
@@ -110,7 +100,7 @@ def filter_formulas(mol_db_df):
 
     formulas = pd.Series(mol_db_df['formula'].unique())
     valid_formulas = formulas[formulas.map(is_valid)]
-    return mol_db_df[mol_db_df.formula.isin(set(valid_formulas))]
+    return mol_db_df[mol_db_df.formula.isin(set(valid_formulas))].copy()
 
 
 def import_molecules(mol_db, csv_file, delimiter):
@@ -118,7 +108,7 @@ def import_molecules(mol_db, csv_file, delimiter):
     assert {'id', 'inchi', 'name', 'formula'}.issubset(set(mol_db_df.columns))
 
     mol_db_df = filter_formulas(mol_db_df)
-    mol_db_df['inchikey'] = get_inchikeys(mol_db_df)
+    mol_db_df['inchikey'] = mol_db_df.apply(get_inchikey_gen(), axis=1)
     mol_db_df = remove_invalid_inchikey_molecules(mol_db_df)
     mol_db_df = remove_duplicated_inchikey_molecules(mol_db_df)
 
