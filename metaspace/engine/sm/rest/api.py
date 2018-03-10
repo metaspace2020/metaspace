@@ -10,7 +10,7 @@ from PIL import Image
 from sm.engine import DB, ESExporter
 from sm.engine import Dataset, SMapiDatasetManager, DatasetActionPriority
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.queue import QueuePublisher, SM_ANNOTATE
+from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.util import SMConfig
 from sm.engine.util import init_logger
 from sm.engine.errors import UnknownDSID
@@ -45,16 +45,17 @@ def _json_params(req):
     return json.loads(b.decode('utf-8'))
 
 
-def _create_queue_publisher():
+def _create_queue_publisher(qdesc):
     config = _read_config()
-    return QueuePublisher(config['rabbitmq'])
+    return QueuePublisher(config['rabbitmq'], qdesc)
 
 
 def _create_dataset_manager(db):
     config = _read_config()
     img_store = ImageStoreServiceWrapper(config['services']['img_service_url'])
-    return SMapiDatasetManager(SM_ANNOTATE, db, ESExporter(db), img_store,
-                               mode='queue', queue_publisher=_create_queue_publisher())
+    return SMapiDatasetManager(db=db, es=ESExporter(db), image_store=img_store, mode='queue',
+                               action_queue=_create_queue_publisher(SM_ANNOTATE),
+                               status_queue=_create_queue_publisher(SM_DS_STATUS))
 
 
 @post('/v1/datasets/add')

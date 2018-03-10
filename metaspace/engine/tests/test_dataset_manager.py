@@ -233,8 +233,12 @@ class TestSMDaemonDatasetManager:
         ds = create_ds(ds_id=ds_id, ds_config=ds_config)
 
         with patch('sm.engine.dataset_manager.MolecularDB') as MolecularDB:
-                mol_db_mock = MolecularDB.return_value
-                mol_db_mock.name = 'HMDB'
+            mol_db_mock = MolecularDB.return_value
+            mol_db_mock.name = 'HMDB'
+
+            with patch('sm.engine.dataset_manager.MolDBServiceWrapper') as MolDBServiceWrapper:
+                moldb_service_wrapper_mock = MolDBServiceWrapper.return_value
+                moldb_service_wrapper_mock.find_db_by_id.return_value = {'name': 'HMDB-v2.5'}
 
                 ds_man.update(ds)
 

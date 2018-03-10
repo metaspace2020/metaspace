@@ -7,7 +7,7 @@ from PIL import Image
 from sm.engine.dataset import DatasetStatus, Dataset
 from sm.engine.errors import DSIDExists
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.mol_db import MolecularDB
+from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
@@ -131,17 +131,26 @@ class SMDaemonDatasetManager(DatasetManager):
         ds.save(self._db, self._es)
         search_job_factory(img_store=self._img_store).run(ds)
 
+    def _finished_job_moldbs(self, ds_id):
+        moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
+        for job_id, mol_db_id in self._db.select("SELECT id, db_id FROM job WHERE ds_id = %s", ds_id):
+            yield job_id, moldb_service.find_db_by_id(mol_db_id)['name']
+
     def update(self, ds, **kwargs):
         """ Reindex all dataset results """
         ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.INDEXING)
 
         self._es.delete_ds(ds.id)
-        for mol_db_dict in ds.config['databases']:
-            mol_db = MolecularDB(name=mol_db_dict['name'],
-                                 version=mol_db_dict.get('version', None),
-                                 iso_gen_config=ds.config['isotope_generation'])
-            isocalc = IsocalcWrapper(ds.config['isotope_generation'])
-            self._es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
+
+        moldb_names = [d['name'] for d in ds.config['databases']]
+        for job_id, mol_db_name in self._finished_job_moldbs(ds.id):
+            if mol_db_name not in moldb_names:
+                self._db.alter("DELETE FROM job WHERE id = %s", job_id)
+            else:
+                mol_db = MolecularDB(name=mol_db_name,
+                                     iso_gen_config=ds.config['isotope_generation'])
+                isocalc = IsocalcWrapper(ds.config['isotope_generation'])
+                self._es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
 
         ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.FINISHED)
 
@@ -180,10 +189,10 @@ class SMapiDatasetManager(DatasetManager):
             msg = ds.to_queue_message()
             msg['action'] = action
             msg.update(kwargs)
-            self._action_queue.publish(msg, priority)
-            self.logger.info('New message posted to %s: %s', self._action_queue, msg)
 
             ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.QUEUED)
+            self._action_queue.publish(msg, priority)
+            self.logger.info('New message posted to %s: %s', self._action_queue, msg)
 
     def add(self, ds, del_first=False, priority=DatasetActionPriority.DEFAULT):
         """ Send add message to the queue. If dataset exists, raise an exception """

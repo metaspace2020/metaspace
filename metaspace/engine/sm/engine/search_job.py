@@ -161,7 +161,9 @@ class SearchJob(object):
             self._ds = ds
 
             if self._sm_config['rabbitmq']:
-                self._status_queue = QueuePublisher(config=self._sm_config['rabbitmq'], qdesc=SM_DS_STATUS)
+                self._status_queue = QueuePublisher(config=self._sm_config['rabbitmq'],
+                                                    qdesc=SM_DS_STATUS,
+                                                    logger_name='sm-engine')
             else:
                 self._status_queue = None
             ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.STARTED)

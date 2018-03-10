@@ -15,8 +15,7 @@ ANNOTATION_COLUMNS = ["sf", "sf_adduct",
                       "adduct", "job_id", "fdr",
                       "iso_image_ids", "polarity"]
 
-ANNOTATIONS_SEL = '''
-SELECT
+ANNOTATIONS_SEL = '''SELECT
     m.sf,
     CONCAT(m.sf, m.adduct) as sf_adduct,
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
@@ -42,8 +41,7 @@ JOIN dataset ds ON ds.id = j.ds_id
 -- 	AND tp.charge = (CASE WHEN ds.config->'isotope_generation'->'charge'->>'polarity' = '+' THEN 1 ELSE -1 END)
 -- 	AND tp.pts_per_mz = (ds.config->'isotope_generation'->>'isocalc_pts_per_mz')::int
 WHERE ds.id = %s AND m.db_id = %s
-ORDER BY COALESCE(m.msm, 0::real) DESC
-'''
+ORDER BY COALESCE(m.msm, 0::real) DESC'''
 
 DATASET_SEL = '''SELECT
     dataset.id,
@@ -56,8 +54,7 @@ DATASET_SEL = '''SELECT
     to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS')
 FROM dataset LEFT JOIN job ON job.ds_id = dataset.id
 WHERE dataset.id = %s
-GROUP BY dataset.id
-'''
+GROUP BY dataset.id'''
 
 DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path',
                    'ds_upload_dt', 'ds_status', 'ds_last_finished')
@@ -234,7 +231,7 @@ class ESExporter(object):
             d['comp_ids'] = mol_by_sf_df.mol_ids.loc[sf][:50].tolist()  # to prevent ES 413 Request Entity Too Large error
             d['comp_names'] = mol_by_sf_df.mol_names.loc[sf][:50].tolist()
             mzs, _ = isocalc.ion_centroids(d['sf'], d['adduct'])
-            d['centroid_mzs'] = mzs.tolist()
+            d['centroid_mzs'] = list(mzs)
             d['mz'] = mzs[0]
             d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])
 

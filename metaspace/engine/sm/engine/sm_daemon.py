@@ -20,8 +20,10 @@ class SMDaemon(object):
         self._dataset_manager_factory = dataset_manager_factory
         self._sm_config = SMConfig.get_conf()
         self._stopped = False
-        self._action_queue_consumer = QueueConsumer(self._sm_config['rabbitmq'], qdesc,
-                                                    self._callback, self._on_success, self._on_failure)
+        self._action_queue_consumer = QueueConsumer(config=self._sm_config['rabbitmq'], qdesc=qdesc,
+                                                    callback=self._callback,
+                                                    on_success=self._on_success,
+                                                    on_failure=self._on_failure)
 
     def _post_to_slack(self, emoji, msg):
         slack_conf = SMConfig.get_conf().get('slack', {})
@@ -122,7 +124,9 @@ class SMDaemon(object):
                 db=db, es=ESExporter(db),
                 img_store=ImageStoreServiceWrapper(self._sm_config['services']['img_service_url']),
                 mode='queue',
-                status_queue=QueuePublisher(self._sm_config['rabbitmq'], qdesc=SM_DS_STATUS)
+                status_queue=QueuePublisher(config=self._sm_config['rabbitmq'],
+                                            qdesc=SM_DS_STATUS,
+                                            logger_name='sm-daemon')
             )
             ds_man.process(ds=Dataset.load(db, msg['ds_id']),
                            action=msg['action'],

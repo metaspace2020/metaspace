@@ -25,7 +25,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     SMConfig.set_path(args.sm_config_path)
-    daemon = SMDaemon(SM_ANNOTATE, SMDaemonDatasetManager)
+    daemon = SMDaemon(qdesc=SM_ANNOTATE, dataset_manager_factory=SMDaemonDatasetManager)
 
     signal.signal(signal.SIGINT, lambda *args: daemon.stop())
     signal.signal(signal.SIGTERM, lambda *args: daemon.stop())

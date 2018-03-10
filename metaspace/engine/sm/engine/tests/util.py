@@ -75,8 +75,7 @@ def test_db(sm_config, request):
 def ds_config():
     return {
         "databases": [{
-            "name": "HMDB",
-            "version": "2016"
+            "name": "HMDB-v2.5"
         }],
         "isotope_generation": {
             "adducts": ["+H", "+Na"],

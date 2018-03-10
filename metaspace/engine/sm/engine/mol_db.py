@@ -23,6 +23,10 @@ class MolDBServiceWrapper(object):
         r.raise_for_status()
         return r.json()['data']
 
+    def fetch_all_dbs(self):
+        url = '{}/databases'.format(self._service_url)
+        return self._fetch(url)
+
     def find_db_by_id(self, id):
         url = '{}/databases/{}'.format(self._service_url, id)
         return self._fetch(url)

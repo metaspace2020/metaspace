@@ -35,32 +35,32 @@ def test_dataset_load_existing_ds_works(fill_db, sm_config, ds_config):
 def test_dataset_save_overwrite_ds_works(fill_db, sm_config, ds_config):
     db = DB(sm_config['db'])
     es_mock = MagicMock(spec=ESExporter)
-    queue_mock = MagicMock(spec=QueuePublisher)
+    status_queue_mock = MagicMock(spec=QueuePublisher)
 
     upload_dt = datetime.now()
     ds_id = '2000-01-01'
     ds = Dataset(ds_id, 'ds_name', 'input_path', upload_dt, {}, ds_config)
 
-    ds.save(db, es_mock, queue_mock)
+    ds.save(db, es_mock, status_queue_mock)
 
     assert ds == Dataset.load(db, ds_id)
     es_mock.sync_dataset.assert_called_once_with(ds_id)
-    queue_mock.publish.assert_called_with({'ds_id': ds_id, 'status': DatasetStatus.NEW}, SM_DS_STATUS)
+    status_queue_mock.publish.assert_called_with({'ds_id': ds_id, 'status': DatasetStatus.NEW})
 
 
 def test_dataset_update_status_works(fill_db, sm_config, ds_config):
     db = DB(sm_config['db'])
     es_mock = MagicMock(spec=ESExporter)
-    queue_mock = MagicMock(spec=QueuePublisher)
+    status_queue_mock = MagicMock(spec=QueuePublisher)
 
     upload_dt = datetime.now()
     ds_id = '2000-01-01'
     ds = Dataset(ds_id, 'ds_name', 'input_path', upload_dt, {}, ds_config, DatasetStatus.INDEXING)
 
-    ds.set_status(db, es_mock, queue_mock, DatasetStatus.FINISHED)
+    ds.set_status(db, es_mock, status_queue_mock, DatasetStatus.FINISHED)
 
     assert DatasetStatus.FINISHED == Dataset.load(db, ds_id).status
-    queue_mock.publish.assert_called_once_with({'ds_id': ds_id, 'status': DatasetStatus.FINISHED}, SM_DS_STATUS)
+    status_queue_mock.publish.assert_called_once_with({'ds_id': ds_id, 'status': DatasetStatus.FINISHED})
 
 
 def test_dataset_to_queue_message_works():
