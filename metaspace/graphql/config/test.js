@@ -14,29 +14,21 @@ config.default_adducts = {
 
 config.img_upload = {
   iso_img_fs_path: '/opt/data/sm_data/public/',
-
   categories: {
     iso_image: {
-      ims: {
-        type: 'image/png',
-        path: '/iso_images/',
-        storage_type: 'fs'
-      },
-      lcms: {
-        type: 'image/png', // should be replaced by 'application/octet-stream' one day
-        path: '/iso_images/',
-        storage_type: 'db'
-      }
+      type: 'image/png',
+      path: '/iso_images/',
+      storage_types: ['fs', 'db']
     },
     optical_image: {
       type: 'image/jpeg',
       path: '/optical_images/',
-      storage_type: 'fs'
+      storage_types: ['fs']
     },
     raw_optical_image: {
       type: 'image/jpeg',
       path: '/raw_optical_images/',
-      storage_type: 'fs'
+      storage_types: ['fs']
     }
   }
 };

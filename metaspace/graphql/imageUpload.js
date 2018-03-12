@@ -172,10 +172,9 @@ function imageProviderFSBackend(storageRootDir) {
   }
 }
 
-async function createCategoryBackend(app, config, category, catSettings, backendFactories) {
-  const {type, path, storage_type} = catSettings;
-  let factory = backendFactories[storage_type];
-  return factory(app, category, type, `/${storage_type}/`, path);
+async function createCategoryBackend(app, config, category, catSettings, storageType, factory) {
+  const {type, path} = catSettings;
+  return factory(app, category, type, `/${storageType}/`, path);
 }
 
 async function setRouteHandlers(config) {
@@ -189,15 +188,9 @@ async function setRouteHandlers(config) {
     };
 
     for (const category of Object.keys(config.img_upload.categories)) {
-      if (category === 'iso_image') {
-        for (const data_type of Object.keys(config.img_upload.categories[category])) {
-          const catSettings = config.img_upload.categories[category][data_type];
-          await createCategoryBackend(app, config, category, catSettings, backendFactories);
-        }
-      }
-      else {
-        const catSettings = config.img_upload.categories[category];
-        await createCategoryBackend(app, config, category, catSettings, backendFactories);
+      const catSettings = config.img_upload.categories[category];
+      for (const storageType of catSettings['storage_types']) {
+        await createCategoryBackend(app, config, category, catSettings, storageType, backendFactories[storageType]);
       }
     }
 
