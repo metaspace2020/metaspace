@@ -37,7 +37,7 @@ miniconda_env:
     - numpy=1.11.2
     - scipy=0.18.1
     - matplotlib=2
-    - pandas=0.19.1
+    - pandas=0.22.0
     - cffi
     - libgcc
     - psycopg2=2.7.1
@@ -152,7 +152,7 @@ sm_ansible_home: /opt/dev/sm-engine-ansible
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
 spark_key_file: ~/.ssh/ubuntu_spark
-spark_version: "2.1.1-bin-hadoop2.7"
+spark_version: "2.3.0-bin-hadoop2.7"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
 spark_user: "ubuntu"
