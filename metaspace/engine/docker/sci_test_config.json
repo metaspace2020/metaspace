@@ -24,12 +24,15 @@
     "s3_base_path": ""
   },
   "spark": {
-    "master": "local[2]",
+    "master": "local[4]",
     "executor.memory": "2g"
   },
   "aws": {
     "aws_access_key_id": "",
     "aws_secret_access_key": "",
     "aws_region": "eu-west-1"
+  },
+  "isotope_storage": {
+    "path": "/tmp/isotope_storage"
   }
 }

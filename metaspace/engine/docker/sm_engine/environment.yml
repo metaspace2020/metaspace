@@ -6,7 +6,7 @@ dependencies:
   - nomkl
   - numpy=1.11
   - scipy=0.17
-  - pandas=0.19.2
+  - pandas>=0.22
   - cffi
   - cryptography
   - lxml
@@ -30,3 +30,4 @@ dependencies:
     - coverage
     - coveralls
     - pypng
+    - PyArrow>=0.8.0
