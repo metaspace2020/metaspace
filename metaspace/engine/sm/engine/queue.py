@@ -4,7 +4,7 @@ import pika
 from pika.exceptions import AMQPError
 
 
-class QueueConsumer(object):
+class QueueConsumerAsync(object):
     """This is an example consumer that will handle unexpected interactions
     with RabbitMQ such as channel and connection closures.
 
@@ -347,6 +347,72 @@ class QueueConsumer(object):
         self._connection.close()
 
 
+class QueueConsumer(object):
+
+    def __init__(self, config, qdesc, callback, on_success, on_failure, logger=None):
+        """Create a new instance of the consumer class
+        """
+        self._heartbeat = 3*60*60  # 3h
+        self._qdesc = qdesc
+        self._qname = self._qdesc['name']
+        self._no_ack = True  # messages get redelivered with no_ack=False
+
+        self._callback = callback
+        self._on_success = on_success
+        self._on_failure = on_failure
+
+        self.logger = logging.getLogger(logger)
+
+        self._connection = None
+        self._channel = None
+        self._url = "amqp://{}:{}@{}:5672/%2F?heartbeat={}".format(config['user'], config['password'],
+                                                                   config['host'], self._heartbeat)
+
+    def on_message(self, channel, method, properties, body):
+        """Invoked by pika when a message is delivered from RabbitMQ. The
+        channel is passed for your convenience. The basic_deliver object that
+        is passed in carries the exchange, routing key, delivery tag and
+        a redelivered flag for the message. The properties passed in is an
+        instance of BasicProperties with the message properties and the body
+        is the message that was sent.
+
+        :param pika.channel.Channel channel: The channel object
+        :param pika.Spec.Basic.Deliver: method
+        :param pika.Spec.BasicProperties: properties
+        :param str|byte body: The message body
+
+        """
+        self.logger.info(' [v] Received message # %s from %s: %s', method.delivery_tag, properties.app_id, body)
+        # self.logger.info(' [v] Received message: %s', body)
+        msg = None
+        try:
+            body = body.decode('utf-8')
+            msg = json.loads(body)
+            self._callback(msg)
+        except BaseException as e:
+            self.logger.error(' [x] Failed: {}'.format(body), exc_info=True)
+            self._on_failure(msg or body)
+        else:
+            self.logger.info(' [v] Succeeded: {}'.format(body))
+            self._on_success(msg)
+
+    def run(self, ):
+        self.logger.info('Connecting to %s', self._url)
+
+        self._connection = pika.BlockingConnection(pika.URLParameters(self._url))
+        self._channel = self._connection.channel()
+        self._channel.queue_declare(queue=self._qname, durable=self._qdesc['durable'],
+                                    arguments=self._qdesc['arguments'])
+        self._channel.basic_qos(prefetch_count=1)
+        self._channel.basic_consume(self.on_message, self._qname, no_ack=self._no_ack)
+
+        self.logger.info(' [*] Waiting for messages...')
+        self._channel.start_consuming()
+
+    def stop(self):
+        self._connection.close()
+
+
 class QueuePublisher(object):
 
     def __init__(self, config, qdesc, logger_name='sm-api'):
@@ -372,8 +438,8 @@ class QueuePublisher(object):
 
     def publish(self, msg, priority=0):
         try:
-            conn = pika.BlockingConnection(self.conn_params)
-            ch = conn.channel()
+            self.conn = pika.BlockingConnection(self.conn_params)
+            ch = self.conn.channel()
             ch.queue_declare(queue=self.qname, durable=self.qdesc['durable'], arguments=self.qdesc['arguments'])
             ch.basic_publish(exchange='',
                              routing_key=self.qname,
