@@ -43,7 +43,7 @@ jobs:
           name: Download and unpack isotope centroids
           command: |
             wget https://s3-eu-west-1.amazonaws.com/embl-sm-testing/dumps/2018-03-13/HMDB-v2.5.tar.gz
-            mkdir /tmp/isotope_storage
+            mkdir -p /tmp/isotope_storage
             tar -xvf HMDB-v2.5.tar.gz -C /tmp/isotope_storage
       - run:
           name: Create and prefill the databases
