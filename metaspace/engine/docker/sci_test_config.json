@@ -24,7 +24,7 @@
     "s3_base_path": ""
   },
   "spark": {
-    "master": "local[4]",
+    "master": "local[1]",
     "executor.memory": "2g"
   },
   "aws": {
