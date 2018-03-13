@@ -45,11 +45,15 @@
        if (!this.sameAdductAnnotations) {
          return [];
        }
+       // no adducts apart from current annotation
+       if (this.sameAdductAnnotations.length == 1) {
+         return [graphColors[0]];
+       }
        // taking last colors from the palette
-       const colors = graphColors.slice(-this.sameAdductAnnotations.length);
+       const colors = graphColors.slice(-this.sameAdductAnnotations.length + 1);
        // replacing color of the current annotation with the 1st palette color
        const curAnnIdx = this.sameAdductAnnotations.findIndex(a => a.adduct == this.annotation.adduct);
-       colors[curAnnIdx] = graphColors[0];
+       colors.splice(curAnnIdx, 0, graphColors[0]);
        return colors;
      },
      adductLegendItems() {
