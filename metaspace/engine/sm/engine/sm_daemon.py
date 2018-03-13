@@ -139,7 +139,7 @@ class SMDaemon(object):
 
     def start(self):
         self._stopped = False
-        self._action_queue_consumer.run()  # starts IOLoop to block and allow pika handle events
+        self._action_queue_consumer.run_reconnect()
 
     def stop(self):
         if not self._stopped:

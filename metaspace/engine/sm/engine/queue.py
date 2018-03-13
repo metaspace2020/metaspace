@@ -1,7 +1,7 @@
 import logging
 import json
 import pika
-from pika.exceptions import AMQPError
+from pika.exceptions import AMQPError, ConnectionClosed
 
 
 class QueueConsumerAsync(object):
@@ -350,7 +350,7 @@ class QueueConsumerAsync(object):
 class QueueConsumer(object):
 
     def __init__(self, config, qdesc, callback, on_success, on_failure, logger=None):
-        """Create a new instance of the consumer class
+        """Create a new instance of the blocking consumer class
         """
         self._heartbeat = 3*60*60  # 3h
         self._qdesc = qdesc
@@ -382,11 +382,11 @@ class QueueConsumer(object):
         :param str|byte body: The message body
 
         """
-        self.logger.info(' [v] Received message # %s from %s: %s', method.delivery_tag, properties.app_id, body)
-        # self.logger.info(' [v] Received message: %s', body)
         msg = None
         try:
             body = body.decode('utf-8')
+            self.logger.info(' [v] Received message # %s from %s: %s',
+                             method.delivery_tag, properties.app_id, body)
             msg = json.loads(body)
             self._callback(msg)
         except BaseException as e:
@@ -396,16 +396,21 @@ class QueueConsumer(object):
             self.logger.info(' [v] Succeeded: {}'.format(body))
             self._on_success(msg)
 
-    def run(self, ):
-        self.logger.info('Connecting to %s', self._url)
+    def run_reconnect(self):
+        while True:
+            try:
+                self.run()
+            except ConnectionClosed as e:
+                self.logger.warning(' [x] Server disconnected: {}. Reconnecting...'.format(e))
 
+    def run(self):
+        self.logger.info('Connecting to %s', self._url)
         self._connection = pika.BlockingConnection(pika.URLParameters(self._url))
         self._channel = self._connection.channel()
         self._channel.queue_declare(queue=self._qname, durable=self._qdesc['durable'],
                                     arguments=self._qdesc['arguments'])
         self._channel.basic_qos(prefetch_count=1)
         self._channel.basic_consume(self.on_message, self._qname, no_ack=self._no_ack)
-
         self.logger.info(' [*] Waiting for messages...')
         self._channel.start_consuming()
 
