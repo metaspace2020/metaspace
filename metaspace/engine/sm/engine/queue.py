@@ -16,7 +16,7 @@ class QueueConsumerAsync(object):
     If the channel is closed, it will indicate a problem with one of the
     commands that were issued and that should surface in the output as well.
     """
-    def __init__(self, config, qdesc, callback, on_success, on_failure):
+    def __init__(self, config, qdesc, callback, on_success, on_failure, logger_name):
         """Create a new instance of the consumer class, passing in the AMQP
         URL used to connect to RabbitMQ.
 
@@ -26,21 +26,24 @@ class QueueConsumerAsync(object):
         self.exchange = 'sm'  # default exchange ("") cannot be used here
         self.exchange_type = 'direct'
         self.routing_key = None
-        self.qdesc = qdesc
-        self.qname = self.qdesc['name']
-        self.no_ack = False  # messages get redelivered with no_ack=False
+        self._qdesc = qdesc
+        self._qname = self._qdesc['name']
+        self._no_ack = True  # messages get redelivered with no_ack=False
+        self._heartbeat = 3 * 60 * 60  # 3h
+        self._reopen_timeout = 2
 
         self._callback = callback
         self._on_success = on_success
         self._on_failure = on_failure
 
-        self.logger = logging.getLogger('sm-daemon')
+        self.logger = logging.getLogger(logger_name)
 
         self._connection = None
         self._channel = None
         self._closing = False
         self._consumer_tag = None
-        self._url = "amqp://{}:{}@{}:5672/%2F?heartbeat=0".format(config['user'], config['password'], config['host'])
+        self._url = "amqp://{}:{}@{}:5672/%2F?heartbeat={}".format(config['user'], config['password'],
+                                                                   config['host'], self._heartbeat)
 
     def connect(self):
         """This method connects to RabbitMQ, returning the connection handle.
@@ -89,9 +92,9 @@ class QueueConsumerAsync(object):
         if self._closing:
             self._connection.ioloop.stop()
         else:
-            self.logger.warning('Connection closed, reopening in 5 seconds: (%s) %s',
-                           reply_code, reply_text)
-            self._connection.add_timeout(5, self.reconnect)
+            self.logger.warning('Connection closed, reopening in %s seconds: (%s) %s',
+                                self._reopen_timeout, reply_code, reply_text)
+            self._connection.add_timeout(self._reopen_timeout, self.reconnect)
 
     def reconnect(self):
         """Will be invoked by the IOLoop timer if the connection is
@@ -175,7 +178,7 @@ class QueueConsumerAsync(object):
 
         """
         self.logger.info('Exchange declared')
-        self.setup_queue(self.qname)
+        self.setup_queue(self._qname)
 
     def setup_queue(self, queue_name):
         """Setup the queue on RabbitMQ by invoking the Queue.Declare RPC
@@ -187,7 +190,7 @@ class QueueConsumerAsync(object):
         """
         self.logger.info('Declaring queue %s', queue_name)
         self._channel.queue_declare(self.on_queue_declareok, queue_name,
-                                    durable=self.qdesc['durable'], arguments=self.qdesc['arguments'])
+                                    durable=self._qdesc['durable'], arguments=self._qdesc['arguments'])
 
     def on_queue_declareok(self, method_frame):
         """Method invoked by pika when the Queue.Declare RPC call made in
@@ -199,8 +202,8 @@ class QueueConsumerAsync(object):
         :param pika.frame.Method method_frame: The Queue.DeclareOk frame
 
         """
-        self.logger.info('Binding %s to %s with %s', self.exchange, self.qname, self.routing_key)
-        self._channel.queue_bind(self.on_bindok, self.qname, self.exchange, self.routing_key)
+        self.logger.info('Binding %s to %s with %s', self.exchange, self._qname, self.routing_key)
+        self._channel.queue_bind(self.on_bindok, self._qname, self.exchange, self.routing_key)
 
     def on_bindok(self, unused_frame):
         """Invoked by pika when the Queue.Bind method has completed. At this
@@ -226,8 +229,8 @@ class QueueConsumerAsync(object):
         self.logger.info('Issuing consumer related RPC commands')
         self.add_on_cancel_callback()
         self.logger.info(' [*] Waiting for messages...')
-        self._consumer_tag = self._channel.basic_consume(self.on_message, self.qname,
-                                                         no_ack=self.no_ack, exclusive=True)
+        self._consumer_tag = self._channel.basic_consume(self.on_message, self._qname,
+                                                         no_ack=self._no_ack, exclusive=True)
 
     def add_on_cancel_callback(self):
         """Add a callback that will be invoked if RabbitMQ cancels the consumer
@@ -415,6 +418,7 @@ class QueueConsumer(object):
         self._channel.start_consuming()
 
     def stop(self):
+        # self._channel.stop_consuming()  # doesn't work anyway
         self._connection.close()
 
 

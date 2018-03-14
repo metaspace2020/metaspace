@@ -4,7 +4,7 @@ from pytest import fixture
 from unittest.mock import MagicMock
 
 from sm.engine import QueuePublisher
-from sm.engine.queue import QueueConsumer, SM_ANNOTATE
+from sm.engine.queue import QueueConsumerAsync, SM_ANNOTATE
 from sm.engine.tests.util import sm_config
 
 QDESC = SM_ANNOTATE
@@ -34,7 +34,9 @@ def test_queue_msg_published_consumed_on_success_called(sm_config, delete_queue)
     callback.side_effect = lambda *args: print('WITHIN CALLBACK: ', args)
     on_success = MagicMock()
 
-    queue_consumer = QueueConsumer(sm_config['rabbitmq'], QDESC, callback, on_success, lambda *args: None)
+    queue_consumer = QueueConsumerAsync(sm_config['rabbitmq'], QDESC,
+                                        callback, on_success, lambda *args: None,
+                                        logger_name=None)
     run_queue_consumer_thread(queue_consumer)
 
     callback.assert_called_once_with(msg)
@@ -53,8 +55,9 @@ def test_queue_msg_published_consumed_on_failure_called(sm_config):
     callback.side_effect = raise_exception
     on_failure = MagicMock()
 
-    queue_consumer = QueueConsumer(sm_config['rabbitmq'], QDESC,
-                                   callback, lambda *args: None, on_failure)
+    queue_consumer = QueueConsumerAsync(sm_config['rabbitmq'], QDESC,
+                                        callback, lambda *args: None, on_failure,
+                                        logger_name=None)
     run_queue_consumer_thread(queue_consumer)
 
     callback.assert_called_once_with(msg)

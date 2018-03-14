@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from os.path import join
 from threading import Thread
+from queue import Queue
 import time
 from unittest.mock import MagicMock
 from pytest import fixture, raises
@@ -12,8 +13,8 @@ from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root
 from sm.engine.sm_daemon import SMDaemon
 from sm.engine.search_job import SearchJob
-from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
-from sm.engine import DB, ESExporter, QueuePublisher, Dataset, SMapiDatasetManager, DatasetStatus, QueueConsumer
+from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS, QueueConsumerAsync
+from sm.engine import DB, ESExporter, QueuePublisher, Dataset, SMapiDatasetManager, DatasetStatus
 from sm.engine.tests.util import test_db, sm_config, ds_config
 
 ACTION_QDESC = SM_ANNOTATE
@@ -55,16 +56,16 @@ def create_ds(ds_id=None, upload_dt=None, input_path=None, meta=None, ds_config=
 
 
 class SMDaemonDatasetManagerMock(SMDaemonDatasetManager):
-    calls = []
+    calls = Queue()
 
     def add(self, ds, **kwargs):
-        self.calls.append(('add', ds, kwargs))
+        self.calls.put(('add', ds, kwargs))
 
     def update(self, ds, **kwargs):
-        self.calls.append(('update', ds, kwargs))
+        self.calls.put(('update', ds, kwargs))
 
     def delete(self, ds, **kwargs):
-        self.calls.append(('delete', ds, kwargs))
+        self.calls.put(('delete', ds, kwargs))
 
 
 @fixture
@@ -77,7 +78,7 @@ def delete_queue(sm_config):
 @fixture
 def clean_ds_man_mock(request):
     def fin():
-        SMDaemonDatasetManagerMock.calls = []
+        SMDaemonDatasetManagerMock.calls = Queue()
     request.addfinalizer(fin)
 
 
@@ -107,9 +108,9 @@ def test_sm_daemon_receive_message(sm_config, clean_ds_man_mock, delete_queue):
     sm_daemon._callback = callback
     sm_daemon._on_success = on_success
     sm_daemon._on_failure = on_failure
-    sm_daemon._action_queue_consumer = QueueConsumer(sm_config['rabbitmq'], ACTION_QDESC,
-                                                     callback, on_success, on_failure,
-                                                     logger='sm-daemon')
+    sm_daemon._action_queue_consumer = QueueConsumerAsync(sm_config['rabbitmq'], ACTION_QDESC,
+                                                          callback, on_success, on_failure,
+                                                          logger_name='sm-daemon')
     run_sm_daemon_thread(sm_daemon)
 
     callback.assert_called_once_with(msg)
@@ -125,9 +126,9 @@ class TestSMDaemonSingleEventCases:
 
         api_ds_man.add(ds, del_first=True, priority=DatasetActionPriority.HIGH)
 
-        run_sm_daemon_thread(SMDaemon(ACTION_QDESC, SMDaemonDatasetManagerMock))
+        run_sm_daemon_thread()
 
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
+        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
         assert _ds.id == ds.id
         assert _kwargs['search_job_factory'] == SearchJob
@@ -142,7 +143,7 @@ class TestSMDaemonSingleEventCases:
 
         run_sm_daemon_thread()
 
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
+        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'update'
         assert _ds.id == ds.id
 
@@ -154,7 +155,7 @@ class TestSMDaemonSingleEventCases:
 
         run_sm_daemon_thread()
 
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
+        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'delete'
         assert _ds.id == ds.id
         assert not _kwargs.get('del_raw_data', None)
@@ -189,12 +190,12 @@ class TestSMDaemonTwoEventsCases:
 
         run_sm_daemon_thread()
 
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
+        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
         assert _ds.id == ds_pri.id
         assert _kwargs['search_job_factory'] == SearchJob
 
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[1]
+        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
         assert _ds.id == ds.id
         assert _kwargs['search_job_factory'] == SearchJob
@@ -209,11 +210,11 @@ class TestSMDaemonTwoEventsCases:
 
         run_sm_daemon_thread()
 
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
+        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'update'
         assert _ds.id == ds.id
 
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[1]
+        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
         assert _ds.id == ds.id
         assert _kwargs['search_job_factory'] == SearchJob
@@ -228,7 +229,7 @@ class TestSMDaemonTwoEventsCases:
 
         run_sm_daemon_thread()
 
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
+        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
         assert _ds.id == ds.id
         assert _ds.config == ds.config
@@ -243,14 +244,14 @@ class TestSMDaemonTwoEventsCases:
 
         run_sm_daemon_thread()
 
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
+        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
         assert _ds.id == ds.id
         assert _ds.config == ds.config
         assert _kwargs['search_job_factory'] == SearchJob
         assert _kwargs['del_first'] == False
 
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[1]
+        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
         assert _ds.id == ds.id
         assert _ds.config == ds.config
@@ -265,7 +266,7 @@ class TestSMDaemonTwoEventsCases:
 
         run_sm_daemon_thread()
 
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls[0]
+        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'delete'
         assert _ds.id == ds.id
         assert not _kwargs.get('del_raw_data', False)
