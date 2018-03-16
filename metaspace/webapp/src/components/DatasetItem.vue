@@ -7,6 +7,21 @@
       </dataset-info>
     </el-dialog>
 
+    <div class="opt-image">
+      <router-link :to="opticalImageAlignmentHref" v-if="haveEditAccess && dataset.status === 'FINISHED'">
+        <div v-if="thumbnailCheck" class="edit-opt-image" title="Edit Optical Image">
+          <img class="opt-image-thumbnail" :src="opticalImageSmall" width="100px" height="100px" alt="Edit optical image"/>
+        </div>
+        <div v-else class="no-opt-image" title="Add Optical Image">
+          <img class="add-opt-image-thumbnail" src="../assets/no_opt_image.png" width="100px" height="100px" alt="Add optical image"/>
+        </div>
+      </router-link>
+      <div v-else class="edit-opt-image-guest">
+        <img v-if="thumbnailCheck" :src="opticalImageSmall" width="100px" height="100px" alt="Optical image"/>
+        <img v-else src="../assets/no_opt_image.png" width="100px" height="100px" alt="Optical image"/>
+      </div>
+    </div>
+
     <div class="ds-info">
       <div>
         <b>{{ formatDatasetName }}</b>
@@ -56,6 +71,9 @@
               title="Filter by this lab"
               @click="addFilter('institution')"></span>
       </div>
+      <div v-if="dataset.status == 'FINISHED'">
+        <span>{{formatFdrCounts()}} annotations @ FDR {{formatFdrLevel()}}%</span>
+      </div>
     </div>
 
     <div class="ds-actions">
@@ -103,7 +121,7 @@
 <script>
  import DatasetInfo from './DatasetInfo.vue';
  import capitalize from 'lodash/capitalize';
- import {deleteDatasetQuery} from '../api/dataset';
+ import {deleteDatasetQuery, opticalImageQuery} from '../api/dataset';
  import {getJWT} from '../util';
 
  function removeUnderscores(str) {
@@ -116,7 +134,19 @@
    components: {
      DatasetInfo
    },
+
    computed: {
+     thumbnailCheck() {
+       return this.opticalImageSmall!=null
+     },
+
+     opticalImageAlignmentHref() {
+         return {
+             name: 'add-optical-image',
+             params: {dataset_id: this.dataset.id}
+         };
+     },
+
      formatSubmitter() {
        const { name, surname } = this.dataset.submitter;
        return name + " " + surname;
@@ -214,9 +244,28 @@
    data() {
      return {
        showMetadataDialog: false,
-       disabled: false
+       opticalImageSmall: null,
+       disabled: false,
+       ind: null
      };
    },
+
+   apollo: {
+     opticalImageUrl: {
+       query: opticalImageQuery,
+       variables() {
+         return {
+           datasetId: this.dataset.id,
+           zoom: 1.
+         };
+       },
+       fetchPolicy: 'network-only',
+       result(res) {
+         this.opticalImageSmall = res.data.opticalImageUrl
+       }
+     }
+   },
+
    methods: {
      resultsHref(databaseName) {
        return {
@@ -254,9 +303,14 @@
                  id: this.dataset.id
              }});
            })
-           .then(resp => resp.data.deleteDataset)
+           .then(resp => {
+             return {
+               deleteDataset: resp.data.deleteDataset,
+               deleteOptImage: resp.data.deleteOpticalImage
+             }
+           })
            .then(status => {
-             if (status != 'success') {
+             if (status.deleteDataset != 'success') {
                this.$message({
                  message: "Deletion failed :( Contact us: contact@metaspace2020.eu" + "(error: " + status + ")",
                  type: 'error',
@@ -265,14 +319,87 @@
                });
                this.disabled = false;
              }
+             if(status.deleteOptImage != 'success') {
+               console.log('Deletion of optical image failed whlie dataset was being deleted' + ' :' + status['deleteOptImage']);
+             }
            });
          }).catch(_ => {});
+     },
+
+     formatFdrLevel() {
+       return this.dataset.fdrCounts.levels.join(', ');
+     },
+
+     formatFdrCounts() {
+       return this.dataset.fdrCounts.counts.join(', ');
      }
    }
  }
 </script>
 
 <style>
+  .no-opt-image {
+    position: relative;
+    display: block;
+    width: 100px;
+    height: 100px;
+    outline: 1px dotted rgba(0, 0, 0, 0.6);
+    z-index: 0;
+  }
+
+  .no-opt-image:hover::before {
+    font-family: 'element-icons' !important;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 1.5em;
+    color: #2c3e50;
+    position: absolute;
+    content: '\E62B';
+    display: block;
+    width: 30px;
+    height: 30px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+
+  .no-opt-image:hover{
+    cursor: pointer;
+  }
+
+  .edit-opt-image, .edit-opt-image-guest {
+    position: relative;
+    display: block;
+    width: 100px;
+    height: 100px;
+    z-index: 0;
+  }
+
+  .edit-opt-image:hover::before {
+    font-family: 'element-icons' !important;
+    font-style: normal;
+    font-size: 1.5em;
+    color: #2c3e50;
+    position: absolute;
+    content: '\E61C';
+    display: block;
+    width: 30px;
+    height: 30px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-size: contain;
+  }
+
+  .edit-opt-image:hover {
+    cursor: pointer;
+  }
+
+  .opt-image-thumbnail:hover, .add-opt-image-thumbnail:hover{
+    opacity: .2;
+  }
+
  .dataset-item {
    border-radius: 5px;
    width: 100%;
@@ -292,10 +419,15 @@
    justify-content: center;
  }
 
- .ds-info {
+ .opt-image {
+   padding: 10px 0 10px 10px;
+   margin: 0px;
+ }
+
+ .ds-info{
    padding: 10px;
    margin: 0px;
-   width: 72%;
+   width: 60%;
  }
 
  .ds-actions {

@@ -1,7 +1,7 @@
 import gql from 'graphql-tag';
 
 export const datasetListQuery =
-  gql`query GetDatasets($dFilter: DatasetFilter, $query: String) {
+  gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Float!]!) {
     allDatasets(offset: 0, limit: 100, filter: $dFilter, simpleQuery: $query) {
       id
       name
@@ -23,12 +23,29 @@ export const datasetListQuery =
       growthConditions
       metadataJson
       status
+      fdrCounts(inpFdrLvls: $inpFdrLvls) {
+        levels
+        counts
+      }
     }
   }`;
 
 export const datasetCountQuery =
   gql`query CountDatasets($dFilter: DatasetFilter, $query: String) {
     countDatasets(filter: $dFilter, simpleQuery: $query)
+  }`;
+
+export const opticalImageQuery =
+    gql`query ($datasetId: String!, $zoom: Float!) {
+    opticalImageUrl(datasetId: $datasetId, zoom: $zoom)
+  }`;
+
+export const rawOpticalImageQuery =
+    gql`query Q($ds_id: String!) {
+    rawOpticalImage(datasetId: $ds_id) {
+      url
+      transform
+    }
   }`;
 
 export const submitDatasetQuery =
@@ -39,6 +56,7 @@ export const submitDatasetQuery =
 export const deleteDatasetQuery =
   gql`mutation ($jwt: String!, $id: String!) {
     deleteDataset(jwt: $jwt, datasetId: $id)
+    deleteOpticalImage(jwt: $jwt, datasetId: $id)
   }`;
 
 export const addOpticalImageQuery =
@@ -48,7 +66,7 @@ export const addOpticalImageQuery =
                             imageUrl: $imageUrl, transform: $transform})
   }`;
 
-export const opticalImageQuery =
-  gql`query ($datasetId: String!, $zoom: Float!) {
-    opticalImageUrl(datasetId: $datasetId, zoom: $zoom)
+export const deleteOpticalImageQuery =
+  gql`mutation ($jwt: String!, $id: String!) {
+    deleteOpticalImage(jwt: $jwt, datasetId: $id)
   }`;

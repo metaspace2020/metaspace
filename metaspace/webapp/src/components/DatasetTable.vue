@@ -168,7 +168,7 @@
            else if (status == 'FAILED')
              message = `Something went wrong with dataset ${name} :(`;
            else if (status == 'QUEUED')
-             message = `Dataset ${name} has been submitted by ${who}`;
+             message = `Dataset ${name} has been submitted to query by ${who}`;
            else if (status == 'STARTED')
              message = `Started processing dataset ${name}`;
            this.$notify({ message, type: statusMap[status] });
@@ -224,10 +224,13 @@
        (row.analyzer.resolvingPower / 1000).toFixed(0) * 1000,
 
      queryVariables(status) {
-       return {
+       let body = {
          dFilter: Object.assign({status}, this.$store.getters.gqlDatasetFilter),
-         query: this.$store.getters.ftsQuery
-       }
+         query: this.$store.getters.ftsQuery,
+         inpFdrLvls: []
+       };
+       if (status === 'FINISHED') {body['inpFdrLvls'] = [10]};
+       return body
      },
 
      count(stage) {

@@ -36,8 +36,9 @@
         <div>
           <label class="optical-image-select el-button">
             <input type="file"
+                   class="input-optical-image"
                    style="display: none;"
-                   @change="onFileChange"
+                   @change="onFileChange($event)"
                    accept=".jpg, .jpeg"/>
             Select optical image
           </label>
@@ -64,10 +65,10 @@
         <div class="annotation-selection">
           <span style="font-size: 14px; margin-bottom: 5px;" >Annotation:</span>
           <el-pagination
-                layout="prev,slot,next"
-                :total="this.annotations ? this.annotations.length : 0"
-                :page-size=1
-                @current-change="updateIndex">
+                  layout="prev,slot,next"
+                  :total="this.annotations ? this.annotations.length : 0"
+                  :page-size=1
+                  @current-change="updateIndex">
             <el-select v-model="annotationIndex" filterable class="annotation-short-info">
               <el-option v-for="(annot, i) in annotations"
                          :key="annot.id"
@@ -84,21 +85,26 @@
 
         <div class="optical-image-submit">
           <el-row :gutter="20" style="margin-bottom: 10px">
-            <el-col :span="12" :offset="12">
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
               <el-button @click="cancel">
                 Cancel
               </el-button>
             </el-col>
-          </el-row>
-          <el-row :gutter="20">
-            <el-col :span="12">
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
               <el-button @click="reset"
                          v-show="opticalImgUrl"
                          style="margin-bottom: 10px;">
                 Reset
               </el-button>
             </el-col>
-
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
+              <el-button class="del-optical-image" @click="deleteOpticalImages"
+                         v-show="opticalImgUrl">
+                Delete
+              </el-button>
+            </el-col>
             <el-col :span="12" :offset="opticalImgUrl ? 0 : 12">
               <el-button type="primary"
                          @click="submit"
@@ -128,10 +134,12 @@
 </template>
 
 <script>
+
  import ImageAligner from './ImageAligner.vue';
  import {annotationListQuery} from '../api/annotation';
- import {addOpticalImageQuery} from '../api/dataset';
+ import {addOpticalImageQuery, deleteOpticalImageQuery, rawOpticalImageQuery} from '../api/dataset';
  import {renderMolFormula, prettifySign, getJWT} from '../util';
+
  import gql from 'graphql-tag';
 
  export default {
@@ -147,9 +155,15 @@
      },
 
      // service for storing raw optical images
+     rawImageStorageUrl: {
+       type: String,
+       default: '/raw_optical_images',
+     },
+
+     // service for storing zoomed optical images (added/R)
      imageStorageUrl: {
        type: String,
-       default: '/raw_optical_images'
+       default: '/optical_images',
      }
    },
 
@@ -172,12 +186,7 @@
 
    mounted() {
      this.$apollo.query({
-       query: gql`query Q($ds_id: String!) {
-         rawOpticalImage(datasetId: $ds_id) {
-           url
-           transform
-         }
-       }`,
+       query: rawOpticalImageQuery,
        variables: {ds_id: this.datasetId},
        fetchPolicy: 'network-only'
      }).then(({data}) => {
@@ -290,6 +299,7 @@
        this.angle = 0;
        this.initialTransform = [[1,0,0],[0,1,0],[0,0,1]];
        this.alreadyUploaded = false;
+       document.querySelector('.input-optical-image').value='';
      },
      updateIndex(newIdx) {
        this.annotationIndex = newIdx - 1;
@@ -312,7 +322,7 @@
          return;
        }
 
-       const uri = this.imageStorageUrl + "/upload/";
+       const uri = this.rawImageStorageUrl + "/upload/";
        let xhr = new XMLHttpRequest(),
            fd = new FormData();
        xhr.open("POST", uri, true);
@@ -320,7 +330,7 @@
        xhr.onreadystatechange = () => {
          if (xhr.readyState == 4 && xhr.status == 201) {
            const imageId = xhr.response.image_id,
-               imageUrl = this.imageStorageUrl + '/' + imageId;
+               imageUrl = this.rawImageStorageUrl + '/' + imageId;
            this.addOpticalImage(imageUrl).then(() => {
              this.$message({
                type: 'success',
@@ -346,6 +356,7 @@
      },
 
      addOpticalImage(imageUrl) {
+       // TODO if there are no iso images found prevent optical image addition
        return getJWT()
            .then(jwt =>
                this.$apollo.mutate({
@@ -363,6 +374,43 @@
                throw new Error(status);
              return status;
            });
+     },
+
+     async deleteOpticalImages() {
+       try {
+         if (this.alreadyUploaded) {
+           let jwt = await getJWT();
+           let delRes = await this.$apollo.mutate({
+             mutation: deleteOpticalImageQuery,
+             variables: {
+               jwt,
+               id: this.datasetId
+             }
+           });
+           if (delRes.data.deleteOpticalImage != 'success') {
+             this.$message({
+               type: 'error',
+               message: "Couldn't delete optical image due to an error"
+             })}
+           else {
+             this.destroyOptImage();
+             this.$message({
+               type: 'success',
+               message: 'The image and alignment were successfully deleted!'
+             });
+           }
+         } else {
+           this.destroyOptImage();
+         }
+         return 'success'
+       } catch(e) {
+         return e.message
+       }
+     },
+
+     destroyOptImage() {
+       this.opticalImgUrl = window.URL.revokeObjectURL(this.opticalImgUrl);
+       this.file = '';
      },
 
      reset() {

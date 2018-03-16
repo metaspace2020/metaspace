@@ -1,9 +1,10 @@
 <template>
   <div class="main-content">
-    <div id="mainBanner">
-      <img src="../assets/METASPACE_banner_blue_bg.jpg" alt="METASPACE here and now" style="height:100%; object-fit: cover; object-position: 0 0">
-      <div style="position: absolute; top: 175px; left: 384px; color: white; font-size: 30px;">Welcome to</div>
-      <div style="position: absolute; top: 320px; left: 384px; color: white; font-size: 22px;">Platform for metabolite annotation of imaging mass spectrometry data</div>
+    <div class="mainBanner-wrapper">
+      <div class="mainBanner">
+        <div style="position: absolute; top: 115px; left: 334px; color: white; font-size: 30px;">Welcome to</div>
+        <div style="position: absolute; top: 260px; left: 334px; color: white; font-size: 22px;">Platform for metabolite annotation of imaging mass spectrometry data</div>
+      </div>
     </div>
     <div id="about">
     <el-row>
@@ -119,10 +120,21 @@
    max-width: 900px;
  }
 
- #mainBanner {
+ .mainBanner {
+   position: relative;
    height: 400px;
+   max-width: 1100px;
+   width: 100%;
+   background: url("../assets/METASPACE_banner_blue_bg.jpg") -50px;
+   background-size: cover;
+   margin: -8px auto 0 auto;
+   /*outline: 1px solid red;*/
+   box-sizing: border-box;
+ }
+ .mainBanner-wrapper {
    width: 100%;
    background-color: #008aff;
-   margin-top: -8px;
  }
+
+
 </style>
