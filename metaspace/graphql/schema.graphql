@@ -44,6 +44,11 @@ enum JobStatus {
   FAILED
 }
 
+type FdrCounts {
+  levels: [Float!]!
+  counts: [Float!]!
+}
+
 type Dataset {
   id: String!
   name: String!
@@ -70,6 +75,7 @@ type Dataset {
   status: JobStatus
   inputPath: String
   uploadDateTime: String
+  fdrCounts(inpFdrLvls: [Float!]!): FdrCounts!
 }
 
 # fields of categorical type
@@ -280,6 +286,8 @@ type Mutation {
     delRawData: Boolean, sync: Boolean=true): String
 
   addOpticalImage(input: AddOpticalImageInput!): String
+
+  deleteOpticalImage(jwt: String!, datasetId: String!): String!
 }
 
 type DatasetStatusUpdate {
