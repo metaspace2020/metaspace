@@ -28,7 +28,6 @@ jobs:
       - run:
           name: Setup configuration files
           command: |
-            cp conf/sm_log.cfg.template conf/sm_log.cfg
             cp docker/sci_test_config.json conf/config.json
             mkdir -p logs
             echo 'localhost:5432:sm:password\n' > ~/.pgpass

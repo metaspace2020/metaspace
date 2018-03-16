@@ -62,7 +62,6 @@ GROUP BY dataset.id
 DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path',
                    'ds_upload_dt', 'ds_status', 'ds_last_finished')
 
-
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
     http_auth = (es_config['user'], es_config['password']) if 'user' in es_config else None

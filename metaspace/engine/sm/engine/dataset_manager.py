@@ -12,8 +12,9 @@ from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
 
-SEL_DATASET_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
-UPD_DATASET_OPTICAL_IMAGE = 'update dataset set optical_image = %s, transform = %s WHERE id = %s'
+SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
+UPD_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = %s, transform = %s WHERE id = %s'
+DEL_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = NULL, transform = NULL WHERE id = %s'
 
 IMG_URLS_BY_ID_SEL = ('SELECT iso_image_ids '
                       'FROM iso_image_metrics m '
@@ -73,6 +74,7 @@ class DatasetManager(object):
         ----------
         db : sm.engine.DB
         es: sm.engine.ESExporter
+        img_store: sm.engine.png_generator.ImageStoreServiceWrapper
         mode: unicode
             'local' or 'queue'
         queue_publisher: sm.engine.queue.QueuePublisher
@@ -100,7 +102,10 @@ class DatasetManager(object):
     def delete(self, ds, **kwargs):
         raise NotImplemented
 
-    def add_optical_image(self, ds, url, transform, **kwargs):
+    def add_optical_image(self, ds, img_id, transform, zoom_levels, **kwargs):
+        raise NotImplemented
+
+    def del_optical_image(self, ds, **kwargs):
         raise NotImplemented
 
     def _img_store(self):
@@ -237,31 +242,45 @@ class SMapiDatasetManager(DatasetManager):
         buf.seek(0)
         return buf
 
-    def _add_raw_optical_image(self, ds, optical_scan, transform):
-        row = self._db.select_one(SEL_DATASET_OPTICAL_IMAGE, ds.id)
-        if row and row[0]:
-            self._img_store.delete_image_by_id('raw_optical_image', row[0])
-        buf = self._save_jpeg(optical_scan)
-        img_id = self._img_store.post_image('raw_optical_image', buf)
-        self._db.alter(UPD_DATASET_OPTICAL_IMAGE, img_id, transform, ds.id)
+    def _add_raw_optical_image(self, ds, img_id, transform):
+        row = self._db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, ds.id)
+        if row:
+            old_img_id = row[0]
+            if old_img_id and old_img_id != img_id:
+                self._img_store.delete_image_by_id('raw_optical_image', old_img_id)
+        self._db.alter(UPD_DATASET_RAW_OPTICAL_IMAGE, img_id, transform, ds.id)
 
-    def _add_zoom_optical_images(self, ds, optical_scan, transform, zoom_levels):
+    def _add_zoom_optical_images(self, ds, img_id, transform, zoom_levels):
         dims = self._annotation_image_shape(self._img_store, ds.id)
         rows = []
+        optical_img = self._img_store.get_image_by_id('raw_optical_image', img_id)
         for zoom in zoom_levels:
-            img = self._transform_scan(optical_scan, transform, dims, zoom)
+            img = self._transform_scan(optical_img, transform, dims, zoom)
             buf = self._save_jpeg(img)
-            img_id = self._img_store.post_image('optical_image', buf)
-            rows.append((img_id, ds.id, zoom))
+            scaled_img_id = self._img_store.post_image('optical_image', buf)
+            rows.append((scaled_img_id, ds.id, zoom))
 
         for row in self._db.select(SEL_OPTICAL_IMAGE, ds.id):
             self._img_store.delete_image_by_id('optical_image', row[0])
         self._db.alter(DEL_OPTICAL_IMAGE, ds.id)
         self._db.insert(INS_OPTICAL_IMAGE, rows)
 
-    def add_optical_image(self, ds, optical_scan, transform, zoom_levels=[1, 2, 4, 8], **kwargs):
+    def add_optical_image(self, ds, img_id, transform, zoom_levels=[1, 2, 4, 8], **kwargs):
         """ Generate scaled and transformed versions of the provided optical image """
         self.logger.info('Adding optical image to "%s" dataset', ds.id)
-        self._add_raw_optical_image(ds, optical_scan, transform)
-        self._add_zoom_optical_images(ds, optical_scan, transform, zoom_levels)
+        self._add_raw_optical_image(ds, img_id, transform)
+        self._add_zoom_optical_images(ds, img_id, transform, zoom_levels)
+
+    def del_optical_image(self, ds, **kwargs):
+        """ Deletes raw and zoomed optical images from DB and FS"""
+        self.logger.info('Deleting optical image to "%s" dataset', ds.id)
+        row = self._db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, ds.id)
+        if row:
+            raw_img_id = row[0]
+            if raw_img_id:
+                self._img_store.delete_image_by_id('raw_optical_image', raw_img_id)
+        for row in self._db.select(SEL_OPTICAL_IMAGE, ds.id):
+            self._img_store.delete_image_by_id('optical_image', row[0])
+        self._db.alter(DEL_DATASET_RAW_OPTICAL_IMAGE, ds.id)
+        self._db.alter(DEL_OPTICAL_IMAGE, ds.id)
 

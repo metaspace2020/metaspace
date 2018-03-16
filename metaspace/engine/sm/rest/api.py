@@ -1,3 +1,4 @@
+import argparse
 import json
 from datetime import datetime
 import logging
@@ -16,8 +17,6 @@ from sm.engine.util import init_logger
 from sm.engine.errors import UnknownDSID
 
 
-CONFIG_PATH = 'conf/config.json'
-
 OK = {
     'status': 200,
     'title': 'OK'
@@ -29,14 +28,8 @@ ERR_OBJECT_NOT_EXISTS = {
 }
 
 
-def _read_config():
-    SMConfig.set_path(CONFIG_PATH)
-    config = SMConfig.get_conf()
-    return config
-
-
 def _create_db_conn():
-    config = _read_config()
+    config = SMConfig.get_conf()
     return DB(config['db'])
 
 
@@ -46,12 +39,12 @@ def _json_params(req):
 
 
 def _create_queue_publisher():
-    config = _read_config()
+    config = SMConfig.get_conf()
     return QueuePublisher(config['rabbitmq'])
 
 
 def _create_dataset_manager(db):
-    config = _read_config()
+    config = SMConfig.get_conf()
     img_store = ImageStoreServiceWrapper(config['services']['img_service_url'])
     return SMapiDatasetManager(SM_ANNOTATE, db, ESExporter(db), img_store,
                                mode='queue', queue_publisher=_create_queue_publisher())
@@ -85,7 +78,6 @@ def sm_modify_dataset(request_name):
                 db = _create_db_conn()
                 ds = Dataset.load(db=db, ds_id=ds_id)
                 ds_man = _create_dataset_manager(db)
-
                 handler(ds_man, ds, params)
 
                 db.close()
@@ -107,19 +99,33 @@ def update_ds(ds_man, ds, params):
 
     ds_man.update(ds, priority=params.get('priority', DatasetActionPriority.DEFAULT))
 
+
 @post('/v1/datasets/<ds_id>/delete')
 @sm_modify_dataset('DELETE')
 def delete_ds(ds_man, ds, params):
     del_raw = params.get('del_raw', False)
     ds_man.delete(ds, del_raw_data=del_raw)
 
+
 @post('/v1/datasets/<ds_id>/add-optical-image')
 @sm_modify_dataset('ADD_OPTICAL_IMAGE')
 def add_optical_image(ds_man, ds, params):
-    image = Image.open(requests.get(params['url'], stream=True).raw)
-    ds_man.add_optical_image(ds, image, params['transform'])
+    img_id = params['url'].split('/')[-1]
+    ds_man.add_optical_image(ds, img_id, params['transform'])
+
+
+@post('/v1/datasets/<ds_id>/del-optical-image')
+@sm_modify_dataset('DEL_OPTICAL_IMAGE')
+def del_optical_image(ds_man, ds, params):
+    ds_man.del_optical_image(ds)
+
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='SM Engine REST API')
+    parser.add_argument('--config', dest='config_path', default='conf/config.json', type=str, help='SM config path')
+    args = parser.parse_args()
+    SMConfig.set_path(args.config_path)
+
     init_logger()
     logger = logging.getLogger(name='sm-api')
     run(host='localhost', port=5123)
