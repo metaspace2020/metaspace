@@ -13,7 +13,7 @@ from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root
 from sm.engine.sm_daemon import SMDaemon
 from sm.engine.search_job import SearchJob
-from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS, QueueConsumerAsync
+from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS, QueueConsumer
 from sm.engine import DB, ESExporter, QueuePublisher, Dataset, SMapiDatasetManager, DatasetStatus
 from sm.engine.tests.util import test_db, sm_config, ds_config
 
@@ -108,9 +108,9 @@ def test_sm_daemon_receive_message(sm_config, clean_ds_man_mock, delete_queue):
     sm_daemon._callback = callback
     sm_daemon._on_success = on_success
     sm_daemon._on_failure = on_failure
-    sm_daemon._action_queue_consumer = QueueConsumerAsync(sm_config['rabbitmq'], ACTION_QDESC,
-                                                          callback, on_success, on_failure,
-                                                          logger_name='sm-daemon')
+    sm_daemon._action_queue_consumer = QueueConsumer(sm_config['rabbitmq'], ACTION_QDESC,
+                                                     callback, on_success, on_failure,
+                                                     logger_name='sm-daemon')
     run_sm_daemon_thread(sm_daemon)
 
     callback.assert_called_once_with(msg)

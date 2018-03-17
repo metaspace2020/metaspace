@@ -6,7 +6,7 @@ import boto3
 
 from sm.engine.dataset_manager import DatasetAction
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.queue import SM_DS_STATUS, QueueConsumerAsync
+from sm.engine.queue import SM_DS_STATUS, QueueConsumer
 from sm.engine.util import SMConfig, sm_log_config, init_logger
 from sm.engine import ESExporter, QueuePublisher, Dataset, SearchJob
 from sm.engine import DB
@@ -20,7 +20,7 @@ class SMDaemon(object):
         self._dataset_manager_factory = dataset_manager_factory
         self._sm_config = SMConfig.get_conf()
         self._stopped = False
-        self._action_queue_consumer = QueueConsumerAsync(config=self._sm_config['rabbitmq'], qdesc=qdesc,
+        self._action_queue_consumer = QueueConsumer(config=self._sm_config['rabbitmq'], qdesc=qdesc,
                                                          callback=self._callback,
                                                          on_success=self._on_success,
                                                          on_failure=self._on_failure,
@@ -139,7 +139,7 @@ class SMDaemon(object):
 
     def start(self):
         self._stopped = False
-        self._action_queue_consumer.run()
+        self._action_queue_consumer.run_reconnect()
 
     def stop(self):
         if not self._stopped:

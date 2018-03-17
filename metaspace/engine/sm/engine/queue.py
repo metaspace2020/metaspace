@@ -1,5 +1,6 @@
 import logging
 import json
+from time import sleep
 import pika
 from pika.exceptions import AMQPError, ConnectionClosed
 
@@ -28,7 +29,7 @@ class QueueConsumerAsync(object):
         self.routing_key = None
         self._qdesc = qdesc
         self._qname = self._qdesc['name']
-        self._no_ack = True  # messages get redelivered with no_ack=False
+        self._no_ack = False  # messages get redelivered with no_ack=False
         self._heartbeat = 3 * 60 * 60  # 3h
         self._reopen_timeout = 2
 
@@ -266,11 +267,13 @@ class QueueConsumerAsync(object):
         :param str|byte body: The message body
 
         """
-        self.logger.info(' [v] Received message # %s from %s: %s', basic_deliver.delivery_tag, properties.app_id, body)
-        self.acknowledge_message(basic_deliver.delivery_tag)
         msg = None
         try:
+            self.acknowledge_message(basic_deliver.delivery_tag)
             body = body.decode('utf-8')
+            self.logger.info(' [v] Received message # %s from %s: %s', basic_deliver.delivery_tag, properties.app_id,
+                             body)
+
             msg = json.loads(body)
             self._callback(msg)
         except BaseException as e:
@@ -352,26 +355,26 @@ class QueueConsumerAsync(object):
 
 class QueueConsumer(object):
 
-    def __init__(self, config, qdesc, callback, on_success, on_failure, logger=None):
+    def __init__(self, config, qdesc, callback, on_success, on_failure, logger_name=None):
         """Create a new instance of the blocking consumer class
         """
         self._heartbeat = 3*60*60  # 3h
         self._qdesc = qdesc
         self._qname = self._qdesc['name']
-        self._no_ack = True  # messages get redelivered with no_ack=False
+        self._no_ack = False  # messages get redelivered with no_ack=False
+        self._connection = None
+        self._channel = None
+        self._url = "amqp://{}:{}@{}:5672/%2F?heartbeat={}".format(config['user'], config['password'],
+                                                                   config['host'], self._heartbeat)
+        self._poll_timeout = 1
 
         self._callback = callback
         self._on_success = on_success
         self._on_failure = on_failure
 
-        self.logger = logging.getLogger(logger)
+        self.logger = logging.getLogger(logger_name)
 
-        self._connection = None
-        self._channel = None
-        self._url = "amqp://{}:{}@{}:5672/%2F?heartbeat={}".format(config['user'], config['password'],
-                                                                   config['host'], self._heartbeat)
-
-    def on_message(self, channel, method, properties, body):
+    def on_message(self, method, properties, body):
         """Invoked by pika when a message is delivered from RabbitMQ. The
         channel is passed for your convenience. The basic_deliver object that
         is passed in carries the exchange, routing key, delivery tag and
@@ -379,7 +382,6 @@ class QueueConsumer(object):
         instance of BasicProperties with the message properties and the body
         is the message that was sent.
 
-        :param pika.channel.Channel channel: The channel object
         :param pika.Spec.Basic.Deliver: method
         :param pika.Spec.BasicProperties: properties
         :param str|byte body: The message body
@@ -412,13 +414,14 @@ class QueueConsumer(object):
         self._channel = self._connection.channel()
         self._channel.queue_declare(queue=self._qname, durable=self._qdesc['durable'],
                                     arguments=self._qdesc['arguments'])
-        self._channel.basic_qos(prefetch_count=1)
-        self._channel.basic_consume(self.on_message, self._qname, no_ack=self._no_ack)
         self.logger.info(' [*] Waiting for messages...')
-        self._channel.start_consuming()
+        while True:
+            method, properties, body = self._channel.basic_get(queue=self._qname, no_ack=self._no_ack)
+            if body is not None:
+                self.on_message(method, properties, body)
+            sleep(self._poll_timeout)
 
     def stop(self):
-        # self._channel.stop_consuming()  # doesn't work anyway
         self._connection.close()
 
 
