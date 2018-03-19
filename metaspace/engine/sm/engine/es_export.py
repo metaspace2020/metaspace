@@ -66,7 +66,6 @@ DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_acq_geometry'
                    'ds_ion_img_storage', 'ds_upload_dt', 'ds_status', 'ds_last_finished')
 DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry')
 
-
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
     http_auth = (es_config['user'], es_config['password']) if 'user' in es_config else None

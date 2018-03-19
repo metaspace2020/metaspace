@@ -21,10 +21,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description=('Daemon for consuming messages from the '
                                                   'queue and performing dataset manipulations'))
-    parser.add_argument('--sm-config', dest='sm_config_path', default='conf/config.json', type=str, help='SM config path')
+    parser.add_argument('--config', dest='config_path', default='conf/config.json', type=str, help='SM config path')
     args = parser.parse_args()
 
-    SMConfig.set_path(args.sm_config_path)
+    SMConfig.set_path(args.config_path)
     daemon = SMDaemon(SM_ANNOTATE, SMDaemonDatasetManager)
 
     signal.signal(signal.SIGINT, lambda *args: daemon.stop())

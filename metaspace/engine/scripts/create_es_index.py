@@ -9,12 +9,12 @@ from sm.engine import ESIndexManager
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Create ElasticSearch indices')
-    parser.add_argument('--conf', default='conf/config.json', help="SM config path")
+    parser.add_argument('--config', dest='config_path', default='conf/config.json', help='SM config path')
     parser.add_argument('--drop', action='store_true', help='Delete index if exists')
     args = parser.parse_args()
 
     dictConfig(sm_log_config)
-    SMConfig.set_path(args.conf)
+    SMConfig.set_path(args.config_path)
 
     es_config = SMConfig.get_conf()['elasticsearch']
     es_man = ESIndexManager(es_config)

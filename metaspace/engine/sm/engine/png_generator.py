@@ -22,6 +22,21 @@ class ImageStoreServiceWrapper(object):
         return path.join(self._img_service_url, storage_type, img_type + 's', method, img_id)
 
     def post_image(self, storage_type, img_type, fp):
+        """
+        Args
+        ---
+        storage_type: str
+            db | fs
+        img_type: str
+            iso_image | optical_image | raw_optical_image
+        fp:
+            file object
+
+        Returns
+        ---
+        : str
+            new image id
+        """
         url = self._format_url(storage_type=storage_type, img_type=img_type, method='upload')
         r = self._session.post(url, files={img_type: fp})
         r.raise_for_status()
