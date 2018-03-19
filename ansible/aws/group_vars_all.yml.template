@@ -151,6 +151,9 @@ sm_webapp_jwt_secret: "{{ sm_graphql_jwt_secret }}"
 sm_webapp_redis_host: localhost
 sm_webapp_redis_port: 6379
 sm_webapp_enable_uploads: true
+# metadata types are specified by corresponding filenames in METASPACE2020/metadata repository
+# "specialised metadata" subfolder
+sm_webapp_metadata_types: ["ims", "lcms"]
 
 sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
 sm_ansible_branch: rel-v0.8
