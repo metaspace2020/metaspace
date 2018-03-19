@@ -93,11 +93,6 @@ function scrollDistance(event: MouseWheelEvent) {
   return sY;
 }
 
-function mdTypeSupportsOpticalImages(mdType: string): boolean {
-  const mdTypesToSkipImages = ['LC-MS'];
-  return !mdTypesToSkipImages.includes(mdType);
-}
-
 export {
   renderMolFormula,
   prettifySign,
@@ -108,6 +103,5 @@ export {
   createColormap,
   mzFilterPrecision,
   csvExportHeader,
-  scrollDistance,
-  mdTypeSupportsOpticalImages
+  scrollDistance
 };

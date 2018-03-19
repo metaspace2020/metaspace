@@ -2,6 +2,7 @@ import Vue from 'vue';
 
 import VueApollo from 'vue-apollo';
 import apolloClient from './graphqlClient';
+const VueAnalytics = require('vue-analytics').default;
 Vue.use(VueApollo);
 
 const apolloProvider = new VueApollo({
@@ -19,6 +20,20 @@ import { sync } from 'vuex-router-sync';
 sync(store, router);
 
 import App from './App.vue';
+
+const isProd = process.env.NODE_ENV === 'production';
+
+Vue.use(VueAnalytics, {
+  id: 'UA-73509518-1',
+  router,
+  autoTracking: {
+    exception: true
+  },
+  debug: {
+    enabled: !isProd,
+    sendHitTask: isProd
+  }
+});
 
 //Vue.config.performance = true;
 

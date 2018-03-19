@@ -2,10 +2,6 @@
   <div id="md-editor-container">
     <div style="position: relative;" v-if="!loading">
       <div id="md-editor-submit">
-        <router-link :to="opticalImageAlignmentHref" v-if="isOpticalImageSupported"
-                     style="width: 150px; margin-right: 50px;">
-          Add optical image...
-        </router-link>
         <el-button @click="cancel" v-if="datasetId">Cancel</el-button>
         <el-button type="primary" v-if="enableSubmit" @click="submit">Submit</el-button>
         <el-button v-else type="primary" disabled :title="disabledSubmitMessage">
@@ -186,7 +182,6 @@
    fetchMetadataQuery,
    metadataOptionsQuery
  } from '../api/metadata';
- import {mdTypeSupportsOpticalImages} from '../util';
  import Vue from 'vue';
 
  const metadataSchemas = {};
@@ -358,17 +353,6 @@
          messages[err.dataPath] = err.message;
        }
        return messages;
-     },
-
-     opticalImageAlignmentHref() {
-       return {
-         name: 'add-optical-image',
-         params: {dataset_id: this.datasetId}
-       };
-     },
-
-     isOpticalImageSupported() {
-       return this.datasetId && mdTypeSupportsOpticalImages(this.currentMetadataType());
      }
    },
    methods: {

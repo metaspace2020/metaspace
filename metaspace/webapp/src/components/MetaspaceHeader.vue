@@ -147,6 +147,10 @@
                message: res.statusText
              });
          });
+       this.$ga.event({
+         eventCategory: 'Link sender',
+         eventAction: 'sending login link'
+       })
      },
 
      login() {
