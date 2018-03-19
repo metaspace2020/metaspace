@@ -77,6 +77,14 @@ function baseDatasetQuery() {
   });
 }
 
+function checkFetchRes(resp) {
+  if (resp.ok) {
+    return resp
+  } else {
+    throw new Error(`An error occurred during fetch request - status ${resp.status}`);
+  }
+}
+
 const Resolvers = {
   Person: {
     name(obj) { return obj.First_Name; },
@@ -268,6 +276,26 @@ const Resolvers = {
 
     uploadDateTime(ds) {
       return ds._source.ds_upload_dt;
+    },
+
+    fdrCounts(ds, {inpFdrLvls}) {
+      let outFdrLvls = [], outFdrCounts = [];
+      if(ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
+        let inpAllLvlCounts = ds._source.annotation_counts[0].counts;
+        inpFdrLvls.forEach(lvl => {
+          let findRes = inpAllLvlCounts.find(lvlCount => {
+            return lvlCount.level === lvl
+          });
+          if (findRes) {
+            outFdrLvls.push(findRes.level);
+            outFdrCounts.push(findRes.n);
+          }
+        });
+      }
+      return {
+        'levels': outFdrLvls,
+        'counts': outFdrCounts
+      }
     }
   },
 
@@ -526,14 +554,32 @@ const Resolvers = {
       }
       const payload = jwt.decode(input.jwt, config.jwt.secret);
       try {
-        logger.info(input);
         await checkPermissions(datasetId, payload);
         const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/add-optical-image`;
         const body = {url: imageUrl, transform};
-        await fetch(url, {
+        let processOptImage = await fetch(url, {
           method: 'POST',
           body: JSON.stringify(body),
           headers: {'Content-Type': 'application/json'}});
+        checkFetchRes(processOptImage);
+        return 'success';
+      } catch (e) {
+        logger.error(e.message);
+        return e.message;
+      }
+    },
+
+    async deleteOpticalImage(_, args) {
+      let {datasetId} = args;
+      const payload = jwt.decode(args.jwt, config.jwt.secret);
+      const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/del-optical-image`;
+      try {
+        await checkPermissions(datasetId, payload);
+        let dbDelFetch = await fetch(url, {
+          method: 'POST',
+          body: JSON.stringify({datasetId}),
+          headers: {'Content-Type': 'application/json'}});
+        checkFetchRes(dbDelFetch);
         return 'success';
       } catch (e) {
         logger.error(e.message);

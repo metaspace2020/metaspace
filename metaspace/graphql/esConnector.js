@@ -147,11 +147,10 @@ module.exports.esSearchResults = function(args, docType) {
     from: args.offset,
     size: args.limit
   };
-  logger.info(JSON.stringify(body));
-  console.time('esQuery');
+  // console.time('esQuery');
 
   return es.search(request).then((resp) => {
-    console.timeEnd('esQuery');
+    // console.timeEnd('esQuery');
     return resp.hits.hits;
   }).catch((e) => {
     logger.error(e);
