@@ -184,7 +184,7 @@ class ESExporter(object):
     def _ds_add_derived_fields(self, dataset):
         submitter = dataset.get('ds_meta', {}).get('Submitted_By', {}).get('Submitter', None)
         if submitter:
-            dataset['ds_submitter'] = submitter['First_Name'] + ' ' + submitter['Surname']
+            dataset['ds_submitter'] = submitter.get('First_Name', '') + ' ' + submitter.get('Surname', '')
 
     def _ds_get_by_id(self, ds_id):
         dataset = dict(zip(DATASET_COLUMNS, self._db.select(DATASET_SEL, ds_id)[0]))
