@@ -34,6 +34,7 @@
                  .replace(/_/g, ' ')
                  .replace(/ [A-Z][a-z]/g, (x) => ' ' + x.slice(1).toLowerCase())
                  .replace(/ freetext$/, '')
+                 .replace(/ table$/, '')
                  .replace('metaspace', 'METASPACE');
      },
 
@@ -58,7 +59,7 @@
        label = this.prettify(label);
        const id = label;
        if (isLeaf)
-         return { id, label: label + ': ' + this.prettify(obj) };
+         return { id, label: `${label}: ${Array.isArray(obj) ? JSON.stringify(obj) : this.prettify(obj)}` };
 
        return { id, label, children };
      }
