@@ -4,6 +4,44 @@
   "title": "Metadata Submission",
   "description": "Metadata specific to liquid chromatography mass spectrometry (LC-MS) as developed in the METASPACE project",
   "type": "object",
+  "definitions": {
+    "Solvent_Component": {
+      "type": "object",
+      "description": "Component of LC solvent",
+      "required": ["Component", "Percentage"],
+      "properties": {
+        "Component": {
+          "type": "string",
+          "title": "Component",
+          "description": "e.g. \"Methanol\"",
+          "minLength": 3
+        },
+        "Percentage": {
+          "type": "number",
+          "title": "Percentage",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    },
+    "Gradient_Mark": {
+      "type": "object",
+      "description": "LC gradient mark",
+      "properties": {
+        "Time": {
+          "type": "number",
+          "title": "Time [min]",
+          "minimum": 0
+        },
+        "B_Percentage": {
+          "type": "number",
+          "title": "% of Solvent B",
+          "minimum": 0,
+          "maximum": 100
+        }
+      }
+    }
+  },
   "properties": {
     "Data_Type": {
       "enum":["LC-MS"]
@@ -11,17 +49,39 @@
     "Sample_Preparation": {
       "description": "Information about how the sample was prepared for LC-MS",
       "type": "object",
-      "required": ["LC_Column", "Solvents_Freetext"],
+      "required": ["LC_Column", "Solvent_A_Table", "Solvent_B_Table"],
       "properties": {
         "LC_Column": {
           "description": "Type of LC column used",
           "type": "string",
           "minLength": 1
         },
-        "Solvents_Freetext": {
-          "description": "A semicolon-separated list of LC buffers components",
-          "type": "string",
-          "minLength": 1
+        "Solvent_A_Table": {
+          "type": "array",
+          "description": "Click \"Add row\" to list components of Solvent A",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/Solvent_Component"
+          }
+        },
+        "Solvent_B_Table": {
+          "type": "array",
+          "description": "Click \"Add row\" to list components of Solvent B",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/Solvent_Component"
+          }
+        },
+        "Gradient_Table": {
+          "type": "array",
+          "description": "Click \"Add row\" to describe the gradient",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/Gradient_Mark"
+          }
         }
       }
     }
