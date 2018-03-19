@@ -33,7 +33,7 @@ function molecularDatabaseService(port) {
   };
 
   const databases = {
-    data: [{name: 'HMDB-v2.5', version: '2016'}],
+    data: [{name: config.defaults.moldb_name}],
     meta: { message: 'OK', code: 200 }
   };
 
