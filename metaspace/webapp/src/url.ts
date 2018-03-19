@@ -8,7 +8,7 @@ interface Dictionary<T> {
 }
 
 export const DEFAULT_FILTER: Dictionary<any> = {
-  database: 'HMDB',
+  database: FILTER_SPECIFICATIONS.database.initialValue,
   institution: undefined,
   submitter: undefined,
   datasetIds: undefined,
@@ -26,7 +26,7 @@ export const DEFAULT_FILTER: Dictionary<any> = {
   maldiMatrix: undefined,
   analyzerType: undefined,
   simpleQuery: '',
-  metadataType: 'Imaging MS'
+  metadataType: FILTER_SPECIFICATIONS.metadataType.initialValue
 };
 
 const FILTER_TO_URL: Dictionary<string> = {

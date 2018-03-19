@@ -7,8 +7,11 @@ import SearchBox from './components/SearchBox.vue';
 import * as assert from 'assert';
 import metadataRegistry from './assets/metadataRegistry';
 
-const defaultMetadataType = 'Imaging MS';
-assert(defaultMetadataType in metadataRegistry);
+// Set Imaging as default or any other if Imaging is not available
+let defaultMetadataType = 'Imaging MS';
+if (!(defaultMetadataType in metadataRegistry)) {
+  defaultMetadataType = Object.keys(metadataRegistry)[0];
+}
 
 // Filled during the initialization of adduct filter below
 const ADDUCT_POLARITY = {};

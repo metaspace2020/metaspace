@@ -2,6 +2,7 @@ const deref = require('json-schema-deref-sync');
 const mergeWith = require('lodash/mergeWith');
 const fs = require('fs');
 const path = require('path');
+const config = require('./src/clientConfig.json');
 
 
 const minSchemaPath = "metadata/min metadata schema.json";
@@ -14,8 +15,14 @@ function readJsonSchema(filePath) {
     return deref(schema);
 }
 
-function fileHasExtension(filename, extension) {
-    return filename.substr(-extension.length).toLowerCase() == extension.toLowerCase();
+function filenameMatches(filename, allowedNames, allowedExt) {
+    for (const name of allowedNames) {
+        const allowedOption = name + allowedExt;
+        if (filename.toLowerCase() == allowedOption.toLowerCase()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function mergeCustomizer(objValue, srcValue) {
@@ -26,6 +33,10 @@ function mergeCustomizer(objValue, srcValue) {
 
 if (process.argv.length != 3) {
     throw 'The script expects a single argument: a path to directory where metadata should be stored';
+}
+
+if (!config.metadataTypes) {
+    throw 'Allowed metadata types not found in "clientConfig.json"';
 }
 
 const outputDir = process.argv[2];
@@ -40,7 +51,7 @@ const dirFiles = fs.readdirSync(specializedSchemasDir);
 for (const filename of dirFiles) {
     const filePath = path.join(specializedSchemasDir, filename);
     const fileStat = fs.lstatSync(filePath);
-    if (!fileStat.isDirectory() && fileHasExtension(filename, metadataFileExtension)) {
+    if (!fileStat.isDirectory() && filenameMatches(filename, config.metadataTypes, metadataFileExtension)) {
         const specMetadata = readJsonSchema(filePath);
         const mdType = specMetadata['properties']['Data_Type']['enum'][0];
         const fullSchema = {};
@@ -48,6 +59,10 @@ for (const filename of dirFiles) {
         fs.writeFileSync(path.join(outputDir, filename), JSON.stringify(fullSchema));
         metadataFiles[mdType] = filename;
     }
+}
+
+if (!metadataFiles) {
+    throw 'No metadata schemas were found';
 }
 
 // create unified metadata registry
