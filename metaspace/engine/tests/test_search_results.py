@@ -49,7 +49,7 @@ def test_isotope_images_are_stored(search_results, spark_context):
         (0, [ coo([[0, 0], [0, 1]]), None, coo([[2, 3], [1, 0]]), None ]),
         (1, [ coo([[1, 1], [0, 1]]), None, None, None])
     ])
-    ids = search_results.post_images_to_image_store(ion_iso_images, mask, img_store_mock)
+    ids = search_results.post_images_to_image_store(ion_iso_images, mask, img_store_mock, 'fs')
     assert ids == { 0: {'iso_image_ids': [IMG_ID, None, IMG_ID, None]}, 1: {'iso_image_ids': [IMG_ID, None, None, None]} }
     assert img_store_mock.post_image.call_count == 3
 

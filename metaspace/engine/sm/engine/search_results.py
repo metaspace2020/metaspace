@@ -61,7 +61,7 @@ class SearchResults(object):
 
         return _post_images
 
-    def post_images_to_image_store(self, ion_iso_images, alpha_channel, img_store_type, img_store):
+    def post_images_to_image_store(self, ion_iso_images, alpha_channel, img_store, img_store_type):
         logger.info('Posting iso images to {}'.format(img_store))
         post_images = self._image_inserter(img_store, img_store_type, alpha_channel)
         return dict(ion_iso_images.mapValues(post_images).collect())
@@ -83,5 +83,5 @@ class SearchResults(object):
             m/z image store
         """
         logger.info('Storing search results to the DB')
-        ion_img_ids = self.post_images_to_image_store(ion_iso_images, alpha_channel, img_store_type, img_store)
+        ion_img_ids = self.post_images_to_image_store(ion_iso_images, alpha_channel, img_store, img_store_type)
         self.store_ion_metrics(ion_metrics_df, ion_img_ids, db)
