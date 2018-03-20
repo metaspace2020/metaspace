@@ -16,5 +16,5 @@
     "storage": "{{ sm_webapp_upload_destination }}"
   },
 
-  "metadataTypes": {{ sm_webapp_metadata_types }}
+  "metadataTypes": {{ sm_webapp_metadata_types | to_json }}
 }
