@@ -6,7 +6,8 @@ from numpy.testing import assert_array_equal
 from sm.engine import DatasetReader, DB
 from sm.engine.work_dir import WorkDirManager
 from sm.engine.util import SMConfig
-from sm.engine.tests.util import sm_config, ds_config, spark_context
+from sm.engine.tests.util import sm_config, ds_config
+from sm.engine.tests.util import pysparkling_context as spark_context
 
 
 def test_dataset_reader_get_sample_area_mask_correctness(sm_config, spark_context):

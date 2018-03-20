@@ -35,7 +35,8 @@
     "spark.kryoserializer.buffer.max": "128m",
     "spark.python.worker.memory": "512m",
     "spark.rdd.compress": true,
-    "spark.ui.showConsoleProgress": false
+    "spark.ui.showConsoleProgress": false,
+    "spark.sql.execution.arrow.enabled": true
   },
   "aws": {
     "aws_access_key_id": "{{ aws_access_key_id }}",
@@ -44,5 +45,8 @@
   "slack": {
     "channel": "{{ slack_channel }}",
     "webhook_url": "{{ slack_webhook_url }}"
+  },
+  "isotope_storage": {
+    "path": "{{ sm_isotope_storage_path }}"
   }
 }

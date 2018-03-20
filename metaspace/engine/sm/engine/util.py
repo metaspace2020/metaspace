@@ -5,12 +5,14 @@ from subprocess import check_call, call
 import logging
 from logging.config import dictConfig
 from os.path import join, exists
+from pathlib import Path
 
 from sm.engine import Dataset
 
 
 def proj_root():
     return os.getcwd()
+
 
 sm_log_formatters = {
     'sm': {
@@ -36,7 +38,7 @@ sm_log_config = {
             'class': 'logging.FileHandler',
             'formatter': 'sm',
             'level': logging.DEBUG,
-            'filename': os.path.join(proj_root(), 'logs/sm-engine.log')
+            'filename': '/tmp/sm-engine.log'
         }
     },
     'loggers': {
@@ -57,6 +59,11 @@ sm_log_config = {
 
 
 def init_logger(log_config=None):
+    logs_dir = Path(proj_root()).joinpath('logs')
+    if not logs_dir.exists():
+        logs_dir.mkdir()
+
+    sm_log_config['handlers']['file']['filename'] = str(logs_dir.joinpath('sm-engine.log'))
     dictConfig(log_config if log_config else sm_log_config)
 
 
@@ -132,3 +139,9 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
     ds_config = json.load(open(join(ds_input_path, 'config.json')))
 
     return Dataset(ds_id, ds_name, ds_input_path, datetime.now(), metadata, ds_config)
+
+
+def split_s3_path(path):
+    """ Returns a pair (bucket, key) """
+    return path.split('s3a://')[-1].split('/', 1)
+

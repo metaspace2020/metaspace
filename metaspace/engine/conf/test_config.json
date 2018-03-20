@@ -27,11 +27,15 @@
   },
   "spark": {
     "master": "local[4]",
-    "executor.memory": "2g"
+    "executor.memory": "2g",
+    "spark.sql.execution.arrow.enabled": true
   },
   "aws": {
     "aws_access_key_id": "",
     "aws_secret_access_key": ""
   },
-  "slack": {}
+  "slack": {},
+  "isotope_storage": {
+    "path": "/tmp/isotope_storage"
+  }
 }

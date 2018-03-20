@@ -6,7 +6,7 @@ from elasticsearch_dsl import Search
 from fabric.api import local
 #from pyspark import SparkContext, SparkConf
 # lots of patch calls rely on SparkContext name
-from pysparkling import Context as SparkContext
+from pysparkling import Context
 import pandas as pd
 from logging.config import dictConfig
 from unittest.mock import MagicMock
@@ -28,9 +28,22 @@ def sm_config():
     return SMConfig.get_conf(update=True)
 
 
+class SparkContext(Context):
+    def parallelize(self, x, numSlices=None):
+        return super().parallelize(x, numPartitions=numSlices)
+
+
 @pytest.fixture(scope='module')
-def spark_context(request):
+def pysparkling_context(request):
     return SparkContext()
+
+
+@pytest.fixture(scope='module')
+def pyspark_context(request):
+    from pyspark import SparkContext
+    sc = SparkContext(master='local[2]')
+    request.addfinalizer(lambda: sc.stop())
+    return sc
     
 
 @pytest.fixture()
@@ -62,8 +75,7 @@ def test_db(sm_config, request):
 def ds_config():
     return {
         "databases": [{
-            "name": "HMDB",
-            "version": "2016"
+            "name": "HMDB-v2.5"
         }],
         "isotope_generation": {
             "adducts": ["+H", "+Na"],

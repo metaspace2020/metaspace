@@ -76,17 +76,18 @@ def _sp_df_gen(sp_it, sp_indexes):
             yield sp_indexes[sp_id], mz, ints
 
 
-def _gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, min_px=1):
-    if len(sf_peak_df) > 0:
+def _gen_iso_images(spectra_it, sp_indexes, centr_df, nrows, ncols, ppm, min_px=1):
+    if len(centr_df) > 0:
         # a bit slower than using pure numpy arrays but much shorter
         # may leak memory because of https://github.com/pydata/pandas/issues/2659 or smth else
         sp_df = pd.DataFrame(_sp_df_gen(spectra_it, sp_indexes),
                              columns=['idx', 'mz', 'ints']).sort_values(by='mz')
 
         # -1, + 1 are needed to extend sf_peak_mz range so that it covers 100% of spectra
-        sf_peak_df = sf_peak_df[(sf_peak_df.mz >= sp_df.mz.min()-1) & (sf_peak_df.mz <= sp_df.mz.max()+1)]
-        lower = sf_peak_df.mz.map(lambda mz: mz - mz*ppm*1e-6)
-        upper = sf_peak_df.mz.map(lambda mz: mz + mz*ppm*1e-6)
+        centr_df = centr_df[(centr_df.mz >= sp_df.mz.min() - 1) &
+                            (centr_df.mz <= sp_df.mz.max() + 1)]
+        lower = centr_df.mz.map(lambda mz: mz - mz * ppm * 1e-6)
+        upper = centr_df.mz.map(lambda mz: mz + mz * ppm * 1e-6)
         lower_idx = np.searchsorted(sp_df.mz, lower, 'l')
         upper_idx = np.searchsorted(sp_df.mz, upper, 'r')
 
@@ -97,8 +98,8 @@ def _gen_iso_images(spectra_it, sp_indexes, sf_peak_df, nrows, ncols, ppm, min_p
                     idx = sp_df.idx[l:u].values
                     row_inds = idx / ncols
                     col_inds = idx % ncols
-                    yield (sf_peak_df.sf_id.iloc[i], sf_peak_df.adduct.iloc[i]),\
-                          (sf_peak_df.peak_i.iloc[i], coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols)))
+                    m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols))
+                    yield centr_df.index[i], (centr_df.peak_i.iloc[i], m)
 
 
 def _img_pairs_to_list(pairs, shape):
@@ -130,7 +131,7 @@ def define_mz_segments(spectra, sf_peak_df, ppm):
 
     peaks_per_sp = max(1, int(np.mean([mzs.shape[0] for (sp_id, mzs, ints) in spectra_sample])))
     plan_mz_segm_n = (spectra_n * peaks_per_sp) // 10**6  # 1M peaks per segment
-    plan_mz_segm_n = np.clip(plan_mz_segm_n, 32, 2048)
+    plan_mz_segm_n = int(np.clip(plan_mz_segm_n, 32, 2048))
 
     mz_grid, workload_per_mz, sp_workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10**4)
     mz_bounds = _define_mz_bounds(mz_grid, workload_per_mz, sp_workload_per_mz, n=plan_mz_segm_n)
@@ -138,14 +139,14 @@ def define_mz_segments(spectra, sf_peak_df, ppm):
     return mz_segments
 
 
-def gen_iso_peak_images(sc, ds_reader, sf_peak_df, segm_spectra, ppm):
+def gen_iso_peak_images(sc, ds_reader, ion_centroids_df, segm_spectra, ppm):
     sp_indexes_brcast = sc.broadcast(ds_reader.get_norm_img_pixel_inds())
-    sf_peak_df_brcast = sc.broadcast(sf_peak_df)  # TODO: replace broadcast variable with rdd and cogroup
+    ion_centroids_df_brcast = sc.broadcast(ion_centroids_df)  # TODO: replace broadcast variable with rdd and cogroup
     nrows, ncols = ds_reader.get_dims()
 
     def generate_images_for_segment(item):
         _, sp_segm = item
-        return _gen_iso_images(sp_segm, sp_indexes_brcast.value, sf_peak_df_brcast.value,
+        return _gen_iso_images(sp_segm, sp_indexes_brcast.value, ion_centroids_df_brcast.value,
                                nrows, ncols, ppm)
     iso_peak_images = segm_spectra.flatMap(generate_images_for_segment)
     return iso_peak_images
@@ -159,8 +160,8 @@ def gen_iso_sf_images(iso_peak_images, shape):
 
 
 # TODO: add tests
-def compute_sf_images(sc, ds_reader, sf_peak_df, ppm):
-    """ Compute isotopic images for all formulae
+def compute_sf_images(sc, ds_reader, ion_centroids_df, ppm):
+    """ Compute isotopic images for all formulas
 
     Returns
     ----------
@@ -169,13 +170,12 @@ def compute_sf_images(sc, ds_reader, sf_peak_df, ppm):
     """
     spectra_rdd = ds_reader.get_spectra()
 
-    mz_segments = define_mz_segments(spectra_rdd, sf_peak_df, ppm)
+    mz_segments = define_mz_segments(spectra_rdd, ion_centroids_df, ppm)
     segm_spectra = (spectra_rdd
                     .flatMap(lambda sp: _segment_spectrum(sp, mz_segments))
                     .groupByKey(numPartitions=len(mz_segments)))
 
-    iso_peak_images = gen_iso_peak_images(sc, ds_reader, sf_peak_df, segm_spectra, ppm)
+    iso_peak_images = gen_iso_peak_images(sc, ds_reader, ion_centroids_df, segm_spectra, ppm)
     iso_sf_images = gen_iso_sf_images(iso_peak_images, shape=ds_reader.get_dims())
 
     return iso_sf_images
-

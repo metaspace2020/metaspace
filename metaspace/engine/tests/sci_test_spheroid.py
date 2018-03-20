@@ -9,19 +9,17 @@ from mock import MagicMock
 from sm.engine import Dataset
 from sm.engine import ESExporter
 from sm.engine import SMDaemonDatasetManager
-from sm.engine import SearchJob
 from sm.engine.db import DB
 from sm.engine.errors import UnknownDSID
 from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root, SMConfig, create_ds_from_files, init_logger
 
-SEARCH_RES_SELECT = ("select sf, adduct, stats "
+SEARCH_RES_SELECT = ("select m.sf, m.adduct, m.stats "
                      "from iso_image_metrics m "
-                     "join sum_formula f on f.id = m.sf_id "
                      "join job j on j.id = m.job_id "
                      "join dataset ds on ds.id = j.ds_id "
-                     "where f.db_id = %s AND ds.name = %s "
+                     "where m.db_id = %s AND ds.name = %s "
                      "ORDER BY sf, adduct ")
 
 
@@ -54,7 +52,7 @@ class SciTester(object):
 
     def fetch_search_res(self):
         mol_db_service = MolDBServiceWrapper(self.sm_config['services']['mol_db'])
-        mol_db_id = mol_db_service.find_db_by_name_version('HMDB', '2016')[0]['id']
+        mol_db_id = mol_db_service.find_db_by_name_version('HMDB-v2.5')[0]['id']
         rows = self.db.select(SEARCH_RES_SELECT, mol_db_id, self.ds_name)
         return {(r[0], r[1]): self.metr_dict_to_array(r[2]) for r in rows}
 
@@ -141,12 +139,10 @@ class SciTester(object):
             img_store = ImageStoreServiceWrapper(self.sm_config['services']['img_service_url'])
         ds_man = SMDaemonDatasetManager(db=self.db, es=ESExporter(self.db),
                                         img_store=img_store, mode='local')
-        try:
-            ds = Dataset.load(self.db, self.ds_id)
-        except UnknownDSID:
-            print('Test dataset {}/{} does not exist'.format(self.ds_id, self.ds_name))
-            ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
 
+        ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
+        ds_man.delete(ds)
+        from sm.engine import SearchJob
         ds_man.add(ds, search_job_factory=SearchJob, del_first=True)
 
     def clear_data_dirs(self):

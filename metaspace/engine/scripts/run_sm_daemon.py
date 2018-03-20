@@ -24,8 +24,8 @@ if __name__ == "__main__":
     parser.add_argument('--config', dest='config_path', default='conf/config.json', type=str, help='SM config path')
     args = parser.parse_args()
 
-    SMConfig.set_path(args.config_path)
-    daemon = SMDaemon(SM_ANNOTATE, SMDaemonDatasetManager)
+    SMConfig.set_path(args.sm_config_path)
+    daemon = SMDaemon(qdesc=SM_ANNOTATE, dataset_manager_factory=SMDaemonDatasetManager)
 
     signal.signal(signal.SIGINT, lambda *args: daemon.stop())
     signal.signal(signal.SIGTERM, lambda *args: daemon.stop())
