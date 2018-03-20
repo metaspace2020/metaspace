@@ -172,7 +172,9 @@ class TestSMapiDatasetManager:
         queue_mock = MagicMock(spec=QueuePublisher)
         es_mock = MagicMock(spec=ESExporter)
         img_store_mock = MagicMock(ImageStoreServiceWrapper)
-        img_store_mock.post_image.side_effect = ['raw_opt_imgs_id', 'opt_img_id1', 'opt_img_id2', 'opt_img_id3']
+        img_store_mock.post_image.side_effect = ['opt_img_id1', 'opt_img_id2', 'opt_img_id3']
+        img_store_mock.get_image_by_id.return_value = Image.new('RGB', (100, 100))
+
         ds_man = create_ds_man(sm_config=sm_config, db=db, es=es_mock,
                                img_store=img_store_mock, queue=queue_mock, sm_api=True)
         ds_man._annotation_image_shape = MagicMock(return_value=(100, 100))
@@ -180,13 +182,14 @@ class TestSMapiDatasetManager:
         ds_id = '2000-01-01'
         ds = create_ds(ds_id=ds_id, ds_config=ds_config)
 
-        optical_image = Image.new('RGB', (100, 100))
         zoom_levels = [1, 2, 3]
-        ds_man.add_optical_image(ds, optical_image, [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+        raw_img_id = 'raw_opt_img_id'
+        ds_man.add_optical_image(ds, raw_img_id, [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
                                  zoom_levels=zoom_levels)
         assert db.select('SELECT * FROM optical_image') == [
                 ('opt_img_id{}'.format(i + 1), ds.id, zoom)
                 for i, zoom in enumerate(zoom_levels)]
+        assert db.select('SELECT optical_image FROM dataset where id = %s', ds_id) == [(raw_img_id,)]
 
 
 class TestSMDaemonDatasetManager:
