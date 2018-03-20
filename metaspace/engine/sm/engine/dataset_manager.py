@@ -219,9 +219,11 @@ class SMapiDatasetManager(DatasetManager):
             self.logger.info('Nothing to update: %s %s', ds.id, ds.name)
 
     def _annotation_image_shape(self, ds):
+        self.logger.info('Querying annotation image shape for "%s" dataset...', ds.id)
         ion_img_id = self._db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', ds.id)[0][0][0]
         storage_type = ds.get_ion_img_storage_type(self._db)
         result = self._img_store.get_image_by_id(storage_type, 'iso_image', ion_img_id).size
+        self.logger.info('Annotation image shape for "{}" dataset is {}'.format(ds.id, result))
         return result
 
     def _transform_scan(self, scan, transform_, dims, zoom):
@@ -258,7 +260,7 @@ class SMapiDatasetManager(DatasetManager):
         self._db.alter(UPD_DATASET_RAW_OPTICAL_IMAGE, img_id, transform, ds.id)
 
     def _add_zoom_optical_images(self, ds, img_id, transform, zoom_levels):
-        dims = self._annotation_image_shape(ds.id)
+        dims = self._annotation_image_shape(ds)
         rows = []
         optical_img = self._img_store.get_image_by_id('fs', 'raw_optical_image', img_id)
         for zoom in zoom_levels:
