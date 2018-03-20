@@ -142,7 +142,7 @@
      return Object.assign({}, this.imagePosition, {
        annotImageOpacity: (this.showOpticalImage && this.opticalImageUrl) ? this.opacity : 1.0,
        opticalSrc: this.showOpticalImage ? this.opticalImageUrl : '',
-       opacity: this.opacity,
+       opticalImageUrl: this.opticalImageUrl,
        opacityMode: this.imageOpacityMode,
        showOpticalImage: this.showOpticalImage
      });

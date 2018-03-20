@@ -19,7 +19,7 @@
             @click="resetViewport"/>
     </span>
 
-    <span v-if="imageLoaderSettings.opticalSrc">
+    <span v-if="imageLoaderSettings.opticalImageUrl">
         <img class="show-optical-image-icon"
             :class="imageLoaderSettings.showOpticalImage ? '' : 'png-icon-disabled'"
             src="../../../assets/microscope-icon.png"

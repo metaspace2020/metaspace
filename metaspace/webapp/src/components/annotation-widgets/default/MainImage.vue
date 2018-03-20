@@ -10,12 +10,12 @@
     </image-loader>
 
     <div class="colorbar-container">
-        <div v-if="imageLoaderSettings.opticalSrc">
+        <div v-if="imageLoaderSettings.opticalImageUrl">
         Opacity:
         <el-slider
             vertical
             height="150px"
-            v-model="imageLoaderSettings.opacity"
+            v-model="opacity"
             :min=0
             :max=1
             :step=0.01
@@ -66,6 +66,8 @@ export default class MainImage extends Vue {
     colormap: any
     @Prop()
     colormapName: any
+    @Prop()
+    opacity: number
     @Prop()
     imageLoaderSettings: any
     @Prop()

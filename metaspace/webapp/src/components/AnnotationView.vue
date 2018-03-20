@@ -30,6 +30,7 @@
                      :annotation="annotation"
                      :colormap="colormap"
                      :colormapName="colormapName"
+                     :opacity="opacity"
                      :imageLoaderSettings="imageLoaderSettings"
                      :onImageZoom="onImageZoom"
                      :onImageMove="onImageMove"
