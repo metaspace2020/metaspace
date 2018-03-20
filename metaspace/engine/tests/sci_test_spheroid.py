@@ -120,7 +120,7 @@ class SciTester(object):
     def search_results_are_different(self):
         old_search_res = self.read_base_search_res()
         search_res = self.fetch_search_res()
-        return (self._missed_formulae(old_search_res, search_res) or
+        return (self._missed_formulas(old_search_res, search_res) or
                 self._false_discovery(old_search_res, search_res) or
                 self._metrics_diff(old_search_res, search_res))
 
@@ -146,7 +146,7 @@ class SciTester(object):
             ds = Dataset.load(self.db, self.ds_id)
         except UnknownDSID:
             print('Test dataset {}/{} does not exist'.format(self.ds_id, self.ds_name))
-            ds = create_ds_from_files(self.ds_id, self.ds_name, Path(self.input_path))
+            ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
 
         ds_man.add(ds, search_job_factory=SearchJob, del_first=True)
 

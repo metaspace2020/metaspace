@@ -5,7 +5,7 @@ jobs:
       # includes:
       #   - miniconda with all packages required for sm-engine
       #   - pyspark installation
-      - image: iprotsyuk/sm-engine:lc-m-support
+      - image: intsco/sm_engine:lcms
 
       - image: postgres:9.5-alpine
         environment:
@@ -38,12 +38,7 @@ jobs:
             source docker/env.sh
             pip install pysparkling
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
-            coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests --ignore=tests/test_queue.py --ignore=tests/test_sm_daemon.py
-      - run:
-          name: Submit test coverage to coveralls
-          command: |
-            source docker/env.sh
-            coveralls
+            coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests --ignore=tests/test_queue.py --ignore=tests/test_sm_daemon.py #&& coveralls
       - run:
           name: Create and prefill the database
           command: |

@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-MAINTAINER Artem Tarasov <artem.tarasov@embl.de>
+MAINTAINER Vitaly Kovalev <kovalev@embl.de>
 WORKDIR /root
 
 # use bash as default shell
