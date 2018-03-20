@@ -7,7 +7,7 @@
       </dataset-info>
     </el-dialog>
 
-    <div class="opt-image">
+    <div class="opt-image" v-if="isOpticalImageSupported">
       <router-link :to="opticalImageAlignmentHref" v-if="haveEditAccess && dataset.status === 'FINISHED'">
         <div v-if="thumbnailCheck" class="edit-opt-image" title="Edit Optical Image">
           <img class="opt-image-thumbnail" :src="opticalImageSmall" width="100px" height="100px" alt="Edit optical image"/>
@@ -122,7 +122,7 @@
  import DatasetInfo from './DatasetInfo.vue';
  import capitalize from 'lodash/capitalize';
  import {deleteDatasetQuery, opticalImageQuery} from '../api/dataset';
- import {getJWT} from '../util';
+ import {getJWT, mdTypeSupportsOpticalImages} from '../util';
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');
@@ -145,6 +145,10 @@
              name: 'add-optical-image',
              params: {dataset_id: this.dataset.id}
          };
+     },
+
+     isOpticalImageSupported() {
+       return mdTypeSupportsOpticalImages(this.$store.getters.filter.metadataType);
      },
 
      formatSubmitter() {
