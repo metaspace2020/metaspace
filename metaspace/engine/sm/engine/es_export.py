@@ -8,7 +8,7 @@ import pandas as pd
 from sm.engine.util import SMConfig
 from sm.engine.db import DB
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 ANNOTATION_COLUMNS = ["sf", "sf_adduct",
                       "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",

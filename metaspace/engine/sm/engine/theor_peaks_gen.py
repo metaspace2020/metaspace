@@ -11,7 +11,7 @@ from sm.engine.fdr import DECOY_ADDUCTS
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 SF_ADDUCT_SEL = ('SELECT sf, adduct FROM theor_peaks p '
                  'WHERE ROUND(sigma::numeric, 6) = %s AND charge = %s AND pts_per_mz = %s')

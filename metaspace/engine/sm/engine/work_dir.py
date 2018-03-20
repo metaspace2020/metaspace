@@ -17,7 +17,7 @@ from boto3.s3.transfer import S3Transfer
 from sm.engine.util import cmd_check, SMConfig
 
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 
 def split_s3_path(path):
@@ -62,11 +62,11 @@ class LocalWorkDir(object):
         for handler in file_handlers:
             ms_file_extension = handler['extensions'][0]
             logger.info('"%s" file handler is looking for files with "%s" extension \
-                        in the input directory...',  handler['type'], ms_file_extension)
+                        in the input directory',  handler['type'], ms_file_extension)
             ms_file_path = next((fn for fn in listdir(self.ds_path) \
                 if re.search(r'\.{}$'.format(ms_file_extension), fn, re.IGNORECASE)), None)
             if ms_file_path:
-                logger.info('"%s" file handler has found "%s" in the input directory...',\
+                logger.info('"%s" file handler has found "%s" in the input directory',
                             handler['type'], ms_file_path)
                 self._ms_file_path = join(self.ds_path, ms_file_path)
                 break
@@ -131,7 +131,7 @@ class S3WorkDir(object):
             return True
 
     def copy(self, local, remote):
-        logger.info('Coping DS text files to S3...')
+        logger.info('Coping dataset file to S3')
         self.s3transfer.upload_file(local, *split_s3_path(remote))
 
 

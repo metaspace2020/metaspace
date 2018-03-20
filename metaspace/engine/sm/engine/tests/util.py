@@ -17,9 +17,7 @@ from sm.engine.util import proj_root, sm_log_config, SMConfig, init_logger, logg
 from sm.engine import ESExporter, ESIndexManager
 from os.path import join
 
-log_config = sm_log_config
-log_config['loggers']['sm-engine']['handlers'] = ['console_debug']
-init_logger(log_config)
+init_logger()
 
 
 @pytest.fixture(scope='session')

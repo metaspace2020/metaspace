@@ -6,7 +6,7 @@ import requests
 from sm.engine.db import DB
 from sm.engine.util import SMConfig
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 SF_INS = 'INSERT INTO sum_formula (db_id, sf) values (%s, %s)'
 SF_COUNT = 'SELECT count(*) FROM sum_formula WHERE db_id = %s'

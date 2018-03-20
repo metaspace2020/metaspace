@@ -1,4 +1,18 @@
 {
+  "loggers": {
+    "engine": {
+      "level": "DEBUG",
+      "handlers": ["console_debug"]
+    },
+    "daemon": {
+      "level": "DEBUG",
+      "handlers": ["console_warn", "file"]
+    },
+    "api": {
+      "level": "DEBUG",
+      "handlers": ["console_debug"]
+    }
+  },
   "db": {
     "host": "localhost",
     "database": "sm_test",

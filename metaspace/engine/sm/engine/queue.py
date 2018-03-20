@@ -35,7 +35,7 @@ class QueueConsumer(object):
         self._on_success = on_success
         self._on_failure = on_failure
 
-        self.logger = logging.getLogger('sm-daemon')
+        self.logger = logging.getLogger('daemon')
 
         self._connection = None
         self._channel = None
@@ -353,11 +353,11 @@ class QueueConsumer(object):
 # should be rewritten in asyncronous fashion
 class QueuePublisher(object):
 
-    def __init__(self, config, logger_name='sm-api'):
+    def __init__(self, config, logger=None):
         creds = pika.PlainCredentials(config['user'], config['password'])
         self._conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat_interval=0)
 
-        self.logger = logging.getLogger(logger_name)
+        self.logger = logger if logger else logging.getLogger()
 
     def queue_purge(self, qname):
         try:

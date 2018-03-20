@@ -6,7 +6,7 @@ import requests
 
 from sm.engine.png_generator import PngGenerator
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
 
 

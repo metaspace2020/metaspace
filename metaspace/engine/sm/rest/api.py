@@ -40,7 +40,7 @@ def _json_params(req):
 
 def _create_queue_publisher():
     config = SMConfig.get_conf()
-    return QueuePublisher(config['rabbitmq'])
+    return QueuePublisher(config['rabbitmq'], logger)
 
 
 def _create_dataset_manager(db):
@@ -128,5 +128,5 @@ if __name__ == '__main__':
     SMConfig.set_path(args.config_path)
 
     init_logger()
-    logger = logging.getLogger(name='sm-api')
+    logger = logging.getLogger(name='api')
     run(host='localhost', port=5123)

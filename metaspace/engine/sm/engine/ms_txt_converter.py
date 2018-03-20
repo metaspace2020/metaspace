@@ -16,7 +16,7 @@ from pyMSpec.centroid_detection import gradient
 from sm.engine.util import SMConfig
 
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 
 def preprocess_spectrum(mzs, ints):
@@ -56,7 +56,7 @@ def get_track_progress(points_n, steps_n, active=False):
 
     def track(i):
         if i % every_n == 0:
-            print("Wrote %.1f%% (%d of %d)" % (i / points_n * 100, i, points_n))
+            logger.debug("Wrote %.1f%% (%d of %d)" % (i / points_n * 100, i, points_n))
 
     def dont_track(i): pass
 
@@ -142,7 +142,7 @@ class MsTxtConverter(object):
             pixels_n = len(coordinates)
             track_progress = get_track_progress(points_n=pixels_n, steps_n=10, active=print_progress)
 
-            logger.info('Converting %s spectra ...', pixels_n)
+            logger.info('Converting %s spectra', pixels_n)
             for i, (x, y) in enumerate(coordinates):
                 try:
                     self.parse_save_spectrum(i, x, y)

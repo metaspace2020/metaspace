@@ -6,7 +6,7 @@ from sm.engine.msm_basic.formula_img_validator import sf_image_metrics
 from sm.engine.search_algorithm import SearchAlgorithm
 
 import logging
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 
 class MSMBasicSearch(SearchAlgorithm):

@@ -24,9 +24,11 @@ if __name__ == "__main__":
                         type=str, help='SM config path')
     args = parser.parse_args()
 
-    init_logger()
     SMConfig.set_path(args.sm_config_path)
     sm_config = SMConfig.get_conf()
+
+    init_logger(name='engine')
+
     db = DB(sm_config['db'])
     img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
     ds_man = SMDaemonDatasetManager(db, ESExporter(db), img_store, mode='local')

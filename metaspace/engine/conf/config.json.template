@@ -1,4 +1,18 @@
 {
+  "loggers": {
+    "engine": {
+      "level": "INFO",
+      "handlers": ["console_debug"]
+    },
+    "daemon": {
+      "level": "INFO",
+      "handlers": ["console_warn", "file"]
+    },
+    "api": {
+      "level": "INFO",
+      "handlers": ["console_debug"]
+    }
+  },
   "db": {
     "host": "{{ sm_postgres_host }}",
     "database": "sm",

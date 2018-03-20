@@ -117,7 +117,7 @@ class SMDaemonDatasetManager(DatasetManager):
 
     def __init__(self, db, es, img_store, mode, queue_publisher=None):
         DatasetManager.__init__(self, db=db, es=es, img_store=img_store, mode=mode,
-                                queue_publisher=queue_publisher, logger_name='sm-daemon')
+                                queue_publisher=queue_publisher, logger_name='daemon')
 
     def process(self, ds, action, **kwargs):
         if action == DatasetAction.ADD:
@@ -161,7 +161,7 @@ class SMDaemonDatasetManager(DatasetManager):
                     if img_id:
                         self._img_store.delete_image_by_id(storage_type, 'iso_image', img_id)
         except UnknownDSID:
-            self.logger.warning('Attempt to delete isotopic images of non-existing dataset. Skipping...')
+            self.logger.warning('Attempt to delete isotopic images of non-existing dataset. Skipping')
 
     def delete(self, ds, del_raw_data=False, **kwargs):
         """ Delete all dataset related data from the DB """
@@ -182,7 +182,7 @@ class SMapiDatasetManager(DatasetManager):
     def __init__(self, qname, db, es, image_store, mode, queue_publisher=None):
         self.qname = qname
         DatasetManager.__init__(self, db=db, es=es, img_store=image_store, mode=mode,
-                                queue_publisher=queue_publisher, logger_name='sm-api')
+                                queue_publisher=queue_publisher, logger_name='api')
 
     def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT, **kwargs):
         ds.set_status(self._db, self._es, self._queue, DatasetStatus.QUEUED)

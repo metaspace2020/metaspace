@@ -84,9 +84,9 @@ class SciTester(object):
         print("\nMSM HISTOGRAM")
         self.print_metric_hist(metrics_array[:, 3])
 
-    def _missed_formulae(self, old, new):
+    def _missed_formulas(self, old, new):
         missed_sf_adduct = set(old.keys()) - set(new.keys())
-        print('MISSED FORMULAE: {:.1f}%'.format(len(missed_sf_adduct) / len(old) * 100))
+        print('MISSED FORMULAS: {:.1f}%'.format(len(missed_sf_adduct) / len(old) * 100))
         if missed_sf_adduct:
             missed_sf_base_metrics = np.array([old[k] for k in missed_sf_adduct])
             self.report_metric_differences(missed_sf_base_metrics)
@@ -164,8 +164,9 @@ if __name__ == '__main__':
                         help='path to sm config file')
     parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')
     args = parser.parse_args()
+
     SMConfig.set_path(args.sm_config_path)
-    init_logger()
+    init_logger(name='engine')
 
     sci_tester = SciTester(args.sm_config_path)
 

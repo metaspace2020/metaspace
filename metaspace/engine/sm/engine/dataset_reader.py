@@ -8,7 +8,7 @@ from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 
 class DatasetReader(object):

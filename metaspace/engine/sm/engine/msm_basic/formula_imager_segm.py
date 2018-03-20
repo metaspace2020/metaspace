@@ -11,7 +11,7 @@ MAX_MZ_VALUE = 10**5
 MAX_INTENS_VALUE = 10**12
 ABS_MZ_TOLERANCE_DA = 0.002
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 
 def _check_spectra_quality(spectra_sample):
@@ -150,7 +150,7 @@ def define_mz_segments(spectra, sf_peak_df, ppm):
     mz_grid, workload_per_mz, sp_workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10**4)
     mz_bounds = _define_mz_bounds(mz_grid, workload_per_mz, sp_workload_per_mz, n=plan_mz_segm_n)
     mz_segments = _create_mz_segments(mz_bounds, ppm=ppm)
-    logger.info('Generated m/z segments: %s', mz_segments)
+    logger.debug('Generated m/z segments: %s', mz_segments)
     return mz_segments
 
 

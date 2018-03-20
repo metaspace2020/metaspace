@@ -10,7 +10,7 @@ from sm.engine.util import SMConfig, sm_log_config, init_logger
 from sm.engine import QueueConsumer, ESExporter, QueuePublisher, Dataset, SearchJob
 from sm.engine import DB
 
-logger = logging.getLogger('sm-daemon')
+logger = logging.getLogger('daemon')
 
 
 class SMDaemon(object):
@@ -120,7 +120,7 @@ class SMDaemon(object):
             ds_man = self._dataset_manager_factory(
                 db=db, es=ESExporter(db),
                 img_store=ImageStoreServiceWrapper(self._sm_config['services']['img_service_url']),
-                mode='queue', queue_publisher=QueuePublisher(self._sm_config['rabbitmq'])
+                mode='queue', queue_publisher=QueuePublisher(self._sm_config['rabbitmq'], logger)
             )
             ds_man.process(ds=Dataset.load(db, msg['ds_id']),
                            action=msg['action'],

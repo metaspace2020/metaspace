@@ -25,7 +25,7 @@ from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 from sm.engine.errors import JobFailedError, ESExportFailedError
 from sm.engine.queue import QueuePublisher
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 JOB_ID_MOLDB_ID_SEL = "SELECT id, db_id FROM job WHERE ds_id = %s"
 JOB_INS = "INSERT INTO job (db_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
@@ -94,7 +94,7 @@ class SearchJob(object):
             self.store_job_meta(mol_db.id)
             mol_db.set_job_id(self._job_id)
 
-            logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s ...",
+            logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
                         self._ds.id, self._ds.name, mol_db.name, mol_db.version)
 
             theor_peaks_gen = TheorPeaksGenerator(self._sc, mol_db, self._ds.config, db=self._db)
@@ -173,7 +173,7 @@ class SearchJob(object):
             self._ds = ds
 
             if self._sm_config['rabbitmq']:
-                self._queue = QueuePublisher(self._sm_config['rabbitmq'])
+                self._queue = QueuePublisher(self._sm_config['rabbitmq'], logger)
             else:
                 self._queue = None
 

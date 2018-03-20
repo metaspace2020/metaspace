@@ -41,27 +41,43 @@ sm_log_config = {
         }
     },
     'loggers': {
-        'sm-engine': {
+        'engine': {
             'handlers': ['console_debug', 'file'],
             'level': logging.DEBUG
         },
-        'sm-api': {
+        'api': {
             'handlers': ['console_debug'],
             'level': logging.DEBUG
         },
-        'sm-daemon': {
+        'daemon': {
             'handlers': ['console_debug'],
             'level': logging.DEBUG
         }
     }
 }
 
+log_level_codes = {
+    'ERROR': logging.ERROR,
+    'WARNING': logging.WARNING,
+    'INFO': logging.INFO,
+    'DEBUG': logging.DEBUG
+}
 
-def init_logger(log_config=None):
-    dictConfig(log_config if log_config else sm_log_config)
+
+def init_logger(name=None):
+    """ Init logger using SM config file
+    """
+    if name:
+        sm_config = SMConfig.get_conf()
+        log_config = sm_log_config
+        log_config['loggers'][name]['handlers'] = sm_config['loggers'][name]['handlers']
+        log_config['loggers'][name]['level'] = log_level_codes[sm_config['loggers'][name]['level']]
+        dictConfig(log_config)
+    else:
+        dictConfig(sm_log_config)
 
 
-logger = logging.getLogger(name='sm-engine')
+logger = logging.getLogger(name='engine')
 
 
 class SMConfig(object):
@@ -148,9 +164,9 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
         metadata = json.load(open(str(meta_path)))
     else:
         metadata = {}
-    ds_config = json.load(open(str(ds_input_path.joinpath('config.json'))))
+    ds_config = json.load(open(str(base_dir.joinpath('config.json'))))
 
-    imzml_path = next(base_dir.glob('.imzML'))
+    imzml_path = next(base_dir.glob('*.imzML'))
     ms_file_type_config = SMConfig.get_ms_file_handler(str(imzml_path))
     img_storage_type = ms_file_type_config['img_storage_type']
 
