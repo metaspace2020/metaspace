@@ -5,7 +5,7 @@
     update: yes
     force: yes
     recursive: yes
-#    track_submodules: yes  # doesn't update submodule properly
+    track_submodules: no  # when 'no' submodules refer to commit specified in the web app repository
     version: "{{ sm_webapp_branch }}"
   register: git_deploy
   until: git_deploy | succeeded

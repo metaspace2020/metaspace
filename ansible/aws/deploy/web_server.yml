@@ -19,7 +19,7 @@
       tags: [sm-graphql]
 
     - import_tasks: ../../deploy_tasks/sm_web_app.yml
-      tags: [sm-web-app]
+      tags: [sm-webapp]
 
     - import_tasks: ../../deploy_tasks/sm_cluster_autostart.yml
       tags: [sm-cluster-autostart]
