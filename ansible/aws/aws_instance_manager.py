@@ -1,17 +1,13 @@
 #!/usr/bin/env python
 import argparse
-
 import boto3
 from pprint import pprint
 from time import sleep
 from datetime import datetime, timedelta
-
 from os import path
-
-import sys
-
 from subprocess import check_output
 from yaml import load
+import sys
 
 
 class AWSInstManager(object):

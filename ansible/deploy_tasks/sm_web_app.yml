@@ -32,12 +32,6 @@
     chdir: "{{ sm_webapp_home }}"
     executable: /bin/bash
 
-- name: Dereference metadata schema
-  shell: node deref_schema.js > src/assets/metadata_schema.json
-  args:
-    chdir: "{{ sm_webapp_home }}"
-    executable: /bin/bash
-
 - name: Run build app
   shell: yarn run build
   args:
