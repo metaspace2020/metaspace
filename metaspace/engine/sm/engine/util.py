@@ -44,15 +44,15 @@ sm_log_config = {
     'loggers': {
         'sm-engine': {
             'handlers': ['console_debug', 'file'],
-            'level': logging.DEBUG
+            'level': logging.INFO
         },
         'sm-api': {
             'handlers': ['console_debug'],
-            'level': logging.DEBUG
+            'level': logging.INFO
         },
         'sm-daemon': {
             'handlers': ['console_debug'],
-            'level': logging.DEBUG
+            'level': logging.INFO
         }
     }
 }
