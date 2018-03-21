@@ -16,6 +16,7 @@
             vertical
             height="150px"
             v-model="opacity"
+            v-on:input="onOpacityInput"
             :min=0
             :max=1
             :step=0.01
@@ -94,6 +95,10 @@ export default class MainImage extends Vue {
 
     get browserSupportsDomToImage(): boolean {
       return window.navigator.userAgent.includes('Chrome');
+    }
+
+    onOpacityInput(val: number): void {
+      this.$emit('opacityInput', val);
     }
 }
 </script>

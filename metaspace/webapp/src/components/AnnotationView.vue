@@ -34,7 +34,8 @@
                      :imageLoaderSettings="imageLoaderSettings"
                      :onImageZoom="onImageZoom"
                      :onImageMove="onImageMove"
-                     :acquisitionGeometry="msAcqGeometry">
+                     :acquisitionGeometry="msAcqGeometry"
+                     v-on:opacityInput="newVal => opacity = newVal">
           </component>
         </el-collapse-item>
 
