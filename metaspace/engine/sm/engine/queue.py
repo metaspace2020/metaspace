@@ -361,12 +361,12 @@ class QueueConsumer(object):
         self._heartbeat = 3*60*60  # 3h
         self._qdesc = qdesc
         self._qname = self._qdesc['name']
-        self._no_ack = False  # messages get redelivered with no_ack=False
+        self._no_ack = True  # messages get redelivered with no_ack=False
         self._connection = None
         self._channel = None
         self._url = "amqp://{}:{}@{}:5672/%2F?heartbeat={}".format(config['user'], config['password'],
                                                                    config['host'], self._heartbeat)
-        self._poll_timeout = 1
+        self._poll_interval = 1
 
         self._callback = callback
         self._on_success = on_success
@@ -419,7 +419,9 @@ class QueueConsumer(object):
             method, properties, body = self._channel.basic_get(queue=self._qname, no_ack=self._no_ack)
             if body is not None:
                 self.on_message(method, properties, body)
-            sleep(self._poll_timeout)
+            else:
+                self.logger.debug('No messages in "{}" queue'.format(self._qname))
+            sleep(self._poll_interval)
 
     def stop(self):
         self._connection.close()

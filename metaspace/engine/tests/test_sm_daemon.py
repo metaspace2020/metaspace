@@ -70,9 +70,16 @@ class SMDaemonDatasetManagerMock(SMDaemonDatasetManager):
 
 @fixture
 def delete_queue(sm_config):
-    for qdesc in [ACTION_QDESC, STATUS_QDESC]:
-        queue_pub = QueuePublisher(sm_config['rabbitmq'], qdesc)
-        queue_pub.delete_queue()
+    def _delete():
+        for qdesc in [ACTION_QDESC, STATUS_QDESC]:
+            queue_pub = QueuePublisher(sm_config['rabbitmq'], qdesc)
+            queue_pub.delete_queue()
+
+    # before tests
+    _delete()
+    yield
+    # after tests
+    _delete()
 
 
 @fixture
