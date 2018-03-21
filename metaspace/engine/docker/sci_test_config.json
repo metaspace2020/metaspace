@@ -12,7 +12,7 @@
   },
   "rabbitmq": {
     "host": "localhost",
-    "user": "sm_test",
+    "user": "sm",
     "password": "password"
   },
   "services": {

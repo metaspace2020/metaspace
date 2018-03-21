@@ -17,9 +17,9 @@ jobs:
           ES_JAVA_OPTS: "-Xms512m -Xmx512m"
         command: [elasticsearch, -Etransport.host=127.0.0.1]
 
-      - image: rabbitmq:3.6-alpine
+      - image: rabbitmq:3.6-management
         environment:
-          RABBITMQ_DEFAULT_USER: sm_test
+          RABBITMQ_DEFAULT_USER: sm
           RABBITMQ_DEFAULT_PASS: password
 
     working_directory: /code/sm-engine
