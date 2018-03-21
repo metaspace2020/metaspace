@@ -32,7 +32,7 @@ describe('GraphQL integration: Annotation type', () => {
     const query = `{
       allAnnotations(
         filter: {
-          database: "HMDB",
+          database: "HMDB-v2.5",
           datasetName: "sci_test_spheroid_untreated",
           sumFormula: "C8H20NO6P",
           adduct: "+K"
@@ -72,7 +72,7 @@ describe('GraphQL integration: Annotation type', () => {
           "imageURL": "/mol-images/HMDB/HMDB00086.svg",
           "information": [
             {
-              "database": "HMDB",
+              "database": "HMDB-v2.5",
               "url": "/metabolites/HMDB00086"
             }
           ]
