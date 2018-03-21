@@ -29,7 +29,7 @@
 
         Please:
         <ul>
-          <li>Select another database <br/>(HMDB is always applicable)</li>
+          <li>Select another database <br/>(HMDB-v2.5 is always applicable)</li>
           <li>Relax the FDR filter</li>
           <li>Look for missing pixels/stripes: <br/>these indicate calibration issues</li>
         </ul>

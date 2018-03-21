@@ -8,7 +8,7 @@ interface Dictionary<T> {
 }
 
 export const DEFAULT_FILTER: Dictionary<any> = {
-  database: 'HMDB',
+  database: 'HMDB-v2.5',
   institution: undefined,
   submitter: undefined,
   datasetIds: undefined,
