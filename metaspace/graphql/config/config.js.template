@@ -11,7 +11,11 @@ config.img_storage_port = 4201;
 config.log = {};
 config.log.level = 'info';
 
-config.default_adducts = {{ sm_graphql_default_adducts | to_json }};
+config.defaults = {
+  adducts: {{ sm_graphql_default_adducts | to_json }},
+  moldb_name: 'HMDB-v2.5'
+}
+
 
 /* Settings for image storage.
    It's currently co-hosted with the GraphQL server. */

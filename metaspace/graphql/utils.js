@@ -59,15 +59,15 @@ function generateProcessingConfig(meta_json) {
   else
     mdb_list = mdb_names.map( (name) => ({'name': name}) );
 
-  if (mdb_list.filter( mdb => mdb.name == 'HMDB').length == 0)
-    mdb_list.push({ "name": "HMDB", "version": "2016" });
+  if (mdb_list.filter( mdb => mdb.name == config.defaults.moldb_name).length == 0)
+    mdb_list.push({ "name": config.defaults.moldb_name});
 
   // TODO: metadata format should support adduct specification
   let adducts;
   if (m_opts.hasOwnProperty('Adducts'))
     adducts = m_opts['Adducts'];
   else
-    adducts = config.default_adducts[polarity];
+    adducts = config.defaults.adducts[polarity];
 
   return {
     "databases": mdb_list,

@@ -7,9 +7,12 @@ config.img_storage_port = 4202;
 config.log = {};
 config.log.level = 'debug';
 
-config.default_adducts = {
-  "+": ["+H", "+K", "+Na"],
-  "-": ["-H", "+Cl"]
+config.defaults = {
+  adducts: {
+    "+": ["+H", "+Na", "+K"],
+    "-": ["-H", "+Cl"]
+  },
+  moldb_name: 'HMDB-v2.5'
 };
 
 config.img_upload = {

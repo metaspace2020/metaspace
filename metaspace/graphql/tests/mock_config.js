@@ -5,7 +5,10 @@ const config = {
     level: 'info'
   },
 
-  default_adducts: {'+': ['+H', '+Na', '+K'], '-': ['-H', '+Cl']},
+  defaults: {
+    adducts: {'+': ['+H', '+Na', '+K'], '-': ['-H', '+Cl']},
+    moldb_name: 'HMDB-v2.5'
+  },
 
   img_upload: {
     iso_img_fs_path: "/opt/data/sm_data/public/",
