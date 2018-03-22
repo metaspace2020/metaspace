@@ -1,6 +1,6 @@
 <template>
   <div id="md-editor-container">
-    <div style="position: relative;">
+    <div style="position: relative;" v-if="!loading">
       <div id="md-editor-submit">
         <el-button @click="cancel" v-if="datasetId">Cancel</el-button>
         <el-button type="primary" v-if="enableSubmit" @click="submit">Submit</el-button>
@@ -9,11 +9,11 @@
         </el-button>
       </div>
 
-      <div id="md-section-list" v-loading="loading">
-
+      <div id="md-section-list">
+        <!-- Hardcoded "Data_Type" property of the metadata schema. Not supposed to be changed by user. -->
         <div class="metadata-section"
-             v-for="(section, sectionName) in schema.properties"
-             :key="sectionName">
+             v-for="(section, sectionName) in schema.properties" :key="sectionName"
+                v-if="sectionName != 'Data_Type'">
           <div class="heading" v-html="prettify(sectionName)"></div>
 
           <el-form size="medium">
@@ -40,7 +40,7 @@
                                    class="md-ac"
                                    v-model="value[sectionName][propName]"
                                    :required="isRequired(propName, section)"
-                                   :fetch-suggestions="(q, cb) => getSuggestions(q, cb, sectionName, propName)"
+                                   :fetch-suggestions="(q, cb) => getSuggestions(q ? q: '', cb, sectionName, propName)"
                                    :placeholder="prop.description">
                   </el-autocomplete>
                 </div>
@@ -54,8 +54,10 @@
                 </div>
 
                 <div>
+                  <!-- Custom event handler for polarity selector, as available adduct list should be updated -->
                   <el-select v-if="prop.enum"
                              :required="isRequired(propName, section)"
+                             @change="propName == 'Polarity' ? onPolarityChange(): null"
                              v-model="value[sectionName][propName]">
                     <el-option v-for="opt in prop.enum" :value="opt" :label="opt" :key="opt">
                     </el-option>
@@ -69,14 +71,37 @@
 
               <el-form-item class="control" v-if="prop.type == 'array' && !loading"
                             :class="isError(sectionName, propName)">
-                <!-- so far it's only for Metabolite_Database  -->
-                <el-select v-if="prop.items.enum"
+
+                <el-select v-if="!isTable(propName) && prop.items.enum"
                            :required="isRequired(propName, section)"
                            multiple
                            v-model="value[sectionName][propName]">
                   <el-option v-for="opt in prop.items.enum" :value="opt" :label="opt" :key="opt">
                   </el-option>
                 </el-select>
+
+                <div v-if="isTable(propName)" style="height: 240px">
+                  <el-table :data="value[sectionName][propName]"
+                            highlight-current-row
+                            @current-change="(newRow, oldRow) => newRow ? $set(formTableCurrentRows, `${sectionName}-${propName}`, value[sectionName][propName].indexOf(newRow))
+                                                                        : $delete(formTableCurrentRows, `${sectionName}-${propName}`)"
+                            :empty-text="prop.description"
+                            border
+                            max-height="200">
+                    <el-table-column v-for="(field, fieldName) in prop.items.properties" :key="fieldName" :label="field.title" :prop="fieldName">
+                      <div slot-scope="scope">
+                        <el-input-number v-if="field.type == 'number' || field.type == 'integer'" v-model="scope.row[fieldName]" style="width: inherit" />
+                        <el-input v-else v-model="scope.row[fieldName]" :placeholder="field.description" />
+                      </div>
+                    </el-table-column>
+                  </el-table>
+                  <el-button @click.native.prevent="value[sectionName][propName].splice(formTableCurrentRows[`${sectionName}-${propName}`], 1)"
+                             :disabled="!(`${sectionName}-${propName}` in formTableCurrentRows)"
+                             class="table-btn">Delete row</el-button>
+                  <el-button @click.native.prevent="insertObjectToArray(value[sectionName][propName], value[sectionName][propName].length, Object.keys(prop.items.properties))"
+                             class="table-btn">Add row</el-button>
+                </div>
+
                 <span class="error-msg" v-if="isError(sectionName, propName)">
                   {{ getErrorMessage(sectionName, propName) }}
                 </span>
@@ -98,8 +123,6 @@
                       </el-input>
 
                       <el-input-number v-if="field.type == 'number'"
-                                      :min="field.minimum"
-                                      :max="field.maximum"
                                       class="fw-num"
                                       v-model="value[sectionName][propName][fieldName]"
                                       :placeholder="field.default">
@@ -120,6 +143,8 @@
         </div>
       </div>
     </div>
+    <div id="load-indicator" v-else v-loading="true">
+    </div>
   </div>
 </template>
 
@@ -133,8 +158,9 @@
   * nesting is limited to 3 levels: section -> field -> subfield
   * sections are assumed to be objects
   * strings, numbers and enums are supported for fields
-  * anything with name ending in Free_Text renders as a textarea
-  * strings and numbers are supported for subfields
+  * anything with name ending in _Free_Text renders as a textarea.
+  * If name ends with _Table, it'll be rendered as a table.
+  * Strings and numbers are supported for subfields.
 
     FIELD_WIDTH dictionary can be used to control field/subfield widths.
 
@@ -148,17 +174,26 @@
     a submit event is emitted with dataset ID and stringified form value.
   */
 
- import metadataSchema from '../assets/metadata_schema.json';
+ import metadataRegistry from '../assets/metadataRegistry';
  import Ajv from 'ajv';
  import merge from 'lodash/merge';
  import {
    fetchAutocompleteSuggestionsQuery,
-   fetchMetadataQuery
+   fetchMetadataQuery,
+   metadataOptionsQuery
  } from '../api/metadata';
- import gql from 'graphql-tag';
  import Vue from 'vue';
 
+ const metadataSchemas = {};
+ for (const mdType of Object.keys(metadataRegistry)) {
+   const mdFilename = metadataRegistry[mdType];
+   metadataSchemas[mdType] = require(`../assets/${mdFilename}`);
+ }
+
  const ajv = new Ajv({allErrors: true});
+ // clear schema cache
+ ajv.removeSchema();
+ const schemaValidators = {};
 
  const FIELD_WIDTH = {
    'Institution': 6,
@@ -175,6 +210,9 @@
    'mz': 12,
    'Resolving_Power': 12,
    'Dataset_Name': 7,
+   'Solvent_A_Table': 7,
+   'Solvent_B_Table': 7,
+   'Gradient_Table': 9
  };
 
  function objectFactory(schema) {
@@ -231,51 +269,84 @@
  export default {
    name: 'metadata-editor',
    props: ['datasetId', 'enableSubmit', 'disabledSubmitMessage'],
-   created() {
-     this.loading = true;
-     this.$apollo.query({query: gql`{molecularDatabases{name}}`}).then(response => {
-       Vue.set(this.schema.properties.metaspace_options.properties.Metabolite_Database.items,
-               'enum',
-               response.data.molecularDatabases.map(d => d.name));
-       this.validator = ajv.compile(this.schema);
-       this.setLoadingStatus(false);
-     }).catch(err => {
-       console.log("Error fetching list of metabolite databases: ", err);
-     });
+   apollo: {
+     metadataSelectorOptions: {
+       query: metadataOptionsQuery,
+       update(data) {
+         this._possibleAdducts = {
+           'Positive': data.adducts.filter(a => a.charge > 0).map(a => a.adduct),
+           'Negative': data.adducts.filter(a => a.charge < 0).map(a => a.adduct)
+         };
+         this._molecularDatabases = data.molecularDatabases.map(d => d.name);
+         this.updateCurrentAdductOptions();
+       },
+       loadingKey: 'loading'
+     },
+     existingMetadata: {
+       query: fetchMetadataQuery,
+       variables() {
+         return { id: this.datasetId };
+       },
+       fetchPolicy: 'network-only',
+       skip() {
+         return !this.datasetId;
+       },
+       update(data) {
+         this.value = this.fixEntries(JSON.parse(data.dataset.metadataJson));
+         this._datasetMdType = this.value.Data_Type;
+         const defaultValue = objectFactory(this.schema);
+         this.value = merge({}, defaultValue, this.value);
+         this.updateCurrentAdductOptions();
+
+         // in case user just opened a link to metadata editing page w/o navigation in web-app,
+         // filters are not set up
+         this.$store.commit('updateFilter', {metadataType: this.value.Data_Type});
+       },
+       loadingKey: 'loading'
+     }
    },
 
    mounted() {
      // no datasetId means a new dataset => help filling out by loading the last submission
      if (!this.datasetId) {
        this.loadLastSubmission();
-       return;
      }
-
-     this.loading = true;
-     // otherwise we need to fetch existing data from the server
-     this.$apollo.query({
-       query: fetchMetadataQuery,
-       variables: { id: this.datasetId },
-       fetchPolicy: 'network-only'
-     }).then(resp => {
-       const defaultValue = objectFactory(metadataSchema),
-             value = this.fixEntries(JSON.parse(resp.data.dataset.metadataJson));
-       this.value = merge({}, defaultValue, value);
-       this.setLoadingStatus(false);
-     }).catch(err => {
-       console.log("Error fetching current metadata: ", err);
-     });
    },
 
    data() {
+     // some default value before we download metadata
+     this._datasetMdType = Object.keys(metadataRegistry)[0];
      return {
-       schema: metadataSchema,
-       value: objectFactory(metadataSchema),
+       // for existing dataset we can't predict metadata type before we download metadata
+       value: objectFactory(metadataSchemas[this.datasetId ? this._datasetMdType : this.$store.getters.filter.metadataType]),
        validationErrors: [],
-       loading: true
+       loading: 0,
+       // dictionary with highlighted row numbers in each table in the submission form
+       // keys in the dictionary are formatted like `metadata_section-section-property`
+       // if no row is highlighted, the corresponding key must not be in the dictionary
+       formTableCurrentRows: {}
      }
    },
+
    computed: {
+     schema() {
+       const schema = metadataSchemas[this.currentMetadataType()];
+       this.updateSchemaOptions(schema);
+       const curDataType = schema.properties.Data_Type.enum[0];
+       if (this.value.Data_Type != curDataType) {
+         this.value.Data_Type = curDataType;
+       }
+       return schema;
+     },
+
+     validator() {
+       const currentMdType = this.currentMetadataType();
+       if (!(currentMdType in schemaValidators)) {
+         schemaValidators[currentMdType] = ajv.compile(metadataSchemas[currentMdType]);
+       }
+       return schemaValidators[currentMdType];
+     },
+
      errorMessages() {
        let messages = {};
        for (let err of this.validationErrors) {
@@ -285,11 +356,15 @@
      }
    },
    methods: {
+     currentMetadataType() {
+       return this.datasetId ? this._datasetMdType : this.$store.getters.filter.metadataType;
+     },
+
      prettify(propName, parent) {
        let name = propName.toString()
                           .replace(/_/g, ' ')
                           .replace(/ [A-Z][a-z]/g, (x) => ' ' + x.slice(1).toLowerCase())
-                          .replace(/ freetext$/, '')
+                          .replace(/( freetext$| table$)/, '')
                           .replace('metaspace', 'METASPACE');
 
        if (this.isRequired(propName, parent))
@@ -305,6 +380,10 @@
 
      isFreeText(propName) {
        return propName.endsWith('Freetext');
+     },
+
+     isTable(propName) {
+       return propName.endsWith('Table');
      },
 
      enableAutocomplete(propName) {
@@ -323,15 +402,72 @@
      },
 
      isError(...args) {
-       let msg = this.errorMessages[this.buildPath(...args)];
-       if (msg)
-         return 'is-error';
-       else
-         return '';
+       let result = '';
+       const propPath = this.buildPath(...args);
+       if (this.isTable(args[args.length - 1])) {
+         // for table fields errors look like schema.path.field[rowNum].colName
+         for (const errorKey of Object.keys(this.errorMessages)) {
+           if (errorKey == propPath || RegExp(`^${propPath}\\[\\d+\\]`).test(errorKey)) {
+             result = 'is-table-error';
+             break;
+           }
+         }
+       } else {
+         result = propPath in this.errorMessages ? 'is-error' : '';
+       }
+       return result;
+     },
+
+     getSchemaField(...args) {
+       if (args.length > 2) {
+         const newArgs = args.slice(1, args.length - 1);
+         newArgs.push(args[args.length - 1].properties[args[0]]);
+         return this.getSchemaField(...newArgs);
+       } else if (args.length == 2) {
+         return args[1].properties[args[0]];
+       } else {
+         throw 'Unexpected number of arguments';
+       }
      },
 
      getErrorMessage(...args) {
-       return this.errorMessages[this.buildPath(...args)];
+       let result = '';
+       if (this.isTable(args[args.length - 1])) {
+         result = this.getTableErrorMessage(...args);
+       } else {
+         result = this.errorMessages[this.buildPath(...args)];
+       }
+       return result;
+     },
+
+     // for table content, error keys look like "schema.field.subfield[rowNum].colName"
+     getTableErrorMessage(...args) {
+       let result = '';
+       const propPath = this.buildPath(...args);
+       const colNameRe = RegExp(`^${propPath}\\[\\d+\\]`);
+       for (const errorKey of Object.keys(this.errorMessages)) {
+         if (errorKey == propPath || colNameRe.test(errorKey)) {
+           if (errorKey.length != propPath.length) {
+             const errorPath = errorKey.match(colNameRe)[0];
+             const zeroBasedErrRow = errorKey.substring(errorPath.lastIndexOf('[') + 1, errorPath.lastIndexOf(']'));
+             const errorRow = Number(zeroBasedErrRow) + 1;
+             const columnName = errorKey.substring(errorPath.length + 1);
+             if (columnName) {
+               const schemaPath = args.slice();
+               schemaPath.push(this.schema);
+               const schemaField = this.getSchemaField(...schemaPath);
+               const columnDisplayName = schemaField.items.properties[columnName].title;
+               result = `Row ${errorRow}: "${columnDisplayName}" ${this.errorMessages[errorKey]}`;
+             } else {
+               result = `Row ${errorRow} ${this.errorMessages[errorKey]}`;
+             }
+           } else {
+             result = this.errorMessages[errorKey];
+           }
+           break;
+         }
+       }
+       return result;
      },
 
      cancel() {
@@ -350,7 +486,7 @@
      },
 
      loadLastSubmission() {
-       const defaultValue = objectFactory(metadataSchema);
+       const defaultValue = objectFactory(this.schema);
        let lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
        if (lastValue && lastValue.metaspace_options) {
          lastValue.metaspace_options.Dataset_Name = ''; // different for each dataset
@@ -358,10 +494,36 @@
          /* we want to have all nested fields to be present for convenience,
             that's what objectFactory essentially does */
          this.value = merge({}, defaultValue, this.fixEntries(lastValue));
+         this.updateCurrentAdductOptions();
        } else {
          this.value = defaultValue;
        }
-       this.setLoadingStatus(false);
+     },
+
+     updateSchemaOptions(schema) {
+       if (!this.schemaHasMolDbOptions(schema) && this._molecularDatabases) {
+         schema.properties.metaspace_options.properties.Metabolite_Database.items['enum'] = this._molecularDatabases;
+
+         const selectedPolarity = this.value.MS_Analysis.Polarity;
+         schema.properties.metaspace_options.properties.Adducts.items['enum'] = selectedPolarity ? this._possibleAdducts[selectedPolarity] : [];
+       }
+     },
+
+     schemaHasMolDbOptions(schema) {
+       return 'enum' in schema.properties.metaspace_options.properties.Metabolite_Database.items;
+     },
+
+     updateCurrentAdductOptions() {
+       if (this._possibleAdducts && (this.value.MS_Analysis.Polarity in this._possibleAdducts)) {
+         Vue.set(this.schema.properties.metaspace_options.properties.Adducts.items,
+                 'enum',
+                 this._possibleAdducts[this.value.MS_Analysis.Polarity]);
+       }
+     },
+
+     onPolarityChange() {
+       this.value.metaspace_options.Adducts = [];
+       this.updateCurrentAdductOptions();
      },
 
      setLoadingStatus(value) {
@@ -374,7 +536,7 @@
      },
 
      submit() {
-       const cleanValue = trimEmptyFields(metadataSchema, this.value);
+       const cleanValue = trimEmptyFields(this.schema, this.value);
 
        this.validator(cleanValue);
        this.validationErrors = this.validator.errors || [];
@@ -401,9 +563,16 @@
      },
 
      /* for outside access from the upload page, to autofill it with the filename */
-     suggestDatasetName(name) {
-       if (this.value.metaspace_options.Dataset_Name == '')
-         this.value.metaspace_options.Dataset_Name = name;
+     fillDatasetName(name) {
+       this.value.metaspace_options.Dataset_Name = name;
+     },
+
+     insertObjectToArray(array, index, keys) {
+       const newObj = keys.reduce((res, key) => {
+         res[key] = undefined;
+         return res;
+       }, {})
+       array.splice(index, 0, newObj);
      }
    }
  }
@@ -485,6 +654,54 @@
 
  .md-ac {
    width: 100%;
+ }
+
+ #load-indicator {
+   min-height: 300px;
+ }
+
+ .el-table__body-wrapper {
+   overflow-x: hidden;
+ }
+
+ .el-table__empty-block {
+   min-height: inherit;
+   height: 50px;
+ }
+
+ .el-table__empty-text {
+   width: 90%;
+   color: #B5BCCC;
+ }
+
+ .el-table table tr > td {
+   padding-top: 5px;
+   padding-bottom: 5px;
+ }
+
+ .el-table table tr > td {
+   padding-top: 5px;
+   padding-bottom: 5px;
+ }
+
+ .el-table thead tr > th {
+   padding-top: 5px;
+   padding-bottom: 5px;
+ }
+
+ .el-table thead tr > th > .cell {
+   padding-left: 10px;
+   padding-right: 5px;
+ }
+
+ .table-btn {
+   float: right;
+   margin-top: 5px;
+   margin-left: 5px;
+ }
+
+ .is-table-error .el-table {
+   border: 1px solid red;
  }
 
 </style>

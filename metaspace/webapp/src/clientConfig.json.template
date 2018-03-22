@@ -14,5 +14,7 @@
       "s3_signature_version": 2
     },
     "storage": "{{ sm_webapp_upload_destination }}"
-  }
+  },
+
+  "metadataTypes": {{ sm_webapp_metadata_types | to_json }}
 }

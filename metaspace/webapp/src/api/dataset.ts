@@ -23,6 +23,7 @@ export const datasetListQuery =
       growthConditions
       metadataJson
       status
+      metadataType
       fdrCounts(inpFdrLvls: $inpFdrLvls) {
         levels
         counts
@@ -69,4 +70,11 @@ export const addOpticalImageQuery =
 export const deleteOpticalImageQuery =
   gql`mutation ($jwt: String!, $id: String!) {
     deleteOpticalImage(jwt: $jwt, datasetId: $id)
+  }`;
+
+export const msAcqGeometryQuery =
+  gql`query ($datasetId: String!) {
+    dataset(id: $datasetId) {
+      acquisitionGeometry
+    }
   }`;

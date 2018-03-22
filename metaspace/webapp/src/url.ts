@@ -8,7 +8,7 @@ interface Dictionary<T> {
 }
 
 export const DEFAULT_FILTER: Dictionary<any> = {
-  database: 'HMDB-v2.5',
+  database: FILTER_SPECIFICATIONS.database.initialValue,
   institution: undefined,
   submitter: undefined,
   datasetIds: undefined,
@@ -25,7 +25,8 @@ export const DEFAULT_FILTER: Dictionary<any> = {
   ionisationSource: undefined,
   maldiMatrix: undefined,
   analyzerType: undefined,
-  simpleQuery: ''
+  simpleQuery: '',
+  metadataType: FILTER_SPECIFICATIONS.metadataType.initialValue
 };
 
 const FILTER_TO_URL: Dictionary<string> = {
@@ -46,14 +47,16 @@ const FILTER_TO_URL: Dictionary<string> = {
   ionisationSource: 'src',
   maldiMatrix: 'matrix',
   analyzerType: 'instr',
-  simpleQuery: 'q'
+  simpleQuery: 'q',
+  metadataType: 'mdtype'
 };
 
 const URL_TO_FILTER: Dictionary<string> = invert(FILTER_TO_URL);
 
 const PATH_TO_LEVEL: Dictionary<string> = {
   '/annotations': 'annotation',
-  '/datasets': 'dataset'
+  '/datasets': 'dataset',
+  '/upload': 'upload'
 };
 
 export function encodeParams(filter: any, path: string): Dictionary<string> {

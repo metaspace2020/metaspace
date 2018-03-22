@@ -1,5 +1,6 @@
-var path = require('path');
-var webpack = require('webpack');
+const path = require('path');
+const webpack = require('webpack');
+const WebpackShellPlugin = require('webpack-shell-plugin');
 
 
 module.exports = {
@@ -85,6 +86,9 @@ module.exports = {
     new webpack.optimize.CommonsChunkPlugin({
       name: "vendor",
       filename: "vendor.bundle.js"
+    }),
+    new WebpackShellPlugin({
+      onBuildStart: ['node deref_schema.js src/assets/']
     })
   ]
 }

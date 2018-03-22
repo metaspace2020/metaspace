@@ -407,9 +407,11 @@
 </script>
 
 <style>
+ /* No attribute exists for MS Edge at the moment, so ion images are antialiased there */
  .isotope-image {
    image-rendering: pixelated;
    image-rendering: -moz-crisp-edges;
+   -ms-interpolation-mode: nearest-neighbor;
  }
 
  .image-loader {

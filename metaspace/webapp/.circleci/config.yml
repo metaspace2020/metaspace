@@ -24,6 +24,11 @@ jobs:
     working_directory: /tmp/webapp
     steps:
       - checkout
+      - run:
+          name: Check out git submodules
+          command: |
+            git submodule sync --recursive
+            git submodule update --recursive --init
       - restore_cache:
           keys:
             - yarn-cache-{{ .Branch }}-{{checksum "yarn.lock"}}

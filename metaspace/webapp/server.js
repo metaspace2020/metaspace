@@ -120,7 +120,7 @@ if (conf.AWS_ACCESS_KEY_ID && env != 'development') {
   AWS.config.update({
     accessKeyId: conf.AWS_ACCESS_KEY_ID,
     secretAccessKey: conf.AWS_SECRET_ACCESS_KEY,
-    region: 'eu-west-1'
+    region: conf.AWS_REGION
   });
 
   var ses = new AWS.SES();

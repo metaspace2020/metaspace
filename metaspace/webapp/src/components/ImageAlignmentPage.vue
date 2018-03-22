@@ -153,17 +153,10 @@
        type: Number,
        default: 25
      },
-
      // service for storing raw optical images
      rawImageStorageUrl: {
        type: String,
-       default: '/raw_optical_images',
-     },
-
-     // service for storing zoomed optical images (added/R)
-     imageStorageUrl: {
-       type: String,
-       default: '/optical_images',
+       default: '/fs/raw_optical_images',
      }
    },
 
@@ -180,27 +173,29 @@
        showHints: {
          status: true,
          text: 'Hide hints'
-       }
+       },
+       datasetName: ''
      }
    },
 
-   mounted() {
-     this.$apollo.query({
-       query: rawOpticalImageQuery,
-       variables: {ds_id: this.datasetId},
-       fetchPolicy: 'network-only'
-     }).then(({data}) => {
-       const {url, transform} = data.rawOpticalImage;
-       if (transform != null) {
-         this.opticalImgUrl = url;
-         this.initialTransform = transform;
-         this.angle = 0;
-         this.alreadyUploaded = true;
-       }
-     });
-   },
-
    apollo: {
+     rawOpticalImage: {
+       query: rawOpticalImageQuery,
+       variables() {
+         return {ds_id: this.datasetId}
+       },
+       fetchPolicy: 'network-only',
+       update(data) {
+         const {url, transform} = data.rawOpticalImage;
+         if (transform != null) {
+           this.opticalImgUrl = url;
+           this.initialTransform = transform;
+           this.angle = 0;
+           this.alreadyUploaded = true;
+         }
+       }
+     },
+
      annotations: {
        query: annotationListQuery,
        variables() {
@@ -217,12 +212,23 @@
        update: data => data.allAnnotations
      },
 
-     datasetName: {
-       query: gql`query getDatasetName($id: String!) { dataset(id: $id) { name } }`,
+     datasetProperties: {
+       query: gql`query getDatasetName($id: String!) {
+                    dataset(id: $id) {
+                      name
+                      metadataType
+                    }
+                  }`,
        variables() {
          return {id: this.datasetId};
        },
-       update: data => data.dataset.name
+       update(data) {
+         this.datasetName = data.dataset.name;
+
+         // in case user just opened a link to optical image upload page w/o navigation in web-app,
+         // filters are not set up
+         this.$store.commit('updateFilter', {metadataType: data.dataset.metadataType});
+       }
      }
    },
 

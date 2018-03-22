@@ -19,83 +19,29 @@
         </div>
 
         <el-collapse-item name="images" id="annot-img-collapse" class="av-centered">
-          <span slot="title">
-            <span style="padding-right: 20px">
-              m/z image
-            </span>
-
-            <el-popover placement="left" trigger="click">
-              <ion-image-settings></ion-image-settings>
-
-              <div slot="reference" @click="$event.stopPropagation()">
-                <i class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i>
-              </div>
-            </el-popover>
-
-            <span>
-              <img class="reset-image-icon"
-                   src="../assets/reset-image-icon.png"
-                   title="Reset image zoom and offsets"
-                   @click="resetViewport"/>
-            </span>
-
-            <span v-if="opticalImageUrl">
-              <img class="show-optical-image-icon"
-                   :class="showOpticalImage ? '' : 'png-icon-disabled'"
-                   src="../assets/microscope-icon.png"
-                   title="Show/hide optical image"
-                   @click="toggleOpticalImage"/>
-            </span>
-          </span>
-
-          <div class="main-ion-image-container">
-            <image-loader :src="annotation.isotopeImages[0].url"
-                          :colormap="colormap"
-                          :max-height=500
-                          id="annot-view-main-image-loader"
-                          ref="imageLoader"
-                          v-bind="imageLoaderSettings"
-                          @zoom="onImageZoom"
-                          @move="onImageMove"
-                          class="ion-image principal-peak-image">
-            </image-loader>
-
-            <div class="colorbar-container">
-              <div v-if="opticalImageUrl">
-                Opacity:
-                <el-slider
-                    vertical
-                    height="150px"
-                    v-model="opacity"
-                    :min=0
-                    :max=1
-                    :step=0.01
-                    style="margin: 10px 0px 30px 0px;"
-                >
-                </el-slider>
-              </div>
-
-              {{ annotation.isotopeImages[0].maxIntensity.toExponential(2) }}
-              <colorbar style="width: 20px; height: 160px; align-self: center;"
-                        :direction="colorbarDirection" :map="colormapName"
-                        slot="reference">
-              </colorbar>
-              {{ annotation.isotopeImages[0].minIntensity.toExponential(2) }}
-
-              <div class="annot-view__image-download" v-if="browserSupportsDomToImage">
-                <!-- see https://github.com/tsayen/dom-to-image/issues/155 -->
-                <img src="../assets/download-icon.png"
-                     width="32px"
-                     title="Save visible region in PNG format"
-                     @click="saveImage"/>
-              </div>
-            </div>
-          </div>
+          <component :is="metadataDependentComponent('main-image-header')"
+                     :annotation="annotation"
+                     :imageLoaderSettings="imageLoaderSettings"
+                     :resetViewport="resetViewport"
+                     :toggleOpticalImage="toggleOpticalImage"
+                     slot="title">
+          </component>
+          <component :is="metadataDependentComponent('main-image')"
+                     :annotation="annotation"
+                     :colormap="colormap"
+                     :colormapName="colormapName"
+                     :opacity="opacity"
+                     :imageLoaderSettings="imageLoaderSettings"
+                     :onImageZoom="onImageZoom"
+                     :onImageMove="onImageMove"
+                     :acquisitionGeometry="msAcqGeometry"
+                     v-on:opacityInput="newVal => opacity = newVal">
+          </component>
         </el-collapse-item>
 
         <el-collapse-item :title="compoundsTabLabel" name="compounds">
           <div id="compound-list">
-            <div class="compound" v-for="compound in annotation.possibleCompounds">
+            <div class="compound" v-for="(compound, idx) in annotation.possibleCompounds" :key="idx">
               <el-popover placement="left" trigger="click">
                 <img :src="compound.imageURL" class="compound-thumbnail"
                      slot="reference"/>
@@ -131,36 +77,14 @@
         </el-collapse-item>
 
         <el-collapse-item title="Diagnostics" name="scores">
-          <el-row id="scores-table">
-            MSM score =
-            <span>{{ annotation.msmScore.toFixed(3) }}</span> =
-            <span>{{ annotation.rhoSpatial.toFixed(3) }}</span>
-            (&rho;<sub>spatial</sub>) &times;
-            <span>{{ annotation.rhoSpectral.toFixed(3) }}</span>
-            (&rho;<sub>spectral</sub>) &times;
-            <span>{{ annotation.rhoChaos.toFixed(3) }}</span>
-            (&rho;<sub>chaos</sub>)
-          </el-row>
-          <el-row id="isotope-images-container">
-            <el-col :xs="24" :sm="12" :md="12" :lg="6"
-                    v-for="(img, idx) in annotation.isotopeImages.filter(img => img.url !== null)"
-                    :key="idx">
-              <div class="small-peak-image">
-                {{ img.mz.toFixed(4) }}<br/>
-                <image-loader :src="img.url"
-                              :colormap="colormap"
-                              :max-height=250
-                              v-bind="imageLoaderSettings"
-                              class="ion-image">
-                </image-loader>
-              </div>
-            </el-col>
-          </el-row>
-          <el-row id="isotope-plot-container">
-            <isotope-pattern-plot :data="peakChartData"
-                                  v-if="activeSections.indexOf('scores') !== -1">
-            </isotope-pattern-plot>
-          </el-row>
+          <component v-if="activeSections.indexOf('scores') !== -1"
+                     :is="metadataDependentComponent('diagnostics')"
+                     :annotation="annotation"
+                     :colormap="colormap"
+                     :imageLoaderSettings="imageLoaderSettings"
+                     :peakChartData="peakChartData"
+                     :acquisitionGeometry="msAcqGeometry">
+          </component>
         </el-collapse-item>
 
         <el-collapse-item title="Dataset info" name="metadata">
@@ -170,11 +94,16 @@
         </el-collapse-item>
 
         <el-collapse-item title="Related annotations" name="adducts">
-          <adducts-info v-if="activeSections.indexOf('adducts') !== -1"
-                        :annotation="annotation"
-                        :database="this.$store.getters.filter.database"
-                        :image-loader-settings="imageLoaderSettings">
-          </adducts-info>
+          <el-row style="font-size: 16px; text-align: center; margin: 10px auto;">
+            <span>All adducts for this annotation in the same dataset</span>
+          </el-row>
+          <component v-if="activeSections.indexOf('adducts') !== -1"
+                     :is="metadataDependentComponent('adducts-info')"
+                     :annotation="annotation"
+                     :database="this.$store.getters.filter.database"
+                     :acquisitionGeometry="msAcqGeometry"
+                     :image-loader-settings="imageLoaderSettings">
+          </component>
         </el-collapse-item>
       </el-collapse>
     </el-col>
@@ -182,30 +111,10 @@
 </template>
 
 <script lang="ts">
- export * from './AnnotationView.ts';
+ export * from './AnnotationView';
 </script>
 
 <style>
- .ion-image > img, .small-peak-image img {
-   image-rendering: pixelated;
-   image-rendering: -moz-crisp-edges;
-   -ms-interpolation-mode: nearest-neighbor;
- }
-
- #isotope-images-container {
-   margin: 0 auto;
-   text-align: left;
-   font-size: 0;
-   margin-top: 10px;
- }
-
- .small-peak-image {
-   font-size: 1rem;
-   vertical-align: top;
-   padding: 0 5px 0 5px;
-   text-align: center;
- }
-
  .sf-big {
    text-shadow : 0 0 0px #000;
    font: 24px 'Roboto', sans-serif;
@@ -245,18 +154,6 @@
    height: 700px;
  }
 
- #scores-table {
-   border-collapse: collapse;
-   border: 1px solid lightblue;
-   font-size: 16px;
-   text-align: center;
-   padding: 3px;
- }
-
- #scores-table > span {
-   color: blue;
- }
-
  .av-centered {
    text-align: center !important;
    cursor: default !important;
@@ -289,41 +186,6 @@
 
  #annot-img-collapse .el-collapse-item__header>span {
    display: inline-flex;
- }
-
-
- .main-ion-image-container {
-   display: flex;
-   flex-direction: row;
-   justify-content: center;
- }
-
- .colorbar-container {
-   display: flex;
-   flex-direction: column;
-   justify-content: flex-end;
-   padding-left: 10px;
-   padding-bottom: 6px;
- }
-
- #isotope-plot-container text {
-   font-family: "Roboto" !important;
- }
-
- .reset-image-icon, .show-optical-image-icon {
-   width: 24px;
-   padding-left: 20px;
-   vertical-align: middle;
-   cursor: pointer;
- }
-
- .png-icon-disabled {
-   opacity: 0.3;
- }
-
- .annot-view__image-download {
-   margin-top: 20px;
-   cursor: pointer;
  }
 
 </style>

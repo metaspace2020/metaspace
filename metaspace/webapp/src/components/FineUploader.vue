@@ -1,13 +1,12 @@
 <template>
   <div>
     <script type="text/template" id="qq-template">
-      <div class="qq-uploader-selector qq-uploader"
-          qq-drop-area-text="Drop here the .imzML and .ibd files">
+      <div id="upload-area-container" class="qq-uploader-selector qq-uploader">
         <div class="qq-upload-drop-area-selector qq-upload-drop-area" qq-hide-dropzone>
           <span class="qq-upload-drop-area-text-selector"></span>
         </div>
         <div class="buttons">
-          <div class="qq-upload-button-selector qq-upload-button metasp-button" role="button">
+          <div id="select-files-button" class="qq-upload-button-selector qq-upload-button metasp-button" role="button">
             Select files
           </div>
         </div>
@@ -73,7 +72,6 @@
    template: 'qq-template',
    autoUpload: false,
    iframeSupport: {localBlankPagePath: "/server/success.html"},
-   multiple: true,
    cors: {expected: true},
    chunking: {
      enabled: true,
@@ -83,16 +81,12 @@
    retry: {
      enableAuto: true
    },
-   resume: {enabled: true},
-   validation: {
-     itemLimit: 2,
-     allowedExtensions: ["imzML", "ibd"]
-   },
+   resume: {enabled: true}
  };
 
  export default {
    name: 'fine-uploader',
-   props: ['config'],
+   props: ['config', 'dataTypeConfig'],
    data() {
      return {
        fineUploader: null,
@@ -104,9 +98,28 @@
 
    mounted() {
      this.reset();
+     this.onDataTypeConfigUpdate();
+   },
+
+   watch: {
+     'dataTypeConfig': function() {
+       this.reset();
+       this.onDataTypeConfigUpdate();
+     }
    },
 
    methods: {
+     // FineUploader template initialization prevents from using Vue.js template features
+     // had to access DOM directly in this method
+     onDataTypeConfigUpdate() {
+       const multipleFilesAllowed = this.dataTypeConfig.maxFiles > 1;
+       const fileExtensions = this.dataTypeConfig.fileExtensions;
+       const formattedFileTypes = fileExtensions.length > 1 ? `${fileExtensions.slice(0, -1).join(', ')} and ${fileExtensions[fileExtensions.length - 1]}`
+                                                            : fileExtensions[0];
+       document.getElementById('upload-area-container').setAttribute('qq-drop-area-text',
+         `Drop ${formattedFileTypes} file${multipleFilesAllowed ? 's' : ''} here`);
+     },
+
      validate() {
        const files = this.fineUploader.getUploads();
 
@@ -118,24 +131,7 @@
          fnames = ['test.imzML', 'test.ibd'];
        }
 
-       if (fnames.length < 2) {
-         return;
-       }
-
-       const basename = fname => fname.split('.').slice(0, -1).join('.');
-       const extension = fname => fname.split('.').slice(-1)[0];
-
-       // consider only the last two selected files
-       let [first, second] = [fnames.slice(-2)[0], fnames.slice(-1)[0]];
-       let [fext, sext] = [first, second].map(extension);
-       let [fbn, sbn] = [first, second].map(basename);
-       if (fext == sext || fbn != sbn) {
-         this.$message({
-           message: "Incompatible file names! Please select 2 files " +
-                    "with the same name but different extension",
-           type: 'error'
-         });
-
+       if (!this.dataTypeConfig.nameValidator.bind(this)(fnames)) {
          return;
        }
 
@@ -145,12 +141,7 @@
      },
 
      uploadIfValid(id) {
-       if (!this.valid)
-         return;
-
-       // apparently that's the only way to check
-       // if both files are in fineUploader._storedIds already
-       if (id == 1) {
+       if (this.valid) {
          this.$emit('upload', this.uploadFilenames);
          this.fineUploader.uploadStoredFiles();
        }
@@ -162,6 +153,11 @@
        this.uuid = uuid();
 
        let options = Object.assign({}, basicOptions, {
+         validation: {
+           allowedExtensions: this.dataTypeConfig.fileExtensions,
+           itemLimit: this.dataTypeConfig.maxFiles
+         },
+         multiple: this.dataTypeConfig.maxFiles > 1,
          element: this.$refs.fu,
          objectProperties: {
            key: (id) => `${this.uuid}/${this.fineUploader.getFile(id).name}`

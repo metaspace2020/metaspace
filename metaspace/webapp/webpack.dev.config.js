@@ -1,5 +1,6 @@
 var path = require('path');
 var webpack = require('webpack');
+const WebpackShellPlugin = require('webpack-shell-plugin');
 
 module.exports = {
   entry: [
@@ -76,6 +77,9 @@ module.exports = {
   },
   devtool: '#eval-source-map',
   plugins: [
+    new WebpackShellPlugin({
+      onBuildStart: ['node deref_schema.js src/assets/']
+    }),
     new webpack.DefinePlugin({
       'process.env': {
         NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')

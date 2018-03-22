@@ -1,21 +1,14 @@
  import { renderMolFormula } from '../util';
  import DatasetInfo from './DatasetInfo.vue';
- import AdductsInfo from './AdductsInfo.vue';
- import ImageLoader from './ImageLoader.vue';
- import IonImageSettings from './IonImageSettings.vue';
- import IsotopePatternPlot from './IsotopePatternPlot.vue';
- import Colorbar from './Colorbar.vue';
- import {annotationQuery} from '../api/annotation';
- import {opticalImageQuery} from '../api/dataset';
+ import { annotationQuery } from '../api/annotation';
+ import { msAcqGeometryQuery, opticalImageQuery } from '../api/dataset';
  import { encodeParams } from '../url';
+ import annotationWidgets from './annotation-widgets/index'
 
- import Vue, { ComponentOptions } from 'vue';
+ import Vue from 'vue';
  import { Store } from 'vuex';
  import { Component, Prop } from 'vue-property-decorator';
  import { Location } from 'vue-router';
- import { saveAs } from 'file-saver';
-
- import * as domtoimage from 'dom-to-image';
 
  type ImagePosition = {
    zoom: number
@@ -31,16 +24,20 @@
 
  type ImageLoaderSettings = ImagePosition & ImageSettings;
 
+ const metadataDependentComponents: any = {};
+ const componentsToRegister: any = { DatasetInfo };
+ for (let category of Object.keys(annotationWidgets)) {
+   metadataDependentComponents[category] = {};
+   for (let mdType of Object.keys(annotationWidgets[category])) {
+     const component = annotationWidgets[category][mdType];
+     metadataDependentComponents[category][mdType] = component;
+     componentsToRegister[`${category}-${mdType}`] = component;
+   }
+ }
+
  @Component({
    name: 'annotation-view',
-   components: {
-     DatasetInfo,
-     AdductsInfo,
-     ImageLoader,
-     IonImageSettings,
-     IsotopePatternPlot,
-     Colorbar
-   },
+   components: componentsToRegister,
    apollo: {
      peakChartData: {
        query: annotationQuery,
@@ -70,19 +67,35 @@
        },
        // assumes both image server and webapp are routed via nginx
        update: (data: any) => data.opticalImageUrl
+     },
+
+     msAcqGeometry: {
+       query: msAcqGeometryQuery,
+       variables(this: any): any {
+         return {
+          datasetId: this.annotation.dataset.id
+         }
+       },
+       update: (data: any) => JSON.parse(data['dataset']['acquisitionGeometry'])
      }
    }
  })
  export default class AnnotationView extends Vue {
    $store: Store<any>
-   $refs: any
 
    @Prop()
    annotation: any
 
+   msAcqGeometry: any
    peakChartData: any
    opticalImageUrl: string
    showOpticalImage: boolean = true
+
+   metadataDependentComponent(category: string): any {
+     const currentMdType: string = this.$store.getters.filter.metadataType;
+     const componentKey: string = currentMdType in metadataDependentComponents[category] ? currentMdType : 'default';
+     return metadataDependentComponents[category][componentKey];
+   }
 
    get activeSections(): string[] {
      return this.$store.getters.settings.annotationView.activeSections;
@@ -94,10 +107,6 @@
 
    get colormapName(): string {
      return this.colormap.replace('-', '');
-   }
-
-   get colorbarDirection(): string {
-     return this.colormap[0] == '-' ? 'bottom' : 'top';
    }
 
    get formattedMolFormula(): string {
@@ -133,7 +142,9 @@
      return Object.assign({}, this.imagePosition, {
        annotImageOpacity: (this.showOpticalImage && this.opticalImageUrl) ? this.opacity : 1.0,
        opticalSrc: this.showOpticalImage ? this.opticalImageUrl : '',
-       opacityMode: this.imageOpacityMode
+       opticalImageUrl: this.opticalImageUrl,
+       opacityMode: this.imageOpacityMode,
+       showOpticalImage: this.showOpticalImage
      });
    }
 
@@ -174,22 +185,5 @@
    toggleOpticalImage(event: any): void {
      event.stopPropagation();
      this.showOpticalImage = !this.showOpticalImage
-   }
-
-   saveImage(event: any): void {
-     let node = this.$refs.imageLoader.getContainer();
-
-     domtoimage
-       .toBlob(node, {
-         width: this.$refs.imageLoader.imageWidth,
-         height: this.$refs.imageLoader.imageHeight
-       })
-       .then(blob => {
-         saveAs(blob, `${this.annotation.id}.png`);
-       })
-   }
-
-   get browserSupportsDomToImage(): boolean {
-     return window.navigator.userAgent.includes('Chrome');
    }
  }
