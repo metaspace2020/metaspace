@@ -140,9 +140,9 @@ const Resolvers = {
     },
 
     adductSuggestions() {
-      return config.default_adducts['-'].map(a => {
+      return config.defaults.adducts['-'].map(a => {
         return {adduct: a, charge: -1};
-      }).concat(config.default_adducts['+'].map(a => {
+      }).concat(config.defaults.adducts['+'].map(a => {
         return {adduct: a, charge: 1};
       }));
     },
