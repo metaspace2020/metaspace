@@ -24,6 +24,7 @@ export const datasetListQuery =
       metadataJson
       status
       fdrCounts(inpFdrLvls: $inpFdrLvls) {
+        dbName
         levels
         counts
       }
