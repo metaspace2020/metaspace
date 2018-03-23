@@ -85,6 +85,7 @@ function checkFetchRes(resp) {
   }
 }
 
+
 const Resolvers = {
   Person: {
     name(obj) { return obj.First_Name; },
@@ -266,20 +267,36 @@ const Resolvers = {
     },
 
     fdrCounts(ds, {inpFdrLvls}) {
-      let outFdrLvls = [], outFdrCounts = [];
+      let outFdrLvls = [], outFdrCounts = [], maxCounts = 0, dbName = '';
       if(ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
-        let inpAllLvlCounts = ds._source.annotation_counts[0].counts;
-        inpFdrLvls.forEach(lvl => {
-          let findRes = inpAllLvlCounts.find(lvlCount => {
-            return lvlCount.level === lvl
-          });
-          if (findRes) {
-            outFdrLvls.push(findRes.level);
-            outFdrCounts.push(findRes.n);
-          }
+        let annotCounts = ds._source.annotation_counts;
+        let dbList = ds._source.ds_config.databases.map(el => el.name);
+        let filteredDbList = annotCounts.filter(el => {
+          return dbList.includes(el.db.name)
         });
+        for (let db of filteredDbList) {
+          let buzz = db.counts.find(lvlObj => {
+            return lvlObj.level === 10
+          });
+          if (buzz.n >= maxCounts) {
+            maxCounts = buzz.n; outFdrLvls = []; outFdrCounts = [];
+            inpFdrLvls.forEach(inpLvl => {
+              let foo = db.counts.find(lvlObj => {
+                return lvlObj.level === inpLvl
+              });
+              if (foo) {
+                dbName = db.db.name;
+                outFdrLvls.push(foo.level);
+                outFdrCounts.push(foo.n);
+              }
+            })
+          } else {
+            break;
+          }
+        }
       }
       return {
+        'dbName': dbName,
         'levels': outFdrLvls,
         'counts': outFdrCounts
       }
