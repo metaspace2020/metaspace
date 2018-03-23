@@ -39,7 +39,7 @@ miniconda_env:
     - numpy=1.11.2
     - scipy=0.18.1
     - matplotlib=2
-    - pandas=0.19.1
+    - pandas=0.22.0
     - cffi
     - libgcc
     - psycopg2=2.7.1
@@ -57,6 +57,7 @@ miniconda_env:
       - pika>=0.11.0b1
       - bottle
       - pysparkling
+      - PyArrow>=0.8.0
 
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
 sm_branch: rel-v0.8
@@ -72,6 +73,7 @@ sm_es_password: ELASTIC_PASSWORD
 sm_send_email: true
 sm_create_schema: true  # set to false to avoid database dropping
 sm_create_es_index: true  # set to false to avoid Elasticsearch index dropping
+sm_isotope_storage_path: S3_ISOTOPE_STORAGE_PATH
 
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
@@ -163,7 +165,7 @@ sm_ansible_home: /opt/dev/sm-engine-ansible
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
 spark_key_file: ~/.ssh/ubuntu_spark
-spark_version: "2.1.1-bin-hadoop2.7"
+spark_version: "2.3.0-bin-hadoop2.7"
 spark_mirror: "https://s3-eu-west-1.amazonaws.com/sm-engine/dev"
 spark_home: "/usr/lib/spark"
 spark_user: "ubuntu"
