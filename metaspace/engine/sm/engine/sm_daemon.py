@@ -78,8 +78,9 @@ class SMDaemon(object):
         ds_name, ds_meta = self._fetch_ds_metadata(msg['ds_id'])
 
         base_url = self._sm_config['services']['web_app_url']
-        url_params = urllib.parse.quote(msg['ds_id'])
-        msg['web_app_link'] = '{}/#/annotations?ds={}'.format(base_url, url_params)
+        ds_id_quoted = urllib.parse.quote(msg['ds_id'])
+        md_type_quoted = urllib.parse.quote(ds_meta['Data_Type'])
+        msg['web_app_link'] = '{}/#/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
         self._post_to_slack('dart', ' [v] Succeeded: {}'.format(json.dumps(msg)))
 
         if msg['action'] == DatasetAction.ADD and self._is_possible_send_email(ds_meta):
