@@ -141,7 +141,6 @@ class SciTester(object):
                                         img_store=img_store, mode='local')
 
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
-        ds_man.delete(ds)
         from sm.engine import SearchJob
         ds_man.add(ds, search_job_factory=SearchJob, del_first=True)
 

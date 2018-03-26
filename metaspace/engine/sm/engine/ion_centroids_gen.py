@@ -134,7 +134,7 @@ class IonCentroidsGenerator(object):
 
         ion_map = self.ion_df.reset_index().set_index(['sf', 'adduct']).ion_i
         ion_ids = ion_map.loc[list(map(tuple, ions))].values
-        return self.ion_centroids_df.loc[ion_ids]
+        return self.ion_centroids_df.loc[ion_ids].sort_values(by='mz')
 
     def generate_if_not_exist(self, isocalc, sfs, adducts):
         if not self.exists():

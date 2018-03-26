@@ -64,7 +64,7 @@ class FDR(object):
         return df.drop('fdr_d', axis=1)
 
     def estimate_fdr(self, sf_adduct_msm_df):
-        logger.info('Estimating FDR...')
+        logger.info('Estimating FDR')
 
         all_sf_adduct_msm_df = (pd.DataFrame(self.ion_tuples(), columns=['sf', 'adduct'])
                                 .set_index(['sf', 'adduct']).sort_index())
