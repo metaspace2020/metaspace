@@ -58,6 +58,8 @@ miniconda_env:
       - bottle
       - pysparkling
       - PyArrow>=0.8.0
+      - Pillow==4.2.1,
+      - pyopenms==2.2.0
 
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
 sm_branch: rel-v0.8
@@ -111,7 +113,6 @@ nodejs_version: 8.*
 sm_graphql_repo_url: https://github.com/METASPACE2020/sm-graphql.git
 sm_graphql_branch: rel-v0.8
 sm_graphql_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually in production
-sm_graphql_home: /opt/dev/sm-graphql
 sm_graphql_home: /opt/dev/sm-graphql
 sm_graphql_slack_webhook_url: ""
 sm_graphql_slack_channel: ""
