@@ -20,7 +20,7 @@ RUN apt-get update && \
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 
 # install Spark
-ENV SPARK_DIR spark-2.1.1-bin-hadoop2.7
+ENV SPARK_DIR spark-2.3.0-bin-hadoop2.7
 RUN wget -qO - http://s3-eu-west-1.amazonaws.com/sm-engine/dev/$SPARK_DIR.tar.gz | tar xz
 ENV SPARK_HOME /root/$SPARK_DIR
 
@@ -35,5 +35,5 @@ COPY environment.yml /root/environment.yml
 RUN conda install -y nomkl && conda env create && conda clean -y --all
 
 # install environment for MolecularDB
-RUN git clone https://github.com/metaspace2020/sm-molecular-db -b rel-v0.7 && \
+RUN git clone https://github.com/metaspace2020/sm-molecular-db -b rel-v0.9 && \
     cd sm-molecular-db && conda env create && conda clean -y --all

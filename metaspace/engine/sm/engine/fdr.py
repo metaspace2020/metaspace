@@ -11,9 +11,8 @@ DECOY_ADDUCTS = ['+He', '+Li', '+Be', '+B', '+C', '+N', '+O', '+F', '+Ne', '+Mg'
 
 class FDR(object):
 
-    def __init__(self, job_id, mol_db, decoy_sample_size, target_adducts, db):
+    def __init__(self, job_id, decoy_sample_size, target_adducts, db):
         self.job_id = job_id
-        self._mol_db = mol_db
         self.decoy_sample_size = decoy_sample_size
         self.db = db
         self.target_adducts = target_adducts
@@ -21,29 +20,28 @@ class FDR(object):
         self.fdr_levels = [0.05, 0.1, 0.2, 0.5]
         self.random_seed = 42
 
-    def _decoy_adduct_gen(self, sf_ids, target_adducts, decoy_adducts_cand, decoy_sample_size):
+    def _decoy_adduct_gen(self, sfs, target_adducts, decoy_adducts_cand, decoy_sample_size):
         np.random.seed(self.random_seed)
-        for sf_id in sf_ids:
+        for sf in sfs:
             for ta in target_adducts:
                 for da in np.random.choice(decoy_adducts_cand, size=decoy_sample_size, replace=False):
-                    yield (sf_id, ta, da)
+                    yield (sf, ta, da)
 
-    def _save_target_decoy_df(self):
-        buf = StringIO()
-        df = self.td_df.copy()
-        df.insert(0, 'db_id', self._mol_db.id)
-        df.insert(0, 'job_id', self.job_id)
-        df.to_csv(buf, index=False, header=False)
-        buf.seek(0)
-        self.db.copy(buf, 'target_decoy_add', sep=',')
-
-    def decoy_adduct_selection(self):
-        sf_ids = self._mol_db.sfs.keys()
+    def decoy_adducts_selection(self, sfs):
         decoy_adduct_cand = list(set(DECOY_ADDUCTS) - set(self.target_adducts))
-        self.td_df = pd.DataFrame(self._decoy_adduct_gen(sf_ids, self.target_adducts,
+        self.td_df = pd.DataFrame(self._decoy_adduct_gen(sfs, self.target_adducts,
                                                          decoy_adduct_cand, self.decoy_sample_size),
-                                  columns=['sf_id', 'ta', 'da'])
-        self._save_target_decoy_df()
+                                  columns=['sf', 'ta', 'da'])
+
+    def ion_tuples(self):
+        """ All ions needed for FDR calculation """
+        d_ions = self.td_df[['sf', 'da']].drop_duplicates().values.tolist()
+        t_ions = self.td_df[['sf', 'ta']].drop_duplicates().values.tolist()
+        return t_ions + d_ions
+
+    def all_adducts(self):
+        """ Union of target and decoy adducts """
+        return list(set(self.target_adducts) | set(DECOY_ADDUCTS))
 
     @staticmethod
     def _msm_fdr_map(target_msm, decoy_msm):
@@ -65,19 +63,23 @@ class FDR(object):
         df['fdr'] = df.fdr_d
         return df.drop('fdr_d', axis=1)
 
-    def estimate_fdr(self, msm_df):
+    def estimate_fdr(self, sf_adduct_msm_df):
         logger.info('Estimating FDR')
+
+        all_sf_adduct_msm_df = (pd.DataFrame(self.ion_tuples(), columns=['sf', 'adduct'])
+                                .set_index(['sf', 'adduct']).sort_index())
+        all_sf_adduct_msm_df = all_sf_adduct_msm_df.join(sf_adduct_msm_df).fillna(0)
 
         target_fdr_df_list = []
         for ta in self.target_adducts:
-            target_msm = msm_df.loc(axis=0)[:,ta]
+            target_msm = all_sf_adduct_msm_df.loc(axis=0)[:, ta]
+            full_decoy_df = self.td_df[self.td_df.ta == ta][['sf', 'da']]
 
             msm_fdr_list = []
             for i in range(self.decoy_sample_size):
-                full_decoy_df = self.td_df[self.td_df.ta == ta][['sf_id', 'da']]
                 decoy_subset_df = full_decoy_df[i::self.decoy_sample_size]
                 sf_da_list = [tuple(row) for row in decoy_subset_df.values]
-                decoy_msm = msm_df.loc[sf_da_list]
+                decoy_msm = all_sf_adduct_msm_df.loc[sf_da_list]
                 msm_fdr = self._msm_fdr_map(target_msm, decoy_msm)
                 msm_fdr_list.append(msm_fdr)
 

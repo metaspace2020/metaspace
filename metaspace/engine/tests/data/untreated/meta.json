@@ -13,7 +13,7 @@
         "Institution": "EMBL"
     }, 
     "metaspace_options": { 
-        "Metabolite_Database": "HMDB", 
+        "Metabolite_Database": "HMDB-v2.5",
         "Dataset_Name": "untreated_test"
     }, 
     "Sample_Information": {

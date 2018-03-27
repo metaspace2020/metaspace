@@ -7,7 +7,10 @@ import requests
 from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('engine')
-METRICS_INS = 'INSERT INTO iso_image_metrics VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
+METRICS_INS = '''
+INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, msm, fdr, stats, iso_image_ids)
+VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+'''
 
 
 class SearchResults(object):
@@ -28,20 +31,21 @@ class SearchResults(object):
         self.metric_names = metric_names
 
     def _metrics_table_row_gen(self, job_id, db_id, metr_df, ion_img_ids):
-        for ind, r in metr_df.reset_index().iterrows():
+        for ind, r in metr_df.iterrows():
             m = OrderedDict((name, r[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
-            ids = ion_img_ids[(r.sf_id, r.adduct)]
-            yield (job_id, db_id, r.sf_id, r.adduct,
+            image_ids = ion_img_ids[r.ion_i]['iso_image_ids']
+            yield (job_id, db_id, r.sf, r.adduct,
                    float(r.msm), float(r.fdr), metr_json,
-                   ids['iso_image_ids'])
+                   image_ids)
 
     def store_ion_metrics(self, ion_metrics_df, ion_img_ids, db):
         """ Store formula image metrics and image ids in the database """
         logger.info('Storing iso image metrics')
 
         rows = list(self._metrics_table_row_gen(self.job_id, self.sf_db_id,
-                                                ion_metrics_df, ion_img_ids))
+                                                ion_metrics_df.reset_index(),
+                                                ion_img_ids))
         db.insert(METRICS_INS, rows)
 
     def _image_inserter(self, img_store, img_store_type, alpha_channel):
@@ -72,7 +76,7 @@ class SearchResults(object):
         Args
         ---------
         ion_metrics_df : pandas.Dataframe
-            sf_id, adduct, msm, fdr, individual metrics
+            sf, adduct, msm, fdr, individual metrics
         ion_iso_images : pyspark.RDD
             values must be lists of 2d intensity arrays (in coo_matrix format)
         alpha_channel : numpy.array

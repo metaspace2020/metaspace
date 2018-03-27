@@ -1,6 +1,6 @@
 from scipy.sparse import coo_matrix
 
-from sm.engine.tests.util import spark_context
+from sm.engine.tests.util import pysparkling_context as spark_context
 from sm.engine.msm_basic.formula_imager_segm import gen_iso_sf_images
 
 

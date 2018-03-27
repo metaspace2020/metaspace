@@ -16,7 +16,7 @@ class SearchAlgorithm(object):
     def search(self):
         pass
 
-    def calc_metrics(self, sf_images):
+    def calc_metrics(self, sf_images, ion_centroids_df):
         pass
 
     def estimate_fdr(self, all_sf_metrics_df):

@@ -26,7 +26,7 @@
   },
   "rabbitmq": {
     "host": "localhost",
-    "user": "sm_test",
+    "user": "sm",
     "password": "password"
   },
   "services": {
@@ -38,7 +38,7 @@
     "s3_base_path": ""
   },
   "spark": {
-    "master": "local[2]",
+    "master": "local[1]",
     "executor.memory": "2g"
   },
   "aws": {
@@ -70,5 +70,8 @@
         "path": "sm.engine.lcms_geometry_factory"
       },
       "img_storage_type": "db"
-  }]
+  }],
+  "isotope_storage": {
+    "path": "/tmp/isotope_storage"
+  }
 }

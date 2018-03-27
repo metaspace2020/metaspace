@@ -37,21 +37,21 @@ sm_log_config = {
             'class': 'logging.FileHandler',
             'formatter': 'sm',
             'level': logging.DEBUG,
-            'filename': os.path.join(proj_root(), 'logs/sm-engine.log')
+            'filename': '/tmp/sm-engine.log'
         }
     },
     'loggers': {
         'engine': {
             'handlers': ['console_debug', 'file'],
-            'level': logging.DEBUG
+            'level': logging.INFO
         },
         'api': {
             'handlers': ['console_debug'],
-            'level': logging.DEBUG
+            'level': logging.INFO
         },
         'daemon': {
             'handlers': ['console_debug'],
-            'level': logging.DEBUG
+            'level': logging.INFO
         }
     }
 }
@@ -67,6 +67,10 @@ log_level_codes = {
 def init_logger(name=None):
     """ Init logger using SM config file
     """
+    logs_dir = Path(proj_root()).joinpath('logs')
+    if not logs_dir.exists():
+        logs_dir.mkdir()
+
     if name:
         sm_config = SMConfig.get_conf()
         log_config = sm_log_config
@@ -169,6 +173,11 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
     imzml_path = next(base_dir.glob('*.imzML'))
     ms_file_type_config = SMConfig.get_ms_file_handler(str(imzml_path))
     img_storage_type = ms_file_type_config['img_storage_type']
-
     return Dataset(id=ds_id, name=ds_name, input_path=ds_input_path, img_storage_type=img_storage_type,
                    upload_dt=datetime.now(), metadata=metadata, config=ds_config)
+
+
+def split_s3_path(path):
+    """ Returns a pair (bucket, key) """
+    return path.split('s3a://')[-1].split('/', 1)
+

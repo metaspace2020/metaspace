@@ -17,8 +17,7 @@ if __name__ == "__main__":
 
     SMConfig.set_path(args.config_path)
     init_logger(name='daemon')
-
-    daemon = SMDaemon(SM_ANNOTATE, SMDaemonDatasetManager)
+    daemon = SMDaemon(qdesc=SM_ANNOTATE, dataset_manager_factory=SMDaemonDatasetManager)
 
     signal.signal(signal.SIGINT, lambda *args: daemon.stop())
     signal.signal(signal.SIGTERM, lambda *args: daemon.stop())

@@ -14,15 +14,9 @@ import boto3
 from botocore.exceptions import ClientError
 from boto3.s3.transfer import S3Transfer
 
-from sm.engine.util import cmd_check, SMConfig
-
+from sm.engine.util import cmd_check, SMConfig, split_s3_path
 
 logger = logging.getLogger('engine')
-
-
-def split_s3_path(path):
-    """ Returns a pair (bucket, key) """
-    return path.split('s3a://')[-1].split('/', 1)
 
 
 def split_local_path(path):
@@ -36,7 +30,7 @@ def delete_s3_path(bucket, path, s3):
             s3.Object(bucket, obj.key).delete()
         logger.info('Successfully deleted "%s"', path)
     except CalledProcessError as e:
-        logger.warning('Deleting "%s" error: %s', path, e.message)
+        logger.warning('Deleting "%s" error: %s', path, e.stderr)
 
 
 def delete_local_path(path):
@@ -44,7 +38,7 @@ def delete_local_path(path):
         cmd_check('rm -rf {}', path)
         logger.info('Successfully deleted "%s"', path)
     except CalledProcessError as e:
-        logger.warning('Deleting %s error: %s', path, e.message)
+        logger.warning('Deleting %s error: %s', path, e.stderr)
 
 
 class LocalWorkDir(object):
@@ -131,7 +125,7 @@ class S3WorkDir(object):
             return True
 
     def copy(self, local, remote):
-        logger.info('Coping dataset file to S3')
+        logger.info('Coping from {} to {}'.format(local, remote))
         self.s3transfer.upload_file(local, *split_s3_path(remote))
 
 

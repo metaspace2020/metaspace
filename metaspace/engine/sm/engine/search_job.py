@@ -11,19 +11,22 @@ from datetime import datetime
 from pyspark import SparkContext, SparkConf
 import logging
 
+from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
 from sm.engine.dataset import DatasetStatus
 from sm.engine.dataset_reader import DatasetReader
 from sm.engine.db import DB
-from sm.engine.fdr import FDR
+from sm.engine.fdr import FDR, DECOY_ADDUCTS
 from sm.engine.search_results import SearchResults
-from sm.engine.theor_peaks_gen import TheorPeaksGenerator
+from sm.engine.ion_centroids_gen import IonCentroidsGenerator
 from sm.engine.util import proj_root, SMConfig, read_json, sm_log_formatters
 from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 from sm.engine.errors import JobFailedError, ESExportFailedError
 from sm.engine.queue import QueuePublisher
+from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS
 
 logger = logging.getLogger('engine')
 
@@ -51,7 +54,7 @@ class SearchJob(object):
         self._db = None
         self._ds = None
         self._ds_reader = None
-        self._queue = None
+        self._status_queue = None
         self._fdr = None
         self._wd_manager = None
         self._es = None
@@ -85,10 +88,6 @@ class SearchJob(object):
         rows = [(mol_db_id, self._ds.id, 'STARTED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self._job_id = self._db.insert_return(JOB_INS, rows)[0]
 
-    # TODO: stop storing target-decoy adduct combinations in the database
-    def clean_target_decoy_table(self):
-        self._db.alter(TARGET_DECOY_ADD_DEL, self._ds.id)
-
     def _run_annotation_job(self, mol_db):
         try:
             self.store_job_meta(mol_db.id)
@@ -97,15 +96,21 @@ class SearchJob(object):
             logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
                         self._ds.id, self._ds.name, mol_db.name, mol_db.version)
 
-            theor_peaks_gen = TheorPeaksGenerator(self._sc, mol_db, self._ds.config, db=self._db)
-            theor_peaks_gen.run()
+            self._fdr = FDR(job_id=self._job_id,
+                            decoy_sample_size=20,
+                            target_adducts=self._ds.config['isotope_generation']['adducts'],
+                            db=self._db)
+            self._fdr.decoy_adducts_selection(mol_db.sfs.values())
 
-            target_adducts = self._ds.config['isotope_generation']['adducts']
-            self._fdr = FDR(self._job_id, mol_db,
-                            decoy_sample_size=20, target_adducts=target_adducts, db=self._db)
-            self._fdr.decoy_adduct_selection()
+            isocalc = IsocalcWrapper(self._ds.config['isotope_generation'])
+            centroids_gen = IonCentroidsGenerator(sc=self._sc, moldb_name=mol_db.name, isocalc=isocalc)
+            centroids_gen.generate_if_not_exist(isocalc=isocalc,
+                                                sfs=mol_db.sfs.values(),
+                                                adducts=self._fdr.all_adducts())
 
-            search_alg = MSMBasicSearch(self._sc, self._ds, self._ds_reader, mol_db, self._fdr, self._ds.config)
+            search_alg = MSMBasicSearch(sc=self._sc, ds=self._ds, ds_reader=self._ds_reader,
+                                        mol_db=mol_db, centr_gen=centroids_gen,
+                                        fdr=self._fdr, ds_config=self._ds.config)
             ion_metrics_df, ion_iso_images = search_alg.search()
 
             search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys())
@@ -117,11 +122,11 @@ class SearchJob(object):
             msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
             raise JobFailedError(msg) from e
         else:
-            self._export_search_results_to_es(mol_db)
+            self._export_search_results_to_es(mol_db, isocalc)
 
-    def _export_search_results_to_es(self, mol_db):
+    def _export_search_results_to_es(self, mol_db, isocalc):
         try:
-            self._es.index_ds(self._ds.id, mol_db)
+            self._es.index_ds(self._ds.id, mol_db, isocalc)
         except Exception as e:
             self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
             msg = 'Export to ES failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
@@ -173,9 +178,12 @@ class SearchJob(object):
             self._ds = ds
 
             if self._sm_config['rabbitmq']:
-                self._queue = QueuePublisher(self._sm_config['rabbitmq'], logger)
+                self._status_queue = QueuePublisher(config=self._sm_config['rabbitmq'],
+                                                    qdesc=SM_DS_STATUS,
+                                                    logger=logger)
             else:
-                self._queue = None
+                self._status_queue = None
+            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.STARTED)
 
             self._wd_manager = WorkDirManager(ds.id)
             self._configure_spark()
@@ -189,7 +197,7 @@ class SearchJob(object):
             self._save_data_from_raw_ms_file()
             self._img_store.storage_type = self._ds.get_ion_img_storage_type(self._db)
 
-            ds.set_status(self._db, self._es, self._queue, DatasetStatus.STARTED)
+            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.STARTED)
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
@@ -197,21 +205,20 @@ class SearchJob(object):
                 mol_db = MolecularDB(id=mol_db_id, iso_gen_config=self._ds.config['isotope_generation'], db=self._db)
                 self._run_annotation_job(mol_db)
 
-            ds.set_status(self._db, self._es, self._queue, DatasetStatus.FINISHED)
+            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.FINISHED)
 
             logger.info("All done!")
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
         except Exception as e:
             if self._ds:
-                ds.set_status(self._db, self._es, self._queue, DatasetStatus.FAILED)
+                ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.FAILED)
             logger.error(e, exc_info=True)
             raise
         finally:
             if self._sc:
                 self._sc.stop()
             if self._db:
-                self.clean_target_decoy_table()
                 self._db.close()
             if self._wd_manager and not self.no_clean:
                 self._wd_manager.clean()

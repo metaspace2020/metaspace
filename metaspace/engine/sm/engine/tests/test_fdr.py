@@ -1,9 +1,11 @@
+from itertools import product
+
 import pandas as pd
 from sm.engine.db import DB
 from unittest.mock import MagicMock, patch
 from pandas.util.testing import assert_frame_equal
 
-from sm.engine.fdr import FDR
+from sm.engine.fdr import FDR, DECOY_ADDUCTS
 from sm.engine import MolecularDB
 
 
@@ -15,65 +17,87 @@ def test_fdr_decoy_adduct_selection_saves_corr():
     mol_db_mock.id.return_value = 0
     mol_db_mock.sfs.return_value = {1: 'sf_1'}
 
-    fdr = FDR(0, mol_db_mock, 2, ['+H', '+K'], db_mock)
+    fdr = FDR(job_id=0, decoy_sample_size=2, target_adducts=['+H', '+K'], db=db_mock)
 
     def assert_df_values_equal(self, other):
         assert set(self) == set(other)
 
-    exp_target_decoy_df = pd.DataFrame([(1, '+H', '+He'),
-                                        (1, '+H', '+Li'),
-                                        (1, '+K', '+He'),
-                                        (1, '+K', '+Li')],
-                                       columns=['sf_id', 'ta', 'da'])
+    exp_target_decoy_df = pd.DataFrame([('H2O', '+H', '+He'),
+                                        ('H2O', '+H', '+Li'),
+                                        ('H2O', '+K', '+He'),
+                                        ('H2O', '+K', '+Li')],
+                                       columns=['sf', 'ta', 'da'])
     fdr._save_target_decoy_df = MagicMock(side_effect=lambda: assert_df_values_equal(exp_target_decoy_df, fdr.td_df))
 
-    fdr.decoy_adduct_selection()
+    fdr.decoy_adducts_selection(['H2O'])
 
 
 def test_estimate_fdr_returns_correct_df():
-    fdr = FDR(0, None, 2, ['+H'], None)
+    fdr = FDR(job_id=0, decoy_sample_size=2, target_adducts=['+H'], db=None)
     fdr.fdr_levels = [0.2, 0.8]
-    fdr.td_df = pd.DataFrame([[1, '+H', '+Cu'],
-                              [1, '+H', '+Co'],
-                              [2, '+H', '+Ag'],
-                              [2, '+H', '+Ar']],
-                             columns=['sf_id', 'ta', 'da'])
+    fdr.td_df = pd.DataFrame([['H2O', '+H', '+Cu'],
+                              ['H2O', '+H', '+Co'],
+                              ['C2H2', '+H', '+Ag'],
+                              ['C2H2', '+H', '+Ar']],
+                             columns=['sf', 'ta', 'da'])
 
-    msm_df = pd.DataFrame([[1, '+H', 0.85],
-                          [2, '+H', 0.5],
-                          [1, '+Cu', 0.5],
-                          [1, '+Co', 0.5],
-                          [2, '+Ag', 0.75],
-                          [2, '+Ar', 0.0]],
-                          columns=['sf_id', 'adduct', 'msm']).set_index(['sf_id', 'adduct']).sort_index()
-    exp_sf_df = pd.DataFrame([[1, '+H', 0.2], [2, '+H', 0.8]],
-                             columns=['sf_id', 'adduct', 'fdr']).set_index(['sf_id', 'adduct'])
+    msm_df = pd.DataFrame([['H2O', '+H', 0.85],
+                          ['C2H2', '+H', 0.5],
+                          ['H2O', '+Cu', 0.5],
+                          ['H2O', '+Co', 0.5],
+                          ['C2H2', '+Ag', 0.75],
+                          ['C2H2', '+Ar', 0.0]],
+                          columns=['sf', 'adduct', 'msm']).set_index(['sf', 'adduct']).sort_index()
+    exp_sf_df = pd.DataFrame([['H2O', '+H', 0.2], ['C2H2', '+H', 0.8]],
+                             columns=['sf', 'adduct', 'fdr']).set_index(['sf', 'adduct'])
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
 
 
 def test_estimate_fdr_digitize_works():
-    fdr = FDR(0, None, 1, ['+H'], None)
+    fdr = FDR(job_id=0, decoy_sample_size=1, target_adducts=['+H'], db=None)
     fdr.fdr_levels = [0.4, 0.8]
-    fdr.td_df = pd.DataFrame([[1, '+H', '+Cu'],
-                              [2, '+H', '+Ag'],
-                              [3, '+H', '+Cl'],
-                              [4, '+H', '+Co']],
-                             columns=['sf_id', 'ta', 'da'])
+    fdr.td_df = pd.DataFrame([['C1', '+H', '+Cu'],
+                              ['C2', '+H', '+Ag'],
+                              ['C3', '+H', '+Cl'],
+                              ['C4', '+H', '+Co']],
+                             columns=['sf', 'ta', 'da'])
 
-    msm_df = pd.DataFrame([[1, '+H', 1.0],
-                          [2, '+H', 0.75],
-                          [3, '+H', 0.5],
-                          [4, '+H', 0.25],
-                          [1, '+Cu', 0.75],
-                          [2, '+Ag', 0.3],
-                          [3, '+Cl', 0.25],
-                          [4, '+Co', 0.1]],
-                          columns=['sf_id', 'adduct', 'msm']).set_index(['sf_id', 'adduct']).sort_index()
-    exp_sf_df = pd.DataFrame([[1, '+H', 0.4],
-                              [2, '+H', 0.4],
-                              [3, '+H', 0.4],
-                              [4, '+H', 0.8]],
-                             columns=['sf_id', 'adduct', 'fdr']).set_index(['sf_id', 'adduct'])
+    msm_df = pd.DataFrame([['C1', '+H', 1.0],
+                          ['C2', '+H', 0.75],
+                          ['C3', '+H', 0.5],
+                          ['C4', '+H', 0.25],
+                          ['C1', '+Cu', 0.75],
+                          ['C2', '+Ag', 0.3],
+                          ['C3', '+Cl', 0.25],
+                          ['C4', '+Co', 0.1]],
+                          columns=['sf', 'adduct', 'msm']).set_index(['sf', 'adduct']).sort_index()
+    exp_sf_df = pd.DataFrame([['C1', '+H', 0.4],
+                              ['C2', '+H', 0.4],
+                              ['C3', '+H', 0.4],
+                              ['C4', '+H', 0.8]],
+                             columns=['sf', 'adduct', 'fdr']).set_index(['sf', 'adduct'])
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
+
+
+def test_ions():
+    sfs = {0: 'H2O', 1: 'C5H2OH'}
+    target_adducts = ['+H', '+Na']
+    decoy_sample_size = 5
+
+    mol_db_mock = MagicMock(MolecularDB)
+    mol_db_mock.sfs = sfs
+
+    fdr = FDR(job_id=0, decoy_sample_size=decoy_sample_size,
+              target_adducts=target_adducts, db=None)
+    fdr.decoy_adducts_selection(['H2O', 'C5H2OH'])
+    ions = fdr.ion_tuples()
+
+    assert type(ions) == list
+    # total number varies because different (sf, adduct) pairs may receive the same (sf, decoy_adduct) pair
+    assert len(sfs) * decoy_sample_size + len(sfs) * len(target_adducts) < \
+           len(ions) <= \
+           len(sfs) * len(target_adducts) * decoy_sample_size + len(sfs) * len(target_adducts)
+    target_ions = [(sf, adduct) for sf, adduct in product(sfs.values(), target_adducts)]
+    assert set(target_ions).issubset(set(map(tuple, ions)))
