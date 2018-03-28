@@ -227,7 +227,8 @@
        let body = {
          dFilter: Object.assign({status}, this.$store.getters.gqlDatasetFilter),
          query: this.$store.getters.ftsQuery,
-         inpFdrLvls: []
+         inpFdrLvls: [],
+         checkLvl: 10
        };
        if (status === 'FINISHED') {body['inpFdrLvls'] = [10]};
        return body
