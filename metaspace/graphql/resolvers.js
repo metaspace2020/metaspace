@@ -266,28 +266,28 @@ const Resolvers = {
       return ds._source.ds_upload_dt;
     },
 
-    fdrCounts(ds, {inpFdrLvls}) {
+    fdrCounts(ds, {inpFdrLvls, checkLvl}) {
       let outFdrLvls = [], outFdrCounts = [], maxCounts = 0, dbName = '';
       if(ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
         let annotCounts = ds._source.annotation_counts;
-        let dbList = ds._source.ds_config.databases.map(el => el.name);
+        let dbList = ds._source.ds_meta.metaspace_options.Metabolite_Database;
         let filteredDbList = annotCounts.filter(el => {
           return dbList.includes(el.db.name)
         });
         for (let db of filteredDbList) {
-          let buzz = db.counts.find(lvlObj => {
-            return lvlObj.level === 10
+          let maxCountsCand = db.counts.find(lvlObj => {
+            return lvlObj.level === checkLvl
           });
-          if (buzz.n >= maxCounts) {
-            maxCounts = buzz.n; outFdrLvls = []; outFdrCounts = [];
+          if (maxCountsCand.n >= maxCounts) {
+            maxCounts = maxCountsCand.n; outFdrLvls = []; outFdrCounts = [];
             inpFdrLvls.forEach(inpLvl => {
-              let foo = db.counts.find(lvlObj => {
+              let findRes = db.counts.find(lvlObj => {
                 return lvlObj.level === inpLvl
               });
-              if (foo) {
+              if (findRes) {
                 dbName = db.db.name;
-                outFdrLvls.push(foo.level);
-                outFdrCounts.push(foo.n);
+                outFdrLvls.push(findRes.level);
+                outFdrCounts.push(findRes.n);
               }
             })
           } else {
