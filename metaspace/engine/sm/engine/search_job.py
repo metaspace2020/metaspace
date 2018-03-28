@@ -24,9 +24,7 @@ from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 from sm.engine.errors import JobFailedError, ESExportFailedError
-from sm.engine.queue import QueuePublisher
-from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS
+from sm.engine.queue import QueuePublisher, SM_DS_STATUS
 
 logger = logging.getLogger('engine')
 

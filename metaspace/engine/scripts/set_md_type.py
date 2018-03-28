@@ -32,7 +32,7 @@ if __name__ == "__main__":
     sm_config = SMConfig.get_conf()
 
     init_logger()
-    logger = logging.getLogger('sm-engine')
+    logger = logging.getLogger('engine')
 
     db = DB(sm_config['db'])
 

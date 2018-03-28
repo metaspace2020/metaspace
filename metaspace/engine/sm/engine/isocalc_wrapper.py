@@ -27,7 +27,7 @@ class IsocalcWrapper(object):
             polarity = isocalc_config['charge']['polarity']
             self.charge = (-1 if polarity == '-' else 1) * isocalc_config['charge']['n_charges']
         self.sigma = float(isocalc_config['isocalc_sigma'])
-        self.pts_per_mz = int(isocalc_config['isocalc_pts_per_mz'])
+        # self.pts_per_mz = int(isocalc_config['isocalc_pts_per_mz'])
 
     @staticmethod
     def _trim(mzs, ints, k):

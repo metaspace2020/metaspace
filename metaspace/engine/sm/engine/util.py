@@ -13,6 +13,7 @@ from sm.engine import Dataset
 def proj_root():
     return os.getcwd()
 
+
 sm_log_formatters = {
     'sm': {
         'format': '%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s'
@@ -37,7 +38,7 @@ sm_log_config = {
             'class': 'logging.FileHandler',
             'formatter': 'sm',
             'level': logging.DEBUG,
-            'filename': '/tmp/sm-engine.log'
+            'filename': '/tmp/engine.log'
         }
     },
     'loggers': {

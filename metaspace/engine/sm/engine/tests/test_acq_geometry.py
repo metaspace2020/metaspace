@@ -7,6 +7,7 @@ from os.path import join, dirname
 from sm.engine.acq_geometry_factory import ACQ_GEOMETRY_KEYS
 from sm.engine.ims_geometry_factory import ImsGeometryFactory
 from sm.engine.lcms_geometry_factory import LcmsGeometryFactory
+from sm.engine.util import proj_root
 
 
 class TestGeometryVariants(object):
@@ -22,13 +23,12 @@ class TestGeometryVariants(object):
     }
     empty = {}
 
-PROJ_DIR_PATH = dirname(dirname(dirname(dirname(__file__))))
 
 def test_ims_geometry_factory():
     imzml_parser_mock = MagicMock(ImzMLParser)
     imzml_parser_mock.imzmldict = TestGeometryVariants.regular
 
-    ims_file_path = join(PROJ_DIR_PATH, 'tests/data/imzml_example_ds/Example_Continuous.imzML')
+    ims_file_path = join(proj_root(), 'tests/data/imzml_example_ds/Example_Continuous.imzML')
 
     factory_reg_geom = ImsGeometryFactory(ims_file_path)
     factory_reg_geom.parser = imzml_parser_mock
@@ -90,7 +90,7 @@ def test_ims_geometry_factory():
     }
 
 def test_lcms_geometry_factory():
-    lcms_file_path = join(PROJ_DIR_PATH, 'tests/data/lcms_acq_geometry_example/apple_surface_swab.mzML')
+    lcms_file_path = join(proj_root(), 'tests/data/lcms_acq_geometry_example/apple_surface_swab.mzML')
     factory = LcmsGeometryFactory(lcms_file_path.encode())
 
     geometry = factory.create()

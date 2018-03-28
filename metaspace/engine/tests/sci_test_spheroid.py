@@ -154,7 +154,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scientific tests runner')
     parser.add_argument('-r', '--run', action='store_true', help='compare current search results with previous')
     parser.add_argument('-s', '--save', action='store_true', help='store current search results')
-    parser.add_argument('--sm-config', dest='sm_config_path',
+    parser.add_argument('--config', dest='sm_config_path',
                         default=join(proj_root(), 'conf/config.json'),
                         help='path to sm config file')
     parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')

@@ -21,10 +21,10 @@ class SMDaemon(object):
         self._sm_config = SMConfig.get_conf()
         self._stopped = False
         self._action_queue_consumer = QueueConsumer(config=self._sm_config['rabbitmq'], qdesc=qdesc,
-                                                         callback=self._callback,
-                                                         on_success=self._on_success,
-                                                         on_failure=self._on_failure,
-                                                         logger_name='sm-daemon')
+                                                    callback=self._callback,
+                                                    on_success=self._on_success,
+                                                    on_failure=self._on_failure,
+                                                    logger_name='daemon')
 
     def _post_to_slack(self, emoji, msg):
         slack_conf = SMConfig.get_conf().get('slack', {})

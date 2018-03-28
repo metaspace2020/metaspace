@@ -2,7 +2,6 @@ import json
 import logging
 
 from sm.engine.errors import UnknownDSID
-from sm.engine.queue import SM_DS_STATUS
 
 logger = logging.getLogger('engine')
 

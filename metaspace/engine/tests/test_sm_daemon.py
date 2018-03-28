@@ -117,7 +117,7 @@ def test_sm_daemon_receive_message(sm_config, clean_ds_man_mock, delete_queue):
     sm_daemon._on_failure = on_failure
     sm_daemon._action_queue_consumer = QueueConsumer(sm_config['rabbitmq'], ACTION_QDESC,
                                                      callback, on_success, on_failure,
-                                                     logger_name='sm-daemon')
+                                                     logger_name='daemon')
     run_sm_daemon_thread(sm_daemon)
 
     callback.assert_called_once_with(msg)

@@ -31,3 +31,6 @@ dependencies:
     - coveralls
     - pypng
     - PyArrow>=0.8.0
+    - Pillow==4.2.1
+    - pyopenms==2.2.0
+    - pysparkling

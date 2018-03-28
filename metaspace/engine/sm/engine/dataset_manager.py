@@ -117,7 +117,7 @@ class SMDaemonDatasetManager(DatasetManager):
 
     def __init__(self, db, es, img_store, mode=None, status_queue=None):
         DatasetManager.__init__(self, db=db, es=es, img_store=img_store, mode=mode,
-                                status_queue=status_queue, logger_name='sm-daemon')
+                                status_queue=status_queue, logger_name='daemon')
 
     def process(self, ds, action, **kwargs):
         if action == DatasetAction.ADD:
@@ -191,7 +191,7 @@ class SMapiDatasetManager(DatasetManager):
 
     def __init__(self, db, es, image_store, mode, action_queue=None, status_queue=None):
         DatasetManager.__init__(self, db=db, es=es, img_store=image_store, mode=mode,
-                                status_queue=status_queue, logger_name='sm-api')
+                                status_queue=status_queue, logger_name='api')
         self._action_queue = action_queue
 
     def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT, **kwargs):
