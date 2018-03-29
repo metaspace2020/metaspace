@@ -1,8 +1,13 @@
 import logging
 import json
+from threading import Event, Thread
 from time import sleep
 import pika
 from pika.exceptions import AMQPError, ConnectionClosed
+
+
+class StopThread(Exception):
+    pass
 
 
 class QueueConsumerAsync(object):
@@ -353,11 +358,12 @@ class QueueConsumerAsync(object):
         self._connection.close()
 
 
-class QueueConsumer(object):
+class QueueConsumer(Thread):
 
-    def __init__(self, config, qdesc, callback, on_success, on_failure, logger_name=None):
+    def __init__(self, config, qdesc, callback, on_success, on_failure, logger_name=None, poll_interval=1):
         """Create a new instance of the blocking consumer class
         """
+        super().__init__()
         self._heartbeat = 3*60*60  # 3h
         self._qdesc = qdesc
         self._qname = self._qdesc['name']
@@ -366,7 +372,8 @@ class QueueConsumer(object):
         self._channel = None
         self._url = "amqp://{}:{}@{}:5672/%2F?heartbeat={}".format(config['user'], config['password'],
                                                                    config['host'], self._heartbeat)
-        self._poll_interval = 1
+        self._poll_interval = poll_interval
+        self._stop_event = Event()
 
         self._callback = callback
         self._on_success = on_success
@@ -402,30 +409,42 @@ class QueueConsumer(object):
             self.logger.info(' [v] Succeeded: {}'.format(body))
             self._on_success(msg)
 
-    def run_reconnect(self):
+    def run(self):
+        """ Use `start` method to kick off message polling """
         while True:
             try:
-                self.run()
-            except ConnectionClosed as e:
+                self._poll()
+            except AMQPError as e:
                 self.logger.warning(' [x] Server disconnected: {}. Reconnecting...'.format(e))
+            except StopThread:
+                return
 
-    def run(self):
+    def _poll(self):
         self.logger.info('Connecting to %s', self._url)
         self._connection = pika.BlockingConnection(pika.URLParameters(self._url))
         self._channel = self._connection.channel()
         self._channel.queue_declare(queue=self._qname, durable=self._qdesc['durable'],
                                     arguments=self._qdesc['arguments'])
         self.logger.info(' [*] Waiting for messages...')
+
         while True:
             method, properties, body = self._channel.basic_get(queue=self._qname, no_ack=self._no_ack)
             if body is not None:
                 self.on_message(method, properties, body)
             else:
                 self.logger.debug('No messages in "{}" queue'.format(self._qname))
-            sleep(self._poll_interval)
+
+            if self.stopped():
+                raise StopThread()
+            else:
+                sleep(self._poll_interval)
 
     def stop(self):
-        self._connection.close()
+        """ After calling `stop`, method `join` must be called"""
+        self._stop_event.set()
+
+    def stopped(self):
+        return self._stop_event.is_set()
 
 
 class QueuePublisher(object):

@@ -1,14 +1,15 @@
-from threading import Thread
 import time
 import requests
 from pytest import fixture
 from queue import Queue
-
-from requests.adapters import HTTPAdapter
+import logging
 
 from sm.engine import QueuePublisher
 from sm.engine.queue import QueueConsumer, SM_ANNOTATE
 from sm.engine.tests.util import sm_config
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 QDESC = SM_ANNOTATE
 QDESC['name'] = 'sm_test'
@@ -27,16 +28,13 @@ def delete_queue(sm_config):
 
 
 def run_queue_consumer_thread(config, callback, output_q, wait=1):
-
-    def run_consume():
-        queue_consumer = QueueConsumer(config, QDESC, callback,
-                                       lambda *args: output_q.put('on_success'),
-                                       lambda *args: output_q.put('on_failure'))
-        queue_consumer.run_reconnect()
-
-    t = Thread(target=run_consume)
-    t.start()
-    t.join(timeout=wait)
+    queue_consumer = QueueConsumer(config, QDESC, callback,
+                                   lambda *args: output_q.put('on_success'),
+                                   lambda *args: output_q.put('on_failure'),
+                                   poll_interval=0.1)
+    queue_consumer.start()
+    queue_consumer.stop()
+    queue_consumer.join()
 
 
 def queue_is_empty(config):
