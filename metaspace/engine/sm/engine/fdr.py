@@ -28,7 +28,7 @@ class FDR(object):
                     yield (sf, ta, da)
 
     def decoy_adducts_selection(self, sfs):
-        decoy_adduct_cand = list(set(DECOY_ADDUCTS) - set(self.target_adducts))
+        decoy_adduct_cand = [add for add in DECOY_ADDUCTS if add not in self.target_adducts]
         self.td_df = pd.DataFrame(self._decoy_adduct_gen(sfs, self.target_adducts,
                                                          decoy_adduct_cand, self.decoy_sample_size),
                                   columns=['sf', 'ta', 'da'])
