@@ -1,7 +1,7 @@
 import json
+import logging
 from datetime import datetime
 from os.path import join
-from threading import Thread
 from queue import Queue
 import time
 from unittest.mock import MagicMock
@@ -17,6 +17,9 @@ from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS, QueueConsumer
 from sm.engine import DB, ESExporter, QueuePublisher, Dataset, SMapiDatasetManager, DatasetStatus
 from sm.engine.tests.util import test_db, sm_config, ds_config
 
+
+logging.basicConfig(level=logging.DEBUG)
+
 ACTION_QDESC = SM_ANNOTATE
 ACTION_QDESC['name'] = 'sm_test'
 
@@ -30,7 +33,7 @@ SM_CONFIG_PATH = join(proj_root(), 'conf/test_config.json')
 def fill_db(test_db, sm_config, ds_config):
     upload_dt = '2000-01-01 00:00:00'
     ds_id = '2000-01-01'
-    meta = {"meta": "data"}
+    meta = {'Data_Type': 'Imaging MS'}
     db = DB(sm_config['db'])
     db.insert('INSERT INTO dataset values(%s, %s, %s, %s, %s, %s, %s)',
               rows=[(ds_id, 'ds_name', 'input_path', upload_dt,
@@ -51,12 +54,17 @@ def create_ds(ds_id=None, upload_dt=None, input_path=None, meta=None, ds_config=
     ds_id = ds_id or '2000-01-01'
     upload_dt = upload_dt or datetime.now()
     input_path = input_path or join(proj_root(), 'tests/data/imzml_example_ds')
-    meta = meta or {"meta": "data"}
+    meta = meta or {'Data_Type': 'Imaging MS'}
     return Dataset(ds_id, 'imzml_example', input_path, upload_dt, meta, ds_config)
 
 
+class Q(Queue):
+    def get(self, **args):
+        return Queue.get(self, timeout=1)
+
+
 class SMDaemonDatasetManagerMock(SMDaemonDatasetManager):
-    calls = Queue()
+    calls = Q()
 
     def add(self, ds, **kwargs):
         self.calls.put(('add', ds, kwargs))
@@ -66,6 +74,13 @@ class SMDaemonDatasetManagerMock(SMDaemonDatasetManager):
 
     def delete(self, ds, **kwargs):
         self.calls.put(('delete', ds, kwargs))
+
+
+@fixture
+def clean_ds_man_mock(request):
+    def fin():
+        SMDaemonDatasetManagerMock.calls = Q()
+    request.addfinalizer(fin)
 
 
 @fixture
@@ -82,20 +97,11 @@ def delete_queue(sm_config):
     _delete()
 
 
-@fixture
-def clean_ds_man_mock(request):
-    def fin():
-        SMDaemonDatasetManagerMock.calls = Queue()
-    request.addfinalizer(fin)
-
-
-def run_sm_daemon_thread(sm_daemon=None, wait=2):
-    daemon = sm_daemon or SMDaemon(ACTION_QDESC, SMDaemonDatasetManagerMock)
-    t = Thread(target=daemon.start)
-    t.start()
-    time.sleep(wait)  # let the consumer fetch and process all messages
+def run_sm_daemon(sm_daemon=None, wait=1):
+    daemon = sm_daemon or SMDaemon(ACTION_QDESC, SMDaemonDatasetManagerMock, poll_interval=0.1)
+    daemon.start()
+    time.sleep(wait)
     daemon.stop()
-    t.join()
 
 
 def test_sm_daemon_receive_message(sm_config, clean_ds_man_mock, delete_queue):
@@ -117,8 +123,8 @@ def test_sm_daemon_receive_message(sm_config, clean_ds_man_mock, delete_queue):
     sm_daemon._on_failure = on_failure
     sm_daemon._action_queue_consumer = QueueConsumer(sm_config['rabbitmq'], ACTION_QDESC,
                                                      callback, on_success, on_failure,
-                                                     logger_name='sm-daemon')
-    run_sm_daemon_thread(sm_daemon)
+                                                     logger_name='sm-daemon', poll_interval=0.1)
+    run_sm_daemon(sm_daemon)
 
     callback.assert_called_once_with(msg)
     on_success.assert_called_once_with(msg)
@@ -133,7 +139,7 @@ class TestSMDaemonSingleEventCases:
 
         api_ds_man.add(ds, del_first=True, priority=DatasetActionPriority.HIGH)
 
-        run_sm_daemon_thread()
+        run_sm_daemon()
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
@@ -144,11 +150,11 @@ class TestSMDaemonSingleEventCases:
     def test_update(self, fill_db, clean_ds_man_mock, delete_queue, ds_config, sm_config):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
         ds = create_ds(ds_config=ds_config)
-        ds.meta = {'new': 'meta'}
+        ds.meta['new'] = 'field'
 
         api_ds_man.update(ds)
 
-        run_sm_daemon_thread()
+        run_sm_daemon()
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'update'
@@ -160,7 +166,7 @@ class TestSMDaemonSingleEventCases:
 
         api_ds_man.delete(ds)
 
-        run_sm_daemon_thread()
+        run_sm_daemon()
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'delete'
@@ -195,7 +201,7 @@ class TestSMDaemonTwoEventsCases:
         api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
         api_ds_man.add(ds_pri, priority=DatasetActionPriority.HIGH)
 
-        run_sm_daemon_thread()
+        run_sm_daemon()
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
@@ -215,7 +221,7 @@ class TestSMDaemonTwoEventsCases:
         ds.meta['new_field'] = 'value'
         api_ds_man.update(ds, priority=DatasetActionPriority.DEFAULT)
 
-        run_sm_daemon_thread()
+        run_sm_daemon()
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'update'
@@ -234,7 +240,7 @@ class TestSMDaemonTwoEventsCases:
         ds.config['databases'].append({'name': 'ChEBI'})
         api_ds_man.update(ds, priority=DatasetActionPriority.DEFAULT)
 
-        run_sm_daemon_thread()
+        run_sm_daemon()
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
@@ -249,7 +255,7 @@ class TestSMDaemonTwoEventsCases:
         ds.config['isotope_generation']['isocalc_sigma'] *= 2
         api_ds_man.update(ds)
 
-        run_sm_daemon_thread()
+        run_sm_daemon()
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
@@ -271,7 +277,7 @@ class TestSMDaemonTwoEventsCases:
         api_ds_man.add(ds)
         api_ds_man.delete(ds)
 
-        run_sm_daemon_thread()
+        run_sm_daemon()
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'delete'

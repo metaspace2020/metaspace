@@ -16,15 +16,15 @@ logger = logging.getLogger('sm-daemon')
 
 class SMDaemon(object):
 
-    def __init__(self, qdesc, dataset_manager_factory):
+    def __init__(self, qdesc, dataset_manager_factory, poll_interval=1):
         self._dataset_manager_factory = dataset_manager_factory
         self._sm_config = SMConfig.get_conf()
         self._stopped = False
         self._action_queue_consumer = QueueConsumer(config=self._sm_config['rabbitmq'], qdesc=qdesc,
-                                                         callback=self._callback,
-                                                         on_success=self._on_success,
-                                                         on_failure=self._on_failure,
-                                                         logger_name='sm-daemon')
+                                                    callback=self._callback,
+                                                    on_success=self._on_success,
+                                                    on_failure=self._on_failure,
+                                                    logger_name='sm-daemon', poll_interval=poll_interval)
 
     def _post_to_slack(self, emoji, msg):
         slack_conf = SMConfig.get_conf().get('slack', {})
@@ -139,9 +139,10 @@ class SMDaemon(object):
 
     def start(self):
         self._stopped = False
-        self._action_queue_consumer.run_reconnect()
+        self._action_queue_consumer.start()
 
     def stop(self):
         if not self._stopped:
             self._action_queue_consumer.stop()
+            self._action_queue_consumer.join()
             self._stopped = True
