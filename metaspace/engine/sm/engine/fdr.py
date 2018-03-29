@@ -39,7 +39,7 @@ class FDR(object):
 
     def decoy_adduct_selection(self):
         sf_ids = self._mol_db.sfs.keys()
-        decoy_adduct_cand = list(set(DECOY_ADDUCTS) - set(self.target_adducts))
+        decoy_adduct_cand = [add for add in DECOY_ADDUCTS if add not in self.target_adducts]
         self.td_df = pd.DataFrame(self._decoy_adduct_gen(sf_ids, self.target_adducts,
                                                          decoy_adduct_cand, self.decoy_sample_size),
                                   columns=['sf_id', 'ta', 'da'])
