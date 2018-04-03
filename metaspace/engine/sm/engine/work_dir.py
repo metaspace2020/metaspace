@@ -110,7 +110,7 @@ class S3WorkDir(object):
             return True
 
     def copy(self, local, remote):
-        logger.info('Coping from {} to {} ...'.format(local, remote))
+        logger.info('Coping from {} to {}'.format(local, remote))
         self.s3transfer.upload_file(local, *split_s3_path(remote))
 
 

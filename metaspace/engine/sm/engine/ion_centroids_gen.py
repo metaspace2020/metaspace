@@ -18,7 +18,7 @@ class IonCentroidsGenerator(object):
     Args
     ----------
     sc : pyspark.SparkContext
-    mol_db : MolDB
+    moldb_name : str
     isocalc: IsocalcWrapper
     """
     def __init__(self, sc, moldb_name, isocalc):
@@ -63,7 +63,7 @@ class IonCentroidsGenerator(object):
             Cannot be a class field as Spark doesn't allow to pass 'self' to functions
         adducts: list
         """
-        logger.info('Generating molecular isotopic peaks...')
+        logger.info('Generating molecular isotopic peaks')
 
         def calc_centroids(args):
             ion_i, sf, adduct = args
@@ -101,7 +101,7 @@ class IonCentroidsGenerator(object):
     def save(self):
         """ Save isotopic peaks
         """
-        logger.info('Saving peaks...')
+        logger.info('Saving peaks')
 
         centr_spark_df = self._spark_session.createDataFrame(self.ion_centroids_df.reset_index())
         centr_spark_df.write.parquet(self._ion_centroids_path + '/ion_centroids', mode='overwrite')
@@ -109,7 +109,7 @@ class IonCentroidsGenerator(object):
         ion_spark_df.write.parquet(self._ion_centroids_path + '/ions', mode='overwrite')
 
     def restore(self):
-        logger.info('Restoring peaks...')
+        logger.info('Restoring peaks')
 
         self.ion_df = self._spark_session.read.parquet(
             self._ion_centroids_path + '/ions').toPandas().set_index('ion_i')
@@ -142,20 +142,3 @@ class IonCentroidsGenerator(object):
             self.save()
         else:
             self.restore()
-
-    # def ion_centroid_ints(self, ions):
-    #     return self._ion_centroids.groupby('ion').apply(lambda df: df.int.tolist()).to_dict()
-
-    # def get_sf_adduct_sorted_df(self):
-    #     return self._ion_centroids[['ion']].copy().drop_duplicates().set_index(['ion']).sort_index()
-    #     # sf_adduct_list = list(map(self._split_ion, self._ion_centroids.ion.unique()))
-    #     # df = pd.DataFrame(sf_adduct_list, columns=['sf', 'adduct'])
-    #     # return df.set_index(['sf', 'adduct']).sort_index()
-
-    # def _split_ion(self, ion):
-    #     adduct_start_ind = max(ion.find('+'), ion.find('-'))
-    #     sf, adduct = ion[:adduct_start_ind], ion[adduct_start_ind:]
-    #     return sf, adduct
-    #
-    # def split_ions(self, ions):
-    #     return map(self._split_ion, ions)

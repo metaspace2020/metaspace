@@ -88,7 +88,7 @@ class SearchJob(object):
             self.store_job_meta(mol_db.id)
             mol_db.set_job_id(self._job_id)
 
-            logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s ...",
+            logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
                         self._ds.id, self._ds.name, mol_db.name, mol_db.version)
 
             self._fdr = FDR(job_id=self._job_id,

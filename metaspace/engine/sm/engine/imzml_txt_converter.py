@@ -130,7 +130,7 @@ class ImzmlTxtConverter(object):
             pixels_n = len(coordinates)
             track_progress = get_track_progress(points_n=pixels_n, steps_n=10, active=print_progress)
 
-            logger.info('Converting %s spectra ...', pixels_n)
+            logger.info('Converting %s spectra', pixels_n)
             for i, (x, y) in enumerate(coordinates):
                 try:
                     self.parse_save_spectrum(i, x, y)
