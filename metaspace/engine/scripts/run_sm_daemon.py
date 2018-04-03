@@ -30,8 +30,4 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, lambda *args: daemon.stop())
     signal.signal(signal.SIGTERM, lambda *args: daemon.stop())
 
-    try:
-        daemon.start()
-    finally:
-        if daemon:
-            daemon.stop()
+    daemon.start()

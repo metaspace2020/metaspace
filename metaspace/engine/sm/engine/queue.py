@@ -416,7 +416,8 @@ class QueueConsumer(Thread):
             except AMQPError as e:
                 self.logger.warning(' [x] Server disconnected: {}. Reconnecting...'.format(e))
             except StopThread:
-                return
+                self.logger.info(' [x] Stop signal received. Stopping')
+                break
 
     def _poll(self):
         self.logger.info('Connecting to %s', self._url)
