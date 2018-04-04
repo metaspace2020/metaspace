@@ -316,23 +316,26 @@ const Resolvers = {
       const ids = hit._source.comp_ids;
       const names = hit._source.comp_names;
       let compounds = [];
-      for (var i = 0; i < names.length; i++) {
+      for (let i = 0; i < names.length; i++) {
         let id = ids[i];
+        let dbName = hit._source.db_name,
+          dbBaseName = dbName.split('-')[0];
+
         let infoURL;
-        if (hit._source.db_name == 'HMDB') {
+        if (dbBaseName === 'HMDB') {
           infoURL = `http://www.hmdb.ca/metabolites/${id}`;
-        } else if (hit._source.db_name == 'ChEBI') {
+        } else if (dbBaseName === 'ChEBI') {
           infoURL = `http://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}`;
-        } else if (hit._source.db_name == 'SwissLipids') {
+        } else if (dbBaseName === 'SwissLipids') {
           infoURL = `http://swisslipids.org/#/entity/${id}`;
-        } else if (hit._source.db_name == 'LIPID_MAPS') {
+        } else if (dbBaseName === 'LipidMaps') {
           infoURL = `http://www.lipidmaps.org/data/LMSDRecord.php?LMID=${id}`;
         }
 
         compounds.push({
           name: names[i],
-          imageURL: `http://${config.services.mol_image_server_host}/mol-images/${hit._source.db_name}/${id}.svg`,
-          information: [{database: hit._source.db_name, url: infoURL, databaseId: id}]
+          imageURL: `http://${config.services.mol_image_server_host}/mol-images/${dbBaseName}/${id}.svg`,
+          information: [{database: dbName, url: infoURL, databaseId: id}]
         });
       }
       return compounds;
