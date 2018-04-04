@@ -76,20 +76,19 @@ class IonCentroidsGenerator(object):
             else:
                 return []
 
-        self.ion_df = pd.DataFrame([(i, sf, adduct) for i, (sf, adduct) in
-                                    enumerate(sorted(product(sfs, adducts)))],
-                                   columns=['ion_i', 'sf', 'adduct']).set_index('ion_i')
+        ion_df = pd.DataFrame([(i, sf, adduct) for i, (sf, adduct) in
+                               enumerate(sorted(product(sfs, adducts)))],
+                              columns=['ion_i', 'sf', 'adduct']).set_index('ion_i')
 
-        ion_centroids_rdd = (self._sc.parallelize(self.ion_df.reset_index().values,
+        ion_centroids_rdd = (self._sc.parallelize(ion_df.reset_index().values,
                                                   numSlices=self._iso_gen_part_n)
-                             .filter(lambda arg: arg is not None)
                              .flatMap(calc_centroids))
         self.ion_centroids_df = (pd.DataFrame(data=ion_centroids_rdd.collect(),
                                               columns=['ion_i', 'peak_i', 'mz', 'int'])
                                  .sort_values(by='mz')
                                  .set_index('ion_i'))
 
-        self.ion_df = self.ion_df.loc[self.ion_centroids_df.index.unique()]
+        self.ion_df = ion_df.loc[self.ion_centroids_df.index.unique()]
 
         # Use when pandas DataFrames get way too big
         # ion_centroids_df = self._spark_session.createDataFrame(data=ion_centroids_rdd,
@@ -133,7 +132,7 @@ class IonCentroidsGenerator(object):
         assert self.ion_df is not None
 
         ion_map = self.ion_df.reset_index().set_index(['sf', 'adduct']).ion_i
-        ion_ids = ion_map.loc[list(map(tuple, ions))].values
+        ion_ids = ion_map.loc[ions].values
         return self.ion_centroids_df.loc[ion_ids].sort_values(by='mz')
 
     def generate_if_not_exist(self, isocalc, sfs, adducts):
@@ -142,3 +141,8 @@ class IonCentroidsGenerator(object):
             self.save()
         else:
             self.restore()
+
+    def ions(self, adducts):
+        return (self.ion_df[self.ion_df.adduct.isin(adducts)]
+                .sort_values(by=['sf', 'adduct'])
+                .to_records(index=False))

@@ -91,17 +91,19 @@ class SearchJob(object):
             logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
                         self._ds.id, self._ds.name, mol_db.name, mol_db.version)
 
+            target_adducts = self._ds.config['isotope_generation']['adducts']
             self._fdr = FDR(job_id=self._job_id,
                             decoy_sample_size=20,
-                            target_adducts=self._ds.config['isotope_generation']['adducts'],
+                            target_adducts=target_adducts,
                             db=self._db)
-            self._fdr.decoy_adducts_selection(mol_db.sfs.values())
 
             isocalc = IsocalcWrapper(self._ds.config['isotope_generation'])
             centroids_gen = IonCentroidsGenerator(sc=self._sc, moldb_name=mol_db.name, isocalc=isocalc)
             centroids_gen.generate_if_not_exist(isocalc=isocalc,
-                                                sfs=mol_db.sfs.values(),
+                                                sfs=mol_db.sfs,
                                                 adducts=self._fdr.all_adducts())
+            target_ions = centroids_gen.ions(target_adducts)
+            self._fdr.decoy_adducts_selection(target_ions)
 
             search_alg = MSMBasicSearch(sc=self._sc, ds=self._ds, ds_reader=self._ds_reader,
                                         mol_db=mol_db, centr_gen=centroids_gen,
