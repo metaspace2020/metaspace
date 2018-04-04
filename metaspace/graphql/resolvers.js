@@ -85,6 +85,7 @@ function checkFetchRes(resp) {
   }
 }
 
+
 const Resolvers = {
   Person: {
     name(obj) { return obj.First_Name; },
@@ -265,21 +266,37 @@ const Resolvers = {
       return ds._source.ds_upload_dt;
     },
 
-    fdrCounts(ds, {inpFdrLvls}) {
-      let outFdrLvls = [], outFdrCounts = [];
+    fdrCounts(ds, {inpFdrLvls, checkLvl}) {
+      let outFdrLvls = [], outFdrCounts = [], maxCounts = 0, dbName = '';
       if(ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
-        let inpAllLvlCounts = ds._source.annotation_counts[0].counts;
-        inpFdrLvls.forEach(lvl => {
-          let findRes = inpAllLvlCounts.find(lvlCount => {
-            return lvlCount.level === lvl
-          });
-          if (findRes) {
-            outFdrLvls.push(findRes.level);
-            outFdrCounts.push(findRes.n);
-          }
+        let annotCounts = ds._source.annotation_counts;
+        let dbList = ds._source.ds_meta.metaspace_options.Metabolite_Database;
+        let filteredDbList = annotCounts.filter(el => {
+          return dbList.includes(el.db.name)
         });
+        for (let db of filteredDbList) {
+          let maxCountsCand = db.counts.find(lvlObj => {
+            return lvlObj.level === checkLvl
+          });
+          if (maxCountsCand.n >= maxCounts) {
+            maxCounts = maxCountsCand.n; outFdrLvls = []; outFdrCounts = [];
+            inpFdrLvls.forEach(inpLvl => {
+              let findRes = db.counts.find(lvlObj => {
+                return lvlObj.level === inpLvl
+              });
+              if (findRes) {
+                dbName = db.db.name;
+                outFdrLvls.push(findRes.level);
+                outFdrCounts.push(findRes.n);
+              }
+            })
+          } else {
+            break;
+          }
+        }
       }
       return {
+        'dbName': dbName,
         'levels': outFdrLvls,
         'counts': outFdrCounts
       }
