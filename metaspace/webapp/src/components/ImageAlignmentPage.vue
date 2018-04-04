@@ -197,7 +197,7 @@
          this.angle = 0;
          this.alreadyUploaded = true;
        }
-     });
+     })
    },
 
    apollo: {
@@ -367,6 +367,10 @@
                    imageUrl,
                    transform: this.$refs.aligner.normalizedTransform
                  }
+               }),
+               this.$message({
+                 message: 'Your optical image was submitted! Please wait until it will be saved...',
+                 type: 'success'
                }))
            .then(resp => resp.data.addOpticalImage)
            .then(status => {

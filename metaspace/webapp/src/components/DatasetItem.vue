@@ -72,7 +72,7 @@
               @click="addFilter('institution')"></span>
       </div>
       <div v-if="dataset.status == 'FINISHED'">
-        <span>{{formatFdrCounts()}} annotations @ FDR {{formatFdrLevel()}}%</span>
+        <span>{{formatFdrCounts()}} annotations @ FDR {{formatFdrLevel()}}% ({{formatDbName()}})</span>
       </div>
     </div>
 
@@ -332,6 +332,10 @@
 
      formatFdrCounts() {
        return this.dataset.fdrCounts.counts.join(', ');
+     },
+
+     formatDbName() {
+       return this.dataset.fdrCounts.dbName;
      }
    }
  }
