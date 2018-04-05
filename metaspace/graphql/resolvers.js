@@ -85,6 +85,7 @@ function checkFetchRes(resp) {
   }
 }
 
+
 const Resolvers = {
   Person: {
     name(obj) { return obj.First_Name; },
@@ -278,21 +279,37 @@ const Resolvers = {
       return ds._source.ds_upload_dt;
     },
 
-    fdrCounts(ds, {inpFdrLvls}) {
-      let outFdrLvls = [], outFdrCounts = [];
+    fdrCounts(ds, {inpFdrLvls, checkLvl}) {
+      let outFdrLvls = [], outFdrCounts = [], maxCounts = 0, dbName = '';
       if(ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
-        let inpAllLvlCounts = ds._source.annotation_counts[0].counts;
-        inpFdrLvls.forEach(lvl => {
-          let findRes = inpAllLvlCounts.find(lvlCount => {
-            return lvlCount.level === lvl
-          });
-          if (findRes) {
-            outFdrLvls.push(findRes.level);
-            outFdrCounts.push(findRes.n);
-          }
+        let annotCounts = ds._source.annotation_counts;
+        let dbList = ds._source.ds_meta.metaspace_options.Metabolite_Database;
+        let filteredDbList = annotCounts.filter(el => {
+          return dbList.includes(el.db.name)
         });
+        for (let db of filteredDbList) {
+          let maxCountsCand = db.counts.find(lvlObj => {
+            return lvlObj.level === checkLvl
+          });
+          if (maxCountsCand.n >= maxCounts) {
+            maxCounts = maxCountsCand.n; outFdrLvls = []; outFdrCounts = [];
+            inpFdrLvls.forEach(inpLvl => {
+              let findRes = db.counts.find(lvlObj => {
+                return lvlObj.level === inpLvl
+              });
+              if (findRes) {
+                dbName = db.db.name;
+                outFdrLvls.push(findRes.level);
+                outFdrCounts.push(findRes.n);
+              }
+            })
+          } else {
+            break;
+          }
+        }
       }
       return {
+        'dbName': dbName,
         'levels': outFdrLvls,
         'counts': outFdrCounts
       }
@@ -312,23 +329,26 @@ const Resolvers = {
       const ids = hit._source.comp_ids;
       const names = hit._source.comp_names;
       let compounds = [];
-      for (var i = 0; i < names.length; i++) {
+      for (let i = 0; i < names.length; i++) {
         let id = ids[i];
+        let dbName = hit._source.db_name,
+          dbBaseName = dbName.split('-')[0];
+
         let infoURL;
-        if (hit._source.db_name == 'HMDB') {
+        if (dbBaseName === 'HMDB') {
           infoURL = `http://www.hmdb.ca/metabolites/${id}`;
-        } else if (hit._source.db_name == 'ChEBI') {
+        } else if (dbBaseName === 'ChEBI') {
           infoURL = `http://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}`;
-        } else if (hit._source.db_name == 'SwissLipids') {
+        } else if (dbBaseName === 'SwissLipids') {
           infoURL = `http://swisslipids.org/#/entity/${id}`;
-        } else if (hit._source.db_name == 'LIPID_MAPS') {
+        } else if (dbBaseName === 'LipidMaps') {
           infoURL = `http://www.lipidmaps.org/data/LMSDRecord.php?LMID=${id}`;
         }
 
         compounds.push({
           name: names[i],
-          imageURL: `/mol-images/${hit._source.db_name}/${id}.svg`,
-          information: [{database: hit._source.db_name, url: infoURL, databaseId: id}]
+          imageURL: `/mol-images/${dbBaseName}/${id}.svg`,
+          information: [{database: dbName, url: infoURL, databaseId: id}]
         });
       }
       return compounds;

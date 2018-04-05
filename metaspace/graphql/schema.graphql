@@ -45,6 +45,7 @@ enum JobStatus {
 }
 
 type FdrCounts {
+  dbName: String!
   levels: [Float!]!
   counts: [Float!]!
 }
@@ -77,7 +78,7 @@ type Dataset {
   status: JobStatus
   inputPath: String
   uploadDateTime: String
-  fdrCounts(inpFdrLvls: [Float!]!): FdrCounts!
+  fdrCounts(inpFdrLvls: [Float!]!, checkLvl: Float!): FdrCounts!
 }
 
 # fields of categorical type
