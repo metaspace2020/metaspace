@@ -129,7 +129,7 @@ sm_graphql_slack_webhook_url: ""
 sm_graphql_slack_channel: ""
 sm_graphql_jwt_secret: JWT_SECRET
 sm_graphql_public_url: "http://{{ sm_graphql_hostname }}/graphql"
-sm_graphql_mol_image_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
+sm_graphql_mol_image_host: "{{ sm_graphql_hostname }}"
 sm_graphql_img_upload_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_graphql_moldb_service_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}/mol_db"
 sm_graphql_database_password: "{{ sm_postgres_password }}"
