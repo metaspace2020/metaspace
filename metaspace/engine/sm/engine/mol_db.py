@@ -10,7 +10,7 @@ logger = logging.getLogger('engine')
 
 SF_INS = 'INSERT INTO sum_formula (db_id, sf) values (%s, %s)'
 SF_COUNT = 'SELECT count(*) FROM sum_formula WHERE db_id = %s'
-SF_SELECT = 'SELECT id, sf FROM sum_formula WHERE db_id = %s'
+SF_SELECT = 'SELECT sf FROM sum_formula WHERE db_id = %s'
 
 
 class MolDBServiceWrapper(object):
@@ -126,10 +126,11 @@ class MolecularDB(object):
 
     @property
     def sfs(self):
+        """ Total list of formulas """
         if not self._sfs:
             if self._db.select_one(SF_COUNT, self._id)[0] == 0:
                 sfs = self._mol_db_service.fetch_db_sfs(self.id)
                 rows = [(self._id, sf) for sf in sfs]
                 self._db.insert(SF_INS, rows)
-            self._sfs = OrderedDict(self._db.select(SF_SELECT, self._id))
+            self._sfs = [row[0] for row in self._db.select(SF_SELECT, self._id)]
         return self._sfs

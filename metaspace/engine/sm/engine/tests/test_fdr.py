@@ -13,23 +13,19 @@ from sm.engine import MolecularDB
 def test_fdr_decoy_adduct_selection_saves_corr():
     db_mock = MagicMock(DB)
     db_mock.select.return_value = [(1,)]
-    mol_db_mock = MagicMock(MolecularDB)
-    mol_db_mock.id.return_value = 0
-    mol_db_mock.sfs.return_value = {1: 'sf_1'}
 
     fdr = FDR(job_id=0, decoy_sample_size=2, target_adducts=['+H', '+K'], db=db_mock)
-
-    def assert_df_values_equal(self, other):
-        assert set(self) == set(other)
 
     exp_target_decoy_df = pd.DataFrame([('H2O', '+H', '+He'),
                                         ('H2O', '+H', '+Li'),
                                         ('H2O', '+K', '+He'),
                                         ('H2O', '+K', '+Li')],
                                        columns=['sf', 'ta', 'da'])
-    fdr._save_target_decoy_df = MagicMock(side_effect=lambda: assert_df_values_equal(exp_target_decoy_df, fdr.td_df))
 
-    fdr.decoy_adducts_selection(['H2O'])
+    fdr.decoy_adducts_selection(target_ions=[('H2O', '+H'), ('H2O', '+K')])
+
+    assert_frame_equal(fdr.td_df.sort_values(by=['sf', 'ta', 'da']).reset_index(drop=True),
+                       exp_target_decoy_df.sort_values(by=['sf', 'ta', 'da']).reset_index(drop=True))
 
 
 def test_estimate_fdr_returns_correct_df():
@@ -82,16 +78,14 @@ def test_estimate_fdr_digitize_works():
 
 
 def test_ions():
-    sfs = {0: 'H2O', 1: 'C5H2OH'}
+    sfs = ['H2O', 'C5H2OH']
     target_adducts = ['+H', '+Na']
     decoy_sample_size = 5
 
-    mol_db_mock = MagicMock(MolecularDB)
-    mol_db_mock.sfs = sfs
-
     fdr = FDR(job_id=0, decoy_sample_size=decoy_sample_size,
               target_adducts=target_adducts, db=None)
-    fdr.decoy_adducts_selection(['H2O', 'C5H2OH'])
+    fdr.decoy_adducts_selection(target_ions=[('H2O', '+H'), ('H2O', '+Na'),
+                                             ('C5H2OH', '+H'), ('C5H2OH', '+Na')])
     ions = fdr.ion_tuples()
 
     assert type(ions) == list
@@ -99,5 +93,5 @@ def test_ions():
     assert len(sfs) * decoy_sample_size + len(sfs) * len(target_adducts) < \
            len(ions) <= \
            len(sfs) * len(target_adducts) * decoy_sample_size + len(sfs) * len(target_adducts)
-    target_ions = [(sf, adduct) for sf, adduct in product(sfs.values(), target_adducts)]
+    target_ions = [(sf, adduct) for sf, adduct in product(sfs, target_adducts)]
     assert set(target_ions).issubset(set(map(tuple, ions)))

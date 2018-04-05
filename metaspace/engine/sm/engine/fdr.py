@@ -1,4 +1,3 @@
-from io import StringIO
 import logging
 import numpy as np
 import pandas as pd
@@ -20,24 +19,22 @@ class FDR(object):
         self.fdr_levels = [0.05, 0.1, 0.2, 0.5]
         self.random_seed = 42
 
-    def _decoy_adduct_gen(self, sfs, target_adducts, decoy_adducts_cand, decoy_sample_size):
+    def _decoy_adduct_gen(self, target_ions, decoy_adducts_cand):
         np.random.seed(self.random_seed)
-        for sf in sfs:
-            for ta in target_adducts:
-                for da in np.random.choice(decoy_adducts_cand, size=decoy_sample_size, replace=False):
-                    yield (sf, ta, da)
+        for sf, ta in target_ions:
+            for da in np.random.choice(decoy_adducts_cand, size=self.decoy_sample_size, replace=False):
+                yield (sf, ta, da)
 
-    def decoy_adducts_selection(self, sfs):
-        decoy_adduct_cand = list(set(DECOY_ADDUCTS) - set(self.target_adducts))
-        self.td_df = pd.DataFrame(self._decoy_adduct_gen(sfs, self.target_adducts,
-                                                         decoy_adduct_cand, self.decoy_sample_size),
+    def decoy_adducts_selection(self, target_ions):
+        decoy_adduct_cand = [add for add in DECOY_ADDUCTS if add not in self.target_adducts]
+        self.td_df = pd.DataFrame(self._decoy_adduct_gen(target_ions, decoy_adduct_cand),
                                   columns=['sf', 'ta', 'da'])
 
     def ion_tuples(self):
         """ All ions needed for FDR calculation """
         d_ions = self.td_df[['sf', 'da']].drop_duplicates().values.tolist()
         t_ions = self.td_df[['sf', 'ta']].drop_duplicates().values.tolist()
-        return t_ions + d_ions
+        return list(map(tuple, t_ions + d_ions))
 
     def all_adducts(self):
         """ Union of target and decoy adducts """
