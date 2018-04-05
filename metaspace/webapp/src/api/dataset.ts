@@ -1,7 +1,7 @@
 import gql from 'graphql-tag';
 
 export const datasetListQuery =
-  gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Float!]!) {
+  gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Float!]!, $checkLvl: Float!) {
     allDatasets(offset: 0, limit: 100, filter: $dFilter, simpleQuery: $query) {
       id
       name
@@ -24,7 +24,8 @@ export const datasetListQuery =
       metadataJson
       status
       metadataType
-      fdrCounts(inpFdrLvls: $inpFdrLvls) {
+      fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
+        dbName
         levels
         counts
       }
