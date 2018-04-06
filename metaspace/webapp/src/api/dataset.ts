@@ -1,7 +1,7 @@
 import gql from 'graphql-tag';
 
 export const datasetListQuery =
-  gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Float!]!, $checkLvl: Float!) {
+  gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!) {
     allDatasets(offset: 0, limit: 100, filter: $dFilter, simpleQuery: $query) {
       id
       name
