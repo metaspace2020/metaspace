@@ -76,7 +76,7 @@ type Dataset {
   status: JobStatus
   inputPath: String
   uploadDateTime: String
-  fdrCounts(inpFdrLvls: [Float!]!, checkLvl: Float!): FdrCounts!
+  fdrCounts(inpFdrLvls: [Int!]!, checkLvl: Int!): FdrCounts!
 }
 
 # fields of categorical type
