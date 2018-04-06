@@ -150,7 +150,7 @@
           "description": "Metabolite database searched against",
           "type": "array",
           "minItems": 1,
-          "default": ["HMDB-v2.5"],
+          "default": [],
           "items": { "type": "string" },
           "uniqueItems": true
         },
