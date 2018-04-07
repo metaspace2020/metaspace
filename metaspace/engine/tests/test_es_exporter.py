@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 import pandas as pd
@@ -8,10 +9,7 @@ from sm.engine.es_export import ESExporter, ESIndexManager, DATASET_SEL, ANNOTAT
 from sm.engine import DB
 from sm.engine.ion_centroids_gen import IonCentroidsGenerator
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.util import logger, init_logger
 from sm.engine.tests.util import sm_config, ds_config, sm_index, es, es_dsl_search, test_db
-
-init_logger()
 
 
 def wait_for_es(sec=1):
@@ -39,7 +37,7 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
                     ('Au', 'Au+H', 1, 1, 1, 100, 0, 100, 1, '+H', 1, 0.05,
                      ['iso_img_id_1', 'iso_img_id_2'], '+')]
         else:
-            logger.error('Wrong db_sel_side_effect arguments: ', args)
+            logging.getLogger('engine').error('Wrong db_sel_side_effect arguments: ', args)
 
     db_mock = MagicMock(spec=DB)
     db_mock.select.side_effect = db_sel_side_effect

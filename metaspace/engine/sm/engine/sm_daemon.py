@@ -7,7 +7,7 @@ import boto3
 from sm.engine.dataset_manager import DatasetAction
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import SM_DS_STATUS, QueueConsumer
-from sm.engine.util import SMConfig, sm_log_config, init_logger
+from sm.engine.util import SMConfig, init_loggers
 from sm.engine import ESExporter, QueuePublisher, Dataset, SearchJob
 from sm.engine import DB
 

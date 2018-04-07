@@ -1,4 +1,5 @@
-from os.path import join
+import logging
+from pathlib import Path
 import pytest
 from unittest.mock import patch
 from elasticsearch import Elasticsearch
@@ -8,21 +9,21 @@ from fabric.api import local
 # lots of patch calls rely on SparkContext name
 from pysparkling import Context
 import pandas as pd
-from logging.config import dictConfig
 from unittest.mock import MagicMock
 
 from sm.engine.db import DB
 from sm.engine.mol_db import MolecularDB
-from sm.engine.util import proj_root, sm_log_config, SMConfig, init_logger, logger
+from sm.engine.util import proj_root, SMConfig, init_loggers
 from sm.engine import ESExporter, ESIndexManager
-from os.path import join
 
-init_logger()
+TEST_CONFIG_PATH = 'conf/test_config.json'
+SMConfig.set_path(Path(proj_root()) / TEST_CONFIG_PATH)
+
+init_loggers(SMConfig.get_conf()['logs'])
 
 
 @pytest.fixture(scope='session')
 def sm_config():
-    SMConfig.set_path(join(proj_root(), 'conf', 'test_config.json'))
     return SMConfig.get_conf(update=True)
 
 
@@ -56,14 +57,14 @@ def test_db(sm_config, request):
 
     local('psql -h {} -U {} sm_test < {}'.format(
         sm_config['db']['host'], sm_config['db']['user'],
-        join(proj_root(), 'scripts/create_schema.sql')))
+        Path(proj_root()) / 'scripts/create_schema.sql'))
 
     def fin():
         db = DB(db_config, autocommit=True)
         try:
             db.alter('DROP DATABASE IF EXISTS sm_test')
         except Exception as e:
-            logger.warning('Drop sm_test database failed: %s', e)
+            logging.getLogger('engine').warning('Drop sm_test database failed: %s', e)
         finally:
             db.close()
     request.addfinalizer(fin)

@@ -11,8 +11,7 @@ from .util import SMConfig
 try:
     import pyspark
 except ImportError:
-    from .util import init_logger, logger
-    init_logger()
-    logger.warn('pyspark is not on PYTHONPATH')
+    import logging
+    logging.getLogger().warn('pyspark is not on PYTHONPATH')
 else:
     from .search_job import SearchJob

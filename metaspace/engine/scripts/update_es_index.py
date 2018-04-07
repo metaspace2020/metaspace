@@ -4,7 +4,8 @@ import sys
 from copy import deepcopy
 
 from sm.engine import MolecularDB
-from sm.engine.util import sm_log_config, init_logger, SMConfig
+from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.util import init_loggers, SMConfig
 from sm.engine import DB
 from sm.engine import ESExporter, ESIndexManager
 
@@ -35,7 +36,8 @@ def _reindex_datasets(rows, es_exp):
             for mol_db_dict in ds_config['databases']:
                 mol_db = MolecularDB(name=mol_db_dict['name'], version=mol_db_dict.get('version', None),
                                      iso_gen_config=ds_config['isotope_generation'])
-                es_exp.index_ds(ds_id, mol_db)
+                isocalc = IsocalcWrapper(ds_config['isotope_generation'])
+                es_exp.index_ds(ds_id, mol_db=mol_db, isocalc=isocalc)
         except Exception as e:
             new_msg = 'Failed to reindex(ds_id={}, ds_name={}): {}'.format(ds_id, ds_name, e)
             raise Exception(new_msg) from e
@@ -69,7 +71,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     SMConfig.set_path(args.config)
-    init_logger(name='engine')
+    init_loggers(SMConfig.get_conf()['logs'])
     logger = logging.getLogger('engine')
 
     reindex_results(args.ds_id, args.ds_name)

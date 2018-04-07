@@ -226,7 +226,7 @@ class ESExporter(object):
         fdr_levels = [5, 10, 20, 50]
 
         annotations = self._db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
-        logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
+        logger.info('Indexing {} documents: {}, {}'.format(len(annotations), ds_id, mol_db))
 
         n = 100
         to_index = []

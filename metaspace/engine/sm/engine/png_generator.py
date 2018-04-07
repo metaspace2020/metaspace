@@ -1,3 +1,4 @@
+import logging
 from io import BytesIO
 from PIL import Image
 from os import path
@@ -6,8 +7,6 @@ import requests
 import numpy as np
 from requests.adapters import HTTPAdapter
 
-from sm.engine.util import logger
-
 
 class ImageStoreServiceWrapper(object):
 
@@ -15,6 +14,7 @@ class ImageStoreServiceWrapper(object):
         self._img_service_url = img_service_url
         self._session = requests.Session()
         self._session.mount(self._img_service_url, HTTPAdapter(max_retries=5))
+        self._logger =  logging.getLogger('engine')
 
     def _format_url(self, storage_type, img_type, method='', img_id=''):
         assert storage_type, 'Wrong storage_type: %s' % storage_type
@@ -45,7 +45,7 @@ class ImageStoreServiceWrapper(object):
     def delete_image(self, url):
         r = self._session.delete(url)
         if r.status_code != 202:
-            logger.warn('Failed to delete: {}'.format(url))
+            self._logger.warning('Failed to delete: {}'.format(url))
 
     def get_image_by_id(self, storage_type, img_type, img_id):
         url = self._format_url(storage_type=storage_type, img_type=img_type, img_id=img_id)

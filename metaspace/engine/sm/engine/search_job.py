@@ -19,7 +19,7 @@ from sm.engine.db import DB
 from sm.engine.fdr import FDR, DECOY_ADDUCTS
 from sm.engine.search_results import SearchResults
 from sm.engine.ion_centroids_gen import IonCentroidsGenerator
-from sm.engine.util import proj_root, SMConfig, read_json, sm_log_formatters
+from sm.engine.util import proj_root, SMConfig, read_json
 from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper

@@ -13,7 +13,7 @@ from sm.engine import Dataset, SMapiDatasetManager, DatasetActionPriority
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS
 from sm.engine.util import SMConfig
-from sm.engine.util import init_logger
+from sm.engine.util import init_loggers
 from sm.engine.errors import UnknownDSID
 
 
@@ -128,6 +128,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     SMConfig.set_path(args.config_path)
 
-    init_logger()
+    init_loggers(SMConfig.get_conf()['logs'])
     logger = logging.getLogger(name='api')
     run(host='localhost', port=5123)
