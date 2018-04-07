@@ -15,7 +15,7 @@ from pyimzml.ImzMLParser import ImzMLParser
 from sm.engine.util import SMConfig
 
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 
 def preprocess_spectrum(mzs, ints):
@@ -55,7 +55,7 @@ def get_track_progress(points_n, steps_n, active=False):
 
     def track(i):
         if i % every_n == 0:
-            print("Wrote %.1f%% (%d of %d)" % (i / points_n * 100, i, points_n))
+            logger.debug("Wrote %.1f%% (%d of %d)" % (i / points_n * 100, i, points_n))
 
     def dont_track(i): pass
 

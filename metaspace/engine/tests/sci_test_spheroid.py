@@ -13,7 +13,7 @@ from sm.engine.db import DB
 from sm.engine.errors import UnknownDSID
 from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.util import proj_root, SMConfig, create_ds_from_files, init_logger
+from sm.engine.util import proj_root, SMConfig, create_ds_from_files, init_loggers
 
 SEARCH_RES_SELECT = ("select m.sf, m.adduct, m.stats "
                      "from iso_image_metrics m "
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')
     args = parser.parse_args()
     SMConfig.set_path(args.sm_config_path)
-    init_logger()
+    init_loggers(SMConfig.get_conf()['logs'])
 
     sci_tester = SciTester(args.sm_config_path)
 

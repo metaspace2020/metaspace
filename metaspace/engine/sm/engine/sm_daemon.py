@@ -7,11 +7,11 @@ import boto3
 from sm.engine.dataset_manager import DatasetAction
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import SM_DS_STATUS, QueueConsumer
-from sm.engine.util import SMConfig, sm_log_config, init_logger
+from sm.engine.util import SMConfig, init_loggers
 from sm.engine import ESExporter, QueuePublisher, Dataset, SearchJob
 from sm.engine import DB
 
-logger = logging.getLogger('sm-daemon')
+logger = logging.getLogger('daemon')
 
 
 class SMDaemon(object):
@@ -24,7 +24,7 @@ class SMDaemon(object):
                                                     callback=self._callback,
                                                     on_success=self._on_success,
                                                     on_failure=self._on_failure,
-                                                    logger_name='sm-daemon', poll_interval=poll_interval)
+                                                    logger_name='daemon', poll_interval=poll_interval)
 
     def _post_to_slack(self, emoji, msg):
         slack_conf = SMConfig.get_conf().get('slack', {})
@@ -127,7 +127,7 @@ class SMDaemon(object):
                 mode='queue',
                 status_queue=QueuePublisher(config=self._sm_config['rabbitmq'],
                                             qdesc=SM_DS_STATUS,
-                                            logger_name='sm-daemon')
+                                            logger_name='daemon')
             )
             ds_man.process(ds=Dataset.load(db, msg['ds_id']),
                            action=msg['action'],

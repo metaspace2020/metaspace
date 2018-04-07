@@ -8,7 +8,7 @@ import pandas as pd
 from sm.engine.util import SMConfig
 from sm.engine.db import DB
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 ANNOTATION_COLUMNS = ["sf", "sf_adduct",
                       "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
@@ -216,7 +216,7 @@ class ESExporter(object):
         fdr_levels = [5, 10, 20, 50]
 
         annotations = self._db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
-        logger.info('Indexing {} documents: {}'.format(len(annotations), ds_id))
+        logger.info('Indexing {} documents: {}, {}'.format(len(annotations), ds_id, mol_db))
 
         n = 100
         to_index = []

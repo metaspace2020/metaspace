@@ -15,7 +15,7 @@ import psycopg2.extras
 import logging
 
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 
 def db_decor(func):

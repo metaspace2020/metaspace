@@ -18,7 +18,7 @@ from sm.engine.db import DB
 from sm.engine.fdr import FDR, DECOY_ADDUCTS
 from sm.engine.search_results import SearchResults
 from sm.engine.ion_centroids_gen import IonCentroidsGenerator
-from sm.engine.util import proj_root, SMConfig, read_json, sm_log_formatters
+from sm.engine.util import proj_root, SMConfig, read_json
 from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
@@ -26,7 +26,7 @@ from sm.engine.errors import JobFailedError, ESExportFailedError
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 JOB_ID_MOLDB_ID_SEL = "SELECT id, db_id FROM job WHERE ds_id = %s"
 JOB_INS = "INSERT INTO job (db_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
@@ -165,7 +165,7 @@ class SearchJob(object):
             if self._sm_config['rabbitmq']:
                 self._status_queue = QueuePublisher(config=self._sm_config['rabbitmq'],
                                                     qdesc=SM_DS_STATUS,
-                                                    logger_name='sm-engine')
+                                                    logger_name='engine')
             else:
                 self._status_queue = None
             ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.STARTED)

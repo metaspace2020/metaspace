@@ -48,5 +48,45 @@
   },
   "isotope_storage": {
     "path": "{{ sm_isotope_storage_path }}"
+  },
+  "logs": {
+    "version": 1,
+    "formatters": {
+      "sm": {
+        "format": "%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s"
+      }
+    },
+    "handlers": {
+        "console_warn": {
+            "class": "logging.StreamHandler",
+            "formatter": "sm",
+            "level": "WARNING"
+        },
+        "console_debug": {
+            "class": "logging.StreamHandler",
+            "formatter": "sm",
+            "level": "DEBUG"
+        },
+        "file_engine": {
+            "class": "logging.FileHandler",
+            "formatter": "sm",
+            "level": "DEBUG",
+            "filename": "logs/sm-engine.log"
+        }
+    },
+    "loggers": {
+        "engine": {
+            "handlers": ["console_debug", "file_engine"],
+            "level": "INFO"
+        },
+        "api": {
+            "handlers": ["console_debug"],
+            "level": "INFO"
+        },
+        "daemon": {
+            "handlers": ["console_debug"],
+            "level": "INFO"
+        }
+    }
   }
 }

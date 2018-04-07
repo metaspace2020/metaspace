@@ -1,9 +1,6 @@
 import argparse
-from os.path import abspath
-import json
-from logging.config import dictConfig
 
-from sm.engine.util import sm_log_config, SMConfig
+from sm.engine.util import SMConfig, init_loggers
 from sm.engine import ESIndexManager
 
 
@@ -13,8 +10,8 @@ if __name__ == '__main__':
     parser.add_argument('--drop', action='store_true', help='Delete index if exists')
     args = parser.parse_args()
 
-    dictConfig(sm_log_config)
     SMConfig.set_path(args.config_path)
+    init_loggers(SMConfig.get_conf()['logs'])
 
     es_config = SMConfig.get_conf()['elasticsearch']
     es_man = ESIndexManager(es_config)

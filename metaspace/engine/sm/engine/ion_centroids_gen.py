@@ -9,7 +9,7 @@ import pandas as pd
 from sm.engine.util import SMConfig, split_s3_path
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 
 class IonCentroidsGenerator(object):

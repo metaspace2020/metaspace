@@ -4,7 +4,6 @@ from datetime import datetime
 from subprocess import check_call, call
 import logging
 from logging.config import dictConfig
-from os.path import join, exists
 from pathlib import Path
 
 from sm.engine import Dataset
@@ -14,60 +13,35 @@ def proj_root():
     return os.getcwd()
 
 
-sm_log_formatters = {
-    'sm': {
-        'format': '%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s'
-    }
-}
+def init_loggers(config=None):
+    """ Init logger using config file, 'logs' section of the sm config
+    """
+    if not config:
+        SMConfig.set_path('conf/config.json')
+        config = SMConfig.get_conf()['logs']
 
-sm_log_config = {
-    'version': 1,
-    'formatters': sm_log_formatters,
-    'handlers': {
-        'console_warn': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'sm',
-            'level': logging.WARNING,
-        },
-        'console_debug': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'sm',
-            'level': logging.DEBUG,
-        },
-        'file': {
-            'class': 'logging.FileHandler',
-            'formatter': 'sm',
-            'level': logging.DEBUG,
-            'filename': '/tmp/sm-engine.log'
-        }
-    },
-    'loggers': {
-        'sm-engine': {
-            'handlers': ['console_debug', 'file'],
-            'level': logging.INFO
-        },
-        'sm-api': {
-            'handlers': ['console_debug'],
-            'level': logging.INFO
-        },
-        'sm-daemon': {
-            'handlers': ['console_debug'],
-            'level': logging.INFO
-        }
-    }
-}
-
-
-def init_logger(log_config=None):
     logs_dir = Path(proj_root()).joinpath('logs')
     if not logs_dir.exists():
         logs_dir.mkdir()
 
-    sm_log_config['handlers']['file']['filename'] = str(logs_dir.joinpath('sm-engine.log'))
-    dictConfig(log_config if log_config else sm_log_config)
+    log_level_codes = {
+        'ERROR': logging.ERROR,
+        'WARNING': logging.WARNING,
+        'INFO': logging.INFO,
+        'DEBUG': logging.DEBUG
+    }
 
+    def convert_levels(orig_d):
+        d = orig_d.copy()
+        for k, v in d.items():
+            if k == 'level':
+                d[k] = log_level_codes[d[k]]
+            elif type(v) == dict:
+                d[k] = convert_levels(v)
+        return d
 
-logger = logging.getLogger(name='sm-engine')
+    log_config = convert_levels(config)
+    dictConfig(log_config)
 
 
 class SMConfig(object):
@@ -84,7 +58,7 @@ class SMConfig(object):
         ----------
         path : String
         """
-        cls._path = os.path.realpath(path)
+        cls._path = os.path.realpath(str(path))
 
     @classmethod
     def get_conf(cls, update=False):
@@ -97,17 +71,16 @@ class SMConfig(object):
         assert cls._path
         if update or not cls._config_dict:
             try:
-                config_path = cls._path or os.path.join(proj_root(), 'conf', 'config.json')
-                with open(config_path) as f:
+                with open(cls._path) as f:
                     cls._config_dict = json.load(f)
             except IOError as e:
-                logger.warning(e)
+                logging.getLogger('engine').warning(e)
         return cls._config_dict
 
 
 def _cmd(template, call_func, *args):
     cmd_str = template.format(*args)
-    logger.info('Call "%s"', cmd_str)
+    logging.getLogger('engine').info('Call "%s"', cmd_str)
     return call_func(cmd_str.split())
 
 
@@ -125,23 +98,23 @@ def read_json(path):
         with open(path) as f:
             res = json.load(f)
     except IOError as e:
-        logger.warning("Couldn't find %s file", path)
+        logging.getLogger('engine').warning("Couldn't find %s file", path)
     finally:
         return res
 
 
 def create_ds_from_files(ds_id, ds_name, ds_input_path):
-    meta_path = join(ds_input_path, 'meta.json')
-    if exists(meta_path):
-        metadata = json.load(open(meta_path))
+    ds_input_path = Path(ds_input_path)
+    meta_path = ds_input_path.joinpath('meta.json')
+    if meta_path.exists():
+        metadata = json.load(open(str(meta_path)))
     else:
         metadata = {}
-    ds_config = json.load(open(join(ds_input_path, 'config.json')))
+    ds_config = json.load(open(str(ds_input_path.joinpath('config.json'))))
 
-    return Dataset(ds_id, ds_name, ds_input_path, datetime.now(), metadata, ds_config)
+    return Dataset(ds_id, ds_name, str(ds_input_path), datetime.now(), metadata, ds_config)
 
 
 def split_s3_path(path):
     """ Returns a pair (bucket, key) """
     return path.split('s3a://')[-1].split('/', 1)
-

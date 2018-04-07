@@ -9,7 +9,7 @@ from sm.engine.es_export import ESExporter
 from sm.engine.work_dir import WorkDirManager
 
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 
 class DatasetReader(object):

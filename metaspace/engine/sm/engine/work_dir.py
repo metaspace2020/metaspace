@@ -16,7 +16,7 @@ from boto3.s3.transfer import S3Transfer
 
 from sm.engine.util import cmd_check, SMConfig, split_s3_path
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 
 def split_local_path(path):

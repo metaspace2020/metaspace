@@ -5,7 +5,7 @@ import logging
 from collections import namedtuple
 
 
-logger = logging.getLogger('sm-engine')
+logger = logging.getLogger('engine')
 
 ISOTOPIC_PEAK_N = 4
 SIGMA_TO_FWHM = 2.3548200450309493  # 2 \sqrt{2 \log 2}

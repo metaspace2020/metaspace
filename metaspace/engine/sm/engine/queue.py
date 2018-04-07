@@ -449,7 +449,7 @@ class QueueConsumer(Thread):
 
 class QueuePublisher(object):
 
-    def __init__(self, config, qdesc, logger_name='sm-api'):
+    def __init__(self, config, qdesc, logger_name='api'):
         creds = pika.PlainCredentials(config['user'], config['password'])
         self.qdesc = qdesc
         self.qname = qdesc['name']
