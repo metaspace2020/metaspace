@@ -9,6 +9,17 @@
     version: "{{ sm_webapp_branch }}"
   register: git_deploy
   until: git_deploy | succeeded
+  when: local_deploy is not defined
+
+- name: Upload local files
+  synchronize:
+    src: "{{ sm_webapp_home }}/"
+    dest: "{{ sm_webapp_home }}/"
+    rsync_opts:
+      - --exclude='config/*.js' --exclude=S3/*
+      - --exclude='logs/*' --exclude='dist/*'
+      - --exclude='node_modules/*' --exclude='.*'
+  when: local_deploy is defined
 
 - name: Pull config template from the remote host
   fetch: src={{ sm_webapp_home }}/conf.js.template dest=/tmp/conf.js.template
