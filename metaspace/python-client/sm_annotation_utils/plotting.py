@@ -2,6 +2,11 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import pandas as pd
+import pylab
+from matplotlib.patches import Circle, Ellipse, Rectangle, Polygon
+from itertools import chain
+from collections import Iterable
+from matplotlib_venn import venn3
 
 def rarefaction_curve(df, granularity=20, n_reps=2, plot_args={}):
     x = np.linspace(0, df.shape[0], granularity, dtype=int)
@@ -90,11 +95,7 @@ alignment = {'horizontalalignment':'center', 'verticalalignment':'center'}
 #--------------------------------------------------------------------
 def venn(data, names=None, fill="number", show_names=True, show_plot=True, **kwds):
     # Credit: https://github.com/ksahlin/pyinfor/blob/master/venn.py
-    import pylab
-    from matplotlib.patches import Circle, Ellipse, Rectangle, Polygon
-    from itertools import chain
-    from collections import Iterable
-    from matplotlib_venn import venn3
+
 
     """
     data: a list
@@ -411,7 +412,8 @@ def venn4_square(data=None, names=None, fill="number", show_names=True, show_plo
     patches.append(Polygon([[100+height, 100+width], [100+height+width/4., 100+width/2], [100+height, 100]], color=colors[3], alpha=0.4, linewidth=0))
 
     ## Draw Ellipses
-    mult = width / (2.1 * np.max(labels.values()))
+    print(labels.values(), np.max(list(labels.values())))
+    mult = width / (2.1 * np.max(list(labels.values())))
     def area_to_width(total, max_width):
         return np.sqrt(total/np.pi())
     # 1
@@ -486,7 +488,7 @@ def venn4_square(data=None, names=None, fill="number", show_names=True, show_plo
         pylab.text(100+3*width/4, 100+3*width/4, labels['1111'], **alignment)
 
     patches.append(
-        Ellipse((100 + height, 100 + height), width=mult*np.max(labels.values()), height=mult*np.max(labels.values()),
+        Ellipse((100 + height, 100 + height), width=mult*np.max(list(labels.values())), height=mult*np.max(list(labels.values())),
                 color='r', alpha=0.5))
 
     for e in patches:
@@ -497,7 +499,7 @@ def venn4_square(data=None, names=None, fill="number", show_names=True, show_plo
     ax.set_yticks([])
     ax.set_aspect("equal")
 
-    pylab.text(100 + height, 100 + height, "{}".format(np.max(labels.values())), fontsize=16, **alignment)
+    pylab.text(100 + height, 100 + height, "{}".format(np.max(list(labels.values()))), fontsize=16, **alignment)
 
     # names of different groups
     pylab.text(90, 90 + height, names[0], fontsize=16, rotation=27, ha='left', va='bottom')
@@ -518,6 +520,7 @@ def clustermap(data_array, row_labels=[], intensity_title=None, title=None, colu
     import plotly.graph_objs as go
     import plotly.figure_factory as FF
     import plotly
+    from sklearn.decomposition import PCA
 
     if len(column_labels) == 0:
         column_labels = ["{}".format(ii) for ii in range(data_array.shape[1])]
@@ -534,7 +537,10 @@ def clustermap(data_array, row_labels=[], intensity_title=None, title=None, colu
         dendro_top['data'][i]['yaxis'] = 'y2'
 
     # Create Side Dendrogram
-    dendro_side = FF.create_dendrogram(data_array, orientation='right')
+    if data_array.shape[1] > 50:
+        dendro_side = FF.create_dendrogram(PCA(n_components=25).fit_transform(data_array), orientation='right')
+    else:
+        dendro_side = FF.create_dendrogram(data_array, orientation='right')
     for i in range(len(dendro_side['data'])):
         dendro_side['data'][i]['xaxis'] = 'x3'
         dendro_side['data'][i]['yaxis'] = 'y1'
