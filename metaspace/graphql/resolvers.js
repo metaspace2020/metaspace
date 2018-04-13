@@ -1,7 +1,8 @@
 const sprintf = require('sprintf-js'),
   fetch = require('node-fetch'),
   jwt = require('jwt-simple'),
-  {UserError} = require('graphql-errors');
+  {UserError} = require('graphql-errors'),
+  Ajv = require('ajv');
 
 const config = require('config'),
   {esSearchResults, esCountResults, esCountGroupedResults,
@@ -9,6 +10,10 @@ const config = require('config'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {generateProcessingConfig, metadataChangeSlackNotify,
     metadataUpdateFailedSlackNotify, logger, pubsub, pg} = require("./utils.js");
+
+const ajv = new Ajv({allErrors: true});
+const metadataSchema = require('./src/assets/metadata_schema.json'),
+    validator = ajv.compile(metadataSchema);
 
 function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
   // wait until updates are reflected in ES so that clients don't have to care
@@ -85,6 +90,47 @@ function checkFetchRes(resp) {
   }
 }
 
+
+
+function isEmpty(obj) {
+  if (!obj)
+    return true;
+  if (!(obj instanceof Object))
+    return false;
+  let empty = true;
+  for (var key in obj) {
+    if (!isEmpty(obj[key])) {
+      empty = false;
+      break;
+    }
+  }
+  return empty;
+}
+
+function trimEmptyFields(schema, value) {
+  if (!(value instanceof Object))
+    return value;
+  if (Array.isArray(value))
+    return value;
+  let obj = Object.assign({}, value);
+  for (var name in schema.properties) {
+    const prop = schema.properties[name];
+    if (isEmpty(obj[name]) && (!schema.required || schema.required.indexOf(name) == -1))
+      delete obj[name];
+    else
+      obj[name] = trimEmptyFields(prop, obj[name]);
+  }
+  return obj;
+}
+
+function validateForm(value) {
+  const cleanValue = trimEmptyFields(metadataSchema, value);
+
+  validator(cleanValue);
+  let validationErrors = validator.errors || [];
+
+  return validationErrors;
+}
 
 const Resolvers = {
   Person: {
@@ -392,11 +438,14 @@ const Resolvers = {
 
   Mutation: {
     submitDataset(_, args) {
-      const {name, path, metadataJson, datasetId, delFirst, priority, sync} = args;
+      const {name, path, metadataToValidate, datasetId, delFirst, priority, sync} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
-
-        const metadata = JSON.parse(metadataJson);
+        const metadata = JSON.parse(metadataToValidate);
+        let validationErrors = validateForm(metadata);
+        if (validationErrors.length > 0) {
+          throw new Error (JSON.stringify(['failed_validation', validationErrors]));
+        }
         const body = JSON.stringify({
           id: datasetId,
           name: name,
@@ -472,10 +521,14 @@ const Resolvers = {
     },
 
     updateMetadata(_, args) {
-      const {datasetId, metadataJson, priority, sync} = args;
+      const {datasetId, metadataToValidate, priority, sync} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
-        const newMetadata = JSON.parse(metadataJson);
+        const newMetadata = JSON.parse(metadataToValidate);
+        let validationErrors = validateForm(newMetadata);
+        if (validationErrors.length > 0) {
+          throw new Error (JSON.stringify(['failed_validation', validationErrors]));
+        }
         const user = payload.name || payload.email;
 
         return checkPermissions(datasetId, payload)
@@ -562,6 +615,7 @@ const Resolvers = {
       }
       const payload = jwt.decode(input.jwt, config.jwt.secret);
       try {
+        logger.info(input);
         await checkPermissions(datasetId, payload);
         const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/add-optical-image`;
         const body = {url: imageUrl, transform};
