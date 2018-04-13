@@ -2,7 +2,8 @@ const slack = require('node-slack'),
   jsondiffpatch = require('jsondiffpatch'),
   winston = require('winston'),
   moment = require('moment'),
-  { PubSub } = require('graphql-subscriptions');
+  { PubSub } = require('graphql-subscriptions'),
+  {UserError} = require('graphql-errors');
 
 const config = require('config');
 
@@ -147,10 +148,45 @@ let pg = require('knex')({
   searchPath: 'knex,public'
 });
 
+function checkPermissions(datasetId, payload) {
+  return pg.select().from('dataset').where('id', '=', datasetId)
+    .then(records => {
+      if (records.length == 0)
+        throw new UserError(`No dataset with specified id: ${datasetId}`);
+      metadata = records[0].metadata;
+
+      let allowUpdate = false;
+      if (payload.role == 'admin')
+        allowUpdate = true;
+      else if (payload.email == metadata.Submitted_By.Submitter.Email)
+        allowUpdate = true;
+      if (!allowUpdate)
+        throw new UserError(`You don't have permissions to edit the dataset: ${datasetId}`);
+    });
+}
+
+async function fetchDS({id, name}) {
+  let records;
+  if (id !== undefined)
+    records = await pg.select().from('dataset').where('id', '=', id);
+  else if (name !== undefined)
+    records = await pg.select().from('dataset').where('name', '=', name);
+  else
+    throw new UserError(`'id' or 'name' must be provided`);
+
+  if (records.length === 0)
+    return undefined;
+  else if (records.length > 1)
+    throw new UserError(`More than one dataset found: '${id}' '${name}'`);
+  return records[0];
+}
+
 module.exports = {
   generateProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
+  checkPermissions,
+  fetchDS,
   config,
   logger,
   pubsub,

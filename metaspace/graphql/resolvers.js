@@ -1,19 +1,16 @@
 const sprintf = require('sprintf-js'),
-  fetch = require('node-fetch'),
   jwt = require('jwt-simple'),
   {UserError} = require('graphql-errors'),
-  Ajv = require('ajv');
+  fetch = require('node-fetch');
 
 const config = require('config'),
   {esSearchResults, esCountResults, esCountGroupedResults,
    esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {generateProcessingConfig, metadataChangeSlackNotify,
-    metadataUpdateFailedSlackNotify, logger, pubsub, pg} = require("./utils.js");
-
-const ajv = new Ajv({allErrors: true});
-const metadataSchema = require('./src/assets/metadata_schema.json'),
-    validator = ajv.compile(metadataSchema);
+    metadataUpdateFailedSlackNotify, fetchDS,
+    logger, pubsub, pg} = require("./utils.js"),
+  {Mutation: DSMutation} = require('./dsMutation.js');
 
 function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
   // wait until updates are reflected in ES so that clients don't have to care
@@ -53,23 +50,6 @@ queue.then(function(conn) {
   });
 }).catch(console.warn);
 
-function checkPermissions(datasetId, payload) {
-  return pg.select().from('dataset').where('id', '=', datasetId)
-    .then(records => {
-      if (records.length == 0)
-        throw new UserError(`No dataset with specified id: ${datasetId}`);
-      metadata = records[0].metadata;
-
-      let allowUpdate = false;
-      if (payload.role == 'admin')
-        allowUpdate = true;
-      else if (payload.email == metadata.Submitted_By.Submitter.Email)
-        allowUpdate = true;
-      if (!allowUpdate)
-        throw new UserError(`You don't have permissions to edit the dataset: ${datasetId}`);
-    });
-}
-
 function baseDatasetQuery() {
   return pg.from(function() {
     this.select(pg.raw('dataset.id as id'),
@@ -86,51 +66,11 @@ function checkFetchRes(resp) {
   if (resp.ok) {
     return resp
   } else {
-    throw new Error(`An error occurred during fetch request - status ${resp.status}`);
+    throw new UserError(`An error occurred during fetch request - status ${resp.status}`);
   }
 }
 
 
-
-function isEmpty(obj) {
-  if (!obj)
-    return true;
-  if (!(obj instanceof Object))
-    return false;
-  let empty = true;
-  for (var key in obj) {
-    if (!isEmpty(obj[key])) {
-      empty = false;
-      break;
-    }
-  }
-  return empty;
-}
-
-function trimEmptyFields(schema, value) {
-  if (!(value instanceof Object))
-    return value;
-  if (Array.isArray(value))
-    return value;
-  let obj = Object.assign({}, value);
-  for (var name in schema.properties) {
-    const prop = schema.properties[name];
-    if (isEmpty(obj[name]) && (!schema.required || schema.required.indexOf(name) == -1))
-      delete obj[name];
-    else
-      obj[name] = trimEmptyFields(prop, obj[name]);
-  }
-  return obj;
-}
-
-function validateForm(value) {
-  const cleanValue = trimEmptyFields(metadataSchema, value);
-
-  validator(cleanValue);
-  let validationErrors = validator.errors || [];
-
-  return validationErrors;
-}
 
 const Resolvers = {
   Person: {
@@ -144,7 +84,7 @@ const Resolvers = {
       return esDatasetByID(id);
     },
 
-    allDatasets(_, args) {
+    async allDatasets(_, args) {
       args.datasetFilter = args.filter;
       args.filter = {};
       return esSearchResults(args, 'dataset');
@@ -437,217 +377,33 @@ const Resolvers = {
   },
 
   Mutation: {
-    submitDataset(_, args) {
-      const {name, path, metadataToValidate, datasetId, delFirst, priority, sync} = args;
-      try {
-        const payload = jwt.decode(args.jwt, config.jwt.secret);
-        const metadata = JSON.parse(metadataToValidate);
-        let validationErrors = validateForm(metadata);
-        if (validationErrors.length > 0) {
-          throw new Error (JSON.stringify(['failed_validation', validationErrors]));
-        }
-        const body = JSON.stringify({
-          id: datasetId,
-          name: name,
-          input_path: path,
-          metadata: metadata,
-          config: generateProcessingConfig(metadata),
-          priority: priority,
-          del_first: delFirst
-        });
-
-        const url = `http://${config.services.sm_engine_api_host}/v1/datasets/add`;
-        let smAPIPromise = fetch(url, {
-             method: 'POST',
-             body: body,
-             headers: {
-                "Content-Type": "application/json"
-             }})
-          .then(() => {
-            logger.info(`submitDataset success: ${datasetId} ${name}`);
-            return "success"
-          })
-          .catch(e => {
-            logger.error(`submitDataset error: ${e.message}\n`);
-            return e.message
-          });
-        if (sync)
-          return smAPIPromise;
-      } catch (e) {
-        logger.error(e);
-        return e.message;
-      }
+    resubmitDataset: async (_, args) => {
+      const ds = await fetchDS({id: args.datasetId});
+      if (ds === undefined)
+        throw new UserError('DS does not exist');
+      args.name = ds.name;
+      args.path = ds.input_path;
+      args.metadata = ds.metadata;
+      return DSMutation.submit(args);
     },
 
-    resubmitDataset(_, args) {
-      const {datasetId, priority, sync} = args;
-      try {
-        const payload = jwt.decode(args.jwt, config.jwt.secret);
-
-        return checkPermissions(datasetId, payload)
-          .then(() => {
-            return pg.select().from('dataset').where('id', '=', datasetId)
-              .then(records => {
-                const ds = records[0];
-                const body = JSON.stringify({
-                  id: ds.id,
-                  name: ds.name,
-                  input_path: ds.input_path,
-                  metadata: ds.metadata,
-                  config: ds.config,
-                  priority: priority,
-                  del_first: true
-                });
-
-                const url = `http://${config.services.sm_engine_api_host}/v1/datasets/add`;
-                let smAPIPromise = fetch(url, { method: 'POST', body: body, headers: {
-                  "Content-Type": "application/json"}})
-                  .then(() => {
-                    logger.info(`resubmitDataset success: ${ds.id} ${ds.name}`);
-                    return "success";
-                  })
-                  .catch(e => {
-                    logger.error(`resubmitDataset error: ${e.message}\n`);
-                    return e.message
-                  });
-                if (sync)
-                  return smAPIPromise;
-              });
-          })
-      } catch (e) {
-        logger.error(e);
-        return e.message;
-      }
+    submitDataset: (_, args) => {
+      args.metadata = JSON.parse(args.metadataJson);
+      delete args['metadataJson'];
+      return DSMutation.submit(args);
     },
 
-    updateMetadata(_, args) {
-      const {datasetId, metadataToValidate, priority, sync} = args;
-      try {
-        const payload = jwt.decode(args.jwt, config.jwt.secret);
-        const newMetadata = JSON.parse(metadataToValidate);
-        let validationErrors = validateForm(newMetadata);
-        if (validationErrors.length > 0) {
-          throw new Error (JSON.stringify(['failed_validation', validationErrors]));
-        }
-        const user = payload.name || payload.email;
-
-        return checkPermissions(datasetId, payload)
-          .then(() => {
-            const body = JSON.stringify({
-              metadata: newMetadata,
-              config: generateProcessingConfig(newMetadata),
-              name: newMetadata.metaspace_options.Dataset_Name || "",
-              priority: priority
-            });
-
-            return pg.select().from('dataset').where('id', '=', datasetId)
-              .then(records => {
-                const oldMetadata = records[0].metadata;
-                metadataChangeSlackNotify(user, datasetId, oldMetadata, newMetadata);
-              })
-              .then(() => {
-                const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/update`;
-                let smAPIPromise = fetch(url, { method: 'POST', body: body, headers: {
-                    "Content-Type": "application/json"
-                  }})
-                  .then(() => {
-                    logger.info(`updateMetadata success: ${datasetId}`);
-                    return "success";
-                  })
-                  .catch( e => {
-                    logger.error(`updateMetadata error: ${e.message}\n${e.stack}`);
-                    metadataUpdateFailedSlackNotify(user, datasetId, e.message);
-                  });
-                if (sync)
-                  return smAPIPromise;
-              })
-          })
-      } catch (e) {
-        logger.error(e);
-        return e.message;
-      }
+    updateMetadata: (_, args) => {
+      return DSMutation.update(args);
     },
 
-    deleteDataset(_, args) {
-      const {datasetId, delRawData, sync} = args;
-
-      try {
-        const payload = jwt.decode(args.jwt, config.jwt.secret);
-        return checkPermissions(datasetId, payload)
-          .then( () => {
-            const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/delete`;
-            let body = JSON.stringify({});
-            // if (delRawData != undefined || delRawData == false)
-            //   body = JSON.stringify({});
-            // else
-            //   body = JSON.stringify({ "del_raw": true });
-            let smAPIPromise = fetch(url, {method: "POST", body: body, headers: {
-                "Content-Type": "application/json"
-              }})
-              .catch( e => {
-                logger.error(`deleteDataset error: ${e.message}\n${e.stack}`);
-              });
-            if (sync)
-              return smAPIPromise;
-          })
-          .then(res => {
-            logger.info(`deleteDataset success: ${datasetId}`);
-            return "success";
-          })
-      } catch (e) {
-        logger.error(e.message);
-        return e.message;
-      }
+    deleteDataset: (_, args) => {
+      return DSMutation.delete(args);
     },
 
-    async addOpticalImage(_, {input}) {
-      let {datasetId, imageUrl, transform} = input;
-      const basePath = `http://localhost:${config.img_storage_port}`;
-      if (imageUrl[0] == '/') {
-        // imageUrl comes from the web application and should not include host/port.
-        //
-        // This is necessary for a Virtualbox installation because of port mapping,
-        // and preferred for AWS installation because we're not charged for downloads
-        // if internal network is used.
-        //
-        // TODO support image storage running on a separate host
-        imageUrl = basePath + imageUrl;
-      }
-      const payload = jwt.decode(input.jwt, config.jwt.secret);
-      try {
-        logger.info(input);
-        await checkPermissions(datasetId, payload);
-        const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/add-optical-image`;
-        const body = {url: imageUrl, transform};
-        let processOptImage = await fetch(url, {
-          method: 'POST',
-          body: JSON.stringify(body),
-          headers: {'Content-Type': 'application/json'}});
-        checkFetchRes(processOptImage);
-        return 'success';
-      } catch (e) {
-        logger.error(e.message);
-        return e.message;
-      }
-    },
+    addOpticalImage: DSMutation.addOpticalImage,
 
-    async deleteOpticalImage(_, args) {
-      let {datasetId} = args;
-      const payload = jwt.decode(args.jwt, config.jwt.secret);
-      const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/del-optical-image`;
-      try {
-        await checkPermissions(datasetId, payload);
-        let dbDelFetch = await fetch(url, {
-          method: 'POST',
-          body: JSON.stringify({datasetId}),
-          headers: {'Content-Type': 'application/json'}});
-        checkFetchRes(dbDelFetch);
-        return 'success';
-      } catch (e) {
-        logger.error(e.message);
-        return e.message;
-      }
-    }
+    deleteOpticalImage: DSMutation.deleteOpticalImage
   },
 
   Subscription: {
