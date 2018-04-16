@@ -290,6 +290,19 @@ const Resolvers = {
         'levels': outFdrLvls,
         'counts': outFdrCounts
       }
+    },
+
+    opticalImage(ds) {
+      return Resolvers.Query.rawOpticalImage(null, {datasetId: ds._source.ds_id})
+          .then(optImage => {
+            if (optImage.transform == null) {
+              //non-existing optical image don't have transform value
+              return 'noOptImage'
+            }
+            return optImage.url
+          }).catch((e) => {
+            logger.error(e);
+          })
     }
   },
 
