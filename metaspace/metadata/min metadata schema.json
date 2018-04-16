@@ -45,7 +45,8 @@
         },
         "Condition": {
           "description": "disease state of the organism",
-          "type": "string"
+          "type": "string",
+          "minLength": 3
         },
         "Sample_Growth_Conditions": {
           "description": "intervention, treatment group or growth conditions",
