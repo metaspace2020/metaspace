@@ -45,7 +45,7 @@ jobs:
             rm -rf sm-graphql
             git clone https://github.com/metaspace2020/sm-graphql --branch rel-v0.9 --recursive
             export NPM_CONFIG_LOGLEVEL=warn
-            cd sm-graphql && yarn install && node deref_schema.js > metadata_schema.json && cd ..
+            cd sm-graphql && yarn install && node deref_schema.js > metadata_schema.json
             cp tests/mock_config.js config/default.js
             forever start -e api_mocks.err.log tests/api_mocks.js
             forever start -o sm-graphql.out.log -e sm-graphql.err.log server.js
@@ -57,6 +57,6 @@ jobs:
           name: Run tests
           command: |
             export NPM_CONFIG_LOGLEVEL=warn
-            while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
+            #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             stty cols 80  # https://github.com/DevExpress/testcafe/issues/1469
             yarn run test
