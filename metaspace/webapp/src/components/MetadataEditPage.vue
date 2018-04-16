@@ -41,9 +41,10 @@
      },
 
      updateMetadata(jwt, dsId, value) {
+       const dsName = JSON.parse(value).metaspace_options.Dataset_Name;
        return this.$apollo.mutate({
          mutation: updateMetadataQuery,
-         variables: {jwt, dsId, value},
+         variables: {jwt, dsId, dsName, value},
          updateQueries: {
            fetchMetadataQuery: (prev, _) => ({
              dataset: {
@@ -51,11 +52,9 @@
              }
            })
          }
-       }).then(resp => resp.data.updateMetadata)
-         .then(status => {
-           if (status != 'success')
-             throw new Error(status);
-         });
+       }).catch( e => {
+         throw Error('GraphQL error');
+       });
      }
    }
  }
