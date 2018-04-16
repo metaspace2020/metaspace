@@ -28,7 +28,7 @@ from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS
 
 logger = logging.getLogger('engine')
 
-JOB_ID_MOLDB_ID_SEL = "SELECT id, db_id FROM job WHERE ds_id = %s"
+JOB_ID_MOLDB_ID_SEL = "SELECT id, db_id FROM job WHERE ds_id = %s AND status='FINISHED'"
 JOB_INS = "INSERT INTO job (db_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
 JOB_UPD = "UPDATE job set status=%s, finish=%s where id=%s"
 TARGET_DECOY_ADD_DEL = 'DELETE FROM target_decoy_add tda WHERE tda.job_id IN (SELECT id FROM job WHERE ds_id = %s)'
@@ -88,7 +88,7 @@ class SearchJob(object):
             self.store_job_meta(mol_db.id)
             mol_db.set_job_id(self._job_id)
 
-            logger.info("Processing ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
+            logger.info("Running new job ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
                         self._ds.id, self._ds.name, mol_db.name, mol_db.version)
 
             target_adducts = self._ds.config['isotope_generation']['adducts']
@@ -130,18 +130,19 @@ class SearchJob(object):
         else:
             self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
 
-    def prepare_moldb_id_list(self):
+    def _remove_annotation_job(self, mol_db):
+        logger.info("Removing job results ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
+                    self._ds.id, self._ds.name, mol_db.name, mol_db.version)
+        self._db.alter("DELETE FROM job WHERE ds_id = %s and db_id = %s", self._ds.id, mol_db.id)
+        self._es.delete_ds(self._ds.id, mol_db)
+
+    def _moldb_ids(self):
         moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
-        finished_job_moldb_ids = [r[1] for r in self._db.select(JOB_ID_MOLDB_ID_SEL, self._ds.id)]
-        moldb_id_list = []
-        for mol_db_dict in self._ds.config['databases']:
-            data = moldb_service.find_db_by_name_version(mol_db_dict['name'],
-                                                         mol_db_dict.get('version', None))
-            if data:
-                mol_db_id = data[0]['id']
-                if mol_db_id not in finished_job_moldb_ids:
-                    moldb_id_list.append(mol_db_id)
-        return moldb_id_list
+        completed_moldb_ids = {moldb_service.find_db_by_id(db_id)['id']
+                               for (_, db_id) in self._db.select(JOB_ID_MOLDB_ID_SEL, self._ds.id)}
+        new_moldb_ids = {moldb_service.find_db_by_name_version(d['name'], d.get('version', None))[0]['id']
+                         for d in self._ds.config['databases']}
+        return completed_moldb_ids, new_moldb_ids
 
     def run(self, ds):
         """ Entry point of the engine. Molecule search is completed in several steps:
@@ -181,9 +182,14 @@ class SearchJob(object):
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
-            for mol_db_id in self.prepare_moldb_id_list():
-                mol_db = MolecularDB(id=mol_db_id, iso_gen_config=self._ds.config['isotope_generation'], db=self._db)
-                self._run_annotation_job(mol_db)
+            completed_moldb_ids, new_moldb_ids = self._moldb_ids()
+            for moldb_id in completed_moldb_ids.symmetric_difference(new_moldb_ids):  # ignore ids present in both sets
+                mol_db = MolecularDB(id=moldb_id, db=self._db,
+                                     iso_gen_config=self._ds.config['isotope_generation'])
+                if moldb_id not in new_moldb_ids:
+                    self._remove_annotation_job(mol_db)
+                elif moldb_id not in completed_moldb_ids:
+                    self._run_annotation_job(mol_db)
 
             ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.FINISHED)
 

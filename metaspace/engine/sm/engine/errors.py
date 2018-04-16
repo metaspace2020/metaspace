@@ -20,5 +20,7 @@ class UnknownDSID(SMError):
 
 
 class DSIDExists(SMError):
-    def __init__(self, msg):
-        super().__init__(msg)
+
+    def __init__(self, ds_id):
+        super().__init__('Dataset already exists: {}'.format(ds_id))
+

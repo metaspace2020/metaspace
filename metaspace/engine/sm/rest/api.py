@@ -2,11 +2,9 @@ import argparse
 import json
 from datetime import datetime
 import logging
-import requests
 from bottle import post, run
 from bottle import request as req
 from bottle import response as resp
-from PIL import Image
 
 from sm.engine import DB, ESExporter
 from sm.engine import Dataset, SMapiDatasetManager, DatasetActionPriority
@@ -16,15 +14,19 @@ from sm.engine.util import SMConfig
 from sm.engine.util import init_loggers
 from sm.engine.errors import UnknownDSID
 
-
 OK = {
-    'status': 200,
-    'title': 'OK'
+    'status_code': 200,
+    'status': 'success'
 }
 
 ERR_OBJECT_NOT_EXISTS = {
-    'status': 404,
-    'title': 'Object Not Exists'
+    'status_code': 404,
+    'status': 'Object Not Exists'
+}
+
+ERR_OBJECT_EXISTS = {
+    'status_code': 400,
+    'status': 'Already exists'
 }
 
 
@@ -56,7 +58,8 @@ def add_ds():
     params = _json_params(req)
     logger.info('Received ADD request: %s', params)
     now = datetime.now()
-    ds = Dataset(params.get('id', None) or now.strftime("%Y-%m-%d_%Hh%Mm%Ss"),
+    ds_id = params.get('id', None) or now.strftime("%Y-%m-%d_%Hh%Mm%Ss")
+    ds = Dataset(ds_id,
                  params.get('name', None),
                  params.get('input_path'),
                  params.get('upload_dt', now),
@@ -67,7 +70,7 @@ def add_ds():
     ds_man.add(ds, del_first=params.get('del_first', False),
                priority=params.get('priority', DatasetActionPriority.DEFAULT))
     db.close()
-    return OK['title']
+    return {'status': OK['status'], 'ds_id': ds_id}
 
 
 def sm_modify_dataset(request_name):
@@ -82,10 +85,16 @@ def sm_modify_dataset(request_name):
                 handler(ds_man, ds, params)
 
                 db.close()
-                return OK['title']
+                return {
+                    'status': OK['status'],
+                    'ds_id': ds_id
+                }
             except UnknownDSID:
-                resp.status = ERR_OBJECT_NOT_EXISTS['status']
-                return ERR_OBJECT_NOT_EXISTS['title']
+                resp.status = ERR_OBJECT_NOT_EXISTS['status_code']
+                return {
+                    'status': ERR_OBJECT_NOT_EXISTS['status'],
+                    'ds_id': ds_id
+                }
         return _func
     return _modify
 

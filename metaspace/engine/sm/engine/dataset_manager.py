@@ -42,30 +42,6 @@ class DatasetActionPriority(object):
     DEFAULT = LOW
 
 
-class ConfigDiff:
-    EQUAL, NEW_MOL_DB, INSTR_PARAMS_DIFF = range(3)
-
-    @staticmethod
-    def compare_configs(old, new):
-        def mol_dbs_to_set(mol_dbs):
-            return set((mol_db['name'], mol_db.get('version', None)) for mol_db in mol_dbs)
-
-        res = ConfigDiff.EQUAL
-        if old != new:
-            old_rest, new_rest = old.copy(), new.copy()
-            old_rest.pop('databases', None)
-            new_rest.pop('databases', None)
-            if old_rest != new_rest:
-                res = ConfigDiff.INSTR_PARAMS_DIFF
-            else:
-                old_mol_dbs = mol_dbs_to_set(old.get('databases', []))
-                new_mol_dbs = mol_dbs_to_set(new.get('databases', []))
-                if len(new_mol_dbs - old_mol_dbs) > 0:
-                    res = ConfigDiff.NEW_MOL_DB
-                    # TODO: if some databases got removed from the list we need to delete these results
-        return res
-
-
 class DatasetManager(object):
     """ Abstract class for dataset data management in the engine.
         SMDaemonDatasetManager or SMapiDatasetManager should be instantiated instead
@@ -201,8 +177,6 @@ class SMapiDatasetManager(DatasetManager):
 
     def add(self, ds, del_first=False, priority=DatasetActionPriority.DEFAULT):
         """ Send add message to the queue. If dataset exists, raise an exception """
-        if not del_first and ds.is_stored(self._db):
-            raise DSIDExists('{} - {}'.format(ds.id, ds.name))
         self._post_sm_msg(ds=ds, action=DatasetAction.ADD, priority=priority, del_first=del_first)
 
     def delete(self, ds, del_raw_data=False):
@@ -211,18 +185,7 @@ class SMapiDatasetManager(DatasetManager):
 
     def update(self, ds, priority=DatasetActionPriority.DEFAULT):
         """ Send update or add message to the queue or do nothing """
-        old_ds = Dataset.load(self._db, ds.id)
-        config_diff = ConfigDiff.compare_configs(old_ds.config, ds.config)
-        meta_diff = old_ds.meta != ds.meta
-
-        if config_diff == ConfigDiff.INSTR_PARAMS_DIFF:
-            self._post_sm_msg(ds=ds, action=DatasetAction.ADD, priority=priority, del_first=True)
-        elif config_diff == ConfigDiff.NEW_MOL_DB:
-            self._post_sm_msg(ds=ds, action=DatasetAction.ADD, priority=priority)
-        elif config_diff == ConfigDiff.EQUAL and meta_diff:
-            self._post_sm_msg(ds=ds, action=DatasetAction.UPDATE, priority=DatasetActionPriority.HIGH)
-        else:
-            self.logger.info('Nothing to update: %s %s', ds.id, ds.name)
+        self._post_sm_msg(ds=ds, action=DatasetAction.UPDATE, priority=DatasetActionPriority.HIGH)
 
     def _annotation_image_shape(self, img_store, ds_id):
         ion_img_id = self._db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', ds_id)[0][0][0]
