@@ -269,7 +269,9 @@ type Query {
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
-  rawOpticalImage(datasetId: String!): RawOpticalImage
+  rawOpticalImage(datasetId: String!): RawOpticalImage,
+
+  reprocessingNeeded(datasetId: String!, metadataJson: String!): Boolean
 }
 
 type Mutation {

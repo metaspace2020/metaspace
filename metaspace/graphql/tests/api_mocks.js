@@ -51,15 +51,15 @@ function engineRestService(port) {
   app.use(cors());
 
   app.post('/datasets/add', function (req, res) {
-    res.send('OK') ;
+    res.send('success') ;
   });
 
   app.post('/datasets/:id/update', function (req, res) {
-    res.send('OK');
+    res.send('success');
   });
 
   app.post('/datasets/:id/delete', function (req, res) {
-    res.send('OK');
+    res.send('success');
   });
 
   app.listen(port);

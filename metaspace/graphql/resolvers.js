@@ -10,7 +10,7 @@ const config = require('config'),
   {generateProcessingConfig, metadataChangeSlackNotify,
     metadataUpdateFailedSlackNotify, fetchDS,
     logger, pubsub, pg} = require("./utils.js"),
-  {Mutation: DSMutation} = require('./dsMutation.js');
+  {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js');
 
 function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
   // wait until updates are reflected in ES so that clients don't have to care
@@ -182,6 +182,10 @@ const Resolvers = {
         .catch((e) => {
           logger.error(e);
         })
+    },
+
+    reprocessingNeeded(_, args) {
+      return DSQuery.reprocessingNeeded(args);
     }
   },
 

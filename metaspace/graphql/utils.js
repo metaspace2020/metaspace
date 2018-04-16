@@ -20,19 +20,19 @@ const RESOL_POWER_PARAMS = {
     '1000K': {sigma: 0.00017331000892, fwhm: 0.000408113883008, pts_per_mz: 28850},
 };
 
-function generateProcessingConfig(meta_json) {
+function generateProcessingConfig(metadata) {
   const polarity_dict = {'Positive': '+', 'Negative': '-'},
-        polarity = polarity_dict[meta_json['MS_Analysis']['Polarity']],
-        instrument = meta_json['MS_Analysis']['Analyzer'],
-        rp = meta_json['MS_Analysis']['Detector_Resolving_Power'],
+        polarity = polarity_dict[metadata['MS_Analysis']['Polarity']],
+        instrument = metadata['MS_Analysis']['Analyzer'],
+        rp = metadata['MS_Analysis']['Detector_Resolving_Power'],
         rp_mz = parseFloat(rp['mz']),
         rp_resolution = parseFloat(rp['Resolving_Power']);
 
   let rp200, params;
 
-  if (instrument == 'FTICR')
+  if (instrument === 'FTICR')
     rp200 = rp_resolution * rp_mz / 200.0;
-  else if (instrument == 'Orbitrap')
+  else if (instrument === 'Orbitrap')
     rp200 = rp_resolution * Math.pow(rp_mz / 200.0,  0.5);
   else
     rp200 = rp_resolution;
@@ -46,7 +46,7 @@ function generateProcessingConfig(meta_json) {
   else if (rp200 < 875000) params = RESOL_POWER_PARAMS['750K'];
   else params = RESOL_POWER_PARAMS['1000K'];
 
-  let m_opts = meta_json['metaspace_options'];
+  let m_opts = metadata['metaspace_options'];
   let ppm = 3.0;
   if ('ppm' in m_opts) {
     ppm = m_opts['ppm'];
@@ -60,7 +60,7 @@ function generateProcessingConfig(meta_json) {
   else
     mdb_list = mdb_names.map( (name) => ({'name': name}) );
 
-  if (mdb_list.filter( mdb => mdb.name == config.defaults.moldb_name).length == 0)
+  if (mdb_list.filter( mdb => mdb.name === config.defaults.moldb_name).length === 0)
     mdb_list.push({ "name": config.defaults.moldb_name});
 
   // TODO: metadata format should support adduct specification
@@ -151,14 +151,14 @@ let pg = require('knex')({
 function checkPermissions(datasetId, payload) {
   return pg.select().from('dataset').where('id', '=', datasetId)
     .then(records => {
-      if (records.length == 0)
+      if (records.length === 0)
         throw new UserError(`No dataset with specified id: ${datasetId}`);
       metadata = records[0].metadata;
 
       let allowUpdate = false;
-      if (payload.role == 'admin')
+      if (payload.role === 'admin')
         allowUpdate = true;
-      else if (payload.email == metadata.Submitted_By.Submitter.Email)
+      else if (payload.email === metadata.Submitted_By.Submitter.Email)
         allowUpdate = true;
       if (!allowUpdate)
         throw new UserError(`You don't have permissions to edit the dataset: ${datasetId}`);

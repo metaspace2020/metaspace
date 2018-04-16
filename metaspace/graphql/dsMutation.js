@@ -2,7 +2,8 @@ const jsondiffpatch = require('jsondiffpatch'),
   jwt = require('jwt-simple'),
   config = require('config'),
   Ajv = require('ajv'),
-  fetch = require('node-fetch');
+  fetch = require('node-fetch'),
+  {UserError} = require('graphql-errors');
 
 const {pg, logger, fetchDS, checkPermissions, generateProcessingConfig} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json');
@@ -46,7 +47,7 @@ function validateMetadata(metadata) {
   validator(cleanValue);
   const validationErrors = validator.errors || [];
   if (validationErrors.length > 0) {
-    throw new Error(JSON.stringify(['failed_validation', validationErrors]));
+    throw new UserError(JSON.stringify(['failed_validation', validationErrors]));
   }
 }
 
@@ -67,12 +68,12 @@ async function reprocessingNeeded(datasetId, newMetadata, newConfig) {
       procSettingsUpd = true;
   }
 
-  if (dbUpd) {
-    throw new Error(`Resubmission needed. Call 'submitDataset'. ` +
+  if (procSettingsUpd) {
+    throw new UserError(`Resubmission needed. Call 'submitDataset' with 'delFirst: true'. ` +
       `Metadata diff: ${JSON.stringify(metaDiff)}`);
   }
-  else if (procSettingsUpd) {
-    throw new Error(`Resubmission needed. Call 'submitDataset' with 'delFirst: true'. ` +
+  else if (dbUpd) {
+    throw new UserError(`Resubmission needed. Call 'submitDataset'. ` +
       `Metadata diff: ${JSON.stringify(metaDiff)}`);
   }
 }
@@ -99,6 +100,20 @@ async function smAPIRequest(datasetId, uri, body) {
 }
 
 module.exports = {
+  Query: {
+    reprocessingNeeded: async (args) => {
+      const {datasetId, metadataJson} = args,
+        newMetadata = JSON.parse(metadataJson),
+        newConfig = generateProcessingConfig(newMetadata);
+      try {
+        await reprocessingNeeded(datasetId, newMetadata, newConfig);
+        return false;
+      }
+      catch (e) {
+        return true;
+      }
+    }
+  },
   Mutation: {
     submit: async (args) => {
       const {datasetId, name, path, metadata, priority, sync, delFirst} = args;
@@ -126,7 +141,7 @@ module.exports = {
           return 'success';
       } catch (e) {
         logger.error(e.stack);
-        return e.message;
+        throw e;
       }
     },
     update: async (args) => {
@@ -136,7 +151,7 @@ module.exports = {
           newMetadata = JSON.parse(metadataJson);
         const ds = await fetchDS({id: datasetId});
         if (ds === undefined) {
-          throw Error('DS does not exist');
+          throw UserError('DS does not exist');
         }
 
         await checkPermissions(ds.id, payload);
@@ -157,7 +172,7 @@ module.exports = {
           return 'success';
       } catch (e) {
         logger.error(e.stack);
-        return e.message;
+        throw e;
       }
     },
     delete: async (args) => {
@@ -179,7 +194,7 @@ module.exports = {
           return 'success';
       } catch (e) {
         logger.error(e.stack);
-        return e.message;
+        throw e;
       }
     },
     addOpticalImage: async (_, {input}) => {
