@@ -1,5 +1,9 @@
 const config = {
   port: 3010,
+  img_storage_port: 4201,
+
+  ws_port: 5666,
+  websocket_public_url: 'ws://localhost:5666/graphql',
 
   log: {
     level: 'info'
@@ -12,8 +16,21 @@ const config = {
 
   img_upload: {
     iso_img_fs_path: "/opt/data/sm_data/public/",
-    img_base_path: "/iso_images/",
-    backend: 'fs'
+    backend: "fs", // "fs or "db"
+    categories: {
+      iso_image: {
+        type: 'image/png',
+        path: '/iso_images/'
+      },
+      optical_image: {
+        type: 'image/jpeg',
+        path: '/optical_images/'
+      },
+      raw_optical_image: {
+        type: 'image/jpeg',
+        path: '/raw_optical_images/'
+      }
+    }
   },
 
   services: {
@@ -46,10 +63,7 @@ const config = {
     port: 5672,
     user: 'sm',
     password: 'password'
-  },
-
-  ws_port: 5666,
-  websocket_public_url: 'ws://localhost:5666/graphql'
+  }
 };
 
 module.exports = config;

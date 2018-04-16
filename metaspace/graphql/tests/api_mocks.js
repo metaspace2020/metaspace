@@ -1,6 +1,7 @@
 const express = require('express'),
       cors = require('cors'),
-      url = require('url');
+      url = require('url'),
+      config = require('config');
 
 function molecularImageServer(port) {
   let app = express();
