@@ -47,7 +47,10 @@ function validateMetadata(metadata) {
   validator(cleanValue);
   const validationErrors = validator.errors || [];
   if (validationErrors.length > 0) {
-    throw new UserError(JSON.stringify(['failed_validation', validationErrors]));
+    throw new UserError(JSON.stringify({
+      'type': 'failed_validation',
+      'validation_errors': validationErrors
+    }));
   }
 }
 
@@ -69,12 +72,18 @@ async function reprocessingNeeded(datasetId, newMetadata, newConfig) {
   }
 
   if (procSettingsUpd) {
-    throw new UserError(`Resubmission needed. Call 'submitDataset' with 'delFirst: true'. ` +
-      `Metadata diff: ${JSON.stringify(metaDiff)}`);
+    throw new UserError(JSON.stringify({
+      'type': 'drop_submit_needed',
+      'hint': `Resubmission needed. Call 'submitDataset' with 'delFirst: true'.`,
+      'metadata_diff': metaDiff
+    }))
   }
   else if (dbUpd) {
-    throw new UserError(`Resubmission needed. Call 'submitDataset'. ` +
-      `Metadata diff: ${JSON.stringify(metaDiff)}`);
+    throw new UserError(JSON.stringify({
+      'type': 'submit_needed',
+      'hint': `Resubmission needed. Call 'submitDataset'.`,
+      'metadata_diff': metaDiff
+    }))
   }
 }
 
