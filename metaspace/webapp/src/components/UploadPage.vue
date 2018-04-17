@@ -123,7 +123,9 @@
          });
        }).catch(err => {
          console.log(err.message);
-         if (err.message === 'failed_validation') {
+         const graphQLError = JSON.parse(err.graphQLErrors[0].message);
+         if (graphQLError['type'] === 'failed_validation') {
+           this.validationErrors = graphQLError['validation_errors'];
            this.$message({
              message: 'Please fix the highlighted fields and submit again',
              type: 'error'
@@ -148,21 +150,7 @@
              path: pathFromUUID(uuid),
              value: formData,
              jwt
-           }}))
-         .then(resp => resp.data.submitDataset)
-         .then(status => {
-           if (status != 'success') {
-             let parsedStatus = this.safelyParseJSON(status);
-             if (parsedStatus == 'failed_parsing') {
-               throw new Error('failed_parsing');
-             } else if (parsedStatus[0] === 'failed_validation') {
-               this.validationErrors = parsedStatus[1];
-               throw new Error(parsedStatus[0]);
-             }
-             throw new Error(status);
-           }
-           return status;
-         });
+           }}));
      }
    }
  }

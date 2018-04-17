@@ -316,7 +316,7 @@
              .then(resp => {
            offset += chunkSize;
            writeCsvChunk(resp.data.datasets);
-=           if (!self.isExporting || offset >= self.finishedCount) {
+           if (!self.isExporting || offset >= self.finishedCount) {
              finish();
            } else {
              window.setTimeout(runExport, 50);

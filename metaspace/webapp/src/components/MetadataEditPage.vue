@@ -43,18 +43,28 @@
                  });
                  this.$router.go(-1);
                }).catch(err => {
-                  console.log(err);
-                    if (err.message === 'failed_validation') {
-                      this.$message({
-                      message: 'Please fix the highlighted fields and submit again',
-                      type: 'error'
-                      });
-                    } else {
-                      this.$message({message: 'Couldn\'t save the form: ' + err.message, type: 'error'})
-                    }
+                 console.log(err);
+                 const graphQLError = JSON.parse(err.graphQLErrors[0].message);
+                 if (graphQLError['type'] === 'failed_validation') {
+                   this.$message({
+                     message: 'Please fix the highlighted fields and submit again',
+                     type: 'error'
+                   });
+                 }
+                  // else if (graphQLError['type'] === 'submit_needed') {
+                  //   this.submitDataset(jwt, datasetId, ...)
+                  // }
+                  // else if (graphQLError['type'] === 'drop_submit_needed') {
+                  //   this.submitDataset(jwt, datasetId, ..., delFirst)
+                  // }
+                 else {
+                   this.$message({message: 'Couldn\'t save the form: GraphQL error', type: 'error'});
+                 }
                });
      },
-
+     // submitDataset(jwt, dsId, ...) {
+     //
+     // },
      updateMetadata(jwt, dsId, value) {
        const dsName = JSON.parse(value).metaspace_options.Dataset_Name;
        return this.$apollo.mutate({
@@ -67,8 +77,6 @@
              }
            })
          }
-       }).catch( e => {
-         throw Error('GraphQL error');
        });
      }
    }
