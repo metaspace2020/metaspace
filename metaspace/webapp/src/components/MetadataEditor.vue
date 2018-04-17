@@ -149,7 +149,6 @@
   */
 
  import metadataSchema from '../assets/metadata_schema.json';
- import Ajv from 'ajv';
  import merge from 'lodash/merge';
  import {
    fetchAutocompleteSuggestionsQuery,
@@ -157,8 +156,6 @@
  } from '../api/metadata';
  import gql from 'graphql-tag';
  import Vue from 'vue';
-
- const ajv = new Ajv({allErrors: true});
 
  const FIELD_WIDTH = {
    'Institution': 6,
@@ -193,51 +190,28 @@
    'array': schema => schema.default || []
  }
 
- function isEmpty(obj) {
-   if (!obj)
-     return true;
-   if (!(obj instanceof Object))
-     return false;
-   let empty = true;
-   for (var key in obj) {
-     if (!isEmpty(obj[key])) {
-       empty = false;
-       break;
-     }
-   }
-   return empty;
- }
-
- function trimEmptyFields(schema, value) {
-   if (!(value instanceof Object))
-     return value;
-   if (Array.isArray(value))
-     return value;
-   let obj = Object.assign({}, value);
-   for (var name in schema.properties) {
-     const prop = schema.properties[name];
-     if (isEmpty(obj[name]) && (!schema.required || schema.required.indexOf(name) == -1))
-       delete obj[name];
-     else
-       obj[name] = trimEmptyFields(prop, obj[name]);
-   }
-   return obj;
- }
-
  const LOCAL_STORAGE_KEY = 'latestMetadataSubmission';
 
  // TODO: fill in institution automatically when user profiles are added
 
  export default {
    name: 'metadata-editor',
-   props: ['datasetId', 'enableSubmit', 'disabledSubmitMessage'],
+   props: {
+     datasetId: String,
+     enableSubmit: Boolean,
+     disabledSubmitMessage: String,
+     validationErrors: {
+       type: Array,
+       default: () => []
+     }
+   },
+
    created() {
      this.loading = true;
      this.$apollo.query({query: gql`{molecularDatabases{name}}`}).then(response => {
        Vue.set(this.schema.properties.metaspace_options.properties.Metabolite_Database.items,
                'enum',
                response.data.molecularDatabases.map(d => d.name));
-       this.validator = ajv.compile(this.schema);
        this.setLoadingStatus(false);
      }).catch(err => {
        console.log("Error fetching list of metabolite databases: ", err);
@@ -271,7 +245,6 @@
      return {
        schema: metadataSchema,
        value: objectFactory(metadataSchema),
-       validationErrors: [],
        loading: true
      }
    },
@@ -285,6 +258,16 @@
      }
    },
    methods: {
+     safelyParseJSON(json) {
+       let parseRes;
+       try {
+         parseRes = JSON.parse(json);
+       } catch (err) {
+         return 'failed_parsing';
+       }
+       return parseRes;
+     },
+
      prettify(propName, parent) {
        let name = propName.toString()
                           .replace(/_/g, ' ')
@@ -374,22 +357,8 @@
      },
 
      submit() {
-       const cleanValue = trimEmptyFields(metadataSchema, this.value);
-
-       this.validator(cleanValue);
-       this.validationErrors = this.validator.errors || [];
-
-       if (this.validationErrors.length > 0) {
-         this.$message({
-           message: 'Please fix the highlighted fields and submit again',
-           type: 'error'
-         })
-       } else {
-         const value = JSON.stringify(cleanValue);
-         if (!this.datasetId) localStorage.setItem(LOCAL_STORAGE_KEY, value);
-
-         this.$emit('submit', this.datasetId, value);
-       }
+       this.$emit('submit', this.datasetId, JSON.stringify(this.value));
+       if (!this.datasetId) localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.value));
      },
 
      getSuggestions(query, callback, ...args) {

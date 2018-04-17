@@ -258,7 +258,7 @@
 
        csv += ['datasetId', 'datasetName', 'institution', 'submitter',
                'PI', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource',
-               'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime'
+               'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime','fdr@10%', 'opticalImage'
        ].join(',') + "\n";
 
        function person(p) { return p ? p.name + ' ' + p.surname : ''; }
@@ -279,7 +279,9 @@
            row.analyzer.type,
            Math.round(row.analyzer.resolvingPower),
            row.polarity.toLowerCase(),
-           row.uploadDateTime
+           row.uploadDateTime,
+           row.fdrCounts.counts,
+           (row.opticalImage != 'noOptImage') ? window.location.host + row.opticalImage : 'No optical image'
          ].join(',');
        }
 
@@ -314,7 +316,7 @@
              .then(resp => {
            offset += chunkSize;
            writeCsvChunk(resp.data.datasets);
-           if (!self.isExporting || offset >= self.finishedCount) {
+=           if (!self.isExporting || offset >= self.finishedCount) {
              finish();
            } else {
              window.setTimeout(runExport, 50);

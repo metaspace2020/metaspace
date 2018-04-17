@@ -2,7 +2,8 @@
   <metadata-editor :datasetId="datasetId"
                    :enableSubmit="loggedIn"
                    @submit="onSubmit"
-                   disabledSubmitMessage="You must be logged in to perform this operation">
+                   disabledSubmitMessage="You must be logged in to perform this operation"
+                   v-bind:validationErrors="validationErrors">
   </metadata-editor>
 </template>
 
@@ -13,6 +14,11 @@
 
  export default {
    name: 'metadata-edit-page',
+   data() {
+     return {
+       validationErrors: []
+     }
+   },
    computed: {
      datasetId() {
        return this.$store.state.route.params.dataset_id;
@@ -25,18 +31,27 @@
    components: {
      MetadataEditor
    },
+
    methods: {
      onSubmit(datasetId, value) {
        getJWT().then(jwt => this.updateMetadata(jwt, datasetId, value))
                .then(() => {
+                 this.validationErrors = [];
                  this.$message({
                    message: 'Metadata was successfully updated!',
                    type: 'success'
                  });
                  this.$router.go(-1);
                }).catch(err => {
-                 console.log(err);
-                 this.$message({message: 'Couldn\'t save the form: ' + err.message, type: 'error'})
+                  console.log(err);
+                    if (err.message === 'failed_validation') {
+                      this.$message({
+                      message: 'Please fix the highlighted fields and submit again',
+                      type: 'error'
+                      });
+                    } else {
+                      this.$message({message: 'Couldn\'t save the form: ' + err.message, type: 'error'})
+                    }
                });
      },
 

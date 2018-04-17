@@ -28,6 +28,7 @@ export const datasetListQuery =
         levels
         counts
       }
+      opticalImage
     }
   }`;
 
