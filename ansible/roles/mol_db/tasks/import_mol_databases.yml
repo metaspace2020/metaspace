@@ -2,6 +2,7 @@
   get_url:
     url: "{{ item.url }}"
     dest: "/tmp/{{ item.url | basename }}"
+    force: yes
   with_items: "{{ mol_db_imports }}"
 
 - name: Import databases

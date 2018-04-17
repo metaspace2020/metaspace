@@ -1,10 +1,12 @@
 - name: Clone sm-graphql git repository
-  git: >
-    dest={{ sm_graphql_home }}
-    repo=https://github.com/METASPACE2020/sm-graphql.git
-    update=yes
-    force=yes
-    version={{ sm_graphql_branch }}
+  git:
+    dest: "{{ sm_graphql_home }}"
+    repo: https://github.com/METASPACE2020/sm-graphql.git
+    update: yes
+    force: yes
+    recursive: yes
+    track_submodules: no  # submodules refer to commit specified in the web app repository
+    version: "{{ sm_graphql_branch }}"
   when: local_deploy is not defined
   register: git_deploy
   until: git_deploy | succeeded
@@ -19,6 +21,12 @@
 
 - name: Install sm-graphql dependencies
   shell: yarn install
+  args:
+    chdir: "{{ sm_graphql_home }}"
+    executable: /bin/bash
+
+- name: Dereference metadata schema
+  shell: node deref_schema.js > metadata_schema.json
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
