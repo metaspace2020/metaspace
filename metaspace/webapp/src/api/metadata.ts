@@ -36,7 +36,7 @@ export const fetchOptionListsQuery = gql`{
 
 export const metadataExportQuery = gql`
   query MetadataExport($dFilter: DatasetFilter, $offset: Int, $limit: Int,
-                       $query: String) {
+                       $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!) {
     datasets: allDatasets(filter: $dFilter, simpleQuery: $query,
                           offset: $offset, limit: $limit) {
       id
@@ -62,5 +62,11 @@ export const metadataExportQuery = gql`
       }
       polarity
       uploadDateTime
+      fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
+        dbName
+        levels
+        counts
+      }
+      opticalImage
     }
   } `;

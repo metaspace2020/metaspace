@@ -44,7 +44,8 @@
       <metadata-editor ref="editor"
                        :enableSubmit="enableSubmit"
                        @submit="onFormSubmit"
-                       disabledSubmitMessage="Your files must be uploaded first">
+                       disabledSubmitMessage="Your files must be uploaded first"
+                       v-bind:validationErrors="validationErrors">
       </metadata-editor>
     </div>
   </div>
@@ -73,14 +74,27 @@
        fineUploaderConfig: config.fineUploader,
        enableSubmit: false,
        introIsHidden: true,
-       enableUploads: config.enableUploads
+       enableUploads: config.enableUploads,
+       validationErrors: []
      }
    },
    components: {
      FineUploader,
      MetadataEditor
    },
+
    methods: {
+     safelyParseJSON(json) {
+       let parseRes;
+       try {
+         parseRes = JSON.parse(json);
+       } catch (err) {
+         console.log(err.message);
+         return 'failed_parsing' + err.message;
+       }
+       return parseRes;
+     },
+
      onUpload(filenames) {
        const imzml = filenames.filter(f => f.toLowerCase().endsWith('imzml'))[0];
        Vue.nextTick(() => {
@@ -99,8 +113,8 @@
      onFormSubmit(_, formData) {
        const uuid = this.$refs.uploader.getUUID();
        this.submitDataset(uuid, formData).then(() => {
+         this.validationErrors = [];
          this.enableSubmit = false;
-
          this.$refs.uploader.reset();
          this.$refs.editor.resetDatasetName();
          this.$message({
@@ -109,12 +123,21 @@
          });
        }).catch(err => {
          console.log(err.message);
-         this.$message({
-           message: 'Metadata submission failed :( Contact us: contact@metaspace2020.eu',
-           type: 'error',
-           duration: 0,
-           showClose: true
-         })
+         const graphQLError = JSON.parse(err.graphQLErrors[0].message);
+         if (graphQLError['type'] === 'failed_validation') {
+           this.validationErrors = graphQLError['validation_errors'];
+           this.$message({
+             message: 'Please fix the highlighted fields and submit again',
+             type: 'error'
+           });
+         } else {
+           this.$message({
+             message: 'Metadata submission failed :( Contact us: contact@metaspace2020.eu',
+             type: 'error',
+             duration: 0,
+             showClose: true
+           })
+         }
        })
      },
 
@@ -127,16 +150,11 @@
              path: pathFromUUID(uuid),
              value: formData,
              jwt
-           }}))
-         .then(resp => resp.data.submitDataset)
-         .then(status => {
-           if (status != 'success')
-             throw new Error(status);
-           return status;
-         });
+           }}));
      }
    }
  }
+
 </script>
 
 <style>
