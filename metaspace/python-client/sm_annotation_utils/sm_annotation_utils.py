@@ -555,6 +555,8 @@ class SMInstance(object):
             datasetFilter = datasetFilter
             )
         df = pd.io.json.json_normalize(records)
+        if df.empty:
+            return df
         return pd.DataFrame(dict(
             formula=df['sumFormula'],
             adduct=df['adduct'],
@@ -675,6 +677,12 @@ class SMInstance(object):
         :param folder_uuid: a unique key for the dataset
         :return: 
         """
+        def check_databases(requested_dbs):
+            found_dbs = [db.name for db in self._moldb_client.getDatabaseList()]
+            for db in requested_dbs:
+                assert db in found_dbs, "{} not a recognised database. Valid:[{}]".format(db, found_dbs)
+
+        check_databases(json.loads(metadata)['metaspace_options']['Metabolite_Database'])
         s3 = boto3.client('s3')
         buckets = s3.list_buckets()
         if not s3bucket in [b['Name'] for b in buckets['Buckets']]:
