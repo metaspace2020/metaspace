@@ -6,7 +6,7 @@ import pytest
 from PIL import Image
 
 from sm.engine import DB, ESExporter, QueuePublisher
-from sm.engine.dataset_manager import SMapiDatasetManager, SMDaemonDatasetManager, ConfigDiff
+from sm.engine.dataset_manager import SMapiDatasetManager, SMDaemonDatasetManager
 from sm.engine.dataset_manager import Dataset, DatasetActionPriority, DatasetAction, DatasetStatus
 from sm.engine.errors import DSIDExists
 from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
@@ -56,26 +56,6 @@ def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', up
     return Dataset(ds_id, ds_name, input_path, upload_dt, metadata or {}, ds_config or {}, status=status)
 
 
-class TestConfigDiff:
-
-    def test_compare_configs_returns_equal(self, ds_config):
-        old_config = deepcopy(ds_config)
-        new_config = deepcopy(ds_config)
-        assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.EQUAL
-
-    def test_compare_configs_returns_inst_params_diff(self, ds_config):
-        old_config = deepcopy(ds_config)
-        new_config = deepcopy(ds_config)
-        new_config['isotope_generation']['isocalc_sigma'] = 0.03
-        assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.INSTR_PARAMS_DIFF
-
-    def test_compare_configs_returns_new_mol_db(self, ds_config):
-        old_config = deepcopy(ds_config)
-        new_config = deepcopy(ds_config)
-        new_config['databases'] = [{'name': 'ChEBI'}]
-        assert ConfigDiff.compare_configs(old_config, new_config) == ConfigDiff.NEW_MOL_DB
-
-
 class TestSMapiDatasetManager:
 
     def test_add_new_ds(self, test_db, sm_config, ds_config):
@@ -90,21 +70,6 @@ class TestSMapiDatasetManager:
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path',
                'action': DatasetAction.ADD, 'del_first': False}
         action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.HIGH)])
-
-    def test_add_ds__already_exists(self, fill_db, sm_config, ds_config):
-        queue_mock = MagicMock(spec=QueuePublisher)
-        es_mock = MagicMock(spec=ESExporter)
-        db = DB(sm_config['db'])
-        try:
-            ds_man = create_ds_man(sm_config, db=db, es=es_mock, action_queue=queue_mock, sm_api=True)
-
-            ds_id = '2000-01-01'
-            ds = create_ds(ds_id=ds_id, ds_config=ds_config)
-
-            with pytest.raises(DSIDExists):
-                ds_man.add(ds)
-        finally:
-            db.close()
 
     def test_delete_ds(self, test_db, sm_config, ds_config):
         action_queue_mock = MagicMock(spec=QueuePublisher)
@@ -143,7 +108,7 @@ class TestSMapiDatasetManager:
 
         action_queue_mock.assert_not_called()
 
-    def test_update_ds_new_mol_db(self, fill_db, sm_config, ds_config):
+    def test_add_ds__new_mol_db(self, fill_db, sm_config, ds_config):
         action_queue_mock = MagicMock(spec=QueuePublisher)
         ds_man = create_ds_man(sm_config, action_queue=action_queue_mock, sm_api=True)
 
@@ -151,24 +116,10 @@ class TestSMapiDatasetManager:
         ds = create_ds(ds_id=ds_id, ds_config=ds_config)
 
         ds.config['databases'] = [{'name': 'HMDB'}, {'name': 'ChEBI'}]
-        ds_man.update(ds)
+        ds_man.add(ds)
 
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path',
-               'action': DatasetAction.ADD}
-        action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.DEFAULT)])
-
-    def test_update_ds__instr_param_diff(self, fill_db, sm_config, ds_config):
-        action_queue_mock = MagicMock(spec=QueuePublisher)
-        ds_man = create_ds_man(sm_config, action_queue=action_queue_mock, sm_api=True)
-
-        ds_id = '2000-01-01'
-        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
-
-        ds.config['isotope_generation']['isocalc_sigma'] *= 2
-        ds_man.update(ds)
-
-        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'input_path': 'input_path',
-               'action': DatasetAction.ADD, 'del_first': True}
+               'action': DatasetAction.ADD, 'del_first': False}
         action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.DEFAULT)])
 
     def test_add_optical_image(self, fill_db, sm_config, ds_config):

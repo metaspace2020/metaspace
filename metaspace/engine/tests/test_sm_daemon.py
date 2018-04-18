@@ -173,21 +173,21 @@ class TestSMDaemonSingleEventCases:
         assert _ds.id == ds.id
         assert not _kwargs.get('del_raw_data', None)
 
-    def test_update__does_not_exist_raises_exception(self, test_db, clean_ds_man_mock, delete_queue,
-                                                     ds_config, sm_config):
-        ds = create_ds(ds_config=ds_config)
-        api_ds_man = create_api_ds_man(sm_config=sm_config)
+    # def test_update__does_not_exist_raises_exception(self, test_db, clean_ds_man_mock, delete_queue,
+    #                                                  ds_config, sm_config):
+    #     ds = create_ds(ds_config=ds_config)
+    #     api_ds_man = create_api_ds_man(sm_config=sm_config)
+    #
+    #     with raises(UnknownDSID):
+    #         api_ds_man.update(ds)
 
-        with raises(UnknownDSID):
-            api_ds_man.update(ds)
-
-    def test_delete__does_not_exist__raises_exception(self, test_db, clean_ds_man_mock, delete_queue,
-                                                      ds_config, sm_config):
-        ds = create_ds(ds_config=ds_config)
-        api_ds_man = create_api_ds_man(sm_config=sm_config)
-
-        with raises(UnknownDSID):
-            api_ds_man.update(ds)
+    # def test_delete__does_not_exist__raises_exception(self, test_db, clean_ds_man_mock, delete_queue,
+    #                                                   ds_config, sm_config):
+    #     ds = create_ds(ds_config=ds_config)
+    #     api_ds_man = create_api_ds_man(sm_config=sm_config)
+    #
+    #     with raises(UnknownDSID):
+    #         api_ds_man.update(ds)
 
 
 class TestSMDaemonTwoEventsCases:
@@ -233,43 +233,43 @@ class TestSMDaemonTwoEventsCases:
         assert _kwargs['search_job_factory'] == SearchJob
         assert _kwargs['del_first'] == False
 
-    def test_add_update_ds__new_moldb(self, test_db, sm_config, ds_config, clean_ds_man_mock, delete_queue):
-        api_ds_man = create_api_ds_man(sm_config=sm_config)
-        ds = create_ds(ds_config=ds_config)
-        api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
-        ds.config['databases'].append({'name': 'ChEBI'})
-        api_ds_man.update(ds, priority=DatasetActionPriority.DEFAULT)
+    # def test_add_update_ds__new_moldb(self, test_db, sm_config, ds_config, clean_ds_man_mock, delete_queue):
+    #     api_ds_man = create_api_ds_man(sm_config=sm_config)
+    #     ds = create_ds(ds_config=ds_config)
+    #     api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
+    #     ds.config['databases'].append({'name': 'ChEBI'})
+    #     api_ds_man.update(ds, priority=DatasetActionPriority.DEFAULT)
+    #
+    #     run_sm_daemon()
+    #
+    #     method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
+    #     assert method == 'add'
+    #     assert _ds.id == ds.id
+    #     assert _ds.config == ds.config
+    #     assert _kwargs['search_job_factory'] == SearchJob
 
-        run_sm_daemon()
-
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
-        assert method == 'add'
-        assert _ds.id == ds.id
-        assert _ds.config == ds.config
-        assert _kwargs['search_job_factory'] == SearchJob
-
-    def test_add_update_ds__new_config(self, test_db, sm_config, ds_config, clean_ds_man_mock, delete_queue):
-        api_ds_man = create_api_ds_man(sm_config=sm_config)
-        ds = create_ds(ds_config=ds_config)
-        api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
-        ds.config['isotope_generation']['isocalc_sigma'] *= 2
-        api_ds_man.update(ds)
-
-        run_sm_daemon()
-
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
-        assert method == 'add'
-        assert _ds.id == ds.id
-        assert _ds.config == ds.config
-        assert _kwargs['search_job_factory'] == SearchJob
-        assert _kwargs['del_first'] == False
-
-        method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
-        assert method == 'add'
-        assert _ds.id == ds.id
-        assert _ds.config == ds.config
-        assert _kwargs['search_job_factory'] == SearchJob
-        assert _kwargs['del_first'] == True
+    # def test_add_update_ds__new_config(self, test_db, sm_config, ds_config, clean_ds_man_mock, delete_queue):
+    #     api_ds_man = create_api_ds_man(sm_config=sm_config)
+    #     ds = create_ds(ds_config=ds_config)
+    #     api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
+    #     ds.config['isotope_generation']['isocalc_sigma'] *= 2
+    #     api_ds_man.update(ds)
+    #
+    #     run_sm_daemon()
+    #
+    #     method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
+    #     assert method == 'add'
+    #     assert _ds.id == ds.id
+    #     assert _ds.config == ds.config
+    #     assert _kwargs['search_job_factory'] == SearchJob
+    #     assert _kwargs['del_first'] == False
+    #
+    #     method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
+    #     assert method == 'add'
+    #     assert _ds.id == ds.id
+    #     assert _ds.config == ds.config
+    #     assert _kwargs['search_job_factory'] == SearchJob
+    #     assert _kwargs['del_first'] == True
 
     def test_add_delete_ds(self, test_db, sm_config, ds_config, clean_ds_man_mock, delete_queue):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
