@@ -10,15 +10,15 @@
     <div class="opt-image">
       <router-link :to="opticalImageAlignmentHref" v-if="haveEditAccess && dataset.status === 'FINISHED'">
         <div v-if="thumbnailCheck" class="edit-opt-image" title="Edit Optical Image">
-          <img class="opt-image-thumbnail" :src="opticalImageSmall" width="100px" height="100px" alt="Edit optical image"/>
+          <img class="opt-image-thumbnail" :src="opticalImageSmall" alt="Edit optical image"/>
         </div>
         <div v-else class="no-opt-image" title="Add Optical Image">
-          <img class="add-opt-image-thumbnail" src="../assets/no_opt_image.png" width="100px" height="100px" alt="Add optical image"/>
+          <img class="add-opt-image-thumbnail" src="../assets/no_opt_image.png" alt="Add optical image"/>
         </div>
       </router-link>
       <div v-else class="edit-opt-image-guest">
-        <img v-if="thumbnailCheck" :src="opticalImageSmall" width="100px" height="100px" alt="Optical image"/>
-        <img v-else src="../assets/no_opt_image.png" width="100px" height="100px" alt="Optical image"/>
+        <img v-if="thumbnailCheck" :src="opticalImageSmall" alt="Optical image"/>
+        <img v-else src="../assets/no_opt_image.png" alt="Optical image"/>
       </div>
     </div>
 
@@ -402,6 +402,13 @@
 
   .opt-image-thumbnail:hover, .add-opt-image-thumbnail:hover{
     opacity: .2;
+  }
+
+  .opt-image img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    object-position: 0 0;
   }
 
  .dataset-item {
