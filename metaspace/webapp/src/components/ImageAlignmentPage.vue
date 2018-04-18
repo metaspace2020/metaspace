@@ -334,7 +334,7 @@
            this.addOpticalImage(imageUrl).then(() => {
              this.$message({
                type: 'success',
-               message: 'The image and alignment were successfully saved!'
+               message: 'The image and alignment were successfully saved'
              });
              this.$router.go(-1);
            }).catch((e) => {
@@ -355,43 +355,38 @@
        xhr.send(fd);
      },
 
-     addOpticalImage(imageUrl) {
+     async addOpticalImage(imageUrl) {
        // TODO if there are no iso images found prevent optical image addition
-       return getJWT()
-           .then(jwt =>
-               this.$apollo.mutate({
-                 mutation: addOpticalImageQuery,
-                 variables: {
-                   jwt,
-                   datasetId: this.datasetId,
-                   imageUrl,
-                   transform: this.$refs.aligner.normalizedTransform
-                 }
-               }),
-               this.$message({
-                 message: 'Your optical image was submitted! Please wait until it will be saved...',
-                 type: 'success'
-               }))
-           .then(resp => resp.data.addOpticalImage)
-           .then(status => {
-             if (status != 'success')
-               throw new Error(status);
-             return status;
-           });
+       const jwt = await getJWT();
+       const graphQLPromise = this.$apollo.mutate({
+         mutation: addOpticalImageQuery,
+         variables: {
+           jwt,
+           datasetId: this.datasetId,
+           imageUrl,
+           transform: this.$refs.aligner.normalizedTransform
+         }
+       });
+       this.$message({
+         message: 'Your optical image was submitted! Please wait until it will be saved...',
+         type: 'success'
+       });
+       return graphQLPromise;
      },
 
      async deleteOpticalImages() {
        try {
          if (this.alreadyUploaded) {
-           let jwt = await getJWT();
-           let delRes = await this.$apollo.mutate({
+           const jwt = await getJWT();
+           const graphQLResp = await this.$apollo.mutate({
              mutation: deleteOpticalImageQuery,
-             variables: {
-               jwt,
-               id: this.datasetId
-             }
-           });
-           if (delRes.data.deleteOpticalImage != 'success') {
+               variables: {
+                 jwt,
+                 id: this.datasetId
+               }
+             });
+           const resp = JSON.parse(graphQLResp.data.deleteOpticalImage);
+           if (resp.status !== 'success') {
              this.$message({
                type: 'error',
                message: "Couldn't delete optical image due to an error"
@@ -408,6 +403,7 @@
          }
          return 'success'
        } catch(e) {
+         console.log(e.message);
          return e.message
        }
      },

@@ -74,7 +74,7 @@ module.exports = {
   devServer: {
     hot: true,
   },
-  devtool: '#eval-source-map',
+  devtool: 'cheap-module-source-map',
   plugins: [
     new webpack.DefinePlugin({
       'process.env': {
