@@ -62,15 +62,6 @@ function baseDatasetQuery() {
   });
 }
 
-function checkFetchRes(resp) {
-  if (resp.ok) {
-    return resp
-  } else {
-    throw new UserError(`An error occurred during fetch request - status ${resp.status}`);
-  }
-}
-
-
 
 const Resolvers = {
   Person: {
@@ -418,9 +409,13 @@ const Resolvers = {
       return DSMutation.delete(args);
     },
 
-    addOpticalImage: DSMutation.addOpticalImage,
+    addOpticalImage: (_, {input}) => {
+      return DSMutation.addOpticalImage(input);
+    },
 
-    deleteOpticalImage: DSMutation.deleteOpticalImage
+    deleteOpticalImage: (_, args) => {
+      return DSMutation.deleteOpticalImage(args);
+    }
   },
 
   Subscription: {
