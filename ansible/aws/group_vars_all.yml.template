@@ -74,6 +74,9 @@ sm_send_email: true
 sm_create_schema: true  # set to false to avoid database dropping
 sm_create_es_index: true  # set to false to avoid Elasticsearch index dropping
 sm_isotope_storage_path: S3_ISOTOPE_STORAGE_PATH
+sm_default_adducts:
+  "+": ["+H", "+Na", "+K"]
+  "-": ["-H", "+Cl"]
 
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
@@ -137,9 +140,7 @@ sm_graphql_rabbitmq_host: "{{ rabbitmq_host }}"
 sm_graphql_rabbitmq_user: "{{ rabbitmq_user }}"
 sm_graphql_rabbitmq_password: "{{ rabbitmq_password }}"
 sm_graphql_ws_public_endpoint: "ws://{{ sm_graphql_hostname }}/ws"
-sm_graphql_default_adducts:
-  "+": ["+H", "+Na", "+K"]
-  "-": ["-H", "+Cl"]
+sm_graphql_default_adducts: "{{ sm_default_adducts }}"
 sm_graphql_img_storage_backend: fs
 
 sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually in production
