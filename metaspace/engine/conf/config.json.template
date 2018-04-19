@@ -1,4 +1,7 @@
 {
+  "defaults": {
+    "adducts": {{ sm_default_adducts | to_json }}
+  },
   "db": {
     "host": "{{ sm_postgres_host }}",
     "database": "sm",
