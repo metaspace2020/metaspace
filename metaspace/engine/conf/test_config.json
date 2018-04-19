@@ -1,4 +1,10 @@
 {
+  "defaults": {
+    "adducts": {
+      "+": ["+H", "+Na", "+K"],
+      "-": ["-H", "+Cl"]
+    }
+  },
   "db": {
     "host": "localhost",
     "database": "sm_test",

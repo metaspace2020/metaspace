@@ -112,6 +112,7 @@ class SMDaemonDatasetManager(DatasetManager):
             self._del_iso_images(ds)
             self._es.delete_ds(ds.id)
             self._db.alter('DELETE FROM job WHERE ds_id=%s', ds.id)
+        ds.save(self._db, self._es)
         search_job_factory(img_store=self._img_store).run(ds)
 
     def _finished_job_moldbs(self, ds_id):
