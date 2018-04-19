@@ -398,9 +398,9 @@ const Resolvers = {
       const ds = await fetchDS({id: args.datasetId});
       if (ds === undefined)
         throw new UserError('DS does not exist');
-      args.name = ds.name;
+      args.name = args.name || ds.name;
       args.path = ds.input_path;
-      args.metadata = ds.metadata;
+      args.metadata = args.metadataJson ? JSON.parse(args.metadataJson) : ds.metadata;
       return DSMutation.submit(args);
     },
 
