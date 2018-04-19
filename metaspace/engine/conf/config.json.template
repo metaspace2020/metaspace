@@ -1,17 +1,6 @@
 {
-  "loggers": {
-    "engine": {
-      "level": "INFO",
-      "handlers": ["console_debug"]
-    },
-    "daemon": {
-      "level": "INFO",
-      "handlers": ["console_warn", "file"]
-    },
-    "api": {
-      "level": "INFO",
-      "handlers": ["console_debug"]
-    }
+  "defaults": {
+    "adducts": {{ sm_default_adducts | to_json }}
   },
   "db": {
     "host": "{{ sm_postgres_host }}",

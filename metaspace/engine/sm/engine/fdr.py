@@ -36,10 +36,6 @@ class FDR(object):
         t_ions = self.td_df[['sf', 'ta']].drop_duplicates().values.tolist()
         return list(map(tuple, t_ions + d_ions))
 
-    def all_adducts(self):
-        """ Union of target and decoy adducts """
-        return list(set(self.target_adducts) | set(DECOY_ADDUCTS))
-
     @staticmethod
     def _msm_fdr_map(target_msm, decoy_msm):
         target_msm_hits = pd.Series(target_msm.msm.value_counts(), name='target')

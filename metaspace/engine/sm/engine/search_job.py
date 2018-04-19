@@ -102,9 +102,11 @@ class SearchJob(object):
 
             isocalc = IsocalcWrapper(self._ds.config['isotope_generation'])
             centroids_gen = IonCentroidsGenerator(sc=self._sc, moldb_name=mol_db.name, isocalc=isocalc)
+            polarity = self._ds.config['isotope_generation']['charge']['polarity']
+            all_adducts = list(set(self._sm_config['defaults']['adducts'][polarity]) | set(DECOY_ADDUCTS))
             centroids_gen.generate_if_not_exist(isocalc=isocalc,
                                                 sfs=mol_db.sfs,
-                                                adducts=self._fdr.all_adducts())
+                                                adducts=all_adducts)
             target_ions = centroids_gen.ions(target_adducts)
             self._fdr.decoy_adducts_selection(target_ions)
 
