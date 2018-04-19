@@ -29,6 +29,11 @@ ERR_OBJECT_EXISTS = {
     'status': 'Already exists'
 }
 
+ERROR = {
+    'status_code': 500,
+    'status': 'Server error'
+}
+
 
 def _create_db_conn():
     config = SMConfig.get_conf()
@@ -55,22 +60,32 @@ def _create_dataset_manager(db):
 
 @post('/v1/datasets/add')
 def add_ds():
-    params = _json_params(req)
-    logger.info('Received ADD request: %s', params)
-    now = datetime.now()
-    ds_id = params.get('id', None) or now.strftime("%Y-%m-%d_%Hh%Mm%Ss")
-    ds = Dataset(ds_id,
-                 params.get('name', None),
-                 params.get('input_path'),
-                 params.get('upload_dt', now),
-                 params.get('metadata', None),
-                 params.get('config'))
-    db = _create_db_conn()
-    ds_man = _create_dataset_manager(db)
-    ds_man.add(ds, del_first=params.get('del_first', False),
-               priority=params.get('priority', DatasetActionPriority.DEFAULT))
-    db.close()
-    return {'status': OK['status'], 'ds_id': ds_id}
+    try:
+        params = _json_params(req)
+        logger.info('Received ADD request: %s', params)
+        now = datetime.now()
+        ds_id = params.get('id', None) or now.strftime("%Y-%m-%d_%Hh%Mm%Ss")
+        ds = Dataset(ds_id,
+                     params.get('name', None),
+                     params.get('input_path'),
+                     params.get('upload_dt', now),
+                     params.get('metadata', None),
+                     params.get('config'))
+        db = _create_db_conn()
+        ds_man = _create_dataset_manager(db)
+        ds_man.add(ds, del_first=params.get('del_first', False),
+                   priority=params.get('priority', DatasetActionPriority.DEFAULT))
+        db.close()
+        return {
+            'status': OK['status'],
+            'ds_id': ds_id
+        }
+    except Exception:
+        resp.status = ERROR['status_code']
+        return {
+            'status': ERROR['status'],
+            'ds_id': ds_id
+        }
 
 
 def sm_modify_dataset(request_name):
@@ -93,6 +108,12 @@ def sm_modify_dataset(request_name):
                 resp.status = ERR_OBJECT_NOT_EXISTS['status_code']
                 return {
                     'status': ERR_OBJECT_NOT_EXISTS['status'],
+                    'ds_id': ds_id
+                }
+            except Exception:
+                resp.status = ERROR['status_code']
+                return {
+                    'status': ERROR['status'],
                     'ds_id': ds_id
                 }
         return _func
