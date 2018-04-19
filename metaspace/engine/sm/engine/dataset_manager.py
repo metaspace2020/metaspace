@@ -108,8 +108,10 @@ class SMDaemonDatasetManager(DatasetManager):
         """ Run an annotation job for the dataset. If del_first provided, delete first
         """
         if del_first:
-            self.delete(ds)
-        ds.save(self._db, self._es)
+            self.logger.warning('Deleting all results for dataset: {}'.format(ds.id))
+            self._del_iso_images(ds)
+            self._es.delete_ds(ds.id)
+            self._db.alter('DELETE FROM job WHERE ds_id=%s', ds.id)
         search_job_factory(img_store=self._img_store).run(ds)
 
     def _finished_job_moldbs(self, ds_id):
@@ -146,7 +148,7 @@ class SMDaemonDatasetManager(DatasetManager):
 
     def delete(self, ds, del_raw_data=False, **kwargs):
         """ Delete all dataset related data from the DB """
-        self.logger.warning('ds_id already exists: {}. Deleting'.format(ds.id))
+        self.logger.warning('Deleting dataset: {}'.format(ds.id))
         self._del_iso_images(ds)
         self._es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', ds.id)
