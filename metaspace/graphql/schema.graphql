@@ -280,7 +280,8 @@ type Mutation {
     path: String, metadataJson: String,
     priority: Int=0, sync: Boolean=true, delFirst: Boolean=false): String
 
-  resubmitDataset(jwt: String!, datasetId: String!,
+  resubmitDataset(jwt: String!, datasetId: String!, name: String,
+    path: String, metadataJson: String,
     priority: Int=0, sync: Boolean=true, delFirst: Boolean=false): String
 
   updateMetadata(jwt: String!, datasetId: String!, name: String,
