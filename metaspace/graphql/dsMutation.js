@@ -128,7 +128,8 @@ module.exports = {
       const {datasetId, name, path, metadata, priority, sync, delFirst} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
-        if (datasetId !== undefined)
+        const ds = await fetchDS({id: datasetId});
+        if (ds !== undefined)
           await checkPermissions(datasetId, payload);
 
         validateMetadata(metadata);
