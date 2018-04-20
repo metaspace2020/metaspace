@@ -98,7 +98,7 @@ async function smAPIRequest(datasetId, uri, body) {
   });
 
   const respText = await resp.text();
-  if (resp.status !== 200) {
+  if (!resp.ok) {
     throw new UserError(`smAPIRequest: ${respText}`);
   }
   else {
@@ -206,10 +206,10 @@ module.exports = {
         throw e;
       }
     },
-    addOpticalImage: async (_, {input}) => {
-      let {datasetId, imageUrl, transform} = input;
+    addOpticalImage: async (args) => {
+      let {datasetId, imageUrl, transform} = args;
       const basePath = `http://localhost:${config.img_storage_port}`;
-      if (imageUrl[0] == '/') {
+      if (imageUrl[0] === '/') {
         // imageUrl comes from the web application and should not include host/port.
         //
         // This is necessary for a Virtualbox installation because of port mapping,
@@ -219,39 +219,29 @@ module.exports = {
         // TODO support image storage running on a separate host
         imageUrl = basePath + imageUrl;
       }
-      const payload = jwt.decode(input.jwt, config.jwt.secret);
+      const payload = jwt.decode(args.jwt, config.jwt.secret);
       try {
-        logger.info(input);
+        logger.info(args);
         await checkPermissions(datasetId, payload);
-        const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/add-optical-image`;
+        const uri = `/v1/datasets/${datasetId}/add-optical-image`;
         const body = {url: imageUrl, transform};
-        let processOptImage = await fetch(url, {
-          method: 'POST',
-          body: JSON.stringify(body),
-          headers: {'Content-Type': 'application/json'}});
-        checkFetchRes(processOptImage);
-        return 'success';
+        return await smAPIRequest(datasetId, uri, body);
       } catch (e) {
         logger.error(e.message);
-        return e.message;
+        throw e;
       }
     },
 
-    deleteOpticalImage: async (_, args) => {
+    deleteOpticalImage: async (args) => {
       let {datasetId} = args;
       const payload = jwt.decode(args.jwt, config.jwt.secret);
-      const url = `http://${config.services.sm_engine_api_host}/v1/datasets/${datasetId}/del-optical-image`;
+      const uri = `/v1/datasets/${datasetId}/del-optical-image`;
       try {
         await checkPermissions(datasetId, payload);
-        let dbDelFetch = await fetch(url, {
-          method: 'POST',
-          body: JSON.stringify({datasetId}),
-          headers: {'Content-Type': 'application/json'}});
-        checkFetchRes(dbDelFetch);
-        return 'success';
+        return await smAPIRequest(datasetId, uri, {});
       } catch (e) {
         logger.error(e.message);
-        return e.message;
+        throw e;
       }
     }
   }

@@ -62,15 +62,6 @@ function baseDatasetQuery() {
   });
 }
 
-function checkFetchRes(resp) {
-  if (resp.ok) {
-    return resp
-  } else {
-    throw new UserError(`An error occurred during fetch request - status ${resp.status}`);
-  }
-}
-
-
 
 const Resolvers = {
   Person: {
@@ -333,6 +324,8 @@ const Resolvers = {
           infoURL = `http://swisslipids.org/#/entity/${id}`;
         } else if (dbBaseName === 'LipidMaps') {
           infoURL = `http://www.lipidmaps.org/data/LMSDRecord.php?LMID=${id}`;
+        } else if (dbBaseName === 'PAMDB') {
+          infoURL = `http://pseudomonas.umaryland.edu/PAMDB?MetID=${id}`;
         }
 
         compounds.push({
@@ -395,7 +388,7 @@ const Resolvers = {
 
   Mutation: {
     resubmitDataset: async (_, args) => {
-      const ds = await fetchDS({id: args.datasetId});
+      const ds = await fetchDS({id: datasetId});
       if (ds === undefined)
         throw new UserError('DS does not exist');
       args.name = args.name || ds.name;
@@ -418,9 +411,13 @@ const Resolvers = {
       return DSMutation.delete(args);
     },
 
-    addOpticalImage: DSMutation.addOpticalImage,
+    addOpticalImage: (_, {input}) => {
+      return DSMutation.addOpticalImage(input);
+    },
 
-    deleteOpticalImage: DSMutation.deleteOpticalImage
+    deleteOpticalImage: (_, args) => {
+      return DSMutation.deleteOpticalImage(args);
+    }
   },
 
   Subscription: {

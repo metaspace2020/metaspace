@@ -28,7 +28,8 @@ function imageProviderDBBackend(pg) {
       table.text('category');
       table.binary('data');
     }).then(() => {
-      app.get(path.join(basePath, ":img_id"),
+      const uri = path.join(basePath, ":img_id");
+      app.get(uri,
         function (req, res) {
           pg.select(pg.raw('data'))
             .from(IMG_TABLE_NAME)
@@ -46,6 +47,7 @@ function imageProviderDBBackend(pg) {
               res.status(404).send('Not found');
             });
         });
+      logger.debug(`Accepting GET on ${uri}`);
 
       app.post(path.join(basePath, 'upload'), upload.single(fieldName),
         function (req, res, next) {
@@ -101,13 +103,15 @@ function imageProviderFSBackend(storageRootDir) {
     });
     let upload = multer({storage});
 
-    app.get(path.join(basePath, ':image_id'),
+    let uri = path.join(basePath, ':image_id');
+    app.get(uri,
       function (req, res, next) {
         let subdir = req.params.image_id.slice(0, 3),
           fname = req.params.image_id.slice(3);
         req.url = path.join(basePath, subdir, fname);
         next();
       });
+    logger.debug(`Accepting GET on ${uri}`);
 
     const options = {
       setHeaders: (res) => {
@@ -116,14 +120,17 @@ function imageProviderFSBackend(storageRootDir) {
     };
     app.use(express.static(storageRootDir, options));
 
-    app.post(path.join(basePath, 'upload'), upload.single(fieldName),
+    uri = path.join(basePath, 'upload');
+    app.post(uri, upload.single(fieldName),
       function (req, res, next) {
         let imageID = path.basename(req.file.destination) + req.file.filename;
         logger.debug(req.file);
         res.status(201).json({'image_id': imageID});
       });
+    logger.debug(`Accepting POST on ${uri}`);
 
-    app.delete(path.join(basePath, 'delete', ":image_id"),
+    uri = path.join(basePath, 'delete', ":image_id");
+    app.delete(uri,
       async (req, res, next) => {
         try {
           let subdir = req.params.image_id.slice(0, 3),
@@ -137,6 +144,7 @@ function imageProviderFSBackend(storageRootDir) {
           res.status(404).json()
         }
       });
+    logger.debug(`Accepting DELETE on ${uri}`);
   }
 }
 
