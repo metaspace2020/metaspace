@@ -50,6 +50,14 @@ export const rawOpticalImageQuery =
     }
   }`;
 
+export const resubmitDatasetQuery =
+  gql`mutation ($jwt: String!, $datasetId: String!, $name: String, 
+                $metadataJson: String, $delFirst: Boolean) {
+    resubmitDataset(jwt: $jwt, datasetId: $datasetId, name: $name, 
+                  metadataJson: $metadataJson, delFirst: $delFirst, 
+                  priority: 1)
+  }`;
+
 export const submitDatasetQuery =
   gql`mutation ($jwt: String!, $path: String!, $value: String!) {
     submitDataset(jwt: $jwt, path: $path, metadataJson: $value, priority: 1)
