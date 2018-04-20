@@ -388,7 +388,7 @@ const Resolvers = {
 
   Mutation: {
     resubmitDataset: async (_, args) => {
-      const ds = await fetchDS({id: datasetId});
+      const ds = await fetchDS({id: args.datasetId});
       if (ds === undefined)
         throw new UserError('DS does not exist');
       args.name = args.name || ds.name;
