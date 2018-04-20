@@ -93,7 +93,7 @@
            'Reprocessing required',
            {
              type: 'warning',
-             confirmButtonText: 'Save',
+             confirmButtonText: 'Continue',
              cancelButtonText: 'Cancel'
            });
          return true;
