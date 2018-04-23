@@ -258,7 +258,7 @@
 
        csv += ['datasetId', 'datasetName', 'institution', 'submitter',
                'PI', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource',
-               'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime','fdr@10%', 'opticalImage'
+               'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime','FDR@10% + DataBase', 'opticalImage'
        ].join(',') + "\n";
 
        function person(p) { return p ? p.name + ' ' + p.surname : ''; }
@@ -280,8 +280,8 @@
            Math.round(row.analyzer.resolvingPower),
            row.polarity.toLowerCase(),
            row.uploadDateTime,
-           row.fdrCounts.counts,
-           (row.opticalImage != 'noOptImage') ? window.location.host + row.opticalImage : 'No optical image'
+           `${row.fdrCounts.counts}` + ' ' + `${row.fdrCounts.dbName}`,
+           (row.opticalImage != 'noOptImage') ? 'http://' + window.location.host + row.opticalImage : 'No optical image'
          ].join(',');
        }
 

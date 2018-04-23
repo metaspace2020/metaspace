@@ -56,7 +56,7 @@
               title="Filter by polarity"
               @click="addFilter('polarity')">
           {{ dataset.polarity.toLowerCase() }} mode</span>,
-        resolving power {{ formatResolvingPower }}
+        RP {{ formatResolvingPower }}
       </div>
 
       <div style="font-size: 15px;">
