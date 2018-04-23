@@ -151,7 +151,7 @@ let pg = require('knex')({
   searchPath: 'knex,public'
 });
 
-function checkPermissions(datasetId, payload) {
+function checkPermissions(datasetId, user) {
   return pg.select().from('dataset').where('id', '=', datasetId)
     .then(records => {
       if (records.length === 0)
@@ -159,9 +159,9 @@ function checkPermissions(datasetId, payload) {
       metadata = records[0].metadata;
 
       let allowUpdate = false;
-      if (payload.role === 'admin')
+      if (user.role === 'admin')
         allowUpdate = true;
-      else if (payload.email === metadata.Submitted_By.Submitter.Email)
+      else if (user.email === metadata.Submitted_By.Submitter.Email)
         allowUpdate = true;
       if (!allowUpdate)
         throw new UserError(`You don't have permissions to edit the dataset: ${datasetId}`);

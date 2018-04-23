@@ -7,7 +7,7 @@ const bodyParser = require('body-parser'),
   fetch = require('node-fetch'),
   {graphqlExpress, graphiqlExpress} = require('apollo-server-express'),
   jsondiffpatch = require('jsondiffpatch'),
-  jwt = require('jwt-simple'),
+  jwt = require('express-jwt'),
   cors = require('cors'),
   knex = require('knex'),
   makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
@@ -42,11 +42,14 @@ function createHttpServerAsync(config) {
 
       app.use(cors());
       app.use(compression());
+      app.use(jwt({
+        secret: config.jwt.secret,
+        // issuer: config.jwt.issuer, // TODO: Add issuer to config so that it can be validated
+        credentialsRequired: false,
+      }))
       app.use('/graphql',
           bodyParser.json({type: '*/*'}),
-          graphqlExpress(request => ({schema,
-             context: { auth: request.header('Authorization') }
-          })));
+          graphqlExpress({schema}));
       app.use('/graphiql', graphiqlExpress({
         endpointURL: '/graphql',
         subscriptionsEndpoint: config.websocket_public_url,

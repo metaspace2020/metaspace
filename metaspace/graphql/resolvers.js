@@ -1,5 +1,4 @@
 const sprintf = require('sprintf-js'),
-  jwt = require('jwt-simple'),
   {UserError} = require('graphql-errors'),
   fetch = require('node-fetch');
 
