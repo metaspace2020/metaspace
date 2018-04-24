@@ -395,6 +395,7 @@ const Resolvers = {
       args.name = args.name || ds.name;
       args.path = ds.input_path;
       args.metadata = args.metadataJson ? JSON.parse(args.metadataJson) : ds.metadata;
+      args.is_public = args.is_public !== undefined ? args.is_public : ds.is_public;
       return DSMutation.submit(args, req.user);
     },
 

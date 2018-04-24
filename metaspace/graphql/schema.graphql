@@ -278,15 +278,15 @@ type Query {
 
 type Mutation {
   submitDataset(jwt: String!, datasetId: String, name: String,
-    path: String, metadataJson: String,
+    path: String, metadataJson: String, is_public: Boolean!,
     priority: Int=0, delFirst: Boolean=false): String
 
   resubmitDataset(jwt: String!, datasetId: String!, name: String,
-    metadataJson: String, priority: Int=0,
+    metadataJson: String, is_public: Boolean, priority: Int=0,
     delFirst: Boolean=false): String
 
   updateMetadata(jwt: String!, datasetId: String!, name: String,
-    metadataJson: String!, priority: Int=0): String
+    metadataJson: String!, is_public: Boolean!, priority: Int=0): String
 
   deleteDataset(jwt: String!, datasetId: String!,
     delRawData: Boolean): String

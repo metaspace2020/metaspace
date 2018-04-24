@@ -143,7 +143,7 @@ module.exports = {
   },
   Mutation: {
     submit: async (args, user) => {
-      const {datasetId, name, path, metadata, priority, sync, delFirst} = args;
+      const {datasetId, name, path, metadata, is_public, priority, sync, delFirst} = args;
       try {
         if (datasetId !== undefined) {
           const ds = await fetchDS({id: datasetId});
@@ -160,7 +160,8 @@ module.exports = {
           metadata: metadata,
           config: generateProcessingConfig(metadata),
           priority: priority,
-          del_first: delFirst
+          del_first: delFirst,
+          is_public: is_public
         };
         if (datasetId !== undefined)
           body.id = datasetId;
@@ -171,7 +172,7 @@ module.exports = {
       }
     },
     update: async (args, user) => {
-      const {datasetId, name, metadataJson, priority} = args;
+      const {datasetId, name, metadataJson, is_public, priority} = args;
       try {
         const newMetadata = JSON.parse(metadataJson);
         const ds = await fetchDS({id: datasetId});
@@ -188,7 +189,8 @@ module.exports = {
           metadata: newMetadata,
           config: newConfig,
           name: name || ds.name,
-          priority: priority
+          priority: priority,
+          is_public: is_public
         };
         return await smAPIRequest(ds.id, `/v1/datasets/${ds.id}/update`, body);
       } catch (e) {
