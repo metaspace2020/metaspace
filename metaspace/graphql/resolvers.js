@@ -130,16 +130,23 @@ const Resolvers = {
               .then(results => results.map(r => ({First_Name: r.name, Surname: r.surname, Email: ''})))
     },
 
-    molecularDatabases(_, args) {
-      const host = config.services.moldb_service_host;
-      return fetch(`http://${host}/v1/databases`)
-        .then(res => res.json())
-        .then((body) => {
-          let mol_dbs = body['data'];
-          logger.debug(`Molecular databases: ` + JSON.stringify(mol_dbs));
-          return mol_dbs;
-        })
-        .catch((e) => { logger.error(e); return null; })
+    async molecularDatabases(_, args) {
+      try {
+        const host = config.services.moldb_service_host,
+          resp = await fetch(`http://${host}/v1/databases`),
+          body = await resp.json();
+        let mol_dbs = body['data'];
+        if (args.hideDeprecated !== undefined) {
+          const deprecatedMolDBs = new Set(['HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids', 'COTTON_HMDB']);
+          mol_dbs = mol_dbs.filter((mol_db) => !deprecatedMolDBs.has(mol_db.name));
+        }
+        logger.debug(`Molecular databases: ` + JSON.stringify(mol_dbs));
+        return mol_dbs;
+      }
+      catch (e) {
+        logger.error(e);
+        return 'Server error';
+      }
     },
 
     opticalImageUrl(_, {datasetId, zoom}) {

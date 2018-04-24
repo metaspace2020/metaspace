@@ -266,7 +266,7 @@ type Query {
 
   peopleSuggestions(role: PersonRole!, query: String!): [Person!]!
 
-  molecularDatabases: [MolecularDatabase!]
+  molecularDatabases(hideDeprecated: Boolean = true): [MolecularDatabase!]
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
