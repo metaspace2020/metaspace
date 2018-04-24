@@ -49,7 +49,10 @@ function createHttpServerAsync(config) {
       }))
       app.use('/graphql',
           bodyParser.json({type: '*/*'}),
-          graphqlExpress({schema}));
+          graphqlExpress(req => ({
+            schema,
+            context: req
+          })));
       app.use('/graphiql', graphiqlExpress({
         endpointURL: '/graphql',
         subscriptionsEndpoint: config.websocket_public_url,

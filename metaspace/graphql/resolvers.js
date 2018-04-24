@@ -388,36 +388,36 @@ const Resolvers = {
   },
 
   Mutation: {
-    resubmitDataset: async (_, args) => {
+    resubmitDataset: async (_, args, req) => {
       const ds = await fetchDS({id: args.datasetId});
       if (ds === undefined)
         throw new UserError('DS does not exist');
       args.name = args.name || ds.name;
       args.path = ds.input_path;
       args.metadata = args.metadataJson ? JSON.parse(args.metadataJson) : ds.metadata;
-      return DSMutation.submit(args);
+      return DSMutation.submit(args, req.user);
     },
 
-    submitDataset: (_, args) => {
+    submitDataset: (_, args, req) => {
       args.metadata = JSON.parse(args.metadataJson);
       delete args['metadataJson'];
       return DSMutation.submit(args);
     },
 
-    updateMetadata: (_, args) => {
-      return DSMutation.update(args);
+    updateMetadata: (_, args, req) => {
+      return DSMutation.update(args, req.user);
     },
 
-    deleteDataset: (_, args) => {
-      return DSMutation.delete(args);
+    deleteDataset: (_, args, req) => {
+      return DSMutation.delete(args, req.user);
     },
 
-    addOpticalImage: (_, {input}) => {
-      return DSMutation.addOpticalImage(input);
+    addOpticalImage: (_, {input}, req) => {
+      return DSMutation.addOpticalImage(input, req.user);
     },
 
-    deleteOpticalImage: (_, args) => {
-      return DSMutation.deleteOpticalImage(args);
+    deleteOpticalImage: (_, args, req) => {
+      return DSMutation.deleteOpticalImage(args, req.user);
     }
   },
 
