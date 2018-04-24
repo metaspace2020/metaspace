@@ -34,20 +34,23 @@ class DatasetStatus(object):
 
 class Dataset(object):
     """ Model class for representing a dataset """
-    DS_SEL = 'SELECT name, input_path, upload_dt, metadata, config, status FROM dataset WHERE id = %s'
-    DS_UPD = 'UPDATE dataset set name=%s, input_path=%s, upload_dt=%s, metadata=%s, config=%s, status=%s where id=%s'
+    DS_SEL = ('SELECT name, input_path, upload_dt, metadata, config, status, is_public '
+              'FROM dataset WHERE id = %s')
+    DS_UPD = ('UPDATE dataset set name=%s, input_path=%s, upload_dt=%s, metadata=%s, config=%s, status=%s, '
+              'is_public=%s where id=%s')
     DS_CONFIG_SEL = 'SELECT config FROM dataset WHERE id = %s'
-    DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status) '
-                 'VALUES (%s, %s, %s, %s, %s, %s, %s)')
+    DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, is_public) '
+                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)')
 
     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
-                 metadata=None, config=None, status=DatasetStatus.NEW):
+                 metadata=None, config=None, status=DatasetStatus.NEW, is_public=True):
         self.id = id
         self.input_path = input_path
         self.upload_dt = upload_dt
         self.meta = metadata
         self.config = config
         self.status = status
+        self.is_public = is_public
         self.name = name or (metadata.get('metaspace_options', {}).get('Dataset_Name', id) if metadata else None)
 
     def __str__(self):
@@ -65,7 +68,7 @@ class Dataset(object):
         r = db.select_one(cls.DS_SEL, ds_id)
         if r:
             ds = Dataset(ds_id)
-            ds.name, ds.input_path, ds.upload_dt, ds.meta, ds.config, ds.status = r
+            ds.name, ds.input_path, ds.upload_dt, ds.meta, ds.config, ds.status, ds.is_public = r
         else:
             raise UnknownDSID('Dataset does not exist: {}'.format(ds_id))
         return ds
@@ -75,9 +78,10 @@ class Dataset(object):
         return True if r else False
 
     def save(self, db, es, status_queue=None):
-        assert self.id and self.name and self.input_path and self.upload_dt and self.config and self.status
+        assert self.id and self.name and self.input_path and self.upload_dt and self.config and self.status \
+               and self.is_public is not None
         row = (self.id, self.name, self.input_path, self.upload_dt.isoformat(' '),
-               json.dumps(self.meta), json.dumps(self.config), self.status)
+               json.dumps(self.meta), json.dumps(self.config), self.status, self.is_public)
         if not self.is_stored(db):
             db.insert(self.DS_INSERT, [row])
         else:
