@@ -5,8 +5,11 @@ const jsondiffpatch = require('jsondiffpatch'),
   fetch = require('node-fetch'),
   {UserError} = require('graphql-errors');
 
-const {pg, logger, fetchDS, checkPermissions, generateProcessingConfig} = require('./utils.js'),
+const {pg, logger, fetchDS, checkPermissions,
+    generateProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json');
+
+let {molecularDatabases} = 1;
 
 ajv = new Ajv({allErrors: true});
 validator = ajv.compile(metadataSchema);
@@ -51,6 +54,18 @@ function validateMetadata(metadata) {
       'type': 'failed_validation',
       'validation_errors': validationErrors
     }));
+  }
+}
+
+async function molDBsExist(molDBNames) {
+  const existingMolDBs = await fetchMolecularDatabases(hideDeprecated=true),
+    existingMolDBNames = new Set(existingMolDBs.map((mol_db) => mol_db.name));
+  for (let name of molDBNames) {
+    if (!existingMolDBNames.has(name))
+      throw new UserError(JSON.stringify({
+        'type': 'wrong_moldb_name',
+        'moldb_name': name
+      }));
   }
 }
 
@@ -135,6 +150,7 @@ module.exports = {
         }
 
         validateMetadata(metadata);
+        await molDBsExist(metadata.metaspace_options.Metabolite_Database);
 
         const body = {
           name: name,

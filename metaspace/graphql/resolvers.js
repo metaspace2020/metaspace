@@ -8,7 +8,7 @@ const config = require('config'),
    esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {generateProcessingConfig, metadataChangeSlackNotify,
-    metadataUpdateFailedSlackNotify, fetchDS,
+    metadataUpdateFailedSlackNotify, fetchDS, fetchMolecularDatabases,
     logger, pubsub, pg} = require("./utils.js"),
   {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js');
 
@@ -132,16 +132,9 @@ const Resolvers = {
 
     async molecularDatabases(_, args) {
       try {
-        const host = config.services.moldb_service_host,
-          resp = await fetch(`http://${host}/v1/databases`),
-          body = await resp.json();
-        let mol_dbs = body['data'];
-        if (args.hideDeprecated !== undefined) {
-          const deprecatedMolDBs = new Set(['HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids', 'COTTON_HMDB']);
-          mol_dbs = mol_dbs.filter((mol_db) => !deprecatedMolDBs.has(mol_db.name));
-        }
-        logger.debug(`Molecular databases: ` + JSON.stringify(mol_dbs));
-        return mol_dbs;
+        let molDBs = await fetchMolecularDatabases(args.hideDeprecated);
+        logger.debug(`Molecular databases: ` + JSON.stringify(molDBs));
+        return molDBs;
       }
       catch (e) {
         logger.error(e);

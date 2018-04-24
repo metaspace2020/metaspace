@@ -3,7 +3,8 @@ const slack = require('node-slack'),
   winston = require('winston'),
   moment = require('moment'),
   { PubSub } = require('graphql-subscriptions'),
-  {UserError} = require('graphql-errors');
+  {UserError} = require('graphql-errors'),
+  fetch = require('node-fetch');
 
 const config = require('config');
 
@@ -181,12 +182,26 @@ async function fetchDS({id, name}) {
   return records[0];
 }
 
+const deprecatedMolDBs = new Set(['HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids', 'COTTON_HMDB']);
+
+async function fetchMolecularDatabases({hideDeprecated}) {
+  const host = config.services.moldb_service_host,
+    resp = await fetch(`http://${host}/v1/databases`),
+    body = await resp.json();
+  let molDBs = body['data'];
+  if (hideDeprecated) {
+    molDBs = molDBs.filter((molDB) => !deprecatedMolDBs.has(molDB.name));
+  }
+  return molDBs;
+}
+
 module.exports = {
   generateProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
   checkPermissions,
   fetchDS,
+  fetchMolecularDatabases,
   config,
   logger,
   pubsub,
