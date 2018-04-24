@@ -58,7 +58,7 @@ function validateMetadata(metadata) {
 }
 
 async function molDBsExist(molDBNames) {
-  const existingMolDBs = await fetchMolecularDatabases(hideDeprecated=true),
+  const existingMolDBs = await fetchMolecularDatabases({hideDeprecated: false}),
     existingMolDBNames = new Set(existingMolDBs.map((mol_db) => mol_db.name));
   for (let name of molDBNames) {
     if (!existingMolDBNames.has(name))

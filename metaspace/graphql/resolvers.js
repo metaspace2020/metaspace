@@ -132,7 +132,7 @@ const Resolvers = {
 
     async molecularDatabases(_, args) {
       try {
-        let molDBs = await fetchMolecularDatabases(args.hideDeprecated);
+        let molDBs = await fetchMolecularDatabases({hideDeprecated: args.hideDeprecated});
         logger.debug(`Molecular databases: ` + JSON.stringify(molDBs));
         return molDBs;
       }

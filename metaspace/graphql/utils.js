@@ -184,7 +184,7 @@ async function fetchDS({id, name}) {
 
 const deprecatedMolDBs = new Set(['HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids', 'COTTON_HMDB']);
 
-async function fetchMolecularDatabases({hideDeprecated}) {
+async function fetchMolecularDatabases({hideDeprecated = true}) {
   const host = config.services.moldb_service_host,
     resp = await fetch(`http://${host}/v1/databases`),
     body = await resp.json();
