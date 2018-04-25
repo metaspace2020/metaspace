@@ -5,7 +5,6 @@
     executable: /bin/bash
   register: supervisorctl_status_out
 
-
 - name: Start supervisord daemon
   shell: >
     supervisord -c /etc/supervisor/supervisord.conf -l /var/log/supervisor/supervisord.log
@@ -14,11 +13,6 @@
     executable: /bin/bash
   register: command_result
   when: "'no such file' in supervisorctl_status_out.stdout"
-
-#- debug: var=command_result
-#  when: "'no such file' in supervisorctl_status_out.stdout"
-#  failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'
-
 
 - name: "Restart {{ supervisor_app | default('all') }} app(s) running under supervisor"
   shell: >
@@ -32,7 +26,8 @@
   shell: supervisorctl status {{ supervisor_app | default("all") }}
   args:
     executable: /bin/bash
-  register: command_result
+  register: res
 
-- debug: var=command_result
-  failed_when: '"ERROR" in command_result.stdout or "FATAL" in command_result.stdout'
+- name: Check if supervisor status contains errors
+  debug: var=res
+  failed_when: '"EXITED" in res.stdout or "FATAL" in res.stdout or "ERROR" in res.stdout'

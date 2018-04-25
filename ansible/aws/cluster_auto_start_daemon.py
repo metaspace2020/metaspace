@@ -93,18 +93,14 @@ class ClusterDaemon(object):
             return resp.ok
 
     def queue_empty(self):
-        try:
-            creds = pika.PlainCredentials(self.ansible_config['rabbitmq_user'],
-                                          self.ansible_config['rabbitmq_password'])
-            conn = pika.BlockingConnection(pika.ConnectionParameters(host=self.ansible_config['rabbitmq_host'],
-                                                                     credentials=creds))
-            ch = conn.channel()
-            m = ch.queue_declare(queue=self.qname, durable=True, arguments={'x-max-priority': 3})
-            self.logger.debug('Messages in the queue: {}'.format(m.method.message_count))
-            return m.method.message_count == 0
-        except Exception as e:
-            self.logger.warning(e, exc_info=True)
-            return True
+        creds = pika.PlainCredentials(self.ansible_config['rabbitmq_user'],
+                                      self.ansible_config['rabbitmq_password'])
+        conn = pika.BlockingConnection(pika.ConnectionParameters(host=self.ansible_config['rabbitmq_host'],
+                                                                 credentials=creds))
+        ch = conn.channel()
+        m = ch.queue_declare(queue=self.qname, durable=True, arguments={'x-max-priority': 3})
+        self.logger.debug('Messages in the queue: {}'.format(m.method.message_count))
+        return m.method.message_count == 0
 
     def cluster_up(self):
         return self._send_rest_request('http://{}:8080/api/v1/applications'.format(self.spark_master_public_ip))
@@ -200,6 +196,7 @@ class ClusterDaemon(object):
 
                 sleep(self.interval)
         except Exception as e:
+            self.logger.error(e, exc_info=True)
             self._post_to_slack('sos', "[v] Something went wrong: {}".format(e))
             self._send_email('kovalev@embl.de', 'Cluster auto start daemon ({}) failed'.format(self.stage), str(e))
 
