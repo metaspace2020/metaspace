@@ -151,19 +151,24 @@ let pg = require('knex')({
   searchPath: 'knex,public'
 });
 
+function canUserViewEsDataset(dataset, user) {
+  return dataset.ds_is_public
+    || user.role === 'admin'
+    || (dataset.ds_submitter_email && dataset.ds_submitter_email === user.email);
+}
+
+function canUserEditDbDataset(dbDataset, user) {
+  return user.role === 'admin'
+    || user.email === dbDataset.metadata.Submitted_By.Submitter.Email;
+}
+
 function checkPermissions(datasetId, user) {
   return pg.select().from('dataset').where('id', '=', datasetId)
     .then(records => {
       if (records.length === 0)
         throw new UserError(`No dataset with specified id: ${datasetId}`);
-      metadata = records[0].metadata;
 
-      let allowUpdate = false;
-      if (user.role === 'admin')
-        allowUpdate = true;
-      else if (user.email === metadata.Submitted_By.Submitter.Email)
-        allowUpdate = true;
-      if (!allowUpdate)
+      if (!canUserEditDbDataset(records[0], user))
         throw new UserError(`You don't have permissions to edit the dataset: ${datasetId}`);
     });
 }
@@ -201,6 +206,7 @@ module.exports = {
   generateProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
+  canUserViewEsDataset,
   checkPermissions,
   fetchDS,
   fetchMolecularDatabases,
