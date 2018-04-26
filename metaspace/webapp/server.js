@@ -16,7 +16,11 @@ const LOCAL_SETUP = conf.UPLOAD_DESTINATION != 's3';
 var app = express();
 
 var jwt = require('jwt-simple');
-var RedisStore = require('connect-redis')(session);
+let sessionStore = undefined;
+if (conf.REDIS_CONFIG) {
+  var RedisStore = require('connect-redis')(session);
+  sessionStore = new RedisStore(conf.REDIS_CONFIG);
+}
 
 var knex = require('knex')({
   // FIXME: this is a temporary solution, use Postgres in the future
@@ -39,7 +43,7 @@ function Users() {
 }
 
 app.use(session({
-  store: new RedisStore(conf.REDIS_CONFIG),
+  store: sessionStore,
   secret: conf.COOKIE_SECRET,
   resave: false,
   cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 1 month
@@ -107,8 +111,13 @@ if (conf.GOOGLE_CLIENT_ID) {
   }));
 }
 
-var plRedisStore = require('passwordless-redisstore-bcryptjs');
-passwordless.init(new plRedisStore(conf.REDIS_CONFIG.port, conf.REDIS_CONFIG.host));
+if(conf.REDIS_CONFIG) {
+  const plRedisStore = require('passwordless-redisstore-bcryptjs');
+  passwordless.init(new plRedisStore(conf.REDIS_CONFIG.port, conf.REDIS_CONFIG.host));
+} else {
+  const plMemoryStore = require('passwordless-memorystore');
+  passwordless.init(new plMemoryStore());
+}
 
 function loginLink(token, uid) {
   return `http://${conf.HOST_NAME}/?token=${token}&uid=${encodeURIComponent(uid)}`;
@@ -146,18 +155,10 @@ if (conf.AWS_ACCESS_KEY_ID && env != 'development') {
 }
 
 if (env == 'development') {
-  // in development the login link is simply stored in Redis
-
-  var Redis = require('ioredis');
-  var redis = new Redis({
-    keyPrefix: 'login-link:',
-    showFriendlyErrorStack: true // NB. not to be used in production!
-  });
 
   passwordless.addDelivery((token, uid, recipient, callback) => {
-    redis.set(recipient, loginLink(token, uid))
-         .then(() => { console.log(`Stored login link for ${recipient} in Redis`); callback(null); })
-         .catch(err => { callback(err); });
+    console.log(`Login link for ${recipient}: ${loginLink(token, uid)}`);
+    callback(null);
   });
 
   // expose the link to outside to enable testing even when the webapp is inside virtualbox/docker
