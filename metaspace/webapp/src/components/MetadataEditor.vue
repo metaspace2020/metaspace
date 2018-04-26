@@ -191,6 +191,8 @@
  }
 
  const LOCAL_STORAGE_KEY = 'latestMetadataSubmission';
+ const LOCAL_STORAGE_VERSION_KEY = 'latestMetadataSubmissionVersion';
+ const LOCAL_STORAGE_CURRENT_VERSION = 2;
 
  // TODO: fill in institution automatically when user profiles are added
 
@@ -334,13 +336,19 @@
 
      loadLastSubmission() {
        const defaultValue = objectFactory(metadataSchema);
-       let lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+       const lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+       const lastVersion = JSON.parse(localStorage.getItem(LOCAL_STORAGE_VERSION_KEY) || '1');
+
        if (lastValue && lastValue.metaspace_options) {
          lastValue.metaspace_options.Dataset_Name = ''; // different for each dataset
 
          /* we want to have all nested fields to be present for convenience,
             that's what objectFactory essentially does */
          this.value = merge({}, defaultValue, this.fixEntries(lastValue));
+
+         if (lastVersion < 2) {
+           this.value.metaspace_options.Metabolite_Database = [];
+         }
        } else {
          this.value = defaultValue;
        }
@@ -358,7 +366,10 @@
 
      submit() {
        this.$emit('submit', this.datasetId, JSON.stringify(this.value));
-       if (!this.datasetId) localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.value));
+       if (!this.datasetId) {
+         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.value));
+         localStorage.setItem(LOCAL_STORAGE_VERSION_KEY, JSON.stringify(LOCAL_STORAGE_CURRENT_VERSION));
+       }
      },
 
      getSuggestions(query, callback, ...args) {
