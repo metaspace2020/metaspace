@@ -483,7 +483,7 @@ class QueuePublisher(object):
                                  priority=priority
                              ))
             self.logger.info(" [v] Sent {} to {}".format(json.dumps(msg), self.qname))
-        except Exception as e:
+        except AMQPError as e:
             self.logger.error('Failed to publish a message: %s - %s', msg, e)
         finally:
             if self.conn:

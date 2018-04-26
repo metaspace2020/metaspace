@@ -14,7 +14,6 @@ class ImageStoreServiceWrapper(object):
         self._img_service_url = img_service_url
         self._session = requests.Session()
         self._session.mount(self._img_service_url, HTTPAdapter(max_retries=5))
-        self._logger =  logging.getLogger('engine')
 
     def _format_url(self, img_type, method='', img_id=''):
         return path.join(self._img_service_url, img_type + 's', method, img_id)
@@ -41,7 +40,7 @@ class ImageStoreServiceWrapper(object):
     def delete_image(self, url):
         r = self._session.delete(url)
         if r.status_code != 202:
-            self._logger.warning('Failed to delete: {}'.format(url))
+            print('Failed to delete: {}'.format(url))  # logger has issues with pickle when sent to spark
 
     def get_image_by_id(self, img_type, img_id):
         url = self._format_url(img_type=img_type, img_id=img_id)
