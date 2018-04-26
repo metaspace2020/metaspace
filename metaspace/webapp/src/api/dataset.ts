@@ -52,15 +52,15 @@ export const rawOpticalImageQuery =
 
 export const resubmitDatasetQuery =
   gql`mutation ($jwt: String!, $datasetId: String!, $name: String, 
-                $metadataJson: String, $delFirst: Boolean) {
+                $metadataJson: String, $isPublic: Boolean, $delFirst: Boolean) {
     resubmitDataset(jwt: $jwt, datasetId: $datasetId, name: $name, 
-                  metadataJson: $metadataJson, delFirst: $delFirst, 
-                  priority: 1)
+                  metadataJson: $metadataJson, isPublic: $isPublic, 
+                  delFirst: $delFirst, priority: 1)
   }`;
 
 export const submitDatasetQuery =
-  gql`mutation ($jwt: String!, $path: String!, $value: String!) {
-    submitDataset(jwt: $jwt, path: $path, metadataJson: $value, priority: 1)
+  gql`mutation ($jwt: String!, $path: String!, $value: String!, $isPublic: Boolean!) {
+    submitDataset(jwt: $jwt, path: $path, metadataJson: $value, isPublic: $isPublic, priority: 1)
   }`;
 
 export const deleteDatasetQuery =

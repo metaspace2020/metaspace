@@ -2,6 +2,13 @@
   <div id="md-editor-container">
     <div style="position: relative;">
       <div id="md-editor-submit">
+        <div id="md-editor-public">
+          <el-checkbox v-model="isPublic">Public</el-checkbox>
+          <el-popover trigger="hover" placement="top">
+            <div>If checked, the annotation results will be publicly visible.</div>
+            <i slot="reference" class="el-icon-question"></i>
+          </el-popover>
+        </div>
         <el-button @click="cancel" v-if="datasetId">Cancel</el-button>
         <el-button type="primary" v-if="enableSubmit" @click="submit">Submit</el-button>
         <el-button v-else type="primary" disabled :title="disabledSubmitMessage">
@@ -73,6 +80,20 @@
                 </span>
               </el-form-item>
 
+              <el-form-item class="control" v-if="prop.type == 'boolean' && !loading"
+                            :class="isError(sectionName, propName)">
+
+                <div>
+                  <el-checkbox v-model="value[sectionName][propName]"
+                            :placeholder="prop.description">
+                  </el-checkbox>
+                </div>
+
+                <span class="error-msg" v-if="isError(sectionName, propName)">
+                  {{ getErrorMessage(sectionName, propName) }}
+                </span>
+              </el-form-item>
+
               <el-form-item class="control" v-if="prop.type == 'array' && !loading"
                             :class="isError(sectionName, propName)">
                 <!-- so far it's only for Metabolite_Database  -->
@@ -100,7 +121,8 @@
 
                       <el-input v-if="field.type == 'string'"
                                 v-model="value[sectionName][propName][fieldName]"
-                                :placeholder="field.description">
+                                :placeholder="field.description"
+                                :disabled="isDisabled(sectionName, propName, fieldName)">
                       </el-input>
 
                       <el-input-number v-if="field.type == 'number'"
@@ -198,7 +220,8 @@
    'string': schema => schema.default || '',
    'number': schema => schema.default || 0,
    'object': objectFactory,
-   'array': schema => schema.default || []
+   'array': schema => schema.default || [],
+   'boolean': schema => schema.default || false,
  }
 
  const LOCAL_STORAGE_KEY = 'latestMetadataSubmission';
@@ -248,10 +271,11 @@
        variables: { id: this.datasetId },
        fetchPolicy: 'network-only'
      }).then(resp => {
-       const defaultValue = objectFactory(metadataSchema),
+       const defaultValue = this.getDefaultMetadataValue(),
              value = this.fixEntries(JSON.parse(resp.data.dataset.metadataJson));
        this.value = merge({}, defaultValue, value);
        this.defaultDatabaseApplied = true;
+       this.isPublic = resp.data.dataset.isPublic;
        this.setLoadingStatus(false);
      }).catch(err => {
        console.log("Error fetching current metadata: ", err);
@@ -261,7 +285,8 @@
    data() {
      return {
        schema: metadataSchema,
-       value: objectFactory(metadataSchema),
+       value: this.getDefaultMetadataValue(),
+       isPublic: true,
        loading: true,
        molecularDatabases: null,
        defaultDatabaseApplied: false
@@ -299,6 +324,15 @@
        return name;
      },
 
+     getDefaultMetadataValue() {
+       const user = this.$store.state.user,
+         email = user ? user.email : '';
+       return merge({},
+         objectFactory(metadataSchema),
+         {Submitted_By: {Submitter: {Email: email}}}
+       );
+     },
+
      getHelp(propName) {
        return FIELD_HELP[propName];
      },
@@ -319,6 +353,10 @@
 
      isRequired(propName, parent) {
        return parent && parent.required && (parent.required.indexOf(propName) != -1);
+     },
+
+     isDisabled(...args) {
+       return args[0] === 'Submitted_By' && args[1] === 'Submitter' && args[2] === 'Email';
      },
 
      buildPath(...args) {
@@ -364,10 +402,9 @@
      },
 
      loadLastSubmission() {
-       const defaultValue = objectFactory(metadataSchema);
+       const defaultValue = this.getDefaultMetadataValue();
        const lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
        const lastVersion = JSON.parse(localStorage.getItem(LOCAL_STORAGE_VERSION_KEY) || '1');
-
        if (lastValue && lastValue.metaspace_options) {
          lastValue.metaspace_options.Dataset_Name = ''; // different for each dataset
 
@@ -397,7 +434,7 @@
      },
 
      submit() {
-       this.$emit('submit', this.datasetId, JSON.stringify(this.value));
+       this.$emit('submit', this.datasetId, JSON.stringify(this.value), this.isPublic);
        if (!this.datasetId) {
          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.value));
          localStorage.setItem(LOCAL_STORAGE_VERSION_KEY, JSON.stringify(LOCAL_STORAGE_CURRENT_VERSION));
@@ -475,6 +512,11 @@
  #md-editor-submit > button {
    width: 100px;
    padding: 6px;
+ }
+
+ #md-editor-public {
+   display: inline-block;
+   width: 100px;
  }
 
  .control.el-form-item, .subfield > .el-form-item {

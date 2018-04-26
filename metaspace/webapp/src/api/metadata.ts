@@ -3,7 +3,8 @@ import gql from 'graphql-tag';
 export const fetchMetadataQuery =
   gql`query fetchMetadataQuery($id: String!) {
     dataset(id: $id) {
-      metadataJson
+      metadataJson,
+      isPublic
     }
   }`;
 
@@ -13,8 +14,10 @@ export const fetchAutocompleteSuggestionsQuery =
   }`;
 
 export const updateMetadataQuery =
-  gql`mutation ($jwt: String!, $dsId: String!, $dsName: String, $value: String!) {
-    updateMetadata(jwt: $jwt, datasetId: $dsId, name: $dsName, metadataJson: $value, priority: 1)
+  gql`mutation ($jwt: String!, $dsId: String!, $dsName: String, $value: String!,
+                $isPublic: Boolean!) {
+    updateMetadata(jwt: $jwt, datasetId: $dsId, name: $dsName, 
+          metadataJson: $value, isPublic: $isPublic, priority: 1)
   }`;
 
 // TODO: use autocompletion for filter values, same as on the upload page

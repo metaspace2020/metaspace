@@ -110,9 +110,9 @@
        console.log(failedFiles);
      },
 
-     onFormSubmit(_, formData) {
+     onFormSubmit(_, formData, isPublic) {
        const uuid = this.$refs.uploader.getUUID();
-       this.submitDataset(uuid, formData).then(() => {
+       this.submitDataset(uuid, formData, isPublic).then(() => {
          this.validationErrors = [];
          this.enableSubmit = false;
          this.$refs.uploader.reset();
@@ -141,7 +141,7 @@
        })
      },
 
-     submitDataset(uuid, formData) {
+     submitDataset(uuid, formData, isPublic) {
        console.log("submitting " + uuid);
        return getJWT()
          .then(jwt => this.$apollo.mutate({
@@ -149,7 +149,8 @@
            variables: {
              path: pathFromUUID(uuid),
              value: formData,
-             jwt
+             jwt,
+             isPublic
            }}));
      }
    }

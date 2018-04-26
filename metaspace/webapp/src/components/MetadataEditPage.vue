@@ -35,14 +35,14 @@
    },
 
    methods: {
-     async onSubmit(datasetId, value) {
+     async onSubmit(datasetId, value, isPublic) {
        // Prevent duplicate submissions if user double-clicks
        if (this.isSubmitting) return;
        this.isSubmitting = true;
 
        try {
          const jwt = await getJWT();
-         const wasSaved = await this.saveDataset(jwt, datasetId, value);
+         const wasSaved = await this.saveDataset(jwt, datasetId, value, isPublic);
 
          if (wasSaved) {
            this.validationErrors = [];
@@ -60,10 +60,10 @@
          this.isSubmitting = false;
        }
      },
-     async saveDataset(jwt, datasetId, value)
+     async saveDataset(jwt, datasetId, value, isPublic)
      {
        try {
-         await this.updateMetadata(jwt, datasetId, value);
+         await this.updateMetadata(jwt, datasetId, value, isPublic);
          return true;
        } catch (err) {
          console.log(err);
@@ -72,7 +72,7 @@
          if ((graphQLError['type'] === 'submit_needed' || graphQLError['type'] === 'drop_submit_needed')) {
            if (await this.confirmReprocess()) {
              const delFirst = graphQLError['type'] === 'drop_submit_needed';
-             await this.submitDataset(jwt, datasetId, value, delFirst);
+             await this.resubmitDataset(jwt, datasetId, value, isPublic, delFirst);
              return true;
            }
          } else if (graphQLError['type'] === 'failed_validation') {
@@ -102,11 +102,11 @@
          return false;
        }
      },
-     submitDataset(jwt, datasetId, metadataJson, delFirst) {
+     resubmitDataset(jwt, datasetId, metadataJson, isPublic, delFirst) {
        const name = JSON.parse(metadataJson).metaspace_options.Dataset_Name;
        return this.$apollo.mutate({
          mutation: resubmitDatasetQuery,
-         variables: {jwt, datasetId, name, metadataJson, delFirst},
+         variables: {jwt, datasetId, name, metadataJson, isPublic, delFirst},
          updateQueries: {
            fetchMetadataQuery: (prev, _) => ({
              dataset: {
@@ -116,11 +116,11 @@
          }
        });
      },
-     updateMetadata(jwt, dsId, value) {
+     updateMetadata(jwt, dsId, value, isPublic) {
        const dsName = JSON.parse(value).metaspace_options.Dataset_Name;
        return this.$apollo.mutate({
          mutation: updateMetadataQuery,
-         variables: {jwt, dsId, dsName, value},
+         variables: {jwt, dsId, dsName, value, isPublic},
          updateQueries: {
            fetchMetadataQuery: (prev, _) => ({
              dataset: {

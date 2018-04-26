@@ -1,3 +1,3 @@
 [submodule "metadata"]
-	path = metaspace/webapp/metadata
+	path = metadata
 	url = https://github.com/metaspace2020/metadata.git
