@@ -69,35 +69,38 @@ async function molDBsExist(molDBNames) {
   }
 }
 
-async function reprocessingNeeded(datasetId, newMetadata, newConfig) {
-  const records = await pg.select().from('dataset').where('id', '=', datasetId),
-    oldMetadata = records[0].metadata,
-    oldConfig = records[0].config,
-    configDelta = jsondiffpatch.diff(oldConfig, newConfig),
-    configDiff = jsondiffpatch.formatters.jsonpatch.format(configDelta),
-    metaDelta = jsondiffpatch.diff(oldMetadata, newMetadata),
-    metaDiff = jsondiffpatch.formatters.jsonpatch.format(metaDelta);
+function reprocessingNeeded(ds, newMetadata) {
+    const oldMetadata = ds.metadata,
+      oldConfig = ds.config,
+      configDelta = jsondiffpatch.diff(oldConfig, generateProcessingConfig(newMetadata)),
+      configDiff = jsondiffpatch.formatters.jsonpatch.format(configDelta),
+      metaDelta = jsondiffpatch.diff(oldMetadata, newMetadata),
+      metaDiff = jsondiffpatch.formatters.jsonpatch.format(metaDelta);
 
   let dbUpd = false, procSettingsUpd = false;
   for (let diffObj of configDiff) {
-    if (diffObj.path.startsWith('/databases'))
-      dbUpd = true;
-    else
-      procSettingsUpd = true;
+    if (diffObj.op !== 'move') {
+      if (diffObj.path.startsWith('/databases'))
+        dbUpd = true;
+      else
+        procSettingsUpd = true;
+    }
   }
 
   if (procSettingsUpd) {
     throw new UserError(JSON.stringify({
       'type': 'drop_submit_needed',
       'hint': `Resubmission needed. Call 'submitDataset' with 'delFirst: true'.`,
-      'metadata_diff': metaDiff
+      'metadata_diff': metaDiff,
+      'config_diff': configDiff
     }))
   }
   else if (dbUpd) {
     throw new UserError(JSON.stringify({
       'type': 'submit_needed',
       'hint': `Resubmission needed. Call 'submitDataset'.`,
-      'metadata_diff': metaDiff
+      'metadata_diff': metaDiff,
+      'config_diff': configDiff
     }))
   }
 }
@@ -124,13 +127,14 @@ async function smAPIRequest(datasetId, uri, body) {
 }
 
 module.exports = {
+  reprocessingNeeded,
   Query: {
     reprocessingNeeded: async (args) => {
       const {datasetId, metadataJson} = args,
         newMetadata = JSON.parse(metadataJson),
         newConfig = generateProcessingConfig(newMetadata);
       try {
-        await reprocessingNeeded(datasetId, newMetadata, newConfig);
+        reprocessingNeeded(await fetchDS(datasetId), newMetadata, newConfig);
         return false;
       }
       catch (e) {
@@ -185,7 +189,7 @@ module.exports = {
         await checkPermissions(ds.id, payload);
         validateMetadata(newMetadata);
         const newConfig = generateProcessingConfig(newMetadata);
-        await reprocessingNeeded(ds.id, newMetadata, newConfig);
+        reprocessingNeeded(ds, newMetadata, newConfig);
 
         const body = {
           metadata: newMetadata,
