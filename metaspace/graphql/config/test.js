@@ -2,7 +2,7 @@ let config = {};
 
 config.port = 3011;
 config.ws_port = 5667;
-config.iso_img_port = 4202;
+config.img_storage_port = 4202;
 
 config.log = {};
 config.log.level = 'debug';
@@ -15,10 +15,24 @@ config.defaults = {
   moldb_name: 'HMDB-v2.5'
 };
 
-config.img_upload = {};
-config.img_upload.iso_img_fs_path = '/opt/data/sm_data/public/';
-config.img_upload.categories = {iso_image: {type: 'image/png', path: '/iso_images/'}};
-// config.img_upload.backend = "fs"; // "fs" or "db"
+config.img_upload = {
+  iso_img_fs_path: "/opt/data/sm_data/public/",
+  backend: "fs", // "fs or "db"
+  categories: {
+    iso_image: {
+      type: 'image/png',
+      path: '/iso_images/'
+    },
+    optical_image: {
+      type: 'image/jpeg',
+      path: '/optical_images/'
+    },
+    raw_optical_image: {
+      type: 'image/jpeg',
+      path: '/raw_optical_images/'
+    }
+  }
+};
 
 config.services = {};
 /* Molecular database service, used only for internal purposes (peakChartData query) */

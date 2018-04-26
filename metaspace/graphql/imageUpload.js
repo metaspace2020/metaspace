@@ -23,12 +23,12 @@ function imageProviderDBBackend(pg) {
     let storage = multer.memoryStorage();
     let upload = multer({ storage: storage });
 
-    pg.schema.createTableIfNotExists(IMG_TABLE_NAME, function (table) {
+    return pg.schema.createTableIfNotExists(IMG_TABLE_NAME, function (table) {
       table.text('id');
       table.text('category');
       table.binary('data');
     }).then(() => {
-      const uri = path.join(basePath, ":img_id");
+      let uri = path.join(basePath, ":img_id");
       app.get(uri,
         function (req, res) {
           pg.select(pg.raw('data'))
@@ -49,7 +49,8 @@ function imageProviderDBBackend(pg) {
         });
       logger.debug(`Accepting GET on ${uri}`);
 
-      app.post(path.join(basePath, 'upload'), upload.single(fieldName),
+      uri = path.join(basePath, 'upload');
+      app.post(uri, upload.single(fieldName),
         function (req, res, next) {
           logger.debug(req.file.originalname);
           let imgID = crypto.randomBytes(16).toString('hex');
@@ -65,8 +66,10 @@ function imageProviderDBBackend(pg) {
               res.status(500).send('Failed to store image');
             });
         });
+      logger.debug(`Accepting POST on ${uri}`);
 
-      app.delete(path.join(basePath, 'delete', ":img_id"),
+      uri = path.join(basePath, 'delete', ":img_id");
+      app.delete(uri,
         function (req, res, next) {
           pg.del().from(IMG_TABLE_NAME)
             .where('id', '=', req.params.img_id)
@@ -78,6 +81,7 @@ function imageProviderDBBackend(pg) {
               res.status(202).end();
             })
         });
+        logger.debug(`Accepting DELETE on ${uri}`);
       });
   }
 }
@@ -148,7 +152,7 @@ function imageProviderFSBackend(storageRootDir) {
   }
 }
 
-function createImgServerAsync(config) {
+async function createImgServerAsync(config) {
   const app = express();
   app.use(cors());
 
@@ -160,10 +164,10 @@ function createImgServerAsync(config) {
   if (backend === undefined) {
     logger.error(`Unknown image upload backend: ${config.img_upload.backend}`);
   } else {
-    Object.keys(config.img_upload.categories).forEach(category => {
+    for (let category of Object.keys(config.img_upload.categories)) {
       const {type, path} = config.img_upload.categories[category];
-      backend(app, category, type, path);
-    });
+      await backend(app, category, type, path);
+    }
   }
 
   let httpServer = http.createServer(app);

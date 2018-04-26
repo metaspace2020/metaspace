@@ -1,5 +1,6 @@
 /**
  * Created by intsco on 5/9/17.
+ * @jest-environment node
  */
 process.env.NODE_ENV = 'test';
 
@@ -24,9 +25,10 @@ describe('imageUploadTest with fs and db backends', () => {
   configSets.forEach( (cs) => {
 
     describe(`${cs.backend} backend`, () => {
-      let server;
+      let server,
+        image_id;
 
-      before((done) => {
+      beforeAll((done) => {
         let config = require('config');
         config.img_upload.backend = cs.backend;
         createImgServerAsync(config)
@@ -39,7 +41,7 @@ describe('imageUploadTest with fs and db backends', () => {
           });
       });
 
-      after((done) => {
+      afterAll((done) => {
         server.close(() => {
           logger.debug('Iso image server closed');
           if (cs === 'db') {
