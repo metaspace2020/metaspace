@@ -34,13 +34,12 @@ def _reindex_datasets(rows, es_exp):
         try:
             es_exp.delete_ds(ds_id)
             for mol_db_dict in ds_config['databases']:
-                mol_db = MolecularDB(name=mol_db_dict['name'], version=mol_db_dict.get('version', None),
-                                     iso_gen_config=ds_config['isotope_generation'])
+                mol_db = MolecularDB(name=mol_db_dict['name'], iso_gen_config=ds_config['isotope_generation'])
                 isocalc = IsocalcWrapper(ds_config['isotope_generation'])
                 es_exp.index_ds(ds_id, mol_db=mol_db, isocalc=isocalc)
         except Exception as e:
             new_msg = 'Failed to reindex(ds_id={}, ds_name={}): {}'.format(ds_id, ds_name, e)
-            raise Exception(new_msg) from e
+            logger.error(new_msg)
 
 
 def reindex_results(ds_id, ds_mask):
