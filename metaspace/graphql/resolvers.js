@@ -253,33 +253,33 @@ const Resolvers = {
         let annotCounts = ds._source.annotation_counts;
         let dbList = ds._source.ds_meta.metaspace_options.Metabolite_Database;
         let filteredDbList = annotCounts.filter(el => {
-          return dbList.includes(el.db.name)
+            return dbList.includes(el.db.name)
         });
         for (let db of filteredDbList) {
           let maxCountsCand = db.counts.find(lvlObj => {
-            return lvlObj.level === checkLvl
-          });
-          if (maxCountsCand.n >= maxCounts) {
-            maxCounts = maxCountsCand.n; outFdrLvls = []; outFdrCounts = [];
-            inpFdrLvls.forEach(inpLvl => {
-              let findRes = db.counts.find(lvlObj => {
-                return lvlObj.level === inpLvl
-              });
-              if (findRes) {
-                dbName = db.db.name;
-                outFdrLvls.push(findRes.level);
-                outFdrCounts.push(findRes.n);
-              }
-            })
-          } else {
-            break;
-          }
+                return lvlObj.level === checkLvl
+            });
+            if (maxCountsCand.n >= maxCounts) {
+              maxCounts = maxCountsCand.n;
+              outFdrLvls = [];
+              outFdrCounts = [];
+              inpFdrLvls.forEach(inpLvl => {
+                let findRes = db.counts.find(lvlObj => {
+                  return lvlObj.level === inpLvl
+                });
+                if (findRes) {
+                  dbName = db.db.name;
+                  outFdrLvls.push(findRes.level);
+                  outFdrCounts.push(findRes.n);
+                }
+              })
+            }
         }
-      }
-      return {
-        'dbName': dbName,
-        'levels': outFdrLvls,
-        'counts': outFdrCounts
+        return {
+            'dbName': dbName,
+            'levels': outFdrLvls,
+            'counts': outFdrCounts
+        }
       }
     },
 
