@@ -22,6 +22,7 @@ export const datasetListQuery =
       condition
       growthConditions
       metadataJson
+      isPublic
       status
       fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
         dbName

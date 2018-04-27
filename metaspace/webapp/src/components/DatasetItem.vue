@@ -114,6 +114,8 @@
         <i class="el-icon-delete"></i>
         <a @click="openDeleteDialog">Delete dataset</a>
       </div>
+
+      <img v-if="!dataset.isPublic" class="ds-item-private-icon" src="../assets/padlock-icon.svg">
     </div>
   </div>
 </template>
@@ -412,6 +414,7 @@
   }
 
  .dataset-item {
+   position: relative;
    border-radius: 5px;
    width: 100%;
    max-width: 800px;
@@ -499,6 +502,14 @@
  .ds-item-disabled {
    pointer-events: none;
    opacity: 0.5;
+ }
+ .ds-item-private-icon {
+   position: absolute;
+   opacity: 0.2;
+   width: 24px;
+   height: 32px;
+   right: 10px;
+   bottom: 8px;
  }
 
 </style>

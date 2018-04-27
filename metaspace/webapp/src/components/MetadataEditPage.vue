@@ -110,7 +110,8 @@
          updateQueries: {
            fetchMetadataQuery: (prev, _) => ({
              dataset: {
-               metadataJSON: JSON.stringify(metadataJson)
+               metadataJSON: JSON.stringify(metadataJson),
+               isPublic
              }
            })
          }
@@ -124,7 +125,8 @@
          updateQueries: {
            fetchMetadataQuery: (prev, _) => ({
              dataset: {
-               metadataJSON: JSON.stringify(value)
+               metadataJSON: JSON.stringify(value),
+               isPublic
              }
            })
          }
