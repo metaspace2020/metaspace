@@ -280,7 +280,7 @@
            Math.round(row.analyzer.resolvingPower),
            row.polarity.toLowerCase(),
            row.uploadDateTime,
-           `${row.fdrCounts.counts}` + ' ' + `${row.fdrCounts.dbName}`,
+           row.fdrCounts ? `${row.fdrCounts.counts}` + ' ' + `${row.fdrCounts.dbName}` : '',
            (row.opticalImage != 'noOptImage') ? 'http://' + window.location.host + row.opticalImage : 'No optical image'
          ].join(',');
        }
