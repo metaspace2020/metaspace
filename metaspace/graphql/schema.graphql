@@ -45,9 +45,9 @@ enum JobStatus {
 }
 
 type FdrCounts {
-  dbName: String!
-  levels: [Float!]!
-  counts: [Float!]!
+  dbName: String
+  levels: [Float!]
+  counts: [Float!]
 }
 
 type Dataset {
