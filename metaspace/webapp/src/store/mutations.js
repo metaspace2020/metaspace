@@ -58,13 +58,30 @@ export default {
   },
 
   addFilter (state, name) {
-    const {initialValue} = FILTER_SPECIFICATIONS[name];
+    let {initialValue} = FILTER_SPECIFICATIONS[name];
+    if(typeof initialValue === 'function') {
+      if(state.filterLists != null) {
+        initialValue = initialValue(state.filterLists);
+      } else {
+        initialValue = null;
+      }
+    }
+
     // FIXME: is there any way to access getters here?
     let filter = Object.assign(decodeParams(state.route),
                                {[name]: initialValue});
 
     state.orderedActiveFilters.push(name);
     pushURL(state, filter);
+  },
+
+  setFilterListsLoading(state) {
+    state.filterListsLoading = true;
+  },
+
+  setFilterLists(state, filterLists) {
+    state.filterLists = filterLists;
+    state.filterListsLoading = false;
   },
 
   setAnnotation(state, annotation) {
