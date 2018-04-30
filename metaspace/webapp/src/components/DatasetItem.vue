@@ -71,7 +71,7 @@
               title="Filter by this lab"
               @click="addFilter('institution')"></span>
       </div>
-      <div v-if="dataset.status == 'FINISHED'">
+      <div v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
         <span>{{formatFdrCounts()}} annotations @ FDR {{formatFdrLevel()}}% ({{formatDbName()}})</span>
       </div>
     </div>
