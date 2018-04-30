@@ -133,6 +133,8 @@ const Resolvers = {
     async molecularDatabases(_, args) {
       try {
         let molDBs = await fetchMolecularDatabases({hideDeprecated: args.hideDeprecated});
+        for (let moldb of molDBs)
+          moldb['default'] = config.defaults.moldb_names.includes(moldb.name);
         logger.debug(`Molecular databases: ` + JSON.stringify(molDBs));
         return molDBs;
       }
