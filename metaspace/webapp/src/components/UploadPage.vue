@@ -7,6 +7,14 @@
     </div>
   </div>
 
+  <div id="upload-page" v-else-if="!isSignedIn">
+    <div id="sign-in-message">
+      <intro-message>
+        <p><b>To get started, click "Sign in" to sign in or create an account.</b></p>
+      </intro-message>
+    </div>
+  </div>
+
   <div id="upload-page" v-else>
     <div id="upload-left-pane">
       <div id="instructions">
@@ -17,20 +25,9 @@
         </p>
 
         <div v-show="!introIsHidden">
-          <p>Thank you for considering submitting your data to METASPACE! Here are the key points you need to know:</p>
-
-          <p><b>Public results, private data</b><br/> Annotation results for all data submitted to METASPACE become public. The submitted data does not become public but you give us a permission to store and process it as well as publicly show and share the annotation results. At any point of time you can request to delete your data or the annotation results.</p>
-
-           <p><b>Type of MS:</b> We can annotate only FTICR- or Orbitrap- imaging MS data.</p>
-
-          <p><b>Format:</b> We can receive only data in the imzML centroided format. Please check out <a href="http://project.metaspace2020.eu/imzml">our instructions</a> for converting datasets into this format. If you are experiencing difficulties, please contact your instrument vendor.</p>
-
-          <p><b>Step-by-step tutorial:</b> Please read our <a href="https://www.slideshare.net/Metaspace2020/metaspace-training-course-ourcon-v-2017">training guide slides</a> providing an introduction to METASPACE as well as a step-by-step tutorial with screenshots.</p>
-
-          <p><b>Questions or requests?</b> Please email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>. Also, we are always happy to receive your feedback, both positive and negative.</p>
-
-          <p>To start the submission, just drop the files into the box below, fill in the metadata form, and click the Submit button.</p>
-          <p>Have fun using METASPACE!</p>
+          <intro-message>
+            <p>To start the submission, just drop the files into the box below, fill in the metadata form, and click the Submit button.</p>
+          </intro-message>
         </div>
       </div>
 
@@ -56,6 +53,7 @@
 
  import FineUploader from './FineUploader.vue';
  import MetadataEditor from './MetadataEditor.vue';
+ import IntroMessage from './IntroMessage.vue';
  import Vue from 'vue';
 
  import * as config from '../clientConfig.json';
@@ -80,7 +78,14 @@
    },
    components: {
      FineUploader,
-     MetadataEditor
+     MetadataEditor,
+     IntroMessage
+   },
+
+   computed: {
+     isSignedIn() {
+       return this.$store.state.user != null;
+     }
    },
 
    methods: {
@@ -189,4 +194,8 @@
    padding: 10px;
    text-align: center;
  }
+
+  #sign-in-message {
+    padding: 20px;
+  }
 </style>
