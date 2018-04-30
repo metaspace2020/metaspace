@@ -45,9 +45,9 @@ enum JobStatus {
 }
 
 type FdrCounts {
-  dbName: String
-  levels: [Float!]
-  counts: [Float!]
+  dbName: String!
+  levels: [Float!]!
+  counts: [Float!]!
 }
 
 type Dataset {
@@ -76,7 +76,7 @@ type Dataset {
   status: JobStatus
   inputPath: String
   uploadDateTime: String
-  fdrCounts(inpFdrLvls: [Int!]!, checkLvl: Int!): FdrCounts!
+  fdrCounts(inpFdrLvls: [Int!]!, checkLvl: Int!): FdrCounts
   opticalImage: String!
 }
 
