@@ -13,7 +13,7 @@ config.log.level = 'info';
 
 config.defaults = {
   adducts: {{ sm_graphql_default_adducts | to_json }},
-  moldb_names: ['HMDB-v4']
+  moldb_names: ['HMDB-v2.5']
 }
 
 

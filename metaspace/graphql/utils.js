@@ -61,8 +61,10 @@ function generateProcessingConfig(metadata) {
   else
     mdb_list = mdb_names.map( (name) => ({'name': name}) );
 
-  if (mdb_list.filter( mdb => mdb.name === config.defaults.moldb_name).length === 0)
-    mdb_list.push({ "name": config.defaults.moldb_name});
+  for (let default_moldb_name of config.defaults.moldb_names) {
+    if (mdb_list.filter(mdb => mdb.name === default_moldb_name).length === 0)
+      mdb_list.push({ "name": default_moldb_name});
+  }
 
   // TODO: metadata format should support adduct specification
   let adducts;
