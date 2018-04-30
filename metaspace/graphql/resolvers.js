@@ -6,8 +6,7 @@ const config = require('config'),
   {esSearchResults, esCountResults, esCountGroupedResults,
    esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
-  {generateProcessingConfig, metadataChangeSlackNotify,
-    metadataUpdateFailedSlackNotify, fetchDS, fetchMolecularDatabases,
+  {pgDatasetsViewableByUser, fetchDS, fetchMolecularDatabases, assertUserCanViewDataset,
     logger, pubsub, pg} = require("./utils.js"),
   {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js');
 
@@ -50,18 +49,6 @@ queue.then(function(conn) {
   });
 }).catch(console.warn);
 
-function baseDatasetQuery() {
-  return pg.from(function() {
-    this.select(pg.raw('dataset.id as id'),
-                'name',
-                pg.raw('max(finish) as last_finished'),
-                pg.raw('dataset.status as status'),
-                'metadata', 'config', 'input_path')
-        .from('dataset').leftJoin('job', 'dataset.id', 'job.ds_id')
-        .groupBy('dataset.id').as('tmp');
-  });
-}
-
 
 const Resolvers = {
   Person: {
@@ -71,8 +58,8 @@ const Resolvers = {
   },
 
   Query: {
-    dataset(_, { id }, {user}) {
-      return esDatasetByID(id, user);
+    async dataset(_, { id }, {user}) {
+      return await esDatasetByID(id, user);
     },
 
     async allDatasets(_, args, {user}) {
@@ -111,7 +98,8 @@ const Resolvers = {
 
     metadataSuggestions(_, { field, query, limit }, {user}) {
       let f = new SubstringMatchFilter(field, {}),
-          q = pg.select(pg.raw(f.pgField + " as field")).select().from('dataset')
+          q = pg.from(pgDatasetsViewableByUser(user))
+                .select(pg.raw(f.pgField + " as field"))
                 .groupBy('field').orderByRaw('count(*) desc').limit(limit);
       return f.pgFilter(q, query).orderBy('field', 'asc')
               .then(results => results.map(row => row['field']));
@@ -123,7 +111,8 @@ const Resolvers = {
             p2 = schemaPath + '.Surname',
             f1 = getPgField(p1),
             f2 = getPgField(p2);
-      const q = pg.distinct(pg.raw(`${f1} as name, ${f2} as surname`)).select().from('dataset')
+      const q = pg.from(pgDatasetsViewableByUser(user))
+                  .distinct(pg.raw(`${f1} as name, ${f2} as surname`))
                   .whereRaw(`${f1} ILIKE ? OR ${f2} ILIKE ?`, ['%' + query + '%', '%' + query + '%']);
       logger.info(q.toString());
       return q.orderBy('name', 'asc').orderBy('surname', 'asc')
@@ -146,6 +135,8 @@ const Resolvers = {
 
     opticalImageUrl(_, {datasetId, zoom}, {user}) {
       const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
+      assertUserCanViewDataset(datasetId, user);
+
       return pg.select().from('optical_image')
           .where('ds_id', '=', datasetId)
           .where('zoom', '=', intZoom)
@@ -160,8 +151,9 @@ const Resolvers = {
           })
     },
 
-    rawOpticalImage(_, {datasetId}) {
-      return pg.select().from('dataset')
+    rawOpticalImage(_, {datasetId}, {user}) {
+      return pg
+        .from(pgDatasetsViewableByUser(user))
         .where('id', '=', datasetId)
         .then(records => {
           if (records.length > 0)
@@ -178,7 +170,7 @@ const Resolvers = {
     },
 
     reprocessingNeeded(_, args, {user}) {
-      return DSQuery.reprocessingNeeded(args);
+      return DSQuery.reprocessingNeeded(args, user);
     }
   },
 
@@ -289,8 +281,8 @@ const Resolvers = {
       }
     },
 
-    opticalImage(ds) {
-      return Resolvers.Query.rawOpticalImage(null, {datasetId: ds._source.ds_id})
+    opticalImage(ds, _, context) {
+      return Resolvers.Query.rawOpticalImage(null, {datasetId: ds._source.ds_id}, context)
           .then(optImage => {
             if (optImage.transform == null) {
               //non-existing optical image don't have transform value

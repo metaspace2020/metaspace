@@ -120,16 +120,16 @@ function constructAnnotationQuery(args, docType, user) {
       query: simpleQuery, fields: ["_all"], default_operator: "and"
    }});
 
-  if (user && user.email) {
+  if (user != null && user.email && user.role !== 'admin') {
     addFilter({
       bool: {
         should: [
           { term: { ds_is_public: true } },
-          { term: { ds_uploader: user.email } }
+          { term: { ds_submitter_email: user.email } }
         ]
       }
     });
-  } else {
+  } else if (user.role !== 'admin') {
     addFilter({ term: { ds_is_public: true } });
   }
 
@@ -144,6 +144,8 @@ function constructAnnotationQuery(args, docType, user) {
         addFilter(f);
     }
   }
+
+  // console.log(JSON.stringify(body,null,2));
 
   return body;
 }
@@ -266,17 +268,18 @@ module.exports.esCountGroupedResults = function(args, docType, user) {
 }
 
 async function getById(docType, id, user, ignorePermissions=false) {
-  try {
+  // try {
+
     const resp = await es.get({ index: esIndex, type: docType, id });
     if (ignorePermissions || canUserViewEsDataset(resp, user)) {
       return resp;
     } else {
       throw new Error(`Unauthorized: user ${user.email} tried to access ${docType} ${id}`)
     }
-  } catch (e) {
-    logger.error(e);
-  }
-  return null;
+  // } catch (e) {
+  //   console.log('foo');
+  //   logger.error(e);
+  // }
 }
 
 module.exports.esAnnotationByID = function(id, user, ignorePermissions=false) {

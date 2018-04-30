@@ -5,7 +5,7 @@ const jsondiffpatch = require('jsondiffpatch'),
   {UserError} = require('graphql-errors'),
   _ = require('lodash');
 
-const {pg, logger, fetchDS, checkPermissions,
+const {pg, logger, fetchDS, assertUserCanEditDataset,
     generateProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json');
 
@@ -134,11 +134,12 @@ async function smAPIRequest(datasetId, uri, body) {
 module.exports = {
   reprocessingNeeded,
   Query: {
-    reprocessingNeeded: async (args) => {
+    reprocessingNeeded: async (args, user) => {
       const {datasetId, metadataJson} = args,
         newMetadata = JSON.parse(metadataJson),
         newConfig = generateProcessingConfig(newMetadata),
         {metadata: oldMetadata, config: oldConfig} = await fetchDS({id: datasetId});
+      await assertUserCanEditDataset(datasetId, user);
       try {
         await reprocessingNeeded(oldMetadata, oldConfig, newMetadata, newConfig);
         return false;
@@ -155,7 +156,7 @@ module.exports = {
         if (datasetId !== undefined) {
           const ds = await fetchDS({id: datasetId});
           if (ds !== undefined)
-            await checkPermissions(datasetId, payload);
+            await assertUserCanEditDataset(datasetId, payload);
         }
 
         setSubmitter(null, metadata, user);
@@ -188,7 +189,7 @@ module.exports = {
           throw UserError('DS does not exist');
         }
 
-        await checkPermissions(ds.id, user);
+        await assertUserCanEditDataset(ds.id, user);
         setSubmitter(ds.metadata, newMetadata, user);
         validateMetadata(newMetadata);
         const newConfig = generateProcessingConfig(newMetadata);
@@ -212,7 +213,7 @@ module.exports = {
 
       try {
         let datasetId = args.datasetId;
-        await checkPermissions(datasetId, user);
+        await assertUserCanEditDataset(datasetId, user);
 
         // if (delRawData != undefined || delRawData == false)
         //   body = JSON.stringify({});
@@ -246,7 +247,7 @@ module.exports = {
       }
       try {
         logger.info(args);
-        await checkPermissions(datasetId, user);
+        await assertUserCanEditDataset(datasetId, user);
         const uri = `/v1/datasets/${datasetId}/add-optical-image`;
         const body = {url: imageUrl, transform};
         return await smAPIRequest(datasetId, uri, body);
@@ -258,7 +259,7 @@ module.exports = {
 
     deleteOpticalImage: async (args, user) => {
       const {datasetId} = args;
-      await checkPermissions(datasetId, user);
+      await assertUserCanEditDataset(datasetId, user);
       return await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/del-optical-image`, {});
     }
   }
