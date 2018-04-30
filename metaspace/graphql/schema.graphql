@@ -125,6 +125,7 @@ type MolecularDatabase {
   id: Int!
   name: String!
   version: String!
+  default: Boolean!
 }
 
 type Annotation {
