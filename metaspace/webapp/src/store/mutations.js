@@ -3,6 +3,7 @@ import router from '../router';
 import {decodeParams,
         encodeParams, encodeSections, encodeSortOrder,
         stripFilteringParams} from '../url';
+import {getFilterInitialValue} from '../filterSpecs';
 
 function updatedLocation(state, filter) {
   let query = encodeParams(filter, state.route.path, state.filterLists);
