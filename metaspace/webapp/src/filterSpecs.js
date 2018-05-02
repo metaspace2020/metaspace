@@ -34,6 +34,7 @@ function formatFDR (fdr) {
    * description: what will be shown as a select option
    * levels: on which pages the filter makes sense;
      currently 'annotation' and 'dataset' are used
+   * defaultInLevels: on which pages the filter should be active by default
    * initialValue: what will be the filter value when it's created
    * any required settings for the chosen filter component
      (e.g. 'options' for SingleSelectFilter/MultipleSelectFilter)
@@ -47,8 +48,8 @@ function formatFDR (fdr) {
    e.g. adding GraphQL query variables and setting them accordingly.
 
    Data filtering logic is currently located in two places:
-   * url.js
-     add new fields to DEFAULT_FILTER and FILTER_TO_URL (for vue-router)
+   * url.ts
+     add new fields to FILTER_TO_URL (for vue-router)
    * store/getters.js
      edit gqlAnnotationFilter and gqlDatasetFilter getters
 
@@ -67,10 +68,10 @@ const FILTER_SPECIFICATIONS = {
     name: 'Database',
     description: 'Select database',
     levels: ['annotation'],
+    defaultInLevels: ['annotation'],
     initialValue: lists => lists.molecularDatabases
                                 .filter(d => d.default)
                                 .map(d => d.name)[0],
-
     options: lists => lists.molecularDatabases.map(d => d.name),
     removable: false
   },
@@ -126,6 +127,7 @@ const FILTER_SPECIFICATIONS = {
     name: 'FDR',
     description: 'Select FDR level',
     levels: ['annotation'],
+    defaultInLevels: ['annotation'],
     initialValue: 0.1,
 
     options: [0.05, 0.1, 0.2, 0.5],
@@ -248,9 +250,34 @@ const FILTER_SPECIFICATIONS = {
     name: 'Simple query',
     description: 'Search anything',
     levels: ['annotation', 'dataset'],
-    initialValue: undefined,
+    defaultInLevels: ['annotation', 'dataset'],
+    initialValue: '',
     removable: false
   }
 };
 
-export { FILTER_SPECIFICATIONS as default };
+function getFilterInitialValue(key, filterLists) {
+  let value = FILTER_SPECIFICATIONS[key].initialValue;
+
+  if(typeof value === 'function') {
+    if(filterLists != null) {
+      value = value(filterLists);
+    } else {
+      value = null;
+    }
+  }
+  return value;
+}
+
+function getDefaultFilter(level, filterLists) {
+  const filter = {};
+  for (const key in FILTER_SPECIFICATIONS) {
+    if(FILTER_SPECIFICATIONS[key].defaultInLevels != null
+      && FILTER_SPECIFICATIONS[key].defaultInLevels.includes(level)) {
+      filter[key] = getFilterInitialValue(key, filterLists);
+    }
+  }
+  return filter;
+}
+
+export { FILTER_SPECIFICATIONS as default, getFilterInitialValue, getDefaultFilter };

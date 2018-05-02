@@ -2,7 +2,7 @@
   <tag-filter :name="name" :removable="removable"
               @destroy="destroy">
     <el-select slot="edit"
-               :filterable="filterable" :clearable="clearable" v-model="value2">
+               :filterable="filterable" :clearable="clearable" :value="value" @change="onChange">
       <el-option v-for="item in options"
                  :label="formatOption(item)" :value="item" :key="item">
       </el-option>
@@ -30,6 +30,10 @@
    components: {
      TagFilter
    },
+   model: {
+     prop: 'value',
+     event: 'change'
+   },
    props: {
      name: String,
      options: Array,
@@ -40,19 +44,10 @@
      removable: {type: Boolean, default: true},
      filterable: {type: Boolean, default: true}
    },
-   data() {
-     return {
-       value2: this.value
-     };
-   },
-   watch: {
-     // TODO: why :value="value" + @change="onChange" doesn't work?
-     value2(val) {
-       this.$emit('input', val);
-       this.$emit('change', val);
-     }
-   },
    methods: {
+     onChange(val: Option) {
+       this.$emit('change', val);
+     },
      formatOption(option: Option): string {
        if (this.optionFormatter)
          return this.optionFormatter(option);

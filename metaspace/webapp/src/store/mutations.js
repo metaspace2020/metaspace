@@ -1,12 +1,11 @@
 import router from '../router';
 
-import FILTER_SPECIFICATIONS from '../filterSpecs';
 import {decodeParams,
         encodeParams, encodeSections, encodeSortOrder,
         stripFilteringParams} from '../url';
 
 function updatedLocation(state, filter) {
-  let query = encodeParams(filter, state.route.path);
+  let query = encodeParams(filter, state.route.path, state.filterLists);
 
   state.lastUsedFilters[state.route.path] = {
     filter,
@@ -58,17 +57,10 @@ export default {
   },
 
   addFilter (state, name) {
-    let {initialValue} = FILTER_SPECIFICATIONS[name];
-    if(typeof initialValue === 'function') {
-      if(state.filterLists != null) {
-        initialValue = initialValue(state.filterLists);
-      } else {
-        initialValue = null;
-      }
-    }
+    const initialValue = getFilterInitialValue(name, state.filterLists);
 
     // FIXME: is there any way to access getters here?
-    let filter = Object.assign(decodeParams(state.route),
+    let filter = Object.assign(decodeParams(state.route, state.filterLists),
                                {[name]: initialValue});
 
     state.orderedActiveFilters.push(name);
