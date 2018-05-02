@@ -164,8 +164,6 @@
  import Vue from 'vue';
  import DatabaseDescriptions from './DatabaseDescriptions.vue';
 
- //TODO Lachlan: Consolidate hard-coded data into its own file, using full paths instead of field names and
- // components instead of HTML snippets.
  const FIELD_WIDTH = {
    'Institution': 6,
    'Submitter': 9,
@@ -292,8 +290,6 @@
 
        if (this.isRequired(propName, parent))
          name += '<span style="color: red">*</span>';
-
-
        return name;
      },
 
