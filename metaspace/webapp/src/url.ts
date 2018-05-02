@@ -1,4 +1,4 @@
-import FILTER_SPECIFICATIONS from './filterSpecs.js';
+import FILTER_SPECIFICATIONS, { getDefaultFilter } from './filterSpecs.js';
 
 import { invert } from 'lodash';
 import { Location } from 'vue-router';
@@ -6,27 +6,6 @@ import { Location } from 'vue-router';
 interface Dictionary<T> {
   [key: string]: T;
 }
-
-export const DEFAULT_FILTER: Dictionary<any> = {
-  database: 'HMDB-v2.5',
-  institution: undefined,
-  submitter: undefined,
-  datasetIds: undefined,
-  minMSM: undefined,
-  compoundName: undefined,
-  adduct: undefined,
-  mz: undefined,
-  fdrLevel: 0.1,
-  polarity: undefined,
-  organism: undefined,
-  organismPart: undefined,
-  condition: undefined,
-  growthConditions: undefined,
-  ionisationSource: undefined,
-  maldiMatrix: undefined,
-  analyzerType: undefined,
-  simpleQuery: ''
-};
 
 const FILTER_TO_URL: Dictionary<string> = {
   database: 'db',
@@ -56,15 +35,17 @@ const PATH_TO_LEVEL: Dictionary<string> = {
   '/datasets': 'dataset'
 };
 
-export function encodeParams(filter: any, path: string): Dictionary<string> {
+export function encodeParams(filter: any, path: string, filterLists: any): Dictionary<string> {
   const level = PATH_TO_LEVEL[path];
+  const defaultFilter = getDefaultFilter(level, filterLists);
+
   let q: Dictionary<string> = {};
   for (var key in FILTER_TO_URL) {
     const {levels, encoding} = FILTER_SPECIFICATIONS[key];
     if (levels.indexOf(level) == -1)
       continue;
 
-    if (filter[key] != DEFAULT_FILTER[key]) {
+    if (key in filter && filter[key] != defaultFilter[key]) {
       if (encoding == 'json')
         q[FILTER_TO_URL[key]] = JSON.stringify(filter[key]);
       else if (encoding == 'list')
@@ -86,7 +67,7 @@ export function stripFilteringParams(query: Dictionary<string>): Dictionary<stri
   return q;
 }
 
-export function decodeParams(location: Location): Object {
+export function decodeParams(location: Location, filterLists: any): Object {
   const {query, path} = location;
 
   if (!path || !query)
@@ -94,10 +75,7 @@ export function decodeParams(location: Location): Object {
 
   const level = PATH_TO_LEVEL[path];
 
-  let filter: any = {};
-  for (var key in DEFAULT_FILTER)
-    if (FILTER_SPECIFICATIONS[key].levels.indexOf(level) != -1)
-      filter[key] = DEFAULT_FILTER[key];
+  const filter: any = getDefaultFilter(level, filterLists);
 
   for (var key in query) {
     const fKey = URL_TO_FILTER[key];

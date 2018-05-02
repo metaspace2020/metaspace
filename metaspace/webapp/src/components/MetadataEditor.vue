@@ -210,10 +210,13 @@
 
    created() {
      this.loading = true;
-     this.$apollo.query({query: gql`{molecularDatabases{name}}`}).then(response => {
+     this.$apollo.query({query: gql`{molecularDatabases{name, default}}`}).then(response => {
        Vue.set(this.schema.properties.metaspace_options.properties.Metabolite_Database.items,
                'enum',
                response.data.molecularDatabases.map(d => d.name));
+       this.molecularDatabases = response.data.molecularDatabases;
+
+       this.applyDefaultDatabases();
        this.setLoadingStatus(false);
      }).catch(err => {
        console.log("Error fetching list of metabolite databases: ", err);
@@ -237,6 +240,7 @@
        const defaultValue = objectFactory(metadataSchema),
              value = this.fixEntries(JSON.parse(resp.data.dataset.metadataJson));
        this.value = merge({}, defaultValue, value);
+       this.defaultDatabaseApplied = true;
        this.setLoadingStatus(false);
      }).catch(err => {
        console.log("Error fetching current metadata: ", err);
@@ -247,7 +251,9 @@
      return {
        schema: metadataSchema,
        value: objectFactory(metadataSchema),
-       loading: true
+       loading: true,
+       molecularDatabases: null,
+       defaultDatabaseApplied: false
      }
    },
    computed: {
@@ -334,6 +340,14 @@
        return value;
      },
 
+     applyDefaultDatabases() {
+       if(this.molecularDatabases && !this.defaultDatabaseApplied) {
+         const defaultDatabases = this.molecularDatabases.filter(d => d.default).map(d => d.name);
+         this.value = merge({}, this.value, {metaspace_options: {Metabolite_Database: defaultDatabases}});
+         this.defaultDatabaseApplied = true;
+       }
+     },
+
      loadLastSubmission() {
        const defaultValue = objectFactory(metadataSchema);
        const lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
@@ -345,7 +359,10 @@
          /* we want to have all nested fields to be present for convenience,
             that's what objectFactory essentially does */
          this.value = merge({}, defaultValue, this.fixEntries(lastValue));
+         this.applyDefaultDatabases();
 
+         // If people have a saved form value, clear the database (instead of using the new default) to ensure
+         // that they're aware that the databases have changed.
          if (lastVersion < 2) {
            this.value.metaspace_options.Metabolite_Database = [];
          }

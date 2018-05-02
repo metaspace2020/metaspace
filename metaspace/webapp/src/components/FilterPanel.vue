@@ -35,7 +35,6 @@
  import MzFilter from './MzFilter.vue';
  import SearchBox from './SearchBox.vue';
  import FILTER_SPECIFICATIONS from '../filterSpecs';
- import {fetchOptionListsQuery} from '../api/metadata';
  import deepcopy from 'deepcopy';
 
  const filterKeys = [
@@ -71,15 +70,8 @@
      MzFilter,
      SearchBox
    },
-   apollo: {
-     optionLists_: {
-       query: fetchOptionListsQuery,
-       update: data => data,
-       result({data}) {
-         if (data)
-           this.optionLists = deepcopy(data)
-       }
-     }
+   mounted() {
+     this.$store.dispatch('initFilterLists');
    },
    computed: {
      filter() {
@@ -109,8 +101,7 @@
 
    data () {
      return {
-       selectedFilterToAdd: null,
-       optionLists: null
+       selectedFilterToAdd: null
      }
    },
 
@@ -138,16 +129,17 @@
      },
 
      getFilterOptions(filter) {
+       const {filterLists} = this.$store.state;
        // dynamically generated options are supported:
        // either specify a function of optionLists or one of its field names
        if (typeof filter.options === 'object')
          return filter.options;
-       if (!this.optionLists)
+       if (filterLists == null)
          return [];
        if (typeof filter.options === 'string')
-         return this.optionLists[filter.options];
+         return filterLists[filter.options];
        else if (typeof filter.options === 'function') {
-         return filter.options(this.optionLists);
+         return filter.options(filterLists);
        }
        return [];
      }
