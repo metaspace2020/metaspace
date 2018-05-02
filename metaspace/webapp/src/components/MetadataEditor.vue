@@ -214,8 +214,9 @@
        Vue.set(this.schema.properties.metaspace_options.properties.Metabolite_Database.items,
                'enum',
                response.data.molecularDatabases.map(d => d.name));
+       this.molecularDatabases = response.data.molecularDatabases;
 
-       this.applyDefaultDatabases(response.data.molecularDatabases);
+       this.applyDefaultDatabases();
        this.setLoadingStatus(false);
      }).catch(err => {
        console.log("Error fetching list of metabolite databases: ", err);
@@ -251,6 +252,7 @@
        schema: metadataSchema,
        value: objectFactory(metadataSchema),
        loading: true,
+       molecularDatabases: null,
        defaultDatabaseApplied: false
      }
    },
@@ -338,9 +340,9 @@
        return value;
      },
 
-     applyDefaultDatabases(databases) {
-       if(databases && !this.defaultDatabaseApplied) {
-         const defaultDatabases = databases.filter(d => d.default).map(d => d.name);
+     applyDefaultDatabases() {
+       if(this.molecularDatabases && !this.defaultDatabaseApplied) {
+         const defaultDatabases = this.molecularDatabases.filter(d => d.default).map(d => d.name);
          this.value = merge({}, this.value, {metaspace_options: {Metabolite_Database: defaultDatabases}});
          this.defaultDatabaseApplied = true;
        }
@@ -357,7 +359,7 @@
          /* we want to have all nested fields to be present for convenience,
             that's what objectFactory essentially does */
          this.value = merge({}, defaultValue, this.fixEntries(lastValue));
-         this.applyDefaultDatabases(this.schema.properties.metaspace_options.properties.Metabolite_Database.items);
+         this.applyDefaultDatabases();
 
          // If people have a saved form value, clear the database (instead of using the new default) to ensure
          // that they're aware that the databases have changed.
