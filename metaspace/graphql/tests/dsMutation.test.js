@@ -28,7 +28,7 @@ const metadata = {
   },
   "metaspace_options": {
     "Dataset_Name": "dataset name",
-    "Metabolite_Database": [config.defaults.moldb_name]
+    "Metabolite_Database": config.defaults.moldb_names
   },
   "Sample_Information": {
     "Organism": "Mus musculus (mouse)",
@@ -65,7 +65,7 @@ const metadata = {
       "isocalc_sigma": 0.000619,
       "isocalc_pts_per_mz": 8078
     },
-    "databases": [{"name": config.defaults.moldb_name}]
+    "databases": config.defaults.moldb_names.map(function(moldb_name) {return {name: moldb_name}})
   },
   ds = {
     config: dsConfig,
@@ -78,7 +78,7 @@ function clone(obj) {
 
 test('Reprocessing needed when database list changed', () => {
   const newMetadata = clone(metadata);
-  newMetadata.metaspace_options.Metabolite_Database = ['HMDB-v2.5', 'ChEBI'];
+  newMetadata.metaspace_options.Metabolite_Database += ['ChEBI'];
 
   try {
     reprocessingNeeded(ds, newMetadata);

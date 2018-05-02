@@ -11,7 +11,7 @@ const config = {
 
   defaults: {
     adducts: {'+': ['+H', '+Na', '+K'], '-': ['-H', '+Cl']},
-    moldb_name: 'HMDB-v2.5'
+    moldb_name: 'HMDB-v4'
   },
 
   img_upload: {
