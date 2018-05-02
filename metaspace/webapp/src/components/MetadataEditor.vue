@@ -20,7 +20,13 @@
             <el-col :span="getWidth(propName)"
                     v-for="(prop, propName) in section.properties"
                     :key="sectionName + propName">
-              <div class="field-label" v-html="prettify(propName, section)"></div>
+              <div class="field-label">
+                <span v-html="prettify(propName, section)"></span>
+                <el-popover trigger="hover" placement="right" v-if="getHelp(propName)">
+                  <div v-html="getHelp(propName)"></div>
+                  <i slot="reference" class="el-icon-question"></i>
+                </el-popover>
+              </div>
 
               <el-form-item class="control" v-if="prop.type == 'string' && !loading"
                             :class="isError(sectionName, propName)">
@@ -157,6 +163,8 @@
  import gql from 'graphql-tag';
  import Vue from 'vue';
 
+ //TODO Lachlan: Consolidate hard-coded data into its own file, using full paths instead of field names and
+ // components instead of HTML snippets.
  const FIELD_WIDTH = {
    'Institution': 6,
    'Submitter': 9,
@@ -173,6 +181,41 @@
    'Resolving_Power': 12,
    'Dataset_Name': 7,
  };
+
+ const FIELD_HELP = {
+   'Metabolite_Database': `
+   <div class="md-editor-tooltip">
+     <p>
+       The database selection determines which metabolites will be annotated.
+       Many databases are for specific types of sample, please see their respective webpages for details.
+       <b>HMDB-v4</b> is the best choice for most datasets.
+     </p>
+     <p>
+       <b>Brassica Napus database (BraChemDB):</b>
+       A curated rapeseed database from LC-MS/MS measurements.
+     </p>
+     <p>
+       <b><a href="https://www.ebi.ac.uk/chebi/aboutChebiForward.do">Chemical Entities of Biological Interest (ChEBI)</a>:</b>
+        ChEBI is a database and ontology containing information about chemical entities of biological interest, each of which is classified within the ontology and assigned multiple annotations including (where relevant) a chemical structure, database cross-references, synonyms and literature citations.
+     </p>
+     <p>
+       <b><a href="http://www.hmdb.ca/about">Human Metabolome Database (HMDB)</a>:</b>
+       Database containing detailed information about small molecule metabolites found in the human body. The database is designed to contain or link three kinds of data: 1) chemical data, 2) clinical data, and 3) molecular biology/biochemistry data. The database contains 114,064 metabolite entries including both water-soluble and lipid soluble metabolites as well as metabolites that would be regarded as either abundant (> 1 uM) or relatively rare (< 1 nM).  HMDB-endogenous is a filtered version of HMDB that contains only those molecules labelled in the database as endogenously produced.
+     </p>
+     <p>
+       <b><a href="http://www.lipidmaps.org/data/databases.html">LIPID Metabolites And Pathways Strategy (LipidMaps)</a>:</b>
+       A multi-institutional effort created in 2003 to identify and quantitate, using a systems biology approach and sophisticated mass spectrometers, all of the major — and many minor — lipid species in mammalian cells.
+     </p>
+     <p>
+       <b><a href="http://pseudomonas.umaryland.edu/">Pseudomonas aeruginosa Metabolome Database (PAMDB)</a>:</b>
+       The PAMDB is an expertly curated database containing extensive metabolomic data and metabolic pathway diagrams about Pseudomonas aeruginosa (reference strain PAO1).
+     </p>
+     <p>
+       <b><a href="http://www.swisslipids.org/#/about">SwissLipids</a>:</b>
+       An expert curated resource that provides a framework for the integration of lipid and lipidomic data with biological knowledge and models.  Information about known lipids, including knowledge of lipid structures, metabolism, interactions, and subcellular and tissular localization is curated from peer-reviewed literature. The set of known, expert curated lipids provided by SwissLipids is complemented by a library of theoretical lipid structures.
+     </p>
+   </div>`
+ }
 
  function objectFactory(schema) {
    let obj = {};
@@ -279,7 +322,13 @@
 
        if (this.isRequired(propName, parent))
          name += '<span style="color: red">*</span>';
+
+
        return name;
+     },
+
+     getHelp(propName) {
+       return FIELD_HELP[propName];
      },
 
      getWidth(propName) {
@@ -439,6 +488,13 @@
  #md-editor-submit > button {
    width: 100px;
    padding: 6px;
+ }
+
+ .md-editor-tooltip {
+   width: 80vh;
+   max-width: 600px;
+   word-break: normal;
+   text-align: left;
  }
 
  .control.el-form-item, .subfield > .el-form-item {
