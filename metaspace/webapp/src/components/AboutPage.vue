@@ -79,20 +79,20 @@
         </p>
       </el-row>
       <el-row id="funding">
-        <h2 id="please-appreciate-those-who-funded-it">Funding Appreciation</h2>
-        <div style="display:flex">
-          <div style="padding-right:20px"><img src="/dist/eu_flag.jpg?8e789a66f5dcb1e8a8038388b47dae3e" alt="EU"
-                                               style="height:60px"></div>
-          <div style="display:flex;flex-direction:column;justify-content:center"> This website is part of a project that
-            has
-            received funding from the European Union's Horizon 2020 research and innovation programme under grant
-            agreement
-            No 634402.
+        <h2 id="please-appreciate-those-who-funded-it">Funding</h2>
+        <div style="display:flex; flex-direction: row; flex-wrap: wrap; width: 100%;">
+          <div style="flex-basis: 200px; padding: 16px 0">
+            <img src="../assets/eu_flag.jpg" alt="EU" style="width: 90px">
+            <img src="../assets/nih_logo.png" alt="NIH" style="width: 90px">
+          </div>
+          <div style="flex-basis: 70%; flex-grow: 1"><p> We acknowledge funding from the
+            European Union’s Horizon 2020 programme under the grant agreement 634402
+            as well as from the National Institutes of Health NIDDK Kidney Precision Medicine Project.</p>
           </div>
         </div>
       </el-row>
       <el-row id="acknowledgement">
-        <h2>acknowledgements</h2>
+        <h2>Other acknowledgements</h2>
         <p>
           Icons by <a href="http://www.freepik.com/">Freepik</a> from <a href="www.flaticon.com">www.flaticon.com</a>
         </p>
