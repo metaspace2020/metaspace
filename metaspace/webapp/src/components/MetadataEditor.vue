@@ -20,7 +20,13 @@
             <el-col :span="getWidth(propName)"
                     v-for="(prop, propName) in section.properties"
                     :key="sectionName + propName">
-              <div class="field-label" v-html="prettify(propName, section)"></div>
+              <div class="field-label">
+                <span v-html="prettify(propName, section)"></span>
+                <el-popover trigger="hover" placement="right" v-if="getHelp(propName)">
+                  <component :is="getHelp(propName)"></component>
+                  <i slot="reference" class="el-icon-question field-label-help"></i>
+                </el-popover>
+              </div>
 
               <el-form-item class="control" v-if="prop.type == 'string' && !loading"
                             :class="isError(sectionName, propName)">
@@ -156,6 +162,7 @@
  } from '../api/metadata';
  import gql from 'graphql-tag';
  import Vue from 'vue';
+ import DatabaseDescriptions from './DatabaseDescriptions.vue';
 
  const FIELD_WIDTH = {
    'Institution': 6,
@@ -173,6 +180,10 @@
    'Resolving_Power': 12,
    'Dataset_Name': 7,
  };
+
+ const FIELD_HELP = {
+   'Metabolite_Database': DatabaseDescriptions
+ }
 
  function objectFactory(schema) {
    let obj = {};
@@ -286,6 +297,10 @@
        if (this.isRequired(propName, parent))
          name += '<span style="color: red">*</span>';
        return name;
+     },
+
+     getHelp(propName) {
+       return FIELD_HELP[propName];
      },
 
      getWidth(propName) {
@@ -427,6 +442,10 @@
  .field-label {
    font-size: 16px;
    padding: 0px 0px 3px 5px;
+ }
+
+ .field-label-help {
+   cursor: pointer;
  }
 
  .subfield {
