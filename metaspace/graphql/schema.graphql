@@ -279,17 +279,17 @@ type Query {
 type Mutation {
   submitDataset(jwt: String!, datasetId: String, name: String,
     path: String, metadataJson: String,
-    priority: Int=0, sync: Boolean=true, delFirst: Boolean=false): String
+    priority: Int=0, delFirst: Boolean=false): String
 
   resubmitDataset(jwt: String!, datasetId: String!, name: String,
-    metadataJson: String, priority: Int=0, sync: Boolean=true,
+    metadataJson: String, priority: Int=0,
     delFirst: Boolean=false): String
 
   updateMetadata(jwt: String!, datasetId: String!, name: String,
-    metadataJson: String!, priority: Int=0, sync: Boolean=true): String
+    metadataJson: String!, priority: Int=0): String
 
   deleteDataset(jwt: String!, datasetId: String!,
-    delRawData: Boolean, sync: Boolean=true): String
+    delRawData: Boolean): String
 
   addOpticalImage(input: AddOpticalImageInput!): String
 
