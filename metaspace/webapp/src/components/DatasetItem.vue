@@ -295,40 +295,34 @@
        this.$store.commit('updateFilter', filter);
      },
 
-     openDeleteDialog() {
-       this.$confirm("Are you sure you want to delete " +
-                     this.formatDatasetName + "?")
-         .then(_ => {
-           getJWT().then(jwt => {
-             this.disabled = true;
-             return this.$apollo.mutate({
-               mutation: deleteDatasetQuery,
-               variables: {
-                 jwt,
-                 id: this.dataset.id
-             }});
-           })
-           .then(resp => {
-             return {
-               deleteDataset: resp.data.deleteDataset,
-               deleteOptImage: resp.data.deleteOpticalImage
-             }
-           })
-           .then(status => {
-             if (status.deleteDataset != 'success') {
-               this.$message({
-                 message: "Deletion failed :( Contact us: contact@metaspace2020.eu" + "(error: " + status + ")",
-                 type: 'error',
-                 duration: 0,
-                 showClose: true
-               });
-               this.disabled = false;
-             }
-             if(status.deleteOptImage != 'success') {
-               console.log('Deletion of optical image failed whlie dataset was being deleted' + ' :' + status['deleteOptImage']);
-             }
-           });
-         }).catch(_ => {});
+     async openDeleteDialog() {
+       try {
+         await this.$confirm(`Are you sure you want to delete ${this.formatDatasetName}?`);
+       } catch (cancel) {
+         return;
+       }
+
+       try {
+         this.disabled = true;
+         const jwt = await getJWT();
+         const resp = await this.$apollo.mutate({
+           mutation: deleteDatasetQuery,
+           variables: {
+             jwt,
+             id: this.dataset.id
+           }
+         });
+       }
+       catch (err) {
+         console.log(err);
+         this.$message({
+           message: "Deletion failed :( Please contact us at contact@metaspace2020.eu",
+           type: 'error',
+           duration: 0,
+           showClose: true
+         });
+         this.disabled = false;
+       }
      },
 
      formatFdrLevel() {

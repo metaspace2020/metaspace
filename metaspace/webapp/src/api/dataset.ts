@@ -66,7 +66,6 @@ export const submitDatasetQuery =
 export const deleteDatasetQuery =
   gql`mutation ($jwt: String!, $id: String!) {
     deleteDataset(jwt: $jwt, datasetId: $id)
-    deleteOpticalImage(jwt: $jwt, datasetId: $id)
   }`;
 
 export const addOpticalImageQuery =
