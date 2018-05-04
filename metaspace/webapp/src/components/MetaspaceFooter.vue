@@ -3,7 +3,9 @@
     <div id="footer-contents">
       <img class="footer-logo" src="../assets/eu_flag.jpg"></img>
       <div id="footer-text">
-        This website is part of a project that has received funding from the European Union's Horizon 2020 research and innovation programme under grant agreement No 634402
+        We acknowledge funding from the
+        European Union’s Horizon 2020 programme under the grant agreement 634402
+        as well as from the National Institutes of Health NIDDK Kidney Precision Medicine Project.
       </div>
       <!--img class="footer-logo" src="../assets/aws_logo.png" style="padding-left: 52px;"></img-->
     </div>
