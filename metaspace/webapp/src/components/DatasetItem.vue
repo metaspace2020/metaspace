@@ -123,6 +123,7 @@
  import capitalize from 'lodash/capitalize';
  import {deleteDatasetQuery, opticalImageQuery} from '../api/dataset';
  import {getJWT} from '../util';
+ import {encodeParams} from '../url';
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');
@@ -268,9 +269,13 @@
 
    methods: {
      resultsHref(databaseName) {
+       const filter = Object.assign({}, this.$store.getters.filter, {
+         database: databaseName,
+         datasetIds: [this.dataset.id]
+       });
        return {
          path: '/annotations',
-         query: {ds: this.dataset.id, db: databaseName}
+         query: encodeParams(filter, '/annotations', this.$store.state.filterLists)
        };
      },
 
