@@ -4,14 +4,14 @@
       Database selection determines which metabolites can be annotated.
       Many databases are for specific types of sample, please see their respective webpages for details.
       We show either the version number or a time-stamped date of export.<br/>
-      <b>HMDB-v4</b> is the best choice for most mammalian datasets.
+      <b>HMDB-v4</b> is our suggested choice for mammalian datasets.
     </p>
     <div>
       <b>Brassica Napus database (BraChemDB):</b>
       A curated rapeseed database from LC-MS/MS measurements.
       <el-popover trigger="hover" placement="top">
         <div class="desc-cite-popover">University of Rennes 1</div>
-        <span slot="reference" class="desc-cite">Cite</span>
+        <span slot="reference" class="desc-cite">Citation</span>
       </el-popover>
     </div>
     <div>
@@ -23,7 +23,7 @@
           ChEBI in 2016: Improved services and an expanding collection of metabolites.
           <a href="http://europepmc.org/abstract/MED/26467479">Nucleic Acids Res.</a>
         </div>
-        <span slot="reference" class="desc-cite">Cite</span>
+        <span slot="reference" class="desc-cite">Citation</span>
       </el-popover>
     </div>
     <div>
@@ -37,7 +37,7 @@
           Nucleic Acids Res. 2018. Jan 4;46(D1):D608-17.
           <a href="http://www.ncbi.nlm.nih.gov/pubmed/29140435">29140435</a>
         </div>
-        <span slot="reference" class="desc-cite">Cite</span>
+        <span slot="reference" class="desc-cite">Citation</span>
       </el-popover>
     </div>
     <div>
@@ -49,7 +49,7 @@
           Sud M., Fahy E., Cotter D., Brown A., Dennis E., Glass C., Murphy R., Raetz C., Russell D., and Subramaniam S.,
           Nucleic Acids Research 35, D527-32 (2006)
         </div>
-        <span slot="reference" class="desc-cite">Cite</span>
+        <span slot="reference" class="desc-cite">Citation</span>
       </el-popover>
     </div>
     <div>
@@ -64,7 +64,7 @@
           Nucleic Acids Res. 46(D1):D575-D580.
           DOI: <a href="https://academic.oup.com/nar/article-lookup/doi/10.1093/nar/gkx1061">10.1093/nar/gkx1061</a>
         </div>
-        <span slot="reference" class="desc-cite">Cite</span>
+        <span slot="reference" class="desc-cite">Citation</span>
       </el-popover>
     </div>
     <div>
@@ -78,7 +78,7 @@
           Volume 31, Issue 17, 1 September 2015, Pages 2860–2866,
           <a href="https://doi.org/10.1093/bioinformatics/btv285">https://doi.org/10.1093/bioinformatics/btv285</a>
         </div>
-        <span slot="reference" class="desc-cite">Cite</span>
+        <span slot="reference" class="desc-cite">Citation</span>
       </el-popover>
     </div>
   </div>
