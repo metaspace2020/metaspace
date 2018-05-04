@@ -297,30 +297,26 @@
          return;
        }
 
-       this.disabled = true;
-       const jwt = await getJWT();
-       const resp = await this.$apollo.mutate({
-         mutation: deleteDatasetQuery,
-         variables: {
-           jwt,
-           id: this.dataset.id
-         }
-       });
-
-       const deleteDataset = JSON.parse(resp.data.deleteDataset),
-             deleteOptImage = JSON.parse(resp.data.deleteOpticalImage);
-
-       if (deleteDataset.status != 'success') {
+       try {
+         this.disabled = true;
+         const jwt = await getJWT();
+         const resp = await this.$apollo.mutate({
+           mutation: deleteDatasetQuery,
+           variables: {
+             jwt,
+             id: this.dataset.id
+           }
+         });
+       }
+       catch (err) {
+         console.log(err);
          this.$message({
-           message: "Deletion failed :( Contact us: contact@metaspace2020.eu" + "(error: " + deleteDataset.status + ")",
+           message: "Deletion failed :( Please contact us at contact@metaspace2020.eu",
            type: 'error',
            duration: 0,
            showClose: true
          });
          this.disabled = false;
-       }
-       if (deleteOptImage.status != 'success') {
-         console.log('Deletion of optical image failed while dataset was being deleted' + ' :' + deleteOptImage.status);
        }
      },
 
