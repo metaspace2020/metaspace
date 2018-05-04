@@ -166,18 +166,14 @@ module.exports = {
         };
         if (datasetId !== undefined)
           body.id = datasetId;
-        let smAPIPromise = smAPIRequest(datasetId, '/v1/datasets/add', body);
-        if (sync)
-          return smAPIPromise;
-        else
-          return 'success';
+        return await smAPIRequest(datasetId, '/v1/datasets/add', body);
       } catch (e) {
         logger.error(e.stack);
         throw e;
       }
     },
     update: async (args) => {
-      const {datasetId, name, metadataJson, priority, sync} = args;
+      const {datasetId, name, metadataJson, priority} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret),
           newMetadata = JSON.parse(metadataJson);
@@ -197,11 +193,7 @@ module.exports = {
           name: name || ds.name,
           priority: priority
         };
-        let smAPIPromise = smAPIRequest(ds.id, `/v1/datasets/${ds.id}/update`, body);
-        if (sync)
-          return await smAPIPromise;
-        else
-          return 'success';
+        return await smAPIRequest(ds.id, `/v1/datasets/${ds.id}/update`, body);
       } catch (e) {
         logger.error(e.stack);
         throw e;
@@ -219,11 +211,14 @@ module.exports = {
         //   body = JSON.stringify({});
         // else
         //   body = JSON.stringify({ "del_raw": true });
-        let smAPIPromise = smAPIRequest(datasetId, `/v1/datasets/${datasetId}/delete`, {});
-        if (sync)
-          return smAPIPromise;
-        else
-          return 'success';
+        try {
+          await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/del-optical-image`, {});
+        }
+        catch (err) {
+          logger.warning(err);
+        }
+
+        return await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/delete`, {});
       } catch (e) {
         logger.error(e.stack);
         throw e;
@@ -256,16 +251,8 @@ module.exports = {
     },
 
     deleteOpticalImage: async (args) => {
-      let {datasetId} = args;
-      const payload = jwt.decode(args.jwt, config.jwt.secret);
-      const uri = `/v1/datasets/${datasetId}/del-optical-image`;
-      try {
-        await checkPermissions(datasetId, payload);
-        return await smAPIRequest(datasetId, uri, {});
-      } catch (e) {
-        logger.error(e.message);
-        throw e;
-      }
+      const {datasetId} = args;
+      return await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/del-optical-image`, {});
     }
   }
 };
