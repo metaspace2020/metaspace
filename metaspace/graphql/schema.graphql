@@ -72,6 +72,7 @@ type Dataset {
   # full metadata JSON conforming to schema published at
   # https://github.com/metaspace2020/metadata
   metadataJson: String!
+  isPublic: Boolean!
 
   status: JobStatus
   inputPath: String
@@ -278,15 +279,15 @@ type Query {
 
 type Mutation {
   submitDataset(jwt: String!, datasetId: String, name: String,
-    path: String, metadataJson: String,
+    path: String, metadataJson: String, isPublic: Boolean!,
     priority: Int=0, delFirst: Boolean=false): String
 
   resubmitDataset(jwt: String!, datasetId: String!, name: String,
-    metadataJson: String, priority: Int=0,
+    metadataJson: String, isPublic: Boolean, priority: Int=0,
     delFirst: Boolean=false): String
 
   updateMetadata(jwt: String!, datasetId: String!, name: String,
-    metadataJson: String!, priority: Int=0): String
+    metadataJson: String!, isPublic: Boolean!, priority: Int=0): String
 
   deleteDataset(jwt: String!, datasetId: String!,
     delRawData: Boolean): String

@@ -7,8 +7,8 @@ const elasticsearch = require('elasticsearch'),
   sprintf = require('sprintf-js');
 
 const config = require('config'),
-  {datasetFilters, dsField} = require('./datasetFilters.js');
-  logger = require('./utils').logger;
+  {datasetFilters, dsField} = require('./datasetFilters.js'),
+  {logger, canUserViewEsDataset} = require('./utils');
 
 const esConfig = () => {
   return {
@@ -56,7 +56,7 @@ function esSort(orderBy, sortingOrder) {
 }
 
 // consider renaming the function as it handles not only annotations but datasets as well
-function constructAnnotationQuery(args, docType) {
+function constructAnnotationQuery(args, docType, user) {
   const { orderBy, sortingOrder, offset, limit, filter, datasetFilter, simpleQuery } = args;
   const { database, datasetName, mzFilter, msmScoreFilter,
     fdrLevel, sumFormula, adduct, compoundQuery } = filter;
@@ -120,6 +120,19 @@ function constructAnnotationQuery(args, docType) {
       query: simpleQuery, fields: ["_all"], default_operator: "and"
    }});
 
+  if (user != null && user.email && user.role !== 'admin') {
+    addFilter({
+      bool: {
+        should: [
+          { term: { ds_is_public: true } },
+          { term: { ds_submitter_email: user.email } }
+        ]
+      }
+    });
+  } else if (user.role !== 'admin') {
+    addFilter({ term: { ds_is_public: true } });
+  }
+
   for (var key in datasetFilters) {
     const val = datasetFilter[key];
     if (val) {
@@ -135,12 +148,12 @@ function constructAnnotationQuery(args, docType) {
   return body;
 }
 
-module.exports.esSearchResults = function(args, docType) {
+module.exports.esSearchResults = function(args, docType, user) {
   if (args.limit > ES_LIMIT_MAX) {
     return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
 
-  const body = constructAnnotationQuery(args, docType);
+  const body = constructAnnotationQuery(args, docType, user);
   const request = {
     body,
     index: esIndex,
@@ -158,8 +171,8 @@ module.exports.esSearchResults = function(args, docType) {
   });
 };
 
-module.exports.esCountResults = function(args, docType) {
-  const body = constructAnnotationQuery(args, docType);
+module.exports.esCountResults = function(args, docType, user) {
+  const body = constructAnnotationQuery(args, docType, user);
   const request = { body, index: esIndex };
   return es.count(request).then((resp) => {
     return resp.count;
@@ -222,8 +235,8 @@ function flattenAggResponse(fields, aggs, idx) {
   return { counts };
 }
 
-module.exports.esCountGroupedResults = function(args, docType) {
-  const q = constructAnnotationQuery(args, docType);
+module.exports.esCountGroupedResults = function(args, docType, user) {
+  const q = constructAnnotationQuery(args, docType, user);
 
   if (args.groupingFields.length == 0) {
     // handle case of no grouping for convenience
@@ -252,20 +265,19 @@ module.exports.esCountGroupedResults = function(args, docType) {
     });
 }
 
-function getById(docType, id) {
-  return es.get({index: esIndex, type: docType, id})
-  .then((resp) => {
+async function getById(docType, id, user, ignorePermissions=false) {
+  const resp = await es.get({ index: esIndex, type: docType, id });
+  if (ignorePermissions || canUserViewEsDataset(resp, user)) {
     return resp;
-  }).catch((e) => {
-    logger.error(e);
-    return null;
-  });
+  } else {
+    throw new Error(`Unauthorized: user ${user.email} tried to access ${docType} ${id}`)
+  }
 }
 
-module.exports.esAnnotationByID = function(id) {
-  return getById('annotation', id);
+module.exports.esAnnotationByID = function(id, user, ignorePermissions=false) {
+  return getById('annotation', id, user, ignorePermissions);
 };
 
-module.exports.esDatasetByID = function(id) {
-  return getById('dataset', id);
+module.exports.esDatasetByID = function(id, user, ignorePermissions=false) {
+  return getById('dataset', id, user, ignorePermissions);
 };

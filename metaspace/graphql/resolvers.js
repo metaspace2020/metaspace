@@ -1,5 +1,4 @@
 const sprintf = require('sprintf-js'),
-  jwt = require('jwt-simple'),
   {UserError} = require('graphql-errors'),
   fetch = require('node-fetch');
 
@@ -7,15 +6,15 @@ const config = require('config'),
   {esSearchResults, esCountResults, esCountGroupedResults,
    esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
-  {generateProcessingConfig, metadataChangeSlackNotify,
-    metadataUpdateFailedSlackNotify, fetchDS, fetchMolecularDatabases,
+  {pgDatasetsViewableByUser, fetchDS, fetchMolecularDatabases, assertUserCanViewDataset,
     logger, pubsub, pg} = require("./utils.js"),
   {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js');
 
 function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
   // wait until updates are reflected in ES so that clients don't have to care
   const maxAttempts = 5;
-  esDatasetByID(ds_id).then(function(ds) {
+  // TODO Lachlan: Apply security to pubsub
+  esDatasetByID(ds_id, null, true).then(function(ds) {
     if (attempt > maxAttempts) {
       console.warn(`Failed to propagate dataset update for ${ds_id}`);
       return;
@@ -50,18 +49,6 @@ queue.then(function(conn) {
   });
 }).catch(console.warn);
 
-function baseDatasetQuery() {
-  return pg.from(function() {
-    this.select(pg.raw('dataset.id as id'),
-                'name',
-                pg.raw('max(finish) as last_finished'),
-                pg.raw('dataset.status as status'),
-                'metadata', 'config', 'input_path')
-        .from('dataset').leftJoin('job', 'dataset.id', 'job.ds_id')
-        .groupBy('dataset.id').as('tmp');
-  });
-}
-
 
 const Resolvers = {
   Person: {
@@ -71,66 +58,68 @@ const Resolvers = {
   },
 
   Query: {
-    dataset(_, { id }) {
-      return esDatasetByID(id);
+    async dataset(_, { id }, {user}) {
+      return await esDatasetByID(id, user);
     },
 
-    async allDatasets(_, args) {
+    async allDatasets(_, args, {user}) {
       args.datasetFilter = args.filter;
       args.filter = {};
-      return esSearchResults(args, 'dataset');
+      return esSearchResults(args, 'dataset', user);
     },
 
-    allAnnotations(_, args) {
-      return esSearchResults(args, 'annotation');
+    allAnnotations(_, args, {user}) {
+      return esSearchResults(args, 'annotation', user);
     },
 
-    countDatasets(_, args) {
+    countDatasets(_, args, {user}) {
       args.datasetFilter = args.filter;
       args.filter = {};
-      return esCountResults(args, 'dataset');
+      return esCountResults(args, 'dataset', user);
     },
 
-    countDatasetsPerGroup(_, {query}) {
+    countDatasetsPerGroup(_, {query}, {user}) {
       const args = {
         datasetFilter: query.filter,
         simpleQuery: query.simpleQuery,
         filter: {},
         groupingFields: query.fields
       };
-      return esCountGroupedResults(args, 'dataset');
+      return esCountGroupedResults(args, 'dataset', user);
     },
 
-    countAnnotations(_, args) {
-      return esCountResults(args, 'annotation');
+    countAnnotations(_, args, {user}) {
+      return esCountResults(args, 'annotation', user);
     },
 
-    annotation(_, { id }) {
-      return esAnnotationByID(id);
+    annotation(_, { id }, {user}) {
+      return esAnnotationByID(id, user);
     },
 
-    metadataSuggestions(_, { field, query, limit }) {
+    metadataSuggestions(_, { field, query, limit }, {user}) {
       let f = new SubstringMatchFilter(field, {}),
-          q = pg.select(pg.raw(f.pgField + " as field")).select().from('dataset')
+          q = pg.from(pgDatasetsViewableByUser(user))
+                .select(pg.raw(f.pgField + " as field"))
                 .groupBy('field').orderByRaw('count(*) desc').limit(limit);
       return f.pgFilter(q, query).orderBy('field', 'asc')
               .then(results => results.map(row => row['field']));
     },
 
-    peopleSuggestions(_, { role, query }) {
+    peopleSuggestions(_, { role, query }, {user}) {
       const schemaPath = 'Submitted_By.' + (role == 'PI' ? 'Principal_Investigator' : 'Submitter');
       const p1 = schemaPath + '.First_Name',
             p2 = schemaPath + '.Surname',
             f1 = getPgField(p1),
             f2 = getPgField(p2);
-      const q = pg.distinct(pg.raw(`${f1} as name, ${f2} as surname`)).select().from('dataset')
+      const q = pg.from(pgDatasetsViewableByUser(user))
+                  .distinct(pg.raw(`${f1} as name, ${f2} as surname`))
                   .whereRaw(`${f1} ILIKE ? OR ${f2} ILIKE ?`, ['%' + query + '%', '%' + query + '%']);
       logger.info(q.toString());
       return q.orderBy('name', 'asc').orderBy('surname', 'asc')
               .then(results => results.map(r => ({First_Name: r.name, Surname: r.surname, Email: ''})))
     },
 
-    async molecularDatabases(_, args) {
+    async molecularDatabases(_, args, {user}) {
       try {
         let molDBs = await fetchMolecularDatabases({hideDeprecated: args.hideDeprecated});
         for (let moldb of molDBs)
@@ -144,8 +133,10 @@ const Resolvers = {
       }
     },
 
-    opticalImageUrl(_, {datasetId, zoom}) {
+    opticalImageUrl(_, {datasetId, zoom}, {user}) {
       const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
+      assertUserCanViewDataset(datasetId, user);
+
       return pg.select().from('optical_image')
           .where('ds_id', '=', datasetId)
           .where('zoom', '=', intZoom)
@@ -160,8 +151,9 @@ const Resolvers = {
           })
     },
 
-    rawOpticalImage(_, {datasetId}) {
-      return pg.select().from('dataset')
+    rawOpticalImage(_, {datasetId}, {user}) {
+      return pg
+        .from(pgDatasetsViewableByUser(user))
         .where('id', '=', datasetId)
         .then(records => {
           if (records.length > 0)
@@ -177,8 +169,8 @@ const Resolvers = {
         })
     },
 
-    reprocessingNeeded(_, args) {
-      return DSQuery.reprocessingNeeded(args);
+    reprocessingNeeded(_, args, {user}) {
+      return DSQuery.reprocessingNeeded(args, user);
     }
   },
 
@@ -210,6 +202,10 @@ const Resolvers = {
 
     metadataJson(ds) {
       return JSON.stringify(ds._source.ds_meta);
+    },
+
+    isPublic(ds) {
+      return ds._source.ds_is_public;
     },
 
     institution(ds) { return dsField(ds, 'institution'); },
@@ -285,8 +281,8 @@ const Resolvers = {
       }
     },
 
-    opticalImage(ds) {
-      return Resolvers.Query.rawOpticalImage(null, {datasetId: ds._source.ds_id})
+    opticalImage(ds, _, context) {
+      return Resolvers.Query.rawOpticalImage(null, {datasetId: ds._source.ds_id}, context)
           .then(optImage => {
             if (optImage.transform == null) {
               //non-existing optical image don't have transform value
@@ -389,36 +385,37 @@ const Resolvers = {
   },
 
   Mutation: {
-    resubmitDataset: async (_, args) => {
+    resubmitDataset: async (_, args, {user}) => {
       const ds = await fetchDS({id: args.datasetId});
       if (ds === undefined)
         throw new UserError('DS does not exist');
       args.name = args.name || ds.name;
       args.path = ds.input_path;
       args.metadata = args.metadataJson ? JSON.parse(args.metadataJson) : ds.metadata;
-      return DSMutation.submit(args);
+      args.is_public = args.is_public !== undefined ? args.is_public : ds.is_public;
+      return DSMutation.submit(args, user);
     },
 
-    submitDataset: (_, args) => {
+    submitDataset: (_, args, {user}) => {
       args.metadata = JSON.parse(args.metadataJson);
       delete args['metadataJson'];
-      return DSMutation.submit(args);
+      return DSMutation.submit(args, user);
     },
 
-    updateMetadata: (_, args) => {
-      return DSMutation.update(args);
+    updateMetadata: (_, args, {user}) => {
+      return DSMutation.update(args, user);
     },
 
-    deleteDataset: (_, args) => {
-      return DSMutation.delete(args);
+    deleteDataset: (_, args, {user}) => {
+      return DSMutation.delete(args, user);
     },
 
-    addOpticalImage: (_, {input}) => {
-      return DSMutation.addOpticalImage(input);
+    addOpticalImage: (_, {input}, {user}) => {
+      return DSMutation.addOpticalImage(input, user);
     },
 
-    deleteOpticalImage: (_, args) => {
-      return DSMutation.deleteOpticalImage(args);
+    deleteOpticalImage: (_, args, {user}) => {
+      return DSMutation.deleteOpticalImage(args, user);
     }
   },
 

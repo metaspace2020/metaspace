@@ -126,6 +126,8 @@ const logger = new (winston.Logger)({
         return moment().format();
       },
       formatter: function(options) {
+        // TODO Lachlan: This custom formatter logs an empty string when given an error
+        // Copy the default formatter's behavior for when options.message is empty
         // Return string will be passed to logger.
         return options.timestamp() +' - '+ options.level.toUpperCase() +' - '+ (options.message ? options.message : '') +
           (options.meta && Object.keys(options.meta).length ? '\n\t'+ JSON.stringify(options.meta) : '' );
@@ -151,24 +153,59 @@ let pg = require('knex')({
   searchPath: 'knex,public'
 });
 
-function checkPermissions(datasetId, payload) {
+function canUserViewEsDataset(dataset, user) {
+  return dataset._source.ds_is_public
+    || (user != null && user.role === 'admin')
+    || (user != null && dataset._source.ds_submitter_email && dataset._source.ds_submitter_email === user.email);
+}
+
+function pgDatasetsViewableByUser(user) {
+  // The returned callback can be used in `.from` and `.join` clauses, e.g. `.from(pgDatasetsViewableByUser(user))`
+  // This pattern is used to protect against accidentally breaking the filters by using a chained `.orWhere` clause
+  // More discussion here: https://github.com/tgriesser/knex/issues/1714
+  return q => {
+    let filter;
+    if (user && user.role === 'admin') {
+      filter = ds => true;
+    } else if (user && user.email) {
+      filter = ds => ds.where('is_public', true)
+                       .orWhereRaw("metadata#>>'{Submitted_By,Submitter,Email}' = ?", [user.email]);
+    } else {
+      filter = ds => ds.where('is_public', true);
+    }
+    return q.from('dataset').where(filter).as('dataset');
+  };
+}
+
+async function assertUserCanViewDataset(datasetId, user) {
+  const records = await pg.select().from('dataset').where('id', '=', datasetId);
+
+  if (records.length === 0)
+    throw new UserError(`No dataset with specified id: ${datasetId}`);
+
+  if (!(records[0].is_public
+      || (user != null && user.role === 'admin')
+      || (user != null && user.email === records[0].metadata.Submitted_By.Submitter.Email))) {
+    throw new UserError(`You don't have permissions to view the dataset: ${datasetId}`);
+  }
+}
+
+function assertUserCanEditDataset(datasetId, user) {
   return pg.select().from('dataset').where('id', '=', datasetId)
     .then(records => {
       if (records.length === 0)
         throw new UserError(`No dataset with specified id: ${datasetId}`);
-      metadata = records[0].metadata;
 
-      let allowUpdate = false;
-      if (payload.role === 'admin')
-        allowUpdate = true;
-      else if (payload.email === metadata.Submitted_By.Submitter.Email)
-        allowUpdate = true;
-      if (!allowUpdate)
+      if (user == null
+          || !(user.role === 'admin'
+               || user.email === records[0].metadata.Submitted_By.Submitter.Email)) {
         throw new UserError(`You don't have permissions to edit the dataset: ${datasetId}`);
+      }
     });
 }
 
 async function fetchDS({id, name}) {
+  // TODO Lachlan: Refactor this so that security is enforced by default
   let records;
   if (id !== undefined)
     records = await pg.select().from('dataset').where('id', '=', id);
@@ -201,7 +238,10 @@ module.exports = {
   generateProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
-  checkPermissions,
+  canUserViewEsDataset,
+  pgDatasetsViewableByUser,
+  assertUserCanViewDataset,
+  assertUserCanEditDataset,
   fetchDS,
   fetchMolecularDatabases,
   config,

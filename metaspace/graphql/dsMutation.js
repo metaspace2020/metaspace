@@ -1,11 +1,11 @@
 const jsondiffpatch = require('jsondiffpatch'),
-  jwt = require('jwt-simple'),
   config = require('config'),
   Ajv = require('ajv'),
   fetch = require('node-fetch'),
-  {UserError} = require('graphql-errors');
+  {UserError} = require('graphql-errors'),
+  _ = require('lodash');
 
-const {pg, logger, fetchDS, checkPermissions,
+const {pg, logger, fetchDS, assertUserCanEditDataset,
     generateProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json');
 
@@ -45,6 +45,13 @@ function trimEmptyFields(schema, value) {
   return obj;
 }
 
+function setSubmitter(oldMetadata, newMetadata, user) {
+  const email = oldMetadata != null
+    ? oldMetadata.Submitted_By.Submitter.Email
+    : user.email;
+  _.set(newMetadata, ['Submitted_By', 'Submitter', 'Email'], email)
+}
+
 function validateMetadata(metadata) {
   const cleanValue = trimEmptyFields(metadataSchema, metadata);
   validator(cleanValue);
@@ -69,13 +76,11 @@ async function molDBsExist(molDBNames) {
   }
 }
 
-function reprocessingNeeded(ds, newMetadata) {
-    const oldMetadata = ds.metadata,
-      oldConfig = ds.config,
-      configDelta = jsondiffpatch.diff(oldConfig, generateProcessingConfig(newMetadata)),
-      configDiff = jsondiffpatch.formatters.jsonpatch.format(configDelta),
-      metaDelta = jsondiffpatch.diff(oldMetadata, newMetadata),
-      metaDiff = jsondiffpatch.formatters.jsonpatch.format(metaDelta);
+async function reprocessingNeeded(oldMetadata, oldConfig, newMetadata, newConfig) {
+  const configDelta = jsondiffpatch.diff(oldConfig, newConfig),
+    configDiff = jsondiffpatch.formatters.jsonpatch.format(configDelta),
+    metaDelta = jsondiffpatch.diff(oldMetadata, newMetadata),
+    metaDiff = jsondiffpatch.formatters.jsonpatch.format(metaDelta);
 
   let dbUpd = false, procSettingsUpd = false;
   for (let diffObj of configDiff) {
@@ -129,12 +134,14 @@ async function smAPIRequest(datasetId, uri, body) {
 module.exports = {
   reprocessingNeeded,
   Query: {
-    reprocessingNeeded: async (args) => {
+    reprocessingNeeded: async (args, user) => {
       const {datasetId, metadataJson} = args,
         newMetadata = JSON.parse(metadataJson),
-        newConfig = generateProcessingConfig(newMetadata);
+        newConfig = generateProcessingConfig(newMetadata),
+        {metadata: oldMetadata, config: oldConfig} = await fetchDS({id: datasetId});
+      await assertUserCanEditDataset(datasetId, user);
       try {
-        reprocessingNeeded(await fetchDS(datasetId), newMetadata, newConfig);
+        await reprocessingNeeded(oldMetadata, oldConfig, newMetadata, newConfig);
         return false;
       }
       catch (e) {
@@ -143,16 +150,16 @@ module.exports = {
     }
   },
   Mutation: {
-    submit: async (args) => {
-      const {datasetId, name, path, metadata, priority, sync, delFirst} = args;
+    submit: async (args, user) => {
+      const {datasetId, name, path, metadata, isPublic, priority, sync, delFirst} = args;
       try {
-        const payload = jwt.decode(args.jwt, config.jwt.secret);
         if (datasetId !== undefined) {
           const ds = await fetchDS({id: datasetId});
           if (ds !== undefined)
-            await checkPermissions(datasetId, payload);
+            await assertUserCanEditDataset(datasetId, payload);
         }
 
+        setSubmitter(null, metadata, user);
         validateMetadata(metadata);
         await molDBsExist(metadata.metaspace_options.Metabolite_Database);
 
@@ -162,7 +169,8 @@ module.exports = {
           metadata: metadata,
           config: generateProcessingConfig(metadata),
           priority: priority,
-          del_first: delFirst
+          del_first: delFirst,
+          is_public: isPublic
         };
         if (datasetId !== undefined)
           body.id = datasetId;
@@ -172,26 +180,27 @@ module.exports = {
         throw e;
       }
     },
-    update: async (args) => {
-      const {datasetId, name, metadataJson, priority} = args;
+    update: async (args, user) => {
+      const {datasetId, name, metadataJson, isPublic, priority} = args;
       try {
-        const payload = jwt.decode(args.jwt, config.jwt.secret),
-          newMetadata = JSON.parse(metadataJson);
+        const newMetadata = JSON.parse(metadataJson);
         const ds = await fetchDS({id: datasetId});
         if (ds === undefined) {
           throw UserError('DS does not exist');
         }
 
-        await checkPermissions(ds.id, payload);
+        await assertUserCanEditDataset(ds.id, user);
+        setSubmitter(ds.metadata, newMetadata, user);
         validateMetadata(newMetadata);
         const newConfig = generateProcessingConfig(newMetadata);
-        reprocessingNeeded(ds, newMetadata, newConfig);
+        await reprocessingNeeded(ds.metadata, ds.config, newMetadata, newConfig);
 
         const body = {
           metadata: newMetadata,
           config: newConfig,
           name: name || ds.name,
-          priority: priority
+          priority: priority,
+          is_public: isPublic
         };
         return await smAPIRequest(ds.id, `/v1/datasets/${ds.id}/update`, body);
       } catch (e) {
@@ -199,13 +208,12 @@ module.exports = {
         throw e;
       }
     },
-    delete: async (args) => {
+    delete: async (args, user) => {
       const {name, delRawData, sync} = args;
 
       try {
-        const payload = jwt.decode(args.jwt, config.jwt.secret);
         let datasetId = args.datasetId;
-        await checkPermissions(datasetId, payload);
+        await assertUserCanEditDataset(datasetId, user);
 
         // if (delRawData != undefined || delRawData == false)
         //   body = JSON.stringify({});
@@ -224,7 +232,7 @@ module.exports = {
         throw e;
       }
     },
-    addOpticalImage: async (args) => {
+    addOpticalImage: async (args, user) => {
       let {datasetId, imageUrl, transform} = args;
       const basePath = `http://localhost:${config.img_storage_port}`;
       if (imageUrl[0] === '/') {
@@ -237,10 +245,9 @@ module.exports = {
         // TODO support image storage running on a separate host
         imageUrl = basePath + imageUrl;
       }
-      const payload = jwt.decode(args.jwt, config.jwt.secret);
       try {
         logger.info(args);
-        await checkPermissions(datasetId, payload);
+        await assertUserCanEditDataset(datasetId, user);
         const uri = `/v1/datasets/${datasetId}/add-optical-image`;
         const body = {url: imageUrl, transform};
         return await smAPIRequest(datasetId, uri, body);
@@ -250,8 +257,9 @@ module.exports = {
       }
     },
 
-    deleteOpticalImage: async (args) => {
+    deleteOpticalImage: async (args, user) => {
       const {datasetId} = args;
+      await assertUserCanEditDataset(datasetId, user);
       return await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/del-optical-image`, {});
     }
   }
