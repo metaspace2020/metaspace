@@ -145,8 +145,6 @@ function constructAnnotationQuery(args, docType, user) {
     }
   }
 
-  // console.log(JSON.stringify(body,null,2));
-
   return body;
 }
 
@@ -268,18 +266,12 @@ module.exports.esCountGroupedResults = function(args, docType, user) {
 }
 
 async function getById(docType, id, user, ignorePermissions=false) {
-  // try {
-
-    const resp = await es.get({ index: esIndex, type: docType, id });
-    if (ignorePermissions || canUserViewEsDataset(resp, user)) {
-      return resp;
-    } else {
-      throw new Error(`Unauthorized: user ${user.email} tried to access ${docType} ${id}`)
-    }
-  // } catch (e) {
-  //   console.log('foo');
-  //   logger.error(e);
-  // }
+  const resp = await es.get({ index: esIndex, type: docType, id });
+  if (ignorePermissions || canUserViewEsDataset(resp, user)) {
+    return resp;
+  } else {
+    throw new Error(`Unauthorized: user ${user.email} tried to access ${docType} ${id}`)
+  }
 }
 
 module.exports.esAnnotationByID = function(id, user, ignorePermissions=false) {
