@@ -19,6 +19,7 @@ CREATE TABLE dataset (
 	status				text,
 	optical_image text,
 	transform			float[],
+	is_public     boolean not null default(true),
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
 );
 CREATE INDEX ind_dataset_name ON dataset (name);

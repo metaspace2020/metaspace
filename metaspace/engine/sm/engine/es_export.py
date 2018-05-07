@@ -51,13 +51,15 @@ DATASET_SEL = '''SELECT
     input_path,
     upload_dt,
     dataset.status,
-    to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS')
+    to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS'),
+    is_public
 FROM dataset LEFT JOIN job ON job.ds_id = dataset.id
 WHERE dataset.id = %s
 GROUP BY dataset.id'''
 
 DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path',
-                   'ds_upload_dt', 'ds_status', 'ds_last_finished')
+                   'ds_upload_dt', 'ds_status', 'ds_last_finished', 'ds_is_public')
+
 
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
@@ -184,6 +186,7 @@ class ESExporter(object):
         submitter = dataset.get('ds_meta', {}).get('Submitted_By', {}).get('Submitter', None)
         if submitter:
             dataset['ds_submitter'] = submitter.get('First_Name', '') + ' ' + submitter.get('Surname', '')
+            dataset['ds_submitter_email'] = submitter.get('Email', '')
 
     def _ds_get_by_id(self, ds_id):
         dataset = dict(zip(DATASET_COLUMNS, self._db.select(DATASET_SEL, ds_id)[0]))

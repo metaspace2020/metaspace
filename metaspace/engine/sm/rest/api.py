@@ -70,7 +70,9 @@ def add_ds():
                      params.get('input_path'),
                      params.get('upload_dt', now),
                      params.get('metadata', None),
-                     params.get('config'))
+                     params.get('config'),
+                     is_public=params.get('is_public')
+                     )
         db = _create_db_conn()
         ds_man = _create_dataset_manager(db)
         ds_man.add(ds, del_first=params.get('del_first', False),
@@ -127,6 +129,7 @@ def update_ds(ds_man, ds, params):
     ds.input_path = params.get('input_path', ds.input_path)
     ds.meta = params.get('metadata', ds.meta)
     ds.config = params.get('config', ds.config)
+    ds.is_public = params.get('is_public', ds.is_public)
 
     ds_man.update(ds, priority=params.get('priority', DatasetActionPriority.DEFAULT))
 

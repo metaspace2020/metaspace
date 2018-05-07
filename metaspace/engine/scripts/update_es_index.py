@@ -17,15 +17,19 @@ def _reindex_all(conf):
     new_index = es_man.another_index_name(es_man.internal_index_name(alias))
     es_man.create_index(new_index)
 
-    tmp_es_config = deepcopy(es_config)
-    tmp_es_config['index'] = new_index
+    try:
+        tmp_es_config = deepcopy(es_config)
+        tmp_es_config['index'] = new_index
 
-    db = DB(conf['db'])
-    es_exp = ESExporter(db, tmp_es_config)
-    rows = db.select('select id, name, config from dataset')
-    _reindex_datasets(rows, es_exp)
+        db = DB(conf['db'])
+        es_exp = ESExporter(db, tmp_es_config)
+        rows = db.select('select id, name, config from dataset')
+        _reindex_datasets(rows, es_exp)
 
-    es_man.remap_alias(tmp_es_config['index'], alias=alias)
+        es_man.remap_alias(tmp_es_config['index'], alias=alias)
+    except Exception as e:
+        es_man.delete_index(new_index)
+        raise e
 
 
 def _reindex_datasets(rows, es_exp):
