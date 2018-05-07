@@ -6750,6 +6750,13 @@ passport@^0.3.2:
     passport-strategy "1.x.x"
     pause "0.0.1"
 
+passwordless-memorystore@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/passwordless-memorystore/-/passwordless-memorystore-0.0.1.tgz#6bf51dbdf7da35e924fc7c8f14c3ef011c48cdf8"
+  dependencies:
+    bcryptjs "^2.1.0"
+    passwordless-tokenstore "0.0.10"
+
 passwordless-redisstore-bcryptjs@0.0.2:
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/passwordless-redisstore-bcryptjs/-/passwordless-redisstore-bcryptjs-0.0.2.tgz#c4f1237f9639543af5016cf718a985615cbe16d0"

@@ -101,6 +101,7 @@
     "markdown-loader": "~0.1.7",
     "marky-mark": "~1.2.1",
     "node-fetch": "1.7.3",
+    "passwordless-memorystore": "^0.0.1",
     "postcss-loader": "~1.2.2",
     "source-map-loader": "0.2.1",
     "style-loader": "~0.13.1",
