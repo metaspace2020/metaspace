@@ -7,31 +7,35 @@ const config = require('config'),
    esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {pgDatasetsViewableByUser, fetchDS, fetchMolecularDatabases, assertUserCanViewDataset,
-    logger, pubsub, pg} = require("./utils.js"),
+    canUserViewPgDataset, logger, pubsub, pg} = require("./utils.js"),
   {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js');
 
-function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
+async function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
   // wait until updates are reflected in ES so that clients don't have to care
   const maxAttempts = 5;
-  // TODO Lachlan: Apply security to pubsub
-  esDatasetByID(ds_id, null, true).then(function(ds) {
-    if (attempt > maxAttempts) {
-      console.warn(`Failed to propagate dataset update for ${ds_id}`);
-      return;
-    }
-    console.log(attempt, status, ds === null);
 
-    if (ds === null && status == 'DELETED') {
-      setTimeout(() => { pubsub.publish('datasetDeleted', {datasetId: ds_id}); }, 1000);
-    } else if (ds !== null && status != 'DELETED') {
-      const dataset = Object.assign({}, ds, {status});
-      pubsub.publish('datasetStatusUpdated', {dataset});
-    } else {
-      setTimeout(publishDatasetStatusUpdate,
-                 50 * attempt * attempt,
-                 ds_id, status, attempt + 1);
-    }
-  });
+  const ds = await esDatasetByID(ds_id, null, true);
+
+  if (attempt > maxAttempts) {
+    console.warn(`Failed to propagate dataset update for ${ds_id}`);
+    return;
+  }
+  console.log(attempt, status);
+
+  if (ds === null && status === 'DELETED') {
+    setTimeout(() => {
+      pubsub.publish('datasetStatusUpdated', {});
+    }, 1000);
+  } else if (ds !== null && status !== 'DELETED') {
+    pubsub.publish('datasetStatusUpdated', {
+      dataset: Object.assign({}, ds, { status }),
+      dbDs: await fetchDS({id: ds_id})
+    });
+  } else {
+    setTimeout(publishDatasetStatusUpdate,
+               50 * attempt * attempt,
+               ds_id, status, attempt + 1);
+  }
 }
 
 let queue = require('amqplib').connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`);
@@ -422,13 +426,15 @@ const Resolvers = {
   Subscription: {
     datasetStatusUpdated: {
       subscribe: () => pubsub.asyncIterator('datasetStatusUpdated'),
-      resolve: payload => { return payload; }
+      resolve: (payload, _, context) => {
+        if (payload.dataset && payload.dbDs && canUserViewPgDataset(payload.dbDs, context.user)) {
+          return {dataset: payload.dataset};
+        } else {
+          // Empty payload indicates that the client should still refresh its dataset list
+          return {};
+        }
+      }
     },
-
-    datasetDeleted: {
-      subscribe: () => pubsub.asyncIterator('datasetDeleted'),
-      resolve: payload => { return payload; }
-    }
   }
 };
 

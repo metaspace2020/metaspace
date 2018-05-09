@@ -156,8 +156,16 @@ let pg = require('knex')({
 function canUserViewEsDataset(dataset, user) {
   return dataset._source.ds_is_public
     || (user != null && user.role === 'admin')
-    || (user != null && dataset._source.ds_submitter_email && dataset._source.ds_submitter_email === user.email);
+    || (user != null && user.email != null && user.email !== '' && dataset._source.ds_submitter_email === user.email);
 }
+
+function canUserViewPgDataset(dataset, user) {
+  return dataset.is_public
+    || (user != null && user.role === 'admin')
+    || (user != null && user.email != null && user.email !== ''
+      && dataset.metadata.Submitted_By.Submitter.Email === user.email);
+}
+
 
 function pgDatasetsViewableByUser(user) {
   // The returned callback can be used in `.from` and `.join` clauses, e.g. `.from(pgDatasetsViewableByUser(user))`
@@ -183,9 +191,7 @@ async function assertUserCanViewDataset(datasetId, user) {
   if (records.length === 0)
     throw new UserError(`No dataset with specified id: ${datasetId}`);
 
-  if (!(records[0].is_public
-      || (user != null && user.role === 'admin')
-      || (user != null && user.email === records[0].metadata.Submitted_By.Submitter.Email))) {
+  if (!canUserViewPgDataset(records[0], user)) {
     throw new UserError(`You don't have permissions to view the dataset: ${datasetId}`);
   }
 }
@@ -239,6 +245,7 @@ module.exports = {
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
   canUserViewEsDataset,
+  canUserViewPgDataset,
   pgDatasetsViewableByUser,
   assertUserCanViewDataset,
   assertUserCanEditDataset,

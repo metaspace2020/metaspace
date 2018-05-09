@@ -298,17 +298,11 @@ type Mutation {
 }
 
 type DatasetStatusUpdate {
-  dataset: Dataset!
-}
-
-type DatasetDeleteNotification {
-  datasetId: String!
+  dataset: Dataset
 }
 
 type Subscription {
   datasetStatusUpdated: DatasetStatusUpdate
-
-  datasetDeleted: DatasetDeleteNotification
 }
 
 schema {
