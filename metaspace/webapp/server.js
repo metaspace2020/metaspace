@@ -273,7 +273,11 @@ if (env == 'development') {
   app.use(webpackDevMiddleware(compiler, {
     publicPath: config.output.publicPath,
     noInfo: true,
-    stats: {colors: true}
+    stats: {
+      chunks: false,
+      chunkModules: false,
+      colors: true
+    }
   }));
 
   app.use(webpackHotMiddleware(compiler, {
