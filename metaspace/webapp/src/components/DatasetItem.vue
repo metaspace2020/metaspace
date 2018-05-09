@@ -115,7 +115,10 @@
         <a @click="openDeleteDialog">Delete dataset</a>
       </div>
 
-      <img v-if="!dataset.isPublic" class="ds-item-private-icon" src="../assets/padlock-icon.svg">
+      <img v-if="!dataset.isPublic"
+           class="ds-item-private-icon"
+           src="../assets/padlock-icon.svg"
+           title="These annotation results are not publicly visible">
     </div>
   </div>
 </template>
