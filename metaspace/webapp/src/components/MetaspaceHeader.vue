@@ -154,13 +154,11 @@
          const {name, email, role} = decodePayload(jwt);
          if (role != 'anonymous') {
            this.$store.commit('login', {name, email, role});
-           console.log(`Signed in as ${name} (role: ${role})`);
          }
-       }).catch(err => console.log(err))
+       })
      },
 
      logout() {
-       console.log('logout');
        fetch('/logout', {credentials: 'include'}).then(() => {
          this.$store.commit('logout');
        });

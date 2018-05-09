@@ -130,7 +130,6 @@
            datasetDeleted { datasetId }
          }`,
          result(data) {
-           console.log(data);
            this.refetchList();
          }
        },
@@ -151,7 +150,6 @@
            }
          }`,
          result(data) {
-           console.log(data);
            const {
              id, name, status, submitter, institution
            } = data.datasetStatusUpdated.dataset;

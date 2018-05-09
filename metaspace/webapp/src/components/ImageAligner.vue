@@ -247,11 +247,9 @@
      },
 
      updateRotation(event){
-       //console.log(event)
      },
 
      onMouseUp(event) {
-       console.log('left mouse up');
        this.updateHandlePosition(event);
        this.draggedHandle = null;
        this.dragThrottled = false;
@@ -260,7 +258,6 @@
      },
 
      onRightMouseUp(event) {
-       console.log('right mouse up');
        this.updateRotation(event);
        this.draggedHandle = null;
        this.dragThrottled = false;
@@ -317,7 +314,6 @@
        },
 
      onImageMouseDown(event) {
-       console.log('left mouse down');
        event.preventDefault();
        this.dragStartX = event.clientX;
        this.dragStartY = event.clientY;
@@ -327,7 +323,6 @@
      },
 
      onImageRightMouseDown(event) {
-       console.log('right mouse down');
        event.preventDefault();
        this.imageDrag=false;
        this.startRotationAngle = this.rotationAngleDegrees;
@@ -467,7 +462,6 @@
      },
 
      initialTransform() {
-       console.log(this.initialTransform);
        this.normalizedTransform = this.initialTransform;
      }
    }
