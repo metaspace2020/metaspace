@@ -1,8 +1,16 @@
 import Vue from 'vue';
 
+import * as config from './clientConfig.json';
+import * as Raven from 'raven-js';
+import * as RavenVue from 'raven-js/plugins/vue';
+if(config.ravenDsn != null) {
+  Raven.config(config.ravenDsn)
+       .addPlugin(RavenVue, Vue)
+       .install();
+}
+
 import VueApollo from 'vue-apollo';
 import apolloClient from './graphqlClient';
-const VueAnalytics = require('vue-analytics').default;
 Vue.use(VueApollo);
 
 const apolloProvider = new VueApollo({
@@ -23,6 +31,7 @@ import App from './App.vue';
 
 const isProd = process.env.NODE_ENV === 'production';
 
+import VueAnalytics from 'vue-analytics';
 Vue.use(VueAnalytics, {
   id: 'UA-73509518-1',
   router,
