@@ -155,7 +155,6 @@ if (conf.AWS_ACCESS_KEY_ID && env != 'development') {
       }
     }, (err, data) => {
       if (err) console.log(err);
-      console.log('Sent login link to ' + recipient);
       callback(err);
     });
   });
@@ -181,7 +180,6 @@ app.use(passwordless.acceptToken({ successRedirect: '/'}));
 
 app.get('/sendToken/',
   passwordless.requestToken((user, delivery, callback, req) => {
-    console.log(user);
     Users().where({email: user}).first()
            .then(record => {
              if (record) {
