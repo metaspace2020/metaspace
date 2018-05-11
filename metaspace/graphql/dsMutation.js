@@ -131,17 +131,28 @@ async function smAPIRequest(datasetId, uri, body) {
   }
 }
 
+function updateObject(obj, upd) {
+  const updObj = _.cloneDeep(obj);
+  _.extend(updObj, upd);
+  return updObj;
+}
+
 module.exports = {
   reprocessingNeeded,
   Query: {
     reprocessingNeeded: async (args, user) => {
-      const {datasetId, metadataJson} = args,
-        newMetadata = JSON.parse(metadataJson),
-        newConfig = generateProcessingConfig(newMetadata),
-        {metadata: oldMetadata, config: oldConfig} = await fetchDS({id: datasetId});
-      await assertUserCanEditDataset(datasetId, user);
+      const {input} = args;
+      input.metadata = JSON.parse(input.metadataJson);
+      validateMetadata(input.metadata);
+
+      const ds = await fetchDS({id: input.id});
+      await assertUserCanEditDataset(ds.id, user);
+
+      const updDS = updateObject(ds, input);
+      updDS.config = generateProcessingConfig(updDS);
+
       try {
-        await reprocessingNeeded(oldMetadata, oldConfig, newMetadata, newConfig);
+        await reprocessingNeeded(ds, updDS);
         return false;
       }
       catch (e) {
@@ -193,8 +204,7 @@ module.exports = {
         if (input.metadataJson !== undefined) {
           input.metadata = JSON.parse(input.metadataJson);
         }
-        const updDS = _.cloneDeep(ds);
-        _.extend(updDS, input);
+        const updDS = updateObject(ds, input);
 
         setSubmitter(ds.metadata, updDS.metadata, user);
         validateMetadata(updDS.metadata);

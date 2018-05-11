@@ -292,7 +292,7 @@ type Query {
 
   rawOpticalImage(datasetId: String!): RawOpticalImage,
 
-  reprocessingNeeded(datasetId: String!, metadataJson: String!): Boolean
+  reprocessingNeeded(input: DatasetUpdateInput!): Boolean!
 }
 
 type Mutation {
