@@ -125,15 +125,6 @@
 
    apollo: {
      $subscribe: {
-       datasetDeleted: {
-         query: gql`subscription DD {
-           datasetDeleted { datasetId }
-         }`,
-         result(data) {
-           this.refetchList();
-         }
-       },
-
        datasetStatusUpdated: {
          query: gql`subscription DS {
            datasetStatusUpdated {
@@ -150,26 +141,26 @@
            }
          }`,
          result(data) {
-           const {
-             id, name, status, submitter, institution
-           } = data.datasetStatusUpdated.dataset;
-           const who = `${submitter.name} ${submitter.surname} (${institution})`;
-           const statusMap = {
-             FINISHED: 'success',
-             QUEUED: 'info',
-             STARTED: 'info',
-             FAILED: 'warning'
-           };
-           let message = '';
-           if (status == 'FINISHED')
-             message = `Processing of dataset ${name} is finished!`;
-           else if (status == 'FAILED')
-             message = `Something went wrong with dataset ${name} :(`;
-           else if (status == 'QUEUED')
-             message = `Dataset ${name} has been submitted to query by ${who}`;
-           else if (status == 'STARTED')
-             message = `Started processing dataset ${name}`;
-           this.$notify({ message, type: statusMap[status] });
+           if (data.datasetStatusUpdated.dataset != null) {
+             const {name, status, submitter, institution} = data.datasetStatusUpdated.dataset;
+             const who = `${submitter.name} ${submitter.surname} (${institution})`;
+             const statusMap = {
+               FINISHED: 'success',
+               QUEUED: 'info',
+               STARTED: 'info',
+               FAILED: 'warning'
+             };
+             let message = '';
+             if (status == 'FINISHED')
+               message = `Processing of dataset ${name} is finished!`;
+             else if (status == 'FAILED')
+               message = `Something went wrong with dataset ${name} :(`;
+             else if (status == 'QUEUED')
+               message = `Dataset ${name} has been submitted to query by ${who}`;
+             else if (status == 'STARTED')
+               message = `Started processing dataset ${name}`;
+             this.$notify({ message, type: statusMap[status] });
+           }
 
            this.refetchList();
          }
