@@ -1,6 +1,7 @@
 const sprintf = require('sprintf-js'),
   {UserError} = require('graphql-errors'),
-  fetch = require('node-fetch');
+  fetch = require('node-fetch'),
+  lodash = require('lodash');
 
 const config = require('config'),
   {esSearchResults, esCountResults, esCountGroupedResults,
@@ -212,6 +213,10 @@ const Resolvers = {
       return ds._source.ds_is_public;
     },
 
+    molDBs(ds) {
+      return ds._source.ds_mol_dbs;
+    },
+
     institution(ds) { return dsField(ds, 'institution'); },
     organism(ds) { return dsField(ds, 'organism'); },
     organismPart(ds) { return dsField(ds, 'organismPart'); },
@@ -253,11 +258,11 @@ const Resolvers = {
       let outFdrLvls = [], outFdrCounts = [], maxCounts = 0, dbName = '';
       if(ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
         let annotCounts = ds._source.annotation_counts;
-        let dbList = ds._source.ds_meta.metaspace_options.Metabolite_Database;
-        let filteredDbList = annotCounts.filter(el => {
-            return dbList.includes(el.db.name)
+        let molDBs = ds._source.ds_mol_dbs;
+        let filteredMolDBs = annotCounts.filter(el => {
+            return molDBs.includes(el.db.name);
         });
-        for (let db of filteredDbList) {
+        for (let db of filteredMolDBs) {
           let maxCountsCand = db.counts.find(lvlObj => {
                 return lvlObj.level === checkLvl
             });
@@ -390,19 +395,16 @@ const Resolvers = {
 
   Mutation: {
     resubmitDataset: async (_, args, {user}) => {
-      const ds = await fetchDS({id: args.datasetId});
+      const {input, priority, delFirst} = args;
+      const ds = await fetchDS({id: input.id});
       if (ds === undefined)
         throw new UserError('DS does not exist');
-      args.name = args.name || ds.name;
-      args.path = ds.input_path;
-      args.metadata = args.metadataJson ? JSON.parse(args.metadataJson) : ds.metadata;
-      args.is_public = args.is_public !== undefined ? args.is_public : ds.is_public;
-      return DSMutation.submit(args, user);
+
+      lodash.extend(ds, input);
+      return DSMutation.submit({input: ds, priority: priority, delFirst: delFirst}, user);
     },
 
     submitDataset: (_, args, {user}) => {
-      args.metadata = JSON.parse(args.metadataJson);
-      delete args['metadataJson'];
       return DSMutation.submit(args, user);
     },
 

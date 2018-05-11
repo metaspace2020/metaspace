@@ -1,7 +1,10 @@
+process.env.NODE_ENV = 'test';
+
 const {UserError} = require('graphql-errors'),
   config = require('config');
 
-const {reprocessingNeeded} = require('../dsMutation');
+const {reprocessingNeeded} = require('../dsMutation'),
+  {generateProcessingConfig} = require('../utils');
 
 const metadata = {
   "MS_Analysis": {
@@ -25,10 +28,6 @@ const metadata = {
       "Surname": "Surname",
       "First_Name": "Name"
     }
-  },
-  "metaspace_options": {
-    "Dataset_Name": "dataset name",
-    "Metabolite_Database": config.defaults.moldb_names
   },
   "Sample_Information": {
     "Organism": "Mus musculus (mouse)",
@@ -57,7 +56,7 @@ const metadata = {
       "ppm": 3
     },
     "isotope_generation": {
-      "adducts": ["+H", "+K", "+Na"],
+      "adducts": ["+H", "+Na", "+K"],
       "charge": {
         "polarity": "+",
         "n_charges": 1
@@ -69,7 +68,8 @@ const metadata = {
   },
   ds = {
     config: dsConfig,
-    metadata: metadata
+    metadata: metadata,
+    molDBs: config.defaults.moldb_names
   };
 
 function clone(obj) {
@@ -77,15 +77,16 @@ function clone(obj) {
 }
 
 test('Reprocessing needed when database list changed', () => {
-  const newMetadata = clone(metadata);
-  newMetadata.metaspace_options.Metabolite_Database += ['ChEBI'];
+  const updDS = clone(ds);
+  updDS.molDBs.push('ChEBI');
+  updDS.config = generateProcessingConfig(updDS);
 
   try {
-    reprocessingNeeded(ds, newMetadata);
+    reprocessingNeeded(ds, updDS);
     throw(new Error());
   }
   catch (e) {
-    expect(e.message).not.toBe(undefined);
+    expect(e.message).not.toBe('');
     const msg = JSON.parse(e.message);
     expect(msg['type']).toBe('submit_needed');
   }
@@ -93,15 +94,16 @@ test('Reprocessing needed when database list changed', () => {
 });
 
 test('Drop reprocessing needed when instrument settings changed', () => {
-  const newMetadata = clone(metadata);
-  newMetadata.MS_Analysis.Detector_Resolving_Power.mz = 100;
+  const updDS = clone(ds);
+  updDS.metadata.MS_Analysis.Detector_Resolving_Power.mz = 100;
+  updDS.config = generateProcessingConfig(updDS);
 
   try {
-    reprocessingNeeded(ds, newMetadata);
+    reprocessingNeeded(ds, updDS);
     throw(new Error());
   }
   catch (e) {
-    expect(e.message).not.toBe(undefined);
+    expect(e.message).not.toBe('');
     const msg = JSON.parse(e.message);
     expect(msg['type']).toBe('drop_submit_needed');
   }
@@ -109,11 +111,12 @@ test('Drop reprocessing needed when instrument settings changed', () => {
 });
 
 test('Reprocessing not needed when just metadata changed', () => {
-  const newMetadata = clone(metadata);
-  newMetadata.metaspace_options.Dataset_Name = 'New dataset name';
-  newMetadata.Sample_Preparation.MALDI_Matrix = 'New matrix';
-  newMetadata.MS_Analysis.ionisationSource = 'DESI';
-  newMetadata.Sample_Information.Organism = 'New organism';
+  const updDS = clone(ds);
+  updDS.metadata.Sample_Preparation.MALDI_Matrix = 'New matrix';
+  updDS.metadata.MS_Analysis.ionisationSource = 'DESI';
+  updDS.metadata.Sample_Information.Organism = 'New organism';
+  updDS.name = 'New DS name';
+  updDS.config = generateProcessingConfig(updDS);
 
-  reprocessingNeeded(ds, newMetadata);
+  reprocessingNeeded(ds, updDS);
 });

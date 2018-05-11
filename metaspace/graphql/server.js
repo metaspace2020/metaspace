@@ -46,7 +46,7 @@ function createHttpServerAsync(config) {
         secret: config.jwt.secret,
         // issuer: config.jwt.issuer, // TODO: Add issuer to config so that it can be validated
         credentialsRequired: false,
-      }))
+      }));
       app.use('/graphql',
           bodyParser.json({type: '*/*'}),
           graphqlExpress(req => ({

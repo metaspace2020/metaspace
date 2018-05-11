@@ -76,10 +76,10 @@ async function molDBsExist(molDBNames) {
   }
 }
 
-async function reprocessingNeeded(oldMetadata, oldConfig, newMetadata, newConfig) {
-  const configDelta = jsondiffpatch.diff(oldConfig, newConfig),
+function reprocessingNeeded(ds, updDS) {
+  const configDelta = jsondiffpatch.diff(ds.config, updDS.config),
     configDiff = jsondiffpatch.formatters.jsonpatch.format(configDelta),
-    metaDelta = jsondiffpatch.diff(oldMetadata, newMetadata),
+    metaDelta = jsondiffpatch.diff(ds.metadata, updDS.metadata),
     metaDiff = jsondiffpatch.formatters.jsonpatch.format(metaDelta);
 
   let dbUpd = false, procSettingsUpd = false;
@@ -151,74 +151,76 @@ module.exports = {
   },
   Mutation: {
     submit: async (args, user) => {
-      const {datasetId, name, path, metadata, isPublic, priority, sync, delFirst} = args;
+      const {input: ds, priority, delFirst} = args;
       try {
-        if (datasetId !== undefined) {
-          const ds = await fetchDS({id: datasetId});
-          if (ds !== undefined)
-            await assertUserCanEditDataset(datasetId, payload);
+        if (ds.id !== undefined) {
+          await assertUserCanEditDataset(ds.id, user);
         }
 
-        setSubmitter(null, metadata, user);
-        validateMetadata(metadata);
-        await molDBsExist(metadata.metaspace_options.Metabolite_Database);
+        ds.metadata = JSON.parse(ds.metadataJson);
+        setSubmitter(null, ds.metadata, user);
+        validateMetadata(ds.metadata);
+        await molDBsExist(ds.molDBs);
+        ds.config = generateProcessingConfig(ds);
 
         const body = {
-          name: name,
-          input_path: path,
-          metadata: metadata,
-          config: generateProcessingConfig(metadata),
+          name: ds.name,
+          input_path: ds.inputPath,
+          metadata: ds.metadata,
+          config: ds.config,
           priority: priority,
           del_first: delFirst,
-          is_public: isPublic
+          is_public: ds.isPublic,
+          mol_dbs: ds.molDBs
         };
-        if (datasetId !== undefined)
-          body.id = datasetId;
-        return await smAPIRequest(datasetId, '/v1/datasets/add', body);
+        if (ds.id !== undefined)
+          body.id = ds.id;
+        return await smAPIRequest(ds.id, '/v1/datasets/add', body);
       } catch (e) {
         logger.error(e.stack);
         throw e;
       }
     },
     update: async (args, user) => {
-      const {datasetId, name, metadataJson, isPublic, priority} = args;
+      const {input, priority} = args;
       try {
-        const newMetadata = JSON.parse(metadataJson);
-        const ds = await fetchDS({id: datasetId});
+        let ds = await fetchDS({id: input.id});
         if (ds === undefined) {
           throw UserError('DS does not exist');
         }
-
         await assertUserCanEditDataset(ds.id, user);
-        setSubmitter(ds.metadata, newMetadata, user);
-        validateMetadata(newMetadata);
-        const newConfig = generateProcessingConfig(newMetadata);
-        await reprocessingNeeded(ds.metadata, ds.config, newMetadata, newConfig);
+
+        if (input.metadataJson !== undefined) {
+          input.metadata = JSON.parse(input.metadataJson);
+        }
+        const updDS = _.cloneDeep(ds);
+        _.extend(updDS, input);
+
+        setSubmitter(ds.metadata, updDS.metadata, user);
+        validateMetadata(updDS.metadata);
+        updDS.config = generateProcessingConfig(updDS);
+        await reprocessingNeeded(ds, updDS);
 
         const body = {
-          metadata: newMetadata,
-          config: newConfig,
-          name: name || ds.name,
+          metadata: updDS.metadata,
+          config: updDS.config,
+          name: updDS.name,
           priority: priority,
-          is_public: isPublic
+          is_public: updDS.isPublic
         };
-        return await smAPIRequest(ds.id, `/v1/datasets/${ds.id}/update`, body);
+        return await smAPIRequest(updDS.id, `/v1/datasets/${updDS.id}/update`, body);
       } catch (e) {
         logger.error(e.stack);
         throw e;
       }
     },
     delete: async (args, user) => {
-      const {name, delRawData, sync} = args;
+      const {name} = args;
 
       try {
         let datasetId = args.datasetId;
         await assertUserCanEditDataset(datasetId, user);
 
-        // if (delRawData != undefined || delRawData == false)
-        //   body = JSON.stringify({});
-        // else
-        //   body = JSON.stringify({ "del_raw": true });
         try {
           await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/del-optical-image`, {});
         }
