@@ -126,9 +126,8 @@ class SMDaemonDatasetManager(DatasetManager):
 
         self._es.delete_ds(ds.id)
 
-        moldb_names = [d['name'] for d in ds.config['databases']]
         for job_id, mol_db_name in self._finished_job_moldbs(ds.id):
-            if mol_db_name not in moldb_names:
+            if mol_db_name not in ds.config['databases']:
                 self._db.alter("DELETE FROM job WHERE id = %s", job_id)
             else:
                 mol_db = MolecularDB(name=mol_db_name,

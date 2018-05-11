@@ -27,19 +27,12 @@ ANNOTATIONS_SEL = '''SELECT
     COALESCE(m.msm, 0::real) AS msm,
     m.adduct,
     j.id AS job_id,
---    f.id AS sf_id,
     m.fdr as pass_fdr,
---    tp.centr_mzs AS centroid_mzs,
     m.iso_image_ids as iso_image_ids,
     ds.config->'isotope_generation'->'charge'->'polarity' as polarity
 FROM iso_image_metrics m
---JOIN sum_formula f ON f.id = m.sf_id
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
--- JOIN theor_peaks tp ON tp.sf = f.sf AND tp.adduct = m.adduct
--- 	AND tp.sigma::real = (ds.config->'isotope_generation'->>'isocalc_sigma')::real
--- 	AND tp.charge = (CASE WHEN ds.config->'isotope_generation'->'charge'->>'polarity' = '+' THEN 1 ELSE -1 END)
--- 	AND tp.pts_per_mz = (ds.config->'isotope_generation'->>'isocalc_pts_per_mz')::int
 WHERE ds.id = %s AND m.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC'''
 
@@ -52,13 +45,14 @@ DATASET_SEL = '''SELECT
     upload_dt,
     dataset.status,
     to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS'),
-    is_public
+    is_public,
+    mol_dbs
 FROM dataset LEFT JOIN job ON job.ds_id = dataset.id
 WHERE dataset.id = %s
 GROUP BY dataset.id'''
 
 DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path',
-                   'ds_upload_dt', 'ds_status', 'ds_last_finished', 'ds_is_public')
+                   'ds_upload_dt', 'ds_status', 'ds_last_finished', 'ds_is_public', "ds_mol_dbs")
 
 
 def init_es_conn(es_config):

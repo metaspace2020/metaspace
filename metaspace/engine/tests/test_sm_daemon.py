@@ -150,7 +150,7 @@ class TestSMDaemonSingleEventCases:
     def test_update(self, fill_db, clean_ds_man_mock, delete_queue, ds_config, sm_config):
         api_ds_man = create_api_ds_man(sm_config=sm_config)
         ds = create_ds(ds_config=ds_config)
-        ds.meta['new'] = 'field'
+        ds.metadata['new'] = 'field'
 
         api_ds_man.update(ds)
 
@@ -218,7 +218,7 @@ class TestSMDaemonTwoEventsCases:
         api_ds_man = create_api_ds_man(sm_config=sm_config)
         ds = create_ds(ds_config=ds_config)
         api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
-        ds.meta['new_field'] = 'value'
+        ds.metadata['new_field'] = 'value'
         api_ds_man.update(ds, priority=DatasetActionPriority.DEFAULT)
 
         run_sm_daemon()

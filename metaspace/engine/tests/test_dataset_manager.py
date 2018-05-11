@@ -89,7 +89,7 @@ class TestSMapiDatasetManager:
 
         ds_id = '2000-01-01'
         ds = create_ds(ds_id=ds_id, ds_config=ds_config)
-        ds.meta = {'new': 'metadata'}
+        ds.metadata = {'new': 'metadata'}
 
         ds_man.update(ds)
 

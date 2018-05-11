@@ -71,18 +71,19 @@ def add_ds():
                      params.get('upload_dt', now),
                      params.get('metadata', None),
                      params.get('config'),
-                     is_public=params.get('is_public')
-                     )
+                     is_public=params.get('is_public'),
+                     mol_dbs=params.get('mol_dbs'))
         db = _create_db_conn()
         ds_man = _create_dataset_manager(db)
-        ds_man.add(ds, del_first=params.get('del_first', False),
-                   priority=params.get('priority', DatasetActionPriority.DEFAULT))
+        priority = params.get('priority', DatasetActionPriority.DEFAULT)
+        ds_man.add(ds, del_first=params.get('del_first', False), priority=priority)
         db.close()
         return {
             'status': OK['status'],
             'ds_id': ds_id
         }
-    except Exception:
+    except Exception as e:
+        logger.error(e, exc_info=True)
         resp.status = ERROR['status_code']
         return {
             'status': ERROR['status'],
@@ -112,7 +113,8 @@ def sm_modify_dataset(request_name):
                     'status': ERR_OBJECT_NOT_EXISTS['status'],
                     'ds_id': ds_id
                 }
-            except Exception:
+            except Exception as e:
+                logger.error(e, exc_info=True)
                 resp.status = ERROR['status_code']
                 return {
                     'status': ERROR['status'],
@@ -127,7 +129,7 @@ def sm_modify_dataset(request_name):
 def update_ds(ds_man, ds, params):
     ds.name = params.get('name', ds.name)
     ds.input_path = params.get('input_path', ds.input_path)
-    ds.meta = params.get('metadata', ds.meta)
+    ds.metadata = params.get('metadata', ds.metadata)
     ds.config = params.get('config', ds.config)
     ds.is_public = params.get('is_public', ds.is_public)
 
