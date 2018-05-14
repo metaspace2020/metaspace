@@ -57,8 +57,7 @@
     "Sample_Preparation": {
       "description": "Information about how the sample was prepared for imaging",
       "type": "object",
-      "required": ["Sample_Stabilisation", "Tissue_Modification",
-                   "MALDI_Matrix", "MALDI_Matrix_Application"],
+      "required": ["Sample_Stabilisation", "Tissue_Modification"],
       "properties": {
         "Sample_Stabilisation": {
           "description": "Quenching or preservation method used",
