@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "id": "https://raw.githubusercontent.com/METASPACE2020/metadata/master/min%20metadata%20schema.json",
   "title": "Metadata Submission",
-  "description": "Minimal metadata for imaging mass spectrometry (imaging MS) as developed in the METASPACE project",
+  "description": "Minimal metadata for mass spectrometry as developed in the METASPACE project",
   "type": "object",
   "definitions": {
     "person": {
@@ -26,8 +26,13 @@
       }
     }
   },
-  "required": ["Sample_Information", "Sample_Preparation", "Submitted_By", "MS_Analysis", "metaspace_options"],
+  "required": ["Data_Type", "Sample_Information", "Sample_Preparation", "Submitted_By", "MS_Analysis", "metaspace_options"],
   "properties": {
+    "Data_Type": {
+      "description": "Type of MS data",
+      "type": "string",
+      "minLength": 3
+    },
     "Sample_Information": {
       "type": "object",
       "required": ["Organism", "Organism_Part", "Condition"],
@@ -55,7 +60,7 @@
       }
     },
     "Sample_Preparation": {
-      "description": "Information about how the sample was prepared for imaging",
+      "description": "Information about how the sample was prepared for the experiment",
       "type": "object",
       "required": ["Sample_Stabilisation", "Tissue_Modification"],
       "properties": {
@@ -68,24 +73,6 @@
           "description": "Post stabilisation tissue modification",
           "type": "string",
           "minLength": 1
-        },
-        "MALDI_Matrix": {
-          "description": "The MALDI matrix used (if any)",
-          "type": "string",
-          "minLength": 1,
-          "default": "none"
-        },
-        "Solvent": {
-          "description": "Solvent used for extract (e.g. for DESI or MALDI matrix solution)",
-          "type": "string",
-          "minLength": 1,
-          "default": "none"
-        },
-        "MALDI_Matrix_Application": {
-          "description": "Method of MALDI matrix application (if any)",
-          "type": "string",
-          "minLength": 1,
-          "default": "none"
         }
       }
     },
@@ -152,25 +139,6 @@
         },
         "Principal_Investigator": {
           "$ref": "#/definitions/person"
-        }
-      }
-    },
-    "metaspace_options":{
-      "type": "object",
-      "description": "Processing options for the METASPACE engine",
-      "required": ["Metabolite_Database", "Dataset_Name"],
-      "properties":{
-        "Metabolite_Database": {
-          "description": "Metabolite database searched against",
-          "type": "array",
-          "minItems": 1,
-          "items": { "type": "string" },
-          "uniqueItems": true
-        },
-        "Dataset_Name":{
-          "description": "Dataset name",
-          "type": "string",
-          "minLength": 5
         }
       }
     },
