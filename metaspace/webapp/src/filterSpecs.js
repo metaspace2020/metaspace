@@ -4,14 +4,7 @@ import SingleSelectFilter from './components/SingleSelectFilter.vue';
 import DatasetNameFilter from './components/DatasetNameFilter.vue';
 import MzFilter from './components/MzFilter.vue';
 import SearchBox from './components/SearchBox.vue';
-import * as assert from 'assert';
-import metadataRegistry from './assets/metadataRegistry';
-
-// Set Imaging as default or any other if Imaging is not available
-let defaultMetadataType = 'Imaging MS';
-if (!(defaultMetadataType in metadataRegistry)) {
-  defaultMetadataType = Object.keys(metadataRegistry)[0];
-}
+import {metadataTypes, defaultMetadataType} from './assets/metadataRegistry';
 
 // Filled during the initialization of adduct filter below
 const ADDUCT_POLARITY = {};
@@ -264,9 +257,10 @@ const FILTER_SPECIFICATIONS = {
     name: 'Data type',
     description: 'Select data type',
     levels: ['annotation', 'dataset', 'upload'],
+    defaultInLevels: ['annotation', 'dataset', 'upload'],
     initialValue: defaultMetadataType,
     removable: false,
-    options: Object.keys(metadataRegistry)
+    options: metadataTypes
   }
 };
 

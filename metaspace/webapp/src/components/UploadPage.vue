@@ -72,7 +72,7 @@
      fileExtensions: ['mzML'],
      maxFiles: 1,
      nameValidator(fileNames) {
-       return fileNames.length == 1;
+       return fileNames.length === 1;
      }
    },
    default: {
@@ -91,7 +91,7 @@
        let [first, second] = [fileNames[fileCount - 2], fileNames[fileCount - 1]];
        let [fext, sext] = [first, second].map(extension);
        let [fbn, sbn] = [first, second].map(basename);
-       if (fext == sext || fbn != sbn) {
+       if (fext === sext || fbn !== sbn) {
          this.$message({
            message: "Incompatible file names! Please select 2 files " +
                     "with the same name but different extension",
@@ -133,10 +133,7 @@
      fineUploaderDataTypeConfig() {
        const activeDataType = this.$store.getters.filter.metadataType;
        return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig['default'];
-     }
-   },
-
-   computed: {
+     },
      isSignedIn() {
        return this.$store.state.user != null;
      }
@@ -220,7 +217,7 @@
            mutation: submitDatasetQuery,
            variables: {
              path: pathFromUUID(uuid),
-             value: formData,
+             metadataJson: formData,
              jwt,
              isPublic
            }}));

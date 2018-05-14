@@ -8,7 +8,7 @@ const config = require('./src/clientConfig.json');
 const minSchemaPath = "metadata/min metadata schema.json";
 const specializedSchemasDir = "metadata/specialised metadata";
 const metadataFileExtension = '.json';
-const metadataRegistryFilename = 'metadataRegistry.js';
+const metadataMappingFilename = 'metadataMapping.js';
 
 function readJsonSchema(filePath) {
     const schema = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -67,4 +67,4 @@ if (!metadataFiles) {
 
 // create unified metadata registry
 const registryExportStmt = `export default ${JSON.stringify(metadataFiles)};`;
-fs.writeFileSync(path.join(outputDir, metadataRegistryFilename), registryExportStmt);
+fs.writeFileSync(path.join(outputDir, metadataMappingFilename), registryExportStmt);

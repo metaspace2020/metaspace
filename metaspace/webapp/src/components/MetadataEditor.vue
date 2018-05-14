@@ -35,7 +35,7 @@
                 </el-popover>
               </div>
 
-              <el-form-item class="control" v-if="prop.type == 'string' && !loading"
+              <el-form-item class="control" v-if="prop.type == 'string'"
                             :class="isError(sectionName, propName)">
 
                 <div>
@@ -82,7 +82,7 @@
                 </span>
               </el-form-item>
 
-              <el-form-item class="control" v-if="prop.type == 'boolean' && !loading"
+              <el-form-item class="control" v-if="prop.type == 'boolean'"
                             :class="isError(sectionName, propName)">
 
                 <div>
@@ -96,7 +96,7 @@
                 </span>
               </el-form-item>
 
-              <el-form-item class="control" v-if="prop.type == 'array' && !loading"
+              <el-form-item class="control" v-if="prop.type == 'array'"
                             :class="isError(sectionName, propName)">
 
                 <el-select v-if="!isTable(propName) && prop.items.enum"
@@ -141,7 +141,6 @@
                           v-for="(field, fieldName) in prop.properties" :key="sectionName + propName + fieldName">
 
                     <el-form-item :class="isError(sectionName, propName, fieldName)"
-                                  v-if="!loading"
                                   :required="isRequired(fieldName, prop)">
 
                       <el-input v-if="field.type == 'string'"
@@ -202,7 +201,8 @@
     a submit event is emitted with dataset ID and stringified form value.
   */
 
- import metadataRegistry from '../assets/metadataRegistry';
+ import {defaultMetadataType, metadataSchemas} from '../assets/metadataRegistry';
+ import Ajv from 'ajv';
  import merge from 'lodash/merge';
  import {
    fetchAutocompleteSuggestionsQuery,
@@ -212,11 +212,6 @@
  import Vue from 'vue';
  import DatabaseDescriptions from './DatabaseDescriptions.vue';
 
- const metadataSchemas = {};
- for (const mdType of Object.keys(metadataRegistry)) {
-   const mdFilename = metadataRegistry[mdType];
-   metadataSchemas[mdType] = require(`../assets/${mdFilename}`);
- }
 
  const ajv = new Ajv({allErrors: true});
  // clear schema cache
@@ -289,8 +284,9 @@
            'Positive': data.adducts.filter(a => a.charge > 0).map(a => a.adduct),
            'Negative': data.adducts.filter(a => a.charge < 0).map(a => a.adduct)
          };
-         this.molecularDatabases = data.molecularDatabases;
+         this.molecularDatabases = data.molecularDatabases.map(d => d.name);
 
+         this.updateSchemaOptions();
          this.applyDefaultDatabases();
          this.updateCurrentAdductOptions();
        },
@@ -307,30 +303,19 @@
        },
        update(data) {
          this.value = this.fixEntries(JSON.parse(data.dataset.metadataJson));
-         this._datasetMdType = this.value.Data_Type;
-         const defaultValue = this.getDefaultMetadataValue();
+         this._datasetMdType = this.value.Data_Type || defaultMetadataType;
+         const defaultValue = this.getDefaultMetadataValue(this._datasetMdType);
          this.value = merge({}, defaultValue, this.value);
          this.isPublic = data.dataset.isPublic;
          this.updateCurrentAdductOptions();
+         this.updateSchemaOptions();
 
          // in case user just opened a link to metadata editing page w/o navigation in web-app,
          // filters are not set up
-         this.$store.commit('updateFilter', {metadataType: this.value.Data_Type});
+         this.$store.commit('updateFilter', {metadataType: this._datasetMdType});
        },
        loadingKey: 'loading'
      }
-   },
-   created() {
-     this.loading = true;
-     this.$apollo.query({query: gql`{molecularDatabases{name}}`}).then(response => {
-       Vue.set(this.schema.properties.metaspace_options.properties.Metabolite_Database.items,
-               'enum',
-               response.data.molecularDatabases.map(d => d.name));
-       this.validator = ajv.compile(this.schema);
-       this.setLoadingStatus(false);
-     }).catch(err => {
-       console.log("Error fetching list of metabolite databases: ", err);
-     });
    },
 
    mounted() {
@@ -342,12 +327,11 @@
 
    data() {
      // some default value before we download metadata
-     this._datasetMdType = Object.keys(metadataRegistry)[0];
+     this._datasetMdType = this.$store.getters.filter.metadataType;
      return {
-       schema: metadataSchema,
-       value: this.getDefaultMetadataValue(),
+       value: this.getDefaultMetadataValue(this._datasetMdType),
        isPublic: true,
-       loading: true,
+       loading: 0,
        molecularDatabases: null,
        defaultDatabaseApplied: false,
        // dictionary with highlighted row numbers in each table in the submission form
@@ -360,13 +344,7 @@
 
    computed: {
      schema() {
-       const schema = metadataSchemas[this.currentMetadataType()];
-       this.updateSchemaOptions(schema);
-       const curDataType = schema.properties.Data_Type.enum[0];
-       if (this.value.Data_Type != curDataType) {
-         this.value.Data_Type = curDataType;
-       }
-       return schema;
+       return metadataSchemas[this.currentMetadataType()];
      },
 
      validator() {
@@ -387,7 +365,7 @@
    },
    methods: {
      currentMetadataType() {
-       return this.datasetId ? this._datasetMdType : this.$store.getters.filter.metadataType;
+       return this.datasetId ? this._datasetMdType : this.$store.getters.filter.metadataType || this._datasetMdType;
      },
 
      safelyParseJSON(json) {
@@ -412,11 +390,11 @@
        return name;
      },
 
-     getDefaultMetadataValue() {
+     getDefaultMetadataValue(metadataType) {
        const user = this.$store.state.user,
          email = user ? user.email : '';
        return merge({},
-         objectFactory(metadataSchema),
+         objectFactory(metadataSchemas[metadataType]),
          {Submitted_By: {Submitter: {Email: email}}}
        );
      },
@@ -551,15 +529,16 @@
      },
 
      loadLastSubmission() {
-       const defaultValue = this.getDefaultMetadataValue();
        const lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
        const lastVersion = JSON.parse(localStorage.getItem(LOCAL_STORAGE_VERSION_KEY) || '1');
        if (lastValue && lastValue.metaspace_options) {
          lastValue.metaspace_options.Dataset_Name = ''; // different for each dataset
 
+         const defaultValue = this.getDefaultMetadataValue(this._datasetMdType);
          /* we want to have all nested fields to be present for convenience,
-            that's what objectFactory essentially does */
+                     that's what objectFactory essentially does */
          this.value = merge({}, defaultValue, this.fixEntries(lastValue));
+         this.updateSchemaOptions();
          this.applyDefaultDatabases();
          this.updateCurrentAdductOptions();
 
@@ -568,17 +547,24 @@
          if (lastVersion < 2) {
            this.value.metaspace_options.Metabolite_Database = [];
          }
-       } else {
-         this.value = defaultValue;
        }
      },
 
-     updateSchemaOptions(schema) {
-       if (!this.schemaHasMolDbOptions(schema) && this._molecularDatabases) {
-         schema.properties.metaspace_options.properties.Metabolite_Database.items['enum'] = this._molecularDatabases;
+     updateSchemaOptions() {
+       const schema = metadataSchemas[this.currentMetadataType()];
+
+       const curDataType = schema.properties.Data_Type.enum[0];
+       if (this.value.Data_Type !== curDataType) {
+         this.value.Data_Type = curDataType;
+       }
+
+       if (!this.schemaHasMolDbOptions(schema) && this.molecularDatabases) {
+         Vue.set(schema.properties.metaspace_options.properties.Metabolite_Database.items, 'enum',
+           this.molecularDatabases);
 
          const selectedPolarity = this.value.MS_Analysis.Polarity;
-         schema.properties.metaspace_options.properties.Adducts.items['enum'] = selectedPolarity ? this._possibleAdducts[selectedPolarity] : [];
+         Vue.set(schema.properties.metaspace_options.properties.Adducts.items, 'enum',
+           selectedPolarity ? this._possibleAdducts[selectedPolarity] : []);
        }
      },
 
@@ -599,33 +585,16 @@
        this.updateCurrentAdductOptions();
      },
 
-     setLoadingStatus(value) {
-       // https://github.com/ElemeFE/element/issues/4834
-       this.$nextTick(() => { this.loading = value; });
-     },
-
      resetDatasetName() {
        this.value.metaspace_options.Dataset_Name = '';
      },
 
      submit() {
-       const cleanValue = trimEmptyFields(this.schema, this.value);
-
-       this.validator(cleanValue);
-       this.validationErrors = this.validator.errors || [];
-
-       if (this.validationErrors.length > 0) {
-         this.$message({
-           message: 'Please fix the highlighted fields and submit again',
-           type: 'error'
-         })
-       } else {
-         const value = JSON.stringify(cleanValue);
-         if (!this.datasetId) {
-           localStorage.setItem(LOCAL_STORAGE_KEY, value);
-           localStorage.setItem(LOCAL_STORAGE_VERSION_KEY, JSON.stringify(LOCAL_STORAGE_CURRENT_VERSION));
-         }
-         this.$emit('submit', this.datasetId, value, this.isPublic);
+       const value = JSON.stringify(this.value);
+       this.$emit('submit', this.datasetId, value, this.isPublic);
+       if (!this.datasetId) {
+         localStorage.setItem(LOCAL_STORAGE_KEY, value);
+         localStorage.setItem(LOCAL_STORAGE_VERSION_KEY, JSON.stringify(LOCAL_STORAGE_CURRENT_VERSION));
        }
      },
 

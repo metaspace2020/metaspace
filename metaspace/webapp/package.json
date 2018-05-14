@@ -9,7 +9,8 @@
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
     "build-ci": "cross-env NODE_ENV=production webpack --hide-modules",
     "test": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=20000 --quarantine-mode --assertion-timeout=20000",
-    "cucumber-test": "cucumber-js --compiler ts:ts-node/register tests/e2e/ --fail-fast"
+    "cucumber-test": "cucumber-js --compiler ts:ts-node/register tests/e2e/ --fail-fast",
+    "deref-schema": "node deref_schema.js src/assets/"
   },
   "dependencies": {
     "ajv": "^4.10.0",

@@ -9,16 +9,14 @@
 </template>
 
 <script>
- import metadataRegistry from '../assets/metadataRegistry';
+ import {metadataSchemas} from '../assets/metadataRegistry';
 
  export default {
    name: 'dataset-info',
    props: ['metadata', 'expandedKeys'],
    data() {
-     const mdFilename = metadataRegistry[this.$store.getters.filter.metadataType];
-     const metadataSchema = require(`../assets/${mdFilename}`);
      return {
-       schema: metadataSchema,
+       schema: metadataSchemas[this.$store.getters.filter.metadataType],
        defaultExpandedKeys: this.expandedKeys
      }
    },
