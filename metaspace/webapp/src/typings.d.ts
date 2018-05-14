@@ -20,6 +20,7 @@ declare module "*/clientConfig.json" {
     enableUploads: boolean
 
     fineUploader: FineUploaderConfig
+    ravenDsn: string | null
   }
 
   const value: ClientConfig;

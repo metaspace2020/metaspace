@@ -252,8 +252,6 @@
 
        this.applyDefaultDatabases();
        this.setLoadingStatus(false);
-     }).catch(err => {
-       console.log("Error fetching list of metabolite databases: ", err);
      });
    },
 
@@ -277,8 +275,6 @@
        this.defaultDatabaseApplied = true;
        this.isPublic = resp.data.dataset.isPublic;
        this.setLoadingStatus(false);
-     }).catch(err => {
-       console.log("Error fetching current metadata: ", err);
      });
    },
 
@@ -302,16 +298,6 @@
      }
    },
    methods: {
-     safelyParseJSON(json) {
-       let parseRes;
-       try {
-         parseRes = JSON.parse(json);
-       } catch (err) {
-         return 'failed_parsing';
-       }
-       return parseRes;
-     },
-
      prettify(propName, parent) {
        let name = propName.toString()
                           .replace(/_/g, ' ')

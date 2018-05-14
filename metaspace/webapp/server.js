@@ -6,7 +6,8 @@ var AWS = require('aws-sdk'),
     bodyParser = require('body-parser'),
     favicon = require('serve-favicon'),
     session = require('express-session'),
-    GoogleStrategy = require('passport-google-oauth20').Strategy;
+    GoogleStrategy = require('passport-google-oauth20').Strategy,
+    Raven = require('raven');
 
 var env = process.env.NODE_ENV || 'development';
 var conf = require('./conf.js');
@@ -14,6 +15,12 @@ var conf = require('./conf.js');
 const LOCAL_SETUP = conf.UPLOAD_DESTINATION != 's3';
 
 var app = express();
+
+if (env !== 'development' && conf.RAVEN_DSN != null) {
+  Raven.config(conf.RAVEN_DSN).install();
+  // Raven.requestHandler should be the first middleware
+  app.use(Raven.requestHandler());
+}
 
 var jwt = require('jwt-simple');
 let sessionStore = undefined;
@@ -148,7 +155,6 @@ if (conf.AWS_ACCESS_KEY_ID && env != 'development') {
       }
     }, (err, data) => {
       if (err) console.log(err);
-      console.log('Sent login link to ' + recipient);
       callback(err);
     });
   });
@@ -174,7 +180,6 @@ app.use(passwordless.acceptToken({ successRedirect: '/'}));
 
 app.get('/sendToken/',
   passwordless.requestToken((user, delivery, callback, req) => {
-    console.log(user);
     Users().where({email: user}).first()
            .then(record => {
              if (record) {
@@ -266,7 +271,11 @@ if (env == 'development') {
   app.use(webpackDevMiddleware(compiler, {
     publicPath: config.output.publicPath,
     noInfo: true,
-    stats: {colors: true}
+    stats: {
+      chunks: false,
+      chunkModules: false,
+      colors: true
+    }
   }));
 
   app.use(webpackHotMiddleware(compiler, {
@@ -289,6 +298,11 @@ if (conf.UPLOAD_DESTINATION == 's3') {
   app.use('/upload', require('./fineUploaderS3Middleware.js')());
 } else {
   app.use('/upload', require('./fineUploaderLocalMiddleware.js')());
+}
+
+if (env !== 'development' && conf.RAVEN_DSN != null) {
+  // Raven.errorHandler should go after all normal handlers/middleware, but before any other error handlers
+  app.use(Raven.errorHandler());
 }
 
 app.listen(conf.PORT, () => {
