@@ -125,16 +125,6 @@
 
    apollo: {
      $subscribe: {
-       datasetDeleted: {
-         query: gql`subscription DD {
-           datasetDeleted { datasetId }
-         }`,
-         result(data) {
-           console.log(data);
-           this.refetchList();
-         }
-       },
-
        datasetStatusUpdated: {
          query: gql`subscription DS {
            datasetStatusUpdated {
@@ -151,27 +141,26 @@
            }
          }`,
          result(data) {
-           console.log(data);
-           const {
-             id, name, status, submitter, institution
-           } = data.datasetStatusUpdated.dataset;
-           const who = `${submitter.name} ${submitter.surname} (${institution})`;
-           const statusMap = {
-             FINISHED: 'success',
-             QUEUED: 'info',
-             STARTED: 'info',
-             FAILED: 'warning'
-           };
-           let message = '';
-           if (status == 'FINISHED')
-             message = `Processing of dataset ${name} is finished!`;
-           else if (status == 'FAILED')
-             message = `Something went wrong with dataset ${name} :(`;
-           else if (status == 'QUEUED')
-             message = `Dataset ${name} has been submitted to query by ${who}`;
-           else if (status == 'STARTED')
-             message = `Started processing dataset ${name}`;
-           this.$notify({ message, type: statusMap[status] });
+           if (data.datasetStatusUpdated.dataset != null) {
+             const {name, status, submitter, institution} = data.datasetStatusUpdated.dataset;
+             const who = `${submitter.name} ${submitter.surname} (${institution})`;
+             const statusMap = {
+               FINISHED: 'success',
+               QUEUED: 'info',
+               STARTED: 'info',
+               FAILED: 'warning'
+             };
+             let message = '';
+             if (status == 'FINISHED')
+               message = `Processing of dataset ${name} is finished!`;
+             else if (status == 'FAILED')
+               message = `Something went wrong with dataset ${name} :(`;
+             else if (status == 'QUEUED')
+               message = `Dataset ${name} has been submitted to query by ${who}`;
+             else if (status == 'STARTED')
+               message = `Started processing dataset ${name}`;
+             this.$notify({ message, type: statusMap[status] });
+           }
 
            this.refetchList();
          }
@@ -258,7 +247,7 @@
 
        csv += ['datasetId', 'datasetName', 'institution', 'submitter',
                'PI', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource',
-               'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime'
+               'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime','FDR@10% + DataBase', 'opticalImage'
        ].join(',') + "\n";
 
        function person(p) { return p ? p.name + ' ' + p.surname : ''; }
@@ -279,7 +268,9 @@
            row.analyzer.type,
            Math.round(row.analyzer.resolvingPower),
            row.polarity.toLowerCase(),
-           row.uploadDateTime
+           row.uploadDateTime,
+           row.fdrCounts ? `${row.fdrCounts.counts}` + ' ' + `${row.fdrCounts.dbName}` : '',
+           (row.opticalImage != 'noOptImage') ? 'http://' + window.location.host + row.opticalImage : 'No optical image'
          ].join(',');
        }
 

@@ -3,7 +3,7 @@ import {decodeParams, decodeSettings} from '../url';
 
 export default {
   filter(state) {
-    return decodeParams(state.route);
+    return decodeParams(state.route, state.filterLists);
   },
 
   settings(state) {

@@ -12,6 +12,7 @@ npm-debug.log*
 pids
 *.pid
 *.seed
+db.sqlite
 
 # Dereferenced metadata files
 /src/assets/*.json
@@ -47,6 +48,10 @@ jspm_packages
 
 # Passwords and other sensitive data
 conf.js
+src/clientConfig.json
 
 # Screenshots taken by testcafe
 tests/e2e/screenshots
+
+# WebStorm files
+.idea

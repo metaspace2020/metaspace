@@ -134,7 +134,7 @@
        simpleQuery: ''
      };
      const path = '/annotations';
-     const q = encodeParams(filter, path)
+     const q = encodeParams(filter, path, this.$store.state.filterLists);
      return {query: q, path};
    }
 

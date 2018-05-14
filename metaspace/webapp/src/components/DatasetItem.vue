@@ -10,15 +10,15 @@
     <div class="opt-image" v-if="isOpticalImageSupported">
       <router-link :to="opticalImageAlignmentHref" v-if="haveEditAccess && dataset.status === 'FINISHED'">
         <div v-if="thumbnailCheck" class="edit-opt-image" title="Edit Optical Image">
-          <img class="opt-image-thumbnail" :src="opticalImageSmall" width="100px" height="100px" alt="Edit optical image"/>
+          <img class="opt-image-thumbnail" :src="opticalImageSmall" alt="Edit optical image"/>
         </div>
         <div v-else class="no-opt-image" title="Add Optical Image">
-          <img class="add-opt-image-thumbnail" src="../assets/no_opt_image.png" width="100px" height="100px" alt="Add optical image"/>
+          <img class="add-opt-image-thumbnail" src="../assets/no_opt_image.png" alt="Add optical image"/>
         </div>
       </router-link>
       <div v-else class="edit-opt-image-guest">
-        <img v-if="thumbnailCheck" :src="opticalImageSmall" width="100px" height="100px" alt="Optical image"/>
-        <img v-else src="../assets/no_opt_image.png" width="100px" height="100px" alt="Optical image"/>
+        <img v-if="thumbnailCheck" :src="opticalImageSmall" alt="Optical image"/>
+        <img v-else src="../assets/no_opt_image.png" alt="Optical image"/>
       </div>
     </div>
 
@@ -56,7 +56,7 @@
               title="Filter by polarity"
               @click="addFilter('polarity')">
           {{ dataset.polarity.toLowerCase() }} mode</span>,
-        resolving power {{ formatResolvingPower }}
+        RP {{ formatResolvingPower }}
       </div>
 
       <div style="font-size: 15px;">
@@ -71,7 +71,7 @@
               title="Filter by this lab"
               @click="addFilter('institution')"></span>
       </div>
-      <div v-if="dataset.status == 'FINISHED'">
+      <div v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
         <span>{{formatFdrCounts()}} annotations @ FDR {{formatFdrLevel()}}% ({{formatDbName()}})</span>
       </div>
     </div>
@@ -114,6 +114,11 @@
         <i class="el-icon-delete"></i>
         <a @click="openDeleteDialog">Delete dataset</a>
       </div>
+
+      <img v-if="!dataset.isPublic"
+           class="ds-item-private-icon"
+           src="../assets/padlock-icon.svg"
+           title="These annotation results are not publicly visible">
     </div>
   </div>
 </template>
@@ -123,6 +128,7 @@
  import capitalize from 'lodash/capitalize';
  import {deleteDatasetQuery, opticalImageQuery} from '../api/dataset';
  import {getJWT, mdTypeSupportsOpticalImages} from '../util';
+ import {encodeParams} from '../url';
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');
@@ -272,9 +278,15 @@
 
    methods: {
      resultsHref(databaseName) {
+       const filter = Object.assign({}, this.$store.getters.filter, {
+         database: databaseName,
+         datasetIds: [this.dataset.id]
+       });
        return {
          path: '/annotations',
-         query: {ds: this.dataset.id, db: databaseName, mdtype: this.dataset.metadataType}
+         query: Object.assign({},
+           encodeParams(filter, '/annotations', this.$store.state.filterLists),
+           {mdtype: this.dataset.metadataType})
        };
      },
 
@@ -294,40 +306,34 @@
        this.$store.commit('updateFilter', filter);
      },
 
-     openDeleteDialog() {
-       this.$confirm("Are you sure you want to delete " +
-                     this.formatDatasetName + "?")
-         .then(_ => {
-           getJWT().then(jwt => {
-             this.disabled = true;
-             return this.$apollo.mutate({
-               mutation: deleteDatasetQuery,
-               variables: {
-                 jwt,
-                 id: this.dataset.id
-             }});
-           })
-           .then(resp => {
-             return {
-               deleteDataset: resp.data.deleteDataset,
-               deleteOptImage: resp.data.deleteOpticalImage
-             }
-           })
-           .then(status => {
-             if (status.deleteDataset != 'success') {
-               this.$message({
-                 message: "Deletion failed :( Contact us: contact@metaspace2020.eu" + "(error: " + status + ")",
-                 type: 'error',
-                 duration: 0,
-                 showClose: true
-               });
-               this.disabled = false;
-             }
-             if(status.deleteOptImage != 'success') {
-               console.log('Deletion of optical image failed whlie dataset was being deleted' + ' :' + status['deleteOptImage']);
-             }
-           });
-         }).catch(_ => {});
+     async openDeleteDialog() {
+       try {
+         await this.$confirm(`Are you sure you want to delete ${this.formatDatasetName}?`);
+       } catch (cancel) {
+         return;
+       }
+
+       try {
+         this.disabled = true;
+         const jwt = await getJWT();
+         const resp = await this.$apollo.mutate({
+           mutation: deleteDatasetQuery,
+           variables: {
+             jwt,
+             id: this.dataset.id
+           }
+         });
+       }
+       catch (err) {
+         console.log(err);
+         this.$message({
+           message: "Deletion failed :( Please contact us at contact@metaspace2020.eu",
+           type: 'error',
+           duration: 0,
+           showClose: true
+         });
+         this.disabled = false;
+       }
      },
 
      formatFdrLevel() {
@@ -408,7 +414,15 @@
     opacity: .2;
   }
 
+  .opt-image img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    object-position: 0 0;
+  }
+
  .dataset-item {
+   position: relative;
    border-radius: 5px;
    width: 100%;
    max-width: 800px;
@@ -496,6 +510,14 @@
  .ds-item-disabled {
    pointer-events: none;
    opacity: 0.5;
+ }
+ .ds-item-private-icon {
+   position: absolute;
+   opacity: 0.2;
+   width: 24px;
+   height: 32px;
+   right: 10px;
+   bottom: 8px;
  }
 
 </style>

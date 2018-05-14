@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: lomereiter/sm-webapp:0.7.1
+      - image: intsco/sm-webapp:0.9
 
       - image: postgres:9.5-alpine
         environment:
@@ -48,12 +48,12 @@ jobs:
           name: Start GraphQL server and service mocks
           command: |
             rm -rf sm-graphql
-            git clone https://github.com/metaspace2020/sm-graphql --branch rel-v0.9
+            git clone https://github.com/metaspace2020/sm-graphql --branch rel-v0.9 --recursive
             export NPM_CONFIG_LOGLEVEL=warn
-            cd sm-graphql && yarn install && cd ..
-            cp sm-graphql/tests/mock_config.js sm-graphql/config/default.js
-            forever start sm-graphql/tests/api_mocks.js
-            cd sm-graphql && forever start server.js
+            cd sm-graphql && yarn install && node deref_schema.js > metadata_schema.json
+            cp tests/mock_config.js config/default.js
+            forever start -e api_mocks.err.log tests/api_mocks.js
+            forever start -o sm-graphql.out.log -e sm-graphql.err.log server.js
       - run:
           name: Load test data into the database and ElasticSearch
           command: |

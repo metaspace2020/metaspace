@@ -106,26 +106,25 @@
        this.options = options;
      },
 
-     fetchNames(ids) {
-       this.$apollo.query({
+     async fetchNames(ids) {
+       const {data} = await this.$apollo.query({
          query: namesQuery,
 
          // TODO update when we make GraphQL accept an array
          variables: {ids: ids.join('|')}
-       }).then(({data}) => {
-         this.cachedOptions = deepcopy(data.options);
-         /* hack to make it show dataset names instead of ids */
-         this.$refs.select.cachedOptions = this.cachedOptions;
-         this.$refs.select.setSelected();
+       });
+       this.cachedOptions = deepcopy(data.options);
+       /* hack to make it show dataset names instead of ids */
+       this.$refs.select.cachedOptions = this.cachedOptions;
+       this.$refs.select.setSelected();
 
-         this.joinOptions();
-         if (ids.length == 1) {
-           this.currentLabel = data.options[0].currentLabel;
-         }
-       }).catch((err) => {/* TODO: more error reporting */});
+       this.joinOptions();
+       if (ids.length == 1) {
+         this.currentLabel = data.options[0].currentLabel;
+       }
      },
 
-     fetchOptions(query) {
+     async fetchOptions(query) {
        this.loading = true;
 
        let orderBy = 'ORDER_BY_NAME', sortDir = 'ASCENDING';
@@ -139,18 +138,18 @@
        const df = Object.assign({name: query, status: 'FINISHED'},
                                 this.$store.getters.gqlDatasetFilter);
        delete df.ids;
-
-       this.$apollo.query({
-         query: optionsQuery,
-         variables: {df, orderBy, sortDir}
-       }).then(({data}) => {
+       try {
+         const {data} = await this.$apollo.query({
+           query: optionsQuery,
+           variables: {df, orderBy, sortDir}
+         });
          this.loading = false;
-         this.options = data.options.sort();
+         this.options = deepcopy(data.options).sort();
          this.joinOptions();
-       }).catch((err) => {
-         // TODO: more error reporting
+       } catch (err) {
          this.options = [];
-       });
+         throw err;
+       }
      },
      onChange(val) {
        this.$emit('input', val);

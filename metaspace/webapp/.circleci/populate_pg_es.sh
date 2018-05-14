@@ -1,7 +1,7 @@
 mkdir -p tmp
 cd tmp
 
-DUMPS=https://s3-eu-west-1.amazonaws.com/embl-sm-testing/dumps/2017-07-06
+DUMPS=https://s3-eu-west-1.amazonaws.com/embl-sm-testing/dumps/2018-04-13
 
 wget -q $DUMPS/sm_index_settings.json.gz
 gunzip -f sm_index_settings.json.gz

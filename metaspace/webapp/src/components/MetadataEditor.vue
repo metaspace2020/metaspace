@@ -2,6 +2,13 @@
   <div id="md-editor-container">
     <div style="position: relative;" v-if="!loading">
       <div id="md-editor-submit">
+        <div id="md-editor-public">
+          <el-checkbox v-model="isPublic">Public</el-checkbox>
+          <el-popover trigger="hover" placement="top">
+            <div>If checked, the annotation results will be publicly visible.</div>
+            <i slot="reference" class="el-icon-question"></i>
+          </el-popover>
+        </div>
         <el-button @click="cancel" v-if="datasetId">Cancel</el-button>
         <el-button type="primary" v-if="enableSubmit" @click="submit">Submit</el-button>
         <el-button v-else type="primary" disabled :title="disabledSubmitMessage">
@@ -20,7 +27,13 @@
             <el-col :span="getWidth(propName)"
                     v-for="(prop, propName) in section.properties"
                     :key="sectionName + propName">
-              <div class="field-label" v-html="prettify(propName, section)"></div>
+              <div class="field-label">
+                <span v-html="prettify(propName, section)"></span>
+                <el-popover trigger="hover" placement="right" v-if="getHelp(propName)">
+                  <component :is="getHelp(propName)"></component>
+                  <i slot="reference" class="el-icon-question field-label-help"></i>
+                </el-popover>
+              </div>
 
               <el-form-item class="control" v-if="prop.type == 'string' && !loading"
                             :class="isError(sectionName, propName)">
@@ -62,6 +75,20 @@
                     <el-option v-for="opt in prop.enum" :value="opt" :label="opt" :key="opt">
                     </el-option>
                   </el-select>
+                </div>
+
+                <span class="error-msg" v-if="isError(sectionName, propName)">
+                  {{ getErrorMessage(sectionName, propName) }}
+                </span>
+              </el-form-item>
+
+              <el-form-item class="control" v-if="prop.type == 'boolean' && !loading"
+                            :class="isError(sectionName, propName)">
+
+                <div>
+                  <el-checkbox v-model="value[sectionName][propName]"
+                            :placeholder="prop.description">
+                  </el-checkbox>
                 </div>
 
                 <span class="error-msg" v-if="isError(sectionName, propName)">
@@ -119,7 +146,8 @@
 
                       <el-input v-if="field.type == 'string'"
                                 v-model="value[sectionName][propName][fieldName]"
-                                :placeholder="field.description">
+                                :placeholder="field.description"
+                                :disabled="isDisabled(sectionName, propName, fieldName)">
                       </el-input>
 
                       <el-input-number v-if="field.type == 'number'"
@@ -175,7 +203,6 @@
   */
 
  import metadataRegistry from '../assets/metadataRegistry';
- import Ajv from 'ajv';
  import merge from 'lodash/merge';
  import {
    fetchAutocompleteSuggestionsQuery,
@@ -183,6 +210,7 @@
    metadataOptionsQuery
  } from '../api/metadata';
  import Vue from 'vue';
+ import DatabaseDescriptions from './DatabaseDescriptions.vue';
 
  const metadataSchemas = {};
  for (const mdType of Object.keys(metadataRegistry)) {
@@ -215,6 +243,10 @@
    'Gradient_Table': 9
  };
 
+ const FIELD_HELP = {
+   'Metabolite_Database': DatabaseDescriptions
+ }
+
  function objectFactory(schema) {
    let obj = {};
    for (var name in schema.properties) {
@@ -228,47 +260,27 @@
    'string': schema => schema.default || '',
    'number': schema => schema.default || 0,
    'object': objectFactory,
-   'array': schema => schema.default || []
- }
-
- function isEmpty(obj) {
-   if (!obj)
-     return true;
-   if (!(obj instanceof Object))
-     return false;
-   let empty = true;
-   for (var key in obj) {
-     if (!isEmpty(obj[key])) {
-       empty = false;
-       break;
-     }
-   }
-   return empty;
- }
-
- function trimEmptyFields(schema, value) {
-   if (!(value instanceof Object))
-     return value;
-   if (Array.isArray(value))
-     return value;
-   let obj = Object.assign({}, value);
-   for (var name in schema.properties) {
-     const prop = schema.properties[name];
-     if (isEmpty(obj[name]) && (!schema.required || schema.required.indexOf(name) == -1))
-       delete obj[name];
-     else
-       obj[name] = trimEmptyFields(prop, obj[name]);
-   }
-   return obj;
+   'array': schema => schema.default || [],
+   'boolean': schema => schema.default || false,
  }
 
  const LOCAL_STORAGE_KEY = 'latestMetadataSubmission';
+ const LOCAL_STORAGE_VERSION_KEY = 'latestMetadataSubmissionVersion';
+ const LOCAL_STORAGE_CURRENT_VERSION = 2;
 
  // TODO: fill in institution automatically when user profiles are added
 
  export default {
    name: 'metadata-editor',
-   props: ['datasetId', 'enableSubmit', 'disabledSubmitMessage'],
+   props: {
+     datasetId: String,
+     enableSubmit: Boolean,
+     disabledSubmitMessage: String,
+     validationErrors: {
+       type: Array,
+       default: () => []
+     }
+   },
    apollo: {
      metadataSelectorOptions: {
        query: metadataOptionsQuery,
@@ -277,7 +289,9 @@
            'Positive': data.adducts.filter(a => a.charge > 0).map(a => a.adduct),
            'Negative': data.adducts.filter(a => a.charge < 0).map(a => a.adduct)
          };
-         this._molecularDatabases = data.molecularDatabases.map(d => d.name);
+         this.molecularDatabases = data.molecularDatabases;
+
+         this.applyDefaultDatabases();
          this.updateCurrentAdductOptions();
        },
        loadingKey: 'loading'
@@ -294,8 +308,9 @@
        update(data) {
          this.value = this.fixEntries(JSON.parse(data.dataset.metadataJson));
          this._datasetMdType = this.value.Data_Type;
-         const defaultValue = objectFactory(this.schema);
+         const defaultValue = this.getDefaultMetadataValue();
          this.value = merge({}, defaultValue, this.value);
+         this.isPublic = data.dataset.isPublic;
          this.updateCurrentAdductOptions();
 
          // in case user just opened a link to metadata editing page w/o navigation in web-app,
@@ -304,6 +319,18 @@
        },
        loadingKey: 'loading'
      }
+   },
+   created() {
+     this.loading = true;
+     this.$apollo.query({query: gql`{molecularDatabases{name}}`}).then(response => {
+       Vue.set(this.schema.properties.metaspace_options.properties.Metabolite_Database.items,
+               'enum',
+               response.data.molecularDatabases.map(d => d.name));
+       this.validator = ajv.compile(this.schema);
+       this.setLoadingStatus(false);
+     }).catch(err => {
+       console.log("Error fetching list of metabolite databases: ", err);
+     });
    },
 
    mounted() {
@@ -317,14 +344,17 @@
      // some default value before we download metadata
      this._datasetMdType = Object.keys(metadataRegistry)[0];
      return {
-       // for existing dataset we can't predict metadata type before we download metadata
-       value: objectFactory(metadataSchemas[this.datasetId ? this._datasetMdType : this.$store.getters.filter.metadataType]),
-       validationErrors: [],
-       loading: 0,
+       schema: metadataSchema,
+       value: this.getDefaultMetadataValue(),
+       isPublic: true,
+       loading: true,
+       molecularDatabases: null,
+       defaultDatabaseApplied: false,
        // dictionary with highlighted row numbers in each table in the submission form
        // keys in the dictionary are formatted like `metadata_section-section-property`
        // if no row is highlighted, the corresponding key must not be in the dictionary
        formTableCurrentRows: {}
+
      }
    },
 
@@ -360,6 +390,16 @@
        return this.datasetId ? this._datasetMdType : this.$store.getters.filter.metadataType;
      },
 
+     safelyParseJSON(json) {
+       let parseRes;
+       try {
+         parseRes = JSON.parse(json);
+       } catch (err) {
+         return 'failed_parsing';
+       }
+       return parseRes;
+     },
+
      prettify(propName, parent) {
        let name = propName.toString()
                           .replace(/_/g, ' ')
@@ -370,6 +410,19 @@
        if (this.isRequired(propName, parent))
          name += '<span style="color: red">*</span>';
        return name;
+     },
+
+     getDefaultMetadataValue() {
+       const user = this.$store.state.user,
+         email = user ? user.email : '';
+       return merge({},
+         objectFactory(metadataSchema),
+         {Submitted_By: {Submitter: {Email: email}}}
+       );
+     },
+
+     getHelp(propName) {
+       return FIELD_HELP[propName];
      },
 
      getWidth(propName) {
@@ -392,6 +445,10 @@
 
      isRequired(propName, parent) {
        return parent && parent.required && (parent.required.indexOf(propName) != -1);
+     },
+
+     isDisabled(...args) {
+       return args[0] === 'Submitted_By' && args[1] === 'Submitter' && args[2] === 'Email';
      },
 
      buildPath(...args) {
@@ -485,16 +542,32 @@
        return value;
      },
 
+     applyDefaultDatabases() {
+       if(this.molecularDatabases && !this.defaultDatabaseApplied) {
+         const defaultDatabases = this.molecularDatabases.filter(d => d.default).map(d => d.name);
+         this.value = merge({}, this.value, {metaspace_options: {Metabolite_Database: defaultDatabases}});
+         this.defaultDatabaseApplied = true;
+       }
+     },
+
      loadLastSubmission() {
-       const defaultValue = objectFactory(this.schema);
-       let lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+       const defaultValue = this.getDefaultMetadataValue();
+       const lastValue = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || '{}');
+       const lastVersion = JSON.parse(localStorage.getItem(LOCAL_STORAGE_VERSION_KEY) || '1');
        if (lastValue && lastValue.metaspace_options) {
          lastValue.metaspace_options.Dataset_Name = ''; // different for each dataset
 
          /* we want to have all nested fields to be present for convenience,
             that's what objectFactory essentially does */
          this.value = merge({}, defaultValue, this.fixEntries(lastValue));
+         this.applyDefaultDatabases();
          this.updateCurrentAdductOptions();
+
+         // If people have a saved form value, clear the database (instead of using the new default) to ensure
+         // that they're aware that the databases have changed.
+         if (lastVersion < 2) {
+           this.value.metaspace_options.Metabolite_Database = [];
+         }
        } else {
          this.value = defaultValue;
        }
@@ -548,9 +621,11 @@
          })
        } else {
          const value = JSON.stringify(cleanValue);
-         if (!this.datasetId) localStorage.setItem(LOCAL_STORAGE_KEY, value);
-
-         this.$emit('submit', this.datasetId, value);
+         if (!this.datasetId) {
+           localStorage.setItem(LOCAL_STORAGE_KEY, value);
+           localStorage.setItem(LOCAL_STORAGE_VERSION_KEY, JSON.stringify(LOCAL_STORAGE_CURRENT_VERSION));
+         }
+         this.$emit('submit', this.datasetId, value, this.isPublic);
        }
      },
 
@@ -601,6 +676,10 @@
    padding: 0px 0px 3px 5px;
  }
 
+ .field-label-help {
+   cursor: pointer;
+ }
+
  .subfield {
    padding-right: 10px;
  }
@@ -628,6 +707,11 @@
  #md-editor-submit > button {
    width: 100px;
    padding: 6px;
+ }
+
+ #md-editor-public {
+   display: inline-block;
+   width: 100px;
  }
 
  .control.el-form-item, .subfield > .el-form-item {

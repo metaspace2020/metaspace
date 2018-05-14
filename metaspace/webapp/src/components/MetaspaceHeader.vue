@@ -82,7 +82,7 @@
 
 <script>
  import FILTER_SPECIFICATIONS from '../filterSpecs.js';
- import {encodeParams, DEFAULT_FILTER} from '../url';
+ import {encodeParams} from '../url';
  import {getJWT, decodePayload} from '../util';
 
  export default {
@@ -123,10 +123,10 @@
      href(path) {
        const lastParams = this.$store.state.lastUsedFilters[path];
        let f = lastParams ? lastParams.filter : {}
-       f = Object.assign({}, DEFAULT_FILTER, f, this.$store.getters.filter)
+       f = Object.assign({}, f, this.$store.getters.filter)
        const link = {
          path,
-         query: encodeParams(f, path)
+         query: encodeParams(f, path, this.$store.state.filterLists)
        };
        return link;
      },

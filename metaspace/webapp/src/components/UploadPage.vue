@@ -7,6 +7,14 @@
     </div>
   </div>
 
+  <div id="upload-page" v-else-if="!isSignedIn">
+    <div id="sign-in-message">
+      <intro-message>
+        <p><b>To get started, click "Sign in" to sign in or create an account.</b></p>
+      </intro-message>
+    </div>
+  </div>
+
   <div id="upload-page" v-else>
     <div id="upload-left-pane">
       <div id="filter-panel-container">
@@ -21,20 +29,9 @@
         </p>
 
         <div v-show="!introIsHidden">
-          <p>Thank you for considering submitting your data to METASPACE! Here are the key points you need to know:</p>
-
-          <p><b>Public results, private data</b><br/> Annotation results for all data submitted to METASPACE become public. The submitted data does not become public but you give us a permission to store and process it as well as publicly show and share the annotation results. At any point of time you can request to delete your data or the annotation results.</p>
-
-           <p><b>Type of MS:</b> We can annotate only FTICR- or Orbitrap- MS data.</p>
-
-          <p><b>Format:</b> We can receive only data in the imzML (imaging MS) or mzML (LC-MS) centroided format. Please check out <a href="http://project.metaspace2020.eu/imzml">our instructions</a> for converting datasets into these formats. If you are experiencing difficulties, please contact your instrument vendor.</p>
-
-          <p><b>Step-by-step tutorial:</b> Please read our <a href="https://www.slideshare.net/Metaspace2020/metaspace-training-course-ourcon-v-2017">training guide slides</a> providing an introduction to METASPACE as well as a step-by-step tutorial with screenshots.</p>
-
-          <p><b>Questions or requests?</b> Please email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>. Also, we are always happy to receive your feedback, both positive and negative.</p>
-
-          <p>To start the submission, just drop the file(s) into the box below, fill in the metadata form, and click the Submit button.</p>
-          <p>Have fun using METASPACE!</p>
+          <intro-message>
+            <p>To start the submission, just drop the file(s) into the box below, fill in the metadata form, and click the Submit button.</p>
+          </intro-message>
         </div>
       </div>
 
@@ -49,7 +46,8 @@
       <metadata-editor ref="editor"
                        :enableSubmit="enableSubmit"
                        @submit="onFormSubmit"
-                       disabledSubmitMessage="Your files must be uploaded first">
+                       disabledSubmitMessage="Your files must be uploaded first"
+                       v-bind:validationErrors="validationErrors">
       </metadata-editor>
     </div>
   </div>
@@ -61,6 +59,7 @@
  import FineUploader from './FineUploader.vue';
  import FilterPanel from './FilterPanel.vue';
  import MetadataEditor from './MetadataEditor.vue';
+ import IntroMessage from './IntroMessage.vue';
  import Vue from 'vue';
  import * as assert from 'assert';
 
@@ -120,13 +119,15 @@
        fineUploaderConfig: config.fineUploader,
        enableSubmit: false,
        introIsHidden: true,
-       enableUploads: config.enableUploads
+       enableUploads: config.enableUploads,
+       validationErrors: []
      }
    },
    components: {
      FineUploader,
      MetadataEditor,
-     FilterPanel
+     FilterPanel,
+     IntroMessage
    },
    computed: {
      fineUploaderDataTypeConfig() {
@@ -134,7 +135,25 @@
        return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig['default'];
      }
    },
+
+   computed: {
+     isSignedIn() {
+       return this.$store.state.user != null;
+     }
+   },
+
    methods: {
+     safelyParseJSON(json) {
+       let parseRes;
+       try {
+         parseRes = JSON.parse(json);
+       } catch (err) {
+         console.log(err.message);
+         return 'failed_parsing' + err.message;
+       }
+       return parseRes;
+     },
+
      onUpload(filenames) {
        const allowedExts = this.fineUploaderDataTypeConfig.fileExtensions.map(ext => `.${ext.toLowerCase()}`);
        let fileName = '';
@@ -163,11 +182,11 @@
        console.log(failedFiles);
      },
 
-     onFormSubmit(_, formData) {
+     onFormSubmit(_, formData, isPublic) {
        const uuid = this.$refs.uploader.getUUID();
-       this.submitDataset(uuid, formData).then(() => {
+       this.submitDataset(uuid, formData, isPublic).then(() => {
+         this.validationErrors = [];
          this.enableSubmit = false;
-
          this.$refs.uploader.reset();
          this.$refs.editor.resetDatasetName();
          this.$message({
@@ -176,16 +195,25 @@
          });
        }).catch(err => {
          console.log(err.message);
-         this.$message({
-           message: 'Metadata submission failed :( Contact us: contact@metaspace2020.eu',
-           type: 'error',
-           duration: 0,
-           showClose: true
-         })
+         const graphQLError = JSON.parse(err.graphQLErrors[0].message);
+         if (graphQLError['type'] === 'failed_validation') {
+           this.validationErrors = graphQLError['validation_errors'];
+           this.$message({
+             message: 'Please fix the highlighted fields and submit again',
+             type: 'error'
+           });
+         } else {
+           this.$message({
+             message: 'Metadata submission failed :( Contact us: contact@metaspace2020.eu',
+             type: 'error',
+             duration: 0,
+             showClose: true
+           })
+         }
        })
      },
 
-     submitDataset(uuid, formData) {
+     submitDataset(uuid, formData, isPublic) {
        console.log("submitting " + uuid);
        return getJWT()
          .then(jwt => this.$apollo.mutate({
@@ -193,17 +221,13 @@
            variables: {
              path: pathFromUUID(uuid),
              value: formData,
-             jwt
-           }}))
-         .then(resp => resp.data.submitDataset)
-         .then(status => {
-           if (status != 'success')
-             throw new Error(status);
-           return status;
-         });
+             jwt,
+             isPublic
+           }}));
      }
    }
  }
+
 </script>
 
 <style>
@@ -242,4 +266,8 @@
    padding: 10px;
    text-align: center;
  }
+
+  #sign-in-message {
+    padding: 20px;
+  }
 </style>

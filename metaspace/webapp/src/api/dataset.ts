@@ -22,6 +22,7 @@ export const datasetListQuery =
       condition
       growthConditions
       metadataJson
+      isPublic
       status
       metadataType
       fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
@@ -29,6 +30,7 @@ export const datasetListQuery =
         levels
         counts
       }
+      opticalImage
     }
   }`;
 
@@ -50,15 +52,22 @@ export const rawOpticalImageQuery =
     }
   }`;
 
+export const resubmitDatasetQuery =
+  gql`mutation ($jwt: String!, $datasetId: String!, $name: String, 
+                $metadataJson: String, $isPublic: Boolean, $delFirst: Boolean) {
+    resubmitDataset(jwt: $jwt, datasetId: $datasetId, name: $name, 
+                  metadataJson: $metadataJson, isPublic: $isPublic, 
+                  delFirst: $delFirst, priority: 1)
+  }`;
+
 export const submitDatasetQuery =
-  gql`mutation ($jwt: String!, $path: String!, $value: String!) {
-    submitDataset(jwt: $jwt, path: $path, metadataJson: $value, priority: 1)
+  gql`mutation ($jwt: String!, $path: String!, $value: String!, $isPublic: Boolean!) {
+    submitDataset(jwt: $jwt, path: $path, metadataJson: $value, isPublic: $isPublic, priority: 1)
   }`;
 
 export const deleteDatasetQuery =
   gql`mutation ($jwt: String!, $id: String!) {
     deleteDataset(jwt: $jwt, datasetId: $id)
-    deleteOpticalImage(jwt: $jwt, datasetId: $id)
   }`;
 
 export const addOpticalImageQuery =

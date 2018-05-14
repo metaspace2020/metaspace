@@ -53,7 +53,7 @@ module.exports = {
           loader: 'style-loader!css-loader!sass-loader'
       },
       {
-          test: /\.(eot|svg|ttf|woff|woff2)(\?\S*)?$/,
+          test: /\.(eot|ttf|woff|woff2)(\?\S*)?$/,
           loader: 'file-loader'
       },
       {
@@ -75,7 +75,7 @@ module.exports = {
   devServer: {
     hot: true,
   },
-  devtool: '#eval-source-map',
+  devtool: 'cheap-module-source-map',
   plugins: [
     new WebpackShellPlugin({
       onBuildStart: ['node deref_schema.js src/assets/']
