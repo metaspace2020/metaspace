@@ -73,9 +73,9 @@ def test_db(sm_config, request):
 @pytest.fixture()
 def ds_config():
     return {
-        "databases": [{
-            "name": "HMDB-v2.5"
-        }],
+        "databases": [
+            "HMDB-v4"
+        ],
         "isotope_generation": {
             "adducts": ["+H", "+Na"],
             "charge": {

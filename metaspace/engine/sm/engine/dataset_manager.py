@@ -179,7 +179,7 @@ class SMapiDatasetManager(DatasetManager):
             self.logger.info('New message posted to %s: %s', self._action_queue, msg)
 
     def add(self, ds, del_first=False, priority=DatasetActionPriority.DEFAULT):
-        """ Send add message to the queue. If dataset exists, raise an exception """
+        """ Send add message to the queue """
         self._post_sm_msg(ds=ds, action=DatasetAction.ADD, priority=priority, del_first=del_first)
 
     def delete(self, ds, del_raw_data=False):
@@ -187,7 +187,7 @@ class SMapiDatasetManager(DatasetManager):
         self._post_sm_msg(ds=ds, action=DatasetAction.DELETE, priority=DatasetActionPriority.HIGH)
 
     def update(self, ds, priority=DatasetActionPriority.DEFAULT):
-        """ Send update or add message to the queue or do nothing """
+        """ Send update message to the queue """
         self._post_sm_msg(ds=ds, action=DatasetAction.UPDATE, priority=DatasetActionPriority.HIGH)
 
     def _annotation_image_shape(self, img_store, ds_id):

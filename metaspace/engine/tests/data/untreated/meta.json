@@ -11,11 +11,7 @@
             "Email": ""
         }, 
         "Institution": "EMBL"
-    }, 
-    "metaspace_options": { 
-        "Metabolite_Database": "HMDB-v2.5",
-        "Dataset_Name": "untreated_test"
-    }, 
+    },
     "Sample_Information": {
         "Organism": "Homo_sapiens_(Human)", 
         "Organism_Part": "Colon", 

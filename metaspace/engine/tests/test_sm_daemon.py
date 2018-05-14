@@ -55,7 +55,8 @@ def create_ds(ds_id=None, upload_dt=None, input_path=None, meta=None, ds_config=
     upload_dt = upload_dt or datetime.now()
     input_path = input_path or join(proj_root(), 'tests/data/imzml_example_ds')
     meta = meta or {'Data_Type': 'Imaging MS'}
-    return Dataset(ds_id, 'imzml_example', input_path, upload_dt, meta, ds_config)
+    mol_dbs = ['HMDB-v4']
+    return Dataset(ds_id, 'imzml_example', input_path, upload_dt, meta, ds_config, mol_dbs=mol_dbs)
 
 
 class Q(Queue):

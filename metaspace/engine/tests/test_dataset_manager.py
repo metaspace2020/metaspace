@@ -51,9 +51,12 @@ def create_ds_man(sm_config, db=None, es=None, img_store=None,
 
 
 def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
-              metadata=None, ds_config=None, status=DatasetStatus.NEW):
+              metadata=None, ds_config=None, status=DatasetStatus.NEW, mol_dbs=None):
     upload_dt = upload_dt or datetime.now()
-    return Dataset(ds_id, ds_name, input_path, upload_dt, metadata or {}, ds_config or {}, status=status)
+    if not mol_dbs:
+        mol_dbs = ['HMDB-v4']
+    return Dataset(ds_id, ds_name, input_path, upload_dt, metadata or {}, ds_config or {},
+                   status=status, mol_dbs=mol_dbs)
 
 
 class TestSMapiDatasetManager:
@@ -192,7 +195,7 @@ class TestSMDaemonDatasetManager:
 
             with patch('sm.engine.dataset_manager.MolDBServiceWrapper') as MolDBServiceWrapper:
                 moldb_service_wrapper_mock = MolDBServiceWrapper.return_value
-                moldb_service_wrapper_mock.find_db_by_id.return_value = {'name': 'HMDB-v2.5'}
+                moldb_service_wrapper_mock.find_db_by_id.return_value = {'name': 'HMDB-v4'}
 
                 ds_man.update(ds)
 

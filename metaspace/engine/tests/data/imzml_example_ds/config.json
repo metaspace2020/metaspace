@@ -1,9 +1,5 @@
 {
-  "databases": [{
-    "name": "HMDB",
-    "version": "2017-01"
-    }
-  ],
+  "databases": ["HMDB"],
   "isotope_generation": {
     "adducts": ["+H","+Na","+K"],
     "charge": {

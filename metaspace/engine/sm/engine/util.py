@@ -112,7 +112,8 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
         metadata = {}
     ds_config = json.load(open(str(ds_input_path.joinpath('config.json'))))
 
-    return Dataset(ds_id, ds_name, str(ds_input_path), datetime.now(), metadata, ds_config)
+    return Dataset(ds_id, ds_name, str(ds_input_path), datetime.now(), metadata, ds_config,
+                   is_public=True, mol_dbs=ds_config['databases'])
 
 
 def split_s3_path(path):

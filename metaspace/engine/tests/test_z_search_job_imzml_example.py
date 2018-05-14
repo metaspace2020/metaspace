@@ -37,8 +37,8 @@ def clean_isotope_storage(sm_config):
 
 def init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock):
     mol_db_wrapper_mock = MolDBServiceWrapperMock()
-    mol_db_wrapper_mock.find_db_by_name_version.return_value = [{'id': 0, 'name': 'HMDB', 'version': '2016'}]
-    mol_db_wrapper_mock.find_db_by_id.return_value = {'id': 0, 'name': 'HMDB', 'version': '2016'}
+    mol_db_wrapper_mock.find_db_by_name_version.return_value = [{'id': 0, 'name': 'HMDB-v4', 'version': '2018'}]
+    mol_db_wrapper_mock.find_db_by_id.return_value = {'id': 0, 'name': 'HMDB-v4', 'version': '2018'}
     mol_db_wrapper_mock.fetch_db_sfs.return_value = ['C12H24O']
     mol_db_wrapper_mock.fetch_molecules.return_value = [{'sf': 'C12H24O', 'mol_id': 'HMDB0001',
                                                          'mol_name': 'molecule name'}]
@@ -73,7 +73,7 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
         upload_dt = datetime.now()
         ds_id = '2000-01-01_00h00m'
         db.insert(Dataset.DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt,
-                                       '{}', ds_config_str, DatasetStatus.QUEUED)])
+                                       '{}', ds_config_str, DatasetStatus.QUEUED, True, ['HMDB-v4'])])
         job = SearchJob()
         job._sm_config['rabbitmq'] = {}  # avoid talking to RabbitMQ during the test
         ds = Dataset.load(db, ds_id)
@@ -152,7 +152,7 @@ def test_search_job_imzml_example_annotation_job_fails(get_compute_img_metrics_m
         upload_dt = datetime.now()
         ds_config_str = open(ds_config_path).read()
         db.insert(Dataset.DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt.isoformat(' '),
-                                       '{}', ds_config_str, DatasetStatus.QUEUED)])
+                                       '{}', ds_config_str, DatasetStatus.QUEUED, True, ['HMDB-v4'])])
 
         job = SearchJob()
         ds = Dataset.load(db, ds_id)
@@ -204,7 +204,7 @@ def test_search_job_imzml_example_es_export_fails(get_compute_img_metrics_mock, 
         upload_dt = datetime.now()
         ds_config_str = open(ds_config_path).read()
         db.insert(Dataset.DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt.isoformat(' '),
-                                       '{}', ds_config_str, DatasetStatus.QUEUED)])
+                                       '{}', ds_config_str, DatasetStatus.QUEUED, True, ['HMDB-v4'])])
 
         with patch('sm.engine.search_job.ESExporter.index_ds') as index_ds_mock:
             index_ds_mock.side_effect = throw_exception_function
