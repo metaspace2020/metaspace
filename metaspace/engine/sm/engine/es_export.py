@@ -6,7 +6,6 @@ from collections import defaultdict
 import pandas as pd
 
 from sm.engine.util import SMConfig
-from sm.engine.db import DB
 
 logger = logging.getLogger('engine')
 
@@ -27,19 +26,12 @@ ANNOTATIONS_SEL = '''SELECT
     COALESCE(m.msm, 0::real) AS msm,
     m.adduct,
     j.id AS job_id,
---    f.id AS sf_id,
     m.fdr as pass_fdr,
---    tp.centr_mzs AS centroid_mzs,
     m.iso_image_ids as iso_image_ids,
     ds.config->'isotope_generation'->'charge'->'polarity' as polarity
 FROM iso_image_metrics m
---JOIN sum_formula f ON f.id = m.sf_id
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
--- JOIN theor_peaks tp ON tp.sf = f.sf AND tp.adduct = m.adduct
--- 	AND tp.sigma::real = (ds.config->'isotope_generation'->>'isocalc_sigma')::real
--- 	AND tp.charge = (CASE WHEN ds.config->'isotope_generation'->'charge'->>'polarity' = '+' THEN 1 ELSE -1 END)
--- 	AND tp.pts_per_mz = (ds.config->'isotope_generation'->>'isocalc_pts_per_mz')::int
 WHERE ds.id = %s AND m.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC'''
 
@@ -52,13 +44,17 @@ DATASET_SEL = '''SELECT
     upload_dt,
     dataset.status,
     to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS'),
-    is_public
+    is_public,
+    acq_geometry,
+    ion_img_storage_type
 FROM dataset LEFT JOIN job ON job.ds_id = dataset.id
 WHERE dataset.id = %s
 GROUP BY dataset.id'''
 
 DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path',
-                   'ds_upload_dt', 'ds_status', 'ds_last_finished', 'ds_is_public')
+                   'ds_upload_dt', 'ds_status', 'ds_last_finished',
+                   'ds_is_public', 'ds_acq_geometry', 'ds_ion_img_storage')
+DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry')
 
 
 def init_es_conn(es_config):
@@ -207,6 +203,11 @@ class ESExporter(object):
         mol_by_sf_df.columns = ['mol_ids', 'mol_names']
         return mol_by_sf_df
 
+    def _add_ds_attrs_to_ann(self, ann, ds_attrs):
+        for attr in ds_attrs:
+            if attr not in DS_COLUMNS_TO_SKIP_IN_ANN:
+                ann[attr] = ds_attrs[attr]
+
     def index_ds(self, ds_id, mol_db, isocalc):
         try:
             dataset = self._remove_mol_db_from_dataset(ds_id, mol_db)
@@ -226,7 +227,7 @@ class ESExporter(object):
         mol_by_sf_df = self._get_mol_by_sf_df(mol_db)
         for r in annotations:
             d = dict(zip(ANNOTATION_COLUMNS, r))
-            d.update(dataset)  # include all dataset fields (prefixed with 'ds_')
+            self._add_ds_attrs_to_ann(d, dataset)
             d['db_name'] = mol_db.name
             d['db_version'] = mol_db.version
             sf = d['sf']

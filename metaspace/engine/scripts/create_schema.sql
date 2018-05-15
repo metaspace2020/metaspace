@@ -20,6 +20,8 @@ CREATE TABLE dataset (
 	optical_image text,
 	transform			float[],
 	is_public     boolean not null default(true),
+	acq_geometry	json,
+	ion_img_storage_type text,
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
 );
 CREATE INDEX ind_dataset_name ON dataset (name);

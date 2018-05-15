@@ -380,6 +380,7 @@ class QueueConsumer(Thread):
         self._on_failure = on_failure
 
         self.logger = logging.getLogger(logger_name)
+        # self.logger = logger if logger else logging.getLogger()
 
     def on_message(self, method, properties, body):
         """Invoked by pika when a message is delivered from RabbitMQ. The
@@ -449,13 +450,13 @@ class QueueConsumer(Thread):
 
 class QueuePublisher(object):
 
-    def __init__(self, config, qdesc, logger_name='api'):
+    def __init__(self, config, qdesc, logger=None):
         creds = pika.PlainCredentials(config['user'], config['password'])
         self.qdesc = qdesc
         self.qname = qdesc['name']
         self.conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat_interval=0)
         self.conn = None
-        self.logger = logging.getLogger(logger_name)
+        self.logger = logger if logger else logging.getLogger()
 
     def __str__(self):
         return '<QueuePublisher:{}>'.format(self.qname)

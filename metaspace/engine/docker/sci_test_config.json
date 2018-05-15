@@ -38,6 +38,31 @@
     "aws_secret_access_key": "",
     "aws_region": "eu-west-1"
   },
+  "ms_file_handlers": [{
+      "type": "ims",
+      "extensions": ["imzML", "ibd"],
+      "parser_factory": {
+        "name": "ImzMLParser",
+        "path": "pyimzml.ImzMLParser"
+      },
+      "acq_geometry_factory": {
+        "name": "ImsGeometryFactory",
+        "path": "sm.engine.ims_geometry_factory"
+      },
+      "img_storage_type": "fs"
+    }, {
+      "type": "lcms",
+      "extensions": ["mzML"],
+      "parser_factory": {
+        "name": "MzMLParser",
+        "path": "sm.engine.mzml_parser"
+      },
+      "acq_geometry_factory": {
+        "name": "LcmsGeometryFactory",
+        "path": "sm.engine.lcms_geometry_factory"
+      },
+      "img_storage_type": "db"
+  }],
   "isotope_storage": {
     "path": "/tmp/isotope_storage"
   },

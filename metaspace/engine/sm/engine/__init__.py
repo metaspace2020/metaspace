@@ -5,6 +5,8 @@ from .es_export import ESExporter, ESIndexManager
 from .queue import QueuePublisher, QueueConsumerAsync
 from .db import DB
 from .mol_db import MolecularDB
+from .ms_txt_converter import MsTxtConverter
+from .util import SMConfig
 
 try:
     import pyspark

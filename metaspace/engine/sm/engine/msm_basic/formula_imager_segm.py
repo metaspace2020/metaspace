@@ -3,11 +3,15 @@ from collections import defaultdict
 import pandas as pd
 import numpy as np
 from scipy.sparse import coo_matrix
+import logging
 
 from sm.engine.errors import JobFailedError
 
 MAX_MZ_VALUE = 10**5
 MAX_INTENS_VALUE = 10**12
+ABS_MZ_TOLERANCE_DA = 0.002
+
+logger = logging.getLogger('engine')
 
 
 def _check_spectra_quality(spectra_sample):
@@ -76,6 +80,18 @@ def _sp_df_gen(sp_it, sp_indexes):
             yield sp_indexes[sp_id], mz, ints
 
 
+# def _create_lower_upper_mz_bounds(sf_peak_df, ppm):
+#     """ Different approaches for ims data (ppm based) and lcms data (abs tolerance in mz)
+#     """
+#     if ppm > 0:
+#         lower = sf_peak_df.mz.map(lambda mz: mz - mz * ppm * 1e-6)
+#         upper = sf_peak_df.mz.map(lambda mz: mz + mz * ppm * 1e-6)
+#     else:
+#         lower = sf_peak_df.mz.map(lambda mz: mz - ABS_MZ_TOLERANCE_DA)
+#         upper = sf_peak_df.mz.map(lambda mz: mz + ABS_MZ_TOLERANCE_DA)
+#     return lower, upper
+
+
 def _gen_iso_images(spectra_it, sp_indexes, centr_df, nrows, ncols, ppm, min_px=1):
     if len(centr_df) > 0:
         # a bit slower than using pure numpy arrays but much shorter
@@ -84,6 +100,8 @@ def _gen_iso_images(spectra_it, sp_indexes, centr_df, nrows, ncols, ppm, min_px=
                              columns=['idx', 'mz', 'ints']).sort_values(by='mz')
 
         # -1, + 1 are needed to extend sf_peak_mz range so that it covers 100% of spectra
+        # sf_peak_df = sf_peak_df[(sf_peak_df.mz >= sp_df.mz.min()-1) & (sf_peak_df.mz <= sp_df.mz.max()+1)]
+        # lower, upper = _create_lower_upper_mz_bounds(sf_peak_df, ppm)
         centr_df = centr_df[(centr_df.mz >= sp_df.mz.min() - 1) &
                             (centr_df.mz <= sp_df.mz.max() + 1)]
         lower = centr_df.mz.map(lambda mz: mz - mz * ppm * 1e-6)
@@ -136,6 +154,7 @@ def define_mz_segments(spectra, sf_peak_df, ppm):
     mz_grid, workload_per_mz, sp_workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10**4)
     mz_bounds = _define_mz_bounds(mz_grid, workload_per_mz, sp_workload_per_mz, n=plan_mz_segm_n)
     mz_segments = _create_mz_segments(mz_bounds, ppm=ppm)
+    logger.debug('Generated m/z segments: %s', mz_segments)
     return mz_segments
 
 

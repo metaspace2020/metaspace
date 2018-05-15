@@ -47,12 +47,13 @@ def _json_params(req):
 
 def _create_queue_publisher(qdesc):
     config = SMConfig.get_conf()
-    return QueuePublisher(config['rabbitmq'], qdesc)
+    return QueuePublisher(config['rabbitmq'], qdesc, logger)
 
 
 def _create_dataset_manager(db):
     config = SMConfig.get_conf()
     img_store = ImageStoreServiceWrapper(config['services']['img_service_url'])
+    img_store.storage_type = 'fs'
     return SMapiDatasetManager(db=db, es=ESExporter(db), image_store=img_store, mode='queue',
                                action_queue=_create_queue_publisher(SM_ANNOTATE),
                                status_queue=_create_queue_publisher(SM_DS_STATUS))

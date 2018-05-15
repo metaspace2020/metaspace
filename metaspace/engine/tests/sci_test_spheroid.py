@@ -5,6 +5,7 @@ import numpy as np
 from fabric.api import local
 from fabric.context_managers import warn_only
 from mock import MagicMock
+from pathlib import Path
 
 from sm.engine import Dataset
 from sm.engine import ESExporter
@@ -81,9 +82,9 @@ class SciTester(object):
         print("\nMSM HISTOGRAM")
         self.print_metric_hist(metrics_array[:, 3])
 
-    def _missed_formulae(self, old, new):
+    def _missed_formulas(self, old, new):
         missed_sf_adduct = set(old.keys()) - set(new.keys())
-        print('MISSED FORMULAE: {:.1f}%'.format(len(missed_sf_adduct) / len(old) * 100))
+        print('MISSED FORMULAS: {:.1f}%'.format(len(missed_sf_adduct) / len(old) * 100))
         if missed_sf_adduct:
             missed_sf_base_metrics = np.array([old[k] for k in missed_sf_adduct])
             self.report_metric_differences(missed_sf_base_metrics)
@@ -117,7 +118,7 @@ class SciTester(object):
     def search_results_are_different(self):
         old_search_res = self.read_base_search_res()
         search_res = self.fetch_search_res()
-        return (self._missed_formulae(old_search_res, search_res) or
+        return (self._missed_formulas(old_search_res, search_res) or
                 self._false_discovery(old_search_res, search_res) or
                 self._metrics_diff(old_search_res, search_res))
 
@@ -153,11 +154,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Scientific tests runner')
     parser.add_argument('-r', '--run', action='store_true', help='compare current search results with previous')
     parser.add_argument('-s', '--save', action='store_true', help='store current search results')
-    parser.add_argument('--sm-config', dest='sm_config_path',
+    parser.add_argument('--config', dest='sm_config_path',
                         default=join(proj_root(), 'conf/config.json'),
                         help='path to sm config file')
     parser.add_argument('--mock-img-store', action='store_true', help='whether to mock the Image Store Service')
     args = parser.parse_args()
+
     SMConfig.set_path(args.sm_config_path)
     init_loggers(SMConfig.get_conf()['logs'])
 

@@ -2,7 +2,6 @@ import json
 import logging
 
 from sm.engine.errors import UnknownDSID
-from sm.engine.queue import SM_DS_STATUS
 
 logger = logging.getLogger('engine')
 
@@ -42,8 +41,13 @@ class Dataset(object):
     DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, is_public) '
                  'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)')
 
+    ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
+    ACQ_GEOMETRY_UPD = 'UPDATE dataset SET acq_geometry = %s WHERE id = %s'
+    IMG_STORAGE_TYPE_SEL = 'SELECT ion_img_storage_type FROM dataset WHERE id = %s'
+    IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
+
     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
-                 metadata=None, config=None, status=DatasetStatus.NEW, is_public=True):
+                 metadata=None, config=None, img_storage_type=None, is_public=True, status=DatasetStatus.NEW):
         self.id = id
         self.input_path = input_path
         self.upload_dt = upload_dt
@@ -51,6 +55,7 @@ class Dataset(object):
         self.config = config
         self.status = status
         self.is_public = is_public
+        self.ion_img_storage_type = img_storage_type or 'fs'
         self.name = name or (metadata.get('metaspace_options', {}).get('Dataset_Name', id) if metadata else None)
 
     def __str__(self):
@@ -91,6 +96,27 @@ class Dataset(object):
         es.sync_dataset(self.id)
         if status_queue:
             status_queue.publish({'ds_id': self.id, 'status': self.status})
+
+    def get_acq_geometry(self, db):
+        r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, self.id)
+        if not r:
+            raise UnknownDSID('Dataset does not exist: {}'.format(self.id))
+        return r[0]
+
+    def save_acq_geometry(self, db, acq_geometry):
+        db.alter(self.ACQ_GEOMETRY_UPD, json.dumps(acq_geometry), self.id)
+
+    def get_ion_img_storage_type(self, db):
+        if not self.ion_img_storage_type:
+            r = db.select_one(Dataset.IMG_STORAGE_TYPE_SEL, self.id)
+            if not r:
+                raise UnknownDSID('Dataset does not exist: {}'.format(self.id))
+            self.ion_img_storage_type = r[0]
+        return self.ion_img_storage_type
+
+    def save_ion_img_storage_type(self, db, storage_type):
+        db.alter(self.IMG_STORAGE_TYPE_UPD, storage_type, self.id)
+        self.ion_img_storage_type = storage_type
 
     def to_queue_message(self):
         msg = {

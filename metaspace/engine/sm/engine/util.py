@@ -13,6 +13,7 @@ def proj_root():
     return os.getcwd()
 
 
+
 def init_loggers(config=None):
     """ Init logger using config file, 'logs' section of the sm config
     """
@@ -77,6 +78,22 @@ class SMConfig(object):
                 logging.getLogger('engine').warning(e)
         return cls._config_dict
 
+    @classmethod
+    def get_ms_file_handler(cls, ms_file_path):
+        """
+        Parameters
+        ----------
+        ms_file_path : String
+
+        Returns
+        -------
+        : dict
+            SM configuration for handling specific type of MS data
+        """
+        conf = cls.get_conf()
+        ms_file_extension = Path(ms_file_path).suffix[1:]  # skip the leading "."
+        return next((h for h in conf['ms_file_handlers'] if ms_file_extension in h['extensions']), None)
+
 
 def _cmd(template, call_func, *args):
     cmd_str = template.format(*args)
@@ -104,15 +121,19 @@ def read_json(path):
 
 
 def create_ds_from_files(ds_id, ds_name, ds_input_path):
-    ds_input_path = Path(ds_input_path)
-    meta_path = ds_input_path.joinpath('meta.json')
+    base_dir = Path(ds_input_path)
+    meta_path = base_dir / 'meta.json'
     if meta_path.exists():
         metadata = json.load(open(str(meta_path)))
     else:
         metadata = {}
-    ds_config = json.load(open(str(ds_input_path.joinpath('config.json'))))
+    ds_config = json.load(open(str(base_dir / 'config.json')))
 
-    return Dataset(ds_id, ds_name, str(ds_input_path), datetime.now(), metadata, ds_config)
+    imzml_path = next(base_dir.glob('*.imzML'))
+    ms_file_type_config = SMConfig.get_ms_file_handler(str(imzml_path))
+    img_storage_type = ms_file_type_config['img_storage_type']
+    return Dataset(id=ds_id, name=ds_name, input_path=ds_input_path, img_storage_type=img_storage_type,
+                   upload_dt=datetime.now(), metadata=metadata, config=ds_config)
 
 
 def split_s3_path(path):

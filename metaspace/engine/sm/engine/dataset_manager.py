@@ -5,12 +5,13 @@ import numpy as np
 from PIL import Image
 
 from sm.engine.dataset import DatasetStatus, Dataset
-from sm.engine.errors import DSIDExists
+from sm.engine.errors import DSIDExists, UnknownDSID
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig
 from sm.engine.work_dir import WorkDirManager
+from sm.engine.ims_geometry_factory import ImsGeometryFactory
 
 SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
 UPD_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = %s, transform = %s WHERE id = %s'
@@ -141,11 +142,15 @@ class SMDaemonDatasetManager(DatasetManager):
     def _del_iso_images(self, ds):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
 
-        for row in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
-            iso_image_ids = row[0]
-            for img_id in iso_image_ids:
-                if img_id:
-                    self._img_store.delete_image_by_id('iso_image', img_id)
+        try:
+            storage_type = ds.get_ion_img_storage_type(self._db)
+            for row in self._db.select(IMG_URLS_BY_ID_SEL, ds.id):
+                iso_image_ids = row[0]
+                for img_id in iso_image_ids:
+                    if img_id:
+                        self._img_store.delete_image_by_id(storage_type, 'iso_image', img_id)
+        except UnknownDSID:
+            self.logger.warning('Attempt to delete isotopic images of non-existing dataset. Skipping')
 
     def delete(self, ds, del_raw_data=False, **kwargs):
         """ Delete all dataset related data from the DB """
@@ -170,6 +175,7 @@ class SMapiDatasetManager(DatasetManager):
         self._action_queue = action_queue
 
     def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT, **kwargs):
+        ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.QUEUED)
         if self.mode == 'queue':
             msg = ds.to_queue_message()
             msg['action'] = action
@@ -191,9 +197,13 @@ class SMapiDatasetManager(DatasetManager):
         """ Send update or add message to the queue or do nothing """
         self._post_sm_msg(ds=ds, action=DatasetAction.UPDATE, priority=DatasetActionPriority.HIGH)
 
-    def _annotation_image_shape(self, img_store, ds_id):
-        ion_img_id = self._db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', ds_id)[0][0][0]
-        return img_store.get_image_by_id('iso_image', ion_img_id).size
+    def _annotation_image_shape(self, ds):
+        self.logger.info('Querying annotation image shape for "%s" dataset...', ds.id)
+        ion_img_id = self._db.select(IMG_URLS_BY_ID_SEL + ' LIMIT 1', ds.id)[0][0][0]
+        storage_type = ds.get_ion_img_storage_type(self._db)
+        result = self._img_store.get_image_by_id(storage_type, 'iso_image', ion_img_id).size
+        self.logger.info('Annotation image shape for "{}" dataset is {}'.format(ds.id, result))
+        return result
 
     def _transform_scan(self, scan, transform_, dims, zoom):
         # zoom is relative to the web application viewport size and not to the ion image dimensions,
@@ -225,21 +235,21 @@ class SMapiDatasetManager(DatasetManager):
         if row:
             old_img_id = row[0]
             if old_img_id and old_img_id != img_id:
-                self._img_store.delete_image_by_id('raw_optical_image', old_img_id)
+                self._img_store.delete_image_by_id('fs', 'raw_optical_image', old_img_id)
         self._db.alter(UPD_DATASET_RAW_OPTICAL_IMAGE, img_id, transform, ds.id)
 
     def _add_zoom_optical_images(self, ds, img_id, transform, zoom_levels):
-        dims = self._annotation_image_shape(self._img_store, ds.id)
+        dims = self._annotation_image_shape(ds)
         rows = []
-        optical_img = self._img_store.get_image_by_id('raw_optical_image', img_id)
+        optical_img = self._img_store.get_image_by_id('fs', 'raw_optical_image', img_id)
         for zoom in zoom_levels:
             img = self._transform_scan(optical_img, transform, dims, zoom)
             buf = self._save_jpeg(img)
-            scaled_img_id = self._img_store.post_image('optical_image', buf)
+            scaled_img_id = self._img_store.post_image('fs', 'optical_image', buf)
             rows.append((scaled_img_id, ds.id, zoom))
 
         for row in self._db.select(SEL_OPTICAL_IMAGE, ds.id):
-            self._img_store.delete_image_by_id('optical_image', row[0])
+            self._img_store.delete_image_by_id('fs', 'optical_image', row[0])
         self._db.alter(DEL_OPTICAL_IMAGE, ds.id)
         self._db.insert(INS_OPTICAL_IMAGE, rows)
 
@@ -256,9 +266,8 @@ class SMapiDatasetManager(DatasetManager):
         if row:
             raw_img_id = row[0]
             if raw_img_id:
-                self._img_store.delete_image_by_id('raw_optical_image', raw_img_id)
+                self._img_store.delete_image_by_id('fs', 'raw_optical_image', raw_img_id)
         for row in self._db.select(SEL_OPTICAL_IMAGE, ds.id):
-            self._img_store.delete_image_by_id('optical_image', row[0])
+            self._img_store.delete_image_by_id('fs', 'optical_image', row[0])
         self._db.alter(DEL_DATASET_RAW_OPTICAL_IMAGE, ds.id)
         self._db.alter(DEL_OPTICAL_IMAGE, ds.id)
-
