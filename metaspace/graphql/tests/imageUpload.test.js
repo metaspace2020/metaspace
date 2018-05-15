@@ -7,93 +7,107 @@ process.env.NODE_ENV = 'test';
 const chai = require('chai'),
   should = chai.should(),
   chaiHttp = require('chai-http'),
-  fs = require('fs');
+  fs = require('fs'),
+  config = require('config'),
+  {promisify} = require('util');
 
-const {logger, pg} = require('../utils.js'),
+const {logger, db} = require('../utils.js'),
   {createImgServerAsync, IMG_TABLE_NAME} = require('../imageUpload');
 
 chai.use(chaiHttp);
 
-// let server;
+let img_storage_types = [//{type: 'image/png', storage_type: 'fs'},
+                         {type: 'application/octet-stream', storage_type: 'db'}];
 
 describe('imageUploadTest with fs and db backends', () => {
-  const configSets = [
-    {backend: 'db'},
-    {backend: 'fs'}
-  ];
+  img_storage_types.forEach( ({storage_type, type}) => {
 
-  configSets.forEach( (cs) => {
+// <<<<<<< HEAD:tests/imageUpload.test.js
+//   configSets.forEach( (cs) => {
+//
+//     describe(`${cs.backend} backend`, () => {
+//       let server,
+//         image_id;
+//
+//       beforeAll((done) => {
+//         let config = require('config');
+//         config.img_upload.backend = cs.backend;
+// =======
+    describe(`${storage_type} storage type`, () => {
+      let server;
 
-    describe(`${cs.backend} backend`, () => {
-      let server,
-        image_id;
-
-      beforeAll((done) => {
-        let config = require('config');
-        config.img_upload.backend = cs.backend;
-        createImgServerAsync(config)
-          .then((srv) => {
-            server = srv;
-            done();
-          })
-          .catch((err) => {
-            logger.error(err);
-          });
+      beforeAll(async () => {
+        const srv = await createImgServerAsync(config);
+        server = srv;
+          // .then((srv) => {
+          //   server = srv;
+          //   // done();
+          // })
+          // .catch((err) => {
+          //   logger.error(err);
+          // });
       });
 
-      afterAll((done) => {
-        server.close(() => {
+      afterAll(done => {
+        // const serverCloseAsync = promisify(server.close);
+        // await serverCloseAsync();
+        // logger.debug('Iso image server closed');
+
+        server.close(async () => {
           logger.debug('Iso image server closed');
-          if (cs === 'db') {
-            pg.schema.dropTableIfExists(IMG_TABLE_NAME)
-              .then(() => done())
-              .catch((e) => {
-                logger.error(e.message);
-              });
+          if (storage_type === 'db') {
+            await db.schema.dropTableIfExists(IMG_TABLE_NAME)
           }
-          else {
-            done();
-          }
+          done();
         });
-        // wsServer.close(() => console.log('WS server closed!') );
+        // // wsServer.close(() => console.log('WS server closed!') );
       });
 
-      it(`POST /iso_images/upload should store the image and respond with a new iso image id`, (done) => {
-        chai.request(server)
-          .post('/iso_images/upload')
+      let image_id;
+
+      it(`POST /${storage_type}/iso_images/upload should store the image and respond with a new iso image id`, async () => {
+        const resp = await chai.request(server)
+          .post(`/${storage_type}/iso_images/upload`)
           .attach('iso_image', fs.readFileSync('tests/test_iso_image.png'), 'test_iso_image.png')
-          .end((err, res) => {
-            // there should be no errors
-            should.not.exist(err);
-            // there should be a 201 status code
-            res.status.should.equal(201);
-            // the response should be JSON
-            res.type.should.equal("application/json");
-            res.body.should.have.property("image_id");
+          .send();
 
-            image_id = res.body.image_id;
-            logger.debug(image_id);
-            done();
-          });
+        expect(resp.status).toBe(201);
+        // expect(resp.status).toBe(201);
+          // .end((err, res) => {
+          //   // there should be no errors
+          //   should.not.exist(err);
+          //   // there should be a 201 status code
+          //   res.status.should.equal(201);
+          //   // the response should be JSON
+          //   res.type.should.equal("application/json");
+          //   res.body.should.have.property("image_id");
+          //
+          //   image_id = res.body.image_id;
+          //   logger.debug(image_id);
+          //   done();
+          // });
+
+        logger.debug(image_id);
       });
 
-      it('GET /iso_images/:id should respond with the iso image', (done) => {
+      it(`GET /${storage_type}/iso_images/:image_id should respond with the iso image`, async (done) => {
         chai.request(server)
-          .get(`/iso_images/${image_id}`)
+          .get(`/${storage_type}/iso_images/${image_id}`)
           .end((err, res) => {
             // there should be no errors
             should.not.exist(err);
             // there should be a 200 status code
             res.status.should.equal(200);
             // the response should be PNG
-            res.type.should.equal("image/png");
+            res.type.should.equal(type);
             // res.body.status.should.have.property("image_url");
             done();
           });
       });
-      it('DELETE /iso_images/delete/:id should delete the iso image', (done) => {
+
+      it(`DELETE /${storage_type}/iso_images/delete/${image_id} should delete the iso image`, (done) => {
         chai.request(server)
-          .delete(`/iso_images/delete/${image_id}`)
+          .delete(`/${storage_type}/iso_images/delete/${image_id}`)
           .end((err, res) => {
             // there should be no errors
             should.not.exist(err);
@@ -103,9 +117,9 @@ describe('imageUploadTest with fs and db backends', () => {
           });
       });
 
-      it('GET /iso_images/:id should respond with 404 as the image is deleted', (done) => {
+      it(`GET /${storage_type}/iso_images/:image_id should respond with 404 as the image is deleted`, (done) => {
         chai.request(server)
-          .get(`/iso_images/${image_id}`)
+          .get(`/${storage_type}/iso_images/${image_id}`)
           .end((err, res) => {
             // there should be a 200 status code
             res.status.should.equal(404);

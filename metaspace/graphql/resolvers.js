@@ -10,6 +10,7 @@ const config = require('config'),
     canUserViewPgDataset, logger, pubsub, pg} = require("./utils.js"),
   {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js');
 
+
 async function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
   // wait until updates are reflected in ES so that clients don't have to care
   const maxAttempts = 5;
@@ -52,6 +53,43 @@ queue.then(function(conn) {
     });
   });
 }).catch(console.warn);
+
+function checkPermissions(datasetId, payload) {
+  return db.select().from('dataset').where('id', '=', datasetId)
+    .then(records => {
+      if (records.length == 0)
+        throw new UserError(`No dataset with specified id: ${datasetId}`);
+      metadata = records[0].metadata;
+
+      let allowUpdate = false;
+      if (payload.role == 'admin')
+        allowUpdate = true;
+      else if (payload.email == metadata.Submitted_By.Submitter.Email)
+        allowUpdate = true;
+      if (!allowUpdate)
+        throw new UserError(`You don't have permissions to edit the dataset: ${datasetId}`);
+    });
+}
+
+function baseDatasetQuery() {
+  return db.from(function() {
+    this.select(db.raw('dataset.id as id'),
+                'name',
+                db.raw('max(finish) as last_finished'),
+                db.raw('dataset.status as status'),
+                'metadata', 'config', 'input_path')
+        .from('dataset').leftJoin('job', 'dataset.id', 'job.ds_id')
+        .groupBy('dataset.id').as('tmp');
+  });
+}
+
+function checkFetchRes(resp) {
+  if (resp.ok) {
+    return resp
+  } else {
+    throw new Error(`An error occurred during fetch request - status ${resp.status}`);
+  }
+}
 
 
 const Resolvers = {
@@ -109,6 +147,14 @@ const Resolvers = {
               .then(results => results.map(row => row['field']));
     },
 
+    adductSuggestions() {
+      return config.defaults.adducts['-'].map(a => {
+        return {adduct: a, charge: -1};
+      }).concat(config.defaults.adducts['+'].map(a => {
+        return {adduct: a, charge: 1};
+      }));
+    },
+
     peopleSuggestions(_, { role, query }, {user}) {
       const schemaPath = 'Submitted_By.' + (role == 'PI' ? 'Principal_Investigator' : 'Submitter');
       const p1 = schemaPath + '.First_Name',
@@ -162,7 +208,7 @@ const Resolvers = {
         .then(records => {
           if (records.length > 0)
             return {
-              url: '/raw_optical_images/' + records[0].optical_image,
+              url: '/fs/raw_optical_images/' + records[0].optical_image,
               transform: records[0].transform
             };
           else
@@ -212,6 +258,10 @@ const Resolvers = {
       return ds._source.ds_is_public;
     },
 
+    acquisitionGeometry(ds) {
+      return JSON.stringify(ds._source.ds_acq_geometry);
+    },
+
     institution(ds) { return dsField(ds, 'institution'); },
     organism(ds) { return dsField(ds, 'organism'); },
     organismPart(ds) { return dsField(ds, 'organismPart'); },
@@ -220,6 +270,7 @@ const Resolvers = {
     polarity(ds) { return dsField(ds, 'polarity').toUpperCase(); },
     ionisationSource(ds) { return dsField(ds, 'ionisationSource'); },
     maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
+    metadataType(ds) { return dsField(ds, 'metadataType'); },
 
     submitter(ds) {
       return ds._source.ds_meta.Submitted_By.Submitter;
@@ -332,7 +383,7 @@ const Resolvers = {
 
         compounds.push({
           name: names[i],
-          imageURL: `http://${config.services.mol_image_server_host}/mol-images/${dbBaseName}/${id}.svg`,
+          imageURL: `/mol-images/${dbBaseName}/${id}.svg`,
           information: [{database: dbName, url: infoURL, databaseId: id}]
         });
       }
@@ -378,7 +429,7 @@ const Resolvers = {
       const {iso_image_ids, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints} = hit._source;
       return centroid_mzs.map(function(mz, i) {
         return {
-          url: iso_image_ids[i] !== null ? config.img_upload.categories.iso_image.path + iso_image_ids[i] : null,
+          url: iso_image_ids[i] !== null ? `/${hit._source.ds_ion_img_storage}${config.img_upload.categories.iso_image.path}${iso_image_ids[i]}` : null,
           mz: parseFloat(mz),
           totalIntensity: total_iso_ints[i],
           minIntensity: min_iso_ints[i],

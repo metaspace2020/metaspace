@@ -73,6 +73,8 @@ type Dataset {
   # https://github.com/metaspace2020/metadata
   metadataJson: String!
   isPublic: Boolean!
+  acquisitionGeometry: String
+  metadataType: String!
 
   status: JobStatus
   inputPath: String
@@ -107,6 +109,11 @@ type Compound {
   imageURL: String
   information: [CompoundInfoEntry]
   # TODO: InChi/SMILES, ClassyFire results
+}
+
+type Adduct {
+  adduct: String!
+  charge: Int!
 }
 
 type Spectrum {
@@ -205,6 +212,9 @@ input DatasetFilter {
   # exact match
   growthConditions: String
 
+  # exact match
+  metadataType: String
+
   status: JobStatus
 }
 
@@ -269,6 +279,8 @@ type Query {
   peopleSuggestions(role: PersonRole!, query: String!): [Person!]!
 
   molecularDatabases(hideDeprecated: Boolean = true): [MolecularDatabase!]
+
+  adductSuggestions: [Adduct!]!
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
