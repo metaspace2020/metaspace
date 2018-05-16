@@ -223,7 +223,7 @@ module.exports = {
           await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/del-optical-image`, {});
         }
         catch (err) {
-          logger.warning(err);
+          logger.warn(err);
         }
 
         return await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/delete`, {});
