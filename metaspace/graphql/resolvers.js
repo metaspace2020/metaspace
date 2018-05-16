@@ -7,7 +7,7 @@ const config = require('config'),
    esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {pgDatasetsViewableByUser, fetchDS, fetchMolecularDatabases, assertUserCanViewDataset,
-    canUserViewPgDataset, logger, pubsub, pg} = require("./utils.js"),
+    canUserViewPgDataset, logger, pubsub, db} = require("./utils.js"),
   {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js');
 
 
@@ -140,8 +140,8 @@ const Resolvers = {
 
     metadataSuggestions(_, { field, query, limit }, {user}) {
       let f = new SubstringMatchFilter(field, {}),
-          q = pg.from(pgDatasetsViewableByUser(user))
-                .select(pg.raw(f.pgField + " as field"))
+          q = db.from(pgDatasetsViewableByUser(user))
+                .select(db.raw(f.pgField + " as field"))
                 .groupBy('field').orderByRaw('count(*) desc').limit(limit);
       return f.pgFilter(q, query).orderBy('field', 'asc')
               .then(results => results.map(row => row['field']));
@@ -161,8 +161,8 @@ const Resolvers = {
             p2 = schemaPath + '.Surname',
             f1 = getPgField(p1),
             f2 = getPgField(p2);
-      const q = pg.from(pgDatasetsViewableByUser(user))
-                  .distinct(pg.raw(`${f1} as name, ${f2} as surname`))
+      const q = db.from(pgDatasetsViewableByUser(user))
+                  .distinct(db.raw(`${f1} as name, ${f2} as surname`))
                   .whereRaw(`${f1} ILIKE ? OR ${f2} ILIKE ?`, ['%' + query + '%', '%' + query + '%']);
       logger.info(q.toString());
       return q.orderBy('name', 'asc').orderBy('surname', 'asc')
@@ -187,7 +187,7 @@ const Resolvers = {
       const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
       assertUserCanViewDataset(datasetId, user);
 
-      return pg.select().from('optical_image')
+      return db.select().from('optical_image')
           .where('ds_id', '=', datasetId)
           .where('zoom', '=', intZoom)
           .then(records => {
@@ -202,7 +202,7 @@ const Resolvers = {
     },
 
     rawOpticalImage(_, {datasetId}, {user}) {
-      return pg
+      return db
         .from(pgDatasetsViewableByUser(user))
         .where('id', '=', datasetId)
         .then(records => {

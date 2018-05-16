@@ -5,7 +5,7 @@ const jsondiffpatch = require('jsondiffpatch'),
   {UserError} = require('graphql-errors'),
   _ = require('lodash');
 
-const {pg, logger, fetchDS, assertUserCanEditDataset,
+const {db, logger, fetchDS, assertUserCanEditDataset,
     generateProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json');
 
