@@ -10,7 +10,7 @@
       </el-option>
     </el-select>
 
-    <component v-for="f in activeFilters" :key="f.name"
+    <component v-for="f in visibleFilters" :key="f.name"
                :is="f.type"
                :name="f.name"
                :options="getFilterOptions(f)"
@@ -82,8 +82,10 @@
        return this.$store.state.orderedActiveFilters;
      },
 
-     activeFilters() {
-       return this.activeKeys.map(this.makeFilter);
+     visibleFilters() {
+       return this.activeKeys
+                  .filter(this.shouldShowFilter)
+                  .map(this.makeFilter);
      },
 
      availableFilters() {
@@ -115,6 +117,11 @@
    },
 
    methods: {
+     shouldShowFilter(filterKey) {
+       const {hidden} = FILTER_SPECIFICATIONS[filterKey];
+       return typeof hidden === 'function' ? hidden() : (hidden == null || hidden);
+     },
+
      makeFilter(filterKey) {
        const filterSpec = FILTER_SPECIFICATIONS[filterKey];
        let self = this;

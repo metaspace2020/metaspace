@@ -30,6 +30,7 @@ function formatFDR (fdr) {
      currently 'annotation' and 'dataset' are used
    * defaultInLevels: on which pages the filter should be active by default
    * initialValue: what will be the filter value when it's created
+   * hidden: whether to hide the filter from the UI
    * any required settings for the chosen filter component
      (e.g. 'options' for SingleSelectFilter/MultipleSelectFilter)
 
@@ -260,7 +261,8 @@ const FILTER_SPECIFICATIONS = {
     defaultInLevels: ['annotation', 'dataset', 'upload'],
     initialValue: defaultMetadataType,
     removable: false,
-    options: metadataTypes
+    options: metadataTypes,
+    hidden: () => metadataTypes == null || metadataTypes.length <= 1
   }
 };
 
