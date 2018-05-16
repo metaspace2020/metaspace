@@ -140,17 +140,6 @@
    },
 
    methods: {
-     safelyParseJSON(json) {
-       let parseRes;
-       try {
-         parseRes = JSON.parse(json);
-       } catch (err) {
-         console.log(err.message);
-         return 'failed_parsing' + err.message;
-       }
-       return parseRes;
-     },
-
      onUpload(filenames) {
        const allowedExts = this.fineUploaderDataTypeConfig.fileExtensions.map(ext => `.${ext.toLowerCase()}`);
        let fileName = '';
@@ -176,7 +165,7 @@
      },
 
      onFailure(failedFiles) {
-       console.log(failedFiles);
+       // Do nothing - FineUploader has already displayed a message to the user
      },
 
      onFormSubmit(_, formData, isPublic) {
@@ -191,27 +180,29 @@
            type: 'success'
          });
        }).catch(err => {
-         console.log(err.message);
-         const graphQLError = JSON.parse(err.graphQLErrors[0].message);
-         if (graphQLError['type'] === 'failed_validation') {
-           this.validationErrors = graphQLError['validation_errors'];
-           this.$message({
-             message: 'Please fix the highlighted fields and submit again',
-             type: 'error'
-           });
+         if (err.graphQLErrors != null) {
+           const graphQLError = JSON.parse(err.graphQLErrors[0].message);
+           if (graphQLError['type'] === 'failed_validation') {
+             this.validationErrors = graphQLError['validation_errors'];
+             this.$message({
+               message: 'Please fix the highlighted fields and submit again',
+               type: 'error'
+             });
+           } else {
+             this.$message({
+               message: 'Metadata submission failed :( Contact us: contact@metaspace2020.eu',
+               type: 'error',
+               duration: 0,
+               showClose: true
+             })
+           }
          } else {
-           this.$message({
-             message: 'Metadata submission failed :( Contact us: contact@metaspace2020.eu',
-             type: 'error',
-             duration: 0,
-             showClose: true
-           })
+           throw err;
          }
        })
      },
 
      submitDataset(uuid, formData, isPublic) {
-       console.log("submitting " + uuid);
        return getJWT()
          .then(jwt => this.$apollo.mutate({
            mutation: submitDatasetQuery,

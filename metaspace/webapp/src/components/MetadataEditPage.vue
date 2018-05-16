@@ -56,6 +56,7 @@
          // Empty catch block needed because babel-plugin-component throws a
          // compilation error when an async function has a try/finally without a catch.
          // https://github.com/ElementUI/babel-plugin-component/issues/9
+         throw e;
        } finally {
          this.isSubmitting = false;
        }
@@ -66,24 +67,27 @@
          await this.updateMetadata(jwt, datasetId, value, isPublic);
          return true;
        } catch (err) {
-         console.log(err);
-         const graphQLError = JSON.parse(err.graphQLErrors[0].message);
+         if (err.graphQLErrors != null) {
+           const graphQLError = JSON.parse(err.graphQLErrors[0].message);
 
-         if ((graphQLError['type'] === 'submit_needed' || graphQLError['type'] === 'drop_submit_needed')) {
-           if (await this.confirmReprocess()) {
-             const delFirst = graphQLError['type'] === 'drop_submit_needed';
-             await this.resubmitDataset(jwt, datasetId, value, isPublic, delFirst);
-             return true;
+           if ((graphQLError['type'] === 'submit_needed' || graphQLError['type'] === 'drop_submit_needed')) {
+             if (await this.confirmReprocess()) {
+               const delFirst = graphQLError['type'] === 'drop_submit_needed';
+               await this.resubmitDataset(jwt, datasetId, value, isPublic, delFirst);
+               return true;
+             }
+           } else if (graphQLError['type'] === 'failed_validation') {
+             this.$message({
+               message: 'Please fix the highlighted fields and submit again',
+               type: 'error'
+             });
+           } else {
+             this.$message({ message: 'Couldn\'t save the form: GraphQL error', type: 'error' });
            }
-         } else if (graphQLError['type'] === 'failed_validation') {
-           this.$message({
-             message: 'Please fix the highlighted fields and submit again',
-             type: 'error'
-           });
+           return false;
          } else {
-           this.$message({ message: 'Couldn\'t save the form: GraphQL error', type: 'error' });
+           throw err;
          }
-         return false;
        }
      },
      async confirmReprocess() {

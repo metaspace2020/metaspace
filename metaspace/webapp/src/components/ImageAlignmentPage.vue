@@ -319,11 +319,11 @@
            });
            this.$router.go(-1);
          }).catch((e) => {
-           console.log(e);
            this.$message({
              type: 'error',
              message: 'Internal server error'
            });
+           throw e;
          });
          return;
        }
@@ -344,11 +344,11 @@
              });
              this.$router.go(-1);
            }).catch((e) => {
-             console.log(e);
              this.$message({
                type: 'error',
                message: 'Internal server error'
              });
+             throw e;
            });
          } else if (xhr.readyState == 4) {
            this.$message({
@@ -396,8 +396,8 @@
              this.$message({
                type: 'error',
                message: "Couldn't delete optical image due to an error"
-             })}
-           else {
+             });
+           } else {
              this.destroyOptImage();
              this.$message({
                type: 'success',
@@ -407,10 +407,12 @@
          } else {
            this.destroyOptImage();
          }
-         return 'success'
        } catch(e) {
-         console.log(e.message);
-         return e.message
+         this.$message({
+           type: 'error',
+           message: "Couldn't delete optical image due to an error"
+         });
+         throw e;
        }
      },
 

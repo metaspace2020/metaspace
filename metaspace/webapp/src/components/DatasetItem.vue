@@ -325,7 +325,6 @@
          });
        }
        catch (err) {
-         console.log(err);
          this.$message({
            message: "Deletion failed :( Please contact us at contact@metaspace2020.eu",
            type: 'error',
@@ -333,6 +332,7 @@
            showClose: true
          });
          this.disabled = false;
+         throw err;
        }
      },
 

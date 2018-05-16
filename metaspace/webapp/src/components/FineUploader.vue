@@ -135,7 +135,6 @@
          return;
        }
 
-       console.log(this.uuid);
        this.valid = true;
        this.uploadFilenames = fnames;
      },
@@ -163,12 +162,6 @@
            key: (id) => `${this.uuid}/${this.fineUploader.getFile(id).name}`
          },
          callbacks: {
-           onComplete: (id, name, response) => {
-             if (response.success)
-               console.log('Uploaded: ' + name);
-             else
-               console.log('Failed: ' + name);
-           },
            onAllComplete: (succeeded, failed) => {
              if (failed.length == 0) {
                this.$message({message: 'All datasets have been uploaded', type: 'success'})

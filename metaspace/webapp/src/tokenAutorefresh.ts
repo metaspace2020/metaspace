@@ -17,7 +17,6 @@ class TokenAutorefresh extends Vue {
     this.jwt = await getJWT();
     const payload = decodePayload(this.jwt);
     this.payload = {sub: payload.sub};
-    console.log(payload);
     const delay = payload.exp ? this.interval : 0; // update the token every 30 seconds
     if (delay > 0)
       this.timer = window.setTimeout(() => this.execute(), delay);

@@ -16,5 +16,7 @@
     "storage": "{{ sm_webapp_upload_destination }}"
   },
 
+  "ravenDsn": "https://16556a31185a4882b9ebf6a5abab9452@sentry.io/1203803",
+
   "metadataTypes": {{ sm_webapp_metadata_types | to_json }}
 }
