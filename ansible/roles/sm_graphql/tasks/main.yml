@@ -1,11 +1,14 @@
 ---
 
 - name: Clone sm-graphql git repository
-  git: >
-    dest={{ sm_graphql_home }}
-    repo=https://github.com/METASPACE2020/sm-graphql.git
-    update=yes
-    version={{ sm_graphql_branch }}
+  git:
+    dest: "{{ sm_graphql_home }}"
+    repo: https://github.com/METASPACE2020/sm-graphql.git
+    update: yes
+    force: yes
+    recursive: yes
+    track_submodules: no  # submodules refer to commit specified in the main repository
+    version: "{{ sm_graphql_branch }}"
 
 - name: Install sm-graphql dependencies
   shell: npm install
