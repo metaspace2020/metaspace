@@ -8,4 +8,4 @@ The work on aligning this metadata with metadata required by the [EBI MetaboLigh
 
 ## License
 
-This project is licensed under the Apache 2.0 license.
+This project is licensed under the (Apache 2.0 license)[LICENSE].
