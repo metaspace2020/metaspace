@@ -181,7 +181,6 @@ class SMapiDatasetManager(DatasetManager):
             msg['action'] = action
             msg.update(kwargs)
 
-            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.QUEUED)
             self._action_queue.publish(msg, priority)
             self.logger.info('New message posted to %s: %s', self._action_queue, msg)
 
@@ -267,7 +266,7 @@ class SMapiDatasetManager(DatasetManager):
             raw_img_id = row[0]
             if raw_img_id:
                 self._img_store.delete_image_by_id('fs', 'raw_optical_image', raw_img_id)
-        for row in self._db.select(SEL_OPTICAL_IMAGE, ds.id):
+        for row in self._db.select(SEL_OPTICAL_IMAGE, params=(ds.id,)):
             self._img_store.delete_image_by_id('fs', 'optical_image', row[0])
         self._db.alter(DEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
         self._db.alter(DEL_OPTICAL_IMAGE, params=(ds.id,))
