@@ -23,4 +23,4 @@ Install [CircleCI CLI tool](https://circleci.com/docs/2.0/local-jobs/) and run `
 
 ## License
 
-This project is licensed under the Apache 2.0 license.
+This project is licensed under the (Apache 2.0 license)[LICENSE].
