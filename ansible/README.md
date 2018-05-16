@@ -11,4 +11,4 @@ Check for more information about the SM Platform components
 
 ## License
 
-This project is licensed under Apache 2.0 license.
+This project is licensed under (Apache 2.0 license)[LICENSE].
