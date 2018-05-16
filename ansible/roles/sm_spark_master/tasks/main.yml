@@ -19,7 +19,7 @@
 - name: Clone SM git repository
   git:
     dest: "{{ sm_home }}"
-    repo: "https://github.com/SpatialMetabolomics/sm-engine.git"
+    repo: "{{ sm_repo_url }}"
     update: yes
     version: "{{ sm_branch }}"
     force: yes

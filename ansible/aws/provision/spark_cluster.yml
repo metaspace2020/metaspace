@@ -58,7 +58,7 @@
 
     - name: Load variables for Filebeat role
       include_vars:
-        file: elk_vars.yml
+        file: elk-vars.yml
       when: elk_enable
 
   roles:
