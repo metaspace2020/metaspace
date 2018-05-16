@@ -240,6 +240,10 @@ async function fetchMolecularDatabases({hideDeprecated = true}) {
   return molDBs;
 }
 
+async function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 module.exports = {
   generateProcessingConfig,
   metadataChangeSlackNotify,
@@ -251,6 +255,7 @@ module.exports = {
   assertUserCanEditDataset,
   fetchDS,
   fetchMolecularDatabases,
+  wait,
   config,
   logger,
   pubsub,

@@ -7,36 +7,38 @@ const config = require('config'),
    esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {pgDatasetsViewableByUser, fetchDS, fetchMolecularDatabases, assertUserCanViewDataset,
-    canUserViewPgDataset, logger, pubsub, db} = require("./utils.js"),
+    canUserViewPgDataset, wait, logger, pubsub, db} = require("./utils.js"),
   {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js');
 
 
-async function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
-  // wait until updates are reflected in ES so that clients don't have to care
+async function publishDatasetStatusUpdate(ds_id, status) {
+  // wait until updates are reflected in ES so that clients can refresh their data
   const maxAttempts = 5;
 
-  const ds = await esDatasetByID(ds_id, null, true);
+  try {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      console.log({attempt, status});
+      const ds = await esDatasetByID(ds_id, null, true);
 
-  if (attempt > maxAttempts) {
-    console.warn(`Failed to propagate dataset update for ${ds_id}`);
-    return;
-  }
-  console.log(attempt, status);
+      if (ds === null && status === 'DELETED') {
+        await wait(1000);
+        pubsub.publish('datasetStatusUpdated', {});
+        return;
+      } else if (ds !== null && status !== 'DELETED') {
+        pubsub.publish('datasetStatusUpdated', {
+          dataset: Object.assign({}, ds, { status }),
+          dbDs: await fetchDS({ id: ds_id })
+        });
+        return;
+      }
 
-  if (ds === null && status === 'DELETED') {
-    setTimeout(() => {
-      pubsub.publish('datasetStatusUpdated', {});
-    }, 1000);
-  } else if (ds !== null && status !== 'DELETED') {
-    pubsub.publish('datasetStatusUpdated', {
-      dataset: Object.assign({}, ds, { status }),
-      dbDs: await fetchDS({id: ds_id})
-    });
-  } else {
-    setTimeout(publishDatasetStatusUpdate,
-               50 * attempt * attempt,
-               ds_id, status, attempt + 1);
+      await wait(50 * attempt * attempt);
+    }
+  } catch (err) {
+    logger.error(err);
   }
+
+  logger.warn(`Failed to propagate dataset update for ${ds_id}`);
 }
 
 let queue = require('amqplib').connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`);

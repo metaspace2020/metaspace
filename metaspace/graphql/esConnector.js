@@ -266,8 +266,10 @@ module.exports.esCountGroupedResults = function(args, docType, user) {
 }
 
 async function getById(docType, id, user, ignorePermissions=false) {
-  const resp = await es.get({ index: esIndex, type: docType, id });
-  if (ignorePermissions || canUserViewEsDataset(resp, user)) {
+  const resp = await es.get({ index: esIndex, type: docType, id, ignore: [404] });
+  if (!resp.found) {
+    return null;
+  } else if (ignorePermissions || canUserViewEsDataset(resp, user)) {
     return resp;
   } else {
     throw new Error(`Unauthorized: user ${user.email} tried to access ${docType} ${id}`)
