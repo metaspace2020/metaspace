@@ -192,7 +192,7 @@ const Resolvers = {
           .where('zoom', '=', intZoom)
           .then(records => {
               if (records.length > 0)
-                  return '/optical_images/' + records[0].id;
+                  return '/fs/optical_images/' + records[0].id;
               else
                   return null;
           })
