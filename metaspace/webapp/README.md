@@ -28,3 +28,7 @@ Then set `NODE_ENV` accordingly and run `server.js`, e.g.
 ```bash
 NODE_ENV=production forever start -l forever.log -o out.log -e err.log -c "nodemon --exitcrash" server.js
 ```
+
+## License
+
+This project is licensed under the [Apache 2.0 license](LICENSE).
