@@ -327,7 +327,7 @@
 
    data() {
      // some default value before we download metadata
-     this._datasetMdType = this.$store.getters.filter.metadataType;
+     this._datasetMdType = this.$store.getters.filter.metadataType || defaultMetadataType;
      return {
        value: this.getDefaultMetadataValue(this._datasetMdType),
        isPublic: true,

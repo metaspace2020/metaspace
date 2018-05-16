@@ -262,7 +262,7 @@ const FILTER_SPECIFICATIONS = {
     initialValue: defaultMetadataType,
     removable: false,
     options: metadataTypes,
-    hidden: () => metadataTypes == null || metadataTypes.length <= 1
+    hidden: () => metadataTypes.length <= 1
   }
 };
 

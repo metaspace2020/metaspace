@@ -119,7 +119,7 @@
    methods: {
      shouldShowFilter(filterKey) {
        const {hidden} = FILTER_SPECIFICATIONS[filterKey];
-       return typeof hidden === 'function' ? hidden() : (hidden == null || hidden);
+       return !(typeof hidden === 'function' ? hidden() : (hidden != null && hidden));
      },
 
      makeFilter(filterKey) {
