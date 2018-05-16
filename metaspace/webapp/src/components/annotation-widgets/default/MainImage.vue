@@ -15,7 +15,7 @@
         <el-slider
             vertical
             height="150px"
-            v-model="opacity"
+            :value="opacity"
             v-on:input="onOpacityInput"
             :min=0
             :max=1
