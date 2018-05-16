@@ -156,7 +156,7 @@ module.exports = {
         if (datasetId !== undefined) {
           const ds = await fetchDS({id: datasetId});
           if (ds !== undefined)
-            await assertUserCanEditDataset(datasetId, payload);
+            await assertUserCanEditDataset(datasetId, user);
         }
 
         setSubmitter(null, metadata, user);
