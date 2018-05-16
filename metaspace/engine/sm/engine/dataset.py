@@ -35,11 +35,12 @@ class Dataset(object):
     """ Model class for representing a dataset """
     DS_SEL = ('SELECT name, input_path, upload_dt, metadata, config, status, is_public '
               'FROM dataset WHERE id = %s')
-    DS_UPD = ('UPDATE dataset set name=%s, input_path=%s, upload_dt=%s, metadata=%s, config=%s, status=%s, '
-              'is_public=%s where id=%s')
+    DS_UPD = ('UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
+              'metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s where id=%(id)s')
     DS_CONFIG_SEL = 'SELECT config FROM dataset WHERE id = %s'
     DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, is_public) '
-                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)')
+                 'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, %(metadata)s, %(config)s, '
+                 '%(status)s, %(is_public)s)')
 
     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
     ACQ_GEOMETRY_UPD = 'UPDATE dataset SET acq_geometry = %s WHERE id = %s'
@@ -70,7 +71,7 @@ class Dataset(object):
 
     @classmethod
     def load(cls, db, ds_id):
-        r = db.select_one(cls.DS_SEL, ds_id)
+        r = db.select_one(cls.DS_SEL, params=(ds_id,))
         if r:
             ds = Dataset(ds_id)
             ds.name, ds.input_path, ds.upload_dt, ds.meta, ds.config, ds.status, ds.is_public = r
@@ -79,18 +80,26 @@ class Dataset(object):
         return ds
 
     def is_stored(self, db):
-        r = db.select_one(self.DS_SEL, self.id)
+        r = db.select_one(self.DS_SEL, params=(self.id,))
         return True if r else False
 
     def save(self, db, es, status_queue=None):
         assert self.id and self.name and self.input_path and self.upload_dt and self.config and self.status \
                and self.is_public is not None
-        row = (self.id, self.name, self.input_path, self.upload_dt.isoformat(' '),
-               json.dumps(self.meta), json.dumps(self.config), self.status, self.is_public)
+        d = {
+            'id': self.id,
+            'name': self.name,
+            'input_path': self.input_path,
+            'upload_dt': self.upload_dt.isoformat(' '),
+            'metadata': json.dumps(self.meta),
+            'config': json.dumps(self.config),
+            'status': self.status,
+            'is_public': self.is_public
+        }
         if not self.is_stored(db):
-            db.insert(self.DS_INSERT, [row])
+            db.insert(self.DS_INSERT, rows=[d])
         else:
-            db.alter(self.DS_UPD, *(row[1:] + row[:1]))  # ds_id goes last in DS_UPD
+            db.alter(self.DS_UPD, params=d)
         logger.info("Inserted into dataset table: %s, %s", self.id, self.name)
 
         es.sync_dataset(self.id)
@@ -98,24 +107,24 @@ class Dataset(object):
             status_queue.publish({'ds_id': self.id, 'status': self.status})
 
     def get_acq_geometry(self, db):
-        r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, self.id)
+        r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, params=(self.id,))
         if not r:
             raise UnknownDSID('Dataset does not exist: {}'.format(self.id))
         return r[0]
 
     def save_acq_geometry(self, db, acq_geometry):
-        db.alter(self.ACQ_GEOMETRY_UPD, json.dumps(acq_geometry), self.id)
+        db.alter(self.ACQ_GEOMETRY_UPD, params=(json.dumps(acq_geometry), self.id))
 
     def get_ion_img_storage_type(self, db):
         if not self.ion_img_storage_type:
-            r = db.select_one(Dataset.IMG_STORAGE_TYPE_SEL, self.id)
+            r = db.select_one(Dataset.IMG_STORAGE_TYPE_SEL, params=(self.id,))
             if not r:
                 raise UnknownDSID('Dataset does not exist: {}'.format(self.id))
             self.ion_img_storage_type = r[0]
         return self.ion_img_storage_type
 
     def save_ion_img_storage_type(self, db, storage_type):
-        db.alter(self.IMG_STORAGE_TYPE_UPD, storage_type, self.id)
+        db.alter(self.IMG_STORAGE_TYPE_UPD, params=(storage_type, self.id))
         self.ion_img_storage_type = storage_type
 
     def to_queue_message(self):

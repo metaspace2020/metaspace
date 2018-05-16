@@ -84,7 +84,7 @@ class SearchJob(object):
         """ Store search job metadata in the database """
         logger.info('Storing job metadata')
         rows = [(mol_db_id, self._ds.id, 'STARTED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
-        self._job_id = self._db.insert_return(JOB_INS, rows)[0]
+        self._job_id = self._db.insert_return(JOB_INS, rows=rows)[0]
 
     def _run_annotation_job(self, mol_db):
         try:
@@ -120,7 +120,7 @@ class SearchJob(object):
             img_store_type = self._ds.get_ion_img_storage_type(self._db)
             search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, self._img_store, img_store_type)
         except Exception as e:
-            self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
+            self._db.alter(JOB_UPD, params=('FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id))
             msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
             raise JobFailedError(msg) from e
         else:
@@ -130,22 +130,22 @@ class SearchJob(object):
         try:
             self._es.index_ds(self._ds.id, mol_db, isocalc)
         except Exception as e:
-            self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
+            self._db.alter(JOB_UPD, params=('FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id))
             msg = 'Export to ES failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
             raise ESExportFailedError(msg) from e
         else:
-            self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
+            self._db.alter(JOB_UPD, params=('FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id))
 
     def _remove_annotation_job(self, mol_db):
         logger.info("Removing job results ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
                     self._ds.id, self._ds.name, mol_db.name, mol_db.version)
-        self._db.alter("DELETE FROM job WHERE ds_id = %s and db_id = %s", self._ds.id, mol_db.id)
+        self._db.alter('DELETE FROM job WHERE ds_id = %s and db_id = %s', params=(self._ds.id, mol_db.id))
         self._es.delete_ds(self._ds.id, mol_db)
 
     def _moldb_ids(self):
         moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
         completed_moldb_ids = {moldb_service.find_db_by_id(db_id)['id']
-                               for (_, db_id) in self._db.select(JOB_ID_MOLDB_ID_SEL, self._ds.id)}
+                               for (_, db_id) in self._db.select(JOB_ID_MOLDB_ID_SEL, params=(self._ds.id,))}
         new_moldb_ids = {moldb_service.find_db_by_name_version(d['name'], d.get('version', None))[0]['id']
                          for d in self._ds.config['databases']}
         return completed_moldb_ids, new_moldb_ids

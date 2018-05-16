@@ -54,7 +54,7 @@ class SciTester(object):
     def fetch_search_res(self):
         mol_db_service = MolDBServiceWrapper(self.sm_config['services']['mol_db'])
         mol_db_id = mol_db_service.find_db_by_name_version('HMDB-v2.5')[0]['id']
-        rows = self.db.select(SEARCH_RES_SELECT, mol_db_id, self.ds_name)
+        rows = self.db.select(SEARCH_RES_SELECT, params=(mol_db_id, self.ds_name))
         return {(r[0], r[1]): self.metr_dict_to_array(r[2]) for r in rows}
 
     def save_sci_test_report(self):

@@ -38,7 +38,7 @@ class SMDaemon(object):
 
     def _fetch_ds_metadata(self, ds_id):
         db = DB(SMConfig.get_conf()['db'])
-        res = db.select_one('SELECT name, metadata FROM dataset WHERE id = %s', ds_id)
+        res = db.select_one('SELECT name, metadata FROM dataset WHERE id = %s', params=(ds_id,))
         return res or ('', {})
 
     def _send_email(self, email, subj, body):

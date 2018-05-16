@@ -74,8 +74,18 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
         ds_config_str = open(ds_config_path).read()
         upload_dt = datetime.now()
         ds_id = '2000-01-01_00h00m'
-        db.insert(Dataset.DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt,
-                                       '{}', ds_config_str, DatasetStatus.QUEUED)])
+        db.insert(Dataset.DS_INSERT, [{
+            'id': ds_id,
+            'name': test_ds_name,
+            'input_path': input_dir_path,
+            'upload_dt': upload_dt,
+            'metadata': '{}',
+            'config': ds_config_str,
+            'status': DatasetStatus.QUEUED,
+            'is_public': True,
+            'ion_img_storage': 'fs'
+        }])
+
         img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
         job = SearchJob(img_store=img_store)
         job._sm_config['rabbitmq'] = {}  # avoid talking to RabbitMQ during the test
@@ -83,13 +93,13 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
         job.run(ds)
 
         # dataset table asserts
-        rows = db.select("SELECT id, name, input_path, upload_dt, status from dataset")
+        rows = db.select('SELECT id, name, input_path, upload_dt, status from dataset')
         input_path = join(dirname(__file__), 'data', test_ds_name)
         assert len(rows) == 1
         assert rows[0] == (ds_id, test_ds_name, input_path, upload_dt, DatasetStatus.FINISHED)
 
         # ms acquisition geometry asserts
-        rows = db.select("SELECT acq_geometry from dataset")
+        rows = db.select('SELECT acq_geometry from dataset')
         assert len(rows) == 1
         assert rows[0][0] == ds.get_acq_geometry(db)
         assert rows[0][0] == {
@@ -109,7 +119,7 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
         }
 
         # job table asserts
-        rows = db.select("SELECT db_id, ds_id, status, start, finish from job")
+        rows = db.select('SELECT db_id, ds_id, status, start, finish from job')
         assert len(rows) == 1
         db_id, ds_id, status, start, finish = rows[0]
         assert (db_id, ds_id, status) == (0, '2000-01-01_00h00m', 'FINISHED')
@@ -174,8 +184,17 @@ def test_search_job_imzml_example_annotation_job_fails(get_compute_img_metrics_m
         ds_id = '2000-01-01_00h00m'
         upload_dt = datetime.now()
         ds_config_str = open(ds_config_path).read()
-        db.insert(Dataset.DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt.isoformat(' '),
-                                       '{}', ds_config_str, DatasetStatus.QUEUED)])
+        db.insert(Dataset.DS_INSERT, [{
+            'id': ds_id,
+            'name': test_ds_name,
+            'input_path': input_dir_path,
+            'upload_dt': upload_dt,
+            'metadata': '{}',
+            'config': ds_config_str,
+            'status': DatasetStatus.QUEUED,
+            'is_public': True,
+            'ion_img_storage': 'fs'
+        }])
 
         img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
         job = SearchJob(img_store=img_store)
@@ -190,7 +209,7 @@ def test_search_job_imzml_example_annotation_job_fails(get_compute_img_metrics_m
     except JobFailedError as e:
         assert e
         # dataset table asserts
-        row = db.select_one("SELECT status from dataset")
+        row = db.select_one('SELECT status from dataset')
         assert row[0] == 'FAILED'
     else:
         raise AssertionError('JobFailedError should be raised')
@@ -233,8 +252,17 @@ def test_search_job_imzml_example_es_export_fails(get_compute_img_metrics_mock, 
         ds_id = '2000-01-01_00h00m'
         upload_dt = datetime.now()
         ds_config_str = open(ds_config_path).read()
-        db.insert(Dataset.DS_INSERT, [(ds_id, test_ds_name, input_dir_path, upload_dt.isoformat(' '),
-                                       '{}', ds_config_str, DatasetStatus.QUEUED)])
+        db.insert(Dataset.DS_INSERT, [{
+            'id': ds_id,
+            'name': test_ds_name,
+            'input_path': input_dir_path,
+            'upload_dt': upload_dt,
+            'metadata': '{}',
+            'config': ds_config_str,
+            'status': DatasetStatus.QUEUED,
+            'is_public': True,
+            'ion_img_storage': 'fs'
+        }])
 
         with patch('sm.engine.search_job.ESExporter.index_ds') as index_ds_mock:
             index_ds_mock.side_effect = throw_exception_function
@@ -246,7 +274,7 @@ def test_search_job_imzml_example_es_export_fails(get_compute_img_metrics_mock, 
     except ESExportFailedError as e:
         assert e
         # dataset table asserts
-        row = db.select_one("SELECT status from dataset")
+        row = db.select_one('SELECT status from dataset')
         assert row[0] == 'FAILED'
     else:
         raise AssertionError('ESExportFailedError should be raised')

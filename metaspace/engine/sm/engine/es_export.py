@@ -15,8 +15,8 @@ ANNOTATION_COLUMNS = ["sf", "sf_adduct",
                       "iso_image_ids", "polarity"]
 
 ANNOTATIONS_SEL = '''SELECT
-    m.sf,
-    CONCAT(m.sf, m.adduct) as sf_adduct,
+    m.sf AS sf,
+    CONCAT(m.sf, m.adduct) AS sf_adduct,
     COALESCE(((m.stats -> 'chaos'::text)::text)::real, 0::real) AS chaos,
     COALESCE(((m.stats -> 'spatial'::text)::text)::real, 0::real) AS image_corr,
     COALESCE(((m.stats -> 'spectral'::text)::text)::real, 0::real) AS pattern_match,
@@ -24,11 +24,11 @@ ANNOTATIONS_SEL = '''SELECT
     (m.stats -> 'min_iso_ints'::text) AS min_iso_ints,
     (m.stats -> 'max_iso_ints'::text) AS max_iso_ints,
     COALESCE(m.msm, 0::real) AS msm,
-    m.adduct,
+    m.adduct AS adduct,
     j.id AS job_id,
-    m.fdr as pass_fdr,
-    m.iso_image_ids as iso_image_ids,
-    ds.config->'isotope_generation'->'charge'->'polarity' as polarity
+    m.fdr AS fdr,
+    m.iso_image_ids AS iso_image_ids,
+    ds.config->'isotope_generation'->'charge'->'polarity' AS polarity
 FROM iso_image_metrics m
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
@@ -36,17 +36,17 @@ WHERE ds.id = %s AND m.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC'''
 
 DATASET_SEL = '''SELECT
-    dataset.id,
-    name,
-    config,
-    metadata,
-    input_path,
-    upload_dt,
-    dataset.status,
-    to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS'),
-    is_public,
-    acq_geometry,
-    ion_img_storage_type
+    dataset.id AS ds_id,
+    name AS ds_name,
+    config AS ds_config,
+    metadata AS ds_meta,
+    input_path AS ds_input_path,
+    upload_dt AS ds_upload_dt,
+    dataset.status AS ds_status,
+    to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS') as ds_last_finished,
+    is_public AS ds_is_public,
+    acq_geometry AS ds_acq_geometry,
+    ion_img_storage_type AS ds_ion_img_storage
 FROM dataset LEFT JOIN job ON job.ds_id = dataset.id
 WHERE dataset.id = %s
 GROUP BY dataset.id'''
@@ -185,7 +185,7 @@ class ESExporter(object):
             dataset['ds_submitter_email'] = submitter.get('Email', '')
 
     def _ds_get_by_id(self, ds_id):
-        dataset = dict(zip(DATASET_COLUMNS, self._db.select(DATASET_SEL, ds_id)[0]))
+        dataset = self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
         self._ds_add_derived_fields(dataset)
         return dataset
 
@@ -219,14 +219,13 @@ class ESExporter(object):
         annotation_counts = defaultdict(int)
         fdr_levels = [5, 10, 20, 50]
 
-        annotations = self._db.select(ANNOTATIONS_SEL, ds_id, mol_db.id)
+        annotations = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
         logger.info('Indexing {} documents: {}, {}'.format(len(annotations), ds_id, mol_db))
 
         n = 100
         to_index = []
         mol_by_sf_df = self._get_mol_by_sf_df(mol_db)
-        for r in annotations:
-            d = dict(zip(ANNOTATION_COLUMNS, r))
+        for d in annotations:
             self._add_ds_attrs_to_ann(d, dataset)
             d['db_name'] = mol_db.name
             d['db_version'] = mol_db.version
