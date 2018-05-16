@@ -574,14 +574,22 @@
 
      updateCurrentAdductOptions() {
        if (this._possibleAdducts && (this.value.MS_Analysis.Polarity in this._possibleAdducts)) {
+         const adductsForPolarity = this._possibleAdducts[this.value.MS_Analysis.Polarity];
          Vue.set(this.schema.properties.metaspace_options.properties.Adducts.items,
                  'enum',
-                 this._possibleAdducts[this.value.MS_Analysis.Polarity]);
+                 adductsForPolarity);
+
+         let selectedAdducts = this.value.metaspace_options.Adducts;
+         selectedAdducts = selectedAdducts.filter(adduct => adductsForPolarity.includes(adduct))
+         // Default to selecting all valid adducts (at least until the less common adducts are added)
+         if (selectedAdducts.length === 0) {
+           selectedAdducts = adductsForPolarity.slice();
+         }
+         this.value.metaspace_options.Adducts = selectedAdducts;
        }
      },
 
      onPolarityChange() {
-       this.value.metaspace_options.Adducts = [];
        this.updateCurrentAdductOptions();
      },
 
