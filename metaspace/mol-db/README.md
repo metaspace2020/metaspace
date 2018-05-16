@@ -27,3 +27,7 @@ sudo pip install -r requirements.txt
 ## Running
 
 `python3 app/main.py`
+
+## License
+
+This project is licensed under the (Apache 2.0 license)[LICENSE].
