@@ -15,4 +15,4 @@ and internal funds of the [European Molecular Biology Laboratory](https://www.em
 
 ## License
 
-This project is licensed under the (Apache 2.0 license)[LICENSE].
+This project is licensed under the [Apache 2.0 license](LICENSE).
