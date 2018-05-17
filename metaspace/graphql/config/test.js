@@ -16,20 +16,22 @@ config.defaults = {
 };
 
 config.img_upload = {
-  iso_img_fs_path: "/opt/data/sm_data/public/",
-  backend: "fs", // "fs or "db"
+  iso_img_fs_path: '/opt/data/sm_data/public/',
   categories: {
     iso_image: {
-      type: 'image/png',
-      path: '/iso_images/'
+      type: 'image/png',  // applies only to post requests
+      path: '/iso_images/',
+      storage_types: ['fs', 'db']
     },
     optical_image: {
       type: 'image/jpeg',
-      path: '/optical_images/'
+      path: '/optical_images/',
+      storage_types: ['fs']
     },
     raw_optical_image: {
       type: 'image/jpeg',
-      path: '/raw_optical_images/'
+      path: '/raw_optical_images/',
+      storage_types: ['fs']
     }
   }
 };
@@ -37,8 +39,6 @@ config.img_upload = {
 config.services = {};
 /* Molecular database service, used only for internal purposes (peakChartData query) */
 config.services.moldb_service_host = "localhost";
-/* Public IP of the server that hosts molecule images */
-config.services.mol_image_server_host = "localhost";
 config.services.sm_engine_api_host = "localhost";
 
 config.db = {};

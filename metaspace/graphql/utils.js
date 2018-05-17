@@ -147,7 +147,7 @@ const dbConfig = () => {
   };
 };
 
-let pg = require('knex')({
+let db = require('knex')({
   client: 'pg',
   connection: dbConfig(),
   searchPath: 'knex,public'
@@ -186,7 +186,7 @@ function pgDatasetsViewableByUser(user) {
 }
 
 async function assertUserCanViewDataset(datasetId, user) {
-  const records = await pg.select().from('dataset').where('id', '=', datasetId);
+  const records = await db.select().from('dataset').where('id', '=', datasetId);
 
   if (records.length === 0)
     throw new UserError(`No dataset with specified id: ${datasetId}`);
@@ -197,7 +197,7 @@ async function assertUserCanViewDataset(datasetId, user) {
 }
 
 function assertUserCanEditDataset(datasetId, user) {
-  return pg.select().from('dataset').where('id', '=', datasetId)
+  return db.select().from('dataset').where('id', '=', datasetId)
     .then(records => {
       if (records.length === 0)
         throw new UserError(`No dataset with specified id: ${datasetId}`);
@@ -214,9 +214,9 @@ async function fetchDS({id, name}) {
   // TODO Lachlan: Refactor this so that security is enforced by default
   let records;
   if (id !== undefined)
-    records = await pg.select().from('dataset').where('id', '=', id);
+    records = await db.select().from('dataset').where('id', '=', id);
   else if (name !== undefined)
-    records = await pg.select().from('dataset').where('name', '=', name);
+    records = await db.select().from('dataset').where('name', '=', name);
   else
     throw new UserError(`'id' or 'name' must be provided`);
 
@@ -240,6 +240,10 @@ async function fetchMolecularDatabases({hideDeprecated = true}) {
   return molDBs;
 }
 
+async function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 module.exports = {
   generateProcessingConfig,
   metadataChangeSlackNotify,
@@ -251,8 +255,9 @@ module.exports = {
   assertUserCanEditDataset,
   fetchDS,
   fetchMolecularDatabases,
+  wait,
   config,
   logger,
   pubsub,
-  pg
+  db
 };

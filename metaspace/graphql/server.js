@@ -15,8 +15,9 @@ const bodyParser = require('body-parser'),
   Promise = require("bluebird"),
   slack = require('node-slack'),
   sprintf = require('sprintf-js'),
-  logger = require('./utils.js').logger,
   readFile = Promise.promisify(require("fs").readFile);
+
+const logger = require('./utils.js').logger;
 
 // subscriptions setup
 const http = require('http'),

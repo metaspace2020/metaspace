@@ -5,7 +5,7 @@ const jsondiffpatch = require('jsondiffpatch'),
   {UserError} = require('graphql-errors'),
   _ = require('lodash');
 
-const {pg, logger, fetchDS, assertUserCanEditDataset,
+const {db, logger, fetchDS, assertUserCanEditDataset,
     generateProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json');
 
@@ -156,7 +156,7 @@ module.exports = {
         if (datasetId !== undefined) {
           const ds = await fetchDS({id: datasetId});
           if (ds !== undefined)
-            await assertUserCanEditDataset(datasetId, payload);
+            await assertUserCanEditDataset(datasetId, user);
         }
 
         setSubmitter(null, metadata, user);
@@ -223,7 +223,7 @@ module.exports = {
           await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/del-optical-image`, {});
         }
         catch (err) {
-          logger.warning(err);
+          logger.warn(err);
         }
 
         return await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/delete`, {});

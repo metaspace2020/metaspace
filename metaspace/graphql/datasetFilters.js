@@ -117,7 +117,8 @@ const datasetFilters = {
   name: new SubstringMatchFilter('', {esField: 'ds_name', pgField: 'name'}),
   ids: new DatasetIdFilter(),
   status: new ExactMatchFilter('', {esField: 'ds_status', pgField: 'status'}),
-  submitter: new PersonFilter('Submitted_By.Submitter')
+  submitter: new PersonFilter('Submitted_By.Submitter'),
+  metadataType: new ExactMatchFilter('Data_Type', {}),
 }
 
 function dsField(hit, alias){

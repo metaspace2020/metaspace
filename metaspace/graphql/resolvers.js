@@ -7,35 +7,38 @@ const config = require('config'),
    esAnnotationByID, esDatasetByID} = require('./esConnector'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {pgDatasetsViewableByUser, fetchDS, fetchMolecularDatabases, assertUserCanViewDataset,
-    canUserViewPgDataset, logger, pubsub, pg} = require("./utils.js"),
+    canUserViewPgDataset, wait, logger, pubsub, db} = require("./utils.js"),
   {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js');
 
-async function publishDatasetStatusUpdate(ds_id, status, attempt=1) {
-  // wait until updates are reflected in ES so that clients don't have to care
+
+async function publishDatasetStatusUpdate(ds_id, status) {
+  // wait until updates are reflected in ES so that clients can refresh their data
   const maxAttempts = 5;
 
-  const ds = await esDatasetByID(ds_id, null, true);
+  try {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      console.log({attempt, status});
+      const ds = await esDatasetByID(ds_id, null, true);
 
-  if (attempt > maxAttempts) {
-    console.warn(`Failed to propagate dataset update for ${ds_id}`);
-    return;
-  }
-  console.log(attempt, status);
+      if (ds === null && status === 'DELETED') {
+        await wait(1000);
+        pubsub.publish('datasetStatusUpdated', {});
+        return;
+      } else if (ds !== null && status !== 'DELETED') {
+        pubsub.publish('datasetStatusUpdated', {
+          dataset: Object.assign({}, ds, { status }),
+          dbDs: await fetchDS({ id: ds_id })
+        });
+        return;
+      }
 
-  if (ds === null && status === 'DELETED') {
-    setTimeout(() => {
-      pubsub.publish('datasetStatusUpdated', {});
-    }, 1000);
-  } else if (ds !== null && status !== 'DELETED') {
-    pubsub.publish('datasetStatusUpdated', {
-      dataset: Object.assign({}, ds, { status }),
-      dbDs: await fetchDS({id: ds_id})
-    });
-  } else {
-    setTimeout(publishDatasetStatusUpdate,
-               50 * attempt * attempt,
-               ds_id, status, attempt + 1);
+      await wait(50 * attempt * attempt);
+    }
+  } catch (err) {
+    logger.error(err);
   }
+
+  logger.warn(`Failed to propagate dataset update for ${ds_id}`);
 }
 
 let queue = require('amqplib').connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`);
@@ -52,6 +55,43 @@ queue.then(function(conn) {
     });
   });
 }).catch(console.warn);
+
+function checkPermissions(datasetId, payload) {
+  return db.select().from('dataset').where('id', '=', datasetId)
+    .then(records => {
+      if (records.length == 0)
+        throw new UserError(`No dataset with specified id: ${datasetId}`);
+      metadata = records[0].metadata;
+
+      let allowUpdate = false;
+      if (payload.role == 'admin')
+        allowUpdate = true;
+      else if (payload.email == metadata.Submitted_By.Submitter.Email)
+        allowUpdate = true;
+      if (!allowUpdate)
+        throw new UserError(`You don't have permissions to edit the dataset: ${datasetId}`);
+    });
+}
+
+function baseDatasetQuery() {
+  return db.from(function() {
+    this.select(db.raw('dataset.id as id'),
+                'name',
+                db.raw('max(finish) as last_finished'),
+                db.raw('dataset.status as status'),
+                'metadata', 'config', 'input_path')
+        .from('dataset').leftJoin('job', 'dataset.id', 'job.ds_id')
+        .groupBy('dataset.id').as('tmp');
+  });
+}
+
+function checkFetchRes(resp) {
+  if (resp.ok) {
+    return resp
+  } else {
+    throw new Error(`An error occurred during fetch request - status ${resp.status}`);
+  }
+}
 
 
 const Resolvers = {
@@ -102,11 +142,19 @@ const Resolvers = {
 
     metadataSuggestions(_, { field, query, limit }, {user}) {
       let f = new SubstringMatchFilter(field, {}),
-          q = pg.from(pgDatasetsViewableByUser(user))
-                .select(pg.raw(f.pgField + " as field"))
+          q = db.from(pgDatasetsViewableByUser(user))
+                .select(db.raw(f.pgField + " as field"))
                 .groupBy('field').orderByRaw('count(*) desc').limit(limit);
       return f.pgFilter(q, query).orderBy('field', 'asc')
               .then(results => results.map(row => row['field']));
+    },
+
+    adductSuggestions() {
+      return config.defaults.adducts['-'].map(a => {
+        return {adduct: a, charge: -1};
+      }).concat(config.defaults.adducts['+'].map(a => {
+        return {adduct: a, charge: 1};
+      }));
     },
 
     peopleSuggestions(_, { role, query }, {user}) {
@@ -115,8 +163,8 @@ const Resolvers = {
             p2 = schemaPath + '.Surname',
             f1 = getPgField(p1),
             f2 = getPgField(p2);
-      const q = pg.from(pgDatasetsViewableByUser(user))
-                  .distinct(pg.raw(`${f1} as name, ${f2} as surname`))
+      const q = db.from(pgDatasetsViewableByUser(user))
+                  .distinct(db.raw(`${f1} as name, ${f2} as surname`))
                   .whereRaw(`${f1} ILIKE ? OR ${f2} ILIKE ?`, ['%' + query + '%', '%' + query + '%']);
       logger.info(q.toString());
       return q.orderBy('name', 'asc').orderBy('surname', 'asc')
@@ -141,12 +189,12 @@ const Resolvers = {
       const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
       assertUserCanViewDataset(datasetId, user);
 
-      return pg.select().from('optical_image')
+      return db.select().from('optical_image')
           .where('ds_id', '=', datasetId)
           .where('zoom', '=', intZoom)
           .then(records => {
               if (records.length > 0)
-                  return '/optical_images/' + records[0].id;
+                  return '/fs/optical_images/' + records[0].id;
               else
                   return null;
           })
@@ -156,13 +204,13 @@ const Resolvers = {
     },
 
     rawOpticalImage(_, {datasetId}, {user}) {
-      return pg
+      return db
         .from(pgDatasetsViewableByUser(user))
         .where('id', '=', datasetId)
         .then(records => {
           if (records.length > 0)
             return {
-              url: '/raw_optical_images/' + records[0].optical_image,
+              url: '/fs/raw_optical_images/' + records[0].optical_image,
               transform: records[0].transform
             };
           else
@@ -212,6 +260,10 @@ const Resolvers = {
       return ds._source.ds_is_public;
     },
 
+    acquisitionGeometry(ds) {
+      return JSON.stringify(ds._source.ds_acq_geometry);
+    },
+
     institution(ds) { return dsField(ds, 'institution'); },
     organism(ds) { return dsField(ds, 'organism'); },
     organismPart(ds) { return dsField(ds, 'organismPart'); },
@@ -220,6 +272,7 @@ const Resolvers = {
     polarity(ds) { return dsField(ds, 'polarity').toUpperCase(); },
     ionisationSource(ds) { return dsField(ds, 'ionisationSource'); },
     maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
+    metadataType(ds) { return dsField(ds, 'metadataType'); },
 
     submitter(ds) {
       return ds._source.ds_meta.Submitted_By.Submitter;
@@ -332,7 +385,7 @@ const Resolvers = {
 
         compounds.push({
           name: names[i],
-          imageURL: `http://${config.services.mol_image_server_host}/mol-images/${dbBaseName}/${id}.svg`,
+          imageURL: `/mol-images/${dbBaseName}/${id}.svg`,
           information: [{database: dbName, url: infoURL, databaseId: id}]
         });
       }
@@ -378,7 +431,7 @@ const Resolvers = {
       const {iso_image_ids, centroid_mzs, total_iso_ints, min_iso_ints, max_iso_ints} = hit._source;
       return centroid_mzs.map(function(mz, i) {
         return {
-          url: iso_image_ids[i] !== null ? config.img_upload.categories.iso_image.path + iso_image_ids[i] : null,
+          url: iso_image_ids[i] !== null ? `/${hit._source.ds_ion_img_storage}${config.img_upload.categories.iso_image.path}${iso_image_ids[i]}` : null,
           mz: parseFloat(mz),
           totalIntensity: total_iso_ints[i],
           minIntensity: min_iso_ints[i],
