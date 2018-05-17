@@ -1,15 +1,16 @@
 <template>
   <div class="filter-panel">
-    <el-select placeholder="Add filter"
+    <el-select v-if="anyOptionalFilterPresent"
+               placeholder="Add filter"
                v-model="selectedFilterToAdd"
                @change="addFilter"
                style="width: 200px; margin-bottom: 10px;">
-      <el-option v-for="f in availableFilters"
+      <el-option v-for="f in availableFilters" :key="f.key"
                  :value="f.key" :label="f.description">
       </el-option>
     </el-select>
 
-    <component v-for="f in activeFilters"
+    <component v-for="f in visibleFilters" :key="f.name"
                :is="f.type"
                :name="f.name"
                :options="getFilterOptions(f)"
@@ -28,16 +29,10 @@
 </template>
 
 <script>
- import InputFilter from './InputFilter.vue';
- import SingleSelectFilter from './SingleSelectFilter.vue';
- import MultiSelectFilter from './MultiSelectFilter.vue';
- import DatasetNameFilter from './DatasetNameFilter.vue';
- import MzFilter from './MzFilter.vue';
- import SearchBox from './SearchBox.vue';
  import FILTER_SPECIFICATIONS from '../filterSpecs';
- import deepcopy from 'deepcopy';
+ import * as assert from 'assert';
 
- const filterKeys = [
+ const orderedFilterKeys = [
    'database',
    'fdrLevel',
    'institution',
@@ -55,21 +50,26 @@
    'ionisationSource',
    'maldiMatrix',
    'minMSM',
-   'simpleQuery'
+   'simpleQuery',
+   'metadataType'
  ];
+
+ const filterComponents = {};
+ Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
+   const componentType = FILTER_SPECIFICATIONS[cur].type;
+   // a bit hacky way of getting component name b/c of different ways of initialization
+   assert((('options' in componentType) && ('name' in componentType['options'])) || 'name' in componentType);
+   const typeName = ('options' in componentType) ? componentType['options'].name : componentType.name;
+   if (!(typeName in accum)) {
+     accum[typeName] = componentType;
+   }
+   return accum;
+ }, filterComponents);
 
  export default {
    name: 'filter-panel',
    props: ["level"],
-   components: {
-     // TODO: fetch these from filterSpecs.js
-     InputFilter,
-     SingleSelectFilter,
-     MultiSelectFilter,
-     DatasetNameFilter,
-     MzFilter,
-     SearchBox
-   },
+   components: filterComponents,
    mounted() {
      this.$store.dispatch('initFilterLists');
    },
@@ -82,13 +82,15 @@
        return this.$store.state.orderedActiveFilters;
      },
 
-     activeFilters() {
-       return this.activeKeys.map(this.makeFilter);
+     visibleFilters() {
+       return this.activeKeys
+                  .filter(this.shouldShowFilter)
+                  .map(this.makeFilter);
      },
 
      availableFilters() {
        let available = [];
-       for (let key of filterKeys) {
+       for (let key of orderedFilterKeys) {
          if (FILTER_SPECIFICATIONS[key].levels.indexOf(this.level) == -1)
            continue;
          if (this.activeKeys.indexOf(key) == -1)
@@ -96,6 +98,15 @@
                            description: FILTER_SPECIFICATIONS[key].description})
        }
        return available;
+     },
+
+     anyOptionalFilterPresent() {
+       for (const filter of this.availableFilters) {
+         if (!('removable' in FILTER_SPECIFICATIONS[filter.key]) || FILTER_SPECIFICATIONS[filter.key]['removable']) {
+           return true;
+         }
+       }
+       return false;
      }
    },
 
@@ -106,6 +117,11 @@
    },
 
    methods: {
+     shouldShowFilter(filterKey) {
+       const {hidden} = FILTER_SPECIFICATIONS[filterKey];
+       return !(typeof hidden === 'function' ? hidden() : (hidden != null && hidden));
+     },
+
      makeFilter(filterKey) {
        const filterSpec = FILTER_SPECIFICATIONS[filterKey];
        let self = this;

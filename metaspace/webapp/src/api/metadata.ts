@@ -30,11 +30,17 @@ export const fetchOptionListsQuery = gql`{
   ionisationSources: metadataSuggestions(field: "MS_Analysis.Ionisation_Source", query: "", limit: 1000)
   maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "", limit: 1000)
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
-  molecularDatabases: molecularDatabases(hideDeprecated: false){name, default},
+  molecularDatabases: molecularDatabases(hideDeprecated: false){name, default}
   submitterNames: peopleSuggestions(role: SUBMITTER, query: "") {
     name
     surname
   }
+  adducts: adductSuggestions{adduct, charge}
+}`;
+
+export const metadataOptionsQuery = gql`{
+  molecularDatabases: molecularDatabases{name}
+  adducts: adductSuggestions{adduct, charge}
 }`;
 
 export const metadataExportQuery = gql`

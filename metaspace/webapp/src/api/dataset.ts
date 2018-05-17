@@ -24,6 +24,7 @@ export const datasetListQuery =
       metadataJson
       isPublic
       status
+      metadataType
       fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
         dbName
         levels
@@ -60,8 +61,8 @@ export const resubmitDatasetQuery =
   }`;
 
 export const submitDatasetQuery =
-  gql`mutation ($jwt: String!, $path: String!, $value: String!, $isPublic: Boolean!) {
-    submitDataset(jwt: $jwt, path: $path, metadataJson: $value, isPublic: $isPublic, priority: 1)
+  gql`mutation ($jwt: String!, $path: String!, $metadataJson: String!, $isPublic: Boolean!) {
+    submitDataset(jwt: $jwt, path: $path, metadataJson: $metadataJson, isPublic: $isPublic, priority: 1)
   }`;
 
 export const deleteDatasetQuery =
@@ -79,4 +80,11 @@ export const addOpticalImageQuery =
 export const deleteOpticalImageQuery =
   gql`mutation ($jwt: String!, $id: String!) {
     deleteOpticalImage(jwt: $jwt, datasetId: $id)
+  }`;
+
+export const msAcqGeometryQuery =
+  gql`query ($datasetId: String!) {
+    dataset(id: $datasetId) {
+      acquisitionGeometry
+    }
   }`;

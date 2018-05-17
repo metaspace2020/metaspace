@@ -17,6 +17,10 @@
 
   <div id="upload-page" v-else>
     <div id="upload-left-pane">
+      <div id="filter-panel-container">
+        <filter-panel level="upload"></filter-panel>
+      </div>
+
       <div id="instructions">
 
         <p style="font-size: 18px" v-if="introIsHidden">
@@ -26,12 +30,13 @@
 
         <div v-show="!introIsHidden">
           <intro-message>
-            <p>To start the submission, just drop the files into the box below, fill in the metadata form, and click the Submit button.</p>
+            <p>To start the submission, just drop the file(s) into the box below, fill in the metadata form, and click the Submit button.</p>
           </intro-message>
         </div>
       </div>
 
       <fine-uploader :config="fineUploaderConfig"
+                     :dataTypeConfig="fineUploaderDataTypeConfig"
                      ref="uploader"
                      @upload="onUpload" @success="onSuccess" @failure="onFailure">
       </fine-uploader>
@@ -52,16 +57,58 @@
  // TODO: try https://github.com/FineUploader/vue-fineuploader once it's ready for production
 
  import FineUploader from './FineUploader.vue';
+ import FilterPanel from './FilterPanel.vue';
  import MetadataEditor from './MetadataEditor.vue';
  import IntroMessage from './IntroMessage.vue';
  import Vue from 'vue';
+ import * as assert from 'assert';
 
  import * as config from '../clientConfig.json';
  import {getJWT, pathFromUUID} from '../util';
  import {submitDatasetQuery} from '../api/dataset';
 
+ const DataTypeConfig = {
+   'LC-MS': {
+     fileExtensions: ['mzML'],
+     maxFiles: 1,
+     nameValidator(fileNames) {
+       return fileNames.length === 1;
+     }
+   },
+   default: {
+     fileExtensions: ['imzML', 'ibd'],
+     maxFiles: 2,
+     nameValidator(fileNames) {
+       if (fileNames.length < 2) {
+         return false;
+       }
+
+       const basename = fname => fname.split('.').slice(0, -1).join('.');
+       const extension = fname => fname.split('.').slice(-1)[0];
+
+       // consider only the last two selected files
+       const fileCount = fileNames.length;
+       let [first, second] = [fileNames[fileCount - 2], fileNames[fileCount - 1]];
+       let [fext, sext] = [first, second].map(extension);
+       let [fbn, sbn] = [first, second].map(basename);
+       if (fext === sext || fbn !== sbn) {
+         this.$message({
+           message: "Incompatible file names! Please select 2 files " +
+                    "with the same name but different extension",
+           type: 'error'
+         });
+         return false;
+       }
+       return true;
+     }
+   }
+ }
+
  export default {
    name: 'upload-page',
+   created() {
+     this.$store.commit('updateFilter', this.$store.getters.filter);
+   },
    mounted() {
      const {query} = this.$store.state.route;
      if (query['first-time'] !== undefined)
@@ -79,10 +126,14 @@
    components: {
      FineUploader,
      MetadataEditor,
+     FilterPanel,
      IntroMessage
    },
-
    computed: {
+     fineUploaderDataTypeConfig() {
+       const activeDataType = this.$store.getters.filter.metadataType;
+       return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig['default'];
+     },
      isSignedIn() {
        return this.$store.state.user != null;
      }
@@ -90,9 +141,22 @@
 
    methods: {
      onUpload(filenames) {
-       const imzml = filenames.filter(f => f.toLowerCase().endsWith('imzml'))[0];
+       const allowedExts = this.fineUploaderDataTypeConfig.fileExtensions.map(ext => `.${ext.toLowerCase()}`);
+       let fileName = '';
+       let fileExt = '';
+       for (const ext of allowedExts) {
+         for (const f of filenames) {
+           if (f.toLowerCase().endsWith(ext)) {
+             fileName = f;
+             fileExt = ext;
+             break;
+           }
+         }
+       }
+       assert(fileName && fileExt);
+       const dsName = fileName.slice(0, fileName.length - fileExt.length);
        Vue.nextTick(() => {
-         this.$refs.editor.suggestDatasetName(imzml.slice(0, imzml.length - 6));
+         this.$refs.editor.fillDatasetName(dsName);
        });
      },
 
@@ -144,7 +208,7 @@
            mutation: submitDatasetQuery,
            variables: {
              path: pathFromUUID(uuid),
-             value: formData,
+             metadataJson: formData,
              jwt,
              isPublic
            }}));
@@ -156,6 +220,11 @@
 
 <style>
  #instructions {
+   padding-left: 5px;
+ }
+
+ #filter-panel-container > * {
+   padding-left: 0;
  }
 
  #upload-page, #maintenance-message {

@@ -25,14 +25,16 @@ const FILTER_TO_URL: Dictionary<string> = {
   ionisationSource: 'src',
   maldiMatrix: 'matrix',
   analyzerType: 'instr',
-  simpleQuery: 'q'
+  simpleQuery: 'q',
+  metadataType: 'mdtype'
 };
 
 const URL_TO_FILTER: Dictionary<string> = invert(FILTER_TO_URL);
 
 const PATH_TO_LEVEL: Dictionary<string> = {
   '/annotations': 'annotation',
-  '/datasets': 'dataset'
+  '/datasets': 'dataset',
+  '/upload': 'upload'
 };
 
 export function encodeParams(filter: any, path: string, filterLists: any): Dictionary<string> {

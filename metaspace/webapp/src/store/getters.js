@@ -42,7 +42,7 @@ export default {
     const filter = getters.filter;
     const {institution, submitter, datasetIds, polarity,
            organism, organismPart, condition, growthConditions,
-           ionisationSource, analyzerType, maldiMatrix} = filter;
+           ionisationSource, analyzerType, maldiMatrix, metadataType} = filter;
     return {
       institution,
       submitter,
@@ -57,7 +57,8 @@ export default {
       ionisationSource,
       maldiMatrix,
       analyzerType,
-      polarity: polarity ? polarity.toUpperCase() : null
+      polarity: polarity ? polarity.toUpperCase() : null,
+      metadataType
     }
   }
 }

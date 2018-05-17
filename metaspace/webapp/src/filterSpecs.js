@@ -1,19 +1,13 @@
 import { renderMolFormula } from './util';
 import InputFilter from './components/InputFilter.vue';
 import SingleSelectFilter from './components/SingleSelectFilter.vue';
-import MultiSelectFilter from './components/MultiSelectFilter.vue';
 import DatasetNameFilter from './components/DatasetNameFilter.vue';
 import MzFilter from './components/MzFilter.vue';
 import SearchBox from './components/SearchBox.vue';
+import {metadataTypes, defaultMetadataType} from './assets/metadataRegistry';
 
-// FIXME: hard-coded adducts
-const ADDUCT_POLARITY = {
-  '+H': 'POSITIVE',
-  '+Na': 'POSITIVE',
-  '+K': 'POSITIVE',
-  '-H': 'NEGATIVE',
-  '+Cl': 'NEGATIVE',
-};
+// Filled during the initialization of adduct filter below
+const ADDUCT_POLARITY = {};
 
 function formatAdduct (adduct) {
   if (adduct === null)
@@ -36,6 +30,7 @@ function formatFDR (fdr) {
      currently 'annotation' and 'dataset' are used
    * defaultInLevels: on which pages the filter should be active by default
    * initialValue: what will be the filter value when it's created
+   * hidden: whether to hide the filter from the UI
    * any required settings for the chosen filter component
      (e.g. 'options' for SingleSelectFilter/MultipleSelectFilter)
 
@@ -107,9 +102,12 @@ const FILTER_SPECIFICATIONS = {
     name: 'Adduct',
     description: 'Select adduct',
     levels: ['annotation'],
-    initialValue: null,
-
-    options: [null, '+H', '-H', '+Na', '+Cl', '+K'],
+    initialValue: undefined,
+    options: lists => lists.adducts.map(d => {
+      const {adduct, charge} = d;
+      ADDUCT_POLARITY[adduct] = charge > 0 ? 'POSITIVE' : 'NEGATIVE';
+      return adduct;
+    }),
     optionFormatter: formatAdduct,
     valueFormatter: formatAdduct
   },
@@ -253,6 +251,18 @@ const FILTER_SPECIFICATIONS = {
     defaultInLevels: ['annotation', 'dataset'],
     initialValue: '',
     removable: false
+  },
+
+  metadataType: {
+    type: SingleSelectFilter,
+    name: 'Data type',
+    description: 'Select data type',
+    levels: ['annotation', 'dataset', 'upload'],
+    defaultInLevels: ['annotation', 'dataset', 'upload'],
+    initialValue: defaultMetadataType,
+    removable: false,
+    options: metadataTypes,
+    hidden: () => metadataTypes.length <= 1
   }
 };
 

@@ -10,7 +10,7 @@
         </router-link>
       </div>
 
-      <router-link to="/upload">
+      <router-link :to="uploadHref">
         <div class="header-item vc page-link" id='upload-link'>
           <div class="vc">Upload</div>
         </div>
@@ -89,6 +89,10 @@
    name: 'metaspace-header',
 
    computed: {
+     uploadHref() {
+       return this.href('/upload');
+     },
+
      datasetsHref() {
        return this.href('/datasets');
      },
