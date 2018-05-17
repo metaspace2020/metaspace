@@ -28,7 +28,7 @@
 
 - name: Load variables for ELK and Filebeat
   include_vars:
-    file: elk_vars.yml
+    file: elk-vars.yml
   when: elk_enable
 
 - name: Upload group_vars/elk-vars.yml with variables resolved

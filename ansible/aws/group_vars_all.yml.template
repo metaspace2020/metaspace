@@ -11,7 +11,7 @@ aws_secret_access_key: AWS_SECRET_ACCESS_KEY
 aws_key_name: AWS_KEY_NAME
 aws_region: eu-west-1
 
-notification_email:
+notification_email: SM-ADMIN@EXAMPLE.COM
 
 postgres_version: 9.5
 postgres_port: 5432
@@ -58,6 +58,8 @@ miniconda_env:
       - bottle
       - pysparkling
       - PyArrow>=0.8.0
+      - Pillow==4.2.1,
+      - pyopenms==2.2.0
 
 sm_repo_url: https://github.com/METASPACE2020/sm-engine
 sm_branch: rel-v0.9
@@ -80,8 +82,9 @@ sm_default_adducts:
 
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
-mol_db_home: /opt/dev/sm-mol-db
+mol_db_repo_url: https://github.com/METASPACE2020/sm-molecular-db.git
 mol_db_branch: rel-v0.9
+mol_db_home: /opt/dev/sm-mol-db
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}/mol_db/v1"
 mol_db_postgres_pass: POSTGRES_PASSWORD
 mol_db_image_dir: /var/www/mol-images
@@ -94,15 +97,15 @@ mol_db_image_archives:
 #  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-lipid-maps.tar.xz
 #  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-swiss-lipids.tar.xz
 mol_db_imports:
-  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/hmdb/hmdb_2-5.tsv"
-    name: "HMDB-v2.5"
+  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/hmdb/hmdb_4.tsv"
+    name: "HMDB-v4"
+    version: "2018-03-08"
 # uncomment below for other databases
+#  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/hmdb/hmdb_2-5.tsv"
+#    name: "HMDB-v2.5"
 #    version: "2018-03-08"
 #  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/hmdb/hmdb_3-6.tsv"
 #    name: "HMDB-v3.6"
-#    version: "2018-03-08"
-#  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/hmdb/hmdb_4.tsv"
-#    name: "HMDB-v4"
 #    version: "2018-03-08"
 #  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/hmdb/hmdb_4-endogenous.tsv"
 #    name: "HMDB-v4-endogenous"
@@ -128,9 +131,10 @@ mol_db_imports:
 
 nodejs_version: 8.*
 
+sm_graphql_repo_url: https://github.com/METASPACE2020/sm-graphql.git
+sm_graphql_branch: rel-v0.9
 sm_graphql_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually in production
 sm_graphql_home: /opt/dev/sm-graphql
-sm_graphql_branch: rel-v0.9
 sm_graphql_slack_webhook_url: ""
 sm_graphql_slack_channel: ""
 sm_graphql_jwt_secret: JWT_SECRET
@@ -146,14 +150,18 @@ sm_graphql_ws_public_endpoint: "ws://{{ sm_graphql_hostname }}/ws"
 sm_graphql_default_adducts: "{{ sm_default_adducts }}"
 sm_graphql_img_storage_backend: fs
 
-sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually in production
+sm_webapp_repo_url: https://github.com/METASPACE2020/sm-webapp.git
+sm_webapp_branch: rel-v0.9
+sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually for production
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"
 sm_webapp_home: /opt/dev/sm-web-app
-sm_webapp_branch: rel-v0.9
 sm_webapp_port: 8082
 sm_webapp_cookie_secret: COOKIE_SECRET
 sm_webapp_admin_emails: [admin@mail.de]
-sm_webapp_aws_region: "{{ aws_region }}"
+# The region should satisfy the following requirements:
+#  - AWS SES endpoints are available there
+#  - AWS authentication protocol V2 is supported
+sm_webapp_aws_region: WEBAPP_AWS_REGION
 sm_webapp_aws_access_key_id: WEBAPP_AWS_ACCESS_KEY_ID
 sm_webapp_aws_secret_access_key: WEBAPP_AWS_SECRET_ACCESS_KEY
 sm_webapp_s3_bucket: BUCKET-NAME-UPLOAD  # just plain bucket name
@@ -167,6 +175,9 @@ sm_webapp_jwt_secret: "{{ sm_graphql_jwt_secret }}"
 sm_webapp_redis_host: localhost
 sm_webapp_redis_port: 6379
 sm_webapp_enable_uploads: true
+# metadata types are specified by corresponding filenames in METASPACE2020/metadata repository
+# "specialised metadata" subfolder
+sm_webapp_metadata_types: ["ims", "lcms"]
 
 sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
 sm_ansible_branch: rel-v0.9
@@ -239,17 +250,21 @@ nginx_servers:
         params:
           - proxy_pass http://web_server;
           - client_max_body_size 5M;
-      - path: /iso_images/
+      - path: /fs/iso_images/
         params:
-          - proxy_pass http://isotope_image_server/iso_images/;
+          - proxy_pass http://isotope_image_server/fs/iso_images/;
           - limit_except GET {deny all;}
-      - path: /optical_images/
+      - path: /db/iso_images/
         params:
-          - proxy_pass http://isotope_image_server/optical_images/;
+          - proxy_pass http://isotope_image_server/db/iso_images/;
           - limit_except GET {deny all;}
-      - path: /raw_optical_images/
+      - path: /fs/optical_images/
         params:
-          - proxy_pass http://isotope_image_server/raw_optical_images/;
+          - proxy_pass http://isotope_image_server/fs/optical_images/;
+          - limit_except GET {deny all;}
+      - path: /fs/raw_optical_images/
+        params:
+          - proxy_pass http://isotope_image_server/fs/raw_optical_images/;
           - client_max_body_size 25M;
       - path: /graphql
         params:
@@ -300,8 +315,8 @@ cluster_configuration:
       elipalloc:  # create manually in AWS console and put the id here to use static IP address
       price:  # put price to use spot instances
       sec_group: default  # update for better security
-      image: ami-07174474  # public ubuntu 16.04
-
+      image: ami-07174474  # public ubuntu 16.04 at eu-west-1
+                           # ami-4d6c0e22 is for eu-central-1
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:

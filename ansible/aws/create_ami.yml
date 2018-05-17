@@ -16,6 +16,7 @@
   tasks:
     - name: Gather AWS instance facts
       action: ec2_metadata_facts
+  tags: [always]
 
 
 - name: Create new Spark master and slave AMIs
@@ -35,6 +36,7 @@
         name: "{{ master_hostgroup }}-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}"
         instance_id: "{{ hostvars['master-1'].ansible_ec2_instance_id }}"
         tags: {"hostgroup": "{{ master_hostgroup }}" }
+        region: "{{ aws_region }}"
         wait: yes
       register: instance
 
@@ -45,7 +47,9 @@
         name: "{{ slave_hostgroup }}-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}"
         instance_id: "{{ hostvars['slave-1'].ansible_ec2_instance_id }}"
         tags: {"hostgroup": "{{ slave_hostgroup }}" }
+        region: "{{ aws_region }}"
         wait: yes
       register: instance
+      tags: [slave]
 
     - debug: var=instance

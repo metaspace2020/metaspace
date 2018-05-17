@@ -3,21 +3,21 @@ import argparse
 import boto3
 from pprint import pprint
 from time import sleep
-from yaml import load
 from datetime import datetime, timedelta
-from subprocess import check_output
 from os import path
+from subprocess import check_output
+from yaml import load
 import sys
 
 
 class AWSInstManager(object):
 
-    def __init__(self, key_name, conf, region='eu-west-1', dry_run=False, verbose=False):
+    def __init__(self, key_name, conf, region, dry_run=False, verbose=False):
         self.key_name = key_name
         self.region = region
         self.dry_run = dry_run
-        self.ec2 = boto3.resource('ec2', region)
-        self.ec2_client = boto3.client('ec2', region)
+        self.ec2 = boto3.resource('ec2', region_name=region)
+        self.ec2_client = boto3.client('ec2', region_name=region)
         self.conf = conf
         if verbose:
             pprint(self.conf)
@@ -174,6 +174,7 @@ if __name__ == '__main__':
     parser.add_argument('--create-ami', dest='create_ami', action='store_true')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
                         help="Don't actually start/stop instances")
+    parser.add_argument('--region', dest='region', type=str, help='AWS region to spin up instances at')
     args = parser.parse_args()
 
     conf_file = 'group_vars/all.yml' if not args.create_ami else 'group_vars/create_ami_config.yml'
@@ -181,7 +182,7 @@ if __name__ == '__main__':
     conf = load(open(config_path))
     cluster_conf = conf['cluster_configuration']
 
-    aws_inst_man = AWSInstManager(key_name=args.key_name or conf['aws_key_name'], conf=cluster_conf,
+    aws_inst_man = AWSInstManager(key_name=args.key_name or conf['aws_key_name'], conf=cluster_conf, region=args.region,
                                   dry_run=args.dry_run, verbose=True)
 
     components = args.components.strip(' ').split(',')

@@ -14,7 +14,7 @@
 
     - name: Spin up SM cluster instances
       shell: python3 aws_instance_manager.py start --key-name {{ aws_key_name }}
-             --components {{ components }} --stage {{ stage }}
+             --components {{ components }} --stage {{ stage }} --region {{ aws_region }}
       when: spark_volume_size is not defined
 
     - meta: refresh_inventory
