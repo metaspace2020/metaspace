@@ -15,11 +15,18 @@ Please check the [sm-engine-ansible](https://github.com/METASPACE2020/sm-engine-
 ## Uploading Dataset and Browsing Results
 Please visit the help page of our web application running on AWS:
 
-[http://metasp.eu/#/help](http://metasp.eu/#/help) 
+[http://metasp.eu/#/help](http://metasp.eu/#/help)
 
 ## Running sm-engine tests
 
 Install [CircleCI CLI tool](https://circleci.com/docs/2.0/local-jobs/) and run `circleci build` from the project root.
+
+## Funding
+
+This project is funded from the [European Horizon2020](https://ec.europa.eu/programmes/horizon2020/)
+project [METASPACE](http://project.metaspace2020.eu/) (no. 634402),
+[NIH NIDDK project KPMP](http://kpmp.org/)
+and internal funds of the [European Molecular Biology Laboratory](https://www.embl.org/).
 
 ## License
 
