@@ -29,6 +29,13 @@ Then set `NODE_ENV` accordingly and run `server.js`, e.g.
 NODE_ENV=production forever start -l forever.log -o out.log -e err.log -c "nodemon --exitcrash" server.js
 ```
 
+## Funding
+
+This project is funded from the [European Horizon2020](https://ec.europa.eu/programmes/horizon2020/)
+project [METASPACE](http://project.metaspace2020.eu/) (no. 634402),
+[NIH NIDDK project KPMP](http://kpmp.org/)
+and internal funds of the [European Molecular Biology Laboratory](https://www.embl.org/).
+
 ## License
 
 This project is licensed under the [Apache 2.0 license](LICENSE).
