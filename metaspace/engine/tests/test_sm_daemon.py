@@ -90,11 +90,9 @@ def delete_queue(sm_config):
             queue_pub = QueuePublisher(sm_config['rabbitmq'], qdesc)
             queue_pub.delete_queue()
 
-    # before tests
-    _delete()
+    _delete()  # before tests
     yield
-    # after tests
-    _delete()
+    _delete()  # after tests
 
 
 def run_sm_daemon(sm_daemon=None, wait=1):
@@ -144,7 +142,7 @@ class TestSMDaemonSingleEventCases:
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
         assert _ds.id == ds.id
-        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['search_job_factory'].__name__ == 'SearchJob'
         assert _kwargs['del_first'] == True
 
     def test_update(self, fill_db, clean_ds_man_mock, delete_queue, ds_config, sm_config):
@@ -206,12 +204,12 @@ class TestSMDaemonTwoEventsCases:
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
         assert _ds.id == ds_pri.id
-        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['search_job_factory'].__name__ == 'SearchJob'
 
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
         assert _ds.id == ds.id
-        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['search_job_factory'].__name__ == 'SearchJob'
 
     def test_add_update_ds__new_meta__update_goes_first(self, test_db, sm_config, ds_config,
                                                         delete_queue, clean_ds_man_mock):
@@ -230,46 +228,8 @@ class TestSMDaemonTwoEventsCases:
         method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
         assert method == 'add'
         assert _ds.id == ds.id
-        assert _kwargs['search_job_factory'] == SearchJob
+        assert _kwargs['search_job_factory'].__name__ == 'SearchJob'
         assert _kwargs['del_first'] == False
-
-    # def test_add_update_ds__new_moldb(self, test_db, sm_config, ds_config, clean_ds_man_mock, delete_queue):
-    #     api_ds_man = create_api_ds_man(sm_config=sm_config)
-    #     ds = create_ds(ds_config=ds_config)
-    #     api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
-    #     ds.config['databases'].append({'name': 'ChEBI'})
-    #     api_ds_man.update(ds, priority=DatasetActionPriority.DEFAULT)
-    #
-    #     run_sm_daemon()
-    #
-    #     method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
-    #     assert method == 'add'
-    #     assert _ds.id == ds.id
-    #     assert _ds.config == ds.config
-    #     assert _kwargs['search_job_factory'] == SearchJob
-
-    # def test_add_update_ds__new_config(self, test_db, sm_config, ds_config, clean_ds_man_mock, delete_queue):
-    #     api_ds_man = create_api_ds_man(sm_config=sm_config)
-    #     ds = create_ds(ds_config=ds_config)
-    #     api_ds_man.add(ds, priority=DatasetActionPriority.DEFAULT)
-    #     ds.config['isotope_generation']['isocalc_sigma'] *= 2
-    #     api_ds_man.update(ds)
-    #
-    #     run_sm_daemon()
-    #
-    #     method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
-    #     assert method == 'add'
-    #     assert _ds.id == ds.id
-    #     assert _ds.config == ds.config
-    #     assert _kwargs['search_job_factory'] == SearchJob
-    #     assert _kwargs['del_first'] == False
-    #
-    #     method, _ds, _kwargs = SMDaemonDatasetManagerMock.calls.get()
-    #     assert method == 'add'
-    #     assert _ds.id == ds.id
-    #     assert _ds.config == ds.config
-    #     assert _kwargs['search_job_factory'] == SearchJob
-    #     assert _kwargs['del_first'] == True
 
     def test_add_delete_ds(self, test_db, sm_config, ds_config, clean_ds_man_mock, delete_queue):
         api_ds_man = create_api_ds_man(sm_config=sm_config)

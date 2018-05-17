@@ -5,6 +5,7 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 import time
+from importlib import import_module
 from pprint import pformat
 from datetime import datetime
 from pyspark import SparkContext, SparkConf
@@ -23,8 +24,7 @@ from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 from sm.engine.errors import JobFailedError, ESExportFailedError
-from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS
+from sm.engine.queue import QueuePublisher, SM_DS_STATUS
 
 logger = logging.getLogger('engine')
 
@@ -42,6 +42,7 @@ class SearchJob(object):
     no_clean : bool
         Don't delete interim data files
     """
+
     def __init__(self, img_store=None, no_clean=False):
         self.no_clean = no_clean
         self._img_store = img_store
@@ -57,6 +58,7 @@ class SearchJob(object):
         self._es = None
 
         self._sm_config = SMConfig.get_conf()
+
         logger.debug('Using SM config:\n%s', pformat(self._sm_config))
 
     def _configure_spark(self):
@@ -70,6 +72,7 @@ class SearchJob(object):
             sconf.set("spark.hadoop.fs.s3a.access.key", self._sm_config['aws']['aws_access_key_id'])
             sconf.set("spark.hadoop.fs.s3a.secret.key", self._sm_config['aws']['aws_secret_access_key'])
             sconf.set("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem")
+            sconf.set("spark.hadoop.fs.s3a.endpoint", "s3.{}.amazonaws.com".format(self._sm_config['aws']['aws_region']))
 
         self._sc = SparkContext(master=self._sm_config['spark']['master'], conf=sconf, appName='SM engine')
 
@@ -81,7 +84,7 @@ class SearchJob(object):
         """ Store search job metadata in the database """
         logger.info('Storing job metadata')
         rows = [(mol_db_id, self._ds.id, 'STARTED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
-        self._job_id = self._db.insert_return(JOB_INS, rows)[0]
+        self._job_id = self._db.insert_return(JOB_INS, rows=rows)[0]
 
     def _run_annotation_job(self, mol_db):
         try:
@@ -114,9 +117,10 @@ class SearchJob(object):
 
             search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys())
             mask = self._ds_reader.get_2d_sample_area_mask()
-            search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, self._img_store)
+            img_store_type = self._ds.get_ion_img_storage_type(self._db)
+            search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, self._img_store, img_store_type)
         except Exception as e:
-            self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
+            self._db.alter(JOB_UPD, params=('FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id))
             msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
             raise JobFailedError(msg) from e
         else:
@@ -126,30 +130,41 @@ class SearchJob(object):
         try:
             self._es.index_ds(self._ds.id, mol_db, isocalc)
         except Exception as e:
-            self._db.alter(JOB_UPD, 'FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
+            self._db.alter(JOB_UPD, params=('FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id))
             msg = 'Export to ES failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
             raise ESExportFailedError(msg) from e
         else:
-            self._db.alter(JOB_UPD, 'FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id)
+            self._db.alter(JOB_UPD, params=('FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id))
 
     def _remove_annotation_job(self, mol_db):
         logger.info("Removing job results ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
                     self._ds.id, self._ds.name, mol_db.name, mol_db.version)
-        self._db.alter("DELETE FROM job WHERE ds_id = %s and db_id = %s", self._ds.id, mol_db.id)
+        self._db.alter('DELETE FROM job WHERE ds_id = %s and db_id = %s', params=(self._ds.id, mol_db.id))
         self._es.delete_ds(self._ds.id, mol_db)
 
     def _moldb_ids(self):
         moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
         completed_moldb_ids = {moldb_service.find_db_by_id(db_id)['id']
-                               for (_, db_id) in self._db.select(JOB_ID_MOLDB_ID_SEL, self._ds.id)}
+                               for (_, db_id) in self._db.select(JOB_ID_MOLDB_ID_SEL, params=(self._ds.id,))}
         new_moldb_ids = {moldb_service.find_db_by_name_version(d['name'], d.get('version', None))[0]['id']
                          for d in self._ds.config['databases']}
         return completed_moldb_ids, new_moldb_ids
 
+    def _save_data_from_raw_ms_file(self):
+        ms_file_type_config = SMConfig.get_ms_file_handler(self._wd_manager.local_dir.ms_file_path)
+        acq_geometry_factory_module = ms_file_type_config['acq_geometry_factory']
+        acq_geometry_factory = getattr(import_module(acq_geometry_factory_module['path']),
+                                                acq_geometry_factory_module['name'])
+
+        acq_geometry = acq_geometry_factory(self._wd_manager.local_dir.ms_file_path).create()
+        self._ds.save_acq_geometry(self._db, acq_geometry)
+
+        self._ds.save_ion_img_storage_type(self._db, ms_file_type_config['img_storage_type'])
+
     def run(self, ds):
         """ Entry point of the engine. Molecule search is completed in several steps:
             * Copying input data to the engine work dir
-            * Conversion input data (imzML+ibd) to plain text format. One line - one spectrum data
+            * Conversion input mass spec files to plain text format. One line - one spectrum data
             * Generation and saving to the database theoretical peaks for all formulas from the molecule database
             * Molecules search. The most compute intensive part. Spark is used to run it in distributed manner.
             * Saving results (isotope images and their metrics of quality for each putative molecule) to the database
@@ -168,7 +183,7 @@ class SearchJob(object):
             if self._sm_config['rabbitmq']:
                 self._status_queue = QueuePublisher(config=self._sm_config['rabbitmq'],
                                                     qdesc=SM_DS_STATUS,
-                                                    logger_name='engine')
+                                                    logger=logger)
             else:
                 self._status_queue = None
             ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.STARTED)
@@ -181,6 +196,11 @@ class SearchJob(object):
 
             self._ds_reader = DatasetReader(self._ds.input_path, self._sc, self._wd_manager)
             self._ds_reader.copy_convert_input_data()
+
+            self._save_data_from_raw_ms_file()
+            self._img_store.storage_type = self._ds.get_ion_img_storage_type(self._db)
+
+            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.STARTED)
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 

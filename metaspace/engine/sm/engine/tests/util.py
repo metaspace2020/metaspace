@@ -108,10 +108,9 @@ def es_dsl_search(es, sm_config):
 @pytest.fixture()
 def sm_index(sm_config, request):
     es_config = sm_config['elasticsearch']
-    with patch('sm.engine.es_export.DB') as DBMock:
-        es_man = ESIndexManager(es_config)
-        es_man.delete_index(es_config['index'])
-        es_man.create_index(es_config['index'])
+    es_man = ESIndexManager(es_config)
+    es_man.delete_index(es_config['index'])
+    es_man.create_index(es_config['index'])
 
     def fin():
         es_man = ESIndexManager(es_config)

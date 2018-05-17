@@ -53,7 +53,9 @@ def create_ds_man(sm_config, db=None, es=None, img_store=None,
 def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
               metadata=None, ds_config=None, status=DatasetStatus.NEW):
     upload_dt = upload_dt or datetime.now()
-    return Dataset(ds_id, ds_name, input_path, upload_dt, metadata or {}, ds_config or {}, status=status)
+    ds = Dataset(ds_id, ds_name, input_path, upload_dt, metadata or {}, ds_config or {}, status=status)
+    ds.ion_img_storage_type = 'fs'
+    return ds
 
 
 class TestSMapiDatasetManager:
@@ -144,7 +146,7 @@ class TestSMapiDatasetManager:
         assert db.select('SELECT * FROM optical_image') == [
                 ('opt_img_id{}'.format(i + 1), ds.id, zoom)
                 for i, zoom in enumerate(zoom_levels)]
-        assert db.select('SELECT optical_image FROM dataset where id = %s', ds_id) == [(raw_img_id,)]
+        assert db.select('SELECT optical_image FROM dataset where id = %s', params=(ds_id,)) == [(raw_img_id,)]
 
 
 class TestSMDaemonDatasetManager:
@@ -174,7 +176,7 @@ class TestSMDaemonDatasetManager:
             ds_man.add(ds, search_job_factory=self.SearchJob)
 
             DS_SEL = 'select name, input_path, upload_dt, metadata, config from dataset where id=%s'
-            assert db.select_one(DS_SEL, ds_id) == (ds_name, input_path, upload_dt, metadata, ds_config)
+            assert db.select_one(DS_SEL, params=(ds_id,)) == (ds_name, input_path, upload_dt, metadata, ds_config)
         finally:
             db.close()
 
@@ -215,6 +217,6 @@ class TestSMDaemonDatasetManager:
 
         ids = ['iso_image_{}_id'.format(id) for id in range(1, 3)]
         img_store_service_mock.delete_image_by_id.assert_has_calls(
-            [call('iso_image', ids[0]), call('iso_image', ids[1])])
+            [call('fs', 'iso_image', ids[0]), call('fs', 'iso_image', ids[1])])
         es_mock.delete_ds.assert_called_with(ds_id)
-        assert db.select_one('SELECT * FROM dataset WHERE id = %s', ds_id) == []
+        assert db.select_one('SELECT * FROM dataset WHERE id = %s', params=(ds_id,)) == []

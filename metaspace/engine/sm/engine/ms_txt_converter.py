@@ -1,16 +1,17 @@
 """
 
-:synopsis: Converter of ImzML into a text format accessible from pyspark
+:synopsis: Converter of mass spec files into a text format accessible from pyspark
 
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 from collections import Counter
+from importlib import import_module
 from os.path import exists
 import logging
 import numpy as np
 import scipy.signal as signal
+from sm.engine.errors import SMError
 from pyMSpec.centroid_detection import gradient
-from pyimzml.ImzMLParser import ImzMLParser
 
 from sm.engine.util import SMConfig
 
@@ -62,22 +63,28 @@ def get_track_progress(points_n, steps_n, active=False):
     return track if active else dont_track
 
 
-class ImzmlTxtConverter(object):
-    """ Converts spectra from imzML/ibd to plain text files for later access from Spark
+class MsTxtConverter(object):
+    """ Converts spectra from mass spec file formats to plain text files
+    for later access from Spark using provided file parser
 
     Args
     ----
-    imzml_path : str
-        Path to an imzML file
+    ms_file_path : str
+        Path to a mass spec data file
     txt_path : str
         Path to store spectra in plain text format
     coord_path : str
         Path to store spectra coordinates in plain text format
     """
-    def __init__(self, imzml_path, txt_path, coord_path=None):
-        self.imzml_path = imzml_path
+    _parser_factory = None
+
+    def __init__(self, ms_file_path, txt_path, coord_path=None):
+        self.ms_file_path = ms_file_path
+
+        if self._parser_factory is None:
+            self._init_ms_parser_factory()
+
         self.preprocess = None
-        self.sm_config = SMConfig.get_conf()
 
         self.txt_path = txt_path
         self.coord_path = coord_path
@@ -96,6 +103,11 @@ class ImzmlTxtConverter(object):
         if self.coord_file:
             self.coord_file.write(encode_coord_line(i, x, y) + '\n')
 
+    def _init_ms_parser_factory(self):
+        ms_file_type_config = SMConfig.get_ms_file_handler(self.ms_file_path)
+        ms_parser_factory_module = ms_file_type_config['parser_factory']
+        self._parser_factory = getattr(import_module(ms_parser_factory_module['path']), ms_parser_factory_module['name'])
+
     @staticmethod
     def _check_coord_duplicates(coordinates):
         top_n_coord_counts = Counter(coordinates).most_common(100)
@@ -106,8 +118,8 @@ class ImzmlTxtConverter(object):
 
     def convert(self, preprocess=False, print_progress=True):
         """
-        Converts MS imaging data provided by given parser to a text-based
-        format. Optionally writes the coordinates into a coordinate file.
+        Converts MS data provided by given parser to a text-based format.
+        Optionally writes the coordinates into a coordinate file.
 
         Args
         ----
@@ -116,14 +128,14 @@ class ImzmlTxtConverter(object):
         print_progress : bool
             Whether or not to print progress information to stdout
         """
-        logger.info("ImzML -> Txt conversion")
+        logger.info("MS -> Txt conversion")
         self.preprocess = preprocess
 
         if not exists(self.txt_path):
             self.txt_file = open(self.txt_path, 'w')
             self.coord_file = open(self.coord_path, 'w') if self.coord_path else None
 
-            self.parser = ImzMLParser(self.imzml_path)
+            self.parser = self._parser_factory(self.ms_file_path)
             coordinates = [coo[:2] for coo in self.parser.coordinates]
             self._check_coord_duplicates(coordinates)
 

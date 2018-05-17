@@ -68,9 +68,9 @@ def reindex_results(ds_id, ds_mask):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Reindex dataset results')
-    parser.add_argument('--config', default='conf/config.json', help="SM config path")
-    parser.add_argument('--ds-id', dest='ds_id', default='', help="DS id")
-    parser.add_argument('--ds-name', dest='ds_name', default='', help="DS name prefix mask (_all_ for all datasets)")
+    parser.add_argument('--config', default='conf/config.json', help='SM config path')
+    parser.add_argument('--ds-id', dest='ds_id', default='', help='DS id')
+    parser.add_argument('--ds-name', dest='ds_name', default='', help='DS name prefix mask (_all_ for all datasets)')
     args = parser.parse_args()
 
     SMConfig.set_path(args.config)

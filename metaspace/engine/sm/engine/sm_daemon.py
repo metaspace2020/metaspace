@@ -38,7 +38,7 @@ class SMDaemon(object):
 
     def _fetch_ds_metadata(self, ds_id):
         db = DB(SMConfig.get_conf()['db'])
-        res = db.select_one('SELECT name, metadata FROM dataset WHERE id = %s', ds_id)
+        res = db.select_one('SELECT name, metadata FROM dataset WHERE id = %s', params=(ds_id,))
         return res or ('', {})
 
     def _send_email(self, email, subj, body):
@@ -75,25 +75,27 @@ class SMDaemon(object):
                 and ds_meta['metaspace_options'].get('notify_submitter', True))
 
     def _on_success(self, msg):
-        ds_name, ds_meta = self._fetch_ds_metadata(msg['ds_id'])
+        if msg['action'] != DatasetAction.DELETE:
+            ds_name, ds_meta = self._fetch_ds_metadata(msg['ds_id'])
 
-        base_url = self._sm_config['services']['web_app_url']
-        url_params = urllib.parse.quote(msg['ds_id'])
-        msg['web_app_link'] = '{}/#/annotations?ds={}'.format(base_url, url_params)
+            if msg['action'] == DatasetAction.ADD and self._is_possible_send_email(ds_meta):
+                submitter = ds_meta.get('Submitted_By', {}).get('Submitter', {})
+                md_type_quoted = urllib.parse.quote(ds_meta['Data_Type'])
+                base_url = self._sm_config['services']['web_app_url']
+                ds_id_quoted = urllib.parse.quote(msg['ds_id'])
+                msg['web_app_link'] = '{}/#/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
+                email_body = (
+                    'Dear {} {},\n\n'
+                    'Thank you for uploading dataset {} to the METASPACE annotation service. '
+                    'We are pleased to inform you that the dataset has been processed and is available at {}.\n\n'
+                    'Best regards,\n'
+                    'METASPACE Team\n\n'
+                    '---\n'
+                    'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).'
+                ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name, msg['web_app_link'])
+                self._send_email(submitter['Email'], 'METASPACE service notification (SUCCESS)', email_body)
+
         self._post_to_slack('dart', ' [v] Succeeded: {}'.format(json.dumps(msg)))
-
-        if msg['action'] == DatasetAction.ADD and self._is_possible_send_email(ds_meta):
-            submitter = ds_meta.get('Submitted_By', {}).get('Submitter', {})
-            email_body = (
-                'Dear {} {},\n\n'
-                'Thank you for uploading dataset {} to the METASPACE annotation service. '
-                'We are pleased to inform you that the dataset has been processed and is available at {}.\n\n'
-                'Best regards,\n'
-                'METASPACE Team\n\n'
-                '---\n'
-                'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).'
-            ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name, msg['web_app_link'])
-            self._send_email(submitter['Email'], 'METASPACE service notification (SUCCESS)', email_body)
 
     def _on_failure(self, msg):
         self._post_to_slack('hankey', ' [x] Failed: {}'.format(json.dumps(msg)))
@@ -127,7 +129,7 @@ class SMDaemon(object):
                 mode='queue',
                 status_queue=QueuePublisher(config=self._sm_config['rabbitmq'],
                                             qdesc=SM_DS_STATUS,
-                                            logger_name='daemon')
+                                            logger=logger)
             )
             ds_man.process(ds=Dataset.load(db, msg['ds_id']),
                            action=msg['action'],
