@@ -1,0 +1,130 @@
+{
+  "bottle": {
+    "host": "0.0.0.0",
+    "port": 5123,
+    "refresh": true,
+    "debug": true
+  },
+  "defaults": {
+    "adducts": {
+      "+": ["+H", "+Na", "+K"],
+      "-": ["-H", "+Cl"]
+    }
+  },
+  "db": {
+    "host": "postgres",
+    "database": "sm",
+    "user": "sm",
+    "password": "password"
+  },
+  "elasticsearch": {
+    "index": "sm",
+    "host": "elasticsearch",
+    "port": "9200",
+    "user": "elastic",
+    "password": "elastic"
+  },
+  "services": {
+    "img_service_url": "http://sm-graphql:4201",
+    "mol_db": "http://nginx:8999/mol_db/v1",
+    "web_app_url": "http://nginx:8999",
+    "send_email": false
+  },
+  "rabbitmq": {
+    "host": "rabbitmq",
+    "user": "sm",
+    "password": "password"
+  },
+  "fs": {
+    "base_path": "/opt/data",
+    "s3_base_path": ""
+  },
+  "spark": {
+    "master": "local[*]",
+    "spark.executor.memory": "2g",
+    "spark.driver.memory": "4g",
+    "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
+    "spark.kryoserializer.buffer.max": "128m",
+    "spark.python.worker.memory": "512m",
+    "spark.rdd.compress": true,
+    "spark.ui.showConsoleProgress": false,
+    "spark.sql.execution.arrow.enabled": true
+  },
+  "aws": {
+    "aws_access_key_id": "",
+    "aws_secret_access_key": "",
+    "aws_region": "eu-west-1"
+  },
+  "slack": {
+    "channel": "",
+    "webhook_url": ""
+  },
+  "ms_file_handlers": [{
+      "type": "ims",
+      "extensions": ["imzML", "ibd"],
+      "parser_factory": {
+        "name": "ImzMLParser",
+        "path": "pyimzml.ImzMLParser"
+      },
+      "acq_geometry_factory": {
+        "name": "ImsGeometryFactory",
+        "path": "sm.engine.ims_geometry_factory"
+      },
+      "img_storage_type": "fs"
+    }, {
+      "type": "lcms",
+      "extensions": ["mzML"],
+      "parser_factory": {
+        "name": "MzMLParser",
+        "path": "sm.engine.mzml_parser"
+      },
+      "acq_geometry_factory": {
+        "name": "LcmsGeometryFactory",
+        "path": "sm.engine.lcms_geometry_factory"
+      },
+      "img_storage_type": "db"
+  }],
+  "isotope_storage": {
+    "path": "/opt/data"
+  },
+  "logs": {
+    "version": 1,
+    "formatters": {
+      "sm": {
+        "format": "%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s"
+      }
+    },
+    "handlers": {
+        "console_warn": {
+            "class": "logging.StreamHandler",
+            "formatter": "sm",
+            "level": "DEBUG"
+        },
+        "console_debug": {
+            "class": "logging.StreamHandler",
+            "formatter": "sm",
+            "level": "DEBUG"
+        },
+        "file_engine": {
+            "class": "logging.FileHandler",
+            "formatter": "sm",
+            "level": "DEBUG",
+            "filename": "logs/sm-engine.log"
+        }
+    },
+    "loggers": {
+        "engine": {
+            "handlers": ["console_debug", "file_engine"],
+            "level": "INFO"
+        },
+        "api": {
+            "handlers": ["console_debug"],
+            "level": "INFO"
+        },
+        "daemon": {
+            "handlers": ["console_debug"],
+            "level": "INFO"
+        }
+    }
+  }
+}

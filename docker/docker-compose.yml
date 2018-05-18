@@ -1,0 +1,156 @@
+version: '2'
+
+services:
+
+  elasticsearch:
+    image: elasticsearch:5.5.2
+    volumes:
+      - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+    networks:
+      - sm
+
+  redis:
+    image: redis:4.0.9-alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - sm
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - "5672:5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: sm
+      RABBITMQ_DEFAULT_PASS: password
+    networks:
+      - sm
+
+  postgres:
+    image: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres/initdb.d/:/docker-entrypoint-initdb.d:ro
+      - ./data/pgdata:/var/lib/postgresql/data/pgdata
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      PGDATA: /var/lib/postgresql/data/pgdata
+    networks:
+      - sm
+
+  mol-db:
+    build:
+      context: ./mol-db
+      args:
+        sm_branch: master
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./mol-db/config/:/opt/mol-db/conf:ro
+    environment:
+      APP_ENV: dev
+    networks:
+      - sm
+    depends_on:
+      - postgres
+
+  sm-api:
+    build:
+      context: ./sm-engine
+      args:
+        sm_branch: master
+    ports:
+      - "5123:5123"
+    volumes:
+      - ./sm-engine/conf/:/opt/sm-engine/conf:ro
+      - ./data/:/opt/data:z
+    networks:
+      - sm
+    depends_on:
+      - postgres
+      - elasticsearch
+
+  sm-daemon:
+    build:
+      context: ./sm-engine
+      args:
+        sm_branch: master
+    entrypoint: /start-daemon.sh
+    mem_limit: 8g
+    cpu_shares: 512
+    volumes:
+      - ./sm-engine/conf/:/opt/sm-engine/conf:ro
+      - ./data/:/opt/data:z
+    environment:
+      SPARK_WORKER_CORES: 4
+    networks:
+      - sm
+    depends_on:
+      - postgres
+      - elasticsearch
+      - sm-api
+
+  sm-graphql:
+    build:
+      context: ./sm-graphql
+      args:
+        sm_branch: master
+    ports:
+      - "3010:3010"
+      - "5666:5666"
+      - "4201:4201"
+    volumes:
+      - ./sm-graphql/config/:/opt/sm-graphql/config:ro
+      - ./data/:/opt/data:z
+    networks:
+      - sm
+    depends_on:
+      - rabbitmq
+
+  sm-webapp:
+    build:
+      context: ./sm-webapp
+      args:
+        sm_branch: master
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./sm-webapp/config/conf.js:/opt/sm-webapp/conf.js:ro
+      - ./sm-webapp/config/clientConfig.js:/opt/sm-webapp/src/clientConfig.js:ro
+      - ./data/:/opt/data:z
+    networks:
+      - sm
+
+  nginx:
+    image: nginx
+    ports:
+      - "8999:8999" # main web server
+    volumes:
+      - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/config/proxy-params.conf:/etc/nginx/proxy-params.conf:ro
+      - ./nginx/config/conf.d/:/etc/nginx/conf.d:ro
+      - ./nginx/config/sites-enabled/:/etc/nginx/sites-enabled:ro
+      - ./data/mol-images:/var/www/mol-images:z
+    networks:
+      - sm
+    depends_on:
+      - elasticsearch
+      - mol-db
+      - sm-graphql
+      - sm-webapp
+
+networks:
+  sm:
+    driver: bridge
+    # ipam:
+    #   driver: default
+    #   config:
+    #     - subnet: 172.17.0.0/24
+    #       gateway: 172.17.0.1

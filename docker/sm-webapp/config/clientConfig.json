@@ -1,0 +1,20 @@
+{
+  "graphqlUrl": "http://localhost:8999/graphql",
+  "wsGraphqlUrl": "ws://localhost:8999/ws",
+
+  "google_client_id": "clientid",
+  "enableUploads": true,
+
+  "fineUploader": {
+    "aws": {
+      "access_key_id": "",
+      "region": "",
+      "s3_bucket": "",
+      "s3_signature_endpoint": "/upload/s3/sign",
+      "s3_signature_version": 2
+    },
+    "storage": "/opt/dev/data/uploads"
+  },
+  "ravenDsn": "https://16556a31185a4882b9ebf6a5abab9452@sentry.io/1203803",
+  "metadataTypes": ["ims","lcms"]
+}
