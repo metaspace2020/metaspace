@@ -16,7 +16,6 @@ services:
   rabbitmq:
     image: rabbitmq:management
     ports:
-      - "5672:5672"
       - "15672:15672" #management interface
 
   adminer:
@@ -27,29 +26,16 @@ services:
       - sm
 
   mol-db:
-    build:
-      context: ./mol-db
-      args:
-        sm_branch: master
     volumes:
-      - ./mol-db/config/:/opt/mol-db/conf:ro
-      # Development volumes
-      - ../sm-molecular-db/:/opt/dev/sm-molecular-db:ro
+      - "${DEV_ROOT}/sm-molecular-db/:/opt/dev/sm-molecular-db:ro"
       - ./mol-db/install-dbs.sh:/install-dbs.sh:ro
       - ./mol-db/run.sh:/run.sh:ro
     environment:
       - SM_DOCKER_ENV=development
 
   sm-api:
-    build:
-      context: ./sm-engine
-      args:
-        sm_branch: master
     volumes:
-      - ./sm-engine/conf/:/opt/sm-engine/conf:ro
-      - ./data/:/opt/data:z
-      # Development volumes
-      - ../sm-engine/:/opt/dev/sm-engine:z
+      - "${DEV_ROOT}/sm-engine/:/opt/dev/sm-engine:z"
       - ./sm-engine/rebuild-es-index.sh:/rebuild-es-index.sh:ro
       - ./sm-engine/run-api.sh:/run-api.sh:ro
       - ./sm-engine/run-daemon.sh:/run-daemon.sh:ro
@@ -57,55 +43,30 @@ services:
       - SM_DOCKER_ENV=development
 
   sm-daemon:
-    build:
-      context: ./sm-engine
-      args:
-        sm_branch: master
     volumes:
-      - ./sm-engine/conf/:/opt/sm-engine/conf:ro
-      - ./data/:/opt/data:z
-      # Development volumes
-      - ../sm-engine/:/opt/dev/sm-engine:z
+      - "${DEV_ROOT}/sm-engine/:/opt/dev/sm-engine:z"
       - ./sm-engine/rebuild-es-index.sh:/rebuild-es-index.sh:ro
       - ./sm-engine/run-api.sh:/run-api.sh:ro
       - ./sm-engine/run-daemon.sh:/run-daemon.sh:ro
     environment:
       - SM_DOCKER_ENV=development
-      - SPARK_WORKER_CORES=4
 
   sm-graphql:
-    build:
-      context: ./sm-graphql
-      args:
-        sm_branch: master
     volumes:
-      - ./sm-graphql/config/:/opt/sm-graphql/config:ro
-      - ./data/:/opt/data:z
-      # Development volumes
-      - ../sm-graphql/:/opt/dev/sm-graphql:z
+      - "${DEV_ROOT}/sm-graphql/:/opt/dev/sm-graphql:z"
       - ./sm-graphql/run.sh:/run.sh:ro
     environment:
       - SM_DOCKER_ENV=development
 
   sm-webapp:
-    build:
-      context: ./sm-webapp
-      args:
-        sm_branch: master
     volumes:
-      - ./sm-webapp/config/conf.js:/opt/sm-webapp/conf.js:ro
-      - ./sm-webapp/config/clientConfig.js:/opt/sm-webapp/src/clientConfig.js:ro
-      - ./data/:/opt/data:z
-      # Development volumes
-      - ../sm-webapp/:/opt/dev/sm-webapp:z
+      - "${DEV_ROOT}/sm-webapp/:/opt/dev/sm-webapp:z"
       - ./sm-webapp/run.sh:/run.sh:ro
     environment:
       - SM_DOCKER_ENV=development
 
   nginx:
-    image: nginx
     ports:
-      - "8999:8999" # main web server
       - "9210:9210" # password-protected kibana proxy
     # Use extra_hosts to map DNS names to the host if you need to run any of the applications outside of docker
     # extra_hosts:

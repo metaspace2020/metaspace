@@ -10,14 +10,14 @@ exports.GOOGLE_CALLBACK_URL = ""
 exports.COOKIE_SECRET = "thisisasecretdonttellanyone";
 exports.JWT_SECRET = "secret";
 
-exports.ADMIN_EMAILS = "lachlan.stuart@embl.de";
+exports.ADMIN_EMAILS = [];
 
 exports.AWS_ACCESS_KEY_ID = "";
 exports.AWS_SECRET_ACCESS_KEY = "";
 
 // either 's3' or the destination directory
 // must match 'storage' value in src/clientConfig.js
-exports.UPLOAD_DESTINATION = "/home/lachlan/dev/embl/ms-docker/sm-data/uploads";
+exports.UPLOAD_DESTINATION = "/opt/data/uploads";
 
 exports.REDIS_CONFIG = {
   host: "redis",

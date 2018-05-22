@@ -49,7 +49,7 @@ services:
     build:
       context: ./mol-db
       args:
-        sm_branch: master
+        sm_branch: "$MOL_DB_BRANCH"
     ports:
       - "5001:5001"
     volumes:
@@ -65,12 +65,12 @@ services:
     build:
       context: ./sm-engine
       args:
-        sm_branch: master
+        sm_branch: "$SM_ENGINE_BRANCH"
     ports:
       - "5123:5123"
     volumes:
       - ./sm-engine/conf/:/opt/sm-engine/conf:ro
-      - ./data/:/opt/data:z
+      - "${DATA_ROOT}:/opt/data:z"
     networks:
       - sm
     depends_on:
@@ -81,13 +81,13 @@ services:
     build:
       context: ./sm-engine
       args:
-        sm_branch: master
+        sm_branch: "$SM_ENGINE_BRANCH"
     entrypoint: /start-daemon.sh
     mem_limit: 8g
     cpu_shares: 512
     volumes:
       - ./sm-engine/conf/:/opt/sm-engine/conf:ro
-      - ./data/:/opt/data:z
+      - "${DATA_ROOT}:/opt/data:z"
     environment:
       SPARK_WORKER_CORES: 4
     networks:
@@ -101,14 +101,14 @@ services:
     build:
       context: ./sm-graphql
       args:
-        sm_branch: master
+        sm_branch: "$SM_GRAPHQL_BRANCH"
     ports:
       - "3010:3010"
       - "5666:5666"
       - "4201:4201"
     volumes:
       - ./sm-graphql/config/:/opt/sm-graphql/config:ro
-      - ./data/:/opt/data:z
+      - ${DATA_ROOT}:/opt/data:z
     networks:
       - sm
     depends_on:
@@ -118,26 +118,26 @@ services:
     build:
       context: ./sm-webapp
       args:
-        sm_branch: master
+        sm_branch: "$SM_WEBAPP_BRANCH"
     ports:
       - "8082:8082"
     volumes:
       - ./sm-webapp/config/conf.js:/opt/sm-webapp/conf.js:ro
-      - ./sm-webapp/config/clientConfig.js:/opt/sm-webapp/src/clientConfig.js:ro
-      - ./data/:/opt/data:z
+      - ./sm-webapp/config/clientConfig.json:/opt/sm-webapp/src/clientConfig.json:ro
+      - "${DATA_ROOT}:/opt/data:z"
     networks:
       - sm
 
   nginx:
     image: nginx
     ports:
-      - "8999:8999" # main web server
+      - "${WWW_PORT}:8999" # main web server
     volumes:
       - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/config/proxy-params.conf:/etc/nginx/proxy-params.conf:ro
       - ./nginx/config/conf.d/:/etc/nginx/conf.d:ro
       - ./nginx/config/sites-enabled/:/etc/nginx/sites-enabled:ro
-      - ./data/mol-images:/var/www/mol-images:z
+      - "${DATA_ROOT}/mol-images:/var/www/mol-images:z"
     networks:
       - sm
     depends_on:
@@ -154,3 +154,8 @@ networks:
     #   config:
     #     - subnet: 172.17.0.0/24
     #       gateway: 172.17.0.1
+  #TODO: Internal network
+  #internal
+      #driver: overlay
+      #internal: true
+  
