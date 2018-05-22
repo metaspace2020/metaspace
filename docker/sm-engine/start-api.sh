@@ -2,6 +2,20 @@
 
 source activate sm
 
+echo "Waiting for Postgres to start"
+until $(nc -z postgres 5432); do
+    printf '.'
+    sleep 5
+done
+echo "Postgres is up"
+
+echo "Waiting for RabbitMQ to start"
+until $(nc -z rabbitmq 5672); do
+    printf '.'
+    sleep 5
+done
+echo "RabbitMQ is up"
+
 if [ "$SM_DOCKER_ENV" = "development" ]; then
   cd /opt/dev/sm-engine
   conda env update
@@ -37,5 +51,4 @@ if [ $? == 0 ]; then
   python -m scripts.create_es_index
 fi
 
-echo "Launching sm-api"
 exec python -m sm.rest.api

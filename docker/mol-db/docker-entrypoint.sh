@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+echo "Waiting for Postgres to start"
+until $(nc -z postgres 5432); do
+    printf '.'
+    sleep 5
+done
+echo "Postgres is up"
+
 if [ "$SM_DOCKER_ENV" = "development" ]; then
   # Run conda env update from /tmp because it can't run in a read-only directory
   cd /tmp

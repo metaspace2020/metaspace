@@ -2,11 +2,13 @@ FROM jupyter/pyspark-notebook
 
 USER root
 
-RUN apt-get update && apt-get install -y git curl postgresql-client
+RUN apt-get update && apt-get install -y git curl postgresql-client && apt-get clean
 
 RUN mkdir -p /opt/sm-engine /opt/data ; chown $NB_UID:$NB_GID /opt/sm-engine /opt/data
 
 USER $NB_UID
+
+RUN conda update -n base conda
 
 WORKDIR /opt/sm-engine
 

@@ -1,6 +1,8 @@
 FROM continuumio/miniconda
 
-RUN apt-get update && apt-get install -y git curl postgresql-client openbabel
+RUN apt-get update && apt-get install -y git curl postgresql-client openbabel netcat && apt-get clean
+
+RUN conda update -n base conda
 
 WORKDIR /opt/mol-db
 

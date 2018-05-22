@@ -1,5 +1,7 @@
 FROM node
 
+RUN apt-get update && apt-get install -y netcat && apt-get clean
+
 WORKDIR /opt/sm-graphql
 
 ARG sm_branch=master
