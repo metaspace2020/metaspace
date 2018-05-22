@@ -31,6 +31,11 @@ if [ "$( PGPASSWORD=password psql -U sm -h postgres -tAc "SELECT NOT EXISTS (SEL
   PGPASSWORD=password psql -U sm -h postgres -f ./scripts/create_schema.sql
 fi
 
-python -m scripts.create_es_index
+curl -I http://elasticsearch:9200/sm 2>/dev/null | head -1 | grep 404 >/dev/null
+if [ $? == 0 ]; then
+  echo "Creating Elasticsearch index"
+  python -m scripts.create_es_index
+fi
 
+echo "Launching sm-api"
 exec python -m sm.rest.api

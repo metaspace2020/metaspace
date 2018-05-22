@@ -10,6 +10,7 @@ RUN git clone --recurse-submodules --branch "$sm_branch" https://github.com/META
 
 RUN conda env create
 
-COPY install-dbs.sh run.sh /
+COPY *.sh /
 
-ENTRYPOINT [ "/run.sh" ]
+ENTRYPOINT [ ]
+CMD [ "/docker-entrypoint.sh" ]

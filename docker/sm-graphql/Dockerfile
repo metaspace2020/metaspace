@@ -14,4 +14,5 @@ RUN node deref_schema.js > metadata_schema.json
 
 COPY docker-entrypoint.sh /
 
-ENTRYPOINT [ "/docker-entrypoint.sh" ]
+ENTRYPOINT [ ]
+CMD [ "/docker-entrypoint.sh" ]

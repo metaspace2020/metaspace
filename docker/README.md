@@ -9,9 +9,11 @@ sudo snap install docker
 
 After installation, log out and log back in to start the Docker daemon. If this step isn't done, docker will hang when trying to start containers.
 
-### Config file
+### Docker config file
 
 Copy `.env.example` to `.env` and customize it if needed.
+
+> TODO: Change dockerfiles to accept a commit hash instead of a branch as an argument
 
 ### Self-contained installation
 
@@ -45,22 +47,19 @@ it will likely be necessary to reinstall the dependencies for `sm-engine` and `s
 container, so that docker-compatible versions of binary packages are used:
 
 ```bash
-docker-compose run --rm --entrypoint "bash -c 'cd /opt/dev/sm-webapp; yarn install'" sm-webapp
-docker-compose run --rm --entrypoint "bash -c 'cd /opt/dev/sm-graphql; yarn install'" sm-graphql
+docker-compose run --rm sm-webapp yarn install
+docker-compose run --rm sm-graphql yarn install
 ```
 
 ### Import data
 
 ```bash
-docker-compose run --rm mol-db /import-dbs.sh
+docker-compose run --rm mol-db /install-dbs.sh
 cd data
 ./fetch-mol-images.sh
 ```
 
 ### Configuration
-
-TODO: Pull configuration templates from their respective repositories
-and use a Jinja-based tool to populate them with defaults so that the configuration isn't hard-coded
 
 If running in a development setup, all config files will need to be updated with these settings:
 
@@ -72,6 +71,9 @@ If running in a development setup, all config files will need to be updated with
 * RabbitMQ host/user/pass: `rabbitmq` / `rabbitmq` / `rabbitmq`
 * Hosts for SM services: `mol-db`, `sm-api`, `sm-graphql`
 * Data directories: `/opt/data`
+
+> *TODO:* Pull configuration templates from their respective repositories
+> and use a Jinja-based tool to populate them with defaults so that the configuration isn't hard-coded
 
 ### Accessing METASPACE
 
@@ -89,7 +91,7 @@ Watching application logs:
 
 Rebuilding the Elasticsearch index:
 
-* `docker-compose exec sm-api /rebuild-es-index.sh`
+* `docker-compose run --rm sm-api /rebuild-es-index.sh`
 
 ## Funding
 

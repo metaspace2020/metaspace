@@ -18,4 +18,5 @@ COPY config/clientConfig.json src/clientConfig.json
 RUN yarn run build
 
 
-ENTRYPOINT [ "/docker-entrypoint.sh" ]
+ENTRYPOINT [ ]
+CMD [ "/docker-entrypoint.sh" ]

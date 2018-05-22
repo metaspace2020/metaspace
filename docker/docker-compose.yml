@@ -82,7 +82,7 @@ services:
       context: ./sm-engine
       args:
         sm_branch: "$SM_ENGINE_BRANCH"
-    entrypoint: /start-daemon.sh
+    command: /start-daemon.sh
     mem_limit: 8g
     cpu_shares: 512
     volumes:

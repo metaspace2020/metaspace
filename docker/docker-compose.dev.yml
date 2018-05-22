@@ -29,7 +29,7 @@ services:
     volumes:
       - "${DEV_ROOT}/sm-molecular-db/:/opt/dev/sm-molecular-db:ro"
       - ./mol-db/install-dbs.sh:/install-dbs.sh:ro
-      - ./mol-db/run.sh:/run.sh:ro
+      - ./mol-db/docker-entrypoint.sh:/docker-entrypoint.sh:ro
     environment:
       - SM_DOCKER_ENV=development
 
@@ -37,31 +37,28 @@ services:
     volumes:
       - "${DEV_ROOT}/sm-engine/:/opt/dev/sm-engine:z"
       - ./sm-engine/rebuild-es-index.sh:/rebuild-es-index.sh:ro
-      - ./sm-engine/run-api.sh:/run-api.sh:ro
-      - ./sm-engine/run-daemon.sh:/run-daemon.sh:ro
+      - ./sm-engine/start-api.sh:/start-api.sh:ro
     environment:
       - SM_DOCKER_ENV=development
 
   sm-daemon:
     volumes:
       - "${DEV_ROOT}/sm-engine/:/opt/dev/sm-engine:z"
-      - ./sm-engine/rebuild-es-index.sh:/rebuild-es-index.sh:ro
-      - ./sm-engine/run-api.sh:/run-api.sh:ro
-      - ./sm-engine/run-daemon.sh:/run-daemon.sh:ro
+      - ./sm-engine/start-daemon.sh:/start-daemon.sh:ro
     environment:
       - SM_DOCKER_ENV=development
 
   sm-graphql:
     volumes:
       - "${DEV_ROOT}/sm-graphql/:/opt/dev/sm-graphql:z"
-      - ./sm-graphql/run.sh:/run.sh:ro
+      - ./sm-graphql/docker-entrypoint.sh:/docker-entrypoint.sh:ro
     environment:
       - SM_DOCKER_ENV=development
 
   sm-webapp:
     volumes:
       - "${DEV_ROOT}/sm-webapp/:/opt/dev/sm-webapp:z"
-      - ./sm-webapp/run.sh:/run.sh:ro
+      - ./sm-webapp/docker-entrypoint.sh:/docker-entrypoint.sh:ro
     environment:
       - SM_DOCKER_ENV=development
 

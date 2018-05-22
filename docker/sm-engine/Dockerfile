@@ -18,4 +18,5 @@ RUN conda env create
 
 COPY *.sh /
 
-ENTRYPOINT [ "/start-api.sh" ]
+ENTRYPOINT [ ]
+CMD [ "/start-api.sh" ]

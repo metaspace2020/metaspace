@@ -13,7 +13,7 @@
       "s3_signature_endpoint": "/upload/s3/sign",
       "s3_signature_version": 2
     },
-    "storage": "/opt/dev/data/uploads"
+    "storage": "/opt/data/uploads"
   },
   "ravenDsn": "https://16556a31185a4882b9ebf6a5abab9452@sentry.io/1203803",
   "metadataTypes": ["ims","lcms"]
