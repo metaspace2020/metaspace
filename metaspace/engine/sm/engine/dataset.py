@@ -76,7 +76,7 @@ class Dataset(object):
 
     def save(self, db, es, status_queue=None):
         assert self.id and self.name and self.input_path and self.upload_dt and self.config and self.status
-        row = (self.id, self.name, self.input_path, self.upload_dt.isoformat(' '),
+        row = (self.id, self.name, self.input_path, self.upload_dt,
                json.dumps(self.meta), json.dumps(self.config), self.status)
         if not self.is_stored(db):
             db.insert(self.DS_INSERT, [row])

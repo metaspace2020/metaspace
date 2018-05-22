@@ -68,7 +68,7 @@ def add_ds():
         ds = Dataset(ds_id,
                      params.get('name', None),
                      params.get('input_path'),
-                     params.get('upload_dt', now),
+                     params.get('upload_dt', now.isoformat()),
                      params.get('metadata', None),
                      params.get('config'))
         db = _create_db_conn()
@@ -80,7 +80,8 @@ def add_ds():
             'status': OK['status'],
             'ds_id': ds_id
         }
-    except Exception:
+    except Exception as e:
+        logger.error(e, exc_info=True)
         resp.status = ERROR['status_code']
         return {
             'status': ERROR['status'],
@@ -110,7 +111,8 @@ def sm_modify_dataset(request_name):
                     'status': ERR_OBJECT_NOT_EXISTS['status'],
                     'ds_id': ds_id
                 }
-            except Exception:
+            except Exception as e:
+                logger.error(e, exc_info=True)
                 resp.status = ERROR['status_code']
                 return {
                     'status': ERROR['status'],
@@ -125,6 +127,7 @@ def sm_modify_dataset(request_name):
 def update_ds(ds_man, ds, params):
     ds.name = params.get('name', ds.name)
     ds.input_path = params.get('input_path', ds.input_path)
+    ds.upload_dt = params.get('upload_dt', ds.upload_dt)
     ds.meta = params.get('metadata', ds.meta)
     ds.config = params.get('config', ds.config)
 
