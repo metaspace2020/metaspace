@@ -277,19 +277,20 @@ type Query {
 }
 
 type Mutation {
+  # datasetId and uploadDT are optional, uploadDT should be in UTC
   submitDataset(jwt: String!, datasetId: String, name: String,
-    path: String, metadataJson: String,
+    path: String!, uploadDT: String, metadataJson: String!,
     priority: Int=0, delFirst: Boolean=false): String
 
   resubmitDataset(jwt: String!, datasetId: String!, name: String,
     metadataJson: String, priority: Int=0,
     delFirst: Boolean=false): String
 
+  # TODO: consider renaming to updateDataset
   updateMetadata(jwt: String!, datasetId: String!, name: String,
-    metadataJson: String!, priority: Int=0): String
+    uploadDT: String, metadataJson: String, priority: Int=0): String
 
-  deleteDataset(jwt: String!, datasetId: String!,
-    delRawData: Boolean): String
+  deleteDataset(jwt: String!, datasetId: String!, delRawData: Boolean): String
 
   addOpticalImage(input: AddOpticalImageInput!): String
 

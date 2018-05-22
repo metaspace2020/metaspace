@@ -144,7 +144,7 @@ module.exports = {
   },
   Mutation: {
     submit: async (args) => {
-      const {datasetId, name, path, metadata, priority, sync, delFirst} = args;
+      const {datasetId, name, path, uploadDT, metadata, priority, sync, delFirst} = args;
       try {
         const payload = jwt.decode(args.jwt, config.jwt.secret);
         if (datasetId !== undefined) {
@@ -166,6 +166,8 @@ module.exports = {
         };
         if (datasetId !== undefined)
           body.id = datasetId;
+        if (uploadDT !== undefined)
+          body.upload_dt = uploadDT;
         return await smAPIRequest(datasetId, '/v1/datasets/add', body);
       } catch (e) {
         logger.error(e.stack);
@@ -173,26 +175,31 @@ module.exports = {
       }
     },
     update: async (args) => {
-      const {datasetId, name, metadataJson, priority} = args;
+      const {datasetId, name, uploadDT, metadataJson, priority} = args;
       try {
-        const payload = jwt.decode(args.jwt, config.jwt.secret),
-          newMetadata = JSON.parse(metadataJson);
+        const payload = jwt.decode(args.jwt, config.jwt.secret);
         const ds = await fetchDS({id: datasetId});
         if (ds === undefined) {
           throw UserError('DS does not exist');
         }
-
         await checkPermissions(ds.id, payload);
-        validateMetadata(newMetadata);
-        const newConfig = generateProcessingConfig(newMetadata);
-        reprocessingNeeded(ds, newMetadata, newConfig);
 
         const body = {
-          metadata: newMetadata,
-          config: newConfig,
-          name: name || ds.name,
           priority: priority
         };
+        if (name !== undefined)
+          body.name = name;
+        if (uploadDT !== undefined)
+          body.upload_dt = uploadDT;
+        if (metadataJson !== undefined) {
+          const newMetadata = JSON.parse(metadataJson);
+          validateMetadata(newMetadata);
+          const newConfig = generateProcessingConfig(newMetadata);
+          await reprocessingNeeded(ds, newMetadata);
+
+          body.metadata = newMetadata;
+          body.config = newConfig;
+        }
         return await smAPIRequest(ds.id, `/v1/datasets/${ds.id}/update`, body);
       } catch (e) {
         logger.error(e.stack);
