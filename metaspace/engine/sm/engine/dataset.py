@@ -90,7 +90,7 @@ class Dataset(object):
             'id': self.id,
             'name': self.name,
             'input_path': self.input_path,
-            'upload_dt': self.upload_dt.isoformat(' '),
+            'upload_dt': self.upload_dt,
             'metadata': json.dumps(self.meta),
             'config': json.dumps(self.config),
             'status': self.status,
