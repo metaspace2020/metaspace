@@ -142,9 +142,12 @@ if (conf.AWS_ACCESS_KEY_ID && env != 'development') {
   var ses = new AWS.SES();
 
   passwordless.addDelivery((token, uid, recipient, callback, req) => {
-    const host = conf.HOST_NAME;
-    const text = 'Greetings!\nVisit this link to login: ' + loginLink(token, uid)
-               + '\n\n\n---\nMETASPACE team'
+    const text = 'Greetings!\n'
+    + `Visit this link to sign in: ${loginLink(token, uid)}\n\n`
+    + 'Best regards,\n'
+    + 'METASPACE Team\n\n'
+    + '---\n'
+    + 'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).';
 
     ses.sendEmail({
       Source: 'contact@metaspace2020.eu',
@@ -154,7 +157,7 @@ if (conf.AWS_ACCESS_KEY_ID && env != 'development') {
         Body: {Text: {Data: text}}
       }
     }, (err, data) => {
-      if (err) console.log(err);
+      if (err) console.error(err);
       callback(err);
     });
   });
