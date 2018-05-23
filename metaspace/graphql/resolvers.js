@@ -221,6 +221,22 @@ const Resolvers = {
         })
     },
 
+    thumbnailImage(_, {datasetId}) {
+      return pg.select().from('dataset')
+        .where('id ', '=', datasetId)
+        .then(records => {
+          if (records.length > 0 && records[0].thumbnail != null) {
+            return '/optical_images/' + records[0].thumbnail;
+          }
+          else {
+            return null;
+          }
+        })
+        .catch(e => {
+            logger.error(e);
+        })
+    },
+
     reprocessingNeeded(_, args, {user}) {
       return DSQuery.reprocessingNeeded(args, user);
     }

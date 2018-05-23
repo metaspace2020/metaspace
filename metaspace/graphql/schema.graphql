@@ -286,6 +286,8 @@ type Query {
 
   rawOpticalImage(datasetId: String!): RawOpticalImage,
 
+  thumbnailImage(datasetId: String!): String,
+
   reprocessingNeeded(datasetId: String!, metadataJson: String!): Boolean
 }
 
