@@ -14,3 +14,10 @@ discovery.zen.minimum_master_nodes: 1
 ## see https://www.elastic.co/guide/en/elasticsearch/reference/current/bootstrap-checks.html
 #
 discovery.type: single-node
+
+# Allow HTTP requests from all origins so that it's possible to administer with
+# Dejavu: https://opensource.appbase.io/dejavu/live/
+http.cors.allow-origin: "*"
+http.cors.enabled: true
+http.cors.allow-headers : X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+http.cors.allow-credentials: true

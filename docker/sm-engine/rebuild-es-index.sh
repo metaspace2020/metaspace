@@ -11,6 +11,6 @@ fi
 
 source activate sm
 
-python ./scripts/create_es_index.py --drop
+python -m scripts.create_es_index --drop
 
-python ./scripts/update_es_index.py --ds-name %
+python -m scripts.update_es_index --ds-name %
