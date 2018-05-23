@@ -86,7 +86,7 @@ class SMDaemon(object):
                 msg['web_app_link'] = '{}/#/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
                 email_body = (
                     'Dear {} {},\n\n'
-                    'Thank you for uploading dataset {} to the METASPACE annotation service. '
+                    'Thank you for uploading the "{}" dataset to the METASPACE annotation service. '
                     'We are pleased to inform you that the dataset has been processed and is available at {}.\n\n'
                     'Best regards,\n'
                     'METASPACE Team\n\n'
@@ -105,10 +105,10 @@ class SMDaemon(object):
             submitter = ds_meta['Submitted_By'].get('Submitter', '')
             email_body = (
                 'Dear {} {},\n\n'
-                'Thank you for uploading dataset "{}" to the METASPACE annotation service. '
-                'We are sorry to inform you that there were issues with processing your dataset. '
-                'We are already working on it. '
-                'In case you have any questions, please do not hesitate to write us at contact@metaspace2020.eu\n\n'
+                'Thank you for uploading the "{}" dataset to the METASPACE annotation service. '
+                'We are sorry to inform you that there was a problem during processing of this dataset '
+                'and it could not be annotated. '
+                'If this is unexpected, please do not hesitate to contact us for support at contact@metaspace2020.eu\n\n'
                 'Best regards,\n'
                 'METASPACE Team\n\n'
                 '---\n'
