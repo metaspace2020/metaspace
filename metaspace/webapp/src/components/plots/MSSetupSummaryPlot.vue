@@ -63,7 +63,7 @@
      y: true
    },
 
-   sideHistogramColor: 'rgba(0, 105, 224, 0.3)',
+   sideHistogramColor: 'rgb(170, 204, 255)',
 
    pie: {
      showCounts: true,
