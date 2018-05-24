@@ -126,7 +126,7 @@
 <script>
  import DatasetInfo from './DatasetInfo.vue';
  import capitalize from 'lodash/capitalize';
- import {deleteDatasetQuery, opticalImageQuery} from '../api/dataset';
+ import {deleteDatasetQuery, thumbnailOptImageQuery} from '../api/dataset';
  import {getJWT, mdTypeSupportsOpticalImages} from '../util';
  import {encodeParams} from '../url';
 
@@ -262,16 +262,15 @@
 
    apollo: {
      opticalImageUrl: {
-       query: opticalImageQuery,
+       query: thumbnailOptImageQuery,
        variables() {
          return {
-           datasetId: this.dataset.id,
-           zoom: 1.
+           datasetId: this.dataset.id
          };
        },
        fetchPolicy: 'network-only',
        result(res) {
-         this.opticalImageSmall = res.data.opticalImageUrl
+         this.opticalImageSmall = res.data.thumbnail[0]
        }
      }
    },
