@@ -4,7 +4,7 @@ USER root
 
 RUN apt-get update && apt-get install -y git curl postgresql-client && apt-get clean
 
-RUN mkdir -p /opt/sm-engine /opt/data ; chown $NB_UID:$NB_GID /opt/sm-engine /opt/data
+RUN mkdir -p /opt/sm-engine /opt/data ; chown $NB_UID:$NB_GID /opt /opt/*
 
 USER $NB_UID
 

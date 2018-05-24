@@ -12,10 +12,12 @@ wait_for() {
   echo "$2 is up"
 }
 
+source activate sm
+
 if [ "$SM_DOCKER_ENV" = "development" ]; then
-  cd /opt/dev/sm-molecular-db
+  cd /opt/dev/sm-engine
 else
-  cd /opt/mol-db
+  cd /opt/sm-engine
 fi
 
 # Update conda environment if it has changed since the last run
@@ -27,6 +29,6 @@ else
 fi
 
 wait_for "nc -z postgres 5432" "Postgres"
+wait_for "nc -z rabbitmq 5672" "RabbitMQ"
 
-source activate mol-db
-exec gunicorn -b 0.0.0.0:5001 app.main:application --reload
+export PYTHONUNBUFFERED=1 # Fix issue with Python sometimes mysteriously buffering its output indefinitely

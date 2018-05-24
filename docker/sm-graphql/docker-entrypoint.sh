@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 
-echo "Waiting for RabbitMQ to start"
-until $(nc -z rabbitmq 5672); do
-    printf '.'
+wait_for() {
+  if ! $1; then
+    echo "Waiting for $2"
     sleep 5
-done
-echo "RabbitMQ is up"
+    until $1; do
+        printf '.'
+        sleep 1
+    done
+  fi
+  echo "$2 is up"
+}
+
+wait_for "nc -z rabbitmq 5672" "RabbitMQ"
 
 if [ "$SM_DOCKER_ENV" = "development" ]; then
   export NODE_ENV=development

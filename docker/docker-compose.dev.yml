@@ -27,7 +27,7 @@ services:
 
   mol-db:
     volumes:
-      - "${DEV_ROOT}/sm-molecular-db/:/opt/dev/sm-molecular-db:ro"
+      - "${DEV_ROOT}/sm-molecular-db/:/opt/dev/sm-molecular-db:z"
       - ./mol-db/install-dbs.sh:/install-dbs.sh:ro
       - ./mol-db/docker-entrypoint.sh:/docker-entrypoint.sh:ro
     environment:
@@ -38,6 +38,7 @@ services:
       - "${DEV_ROOT}/sm-engine/:/opt/dev/sm-engine:z"
       - ./sm-engine/rebuild-es-index.sh:/rebuild-es-index.sh:ro
       - ./sm-engine/start-api.sh:/start-api.sh:ro
+      - ./sm-engine/start-common.sh:/start-common.sh:ro
     environment:
       - SM_DOCKER_ENV=development
 
@@ -45,6 +46,7 @@ services:
     volumes:
       - "${DEV_ROOT}/sm-engine/:/opt/dev/sm-engine:z"
       - ./sm-engine/start-daemon.sh:/start-daemon.sh:ro
+      - ./sm-engine/start-common.sh:/start-common.sh:ro
     environment:
       - SM_DOCKER_ENV=development
 
