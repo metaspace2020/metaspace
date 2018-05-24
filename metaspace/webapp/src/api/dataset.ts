@@ -52,6 +52,11 @@ export const rawOpticalImageQuery =
     }
   }`;
 
+export const thumbnailOptImageQuery =
+    gql`query ($datasetId: String!) {
+    thumbnailImage(datasetId: $datasetId) 
+  }`;
+
 export const resubmitDatasetQuery =
   gql`mutation ($jwt: String!, $datasetId: String!, $name: String, 
                 $metadataJson: String, $isPublic: Boolean, $delFirst: Boolean) {
