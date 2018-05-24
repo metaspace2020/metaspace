@@ -256,12 +256,12 @@ class SMapiDatasetManager(DatasetManager):
 
     def _add_thumbnail_optical_image(self, ds, img_id):
         size = 200, 200
-        self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, None, ds.id)
+        self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(None, ds.id,))
         optical_img = self._img_store.get_image_by_id('fs', 'raw_optical_image', img_id)
         optical_img.thumbnail(size, Image.ANTIALIAS)
         buf = self._save_jpeg(optical_img)
         img_thumb_id = self._img_store.post_image('fs', 'optical_image', buf)
-        self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, img_thumb_id, ds.id)
+        self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(img_thumb_id, ds.id,))
 
     def add_optical_image(self, ds, img_id, transform, zoom_levels=[1, 2, 4, 8], **kwargs):
         """ Generate scaled and transformed versions of the provided optical image + creates the thumbnail """
@@ -284,4 +284,4 @@ class SMapiDatasetManager(DatasetManager):
             self._img_store.delete_image_by_id('fs', 'optical_image', row[0])
         self._db.alter(DEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
         self._db.alter(DEL_OPTICAL_IMAGE, params=(ds.id,))
-        self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, None , ds.id)
+        self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(None, ds.id,))
