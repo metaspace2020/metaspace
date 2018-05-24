@@ -38,13 +38,13 @@
       <fine-uploader :config="fineUploaderConfig"
                      :dataTypeConfig="fineUploaderDataTypeConfig"
                      ref="uploader"
-                     @upload="onUpload" @success="onSuccess" @failure="onFailure">
+                     @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure">
       </fine-uploader>
     </div>
 
     <div id="upload-right-pane">
       <metadata-editor ref="editor"
-                       :enableSubmit="enableSubmit"
+                       :enableSubmit="uploadedUuid != null && !isSubmitting"
                        @submit="onFormSubmit"
                        disabledSubmitMessage="Your files must be uploaded first"
                        v-bind:validationErrors="validationErrors">
@@ -117,10 +117,11 @@
    data() {
      return {
        fineUploaderConfig: config.fineUploader,
-       enableSubmit: false,
        introIsHidden: true,
        enableUploads: config.enableUploads,
-       validationErrors: []
+       validationErrors: [],
+       isSubmitting: false,
+       uploadedUuid: null,
      }
    },
    components: {
@@ -160,59 +161,72 @@
        });
      },
 
-     onSuccess(filenames) {
-       this.enableSubmit = true;
+     onUploadSuccess(uuid) {
+       this.uploadedUuid = uuid;
      },
 
-     onFailure(failedFiles) {
-       // Do nothing - FineUploader has already displayed a message to the user
+     onUploadFailure() {
+       this.uploadedUuid = null;
      },
 
-     onFormSubmit(_, formData, isPublic) {
-       const uuid = this.$refs.uploader.getUUID();
-       this.submitDataset(uuid, formData, isPublic).then(() => {
+     async onFormSubmit(_, metadataJson, isPublic) {
+       // Prevent duplicate submissions if user double-clicks
+       if (this.isSubmitting) return;
+       this.isSubmitting = true;
+
+       try {
+         await this.$apollo.mutate({
+           mutation: submitDatasetQuery,
+           variables: {
+             jwt: await getJWT(),
+             path: pathFromUUID(this.uploadedUuid),
+             metadataJson,
+             isPublic
+           }
+         });
+
          this.validationErrors = [];
-         this.enableSubmit = false;
          this.$refs.uploader.reset();
          this.$refs.editor.resetDatasetName();
          this.$message({
            message: 'Your dataset was successfully submitted!',
            type: 'success'
          });
-       }).catch(err => {
-         if (err.graphQLErrors != null) {
-           const graphQLError = JSON.parse(err.graphQLErrors[0].message);
-           if (graphQLError['type'] === 'failed_validation') {
-             this.validationErrors = graphQLError['validation_errors'];
-             this.$message({
-               message: 'Please fix the highlighted fields and submit again',
-               type: 'error'
-             });
-           } else {
-             this.$message({
-               message: 'Metadata submission failed :( Contact us: contact@metaspace2020.eu',
-               type: 'error',
-               duration: 0,
-               showClose: true
-             })
-           }
+       } catch (err) {
+         let graphQLError = null;
+         try {
+           graphQLError = JSON.parse(err.graphQLErrors[0].message);
+         } catch(err2) { /* The case where err does not contain a graphQL error is handled below */ }
+
+         if (graphQLError && graphQLError.type === 'failed_validation') {
+           this.validationErrors = graphQLError['validation_errors'];
+           this.$message({
+             message: 'Please fix the highlighted fields and submit again',
+             type: 'error'
+           });
+         } else if (graphQLError && graphQLError.type === 'wrong_moldb_name') {
+           this.$refs.editor.resetMetaboliteDatabase();
+           this.$message({
+             message: 'An unrecognized metabolite database was selected. This field has been cleared, ' +
+             'please select the databases again and resubmit the form.',
+             type: 'error'
+           });
          } else {
+           this.$message({
+             message: 'There was an unexpected problem submitting the dataset. Please refresh the page and try again.'
+               + 'If this problem persists, please contact us at '
+               + '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
+             dangerouslyUseHTMLString: true,
+             type: 'error',
+             duration: 0,
+             showClose: true
+           });
            throw err;
          }
-       })
+       } finally {
+         this.isSubmitting = false;
+       }
      },
-
-     submitDataset(uuid, formData, isPublic) {
-       return getJWT()
-         .then(jwt => this.$apollo.mutate({
-           mutation: submitDatasetQuery,
-           variables: {
-             path: pathFromUUID(uuid),
-             metadataJson: formData,
-             jwt,
-             isPublic
-           }}));
-     }
    }
  }
 

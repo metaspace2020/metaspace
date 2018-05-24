@@ -597,6 +597,10 @@
        this.value.metaspace_options.Dataset_Name = '';
      },
 
+     resetMetaboliteDatabase() {
+       this.value.metaspace_options.Metabolite_Database = [];
+     },
+
      submit() {
        const value = JSON.stringify(this.value);
        this.$emit('submit', this.datasetId, value, this.isPublic);

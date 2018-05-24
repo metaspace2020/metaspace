@@ -165,7 +165,7 @@
            onAllComplete: (succeeded, failed) => {
              if (failed.length == 0) {
                this.$message({message: 'All datasets have been uploaded', type: 'success'})
-               this.$emit('success', this.uploadFilenames);
+               this.$emit('success', this.uuid);
              } else {
                this.$message({message: 'Upload failed :(', type: 'error'})
                this.$emit('failure', failed);
@@ -203,10 +203,6 @@
 
          this.fineUploader = new qq.s3.FineUploader(options);
        }
-     },
-
-     getUUID() {
-       return this.uuid;
      }
    }
  }

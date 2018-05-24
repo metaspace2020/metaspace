@@ -14,10 +14,10 @@ export const fetchAutocompleteSuggestionsQuery =
   }`;
 
 export const updateMetadataQuery =
-  gql`mutation ($jwt: String!, $dsId: String!, $dsName: String, $value: String!,
+  gql`mutation ($jwt: String!, $datasetId: String!, $name: String, $metadataJson: String!,
                 $isPublic: Boolean!) {
-    updateMetadata(jwt: $jwt, datasetId: $dsId, name: $dsName, 
-          metadataJson: $value, isPublic: $isPublic, priority: 1)
+    updateMetadata(jwt: $jwt, datasetId: $datasetId, name: $name, 
+          metadataJson: $metadataJson, isPublic: $isPublic, priority: 1)
   }`;
 
 // TODO: use autocompletion for filter values, same as on the upload page
