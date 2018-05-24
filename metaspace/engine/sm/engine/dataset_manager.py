@@ -16,6 +16,7 @@ from sm.engine.ims_geometry_factory import ImsGeometryFactory
 SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
 UPD_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = %s, transform = %s WHERE id = %s'
 DEL_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = NULL, transform = NULL WHERE id = %s'
+UPD_DATASET_THUMB_OPTICAL_IMAGE = 'update dataset set thumbnail = %s WHERE id = %s'
 
 IMG_URLS_BY_ID_SEL = ('SELECT iso_image_ids '
                       'FROM iso_image_metrics m '
@@ -25,6 +26,7 @@ IMG_URLS_BY_ID_SEL = ('SELECT iso_image_ids '
 
 INS_OPTICAL_IMAGE = 'INSERT INTO optical_image (id, ds_id, zoom) VALUES (%s, %s, %s)'
 SEL_OPTICAL_IMAGE = 'SELECT id FROM optical_image WHERE ds_id = %s'
+SEL_OPTICAL_IMAGE_THUMBNAIL = 'SELECT thumbnail FROM dataset WHERE id = %s'
 DEL_OPTICAL_IMAGE = 'DELETE FROM optical_image WHERE ds_id = %s'
 
 
@@ -252,11 +254,21 @@ class SMapiDatasetManager(DatasetManager):
         self._db.alter(DEL_OPTICAL_IMAGE, params=(ds.id,))
         self._db.insert(INS_OPTICAL_IMAGE, rows=rows)
 
+    def _add_thumbnail_optical_image(self, ds, img_id):
+        size = 200, 200
+        self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, None, ds.id)
+        optical_img = self._img_store.get_image_by_id('fs', 'raw_optical_image', img_id)
+        optical_img.thumbnail(size, Image.ANTIALIAS)
+        buf = self._save_jpeg(optical_img)
+        img_thumb_id = self._img_store.post_image('fs', 'optical_image', buf)
+        self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, img_thumb_id, ds.id)
+
     def add_optical_image(self, ds, img_id, transform, zoom_levels=[1, 2, 4, 8], **kwargs):
-        """ Generate scaled and transformed versions of the provided optical image """
+        """ Generate scaled and transformed versions of the provided optical image + creates the thumbnail """
         self.logger.info('Adding optical image to "%s" dataset', ds.id)
         self._add_raw_optical_image(ds, img_id, transform)
         self._add_zoom_optical_images(ds, img_id, transform, zoom_levels)
+        self._add_thumbnail_optical_image(ds, img_id)
 
     def del_optical_image(self, ds, **kwargs):
         """ Deletes raw and zoomed optical images from DB and FS"""
@@ -268,5 +280,8 @@ class SMapiDatasetManager(DatasetManager):
                 self._img_store.delete_image_by_id('fs', 'raw_optical_image', raw_img_id)
         for row in self._db.select(SEL_OPTICAL_IMAGE, params=(ds.id,)):
             self._img_store.delete_image_by_id('fs', 'optical_image', row[0])
+        for row in self._db.select(SEL_OPTICAL_IMAGE_THUMBNAIL, params=(ds.id,)):
+            self._img_store.delete_image_by_id('fs', 'optical_image', row[0])
         self._db.alter(DEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
         self._db.alter(DEL_OPTICAL_IMAGE, params=(ds.id,))
+        self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, None , ds.id)
