@@ -222,11 +222,11 @@ const Resolvers = {
     },
 
     thumbnailImage(_, {datasetId}) {
-      return pg.select().from('dataset')
+      return db.select().from('dataset')
         .where('id ', '=', datasetId)
         .then(records => {
           if (records.length > 0 && records[0].thumbnail != null) {
-            return '/optical_images/' + records[0].thumbnail;
+            return '/fs/optical_images/' + records[0].thumbnail;
           }
           else {
             return null;
