@@ -2,13 +2,18 @@
   <div id="md-editor-container">
     <div style="position: relative;" v-if="!loading">
       <div id="md-editor-submit">
-        <div id="md-editor-public">
-          <el-checkbox v-model="isPublic">Public</el-checkbox>
-          <el-popover trigger="hover" placement="top">
-            <div>If checked, the annotation results will be publicly visible.</div>
-            <i slot="reference" class="el-icon-question"></i>
-          </el-popover>
-        </div>
+        <el-switch
+          v-model="isPublic"
+          active-text="Public"
+          inactive-text="Private"
+        ></el-switch>
+        <el-popover trigger="hover" placement="top" class="md-editor-public-help">
+          <div>
+            <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>
+            <p><b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>
+          </div>
+          <i slot="reference" class="el-icon-question"></i>
+        </el-popover>
         <el-button @click="cancel" v-if="datasetId">Cancel</el-button>
         <el-button type="primary" v-if="enableSubmit" @click="submit">Submit</el-button>
         <el-button v-else type="primary" disabled :title="disabledSubmitMessage">
@@ -677,6 +682,8 @@
 
  #md-editor-submit {
    position: absolute;
+   display: flex;
+   align-items: center;
    right: 5px;
    top: -3px;
    z-index: 10
@@ -687,9 +694,9 @@
    padding: 6px;
  }
 
- #md-editor-public {
-   display: inline-block;
-   width: 100px;
+ .md-editor-public-help {
+   cursor: pointer;
+   padding: 0 16px 0 8px;
  }
 
  .control.el-form-item, .subfield > .el-form-item {
