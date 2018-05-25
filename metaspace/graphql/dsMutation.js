@@ -174,6 +174,8 @@ module.exports = {
         };
         if (datasetId !== undefined)
           body.id = datasetId;
+        if (uploadDT !== undefined)
+          body.upload_dt = uploadDT;
         return await smAPIRequest(datasetId, '/v1/datasets/add', body);
       } catch (e) {
         logger.error(e.stack);
@@ -181,7 +183,7 @@ module.exports = {
       }
     },
     update: async (args, user) => {
-      const {datasetId, name, metadataJson, isPublic, priority} = args;
+      const {datasetId, name, uploadDT, metadataJson, isPublic, priority} = args;
       try {
         const newMetadata = JSON.parse(metadataJson);
         const ds = await fetchDS({id: datasetId});
@@ -196,12 +198,23 @@ module.exports = {
         await reprocessingNeeded(ds.metadata, ds.config, newMetadata, newConfig);
 
         const body = {
-          metadata: newMetadata,
-          config: newConfig,
-          name: name || ds.name,
           priority: priority,
-          is_public: isPublic
         };
+        if (name !== undefined)
+          body.name = name;
+        if (uploadDT !== undefined)
+          body.upload_dt = uploadDT;
+        if (metadataJson !== undefined) {
+          const newMetadata = JSON.parse(metadataJson);
+          validateMetadata(newMetadata);
+          const newConfig = generateProcessingConfig(newMetadata);
+          await reprocessingNeeded(ds, newMetadata);
+
+          body.metadata = newMetadata;
+          body.config = newConfig;
+        }
+        if (uploadDT !== undefined)
+          body.is_public = isPublic;
         return await smAPIRequest(ds.id, `/v1/datasets/${ds.id}/update`, body);
       } catch (e) {
         logger.error(e.stack);
