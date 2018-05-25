@@ -300,7 +300,7 @@ type Mutation {
 
   # TODO: consider renaming to updateDataset
   updateMetadata(jwt: String!, datasetId: String!, name: String,
-    uploadDT: String, metadataJson: String!, isPublic: Boolean!, priority: Int=0): String
+    uploadDT: String, metadataJson: String!, isPublic: Boolean, priority: Int=0): String
 
   deleteDataset(jwt: String!, datasetId: String!, delRawData: Boolean): String
 
