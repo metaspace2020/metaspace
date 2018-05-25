@@ -132,6 +132,8 @@ services:
       - ./sm-webapp/config/conf.js:/opt/sm-webapp/conf.js:ro
       - ./sm-webapp/config/clientConfig.json:/opt/sm-webapp/src/clientConfig.json:ro
       - "${DATA_ROOT}:/opt/data:z"
+    depends_on:
+      - redis
     networks:
       - sm
 
