@@ -2,13 +2,18 @@
   <div id="md-editor-container">
     <div style="position: relative;" v-if="!loading">
       <div id="md-editor-submit">
-        <div id="md-editor-public">
-          <el-checkbox v-model="isPublic">Public</el-checkbox>
-          <el-popover trigger="hover" placement="top">
-            <div>If checked, the annotation results will be publicly visible.</div>
-            <i slot="reference" class="el-icon-question"></i>
-          </el-popover>
-        </div>
+        <el-switch
+          v-model="isPublic"
+          active-text="Public"
+          inactive-text="Private"
+        ></el-switch>
+        <el-popover trigger="hover" placement="top" class="md-editor-public-help">
+          <div>
+            <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>
+            <p><b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>
+          </div>
+          <i slot="reference" class="el-icon-question"></i>
+        </el-popover>
         <el-button @click="cancel" v-if="datasetId">Cancel</el-button>
         <el-button type="primary" v-if="enableSubmit" @click="submit">Submit</el-button>
         <el-button v-else type="primary" disabled :title="disabledSubmitMessage">
@@ -305,8 +310,8 @@
          this.value = this.fixEntries(JSON.parse(data.dataset.metadataJson));
          this._datasetMdType = this.value.Data_Type || defaultMetadataType;
          const defaultValue = this.getDefaultMetadataValue(this._datasetMdType);
-         this.value = merge({}, defaultValue, this.value);
-         this.isPublic = data.dataset.isPublic;
+         this.value = merge({}, defaultValue, this.getCurrentUserAsSubmitter(), this.value);
+         this.isPublic = data.dataset.isPublic !== false; // Default null/undefined to true
          this.updateCurrentAdductOptions();
          this.updateSchemaOptions();
 
@@ -329,7 +334,7 @@
      // some default value before we download metadata
      this._datasetMdType = this.$store.getters.filter.metadataType || defaultMetadataType;
      return {
-       value: this.getDefaultMetadataValue(this._datasetMdType),
+       value: merge({}, this.getDefaultMetadataValue(this._datasetMdType), this.getCurrentUserAsSubmitter()),
        isPublic: true,
        loading: 0,
        molecularDatabases: null,
@@ -391,12 +396,13 @@
      },
 
      getDefaultMetadataValue(metadataType) {
+       return objectFactory(metadataSchemas[metadataType]);
+     },
+
+     getCurrentUserAsSubmitter() {
        const user = this.$store.state.user,
          email = user ? user.email : '';
-       return merge({},
-         objectFactory(metadataSchemas[metadataType]),
-         {Submitted_By: {Submitter: {Email: email}}}
-       );
+       return {Submitted_By: {Submitter: {Email: email}}};
      },
 
      getHelp(propName) {
@@ -537,7 +543,7 @@
          const defaultValue = this.getDefaultMetadataValue(this._datasetMdType);
          /* we want to have all nested fields to be present for convenience,
                      that's what objectFactory essentially does */
-         this.value = merge({}, defaultValue, this.fixEntries(lastValue));
+         this.value = merge({}, defaultValue, this.fixEntries(lastValue), this.getCurrentUserAsSubmitter());
          this.updateSchemaOptions();
          this.applyDefaultDatabases();
          this.updateCurrentAdductOptions();
@@ -676,6 +682,8 @@
 
  #md-editor-submit {
    position: absolute;
+   display: flex;
+   align-items: center;
    right: 5px;
    top: -3px;
    z-index: 10
@@ -686,9 +694,9 @@
    padding: 6px;
  }
 
- #md-editor-public {
-   display: inline-block;
-   width: 100px;
+ .md-editor-public-help {
+   cursor: pointer;
+   padding: 0 16px 0 8px;
  }
 
  .control.el-form-item, .subfield > .el-form-item {
