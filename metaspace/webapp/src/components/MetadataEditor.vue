@@ -305,8 +305,8 @@
          this.value = this.fixEntries(JSON.parse(data.dataset.metadataJson));
          this._datasetMdType = this.value.Data_Type || defaultMetadataType;
          const defaultValue = this.getDefaultMetadataValue(this._datasetMdType);
-         this.value = merge({}, defaultValue, this.value);
-         this.isPublic = data.dataset.isPublic;
+         this.value = merge({}, defaultValue, this.getCurrentUserAsSubmitter(), this.value);
+         this.isPublic = data.dataset.isPublic !== false; // Default null/undefined to true
          this.updateCurrentAdductOptions();
          this.updateSchemaOptions();
 
@@ -329,7 +329,7 @@
      // some default value before we download metadata
      this._datasetMdType = this.$store.getters.filter.metadataType || defaultMetadataType;
      return {
-       value: this.getDefaultMetadataValue(this._datasetMdType),
+       value: merge({}, this.getDefaultMetadataValue(this._datasetMdType), this.getCurrentUserAsSubmitter()),
        isPublic: true,
        loading: 0,
        molecularDatabases: null,
@@ -391,12 +391,13 @@
      },
 
      getDefaultMetadataValue(metadataType) {
+       return objectFactory(metadataSchemas[metadataType]);
+     },
+
+     getCurrentUserAsSubmitter() {
        const user = this.$store.state.user,
          email = user ? user.email : '';
-       return merge({},
-         objectFactory(metadataSchemas[metadataType]),
-         {Submitted_By: {Submitter: {Email: email}}}
-       );
+       return {Submitted_By: {Submitter: {Email: email}}};
      },
 
      getHelp(propName) {
@@ -537,7 +538,7 @@
          const defaultValue = this.getDefaultMetadataValue(this._datasetMdType);
          /* we want to have all nested fields to be present for convenience,
                      that's what objectFactory essentially does */
-         this.value = merge({}, defaultValue, this.fixEntries(lastValue));
+         this.value = merge({}, defaultValue, this.fixEntries(lastValue), this.getCurrentUserAsSubmitter());
          this.updateSchemaOptions();
          this.applyDefaultDatabases();
          this.updateCurrentAdductOptions();
