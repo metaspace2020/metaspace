@@ -261,16 +261,16 @@
    },
 
    apollo: {
-     opticalImageUrl: {
+     imageThumbnail: {
        query: thumbnailOptImageQuery,
        variables() {
          return {
-           datasetId: this.dataset.id
+           datasetId: this.dataset.id,
          };
        },
        fetchPolicy: 'network-only',
        result(res) {
-         this.opticalImageSmall = res.data.thumbnail[0]
+         this.opticalImageSmall = res.data.thumbnailImage
        }
      }
    },
