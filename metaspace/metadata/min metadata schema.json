@@ -126,7 +126,7 @@
     "Submitted_By": {
       "type": "object",
       "description": "Information about the uploader",
-      "required": ["Institution", "Submitter"],
+      "required": ["Institution", "Submitter", "Principal_Investigator"],
       "properties": {
         "Institution": {
           "type": "string",
