@@ -1,7 +1,8 @@
 const {UserError} = require('graphql-errors'),
   config = require('config');
 
-const {reprocessingNeeded} = require('../dsMutation');
+const {reprocessingNeeded} = require('../dsMutation'),
+  {generateProcessingConfig} = require('../utils');
 
 const metadata = {
   "MS_Analysis": {
@@ -78,18 +79,17 @@ function clone(obj) {
 
 test('Reprocessing needed when database list changed', () => {
   const newMetadata = clone(metadata);
-  newMetadata.metaspace_options.Metabolite_Database += ['ChEBI'];
+  newMetadata.metaspace_options.Metabolite_Database.push('ChEBI');
 
   try {
-    reprocessingNeeded(ds, newMetadata);
+    reprocessingNeeded(ds.metadata, ds.config, newMetadata, generateProcessingConfig(newMetadata));
     throw(new Error());
   }
   catch (e) {
-    expect(e.message).not.toBe(undefined);
+    expect(e.message).not.toBe('');
     const msg = JSON.parse(e.message);
     expect(msg['type']).toBe('submit_needed');
   }
-
 });
 
 test('Drop reprocessing needed when instrument settings changed', () => {
@@ -97,15 +97,14 @@ test('Drop reprocessing needed when instrument settings changed', () => {
   newMetadata.MS_Analysis.Detector_Resolving_Power.mz = 100;
 
   try {
-    reprocessingNeeded(ds, newMetadata);
+    reprocessingNeeded(ds.metadata, ds.config, newMetadata, generateProcessingConfig(newMetadata));
     throw(new Error());
   }
   catch (e) {
-    expect(e.message).not.toBe(undefined);
+    expect(e.message).not.toBe('');
     const msg = JSON.parse(e.message);
     expect(msg['type']).toBe('drop_submit_needed');
   }
-
 });
 
 test('Reprocessing not needed when just metadata changed', () => {
@@ -115,5 +114,5 @@ test('Reprocessing not needed when just metadata changed', () => {
   newMetadata.MS_Analysis.ionisationSource = 'DESI';
   newMetadata.Sample_Information.Organism = 'New organism';
 
-  reprocessingNeeded(ds, newMetadata);
+  reprocessingNeeded(ds.metadata, ds.config, newMetadata, generateProcessingConfig(newMetadata));
 });

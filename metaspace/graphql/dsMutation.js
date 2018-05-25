@@ -76,7 +76,7 @@ async function molDBsExist(molDBNames) {
   }
 }
 
-async function reprocessingNeeded(oldMetadata, oldConfig, newMetadata, newConfig) {
+function reprocessingNeeded(oldMetadata, oldConfig, newMetadata, newConfig) {
   const configDelta = jsondiffpatch.diff(oldConfig, newConfig),
     configDiff = jsondiffpatch.formatters.jsonpatch.format(configDelta),
     metaDelta = jsondiffpatch.diff(oldMetadata, newMetadata),
@@ -151,7 +151,7 @@ module.exports = {
   },
   Mutation: {
     submit: async (args, user) => {
-      const {datasetId, name, path, metadata, isPublic, priority, sync, delFirst} = args;
+      const {datasetId, name, path, uploadDT, metadata, isPublic, priority, sync, delFirst} = args;
       try {
         if (datasetId !== undefined) {
           const ds = await fetchDS({id: datasetId});
@@ -185,17 +185,11 @@ module.exports = {
     update: async (args, user) => {
       const {datasetId, name, uploadDT, metadataJson, isPublic, priority} = args;
       try {
-        const newMetadata = JSON.parse(metadataJson);
         const ds = await fetchDS({id: datasetId});
         if (ds === undefined) {
           throw UserError('DS does not exist');
         }
-
         await assertUserCanEditDataset(ds.id, user);
-        setSubmitter(ds.metadata, newMetadata, user);
-        validateMetadata(newMetadata);
-        const newConfig = generateProcessingConfig(newMetadata);
-        await reprocessingNeeded(ds.metadata, ds.config, newMetadata, newConfig);
 
         const body = {
           priority: priority,
@@ -206,14 +200,15 @@ module.exports = {
           body.upload_dt = uploadDT;
         if (metadataJson !== undefined) {
           const newMetadata = JSON.parse(metadataJson);
+          setSubmitter(ds.metadata, newMetadata, user);
           validateMetadata(newMetadata);
           const newConfig = generateProcessingConfig(newMetadata);
-          await reprocessingNeeded(ds, newMetadata);
+          reprocessingNeeded(ds.metadata, ds.config, newMetadata, newConfig);
 
           body.metadata = newMetadata;
           body.config = newConfig;
         }
-        if (uploadDT !== undefined)
+        if (isPublic !== undefined)
           body.is_public = isPublic;
         return await smAPIRequest(ds.id, `/v1/datasets/${ds.id}/update`, body);
       } catch (e) {

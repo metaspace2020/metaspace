@@ -448,8 +448,9 @@ const Resolvers = {
         throw new UserError('DS does not exist');
       args.name = args.name || ds.name;
       args.path = ds.input_path;
+      args.uploadDT = ds.upload_dt;
       args.metadata = args.metadataJson ? JSON.parse(args.metadataJson) : ds.metadata;
-      args.is_public = args.is_public !== undefined ? args.is_public : ds.is_public;
+      args.is_public = args.isPublic !== undefined ? args.isPublic : ds.is_public;
       return DSMutation.submit(args, user);
     },
 
