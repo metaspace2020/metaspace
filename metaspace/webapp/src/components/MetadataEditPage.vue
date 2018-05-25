@@ -1,5 +1,6 @@
 <template>
-  <metadata-editor :datasetId="datasetId"
+  <metadata-editor ref="editor"
+                   :datasetId="datasetId"
                    :enableSubmit="loggedIn && !isSubmitting"
                    @submit="onSubmit"
                    disabledSubmitMessage="You must be logged in to perform this operation"
@@ -35,14 +36,13 @@
    },
 
    methods: {
-     async onSubmit(datasetId, value, isPublic) {
+     async onSubmit(datasetId, metadataJson, isPublic) {
        // Prevent duplicate submissions if user double-clicks
        if (this.isSubmitting) return;
        this.isSubmitting = true;
 
        try {
-         const jwt = await getJWT();
-         const wasSaved = await this.saveDataset(jwt, datasetId, value, isPublic);
+         const wasSaved = await this.saveDataset(datasetId, metadataJson, isPublic);
 
          if (wasSaved) {
            this.validationErrors = [];
@@ -61,35 +61,52 @@
          this.isSubmitting = false;
        }
      },
-     async saveDataset(jwt, datasetId, value, isPublic)
-     {
+     async saveDataset(datasetId, metadataJson, isPublic, resubmit=false, delFirst=undefined) {
+       // TODO Lachlan: This is similar to the logic in UploadPage.vue. Refactor this when these components are in JSX
        try {
-         await this.updateMetadata(jwt, datasetId, value, isPublic);
+         await this.updateOrResubmit(datasetId, metadataJson, isPublic, resubmit, delFirst);
          return true;
        } catch (err) {
-         if (err.graphQLErrors != null) {
-           const graphQLError = JSON.parse(err.graphQLErrors[0].message);
+         let graphQLError = null;
+         try {
+           graphQLError = JSON.parse(err.graphQLErrors[0].message);
+         } catch(err2) { /* The case where err does not contain a graphQL error is handled below */ }
 
-           if ((graphQLError['type'] === 'submit_needed' || graphQLError['type'] === 'drop_submit_needed')) {
-             if (await this.confirmReprocess()) {
-               const delFirst = graphQLError['type'] === 'drop_submit_needed';
-               await this.resubmitDataset(jwt, datasetId, value, isPublic, delFirst);
-               return true;
-             }
-           } else if (graphQLError['type'] === 'failed_validation') {
-             this.$message({
-               message: 'Please fix the highlighted fields and submit again',
-               type: 'error'
-             });
-           } else {
-             this.$message({ message: 'Couldn\'t save the form: GraphQL error', type: 'error' });
+         if (graphQLError
+           && !resubmit
+           && (graphQLError['type'] === 'submit_needed' || graphQLError['type'] === 'drop_submit_needed')) {
+           if (await this.confirmReprocess()) {
+             const delFirstNeeded = graphQLError['type'] === 'drop_submit_needed';
+             return await this.saveDataset(datasetId, metadataJson, isPublic, true, delFirstNeeded);
            }
-           return false;
+         } else if (graphQLError && graphQLError.type === 'wrong_moldb_name') {
+           this.$refs.editor.resetMetaboliteDatabase();
+           this.$message({
+             message: 'An unrecognized metabolite database was selected. This field has been cleared. ' +
+             'Please select the databases again and resubmit the form.',
+             type: 'error'
+           });
+         } else if (graphQLError && graphQLError['type'] === 'failed_validation') {
+           this.$message({
+             message: 'Please fix the highlighted fields and submit again',
+             type: 'error'
+           });
          } else {
+           this.$message({
+             message: 'There was an unexpected problem submitting the dataset. Please refresh the page and try again.'
+             + 'If this problem persists, please contact us at '
+             + '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
+             dangerouslyUseHTMLString: true,
+             type: 'error',
+             duration: 0,
+             showClose: true
+           });
            throw err;
          }
+         return false;
        }
      },
+
      async confirmReprocess() {
        try {
          await this.$confirm('The changes to the analysis options require the dataset to be reprocessed. ' +
@@ -106,32 +123,18 @@
          return false;
        }
      },
-     resubmitDataset(jwt, datasetId, metadataJson, isPublic, delFirst) {
+
+     async updateOrResubmit(datasetId, metadataJson, isPublic, resubmit, delFirst) {
+       const jwt = await getJWT();
        const name = JSON.parse(metadataJson).metaspace_options.Dataset_Name;
-       return this.$apollo.mutate({
-         mutation: resubmitDatasetQuery,
+       return await this.$apollo.mutate({
+         mutation: resubmit ? resubmitDatasetQuery : updateMetadataQuery,
          variables: {jwt, datasetId, name, metadataJson, isPublic, delFirst},
          updateQueries: {
            fetchMetadataQuery: (prev, _) => ({
-             dataset: {
-               metadataJson: JSON.stringify(metadataJson),
-               isPublic
-             }
-           })
-         }
-       });
-     },
-     updateMetadata(jwt, dsId, value, isPublic) {
-       const dsName = JSON.parse(value).metaspace_options.Dataset_Name;
-       return this.$apollo.mutate({
-         mutation: updateMetadataQuery,
-         variables: {jwt, dsId, dsName, value, isPublic},
-         updateQueries: {
-           fetchMetadataQuery: (prev, _) => ({
-             dataset: {
-               metadataJson: JSON.stringify(value),
-               isPublic
-             }
+             ...prev,
+             metadataJson,
+             isPublic
            })
          }
        });
