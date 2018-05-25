@@ -39,30 +39,8 @@ repository is checked out.
 e.g. the `sm-webapp` container will run from code in `../../sm-webapp` relative to the
 `docker-compose.yml` file.
 
-```bash
-# clone projects in parent directory
-pushd ../..
-git clone --recurse-submodules https://github.com/METASPACE2020/sm-molecular-db.git
-git clone --recurse-submodules https://github.com/METASPACE2020/sm-engine.git
-git clone --recurse-submodules https://github.com/METASPACE2020/sm-graphql.git
-git clone --recurse-submodules https://github.com/METASPACE2020/sm-webapp.git
-
-popd
-# (Optional) Create a symlink so that the path to the data directory is the same in all environments
-sudo ln -s "${PWD}/data" /opt/data
-
-docker-compose up -d
-```
-
-Note that if the OS or Node versions differ significantly between the environments inside and
-outside of Docker, it will likely be necessary to reinstall the dependencies for `sm-engine` and
-`sm-webapp` from inside the container, so that docker-compatible versions of binary packages are
-used:
-
-```bash
-docker-compose run --rm sm-webapp yarn install
-docker-compose run --rm sm-graphql yarn install
-```
+After setting up the `.env` file, run `setup-dev-env.sh` to automatically clone the repositories
+into `DEV_ROOT` and set up the rest of the development environment.
 
 ### Import data
 

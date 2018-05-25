@@ -6,9 +6,9 @@ services:
     image: elasticsearch:5.5.2
     volumes:
       - ./elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
-    ports:
-      - "9200:9200"
-      - "9300:9300"
+    # ports:
+    #   - "9200:9200"
+    #   - "9300:9300"
     environment:
       ES_JAVA_OPTS: "-Xmx256m -Xms256m"
     networks:
@@ -16,15 +16,15 @@ services:
 
   redis:
     image: redis:4.0.9-alpine
-    ports:
-      - "6379:6379"
+    # ports:
+    #   - "6379:6379"
     networks:
       - sm
 
   rabbitmq:
     image: rabbitmq
-    ports:
-      - "5672:5672"
+    # ports:
+    #   - "5672:5672"
     environment:
       RABBITMQ_DEFAULT_USER: sm
       RABBITMQ_DEFAULT_PASS: password
@@ -33,8 +33,8 @@ services:
 
   postgres:
     image: postgres
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"
     volumes:
       - ./postgres/initdb.d/:/docker-entrypoint-initdb.d:ro
       - ./data/pgdata:/var/lib/postgresql/data/pgdata
@@ -49,9 +49,10 @@ services:
     build:
       context: ./mol-db
       args:
-        sm_branch: "$MOL_DB_BRANCH"
-    ports:
-      - "5001:5001"
+        MOL_DB_REPO: "$MOL_DB_REPO"
+        MOL_DB_BRANCH: "$MOL_DB_BRANCH"
+    # ports:
+    #   - "5001:5001"
     volumes:
       - ./mol-db/config/:/opt/mol-db/conf:ro
     environment:
@@ -59,21 +60,24 @@ services:
     networks:
       - sm
     depends_on:
+      - rabbitmq
       - postgres
 
   sm-api:
     build:
       context: ./sm-engine
       args:
-        sm_branch: "$SM_ENGINE_BRANCH"
-    ports:
-      - "5123:5123"
+        SM_ENGINE_REPO: "$SM_ENGINE_REPO"
+        SM_ENGINE_BRANCH: "$SM_ENGINE_BRANCH"
+    # ports:
+    #   - "5123:5123"
     volumes:
       - ./sm-engine/conf/:/opt/sm-engine/conf:ro
       - "${DATA_ROOT}:/opt/data:z"
     networks:
       - sm
     depends_on:
+      - rabbitmq
       - postgres
       - elasticsearch
 
@@ -81,7 +85,8 @@ services:
     build:
       context: ./sm-engine
       args:
-        sm_branch: "$SM_ENGINE_BRANCH"
+        SM_ENGINE_REPO: "$SM_ENGINE_REPO"
+        SM_ENGINE_BRANCH: "$SM_ENGINE_BRANCH"
     command: /start-daemon.sh
     mem_limit: 8g
     cpu_shares: 512
@@ -101,11 +106,12 @@ services:
     build:
       context: ./sm-graphql
       args:
-        sm_branch: "$SM_GRAPHQL_BRANCH"
-    ports:
-      - "3010:3010"
-      - "5666:5666"
-      - "4201:4201"
+        SM_GRAPHQL_REPO: "$SM_GRAPHQL_REPO"
+        SM_GRAPHQL_BRANCH: "$SM_GRAPHQL_BRANCH"
+    # ports:
+    #   - "3010:3010"
+    #   - "5666:5666"
+    #   - "4201:4201"
     volumes:
       - ./sm-graphql/config/:/opt/sm-graphql/config:ro
       - ${DATA_ROOT}:/opt/data:z
@@ -118,9 +124,10 @@ services:
     build:
       context: ./sm-webapp
       args:
-        sm_branch: "$SM_WEBAPP_BRANCH"
-    ports:
-      - "8082:8082"
+        SM_WEBAPP_REPO: "$SM_WEBAPP_REPO"
+        SM_WEBAPP_BRANCH: "$SM_WEBAPP_BRANCH"
+    # ports:
+    #   - "8082:8082"
     volumes:
       - ./sm-webapp/config/conf.js:/opt/sm-webapp/conf.js:ro
       - ./sm-webapp/config/clientConfig.json:/opt/sm-webapp/src/clientConfig.json:ro
@@ -132,6 +139,8 @@ services:
     image: nginx
     ports:
       - "${WWW_PORT}:8999" # main web server
+    expose:
+      - "${WWW_PORT}"
     volumes:
       - ./nginx/config/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/config/proxy-params.conf:/etc/nginx/proxy-params.conf:ro
@@ -149,12 +158,3 @@ services:
 networks:
   sm:
     driver: bridge
-    # ipam:
-    #   driver: default
-    #   config:
-    #     - subnet: 172.17.0.0/24
-    #       gateway: 172.17.0.1
-  #TODO: Internal network
-  #internal
-      #driver: overlay
-      #internal: true

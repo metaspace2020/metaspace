@@ -10,13 +10,19 @@ USER $NB_UID
 
 RUN conda update -n base conda
 
+# Prefetch dependencies before getting the full source code so Docker's image cache
+# reduces the amount that needs to be downloaded to rebuild an image after a code change
+RUN curl https://raw.githubusercontent.com/METASPACE2020/sm-engine/master/environment.yml -o /opt/last-environment.yml
+RUN conda env create -f /opt/last-environment.yml
+
 WORKDIR /opt/sm-engine
 
-ARG sm_branch=master
+ARG SM_ENGINE_REPO=https://github.com/METASPACE2020/sm-engine.git
+ARG SM_ENGINE_BRANCH=master
 
-RUN git clone --recurse-submodules --branch "$sm_branch" https://github.com/METASPACE2020/sm-engine.git .
+RUN git clone --recurse-submodules --branch "$SM_ENGINE_BRANCH" "$SM_ENGINE_REPO" .
 
-RUN conda env create
+RUN conda env update
 
 COPY *.sh /
 
