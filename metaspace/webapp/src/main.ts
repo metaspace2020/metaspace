@@ -17,10 +17,8 @@ const apolloProvider = new VueApollo({
   defaultClient: apolloClient
 })
 
-import ElementUI from 'element-ui';
 import './element-variables.scss';
-import locale from 'element-ui/lib/locale/lang/en';
-Vue.use(ElementUI, { locale });
+import './registerElementUi';
 
 import store from './store';
 import router from './router';
@@ -44,16 +42,7 @@ Vue.use(VueAnalytics, {
   }
 });
 
-//Vue.config.performance = true;
-
-/*
-if (module.hot) {
-  module.hot.accept();
-  module.hot.dispose(function() {
-    clearInterval(timer);
-  });
-}
-*/
+Vue.config.performance = true;
 
 new Vue({
   el: '#app',
