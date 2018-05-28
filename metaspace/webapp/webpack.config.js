@@ -6,7 +6,7 @@ const WebpackShellPlugin = require('webpack-shell-plugin');
 module.exports = {
   entry: {
     app: ['./src/main.ts'],
-    vendor: ['ajv', 'vue', 'vuex', 'vue-router', 'vuex-router-sync',
+    vendor: ['vue', 'vuex', 'vue-router', 'vuex-router-sync',
              'vue-apollo', 'apollo-client', 'graphql-tag',
              'element-ui', 'd3', 'lodash'
     ]

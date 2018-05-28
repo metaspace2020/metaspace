@@ -13,7 +13,6 @@
     "deref-schema": "node deref_schema.js src/assets/"
   },
   "dependencies": {
-    "ajv": "^4.10.0",
     "apollo-client": "^1.9.3",
     "aws-sdk": "^2.36.0",
     "body-parser": "^1.16.0",

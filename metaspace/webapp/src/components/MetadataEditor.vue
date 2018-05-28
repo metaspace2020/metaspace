@@ -207,7 +207,6 @@
   */
 
  import {defaultMetadataType, metadataSchemas} from '../assets/metadataRegistry';
- import Ajv from 'ajv';
  import merge from 'lodash/merge';
  import {
    fetchAutocompleteSuggestionsQuery,
@@ -217,11 +216,6 @@
  import Vue from 'vue';
  import DatabaseDescriptions from './DatabaseDescriptions.vue';
 
-
- const ajv = new Ajv({allErrors: true});
- // clear schema cache
- ajv.removeSchema();
- const schemaValidators = {};
 
  const FIELD_WIDTH = {
    'Institution': 6,
@@ -350,14 +344,6 @@
    computed: {
      schema() {
        return metadataSchemas[this.currentMetadataType()];
-     },
-
-     validator() {
-       const currentMdType = this.currentMetadataType();
-       if (!(currentMdType in schemaValidators)) {
-         schemaValidators[currentMdType] = ajv.compile(metadataSchemas[currentMdType]);
-       }
-       return schemaValidators[currentMdType];
      },
 
      errorMessages() {
