@@ -8,9 +8,9 @@
   </div>
 
   <div id="upload-page" v-else-if="!isSignedIn">
-    <div id="sign-in-message">
+    <div id="sign-in-intro">
       <intro-message>
-        <p><b>To get started, click "Sign in" to sign in or create an account.</b></p>
+        <p class="sign-in-message"><b>To get started, click "Sign in" to sign in or create an account.</b></p>
       </intro-message>
     </div>
   </div>
@@ -269,7 +269,11 @@
    text-align: center;
  }
 
-  #sign-in-message {
+  #sign-in-intro {
     padding: 20px;
+  }
+  .sign-in-message {
+    margin: 1.5em 0;
+    font-size: 1.5em;
   }
 </style>
