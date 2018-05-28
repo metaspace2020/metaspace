@@ -112,7 +112,7 @@ function imageProviderFSBackend(storageRootDir) {
       destination: async (req, file, cb) => {
         try {
           let subdir = crypto.randomBytes(2).toString('hex').slice(1),  // 3 letter sub-folder name
-            dest = path.join(storageRootDir, basePath, subdir);
+            dest = path.join(storageRootDir, categoryPath, subdir);
           await fs.ensureDir(dest);
           cb(null, dest);
         }
@@ -132,7 +132,7 @@ function imageProviderFSBackend(storageRootDir) {
       function (req, res, next) {
         let subdir = req.params.image_id.slice(0, 3),
           fname = req.params.image_id.slice(3);
-        req.url = path.join(basePath, subdir, fname);
+        req.url = path.join(categoryPath, subdir, fname);
         next();
       });
     const options = {
@@ -158,7 +158,7 @@ function imageProviderFSBackend(storageRootDir) {
         try {
           let subdir = req.params.image_id.slice(0, 3),
             fname = req.params.image_id.slice(3);
-          const imgPath = path.join(storageRootDir, basePath, subdir, fname);
+          const imgPath = path.join(storageRootDir, categoryPath, subdir, fname);
           await fs.unlink(imgPath);
           res.status(202).json();
         }
