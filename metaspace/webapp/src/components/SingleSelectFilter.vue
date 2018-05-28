@@ -19,50 +19,55 @@
 
 <script lang="ts">
  import TagFilter from './TagFilter.vue';
- import Vue, { ComponentOptions } from 'vue';
+ import Vue from 'vue';
+ import { Component, Model, Prop } from 'vue-property-decorator'
 
  type Option = string | number;
 
- export default Vue.extend({
-   name: 'single-select-filter',
+ @Component({
    components: {
      TagFilter
-   },
-   model: {
-     prop: 'value',
-     event: 'change'
-   },
-   props: {
-     name: String,
-     options: Array,
-     value: [String, Number, Object],
-     optionFormatter: Function,
-     valueFormatter: Function,
-     clearable: {type: Boolean, default: false},
-     removable: {type: Boolean, default: true},
-     filterable: {type: Boolean, default: true}
-   },
-   methods: {
-     onChange(val: Option) {
-       this.$emit('change', val);
-     },
-     formatOption(option: Option): string {
-       if (this.optionFormatter)
-         return this.optionFormatter(option);
-       else
-         return option + '';
-     },
-
-     formatValue(value: Option): string {
-       if (this.valueFormatter)
-         return this.valueFormatter(value);
-       else
-         return value + '';
-     },
-
-     destroy(): void {
-       this.$emit('destroy');
-     }
    }
  })
+ export default class SingleSelectFilter extends Vue {
+   @Model('change')
+   value?: string | number | Object;
+
+   @Prop({required: true})
+   name!: string;
+   @Prop({required: true})
+   options!: any[];
+   @Prop()
+   optionFormatter?: Function;
+   @Prop()
+   valueFormatter?: Function;
+   @Prop({type: Boolean, default: false})
+   clearable!: boolean;
+   @Prop({type: Boolean, default: true})
+   removable!: boolean;
+   @Prop({type: Boolean, default: true})
+   filterable!: boolean;
+
+   onChange(val: Option) {
+     this.$emit('change', val);
+   }
+
+   formatOption(option: Option): string {
+     if (this.optionFormatter)
+       return this.optionFormatter(option);
+     else
+       return option + '';
+   }
+
+   formatValue(value: Option): string {
+     if (this.valueFormatter)
+       return this.valueFormatter(value);
+     else
+       return value + '';
+   }
+
+   destroy(): void {
+     this.$emit('destroy');
+   }
+ };
 </script>
