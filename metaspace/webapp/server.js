@@ -250,7 +250,7 @@ const configureAppServer = (app) => {
     const compiler = webpack(config);
 
     app.use(webpackDevMiddleware(compiler, {
-      // publicPath: config.output.publicPath,
+      publicPath: config.output.publicPath,
       noInfo: true,
       stats: {
         chunks: false,

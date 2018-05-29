@@ -1,6 +1,6 @@
 import FILTER_SPECIFICATIONS, { getDefaultFilter } from './filterSpecs.js';
 
-import { invert } from 'lodash';
+import invert from 'lodash/invert';
 import { Location } from 'vue-router';
 
 interface Dictionary<T> {

@@ -30,7 +30,6 @@
 
 <script>
  import FILTER_SPECIFICATIONS from '../filterSpecs';
- import * as assert from 'assert';
 
  const orderedFilterKeys = [
    'database',
@@ -58,7 +57,9 @@
  Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
    const componentType = FILTER_SPECIFICATIONS[cur].type;
    // a bit hacky way of getting component name b/c of different ways of initialization
-   assert((('options' in componentType) && ('name' in componentType['options'])) || 'name' in componentType);
+   if (!componentType.name && !(componentType.options && componentType.options.name)) {
+     throw new Error('Missing name in FILTER_SPECIFICATIONS component type');
+   }
    const typeName = ('options' in componentType) ? componentType['options'].name : componentType.name;
    if (!(typeName in accum)) {
      accum[typeName] = componentType;

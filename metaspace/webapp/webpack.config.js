@@ -1,6 +1,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const derefSchema = require('./deref_schema');
 
 derefSchema('src/assets/');
@@ -8,16 +9,13 @@ derefSchema('src/assets/');
 module.exports = {
   mode: 'production',
   entry: {
-    app: ['./src/main.ts'],
-    vendor: ['vue', 'vuex', 'vue-router', 'vuex-router-sync',
-             'vue-apollo', 'apollo-client', 'graphql-tag',
-             'element-ui', 'd3', 'lodash'
-    ]
+    app: './src/main.ts'
   },
   output: {
     path: path.resolve(__dirname, './dist'),
     publicPath: '/dist/',
-    filename: 'app.js'
+    filename: 'app.js',
+    chunkFilename: '[name].js'
   },
   module: {
     rules: [
@@ -29,7 +27,10 @@ module.exports = {
         test: /\.ts$/,
         exclude: /node_modules/,
         use: [
-          {loader: 'ts-loader', options: { appendTsSuffixTo: [/\.vue$/, /\.json$/] }}
+          {
+            loader: 'ts-loader',
+            options: { appendTsSuffixTo: [/\.vue$/, /\.json$/], onlyCompileBundledFiles: true, transpileOnly: true }
+          }
         ],
       },
       {
@@ -71,15 +72,29 @@ module.exports = {
       'vue$': 'vue/dist/vue.esm.js'
     }
   },
-  devServer: {
-    historyApiFallback: true,
-    noInfo: true
+  optimization: {
+    noEmitOnErrors: true,
+    splitChunks: {
+      cacheGroups: {
+        vendor: {
+          name: 'vendor',
+          test: /[\\/]node_modules[\\/]/,
+          chunks: 'all'
+        },
+        default: {
+          minChunks: 2,
+          priority: -20,
+          reuseExistingChunk: true
+        }
+      }
+    }
   },
   devtool: 'source-map',
   plugins: [
-    // TODO: HTML changes needed for this
-    new webpack.optimize.SplitChunksPlugin(),
-    // TODO: Does this do anything?
+    new ForkTsCheckerWebpackPlugin({
+      vue: true,
+      workers: 2,
+    }),
     new webpack.LoaderOptionsPlugin({
       minimize: true
     }),

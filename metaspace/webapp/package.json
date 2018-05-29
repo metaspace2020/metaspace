@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "cross-env NODE_ENV=development node --max_old_space_size=4096 server.js",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
+    "build-stats": "cross-env NODE_ENV=production webpack --profile --json > stats.json",
     "build-ci": "cross-env NODE_ENV=production webpack --hide-modules",
     "test": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=20000 --quarantine-mode --assertion-timeout=20000",
     "cucumber-test": "cucumber-js --compiler ts:ts-node/register tests/e2e/ --fail-fast",

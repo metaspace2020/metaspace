@@ -17,8 +17,10 @@ const apolloProvider = new VueApollo({
   defaultClient: apolloClient
 })
 
+import ElementUI from 'element-ui';
 import './element-variables.scss';
-import './registerElementUi';
+import locale from 'element-ui/lib/locale/lang/en';
+Vue.use(ElementUI, { locale });
 
 import store from './store';
 import router from './router';

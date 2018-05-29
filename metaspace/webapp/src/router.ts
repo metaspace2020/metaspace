@@ -1,31 +1,31 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-
+import DatasetsPage from './components/DatasetsPage.vue';
 Vue.use(VueRouter);
 
 const router = new VueRouter({
   routes: [
     { path: '/', redirect: '/about' },
-    { path: '/annotations', component: () => import('./components/AnnotationsPage.vue') },
+    { path: '/annotations', component: async () => await import(/* webpackChunkName: "AnnotationsPage" */ './components/AnnotationsPage.vue') },
     {
       path: '/datasets',
-      component: () => import('./components/DatasetsPage.vue'),
+      component: DatasetsPage,
       children: [
-        {path: '', component: () => import('./components/DatasetTable.vue')},
-        {path: 'edit/:dataset_id', component: () => import('./components/MetadataEditPage.vue'), name: 'edit-metadata'},
+        {path: '', component: async () => await import(/* webpackChunkName: "DatasetTable" */ './components/DatasetTable.vue')},
+        {path: 'edit/:dataset_id', component: async () => await import(/* webpackChunkName: "MetadataEditPage" */ './components/MetadataEditPage.vue'), name: 'edit-metadata'},
         {
           path: ':dataset_id/add-optical-image',
           name: 'add-optical-image',
-          component: () => import('./components/ImageAlignmentPage.vue')
+          component: async () => await import(/* webpackChunkName: "ImageAlignmentPage" */ './components/ImageAlignmentPage.vue')
         }
       ]
     },
     {
       path: '/upload',
-      component: () => import('./components/UploadPage.vue')
+      component: async () => await import(/* webpackChunkName: "UploadPage" */ './components/UploadPage.vue')
     },
-    { path: '/about', component: () => import('./components/AboutPage.vue') },
-    { path: '/help', component: () => import('./components/HelpPage.vue') }
+    { path: '/about', component: async () => await import(/* webpackChunkName: "AboutPage" */ './components/AboutPage.vue') },
+    { path: '/help', component: async () => await import(/* webpackChunkName: "HelpPage" */ './components/HelpPage.vue') }
   ]
 })
 

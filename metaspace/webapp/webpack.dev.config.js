@@ -72,6 +72,9 @@ module.exports = {
       'vue$': 'vue/dist/vue.esm.js',
     }
   },
+  optimization:{
+    noEmitOnErrors: true
+  },
   devServer: {
     hot: true,
   },
@@ -81,13 +84,7 @@ module.exports = {
       vue: true,
       workers: 2,
     }),
-    new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
-      }
-    }),
     new VueLoaderPlugin(),
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.NoEmitOnErrorsPlugin(),
   ]
 };
