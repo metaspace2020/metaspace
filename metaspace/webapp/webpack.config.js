@@ -1,9 +1,12 @@
 const path = require('path');
 const webpack = require('webpack');
-const WebpackShellPlugin = require('webpack-shell-plugin');
+const VueLoaderPlugin = require('vue-loader/lib/plugin');
+const derefSchema = require('./deref_schema');
 
+derefSchema('src/assets/');
 
 module.exports = {
+  mode: 'production',
   entry: {
     app: ['./src/main.ts'],
     vendor: ['vue', 'vuex', 'vue-router', 'vuex-router-sync',
@@ -20,54 +23,45 @@ module.exports = {
     rules: [
       {
         test: /\.vue$/,
-        loader: 'vue-loader',
-        options: {
-          loaders: {
-            // Since sass-loader (weirdly) has SCSS as its default parse mode, we map
-            // the "scss" and "sass" values for the lang attribute to the right configs here.
-            // other preprocessors should work out of the box, no loader config like this nessessary.
-            'scss': 'vue-style-loader!css-loader!postcss-loader!sass-loader',
-            'sass': 'vue-style-loader!css-loader!postcss-loader!sass-loader?indentedSyntax',
-            'less': 'vue-style-loader!css-loader!postcss-loader!less-loader',
-            'js': 'babel-loader'
-          },
-          esModule: true
-        }
+        use: 'vue-loader'
       },
       {
-        test: /\.(t|j)s$/,
-        loader: 'ts-loader',
+        test: /\.ts$/,
         exclude: /node_modules/,
-        options: {
-          appendTsSuffixTo: [/\.vue$/, /\.json$/],
-        }
+        use: [
+          {loader: 'ts-loader', options: { appendTsSuffixTo: [/\.vue$/, /\.json$/] }}
+        ],
+      },
+      {
+        test: /\.js$/,
+        use: 'babel-loader',
+        exclude: /node_modules/
       },
       {
         test: /\.(png|jpg|gif|svg)$/,
-        loader: 'file-loader',
-        options: {
-          name: '[name].[ext]?[hash]'
-        }
+        use: [
+          {loader: 'file-loader', options: { name: '[name].[ext]?[hash]' }}
+        ],
       },
       {
-          test: /\.css$/,
-          loader: 'style-loader!css-loader'
+        test: /\.css$/,
+        use: ['vue-style-loader', 'css-loader']
       },
       {
-          test: /\.scss$/,
-          loader: 'style-loader!css-loader!sass-loader'
+        test: /\.scss$/,
+        use: ['vue-style-loader', 'css-loader', 'postcss-loader', 'sass-loader']
       },
       {
-          test: /\.(eot|ttf|woff|woff2)(\?\S*)?$/,
-          loader: 'file-loader'
+        test: /\.(eot|ttf|woff|woff2)(\?\S*)?$/,
+        use: 'file-loader'
       },
       {
-          test: /\.md$/,
-          loader: 'html-loader!markdown-loader'
+        test: /\.md$/,
+        use: ['html-loader', 'markdown-loader']
       },
       {
         test: /\.tour/,
-        loader: 'json-loader!./loaders/tour-loader.js'
+        use: ['json-loader', './loaders/tour-loader.js']
       }
     ]
   },
@@ -81,35 +75,15 @@ module.exports = {
     historyApiFallback: true,
     noInfo: true
   },
-  devtool: '#eval-source-map',
+  devtool: 'source-map',
   plugins: [
-    new webpack.optimize.CommonsChunkPlugin({
-      name: "vendor",
-      filename: "vendor.bundle.js"
-    }),
-    new WebpackShellPlugin({
-      onBuildStart: ['node deref_schema.js src/assets/']
-    })
-  ]
-}
-
-if (process.env.NODE_ENV === 'production') {
-  module.exports.devtool = '#source-map'
-  // http://vue-loader.vuejs.org/en/workflow/production.html
-  module.exports.plugins = (module.exports.plugins || []).concat([
-    new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: '"production"'
-      }
-    }),
-    new webpack.optimize.UglifyJsPlugin({
-      sourceMap: true,
-      compress: {
-        warnings: false
-      }
-    }),
+    // TODO: HTML changes needed for this
+    new webpack.optimize.SplitChunksPlugin(),
+    // TODO: Does this do anything?
     new webpack.LoaderOptionsPlugin({
       minimize: true
-    })
-  ])
-}
+    }),
+    new VueLoaderPlugin()
+  ]
+};
+

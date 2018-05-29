@@ -1,8 +1,12 @@
-var path = require('path');
-var webpack = require('webpack');
-const WebpackShellPlugin = require('webpack-shell-plugin');
+const webpack = require('webpack');
+const VueLoaderPlugin = require('vue-loader/lib/plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const derefSchema = require('./deref_schema');
+
+derefSchema('src/assets/');
 
 module.exports = {
+  mode: 'development',
   entry: [
     'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000',
     './src/main.ts'
@@ -10,59 +14,55 @@ module.exports = {
   output: {
     path: '/',
     publicPath: '/dist/',
-    filename: 'app.js'
+    filename: 'app.js',
+    chunkFilename: 'app.[name].js'
   },
   module: {
     rules: [
       {
         test: /\.vue$/,
-        loader: 'vue-loader',
-        options: {
-          loaders: {
-            // Since sass-loader (weirdly) has SCSS as its default parse mode, we map
-            // the "scss" and "sass" values for the lang attribute to the right configs here.
-            // other preprocessors should work out of the box, no loader config like this nessessary.
-            'scss': 'vue-style-loader!css-loader!postcss-loader!sass-loader',
-            'sass': 'vue-style-loader!css-loader!postcss-loader!sass-loader?indentedSyntax',
-            'less': 'vue-style-loader!css-loader!postcss-loader!less-loader'
-          },
-          esModule: true
-        }
+        use: 'vue-loader'
       },
       {
-        test: /\.(t|j)s$/,
-        loader: 'ts-loader',
+        test: /\.ts$/,
         exclude: /node_modules/,
-        options: {
-          appendTsSuffixTo: [/\.vue$/, /\.json$/],
-        }
+        use: [
+          {
+            loader: 'ts-loader',
+            options: { appendTsSuffixTo: [/\.vue$/, /\.json$/], onlyCompileBundledFiles: true, transpileOnly: true }
+          }
+        ],
+      },
+      {
+        test: /\.js$/,
+        use: 'babel-loader',
+        exclude: /node_modules/
       },
       {
         test: /\.(png|jpg|gif|svg)$/,
-        loader: 'file-loader',
-        options: {
-          name: '[name].[ext]?[hash]'
-        }
+        use: [
+          {loader: 'file-loader', options: { name: '[name].[ext]?[hash]' }}
+        ],
       },
       {
-          test: /\.css$/,
-          loader: 'style-loader!css-loader'
+        test: /\.css$/,
+        use: ['vue-style-loader', 'css-loader']
       },
       {
-          test: /\.scss$/,
-          loader: 'style-loader!css-loader!sass-loader'
+        test: /\.scss$/,
+        use: ['vue-style-loader', 'css-loader', 'postcss-loader', 'sass-loader']
       },
       {
-          test: /\.(eot|ttf|woff|woff2)(\?\S*)?$/,
-          loader: 'file-loader'
+        test: /\.(eot|ttf|woff|woff2)(\?\S*)?$/,
+        use: 'file-loader'
       },
       {
-          test: /\.md$/,
-          loader: 'html-loader!markdown-loader'
+        test: /\.md$/,
+        use: ['html-loader', 'markdown-loader']
       },
       {
         test: /\.tour/,
-        loader: 'json-loader!./loaders/tour-loader.js'
+        use: ['json-loader', './loaders/tour-loader.js']
       }
     ]
   },
@@ -77,13 +77,17 @@ module.exports = {
   },
   devtool: 'cheap-module-source-map',
   plugins: [
-    new WebpackShellPlugin({
-      onBuildStart: ['node deref_schema.js src/assets/']
+    new ForkTsCheckerWebpackPlugin({
+      vue: true,
+      workers: 2,
     }),
     new webpack.DefinePlugin({
       'process.env': {
         NODE_ENV: JSON.stringify(process.env.NODE_ENV || 'development')
       }
-    })
+    }),
+    new VueLoaderPlugin(),
+    new webpack.HotModuleReplacementPlugin(),
+    new webpack.NoEmitOnErrorsPlugin(),
   ]
-}
+};
