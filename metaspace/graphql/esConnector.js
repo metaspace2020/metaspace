@@ -120,7 +120,9 @@ function constructAnnotationQuery(args, docType, user) {
       query: simpleQuery, fields: ["_all"], default_operator: "and"
    }});
 
-  if (user != null && user.email && user.role !== 'admin') {
+  if (user != null && user.role === 'admin') {
+    // Admin's see everything - don't filter
+  } else if (user != null && user.email) {
     addFilter({
       bool: {
         should: [
@@ -129,7 +131,7 @@ function constructAnnotationQuery(args, docType, user) {
         ]
       }
     });
-  } else if (user.role !== 'admin') {
+  } else {
     addFilter({ term: { ds_is_public: true } });
   }
 
