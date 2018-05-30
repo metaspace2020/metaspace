@@ -107,7 +107,7 @@ const configureGoogleAuth = (app, knex) => {
   }
 };
 
-const configurePasswordlessAuth = (app) => {
+const configurePasswordlessAuth = (app, knex) => {
   if (conf.REDIS_CONFIG) {
     const plRedisStore = require('passwordless-redisstore-bcryptjs');
     passwordless.init(new plRedisStore(conf.REDIS_CONFIG.port, conf.REDIS_CONFIG.host));
@@ -154,17 +154,9 @@ const configurePasswordlessAuth = (app) => {
   }
 
   if (env === 'development') {
-
     passwordless.addDelivery((token, uid, recipient, callback) => {
       console.log(`Login link for ${recipient}: ${loginLink(token, uid)}`);
       callback(null);
-    });
-
-    // expose the link to outside to enable testing even when the webapp is inside virtualbox/docker
-    app.get('/getLoginLink/:email', function (req, res) {
-      redis.get(req.params.email)
-           .then(link => res.send(link))
-           .catch((e) => { res.status(400); });
     });
   }
 
