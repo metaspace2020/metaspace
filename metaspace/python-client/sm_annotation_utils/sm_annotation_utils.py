@@ -131,7 +131,11 @@ class GraphQLClient(object):
           }
         }
         """
-        return self.query(query, {'id': datasetId})['dataset']
+        match = self.query(query, {'id': datasetId})['dataset']
+        if not match:
+            raise DatasetNotFound("search by id for {}".format(datasetId))
+        else:
+            return match
 
     def getDatasetByName(self, datasetName):
         query = """
@@ -143,7 +147,7 @@ class GraphQLClient(object):
         """
         matches = self.query(query, {'filter': {'name': datasetName}})['allDatasets']
         if not matches:
-            return None
+            raise DatasetNotFound("search by name for {}".format(datasetName))
         else:
             return matches[0]
 
@@ -163,7 +167,7 @@ class GraphQLClient(object):
         }"""
         annotFilter = deepcopy(annotationFilter)
         if 'database' not in annotFilter:
-            annotFilter['database'] = 'HMDB'
+            annotFilter['database'] = "HMDB-v4"
         return self.listQuery('allAnnotations', query,
                               {'filter': annotFilter, 'dFilter': datasetFilter})
 
@@ -202,20 +206,56 @@ class GraphQLClient(object):
         variables = {"datasetId": dsid}
         return self.query(query, variables)
 
-    def submitDataset(self, data_path, metadata, priority):
+    def submitDataset(self, data_path, metadata, priority=0, dsid=None):
+        if self.jwt == None:
+            raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
+        query = """
+                        mutation customSubmitDataset ($jwt: String!, $path: String!, 
+                        $metadata: String!, $priority: Int, $datasetId: String) {
+                              submitDataset(
+                                jwt: $jwt,
+                                path: $path,
+                                metadataJson: $metadata,
+                                priority: $priority,
+                                datasetId: $datasetId
+                              )
+                         }
+                        """
+        queryWithId = """
+                mutation customSubmitDataset ($jwt: String!, $path: String!, 
+                $metadata: String!, $priority: Int, $datasetId: String) {
+                      submitDataset(
+                        jwt: $jwt,
+                        path: $path,
+                        metadataJson: $metadata,
+                        priority: $priority,
+                        datasetId: $datasetId
+                      )
+                 }
+                """
+        variables = {
+            'jwt': self.jwt, 'path': data_path,
+            'metadata': metadata, 'priority': priority}
+        if dsid is not None:
+            variables['datasetId'] = dsid
+            return self.query(queryWithId, variables)
+        print('noid', dsid)
+        return self.query(query, variables)
+
+    def deleteDataset(self, datasetID, delRaw=False):
         if self.jwt == None:
             raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
 
         query = """
-                mutation customSubmitDataset ($jwt: String!, $path: String!, $metadata: String!, $priority: Int) {
-                      submitDataset(jwt: $jwt,
-                        path: $path,
-                        metadataJson: $metadata,
-                        priority: $priority
+                mutation customDeleteDataset ($jwt: String!, $datasetId: String!, $delRaw: Boolean) {
+                      deleteDataset(
+                        jwt: $jwt,
+                        datasetId: $datasetId,
+                        delRawData: $delRaw
                       )
                  }
                 """
-        variables = {'jwt': self.jwt, 'path': data_path, 'metadata': metadata, 'priority': priority}
+        variables = {'jwt': self.jwt, 'datasetId': datasetID, 'delRaw': delRaw}
         return self.query(query, variables)
 
 
@@ -544,7 +584,7 @@ class SMInstance(object):
         df.index = [d.name for d in datasets]
         return df
 
-    def get_annotations(self, fdr=0.1, db_name='HMDB', datasetFilter = {}):
+    def get_annotations(self, fdr=0.1, db_name="HMDB-v4", datasetFilter = {}):
         """
         Returns: a table of booleans indicating which ions were annotated in a
         particular dataset at the specified fdr.
@@ -635,13 +675,13 @@ class SMInstance(object):
         buckets = s.execute().aggregations.per_sf_adduct.buckets
         return [re.match(r'(.*?)([+-].*)', res.key).groups() for res in buckets]
 
-    def msm_scores(self, datasets, sf_adduct_pairs, db_name='HMDB'):
+    def msm_scores(self, datasets, sf_adduct_pairs, db_name="HMDB-v4"):
         """
         Returns a dataframe of MSM scores for multiple datasets and (sum formula, adduct) pairs.
         """
         return self.get_tables(datasets, sf_adduct_pairs, ['msm'], db_name)['msm']
 
-    def get_tables(self, datasets, sf_adduct_pairs, fields=['msm', 'fdr'], db_name='HMDB'):
+    def get_tables(self, datasets, sf_adduct_pairs, fields=['msm', 'fdr'], db_name="HMDB-v4"):
         """
         Returns dataframe-valued dictionaries of MSM scores
         for multiple datasets and (sum formula, adduct) pairs.
@@ -670,7 +710,7 @@ class SMInstance(object):
                                             fill_value=fill_values.get(f, 0.0))
         return d
 
-    def submit_dataset(self, imzml_fn, ibd_fn, metadata, folder_uuid = None, s3bucket ='sm-external-export', priority=0):
+    def submit_dataset(self, imzml_fn, ibd_fn, metadata, dsid=None, folder_uuid = None, s3bucket ='sm-external-export', priority=0):
         """
         Submit a dataset for processing on the SM Instance
         :param imzml_fn: file path to imzml
@@ -692,7 +732,11 @@ class SMInstance(object):
             key = "{}/{}".format(folder_uuid, os.path.split(fn)[1])
             s3.upload_file(fn, s3bucket, key)
         folder = "s3a://" + s3bucket + "/" + folder_uuid
-        return self._gqclient.submitDataset(folder, metadata, priority)
+        return self._gqclient.submitDataset(folder, metadata, priority, dsid=dsid)
+
+    def delete_dataset(self, dsid, **kwargs):
+        return self._gqclient.deleteDataset(dsid, **kwargs)
+
 
 class MolecularDatabase:
     def __init__(self, metadata, client):
@@ -846,3 +890,6 @@ class DataframeNode(object):
 
     def column_names(self):
         return list(self.df.columns)
+
+class DatasetNotFound(Exception):
+    pass
