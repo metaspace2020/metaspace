@@ -249,19 +249,8 @@ const configureAppServer = (app) => {
     const config = require('./webpack.dev.config.js');
     const compiler = webpack(config);
 
-    app.use(webpackDevMiddleware(compiler, {
-      publicPath: config.output.publicPath,
-      noInfo: true,
-      stats: {
-        chunks: false,
-        chunkModules: false,
-        colors: true,
-      },
-    }));
-
-    app.use(webpackHotMiddleware(compiler, {
-      log: console.log,
-    }));
+    app.use(webpackDevMiddleware(compiler, config.devServer));
+    app.use(webpackHotMiddleware(compiler));
 
     app.set('views', __dirname);
     app.engine('html', require('ejs').renderFile);

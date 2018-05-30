@@ -1,6 +1,5 @@
 const webpack = require('webpack');
-const VueLoaderPlugin = require('vue-loader/lib/plugin');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const {output, module: {rules}, resolve, optimization, plugins} = require('./webpack.common');
 const derefSchema = require('./deref_schema');
 
 derefSchema('src/assets/');
@@ -11,80 +10,28 @@ module.exports = {
     'webpack-hot-middleware/client?path=/__webpack_hmr&timeout=20000',
     './src/main.ts'
   ],
-  output: {
-    path: '/',
-    publicPath: '/dist/',
-    filename: 'app.js',
-    chunkFilename: 'app.[name].js'
-  },
+  output,
   module: {
-    rules: [
-      {
-        test: /\.vue$/,
-        use: 'vue-loader'
-      },
-      {
-        test: /\.ts$/,
-        exclude: /node_modules/,
-        use: [
-          {
-            loader: 'ts-loader',
-            options: { appendTsSuffixTo: [/\.vue$/, /\.json$/], onlyCompileBundledFiles: true, transpileOnly: true }
-          }
-        ],
-      },
-      {
-        test: /\.js$/,
-        use: 'babel-loader',
-        exclude: /node_modules/
-      },
-      {
-        test: /\.(png|jpg|gif|svg)$/,
-        use: [
-          {loader: 'file-loader', options: { name: '[name].[ext]?[hash]' }}
-        ],
-      },
-      {
-        test: /\.css$/,
-        use: ['vue-style-loader', 'css-loader']
-      },
-      {
-        test: /\.scss$/,
-        use: ['vue-style-loader', 'css-loader', 'postcss-loader', 'sass-loader']
-      },
-      {
-        test: /\.(eot|ttf|woff|woff2)(\?\S*)?$/,
-        use: 'file-loader'
-      },
-      {
-        test: /\.md$/,
-        use: ['html-loader', 'markdown-loader']
-      },
-      {
-        test: /\.tour/,
-        use: ['json-loader', './loaders/tour-loader.js']
-      }
-    ]
+    rules
   },
-  resolve: {
-    extensions: ['.ts', '.js', '.vue', '.json'],
-    alias: {
-      'vue$': 'vue/dist/vue.esm.js',
-    }
-  },
-  optimization:{
-    noEmitOnErrors: true
-  },
+  resolve,
+  optimization,
   devServer: {
     hot: true,
+    publicPath: output.publicPath,
+    noInfo: true,
+    stats: {
+      all: false,
+      builtAt: true,
+      colors: true,
+      errors: true,
+      errorDetails: true,
+      warnings: true,
+    },
   },
   devtool: 'cheap-module-source-map',
   plugins: [
-    new ForkTsCheckerWebpackPlugin({
-      vue: true,
-      workers: 2,
-    }),
-    new VueLoaderPlugin(),
+    ...plugins,
     new webpack.HotModuleReplacementPlugin(),
   ]
 };
