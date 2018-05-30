@@ -36,7 +36,6 @@ class GraphQLClient(object):
     def query(self, query, variables={}):
         res = requests.post(self.url,
                             json={'query': query, 'variables': variables}, headers = self.hed)
-        print(res)
         return _extract_data(res)
 
     def iterQuery(self, query, variables={}, batch_size=50000):
