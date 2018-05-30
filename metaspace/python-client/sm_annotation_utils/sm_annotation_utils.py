@@ -24,17 +24,19 @@ def _extract_data(res):
 DEFAULT_CONFIG = {
     'graphql_url': 'http://metaspace2020.eu/graphql',
     'moldb_url': 'http://metaspace2020.eu/mol_db/v1',
-    'jwt': None
+    'jwt': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNRVRBU1BBQ0UyMDIwIiwicm9sZSI6ImFub255bW91cyJ9.Hl0h6crcHLb-SPm7nomXkQco5l2iAO6D1bwdjmOaFXM'
 }
 
 class GraphQLClient(object):
     def __init__(self, url, jwt=""):
         self.url = url
         self.jwt=jwt
+        self.hed = {'Authorization':'Bearer ' + self.jwt}
 
     def query(self, query, variables={}):
         res = requests.post(self.url,
-                            json={'query': query, 'variables': variables})
+                            json={'query': query, 'variables': variables}, headers = self.hed)
+        print(res)
         return _extract_data(res)
 
     def iterQuery(self, query, variables={}, batch_size=50000):
@@ -85,9 +87,13 @@ class GraphQLClient(object):
         organism
         organismPart
         condition
+        growthConditions
         maldiMatrix
         configJson
         metadataJson
+        isPublic
+        acquisitionGeometry
+        metadataType
         status
         inputPath
     """
