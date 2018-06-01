@@ -44,16 +44,7 @@ Vue.use(VueAnalytics, {
   }
 });
 
-//Vue.config.performance = true;
-
-/*
-if (module.hot) {
-  module.hot.accept();
-  module.hot.dispose(function() {
-    clearInterval(timer);
-  });
-}
-*/
+Vue.config.performance = true;
 
 new Vue({
   el: '#app',

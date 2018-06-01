@@ -61,7 +61,6 @@
  import MetadataEditor from './MetadataEditor.vue';
  import IntroMessage from './IntroMessage.vue';
  import Vue from 'vue';
- import * as assert from 'assert';
 
  import * as config from '../clientConfig.json';
  import {getJWT, pathFromUUID} from '../util';
@@ -154,7 +153,9 @@
            }
          }
        }
-       assert(fileName && fileExt);
+       if (!fileName || !fileExt) {
+         throw new Error('Missing fileName/fileExt');
+       }
        const dsName = fileName.slice(0, fileName.length - fileExt.length);
        Vue.nextTick(() => {
          this.$refs.editor.fillDatasetName(dsName);

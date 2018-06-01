@@ -20,7 +20,7 @@ networkInterface.use([{
       if (!tokenAutorefresh.jwt) {
         window.setTimeout(() => handler(attempt + 1), 50 * attempt * attempt);
       } else {
-        req.options.headers['Authorization'] = 'Bearer ' + tokenAutorefresh.jwt;
+        (req.options.headers as Record<string, string>)['Authorization'] = 'Bearer ' + tokenAutorefresh.jwt;
         next();
       }
     }

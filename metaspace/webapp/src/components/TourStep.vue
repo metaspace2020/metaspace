@@ -41,7 +41,7 @@
  import Vue from 'vue';
  import Popper from 'popper.js';
 
- import router from '../router.js';
+ import router from '../router';
 
  const startingRoute = 'help';
 

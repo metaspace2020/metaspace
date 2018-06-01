@@ -61,20 +61,20 @@ import ImageLoader from '../../ImageLoader.vue';
 export default class MainImage extends Vue {
     $refs: any
 
-    @Prop()
-    annotation: any
-    @Prop()
-    colormap: any
-    @Prop()
-    colormapName: any
-    @Prop()
-    opacity: number
-    @Prop()
-    imageLoaderSettings: any
-    @Prop()
-    onImageMove: Function
-    @Prop()
-    onImageZoom: Function
+    @Prop({required: true})
+    annotation!: any
+    @Prop({required: true, type: String})
+    colormap!: string
+    @Prop({required: true, type: String})
+    colormapName!: string
+    @Prop({required: true, type: Number})
+    opacity!: number
+    @Prop({required: true})
+    imageLoaderSettings!: any
+    @Prop({required: true, type: Function})
+    onImageMove!: Function
+    @Prop({required: true, type: Function})
+    onImageZoom!: Function
 
     get colorbarDirection(): string {
       return this.colormap[0] == '-' ? 'bottom' : 'top';

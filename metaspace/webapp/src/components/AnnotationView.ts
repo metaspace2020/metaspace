@@ -81,14 +81,12 @@
    }
  })
  export default class AnnotationView extends Vue {
-   $store: Store<any>
-
    @Prop()
    annotation: any
 
    msAcqGeometry: any
    peakChartData: any
-   opticalImageUrl: string
+   opticalImageUrl?: string
    showOpticalImage: boolean = true
 
    metadataDependentComponent(category: string): any {
@@ -141,7 +139,7 @@
    get imageLoaderSettings(): ImageLoaderSettings {
      return Object.assign({}, this.imagePosition, {
        annotImageOpacity: (this.showOpticalImage && this.opticalImageUrl) ? this.opacity : 1.0,
-       opticalSrc: this.showOpticalImage ? this.opticalImageUrl : '',
+       opticalSrc: this.showOpticalImage && this.opticalImageUrl != null ? this.opticalImageUrl : '',
        opticalImageUrl: this.opticalImageUrl,
        opacityMode: this.imageOpacityMode,
        showOpticalImage: this.showOpticalImage

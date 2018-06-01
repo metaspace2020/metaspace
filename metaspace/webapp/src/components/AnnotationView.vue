@@ -111,7 +111,8 @@
 </template>
 
 <script lang="ts">
- export * from './AnnotationView';
+ import AnnotationView from './AnnotationView';
+ export default AnnotationView;
 </script>
 
 <style>

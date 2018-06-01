@@ -42,10 +42,10 @@ import IonImageSettings from '../../IonImageSettings.vue';
 export default class MainImageHeader extends Vue {
     @Prop()
     imageLoaderSettings: any
-    @Prop()
-    resetViewport: Function
-    @Prop()
-    toggleOpticalImage: Function
+    @Prop({required: true, type: Function})
+    resetViewport!: Function
+    @Prop({required: true, type: Function})
+    toggleOpticalImage!: Function
 }
 </script>
 
