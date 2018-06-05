@@ -129,7 +129,7 @@ class TestSMapiDatasetManager:
         action_queue_mock = MagicMock(spec=QueuePublisher)
         es_mock = MagicMock(spec=ESExporter)
         img_store_mock = MagicMock(ImageStoreServiceWrapper)
-        img_store_mock.post_image.side_effect = ['opt_img_id1', 'opt_img_id2', 'opt_img_id3']
+        img_store_mock.post_image.side_effect = ['opt_img_id1', 'opt_img_id2', 'opt_img_id3', 'thumbnail_id']
         img_store_mock.get_image_by_id.return_value = Image.new('RGB', (100, 100))
 
         ds_man = create_ds_man(sm_config=sm_config, db=db, es=es_mock,
@@ -147,6 +147,7 @@ class TestSMapiDatasetManager:
                 ('opt_img_id{}'.format(i + 1), ds.id, zoom)
                 for i, zoom in enumerate(zoom_levels)]
         assert db.select('SELECT optical_image FROM dataset where id = %s', params=(ds_id,)) == [(raw_img_id,)]
+        assert db.select('SELECT thumbnail FROM dataset where id = %s', params=(ds_id,)) == [('thumbnail_id',)]
 
 
 class TestSMDaemonDatasetManager:

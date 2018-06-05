@@ -259,9 +259,9 @@ class SMapiDatasetManager(DatasetManager):
         self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(None, ds.id,))
         dims = self._annotation_image_shape(ds)
         optical_img = self._img_store.get_image_by_id('fs', 'raw_optical_image', img_id)
-        img = optical_img = self._transform_scan(optical_img, transform, dims, zoom=1)
+        img = self._transform_scan(optical_img, transform, dims, zoom=1)
         img.thumbnail(size, Image.ANTIALIAS)
-        buf = self._save_jpeg(optical_img)
+        buf = self._save_jpeg(img)
         img_thumb_id = self._img_store.post_image('fs', 'optical_image', buf)
         self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(img_thumb_id, ds.id,))
 
