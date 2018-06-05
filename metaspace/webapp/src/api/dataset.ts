@@ -54,7 +54,7 @@ export const rawOpticalImageQuery =
 
 export const thumbnailOptImageQuery =
     gql`query ($datasetId: String!) {
-    thumbnailImage(datasetId: $datasetId) 
+      thumbnailImage(datasetId: $datasetId) 
   }`;
 
 export const resubmitDatasetQuery =

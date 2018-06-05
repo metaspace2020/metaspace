@@ -261,7 +261,7 @@
    },
 
    apollo: {
-     imageThumbnail: {
+     thumbnailImage: {
        query: thumbnailOptImageQuery,
        variables() {
          return {
