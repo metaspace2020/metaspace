@@ -31,6 +31,7 @@ class TokenAutorefresh {
       this.jwtPromise = undefined;
       this.jwtCanExpire = decodePayload(this.jwt).exp != null;
     }
+    return await this.getJwt();
   }
 
 

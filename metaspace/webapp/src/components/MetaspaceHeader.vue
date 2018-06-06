@@ -154,18 +154,11 @@
      },
 
      login() {
-       getJWT().then(jwt => {
-         const {name, email, role} = decodePayload(jwt);
-         if (role != 'anonymous') {
-           this.$store.commit('login', {name, email, role});
-         }
-       })
+       this.$store.dispatch('loadUser');
      },
 
      logout() {
-       fetch('/logout', {credentials: 'include'}).then(() => {
-         this.$store.commit('logout');
-       });
+       this.$store.dispatch('logout');
      }
    }
  }
