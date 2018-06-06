@@ -81,9 +81,8 @@
 </template>
 
 <script>
- import FILTER_SPECIFICATIONS from '../filterSpecs.js';
  import {encodeParams} from '../url';
- import {getJWT, decodePayload} from '../util';
+ import tokenAutorefresh from '../tokenAutorefresh';
 
  export default {
    name: 'metaspace-header',
@@ -113,10 +112,6 @@
      return {
        loginEmail: (this.$store.state.user ? this.$store.state.user.email : '')
      };
-   },
-
-   mounted() {
-     this.login();
    },
 
    methods: {
@@ -153,12 +148,9 @@
        })
      },
 
-     login() {
-       this.$store.dispatch('loadUser');
-     },
-
-     logout() {
-       this.$store.dispatch('logout');
+     async logout() {
+       await fetch('/logout', {credentials: 'include'});
+       await tokenAutorefresh.refreshJwt(true);
      }
    }
  }

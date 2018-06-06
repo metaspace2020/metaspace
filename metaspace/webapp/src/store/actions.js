@@ -1,8 +1,6 @@
 import apolloClient from '../graphqlClient';
 import {fetchOptionListsQuery} from '../api/metadata';
 import {decodeParams} from '../url';
-import { decodePayload } from '../util';
-import tokenAutorefresh from '../tokenAutorefresh';
 
 export default {
 
@@ -22,16 +20,4 @@ export default {
     context.commit('updateFilter', filter)
   },
 
-  async loadUser(context) {
-    const jwt = await tokenAutorefresh.getJwt();
-    const {name, email, role} = decodePayload(jwt);
-
-    context.commit('setUser', {name, email, role});
-  },
-
-  async logout(context) {
-    await fetch('/logout', {credentials: 'include'});
-    await tokenAutorefresh.refreshJwt(true);
-    await context.dispatch('loadUser');
-  },
 };

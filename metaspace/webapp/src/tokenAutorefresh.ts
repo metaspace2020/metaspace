@@ -6,6 +6,7 @@ class TokenAutorefresh {
   jwt?: string;
   jwtPromise?: Promise<string>;
   jwtCanExpire: boolean = true;
+  jwtListeners: ((jwt?: string, payload?: any) => void)[] = [];
 
   constructor() {
     this.runRefreshLoop();
@@ -29,11 +30,16 @@ class TokenAutorefresh {
     if (this.jwtPromise === promise) {
       this.jwt = jwt;
       this.jwtPromise = undefined;
-      this.jwtCanExpire = decodePayload(this.jwt).exp != null;
+      const payload = decodePayload(this.jwt);
+      this.jwtCanExpire = payload.exp != null;
+      this.jwtListeners.forEach(listener => listener(jwt, payload));
     }
     return await this.getJwt();
   }
 
+  addJwtListener(listener: (jwt?: string, payload?: any) => void) {
+    this.jwtListeners.push(listener);
+  }
 
   private async runRefreshLoop() {
     let errors = 0;
@@ -53,6 +59,11 @@ class TokenAutorefresh {
         errors++;
         if (errors > 5) {
           this.jwt = undefined;
+          try {
+            this.jwtListeners.forEach(listener => listener());
+          } catch (err) {
+            console.error(err);
+          }
         }
       }
     }

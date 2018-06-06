@@ -61,4 +61,6 @@ const app = new Vue({
 })
 
 setErrorNotifier(app.$notify);
-(window as any).foo = (app as any).$apollo;
+
+import tokenAutorefresh from './tokenAutorefresh'
+tokenAutorefresh.addJwtListener((jwt, payload) => store.commit('setUser', payload));
