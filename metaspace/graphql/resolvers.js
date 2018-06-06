@@ -109,11 +109,11 @@ const Resolvers = {
     async allDatasets(_, args, {user}) {
       args.datasetFilter = args.filter;
       args.filter = {};
-      return esSearchResults(args, 'dataset', user);
+      return await esSearchResults(args, 'dataset', user);
     },
 
-    allAnnotations(_, args, {user}) {
-      return esSearchResults(args, 'annotation', user);
+    async allAnnotations(_, args, {user}) {
+      return await esSearchResults(args, 'annotation', user);
     },
 
     countDatasets(_, args, {user}) {

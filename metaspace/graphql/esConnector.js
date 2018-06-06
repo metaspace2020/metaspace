@@ -150,7 +150,7 @@ function constructAnnotationQuery(args, docType, user) {
   return body;
 }
 
-module.exports.esSearchResults = function(args, docType, user) {
+module.exports.esSearchResults = async function(args, docType, user) {
   if (args.limit > ES_LIMIT_MAX) {
     return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
@@ -164,24 +164,15 @@ module.exports.esSearchResults = function(args, docType, user) {
   };
   // console.time('esQuery');
 
-  return es.search(request).then((resp) => {
-    // console.timeEnd('esQuery');
-    return resp.hits.hits;
-  }).catch((e) => {
-    logger.error(e);
-    return e.message;
-  });
+  const resp = await es.search(request);
+  return resp.hits.hits;
 };
 
-module.exports.esCountResults = function(args, docType, user) {
+module.exports.esCountResults = async function(args, docType, user) {
   const body = constructAnnotationQuery(args, docType, user);
   const request = { body, index: esIndex };
-  return es.count(request).then((resp) => {
-    return resp.count;
-  }).catch((e) => {
-    logger.error(e);
-    return e.message;
-  });
+  const resp = await es.count(request);
+  return resp.count;
 };
 
 const fieldEnumToSchemaPath = {

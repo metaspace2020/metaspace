@@ -11,6 +11,7 @@ const bodyParser = require('body-parser'),
   cors = require('cors'),
   knex = require('knex'),
   makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
+  {maskErrors} = require('graphql-errors'),
   moment = require('moment'),
   Promise = require("bluebird"),
   slack = require('node-slack'),
@@ -40,6 +41,7 @@ function createHttpServerAsync(config) {
         resolvers: Resolvers,
         logger
       });
+      maskErrors(schema);
 
       app.use(cors());
       app.use(compression());
