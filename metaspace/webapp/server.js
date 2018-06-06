@@ -135,9 +135,7 @@ const configurePasswordlessAuth = (app, knex) => {
       const text = 'Greetings!\n'
         + `Visit this link to sign in: ${loginLink(token, uid)}\n\n`
         + 'Best regards,\n'
-        + 'METASPACE Team\n\n'
-        + '---\n'
-        + 'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).';
+        + 'METASPACE Team';
 
       ses.sendEmail({
         Source: 'contact@metaspace2020.eu',
