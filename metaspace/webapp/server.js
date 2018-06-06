@@ -12,7 +12,7 @@ const AWS = require('aws-sdk'),
 const env = process.env.NODE_ENV || 'development';
 const conf = require('./conf.js');
 
-const LOCAL_SETUP = false;//conf.UPLOAD_DESTINATION !== 's3';
+const LOCAL_SETUP = conf.UPLOAD_DESTINATION !== 's3';
 
 const configureSession = (app) => {
   let sessionStore = undefined;
