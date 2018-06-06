@@ -59,11 +59,6 @@ class TokenAutorefresh {
         errors++;
         if (errors > 5) {
           this.jwt = undefined;
-          try {
-            this.jwtListeners.forEach(listener => listener());
-          } catch (err) {
-            console.error(err);
-          }
         }
       }
     }
