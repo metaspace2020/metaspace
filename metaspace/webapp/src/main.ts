@@ -32,6 +32,7 @@ import App from './App.vue';
 const isProd = process.env.NODE_ENV === 'production';
 
 import VueAnalytics from 'vue-analytics';
+import { setErrorNotifier } from './util'
 Vue.use(VueAnalytics, {
   id: 'UA-73509518-1',
   router,
@@ -46,7 +47,7 @@ Vue.use(VueAnalytics, {
 
 Vue.config.performance = true;
 
-new Vue({
+const app = new Vue({
   el: '#app',
   render: h => h(App),
     /*
@@ -58,3 +59,6 @@ new Vue({
   router,
   apolloProvider
 })
+
+setErrorNotifier(app.$notify);
+(window as any).foo = (app as any).$apollo;
