@@ -89,9 +89,7 @@ class SMDaemon(object):
                     'Thank you for uploading the "{}" dataset to the METASPACE annotation service. '
                     'We are pleased to inform you that the dataset has been processed and is available at {}.\n\n'
                     'Best regards,\n'
-                    'METASPACE Team\n\n'
-                    '---\n'
-                    'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).'
+                    'METASPACE Team'
                 ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name, msg['web_app_link'])
                 self._send_email(submitter['Email'], 'METASPACE service notification (SUCCESS)', email_body)
 
@@ -110,9 +108,7 @@ class SMDaemon(object):
                 'and it could not be annotated. '
                 'If this is unexpected, please do not hesitate to contact us for support at contact@metaspace2020.eu\n\n'
                 'Best regards,\n'
-                'METASPACE Team\n\n'
-                '---\n'
-                'The online annotation engine is being developed as part of the METASPACE Horizon2020 project (grant number: 634402).'
+                'METASPACE Team'
             ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name)
             self._send_email(submitter['Email'], 'METASPACE service notification (FAILED)', email_body)
 
