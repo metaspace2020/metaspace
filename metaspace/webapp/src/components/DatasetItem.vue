@@ -23,11 +23,11 @@
     </div>
 
     <div class="ds-info">
-      <div>
+      <div class="ds-item-line">
         <b>{{ formatDatasetName }}</b>
       </div>
 
-      <div style="color: darkblue;">
+      <div class="ds-item-line" style="color: darkblue;">
         <span class="ds-add-filter"
               title="Filter by species"
               @click="addFilter('organism')">
@@ -43,7 +43,7 @@
           ({{ formatCondition }})</span>
       </div>
 
-      <div>
+      <div class="ds-item-line">
         <span class="ds-add-filter"
               title="Filter by ionisation source"
               @click="addFilter('ionisationSource')">
@@ -59,7 +59,7 @@
         RP {{ formatResolvingPower }}
       </div>
 
-      <div style="font-size: 15px;">
+      <div class="ds-item-line" style="font-size: 15px;">
         Submitted <span class="s-bold">{{ formatDate }}</span>
         at {{ formatTime }} by
         <span class="ds-add-filter"
@@ -71,7 +71,7 @@
               title="Filter by this lab"
               @click="addFilter('institution')"></span>
       </div>
-      <div v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
+      <div class="ds-item-line" v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
         <span>{{formatFdrCounts()}} annotations @ FDR {{formatFdrLevel()}}% ({{formatDbName()}})</span>
       </div>
     </div>
@@ -518,6 +518,11 @@
    height: 32px;
    right: 10px;
    bottom: 8px;
+ }
+ .ds-item-line {
+   overflow: hidden;
+   white-space: nowrap;
+   text-overflow: ellipsis;
  }
 
 </style>

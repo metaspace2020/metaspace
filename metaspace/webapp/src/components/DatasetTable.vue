@@ -355,7 +355,7 @@
    display: flex;
    flex-direction: row;
    flex-wrap: wrap;
-   align-items: center;
+   align-items: stretch;
  }
 
  .cb-started .el-checkbox__input.is-checked .el-checkbox__inner {
