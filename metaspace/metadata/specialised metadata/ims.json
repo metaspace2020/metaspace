@@ -11,7 +11,7 @@
     "Sample_Preparation": {
       "description": "Information about how the sample was prepared for imaging",
       "type": "object",
-      "required": [],
+      "required": ["MALDI_Matrix", "MALDI_Matrix_Application"],
       "properties": {
         "MALDI_Matrix": {
           "description": "The MALDI matrix used (if any)",
