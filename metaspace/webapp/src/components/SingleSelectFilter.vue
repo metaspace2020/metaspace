@@ -4,7 +4,7 @@
     <el-select slot="edit"
                :filterable="filterable" :clearable="clearable" :value="value" @change="onChange">
       <el-option v-for="(item, idx) in options"
-                 v-html="formatOption(item)" :value="item" :key="idx">
+                 :label="formatOption(item)" :value="item" :key="idx">
       </el-option>
     </el-select>
 
