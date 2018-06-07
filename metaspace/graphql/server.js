@@ -41,7 +41,10 @@ function createHttpServerAsync(config) {
         resolvers: Resolvers,
         logger
       });
-      maskErrors(schema);
+
+      if (process.env.NODE_ENV !== 'development') {
+        maskErrors(schema);
+      }
 
       app.use(cors());
       app.use(compression());
