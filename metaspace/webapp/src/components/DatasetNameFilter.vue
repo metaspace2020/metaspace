@@ -72,9 +72,9 @@
 
    watch: {
      value(newValue) {
-       this.value2 = newValue;
+       this.value2 = newValue || [];
 
-       this.fetchNames(newValue);
+       this.fetchNames(this.value2);
      }
    },
 
