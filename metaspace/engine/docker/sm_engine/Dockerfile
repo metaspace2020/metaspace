@@ -35,5 +35,5 @@ COPY environment.yml /root/environment.yml
 RUN conda install -y nomkl && conda env create && conda clean -y --all
 
 # install environment for MolecularDB
-RUN git clone https://github.com/metaspace2020/sm-molecular-db -b rel-v0.9 && \
+RUN git clone https://github.com/metaspace2020/sm-molecular-db -b rel-v0.10 && \
     cd sm-molecular-db && conda env create && conda clean -y --all

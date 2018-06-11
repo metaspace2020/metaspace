@@ -28,7 +28,7 @@ dependencies:
     - elasticsearch_dsl
     - pika>=0.11.0b1
     - coverage
-    - coveralls
+    - codecov
     - pypng
     - PyArrow>=0.8.0
     - Pillow==4.2.1
