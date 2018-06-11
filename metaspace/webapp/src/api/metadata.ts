@@ -39,7 +39,7 @@ export const fetchOptionListsQuery = gql`{
 }`;
 
 export const metadataOptionsQuery = gql`{
-  molecularDatabases: molecularDatabases{name}
+  molecularDatabases: molecularDatabases{name, default}
   adducts: adductSuggestions{adduct, charge}
 }`;
 
