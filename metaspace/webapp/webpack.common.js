@@ -70,8 +70,8 @@ module.exports.optimization = {
         test: /[\\/]node_modules[\\/]/,
         chunks: 'initial'
       },
+      vendors: false,
       default: {
-        minChunks: 2,
         priority: -20,
         reuseExistingChunk: true
       }
