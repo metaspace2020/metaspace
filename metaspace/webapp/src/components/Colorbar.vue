@@ -4,7 +4,7 @@
 </template>
 
 <script lang="ts">
- import {getColorScale} from '../util';
+ import getColorScale from '../lib/getColorScale';
  import Vue, { ComponentOptions } from 'vue';
 
  export default Vue.extend({
