@@ -13,6 +13,8 @@ export interface JsonSchemaProperty {
   required?: string[];
   title?: string;
   description?: string;
+  smEditorType?: FormFieldEditorType;
+  smEditorColWidth?: number;
 }
 
 export type FormFieldEditorType = 'textarea' | 'select' | 'autocomplete' | 'checkbox' | 'table' | 'selectMulti' | 'person' | 'detectorResolvingPower' | 'text';
@@ -109,12 +111,12 @@ function deriveSection(section: JsonSchemaProperty, sectionKey: string): FormSec
     const derivedSection: FormSectionProperty = {
       ...section,
       type: 'object',
-      title: prettify(sectionKey),
+      title: section.title || prettify(sectionKey),
       properties: mapValues(section.properties, (field, fieldKey) => ({
         ...field,
-        smEditorType: getFieldType(field, fieldKey),
-        smEditorColWidth: getWidth(fieldKey),
-        title: prettify(fieldKey),
+        smEditorType: field.smEditorType || getFieldType(field, fieldKey),
+        smEditorColWidth: field.smEditorColWidth || getWidth(fieldKey),
+        title: field.title || prettify(fieldKey),
       })),
     };
     return derivedSection;
