@@ -331,6 +331,12 @@
    align-items: center;
  }
 
+ .export-btn {
+   margin-top: 7px;
+   width: 135px;
+   height: 36px;
+ }
+
  .cb-started .el-checkbox__input.is-checked .el-checkbox__inner {
    background: #5eed5e;
  }
