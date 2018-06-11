@@ -38,6 +38,7 @@ build/Release
 
 # Compiled output
 dist
+stats.json
 
 # Dependency directories
 node_modules
