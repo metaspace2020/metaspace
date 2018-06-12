@@ -151,7 +151,7 @@ module.exports = {
   },
   Mutation: {
     submit: async (args, user) => {
-      const {datasetId, name, path, uploadDT, metadata, isPublic, priority, sync, delFirst} = args;
+      const {datasetId, name, path, uploadDT, metadata, isPublic, priority, delFirst} = args;
       try {
         if (datasetId !== undefined) {
           const ds = await fetchDS({id: datasetId});
@@ -217,10 +217,9 @@ module.exports = {
       }
     },
     delete: async (args, user) => {
-      const {name, delRawData, sync} = args;
+      const {datasetId} = args;
 
       try {
-        let datasetId = args.datasetId;
         await assertUserCanEditDataset(datasetId, user);
 
         // if (delRawData != undefined || delRawData == false)
@@ -264,7 +263,6 @@ module.exports = {
         throw e;
       }
     },
-
     deleteOpticalImage: async (args, user) => {
       const {datasetId} = args;
       await assertUserCanEditDataset(datasetId, user);
