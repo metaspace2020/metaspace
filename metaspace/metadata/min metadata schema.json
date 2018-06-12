@@ -26,7 +26,7 @@
       }
     }
   },
-  "required": ["Data_Type", "Sample_Information", "Sample_Preparation", "Submitted_By", "MS_Analysis", "metaspace_options"],
+  "required": ["Data_Type", "Sample_Information", "Sample_Preparation", "Submitted_By", "MS_Analysis"],
   "properties": {
     "Data_Type": {
       "description": "Type of MS data",
@@ -139,33 +139,6 @@
         },
         "Principal_Investigator": {
           "$ref": "#/definitions/person"
-        }
-      }
-    },
-    "metaspace_options":{
-      "type": "object",
-      "description": "Processing options for the METASPACE engine",
-      "required": ["Metabolite_Database", "Dataset_Name", "Adducts"],
-      "properties":{
-        "Metabolite_Database": {
-          "description": "Metabolite database searched against",
-          "type": "array",
-          "minItems": 1,
-          "default": [],
-          "items": { "type": "string" },
-          "uniqueItems": true
-        },
-        "Adducts": {
-          "description": "Adduct types",
-          "type": "array",
-          "minItems": 1,
-          "items": { "type": "string" },
-          "uniqueItems": true
-        },
-        "Dataset_Name":{
-          "description": "Dataset name",
-          "type": "string",
-          "minLength": 5
         }
       }
     },
