@@ -1,4 +1,4 @@
-# Spatial Metabolomics Engine [![Build Status](https://circleci.com/gh/METASPACE2020/sm-engine.svg?style=svg)](https://circleci.com/gh/METASPACE2020/sm-engine) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest) [![Coverage Status](https://img.shields.io/coveralls/METASPACE2020/sm-engine.svg)](https://coveralls.io/github/METASPACE2020/sm-engine?branch=master)
+# Spatial Metabolomics Engine [![Build Status](https://circleci.com/gh/METASPACE2020/sm-engine.svg?style=svg)](https://circleci.com/gh/METASPACE2020/sm-engine) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/METASPACE2020/sm-engine/branch/master/graph/badge.svg)](https://codecov.io/gh/METASPACE2020/sm-engine)
 High throughput molecular annotation for imaging mass spectrometry datasets
 
 ## Main Features
