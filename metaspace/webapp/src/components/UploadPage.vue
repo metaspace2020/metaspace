@@ -58,7 +58,7 @@
 
  import FineUploader from './FineUploader.vue';
  import FilterPanel from './FilterPanel.vue';
- import MetadataEditor from './MetadataEditor.vue';
+ import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
  import IntroMessage from './IntroMessage.vue';
  import Vue from 'vue';
 
@@ -186,6 +186,7 @@
            }
          });
 
+         this.uploadedUuid = null;
          this.validationErrors = [];
          this.$refs.uploader.reset();
          this.$refs.editor.resetDatasetName();
