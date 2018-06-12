@@ -6,6 +6,13 @@ This repository contains information about the minimal metadata for imaging mass
 
 The work on aligning this metadata with metadata required by the [EBI MetaboLights repository](www.ebi.ac.uk/metabolights/) is in progress.
 
+## Funding
+
+This project is funded from the [European Horizon2020](https://ec.europa.eu/programmes/horizon2020/)
+project [METASPACE](http://project.metaspace2020.eu/) (no. 634402),
+[NIH NIDDK project KPMP](http://kpmp.org/)
+and internal funds of the [European Molecular Biology Laboratory](https://www.embl.org/).
+
 ## License
 
-This project is licensed under the Apache 2.0 license.
+This project is licensed under the [Apache 2.0 license](LICENSE).
