@@ -1,9 +1,4 @@
 import * as config from './clientConfig.json';
-import * as scales from 'plotly.js/src/components/colorscale/scales.js';
-import * as extractScale from 'plotly.js/src/components/colorscale/extract_scale.js';
-import * as d3 from 'd3';
-import { ElNotification } from 'element-ui/types/notification'
-import * as Raven from 'raven-js';
 
 const fuConfig = config.fineUploader;
 
@@ -53,30 +48,6 @@ function pathFromUUID(uuid: string): string {
     return fuConfig.storage + '/' + uuid + '/';
 }
 
-interface ColorScale {
-  domain: number[]
-  range: d3.RGBColor[]
-}
-
-function getColorScale(name: string): ColorScale {
-  if (name[0] != '-')
-    return extractScale(scales[name], 0, 1); // normal
-  else
-    return extractScale(scales[name.slice(1)], 1, 0); // inverted
-}
-
-function createColormap(name: string): number[][] {
-  const {domain, range} = getColorScale(name);
-  const sclFun = d3.scaleLinear<d3.RGBColor>().domain(domain).range(range).clamp(true);
-
-  let colors = [];
-  for (let i = 0; i < 256; i++) {
-    const color = d3.rgb(sclFun(i / 255.0));
-    colors.push([color.r, color.g, color.b].map(Math.round));
-  }
-  return colors;
-}
-
 function mzFilterPrecision(value: number): string {
   const splitVal = (value + '').split('.');
   if (splitVal.length == 1) {
@@ -104,22 +75,6 @@ function mdTypeSupportsOpticalImages(mdType: string): boolean {
   return !mdTypesToSkipImages.includes(mdType);
 }
 
-let $notify: ElNotification;
-function setErrorNotifier(_$notify: ElNotification) {
-  $notify = _$notify;
-}
-
-function reportError(err: Error, message?: string) {
-  try {
-    Raven.captureException(err);
-    if ($notify != null) {
-      $notify.error(message || 'Oops! Something went wrong. Please refresh the page and try again.');
-    }
-  } catch(ex) {
-    console.error(ex);
-    /* Avoid breaking down-stream error handling  */
-  }
-}
 
 export {
   renderMolFormula,
@@ -128,12 +83,8 @@ export {
   getJWT,
   decodePayload,
   pathFromUUID,
-  getColorScale,
-  createColormap,
   mzFilterPrecision,
   csvExportHeader,
   scrollDistance,
   mdTypeSupportsOpticalImages,
-  setErrorNotifier,
-  reportError,
 };

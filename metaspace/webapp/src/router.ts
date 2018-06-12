@@ -12,14 +12,21 @@ const router = new VueRouter({
       path: '/datasets',
       component: DatasetsPage,
       children: [
-        {path: '', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "DatasetTable" */ './components/DatasetTable.vue')},
-        {path: 'edit/:dataset_id', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ './components/MetadataEditPage.vue'), name: 'edit-metadata'},
-        {
-          path: ':dataset_id/add-optical-image',
-          name: 'add-optical-image',
-          component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "ImageAlignmentPage" */ './components/ImageAlignmentPage.vue')
-        }
+        {path: '', redirect: 'list'},
+        {path: 'list', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "DatasetTable" */ './components/DatasetTable.vue')},
+        {path: 'summary', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "DatasetSummary" */ './components/plots/DatasetSummary.vue')},
       ]
+    },
+
+    {
+      path: '/datasets/edit/:dataset_id',
+      component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ './components/MetadataEditPage.vue'),
+      name: 'edit-metadata'
+    },
+    {
+      path: '/datasets/:dataset_id/add-optical-image',
+      name: 'add-optical-image',
+      component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "ImageAlignmentPage" */ './components/ImageAlignmentPage.vue')
     },
     {
       path: '/upload',

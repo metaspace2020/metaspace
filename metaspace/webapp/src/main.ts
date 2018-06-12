@@ -32,7 +32,7 @@ import App from './App.vue';
 const isProd = process.env.NODE_ENV === 'production';
 
 import VueAnalytics from 'vue-analytics';
-import { setErrorNotifier } from './util'
+import { setErrorNotifier } from './lib/reportError'
 Vue.use(VueAnalytics, {
   id: 'UA-73509518-1',
   router,

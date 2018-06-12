@@ -127,8 +127,10 @@ export default {
     router.replace({query});
   },
 
-  setCurrentTab(state, tab) {
-    let query = Object.assign({}, state.route.query, {tab});
-    router.replace({query});
+  setDatasetTab(state, tab) {
+    router.replace({
+      path: `/datasets/${tab.toLowerCase()}`,
+      query: state.route.query,
+    });
   }
 };

@@ -1,6 +1,10 @@
 <template>
   <el-row>
-    <router-view></router-view>
+    <div id="dataset-page">
+      <div id="dataset-page-contents">
+        <router-view></router-view>
+      </div>
+    </div>
   </el-row>
 </template>
 
@@ -13,3 +17,22 @@
    }
  }
 </script>
+
+<style lang="scss">
+
+  #dataset-page {
+    display: flex;
+    justify-content: center;
+  }
+
+  /* 1 dataset per row by default*/
+  #dataset-page-contents {
+    display: inline-block;
+    width: 820px;
+
+    @media (min-width: 1650px) {
+      /* 2 datasets per row on wide screens */
+      width: 1620px;
+    }
+  }
+</style>

@@ -27,7 +27,8 @@
 <script>
  // uses loading directive from Element-UI
 
- import {createColormap, scrollDistance} from '../util';
+ import {scrollDistance} from '../util';
+ import createColormap from '../lib/createColormap';
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
  import config from '../clientConfig.json';
