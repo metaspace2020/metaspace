@@ -2,6 +2,7 @@ import {ApolloClient, createBatchingNetworkInterface } from 'apollo-client';
 import {SubscriptionClient, addGraphQLSubscriptions} from 'subscriptions-transport-ws';
 import * as config from './clientConfig.json';
 import tokenAutorefresh from './tokenAutorefresh';
+import { reportError } from './util'
 
 const networkInterface = createBatchingNetworkInterface({
   uri: config.graphqlUrl,
@@ -9,23 +10,23 @@ const networkInterface = createBatchingNetworkInterface({
 });
 
 networkInterface.use([{
-  applyBatchMiddleware(req, next) {
+  async applyBatchMiddleware(req, next) {
 
     if (!req.options.headers) {
       req.options.headers = {};
     }
+    try {
+      const jwt = await tokenAutorefresh.getJwt();
 
-    const handler = (attempt: number) => {
-      // wait until the browser receives a JWT
-      if (!tokenAutorefresh.jwt) {
-        window.setTimeout(() => handler(attempt + 1), 50 * attempt * attempt);
-      } else {
-        (req.options.headers as Record<string, string>)['Authorization'] = 'Bearer ' + tokenAutorefresh.jwt;
-        next();
-      }
+      (req.options.headers as Record<string, string>)['Authorization'] = 'Bearer ' + jwt;
+    } catch (err) {
+      reportError(err, 'There was an error connecting to the server. Please refresh the page and try again');
+      // WORKAROUND: apollo-client doesn't have good error handling here. There's no way to abort the request
+      // and if `next` isn't called then it will prevent future requests, so force a server error with an invalid JWT
+      // as a visible error is preferable to silently doing the wrong thing.
+      (req.options.headers as Record<string, string>)['Authorization'] = 'Bearer invalid';
     }
-
-    handler(1);
+    next();
   }
 }]);
 

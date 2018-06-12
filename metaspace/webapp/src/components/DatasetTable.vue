@@ -328,7 +328,7 @@
    display: flex;
    flex-direction: row;
    flex-wrap: wrap;
-   align-items: center;
+   align-items: stretch;
  }
 
  .export-btn {
