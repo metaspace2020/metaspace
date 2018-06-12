@@ -2,7 +2,7 @@ import {ApolloClient, createBatchingNetworkInterface } from 'apollo-client';
 import {SubscriptionClient, addGraphQLSubscriptions} from 'subscriptions-transport-ws';
 import * as config from './clientConfig.json';
 import tokenAutorefresh from './tokenAutorefresh';
-import { reportError } from './util'
+import reportError from './lib/reportError'
 
 const networkInterface = createBatchingNetworkInterface({
   uri: config.graphqlUrl,
