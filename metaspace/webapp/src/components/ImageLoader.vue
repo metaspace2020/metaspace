@@ -1,14 +1,17 @@
 <template>
   <div class="image-loader"
+       :style="hideImage"
        v-loading="isLoading"
        ref="parent"
        v-resize.debounce.50="onResize"
        :element-loading-text="message">
 
-    <div :style="imageContainerStyle" class="image-loader__container"
-         ref="container">
+    <div class="image-loader__container" ref="container" style="align-self: center">
       <div style="text-align: left; z-index: 2; position: relative">
-        <img :src="dataURI" :style="imageStyle" v-on:click="onClick" ref="visibleImage"
+        <img :src="dataURI"
+             :style="imageStyle"
+             @click="onClick"
+             ref="visibleImage"
              class="isotope-image"/>
       </div>
 
@@ -82,6 +85,10 @@
      transform: {
        type: String,
        default: ''
+     },
+     halfWidth: {
+       type: Boolean,
+       default: false
      }
    },
    data () {
@@ -117,13 +124,18 @@
    mounted: function() {
      this.parentDivWidth = this.$refs.parent.clientWidth;
      this.$refs.visibleImage.addEventListener('mousedown', this.onMouseDown);
-     this.$refs.visibleImage.addEventListener('wheel', this.onWheel);
      window.addEventListener('resize', this.onResize);
    },
    beforeDestroy: function() {
      window.removeEventListener('resize', this.onResize);
    },
    computed: {
+     hideImage() {
+       if (this.halfWidth) {
+         return 'overflow: hidden;'
+       }
+     },
+
      imageStyle() {
        // assume the allocated screen space has width > height
        if (!this.isLCMS) {
@@ -132,7 +144,7 @@
                dx = this.xOffset * this.scaleFactor * this.zoom,
                dy = this.yOffset * this.scaleFactor * this.zoom,
                transform = `scale(${this.zoom}, ${this.zoom})` +
-                           `translate(${-dx / this.zoom}px, ${-dy / this.zoom}px)`,
+                   `translate(${-dx / this.zoom}px, ${-dy / this.zoom}px)`,
                clipPathOffsets = [dy, (width * (this.zoom - 1) - dx), (height * (this.zoom - 1) - dy), dx];
 
          let clipPath = null;
@@ -142,23 +154,15 @@
          return {
            'width': width + 'px',
            'height': height + 'px',
-           transform: transform + ' ' + this.transform,
-           'transform-origin': '0 0',
-           clipPath,
-           //opacity: this.annotImageOpacity
+            transform: transform + ' ' + this.transform,
+           'transform-origin': this.halfWidth ? '50% 50% 0' : '0 0',
+           'clipPath': this.halfWidth ? '' : clipPath,
          };
        } else // LC-MS data (1 x number of time points)
        return {
          width: '100%',
          height: Math.min(100, this.maxHeight) + 'px'
        };
-     },
-
-     imageContainerStyle() {
-       return {
-         width: this.imageWidth + 'px',
-         'align-self': 'center'
-       }
      },
 
      opticalImageStyle() {
@@ -196,21 +200,6 @@
        this.$nextTick(() => {
          this.updateDimensions();
        });
-     },
-
-     onWheel(event) {
-       event.preventDefault();
-       const sY = scrollDistance(event);
-
-       const newZoom = Math.max(1, this.zoom - sY / 10.0);
-       const rect = event.target.getBoundingClientRect(),
-             x = (event.clientX - rect.left) / this.scaleFactor / this.zoom,
-             y = (event.clientY - rect.top) / this.scaleFactor / this.zoom,
-             xOffset = -(this.zoom / newZoom - 1) * x + this.zoom / newZoom * this.xOffset,
-             yOffset = -(this.zoom / newZoom - 1) * y + this.zoom / newZoom * this.yOffset;
-
-       this.$emit('zoom', {zoom: newZoom});
-       this.$emit('move', {xOffset, yOffset});
      },
 
      onMouseDown(event) {
@@ -396,12 +385,15 @@
        return this.image;
      },
 
-     getScaleFactor() {
-       return this.scaleFactor;
+     getParent() {
+       return this.$refs.parent;
      },
 
-     getContainer() {
-       return this.$refs.container;
+     getScaledImageSize() {
+       return {
+         'imgWidth': this.$refs.visibleImage.getBoundingClientRect().width,
+         'imgHeight': this.$refs.visibleImage.getBoundingClientRect().height
+       }
      }
    }
  }
@@ -416,6 +408,8 @@
  }
 
  .image-loader {
+   cursor: -webkit-grab;
+   cursor: grab;
    width: 100%;
    line-height: 0px;
    display: flex;
