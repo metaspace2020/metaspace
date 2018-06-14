@@ -21,11 +21,12 @@ const RESOL_POWER_PARAMS = {
     '1000K': {sigma: 0.00017331000892, fwhm: 0.000408113883008, pts_per_mz: 28850},
 };
 
-function generateProcessingConfig(metadata) {
+// TODO: move config generation to engine
+function addProcessingConfig(ds) {
   const polarity_dict = {'Positive': '+', 'Negative': '-'},
-        polarity = polarity_dict[metadata['MS_Analysis']['Polarity']],
-        instrument = metadata['MS_Analysis']['Analyzer'],
-        rp = metadata['MS_Analysis']['Detector_Resolving_Power'],
+        polarity = polarity_dict[ds.metadata['MS_Analysis']['Polarity']],
+        instrument = ds.metadata['MS_Analysis']['Analyzer'],
+        rp = ds.metadata['MS_Analysis']['Detector_Resolving_Power'],
         rp_mz = parseFloat(rp['mz']),
         rp_resolution = parseFloat(rp['Resolving_Power']);
 
@@ -47,34 +48,19 @@ function generateProcessingConfig(metadata) {
   else if (rp200 < 875000) params = RESOL_POWER_PARAMS['750K'];
   else params = RESOL_POWER_PARAMS['1000K'];
 
-  let m_opts = metadata['metaspace_options'];
-  let ppm = 3.0;
-  if ('ppm' in m_opts) {
-    ppm = m_opts['ppm'];
+  const molDBs = ds.molDBs;
+  for (let defaultMolDBName of config.defaults.moldb_names) {
+    if (molDBs.indexOf(defaultMolDBName) < 0)
+      molDBs.push(defaultMolDBName);
+  }
+  let adducts = config.defaults.adducts[polarity];
+  if (Array.isArray(ds.adducts)) {
+    if (ds.adducts.length > 0)
+      adducts = ds.adducts;
   }
 
-  // TODO: move to proper metadata format supporting multiple molecular databases
-  let mdb_list;
-  let mdb_names = m_opts['Metabolite_Database'];
-  if (!Array.isArray(mdb_names))
-    mdb_list = [{'name': mdb_names}];
-  else
-    mdb_list = mdb_names.map( (name) => ({'name': name}) );
-
-  for (let default_moldb_name of config.defaults.moldb_names) {
-    if (mdb_list.filter(mdb => mdb.name === default_moldb_name).length === 0)
-      mdb_list.push({ "name": default_moldb_name});
-  }
-
-  // TODO: metadata format should support adduct specification
-  let adducts;
-  if (m_opts.hasOwnProperty('Adducts'))
-    adducts = m_opts['Adducts'];
-  else
-    adducts = config.defaults.adducts[polarity];
-
-  return {
-    "databases": mdb_list,
+  ds.config = {
+    "databases": molDBs,
     "isotope_generation": {
       "adducts": adducts,
       "charge": {
@@ -85,7 +71,7 @@ function generateProcessingConfig(metadata) {
       "isocalc_pts_per_mz": params['pts_per_mz']
     },
     "image_generation": {
-      "ppm": ppm,
+      "ppm": 3,
       "nlevels": 30,
       "q": 99,
       "do_preprocessing": false
@@ -99,9 +85,8 @@ function metadataChangeSlackNotify(user, datasetId, oldMetadata, newMetadata) {
 
   const slackConn = config.slack.webhook_url ? new slack(config.slack.webhook_url): null;
   if (slackConn) {
-    let oldDSName = oldMetadata.metaspace_options.Dataset_Name || "";
     let msg = slackConn.send({
-      text: `${user} edited metadata of ${oldDSName} (id: ${datasetId})` +
+      text: `${user} edited metadata of dataset (id: ${datasetId})` +
       "\nDifferences:\n" + JSON.stringify(diff, null, 2),
       channel: config.slack.channel
     });
@@ -224,7 +209,19 @@ async function fetchDS({id, name}) {
     return undefined;
   else if (records.length > 1)
     throw new UserError(`More than one dataset found: '${id}' '${name}'`);
-  return records[0];
+
+  const ds = records[0];
+  return {
+    id: ds.id,
+    name: ds.name,
+    inputPath: ds.input_path,
+    uploadDT: ds.upload_dt,
+    metadata: ds.metadata,
+    metadataJson: JSON.stringify(ds.metadata),
+    config: ds.config,
+    isPublic: ds.is_public,
+    molDBs: ds.mol_dbs
+  };
 }
 
 const deprecatedMolDBs = new Set(['HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids', 'COTTON_HMDB']);
@@ -245,7 +242,7 @@ async function wait(ms) {
 }
 
 module.exports = {
-  generateProcessingConfig,
+  addProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
   canUserViewEsDataset,

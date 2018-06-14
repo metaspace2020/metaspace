@@ -1,6 +1,7 @@
 const sprintf = require('sprintf-js'),
   {UserError} = require('graphql-errors'),
-  fetch = require('node-fetch');
+  fetch = require('node-fetch'),
+  lodash = require('lodash');
 
 const config = require('config'),
   {esSearchResults, esCountResults, esCountGroupedResults,
@@ -85,14 +86,6 @@ function baseDatasetQuery() {
   });
 }
 
-function checkFetchRes(resp) {
-  if (resp.ok) {
-    return resp
-  } else {
-    throw new Error(`An error occurred during fetch request - status ${resp.status}`);
-  }
-}
-
 
 const Resolvers = {
   Person: {
@@ -149,13 +142,13 @@ const Resolvers = {
               .then(results => results.map(row => row['field']));
     },
 
-    adductSuggestions() {
-      return config.defaults.adducts['-'].map(a => {
-        return {adduct: a, charge: -1};
-      }).concat(config.defaults.adducts['+'].map(a => {
-        return {adduct: a, charge: 1};
-      }));
-    },
+    // adductSuggestions() {
+    //   return config.defaults.adducts['-'].map(a => {
+    //     return {adduct: a, charge: -1};
+    //   }).concat(config.defaults.adducts['+'].map(a => {
+    //     return {adduct: a, charge: 1};
+    //   }));
+    // },
 
     peopleSuggestions(_, { role, query }, {user}) {
       const schemaPath = 'Submitted_By.' + (role == 'PI' ? 'Principal_Investigator' : 'Submitter');
@@ -276,6 +269,14 @@ const Resolvers = {
       return ds._source.ds_is_public;
     },
 
+    molDBs(ds) {
+      return ds._source.ds_mol_dbs;
+    },
+
+    adducts(ds) {
+      return ds._source.ds_adducts;
+    },
+
     acquisitionGeometry(ds) {
       return JSON.stringify(ds._source.ds_acq_geometry);
     },
@@ -322,11 +323,11 @@ const Resolvers = {
       let outFdrLvls = [], outFdrCounts = [], maxCounts = 0, dbName = '';
       if(ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
         let annotCounts = ds._source.annotation_counts;
-        let dbList = ds._source.ds_meta.metaspace_options.Metabolite_Database;
-        let filteredDbList = annotCounts.filter(el => {
-            return dbList.includes(el.db.name)
+        let molDBs = ds._source.ds_mol_dbs;
+        let filteredMolDBs = annotCounts.filter(el => {
+            return molDBs.includes(el.db.name);
         });
-        for (let db of filteredDbList) {
+        for (let db of filteredMolDBs) {
           let maxCountsCand = db.counts.find(lvlObj => {
                 return lvlObj.level === checkLvl
             });
@@ -459,20 +460,18 @@ const Resolvers = {
 
   Mutation: {
     resubmitDataset: async (_, args, {user}) => {
-      const ds = await fetchDS({id: args.datasetId});
+      const {input, priority, delFirst} = args;
+      const ds = await fetchDS({id: input.id});
       if (ds === undefined)
         throw new UserError('DS does not exist');
-      args.name = args.name || ds.name;
-      args.path = ds.input_path;
-      args.uploadDT = ds.upload_dt;
-      args.metadata = args.metadataJson ? JSON.parse(args.metadataJson) : ds.metadata;
-      args.is_public = args.isPublic !== undefined ? args.isPublic : ds.is_public;
-      return DSMutation.submit(args, user);
+
+      if (input.metadataJson !== undefined)
+        input.metadata = JSON.parse(input.metadataJson);
+      lodash.extend(ds, input);
+      return DSMutation.submit({input: ds, priority: priority, delFirst: delFirst}, user);
     },
 
     submitDataset: (_, args, {user}) => {
-      args.metadata = JSON.parse(args.metadataJson);
-      delete args['metadataJson'];
       return DSMutation.submit(args, user);
     },
 

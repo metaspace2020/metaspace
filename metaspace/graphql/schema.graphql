@@ -40,6 +40,7 @@ enum SortingOrder {
 enum JobStatus {
   QUEUED,
   STARTED,
+  INDEXING,
   FINISHED,
   FAILED
 }
@@ -73,6 +74,8 @@ type Dataset {
   # https://github.com/metaspace2020/metadata
   metadataJson: String!
   isPublic: Boolean!
+  molDBs: [String!]!
+  adducts: [String!]!
   acquisitionGeometry: String
   metadataType: String!
 
@@ -111,10 +114,10 @@ type Compound {
   # TODO: InChi/SMILES, ClassyFire results
 }
 
-type Adduct {
-  adduct: String!
-  charge: Int!
-}
+#type Adduct {
+#  adduct: String!
+#  charge: Int!
+#}
 
 type Spectrum {
   mzs: [Float!]!
@@ -224,6 +227,25 @@ input DatasetCountPerGroupInput {
   simpleQuery: String
 }
 
+input DatasetSubmitInput {
+  id: String
+  name: String
+  inputPath: String
+  uploadDT: String
+  isPublic: Boolean = true
+  molDBs: [String!]
+  adducts: [String!]
+  metadataJson: String
+}
+
+input DatasetUpdateInput {
+  id: String
+  name: String
+  uploadDT: String
+  isPublic: Boolean = true
+  metadataJson: String
+}
+
 type DatasetCountPerGroupListElement {
   fieldValues: [String!]!  # corresponding to input fields
   count: Int!
@@ -280,35 +302,30 @@ type Query {
 
   molecularDatabases(hideDeprecated: Boolean = true): [MolecularDatabase!]
 
-  adductSuggestions: [Adduct!]!
+#  adductSuggestions: [Adduct!]!
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
-  rawOpticalImage(datasetId: String!): RawOpticalImage,
+  rawOpticalImage(datasetId: String!): RawOpticalImage
 
   thumbnailImage(datasetId: String!): String,
 
-  reprocessingNeeded(datasetId: String!, metadataJson: String!): Boolean
+  reprocessingNeeded(input: DatasetUpdateInput!): Boolean!
 }
 
 type Mutation {
-  # datasetId and uploadDT are optional, uploadDT should be in UTC
-  submitDataset(jwt: String!, datasetId: String, name: String,
-    path: String, uploadDT: String, metadataJson: String, isPublic: Boolean!,
-    priority: Int=0, delFirst: Boolean=false): String
+  submitDataset(input: DatasetSubmitInput!, priority: Int=0, delFirst: Boolean=false): String!
 
-  resubmitDataset(jwt: String!, datasetId: String!, name: String,
-    metadataJson: String, isPublic: Boolean, priority: Int=0, delFirst: Boolean=false): String
+  resubmitDataset(input: DatasetSubmitInput!, priority: Int=0, delFirst: Boolean=false): String!
 
   # TODO: consider renaming to updateDataset
-  updateMetadata(jwt: String!, datasetId: String!, name: String,
-    uploadDT: String, metadataJson: String, isPublic: Boolean, priority: Int=0): String
+  updateMetadata(input: DatasetUpdateInput!, priority: Int=0): String!
 
-  deleteDataset(jwt: String!, datasetId: String!, delRawData: Boolean): String
+  deleteDataset(datasetId: String!): String!
 
-  addOpticalImage(input: AddOpticalImageInput!): String
+  addOpticalImage(input: AddOpticalImageInput!): String!
 
-  deleteOpticalImage(jwt: String!, datasetId: String!): String!
+  deleteOpticalImage(datasetId: String!): String!
 }
 
 type DatasetStatusUpdate {
