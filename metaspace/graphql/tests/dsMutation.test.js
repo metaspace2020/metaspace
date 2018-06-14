@@ -4,7 +4,7 @@ const {UserError} = require('graphql-errors'),
   config = require('config');
 
 const {reprocessingNeeded} = require('../dsMutation'),
-  {generateProcessingConfig} = require('../utils');
+  {addProcessingConfig} = require('../utils');
 
 const metadata = {
   "MS_Analysis": {
@@ -64,7 +64,7 @@ const metadata = {
       "isocalc_sigma": 0.000619,
       "isocalc_pts_per_mz": 8078
     },
-    "databases": config.defaults.moldb_names.map(function(moldb_name) {return {name: moldb_name}})
+    "databases": config.defaults.moldb_names
   },
   ds = {
     config: dsConfig,
@@ -79,10 +79,17 @@ function clone(obj) {
 test('Reprocessing needed when database list changed', () => {
   const updDS = clone(ds);
   updDS.molDBs.push('ChEBI');
-  updDS.config = generateProcessingConfig(updDS);
+  addProcessingConfig(updDS);
 
   try {
     reprocessingNeeded(ds, updDS);
+// =======
+//   const newMetadata = clone(metadata);
+//   newMetadata.metaspace_options.Metabolite_Database.push('ChEBI');
+//
+//   try {
+//     reprocessingNeeded(ds.metadata, ds.config, newMetadata, generateProcessingConfig(newMetadata));
+// >>>>>>> master
     throw(new Error());
   }
   catch (e) {
@@ -90,16 +97,18 @@ test('Reprocessing needed when database list changed', () => {
     const msg = JSON.parse(e.message);
     expect(msg['type']).toBe('submit_needed');
   }
-
 });
 
 test('Drop reprocessing needed when instrument settings changed', () => {
   const updDS = clone(ds);
   updDS.metadata.MS_Analysis.Detector_Resolving_Power.mz = 100;
-  updDS.config = generateProcessingConfig(updDS);
+  addProcessingConfig(updDS);
 
   try {
     reprocessingNeeded(ds, updDS);
+// =======
+//     reprocessingNeeded(ds.metadata, ds.config, newMetadata, generateProcessingConfig(newMetadata));
+// >>>>>>> master
     throw(new Error());
   }
   catch (e) {
@@ -107,7 +116,6 @@ test('Drop reprocessing needed when instrument settings changed', () => {
     const msg = JSON.parse(e.message);
     expect(msg['type']).toBe('drop_submit_needed');
   }
-
 });
 
 test('Reprocessing not needed when just metadata changed', () => {
@@ -116,7 +124,10 @@ test('Reprocessing not needed when just metadata changed', () => {
   updDS.metadata.MS_Analysis.ionisationSource = 'DESI';
   updDS.metadata.Sample_Information.Organism = 'New organism';
   updDS.name = 'New DS name';
-  updDS.config = generateProcessingConfig(updDS);
+  addProcessingConfig(ds, updDS);
 
   reprocessingNeeded(ds, updDS);
+// =======
+//   reprocessingNeeded(ds.metadata, ds.config, newMetadata, generateProcessingConfig(newMetadata));
+// >>>>>>> master
 });

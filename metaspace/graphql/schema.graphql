@@ -75,6 +75,9 @@ type Dataset {
   metadataJson: String!
   isPublic: Boolean!
   molDBs: [String!]!
+  adducts: [String!]!
+  acquisitionGeometry: String
+  metadataType: String!
 
   status: JobStatus
   inputPath: String
@@ -110,6 +113,11 @@ type Compound {
   information: [CompoundInfoEntry]
   # TODO: InChi/SMILES, ClassyFire results
 }
+
+#type Adduct {
+#  adduct: String!
+#  charge: Int!
+#}
 
 type Spectrum {
   mzs: [Float!]!
@@ -207,6 +215,9 @@ input DatasetFilter {
   # exact match
   growthConditions: String
 
+  # exact match
+  metadataType: String
+
   status: JobStatus
 }
 
@@ -222,6 +233,7 @@ input DatasetSubmitInput {
   inputPath: String
   isPublic: Boolean = true
   molDBs: [String!]
+  adducts: [String!]
   metadataJson: String
 }
 
@@ -288,6 +300,8 @@ type Query {
 
   molecularDatabases(hideDeprecated: Boolean = true): [MolecularDatabase!]
 
+#  adductSuggestions: [Adduct!]!
+
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
   rawOpticalImage(datasetId: String!): RawOpticalImage,
@@ -303,6 +317,27 @@ type Mutation {
   updateMetadata(input: DatasetUpdateInput!, priority: Int=0): String!
 
   deleteDataset(datasetId: String!): String!
+#=======
+#  thumbnailImage(datasetId: String!): String,
+#
+#  reprocessingNeeded(datasetId: String!, metadataJson: String!): Boolean
+#}
+#
+#type Mutation {
+#  # datasetId and uploadDT are optional, uploadDT should be in UTC
+#  submitDataset(jwt: String!, datasetId: String, name: String,
+#    path: String, uploadDT: String, metadataJson: String, isPublic: Boolean!,
+#    priority: Int=0, delFirst: Boolean=false): String
+#
+#  resubmitDataset(jwt: String!, datasetId: String!, name: String,
+#    metadataJson: String, isPublic: Boolean, priority: Int=0, delFirst: Boolean=false): String
+#
+#  # TODO: consider renaming to updateDataset
+#  updateMetadata(jwt: String!, datasetId: String!, name: String,
+#    uploadDT: String, metadataJson: String, isPublic: Boolean, priority: Int=0): String
+#
+#  deleteDataset(jwt: String!, datasetId: String!, delRawData: Boolean): String
+#>>>>>>> master
 
   addOpticalImage(input: AddOpticalImageInput!): String!
 

@@ -21,19 +21,21 @@ config.defaults = {
    It's currently co-hosted with the GraphQL server. */
 config.img_upload = {
   iso_img_fs_path: "/opt/data/sm_data/public/",
-  backend: "{{ sm_graphql_img_storage_backend }}", // "fs or "db"
   categories: {
     iso_image: {
       type: 'image/png',
-      path: '/iso_images/'
+      path: '/iso_images/',
+      storage_types: ['fs', 'db']
     },
     optical_image: {
       type: 'image/jpeg',
-      path: '/optical_images/'
+      path: '/optical_images/',
+      storage_types: ['fs']
     },
     raw_optical_image: {
       type: 'image/jpeg',
-      path: '/raw_optical_images/'
+      path: '/raw_optical_images/',
+      storage_types: ['fs']
     }
   }
 };
@@ -41,8 +43,6 @@ config.img_upload = {
 config.services = {};
 /* Molecular database service, used only for internal purposes (peakChartData query) */
 config.services.moldb_service_host = "{{ sm_graphql_moldb_service_host }}";
-/* Public IP of the server that hosts molecule images */
-config.services.mol_image_server_host = "{{ sm_graphql_mol_image_host }}";
 /* Internal ad-hoc service with the only endpoint /reindex/:dataset_id */
 config.services.sm_engine_api_host = "localhost:5123";
 

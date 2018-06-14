@@ -120,7 +120,9 @@ function constructAnnotationQuery(args, docType, user) {
       query: simpleQuery, fields: ["_all"], default_operator: "and"
    }});
 
-  if (user != null && user.email && user.role !== 'admin') {
+  if (user != null && user.role === 'admin') {
+    // Admin's see everything - don't filter
+  } else if (user != null && user.email) {
     addFilter({
       bool: {
         should: [
@@ -129,7 +131,7 @@ function constructAnnotationQuery(args, docType, user) {
         ]
       }
     });
-  } else if (user.role !== 'admin') {
+  } else {
     addFilter({ term: { ds_is_public: true } });
   }
 
@@ -148,7 +150,7 @@ function constructAnnotationQuery(args, docType, user) {
   return body;
 }
 
-module.exports.esSearchResults = function(args, docType, user) {
+module.exports.esSearchResults = async function(args, docType, user) {
   if (args.limit > ES_LIMIT_MAX) {
     return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
@@ -162,24 +164,15 @@ module.exports.esSearchResults = function(args, docType, user) {
   };
   // console.time('esQuery');
 
-  return es.search(request).then((resp) => {
-    // console.timeEnd('esQuery');
-    return resp.hits.hits;
-  }).catch((e) => {
-    logger.error(e);
-    return e.message;
-  });
+  const resp = await es.search(request);
+  return resp.hits.hits;
 };
 
-module.exports.esCountResults = function(args, docType, user) {
+module.exports.esCountResults = async function(args, docType, user) {
   const body = constructAnnotationQuery(args, docType, user);
   const request = { body, index: esIndex };
-  return es.count(request).then((resp) => {
-    return resp.count;
-  }).catch((e) => {
-    logger.error(e);
-    return e.message;
-  });
+  const resp = await es.count(request);
+  return resp.count;
 };
 
 const fieldEnumToSchemaPath = {
@@ -266,8 +259,10 @@ module.exports.esCountGroupedResults = function(args, docType, user) {
 }
 
 async function getById(docType, id, user, ignorePermissions=false) {
-  const resp = await es.get({ index: esIndex, type: docType, id });
-  if (ignorePermissions || canUserViewEsDataset(resp, user)) {
+  const resp = await es.get({ index: esIndex, type: docType, id, ignore: [404] });
+  if (!resp.found) {
+    return null;
+  } else if (ignorePermissions || canUserViewEsDataset(resp, user)) {
     return resp;
   } else {
     throw new Error(`Unauthorized: user ${user.email} tried to access ${docType} ${id}`)

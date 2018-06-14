@@ -11,12 +11,14 @@ const bodyParser = require('body-parser'),
   cors = require('cors'),
   knex = require('knex'),
   makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
+  {maskErrors} = require('graphql-errors'),
   moment = require('moment'),
   Promise = require("bluebird"),
   slack = require('node-slack'),
   sprintf = require('sprintf-js'),
-  logger = require('./utils.js').logger,
   readFile = Promise.promisify(require("fs").readFile);
+
+const logger = require('./utils.js').logger;
 
 // subscriptions setup
 const http = require('http'),
@@ -39,6 +41,10 @@ function createHttpServerAsync(config) {
         resolvers: Resolvers,
         logger
       });
+
+      if (process.env.NODE_ENV !== 'development') {
+        maskErrors(schema);
+      }
 
       app.use(cors());
       app.use(compression());
