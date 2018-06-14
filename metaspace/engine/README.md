@@ -1,4 +1,4 @@
-# Spatial Metabolomics Engine [![Build Status](https://circleci.com/gh/METASPACE2020/sm-engine.svg?style=svg)](https://circleci.com/gh/METASPACE2020/sm-engine) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest) [![Coverage Status](https://img.shields.io/coveralls/METASPACE2020/sm-engine.svg)](https://coveralls.io/github/METASPACE2020/sm-engine?branch=master)
+# Spatial Metabolomics Engine [![Build Status](https://circleci.com/gh/METASPACE2020/sm-engine.svg?style=svg)](https://circleci.com/gh/METASPACE2020/sm-engine) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/METASPACE2020/sm-engine/branch/master/graph/badge.svg)](https://codecov.io/gh/METASPACE2020/sm-engine)
 High throughput molecular annotation for imaging mass spectrometry datasets
 
 ## Main Features
@@ -15,12 +15,19 @@ Please check the [sm-engine-ansible](https://github.com/METASPACE2020/sm-engine-
 ## Uploading Dataset and Browsing Results
 Please visit the help page of our web application running on AWS:
 
-[http://metasp.eu/#/help](http://metasp.eu/#/help) 
+[http://metasp.eu/#/help](http://metasp.eu/#/help)
 
 ## Running sm-engine tests
 
 Install [CircleCI CLI tool](https://circleci.com/docs/2.0/local-jobs/) and run `circleci build` from the project root.
 
+## Funding
+
+This project is funded from the [European Horizon2020](https://ec.europa.eu/programmes/horizon2020/)
+project [METASPACE](http://project.metaspace2020.eu/) (no. 634402),
+[NIH NIDDK project KPMP](http://kpmp.org/)
+and internal funds of the [European Molecular Biology Laboratory](https://www.embl.org/).
+
 ## License
 
-This project is licensed under the Apache 2.0 license.
+This project is licensed under the [Apache 2.0 license](LICENSE).

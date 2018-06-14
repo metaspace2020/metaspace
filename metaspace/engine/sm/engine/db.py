@@ -23,12 +23,15 @@ def db_decor(func):
     def wrapper(self, *args, **kwargs):
         res = []
         try:
-            logger.debug(args[0])
+            # for cases when SQL queries are written to StringIO
+            value_getter = getattr(args[0], 'getvalue', None)
+            debug_output = args[0] if not value_getter else value_getter()
+            logger.debug(debug_output[:1000])
             res = func(self, *args, **kwargs)
         except Exception as e:
-            logger.error('SQL: %s,\nArgs: %s', args[0], str(args[1:])[:1000], exc_info=True)
+            # logger.error('SQL: %s,\nArgs: %s', args[0], str(args[1:])[:1000], exc_info=False)
             self.conn.rollback()
-            raise
+            raise Exception('SQL: {},\nArgs: {}\nError: {}'.format(args[0], str(args[1:])[:1000], e.args[0]))
         else:
             self.conn.commit()
         finally:
@@ -60,40 +63,49 @@ class DB(object):
         """ Close the connection to the database """
         self.conn.close()
 
+    def _select(self, sql, params=None):
+        self.curs = self.conn.cursor()
+        self.curs.execute(sql, params) if params else self.curs.execute(sql)
+        return self.curs.fetchall()
+
     @db_decor
-    def select(self, sql, *args):
+    def select(self, sql, params=None):
         """ Execute select query
 
         Args
         ------------
         sql : string
             sql select query with %s placeholders
-        args :
+        params :
             query parameters for placeholders
         Returns
         ------------
         : list
             list of rows
         """
-        self.curs = self.conn.cursor()
-        self.curs.execute(sql, args) if args else self.curs.execute(sql)
-        return self.curs.fetchall()
+        return self._select(sql, params)
 
-    def select_one(self, sql, *args):
+    @db_decor
+    def select_with_fields(self, sql, params):
+        rows = self._select(sql, params)
+        fields = [desc[0] for desc in self.curs.description]
+        return [dict(zip(fields, row)) for row in rows]
+
+    def select_one(self, sql, params=None):
         """ Execute select query and take the first row
 
         Args
         ------------
         sql : string
             sql select query with %s placeholders
-        args :
+        params :
             query parameters for placeholders
         Returns
         ------------
         : tuple
             single row
         """
-        res = self.select(sql, *args)
+        res = self._select(sql, params)
         assert len(res) in [0, 1], "Requested one row, got {}".format(len(res))
         return res[0] if len(res) > 0 else []
 
@@ -134,18 +146,18 @@ class DB(object):
         return ids
 
     @db_decor
-    def alter(self, sql, *args):
+    def alter(self, sql, params=None):
         """ Execute alter query
 
         Args
         ------------
         sql : string
             sql alter query with %s placeholders
-        args :
+        params :
             query parameters for placeholders
         """
         self.curs = self.conn.cursor()
-        self.curs.execute(sql, args)
+        self.curs.execute(sql, params)
 
     @db_decor
     def copy(self, inp_file, table, sep='\t', columns=None):

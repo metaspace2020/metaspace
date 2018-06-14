@@ -47,12 +47,13 @@ def _json_params(req):
 
 def _create_queue_publisher(qdesc):
     config = SMConfig.get_conf()
-    return QueuePublisher(config['rabbitmq'], qdesc)
+    return QueuePublisher(config['rabbitmq'], qdesc, logger)
 
 
 def _create_dataset_manager(db):
     config = SMConfig.get_conf()
     img_store = ImageStoreServiceWrapper(config['services']['img_service_url'])
+    img_store.storage_type = 'fs'
     return SMapiDatasetManager(db=db, es=ESExporter(db), image_store=img_store, mode='queue',
                                action_queue=_create_queue_publisher(SM_ANNOTATE),
                                status_queue=_create_queue_publisher(SM_DS_STATUS))
@@ -68,11 +69,12 @@ def add_ds():
         ds = Dataset(ds_id,
                      params.get('name', None),
                      params.get('input_path'),
-                     params.get('upload_dt', now),
+                     params.get('upload_dt', now.isoformat()),
                      params.get('metadata', None),
                      params.get('config'),
                      is_public=params.get('is_public'),
-                     mol_dbs=params.get('mol_dbs'))
+                     mol_dbs=params.get('mol_dbs'),
+                     adducts=params.get('adducts'))
         db = _create_db_conn()
         ds_man = _create_dataset_manager(db)
         priority = params.get('priority', DatasetActionPriority.DEFAULT)
@@ -130,6 +132,7 @@ def update_ds(ds_man, ds, params):
     ds.name = params.get('name', ds.name)
     ds.input_path = params.get('input_path', ds.input_path)
     ds.metadata = params.get('metadata', ds.metadata)
+    ds.upload_dt = params.get('upload_dt', ds.upload_dt)
     ds.config = params.get('config', ds.config)
     ds.is_public = params.get('is_public', ds.is_public)
 
@@ -164,4 +167,4 @@ if __name__ == '__main__':
 
     init_loggers(SMConfig.get_conf()['logs'])
     logger = logging.getLogger(name='api')
-    run(host='localhost', port=5123)
+    run(**SMConfig.get_conf()['bottle'])

@@ -1,6 +1,8 @@
 .cache
 *.pyc
 .idea
+.vscode
+.pytest_cache
 *.pkl
 *.zip
 conf/*.json
@@ -14,3 +16,4 @@ docs/_templates
 webapp/static/js/amcharts/plugins/dataloader/examples/data/
 logs/*
 *.egg-info
+supervisord.log

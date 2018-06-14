@@ -20,27 +20,60 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
     ds_id = '2000-01-01_00h00m'
     upload_dt = datetime.now().isoformat(' ')
     mol_db_id = 0
-    last_finished = '2017-01-01T18:00:00'
+    last_finished = '2017-01-01T00:00:00'
 
-    def db_sel_side_effect(*args):
-        if args == (DATASET_SEL, ds_id):
-            # ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path', 'ds_status', 'ds_last_finished')
-            return [(ds_id, 'ds_name', 'ds_config', {}, 'ds_input_path', upload_dt, 'ds_status',
-                     datetime.strptime(last_finished, '%Y-%m-%dT%H:%M:%S'))]
-        elif args == (ANNOTATIONS_SEL, ds_id, mol_db_id):
-            # "sf", "sf_adduct",
-            # "chaos", "image_corr", "pattern_match", "total_iso_ints", "min_iso_ints", "max_iso_ints", "msm",
-            # "adduct", "job_id", "fdr",
-            # "iso_image_ids", "polarity"
-            return [('H2O', 'H2O+H', 1, 1, 1, 100, 0, 100, 1, '+H', 1, 0.1,
-                     ['iso_img_id_1', 'iso_img_id_2'], '+'),
-                    ('Au', 'Au+H', 1, 1, 1, 100, 0, 100, 1, '+H', 1, 0.05,
-                     ['iso_img_id_1', 'iso_img_id_2'], '+')]
+    def db_sel_side_effect(sql, params):
+        if sql == DATASET_SEL:
+            return [{
+                'ds_id': ds_id,
+                'ds_name': 'ds_name',
+                'ds_input_path': 'ds_input_path',
+                'ds_config': 'ds_config',
+                'ds_meta': {},
+                'ds_upload_dt': upload_dt,
+                'ds_status': 'ds_status',
+                'ds_last_finished': datetime.strptime(last_finished, '%Y-%m-%dT%H:%M:%S'),
+                'ds_is_public': True,
+                'ds_ion_img_storage': 'fs',
+                'ds_acq_geometry': {}
+            }]
+        elif sql == ANNOTATIONS_SEL:
+            return [{
+                'sf': 'H2O',
+                'sf_adduct': 'H2O+H',
+                'chaos': 1,
+                'image_corr': 1,
+                'pattern_match': 1,
+                'total_iso_ints': 100,
+                'min_iso_ints': 0,
+                'max_iso_ints': 100,
+                'msm': 1,
+                'adduct': '+H',
+                'job_id': 1,
+                'fdr': 0.1,
+                'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+                'polarity': '+'
+            }, {
+                'sf': 'Au',
+                'sf_adduct': 'Au+H',
+                'chaos': 1,
+                'image_corr': 1,
+                'pattern_match': 1,
+                'total_iso_ints': 100,
+                'min_iso_ints': 0,
+                'max_iso_ints': 100,
+                'msm': 1,
+                'adduct': '+H',
+                'job_id': 1,
+                'fdr': 0.05,
+                'iso_image_ids': ['iso_img_id_1', 'iso_img_id_2'],
+                'polarity': '+'
+            }]
         else:
             logging.getLogger('engine').error('Wrong db_sel_side_effect arguments: ', args)
 
     db_mock = MagicMock(spec=DB)
-    db_mock.select.side_effect = db_sel_side_effect
+    db_mock.select_with_fields.side_effect = db_sel_side_effect
 
     mol_db_mock = MagicMock(MolecularDB)
     mol_db_mock.id = mol_db_id
@@ -61,6 +94,18 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
 
     wait_for_es(sec=1)
 
+    ds_d = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']
+    assert ds_d == {
+        'ds_last_finished': last_finished, 'ds_config': 'ds_config', 'ds_meta': {},
+        'ds_status': 'ds_status', 'ds_name': 'ds_name', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
+        'ds_upload_dt': upload_dt,
+        'annotation_counts': [{'db': {'name': 'db_name', 'version': '2017'},
+                               'counts': [{'level': 5, 'n': 1}, {'level': 10, 'n': 2},
+                                          {'level': 20, 'n': 2}, {'level': 50, 'n': 2}]}],
+        'ds_is_public': True,
+        'ds_acq_geometry': {},
+        'ds_ion_img_storage': 'fs'
+    }
     ann_1_d = es_dsl_search.filter('term', sf='H2O').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_1_d == {
         'pattern_match': 1, 'image_corr': 1, 'fdr': 0.1, 'chaos': 1, 'sf': 'H2O', 'min_iso_ints': 0,
@@ -69,7 +114,8 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         'adduct': '+H', 'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
         'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 100., 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
-        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished
+        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
+        'ds_ion_img_storage': 'fs', 'ds_is_public': True
     }
     ann_2_d = es_dsl_search.filter('term', sf='Au').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_2_d == {
@@ -79,16 +125,8 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         'adduct': '+H',  'ds_name': 'ds_name', 'annotation_counts': [], 'db_version': '2017', 'ds_status': 'ds_status',
         'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 10., 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
-        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished
-    }
-    ds_d = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']
-    assert ds_d == {
-        'ds_last_finished': last_finished, 'ds_config': 'ds_config', 'ds_meta': {},
-        'ds_status': 'ds_status', 'ds_name': 'ds_name', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
-        'ds_upload_dt': upload_dt,
-        'annotation_counts': [{'db': {'name': 'db_name', 'version': '2017'},
-                               'counts': [{'level': 5, 'n': 1}, {'level': 10, 'n': 2},
-                                          {'level': 20, 'n': 2}, {'level': 50, 'n': 2}]}]
+        'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
+        'ds_ion_img_storage': 'fs', 'ds_is_public': True
     }
 
 

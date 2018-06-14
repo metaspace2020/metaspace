@@ -15,6 +15,7 @@ RUN apt-get update && \
       bzip2 \
       git \
       postgresql-client \
+      libglib2.0-0 \
     && apt-get clean
 ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 
@@ -31,8 +32,11 @@ ENV PATH /miniconda/bin:$PATH
 
 # install necessary Python packages
 COPY environment.yml /root/environment.yml
-RUN conda install -y nomkl && conda env create && conda clean -y --all
+RUN conda update -n base conda &&\
+    conda install -y nomkl pip &&\
+    conda env create &&\
+    conda clean -y --all
 
 # install environment for MolecularDB
-RUN git clone https://github.com/metaspace2020/sm-molecular-db -b rel-v0.9 && \
+RUN git clone https://github.com/metaspace2020/sm-molecular-db -b rel-v0.10 && \
     cd sm-molecular-db && conda env create && conda clean -y --all

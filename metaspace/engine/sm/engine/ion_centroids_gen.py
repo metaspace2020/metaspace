@@ -32,7 +32,7 @@ class IonCentroidsGenerator(object):
         self._spark_session = SparkSession(self._sc)
         self._ion_centroids_path = '{}/{}/{}/{}'.format(self._sm_config['isotope_storage']['path'],
                                                         self._moldb_name,
-                                                        self._isocalc.pts_per_mz,
+                                                        self._isocalc.sigma,
                                                         self._isocalc.charge)
         self.ion_df = None
         self.ion_centroids_df = None

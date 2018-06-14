@@ -15,15 +15,19 @@ class ImageStoreServiceWrapper(object):
         self._session = requests.Session()
         self._session.mount(self._img_service_url, HTTPAdapter(max_retries=5))
 
-    def _format_url(self, img_type, method='', img_id=''):
-        return path.join(self._img_service_url, img_type + 's', method, img_id)
+    def _format_url(self, storage_type, img_type, method='', img_id=''):
+        assert storage_type, 'Wrong storage_type: %s' % storage_type
+        assert img_type, 'Wrong img_type: %s' % img_type
+        return path.join(self._img_service_url, storage_type, img_type + 's', method, img_id)
 
-    def post_image(self, img_type, fp):
+    def post_image(self, storage_type, img_type, fp):
         """
         Args
         ---
+        storage_type: str
+            db | fs
         img_type: str
-            iso_image|optical_image|raw_optical_image
+            iso_image | optical_image | raw_optical_image
         fp:
             file object
 
@@ -32,7 +36,7 @@ class ImageStoreServiceWrapper(object):
         : str
             new image id
         """
-        url = self._format_url(img_type=img_type, method='upload')
+        url = self._format_url(storage_type=storage_type, img_type=img_type, method='upload')
         r = self._session.post(url, files={img_type: fp})
         r.raise_for_status()
         return r.json()['image_id']
@@ -42,12 +46,12 @@ class ImageStoreServiceWrapper(object):
         if r.status_code != 202:
             print('Failed to delete: {}'.format(url))  # logger has issues with pickle when sent to spark
 
-    def get_image_by_id(self, img_type, img_id):
-        url = self._format_url(img_type=img_type, img_id=img_id)
+    def get_image_by_id(self, storage_type, img_type, img_id):
+        url = self._format_url(storage_type=storage_type, img_type=img_type, img_id=img_id)
         return Image.open(self._session.get(url, stream=True).raw)
 
-    def delete_image_by_id(self, img_type, img_id):
-        url = self._format_url(img_type=img_type, method='delete', img_id=img_id)
+    def delete_image_by_id(self, storage_type, img_type, img_id):
+        url = self._format_url(storage_type=storage_type, img_type=img_type, method='delete', img_id=img_id)
         self.delete_image(url)
 
     def __str__(self):
