@@ -2,7 +2,7 @@
   <div class="image-loader"
        v-loading="isLoading"
        ref="parent"
-       v-resize.debounce.50="onResize"
+       v-resize="onResize"
        :element-loading-text="message">
 
     <div class="image-loader__container" ref="container" style="align-self: center">
@@ -37,6 +37,7 @@
  // uses loading directive from Element-UI
 
  import {scrollDistance, getOS} from '../util';
+ import {throttle} from 'lodash-es';
  import createColormap from '../lib/createColormap';
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
@@ -124,6 +125,9 @@
        tmId: 0
      }
    },
+   created() {
+     this.onResize = throttle(this.onResize, 100);
+   },
    mounted() {
      this.image.onload = this.redraw.bind(this);
      this.image.onerror = this.image.onabort = this.onFail.bind(this);
@@ -134,6 +138,8 @@
    },
    beforeDestroy() {
      window.removeEventListener('resize', this.onResize);
+     // Cancel any pending callbacks to the throttled resize handler, as $refs is about to be emptied out
+     this.onResize.cancel();
    },
    computed: {
      messageOS() {
@@ -202,11 +208,16 @@
      }
    },
    methods: {
-     onResize() {
+
+     onResize: function() {
        this.parentDivWidth = this.$refs.parent.clientWidth;
        this.determineScaleFactor();
        this.$nextTick(() => {
-         this.updateDimensions();
+         // Occasionally $nextTick calls back after this component is unmounted - double-check visibleImage still exists
+         // before calling updateDimensions
+         if (this.$refs.visibleImage) {
+           this.updateDimensions();
+         }
        });
      },
 
