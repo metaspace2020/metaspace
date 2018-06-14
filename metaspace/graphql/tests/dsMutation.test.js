@@ -83,13 +83,6 @@ test('Reprocessing needed when database list changed', () => {
 
   try {
     reprocessingNeeded(ds, updDS);
-// =======
-//   const newMetadata = clone(metadata);
-//   newMetadata.metaspace_options.Metabolite_Database.push('ChEBI');
-//
-//   try {
-//     reprocessingNeeded(ds.metadata, ds.config, newMetadata, generateProcessingConfig(newMetadata));
-// >>>>>>> master
     throw(new Error());
   }
   catch (e) {
@@ -106,9 +99,6 @@ test('Drop reprocessing needed when instrument settings changed', () => {
 
   try {
     reprocessingNeeded(ds, updDS);
-// =======
-//     reprocessingNeeded(ds.metadata, ds.config, newMetadata, generateProcessingConfig(newMetadata));
-// >>>>>>> master
     throw(new Error());
   }
   catch (e) {
@@ -127,7 +117,4 @@ test('Reprocessing not needed when just metadata changed', () => {
   addProcessingConfig(ds, updDS);
 
   reprocessingNeeded(ds, updDS);
-// =======
-//   reprocessingNeeded(ds.metadata, ds.config, newMetadata, generateProcessingConfig(newMetadata));
-// >>>>>>> master
 });

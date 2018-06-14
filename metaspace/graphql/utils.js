@@ -21,7 +21,8 @@ const RESOL_POWER_PARAMS = {
     '1000K': {sigma: 0.00017331000892, fwhm: 0.000408113883008, pts_per_mz: 28850},
 };
 
-function generateProcessingConfig(ds) {
+// TODO: move config generation to engine
+function addProcessingConfig(ds) {
   const polarity_dict = {'Positive': '+', 'Negative': '-'},
         polarity = polarity_dict[ds.metadata['MS_Analysis']['Polarity']],
         instrument = ds.metadata['MS_Analysis']['Analyzer'],
@@ -48,13 +49,17 @@ function generateProcessingConfig(ds) {
   else params = RESOL_POWER_PARAMS['1000K'];
 
   const molDBs = ds.molDBs;
-  for (let default_moldb_name of config.defaults.moldb_names) {
-    if (molDBs.indexOf(default_moldb_name) < 0)
-      molDBs.push(default_moldb_name);
+  for (let defaultMolDBName of config.defaults.moldb_names) {
+    if (molDBs.indexOf(defaultMolDBName) < 0)
+      molDBs.push(defaultMolDBName);
   }
-  const adducts = config.defaults.adducts[polarity];
+  let adducts = config.defaults.adducts[polarity];
+  if (Array.isArray(ds.adducts)) {
+    if (ds.adducts.length > 0)
+      adducts = ds.adducts;
+  }
 
-  return {
+  ds.config = {
     "databases": molDBs,
     "isotope_generation": {
       "adducts": adducts,
@@ -210,6 +215,7 @@ async function fetchDS({id, name}) {
     id: ds.id,
     name: ds.name,
     inputPath: ds.input_path,
+    uploadDT: ds.upload_dt,
     metadata: ds.metadata,
     metadataJson: JSON.stringify(ds.metadata),
     config: ds.config,
@@ -236,7 +242,7 @@ async function wait(ms) {
 }
 
 module.exports = {
-  generateProcessingConfig,
+  addProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
   canUserViewEsDataset,

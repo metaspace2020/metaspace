@@ -469,14 +469,6 @@ const Resolvers = {
         input.metadata = JSON.parse(input.metadataJson);
       lodash.extend(ds, input);
       return DSMutation.submit({input: ds, priority: priority, delFirst: delFirst}, user);
-// =======
-//       args.name = args.name || ds.name;
-//       args.path = ds.input_path;
-//       args.uploadDT = ds.upload_dt;
-//       args.metadata = args.metadataJson ? JSON.parse(args.metadataJson) : ds.metadata;
-//       args.is_public = args.isPublic !== undefined ? args.isPublic : ds.is_public;
-//       return DSMutation.submit(args, user);
-// >>>>>>> master
     },
 
     submitDataset: (_, args, {user}) => {

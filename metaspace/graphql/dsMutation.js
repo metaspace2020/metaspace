@@ -167,14 +167,6 @@ module.exports = {
       try {
         if (ds.id !== undefined) {
           await assertUserCanEditDataset(ds.id, user);
-// =======
-//       const {datasetId, name, path, uploadDT, metadata, isPublic, priority, delFirst} = args;
-//       try {
-//         if (datasetId !== undefined) {
-//           const ds = await fetchDS({id: datasetId});
-//           if (ds !== undefined)
-//             await assertUserCanEditDataset(datasetId, user);
-// >>>>>>> master
         }
 
         ds.metadata = JSON.parse(ds.metadataJson);
@@ -186,6 +178,7 @@ module.exports = {
         const body = {
           name: ds.name,
           input_path: ds.inputPath,
+          upload_dt: ds.uploadDT,
           metadata: ds.metadata,
           config: ds.config,
           priority: priority,
@@ -197,13 +190,6 @@ module.exports = {
         if (ds.id !== undefined)
           body.id = ds.id;
         return await smAPIRequest(ds.id, '/v1/datasets/add', body);
-// =======
-//         if (datasetId !== undefined)
-//           body.id = datasetId;
-//         if (uploadDT !== undefined)
-//           body.upload_dt = uploadDT;
-//         return await smAPIRequest(datasetId, '/v1/datasets/add', body);
-// >>>>>>> master
       } catch (e) {
         logger.error(e.stack);
         throw e;
@@ -213,13 +199,8 @@ module.exports = {
       const {input, priority} = args;
       try {
         let ds = await fetchDS({id: input.id});
-// =======
-//       const {datasetId, name, uploadDT, metadataJson, isPublic, priority} = args;
-//       try {
-//         const ds = await fetchDS({id: datasetId});
-// >>>>>>> master
         if (ds === undefined) {
-          throw UserError('DS does not exist');
+          throw new UserError('DS does not exist');
         }
         await assertUserCanEditDataset(ds.id, user);
 
@@ -236,33 +217,11 @@ module.exports = {
           metadata: updDS.metadata,
           config: updDS.config,
           name: updDS.name,
+          upload_dt: updDS.uploadDT,
           priority: priority,
           is_public: updDS.isPublic
         };
         return await smAPIRequest(updDS.id, `/v1/datasets/${updDS.id}/update`, body);
-// =======
-//
-//         const body = {
-//           priority: priority,
-//         };
-//         if (name !== undefined)
-//           body.name = name;
-//         if (uploadDT !== undefined)
-//           body.upload_dt = uploadDT;
-//         if (metadataJson !== undefined) {
-//           const newMetadata = JSON.parse(metadataJson);
-//           setSubmitter(ds.metadata, newMetadata, user);
-//           validateMetadata(newMetadata);
-//           const newConfig = generateProcessingConfig(newMetadata);
-//           reprocessingNeeded(ds.metadata, ds.config, newMetadata, newConfig);
-//
-//           body.metadata = newMetadata;
-//           body.config = newConfig;
-//         }
-//         if (isPublic !== undefined)
-//           body.is_public = isPublic;
-//         return await smAPIRequest(ds.id, `/v1/datasets/${ds.id}/update`, body);
-// >>>>>>> master
       } catch (e) {
         logger.error(e.stack);
         throw e;
