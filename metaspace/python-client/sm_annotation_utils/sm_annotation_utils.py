@@ -15,6 +15,8 @@ def _extract_data(res):
     if not res.headers.get('Content-Type').startswith('application/json'):
         raise Exception(res.text)
     res_json = res.json()
+    if 'errors' in res_json:
+        raise Exception('Server returned an error" "{}"'.format(res_json['errors']))
     if 'data' in res_json:
         return res.json()['data']
     else:
@@ -92,8 +94,6 @@ class GraphQLClient(object):
         metadataJson
         isPublic
         acquisitionGeometry
-        metadataType
-        status
         inputPath
     """
 
@@ -211,7 +211,7 @@ class GraphQLClient(object):
             raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
         query = """
                         mutation customSubmitDataset ($jwt: String!, $path: String!, 
-                        $metadata: String!, $priority: Int, $datasetId: String) {
+                                        $metadata: String!, $priority: Int, $datasetId: String) {
                               submitDataset(
                                 jwt: $jwt,
                                 path: $path,
@@ -229,7 +229,8 @@ class GraphQLClient(object):
                         path: $path,
                         metadataJson: $metadata,
                         priority: $priority,
-                        datasetId: $datasetId
+                        datasetId: $datasetId,
+                        delFirst: true,
                       )
                  }
                 """
@@ -241,6 +242,22 @@ class GraphQLClient(object):
             return self.query(queryWithId, variables)
         print('noid', dsid)
         return self.query(query, variables)
+
+    def updateMetdata(self, dsid, metadata):
+        updateQuery = """
+            mutation newMeta ($id: String!, $metadata: String!, $jwt: String!) {
+              updateMetadata(
+                jwt: $jwt,
+                datasetId: $id,
+                metadataJson: $metadata,
+              )
+             }
+            """
+        variables = {
+            'jwt': self.jwt,
+            'metadata': metadata,
+            'id': dsid}
+        return self.query(updateQuery, variables=variables)
 
     def deleteDataset(self, datasetID, delRaw=False):
         if self.jwt == None:
@@ -733,6 +750,9 @@ class SMInstance(object):
             s3.upload_file(fn, s3bucket, key)
         folder = "s3a://" + s3bucket + "/" + folder_uuid
         return self._gqclient.submitDataset(folder, metadata, priority, dsid=dsid)
+
+    def update_metadata(self, dsid, new_metadata):
+        return self._gqclient.updateMetdata(dsid, new_metadata)
 
     def delete_dataset(self, dsid, **kwargs):
         return self._gqclient.deleteDataset(dsid, **kwargs)
