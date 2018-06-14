@@ -5,7 +5,6 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 from functools import wraps
-from traceback import format_exc
 
 import psycopg2
 import psycopg2.extensions
@@ -30,10 +29,9 @@ def db_decor(func):
             logger.debug(debug_output[:1000])
             res = func(self, *args, **kwargs)
         except Exception as e:
-            # logger.error(format_exc())
-            logger.error('%s, SQL: %s\n%s', e, args[0], str(args[1:])[:1000])
+            # logger.error('SQL: %s,\nArgs: %s', args[0], str(args[1:])[:1000], exc_info=False)
             self.conn.rollback()
-            raise
+            raise Exception('SQL: {},\nArgs: {}\nError: {}'.format(args[0], str(args[1:])[:1000], e.args[0]))
         else:
             self.conn.commit()
         finally:

@@ -33,14 +33,16 @@ class DatasetStatus(object):
 
 class Dataset(object):
     """ Model class for representing a dataset """
-    DS_SEL = ('SELECT name, input_path, upload_dt, metadata, config, status, is_public '
+    DS_SEL = ('SELECT id, name, input_path, upload_dt, metadata, config, status, is_public, mol_dbs, adducts '
               'FROM dataset WHERE id = %s')
     DS_UPD = ('UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
-              'metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s where id=%(id)s')
+              'metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s, '
+              'mol_dbs=%(mol_dbs)s, adducts=%(adducts)s where id=%(id)s')
     DS_CONFIG_SEL = 'SELECT config FROM dataset WHERE id = %s'
-    DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, is_public) '
-                 'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, %(metadata)s, %(config)s, '
-                 '%(status)s, %(is_public)s)')
+    DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, '
+                 'is_public, mol_dbs, adducts) '
+                 'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, %(metadata)s, %(config)s, %(status)s, '
+                 '%(is_public)s, %(mol_dbs)s, %(adducts)s)')
 
     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
     ACQ_GEOMETRY_UPD = 'UPDATE dataset SET acq_geometry = %s WHERE id = %s'
@@ -48,16 +50,35 @@ class Dataset(object):
     IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
 
     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
-                 metadata=None, config=None, img_storage_type=None, is_public=True, status=DatasetStatus.NEW):
+                 metadata=None, config=None, status=DatasetStatus.NEW,
+                 is_public=True, mol_dbs=None, adducts=None, img_storage_type='fs'):
+# =======
+#     DS_UPD = ('UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
+#               'metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s where id=%(id)s')
+#     DS_CONFIG_SEL = 'SELECT config FROM dataset WHERE id = %s'
+#     DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, is_public) '
+#                  'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, %(metadata)s, %(config)s, '
+#                  '%(status)s, %(is_public)s)')
+#
+#     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
+#     ACQ_GEOMETRY_UPD = 'UPDATE dataset SET acq_geometry = %s WHERE id = %s'
+#     IMG_STORAGE_TYPE_SEL = 'SELECT ion_img_storage_type FROM dataset WHERE id = %s'
+#     IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
+#
+#     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
+#                  metadata=None, config=None, img_storage_type=None, is_public=True, status=DatasetStatus.NEW):
+# >>>>>>> master
         self.id = id
+        self.name = name
         self.input_path = input_path
         self.upload_dt = upload_dt
-        self.meta = metadata
+        self.metadata = metadata
         self.config = config
         self.status = status
         self.is_public = is_public
-        self.ion_img_storage_type = img_storage_type or 'fs'
-        self.name = name or (metadata.get('metaspace_options', {}).get('Dataset_Name', id) if metadata else None)
+        self.mol_dbs = mol_dbs
+        self.adducts = adducts
+        self.ion_img_storage_type = img_storage_type
 
     def __str__(self):
         return str(self.__dict__)
@@ -71,13 +92,12 @@ class Dataset(object):
 
     @classmethod
     def load(cls, db, ds_id):
-        r = db.select_one(cls.DS_SEL, params=(ds_id,))
-        if r:
-            ds = Dataset(ds_id)
-            ds.name, ds.input_path, ds.upload_dt, ds.meta, ds.config, ds.status, ds.is_public = r
+        docs = db.select_with_fields(cls.DS_SEL, params=(ds_id,))
+        if docs:
+            return Dataset(**docs[0])
+            # ds.name, ds.input_path, ds.upload_dt, ds.metadata, ds.config, ds.status, ds.is_public, ds.mol_dbs = r
         else:
             raise UnknownDSID('Dataset does not exist: {}'.format(ds_id))
-        return ds
 
     def is_stored(self, db):
         r = db.select_one(self.DS_SEL, params=(self.id,))
@@ -86,20 +106,22 @@ class Dataset(object):
     def save(self, db, es, status_queue=None):
         assert self.id and self.name and self.input_path and self.upload_dt and self.config and self.status \
                and self.is_public is not None
-        d = {
+        doc = {
             'id': self.id,
             'name': self.name,
             'input_path': self.input_path,
             'upload_dt': self.upload_dt,
-            'metadata': json.dumps(self.meta),
+            'metadata': json.dumps(self.metadata),
             'config': json.dumps(self.config),
             'status': self.status,
-            'is_public': self.is_public
+            'is_public': self.is_public,
+            'mol_dbs': self.mol_dbs,
+            'adducts': self.adducts
         }
         if not self.is_stored(db):
-            db.insert(self.DS_INSERT, rows=[d])
+            db.insert(self.DS_INSERT, rows=[doc])
         else:
-            db.alter(self.DS_UPD, params=d)
+            db.alter(self.DS_UPD, params=doc)
         logger.info("Inserted into dataset table: %s, %s", self.id, self.name)
 
         es.sync_dataset(self.id)
@@ -133,8 +155,7 @@ class Dataset(object):
             'ds_name': self.name,
             'input_path': self.input_path
         }
-        if self.meta and self.meta.get('metaspace_options', {}).get('notify_submitter', True):
-            email = self.meta.get('Submitted_By', {}).get('Submitter', {}).get('Email', None)
-            if email:
-                msg['user_email'] = email.lower()
+        email = self.metadata.get('Submitted_By', {}).get('Submitter', {}).get('Email', None)
+        if email:
+            msg['user_email'] = email.lower()
         return msg

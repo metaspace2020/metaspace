@@ -120,7 +120,7 @@ class SMDaemonDatasetManager(DatasetManager):
 
     def _finished_job_moldbs(self, ds_id):
         moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
-        for job_id, mol_db_id in self._db.select("SELECT id, db_id FROM job WHERE ds_id = %s", params=(ds_id,)):
+        for job_id, mol_db_id in self._db.select('SELECT id, db_id FROM job WHERE ds_id = %s', params=(ds_id,)):
             yield job_id, moldb_service.find_db_by_id(mol_db_id)['name']
 
     def update(self, ds, **kwargs):
@@ -129,9 +129,8 @@ class SMDaemonDatasetManager(DatasetManager):
 
         self._es.delete_ds(ds.id)
 
-        moldb_names = [d['name'] for d in ds.config['databases']]
         for job_id, mol_db_name in self._finished_job_moldbs(ds.id):
-            if mol_db_name not in moldb_names:
+            if mol_db_name not in ds.config['databases']:
                 self._db.alter('DELETE FROM job WHERE id = %s', params=(job_id,))
             else:
                 mol_db = MolecularDB(name=mol_db_name,
@@ -187,7 +186,7 @@ class SMapiDatasetManager(DatasetManager):
             self.logger.info('New message posted to %s: %s', self._action_queue, msg)
 
     def add(self, ds, del_first=False, priority=DatasetActionPriority.DEFAULT):
-        """ Send add message to the queue. If dataset exists, raise an exception """
+        """ Send add message to the queue """
         self._post_sm_msg(ds=ds, action=DatasetAction.ADD, priority=priority, del_first=del_first)
 
     def delete(self, ds, del_raw_data=False):
@@ -195,7 +194,7 @@ class SMapiDatasetManager(DatasetManager):
         self._post_sm_msg(ds=ds, action=DatasetAction.DELETE, priority=DatasetActionPriority.HIGH)
 
     def update(self, ds, priority=DatasetActionPriority.DEFAULT):
-        """ Send update or add message to the queue or do nothing """
+        """ Send update message to the queue """
         self._post_sm_msg(ds=ds, action=DatasetAction.UPDATE, priority=DatasetActionPriority.HIGH)
 
     def _annotation_image_shape(self, ds):

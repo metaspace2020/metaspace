@@ -13,7 +13,6 @@ def proj_root():
     return os.getcwd()
 
 
-
 def init_loggers(config=None):
     """ Init logger using config file, 'logs' section of the sm config
     """
@@ -132,8 +131,11 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
     imzml_path = next(base_dir.glob('*.imzML'))
     ms_file_type_config = SMConfig.get_ms_file_handler(str(imzml_path))
     img_storage_type = ms_file_type_config['img_storage_type']
-    return Dataset(id=ds_id, name=ds_name, input_path=ds_input_path, img_storage_type=img_storage_type,
-                   upload_dt=datetime.now(), metadata=metadata, config=ds_config)
+    return Dataset(ds_id, ds_name, str(ds_input_path), datetime.now(), metadata, ds_config,
+                   is_public=True,
+                   mol_dbs=ds_config['databases'],
+                   adducts=ds_config['isotope_generation']['adducts'],
+                   img_storage_type=img_storage_type)
 
 
 def split_s3_path(path):

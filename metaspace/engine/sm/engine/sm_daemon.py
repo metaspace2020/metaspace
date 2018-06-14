@@ -68,6 +68,7 @@ class SMDaemon(object):
             logger.warning('SEM failed to send email to {}'.format(email))
 
     def _is_possible_send_email(self, ds_meta):
+        # TODO: take 'notify_submitter' from message not metadata
         submitter = ds_meta.get('Submitted_By', {}).get('Submitter', None)
         return (self._sm_config['services']['send_email']
                 and submitter

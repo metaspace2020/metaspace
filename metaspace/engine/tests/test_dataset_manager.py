@@ -20,9 +20,11 @@ def fill_db(test_db, sm_config, ds_config):
     ds_id = '2000-01-01'
     meta = {"meta": "data"}
     db = DB(sm_config['db'])
-    db.insert('INSERT INTO dataset values (%s, %s, %s, %s, %s, %s, %s)',
+    db.insert('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, '
+              'status, is_public, mol_dbs, adducts) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
               rows=[(ds_id, 'ds_name', 'input_path', upload_dt,
-                     json.dumps(meta), json.dumps(ds_config), DatasetStatus.FINISHED)])
+                     json.dumps(meta), json.dumps(ds_config), DatasetStatus.FINISHED,
+                     True, ['HMDB-v4'], ['+H'])])
     db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
               rows=[(0, 0, ds_id)])
     db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
@@ -51,11 +53,14 @@ def create_ds_man(sm_config, db=None, es=None, img_store=None,
 
 
 def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
-              metadata=None, ds_config=None, status=DatasetStatus.NEW):
+              metadata=None, ds_config=None, status=DatasetStatus.NEW, mol_dbs=None, adducts=None):
     upload_dt = upload_dt or datetime.now()
-    ds = Dataset(ds_id, ds_name, input_path, upload_dt, metadata or {}, ds_config or {}, status=status)
-    ds.ion_img_storage_type = 'fs'
-    return ds
+    if not mol_dbs:
+        mol_dbs = ['HMDB-v4']
+    if not adducts:
+        adducts = ['+H', '+Na', '+K']
+    return Dataset(ds_id, ds_name, input_path, upload_dt, metadata or {}, ds_config or {},
+                   status=status, mol_dbs=mol_dbs, adducts=adducts, img_storage_type='fs')
 
 
 class TestSMapiDatasetManager:
@@ -91,7 +96,7 @@ class TestSMapiDatasetManager:
 
         ds_id = '2000-01-01'
         ds = create_ds(ds_id=ds_id, ds_config=ds_config)
-        ds.meta = {'new': 'metadata'}
+        ds.metadata = {'new': 'metadata'}
 
         ds_man.update(ds)
 
@@ -195,7 +200,7 @@ class TestSMDaemonDatasetManager:
 
             with patch('sm.engine.dataset_manager.MolDBServiceWrapper') as MolDBServiceWrapper:
                 moldb_service_wrapper_mock = MolDBServiceWrapper.return_value
-                moldb_service_wrapper_mock.find_db_by_id.return_value = {'name': 'HMDB-v2.5'}
+                moldb_service_wrapper_mock.find_db_by_id.return_value = {'name': 'HMDB-v4'}
 
                 ds_man.update(ds)
 

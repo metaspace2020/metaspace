@@ -39,22 +39,21 @@ DATASET_SEL = '''SELECT
     dataset.id AS ds_id,
     name AS ds_name,
     config AS ds_config,
-    metadata AS ds_meta,
+    metadata AS ds_metadata,
     input_path AS ds_input_path,
     upload_dt AS ds_upload_dt,
     dataset.status AS ds_status,
-    to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS') as ds_last_finished,
-    is_public AS ds_is_public,
+    to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS') AS ds_last_finished,
+    is_public AS ds_public,
+    mol_dbs AS ds_mol_dbs,
+    adducts AS ds_adducts,
     acq_geometry AS ds_acq_geometry,
     ion_img_storage_type AS ds_ion_img_storage
 FROM dataset LEFT JOIN job ON job.ds_id = dataset.id
 WHERE dataset.id = %s
 GROUP BY dataset.id'''
 
-DATASET_COLUMNS = ('ds_id', 'ds_name', 'ds_config', 'ds_meta', 'ds_input_path',
-                   'ds_upload_dt', 'ds_status', 'ds_last_finished',
-                   'ds_is_public', 'ds_acq_geometry', 'ds_ion_img_storage')
-DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry')
+DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry',)
 
 
 def init_es_conn(es_config):

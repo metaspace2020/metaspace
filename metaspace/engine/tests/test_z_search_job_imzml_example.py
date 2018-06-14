@@ -39,8 +39,8 @@ def clean_isotope_storage(sm_config):
 
 def init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock):
     mol_db_wrapper_mock = MolDBServiceWrapperMock()
-    mol_db_wrapper_mock.find_db_by_name_version.return_value = [{'id': 0, 'name': 'HMDB', 'version': '2016'}]
-    mol_db_wrapper_mock.find_db_by_id.return_value = {'id': 0, 'name': 'HMDB', 'version': '2016'}
+    mol_db_wrapper_mock.find_db_by_name_version.return_value = [{'id': 0, 'name': 'HMDB-v4', 'version': '2018'}]
+    mol_db_wrapper_mock.find_db_by_id.return_value = {'id': 0, 'name': 'HMDB-v4', 'version': '2018'}
     mol_db_wrapper_mock.fetch_db_sfs.return_value = ['C12H24O']
     mol_db_wrapper_mock.fetch_molecules.return_value = [{'sf': 'C12H24O', 'mol_id': 'HMDB0001',
                                                          'mol_name': 'molecule name'}]
@@ -83,6 +83,8 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
             'config': ds_config_str,
             'status': DatasetStatus.QUEUED,
             'is_public': True,
+            'mol_dbs': ['HMDB-v4'],
+            'adducts': ['+H', '+Na', '+K'],
             'ion_img_storage': 'fs'
         }])
 
@@ -193,6 +195,8 @@ def test_search_job_imzml_example_annotation_job_fails(get_compute_img_metrics_m
             'config': ds_config_str,
             'status': DatasetStatus.QUEUED,
             'is_public': True,
+            'mol_dbs': ['HMDB-v4'],
+            'adducts': ['+H', '+Na', '+K'],
             'ion_img_storage': 'fs'
         }])
 
@@ -261,6 +265,8 @@ def test_search_job_imzml_example_es_export_fails(get_compute_img_metrics_mock, 
             'config': ds_config_str,
             'status': DatasetStatus.QUEUED,
             'is_public': True,
+            'mol_dbs': ['HMDB-v4'],
+            'adducts': ['+H', '+Na', '+K'],
             'ion_img_storage': 'fs'
         }])
 

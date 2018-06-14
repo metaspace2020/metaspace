@@ -42,7 +42,6 @@ class SearchJob(object):
     no_clean : bool
         Don't delete interim data files
     """
-
     def __init__(self, img_store=None, no_clean=False):
         self.no_clean = no_clean
         self._img_store = img_store
@@ -146,8 +145,8 @@ class SearchJob(object):
         moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
         completed_moldb_ids = {moldb_service.find_db_by_id(db_id)['id']
                                for (_, db_id) in self._db.select(JOB_ID_MOLDB_ID_SEL, params=(self._ds.id,))}
-        new_moldb_ids = {moldb_service.find_db_by_name_version(d['name'], d.get('version', None))[0]['id']
-                         for d in self._ds.config['databases']}
+        new_moldb_ids = {moldb_service.find_db_by_name_version(moldb_name)[0]['id']
+                         for moldb_name in self._ds.config['databases']}
         return completed_moldb_ids, new_moldb_ids
 
     def _save_data_from_raw_ms_file(self):
