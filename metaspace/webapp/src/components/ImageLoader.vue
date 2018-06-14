@@ -100,6 +100,7 @@
    data () {
      return {
        image: new Image(),
+       colors: createColormap(this.colormap),
        isLoading: false,
        message: '',
        dataURI: '',
@@ -123,18 +124,15 @@
        tmId: 0
      }
    },
-   created() {
-     this.colors = createColormap(this.colormap);
+   mounted() {
      this.image.onload = this.redraw.bind(this);
      this.image.onerror = this.image.onabort = this.onFail.bind(this);
      if (this.src)
        this.loadImage(this.src);
-   },
-   mounted: function() {
      this.parentDivWidth = this.$refs.parent.clientWidth;
      window.addEventListener('resize', this.onResize);
    },
-   beforeDestroy: function() {
+   beforeDestroy() {
      window.removeEventListener('resize', this.onResize);
    },
    computed: {
@@ -276,8 +274,12 @@
      loadImage(url) {
        this.image.crossOrigin = "Anonymous";
        this.image.src = (config.imageStorage || '') + url;
-       if (window.navigator.userAgent.includes("Trident"))
-         return; // in IE11 something is fucked up as usual
+       if (window.navigator.userAgent.includes("Trident")) {
+         // IE11 never fires the events that would set isLoading=false.
+         // It's probably this: https://stackoverflow.com/questions/16797786/image-load-event-on-ie
+         // but this issue isn't big enough to justify the time cost and risk of destabilizing to try a solution.
+         return;
+       }
 
        this.isLoading = true;
      },
