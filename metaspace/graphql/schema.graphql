@@ -263,7 +263,6 @@ type RawOpticalImage {
 }
 
 input AddOpticalImageInput {
-  jwt: String!
   datasetId: String!
   imageUrl: String!
 
