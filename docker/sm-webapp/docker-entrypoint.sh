@@ -21,6 +21,6 @@ else
   cd /opt/sm-webapp
 fi
 
-wait_for "nc -z postgres 6379" "Redis"
+wait_for "nc -z redis 6379" "Redis"
 
 exec node server.js

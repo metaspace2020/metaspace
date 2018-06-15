@@ -1,6 +1,7 @@
 #sqlite3 isn't compatible with node 10 yet
 FROM node:8
 
+RUN apt-get update && apt-get install -y netcat && apt-get clean
 RUN yarn global add nodemon
 
 # Prefetch dependencies before getting the full source code so Docker's image cache
