@@ -142,13 +142,13 @@ const Resolvers = {
               .then(results => results.map(row => row['field']));
     },
 
-    // adductSuggestions() {
-    //   return config.defaults.adducts['-'].map(a => {
-    //     return {adduct: a, charge: -1};
-    //   }).concat(config.defaults.adducts['+'].map(a => {
-    //     return {adduct: a, charge: 1};
-    //   }));
-    // },
+    adductSuggestions() {
+      return config.defaults.adducts['-'].map(a => {
+        return {adduct: a, charge: -1};
+      }).concat(config.defaults.adducts['+'].map(a => {
+        return {adduct: a, charge: 1};
+      }));
+    },
 
     peopleSuggestions(_, { role, query }, {user}) {
       const schemaPath = 'Submitted_By.' + (role == 'PI' ? 'Principal_Investigator' : 'Submitter');

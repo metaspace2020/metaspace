@@ -114,10 +114,10 @@ type Compound {
   # TODO: InChi/SMILES, ClassyFire results
 }
 
-#type Adduct {
-#  adduct: String!
-#  charge: Int!
-#}
+type Adduct {
+  adduct: String!
+  charge: Int!
+}
 
 type Spectrum {
   mzs: [Float!]!
@@ -302,7 +302,7 @@ type Query {
 
   molecularDatabases(hideDeprecated: Boolean = true): [MolecularDatabase!]
 
-#  adductSuggestions: [Adduct!]!
+  adductSuggestions: [Adduct!]!
 
   opticalImageUrl(datasetId: String!, zoom: Float = 1): String
 
