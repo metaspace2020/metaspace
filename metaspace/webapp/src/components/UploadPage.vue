@@ -63,7 +63,7 @@
  import Vue from 'vue';
 
  import * as config from '../clientConfig.json';
- import {getJWT, pathFromUUID} from '../util';
+ import {pathFromUUID} from '../util';
  import {submitDatasetQuery} from '../api/dataset';
 
  const DataTypeConfig = {
@@ -170,7 +170,7 @@
        this.uploadedUuid = null;
      },
 
-     async onFormSubmit(_, metadataJson, isPublic) {
+     async onFormSubmit(_, metadataJson, metaspaceOptions) {
        // Prevent duplicate submissions if user double-clicks
        if (this.isSubmitting) return;
        this.isSubmitting = true;
@@ -179,10 +179,11 @@
          await this.$apollo.mutate({
            mutation: submitDatasetQuery,
            variables: {
-             jwt: await getJWT(),
-             path: pathFromUUID(this.uploadedUuid),
-             metadataJson,
-             isPublic
+             input: {
+               inputPath: pathFromUUID(this.uploadedUuid),
+               metadataJson,
+               ...metaspaceOptions,
+             }
            }
          });
 

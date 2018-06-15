@@ -23,6 +23,7 @@ export const datasetListQuery =
       growthConditions
       metadataJson
       isPublic
+      molDBs
       status
       metadataType
       fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
@@ -57,34 +58,31 @@ export const thumbnailOptImageQuery =
       thumbnailImage(datasetId: $datasetId) 
   }`;
 
-export const resubmitDatasetQuery =
-  gql`mutation ($jwt: String!, $datasetId: String!, $name: String, 
-                $metadataJson: String, $isPublic: Boolean, $delFirst: Boolean) {
-    resubmitDataset(jwt: $jwt, datasetId: $datasetId, name: $name, 
-                  metadataJson: $metadataJson, isPublic: $isPublic, 
-                  delFirst: $delFirst, priority: 1)
+export const submitDatasetQuery =
+  gql`mutation ($input: DatasetSubmitInput!, $delFirst: Boolean=false) {
+    submitDataset(input: $input, delFirst: $delFirst, priority: 1)
   }`;
 
-export const submitDatasetQuery =
-  gql`mutation ($jwt: String!, $path: String!, $metadataJson: String!, $isPublic: Boolean!) {
-    submitDataset(jwt: $jwt, path: $path, metadataJson: $metadataJson, isPublic: $isPublic, priority: 1)
+export const resubmitDatasetQuery =
+  gql`mutation ($input: DatasetSubmitInput!, $delFirst: Boolean=false) {
+    resubmitDataset(input: $input, delFirst: $delFirst, priority: 1)
   }`;
 
 export const deleteDatasetQuery =
-  gql`mutation ($jwt: String!, $id: String!) {
-    deleteDataset(jwt: $jwt, datasetId: $id)
+  gql`mutation ($id: String!) {
+    deleteDataset(datasetId: $id)
   }`;
 
 export const addOpticalImageQuery =
-  gql`mutation ($jwt: String!, $imageUrl: String!,
+  gql`mutation ($imageUrl: String!,
                 $datasetId: String!, $transform: [[Float]]!) {
-    addOpticalImage(input: {jwt: $jwt, datasetId: $datasetId,
+    addOpticalImage(input: {datasetId: $datasetId,
                             imageUrl: $imageUrl, transform: $transform})
   }`;
 
 export const deleteOpticalImageQuery =
-  gql`mutation ($jwt: String!, $id: String!) {
-    deleteOpticalImage(jwt: $jwt, datasetId: $id)
+  gql`mutation ($id: String!) {
+    deleteOpticalImage(datasetId: $id)
   }`;
 
 export const msAcqGeometryQuery =

@@ -57,7 +57,7 @@
     @Prop({ type: Boolean, default: false })
     required!: boolean;
 
-    @Prop(Function)
+    @Prop({ type: Function, required: true })
     fetchSuggestions!: FetchSuggestions;
 
     @Prop(Boolean)

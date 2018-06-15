@@ -42,6 +42,13 @@ export interface FormSchema extends JsonSchemaProperty {
   };
 }
 
+export interface MetaspaceOptions {
+  isPublic: boolean;
+  molDBs: string[];
+  adducts: string[];
+  name: string;
+}
+
 const FIELD_WIDTH: Record<string, number> = {
   'Institution': 6,
   'Submitter': 9,

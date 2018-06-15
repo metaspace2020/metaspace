@@ -82,7 +82,6 @@
       :value="value"
       :error="typeof error !== 'string' ? error : null"
       :required="required"
-      :fetchSuggestions="fetchSuggestions"
     />
 
     <div v-else style="color: red">Unrecognized form field type: {{type}}</div>

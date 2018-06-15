@@ -3,7 +3,7 @@
     <div style="position: relative;" v-if="value != null">
       <div id="md-editor-submit">
         <el-switch
-          v-model="isPublic"
+          v-model="metaspaceOptions.isPublic"
           active-text="Public"
           inactive-text="Private"
         ></el-switch>
@@ -24,9 +24,14 @@
       <div id="md-section-list">
         <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"/>
         <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"/>
-        <form-section v-bind="sectionBinds('Submitted_By')" v-on="sectionEvents('Submitted_By')"/>
         <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"/>
-        <form-section v-bind="sectionBinds('metaspace_options')" v-on="sectionEvents('metaspace_options')"/>
+        <form-section v-bind="sectionBinds('Submitted_By')" v-on="sectionEvents('Submitted_By')"/>
+        <metaspace-options-section 
+          v-model="metaspaceOptions" 
+          :error="errors['metaspaceOptions']"
+          :molDBOptions="molDBOptions"
+          :adductOptions="adductOptions"
+        />
         <form-section v-for="sectionKey in otherSections"
                       :key="sectionKey"
                       v-bind="sectionBinds(sectionKey)"
@@ -60,13 +65,17 @@
 
  import {defaultMetadataType, metadataSchemas} from '../../assets/metadataRegistry';
  import {deriveFullSchema} from './formStructure';
- import {get, set, isArray, isEqual, isPlainObject, mapValues, forEach, without} from 'lodash-es';
+ import {
+   get, set, cloneDeep, defaults,
+   isArray, isEmpty, isEqual, isPlainObject, 
+   mapValues, forEach, without, pick
+ } from 'lodash-es';
  import {
    fetchAutocompleteSuggestionsQuery,
    fetchMetadataQuery,
    metadataOptionsQuery
  } from '../../api/metadata';
- import DatabaseDescriptions from '../DatabaseDescriptions.vue';
+ import MetaspaceOptionsSection from './MetaspaceOptionsSection.vue';
  import FormSection from './FormSection.vue';
 
  const factories = {
@@ -78,7 +87,26 @@
  };
 
  const LOCAL_STORAGE_KEY = 'latestMetadataSubmission';
+ const LOCAL_STORAGE_METASPACE_OPTIONS = 'latestMetadataOptions';
  const LOCAL_STORAGE_VERSION_KEY = 'latestMetadataSubmissionVersion';
+ 
+ const defaultMetaspaceOptions = {
+   isPublic: true,
+   molDBs: [],
+   adducts: [],
+   name: ''
+ };
+ 
+ function safeJsonParse(json) {
+   if (json) {
+     try {
+       return JSON.parse(json);
+     } catch (err) {
+       Raven.captureException(err);
+     }
+   }
+   return undefined;
+ }
 
  // TODO: fill in institution automatically when user profiles are added
 
@@ -92,6 +120,7 @@
    },
    components: {
      FormSection,
+     MetaspaceOptionsSection,
    },
 
    created() {
@@ -101,10 +130,11 @@
    data() {
      return {
        value: null,
-       isPublic: true,
        schema: null,
-       molecularDatabases: [],
+       localErrors: {},
+       molDBOptions: [],
        possibleAdducts: {},
+       metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
      }
    },
 
@@ -119,7 +149,7 @@
 
    computed: {
      errors() {
-       let errors = {};
+       let errors = cloneDeep(this.localErrors);
        (this.validationErrors || []).forEach(err => set(errors, err.dataPath.split('.').slice(1), err.message));
        return errors;
      },
@@ -134,46 +164,25 @@
          'Sample_Preparation',
          'Submitted_By',
          'MS_Analysis',
-         'metaspace_options',
        ];
        return without(allSections, ...specialSections);
+     },
+     adductOptions() {
+       return this.possibleAdducts[get(this.value, ['MS_Analysis', 'Polarity']) || 'Positive'];
      }
    },
    methods: {
-     getAugmentedSchema(mdType) {
-       const schema = deriveFullSchema(metadataSchemas[mdType]);
-
-       schema.properties.metaspace_options.properties.Metabolite_Database.smEditorHelp = DatabaseDescriptions;
-
-       // Instead of imperatively updating the schema every time something changes, use getters so that anything
-       // that watches the schema automatically subscribes to the correct data source.
-
-       Object.defineProperty(schema.properties.metaspace_options.properties.Adducts.items, 'enum', {
-         get: () => this.possibleAdducts[get(this.value, ['MS_Analysis', 'Polarity'] || 'Positive')],
-       });
-
-       Object.defineProperty(schema.properties.metaspace_options.properties.Metabolite_Database.items, 'enum', {
-         get: () => this.molecularDatabases,
-       });
-
-       return schema;
-     },
-
      async loadDataset() {
        if (!this.datasetId) {
          // no datasetId means a new dataset => help filling out by loading the last submission
-         try {
-           const lastFormValueJson = localStorage.getItem(LOCAL_STORAGE_KEY);
-           if (lastFormValueJson) {
-             return {
-               metadata: JSON.parse(lastFormValueJson),
-               isPublic: true,
-             }
-           }
-         } catch (err) {
-           Raven.captureException(err);
+         // metaspaceOptions was previously part of metadataJson, so migrate if necessary
+         const metadata = safeJsonParse(localStorage.getItem(LOCAL_STORAGE_KEY)) || {};
+         const metaspaceOptions = safeJsonParse(localStorage.getItem(LOCAL_STORAGE_METASPACE_OPTIONS))
+           || (metadata && metadata.metadata_options);
+         return {
+           metadata,
+           metaspaceOptions,
          }
-         return null;
        } else {
          const {data} = await this.$apollo.query({
            query: fetchMetadataQuery,
@@ -182,7 +191,7 @@
          });
          return {
            metadata: JSON.parse(data.dataset.metadataJson),
-           isPublic: data.dataset.isPublic,
+           metaspaceOptions: pick(data.dataset, 'isPublic', 'molDBs', 'adducts', 'name'),
          }
        }
      },
@@ -197,7 +206,7 @@
      async loadForm() {
        const [dataset, options] = await Promise.all([this.loadDataset(), this.loadOptions()]);
        const loadedMetadata = dataset && dataset.metadata;
-       const isPublic = (dataset && dataset.isPublic) !== false; // Default to true
+       const metaspaceOptions = defaults({}, dataset && dataset.metaspaceOptions, defaultMetaspaceOptions);
        const mdType = (
          this.isNew
            ? this.$store.getters.filter.metadataType
@@ -230,14 +239,13 @@
          });
        }
 
-
        // Load options
        this.possibleAdducts = {
          'Positive': adducts.filter(a => a.charge > 0).map(a => a.adduct),
          'Negative': adducts.filter(a => a.charge < 0).map(a => a.adduct)
        };
-       this.molecularDatabases = molecularDatabases.map(d => d.name);
-       this.schema = this.getAugmentedSchema(mdType);
+       this.molDBOptions = molecularDatabases.map(d => d.name);
+       this.schema = deriveFullSchema(metadataSchemas[mdType]);
 
        if (this.isNew) {
          // If this is a form from localStorage and metabolite databases have changed since the form was submitted,
@@ -245,28 +253,47 @@
          // This is because we it's expensive to change database later. We want a smart default for new users,
          // but if the user has previously selected a value that is now invalid, they should be made aware so that they
          // can choose an appropriate substitute.
-         const selectedDbs = get(metadata, ['metaspace_options', 'Metabolite_Database']) || [];
-         if (selectedDbs.some(db => !this.molecularDatabases.includes(db))) {
-           set(metadata, ['metaspace_options', 'Metabolite_Database'], []);
+         const selectedDbs = metaspaceOptions.molDBs || [];
+         if (selectedDbs.some(db => !this.molDBOptions.includes(db))) {
+           metaspaceOptions.molDBs = [];
          } else if (selectedDbs.length === 0) {
            const defaultDbs = molecularDatabases.filter(d => d.default).map(d => d.name);
-           set(metadata, ['metaspace_options', 'Metabolite_Database'], defaultDbs);
+           metaspaceOptions.molDBs = defaultDbs;
          }
          // Name should be different for each dataset
-         set(metadata, ['metaspace_options', 'Dataset_Name'], '');
+         metaspaceOptions.name = '';
          // Populate submitter
          const user = this.$store.state.user;
          set(metadata, ['Submitted_By', 'Submitter', 'Email'], user ? user.email : '');
        }
 
        this.value = metadata;
-       this.isPublic = isPublic;
+       this.metaspaceOptions = metaspaceOptions;
 
        this.updateCurrentAdductOptions();
      },
 
+     validate() {
+       const errors = {};
+
+       if (isEmpty(this.metaspaceOptions.molDBs)) {
+         set(errors, ['metaspaceOptions', 'molDBs'], 'should have at least 1 selection');
+       }
+       if (isEmpty(this.metaspaceOptions.adducts)) {
+         set(errors, ['metaspaceOptions', 'adducts'], 'should have at least 1 selection');
+       }
+       if (!this.metaspaceOptions.name || this.metaspaceOptions.name.length < 5) {
+         set(errors, ['metaspaceOptions', 'name'], 'should be at least 5 characters');
+       } else if (this.metaspaceOptions.name.length > 50) {
+         set(errors, ['metaspaceOptions', 'name'], 'should be no more than 50 characters');
+       }
+
+       this.localErrors = errors;
+     },
+
      saveForm() {
        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.value));
+       localStorage.setItem(LOCAL_STORAGE_METASPACE_OPTIONS, JSON.stringify(this.metaspaceOptions));
        localStorage.removeItem(LOCAL_STORAGE_VERSION_KEY); // No longer used
      },
 
@@ -275,7 +302,7 @@
          sectionKey,
          section: this.schema.properties[sectionKey],
          value: this.value[sectionKey],
-         error: this.errors && this.errors[sectionKey],
+         error: this.errors[sectionKey],
          getSuggestionsForField: this.getSuggestionsForField,
        }
      },
@@ -303,27 +330,31 @@
      },
 
      updateCurrentAdductOptions() {
-       const adductsForPolarity = this.schema.properties.metaspace_options.properties.Adducts.items.enum;
-       const selectedAdducts = this.value.metaspace_options.Adducts;
-       let newAdducts = selectedAdducts.filter(adduct => adductsForPolarity.includes(adduct))
+       const selectedAdducts = this.metaspaceOptions.adducts;
+       let newAdducts = selectedAdducts.filter(adduct => this.adductOptions.includes(adduct))
        // Default to selecting all valid adducts (at least until the less common adducts are added)
-       if (newAdducts.length === 0 && selectedAdducts.length !== 0) {
-         newAdducts = adductsForPolarity.slice();
+       if (newAdducts.length === 0) {
+         newAdducts = this.adductOptions.slice();
        }
-       this.value.metaspace_options.Adducts = newAdducts;
+       this.metaspaceOptions.adducts = newAdducts;
      },
 
      resetDatasetName() {
-       this.value.metaspace_options.Dataset_Name = '';
+       this.metaspaceOptions.name = '';
      },
 
      resetMetaboliteDatabase() {
-       this.value.metaspace_options.Metabolite_Database = [];
+       this.metaspaceOptions.molDBs = [];
      },
 
      submit() {
+       this.validate();
+       if (!isEmpty(this.localErrors)) {
+         return;
+       }
+
        const value = JSON.stringify(this.value);
-       this.$emit('submit', this.datasetId, value, this.isPublic);
+       this.$emit('submit', this.datasetId, value, this.metaspaceOptions);
        if (!this.datasetId) {
          this.saveForm();
        }
@@ -339,7 +370,7 @@
 
      /* for outside access from the upload page, to autofill it with the filename */
      fillDatasetName(name) {
-       this.value.metaspace_options.Dataset_Name = name;
+       this.metaspaceOptions.name = name;
      },
    }
  }

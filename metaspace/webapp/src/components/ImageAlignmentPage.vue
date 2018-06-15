@@ -138,7 +138,7 @@
  import ImageAligner from './ImageAligner.vue';
  import {annotationListQuery} from '../api/annotation';
  import {addOpticalImageQuery, deleteOpticalImageQuery, rawOpticalImageQuery} from '../api/dataset';
- import {renderMolFormula, prettifySign, getJWT} from '../util';
+ import {renderMolFormula, prettifySign} from '../util';
 
  import gql from 'graphql-tag';
 
@@ -363,11 +363,9 @@
 
      async addOpticalImage(imageUrl) {
        // TODO if there are no iso images found prevent optical image addition
-       const jwt = await getJWT();
        const graphQLPromise = this.$apollo.mutate({
          mutation: addOpticalImageQuery,
          variables: {
-           jwt,
            datasetId: this.datasetId,
            imageUrl,
            transform: this.$refs.aligner.normalizedTransform
@@ -383,11 +381,9 @@
      async deleteOpticalImages() {
        try {
          if (this.alreadyUploaded) {
-           const jwt = await getJWT();
            const graphQLResp = await this.$apollo.mutate({
              mutation: deleteOpticalImageQuery,
                variables: {
-                 jwt,
                  id: this.datasetId
                }
              });
