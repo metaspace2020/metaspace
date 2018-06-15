@@ -243,6 +243,8 @@ input DatasetUpdateInput {
   name: String
   uploadDT: String
   isPublic: Boolean = true
+  molDBs: [String!]
+  adducts: [String!]
   metadataJson: String
 }
 
