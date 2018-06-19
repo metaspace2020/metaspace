@@ -9,8 +9,7 @@
 </template>
 
 <script>
- import MetadataEditor from './MetadataEditor.vue';
- import {getJWT} from '../util';
+ import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
  import {resubmitDatasetQuery} from '../api/dataset';
  import {updateMetadataQuery} from '../api/metadata';
 
@@ -36,13 +35,13 @@
    },
 
    methods: {
-     async onSubmit(datasetId, metadataJson, isPublic) {
+     async onSubmit(datasetId, metadataJson, metaspaceOptions) {
        // Prevent duplicate submissions if user double-clicks
        if (this.isSubmitting) return;
        this.isSubmitting = true;
 
        try {
-         const wasSaved = await this.saveDataset(datasetId, metadataJson, isPublic);
+         const wasSaved = await this.saveDataset(datasetId, metadataJson, metaspaceOptions);
 
          if (wasSaved) {
            this.validationErrors = [];
@@ -124,17 +123,21 @@
        }
      },
 
-     async updateOrResubmit(datasetId, metadataJson, isPublic, resubmit, delFirst) {
-       const jwt = await getJWT();
-       const name = JSON.parse(metadataJson).metaspace_options.Dataset_Name;
+     async updateOrResubmit(datasetId, metadataJson, metaspaceOptions, resubmit, delFirst) {
        return await this.$apollo.mutate({
          mutation: resubmit ? resubmitDatasetQuery : updateMetadataQuery,
-         variables: {jwt, datasetId, name, metadataJson, isPublic, delFirst},
+         variables: {
+           input: {
+             id: datasetId,
+             ...metaspaceOptions,
+           },
+           delFirst
+         },
          updateQueries: {
            fetchMetadataQuery: (prev, _) => ({
              ...prev,
              metadataJson,
-             isPublic
+             ...metaspaceOptions
            })
          }
        });

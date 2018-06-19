@@ -18,5 +18,6 @@ export default {
     // Refresh the current filter so that computed defaults that depend on `filterLists` are applied
     const filter = decodeParams(context.state.route, context.state.filterLists)
     context.commit('updateFilter', filter)
-  }
+  },
+
 };

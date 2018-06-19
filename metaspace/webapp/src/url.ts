@@ -1,6 +1,6 @@
 import FILTER_SPECIFICATIONS, { getDefaultFilter } from './filterSpecs.js';
 
-import invert from 'lodash/invert';
+import {invert} from 'lodash-es';
 import { Location } from 'vue-router';
 
 interface Dictionary<T> {
@@ -34,11 +34,13 @@ const URL_TO_FILTER: Dictionary<string> = invert(FILTER_TO_URL);
 const PATH_TO_LEVEL: Dictionary<string> = {
   '/annotations': 'annotation',
   '/datasets': 'dataset',
+  '/datasets/list': 'dataset',
+  '/datasets/summary': 'dataset',
   '/upload': 'upload'
 };
 
 export function encodeParams(filter: any, path: string, filterLists: any): Dictionary<string> {
-  const level = PATH_TO_LEVEL[path];
+  const level = PATH_TO_LEVEL[path.toLowerCase()];
   const defaultFilter = getDefaultFilter(level, filterLists);
 
   let q: Dictionary<string> = {};

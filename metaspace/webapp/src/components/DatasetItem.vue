@@ -23,11 +23,11 @@
     </div>
 
     <div class="ds-info">
-      <div>
+      <div class="ds-item-line">
         <b>{{ formatDatasetName }}</b>
       </div>
 
-      <div style="color: darkblue;">
+      <div class="ds-item-line" style="color: darkblue;">
         <span class="ds-add-filter"
               title="Filter by species"
               @click="addFilter('organism')">
@@ -43,7 +43,7 @@
           ({{ formatCondition }})</span>
       </div>
 
-      <div>
+      <div class="ds-item-line">
         <span class="ds-add-filter"
               title="Filter by ionisation source"
               @click="addFilter('ionisationSource')">
@@ -59,7 +59,7 @@
         RP {{ formatResolvingPower }}
       </div>
 
-      <div style="font-size: 15px;">
+      <div class="ds-item-line" style="font-size: 15px;">
         Submitted <span class="s-bold">{{ formatDate }}</span>
         at {{ formatTime }} by
         <span class="ds-add-filter"
@@ -71,7 +71,7 @@
               title="Filter by this lab"
               @click="addFilter('institution')"></span>
       </div>
-      <div v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
+      <div class="ds-item-line" v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
         <span>{{formatFdrCounts()}} annotations @ FDR {{formatFdrLevel()}}% ({{formatDbName()}})</span>
       </div>
     </div>
@@ -125,9 +125,9 @@
 
 <script>
  import DatasetInfo from './DatasetInfo.vue';
- import capitalize from 'lodash/capitalize';
+ import {capitalize} from 'lodash-es';
  import {deleteDatasetQuery, thumbnailOptImageQuery} from '../api/dataset';
- import {getJWT, mdTypeSupportsOpticalImages} from '../util';
+ import {mdTypeSupportsOpticalImages} from '../util';
  import {encodeParams} from '../url';
 
  function removeUnderscores(str) {
@@ -204,7 +204,7 @@
      },
 
      metaboliteDatabases() {
-       const dbs = this.metadata.metaspace_options.Metabolite_Database;
+       const dbs = this.dataset.molDBs;
        if (typeof dbs === 'string')
          return [dbs];
        else
@@ -314,11 +314,9 @@
 
        try {
          this.disabled = true;
-         const jwt = await getJWT();
          const resp = await this.$apollo.mutate({
            mutation: deleteDatasetQuery,
            variables: {
-             jwt,
              id: this.dataset.id
            }
          });
@@ -517,6 +515,11 @@
    height: 32px;
    right: 10px;
    bottom: 8px;
+ }
+ .ds-item-line {
+   overflow: hidden;
+   white-space: nowrap;
+   text-overflow: ellipsis;
  }
 
 </style>

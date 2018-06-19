@@ -1,59 +1,47 @@
 <template>
-  <div id="dataset-page">
-    <div id="dataset-page-contents">
-      <div id="dataset-page-head">
-        <filter-panel level="dataset"></filter-panel>
+  <div>
+    <filter-panel level="dataset"></filter-panel>
 
-        <div>
-          <el-form :inline="true" style="display: inline-flex">
-            <el-radio-group v-model="displayMode" size="small">
-              <el-radio-button label="List"></el-radio-button>
-              <el-radio-button label="Summary"></el-radio-button>
-            </el-radio-group>
+    <div>
+      <el-form :inline="true" style="display: inline-flex">
+        <el-radio-group value="List" @input="onChangeTab" size="small">
+          <el-radio-button label="List"></el-radio-button>
+          <el-radio-button label="Summary"></el-radio-button>
+        </el-radio-group>
 
-            <el-checkbox-group v-model="categories" :min=1 style="padding: 5px 20px;"
-                               v-if="displayMode == 'List'">
-              <el-checkbox class="cb-started" label="started">Processing {{ count('started') }}</el-checkbox>
-              <el-checkbox class="cb-queued" label="queued">Queued {{ count('queued') }}</el-checkbox>
-              <el-checkbox label="finished">Finished {{ count('finished') }}</el-checkbox>
-            </el-checkbox-group>
-          </el-form>
+        <el-checkbox-group v-model="categories" :min=1 style="padding: 5px 20px;">
+          <el-checkbox class="cb-started" label="started">Processing {{ count('started') }}</el-checkbox>
+          <el-checkbox class="cb-queued" label="queued">Queued {{ count('queued') }}</el-checkbox>
+          <el-checkbox label="finished">Finished {{ count('finished') }}</el-checkbox>
+        </el-checkbox-group>
+      </el-form>
+    </div>
+
+    <div>
+      <div id="dataset-list-header">
+        <div v-if="noFilters" style="font: 24px 'Roboto', sans-serif; padding: 5px;">
+          <span v-if="noFilters">
+            Recent uploads
+          </span>
         </div>
 
-        <div v-if="displayMode == 'List'">
-          <div id="dataset-list-header">
-            <div v-if="noFilters" style="font: 24px 'Roboto', sans-serif; padding: 5px;">
-              <span v-if="noFilters">
-                Recent uploads
-              </span>
-            </div>
-
-            <div v-else style="font: 18px 'Roboto', sans-serif; padding: 5px;">
-              <span v-if="nonEmpty">
-                Search results in reverse chronological order
-              </span>
-              <span v-else>No datasets found</span>
-            </div>
-
-            <el-button v-if="nonEmpty" :disabled="isExporting" @click="startExport" class="export-btn">
-              Export to CSV
-            </el-button>
-          </div>
-
-          <div class="dataset-list">
-            <dataset-item v-for="(dataset, i) in datasets"
-                          :dataset="dataset" :key="dataset.id"
-                          :class="[i%2 ? 'even': 'odd']">
-            </dataset-item>
-          </div>
+        <div v-else style="font: 18px 'Roboto', sans-serif; padding: 5px;">
+          <span v-if="nonEmpty">
+            Search results in reverse chronological order
+          </span>
+          <span v-else>No datasets found</span>
         </div>
 
-        <div v-else id="dataset-summary-charts">
-          <upload-timeline-plot></upload-timeline-plot>
-          <submitter-summary-plot></submitter-summary-plot>
-          <mass-spec-setup-plot></mass-spec-setup-plot>
-          <organism-summary-plot></organism-summary-plot>
-        </div>
+        <el-button v-if="nonEmpty" :disabled="isExporting" @click="startExport" class="export-btn">
+          Export to CSV
+        </el-button>
+      </div>
+
+      <div class="dataset-list">
+        <dataset-item v-for="(dataset, i) in datasets"
+                      :dataset="dataset" :key="dataset.id"
+                      :class="[i%2 ? 'even': 'odd']">
+        </dataset-item>
       </div>
     </div>
   </div>
@@ -64,10 +52,6 @@
  import {metadataExportQuery} from '../api/metadata';
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
- import MassSpecSetupPlot from './plots/MSSetupSummaryPlot.vue';
- import OrganismSummaryPlot from './plots/OrganismSummaryPlot.vue';
- import SubmitterSummaryPlot from './plots/SubmitterSummaryPlot.vue';
- import UploadTimelinePlot from './plots/DatasetUploadTimeline.vue';
  import {csvExportHeader} from '../util';
  import gql from 'graphql-tag';
  import FileSaver from 'file-saver';
@@ -87,10 +71,6 @@
    components: {
      DatasetItem,
      FilterPanel,
-     MassSpecSetupPlot,
-     OrganismSummaryPlot,
-     SubmitterSummaryPlot,
-     UploadTimelinePlot
    },
 
    computed: {
@@ -112,15 +92,6 @@
            list = list.concat(this[category]);
        return list;
      },
-
-     displayMode: {
-       get() {
-         return this.$store.getters.settings.datasets.tab;
-       },
-       set(value) {
-         this.$store.commit('setCurrentTab', value);
-       }
-     }
    },
 
    apollo: {
@@ -314,12 +285,16 @@
        }
 
        runExport();
+     },
+
+     onChangeTab(tab) {
+       this.$store.commit('setDatasetTab', tab);
      }
    }
  }
 </script>
 
-<style>
+<style lang="scss">
 
  #dataset-page {
    display: flex;
@@ -330,32 +305,36 @@
  #dataset-page-contents {
    display: inline-block;
    width: 820px;
+
+   @media (min-width: 1650px) {
+     /* 2 datasets per row on wide screens */
+     width: 1620px;
+   }
  }
 
  .even {
    background-color: #e6f1ff;
+
+   @media (min-width: 1650px) {
+     background-color: white;
+   }
  }
 
  .odd {
    background-color: white;
  }
 
- /* 2 datasets per row on wide screens */
- @media (min-width: 1650px) {
-   #dataset-page-contents {
-     width: 1620px;
-   }
-
-   .even {
-     background-color: white !important;
-   }
- }
-
  .dataset-list {
    display: flex;
    flex-direction: row;
    flex-wrap: wrap;
-   align-items: center;
+   align-items: stretch;
+ }
+
+ .export-btn {
+   margin-top: 7px;
+   width: 135px;
+   height: 36px;
  }
 
  .cb-started .el-checkbox__input.is-checked .el-checkbox__inner {
@@ -364,13 +343,6 @@
 
  .cb-queued .el-checkbox__input.is-checked .el-checkbox__inner {
    background: #72c8e5;
- }
-
- #dataset-summary-charts {
-   flex-flow: row wrap;
-   display: flex;
-   justify-content: space-around;
-   padding-bottom: 50px;
  }
 
  #dataset-list-header {

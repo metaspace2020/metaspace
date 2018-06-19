@@ -32,6 +32,7 @@ import App from './App.vue';
 const isProd = process.env.NODE_ENV === 'production';
 
 import VueAnalytics from 'vue-analytics';
+import { setErrorNotifier } from './lib/reportError'
 Vue.use(VueAnalytics, {
   id: 'UA-73509518-1',
   router,
@@ -44,9 +45,10 @@ Vue.use(VueAnalytics, {
   }
 });
 
-Vue.config.performance = true;
+Vue.config.devtools = process.env.NODE_ENV === 'development';
+Vue.config.performance = process.env.NODE_ENV === 'development';
 
-new Vue({
+const app = new Vue({
   el: '#app',
   render: h => h(App),
     /*
@@ -58,3 +60,8 @@ new Vue({
   router,
   apolloProvider
 })
+
+setErrorNotifier(app.$notify);
+
+import tokenAutorefresh from './tokenAutorefresh'
+tokenAutorefresh.addJwtListener((jwt, payload) => store.commit('setUser', payload));

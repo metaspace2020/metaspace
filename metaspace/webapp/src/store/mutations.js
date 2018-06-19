@@ -4,6 +4,9 @@ import {decodeParams,
         encodeParams, encodeSections, encodeSortOrder,
         stripFilteringParams} from '../url';
 import {getFilterInitialValue} from '../filterSpecs';
+import tokenAutorefresh from '../tokenAutorefresh';
+import {decodePayload} from '../util';
+
 
 function updatedLocation(state, filter) {
   let query = encodeParams(filter, state.route.path, state.filterLists);
@@ -85,14 +88,9 @@ export default {
     state.tableIsLoading = isLoading;
   },
 
-  login(state, user) {
-    state.authenticated = true;
+  setUser(state, user) {
+    state.authenticated = user != null && user.role !== 'anonymous';
     state.user = user;
-  },
-
-  logout(state) {
-    state.authenticated = false;
-    state.user = null;
   },
 
   startTour(state, tourDescription) {
@@ -129,8 +127,10 @@ export default {
     router.replace({query});
   },
 
-  setCurrentTab(state, tab) {
-    let query = Object.assign({}, state.route.query, {tab});
-    router.replace({query});
+  setDatasetTab(state, tab) {
+    router.replace({
+      path: `/datasets/${tab.toLowerCase()}`,
+      query: state.route.query,
+    });
   }
 };

@@ -32,10 +32,11 @@
                      :colormapName="colormapName"
                      :opacity="opacity"
                      :imageLoaderSettings="imageLoaderSettings"
-                     :onImageZoom="onImageZoom"
+                     :zoom="imagePosition.zoom"
+                     @zoom-input="onImageZoom"
                      :onImageMove="onImageMove"
                      :acquisitionGeometry="msAcqGeometry"
-                     v-on:opacityInput="newVal => opacity = newVal">
+                     @opacityInput="newVal => opacity = newVal">
           </component>
         </el-collapse-item>
 

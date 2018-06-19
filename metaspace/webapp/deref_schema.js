@@ -1,5 +1,5 @@
 const deref = require('json-schema-deref-sync');
-const mergeWith = require('lodash/mergeWith');
+const {mergeWith} = require('lodash');
 const fs = require('fs');
 const path = require('path');
 const config = require('./src/clientConfig.json');
