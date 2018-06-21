@@ -182,6 +182,20 @@ const configurePasswordlessAuth = (app, knex) => {
 
 const configureJwtMinting = (app, knex) => {
   const jwt = require('jwt-simple');
+
+  function mintJWT(user, expSeconds=60) {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const payload = {
+      'iss': 'METASPACE2020',
+      'sub': user.id,
+      'name': user.name,
+      'email': user.email,
+      'iat': nowSeconds,
+      'exp': expSeconds == null ? undefined : nowSeconds + expSeconds,
+      'role': conf.ADMIN_EMAILS.includes(user.email) ? 'admin' : 'user',
+    };
+    return jwt.encode(payload, conf.JWT_SECRET);
+  }
   // Gives a one-time token, which expires in 60 seconds.
   // (this allows small time discrepancy between different servers)
   // If we want to use longer lifetimes we need to setup HTTPS on all servers.
@@ -206,18 +220,6 @@ const configureJwtMinting = (app, knex) => {
       return;
     }
 
-    function mintJWT(user) {
-      const payload = {
-        'iss': 'METASPACE2020',
-        'sub': user.id,
-        'name': user.name,
-        'email': user.email,
-        'exp': Math.floor(Date.now() / 1000 + 60),
-        'role': conf.ADMIN_EMAILS.includes(user.email) ? 'admin' : 'user',
-      };
-      return jwt.encode(payload, conf.JWT_SECRET);
-    }
-
     if (typeof req.user === 'string') {
       // FIXME: refactor into a middleware
       knex('users').where('id', '=', req.user).first().then(user => {
@@ -225,6 +227,20 @@ const configureJwtMinting = (app, knex) => {
       }).catch(err => res.sendStatus(403));
     } else {
       res.send(mintJWT(req.user));
+    }
+  });
+
+  app.get('/getApiToken', async (req, res, next) => {
+    try {
+      const user = req.user != null && await knex('users').where('id', req.user).first();
+      if (user) {
+        const jwt = mintJWT(user, null);
+        res.send(`Your API token is: ${jwt}`);
+      } else {
+        res.status(401).send("Please log in before accessing this page");
+      }
+    } catch (err) {
+      next(err);
     }
   });
 };
