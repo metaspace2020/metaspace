@@ -52,3 +52,10 @@
 - name: Start EleasticSearch on boot
   become: yes
   service: name=elasticsearch enabled=true
+
+- name: Set global search query timeout
+  uri:
+    url: http://localhost:9200/_cluster/settings
+    method: PUT
+    body_format: json
+    body: '{ "persistent" : { "search.default_search_timeout" : "30s" } }'
