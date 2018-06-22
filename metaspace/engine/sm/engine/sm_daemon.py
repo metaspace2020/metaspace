@@ -72,8 +72,7 @@ class SMDaemon(object):
         submitter = ds_meta.get('Submitted_By', {}).get('Submitter', None)
         return (self._sm_config['services']['send_email']
                 and submitter
-                and 'Email' in submitter
-                and ds_meta['metaspace_options'].get('notify_submitter', True))
+                and 'Email' in submitter)
 
     def _on_success(self, msg):
         if msg['action'] != DatasetAction.DELETE:

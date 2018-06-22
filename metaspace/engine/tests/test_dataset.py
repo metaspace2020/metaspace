@@ -72,7 +72,7 @@ def test_dataset_update_status_works(fill_db, sm_config, ds_config):
 def test_dataset_to_queue_message_works():
     upload_dt = datetime.now()
     ds_id = '2000-01-01'
-    meta = {'Submitted_By': {'Submitter': {'Email': 'user@example.com'}}, 'metaspace_options': {}}
+    meta = {'Submitted_By': {'Submitter': {'Email': 'user@example.com'}}}
     ds = Dataset(ds_id, 'ds_name', 'input_path', upload_dt, meta, ds_config,
                  mol_dbs=['HDMB'], adducts=['+H'])
 
