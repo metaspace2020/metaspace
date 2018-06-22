@@ -86,7 +86,8 @@ class ESIndexManager(object):
             "strings": {
                 "match_mapping_type": "string",
                     "mapping": {
-                        "type": "keyword"}}
+                        "type": "keyword",
+                        "normalizer": "default"}}
         }]
         body = {
             "settings": {
@@ -95,10 +96,13 @@ class ESIndexManager(object):
                     "number_of_replicas": 0,
                     "max_result_window": 2147483647,
                     "analysis": {
-                        "analyzer": {
-                            "analyzer_keyword": {
-                                "tokenizer": "keyword",
-                                "filter": "lowercase"}}}}},
+                        "normalizer": {
+                            "default": {
+                                "type": "custom",
+                                "filter": ["lowercase", "asciifolding"]
+                            }
+                        }
+                    }}},
             "mappings": {
                 "dataset": {
                     "dynamic_templates": dynamic_templates,
@@ -110,9 +114,6 @@ class ESIndexManager(object):
                     "dynamic_templates": dynamic_templates,
                     "properties": {
                         "ds_id": {"type": "keyword"},
-                        "comp_names": {
-                            "type": "text",
-                            "analyzer": "analyzer_keyword"},
                         "chaos": {"type": "float"},
                         "image_corr": {"type": "float"},
                         "pattern_match": {"type": "float"},
