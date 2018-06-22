@@ -24,7 +24,7 @@ def _extract_data(res):
 DEFAULT_CONFIG = {
     'graphql_url': 'http://metaspace2020.eu/graphql',
     'moldb_url': 'http://metaspace2020.eu/mol_db/v1',
-    'jwt': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNRVRBU1BBQ0UyMDIwIiwicm9sZSI6ImFub255bW91cyJ9.Hl0h6crcHLb-SPm7nomXkQco5l2iAO6D1bwdjmOaFXM'
+    'jwt': ''
 }
 
 class GraphQLClient(object):
@@ -92,7 +92,6 @@ class GraphQLClient(object):
         metadataJson
         isPublic
         acquisitionGeometry
-        metadataType
         status
         inputPath
     """
@@ -206,6 +205,26 @@ class GraphQLClient(object):
         variables = {"datasetId": dsid}
         return self.query(query, variables)
 
+    def submitDatasetLocally(self, data_path, metadata, is_public, priority=0, config=None, name=None):
+        if self.jwt == None:
+            raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
+        query = """
+                    mutation customLocalSubmitDataset ($jwt: String!, $path: String! 
+                    $metadataJson: String!, $isPublic: Boolean!, $priority: Int!) {
+                        submitDataset(
+                            jwt: $jwt,
+                            path: $path,
+                            metadataJson: $metadataJson,
+                            isPublic: $isPublic,
+                            priority: $priority
+                        )
+                    }
+                   """
+        variables = {
+            'jwt': self.jwt, 'path': data_path, 'metadataJson': metadata, 'isPublic': is_public, 'priority': priority
+        }
+        return self.query(query, variables)
+
     def submitDataset(self, data_path, metadata, priority=0, dsid=None):
         if self.jwt == None:
             raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
@@ -258,6 +277,29 @@ class GraphQLClient(object):
         variables = {'jwt': self.jwt, 'datasetId': datasetID, 'delRaw': delRaw}
         return self.query(query, variables)
 
+    def updateMetadataQuery(self, dataset_id, metadata, is_public):
+        if self.jwt == None:
+             raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
+
+        query = """
+                mutation updateMetadata($jwt: String!, $datasetId: String!, $metadataJson: String!,
+                        $isPublic: Boolean!) {
+                        updateMetadata(
+                          jwt: $jwt, 
+                          datasetId: $datasetId,  
+                          metadataJson: $metadataJson,
+                          isPublic: $isPublic
+                          )
+                        }
+                """
+        variables = {
+             'jwt': self.jwt,
+             'datasetId': dataset_id,
+             'metadataJson': metadata,
+             'isPublic': is_public,
+        }
+
+        return self.query(query, variables)
 
 class MolDBClient:
     def __init__(self, config):
@@ -403,6 +445,10 @@ class SMDataset(object):
     @property
     def s3dir(self):
         return self._info['inputPath']
+
+    @property
+    def is_public(self):
+        return self._info['isPublic']
 
     def __repr__(self):
         return "SMDataset({} | ID: {})".format(self.name, self.id)
@@ -552,7 +598,7 @@ class SMInstance(object):
         else:
             raise Exception("either name or id must be provided")
 
-    def datasets(self, nameMask='', idMask=''):
+    def datasets(self, nameMask='', idMask=[]):
         if not nameMask == '':
             return [
                 SMDataset(info, self._gqclient)
@@ -733,6 +779,12 @@ class SMInstance(object):
             s3.upload_file(fn, s3bucket, key)
         folder = "s3a://" + s3bucket + "/" + folder_uuid
         return self._gqclient.submitDataset(folder, metadata, priority, dsid=dsid)
+
+    def submit_dataset_locally(self, data_path, metadata, is_public, priority=1, **kwargs):
+        return self._gqclient.submitDatasetLocally(data_path, metadata, is_public, priority, **kwargs)
+
+    def update_dataset(self, datasetID, metadata, isPublic, **kwargs):
+        return self._gqclient.updateMetadataQuery(datasetID, metadata, isPublic, **kwargs)
 
     def delete_dataset(self, dsid, **kwargs):
         return self._gqclient.deleteDataset(dsid, **kwargs)
