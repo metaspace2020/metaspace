@@ -15,16 +15,18 @@ def _extract_data(res):
     if not res.headers.get('Content-Type').startswith('application/json'):
         raise Exception(res.text)
     res_json = res.json()
+    if 'errors' in res_json:
+        raise Exception('Server returned an error" "{}"'.format(res_json['errors']))
     if 'data' in res_json:
         return res.json()['data']
     else:
         raise Exception(res.json()['errors'][0]['message'])
 
-
+#jwt for anonymous access
 DEFAULT_CONFIG = {
     'graphql_url': 'http://metaspace2020.eu/graphql',
     'moldb_url': 'http://metaspace2020.eu/mol_db/v1',
-    'jwt': ''
+    'jwt': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNRVRBU1BBQ0UyMDIwIiwicm9sZSI6ImFub255bW91cyJ9.Hl0h6crcHLb-SPm7nomXkQco5l2iAO6D1bwdjmOaFXM'
 }
 
 class GraphQLClient(object):
@@ -230,7 +232,7 @@ class GraphQLClient(object):
             raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
         query = """
                         mutation customSubmitDataset ($jwt: String!, $path: String!, 
-                        $metadata: String!, $priority: Int, $datasetId: String) {
+                                        $metadata: String!, $priority: Int, $datasetId: String) {
                               submitDataset(
                                 jwt: $jwt,
                                 path: $path,
@@ -248,7 +250,8 @@ class GraphQLClient(object):
                         path: $path,
                         metadataJson: $metadata,
                         priority: $priority,
-                        datasetId: $datasetId
+                        datasetId: $datasetId,
+                        delFirst: true,
                       )
                  }
                 """
