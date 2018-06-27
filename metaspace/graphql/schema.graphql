@@ -317,7 +317,8 @@ type Query {
 type Mutation {
   submitDataset(input: DatasetSubmitInput!, priority: Int=0, delFirst: Boolean=false): String!
 
-  resubmitDataset(input: DatasetSubmitInput!, priority: Int=0, delFirst: Boolean=false): String!
+  # for dev purposes only
+  resubmitDataset(datasetId: String, priority: Int=0, delFirst: Boolean=false): String!
 
   # TODO: consider renaming to updateDataset
   updateMetadata(input: DatasetUpdateInput!, priority: Int=0): String!

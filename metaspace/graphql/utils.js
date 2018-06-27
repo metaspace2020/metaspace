@@ -220,7 +220,8 @@ async function fetchDS({id, name}) {
     metadataJson: JSON.stringify(ds.metadata),
     config: ds.config,
     isPublic: ds.is_public,
-    molDBs: ds.mol_dbs
+    molDBs: ds.mol_dbs,
+    adducts: ds.adducts
   };
 }
 

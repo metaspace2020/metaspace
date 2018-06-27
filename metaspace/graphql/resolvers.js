@@ -460,14 +460,10 @@ const Resolvers = {
 
   Mutation: {
     resubmitDataset: async (_, args, {user}) => {
-      const {input, priority, delFirst} = args;
-      const ds = await fetchDS({id: input.id});
+      const {datasetId, priority, delFirst} = args;
+      const ds = await fetchDS({id: datasetId});
       if (ds === undefined)
         throw new UserError('DS does not exist');
-
-      if (input.metadataJson !== undefined)
-        input.metadata = JSON.parse(input.metadataJson);
-      lodash.extend(ds, input);
       return DSMutation.submit({input: ds, priority: priority, delFirst: delFirst}, user);
     },
 
