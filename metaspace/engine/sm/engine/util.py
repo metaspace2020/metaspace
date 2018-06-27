@@ -5,6 +5,8 @@ from subprocess import check_call, call
 import logging
 from logging.config import dictConfig
 from pathlib import Path
+import re
+from fnmatch import translate
 
 from sm.engine import Dataset
 
@@ -90,7 +92,7 @@ class SMConfig(object):
             SM configuration for handling specific type of MS data
         """
         conf = cls.get_conf()
-        ms_file_extension = Path(ms_file_path).suffix[1:]  # skip the leading "."
+        ms_file_extension = Path(ms_file_path).suffix[1:].lower()  # skip the leading "."
         return next((h for h in conf['ms_file_handlers'] if ms_file_extension in h['extensions']), None)
 
 
@@ -128,7 +130,9 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
         metadata = {}
     ds_config = json.load(open(str(base_dir / 'config.json')))
 
-    imzml_path = next(base_dir.glob('*.imzML'))
+    regexp = re.compile(translate('*.imzML'), re.IGNORECASE)
+    imzml_path = [f for f in base_dir.glob('*')
+                  if re.match(regexp, str(f))][0]
     ms_file_type_config = SMConfig.get_ms_file_handler(str(imzml_path))
     img_storage_type = ms_file_type_config['img_storage_type']
     return Dataset(ds_id, ds_name, str(ds_input_path), datetime.now(), metadata, ds_config,
