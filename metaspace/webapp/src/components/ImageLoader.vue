@@ -1,13 +1,12 @@
 <template>
   <div class="image-loader"
-       :style="hideImage"
        v-loading="isLoading"
        ref="parent"
        v-resize.debounce.50="onResize"
        :element-loading-text="message">
 
     <div class="image-loader__container" ref="container" style="align-self: center">
-      <div style="text-align: left; z-index: 2; position: relative">
+      <div style="text-align: left; z-index: 2; position: relative;">
         <img :src="dataURI"
              :style="imageStyle"
              @click="onClick"
@@ -23,6 +22,9 @@
       </div>
     </div>
 
+    <div ref="mapOverlap" class="blackRect" :style="hideMessage">
+      <p class="span"> To zoom into/out the image {{messageOS}}</p>
+    </div>
     <canvas ref="canvas" style="display:none;"></canvas>
   </div>
 </template>
@@ -30,7 +32,7 @@
 <script>
  // uses loading directive from Element-UI
 
- import {scrollDistance} from '../util';
+ import {scrollDistance, getOS} from '../util';
  import createColormap from '../lib/createColormap';
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
@@ -86,7 +88,7 @@
        type: String,
        default: ''
      },
-     halfWidth: {
+     scrollBlock: {
        type: Boolean,
        default: false
      }
@@ -124,15 +126,28 @@
    mounted: function() {
      this.parentDivWidth = this.$refs.parent.clientWidth;
      this.$refs.visibleImage.addEventListener('mousedown', this.onMouseDown);
+     this.$refs.visibleImage.addEventListener('wheel', this.onWheel);
      window.addEventListener('resize', this.onResize);
    },
    beforeDestroy: function() {
      window.removeEventListener('resize', this.onResize);
    },
    computed: {
-     hideImage() {
-       if (this.halfWidth) {
-         return 'overflow: hidden;'
+     messageOS() {
+       if (getOS() === 'Linux' || getOS() === 'Windows' || getOS() === '') {
+         return 'hold CTRL and scroll'
+       }
+       else if (getOS() === 'Mac OS') {
+         return 'hold CMD ⌘ and scroll'
+       }
+       else if (getOS() === 'Android' || getOS() === 'iOS') {
+         return 'use two fingers'
+       }
+     },
+
+     hideMessage() {
+       if (!this.scrollBlock) {
+         return 'display: none'
        }
      },
 
@@ -144,19 +159,13 @@
                dx = this.xOffset * this.scaleFactor * this.zoom,
                dy = this.yOffset * this.scaleFactor * this.zoom,
                transform = `scale(${this.zoom}, ${this.zoom})` +
-                   `translate(${-dx / this.zoom}px, ${-dy / this.zoom}px)`,
-               clipPathOffsets = [dy, (width * (this.zoom - 1) - dx), (height * (this.zoom - 1) - dy), dx];
-
-         let clipPath = null;
-         if (dx != 0 || dy != 0 || this.zoom != 1)
-           clipPath = 'inset(' + clipPathOffsets.map(x => x / this.zoom + 'px').join(' ') + ')';
+                   `translate(${-dx / this.zoom}px, ${-dy / this.zoom}px)`
 
          return {
            'width': width + 'px',
            'height': height + 'px',
-            transform: transform + ' ' + this.transform,
-           'transform-origin': this.halfWidth ? '50% 50% 0' : '0 0',
-           'clipPath': this.halfWidth ? '' : clipPath,
+           transform: transform + ' ' + this.transform,
+           'transform-origin': '0 0'
          };
        } else // LC-MS data (1 x number of time points)
        return {
@@ -201,6 +210,40 @@
          this.updateDimensions();
        });
      },
+
+
+     onWheel(event) {
+       let el = this.$refs.mapOverlap;
+       console.log( event.touches)
+
+       // TODO: add pinch event handling for mobile devices
+       if (event.ctrlKey || event.metaKey) {
+         event.preventDefault();
+         const sY = scrollDistance(event);
+
+         const newZoom = Math.max(1, this.zoom - sY / 10.0);
+         const rect = event.target.getBoundingClientRect(),
+             x = (event.clientX - rect.left) / this.scaleFactor / this.zoom,
+             y = (event.clientY - rect.top) / this.scaleFactor / this.zoom,
+             xOffset = -(this.zoom / newZoom - 1) * x + this.zoom / newZoom * this.xOffset,
+             yOffset = -(this.zoom / newZoom - 1) * y + this.zoom / newZoom * this.yOffset;
+
+         this.$emit('zoom', {zoom: newZoom});
+         this.$emit('move', {xOffset, yOffset});
+       }
+       else if (event.deltaY) {
+         el.classList.add("fadeIn");
+         setTimeout(function() {
+           el.classList.add("fadeOut");
+           setTimeout(function () {
+             el.classList.remove("fadeIn");
+             el.classList.remove("fadeOut");
+           }, 1);
+           console.log('done')
+         }, 1100);
+       }
+     },
+
 
      onMouseDown(event) {
        event.preventDefault();
@@ -289,6 +332,7 @@
 
        this.grayscaleData = grayscaleData;
      },
+
 
      redraw () {
        this.isLCMS = this.image.height == 1;
@@ -411,9 +455,43 @@
    cursor: -webkit-grab;
    cursor: grab;
    width: 100%;
+   height: 100%;
    line-height: 0px;
    display: flex;
    flex-direction: column;
    align-self: center;
  }
+
+  .blackRect {
+    pointer-events: none;
+    background-color: black;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    opacity: 0;
+    transition: 0.2s;
+    z-index: 3;
+  }
+
+  .fadeIn {
+   background-color: black;
+   opacity: 0.6;
+   transition: 0.7s;
+  }
+
+  .fadeOut {
+    background-color: #fff;
+    opacity: 0;
+    transition: 1.1s;
+  }
+
+  .span {
+    font: 24px 'Roboto', sans-serif;
+    display: inline-block;
+    line-height: 500px;
+    z-index: 4;
+    color: #fff;
+    padding: auto;
+  }
+
 </style>

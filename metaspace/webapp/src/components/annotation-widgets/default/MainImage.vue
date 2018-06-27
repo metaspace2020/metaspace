@@ -5,8 +5,10 @@
                       :colormap="colormap"
                       :max-height=500
                       ref="imageLoader"
-                      half-width
+                      scrollBlock
+                      style="overflow: hidden"
                       v-bind="imageLoaderSettings"
+                      @zoom="onImageZoom"
                       @move="onImageMove">
         </image-loader>
 
@@ -41,19 +43,6 @@
             </div>
         </div>
     </div>
-    <div class="main-ion-image-container-row2">
-        Zoom:
-        <el-slider
-            width="100%"
-            label="Zoom"
-            :value="zoomVal"
-            @input="onZoomInput"
-            :min=1
-            :max=10
-            :step="0.1"
-            style="margin: 0">
-        </el-slider>
-    </div>
 </div>
 </template>
 
@@ -83,17 +72,14 @@ export default class MainImage extends Vue {
     @Prop({required: true, type: String})
     colormapName!: string
     @Prop({required: true, type: Number})
-    zoom!: number
-    @Prop({required: true, type: Number})
     opacity!: number
     @Prop({required: true})
     imageLoaderSettings!: any
     @Prop({required: true, type: Function})
     onImageMove!: Function
+    @Prop({required: true, type: Function})
+    onImageZoom!: Function
 
-    get zoomVal(): number {
-      return this.zoom
-    }
 
     get colorbarDirection(): string {
       return this.colormap[0] == '-' ? 'bottom' : 'top';
@@ -101,7 +87,7 @@ export default class MainImage extends Vue {
 
     saveImage(event: any): void {
       let node = this.$refs.imageLoader.getParent(),
-          {imgWidth, imgHeight} = this.$refs.imageLoader.getScaledImageSize();
+        {imgWidth, imgHeight} = this.$refs.imageLoader.getScaledImageSize();
 
       domtoimage
         .toBlob(node, {
@@ -113,16 +99,12 @@ export default class MainImage extends Vue {
         })
     }
 
-    get browserSupportsDomToImage(): boolean {
+  get browserSupportsDomToImage(): boolean {
       return window.navigator.userAgent.includes('Chrome');
     }
 
     onOpacityInput(val: number): void {
       this.$emit('opacityInput', val);
-    }
-
-    onZoomInput(val: number): void {
-      this.$emit('zoom-input', val)
     }
 }
 </script>
