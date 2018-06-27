@@ -10,6 +10,8 @@
         <img :src="dataURI"
              :style="imageStyle"
              @click="onClick"
+             @wheel="onWheel"
+             @mousedown="onMouseDown"
              ref="visibleImage"
              class="isotope-image"/>
       </div>
@@ -22,8 +24,10 @@
       </div>
     </div>
 
-    <div ref="mapOverlap" class="blackRect" :style="hideMessage">
-      <p class="span"> To zoom into/out the image {{messageOS}}</p>
+    <div ref="mapOverlap"
+         :class="{'image-loader__overlay': overlayDefault, 'image-loader__overlay--visible': overlayFadingIn}"
+         v-show="scrollBlock">
+      <p class="image-loader__overlay--text">Use {{messageOS}} + scroll wheel to zoom the image</p>
     </div>
     <canvas ref="canvas" style="display:none;"></canvas>
   </div>
@@ -113,7 +117,9 @@
        dragStartY: 0,
        dragXOffset: 0, // starting position
        dragYOffset: 0,
-       dragThrottled: false
+       dragThrottled: false,
+       overlayDefault: true,
+       overlayFadingIn: false
      }
    },
    created() {
@@ -125,8 +131,6 @@
    },
    mounted: function() {
      this.parentDivWidth = this.$refs.parent.clientWidth;
-     this.$refs.visibleImage.addEventListener('mousedown', this.onMouseDown);
-     this.$refs.visibleImage.addEventListener('wheel', this.onWheel);
      window.addEventListener('resize', this.onResize);
    },
    beforeDestroy: function() {
@@ -134,20 +138,16 @@
    },
    computed: {
      messageOS() {
-       if (getOS() === 'Linux' || getOS() === 'Windows' || getOS() === '') {
-         return 'hold CTRL and scroll'
-       }
-       else if (getOS() === 'Mac OS') {
-         return 'hold CMD ⌘ and scroll'
-       }
-       else if (getOS() === 'Android' || getOS() === 'iOS') {
-         return 'use two fingers'
-       }
-     },
+       let os = getOS();
 
-     hideMessage() {
-       if (!this.scrollBlock) {
-         return 'display: none'
+       if (os === 'Linux' || os === 'Windows') {
+         return 'CTRL'
+       } else if (os === 'Mac OS') {
+         return 'CMD ⌘'
+       } else if (os === 'Android' || os === 'iOS') {
+         return 'two fingers'
+       } else {
+         return 'CTRL'
        }
      },
 
@@ -213,9 +213,8 @@
 
 
      onWheel(event) {
-       let el = this.$refs.mapOverlap;
-
-       // TODO: add pinch event handling for mobile devices
+       let tmId = 0;
+       // TODO: add pinch event handler for mobile devices
        if (event.ctrlKey || event.metaKey) {
          event.preventDefault();
          const sY = scrollDistance(event);
@@ -231,13 +230,10 @@
          this.$emit('move', {xOffset, yOffset});
        }
        else if (event.deltaY) {
-         el.classList.add("fadeIn");
-         setTimeout(function() {
-           el.classList.add("fadeOut");
-           setTimeout(function () {
-             el.classList.remove("fadeIn");
-             el.classList.remove("fadeOut");
-           }, 1);
+         this.overlayFadingIn = true;
+         clearTimeout(tmId);
+         tmId = setTimeout(() => {
+           this.overlayFadingIn = false;
          }, 1100);
        }
      },
@@ -460,36 +456,30 @@
    align-self: center;
  }
 
-  .blackRect {
-    pointer-events: none;
-    background-color: black;
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    opacity: 0;
-    transition: 0.2s;
-    z-index: 3;
-  }
+ .image-loader__overlay--text {
+   font: 24px 'Roboto', sans-serif;
+   display: inline-block;
+   line-height: 500px;
+   z-index: 4;
+   color: #fff;
+   padding: auto;
+ }
 
-  .fadeIn {
-   background-color: black;
-   opacity: 0.6;
-   transition: 0.7s;
-  }
+ .image-loader__overlay {
+  pointer-events: none;
+  background-color: #fff;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  opacity: 0;
+  transition: 1.1s;
+  z-index: 3;
+ }
 
-  .fadeOut {
-    background-color: #fff;
-    opacity: 0;
-    transition: 1.1s;
-  }
-
-  .span {
-    font: 24px 'Roboto', sans-serif;
-    display: inline-block;
-    line-height: 500px;
-    z-index: 4;
-    color: #fff;
-    padding: auto;
-  }
+ .image-loader__overlay--visible {
+  background-color: black;
+  opacity: 0.6;
+  transition: 0.7s;
+ }
 
 </style>
