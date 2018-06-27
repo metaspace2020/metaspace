@@ -10,7 +10,7 @@
 
 <script>
  import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
- import {resubmitDatasetQuery} from '../api/dataset';
+ import {submitDatasetQuery} from '../api/dataset';
  import {updateMetadataQuery} from '../api/metadata';
 
  export default {
@@ -125,7 +125,7 @@
 
      async updateOrResubmit(datasetId, metadataJson, metaspaceOptions, resubmit, delFirst) {
        return await this.$apollo.mutate({
-         mutation: resubmit ? resubmitDatasetQuery : updateMetadataQuery,
+         mutation: resubmit ? submitDatasetQuery : updateMetadataQuery,
          variables: {
            input: {
              id: datasetId,
