@@ -214,7 +214,6 @@
 
      onWheel(event) {
        let el = this.$refs.mapOverlap;
-       console.log( event.touches)
 
        // TODO: add pinch event handling for mobile devices
        if (event.ctrlKey || event.metaKey) {
@@ -239,7 +238,6 @@
              el.classList.remove("fadeIn");
              el.classList.remove("fadeOut");
            }, 1);
-           console.log('done')
          }, 1100);
        }
      },
