@@ -30,17 +30,19 @@
     "s3_base_path": ""
   },
   "spark": {
-    "master": "local[1]",
-    "executor.memory": "2g"
+    "master": "local[4]",
+    "executor.memory": "2g",
+    "spark.sql.execution.arrow.enabled": true
   },
   "aws": {
     "aws_access_key_id": "",
     "aws_secret_access_key": "",
     "aws_region": "eu-west-1"
   },
+  "slack": {},
   "ms_file_handlers": [{
       "type": "ims",
-      "extensions": ["imzML", "ibd"],
+      "extensions": ["imzml", "ibd"],
       "parser_factory": {
         "name": "ImzMLParser",
         "path": "pyimzml.ImzMLParser"
@@ -52,7 +54,7 @@
       "img_storage_type": "fs"
     }, {
       "type": "lcms",
-      "extensions": ["mzML"],
+      "extensions": ["mzml"],
       "parser_factory": {
         "name": "MzMLParser",
         "path": "sm.engine.mzml_parser"
