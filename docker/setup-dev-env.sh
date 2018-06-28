@@ -1,13 +1,12 @@
-if [ ! -f .env ]; then
-  cp .env.example .env
-fi
+# set up .env file
+cp -n .env.example .env
 
-# copy docker configs from into projects
-cp -r sm-mol-db/conf/* ../metaspace/mol-db/conf/
-cp -r sm-engine/conf/* ../metaspace/engine/conf/
-cp -r sm-graphql/config/* ../metaspace/graphql/config/
-cp sm-webapp/config/conf.js ../metaspace/webapp/
-cp sm-webapp/config/clientConfig.json ../metaspace/webapp/src/
+# copy docker configs into projects if needed
+cp -nr sm-mol-db/conf/* ../metaspace/mol-db/conf/
+cp -nr sm-engine/conf/* ../metaspace/engine/conf/
+cp -nr sm-graphql/config/* ../metaspace/graphql/config/
+cp -n sm-webapp/config/conf.js ../metaspace/webapp/
+cp -n sm-webapp/config/clientConfig.json ../metaspace/webapp/src/
 
 # set up molecular DB
 docker-compose run --rm sm-mol-db /install-dbs.sh
