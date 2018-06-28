@@ -14,12 +14,13 @@
     <el-autocomplete
       v-if="type === 'autocomplete'"
       class="md-ac"
+      :popper-class="wideAutocomplete ? 'md-ac-popper--wide' : ''"
       @input="onInput"
       :value="value"
       :required="required"
       :placeholder="placeholder"
       :trigger-on-focus="true"
-      :fetch-suggestions="fetchSuggestions"
+      :fetch-suggestions="fetchSuggestionsAndTestWidth"
     />
 
     <el-input
@@ -96,6 +97,7 @@
   import PersonInput from './PersonInput.vue';
   import DetectorResolvingPowerInput from './DetectorResolvingPowerInput.vue';
   import { Component, Prop } from 'vue-property-decorator';
+  import { FetchSuggestions, FetchSuggestionsCallback } from 'element-ui/types/autocomplete';
 
   @Component({
     components: {
@@ -124,11 +126,23 @@
     @Prop(String)
     placeholder?: String;
     @Prop(Function)
-    fetchSuggestions!: Function;
+    fetchSuggestions!: FetchSuggestions;
+
+    wideAutocomplete = false;
 
     onInput(val: any) {
       this.$emit('input', val);
     }
+
+    fetchSuggestionsAndTestWidth(queryString: string, callback: FetchSuggestionsCallback) {
+      const CHARS_BREAKPOINT = 26;
+      this.fetchSuggestions(queryString, results => {
+        this.wideAutocomplete = Array.isArray(results)
+          && results.some(result => result && result.value && result.value.length && result.value.length >= CHARS_BREAKPOINT);
+        callback(results);
+      })
+    }
+
   }
 </script>
 
@@ -154,6 +168,10 @@
 
   .md-ac {
     width: 100%;
+  }
+
+  .md-ac-popper--wide {
+    min-width: 400px;
   }
 
   .field-label-help {
