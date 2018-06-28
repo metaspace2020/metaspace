@@ -1,0 +1,32 @@
+name: sm_engine
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.4
+  - nomkl
+  - numpy=1.11
+  - scipy=0.17
+  - pandas=0.19.2
+  - cffi
+  - cryptography
+  - lxml
+  - libgcc
+  - psycopg2=2.6.1
+  - pytest
+  - pip:
+    - Fabric3
+    - requests
+    - mock
+    - py4j
+    - tornado
+    - tornpsql
+    - recommonmark
+    - boto3
+    - networkx
+    - pyyaml
+    - elasticsearch
+    - elasticsearch_dsl
+    - pika>=0.11.0b1
+    - coverage
+    - coveralls
+    - pypng

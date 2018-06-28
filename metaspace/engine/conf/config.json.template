@@ -1,0 +1,48 @@
+{
+  "db": {
+    "host": "{{ sm_postgres_host }}",
+    "database": "sm",
+    "user": "sm",
+    "password": "{{ sm_postgres_password }}"
+  },
+  "elasticsearch": {
+    "index": "sm",
+    "host": "{{ sm_es_host }}",
+    "port": "{{ sm_es_port }}",
+    "user": "{{ sm_es_user }}",
+    "password": "{{ sm_es_password }}"
+  },
+  "services": {
+    "img_service_url": "{{ sm_img_service_url }}",
+    "mol_db": "{{ mol_db_url }}",
+    "web_app_url": "{{ sm_webapp_url }}",
+    "send_email": {{ sm_send_email | to_json }}
+  },
+  "rabbitmq": {
+    "host": "{{ rabbitmq_host }}",
+    "user": "sm",
+    "password": "{{ rabbitmq_password }}"
+  },
+  "fs": {
+    "base_path": "/opt/data/sm_data",
+    "s3_base_path": "{{ sm_s3_path }}"
+  },
+  "spark": {
+    "master": "{{ spark_master_host | default('local[*]') }}",
+    "spark.executor.memory": "2g",
+    "spark.driver.memory": "4g",
+    "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
+    "spark.kryoserializer.buffer.max": "128m",
+    "spark.python.worker.memory": "512m",
+    "spark.rdd.compress": true,
+    "spark.ui.showConsoleProgress": false
+  },
+  "aws": {
+    "aws_access_key_id": "{{ aws_access_key_id }}",
+    "aws_secret_access_key": "{{ aws_secret_access_key }}"
+  },
+  "slack": {
+    "channel": "{{ slack_channel }}",
+    "webhook_url": "{{ slack_webhook_url }}"
+  }
+}
