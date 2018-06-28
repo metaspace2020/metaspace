@@ -14,7 +14,7 @@ The METASPACE platform is developed by software engineers, data scientists and
 ## Projects
 
 | Project | Description |
-| --- | :--- |
+| :--- | :--- |
 | [engine](metaspace/engine) | Contains a daemon that runs the metabolite annotation engine, and a REST API for sending jobs to the daemon |
 | [graphql](metaspace/graphql) | A GraphQL API for accessing the annotations database and metabolite annotation engine |
 | [webapp](metaspace/webapp) | A web application for submitting datasets and browsing results |
