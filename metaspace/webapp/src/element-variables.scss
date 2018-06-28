@@ -1,0 +1,26 @@
+$--color-primary: rgb(0, 105, 224);
+
+/* icon font path, required */
+$--font-path: '../node_modules/element-ui/lib/theme-chalk/fonts';
+
+$--table-header-color: #333;
+$--collapse-header-height: 40px;
+
+@import "../node_modules/element-ui/packages/theme-chalk/src/index";
+
+@include b(collapse-item) {
+  @include e(header) {
+    padding-left: 10px;
+    @include e(arrow) {
+      line-height: 40px;
+      float: left;
+      margin-left: 8px;
+    }
+  }
+
+  @include when(active) {
+    @include e(header) {
+      background-color: $--color-primary-light-9;
+    }
+  }
+}
