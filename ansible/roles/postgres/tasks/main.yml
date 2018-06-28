@@ -1,0 +1,43 @@
+---
+
+- name: Install postgres
+  apt: name={{ item }} state=present
+  with_items:
+    - postgresql-{{ postgres_version }}
+    - postgresql-contrib-{{ postgres_version }}
+    - libpq-dev
+
+- name: Create postgres user
+  user: name=postgres shell=/bin/bash
+
+- import_tasks: drop_create.yml
+  when: postgres_drop_create
+
+- name: Replace postgres config file pg_hba.conf
+  copy: src=pg_hba.conf dest=/etc/postgresql/{{ postgres_version }}/main/pg_hba.conf owner=postgres group=postgres mode="u=rw,g=r"
+  notify:
+    - pg_conf_update
+
+- name: Make postgres listen to any ip address
+  lineinfile:
+    dest: /etc/postgresql/{{ postgres_version }}/main/postgresql.conf
+    regexp: 'listen_addresses = '
+    line: "listen_addresses = '*'"
+  notify:
+    - pg_conf_update
+
+- name: Specify the postgres port
+  lineinfile:
+    dest: /etc/postgresql/{{ postgres_version }}/main/postgresql.conf
+    regexp: 'port ='
+    line: "port = {{ postgres_port }}"
+  notify:
+    - pg_conf_update
+
+- meta: flush_handlers
+
+- name: Start postgres server
+  service: name=postgresql state=started
+
+- name: Start postgres server on reboot
+  service: name=postgresql enabled=yes

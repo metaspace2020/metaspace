@@ -1,0 +1,11 @@
+---
+
+- hosts: all
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: Test jinja2template
+      template:
+        src: ../roles/nginx/templates/sites-available-default.j2
+        dest: sites-available-default

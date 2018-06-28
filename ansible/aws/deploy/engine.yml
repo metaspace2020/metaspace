@@ -1,0 +1,57 @@
+---
+
+- name: Gather AWS web instance facts
+  hosts: web
+  user: ubuntu
+  tasks:
+    - action: ec2_metadata_facts
+  tags: [always]
+
+
+- name: Deploying SM engine code to the slaves
+  hosts: slave
+  user: ubuntu
+  gather_facts: false
+
+  tasks:
+    - import_tasks: ../../deploy_tasks/sm_engine.yml
+  tags: [slave]
+
+
+- name: Deploying SM engine code to the master
+  hosts: master
+  user: ubuntu
+  gather_facts: true
+
+  vars:
+    spark_master_host: "spark://{{ ansible_hostname }}.{{ aws_region }}.compute.internal:7077"
+    sm_web_app_url: "{{ sm_webapp_url }}"
+    es_host: "{{ sm_es_host }}"
+    es_port: "{{ sm_es_port }}"
+    es_user: "{{ sm_es_user }}"
+    es_password: "{{ sm_es_password }}"
+
+  tasks:
+    - import_tasks: ../../deploy_tasks/sm_engine.yml
+
+    - name: Pull SM config from the remote host
+      fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
+             flat=yes fail_on_missing=yes
+
+    - name: "Put SM config to {{ sm_home }}/conf/config.json"
+      template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
+                owner={{ spark_user }} group={{ spark_user }} mode=0600
+
+    - name: Remove old logs
+      file: path="{{ sm_home }}/logs" state=absent
+
+    - name: Create folder for logs
+      file: path="{{ sm_home }}/logs" state=directory
+
+    - name: Restart Filebeat to avoid issues with old logs
+      become: yes
+      systemd: name=filebeat state=restarted
+      when: elk_enable
+
+    - import_tasks: ../../restart_supervisor.yml supervisor_app=sm-daemon
+  tags: [master]

@@ -1,0 +1,23 @@
+---
+
+- name: Install pip
+  become: yes
+  apt: name=python-pip state=present
+
+- name: Install supervisor into system python site
+  become: yes
+  pip: name=supervisor state=latest
+
+- name: Create config/log directory for supervisor
+  become: yes
+  file: path={{ item }} state=directory mode=0700 owner=ubuntu group=ubuntu
+  with_items:
+    - /etc/supervisor
+    - /var/log/supervisor
+
+- name: Copy supervisor config file
+  copy: src=supervisord.conf dest=/etc/supervisor/supervisord.conf mode=0600 owner=ubuntu group=ubuntu
+
+- name: Make sure that a directory for the logs exists
+  become: yes
+  file: path={{ supervisor_log_dir }} state=directory mode=0755 owner=ubuntu group=ubuntu

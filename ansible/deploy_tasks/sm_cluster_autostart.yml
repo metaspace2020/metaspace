@@ -1,0 +1,44 @@
+---
+
+- name: Git clone sm-engine-ansible
+  git:
+    dest: "{{ sm_ansible_home }}"
+    repo: "{{ sm_ansible_url }}"
+    update: yes
+    force: yes
+    version: "{{ sm_ansible_branch }}"
+  when: local_deploy is not defined
+  register: git_deploy
+  until: git_deploy | succeeded
+
+- name: Upload local files
+  synchronize:
+    src: "{{ sm_ansible_home }}/"
+    dest: "{{ sm_ansible_home }}/"
+    rsync_opts:
+      - "--exclude=.*"
+  when: local_deploy is defined
+
+- name: Make sure a folder for the config file exists
+  file: path={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/ state=directory mode=0755
+
+- name: Upload group_vars/all.yml with variables resolved
+  template: src=../{{ stage }}/group_vars/all.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all.yml
+            owner=ubuntu group=ubuntu mode=0600
+
+- name: Load variables for ELK and Filebeat
+  include_vars:
+    file: elk-vars.yml
+  when: elk_enable
+
+- name: Upload group_vars/elk-vars.yml with variables resolved
+  template: src=../{{ stage }}/group_vars/elk-vars.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/elk-vars.yml
+            owner=ubuntu group=ubuntu mode=0600
+  when: elk_enable
+
+- name: Update the inventory file
+  command: "{{ sm_cluster_autostart_python }} update_inventory.py --stage {{ stage }}"
+  args:
+    chdir: "{{ sm_ansible_home }}/aws"
+
+- import_tasks: ../../restart_supervisor.yml  supervisor_app=sm-cluster-autostart
