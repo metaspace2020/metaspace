@@ -1,4 +1,0 @@
-- SM webapp:
-  - users can't login at all, we can introduce local mode with a single always logged-in admin
-  - configure storage (default is /tmp/ which might not have enough disk space)
-    - hardcoded paths in fineuploaderlocalmiddleware and src/util.js need to be taken from configs
