@@ -98,7 +98,7 @@
         "console_warn": {
             "class": "logging.StreamHandler",
             "formatter": "sm",
-            "level": "DEBUG"
+            "level": "WARNING"
         },
         "console_debug": {
             "class": "logging.StreamHandler",
