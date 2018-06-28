@@ -1,0 +1,27 @@
+---
+
+#- name: Unmount instance volumes
+#  become: yes
+#  shell: umount /dev/xvd{{ item }}
+#  with_items: "{{ block_dev_labels }}"
+#  ignore_errors: yes
+#
+#- name: Format file systems on instance volumes
+#  become: yes
+#  command: mkfs /dev/xvd{{ item }}
+#  with_items: "{{ block_dev_labels }}"
+#
+#- name: Create mounting points for instance volumes
+#  become: yes
+#  file: dest=/mnt{{ item }} state=directory owner=ubuntu group=ubuntu mode=0777
+#  with_items: "{{ block_dev_labels }}"
+#
+#- name: Mount instance volumes
+#  become: yes
+#  mount: name=/mnt{{ item }} src=/dev/xvd{{ item }} fstype=ext4 state=present
+#  with_items: "{{ block_dev_labels }}"
+
+
+#- name: Put SPARK_HOME into update sm-env.sh scripts
+#  template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
+

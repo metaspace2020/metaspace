@@ -1,0 +1,55 @@
+---
+
+- name: Collect the Spark master facts for creating an AMI
+  hosts: master
+  user: ubuntu
+
+  tasks:
+    - name: Gather AWS instance facts
+      action: ec2_metadata_facts
+
+
+- name: Collect the Spark slave facts for creating an AMI
+  hosts: slave
+  user: ubuntu
+
+  tasks:
+    - name: Gather AWS instance facts
+      action: ec2_metadata_facts
+  tags: [always]
+
+
+- name: Create new Spark master and slave AMIs
+  hosts: localhost
+
+  vars:
+    master_hostgroup: "{{ cluster_configuration.instances.master.hostgroup }}"
+    slave_hostgroup: "{{ cluster_configuration.instances.slave.hostgroup }}"
+
+  tasks:
+    - debug: var=ansible_date_time.iso8601
+    - debug: var=hostvars['master-1'].ansible_ec2_instance_id
+    - debug: var=hostvars['slave-1'].ansible_ec2_instance_id
+
+    - name: Create a master AMI
+      ec2_ami:
+        name: "{{ master_hostgroup }}-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}"
+        instance_id: "{{ hostvars['master-1'].ansible_ec2_instance_id }}"
+        tags: {"hostgroup": "{{ master_hostgroup }}" }
+        region: "{{ aws_region }}"
+        wait: yes
+      register: instance
+
+    - debug: var=instance
+
+    - name: Create a slave AMI
+      ec2_ami:
+        name: "{{ slave_hostgroup }}-{{ ansible_date_time.iso8601 | regex_replace(':', '-')  }}"
+        instance_id: "{{ hostvars['slave-1'].ansible_ec2_instance_id }}"
+        tags: {"hostgroup": "{{ slave_hostgroup }}" }
+        region: "{{ aws_region }}"
+        wait: yes
+      register: instance
+      tags: [slave]
+
+    - debug: var=instance
