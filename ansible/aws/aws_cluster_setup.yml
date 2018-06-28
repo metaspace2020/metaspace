@@ -1,0 +1,45 @@
+---
+
+- name: SM spark master initial setup (slaves file update)
+  hosts: master
+  user: ubuntu
+  gather_facts: true
+
+  vars:
+    spark_master_host: "spark://{{ ansible_hostname }}:7077"
+    spark_slave_ips: []
+
+  tasks:
+    - name: Create a list of private ip addresses for the slave instances
+      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
+      with_items: "{{ groups['slave'] }}"
+
+    - name: Put slave ip addresses into the slaves file
+      become: yes
+      template: src=../roles/spark_master/templates/slaves.j2 dest="{{ spark_home }}/conf/slaves"
+                owner=ubuntu group=ubuntu mode=0664
+
+    - name: Start the master daemon
+      command: "{{ spark_home }}/sbin/start-master.sh"
+      register: command_result
+      changed_when: not ('Stop it first' in command_result.stdout)
+      failed_when: ('timed out' in command_result.stdout)
+
+    - debug: var=command_result
+
+    - name: Wait for the master daemon to start up
+      wait_for: host={{ ansible_ssh_host }} port=8080 delay=5 timeout=120
+
+    - name: Start the slave daemons
+      command: "{{ spark_home }}/sbin/start-slaves.sh"
+#      when: not ('localhost' in spark_slave_ips)
+      register: command_result
+      changed_when: not ('Stop it first' in command_result.stdout)
+      failed_when: ('timed out' in command_result.stdout)
+
+    - debug: var=command_result
+
+    - name: Wait for the slave daemons to start up
+      wait_for: host={{ item }} port=8081 delay=5 timeout=120
+      with_items: "{{ spark_slave_ips }}"
+      when: not ('localhost' in spark_slave_ips)

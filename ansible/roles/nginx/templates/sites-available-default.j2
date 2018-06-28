@@ -1,0 +1,26 @@
+log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+        '$status $body_bytes_sent "$http_referer" '
+        '"$http_user_agent" "$http_x_forwarded_for"';
+proxy_cache_path /tmp/nginx levels=1:2 keys_zone=my_zone:2000m inactive=168h;
+
+{% for host in nginx_upstream_hosts %}
+upstream {{ host.name }} {
+    server {{ host.server }};
+}
+{% endfor %}
+
+{% for srv in nginx_servers %}
+server {
+{% for par in srv.params %}
+    {{ par }}
+{% endfor %}
+{% for location in srv.locations | default([]) %}
+    location {{ location.path }} {
+{% for item in location.params %}
+        {{ item }}
+{% endfor %}
+    }
+{% endfor %}
+}
+
+{% endfor %}

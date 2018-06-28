@@ -1,0 +1,5 @@
+---
+java_major_version: "8"
+java_flavor: "oracle"
+java_oracle_accept_license_agreement: True
+update_apt_cache: False

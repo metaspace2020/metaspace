@@ -1,0 +1,12 @@
+---
+
+- name: Update APT cache
+  become: yes
+  apt: update_cache=yes
+  when: update_apt_cache
+
+- import_tasks: "openjdk.yml"
+  when: java_flavor == "openjdk"
+
+- import_tasks: "oracle.yml"
+  when: java_flavor == "oracle"

@@ -1,0 +1,9 @@
+- name: Stop postgres server
+  service: name=postgresql state=stopped
+
+- name: Drop postgres cluster created by default  #FIXME
+  command: pg_dropcluster {{ postgres_version }} main
+
+- name: Create postgres cluster
+  command: pg_createcluster {{ postgres_version }} main --locale en_US.UTF-8
+  ignore_errors: yes

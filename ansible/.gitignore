@@ -1,0 +1,7 @@
+.*
+*.retry
+vbox/group_vars/*.yml
+aws/*/group_vars/*.yml
+aws/*/hosts*
+*.ipynb
+*.pyc
