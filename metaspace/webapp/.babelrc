@@ -1,0 +1,14 @@
+{
+  "presets": [
+    ["env", {"modules": false}]
+  ],
+  "plugins": [
+    ["component", [{
+      "libraryName": "element-ui",
+      "styleLibraryName": "theme-default"
+    }]],
+    "transform-object-rest-spread",
+    "transform-runtime",
+    "syntax-dynamic-import"
+  ]
+}
