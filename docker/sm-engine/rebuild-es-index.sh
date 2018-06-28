@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 
 if [ "$SM_DOCKER_ENV" = "development" ]; then
-  # Run conda env update from /tmp because it can't run in a read-only directory
-  cd /tmp
-  conda env update -p /opt/dev/sm-engine
-  cd /opt/dev/sm-engine
+  cd /opt/dev/metaspace/metaspace/engine
+  conda env update
 else
-  cd /opt/sm-engine
+  cd /opt/metaspace/metaspace/engine
 fi
 
 source activate sm

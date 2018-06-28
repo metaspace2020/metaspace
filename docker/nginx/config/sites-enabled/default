@@ -54,7 +54,7 @@ server {
         include proxy-params.conf;
     }
     location /mol_db/ {
-        proxy_pass http://mol-db:5001/;
+        proxy_pass http://sm-mol-db:5001/;
         include proxy-params.conf;
     }
     location /app/kibana {

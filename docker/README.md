@@ -32,20 +32,17 @@ Run `docker-compose up -d` and jump to the "Import data" section
 
 ### Development installation
 
-In a development setup, SM projects are run from volumes that are linked to the filesystem.
-These projects are expected to be checked out in the directory defined by the `DEV_ROOT` variable
-in the `.env` file, which defaults to `../..`, the directory above where this `sm-engine-ansible`
-repository is checked out.
-e.g. the `sm-webapp` container will run from code in `../../sm-webapp` relative to the
-`docker-compose.yml` file.
+In a development setup, the full `metaspace` repository is mounted into the
+container and projects are run from your checked-out code. This makes it much
+easier to make live code changes.
 
-After setting up the `.env` file, run `setup-dev-env.sh` to automatically clone the repositories
-into `DEV_ROOT` and set up the rest of the development environment.
+Running `setup-dev-env.sh` will copy the pre-made docker config files into the
+projects in this repository, set up mol-db, and start the docker containers.
 
 ### Import data
 
 ```bash
-docker-compose run --rm mol-db /install-dbs.sh
+docker-compose run --rm sm-mol-db /install-dbs.sh
 ./fetch-mol-images.sh
 ```
 

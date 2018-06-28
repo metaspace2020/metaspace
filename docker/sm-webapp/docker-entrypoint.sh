@@ -14,11 +14,11 @@ wait_for() {
 
 if [ "$SM_DOCKER_ENV" = "development" ]; then
   export NODE_ENV=development
-  cd /opt/dev/sm-webapp
+  cd /opt/dev/metaspace/metaspace/webapp
   yarn install
 else
   export NODE_ENV=production
-  cd /opt/sm-webapp
+  cd /opt/metaspace/metaspace/webapp
 fi
 
 wait_for "nc -z redis 6379" "Redis"

@@ -16,11 +16,12 @@ wait_for "nc -z rabbitmq 5672" "RabbitMQ"
 
 if [ "$SM_DOCKER_ENV" = "development" ]; then
   export NODE_ENV=development
-  cd /opt/dev/sm-graphql
+  cd /opt/dev/metaspace/metaspace/graphql
   yarn install
+  node deref_schema.js > metadata_schema.json
   exec nodemon server.js
 else
   export NODE_ENV=production
-  cd /opt/sm-graphql
+  cd /opt/metaspace/metaspace/graphql
   exec node server.js
 fi
