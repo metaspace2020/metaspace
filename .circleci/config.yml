@@ -117,6 +117,40 @@ jobs:
             source docker/env.sh
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             codecov
+
+  test-engine-sci:
+    docker:
+      # includes:
+      #   - miniconda with all packages required for sm-engine
+      #   - pyspark installation
+      - image: intsco/sm-engine:0.10
+
+      - image: postgres:9.5-alpine
+        environment:
+          POSTGRES_USER: sm
+          POSTGRES_PASSWORD: password
+
+      - image: elasticsearch:5.4.0-alpine
+        environment:
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+        command: [elasticsearch, -Etransport.host=127.0.0.1]
+
+      - image: rabbitmq:3.6-management
+        environment:
+          RABBITMQ_DEFAULT_USER: sm
+          RABBITMQ_DEFAULT_PASS: password
+
+    working_directory: ~/metaspace/metaspace/engine
+    steps:
+      - checkout:
+          path: ~/metaspace
+      - run:
+          name: Setup configuration files
+          command: |
+            cp docker/sci_test_config.json conf/config.json
+            mkdir -p logs
+            echo 'localhost:5432:sm:password\n' > ~/.pgpass
+            chmod 0600 ~/.pgpass
       - run:
           name: Download and unpack isotope centroids
           command: |
@@ -160,4 +194,14 @@ workflows:
               only:
                 - master
                 - feature/.*
+  weekly:
+    jobs:
+      - test-engine-sci
+    triggers:
+      - schedule:
+          cron: "0 11 * * 1"
+          filters:
+            branches:
+              only:
+                - master
 
