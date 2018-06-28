@@ -1,0 +1,46 @@
+---
+
+#- name: Set kernel inotify watch limit to 524288
+#  sysctl:
+#    name: fs.inotify.max_user_watches
+#    value: 524288
+#    state: present
+
+- name: Install software-properties-common
+  become: yes
+  apt: name=software-properties-common state=present
+
+- name: Download Node.js installation setup script
+  get_url:
+    url: https://deb.nodesource.com/setup_{{ nodejs_version | replace('*', 'x') }}
+    dest: /tmp/nodejs_setup.sh
+    mode: 0744
+    force: yes
+
+- name: Run NodeJS setup script
+  become: yes
+  shell: /tmp/nodejs_setup.sh
+  args:
+    executable: /bin/bash
+
+- name: Install NodeJS
+  become: yes
+  apt: name=nodejs state=latest
+
+- name: Add Yarn apt key
+  become: yes
+  apt_key:
+    url: https://dl.yarnpkg.com/debian/pubkey.gpg
+
+- name: Add Yarn repository
+  become: yes
+  apt_repository:
+    repo: deb https://dl.yarnpkg.com/debian/ stable main
+    state: present
+
+- name: Install Yarn apt package
+  become: yes
+  apt:
+    name: yarn
+    state: present
+    update_cache: yes

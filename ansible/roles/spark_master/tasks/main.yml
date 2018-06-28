@@ -1,0 +1,32 @@
+- name: Put slave ip addresses into slaves file
+  become: yes
+  template: src=slaves.j2 dest="{{ spark_home }}/conf/slaves" owner=ubuntu group=ubuntu mode=0664
+
+- name: Start master and slaves
+  become: no
+  command: "{{ spark_home }}/sbin/start-all.sh"
+  when: not ('localhost' in spark_slave_ips)
+  register: command_result
+  changed_when: not ('Stop it first' in command_result.stdout)
+
+- name: Check that master daemon is up
+  command: jps -l
+  become: no
+  when: not ('localhost' in spark_slave_ips)
+  register: command_result
+  failed_when: not ('Master' in command_result.stdout)
+
+- name: Wait for slave daemons to start up
+  wait_for: host={{ item }} port=8081 delay=5
+  with_items: "{{ spark_slave_ips }}"
+  when: not ('localhost' in spark_slave_ips)
+
+#- name: Check that slave daemons are up
+#  get_url: url=http://{{ item }}:8081 dest=/tmp/{{ item }}.html
+#  with_items: "{{ spark_slave_ips }}"
+
+- name: Set log4j.rootCategory=ERROR
+  lineinfile:
+    dest: "{{ spark_home }}/conf/log4j.properties"
+    regexp: '^log4j\.rootCategory'
+    line: "log4j.rootCategory=ERROR, console"

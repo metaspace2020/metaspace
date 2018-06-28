@@ -1,0 +1,6 @@
+miniconda_python: 2
+miniconda_version: "2.16.0"
+miniconda_installer_checksum: ""
+miniconda_prefix: "{{ ansible_env.HOME }}/miniconda{{ miniconda_python if miniconda_python == 3 else '' }}"
+miniconda_update_conda: False
+miniconda_env: ""

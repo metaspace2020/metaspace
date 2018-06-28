@@ -1,0 +1,14 @@
+---
+
+dependencies:
+  # TODO: setup ingest node pipeline for filebeat
+  - role: elasticsearch
+    tags: [elasticsearch]
+
+  - role: kibana
+    tags: [kibana]
+
+  #TODO: automate letsecrypt installation
+
+  - role: nginx
+    tags: [nginx]

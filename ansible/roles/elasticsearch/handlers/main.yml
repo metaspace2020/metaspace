@@ -1,0 +1,2 @@
+- name: es_conf_update
+  service: name=elasticsearch state=restarted
