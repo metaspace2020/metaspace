@@ -1,0 +1,48 @@
+---
+
+aws_region: eu-west-1
+aws_key_name:  # should be provided
+
+miniconda_prefix: /opt/dev/miniconda3
+miniconda_env:
+  name: sm
+
+cluster_configuration:
+  instances:
+    web:
+      hostgroup: sm-web-dev
+
+    elk:
+      hostgroup: elk
+
+    master:
+      hostgroup: sm-spark-master-dev
+      type: c4.large
+      n: 1
+      elipalloc:
+      price: 0.6
+      sec_group: default
+      image:
+
+      block_dev_maps:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+            DeleteOnTermination: True
+            VolumeType: gp2
+
+    slave:
+      hostgroup: sm-spark-slave-dev
+      type: c4.large
+      n: 1
+      elipalloc:
+      price: 0.6
+      sec_group: default
+      image:
+
+      block_dev_maps:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+            DeleteOnTermination: True
+            VolumeType: gp2

@@ -1,0 +1,14 @@
+---
+
+spark_user: "ubuntu"
+spark_user_groups: ["ubuntu"]
+spark_user_shell: "/bin/false"    # the spark user's default shell
+spark_src_dir: "/tmp"
+spark_conf_dir: "/etc/spark"
+spark_usr_parent_dir: "/usr/lib"  #this is the folder where the spark archive will be extracted
+spark_usr_dir: "/usr/lib/spark"
+spark_log_dir: "/var/log/spark"
+spark_run_dir: "/tmp"
+
+spark_env_extras: {}
+spark_defaults_extras: {}
