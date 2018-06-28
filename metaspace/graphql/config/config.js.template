@@ -1,0 +1,74 @@
+/**
+ * Created by intsco on 2/8/17.
+ */
+
+let config = {};
+
+config.port = 3010;
+config.ws_port = 5666;
+config.img_storage_port = 4201;
+
+config.log = {};
+config.log.level = 'info';
+
+config.defaults = {
+  adducts: {{ sm_graphql_default_adducts | to_json }},
+  moldb_names: ['HMDB-v4']
+}
+
+
+/* Settings for image storage.
+   It's currently co-hosted with the GraphQL server. */
+config.img_upload = {
+  iso_img_fs_path: "/opt/data/sm_data/public/",
+  categories: {
+    iso_image: {
+      type: 'image/png',
+      path: '/iso_images/',
+      storage_types: ['fs', 'db']
+    },
+    optical_image: {
+      type: 'image/jpeg',
+      path: '/optical_images/',
+      storage_types: ['fs']
+    },
+    raw_optical_image: {
+      type: 'image/jpeg',
+      path: '/raw_optical_images/',
+      storage_types: ['fs']
+    }
+  }
+};
+
+config.services = {};
+/* Molecular database service, used only for internal purposes (peakChartData query) */
+config.services.moldb_service_host = "{{ sm_graphql_moldb_service_host }}";
+/* Internal ad-hoc service with the only endpoint /reindex/:dataset_id */
+config.services.sm_engine_api_host = "localhost:5123";
+
+config.db = {};
+config.db.host = "{{ sm_graphql_database_host | default('localhost') }}";
+config.db.database = "sm";
+config.db.user = "sm";
+config.db.password = "{{ sm_graphql_database_password }}";
+
+config.elasticsearch = {};
+config.elasticsearch.index = "sm";
+config.elasticsearch.host = "localhost";
+config.elasticsearch.port = 9200;
+
+config.rabbitmq = {};
+config.rabbitmq.host = "{{ sm_graphql_rabbitmq_host }}";
+config.rabbitmq.user = "{{ sm_graphql_rabbitmq_user }}";
+config.rabbitmq.password = "{{ sm_graphql_rabbitmq_password }}";
+
+config.websocket_public_url = "{{ sm_graphql_ws_public_endpoint }}";
+
+config.slack = {};
+config.slack.webhook_url = "{{ sm_graphql_slack_webhook_url }}";
+config.slack.channel = "{{ sm_graphql_slack_channel }}";
+
+config.jwt = {};
+config.jwt.secret = "{{ sm_graphql_jwt_secret }}";
+
+module.exports = config;

@@ -1,0 +1,16 @@
+clientConfig.json
+db.sqlite
+
+# Dereferenced metadata files
+/src/assets/*.json
+/src/assets/metadataMapping.js
+
+# Compiled output
+stats.json
+
+# Passwords and other sensitive data
+conf.js
+src/clientConfig.json
+
+# Screenshots taken by testcafe
+tests/e2e/screenshots

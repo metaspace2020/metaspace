@@ -1,0 +1,70 @@
+version: 2
+jobs:
+  build:
+    docker:
+      # includes:
+      #   - miniconda with all packages required for sm-engine
+      #   - pyspark installation
+      - image: intsco/sm-engine:0.10
+
+      - image: postgres:9.5-alpine
+        environment:
+          POSTGRES_USER: sm
+          POSTGRES_PASSWORD: password
+
+      - image: elasticsearch:5.4.0-alpine
+        environment:
+          ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+        command: [elasticsearch, -Etransport.host=127.0.0.1]
+
+      - image: rabbitmq:3.6-management
+        environment:
+          RABBITMQ_DEFAULT_USER: sm
+          RABBITMQ_DEFAULT_PASS: password
+
+    working_directory: /code/sm-engine
+    steps:
+      - checkout
+      - run:
+          name: Setup configuration files
+          command: |
+            cp docker/sci_test_config.json conf/config.json
+            mkdir -p logs
+            echo 'localhost:5432:sm:password\n' > ~/.pgpass
+            chmod 0600 ~/.pgpass
+      - run:
+          name: Run unit and integration tests
+          command: |
+            source docker/env.sh
+            pip install -U pip
+            #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
+            coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests
+      - run:
+          name: Upload test coverage
+          command: |
+            source docker/env.sh
+            #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
+            codecov
+      - run:
+          name: Download and unpack isotope centroids
+          command: |
+            wget https://s3-eu-west-1.amazonaws.com/embl-sm-testing/dumps/2018-03-13/HMDB-v2.5.tar.gz
+            mkdir -p /tmp/isotope_storage
+            tar -xvf HMDB-v2.5.tar.gz -C /tmp/isotope_storage
+      - run:
+          name: Create and prefill the databases
+          command: |
+            createdb -h localhost -U postgres sm_test
+            psql -U sm -h localhost -d sm_test < scripts/create_schema.sql
+            wget -qN https://s3-eu-west-1.amazonaws.com/embl-sm-testing/dumps/2018-03-13/mol_db.dump
+            pg_restore -U sm -h localhost --no-owner --role=sm -d sm_test mol_db.dump
+            cp docker/mol_db_conf.ini /root/sm-molecular-db/conf/local.ini
+      - run:
+          name: Run scientific test
+          command: |
+            cd /root/sm-molecular-db
+            source activate mol-db
+            python app/main.py &  # run in background
+            cd /code/sm-engine
+            source docker/env.sh
+            python tests/sci_test_spheroid.py -r --mock-img-store

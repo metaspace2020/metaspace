@@ -16,12 +16,12 @@
   file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
 
-- name: Clone SM git repository
+- name: Pull metaspace sources from the repository
   git:
-    dest: "{{ sm_home }}"
-    repo: "{{ sm_repo_url }}"
+    repo: "{{ metaspace_repo_url }}"
+    version: "{{ metaspace_branch }}"
+    dest: "{{ metaspace_home }}"
     update: yes
-    version: "{{ sm_branch }}"
     force: yes
   register: git_deploy
   until: git_deploy | succeeded

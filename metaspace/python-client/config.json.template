@@ -1,0 +1,37 @@
+{
+  "db": {
+    "host": "{{ postgres_host }}",
+    "database": "sm",
+    "user": "sm",
+    "password": "{{ sm_postgres_password }}"
+  },
+  "elasticsearch": {
+    "index": "sm",
+    "host": "{{ es_host }}",
+    "port": "{{ es_port }}"
+  },
+  "rabbitmq": {
+    "host": "{{ rabbitmq_host }}",
+    "user": "sm",
+    "password": "{{ rabbitmq_password }}"
+  },
+  "fs": {
+    "base_path": "/opt/data/sm_data",
+    "s3_base_path": "{{ sm_s3_path }}"
+  },
+  "spark": {
+    "master": "{{ spark_master_host }}",
+    "spark.executor.memory": "2g",
+    "spark.driver.memory": "4g",
+    "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
+    "spark.kryoserializer.buffer.max": "128m"
+  },
+  "aws": {
+    "aws_access_key_id": "{{ aws_access_key_id }}",
+    "aws_secret_access_key": "{{ aws_secret_access_key }}"
+  },
+  "slack": {
+    "channel": "{{ slack_channel }}",
+    "webhook_url": "{{ slack_webhook_url }}"
+  }
+}

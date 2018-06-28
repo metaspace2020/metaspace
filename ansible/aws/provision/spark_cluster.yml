@@ -86,6 +86,9 @@
       when: spark_master_filebeat is defined
       tags: [filebeat]
 
+    - role: metaspace_repo
+      tags: [metaspace_repo]
+
     - role: sm_spark_master
       venv: "{{ miniconda_prefix }}"
       conda_env: "{{ miniconda_env.name }}"

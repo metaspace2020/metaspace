@@ -1,12 +1,6 @@
-- name: Pull sm-engine sources from the repository
-  git: repo={{ sm_repo_url }}
-       dest={{ sm_home }}
-       version={{ sm_branch }}
-       update=yes
-       force=yes
-  when: local_deploy is not defined
-  register: git_deploy
-  until: git_deploy | succeeded
+---
+
+- import_tasks: metaspace_repo.yml
 
 - name: Upload local files
   synchronize:

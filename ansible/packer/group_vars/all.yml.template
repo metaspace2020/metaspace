@@ -58,9 +58,7 @@ spark_env_extras_master:
 spark_slave_ips:
   - localhost
 
-sm_branch: v0.4
 sm_postgres_password: "1234"
-sm_home: "/opt/dev/sm"
 sm_s3_path:
 
 hmdb_url: "https://s3-eu-west-1.amazonaws.com/sm-engine/hmdb.csv"

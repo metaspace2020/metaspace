@@ -3,12 +3,21 @@
 # to upgrade instead of disabling the requirement below.
 Vagrant.require_version ">= 1.7.0"
 
+# HashiCorp removed some redirects so Vagrant <=1.9.1 can't download images without this hack
+# Vagrant::DEFAULT_SERVER_URL became frozen in Vagrant 2.0.3
+# Issue: https://github.com/hashicorp/vagrant/issues/9442
+unless Vagrant::DEFAULT_SERVER_URL.frozen?
+  Vagrant::DEFAULT_SERVER_URL.replace('https://vagrantcloud.com')
+end
+
 Vagrant.configure(2) do |config|
 
   # why not ubuntu/xenial64?
   # https://bugs.launchpad.net/cloud-images/+bug/1569237
 
   config.vm.box = "bento/ubuntu-16.04"
+
+  config.vm.network "private_network", ip: "172.30.1.5"
 
   # web application
   config.vm.network "forwarded_port", guest: 80, host: 8999

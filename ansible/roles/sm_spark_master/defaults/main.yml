@@ -1,7 +1,6 @@
 ---
 
-sm_branch: master
-sm_home: /opt/dev/sm
+sm_home: "{{ metaspace_home }}/metaspace/engine"
 spark_user: ubuntu
 sm_s3_path: ""
 

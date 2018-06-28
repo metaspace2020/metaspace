@@ -37,10 +37,11 @@ miniconda_env:
     - numpy=1.11.2
     - scipy=0.18.1
     - matplotlib=2
-    - pandas=0.19.1
+    - pandas=0.22.0
     - cffi
     - libgcc
     - psycopg2=2.7.1
+    - nomkl
     - pip:
       - requests
       - py4j
@@ -55,15 +56,20 @@ miniconda_env:
       - pika>=0.11.0b1
       - bottle
       - pysparkling
+      - PyArrow>=0.8.0
+      - Pillow==4.2.1
+      - pyopenms==2.2.0
 
 web_host_internal_address: "{{ hostvars['web-1'].ansible_ssh_host }}"
 web_host_external_address: "localhost:8999"  # mapping of internal 80 port
 
-sm_repo_url: https://github.com/METASPACE2020/sm-engine
-sm_branch: rel-v0.7
+metaspace_repo_url: https://github.com/metaspace2020/metaspace
+metaspace_branch: master
+metaspace_home: /opt/dev/metaspace
+
 sm_postgres_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
 sm_postgres_password: password
-sm_home: /opt/dev/sm
+sm_home: "{{ metaspace_home }}/metaspace/engine"
 sm_s3_path: ""
 sm_img_service_url: "http://{{ web_host_internal_address }}:4201"  # used in the engine for adding/deleting iso images, direct port access is needed
 sm_es_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
@@ -73,12 +79,14 @@ sm_es_password: elastic
 sm_send_email: false
 sm_create_schema: true  # if true will destruct main database 'sm'
 sm_create_es_index: true  # if true Elasticsearch index will be dropped and recreated
+sm_isotope_storage_path: /opt/data/
+sm_default_adducts:
+  "+": ["+H", "+Na", "+K"]
+  "-": ["-H", "+Cl"]
 
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
-mol_db_repo_url: https://github.com/METASPACE2020/sm-molecular-db.git
-mol_db_branch: rel-v0.7
-mol_db_home: /opt/dev/sm-mol-db
+mol_db_home: "{{ metaspace_home }}/metaspace/mol-db"
 mol_db_url: "http://{{ web_host_internal_address }}/mol_db/v1"
 mol_db_postgres_pass: password
 mol_db_image_dir: /var/www/mol-images
@@ -91,9 +99,7 @@ mol_db_imports:
     name: HMDB
     version: 2016
 
-sm_graphql_repo_url: https://github.com/METASPACE2020/sm-graphql.git
-sm_graphql_branch: rel-v0.7
-sm_graphql_home: /opt/dev/sm-graphql
+sm_graphql_home: "{{ metaspace_home }}/metaspace/graphql"
 sm_graphql_slack_webhook_url:
 sm_graphql_slack_channel:
 sm_graphql_jwt_secret: secret
@@ -109,11 +115,9 @@ sm_graphql_default_adducts:
   "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
 
-sm_webapp_repo_url: https://github.com/METASPACE2020/sm-webapp.git
-sm_webapp_branch: rel-v0.7
 sm_webapp_hostname: "{{ web_host_external_address }}"
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"
-sm_webapp_home: /opt/dev/sm-web-app
+sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
 sm_webapp_port: 8082
 sm_webapp_cookie_secret: secret
 sm_webapp_admin_emails:
@@ -131,13 +135,11 @@ sm_webapp_jwt_secret: "{{ sm_graphql_jwt_secret }}"
 sm_webapp_redis_host: localhost
 sm_webapp_redis_port: 6379
 sm_webapp_enable_uploads: true
-# metadata types are specified by corresponding filenames in METASPACE2020/metadata repository
+# metadata types are specified by corresponding filenames in metaspace2020/metadata repository
 # "specialised metadata" subfolder
 sm_webapp_metadata_types: ["ims", "lcms"]
 
-sm_ansible_url: https://github.com/METASPACE2020/sm-engine-ansible.git
-sm_ansible_branch: rel-v0.7
-sm_ansible_home: /opt/dev/sm-engine-ansible
+sm_ansible_home: "{{ metaspace_home }}/ansible"
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 

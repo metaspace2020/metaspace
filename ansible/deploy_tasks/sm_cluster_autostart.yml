@@ -1,15 +1,6 @@
 ---
 
-- name: Git clone sm-engine-ansible
-  git:
-    dest: "{{ sm_ansible_home }}"
-    repo: "{{ sm_ansible_url }}"
-    update: yes
-    force: yes
-    version: "{{ sm_ansible_branch }}"
-  when: local_deploy is not defined
-  register: git_deploy
-  until: git_deploy | succeeded
+- import_tasks: metaspace_repo.yml
 
 - name: Upload local files
   synchronize:

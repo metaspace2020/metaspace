@@ -7,15 +7,6 @@
 #- name: Clean sm-web-app folder
 #  file: name={{ sm_webapp_home}} state=absent
 
-- name: Clone sm-web-app git repository
-  git:
-    dest: "{{ sm_webapp_home }}"
-    repo: "{{ sm_webapp_repo_url }}"
-    update: yes
-    force: yes
-    recursive: yes
-    version: "{{ sm_webapp_branch }}"
-
 - name: Pull config template from the remote host
   fetch: src={{ sm_webapp_home }}/conf.js.template dest=/tmp/conf.js.template
          flat=yes fail_on_missing=yes
