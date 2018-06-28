@@ -1,0 +1,30 @@
+{
+  "db": {
+    "host": "localhost",
+    "database": "sm_test",
+    "user": "sm",
+    "password": "password"
+  },
+  "elasticsearch": {
+    "index": "sm",
+    "host": "localhost",
+    "port": 9200
+  },
+  "rabbitmq": {
+    "host": "localhost",
+    "user": "sm_test",
+    "password": "password"
+  },
+  "services": {
+    "iso_images": "",
+    "mol_db": "http://localhost:5001/v1"
+  },
+  "fs": {
+    "base_path": "/opt/data/sm_test_data",
+    "s3_base_path": ""
+  },
+  "spark": {
+    "master": "local[2]",
+    "executor.memory": "2g"
+  }
+}

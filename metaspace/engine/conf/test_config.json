@@ -1,0 +1,33 @@
+{
+  "db": {
+    "host": "localhost",
+    "database": "sm_test",
+    "user": "sm",
+    "password": "securepassword"
+  },
+  "elasticsearch": {
+    "index": "sm_test",
+    "host": "localhost",
+    "port": 9200
+  },
+  "rabbitmq": {
+    "host": "localhost",
+    "user": "sm_test",
+    "password": "password"
+  },
+  "services": {
+    "web_app_url": "http://localhost:8082",
+    "iso_images": "http://localhost:3010/iso_images",
+    "mol_db": "http://localhost:5001/v1",
+    "send_email": false
+  },
+  "fs": {
+    "base_path": "/opt/data/sm_test_data",
+    "s3_base_path": ""
+  },
+  "spark": {
+    "master": "local[4]",
+    "executor.memory": "2g"
+  },
+  "slack": {}
+}
