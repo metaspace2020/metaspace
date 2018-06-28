@@ -1,0 +1,30 @@
+exports.PORT = "{{ sm_webapp_port }}";
+
+exports.GOOGLE_CLIENT_ID = "{{ sm_webapp_google_client_id }}";
+exports.GOOGLE_CLIENT_SECRET = "{{ sm_webapp_google_client_secret }}"
+
+/* add this callback URL in Google developer console;
+   you must also enable Google+ API for the project */
+exports.GOOGLE_CALLBACK_URL = "{{ sm_webapp_google_callback_url }}"
+
+exports.COOKIE_SECRET = "{{ sm_webapp_cookie_secret }}";
+exports.JWT_SECRET = "{{ sm_webapp_jwt_secret }}";
+
+exports.ADMIN_EMAILS = "{{ sm_webapp_admin_emails }}";
+
+exports.AWS_ACCESS_KEY_ID = "{{ sm_webapp_aws_access_key_id }}";
+exports.AWS_SECRET_ACCESS_KEY = "{{ sm_webapp_aws_secret_access_key }}";
+exports.AWS_REGION = "{{ sm_webapp_aws_region }}";
+
+// either 's3' or the destination directory
+// must match 'storage' value in src/clientConfig.js
+exports.UPLOAD_DESTINATION = "{{ sm_webapp_upload_destination }}";
+
+exports.REDIS_CONFIG = {
+  host: "{{ sm_webapp_redis_host }}",
+  port: "{{ sm_webapp_redis_port }}"
+}
+
+exports.HOST_NAME = "{{ sm_webapp_hostname }}";
+
+exports.RAVEN_DSN = "https://16556a31185a4882b9ebf6a5abab9452@sentry.io/1203803";
