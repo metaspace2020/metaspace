@@ -154,4 +154,10 @@ workflows:
       - test-webapp
     triggers:
       - schedule:
-        cron: "0 11 * * 1-5"
+          cron: "0 11 * * 1-5"
+          filters:
+            branches:
+              only:
+                - master
+                - feature/.*
+
