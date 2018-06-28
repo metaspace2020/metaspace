@@ -30,14 +30,25 @@ Please check the [ansible](ansible) project for production installations on AWS,
 ## Uploading Dataset and Browsing Results
 Please visit the help page of our web application running on AWS:
 
-[http://metasp.eu/#/help](http://metasp.eu/#/help)
+[http://metaspace2020.eu/#/help](http://metaspace2020.eu/#/help)
 
-## Funding
+## Acknowledgements
+
+<img src="https://user-images.githubusercontent.com/26366936/42041116-818a0048-7af1-11e8-82d7-15c9d7ab0441.png" width="98" height="65"><img src="https://user-images.githubusercontent.com/26366936/42041125-845b691a-7af1-11e8-9c43-bfbf2152d6e4.png" width="102" height="65">
 
 This project is funded from the [European Horizon2020](https://ec.europa.eu/programmes/horizon2020/)
 project [METASPACE](http://project.metaspace2020.eu/) (no. 634402),
 [NIH NIDDK project KPMP](http://kpmp.org/)
 and internal funds of the [European Molecular Biology Laboratory](https://www.embl.org/).
+
+[<img src="https://user-images.githubusercontent.com/26366936/42039120-f008e4c6-7aec-11e8-97ea-87e48bf7bc1c.png" alt="BrowserStack" width="200">](https://www.browserstack.com)
+
+METASPACE is tested with [BrowserStack](https://www.browserstack.com) to ensure cross-browser compatibility.
+This service is provided for free under [BrowserStack's Open Source plan](https://www.browserstack.com/open-source).
+
+[![Amazon Web Services and the “Powered by AWS” logo are trademarks of Amazon.com, Inc. or its affiliates in the United States and/or other countries.](https://d0.awsstatic.com/logos/powered-by-aws.png)](https://aws.amazon.com)
+
+METASPACE is hosted on [Amazon Web Services](https://aws.amazon.com) with the support of [AWS Cloud Credits for Research](https://aws.amazon.com/research-credits/).
 
 ## License
 
