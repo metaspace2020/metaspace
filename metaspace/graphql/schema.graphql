@@ -1,0 +1,199 @@
+type Person {
+  name: String!
+  surname: String!
+  email: String!
+}
+
+enum Polarity {
+  POSITIVE
+  NEGATIVE
+}
+
+type Analyzer {
+  type: String!
+  resolvingPower(mz: Float!): Float!
+}
+
+enum AnnotationOrderBy {
+  ORDER_BY_MZ
+  ORDER_BY_MSM
+  ORDER_BY_FDR_MSM
+  ORDER_BY_DATASET
+  ORDER_BY_FORMULA
+}
+
+enum DatasetOrderBy {
+  ORDER_BY_DATE
+  ORDER_BY_NAME
+}
+
+enum SortingOrder {
+  ASCENDING,
+  DESCENDING
+}
+
+enum JobStatus {
+  QUEUED,
+  STARTED,
+  FINISHED,
+  FAILED
+}
+
+type Dataset {
+  id: String!
+  name: String!
+
+  institution: String!
+  submitter: Person!
+  principalInvestigator: Person
+
+  polarity: Polarity!
+  ionisationSource: String!
+  analyzer: Analyzer!
+
+  organism: String
+  organismPart: String
+  condition: String
+  maldiMatrix: String
+
+  configJson: String!
+  # full metadata JSON conforming to schema published at
+  # https://github.com/metaspace2020/metadata
+  metadataJson: String!
+
+  status: JobStatus
+  inputPath: String
+}
+
+type CompoundInfoEntry {
+  database: String!
+  url: String
+}
+
+type Compound {
+  name: String!
+  imageURL: String
+  information: [CompoundInfoEntry]
+  # TODO: InChi/SMILES, ClassyFire results
+}
+
+type Spectrum {
+  mzs: [Float!]!
+  intensities: [Float!]!
+}
+
+type MzImage {
+  mz: Float
+  url: String
+  totalIntensity: Float!
+  minIntensity: Float!,
+  maxIntensity: Float!
+}
+
+type Annotation {
+  id: String!
+
+  dataset: Dataset!
+  sumFormula: String!
+  adduct: String!
+  mz: Float!
+  possibleCompounds: [Compound!]!
+  fdrLevel: Float!
+  msmScore: Float!
+  rhoSpatial: Float
+  rhoSpectral: Float
+  rhoChaos: Float
+  isotopeImages: [MzImage!]!
+
+  peakChartData: String  # JSON
+}
+
+# [min, max) interval
+input NumericRange {
+  min: Float!
+  max: Float!
+}
+
+input AnnotationFilter {
+  database: String
+  datasetName: String
+  mzFilter: NumericRange
+  msmScoreFilter: NumericRange
+  compoundQuery: String
+  fdrLevel: Float
+  sumFormula: String
+  adduct: String
+}
+
+input DatasetFilter {
+  # list of IDs separated by '|'
+  ids: String
+
+  # exact match
+  institution: String
+
+  # substring match
+  name: String
+
+  # not yet implemented
+  submitter: String
+
+  polarity: Polarity
+
+  # exact match
+  ionisationSource: String
+
+  # exact match
+  analyzerType: String
+
+  # exact match
+  maldiMatrix: String
+
+  # exact match
+  organism: String
+
+  # exact match
+  organismPart: String
+
+  # exact match
+  condition: String
+
+  status: JobStatus
+}
+
+type Query {
+  dataset(id: String!): Dataset
+  datasetByName(name: String!): Dataset
+
+  allDatasets(orderBy: DatasetOrderBy = ORDER_BY_DATE,
+              sortingOrder: SortingOrder = DESCENDING,
+              filter: DatasetFilter = {},
+              offset: Int = 0, limit: Int = 10): [Dataset!]!
+
+  allAnnotations(orderBy: AnnotationOrderBy = ORDER_BY_MSM,
+                 sortingOrder: SortingOrder = DESCENDING,
+                 offset: Int = 0, limit: Int = 10,
+                 filter: AnnotationFilter = {},
+                 datasetFilter: DatasetFilter = {}): [Annotation]
+
+  countDatasets(filter: DatasetFilter = {}): Int!
+
+  countAnnotations(filter: AnnotationFilter = {},
+                   datasetFilter: DatasetFilter = {}): Int!
+
+  annotation(id: String!): Annotation
+
+  metadataSuggestions(field: String!, query: String!): [String!]!
+}
+
+type Mutation {
+  submitDataset(jwt: String!, datasetId: String, name: String, path: String!, metadataJson: String!): String
+  resubmitDataset(jwt: String!, datasetId: String!): String
+  updateMetadata(jwt: String!, datasetId: String!, metadataJson: String!): String
+  deleteDataset(jwt: String!, datasetId: String!, delRawData: Boolean): String
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}
