@@ -1,0 +1,67 @@
+---
+
+- name: SM services instance basic configuration
+  hosts: web
+  user: ubuntu
+  gather_facts: no
+
+  roles:
+    - role: base
+      become: yes
+      swapsize: 16384
+
+  tasks:
+    - name: Add spark master public key to authorized_keys
+      authorized_key: user=ubuntu key="{{ item }}"
+      with_file:
+        - "{{ spark_key_file }}.pub"
+  tags: [base]
+
+
+- name: SM services instance configuration
+  hosts: web
+  user: ubuntu
+  gather_facts: yes
+
+  roles:
+    - role: postgres
+      become: yes
+      tags: [postgres]
+
+    - role: elasticsearch
+      become: yes
+      tags: [elasticsearch]
+
+    - role: kibana
+      become: yes
+      tags: [kibana]
+
+    - role: nginx
+      tags: [nginx]
+
+    - role: rabbitmq
+      tags: [rabbitmq]
+
+    - role: miniconda
+      tags: [miniconda]
+
+    - role: supervisor
+      tags: [supervisor]
+
+    - role: nodejs
+      tags: [nodejs]
+
+    - role: mol_db
+      tags: [mol_db]
+
+    - role: sm_api
+      tags: [sm_api]
+
+    - role: sm_graphql
+      tags: [sm_graphql]
+
+    - role: sm_web_app
+      tags: [sm_web_app]
+
+    - role: sm_cluster_autostart
+      tags: [sm_cluster_autostart]

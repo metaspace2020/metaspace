@@ -1,0 +1,34 @@
+---
+
+- name: Git clone sm-engine-ansible
+  git:
+    dest: "{{ sm_ansible_home }}"
+    repo: "{{ sm_ansible_url }}"
+    update: yes
+    force: yes
+    version: "{{ sm_ansible_branch }}"
+  when: local_deploy is not defined
+  register: git_deploy
+  until: git_deploy | succeeded
+
+- name: Upload local files
+  synchronize:
+    src: "{{ sm_ansible_home }}/"
+    dest: "{{ sm_ansible_home }}/"
+    rsync_opts:
+      - "--exclude=.*"
+  when: local_deploy is defined
+
+- name: Make sure a folder for the config file exists
+  file: path={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/ state=directory mode=0755
+
+- name: Upload templated group_vars/all.yml
+  template: src=../{{ stage }}/group_vars/all.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all.yml
+            owner=ubuntu group=ubuntu mode=0600
+
+- name: Update the inventory file
+  command: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python update_inventory.py --stage {{ stage }}"
+  args:
+    chdir: "{{ sm_ansible_home }}/aws"
+
+- include: ../../restart_supervisor.yml  supervisor_app=sm-cluster-autostart

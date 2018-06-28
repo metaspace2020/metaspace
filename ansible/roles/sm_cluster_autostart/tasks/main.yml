@@ -1,0 +1,60 @@
+- name: Install sys libs needed for Ansible
+  become: yes
+  apt: name={{ item }} state=present
+  with_items:
+    - python-dev
+    - libffi-dev
+    - libssl-dev
+
+- name: Install Ansible
+  become: yes
+  pip: name=ansible
+
+#- name: Install sm-cluster-autostart dependencies
+#  become: yes
+#  pip: name={{ item }} state=latest
+#  with_items:
+#    - pika
+#    - requests
+#    - pyyaml
+#    - fabric
+#    - boto
+#    - boto3
+#    - pandas
+
+- name: Make sure {{ sm_ansible_home }} exists
+  become: yes
+  file: path={{ sm_ansible_home }} owner=ubuntu group=ubuntu state=directory mode=0755
+
+- name: Git clone sm-engine-ansible
+  git:
+    dest: "{{ sm_ansible_home }}"
+    repo: "{{ sm_ansible_url }}"
+    update: yes
+    version: "{{ sm_ansible_branch }}"
+  register: git_deploy
+  until: git_deploy | succeeded
+
+- name: Make sure {{ sm_ansible_home }}/aws/logs exists
+  become: yes
+  file: path={{ sm_ansible_home }}/aws/logs owner=ubuntu group=ubuntu state=directory mode=0755
+
+- name: Templated supervisord config for the cluster_auto_start_daemon
+  template: src=sm-cluster-autostart-daemon.supervisor.j2
+            dest=/etc/supervisor/sm-cluster-autostart-daemon.supervisor
+            owner=ubuntu group=ubuntu mode=0600
+
+- name: Copy private key for SSHing to the master
+  copy: src={{ spark_key_file }} dest="/home/ubuntu/.ssh/id_rsa" owner=ubuntu group=ubuntu mode="u=rw,g=,o="
+
+- name: Make sure .aws directory exists
+  file: path=/home/ubuntu/.aws/
+        state=directory mode=0755
+        owner=ubuntu group=ubuntu
+  when: aws_access_key_id is defined
+
+- name: Put aws credentials file into the home dir
+  template: src=aws_credentials.j2
+            dest=/home/ubuntu/.aws/credentials mode=0600
+            owner=ubuntu group=ubuntu
+  when: aws_access_key_id is defined

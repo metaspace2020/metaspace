@@ -1,0 +1,3 @@
+#rabbitmq_version: 3.2.4-1
+rabbitmq_user: sm
+rabbitmq_password: changeme

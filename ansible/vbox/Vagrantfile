@@ -1,0 +1,64 @@
+# This guide is optimized for Vagrant 1.7 and above.
+# Although versions 1.6.x should behave very similarly, it is recommended
+# to upgrade instead of disabling the requirement below.
+Vagrant.require_version ">= 1.7.0"
+
+Vagrant.configure(2) do |config|
+
+  # why not ubuntu/xenial64?
+  # https://bugs.launchpad.net/cloud-images/+bug/1569237
+
+  config.vm.box = "bento/ubuntu-16.04"
+
+  # web application
+  config.vm.network "forwarded_port", guest: 80, host: 8999
+
+  # Spark UI
+  config.vm.network "forwarded_port", guest: 4040, host: 4041
+
+  # Postgres database server
+  config.vm.network "forwarded_port", guest: 5432, host: 2345
+
+  # GraphQL server / GraphiQL web interface
+  config.vm.network "forwarded_port", guest: 3010, host: 13010
+
+  # ElasticSearch behind nginx
+  config.vm.network "forwarded_port", guest: 9700, host: 9701
+
+  # kibana
+  config.vm.network "forwarded_port", guest: 8080, host: 5602
+
+  # rabbitmq
+  config.vm.network "forwarded_port", guest: 5672, host: 5673
+  config.vm.network "forwarded_port", guest: 15672, host: 15673
+
+  # Disable the new default behavior introduced in Vagrant 1.7, to
+  # ensure that all Vagrant machines will use the same SSH key pair.
+  # See https://github.com/mitchellh/vagrant/issues/5005
+  config.ssh.insert_key = false
+
+  #config.vm.synced_folder "/opt/data", "/data"
+
+  config.vm.provider "virtualbox" do |v|
+    v.name = "sm-engine"
+    v.memory = 8192
+    v.cpus = 4
+
+    # bento is also not perfect: https://github.com/chef/bento/issues/694
+    # another solution is to upgrade VirtualBox, but it's easier to add a line here
+    v.customize ["modifyvm", :id, "--cableconnected1", "on"]
+
+    # fast networking
+    v.customize ["modifyvm", :id, "--nictype1", "virtio"]
+  end
+
+  #config.vm.provision "file", source: "keys/public", destination: "~/.ssh/authorized_keys"
+
+  config.vm.provision :ansible do |ansible|
+    ansible.verbose = "vv"
+    ansible.inventory_path = "hosts"
+    ansible.playbook = "system.yml"
+    ansible.extra_vars = {pub_key_file: "~/.ssh/id_rsa.pub"}
+    ansible.host_key_checking = false
+  end
+end

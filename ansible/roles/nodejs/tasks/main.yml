@@ -1,0 +1,27 @@
+---
+
+#- name: Set kernel inotify watch limit to 524288
+#  sysctl:
+#    name: fs.inotify.max_user_watches
+#    value: 524288
+#    state: present
+
+- name: Install software-properties-common
+  become: yes
+  apt: name=software-properties-common state=present
+
+- name: Download NodeJS installation setup script
+  get_url:
+    url: https://deb.nodesource.com/setup_{{ nodejs_version | replace('*', 'x') }}
+    dest: /tmp/nodejs_setup.sh
+    mode: 0744
+
+- name: Run NodeJS setup script
+  become: yes
+  shell: /tmp/nodejs_setup.sh
+  args:
+    executable: /bin/bash
+
+- name: Install NodeJS
+  become: yes
+  apt: name=nodejs={{ nodejs_version }} state=present

@@ -1,0 +1,11 @@
+# -*- conf -*-
+
+[program:sm-web-app]
+process_name = sm-web-app
+directory = {{ sm_webapp_home }}
+environment = NODE_ENV=production
+command = node server.js
+redirect_stderr = true
+stdout_logfile = {{ sm_webapp_home }}/logs/sm-web-app.log
+numprocs = 1
+numprocs_start = 8000

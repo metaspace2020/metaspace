@@ -1,0 +1,73 @@
+---
+
+- name: Add {{ spark_key_file }} to authorized_keys
+  authorized_key: user=ubuntu key="{{ item }}"
+  with_file:
+    - "{{ spark_key_file }}.pub"
+
+- name: Install system wide packages
+  become: yes
+  apt: name={{ item }} state=present
+  with_items:
+    - git
+    - zip
+
+- name: Create /opt/dev directory
+  file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
+  become: yes
+
+- name: Clone SM git repository
+  git:
+    dest: "{{ sm_home }}"
+    repo: "https://github.com/SpatialMetabolomics/sm-engine.git"
+    update: yes
+    version: "{{ sm_branch }}"
+    force: yes
+  register: git_deploy
+  until: git_deploy | succeeded
+
+- name: Create /opt/data/sm_data directory
+  file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
+  become: yes
+
+- name: Put SPARK_HOME into update sm-env.sh scripts
+  template: src=sm-env.sh.j2 dest="{{ sm_home }}/scripts/sm-env.sh" owner=ubuntu group=ubuntu mode=0644
+
+- name: Make sure .aws directory exists
+  file: path=/home/{{ spark_user }}/.aws/
+        state=directory
+        owner={{ spark_user }}
+        group={{ spark_user }}
+        mode=0755
+  when: aws_access_key_id is defined
+
+- name: Put aws credentials file into the home dir
+  template: src=aws_credentials.j2
+            dest=/home/{{ spark_user }}/.aws/credentials
+            owner={{ spark_user }}
+            group={{ spark_user }}
+            mode=0600
+  when: aws_access_key_id is defined
+
+- name: Pull SM config from the remote host
+  fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
+         flat=yes fail_on_missing=yes
+
+- name: Put SM config to {{ sm_home }}/conf/config.json
+  template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
+            owner={{ spark_user }} group={{ spark_user }} mode=0600
+
+- name: Make sure that a directory for the SM logs exists
+  file: path={{ sm_home }}/logs state=directory mode=0755
+
+- name: Add Miniconda scripts to PATH as symlinks
+  become: yes
+  file: src={{ miniconda_prefix }}/bin/{{ item }} dest=/usr/local/bin/{{ item }} state=link
+  with_items:
+    - conda
+    - activate
+    - deactivate
+
+- name: Copy sm-daemon supervisor config file
+  template: src=sm-daemon.supervisor.j2 dest=/etc/supervisor/sm-daemon.supervisor
+            mode=0600 owner=ubuntu group=ubuntu

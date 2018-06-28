@@ -1,0 +1,15 @@
+---
+- hosts: all
+
+  pre_tasks:
+    - name: Update APT cache
+      apt: update_cache=yes
+
+  roles:
+    # OpenJDK 7
+    - { role: "azavea.java" }
+    # OpenJDK 8 does not exist in the supported platforms of this role
+    # Oracle Java 7
+    #- { role: "azavea.java", java_version: "7u76*", java_flavor: "oracle", java_oracle_accept_license_agreement: True }
+    # Oracle Java 8
+    #- { role: "azavea.java", java_major_version: "8", java_version: "8u31*", java_flavor: "oracle", java_oracle_accept_license_agreement: True }
