@@ -1,4 +1,0 @@
-[submodule "metadata"]
-	path = metaspace/webapp/metadata
-	url = https://github.com/METASPACE2020/metadata.git
-	branch = master

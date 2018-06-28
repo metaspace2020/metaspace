@@ -1,0 +1,18 @@
+---
+- hosts: all
+
+  vars:
+    java_version: "7u51-2.4.*"
+    spark_env_extras:
+      TEST_B: "b"
+      TEST_A: "a"
+    spark_defaults_extras:
+      "spark.eventLog.enabled": "true"
+      "spark.eventLog.disabled": "true"
+
+  pre_tasks:
+    - name: Update APT cache
+      apt: update_cache=yes
+
+  roles:
+    - { role: "azavea.spark" }

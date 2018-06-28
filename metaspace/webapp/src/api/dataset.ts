@@ -63,11 +63,6 @@ export const submitDatasetQuery =
     submitDataset(input: $input, delFirst: $delFirst, priority: 1)
   }`;
 
-export const resubmitDatasetQuery =
-  gql`mutation ($input: DatasetSubmitInput!, $delFirst: Boolean=false) {
-    resubmitDataset(input: $input, delFirst: $delFirst, priority: 1)
-  }`;
-
 export const deleteDatasetQuery =
   gql`mutation ($id: String!) {
     deleteDataset(datasetId: $id)

@@ -1,0 +1,46 @@
+# Caches
+.cache
+.npm
+.grunt
+.node_repl_history
+.eslintcache
+__pycache__/
+*.py[cod]
+*$py.class
+.yarn-integrity
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependencies
+node_modules/
+
+# Output for local tools (coverage, test, etc.)
+coverage/
+lib-cov/
+.nyc_output/
+
+# Compiled output
+build/Release
+dist
+.lock-wscript
+*.so
+*.egg-info
+
+# IDE
+.idea
+.vscode
+
+# Other files that should usually not be committed
+*.pkl
+*.zip

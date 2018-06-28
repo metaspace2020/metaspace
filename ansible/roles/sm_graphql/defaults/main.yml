@@ -1,0 +1,2 @@
+sm_home: "{{ metaspace_home }}/metaspace/graphql"
+sm_database_host: localhost

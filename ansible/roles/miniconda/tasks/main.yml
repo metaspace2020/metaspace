@@ -1,0 +1,47 @@
+---
+
+- name: Download miniconda installer
+  get_url: url="https://repo.continuum.io/miniconda/{{ miniconda_installer }}"
+          dest="/tmp/{{ miniconda_installer }}"
+          checksum="{{ miniconda_installer_checksum }}"
+          mode=0755
+          timeout=1200
+  #force={{ 'yes' if miniconda_installer_checksum == '' else 'no' }}
+    
+- name: directory {{ miniconda_prefix | dirname }} exists
+  file:
+    path="{{ miniconda_prefix | dirname }}"
+    state=directory
+    owner=ubuntu
+    group=ubuntu
+  become: yes
+
+- name: miniconda is installed
+  shell:
+    '"/tmp/{{ miniconda_installer}}" -b -p "{{ miniconda_prefix }}"'
+  args:
+    creates: "{{ miniconda_prefix }}"
+    executable: /bin/bash
+
+- name: Add Miniconda scripts to PATH as symlinks
+  become: yes
+  file: src={{ miniconda_prefix }}/bin/{{ item }} dest=/usr/local/bin/{{ item }} state=link
+  with_items:
+    - conda
+    - activate
+
+- name: miniconda is up-to-date
+  command: '"{{ miniconda_prefix }}/bin/conda" update conda -y -q'
+  register: miniconda_update
+  when: miniconda_update_conda
+  changed_when: '"All requested packages already installed" in miniconda_update'
+
+- name: conda environment file /tmp/{{ miniconda_env.name }}-environment.yml is created
+  copy:
+    content="{{ miniconda_env | to_yaml }}"
+    dest="/tmp/{{ miniconda_env.name }}-environment.yml"
+  when: miniconda_env != ''
+
+- import_tasks: environment.yml
+  when: miniconda_env != ''
+

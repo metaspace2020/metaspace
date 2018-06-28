@@ -1,0 +1,64 @@
+---
+
+- name: Set virtual memory max map count variable to 262144
+  sysctl:
+    name: vm.max_map_count
+    value: 262144
+    state: present
+
+- name: Download ElasticSearch version={{ elasticsearch_version }}
+  get_url: url=https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/{{ elasticsearch_version }}/elasticsearch-{{ elasticsearch_version }}.deb
+           dest=/tmp/elasticsearch-{{ elasticsearch_version }}.deb
+  when: not "'{{ elasticsearch_version }}'.startswith('5.')"
+
+- name: Download ElasticSearch version={{ elasticsearch_version }}
+  get_url: url=https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-{{ elasticsearch_version }}.deb
+           dest=/tmp/elasticsearch-{{ elasticsearch_version }}.deb
+  when: "'{{ elasticsearch_version }}'.startswith('5.')"
+
+- name: Install ElasticSearch
+  become: yes
+  apt:
+    deb: /tmp/elasticsearch-{{ elasticsearch_version }}.deb
+
+- name: Make ElasticSearch to listen to any ip address
+  become: yes
+  lineinfile:
+    dest: /etc/elasticsearch/elasticsearch.yml
+    regexp: network.host
+    line: "network.host: 0.0.0.0"
+  when: bound_to_any_host
+
+- name: Specify a port for ElasticSearch
+  become: yes
+  lineinfile:
+    dest: /etc/elasticsearch/elasticsearch.yml
+    regexp: http.port
+    line: "http.port: {{ elasticsearch_port }}"
+
+#  notify:
+#    - es_conf_update
+
+#- meta: flush_handlers
+
+- name: ES conf update restart
+  become: yes
+  service: name=elasticsearch state=restarted
+
+- name: Start EleasticSearch service
+  become: yes
+  service: name=elasticsearch state=started
+
+- name: Start EleasticSearch on boot
+  become: yes
+  service: name=elasticsearch enabled=true
+
+- name: Set global search query timeout
+  uri:
+    url: http://localhost:9200/_cluster/settings
+    method: PUT
+    body_format: json
+    body: '{ "persistent" : { "search.default_search_timeout" : "30s" } }'
+  retries: 5
+  register: result
+  until: result is succeeded

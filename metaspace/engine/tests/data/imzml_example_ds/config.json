@@ -1,0 +1,19 @@
+{
+  "databases": ["HMDB"],
+  "isotope_generation": {
+    "adducts": ["+H","+Na","+K"],
+    "charge": {
+        "polarity": "+",
+        "n_charges": 1
+	},
+    "isocalc_sigma": 0.01,
+    "isocalc_pts_per_mz": 10000
+  },
+  "image_generation": {
+    "ppm": 100.0,
+    "nlevels": 30,
+    "q": 99,
+    "do_preprocessing": false
+  },
+  "molecules_num": null
+}

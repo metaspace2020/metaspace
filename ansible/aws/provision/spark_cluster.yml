@@ -1,0 +1,98 @@
+---
+
+- name: SM master, slave instances basic configuration
+  hosts: master, slave
+  user: ubuntu
+  gather_facts: no
+
+  roles:
+    - role: base
+      become: yes
+      swapsize: 16384
+  tags: [base, master, slave]
+
+
+- name: SM spark slave instances configuration
+  hosts: slave
+  user: ubuntu
+  gather_facts: yes
+
+  roles:
+    - role: spark
+      become: yes
+      spark_env_extras: "{{ spark_env_extras_slave }}"
+
+    - role: sm_spark_slave
+      venv: "{{ miniconda_prefix }}"
+      conda_env: "{{ miniconda_env.name }}"
+      spark_usr_dir: "{{ spark_home }}"
+
+    - role: miniconda
+      tags: [miniconda]
+  tags: [slave]
+
+
+- name: Collect the Web server facts
+  hosts: web
+  user: ubuntu
+
+  tasks:
+    - name: Gather AWS instance facts
+      action: ec2_metadata_facts
+  tags: [always]
+
+
+- name: SM spark master instance configuration
+  hosts: master
+  user: ubuntu
+  gather_facts: yes
+
+  vars:
+    spark_master_host: "spark://{{ ansible_hostname }}:7077"
+    spark_slave_ips: []
+
+  pre_tasks:
+    - name: Create a list of private ip addresses for the slave instances
+      set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
+      with_items: "{{ groups['slave'] }}"
+
+    - name: Load variables for Filebeat role
+      include_vars:
+        file: elk-vars.yml
+      when: elk_enable
+
+  roles:
+    - role: spark
+      become: yes
+      spark_env_extras: "{{ spark_env_extras_master }}"
+
+    - role: spark_master
+      become: yes
+
+    - role: miniconda
+      tags: [miniconda]
+
+    - role: supervisor
+
+    - role: filebeat
+      become: yes
+      filebeat_prospectors: "{{ spark_master_filebeat.prospectors }}"
+      filebeat_version: "{{ spark_master_filebeat.version }}"
+      es_host: "{{ spark_master_filebeat.es_host }}"
+      es_user: "{{ spark_master_filebeat.es_user }}"
+      es_password: "{{ spark_master_filebeat.es_password }}"
+      ingest_node_pipeline_id: "{{ spark_master_filebeat.ingest_node_pipeline_id }}"
+      ingest_node_pipeline: "{{ spark_master_filebeat.ingest_node_pipeline }}"
+      when: spark_master_filebeat is defined
+      tags: [filebeat]
+
+    - role: metaspace_repo
+      tags: [metaspace_repo]
+
+    - role: sm_spark_master
+      venv: "{{ miniconda_prefix }}"
+      conda_env: "{{ miniconda_env.name }}"
+      spark_usr_dir: "{{ spark_home }}"
+      sm_web_app_url: "{{ sm_webapp_url }}"
+      tags: [sm-spark-master]
+  tags: [master]

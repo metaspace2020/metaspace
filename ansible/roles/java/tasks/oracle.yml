@@ -1,0 +1,35 @@
+---
+
+- name: Install add-apt-repostory
+  become: yes
+  apt: name=software-properties-common state=latest
+
+- name: Configure the WebUpd8 repository
+  become: yes
+  apt_repository: repo="ppa:webupd8team/java" state=present
+
+- name: Accept Oracle license
+  become: yes
+  debconf: name=oracle-java{{ java_major_version }}-installer
+           question="shared/accepted-oracle-license-v1-1"
+           value="true"
+           vtype="select"
+  when: java_oracle_accept_license_agreement
+
+- name: Install Oracle Java 8
+  become: yes
+  apt: name={{item}} state=latest
+  with_items:
+    - oracle-java8-installer
+    - ca-certificates
+    - oracle-java8-set-default
+
+- name: Set Oracle Java as the default
+  alternatives: name=java path="/usr/lib/jvm/java-{{ java_major_version }}-oracle/jre/bin/java"
+
+#- name: Write ld.so.conf for Java
+#  template:
+#    src: java.conf.j2
+#    dest: /etc/ld.so.conf.d/java.conf
+#  notify:
+#   - Reload ldconfig

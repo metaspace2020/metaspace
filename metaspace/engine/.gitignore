@@ -1,0 +1,8 @@
+conf/*.json
+conf/*.cfg
+!conf/test_config.json
+scripts/sm-env.sh
+data/*/*
+docs/_build
+docs/_static
+docs/_templates

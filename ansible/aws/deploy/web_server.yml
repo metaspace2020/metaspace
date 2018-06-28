@@ -1,0 +1,28 @@
+---
+
+- name: Deploying SM services code
+  user: ubuntu
+  hosts: web
+
+  tasks:
+    - name: Gather EC2 instance facts
+      ec2_metadata_facts:
+      tags: [always]
+
+    - import_tasks: ../../deploy_tasks/metaspace_repo.yml
+      tags: [metaspace_repo]
+
+    - import_tasks: ../../deploy_tasks/sm_mol_db.yml
+      tags: [sm-mol-db]
+
+    - import_tasks: ../../deploy_tasks/sm_api.yml
+      tags: [sm-api]
+
+    - import_tasks: ../../deploy_tasks/sm_graphql.yml
+      tags: [sm-graphql]
+
+    - import_tasks: ../../deploy_tasks/sm_web_app.yml
+      tags: [sm-web-app]
+
+    - import_tasks: ../../deploy_tasks/sm_cluster_autostart.yml
+      tags: [sm-cluster-autostart]

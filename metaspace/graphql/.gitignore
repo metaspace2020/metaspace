@@ -1,0 +1,3 @@
+config/*.js
+!config/test.js
+metadata_schema.json
