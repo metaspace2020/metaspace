@@ -38,5 +38,8 @@ RUN conda update -n base conda &&\
     conda clean -y --all
 
 # install environment for MolecularDB
-RUN git clone https://github.com/metaspace2020/sm-molecular-db -b rel-v0.10 && \
-    cd sm-molecular-db && conda env create && conda clean -y --all
+RUN cd /tmp &&\
+    wget -q https://raw.githubusercontent.com/metaspace2020/metaspace/master/metaspace/mol-db/environment.yml &&\
+    conda env create &&\
+    conda clean -y --all &&\
+    rm environment.yml

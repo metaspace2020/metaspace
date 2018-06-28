@@ -1,6 +1,6 @@
 # sm-graphql
 
-GraphQL interface to SM engine (prototype)
+GraphQL interface to SM engine
 
 ## Development setup
 

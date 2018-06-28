@@ -8,6 +8,7 @@ dependencies:
   - cffi
   - libgcc
   - psycopg2=2.7.1
+  - nomkl
   - pip:
     - requests
     - pytest

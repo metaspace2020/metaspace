@@ -5,6 +5,7 @@ Software requirements for the developer machine:
 * Python>=3.5
 * boto3>=1.5
 * boto>=2.48
+* pyyaml
 * [Ansible>=2.4](http://docs.ansible.com/ansible/intro_installation.html#latest-releases-via-pip)
 
 
@@ -13,8 +14,8 @@ Software requirements for the developer machine:
 #### Clone repository and copy config file
 
 ```
-git clone -b rel-v0.8 https://github.com/intsco/sm-engine-ansible.git
-cd aws
+git clone -b rel-v0.8 https://github.com/metaspace2020/metaspace.git
+cd metaspace/ansible/aws
 mkdir dev/group_vars
 cp group_vars_all.yml.template dev/group_vars/all.yml
 ```
@@ -27,6 +28,8 @@ For the web application bucket make sure to allow PUT, POST, and DELETE requests
 * Create a separate IAM user for the web application. Make sure this user have full access to the web application bucket.
 * Create a pair of public/private keys with `ssh-keygen`. Upload the public key to the AWS Console.
 It will be used to ssh to instances.
+* Create [AWS configuration and credential files](https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html)
+for the admin IAM user on the developer manchine.
 
 #### Update config file
 

@@ -5,6 +5,9 @@
   user: ubuntu
 
   tasks:
+    - import_tasks: ../deploy_tasks/metaspace_repo.yml
+      tags: [metaspace_repo]
+
     - import_tasks: ../deploy_tasks/sm_graphql.yml
       tags: [sm_graphql]
 

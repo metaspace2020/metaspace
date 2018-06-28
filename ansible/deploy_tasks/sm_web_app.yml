@@ -1,15 +1,6 @@
-- name: Clone sm-web-app git repository
-  git:
-    dest: "{{ sm_webapp_home }}"
-    repo: "{{ sm_webapp_repo_url }}"
-    update: yes
-    force: yes
-    recursive: yes
-    track_submodules: no  # when 'no' submodules refer to commit specified in the web app repository
-    version: "{{ sm_webapp_branch }}"
-  register: git_deploy
-  until: git_deploy | succeeded
-  when: local_deploy is not defined
+---
+
+- import_tasks: metaspace_repo.yml
 
 - name: Upload local files
   synchronize:

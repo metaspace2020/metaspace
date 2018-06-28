@@ -1,4 +1,4 @@
-# Spatial Metabolomics Engine [![Build Status](https://circleci.com/gh/METASPACE2020/sm-engine.svg?style=svg)](https://circleci.com/gh/METASPACE2020/sm-engine) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/METASPACE2020/sm-engine/branch/master/graph/badge.svg)](https://codecov.io/gh/METASPACE2020/sm-engine)
+# Spatial Metabolomics Engine
 High throughput molecular annotation for imaging mass spectrometry datasets
 
 ## Main Features
@@ -6,11 +6,11 @@ High throughput molecular annotation for imaging mass spectrometry datasets
 - Apache Spark based implementation for easy scaling from one machine to a cluster
 - Can be run in both local and distributed modes
 - Comes with unit, regression and scientific tests
-- [Web application](https://github.com/METASPACE2020/sm-webapp) for upload and browsing search results
-- [Ansible project](https://github.com/METASPACE2020/sm-engine-ansible) for easy deployment to AWS
+- [Web application](../webapp) for upload and browsing search results
+- [Ansible project](../../ansible) for easy deployment to AWS
 
 ## Installation
-Please check the [sm-engine-ansible](https://github.com/METASPACE2020/sm-engine-ansible) project
+Please check the [sm-engine-ansible](https://github.com/metaspace2020/sm-engine-ansible) project
 
 ## Uploading Dataset and Browsing Results
 Please visit the help page of our web application running on AWS:

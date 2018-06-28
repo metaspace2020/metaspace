@@ -9,6 +9,9 @@
       ec2_metadata_facts:
       tags: [always]
 
+    - import_tasks: ../../deploy_tasks/metaspace_repo.yml
+      tags: [metaspace_repo]
+
     - import_tasks: ../../deploy_tasks/sm_mol_db.yml
       tags: [sm-mol-db]
 

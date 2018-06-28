@@ -5,8 +5,8 @@ const path = require('path');
 const config = require('./src/clientConfig.json');
 
 
-const minSchemaPath = "metadata/min metadata schema.json";
-const specializedSchemasDir = "metadata/specialised metadata";
+const minSchemaPath = "../metadata/min metadata schema.json";
+const specializedSchemasDir = "../metadata/specialised metadata";
 const metadataFileExtension = '.json';
 const metadataMappingFilename = 'metadataMapping.js';
 

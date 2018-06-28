@@ -1,8 +1,6 @@
-[![CircleCI](https://circleci.com/gh/METASPACE2020/sm-webapp/tree/master.svg?style=svg)](https://circleci.com/gh/METASPACE2020/sm-webapp/tree/master)
-
 # sm-webapp
 
-Web application for browsing results produced by [sm-engine](https://github.com/metaspace2020/sm-engine).
+Web application for browsing results produced by [METASPACE engine](../engine).
 
 ## Installation
 

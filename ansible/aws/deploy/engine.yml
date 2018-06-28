@@ -14,6 +14,7 @@
   gather_facts: false
 
   tasks:
+    - import_tasks: ../../deploy_tasks/metaspace_repo.yml
     - import_tasks: ../../deploy_tasks/sm_engine.yml
   tags: [slave]
 
@@ -32,6 +33,9 @@
     es_password: "{{ sm_es_password }}"
 
   tasks:
+    - import_tasks: ../../deploy_tasks/metaspace_repo.yml
+      tags: [metaspace_repo]
+
     - import_tasks: ../../deploy_tasks/sm_engine.yml
 
     - name: Pull SM config from the remote host

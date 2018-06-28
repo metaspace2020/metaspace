@@ -14,13 +14,6 @@
   become_user: postgres
   postgresql_db: name=mol_db owner=mol_db encoding=UTF8 template=template0
 
-- name: Clone MolDB git repository
-  git: >
-    dest={{ mol_db_home }}
-    repo={{ mol_db_repo_url }}
-    update=yes
-    version={{ mol_db_branch }}
-
 - name: Check if env already exists
   stat:
     path: "{{ mol_db_miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}"

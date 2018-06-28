@@ -20,7 +20,7 @@ Inside the container:
 service elasticsearch start
 service postgresql start
 service rabbitmq-server start
-cd /opt/dev/sm
+cd /opt/dev/metaspace/metaspace/engine
 source /opt/dev/miniconda/bin/activate sm
 supervisord -c /etc/supervisor/supervisord.conf -l /var/log/supervisor/supervisord.log
 ```

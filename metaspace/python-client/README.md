@@ -1,6 +1,6 @@
 # sm-analytics-python
 
-Python module that provides programmatic access to a running instance of [`METASPACE`](https://github.com/METASPACE2020/) platform
+Python module that provides programmatic access to a running instance of [`METASPACE`](https://github.com/metaspace2020/) platform
 
 ## Applications
 
@@ -15,7 +15,7 @@ You need Python 3 to use this library.
 `pip install git+https://github.com/metaspace2020/sm-analytics-python`
 
 ## Which branch to use
-If you are trying to access annotations from the main public metaspace instance then make sure you are on branch [rel-v0.10](https://github.com/METASPACE2020/sm-analytics-python/tree/rel-v0.10/).
+If you are trying to access annotations from the main public metaspace instance then make sure you are on branch [rel-v0.10](https://github.com/metaspace2020/sm-analytics-python/tree/rel-v0.10/).
 
 ## Funding
 

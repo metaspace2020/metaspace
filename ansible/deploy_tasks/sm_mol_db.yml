@@ -1,13 +1,6 @@
-- name: Clone MolDB git repository
-  git: >
-    dest={{ mol_db_home }}
-    repo={{ mol_db_repo_url }}
-    update=yes
-    force=yes
-    version={{ mol_db_branch }}
-  when: local_deploy is not defined
-  register: git_deploy
-  until: git_deploy | succeeded
+---
+
+- import_tasks: metaspace_repo.yml
 
 - name: Upload local files
   synchronize:

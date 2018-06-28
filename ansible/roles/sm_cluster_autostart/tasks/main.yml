@@ -26,13 +26,13 @@
   become: yes
   file: path={{ sm_ansible_home }} owner=ubuntu group=ubuntu state=directory mode=0755
 
-- name: Git clone sm-engine-ansible
+- name: Pull metaspace sources from the repository
   git:
-    dest: "{{ sm_ansible_home }}"
-    repo: "{{ sm_ansible_url }}"
+    repo: "{{ metaspace_repo_url }}"
+    version: "{{ metaspace_branch }}"
+    dest: "{{ metaspace_home }}"
     update: yes
     force: yes
-    version: "{{ sm_ansible_branch }}"
   register: git_deploy
   until: git_deploy | succeeded
 

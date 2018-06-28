@@ -26,6 +26,9 @@
 
     - role: supervisor
 
+    - role: metaspace_repo
+      tags: [metaspace_repo]
+
     - role: mol_db
       tags: [mol_db]
 

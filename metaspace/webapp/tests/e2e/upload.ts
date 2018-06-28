@@ -81,7 +81,7 @@ class UploadForm {
 }
 
 async function downloadExampleData() {
-    const remotePrefix = "https://github.com/METASPACE2020/sm-engine/blob/master/tests/data/imzml_example_ds/"
+    const remotePrefix = "https://github.com/metaspace2020/metaspace/blob/master/metaspace/engine/tests/data/imzml_example_ds/"
     let filenames = ["Example_Continuous.imzML", "Example_Continuous.ibd"];
 
     chdir('tests/e2e/');

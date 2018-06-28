@@ -1,3 +1,2 @@
-sm_graphql_home: /opt/dev/sm-graphql
-sm_graphql_branch: master
+sm_home: "{{ metaspace_home }}/metaspace/graphql"
 sm_database_host: localhost
