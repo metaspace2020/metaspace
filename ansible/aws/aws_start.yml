@@ -1,0 +1,50 @@
+---
+
+- name: Spinning up AWS instances
+  hosts: localhost
+  connection: local
+  gather_facts: False
+
+  vars:
+    components: ''
+
+  tasks:
+    - debug: var=components
+    - debug: var=aws_key_name
+
+    - name: Spin up SM cluster instances
+      shell: python3 aws_instance_manager.py start --key-name {{ aws_key_name }}
+             --components {{ components }} --stage {{ stage }} --region {{ aws_region }}
+      when: spark_volume_size is not defined
+
+    - meta: refresh_inventory
+  tags: ["web", "spark"]
+
+
+- name: Wait for SSH on the master to come up
+  hosts: localhost
+  user: ubuntu
+  gather_facts: True
+
+  tasks:
+    - debug: var=hostvars['master-1']['ansible_ssh_host']
+
+    - name: Wait for SSH on the master to come up
+      wait_for:
+        host: "{{ hostvars['master-1']['ansible_ssh_host'] }}"
+        port: 22
+        timeout: 300
+        state: started
+
+    - debug: var=hostvars["{{ item }}"]['ansible_ssh_host']
+      with_items: "{{ groups['slave'] }}"
+
+    - name: Wait for SSH on the slaves to come up
+      wait_for:
+        host: "{{ hostvars[item]['ansible_ssh_host'] }}"
+        port: 22
+        timeout: 300
+        state: started
+      with_items: "{{ groups['slave'] }}"
+
+  tags: ["spark"]

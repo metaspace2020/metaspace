@@ -1,0 +1,3 @@
+sm_graphql_home: /opt/dev/sm-graphql
+sm_graphql_branch: master
+sm_database_host: localhost

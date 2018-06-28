@@ -1,0 +1,78 @@
+version: '2'
+
+services:
+
+  kibana:
+    image: kibana:5.5
+    volumes:
+      - ./kibana/config/:/usr/share/kibana/config:ro
+    ports:
+      - "5601:5601"
+    networks:
+      - sm
+    depends_on:
+      - elasticsearch
+
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - "15672:15672" #management interface
+
+  adminer:
+    image: adminer
+    ports:
+      - "9000:8080"
+    networks:
+      - sm
+
+  mol-db:
+    volumes:
+      - "${DEV_ROOT}/sm-molecular-db/:/opt/dev/sm-molecular-db:z"
+      - ./mol-db/install-dbs.sh:/install-dbs.sh:ro
+      - ./mol-db/docker-entrypoint.sh:/docker-entrypoint.sh:ro
+    environment:
+      - SM_DOCKER_ENV=development
+
+  sm-api:
+    volumes:
+      - "${DEV_ROOT}/sm-engine/:/opt/dev/sm-engine:z"
+      - ./sm-engine/rebuild-es-index.sh:/rebuild-es-index.sh:ro
+      - ./sm-engine/start-api.sh:/start-api.sh:ro
+      - ./sm-engine/start-common.sh:/start-common.sh:ro
+    environment:
+      - SM_DOCKER_ENV=development
+
+  sm-daemon:
+    volumes:
+      - "${DEV_ROOT}/sm-engine/:/opt/dev/sm-engine:z"
+      - ./sm-engine/start-daemon.sh:/start-daemon.sh:ro
+      - ./sm-engine/start-common.sh:/start-common.sh:ro
+    environment:
+      - SM_DOCKER_ENV=development
+
+  sm-graphql:
+    volumes:
+      - "${DEV_ROOT}/sm-graphql/:/opt/dev/sm-graphql:z"
+      - ./sm-graphql/docker-entrypoint.sh:/docker-entrypoint.sh:ro
+    environment:
+      - SM_DOCKER_ENV=development
+
+  sm-webapp:
+    volumes:
+      - "${DEV_ROOT}/sm-webapp/:/opt/dev/sm-webapp:z"
+      - ./sm-webapp/docker-entrypoint.sh:/docker-entrypoint.sh:ro
+    environment:
+      - SM_DOCKER_ENV=development
+
+  nginx:
+    ports:
+      - "9210:9210" # password-protected kibana proxy
+    # Use extra_hosts to map DNS names to the host if you need to run any of the applications outside of docker
+    # extra_hosts:
+    #   - "sm-webapp:172.17.0.1"
+    #   - "sm-graphql:172.17.0.1"
+    #   - "mol-db:172.17.0.1"
+    depends_on:
+      - elasticsearch
+      - kibana
+      - mol-db

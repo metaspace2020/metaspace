@@ -1,0 +1,3 @@
+- name: pg_conf_update
+  become: yes
+  service: name=postgresql state=restarted

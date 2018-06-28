@@ -1,0 +1,2 @@
+CREATE USER mol_db WITH CREATEDB PASSWORD 'password';
+CREATE DATABASE mol_db OWNER mol_db;

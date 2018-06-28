@@ -1,0 +1,127 @@
+{
+  "loggers": {
+    "engine": {
+      "level": "DEBUG",
+      "handlers": ["console_debug"]
+    },
+    "daemon": {
+      "level": "DEBUG",
+      "handlers": ["console_warn", "file"]
+    },
+    "api": {
+      "level": "DEBUG",
+      "handlers": ["console_debug"]
+    }
+  },
+  "defaults": {
+    "adducts": {
+      "+": ["+H", "+Na", "+K"],
+      "-": ["-H", "+Cl"]
+    }
+  },
+  "db": {
+    "host": "localhost",
+    "database": "sm_test",
+    "user": "sm",
+    "password": "securepassword"
+  },
+  "elasticsearch": {
+    "index": "sm_test",
+    "host": "localhost",
+    "port": 9200
+  },
+  "rabbitmq": {
+    "host": "localhost",
+    "user": "sm",
+    "password": "password"
+  },
+  "services": {
+    "web_app_url": "http://localhost:8082",
+    "img_service_url": "http://localhost:4201",
+    "mol_db": "http://localhost:5001/v1",
+    "send_email": false
+  },
+  "fs": {
+    "base_path": "/opt/data/sm_test_data",
+    "s3_base_path": ""
+  },
+  "spark": {
+    "master": "local[4]",
+    "executor.memory": "2g",
+    "spark.sql.execution.arrow.enabled": true
+  },
+  "aws": {
+    "aws_access_key_id": "",
+    "aws_secret_access_key": "",
+    "aws_region": "eu-west-1"
+  },
+  "slack": {},
+  "ms_file_handlers": [{
+      "type": "ims",
+      "extensions": ["imzML", "ibd"],
+      "parser_factory": {
+        "name": "ImzMLParser",
+        "path": "pyimzml.ImzMLParser"
+      },
+      "acq_geometry_factory": {
+        "name": "ImsGeometryFactory",
+        "path": "sm.engine.ims_geometry_factory"
+      },
+      "img_storage_type": "fs"
+    }, {
+      "type": "lcms",
+      "extensions": ["mzML"],
+      "parser_factory": {
+        "name": "MzMLParser",
+        "path": "sm.engine.mzml_parser"
+      },
+      "acq_geometry_factory": {
+        "name": "LcmsGeometryFactory",
+        "path": "sm.engine.lcms_geometry_factory"
+      },
+      "img_storage_type": "db"
+  }],
+  "isotope_storage": {
+    "path": "/tmp/isotope_storage"
+  },
+  "logs": {
+    "version": 1,
+    "formatters": {
+      "sm": {
+        "format": "%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s"
+      }
+    },
+    "handlers": {
+        "console_warn": {
+            "class": "logging.StreamHandler",
+            "formatter": "sm",
+            "level": "WARNING"
+        },
+        "console_debug": {
+            "class": "logging.StreamHandler",
+            "formatter": "sm",
+            "level": "DEBUG"
+        },
+        "file_engine": {
+            "class": "logging.FileHandler",
+            "formatter": "sm",
+            "level": "DEBUG",
+            "filename": "logs/sm-engine.log"
+        }
+    },
+    "loggers": {
+        "engine": {
+            "handlers": ["console_debug", "file_engine"],
+            "level": "INFO"
+        },
+        "api": {
+            "handlers": ["console_debug"],
+            "level": "INFO"
+        },
+        "daemon": {
+            "handlers": ["console_debug"],
+            "level": "INFO"
+        }
+    }
+  }
+}

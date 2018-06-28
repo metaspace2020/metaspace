@@ -1,0 +1,38 @@
+version: '2'
+
+services:
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  elasticsearch:
+    ports:
+      - "9200:9200"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  rabbitmq:
+    ports:
+      - "5672:5672"
+
+  sm-api:
+    command: "true" # Immediately quit so that the port doesn't stay in use
+
+  mol-db:
+    ports:
+      - "5001:5001"
+
+  sm-graphql:
+    extra_hosts:
+      - "sm-api:172.17.0.1"
+
+  sm-webapp:
+    extra_hosts:
+      - "sm-api:172.17.0.1"
+
+  nginx:
+    extra_hosts:
+      - "sm-api:172.17.0.1"

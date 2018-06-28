@@ -1,0 +1,22 @@
+{
+  "graphqlUrl": "{{ sm_webapp_graphql_url }}",
+  "wsGraphqlUrl": "{{ sm_webapp_graphql_ws_public_endpoint }}",
+
+  "google_client_id": "{{ sm_webapp_google_client_id }}",
+  "enableUploads": {{ sm_webapp_enable_uploads | to_json }},
+
+  "fineUploader": {
+    "aws": {
+      "access_key_id": "{{ sm_webapp_aws_access_key_id }}",
+      "region": "{{ sm_webapp_aws_region }}",
+      "s3_bucket": "{{ sm_webapp_s3_bucket }}",
+      "s3_signature_endpoint": "/upload/s3/sign",
+      "s3_signature_version": 2
+    },
+    "storage": "{{ sm_webapp_upload_destination }}"
+  },
+
+  "ravenDsn": "https://16556a31185a4882b9ebf6a5abab9452@sentry.io/1203803",
+
+  "metadataTypes": {{ sm_webapp_metadata_types | to_json }}
+}
