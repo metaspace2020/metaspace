@@ -27,7 +27,7 @@
     <div ref="mapOverlap"
          :class="{'image-loader__overlay': overlayDefault, 'image-loader__overlay--visible': overlayFadingIn}"
          v-show="scrollBlock">
-      <p class="image-loader__overlay--text">Use {{messageOS}} + scroll wheel to zoom the image</p>
+      <p class="image-loader__overlay-text">Use {{messageOS}} to zoom the image</p>
     </div>
     <canvas ref="canvas" style="display:none;"></canvas>
   </div>
@@ -119,7 +119,8 @@
        dragYOffset: 0,
        dragThrottled: false,
        overlayDefault: true,
-       overlayFadingIn: false
+       overlayFadingIn: false,
+       tmId: 0
      }
    },
    created() {
@@ -141,13 +142,13 @@
        let os = getOS();
 
        if (os === 'Linux' || os === 'Windows') {
-         return 'CTRL'
+         return 'CTRL + scroll the mouse wheel'
        } else if (os === 'Mac OS') {
-         return 'CMD ⌘'
+         return 'CMD ⌘ + scroll the mouse wheel'
        } else if (os === 'Android' || os === 'iOS') {
          return 'two fingers'
        } else {
-         return 'CTRL'
+         return 'CTRL + scroll wheel'
        }
      },
 
@@ -213,7 +214,6 @@
 
 
      onWheel(event) {
-       let tmId = 0;
        // TODO: add pinch event handler for mobile devices
        if (event.ctrlKey || event.metaKey) {
          event.preventDefault();
@@ -231,8 +231,10 @@
        }
        else if (event.deltaY) {
          this.overlayFadingIn = true;
-         clearTimeout(tmId);
-         tmId = setTimeout(() => {
+         if (this.tmId !== 0) {
+           clearTimeout(this.tmId)
+         }
+         this.tmId = setTimeout(() => {
            this.overlayFadingIn = false;
          }, 1100);
        }
@@ -456,7 +458,7 @@
    align-self: center;
  }
 
- .image-loader__overlay--text {
+ .image-loader__overlay-text {
    font: 24px 'Roboto', sans-serif;
    display: inline-block;
    line-height: 500px;

@@ -121,11 +121,6 @@ export default class MainImage extends Vue {
     justify-content: center;
 }
 
-.main-ion-image-container-row2 {
-    padding: 0 30%;
-    margin: 15px 0 0 0;
-}
-
 .colorbar-container {
     display: flex;
     flex-direction: column;
