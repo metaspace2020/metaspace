@@ -135,7 +135,7 @@
        return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig['default'];
      },
      isSignedIn() {
-       return this.$store.state.user != null;
+       return this.$store.state.authenticated;
      }
    },
 
