@@ -58,14 +58,14 @@ export const thumbnailOptImageQuery =
       thumbnailImage(datasetId: $datasetId) 
   }`;
 
-export const submitDatasetQuery =
-  gql`mutation ($input: DatasetSubmitInput!, $delFirst: Boolean=false) {
-    submitDataset(input: $input, delFirst: $delFirst, priority: 1)
+export const createDatasetQuery =
+  gql`mutation ($input: DatasetCreateInput!) {
+      createDataset(input: $input, priority: 1)
   }`;
 
 export const deleteDatasetQuery =
   gql`mutation ($id: String!) {
-    deleteDataset(datasetId: $id)
+    deleteDataset(id: $id)
   }`;
 
 export const addOpticalImageQuery =

@@ -64,7 +64,7 @@
 
  import * as config from '../clientConfig.json';
  import {pathFromUUID} from '../util';
- import {submitDatasetQuery} from '../api/dataset';
+ import {createDatasetQuery} from '../api/dataset';
 
  const DataTypeConfig = {
    'LC-MS': {
@@ -177,7 +177,7 @@
 
        try {
          await this.$apollo.mutate({
-           mutation: submitDatasetQuery,
+           mutation: createDatasetQuery,
            variables: {
              input: {
                inputPath: pathFromUUID(this.uploadedUuid),

@@ -16,9 +16,9 @@ export const fetchAutocompleteSuggestionsQuery =
     metadataSuggestions(field: $field, query: $query, limit: 5)
   }`;
 
-export const updateMetadataQuery =
-  gql`mutation ($input: DatasetUpdateInput!) {
-    updateMetadata(input: $input, priority: 1)
+export const updateDatasetQuery =
+  gql`mutation ($id: String!, $reprocess: Boolean, $input: DatasetUpdateInput!) {
+    updateDataset(id: $id, input: $input, reprocess: $reprocess priority: 1)
   }`;
 
 // TODO: use autocompletion for filter values, same as on the upload page

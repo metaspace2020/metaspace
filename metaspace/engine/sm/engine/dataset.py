@@ -52,22 +52,6 @@ class Dataset(object):
     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
                  metadata=None, config=None, status=DatasetStatus.NEW,
                  is_public=True, mol_dbs=None, adducts=None, img_storage_type='fs'):
-# =======
-#     DS_UPD = ('UPDATE dataset set name=%(name)s, input_path=%(input_path)s, upload_dt=%(upload_dt)s, '
-#               'metadata=%(metadata)s, config=%(config)s, status=%(status)s, is_public=%(is_public)s where id=%(id)s')
-#     DS_CONFIG_SEL = 'SELECT config FROM dataset WHERE id = %s'
-#     DS_INSERT = ('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, status, is_public) '
-#                  'VALUES (%(id)s, %(name)s, %(input_path)s, %(upload_dt)s, %(metadata)s, %(config)s, '
-#                  '%(status)s, %(is_public)s)')
-#
-#     ACQ_GEOMETRY_SEL = 'SELECT acq_geometry FROM dataset WHERE id = %s'
-#     ACQ_GEOMETRY_UPD = 'UPDATE dataset SET acq_geometry = %s WHERE id = %s'
-#     IMG_STORAGE_TYPE_SEL = 'SELECT ion_img_storage_type FROM dataset WHERE id = %s'
-#     IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
-#
-#     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
-#                  metadata=None, config=None, img_storage_type=None, is_public=True, status=DatasetStatus.NEW):
-# >>>>>>> master
         self.id = id
         self.name = name
         self.input_path = input_path
