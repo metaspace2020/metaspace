@@ -281,8 +281,9 @@ class SMapiDatasetManager(DatasetManager):
                 self._img_store.delete_image_by_id('fs', 'raw_optical_image', raw_img_id)
         for row in self._db.select(SEL_OPTICAL_IMAGE, params=(ds.id,)):
             self._img_store.delete_image_by_id('fs', 'optical_image', row[0])
-        for row in self._db.select(SEL_OPTICAL_IMAGE_THUMBNAIL, params=(ds.id,)):
-            self._img_store.delete_image_by_id('fs', 'optical_image', row[0])
+        (img_id,) = self._db.select_one(SEL_OPTICAL_IMAGE_THUMBNAIL, params=(ds.id,))
+        if img_id:
+            self._img_store.delete_image_by_id('fs', 'optical_image', img_id)
         self._db.alter(DEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
         self._db.alter(DEL_OPTICAL_IMAGE, params=(ds.id,))
         self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(None, ds.id,))

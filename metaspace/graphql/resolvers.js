@@ -459,19 +459,19 @@ const Resolvers = {
   },
 
   Mutation: {
-    resubmitDataset: async (_, args, {user}) => {
-      const {datasetId, priority, delFirst} = args;
-      const ds = await fetchDS({id: datasetId});
+    reprocessDataset: async (_, args, {user}) => {
+      const {id, delFirst, priority} = args;
+      const ds = await fetchDS({id});
       if (ds === undefined)
         throw new UserError('DS does not exist');
-      return DSMutation.submit({input: ds, priority: priority, delFirst: delFirst}, user);
+      return DSMutation.update({id: id, input: ds, reprocess: true, delFirst: delFirst, priority: priority}, user);
     },
 
-    submitDataset: (_, args, {user}) => {
-      return DSMutation.submit(args, user);
+    createDataset: (_, args, {user}) => {
+      return DSMutation.create(args, user);
     },
 
-    updateMetadata: (_, args, {user}) => {
+    updateDataset: (_, args, {user}) => {
       return DSMutation.update(args, user);
     },
 

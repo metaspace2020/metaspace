@@ -76,7 +76,7 @@ async function molDBsExist(molDBNames) {
   }
 }
 
-function reprocessingNeeded(ds, updDS) {
+function processingSettingsChanged(ds, updDS) {
   const configDelta = jsondiffpatch.diff(ds.config, updDS.config),
     configDiff = jsondiffpatch.formatters.jsonpatch.format(configDelta),
     metaDelta = jsondiffpatch.diff(ds.metadata, updDS.metadata),
@@ -91,23 +91,8 @@ function reprocessingNeeded(ds, updDS) {
         procSettingsUpd = true;
     }
   }
-
-  if (procSettingsUpd) {
-    throw new UserError(JSON.stringify({
-      'type': 'drop_submit_needed',
-      'hint': `Resubmission needed. Call 'submitDataset' with 'delFirst: true'.`,
-      'metadata_diff': metaDiff,
-      'config_diff': configDiff
-    }))
-  }
-  else if (dbUpd) {
-    throw new UserError(JSON.stringify({
-      'type': 'submit_needed',
-      'hint': `Resubmission needed. Call 'submitDataset'.`,
-      'metadata_diff': metaDiff,
-      'config_diff': configDiff
-    }))
-  }
+  return {dbUpd: dbUpd, procSettingsUpd: procSettingsUpd,
+    configDiff: configDiff, metaDiff: metaDiff}
 }
 
 async function smAPIRequest(datasetId, uri, body) {
@@ -138,71 +123,49 @@ function updateObject(obj, upd) {
 }
 
 module.exports = {
-  reprocessingNeeded,
-  Query: {
-    reprocessingNeeded: async (args, user) => {
-      const {input} = args;
-      const ds = await fetchDS({id: input.id});
-      await assertUserCanEditDataset(ds.id, user);
-
-      if (input.metadataJson !== undefined)
-        input.metadata = JSON.parse(input.metadataJson);
-      validateMetadata(input.metadata);
-
-      const updDS = updateObject(ds, input);
-      addProcessingConfig(updDS);
-
-      try {
-        await reprocessingNeeded(ds, updDS);
-        return false;
-      }
-      catch (e) {
-        return true;
-      }
-    }
-  },
   Mutation: {
-    submit: async (args, user) => {
-      const {input: ds, priority, delFirst} = args;
+    create: async (args, user) => {
+      const {id, input, priority} = args;
       try {
-        if (ds.id !== undefined) {
-          await assertUserCanEditDataset(ds.id, user);
+        if (id !== undefined && user.role == 'admin') {
+          let ds = await fetchDS({id});
+          if (ds !== undefined)
+            throw new UserError(`DS id '${id}' already exists`);
         }
 
-        ds.metadata = JSON.parse(ds.metadataJson);
-        setSubmitter(null, ds.metadata, user);
-        validateMetadata(ds.metadata);
-        await molDBsExist(ds.molDBs);
-        addProcessingConfig(ds);
+        input.metadata = JSON.parse(input.metadataJson);
+        setSubmitter(null, input.metadata, user);
+        validateMetadata(input.metadata);
+        await molDBsExist(input.molDBs);
+        addProcessingConfig(input);
 
         const body = {
-          name: ds.name,
-          input_path: ds.inputPath,
-          upload_dt: ds.uploadDT,
-          metadata: ds.metadata,
-          config: ds.config,
+          name: input.name,
+          input_path: input.inputPath,
+          upload_dt: input.uploadDT,
+          metadata: input.metadata,
+          config: input.config,
+          is_public: input.isPublic,
+          mol_dbs: input.molDBs,
+          adducts: input.adducts,
           priority: priority,
-          del_first: delFirst,
-          is_public: ds.isPublic,
-          mol_dbs: ds.molDBs,
-          adducts: ds.adducts
         };
-        if (ds.id !== undefined)
-          body.id = ds.id;
-        return await smAPIRequest(ds.id, '/v1/datasets/add', body);
+        if (id !== undefined)
+          body.id = id;
+        return await smAPIRequest(id, '/v1/datasets/add', body);
       } catch (e) {
         logger.error(e.stack);
         throw e;
       }
     },
     update: async (args, user) => {
-      const {input, priority} = args;
+      const {id, input, reprocess, delFirst, priority} = args;
       try {
-        let ds = await fetchDS({id: input.id});
+        let ds = await fetchDS({id});
         if (ds === undefined) {
-          throw new UserError('DS does not exist');
+          throw new UserError(`DS id '${id}' does not exist`);
         }
-        await assertUserCanEditDataset(ds.id, user);
+        await assertUserCanEditDataset(id, user);
 
         if (input.metadataJson !== undefined)
           input.metadata = JSON.parse(input.metadataJson);
@@ -211,36 +174,57 @@ module.exports = {
         setSubmitter(ds.metadata, updDS.metadata, user);
         validateMetadata(updDS.metadata);
         addProcessingConfig(updDS);
-        await reprocessingNeeded(ds, updDS);
+
+        const {dbUpd, procSettingsUpd} = await processingSettingsChanged(ds, updDS);
+        const reprocessingNeeded = dbUpd || procSettingsUpd;
 
         const body = {
+          id: updDS.id,
+          name: updDS.name,
+          input_path: updDS.inputPath,
+          upload_dt: updDS.uploadDT,
           metadata: updDS.metadata,
           config: updDS.config,
-          name: updDS.name,
-          upload_dt: updDS.uploadDT,
+          is_public: updDS.isPublic,
+          mol_dbs: updDS.molDBs,
+          adducts: updDS.adducts,
           priority: priority,
-          is_public: updDS.isPublic
+          del_first: procSettingsUpd || delFirst  // delete old results if processing settings changed
         };
-        return await smAPIRequest(updDS.id, `/v1/datasets/${updDS.id}/update`, body);
+
+        if (reprocess) {
+          return await smAPIRequest(updDS.id, '/v1/datasets/add', body);
+        }
+        else {
+          if (reprocessingNeeded) {
+            throw new UserError(JSON.stringify({
+              'type': 'reprocessing_needed',
+              'hint': `Reprocessing needed. Provide 'reprocess' flag.`
+            }));
+          }
+          else {
+            return await smAPIRequest(updDS.id, `/v1/datasets/${updDS.id}/update`, body);
+          }
+        }
       } catch (e) {
         logger.error(e.stack);
         throw e;
       }
     },
     delete: async (args, user) => {
-      const {datasetId} = args;
+      const {id, priority} = args;
 
       try {
-        await assertUserCanEditDataset(datasetId, user);
+        await assertUserCanEditDataset(id, user);
 
         try {
-          await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/del-optical-image`, {});
+          await smAPIRequest(id, `/v1/datasets/${id}/del-optical-image`, {});
         }
         catch (err) {
           logger.warn(err);
         }
 
-        return await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/delete`, {});
+        return await smAPIRequest(id, `/v1/datasets/${id}/delete`, {});
       } catch (e) {
         logger.error(e.stack);
         throw e;

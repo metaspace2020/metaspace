@@ -10,8 +10,7 @@
 
 <script>
  import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
- import {submitDatasetQuery} from '../api/dataset';
- import {updateMetadataQuery} from '../api/metadata';
+ import {updateDatasetQuery} from '../api/metadata';
 
  export default {
    name: 'metadata-edit-page',
@@ -60,10 +59,10 @@
          this.isSubmitting = false;
        }
      },
-     async saveDataset(datasetId, metadataJson, isPublic, resubmit=false, delFirst=undefined) {
+     async saveDataset(datasetId, metadataJson, metaspaceOptions) {
        // TODO Lachlan: This is similar to the logic in UploadPage.vue. Refactor this when these components are in JSX
        try {
-         await this.updateOrResubmit(datasetId, metadataJson, isPublic, resubmit, delFirst);
+         await this.updateOrReprocess(datasetId, metadataJson, metaspaceOptions, false);
          return true;
        } catch (err) {
          let graphQLError = null;
@@ -72,11 +71,9 @@
          } catch(err2) { /* The case where err does not contain a graphQL error is handled below */ }
 
          if (graphQLError
-           && !resubmit
-           && (graphQLError['type'] === 'submit_needed' || graphQLError['type'] === 'drop_submit_needed')) {
+           && (graphQLError['type'] === 'reprocessing_needed')) {
            if (await this.confirmReprocess()) {
-             const delFirstNeeded = graphQLError['type'] === 'drop_submit_needed';
-             return await this.saveDataset(datasetId, metadataJson, isPublic, true, delFirstNeeded);
+             return await this.updateOrReprocess(datasetId, metadataJson, metaspaceOptions, true);
            }
          } else if (graphQLError && graphQLError.type === 'wrong_moldb_name') {
            this.$refs.editor.resetMetaboliteDatabase();
@@ -123,15 +120,16 @@
        }
      },
 
-     async updateOrResubmit(datasetId, metadataJson, metaspaceOptions, resubmit, delFirst) {
+     async updateOrReprocess(datasetId, metadataJson, metaspaceOptions, reprocess) {
        return await this.$apollo.mutate({
-         mutation: resubmit ? submitDatasetQuery : updateMetadataQuery,
+         mutation: updateDatasetQuery,
          variables: {
+           id: datasetId,
            input: {
-             id: datasetId,
-             ...metaspaceOptions,
+             metadataJson: metadataJson,
+             ...metaspaceOptions
            },
-           delFirst
+           reprocess: reprocess
          },
          updateQueries: {
            fetchMetadataQuery: (prev, _) => ({
