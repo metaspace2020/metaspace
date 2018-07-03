@@ -3,7 +3,7 @@ Easy access to datasets by downloading them from S3.
 Works best on Amazon EC2 (eu-west-1 region).
 
 Requirements:
- - cpyMSpec, cpyImagingMSpec>=0.3.0, sm_annotation_utils
+ - cpyMSpec, cpyImagingMSpec>=0.3.0, metaspace
  - installed boto3, .aws/credentials file
  - installed ims-cpp conda package (conda install -c lomereiter ims-cpp)
 """

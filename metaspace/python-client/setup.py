@@ -1,11 +1,11 @@
 from setuptools import setup, find_packages
 
-from sm_annotation_utils import __version__
+from metaspace import __version__
 
-setup(name='sm_annotation_utils',
+setup(name='metaspace',
       version=__version__,
       description='Python library for working with sm-engine annotations',
-      url='https://github.com/metaspace2020/metaspace/metaspace/python-client',
+      url='https://github.com/metaspace2020/metaspace/tree/master/metaspace/python-client',
       author='Alexandrov Team, EMBL',
       packages=find_packages(),
       install_requires=[
