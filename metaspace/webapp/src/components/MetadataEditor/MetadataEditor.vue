@@ -339,8 +339,9 @@
        this.metaspaceOptions.adducts = newAdducts;
      },
 
-     resetDatasetName() {
+     resetAfterSubmit() {
        this.metaspaceOptions.name = '';
+       this.localErrors = {};
      },
 
      resetMetaboliteDatabase() {
