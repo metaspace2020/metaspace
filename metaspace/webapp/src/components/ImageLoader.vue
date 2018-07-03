@@ -347,27 +347,29 @@
 
      redraw () {
        this.isLCMS = this.image.height == 1;
-       let canvas = this.$refs.canvas,
-           ctx = canvas.getContext("2d");
+       const canvas = this.$refs.canvas;
+       if (canvas != null) {
+         const ctx = canvas.getContext("2d");
 
-       this.determineScaleFactor();
-       this.updateDimensions();
-       ctx.canvas.height = this.image.naturalHeight;
-       ctx.canvas.width = this.image.naturalWidth;
-       ctx.setTransform(1, 0, 0, 1, 0, 0);
+         this.determineScaleFactor();
+         this.updateDimensions();
+         ctx.canvas.height = this.image.naturalHeight;
+         ctx.canvas.width = this.image.naturalWidth;
+         ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-       ctx.drawImage(this.image, 0, 0);
-       const q = this.computeQuantile();
+         ctx.drawImage(this.image, 0, 0);
+         const q = this.computeQuantile();
 
-       ctx.drawImage(this.image, 0, 0);
-       if (canvas.width == 0)
-         return;
-       let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-       this.removeHotspots(imageData, q);
-       ctx.putImageData(imageData, 0, 0);
-       this.applyColormap();
+         ctx.drawImage(this.image, 0, 0);
+         if (canvas.width == 0)
+           return;
+         let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+         this.removeHotspots(imageData, q);
+         ctx.putImageData(imageData, 0, 0);
+         this.applyColormap();
 
-       this.isLoading = false;
+         this.isLoading = false;
+       }
      },
 
      applyColormap() {

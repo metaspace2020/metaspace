@@ -314,7 +314,10 @@
      this._onDataArrival = (data) => {
        if (!data) return;
        Vue.nextTick(() => this.setRow(data, 0));
-       document.getElementById('annot-table').focus();
+       const annotTable = document.getElementById('annot-table');
+       if (annotTable != null) {
+         annotTable.focus();
+       }
      };
    },
    methods: {
