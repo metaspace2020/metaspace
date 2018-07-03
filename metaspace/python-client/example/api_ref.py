@@ -2,7 +2,7 @@ import os
 import json
 import boto3
 import pandas as pd
-from sm_annotation_utils import sm_annotation_utils
+from metaspace import sm_annotation_utils
 def get_study_info(ds_ids, database='HMDB-v4', fdr=0.1, config=None):
     ## CONNECT TO METASPACE SERVICES
     if config==None:
