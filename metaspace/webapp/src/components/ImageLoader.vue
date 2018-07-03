@@ -103,6 +103,7 @@
        image: new Image(),
        colors: createColormap(this.colormap),
        isLoading: false,
+       isUnmounted: false,
        message: '',
        dataURI: '',
        hotspotRemovalQuantile: 0.99,
@@ -138,8 +139,8 @@
    },
    beforeDestroy() {
      window.removeEventListener('resize', this.onResize);
-     // Cancel any pending callbacks to the throttled resize handler, as $refs is about to be emptied out
-     this.onResize.cancel();
+     this.onResize.cancel(); // If there's a pending throttled call, cancel it
+     this.isUnmounted = true;
    },
    computed: {
      messageOS() {
@@ -210,15 +211,16 @@
    methods: {
 
      onResize: function() {
-       this.parentDivWidth = this.$refs.parent.clientWidth;
-       this.determineScaleFactor();
-       this.$nextTick(() => {
-         // Occasionally $nextTick calls back after this component is unmounted - double-check visibleImage still exists
-         // before calling updateDimensions
-         if (this.$refs.visibleImage) {
-           this.updateDimensions();
-         }
-       });
+       // v-resize sometimes keeps calling after the component is destroyed - ignore it when it does.
+       if (!this.isUnmounted) {
+         this.parentDivWidth = this.$refs.parent.clientWidth;
+         this.determineScaleFactor();
+         this.$nextTick(() => {
+           if (!this.isUnmounted) {
+             this.updateDimensions();
+           }
+         });
+       }
      },
 
 

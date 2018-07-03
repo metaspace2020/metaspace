@@ -322,8 +322,11 @@
        this.recordsPerPage = newSize;
      },
      setRow(data, rowIndex) {
-       this.$refs.table.setCurrentRow(null);
-       this.$refs.table.setCurrentRow(data[rowIndex]);
+       // Ignore if called after unmount
+       if (this.$refs.table != null) {
+         this.$refs.table.setCurrentRow(null);
+         this.$refs.table.setCurrentRow(data[rowIndex]);
+       }
      },
      queryVariables() {
        const {annotationFilter, datasetFilter, ftsQuery} = this.gqlFilter;
