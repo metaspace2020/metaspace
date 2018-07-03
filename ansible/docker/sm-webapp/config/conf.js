@@ -24,6 +24,6 @@ exports.REDIS_CONFIG = {
   port: "6379"
 }
 
-exports.HOST_NAME = "localhost:8999";
+exports.HOST_NAME = "localhost:8999"; //FIXME: Tests fail when this has a port. Login links on dev PCs are broken when this doesn't have a port. exports.PORT won't help here because it's the *internal* port of the webserver, not the public/nginx port.
 
 exports.RAVEN_DSN = "https://16556a31185a4882b9ebf6a5abab9452@sentry.io/1203803";

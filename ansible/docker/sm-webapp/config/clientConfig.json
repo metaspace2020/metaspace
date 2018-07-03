@@ -1,7 +1,4 @@
 {
-  "graphqlUrl": "http://localhost:8999/graphql",
-  "wsGraphqlUrl": "ws://localhost:8999/ws",
-
   "google_client_id": "clientid",
   "enableUploads": true,
 
