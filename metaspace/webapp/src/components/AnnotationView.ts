@@ -164,8 +164,8 @@
      this.$store.commit('updateAnnotationViewSections', activeSections)
    }
 
-   onImageZoom(zoom: any): void {
-     this.imagePosition.zoom = zoom;
+   onImageZoom(event: any): void {
+     this.imagePosition.zoom = event.zoom;
    }
 
    onImageMove(event: any): void {

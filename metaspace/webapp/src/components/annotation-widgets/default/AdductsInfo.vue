@@ -8,7 +8,8 @@
                 <image-loader :src="other.isotopeImages[0].url"
                             v-bind="imageLoaderSettings"
                             :colormap="colormap"
-                            :max-height=250>
+                            :max-height=250
+                            style="overflow: hidden">
                 </image-loader>
                 <div class="rel-annot-details">
                 MSM score: {{ other.msmScore.toFixed(3) }}<br/>

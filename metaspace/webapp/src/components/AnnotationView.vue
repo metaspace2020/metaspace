@@ -32,8 +32,7 @@
                      :colormapName="colormapName"
                      :opacity="opacity"
                      :imageLoaderSettings="imageLoaderSettings"
-                     :zoom="imagePosition.zoom"
-                     @zoom-input="onImageZoom"
+                     :onImageZoom="onImageZoom"
                      :onImageMove="onImageMove"
                      :acquisitionGeometry="msAcqGeometry"
                      @opacityInput="newVal => opacity = newVal">

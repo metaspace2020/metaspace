@@ -1,16 +1,17 @@
 <template>
   <div class="image-loader"
-       :style="hideImage"
        v-loading="isLoading"
        ref="parent"
        v-resize.debounce.50="onResize"
        :element-loading-text="message">
 
     <div class="image-loader__container" ref="container" style="align-self: center">
-      <div style="text-align: left; z-index: 2; position: relative">
+      <div style="text-align: left; z-index: 2; position: relative;">
         <img :src="dataURI"
              :style="imageStyle"
              @click="onClick"
+             @wheel="onWheel"
+             @mousedown="onMouseDown"
              ref="visibleImage"
              class="isotope-image"/>
       </div>
@@ -23,6 +24,11 @@
       </div>
     </div>
 
+    <div ref="mapOverlap"
+         :class="{'image-loader__overlay': overlayDefault, 'image-loader__overlay--visible': overlayFadingIn}"
+         v-show="scrollBlock">
+      <p class="image-loader__overlay-text">Use {{messageOS}} to zoom the image</p>
+    </div>
     <canvas ref="canvas" style="display:none;"></canvas>
   </div>
 </template>
@@ -30,7 +36,7 @@
 <script>
  // uses loading directive from Element-UI
 
- import {scrollDistance} from '../util';
+ import {scrollDistance, getOS} from '../util';
  import createColormap from '../lib/createColormap';
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
@@ -86,7 +92,7 @@
        type: String,
        default: ''
      },
-     halfWidth: {
+     scrollBlock: {
        type: Boolean,
        default: false
      }
@@ -111,7 +117,10 @@
        dragStartY: 0,
        dragXOffset: 0, // starting position
        dragYOffset: 0,
-       dragThrottled: false
+       dragThrottled: false,
+       overlayDefault: true,
+       overlayFadingIn: false,
+       tmId: 0
      }
    },
    created() {
@@ -123,16 +132,23 @@
    },
    mounted: function() {
      this.parentDivWidth = this.$refs.parent.clientWidth;
-     this.$refs.visibleImage.addEventListener('mousedown', this.onMouseDown);
      window.addEventListener('resize', this.onResize);
    },
    beforeDestroy: function() {
      window.removeEventListener('resize', this.onResize);
    },
    computed: {
-     hideImage() {
-       if (this.halfWidth) {
-         return 'overflow: hidden;'
+     messageOS() {
+       let os = getOS();
+
+       if (os === 'Linux' || os === 'Windows') {
+         return 'CTRL + scroll the mouse wheel'
+       } else if (os === 'Mac OS') {
+         return 'CMD ⌘ + scroll the mouse wheel'
+       } else if (os === 'Android' || os === 'iOS') {
+         return 'two fingers'
+       } else {
+         return 'CTRL + scroll wheel'
        }
      },
 
@@ -144,19 +160,13 @@
                dx = this.xOffset * this.scaleFactor * this.zoom,
                dy = this.yOffset * this.scaleFactor * this.zoom,
                transform = `scale(${this.zoom}, ${this.zoom})` +
-                   `translate(${-dx / this.zoom}px, ${-dy / this.zoom}px)`,
-               clipPathOffsets = [dy, (width * (this.zoom - 1) - dx), (height * (this.zoom - 1) - dy), dx];
-
-         let clipPath = null;
-         if (dx != 0 || dy != 0 || this.zoom != 1)
-           clipPath = 'inset(' + clipPathOffsets.map(x => x / this.zoom + 'px').join(' ') + ')';
+                   `translate(${-dx / this.zoom}px, ${-dy / this.zoom}px)`
 
          return {
            'width': width + 'px',
            'height': height + 'px',
-            transform: transform + ' ' + this.transform,
-           'transform-origin': this.halfWidth ? '50% 50% 0' : '0 0',
-           'clipPath': this.halfWidth ? '' : clipPath,
+           transform: transform + ' ' + this.transform,
+           'transform-origin': '0 0'
          };
        } else // LC-MS data (1 x number of time points)
        return {
@@ -201,6 +211,35 @@
          this.updateDimensions();
        });
      },
+
+
+     onWheel(event) {
+       // TODO: add pinch event handler for mobile devices
+       if (event.ctrlKey || event.metaKey) {
+         event.preventDefault();
+         const sY = scrollDistance(event);
+
+         const newZoom = Math.max(1, this.zoom - sY / 10.0);
+         const rect = event.target.getBoundingClientRect(),
+             x = (event.clientX - rect.left) / this.scaleFactor / this.zoom,
+             y = (event.clientY - rect.top) / this.scaleFactor / this.zoom,
+             xOffset = -(this.zoom / newZoom - 1) * x + this.zoom / newZoom * this.xOffset,
+             yOffset = -(this.zoom / newZoom - 1) * y + this.zoom / newZoom * this.yOffset;
+
+         this.$emit('zoom', {zoom: newZoom});
+         this.$emit('move', {xOffset, yOffset});
+       }
+       else if (event.deltaY) {
+         this.overlayFadingIn = true;
+         if (this.tmId !== 0) {
+           clearTimeout(this.tmId)
+         }
+         this.tmId = setTimeout(() => {
+           this.overlayFadingIn = false;
+         }, 1100);
+       }
+     },
+
 
      onMouseDown(event) {
        event.preventDefault();
@@ -289,6 +328,7 @@
 
        this.grayscaleData = grayscaleData;
      },
+
 
      redraw () {
        this.isLCMS = this.image.height == 1;
@@ -411,9 +451,37 @@
    cursor: -webkit-grab;
    cursor: grab;
    width: 100%;
+   height: 100%;
    line-height: 0px;
    display: flex;
    flex-direction: column;
    align-self: center;
  }
+
+ .image-loader__overlay-text {
+   font: 24px 'Roboto', sans-serif;
+   display: inline-block;
+   line-height: 500px;
+   z-index: 4;
+   color: #fff;
+   padding: auto;
+ }
+
+ .image-loader__overlay {
+  pointer-events: none;
+  background-color: #fff;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  opacity: 0;
+  transition: 1.1s;
+  z-index: 3;
+ }
+
+ .image-loader__overlay--visible {
+  background-color: black;
+  opacity: 0.6;
+  transition: 0.7s;
+ }
+
 </style>

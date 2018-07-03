@@ -19,7 +19,8 @@
                 <image-loader :src="img.url"
                               :colormap="colormap"
                               :max-height=250
-                              v-bind="imageLoaderSettings">
+                              v-bind="imageLoaderSettings"
+                              style="overflow: hidden">
                 </image-loader>
             </div>
         </el-col>
