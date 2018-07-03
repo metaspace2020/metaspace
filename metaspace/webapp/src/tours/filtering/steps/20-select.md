@@ -1,5 +1,6 @@
 ---
 title: Other filters
+route: '/annotations'
 target: '.filter-panel > .el-select'
 placement: right
 ---

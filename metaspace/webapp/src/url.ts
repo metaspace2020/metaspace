@@ -34,7 +34,6 @@ const URL_TO_FILTER: Dictionary<string> = invert(FILTER_TO_URL);
 const PATH_TO_LEVEL: Dictionary<string> = {
   '/annotations': 'annotation',
   '/datasets': 'dataset',
-  '/datasets/list': 'dataset',
   '/datasets/summary': 'dataset',
   '/upload': 'upload'
 };

@@ -1,5 +1,6 @@
 ---
 title: Sorting the table
+route: '/annotations'
 target: '#annot-table th:nth-last-child(4) > .cell'
 placement: bottom
 nextOnTargetClick: true

@@ -1,6 +1,6 @@
 ---
 title: Filtering datasets
-route: datasets
+route: '/datasets'
 target: '.dataset-item'
 placement: bottom
 ---

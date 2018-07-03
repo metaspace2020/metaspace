@@ -2,7 +2,7 @@
 title: Overview
 target: '.el-collapse-item:nth-child(4) > div[role="tab"] > .el-collapse-item__header'
 placement: left
-route: 'annotations'
+route: '/annotations'
 query: {sections: 4}
 ---
 

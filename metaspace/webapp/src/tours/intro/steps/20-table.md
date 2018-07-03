@@ -2,7 +2,7 @@
 title: Annotation table
 target: '#annot-table'
 placement: right
-route: annotations
+route: '/annotations'
 ---
 
 Annotations are the core of the METASPACE platform and this table lets you browse and search them. 

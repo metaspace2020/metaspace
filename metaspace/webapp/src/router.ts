@@ -12,8 +12,7 @@ const router = new VueRouter({
       path: '/datasets',
       component: DatasetsPage,
       children: [
-        {path: '', redirect: 'list'},
-        {path: 'list', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "DatasetTable" */ './components/DatasetTable.vue')},
+        {path: '', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "DatasetTable" */ './components/DatasetTable.vue')},
         {path: 'summary', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "DatasetSummary" */ './components/plots/DatasetSummary.vue')},
       ]
     },

@@ -1,8 +1,8 @@
 ---
 title: Filters
+route: '/annotations'
 target: '.filter-panel'
 placement: bottom
-route: annotations
 ---
 Filtering is the core method for navigating through the annotations. You can see the currently applied filters here at the top. Each filter focuses the annotations shown in the table to help you to dig down to the information content of your datasets.
 

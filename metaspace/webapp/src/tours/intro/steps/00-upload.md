@@ -2,7 +2,7 @@
 title: Upload
 target: '#upload-link'
 placement: bottom
-route: upload
+route: '/upload'
 ---
 
 This is the place to go when you acquire a new dataset.
