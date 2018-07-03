@@ -1,6 +1,7 @@
 ---
 title: Removing filters
 route: '/annotations'
+query: {organism: 'Human'}
 target: '.filter-panel .tf-outer:nth-last-child(1) .tf-remove'
 placement: bottom
 ---

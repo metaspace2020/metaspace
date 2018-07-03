@@ -1,6 +1,7 @@
 ---
 title: Filters
 route: '/annotations'
+query: {organism: 'Human'}
 target: '.filter-panel'
 placement: bottom
 ---
