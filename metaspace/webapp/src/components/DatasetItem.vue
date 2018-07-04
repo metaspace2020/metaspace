@@ -72,7 +72,10 @@
               @click="addFilter('institution')"></span>
       </div>
       <div class="ds-item-line" v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
-        <span>{{formatFdrCounts()}} annotations @ FDR {{formatFdrLevel()}}% ({{formatDbName()}})</span>
+        <span>
+          <router-link :to="resultsHref(formatDbName())">{{formatFdrCounts()}} annotations</router-link>
+          @ FDR {{formatFdrLevel()}}% ({{formatDbName()}})
+        </span>
       </div>
     </div>
 
