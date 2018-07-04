@@ -30,7 +30,8 @@ logger = logging.getLogger('engine')
 
 JOB_ID_MOLDB_ID_SEL = "SELECT id, db_id FROM job WHERE ds_id = %s AND status='FINISHED'"
 JOB_INS = "INSERT INTO job (db_id, ds_id, status, start) VALUES (%s, %s, %s, %s) RETURNING id"
-JOB_UPD = "UPDATE job set status=%s, finish=%s where id=%s"
+JOB_UPD_STATUS_FINISH = "UPDATE job set status=%s, finish=%s where id=%s"
+JOB_UPD_FINISH = "UPDATE job set finish=%s where id=%s"
 TARGET_DECOY_ADD_DEL = 'DELETE FROM target_decoy_add tda WHERE tda.job_id IN (SELECT id FROM job WHERE ds_id = %s)'
 
 
@@ -82,7 +83,7 @@ class SearchJob(object):
     def store_job_meta(self, mol_db_id):
         """ Store search job metadata in the database """
         logger.info('Storing job metadata')
-        rows = [(mol_db_id, self._ds.id, 'STARTED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
+        rows = [(mol_db_id, self._ds.id, DatasetStatus.ANNOTATING, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self._job_id = self._db.insert_return(JOB_INS, rows=rows)[0]
 
     def _run_annotation_job(self, mol_db):
@@ -119,21 +120,13 @@ class SearchJob(object):
             img_store_type = self._ds.get_ion_img_storage_type(self._db)
             search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, self._img_store, img_store_type)
         except Exception as e:
-            self._db.alter(JOB_UPD, params=('FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id))
+            self._db.alter(JOB_UPD_STATUS_FINISH, params=(DatasetStatus.FAILED,
+                                                          datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                          self._job_id))
             msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
             raise JobFailedError(msg) from e
         else:
-            self._export_search_results_to_es(mol_db, isocalc)
-
-    def _export_search_results_to_es(self, mol_db, isocalc):
-        try:
-            self._es.index_ds(self._ds.id, mol_db, isocalc)
-        except Exception as e:
-            self._db.alter(JOB_UPD, params=('FAILED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id))
-            msg = 'Export to ES failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
-            raise ESExportFailedError(msg) from e
-        else:
-            self._db.alter(JOB_UPD, params=('FINISHED', datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id))
+            self._db.alter(JOB_UPD_FINISH, params=(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id))
 
     def _remove_annotation_job(self, mol_db):
         logger.info("Removing job results ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
@@ -173,6 +166,7 @@ class SearchJob(object):
             ds : sm.engine.dataset_manager.Dataset
         """
         try:
+            logger.info('*' * 150)
             start = time.time()
 
             self._init_db()
@@ -185,7 +179,7 @@ class SearchJob(object):
                                                     logger=logger)
             else:
                 self._status_queue = None
-            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.STARTED)
+            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.ANNOTATING)
 
             self._wd_manager = WorkDirManager(ds.id)
             self._configure_spark()
@@ -199,8 +193,6 @@ class SearchJob(object):
             self._save_data_from_raw_ms_file()
             self._img_store.storage_type = self._ds.get_ion_img_storage_type(self._db)
 
-            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.STARTED)
-
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
             completed_moldb_ids, new_moldb_ids = self._moldb_ids()
@@ -211,8 +203,6 @@ class SearchJob(object):
                     self._remove_annotation_job(mol_db)
                 elif moldb_id not in completed_moldb_ids:
                     self._run_annotation_job(mol_db)
-
-            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.FINISHED)
 
             logger.info("All done!")
             time_spent = time.time() - start

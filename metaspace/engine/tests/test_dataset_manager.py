@@ -6,7 +6,7 @@ import pytest
 from PIL import Image
 
 from sm.engine import DB, ESExporter, QueuePublisher
-from sm.engine.dataset_manager import SMapiDatasetManager, SMDaemonDatasetManager
+from sm.engine.dataset_manager import SMapiDatasetManager, SMDaemonManager
 from sm.engine.dataset_manager import Dataset, DatasetActionPriority, DatasetAction, DatasetStatus
 from sm.engine.errors import DSIDExists
 from sm.engine.queue import SM_ANNOTATE, SM_DS_STATUS
@@ -45,11 +45,11 @@ def create_ds_man(sm_config, db=None, es=None, img_store=None,
     if sm_api:
         return SMapiDatasetManager(db=db, es=es_mock,
                                    mode='queue', image_store=img_store_mock,
-                                   action_queue=action_queue_mock, status_queue=status_queue_mock)
+                                   annot_queue=action_queue_mock, status_queue=status_queue_mock)
     else:
-        return SMDaemonDatasetManager(db=db, es=es_mock,
-                                      img_store=img_store_mock, mode=None,
-                                      status_queue=status_queue_mock)
+        return SMDaemonManager(db=db, es=es_mock,
+                               img_store=img_store_mock, mode=None,
+                               status_queue=status_queue_mock)
 
 
 def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,

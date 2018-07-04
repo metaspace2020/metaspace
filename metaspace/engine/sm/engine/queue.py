@@ -3,7 +3,7 @@ import json
 from threading import Event, Thread
 from time import sleep
 import pika
-from pika.exceptions import AMQPError, ConnectionClosed
+from pika.exceptions import AMQPError
 
 
 class StopThread(Exception):
@@ -360,14 +360,14 @@ class QueueConsumerAsync(object):
 
 class QueueConsumer(Thread):
 
-    def __init__(self, config, qdesc, callback, on_success, on_failure, logger_name=None, poll_interval=1):
+    def __init__(self, config, qdesc, callback, on_success, on_failure, logger=None, poll_interval=1):
         """Create a new instance of the blocking consumer class
         """
         super().__init__()
         self._heartbeat = 3*60*60  # 3h
         self._qdesc = qdesc
         self._qname = self._qdesc['name']
-        self._no_ack = True  # messages get redelivered with no_ack=False
+        # self._no_ack = True  # messages get redelivered with no_ack=False
         self._connection = None
         self._channel = None
         self._url = "amqp://{}:{}@{}:5672/%2F?heartbeat={}".format(config['user'], config['password'],
@@ -379,35 +379,29 @@ class QueueConsumer(Thread):
         self._on_success = on_success
         self._on_failure = on_failure
 
-        self.logger = logging.getLogger(logger_name)
-        # self.logger = logger if logger else logging.getLogger()
+        self.logger = logger or logging.getLogger()
 
-    def on_message(self, method, properties, body):
-        """Invoked by pika when a message is delivered from RabbitMQ. The
-        channel is passed for your convenience. The basic_deliver object that
-        is passed in carries the exchange, routing key, delivery tag and
-        a redelivered flag for the message. The properties passed in is an
-        instance of BasicProperties with the message properties and the body
-        is the message that was sent.
+    def get_message(self):
+        method, properties, body = self._channel.basic_get(queue=self._qname, no_ack=False)
+        if body is not None:
+            msg = None
+            try:
+                body = body.decode('utf-8')
+                self.logger.info(' [v] Received message # %s from %s: %s',
+                                 method.delivery_tag, properties.app_id, body)
+                msg = json.loads(body)
 
-        :param pika.Spec.Basic.Deliver: method
-        :param pika.Spec.BasicProperties: properties
-        :param str|byte body: The message body
-
-        """
-        msg = None
-        try:
-            body = body.decode('utf-8')
-            self.logger.info(' [v] Received message # %s from %s: %s',
-                             method.delivery_tag, properties.app_id, body)
-            msg = json.loads(body)
-            self._callback(msg)
-        except BaseException as e:
-            self.logger.error(' [x] Failed: {}'.format(body), exc_info=True)
-            self._on_failure(msg or body)
+                self._callback(msg)
+            except BaseException as e:
+                self._channel.basic_ack(method.delivery_tag)
+                self.logger.error(' [x] Failed: {}'.format(body), exc_info=True)
+                self._on_failure(msg or body)
+            else:
+                self._channel.basic_ack(method.delivery_tag)
+                self.logger.info(' [v] Succeeded: {}'.format(body))
+                self._on_success(msg)
         else:
-            self.logger.info(' [v] Succeeded: {}'.format(body))
-            self._on_success(msg)
+            self.logger.debug('No messages in "{}" queue'.format(self._qname))
 
     def run(self):
         """ Use `start` method to kick off message polling """
@@ -429,12 +423,7 @@ class QueueConsumer(Thread):
         self.logger.info(' [*] Waiting for messages...')
 
         while True:
-            method, properties, body = self._channel.basic_get(queue=self._qname, no_ack=self._no_ack)
-            if body is not None:
-                self.on_message(method, properties, body)
-            else:
-                self.logger.debug('No messages in "{}" queue'.format(self._qname))
-
+            self.get_message()
             if self.stopped():
                 raise StopThread()
             else:
@@ -493,6 +482,13 @@ class QueuePublisher(object):
 
 SM_ANNOTATE = {
     'name': 'sm_annotate',
+    'durable': True,
+    'arguments': {
+        'x-max-priority': 3
+    }
+}
+SM_UPDATE = {
+    'name': 'sm_update',
     'durable': True,
     'arguments': {
         'x-max-priority': 3

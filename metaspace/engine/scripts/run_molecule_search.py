@@ -8,7 +8,7 @@ import sys
 
 from sm.engine import DB
 from sm.engine import ESExporter
-from sm.engine import SMDaemonDatasetManager
+from sm.engine.sm_daemon import SMDaemonManager
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig, init_loggers, create_ds_from_files
 from sm.engine.search_job import SearchJob
@@ -31,11 +31,11 @@ if __name__ == "__main__":
 
     db = DB(sm_config['db'])
     img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
-    ds_man = SMDaemonDatasetManager(db, ESExporter(db), img_store, mode='local')
+    manager = SMDaemonManager(db, ESExporter(db), img_store)
 
     try:
         ds = create_ds_from_files(args.ds_id, args.ds_name, args.input_path)
-        ds_man.add(ds, SearchJob, del_first=True)
+        manager.annotate(ds, SearchJob, del_first=True)
     except Exception as e:
         logging.getLogger('engine').error(e, exc_info=True)
         sys.exit(1)

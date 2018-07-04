@@ -1,6 +1,6 @@
 from .dataset import Dataset, DatasetStatus
 from .dataset_reader import DatasetReader
-from .dataset_manager import SMapiDatasetManager, SMDaemonDatasetManager, DatasetActionPriority
+from .dataset_manager import SMapiDatasetManager, DatasetActionPriority
 from .es_export import ESExporter, ESIndexManager
 from .queue import QueuePublisher, QueueConsumerAsync
 from .db import DB

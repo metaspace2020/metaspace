@@ -14,13 +14,24 @@ class ESExportFailedError(SMError):
         super().__init__(msg)
 
 
-class UnknownDSID(SMError):
-    def __init__(self, msg):
+class DSError(SMError):
+    def __init__(self, ds_id, msg):
         super().__init__(msg)
+        self.ds_id = ds_id
 
 
-class DSIDExists(SMError):
+class UnknownDSID(DSError):
+    def __init__(self, ds_id):
+        super().__init__(ds_id, f'DS {ds_id} does not exist')
+
+
+class DSIDExists(DSError):
 
     def __init__(self, ds_id):
-        super().__init__('Dataset already exists: {}'.format(ds_id))
+        super().__init__(ds_id, f'Dataset {ds_id} already exists')
 
+
+class DSIsBusy(DSError):
+
+    def __init__(self, ds_id):
+        super().__init__(ds_id, f'Dataset {ds_id} is busy')
