@@ -201,6 +201,11 @@ const configureJwtMinting = (app, knex) => {
   // If we want to use longer lifetimes we need to setup HTTPS on all servers.
   app.get('/getToken', (req, res, next) => {
 
+    // Ensure browsers don't cache JWTs
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     // basic support for local installations: no authentication, everyone is admin
     if (!req.user && LOCAL_SETUP) {
       res.send(jwt.encode({
@@ -264,7 +269,10 @@ const configureAppServer = (app) => {
   } else {
     const compression = require('compression');
     app.use(compression());
-    app.use('/dist', express.static('dist'));
+    app.use('/dist', express.static('dist', {
+      // Cache headers must be specified, or else some browsers automatically start caching JS files
+      maxAge: '10m'
+    }));
   }
 };
 

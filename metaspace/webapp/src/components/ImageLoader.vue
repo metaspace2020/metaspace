@@ -2,7 +2,7 @@
   <div class="image-loader"
        v-loading="isLoading"
        ref="parent"
-       v-resize.debounce.50="onResize"
+       v-resize="onResize"
        :element-loading-text="message">
 
     <div class="image-loader__container" ref="container" style="align-self: center">
@@ -37,6 +37,7 @@
  // uses loading directive from Element-UI
 
  import {scrollDistance, getOS} from '../util';
+ import {throttle} from 'lodash-es';
  import createColormap from '../lib/createColormap';
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
@@ -100,7 +101,9 @@
    data () {
      return {
        image: new Image(),
+       colors: createColormap(this.colormap),
        isLoading: false,
+       isUnmounted: false,
        message: '',
        dataURI: '',
        hotspotRemovalQuantile: 0.99,
@@ -124,18 +127,20 @@
      }
    },
    created() {
-     this.colors = createColormap(this.colormap);
+     this.onResize = throttle(this.onResize, 100);
+   },
+   mounted() {
      this.image.onload = this.redraw.bind(this);
      this.image.onerror = this.image.onabort = this.onFail.bind(this);
      if (this.src)
        this.loadImage(this.src);
-   },
-   mounted: function() {
      this.parentDivWidth = this.$refs.parent.clientWidth;
      window.addEventListener('resize', this.onResize);
    },
-   beforeDestroy: function() {
+   beforeDestroy() {
      window.removeEventListener('resize', this.onResize);
+     this.onResize.cancel(); // If there's a pending throttled call, cancel it
+     this.isUnmounted = true;
    },
    computed: {
      messageOS() {
@@ -204,12 +209,18 @@
      }
    },
    methods: {
-     onResize() {
-       this.parentDivWidth = this.$refs.parent.clientWidth;
-       this.determineScaleFactor();
-       this.$nextTick(() => {
-         this.updateDimensions();
-       });
+
+     onResize: function() {
+       // v-resize sometimes keeps calling after the component is destroyed - ignore it when it does.
+       if (!this.isUnmounted) {
+         this.parentDivWidth = this.$refs.parent.clientWidth;
+         this.determineScaleFactor();
+         this.$nextTick(() => {
+           if (!this.isUnmounted) {
+             this.updateDimensions();
+           }
+         });
+       }
      },
 
 
@@ -276,8 +287,12 @@
      loadImage(url) {
        this.image.crossOrigin = "Anonymous";
        this.image.src = (config.imageStorage || '') + url;
-       if (window.navigator.userAgent.includes("Trident"))
-         return; // in IE11 something is fucked up as usual
+       if (window.navigator.userAgent.includes("Trident")) {
+         // IE11 never fires the events that would set isLoading=false.
+         // It's probably this: https://stackoverflow.com/questions/16797786/image-load-event-on-ie
+         // but this issue isn't big enough to justify the time cost and risk of destabilizing to try a solution.
+         return;
+       }
 
        this.isLoading = true;
      },
@@ -332,27 +347,29 @@
 
      redraw () {
        this.isLCMS = this.image.height == 1;
-       let canvas = this.$refs.canvas,
-           ctx = canvas.getContext("2d");
+       const canvas = this.$refs.canvas;
+       if (canvas != null) {
+         const ctx = canvas.getContext("2d");
 
-       this.determineScaleFactor();
-       this.updateDimensions();
-       ctx.canvas.height = this.image.naturalHeight;
-       ctx.canvas.width = this.image.naturalWidth;
-       ctx.setTransform(1, 0, 0, 1, 0, 0);
+         this.determineScaleFactor();
+         this.updateDimensions();
+         ctx.canvas.height = this.image.naturalHeight;
+         ctx.canvas.width = this.image.naturalWidth;
+         ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-       ctx.drawImage(this.image, 0, 0);
-       const q = this.computeQuantile();
+         ctx.drawImage(this.image, 0, 0);
+         const q = this.computeQuantile();
 
-       ctx.drawImage(this.image, 0, 0);
-       if (canvas.width == 0)
-         return;
-       let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-       this.removeHotspots(imageData, q);
-       ctx.putImageData(imageData, 0, 0);
-       this.applyColormap();
+         ctx.drawImage(this.image, 0, 0);
+         if (canvas.width == 0)
+           return;
+         let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+         this.removeHotspots(imageData, q);
+         ctx.putImageData(imageData, 0, 0);
+         this.applyColormap();
 
-       this.isLoading = false;
+         this.isLoading = false;
+       }
      },
 
      applyColormap() {

@@ -13,8 +13,8 @@ declare module "*/clientConfig.json" {
   }
 
   interface ClientConfig {
-    graphqlUrl: string
-    wsGraphqlUrl: string
+    graphqlUrl: string | null
+    wsGraphqlUrl: string | null
 
     google_client_id: string
     enableUploads: boolean

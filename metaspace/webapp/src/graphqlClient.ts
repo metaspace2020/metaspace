@@ -4,8 +4,11 @@ import * as config from './clientConfig.json';
 import tokenAutorefresh from './tokenAutorefresh';
 import reportError from './lib/reportError'
 
+const graphqlUrl = config.graphqlUrl || `${window.location.origin}/graphql`;
+const wsGraphqlUrl = config.wsGraphqlUrl || `${window.location.origin.replace(/^http/, 'ws')}/ws`;
+
 const networkInterface = createBatchingNetworkInterface({
-  uri: config.graphqlUrl,
+  uri: graphqlUrl,
   batchInterval: 10
 });
 
@@ -30,7 +33,7 @@ networkInterface.use([{
   }
 }]);
 
-const wsClient = new SubscriptionClient(config.wsGraphqlUrl, {
+const wsClient = new SubscriptionClient(wsGraphqlUrl, {
   reconnect: true
 });
 

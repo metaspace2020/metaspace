@@ -162,9 +162,7 @@ sm_webapp_s3_bucket: BUCKET-NAME-UPLOAD  # just plain bucket name
 sm_webapp_google_client_id: ""
 sm_webapp_google_client_secret: ""
 sm_webapp_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
-sm_webapp_graphql_url: /graphql
 sm_webapp_upload_destination: s3
-sm_webapp_graphql_ws_public_endpoint: "{{ sm_graphql_ws_public_endpoint }}"
 sm_webapp_jwt_secret: "{{ sm_graphql_jwt_secret }}"
 sm_webapp_redis_host: localhost
 sm_webapp_redis_port: 6379

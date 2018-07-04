@@ -128,8 +128,12 @@ export default {
   },
 
   setDatasetTab(state, tab) {
+    const path = {
+      'list': '/datasets',
+      'summary': '/datasets/summary'
+    }[tab.toLowerCase()];
     router.replace({
-      path: `/datasets/${tab.toLowerCase()}`,
+      path,
       query: state.route.query,
     });
   }

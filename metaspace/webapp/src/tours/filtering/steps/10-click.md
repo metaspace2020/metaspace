@@ -1,5 +1,6 @@
 ---
 title: Adding filters in a single click
+route: '/annotations'
 target: '#annot-table tr:nth-child(7) > td:nth-child(4)'
 placement: top
 nextOnTargetClick: true

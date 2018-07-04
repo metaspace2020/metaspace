@@ -190,7 +190,7 @@
          this.uploadedUuid = null;
          this.validationErrors = [];
          this.$refs.uploader.reset();
-         this.$refs.editor.resetDatasetName();
+         this.$refs.editor.resetAfterSubmit();
          this.$message({
            message: 'Your dataset was successfully submitted!',
            type: 'success'

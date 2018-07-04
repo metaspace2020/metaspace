@@ -1,5 +1,6 @@
 ---
 title: Editing filters
+route: '/annotations'
 target: '.filter-panel .tf-outer:nth-last-child(1)'
 placement: left
 ---

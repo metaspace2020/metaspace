@@ -314,7 +314,10 @@
      this._onDataArrival = (data) => {
        if (!data) return;
        Vue.nextTick(() => this.setRow(data, 0));
-       document.getElementById('annot-table').focus();
+       const annotTable = document.getElementById('annot-table');
+       if (annotTable != null) {
+         annotTable.focus();
+       }
      };
    },
    methods: {
@@ -322,8 +325,11 @@
        this.recordsPerPage = newSize;
      },
      setRow(data, rowIndex) {
-       this.$refs.table.setCurrentRow(null);
-       this.$refs.table.setCurrentRow(data[rowIndex]);
+       // Ignore if called after unmount
+       if (this.$refs.table != null) {
+         this.$refs.table.setCurrentRow(null);
+         this.$refs.table.setCurrentRow(data[rowIndex]);
+       }
      },
      queryVariables() {
        const {annotationFilter, datasetFilter, ftsQuery} = this.gqlFilter;
