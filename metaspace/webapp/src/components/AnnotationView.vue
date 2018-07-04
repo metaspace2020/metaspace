@@ -8,16 +8,19 @@
           <div class="el-collapse-item__header av-header grey-bg">
             <span class="sf-big" v-html="formattedMolFormula"> </span>
             <span class="mz-big">{{ annotation.mz.toFixed(4) }}</span>
-            <router-link target="_blank"
-                         style="font-size: 20px"
-                         title="Link to this annotation (opens in a new tab)"
-                         :to="permalinkHref">
-              <img src="../assets/share-icon.png" class="av-icon">
-            </router-link>
-            <img v-if="!annotation.dataset.isPublic"
-                 src="../assets/padlock-icon.svg"
-                 class="av-icon"
-                 title="This dataset's annotation results are not publicly visible">
+            <el-popover trigger="hover" placement="bottom">
+              <router-link slot="reference"
+                           target="_blank"
+                           :to="permalinkHref">
+                <img src="../assets/share-icon.png" class="av-icon">
+              </router-link>
+              <div>Link to this annotation (opens in a new tab)</div>
+            </el-popover>
+
+            <el-popover v-if="!annotation.dataset.isPublic" trigger="hover" placement="bottom">
+              <img slot="reference" src="../assets/padlock-icon.svg" class="av-icon">
+              <div>This dataset's annotation results are not publicly visible</div>
+            </el-popover>
           </div>
         </div>
 
