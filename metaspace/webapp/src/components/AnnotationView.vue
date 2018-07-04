@@ -126,6 +126,8 @@
     text-align: center !important;
     cursor: default !important;
     font: 24px 'Roboto', sans-serif;
+    line-height: 40px;
+    vertical-align: center;
 
     >*+* {
       margin-left: 8px;
