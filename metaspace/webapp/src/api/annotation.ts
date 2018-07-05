@@ -22,6 +22,7 @@ export const annotationListQuery =
           name
           polarity
           metadataJson
+          isPublic
         }
         isotopeImages {
           mz

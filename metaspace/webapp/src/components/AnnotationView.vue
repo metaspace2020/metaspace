@@ -5,16 +5,22 @@
                    @change="onSectionsChange">
 
         <div class="el-collapse-item grey-bg">
-          <div class="el-collapse-item__header av-centered grey-bg">
+          <div class="el-collapse-item__header av-header grey-bg">
             <span class="sf-big" v-html="formattedMolFormula"> </span>
             <span class="mz-big">{{ annotation.mz.toFixed(4) }}</span>
-            <span>
-              <router-link target="_blank"
-                           style="font-size: 20px"
-                           title="Link to this annotation (opens in a new tab)"
-                           :to="permalinkHref"><img src="../assets/share-icon.png" width="18px">
+            <el-popover trigger="hover" placement="bottom">
+              <router-link slot="reference"
+                           target="_blank"
+                           :to="permalinkHref">
+                <img src="../assets/share-icon.png" class="av-icon">
               </router-link>
-            </span>
+              <div>Link to this annotation (opens in a new tab)</div>
+            </el-popover>
+
+            <el-popover v-if="!annotation.dataset.isPublic" trigger="hover" placement="bottom">
+              <img slot="reference" src="../assets/padlock-icon.svg" class="av-icon">
+              <div>This dataset's annotation results are not publicly visible</div>
+            </el-popover>
           </div>
         </div>
 
@@ -115,16 +121,34 @@
  export default AnnotationView;
 </script>
 
-<style>
- .sf-big {
-   text-shadow : 0 0 0px #000;
-   font: 24px 'Roboto', sans-serif;
- }
+<style lang="scss">
+  .av-header {
+    text-align: center !important;
+    cursor: default !important;
+    font: 24px 'Roboto', sans-serif;
+    line-height: 40px;
+    vertical-align: center;
 
- .mz-big {
-   font: 24px 'Roboto';
-   padding: 0px 20px;
- }
+    >*+* {
+      margin-left: 8px;
+      margin-right: 8px;
+    }
+
+    .av-icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .sf-big {
+      font: 24px 'Roboto', sans-serif;
+      text-shadow : 0 0 0 #000;
+    }
+
+    .mz-big {
+      font: 24px 'Roboto';
+      padding: 0 4px;
+    }
+  }
 
  #annot-content {
    width: 100%;
@@ -153,11 +177,6 @@
 
  .compound-image {
    height: 700px;
- }
-
- .av-centered {
-   text-align: center !important;
-   cursor: default !important;
  }
 
  .el-collapse-item__header {
