@@ -4,7 +4,7 @@
                    :enableSubmit="loggedIn && !isSubmitting"
                    @submit="onSubmit"
                    disabledSubmitMessage="You must be logged in to perform this operation"
-                   v-bind:validationErrors="validationErrors">
+                   :validationErrors="validationErrors">
   </metadata-editor>
 </template>
 
@@ -83,6 +83,7 @@
              type: 'error'
            });
          } else if (graphQLError && graphQLError['type'] === 'failed_validation') {
+           this.validationErrors = graphQLError['validation_errors'];
            this.$message({
              message: 'Please fix the highlighted fields and submit again',
              type: 'error'

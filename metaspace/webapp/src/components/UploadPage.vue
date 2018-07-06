@@ -47,7 +47,7 @@
                        :enableSubmit="uploadedUuid != null && !isSubmitting"
                        @submit="onFormSubmit"
                        disabledSubmitMessage="Your files must be uploaded first"
-                       v-bind:validationErrors="validationErrors">
+                       :validationErrors="validationErrors">
       </metadata-editor>
     </div>
   </div>
