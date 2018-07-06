@@ -11,3 +11,53 @@
   when: local_deploy is not defined
   register: git_deploy
   until: git_deploy | succeeded
+
+- name: Upload local files
+  synchronize:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    rsync_opts: "{{ item.rsync_opts }}"
+  when: local_deploy is defined
+  with_items:
+    - src: "{{ sm_graphql_home }}/"
+      dest: "{{ sm_graphql_home }}/"
+      rsync_opts:
+        - --exclude='config/*.js'
+        - --exclude='logs/*'
+        - --exclude='dist/*'
+        - --exclude='node_modules/*'
+        - --exclude='.*'
+    - src: "{{ sm_webapp_home }}/"
+      dest: "{{ sm_webapp_home }}/"
+      rsync_opts:
+        - --exclude='config/*.js'
+        - --exclude=S3/*
+        - --exclude='logs/*'
+        - --exclude='dist/*'
+        - --exclude='node_modules/*'
+        - --exclude='.*'
+    - src: "{{ mol_db_home }}/"
+      dest: "{{ mol_db_home }}/"
+      rsync_opts:
+        - --exclude='conf/*'
+        - --exclude='logs'
+        - --exclude='.*'
+    - src: "{{ sm_ansible_home }}/"
+      dest: "{{ sm_ansible_home }}/"
+      rsync_opts:
+        - --exclude=.*
+
+- name: Upload local files (engine)
+  synchronize:
+    src: "{{ sm_home }}/{{ item }}/"
+    dest: "{{ sm_home }}/{{ item }}/"
+    rsync_opts:
+      - "--exclude=*.sh"
+      - "--exclude=*.json"
+      - "--exclude=.*"
+  with_items:
+    - scripts
+    - conf
+    - sm
+    - tests
+  when: local_deploy is defined

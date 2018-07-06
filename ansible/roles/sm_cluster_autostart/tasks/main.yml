@@ -1,3 +1,5 @@
+---
+
 - name: Install sys libs needed for Ansible
   become: yes
   apt: name={{ item }} state=present
@@ -26,24 +28,9 @@
   become: yes
   file: path={{ sm_ansible_home }} owner=ubuntu group=ubuntu state=directory mode=0755
 
-- name: Pull metaspace sources from the repository
-  git:
-    repo: "{{ metaspace_repo_url }}"
-    version: "{{ metaspace_branch }}"
-    dest: "{{ metaspace_home }}"
-    update: yes
-    force: yes
-  register: git_deploy
-  until: git_deploy | succeeded
-
 - name: Make sure {{ sm_ansible_home }}/aws/logs exists
   become: yes
   file: path={{ sm_ansible_home }}/aws/logs owner=ubuntu group=ubuntu state=directory mode=0755
-
-- name: Templated supervisord config for the cluster_auto_start_daemon
-  template: src=sm-cluster-autostart-daemon.supervisor.j2
-            dest=/etc/supervisor/sm-cluster-autostart-daemon.supervisor
-            owner=ubuntu group=ubuntu mode=0600
 
 - name: Copy private key for SSHing to the master
   copy: src={{ spark_key_file }} dest="/home/ubuntu/.ssh/id_rsa" owner=ubuntu group=ubuntu mode="u=rw,g=,o="

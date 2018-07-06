@@ -1,0 +1,8 @@
+---
+
+mol_db_app_name: sm-mol-db
+mol_db_home: "{{ metaspace_home }}/metaspace/mol-db"
+mol_db_port: 5001
+mol_db_miniconda_env:
+  name: mol-db
+mol_db_miniconda_prefix: /opt/dev/miniconda3

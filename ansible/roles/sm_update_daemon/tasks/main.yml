@@ -1,0 +1,5 @@
+---
+
+- name: Copy sm-update-daemon supervisor config file
+  template: src=sm-update-daemon.supervisor.j2 dest=/etc/supervisor/sm-update-daemon.supervisor
+            mode=0600 owner=ubuntu group=ubuntu

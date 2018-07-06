@@ -11,7 +11,7 @@ from sm.engine.mol_db import MolDBServiceWrapper, MolecularDB
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import SM_DS_STATUS, QueueConsumer
 from sm.engine.util import SMConfig, init_loggers
-from sm.engine import ESExporter, QueuePublisher, Dataset, SearchJob, DatasetStatus
+from sm.engine import ESExporter, QueuePublisher, Dataset, DatasetStatus
 from sm.engine import DB
 from sm.engine.work_dir import WorkDirManager
 
@@ -200,6 +200,7 @@ class SMAnnotateDaemon(object):
         self._post_to_slack('new', " [v] Received: {}".format(json.dumps(msg)))
 
         ds = Dataset.load(self._db, msg['ds_id'])
+        from sm.engine import SearchJob
         self._manager.annotate(ds=ds,
                                search_job_factory=SearchJob,
                                del_first=msg.get('del_first', False))

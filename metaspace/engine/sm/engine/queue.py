@@ -364,14 +364,12 @@ class QueueConsumer(Thread):
         """Create a new instance of the blocking consumer class
         """
         super().__init__()
+        self._config = config
         self._heartbeat = 3*60*60  # 3h
         self._qdesc = qdesc
         self._qname = self._qdesc['name']
-        # self._no_ack = True  # messages get redelivered with no_ack=False
         self._connection = None
         self._channel = None
-        self._url = "amqp://{}:{}@{}:5672/%2F?heartbeat={}".format(config['user'], config['password'],
-                                                                   config['host'], self._heartbeat)
         self._poll_interval = poll_interval
         self._stop_event = Event()
 
@@ -380,6 +378,11 @@ class QueueConsumer(Thread):
         self._on_failure = on_failure
 
         self.logger = logger or logging.getLogger()
+
+    def get_connect_url(self, hide_password=False):
+        pwd = self._config['password'] if not hide_password else '***'
+        return "amqp://{}:{}@{}:5672/%2F?heartbeat={}".format(self._config['user'], pwd,
+                                                              self._config['host'], self._heartbeat)
 
     def get_message(self):
         method, properties, body = self._channel.basic_get(queue=self._qname, no_ack=False)
@@ -415,8 +418,8 @@ class QueueConsumer(Thread):
                 break
 
     def _poll(self):
-        self.logger.info('Connecting to %s', self._url)
-        self._connection = pika.BlockingConnection(pika.URLParameters(self._url))
+        self.logger.info('Connecting to %s', self.get_connect_url(hide_password=True))
+        self._connection = pika.BlockingConnection(pika.URLParameters(self.get_connect_url()))
         self._channel = self._connection.channel()
         self._channel.queue_declare(queue=self._qname, durable=self._qdesc['durable'],
                                     arguments=self._qdesc['arguments'])

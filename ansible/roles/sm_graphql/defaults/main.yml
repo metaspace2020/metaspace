@@ -1,2 +1,3 @@
-sm_home: "{{ metaspace_home }}/metaspace/graphql"
-sm_database_host: localhost
+#sm_database_host: localhost
+sm_graphql_app_name: sm-graphql
+sm_graphql_home: "{{ metaspace_home }}/metaspace/graphql"

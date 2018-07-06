@@ -194,4 +194,5 @@ if __name__ == '__main__':
 
     init_loggers(SMConfig.get_conf()['logs'])
     logger = logging.getLogger(name='api')
+    logger.info('Starting SM api')
     run(**SMConfig.get_conf()['bottle'])
