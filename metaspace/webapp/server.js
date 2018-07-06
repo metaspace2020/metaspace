@@ -59,7 +59,7 @@ const configureGoogleAuth = (app, knex) => {
       if (foundUser) {
         return foundUser;
       } else {
-        const ids = knex('users').insert(user);
+        const ids = await knex('users').insert(user);
         return { id: ids[0], ...user };
       }
     };
