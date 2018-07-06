@@ -12,8 +12,6 @@ const AWS = require('aws-sdk'),
 const env = process.env.NODE_ENV || 'development';
 const conf = require('./conf.js');
 
-const LOCAL_SETUP = conf.UPLOAD_DESTINATION !== 's3';
-
 const configureSession = (app) => {
   let sessionStore = undefined;
   if (conf.REDIS_CONFIG) {
@@ -207,7 +205,7 @@ const configureJwtMinting = (app, knex) => {
     res.setHeader('Expires', '0');
 
     // basic support for local installations: no authentication, everyone is admin
-    if (!req.user && LOCAL_SETUP) {
+    if (!req.user && conf.AUTO_LOGIN_AS_ADMIN) {
       res.send(jwt.encode({
         'iss': 'METASPACE2020',
         'role': 'admin',
