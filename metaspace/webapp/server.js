@@ -277,7 +277,7 @@ const configureAppServer = (app) => {
 };
 
 const configureRavenRequestHandler = (app) => {
-  if (env !== 'development' && conf.RAVEN_DSN != null) {
+  if (env !== 'development' && conf.RAVEN_DSN != null && conf.RAVEN_DSN !== '') {
     Raven.config(conf.RAVEN_DSN).install();
     // Raven.requestHandler should be the first middleware
     app.use(Raven.requestHandler());
@@ -285,7 +285,7 @@ const configureRavenRequestHandler = (app) => {
 };
 
 const configureRavenErrorHandler = (app) => {
-  if (env !== 'development' && conf.RAVEN_DSN != null) {
+  if (env !== 'development' && conf.RAVEN_DSN != null && conf.RAVEN_DSN !== '') {
     // Raven.errorHandler should go after all normal handlers/middleware, but before any other error handlers
     app.use(Raven.errorHandler());
   }

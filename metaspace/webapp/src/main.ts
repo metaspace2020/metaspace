@@ -3,7 +3,7 @@ import Vue from 'vue';
 import * as config from './clientConfig.json';
 import * as Raven from 'raven-js';
 import * as RavenVue from 'raven-js/plugins/vue';
-if(config.ravenDsn != null) {
+if(config.ravenDsn != null && config.ravenDsn !== '') {
   Raven.config(config.ravenDsn)
        .addPlugin(RavenVue, Vue)
        .install();

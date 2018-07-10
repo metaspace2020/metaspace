@@ -26,4 +26,4 @@ exports.REDIS_CONFIG = {
 
 exports.HOST_NAME = "localhost:8999";
 
-exports.RAVEN_DSN = "https://16556a31185a4882b9ebf6a5abab9452@sentry.io/1203803";
+exports.RAVEN_DSN = null;
