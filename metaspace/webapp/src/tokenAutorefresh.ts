@@ -1,18 +1,20 @@
 import { getJWT, decodePayload, delay } from './util'
 
-const REFRESH_INTERVAL = 30000; // 30 seconds
+const REFRESH_INTERVAL_MS = 30000;
 
 class TokenAutorefresh {
   jwt?: string;
   jwtPromise?: Promise<string>;
   jwtCanExpire: boolean = true;
   jwtListeners: ((jwt?: string, payload?: any) => void)[] = [];
+  refreshLoopRunning: boolean = false;
 
   constructor() {
-    this.runRefreshLoop();
+    this.ensureRefreshLoopRunning();
   }
 
   async getJwt() {
+    this.ensureRefreshLoopRunning();
     while (this.jwt == null && this.jwtPromise != null) {
       await this.jwtPromise;
     }
@@ -41,27 +43,25 @@ class TokenAutorefresh {
     this.jwtListeners.push(listener);
   }
 
-  private async runRefreshLoop() {
-    let errors = 0;
+  private async ensureRefreshLoopRunning() {
+    if (this.refreshLoopRunning) {
+      return
+    }
+    this.refreshLoopRunning = true;
     while (true) {
       try {
         if (!this.jwt || this.jwtCanExpire) {
           await this.refreshJwt();
-          errors = 0;
         }
-        await delay(REFRESH_INTERVAL);
+        await delay(REFRESH_INTERVAL_MS);
       } catch (err) {
-        // If there's an error, speed up the refresh cycle so that the user isn't left waiting too long after
-        // the issue is resolved
-        await delay(1000);
-
-        // Also clear the stored token so that an error message gets shown next time there's a request
-        errors++;
-        if (errors > 5) {
-          this.jwt = undefined;
-        }
+        // After a failure, clear the stored token and stop refreshing.
+        // This allows the next request to retry fetching the token and alert the user if something is wrong.
+        this.jwt = undefined;
+        break;
       }
     }
+    this.refreshLoopRunning = false;
   }
 }
 
