@@ -11,6 +11,8 @@ exports.COOKIE_SECRET = "thisisasecretdonttellanyone";
 exports.JWT_SECRET = "secret";
 
 exports.ADMIN_EMAILS = [];
+// Set this to true to be automatically logged in as an administrator (Only use this for development!)
+exports.AUTO_LOGIN_AS_ADMIN = false;
 
 exports.AWS_ACCESS_KEY_ID = "";
 exports.AWS_SECRET_ACCESS_KEY = "";
