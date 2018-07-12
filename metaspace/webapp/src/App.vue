@@ -9,6 +9,8 @@
     <!--metaspace-footer>
     </metaspace-footer-->
 
+    <dialog-controller v-if="features.newAuth" />
+
     <tour-step ref="tour" :tour="this.$store.state.currentTour"></tour-step>
   </div>
 </template>
@@ -18,13 +20,21 @@
  import MetaspaceHeader from './components/MetaspaceHeader.vue';
  import MetaspaceFooter from './components/MetaspaceFooter.vue';
  import TourStep from './components/TourStep.vue';
+ import DialogController from './components/Account/DialogController';
+ import * as config from './clientConfig.json';
 
  export default {
    name: 'app',
    components: {
      MetaspaceHeader,
      MetaspaceFooter,
-     TourStep
+     TourStep,
+     DialogController,
+   },
+   data() {
+     return {
+       features: config.features
+     }
    }
  }
 </script>

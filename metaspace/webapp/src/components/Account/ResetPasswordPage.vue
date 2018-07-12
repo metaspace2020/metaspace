@@ -1,0 +1,127 @@
+<template>
+  <div class="reset-password">
+    <div v-loading="isTokenValid == null" class="reset-password__body">
+      <div v-if="isTokenValid">
+        <h1>Reset Password</h1>
+        <el-form ref="form" :model="model" :rules="rules" class="reset-password__form">
+          <p>
+            Please choose a new password
+          </p>
+          <el-form-item prop="password">
+            <el-input
+              type="password"
+              v-model="model.password"
+              placeholder="Password"
+              required
+            />
+          </el-form-item>
+          <el-form-item prop="confirmPassword">
+            <el-input
+              type="password"
+              v-model="model.confirmPassword"
+              placeholder="Confirm password"
+              required
+            />
+          </el-form-item>
+          <el-button type="primary" :loading="isSubmitting" @click="onSubmit">
+            Reset password
+          </el-button>
+        </el-form>
+      </div>
+      <div v-else>
+        <h1>Reset Password</h1>
+        <p>
+          The reset password link you have used is no longer valid.
+          Please <router-link to="/account/forgot-password">start over</router-link>.
+        </p>
+      </div>
+    </div>
+  </div>
+</template>
+<script lang="ts">
+  import Vue from 'vue';
+  import { Component } from 'vue-property-decorator';
+  import { Form } from 'element-ui';
+  import { validatePasswordResetToken, resetPassword } from '../../api/account';
+  import reportError from '../../lib/reportError';
+
+  interface Model {
+    password: string;
+    confirmPassword: string;
+  }
+
+  @Component
+  export default class ResetPasswordPage extends Vue {
+    isTokenValid: boolean | null = null;
+    isSubmitting: boolean = false;
+    model: Model = {
+      password: '',
+      confirmPassword: '',
+    };
+    rules = {
+      password: [
+        { required: true, message: 'Password is required' },
+        { validator: this.validatePassword },
+      ],
+      confirmPassword: [
+        { required: true, message: 'Password is required' },
+        { validator: this.validateConfirmPassword },
+      ],
+    };
+
+    get token() {
+      return this.$route.query.token;
+    }
+    get email() {
+      return this.$route.query.email;
+    }
+
+    async created() {
+      this.isTokenValid = Boolean(this.token) && Boolean(this.email)
+        && await validatePasswordResetToken(this.token, this.email);
+    }
+
+    validatePassword(rule: object, value: string, callback: Function) {
+      (this.$refs.form as Form).validateField('confirmPassword', () => {});
+      callback();
+    };
+
+    validateConfirmPassword(rule: object, value: string, callback: Function) {
+      if (value && this.model.confirmPassword && value !== this.model.confirmPassword) {
+        callback(new Error('Passwords must match'));
+      } else {
+        callback();
+      }
+    };
+
+    async onSubmit() {
+      await (this.$refs.form as Form).validate();
+      try {
+        this.isSubmitting = true;
+        await resetPassword(this.token, this.email, this.model.password);
+        this.$router.push('/');
+      } catch (err) {
+        reportError(err);
+      } finally {
+        this.isSubmitting = false;
+      }
+    }
+
+    onClose() {
+      this.$store.commit('account/hideDialog', 'signIn');
+    }
+  }
+</script>
+<style>
+  .reset-password {
+    padding: 100px 20px 20px 20px;
+    display: flex;
+    justify-content: center;
+  }
+  .reset-password__body {
+    flex: 0 1 950px;
+  }
+  .reset-password__form {
+    max-width: 400px;
+  }
+</style>

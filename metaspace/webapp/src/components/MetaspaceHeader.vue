@@ -41,29 +41,9 @@
       </router-link>
     </div>
 
-    <el-popover ref="login-popover"
-                placement="bottom"
-                trigger="click"
-                style="text-align:center;">
-      <div id="email-link-container">
-        <el-button type="primary" @click="sendLoginLink">Send a link to</el-button>
-        <span>
-          <el-input v-model="loginEmail"
-                    placeholder="e-mail address">
-          </el-input>
-        </span>
-      </div>
-
-      <div style="text-align: center;">
-        <div style="margin: 10px; font-size: 18px;">or</div>
-        <a href="/auth/google">
-          <el-button>Sign in with Google</el-button>
-        </a>
-      </div>
-    </el-popover>
 
     <div v-show="!this.$store.state.authenticated"
-         class="header-item vc page-link" v-popover:login-popover>
+         class="header-item vc page-link" @click="showSignIn">
       <div class="vc">Sign in</div>
     </div>
 
@@ -146,6 +126,10 @@
          eventCategory: 'Link sender',
          eventAction: 'sending login link'
        })
+     },
+
+     showSignIn() {
+       this.$store.commit('account/showDialog', 'signIn');
      },
 
      async logout() {
