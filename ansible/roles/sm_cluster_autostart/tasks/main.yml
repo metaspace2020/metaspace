@@ -28,10 +28,6 @@
   become: yes
   file: path={{ sm_ansible_home }} owner=ubuntu group=ubuntu state=directory mode=0755
 
-- name: Make sure {{ sm_ansible_home }}/aws/logs exists
-  become: yes
-  file: path={{ sm_ansible_home }}/aws/logs owner=ubuntu group=ubuntu state=directory mode=0755
-
 - name: Copy private key for SSHing to the master
   copy: src={{ spark_key_file }} dest="/home/ubuntu/.ssh/id_rsa" owner=ubuntu group=ubuntu mode="u=rw,g=,o="
 

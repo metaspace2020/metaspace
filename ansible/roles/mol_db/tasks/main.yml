@@ -45,9 +45,6 @@
     source {{ mol_db_miniconda_prefix }}/bin/activate {{ mol_db_miniconda_env.name }}
     && conda install -c openbabel openbabel
 
-- name: Make sure that the logs directory exists
-  file: path={{ mol_db_home }}/logs state=directory mode=0755
-
 - import_tasks: import_mol_databases.yml
   when: mol_db_import_databases
 

@@ -2,7 +2,9 @@
 
 - name: Define supervisor_app name
   set_fact:
-    supervisor_app: "{{ supervisor_app | default('all') }}"
+    app: "{{ supervisor_app | default('all') }}"
+
+- debug: var=app
 
 - name: Check if supervisord daemon is running
   shell: supervisorctl status
@@ -19,16 +21,16 @@
   register: command_result
   when: "'no such file' in supervisorctl_status_out.stdout"
 
-- name: "Restart {{ supervisor_app }} app(s) running under supervisor"
+- name: "Restart {{ app }} app(s) running under supervisor"
   shell: >
     supervisorctl reread
     && supervisorctl update
-    && supervisorctl restart {{ supervisor_app }}
+    && supervisorctl restart {{ app }}
   args:
     executable: /bin/bash
 
-- name: Check {{ supervisor_app }} app(s) status
-  shell: supervisorctl status {{ supervisor_app }}
+- name: Check {{ app }} app(s) status
+  shell: supervisorctl status {{ app }}
   args:
     executable: /bin/bash
   register: res

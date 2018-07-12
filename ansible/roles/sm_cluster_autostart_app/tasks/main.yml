@@ -1,24 +1,14 @@
 ---
 
 - name: Make sure a folder for the config file exists
-  file: path={{ sm_ansible_home }}/aws/env/{{ stage }}/group_vars/ state=directory mode=0755
+  file: path={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/ state=directory mode=0755
 
-- name: Upload env/{{ stage }}/group_vars/all.yml with variables resolved
-  template: src=../env/{{ stage }}/group_vars/all.yml dest={{ sm_ansible_home }}/aws/env/{{ stage }}/group_vars/all.yml
+- name: Upload {{ stage }}/group_vars/all.yml with variables resolved
+  template: src=../{{ stage }}/group_vars/all.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/all.yml
             owner=ubuntu group=ubuntu mode=0600
 
-#- name: Load variables for ELK and Filebeat
-#  include_vars:
-#    file: elk-vars.yml
-#  when: elk_enable
-
-#- name: Upload group_vars/elk-vars.yml with variables resolved
-#  template: src=../{{ stage }}/group_vars/elk-vars.yml dest={{ sm_ansible_home }}/aws/{{ stage }}/group_vars/elk-vars.yml
-#            owner=ubuntu group=ubuntu mode=0600
-#  when: elk_enable
-
 - name: Update the inventory file
-  command: "{{ sm_cluster_autostart_python }} update_inventory.py --stage env/{{ stage }}"
+  command: "{{ sm_cluster_autostart_python }} update_inventory.py --stage={{ stage }}"
   args:
     chdir: "{{ sm_ansible_home }}/aws"
 
@@ -26,3 +16,7 @@
   template: src=sm-cluster-autostart-daemon.supervisor.j2
             dest=/etc/supervisor/sm-cluster-autostart-daemon.supervisor
             owner=ubuntu group=ubuntu mode=0600
+
+- name: Make sure {{ sm_ansible_home }}/aws/logs exists
+  become: yes
+  file: path={{ sm_ansible_home }}/aws/logs owner=ubuntu group=ubuntu state=directory mode=0755
