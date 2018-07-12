@@ -77,7 +77,7 @@ class SMapiDatasetManager(object):
 
     def add(self, ds, **kwargs):
         """ Send add message to the queue """
-        self._post_sm_msg(ds=ds, queue=self._annot_queue, **kwargs)
+        self._post_sm_msg(ds=ds, queue=self._annot_queue, action='annotate', **kwargs)
 
     def delete(self, ds, **kwargs):
         """ Send delete message to the queue """

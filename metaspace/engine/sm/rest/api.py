@@ -88,7 +88,8 @@ def add_ds():
         db = _create_db_conn()
         ds_man = _create_dataset_manager(db)
         ds_man.add(ds, del_first=params.get('del_first', False),
-                   force=params.get('force', False))
+                   force=params.get('force', False),
+                   email=params.get('email', None))
         db.close()
         return {
             'status': OK['status'],
@@ -161,6 +162,7 @@ def update_ds(ds_man, ds, params):
     ds.upload_dt = params.get('upload_dt', ds.upload_dt)
     ds.config = params.get('config', ds.config)
     ds.is_public = params.get('is_public', ds.is_public)
+    ds.mol_dbs = params.get('mol_dbs', ds.mol_dbs)
     force = params.get('force', False)
     ds_man.update(ds, force=force)
 

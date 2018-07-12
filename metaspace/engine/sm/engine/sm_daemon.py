@@ -20,11 +20,36 @@ class SMDaemonManager(object):
 
     def __init__(self, db, es, img_store, status_queue=None, logger=None):
         self._sm_config = SMConfig.get_conf()
+        self._slack_conf = self._sm_config.get('slack', {})
         self._db = db
         self._es = es
         self._img_store = img_store
         self._status_queue = status_queue
         self.logger = logger
+
+    def post_to_slack(self, emoji, msg):
+        if self._slack_conf.get('webhook_url', None):
+            m = {"channel": self._slack_conf['channel'],
+                 "username": "webhookbot",
+                 "text": ":{}:{}".format(emoji, msg),
+                 "icon_emoji": ":robot_face:"}
+            post(self._slack_conf['webhook_url'], json=m)
+
+    def fetch_ds_metadata(self, ds_id):
+        res = self._db.select_one('SELECT name, metadata FROM dataset WHERE id = %s', params=(ds_id,))
+        return res or ('', {})
+
+    def create_web_app_link(self, msg):
+        link = None
+        try:
+            ds_name, ds_meta = self.fetch_ds_metadata(msg['ds_id'])
+            md_type_quoted = urllib.parse.quote(ds_meta['Data_Type'])
+            base_url = self._sm_config['services']['web_app_url']
+            ds_id_quoted = urllib.parse.quote(msg['ds_id'])
+            link = '{}/#/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
+        except Exception as e:
+            self.logger.error(e)
+        return link
 
     def annotate(self, ds, search_job_factory=None, del_first=False):
         """ Run an annotation job for the dataset. If del_first provided, delete first
@@ -107,26 +132,11 @@ class SMAnnotateDaemon(object):
         self._db = DB(self._sm_config['db'])
         self._manager = manager
 
-    def _post_to_slack(self, emoji, msg):
-        slack_conf = self._sm_config.get('slack', {})
-
-        if slack_conf.get('webhook_url', None):
-            m = {"channel": slack_conf['channel'],
-                 "username": "webhookbot",
-                 "text": ":{}:{}".format(emoji, msg),
-                 "icon_emoji": ":robot_face:"}
-            post(slack_conf['webhook_url'], json=m)
-
-    def _fetch_ds_metadata(self, ds_id):
-        res = self._db.select_one('SELECT name, metadata FROM dataset WHERE id = %s', params=(ds_id,))
-        return res or ('', {})
-
     def _send_email(self, email, subj, body):
         cred_dict = dict(aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
                          aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
         ses = boto3.client('ses', 'eu-west-1', **cred_dict)
         resp = ses.send_email(
-            # Source='metaspace2020@gmail.com',
             Source='contact@metaspace2020.eu',
             Destination={
                 'ToAddresses': [email]
@@ -147,57 +157,45 @@ class SMAnnotateDaemon(object):
         else:
             self.logger.warning('SEM failed to send email to {}'.format(email))
 
-    def _is_possible_send_email(self, ds_meta):
-        # TODO: take 'notify_submitter' from message not metadata
-        submitter = ds_meta.get('Submitted_By', {}).get('Submitter', None)
-        return (self._sm_config['services']['send_email']
-                and submitter
-                and 'Email' in submitter)
-
     def _on_success(self, msg):
-        self._post_to_slack('dart', ' [v] Annotation succeeded: {}'.format(json.dumps(msg)))
+        self.logger.info(f" SM daemon: success")
 
-        # if msg['action'] != DatasetAction.DELETE:
-        # ds_name, ds_meta = self._fetch_ds_metadata(msg['ds_id'])
+        ds_name, _ = self._manager.fetch_ds_metadata(msg['ds_id'])
+        msg['web_app_link'] = self._manager.create_web_app_link(msg)
+        self._manager.post_to_slack('dart', ' [v] Annotation succeeded: {}'.format(json.dumps(msg)))
 
-        # if msg['action'] == DatasetAction.ADD and \
-        # if self._is_possible_send_email(ds_meta):
-        #     submitter = ds_meta.get('Submitted_By', {}).get('Submitter', {})
-        #     md_type_quoted = urllib.parse.quote(ds_meta['Data_Type'])
-        #     base_url = self._sm_config['services']['web_app_url']
-        #     ds_id_quoted = urllib.parse.quote(msg['ds_id'])
-        #     msg['web_app_link'] = '{}/#/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
-        #     email_body = (
-        #         'Dear {} {},\n\n'
-        #         'Thank you for uploading the "{}" dataset to the METASPACE annotation service. '
-        #         'We are pleased to inform you that the dataset has been processed and is available at {}.\n\n'
-        #         'Best regards,\n'
-        #         'METASPACE Team'
-        #     ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name, msg['web_app_link'])
-        #     self._send_email(submitter['Email'], 'METASPACE service notification (SUCCESS)', email_body)
+        if msg.get('email'):
+            email_body = (
+                'Dear METASPACE user,\n\n'
+                'Thank you for uploading the "{}" dataset to the METASPACE annotation service. '
+                'We are pleased to inform you that the dataset has been processed and is available at {}.\n\n'
+                'Best regards,\n'
+                'METASPACE Team'
+            ).format(ds_name, msg['web_app_link'])
+            self._send_email(msg['email'], 'METASPACE service notification (SUCCESS)', email_body)
 
     def _on_failure(self, msg):
-        self._post_to_slack('hankey', ' [x] Annotation failed: {}'.format(json.dumps(msg)))
+        self.logger.info(f" SM daemon: failure")
 
-        # ds_name, ds_meta = self._fetch_ds_metadata(msg['ds_id'])
-        #
-        # if msg['action'] == DatasetAction.ADD and self._is_possible_send_email(ds_meta):
-        #     submitter = ds_meta['Submitted_By'].get('Submitter', '')
-        #     email_body = (
-        #         'Dear {} {},\n\n'
-        #         'Thank you for uploading the "{}" dataset to the METASPACE annotation service. '
-        #         'We are sorry to inform you that there was a problem during processing of this dataset '
-        #         'and it could not be annotated. '
-        #         'If this is unexpected, please do not hesitate to contact us for support at contact@metaspace2020.eu\n\n'
-        #         'Best regards,\n'
-        #         'METASPACE Team'
-        #     ).format(submitter.get('First_Name', ''), submitter.get('Surname', ''), ds_name)
-        #     self._send_email(submitter['Email'], 'METASPACE service notification (FAILED)', email_body)
+        ds_name, _ = self._manager.fetch_ds_metadata(msg['ds_id'])
+        msg['web_app_link'] = self._manager.create_web_app_link(msg)
+        self._manager.post_to_slack('hankey', ' [x] Annotation failed: {}'.format(json.dumps(msg)))
+
+        if msg.get('email'):
+            email_body = (
+                'Dear METASPACE user,\n\n'
+                'We are sorry to inform you that there was a problem during processing of the "{}" dataset '
+                'and it could not be annotated. '
+                'If this is unexpected, please do not hesitate to contact us for support at contact@metaspace2020.eu\n\n'
+                'Best regards,\n'
+                'METASPACE Team'
+            ).format(ds_name)
+            self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
 
     def _callback(self, msg):
-        log_msg = f" SM daemon received a message: {msg}"
-        self.logger.info(log_msg)
-        self._post_to_slack('new', " [v] Received: {}".format(json.dumps(msg)))
+        self.logger.info(f" SM daemon received a message: {msg}")
+
+        self._manager.post_to_slack('new', " [v] New annotation message: {}".format(json.dumps(msg)))
 
         ds = Dataset.load(self._db, msg['ds_id'])
         from sm.engine import SearchJob
@@ -246,15 +244,25 @@ class SMUpdateDaemon(object):
                                                 logger=self.logger)
         self._stopped = False
 
+    def _post_to_slack(self, msg):
+        if msg['action'] == 'update':
+            msg['web_app_link'] = self._manager.create_web_app_link(msg)
+            self._manager.post_to_slack('dart', f' [v] Update succeeded: {json.dumps(msg)}')
+        elif msg['action'] == 'delete':
+            self._manager.post_to_slack('dart', f' [v] Delete succeeded: {json.dumps(msg)}')
+
     def _on_success(self, msg):
         self.logger.info(f" SM daemon: success")
+        self._post_to_slack(msg)
 
     def _on_failure(self, msg):
         self.logger.info(f" SM daemon: failure")
+        self._post_to_slack(msg)
 
     def _callback(self, msg):
-        log_msg = f' SM index update daemon received a message: {msg}'
-        self.logger.info(log_msg)
+        self.logger.info(f' SM index update daemon received a message: {msg}')
+        self._manager.post_to_slack('new', f" [v] New {msg['action']} message: {json.dumps(msg)}")
+
         ds = Dataset.load(self._db, msg['ds_id'])
 
         if msg['action'] == 'update':
