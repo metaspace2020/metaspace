@@ -1,0 +1,32 @@
+type User {
+  id: ID!
+  name: String!
+  role: String            # null if current user is not allowed to see
+  email: String           # null if current user is not allowed to see
+  groups: [UserGroup!]    # null if current user is not allowed to see
+  primaryGroup: UserGroup
+}
+
+type UpdateUserInput {
+  id: ID                  # For admins
+  name: String
+  role: String
+  email: String
+  primaryGroupId: ID
+}
+
+type Query {
+  currentUser(): User!
+  user(id: ID!): User                # For admins
+  allUsers(query: String): [User!]!  # For admins
+}
+
+type Mutation {
+  updateUser(update: UpdateUserInput!): User!
+  deleteUser(id: ID!, deleteDatasets: Boolean!): Boolean!
+}
+
+schema {
+  query: Query
+  mutation: Mutation
+}

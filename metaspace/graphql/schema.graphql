@@ -1,6 +1,5 @@
 type Person {
   name: String!
-  surname: String!
   email: String!
 }
 
@@ -55,8 +54,9 @@ type Dataset {
   id: String!
   name: String!
 
-  institution: String!
-  submitter: Person!
+  institution: String
+  submitter: User!
+  group: Group
   principalInvestigator: Person
 
   polarity: Polarity!
@@ -89,8 +89,7 @@ type Dataset {
 # fields of categorical type
 enum DatasetAggField {
   DF_INSTITUTION,
-  DF_SUBMITTER_FIRST_NAME,
-  DF_SUBMITTER_SURNAME,
+  DF_SUBMITTER_NAME,
   DF_POLARITY,
   DF_ION_SOURCE,
   DF_ANALYZER_TYPE,
@@ -174,10 +173,6 @@ input AnnotationFilter {
   adduct: String
 }
 
-input PersonFilter {
-  name: String!
-  surname: String!
-}
 
 input DatasetFilter {
   # list of IDs separated by '|'
@@ -190,7 +185,10 @@ input DatasetFilter {
   name: String
 
   # exact match
-  submitter: PersonFilter
+  submitter: ID
+
+  # exact match
+  group: ID
 
   polarity: Polarity
 
@@ -231,6 +229,8 @@ input DatasetCreateInput {
   name: String!
   inputPath: String!
   uploadDT: String
+  submitterId: ID
+  groupId: ID
   isPublic: Boolean! = true
   molDBs: [String!]!
   adducts: [String!]!
@@ -241,6 +241,8 @@ input DatasetUpdateInput {
   name: String
   uploadDT: String
   metadataJson: String
+  submitterId: ID
+  groupId: ID
   isPublic: Boolean = true
   molDBs: [String!]
   adducts: [String!]
