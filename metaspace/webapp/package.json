@@ -8,9 +8,10 @@
     "dev": "cross-env NODE_ENV=development node --max_old_space_size=4096 server.js",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
     "build-ci": "cross-env NODE_ENV=production webpack --hide-modules",
-    "test": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=20000 --quarantine-mode --assertion-timeout=20000",
+    "test": "jest",
+    "test-e2e": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=20000 --quarantine-mode --assertion-timeout=20000",
     "cucumber-test": "cucumber-js --compiler ts:ts-node/register tests/e2e/ --fail-fast",
-    "deref-schema": "node deref_schema.js src/assets/"
+    "coverage": "jest --coverage"
   },
   "dependencies": {
     "apollo-client": "^1.9.3",
@@ -78,12 +79,14 @@
     "@types/cucumber": "2.0.4",
     "@types/d3": "4.10.1",
     "@types/file-saver": "0.0.1",
+    "@types/jest": "^23.1.5",
     "@types/lodash-es": "~4.17.0",
     "@types/node": "8.0.31",
     "@types/node-fetch": "1.6.7",
     "@types/plotly.js": "1.28.11",
     "@types/webpack-env": "1.13.1",
     "@types/ws": "3.0.2",
+    "@vue/test-utils": "^1.0.0-beta.20",
     "autoprefixer": "^6.7.2",
     "babel": "6.23.0",
     "babel-core": "6.26.3",
@@ -100,6 +103,8 @@
     "file-loader": "^1.1.11",
     "generate-json-webpack-plugin": "^0.3.1",
     "html-loader": "^0.5.5",
+    "jest": "^23.4.0",
+    "jest-serializer-vue": "^2.0.2",
     "json-schema-deref-sync": "^0.3.3",
     "less": "~3.0.4",
     "less-loader": "~4.1.0",
@@ -111,9 +116,11 @@
     "source-map-loader": "0.2.3",
     "style-loader": "~0.21.0",
     "testcafe": "^0.18.1",
+    "ts-jest": "^23.0.0",
     "ts-node": "~3.1.0",
     "typescript": "~2.8.3",
     "vue-class-component": "6.2.0",
+    "vue-jest": "^2.6.0",
     "vue-loader": "~15.2.2",
     "vue-property-decorator": "6.1.0",
     "vue-template-compiler": "~2.5.16",
@@ -123,5 +130,32 @@
     "webpack-dev-middleware": "^3.1.3",
     "webpack-dev-server": "^3.1.4",
     "webpack-hot-middleware": "^2.22.2"
+  },
+  "jest": {
+    "cache": false,
+    "transform": {
+      "^.+\\.vue$": "<rootDir>/node_modules/vue-jest",
+      "^.+\\.tsx?$": "<rootDir>/node_modules/ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "js",
+      "json",
+      "vue"
+    ],
+    "globals": {
+      "vue-jest": {
+        "tsConfigFile": "tsconfig.json",
+        "babelRcFile": ".babelrc"
+      },
+      "ts-jest": {
+        "tsConfigFile": "tsconfig.json",
+        "useBabelrc": true
+      }
+    },
+    "snapshotSerializers": [
+      "<rootDir>/node_modules/jest-serializer-vue"
+    ]
   }
 }

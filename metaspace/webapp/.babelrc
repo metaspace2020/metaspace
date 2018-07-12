@@ -1,12 +1,24 @@
 {
+
+  "env": {
+    "test": {
+      "ignore": "",
+      "plugins": [
+        ["add-module-exports", {
+          "addDefaultProperty": true
+        }]
+      ]
+    }
+  },
   "presets": [
-    ["env", {"modules": false}]
+    ["env"]
   ],
   "plugins": [
     ["component", [{
       "libraryName": "element-ui",
       "styleLibraryName": "theme-default"
     }]],
+
     "transform-object-rest-spread",
     "transform-runtime",
     "syntax-dynamic-import"
