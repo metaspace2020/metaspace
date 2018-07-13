@@ -12,6 +12,7 @@
     version: "{{ metaspace_branch }}"
     dest: "{{ metaspace_home }}"
     update: yes
+    force: yes
   when: local_deploy is not defined
 #  register: git_deploy
 #  until: git_deploy | succeeded

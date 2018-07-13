@@ -10,7 +10,7 @@
 
 - name: Install rabbitmq
   become: yes
-  apt: pkg=rabbitmq-server state=installed force=yes
+  apt: pkg=rabbitmq-server state=latest force=yes
 
 - name: Enable rabbitmq plugins
   become: yes

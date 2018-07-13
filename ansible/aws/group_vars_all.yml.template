@@ -28,7 +28,6 @@ kibana_user: kibana
 kibana_password: KIBANA_PASSWORD
 kibana_es_port: 9200  # kibana runs on the same host and connects to ES directly
 
-rabbitmq_version: 3.6.8-1
 rabbitmq_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 rabbitmq_user: sm
 rabbitmq_password: RABBITMQ_PASSWORD

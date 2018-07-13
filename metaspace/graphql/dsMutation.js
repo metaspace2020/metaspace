@@ -156,6 +156,7 @@ module.exports = {
           mol_dbs: input.molDBs,
           adducts: input.adducts,
           priority: priority,
+          email: user.email,
         };
         if (id !== undefined)
           body.id = id;

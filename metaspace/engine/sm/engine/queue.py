@@ -385,7 +385,7 @@ class QueueConsumer(Thread):
                                                               self._config['host'], self._heartbeat)
 
     def get_message(self):
-        method, properties, body = self._channel.basic_get(queue=self._qname, no_ack=False)
+        method, properties, body = self._channel.basic_get(queue=self._qname, no_ack=True)
         if body is not None:
             msg = None
             try:
@@ -396,11 +396,9 @@ class QueueConsumer(Thread):
 
                 self._callback(msg)
             except BaseException as e:
-                self._channel.basic_ack(method.delivery_tag)
                 self.logger.error(' [x] Failed: {}'.format(body), exc_info=True)
                 self._on_failure(msg or body)
             else:
-                self._channel.basic_ack(method.delivery_tag)
                 self.logger.info(' [v] Succeeded: {}'.format(body))
                 self._on_success(msg)
         else:
@@ -446,7 +444,7 @@ class QueuePublisher(object):
         creds = pika.PlainCredentials(config['user'], config['password'])
         self.qdesc = qdesc
         self.qname = qdesc['name']
-        self.conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat_interval=0)
+        self.conn_params = pika.ConnectionParameters(host=config['host'], credentials=creds, heartbeat=0)
         self.conn = None
         self.logger = logger if logger else logging.getLogger()
 

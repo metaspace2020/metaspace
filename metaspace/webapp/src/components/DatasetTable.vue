@@ -118,7 +118,7 @@
              const statusMap = {
                FINISHED: 'success',
                QUEUED: 'info',
-               STARTED: 'info',
+               ANNOTATING: 'info',
                FAILED: 'warning'
              };
              let message = '';
@@ -128,7 +128,7 @@
                message = `Something went wrong with dataset ${name} :(`;
              else if (status == 'QUEUED')
                message = `Dataset ${name} has been submitted to query by ${who}`;
-             else if (status == 'STARTED')
+             else if (status == 'ANNOTATING')
                message = `Started processing dataset ${name}`;
              this.$notify({ message, type: statusMap[status] });
            }
@@ -143,7 +143,7 @@
        query: datasetListQuery,
        update: data => data.allDatasets,
        variables () {
-         return this.queryVariables('STARTED');
+         return this.queryVariables('ANNOTATING');
        }
      },
 

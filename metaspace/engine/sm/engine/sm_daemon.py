@@ -158,7 +158,7 @@ class SMAnnotateDaemon(object):
             self.logger.warning('SEM failed to send email to {}'.format(email))
 
     def _on_success(self, msg):
-        self.logger.info(f" SM daemon: success")
+        self.logger.info(f" SM annotate daemon: success")
 
         ds_name, _ = self._manager.fetch_ds_metadata(msg['ds_id'])
         msg['web_app_link'] = self._manager.create_web_app_link(msg)
@@ -175,7 +175,7 @@ class SMAnnotateDaemon(object):
             self._send_email(msg['email'], 'METASPACE service notification (SUCCESS)', email_body)
 
     def _on_failure(self, msg):
-        self.logger.info(f" SM daemon: failure")
+        self.logger.error(f" SM annotate daemon: failure")
 
         ds_name, _ = self._manager.fetch_ds_metadata(msg['ds_id'])
         msg['web_app_link'] = self._manager.create_web_app_link(msg)
@@ -193,7 +193,7 @@ class SMAnnotateDaemon(object):
             self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
 
     def _callback(self, msg):
-        self.logger.info(f" SM daemon received a message: {msg}")
+        self.logger.info(f" SM annotate daemon received a message: {msg}")
 
         self._manager.post_to_slack('new', " [v] New annotation message: {}".format(json.dumps(msg)))
 
@@ -252,15 +252,15 @@ class SMUpdateDaemon(object):
             self._manager.post_to_slack('dart', f' [v] Delete succeeded: {json.dumps(msg)}')
 
     def _on_success(self, msg):
-        self.logger.info(f" SM daemon: success")
+        self.logger.info(f" SM update daemon: success")
         self._post_to_slack(msg)
 
     def _on_failure(self, msg):
-        self.logger.info(f" SM daemon: failure")
+        self.logger.error(f" SM update daemon: failure")
         self._post_to_slack(msg)
 
     def _callback(self, msg):
-        self.logger.info(f' SM index update daemon received a message: {msg}')
+        self.logger.info(f' SM update daemon received a message: {msg}')
         self._manager.post_to_slack('new', f" [v] New {msg['action']} message: {json.dumps(msg)}")
 
         ds = Dataset.load(self._db, msg['ds_id'])

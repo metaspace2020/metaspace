@@ -39,7 +39,7 @@ enum SortingOrder {
 
 enum JobStatus {
   QUEUED,
-  STARTED,
+  ANNOTATING,
   INDEXING,
   FINISHED,
   FAILED
