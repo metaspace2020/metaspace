@@ -1,11 +1,12 @@
 type Person {
+  id: ID           # null if it was entered as free-text
   name: String!
-  email: String!
+  email: String    # null if current user is not allowed to see
 }
 
-enum PersonRole {
-  SUBMITTER,
-  PI
+type UserSearchResult {
+  id: ID!
+  name: String!
 }
 
 enum Polarity {
@@ -299,8 +300,6 @@ type Query {
 
   metadataSuggestions(field: String!, query: String!, limit: Int = 10): [String!]!
 
-  peopleSuggestions(role: PersonRole!, query: String!): [Person!]!
-
   molecularDatabases(hideDeprecated: Boolean = true): [MolecularDatabase!]
 
   adductSuggestions: [Adduct!]!
@@ -312,6 +311,8 @@ type Query {
   thumbnailImage(datasetId: String!): String,
 
   reprocessingNeeded(input: DatasetUpdateInput!): Boolean!
+
+  currentUserLastSubmittedDataset(): Dataset
 }
 
 type Mutation {
