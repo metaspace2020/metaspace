@@ -4,9 +4,14 @@ type Person {
   email: String    # null if current user is not allowed to see
 }
 
-type UserSearchResult {
+type PersonSearchResult {
   id: ID!
   name: String!
+}
+
+enum PersonRole {
+  SUBMITTER,
+  PI
 }
 
 enum Polarity {
@@ -299,6 +304,8 @@ type Query {
   annotation(id: String!): Annotation
 
   metadataSuggestions(field: String!, query: String!, limit: Int = 10): [String!]!
+
+  peopleSuggestions(role: PersonRole!, query: String!): [PersonSearchResult!]!
 
   molecularDatabases(hideDeprecated: Boolean = true): [MolecularDatabase!]
 
