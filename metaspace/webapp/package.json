@@ -135,7 +135,7 @@
     "cache": false,
     "transform": {
       "^.+\\.vue$": "<rootDir>/node_modules/vue-jest",
-      "^.+\\.tsx?$": "<rootDir>/node_modules/ts-jest"
+      "^.+\\.[jt]sx?$": "<rootDir>/node_modules/ts-jest"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "moduleFileExtensions": [
@@ -144,16 +144,10 @@
       "json",
       "vue"
     ],
-    "globals": {
-      "vue-jest": {
-        "tsConfigFile": "tsconfig.json",
-        "babelRcFile": ".babelrc"
-      },
-      "ts-jest": {
-        "tsConfigFile": "tsconfig.json",
-        "useBabelrc": true
-      }
-    },
+    "collectCoverageFrom": [
+      "src/**/*.{ts,js,vue}",
+      "!src/**/*.{test,spec,d}.{ts,js}"
+    ],
     "snapshotSerializers": [
       "<rootDir>/node_modules/jest-serializer-vue"
     ]
