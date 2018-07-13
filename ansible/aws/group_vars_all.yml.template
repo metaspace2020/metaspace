@@ -171,6 +171,9 @@ sm_webapp_enable_uploads: true
 # metadata types are specified by corresponding filenames in metaspace2020/metadata repository
 # "specialised metadata" subfolder
 sm_webapp_metadata_types: ["ims", "lcms"]
+sm_webapp_features:
+  newAuth: false
+
 
 sm_ansible_home: "{{ metaspace_home }}/ansible"
 
