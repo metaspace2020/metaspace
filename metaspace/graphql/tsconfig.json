@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "target": "es5",
+    "strict": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "lib": ["ES2015", "ESNext", "ScriptHost"],
+    "module": "CommonJS",
+    "moduleResolution": "node"
+  }
+}

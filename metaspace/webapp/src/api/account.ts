@@ -5,6 +5,13 @@ const fetchPostJson = async (url: string, body: object) =>
     body: JSON.stringify(body),
   });
 
+export const signOut = async () => {
+  const response = await fetch('/auth/signout', {method: 'POST'});
+  if (response.status !== 200) {
+    throw new Error(`Unexpected response from server: ${response.status} ${response.statusText}`)
+  }
+};
+
 export const signInByEmail = async (email: string, password: string): Promise<boolean> => {
   const response = await fetchPostJson('/auth/signin', { email, password });
   return response.status >= 200 && response.status < 300;
@@ -31,7 +38,7 @@ export const validatePasswordResetToken = async (token: string, email: string): 
 
 
 export const resetPassword = async (token: string, email: string, password: string) => {
-  const response = await fetchPostJson('/auth/sendpasswordreset', { token, email, password });
+  const response = await fetchPostJson('/auth/resetpassword', { token, email, password });
   if (response.status !== 200) {
     throw new Error(`Unexpected response from server: ${response.status} ${response.statusText}`)
   }

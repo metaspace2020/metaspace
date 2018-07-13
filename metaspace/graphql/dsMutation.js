@@ -9,10 +9,8 @@ const {db, logger, fetchDS, assertUserCanEditDataset,
     addProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json');
 
-let {molecularDatabases} = 1;
-
-ajv = new Ajv({allErrors: true});
-validator = ajv.compile(metadataSchema);
+const ajv = new Ajv({allErrors: true});
+const validator = ajv.compile(metadataSchema);
 
 function isEmpty(obj) {
   if (!obj)

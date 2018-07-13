@@ -4,19 +4,14 @@ const bodyParser = require('body-parser'),
   Resolvers = require('./resolvers.js'),
   config = require('config'),
   express = require('express'),
-  fetch = require('node-fetch'),
   {graphqlExpress, graphiqlExpress} = require('apollo-server-express'),
-  jsondiffpatch = require('jsondiffpatch'),
   jwt = require('express-jwt'),
   cors = require('cors'),
-  knex = require('knex'),
   makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
   {maskErrors} = require('graphql-errors'),
-  moment = require('moment'),
-  Promise = require("bluebird"),
-  slack = require('node-slack'),
-  sprintf = require('sprintf-js'),
-  readFile = Promise.promisify(require("fs").readFile);
+  {promisify} = require('util'),
+  readFile = promisify(require("fs").readFile),
+  {configureAuth} = require('./src/auth/api');
 
 const logger = require('./utils.js').logger;
 
@@ -64,6 +59,9 @@ function createHttpServerAsync(config) {
         subscriptionsEndpoint: config.websocket_public_url,
       }));
 
+      app.use(bodyParser.json());
+      configureAuth(app);
+
       app.use(function (err, req, res, next) {
         res.status(err.status || 500);
         logger.error(err.stack);
@@ -71,6 +69,7 @@ function createHttpServerAsync(config) {
           message: err.message
         });
       });
+
 
       httpServer.listen(config.port);
 

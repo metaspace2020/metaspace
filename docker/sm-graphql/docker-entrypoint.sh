@@ -19,9 +19,9 @@ if [ "$SM_DOCKER_ENV" = "development" ]; then
   cd /opt/dev/metaspace/metaspace/graphql
   yarn install
   node deref_schema.js > metadata_schema.json
-  exec nodemon server.js
+  exec nodemon --require ts-node/register server.js
 else
   export NODE_ENV=production
   cd /opt/metaspace/metaspace/graphql
-  exec node server.js
+  exec node --require ts-node/register server.js
 fi
