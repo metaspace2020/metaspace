@@ -16,6 +16,9 @@ export interface NewDbUser {
   googleId?: string;
 }
 
+// FIXME: This is just a stub and should obviously not be used in production. Passwords need to be salted & hashed
+// (ideally by a 3rd party library), tokens need to be able to be expired, some mechanism should be added so that
+// a user's other sessions are revoked when they change their password, etc.
 const users: DbUser[] = [];
 
 export const findUserById = async (id: string): Promise<Readonly<DbUser> | undefined> => {

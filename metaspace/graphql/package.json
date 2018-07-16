@@ -5,6 +5,7 @@
   "main": "server.js",
   "author": "Artem Tarasov <artem.tarasov@embl.de>",
   "scripts": {
+    "dev": "nodemon -e js,json,ts --require ts-node/register server.js",
     "start": "ts-node server.js",
     "test": "jest tests",
     "test-integration": "mocha --timeout 3000 tests/*RegrTest.js"

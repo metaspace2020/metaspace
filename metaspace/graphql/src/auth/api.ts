@@ -24,7 +24,7 @@ const configurePassport = (app: Express) => {
     return await findUserById(id) || false;
   }));
 
-  app.post('/auth/signout', (req, res) => {
+  app.post('/api_auth/signout', (req, res) => {
     req.logout();
     res.send('OK');
   });
@@ -41,7 +41,7 @@ const configureLocalAuth = (app: Express) => {
     })
   ));
 
-  app.post('/auth/signin', Passport.authenticate('local', {
+  app.post('/api_auth/signin', Passport.authenticate('local', {
     failureRedirect: '/#/account/sign-in',
   }))
 };
@@ -65,11 +65,11 @@ const configureGoogleAuth = (app: Express) => {
       })
     ));
 
-    app.get('/auth/google', Passport.authenticate('google', {
+    app.get('/api_auth/google', Passport.authenticate('google', {
       scope: ['profile', 'email']
     }));
 
-    app.get('/auth/google/callback', Passport.authenticate('google', {
+    app.get('/api_auth/google/callback', Passport.authenticate('google', {
       successRedirect: '/#/datasets',
       failureRedirect: '/#/account/sign-in',
     }));
@@ -77,7 +77,7 @@ const configureGoogleAuth = (app: Express) => {
 };
 
 const configureCreateAccount = (app: Express) => {
-  app.post('/auth/createaccount', async (req, res, next) => {
+  app.post('/api_auth/createaccount', async (req, res, next) => {
     try {
       const { name, email, password } = req.body;
       const user = await createUser({ name, email, password });
@@ -87,7 +87,7 @@ const configureCreateAccount = (app: Express) => {
     }
   });
 
-  app.get('/auth/verifyemail', async (req, res, next) => {
+  app.get('/api_auth/verifyemail', async (req, res, next) => {
     const {email, token} = req.query;
     // TODO: Verify email
     const user = findUserByEmail(email);
@@ -106,7 +106,7 @@ const configureCreateAccount = (app: Express) => {
 };
 
 const configureResetPassword = (app: Express) => {
-  app.post('/auth/sendpasswordresettoken', async (req, res, next) => {
+  app.post('/api_auth/sendpasswordresettoken', async (req, res, next) => {
     try {
       const { email } = req.body;
       const token = await createResetPasswordToken(email);
@@ -117,7 +117,7 @@ const configureResetPassword = (app: Express) => {
     }
   });
 
-  app.post('/auth/validatepasswordresettoken', async (req, res, next) => {
+  app.post('/api_auth/validatepasswordresettoken', async (req, res, next) => {
     try {
       const { email, token } = req.body;
       const user = await findUserByEmail(email);
@@ -132,7 +132,7 @@ const configureResetPassword = (app: Express) => {
     }
   });
 
-  app.post('/auth/resetpassword', async (req, res, next) => {
+  app.post('/api_auth/resetpassword', async (req, res, next) => {
     try {
       const { email, token, password } = req.body;
       let user = await findUserByEmail(email);

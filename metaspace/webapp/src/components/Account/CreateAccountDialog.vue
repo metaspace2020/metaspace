@@ -67,7 +67,7 @@
           <div class="divider" />
         </div>
         <div class="right-side">
-          <a class="google-button" href="/auth/google">
+          <a class="google-button" href="/api_auth/google">
             <google-button>Sign up with Google</google-button>
           </a>
           <ul style="padding: 0 20px;">

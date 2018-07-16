@@ -79,7 +79,7 @@ exports[`CreateAccountDialog should match snapshot 1`] = `
         <div class="divider"></div>
       </div>
       <div class="right-side">
-        <a href="/auth/google" class="google-button">
+        <a href="/api_auth/google" class="google-button">
           <div class="abcRioButton abcRioButtonBlue">
             <div class="abcRioButtonContentWrapper">
               <div class="abcRioButtonIcon" style="padding: 10px;">
