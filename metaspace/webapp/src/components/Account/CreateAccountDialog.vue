@@ -89,7 +89,7 @@
   import { Form } from 'element-ui';
   import GoogleButton from './GoogleButton.vue';
   import InterDialogLink from './InterDialogLink';
-  import { createAccountByEmail } from '../../api/account';
+  import { createAccountByEmail } from '../../api/auth';
   import reportError from '../../lib/reportError';
 
   interface Model {

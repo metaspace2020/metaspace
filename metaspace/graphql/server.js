@@ -80,6 +80,7 @@ function createHttpServerAsync(config) {
       }));
 
       app.use(bodyParser.json());
+      configureSession(app);
       configureAuth(app);
 
       app.use(function (err, req, res, next) {

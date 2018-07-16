@@ -92,6 +92,7 @@
 </template>
 
 <script>
+ import {signOut} from '../api/auth';
  import {encodeParams} from '../url';
  import tokenAutorefresh from '../tokenAutorefresh';
  import * as config from '../clientConfig.json';
@@ -173,7 +174,11 @@
      },
 
      async logout() {
-       await fetch('/logout', {credentials: 'include'});
+       if (config.features.newAuth) {
+         await signOut();
+       } else {
+         await fetch('/logout', {credentials: 'include'});
+       }
        await tokenAutorefresh.refreshJwt(true);
      }
    }

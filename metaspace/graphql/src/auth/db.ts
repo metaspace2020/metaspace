@@ -5,6 +5,7 @@ export interface DbUser {
   email: string;
   password: string | null;
   name: string | null;
+  role: string | null;
   googleId: string | null;
   emailVerificationToken: string | null;
   resetPasswordToken: string | null;
@@ -39,6 +40,7 @@ export const createUser = async (user: NewDbUser): Promise<Readonly<DbUser>> => 
       password: null,
       name: null,
       googleId: null,
+      role: 'user',
     }),
     id: users.length.toString(),
     emailVerificationToken: '123',
@@ -46,6 +48,10 @@ export const createUser = async (user: NewDbUser): Promise<Readonly<DbUser>> => 
   };
   users.push(newUser);
   return newUser;
+};
+
+export const verifyEmail = async (email: string, token: string): Promise<Readonly<DbUser> | undefined> => {
+  return users.find(u => u.email === email && u.emailVerificationToken === token);
 };
 
 export const createResetPasswordToken = async (userId: string): Promise<string> => {
@@ -57,12 +63,13 @@ export const createResetPasswordToken = async (userId: string): Promise<string> 
   return user.resetPasswordToken;
 };
 
-export const setUserPassword = async (userId: string, password: string): Promise<Readonly<DbUser>> => {
-  const user = users.find(u => u.id === userId);
-  if (!user) {
-    throw new Error();
+export const resetPassword = async (email: string, password: string, token: string): Promise<Readonly<DbUser> | undefined> => {
+  // TODO: token expiry, etc.
+  const user = users.find(u => u.email === email && u.resetPasswordToken === token);
+  if (user) {
+    user.password = password;
+    user.resetPasswordToken = null;
+    return user;
   }
-  user.password = password;
-  user.resetPasswordToken = null;
-  return user;
+  return undefined;
 };

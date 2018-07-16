@@ -2,11 +2,12 @@ const fetchPostJson = async (url: string, body: object) =>
   await fetch(url, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
+    credentials: 'include',
     body: JSON.stringify(body),
   });
 
 export const signOut = async () => {
-  const response = await fetch('/api_auth/signout', {method: 'POST'});
+  const response = await fetch('/api_auth/signout', {method: 'POST', credentials: 'include'});
   if (response.status !== 200) {
     throw new Error(`Unexpected response from server: ${response.status} ${response.statusText}`)
   }

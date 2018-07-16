@@ -42,7 +42,7 @@
   import Vue from 'vue';
   import { Component } from 'vue-property-decorator';
   import { Form } from 'element-ui';
-  import { validatePasswordResetToken, resetPassword } from '../../api/account';
+  import { validatePasswordResetToken, resetPassword } from '../../api/auth';
   import reportError from '../../lib/reportError';
 
   interface Model {
