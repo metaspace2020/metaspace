@@ -45,7 +45,7 @@
         @dblclick.native="onDoubleClick"
         @mousedown.native="onImageMouseDown"
         @contextmenu.native="onImageRightMouseDown"
-        style="z-index: 5;"
+        style="z-index: 5; overflow: visible"
         :max-height=100500
         @wheel.native="onWheel"
         :annot-image-opacity="annotImageOpacity"
