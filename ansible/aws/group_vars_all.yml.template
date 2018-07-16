@@ -145,6 +145,9 @@ sm_graphql_rabbitmq_password: "{{ rabbitmq_password }}"
 sm_graphql_ws_public_endpoint: "ws://{{ sm_graphql_hostname }}/ws"
 sm_graphql_default_adducts: "{{ sm_default_adducts }}"
 sm_graphql_img_storage_backend: fs
+sm_graphql_redis_host: localhost
+sm_graphql_redis_port: 6379
+sm_graphql_cookie_secret: COOKIE_SECRET
 
 sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually for production
 sm_webapp_url: "http://{{ sm_webapp_hostname }}"
@@ -267,6 +270,10 @@ nginx_servers:
       - path: /graphiql
         params:
           - proxy_pass http://graphql_server/graphiql;
+          - include proxy-params.conf;
+      - path: /api_auth
+        params:
+          - proxy_pass http://graphql_server/api_auth;
           - include proxy-params.conf;
       - path: /ws
         params:

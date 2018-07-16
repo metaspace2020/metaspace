@@ -41,13 +41,44 @@
       </router-link>
     </div>
 
+    <div v-if="!this.$store.state.authenticated">
+      <div v-if="features.newAuth">
+        <div class="header-item vc page-link" @click="showCreateAccount">
+          <div class="vc">Create account</div>
+        </div>
 
-    <div v-show="!this.$store.state.authenticated"
-         class="header-item vc page-link" @click="showSignIn">
-      <div class="vc">Sign in</div>
+        <div class="header-item vc page-link" @click="showSignIn">
+          <div class="vc">Sign in</div>
+        </div>
+      </div>
+      <div v-else>
+        <el-popover ref="login-popover"
+                    placement="bottom"
+                    trigger="click"
+                    style="text-align:center;">
+          <div id="email-link-container">
+            <el-button type="primary" @click="sendLoginLink">Send a link to</el-button>
+            <span>
+            <el-input v-model="loginEmail"
+                      placeholder="e-mail address">
+            </el-input>
+          </span>
+          </div>
+
+          <div style="text-align: center;">
+            <div style="margin: 10px; font-size: 18px;">or</div>
+            <a href="/auth/google">
+              <el-button>Sign in with Google</el-button>
+            </a>
+          </div>
+        </el-popover>
+
+        <div class="header-item vc page-link" v-popover:login-popover>
+          <div class="vc">Sign in</div>
+        </div>
+      </div>
     </div>
-
-    <div v-show="this.$store.state.authenticated">
+    <div v-else>
       <div class="header-item vc">
         <div class="vc" style="color: white;">
           {{ userNameOrEmail }}
@@ -63,6 +94,7 @@
 <script>
  import {encodeParams} from '../url';
  import tokenAutorefresh from '../tokenAutorefresh';
+ import * as config from '../clientConfig.json';
 
  export default {
    name: 'metaspace-header',
@@ -85,6 +117,10 @@
        if (!user)
          return '';
        return user.name || user.email;
+     },
+
+     features() {
+       return config.features;
      }
    },
 
@@ -126,6 +162,10 @@
          eventCategory: 'Link sender',
          eventAction: 'sending login link'
        })
+     },
+
+     showCreateAccount() {
+       this.$store.commit('account/showDialog', 'createAccount');
      },
 
      showSignIn() {

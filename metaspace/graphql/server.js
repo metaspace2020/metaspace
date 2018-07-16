@@ -4,6 +4,8 @@ const bodyParser = require('body-parser'),
   Resolvers = require('./resolvers.js'),
   config = require('config'),
   express = require('express'),
+  session = require('express-session'),
+  connectRedis = require('connect-redis'),
   {graphqlExpress, graphiqlExpress} = require('apollo-server-express'),
   jwt = require('express-jwt'),
   cors = require('cors'),
@@ -24,6 +26,24 @@ let wsServer = http.createServer((req, res) => {
   res.writeHead(404);
   res.end();
 });
+
+
+const configureSession = (app) => {
+  let sessionStore = undefined;
+  if (config.redis.host) {
+    const RedisStore = connectRedis(session);
+    sessionStore = new RedisStore(config.redis);
+  }
+
+  app.use(session({
+    store: sessionStore,
+    secret: config.cookie.secret,
+    resave: false,
+    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 1 month
+    name: 'api.sid',
+  }));
+};
+
 
 function createHttpServerAsync(config) {
   let app = express();

@@ -16,7 +16,7 @@
 </template>
 
 <script>
-
+ import * as cookie from 'js-cookie';
  import MetaspaceHeader from './components/MetaspaceHeader.vue';
  import MetaspaceFooter from './components/MetaspaceFooter.vue';
  import TourStep from './components/TourStep.vue';
@@ -34,6 +34,24 @@
    data() {
      return {
        features: config.features
+     }
+   },
+   async created() {
+     const flashMessage = cookie.getJSON('flashMessage');
+     if (flashMessage) {
+       try {
+         if (flashMessage.type === 'email_verified') {
+           await this.$alert('Your email address was successfully verified. You may now upload datasets to METASPACE.',
+             'Welcome to METASPACE',
+             {
+               type: 'success'
+             });
+         }
+       } catch (err) {
+         // Ignore any errors - promise rejection here just means that the user cancelled out of the dialog
+       } finally {
+         cookie.remove('flashMessage');
+       }
      }
    }
  }

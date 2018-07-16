@@ -81,6 +81,11 @@ const configureCreateAccount = (app: Express) => {
     try {
       const { name, email, password } = req.body;
       const user = await createUser({ name, email, password });
+      const token = user.emailVerificationToken;
+      if (token != null) {
+        // TODO: Send email
+        console.log(`/api_auth/verifyemail?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`)
+      }
       res.send(true);
     } catch (err) {
       next(err);
@@ -90,12 +95,13 @@ const configureCreateAccount = (app: Express) => {
   app.get('/api_auth/verifyemail', async (req, res, next) => {
     const {email, token} = req.query;
     // TODO: Verify email
-    const user = findUserByEmail(email);
+    const user = await findUserByEmail(email);
     if (user) {
       req.login(user, (err) => {
         if (err) {
           next(err);
         } else {
+          res.cookie('flashMessage', JSON.stringify({type: 'email_verified'}), {maxAge: 10*60*1000});
           res.redirect('/#/');
         }
       });
@@ -110,6 +116,7 @@ const configureResetPassword = (app: Express) => {
     try {
       const { email } = req.body;
       const token = await createResetPasswordToken(email);
+      // TODO: Send email
       console.log(`/#/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
       res.send(true);
     } catch (err) {
