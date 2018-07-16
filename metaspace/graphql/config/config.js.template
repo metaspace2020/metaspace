@@ -78,4 +78,6 @@ config.slack.channel = "{{ sm_graphql_slack_channel }}";
 config.jwt = {};
 config.jwt.secret = "{{ sm_graphql_jwt_secret }}";
 
+config.features = {{ sm_graphql_features | to_json }};
+
 module.exports = config;

@@ -79,9 +79,11 @@ function createHttpServerAsync(config) {
         subscriptionsEndpoint: config.websocket_public_url,
       }));
 
-      app.use(bodyParser.json());
-      configureSession(app);
-      configureAuth(app);
+      if (config.features.newAuth) {
+        app.use(bodyParser.json());
+        configureSession(app);
+        configureAuth(app);
+      }
 
       app.use(function (err, req, res, next) {
         res.status(err.status || 500);

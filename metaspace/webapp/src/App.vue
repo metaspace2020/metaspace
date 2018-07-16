@@ -40,12 +40,13 @@
      const flashMessage = cookie.getJSON('flashMessage');
      if (flashMessage) {
        try {
-         if (flashMessage.type === 'email_verified') {
+         if (flashMessage.type === 'verify_email_success') {
            await this.$alert('Your email address was successfully verified. You may now upload datasets to METASPACE.',
-             'Welcome to METASPACE',
-             {
-               type: 'success'
-             });
+             'Welcome to METASPACE', {type: 'success'});
+         } else if (flashMessage.type === 'verify_email_failure') {
+           await this.$alert('This email verification link is invalid or has expired. Try signing in or resetting your password. ' +
+             'If this keeps happening, please <a href="mailto:contact@metaspace2020.eu">let us know</a>.',
+             'Something went wrong!', {type: 'warning', dangerouslyUseHTMLString: true});
          }
        } catch (err) {
          // Ignore any errors - promise rejection here just means that the user cancelled out of the dialog

@@ -116,10 +116,23 @@ const configureLocalAuth = (app: Express) => {
     })
   ));
 
-  app.post('/api_auth/signin', Passport.authenticate('local', {
-    failureRedirect: '/#/account/sign-in',
-    successRedirect: '/',
-  }))
+  app.post('/api_auth/signin', function(req, res, next) {
+    Passport.authenticate('local', function(err, user, info) {
+      if (err) {
+        next(err);
+      } else if (user) {
+        req.logIn(user, err => {
+          if (err) {
+            next();
+          } else {
+            res.status(200).send();
+          }
+        });
+      } else {
+        res.status(401).send();
+      }
+    })(req, res, next);
+  })
 };
 
 const configureGoogleAuth = (app: Express) => {
@@ -177,12 +190,13 @@ const configureCreateAccount = (app: Express) => {
         if (err) {
           next(err);
         } else {
-          res.cookie('flashMessage', JSON.stringify({type: 'email_verified'}), {maxAge: 10*60*1000});
+          res.cookie('flashMessage', JSON.stringify({type: 'verify_email_success'}), {maxAge: 10*60*1000});
           res.redirect('/#/');
         }
       });
     } else {
-      res.sendStatus(401); //TODO: Redirect to a user-friendly error message
+      res.cookie('flashMessage', JSON.stringify({type: 'verify_email_failure'}), {maxAge: 10*60*1000});
+      res.redirect('/#/');
     }
   });
 };
