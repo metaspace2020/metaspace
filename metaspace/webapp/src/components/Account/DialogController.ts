@@ -24,8 +24,10 @@ export default class extends Vue {
     return DialogComponent == null ? null : h(DialogComponent);
   }
   created(this: Vue) {
-    const dialog = (this.$route.matched[0] as any).dialogType;
-
-    this.$store.commit('account/showDialogAsPage', dialog);
+    const matchedRoute = this.$route.matched[0] as any;
+    const dialog = matchedRoute ? matchedRoute.dialogType : null;
+    if (dialog) {
+      this.$store.commit('account/showDialogAsPage', dialog);
+    }
   }
 }

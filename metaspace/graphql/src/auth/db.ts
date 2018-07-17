@@ -54,8 +54,8 @@ export const verifyEmail = async (email: string, token: string): Promise<Readonl
   return users.find(u => u.email === email && u.emailVerificationToken === token);
 };
 
-export const createResetPasswordToken = async (userId: string): Promise<string> => {
-  const user = users.find(u => u.id === userId);
+export const createResetPasswordToken = async (email: string): Promise<string> => {
+  const user = users.find(u => u.email === email);
   if (!user) {
     throw new Error();
   }
