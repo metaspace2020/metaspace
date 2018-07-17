@@ -39,7 +39,7 @@ enum SortingOrder {
 
 enum JobStatus {
   QUEUED,
-  STARTED,
+  ANNOTATING,
   INDEXING,
   FINISHED,
   FAILED
@@ -313,12 +313,15 @@ type Query {
 }
 
 type Mutation {
-  createDataset(id: String, input: DatasetCreateInput!, priority: Int=0): String!
+  createDataset(id: String, input: DatasetCreateInput!,
+        priority: Int=0): String!
 
   updateDataset(id: String!, input: DatasetUpdateInput!,
-    reprocess: Boolean=false, delFirst: Boolean=false, priority: Int=0): String!
+        reprocess: Boolean=false, delFirst: Boolean=false,
+        force: Boolean=false, priority: Int=0): String!
 
-  deleteDataset(id: String!, priority: Int=0): String!
+  deleteDataset(id: String!,
+        force: Boolean=false, priority: Int=0): String!
 
   # for dev purposes only
   reprocessDataset(id: String, priority: Int=0, delFirst: Boolean=false): String!

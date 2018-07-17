@@ -1,11 +1,11 @@
 # -*- conf -*-
 
 [program:sm-graphql]
-process_name = sm-graphql
+process_name = {{ sm_graphql_app_name }}
 environment = NODE_ENV="production"
 directory = {{ sm_graphql_home }}
 command = nodejs server.js
 redirect_stderr = true
-stdout_logfile = {{ sm_graphql_home }}/logs/sm-graphql.log
+stdout_logfile = {{ sm_graphql_home }}/logs/{{ sm_graphql_app_name }}.log
 numprocs = 1
 numprocs_start = 8000

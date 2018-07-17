@@ -4,8 +4,7 @@ from pytest import fixture
 from queue import Queue
 import logging
 
-from sm.engine import QueuePublisher
-from sm.engine.queue import QueueConsumer, SM_ANNOTATE
+from sm.engine.queue import QueuePublisher, QueueConsumer, SM_ANNOTATE
 from sm.engine.tests.util import sm_config
 
 

@@ -1,12 +1,11 @@
 from itertools import product
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
-from sm.engine.db import DB
-from unittest.mock import MagicMock, patch
 from pandas.util.testing import assert_frame_equal
 
-from sm.engine.fdr import FDR, DECOY_ADDUCTS
-from sm.engine import MolecularDB
+from sm.engine.db import DB
+from sm.engine.fdr import FDR
 
 
 @patch('sm.engine.fdr.DECOY_ADDUCTS', ['+He', '+Li'])

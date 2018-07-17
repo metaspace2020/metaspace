@@ -2,11 +2,11 @@ import argparse
 import logging
 from copy import deepcopy
 
-from sm.engine import MolecularDB
+from sm.engine.mol_db import MolecularDB
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.util import init_loggers, SMConfig
-from sm.engine import DB
-from sm.engine import ESExporter, ESIndexManager
+from sm.engine.db import DB
+from sm.engine.es_export import ESExporter, ESIndexManager
 
 
 def _reindex_all(conf):

@@ -1,9 +1,9 @@
 from unittest.mock import MagicMock
+
+import pandas as pd
 from pandas.util.testing import assert_frame_equal
 from scipy.sparse import csr_matrix
-import pandas as pd
 
-from sm.engine import MolecularDB
 from sm.engine.fdr import FDR
 from sm.engine.ion_centroids_gen import IonCentroidsGenerator
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch

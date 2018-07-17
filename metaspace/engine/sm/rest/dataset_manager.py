@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 from sm.engine.dataset import DatasetStatus, Dataset
-from sm.engine.errors import DSIDExists, UnknownDSID
+from sm.engine.errors import DSIDExists, UnknownDSID, DSIsBusy
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
@@ -30,172 +30,55 @@ SEL_OPTICAL_IMAGE_THUMBNAIL = 'SELECT thumbnail FROM dataset WHERE id = %s'
 DEL_OPTICAL_IMAGE = 'DELETE FROM optical_image WHERE ds_id = %s'
 
 
-class DatasetAction(object):
-    """ Dataset actions to be used in DatasetManager """
-    ADD = 'ADD'
-    UPDATE = 'UPDATE'
-    DELETE = 'DELETE'
-
-
 class DatasetActionPriority(object):
     """ Priorities used for messages sent to queue """
     LOW = 0
     STANDARD = 1
     HIGH = 2
-    DEFAULT = LOW
+    DEFAULT = STANDARD
 
 
-class DatasetManager(object):
-    """ Abstract class for dataset data management in the engine.
-        SMDaemonDatasetManager or SMapiDatasetManager should be instantiated instead
+class SMapiDatasetManager(object):
 
-        Args
-        ----------
-        db : sm.engine.DB
-        es: sm.engine.ESExporter
-        img_store: sm.engine.png_generator.ImageStoreServiceWrapper
-        mode: unicode
-            'local' or 'queue'
-        status_queue: sm.engine.queue.QueuePublisher
-        logger_name: str
-    """
-    def __init__(self, db=None, es=None, img_store=None, mode=None,
-                 status_queue=None, logger_name=None):
+    def __init__(self, db, es, image_store, logger=None,
+                 annot_queue=None, update_queue=None, status_queue=None):
         self._sm_config = SMConfig.get_conf()
         self._db = db
         self._es = es
-        self._img_store = img_store
-        self.mode = mode
+        self._img_store = image_store
         self._status_queue = status_queue
-        self.logger = logging.getLogger(logger_name)
+        self._annot_queue = annot_queue
+        self._update_queue = update_queue
+        self.logger = logger or logging.getLogger()
 
-    def process(self, ds, action, **kwargs):
-        raise NotImplemented
+    def _post_sm_msg(self, ds, queue, priority=DatasetActionPriority.DEFAULT, **kwargs):
+        if ds.status in {DatasetStatus.QUEUED,
+                         DatasetStatus.ANNOTATING,
+                         DatasetStatus.INDEXING} and not kwargs.get('force', False):
+            raise DSIsBusy(ds.id)
 
-    def update(self, ds, **kwargs):
-        raise NotImplemented
+        ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.QUEUED)
+
+        msg = {
+            'ds_id': ds.id,
+            'ds_name': ds.name
+        }
+        msg.update(kwargs)
+
+        queue.publish(msg, priority)
+        self.logger.info('New message posted to %s: %s', queue, msg)
 
     def add(self, ds, **kwargs):
-        raise NotImplemented
+        """ Send add message to the queue """
+        self._post_sm_msg(ds=ds, queue=self._annot_queue, action='annotate', **kwargs)
 
     def delete(self, ds, **kwargs):
-        raise NotImplemented
-
-    def add_optical_image(self, ds, img_id, transform, zoom_levels, **kwargs):
-        raise NotImplemented
-
-    def del_optical_image(self, ds, **kwargs):
-        raise NotImplemented
-
-    def _img_store(self):
-        return ImageStoreServiceWrapper(self._sm_config['services']['img_service_url'])
-
-
-class SMDaemonDatasetManager(DatasetManager):
-
-    def __init__(self, db, es, img_store, mode=None, status_queue=None):
-        DatasetManager.__init__(self, db=db, es=es, img_store=img_store, mode=mode,
-                                status_queue=status_queue, logger_name='daemon')
-
-    def process(self, ds, action, **kwargs):
-        if action == DatasetAction.ADD:
-            self.add(ds, **kwargs)
-        elif action == DatasetAction.UPDATE:
-            self.update(ds, **kwargs)
-        elif action == DatasetAction.DELETE:
-            self.delete(ds, **kwargs)
-        else:
-            raise Exception('Wrong action: {}'.format(action))
-
-    def add(self, ds, search_job_factory=None, del_first=False, **kwargs):
-        """ Run an annotation job for the dataset. If del_first provided, delete first
-        """
-        if del_first:
-            self.logger.warning('Deleting all results for dataset: {}'.format(ds.id))
-            self._del_iso_images(ds)
-            self._es.delete_ds(ds.id)
-            self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
-        ds.save(self._db, self._es)
-        search_job_factory(img_store=self._img_store).run(ds)
-
-    def _finished_job_moldbs(self, ds_id):
-        moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
-        for job_id, mol_db_id in self._db.select('SELECT id, db_id FROM job WHERE ds_id = %s', params=(ds_id,)):
-            yield job_id, moldb_service.find_db_by_id(mol_db_id)['name']
+        """ Send delete message to the queue """
+        self._post_sm_msg(ds=ds, queue=self._update_queue, action='delete', **kwargs)
 
     def update(self, ds, **kwargs):
-        """ Reindex all dataset results """
-        ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.INDEXING)
-
-        self._es.delete_ds(ds.id)
-
-        for job_id, mol_db_name in self._finished_job_moldbs(ds.id):
-            if mol_db_name not in ds.config['databases']:
-                self._db.alter('DELETE FROM job WHERE id = %s', params=(job_id,))
-            else:
-                mol_db = MolecularDB(name=mol_db_name,
-                                     iso_gen_config=ds.config['isotope_generation'])
-                isocalc = IsocalcWrapper(ds.config['isotope_generation'])
-                self._es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
-
-        ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.FINISHED)
-
-    def _del_iso_images(self, ds):
-        self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
-
-        try:
-            storage_type = ds.get_ion_img_storage_type(self._db)
-            for row in self._db.select(IMG_URLS_BY_ID_SEL, params=(ds.id,)):
-                iso_image_ids = row[0]
-                for img_id in iso_image_ids:
-                    if img_id:
-                        self._img_store.delete_image_by_id(storage_type, 'iso_image', img_id)
-        except UnknownDSID:
-            self.logger.warning('Attempt to delete isotopic images of non-existing dataset. Skipping')
-
-    def delete(self, ds, del_raw_data=False, **kwargs):
-        """ Delete all dataset related data from the DB """
-        self.logger.warning('Deleting dataset: {}'.format(ds.id))
-        self._del_iso_images(ds)
-        # TODO: delete optical images
-        self._es.delete_ds(ds.id)
-        self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
-        if del_raw_data:
-            self.logger.warning('Deleting raw data: {}'.format(ds.input_path))
-            wd_man = WorkDirManager(ds.id)
-            wd_man.del_input_data(ds.input_path)
-        if self.mode == 'queue':
-            self._status_queue.publish({'ds_id': ds.id, 'status': DatasetStatus.DELETED})
-
-
-class SMapiDatasetManager(DatasetManager):
-
-    def __init__(self, db, es, image_store, mode, action_queue=None, status_queue=None):
-        DatasetManager.__init__(self, db=db, es=es, img_store=image_store, mode=mode,
-                                status_queue=status_queue, logger_name='api')
-        self._action_queue = action_queue
-
-    def _post_sm_msg(self, ds, action, priority=DatasetActionPriority.DEFAULT, **kwargs):
-        ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.QUEUED)
-        if self.mode == 'queue':
-            msg = ds.to_queue_message()
-            msg['action'] = action
-            msg.update(kwargs)
-
-            self._action_queue.publish(msg, priority)
-            self.logger.info('New message posted to %s: %s', self._action_queue, msg)
-
-    def add(self, ds, del_first=False, priority=DatasetActionPriority.DEFAULT):
-        """ Send add message to the queue """
-        self._post_sm_msg(ds=ds, action=DatasetAction.ADD, priority=priority, del_first=del_first)
-
-    def delete(self, ds, del_raw_data=False):
-        """ Send delete message to the queue """
-        self._post_sm_msg(ds=ds, action=DatasetAction.DELETE, priority=DatasetActionPriority.HIGH)
-
-    def update(self, ds, priority=DatasetActionPriority.DEFAULT):
-        """ Send update message to the queue """
-        self._post_sm_msg(ds=ds, action=DatasetAction.UPDATE, priority=DatasetActionPriority.HIGH)
+        """ Send index message to the index update queue """
+        self._post_sm_msg(ds=ds, queue=self._update_queue, action='update', **kwargs)
 
     def _annotation_image_shape(self, ds):
         self.logger.info('Querying annotation image shape for "%s" dataset...', ds.id)

@@ -56,20 +56,5 @@
     - role: nodejs
       tags: [nodejs]
 
-    - role: metaspace_repo
-      tags: [metaspace_repo]
-
-    - role: mol_db
-      tags: [sm-mol-db]
-
-    - role: sm_api
-      tags: [sm-api]
-
-    - role: sm_graphql
-      tags: [sm-graphql]
-
-    - role: sm_web_app
-      tags: [sm-webapp]
-
-    - role: sm_cluster_autostart
-      tags: [sm-cluster-autostart]
+    - role: sm_web
+      tags: [sm-web]

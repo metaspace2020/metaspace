@@ -1,31 +1,4 @@
 ---
 
-- import_tasks: metaspace_repo.yml
-
-- name: Upload local files
-  synchronize:
-    src: "{{ sm_home }}/{{ item }}/"
-    dest: "{{ sm_home }}/{{ item }}/"
-    rsync_opts:
-      - "--exclude=*.sh"
-      - "--exclude=*.json"
-      - "--exclude=.*"
-  with_items:
-    - scripts
-    - conf
-    - sm
-    - tests
-  when: local_deploy is defined
-
-- name: Uninstall SM from conda environment
-  args:
-    chdir: "{{ sm_home }}"
-    executable: /bin/bash
-  shell: "{{ sm_activate_venv }} && pip uninstall -y sm"
-  ignore_errors: yes
-
-- name: Install SM into conda environment
-  args:
-    chdir: "{{ sm_home }}"
-    executable: /bin/bash
-  shell: "{{ sm_activate_venv }} && pip install ."
+- import_role:
+    name: sm_engine

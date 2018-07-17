@@ -2,16 +2,13 @@ import argparse
 from os.path import join
 from pprint import pprint
 import numpy as np
+
 from fabric.api import local
 from fabric.context_managers import warn_only
-from mock import MagicMock
-from pathlib import Path
 
-from sm.engine import Dataset
-from sm.engine import ESExporter
-from sm.engine import SMDaemonDatasetManager
+from sm.engine.es_export import ESExporter
+from sm.engine.sm_daemons import SMDaemonManager
 from sm.engine.db import DB
-from sm.engine.errors import UnknownDSID
 from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root, SMConfig, create_ds_from_files, init_loggers
@@ -138,12 +135,12 @@ class SciTester(object):
             img_store = self._create_img_store_mock()
         else:
             img_store = ImageStoreServiceWrapper(self.sm_config['services']['img_service_url'])
-        ds_man = SMDaemonDatasetManager(db=self.db, es=ESExporter(self.db),
-                                        img_store=img_store, mode='local')
+        manager = SMDaemonManager(db=self.db, es=ESExporter(self.db),
+                                 img_store=img_store)
 
         ds = create_ds_from_files(self.ds_id, self.ds_name, self.input_path)
-        from sm.engine import SearchJob
-        ds_man.add(ds, search_job_factory=SearchJob, del_first=True)
+        from sm.engine.search_job import SearchJob
+        manager.annotate(ds, search_job_factory=SearchJob, del_first=True)
 
     def clear_data_dirs(self):
         with warn_only():

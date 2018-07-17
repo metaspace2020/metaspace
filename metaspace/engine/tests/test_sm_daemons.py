@@ -1,22 +1,27 @@
+import os
+import sys
+import logging
 from os.path import join, dirname
-from pathlib import Path
+from unittest.mock import patch
+import time
+from datetime import datetime
 
 import pytest
 from fabric.api import local
 from fabric.context_managers import warn_only
-from unittest.mock import patch, MagicMock
-import time
-from datetime import datetime
 
 from sm.engine.db import DB
-from sm.engine.errors import SMError, JobFailedError, ESExportFailedError
-from sm.engine.search_job import SearchJob
-from sm.engine.fdr import DECOY_ADDUCTS
-from sm.engine.dataset import Dataset
-from sm.engine.dataset_manager import DatasetStatus
-from sm.engine.tests.util import test_db, sm_config, sm_index, es, es_dsl_search
+from sm.engine.es_export import ESExporter
+from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.acq_geometry_factory import ACQ_GEOMETRY_KEYS
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.search_job import JobStatus
+from sm.engine.tests.util import sm_config, ds_config, test_db, init_loggers, sm_index, es_dsl_search
+
+
+os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
+
+init_loggers(sm_config()['logs'])
+logger = logging.getLogger('annotate-daemon')
 
 test_ds_name = 'imzml_example_ds'
 
@@ -24,11 +29,6 @@ proj_dir_path = dirname(dirname(__file__))
 data_dir_path = join(sm_config()["fs"]["base_path"], test_ds_name)
 input_dir_path = join(proj_dir_path, 'tests/data/imzml_example_ds')
 ds_config_path = join(input_dir_path, 'config.json')
-
-
-@pytest.fixture()
-def create_fill_sm_database(test_db, sm_index, sm_config):
-    local('psql -h localhost -U sm sm_test < {}'.format(join(proj_dir_path, 'scripts/create_schema.sql')))
 
 
 @pytest.fixture()
@@ -46,16 +46,60 @@ def init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock):
                                                          'mol_name': 'molecule name'}]
 
 
-@patch('sm.engine.search_job.MolDBServiceWrapper')
+def init_queue_pub(qname='annotate'):
+    from sm.engine import queue
+    queue.SM_ANNOTATE['name'] = queue.SM_ANNOTATE['name'] + '_test'
+    queue.SM_UPDATE['name'] = queue.SM_UPDATE['name'] + '_test'
+    if qname == 'annotate':
+        qdesc = queue.SM_ANNOTATE
+    elif qname == 'update':
+        qdesc = queue.SM_UPDATE
+    else:
+        raise Exception(f'Wrong qname={qname}')
+    queue_pub = queue.QueuePublisher(config=sm_config()['rabbitmq'],
+                                     qdesc=qdesc,
+                                     logger=logger)
+    return queue_pub
+
+
+queue_pub = init_queue_pub()
+
+
+def run_daemons(db, es):
+    from sm.engine.queue import QueuePublisher, SM_DS_STATUS, SM_ANNOTATE, SM_UPDATE
+    from sm.engine.png_generator import ImageStoreServiceWrapper
+    from sm.engine.sm_daemons import SMDaemonManager, SMAnnotateDaemon, SMUpdateDaemon
+
+    status_queue_pub = QueuePublisher(config=sm_config()['rabbitmq'],
+                                      qdesc=SM_DS_STATUS,
+                                      logger=logger)
+    manager = SMDaemonManager(
+        db=db, es=es,
+        img_store=ImageStoreServiceWrapper(sm_config()['services']['img_service_url']),
+        status_queue=status_queue_pub,
+        logger=logger,
+        sm_config=sm_config()
+    )
+    annotate_daemon = SMAnnotateDaemon(manager=manager,
+                                       annot_qdesc=SM_ANNOTATE,
+                                       upd_qdesc=SM_UPDATE)
+    annotate_daemon.start()
+    annotate_daemon.stop()
+    update_daemon = SMUpdateDaemon(manager=manager,
+                                   update_qdesc=SM_UPDATE)
+    update_daemon.start()
+    update_daemon.stop()
+
+
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
-def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metrics_mock,
-                                  post_images_to_annot_service_mock, MolDBServiceWrapperMock, MolDBServiceWrapperMock2,
-                                  sm_config, create_fill_sm_database, es_dsl_search, clean_isotope_storage):
+def test_sm_daemons(get_compute_img_metrics_mock, filter_sf_metrics_mock,
+                    post_images_to_annot_service_mock,
+                    MolDBServiceWrapperMock,
+                    sm_config, test_db, es_dsl_search, clean_isotope_storage):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
-    init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock2)
 
     get_compute_img_metrics_mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100.], [0], [10.])
     filter_sf_metrics_mock.side_effect = lambda x: x
@@ -69,6 +113,9 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
     }
 
     db = DB(sm_config['db'])
+    es = ESExporter(db)
+    annotate_daemon = None
+    update_daemon = None
 
     try:
         ds_config_str = open(ds_config_path).read()
@@ -79,7 +126,7 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
             'name': test_ds_name,
             'input_path': input_dir_path,
             'upload_dt': upload_dt,
-            'metadata': '{}',
+            'metadata': '{"Data_Type": "Imaging MS"}',
             'config': ds_config_str,
             'status': DatasetStatus.QUEUED,
             'is_public': True,
@@ -88,11 +135,10 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
             'ion_img_storage': 'fs'
         }])
 
-        img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
-        job = SearchJob(img_store=img_store)
-        job._sm_config['rabbitmq'] = {}  # avoid talking to RabbitMQ during the test
         ds = Dataset.load(db, ds_id)
-        job.run(ds)
+        queue_pub.publish({'ds_id': ds.id, 'ds_name': ds.name, 'action': 'annotate'})
+
+        run_daemons(db, es)
 
         # dataset table asserts
         rows = db.select('SELECT id, name, input_path, upload_dt, status from dataset')
@@ -124,7 +170,7 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
         rows = db.select('SELECT db_id, ds_id, status, start, finish from job')
         assert len(rows) == 1
         db_id, ds_id, status, start, finish = rows[0]
-        assert (db_id, ds_id, status) == (0, '2000-01-01_00h00m', 'FINISHED')
+        assert (db_id, ds_id, status) == (0, '2000-01-01_00h00m', JobStatus.FINISHED)
         assert start < finish
 
         # image metrics asserts
@@ -150,22 +196,24 @@ def test_search_job_imzml_example(get_compute_img_metrics_mock, filter_sf_metric
 
     finally:
         db.close()
+        if annotate_daemon:
+            annotate_daemon.stop()
+        if update_daemon:
+            update_daemon.stop()
         with warn_only():
             local('rm -rf {}'.format(data_dir_path))
 
 
-@patch('sm.engine.search_job.MolDBServiceWrapper')
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
-def test_search_job_imzml_example_annotation_job_fails(get_compute_img_metrics_mock, filter_sf_metrics_mock,
-                                                       post_images_to_annot_service_mock,
-                                                       MolDBServiceWrapperMock, MolDBServiceWrapperMock2,
-                                                       sm_config, create_fill_sm_database, es_dsl_search,
-                                                       clean_isotope_storage):
+def test_sm_daemons_annot_fails(get_compute_img_metrics_mock, filter_sf_metrics_mock,
+                                post_images_to_annot_service_mock,
+                                MolDBServiceWrapperMock,
+                                sm_config, test_db, es_dsl_search,
+                                clean_isotope_storage):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
-    init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock2)
 
     def throw_exception_function(*args):
         raise Exception('Test')
@@ -181,6 +229,8 @@ def test_search_job_imzml_example_annotation_job_fails(get_compute_img_metrics_m
     }
 
     db = DB(sm_config['db'])
+    es = ESExporter(db)
+    annotate_daemon = None
 
     try:
         ds_id = '2000-01-01_00h00m'
@@ -200,41 +250,34 @@ def test_search_job_imzml_example_annotation_job_fails(get_compute_img_metrics_m
             'ion_img_storage': 'fs'
         }])
 
-        img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
-        job = SearchJob(img_store=img_store)
         ds = Dataset.load(db, ds_id)
+        queue_pub.publish({'ds_id': ds.id, 'ds_name': ds.name, 'action': 'annotate'})
 
-        acq_geom = ds.get_acq_geometry(db)
-        assert acq_geom is None
-        row = db.select_one('SELECT acq_geometry FROM dataset WHERE acq_geometry IS NOT NULL')
-        assert len(row) == 0
+        run_daemons(db, es)
 
-        job.run(ds)
-    except JobFailedError as e:
-        assert e
-        # dataset table asserts
+        # dataset and job tables asserts
         row = db.select_one('SELECT status from dataset')
         assert row[0] == 'FAILED'
-    else:
-        raise AssertionError('JobFailedError should be raised')
+        row = db.select_one('SELECT status from job')
+        assert row[0] == 'FAILED'
     finally:
         db.close()
+        if annotate_daemon:
+            annotate_daemon.stop()
         with warn_only():
             local('rm -rf {}'.format(data_dir_path))
 
 
-@patch('sm.engine.search_job.MolDBServiceWrapper')
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
-def test_search_job_imzml_example_es_export_fails(get_compute_img_metrics_mock, filter_sf_metrics_mock,
-                                                  post_images_to_annot_service_mock,
-                                                  MolDBServiceWrapperMock, MolDBServiceWrapperMock2,
-                                                  sm_config, create_fill_sm_database, es_dsl_search,
-                                                  clean_isotope_storage):
+def test_sm_daemon_es_export_fails(get_compute_img_metrics_mock, filter_sf_metrics_mock,
+                                   post_images_to_annot_service_mock,
+                                   MolDBServiceWrapperMock,
+                                   sm_config, test_db, es_dsl_search,
+                                   clean_isotope_storage):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
-    init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock2)
 
     get_compute_img_metrics_mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100.], [0], [10.])
     filter_sf_metrics_mock.side_effect = lambda x: x
@@ -248,9 +291,14 @@ def test_search_job_imzml_example_es_export_fails(get_compute_img_metrics_mock, 
     }
 
     db = DB(sm_config['db'])
+    annotate_daemon = None
+    update_daemon = None
 
-    def throw_exception_function(*args):
+    def throw_exception_function(*args, **kwargs):
         raise Exception('Test')
+
+    es = ESExporter(db)
+    es.index_ds = throw_exception_function
 
     try:
         ds_id = '2000-01-01_00h00m'
@@ -270,21 +318,21 @@ def test_search_job_imzml_example_es_export_fails(get_compute_img_metrics_mock, 
             'ion_img_storage': 'fs'
         }])
 
-        with patch('sm.engine.search_job.ESExporter.index_ds') as index_ds_mock:
-            index_ds_mock.side_effect = throw_exception_function
+        ds = Dataset.load(db, ds_id)
+        queue_pub.publish({'ds_id': ds.id, 'ds_name': ds.name, 'action': 'annotate'})
 
-            img_store = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
-            job = SearchJob(img_store=img_store)
-            ds = Dataset.load(db, ds_id)
-            job.run(ds)
-    except ESExportFailedError as e:
-        assert e
-        # dataset table asserts
+        run_daemons(db, es)
+
+        # dataset and job tables asserts
+        row = db.select_one('SELECT status from job')
+        assert row[0] == 'FINISHED'
         row = db.select_one('SELECT status from dataset')
         assert row[0] == 'FAILED'
-    else:
-        raise AssertionError('ESExportFailedError should be raised')
     finally:
         db.close()
+        if annotate_daemon:
+            annotate_daemon.stop()
+        if update_daemon:
+            update_daemon.stop()
         with warn_only():
             local('rm -rf {}'.format(data_dir_path))

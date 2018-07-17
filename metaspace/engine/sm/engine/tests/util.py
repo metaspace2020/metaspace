@@ -1,20 +1,19 @@
+import json
 import logging
 from pathlib import Path
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import patch
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search
 from fabric.api import local
-#from pyspark import SparkContext, SparkConf
-# lots of patch calls rely on SparkContext name
 from pysparkling import Context
 import pandas as pd
-from unittest.mock import MagicMock
 
 from sm.engine.db import DB
 from sm.engine.mol_db import MolecularDB
 from sm.engine.util import proj_root, SMConfig, init_loggers
-from sm.engine import ESExporter, ESIndexManager
+from sm.engine.es_export import ESIndexManager
 
 TEST_CONFIG_PATH = 'conf/test_config.json'
 SMConfig.set_path(Path(proj_root()) / TEST_CONFIG_PATH)
@@ -71,6 +70,27 @@ def test_db(sm_config, request):
 
 
 @pytest.fixture()
+def fill_db(test_db, sm_config, ds_config):
+    upload_dt = '2000-01-01 00:00:00'
+    ds_id = '2000-01-01'
+    meta = {"meta": "data"}
+    db = DB(sm_config['db'])
+    db.insert('INSERT INTO dataset (id, name, input_path, upload_dt, metadata, config, '
+              'status, is_public, mol_dbs, adducts) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)',
+              rows=[(ds_id, 'ds_name', 'input_path', upload_dt,
+                     json.dumps(meta), json.dumps(ds_config), 'FINISHED',
+                     True, ['HMDB-v4'], ['+H'])])
+    db.insert("INSERT INTO job (id, db_id, ds_id) VALUES (%s, %s, %s)",
+              rows=[(0, 0, ds_id)])
+    db.insert("INSERT INTO sum_formula (id, db_id, sf) VALUES (%s, %s, %s)",
+              rows=[(1, 0, 'H2O')])
+    db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, iso_image_ids) "
+               "VALUES (%s, %s, %s, %s, %s)"),
+              rows=[(0, 0, 'H2O', '+H', ['iso_image_1_id', 'iso_image_2_id'])])
+    db.close()
+
+
+@pytest.fixture()
 def ds_config():
     return {
         "databases": [
@@ -101,7 +121,9 @@ def es(sm_config):
 
 
 @pytest.fixture()
-def es_dsl_search(es, sm_config):
+def es_dsl_search(sm_config):
+    es = Elasticsearch(hosts=["{}:{}".format(sm_config['elasticsearch']['host'],
+                                             sm_config['elasticsearch']['port'])])
     return Search(using=es, index=sm_config['elasticsearch']['index'])
 
 

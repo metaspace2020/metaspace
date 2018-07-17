@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 from fnmatch import translate
 
-from sm.engine import Dataset
+from sm.engine.dataset import Dataset
 
 
 def proj_root():
@@ -127,7 +127,7 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
     if meta_path.exists():
         metadata = json.load(open(str(meta_path)))
     else:
-        metadata = {}
+        metadata = {'Data_Type': 'Imaging MS'}
     ds_config = json.load(open(str(base_dir / 'config.json')))
 
     regexp = re.compile(translate('*.imzML'), re.IGNORECASE)
