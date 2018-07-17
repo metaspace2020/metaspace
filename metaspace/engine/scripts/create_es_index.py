@@ -1,7 +1,7 @@
 import argparse
 
 from sm.engine.util import SMConfig, init_loggers
-from sm.engine import ESIndexManager
+from sm.engine.es_export import ESIndexManager
 
 
 if __name__ == '__main__':

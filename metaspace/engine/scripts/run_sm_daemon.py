@@ -3,9 +3,10 @@ import argparse
 import logging
 import signal
 
-from sm.engine import DB, ESExporter
+from sm.engine.db import DB
+from sm.engine.es_export import ESExporter
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.sm_daemon import SMAnnotateDaemon, SMDaemonManager, SMUpdateDaemon
+from sm.engine.sm_daemons import SMAnnotateDaemon, SMDaemonManager, SMUpdateDaemon
 from sm.engine.queue import SM_ANNOTATE, SM_UPDATE, SM_DS_STATUS, QueuePublisher
 from sm.engine.util import SMConfig, init_loggers
 

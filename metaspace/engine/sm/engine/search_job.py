@@ -22,7 +22,7 @@ from sm.engine.ion_centroids_gen import IonCentroidsGenerator
 from sm.engine.util import proj_root, SMConfig, read_json
 from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
-from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
+from sm.engine.mol_db import MolecularDB
 from sm.engine.errors import JobFailedError, ESExportFailedError
 from sm.engine.queue import QueuePublisher, SM_DS_STATUS
 
@@ -33,6 +33,12 @@ JOB_INS = "INSERT INTO job (db_id, ds_id, status, start) VALUES (%s, %s, %s, %s)
 JOB_UPD_STATUS_FINISH = "UPDATE job set status=%s, finish=%s where id=%s"
 JOB_UPD_FINISH = "UPDATE job set finish=%s where id=%s"
 TARGET_DECOY_ADD_DEL = 'DELETE FROM target_decoy_add tda WHERE tda.job_id IN (SELECT id FROM job WHERE ds_id = %s)'
+
+
+class JobStatus(object):
+    RUNNING = 'RUNNING'
+    FINISHED = 'FINISHED'
+    FAILED = 'FAILED'
 
 
 class SearchJob(object):
@@ -83,7 +89,7 @@ class SearchJob(object):
     def store_job_meta(self, mol_db_id):
         """ Store search job metadata in the database """
         logger.info('Storing job metadata')
-        rows = [(mol_db_id, self._ds.id, DatasetStatus.ANNOTATING, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
+        rows = [(mol_db_id, self._ds.id, JobStatus.RUNNING, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self._job_id = self._db.insert_return(JOB_INS, rows=rows)[0]
 
     def _run_annotation_job(self, mol_db):
@@ -120,13 +126,15 @@ class SearchJob(object):
             img_store_type = self._ds.get_ion_img_storage_type(self._db)
             search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, self._img_store, img_store_type)
         except Exception as e:
-            self._db.alter(JOB_UPD_STATUS_FINISH, params=(DatasetStatus.FAILED,
+            self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
                                                           datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                                           self._job_id))
             msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
             raise JobFailedError(msg) from e
         else:
-            self._db.alter(JOB_UPD_FINISH, params=(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), self._job_id))
+            self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
+                                                          datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                          self._job_id))
 
     def _remove_annotation_job(self, mol_db):
         logger.info("Removing job results ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
@@ -135,10 +143,9 @@ class SearchJob(object):
         self._es.delete_ds(self._ds.id, mol_db)
 
     def _moldb_ids(self):
-        moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
-        completed_moldb_ids = {moldb_service.find_db_by_id(db_id)['id']
-                               for (_, db_id) in self._db.select(JOB_ID_MOLDB_ID_SEL, params=(self._ds.id,))}
-        new_moldb_ids = {moldb_service.find_db_by_name_version(moldb_name)[0]['id']
+        completed_moldb_ids = {db_id for (_, db_id) in
+                               self._db.select(JOB_ID_MOLDB_ID_SEL, params=(self._ds.id,))}
+        new_moldb_ids = {MolecularDB(name=moldb_name).id
                          for moldb_name in self._ds.config['databases']}
         return completed_moldb_ids, new_moldb_ids
 
@@ -179,7 +186,6 @@ class SearchJob(object):
                                                     logger=logger)
             else:
                 self._status_queue = None
-            ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.ANNOTATING)
 
             self._wd_manager = WorkDirManager(ds.id)
             self._configure_spark()
@@ -207,11 +213,6 @@ class SearchJob(object):
             logger.info("All done!")
             time_spent = time.time() - start
             logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
-        except Exception as e:
-            if self._ds:
-                ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.FAILED)
-            logger.error(e, exc_info=True)
-            raise
         finally:
             if self._sc:
                 self._sc.stop()

@@ -6,9 +6,9 @@ import argparse
 import logging
 import sys
 
-from sm.engine import DB
-from sm.engine import ESExporter
-from sm.engine.sm_daemon import SMDaemonManager
+from sm.engine.db import DB
+from sm.engine.es_export import ESExporter
+from sm.engine.sm_daemons import SMDaemonManager
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig, init_loggers, create_ds_from_files
 from sm.engine.search_job import SearchJob

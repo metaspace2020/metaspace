@@ -4,28 +4,29 @@ from requests import post
 import logging
 import boto3
 
-from sm.engine.dataset_manager import DatasetAction, IMG_URLS_BY_ID_SEL
-from sm.engine.errors import UnknownDSID, DSIsBusy
+from sm.rest.dataset_manager import IMG_URLS_BY_ID_SEL
+from sm.engine.errors import UnknownDSID
 from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.mol_db import MolDBServiceWrapper, MolecularDB
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.mol_db import MolecularDB
 from sm.engine.queue import SM_DS_STATUS, QueueConsumer
-from sm.engine.util import SMConfig, init_loggers
-from sm.engine import ESExporter, QueuePublisher, Dataset, DatasetStatus
-from sm.engine import DB
+from sm.engine.util import SMConfig
+from sm.engine.queue import QueuePublisher
+from sm.engine.dataset import Dataset, DatasetStatus
+from sm.engine.db import DB
 from sm.engine.work_dir import WorkDirManager
+from sm.engine.search_job import SearchJob
 
 
 class SMDaemonManager(object):
 
-    def __init__(self, db, es, img_store, status_queue=None, logger=None):
-        self._sm_config = SMConfig.get_conf()
+    def __init__(self, db, es, img_store, status_queue=None, logger=None, sm_config=None):
+        self._sm_config = sm_config or SMConfig.get_conf()
         self._slack_conf = self._sm_config.get('slack', {})
         self._db = db
-        self._es = es
+        self.es = es
         self._img_store = img_store
-        self._status_queue = status_queue
-        self.logger = logger
+        self.status_queue = status_queue
+        self.logger = logger or logging.getLogger()
 
     def post_to_slack(self, emoji, msg):
         if self._slack_conf.get('webhook_url', None):
@@ -59,19 +60,16 @@ class SMDaemonManager(object):
             self._del_iso_images(ds)
             # self._es.delete_ds(ds.id)
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
-        ds.save(self._db, self._es)
+        ds.save(self._db, self.es)
         search_job_factory(img_store=self._img_store).run(ds)
 
     def _finished_job_moldbs(self, ds_id):
-        moldb_service = MolDBServiceWrapper(self._sm_config['services']['mol_db'])
         for job_id, mol_db_id in self._db.select('SELECT id, db_id FROM job WHERE ds_id = %s', params=(ds_id,)):
-            yield job_id, moldb_service.find_db_by_id(mol_db_id)['name']
+            yield job_id, MolecularDB(id=mol_db_id).name
 
     def index(self, ds):
         """ Reindex all dataset results """
-        ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.INDEXING)
-
-        self._es.delete_ds(ds.id)
+        self.es.delete_ds(ds.id)
 
         for job_id, mol_db_name in self._finished_job_moldbs(ds.id):
             if mol_db_name not in ds.mol_dbs:
@@ -80,9 +78,7 @@ class SMDaemonManager(object):
                 mol_db = MolecularDB(name=mol_db_name,
                                      iso_gen_config=ds.config['isotope_generation'])
                 isocalc = IsocalcWrapper(ds.config['isotope_generation'])
-                self._es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
-
-        ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.FINISHED)
+                self.es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
 
     def _del_iso_images(self, ds):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
@@ -102,14 +98,14 @@ class SMDaemonManager(object):
         self.logger.warning('Deleting dataset: {}'.format(ds.id))
         self._del_iso_images(ds)
         # TODO: delete optical images
-        self._es.delete_ds(ds.id)
+        self.es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
         if del_raw_data:
             self.logger.warning('Deleting raw data: {}'.format(ds.input_path))
             wd_man = WorkDirManager(ds.id)
             wd_man.del_input_data(ds.input_path)
 
-        self._status_queue.publish({'ds_id': ds.id, 'status': DatasetStatus.DELETED})
+        self.status_queue.publish({'ds_id': ds.id, 'status': DatasetStatus.DELETED})
 
 
 class SMAnnotateDaemon(object):
@@ -158,6 +154,9 @@ class SMAnnotateDaemon(object):
             self.logger.warning('SEM failed to send email to {}'.format(email))
 
     def _on_success(self, msg):
+        ds = Dataset.load(self._db, msg['ds_id'])
+        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FINISHED)
+
         self.logger.info(f" SM annotate daemon: success")
 
         ds_name, _ = self._manager.fetch_ds_metadata(msg['ds_id'])
@@ -175,7 +174,10 @@ class SMAnnotateDaemon(object):
             self._send_email(msg['email'], 'METASPACE service notification (SUCCESS)', email_body)
 
     def _on_failure(self, msg):
-        self.logger.error(f" SM annotate daemon: failure")
+        ds = Dataset.load(self._db, msg['ds_id'])
+        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FAILED)
+
+        self.logger.error(f" SM annotate daemon: failure", exc_info=True)
 
         ds_name, _ = self._manager.fetch_ds_metadata(msg['ds_id'])
         msg['web_app_link'] = self._manager.create_web_app_link(msg)
@@ -193,12 +195,12 @@ class SMAnnotateDaemon(object):
             self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
 
     def _callback(self, msg):
-        self.logger.info(f" SM annotate daemon received a message: {msg}")
+        ds = Dataset.load(self._db, msg['ds_id'])
+        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.ANNOTATING)
 
+        self.logger.info(f" SM annotate daemon received a message: {msg}")
         self._manager.post_to_slack('new', " [v] New annotation message: {}".format(json.dumps(msg)))
 
-        ds = Dataset.load(self._db, msg['ds_id'])
-        from sm.engine import SearchJob
         self._manager.annotate(ds=ds,
                                search_job_factory=SearchJob,
                                del_first=msg.get('del_first', False))
@@ -252,18 +254,25 @@ class SMUpdateDaemon(object):
             self._manager.post_to_slack('dart', f' [v] Delete succeeded: {json.dumps(msg)}')
 
     def _on_success(self, msg):
+        ds = Dataset.load(self._db, msg['ds_id'])
+        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FINISHED)
+
         self.logger.info(f" SM update daemon: success")
         self._post_to_slack(msg)
 
     def _on_failure(self, msg):
-        self.logger.error(f" SM update daemon: failure")
+        ds = Dataset.load(self._db, msg['ds_id'])
+        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FAILED)
+
+        self.logger.error(f" SM update daemon: failure", exc_info=True)
         self._post_to_slack(msg)
 
     def _callback(self, msg):
+        ds = Dataset.load(self._db, msg['ds_id'])
+        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.INDEXING)
+
         self.logger.info(f' SM update daemon received a message: {msg}')
         self._manager.post_to_slack('new', f" [v] New {msg['action']} message: {json.dumps(msg)}")
-
-        ds = Dataset.load(self._db, msg['ds_id'])
 
         if msg['action'] == 'update':
             self._manager.index(ds=ds)

@@ -30,13 +30,6 @@ SEL_OPTICAL_IMAGE_THUMBNAIL = 'SELECT thumbnail FROM dataset WHERE id = %s'
 DEL_OPTICAL_IMAGE = 'DELETE FROM optical_image WHERE ds_id = %s'
 
 
-class DatasetAction(object):
-    """ Dataset actions to be used in DatasetManager """
-    ADD = 'ADD'
-    UPDATE = 'UPDATE'
-    DELETE = 'DELETE'
-
-
 class DatasetActionPriority(object):
     """ Priorities used for messages sent to queue """
     LOW = 0
@@ -56,7 +49,7 @@ class SMapiDatasetManager(object):
         self._status_queue = status_queue
         self._annot_queue = annot_queue
         self._update_queue = update_queue
-        self.logger = logger
+        self.logger = logger or logging.getLogger()
 
     def _post_sm_msg(self, ds, queue, priority=DatasetActionPriority.DEFAULT, **kwargs):
         if ds.status in {DatasetStatus.QUEUED,

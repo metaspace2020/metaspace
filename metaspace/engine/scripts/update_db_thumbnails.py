@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import argparse
-from sm.engine import DB, ESExporter
+from sm.engine.db import DB
+from sm.engine.es_export import ESExporter
 from sm.engine.util import SMConfig
-from sm.engine.dataset_manager import SMapiDatasetManager
+from sm.rest.dataset_manager import SMapiDatasetManager
 import sm.rest.api as api
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
