@@ -1,13 +1,13 @@
 import { Module } from 'vuex';
-import { DialogType } from '../components/Account/dialogs';
-import router from '../router';
+import { DialogType } from '../dialogs';
+import router from '../../../router';
 
 export interface AccountState {
   dialog: DialogType | null;
   showDialogAsPage: boolean;
 }
 
-const accountModule: Module<AccountState, any> = {
+const account = {
   namespaced: true,
   state: {
     dialog: null,
@@ -33,4 +33,4 @@ const accountModule: Module<AccountState, any> = {
   }
 };
 
-export default accountModule;
+export default account as Module<AccountState, any>;

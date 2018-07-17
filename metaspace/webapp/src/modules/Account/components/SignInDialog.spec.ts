@@ -4,17 +4,17 @@ import ElementUI from 'element-ui';
 import Vuex from 'vuex';
 import Vue from 'vue';
 import SignInDialog from './SignInDialog.vue';
-import accountModule from '../../store/accountModule';
-import router from '../../router';
-import registerMockComponent from '../../../tests/utils/registerMockComponent';
-import { restoreConsole, suppressConsoleWarn } from '../../../tests/utils/suppressConsole';
+import account from '../store/account';
+import router from '../../../router';
+import registerMockComponent from '../../../../tests/utils/registerMockComponent';
+import { restoreConsole, suppressConsoleWarn } from '../../../../tests/utils/suppressConsole';
 
-jest.mock('../../api/auth');
-import * as _mockAuthApi from '../../api/auth';
+jest.mock('../../../api/auth');
+import * as _mockAuthApi from '../../../api/auth';
 const mockAuthApi = _mockAuthApi as jest.Mocked<typeof _mockAuthApi>;
 
-jest.mock('../../tokenAutorefresh');
-import _mockTokenAutorefresh from '../../tokenAutorefresh';
+jest.mock('../../../tokenAutorefresh');
+import _mockTokenAutorefresh from '../../../tokenAutorefresh';
 const mockTokenAutorefresh = _mockTokenAutorefresh as jest.Mocked<typeof _mockTokenAutorefresh>;
 
 Vue.use(ElementUI);
@@ -43,7 +43,7 @@ describe('SignInDialog', () => {
 
   const store = new Vuex.Store({
     modules: {
-      account: accountModule,
+      account: account,
     },
   });
 
@@ -71,5 +71,4 @@ describe('SignInDialog', () => {
     expect(mockTokenAutorefresh.refreshJwt).toBeCalledWith(true);
     expect(store.state.account.dialog).toBe(null);
   });
-
 });

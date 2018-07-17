@@ -42,9 +42,9 @@
   import Vue from 'vue';
   import { Component } from 'vue-property-decorator';
   import { Form } from 'element-ui';
-  import { validatePasswordResetToken, resetPassword } from '../../api/auth';
-  import reportError from '../../lib/reportError';
-  import tokenAutorefresh from '../../tokenAutorefresh';
+  import { validatePasswordResetToken, resetPassword } from '../../../api/auth';
+  import reportError from '../../../lib/reportError';
+  import tokenAutorefresh from '../../../tokenAutorefresh';
 
   interface Model {
     password: string;

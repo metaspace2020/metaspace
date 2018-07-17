@@ -1,6 +1,6 @@
 import Vue, { CreateElement } from 'vue';
 import { Prop, Component } from 'vue-property-decorator';
-import { dialogRoutes } from './dialogs';
+import { dialogRoutes } from '../dialogs';
 
 
 /**

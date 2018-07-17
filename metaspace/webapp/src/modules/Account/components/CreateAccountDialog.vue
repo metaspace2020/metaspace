@@ -89,8 +89,8 @@
   import { Form } from 'element-ui';
   import GoogleButton from './GoogleButton.vue';
   import InterDialogLink from './InterDialogLink';
-  import { createAccountByEmail } from '../../api/auth';
-  import reportError from '../../lib/reportError';
+  import { createAccountByEmail } from '../../../api/auth';
+  import reportError from '../../../lib/reportError';
 
   interface Model {
     firstName: string;
@@ -149,7 +149,7 @@
 </script>
 
 <style scoped lang="scss">
-  @import "~element-ui/packages/theme-chalk/src/mixins/mixins";
+  @import "../../../../node_modules/element-ui/packages/theme-chalk/src/mixins/mixins";
 
   .el-dialog__wrapper /deep/ .el-dialog {
     width: 400px;

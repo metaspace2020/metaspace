@@ -61,9 +61,9 @@
   import { Form } from 'element-ui';
   import GoogleButton from './GoogleButton.vue';
   import InterDialogLink from './InterDialogLink';
-  import { signInByEmail } from '../../api/auth';
-  import tokenAutorefresh from '../../tokenAutorefresh';
-  import reportError from '../../lib/reportError';
+  import { signInByEmail } from '../../../api/auth';
+  import tokenAutorefresh from '../../../tokenAutorefresh';
+  import reportError from '../../../lib/reportError';
 
   interface Model {
     email: string;

@@ -1,7 +1,7 @@
 import Vue, { CreateElement, Component as VueComponent } from 'vue';
 import { Component } from 'vue-property-decorator';
-import { DialogType } from './dialogs';
-import { AccountState } from '../../store/accountModule';
+import { DialogType } from '../dialogs';
+import { AccountState } from '../store/account';
 import SignInDialog from './SignInDialog.vue';
 import CreateAccountDialog from './CreateAccountDialog.vue';
 import ForgotPasswordDialog from './ForgotPasswordDialog.vue';

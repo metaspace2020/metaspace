@@ -29,7 +29,7 @@
   import { Component } from 'vue-property-decorator';
   import { Form } from 'element-ui';
   import InterDialogLink from './InterDialogLink';
-  import { sendPasswordResetToken } from '../../api/auth';
+  import { sendPasswordResetToken } from '../../../api/auth';
 
   interface Model {
     email: string;

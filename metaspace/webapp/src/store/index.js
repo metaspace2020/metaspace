@@ -5,7 +5,7 @@ Vue.use(Vuex);
 import getters from './getters.js';
 import mutations from './mutations.js';
 import actions from './actions.js';
-import accountModule from './accountModule';
+import accountModule from '../modules/Account/store/account';
 
 const store = new Vuex.Store({
   state: {
