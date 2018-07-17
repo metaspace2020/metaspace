@@ -3,7 +3,7 @@ import {callbackify} from 'util';
 import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
-import * as config from 'config';
+import config from '../utils/config';
 import * as JwtSimple from 'jwt-simple';
 import {
   createResetPasswordToken,
@@ -51,7 +51,6 @@ const configurePassport = (app: Express) => {
 
 const configureJwt = (app: Express) => {
   function mintJWT(user: DbUser | null, expSeconds: number | null = 60) {
-    const conf = config as any;
     const nowSeconds = Math.floor(Date.now() / 1000);
     let payload;
     if (user != null) {
@@ -70,7 +69,7 @@ const configureJwt = (app: Express) => {
         'role': 'anonymous',
       };
     }
-    return JwtSimple.encode(payload, conf.jwt.secret);
+    return JwtSimple.encode(payload, config.jwt.secret);
   }
 
   // Gives a one-time token, which expires in 60 seconds.
@@ -136,13 +135,12 @@ const configureLocalAuth = (app: Express) => {
 };
 
 const configureGoogleAuth = (app: Express) => {
-  const conf = config as any;
-  if (conf.GOOGLE_CLIENT_ID) {
+  if (config.google.client_id) {
     Passport.use(new GoogleStrategy(
       {
-        clientID: conf.GOOGLE_CLIENT_ID,
-        clientSecret: conf.GOOGLE_CLIENT_SECRET,
-        callbackURL: conf.GOOGLE_CALLBACK_URL,
+        clientID: config.google.client_id,
+        clientSecret: config.google.client_secret,
+        callbackURL: config.google.callback_url,
       },
       callbackify(async (accessToken: string, refreshToken: string, profile: any) => {
         return await findUserByGoogleId(profile.id)
@@ -169,12 +167,7 @@ const configureCreateAccount = (app: Express) => {
   app.post('/api_auth/createaccount', async (req, res, next) => {
     try {
       const { name, email, password } = req.body;
-      const user = await createUser({ name, email, password });
-      const token = user.emailVerificationToken;
-      if (token != null) {
-        // TODO: Send email
-        console.log(`/api_auth/verifyemail?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`)
-      }
+      await createUser({ name, email, password });
       res.send(true);
     } catch (err) {
       next(err);
@@ -183,7 +176,7 @@ const configureCreateAccount = (app: Express) => {
 
   app.get('/api_auth/verifyemail', preventCache, async (req, res, next) => {
     const {email, token} = req.query;
-    // TODO: Verify email
+    // TODO: Better handling for when the user
     const user = await verifyEmail(email, token);
     if (user) {
       req.login(user, (err) => {
@@ -207,7 +200,7 @@ const configureResetPassword = (app: Express) => {
       const { email } = req.body;
       const token = await createResetPasswordToken(email);
       // TODO: Send email
-      console.log(`/#/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+      console.log(`${config.web_public_url}/#/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
       res.send(true);
     } catch (err) {
       next(err);

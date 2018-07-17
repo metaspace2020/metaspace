@@ -3,7 +3,7 @@ import VueRouter from 'vue-router';
 import ElementUI from 'element-ui';
 import Vuex from 'vuex';
 import Vue from 'vue';
-import CreateAccountDialog from './CreateAccountDialog.vue';
+import SignInDialog from './SignInDialog.vue';
 import accountModule from '../../store/accountModule';
 import router from '../../router';
 import registerMockComponent from '../../../tests/utils/registerMockComponent';
@@ -13,8 +13,12 @@ jest.mock('../../api/auth');
 import * as _mockAuthApi from '../../api/auth';
 const mockAuthApi = _mockAuthApi as jest.Mocked<typeof _mockAuthApi>;
 
+jest.mock('../../tokenAutorefresh');
+import _mockTokenAutorefresh from '../../tokenAutorefresh';
+const mockTokenAutorefresh = _mockTokenAutorefresh as jest.Mocked<typeof _mockTokenAutorefresh>;
+
 Vue.use(ElementUI);
-registerMockComponent('el-dialog'); // ElDialogs mount their content somewhere else in the DOM. Mock it out so that the snapshot includes the content.
+registerMockComponent('el-dialog');
 Vue.use(VueRouter);
 Vue.use(Vuex);
 
@@ -27,7 +31,7 @@ const setFormField = (wrapper: Wrapper<Vue>, fieldName: string, value: string) =
     .setValue(value);
 };
 
-describe('CreateAccountDialog', () => {
+describe('SignInDialog', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     suppressConsoleWarn('async-validator:');
@@ -44,44 +48,28 @@ describe('CreateAccountDialog', () => {
   });
 
   it('should match snapshot', () => {
-    const wrapper = mount(CreateAccountDialog, { store, router });
+    const wrapper = mount(SignInDialog, { store, router });
     expect(wrapper).toMatchSnapshot();
   });
 
-  it('should be able to submit a valid form', async () => {
+  it('should be able to sign in', async () => {
     // Arrange
-    const firstName = 'foo';
-    const lastName = 'bar';
     const email = 'test@example.com';
     const password = 'baz';
-    const wrapper = mount(CreateAccountDialog, { store, router, sync: false }) as Wrapper<CreateAccountDialog>;
+    const wrapper = mount(SignInDialog, { store, router, sync: false }) as Wrapper<SignInDialog>;
+    mockAuthApi.signInByEmail.mockImplementation(() => Promise.resolve(true));
+    store.commit('account/showDialog', 'signIn');
 
     // Act
-    setFormField(wrapper, 'firstName', firstName);
-    setFormField(wrapper, 'lastName', lastName);
     setFormField(wrapper, 'email', email);
     setFormField(wrapper, 'password', password);
     wrapper.find(ElementUI.Button).trigger('click');
     await Vue.nextTick();
 
     // Assert
-    expect(mockAuthApi.createAccountByEmail).toBeCalledWith(email, password, `${firstName} ${lastName}`);
-    expect(wrapper.text()).toEqual(expect.stringContaining('Please click the link'));
+    expect(mockAuthApi.signInByEmail).toBeCalledWith(email, password);
+    expect(mockTokenAutorefresh.refreshJwt).toBeCalledWith(true);
+    expect(store.state.account.dialog).toBe(null);
   });
 
-  it('should not submit an invalid form', async () => {
-    // Arrange
-    const wrapper = mount(CreateAccountDialog, { store, router, sync: false }) as Wrapper<CreateAccountDialog>;
-
-    // Act
-    setFormField(wrapper, 'firstName', 'foo');
-    setFormField(wrapper, 'lastName', 'bar');
-    setFormField(wrapper, 'email', 'test@email.com');
-    setFormField(wrapper, 'password', ''); // Intentionally left empty
-    wrapper.find(ElementUI.Button).trigger('click');
-    await Vue.nextTick();
-
-    // Assert
-    expect(mockAuthApi.createAccountByEmail).not.toBeCalled();
-  });
 });

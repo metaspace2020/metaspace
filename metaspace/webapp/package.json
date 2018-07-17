@@ -133,7 +133,6 @@
     "webpack-hot-middleware": "^2.22.2"
   },
   "jest": {
-    "cache": false,
     "transform": {
       "^.+\\.vue$": "<rootDir>/node_modules/vue-jest",
       "^.+\\.[jt]sx?$": "<rootDir>/node_modules/ts-jest"

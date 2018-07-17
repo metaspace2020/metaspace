@@ -122,7 +122,11 @@
     };
 
     async onSubmit() {
-      await (this.$refs.form as Form).validate();
+      try {
+        await (this.$refs.form as Form).validate();
+      } catch (err) {
+        return;
+      }
       try {
         const {email, password, firstName, lastName} = this.model;
         this.isSubmitting = true;

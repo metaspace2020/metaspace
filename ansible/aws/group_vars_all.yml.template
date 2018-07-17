@@ -13,6 +13,8 @@ aws_region: eu-west-1
 
 notification_email: SM-ADMIN@EXAMPLE.COM
 
+web_public_url: "http://{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually in production
+
 postgres_version: 9.5
 postgres_port: 5432
 postgres_drop_create: false
@@ -147,12 +149,14 @@ sm_graphql_default_adducts: "{{ sm_default_adducts }}"
 sm_graphql_img_storage_backend: fs
 sm_graphql_redis_host: localhost
 sm_graphql_redis_port: 6379
+sm_graphql_google_client_id: ""
+sm_graphql_google_client_secret: ""
+sm_graphql_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
 sm_graphql_cookie_secret: COOKIE_SECRET
 sm_graphql_features:
   newAuth: false
 
 sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually for production
-sm_webapp_url: "http://{{ sm_webapp_hostname }}"
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
 sm_webapp_port: 8082
 sm_webapp_cookie_secret: COOKIE_SECRET
