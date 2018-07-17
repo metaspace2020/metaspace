@@ -1,10 +1,10 @@
 name: sm
 dependencies:
-  - python=3.6
+  - python>=3.6
   - numpy=1.11.2
   - scipy=0.18.1
   - matplotlib=2
-  - pandas=0.22.0
+  - pandas>=0.22
   - cffi
   - libgcc
   - psycopg2=2.7.1
@@ -24,9 +24,4 @@ dependencies:
     - pyspark==2.3.0
     - pysparkling
     - PyArrow>=0.8.0
-    - pyImagingMSpec==0.1.4
-    - cpyImagingMSpec==0.2.4
-    - pyMSpec==0.1.2
-    - cpyMSpec==0.3.5
-    - pyimzML==1.2.1
     - Pillow==4.2.1
