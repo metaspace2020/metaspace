@@ -129,29 +129,33 @@ class SMAnnotateDaemon(object):
         self._manager = manager
 
     def _send_email(self, email, subj, body):
-        cred_dict = dict(aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
-                         aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
-        ses = boto3.client('ses', 'eu-west-1', **cred_dict)
-        resp = ses.send_email(
-            Source='contact@metaspace2020.eu',
-            Destination={
-                'ToAddresses': [email]
-            },
-            Message={
-                'Subject': {
-                    'Data': subj
+        try:
+            cred_dict = dict(aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+                             aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
+            ses = boto3.client('ses', 'eu-west-1', **cred_dict)
+            resp = ses.send_email(
+                Source='contact@metaspace2020.eu',
+                Destination={
+                    'ToAddresses': [email]
                 },
-                'Body': {
-                    'Text': {
-                        'Data': body
+                Message={
+                    'Subject': {
+                        'Data': subj
+                    },
+                    'Body': {
+                        'Text': {
+                            'Data': body
+                        }
                     }
                 }
-            }
-        )
-        if resp['ResponseMetadata']['HTTPStatusCode'] == 200:
-            self.logger.info('Email with "{}" subject was sent to {}'.format(subj, email))
+            )
+        except Exception as e:
+            self.logger.warning(f'Send email exception {e} for {email}')
         else:
-            self.logger.warning('SEM failed to send email to {}'.format(email))
+            if resp['ResponseMetadata']['HTTPStatusCode'] == 200:
+                self.logger.info(f'Email with "{subj}" subject was sent to {email}')
+            else:
+                self.logger.warning(f'SEM failed to send email to {email}')
 
     def _on_success(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
