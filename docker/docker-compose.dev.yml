@@ -42,10 +42,18 @@ services:
     environment:
       - SM_DOCKER_ENV=development
 
-  sm-daemon:
+  sm-update-daemon:
     volumes:
       - "${DEV_ROOT}/:/opt/dev/metaspace:z"
-      - ./sm-engine/start-daemon.sh:/start-daemon.sh:ro
+      - ./sm-engine/start-update-daemon.sh:/start-update-daemon.sh:ro
+      - ./sm-engine/start-common.sh:/start-common.sh:ro
+    environment:
+      - SM_DOCKER_ENV=development
+
+  sm-annotate-daemon:
+    volumes:
+      - "${DEV_ROOT}/:/opt/dev/metaspace:z"
+      - ./sm-engine/start-annotate-daemon.sh:/start-annotate-daemon.sh:ro
       - ./sm-engine/start-common.sh:/start-common.sh:ro
     environment:
       - SM_DOCKER_ENV=development

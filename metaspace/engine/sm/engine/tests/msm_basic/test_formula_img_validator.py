@@ -1,17 +1,14 @@
 from collections import OrderedDict
+from unittest.mock import patch, MagicMock
 
 import numpy as np
 import pandas as pd
 import pytest
-from unittest.mock import patch, MagicMock
-from numpy.testing import assert_array_almost_equal
 from pandas.util.testing import assert_frame_equal
 from scipy.sparse import csr_matrix
 
-from sm.engine.dataset_manager import DatasetManager, Dataset
-from sm.engine import DatasetReader
-from sm.engine.fdr import FDR
-from sm.engine.mol_db import MolecularDB
+from sm.rest.dataset_manager import Dataset
+from sm.engine.dataset_reader import DatasetReader
 from sm.engine.msm_basic.formula_img_validator import ImgMetrics
 from sm.engine.msm_basic.formula_img_validator import sf_image_metrics, get_compute_img_metrics
 from sm.engine.tests.util import pysparkling_context as spark_context, ds_config, sm_config

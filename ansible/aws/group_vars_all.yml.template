@@ -2,6 +2,10 @@
 
 stage: STAGE_NAME  # prod/stage/dev
 
+metaspace_repo_url: https://github.com/metaspace2020/metaspace
+metaspace_branch: master
+metaspace_home: /opt/dev/metaspace
+
 # SOFTWARE CONFIGURATION
 
 time_zone_name: UTC  # Ubuntu timezone name
@@ -26,7 +30,6 @@ kibana_user: kibana
 kibana_password: KIBANA_PASSWORD
 kibana_es_port: 9200  # kibana runs on the same host and connects to ES directly
 
-rabbitmq_version: 3.6.8-1
 rabbitmq_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 rabbitmq_user: sm
 rabbitmq_password: RABBITMQ_PASSWORD
@@ -38,6 +41,7 @@ miniconda_env:
   name: sm
   dependencies:
     - python=3.6
+    - nomkl
     - numpy=1.11.2
     - scipy=0.18.1
     - matplotlib=2
@@ -45,7 +49,6 @@ miniconda_env:
     - cffi
     - libgcc
     - psycopg2=2.7.1
-    - nomkl
     - pip:
       - requests
       - py4j
@@ -64,10 +67,6 @@ miniconda_env:
       - Pillow==4.2.1
       - pyopenms==2.2.0
 
-metaspace_repo_url: https://github.com/metaspace2020/metaspace
-metaspace_branch: rel-v0.10
-metaspace_home: /opt/dev/metaspace
-
 sm_postgres_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}"
 sm_postgres_password: POSTGRES_PASSWORD
 sm_home: "{{ metaspace_home }}/metaspace/engine"
@@ -78,8 +77,8 @@ sm_es_port: 9210  # cannot be 9200 (nginx proxied)
 sm_es_user: elastic
 sm_es_password: ELASTIC_PASSWORD
 sm_send_email: true
-sm_create_schema: true  # set to false to avoid database dropping
-sm_create_es_index: true  # set to false to avoid Elasticsearch index dropping
+sm_create_schema: true  # set to false to avoid database dropping during provisioning
+sm_create_es_index: true  # set to false to avoid Elasticsearch index dropping during provisioning
 sm_isotope_storage_path: S3_ISOTOPE_STORAGE_PATH
 sm_default_adducts:
   "+": ["+H", "+Na", "+K"]
@@ -160,7 +159,8 @@ sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manual
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
 sm_webapp_port: 8082
 sm_webapp_cookie_secret: COOKIE_SECRET
-sm_webapp_admin_emails: [admin@mail.de]
+sm_webapp_admin_emails:
+  - admin@mail.de
 # The region should satisfy the following requirements:
 #  - AWS SES endpoints are available there
 #  - AWS authentication protocol V2 is supported
@@ -179,10 +179,9 @@ sm_webapp_redis_port: 6379
 sm_webapp_enable_uploads: true
 # metadata types are specified by corresponding filenames in metaspace2020/metadata repository
 # "specialised metadata" subfolder
-sm_webapp_metadata_types: ["ims", "lcms"]
+sm_webapp_metadata_types: ["ims"]  # set ["ims", "lcms"] to accept both IMS and LC-MS datasets
 sm_webapp_features:
   newAuth: false
-
 
 sm_ansible_home: "{{ metaspace_home }}/ansible"
 

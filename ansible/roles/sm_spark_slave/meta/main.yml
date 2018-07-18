@@ -1,6 +1,4 @@
 ---
 
 dependencies:
-#  - { role: base, become: yes }
-#  - { role: spark, become: yes }
-#  - { role: miniconda }
+  - name: sm_engine

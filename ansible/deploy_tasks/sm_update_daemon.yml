@@ -1,0 +1,6 @@
+---
+
+- import_role:
+    name: sm_update_daemon
+
+- import_tasks: ../restart_supervisor.yml supervisor_app=sm-update-daemon

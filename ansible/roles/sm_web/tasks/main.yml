@@ -1,0 +1,56 @@
+---
+
+- name: Install Redis
+  become: yes
+  apt: name=redis-server state=latest
+
+- name: Make sure .aws directory exists
+  file: path=/home/ubuntu/.aws/
+        state=directory mode=0755
+        owner=ubuntu group=ubuntu
+  when: aws_access_key_id is defined
+
+- name: Put aws credentials file into the home dir
+  template: src=aws_credentials.j2
+            dest=/home/ubuntu/.aws/credentials mode=0600
+            owner=ubuntu group=ubuntu
+  when: aws_access_key_id is defined
+
+- name: Create /opt/dev directory
+  file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
+  become: yes
+
+- name: Install psycopg2 (required by ansible)
+  apt: name=python-psycopg2 state=latest
+  become: yes
+
+- name: Create sm postgres user
+  postgresql_user: name=sm password={{ sm_postgres_password }} role_attr_flags=CREATEDB
+  become: yes
+  become_user: postgres
+
+- name: Create sm postgres database
+  become: yes
+  become_user: postgres
+  postgresql_db: name=sm owner=sm encoding=UTF8 template=template0
+
+- name: Create sm schema
+  shell: "psql -h localhost -U sm sm < {{ sm_home }}/scripts/create_schema.sql"
+  args:
+    executable: /bin/bash
+  when: sm_create_schema
+
+- name: Create /opt/data/sm_data directory
+  file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
+  become: yes
+
+- name: Copy sm-api supervisor config file
+  template: src=sm-api.supervisor.j2 dest=/etc/supervisor/sm-api.supervisor
+            mode=0600 owner=ubuntu group=ubuntu
+
+- name: Create SM ElasticSearch index
+  shell: "{{ sm_activate_venv }} && python scripts/create_es_index.py --drop"
+  args:
+    chdir: "{{ sm_home }}"
+    executable: /bin/bash
+  when: sm_create_es_index

@@ -1,10 +1,13 @@
 from datetime import datetime
 import json
 from unittest.mock import MagicMock
+
 from pytest import fixture
 
-from sm.engine import DatasetStatus, Dataset, DB, ESExporter, QueuePublisher
-from sm.engine.queue import SM_DS_STATUS
+from sm.engine.dataset import DatasetStatus, Dataset
+from sm.engine.db import DB
+from sm.engine.es_export import ESExporter
+from sm.engine.queue import QueuePublisher
 from sm.engine.tests.util import pysparkling_context, sm_config, ds_config, test_db
 
 

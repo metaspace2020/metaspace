@@ -14,7 +14,6 @@
   gather_facts: false
 
   tasks:
-    - import_tasks: ../../deploy_tasks/metaspace_repo.yml
     - import_tasks: ../../deploy_tasks/sm_engine.yml
   tags: [slave]
 
@@ -33,29 +32,6 @@
     es_password: "{{ sm_es_password }}"
 
   tasks:
-    - import_tasks: ../../deploy_tasks/metaspace_repo.yml
-      tags: [metaspace_repo]
+    - import_tasks: ../../deploy_tasks/sm_annotate_daemon.yml
 
-    - import_tasks: ../../deploy_tasks/sm_engine.yml
-
-    - name: Pull SM config from the remote host
-      fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
-             flat=yes fail_on_missing=yes
-
-    - name: "Put SM config to {{ sm_home }}/conf/config.json"
-      template: src=/tmp/config.json.template dest={{ sm_home }}/conf/config.json
-                owner={{ spark_user }} group={{ spark_user }} mode=0600
-
-    - name: Remove old logs
-      file: path="{{ sm_home }}/logs" state=absent
-
-    - name: Create folder for logs
-      file: path="{{ sm_home }}/logs" state=directory
-
-    - name: Restart Filebeat to avoid issues with old logs
-      become: yes
-      systemd: name=filebeat state=restarted
-      when: elk_enable
-
-    - import_tasks: ../../restart_supervisor.yml supervisor_app=sm-daemon
   tags: [master]

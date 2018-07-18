@@ -81,13 +81,30 @@ services:
       - postgres
       - elasticsearch
 
-  sm-daemon:
+  sm-update-daemon:
     build:
       context: ./sm-engine
       args:
         METASPACE_REPO: "$METASPACE_REPO"
         METASPACE_BRANCH: "$METASPACE_BRANCH"
-    command: /start-daemon.sh
+    command: /start-update-daemon.sh
+    volumes:
+      - ./sm-engine/conf/:/opt/metaspace/metaspace/engine/conf:ro
+      - "${DATA_ROOT}:/opt/data:z"
+    networks:
+      - sm
+    depends_on:
+      - postgres
+      - elasticsearch
+      - sm-api
+
+  sm-annotate-daemon:
+    build:
+      context: ./sm-engine
+      args:
+        METASPACE_REPO: "$METASPACE_REPO"
+        METASPACE_BRANCH: "$METASPACE_BRANCH"
+    command: /start-annotate-daemon.sh
     mem_limit: 8g
     cpu_shares: 512
     volumes:

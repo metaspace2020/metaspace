@@ -1,0 +1,3 @@
+spark_master_host: local[*]
+sm_create_schema: false
+sm_create_es_index: false

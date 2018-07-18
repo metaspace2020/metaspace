@@ -96,7 +96,7 @@
         <br/>
       </span>
 
-      <span v-if="dataset.status == 'STARTED'">
+      <span v-if="['ANNOTATING', 'INDEXING'].includes(dataset.status)">
         <div class="striped-progressbar processing" title="Processing is under way"></div>
       </span>
 
@@ -107,12 +107,12 @@
       <i class="el-icon-view"></i>
       <a @click="showMetadata" class="metadata-link">Show full metadata</a>
 
-      <div v-if="haveEditAccess && dataset.status != 'STARTED'">
+      <div v-if="haveEditAccess && !['QUEUED', 'ANNOTATING', 'INDEXING'].includes(dataset.status)">
         <i class="el-icon-edit"></i>
         <router-link :to="editHref">Edit metadata</router-link>
       </div>
 
-      <div v-if="haveEditAccess && dataset.status != 'STARTED'"
+      <div v-if="haveEditAccess && !['QUEUED', 'ANNOTATING', 'INDEXING'].includes(dataset.status)"
            class="ds-delete">
         <i class="el-icon-delete"></i>
         <a @click="openDeleteDialog">Delete dataset</a>

@@ -78,7 +78,7 @@ Development tools:
 
 Watching application logs:
 
-* `docker-compose logs --tail 5 -f mol-db sm-api sm-daemon sm-graphql sm-webapp`
+* `docker-compose logs --tail 5 -f mol-db sm-api sm-update-daemon sm-annotate-daemon sm-graphql sm-webapp`
 
 Rebuilding the Elasticsearch index:
 

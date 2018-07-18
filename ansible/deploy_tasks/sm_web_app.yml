@@ -1,43 +1,6 @@
 ---
 
-- import_tasks: metaspace_repo.yml
-
-- name: Upload local files
-  synchronize:
-    src: "{{ sm_webapp_home }}/"
-    dest: "{{ sm_webapp_home }}/"
-    rsync_opts:
-      - --exclude='config/*.js' --exclude=S3/*
-      - --exclude='logs/*' --exclude='dist/*'
-      - --exclude='node_modules/*' --exclude='.*'
-  when: local_deploy is defined
-
-- name: Pull config template from the remote host
-  fetch: src={{ sm_webapp_home }}/conf.js.template dest=/tmp/conf.js.template
-         flat=yes fail_on_missing=yes
-
-- name: Save config as ./conf.js
-  template: src=/tmp/conf.js.template dest={{ sm_webapp_home }}/conf.js
-            owner=ubuntu group=ubuntu mode=0600
-
-- name: Pull client config template from the remote host
-  fetch: src={{ sm_webapp_home }}/src/clientConfig.json.template dest=/tmp/clientConfig.json.template
-         flat=yes fail_on_missing=yes
-
-- name: Save client config as ./src/clientConfig.json
-  template: src=/tmp/clientConfig.json.template dest={{ sm_webapp_home }}/src/clientConfig.json
-            owner=ubuntu group=ubuntu mode=0600
-
-- name: Install sm-web-app dependencies
-  shell: yarn install
-  args:
-    chdir: "{{ sm_webapp_home }}"
-    executable: /bin/bash
-
-- name: Run build app
-  shell: yarn run build
-  args:
-    chdir: "{{ sm_webapp_home }}"
-    executable: /bin/bash
+- import_role:
+    name: sm_web_app
 
 - import_tasks: ../restart_supervisor.yml supervisor_app=sm-web-app
