@@ -24,6 +24,11 @@ jobs:
           paths:
             - /usr/local/share/.cache/yarn
       - run:
+          name: Copy configs
+          command: |
+            cp ci/conf.js .
+            cp ci/clientConfig.json src/
+      - run:
           name: Run tests
           command: |
             yarn run test
@@ -72,8 +77,8 @@ jobs:
       - run:
           name: Build webapp
           command: |
-            cp tests/e2e/conf.js conf.js
-            cp tests/e2e/clientConfig.json src/
+            cp ci/conf.js conf.js
+            cp ci/clientConfig.json src/
             yarn run build-ci
       - run:
           name: Start GraphQL server and service mocks
