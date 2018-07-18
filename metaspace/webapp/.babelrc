@@ -1,15 +1,4 @@
 {
-
-  "env": {
-    "test": {
-      "ignore": "",
-      "plugins": [
-        ["add-module-exports", {
-          "addDefaultProperty": true
-        }]
-      ]
-    }
-  },
   "presets": [
     ["env"]
   ],
