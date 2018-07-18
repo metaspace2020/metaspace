@@ -12,7 +12,6 @@ type CreateGroupInput {
 }
 
 type UpdateGroupInput {
-  id: ID!
   name: String
   shortName: String
 }
@@ -40,7 +39,7 @@ type Query {
 type Mutation {
   ## Managing groups
   createGroup(groupDetails: CreateGroupInput!): Group!
-  updateGroup(groupDetails: UpdateGroupInput!): Group!
+  updateGroup(id: ID!, groupDetails: UpdateGroupInput!): Group!
   deleteGroup(groupId: ID!): Boolean!
 
   ## Managing group users
