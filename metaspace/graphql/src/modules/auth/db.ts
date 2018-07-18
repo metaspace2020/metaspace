@@ -1,5 +1,5 @@
 import {defaults} from 'lodash';
-import config from '../utils/config';
+import config from '../../utils/config';
 
 export interface DbUser {
   id: string;

@@ -4,8 +4,6 @@
     visible
     :lockScroll="false"
     :close-on-click-modal="!hasSucceeded"
-    :close-on-press-escape="!hasSucceeded"
-    :show-close="!hasSucceeded"
     @close="onClose"
   >
     <div v-if="hasSucceeded">

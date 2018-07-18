@@ -13,7 +13,7 @@ const bodyParser = require('body-parser'),
   {maskErrors} = require('graphql-errors'),
   {promisify} = require('util'),
   readFile = promisify(require("fs").readFile),
-  {configureAuth} = require('./src/auth/api');
+  {configureAuth} = require('./src/modules/auth');
 
 const logger = require('./utils.js').logger;
 

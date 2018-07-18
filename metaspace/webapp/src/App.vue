@@ -20,7 +20,7 @@
  import MetaspaceHeader from './components/MetaspaceHeader.vue';
  import MetaspaceFooter from './components/MetaspaceFooter.vue';
  import TourStep from './components/TourStep.vue';
- import DialogController from './modules/Account/components/DialogController';
+ import {DialogController} from './modules/Account';
  import * as config from './clientConfig.json';
 
  export default {

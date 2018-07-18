@@ -2,8 +2,7 @@ import Vue from 'vue';
 import VueRouter from 'vue-router';
 import AboutPage from './components/AboutPage.vue';
 import DatasetsPage from './components/DatasetsPage.vue';
-import DialogPage from './modules/Account/components/DialogPage';
-import ResetPasswordPage from './modules/Account/components/ResetPasswordPage.vue';
+import {DialogPage, ResetPasswordPage} from './modules/Account';
 import * as config from './clientConfig.json';
 
 Vue.use(VueRouter);

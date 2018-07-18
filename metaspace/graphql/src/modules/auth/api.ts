@@ -3,7 +3,7 @@ import {callbackify} from 'util';
 import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
-import config from '../utils/config';
+import config from '../../utils/config';
 import * as JwtSimple from 'jwt-simple';
 import {
   createResetPasswordToken,
