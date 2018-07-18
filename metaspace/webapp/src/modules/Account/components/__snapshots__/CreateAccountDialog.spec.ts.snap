@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`CreateAccountDialog should match snapshot 1`] = `
-<mock-el-dialog title="Create an account" visible="" close-on-click-modal="true" close-on-press-escape="true" show-close="true">
+<mock-el-dialog title="Create an account" visible="" close-on-click-modal="true">
   <div>
     <div class="container">
       <div class="left-side">
