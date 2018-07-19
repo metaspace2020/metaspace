@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
+import { Component, Prop, Watch } from 'vue-property-decorator';
 import { DialogType } from '../dialogs';
 import * as config from '../../../clientConfig.json';
 
@@ -12,6 +12,10 @@ export default class DialogPage extends Vue {
     return null;
   }
   created() {
+    this.showDialog();
+  }
+  @Watch('dialog')
+  showDialog() {
     if (config.features.newAuth) {
       this.$store.commit('account/showDialogAsPage', this.dialog);
     }
