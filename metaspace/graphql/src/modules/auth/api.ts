@@ -13,7 +13,7 @@ import {
   findUserByGoogleId,
   findUserById,
   resetPassword, verifyEmail,
-} from './db';
+} from './db-user';
 
 const getUserFromRequest = (req: Request): DbUser | null => {
   const user = (req as any).cookieUser;
@@ -45,7 +45,7 @@ const configurePassport = (app: Express) => {
   });
   app.get('/api_auth/signout', preventCache, (req, res) => {
     req.logout();
-    res.redirect('/')
+    res.redirect('/');
   });
 };
 
