@@ -13,7 +13,7 @@ const bodyParser = require('body-parser'),
   {maskErrors} = require('graphql-errors'),
   {promisify} = require('util'),
   readFile = promisify(require("fs").readFile),
-  {configureAuth} = require('./src/modules/auth');
+  {configureAuth, initSchema} = require('./src/modules/auth');
 
 const logger = require('./utils.js').logger;
 
@@ -49,7 +49,10 @@ function createHttpServerAsync(config) {
   let app = express();
   let httpServer = http.createServer(app);
 
-  return readFile('schema.graphql', 'utf8')
+  return initSchema()
+    .then(() => {
+      return readFile('schema.graphql', 'utf8');
+    })
     .then((contents) => {
       const schema = makeExecutableSchema({
         typeDefs: contents,
