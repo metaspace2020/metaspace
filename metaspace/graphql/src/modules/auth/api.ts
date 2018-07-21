@@ -12,7 +12,9 @@ import {
   findUserByEmail,
   findUserByGoogleId,
   findUserById,
-  resetPassword, verifyEmail,
+  resetPassword,
+  verifyEmail,
+  verifyPassword
 } from './db-user';
 
 const getUserFromRequest = (req: Request): DbUser | null => {
@@ -111,7 +113,7 @@ const configureLocalAuth = (app: Express) => {
     },
     callbackify(async (username: string, password: string) => {
       const user = await findUserByEmail(username);
-      return user && user.password === password ? user : false;
+      return user && await verifyPassword(password, user.hash) ? user : false;
     })
   ));
 

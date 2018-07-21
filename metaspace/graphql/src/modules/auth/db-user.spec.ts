@@ -1,7 +1,10 @@
-import {knex, initSchema, takeFirst} from './db';
+import {knex,
+  initSchema,
+  takeFirst} from './db';
+import {verifyPassword} from './db-user'
 
 import config from '../../utils/config';
-import {DbUser, createUser, verifyEmail, resetPassword, createResetPasswordToken} from "./db-user";
+import {createUser, verifyEmail, resetPassword, createResetPasswordToken} from "./db-user";
 
 // const knexAdmin = require('knex')({
 //   client: 'postgres',
@@ -18,6 +21,7 @@ describe('Database operations with user', () => {
 
   beforeAll(async () => {
     console.log('> beforeAll');
+    console.log(config.db);
     // await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
     // await knexAdmin.raw(`CREATE DATABASE ${config.db.database}`);
     await initSchema();
@@ -37,7 +41,7 @@ describe('Database operations with user', () => {
   });
 
   afterEach(async () => {
-    await knex('user').truncate();
+    await knex('user').delete();
   });
 
   test('create absolutely new user', async () => {
@@ -47,11 +51,10 @@ describe('Database operations with user', () => {
       email: 'admin@localhost'
     });
 
-    const users = await knex('user').select(['name', 'email', 'password', 'role', 'emailVerified']);
+    const users = await knex('user').select(['name', 'email', 'role', 'emailVerified']);
     expect(users).toHaveLength(1);
     expect(users[0]).toMatchObject({
       name: 'Name',
-      password: 'password',
       email: 'admin@localhost',
       emailVerified: false
     });
@@ -60,11 +63,12 @@ describe('Database operations with user', () => {
   test('create user when it already exists', async () => {
     await knex('user').insert({
       name: 'Name',
-      password: 'password',
       email: 'admin@localhost',
       emailVerificationToken: 'abc'
     });
-    const oldUser = takeFirst(await knex('user').select(['email', 'password', 'name', 'emailVerificationToken']));
+    const oldUser = takeFirst(await knex('user').select(['email', 'hash', 'name']));
+    const oldUserVerificationToken = takeFirst(await knex('user')
+      .select(['email', 'hash', 'name'])).emailVerificationToken;
 
     await createUser({
       name: 'Name',
@@ -72,25 +76,21 @@ describe('Database operations with user', () => {
       email: 'admin@localhost'
     });
 
-    let newUser = takeFirst(await knex('user').select(['email', 'password', 'name']));
-    expect(newUser).toMatchObject({
-      name: 'Name',
-      password: 'password',
-      email: 'admin@localhost'
-    });
-    newUser = takeFirst(await knex('user').select(['emailVerificationToken']));
-    expect(oldUser.emailVerificationToken).not.toEqual(newUser.emailVerificationToken);
+    let newUser = takeFirst(await knex('user').select(['email', 'hash', 'name']));
+    expect(newUser).toMatchObject(oldUser);
+    const newUserEmailVerificationToken = takeFirst(await knex('user')
+      .select(['emailVerificationToken'])).emailVerificationToken;
+    expect(oldUserVerificationToken).not.toEqual(newUserEmailVerificationToken);
   });
 
   test('create user when it already exists, email verified', async () => {
     await knex('user').insert({
       name: 'Name',
-      password: 'password',
       email: 'admin@localhost',
       emailVerificationToken: null,
       emailVerified: true
     });
-    const fields = ['email', 'password', 'name', 'emailVerified', 'emailVerificationToken'];
+    const fields = ['email', 'hash', 'name', 'emailVerified', 'emailVerificationToken'];
     const oldUser = takeFirst(await knex('user').select(fields));
 
     await createUser({
@@ -106,13 +106,13 @@ describe('Database operations with user', () => {
   test('verify email', async () => {
     await knex('user').insert({
       name: 'Name',
-      password: 'password',
       email: 'admin@localhost',
       emailVerificationToken: 'abc',
       emailVerified: false
     });
 
-    await verifyEmail('admin@localhost', 'abc');
+    const u = await verifyEmail('admin@localhost', 'abc');
+    console.log(u);
 
     const fields = ['emailVerified', 'emailVerificationToken'];
     let user = takeFirst(await knex('user').select(fields));
@@ -125,7 +125,6 @@ describe('Database operations with user', () => {
   test('create reset password token', async () => {
     await knex('user').insert({
       name: 'Name',
-      password: 'password',
       email: 'admin@localhost',
       resetPasswordToken: null
     });
@@ -140,17 +139,14 @@ describe('Database operations with user', () => {
   test('reset password', async () => {
     await knex('user').insert({
       name: 'Name',
-      password: 'password',
       email: 'admin@localhost',
       resetPasswordToken: 'abc'
     });
 
     await resetPassword('admin@localhost', 'new password', 'abc');
 
-    const fields = ['password', 'resetPasswordToken'];
-    let user = takeFirst(await knex('user').select(fields));
-    expect(user.password).toBe('new password');
-    expect(user.resetPasswordToken).toBeNull();
+    let user = takeFirst(await knex('user').select(['hash']));
+    expect(await verifyPassword('new password', user.hash)).toBeTruthy();
   });
 
 });

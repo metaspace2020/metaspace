@@ -27,9 +27,9 @@ export const initSchema = async (): Promise<any | undefined> => {
         'user',
         function (t) {
           t.increments('id').primary();
-          t.string('name');
           t.string('email');
-          t.string('password');
+          t.string('hash');
+          t.string('name');
           t.string('role');
           t.string('googleId');
           t.string('emailVerificationToken');
@@ -45,5 +45,5 @@ export const initSchema = async (): Promise<any | undefined> => {
 };
 
 export const takeFirst = (objs: any[]): any => {
-  return objs.length == 0 ? null : objs[0];
+  return objs.length == 0 ? undefined : objs[0];
 };
