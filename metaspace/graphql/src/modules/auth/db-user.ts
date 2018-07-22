@@ -2,6 +2,7 @@ import * as bcrypt from 'bcrypt';
 
 import config from '../../utils/config';
 import {knex, takeFirst} from './db';
+import * as emailService from './email';
 
 export interface DbUser {
   id: string;
@@ -23,11 +24,11 @@ export interface NewDbUser {
 
 const NUM_ROUNDS = 8;
 
-let hashPassword = async (password: string|undefined): Promise<string|null> => {
+const hashPassword = async (password: string|undefined): Promise<string|null> => {
   return (password) ? await bcrypt.hash(password, NUM_ROUNDS) : null;
 };
 
-export let verifyPassword = async (password: string, hash: string|null): Promise<boolean|undefined> => {
+export const verifyPassword = async (password: string, hash: string|null): Promise<boolean|undefined> => {
   return (hash) ? await bcrypt.compare(password, hash) : undefined;
 };
 
@@ -63,18 +64,20 @@ export const createUser = async (userDetails: NewDbUser): Promise<Readonly<void>
       emailVerified: false,
     };
     await knex('user').insert(newUser);
-    // TODO: Send email
-    console.log(`Verification email sent: ${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(userDetails.email)}&token=${encodeURIComponent(emailVerificationToken)}`);
+    const link = `${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(userDetails.email)}&token=${encodeURIComponent(emailVerificationToken)}`;
+    emailService.sendVerificationEmail(userDetails.email, link);
+    console.log(`Verification email sent to ${userDetails.email}: ${link}`);
   } else if (!existingUser.emailVerified) {
     const emailVerificationToken = new Date().valueOf().toString();
     existingUser.emailVerificationToken = emailVerificationToken;
     // TODO: Only regenerate token if it has expired
-    // TODO: Send email directing user to verify email
-    console.log(`Resend email verification: ${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(userDetails.email)}&token=${encodeURIComponent(emailVerificationToken)}`);
+    const link = `${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(userDetails.email)}&token=${encodeURIComponent(emailVerificationToken)}`;
+    emailService.sendVerificationEmail(userDetails.email, link);
+    console.log(`Resend email verification to ${userDetails.email}: ${link}`);
     await knex('user').update(existingUser);
   } else {
-    // TODO: Send email directing user to log in / reset password
-    console.log(`Email already verified: ${existingUser.email}`);
+    emailService.sendLoginEmail(existingUser.email);
+    console.log(`Email already verified. Sent log in email to ${existingUser.email}`);
   }
 };
 
@@ -92,14 +95,16 @@ export const verifyEmail = async (email: string, token: string): Promise<Readonl
   return user;
 };
 
-export const createResetPasswordToken = async (email: string): Promise<string> => {
+export const sendResetPasswordToken = async (email: string): Promise<void> => {
   const user: DbUser = takeFirst(await knex.select().from('user').where('email', '=', email));
   if (user == null) {
     throw new Error(`User with '${email}' email does not exist`);
   }
   user.resetPasswordToken = new Date().valueOf().toString();
   await knex('user').update(user);
-  return user.resetPasswordToken;
+  const link = `${config.web_public_url}/#/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(user.resetPasswordToken)}`;
+  emailService.sendResetPasswordEmail(email, link);
+  console.log(`Sent password reset email to ${email}: ${link}`);
 };
 
 export const resetPassword = async (email: string, password: string, token: string): Promise<Readonly<DbUser> | undefined> => {
