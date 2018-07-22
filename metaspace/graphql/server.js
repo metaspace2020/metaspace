@@ -1,7 +1,5 @@
 const bodyParser = require('body-parser'),
   compression = require('compression'),
-  {createImgServerAsync} = require('./imageUpload.js'),
-  Resolvers = require('./resolvers.js'),
   config = require('config'),
   express = require('express'),
   session = require('express-session'),
@@ -12,10 +10,12 @@ const bodyParser = require('body-parser'),
   makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
   {maskErrors} = require('graphql-errors'),
   {promisify} = require('util'),
-  readFile = promisify(require("fs").readFile),
-  {configureAuth, initSchema} = require('./src/modules/auth');
+  readFile = promisify(require("fs").readFile);
 
-const logger = require('./utils.js').logger;
+const {createImgServerAsync} = require('./imageUpload.js'),
+  {configureAuth, initSchema} = require('./src/modules/auth'),
+  Resolvers = require('./resolvers.js'),
+  logger = require('./utils.js').logger;
 
 // subscriptions setup
 const http = require('http'),

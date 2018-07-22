@@ -3,10 +3,11 @@ import {callbackify} from 'util';
 import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
-import config from '../../utils/config';
 import * as JwtSimple from 'jwt-simple';
+
+import config from '../../utils/config';
 import {
-  createResetPasswordToken,
+  sendResetPasswordToken,
   createUser,
   DbUser,
   findUserByEmail,
@@ -200,9 +201,7 @@ const configureResetPassword = (app: Express) => {
   app.post('/api_auth/sendpasswordresettoken', async (req, res, next) => {
     try {
       const { email } = req.body;
-      const token = await createResetPasswordToken(email);
-      // TODO: Send email
-      console.log(`${config.web_public_url}/#/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+      await sendResetPasswordToken(email);
       res.send(true);
     } catch (err) {
       next(err);

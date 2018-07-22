@@ -65,4 +65,10 @@ config.slack.channel = "";
 config.jwt = {};
 config.jwt.secret = "";
 
+config.aws = {
+  aws_access_key_id: "",
+  aws_secret_access_key: "",
+  aws_region: ""
+};
+
 module.exports = config;
