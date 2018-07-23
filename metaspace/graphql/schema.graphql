@@ -38,6 +38,7 @@ enum SortingOrder {
 }
 
 enum JobStatus {
+  NEW,
   QUEUED,
   ANNOTATING,
   INDEXING,
