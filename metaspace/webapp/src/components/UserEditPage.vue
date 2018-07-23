@@ -123,46 +123,47 @@
           <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up your organization or lab on METASPACE
           </p>
         </div>
-        <div class="notifications">
-          <h2>Notifications</h2>
-          <div class="notification-list">
-            <el-row :gutter="0">
-              <el-col :span="12"><p>Send an email when:</p>
-                <el-checkbox-group
-                  class="notifications">
-                  <div class="notifications_checkbox">
-                    <el-checkbox
-                      label="My dataset's processing has successfully finished"></el-checkbox>
-                  </div>
-                  <div class="notifications_checkbox">
-                    <el-checkbox class="notifications_checkbox"
-                                 label="My dataset's processing failed"></el-checkbox>
-                  </div>
-                </el-checkbox-group>
-                <p>Show a notification when:</p>
-                <el-checkbox-group :indeterminate="isIndeterminate" v-model="checkList"
-                                   class="notifications">
-                  <div class="notifications_checkbox">
-                    <el-checkbox class="notifications_checkbox"
-                                 label="My dataset's processing has successfully finished"></el-checkbox>
-                  </div>
-                  <div class="notifications_checkbox">
-                    <el-checkbox class="notifications_checkbox"
-                                 label="A dataset is added to a group or project that I belong to"></el-checkbox>
-                  </div>
-                  <div class="notifications_checkbox">
-                    <el-checkbox class="notifications_checkbox"
-                                 label="A public dataset has been added to the queue"></el-checkbox>
-                  </div>
-                  <div class="notifications_checkbox">
-                    <el-checkbox class="notifications_checkbox"
-                                 label="A public dataset has finished processing"></el-checkbox>
-                  </div>
-                </el-checkbox-group>
-              </el-col>
-            </el-row>
-          </div>
-        </div>
+        <!--The section below will be introduced in vFuture-->
+        <!--<div class="notifications">-->
+          <!--<h2>Notifications</h2>-->
+          <!--<div class="notification-list">-->
+            <!--<el-row :gutter="0">-->
+              <!--<el-col :span="12"><p>Send an email when:</p>-->
+                <!--<el-checkbox-group-->
+                  <!--class="notifications">-->
+                  <!--<div class="notifications_checkbox">-->
+                    <!--<el-checkbox-->
+                      <!--label="My dataset's processing has successfully finished"></el-checkbox>-->
+                  <!--</div>-->
+                  <!--<div class="notifications_checkbox">-->
+                    <!--<el-checkbox class="notifications_checkbox"-->
+                                 <!--label="My dataset's processing failed"></el-checkbox>-->
+                  <!--</div>-->
+                <!--</el-checkbox-group>-->
+                <!--<p>Show a notification when:</p>-->
+                <!--<el-checkbox-group :indeterminate="isIndeterminate" v-model="checkList"-->
+                                   <!--class="notifications">-->
+                  <!--<div class="notifications_checkbox">-->
+                    <!--<el-checkbox class="notifications_checkbox"-->
+                                 <!--label="My dataset's processing has successfully finished"></el-checkbox>-->
+                  <!--</div>-->
+                  <!--<div class="notifications_checkbox">-->
+                    <!--<el-checkbox class="notifications_checkbox"-->
+                                 <!--label="A dataset is added to a group or project that I belong to"></el-checkbox>-->
+                  <!--</div>-->
+                  <!--<div class="notifications_checkbox">-->
+                    <!--<el-checkbox class="notifications_checkbox"-->
+                                 <!--label="A public dataset has been added to the queue"></el-checkbox>-->
+                  <!--</div>-->
+                  <!--<div class="notifications_checkbox">-->
+                    <!--<el-checkbox class="notifications_checkbox"-->
+                                 <!--label="A public dataset has finished processing"></el-checkbox>-->
+                  <!--</div>-->
+                <!--</el-checkbox-group>-->
+              <!--</el-col>-->
+            <!--</el-row>-->
+          <!--</div>-->
+        <!--</div>-->
         <div class="delete-account">
           <h2>Delete account</h2>
           <p>If you choose to delete your METASPACE account, you will be given the choice of whether to delete the
@@ -181,6 +182,7 @@
 <script lang="ts">
   import Vue from 'vue'
   import Component from 'vue-class-component'
+  import {sendVerificationRequest, leaveGroupRequest, deleteAccountRequest} from '../api/profileData'
 
   interface groupsData {
     group: string;
@@ -194,25 +196,31 @@
   }
 
   interface Model {
-    firstName: string;
-    lastName: string;
-    email: string;
+    id: number
+    name: string
+    role: string
+    email: string
+    primaryGroupId: number
   }
 
   @Component({
     name: 'user-edit-page'
   })
+
   export default class UserEditPage extends Vue {
-    showDeleteAccountDialog: boolean = false
-    countDialog: boolean = false;
+    showDeleteAccountDialog: boolean = false;
     showEmailConfirmDialog: boolean = false;
     showLeaveGroupDialog: boolean = false;
     primaryGroup: string = '';
+    groupId: number = 0;
+    deleteDatasets: boolean = false;
 
     model: Model = {
-      firstName: '',
-      lastName: '',
-      email: this.userEmail()
+      id: 0,
+      name: '',
+      role: '',
+      email: this.userEmail(),
+      primaryGroupId: 0
     };
 
     groupsData: groupsData[] = [{
@@ -258,12 +266,13 @@
     }
 
     countDatasets() {
+      // DISCUSS: should it be done with elasticsearch filter?'
     }
 
     async sendVerEmail() {
-      const {firstName, lastName, email} = this.model;
+      const updateUserInput = this.model;
       try {
-        await sendVerificationRequest(`${firstName} ${lastName}`);
+        await sendVerificationRequest(updateUserInput);
         this.$message({
           type: "success",
           message: "New message to verify your account was sent to your account"
@@ -272,15 +281,16 @@
         this.$message({
           type: "error",
           message: "Failed to send a verification letter. Please contact administrator."
-        });
+        })
+      } finally {
         this.cancelEmailChange()
       }
     }
 
     async leaveGroup() {
-      const {firstName, lastName, email} = this.model;
+      const groupId = this.groupId;
       try {
-        await leaveGroupRequest(`${firstName} ${lastName}`);
+        await leaveGroupRequest(groupId);
         this.$message({
           type: "success",
           message: "Group was successfully left!"
@@ -290,14 +300,17 @@
           type: "error",
           message: "Failed to leave the group. Please contact administrator."
         });
+      } finally {
         this.cancelLeaveGroup()
       }
     }
 
     async deleteAccount() {
-      const {firstName, lastName, email} = this.model;
+      const id = this.model.id;
+      this.deleteDatasets = true;
+
       try {
-        await deleteAccountRequest(`${firstName} ${lastName}`);
+        await deleteAccountRequest(id, this.deleteDatasets);
         this.$message({
           type: "success",
           message: "Group was successfully left!"
@@ -307,6 +320,7 @@
           type: "error",
           message: "Failed to leave the group. Please contact administrator."
         });
+      } finally {
         this.cancelDeleteAccount()
       }
     }
@@ -344,9 +358,10 @@
     margin: 0;
   }
 
-  .notifications_checkbox {
-    margin-left: 0;
-    padding: 0;
-  }
+  /* Uncomment when the vFuture notifications will be introduced
+  /*.notifications_checkbox {*/
+    /*margin-left: 0;*/
+    /*padding: 0;*/
+  /*}*/
 
 </style>
