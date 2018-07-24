@@ -44,7 +44,7 @@
                      width="32px"
                      style="opacity: 0.3"
                      title="Your browser is not supported"
-                     @click="browserWarning"
+                     @click="showBrowserWarning"
                      v-else/>
             </div>
         </div>
@@ -105,8 +105,11 @@ export default class MainImage extends Vue {
         })
     }
 
-    browserWarning(): string {
-      return alert('Your browser is not supported, please change to Chrome/Firefox instead')
+    showBrowserWarning(): any {
+      this.$alert('Due to technical limitations we are only able to support downloading layered and/or zoomed images' +
+      ' on Chrome and Firefox. As a workaround, it is possible to get a copy of the raw ion image by right-clicking ' +
+      'it and clicking "Save picture as", however this will not take into account your current zoom ' +
+      'settings or show the optical image.');
     }
 
   get browserSupportsDomToImage(): boolean {
