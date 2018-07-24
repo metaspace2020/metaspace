@@ -36,9 +36,9 @@ const configurePassport = (app: Express) => {
   }));
   app.use(Passport.session());
 
-  Passport.serializeUser<DbUser, string>(callbackify( async (user: DbUser) => user.id));
+  Passport.serializeUser<DbUser, number>(callbackify( async (user: DbUser) => user.id));
 
-  Passport.deserializeUser<DbUser | false, string>(callbackify(async (id: string) => {
+  Passport.deserializeUser<DbUser | false, number>(callbackify(async (id: number) => {
     return await findUserById(id) || false;
   }));
 

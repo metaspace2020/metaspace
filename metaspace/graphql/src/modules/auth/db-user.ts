@@ -37,7 +37,7 @@ export const verifyPassword = async (password: string, hash: string|null): Promi
 // FIXME: tokens need to be able to be expired, some mechanism should be added so that
 // a user's other sessions are revoked when they change their password, etc.
 
-export const findUserById = async (id: string): Promise<Readonly<DbUser> | undefined> => {
+export const findUserById = async (id: number): Promise<Readonly<DbUser> | undefined> => {
   return takeFirst(await knex.select().from('user').where('id', '=', id));
 };
 
