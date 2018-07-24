@@ -24,7 +24,7 @@
   "services": {
     "img_service_url": "{{ sm_img_service_url }}",
     "mol_db": "{{ mol_db_url }}",
-    "web_app_url": "{{ sm_webapp_url }}",
+    "web_app_url": "{{ web_public_url }}",
     "send_email": {{ sm_send_email | to_json }}
   },
   "rabbitmq": {

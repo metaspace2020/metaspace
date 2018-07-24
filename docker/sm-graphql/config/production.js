@@ -65,6 +65,19 @@ config.rabbitmq.host = "rabbitmq";
 config.rabbitmq.user = "sm";
 config.rabbitmq.password = "password";
 
+config.redis = {};
+config.redis.host = "redis";
+config.redis.port = "6379";
+
+config.cookie = {};
+config.cookie.secret = "secret";
+
+config.google = {};
+config.google.client_id = "";
+config.google.client_secret = "";
+config.google.callback_url = "";
+
+config.web_public_url = "http://0.0.0.0:8999";
 config.websocket_public_url = "ws://0.0.0.0:8999/ws";
 
 config.slack = {};
@@ -73,5 +86,9 @@ config.slack.channel = "";
 
 config.jwt = {};
 config.jwt.secret = "secret";
+
+config.features = {
+  newAuth: false
+};
 
 module.exports = config;

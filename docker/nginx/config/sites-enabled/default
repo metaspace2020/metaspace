@@ -45,6 +45,10 @@ server {
         proxy_pass http://sm-graphql:3010/graphiql;
         include proxy-params.conf;
     }
+    location /api_auth {
+        proxy_pass http://sm-graphql:3010/api_auth;
+        include proxy-params.conf;
+    }
     location /ws {
         set $graphql_ws_server sm-graphql:5666;
         proxy_pass http://$graphql_ws_server/graphql;

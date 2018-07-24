@@ -93,6 +93,6 @@
       venv: "{{ miniconda_prefix }}"
       conda_env: "{{ miniconda_env.name }}"
       spark_usr_dir: "{{ spark_home }}"
-      sm_web_app_url: "{{ sm_webapp_url }}"
+      sm_web_app_url: "{{ web_public_url }}"
       tags: [sm-spark-master]
   tags: [master]

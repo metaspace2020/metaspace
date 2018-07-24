@@ -62,6 +62,19 @@ config.rabbitmq.host = "{{ sm_graphql_rabbitmq_host }}";
 config.rabbitmq.user = "{{ sm_graphql_rabbitmq_user }}";
 config.rabbitmq.password = "{{ sm_graphql_rabbitmq_password }}";
 
+config.redis = {};
+config.redis.host = "{{ sm_graphql_redis_host }}";
+config.redis.port = "{{ sm_graphql_redis_port }}";
+
+config.cookie = {};
+config.cookie.secret = "{{ sm_graphql_cookie_secret }}";
+
+config.google = {};
+config.google.client_id = "{{ sm_graphql_google_client_id }}";
+config.google.client_secret = "{{ sm_graphql_google_client_id }}";
+config.google.callback_url = "{{ sm_graphql_google_client_id }}";
+
+config.web_public_url = "{{ web_public_url }}";
 config.websocket_public_url = "{{ sm_graphql_ws_public_endpoint }}";
 
 config.slack = {};
@@ -70,5 +83,7 @@ config.slack.channel = "{{ sm_graphql_slack_channel }}";
 
 config.jwt = {};
 config.jwt.secret = "{{ sm_graphql_jwt_secret }}";
+
+config.features = {{ sm_graphql_features | to_json }};
 
 module.exports = config;

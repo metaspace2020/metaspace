@@ -4,19 +4,16 @@ const bodyParser = require('body-parser'),
   Resolvers = require('./resolvers.js'),
   config = require('config'),
   express = require('express'),
-  fetch = require('node-fetch'),
+  session = require('express-session'),
+  connectRedis = require('connect-redis'),
   {graphqlExpress, graphiqlExpress} = require('apollo-server-express'),
-  jsondiffpatch = require('jsondiffpatch'),
   jwt = require('express-jwt'),
   cors = require('cors'),
-  knex = require('knex'),
   makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
   {maskErrors} = require('graphql-errors'),
-  moment = require('moment'),
-  Promise = require("bluebird"),
-  slack = require('node-slack'),
-  sprintf = require('sprintf-js'),
-  readFile = Promise.promisify(require("fs").readFile);
+  {promisify} = require('util'),
+  readFile = promisify(require("fs").readFile),
+  {configureAuth} = require('./src/modules/auth');
 
 const logger = require('./utils.js').logger;
 
@@ -29,6 +26,24 @@ let wsServer = http.createServer((req, res) => {
   res.writeHead(404);
   res.end();
 });
+
+
+const configureSession = (app) => {
+  let sessionStore = undefined;
+  if (config.redis.host) {
+    const RedisStore = connectRedis(session);
+    sessionStore = new RedisStore(config.redis);
+  }
+
+  app.use(session({
+    store: sessionStore,
+    secret: config.cookie.secret,
+    resave: false,
+    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 1 month
+    name: 'api.sid',
+  }));
+};
+
 
 function createHttpServerAsync(config) {
   let app = express();
@@ -64,6 +79,12 @@ function createHttpServerAsync(config) {
         subscriptionsEndpoint: config.websocket_public_url,
       }));
 
+      if (config.features.newAuth) {
+        app.use(bodyParser.json());
+        configureSession(app);
+        configureAuth(app);
+      }
+
       app.use(function (err, req, res, next) {
         res.status(err.status || 500);
         logger.error(err.stack);
@@ -71,6 +92,7 @@ function createHttpServerAsync(config) {
           message: err.message
         });
       });
+
 
       httpServer.listen(config.port);
 

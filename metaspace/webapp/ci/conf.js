@@ -8,6 +8,7 @@ exports.COOKIE_SECRET = "cookiesecret";
 exports.JWT_SECRET = "jwtsecret";
 
 exports.ADMIN_EMAILS = [];
+exports.AUTO_LOGIN_AS_ADMIN = true;
 
 exports.AWS_ACCESS_KEY_ID = "";
 exports.AWS_SECRET_ACCESS_KEY = "";

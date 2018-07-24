@@ -8,11 +8,13 @@
     "dev": "cross-env NODE_ENV=development node --max_old_space_size=4096 server.js",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
     "build-ci": "cross-env NODE_ENV=production webpack --hide-modules",
-    "test": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=20000 --quarantine-mode --assertion-timeout=20000",
+    "test": "jest",
+    "test-e2e": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=20000 --quarantine-mode --assertion-timeout=20000",
     "cucumber-test": "cucumber-js --compiler ts:ts-node/register tests/e2e/ --fail-fast",
-    "deref-schema": "node deref_schema.js src/assets/"
+    "coverage": "jest --coverage"
   },
   "dependencies": {
+    "@types/js-cookie": "^2.1.0",
     "apollo-client": "^1.9.3",
     "aws-sdk": "^2.36.0",
     "body-parser": "^1.16.0",
@@ -37,7 +39,7 @@
     "graphql": "^0.11.0",
     "graphql-tag": "^1.3.2",
     "ioredis": "^3.2.1",
-    "js-cookie": "^2.1.4",
+    "js-cookie": "^2.2.0",
     "json-loader": "^0.5.7",
     "jwt-simple": "0.5.1",
     "knex": "^0.12.9",
@@ -70,6 +72,7 @@
     "vue-lazyload": "^1.0.0-rc5",
     "vue-resize-directive": "^1.0.0",
     "vue-router": "^3.0.1",
+    "vue-slide-up-down": "^1.3.3",
     "vuex": "~3.0.1",
     "vuex-router-sync": "^5.0.0"
   },
@@ -77,12 +80,14 @@
     "@types/cucumber": "2.0.4",
     "@types/d3": "4.10.1",
     "@types/file-saver": "0.0.1",
+    "@types/jest": "^23.1.5",
     "@types/lodash-es": "~4.17.0",
     "@types/node": "8.0.31",
     "@types/node-fetch": "1.6.7",
     "@types/plotly.js": "1.28.11",
     "@types/webpack-env": "1.13.1",
     "@types/ws": "3.0.2",
+    "@vue/test-utils": "^1.0.0-beta.20",
     "autoprefixer": "^6.7.2",
     "babel": "6.23.0",
     "babel-core": "6.26.3",
@@ -99,6 +104,8 @@
     "file-loader": "^1.1.11",
     "generate-json-webpack-plugin": "^0.3.1",
     "html-loader": "^0.5.5",
+    "jest": "^23.4.0",
+    "jest-serializer-vue": "^2.0.2",
     "json-schema-deref-sync": "^0.3.3",
     "less": "~3.0.4",
     "less-loader": "~4.1.0",
@@ -110,9 +117,11 @@
     "source-map-loader": "0.2.3",
     "style-loader": "~0.21.0",
     "testcafe": "^0.18.1",
+    "ts-jest": "^23.0.0",
     "ts-node": "~3.1.0",
     "typescript": "~2.8.3",
     "vue-class-component": "6.2.0",
+    "vue-jest": "^2.6.0",
     "vue-loader": "~15.2.2",
     "vue-property-decorator": "6.1.0",
     "vue-template-compiler": "~2.5.16",
@@ -122,5 +131,25 @@
     "webpack-dev-middleware": "^3.1.3",
     "webpack-dev-server": "^3.1.4",
     "webpack-hot-middleware": "^2.22.2"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.vue$": "<rootDir>/node_modules/vue-jest",
+      "^.+\\.[jt]sx?$": "<rootDir>/node_modules/ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "js",
+      "json",
+      "vue"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.{ts,js,vue}",
+      "!src/**/*.{test,spec,d}.{ts,js}"
+    ],
+    "snapshotSerializers": [
+      "<rootDir>/node_modules/jest-serializer-vue"
+    ]
   }
 }

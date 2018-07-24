@@ -6,12 +6,9 @@
     "sourceMap": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "lib": ["es2015", "dom", "esnext"],
-    "module": "ESNext",
+    "esModuleInterop": true,
+    "lib": ["ES2015", "ESNext", "DOM", "ScriptHost"],
+    "module": "CommonJS",
     "moduleResolution": "node"
-  },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.vue"
-  ]
+  }
 }
