@@ -3,7 +3,9 @@
     <p>
       Database selection determines which metabolites can be annotated.
       Many databases are for specific types of sample, please see their respective webpages for details.
-      We show either the version number or a time-stamped date of export.<br/>
+      We show either the version number or a time-stamped date of export.
+      Up to {{ maxMolDbs }} databases may be selected.
+      <br/>
       <b>HMDB-v4</b> is our suggested choice for mammalian datasets.
     </p>
     <div>
@@ -84,8 +86,14 @@
   </div>
 </template>
 <script>
+  import * as config from '../clientConfig.json';
   export default {
-    name: 'database-descriptions'
+    name: 'database-descriptions',
+    data() {
+      return {
+        maxMolDbs: config.maxMolDbs
+      }
+    }
   };
 </script>
 <style>

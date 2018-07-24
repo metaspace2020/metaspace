@@ -20,5 +20,7 @@
 
   "metadataTypes": {{ sm_webapp_metadata_types | to_json }},
 
+  "maxMolDbs": 3,
+
   "features": {{ sm_webapp_features | to_json }}
 }
