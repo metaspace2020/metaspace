@@ -2,17 +2,20 @@ import argparse
 import json
 from datetime import datetime
 import logging
+
 from bottle import post, run
 from bottle import request as req
 from bottle import response as resp
 
-from sm.engine import DB, ESExporter
-from sm.engine import Dataset, SMapiDatasetManager, DatasetActionPriority
+from sm.engine.db import DB
+from sm.engine.es_export import ESExporter
+from sm.engine.dataset import Dataset
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_DS_STATUS, SM_UPDATE
 from sm.engine.util import SMConfig
 from sm.engine.util import init_loggers
 from sm.engine.errors import UnknownDSID, DSIsBusy
+from sm.rest.dataset_manager import SMapiDatasetManager, DatasetActionPriority
 
 OK = {
     'status_code': 200,

@@ -135,7 +135,7 @@ const dbConfig = () => {
 let db = require('knex')({
   client: 'pg',
   connection: dbConfig(),
-  searchPath: 'knex,public'
+  searchPath: ['engine', 'public']
 });
 
 function canUserViewEsDataset(dataset, user) {

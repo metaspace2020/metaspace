@@ -43,9 +43,10 @@ config.services.sm_engine_api_host = "localhost";
 
 config.db = {};
 config.db.host = "localhost";
-config.db.database = "sm";
+config.db.database = "sm_test";
+config.db.schema = "graphql";
 config.db.user = "sm";
-config.db.password = "1321";
+config.db.password = "password";
 
 config.elasticsearch = {};
 config.elasticsearch.index = "sm";
@@ -55,7 +56,7 @@ config.elasticsearch.port = 9200;
 config.rabbitmq = {};
 config.rabbitmq.host = "localhost";
 config.rabbitmq.user = "sm";
-config.rabbitmq.password = "1321";
+config.rabbitmq.password = "password";
 
 config.slack = {};
 config.slack.webhook_url = "";
@@ -63,5 +64,11 @@ config.slack.channel = "";
 
 config.jwt = {};
 config.jwt.secret = "";
+
+config.aws = {
+  aws_access_key_id: "",
+  aws_secret_access_key: "",
+  aws_region: ""
+};
 
 module.exports = config;

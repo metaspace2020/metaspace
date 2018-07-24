@@ -33,6 +33,7 @@ export interface Config {
   db: {
     host: string;
     database: string;
+    schema: string;
     user: string;
     password: string;
   };
@@ -69,6 +70,11 @@ export interface Config {
   };
   features: {
     newAuth: boolean;
+  };
+  aws:  {
+    aws_access_key_id: string;
+    aws_secret_access_key: string;
+    aws_region: string;
   };
 }
 
