@@ -14,7 +14,7 @@
           :error="error && error.molDBs"
           :options="molDBOptions"
           required
-          :multiple-limit="maxMolDbs"
+          :multiple-limit="MAX_MOL_DBS"
         />
       </el-col>
       <el-col :span="6">
@@ -49,7 +49,7 @@
   import FormField from './FormField.vue';
   import DatabaseDescriptions from '../DatabaseDescriptions.vue';
   import { MetaspaceOptions } from './formStructure';
-  import * as config from '../../clientConfig.json';
+  import { MAX_MOL_DBS } from '../../lib/constants';
 
   @Component({
     components: {
@@ -68,7 +68,7 @@
     adductOptions!: string[];
 
     dbHelp = DatabaseDescriptions;
-    maxMolDbs = config.maxMolDbs;
+    MAX_MOL_DBS = MAX_MOL_DBS;
 
     onInput<TKey extends keyof MetaspaceOptions>(field: TKey, val: MetaspaceOptions[TKey]) {
       this.$emit('input', {...this.value, [field]: val});
