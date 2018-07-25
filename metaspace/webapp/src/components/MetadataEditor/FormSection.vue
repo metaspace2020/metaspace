@@ -1,9 +1,11 @@
 <template>
   <div class="metadata-section">
-    <div class="heading">{{section.title}}</div>
+
 
     <el-form size="medium"
              label-position="top">
+      <el-col :span="4" class="heading">{{section.title}}
+      </el-col>
       <el-col v-for="(field, fieldKey) in section.properties"
               :span="field.smEditorColWidth"
               :key="fieldKey">

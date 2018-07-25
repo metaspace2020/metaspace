@@ -22,9 +22,12 @@
       </div>
 
       <div id="md-section-list">
-        <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"/>
-        <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"/>
-        <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"/>
+        <sample-information-section
+          v-model="sampleInfo"
+          style="margin-top: 30px"/>
+        <!--<form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"/>-->
+        <!--<form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"/>-->
+        <!--<form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"/>-->
         <form-section v-bind="sectionBinds('Submitted_By')" v-on="sectionEvents('Submitted_By')"/>
         <metaspace-options-section 
           v-model="metaspaceOptions" 
@@ -77,6 +80,7 @@
  } from '../../api/metadata';
  import MetaspaceOptionsSection from './MetaspaceOptionsSection.vue';
  import FormSection from './FormSection.vue';
+ import SampleInformationSection from './SampleInformationSection.vue';
 
  const factories = {
    'string': schema => schema.default || '',
@@ -89,6 +93,12 @@
  const LOCAL_STORAGE_KEY = 'latestMetadataSubmission';
  const LOCAL_STORAGE_METASPACE_OPTIONS = 'latestMetadataOptions';
  const LOCAL_STORAGE_VERSION_KEY = 'latestMetadataSubmissionVersion';
+
+ const defaultSampleInfo = {
+ 	 organsim: '',
+   organismPart: '',
+   condition: ''
+ };
  
  const defaultMetaspaceOptions = {
    isPublic: true,
@@ -121,6 +131,7 @@
    components: {
      FormSection,
      MetaspaceOptionsSection,
+	   SampleInformationSection
    },
 
    created() {
@@ -135,6 +146,7 @@
        molDBOptions: [],
        possibleAdducts: {},
        metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
+       sampleInfo: cloneDeep(defaultSampleInfo)
      }
    },
 
