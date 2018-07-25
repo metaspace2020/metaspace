@@ -49,8 +49,10 @@ export const findUserByEmail = async (email: string): Promise<DbUser | undefined
   return await knex('user').whereRaw('LOWER(email) = ?', email.toLowerCase()).first();
 };
 
-export const findUserByGoogleId = async (googleId: string): Promise<DbUser | undefined> => {
-  return await knex('user').where('googleId', googleId);
+export const findUserByGoogleId = async (googleId: string|undefined): Promise<DbUser | undefined> => {
+  if (googleId) {
+    return await knex('user').where('googleId', googleId).first();
+  }
 };
 
 const sendEmailVerificationToken = async (user: DbUser) => {
@@ -65,7 +67,21 @@ const sendEmailVerificationToken = async (user: DbUser) => {
   console.log(`Resend email verification to ${user.email}: ${link}`);
 };
 
-export const createUser = async (userDetails: NewDbUser): Promise<void> => {
+const createGoogleUser = async (userDetails: NewDbUser) => {
+  const existingUser = await findUserByGoogleId(userDetails.googleId);
+  if (existingUser == null) {
+    const newUser = {
+      email: userDetails.email,
+      name: userDetails.name || null,
+      googleId: userDetails.googleId || null,
+      role: 'user'
+    };
+    await knex('user').insert(newUser);
+    console.log(`New google user added: ${userDetails.email}`);
+  }
+};
+
+const createLocalUser = async (userDetails: NewDbUser) => {
   const existingUser = await findUserByEmail(userDetails.email);
   if (existingUser == null) {
     const emailVerificationToken = uuid.v4(),
@@ -91,6 +107,15 @@ export const createUser = async (userDetails: NewDbUser): Promise<void> => {
   } else {
     emailService.sendLoginEmail(existingUser.email);
     console.log(`Email already verified. Sent log in email to ${existingUser.email}`);
+  }
+};
+
+export const createUser = async (userDetails: NewDbUser): Promise<void> => {
+  if (userDetails.googleId) {
+    await createGoogleUser(userDetails);
+  }
+  else {
+    await createLocalUser(userDetails);
   }
 };
 

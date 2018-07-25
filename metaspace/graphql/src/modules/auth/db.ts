@@ -40,7 +40,7 @@ export const initSchema = async (): Promise<any> => {
         t.timestamp('emailVerificationTokenExpires');
         t.string('resetPasswordToken');
         t.timestamp('resetPasswordTokenExpires');
-        t.boolean('emailVerified').defaultTo(false);
+        t.boolean('emailVerified');
       });
   }
 };
