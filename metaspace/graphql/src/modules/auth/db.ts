@@ -1,5 +1,5 @@
-import {defaults} from 'lodash';
 import config from '../../utils/config';
+import {DbSchemaName} from './utils';
 
 import * as Knex from 'knex';
 
@@ -15,7 +15,7 @@ const dbConfig = () => {
 export const knex = Knex({
   client: 'pg',
   connection: dbConfig(),
-  searchPath: [config.db.schema],
+  searchPath: [DbSchemaName],
   pool: {
     min: 1,
     max: 1
@@ -24,7 +24,7 @@ export const knex = Knex({
 });
 
 export const initSchema = async (): Promise<any> => {
-  await knex.raw(`CREATE SCHEMA IF NOT EXISTS ${config.db.schema}`);
+  await knex.raw(`CREATE SCHEMA IF NOT EXISTS ${DbSchemaName}`);
 
   if (!await knex.schema.hasTable('user')) {
     await knex.schema.createTable(
@@ -45,14 +45,10 @@ export const initSchema = async (): Promise<any> => {
   }
 };
 
-export const takeFirst = (objs: any[]): any => {
-  return objs.length == 0 ? undefined : objs[0];
-};
-
 export interface DbRow {
   id: number;
 }
 
 export const updateTable = async (name: string, row: DbRow): Promise<void> => {
-  await knex(name).where('id', '=', row.id).update(row);
+  await knex(name).where('id', row.id).update(row);
 };

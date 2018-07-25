@@ -1,8 +1,6 @@
 import config from '../../utils/config';
 import {createExpiry} from "./utils";
-import {knex,
-  initSchema,
-  takeFirst} from './db';
+import {knex, initSchema} from './db';
 import {createUser,
   verifyEmail,
   resetPassword,
@@ -43,8 +41,6 @@ describe('Database operations with user', () => {
   });
 
   beforeEach(async () => {
-    // jest.resetAllMocks();
-    // suppressConsoleWarn('async-validator:');
   });
 
   afterEach(async () => {
@@ -58,7 +54,7 @@ describe('Database operations with user', () => {
       email: 'admin@localhost'
     });
 
-    const user = await knex.from('user').select(['name', 'email', 'role', 'emailVerified']).first();
+    const user = await knex('user').select(['name', 'email', 'role', 'emailVerified']).first();
     expect(user).toMatchObject({
       name: 'Name',
       email: 'admin@localhost',
@@ -76,7 +72,7 @@ describe('Database operations with user', () => {
       emailVerificationTokenExpires: createExpiry(1)
     });
     const fields = ['email', 'hash', 'name', 'emailVerificationToken'];
-    const oldUser = takeFirst(await knex('user').select(fields));
+    const oldUser = await knex('user').select(fields).first();
 
     await createUser({
       name: 'Name',
@@ -84,7 +80,7 @@ describe('Database operations with user', () => {
       email: 'admin@localhost'
     });
 
-    let newUser = takeFirst(await knex('user').select(fields));
+    let newUser = await knex('user').select(fields).first();
     expect(newUser).toMatchObject(oldUser);
 
     const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
@@ -98,9 +94,9 @@ describe('Database operations with user', () => {
       emailVerificationToken: 'abc',
       emailVerificationTokenExpires: createExpiry(-1)
     });
-    const oldUser = takeFirst(await knex('user').select(['email', 'hash', 'name']));
-    const oldUserVerificationToken = takeFirst(await knex('user')
-      .select(['emailVerificationToken'])).emailVerificationToken;
+    const oldUser = await knex('user').select(['email', 'hash', 'name']).first();
+    const oldUserVerificationToken = (await knex('user')
+      .select(['emailVerificationToken']).first()).emailVerificationToken;
 
     await createUser({
       name: 'Name',
@@ -108,10 +104,10 @@ describe('Database operations with user', () => {
       email: 'admin@localhost'
     });
 
-    let newUser = takeFirst(await knex('user').select(['email', 'hash', 'name']));
+    let newUser = await knex('user').select(['email', 'hash', 'name']).first();
     expect(newUser).toMatchObject(oldUser);
-    const newUserEmailVerificationToken = takeFirst(await knex('user')
-      .select(['emailVerificationToken'])).emailVerificationToken;
+    const newUserEmailVerificationToken = (await knex('user')
+      .select(['emailVerificationToken']).first()).emailVerificationToken;
     expect(oldUserVerificationToken).not.toEqual(newUserEmailVerificationToken);
 
     const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
@@ -126,7 +122,7 @@ describe('Database operations with user', () => {
       emailVerified: true
     });
     const fields = ['email', 'hash', 'name', 'emailVerified', 'emailVerificationToken'];
-    const oldUser = takeFirst(await knex('user').select(fields));
+    const oldUser = await knex('user').select(fields).first();
 
     await createUser({
       name: 'Name',
@@ -134,7 +130,7 @@ describe('Database operations with user', () => {
       email: 'admin@localhost'
     });
 
-    let newUser = takeFirst(await knex('user').select(fields));
+    let newUser = await knex('user').select(fields).first();
     expect(newUser).toMatchObject(oldUser);
 
     const sendEmailCallArgs = mockEmail.sendLoginEmail.mock.calls[0];
@@ -153,7 +149,7 @@ describe('Database operations with user', () => {
     await verifyEmail('admin@localhost', 'abc');
 
     const fields = ['emailVerified', 'emailVerificationToken'];
-    let user = takeFirst(await knex('user').select(fields));
+    let user = await knex('user').select(fields).first();
     expect(user).toMatchObject({
       emailVerified: true,
       emailVerificationToken: null
@@ -184,7 +180,7 @@ describe('Database operations with user', () => {
     await sendResetPasswordToken('admin@localhost');
 
     const fields = ['resetPasswordToken'];
-    let user = takeFirst(await knex('user').select(fields));
+    let user = await knex('user').select(fields).first();
     expect(user.resetPasswordToken).not.toBeNull();
 
     const sendEmailCallArgs = mockEmail.sendResetPasswordEmail.mock.calls[0];
@@ -198,11 +194,11 @@ describe('Database operations with user', () => {
       resetPasswordToken: 'abc',
       resetPasswordTokenExpires: createExpiry(-1)
     });
-    let oldUser = takeFirst(await knex('user').select(['resetPasswordToken']));
+    let oldUser = await knex('user').select(['resetPasswordToken']).first();
 
     await sendResetPasswordToken('admin@localhost');
 
-    let newUser = takeFirst(await knex('user').select(['resetPasswordToken']));
+    let newUser = await knex('user').select(['resetPasswordToken']).first();
     expect(newUser.resetPasswordToken).not.toEqual(oldUser.resetPasswordToken);
 
     const sendEmailCallArgs = mockEmail.sendResetPasswordEmail.mock.calls[0];
@@ -219,7 +215,7 @@ describe('Database operations with user', () => {
 
     await resetPassword('admin@localhost', 'new password', 'abc');
 
-    let user = takeFirst(await knex('user').select(['hash']));
+    let user = await knex('user').select(['hash']).first();
     expect(await verifyPassword('new password', user.hash)).toBeTruthy();
   });
 

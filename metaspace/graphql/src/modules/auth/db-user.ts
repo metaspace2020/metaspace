@@ -4,7 +4,6 @@ import * as uuid from 'uuid';
 import config from '../../utils/config';
 import {createExpiry} from "./utils";
 import {knex,
-  takeFirst,
   DbRow,
   updateTable} from './db';
 import * as emailService from './email';
@@ -45,15 +44,15 @@ const tokenExpired = (expires: Date|null): boolean => {
 };
 
 export const findUserById = async (id: number): Promise<Readonly<DbUser> | undefined> => {
-  return takeFirst(await knex.select().from('user').where('id', '=', id));
+  return await knex('user').where('id', '=', id).first();
 };
 
 export const findUserByEmail = async (email: string): Promise<Readonly<DbUser> | undefined> => {
-  return takeFirst(await knex.select().from('user').where('email', '=', email));
+  return await knex('user').where('email', '=', email).first();
 };
 
 export const findUserByGoogleId = async (googleId: string): Promise<Readonly<DbUser> | undefined> => {
-  return takeFirst(await knex.select().from('user').where('googleId', '=', googleId));
+  return await knex('user').where('googleId', '=', googleId);
 };
 
 const sendEmailVerificationToken = async (user: DbUser) => {
@@ -69,7 +68,7 @@ const sendEmailVerificationToken = async (user: DbUser) => {
 };
 
 export const createUser = async (userDetails: NewDbUser): Promise<Readonly<void>> => {
-  const existingUser: DbUser = takeFirst(await knex.select().from('user').where('email', '=', userDetails.email));
+  const existingUser = await knex('user').where('email', userDetails.email).first();
   if (existingUser == null) {
     const emailVerificationToken = uuid.v4(),
       emailVerificationTokenExpires = createExpiry(),
@@ -98,8 +97,7 @@ export const createUser = async (userDetails: NewDbUser): Promise<Readonly<void>
 };
 
 export const verifyEmail = async (email: string, token: string): Promise<Readonly<DbUser> | undefined> => {
-  const user: DbUser = takeFirst(await knex.select().from('user')
-    .where('email', '=', email));
+  const user = await knex('user').where('email', email).first();
   if (user) {
     if (user.emailVerificationToken !== token || tokenExpired(user.emailVerificationTokenExpires)) {
       console.log(`Token is wrong or expired for ${email}`);
@@ -119,7 +117,7 @@ export const verifyEmail = async (email: string, token: string): Promise<Readonl
 };
 
 export const sendResetPasswordToken = async (email: string): Promise<void> => {
-  const user: DbUser = takeFirst(await knex.select().from('user').where('email', '=', email));
+  const user = await knex('user').where('email', email).first();
   if (user == null) {
     throw new Error(`User with ${email} email does not exist`);
   }
@@ -135,7 +133,7 @@ export const sendResetPasswordToken = async (email: string): Promise<void> => {
 };
 
 export const resetPassword = async (email: string, password: string, token: string): Promise<Readonly<DbUser> | undefined> => {
-  const user = takeFirst(await knex.select().from('user').where('email', '=', email));
+  const user = await knex('user').where('email', email).first();
   if (user) {
     if (user.resetPasswordToken !== token || tokenExpired(user.resetPasswordTokenExpires)) {
       console.log(`Token is wrong or expired for ${email}`);
@@ -145,7 +143,7 @@ export const resetPassword = async (email: string, password: string, token: stri
       user.resetPasswordToken = null;
       user.resetPasswordTokenExpires = null;
       await updateTable('user', user);
-      console.log(`Successful password reset: ${email} '${token}'`);
+      console.log(`Successful password reset: ${email}`);
       return user;
     }
   }

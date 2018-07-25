@@ -44,7 +44,6 @@ config.services.sm_engine_api_host = "localhost";
 config.db = {};
 config.db.host = "localhost";
 config.db.database = "sm_test";
-config.db.schema = "graphql";
 config.db.user = "sm";
 config.db.password = "password";
 

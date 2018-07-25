@@ -33,7 +33,6 @@ export interface Config {
   db: {
     host: string;
     database: string;
-    schema: string;
     user: string;
     password: string;
   };
