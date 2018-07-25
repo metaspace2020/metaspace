@@ -2,18 +2,6 @@
   <div class="main-content">
     <div class="user-edit-page">
       <el-dialog
-        title="Confirm email address change"
-        :visible.sync="showEmailConfirmDialog"
-        width="30%"
-        :lock-scroll="false">
-        <span style="line-height: 30px">Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change</span>
-        <el-row style="margin: 20px 0">
-          <el-button title="Cancel" @click="cancelEmailChange">Cancel</el-button>
-          <el-button title="Send verification email" @click="sendVerEmail" type="primary">Yes, send verification email
-          </el-button>
-        </el-row>
-      </el-dialog>
-      <el-dialog
         title="Leave the group"
         :visible.sync="showLeaveGroupDialog"
         width="30%"
@@ -48,32 +36,28 @@
             <h2>User details</h2>
           </el-col>
           <el-col :span="8">
-            <el-button title="Save" type="primary" @click="confirmEmailDialog()" class="saveButton">Save</el-button>
+            <el-button title="Save" type="primary" @click="updateUserDetails" class="saveButton" :loading="isUserDetailsLoading">Save</el-button>
           </el-col>
         </el-row>
         <el-row :gutter="20">
-          <div class="user-details">
-            <el-col :span="12">
-              <div class="fullname">
-                <label class="el-form-item__label"><span>Full name:</span></label>
-                <el-input
-                  placeholder="Full name"
-                  v-model="model.firstName + model.lastName"
-                  clearable>
-                </el-input>
-              </div>
-            </el-col>
-            <el-col :span="12">
-              <div class="email">
-                <label class="el-form-item__label"><span class="field-label">E-mail:</span></label>
-                <el-input
-                  :placeholder="E-mail"
-                  v-model="model.email"
-                  clearable>
-                </el-input>
-              </div>
-            </el-col>
-          </div>
+          <el-form :disabled="isUserDetailsLoading">
+            <div class="user-details">
+              <el-col :span="12">
+                <div class="fullname">
+                  <el-form-item prop="name" label="Full name:">
+                    <el-input v-model="model.name" />
+                  </el-form-item>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="email">
+                  <el-form-item prop="email" label="E-mail:">
+                    <el-input v-model="model.email" />
+                  </el-form-item>
+                </div>
+              </el-col>
+            </div>
+          </el-form>
         </el-row>
 
         <div class="groups">
@@ -182,9 +166,10 @@
 <script lang="ts">
   import Vue from 'vue'
   import Component from 'vue-class-component'
-  import {sendVerificationRequest, leaveGroupRequest, deleteAccountRequest} from '../api/profileData'
+  import {updateUser, leaveGroupRequest, deleteAccountRequest, CurrentUserResult} from '../api/profileData'
+  import reportError from "../lib/reportError";
 
-  interface groupsData {
+  interface GroupsData {
     group: string;
     role: string;
     datasetContributed: number;
@@ -209,11 +194,11 @@
 
   export default class UserEditPage extends Vue {
     showDeleteAccountDialog: boolean = false;
-    showEmailConfirmDialog: boolean = false;
     showLeaveGroupDialog: boolean = false;
     primaryGroup: string = '';
     groupId: number = 0;
     deleteDatasets: boolean = false;
+    isUserDetailsLoading: boolean = false;
 
     model: Model = {
       id: 0,
@@ -222,12 +207,24 @@
       email: this.userEmail(),
       primaryGroupId: 0
     };
-
-    groupsData: groupsData[] = [{
-      group: "EMBL",
-      role: "Administrator",
-      datasetContributed: 2,
-    }];
+    currentUser?: CurrentUserResult = {
+      id: '',
+      name: string;
+      email: string | null;
+      groups: {
+        role: string;
+        numDatasets: number;
+        group: { id:string, name: string };
+      }[] | null;
+      primaryGroup: {
+        group: { id: string }
+      } | null;
+    }
+    // groupsData: GroupsData[] = [{
+    //   group: "EMBL",
+    //   role: "Administrator",
+    //   datasetContributed: 2,
+    // }];
 
     primGroupOptions: primGroupOptions[] = [{
       value: 'EMBL',
@@ -238,20 +235,12 @@
       this.showDeleteAccountDialog = true;
     }
 
-    confirmEmailDialog() {
-      this.showEmailConfirmDialog = true;
-    }
-
     leaveGroupDialog() {
       this.showLeaveGroupDialog = true;
     }
 
     cancelDeleteAccount() {
       this.showDeleteAccountDialog = false;
-    }
-
-    cancelEmailChange() {
-      this.showEmailConfirmDialog = false;
     }
 
     cancelLeaveGroup() {
@@ -269,21 +258,30 @@
       // DISCUSS: should it be done with elasticsearch filter?'
     }
 
-    async sendVerEmail() {
+    async updateUserDetails() {
       const updateUserInput = this.model;
       try {
-        await sendVerificationRequest(updateUserInput);
+        if (true /* check if email has changed */) {
+          try {
+            await this.$confirm(
+              "Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change",
+              "Confirm email address change", {
+                confirmButtonText: "Yes, send verification email"
+              });
+          } catch(err) {
+            return; // The user clicked cancel
+          }
+        }
+        this.isUserDetailsLoading = true;
+        await updateUser(updateUserInput);
         this.$message({
           type: "success",
           message: "New message to verify your account was sent to your account"
         })
       } catch (err) {
-        this.$message({
-          type: "error",
-          message: "Failed to send a verification letter. Please contact administrator."
-        })
+        reportError(err);
       } finally {
-        this.cancelEmailChange()
+        this.isUserDetailsLoading = false;
       }
     }
 
