@@ -1,4 +1,5 @@
 import config from '../../utils/config';
+import {createExpiry} from "./utils";
 import {knex,
   initSchema,
   takeFirst} from './db';
@@ -47,7 +48,7 @@ describe('Database operations with user', () => {
   });
 
   afterEach(async () => {
-    await knex('user').delete();
+    await knex.from('user').truncate();
   });
 
   test('create absolutely new user', async () => {
@@ -57,9 +58,8 @@ describe('Database operations with user', () => {
       email: 'admin@localhost'
     });
 
-    const users = await knex('user').select(['name', 'email', 'role', 'emailVerified']);
-    expect(users).toHaveLength(1);
-    expect(users[0]).toMatchObject({
+    const user = await knex.from('user').select(['name', 'email', 'role', 'emailVerified']).first();
+    expect(user).toMatchObject({
       name: 'Name',
       email: 'admin@localhost',
       emailVerified: false
@@ -72,11 +72,35 @@ describe('Database operations with user', () => {
     await knex('user').insert({
       name: 'Name',
       email: 'admin@localhost',
-      emailVerificationToken: 'abc'
+      emailVerificationToken: 'abc',
+      emailVerificationTokenExpires: createExpiry(1)
+    });
+    const fields = ['email', 'hash', 'name', 'emailVerificationToken'];
+    const oldUser = takeFirst(await knex('user').select(fields));
+
+    await createUser({
+      name: 'Name',
+      password: 'password',
+      email: 'admin@localhost'
+    });
+
+    let newUser = takeFirst(await knex('user').select(fields));
+    expect(newUser).toMatchObject(oldUser);
+
+    const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
+    expect(sendEmailCallArgs[0]).toBe('admin@localhost');
+  });
+
+  test('create user when it already exists but email verification token expired', async () => {
+    await knex('user').insert({
+      name: 'Name',
+      email: 'admin@localhost',
+      emailVerificationToken: 'abc',
+      emailVerificationTokenExpires: createExpiry(-1)
     });
     const oldUser = takeFirst(await knex('user').select(['email', 'hash', 'name']));
     const oldUserVerificationToken = takeFirst(await knex('user')
-      .select(['email', 'hash', 'name'])).emailVerificationToken;
+      .select(['emailVerificationToken'])).emailVerificationToken;
 
     await createUser({
       name: 'Name',
@@ -122,6 +146,7 @@ describe('Database operations with user', () => {
       name: 'Name',
       email: 'admin@localhost',
       emailVerificationToken: 'abc',
+      emailVerificationTokenExpires: createExpiry(1),
       emailVerified: false
     });
 
@@ -133,6 +158,20 @@ describe('Database operations with user', () => {
       emailVerified: true,
       emailVerificationToken: null
     });
+  });
+
+  test('verify email fails, token expired', async () => {
+    await knex('user').insert({
+      name: 'Name',
+      email: 'admin@localhost',
+      emailVerificationToken: 'abc',
+      emailVerificationTokenExpires: createExpiry(-1),
+      emailVerified: false
+    });
+
+    const user = await verifyEmail('admin@localhost', 'abc');
+
+    expect(user).toBeUndefined();
   });
 
   test('send reset password token', async () => {
@@ -152,11 +191,30 @@ describe('Database operations with user', () => {
     expect(sendEmailCallArgs[0]).toBe('admin@localhost');
   });
 
+  test('send reset password token, token refreshed', async () => {
+    await knex('user').insert({
+      name: 'Name',
+      email: 'admin@localhost',
+      resetPasswordToken: 'abc',
+      resetPasswordTokenExpires: createExpiry(-1)
+    });
+    let oldUser = takeFirst(await knex('user').select(['resetPasswordToken']));
+
+    await sendResetPasswordToken('admin@localhost');
+
+    let newUser = takeFirst(await knex('user').select(['resetPasswordToken']));
+    expect(newUser.resetPasswordToken).not.toEqual(oldUser.resetPasswordToken);
+
+    const sendEmailCallArgs = mockEmail.sendResetPasswordEmail.mock.calls[0];
+    expect(sendEmailCallArgs[0]).toBe('admin@localhost');
+  });
+
   test('reset password', async () => {
     await knex('user').insert({
       name: 'Name',
       email: 'admin@localhost',
-      resetPasswordToken: 'abc'
+      resetPasswordToken: 'abc',
+      resetPasswordTokenExpires: createExpiry(1)
     });
 
     await resetPassword('admin@localhost', 'new password', 'abc');
@@ -165,4 +223,16 @@ describe('Database operations with user', () => {
     expect(await verifyPassword('new password', user.hash)).toBeTruthy();
   });
 
+  test('reset password fails, token expired', async () => {
+    await knex('user').insert({
+      name: 'Name',
+      email: 'admin@localhost',
+      resetPasswordToken: 'abc',
+      resetPasswordTokenExpires: createExpiry(-1)
+    });
+
+    const user = await resetPassword('admin@localhost', 'new password', 'abc');
+
+    expect(user).toBeUndefined();
+  });
 });

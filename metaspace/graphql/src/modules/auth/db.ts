@@ -15,7 +15,12 @@ const dbConfig = () => {
 export const knex = Knex({
   client: 'pg',
   connection: dbConfig(),
-  searchPath: [config.db.schema]
+  searchPath: [config.db.schema],
+  pool: {
+    min: 1,
+    max: 1
+  },
+  // debug: true
 });
 
 export const initSchema = async (): Promise<any> => {
@@ -32,10 +37,10 @@ export const initSchema = async (): Promise<any> => {
         t.string('role');
         t.string('googleId');
         t.string('emailVerificationToken');
-        // t.integer('emailVerificationTokenExpires');
+        t.timestamp('emailVerificationTokenExpires');
         t.string('resetPasswordToken');
-        // t.integer('resetPasswordTokenExpires');
-        t.boolean('emailVerified');
+        t.timestamp('resetPasswordTokenExpires');
+        t.boolean('emailVerified').defaultTo(false);
       });
   }
 };
