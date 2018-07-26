@@ -166,8 +166,9 @@
 <script lang="ts">
   import Vue from 'vue'
   import Component from 'vue-class-component'
-  import {updateUser, leaveGroupRequest, deleteAccountRequest, CurrentUserResult} from '../api/profileData'
+  import {updateUser, leaveGroup, deleteUser, currentUserQuery} from '../api/profileData'
   import reportError from "../lib/reportError";
+  import apolloClient from '../graphqlClient';
 
   interface GroupsData {
     group: string;
@@ -188,6 +189,20 @@
     primaryGroupId: number
   }
 
+  interface CurrentUserResult {
+    id: string;
+    name: string;
+    email: string | null;
+    groups: {
+      role: string;
+      numDatasets: number;
+      group: { id:string, name: string };
+    }[] | null;
+    primaryGroup: {
+      group: { id: string }
+    } | null;
+  }
+
   @Component({
     name: 'user-edit-page'
   })
@@ -195,36 +210,16 @@
   export default class UserEditPage extends Vue {
     showDeleteAccountDialog: boolean = false;
     showLeaveGroupDialog: boolean = false;
-    primaryGroup: string = '';
-    groupId: number = 0;
     deleteDatasets: boolean = false;
     isUserDetailsLoading: boolean = false;
 
-    model: Model = {
-      id: 0,
-      name: '',
-      role: '',
-      email: this.userEmail(),
-      primaryGroupId: 0
-    };
-    currentUser?: CurrentUserResult = {
-      id: '',
-      name: string;
-      email: string | null;
-      groups: {
-        role: string;
-        numDatasets: number;
-        group: { id:string, name: string };
-      }[] | null;
-      primaryGroup: {
-        group: { id: string }
-      } | null;
-    }
-    // groupsData: GroupsData[] = [{
-    //   group: "EMBL",
-    //   role: "Administrator",
-    //   datasetContributed: 2,
-    // }];
+    currentUser?: CurrentUserResult;
+
+    groupsData: GroupsData[] = [{
+      group: "EMBL",
+      role: "Administrator",
+      datasetContributed: 2,
+    }];
 
     primGroupOptions: primGroupOptions[] = [{
       value: 'EMBL',
@@ -247,15 +242,10 @@
       this.showLeaveGroupDialog = false;
     }
 
-    userEmail() {
-      const {user} = this.$store.state;
-      if (!user)
-        throw new Error("User is not-defined");
-      return user.email
-    }
-
-    countDatasets() {
-      // DISCUSS: should it be done with elasticsearch filter?'
+    async currentUserInfo() {
+      this.currentUser = await apolloClient.query<CurrentUserResult>({
+        query: currentUserQuery
+      })
     }
 
     async updateUserDetails() {
@@ -288,7 +278,7 @@
     async leaveGroup() {
       const groupId = this.groupId;
       try {
-        await leaveGroupRequest(groupId);
+        await leaveGroup(groupId);
         this.$message({
           type: "success",
           message: "Group was successfully left!"
@@ -308,7 +298,7 @@
       this.deleteDatasets = true;
 
       try {
-        await deleteAccountRequest(id, this.deleteDatasets);
+        await deleteUser(id, this.deleteDatasets);
         this.$message({
           type: "success",
           message: "Group was successfully left!"
@@ -323,6 +313,7 @@
       }
     }
   }
+
 </script>
 
 <style>
