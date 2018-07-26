@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "id": "https://raw.githubusercontent.com/metaspace2020/metadata/master/min%20metadata%20schema.json",
   "title": "METASPACE metadata",
-  "description": "Metadata for imaging mass spectrometry data within the METASPACE knowledge base",
+  "description": "Metadata for data within the METASPACE knowledge base",
   "type": "object",
   "definitions": {
     "person": {
@@ -36,7 +36,7 @@
     "Sample_Information": {
       "type": "object",
       "required": ["Organism", "Organism_Part", "Condition"],
-      "description": "How the sample was acquired and prepared for imaging mass spectrometry.",
+      "description": "How the sample was acquired and prepared for the mass spectrometry analysis.",
       "properties": {
         "Organism": {
           "description": "Species",
@@ -60,7 +60,7 @@
       }
     },
     "Sample_Preparation": {
-      "description": "How the sample was prepared for imaging mass spectrometry",
+      "description": "How the sample was prepared for mass spectrometry",
       "type": "object",
       "required": ["Sample_Stabilisation", "Tissue_Modification"],
       "properties": {
@@ -78,7 +78,7 @@
     },
     "MS_Analysis": {
       "type": "object",
-      "description": "Imaging mass spectrometry settings",
+      "description": "Mass spectrometry settings",
       "required": ["Polarity", "Ionisation_Source", "Analyzer"],
       "properties": {
         "Polarity": {
