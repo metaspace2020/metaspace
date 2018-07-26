@@ -1,13 +1,13 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "id": "https://raw.githubusercontent.com/metaspace2020/metadata/master/min%20metadata%20schema.json",
-  "title": "Metadata Submission",
-  "description": "Minimal metadata for mass spectrometry as developed in the METASPACE project",
+  "title": "METASPACE metadata",
+  "description": "Metadata for imaging mass spectrometry data within the METASPACE knowledge base",
   "type": "object",
   "definitions": {
     "person": {
       "type": "object",
-      "description": "Name and contact email for a human",
+      "description": "Name and contact email",
       "required": ["First_Name", "Surname", "Email"],
       "properties": {
         "First_Name": {
@@ -36,41 +36,41 @@
     "Sample_Information": {
       "type": "object",
       "required": ["Organism", "Organism_Part", "Condition"],
-      "description": "Information about the sample that was imaged.",
+      "description": "How the sample was acquired and prepared for imaging mass spectrometry.",
       "properties": {
         "Organism": {
-          "description": "species of organism",
+          "description": "Species",
           "type": "string",
           "minLength": 3
         },
         "Organism_Part": {
-          "description": "part of the organism",
+          "description": "Organ or organism part",
           "type": "string",
           "minLength": 3
         },
         "Condition": {
-          "description": "disease state of the organism",
+          "description": "E.g. wildtype, diseased",
           "type": "string",
           "minLength": 3
         },
         "Sample_Growth_Conditions": {
-          "description": "intervention, treatment group or growth conditions",
+          "description": "E.g. intervention, treatment",
           "type": "string"
         }
       }
     },
     "Sample_Preparation": {
-      "description": "Information about how the sample was prepared for the experiment",
+      "description": "How the sample was prepared for imaging mass spectrometry",
       "type": "object",
       "required": ["Sample_Stabilisation", "Tissue_Modification"],
       "properties": {
         "Sample_Stabilisation": {
-          "description": "Quenching or preservation method used",
+          "description": "Preservation method",
           "type": "string",
           "minLength": 1
         },
         "Tissue_Modification": {
-          "description": "Post stabilisation tissue modification",
+          "description": "E.g. chemical modification",
           "type": "string",
           "minLength": 1
         }
@@ -78,11 +78,11 @@
     },
     "MS_Analysis": {
       "type": "object",
-      "description": "Details of the image acquisition",
+      "description": "Imaging mass spectrometry settings",
       "required": ["Polarity", "Ionisation_Source", "Analyzer"],
       "properties": {
         "Polarity": {
-          "description": "Instrument polarity used",
+          "description": "Ion polarity mode",
           "type": "string",
           "enum": [
             "Positive",
@@ -90,12 +90,12 @@
           ]
         },
         "Ionisation_Source": {
-          "description": "Type of ionisation source used",
+          "description": "E.g. MALDI, DESI",
           "type": "string",
           "minLength": 1
         },
         "Analyzer": {
-          "description": "Mass analyser used",
+          "description": "E.g. FTICR, Orbitrap",
           "type": "string",
           "minLength": 1
         },
@@ -106,7 +106,7 @@
           "required": ["mz", "Resolving_Power"],
           "properties": {
             "mz": {
-              "description": "m/z at which the resolving power was calculated (Orbitrap resolution is quoted at m/z=200)",
+              "description": "m/z at which the resolving power was calculated (e.g. Orbitrap resolution is normally quoted at m/z 200)",
               "type": "number",
               "minimum": 50,
               "maximum": 5000,
