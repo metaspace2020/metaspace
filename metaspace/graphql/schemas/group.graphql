@@ -22,8 +22,15 @@ type UpdateGroupInput {
 type UserGroup {
   user: User!
   group: Group!
-  role: String!
+  role: UserGroupRole!
   numDatasets: Int!
+}
+
+enum UserGroupRole {
+  INVITED    # User was invited into the group but hasn't confirmed it yet
+  PENDING    # User requested to join the group but the PI hasn't confirmed it yet
+  MEMBER     # Normal member of the group
+  PRINCIPAL_INVESTIGATOR    # Group administrator
 }
 
 type Query {
@@ -33,7 +40,7 @@ type Query {
   # Not sure if `currentUserRoleInGroup` is the right approach. The requirement is that when a user is viewing a group,
   # the UI changes based on their role within that group. This could also e.g. be done as a `currentUserRole: String`
   # or `currentUserGroup: UserGroup` field on Group.
-  currentUserRoleInGroup(groupId: ID!): String
+  currentUserRoleInGroup(groupId: ID!): UserGroupRole
 }
 
 type Mutation {
