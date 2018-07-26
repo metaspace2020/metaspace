@@ -3,6 +3,38 @@ jobs:
   # TODO: Monorepo support - only run tests on projects if they have changed
   # e.g. https://discuss.circleci.com/t/does-circleci-2-0-work-with-monorepos/10378/14
 
+  test-graphql:
+    docker:
+      - image: node:8
+      
+      - image: postgres:9.5-alpine
+        environment:
+          POSTGRES_USER: sm
+          POSTGRES_PASSWORD: password
+
+    working_directory: ~/metaspace/metaspace/graphql
+    steps:
+      - checkout:
+          path: ~/metaspace
+      - restore_cache:
+          keys:
+            - yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+            - yarn-cache
+      - run:
+          name: Install npm packages
+          command: |
+            yarn install
+      - save_cache:
+          key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+          paths:
+            - /usr/local/share/.cache/yarn
+      - run:
+          name: Run tests
+          command: |
+            psql -h localhost -U postgres -c "CREATE DATABASE sm_test"
+            yarn run test
+            psql -h localhost -U postgres -c "DROP DATABASE sm_test"
+
   test-webapp:
     docker:
       - image: intsco/sm-webapp:0.9
@@ -214,6 +246,7 @@ workflows:
   commit:
     jobs:
       - test-engine
+      - test-graphql
       - test-webapp
   daily:
     jobs:

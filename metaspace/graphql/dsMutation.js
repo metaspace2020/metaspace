@@ -5,7 +5,7 @@ const jsondiffpatch = require('jsondiffpatch'),
   {UserError} = require('graphql-errors'),
   _ = require('lodash');
 
-const {db, logger, fetchDS, assertUserCanEditDataset,
+const {logger, fetchDS, assertUserCanEditDataset,
     addProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json');
 
@@ -128,6 +128,7 @@ function updateObject(obj, upd) {
 }
 
 module.exports = {
+  processingSettingsChanged,
   Mutation: {
     create: async (args, user) => {
       const {id, input, priority} = args;

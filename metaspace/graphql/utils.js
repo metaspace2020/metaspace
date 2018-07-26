@@ -110,13 +110,13 @@ const logger = new (winston.Logger)({
       timestamp: function() {
         return moment().format();
       },
-      formatter: function(options) {
-        // TODO Lachlan: This custom formatter logs an empty string when given an error
-        // Copy the default formatter's behavior for when options.message is empty
-        // Return string will be passed to logger.
-        return options.timestamp() +' - '+ options.level.toUpperCase() +' - '+ (options.message ? options.message : '') +
-          (options.meta && Object.keys(options.meta).length ? '\n\t'+ JSON.stringify(options.meta) : '' );
-      }
+      // formatter: function(options) {
+      //   // TODO Lachlan: This custom formatter logs an empty string when given an error
+      //   // Copy the default formatter's behavior for when options.message is empty
+      //   // Return string will be passed to logger.
+      //   return options.timestamp() +' - '+ options.level.toUpperCase() +' - '+ (options.message ? options.message : '') +
+      //     (options.meta && Object.keys(options.meta).length ? '\n\t'+ JSON.stringify(options.meta) : '' );
+      // }
     })
   ]
 });

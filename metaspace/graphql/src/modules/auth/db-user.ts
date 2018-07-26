@@ -5,6 +5,7 @@ import config from '../../utils/config';
 import {createExpiry} from "./utils";
 import {knex, DbRow, updateTable} from './db';
 import * as emailService from './email';
+import {logger} from '../../utils'
 
 export interface DbUser extends DbRow {
   email: string;
@@ -59,12 +60,12 @@ const sendEmailVerificationToken = async (user: DbUser) => {
   if (user.emailVerificationToken == null || tokenExpired(user.emailVerificationTokenExpires)) {
     user.emailVerificationToken = uuid.v4();
     user.emailVerificationTokenExpires = createExpiry();
-    console.log(`Token is null or expired for ${user.email}. New one generated: ${user.emailVerificationToken}`);
+    logger.debug(`Token is null or expired for ${user.email}. New one generated: ${user.emailVerificationToken}`);
     await updateTable('user', user);
   }
   const link = `${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(user.email)}&token=${encodeURIComponent(user.emailVerificationToken)}`;
   emailService.sendVerificationEmail(user.email, link);
-  console.log(`Resend email verification to ${user.email}: ${link}`);
+  logger.debug(`Resend email verification to ${user.email}: ${link}`);
 };
 
 const createGoogleUser = async (userDetails: NewDbUser) => {
@@ -77,7 +78,7 @@ const createGoogleUser = async (userDetails: NewDbUser) => {
       role: 'user'
     };
     await knex('user').insert(newUser);
-    console.log(`New google user added: ${userDetails.email}`);
+    logger.info(`New google user added: ${userDetails.email}`);
   }
 };
 
@@ -101,12 +102,12 @@ const createLocalUser = async (userDetails: NewDbUser) => {
     await knex('user').insert(newUser);
     const link = `${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(userDetails.email)}&token=${encodeURIComponent(emailVerificationToken)}`;
     emailService.sendVerificationEmail(userDetails.email, link);
-    console.log(`Verification email sent to ${userDetails.email}: ${link}`);
+    logger.debug(`Verification email sent to ${userDetails.email}: ${link}`);
   } else if (!existingUser.emailVerified) {
     await sendEmailVerificationToken(existingUser);
   } else {
     emailService.sendLoginEmail(existingUser.email);
-    console.log(`Email already verified. Sent log in email to ${existingUser.email}`);
+    logger.debug(`Email already verified. Sent log in email to ${existingUser.email}`);
   }
 };
 
@@ -123,7 +124,7 @@ export const verifyEmail = async (email: string, token: string): Promise<DbUser 
   const user = await findUserByEmail(email);
   if (user) {
     if (user.emailVerificationToken !== token || tokenExpired(user.emailVerificationTokenExpires)) {
-      console.log(`Token is wrong or expired for ${email}`);
+      logger.debug(`Token '${token}' is wrong or expired for ${email}`);
     }
     else {
       const updUser = {
@@ -133,12 +134,12 @@ export const verifyEmail = async (email: string, token: string): Promise<DbUser 
         emailVerificationTokenExpires: null,
       };
       await updateTable('user', updUser);
-      console.log(`Verified user email ${email}`);
+      logger.info(`Verified user email ${email}`);
       return updUser;
     }
   }
   else {
-    console.log(`User with ${email} does not exist`);
+    logger.warning(`User with ${email} does not exist`);
   }
 };
 
@@ -150,8 +151,8 @@ export const sendResetPasswordToken = async (email: string): Promise<void> => {
 
   let resetPasswordToken;
   if (user.resetPasswordToken == null || tokenExpired(user.resetPasswordTokenExpires)) {
-    console.error(`Token has already expired for ${email}. Generate a new one`);
     resetPasswordToken = uuid.v4();
+    logger.debug(`Token '${user.resetPasswordToken}' expired for ${email}. A new one generated: ${resetPasswordToken}`);
     const updUser = {
       ...user,
       resetPasswordToken,
@@ -164,14 +165,14 @@ export const sendResetPasswordToken = async (email: string): Promise<void> => {
   }
   const link = `${config.web_public_url}/#/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetPasswordToken)}`;
   emailService.sendResetPasswordEmail(email, link);
-  console.log(`Sent password reset email to ${email}: ${link}`);
+  logger.debug(`Sent password reset email to ${email}: ${link}`);
 };
 
 export const resetPassword = async (email: string, password: string, token: string): Promise<DbUser | undefined> => {
   const user = await findUserByEmail(email);
   if (user) {
     if (user.resetPasswordToken !== token || tokenExpired(user.resetPasswordTokenExpires)) {
-      console.log(`Token is wrong or expired for ${email}`);
+      logger.debug(`Token '${user.resetPasswordToken}' is wrong or expired for ${email}`);
     }
     else {
       const updUser = {
@@ -181,7 +182,7 @@ export const resetPassword = async (email: string, password: string, token: stri
         resetPasswordTokenExpires: null
       };
       await updateTable('user', updUser);
-      console.log(`Successful password reset: ${email}`);
+      logger.info(`Successful password reset: ${email}`);
       return updUser;
     }
   }

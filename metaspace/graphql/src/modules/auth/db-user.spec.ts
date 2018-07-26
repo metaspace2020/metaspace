@@ -30,14 +30,12 @@ describe('Database operations with user', () => {
     // await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
     // await knexAdmin.raw(`CREATE DATABASE ${config.db.database}`);
     await initSchema();
-    // await knexAdmin.destroy();
   });
 
   afterAll(async () => {
     console.log('> afterAll');
     // await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
-    // await knexAdmin.destroy();
-    // await require('./db').knex.destroy();
+    await knex.destroy();
   });
 
   beforeEach(async () => {
