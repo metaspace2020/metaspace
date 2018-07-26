@@ -29,7 +29,7 @@
       </div>
 
       <p>
-        You can also take a look at <a href="https://www.slideshare.net/Metaspace2020/metaspace-training-2017">slides from the last training course</a> on METASPACE engine (OurCon '16).
+        You can also take a look at <a href="https://speakerdeck.com/metaspace2020/metaspace-training-guide">slides from the last training course</a> on the METASPACE engine.
       </p>
 
       <p>
