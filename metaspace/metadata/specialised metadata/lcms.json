@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "id": "https://raw.githubusercontent.com/metaspace2020/metadata/master/lcms.json",
-  "title": "Metadata Submission",
-  "description": "Metadata specific to liquid chromatography mass spectrometry (LC-MS) as developed in the METASPACE project",
+  "title": "METASPACE LC-MS metadata",
+  "description": "Metadata for LC-MS data within the METASPACE knowledge base",
   "type": "object",
   "definitions": {
     "Solvent_Component": {
@@ -47,12 +47,12 @@
       "enum":["LC-MS"]
     },
     "Sample_Preparation": {
-      "description": "Information about how the sample was prepared for LC-MS",
+      "description": "How the sample was prepared for LC-MS",
       "type": "object",
       "required": ["LC_Column", "Solvent_A_Table", "Solvent_B_Table"],
       "properties": {
         "LC_Column": {
-          "description": "Type of LC column used",
+          "description": "Type of LC column",
           "type": "string",
           "minLength": 1
         },
