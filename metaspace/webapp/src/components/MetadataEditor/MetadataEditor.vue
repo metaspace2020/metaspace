@@ -2,35 +2,46 @@
   <div id="md-editor-container">
     <div style="position: relative;" v-if="value != null">
       <div id="md-editor-submit">
-        <el-switch
+
+        <div class="filter-panel-container">
+          <filter-panel level="upload"></filter-panel>
+        </div>
+        <div class="spacer"></div>
+        <div> <el-switch
           v-model="metaspaceOptions.isPublic"
           active-text="Public"
           inactive-text="Private"
         ></el-switch>
-        <el-popover trigger="hover" placement="top" class="md-editor-public-help">
-          <div>
-            <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>
-            <p><b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>
-          </div>
-          <i slot="reference" class="el-icon-question"></i>
-        </el-popover>
-        <el-button @click="cancel" v-if="datasetId">Cancel</el-button>
-        <el-button type="primary" v-if="enableSubmit" @click="submit">Submit</el-button>
-        <el-button v-else type="primary" disabled :title="disabledSubmitMessage">
-          Submit
-        </el-button>
+          <el-popover trigger="hover" placement="top" class="md-editor-public-help">
+            <div>
+              <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>
+              <p><b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>
+            </div>
+            <i slot="reference" class="el-icon-question"></i>
+          </el-popover>
+          <el-button @click="cancel" v-if="datasetId">Cancel</el-button>
+          <el-button type="primary" v-if="enableSubmit" @click="submit">Submit</el-button>
+          <el-button v-else type="primary" disabled :title="disabledSubmitMessage">
+            Submit
+          </el-button>
+        </div>
       </div>
 
+
       <div id="md-section-list">
-        <sample-information-section
-          v-model="sampleInfo"
-          style="margin-top: 30px"/>
-        <!--<form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"/>-->
-        <!--<form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"/>-->
-        <!--<form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"/>-->
-        <form-section v-bind="sectionBinds('Submitted_By')" v-on="sectionEvents('Submitted_By')"/>
-        <metaspace-options-section 
-          v-model="metaspaceOptions" 
+
+        <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"
+                      style="margin-top: 0px"/>
+        <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"
+                      style="margin-top: 10px"/>
+        <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"
+                      style="margin-top: 10px"/>
+        <form-section v-bind="sectionBinds('Submitted_By')" v-on="sectionEvents('Submitted_By')"
+                      style="margin-top: 10px"/>
+        <form-section v-bind="sectionBinds('Visibility')" v-on="sectionEvents('Submitted_By')"
+                      style="margin-top: 10px"/>
+        <metaspace-options-section
+          v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :molDBOptions="molDBOptions"
           :adductOptions="adductOptions"
@@ -67,6 +78,7 @@
   */
 
  import {defaultMetadataType, metadataSchemas} from '../../assets/metadataRegistry';
+ import FilterPanel from '../FilterPanel.vue';
  import {deriveFullSchema} from './formStructure';
  import {
    get, set, cloneDeep, defaults,
@@ -80,7 +92,6 @@
  } from '../../api/metadata';
  import MetaspaceOptionsSection from './MetaspaceOptionsSection.vue';
  import FormSection from './FormSection.vue';
- import SampleInformationSection from './SampleInformationSection.vue';
 
  const factories = {
    'string': schema => schema.default || '',
@@ -131,7 +142,7 @@
    components: {
      FormSection,
      MetaspaceOptionsSection,
-	   SampleInformationSection
+     FilterPanel
    },
 
    created() {
@@ -397,9 +408,9 @@
  }
 
  #md-editor-submit {
-   position: absolute;
+   //position: absolute;
    display: flex;
-   align-items: center;
+   //align-items: center;
    right: 5px;
    top: -3px;
    z-index: 10
@@ -423,5 +434,14 @@
  #load-indicator {
    min-height: 300px;
  }
+
+ .spacer {
+   flex-grow:1;
+ }
+
+ /*.filter-panel-container {*/
+   /*margin-left: 10px;*/
+   /*margin-top: -5px;*/
+ /*}*/
 
 </style>

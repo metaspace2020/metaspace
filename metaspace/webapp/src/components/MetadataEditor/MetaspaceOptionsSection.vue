@@ -1,45 +1,51 @@
 <template>
   <div class="metadata-section">
-    <div class="heading">METASPACE options</div>
-
-    <el-form size="medium"
-             label-position="top">
+    <el-row>
       <el-col :span="6">
-        <form-field
-          type="selectMulti"
-          name="Metabolite database"
-          :help="dbHelp"
-          :value="value.molDBs"
-          @input="val => onInput('molDBs', val)"
-          :error="error && error.molDBs"
-          :options="molDBOptions"
-          required
-          :multiple-limit="MAX_MOL_DBS"
-        />
+        <div class="bla">Annotation settings</div>
       </el-col>
-      <el-col :span="6">
-        <form-field
-          type="selectMulti"
-          name="Adducts"
-          :value="value.adducts"
-          @input="val => onInput('adducts', val)"
-          :error="error && error.adducts"
-          :options="adductOptions"
-          required
-        />
+      <el-col :span="18">
+        <el-row>
+          <el-form size="medium"
+                   label-position="top">
+            <el-col :span="8">
+              <form-field
+                type="selectMulti"
+                name="Metabolite database"
+                :help="dbHelp"
+                :value="value.molDBs"
+                @input="val => onInput('molDBs', val)"
+                :error="error && error.molDBs"
+                :options="molDBOptions"
+                required
+              />
+            </el-col>
+            <el-col :span="8">
+              <form-field
+                type="selectMulti"
+                name="Adducts"
+                :value="value.adducts"
+                @input="val => onInput('adducts', val)"
+                :error="error && error.adducts"
+                :options="adductOptions"
+                required
+              />
+            </el-col>
+            <el-col :span="8">
+              <form-field
+                type="text"
+                name="Dataset name"
+                placeholder="Dataset name"
+                :value="value.name"
+                @input="val => onInput('name', val)"
+                :error="error && error.name"
+                required
+              />
+            </el-col>
+          </el-form>
+        </el-row>
       </el-col>
-      <el-col :span="7">
-        <form-field
-          type="text"
-          name="Dataset name"
-          placeholder="Dataset name"
-          :value="value.name"
-          @input="val => onInput('name', val)"
-          :error="error && error.name"
-          required
-        />
-      </el-col>
-    </el-form>
+    </el-row>
   </div>
 </template>
 
@@ -80,11 +86,16 @@
 <style lang="scss">
   .metadata-section {
     display: block;
-    max-width: 1000px;
-    > .heading {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
+    max-width: 950px;
+  }
+
+  .bla {
+    font-family: Helvetica, sans-serif;
+    font-weight: bold;
+    margin: 30px 0 0 10px;
+    display: block;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
   }
 </style>

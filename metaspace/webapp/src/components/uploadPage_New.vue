@@ -38,9 +38,9 @@
                        ref="uploader"
                        @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure">
         </fine-uploader-n>
-        <div id="filter-panel-container">
-          <filter-panel-n level="upload"></filter-panel-n>
-        </div>
+        <!--<div id="filter-panel-container">-->
+          <!--<filter-panel level="upload"></filter-panel>-->
+        <!--</div>-->
       </div>
 
       <div id="upload-right-pane">
@@ -61,7 +61,7 @@
 	// TODO: try https://github.com/FineUploader/vue-fineuploader once it's ready for production
 
 	import FineUploaderN from './FineUploaderN.vue';
-	import FilterPanelN from './FilterPanelN.vue';
+	import FilterPanel from './FilterPanel.vue';
 	import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
 	import IntroMessage from './IntroMessage.vue';
 	import Vue from 'vue';
@@ -130,7 +130,7 @@
 		components: {
 			FineUploaderN,
 			MetadataEditor,
-			FilterPanelN,
+			FilterPanel,
 			IntroMessage
 		},
 		computed: {

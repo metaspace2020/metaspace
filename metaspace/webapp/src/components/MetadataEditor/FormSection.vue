@@ -1,28 +1,33 @@
 <template>
   <div class="metadata-section">
-
-
     <el-form size="medium"
              label-position="top">
-      <el-col :span="4" class="heading">{{section.title}}
+      <el-col :span="6">
+        <div class="sectionTitle">
+          {{section.title}}
+        </div>
       </el-col>
-      <el-col v-for="(field, fieldKey) in section.properties"
-              :span="field.smEditorColWidth"
-              :key="fieldKey">
+      <el-col :span="18">
+        <el-row :gutter="8">
+          <el-col v-for="(field, fieldKey) in section.properties"
+                  :span="field.smEditorColWidth"
+                  :key="fieldKey">
 
-        <form-field
-          :type="field.smEditorType"
-          :name="field.title"
-          :help="field.smEditorHelp"
-          @input="val => onInput([sectionKey, fieldKey], val)"
-          :value="value[fieldKey]"
-          :error="error && error[fieldKey]"
-          :fields="field.items && field.items.properties"
-          :options="field.enum || (field.items && field.items.enum)"
-          :required="section.required && section.required.includes(fieldKey)"
-          :placeholder="field.description"
-          :fetchSuggestions="fetchSuggestionsFunc(fieldKey)"
-        />
+            <form-field
+              :type="field.smEditorType"
+              :name="field.title"
+              :help="field.smEditorHelp"
+              @input="val => onInput([sectionKey, fieldKey], val)"
+              :value="value[fieldKey]"
+              :error="error && error[fieldKey]"
+              :fields="field.items && field.items.properties"
+              :options="field.enum || (field.items && field.items.enum)"
+              :required="section.required && section.required.includes(fieldKey)"
+              :placeholder="field.description"
+              :fetchSuggestions="fetchSuggestionsFunc(fieldKey)"
+            />
+          </el-col>
+        </el-row>
       </el-col>
     </el-form>
   </div>
@@ -69,11 +74,16 @@
 <style lang="scss">
   .metadata-section {
     display: block;
-    max-width: 1000px;
-    > .heading {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
+    max-width: 950px;
+  }
+
+  .sectionTitle {
+    font-family: Helvetica, sans-serif;
+    font-weight: bold;
+    margin: 30px 0 0 10px;
+    display: block;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
   }
 </style>

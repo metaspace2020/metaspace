@@ -2,6 +2,7 @@
   <div class="metadata-section">
     <el-form size="medium"
              label-position="top">
+
       <el-col :span="6">
         <div>
           <p class="sectionName">Sample information</p>
@@ -84,7 +85,7 @@
   font-family: Helvetica, sans-serif;
   font-weight: bold;
   margin: 30px 0 0 30px;
-  display:block;
+  display: block;
   position: relative;
   top: 50%;
   transform: translateY(-50%);

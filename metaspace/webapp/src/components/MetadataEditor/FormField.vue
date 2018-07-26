@@ -26,6 +26,7 @@
 
     <el-input
       v-else-if="type === 'textarea'"
+      :rows="1"
       type="textarea"
       @input="onInput"
       :value="value"
@@ -170,7 +171,8 @@
 
     > .el-form-item__label {
       padding: 0;
-      font-size: 16px;
+      margin-bottom: 0;
+      font-size: 14px;
       line-height: 16px;
     }
   }
@@ -188,17 +190,21 @@
   }
 
   .subfield {
-    padding-right: 10px;
+    padding-right: 20px;
   }
 
   .subfield-label {
-    font-size: 14px;
+    font-size: 12px;
     padding: 0 0 5px 5px;
   }
 
   .error-msg {
     font-size: 12px;
     color: red;
+  }
+
+  .txt-area {
+    min-height: 10px;
   }
 
 </style>

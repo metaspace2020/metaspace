@@ -50,22 +50,17 @@ export interface MetaspaceOptions {
 }
 
 const FIELD_WIDTH: Record<string, number> = {
-  'Institution': 6,
-  'Submitter': 9,
-  'First_Name': 12,
-  'Surname': 12,
-  'Principal_Investigator': 9,
-  'Publication_DOI': 13,
+  'Institution': 8,
+  'Submitter': 16,
+  'Publication_DOI': 16,
   'Email': 24,
-  'Polarity': 3,
-  'Ionisation_Source': 5,
-  'Analyzer': 4,
-  'Detector_Resolving_Power': 12,
-  'mz': 12,
-  'Resolving_Power': 12,
-  'Dataset_Name': 7,
-  'Solvent_A_Table': 7,
-  'Solvent_B_Table': 7,
+  'Polarity': 4,
+  'Ionisation_Source': 8,
+  'Analyzer': 8,
+  'Detector_Resolving_Power': 16,
+  'Dataset_Name': 12,
+  'Solvent_A_Table': 8,
+  'Solvent_B_Table': 8,
   'Gradient_Table': 9
 };
 
@@ -107,8 +102,8 @@ function getFieldType(prop: JsonSchemaProperty, propName: string): FormFieldEdit
 
 function getWidth(propName: string) {
   if (propName.endsWith('Freetext'))
-    return 12;
-  return FIELD_WIDTH[propName] || 6;
+    return 16;
+  return FIELD_WIDTH[propName] || 8;
 }
 
 function deriveSection(section: JsonSchemaProperty, sectionKey: string): FormSectionProperty | DataTypeSectionProperty {

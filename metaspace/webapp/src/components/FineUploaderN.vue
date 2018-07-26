@@ -1,11 +1,16 @@
 <template>
   <div>
+
     <script type="text/template" id="qq-template">
       <div id="upload-area-container" class="qq-uploader-selector qq-uploader">
         <div class="qq-upload-drop-area-selector qq-upload-drop-area" qq-hide-dropzone>
           <span class="qq-upload-drop-area-text-selector"></span>
         </div>
-
+        <div class="buttons">
+          <div id="select-files-button" class="qq-upload-button-selector qq-upload-button metasp-button" role="button">
+            Select files
+          </div>
+        </div>
 
         <span class="qq-drop-processing-selector qq-drop-processing">
           <span>Processing dropped files...</span>
@@ -52,11 +57,7 @@
             <button type="button" class="qq-ok-button-selector">Ok</button>
           </div>
         </dialog>
-         <!--<div class="buttons">-->
-          <!--<div id="select-files-button" class="qq-upload-button-selector qq-upload-button metasp-button" role="button">-->
-            <!--Select files-->
-          <!--</div>-->
-        <!--</div>-->
+
       </div>
 
     </script>
@@ -221,8 +222,12 @@
    font-size: 16px !important;
  }
 
- #fine-uploader-manual-trigger .qq-upload-button {
+ #fine-uploader-manual-trigger {
    margin-right: 15px;
+ }
+
+ .qq-upload-button {
+   margin: 0;
  }
 
  #fine-uploader-manual-trigger .buttons {
@@ -235,9 +240,21 @@
 
  .qq-uploader {
    min-height: 50px;
-   max-height: 200px;
+   max-height: 300px;
    padding: 40px 0;
    margin: 20px 0;
+ }
+
+ .qq-uploader:before {
+   top: 40%;
+ }
+
+ #select-files-button {
+   /*padding: 30px;*/
+   display: block;
+   position: relative;
+   transform: translateY(-60%);
+   margin-left: 20px;
  }
 
 </style>
