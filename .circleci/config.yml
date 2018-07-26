@@ -5,12 +5,12 @@ jobs:
 
   test-graphql:
     docker:
-      - image: node:8
-      
       - image: postgres:9.5-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
+      
+      - image: node:8
 
     working_directory: ~/metaspace/metaspace/graphql
     steps:
@@ -31,7 +31,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            psql -h localhost -U postgres -c "CREATE DATABASE sm_test"
+            psql -h localhost -U postgres -c "CREATE DATABASE sm_test owner sm"
             yarn run test
             psql -h localhost -U postgres -c "DROP DATABASE sm_test"
 
@@ -64,7 +64,6 @@ jobs:
           name: Run tests
           command: |
             yarn run test
-
 
   test-webapp-e2e:
     docker:
@@ -246,7 +245,7 @@ workflows:
   commit:
     jobs:
       - test-engine
-      - test-graphql
+      #- test-graphql
       - test-webapp
   daily:
     jobs:
