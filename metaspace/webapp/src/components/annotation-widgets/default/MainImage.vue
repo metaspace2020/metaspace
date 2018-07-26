@@ -105,7 +105,7 @@ export default class MainImage extends Vue {
         })
     }
 
-    showBrowserWarning(): any {
+    showBrowserWarning() {
       this.$alert('Due to technical limitations we are only able to support downloading layered and/or zoomed images' +
       ' on Chrome and Firefox. As a workaround, it is possible to get a copy of the raw ion image by right-clicking ' +
       'it and clicking "Save picture as", however this will not take into account your current zoom ' +
