@@ -2,10 +2,6 @@
   <div id="md-editor-container">
     <div style="position: relative;" v-if="value != null">
       <div id="md-editor-submit">
-
-        <div class="filter-panel-container">
-          <filter-panel level="upload"></filter-panel>
-        </div>
         <div class="spacer"></div>
         <div> <el-switch
           v-model="metaspaceOptions.isPublic"
@@ -157,7 +153,8 @@
        molDBOptions: [],
        possibleAdducts: {},
        metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
-       sampleInfo: cloneDeep(defaultSampleInfo)
+       sampleInfo: cloneDeep(defaultSampleInfo),
+       groups: ['groupA', 'groupB', 'noGroup']
      }
    },
 

@@ -2,7 +2,6 @@
   <div class="metadata-section">
     <el-form size="medium"
              label-position="top">
-
       <el-col :span="6">
         <div>
           <p class="sectionName">Sample information</p>

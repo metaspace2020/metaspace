@@ -20,6 +20,9 @@
     <div id="upload-page" v-else>
       <div id="upload-left-pane">
         <div id="instructions">
+          <!--<div id="filter-panel-container">-->
+            <!--<filter-panel level="upload"></filter-panel>-->
+          <!--</div>-->
 
           <p style="font-size: 18px" v-if="introIsHidden">
             <span>Submitting for the first time?</span>
@@ -38,9 +41,7 @@
                        ref="uploader"
                        @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure">
         </fine-uploader-n>
-        <!--<div id="filter-panel-container">-->
-          <!--<filter-panel level="upload"></filter-panel>-->
-        <!--</div>-->
+
       </div>
 
       <div id="upload-right-pane">

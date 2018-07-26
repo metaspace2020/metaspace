@@ -56,7 +56,7 @@
 
  const filterComponents = {};
  Object.keys(FILTER_SPECIFICATIONS).reduce((accum, cur) => {
-   const componentType                                                              FILTER_SPECIFICATIONS[cur].type;
+   const componentType = FILTER_SPECIFICATIONS[cur].type;
    // a bit hacky way of getting component name b/c of different ways of initialization
    if (!componentType.name && !(componentType.options && componentType.options.name)) {
      throw new Error('Missing name in FILTER_SPECIFICATIONS component type');
