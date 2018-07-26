@@ -205,6 +205,7 @@
 
   @Component({
     name: 'user-edit-page'
+    //apollo: //define queries
   })
 
   export default class UserEditPage extends Vue {
@@ -225,6 +226,9 @@
       value: 'EMBL',
       label: 'EMBL'
     }];
+
+    //mutations -> $apollo.mutate
+    //queries -> apollo:
 
     deleteAccountDialog() {
       this.showDeleteAccountDialog = true;

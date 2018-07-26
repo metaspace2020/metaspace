@@ -84,6 +84,7 @@ export const deleteUserMutation =
 gql`mutation ($id: string, $deleteDatasets: Boolean!) {
   deleteUser(id: $id, deleteDatasets: $deleteDatasets)
 }`;
+
 //
 // export interface CurrentUserResult {
 //   id: string;
