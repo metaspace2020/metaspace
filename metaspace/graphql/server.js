@@ -1,7 +1,5 @@
 const bodyParser = require('body-parser'),
   compression = require('compression'),
-  {createImgServerAsync} = require('./imageUpload.js'),
-  Resolvers = require('./resolvers.js'),
   config = require('config'),
   express = require('express'),
   session = require('express-session'),
@@ -12,10 +10,12 @@ const bodyParser = require('body-parser'),
   makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
   {maskErrors} = require('graphql-errors'),
   {promisify} = require('util'),
-  readFile = promisify(require("fs").readFile),
-  {configureAuth} = require('./src/modules/auth');
+  readFile = promisify(require("fs").readFile);
 
-const logger = require('./utils.js').logger;
+const {createImgServerAsync} = require('./imageUpload.js'),
+  {configureAuth, initSchema} = require('./src/modules/auth'),
+  Resolvers = require('./resolvers.js'),
+  logger = require('./utils.js').logger;
 
 // subscriptions setup
 const http = require('http'),
@@ -38,6 +38,7 @@ const configureSession = (app) => {
   app.use(session({
     store: sessionStore,
     secret: config.cookie.secret,
+    saveUninitialized: true,
     resave: false,
     cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 1 month
     name: 'api.sid',
@@ -49,7 +50,10 @@ function createHttpServerAsync(config) {
   let app = express();
   let httpServer = http.createServer(app);
 
-  return readFile('schema.graphql', 'utf8')
+  return initSchema()
+    .then(() => {
+      return readFile('schema.graphql', 'utf8');
+    })
     .then((contents) => {
       const schema = makeExecutableSchema({
         typeDefs: contents,
@@ -110,9 +114,6 @@ function createHttpServerAsync(config) {
       logger.info(`SM GraphQL is running on ${config.port} port...`);
 
       return httpServer;
-    })
-    .catch((err) => {
-      logger.error(`Failed to init http server: ${err}`);
     })
 }
 

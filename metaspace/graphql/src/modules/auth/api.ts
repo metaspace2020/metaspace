@@ -3,17 +3,20 @@ import {callbackify} from 'util';
 import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
-import config from '../../utils/config';
 import * as JwtSimple from 'jwt-simple';
+
+import config from '../../utils/config';
 import {
-  createResetPasswordToken,
+  sendResetPasswordToken,
   createUser,
   DbUser,
   findUserByEmail,
   findUserByGoogleId,
   findUserById,
-  resetPassword, verifyEmail,
-} from './db';
+  resetPassword,
+  verifyEmail,
+  verifyPassword
+} from './db-user';
 
 const getUserFromRequest = (req: Request): DbUser | null => {
   const user = (req as any).cookieUser;
@@ -33,9 +36,9 @@ const configurePassport = (app: Express) => {
   }));
   app.use(Passport.session());
 
-  Passport.serializeUser<DbUser, string>(callbackify( async (user: DbUser) => user.id));
+  Passport.serializeUser<DbUser, number>(callbackify( async (user: DbUser) => user.id));
 
-  Passport.deserializeUser<DbUser | false, string>(callbackify(async (id: string) => {
+  Passport.deserializeUser<DbUser | false, number>(callbackify(async (id: number) => {
     return await findUserById(id) || false;
   }));
 
@@ -45,7 +48,7 @@ const configurePassport = (app: Express) => {
   });
   app.get('/api_auth/signout', preventCache, (req, res) => {
     req.logout();
-    res.redirect('/')
+    res.redirect('/');
   });
 };
 
@@ -111,7 +114,7 @@ const configureLocalAuth = (app: Express) => {
     },
     callbackify(async (username: string, password: string) => {
       const user = await findUserByEmail(username);
-      return user && user.password === password ? user : false;
+      return user && await verifyPassword(password, user.hash) ? user : false;
     })
   ));
 
@@ -198,9 +201,7 @@ const configureResetPassword = (app: Express) => {
   app.post('/api_auth/sendpasswordresettoken', async (req, res, next) => {
     try {
       const { email } = req.body;
-      const token = await createResetPasswordToken(email);
-      // TODO: Send email
-      console.log(`${config.web_public_url}/#/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
+      await sendResetPasswordToken(email);
       res.send(true);
     } catch (err) {
       next(err);

@@ -84,6 +84,12 @@ config.slack.channel = "{{ sm_graphql_slack_channel }}";
 config.jwt = {};
 config.jwt.secret = "{{ sm_graphql_jwt_secret }}";
 
+config.aws = {
+  aws_access_key_id: "{{ sm_graphql_aws_access_key_id }}",
+  aws_secret_access_key: "{{ sm_graphql_aws_secret_access_key }}",
+  aws_region: "{{ sm_graphql_aws_region }}"
+};
+
 config.features = {{ sm_graphql_features | to_json }};
 
 module.exports = config;

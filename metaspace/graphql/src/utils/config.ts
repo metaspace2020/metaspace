@@ -70,6 +70,11 @@ export interface Config {
   features: {
     newAuth: boolean;
   };
+  aws:  {
+    aws_access_key_id: string;
+    aws_secret_access_key: string;
+    aws_region: string;
+  };
 }
 
 const _config = config as any as (Config & IConfig);
