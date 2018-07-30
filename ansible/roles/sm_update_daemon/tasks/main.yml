@@ -1,5 +1,10 @@
 ---
 
 - name: Copy sm-update-daemon supervisor config file
-  template: src=sm-update-daemon.supervisor.j2 dest=/etc/supervisor/sm-update-daemon.supervisor
+  template: src=sm-update-daemon.supervisor.j2 dest=/etc/supervisor/{{ sm_update_daemon_app_name }}.supervisor
             mode=0600 owner=ubuntu group=ubuntu
+
+- name: Update and restart supervisor app
+  supervisorctl:
+    name: "{{ sm_update_daemon_app_name }}"
+    state: restarted

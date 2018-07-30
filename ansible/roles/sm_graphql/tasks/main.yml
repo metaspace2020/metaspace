@@ -6,6 +6,10 @@
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
 
+- name: Re-compile and re-install nodejs binaries
+  command: npm rebuild --update-binary bcrypt
+  when: sm_graphql_update_binary
+
 - name: Dereference metadata schema
   shell: node deref_schema.js > metadata_schema.json
   args:
@@ -34,5 +38,10 @@
   file: path={{ sm_graphql_home }}/logs state=directory mode=0755
 
 - name: Copy supervisor config file
-  template: src=sm-graphql.supervisor.j2 dest=/etc/supervisor/sm-graphql.supervisor
+  template: src=sm-graphql.supervisor.j2 dest=/etc/supervisor/{{ sm_graphql_app_name }}.supervisor
             mode=0600 owner=ubuntu group=ubuntu
+
+- name: Update and restart supervisor app
+  supervisorctl:
+    name: "{{ sm_graphql_app_name }}"
+    state: restarted

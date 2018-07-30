@@ -1,6 +1,6 @@
 # -*- conf -*-
 
-[program:sm-graphql]
+[program:{{ sm_graphql_app_name }}]
 process_name = {{ sm_graphql_app_name }}
 environment = NODE_ENV="production"
 directory = {{ sm_graphql_home }}

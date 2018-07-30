@@ -12,11 +12,16 @@
   args:
     chdir: "{{ sm_ansible_home }}/aws"
 
+- name: Make sure {{ sm_ansible_home }}/aws/logs exists
+  become: yes
+  file: path={{ sm_ansible_home }}/aws/logs owner=ubuntu group=ubuntu state=directory mode=0755
+
 - name: Supervisord config for the cluster_auto_start_daemon
   template: src=sm-cluster-autostart-daemon.supervisor.j2
             dest=/etc/supervisor/sm-cluster-autostart-daemon.supervisor
             owner=ubuntu group=ubuntu mode=0600
 
-- name: Make sure {{ sm_ansible_home }}/aws/logs exists
-  become: yes
-  file: path={{ sm_ansible_home }}/aws/logs owner=ubuntu group=ubuntu state=directory mode=0755
+- name: Update and restart supervisor app
+  supervisorctl:
+    name: "{{ sm_cluster_autostart_app_name }}"
+    state: restarted

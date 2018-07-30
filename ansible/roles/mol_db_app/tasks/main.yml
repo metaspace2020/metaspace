@@ -8,9 +8,14 @@
   template: src=/tmp/local.ini.template dest={{ mol_db_home }}/conf/local.ini
             owner=ubuntu group=ubuntu mode=0600
 
+- name: Make sure that a directory for logs exists
+  file: path={{ mol_db_home }}/logs state=directory mode=0755
+
 - name: Copy supervisor config file
   template: src=mol-db.supervisor.j2 dest=/etc/supervisor/{{ mol_db_app_name }}.supervisor
             mode=0600 owner=ubuntu group=ubuntu
 
-- name: Make sure that a directory for logs exists
-  file: path={{ mol_db_home }}/logs state=directory mode=0755
+- name: Update and restart supervisor app
+  supervisorctl:
+    name: "{{ mol_db_app_name }}"
+    state: restarted
