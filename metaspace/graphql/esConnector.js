@@ -177,8 +177,13 @@ module.exports.esCountResults = async function(args, docType, user) {
 
 const fieldEnumToSchemaPath = {
   DF_INSTITUTION: datasetFilters.institution.esField,
-  DF_SUBMITTER_FIRST_NAME: datasetFilters.submitter.esField + '.First_Name',
-  DF_SUBMITTER_SURNAME: datasetFilters.submitter.esField + '.Surname',
+  DF_SUBMITTER_NAME: {
+    script: {
+      // NOTE: In elasticsearch 6, "inline" is replaced with "source"
+      inline: `doc['${datasetFilters.submitter.esField}.First_Name'].value + ' ' + doc['${datasetFilters.submitter.esField}.Surname'].value`,
+      lang: "painless",
+    }
+  },
   DF_POLARITY: datasetFilters.polarity.esField,
   DF_ION_SOURCE: datasetFilters.ionisationSource.esField,
   DF_ANALYZER_TYPE: datasetFilters.analyzerType.esField,
@@ -195,7 +200,8 @@ function addTermAggregations(requestBody, fields) {
   for (let i = fields.length - 1; i >= 0; --i) {
     const f = fields[i], ef = esFields[i];
     // TODO introduce max number of groups and use sum_other_doc_count?
-    let tmp = { aggs: { [f]: { terms: { field: ef, size: 1000 } } } };
+    const terms = typeof ef === 'string' ? { field: ef, size: 1000 } : ef;
+    let tmp = { aggs: { [f]: { terms } } };
 
     if (aggregations)
       tmp.aggs[f] = Object.assign(aggregations, tmp.aggs[f]);

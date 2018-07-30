@@ -89,6 +89,8 @@ function baseDatasetQuery() {
 
 const Resolvers = {
   Person: {
+    // FIXME: Using id = name here until we have actual IDs
+    id(obj) { return [obj.First_Name, obj.Surname].join('|||'); },
     name(obj) { return [obj.First_Name, obj.Surname].filter(n => n).join(' '); },
     email(obj) { return obj.Email; }
   },
@@ -147,6 +149,23 @@ const Resolvers = {
       }).concat(config.defaults.adducts['+'].map(a => {
         return {adduct: a, charge: 1};
       }));
+    },
+
+    submitterSuggestions(_, { query }, {user}) {
+      const schemaPath = 'Submitted_By.Submitter';
+      const p1 = schemaPath + '.First_Name',
+        p2 = schemaPath + '.Surname',
+        f1 = getPgField(p1),
+        f2 = getPgField(p2);
+      const q = db.from(pgDatasetsViewableByUser(user))
+                  .distinct(db.raw(`${f1} as name, ${f2} as surname`))
+                  .whereRaw(`${f1} ILIKE ? OR ${f2} ILIKE ?`, ['%' + query + '%', '%' + query + '%']);
+      logger.info(q.toString());
+      return q.orderBy('name', 'asc').orderBy('surname', 'asc')
+              .then(results => results.map(r => ({
+                id: [r.name, r.surname].join('|||'),
+                name: [r.name, r.surname].filter(n => n).join(' '),
+              })))
     },
 
     async molecularDatabases(_, args, {user}) {

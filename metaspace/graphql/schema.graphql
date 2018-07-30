@@ -57,7 +57,7 @@ type Dataset {
   name: String!
 
   institution: String
-  submitter: User!
+  submitter: Person!
   group: Group
   principalInvestigator: Person
 
@@ -174,7 +174,6 @@ input AnnotationFilter {
   sumFormula: String
   adduct: String
 }
-
 
 input DatasetFilter {
   # list of IDs separated by '|'

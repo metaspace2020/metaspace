@@ -32,9 +32,9 @@ export const fetchOptionListsQuery = gql`{
   maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "", limit: 1000)
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
   molecularDatabases: molecularDatabases(hideDeprecated: false){name, default}
-  submitterNames: peopleSuggestions(role: SUBMITTER, query: "") {
+  submitterNames: submitterSuggestions(query: "") {
+    id
     name
-    surname
   }
   adducts: adductSuggestions{adduct, charge}
 }`;
@@ -54,11 +54,9 @@ export const metadataExportQuery = gql`
       institution
       submitter {
         name
-        surname
       }
       principalInvestigator {
         name
-        surname
       }
       organism
       organismPart
