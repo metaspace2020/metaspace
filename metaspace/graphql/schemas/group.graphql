@@ -5,13 +5,13 @@ type Group {
   members: [UserGroup!]    # null if current user is not allowed to see
 }
 
-type CreateGroupInput {
+input CreateGroupInput {
   name: String!
   shortName: String!
   principalInvestigatorEmail: String!
 }
 
-type UpdateGroupInput {
+input UpdateGroupInput {
   name: String
   shortName: String
 }
@@ -63,9 +63,4 @@ type Mutation {
   inviteUserToGroup(groupId: ID!, email: String!): UserGroup!
   acceptGroupInvitation(groupId: ID!, bringDatasets: [ID!]!): UserGroup!
   # Group can reject user with `removeUserFromGroup`
-}
-
-schema {
-  query: Query
-  mutation: Mutation
 }

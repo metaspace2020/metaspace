@@ -89,8 +89,7 @@ function baseDatasetQuery() {
 
 const Resolvers = {
   Person: {
-    name(obj) { return obj.First_Name; },
-    surname(obj) { return obj.Surname; },
+    name(obj) { return [obj.First_Name, obj.Surname].filter(n => n).join(' '); },
     email(obj) { return obj.Email; }
   },
 
@@ -148,20 +147,6 @@ const Resolvers = {
       }).concat(config.defaults.adducts['+'].map(a => {
         return {adduct: a, charge: 1};
       }));
-    },
-
-    peopleSuggestions(_, { role, query }, {user}) {
-      const schemaPath = 'Submitted_By.' + (role == 'PI' ? 'Principal_Investigator' : 'Submitter');
-      const p1 = schemaPath + '.First_Name',
-            p2 = schemaPath + '.Surname',
-            f1 = getPgField(p1),
-            f2 = getPgField(p2);
-      const q = db.from(pgDatasetsViewableByUser(user))
-                  .distinct(db.raw(`${f1} as name, ${f2} as surname`))
-                  .whereRaw(`${f1} ILIKE ? OR ${f2} ILIKE ?`, ['%' + query + '%', '%' + query + '%']);
-      logger.info(q.toString());
-      return q.orderBy('name', 'asc').orderBy('surname', 'asc')
-              .then(results => results.map(r => ({First_Name: r.name, Surname: r.surname, Email: ''})))
     },
 
     async molecularDatabases(_, args, {user}) {

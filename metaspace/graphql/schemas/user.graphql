@@ -7,7 +7,7 @@ type User {
   primaryGroup: UserGroup
 }
 
-type UpdateUserInput {
+input UpdateUserInput {
   id: ID                  # For admins
   name: String
   role: String
@@ -16,17 +16,12 @@ type UpdateUserInput {
 }
 
 type Query {
-  currentUser(): User!
+  currentUser: User!
   user(id: ID!): User                # For admins
   allUsers(query: String): [User!]!  # For admins
 }
 
 type Mutation {
-  updateUser(update: UpdateUserInput!): User!
+  updateUser(update: UpdateUserInput): User!
   deleteUser(id: ID!, deleteDatasets: Boolean!): Boolean!
-}
-
-schema {
-  query: Query
-  mutation: Mutation
 }

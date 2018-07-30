@@ -315,7 +315,7 @@ type Query {
 
   reprocessingNeeded(input: DatasetUpdateInput!): Boolean!
 
-  currentUserLastSubmittedDataset(): Dataset
+  currentUserLastSubmittedDataset: Dataset
 }
 
 type Mutation {
