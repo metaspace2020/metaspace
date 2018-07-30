@@ -7,10 +7,11 @@
           <span class="qq-upload-drop-area-text-selector"></span>
         </div>
         <div class="buttons">
-          <div id="select-files-button" class="qq-upload-button-selector qq-upload-button metasp-button" role="button">
-            Select files
-          </div>
+          <!--<div id="select-files-button" class="qq-upload-button-selector qq-upload-button metasp-button" role="button">-->
+            <!--Select files-->
+          <!--</div>-->
         </div>
+
 
         <span class="qq-drop-processing-selector qq-drop-processing">
           <span>Processing dropped files...</span>
@@ -61,6 +62,7 @@
       </div>
 
     </script>
+    <div ref="cust" v-if="uploadFilenames.length === 0"><span class="chooseFile">Choose</span> or {{dropText()}}</div>
     <div ref="fu" id="fu-container">
     </div>
   </div>
@@ -112,15 +114,22 @@
    },
 
    methods: {
-     // FineUploader template initialization prevents from using Vue.js template features
-     // had to access DOM directly in this method
+
+     dropText() {
+     const multipleFilesAllowed = this.dataTypeConfig.maxFiles > 1;
+     const fileExtensions = this.dataTypeConfig.fileExtensions;
+     const formattedFileTypes = fileExtensions.length > 1 ? `${fileExtensions.slice(0, -1).join(', ')} and ${fileExtensions[fileExtensions.length - 1]}`
+       : fileExtensions[0];
+
+	     return `Drop ${formattedFileTypes} file${multipleFilesAllowed ? 's' : ''} here`
+     },
+
      onDataTypeConfigUpdate() {
-       const multipleFilesAllowed = this.dataTypeConfig.maxFiles > 1;
-       const fileExtensions = this.dataTypeConfig.fileExtensions;
-       const formattedFileTypes = fileExtensions.length > 1 ? `${fileExtensions.slice(0, -1).join(', ')} and ${fileExtensions[fileExtensions.length - 1]}`
-                                                            : fileExtensions[0];
-       document.getElementById('upload-area-container').setAttribute('qq-drop-area-text',
-         `Drop ${formattedFileTypes} file${multipleFilesAllowed ? 's' : ''} here`);
+	     // FineUploader template initialization prevents from using Vue.js template features
+	     // had to access DOM directly in this method
+	     const inputText = this.$refs.cust;
+	     inputText.classList.add('uploader-text');
+	     document.getElementById('upload-area-container').appendChild(inputText)
      },
 
      validate() {
@@ -154,7 +163,10 @@
        this.valid = false;
        this.uuid = uuid();
 
+       console.log(this.$refs.cust)
+
        let options = Object.assign({}, basicOptions, {
+	       button: this.$refs.cust,
          validation: {
            allowedExtensions: this.dataTypeConfig.fileExtensions,
            itemLimit: this.dataTypeConfig.maxFiles
@@ -194,9 +206,13 @@
            mandatory: true, // to make life easier
            params: {'uuid': this.uuid}
          };
+	       options.button = this.$refs.cust;
 
          this.fineUploader = new qq.FineUploader(options);
+
        } else {
+
+	       options.button = document.getElementById('cust');
          options.request = {
            endpoint: `${this.config.aws.s3_bucket}.s3.amazonaws.com`,
            accessKey: this.config.aws.access_key_id,
@@ -239,9 +255,10 @@
  }
 
  .qq-uploader {
+   width: 85%;
    min-height: 50px;
    max-height: 300px;
-   padding: 40px 0;
+   padding: 10px 0;
    margin: 20px 0;
  }
 
@@ -256,5 +273,19 @@
    transform: translateY(-60%);
    margin-left: 20px;
  }
+
+
+  .uploader-text {
+    font-size: 200%;
+    transform: translateY(15%);
+    width: 100%;
+    text-align: center;
+    opacity: 0.25;
+  }
+
+  .chooseFile {
+    text-decoration:underline;
+    text-decoration-style: dashed;
+  }
 
 </style>

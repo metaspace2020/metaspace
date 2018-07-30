@@ -3,21 +3,21 @@
     <div style="position: relative;" v-if="value != null">
       <div id="md-editor-submit">
         <div class="spacer"></div>
-        <div> <el-switch
-          v-model="metaspaceOptions.isPublic"
-          active-text="Public"
-          inactive-text="Private"
-        ></el-switch>
-          <el-popover trigger="hover" placement="top" class="md-editor-public-help">
-            <div>
-              <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>
-              <p><b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>
-            </div>
-            <i slot="reference" class="el-icon-question"></i>
-          </el-popover>
-          <el-button @click="cancel" v-if="datasetId">Cancel</el-button>
-          <el-button type="primary" v-if="enableSubmit" @click="submit">Submit</el-button>
-          <el-button v-else type="primary" disabled :title="disabledSubmitMessage">
+        <div>
+          <!--<el-switch-->
+          <!--v-model="metaspaceOptions.isPublic"-->
+          <!--active-text="Public"-->
+          <!--inactive-text="Private" />-->
+          <!--<el-popover trigger="hover" placement="top" class="md-editor-public-help">-->
+            <!--<div>-->
+              <!--<p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>-->
+              <!--<p><b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>-->
+            <!--</div>-->
+            <!--<i slot="reference" class="el-icon-question"></i>-->
+          <!--</el-popover>-->
+          <el-button @click="cancel" v-if="datasetId" class="el-button__metadata">Cancel</el-button>
+          <el-button type="primary" v-if="enableSubmit" @click="submit" class="el-button__metadata">Submit</el-button>
+          <el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__metadata">
             Submit
           </el-button>
         </div>
@@ -29,13 +29,13 @@
         <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"
                       style="margin-top: 0px"/>
         <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"
-                      style="margin-top: 10px"/>
+                      style="margin-top: 20px"/>
         <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"
-                      style="margin-top: 10px"/>
+                      style="margin-top: 20px"/>
         <form-section v-bind="sectionBinds('Submitted_By')" v-on="sectionEvents('Submitted_By')"
-                      style="margin-top: 10px"/>
+                      style="margin-top: 20px"/>
         <form-section v-bind="sectionBinds('Visibility')" v-on="sectionEvents('Submitted_By')"
-                      style="margin-top: 10px"/>
+                      style="margin-top: 20px"/>
         <metaspace-options-section
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
@@ -434,6 +434,15 @@
 
  .spacer {
    flex-grow:1;
+ }
+
+ .el-button__metadata {
+   position: absolute;
+   padding: 20px 20px;
+   font-size: 150%;
+   margin-top: -36px;
+   right: 5px;
+   top: -52px;
  }
 
  /*.filter-panel-container {*/
