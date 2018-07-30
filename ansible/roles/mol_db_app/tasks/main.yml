@@ -1,0 +1,16 @@
+---
+
+- name: Pull MolDB config from the remote host
+  fetch: src={{ mol_db_home }}/conf/local.ini.template dest=/tmp/local.ini.template
+         flat=yes fail_on_missing=yes
+
+- name: Put MolDB config to ./conf/local.ini
+  template: src=/tmp/local.ini.template dest={{ mol_db_home }}/conf/local.ini
+            owner=ubuntu group=ubuntu mode=0600
+
+- name: Copy supervisor config file
+  template: src=mol-db.supervisor.j2 dest=/etc/supervisor/{{ mol_db_app_name }}.supervisor
+            mode=0600 owner=ubuntu group=ubuntu
+
+- name: Make sure that a directory for logs exists
+  file: path={{ mol_db_home }}/logs state=directory mode=0755

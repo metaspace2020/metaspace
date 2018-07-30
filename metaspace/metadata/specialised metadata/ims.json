@@ -1,32 +1,32 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "id": "https://raw.githubusercontent.com/metaspace2020/metadata/master/ims.json",
-  "title": "Imaging MS Metadata Submission",
-  "description": "Metadata specific to imaging mass spectrometry (imaging MS) as developed in the METASPACE project",
+  "title": "METASPACE metadata for imaging mass spectrometry",
+  "description": "Metadata for imaging mass spectrometry data within the METASPACE knowledge base",
   "type": "object",
   "properties": {
     "Data_Type": {
       "enum":["Imaging MS"]
     },
     "Sample_Preparation": {
-      "description": "Information about how the sample was prepared for imaging",
+      "description": "How the sample was prepared for imaging mass spectrometry",
       "type": "object",
       "required": ["MALDI_Matrix", "MALDI_Matrix_Application"],
       "properties": {
         "MALDI_Matrix": {
-          "description": "The MALDI matrix used (if any)",
+          "description": "MALDI matrix, if used",
           "type": "string",
           "minLength": 1,
           "default": "none"
         },
         "Solvent": {
-          "description": "Solvent used for extract (e.g. for DESI or MALDI matrix solution)",
+          "description": "Solvent used e.g. for DESI or MALDI matrix",
           "type": "string",
           "minLength": 1,
           "default": "none"
         },
         "MALDI_Matrix_Application": {
-          "description": "Method of MALDI matrix application (if any)",
+          "description": "Method of application, if used",
           "type": "string",
           "minLength": 1,
           "default": "none"

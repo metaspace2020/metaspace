@@ -1,0 +1,5 @@
+---
+
+- name: Copy sm-annotate-daemon supervisor config file
+  template: src=sm-annotate-daemon.supervisor.j2 dest=/etc/supervisor/sm-annotate-daemon.supervisor
+            mode=0600 owner=ubuntu group=ubuntu

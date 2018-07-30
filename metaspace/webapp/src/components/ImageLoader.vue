@@ -465,20 +465,24 @@
  }
 
  .image-loader {
+   display: flex;
+   flex-direction: column;
+   align-content: center;
+   justify-content: space-evenly;
+   overflow: hidden;
    cursor: -webkit-grab;
    cursor: grab;
    width: 100%;
-   height: 100%;
    line-height: 0px;
-   display: flex;
-   flex-direction: column;
-   align-self: center;
  }
 
  .image-loader__overlay-text {
    font: 24px 'Roboto', sans-serif;
-   display: inline-block;
-   line-height: 500px;
+   display: block;
+   position: relative;
+   text-align: center;
+   top: 50%;
+   transform: translateY(-50%);
    z-index: 4;
    color: #fff;
    padding: auto;

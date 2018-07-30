@@ -1,4 +1,4 @@
 ---
 
 dependencies:
-#  - role: nodejs
+  - name: metaspace_repo

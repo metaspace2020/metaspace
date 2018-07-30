@@ -3,10 +3,9 @@
     <div class="main-ion-image-container-row1">
         <image-loader :src="annotation.isotopeImages[0].url"
                       :colormap="colormap"
-                      :max-height=500
                       ref="imageLoader"
                       scrollBlock
-                      style="overflow: hidden"
+                      class="image-loader"
                       v-bind="imageLoaderSettings"
                       @zoom="onImageZoom"
                       @move="onImageMove">
@@ -34,12 +33,19 @@
             </colorbar>
             {{ annotation.isotopeImages[0].minIntensity.toExponential(2) }}
 
-            <div class="annot-view__image-download" v-if="browserSupportsDomToImage">
+            <div class="annot-view__image-download">
                 <!-- see https://github.com/tsayen/dom-to-image/issues/155 -->
                 <img src="../../../assets/download-icon.png"
                      width="32px"
                      title="Save visible region in PNG format"
-                     @click="saveImage"/>
+                     @click="saveImage"
+                     v-if="browserSupportsDomToImage"/>
+                <img src="../../../assets/download-icon.png"
+                     width="32px"
+                     style="opacity: 0.3"
+                     title="Your browser is not supported"
+                     @click="showBrowserWarning"
+                     v-else/>
             </div>
         </div>
     </div>
@@ -99,8 +105,16 @@ export default class MainImage extends Vue {
         })
     }
 
+    showBrowserWarning() {
+      this.$alert('Due to technical limitations we are only able to support downloading layered and/or zoomed images' +
+      ' on Chrome and Firefox. As a workaround, it is possible to get a copy of the raw ion image by right-clicking ' +
+      'it and clicking "Save picture as", however this will not take into account your current zoom ' +
+      'settings or show the optical image.');
+    }
+
   get browserSupportsDomToImage(): boolean {
-      return window.navigator.userAgent.includes('Chrome');
+      return window.navigator.userAgent.includes('Chrome') ||
+          window.navigator.userAgent.includes('Firefox');
     }
 
     onOpacityInput(val: number): void {

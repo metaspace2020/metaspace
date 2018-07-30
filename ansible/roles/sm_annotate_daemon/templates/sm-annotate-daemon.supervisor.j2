@@ -1,0 +1,12 @@
+# -*- conf -*-
+
+[program:sm-annotate-daemon]
+process_name = sm-annotate-daemon
+directory = {{ sm_home }}
+environment = SPARK_HOME="{{ spark_home }}",PYTHONPATH="{{ spark_home }}/python",PYSPARK_PYTHON="{{ miniconda_prefix }}/envs/sm/bin/python"
+command = bash scripts/run.sh scripts/run_sm_daemon.py --name=annotate
+redirect_stderr = true
+stdout_logfile = {{ sm_home }}/logs/sm-annotate-daemon.log
+numprocs = 1
+numprocs_start = 8000
+startretries=5

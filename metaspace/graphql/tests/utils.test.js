@@ -3,32 +3,37 @@
  */
 process.env.NODE_ENV = 'test';
 
-const {generateProcessingConfig} = require('../utils');
+const {addProcessingConfig} = require('../utils');
 
 describe('Generate proper config given metadata', () => {
-  it('should return config with multiple molecular databases', (done) => {
-    let metadata = {
-      'Submitted_By': {
-        'Submitter': {
-          'First_Name': 'Vitaly', 'Surname': 'Kovalev', 'Email': 'kovalev@embl.de'
+
+  test('should return config with multiple molecular databases', () => {
+    const ds = {
+      metadata: {
+        'Submitted_By': {
+          'Submitter': {
+            'First_Name': 'Vitaly', 'Surname': 'Kovalev', 'Email': 'kovalev@embl.de'
+          },
+          'Principal_Investigator': {
+            'First_Name': '', 'Surname': '', 'Email': ''
+          },
+          'Institution': 'EMBL'
         },
-        'Principal_Investigator': {
-          'First_Name': '', 'Surname': '', 'Email': ''
-        },
-        'Institution': 'EMBL'
+        'MS_Analysis': {
+          'Polarity': 'Positive',
+          'Ionisation_Source': 'MALDI',
+          'Detector_Resolving_Power': {
+            'Resolving_Power': 80000, 'mz': 700
+          },
+          'Analyzer': 'FTICR'
+        }
       },
-      'MS_Analysis': {
-        'Polarity': 'Positive',
-        'Ionisation_Source': 'MALDI',
-        'Detector_Resolving_Power': {
-          'Resolving_Power': 80000, 'mz': 700
-        },
-        'Analyzer': 'FTICR'
-      }};
-    
-    let config = generateProcessingConfig({metadata: metadata, molDBs: ['HMDB-v2.5', 'HMDB-v4']});
+      molDBs: ['HMDB-v2.5', 'HMDB-v4']
+    };
+
+    addProcessingConfig(ds);
     let expected = {
-      'databases': [{'name': 'HMDB-v2.5'}, {'name': 'HMDB-v4'}],
+      'databases': ['HMDB-v2.5', 'HMDB-v4'],
       'image_generation': {
         'do_preprocessing': false,
         'nlevels': 30,
@@ -43,34 +48,36 @@ describe('Generate proper config given metadata', () => {
       }
     };
     
-    expect(config).toMatchObject(expected);
-  
-    done();
+    expect(ds.config).toMatchObject(expected);
   });
   
-  it('should return config with a single molecular database', (done) => {
-    let metadata = {
-      'Submitted_By': {
-        'Submitter': {
-          'First_Name': 'Vitaly', 'Surname': 'Kovalev', 'Email': 'kovalev@embl.de'
+  it('should return config with a single molecular database', () => {
+    const ds = {
+      metadata: {
+        'Submitted_By': {
+          'Submitter': {
+            'First_Name': 'Vitaly', 'Surname': 'Kovalev', 'Email': 'kovalev@embl.de'
+          },
+          'Principal_Investigator': {
+            'First_Name': '', 'Surname': '', 'Email': ''
+          },
+          'Institution': 'EMBL'
         },
-        'Principal_Investigator': {
-          'First_Name': '', 'Surname': '', 'Email': ''
-        },
-        'Institution': 'EMBL'
+        'MS_Analysis': {
+          'Polarity': 'Positive',
+          'Ionisation_Source': 'MALDI',
+          'Detector_Resolving_Power': {
+            'Resolving_Power': 80000, 'mz': 700
+          },
+          'Analyzer': 'FTICR'
+        }
       },
-      'MS_Analysis': {
-        'Polarity': 'Positive',
-        'Ionisation_Source': 'MALDI',
-        'Detector_Resolving_Power': {
-          'Resolving_Power': 80000, 'mz': 700
-        },
-        'Analyzer': 'FTICR'
-      }};
+      molDBs: ['HMDB-v4']
+    };
     
-    let config = generateProcessingConfig({metadata: metadata, molDBs: ['HMDB-v4']});
+    addProcessingConfig(ds);
     let expected = {
-      'databases': [{'name': 'HMDB-v4'}],
+      'databases': ['HMDB-v4'],
       'image_generation': {
         'do_preprocessing': false,
         'nlevels': 30,
@@ -85,9 +92,7 @@ describe('Generate proper config given metadata', () => {
       }
     };
     
-    expect(config).toMatchObject(expected);
-    
-    done();
+    expect(ds.config).toMatchObject(expected);
   });
 
   // it('should return config with custom adducts', (done) => {

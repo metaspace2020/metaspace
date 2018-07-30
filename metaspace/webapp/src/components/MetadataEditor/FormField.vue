@@ -21,6 +21,7 @@
       :placeholder="placeholder"
       :trigger-on-focus="true"
       :fetch-suggestions="fetchSuggestionsAndTestWidth"
+      v-bind="$attrs"
     />
 
     <el-input
@@ -30,6 +31,7 @@
       :value="value"
       :required="required"
       :placeholder="placeholder"
+      v-bind="$attrs"
     />
 
     <el-input
@@ -38,13 +40,15 @@
       :value="value"
       :required="required"
       :placeholder="placeholder"
+      v-bind="$attrs"
     />
 
     <el-select
       v-else-if="type === 'select'"
       @input="onInput"
       :value="value"
-      :required="required">
+      :required="required"
+      v-bind="$attrs">
       <el-option v-for="opt in options" :value="opt" :label="opt" :key="opt" />
     </el-select>
 
@@ -54,7 +58,8 @@
       @input="onInput"
       :value="value"
       :required="required"
-      multiple>
+      multiple
+      v-bind="$attrs">
       <el-option v-for="opt in options" :value="opt" :label="opt" :key="opt" />
     </el-select>
 
@@ -65,6 +70,7 @@
       :fields="fields"
       :required="required"
       :placeholder="placeholder"
+      v-bind="$attrs"
     />
 
     <person-input
@@ -75,6 +81,7 @@
       :disableEmail="name === 'Submitter' /* FIXME: Remove this */"
       :required="required"
       :fetchSuggestions="fetchSuggestions"
+      v-bind="$attrs"
     />
 
     <detector-resolving-power-input
@@ -83,6 +90,7 @@
       :value="value"
       :error="typeof error !== 'string' ? error : null"
       :required="required"
+      v-bind="$attrs"
     />
 
     <div v-else style="color: red">Unrecognized form field type: {{type}}</div>
@@ -100,6 +108,7 @@
   import { FetchSuggestions, FetchSuggestionsCallback } from 'element-ui/types/autocomplete';
 
   @Component({
+    inheritAttrs: false,
     components: {
       TableInput,
       PersonInput,

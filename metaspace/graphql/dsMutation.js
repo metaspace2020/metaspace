@@ -5,14 +5,12 @@ const jsondiffpatch = require('jsondiffpatch'),
   {UserError} = require('graphql-errors'),
   _ = require('lodash');
 
-const {db, logger, fetchDS, assertUserCanEditDataset,
+const {logger, fetchDS, assertUserCanEditDataset,
     addProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json');
 
-let {molecularDatabases} = 1;
-
-ajv = new Ajv({allErrors: true});
-validator = ajv.compile(metadataSchema);
+const ajv = new Ajv({allErrors: true});
+const validator = ajv.compile(metadataSchema);
 
 function isEmpty(obj) {
   if (!obj)
@@ -82,16 +80,16 @@ function processingSettingsChanged(ds, updDS) {
     metaDelta = jsondiffpatch.diff(ds.metadata, updDS.metadata),
     metaDiff = jsondiffpatch.formatters.jsonpatch.format(metaDelta);
 
-  let dbUpd = false, procSettingsUpd = false;
+  let newDB = false, procSettingsUpd = false;
   for (let diffObj of configDiff) {
-    if (diffObj.op !== 'move') {
-      if (diffObj.path.startsWith('/databases'))
-        dbUpd = true;
-      else
+    if (diffObj.op !== 'move') {  // ignore permuations in arrays
+      if (diffObj.path.startsWith('/databases') && diffObj.op == 'add')
+        newDB = true;
+      if (!diffObj.path.startsWith('/databases'))
         procSettingsUpd = true;
     }
   }
-  return {dbUpd: dbUpd, procSettingsUpd: procSettingsUpd,
+  return {newDB: newDB, procSettingsUpd: procSettingsUpd,
     configDiff: configDiff, metaDiff: metaDiff}
 }
 
@@ -107,7 +105,14 @@ async function smAPIRequest(datasetId, uri, body) {
 
   const respText = await resp.text();
   if (!resp.ok) {
-    throw new UserError(`smAPIRequest: ${respText}`);
+    const err = JSON.parse(respText);
+    if (err.status == 'dataset_busy')
+      throw new UserError(JSON.stringify({
+        'type': 'dataset_busy',
+        'hint': `Dataset is busy. Try again later.`
+      }));
+    else
+      throw new UserError(`smAPIRequest: ${respText}`);
   }
   else {
     logger.info(`Successful ${uri}: ${datasetId}`);
@@ -123,6 +128,7 @@ function updateObject(obj, upd) {
 }
 
 module.exports = {
+  processingSettingsChanged,
   Mutation: {
     create: async (args, user) => {
       const {id, input, priority} = args;
@@ -149,6 +155,7 @@ module.exports = {
           mol_dbs: input.molDBs,
           adducts: input.adducts,
           priority: priority,
+          email: user.email,
         };
         if (id !== undefined)
           body.id = id;
@@ -159,7 +166,7 @@ module.exports = {
       }
     },
     update: async (args, user) => {
-      const {id, input, reprocess, delFirst, priority} = args;
+      const {id, input, reprocess, delFirst, force, priority} = args;
       try {
         let ds = await fetchDS({id});
         if (ds === undefined) {
@@ -175,8 +182,8 @@ module.exports = {
         validateMetadata(updDS.metadata);
         addProcessingConfig(updDS);
 
-        const {dbUpd, procSettingsUpd} = await processingSettingsChanged(ds, updDS);
-        const reprocessingNeeded = dbUpd || procSettingsUpd;
+        const {newDB, procSettingsUpd} = await processingSettingsChanged(ds, updDS);
+        const reprocessingNeeded = newDB || procSettingsUpd;
 
         const body = {
           id: updDS.id,
@@ -188,8 +195,9 @@ module.exports = {
           is_public: updDS.isPublic,
           mol_dbs: updDS.molDBs,
           adducts: updDS.adducts,
+          del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
           priority: priority,
-          del_first: procSettingsUpd || delFirst  // delete old results if processing settings changed
+          force: force
         };
 
         if (reprocess) {

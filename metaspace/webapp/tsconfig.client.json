@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "lib": ["ES2015", "ESNext", "DOM"],
+    "module": "ESNext"
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.spec.ts"
+  ]
+}

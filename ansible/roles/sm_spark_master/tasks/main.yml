@@ -16,16 +16,6 @@
   file: dest=/opt/dev state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
 
-- name: Pull metaspace sources from the repository
-  git:
-    repo: "{{ metaspace_repo_url }}"
-    version: "{{ metaspace_branch }}"
-    dest: "{{ metaspace_home }}"
-    update: yes
-    force: yes
-  register: git_deploy
-  until: git_deploy | succeeded
-
 - name: Create /opt/data/sm_data directory
   file: dest=/opt/data/sm_data state=directory owner=ubuntu group=ubuntu mode=0700
   become: yes
@@ -67,7 +57,3 @@
     - conda
     - activate
     - deactivate
-
-- name: Copy sm-daemon supervisor config file
-  template: src=sm-daemon.supervisor.j2 dest=/etc/supervisor/sm-daemon.supervisor
-            mode=0600 owner=ubuntu group=ubuntu

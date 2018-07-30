@@ -1,11 +1,6 @@
 ---
 
-- name: Install Redis
-  become: yes
-  apt: name=redis-server state=latest
-
-#- name: Clean sm-web-app folder
-#  file: name={{ sm_webapp_home}} state=absent
+- debug: var=sm_webapp_admin_emails
 
 - name: Pull config template from the remote host
   fetch: src={{ sm_webapp_home }}/conf.js.template dest=/tmp/conf.js.template
@@ -23,13 +18,25 @@
   template: src=/tmp/clientConfig.json.template dest={{ sm_webapp_home }}/src/clientConfig.json
             owner=ubuntu group=ubuntu mode=0600
 
-- name: Make sure that the logs directory exists
+- name: Make sure logs directory exists
   file: path={{ sm_webapp_home }}/logs state=directory mode=0755
 
-- name: Create upload directory
+- name: Make sure upload directory exists
   become: yes
   file: path={{ sm_webapp_upload_destination }} state=directory mode=0755 owner=ubuntu group=ubuntu
   when: sm_webapp_upload_destination != 's3'
+
+- name: Install sm-web-app dependencies
+  shell: yarn install
+  args:
+    chdir: "{{ sm_webapp_home }}"
+    executable: /bin/bash
+
+- name: Run build app
+  shell: yarn run build
+  args:
+    chdir: "{{ sm_webapp_home }}"
+    executable: /bin/bash
 
 - name: Copy supervisor config file
   template: src=sm-web-app.supervisor.j2 dest=/etc/supervisor/sm-web-app.supervisor

@@ -50,7 +50,7 @@ queue.then(function(conn) {
   return ch.assertQueue(rabbitmqChannel).then(function(ok) {
     return ch.consume(rabbitmqChannel, function(msg) {
       const {ds_id, status} = JSON.parse(msg.content.toString());
-      if (['QUEUED', 'STARTED', 'FINISHED', 'FAILED', 'DELETED'].indexOf(status) >= 0)
+      if (['QUEUED', 'ANNOTATING', 'FINISHED', 'FAILED', 'DELETED'].indexOf(status) >= 0)
         publishDatasetStatusUpdate(ds_id, status);
       ch.ack(msg);
     });

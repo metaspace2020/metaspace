@@ -104,7 +104,11 @@
             "handlers": ["console_debug"],
             "level": "INFO"
         },
-        "daemon": {
+        "update-daemon": {
+            "handlers": ["console_debug"],
+            "level": "INFO"
+        },
+        "annotate-daemon": {
             "handlers": ["console_debug"],
             "level": "INFO"
         }

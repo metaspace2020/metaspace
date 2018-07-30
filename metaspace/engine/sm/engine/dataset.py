@@ -16,7 +16,10 @@ class DatasetStatus(object):
     QUEUED = 'QUEUED'
 
     """ The processing is in progress """
-    STARTED = 'STARTED'
+    ANNOTATING = 'ANNOTATING'
+
+    """ The records are being updated because of changed metadata """
+    INDEXING = 'INDEXING'
 
     """ The processing/reindexing finished successfully (most common) """
     FINISHED = 'FINISHED'
@@ -24,11 +27,8 @@ class DatasetStatus(object):
     """ An error occurred during processing """
     FAILED = 'FAILED'
 
-    """ The records are being updated because of changed metadata """
-    INDEXING = 'INDEXING'
-
     """ The dataset has been deleted """
-    DELETED = 'DELETED'
+    DELETED = 'DELETED'  # only for the status queue
 
 
 class Dataset(object):

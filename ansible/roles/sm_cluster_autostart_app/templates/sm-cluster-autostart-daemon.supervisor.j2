@@ -1,0 +1,10 @@
+# -*- conf -*-
+
+[program:sm-cluster-autostart]
+process_name = sm-cluster-autostart
+directory = {{ sm_ansible_home }}/aws
+command = {{ sm_cluster_autostart_python }} cluster_auto_start_daemon.py --ansible-config={{ stage }}/group_vars/all.yml --interval=10
+redirect_stderr = true
+stdout_logfile = {{ sm_ansible_home }}/aws/logs/sm-cluster-autostart-daemon.log
+numprocs = 1
+numprocs_start = 7000

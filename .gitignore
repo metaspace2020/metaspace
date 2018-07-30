@@ -44,3 +44,5 @@ dist
 # Other files that should usually not be committed
 *.pkl
 *.zip
+
+ansible/aws/env
