@@ -15,11 +15,9 @@ const knexAdmin = require('knex')({
   client: 'postgres',
   connection: {
     host     : 'localhost',
-    user     : 'sm',
-    password : 'password',
+    user     : 'postgres',
     database : 'postgres'
-  },
-  searchPath: ['graphql']
+  }
 });
 
 describe('Database operations with user', () => {
