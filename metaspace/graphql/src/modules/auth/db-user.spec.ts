@@ -25,8 +25,8 @@ describe('Database operations with user', () => {
   beforeAll(async () => {
     console.log('> beforeAll');
     console.log(config.db);
-    await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
-    await knexAdmin.raw(`CREATE DATABASE ${config.db.database}`);
+    await knexAdmin.raw(`DROP DATABASE IF EXISTS ${config.db.database}`);
+    await knexAdmin.raw(`CREATE DATABASE ${config.db.database} OWNER ${config.db.user}`);
     await initSchema();
   });
 
