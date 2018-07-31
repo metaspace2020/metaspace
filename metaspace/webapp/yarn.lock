@@ -3018,9 +3018,9 @@ compression@^1.5.2:
     on-headers "~1.0.1"
     vary "~1.1.0"
 
-"concat-files@https://registry.npmjs.org/concat-files/-/concat-files-0.1.1.tgz":
+concat-files@^0.1.1:
   version "0.1.1"
-  resolved "https://registry.npmjs.org/concat-files/-/concat-files-0.1.1.tgz#7016ae60278ba3f6b0b561368fa211160e556db5"
+  resolved "https://registry.yarnpkg.com/concat-files/-/concat-files-0.1.1.tgz#7016ae60278ba3f6b0b561368fa211160e556db5"
   dependencies:
     async "~0.2.6"
 
@@ -8458,7 +8458,7 @@ mixin-object@^2.0.1:
     for-in "^0.1.3"
     is-extendable "^0.1.1"
 
-mkdirp@0.5.x, "mkdirp@>=0.5 0", mkdirp@^0.5.0, mkdirp@^0.5.1, "mkdirp@https://registry.npmjs.org/mkdirp/-/mkdirp-0.5.1.tgz", mkdirp@~0.5.0, mkdirp@~0.5.1:
+mkdirp@0.5.x, "mkdirp@>=0.5 0", mkdirp@^0.5.0, mkdirp@^0.5.1, mkdirp@~0.5.0, mkdirp@~0.5.1:
   version "0.5.1"
   resolved "https://registry.npmjs.org/mkdirp/-/mkdirp-0.5.1.tgz#30057438eac6cf7f8c4767f38648d6697d75c903"
   dependencies:
@@ -8523,13 +8523,13 @@ ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
 
-"multer@https://registry.npmjs.org/multer/-/multer-1.3.0.tgz":
-  version "1.3.0"
-  resolved "https://registry.npmjs.org/multer/-/multer-1.3.0.tgz#092b2670f6846fa4914965efc8cf94c20fec6cd2"
+multer@^1.3.0:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/multer/-/multer-1.3.1.tgz#c3fb3b35f50c7eefe873532f90d3dde02ce6e040"
   dependencies:
     append-field "^0.1.0"
     busboy "^0.2.11"
-    concat-stream "^1.5.0"
+    concat-stream "^1.5.2"
     mkdirp "^0.5.1"
     object-assign "^3.0.0"
     on-finished "^2.3.0"
@@ -8966,7 +8966,7 @@ number-is-nan@^1.0.0:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/number-is-nan/-/number-is-nan-1.0.1.tgz#097b602b53422a522c1afb8790318336941a011d"
 
-numeric@^1.2.6, "numeric@https://registry.npmjs.org/numeric/-/numeric-1.2.6.tgz":
+numeric@^1.2.6:
   version "1.2.6"
   resolved "https://registry.npmjs.org/numeric/-/numeric-1.2.6.tgz#765b02bef97988fcf880d4eb3f36b80fa31335aa"
 
