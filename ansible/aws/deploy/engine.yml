@@ -13,8 +13,8 @@
   user: ubuntu
   gather_facts: false
 
-  tasks:
-    - import_tasks: ../../deploy_tasks/sm_engine.yml
+  roles:
+    - role: sm_engine
   tags: [slave]
 
 
@@ -31,7 +31,8 @@
     es_user: "{{ sm_es_user }}"
     es_password: "{{ sm_es_password }}"
 
-  tasks:
-    - import_tasks: ../../deploy_tasks/sm_annotate_daemon.yml
+  roles:
+    - role: supervisorctl
+    - role: sm_annotate_daemon
 
   tags: [master]

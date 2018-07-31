@@ -2,6 +2,8 @@
 
 stage: STAGE_NAME  # prod/stage/dev
 
+web_host: DOMAIN_NAME or IP
+
 metaspace_repo_url: https://github.com/metaspace2020/metaspace
 metaspace_branch: master
 metaspace_home: /opt/dev/metaspace
@@ -39,13 +41,15 @@ miniconda_python: 3
 miniconda_prefix: /opt/dev/miniconda3
 miniconda_env:
   name: sm
+  channels:
+    - conda-forge
   dependencies:
     - python=3.6
     - nomkl
-    - numpy=1.11.2
-    - scipy=0.18.1
-    - matplotlib=2
-    - pandas=0.22.0
+    - numpy>=1.11.2
+    - scipy>=0.18.1
+    - matplotlib>=2
+    - pandas>=0.22
     - cffi
     - libgcc
     - psycopg2=2.7.1
@@ -84,6 +88,8 @@ sm_default_adducts:
   "+": ["+H", "+Na", "+K"]
   "-": ["-H", "+Cl"]
 
+sm_ansible_home: "{{ metaspace_home }}/ansible"
+sm_cluster_autostart_ansible_version: 2.6.2
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
 mol_db_home: "{{ metaspace_home }}/metaspace/mol-db"
@@ -130,7 +136,7 @@ mol_db_imports:
 
 nodejs_version: 8.*
 
-sm_graphql_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually in production
+sm_graphql_hostname: "{{ web_host }}"  # specify manually in production
 sm_graphql_home: "{{ metaspace_home }}/metaspace/graphql"
 sm_graphql_slack_webhook_url: ""
 sm_graphql_slack_channel: ""
@@ -148,6 +154,9 @@ sm_graphql_default_adducts: "{{ sm_default_adducts }}"
 sm_graphql_img_storage_backend: fs
 sm_graphql_redis_host: localhost
 sm_graphql_redis_port: 6379
+sm_graphql_aws_region: "{{ aws_region }}"
+sm_graphql_aws_access_key_id: GRAPHQL_AWS_ACCESS_KEY_ID
+sm_graphql_aws_secret_access_key: GRAPHQL_AWS_SECRET_ACCESS_KEY
 sm_graphql_google_client_id: ""
 sm_graphql_google_client_secret: ""
 sm_graphql_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
@@ -155,7 +164,7 @@ sm_graphql_cookie_secret: COOKIE_SECRET
 sm_graphql_features:
   newAuth: false
 
-sm_webapp_hostname: "{{ hostvars['web-1'].ansible_ssh_host }}"  # specify manually for production
+sm_webapp_hostname: "{{ web_host }}"
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
 sm_webapp_port: 8082
 sm_webapp_cookie_secret: COOKIE_SECRET
@@ -182,8 +191,6 @@ sm_webapp_enable_uploads: true
 sm_webapp_metadata_types: ["ims"]  # set ["ims", "lcms"] to accept both IMS and LC-MS datasets
 sm_webapp_features:
   newAuth: false
-
-sm_ansible_home: "{{ metaspace_home }}/ansible"
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 

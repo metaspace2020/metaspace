@@ -14,7 +14,6 @@ from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.db import DB
 from sm.engine.work_dir import WorkDirManager
-from sm.engine.search_job import SearchJob
 
 
 class SMDaemonManager(object):
@@ -205,6 +204,7 @@ class SMAnnotateDaemon(object):
         self.logger.info(f" SM annotate daemon received a message: {msg}")
         self._manager.post_to_slack('new', " [v] New annotation message: {}".format(json.dumps(msg)))
 
+        from sm.engine.search_job import SearchJob
         self._manager.annotate(ds=ds,
                                search_job_factory=SearchJob,
                                del_first=msg.get('del_first', False))

@@ -1,6 +1,6 @@
 # -*- conf -*-
 
-[program:sm-mol-db]
+[program:{{ mol_db_app_name }}]
 process_name = {{ mol_db_app_name }}
 environment = PATH="{{ miniconda_prefix }}/envs/{{ mol_db_miniconda_env.name }}/bin"
 directory = {{ mol_db_home }}

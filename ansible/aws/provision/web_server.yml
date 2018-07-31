@@ -58,3 +58,6 @@
 
     - role: sm_web
       tags: [sm-web]
+
+    - role: sm_cluster_autostart
+      tags: [sm-cluster-autostart]
