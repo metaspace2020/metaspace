@@ -18,6 +18,7 @@
     "@types/ws": "^5.1.2",
     "apollo-client-preset": "^1.0.8",
     "apollo-link-batch-http": "^1.2.2",
+    "apollo-link-context": "^1.0.8",
     "apollo-link-ws": "^1.0.8",
     "aws-sdk": "^2.36.0",
     "body-parser": "^1.16.0",
