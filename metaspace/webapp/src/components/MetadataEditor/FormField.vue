@@ -53,7 +53,6 @@
       <el-option v-for="opt in options" :value="opt" :label="opt" :key="opt" />
     </el-select>
 
-
     <el-select
       v-else-if="type === 'selectMulti'"
       @input="onInput"
@@ -171,7 +170,7 @@
 
     > .el-form-item__label {
       padding: 0;
-      margin-bottom: 0;
+      margin-bottom: 2px;
       font-size: 14px;
       line-height: 16px;
     }
@@ -194,8 +193,8 @@
   }
 
   .subfield-label {
-    font-size: 12px;
-    padding: 0 0 5px 5px;
+    font-size: 13px;
+    padding: 2px 0 5px 5px;
   }
 
   .error-msg {

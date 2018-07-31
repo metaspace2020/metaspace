@@ -25,27 +25,33 @@
 
 
       <div id="md-section-list">
+        <data-management-section style="margin-top: 10px"/>
+
 
         <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"
-                      style="margin-top: 0px"/>
+                      style="margin-top: 20px"/>
         <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"
                       style="margin-top: 20px"/>
         <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"
                       style="margin-top: 20px"/>
-        <form-section v-bind="sectionBinds('Submitted_By')" v-on="sectionEvents('Submitted_By')"
-                      style="margin-top: 20px"/>
-        <form-section v-bind="sectionBinds('Visibility')" v-on="sectionEvents('Submitted_By')"
-                      style="margin-top: 20px"/>
+        <!--<form-section v-bind="sectionBinds('Submitted_By')" v-on="sectionEvents('Submitted_By')"-->
+                      <!--style="margin-top: 20px"/>-->
+        <visibility-option-section
+          :isPublic="metaspaceOptions['isPublic']"
+          :error="errors['metaspaceOptions']"
+        />
         <metaspace-options-section
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :molDBOptions="molDBOptions"
           :adductOptions="adductOptions"
+          style="margin-top: 20px"
         />
         <form-section v-for="sectionKey in otherSections"
                       :key="sectionKey"
                       v-bind="sectionBinds(sectionKey)"
-                      v-on="sectionEvents(sectionKey)"/>
+                      v-on="sectionEvents(sectionKey)"
+                      style="margin-top: 20px"/>
       </div>
     </div>
     <div id="load-indicator" v-else v-loading="true">
@@ -87,7 +93,9 @@
    metadataOptionsQuery
  } from '../../api/metadata';
  import MetaspaceOptionsSection from './MetaspaceOptionsSection.vue';
+ import VisibilityOptionSection from './VisibilityOptionSection.vue';
  import FormSection from './FormSection.vue';
+ import DataManagementSection from './DataManagementSection.vue'
 
  const factories = {
    'string': schema => schema.default || '',
@@ -138,7 +146,9 @@
    components: {
      FormSection,
      MetaspaceOptionsSection,
-     FilterPanel
+     FilterPanel,
+     VisibilityOptionSection,
+     DataManagementSection
    },
 
    created() {
@@ -451,3 +461,4 @@
  /*}*/
 
 </style>
+ j8

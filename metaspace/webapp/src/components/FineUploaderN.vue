@@ -62,7 +62,7 @@
       </div>
 
     </script>
-    <div ref="cust" v-if="uploadFilenames.length === 0"><span class="chooseFile">Choose</span> or {{dropText()}}</div>
+    <div ref="cust" v-if="uploadFilenames.length === 0"><span class="chooseFile">Select</span> or {{dropText()}}</div>
     <div ref="fu" id="fu-container">
     </div>
   </div>

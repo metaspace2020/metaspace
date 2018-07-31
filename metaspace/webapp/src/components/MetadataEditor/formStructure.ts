@@ -57,7 +57,7 @@ const FIELD_WIDTH: Record<string, number> = {
   'Polarity': 4,
   'Ionisation_Source': 8,
   'Analyzer': 8,
-  'Detector_Resolving_Power': 16,
+  'Detector_Resolving_Power': 17,
   'Dataset_Name': 12,
   'Solvent_A_Table': 8,
   'Solvent_B_Table': 8,

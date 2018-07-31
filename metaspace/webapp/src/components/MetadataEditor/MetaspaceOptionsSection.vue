@@ -1,48 +1,12 @@
 <template>
   <div class="metadata-section">
+
     <el-row>
       <el-col :span="6">
-        <div class="bla">Submitted by</div>
+        <div class="section-description">Annotation settings</div>
       </el-col>
       <el-col :span="18">
-        <el-row>
-          <el-form size="medium"
-                   label-position="top">
-            <el-col :span="8">
-              <form-field
-                type="text"
-                name="Full name"
-                placeholder="Enter your full name"
-                :value="value.organismPart"
-                @input="val => onInput('orgPart', val)"
-                :error="error && error.name"
-                required
-              />
-            </el-col>
-            <el-col :span="8">
-              <form-field
-                type="selectMulti"
-                name="Group"
-                required>
-              </form-field>
-            </el-col>
-            <el-col :span="8">
-              <form-field
-                type="selectMulti"
-                name="Project"
-                required
-              />
-            </el-col>
-          </el-form>
-        </el-row>
-      </el-col>
-    </el-row>
-    <el-row>
-      <el-col :span="6">
-        <div class="bla">Annotation settings</div>
-      </el-col>
-      <el-col :span="18">
-        <el-row :gutter="0">
+        <el-row :gutter="8">
           <el-form size="medium"
                    label-position="top">
             <el-col :span="8">
@@ -126,7 +90,7 @@
     max-width: 950px;
   }
 
-  .bla {
+  .section-description {
     font-family: Helvetica, sans-serif;
     font-weight: bold;
     margin: 30px 0 0 10px;
