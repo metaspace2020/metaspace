@@ -10,7 +10,10 @@
           </p>
           <div class="dataset-list">
             <div v-for="dataset in allDatasets">
-              <el-checkbox v-model="selectedDatasets[dataset.id]">{{dataset.name}}</el-checkbox>
+              <el-checkbox v-model="selectedDatasets[dataset.id]">
+                {{dataset.name}}
+                <span class="reset-color">(Submitted {{ formatDate(dataset.uploadDT) }})</span>
+              </el-checkbox>
             </div>
           </div>
           <div class="select-buttons">
@@ -46,6 +49,7 @@
   import { Component, Prop, Watch } from 'vue-property-decorator';
   import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset';
   import { fromPairs } from 'lodash-es';
+  import format from 'date-fns/format';
 
   @Component({
     apollo: {
@@ -87,6 +91,10 @@
         : `${action} and transfer ${this.numSelected} ${this.numSelected === 1 ? 'dataset' : 'datasets'}`
     }
 
+    formatDate(date) {
+      return `${format(date, 'YYYY-MM-DD')} at ${format(date, 'HH:mm')}`;
+    }
+
     @Watch('allDatasets')
     populateSelectedDatasets() {
       //Rebuild `selectedDatasets` so that the keys are in sync with the ids from `datasets`
@@ -117,6 +125,7 @@
   }
 </script>
 <style scoped lang="scss">
+  @import "~element-ui/packages/theme-chalk/src/common/var";
   .dialog /deep/ .el-dialog {
     max-width: 600px;
   }
@@ -134,6 +143,9 @@
     flex-wrap: wrap;
     justify-content: flex-end;
     margin-top: 20px;
+  }
+  .reset-color {
+    color: $--color-text-regular;
   }
 
 </style>
