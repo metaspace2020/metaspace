@@ -236,6 +236,18 @@ const Resolvers = {
 
     reprocessingNeeded(_, args, {user}) {
       return DSQuery.reprocessingNeeded(args, user);
+    },
+
+    currentUser(_, args, {user}) {
+      console.log(user);
+      if (user == null || user.name == null) {
+        return null;
+      }
+      return {
+        id: user.name.replace(/ /, '|||'), // TODO: Have actual user IDs
+        name: user.name,
+        email: user.email || null,
+      }
     }
   },
 
@@ -259,6 +271,10 @@ const Resolvers = {
 
     name(ds) {
       return ds._source.ds_name;
+    },
+
+    uploadDT(ds) {
+      return ds._source.ds_upload_dt;
     },
 
     configJson(ds) {

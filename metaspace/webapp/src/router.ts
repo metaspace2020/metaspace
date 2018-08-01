@@ -42,7 +42,9 @@ const router = new VueRouter({
       { path: '/account/create-account', component: DialogPage, props: {dialog: 'createAccount'} },
       { path: '/account/forgot-password', component: DialogPage, props: {dialog: 'forgotPassword'} },
       { path: '/account/reset-password', component: ResetPasswordPage },
-    ] : [])
+    ] : []),
+
+    { path: '/group/:groupId', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "GroupPage" */ './modules/GroupProfile')).ViewGroupProfile },
   ]
 });
 
