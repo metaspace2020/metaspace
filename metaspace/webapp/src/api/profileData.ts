@@ -46,8 +46,13 @@ gql`query {
   currentUser {
     id
     name
-    email
     role
+    email
+    primaryGroup {
+      group {
+        id
+      }
+    }
     groups {
       role
       numDatasets
@@ -56,24 +61,17 @@ gql`query {
         name
       }
     }
-    primaryGroup {
-      group {
-        id
-      }
-    }
   }
 }
 `;
 
 export const updateUserMutation =
-gql`mutation ($update: updateUserInput!) {
+gql`mutation ($update: UpdateUserInput!) {
   updateUser(update: $update) {
-    id
     name
-    role
     email
   }
-}`
+}`;
 
 export const leaveGroupMutation =
 gql`mutation leaveGroup($groupId: groupId!) {

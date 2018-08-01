@@ -1,17 +1,17 @@
 <template>
   <div class="main-content">
     <div class="user-edit-page">
-      <el-dialog
-        title="Leave the group"
-        :visible.sync="showLeaveGroupDialog"
-        width="30%"
-        :lock-scroll="false">
-        <span style="line-height: 30px">
-          <p>Are you sure you want to leave this group?</p>
-        </span>
-        <el-button title="Cancel" @click="cancelLeaveGroup">Cancel</el-button>
-        <el-button title="Send verification email" @click="leaveGroup" type="primary">Yes, leave the group</el-button>
-      </el-dialog>
+      <!--<el-dialog-->
+        <!--title="Leave the group"-->
+        <!--:visible.sync="showLeaveGroupDialog"-->
+        <!--width="30%"-->
+        <!--:lock-scroll="false">-->
+        <!--<span style="line-height: 30px">-->
+          <!--<p>Are you sure you want to leave this group?</p>-->
+        <!--</span>-->
+        <!--<el-button title="Cancel" @click="cancelLeaveGroup">Cancel</el-button>-->
+        <!--<el-button title="Send verification email" @click="leaveGroup" type="primary">Yes, leave the group</el-button>-->
+      <!--</el-dialog>-->
       <el-dialog
         title="Delete account"
         :visible.sync="showDeleteAccountDialog"
@@ -45,14 +45,14 @@
               <el-col :span="12">
                 <div class="fullname">
                   <el-form-item prop="name" label="Full name:">
-                    <el-input v-model="model.name" />
+                    <el-input v-model="currentUser.name" />
                   </el-form-item>
                 </div>
               </el-col>
               <el-col :span="12">
                 <div class="email">
                   <el-form-item prop="email" label="E-mail:">
-                    <el-input v-model="model.email" />
+                    <el-input v-model="currentUser.email" />
                   </el-form-item>
                 </div>
               </el-col>
@@ -95,15 +95,15 @@
             </el-table-column>
           </el-table>
           <p>Primary group:</p>
-          <el-select v-model="primaryGroup" class="primGroupOptions">
-            <el-option
-              v-for="item in primGroupOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-              class="primGroupOptions">
-            </el-option>
-          </el-select>
+          <!--<el-select v-model="primaryGroup" class="primGroupOptions">-->
+            <!--<el-option-->
+              <!--v-for="item in primGroupOptions"-->
+              <!--:key="item.value"-->
+              <!--:label="item.label"-->
+              <!--:value="item.value"-->
+              <!--class="primGroupOptions">-->
+            <!--</el-option>-->
+          <!--</el-select>-->
           <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up your organization or lab on METASPACE
           </p>
         </div>
@@ -165,8 +165,9 @@
 
 <script lang="ts">
   import Vue from 'vue'
+  import VueApollo from 'vue-apollo'
   import Component from 'vue-class-component'
-  import {updateUser, leaveGroup, deleteUser, currentUserQuery} from '../api/profileData'
+  import {updateUserMutation, leaveGroupMutation, deleteUserMutation, currentUserQuery} from '../api/profileData'
   import reportError from "../lib/reportError";
   import apolloClient from '../graphqlClient';
 
@@ -181,17 +182,10 @@
     label: string
   }
 
-  interface Model {
-    id: number
-    name: string
-    role: string
-    email: string
-    primaryGroupId: number
-  }
-
   interface CurrentUserResult {
     id: string;
     name: string;
+    role: string;
     email: string | null;
     groups: {
       role: string;
@@ -204,8 +198,13 @@
   }
 
   @Component({
-    name: 'user-edit-page'
+    name: 'user-edit-page',
     //apollo: //define queries
+    apollo: {
+      currentUser: {
+        query: currentUserQuery
+      }
+    }
   })
 
   export default class UserEditPage extends Vue {
@@ -213,6 +212,7 @@
     showLeaveGroupDialog: boolean = false;
     deleteDatasets: boolean = false;
     isUserDetailsLoading: boolean = false;
+    $apollo: any;
 
     currentUser?: CurrentUserResult;
 
@@ -246,76 +246,84 @@
       this.showLeaveGroupDialog = false;
     }
 
-    async currentUserInfo() {
-      this.currentUser = await apolloClient.query<CurrentUserResult>({
-        query: currentUserQuery
-      })
-    }
-
     async updateUserDetails() {
-      const updateUserInput = this.model;
       try {
         if (true /* check if email has changed */) {
           try {
             await this.$confirm(
-              "Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change",
+              "Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change.",
               "Confirm email address change", {
-                confirmButtonText: "Yes, send verification email"
+                confirmButtonText: "Yes, send verification email",
+                lockScroll: false
               });
-          } catch(err) {
-            return; // The user clicked cancel
+          } catch {
+            return
           }
+          this.isUserDetailsLoading = true;
+          let res = await this.$apollo.mutate({
+            mutation: updateUserMutation,
+            variables: {
+              update: {
+                id: this.currentUser.id,
+                name: this.currentUser.name,
+                role: this.currentUser.role,
+                email: this.currentUser.email,
+                primaryGroupId: this.currentUser.primaryGroup.group.id
+              }
+            },
+          });
+          this.currentUser.email = res.data.updateUser.email;
+          this.currentUser.name = res.data.updateUser.name;
+          this.isUserDetailsLoading = false;
+          this.$message({
+            type: "success",
+            message: "New message to verify your account was sent to your account"
+          });
         }
-        this.isUserDetailsLoading = true;
-        await updateUser(updateUserInput);
-        this.$message({
-          type: "success",
-          message: "New message to verify your account was sent to your account"
-        })
-      } catch (err) {
-        reportError(err);
-      } finally {
+      } catch(err) {
+        console.log(err)
+        reportError(err, 'There was a probem with updating email');
         this.isUserDetailsLoading = false;
       }
     }
-
-    async leaveGroup() {
-      const groupId = this.groupId;
-      try {
-        await leaveGroup(groupId);
-        this.$message({
-          type: "success",
-          message: "Group was successfully left!"
-        })
-      } catch (err) {
-        this.$message({
-          type: "error",
-          message: "Failed to leave the group. Please contact administrator."
-        });
-      } finally {
-        this.cancelLeaveGroup()
-      }
-    }
-
-    async deleteAccount() {
-      const id = this.model.id;
-      this.deleteDatasets = true;
-
-      try {
-        await deleteUser(id, this.deleteDatasets);
-        this.$message({
-          type: "success",
-          message: "Group was successfully left!"
-        })
-      } catch (err) {
-        this.$message({
-          type: "error",
-          message: "Failed to leave the group. Please contact administrator."
-        });
-      } finally {
-        this.cancelDeleteAccount()
-      }
-    }
+    //
+    // async leaveGroup() {
+    //   const groupId = this.groupId;
+    //   try {
+    //     await leaveGroup(groupId);
+    //     this.$message({
+    //       type: "success",
+    //       message: "Group was successfully left!"
+    //     })
+    //   } catch (err) {
+    //     this.$message({
+    //       type: "error",
+    //       message: "Failed to leave the group. Please contact administrator."
+    //     });
+    //   } finally {
+    //     this.cancelLeaveGroup()
+    //   }
+    // }
+    //
+    // async deleteAccount() {
+    //   // const id = this.model.id;
+    //   this.deleteDatasets = true;
+    //
+    //   try {
+    //     await deleteUser(id, this.deleteDatasets);
+    //     this.$message({
+    //       type: "success",
+    //       message: "Group was successfully left!"
+    //     })
+    //   } catch (err) {
+    //     this.$message({
+    //       type: "error",
+    //       message: "Failed to leave the group. Please contact administrator."
+    //     });
+    //   } finally {
+    //     this.cancelDeleteAccount()
+    //   }
+    // }
   }
 
 </script>
