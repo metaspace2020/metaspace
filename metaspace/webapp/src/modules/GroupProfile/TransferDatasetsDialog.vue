@@ -91,7 +91,7 @@
         : `${action} and transfer ${this.numSelected} ${this.numSelected === 1 ? 'dataset' : 'datasets'}`
     }
 
-    formatDate(date) {
+    formatDate(date: string) {
       return `${format(date, 'YYYY-MM-DD')} at ${format(date, 'HH:mm')}`;
     }
 

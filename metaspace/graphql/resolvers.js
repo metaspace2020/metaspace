@@ -239,7 +239,6 @@ const Resolvers = {
     },
 
     currentUser(_, args, {user}) {
-      console.log(user);
       if (user == null || user.name == null) {
         return null;
       }

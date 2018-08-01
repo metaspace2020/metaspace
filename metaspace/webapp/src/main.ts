@@ -33,11 +33,12 @@ const isProd = process.env.NODE_ENV === 'production';
 
 import VueAnalytics from 'vue-analytics';
 import { setErrorNotifier } from './lib/reportError'
+
 Vue.use(VueAnalytics, {
   id: 'UA-73509518-1',
   router,
   autoTracking: {
-    exception: true
+    exception: isProd // disabled in dev because it impairs "break on uncaught exception"
   },
   debug: {
     enabled: !isProd,

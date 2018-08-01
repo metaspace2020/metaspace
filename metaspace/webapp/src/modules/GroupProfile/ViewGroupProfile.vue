@@ -205,7 +205,6 @@
       await this.doSubmit('rejectInvite', async () => {
         await this.$apollo.mutate({
           mutation: leaveGroupMutation,
-          loadingKey: 'loading',
           variables: { groupId: this.groupId },
         });
         await this.$apollo.queries.data.refetch();
@@ -221,7 +220,6 @@
         await this.doSubmit('acceptInvite', async () => {
           await this.$apollo.mutate({
             mutation: acceptGroupInvitationMutation,
-            loadingKey: 'loading',
             variables: { groupId: this.groupId, bringDatasets: selectedDatasetIds },
           });
           await this.$apollo.queries.data.refetch();
@@ -230,7 +228,6 @@
         await this.doSubmit('requestAccess', async () => {
           await this.$apollo.mutate({
             mutation: requestAccessToGroupMutation,
-            loadingKey: 'loading',
             variables: { groupId: this.groupId, bringDatasets: selectedDatasetIds },
           });
           await this.$apollo.queries.data.refetch();
