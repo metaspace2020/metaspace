@@ -7,7 +7,8 @@ const bodyParser = require('body-parser'),
   {graphqlExpress, graphiqlExpress} = require('apollo-server-express'),
   jwt = require('express-jwt'),
   cors = require('cors'),
-  makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
+  {makeExecutableSchema, addResolveFunctionsToSchema, addErrorLoggingToSchema, addMockFunctionsToSchema} = require('graphql-tools'),
+  {mergeTypes} = require('merge-graphql-schemas'),
   {maskErrors} = require('graphql-errors'),
   {promisify} = require('util'),
   readFile = promisify(require("fs").readFile);
@@ -45,23 +46,26 @@ const configureSession = (app) => {
   }));
 };
 
-
 function createHttpServerAsync(config) {
   let app = express();
   let httpServer = http.createServer(app);
 
   return initSchema()
-    .then(() => {
-      return readFile('schema.graphql', 'utf8');
+    .then(async () => {
+      return mergeTypes([
+        await readFile('schema.graphql', 'utf8'),
+        await readFile('schemas/user.graphql', 'utf8'),
+        await readFile('schemas/group.graphql', 'utf8'),
+      ]);
     })
-    .then((contents) => {
-      const schema = makeExecutableSchema({
-        typeDefs: contents,
-        resolvers: Resolvers,
-        logger
-      });
+    .then((mergedSchema) => {
+      const schema = makeExecutableSchema({typeDefs: mergedSchema});
+      addResolveFunctionsToSchema(schema, Resolvers);
+      addErrorLoggingToSchema(schema, logger);
 
-      if (process.env.NODE_ENV !== 'development') {
+      if (process.env.NODE_ENV === 'development') {
+        addMockFunctionsToSchema({schema, preserveResolvers: true});
+      } else {
         maskErrors(schema);
       }
 

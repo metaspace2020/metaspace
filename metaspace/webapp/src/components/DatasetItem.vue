@@ -161,8 +161,8 @@
      },
 
      formatSubmitter() {
-       const { name, surname } = this.dataset.submitter;
-       return name + " " + surname;
+       const { name } = this.dataset.submitter;
+       return name;
      },
 
      formatInstitution() {
@@ -301,8 +301,8 @@
        if (field == 'polarity')
          filter['polarity'] = capitalize(this.dataset.polarity);
        else if (field == 'submitter') {
-         const {name, surname} = this.dataset.submitter;
-         filter[field] = {name, surname};
+         const {id, name} = this.dataset.submitter;
+         filter[field] = {id, name};
        } else
          filter[field] = this.dataset[field] || this[field];
        this.$store.commit('updateFilter', filter);

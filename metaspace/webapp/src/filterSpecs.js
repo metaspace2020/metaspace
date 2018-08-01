@@ -154,11 +154,12 @@ const FILTER_SPECIFICATIONS = {
 
     encoding: 'json',
     options: lists => lists.submitterNames.map(x => {
-      const {name, surname} = x;
-      return {name, surname};
+      const {id, name} = x;
+      return {id, name};
     }),
-    optionFormatter: ({name, surname}) => name + ' ' + surname,
-    valueFormatter: ({name, surname}) => name + ' ' + surname
+    optionFormatter: ({name}) => name,
+    valueFormatter: ({name}) => name,
+    valueKey: 'id',
   },
 
   polarity: {

@@ -1,12 +1,12 @@
 type Person {
+  id: ID           # null if it was entered as free-text
   name: String!
-  surname: String!
-  email: String!
+  email: String    # null if current user is not allowed to see
 }
 
-enum PersonRole {
-  SUBMITTER,
-  PI
+type SubmitterSearchResult {
+  id: ID!
+  name: String!
 }
 
 enum Polarity {
@@ -56,8 +56,9 @@ type Dataset {
   id: String!
   name: String!
 
-  institution: String!
+  institution: String
   submitter: Person!
+  group: Group
   principalInvestigator: Person
 
   polarity: Polarity!
@@ -90,8 +91,7 @@ type Dataset {
 # fields of categorical type
 enum DatasetAggField {
   DF_INSTITUTION,
-  DF_SUBMITTER_FIRST_NAME,
-  DF_SUBMITTER_SURNAME,
+  DF_SUBMITTER_NAME,
   DF_POLARITY,
   DF_ION_SOURCE,
   DF_ANALYZER_TYPE,
@@ -175,11 +175,6 @@ input AnnotationFilter {
   adduct: String
 }
 
-input PersonFilter {
-  name: String!
-  surname: String!
-}
-
 input DatasetFilter {
   # list of IDs separated by '|'
   ids: String
@@ -191,7 +186,10 @@ input DatasetFilter {
   name: String
 
   # exact match
-  submitter: PersonFilter
+  submitter: ID
+
+  # exact match
+  group: ID
 
   polarity: Polarity
 
@@ -232,6 +230,8 @@ input DatasetCreateInput {
   name: String!
   inputPath: String!
   uploadDT: String
+  submitterId: ID
+  groupId: ID
   isPublic: Boolean! = true
   molDBs: [String!]!
   adducts: [String!]!
@@ -242,6 +242,8 @@ input DatasetUpdateInput {
   name: String
   uploadDT: String
   metadataJson: String
+  submitterId: ID
+  groupId: ID
   isPublic: Boolean = true
   molDBs: [String!]
   adducts: [String!]
@@ -298,7 +300,7 @@ type Query {
 
   metadataSuggestions(field: String!, query: String!, limit: Int = 10): [String!]!
 
-  peopleSuggestions(role: PersonRole!, query: String!): [Person!]!
+  submitterSuggestions(query: String!): [SubmitterSearchResult!]!
 
   molecularDatabases(hideDeprecated: Boolean = true): [MolecularDatabase!]
 
@@ -311,6 +313,8 @@ type Query {
   thumbnailImage(datasetId: String!): String,
 
   reprocessingNeeded(input: DatasetUpdateInput!): Boolean!
+
+  currentUserLastSubmittedDataset: Dataset
 }
 
 type Mutation {

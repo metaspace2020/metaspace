@@ -13,7 +13,7 @@
  const query =
    gql`query GetSubmitterCounts($filter: DatasetFilter, $query: String) {
       countDatasetsPerGroup(query: {
-        fields: [DF_INSTITUTION, DF_SUBMITTER_FIRST_NAME, DF_SUBMITTER_SURNAME],
+        fields: [DF_INSTITUTION, DF_SUBMITTER_NAME],
         filter: $filter,
         simpleQuery: $query
       }) {
@@ -75,17 +75,16 @@
       }
 
       for (let entry of this.counts) {
-        let [lab, name, surname] = entry.fieldValues;
-        submitters[lab].push([name.toLowerCase(), surname.toLowerCase()]);
+        let [lab, name] = entry.fieldValues;
+        submitters[lab].push(name.toLowerCase());
         numDatasets[lab] += entry.count;
       }
 
       for (let lab of Object.keys(submitters)) {
-        const fullNames = submitters[lab].map(arr => arr.sort().join(' '));
         result.push({
           lab,
           numDatasets: numDatasets[lab],
-          numSubmitters: (new Set(fullNames)).size
+          numSubmitters: (new Set(submitters[lab])).size
         });
       }
 

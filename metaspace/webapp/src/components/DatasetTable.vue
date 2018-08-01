@@ -105,7 +105,6 @@
                status
                submitter {
                  name
-                 surname
                }
                institution
              }
@@ -114,7 +113,7 @@
          result({data}) {
            if (data.datasetStatusUpdated.dataset != null) {
              const {name, status, submitter, institution} = data.datasetStatusUpdated.dataset;
-             const who = `${submitter.name} ${submitter.surname} (${institution})`;
+             const who = `${submitter.name} (${institution})`;
              const statusMap = {
                FINISHED: 'success',
                QUEUED: 'info',
@@ -177,7 +176,7 @@
 
    methods: {
      formatSubmitter: (row, col) =>
-       row.submitter.name + " " + row.submitter.surname,
+       row.submitter.name,
      formatDatasetName: (row, col) =>
        row.name.split('//', 2)[1],
      formatResolvingPower: (row, col) =>
@@ -221,7 +220,7 @@
                'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime','FDR@10% + DataBase', 'opticalImage'
        ].join(',') + "\n";
 
-       function person(p) { return p ? p.name + ' ' + p.surname : ''; }
+       function person(p) { return p ? p.name : ''; }
 
        function formatRow(row) {
          return [

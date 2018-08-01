@@ -33,7 +33,7 @@
       }
   }`;
 
- const minGroupSize = 10;
+ const minGroupSize = process.env.NODE_ENV === 'development' ? 1 : 10;
 
  const geometry = {
    margin: {

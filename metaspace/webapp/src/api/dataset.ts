@@ -7,9 +7,8 @@ export const datasetListQuery =
       name
       institution
       submitter {
+        id
         name
-        surname
-        email
       }
       polarity
       ionisationSource

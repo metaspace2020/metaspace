@@ -45,7 +45,7 @@ export default {
            ionisationSource, analyzerType, maldiMatrix, metadataType} = filter;
     return {
       institution,
-      submitter,
+      submitter: submitter && submitter.id,
 
       // temporary workaround because of array-related bugs in apollo-client
       ids: datasetIds ? datasetIds.join("|") : null,
