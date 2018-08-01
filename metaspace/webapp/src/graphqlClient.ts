@@ -1,49 +1,52 @@
-import {ApolloClient, createBatchingNetworkInterface } from 'apollo-client';
-import {SubscriptionClient, addGraphQLSubscriptions} from 'subscriptions-transport-ws';
+import { ApolloClient,  InMemoryCache } from 'apollo-client-preset';
+import { BatchHttpLink } from 'apollo-link-batch-http';
+import { WebSocketLink } from 'apollo-link-ws';
+import { setContext } from 'apollo-link-context';
+import { SubscriptionClient } from 'subscriptions-transport-ws';
+import { getOperationAST } from 'graphql/utilities/getOperationAST';
+
 import * as config from './clientConfig.json';
 import tokenAutorefresh from './tokenAutorefresh';
-import reportError from './lib/reportError'
+import reportError from './lib/reportError';
 
 const graphqlUrl = config.graphqlUrl || `${window.location.origin}/graphql`;
 const wsGraphqlUrl = config.wsGraphqlUrl || `${window.location.origin.replace(/^http/, 'ws')}/ws`;
 
-const networkInterface = createBatchingNetworkInterface({
-  uri: graphqlUrl,
-  batchInterval: 10
-});
-
-networkInterface.use([{
-  async applyBatchMiddleware(req, next) {
-
-    if (!req.options.headers) {
-      req.options.headers = {};
-    }
-    try {
-      const jwt = await tokenAutorefresh.getJwt();
-
-      (req.options.headers as Record<string, string>)['Authorization'] = 'Bearer ' + jwt;
-    } catch (err) {
-      reportError(err, 'There was an error connecting to the server. Please refresh the page and try again');
-      // WORKAROUND: apollo-client doesn't have good error handling here. There's no way to abort the request
-      // and if `next` isn't called then it will prevent future requests, so force a server error with an invalid JWT
-      // as a visible error is preferable to silently doing the wrong thing.
-      (req.options.headers as Record<string, string>)['Authorization'] = 'Bearer invalid';
-    }
-    next();
+const authLink = setContext(async () => {
+  try {
+    return ({
+      headers: {
+        authorization: `Bearer ${await tokenAutorefresh.getJwt()}`,
+      },
+    })
+  } catch (err) {
+    reportError(err);
+    throw err;
   }
-}]);
-
-const wsClient = new SubscriptionClient(wsGraphqlUrl, {
-  reconnect: true
 });
 
-const networkInterfaceWithSubscriptions = addGraphQLSubscriptions(
-  networkInterface,
-  wsClient
+const httpLink = new BatchHttpLink({
+  uri: graphqlUrl,
+  batchInterval: 10,
+});
+
+const wsLink = new WebSocketLink(new SubscriptionClient(wsGraphqlUrl, {
+  reconnect: true,
+}));
+
+const link = authLink.split(
+  (operation) => {
+    // Only send subscriptions over websockets
+    const operationAST = getOperationAST(operation.query, operation.operationName);
+    return operationAST != null && operationAST.operation === 'subscription';
+  },
+  wsLink,
+  httpLink,
 );
 
-const apolloClient: ApolloClient = new ApolloClient({
-  networkInterface: networkInterfaceWithSubscriptions
+const apolloClient = new ApolloClient({
+  link,
+  cache: new InMemoryCache(),
 });
 
 export default apolloClient;

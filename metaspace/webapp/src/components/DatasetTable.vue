@@ -111,7 +111,7 @@
              }
            }
          }`,
-         result(data) {
+         result({data}) {
            if (data.datasetStatusUpdated.dataset != null) {
              const {name, status, submitter, institution} = data.datasetStatusUpdated.dataset;
              const who = `${submitter.name} ${submitter.surname} (${institution})`;

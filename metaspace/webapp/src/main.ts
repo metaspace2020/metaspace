@@ -58,8 +58,8 @@ const app = new Vue({
   */
   store,
   router,
-  apolloProvider
-})
+  provide: apolloProvider.provide(),
+});
 
 setErrorNotifier(app.$notify);
 
