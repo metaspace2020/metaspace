@@ -62,7 +62,7 @@
   import GoogleButton from './GoogleButton.vue';
   import InterDialogLink from './InterDialogLink';
   import { signInByEmail } from '../../../api/auth';
-  import tokenAutorefresh from '../../../tokenAutorefresh';
+  import { refreshLoginStatus } from '../../../graphqlClient';
   import reportError from '../../../lib/reportError';
 
   interface Model {
@@ -107,7 +107,7 @@
         this.isSubmitting = true;
         const authenticated = await signInByEmail(email, password);
         if (authenticated) {
-          await tokenAutorefresh.refreshJwt(true);
+          await refreshLoginStatus();
           this.onClose();
         } else {
           form.clearValidate();

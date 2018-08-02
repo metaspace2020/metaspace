@@ -93,7 +93,7 @@
   import gql from 'graphql-tag';
  import {signOut} from '../api/auth';
  import {encodeParams} from '../url';
- import tokenAutorefresh from '../tokenAutorefresh';
+  import { refreshLoginStatus } from '../graphqlClient';
  import * as config from '../clientConfig.json';
 
  export default {
@@ -202,7 +202,7 @@
        } else {
          await fetch('/logout', {credentials: 'include'});
        }
-       await tokenAutorefresh.refreshJwt(true);
+       await refreshLoginStatus();
      },
 
      handleSubmenuEnter(submenu) {

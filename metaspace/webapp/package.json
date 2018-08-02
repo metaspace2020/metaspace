@@ -117,7 +117,6 @@
     "less-loader": "~4.1.0",
     "markdown-loader": "~2.0.2",
     "marky-mark": "~1.2.1",
-    "node-fetch": "1.7.3",
     "passwordless-memorystore": "^0.0.1",
     "postcss-loader": "~2.1.5",
     "source-map-loader": "0.2.3",
@@ -144,6 +143,7 @@
       "^.+\\.[jt]sx?$": "<rootDir>/node_modules/ts-jest"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "setupTestFrameworkScriptFile": "<rootDir>/tests/utils/setupTestFramework.ts",
     "moduleFileExtensions": [
       "ts",
       "js",

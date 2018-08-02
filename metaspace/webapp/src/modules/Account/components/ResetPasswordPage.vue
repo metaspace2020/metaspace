@@ -44,7 +44,7 @@
   import { Form } from 'element-ui';
   import { validatePasswordResetToken, resetPassword } from '../../../api/auth';
   import reportError from '../../../lib/reportError';
-  import tokenAutorefresh from '../../../tokenAutorefresh';
+  import { refreshLoginStatus } from '../../../graphqlClient';
 
   interface Model {
     password: string;
@@ -102,7 +102,7 @@
       try {
         this.isSubmitting = true;
         await resetPassword(this.token, this.email, this.model.password);
-        await tokenAutorefresh.refreshJwt(true);
+        await refreshLoginStatus();
         this.$router.push('/');
         this.$alert('Your password has been successfully reset.', 'Password reset', {type: 'success'});
       } catch (err) {
