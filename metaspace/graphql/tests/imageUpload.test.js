@@ -11,7 +11,7 @@ const chai = require('chai'),
   config = require('config'),
   {promisify} = require('util');
 
-const {logger, db} = require('../utils.js'),
+const {logger, initDBConnection} = require('../utils.js'),
   {createImgServerAsync, IMG_TABLE_NAME} = require('../imageUpload');
 
 chai.use(chaiHttp);
@@ -19,23 +19,36 @@ chai.use(chaiHttp);
 let getRespMimeMap = {
   fs: 'image/png',
   db: 'application/octet-stream'
-}
+};
 
 describe('imageUploadTest with fs and db backends', () => {
   ['db', 'fs'].forEach( (storageType) => {
 
     describe(`${storageType} storage type`, () => {
       let server;
+      let knex, knexAdmin;
 
       beforeAll(async () => {
-        server = await createImgServerAsync(config);
+        logger.info('> Before all');
+        knexAdmin = initDBConnection(() => {
+          return {
+            host      : 'localhost',
+            database  : 'postgres',
+            user      : 'postgres'
+          }
+        });
+        await knexAdmin.raw(`DROP DATABASE IF EXISTS ${config.db.database}`);
+        await knexAdmin.raw(`CREATE DATABASE ${config.db.database} OWNER ${config.db.user}`);
+        knex = initDBConnection();
+        server = await createImgServerAsync(config, knex);
       });
 
       afterAll(done => {
+        logger.info('> After all');
         server.close(async () => {
-          if (storageType === 'db') {
-            await db.schema.dropTableIfExists(IMG_TABLE_NAME)
-          }
+          await knex.destroy();
+          await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
+          await knexAdmin.destroy();
           logger.debug('Iso image server closed');
           done();
         });

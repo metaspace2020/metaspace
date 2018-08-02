@@ -15,8 +15,8 @@ const bodyParser = require('body-parser'),
 
 const {createImgServerAsync} = require('./imageUpload.js'),
   {configureAuth, initSchema} = require('./src/modules/auth'),
-  Resolvers = require('./resolvers.js'),
-  logger = require('./utils.js').logger;
+  Resolvers = require('./resolvers'),
+  {logger, initDBConnection} = require('./utils');
 
 // subscriptions setup
 const http = require('http'),
@@ -123,7 +123,7 @@ function createHttpServerAsync(config) {
 
 if (process.argv[1].endsWith('server.js')) {
   createHttpServerAsync(config);
-  createImgServerAsync(config);
+  createImgServerAsync(config, initDBConnection());
 }
 
 module.exports = {createHttpServerAsync, wsServer}; // for testing
