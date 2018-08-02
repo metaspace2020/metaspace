@@ -83,13 +83,11 @@
     }
 
     validatePassword(rule: object, value: string, callback: Function) {
-      console.log(arguments);
       (this.$refs.form as Form).validateField('confirmPassword', () => {});
       callback();
     };
 
     validateConfirmPassword(rule: object, value: string, callback: Function) {
-      console.log(arguments, this.model.confirmPassword);
       if (value && this.model.password && value !== this.model.password) {
         callback(new Error('Passwords must match'));
       } else {

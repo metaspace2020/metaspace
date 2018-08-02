@@ -142,8 +142,12 @@
       "^.+\\.vue$": "<rootDir>/node_modules/vue-jest",
       "^.+\\.[jt]sx?$": "<rootDir>/node_modules/ts-jest"
     },
+    "moduleNameMapper": {
+      "lodash-es": "lodash"
+    },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "setupTestFrameworkScriptFile": "<rootDir>/tests/utils/setupTestFramework.ts",
+    "restoreMocks": true,
     "moduleFileExtensions": [
       "ts",
       "js",

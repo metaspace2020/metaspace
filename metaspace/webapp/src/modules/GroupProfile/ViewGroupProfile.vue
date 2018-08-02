@@ -126,29 +126,30 @@
             groupId: this.groupId
           }
         },
-        update(this: ViewGroupProfile, data: ViewGroupProfileData) {
-          this.loaded = true;
-          this.currentUserId = data.currentUser ? data.currentUser.id : null;
-          this.group = data.group;
-          this.roleInGroup = data.currentUserRoleInGroup;
-          this.groupDatasets = data.allDatasets;
-          this.countDatasets = data.countDatasets;
+        watchLoading(this: ViewGroupProfile, isLoading: boolean) {
+          // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
+          // button that causes this query to refetch
+          if (!isLoading) {
+            this.loaded = true;
+          }
+        },
+        update(data) {
           return data;
         }
       },
     }
   })
   export default class ViewGroupProfile extends Vue {
-    loaded = false; // Not using 'loadingKey' pattern as the full-page loading spinner doesn't look good when refreshing data
+    loaded = false;
     showTransferDatasetsDialog: boolean = false;
-    data?: ViewGroupProfileData;
+    data: ViewGroupProfileData | null = null;
 
-    currentUserId: string | null = null;
-    group: GroupInfo | null = null;
-    roleInGroup: UserGroupRole | null = null;
-    groupDatasets: DatasetDetailItem[] = [];
+    get currentUserId(): string | null { return this.data && this.data.currentUser && this.data.currentUser.id }
+    get group(): GroupInfo | null { return this.data && this.data.group; }
+    get roleInGroup(): UserGroupRole | null { return this.data && this.data.currentUserRoleInGroup; }
+    get groupDatasets(): DatasetDetailItem[] { return this.data && this.data.allDatasets || []; }
+    get countDatasets(): number { return this.data && this.data.countDatasets || 0; }
     maxVisibleDatasets = 8;
-    countDatasets: number = 0;
     submitAction: SubmitActionType = null; // Used for indicating which button is loading
 
 
