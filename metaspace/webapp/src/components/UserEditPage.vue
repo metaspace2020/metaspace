@@ -6,16 +6,21 @@
         :visible.sync="showDeleteAccountDialog"
         width="30%"
         :lock-scroll="false">
-        <span style="line-height: 30px">
-          <p>If you delete your account, you will lose access to any datasets, groups and
-          projects that have been explicitly shared with you</p>
-          <el-checkbox-group>
-            <el-checkbox style="margin-left: 20px">Delete the that I have submitted</el-checkbox>
-          </el-checkbox-group>
+        <p>If you delete your account, you will lose access to any datasets, groups and
+        projects that have been explicitly shared with you</p>
+        <el-checkbox v-model="delDatasets" style="margin-left: 20px">
+          Delete datasets the that I have submitted
+        </el-checkbox>
+        <el-row>
           <el-button title="Cancel" @click="cancelDeleteAccount">Cancel</el-button>
-          <el-button type="danger" title="Delete account" @click="deleteAccount()"
-                     style="margin: 20px 0">Delete account</el-button>
-        </span>
+          <el-button
+            type="danger"
+            title="Delete account"
+            @click="deleteAccount()"
+            :loading="isUserDeletionLoading"
+            style="margin: 20px 0">
+            Delete account</el-button>
+        </el-row>
         <p><b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them
           deleted later by emailing the METASPACE administrators.</p>
       </el-dialog>
@@ -25,7 +30,13 @@
             <h2>User details</h2>
           </el-col>
           <el-col :span="8">
-            <el-button title="Save" type="primary" @click="updateUserDetails" class="saveButton" :loading="isUserDetailsLoading">Save</el-button>
+            <el-button title="Save"
+                       type="primary"
+                       @click="updateUserDetails"
+                       class="saveButton"
+                       :loading="isUserDetailsLoading">
+              Save
+            </el-button>
           </el-col>
         </el-row>
         <el-row :gutter="20">
@@ -59,18 +70,15 @@
               prop="name"
               label="Group"
               width="180">
-              <template slot-scope="scope">{{scope.row.name}}</template>
             </el-table-column>
             <el-table-column
               prop="role"
               label="Role"
               width="280">
-              <template slot-scope="scope">{{scope.row.role}}</template>
             </el-table-column>
             <el-table-column
               prop="numDatasets"
               label="Dataset contributed">
-              <template slot-scope="scope">{{scope.row.numDatasets}}</template>
             </el-table-column>
             <el-table-column>
               <template slot-scope="scope">
@@ -84,13 +92,12 @@
             </el-table-column>
           </el-table>
           <p>Primary group:</p>
-          <el-select v-model="primaryGroup" class="primGroupOptions">
+          <el-select v-model="value" placeholder="Select" class="primGroupOptions">
             <el-option
-              v-for="item in primGroupOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-              class="primGroupOptions">
+              v-for="item in groupsData"
+              :key="item.id"
+              :label="item.name"
+              :value="item">
             </el-option>
           </el-select>
           <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up your organization or lab on METASPACE
@@ -137,14 +144,18 @@
             <!--</el-row>-->
           <!--</div>-->
         <!--</div>-->
-        <div class="delete-account">
+        <div class="delete-account" style="margin-top: 45px">
           <h2>Delete account</h2>
           <p>If you choose to delete your METASPACE account, you will be given the choice of whether to delete the
             datasets you have uploaded and projects you have created or leave them for others to continue using.</p>
         </div>
         <el-row>
-          <el-button type="danger" title="Delete account" @click="deleteAccountDialog()" style="float:right">Delete
-            account
+          <el-button
+            type="danger"
+            title="Delete account"
+            @click="deleteAccountDialog()"
+            style="float:right">
+            Delete account
           </el-button>
         </el-row>
       </el-row>
@@ -161,14 +172,10 @@
   import apolloClient from '../graphqlClient';
 
   interface GroupsData {
+    id: string;
     name: string;
     role: string;
     numDatasets: number;
-  }
-
-  interface primGroupOptions {
-    value: string
-    label: string
   }
 
   interface CurrentUserResult {
@@ -186,19 +193,22 @@
     }[] | null;
     primaryGroup: {
       group: {
-        id: string
+        id: string;
+        name: string;
       }
     } | null;
   }
 
   @Component({
-    //apollo: //define queries
     apollo: {
       currentUser: {
         query: currentUserQuery,
         result(data) {
           this.name = data.data.currentUser.name;
           this.email = data.data.currentUser.email;
+          this.primaryGroupName = data.data.currentUser.primaryGroup.group.name;
+          this.primaryGroupID = data.data.currentUser.primaryGroup.group.id;
+          this.initEmailVal = this.email;
         }
       }
     }
@@ -207,16 +217,17 @@
   export default class UserEditPage extends Vue {
     showDeleteAccountDialog: boolean = false;
     isUserDetailsLoading: boolean = false;
+    isUserDeletionLoading: boolean = false;
     $apollo: any;
 
     currentUser?: CurrentUserResult;
-    name: string = '';
-    email: string = '';
+    name: string | null = null;
+    email: string | null = null;
+    primaryGroupName: string | null = null;
+    primaryGroupID: string | null = null;
 
-    primGroupOptions: primGroupOptions[] = [{
-      value: 'EMBL',
-      label: 'EMBL'
-    }];
+    delDatasets: boolean = false;
+    initEmailVal: string | null = null;
 
     @Watch('currentUser', {deep: true})
     onCurrentUserChanged() {
@@ -232,20 +243,29 @@
       this.showDeleteAccountDialog = false;
     }
 
+    set value(newGroupName) {
+      this.primaryGroupID = newGroupName.id;
+      this.primaryGroupName = newGroupName.name;
+    }
+
+    get value(): string {
+      return this.primaryGroupName;
+    }
+
     get groupsData(): GroupsData[] {
       if (this.currentUser == null) {
         return [];
       }
       return this.currentUser.groups.map(it => {
-        const {name} = it.group;
+        const {id, name} = it.group;
         const {role, numDatasets} = it;
-        return {name, role, numDatasets}
+        return {id, name, role, numDatasets}
       });
     }
 
     async updateUserDetails() {
       try {
-        if (true /* check if email has changed */) {
+        if (this.initEmailVal !== this.email) {
           try {
             await this.$confirm(
               "Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change.",
@@ -266,7 +286,7 @@
               name: this.name,
               role: this.currentUser.role,
               email: this.email,
-              primaryGroupId: this.currentUser.primaryGroup.group.id
+              primaryGroupId: this.primaryGroupID
             }
           },
         });
@@ -276,7 +296,6 @@
           message: "New message to verify your account was sent to your account"
         });
       } catch(err) {
-        console.log(err)
         reportError(err, 'There was a problem with updating email.');
       } finally {
         this.isUserDetailsLoading = false;
@@ -284,44 +303,51 @@
     }
 
     async leaveGroup(ind: number, rows: GroupsData[]) {
-      console.log(ind, rows)
-      const foo = this.currentUser.groups.map(it => {
-            const {name, id} = it.group;
-            const {role, numDatasets} = it;
-            return {id, name, role, numDatasets}
-          });
-          console.log('arr', foo);
       try {
-        await this.$confirm(
-          "Are you sure you want to leave this group?", {
+        try {
+          await this.$msgbox({
+            message: 'Are you sure you want to leave this group?',
+            showCancelButton: true,
             confirmButtonText: "Yes, leave the group",
-            lockScroll: false
+            lockScroll: false,
+            beforeClose: async (action, instance, done) => {
+              if (action === 'confirm') {
+                instance.confirmButtonLoading = true;
+                instance.confirmButtonText = 'Leaving...';
+                await this.$apollo.mutate({
+                  mutation: leaveGroupMutation,
+                  variables: {
+                    groupId: rows[ind].id
+                  }
+                });
+                rows.splice(ind, 1);
+                instance.confirmButtonLoading = false;
+                done();
+              } else {
+                done();
+              }
+            },
           });
-        rows.splice(ind, 1);
-        await this.$apollo.mutate({
-          mutation: leaveGroupMutation,
-          variables: {
-            groupId: "2222"
-          }
-        });
-        this.$message({
-          type: "success",
-          message: "You have successfully left the group!"
-        })
+          this.$message({
+            type: "success",
+            message: "You have successfully left the group!"
+          })
+        } catch {
+          return
+        }
       } catch (err) {
-        console.log(err)
         reportError(err, 'Failed to leave the group. Please contact administrator.');
-      } finally {
       }
     }
 
     async deleteAccount() {
+      this.isUserDeletionLoading = true;
       try {
         await this.$apollo.mutate({
           mutation: deleteUserMutation,
           variables: {
             id: this.currentUser.id,
-            deleteDatasets: true
+            deleteDatasets: this.delDatasets
           }
         });
         this.$message({
@@ -329,10 +355,10 @@
           message: "You have successfully deleted your account!"
         })
       } catch (err) {
-        console.log(err)
         reportError(err, 'There was a problem with deleting the user account.');
       } finally {
-        this.cancelDeleteAccount()
+        this.cancelDeleteAccount();
+        this.isUserDeletionLoading = false;
       }
     }
   }
@@ -367,6 +393,10 @@
 
   .primGroupOptions {
     margin: 0;
+  }
+
+  .el-dialog__body {
+    padding: 0 20px 20px 20px;
   }
 
   /* Uncomment when the vFuture notifications will be introduced

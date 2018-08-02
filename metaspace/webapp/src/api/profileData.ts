@@ -1,45 +1,4 @@
-import apolloClient from '../graphqlClient'
 import gql from 'graphql-tag';
-import {delay} from "../util";
-import {booleanType} from "aws-sdk/clients/iam";
-
-interface User {
-  id: string;
-  name: string;
-  role: string | null;
-  email: string | null;
-  groups: UserGroup[] | null;
-  primaryGroup: UserGroup | null;
-}
-
-interface UserGroup {
-  user: User;
-  group: Group;
-  role: string;
-  numDatasets: number;
-}
-
-interface Group {
-  id: string;
-  name: string;
-  shortName: string;
-  members: UserGroup[];
-}
-
-interface UpdateUserInput {
-  id: number;
-  name: string;
-  role: string;
-  email: string;
-  primaryGroupId: number;
-}
-
-interface UpdateUserResult {
-  id: string;
-  name: string;
-  role: string | null;
-  email: string | null;
-}
 
 export const currentUserQuery =
 gql`query {
@@ -51,6 +10,7 @@ gql`query {
     primaryGroup {
       group {
         id
+        name
       }
     }
     groups {
