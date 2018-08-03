@@ -44,9 +44,17 @@ function trimEmptyFields(schema, value) {
 }
 
 function setSubmitter(oldMetadata, newMetadata, user) {
-  const email = oldMetadata != null
-    ? oldMetadata.Submitted_By.Submitter.Email
-    : user.email;
+  if (oldMetadata == null) {
+    if (user.role == 'admin') {
+      const email = newMetadata.Submitted_By.Submitter.Email || user.email;
+    }
+    else {
+      const email = user.email;
+    }
+  }
+  else {
+    const email = oldMetadata.Submitted_By.Submitter.Email || user.email;
+  }
   _.set(newMetadata, ['Submitted_By', 'Submitter', 'Email'], email)
 }
 
