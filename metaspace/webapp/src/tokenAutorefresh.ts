@@ -20,6 +20,9 @@ class TokenAutorefresh {
     }
     return this.jwt;
   }
+  async waitForAuth() {
+    await this.getJwt();
+  }
 
   async refreshJwt(invalidateOldJwt: boolean = false) {
     if (invalidateOldJwt) {
