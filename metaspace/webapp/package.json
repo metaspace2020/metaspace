@@ -11,7 +11,8 @@
     "test": "jest",
     "test-e2e": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=20000 --quarantine-mode --assertion-timeout=20000",
     "cucumber-test": "cucumber-js --compiler ts:ts-node/register tests/e2e/ --fail-fast",
-    "coverage": "jest --coverage"
+    "coverage": "jest --coverage",
+    "deref-schema": "node ./deref_schema.js src/assets"
   },
   "dependencies": {
     "@types/js-cookie": "^2.1.0",
