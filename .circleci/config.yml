@@ -64,7 +64,7 @@ jobs:
       - run:
           name: Compile
           command: |
-            yarn run build
+            yarn run build-ci
       - run:
           name: Run tests
           command: |
