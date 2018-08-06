@@ -51,6 +51,7 @@ jobs:
           name: Install npm packages
           command: |
             yarn install
+            npm install -g codecov
       - save_cache:
           key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
           paths:
