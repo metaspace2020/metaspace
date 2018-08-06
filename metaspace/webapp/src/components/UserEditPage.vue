@@ -218,9 +218,8 @@
     showDeleteAccountDialog: boolean = false;
     isUserDetailsLoading: boolean = false;
     isUserDeletionLoading: boolean = false;
-    $apollo: any;
 
-    currentUser?: CurrentUserResult;
+    currentUser: CurrentUserResult | null = null;
     name: string | null = null;
     email: string | null = null;
     primaryGroupName: string | null = null;
@@ -253,7 +252,7 @@
     }
 
     get groupsData(): GroupsData[] {
-      if (this.currentUser == null) {
+      if (this.currentUser == null || this.currentUser.groups == null) {
         return [];
       }
       return this.currentUser.groups.map(it => {
@@ -264,42 +263,45 @@
     }
 
     async updateUserDetails() {
-      try {
-        if (this.initEmailVal !== this.email) {
-          try {
-            await this.$confirm(
-              "Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change.",
-              "Confirm email address change", {
-                confirmButtonText: "Yes, send verification email",
-                lockScroll: false
-              });
-          } catch {
-            return
-          }
-        }
-        this.isUserDetailsLoading = true;
-        await this.$apollo.mutate({
-          mutation: updateUserMutation,
-          variables: {
-            update: {
-              id: this.currentUser.id,
-              name: this.name,
-              role: this.currentUser.role,
-              email: this.email,
-              primaryGroupId: this.primaryGroupID
+      if (this.email !== '') {
+        try {
+          if (this.initEmailVal !== this.email) {
+            try {
+              await this.$confirm(
+                "Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change.",
+                "Confirm email address change", {
+                  confirmButtonText: "Yes, send verification email",
+                  lockScroll: false
+                });
+            } catch {
+              return
             }
-          },
-        });
-        await this.$apollo.queries.currentUser.refetch();
-        this.$message({
-          type: "success",
-          message: "New message to verify your account was sent to your account"
-        });
-      } catch(err) {
-        reportError(err, 'There was a problem with updating email.');
-      } finally {
-        this.isUserDetailsLoading = false;
+          }
+          this.isUserDetailsLoading = true;
+          await this.$apollo.mutate({
+            mutation: updateUserMutation,
+            variables: {
+              update: {
+                id: this.currentUser.id,
+                name: this.name,
+                role: this.currentUser.role,
+                email: this.email,
+                primaryGroupId: this.primaryGroupID
+              }
+            },
+          });
+          await this.$apollo.queries.currentUser.refetch();
+          this.$message({
+            type: "success",
+            message: "New message to verify your account was sent to your account"
+          });
+        } catch(err) {
+          reportError(err, 'There was a problem with updating email.');
+        } finally {
+          this.isUserDetailsLoading = false;
+        }
       }
+
     }
 
     async leaveGroup(ind: number, rows: GroupsData[]) {

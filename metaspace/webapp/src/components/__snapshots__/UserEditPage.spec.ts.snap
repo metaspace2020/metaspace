@@ -1,0 +1,180 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`UserEditPage should match snapshot 1`] = `
+<div class="main-content">
+  <div class="user-edit-page">
+    <mock-el-dialog title="Delete account" width="30%">
+      <p>If you delete your account, you will lose access to any datasets, groups and projects that have been explicitly shared with you</p>
+      <label role="checkbox" class="el-checkbox" style="margin-left: 20px;"><span aria-checked="mixed" class="el-checkbox__input"><span class="el-checkbox__inner"></span>
+        <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+        </span><span class="el-checkbox__label">
+        Delete datasets the that I have submitted
+      <!----></span></label>
+      <div class="el-row">
+        <button type="button" class="el-button el-button--default" title="Cancel">
+          <!---->
+          <!----><span>Cancel</span></button>
+        <button type="button" class="el-button el-button--danger" title="Delete account" style="margin: 20px 0px;">
+          <!---->
+          <!----><span>
+          Delete account</span></button>
+      </div>
+      <p>
+        <b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them deleted later by emailing the METASPACE administrators.</p>
+    </mock-el-dialog>
+    <div class="el-row" id="edit-user-page">
+      <div class="el-row">
+        <div class="el-col el-col-16">
+          <h2>User details</h2>
+        </div>
+        <div class="el-col el-col-8">
+          <button type="button" class="el-button saveButton el-button--primary" title="Save">
+            <!---->
+            <!----><span>
+            Save
+          </span></button>
+        </div>
+      </div>
+      <div class="el-row" style="margin-left: -10px; margin-right: -10px;">
+        <form class="el-form">
+          <div class="user-details">
+            <div class="el-col el-col-12" style="padding-left: 10px; padding-right: 10px;">
+              <div class="fullname">
+                <div class="el-form-item">
+                  <label for="name" class="el-form-item__label">Full name:</label>
+                  <div class="el-form-item__content">
+                    <div class="el-input">
+                      <!---->
+                      <input type="text" autocomplete="off" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                    <!---->
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="el-col el-col-12" style="padding-left: 10px; padding-right: 10px;">
+              <div class="email">
+                <div class="el-form-item">
+                  <label for="email" class="el-form-item__label">E-mail:</label>
+                  <div class="el-form-item__content">
+                    <div class="el-input">
+                      <!---->
+                      <input type="text" autocomplete="off" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                    <!---->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="groups">
+        <h2>Groups</h2>
+        <div class="el-table el-table--fit el-table--border el-table--scrollable-x el-table--enable-row-hover" style="width: 100%;">
+          <div class="hidden-columns">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+          <div class="el-table__header-wrapper">
+            <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 620px;">
+              <colgroup>
+                <col name="el-table_1_column_1" width="180">
+                <col name="el-table_1_column_2" width="280">
+                <col name="el-table_1_column_3" width="80">
+                <col name="el-table_1_column_4" width="80">
+              </colgroup>
+              <thead class="">
+                <tr class="">
+                  <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf">
+                    <div class="cell">Group</div>
+                  </th>
+                  <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf">
+                    <div class="cell">Role</div>
+                  </th>
+                  <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf">
+                    <div class="cell">Dataset contributed</div>
+                  </th>
+                  <th colspan="1" rowspan="1" class="el-table_1_column_4     is-leaf">
+                    <div class="cell"></div>
+                  </th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div class="el-table__body-wrapper is-scrolling-left">
+            <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 620px;">
+              <colgroup>
+                <col name="el-table_1_column_1" width="180">
+                <col name="el-table_1_column_2" width="280">
+                <col name="el-table_1_column_3" width="80">
+                <col name="el-table_1_column_4" width="80">
+              </colgroup>
+              <tbody>
+                <!---->
+              </tbody>
+            </table>
+            <div class="el-table__empty-block" style="width: 620px;"><span class="el-table__empty-text">暂无数据</span></div>
+            <!---->
+          </div>
+          <!---->
+          <!---->
+          <!---->
+          <!---->
+          <div class="el-table__column-resize-proxy" style="display: none;"></div>
+        </div>
+        <p>Primary group:</p>
+        <div class="el-select primGroupOptions">
+          <!---->
+          <div class="el-input el-input--suffix">
+            <!---->
+            <input type="text" autocomplete="off" placeholder="Select" readonly="readonly" class="el-input__inner">
+            <!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-arrow-up"></i><!----></span>
+            <!---->
+            </span>
+            <!---->
+          </div>
+          <div class="el-select-dropdown el-popper" style="display: none;">
+            <div class="el-scrollbar" style="display: none;">
+              <div class="el-select-dropdown__wrap el-scrollbar__wrap el-scrollbar__wrap--hidden-default">
+                <ul class="el-scrollbar__view el-select-dropdown__list"></ul>
+              </div>
+              <div class="el-scrollbar__bar is-horizontal">
+                <div class="el-scrollbar__thumb" style="transform: translateX(0%); -webkit-transform: translateX(0%);"></div>
+              </div>
+              <div class="el-scrollbar__bar is-vertical">
+                <div class="el-scrollbar__thumb" style="transform: translateY(0%); -webkit-transform: translateY(0%);"></div>
+              </div>
+            </div>
+            <p class="el-select-dropdown__empty">
+              无数据
+            </p>
+          </div>
+        </div>
+        <p>
+          <a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up your organization or lab on METASPACE
+        </p>
+      </div>
+      <div class="delete-account" style="margin-top: 45px;">
+        <h2>Delete account</h2>
+        <p>If you choose to delete your METASPACE account, you will be given the choice of whether to delete the datasets you have uploaded and projects you have created or leave them for others to continue using.</p>
+      </div>
+      <div class="el-row">
+        <button type="button" class="el-button el-button--danger" title="Delete account" style="float: right;">
+          <!---->
+          <!----><span>
+          Delete account
+        </span></button>
+      </div>
+    </div>
+  </div>
+</div>
+`;
