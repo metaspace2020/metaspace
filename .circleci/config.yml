@@ -61,9 +61,18 @@ jobs:
             cp ci/conf.js .
             cp ci/clientConfig.json src/
       - run:
+          name: Compile
+          command: |
+            yarn run build
+      - run:
           name: Run tests
           command: |
             yarn run test
+      - run:
+          name: Upload coverage
+          command: |
+            yarn run test --coverage
+            codecov
 
   test-webapp-e2e:
     docker:
