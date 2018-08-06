@@ -4,17 +4,6 @@
       <div id="md-editor-submit">
         <div class="spacer"></div>
         <div>
-          <!--<el-switch-->
-          <!--v-model="metaspaceOptions.isPublic"-->
-          <!--active-text="Public"-->
-          <!--inactive-text="Private" />-->
-          <!--<el-popover trigger="hover" placement="top" class="md-editor-public-help">-->
-            <!--<div>-->
-              <!--<p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>-->
-              <!--<p><b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>-->
-            <!--</div>-->
-            <!--<i slot="reference" class="el-icon-question"></i>-->
-          <!--</el-popover>-->
           <el-button @click="cancel" v-if="datasetId" class="el-button__metadata">Cancel</el-button>
           <el-button type="primary" v-if="enableSubmit" @click="submit" class="el-button__metadata">Submit</el-button>
           <el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__metadata">
@@ -25,33 +14,30 @@
 
 
       <div id="md-section-list">
-        <data-management-section style="margin-top: 10px"/>
-
-
         <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"
                       style="margin-top: 20px"/>
         <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"
-                      style="margin-top: 20px"/>
+                      style="margin-top: 25px"/>
         <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"
-                      style="margin-top: 20px"/>
+                      style="margin-top: 25px"/>
         <!--<form-section v-bind="sectionBinds('Submitted_By')" v-on="sectionEvents('Submitted_By')"-->
                       <!--style="margin-top: 20px"/>-->
+        <data-management-section style="margin-top: 20px"/>
+
         <visibility-option-section
           :isPublic="metaspaceOptions['isPublic']"
-          :error="errors['metaspaceOptions']"
-        />
+          @visibStatus="onVisibStatusChange" />
         <metaspace-options-section
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :molDBOptions="molDBOptions"
           :adductOptions="adductOptions"
-          style="margin-top: 20px"
         />
         <form-section v-for="sectionKey in otherSections"
                       :key="sectionKey"
                       v-bind="sectionBinds(sectionKey)"
                       v-on="sectionEvents(sectionKey)"
-                      style="margin-top: 20px"/>
+                      style="margin-top: 10px"/>
       </div>
     </div>
     <div id="load-indicator" v-else v-loading="true">
@@ -403,6 +389,10 @@
      fillDatasetName(name) {
        this.metaspaceOptions.name = name;
      },
+
+	   onVisibStatusChange(val) {
+		   this.metaspaceOptions['isPublic'] = val;
+	   },
    }
  }
 </script>
@@ -430,7 +420,6 @@
 
  .md-editor-public-help {
    cursor: pointer;
-   padding: 0 16px 0 8px;
  }
 
  #md-section-list {
@@ -450,7 +439,7 @@
    position: absolute;
    padding: 20px 20px;
    font-size: 150%;
-   margin-top: -36px;
+   margin-top: -15px;
    right: 5px;
    top: -52px;
  }
@@ -461,4 +450,3 @@
  /*}*/
 
 </style>
- j8

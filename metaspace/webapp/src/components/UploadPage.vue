@@ -1,54 +1,58 @@
 <template>
-  <div id="upload-page" v-if="!enableUploads">
-    <div id="maintenance-message">
-      Uploading is temporarily disabled so that we can safely update the website.
-      <br/>
-      Please wait a few hours and reload the page. Thank you for understanding!
-    </div>
-  </div>
-
-  <div id="upload-page" v-else-if="!isSignedIn">
-    <div id="sign-in-intro">
-      <intro-message>
-        <p class="sign-in-message"><b>To get started, click "Sign in" to sign in or create an account.</b></p>
-      </intro-message>
-    </div>
-  </div>
-
-  <div id="upload-page" v-else>
-    <div id="upload-left-pane">
-      <div id="filter-panel-container">
-        <filter-panel level="upload"></filter-panel>
+  <div class="main-content">
+    <div class="upload-page-wrapper">
+      <div id="upload-page" v-if="!enableUploads">
+        <div id="maintenance-message">
+          Uploading is temporarily disabled so that we can safely update the website.
+          <br/>
+          Please wait a few hours and reload the page. Thank you for understanding!
+        </div>
       </div>
 
-      <div id="instructions">
-
-        <p style="font-size: 18px" v-if="introIsHidden">
-          <span>Submitting for the first time?</span>
-          <a style="cursor: pointer;" @click="introIsHidden = false">Show instructions</a>
-        </p>
-
-        <div v-show="!introIsHidden">
+      <div id="upload-page" v-else-if="!isSignedIn">
+        <div id="sign-in-intro">
           <intro-message>
-            <p>To start the submission, just drop the file(s) into the box below, fill in the metadata form, and click the Submit button.</p>
+            <p class="sign-in-message"><b>To get started, click "Sign in" to sign in or create an account.</b></p>
           </intro-message>
         </div>
       </div>
 
-      <fine-uploader :config="fineUploaderConfig"
-                     :dataTypeConfig="fineUploaderDataTypeConfig"
-                     ref="uploader"
-                     @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure">
-      </fine-uploader>
-    </div>
+      <div id="upload-page" v-else>
+        <div id="upload-left-pane">
+          <!--<div id="filter-panel-container">-->
+            <!--<filter-panel level="upload"></filter-panel>-->
+          <!--</div>-->
 
-    <div id="upload-right-pane">
-      <metadata-editor ref="editor"
-                       :enableSubmit="uploadedUuid != null && !isSubmitting"
-                       @submit="onFormSubmit"
-                       disabledSubmitMessage="Your files must be uploaded first"
-                       :validationErrors="validationErrors">
-      </metadata-editor>
+          <div id="instructions">
+
+            <!--<p style="font-size: 18px" v-if="introIsHidden">-->
+              <!--<span>Submitting for the first time?</span>-->
+              <!--<a style="cursor: pointer;" @click="introIsHidden = false">Show instructions</a>-->
+            <!--</p>-->
+
+            <div v-show="!introIsHidden">
+              <intro-message>
+                <p>To start the submission, just drop the file(s) into the box below, fill in the metadata form, and click the Submit button.</p>
+              </intro-message>
+            </div>
+          </div>
+
+          <fine-uploader :config="fineUploaderConfig"
+                         :dataTypeConfig="fineUploaderDataTypeConfig"
+                         ref="uploader"
+                         @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure">
+          </fine-uploader>
+        </div>
+
+        <div id="upload-right-pane">
+          <metadata-editor ref="editor"
+                           :enableSubmit="uploadedUuid != null && !isSubmitting"
+                           @submit="onFormSubmit"
+                           disabledSubmitMessage="Your files must be uploaded first"
+                           :validationErrors="validationErrors">
+          </metadata-editor>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -244,18 +248,16 @@
    padding-left: 0;
  }
 
- #upload-page, #maintenance-message {
-   display: flex;
-   flex-wrap: wrap;
-   flex-direction: row;
-   justify-content: center;
- }
+ /*#upload-page, #maintenance-message {*/
+   /*display: flex;*/
+   /*flex-wrap: wrap;*/
+   /*flex-direction: row;*/
+   /*justify-content: center;*/
+ /*}*/
 
  #upload-left-pane {
-   flex-basis: 700px;
    flex-grow: 1;
-   max-width: 1000px;
-   padding: 20px;
+   max-width: 950px;
  }
 
  #upload-right-pane {
@@ -279,4 +281,14 @@
     margin: 1.5em 0;
     font-size: 1.5em;
   }
+
+ .upload-page-wrapper {
+   max-width: 950px;
+ }
+
+ .main-content {
+   padding: 80px 20px 20px 20px;
+   display: flex;
+   justify-content: center;
+ }
 </style>

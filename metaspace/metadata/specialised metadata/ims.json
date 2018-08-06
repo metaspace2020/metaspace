@@ -10,8 +10,8 @@
     },
     "Sample_Preparation": {
       "description": "How the sample was prepared for imaging mass spectrometry",
-      "required": ["MALDI_Matrix", "MALDI_Matrix_Application"],
       "type": "object",
+      "required": ["MALDI_Matrix", "MALDI_Matrix_Application"],
       "properties": {
         "MALDI_Matrix": {
           "description": "MALDI matrix, if used",
@@ -24,7 +24,7 @@
           "type": "string",
           "minLength": 1,
           "default": "none"
-        },
+        }, 
         "Solvent": {
           "description": "Solvent used e.g. for DESI or MALDI matrix",
           "type": "string",
