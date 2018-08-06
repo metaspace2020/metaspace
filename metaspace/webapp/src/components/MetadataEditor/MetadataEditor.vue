@@ -12,7 +12,6 @@
         </div>
       </div>
 
-
       <div id="md-section-list">
         <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"
                       style="margin-top: 20px"/>
@@ -22,17 +21,17 @@
                       style="margin-top: 25px"/>
         <!--<form-section v-bind="sectionBinds('Submitted_By')" v-on="sectionEvents('Submitted_By')"-->
                       <!--style="margin-top: 20px"/>-->
-        <data-management-section style="margin-top: 20px"/>
-
+        <data-management-section
+          v-model="metaspaceOptions"
+          style="margin-top: 20px" />
         <visibility-option-section
-          :isPublic="metaspaceOptions['isPublic']"
+          v-model="metaspaceOptions"
           @visibStatus="onVisibStatusChange" />
         <metaspace-options-section
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :molDBOptions="molDBOptions"
-          :adductOptions="adductOptions"
-        />
+          :adductOptions="adductOptions"/>
         <form-section v-for="sectionKey in otherSections"
                       :key="sectionKey"
                       v-bind="sectionBinds(sectionKey)"
@@ -105,7 +104,8 @@
    isPublic: true,
    molDBs: [],
    adducts: [],
-   name: ''
+   name: '',
+   groups: ['a','b']
  };
  
  function safeJsonParse(json) {
@@ -150,7 +150,6 @@
        possibleAdducts: {},
        metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
        sampleInfo: cloneDeep(defaultSampleInfo),
-       groups: ['groupA', 'groupB', 'noGroup']
      }
    },
 

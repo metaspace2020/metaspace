@@ -19,10 +19,10 @@
             </el-col>
             <el-col :span="8">
               <form-field
+                :value="value.groups"
                 :options="groupsData"
-                :help="groupsHelp"
                 type="selectMulti"
-                placeholder="Select"
+                placeholder="Select your group"
                 name="Group"
                 required>
               </form-field>
@@ -64,19 +64,27 @@
   })
 
   export default class DataManagementSection extends Vue {
+    @Prop({type: Object, required: true})
+    value!: MetaspaceOptions;
+
     currentUser?: CurrentUserResult | null = null;
     name: string | null=null;
     email: string | null=null;
+    // groupsData: string [] = '';
+    // groupsData: string[] = ['test1', 'test2']
 
     get groupsData(): string[] {
+      console.log(this.value)
       if (this.currentUser == null) {
         return [];
       }
-      return this.currentUser.groups.map(it => {
-        const {name} = it.group;
-        return name
+      const groupList = this.currentUser.groups.map(it => {
+        return it.group.name
       });
+      groupList.push('No group...');
+      return groupList
     }
+
   }
 </script>
 

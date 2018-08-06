@@ -1,7 +1,7 @@
 <template>
   <div class="metadata-section">
 
-    <el-row style="margin-top: 10px">
+    <el-row style="margin-top: 0px">
       <el-col :span="6">
         <div class="section-description">Annotation settings</div>
       </el-col>
