@@ -73,7 +73,7 @@ jobs:
           name: Upload coverage
           command: |
             yarn run test --coverage
-            codecov --root ../.. -F webapp
+            codecov -p ../.. -F webapp
 
   test-webapp-e2e:
     docker:
