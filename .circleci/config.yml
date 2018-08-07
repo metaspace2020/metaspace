@@ -73,7 +73,7 @@ jobs:
           name: Upload coverage
           command: |
             yarn run test --coverage
-            codecov -F webapp -p ../..
+            codecov --root ../.. -F webapp
 
   test-webapp-e2e:
     docker:
@@ -188,7 +188,7 @@ jobs:
           command: |
             source docker/env.sh
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
-            codecov -F engine -p ../..
+            codecov --root ../.. -F engine
 
   test-engine-sci:
     docker:
