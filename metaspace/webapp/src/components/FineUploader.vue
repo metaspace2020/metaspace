@@ -257,7 +257,7 @@
    min-height: 50px;
    max-height: 300px;
    padding: 10px 0;
-   /*margin: 10px 0;*/
+   margin: 20px 0;
  }
 
  .qq-uploader:before {

@@ -80,7 +80,6 @@
     onInput<TKey extends keyof MetaspaceOptions>(field: TKey, val: MetaspaceOptions[TKey]) {
       this.$emit('input', {...this.value, [field]: val});
     }
-
   }
 </script>
 

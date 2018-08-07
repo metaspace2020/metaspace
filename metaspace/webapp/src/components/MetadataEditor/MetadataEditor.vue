@@ -31,7 +31,9 @@
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :molDBOptions="molDBOptions"
-          :adductOptions="adductOptions"/>
+          :adductOptions="adductOptions"
+          style="margin-top: 20px"
+        />
         <form-section v-for="sectionKey in otherSections"
                       :key="sectionKey"
                       v-bind="sectionBinds(sectionKey)"
@@ -440,7 +442,7 @@
    font-size: 150%;
    margin-top: -15px;
    right: 5px;
-   top: -52px;
+   top: -75px;
  }
 
  /*.filter-panel-container {*/
