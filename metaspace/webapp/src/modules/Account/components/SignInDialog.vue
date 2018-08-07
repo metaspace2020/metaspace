@@ -108,7 +108,7 @@
         const authenticated = await signInByEmail(email, password);
         if (authenticated) {
           await tokenAutorefresh.refreshJwt(true);
-          this.onClose();
+          this.$store.commit('account/hideDialog', { dialog: 'signIn', isLoginSuccess: true });
         } else {
           form.clearValidate();
           this.isInvalid = true;
