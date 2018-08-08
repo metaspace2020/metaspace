@@ -1,4 +1,5 @@
 import { Express, Request, Response, NextFunction } from 'express';
+import * as Knex from 'knex'
 import {callbackify} from 'util';
 import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
@@ -6,17 +7,19 @@ import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
 import * as JwtSimple from 'jwt-simple';
 
 import config from '../../utils/config';
+import {DbUser} from "./model"
+import {createConnection} from '../../utils/db'
 import {
   sendResetPasswordToken,
   createUser,
-  DbUser,
   findUserByEmail,
   findUserByGoogleId,
   findUserById,
   resetPassword,
   verifyEmail,
-  verifyPassword
-} from './db-user';
+  verifyPassword,
+  initOperation
+} from './operation';
 
 const getUserFromRequest = (req: Request): DbUser | null => {
   const user = (req as any).cookieUser;
@@ -243,7 +246,8 @@ const configureResetPassword = (app: Express) => {
   });
 };
 
-export const configureAuth = (app: Express) => {
+export const configureAuth = async (app: Express) => {
+  await initOperation(createConnection())
   configurePassport(app);
   configureJwt(app);
   configureLocalAuth(app);

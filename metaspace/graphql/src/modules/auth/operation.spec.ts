@@ -1,38 +1,45 @@
+import * as Knex from 'knex';
+
 import config from '../../utils/config';
 import {createExpiry} from "./utils";
-import {knex, initSchema} from './db';
-import {createUser,
+import {createConnection} from '../../utils/db'
+import {
+  createUser,
   verifyEmail,
   resetPassword,
   sendResetPasswordToken,
-  verifyPassword} from "./db-user";
+  verifyPassword,
+  initOperation} from "./operation";
 
 jest.mock('./email');
 import * as _mockEmail from './email';
 const mockEmail = _mockEmail as jest.Mocked<typeof _mockEmail>;
 
-const knexAdmin = require('knex')({
-  client: 'postgres',
-  connection: {
-    host     : 'localhost',
-    user     : 'postgres',
-    database : 'postgres'
-  }
-});
-
 describe('Database operations with user', () => {
+  let knexAdmin: Knex
+  let knex: Knex
 
   beforeAll(async () => {
     console.log('> beforeAll');
-    console.log(config.db);
-    await knexAdmin.raw(`DROP DATABASE IF EXISTS ${config.db.database}`);
-    await knexAdmin.raw(`CREATE DATABASE ${config.db.database} OWNER ${config.db.user}`);
-    await initSchema();
+
+    knexAdmin = createConnection({
+      host     : 'localhost',
+      user     : 'postgres',
+      database : 'postgres'
+    });
+    await knexAdmin.raw(`DROP DATABASE IF EXISTS ${config.db.database}`)
+    await knexAdmin.raw(`CREATE DATABASE ${config.db.database} OWNER ${config.db.user}`)
+
+    console.log(config.db)
+    knex = createConnection()
+    await initOperation(knex)
   });
 
   afterAll(async () => {
     console.log('> afterAll');
+
     await knex.destroy();
+
     await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
     await knexAdmin.destroy();
   });

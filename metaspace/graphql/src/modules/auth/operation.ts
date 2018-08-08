@@ -1,32 +1,24 @@
-import * as bcrypt from 'bcrypt';
-import * as uuid from 'uuid';
+import * as bcrypt from 'bcrypt'
+import * as uuid from 'uuid'
+import * as Knex from 'knex'
 
-import config from '../../utils/config';
-import {createExpiry} from "./utils";
-import {knex, DbRow, updateTable} from './db';
-import * as emailService from './email';
+import config from '../../utils/config'
+import {createExpiry} from "./utils"
+import {createUpdateTable, DbRow} from '../../utils/db'
+import * as emailService from './email'
 import {logger} from '../../utils'
-
-export interface DbUser extends DbRow {
-  email: string;
-  hash: string | null;
-  name: string | null;
-  role: string | null;
-  googleId: string | null;
-  emailVerificationToken: string | null;
-  emailVerificationTokenExpires: Date | null;
-  emailVerified: boolean | null;
-  resetPasswordToken: string | null;
-  resetPasswordTokenExpires: Date | null
-}
-export interface NewDbUser {
-  email: string;
-  password?: string;
-  name?: string;
-  googleId?: string;
-}
+import {DbUser, initSchema, NewDbUser} from './model'
 
 const NUM_ROUNDS = 12;
+
+let knex: Knex
+let updateTable: (name: string, row: DbRow) => Promise<any>
+
+export const initOperation = async (knexObj: Knex) => {
+  knex = knexObj
+  await initSchema(knex)
+  updateTable = createUpdateTable(knex)
+}
 
 const hashPassword = async (password: string|undefined): Promise<string|null> => {
   return (password) ? await bcrypt.hash(password, NUM_ROUNDS) : null;
