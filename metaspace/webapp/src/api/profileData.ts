@@ -43,3 +43,12 @@ export const deleteUserMutation =
 gql`mutation ($id: ID!, $deleteDatasets: Boolean!) {
   deleteUser(id: $id, deleteDatasets: $deleteDatasets)
 }`;
+
+
+// Mocking, TODO: delete this export when Group Profile is merged as it's a duplicate from src/api/group.ts
+export const acceptGroupInvitationMutation =
+gql`mutation acceptGroupInvitation($groupId: ID!, $bringDatasets: [ID!]!) { 
+    acceptGroupInvitation(groupId: $groupId, bringDatasets: $bringDatasets) {
+      role
+    }
+  }`;

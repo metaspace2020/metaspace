@@ -1,6 +1,7 @@
 <template>
   <div class="main-content">
     <div class="user-edit-page">
+
       <el-dialog
         title="Delete account"
         :visible.sync="showDeleteAccountDialog"
@@ -9,10 +10,10 @@
         <p>If you delete your account, you will lose access to any datasets, groups and
         projects that have been explicitly shared with you</p>
         <el-checkbox v-model="delDatasets" style="margin-left: 20px">
-          Delete datasets the that I have submitted
+          Delete datasets that I have submitted
         </el-checkbox>
         <el-row>
-          <el-button title="Cancel" @click="cancelDeleteAccount">Cancel</el-button>
+          <el-button title="Cancel" @click="closeDeleteAccountDialog">Cancel</el-button>
           <el-button
             type="danger"
             title="Delete account"
@@ -41,7 +42,7 @@
         </el-row>
         <el-row :gutter="20">
           <el-form :disabled="isUserDetailsLoading">
-            <div class="user-details">
+            <div class="user-details" style="padding-left: 15px;">
               <el-col :span="12">
                 <div class="fullname">
                   <el-form-item prop="name" label="Full name:">
@@ -64,8 +65,7 @@
           <h2>Groups</h2>
           <el-table
             :data="groupsData"
-            border
-            style="width: 100%">
+            style="width: 100%;padding-left: 15px;">
             <el-table-column
               prop="name"
               label="Group"
@@ -83,16 +83,38 @@
             <el-table-column>
               <template slot-scope="scope">
                 <el-button
+                  v-if="scope.row.role === 'MEMBER'"
                   size="mini"
-                  type="danger"
-                  @click="leaveGroup(scope.$index, groupsData)">
+                  icon="el-icon-arrow-right"
+                  @click="leaveGroup('leave', scope.row)">
                   Leave
+                </el-button><el-button
+                  v-if="scope.row.role === 'PRINCIPAL INVESTIGATOR'"
+                  size="mini"
+                  icon="el-icon-arrow-right"
+                  disabled>
+                  Leave
+                </el-button>
+                <el-button
+                  v-if="scope.row.role === 'INVITED'"
+                  size="mini"
+                  type="success"
+                  icon="el-icon-check">
+                  Accept
+                </el-button>
+                <el-button
+                  v-if="scope.row.role === 'INVITED'"
+                  size="mini"
+                  icon="el-icon-close"
+                  @click="leaveGroup(_, scope.row)">
+                  Decline
                 </el-button>
               </template>
             </el-table-column>
           </el-table>
           <p>Primary group:</p>
-          <el-select v-model="value" placeholder="Select" class="primGroupOptions">
+          <el-select v-model="value" placeholder="Select" class="primGroupOptions"
+                     style="padding-left: 15px;">
             <el-option
               v-for="item in groupsData"
               :key="item.id"
@@ -146,15 +168,15 @@
         <!--</div>-->
         <div class="delete-account" style="margin-top: 45px">
           <h2>Delete account</h2>
-          <p>If you choose to delete your METASPACE account, you will be given the choice of whether to delete the
+          <p style="width: 100%;padding-left: 15px;">If you choose to delete your METASPACE account, you will be given the choice of whether to delete the
             datasets you have uploaded and projects you have created or leave them for others to continue using.</p>
         </div>
         <el-row>
           <el-button
             type="danger"
             title="Delete account"
-            @click="deleteAccountDialog()"
-            style="float:right">
+            @click="openDeleteAccountDialog()"
+            style="float:right; margin-top:15px">
             Delete account
           </el-button>
         </el-row>
@@ -167,9 +189,11 @@
   import Vue from 'vue'
   import VueApollo from 'vue-apollo'
   import { Component, Watch } from 'vue-property-decorator'
-  import {updateUserMutation, leaveGroupMutation, deleteUserMutation, currentUserQuery} from '../api/profileData'
+  import {updateUserMutation, leaveGroupMutation,
+    deleteUserMutation, currentUserQuery, acceptGroupInvitationMutation} from '../api/profileData'
   import reportError from "../lib/reportError";
   import apolloClient from '../graphqlClient';
+  import tokenAutorefresh from '../tokenAutorefresh';
 
   interface GroupsData {
     id: string;
@@ -202,14 +226,7 @@
   @Component({
     apollo: {
       currentUser: {
-        query: currentUserQuery,
-        result(data) {
-          this.name = data.data.currentUser.name;
-          this.email = data.data.currentUser.email;
-          this.primaryGroupName = data.data.currentUser.primaryGroup.group.name;
-          this.primaryGroupID = data.data.currentUser.primaryGroup.group.id;
-          this.initEmailVal = this.email;
-        }
+        query: currentUserQuery
       }
     }
   })
@@ -226,19 +243,29 @@
     primaryGroupID: string | null = null;
 
     delDatasets: boolean = false;
-    initEmailVal: string | null = null;
+    rules: object = {
+      name: [
+        {required: true, pattern:/^[a-zA-Z ]+$/, message: 'Please enter a correct fullname'}
+      ],
+      email: [
+        {required: true, pattern:/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+        message: 'Please enter a correct Email address'
+      }]
+    };
 
     @Watch('currentUser', {deep: true})
     onCurrentUserChanged() {
       this.name = this.currentUser.name;
       this.email = this.currentUser.email;
+      this.primaryGroupName = this.currentUser.primaryGroup.group.name;
+      this.primaryGroupID = this.currentUser.primaryGroup.group.id;
     }
 
-    deleteAccountDialog() {
+    openDeleteAccountDialog() {
       this.showDeleteAccountDialog = true;
     }
 
-    cancelDeleteAccount() {
+    closeDeleteAccountDialog() {
       this.showDeleteAccountDialog = false;
     }
 
@@ -257,94 +284,114 @@
       }
       return this.currentUser.groups.map(it => {
         const {id, name} = it.group;
-        const {role, numDatasets} = it;
+        const {numDatasets} = it;
+        let {role} = it;
+          if (role === 'PENDING') {
+          role = 'REQUESTING ACCESS'
+        }
+        role = role.replace(/[_-]/, " ");
         return {id, name, role, numDatasets}
       });
     }
 
     async updateUserDetails() {
-      if (this.email !== '') {
-        try {
-          if (this.initEmailVal !== this.email) {
-            try {
-              await this.$confirm(
-                "Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change.",
-                "Confirm email address change", {
-                  confirmButtonText: "Yes, send verification email",
-                  lockScroll: false
-                });
-            } catch {
-              return
-            }
+      try {
+        if (this.currentUser.email !== this.email) {
+          try {
+            await this.$confirm(
+              "Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change.",
+              "Confirm email address change", {
+                confirmButtonText: "Yes, send verification email",
+                lockScroll: false
+              });
+          } catch {
+            return
           }
-          this.isUserDetailsLoading = true;
-          await this.$apollo.mutate({
-            mutation: updateUserMutation,
-            variables: {
-              update: {
-                id: this.currentUser.id,
-                name: this.name,
-                role: this.currentUser.role,
-                email: this.email,
-                primaryGroupId: this.primaryGroupID
-              }
-            },
-          });
-          await this.$apollo.queries.currentUser.refetch();
+        }
+        this.isUserDetailsLoading = true;
+        await this.$apollo.mutate({
+          mutation: updateUserMutation,
+          variables: {
+            update: {
+              id: this.currentUser.id,
+              name: this.name,
+              email: this.email,
+              primaryGroupId: this.primaryGroupID
+            }
+          },
+        });
+        await this.$apollo.queries.currentUser.refetch();
+        if (true /* if validated successfully */) {
           this.$message({
             type: "success",
-            message: "New message to verify your account was sent to your account"
+            message: "A verification link has been sent to your new email address. " +
+            "Please click the link in this email to confirm the change."
           });
-        } catch(err) {
-          reportError(err, 'There was a problem with updating email.');
-        } finally {
-          this.isUserDetailsLoading = false;
+        } else {
+          // highlight problematic fields
         }
+      } catch(err) {
+        reportError(err);
+      } finally {
+        this.isUserDetailsLoading = false;
       }
-
     }
 
-    async leaveGroup(ind: number, rows: GroupsData[]) {
+    async leaveGroup(action: string, groupRow: GroupsData) {
       try {
         try {
           await this.$msgbox({
-            message: 'Are you sure you want to leave this group?',
+            message: (action === 'leave') ? `Are you sure you want to leave ${groupRow.name} group?` :
+              `Are you sure you want to decline the invitation to ${groupRow.name} group?`,
             showCancelButton: true,
-            confirmButtonText: "Yes, leave the group",
+            confirmButtonText: (action === 'leave') ? "Yes, leave the group" :
+              "Yes, decline the invitation",
             lockScroll: false,
             beforeClose: async (action, instance, done) => {
-              if (action === 'confirm') {
-                instance.confirmButtonLoading = true;
-                instance.confirmButtonText = 'Leaving...';
-                await this.$apollo.mutate({
-                  mutation: leaveGroupMutation,
-                  variables: {
-                    groupId: rows[ind].id
-                  }
-                });
-                rows.splice(ind, 1);
-                instance.confirmButtonLoading = false;
-                done();
-              } else {
-                done();
+              try {
+                if (action === 'confirm') {
+                  instance.confirmButtonLoading = true;
+                  instance.confirmButtonText = 'Leaving...';
+                  await this.$apollo.mutate({
+                    mutation: leaveGroupMutation,
+                    variables: {
+                      groupId: groupRow.id
+                    }
+                  });
+                  await this.$apollo.queries.currentUser.refetch();
+
+                  this.groupsData.forEach((item, i) => {
+                    if (item.id === groupRow.id) {
+                      this.groupsData.splice(i, 1)
+                    }
+                  });
+                  instance.confirmButtonLoading = false;
+                  done();
+                } else {
+                  done();
+                }
+              } catch(err) {
+                reportError(err);
               }
-            },
+            }
           });
-          this.$message({
-            type: "success",
-            message: "You have successfully left the group!"
-          })
+          if (action === 'leave') {
+            this.$message({
+              type: "success",
+              message: "You have successfully left the group!"
+            })
+          }
         } catch {
           return
         }
       } catch (err) {
-        reportError(err, 'Failed to leave the group. Please contact administrator.');
+        reportError(err);
       }
     }
 
     async deleteAccount() {
-      this.isUserDeletionLoading = true;
       try {
+        this.isUserDeletionLoading = true;
         await this.$apollo.mutate({
           mutation: deleteUserMutation,
           variables: {
@@ -356,14 +403,30 @@
           type: "success",
           message: "You have successfully deleted your account!"
         })
-      } catch (err) {
-        reportError(err, 'There was a problem with deleting the user account.');
+      } catch(err) {
+        reportError(err);
       } finally {
-        this.cancelDeleteAccount();
+        this.closeDeleteAccountDialog();
         this.isUserDeletionLoading = false;
+        await tokenAutorefresh.refreshJwt();
       }
     }
   }
+
+  // TODO: this async method should be bound or replaced with TransferDatasetsDialog.vue from Group profile page
+  // async acceptGroupInvitation(row: GroupsData) {
+  //   try {
+  //     await this.$apollo.mutate({
+  //       mutation: acceptGroupInvitationMutation,
+  //       variables: {
+  //         groupId: row.id,
+  //         bringDatasets: ['','']
+  //       }
+  //     })
+  //   } catch (err) {
+  //     reportError(err)
+  //   }
+  // }
 </script>
 
 <style>
