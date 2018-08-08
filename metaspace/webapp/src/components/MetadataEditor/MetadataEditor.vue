@@ -19,8 +19,6 @@
                       style="margin-top: 25px"/>
         <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"
                       style="margin-top: 25px"/>
-        <!--<form-section v-bind="sectionBinds('Submitted_By')" v-on="sectionEvents('Submitted_By')"-->
-                      <!--style="margin-top: 20px"/>-->
         <data-management-section
           v-model="metaspaceOptions"
           style="margin-top: 20px" />
@@ -399,16 +397,13 @@
 </script>
 
 <style>
-
  #md-editor-container {
    display: flex;
    justify-content: center;
  }
 
  #md-editor-submit {
-   //position: absolute;
    display: flex;
-   //align-items: center;
    right: 5px;
    top: -3px;
    z-index: 10
@@ -417,10 +412,6 @@
  #md-editor-submit > button {
    width: 100px;
    padding: 6px;
- }
-
- .md-editor-public-help {
-   cursor: pointer;
  }
 
  #md-section-list {
@@ -444,10 +435,4 @@
    right: 5px;
    top: -75px;
  }
-
- /*.filter-panel-container {*/
-   /*margin-left: 10px;*/
-   /*margin-top: -5px;*/
- /*}*/
-
 </style>

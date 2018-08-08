@@ -1,17 +1,10 @@
 <template>
   <div>
-
     <script type="text/template" id="qq-template">
       <div id="upload-area-container" class="qq-uploader-selector qq-uploader">
         <div class="qq-upload-drop-area-selector qq-upload-drop-area" qq-hide-dropzone>
           <span class="qq-upload-drop-area-text-selector"></span>
         </div>
-        <div class="buttons">
-          <!--<div id="select-files-button" class="qq-upload-button-selector qq-upload-button metasp-button" role="button">-->
-            <!--Select files-->
-          <!--</div>-->
-        </div>
-
 
         <span class="qq-drop-processing-selector qq-drop-processing">
           <span>Processing dropped files...</span>
@@ -227,21 +220,8 @@
 </script>
 
 <style>
-
- /* override some defaults */
- .metasp-button {
-   background-color: #0069e0 !important;
-   padding: 7px 20px !important;
-   width: 150px !important;
-   font-size: 16px !important;
- }
-
  #fine-uploader-manual-trigger {
    margin-right: 15px;
- }
-
- .qq-upload-button {
-   margin: 0;
  }
 
  #fine-uploader-manual-trigger .buttons {
@@ -264,26 +244,17 @@
    top: 40%;
  }
 
- #select-files-button {
-   /*padding: 30px;*/
-   display: block;
-   position: relative;
-   transform: translateY(-60%);
-   margin-left: 20px;
+ .uploader-text {
+   font-size: 200%;
+   transform: translateY(15%);
+   width: 100%;
+   text-align: center;
+   opacity: 0.25;
  }
 
-
-  .uploader-text {
-    font-size: 200%;
-    transform: translateY(15%);
-    width: 100%;
-    text-align: center;
-    opacity: 0.25;
-  }
-
-  .chooseFile {
-    text-decoration:underline;
-    text-decoration-style: dashed;
-  }
+ .chooseFile {
+   text-decoration:underline;
+   text-decoration-style: dashed;
+ }
 
 </style>

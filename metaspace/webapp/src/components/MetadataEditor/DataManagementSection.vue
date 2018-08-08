@@ -15,9 +15,7 @@
         placeholder="Enter group name"
         :remote-method="remoteMethod"
         :loading="loading">
-
       </el-select>
-
 
     </el-dialog>
     <el-row>
