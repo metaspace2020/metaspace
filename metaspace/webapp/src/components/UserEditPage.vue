@@ -41,19 +41,19 @@
           </el-col>
         </el-row>
         <el-row :gutter="20">
-          <el-form :disabled="isUserDetailsLoading">
+          <el-form :disabled="isUserDetailsLoading" :rules="rules" :model="model" ref="form">
             <div class="user-details" style="padding-left: 15px;">
               <el-col :span="12">
                 <div class="fullname">
                   <el-form-item prop="name" label="Full name:">
-                    <el-input v-model="name" />
+                    <el-input v-model="model.name" />
                   </el-form-item>
                 </div>
               </el-col>
               <el-col :span="12">
                 <div class="email">
                   <el-form-item prop="email" label="E-mail:">
-                    <el-input v-model="email" />
+                    <el-input v-model="model.email" />
                   </el-form-item>
                 </div>
               </el-col>
@@ -106,29 +106,29 @@
                   v-if="scope.row.role === 'INVITED'"
                   size="mini"
                   icon="el-icon-close"
-                  @click="leaveGroup(_, scope.row)">
+                  @click="leaveGroup('leaveGroup', scope.row)">
                   Decline
                 </el-button>
               </template>
             </el-table-column>
           </el-table>
           <p>Primary group:</p>
-          <el-select v-model="value" placeholder="Select" class="primGroupOptions"
+          <el-select v-model="primaryGroupName" placeholder="Select" class="primGroupOptions"
                      style="padding-left: 15px;">
             <el-option
               v-for="item in groupsData"
               :key="item.id"
               :label="item.name"
-              :value="item">
+              :value="item.name">
             </el-option>
           </el-select>
           <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up your organization or lab on METASPACE
           </p>
         </div>
         <!--The section below will be introduced in vFuture-->
-        <!--<div class="notifications">-->
+        <!--<div class="notifications" style="margin-top: 30px">-->
           <!--<h2>Notifications</h2>-->
-          <!--<div class="notification-list">-->
+          <!--<div class="notification-list" style="padding-left: 10px">-->
             <!--<el-row :gutter="0">-->
               <!--<el-col :span="12"><p>Send an email when:</p>-->
                 <!--<el-checkbox-group-->
@@ -194,6 +194,12 @@
   import reportError from "../lib/reportError";
   import apolloClient from '../graphqlClient';
   import tokenAutorefresh from '../tokenAutorefresh';
+  import {ElForm} from "element-ui/types/form";
+
+  interface Model {
+    name: string;
+    email: string | null;
+  }
 
   interface GroupsData {
     id: string;
@@ -235,28 +241,32 @@
     showDeleteAccountDialog: boolean = false;
     isUserDetailsLoading: boolean = false;
     isUserDeletionLoading: boolean = false;
+    // one more var to accept invitation
 
     currentUser: CurrentUserResult | null = null;
-    name: string | null = null;
-    email: string | null = null;
+    model: Model = {
+      name: '',
+      email: ''
+    };
+
     primaryGroupName: string | null = null;
     primaryGroupID: string | null = null;
 
     delDatasets: boolean = false;
     rules: object = {
       name: [
-        {required: true, pattern:/^[a-zA-Z ]+$/, message: 'Please enter a correct fullname'}
+        {required: true, min: 3, max: 50 , message: 'Please enter a correct fullname', trigger: "blur"}
       ],
       email: [
         {required: true, pattern:/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-        message: 'Please enter a correct Email address'
+        message: 'Please enter a correct Email address', trigger: "blur"
       }]
     };
 
     @Watch('currentUser', {deep: true})
-    onCurrentUserChanged() {
-      this.name = this.currentUser.name;
-      this.email = this.currentUser.email;
+    onCurrentUserChanged(this: any) {
+      this.model.name = this.currentUser.name;
+      this.model.email = this.currentUser.email;
       this.primaryGroupName = this.currentUser.primaryGroup.group.name;
       this.primaryGroupID = this.currentUser.primaryGroup.group.id;
     }
@@ -267,15 +277,6 @@
 
     closeDeleteAccountDialog() {
       this.showDeleteAccountDialog = false;
-    }
-
-    set value(newGroupName) {
-      this.primaryGroupID = newGroupName.id;
-      this.primaryGroupName = newGroupName.name;
-    }
-
-    get value(): string {
-      return this.primaryGroupName;
     }
 
     get groupsData(): GroupsData[] {
@@ -294,9 +295,14 @@
       });
     }
 
-    async updateUserDetails() {
+    async updateUserDetails(this: any) {
       try {
-        if (this.currentUser.email !== this.email) {
+        await (this.$refs.form as ElForm).validate();
+      } catch (err) {
+        return;
+      }
+      try {
+        if (this.currentUser.email !== this.model.email) {
           try {
             await this.$confirm(
               "Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change.",
@@ -314,22 +320,18 @@
           variables: {
             update: {
               id: this.currentUser.id,
-              name: this.name,
-              email: this.email,
+              name: this.model.name,
+              email: this.model.email,
               primaryGroupId: this.primaryGroupID
             }
           },
         });
         await this.$apollo.queries.currentUser.refetch();
-        if (true /* if validated successfully */) {
           this.$message({
             type: "success",
             message: "A verification link has been sent to your new email address. " +
             "Please click the link in this email to confirm the change."
           });
-        } else {
-          // highlight problematic fields
-        }
       } catch(err) {
         reportError(err);
       } finally {
@@ -359,12 +361,6 @@
                     }
                   });
                   await this.$apollo.queries.currentUser.refetch();
-
-                  this.groupsData.forEach((item, i) => {
-                    if (item.id === groupRow.id) {
-                      this.groupsData.splice(i, 1)
-                    }
-                  });
                   instance.confirmButtonLoading = false;
                   done();
                 } else {
@@ -389,7 +385,7 @@
       }
     }
 
-    async deleteAccount() {
+    async deleteAccount(this: any) {
       try {
         this.isUserDeletionLoading = true;
         await this.$apollo.mutate({
@@ -406,9 +402,10 @@
       } catch(err) {
         reportError(err);
       } finally {
+        // TODO: Change it to refreshLoginStatus(); after merging group profile page
+        await tokenAutorefresh.refreshJwt();
         this.closeDeleteAccountDialog();
         this.isUserDeletionLoading = false;
-        await tokenAutorefresh.refreshJwt();
       }
     }
   }
