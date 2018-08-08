@@ -7,7 +7,10 @@
     </div>
   </div>
 
-  <div id="upload-page" v-else-if="!isSignedIn">
+  <div id="upload-page" v-else-if="!isSignedIn && features.newAuth">
+  </div>
+
+  <div id="upload-page" v-else-if="!isSignedIn && !features.newAuth">
     <div id="sign-in-intro">
       <intro-message>
         <p class="sign-in-message"><b>To get started, click "Sign in" to sign in or create an account.</b></p>
@@ -61,6 +64,7 @@
  import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
  import IntroMessage from './IntroMessage.vue';
  import Vue from 'vue';
+ import tokenAutorefresh from '../tokenAutorefresh';
 
  import * as config from '../clientConfig.json';
  import {pathFromUUID} from '../util';
@@ -108,10 +112,19 @@
    created() {
      this.$store.commit('updateFilter', this.$store.getters.filter);
    },
-   mounted() {
+   async mounted() {
      const {query} = this.$store.state.route;
      if (query['first-time'] !== undefined)
        this.introIsHidden = false;
+
+     await tokenAutorefresh.waitForAuth();
+     if (!this.isSignedIn && this.features.newAuth) {
+       this.$store.commit('account/showDialog', {
+         dialog: 'signIn',
+         dialogCloseRedirect: '/',
+         loginSuccessRedirect: '/upload',
+       });
+     }
    },
    data() {
      return {
@@ -121,6 +134,7 @@
        validationErrors: [],
        isSubmitting: false,
        uploadedUuid: null,
+       features: config.features
      }
    },
    components: {

@@ -11,31 +11,30 @@ jest.mock('./email');
 import * as _mockEmail from './email';
 const mockEmail = _mockEmail as jest.Mocked<typeof _mockEmail>;
 
-// const knexAdmin = require('knex')({
-//   client: 'postgres',
-//   connection: {
-//     host     : 'localhost',
-//     user     : 'sm',
-//     password : 'password',
-//     database : 'postgres'
-//   },
-//   searchPath: ['graphql']
-// });
+const knexAdmin = require('knex')({
+  client: 'postgres',
+  connection: {
+    host     : 'localhost',
+    user     : 'postgres',
+    database : 'postgres'
+  }
+});
 
 describe('Database operations with user', () => {
 
   beforeAll(async () => {
     console.log('> beforeAll');
     console.log(config.db);
-    // await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
-    // await knexAdmin.raw(`CREATE DATABASE ${config.db.database}`);
+    await knexAdmin.raw(`DROP DATABASE IF EXISTS ${config.db.database}`);
+    await knexAdmin.raw(`CREATE DATABASE ${config.db.database} OWNER ${config.db.user}`);
     await initSchema();
   });
 
   afterAll(async () => {
     console.log('> afterAll');
-    // await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
     await knex.destroy();
+    await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
+    await knexAdmin.destroy();
   });
 
   beforeEach(async () => {

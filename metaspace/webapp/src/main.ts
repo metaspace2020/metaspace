@@ -41,7 +41,7 @@ Vue.use(VueAnalytics, {
     exception: isProd // disabled in dev because it impairs "break on uncaught exception"
   },
   debug: {
-    enabled: !isProd,
+    // enabled: !isProd,
     sendHitTask: isProd
   }
 });
