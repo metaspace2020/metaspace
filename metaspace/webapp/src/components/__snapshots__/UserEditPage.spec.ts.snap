@@ -8,7 +8,7 @@ exports[`UserEditPage should match snapshot 1`] = `
       <label role="checkbox" class="el-checkbox" style="margin-left: 20px;"><span aria-checked="mixed" class="el-checkbox__input"><span class="el-checkbox__inner"></span>
         <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
         </span><span class="el-checkbox__label">
-        Delete datasets the that I have submitted
+        Delete datasets that I have submitted
       <!----></span></label>
       <div class="el-row">
         <button type="button" class="el-button el-button--default" title="Cancel">
@@ -37,19 +37,13 @@ exports[`UserEditPage should match snapshot 1`] = `
       </div>
       <div class="el-row" style="margin-left: -10px; margin-right: -10px;">
         <form class="el-form">
-          <div class="user-details">
+          <div class="user-details" style="padding-left: 15px;">
             <div class="el-col el-col-12" style="padding-left: 10px; padding-right: 10px;">
               <div class="fullname">
-                <div class="el-form-item">
+                <div class="el-form-item is-required">
                   <label for="name" class="el-form-item__label">Full name:</label>
                   <div class="el-form-item__content">
-                    <div class="el-input">
-                      <!---->
-                      <input type="text" autocomplete="off" class="el-input__inner">
-                      <!---->
-                      <!---->
-                      <!---->
-                    </div>
+                    <mock-el-input></mock-el-input>
                     <!---->
                   </div>
                 </div>
@@ -57,16 +51,10 @@ exports[`UserEditPage should match snapshot 1`] = `
             </div>
             <div class="el-col el-col-12" style="padding-left: 10px; padding-right: 10px;">
               <div class="email">
-                <div class="el-form-item">
+                <div class="el-form-item is-required">
                   <label for="email" class="el-form-item__label">E-mail:</label>
                   <div class="el-form-item__content">
-                    <div class="el-input">
-                      <!---->
-                      <input type="text" autocomplete="off" class="el-input__inner">
-                      <!---->
-                      <!---->
-                      <!---->
-                    </div>
+                    <mock-el-input></mock-el-input>
                     <!---->
                   </div>
                 </div>
@@ -77,7 +65,7 @@ exports[`UserEditPage should match snapshot 1`] = `
       </div>
       <div class="groups">
         <h2>Groups</h2>
-        <div class="el-table el-table--fit el-table--border el-table--scrollable-x el-table--enable-row-hover" style="width: 100%;">
+        <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover" style="width: 100%; padding-left: 15px;">
           <div class="hidden-columns">
             <div></div>
             <div></div>
@@ -132,7 +120,7 @@ exports[`UserEditPage should match snapshot 1`] = `
           <div class="el-table__column-resize-proxy" style="display: none;"></div>
         </div>
         <p>Primary group:</p>
-        <div class="el-select primGroupOptions">
+        <div class="el-select primGroupOptions" style="padding-left: 15px;">
           <!---->
           <div class="el-input el-input--suffix">
             <!---->
@@ -165,10 +153,10 @@ exports[`UserEditPage should match snapshot 1`] = `
       </div>
       <div class="delete-account" style="margin-top: 45px;">
         <h2>Delete account</h2>
-        <p>If you choose to delete your METASPACE account, you will be given the choice of whether to delete the datasets you have uploaded and projects you have created or leave them for others to continue using.</p>
+        <p style="width: 100%; padding-left: 15px;">If you choose to delete your METASPACE account, you will be given the choice of whether to delete the datasets you have uploaded and projects you have created or leave them for others to continue using.</p>
       </div>
       <div class="el-row">
-        <button type="button" class="el-button el-button--danger" title="Delete account" style="float: right;">
+        <button type="button" class="el-button el-button--danger" title="Delete account" style="float: right; margin-top: 15px;">
           <!---->
           <!----><span>
           Delete account
