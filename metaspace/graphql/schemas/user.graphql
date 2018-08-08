@@ -16,7 +16,7 @@ input UpdateUserInput {
 }
 
 type Query {
-  currentUser: User!
+  currentUser: User
   user(id: ID!): User                # For admins
   allUsers(query: String): [User!]!  # For admins
 }

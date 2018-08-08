@@ -1,42 +1,100 @@
 import gql from 'graphql-tag';
 
-export const datasetListQuery =
-  gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!) {
-    allDatasets(offset: 0, limit: 100, filter: $dFilter, simpleQuery: $query) {
+// Prefixing these with `Gql` because differently-cased variants are used elsewhere
+export type GqlPolarity = 'POSITIVE' | 'NEGATIVE';
+export type GqlJobStatus = 'NEW' | 'QUEUED' | 'ANNOTATING' | 'INDEXING' | 'FINISHED' | 'FAILED';
+
+export interface DatasetDetailItem {
+  id: string;
+  name: string;
+  institution: string | null;
+  submitter: {
+    id: string | null;
+    name: string;
+  };
+  polarity: GqlPolarity;
+  ionisationSource: string;
+  analyzer: {
+    type: string;
+    resolvingPower: number;
+  };
+  organism: string | null;
+  organismPart: string | null;
+  condition: string | null;
+  growthConditions: string | null;
+  metadataJson: string;
+  isPublic: Boolean;
+  molDBs: string[];
+  status: GqlJobStatus | null;
+  metadataType: string;
+  fdrCounts: {
+    dbName: string;
+    levels: number[];
+    counts: number[];
+  };
+  opticalImage: string;
+}
+
+export const datasetDetailItemFragment =
+  gql`fragment DatasetDetailItem on Dataset {
+    id
+    name
+    institution
+    submitter {
       id
       name
-      institution
-      submitter {
-        id
-        name
-      }
-      polarity
-      ionisationSource
-      analyzer {
-        type
-        resolvingPower(mz: 400)
-      }
-      organism
-      organismPart
-      condition
-      growthConditions
-      metadataJson
-      isPublic
-      molDBs
-      status
-      metadataType
-      fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
-        dbName
-        levels
-        counts
-      }
-      opticalImage
+      email
     }
+    polarity
+    ionisationSource
+    analyzer {
+      type
+      resolvingPower(mz: 400)
+    }
+    organism
+    organismPart
+    condition
+    growthConditions
+    metadataJson
+    isPublic
+    molDBs
+    status
+    metadataType
+    fdrCounts(inpFdrLvls: $inpFdrLvls, checkLvl: $checkLvl) {
+      dbName
+      levels
+      counts
+    }
+    opticalImage
   }`;
+
+export const datasetDetailItemsQuery =
+  gql`query GetDatasets($dFilter: DatasetFilter, $query: String, $inpFdrLvls: [Int!]!, $checkLvl: Int!) {
+    allDatasets(offset: 0, limit: 100, filter: $dFilter, simpleQuery: $query) {
+      ...DatasetDetailItem
+    }
+  }
+  ${datasetDetailItemFragment}
+  `;
 
 export const datasetCountQuery =
   gql`query CountDatasets($dFilter: DatasetFilter, $query: String) {
     countDatasets(filter: $dFilter, simpleQuery: $query)
+  }`;
+
+export interface DatasetListItem {
+  id: string;
+  name: string;
+  uploadDT: string;
+}
+
+export const datasetListItemsQuery =
+  gql`query GetDatasets($dFilter: DatasetFilter, $query: String) {
+    allDatasets(offset: 0, limit: 100, filter: $dFilter, simpleQuery: $query) {
+      id
+      name
+      uploadDT
+    }
   }`;
 
 export const opticalImageQuery =

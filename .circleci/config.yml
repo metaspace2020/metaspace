@@ -9,7 +9,7 @@ jobs:
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
-      
+
       - image: node:8
 
     working_directory: ~/metaspace/metaspace/graphql
@@ -68,6 +68,7 @@ jobs:
       - run:
           name: Run tests
           command: |
+            yarn run deref-schema
             yarn run test
       - run:
           name: Upload coverage

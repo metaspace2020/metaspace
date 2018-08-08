@@ -41,6 +41,12 @@
  export default {
   name: 'submitter-summary-plot',
 
+  data() {
+    return {
+      counts: []
+    }
+  },
+
   apollo: {
     counts: {
       query: query,

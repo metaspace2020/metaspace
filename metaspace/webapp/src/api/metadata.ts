@@ -36,6 +36,10 @@ export const fetchOptionListsQuery = gql`{
     id
     name
   }
+  groups: allGroups {
+    id
+    name
+  }
   adducts: adductSuggestions{adduct, charge}
 }`;
 
