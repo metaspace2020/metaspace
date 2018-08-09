@@ -79,6 +79,7 @@
   import gql from 'graphql-tag';
   import reportError from '../../lib/reportError';
   import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
+  import { encodeParams } from '../../url';
 
   type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';
 
@@ -162,12 +163,12 @@
     }
 
     get datasetsListLink() {
-      return {
-        path: '/datasets',
-        query: {
-          group: this.groupId
-        }
-      }
+      const filters = {
+        group: this.group && {id: this.groupId, name: this.group.name},
+      };
+      const path = '/datasets';
+      const query = encodeParams(filters, path, this.$store.state.filterLists);
+      return { path, query }
     }
 
     async doSubmit(type: SubmitActionType, func: () => Promise<void>) {
