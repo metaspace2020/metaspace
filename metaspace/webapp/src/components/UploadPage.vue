@@ -24,12 +24,6 @@
           <!--</div>-->
 
           <div id="instructions">
-
-            <!--<p style="font-size: 18px" v-if="introIsHidden">-->
-              <!--<span>Submitting for the first time?</span>-->
-              <!--<a style="cursor: pointer;" @click="introIsHidden = false">Show instructions</a>-->
-            <!--</p>-->
-
             <div v-show="!introIsHidden">
               <intro-message>
                 <p>To start the submission, just drop the file(s) into the box below, fill in the metadata form, and click the Submit button.</p>
@@ -37,17 +31,33 @@
             </div>
           </div>
 
-          <fine-uploader :config="fineUploaderConfig"
-                         :dataTypeConfig="fineUploaderDataTypeConfig"
-                         ref="uploader"
-                         @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure">
-          </fine-uploader>
+          <div style="display: flex; flex-direction: row; justify-content: space-evenly">
+            <fine-uploader :config="fineUploaderConfig"
+                           :dataTypeConfig="fineUploaderDataTypeConfig"
+                           ref="uploader"
+                           style="flex-basis: 90%"
+                           @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure" />
+            <div class="md-editor-submit">
+
+                <!--<el-button @click="cancel"  class="el-button__metadata">Cancel</el-button>-->
+                <el-button type="primary" @click="onSubmit" class="el-button__metadata">Submit</el-button>
+                <!--<el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__metadata">-->
+                <!--</el-button>-->
+                <!--<el-button @click="cancel" v-if="datasetId" class="el-button__metadata">Cancel</el-button>-->
+                <!--<el-button type="primary" v-if="enableSubmit" @click="onSubmit" class="el-button__metadata">Submit</el-button>-->
+                <!--<el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__metadata">-->
+                <!--Submit-->
+                <!--</el-button>-->
+            </div>
+
+          </div>
+
         </div>
+
 
         <div id="upload-right-pane">
           <metadata-editor ref="editor"
                            :enableSubmit="uploadedUuid != null && !isSubmitting"
-                           @submit="onFormSubmit"
                            disabledSubmitMessage="Your files must be uploaded first"
                            :validationErrors="validationErrors">
           </metadata-editor>
@@ -105,7 +115,7 @@
        return true;
      }
    }
- }
+ };
 
  export default {
    name: 'upload-page',
@@ -144,6 +154,16 @@
    },
 
    methods: {
+   	 onSubmit() {
+       let queryRes = this.$refs.editor.getFormValueForSubmit();
+       if (queryRes !== undefined) {
+       this.onFormSubmit(
+         queryRes.datasetId,
+         queryRes.metadataJson,
+         queryRes.metaspaceOptions)
+       }
+     },
+
      onUpload(filenames) {
        const allowedExts = this.fineUploaderDataTypeConfig.fileExtensions.map(ext => `.${ext.toLowerCase()}`);
        let fileName = '';
@@ -234,6 +254,10 @@
          this.isSubmitting = false;
        }
      },
+
+	   cancel() {
+		   this.$router.go(-1);
+	   },
    }
  }
 
@@ -247,13 +271,6 @@
  #filter-panel-container > * {
    padding-left: 0;
  }
-
- /*#upload-page, #maintenance-message {*/
-   /*display: flex;*/
-   /*flex-wrap: wrap;*/
-   /*flex-direction: row;*/
-   /*justify-content: center;*/
- /*}*/
 
  #upload-left-pane {
    flex-grow: 1;
@@ -290,5 +307,17 @@
    padding: 80px 20px 20px 20px;
    display: flex;
    justify-content: center;
+ }
+
+ .md-editor-submit {
+   display: flex;
+   flex-direction: column;
+   justify-content: center;
+ }
+
+ .el-button__metadata {
+   margin: auto 0;
+   padding: 20px 20px;
+   font-size: 150%;
  }
 </style>

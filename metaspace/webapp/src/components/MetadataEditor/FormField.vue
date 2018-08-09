@@ -26,7 +26,7 @@
 
     <el-input
       v-else-if="type === 'textarea'"
-      :rows="1"
+      autosize
       type="textarea"
       @input="onInput"
       :value="value"
@@ -151,7 +151,6 @@
         callback(results);
       })
     }
-
   }
 </script>
 
@@ -202,8 +201,7 @@
     color: red;
   }
 
-  .txt-area {
-    min-height: 10px;
+  .el-input__inner {
+    width: 100%;
   }
-
 </style>

@@ -1,42 +1,29 @@
 <template>
   <div id="md-editor-container">
     <div style="position: relative;" v-if="value != null">
-      <div id="md-editor-submit">
-        <div class="spacer"></div>
-        <div>
-          <el-button @click="cancel" v-if="datasetId" class="el-button__metadata">Cancel</el-button>
-          <el-button type="primary" v-if="enableSubmit" @click="submit" class="el-button__metadata">Submit</el-button>
-          <el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__metadata">
-            Submit
-          </el-button>
-        </div>
-      </div>
-
       <div id="md-section-list">
         <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"
-                      style="margin-top: 20px"/>
+                      />
         <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"
-                      style="margin-top: 25px"/>
+                      />
         <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"
-                      style="margin-top: 25px"/>
+                      />
         <data-management-section
           v-model="metaspaceOptions"
-          style="margin-top: 20px" />
+           />
         <visibility-option-section
-          v-model="metaspaceOptions"
-          @visibStatus="onVisibStatusChange" />
+          :isPublic.sync="metaspaceOptions.isPublic"/>
         <metaspace-options-section
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :molDBOptions="molDBOptions"
           :adductOptions="adductOptions"
-          style="margin-top: 20px"
         />
         <form-section v-for="sectionKey in otherSections"
                       :key="sectionKey"
                       v-bind="sectionBinds(sectionKey)"
                       v-on="sectionEvents(sectionKey)"
-                      style="margin-top: 10px"/>
+                      />
       </div>
     </div>
     <div id="load-indicator" v-else v-loading="true">
@@ -105,7 +92,8 @@
    molDBs: [],
    adducts: [],
    name: '',
-   groups: ['a','b']
+	 submitterId: '',
+	 groupId: ''
  };
  
  function safeJsonParse(json) {
@@ -340,10 +328,6 @@
        return factories['object'](metadataSchemas[metadataType]);
      },
 
-     cancel() {
-       this.$router.go(-1);
-     },
-
      updateCurrentAdductOptions() {
        const selectedAdducts = this.metaspaceOptions.adducts;
        let newAdducts = selectedAdducts.filter(adduct => this.adductOptions.includes(adduct))
@@ -363,16 +347,27 @@
        this.metaspaceOptions.molDBs = [];
      },
 
-     submit() {
+     getFormValueForSubmit() {
        this.validate();
+       // debugger;
        if (!isEmpty(this.localErrors)) {
+       	this.$message({
+          message: 'Please check that you entered metadata correctly!',
+          type: "warning"
+        })
+       	console.log(this.localErrors)
          return;
        }
 
        const value = JSON.stringify(this.value);
-       this.$emit('submit', this.datasetId, value, this.metaspaceOptions);
+       // this.$emit('submit', this.datasetId, value, this.metaspaceOptions);
        if (!this.datasetId) {
          this.saveForm();
+       }
+       return {
+	       datasetId: this.datasetId ? this.datasetId: '',
+	       metadataJson: value,
+	       metaspaceOptions: this.metaspaceOptions
        }
      },
 
@@ -387,11 +382,7 @@
      /* for outside access from the upload page, to autofill it with the filename */
      fillDatasetName(name) {
        this.metaspaceOptions.name = name;
-     },
-
-	   onVisibStatusChange(val) {
-		   this.metaspaceOptions['isPublic'] = val;
-	   },
+     }
    }
  }
 </script>
@@ -400,18 +391,6 @@
  #md-editor-container {
    display: flex;
    justify-content: center;
- }
-
- #md-editor-submit {
-   display: flex;
-   right: 5px;
-   top: -3px;
-   z-index: 10
- }
-
- #md-editor-submit > button {
-   width: 100px;
-   padding: 6px;
  }
 
  #md-section-list {
@@ -423,16 +402,4 @@
    min-height: 300px;
  }
 
- .spacer {
-   flex-grow:1;
- }
-
- .el-button__metadata {
-   position: absolute;
-   padding: 20px 20px;
-   font-size: 150%;
-   margin-top: -15px;
-   right: 5px;
-   top: -75px;
- }
 </style>

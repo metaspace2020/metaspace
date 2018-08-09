@@ -73,6 +73,7 @@
 
 <style lang="scss">
   .metadata-section {
+    padding-top: 14px;
     display: block;
     max-width: 950px;
   }

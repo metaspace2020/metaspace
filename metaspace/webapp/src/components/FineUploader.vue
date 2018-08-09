@@ -220,28 +220,11 @@
 </script>
 
 <style>
- #fine-uploader-manual-trigger {
-   margin-right: 15px;
- }
-
- #fine-uploader-manual-trigger .buttons {
-   width: 36%;
- }
-
- #fine-uploader-manual-trigger .qq-uploader .qq-total-progress-bar-container {
-   width: 60%;
- }
-
  .qq-uploader {
-   width: 85%;
-   min-height: 50px;
-   max-height: 300px;
    padding: 10px 0;
-   margin: 20px 0;
- }
-
- .qq-uploader:before {
-   top: 40%;
+   min-height: 45px;
+   max-height: 100px;
+   margin: 25px 20px 25px 0;
  }
 
  .uploader-text {
@@ -251,10 +234,4 @@
    text-align: center;
    opacity: 0.25;
  }
-
- .chooseFile {
-   text-decoration:underline;
-   text-decoration-style: dashed;
- }
-
 </style>

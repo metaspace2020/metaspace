@@ -52,7 +52,7 @@ export interface MetaspaceOptions {
 const FIELD_WIDTH: Record<string, number> = {
   'Institution': 8,
   'Submitter': 8,
-  'Publication_DOI': 16,
+  'Supplementary': 16,
   'Email': 24,
   'Polarity': 4,
   'Ionisation_Source': 8,

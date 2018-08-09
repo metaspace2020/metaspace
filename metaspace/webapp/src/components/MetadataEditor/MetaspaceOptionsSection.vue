@@ -1,7 +1,6 @@
 <template>
   <div class="metadata-section">
-
-    <el-row style="margin-top: 0px">
+    <el-row>
       <el-col :span="6">
         <div class="section-description">Annotation settings</div>
       </el-col>
@@ -9,6 +8,7 @@
         <el-row :gutter="8">
           <el-form size="medium"
                    label-position="top">
+
             <el-col :span="8">
               <form-field
                 type="selectMulti"

@@ -36,6 +36,13 @@ const router = new VueRouter({
     },
     { path: '/about', component: AboutPage },
     { path: '/help', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "HelpPage" */ './components/HelpPage.vue') },
+
+    ...(config.features.newAuth ? [
+      { path: '/account/sign-in', component: DialogPage, props: {dialog: 'signIn'} },
+      { path: '/account/create-account', component: DialogPage, props: {dialog: 'createAccount'} },
+      { path: '/account/forgot-password', component: DialogPage, props: {dialog: 'forgotPassword'} },
+      { path: '/account/reset-password', component: ResetPasswordPage },
+    ] : [])
   ]
 });
 

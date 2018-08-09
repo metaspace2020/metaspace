@@ -14,7 +14,8 @@
       </el-col>
       <el-col :span="18" style="margin-top: 20px">
         <el-switch
-          v-model="isPublic"
+          :value="isPublic"
+          @input="handleChangeIsPublic"
           active-text="Public"
           inactive-text="Private"
         />
@@ -30,20 +31,12 @@ import { MetaspaceOptions } from './formStructure';
 
 @Component
 export default class VisibilityOptionSection extends Vue {
-  isPublic: boolean = true;
+  @Prop({type: Boolean, required: true})
+  isPublic!: boolean;
 
-  @Emit('visibStatus')
-  visibStatus(val: boolean): void {
-    return null
-  }
-
-  @Watch('isPublic')
-  emitVisStatus(val) {
-    this.visibStatus(val)
-  }
-
-  name: "visibility-option-section"
-}
+  @Emit('update:isPublic')
+  handleChangeIsPublic(val: boolean): void {
+  }}
 </script>
 
 <style scoped>

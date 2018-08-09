@@ -126,8 +126,9 @@
     "Additional_Information": {
       "type": "object",
       "properties": {
-        "Publication_DOI": {
+        "Supplementary": {
           "type": "string",
+          "smEditorType": "textarea",
           "title": "Other information about sample/preparation/experiment"
         }
       }

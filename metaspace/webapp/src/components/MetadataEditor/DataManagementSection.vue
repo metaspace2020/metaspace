@@ -47,6 +47,7 @@
                 required>
               </form-field>
             </el-col>
+            <!--Uncomment when projects are introduced-->
             <!--<el-col :span="8">-->
             <!--<form-field-->
             <!--type="selectMulti"-->
@@ -63,7 +64,7 @@
 
 <script lang="ts">
   import Vue from 'vue';
-  import { Component, Prop } from 'vue-property-decorator';
+  import { Component, Prop, Watch } from 'vue-property-decorator';
   import FormField from './FormField.vue';
   import { MetaspaceOptions } from './formStructure';
   import { CurrentUserResult, currentUserQuery } from '../../api/mockedProfileData';
@@ -75,12 +76,7 @@
     },
     apollo: {
       currentUser: {
-        query: currentUserQuery,
-        result(data) {
-          this.name = data.data.currentUser.name;
-          this.groupNameToSubmit = data.data.currentUser.primaryGroup.group.name;
-          this.groupIdToSubmit = data.data.currentUser.primaryGroup.group.id;
-        }
+        query: currentUserQuery
       }
     }
   })
@@ -90,11 +86,18 @@
     value!: MetaspaceOptions;
 
     currentUser?: CurrentUserResult | null = null;
-    name: string | null=null;
-    email: string | null=null;
-    groupNameToSubmit: string | null=null;
+    name: string = '';
+    groupNameToSubmit: string = '';
+    groupIdToSubmit: number | null=null;
     findMyGroup: boolean = false;
-    allGroups: string[];
+    // allGroups: string[];
+
+    @Watch('currentUser', {deep:true})
+    onCurrentUserChanged(this: any) {
+      this.name = this.currentUser.name;
+      this.groupNameToSubmit = this.currentUser.primaryGroup.group.name;
+      this.groupIdToSubmit = this.currentUser.primaryGroup.group.id;
+    }
 
     get groupsData(): string[] {
       if (this.currentUser == null) {
@@ -121,6 +124,7 @@
 
 <style lang="scss">
   .metadata-section {
+    margin-top: 10px;
     display: block;
     max-width: 950px;
   }
