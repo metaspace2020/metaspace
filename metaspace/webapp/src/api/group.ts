@@ -73,6 +73,7 @@ export const editGroupQuery =
       id
       name
       shortName
+      currentUserRole
       members {
         role
         numDatasets
@@ -89,6 +90,7 @@ export interface EditGroupQuery {
   id: string;
   name: string;
   shortName: string;
+  currentUserRole: UserGroupRole | null;
   members: EditGroupQueryMember[] | null;
 }
 export interface EditGroupQueryMember {

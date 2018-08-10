@@ -88,12 +88,12 @@
   interface GroupInfo {
     name: string;
     shortName: string;
+    currentUserRole: UserGroupRole | null;
   }
 
   interface ViewGroupProfileData {
     currentUser: { id: string; } | null;
     group: GroupInfo | null;
-    currentUserRoleInGroup: UserGroupRole | null;
     allDatasets: DatasetDetailItem[];
     countDatasets: number;
   }
@@ -112,8 +112,8 @@
           group(id: $groupId) {
             name
             shortName
+            currentUserRole
           }
-          currentUserRoleInGroup(groupId: $groupId)
           allDatasets(offset: 0, limit: $maxVisibleDatasets, filter: { group: $groupId }) {
             ...DatasetDetailItem
           }
@@ -147,7 +147,7 @@
 
     get currentUserId(): string | null { return this.data && this.data.currentUser && this.data.currentUser.id }
     get group(): GroupInfo | null { return this.data && this.data.group; }
-    get roleInGroup(): UserGroupRole | null { return this.data && this.data.currentUserRoleInGroup; }
+    get roleInGroup(): UserGroupRole | null { return this.data && this.data.group && this.data.group.currentUserRole; }
     get groupDatasets(): DatasetDetailItem[] { return this.data && this.data.allDatasets || []; }
     get countDatasets(): number { return this.data && this.data.countDatasets || 0; }
     maxVisibleDatasets = 8;
@@ -159,7 +159,7 @@
     }
 
     get isInvited(): boolean {
-      return this.data != null && this.data.currentUserRoleInGroup === 'INVITED';
+      return this.roleInGroup === 'INVITED';
     }
 
     get datasetsListLink() {

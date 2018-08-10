@@ -10,7 +10,7 @@
             <el-button v-if="canDelete && group"
                        type="warning"
                        @click="handleDeleteGroup"
-                       :loading="isDeleting">
+                       :loading="isDeletingGroup">
               Delete Group
             </el-button>
             <el-button v-if="canEdit && group"
@@ -25,7 +25,7 @@
           <el-form :model="model" :disabled="groupLoading !== 0 || !canEdit">
             <div class="namesRow">
               <el-form-item label="Full name" prop="name" class="name">
-                <el-input v-model="model.name" />
+                <el-input v-model="model.name" :maxLength="50" />
               </el-form-item>
               <el-form-item label="Short name" prop="shortName" class="shortName">
                 <div slot="label">
@@ -38,7 +38,7 @@
                     </p>
                   </el-popover>
                 </div>
-                <el-input v-model="model.shortName" />
+                <el-input v-model="model.shortName" :maxLength="20" />
               </el-form-item>
             </div>
           </el-form>
@@ -80,6 +80,7 @@
   import { encodeParams } from '../../url';
   import ConfirmAsync from './ConfirmAsync';
   import reportError from '../../lib/reportError';
+  import emailRegex from '../../lib/emailRegex';
 
   interface CurrentUserQuery {
     id: string;
@@ -104,12 +105,6 @@
         loadingKey: 'membersLoading',
         variables(this: EditGroupProfile) { return { groupId: this.groupId } },
       },
-      currentUserRoleInGroup: {
-        query: gql`query ($groupId: ID!) {
-          currentUserRoleInGroup(groupId: $groupId)
-        }`,
-        variables(this: EditGroupProfile) { return { groupId: this.groupId } },
-      },
     }
   })
   export default class EditGroupProfile extends Vue {
@@ -123,7 +118,6 @@
 
     currentUser: CurrentUserQuery | null = null;
     group: EditGroupQuery | null = null;
-    currentUserRoleInGroup: UserGroupRole | null = null;
 
     roleNames: Record<UserGroupRole, string> = {
       'PRINCIPAL_INVESTIGATOR': 'Principal Investigator',
@@ -132,12 +126,13 @@
       'INVITED': 'Invited',
     };
 
-    get canDelete() {
-      return this.currentUser && this.currentUser.role === 'admin';
+    get canDelete(): boolean {
+      return this.currentUser && this.currentUser.role === 'admin' || false;
     }
-    get canEdit() {
+    get canEdit(): boolean {
       return (this.currentUser && this.currentUser.role === 'admin')
-        || this.currentUserRoleInGroup === 'PRINCIPAL_INVESTIGATOR';
+        || (this.group && this.group.currentUserRole === 'PRINCIPAL_INVESTIGATOR')
+        || false;
     }
     get groupId(): string {
       return this.$route.params.groupId;
@@ -249,9 +244,11 @@
     @ConfirmAsync(function (this: EditGroupProfile, member: EditGroupQueryMember) {
       return {
         title: 'Add member',
-        message: `An email will be sent inviting them to join the group. If they accept, they will be able to access the private datasets of ${this.groupName}.`,
+        message: `An email will be sent inviting them to join the group. If they accept the invitation, they will be able to access the private datasets of ${this.groupName}.`,
         showInput: true,
         inputPlaceholder: 'Email address',
+        inputPattern: emailRegex,
+        inputErrorMessage: 'Please enter a valid email address',
         confirmButtonText: 'Invite to group',
         confirmButtonLoadingText: 'Sending invitation...'
       }

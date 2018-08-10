@@ -16,9 +16,9 @@ describe('ViewGroupProfile', () => {
     group: {
       id: 'groupId',
       name: 'group name',
-      shortName: 'groupShortName'
+      shortName: 'groupShortName',
+      currentUserRole: null,
     },
-    currentUserRoleInGroup: null,
     allDatasets: [
       { id: 'datasetId1', name: 'dataset name 1' },
       { id: 'datasetId2', name: 'dataset name 2' },
@@ -47,7 +47,10 @@ describe('ViewGroupProfile', () => {
       loaded: true,
       data: {
         ...mockData,
-        currentUserRoleInGroup: 'INVITED'
+        group: {
+          ...mockData.group,
+          currentUserRole: 'INVITED'
+        }
       },
       maxVisibleDatasets: 2
     });
