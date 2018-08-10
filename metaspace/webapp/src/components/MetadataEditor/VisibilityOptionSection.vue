@@ -36,7 +36,8 @@ export default class VisibilityOptionSection extends Vue {
 
   @Emit('update:isPublic')
   handleChangeIsPublic(val: boolean): void {
-  }}
+  }
+}
 </script>
 
 <style scoped>

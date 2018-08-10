@@ -19,6 +19,7 @@
 
       <div id="upload-page" v-else>
         <div id="upload-left-pane">
+          <!--Uncomment below when LCMS support is needed-->
           <!--<div id="filter-panel-container">-->
             <!--<filter-panel level="upload"></filter-panel>-->
           <!--</div>-->
@@ -157,6 +158,7 @@
    	 onSubmit() {
        let queryRes = this.$refs.editor.getFormValueForSubmit();
        if (queryRes !== undefined) {
+       console.log(queryRes.metaspaceOptions)
        this.onFormSubmit(
          queryRes.datasetId,
          queryRes.metadataJson,

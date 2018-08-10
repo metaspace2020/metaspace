@@ -2,28 +2,20 @@
   <div id="md-editor-container">
     <div style="position: relative;" v-if="value != null">
       <div id="md-section-list">
-        <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"
-                      />
-        <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"
-                      />
-        <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"
-                      />
-        <data-management-section
-          v-model="metaspaceOptions"
-           />
-        <visibility-option-section
-          :isPublic.sync="metaspaceOptions.isPublic"/>
+        <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"/>
+        <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"/>
+        <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"/>
+        <data-management-section v-model="metaspaceOptions"/>
+        <visibility-option-section :isPublic.sync="metaspaceOptions.isPublic"/>
         <metaspace-options-section
           v-model="metaspaceOptions"
           :error="errors['metaspaceOptions']"
           :molDBOptions="molDBOptions"
-          :adductOptions="adductOptions"
-        />
+          :adductOptions="adductOptions"/>
         <form-section v-for="sectionKey in otherSections"
                       :key="sectionKey"
                       v-bind="sectionBinds(sectionKey)"
-                      v-on="sectionEvents(sectionKey)"
-                      />
+                      v-on="sectionEvents(sectionKey)"/>
       </div>
     </div>
     <div id="load-indicator" v-else v-loading="true">
@@ -207,7 +199,7 @@
      },
 
      async loadForm() {
-       const [dataset, options] = await Promise.all([this.loadDataset(), this.loadOptions()]);
+       const [dataset, options] = await Promise.all([this.loadDataset(), this.loadOptions()])
        const loadedMetadata = dataset && dataset.metadata;
        const metaspaceOptions = defaults({}, dataset && dataset.metaspaceOptions, defaultMetaspaceOptions);
        const mdType = (
@@ -265,9 +257,6 @@
          }
          // Name should be different for each dataset
          metaspaceOptions.name = '';
-         // Populate submitter
-         const user = this.$store.state.user;
-         set(metadata, ['Submitted_By', 'Submitter', 'Email'], user ? user.email : '');
        }
 
        this.value = metadata;
@@ -349,13 +338,11 @@
 
      getFormValueForSubmit() {
        this.validate();
-       // debugger;
        if (!isEmpty(this.localErrors)) {
        	this.$message({
           message: 'Please check that you entered metadata correctly!',
           type: "warning"
-        })
-       	console.log(this.localErrors)
+        });
          return;
        }
 

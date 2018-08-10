@@ -59,9 +59,9 @@ const FIELD_WIDTH: Record<string, number> = {
   'Analyzer': 8,
   'Detector_Resolving_Power': 17,
   'Dataset_Name': 12,
-  'Solvent_A_Table': 8,
-  'Solvent_B_Table': 8,
-  'Gradient_Table': 9
+  'Solvent_A_Table': 24,
+  'Solvent_B_Table': 24,
+  'Gradient_Table': 24
 };
 
 function prettify(propName: string) {

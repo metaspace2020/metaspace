@@ -43,16 +43,18 @@ gql`query {
 }
 `;
 
-//  allGroups(query: String): [Group!]!
-// type Group {
-//   id: ID!
-//   name: String!
-//   shortName: String!
-//   members: [UserGroup!]    # null if current user is not allowed to see
-// }
 
 export const allGroups =
 gql`query($query: String) {
-  id
-  name  
+  allGroups(query:$query) {
+    id
+    name
+  }
 }`;
+
+export const requestAccessToGroupMutation =
+gql`mutation($groupId: ID!, $bringDatasets: [ID!]!) {
+  requestAccessToGroup(groupId: $groupId, bringDatasets: $bringDatasets){
+    role
+    }
+  }`;
