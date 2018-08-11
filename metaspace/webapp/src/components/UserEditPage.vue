@@ -1,14 +1,26 @@
 <template>
   <div class="main-content">
     <div class="user-edit-page">
-
+      <transfer-datasets-dialog
+        v-if="showTransferDatasetsDialog"
+        :currentUserId="currentUserId"
+        :groupName="invitingGroup"
+        :isInvited="true"
+        @accept="handleAcceptTransferDatasets"
+        @close="handleCloseTransferDatasetsDialog"
+      />
       <el-dialog
         title="Delete account"
         :visible.sync="showDeleteAccountDialog"
         width="30%"
         :lock-scroll="false">
-        <p>If you delete your account, you will lose access to any datasets, groups and
-        projects that have been explicitly shared with you</p>
+        <p>If you delete your account, you will lose access to all private datasets.
+        </p>
+        <p>Please select whether you would like to delete all your datasets or keep them within METASPACE accessible by the group members:
+        </p>
+        <!--Changed the Text below to the above version after discussion with Theo, plz consider if it fits-->
+        <!--If you delete your account, you will lose access to any datasets, groups and-->
+        <!--projects that have been explicitly shared with you-->
         <el-checkbox v-model="delDatasets" style="margin-left: 20px">
           Delete datasets that I have submitted
         </el-checkbox>
@@ -23,7 +35,7 @@
             Delete account</el-button>
         </el-row>
         <p><b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them
-          deleted later by emailing the METASPACE administrators.</p>
+          deleted later by emailing the METASPACE administrators</p>
       </el-dialog>
       <el-row id="edit-user-page">
         <el-row>
@@ -99,6 +111,7 @@
                   v-if="scope.row.role === 'INVITED'"
                   size="mini"
                   type="success"
+                  @click="acceptInvitation(scope.row)"
                   icon="el-icon-check">
                   Accept
                 </el-button>
@@ -122,8 +135,6 @@
               :value="item.name">
             </el-option>
           </el-select>
-          <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up your organization or lab on METASPACE
-          </p>
         </div>
         <!--The section below will be introduced in vFuture-->
         <!--<div class="notifications" style="margin-top: 30px">-->
@@ -168,8 +179,10 @@
         <!--</div>-->
         <div class="delete-account" style="margin-top: 45px">
           <h2>Delete account</h2>
-          <p style="width: 100%;padding-left: 15px;">If you choose to delete your METASPACE account, you will be given the choice of whether to delete the
-            datasets you have uploaded and projects you have created or leave them for others to continue using.</p>
+          <p style="width: 100%;padding-left: 15px;">
+            If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
+            For the latter, the private data will still be accessible by the group members only.
+          </p>
         </div>
         <el-row>
           <el-button
@@ -193,8 +206,9 @@
     deleteUserMutation, currentUserQuery, acceptGroupInvitationMutation} from '../api/profileData'
   import reportError from "../lib/reportError";
   import apolloClient from '../graphqlClient';
-  import tokenAutorefresh from '../tokenAutorefresh';
+  import {refreshLoginStatus} from '../graphqlClient';
   import {ElForm} from "element-ui/types/form";
+  import TransferDatasetsDialog from '../modules/GroupProfile/TransferDatasetsDialog.vue'
 
   interface Model {
     name: string;
@@ -230,6 +244,9 @@
   }
 
   @Component({
+    components: {
+      TransferDatasetsDialog
+    },
     apollo: {
       currentUser: {
         query: currentUserQuery
@@ -241,16 +258,19 @@
     showDeleteAccountDialog: boolean = false;
     isUserDetailsLoading: boolean = false;
     isUserDeletionLoading: boolean = false;
-    // one more var to accept invitation
+    showTransferDatasetsDialog: boolean = false;
 
     currentUser: CurrentUserResult | null = null;
+    currentUserId: string | null = null;
     model: Model = {
       name: '',
       email: ''
     };
+    invitingGroup: string | null = null;
+    invitingGroupId: string | null = null;
 
     primaryGroupName: string | null = null;
-    primaryGroupID: string | null = null;
+    primaryGroupId: string | null = null;
 
     delDatasets: boolean = false;
     rules: object = {
@@ -265,10 +285,11 @@
 
     @Watch('currentUser', {deep: true})
     onCurrentUserChanged(this: any) {
+      this.currentUserId = this.currentUser.id;
       this.model.name = this.currentUser.name;
       this.model.email = this.currentUser.email;
-      this.primaryGroupName = this.currentUser.primaryGroup.group.name;
-      this.primaryGroupID = this.currentUser.primaryGroup.group.id;
+      this.primaryGroupName = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.name : null;
+      this.primaryGroupId = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
     }
 
     openDeleteAccountDialog() {
@@ -322,7 +343,7 @@
               id: this.currentUser.id,
               name: this.model.name,
               email: this.model.email,
-              primaryGroupId: this.primaryGroupID
+              primaryGroupId: this.primaryGroupId
             }
           },
         });
@@ -340,11 +361,10 @@
     }
 
     async leaveGroup(action: string, groupRow: GroupsData) {
-      try {
         try {
           await this.$msgbox({
-            message: (action === 'leave') ? `Are you sure you want to leave ${groupRow.name} group?` :
-              `Are you sure you want to decline the invitation to ${groupRow.name} group?`,
+            message: (action === 'leave') ? `Are you sure you want to leave ${groupRow.name}?` :
+              `Are you sure you want to decline the invitation to ${groupRow.name}?`,
             showCancelButton: true,
             confirmButtonText: (action === 'leave') ? "Yes, leave the group" :
               "Yes, decline the invitation",
@@ -360,6 +380,9 @@
                       groupId: groupRow.id
                     }
                   });
+                  this.$message({
+                    message: "You have declined the invitation"
+                  });
                   await this.$apollo.queries.currentUser.refetch();
                   instance.confirmButtonLoading = false;
                   done();
@@ -373,16 +396,12 @@
           });
           if (action === 'leave') {
             this.$message({
-              type: "success",
-              message: "You have successfully left the group!"
+              message: "You have successfully left the group"
             })
           }
         } catch {
           return
         }
-      } catch (err) {
-        reportError(err);
-      }
     }
 
     async deleteAccount(this: any) {
@@ -402,28 +421,41 @@
       } catch(err) {
         reportError(err);
       } finally {
-        // TODO: Change it to refreshLoginStatus(); after merging group profile page
-        await tokenAutorefresh.refreshJwt();
+        refreshLoginStatus();
         this.closeDeleteAccountDialog();
         this.isUserDeletionLoading = false;
       }
     }
-  }
 
-  // TODO: this async method should be bound or replaced with TransferDatasetsDialog.vue from Group profile page
-  // async acceptGroupInvitation(row: GroupsData) {
-  //   try {
-  //     await this.$apollo.mutate({
-  //       mutation: acceptGroupInvitationMutation,
-  //       variables: {
-  //         groupId: row.id,
-  //         bringDatasets: ['','']
-  //       }
-  //     })
-  //   } catch (err) {
-  //     reportError(err)
-  //   }
-  // }
+    async acceptInvitation(groupRow: GroupsData) {
+      this.showTransferDatasetsDialog = true;
+      this.invitingGroupId = groupRow.id;
+      this.invitingGroup = groupRow.name;
+    }
+
+    async handleAcceptTransferDatasets(selectedDatasetIds: string[]) {
+      try {
+        await this.$apollo.mutate({
+          mutation: acceptGroupInvitationMutation,
+          variables: { groupId: this.invitingGroupId, bringDatasets: selectedDatasetIds },
+        });
+        await this.$apollo.queries.currentUser.refetch();
+        this.$message({
+          type: "success",
+          message: "You have successfully joined the group!"
+        });
+        this.showTransferDatasetsDialog = false;
+      } catch(err) {
+        reportError(err);
+      } finally {
+        this.showTransferDatasetsDialog = false;
+      }
+    }
+
+    handleCloseTransferDatasetsDialog() {
+      this.showTransferDatasetsDialog = false;
+    }
+  }
 </script>
 
 <style>
@@ -466,5 +498,4 @@
     /*margin-left: 0;*/
     /*padding: 0;*/
   /*}*/
-
 </style>
