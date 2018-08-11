@@ -24,42 +24,22 @@
             <!--<filter-panel level="upload"></filter-panel>-->
           <!--</div>-->
 
-          <div id="instructions">
-            <div v-show="!introIsHidden">
-              <intro-message>
-                <p>To start the submission, just drop the file(s) into the box below, fill in the metadata form, and click the Submit button.</p>
-              </intro-message>
-            </div>
-          </div>
-
-          <div style="display: flex; flex-direction: row; justify-content: space-evenly">
+          <div class="fine-uploader-wrapper">
             <fine-uploader :config="fineUploaderConfig"
                            :dataTypeConfig="fineUploaderDataTypeConfig"
                            ref="uploader"
                            style="flex-basis: 90%"
                            @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure" />
             <div class="md-editor-submit">
-
-                <!--<el-button @click="cancel"  class="el-button__metadata">Cancel</el-button>-->
-                <el-button type="primary" @click="onSubmit" class="el-button__metadata">Submit</el-button>
-                <!--<el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__metadata">-->
-                <!--</el-button>-->
-                <!--<el-button @click="cancel" v-if="datasetId" class="el-button__metadata">Cancel</el-button>-->
-                <!--<el-button type="primary" v-if="enableSubmit" @click="onSubmit" class="el-button__metadata">Submit</el-button>-->
-                <!--<el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__metadata">-->
-                <!--Submit-->
-                <!--</el-button>-->
+               <el-button type="primary" v-if="enableSubmit" @click="onSubmit" class="el-button__metadata">Submit</el-button>
+                <el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__metadata">Submit</el-button>
             </div>
-
           </div>
-
         </div>
-
 
         <div id="upload-right-pane">
           <metadata-editor ref="editor"
                            :enableSubmit="uploadedUuid != null && !isSubmitting"
-                           disabledSubmitMessage="Your files must be uploaded first"
                            :validationErrors="validationErrors">
           </metadata-editor>
         </div>
@@ -123,15 +103,10 @@
    created() {
      this.$store.commit('updateFilter', this.$store.getters.filter);
    },
-   mounted() {
-     const {query} = this.$store.state.route;
-     if (query['first-time'] !== undefined)
-       this.introIsHidden = false;
-   },
+
    data() {
      return {
        fineUploaderConfig: config.fineUploader,
-       introIsHidden: true,
        enableUploads: config.enableUploads,
        validationErrors: [],
        isSubmitting: false,
@@ -145,6 +120,14 @@
      IntroMessage
    },
    computed: {
+	   disabledSubmitMessage(){
+	     return "Your files must be uploaded first"
+     },
+
+     enableSubmit(){
+     	return this.uploadedUuid != null && !this.isSubmitting;
+     },
+
      fineUploaderDataTypeConfig() {
        const activeDataType = this.$store.getters.filter.metadataType;
        return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig['default'];
@@ -321,5 +304,11 @@
    margin: auto 0;
    padding: 20px 20px;
    font-size: 150%;
+ }
+
+ .fine-uploader-wrapper {
+   display: flex;
+   flex-direction: row;
+   justify-content: space-evenly;
  }
 </style>

@@ -30,6 +30,7 @@ export interface FormSectionProperty extends JsonSchemaProperty {
   type: 'object';
   properties: Record<string, FormFieldProperty>;
   title: string;
+  help: string;
 }
 
 export interface DataTypeSectionProperty extends JsonSchemaProperty {

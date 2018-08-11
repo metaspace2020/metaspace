@@ -6,22 +6,19 @@
       <h2>Find a group</h2>
       <p>If you are not member of a group, you can request access here and your dataset will be
       automatically added to the group once your access has been approved.</p>
-      <el-form :model="foo">
+      <el-form >
         <el-form-item label="Your group:">
           <el-row>
             <el-select
-              v-model="valueGroup"
+              v-model="extraGroup"
               filterable
               remote
               reserve-keyword
               placeholder="Enter group name"
               value-key="id"
-              size="mini"
-              :rules="{required: true, message: 'Please select your group or add PI instead'}"
               :loading="loading">
               <el-option
                 v-for="group in allGroups"
-                @click="val => showVal(val)"
                 :key="group.id"
                 :label="group.name"
                 :value="group.name" />
@@ -40,7 +37,7 @@
       </el-row>
       <el-row>
         <p><b>Can't find your group?</b> You can <a>create a group</a> to get your team started,
-          or <a @click="addPI" style="cursor: pointer">fill in your Principal Investigator</a> instead.</p>
+          or <a @click="addPIsection" style="cursor: pointer">fill in your Principal Investigator</a> instead.</p>
       </el-row>
     </el-dialog>
     <el-row>
@@ -58,13 +55,13 @@
                 v-model="name"
                 placeholder="Enter your full name"
                 required
-                disabled
-              />
+                disabled>
+              </form-field>
             </el-col>
             <el-col :span="8">
               <form-field
                 v-model="groupNameToSubmit"
-                :options="userGroupsData"
+                :options="listOfGroups"
                 type="select"
                 placeholder="Select your group"
                 @input="val=>onInput('group', val)"
@@ -112,12 +109,12 @@
                 </form-field>
               </el-col>
               <el-col :span="8">
-                <el-button
+                <el-button plain
                   round
-                  type="primary"
+                  type="info"
                   icon="el-icon-minus"
                   @click="removePIsection"
-                  style="padding: 5px; transform: translateY(90%)"
+                  style="padding: 4px; transform: translateY(100%)"
                 />
               </el-col>
             </el-form>
@@ -151,12 +148,12 @@
       currentUser: {
         query: currentUserQuery
       },
-      // allGroups: {
-      //   query: allGroups,
-      //   variables: {
-      //     query: ''
-      //   }
-      // }
+      allGroups: {
+        query: allGroups,
+        variables: {
+          query: ''
+        }
+      }
     }
   })
 
@@ -171,7 +168,7 @@
     findMyGroup: boolean = false;
     allGroups: Group[];
     loading: boolean = false;
-    valueGroup: Group | null = null;
+    extraGroup: Group | null = null;
     isGroupAccessLoading: boolean = false;
 
     enablePI: boolean = false;
@@ -185,52 +182,78 @@
       //By default groupId for submission is equal to user's primary group
       this.groupIdToSubmit = this.currentUser.primaryGroup.group.id;
     }
-
-    @Watch('valueGroup', {deep: true})
-    onValChange(): void {
+    
+    //This is to watch extraGroup, a value from the dialog for finding a group
+    //This value is then assigned to instance groupNameToSubmit/groupIdToSubmit
+    @Watch('extraGroup', {deep: true})
+    onChange(): void {
       let group = this.allGroups.find(it => {
-        return it.name === this.valueGroup;
+        return it.name === this.extraGroup;
       });
-      this.groupIdToSubmit = group.id;
+      if (group !== null) {
+        this.groupNameToSubmit = group.name;
+        this.groupIdToSubmit = group.id;
+      }
     }
+
+
+/*
+    @Watch('extraGroup', {deep: true})
+    onValChange(): void {
+      if (this.extraGroup === this.noGroupMessage) {
+        this.addPIsection()
+      } else {
+        this.enablePI = false;
+        let group = this.allGroups.find(it => {
+          return it.name === this.extraGroup;
+        });
+        if (group !== null) {
+          this.groupNameToSubmit = group.name;
+          this.groupIdToSubmit = group.id;
+        }
+      }
+    }*/
 
     //Mocked data
-    userGroupsData: string[] = ['GroupA', 'GroupB', 'GroupC', 'Find my group...', 'No group (Use a Principal Investigator instead)'];
-    get allGroups(): Group[] {
-      return [{
-        id: '1',
-        name: 'groupG'
-        },
-        {
-          id: '23',
-          name: 'groupF'
-        }]
+    userGroupsData: Group[] = [
+      {id: 10, name:'GroupA'},
+      {id: 20, name:'GroupB'},
+      {id: 30, name: 'GroupC'},
+      {id: 0, name: 'Find my group...'},
+      {id: -1, name: this.noGroupMessage}
+      ];
+      // get allGroups(): Group[] {
+      //   return [
+      //     { id: '1',
+      //       name: 'groupG'
+      //     },
+      //     { id: '23',
+      //       name: 'groupF'
+      //     }]
+      // }
+
+    get findGroupMessage(): string {
+      return "Find my group...";
     }
 
-    //
-    // get userGroupsData(): string[] {
-    //   console.log(this.allGroups)
-    //
-    //   if (this.currentUser == null) {
-    //     return [];
-    //   }
-    //   const groupList = this.currentUser.groups.map(it => {
-    //     return it.group.name
-    //   });
-    //   groupList.push('Find my group...');
-    //   groupList.push('No group (Use a Principal Investigator instead)');
-    //   return groupList
-    // }
+    get noGroupMessage(): string {
+      return "No group (Enter PI instead)";
+    }
+
+    get listOfGroups(): string[] {
+      return this.userGroupsData.map(it => {
+        return it.name
+      });
+    }
 
     onInput<TKey extends keyof MetaspaceOptions>(field: TKey, val: MetaspaceOptions[TKey]) {
-      if (val === 'Find my group...') {
+      if (val === this.findGroupMessage) {
+        this.enablePI = false;
         this.findMyGroup = true;
-      }
-      if (val === 'No group (Use a Principal Investigator instead)') {
-        this.addPI();
-      }
-      else {
-        this.removePIsection()
+      } else if (val === this.noGroupMessage) {
+        this.addPIsection();
+      } else {
+        this.enablePI = false;
       }
       this.$emit('input', {...this.value, [field]: val});
     }
@@ -266,13 +289,16 @@
       }
     }
 
-    addPI(): void {
+    addPIsection(): void {
       this.findMyGroup = false;
       this.enablePI = true;
+      this.groupNameToSubmit = this.noGroupMessage;
+      this.groupIdToSubmit = null;
     }
 
     removePIsection(): void {
       this.enablePI = false;
+      this.groupNameToSubmit = null;
     }
   }
 </script>

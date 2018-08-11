@@ -114,7 +114,7 @@
      const formattedFileTypes = fileExtensions.length > 1 ? `${fileExtensions.slice(0, -1).join(', ')} and ${fileExtensions[fileExtensions.length - 1]}`
        : fileExtensions[0];
 
-	     return `Drop ${formattedFileTypes} file${multipleFilesAllowed ? 's' : ''} here`
+	     return `drop ${formattedFileTypes} file${multipleFilesAllowed ? 's' : ''} here`
      },
 
      onDataTypeConfigUpdate() {

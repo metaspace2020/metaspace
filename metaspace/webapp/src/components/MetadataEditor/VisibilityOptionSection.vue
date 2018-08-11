@@ -50,4 +50,8 @@ export default class VisibilityOptionSection extends Vue {
     top: 50%;
     transform: translateY(-50%);
   }
+
+  .el-icon-question{
+    cursor: pointer;
+  }
 </style>

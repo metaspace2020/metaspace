@@ -173,6 +173,10 @@
       font-size: 14px;
       line-height: 16px;
     }
+
+    .el-select {
+      width: 100%;
+    }
   }
 
   .md-ac {

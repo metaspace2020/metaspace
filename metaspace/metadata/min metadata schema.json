@@ -80,6 +80,7 @@
       "type": "object",
       "description": "Mass spectrometry settings",
       "required": ["Polarity", "Ionisation_Source", "Analyzer"],
+      "help": "METASPACE is optimized for data from high-resolving power MS like FTICR or Orbitrap",
       "properties": {
         "Polarity": {
           "description": "Ion polarity mode",

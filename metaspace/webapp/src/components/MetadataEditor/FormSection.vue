@@ -5,6 +5,10 @@
       <el-col :span="6">
         <div class="sectionTitle">
           {{section.title}}
+          <el-popover trigger="hover" placement="top" v-if="help">
+            <p>{{section.help}}</p>
+            <i slot="reference" class="el-icon-question field-label-help"></i>
+          </el-popover>
         </div>
       </el-col>
       <el-col :span="18">
@@ -57,6 +61,8 @@
     error?: Record<string, any>;
     @Prop(Function)
     getSuggestionsForField!: (q: string, cb: FetchSuggestionsCallback, ...path: string[]) => void;
+    @Prop({type: Boolean})
+    help?: boolean;
 
     onInput(path: string[], val: string) {
       this.$emit('input', path, val);

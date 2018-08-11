@@ -4,7 +4,10 @@
       <div id="md-section-list">
         <form-section v-bind="sectionBinds('Sample_Information')" v-on="sectionEvents('Sample_Information')"/>
         <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"/>
-        <form-section v-bind="sectionBinds('MS_Analysis')" v-on="sectionEvents('MS_Analysis')"/>
+        <form-section
+          v-bind="sectionBinds('MS_Analysis')"
+          v-on="sectionEvents('MS_Analysis')"
+          help />
         <data-management-section v-model="metaspaceOptions"/>
         <visibility-option-section :isPublic.sync="metaspaceOptions.isPublic"/>
         <metaspace-options-section
@@ -106,7 +109,6 @@
    props: {
      datasetId: String,
      enableSubmit: Boolean,
-     disabledSubmitMessage: String,
      validationErrors: Array,
    },
    components: {
