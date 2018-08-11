@@ -44,10 +44,29 @@ function trimEmptyFields(schema, value) {
 }
 
 function setSubmitter(oldMetadata, newMetadata, user) {
-  const email = oldMetadata != null
-    ? oldMetadata.Submitted_By.Submitter.Email
-    : user.email;
-  _.set(newMetadata, ['Submitted_By', 'Submitter', 'Email'], email)
+  let email;
+  if (oldMetadata == null) {
+    if (user.role == 'admin') {
+      if (newMetadata.Submitted_By.Submitter.Email == user.email) {
+        email = user.email;
+      }
+      else {
+        email = newMetadata.Submitted_By.Submitter.Email;
+      }
+    }
+    else {
+      email = user.email;
+    }
+  }
+  else {
+    if (user.role == 'admin') {
+      email = newMetadata.Submitted_By.Submitter.Email;
+    }
+    else {
+      email = oldMetadata.Submitted_By.Submitter.Email;
+    }
+  }
+  _.set(newMetadata, ['Submitted_By', 'Submitter', 'Email'], email);
 }
 
 function validateMetadata(metadata) {

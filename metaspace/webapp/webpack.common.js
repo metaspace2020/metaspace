@@ -88,6 +88,7 @@ module.exports.plugins = [
   new ForkTsCheckerWebpackPlugin({
     vue: true,
     workers: 2,
+    async: false,
     tsconfig: 'tsconfig.client.json'
   }),
 ];

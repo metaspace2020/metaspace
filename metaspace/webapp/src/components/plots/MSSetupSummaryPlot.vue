@@ -116,6 +116,12 @@
  export default {
   name: 'mass-spec-setup-plot',
 
+  data() {
+    return {
+      counts: []
+    }
+  },
+
   apollo: {
     counts: {
       query: query,

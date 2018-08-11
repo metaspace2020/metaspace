@@ -48,7 +48,7 @@
 </template>
 
 <script>
- import {datasetListQuery, datasetCountQuery} from '../api/dataset';
+ import {datasetDetailItemsQuery, datasetCountQuery} from '../api/dataset';
  import {metadataExportQuery} from '../api/metadata';
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
@@ -139,7 +139,7 @@
 
      started: {
        fetchPolicy: 'cache-and-network',
-       query: datasetListQuery,
+       query: datasetDetailItemsQuery,
        update: data => data.allDatasets,
        variables () {
          return this.queryVariables('ANNOTATING');
@@ -148,7 +148,7 @@
 
      queued: {
        fetchPolicy: 'cache-and-network',
-       query: datasetListQuery,
+       query: datasetDetailItemsQuery,
        update: data => data.allDatasets,
        variables () {
          return this.queryVariables('QUEUED');
@@ -157,7 +157,7 @@
 
      finished: {
        fetchPolicy: 'cache-and-network',
-       query: datasetListQuery,
+       query: datasetDetailItemsQuery,
        update: data => data.allDatasets,
        variables () {
          return this.queryVariables('FINISHED');

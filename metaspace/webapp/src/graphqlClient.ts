@@ -49,4 +49,9 @@ const apolloClient = new ApolloClient({
   cache: new InMemoryCache(),
 });
 
+export const refreshLoginStatus = async () => {
+  await tokenAutorefresh.refreshJwt(true);
+  await apolloClient.resetStore();
+};
+
 export default apolloClient;

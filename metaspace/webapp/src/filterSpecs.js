@@ -145,6 +145,22 @@ const FILTER_SPECIFICATIONS = {
     options: 'institutionNames' // take from Vue instance
   },
 
+  group: {
+    type: SingleSelectFilter,
+    name: 'Group',
+    description: 'Select group',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+    encoding: 'json',
+    options: lists => lists.groups.map(x => {
+      const {id, name} = x;
+      return {id, name};
+    }),
+    optionFormatter: ({name}) => name,
+    valueFormatter: ({name}) => name,
+    valueKey: 'id',
+  },
+
   submitter: {
     type: SingleSelectFilter,
     name: 'Submitter',

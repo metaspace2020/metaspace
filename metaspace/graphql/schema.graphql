@@ -55,6 +55,7 @@ type FdrCounts {
 type Dataset {
   id: String!
   name: String!
+  uploadDT: String!
 
   institution: String
   submitter: Person!
@@ -190,6 +191,7 @@ input DatasetFilter {
 
   # exact match
   group: ID
+  hasGroup: Boolean
 
   polarity: Polarity
 

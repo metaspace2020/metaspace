@@ -27,7 +27,7 @@ export default class InterDialogLink extends Vue {
       on: {
         click: (e: Event) => {
           e.preventDefault();
-          if (this.$store.state.account.showDialogAsPage) {
+          if (this.$store.state.account.dialogCloseRedirect != null) {
             this.$router.push(this.link);
           } else {
             this.$store.commit('account/showDialog', this.dialog);

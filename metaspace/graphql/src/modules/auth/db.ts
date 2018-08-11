@@ -3,6 +3,8 @@ import {DbSchemaName} from './utils';
 
 import * as Knex from 'knex';
 
+export let knex: Knex;
+
 const dbConfig = () => {
   const {host, database, user, password} = config.db;
   return {
@@ -12,18 +14,22 @@ const dbConfig = () => {
   };
 };
 
-export const knex = Knex({
-  client: 'pg',
-  connection: dbConfig(),
-  searchPath: [DbSchemaName],
-  pool: {
-    min: 1,
-    max: 1
-  },
-  // debug: true
-});
+const createConnection = () => {
+  knex = Knex({
+    client: 'pg',
+    connection: dbConfig(),
+    searchPath: [DbSchemaName],
+    pool: {
+      min: 1,
+      max: 1
+    },
+    // debug: true
+  });
+};
 
 export const initSchema = async (): Promise<any> => {
+  createConnection();
+
   await knex.raw(`CREATE SCHEMA IF NOT EXISTS ${DbSchemaName}`);
 
   if (!await knex.schema.hasTable('user')) {

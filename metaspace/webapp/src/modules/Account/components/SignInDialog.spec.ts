@@ -13,9 +13,9 @@ jest.mock('../../../api/auth');
 import * as _mockAuthApi from '../../../api/auth';
 const mockAuthApi = _mockAuthApi as jest.Mocked<typeof _mockAuthApi>;
 
-jest.mock('../../../tokenAutorefresh');
-import _mockTokenAutorefresh from '../../../tokenAutorefresh';
-const mockTokenAutorefresh = _mockTokenAutorefresh as jest.Mocked<typeof _mockTokenAutorefresh>;
+jest.mock('../../../graphqlClient');
+import {refreshLoginStatus as _mockRefreshLoginStatus} from '../../../graphqlClient';
+const mockRefreshLoginStatus = _mockRefreshLoginStatus as jest.Mocked<typeof _mockRefreshLoginStatus>;
 
 Vue.use(ElementUI);
 registerMockComponent('el-dialog');
@@ -68,7 +68,7 @@ describe('SignInDialog', () => {
 
     // Assert
     expect(mockAuthApi.signInByEmail).toBeCalledWith(email, password);
-    expect(mockTokenAutorefresh.refreshJwt).toBeCalledWith(true);
+    expect(mockRefreshLoginStatus).toBeCalled();
     expect(store.state.account.dialog).toBe(null);
   });
 });

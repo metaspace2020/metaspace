@@ -36,6 +36,7 @@
    'database',
    'fdrLevel',
    'institution',
+   'group',
    'submitter',
    'datasetIds',
    'compoundName',
