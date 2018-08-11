@@ -15,6 +15,7 @@ export interface JsonSchemaProperty {
   description?: string;
   smEditorType?: FormFieldEditorType;
   smEditorColWidth?: number;
+  help?: string;
 }
 
 export type FormFieldEditorType = 'textarea' | 'select' | 'autocomplete' | 'checkbox' | 'table' | 'selectMulti' | 'person' | 'detectorResolvingPower' | 'text';
@@ -30,7 +31,6 @@ export interface FormSectionProperty extends JsonSchemaProperty {
   type: 'object';
   properties: Record<string, FormFieldProperty>;
   title: string;
-  help: string;
 }
 
 export interface DataTypeSectionProperty extends JsonSchemaProperty {
@@ -121,6 +121,7 @@ function deriveSection(section: JsonSchemaProperty, sectionKey: string): FormSec
         smEditorColWidth: field.smEditorColWidth || getWidth(fieldKey),
         title: field.title || prettify(fieldKey),
       })),
+      help: section.help
     };
     return derivedSection;
   } else {

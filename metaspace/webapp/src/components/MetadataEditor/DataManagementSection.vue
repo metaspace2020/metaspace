@@ -132,12 +132,10 @@
   import { MetaspaceOptions } from './formStructure';
   import {CurrentUserResult, currentUserQuery, allGroups, requestAccessToGroupMutation} from '../../api/dataManagement';
   import reportError from "../../lib/reportError";
-  import { delay } from '../../util'
 
   interface Group {
     id: string;
     name: string;
-    label: string
   }
 
   @Component({
@@ -166,9 +164,9 @@
     groupNameToSubmit: string = '';
     groupIdToSubmit: number | null = null;
     findMyGroup: boolean = false;
-    allGroups: Group[];
+    allGroups: Group[] | null = null;
     loading: boolean = false;
-    extraGroup: Group | null = null;
+    extraGroup: string | null = null;
     isGroupAccessLoading: boolean = false;
 
     enablePI: boolean = false;
@@ -186,51 +184,27 @@
     //This is to watch extraGroup, a value from the dialog for finding a group
     //This value is then assigned to instance groupNameToSubmit/groupIdToSubmit
     @Watch('extraGroup', {deep: true})
-    onChange(): void {
-      let group = this.allGroups.find(it => {
+    onChange(this: any): void {
+      let group = this.allGroups.find((it: Group) => {
         return it.name === this.extraGroup;
       });
-      if (group !== null) {
+      if (group !== undefined) {
         this.groupNameToSubmit = group.name;
         this.groupIdToSubmit = group.id;
       }
     }
 
-
-/*
-    @Watch('extraGroup', {deep: true})
-    onValChange(): void {
-      if (this.extraGroup === this.noGroupMessage) {
-        this.addPIsection()
-      } else {
-        this.enablePI = false;
-        let group = this.allGroups.find(it => {
-          return it.name === this.extraGroup;
-        });
-        if (group !== null) {
-          this.groupNameToSubmit = group.name;
-          this.groupIdToSubmit = group.id;
-        }
+    get userGroupsData(): Group[] {
+      if (this.currentUser == null) {
+        return [];
       }
-    }*/
-
-    //Mocked data
-    userGroupsData: Group[] = [
-      {id: 10, name:'GroupA'},
-      {id: 20, name:'GroupB'},
-      {id: 30, name: 'GroupC'},
-      {id: 0, name: 'Find my group...'},
-      {id: -1, name: this.noGroupMessage}
-      ];
-      // get allGroups(): Group[] {
-      //   return [
-      //     { id: '1',
-      //       name: 'groupG'
-      //     },
-      //     { id: '23',
-      //       name: 'groupF'
-      //     }]
-      // }
+      const groupList = this.currentUser.groups.map(it => {
+        return it.group
+      });
+      groupList.push({id: '0', name: this.findGroupMessage});
+      groupList.push({id: '-1', name: this.noGroupMessage});
+      return groupList
+    }
 
     get findGroupMessage(): string {
       return "Find my group...";
@@ -258,7 +232,19 @@
       this.$emit('input', {...this.value, [field]: val});
     }
 
-    async onRequestGroupAccess(this: any): void {
+    addPIsection(): void {
+      this.findMyGroup = false;
+      this.enablePI = true;
+      this.groupNameToSubmit = this.noGroupMessage;
+      this.groupIdToSubmit = null;
+    }
+
+    removePIsection(): void {
+      this.enablePI = false;
+      this.groupNameToSubmit = '';
+    }
+
+    async onRequestGroupAccess(this: any) {
       try {
         this.isGroupAccessLoading = true;
         this.$apollo.mutate({
@@ -287,18 +273,6 @@
       } finally {
         this.isGroupAccessLoading = false;
       }
-    }
-
-    addPIsection(): void {
-      this.findMyGroup = false;
-      this.enablePI = true;
-      this.groupNameToSubmit = this.noGroupMessage;
-      this.groupIdToSubmit = null;
-    }
-
-    removePIsection(): void {
-      this.enablePI = false;
-      this.groupNameToSubmit = null;
     }
   }
 </script>
