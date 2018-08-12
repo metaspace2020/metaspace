@@ -349,7 +349,6 @@
        }
 
        const value = JSON.stringify(this.value);
-       // this.$emit('submit', this.datasetId, value, this.metaspaceOptions);
        if (!this.datasetId) {
          this.saveForm();
        }
@@ -380,6 +379,7 @@
  #md-editor-container {
    display: flex;
    justify-content: center;
+   margin-bottom: 50px;
  }
 
  #md-section-list {

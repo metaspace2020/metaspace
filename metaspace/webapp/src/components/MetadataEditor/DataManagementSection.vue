@@ -64,7 +64,7 @@
                 :options="listOfGroups"
                 type="select"
                 placeholder="Select your group"
-                @input="val=>onInput('group', val)"
+                @input="val=>onInput(val)"
                 name="Group"
                 required>
               </form-field>
@@ -162,7 +162,7 @@
     currentUser?: CurrentUserResult | null = null;
     name: string = '';
     groupNameToSubmit: string = '';
-    groupIdToSubmit: number | null = null;
+    groupIdToSubmit: string | null = null;
     findMyGroup: boolean = false;
     allGroups: Group[] | null = null;
     loading: boolean = false;
@@ -185,13 +185,8 @@
     //This value is then assigned to instance groupNameToSubmit/groupIdToSubmit
     @Watch('extraGroup', {deep: true})
     onChange(this: any): void {
-      let group = this.allGroups.find((it: Group) => {
-        return it.name === this.extraGroup;
-      });
-      if (group !== undefined) {
-        this.groupNameToSubmit = group.name;
-        this.groupIdToSubmit = group.id;
-      }
+      this.groupIdToSubmit = this.groupId(this.allGroups, this.extraGroup);
+      this.$emit('input', {...this.value, 'groupId': this.groupIdToSubmit})
     }
 
     get userGroupsData(): Group[] {
@@ -201,8 +196,7 @@
       const groupList = this.currentUser.groups.map(it => {
         return it.group
       });
-      groupList.push({id: '0', name: this.findGroupMessage});
-      groupList.push({id: '-1', name: this.noGroupMessage});
+      groupList.push({id: '', name: this.findGroupMessage}, {id: '', name: this.noGroupMessage});
       return groupList
     }
 
@@ -220,16 +214,29 @@
       });
     }
 
-    onInput<TKey extends keyof MetaspaceOptions>(field: TKey, val: MetaspaceOptions[TKey]) {
-      if (val === this.findGroupMessage) {
+    groupId(groupsList: Group[], groupToFind: string): string {
+      let foundGroup = groupsList.find((it: Group) => {
+        return it.name === groupToFind;
+      });
+      if (foundGroup !== undefined) {
+        return foundGroup.id
+      } else {
+        return ''
+      }
+    }
+
+    onInput (groupName: string) {
+      if (groupName === this.findGroupMessage) {
         this.enablePI = false;
         this.findMyGroup = true;
-      } else if (val === this.noGroupMessage) {
+      } else if (groupName === this.noGroupMessage) {
+        this.$emit('input', {...this.value, 'groupId': ''});
         this.addPIsection();
       } else {
+        this.groupIdToSubmit = this.groupId(this.userGroupsData, groupName);
+        this.$emit('input', {...this.value, 'groupId': this.groupIdToSubmit});
         this.enablePI = false;
       }
-      this.$emit('input', {...this.value, [field]: val});
     }
 
     addPIsection(): void {
