@@ -3,23 +3,33 @@ import gql from 'graphql-tag';
 export type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';
 
 
-
+export interface CreateGroupMutation {
+  createGroup: {
+    id: string;
+  };
+}
 export const createGroupMutation =
   gql`mutation createGroup($groupDetails: CreateGroupInput!) {
     createGroup(groupDetails: $groupDetails) {
       id
-      name
-      shortName
     }
   }`;
 
-
+export interface UpdateGroupMutation {
+  data: {
+    id: string;
+    name: string;
+    shortName: string;
+    currentUserRole: UserGroupRole | null;
+  }
+}
 export const updateGroupMutation =
   gql`mutation updateGroup($id: ID!, $groupDetails: UpdateGroupInput!) {
     updateGroup(id: $id, groupDetails: $groupDetails) {
       id
       name
       shortName
+      currentUserRole
     }
   }`;
 

@@ -95,7 +95,6 @@
     pageSize: number = 10;
     page: number = 1;
 
-
     roleNames: Record<UserGroupRole, string> = {
       'PRINCIPAL_INVESTIGATOR': 'Principal Investigator',
       'MEMBER': 'Member',

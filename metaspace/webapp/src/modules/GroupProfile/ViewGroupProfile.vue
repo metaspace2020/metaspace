@@ -1,70 +1,68 @@
 <template>
-  <div>
-    <div v-loading="!loaded" class="page">
-      <div v-if="group != null" class="page-content">
-        <transfer-datasets-dialog
-          v-if="showTransferDatasetsDialog"
-          :currentUserId="currentUserId"
-          :groupName="group.name"
-          :isInvited="isInvited"
-          @accept="handleAcceptTransferDatasets"
-          @close="handleCloseTransferDatasetsDialog"
-        />
-        <div class="header-row">
-          <div class="header-names">
-            <h1>{{group.name}}</h1>
-            <h2 class="short-name">({{group.shortName}})</h2>
-          </div>
-
-          <div class="header-buttons">
-            <el-button v-if="roleInGroup == null"
-                       type="primary"
-                       @click="handleRequestAccess"
-                       :disabled="!!submitAction"
-                       :loading="submitAction === 'requestAccess'">
-              Request access
-            </el-button>
-            <el-button v-if="roleInGroup === 'PENDING'"
-                       disabled>
-              Request sent
-            </el-button>
-            <el-button v-if="roleInGroup === 'PRINCIPAL_INVESTIGATOR'"
-                       type="primary"
-                       @click="handleManageGroup">
-              Manage group
-            </el-button>
-          </div>
-          <el-alert v-if="roleInGroup === 'INVITED'"
-                    type="info"
-                    show-icon
-                    :closable="false"
-                    title="">
-            <div style="padding: 0 0 20px 20px;">
-              <p>
-                You have been invited to join {{group.name}}.
-              </p>
-              <div>
-                <el-button type="danger" @click="handleRejectInvite" :disabled="!!submitAction" :loading="submitAction === 'rejectInvite'">
-                  Decline invitation
-                </el-button>
-                <el-button type="primary" @click="handleAcceptInvite" :disabled="!!submitAction">
-                  Join group
-                </el-button>
-              </div>
-            </div>
-          </el-alert>
+  <div v-loading="!loaded" class="page">
+    <div v-if="group != null" class="page-content">
+      <transfer-datasets-dialog
+        v-if="showTransferDatasetsDialog"
+        :currentUserId="currentUserId"
+        :groupName="group.name"
+        :isInvited="isInvited"
+        @accept="handleAcceptTransferDatasets"
+        @close="handleCloseTransferDatasetsDialog"
+      />
+      <div class="header-row">
+        <div class="header-names">
+          <h1>{{group.name}}</h1>
+          <h2 class="short-name">({{group.shortName}})</h2>
         </div>
-        <div v-if="groupDatasets.length > 0">
-          <h1>Datasets</h1>
 
-          <div class="dataset-list">
-            <dataset-item v-for="(dataset, i) in groupDatasets.slice(0,8)"
-                          :dataset="dataset" :key="dataset.id"
-                          :class="[i%2 ? 'even': 'odd']" />
+        <div class="header-buttons">
+          <el-button v-if="roleInGroup == null"
+                     type="primary"
+                     @click="handleRequestAccess"
+                     :disabled="!!submitAction"
+                     :loading="submitAction === 'requestAccess'">
+            Request access
+          </el-button>
+          <el-button v-if="roleInGroup === 'PENDING'"
+                     disabled>
+            Request sent
+          </el-button>
+          <el-button v-if="roleInGroup === 'PRINCIPAL_INVESTIGATOR'"
+                     type="primary"
+                     @click="handleManageGroup">
+            Manage group
+          </el-button>
+        </div>
+        <el-alert v-if="roleInGroup === 'INVITED'"
+                  type="info"
+                  show-icon
+                  :closable="false"
+                  title="">
+          <div style="padding: 0 0 20px 20px;">
+            <p>
+              You have been invited to join {{group.name}}.
+            </p>
+            <div>
+              <el-button type="danger" @click="handleRejectInvite" :disabled="!!submitAction" :loading="submitAction === 'rejectInvite'">
+                Decline invitation
+              </el-button>
+              <el-button type="primary" @click="handleAcceptInvite" :disabled="!!submitAction">
+                Join group
+              </el-button>
+            </div>
           </div>
-          <div class="dataset-list-footer">
-            <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
-          </div>
+        </el-alert>
+      </div>
+      <div v-if="groupDatasets.length > 0">
+        <h1>Datasets</h1>
+
+        <div class="dataset-list">
+          <dataset-item v-for="(dataset, i) in groupDatasets.slice(0,8)"
+                        :dataset="dataset" :key="dataset.id"
+                        :class="[i%2 ? 'even': 'odd']" />
+        </div>
+        <div class="dataset-list-footer">
+          <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
         </div>
       </div>
     </div>

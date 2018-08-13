@@ -21,28 +21,7 @@
             </el-button>
           </div>
         </div>
-        <div>
-          <el-form :model="model" :disabled="groupLoading !== 0 || !canEdit">
-            <div class="namesRow">
-              <el-form-item label="Full name" prop="name" class="name">
-                <el-input v-model="model.name" :maxLength="50" />
-              </el-form-item>
-              <el-form-item label="Short name" prop="shortName" class="shortName">
-                <div slot="label">
-                  Short name
-                  <el-popover trigger="hover" placement="right">
-                    <i slot="reference" class="el-icon-question field-label-help"></i>
-                    <p>
-                      The short name will be shown whenever space is in a constraint. If not provided, the full name
-                      will be used but may be clipped to fit the available space.
-                    </p>
-                  </el-popover>
-                </div>
-                <el-input v-model="model.shortName" :maxLength="20" />
-              </el-form-item>
-            </div>
-          </el-form>
-        </div>
+        <edit-group-form :model="model" :disabled="isSaving || !canEdit" />
         <edit-group-members-list
           :loading="groupLoading !== 0"
           :group="group"
@@ -55,7 +34,7 @@
         />
         <div>
           <h1>Datasets</h1>
-          <router-link :to="datasetsListLink()">See all datasets</router-link>
+          <router-link :to="datasetsListLink">See all datasets</router-link>
         </div>
       </div>
     </div>
@@ -70,11 +49,16 @@
     deleteGroupMutation,
     editGroupQuery,
     EditGroupQuery,
-    EditGroupQueryMember, inviteUserToGroupMutation, removeUserFromGroupMutation, updateGroupMutation,
+    EditGroupQueryMember,
+    inviteUserToGroupMutation,
+    removeUserFromGroupMutation,
+    UpdateGroupMutation,
+    updateGroupMutation,
     UserGroupRole,
   } from '../../api/group';
   import gql from 'graphql-tag';
   import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
+  import EditGroupForm from './EditGroupForm.vue';
   import EditGroupMembersList from './EditGroupMembersList.vue';
   import { UserRole } from '../../api/user';
   import { encodeParams } from '../../url';
@@ -91,6 +75,7 @@
     components: {
       DatasetItem,
       TransferDatasetsDialog,
+      EditGroupForm,
       EditGroupMembersList,
     },
     apollo: {
@@ -147,7 +132,7 @@
       this.model.shortName = this.group && this.group.shortName || '';
     }
 
-    datasetsListLink() {
+    get datasetsListLink() {
       const filters = {
         group: {id: this.groupId, name: this.groupName},
       };
@@ -184,7 +169,7 @@
       this.isSaving = true;
       try {
         const {name, shortName} = this.model;
-        await this.$apollo.mutate({
+        await this.$apollo.mutate<UpdateGroupMutation>({
           mutation: updateGroupMutation,
           variables: { id: this.groupId, groupDetails: { name, shortName } },
         });
@@ -283,27 +268,6 @@
   .header-row-buttons {
     display: flex;
     margin-right: 3px;
-  }
-
-  .name {
-    display: inline-block;
-    width: 400px;
-  }
-
-  .shortName {
-    display: inline-block;
-    width: 150px;
-    margin-left: 20px;
-  }
-
-  .grid-button {
-    width: 80px;
-  }
-
-  .pagination-row {
-    display: flex;
-    align-items: center;
-    margin-top: 10px;
   }
 
   .flex-spacer {
