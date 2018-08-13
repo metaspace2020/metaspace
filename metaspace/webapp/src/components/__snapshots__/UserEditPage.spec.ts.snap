@@ -47,7 +47,13 @@ exports[`UserEditPage should match snapshot 1`] = `
                 <div class="el-form-item is-required">
                   <label for="name" class="el-form-item__label">Full name:</label>
                   <div class="el-form-item__content">
-                    <mock-el-input></mock-el-input>
+                    <div class="el-input">
+                      <!---->
+                      <input type="text" autocomplete="off" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
                     <!---->
                   </div>
                 </div>
@@ -58,7 +64,13 @@ exports[`UserEditPage should match snapshot 1`] = `
                 <div class="el-form-item is-required">
                   <label for="email" class="el-form-item__label">E-mail:</label>
                   <div class="el-form-item__content">
-                    <mock-el-input></mock-el-input>
+                    <div class="el-input">
+                      <!---->
+                      <input type="text" autocomplete="off" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
                     <!---->
                   </div>
                 </div>

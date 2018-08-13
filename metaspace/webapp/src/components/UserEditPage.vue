@@ -3,8 +3,8 @@
     <div class="user-edit-page">
       <transfer-datasets-dialog
         v-if="showTransferDatasetsDialog"
-        :currentUserId="currentUserId"
-        :groupName="invitingGroup"
+        :currentUserId="currentUser && currentUser.id"
+        :groupName="invitingGroup && invitingGroup.name"
         :isInvited="true"
         @accept="handleAcceptTransferDatasets"
         @close="handleCloseTransferDatasetsDialog"
@@ -259,15 +259,11 @@
     showTransferDatasetsDialog: boolean = false;
 
     currentUser: CurrentUserResult | null = null;
-    currentUserId: string | null = null;
     model: Model = {
       name: '',
       email: ''
     };
-    invitingGroup: string | null = null;
-    invitingGroupId: string | null = null;
-
-    primaryGroupId: string | null = null;
+    invitingGroup: GroupsData | null = null;
 
     delDatasets: boolean = false;
     rules: object = {
@@ -280,12 +276,14 @@
       }]
     };
 
+    get primaryGroupId(): string | null {
+      return this.currentUser && this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
+    };
+
     @Watch('currentUser', {deep: true})
     onCurrentUserChanged(this: any) {
-      this.currentUserId = this.currentUser.id;
       this.model.name = this.currentUser.name;
       this.model.email = this.currentUser.email;
-      this.primaryGroupId = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
     }
 
     openDeleteAccountDialog() {
@@ -417,7 +415,7 @@
       } catch(err) {
         reportError(err);
       } finally {
-        refreshLoginStatus();
+        await refreshLoginStatus();
         this.closeDeleteAccountDialog();
         this.isUserDeletionLoading = false;
       }
@@ -425,15 +423,14 @@
 
     async acceptInvitation(groupRow: GroupsData) {
       this.showTransferDatasetsDialog = true;
-      this.invitingGroupId = groupRow.id;
-      this.invitingGroup = groupRow.name;
+      this.invitingGroup = groupRow;
     }
 
     async handleAcceptTransferDatasets(selectedDatasetIds: string[]) {
       try {
         await this.$apollo.mutate({
           mutation: acceptGroupInvitationMutation,
-          variables: { groupId: this.invitingGroupId, bringDatasets: selectedDatasetIds },
+          variables: { groupId: this.invitingGroup!.id, bringDatasets: selectedDatasetIds },
         });
         await this.$apollo.queries.currentUser.refetch();
         this.$message({
