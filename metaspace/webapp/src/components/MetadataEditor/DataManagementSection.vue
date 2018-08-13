@@ -53,7 +53,7 @@
                 type="text"
                 name="Your full name"
                 v-model="name"
-                placeholder="Enter your full name"
+                placeholder="E.g. Jon Snow"
                 required
                 disabled>
               </form-field>
