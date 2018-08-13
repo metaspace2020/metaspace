@@ -207,6 +207,8 @@
   import {refreshLoginStatus} from '../graphqlClient';
   import {ElForm} from "element-ui/types/form";
   import TransferDatasetsDialog from '../modules/GroupProfile/TransferDatasetsDialog.vue'
+  import emailRegex from '../lib/emailRegex';
+  import ConfirmAsync from './ConfirmAsync';
 
   interface Model {
     name: string;
@@ -271,7 +273,7 @@
         {required: true, min: 3, max: 50 , message: 'Please enter a correct fullname', trigger: "blur"}
       ],
       email: [
-        {required: true, pattern:/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
+        {required: true, pattern: emailRegex,
         message: 'Please enter a correct Email address', trigger: "blur"
       }]
     };
@@ -310,14 +312,14 @@
       });
     }
 
-    async updateUserDetails(this: any) {
+    async updateUserDetails() {
       try {
         await (this.$refs.form as ElForm).validate();
       } catch (err) {
         return;
       }
       try {
-        if (this.currentUser.email !== this.model.email) {
+        if (this.currentUser!.email !== this.model.email) {
           try {
             await this.$confirm(
               "Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change.",
@@ -334,7 +336,7 @@
           mutation: updateUserMutation,
           variables: {
             update: {
-              id: this.currentUser.id,
+              id: this.currentUser!.id,
               name: this.model.name,
               email: this.model.email,
               primaryGroupId: this.primaryGroupId
@@ -354,48 +356,31 @@
       }
     }
 
+    @ConfirmAsync(function(action: string, groupRow: GroupsData) {
+      return {
+        message: (action === 'leave') ? `Are you sure you want to leave ${groupRow.name}?` :
+          `Are you sure you want to decline the invitation to ${groupRow.name}?`,
+        confirmButtonText: (action === 'leave') ? "Yes, leave the group" :
+          "Yes, decline the invitation",
+        confirmButtonLoadingText: 'Leaving...'
+      };
+    })
     async leaveGroup(action: string, groupRow: GroupsData) {
-        try {
-          await this.$msgbox({
-            message: (action === 'leave') ? `Are you sure you want to leave ${groupRow.name}?` :
-              `Are you sure you want to decline the invitation to ${groupRow.name}?`,
-            showCancelButton: true,
-            confirmButtonText: (action === 'leave') ? "Yes, leave the group" :
-              "Yes, decline the invitation",
-            lockScroll: false,
-            beforeClose: async (action, instance, done) => {
-              try {
-                if (action === 'confirm') {
-                  instance.confirmButtonLoading = true;
-                  instance.confirmButtonText = 'Leaving...';
-                  await this.$apollo.mutate({
-                    mutation: leaveGroupMutation,
-                    variables: {
-                      groupId: groupRow.id
-                    }
-                  });
-                  this.$message({
-                    message: "You have declined the invitation"
-                  });
-                  await this.$apollo.queries.currentUser.refetch();
-                  instance.confirmButtonLoading = false;
-                  done();
-                } else {
-                  done();
-                }
-              } catch(err) {
-                reportError(err);
-              }
-            }
-          });
-          if (action === 'leave') {
-            this.$message({
-              message: "You have successfully left the group"
-            })
-          }
-        } catch {
-          return
+      await this.$apollo.mutate({
+        mutation: leaveGroupMutation,
+        variables: {
+          groupId: groupRow.id
         }
+      });
+      this.$message({
+        message: "You have declined the invitation"
+      });
+      await this.$apollo.queries.currentUser.refetch();
+      if (action === 'leave') {
+        this.$message({
+          message: "You have successfully left the group"
+        });
+      }
     }
 
     async deleteAccount(this: any) {

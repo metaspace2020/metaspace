@@ -78,7 +78,7 @@
         </div>
         <div class="submenu">
           <router-link to="/user/me" class="submenu-item page-link">
-            My Account
+            My account
           </router-link>
           <div class="submenu-item page-link" @click="logout">
             Sign out

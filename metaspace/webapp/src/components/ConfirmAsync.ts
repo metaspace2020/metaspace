@@ -5,6 +5,7 @@ import {
 } from 'element-ui/types/message-box';
 import reportError from '../lib/reportError';
 import Vue from 'vue';
+import './ConfirmAsync.scss'
 
 interface ExtraOptions {
   confirmButtonLoadingText?: string;
@@ -53,6 +54,7 @@ function ConfirmAsync(options: ValueOrCallback<ElMessageBoxOptions & ExtraOption
           showCancelButton: true,
           lockScroll: true,
           showInput,
+          customClass: 'el-message-box-dialog-style',
           ...baseOptions,
           beforeClose: async (action: MessageBoxCloseAction, instance: ElMessageBoxComponent, done: Function) => {
             let originalConfirmText = instance.confirmButtonText;
