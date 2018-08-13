@@ -33,15 +33,15 @@ enum UserGroupRole {
 }
 
 type Query {
-  group(id: ID!): Group
+  group(groupId: ID!): Group
   allGroups(query: String): [Group!]!
 }
 
 type Mutation {
   ## Managing groups
   createGroup(groupDetails: CreateGroupInput!): Group!
-  updateGroup(id: ID!, groupDetails: UpdateGroupInput!): Group!
-  deleteGroup(id: ID!): Boolean!
+  updateGroup(groupId: ID!, groupDetails: UpdateGroupInput!): Group!
+  deleteGroup(groupId: ID!): Boolean!
 
   ## Managing group users
   leaveGroup(groupId: ID!): Boolean!

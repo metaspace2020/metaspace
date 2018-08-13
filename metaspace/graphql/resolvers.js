@@ -245,6 +245,7 @@ const Resolvers = {
       return {
         id: user.name.replace(/ /, '|||'), // TODO: Have actual user IDs
         name: user.name,
+        role: user.role,
         email: user.email || null,
       }
     }

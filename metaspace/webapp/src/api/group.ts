@@ -24,8 +24,8 @@ export interface UpdateGroupMutation {
   }
 }
 export const updateGroupMutation =
-  gql`mutation updateGroup($id: ID!, $groupDetails: UpdateGroupInput!) {
-    updateGroup(id: $id, groupDetails: $groupDetails) {
+  gql`mutation updateGroup($groupId: ID!, $groupDetails: UpdateGroupInput!) {
+    updateGroup(groupId: $groupId, groupDetails: $groupDetails) {
       id
       name
       shortName
@@ -34,8 +34,8 @@ export const updateGroupMutation =
   }`;
 
 export const deleteGroupMutation =
-  gql`mutation deleteGroup($id: ID!) {
-    deleteGroup(id: $id)
+  gql`mutation deleteGroup($groupId: ID!) {
+    deleteGroup(groupId: $groupId)
   }`;
 
 export const removeUserFromGroupMutation =
@@ -79,7 +79,7 @@ export const leaveGroupMutation =
 
 export const editGroupQuery =
   gql`query EditGroupProfileQuery($groupId: ID!) {
-    group(id: $groupId) {
+    group(groupId: $groupId) {
       id
       name
       shortName

@@ -104,7 +104,7 @@
           currentUser {
             id
           }
-          group(id: $groupId) {
+          group(groupId: $groupId) {
             id
             name
             shortName

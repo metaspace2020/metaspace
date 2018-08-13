@@ -154,7 +154,7 @@
         const groupName = this.groupName;
         await this.$apollo.mutate({
           mutation: deleteGroupMutation,
-          variables: { id: this.groupId },
+          variables: { groupId: this.groupId },
         });
         this.$message({ message: `${groupName} has been deleted`, type: 'success' });
         this.$router.push('/');
@@ -171,7 +171,7 @@
         const {name, shortName} = this.model;
         await this.$apollo.mutate<UpdateGroupMutation>({
           mutation: updateGroupMutation,
-          variables: { id: this.groupId, groupDetails: { name, shortName } },
+          variables: { groupId: this.groupId, groupDetails: { name, shortName } },
         });
         this.$message({ message: `${name} has been saved`, type: 'success' });
       } catch(err) {
