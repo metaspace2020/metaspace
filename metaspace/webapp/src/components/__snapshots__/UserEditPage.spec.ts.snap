@@ -3,8 +3,12 @@
 exports[`UserEditPage should match snapshot 1`] = `
 <div class="main-content">
   <div class="user-edit-page">
+    <!---->
     <mock-el-dialog title="Delete account" width="30%">
-      <p>If you delete your account, you will lose access to any datasets, groups and projects that have been explicitly shared with you</p>
+      <p>If you delete your account, you will lose access to all private datasets.
+      </p>
+      <p>Please select whether you would like to delete all your datasets or keep them within METASPACE accessible by the group members:
+      </p>
       <label role="checkbox" class="el-checkbox" style="margin-left: 20px;"><span aria-checked="mixed" class="el-checkbox__input"><span class="el-checkbox__inner"></span>
         <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
         </span><span class="el-checkbox__label">
@@ -20,7 +24,7 @@ exports[`UserEditPage should match snapshot 1`] = `
           Delete account</span></button>
       </div>
       <p>
-        <b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them deleted later by emailing the METASPACE administrators.</p>
+        <b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them deleted later by emailing the METASPACE administrators</p>
     </mock-el-dialog>
     <div class="el-row" id="edit-user-page">
       <div class="el-row">
@@ -147,13 +151,12 @@ exports[`UserEditPage should match snapshot 1`] = `
             </p>
           </div>
         </div>
-        <p>
-          <a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up your organization or lab on METASPACE
-        </p>
       </div>
       <div class="delete-account" style="margin-top: 45px;">
         <h2>Delete account</h2>
-        <p style="width: 100%; padding-left: 15px;">If you choose to delete your METASPACE account, you will be given the choice of whether to delete the datasets you have uploaded and projects you have created or leave them for others to continue using.</p>
+        <p style="width: 100%; padding-left: 15px;">
+          If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE. For the latter, the private data will still be accessible by the group members only.
+        </p>
       </div>
       <div class="el-row">
         <button type="button" class="el-button el-button--danger" title="Delete account" style="float: right; margin-top: 15px;">
