@@ -45,7 +45,9 @@ const router = new VueRouter({
       { path: '/account/reset-password', component: ResetPasswordPage },
     ] : []),
 
+    { path: '/group/create', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "GroupPage" */ './modules/GroupProfile')).CreateGroupPage },
     { path: '/group/:groupId', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "GroupPage" */ './modules/GroupProfile')).ViewGroupProfile },
+    { path: '/group/:groupId/edit', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "GroupPage" */ './modules/GroupProfile')).EditGroupProfile },
   ]
 });
 

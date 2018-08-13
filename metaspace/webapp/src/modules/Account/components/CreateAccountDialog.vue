@@ -89,6 +89,7 @@
   import InterDialogLink from './InterDialogLink';
   import { createAccountByEmail } from '../../../api/auth';
   import reportError from '../../../lib/reportError';
+  import emailRegex from '../../../lib/emailRegex';
 
   interface Model {
     firstName: string;
@@ -113,10 +114,15 @@
       password: ''
     };
     rules = {
-      firstName: [{ required: true, message: 'First name is required' }],
-      lastName: [{ required: true, message: 'Last name is required' }],
-      email: [{ required: true, message: 'Email address is required' }],
-      password: [{ required: true, message: 'Password is required' }],
+      firstName: [{ required: true, min: 2, max: 50, message: 'First name is required' }],
+      lastName: [{ required: true, min: 2, max: 50, message: 'Last name is required' }],
+      email: [
+        { required: true, message: 'Email address is required' },
+        { pattern: emailRegex, message: 'Must be a valid email address' }
+      ],
+      password: [
+        { required: true, min: 8, message: 'Password must be at least 8 characters' }
+      ],
     };
 
     async onSubmit() {
@@ -147,7 +153,7 @@
 </script>
 
 <style scoped lang="scss">
-  @import "../../../../node_modules/element-ui/packages/theme-chalk/src/mixins/mixins";
+  @import "~element-ui/packages/theme-chalk/src/mixins/mixins";
 
   .el-dialog__wrapper /deep/ .el-dialog {
     width: 400px;
