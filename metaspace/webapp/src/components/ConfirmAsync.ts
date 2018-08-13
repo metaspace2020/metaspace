@@ -2,9 +2,9 @@ import {
   ElMessageBoxComponent,
   ElMessageBoxOptions,
   MessageBoxCloseAction,
-} from '../../../node_modules/element-ui/types/message-box';
-import reportError from '../../lib/reportError';
-import { Vue } from '../../../node_modules/vue/types/vue';
+} from 'element-ui/types/message-box';
+import reportError from '../lib/reportError';
+import Vue from 'vue';
 
 interface ExtraOptions {
   confirmButtonLoadingText?: string;
@@ -12,11 +12,19 @@ interface ExtraOptions {
 type ValueOrCallback<T> = T | ((...args: any[]) => T);
 
 /**
- * Decorator for async methods that require a confirmation prompt.
+ * Decorator that prompts the user with a dialog, only calls the wrapped function if the user confirms,
+ * and keeps the dialog open, showing a loading spinner, while the wrapped function executes.
+ *
+ * Note that if `showInput` is set in the options, this also concats the value of the input to the arguments passed to
+ * the wrapped function.
+ *
+ * This doesn't currently provide any mechanism for returning a value from the wrapped function, as it doesn't
+ * make sense with the built-in error handling. Possibly the error handling should be moved into another decorator?
+ *
  * Usage:
  * ```typescript
  * class MyComponent extends Vue {
- *   @ConfirmAsync(function (datasetId: string) {
+ *   @ConfirmAsync(function (this: MyComponent, datasetId: string) {
  *     return {
  *       title: 'Confirm deletion',
  *       confirmButtonLoadingText: 'Deleting...',
@@ -28,7 +36,6 @@ type ValueOrCallback<T> = T | ((...args: any[]) => T);
  *   }
  * }
  *
- * Note that this also concats the value o
  *
  */
 function ConfirmAsync(options: ValueOrCallback<ElMessageBoxOptions & ExtraOptions>) {
