@@ -26,7 +26,7 @@
   import Vue from 'vue';
   import { Component, Prop } from 'vue-property-decorator';
   import emailRegex from '../../lib/emailRegex';
-  import { ElForm } from '../../../node_modules/element-ui/types/form';
+  import { ElForm } from 'element-ui/types/form';
 
   interface Model {
     name: string;

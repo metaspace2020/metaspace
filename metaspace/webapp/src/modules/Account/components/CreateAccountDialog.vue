@@ -153,7 +153,7 @@
 </script>
 
 <style scoped lang="scss">
-  @import "../../../../node_modules/element-ui/packages/theme-chalk/src/mixins/mixins";
+  @import "~element-ui/packages/theme-chalk/src/mixins/mixins";
 
   .el-dialog__wrapper /deep/ .el-dialog {
     width: 400px;
