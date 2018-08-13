@@ -5,7 +5,6 @@ import Vue from 'vue';
 import ViewGroupProfile from './ViewGroupProfile.vue';
 import router from '../../router';
 import Vuex from 'vuex';
-import account from '../Account/store/account';
 
 Vue.use(ElementUI);
 Vue.use(VueRouter);

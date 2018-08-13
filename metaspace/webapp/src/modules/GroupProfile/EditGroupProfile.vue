@@ -86,7 +86,7 @@
         }
       }`,
       group: {
-        query: editGroupQuery ,
+        query: editGroupQuery,
         loadingKey: 'membersLoading',
         variables(this: EditGroupProfile) { return { groupId: this.groupId } },
       },
