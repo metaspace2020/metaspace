@@ -27,7 +27,7 @@ export default class extends Vue {
     const matchedRoute = this.$route.matched[0] as any;
     const dialog = matchedRoute ? matchedRoute.dialogType : null;
     if (dialog) {
-      this.$store.commit('account/showDialogAsPage', dialog);
+      this.$store.commit('account/showDialog', { dialog, dialogCloseRedirect: '/' });
     }
   }
 }

@@ -11,7 +11,8 @@
     "test": "jest",
     "test-e2e": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=20000 --quarantine-mode --assertion-timeout=20000",
     "cucumber-test": "cucumber-js --compiler ts:ts-node/register tests/e2e/ --fail-fast",
-    "coverage": "jest --coverage"
+    "coverage": "jest --coverage",
+    "deref-schema": "node ./deref_schema.js src/assets"
   },
   "dependencies": {
     "@types/js-cookie": "^2.1.0",
@@ -31,6 +32,7 @@
     "d3-color": "^1.0.3",
     "d3-scale": "^1.0.5",
     "d3-svg-legend": "^2.24.0",
+    "date-fns": "^1.29.0",
     "deepcopy": "^0.6.3",
     "dom-to-image": "2.6.0",
     "ejs": "^2.5.5",
@@ -116,7 +118,6 @@
     "less-loader": "~4.1.0",
     "markdown-loader": "~2.0.2",
     "marky-mark": "~1.2.1",
-    "node-fetch": "1.7.3",
     "passwordless-memorystore": "^0.0.1",
     "postcss-loader": "~2.1.5",
     "source-map-loader": "0.2.3",
@@ -142,7 +143,12 @@
       "^.+\\.vue$": "<rootDir>/node_modules/vue-jest",
       "^.+\\.[jt]sx?$": "<rootDir>/node_modules/ts-jest"
     },
+    "moduleNameMapper": {
+      "lodash-es": "lodash"
+    },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "setupTestFrameworkScriptFile": "<rootDir>/tests/utils/setupTestFramework.ts",
+    "restoreMocks": true,
     "moduleFileExtensions": [
       "ts",
       "js",

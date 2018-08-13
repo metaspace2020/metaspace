@@ -44,7 +44,7 @@
   import { Form } from 'element-ui';
   import { validatePasswordResetToken, resetPassword } from '../../../api/auth';
   import reportError from '../../../lib/reportError';
-  import tokenAutorefresh from '../../../tokenAutorefresh';
+  import { refreshLoginStatus } from '../../../graphqlClient';
 
   interface Model {
     password: string;
@@ -83,13 +83,11 @@
     }
 
     validatePassword(rule: object, value: string, callback: Function) {
-      console.log(arguments);
       (this.$refs.form as Form).validateField('confirmPassword', () => {});
       callback();
     };
 
     validateConfirmPassword(rule: object, value: string, callback: Function) {
-      console.log(arguments, this.model.confirmPassword);
       if (value && this.model.password && value !== this.model.password) {
         callback(new Error('Passwords must match'));
       } else {
@@ -102,7 +100,7 @@
       try {
         this.isSubmitting = true;
         await resetPassword(this.token, this.email, this.model.password);
-        await tokenAutorefresh.refreshJwt(true);
+        await refreshLoginStatus();
         this.$router.push('/');
         this.$alert('Your password has been successfully reset.', 'Password reset', {type: 'success'});
       } catch (err) {

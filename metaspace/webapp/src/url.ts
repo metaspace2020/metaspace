@@ -10,6 +10,7 @@ interface Dictionary<T> {
 const FILTER_TO_URL: Dictionary<string> = {
   database: 'db',
   institution: 'lab',
+  group: 'grp',
   submitter: 'subm',
   datasetIds: 'ds',
   minMSM: 'msm',

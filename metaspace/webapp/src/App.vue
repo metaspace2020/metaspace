@@ -3,7 +3,12 @@
     <metaspace-header>
     </metaspace-header>
 
-    <router-view class="main-content">
+    <!--
+      :key="$route.path" is used to force the content to be remounted if a non-querystring param in the URL changes.
+      This ensures that a loading screen is displayed and no unnecessary state is retained when e.g. switching
+      between group profile pages or datasets
+    -->
+    <router-view class="main-content" :key="$route.path">
     </router-view>
 
     <!--metaspace-footer>

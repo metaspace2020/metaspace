@@ -1,12 +1,28 @@
 <template>
-  <div class="main-content">
-    <div class="upload-page-wrapper">
-      <div id="upload-page" v-if="!enableUploads">
-        <div id="maintenance-message">
-          Uploading is temporarily disabled so that we can safely update the website.
-          <br/>
-          Please wait a few hours and reload the page. Thank you for understanding!
-        </div>
+
+  <div id="upload-page" v-if="!enableUploads">
+    <div id="maintenance-message">
+      Uploading is temporarily disabled so that we can safely update the website.
+      <br/>
+      Please wait a few hours and reload the page. Thank you for understanding!
+    </div>
+  </div>
+
+  <div id="upload-page" v-else-if="!isSignedIn && features.newAuth">
+  </div>
+
+  <div id="upload-page" v-else-if="!isSignedIn && !features.newAuth">
+    <div id="sign-in-intro">
+      <intro-message>
+        <p class="sign-in-message"><b>To get started, click "Sign in" to sign in or create an account.</b></p>
+      </intro-message>
+    </div>
+  </div>
+
+  <div id="upload-page" v-else>
+    <div id="upload-left-pane">
+      <div id="filter-panel-container">
+        <filter-panel level="upload"></filter-panel>
       </div>
 
       <div id="upload-page" v-else-if="!isSignedIn">
@@ -56,6 +72,7 @@
  import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
  import IntroMessage from './IntroMessage.vue';
  import Vue from 'vue';
+ import tokenAutorefresh from '../tokenAutorefresh';
 
  import * as config from '../clientConfig.json';
  import {pathFromUUID} from '../util';
@@ -104,6 +121,21 @@
      this.$store.commit('updateFilter', this.$store.getters.filter);
    },
 
+ async mounted() {
+   const {query} = this.$store.state.route;
+   if (query['first-time'] !== undefined)
+     this.introIsHidden = false;
+
+   await tokenAutorefresh.waitForAuth();
+   if (!this.isSignedIn && this.features.newAuth) {
+     this.$store.commit('account/showDialog', {
+       dialog: 'signIn',
+       dialogCloseRedirect: '/',
+       loginSuccessRedirect: '/upload',
+     });
+   }
+ },
+
    data() {
      return {
        fineUploaderConfig: config.fineUploader,
@@ -111,6 +143,7 @@
        validationErrors: [],
        isSubmitting: false,
        uploadedUuid: null,
+       features: config.features
      }
    },
    components: {
