@@ -6,8 +6,10 @@ import EditGroupProfile from './EditGroupProfile.vue';
 import router from '../../router';
 import { EditGroupQuery } from '../../api/group';
 import Vuex from 'vuex';
+import registerMockComponent from '../../../tests/utils/registerMockComponent';
 
 Vue.use(ElementUI);
+registerMockComponent('el-popover');
 Vue.use(VueRouter);
 Vue.use(Vuex);
 
