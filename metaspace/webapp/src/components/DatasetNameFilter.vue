@@ -121,7 +121,7 @@
        this.joinOptions();
        if (ids.length === 1) {
          // data.options.length may be 0 if an invalid ID is passed due to URL truncation or a dataset becoming hidden
-         this.currentLabel = data.options.length >= 0 ? data.options[0].currentLabel : ids[0];
+         this.currentLabel = data.options.length > 0 ? data.options[0].currentLabel : ids[0];
        }
      },
 

@@ -61,11 +61,11 @@
     };
     rules = {
       password: [
-        { required: true, message: 'Password is required' },
+        { required: true, min: 8, message: 'Password must be at least 8 characters' },
         { validator: this.validatePassword, trigger: 'blur' },
       ],
       confirmPassword: [
-        { required: true, message: 'Password is required' },
+        { required: true, min: 8, message: 'Password must be at least 8 characters' },
         { validator: this.validateConfirmPassword, message: 'Passwords must match', trigger: 'blur' },
       ],
     };

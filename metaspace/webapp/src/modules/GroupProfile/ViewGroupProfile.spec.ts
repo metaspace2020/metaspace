@@ -4,9 +4,11 @@ import ElementUI from 'element-ui';
 import Vue from 'vue';
 import ViewGroupProfile from './ViewGroupProfile.vue';
 import router from '../../router';
+import Vuex from 'vuex';
 
 Vue.use(ElementUI);
 Vue.use(VueRouter);
+Vue.use(Vuex);
 
 
 describe('ViewGroupProfile', () => {
@@ -16,9 +18,9 @@ describe('ViewGroupProfile', () => {
     group: {
       id: 'groupId',
       name: 'group name',
-      shortName: 'groupShortName'
+      shortName: 'groupShortName',
+      currentUserRole: null,
     },
-    currentUserRoleInGroup: null,
     allDatasets: [
       { id: 'datasetId1', name: 'dataset name 1' },
       { id: 'datasetId2', name: 'dataset name 2' },
@@ -27,12 +29,19 @@ describe('ViewGroupProfile', () => {
     countDatasets: 3
   };
 
+  const store = new Vuex.Store({
+    state: {
+      filterLists: {
+      },
+    },
+  });
+
   const stubs: Stubs = {
     DatasetItem: true
   };
 
   it('should match snapshot (non-member)', () => {
-    const wrapper = mount(ViewGroupProfile, { router, stubs });
+    const wrapper = mount(ViewGroupProfile, { router, store, stubs });
     wrapper.setData({
       loaded: true,
       data: mockData,
@@ -42,12 +51,15 @@ describe('ViewGroupProfile', () => {
   });
 
   it('should match snapshot (invited)', () => {
-    const wrapper = mount<Vue>(ViewGroupProfile, { router, stubs });
+    const wrapper = mount<Vue>(ViewGroupProfile, { router, store, stubs });
     wrapper.setData({
       loaded: true,
       data: {
         ...mockData,
-        currentUserRoleInGroup: 'INVITED'
+        group: {
+          ...mockData.group,
+          currentUserRole: 'INVITED'
+        }
       },
       maxVisibleDatasets: 2
     });
