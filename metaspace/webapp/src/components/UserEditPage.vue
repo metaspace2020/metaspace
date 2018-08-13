@@ -126,13 +126,13 @@
             </el-table-column>
           </el-table>
           <p>Primary group:</p>
-          <el-select v-model="primaryGroupName" placeholder="Select" class="primGroupOptions"
+          <el-select v-model="primaryGroupId" placeholder="Select" class="primGroupOptions"
                      style="padding-left: 15px;">
             <el-option
               v-for="item in groupsData"
               :key="item.id"
               :label="item.name"
-              :value="item.name">
+              :value="item.id">
             </el-option>
           </el-select>
         </div>
@@ -200,12 +200,10 @@
 
 <script lang="ts">
   import Vue from 'vue'
-  import VueApollo from 'vue-apollo'
   import { Component, Watch } from 'vue-property-decorator'
   import {updateUserMutation, leaveGroupMutation,
     deleteUserMutation, currentUserQuery, acceptGroupInvitationMutation} from '../api/profileData'
   import reportError from "../lib/reportError";
-  import apolloClient from '../graphqlClient';
   import {refreshLoginStatus} from '../graphqlClient';
   import {ElForm} from "element-ui/types/form";
   import TransferDatasetsDialog from '../modules/GroupProfile/TransferDatasetsDialog.vue'
@@ -269,7 +267,6 @@
     invitingGroup: string | null = null;
     invitingGroupId: string | null = null;
 
-    primaryGroupName: string | null = null;
     primaryGroupId: string | null = null;
 
     delDatasets: boolean = false;
@@ -288,7 +285,6 @@
       this.currentUserId = this.currentUser.id;
       this.model.name = this.currentUser.name;
       this.model.email = this.currentUser.email;
-      this.primaryGroupName = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.name : null;
       this.primaryGroupId = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
     }
 
