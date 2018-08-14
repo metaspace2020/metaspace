@@ -26,7 +26,7 @@
 
     <el-input
       v-else-if="type === 'textarea'"
-      autosize
+      :autosize="{minRows: 1.5, maxRows: 6}"
       type="textarea"
       @input="onInput"
       :value="value"

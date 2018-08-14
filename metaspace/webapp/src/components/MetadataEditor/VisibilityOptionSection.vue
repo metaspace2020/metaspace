@@ -2,8 +2,9 @@
   <div class="metadata-section">
     <el-row>
       <el-col :span="6">
-        <div class="section-description">Visibility
-          <el-popover trigger="hover" placement="top" class="md-editor-public-help">
+        <div class="section-description">
+          Visibility
+          <el-popover trigger="hover" placement="top">
             <div>
               <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>
               <p><b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>
@@ -12,7 +13,7 @@
           </el-popover>
         </div>
       </el-col>
-      <el-col :span="18" style="margin-top: 20px">
+      <el-col :span="18" style="padding: 12px 6px 0;">
         <el-switch
           :value="isPublic"
           @input="handleChangeIsPublic"
@@ -27,7 +28,6 @@
 <script lang="ts">
 import Vue from 'vue';
 import { Prop, Component, Emit, Watch } from 'vue-property-decorator';
-import { MetaspaceOptions } from './formStructure';
 
 @Component
 export default class VisibilityOptionSection extends Vue {

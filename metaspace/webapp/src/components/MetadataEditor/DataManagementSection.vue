@@ -315,7 +315,6 @@
 
 <style scoped lang="scss">
   .metadata-section {
-    margin-top: 10px;
     display: block;
     max-width: 950px;
   }
