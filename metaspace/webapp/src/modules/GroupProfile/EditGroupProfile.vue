@@ -104,13 +104,6 @@
     currentUser: CurrentUserQuery | null = null;
     group: EditGroupQuery | null = null;
 
-    roleNames: Record<UserGroupRole, string> = {
-      'PRINCIPAL_INVESTIGATOR': 'Principal Investigator',
-      'MEMBER': 'Member',
-      'PENDING': 'Requesting access',
-      'INVITED': 'Invited',
-    };
-
     get canDelete(): boolean {
       return this.currentUser && this.currentUser.role === 'admin' || false;
     }

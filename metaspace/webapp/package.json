@@ -144,7 +144,8 @@
       "^.+\\.[jt]sx?$": "<rootDir>/node_modules/ts-jest"
     },
     "moduleNameMapper": {
-      "lodash-es": "lodash"
+      "lodash-es": "lodash",
+      "\\.scss$": "<rootDir>/tests/utils/scssMock.js"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "setupTestFrameworkScriptFile": "<rootDir>/tests/utils/setupTestFramework.ts",

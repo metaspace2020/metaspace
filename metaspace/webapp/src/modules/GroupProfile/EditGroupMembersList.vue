@@ -22,7 +22,7 @@
 
       <el-table-column label="Role" width="160">
         <template slot-scope="scope">
-          {{roleNames[scope.row.role]}}
+          {{getRoleName(scope.row.role)}}
         </template>
       </el-table-column>
 
@@ -80,7 +80,7 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component, Emit, Prop } from 'vue-property-decorator';
-  import { EditGroupQuery, EditGroupQueryMember, EditGroupQueryUser, UserGroupRole } from '../../api/group';
+  import { EditGroupQuery, EditGroupQueryMember, EditGroupQueryUser, getRoleName } from '../../api/group';
   import { encodeParams } from '../../url';
 
   @Component({})
@@ -95,12 +95,7 @@
     pageSize: number = 10;
     page: number = 1;
 
-    roleNames: Record<UserGroupRole, string> = {
-      'PRINCIPAL_INVESTIGATOR': 'Principal Investigator',
-      'MEMBER': 'Member',
-      'PENDING': 'Requesting access',
-      'INVITED': 'Invited',
-    };
+    getRoleName = getRoleName;
 
     get members(): EditGroupQueryMember[] {
       return this.group && this.group.members || [];
