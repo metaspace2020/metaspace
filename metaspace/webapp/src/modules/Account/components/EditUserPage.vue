@@ -247,6 +247,7 @@
       name: '',
       email: ''
     };
+    primaryGroupId: string | null = null;
     invitingGroup: GroupRow | null = null;
 
     delDatasets: boolean = false;
@@ -260,15 +261,11 @@
       }]
     };
 
-    get primaryGroupId(): string | null {
-      return this.currentUser && this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
-    };
-
     @Watch('currentUser', {deep: true})
     onCurrentUserChanged(this: any) {
       this.model.name = this.currentUser.name;
       this.model.email = this.currentUser.email;
-
+      this.primaryGroupId = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
     }
 
     openDeleteAccountDialog() {
