@@ -54,7 +54,7 @@ function ConfirmAsync(options: ValueOrCallback<ElMessageBoxOptions & ExtraOption
           showCancelButton: true,
           lockScroll: true,
           showInput,
-          customClass: 'el-message-box-dialog-style',
+          customClass: 'confirm-async-message-box',
           ...baseOptions,
           beforeClose: async (action: MessageBoxCloseAction, instance: ElMessageBoxComponent, done: Function) => {
             let originalConfirmText = instance.confirmButtonText;
