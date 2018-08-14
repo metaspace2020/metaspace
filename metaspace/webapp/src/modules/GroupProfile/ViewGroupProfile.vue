@@ -1,70 +1,66 @@
 <template>
-  <div>
-    <div v-loading="!loaded" class="page">
-      <div v-if="group != null" class="page-content">
-        <transfer-datasets-dialog
-          v-if="showTransferDatasetsDialog"
-          :currentUserId="currentUserId"
-          :groupName="group.name"
-          :isInvited="isInvited"
-          @accept="handleAcceptTransferDatasets"
-          @close="handleCloseTransferDatasetsDialog"
-        />
-        <div class="header-row">
-          <div class="header-names">
-            <h1>{{group.name}}</h1>
-            <h2 class="short-name">({{group.shortName}})</h2>
-          </div>
-
-          <div class="header-buttons">
-            <el-button v-if="roleInGroup == null"
-                       type="primary"
-                       @click="handleRequestAccess"
-                       :disabled="!!submitAction"
-                       :loading="submitAction === 'requestAccess'">
-              Request access
-            </el-button>
-            <el-button v-if="roleInGroup === 'PENDING'"
-                       disabled>
-              Request sent
-            </el-button>
-            <el-button v-if="roleInGroup === 'PRINCIPAL_INVESTIGATOR'"
-                       type="primary"
-                       @click="handleManageGroup">
-              Manage group
-            </el-button>
-          </div>
-          <el-alert v-if="roleInGroup === 'INVITED'"
-                    type="info"
-                    show-icon
-                    :closable="false"
-                    title="">
-            <div style="padding: 0 0 20px 20px;">
-              <p>
-                You have been invited to join {{group.name}}.
-              </p>
-              <div>
-                <el-button type="danger" @click="handleRejectInvite" :disabled="!!submitAction" :loading="submitAction === 'rejectInvite'">
-                  Decline invitation
-                </el-button>
-                <el-button type="primary" @click="handleAcceptInvite" :disabled="!!submitAction">
-                  Join group
-                </el-button>
-              </div>
-            </div>
-          </el-alert>
+  <div v-loading="!loaded" class="page">
+    <div v-if="group != null" class="page-content">
+      <transfer-datasets-dialog
+        v-if="showTransferDatasetsDialog"
+        :currentUserId="currentUserId"
+        :groupName="group.name"
+        :isInvited="isInvited"
+        @accept="handleAcceptTransferDatasets"
+        @close="handleCloseTransferDatasetsDialog"
+      />
+      <div class="header-row">
+        <div class="header-names">
+          <h1>{{group.name}}</h1>
+          <h2 class="short-name">({{group.shortName}})</h2>
         </div>
-        <div v-if="groupDatasets.length > 0">
-          <h1>Datasets</h1>
 
-          <div class="dataset-list">
-            <dataset-item v-for="(dataset, i) in groupDatasets.slice(0,8)"
-                          :dataset="dataset" :key="dataset.id"
-                          :class="[i%2 ? 'even': 'odd']" />
+        <div class="header-buttons">
+          <el-button v-if="roleInGroup == null"
+                     type="primary"
+                     @click="handleRequestAccess">
+            Request access
+          </el-button>
+          <el-button v-if="roleInGroup === 'PENDING'"
+                     disabled>
+            Request sent
+          </el-button>
+          <el-button v-if="roleInGroup === 'PRINCIPAL_INVESTIGATOR'"
+                     type="primary"
+                     @click="handleManageGroup">
+            Manage group
+          </el-button>
+        </div>
+        <el-alert v-if="roleInGroup === 'INVITED'"
+                  type="info"
+                  show-icon
+                  :closable="false"
+                  title="">
+          <div style="padding: 0 0 20px 20px;">
+            <p>
+              You have been invited to join {{group.name}}.
+            </p>
+            <div>
+              <el-button type="danger" @click="handleRejectInvite">
+                Decline invitation
+              </el-button>
+              <el-button type="primary" @click="handleAcceptInvite">
+                Join group
+              </el-button>
+            </div>
           </div>
-          <div class="dataset-list-footer">
-            <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
-          </div>
+        </el-alert>
+      </div>
+      <div v-if="groupDatasets.length > 0">
+        <h1>Datasets</h1>
+
+        <div class="dataset-list">
+          <dataset-item v-for="(dataset, i) in groupDatasets.slice(0,8)"
+                        :dataset="dataset" :key="dataset.id"
+                        :class="[i%2 ? 'even': 'odd']" />
+        </div>
+        <div class="dataset-list-footer">
+          <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
         </div>
       </div>
     </div>
@@ -77,22 +73,22 @@
   import DatasetItem from '../../components/DatasetItem.vue';
   import { acceptGroupInvitationMutation, leaveGroupMutation, requestAccessToGroupMutation } from '../../api/group';
   import gql from 'graphql-tag';
-  import reportError from '../../lib/reportError';
   import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
+  import { encodeParams } from '../../url';
+  import ConfirmAsync from '../../components/ConfirmAsync';
 
   type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';
 
-  type SubmitActionType = null | 'requestAccess' | 'rejectInvite' | 'acceptInvite';
-
   interface GroupInfo {
+    id: string;
     name: string;
     shortName: string;
+    currentUserRole: UserGroupRole | null;
   }
 
   interface ViewGroupProfileData {
     currentUser: { id: string; } | null;
     group: GroupInfo | null;
-    currentUserRoleInGroup: UserGroupRole | null;
     allDatasets: DatasetDetailItem[];
     countDatasets: number;
   }
@@ -108,11 +104,12 @@
           currentUser {
             id
           }
-          group(id: $groupId) {
+          group(groupId: $groupId) {
+            id
             name
             shortName
+            currentUserRole
           }
-          currentUserRoleInGroup(groupId: $groupId)
           allDatasets(offset: 0, limit: $maxVisibleDatasets, filter: { group: $groupId }) {
             ...DatasetDetailItem
           }
@@ -146,11 +143,10 @@
 
     get currentUserId(): string | null { return this.data && this.data.currentUser && this.data.currentUser.id }
     get group(): GroupInfo | null { return this.data && this.data.group; }
-    get roleInGroup(): UserGroupRole | null { return this.data && this.data.currentUserRoleInGroup; }
+    get roleInGroup(): UserGroupRole | null { return this.data && this.data.group && this.data.group.currentUserRole; }
     get groupDatasets(): DatasetDetailItem[] { return this.data && this.data.allDatasets || []; }
     get countDatasets(): number { return this.data && this.data.countDatasets || 0; }
     maxVisibleDatasets = 8;
-    submitAction: SubmitActionType = null; // Used for indicating which button is loading
 
 
     get groupId(): string {
@@ -158,31 +154,16 @@
     }
 
     get isInvited(): boolean {
-      return this.data != null && this.data.currentUserRoleInGroup === 'INVITED';
+      return this.roleInGroup === 'INVITED';
     }
 
     get datasetsListLink() {
-      return {
-        path: '/datasets',
-        query: {
-          group: this.groupId
-        }
-      }
-    }
-
-    async doSubmit(type: SubmitActionType, func: () => Promise<void>) {
-      // Wrapper for functions that submit, so that loading indicators are consistent
-      if (this.submitAction != null) {
-        return;
-      }
-      this.submitAction = type;
-      try {
-        await func();
-      } catch (err) {
-        reportError(err);
-      } finally {
-        this.submitAction = null;
-      }
+      const filters = {
+        group: this.group && {id: this.groupId, name: this.group.name},
+      };
+      const path = '/datasets';
+      const query = encodeParams(filters, path, this.$store.state.filterLists);
+      return { path, query }
     }
 
     async handleRequestAccess() {
@@ -193,23 +174,17 @@
       this.showTransferDatasetsDialog = true;
     }
 
+    @ConfirmAsync({
+      title: 'Decline invitation',
+      message: 'Are you sure?',
+      confirmButtonText: "Decline invitation"
+    })
     async handleRejectInvite() {
-      try {
-        await this.$confirm(
-          "Are you sure?",
-          "Decline invitation", {
-            confirmButtonText: "Decline invitation"
-          });
-      } catch (err) {
-        return; // User clicked Cancel
-      }
-      await this.doSubmit('rejectInvite', async () => {
-        await this.$apollo.mutate({
-          mutation: leaveGroupMutation,
-          variables: { groupId: this.groupId },
-        });
-        await this.$apollo.queries.data.refetch();
+      await this.$apollo.mutate({
+        mutation: leaveGroupMutation,
+        variables: { groupId: this.groupId },
       });
+      await this.$apollo.queries.data.refetch();
     }
 
     handleManageGroup() {
@@ -218,21 +193,17 @@
 
     async handleAcceptTransferDatasets(selectedDatasetIds: string[]) {
       if (this.isInvited) {
-        await this.doSubmit('acceptInvite', async () => {
-          await this.$apollo.mutate({
-            mutation: acceptGroupInvitationMutation,
-            variables: { groupId: this.groupId, bringDatasets: selectedDatasetIds },
-          });
-          await this.$apollo.queries.data.refetch();
-        })
+        await this.$apollo.mutate({
+          mutation: acceptGroupInvitationMutation,
+          variables: { groupId: this.groupId, bringDatasets: selectedDatasetIds },
+        });
+        await this.$apollo.queries.data.refetch();
       } else {
-        await this.doSubmit('requestAccess', async () => {
-          await this.$apollo.mutate({
-            mutation: requestAccessToGroupMutation,
-            variables: { groupId: this.groupId, bringDatasets: selectedDatasetIds },
-          });
-          await this.$apollo.queries.data.refetch();
-        })
+        await this.$apollo.mutate({
+          mutation: requestAccessToGroupMutation,
+          variables: { groupId: this.groupId, bringDatasets: selectedDatasetIds },
+        });
+        await this.$apollo.queries.data.refetch();
       }
       this.showTransferDatasetsDialog = false;
     }

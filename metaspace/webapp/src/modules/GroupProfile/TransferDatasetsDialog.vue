@@ -1,6 +1,7 @@
 <template>
     <el-dialog class="dialog"
                visible
+               append-to-body
                :title="allDatasets.length > 0 ? 'Transfer datasets' : 'Join group'"
                @close="handleClose">
       <div v-loading="loading">
@@ -37,8 +38,8 @@
             Are you sure you want to join {{groupName}}?
           </p>
           <div class="button-bar">
-            <el-button :disabled="isSubmitting" @click="handleClose">Cancel</el-button>
-            <el-button type="primary" :loading="isSubmitting" @click="handleAccept">{{acceptText}}</el-button>
+            <el-button :disabled="isSubmitting" @click="handleClose" size="small">Cancel</el-button>
+            <el-button type="primary" :loading="isSubmitting" @click="handleAccept" size="small">{{acceptText}}</el-button>
           </div>
         </div>
       </div>

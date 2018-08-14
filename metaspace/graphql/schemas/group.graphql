@@ -2,6 +2,7 @@ type Group {
   id: ID!
   name: String!
   shortName: String!
+  currentUserRole: UserGroupRole
   members: [UserGroup!]    # null if current user is not allowed to see
 }
 
@@ -16,9 +17,7 @@ input UpdateGroupInput {
   shortName: String
 }
 
-# Many-to-many relationship between User and Group - we haven't discussed naming conventions for these.
-# I'm used to just joining the two types' names, i.e. "UserGroup" / "GroupUser", but some people prefer
-# a name that describes the relationship e.g. "GroupMember" or "UserInGroup".
+# Many-to-many relationship between User and Group
 type UserGroup {
   user: User!
   group: Group!
@@ -34,19 +33,14 @@ enum UserGroupRole {
 }
 
 type Query {
-  group(id: ID!): Group
+  group(groupId: ID!): Group
   allGroups(query: String): [Group!]!
-
-  # Not sure if `currentUserRoleInGroup` is the right approach. The requirement is that when a user is viewing a group,
-  # the UI changes based on their role within that group. This could also e.g. be done as a `currentUserRole: String`
-  # or `currentUserGroup: UserGroup` field on Group.
-  currentUserRoleInGroup(groupId: ID!): UserGroupRole
 }
 
 type Mutation {
   ## Managing groups
   createGroup(groupDetails: CreateGroupInput!): Group!
-  updateGroup(id: ID!, groupDetails: UpdateGroupInput!): Group!
+  updateGroup(groupId: ID!, groupDetails: UpdateGroupInput!): Group!
   deleteGroup(groupId: ID!): Boolean!
 
   ## Managing group users

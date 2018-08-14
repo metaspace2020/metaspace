@@ -53,7 +53,7 @@ describe('CreateAccountDialog', () => {
     const firstName = 'foo';
     const lastName = 'bar';
     const email = 'test@example.com';
-    const password = 'baz';
+    const password = 'abcd1234';
     const wrapper = mount(CreateAccountDialog, { store, router, sync: false }) as Wrapper<CreateAccountDialog>;
 
     // Act
