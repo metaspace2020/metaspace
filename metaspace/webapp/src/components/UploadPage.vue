@@ -1,7 +1,7 @@
 <template>
   <div class="main-content">
     <div class="upload-page-wrapper">
-      <div id="upload-page" v-if="!enableUploads">
+      <div v-if="!enableUploads">
         <div id="maintenance-message">
           Uploading is temporarily disabled so that we can safely update the website.
           <br/>
@@ -9,7 +9,7 @@
         </div>
       </div>
 
-      <div id="upload-page" v-else-if="!isSignedIn">
+      <div v-else-if="!isSignedIn">
         <div id="sign-in-intro">
           <intro-message>
             <p class="sign-in-message"><b>To get started, click "Sign in" to sign in or create an account.</b></p>
@@ -17,7 +17,7 @@
         </div>
       </div>
 
-      <div id="upload-page" v-else>
+      <div v-else>
         <div id="upload-left-pane">
           <!--Uncomment below when LCMS support is needed-->
           <!--<div id="filter-panel-container">-->

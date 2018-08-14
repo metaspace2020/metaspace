@@ -50,7 +50,10 @@
       :value="value"
       :required="required"
       v-bind="$attrs">
-      <el-option v-for="opt in options" :value="opt" :label="opt" :key="opt" />
+      <el-option v-for="opt in options"
+                 :value="optionsAreStrings ? opt : opt.value"
+                 :label="optionsAreStrings ? opt : opt.label"
+                 :key="optionsAreStrings ? opt : opt.value" />
     </el-select>
 
     <el-select
@@ -60,7 +63,10 @@
       :required="required"
       multiple
       v-bind="$attrs">
-      <el-option v-for="opt in options" :value="opt" :label="opt" :key="opt" />
+      <el-option v-for="opt in options"
+                 :value="optionsAreStrings ? opt : opt.value"
+                 :label="optionsAreStrings ? opt : opt.label"
+                 :key="optionsAreStrings ? opt : opt.value" />
     </el-select>
 
     <table-input
@@ -78,7 +84,6 @@
       @input="onInput"
       :value="value"
       :error="typeof error !== 'string' ? error : null"
-      :disableEmail="name === 'Submitter' /* FIXME: Remove this */"
       :required="required"
       :fetchSuggestions="fetchSuggestions"
       v-bind="$attrs"
@@ -122,7 +127,7 @@
     name!: string;
     @Prop()
     help?: any;
-    @Prop({ required: true, type: [String, Number, Boolean, Object, Array] })
+    @Prop({ validator: val => val !== undefined })
     value!: any;
     @Prop([String, Object, Array])
     error?: string | object | any[];
@@ -138,6 +143,10 @@
     fetchSuggestions!: FetchSuggestions;
 
     wideAutocomplete = false;
+
+    get optionsAreStrings() {
+      return this.options && this.options.length > 0 && typeof this.options[0] === 'string';
+    }
 
     onInput(val: any) {
       this.$emit('input', val);

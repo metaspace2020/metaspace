@@ -1,15 +1,37 @@
 import gql from 'graphql-tag';
+import { datasetSubmitterFragment } from './user';
 
 export const fetchMetadataQuery =
   gql`query fetchMetadataQuery($id: String!) {
     dataset(id: $id) {
-      metadataJson,
-      isPublic,
-      molDBs,
-      adducts,
+      metadataJson
+      isPublic
+      submitter {
+        ...DatasetSubmitterFragment
+      }
+      group {
+        id
+      }
+      principalInvestigator {
+        name
+        email
+      }
+      molDBs
+      adducts
       name
     }
-  }`;
+  }
+  ${datasetSubmitterFragment}
+  `;
+
+export const currentUserSubmitterQuery =
+  gql`query {
+    currentUser {
+    ...DatasetSubmitterFragment
+    }
+  }
+  ${datasetSubmitterFragment}
+  `;
 
 export const fetchAutocompleteSuggestionsQuery =
   gql`query suggestions($field: String!, $query: String!) {

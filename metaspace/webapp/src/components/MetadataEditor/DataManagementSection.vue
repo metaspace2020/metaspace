@@ -1,7 +1,8 @@
 <template>
   <div class="metadata-section">
     <el-dialog
-      :visible.sync="findMyGroup"
+      custom-class="find-group-dialog"
+      :visible.sync="showFindGroupDialog"
       :lockScroll="false">
       <h2>Find a group</h2>
       <p>If you are not member of a group, you can request access here and your dataset will be
@@ -10,34 +11,36 @@
         <el-form-item label="Your group:">
           <el-row>
             <el-select
-              v-model="extraGroup"
+              v-model="groupSearchSelectedId"
               filterable
               remote
-              reserve-keyword
+              :remote-method="handleGroupSearch"
               placeholder="Enter group name"
-              value-key="id"
-              :loading="loading">
+              :loading="groupSearchLoading !== 0">
               <el-option
-                v-for="group in allGroups"
+                v-for="group in groupSearchResults"
                 :key="group.id"
                 :label="group.name"
-                :value="group.name" />
+                :value="group.id" />
             </el-select>
           </el-row>
         </el-form-item>
       </el-form>
 
       <el-row style="margin: 15px 0">
+        <el-button @click="onCancelFindGroupDialog">Cancel</el-button>
         <el-button
-          title="Request access"
           type="primary"
+          :disabled="groupSearchSelectedId == null"
           :loading="isGroupAccessLoading"
           @click="onRequestGroupAccess">Request access
         </el-button>
       </el-row>
       <el-row>
-        <p><b>Can't find your group?</b> You can <a>create a group</a> to get your team started,
-          or <a @click="addPIsection" style="cursor: pointer">fill in your Principal Investigator</a> instead.</p>
+        <p>
+          <b>Can't find your group?</b> <a href="mailto:contact@metaspace2020.eu">Contact us</a> to get your team started,
+          or <a href="#" @click.prevent="handleSelectNoGroup" style="cursor: pointer">fill in your Principal Investigator</a> instead.
+        </p>
       </el-row>
     </el-dialog>
     <el-row>
@@ -51,23 +54,20 @@
             <el-col :span="8">
               <form-field
                 type="text"
-                name="Your full name"
-                v-model="name"
-                placeholder="E.g. Jon Snow"
+                name="Submitter name"
+                :value="submitter != null ? submitter.name : ''"
                 required
-                disabled>
-              </form-field>
+                disabled />
             </el-col>
             <el-col :span="8">
               <form-field
-                v-model="groupNameToSubmit"
-                :options="listOfGroups"
+                v-model="groupId"
+                :error="error && error.groupId"
+                :options="groupOptions"
                 type="select"
                 placeholder="Select your group"
-                @input="val=>onInput(val)"
                 name="Group"
-                required>
-              </form-field>
+                required />
             </el-col>
             <!--Uncomment when projects are introduced-->
             <!--<el-col :span="8">-->
@@ -82,39 +82,31 @@
       </el-col>
     </el-row>
     <el-collapse-transition>
-      <el-row  v-if="enablePI" >
+      <el-row v-if="showPI" >
         <el-col :span="6">
           <div class="section-description">Principal Investigator</div>
         </el-col>
         <el-col :span="18">
           <el-row :gutter="8">
-            <el-form size="medium"
-                     label-position="top">
+            <el-form size="medium" label-position="top">
               <el-col :span="8">
                 <form-field
                   type="text"
-                  name="Full PI name"
-                  v-model="namePI"
-                  placeholder="Principal investigator full name"
+                  name="Full name"
+                  :value="value.principalInvestigator ? value.principalInvestigator.name : ''"
+                  @input="value => handleInputPI('name', value)"
+                  :error="error && error.principalInvestigator && error.principalInvestigator.name"
                   required
                 />
               </el-col>
               <el-col :span="8">
                 <form-field
-                  v-model="emailPI"
                   type="text"
-                  placeholder="PI address"
-                  name="PI Email"
-                  required>
-                </form-field>
-              </el-col>
-              <el-col :span="8">
-                <el-button plain
-                  round
-                  type="info"
-                  icon="el-icon-minus"
-                  @click="removePIsection"
-                  style="padding: 4px; transform: translateY(100%)"
+                  name="Email address"
+                  :value="value.principalInvestigator ? value.principalInvestigator.email : ''"
+                  @input="value => handleInputPI('email', value)"
+                  :error="error && error.principalInvestigator && error.principalInvestigator.email"
+                  required
                 />
               </el-col>
             </el-form>
@@ -130,26 +122,52 @@
   import { Component, Prop, Watch } from 'vue-property-decorator';
   import FormField from './FormField.vue';
   import { MetaspaceOptions } from './formStructure';
-  import {CurrentUserResult, currentUserQuery, allGroups, requestAccessToGroupMutation} from '../../api/dataManagement';
+  import {
+    allGroupsQuery,
+    requestAccessToGroupMutation,
+    GroupListItem,
+    oneGroupQuery,
+  } from '../../api/dataManagement';
   import reportError from "../../lib/reportError";
+  import { DatasetSubmitterFragment } from '../../api/user';
 
-  interface Group {
-    id: string;
-    name: string;
-  }
+  const FIND_GROUP = 'FIND_GROUP';
+  const NO_GROUP = 'NO_GROUP';
 
-  @Component({
+  @Component<DataManagementSection>({
     components: {
       FormField
     },
     apollo: {
-      currentUser: {
-        query: currentUserQuery
+      groupSearchResults: {
+        query: allGroupsQuery,
+        loadingKey: 'groupSearchLoading',
+        variables() {
+          return {
+            query: this.groupSearchQuery
+          };
+        },
+        skip() {
+          return this.groupSearchQuery === '';
+        },
+        update: data => data.allGroups
       },
-      allGroups: {
-        query: allGroups,
-        variables: {
-          query: ''
+      unknownGroup: {
+        // If the dataset is saved with a groupId for a group that the user isn't a member of, do an extra query for it.
+        query: oneGroupQuery,
+        variables() {
+          return {
+            groupId: this.groupId
+          }
+        },
+        skip() {
+          return !this.groupIdIsUnknown;
+        },
+        update(data){
+          return {
+            ...data.group,
+            id: this.groupId, //FIXME: Needed for testing because mocked server returns random IDs
+          }
         }
       }
     }
@@ -158,125 +176,136 @@
   export default class DataManagementSection extends Vue {
     @Prop({type: Object, required: true})
     value!: MetaspaceOptions;
+    @Prop(Object)
+    submitter!: DatasetSubmitterFragment | null;
+    @Prop({type: Object })
+    error?: Record<string, any>;
 
-    currentUser?: CurrentUserResult | null = null;
-    name: string = '';
-    groupNameToSubmit: string = '';
-    groupIdToSubmit: string | null = null;
-    findMyGroup: boolean = false;
-    allGroups: Group[] | null = null;
+    groupSearchQuery: string = '';
+    groupSearchResults: GroupListItem[] | null = null;
+    groupSearchLoading = 0;
+    groupSearchSelectedId: string | null = null;
+    unknownGroup: GroupListItem | null = null;
+    showFindGroupDialog: boolean = false;
     loading: boolean = false;
-    extraGroup: string | null = null;
     isGroupAccessLoading: boolean = false;
+    hasSelectedNoGroup: boolean = false;
+    lastPrincipalInvestigator: MetaspaceOptions['principalInvestigator'] = null;
 
-    enablePI: boolean = false;
-    namePI: string = '';
-    emailPI: string = '';
-
-    @Watch('currentUser', {deep:true})
-    onCurrentUserChanged(this: any) {
-      this.name = this.currentUser.name;
-      this.groupNameToSubmit = this.currentUser.primaryGroup.group.name;
-      //By default groupId for submission is equal to user's primary group
-      this.groupIdToSubmit = this.currentUser.primaryGroup.group.id;
-    }
-    
-    //This is to watch extraGroup, a value from the dialog for finding a group
-    //This value is then assigned to instance groupNameToSubmit/groupIdToSubmit
-    @Watch('extraGroup', {deep: true})
-    onChange(this: any): void {
-      this.groupIdToSubmit = this.groupId(this.allGroups, this.extraGroup);
-      this.$emit('input', {...this.value, 'groupId': this.groupIdToSubmit})
+    get showPI() {
+      return this.hasSelectedNoGroup || this.value.principalInvestigator != null;
     }
 
-    get userGroupsData(): Group[] {
-      if (this.currentUser == null) {
+    get groupIdIsUnknown() {
+      return this.value.groupId != null
+        && this.submitter != null
+        && this.submitter.groups != null
+        && !this.submitter.groups.some(group => group.group.id === this.value.groupId);
+    }
+
+    get groupId() {
+      if (this.value.groupId != null) {
+        return this.value.groupId;
+      } else if (this.showPI) {
+        return NO_GROUP;
+      } else {
+        return null;
+      }
+    }
+    set groupId(value: string | null) {
+      let groupId = this.value.groupId;
+      let principalInvestigator = this.value.principalInvestigator;
+
+      // Remove PI only if changing away from the "No group" option, to prevent data loss in case we somehow get
+      // datasets with both a group and PI
+      if (groupId == null && value !== NO_GROUP) {
+        principalInvestigator = null;
+      }
+      this.hasSelectedNoGroup = value === NO_GROUP;
+
+      if (value === NO_GROUP) {
+        groupId = null;
+        if (principalInvestigator == null) {
+          principalInvestigator = this.lastPrincipalInvestigator || {name: '', email: ''};
+        }
+      } else if (value === FIND_GROUP) {
+        groupId = null;
+        this.showFindGroupDialog = true;
+      } else {
+        groupId = value;
+      }
+
+      this.$emit('input', {...this.value, groupId, principalInvestigator})
+    }
+
+    get groupOptions() {
+      if (this.submitter == null || this.submitter.groups == null) {
         return [];
       }
-      const groupList = this.currentUser.groups.map(it => {
-        return it.group
-      });
-      groupList.push({id: '', name: this.findGroupMessage}, {id: '', name: this.noGroupMessage});
-      return groupList
+      const options = this.submitter.groups.map(({group: {id, name}}) => ({
+        value: id,
+        label: name,
+      }));
+      if (this.groupIdIsUnknown && this.unknownGroup != null) {
+        options.push({value: this.unknownGroup.id, label: this.unknownGroup.name });
+      }
+      options.push({value: FIND_GROUP, label: "Find my group..."});
+      options.push({value: NO_GROUP, label: "No group (Enter PI instead)"});
+      return options;
     }
 
-    get findGroupMessage(): string {
-      return "Find my group...";
-    }
-
-    get noGroupMessage(): string {
-      return "No group (Enter PI instead)";
-    }
-
-    get listOfGroups(): string[] {
-      return this.userGroupsData.map(it => {
-        return it.name
-      });
-    }
-
-    groupId(groupsList: Group[], groupToFind: string): string {
-      let foundGroup = groupsList.find((it: Group) => {
-        return it.name === groupToFind;
-      });
-      if (foundGroup !== undefined) {
-        return foundGroup.id
-      } else {
-        return ''
+    @Watch('value.principalInvestigator')
+    backupPI() {
+      // Save the PI in case user selects a group then changes their mind
+      if (this.value.principalInvestigator != null) {
+        this.lastPrincipalInvestigator = this.value.principalInvestigator;
       }
     }
 
-    onInput (groupName: string) {
-      if (groupName === this.findGroupMessage) {
-        this.enablePI = false;
-        this.findMyGroup = true;
-      } else if (groupName === this.noGroupMessage) {
-        this.$emit('input', {...this.value, 'groupId': ''});
-        this.addPIsection();
-      } else {
-        this.groupIdToSubmit = this.groupId(this.userGroupsData, groupName);
-        this.$emit('input', {...this.value, 'groupId': this.groupIdToSubmit});
-        this.enablePI = false;
-      }
+    handleSelectNoGroup() {
+      const principalInvestigator = this.value.principalInvestigator || this.lastPrincipalInvestigator || {name: '', email: ''};
+
+      this.$emit('input', {...this.value, groupId: null, principalInvestigator});
+      this.showFindGroupDialog = false;
     }
 
-    addPIsection(): void {
-      this.findMyGroup = false;
-      this.enablePI = true;
-      this.groupNameToSubmit = this.noGroupMessage;
-      this.groupIdToSubmit = null;
+    handleInputPI(field: 'name' | 'email', value: string) {
+      const principalInvestigator = {
+        ...this.value.principalInvestigator,
+        [field]: value,
+      };
+      this.$emit('input', {...this.value, principalInvestigator});
     }
 
-    removePIsection(): void {
-      this.enablePI = false;
-      this.groupNameToSubmit = '';
+    handleGroupSearch(query: string) {
+      this.groupSearchQuery = query;
     }
 
-    async onRequestGroupAccess(this: any) {
+    onCancelFindGroupDialog() {
+      this.showFindGroupDialog = false;
+    }
+
+    async onRequestGroupAccess() {
       try {
         this.isGroupAccessLoading = true;
-        this.$apollo.mutate({
+        await this.$apollo.mutate({
           mutation: requestAccessToGroupMutation,
           variables: {
-            groupId: this.groupIdToSubmit,
-            bringDatasets: ''
+            groupId: this.groupSearchSelectedId,
+            bringDatasets: []
           }
         });
-        this.findMyGroup = false;
+
+        this.groupId = this.groupSearchSelectedId;
+        await this.$apollo.queries.unknownGroup.refresh(); // wait for new group to load
+
+        this.showFindGroupDialog = false;
         this.$message({
           message: 'Your request was successfully sent!',
           type: 'success'
-        })
+        });
       } catch(err) {
         reportError(err);
-        this.$message({
-          message: 'There was an unexpected problem with your request. Please try again.'
-          + 'If this problem persists, please contact us at '
-          + '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
-          dangerouslyUseHTMLString: true,
-          type: 'error',
-          duration: 0,
-          showClose: true
-        })
       } finally {
         this.isGroupAccessLoading = false;
       }
@@ -284,7 +313,7 @@
   }
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
   .metadata-section {
     margin-top: 10px;
     display: block;
@@ -301,7 +330,15 @@
     transform: translateY(-50%);
   }
 
-  .el-dialog__body {
-    padding: 10px 25px;
+  /deep/ .find-group-dialog {
+    .el-dialog__body {
+      padding: 10px 25px;
+    }
+    .el-select .el-input__inner {
+      cursor: text;
+    }
+    .el-select .el-input__suffix {
+      display: none;
+    }
   }
 </style>

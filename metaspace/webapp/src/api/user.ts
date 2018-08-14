@@ -50,6 +50,41 @@ export const userProfileQuery =
 }
 `;
 
+export interface DatasetSubmitterFragment {
+  id: string;
+  name: string;
+  primaryGroup: {
+    group: {
+      id: string;
+      name: string;
+    }
+  } | null;
+  groups: {
+    group: {
+      id: string;
+      name: string;
+    }
+  }[] | null;
+}
+
+export const datasetSubmitterFragment =
+  gql`fragment DatasetSubmitterFragment on User {
+    id
+    name
+    primaryGroup {
+      group {
+        id
+        name
+      }
+    }
+    groups {
+      group {
+        id
+        name
+      }
+    }
+  }`;
+
 export const updateUserMutation =
   gql`mutation ($update: UpdateUserInput!) {
   updateUser(update: $update) {

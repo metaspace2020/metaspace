@@ -133,11 +133,15 @@
            reprocess: reprocess
          },
          updateQueries: {
-           fetchMetadataQuery: (prev, _) => ({
-             ...prev,
-             metadataJson,
-             ...metaspaceOptions
-           })
+           fetchMetadataQuery: (prev, _) => {
+             const {groupId, ...options} = metaspaceOptions;
+             return {
+               ...prev,
+               metadataJson,
+               group: groupId ? {id: groupId} : null,
+               ...options
+             }
+           }
          }
        });
      }

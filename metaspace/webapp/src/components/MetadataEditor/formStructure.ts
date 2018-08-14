@@ -47,7 +47,11 @@ export interface MetaspaceOptions {
   isPublic: boolean;
   molDBs: string[];
   adducts: string[];
-  name: string;
+  groupId: string | null;
+  principalInvestigator: {
+    name: string;
+    email: string;
+  } | null;
 }
 
 const FIELD_WIDTH: Record<string, number> = {

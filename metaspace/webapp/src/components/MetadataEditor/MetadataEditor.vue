@@ -6,9 +6,11 @@
         <form-section v-bind="sectionBinds('Sample_Preparation')" v-on="sectionEvents('Sample_Preparation')"/>
         <form-section
           v-bind="sectionBinds('MS_Analysis')"
-          v-on="sectionEvents('MS_Analysis')"
-          help />
-        <data-management-section v-model="metaspaceOptions"/>
+          v-on="sectionEvents('MS_Analysis')"/>
+        <data-management-section
+          v-model="metaspaceOptions"
+          :error="errors['metaspaceOptions']"
+          :submitter="submitter"/>
         <visibility-option-section :isPublic.sync="metaspaceOptions.isPublic"/>
         <metaspace-options-section
           v-model="metaspaceOptions"
@@ -55,14 +57,16 @@
    mapValues, forEach, without, pick
  } from 'lodash-es';
  import {
+   currentUserSubmitterQuery,
    fetchAutocompleteSuggestionsQuery,
    fetchMetadataQuery,
-   metadataOptionsQuery
+   metadataOptionsQuery,
  } from '../../api/metadata';
  import MetaspaceOptionsSection from './MetaspaceOptionsSection.vue';
  import VisibilityOptionSection from './VisibilityOptionSection.vue';
  import FormSection from './FormSection.vue';
  import DataManagementSection from './DataManagementSection.vue'
+ import emailRegex from '../../lib/emailRegex';
 
  const factories = {
    'string': schema => schema.default || '',
@@ -132,6 +136,7 @@
        possibleAdducts: {},
        metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
        sampleInfo: cloneDeep(defaultSampleInfo),
+       submitter: null
      }
    },
 
@@ -176,9 +181,15 @@
          const metadata = safeJsonParse(localStorage.getItem(LOCAL_STORAGE_KEY)) || {};
          const metaspaceOptions = safeJsonParse(localStorage.getItem(LOCAL_STORAGE_METASPACE_OPTIONS))
            || (metadata && metadata.metadata_options);
+
+         const {data} = await this.$apollo.query({
+           query: currentUserSubmitterQuery
+         });
+
          return {
            metadata,
            metaspaceOptions,
+           submitter: data.currentUser
          }
        } else {
          const {data} = await this.$apollo.query({
@@ -186,9 +197,14 @@
            variables: {id: this.datasetId},
            fetchPolicy: 'network-only'
          });
+         const {metadataJson, submitter, isPublic, molDBs, adducts, name, group, principalInvestigator} = data.dataset;
          return {
-           metadata: JSON.parse(data.dataset.metadataJson),
-           metaspaceOptions: pick(data.dataset, 'isPublic', 'molDBs', 'adducts', 'name'),
+           metadata: JSON.parse(metadataJson),
+           metaspaceOptions: {
+             submitterId: submitter.id,
+             groupId: group ? group.id : null,
+             isPublic, molDBs, adducts, name, principalInvestigator
+           }
          }
        }
      },
@@ -263,6 +279,7 @@
 
        this.value = metadata;
        this.metaspaceOptions = metaspaceOptions;
+       this.submitter = dataset.submitter;
 
        this.updateCurrentAdductOptions();
      },
@@ -280,6 +297,19 @@
          set(errors, ['metaspaceOptions', 'name'], 'should be at least 5 characters');
        } else if (this.metaspaceOptions.name.length > 50) {
          set(errors, ['metaspaceOptions', 'name'], 'should be no more than 50 characters');
+       }
+
+       if (this.metaspaceOptions.groupId == null) {
+         if (this.metaspaceOptions.principalInvestigator == null) {
+           set(errors, ['metaspaceOptions', 'groupId'], 'select a group');
+         } else {
+           if (!this.metaspaceOptions.principalInvestigator.name || this.metaspaceOptions.principalInvestigator.name.length < 5) {
+             set(errors, ['metaspaceOptions', 'principalInvestigator', 'name'], 'should be at least 5 characters');
+           }
+           if (!emailRegex.test(this.metaspaceOptions.principalInvestigator.email)) {
+             set(errors, ['metaspaceOptions', 'principalInvestigator', 'email'], 'should be a valid email address');
+           }
+         }
        }
 
        this.localErrors = errors;

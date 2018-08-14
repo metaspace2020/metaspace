@@ -43,8 +43,20 @@ gql`query {
 }
 `;
 
+export interface GroupListItem {
+  id: string;
+  name: string;
+}
 
-export const allGroups =
+export const oneGroupQuery =
+  gql`query($groupId: ID!) {
+  group(groupId:$groupId) {
+    id
+    name
+  }
+}`;
+
+export const allGroupsQuery =
 gql`query($query: String) {
   allGroups(query:$query) {
     id
