@@ -1,135 +1,135 @@
 <template>
   <div class="main-content">
-    <div class="user-edit-page">
-      <transfer-datasets-dialog
-        v-if="showTransferDatasetsDialog"
-        :currentUserId="currentUser && currentUser.id"
-        :groupName="invitingGroup && invitingGroup.name"
-        :isInvited="true"
-        @accept="handleAcceptTransferDatasets"
-        @close="handleCloseTransferDatasetsDialog"
-      />
-      <el-dialog
-        title="Delete account"
-        custom-class="delete-account-dialog"
-        :visible.sync="showDeleteAccountDialog"
-        width="500px"
-        :lock-scroll="false">
-        <p>If you delete your account, you will lose access to all private datasets.
-        </p>
-        <p>Please select whether you would like to delete all your datasets or keep them within METASPACE accessible by the group members:
-        </p>
-        <!--Changed the Text below to the above version after discussion with Theo, plz consider if it fits-->
-        <!--If you delete your account, you will lose access to any datasets, groups and-->
-        <!--projects that have been explicitly shared with you-->
-        <el-checkbox v-model="delDatasets" style="margin: 10px 20px">
-          Delete datasets that I have submitted
-        </el-checkbox>
-        <div style="margin: 10px 0 20px; text-align: right;">
-          <el-button title="Cancel" @click="closeDeleteAccountDialog">Cancel</el-button>
-          <el-button
-            type="danger"
-            title="Delete account"
-            @click="deleteAccount()"
-            :loading="isUserDeletionLoading">
-            Delete account</el-button>
-        </div>
-        <p>
-          <b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them
-          deleted later by emailing the <a href="mailto:contact@metaspace2020.eu">METASPACE administrators</a>.
-        </p>
-      </el-dialog>
-      <el-row id="edit-user-page">
-        <el-row>
-          <el-col :span="16">
-            <h2>User details</h2>
-          </el-col>
-          <el-col :span="8">
-            <el-button title="Save"
-                       type="primary"
-                       @click="updateUserDetails"
-                       class="saveButton"
-                       :loading="isUserDetailsLoading">
-              Save
-            </el-button>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-form :disabled="isUserDetailsLoading" :rules="rules" :model="model" ref="form">
-            <div class="user-details" style="padding-left: 15px;">
-              <el-col :span="12">
-                <div class="fullname">
-                  <el-form-item prop="name" label="Full name:">
-                    <el-input v-model="model.name" />
-                  </el-form-item>
-                </div>
-              </el-col>
-              <el-col :span="12">
-                <div class="email">
-                  <el-form-item prop="email" label="E-mail:">
-                    <el-input v-model="model.email" />
-                  </el-form-item>
-                </div>
-              </el-col>
-            </div>
-          </el-form>
-        </el-row>
+    <transfer-datasets-dialog
+      v-if="showTransferDatasetsDialog"
+      :currentUserId="currentUser && currentUser.id"
+      :groupName="invitingGroup && invitingGroup.name"
+      :isInvited="true"
+      @accept="handleAcceptTransferDatasets"
+      @close="handleCloseTransferDatasetsDialog"
+    />
+    <el-dialog
+      title="Delete account"
+      custom-class="delete-account-dialog"
+      :visible.sync="showDeleteAccountDialog"
+      width="500px"
+      :lock-scroll="false">
+      <p>If you delete your account, you will lose access to all private datasets.
+      </p>
+      <p>Please select whether you would like to delete all your datasets or keep them within METASPACE accessible by the group members:
+      </p>
+      <!--Changed the Text below to the above version after discussion with Theo, plz consider if it fits-->
+      <!--If you delete your account, you will lose access to any datasets, groups and-->
+      <!--projects that have been explicitly shared with you-->
+      <el-checkbox v-model="delDatasets" style="margin: 10px 20px">
+        Delete datasets that I have submitted
+      </el-checkbox>
+      <div style="margin: 10px 0 20px; text-align: right;">
+        <el-button title="Cancel" @click="closeDeleteAccountDialog">Cancel</el-button>
+        <el-button
+          type="danger"
+          title="Delete account"
+          @click="deleteAccount()"
+          :loading="isUserDeletionLoading">
+          Delete account</el-button>
+      </div>
+      <p>
+        <b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them
+        deleted later by emailing the <a href="mailto:contact@metaspace2020.eu">METASPACE administrators</a>.
+      </p>
+    </el-dialog>
+    <div class="user-edit-page" v-loading="!isLoaded">
+      <el-row>
+        <el-col :span="16">
+          <h2>User details</h2>
+        </el-col>
+        <el-col :span="8">
+          <el-button title="Save"
+                     type="primary"
+                     @click="updateUserDetails"
+                     class="saveButton"
+                     :loading="isUserDetailsLoading">
+            Save
+          </el-button>
+        </el-col>
+      </el-row>
+      <el-row :gutter="20">
+        <el-form :disabled="isUserDetailsLoading" :rules="rules" :model="model" ref="form">
+          <div class="user-details" style="padding-left: 15px;">
+            <el-col :span="12">
+              <div>
+                <el-form-item prop="name" label="Full name:">
+                  <el-input v-model="model.name" />
+                </el-form-item>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div>
+                <el-form-item prop="email" label="E-mail:">
+                  <el-input v-model="model.email" />
+                </el-form-item>
+              </div>
+            </el-col>
+          </div>
+        </el-form>
+      </el-row>
 
-        <div class="groups">
-          <h2>Groups</h2>
-          <el-table
-            :data="groupsData"
-            style="width: 100%;padding-left: 15px;">
-            <el-table-column
-              prop="name"
-              label="Group"
-              width="180">
-            </el-table-column>
-            <el-table-column
-              prop="roleName"
-              label="Role"
-              width="280">
-            </el-table-column>
-            <el-table-column
-              prop="numDatasets"
-              label="Dataset contributed">
-            </el-table-column>
-            <el-table-column>
-              <template slot-scope="scope">
-                <el-button
-                  v-if="scope.row.role === 'MEMBER'"
-                  size="mini"
-                  icon="el-icon-arrow-right"
-                  @click="leaveGroup('leave', scope.row)">
-                  Leave
-                </el-button><el-button
-                  v-if="scope.row.role === 'PRINCIPAL INVESTIGATOR'"
-                  size="mini"
-                  icon="el-icon-arrow-right"
-                  disabled>
-                  Leave
-                </el-button>
-                <el-button
-                  v-if="scope.row.role === 'INVITED'"
-                  size="mini"
-                  type="success"
-                  @click="acceptInvitation(scope.row)"
-                  icon="el-icon-check">
-                  Accept
-                </el-button>
-                <el-button
-                  v-if="scope.row.role === 'INVITED'"
-                  size="mini"
-                  icon="el-icon-close"
-                  @click="leaveGroup('leaveGroup', scope.row)">
-                  Decline
-                </el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+      <div>
+        <h2>Groups</h2>
+        <el-table
+          :data="groupsData"
+          style="width: 100%;padding-left: 15px;">
+          <el-table-column
+            prop="name"
+            label="Group"
+            width="180">
+          </el-table-column>
+          <el-table-column
+            prop="roleName"
+            label="Role"
+            width="280">
+          </el-table-column>
+          <el-table-column
+            prop="numDatasets"
+            label="Dataset contributed">
+          </el-table-column>
+          <el-table-column>
+            <template slot-scope="scope">
+              <el-button
+                v-if="scope.row.role === 'MEMBER'"
+                size="mini"
+                icon="el-icon-arrow-right"
+                @click="leaveGroup('leave', scope.row)">
+                Leave
+              </el-button>
+              <el-button
+                v-if="scope.row.role === 'PRINCIPAL_INVESTIGATOR'"
+                size="mini"
+                icon="el-icon-arrow-right"
+                disabled>
+                Leave
+              </el-button>
+              <el-button
+                v-if="scope.row.role === 'INVITED'"
+                size="mini"
+                type="success"
+                @click="acceptInvitation(scope.row)"
+                icon="el-icon-check">
+                Accept
+              </el-button>
+              <el-button
+                v-if="scope.row.role === 'INVITED'"
+                size="mini"
+                icon="el-icon-close"
+                @click="leaveGroup('leaveGroup', scope.row)">
+                Decline
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <div v-if="groupsData && groupsData.length > 1">
           <p>Primary group:</p>
-          <el-select v-model="primaryGroupId" placeholder="Select"
-                     style="padding-left: 15px;">
+          <el-select v-model="primaryGroupId" placeholder="Select" style="padding-left: 15px;">
             <el-option
               v-for="item in groupsData"
               :key="item.id"
@@ -138,63 +138,63 @@
             </el-option>
           </el-select>
         </div>
-        <!--The section below will be introduced in vFuture-->
-        <!--<div class="notifications" style="margin-top: 30px">-->
-          <!--<h2>Notifications</h2>-->
-          <!--<div class="notification-list" style="padding-left: 10px">-->
-            <!--<el-row :gutter="0">-->
-              <!--<el-col :span="12"><p>Send an email when:</p>-->
-                <!--<el-checkbox-group-->
-                  <!--class="notifications">-->
-                  <!--<div class="notifications_checkbox">-->
-                    <!--<el-checkbox-->
-                      <!--label="My dataset's processing has successfully finished"></el-checkbox>-->
-                  <!--</div>-->
-                  <!--<div class="notifications_checkbox">-->
-                    <!--<el-checkbox class="notifications_checkbox"-->
-                                 <!--label="My dataset's processing failed"></el-checkbox>-->
-                  <!--</div>-->
-                <!--</el-checkbox-group>-->
-                <!--<p>Show a notification when:</p>-->
-                <!--<el-checkbox-group :indeterminate="isIndeterminate" v-model="checkList"-->
-                                   <!--class="notifications">-->
-                  <!--<div class="notifications_checkbox">-->
-                    <!--<el-checkbox class="notifications_checkbox"-->
-                                 <!--label="My dataset's processing has successfully finished"></el-checkbox>-->
-                  <!--</div>-->
-                  <!--<div class="notifications_checkbox">-->
-                    <!--<el-checkbox class="notifications_checkbox"-->
-                                 <!--label="A dataset is added to a group or project that I belong to"></el-checkbox>-->
-                  <!--</div>-->
-                  <!--<div class="notifications_checkbox">-->
-                    <!--<el-checkbox class="notifications_checkbox"-->
-                                 <!--label="A public dataset has been added to the queue"></el-checkbox>-->
-                  <!--</div>-->
-                  <!--<div class="notifications_checkbox">-->
-                    <!--<el-checkbox class="notifications_checkbox"-->
-                                 <!--label="A public dataset has finished processing"></el-checkbox>-->
-                  <!--</div>-->
-                <!--</el-checkbox-group>-->
-              <!--</el-col>-->
-            <!--</el-row>-->
-          <!--</div>-->
+      </div>
+      <!--The section below will be introduced in vFuture-->
+      <!--<div class="notifications" style="margin-top: 30px">-->
+        <!--<h2>Notifications</h2>-->
+        <!--<div class="notification-list" style="padding-left: 10px">-->
+          <!--<el-row :gutter="0">-->
+            <!--<el-col :span="12"><p>Send an email when:</p>-->
+              <!--<el-checkbox-group-->
+                <!--class="notifications">-->
+                <!--<div class="notifications_checkbox">-->
+                  <!--<el-checkbox-->
+                    <!--label="My dataset's processing has successfully finished"></el-checkbox>-->
+                <!--</div>-->
+                <!--<div class="notifications_checkbox">-->
+                  <!--<el-checkbox class="notifications_checkbox"-->
+                               <!--label="My dataset's processing failed"></el-checkbox>-->
+                <!--</div>-->
+              <!--</el-checkbox-group>-->
+              <!--<p>Show a notification when:</p>-->
+              <!--<el-checkbox-group :indeterminate="isIndeterminate" v-model="checkList"-->
+                                 <!--class="notifications">-->
+                <!--<div class="notifications_checkbox">-->
+                  <!--<el-checkbox class="notifications_checkbox"-->
+                               <!--label="My dataset's processing has successfully finished"></el-checkbox>-->
+                <!--</div>-->
+                <!--<div class="notifications_checkbox">-->
+                  <!--<el-checkbox class="notifications_checkbox"-->
+                               <!--label="A dataset is added to a group or project that I belong to"></el-checkbox>-->
+                <!--</div>-->
+                <!--<div class="notifications_checkbox">-->
+                  <!--<el-checkbox class="notifications_checkbox"-->
+                               <!--label="A public dataset has been added to the queue"></el-checkbox>-->
+                <!--</div>-->
+                <!--<div class="notifications_checkbox">-->
+                  <!--<el-checkbox class="notifications_checkbox"-->
+                               <!--label="A public dataset has finished processing"></el-checkbox>-->
+                <!--</div>-->
+              <!--</el-checkbox-group>-->
+            <!--</el-col>-->
+          <!--</el-row>-->
         <!--</div>-->
-        <div class="delete-account" style="margin-top: 45px">
-          <h2>Delete account</h2>
-          <p style="width: 100%;padding-left: 15px;">
-            If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
-            For the latter, the private data will still be accessible by the group members only.
-          </p>
-        </div>
-        <el-row>
-          <el-button
-            type="danger"
-            title="Delete account"
-            @click="openDeleteAccountDialog()"
-            style="float:right; margin-top:15px">
-            Delete account
-          </el-button>
-        </el-row>
+      <!--</div>-->
+      <div style="margin-top: 45px">
+        <h2>Delete account</h2>
+        <p style="width: 100%;padding-left: 15px;">
+          If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.
+          For the latter, the private data will still be accessible by the group members only.
+        </p>
+      </div>
+      <el-row>
+        <el-button
+          type="danger"
+          title="Delete account"
+          @click="openDeleteAccountDialog()"
+          style="float:right; margin-top:15px">
+          Delete account
+        </el-button>
       </el-row>
     </div>
   </div>
@@ -204,14 +204,13 @@
   import Vue from 'vue'
   import { Component, Watch } from 'vue-property-decorator'
   import { updateUserMutation, deleteUserMutation, userProfileQuery, UserProfileQuery } from '../../../api/user';
-  import { leaveGroupMutation, acceptGroupInvitationMutation } from '../../../api/group';
+  import { getRoleName, UserGroupRole, leaveGroupMutation, acceptGroupInvitationMutation } from '../../../api/group';
   import reportError from "../../../lib/reportError";
   import {refreshLoginStatus} from '../../../graphqlClient';
   import {ElForm} from "element-ui/types/form";
-  import TransferDatasetsDialog from '../../GroupProfile/TransferDatasetsDialog.vue'
+  import {TransferDatasetsDialog} from '../../GroupProfile'
   import emailRegex from '../../../lib/emailRegex';
   import ConfirmAsync from '../../../components/ConfirmAsync';
-  import { getRoleName, UserGroupRole } from '../../../api/group';
 
   interface Model {
     name: string;
@@ -226,18 +225,29 @@
     numDatasets: number;
   }
 
-  @Component({
+  @Component<EditUserPage>({
     components: {
       TransferDatasetsDialog
     },
     apollo: {
       currentUser: {
-        query: userProfileQuery
+        query: userProfileQuery,
+        result({data}: {data: {currentUser: UserProfileQuery}}) {
+          if (!this.isLoaded) {
+            if (data.currentUser != null) {
+              // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
+              // button that causes this query to refetch
+              this.isLoaded = true;
+            } else {
+              this.$router.push('/account/sign-in');
+            }
+          }
+        },
       }
     }
   })
-
   export default class EditUserPage extends Vue {
+    isLoaded = false;
     showDeleteAccountDialog: boolean = false;
     isUserDetailsLoading: boolean = false;
     isUserDeletionLoading: boolean = false;
@@ -264,9 +274,11 @@
 
     @Watch('currentUser', {deep: true})
     onCurrentUserChanged(this: any) {
-      this.model.name = this.currentUser.name;
-      this.model.email = this.currentUser.email;
-      this.primaryGroupId = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
+      if (this.currentUser) {
+        this.model.name = this.currentUser.name;
+        this.model.email = this.currentUser.email;
+        this.primaryGroupId = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
+      }
     }
 
     openDeleteAccountDialog() {

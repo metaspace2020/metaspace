@@ -23,6 +23,7 @@ describe('EditUserPage', () => {
   it('should match snapshot', async () => {
     const wrapper = mount(EditUserPage, { sync: false });
     wrapper.setData({
+      isLoaded: true,
       currentUser: {
         id: '22333',
         name: 'foo',
