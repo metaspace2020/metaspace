@@ -202,10 +202,8 @@
 <script lang="ts">
   import Vue from 'vue'
   import { Component, Watch } from 'vue-property-decorator'
-  import {
-    updateUserMutation, leaveGroupMutation,
-    deleteUserMutation, userProfileQuery, acceptGroupInvitationMutation, UserProfileQuery,
-  } from '../../../api/profileData';
+  import { updateUserMutation, deleteUserMutation, userProfileQuery, UserProfileQuery } from '../../../api/user';
+  import { leaveGroupMutation, acceptGroupInvitationMutation } from '../../../api/group';
   import reportError from "../../../lib/reportError";
   import {refreshLoginStatus} from '../../../graphqlClient';
   import {ElForm} from "element-ui/types/form";
