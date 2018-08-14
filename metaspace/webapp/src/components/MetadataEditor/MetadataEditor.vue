@@ -112,7 +112,6 @@
    name: 'metadata-editor',
    props: {
      datasetId: String,
-     enableSubmit: Boolean,
      validationErrors: Array,
    },
    components: {
