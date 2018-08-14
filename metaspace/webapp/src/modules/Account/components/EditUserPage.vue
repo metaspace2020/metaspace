@@ -307,7 +307,8 @@
         return;
       }
       try {
-        if (this.currentUser!.email !== this.model.email) {
+        const emailChanged = this.currentUser!.email !== this.model.email;
+        if (emailChanged) {
           try {
             await this.$confirm(
               "Are you sure you want to change email address? A verification email will be sent to your new address to confirm the change.",
@@ -323,8 +324,8 @@
         await this.$apollo.mutate({
           mutation: updateUserMutation,
           variables: {
+            userId: this.currentUser!.id,
             update: {
-              id: this.currentUser!.id,
               name: this.model.name,
               email: this.model.email,
               primaryGroupId: this.primaryGroupId
@@ -332,11 +333,12 @@
           },
         });
         await this.$apollo.queries.currentUser.refetch();
-          this.$message({
-            type: "success",
-            message: "A verification link has been sent to your new email address. " +
-            "Please click the link in this email to confirm the change."
-          });
+        this.$message({
+          type: "success",
+          message: emailChanged
+          ? "A verification link has been sent to your new email address. Please click the link in this email to confirm the change."
+          : "Your details have been saved"
+        });
       } catch(err) {
         reportError(err);
       } finally {
@@ -377,7 +379,7 @@
         await this.$apollo.mutate({
           mutation: deleteUserMutation,
           variables: {
-            id: this.currentUser.id,
+            userId: this.currentUser.id,
             deleteDatasets: this.delDatasets
           }
         });

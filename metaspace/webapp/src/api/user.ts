@@ -86,8 +86,8 @@ export const datasetSubmitterFragment =
   }`;
 
 export const updateUserMutation =
-  gql`mutation ($update: UpdateUserInput!) {
-  updateUser(update: $update) {
+  gql`mutation ($userId: ID!, $update: UpdateUserInput!) {
+  updateUser(userId: $userId, update: $update) {
     id
     name
     email
@@ -95,6 +95,6 @@ export const updateUserMutation =
 }`;
 
 export const deleteUserMutation =
-  gql`mutation ($id: ID!, $deleteDatasets: Boolean!) {
-  deleteUser(id: $id, deleteDatasets: $deleteDatasets)
+  gql`mutation ($userId: ID!, $deleteDatasets: Boolean!) {
+  deleteUser(userId: $userId, deleteDatasets: $deleteDatasets)
 }`;
