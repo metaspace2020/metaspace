@@ -2,7 +2,7 @@
   <div class="metadata-section">
     <el-row>
       <el-col :span="6">
-        <div class="section-description">Annotation settings</div>
+        <div class="metadata-section__title">Annotation settings</div>
       </el-col>
       <el-col :span="18">
         <el-row :gutter="8">
@@ -84,18 +84,5 @@
 </script>
 
 <style lang="scss">
-  .metadata-section {
-    display: block;
-    max-width: 950px;
-  }
-
-  .section-description {
-    font-family: Helvetica, sans-serif;
-    font-weight: bold;
-    margin: 30px 0 0 10px;
-    display: block;
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
-  }
+  @import './FormSection.scss';
 </style>

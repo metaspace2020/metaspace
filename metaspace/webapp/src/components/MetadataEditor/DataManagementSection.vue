@@ -45,7 +45,7 @@
     </el-dialog>
     <el-row>
       <el-col :span="6">
-        <div class="section-description">Data management</div>
+        <div class="metadata-section__title">Data management</div>
       </el-col>
       <el-col :span="18">
         <el-row :gutter="8">
@@ -130,6 +130,7 @@
   } from '../../api/dataManagement';
   import reportError from "../../lib/reportError";
   import { DatasetSubmitterFragment } from '../../api/user';
+  import './FormSection.scss';
 
   const FIND_GROUP = 'FIND_GROUP';
   const NO_GROUP = 'NO_GROUP';
@@ -313,23 +314,10 @@
   }
 </script>
 
-<style scoped lang="scss">
-  .metadata-section {
-    display: block;
-    max-width: 950px;
-  }
+<style lang="scss">
+  @import './FormSection.scss';
 
-  .section-description {
-    font-family: Helvetica, sans-serif;
-    font-weight: bold;
-    margin: 30px 0 0 10px;
-    display: block;
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  /deep/ .find-group-dialog {
+  .find-group-dialog {
     .el-dialog__body {
       padding: 10px 25px;
     }

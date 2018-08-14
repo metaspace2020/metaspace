@@ -7,7 +7,7 @@
       <span>{{ name }}</span><span v-if="required" style="color: red">*</span>
       <el-popover trigger="hover" placement="right" v-if="help">
         <component :is="help"></component>
-        <i slot="reference" class="el-icon-question field-label-help"></i>
+        <i slot="reference" class="el-icon-question metadata-help-icon"></i>
       </el-popover>
     </span>
 
@@ -194,10 +194,6 @@
 
   .md-ac-popper--wide {
     min-width: 400px;
-  }
-
-  .field-label-help {
-    cursor: pointer;
   }
 
   .subfield {

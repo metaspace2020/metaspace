@@ -2,14 +2,14 @@
   <div class="metadata-section">
     <el-row>
       <el-col :span="6">
-        <div class="section-description">
+        <div class="metadata-section__title">
           Visibility
           <el-popover trigger="hover" placement="top">
             <div>
               <p><b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>
               <p><b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>
             </div>
-            <i slot="reference" class="el-icon-question"></i>
+            <i slot="reference" class="el-icon-question metadata-help-icon"></i>
           </el-popover>
         </div>
       </el-col>
@@ -26,32 +26,21 @@
 </template>
 
 <script lang="ts">
-import Vue from 'vue';
-import { Prop, Component, Emit, Watch } from 'vue-property-decorator';
+  import Vue from 'vue';
+  import { Prop, Component, Emit, Watch } from 'vue-property-decorator';
+  import './FormSection.scss';
 
-@Component
-export default class VisibilityOptionSection extends Vue {
-  @Prop({type: Boolean, required: true})
-  isPublic!: boolean;
+  @Component
+  export default class VisibilityOptionSection extends Vue {
+    @Prop({type: Boolean, required: true})
+    isPublic!: boolean;
 
-  @Emit('update:isPublic')
-  handleChangeIsPublic(val: boolean): void {
+    @Emit('update:isPublic')
+    handleChangeIsPublic(val: boolean): void {
+    }
   }
-}
 </script>
 
-<style scoped>
-  .section-description {
-    font-family: Helvetica, sans-serif;
-    font-weight: bold;
-    margin: 30px 0 0 10px;
-    display: block;
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  .el-icon-question{
-    cursor: pointer;
-  }
+<style lang="scss">
+  @import './FormSection.scss';
 </style>

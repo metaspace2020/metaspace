@@ -419,5 +419,4 @@
  #load-indicator {
    min-height: 300px;
  }
-
 </style>

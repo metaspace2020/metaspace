@@ -3,11 +3,11 @@
     <el-form size="medium"
              label-position="top">
       <el-col :span="6">
-        <div class="sectionTitle">
+        <div class="metadata-section__title">
           {{section.title}}
           <el-popover trigger="hover" placement="top" v-if="section.help">
             <p>{{section.help}}</p>
-            <i slot="reference" class="el-icon-question field-label-help"></i>
+            <i slot="reference" class="el-icon-question metadata-help-icon"></i>
           </el-popover>
         </div>
       </el-col>
@@ -76,19 +76,5 @@
 </script>
 
 <style lang="scss">
-  .metadata-section {
-    padding-top: 12px;
-    display: block;
-    max-width: 950px;
-  }
-
-  .sectionTitle {
-    font-family: Helvetica, sans-serif;
-    font-weight: bold;
-    margin: 30px 0 0 10px;
-    display: block;
-    position: relative;
-    top: 50%;
-    transform: translateY(-50%);
-  }
+  @import './FormSection.scss';
 </style>

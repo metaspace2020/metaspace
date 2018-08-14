@@ -34,7 +34,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
           <div class="el-form-item shortName is-required">
             <label for="shortName" class="el-form-item__label"><span>
         Short name
-        <mock-el-popover trigger="hover" placement="right"><div slot-key="default"> <p>The short name will be shown whenever space is limited.</p></div><div slot-key="reference"><i class="el-icon-question field-label-help"></i></div></mock-el-popover></span></label>
+        <mock-el-popover trigger="hover" placement="right"><div slot-key="default"> <p>The short name will be shown whenever space is limited.</p></div><div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div></mock-el-popover></span></label>
             <div
               class="el-form-item__content">
               <div class="el-input">
