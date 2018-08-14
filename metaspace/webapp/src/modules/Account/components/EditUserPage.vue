@@ -205,14 +205,14 @@
   import {
     updateUserMutation, leaveGroupMutation,
     deleteUserMutation, userProfileQuery, acceptGroupInvitationMutation, UserProfileQuery,
-  } from '../api/profileData';
-  import reportError from "../lib/reportError";
-  import {refreshLoginStatus} from '../graphqlClient';
+  } from '../../../api/profileData';
+  import reportError from "../../../lib/reportError";
+  import {refreshLoginStatus} from '../../../graphqlClient';
   import {ElForm} from "element-ui/types/form";
-  import TransferDatasetsDialog from '../modules/GroupProfile/TransferDatasetsDialog.vue'
-  import emailRegex from '../lib/emailRegex';
-  import ConfirmAsync from './ConfirmAsync';
-  import { getRoleName, UserGroupRole } from '../api/group';
+  import TransferDatasetsDialog from '../../GroupProfile/TransferDatasetsDialog.vue'
+  import emailRegex from '../../../lib/emailRegex';
+  import ConfirmAsync from '../../../components/ConfirmAsync';
+  import { getRoleName, UserGroupRole } from '../../../api/group';
 
   interface Model {
     name: string;
@@ -238,7 +238,7 @@
     }
   })
 
-  export default class UserEditPage extends Vue {
+  export default class EditUserPage extends Vue {
     showDeleteAccountDialog: boolean = false;
     isUserDetailsLoading: boolean = false;
     isUserDeletionLoading: boolean = false;

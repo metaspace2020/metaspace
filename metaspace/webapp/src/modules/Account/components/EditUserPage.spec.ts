@@ -1,14 +1,14 @@
 import { mount, Wrapper } from '@vue/test-utils';
 import ElementUI from 'element-ui';
 import Vue from 'vue';
-import registerMockComponent from '../../tests/utils/registerMockComponent';
-import { restoreConsole, suppressConsoleWarn } from '../../tests/utils/suppressConsole';
-import UserEditPage from './UserEditPage.vue';
+import registerMockComponent from '../../../../tests/utils/registerMockComponent';
+import { restoreConsole, suppressConsoleWarn } from '../../../../tests/utils/suppressConsole';
+import EditUserPage from './EditUserPage.vue';
 
 Vue.use(ElementUI);
 registerMockComponent('el-dialog'); // ElDialogs mount their content somewhere else in the DOM. Mock it out so that the snapshot includes the content.
 
-describe('UserEditPage', () => {
+describe('EditUserPage', () => {
   beforeEach(() => {
     jest.useFakeTimers();
     suppressConsoleWarn('async-validator:');
@@ -21,7 +21,7 @@ describe('UserEditPage', () => {
 
 
   it('should match snapshot', async () => {
-    const wrapper = mount(UserEditPage, { sync: false });
+    const wrapper = mount(EditUserPage, { sync: false });
     wrapper.setData({
       currentUser: {
         id: '22333',
