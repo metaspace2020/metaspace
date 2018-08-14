@@ -11,6 +11,7 @@
       />
       <el-dialog
         title="Delete account"
+        custom-class="delete-account-dialog"
         :visible.sync="showDeleteAccountDialog"
         width="500px"
         :lock-scroll="false">
@@ -127,7 +128,7 @@
             </el-table-column>
           </el-table>
           <p>Primary group:</p>
-          <el-select v-model="primaryGroupId" placeholder="Select" class="primGroupOptions"
+          <el-select v-model="primaryGroupId" placeholder="Select"
                      style="padding-left: 15px;">
             <el-option
               v-for="item in groupsData"
@@ -411,7 +412,7 @@
   }
 </script>
 
-<style>
+<style scoped>
   .main-content {
     padding: 100px 20px 20px 20px;
     display: flex;
@@ -434,15 +435,7 @@
     width: 600px;
   }
 
-  .primGroupOptions {
-    margin: 30px 0;
-  }
-
-  .primGroupOptions {
-    margin: 0;
-  }
-
-  .el-dialog__body {
+  /deep/ .delete-account-dialog .el-dialog__body {
     padding: 0 20px 20px 20px;
   }
 
