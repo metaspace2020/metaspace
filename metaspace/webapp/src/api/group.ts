@@ -1,7 +1,16 @@
 import gql from 'graphql-tag';
 
 export type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';
-
+export const getRoleName = (role: UserGroupRole | null | undefined) => {
+  switch (role) {
+    case 'INVITED': return 'Invited';
+    case 'PENDING': return 'Requesting access';
+    case 'MEMBER': return 'Member';
+    case 'PRINCIPAL_INVESTIGATOR': return 'Principal investigator';
+    case null: return '';
+    case undefined: return '';
+  }
+};
 
 export interface CreateGroupMutation {
   createGroup: {

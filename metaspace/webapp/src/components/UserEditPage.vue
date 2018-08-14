@@ -12,7 +12,7 @@
       <el-dialog
         title="Delete account"
         :visible.sync="showDeleteAccountDialog"
-        width="30%"
+        width="500px"
         :lock-scroll="false">
         <p>If you delete your account, you will lose access to all private datasets.
         </p>
@@ -21,21 +21,22 @@
         <!--Changed the Text below to the above version after discussion with Theo, plz consider if it fits-->
         <!--If you delete your account, you will lose access to any datasets, groups and-->
         <!--projects that have been explicitly shared with you-->
-        <el-checkbox v-model="delDatasets" style="margin-left: 20px">
+        <el-checkbox v-model="delDatasets" style="margin: 10px 20px">
           Delete datasets that I have submitted
         </el-checkbox>
-        <el-row>
+        <div style="margin: 10px 0 20px; text-align: right;">
           <el-button title="Cancel" @click="closeDeleteAccountDialog">Cancel</el-button>
           <el-button
             type="danger"
             title="Delete account"
             @click="deleteAccount()"
-            :loading="isUserDeletionLoading"
-            style="margin: 20px 0">
+            :loading="isUserDeletionLoading">
             Delete account</el-button>
-        </el-row>
-        <p><b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them
-          deleted later by emailing the METASPACE administrators</p>
+        </div>
+        <p>
+          <b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them
+          deleted later by emailing the <a href="mailto:contact@metaspace2020.eu">METASPACE administrators</a>.
+        </p>
       </el-dialog>
       <el-row id="edit-user-page">
         <el-row>
@@ -84,7 +85,7 @@
               width="180">
             </el-table-column>
             <el-table-column
-              prop="role"
+              prop="roleName"
               label="Role"
               width="280">
             </el-table-column>
@@ -201,46 +202,29 @@
 <script lang="ts">
   import Vue from 'vue'
   import { Component, Watch } from 'vue-property-decorator'
-  import {updateUserMutation, leaveGroupMutation,
-    deleteUserMutation, currentUserQuery, acceptGroupInvitationMutation} from '../api/profileData'
+  import {
+    updateUserMutation, leaveGroupMutation,
+    deleteUserMutation, userProfileQuery, acceptGroupInvitationMutation, UserProfileQuery,
+  } from '../api/profileData';
   import reportError from "../lib/reportError";
   import {refreshLoginStatus} from '../graphqlClient';
   import {ElForm} from "element-ui/types/form";
   import TransferDatasetsDialog from '../modules/GroupProfile/TransferDatasetsDialog.vue'
   import emailRegex from '../lib/emailRegex';
   import ConfirmAsync from './ConfirmAsync';
+  import { getRoleName, UserGroupRole } from '../api/group';
 
   interface Model {
     name: string;
     email: string | null;
   }
 
-  interface GroupsData {
+  interface GroupRow {
     id: string;
     name: string;
-    role: string;
+    role: UserGroupRole;
+    roleName: string;
     numDatasets: number;
-  }
-
-  interface CurrentUserResult {
-    id: string;
-    name: string;
-    role: string;
-    email: string | null;
-    groups: {
-      role: string;
-      numDatasets: number;
-      group: {
-        id: string,
-        name: string
-      };
-    }[] | null;
-    primaryGroup: {
-      group: {
-        id: string;
-        name: string;
-      }
-    } | null;
   }
 
   @Component({
@@ -249,7 +233,7 @@
     },
     apollo: {
       currentUser: {
-        query: currentUserQuery
+        query: userProfileQuery
       }
     }
   })
@@ -260,12 +244,12 @@
     isUserDeletionLoading: boolean = false;
     showTransferDatasetsDialog: boolean = false;
 
-    currentUser: CurrentUserResult | null = null;
+    currentUser: UserProfileQuery | null = null;
     model: Model = {
       name: '',
       email: ''
     };
-    invitingGroup: GroupsData | null = null;
+    invitingGroup: GroupRow | null = null;
 
     delDatasets: boolean = false;
     rules: object = {
@@ -286,6 +270,7 @@
     onCurrentUserChanged(this: any) {
       this.model.name = this.currentUser.name;
       this.model.email = this.currentUser.email;
+
     }
 
     openDeleteAccountDialog() {
@@ -296,19 +281,14 @@
       this.showDeleteAccountDialog = false;
     }
 
-    get groupsData(): GroupsData[] {
+    get groupsData(): GroupRow[] {
       if (this.currentUser == null || this.currentUser.groups == null) {
         return [];
       }
-      return this.currentUser.groups.map(it => {
-        const {id, name} = it.group;
-        const {numDatasets} = it;
-        let {role} = it;
-          if (role === 'PENDING') {
-          role = 'REQUESTING ACCESS'
-        }
-        role = role.replace(/[_-]/, " ");
-        return {id, name, role, numDatasets}
+      return this.currentUser.groups.map(({group, numDatasets, role}) => {
+        const {id, name} = group;
+        const roleName = getRoleName(role);
+        return {id, name, role, roleName, numDatasets}
       });
     }
 
@@ -356,7 +336,7 @@
       }
     }
 
-    @ConfirmAsync(function(action: string, groupRow: GroupsData) {
+    @ConfirmAsync(function(action: string, groupRow: GroupRow) {
       return {
         message: (action === 'leave') ? `Are you sure you want to leave ${groupRow.name}?` :
           `Are you sure you want to decline the invitation to ${groupRow.name}?`,
@@ -365,7 +345,7 @@
         confirmButtonLoadingText: 'Leaving...'
       };
     })
-    async leaveGroup(action: string, groupRow: GroupsData) {
+    async leaveGroup(action: string, groupRow: GroupRow) {
       await this.$apollo.mutate({
         mutation: leaveGroupMutation,
         variables: {
@@ -406,7 +386,7 @@
       }
     }
 
-    async acceptInvitation(groupRow: GroupsData) {
+    async acceptInvitation(groupRow: GroupRow) {
       this.showTransferDatasetsDialog = true;
       this.invitingGroup = groupRow;
     }
