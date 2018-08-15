@@ -53,8 +53,8 @@
  import {deriveFullSchema} from './formStructure';
  import {
    get, set, cloneDeep, defaults,
-   isArray, isEmpty, isEqual, isPlainObject, 
-   mapValues, forEach, without, pick
+   isArray, isEmpty, isEqual, isPlainObject,
+   mapValues, forEach, without, omit,
  } from 'lodash-es';
  import {
    currentUserSubmitterQuery,
@@ -163,7 +163,6 @@
          'Data_Type',
          'Sample_Information',
          'Sample_Preparation',
-         'Submitted_By',
          'MS_Analysis',
        ];
        return without(allSections, ...specialSections);
@@ -202,7 +201,8 @@
            metaspaceOptions: {
              submitterId: submitter.id,
              groupId: group ? group.id : null,
-             isPublic, molDBs, adducts, name, principalInvestigator
+             principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
+             isPublic, molDBs, adducts, name,
            }
          }
        }
@@ -370,11 +370,11 @@
      getFormValueForSubmit() {
        this.validate();
        if (!isEmpty(this.localErrors)) {
-       	this.$message({
-          message: 'Please check that you entered metadata correctly!',
-          type: "warning"
-        });
-         return;
+       	 this.$message({
+           message: 'Please check that you entered metadata correctly!',
+           type: "warning"
+         });
+         return null;
        }
 
        const value = JSON.stringify(this.value);

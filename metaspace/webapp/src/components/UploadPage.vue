@@ -145,12 +145,10 @@
 
    methods: {
    	 onSubmit() {
-       let queryRes = this.$refs.editor.getFormValueForSubmit();
-       if (queryRes !== undefined) {
-         this.onFormSubmit(
-           queryRes.datasetId,
-           queryRes.metadataJson,
-           queryRes.metaspaceOptions)
+       const formValue = this.$refs.editor.getFormValueForSubmit();
+       if (formValue !== undefined) {
+         const {datasetId, metadataJson, metaspaceOptions} = formValue;
+         this.onFormSubmit(datasetId, metadataJson, metaspaceOptions);
        }
      },
 

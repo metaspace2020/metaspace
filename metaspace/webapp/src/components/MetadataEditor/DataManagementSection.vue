@@ -84,7 +84,7 @@
     <el-collapse-transition>
       <el-row v-if="showPI" >
         <el-col :span="6">
-          <div class="section-description">Principal Investigator</div>
+          <div class="metadata-section__title">Principal Investigator</div>
         </el-col>
         <el-col :span="18">
           <el-row :gutter="8">

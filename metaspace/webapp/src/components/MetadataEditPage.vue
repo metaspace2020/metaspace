@@ -1,11 +1,22 @@
 <template>
-  <metadata-editor ref="editor"
-                   :datasetId="datasetId"
-                   :enableSubmit="loggedIn && !isSubmitting"
-                   @submit="onSubmit"
-                   disabledSubmitMessage="You must be logged in to perform this operation"
-                   :validationErrors="validationErrors">
-  </metadata-editor>
+  <div class="page">
+    <div class="content">
+      <div class="button-bar">
+        <el-button @click="handleCancel">Cancel</el-button>
+        <el-button
+          type="primary"
+          :disabled="!loggedIn || isSubmitting"
+          :title="loggedIn ? undefined : 'You must be logged in to perform this operation'"
+          @click="handleSubmit">
+          Submit
+        </el-button>
+      </div>
+      <metadata-editor ref="editor"
+                       :datasetId="datasetId"
+                       :validationErrors="validationErrors">
+      </metadata-editor>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -34,29 +45,37 @@
    },
 
    methods: {
-     async onSubmit(datasetId, metadataJson, metaspaceOptions) {
-       // Prevent duplicate submissions if user double-clicks
-       if (this.isSubmitting) return;
-       this.isSubmitting = true;
+     handleCancel() {
+       this.$router.push('/datasets');
+     },
+     async handleSubmit() {
+       const formValue = this.$refs.editor.getFormValueForSubmit();
 
-       try {
-         const wasSaved = await this.saveDataset(datasetId, metadataJson, metaspaceOptions);
+       if (formValue !== undefined) {
+         const { datasetId, metadataJson, metaspaceOptions } = formValue;
+         // Prevent duplicate submissions if user double-clicks
+         if (this.isSubmitting) return;
+         this.isSubmitting = true;
 
-         if (wasSaved) {
-           this.validationErrors = [];
-           this.$message({
-             message: 'Metadata was successfully updated!',
-             type: 'success'
-           });
-           this.$router.go(-1);
+         try {
+           const wasSaved = await this.saveDataset(datasetId, metadataJson, metaspaceOptions);
+
+           if (wasSaved) {
+             this.validationErrors = [];
+             this.$message({
+               message: 'Metadata was successfully updated!',
+               type: 'success'
+             });
+             this.$router.push('/datasets');
+           }
+         } catch (e) {
+           // Empty catch block needed because babel-plugin-component throws a
+           // compilation error when an async function has a try/finally without a catch.
+           // https://github.com/ElementUI/babel-plugin-component/issues/9
+           throw e;
+         } finally {
+           this.isSubmitting = false;
          }
-       } catch(e) {
-         // Empty catch block needed because babel-plugin-component throws a
-         // compilation error when an async function has a try/finally without a catch.
-         // https://github.com/ElementUI/babel-plugin-component/issues/9
-         throw e;
-       } finally {
-         this.isSubmitting = false;
        }
      },
      async saveDataset(datasetId, metadataJson, metaspaceOptions) {
@@ -148,3 +167,20 @@
    }
  }
 </script>
+<style scoped lang="scss">
+  .page {
+    display: flex;
+    justify-content: center;
+  }
+  .content {
+    width: 950px;
+  }
+  .button-bar {
+    display: flex;
+    justify-content: flex-end;
+    > button {
+      width: 100px;
+      padding: 6px;
+    }
+  }
+</style>
