@@ -54,7 +54,7 @@
   import Vue from 'vue';
   import { Component, Prop } from 'vue-property-decorator';
   import FormField from './FormField.vue';
-  import DatabaseDescriptions from '../DatabaseDescriptions.vue';
+  import DatabaseDescriptions from './DatabaseDescriptions.vue';
   import { MetaspaceOptions } from './formStructure';
   import { MAX_MOL_DBS } from '../../lib/constants';
 

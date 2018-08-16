@@ -76,18 +76,12 @@
    'boolean': schema => schema.default || false,
  };
 
- const defaultSampleInfo = {
- 	 organsim: '',
-   organismPart: '',
-   condition: ''
- };
- 
  const defaultMetaspaceOptions = {
    isPublic: true,
    molDBs: [],
    adducts: [],
    name: '',
-	 groupId: ''
+   groupId: ''
  };
  
  function safeJsonParse(json) {
@@ -118,7 +112,7 @@
    },
 
    created() {
-     this.loadingPromise = this.loadForm();
+     this.loadingPromise = this.initializeForm();
 
      // Clean up local storage from previous versions
      localStorage.removeItem('latestMetadataSubmission');
@@ -135,7 +129,6 @@
        molDBOptions: [],
        possibleAdducts: {},
        metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
-       sampleInfo: cloneDeep(defaultSampleInfo),
        submitter: null
      }
    },
@@ -143,7 +136,7 @@
    watch: {
      '$store.getters.filter.metadataType'(newMdType) {
        if (this.isNew && newMdType !== this.value.Data_Type) {
-         this.value = this.importMetadata(this.value, newMdType);
+         this.reloadForm(newMdType);
        }
      }
    },
@@ -214,15 +207,27 @@
        return data;
      },
 
-     async loadForm() {
+     async initializeForm() {
        const [dataset, options] = await Promise.all([this.loadDataset(), this.loadOptions()]);
-       const loadedMetadata = dataset && dataset.metadata;
-       const metaspaceOptions = defaults({}, dataset && dataset.metaspaceOptions, defaultMetaspaceOptions);
        const mdType = (
          this.isNew
            ? this.$store.getters.filter.metadataType
-           : (loadedMetadata && loadedMetadata.Data_Type)
+           : (dataset && dataset.metadata && dataset.metadata.Data_Type)
        ) || defaultMetadataType;
+       await this.loadForm(dataset, options, mdType);
+     },
+
+     async reloadForm(mdType) {
+       const dataset = {
+         metadata: this.value,
+         metaspaceOptions: this.metaspaceOptions
+       };
+       await this.loadForm(dataset, await this.loadOptions(), mdType);
+     },
+
+     async loadForm(dataset, options, mdType) {
+       const loadedMetadata = dataset.metadata;
+       const metaspaceOptions = defaults({}, dataset.metaspaceOptions, defaultMetaspaceOptions);
        const {adducts, molecularDatabases} = options;
 
        // in case user just opened a link to metadata editing page w/o navigation in web-app,
@@ -257,7 +262,9 @@
 
        this.value = metadata;
        this.metaspaceOptions = metaspaceOptions;
-       this.submitter = dataset.submitter;
+       if (dataset.submitter != null) {
+         this.submitter = dataset.submitter;
+       }
 
        this.updateCurrentAdductOptions();
      },
@@ -288,30 +295,36 @@
      validate() {
        const errors = {};
 
-       if (isEmpty(this.metaspaceOptions.molDBs)) {
+       const {molDBs, adducts, name, groupId, principalInvestigator} = this.metaspaceOptions;
+
+       if (isEmpty(molDBs)) {
          set(errors, ['metaspaceOptions', 'molDBs'], 'should have at least 1 selection');
        }
-       if (isEmpty(this.metaspaceOptions.adducts)) {
+       if (isEmpty(adducts)) {
          set(errors, ['metaspaceOptions', 'adducts'], 'should have at least 1 selection');
        }
-       if (!this.metaspaceOptions.name || this.metaspaceOptions.name.length < 5) {
+       if (!name || name.length < 5) {
          set(errors, ['metaspaceOptions', 'name'], 'should be at least 5 characters');
-       } else if (this.metaspaceOptions.name.length > 50) {
+       } else if (name.length > 50) {
          set(errors, ['metaspaceOptions', 'name'], 'should be no more than 50 characters');
        }
 
-       if (this.metaspaceOptions.groupId == null) {
-         if (this.metaspaceOptions.principalInvestigator == null) {
-           set(errors, ['metaspaceOptions', 'groupId'], 'select a group');
-         } else {
-           if (!this.metaspaceOptions.principalInvestigator.name || this.metaspaceOptions.principalInvestigator.name.length < 5) {
-             set(errors, ['metaspaceOptions', 'principalInvestigator', 'name'], 'should be at least 5 characters');
+       if (groupId == null && principalInvestigator == null) {
+         set(errors, ['metaspaceOptions', 'groupId'], 'select a group');
+       }
+       if (principalInvestigator != null) {
+         const piName = principalInvestigator.name || '';
+         const piEmail = principalInvestigator.email || '';
+         if (!groupId || piName.length > 0 || piEmail.length > 0) {
+           if (piName.length < 4) {
+             set(errors, ['metaspaceOptions', 'principalInvestigator', 'name'], 'should be at least 4 characters');
            }
-           if (!emailRegex.test(this.metaspaceOptions.principalInvestigator.email)) {
+           if (!emailRegex.test(principalInvestigator.email)) {
              set(errors, ['metaspaceOptions', 'principalInvestigator', 'email'], 'should be a valid email address');
            }
          }
        }
+
 
        this.localErrors = errors;
      },
@@ -366,7 +379,7 @@
      getFormValueForSubmit() {
        this.validate();
        if (!isEmpty(this.localErrors)) {
-       	 this.$message({
+         this.$message({
            message: 'Please check that you entered metadata correctly!',
            type: "warning"
          });
@@ -375,9 +388,9 @@
 
        const value = JSON.stringify(this.value);
        return {
-	       datasetId: this.datasetId ? this.datasetId: '',
-	       metadataJson: value,
-	       metaspaceOptions: this.metaspaceOptions
+         datasetId: this.datasetId ? this.datasetId: '',
+         metadataJson: value,
+         metaspaceOptions: this.metaspaceOptions
        }
      },
 

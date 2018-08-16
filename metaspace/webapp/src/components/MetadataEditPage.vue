@@ -51,7 +51,7 @@
      async handleSubmit() {
        const formValue = this.$refs.editor.getFormValueForSubmit();
 
-       if (formValue !== undefined) {
+       if (formValue != null) {
          const { datasetId, metadataJson, metaspaceOptions } = formValue;
          // Prevent duplicate submissions if user double-clicks
          if (this.isSubmitting) return;

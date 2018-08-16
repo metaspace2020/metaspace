@@ -9,15 +9,7 @@
         </div>
       </div>
 
-      <div v-else-if="!isSignedIn">
-        <div id="sign-in-intro">
-          <intro-message>
-            <p class="sign-in-message"><b>To get started, click "Sign in" to sign in or create an account.</b></p>
-          </intro-message>
-        </div>
-      </div>
-
-      <div v-else>
+      <div v-else-if="isSignedIn">
           <!--Uncomment below when LCMS support is needed-->
           <!--<div id="filter-panel-container">-->
             <!--<filter-panel level="upload"></filter-panel>-->
@@ -47,7 +39,6 @@
  import FineUploader from './FineUploader.vue';
  import FilterPanel from './FilterPanel.vue';
  import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
- import IntroMessage from './IntroMessage.vue';
  import Vue from 'vue';
  import tokenAutorefresh from '../tokenAutorefresh';
 
@@ -122,8 +113,7 @@
    components: {
      FineUploader,
      MetadataEditor,
-     FilterPanel,
-     IntroMessage
+     FilterPanel
    },
    computed: {
 	   disabledSubmitMessage(){
@@ -146,7 +136,7 @@
    methods: {
    	 onSubmit() {
        const formValue = this.$refs.editor.getFormValueForSubmit();
-       if (formValue !== undefined) {
+       if (formValue != null) {
          const {datasetId, metadataJson, metaspaceOptions} = formValue;
          this.onFormSubmit(datasetId, metadataJson, metaspaceOptions);
        }

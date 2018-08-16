@@ -86,7 +86,7 @@
   </div>
 </template>
 <script>
-  import { MAX_MOL_DBS } from '../lib/constants';
+  import { MAX_MOL_DBS } from '../../lib/constants';
 
   export default {
     name: 'database-descriptions',
