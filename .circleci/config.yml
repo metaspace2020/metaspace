@@ -289,7 +289,7 @@ workflows:
       - test-engine
       #- test-graphql
       - generate-graphql-schema
-      - test-webapp
+      - test-webapp:
           requires:
             - generate-graphql-schema
 ## Disabled until we have time to redo these tests
