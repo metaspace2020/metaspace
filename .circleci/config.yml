@@ -18,14 +18,13 @@ jobs:
           path: ~/metaspace
       - restore_cache:
           keys:
-            - yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
-            - yarn-cache
+            - graphql-yarn-cache-{{checksum "yarn.lock"}}
       - run:
           name: Install npm packages
           command: |
             yarn install
       - save_cache:
-          key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+          key: graphql-yarn-cache-{{checksum "yarn.lock"}}
           paths:
             - /usr/local/share/.cache/yarn
       - run:
@@ -46,14 +45,13 @@ jobs:
           path: ~/metaspace
       - restore_cache:
           keys:
-            - yarn-cache-{{checksum "yarn.lock"}}
-            - yarn-cache
+            - graphql-yarn-cache-{{checksum "yarn.lock"}}
       - run:
           name: Install npm packages
           command: |
             yarn install
       - save_cache:
-          key: yarn-cache-{{checksum "yarn.lock"}}
+          key: graphql-yarn-cache-{{checksum "yarn.lock"}}
           paths:
             - ~/metaspace/metaspace/graphql/node_modules
             - /usr/local/share/.cache/yarn
@@ -77,16 +75,16 @@ jobs:
           path: ~/metaspace
       - restore_cache:
           keys:
-            - yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
-            - yarn-cache
+            - webapp-yarn-cache-{{checksum "yarn.lock"}}
       - run:
           name: Install npm packages
           command: |
             yarn install
-            npm install -g codecov
+            yarn install --no-lockfile codecov
       - save_cache:
-          key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+          key: webapp-yarn-cache-{{checksum "yarn.lock"}}
           paths:
+            - ~/metaspace/metaspace/webapp/node_modules
             - /usr/local/share/.cache/yarn
       - attach_workspace:
           at: ~/workspace
@@ -109,7 +107,7 @@ jobs:
           name: Upload coverage
           command: |
             yarn run test --coverage
-            codecov -p ../.. -F webapp
+            npx codecov -p ../.. -F webapp
 
   test-webapp-e2e:
     docker:

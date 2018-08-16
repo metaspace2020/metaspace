@@ -40,7 +40,7 @@ export const initMockGraphqlClient = (mocks?: IMocks) => {
   // const schema = await introspectSchema(link);
 
   const schema = makeRemoteExecutableSchema({
-    schema: buildClientSchema({__schema: require('./graphql-schema.json')})
+    schema: buildClientSchema(require('./graphql-schema.json').data)
   });
 
   addMockFunctionsToSchema({
