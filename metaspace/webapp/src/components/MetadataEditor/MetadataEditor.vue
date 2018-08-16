@@ -123,13 +123,14 @@
    },
 
    created() {
-     this.loadForm();
+     this.loadingPromise = this.loadForm();
    },
 
    data() {
      return {
        value: null,
        schema: null,
+       loadingPromise: null,
        localErrors: {},
        molDBOptions: [],
        possibleAdducts: {},
@@ -216,7 +217,7 @@
      },
 
      async loadForm() {
-       const [dataset, options] = await Promise.all([this.loadDataset(), this.loadOptions()])
+       const [dataset, options] = await Promise.all([this.loadDataset(), this.loadOptions()]);
        const loadedMetadata = dataset && dataset.metadata;
        const metaspaceOptions = defaults({}, dataset && dataset.metaspaceOptions, defaultMetaspaceOptions);
        const mdType = (
