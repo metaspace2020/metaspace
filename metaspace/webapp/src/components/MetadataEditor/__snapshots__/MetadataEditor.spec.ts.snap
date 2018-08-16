@@ -47,7 +47,6 @@ Object {
     "email": "dataset.principalInvestigator.email",
     "name": "dataset.principalInvestigator.name",
   },
-  "submitterId": "dataset.submitter.id",
 }
 `;
 

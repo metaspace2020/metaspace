@@ -248,6 +248,21 @@ const Resolvers = {
         role: user.role,
         email: user.email || null,
       }
+    },
+    async currentUserLastSubmittedDataset(_, args, {user}) {
+      if (user == null || user.name == null) {
+        return null;
+      }
+      const lastDataset = await db('dataset')
+        .whereRaw("metadata#>>'{Submitted_By,Submitter,Email}' = ?", [user.email])
+        .orderBy('upload_dt', 'desc')
+        .select('id')
+        .first();
+      if (lastDataset != null) {
+        return await esDatasetByID(lastDataset.id, user);
+      } else {
+        return null;
+      }
     }
   },
 

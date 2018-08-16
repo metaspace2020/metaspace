@@ -53,13 +53,13 @@
  import {deriveFullSchema} from './formStructure';
  import {
    get, set, cloneDeep, defaults,
-   isArray, isEmpty, isEqual, isPlainObject,
-   mapValues, forEach, without, omit,
+   isEmpty, isEqual, isPlainObject,
+   mapValues, forEach, without, pick, omit,
  } from 'lodash-es';
  import {
-   currentUserSubmitterQuery,
+   newDatasetQuery,
    fetchAutocompleteSuggestionsQuery,
-   fetchMetadataQuery,
+   editDatasetQuery,
    metadataOptionsQuery,
  } from '../../api/metadata';
  import MetaspaceOptionsSection from './MetaspaceOptionsSection.vue';
@@ -76,10 +76,6 @@
    'boolean': schema => schema.default || false,
  };
 
- const LOCAL_STORAGE_KEY = 'latestMetadataSubmission';
- const LOCAL_STORAGE_METASPACE_OPTIONS = 'latestMetadataOptions';
- const LOCAL_STORAGE_VERSION_KEY = 'latestMetadataSubmissionVersion';
-
  const defaultSampleInfo = {
  	 organsim: '',
    organismPart: '',
@@ -91,7 +87,6 @@
    molDBs: [],
    adducts: [],
    name: '',
-	 submitterId: '',
 	 groupId: ''
  };
  
@@ -124,6 +119,11 @@
 
    created() {
      this.loadingPromise = this.loadForm();
+
+     // Clean up local storage from previous versions
+     localStorage.removeItem('latestMetadataSubmission');
+     localStorage.removeItem('latestMetadataOptions');
+     localStorage.removeItem('latestMetadataSubmissionVersion');
    },
 
    data() {
@@ -143,8 +143,7 @@
    watch: {
      '$store.getters.filter.metadataType'(newMdType) {
        if (this.isNew && newMdType !== this.value.Data_Type) {
-         this.saveForm();
-         this.loadForm();
+         this.value = this.importMetadata(this.value, newMdType);
        }
      }
    },
@@ -174,37 +173,36 @@
    },
    methods: {
      async loadDataset() {
-       if (!this.datasetId) {
-         // no datasetId means a new dataset => help filling out by loading the last submission
-         // metaspaceOptions was previously part of metadataJson, so migrate if necessary
-         const metadata = safeJsonParse(localStorage.getItem(LOCAL_STORAGE_KEY)) || {};
-         const metaspaceOptions = safeJsonParse(localStorage.getItem(LOCAL_STORAGE_METASPACE_OPTIONS))
-           || (metadata && metadata.metadata_options);
+       const metaspaceOptionsFromDataset = (dataset) => {
+         const {isPublic, molDBs, adducts, name, group, principalInvestigator} = dataset;
+         return {
+           groupId: group ? group.id : null,
+           principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
+           isPublic, molDBs, adducts, name,
+         };
+       };
 
+       if (!this.datasetId) {
          const {data} = await this.$apollo.query({
-           query: currentUserSubmitterQuery
+           query: newDatasetQuery
          });
+         const dataset = data.currentUserLastSubmittedDataset;
 
          return {
-           metadata,
-           metaspaceOptions,
+           metadata: dataset && safeJsonParse(dataset.metadataJson) || {},
+           metaspaceOptions: dataset != null ? metaspaceOptionsFromDataset(dataset) : null,
            submitter: data.currentUser
          }
        } else {
          const {data} = await this.$apollo.query({
-           query: fetchMetadataQuery,
+           query: editDatasetQuery,
            variables: {id: this.datasetId},
            fetchPolicy: 'network-only'
          });
-         const {metadataJson, submitter, isPublic, molDBs, adducts, name, group, principalInvestigator} = data.dataset;
          return {
-           metadata: JSON.parse(metadataJson),
-           metaspaceOptions: {
-             submitterId: submitter.id,
-             groupId: group ? group.id : null,
-             principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
-             isPublic, molDBs, adducts, name,
-           }
+           metadata: JSON.parse(data.dataset.metadataJson),
+           metaspaceOptions: metaspaceOptionsFromDataset(data.dataset),
+           submitter: data.dataset.submitter,
          }
        }
      },
@@ -225,32 +223,12 @@
            ? this.$store.getters.filter.metadataType
            : (loadedMetadata && loadedMetadata.Data_Type)
        ) || defaultMetadataType;
-       const metadata = this.getDefaultMetadataValue(mdType);
        const {adducts, molecularDatabases} = options;
 
        // in case user just opened a link to metadata editing page w/o navigation in web-app,
        // filters are not set up
        this.$store.commit('updateFilter', {metadataType: mdType});
-       metadata.Data_Type = mdType;
-
-       // Copy loaded metadata over the top of the default value, but only include fields that actually exist and
-       // are of the same type to avoid propagating outdated schema
-       if (loadedMetadata != null) {
-         forEach(loadedMetadata, (loadedSection, sectionKey) => {
-           if (isPlainObject(metadata[sectionKey])) {
-             forEach(loadedSection, (loadedField, fieldKey) => {
-               if (fieldKey in metadata[sectionKey]) {
-                 if (typeof loadedField === typeof metadata[sectionKey][fieldKey]) {
-                   metadata[sectionKey][fieldKey] = loadedField;
-                 } else if (!isArray(fieldValue) && isArray(metadata[sectionKey][fieldKey])) {
-                   // Migrate Metabolite_Database
-                   metadata[sectionKey][fieldKey] = [loadedField];
-                 }
-               }
-             });
-           }
-         });
-       }
+       const metadata = this.importMetadata(loadedMetadata, mdType);
 
        // Load options
        this.possibleAdducts = {
@@ -261,9 +239,9 @@
        this.schema = deriveFullSchema(metadataSchemas[mdType]);
 
        if (this.isNew) {
-         // If this is a form from localStorage and metabolite databases have changed since the form was submitted,
-         // clear the databases so that the user has to re-pick. Otherwise populate it with the default databases
-         // This is because we it's expensive to change database later. We want a smart default for new users,
+         // If this is a prepopulated form from a previous submission and metabolite databases have changed since that submission,
+         // clear the databases so that the user has to re-pick. Otherwise populate it with the default databases.
+         // This is because it's expensive to change database later. We want a smart default for new users,
          // but if the user has previously selected a value that is now invalid, they should be made aware so that they
          // can choose an appropriate substitute.
          const selectedDbs = metaspaceOptions.molDBs || [];
@@ -282,6 +260,29 @@
        this.submitter = dataset.submitter;
 
        this.updateCurrentAdductOptions();
+     },
+
+     importMetadata(loadedMetadata, mdType) {
+       const metadata = this.getDefaultMetadataValue(mdType);
+       metadata.Data_Type = mdType;
+
+       // Copy loaded metadata over the top of the default value, but only include fields that actually exist and
+       // are of the same type to avoid propagating outdated schema
+       if (loadedMetadata != null) {
+         forEach(loadedMetadata, (loadedSection, sectionKey) => {
+           if (isPlainObject(metadata[sectionKey])) {
+             forEach(loadedSection, (loadedField, fieldKey) => {
+               if (fieldKey in metadata[sectionKey]) {
+                 if (typeof loadedField === typeof metadata[sectionKey][fieldKey]) {
+                   metadata[sectionKey][fieldKey] = cloneDeep(loadedField);
+                 }
+               }
+             });
+           }
+         });
+       }
+
+       return metadata;
      },
 
      validate() {
@@ -313,12 +314,6 @@
        }
 
        this.localErrors = errors;
-     },
-
-     saveForm() {
-       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.value));
-       localStorage.setItem(LOCAL_STORAGE_METASPACE_OPTIONS, JSON.stringify(this.metaspaceOptions));
-       localStorage.removeItem(LOCAL_STORAGE_VERSION_KEY); // No longer used
      },
 
      sectionBinds(sectionKey) {
@@ -379,9 +374,6 @@
        }
 
        const value = JSON.stringify(this.value);
-       if (!this.datasetId) {
-         this.saveForm();
-       }
        return {
 	       datasetId: this.datasetId ? this.datasetId: '',
 	       metadataJson: value,

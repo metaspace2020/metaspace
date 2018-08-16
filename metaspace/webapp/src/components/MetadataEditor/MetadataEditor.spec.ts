@@ -91,6 +91,6 @@ describe('MetadataEditor', () => {
     expect(fieldValues['Organism']).toEqual(mockMetadata.Sample_Information.Organism);
     expect(fieldValues['Sample stabilisation']).toEqual(mockMetadata.Sample_Preparation.Sample_Stabilisation);
     expect(fieldValues['Polarity']).toEqual(mockMetadata.MS_Analysis.Polarity);
-    expect(fieldValues['Supplementary']).toEqual(mockMetadata.Additional_Information.Supplementary);
+    expect(fieldValues['Detector resolving power']).toEqual(mockMetadata.MS_Analysis.Detector_Resolving_Power);
   });
 });

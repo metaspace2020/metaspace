@@ -1,35 +1,46 @@
 import gql from 'graphql-tag';
 import { datasetSubmitterFragment } from './user';
 
-export const fetchMetadataQuery =
+export const editDatasetFragment =
+  gql`fragment EditDatasetFragment on Dataset {
+    id
+    metadataJson
+    isPublic
+    group {
+      id
+    }
+    principalInvestigator {
+      name
+      email
+    }
+    molDBs
+    adducts
+    name
+  }`;
+
+export const editDatasetQuery =
   gql`query fetchMetadataQuery($id: String!) {
     dataset(id: $id) {
-      metadataJson
-      isPublic
+      ...EditDatasetFragment
       submitter {
         ...DatasetSubmitterFragment
       }
-      group {
-        id
-      }
-      principalInvestigator {
-        name
-        email
-      }
-      molDBs
-      adducts
-      name
     }
   }
+  ${editDatasetFragment}
   ${datasetSubmitterFragment}
   `;
 
-export const currentUserSubmitterQuery =
+export const newDatasetQuery =
   gql`query {
+    currentUserLastSubmittedDataset {
+      ...EditDatasetFragment
+    }
     currentUser {
-    ...DatasetSubmitterFragment
+      ...DatasetSubmitterFragment
     }
   }
+  ${editDatasetFragment}
   ${datasetSubmitterFragment}
   `;
 
