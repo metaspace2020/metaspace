@@ -80,7 +80,7 @@ jobs:
           name: Install npm packages
           command: |
             yarn install
-            yarn install --no-lockfile codecov
+            yarn global add codecov
       - save_cache:
           key: webapp-yarn-cache-{{checksum "yarn.lock"}}
           paths:

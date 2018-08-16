@@ -26,6 +26,7 @@
     "apollo-link-ws": "^1.0.8",
     "aws-sdk": "^2.36.0",
     "body-parser": "^1.16.0",
+    "codecov": "^3.0.4",
     "concat-files": "^0.1.1",
     "connect-redis": "^3.2.0",
     "cookie-parser": "^1.4.3",
