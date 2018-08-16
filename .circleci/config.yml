@@ -62,9 +62,10 @@ jobs:
           command: |
             mkdir -p dist
             node ./bin/generate-json-graphql-schema.js ./dist/graphql-schema.json
-      - store_artifacts:
-          path: dist
-          destination: graphql
+      - persist_to_workspace:
+          root: dist
+          paths:
+            - graphql-schema.json
 
   test-webapp:
     docker:
@@ -87,6 +88,8 @@ jobs:
           key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
           paths:
             - /usr/local/share/.cache/yarn
+      - attach_workspace:
+          at: ~/workspace
       - run:
           name: Copy configs
           command: |
@@ -99,6 +102,7 @@ jobs:
       - run:
           name: Run tests
           command: |
+            cp ~/workspace/graphql-schema.json ./tests/utils/graphql-schema.json
             yarn run deref-schema
             yarn run test
       - run:
