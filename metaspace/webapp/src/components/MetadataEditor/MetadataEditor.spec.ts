@@ -22,10 +22,6 @@ describe('MetadataEditor', () => {
   beforeAll(async () => {
     await initMockGraphqlClient();
     testConfig.logModifiedComponents = false;
-    (window as any).localStorage = {
-      getItem: () => undefined,
-      setItem: () => undefined,
-    };
     store.replaceState({
       ...store.state,
       route: { path: '/upload', query: {} }
