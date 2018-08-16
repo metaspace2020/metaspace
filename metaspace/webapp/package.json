@@ -12,7 +12,10 @@
     "test-e2e": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=20000 --quarantine-mode --assertion-timeout=20000",
     "cucumber-test": "cucumber-js --compiler ts:ts-node/register tests/e2e/ --fail-fast",
     "coverage": "jest --coverage",
-    "deref-schema": "node ./deref_schema.js src/assets"
+    "deref-schema": "node ./deref_schema.js src/assets",
+    "fetch-graphql-schema": "apollo schema:download tests/utils/schema.json --endpoint ",
+    "fetch-local-graphql-schema": "apollo schema:download tests/utils/schema.json --endpoint http://localhost:8999/graphql",
+    "fetch-prod-graphql-schema": "apollo schema:download tests/utils/schema.json --endpoint http://metaspace2020.eu/graphql"
   },
   "dependencies": {
     "@types/js-cookie": "^2.1.0",
@@ -95,6 +98,7 @@
     "@types/plotly.js": "1.28.11",
     "@types/webpack-env": "1.13.1",
     "@vue/test-utils": "^1.0.0-beta.20",
+    "apollo": "^1.7.0",
     "apollo-link-schema": "^1.1.0",
     "autoprefixer": "^6.7.2",
     "babel": "6.23.0",

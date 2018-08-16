@@ -1,14 +1,11 @@
-import * as config from '../../src/clientConfig.json';
-import { ApolloClient, InMemoryCache, ApolloLink, HttpLink, Operation, FetchResult, NormalizedCacheObject } from 'apollo-client-preset';
+import { ApolloClient, InMemoryCache, NormalizedCacheObject } from 'apollo-client-preset';
 import { SchemaLink } from 'apollo-link-schema';
-import { addMockFunctionsToSchema, IMocks, introspectSchema } from 'graphql-tools';
-import fetch from 'node-fetch';
-import Observable from 'zen-observable-ts';
+import { addMockFunctionsToSchema, IMocks, makeExecutableSchema } from 'graphql-tools';
 import Vue from 'vue';
 import VueApollo from 'vue-apollo';
-import { GraphQLResolveInfo } from 'graphql';
+import { buildClientSchema, GraphQLResolveInfo } from 'graphql';
+import makeRemoteExecutableSchema from '../../node_modules/graphql-tools/dist/stitching/makeRemoteExecutableSchema';
 
-const serverUrl = config.graphqlUrl || 'http://localhost:8888/graphql';
 
 const lazyHash = (str: string) => Array.from(str).reduce((hash, char) => hash ^ char.charCodeAt(0), 0);
 
@@ -19,10 +16,10 @@ const getPath = (info: GraphQLResolveInfo) => {
     path.push(cur.key);
     cur = cur.prev;
   }
-  return path.join('.');
+  return path.reverse().join('.');
 };
 
-const mocks: IMocks = {
+const baseMocks: IMocks = {
   // Replace primitive types with non-randomized versions
   ID: (source, args, context, info) => getPath(info),
   String: (source, args, context, info) => getPath(info),
@@ -33,36 +30,25 @@ const mocks: IMocks = {
   // Mutation: () => ...
 };
 
-class RemoteSchemaLink extends ApolloLink {
-  linkPromise = new Promise<ApolloLink>(async (resolve, reject) => {
-    try {
-    } catch (err) {
-      reject(err);
-    }
-  });
-
-  request(operation: Operation) {
-    return new Observable<FetchResult>(observer => {
-      this.linkPromise.then(
-        link => link.request(operation)!.subscribe(observer),
-        err => observer.error(err),
-      );
-    });
-  }
-
-}
-
 let graphqlClient: ApolloClient<NormalizedCacheObject>;
 export let apolloProvider: VueApollo;
 export let provide: any;
 
-export const initMockGraphqlClient = async () => {
-  const link = new HttpLink({ uri: serverUrl, fetch: fetch as any });
-  const schema = await introspectSchema(link);
+export const initMockGraphqlClient = (mocks?: IMocks) => {
+  // const serverUrl = config.graphqlUrl || 'http://localhost:8888/graphql';
+  // const link = new HttpLink({ uri: serverUrl, fetch: fetch as any });
+  // const schema = await introspectSchema(link);
+
+  const schema = makeRemoteExecutableSchema({
+    schema: buildClientSchema({__schema: require('./schema.json')})
+  });
 
   addMockFunctionsToSchema({
     schema,
-    mocks,
+    mocks: {
+      ...baseMocks,
+      ...mocks
+    },
   });
 
   graphqlClient = new ApolloClient({
@@ -72,9 +58,7 @@ export const initMockGraphqlClient = async () => {
 
   Vue.use(VueApollo);
 
-  apolloProvider = new VueApollo({
-    defaultClient: graphqlClient,
-  });
+  apolloProvider = new VueApollo({ defaultClient: graphqlClient });
   provide = apolloProvider.provide();
 };
 
