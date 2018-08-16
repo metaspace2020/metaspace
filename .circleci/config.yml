@@ -35,6 +35,36 @@ jobs:
             yarn run test
             psql -h localhost -U postgres -c "DROP DATABASE sm_test"
 
+
+  generate-graphql-schema:
+    docker:
+      - image: node:8
+
+    working_directory: ~/metaspace/metaspace/graphql
+    steps:
+      - checkout:
+          path: ~/metaspace
+      - restore_cache:
+          keys:
+            - yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+            - yarn-cache
+      - run:
+          name: Install npm packages
+          command: |
+            yarn install
+      - save_cache:
+          key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+          paths:
+            - /usr/local/share/.cache/yarn
+      - run:
+          name: Generate schema
+          command: |
+            mkdir -p dist
+            node ./bin/generate-json-graphql-schema.js ./dist/graphql-schema.json
+      - store_artifacts:
+          path: dist
+          destination: graphql
+
   test-webapp:
     docker:
       - image: intsco/sm-webapp:0.9
@@ -258,17 +288,18 @@ workflows:
       - test-engine
       #- test-graphql
       - test-webapp
-  daily:
-    jobs:
-      - test-webapp-e2e
-    triggers:
-      - schedule:
-          cron: "0 11 * * 1-5"
-          filters:
-            branches:
-              only:
-                - master
-                - feature/.*
+## Disabled until we have time to redo these tests
+#  daily:
+#    jobs:
+#      - test-webapp-e2e
+#    triggers:
+#      - schedule:
+#          cron: "0 11 * * 1-5"
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - feature/.*
   weekly:
     jobs:
       - test-engine-sci
