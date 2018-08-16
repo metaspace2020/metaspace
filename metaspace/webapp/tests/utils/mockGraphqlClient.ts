@@ -1,6 +1,6 @@
 import { ApolloClient, InMemoryCache, NormalizedCacheObject } from 'apollo-client-preset';
 import { SchemaLink } from 'apollo-link-schema';
-import { addMockFunctionsToSchema, IMocks, makeExecutableSchema } from 'graphql-tools';
+import { addMockFunctionsToSchema, IMocks } from 'graphql-tools';
 import Vue from 'vue';
 import VueApollo from 'vue-apollo';
 import { buildClientSchema, GraphQLResolveInfo } from 'graphql';
@@ -40,7 +40,7 @@ export const initMockGraphqlClient = (mocks?: IMocks) => {
   // const schema = await introspectSchema(link);
 
   const schema = makeRemoteExecutableSchema({
-    schema: buildClientSchema({__schema: require('./schema.json')})
+    schema: buildClientSchema({__schema: require('./graphql-schema.json')})
   });
 
   addMockFunctionsToSchema({
