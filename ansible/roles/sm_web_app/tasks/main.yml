@@ -39,5 +39,10 @@
     executable: /bin/bash
 
 - name: Copy supervisor config file
-  template: src=sm-web-app.supervisor.j2 dest=/etc/supervisor/sm-web-app.supervisor
+  template: src=sm-web-app.supervisor.j2 dest=/etc/supervisor/{{ sm_web_app_app_name }}.supervisor
             mode=0600 owner=ubuntu group=ubuntu
+
+- name: Update and restart supervisor app
+  supervisorctl:
+    name: "{{ sm_web_app_app_name }}"
+    state: restarted

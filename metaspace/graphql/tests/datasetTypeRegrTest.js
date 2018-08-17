@@ -34,8 +34,8 @@ describe('GraphQL integration: Dataset type', () => {
         id,
         name,
         institution,
-        submitter { name, surname, email },
-        principalInvestigator { name, surname, email },
+        submitter { name, email },
+        principalInvestigator { name, email },
         polarity,
         ionisationSource,
         analyzer { type, resolvingPower(mz:200) },
@@ -52,13 +52,11 @@ describe('GraphQL integration: Dataset type', () => {
       'name': 'sci_test_spheroid_untreated',
       'institution': 'EMBL',
       'submitter': {
-        'name': 'Name',
-        'surname': 'Surname',
+        'name': 'Name Surname',
         'email': 'name@embl.de'
       },
       'principalInvestigator': {
         'name': '',
-        'surname': '',
         'email': ''
       },
       'polarity': 'POSITIVE',

@@ -16,5 +16,11 @@
     "storage": "s3"
   },
 
-  "metadataTypes": ["ims", "lcms"]
+  "ravenDsn": "{{ sm_webapp_sentry_dsn }}",
+
+  "metadataTypes": ["ims", "lcms"],
+
+  "features": {
+    "newAuth": true
+  }
 }

@@ -1,0 +1,60 @@
+type Group {
+  id: ID!
+  name: String!
+  shortName: String!
+  currentUserRole: UserGroupRole
+  members: [UserGroup!]    # null if current user is not allowed to see
+}
+
+input CreateGroupInput {
+  name: String!
+  shortName: String!
+  principalInvestigatorEmail: String!
+}
+
+input UpdateGroupInput {
+  name: String
+  shortName: String
+}
+
+# Many-to-many relationship between User and Group
+type UserGroup {
+  user: User!
+  group: Group!
+  role: UserGroupRole!
+  numDatasets: Int!
+}
+
+enum UserGroupRole {
+  INVITED    # User was invited into the group but hasn't confirmed it yet
+  PENDING    # User requested to join the group but the PI hasn't confirmed it yet
+  MEMBER     # Normal member of the group
+  PRINCIPAL_INVESTIGATOR    # Group administrator
+}
+
+type Query {
+  group(groupId: ID!): Group
+  allGroups(query: String): [Group!]!
+}
+
+type Mutation {
+  ## Managing groups
+  createGroup(groupDetails: CreateGroupInput!): Group!
+  updateGroup(groupId: ID!, groupDetails: UpdateGroupInput!): Group!
+  deleteGroup(groupId: ID!): Boolean!
+
+  ## Managing group users
+  leaveGroup(groupId: ID!): Boolean!
+  removeUserFromGroup(groupId: ID!, userId: ID!): Boolean!
+
+  ## User requests access
+  # `bringDatasets` contains a list of IDs of datasets that the user wants to bring into the group with them
+  requestAccessToGroup(groupId: ID!, bringDatasets: [ID!]!): UserGroup!
+  acceptRequestToJoinGroup(groupId: ID!, userId: ID!): UserGroup!
+  # User can reject request with `leaveGroup`
+
+  ## Group invites user
+  inviteUserToGroup(groupId: ID!, email: String!): UserGroup!
+  acceptGroupInvitation(groupId: ID!, bringDatasets: [ID!]!): UserGroup!
+  # Group can reject user with `removeUserFromGroup`
+}

@@ -1,88 +1,100 @@
 <template>
   <div class="b-header">
-    <div>
-      <div class="header-item" id="metasp-logo">
-        <router-link to="/" style="display: flex">
-          <img src="../assets/logo.png"
-              alt="Metaspace" title="Metaspace"
-              style="border: 0px;"
-              class="vc"></img>
-        </router-link>
-      </div>
-
-      <router-link :to="uploadHref">
-        <div class="header-item vc page-link" id='upload-link'>
-          <div class="vc">Upload</div>
-        </div>
+    <div class="header-items">
+      <router-link to="/" class="header-item logo">
+        <img src="../assets/logo.png" alt="Metaspace" title="Metaspace"/>
       </router-link>
 
-      <router-link :to="datasetsHref">
-        <div class="header-item vc page-link" id='datasets-link'>
-          <div class="vc">Datasets</div>
-        </div>
+      <router-link :to="uploadHref" class="header-item page-link" id='upload-link'>
+        Upload
       </router-link>
 
-      <router-link :to="annotationsHref">
-        <div class="header-item vc page-link" id='annotations-link'>
-          <div class="vc">Annotations</div>
-        </div>
+      <router-link :to="datasetsHref" class="header-item page-link" id='datasets-link'>
+        Datasets
       </router-link>
 
-      <router-link to="/about">
-        <div class="header-item vc page-link">
-          <div class="vc">About</div>
-        </div>
+      <router-link :to="annotationsHref" class="header-item page-link" id='annotations-link'>
+        Annotations
       </router-link>
 
-      <router-link to="/help">
-        <div class="header-item vc page-link">
-          <div class="vc">Help</div>
-        </div>
+      <router-link to="/about" class="header-item page-link">
+        About
+      </router-link>
+
+      <router-link to="/help" class="header-item page-link">
+        Help
       </router-link>
     </div>
 
-    <el-popover ref="login-popover"
-                placement="bottom"
-                trigger="click"
-                style="text-align:center;">
-      <div id="email-link-container">
-        <el-button type="primary" @click="sendLoginLink">Send a link to</el-button>
-        <span>
-          <el-input v-model="loginEmail"
-                    placeholder="e-mail address">
-          </el-input>
-        </span>
-      </div>
+    <div v-if="!this.$store.state.authenticated" class="header-items">
+      <div v-if="features.newAuth" class="header-items">
+        <div class="header-item page-link" @click="showCreateAccount">
+          Create account
+        </div>
 
-      <div style="text-align: center;">
-        <div style="margin: 10px; font-size: 18px;">or</div>
-        <a href="/auth/google">
-          <el-button>Sign in with Google</el-button>
-        </a>
+        <div class="header-item page-link" @click="showSignIn">
+          Sign in
+        </div>
       </div>
-    </el-popover>
+      <div v-else class="header-items">
+        <el-popover placement="bottom" trigger="click" class="header-items">
+          <div slot="reference" class="header-item page-link">
+            Sign in
+          </div>
+          <div id="email-link-container">
+            <el-button type="primary" @click="sendLoginLink">Send a link to</el-button>
+            <span>
+              <el-input v-model="loginEmail" placeholder="e-mail address" />
+            </span>
+          </div>
 
-    <div v-show="!this.$store.state.authenticated"
-         class="header-item vc page-link" v-popover:login-popover>
-      <div class="vc">Sign in</div>
+          <div style="text-align: center;">
+            <div style="margin: 10px; font-size: 18px;">or</div>
+            <a href="/auth/google">
+              <el-button>Sign in with Google</el-button>
+            </a>
+          </div>
+        </el-popover>
+      </div>
     </div>
-
-    <div v-show="this.$store.state.authenticated">
-      <div class="header-item vc">
-        <div class="vc" style="color: white;">
+    <div v-else class="header-items">
+      <router-link
+        v-if="currentUser && currentUser.primaryGroup"
+        :to="`/group/${currentUser.primaryGroup.group.id}`"
+        class="header-item page-link">
+        <div class="limit-width">
+          {{currentUser.primaryGroup.group.shortName}}
+        </div>
+      </router-link>
+      <div class="submenu-container user-submenu"
+           :class="{'submenu-container-open': openSubmenu === 'user'}"
+           @mouseenter="handleSubmenuEnter('user')"
+           @mouseleave="handleSubmenuLeave('user')">
+        <div class="header-item submenu-header"
+             :class="{'router-link-active': matchesRoute('/user/me')}">
+          <div class="limit-width" style="color: white;">
           {{ userNameOrEmail }}
+          </div>
         </div>
-      </div>
-      <div class="header-item vc page-link" @click="logout">
-        <div class="vc">Sign out</div>
+        <div class="submenu">
+          <router-link to="/user/me" class="submenu-item page-link">
+            My account
+          </router-link>
+          <div class="submenu-item page-link" @click="logout">
+            Sign out
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+  import gql from 'graphql-tag';
+ import {signOut} from '../api/auth';
  import {encodeParams} from '../url';
- import tokenAutorefresh from '../tokenAutorefresh';
+  import { refreshLoginStatus } from '../graphqlClient';
+ import * as config from '../clientConfig.json';
 
  export default {
    name: 'metaspace-header',
@@ -105,13 +117,35 @@
        if (!user)
          return '';
        return user.name || user.email;
+     },
+
+     features() {
+       return config.features;
      }
    },
 
    data() {
      return {
-       loginEmail: (this.$store.state.user ? this.$store.state.user.email : '')
+       loginEmail: (this.$store.state.user ? this.$store.state.user.email : ''),
+       currentUser: null,
+       openSubmenu: null
      };
+   },
+
+   apollo: {
+     currentUser: {
+       query: gql`query {
+         currentUser {
+           primaryGroup {
+             group {
+               id
+               shortName
+               name
+             }
+           }
+         }
+       }`
+     }
    },
 
    methods: {
@@ -124,6 +158,12 @@
          query: encodeParams(f, path, this.$store.state.filterLists)
        };
        return link;
+     },
+
+     matchesRoute(path) {
+       // WORKAROUND: vue-router hides its util function "isIncludedRoute", which would be perfect here
+       // return isIncludedRoute(this.$route, path);
+       return this.$route.path.startsWith(path);
      },
 
      sendLoginLink() {
@@ -148,16 +188,36 @@
        })
      },
 
+     showCreateAccount() {
+       this.$store.commit('account/showDialog', 'createAccount');
+     },
+
+     showSignIn() {
+       this.$store.commit('account/showDialog', 'signIn');
+     },
+
      async logout() {
-       await fetch('/logout', {credentials: 'include'});
-       await tokenAutorefresh.refreshJwt(true);
-     }
+       if (config.features.newAuth) {
+         await signOut();
+       } else {
+         await fetch('/logout', {credentials: 'include'});
+       }
+       await refreshLoginStatus();
+     },
+
+     handleSubmenuEnter(submenu) {
+       this.openSubmenu = submenu;
+     },
+     handleSubmenuLeave(submenu) {
+       if (this.openSubmenu === submenu) {
+         this.openSubmenu = null;
+       }
+     },
    }
  }
 </script>
 
-<style>
- /* bits and pieces copy-pasted from metasp.eu */
+<style scoped>
  .b-header {
    background-color: rgba(0, 105, 224, 0.85);
    position: fixed;
@@ -167,16 +227,27 @@
    right: 0;
    height: 62px;
    display: flex;
+   align-items: center;
    justify-content: space-between;
+ }
+
+ .header-items {
+   display: flex;
+   align-items: center;
+   height: 100%
  }
 
  .header-item {
    display: flex;
-   float: left;
    border: none;
    padding: 0px 20px;
-   height: 62px;
    font-size: 16px;
+   align-self: stretch;
+   align-items: center;
+   justify-content: center;
+ }
+ .header-item.logo {
+   padding-left: 15px;
  }
 
  @media (max-width: 1000px) {
@@ -186,47 +257,70 @@
    }
  }
 
- /* vertically centered */
- .vc {
-   align-self: center;
- }
-
- .btn-link {
-   text-decoration: none;
-   color: inherit;
- }
-
  .page-link {
    text-align: center;
    color: #eee;
    cursor: pointer;
+   text-decoration: none;
  }
 
- .router-link-active > .page-link, .page-link:hover {
+ .router-link-active.page-link, .page-link:hover,
+ .submenu-container:not(.submenu-container-open) > .router-link-active.submenu-header {
    background: rgba(0, 0, 0, 0.1);
+   outline-offset: -1px;
    outline-color: rgba(0, 0, 0, 0.3);
    outline-style: solid;
    outline-width: 1px;
+   color: white;
  }
 
- .page-link:hover {
-   background: rgba(0, 0, 0, 0.1);
-   outline-color: rgba(0, 0, 0, 0.3);
-   outline-style: solid;
-   outline-width: 1px;
- }
-
- .router-link-active > .page-link {
+ .router-link-active.page-link {
    font-weight: 700;
-   color: white;
+ }
+ .page-link a {
+   text-decoration: none;
  }
 
- .page-link:hover > .vc {
-   color: white;
+ .submenu-container {
+   position: relative;
+   display: flex;
+   align-items: center;
+   height: 100%
  }
+ .submenu {
+   display: none;
+   position: absolute;
+   flex-direction: column;
+   top: 100%;
+   right: 0;
+   width: 100%;
+   min-width: 140px;
+   max-width: 200px;
 
- #metasp-logo {
-   padding-left: 15px;
+   background-color: rgba(0, 105, 224, 0.85);
+   /*background-color: rgb(38, 128, 229);*/
+ }
+ .submenu-container-open > .submenu {
+   display: flex;
+ }
+ .submenu-item {
+   padding: 20px;
+   font-size: 16px;
+   align-self: stretch;
+   justify-content: center;
+ }
+ .limit-width {
+   max-width: 250px;
+   overflow-wrap: break-word;
+   text-align: center;
+   overflow: hidden;
+   line-height: 1.2em;
+   max-height: 2.4em;
+ }
+ @media (max-width: 1000px) {
+   .limit-width {
+     max-width: 150px;
+   }
  }
 
  #email-link-container {

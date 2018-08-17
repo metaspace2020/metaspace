@@ -146,13 +146,13 @@
      });
    }
 
-   opacity: number = 1.0
+   opacity: number = 1.0;
 
    imagePosition: ImagePosition = {
      zoom: 1,
      xOffset: 0,
      yOffset: 0
-   }
+   };
 
    onSectionsChange(activeSections: string[]): void {
      // FIXME: this is a hack to make isotope images redraw

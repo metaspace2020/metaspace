@@ -1,5 +1,10 @@
 ---
 
 - name: Copy sm-api supervisor config file
-  template: src=sm-api.supervisor.j2 dest=/etc/supervisor/sm-api.supervisor
+  template: src=sm-api.supervisor.j2 dest=/etc/supervisor/{{ sm_api_app_name }}.supervisor
             mode=0600 owner=ubuntu group=ubuntu
+
+- name: Update and restart supervisor app
+  supervisorctl:
+    name: "{{ sm_api_app_name }}"
+    state: restarted

@@ -9,10 +9,6 @@
     - libssl-dev
     - python3-pip
 
-- name: Install Ansible
-  become: yes
-  pip: name=ansible version={{ sm_cluster_autostart_ansible_version }} state=present
-
 - name: Install sm-cluster-autostart dependencies
   become: yes
   pip:
@@ -20,9 +16,18 @@
     state: latest
     executable: pip3
   with_items:
+    - cryptography
     - pika
     - requests
     - boto3
+
+- name: Install Ansible
+  become: yes
+  pip:
+    name: ansible
+    version: "{{ sm_cluster_autostart_ansible_version }}"
+    state: present
+    executable: pip3
 
 - name: Make sure {{ sm_ansible_home }} exists
   become: yes

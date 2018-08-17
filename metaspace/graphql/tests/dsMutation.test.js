@@ -3,7 +3,7 @@ process.env.NODE_ENV = 'test';
 const {UserError} = require('graphql-errors'),
   config = require('config');
 
-const {reprocessingNeeded} = require('../dsMutation'),
+const {processingSettingsChanged} = require('../dsMutation'),
   {addProcessingConfig} = require('../utils');
 
 const metadata = {
@@ -81,15 +81,9 @@ test('Reprocessing needed when database list changed', () => {
   updDS.molDBs.push('ChEBI');
   addProcessingConfig(updDS);
 
-  try {
-    reprocessingNeeded(ds, updDS);
-    throw(new Error());
-  }
-  catch (e) {
-    expect(e.message).not.toBe('');
-    const msg = JSON.parse(e.message);
-    expect(msg['type']).toBe('submit_needed');
-  }
+  const {newDB} = processingSettingsChanged(ds, updDS);
+
+  expect(newDB).toBe(true);
 });
 
 test('Drop reprocessing needed when instrument settings changed', () => {
@@ -97,15 +91,9 @@ test('Drop reprocessing needed when instrument settings changed', () => {
   updDS.metadata.MS_Analysis.Detector_Resolving_Power.mz = 100;
   addProcessingConfig(updDS);
 
-  try {
-    reprocessingNeeded(ds, updDS);
-    throw(new Error());
-  }
-  catch (e) {
-    expect(e.message).not.toBe('');
-    const msg = JSON.parse(e.message);
-    expect(msg['type']).toBe('drop_submit_needed');
-  }
+  const {procSettingsUpd} = processingSettingsChanged(ds, updDS);
+
+  expect(procSettingsUpd).toBe(true);
 });
 
 test('Reprocessing not needed when just metadata changed', () => {
@@ -116,5 +104,8 @@ test('Reprocessing not needed when just metadata changed', () => {
   updDS.name = 'New DS name';
   addProcessingConfig(ds, updDS);
 
-  reprocessingNeeded(ds, updDS);
+  const {newDB, procSettingsUpd} = processingSettingsChanged(ds, updDS);
+
+  expect(newDB).toBe(false);
+  expect(procSettingsUpd).toBe(false);
 });

@@ -12,6 +12,11 @@ declare module "*/clientConfig.json" {
     aws: AWSConfig
   }
 
+  interface Features {
+    // Whether to use new authentication system (new sign in / sign up UI, graphql-based login, password-based logins)
+    newAuth?: boolean;
+  }
+
   interface ClientConfig {
     graphqlUrl: string | null
     wsGraphqlUrl: string | null
@@ -21,6 +26,7 @@ declare module "*/clientConfig.json" {
 
     fineUploader: FineUploaderConfig
     ravenDsn: string | null
+    features: Features
   }
 
   const value: ClientConfig;

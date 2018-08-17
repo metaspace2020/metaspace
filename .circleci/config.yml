@@ -3,7 +3,80 @@ jobs:
   # TODO: Monorepo support - only run tests on projects if they have changed
   # e.g. https://discuss.circleci.com/t/does-circleci-2-0-work-with-monorepos/10378/14
 
+  test-graphql:
+    docker:
+      - image: postgres:9.5-alpine
+        environment:
+          POSTGRES_USER: sm
+          POSTGRES_PASSWORD: password
+
+      - image: node:8
+
+    working_directory: ~/metaspace/metaspace/graphql
+    steps:
+      - checkout:
+          path: ~/metaspace
+      - restore_cache:
+          keys:
+            - yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+            - yarn-cache
+      - run:
+          name: Install npm packages
+          command: |
+            yarn install
+      - save_cache:
+          key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+          paths:
+            - /usr/local/share/.cache/yarn
+      - run:
+          name: Run tests
+          command: |
+            psql -h localhost -U postgres -c "CREATE DATABASE sm_test owner sm"
+            yarn run test
+            psql -h localhost -U postgres -c "DROP DATABASE sm_test"
+
   test-webapp:
+    docker:
+      - image: intsco/sm-webapp:0.9
+
+    working_directory: ~/metaspace/metaspace/webapp
+    steps:
+      - checkout:
+          path: ~/metaspace
+      - restore_cache:
+          keys:
+            - yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+            - yarn-cache
+      - run:
+          name: Install npm packages
+          command: |
+            yarn install
+            npm install -g codecov
+      - save_cache:
+          key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+          paths:
+            - /usr/local/share/.cache/yarn
+      - run:
+          name: Copy configs
+          command: |
+            cp ci/conf.js .
+            cp ci/clientConfig.json src/
+      - run:
+          name: Compile
+          command: |
+            yarn run build-ci
+      - run:
+          name: Run tests
+          command: |
+            yarn run deref-schema
+            yarn run test
+      - run:
+          name: Upload coverage
+          command: |
+            yarn run test --coverage
+            codecov -p ../.. -F webapp
+
+  test-webapp-e2e:
     docker:
       - image: intsco/sm-webapp:0.9
 
@@ -46,8 +119,8 @@ jobs:
       - run:
           name: Build webapp
           command: |
-            cp tests/e2e/conf.js conf.js
-            cp tests/e2e/clientConfig.json src/
+            cp ci/conf.js conf.js
+            cp ci/clientConfig.json src/
             yarn run build-ci
       - run:
           name: Start GraphQL server and service mocks
@@ -69,7 +142,7 @@ jobs:
             export NPM_CONFIG_LOGLEVEL=warn
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             stty cols 80  # https://github.com/DevExpress/testcafe/issues/1469
-            yarn run test
+            yarn run test-e2e
 
   test-engine:
     docker:
@@ -116,7 +189,7 @@ jobs:
           command: |
             source docker/env.sh
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
-            codecov
+            codecov --root ../.. -F engine
 
   test-engine-sci:
     docker:
@@ -183,9 +256,11 @@ workflows:
   commit:
     jobs:
       - test-engine
+      #- test-graphql
+      - test-webapp
   daily:
     jobs:
-      - test-webapp
+      - test-webapp-e2e
     triggers:
       - schedule:
           cron: "0 11 * * 1-5"

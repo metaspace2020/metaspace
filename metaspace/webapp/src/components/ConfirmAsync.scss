@@ -1,0 +1,9 @@
+.confirm-async-message-box {
+  margin-top: 15vh;
+  vertical-align: top;
+  padding-bottom: 20px;
+
+  .el-message-box__content, .el-message-box__btns {
+    padding: 20px 20px 0 20px;
+  }
+}

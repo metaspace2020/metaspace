@@ -1,24 +1,22 @@
 const bodyParser = require('body-parser'),
   compression = require('compression'),
-  {createImgServerAsync} = require('./imageUpload.js'),
-  Resolvers = require('./resolvers.js'),
   config = require('config'),
   express = require('express'),
-  fetch = require('node-fetch'),
+  session = require('express-session'),
+  connectRedis = require('connect-redis'),
   {graphqlExpress, graphiqlExpress} = require('apollo-server-express'),
-  jsondiffpatch = require('jsondiffpatch'),
   jwt = require('express-jwt'),
   cors = require('cors'),
-  knex = require('knex'),
-  makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
+  {makeExecutableSchema, addResolveFunctionsToSchema, addErrorLoggingToSchema, addMockFunctionsToSchema} = require('graphql-tools'),
+  {mergeTypes} = require('merge-graphql-schemas'),
   {maskErrors} = require('graphql-errors'),
-  moment = require('moment'),
-  Promise = require("bluebird"),
-  slack = require('node-slack'),
-  sprintf = require('sprintf-js'),
-  readFile = Promise.promisify(require("fs").readFile);
+  {promisify} = require('util'),
+  readFile = promisify(require("fs").readFile);
 
-const logger = require('./utils.js').logger;
+const {createImgServerAsync} = require('./imageUpload.js'),
+  {configureAuth, initSchema} = require('./src/modules/auth'),
+  Resolvers = require('./resolvers.js'),
+  logger = require('./utils.js').logger;
 
 // subscriptions setup
 const http = require('http'),
@@ -30,19 +28,44 @@ let wsServer = http.createServer((req, res) => {
   res.end();
 });
 
+
+const configureSession = (app) => {
+  let sessionStore = undefined;
+  if (config.redis.host) {
+    const RedisStore = connectRedis(session);
+    sessionStore = new RedisStore(config.redis);
+  }
+
+  app.use(session({
+    store: sessionStore,
+    secret: config.cookie.secret,
+    saveUninitialized: true,
+    resave: false,
+    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }, // 1 month
+    name: 'api.sid',
+  }));
+};
+
 function createHttpServerAsync(config) {
   let app = express();
   let httpServer = http.createServer(app);
 
-  return readFile('schema.graphql', 'utf8')
-    .then((contents) => {
-      const schema = makeExecutableSchema({
-        typeDefs: contents,
-        resolvers: Resolvers,
-        logger
-      });
+  return initSchema()
+    .then(async () => {
+      return mergeTypes([
+        await readFile('schema.graphql', 'utf8'),
+        await readFile('schemas/user.graphql', 'utf8'),
+        await readFile('schemas/group.graphql', 'utf8'),
+      ]);
+    })
+    .then((mergedSchema) => {
+      const schema = makeExecutableSchema({typeDefs: mergedSchema});
+      addResolveFunctionsToSchema(schema, Resolvers);
+      addErrorLoggingToSchema(schema, logger);
 
-      if (process.env.NODE_ENV !== 'development') {
+      if (process.env.NODE_ENV === 'development') {
+        addMockFunctionsToSchema({schema, preserveResolvers: true});
+      } else {
         maskErrors(schema);
       }
 
@@ -64,6 +87,12 @@ function createHttpServerAsync(config) {
         subscriptionsEndpoint: config.websocket_public_url,
       }));
 
+      if (config.features.newAuth) {
+        app.use(bodyParser.json());
+        configureSession(app);
+        configureAuth(app);
+      }
+
       app.use(function (err, req, res, next) {
         res.status(err.status || 500);
         logger.error(err.stack);
@@ -71,6 +100,7 @@ function createHttpServerAsync(config) {
           message: err.message
         });
       });
+
 
       httpServer.listen(config.port);
 
@@ -88,9 +118,6 @@ function createHttpServerAsync(config) {
       logger.info(`SM GraphQL is running on ${config.port} port...`);
 
       return httpServer;
-    })
-    .catch((err) => {
-      logger.error(`Failed to init http server: ${err}`);
     })
 }
 

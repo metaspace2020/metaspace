@@ -5,14 +5,12 @@ const jsondiffpatch = require('jsondiffpatch'),
   {UserError} = require('graphql-errors'),
   _ = require('lodash');
 
-const {db, logger, fetchDS, assertUserCanEditDataset,
+const {logger, fetchDS, assertUserCanEditDataset,
     addProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json');
 
-let {molecularDatabases} = 1;
-
-ajv = new Ajv({allErrors: true});
-validator = ajv.compile(metadataSchema);
+const ajv = new Ajv({allErrors: true});
+const validator = ajv.compile(metadataSchema);
 
 function isEmpty(obj) {
   if (!obj)
@@ -46,10 +44,29 @@ function trimEmptyFields(schema, value) {
 }
 
 function setSubmitter(oldMetadata, newMetadata, user) {
-  const email = oldMetadata != null
-    ? oldMetadata.Submitted_By.Submitter.Email
-    : user.email;
-  _.set(newMetadata, ['Submitted_By', 'Submitter', 'Email'], email)
+  let email;
+  if (oldMetadata == null) {
+    if (user.role == 'admin') {
+      if (newMetadata.Submitted_By.Submitter.Email == user.email) {
+        email = user.email;
+      }
+      else {
+        email = newMetadata.Submitted_By.Submitter.Email;
+      }
+    }
+    else {
+      email = user.email;
+    }
+  }
+  else {
+    if (user.role == 'admin') {
+      email = newMetadata.Submitted_By.Submitter.Email;
+    }
+    else {
+      email = oldMetadata.Submitted_By.Submitter.Email;
+    }
+  }
+  _.set(newMetadata, ['Submitted_By', 'Submitter', 'Email'], email);
 }
 
 function validateMetadata(metadata) {
@@ -130,6 +147,7 @@ function updateObject(obj, upd) {
 }
 
 module.exports = {
+  processingSettingsChanged,
   Mutation: {
     create: async (args, user) => {
       const {id, input, priority} = args;

@@ -89,8 +89,9 @@ function baseDatasetQuery() {
 
 const Resolvers = {
   Person: {
-    name(obj) { return obj.First_Name; },
-    surname(obj) { return obj.Surname; },
+    // FIXME: Using id = name here until we have actual IDs
+    id(obj) { return [obj.First_Name, obj.Surname].join('|||'); },
+    name(obj) { return [obj.First_Name, obj.Surname].filter(n => n).join(' '); },
     email(obj) { return obj.Email; }
   },
 
@@ -150,18 +151,21 @@ const Resolvers = {
       }));
     },
 
-    peopleSuggestions(_, { role, query }, {user}) {
-      const schemaPath = 'Submitted_By.' + (role == 'PI' ? 'Principal_Investigator' : 'Submitter');
+    submitterSuggestions(_, { query }, {user}) {
+      const schemaPath = 'Submitted_By.Submitter';
       const p1 = schemaPath + '.First_Name',
-            p2 = schemaPath + '.Surname',
-            f1 = getPgField(p1),
-            f2 = getPgField(p2);
+        p2 = schemaPath + '.Surname',
+        f1 = getPgField(p1),
+        f2 = getPgField(p2);
       const q = db.from(pgDatasetsViewableByUser(user))
                   .distinct(db.raw(`${f1} as name, ${f2} as surname`))
                   .whereRaw(`${f1} ILIKE ? OR ${f2} ILIKE ?`, ['%' + query + '%', '%' + query + '%']);
       logger.info(q.toString());
       return q.orderBy('name', 'asc').orderBy('surname', 'asc')
-              .then(results => results.map(r => ({First_Name: r.name, Surname: r.surname, Email: ''})))
+              .then(results => results.map(r => ({
+                id: [r.name, r.surname].join('|||'),
+                name: [r.name, r.surname].filter(n => n).join(' '),
+              })))
     },
 
     async molecularDatabases(_, args, {user}) {
@@ -232,6 +236,18 @@ const Resolvers = {
 
     reprocessingNeeded(_, args, {user}) {
       return DSQuery.reprocessingNeeded(args, user);
+    },
+
+    currentUser(_, args, {user}) {
+      if (user == null || user.name == null) {
+        return null;
+      }
+      return {
+        id: user.name.replace(/ /, '|||'), // TODO: Have actual user IDs
+        name: user.name,
+        role: user.role,
+        email: user.email || null,
+      }
     }
   },
 
@@ -255,6 +271,10 @@ const Resolvers = {
 
     name(ds) {
       return ds._source.ds_name;
+    },
+
+    uploadDT(ds) {
+      return ds._source.ds_upload_dt;
     },
 
     configJson(ds) {

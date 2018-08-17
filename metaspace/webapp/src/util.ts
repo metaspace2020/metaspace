@@ -32,9 +32,11 @@ function checkStatus(response: Response): Response {
   }
 }
 
-function getJWT(): Promise<JWT> {
-  return fetch("/getToken", {credentials: 'include'})
-         .then(checkStatus).then(resp => resp.text())
+async function getJWT(): Promise<JWT> {
+  const url = config.features.newAuth ? '/api_auth/gettoken' : '/getToken';
+  const response = await fetch(url, {credentials: 'include'});
+  checkStatus(response);
+  return await response.text();
 }
 
 function decodePayload(jwt: JWT) {

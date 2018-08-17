@@ -21,6 +21,7 @@
                :optionFormatter="f.optionFormatter"
                :value="f.value"
                :valueFormatter="f.valueFormatter"
+               :valueKey="f.valueKey"
                :width="f.width"
                @change="f.onChange"
                @destroy="f.onChange(undefined)">
@@ -35,6 +36,7 @@
    'database',
    'fdrLevel',
    'institution',
+   'group',
    'submitter',
    'datasetIds',
    'compoundName',

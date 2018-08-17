@@ -18,5 +18,7 @@
 
   "ravenDsn": "{{ sm_webapp_sentry_dsn }}",
 
-  "metadataTypes": {{ sm_webapp_metadata_types | to_json }}
+  "metadataTypes": {{ sm_webapp_metadata_types | to_json }},
+
+  "features": {{ sm_webapp_features | to_json }}
 }

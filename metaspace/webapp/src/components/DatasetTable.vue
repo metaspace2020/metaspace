@@ -48,7 +48,7 @@
 </template>
 
 <script>
- import {datasetListQuery, datasetCountQuery} from '../api/dataset';
+ import {datasetDetailItemsQuery, datasetCountQuery} from '../api/dataset';
  import {metadataExportQuery} from '../api/metadata';
  import DatasetItem from './DatasetItem.vue';
  import FilterPanel from './FilterPanel.vue';
@@ -105,16 +105,15 @@
                status
                submitter {
                  name
-                 surname
                }
                institution
              }
            }
          }`,
-         result(data) {
+         result({data}) {
            if (data.datasetStatusUpdated.dataset != null) {
              const {name, status, submitter, institution} = data.datasetStatusUpdated.dataset;
-             const who = `${submitter.name} ${submitter.surname} (${institution})`;
+             const who = `${submitter.name} (${institution})`;
              const statusMap = {
                FINISHED: 'success',
                QUEUED: 'info',
@@ -140,7 +139,7 @@
 
      started: {
        fetchPolicy: 'cache-and-network',
-       query: datasetListQuery,
+       query: datasetDetailItemsQuery,
        update: data => data.allDatasets,
        variables () {
          return this.queryVariables('ANNOTATING');
@@ -149,7 +148,7 @@
 
      queued: {
        fetchPolicy: 'cache-and-network',
-       query: datasetListQuery,
+       query: datasetDetailItemsQuery,
        update: data => data.allDatasets,
        variables () {
          return this.queryVariables('QUEUED');
@@ -158,7 +157,7 @@
 
      finished: {
        fetchPolicy: 'cache-and-network',
-       query: datasetListQuery,
+       query: datasetDetailItemsQuery,
        update: data => data.allDatasets,
        variables () {
          return this.queryVariables('FINISHED');
@@ -177,7 +176,7 @@
 
    methods: {
      formatSubmitter: (row, col) =>
-       row.submitter.name + " " + row.submitter.surname,
+       row.submitter.name,
      formatDatasetName: (row, col) =>
        row.name.split('//', 2)[1],
      formatResolvingPower: (row, col) =>
@@ -221,7 +220,7 @@
                'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime','FDR@10% + DataBase', 'opticalImage'
        ].join(',') + "\n";
 
-       function person(p) { return p ? p.name + ' ' + p.surname : ''; }
+       function person(p) { return p ? p.name : ''; }
 
        function formatRow(row) {
          return [

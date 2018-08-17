@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 import argparse
-import boto3
 from pprint import pprint
 from time import sleep
 from datetime import datetime, timedelta
 from os import path
 from subprocess import check_output
-from yaml import load
 import sys
+
+import boto3
+from yaml import load
 
 
 class AWSInstManager(object):
@@ -22,11 +23,17 @@ class AWSInstManager(object):
         if verbose:
             pprint(self.conf)
 
-    def find_inst_by_hostgroup(self, inst_name):
+    def find_inst_by(self, host_group, first=False):
         instances = list(self.ec2.instances.filter(
-                Filters=[{'Name': 'tag:hostgroup', 'Values': [inst_name]},
+                Filters=[{'Name': 'tag:hostgroup', 'Values': [host_group]},
                          {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending']}]))
-        return instances
+        print('The following instances found: {}'.format(instances))
+
+        if first:
+            assert len(instances) == 1, 'hostgroup {} has >1 instances'.format(host_group)
+            return instances[0]
+        else:
+            return instances
 
     def find_best_price_availability_zone(self, timerange_h, inst_type, platform='Linux/UNIX'):
         price_hist = self.ec2_client.describe_spot_price_history(
@@ -109,10 +116,11 @@ class AWSInstManager(object):
 
         print('Launched {}'.format(insts))
 
-    def start_instances(self, inst_name, inst_type, spot_price, inst_n, image, el_ip_id,
-                        sec_group, host_group, block_dev_maps):
+    def create_instances(self, inst_name, inst_type, inst_n, image,
+                         sec_group, host_group, block_dev_maps,
+                         spot_price=None, el_ip_id=None):
         print('Start {} instance(s) of type {}, name={}'.format(inst_n, inst_type, inst_name))
-        instances = self.find_inst_by_hostgroup(inst_name)
+        instances = self.find_inst_by(host_group)
         new_inst_n = inst_n - len(instances)
 
         if len(instances) > inst_n:
@@ -136,8 +144,8 @@ class AWSInstManager(object):
 
         print('Success')
 
-    def stop_instances(self, inst_name, method='stop'):
-        instances = self.find_inst_by_hostgroup(inst_name)
+    def stop_instances(self, host_group, method='stop'):
+        instances = self.find_inst_by(host_group)
 
         if not self.dry_run:
             for inst in instances:
@@ -151,12 +159,12 @@ class AWSInstManager(object):
         else:
             print('DRY RUN!')
 
-    def start_all_instances(self, components):
+    def create_all_instances(self, components):
         for component in components:
             i = self.conf['instances'][component]
-            self.start_instances(i['hostgroup'], i['type'], i['price'], i['n'], i['image'],
-                                 i['elipalloc'], i['sec_group'], i['hostgroup'],
-                                 i['block_dev_maps'])
+            self.create_instances(i['hostgroup'], i['type'], i['n'], i['image'],
+                                  i['sec_group'], i['hostgroup'], i['block_dev_maps'],
+                                  spot_price=i['price'], el_ip_id=i['elipalloc'])
 
     def stop_all_instances(self, components):
         for component in components:
@@ -164,10 +172,46 @@ class AWSInstManager(object):
             method = 'stop' if i['price'] is None else 'terminate'
             self.stop_instances(i['hostgroup'], method=method)
 
+    def clone_prod_instance(self, suffix='beta'):
+        i_conf = self.conf['instances']['web']
+        inst = self.find_inst_by(i_conf['hostgroup'], first=True)
+
+        image_name = "{}-{}".format(i_conf['hostgroup'], datetime.now().isoformat().replace(':', '-'))
+        resp = self.ec2_client.create_image(InstanceId=inst.id,
+                                            Name=image_name, NoReboot=True)
+        print('Created image: {}'.format(resp))
+
+        beta_host_group = '{}-{}'.format(i_conf['hostgroup'], suffix)
+        self.create_instances(inst_name=i_conf['hostgroup'], inst_type=i_conf['type'],
+                              inst_n=1, image=resp['ImageId'], sec_group=i_conf['sec_group'],
+                              host_group=beta_host_group, block_dev_maps=i_conf['block_dev_maps'])
+
+    def swap_prod_instance(self, suffix='beta'):
+        prod_hostgroup = self.conf['instances']['web']['hostgroup']
+        prod_inst = self.find_inst_by(prod_hostgroup, first=True)
+
+        beta_hostgroup = '{}-{}'.format(self.conf['instances']['web']['hostgroup'], suffix)
+        beta_inst = self.find_inst_by(beta_hostgroup, first=True)
+
+        resp = self.ec2_client.create_tags(Resources=[beta_inst.id], Tags=prod_inst.tags)
+        print('Updated beta instance tags: {}'.format(resp))
+        resp = self.ec2_client.create_tags(Resources=[prod_inst.id], Tags=[
+            {'Key': 'hostgroup', 'Value': ''},
+            {'Key': 'Name', 'Value': '{}-old'.format(prod_hostgroup)}
+        ])
+        print('Updated prod instance tags: {}'.format(resp))
+
+        resp = self.ec2_client.associate_address(AllocationId=self.conf['instances']['web']['elipalloc'],
+                                                 InstanceId=beta_inst.id)
+        print('Associated Elastic IP: {}'.format(resp))
+
+        resp = prod_inst.stop()
+        print('Stopped old prod instance: {}'.format(resp))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SM AWS instances management tool')
-    parser.add_argument('action', type=str, help='start|stop')
+    parser.add_argument('action', type=str, help='create|stop|clone|swap')
     parser.add_argument('--components', help='all,web,master,slave')
     parser.add_argument('--key-name', type=str, help='AWS key name to use')
     parser.add_argument('--stage', dest='stage', default='dev', type=str, help='One of dev/stage/prod')
@@ -182,17 +226,27 @@ if __name__ == '__main__':
     conf = load(open(config_path))
     cluster_conf = conf['cluster_configuration']
 
-    aws_inst_man = AWSInstManager(key_name=args.key_name or conf['aws_key_name'], conf=cluster_conf, region=args.region,
+    aws_inst_man = AWSInstManager(key_name=args.key_name or conf['aws_key_name'],
+                                  conf=cluster_conf, region=args.region,
                                   dry_run=args.dry_run, verbose=True)
 
-    components = args.components.strip(' ').split(',')
-    if 'all' in components:
-        components = ['web', 'master', 'slave']
+    if args.components:
+        components = args.components.strip(' ').split(',')
+        if 'all' in components:
+            components = ['web', 'master', 'slave']
+    else:
+        components = []
 
-    if args.action == 'start':
-        aws_inst_man.start_all_instances(components)
+    if args.action == 'create':
+        aws_inst_man.create_all_instances(components)
     elif args.action == 'stop':
         aws_inst_man.stop_all_instances(components)
+    elif args.action == 'clone':
+        aws_inst_man.clone_prod_instance()
+    elif args.action == 'swap':
+        aws_inst_man.swap_prod_instance()
+    else:
+        raise Exception("Wrong action '{}'".format(args.action))
 
     cmd = '{} update_inventory.py --stage {}'.format(sys.executable, args.stage).split(' ')
     print(check_output(cmd, universal_newlines=True))

@@ -4,25 +4,29 @@
   user: ubuntu
   hosts: web
 
-  tasks:
+  pre_tasks:
     - name: Gather EC2 instance facts
       ec2_metadata_facts:
       tags: [always]
 
-    - import_tasks: ../../deploy_tasks/sm_mol_db.yml
+  roles:
+    - role: supervisorctl
+      tags: [always]
+
+    - role: mol_db_app
       tags: [sm-mol-db]
 
-    - import_tasks: ../../deploy_tasks/sm_api.yml
+    - role: sm_api
       tags: [sm-api]
 
-    - import_tasks: ../../deploy_tasks/sm_graphql.yml
+    - role: sm_graphql
       tags: [sm-graphql]
 
-    - import_tasks: ../../deploy_tasks/sm_web_app.yml
+    - role: sm_web_app
       tags: [sm-web-app]
 
-    - import_tasks: ../../deploy_tasks/sm_cluster_autostart.yml
+    - role: sm_cluster_autostart_app
       tags: [sm-cluster-autostart]
 
-    - import_tasks: ../../deploy_tasks/sm_update_daemon.yml
+    - role: sm_update_daemon
       tags: [sm-update-daemon]

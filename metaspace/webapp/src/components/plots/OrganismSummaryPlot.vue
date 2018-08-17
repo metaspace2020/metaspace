@@ -74,6 +74,12 @@
  export default {
   name: 'organism-summary-plot',
 
+  data() {
+    return {
+      counts: []
+    }
+  },
+
   apollo: {
     counts: {
       query: query,

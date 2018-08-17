@@ -90,7 +90,8 @@ class PersonFilter extends AbstractDatasetFilter {
     this.pgSurnameField = getPgField(schemaPath + '.Surname');
   }
 
-  esFilter({name, surname}) {
+  esFilter(id) {
+    const [name='',surname=''] = id.split('|||');
     return [
       // TODO: make these not_analyzed
       {term: {[this.esField + '.First_Name']: name}},
@@ -98,9 +99,37 @@ class PersonFilter extends AbstractDatasetFilter {
     ];
   }
 
-  pgFilter(q, {name, surname}) {
+  pgFilter(q, id) {
+    const [name,surname] = id.split('|||');
+    // TODO: Change this to a proper ID search when IDs are correctly implemented
     return q.whereRaw(`${this.pgNameField} = ? AND ${this.pgSurnameField} = ?`,
-        [name, surname]);
+      [name, surname]);
+  }
+}
+
+class NotNullFilter extends AbstractDatasetFilter {
+  constructor(schemaPath, options={}) {
+    super(schemaPath, options);
+  }
+
+  esFilter(notNull) {
+    if (notNull === true) {
+      return {exists: {field: this.esField}};
+    } else if (notNull === false) {
+      return {bool: {must_not: {exists: {field: this.esField}}}};
+    } else {
+      return {}
+    }
+  }
+
+  pgFilter(q, notNull) {
+    if (notNull === true) {
+      return q.whereNotNull(this.pgField);
+    } else if (notNull === false) {
+      return q.whereNull(this.pgField);
+    } else {
+      return q
+    }
   }
 }
 
@@ -118,6 +147,7 @@ const datasetFilters = {
   ids: new DatasetIdFilter(),
   status: new ExactMatchFilter('', {esField: 'ds_status', pgField: 'status'}),
   submitter: new PersonFilter('Submitted_By.Submitter'),
+  hasGroup: new NotNullFilter('GroupId'), // FIXME: Use a real field
   metadataType: new ExactMatchFilter('Data_Type', {}),
 }
 

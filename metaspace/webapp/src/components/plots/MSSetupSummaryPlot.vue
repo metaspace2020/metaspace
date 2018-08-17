@@ -11,11 +11,13 @@
  import gql from 'graphql-tag';
 
  function matrixName(matrix) {
-   const match = matrix.replace('_', ' ').match(/\(([A-Z0-9]{2,10})\)/);
+   const match = matrix.replace('_', ' ').match(/\(([A-Z0-9]{2,10})\)/i);
    if (match)
        return match[1];
    return matrix;
  }
+
+ const strieq = (a, b) => String(a).localeCompare(String(b), undefined, {sensitivity: 'base'}) === 0;
 
  const query =
    gql`query GetMSSetupCounts($filter: DatasetFilter, $query: String) {
@@ -31,7 +33,7 @@
       }
   }`;
 
- const minGroupSize = 10;
+ const minGroupSize = process.env.NODE_ENV === 'development' ? 1 : 10;
 
  const geometry = {
    margin: {
@@ -70,12 +72,12 @@
      sectors: [
        {
          label: 'Positive',
-         count: d => d.counts.Positive,
+         count: d => d.counts.positive,
          color: '#e55'
        },
        {
          label: 'Negative',
-         count: d => d.counts.Negative,
+         count: d => d.counts.negative,
          color: '#55e'
        }
      ]
@@ -83,7 +85,7 @@
  };
 
  function drawMaldiCurlyBrace(svg, data, xScale) {
-   const maldiData = data.filter(d => d.sourceType == 'MALDI');
+   const maldiData = data.filter(d => strieq(d.sourceType, 'maldi'));
    if (maldiData.length == 0)
      return;
 
@@ -114,6 +116,12 @@
  export default {
   name: 'mass-spec-setup-plot',
 
+  data() {
+    return {
+      counts: []
+    }
+  },
+
   apollo: {
     counts: {
       query: query,
@@ -136,30 +144,31 @@
 
       let result = [];
       let prev = null;
-      const inverted = {'Positive': 'Negative', 'Negative': 'Positive'}
+      const inverted = {'positive': 'negative', 'negative': 'positive'}
 
       for (let entry of this.counts) {
         const [analyzer, source, matrix, polarity] = entry.fieldValues;
-        if (analyzer == 'N/A' || source == 'N/A')
+        if (strieq(analyzer, 'n/a') || strieq(source, 'n/a'))
           continue;
-        if (source == 'MALDI' && matrix == 'N/A')
+        if (strieq(source, 'maldi') && strieq(matrix, 'n/a'))
           continue;
         if (entry.count < minGroupSize)
           continue;
 
+        const normalizedPolarity = String(polarity).toLowerCase();
         const datum = {
           analyzer,
-          source: source == 'MALDI' ? matrixName(matrix) : source,
+          source: strieq(source, 'maldi') ? matrixName(matrix) : source,
           sourceType: source,
           counts: {
-            [polarity]: entry.count,
-            [inverted[polarity]]: 0
+            [normalizedPolarity]: entry.count,
+            [inverted[normalizedPolarity]]: 0
           },
           totalCount: entry.count
         }
 
         if (prev && ['analyzer', 'source', 'sourceType'].every(f => prev[f] == datum[f])) {
-          ['Positive', 'Negative'].forEach(pol => { prev.counts[pol] += datum.counts[pol] });
+          ['positive', 'negative'].forEach(pol => { prev.counts[pol] += datum.counts[pol] });
           prev.totalCount += datum.totalCount;
         } else {
           result.push(datum);
@@ -187,9 +196,9 @@
            }))
           .sort((a, b) => {
             if (a.sourceType != b.sourceType) {
-              if (a.sourceType == 'MALDI')
+              if (strieq(a.sourceType, 'maldi'))
                 return 1;
-              if (b.sourceType == 'MALDI')
+              if (strieq(b.sourceType, 'maldi'))
                 return -1;
             }
             return b.count - a.count;

@@ -21,7 +21,12 @@ module.exports.module = {
       use: [
         {
           loader: 'ts-loader',
-          options: { appendTsSuffixTo: [/\.vue$/, /\.json$/], onlyCompileBundledFiles: true, transpileOnly: true }
+          options: {
+            appendTsSuffixTo: [/\.vue$/, /\.json$/],
+            onlyCompileBundledFiles: true,
+            transpileOnly: true,
+            configFile: 'tsconfig.client.json'
+          }
         }
       ],
     },
@@ -83,6 +88,8 @@ module.exports.plugins = [
   new ForkTsCheckerWebpackPlugin({
     vue: true,
     workers: 2,
+    async: false,
+    tsconfig: 'tsconfig.client.json'
   }),
 ];
 
