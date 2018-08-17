@@ -1,26 +1,37 @@
 <template>
   <div class="metadata-section">
-    <div class="heading">{{section.title}}</div>
-
     <el-form size="medium"
              label-position="top">
-      <el-col v-for="(field, fieldKey) in section.properties"
-              :span="field.smEditorColWidth"
-              :key="fieldKey">
+      <el-col :span="6">
+        <div class="metadata-section__title">
+          {{section.title}}
+          <el-popover trigger="hover" placement="top" v-if="section.help">
+            <p>{{section.help}}</p>
+            <i slot="reference" class="el-icon-question metadata-help-icon"></i>
+          </el-popover>
+        </div>
+      </el-col>
+      <el-col :span="18">
+        <el-row :gutter="8">
+          <el-col v-for="(field, fieldKey) in section.properties"
+                  :span="field.smEditorColWidth"
+                  :key="fieldKey">
 
-        <form-field
-          :type="field.smEditorType"
-          :name="field.title"
-          :help="field.smEditorHelp"
-          @input="val => onInput([sectionKey, fieldKey], val)"
-          :value="value[fieldKey]"
-          :error="error && error[fieldKey]"
-          :fields="field.items && field.items.properties"
-          :options="field.enum || (field.items && field.items.enum)"
-          :required="section.required && section.required.includes(fieldKey)"
-          :placeholder="field.description"
-          :fetchSuggestions="fetchSuggestionsFunc(fieldKey)"
-        />
+            <form-field
+              :type="field.smEditorType"
+              :name="field.title"
+              :help="field.smEditorHelp"
+              @input="val => onInput([sectionKey, fieldKey], val)"
+              :value="value[fieldKey]"
+              :error="error && error[fieldKey]"
+              :fields="field.items && field.items.properties"
+              :options="field.enum || (field.items && field.items.enum)"
+              :required="section.required && section.required.includes(fieldKey)"
+              :placeholder="field.description"
+              :fetchSuggestions="fetchSuggestionsFunc(fieldKey)"
+            />
+          </el-col>
+        </el-row>
       </el-col>
     </el-form>
   </div>
@@ -65,13 +76,5 @@
 </script>
 
 <style lang="scss">
-  .metadata-section {
-    display: block;
-    max-width: 1000px;
-    > .heading {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-  }
+  @import './FormSection.scss';
 </style>

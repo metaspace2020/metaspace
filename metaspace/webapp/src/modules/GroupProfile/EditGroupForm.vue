@@ -8,7 +8,7 @@
         <span slot="label">
           Short name
           <el-popover trigger="hover" placement="right">
-            <i slot="reference" class="el-icon-question field-label-help"></i>
+            <i slot="reference" class="el-icon-question metadata-help-icon"></i>
             <p>The short name will be shown whenever space is limited.</p>
           </el-popover>
         </span>

@@ -8,7 +8,7 @@
           :value="value.mz"
           :required="required"
         />
-        <div class="subfield-label">mz</div>
+        <div class="subfield-label">mz<span style="color: red;">*</span></div>
         <span class="error-msg" v-if="error && error.mz">{{ error.mz }}</span>
       </el-form-item>
     </el-col>
@@ -21,7 +21,7 @@
           :value="value.Resolving_Power"
           :required="required"
         />
-        <div class="subfield-label">resolving power</div>
+        <div class="subfield-label">resolving power<span style="color: red;">*</span></div>
         <span class="error-msg" v-if="error && error.Resolving_Power">{{ error.Resolving_Power }}</span>
       </el-form-item>
     </el-col>

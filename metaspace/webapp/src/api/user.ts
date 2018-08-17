@@ -50,9 +50,44 @@ export const userProfileQuery =
 }
 `;
 
+export interface DatasetSubmitterFragment {
+  id: string;
+  name: string;
+  primaryGroup: {
+    group: {
+      id: string;
+      name: string;
+    }
+  } | null;
+  groups: {
+    group: {
+      id: string;
+      name: string;
+    }
+  }[] | null;
+}
+
+export const datasetSubmitterFragment =
+  gql`fragment DatasetSubmitterFragment on User {
+    id
+    name
+    primaryGroup {
+      group {
+        id
+        name
+      }
+    }
+    groups {
+      group {
+        id
+        name
+      }
+    }
+  }`;
+
 export const updateUserMutation =
-  gql`mutation ($update: UpdateUserInput!) {
-  updateUser(update: $update) {
+  gql`mutation ($userId: ID!, $update: UpdateUserInput!) {
+  updateUser(userId: $userId, update: $update) {
     id
     name
     email
@@ -60,6 +95,6 @@ export const updateUserMutation =
 }`;
 
 export const deleteUserMutation =
-  gql`mutation ($id: ID!, $deleteDatasets: Boolean!) {
-  deleteUser(id: $id, deleteDatasets: $deleteDatasets)
+  gql`mutation ($userId: ID!, $deleteDatasets: Boolean!) {
+  deleteUser(userId: $userId, deleteDatasets: $deleteDatasets)
 }`;

@@ -5,11 +5,6 @@
         <div class="qq-upload-drop-area-selector qq-upload-drop-area" qq-hide-dropzone>
           <span class="qq-upload-drop-area-text-selector"></span>
         </div>
-        <div class="buttons">
-          <div id="select-files-button" class="qq-upload-button-selector qq-upload-button metasp-button" role="button">
-            Select files
-          </div>
-        </div>
         <span class="qq-drop-processing-selector qq-drop-processing">
           <span>Processing dropped files...</span>
           <span class="qq-drop-processing-spinner-selector qq-drop-processing-spinner"></span>
@@ -55,9 +50,15 @@
             <button type="button" class="qq-ok-button-selector">Ok</button>
           </div>
         </dialog>
-      </div>
-    </script>
 
+      </div>
+
+    </script>
+    <div ref="dropzoneTemplate" style="display:none;">
+      <div v-if="uploadFilenames.length === 0">
+        <span class="chooseFile">Select</span> or {{dropText()}}
+      </div>
+    </div>
     <div ref="fu" id="fu-container">
     </div>
   </div>
@@ -98,26 +99,34 @@
 
    mounted() {
      this.reset();
-     this.onDataTypeConfigUpdate();
+   },
+
+   updated() {
+     // Fine Uploader clones the template into its own elements that Vue doesn't manage. Direct DOM manipulation is
+     // needed to keep it reactive. The solution used here is to copy the rendered HTML from `dropzoneTemplate` into the
+     // corresponding element(s) that Fine Uploader manages
+     const dropzoneContent = this.$refs.dropzoneTemplate;
+     const dropzoneClones = this.$refs.fu.querySelectorAll('.fu-dropzone-clone');
+     for (let i = 0; i < dropzoneClones.length; i++) {
+       dropzoneClones[i].innerHTML = dropzoneContent.innerHTML;
+     }
    },
 
    watch: {
      'dataTypeConfig': function() {
        this.reset();
-       this.onDataTypeConfigUpdate();
      }
    },
 
    methods: {
-     // FineUploader template initialization prevents from using Vue.js template features
-     // had to access DOM directly in this method
-     onDataTypeConfigUpdate() {
+
+     dropText() {
        const multipleFilesAllowed = this.dataTypeConfig.maxFiles > 1;
        const fileExtensions = this.dataTypeConfig.fileExtensions;
        const formattedFileTypes = fileExtensions.length > 1 ? `${fileExtensions.slice(0, -1).join(', ')} and ${fileExtensions[fileExtensions.length - 1]}`
-                                                            : fileExtensions[0];
-       document.getElementById('upload-area-container').setAttribute('qq-drop-area-text',
-         `Drop ${formattedFileTypes} file${multipleFilesAllowed ? 's' : ''} here`);
+         : fileExtensions[0];
+
+	     return `drop ${formattedFileTypes} file${multipleFilesAllowed ? 's' : ''} here`
      },
 
      validate() {
@@ -151,7 +160,16 @@
        this.valid = false;
        this.uuid = uuid();
 
+       // Fine Uploader adds child elements to the `button` element, so an additional `buttonContent` element is used
+       // to prevent Fine Uploader's elements from being overwritten
+       const button = document.createElement('div');
+       button.classList.add('fu-dropzone-content');
+       const buttonContent = document.createElement('div');
+       buttonContent.classList.add('fu-dropzone-clone');
+       button.appendChild(buttonContent);
+
        let options = Object.assign({}, basicOptions, {
+	       button: button,
          validation: {
            allowedExtensions: this.dataTypeConfig.fileExtensions,
            itemLimit: this.dataTypeConfig.maxFiles
@@ -193,6 +211,7 @@
          };
 
          this.fineUploader = new qq.FineUploader(options);
+
        } else {
          options.request = {
            endpoint: `${this.config.aws.s3_bucket}.s3.amazonaws.com`,
@@ -203,6 +222,7 @@
 
          this.fineUploader = new qq.s3.FineUploader(options);
        }
+       document.getElementById('upload-area-container').appendChild(button);
      }
    }
  }
@@ -210,35 +230,18 @@
 </script>
 
 <style>
-
- /* override some defaults */
- .metasp-button {
-   background-color: #0069e0 !important;
-   padding: 7px 20px !important;
-   width: 150px !important;
-   font-size: 16px !important;
- }
-
- #fine-uploader-manual-trigger .qq-upload-button {
-   margin-right: 15px;
- }
-
- #fine-uploader-manual-trigger .buttons {
-   width: 36%;
- }
-
- #fine-uploader-manual-trigger .qq-uploader .qq-total-progress-bar-container {
-   width: 60%;
- }
-
  .qq-uploader {
-   min-height: 50px;
-   max-height: 150px;
+   padding: 10px 0;
+   min-height: 45px;
+   max-height: 100px;
+   margin: 25px 20px 25px 0;
  }
 
- #fu-container {
-   max-width: 1000px;
-   padding: 5px;
+ .fu-dropzone-content {
+   font-size: 200%;
+   transform: translateY(15%);
+   width: 100%;
+   text-align: center;
+   opacity: 0.25;
  }
-
 </style>

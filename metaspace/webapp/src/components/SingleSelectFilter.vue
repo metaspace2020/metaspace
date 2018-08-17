@@ -2,7 +2,7 @@
   <tag-filter :name="name" :removable="removable"
               @destroy="destroy">
     <el-select slot="edit"
-               :filterable="filterable" :clearable="clearable" :value="value" :valueKey="valueKey" @change="onChange">
+               :filterable="filterable" :clearable="clearable" :value="value" @change="onChange">
       <el-option v-for="(item, idx) in options"
                  :label="formatOption(item)" :value="item" :key="idx">
       </el-option>
@@ -41,8 +41,6 @@
    optionFormatter?: Function;
    @Prop()
    valueFormatter?: Function;
-   @Prop({type: String})
-   valueKey?: string;
    @Prop({type: Boolean, default: false})
    clearable!: boolean;
    @Prop({type: Boolean, default: true})

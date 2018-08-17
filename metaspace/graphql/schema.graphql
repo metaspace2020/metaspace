@@ -4,6 +4,11 @@ type Person {
   email: String    # null if current user is not allowed to see
 }
 
+input PersonInput {
+  name: String!
+  email: String!
+}
+
 type SubmitterSearchResult {
   id: ID!
   name: String!
@@ -58,7 +63,7 @@ type Dataset {
   uploadDT: String!
 
   institution: String
-  submitter: Person!
+  submitter: User!
   group: Group
   principalInvestigator: Person
 
@@ -234,6 +239,7 @@ input DatasetCreateInput {
   uploadDT: String
   submitterId: ID
   groupId: ID
+  principalInvestigator: PersonInput
   isPublic: Boolean! = true
   molDBs: [String!]!
   adducts: [String!]!
@@ -246,6 +252,7 @@ input DatasetUpdateInput {
   metadataJson: String
   submitterId: ID
   groupId: ID
+  principalInvestigator: PersonInput
   isPublic: Boolean = true
   molDBs: [String!]
   adducts: [String!]

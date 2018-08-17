@@ -1,7 +1,7 @@
 const sprintf = require('sprintf-js'),
   {UserError} = require('graphql-errors'),
   fetch = require('node-fetch'),
-  lodash = require('lodash');
+  _ = require('lodash');
 
 const config = require('config'),
   {esSearchResults, esCountResults, esCountGroupedResults,
@@ -248,6 +248,21 @@ const Resolvers = {
         role: user.role,
         email: user.email || null,
       }
+    },
+    async currentUserLastSubmittedDataset(_, args, {user}) {
+      if (user == null || user.name == null) {
+        return null;
+      }
+      const lastDataset = await db('dataset')
+        .whereRaw("metadata#>>'{Submitted_By,Submitter,Email}' = ?", [user.email])
+        .orderBy('upload_dt', 'desc')
+        .select('id')
+        .first();
+      if (lastDataset != null) {
+        return await esDatasetByID(lastDataset.id, user);
+      } else {
+        return null;
+      }
     }
   },
 
@@ -312,11 +327,11 @@ const Resolvers = {
     metadataType(ds) { return dsField(ds, 'metadataType'); },
 
     submitter(ds) {
-      return ds._source.ds_meta.Submitted_By.Submitter;
+      return _.get(ds._source.ds_meta, 'Submitted_By.Submitter');
     },
 
     principalInvestigator(ds) {
-      return ds._source.ds_meta.Submitted_By.Principal_Investigator;
+      return _.get(ds._source.ds_meta, 'Submitted_By.Principal_Investigator');
     },
 
     analyzer(ds) {

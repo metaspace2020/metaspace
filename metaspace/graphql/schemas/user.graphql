@@ -8,7 +8,6 @@ type User {
 }
 
 input UpdateUserInput {
-  id: ID                  # For admins
   name: String
   role: String
   email: String
@@ -17,11 +16,11 @@ input UpdateUserInput {
 
 type Query {
   currentUser: User
-  user(id: ID!): User                # For admins
+  user(userId: ID!): User                # For admins
   allUsers(query: String): [User!]!  # For admins
 }
 
 type Mutation {
-  updateUser(update: UpdateUserInput): User!
-  deleteUser(id: ID!, deleteDatasets: Boolean!): Boolean!
+  updateUser(userId: ID!, update: UpdateUserInput): User!
+  deleteUser(userId: ID!, deleteDatasets: Boolean!): Boolean!
 }
