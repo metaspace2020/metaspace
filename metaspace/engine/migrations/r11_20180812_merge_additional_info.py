@@ -1,58 +1,69 @@
 from sm.engine.db import DB
+from sm.engine.es_export import ESExporter
 from sm.engine.util import SMConfig
-import json
+from sm.engine.dataset import Dataset
 import argparse
 
-SEL_METADATA = 'SELECT id, metadata FROM dataset'
-UPDATE_METADATA = 'UPDATE dataset SET metadata = %s WHERE id = %s'
+SEL_IDS = 'SELECT id FROM dataset'
 
-def mergeFields(db, enabledLogs):
-    entriesToRemove = ['Publication_DOI', 'Sample_Description_Freetext', 'Sample_Preparation_Freetext',
-                       'Additional_Information_Freetext', 'Expected_Molecules_Freetext']
-    selectDatasetsMetadata = db.select(SEL_METADATA, params=None)
-
-    logs = ''
+def mergeFields(db, es, enabledLogs):
+    ds_ids = db.select(SEL_IDS, params=None)
     notValidDatasets = []
 
-    for dataset in selectDatasetsMetadata:
-        datasetID = dataset[0]
-        metadata = dataset[1]
-        allVals = ''
+    for i, (id,) in enumerate(ds_ids):
+        log_prefix = f'[{i}/{len(ds_ids)}]'
+        try:
+            dataset = Dataset.load(db, id)
+            section = dataset.metadata.get('Additional_Information', {})
 
-        if (sorted(metadata['Additional_Information'].keys()) == sorted(entriesToRemove)):
-            for k in entriesToRemove:
-                if (metadata['Additional_Information'][k] != ''):
-                    allVals = allVals + metadata['Additional_Information'][k] + ' '
-                metadata['Additional_Information'].pop(k, None)
-            metadata['Additional_Information']['Supplementary'] = allVals
-            db.alter(UPDATE_METADATA, params=(json.dumps(metadata), datasetID,))
-        else:
-            for k in entriesToRemove:
-                if k in metadata['Additional_Information']:
-                    logs = logs + ('True | PROPERTY {} DOES EXISTS ON Additional_Information | ID={}\n'.format(k, datasetID))
-                else:
-                    logs = logs + ('False | {} PROPERTY DOESN\'T EXIST ON Additional_Information | ID={}\n'.format(k, datasetID))
-                    notValidDatasets.append(datasetID)
+            if section.get('Supplementary') == None:
+                vals = []
 
-    if (enabledLogs == True):
-        print(logs)
+                if section.get('Additional_Information_Freetext', '').strip():
+                    vals.append(section['Additional_Information_Freetext'])
+                if section.get('Sample_Description_Freetext', '').strip():
+                    vals.append('Sample Description: ' + section['Sample_Description_Freetext'])
+                if section.get('Sample_Preparation_Freetext', '').strip():
+                    vals.append('Sample Preparation: ' + section['Sample_Preparation_Freetext'])
+                if section.get('Expected_Molecules_Freetext', '').strip():
+                    vals.append('Expected Molecules: ' + section['Expected_Molecules_Freetext'])
+                if section.get('Publication_DOI', '').strip():
+                    vals.append('Publication DOI: ' + section['Publication_DOI'])
 
-    print('Problem occurred with the following datasets IDs, please check the logs\n', list(set(notValidDatasets)))
+                dataset.metadata['Additional_Information'] = {'Supplementary': '\n'.join(vals)}
+
+                dataset.save(db, es)
+
+                if enabledLogs:
+                    print(f'{log_prefix} Processed {id} merged {len(vals)} fields')
+            else:
+                if enabledLogs:
+                    print(f'{log_prefix} Skipped already migrated dataset {id}')
+
+        except Exception as ex:
+            notValidDatasets.append(id)
+            print(f'{log_prefix} Error processing dataset {id}')
+            print(ex)
+
+    if notValidDatasets:
+        print('Problem occurred with the following datasets IDs, please check the logs\n', list(set(notValidDatasets)))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Migration script: merging all fields in additional information of"
                                                  " metadata into one 'Supplementary'")
     parser.add_argument('--config', dest='sm_config_path', default='conf/config.json', type=str, help='SM config path')
-    parser.add_argument('--logs', dest='logs', default='False', type=bool, help='Enable logs to track merging')
+    parser.add_argument('--logs', dest='logs', default='True', type=bool, help='Enable logs to track merging')
     args = parser.parse_args()
 
     SMConfig.set_path(args.sm_config_path)
     sm_config = SMConfig.get_conf()
     db = DB(sm_config['db'])
+    es = ESExporter(db)
 
     if args.logs:
         enabledLogs = True
     else:
         enabledLogs = False
 
-    mergeFields(db, enabledLogs)
+    mergeFields(db, es, enabledLogs)
