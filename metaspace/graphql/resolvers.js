@@ -263,10 +263,6 @@ const Resolvers = {
       } else {
         return null;
       }
-    },
-
-    allGroups() {
-      return []
     }
   },
 
@@ -331,13 +327,7 @@ const Resolvers = {
     metadataType(ds) { return dsField(ds, 'metadataType'); },
 
     submitter(ds) {
-      const submitter = _.get(ds._source.ds_meta, 'Submitted_By.Submitter');
-      const name = submitter && (submitter.Name || `${submitter.First_Name} ${submitter.Surname}`) || 'Name';
-      return {
-        id: name, //FIXME: get from database
-        name: name,
-        ...submitter,
-      }
+      return _.get(ds._source.ds_meta, 'Submitted_By.Submitter');
     },
 
     principalInvestigator(ds) {

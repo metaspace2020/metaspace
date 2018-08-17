@@ -123,14 +123,10 @@
             groupId: this.groupId
           }
         },
-        watchLoading(this: ViewGroupProfile, isLoading: boolean) {
+        update(data) {
           // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
           // button that causes this query to refetch
-          if (!isLoading) {
-            this.loaded = true;
-          }
-        },
-        update(data) {
+          this.loaded = true;
           return data;
         }
       },
