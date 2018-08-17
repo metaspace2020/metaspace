@@ -163,6 +163,7 @@ sm_graphql_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/cal
 sm_graphql_cookie_secret: COOKIE_SECRET
 sm_graphql_features:
   newAuth: false
+  graphqlMocks: false
 
 sm_webapp_hostname: "{{ web_host }}"
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
