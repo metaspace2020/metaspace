@@ -240,10 +240,8 @@
     }
 
     get groupOptions() {
-      if (this.submitter == null || this.submitter.groups == null) {
-        return [];
-      }
-      const options = this.submitter.groups.map(({group: {id, name}}) => ({
+      const groups = this.submitter != null && this.submitter.groups || [];
+      const options = groups.map(({group: {id, name}}) => ({
         value: id,
         label: name,
       }));
