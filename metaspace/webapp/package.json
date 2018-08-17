@@ -13,7 +13,7 @@
     "cucumber-test": "cucumber-js --compiler ts:ts-node/register tests/e2e/ --fail-fast",
     "coverage": "jest --coverage",
     "deref-schema": "node ./deref_schema.js src/assets",
-    "fetch-local-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint http://localhost:8999/graphql",
+    "generate-local-graphql-schema": "NODE_PATH=../graphql/node_modules node ../graphql/bin/generate-json-graphql-schema.js tests/utils/graphql-schema.json",
     "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint http://metaspace2020.eu/graphql"
   },
   "dependencies": {
@@ -97,6 +97,7 @@
     "@types/plotly.js": "1.28.11",
     "@types/webpack-env": "1.13.1",
     "@vue/test-utils": "^1.0.0-beta.20",
+    "apollo": "^1.7.0",
     "apollo-link-schema": "^1.1.0",
     "autoprefixer": "^6.7.2",
     "babel": "6.23.0",

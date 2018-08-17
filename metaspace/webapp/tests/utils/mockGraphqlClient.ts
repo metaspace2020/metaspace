@@ -34,13 +34,33 @@ let graphqlClient: ApolloClient<NormalizedCacheObject>;
 export let apolloProvider: VueApollo;
 export let provide: any;
 
-export const initMockGraphqlClient = (mocks?: IMocks) => {
+const getGraphqlSchema = () => {
   // const serverUrl = config.graphqlUrl || 'http://localhost:8888/graphql';
   // const link = new HttpLink({ uri: serverUrl, fetch: fetch as any });
   // const schema = await introspectSchema(link);
 
+  let schemaJson;
+  try {
+    schemaJson = require('./graphql-schema.json');
+  } catch (err) {
+    console.error('tests/utils/graphql-schema.json not found. Please run `yarn run generate-local-graphql-schema`.')
+    throw err;
+  }
+
+  // Normalize the schema because apollo-cli and graphql.js produce different formats, neither is what `buildClientSchema` expects
+  // buildClientSchema expects `{__schema: {"queryType": ...}}`
+  // apollo-cli produces `{"queryType": ...}`
+  // graphql.js produces `{data:{__schema: {"queryType": ...}}}`
+  if (schemaJson.data) { schemaJson = schemaJson.data; }
+  if (!schemaJson.__schema) { schemaJson = {__schema: schemaJson}; }
+  return schemaJson;
+}
+
+export const initMockGraphqlClient = (mocks?: IMocks) => {
+
+
   const schema = makeRemoteExecutableSchema({
-    schema: buildClientSchema(require('./graphql-schema.json').data)
+    schema: buildClientSchema(getGraphqlSchema())
   });
 
   addMockFunctionsToSchema({
@@ -60,6 +80,7 @@ export const initMockGraphqlClient = (mocks?: IMocks) => {
 
   apolloProvider = new VueApollo({ defaultClient: graphqlClient });
   provide = apolloProvider.provide();
+
 };
 
 export const refreshLoginStatus = jest.fn();
