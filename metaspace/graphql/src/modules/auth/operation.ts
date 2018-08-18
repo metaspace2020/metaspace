@@ -1,133 +1,141 @@
 import * as bcrypt from 'bcrypt'
 import * as uuid from 'uuid'
-import * as Knex from 'knex'
+import {Connection, getRepository, Repository, } from 'typeorm';
 
-import config from '../../utils/config'
-import {createExpiry} from "./utils"
-import {createUpdateTable, DbRow} from '../../utils/db'
-import * as emailService from './email'
-import {logger} from '../../utils'
-import {DbUser, initSchema, NewDbUser} from './model'
+import * as emailService from './email';
+import config from '../../utils/config';
+import {logger, createConnection} from '../../utils';
+import {Credentials} from './model';
+import {User} from '../user/model';
+
+export interface UserCredentialsInput {
+  email: string;
+  name: string;
+  password?: string;
+  googleId?: string;
+}
 
 const NUM_ROUNDS = 12;
 
-let knex: Knex
-let updateTable: (name: string, row: DbRow) => Promise<any>
+let connection: Connection;
+let credRepo: Repository<Credentials>;
+let userRepo: Repository<User>;
 
-export const initOperation = async (knexObj: Knex) => {
-  knex = knexObj
-  await initSchema(knex)
-  updateTable = createUpdateTable(knex)
-}
-
-const hashPassword = async (password: string|undefined): Promise<string|null> => {
-  return (password) ? await bcrypt.hash(password, NUM_ROUNDS) : null;
-};
-
-export const verifyPassword = async (password: string, hash: string|null): Promise<boolean|undefined> => {
-  return (hash) ? await bcrypt.compare(password, hash) : undefined;
+export const initOperation = async (typeormConn?: Connection) => {
+  connection = typeormConn || await createConnection();
+  credRepo = getRepository(Credentials);
+  userRepo = getRepository(User);
 };
 
 // FIXME: some mechanism should be added so that a user's other sessions are revoked when they change their password, etc.
 
-const tokenExpired = (expires: Date|null): boolean => {
+const findUserByEmail = async (email: string) => {
+  return await userRepo.findOne({
+    relations: ['credentials'],
+    where: { 'LOWER(email) = ?': email }
+  });
+};
+
+const findUserByGoogleId = async (googleId: string|undefined) => {
+  return await userRepo.findOne({
+    relations: ['credentials'],
+    where: { 'googleId': googleId }
+  });
+};
+
+export const createExpiry = (minutes: number=10) => {
+  const now = new Date().valueOf();
+  return new Date( now + minutes * 60 * 1000);
+};
+
+const tokenExpired = (expires?: Date|null): boolean => {
   return expires == null || expires < new Date();
 };
 
-export const findUserById = async (id: number): Promise<DbUser | undefined> => {
-  return await knex('user').where('id', id).first();
-};
-
-export const findUserByEmail = async (email: string): Promise<DbUser | undefined> => {
-  return await knex('user').whereRaw('LOWER(email) = ?', email.toLowerCase()).first();
-};
-
-export const findUserByGoogleId = async (googleId: string|undefined): Promise<DbUser | undefined> => {
-  if (googleId) {
-    return await knex('user').where('googleId', googleId).first();
+const sendEmailVerificationToken = async (cred: Credentials, email: string) => {
+  if (cred.emailVerificationToken == null || tokenExpired(cred.emailVerificationTokenExpires)) {
+    cred.emailVerificationToken = uuid.v4();
+    cred.emailVerificationTokenExpires = createExpiry();
+    logger.debug(`Token is null or expired for ${cred.UUID}. New one generated: ${cred.emailVerificationToken}`);
+    await credRepo.update({UUID: cred.UUID}, cred);
   }
+  const link = `${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(email)}&token=${encodeURIComponent(cred.emailVerificationToken)}`;
+  emailService.sendVerificationEmail(email, link);
+  logger.debug(`Resent email verification to ${email}: ${link}`);
 };
 
-const sendEmailVerificationToken = async (user: DbUser) => {
-  if (user.emailVerificationToken == null || tokenExpired(user.emailVerificationTokenExpires)) {
-    user.emailVerificationToken = uuid.v4();
-    user.emailVerificationTokenExpires = createExpiry();
-    logger.debug(`Token is null or expired for ${user.email}. New one generated: ${user.emailVerificationToken}`);
-    await updateTable('user', user);
-  }
-  const link = `${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(user.email)}&token=${encodeURIComponent(user.emailVerificationToken)}`;
-  emailService.sendVerificationEmail(user.email, link);
-  logger.debug(`Resend email verification to ${user.email}: ${link}`);
+const createGoogleCredentials = async (userCred: UserCredentialsInput): Promise<Credentials> => {
+  // TODO: Add a test case
+  const newCred = {
+    googleId: userCred.googleId || null,
+  };
+  await credRepo.insert(newCred);
+  logger.info(`New google user added: ${userCred.email}`);
+  return newCred;
 };
 
-const createGoogleUser = async (userDetails: NewDbUser) => {
-  const existingUser = await findUserByGoogleId(userDetails.googleId);
+const hashPassword = async (password: string|undefined): Promise<string|undefined> => {
+  return (password) ? await bcrypt.hash(password, NUM_ROUNDS) : undefined;
+};
+
+export const verifyPassword = async (password: string, hash: string|null|undefined): Promise<boolean|undefined> => {
+  return (hash) ? await bcrypt.compare(password, hash) : undefined;
+};
+
+const createLocalCredentials = async (userCred: UserCredentialsInput): Promise<Credentials> => {
+  const cred: Credentials = {
+    hash: await hashPassword(userCred.password),
+    googleId: userCred.googleId || undefined,
+    emailVerificationToken: uuid.v4(),
+    emailVerificationTokenExpires: createExpiry(),
+    emailVerified: false
+  };
+  await credRepo.insert(cred);
+  await sendEmailVerificationToken(cred, userCred.email);
+  return cred;
+};
+
+export const createUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
+  const existingUser = await findUserByEmail(userCred.email);
   if (existingUser == null) {
-    const newUser = {
-      email: userDetails.email,
-      name: userDetails.name || null,
-      googleId: userDetails.googleId || null,
-      role: 'user'
-    };
-    await knex('user').insert(newUser);
-    logger.info(`New google user added: ${userDetails.email}`);
-  }
-};
+    const newCred = userCred.googleId ?
+      await createGoogleCredentials(userCred) :
+      await createLocalCredentials(userCred);
 
-const createLocalUser = async (userDetails: NewDbUser) => {
-  const existingUser = await findUserByEmail(userDetails.email);
-  if (existingUser == null) {
-    const emailVerificationToken = uuid.v4(),
-      emailVerificationTokenExpires = createExpiry(),
-      passwordHash = await hashPassword(userDetails.password);
-    const newUser = {
-      email: userDetails.email,
-      hash: passwordHash,
-      name: userDetails.name || null,
-      googleId: userDetails.googleId || null,
-      role: 'user',
-      emailVerificationToken,
-      emailVerificationTokenExpires,
-      resetPasswordToken: null,
-      emailVerified: false,
+    const newUser: User = {
+      email: userCred.email,
+      name: userCred.name,
+      credentials: newCred
     };
-    await knex('user').insert(newUser);
-    const link = `${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(userDetails.email)}&token=${encodeURIComponent(emailVerificationToken)}`;
-    emailService.sendVerificationEmail(userDetails.email, link);
-    logger.debug(`Verification email sent to ${userDetails.email}: ${link}`);
-  } else if (!existingUser.emailVerified) {
-    await sendEmailVerificationToken(existingUser);
+    await userRepo.insert(newUser);
+  }
+  else if (!existingUser.credentials.emailVerified) {
+    await sendEmailVerificationToken(existingUser.credentials, existingUser.email);
   } else {
     emailService.sendLoginEmail(existingUser.email);
     logger.debug(`Email already verified. Sent log in email to ${existingUser.email}`);
   }
 };
 
-export const createUser = async (userDetails: NewDbUser): Promise<void> => {
-  if (userDetails.googleId) {
-    await createGoogleUser(userDetails);
-  }
-  else {
-    await createLocalUser(userDetails);
-  }
-};
-
-export const verifyEmail = async (email: string, token: string): Promise<DbUser | undefined> => {
+export const verifyEmail = async (email: string, token: string): Promise<User|undefined> => {
   const user = await findUserByEmail(email);
   if (user) {
-    if (user.emailVerificationToken !== token || tokenExpired(user.emailVerificationTokenExpires)) {
+    if (user.credentials.emailVerificationToken !== token
+      || tokenExpired(user.credentials.emailVerificationTokenExpires)) {
       logger.debug(`Token '${token}' is wrong or expired for ${email}`);
     }
     else {
-      const updUser = {
-        ...user,
+      const updCred: Credentials = {
+        ...user.credentials,
         emailVerified: true,
         emailVerificationToken: null,
         emailVerificationTokenExpires: null,
       };
-      await updateTable('user', updUser);
+      await credRepo.save(updCred);
+      user.credentials = updCred;
+      await userRepo.save(user);
       logger.info(`Verified user email ${email}`);
-      return updUser;
+      return user;
     }
   }
   else {
@@ -141,41 +149,42 @@ export const sendResetPasswordToken = async (email: string): Promise<void> => {
     throw new Error(`User with ${email} email does not exist`);
   }
 
+  const cred = user.credentials;
   let resetPasswordToken;
-  if (user.resetPasswordToken == null || tokenExpired(user.resetPasswordTokenExpires)) {
+  if (cred.resetPasswordToken == null || tokenExpired(cred.resetPasswordTokenExpires)) {
     resetPasswordToken = uuid.v4();
-    logger.debug(`Token '${user.resetPasswordToken}' expired for ${email}. A new one generated: ${resetPasswordToken}`);
-    const updUser = {
-      ...user,
+    logger.debug(`Token '${cred.resetPasswordToken}' expired for ${email}. A new one generated: ${resetPasswordToken}`);
+    const updCred = {
+      ...cred,
       resetPasswordToken,
       resetPasswordTokenExpires: createExpiry()
     };
-    await updateTable('user', updUser);
+    await credRepo.save(updCred);
   }
   else {
-    resetPasswordToken = user.resetPasswordToken;
+    resetPasswordToken = cred.resetPasswordToken;
   }
   const link = `${config.web_public_url}/#/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetPasswordToken)}`;
   emailService.sendResetPasswordEmail(email, link);
   logger.debug(`Sent password reset email to ${email}: ${link}`);
 };
 
-export const resetPassword = async (email: string, password: string, token: string): Promise<DbUser | undefined> => {
+export const resetPassword = async (email: string, password: string, token: string): Promise<User | undefined> => {
   const user = await findUserByEmail(email);
   if (user) {
-    if (user.resetPasswordToken !== token || tokenExpired(user.resetPasswordTokenExpires)) {
-      logger.debug(`Token '${user.resetPasswordToken}' is wrong or expired for ${email}`);
+    if (user.credentials.resetPasswordToken !== token || tokenExpired(user.credentials.resetPasswordTokenExpires)) {
+      logger.debug(`Token '${user.credentials.resetPasswordToken}' is wrong or expired for ${email}`);
     }
     else {
-      const updUser = {
-        ...user,
+      const updCred = {
+        ...user.credentials,
         hash: await hashPassword(password),
         resetPasswordToken: null,
         resetPasswordTokenExpires: null
       };
-      await updateTable('user', updUser);
+      await credRepo.save(updCred);
       logger.info(`Successful password reset: ${email}`);
-      return updUser;
+      return userRepo.findOne({relations: ['credentials'], where: {UUID: user.UUID}});
     }
   }
 };

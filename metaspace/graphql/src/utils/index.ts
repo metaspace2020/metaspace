@@ -1,3 +1,3 @@
-import * as utils from '../../utils';
+export {logger} from '../../utils';
 
-export const logger = utils.logger;
+export {createConnection} from './db';

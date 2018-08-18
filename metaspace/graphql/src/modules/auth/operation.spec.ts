@@ -1,43 +1,98 @@
-import * as Knex from 'knex';
+import * as uuid from 'uuid'
+import * as Knex from 'knex'
+import {Connection, getRepository} from 'typeorm'
 
 import config from '../../utils/config';
-import {createExpiry} from "./utils";
-import {createConnection} from '../../utils/db'
+import {createExpiry} from "./operation";
+import {createConnection, DbSchemaName} from '../../utils/db'
 import {
-  createUser,
+  createUserCredentials,
   verifyEmail,
   resetPassword,
   sendResetPasswordToken,
   verifyPassword,
-  initOperation} from "./operation";
+  initOperation,
+} from './operation'
+import {Credentials} from './model';
+import {User} from '../user/model';
 
 jest.mock('./email');
 import * as _mockEmail from './email';
 const mockEmail = _mockEmail as jest.Mocked<typeof _mockEmail>;
 
+async function createUserCredentialsEntities(connection: Connection, user?: Object, cred?: Object) {
+  const defaultCred = {
+    hash: 'some hash',
+    emailVerificationToken: 'abc',
+    emailVerificationTokenExpires: createExpiry(1),
+    resetPasswordToken: null,
+  };
+  const updCred = {
+    ...defaultCred,
+    ...cred
+  } as Credentials;
+  await connection.manager.insert(Credentials, updCred);
+
+  const defaultUser = {
+    email: 'admin@localhost',
+    name: 'Name',
+  };
+  const updUser = {
+    ...defaultUser,
+    ...user,
+    credentials: updCred
+  } as User;
+  await connection.manager.insert(User, updUser);
+
+  return {
+    user: updUser,
+    cred: updCred
+  };
+}
+
 describe('Database operations with user', () => {
-  let knexAdmin: Knex
-  let knex: Knex
+  let knexAdmin: Knex;
+  let knex: Knex;
+  let typeormConn: Connection;
+  let UUID: string;
 
   beforeAll(async () => {
     console.log('> beforeAll');
 
-    knexAdmin = createConnection({
-      host     : 'localhost',
-      user     : 'postgres',
-      database : 'postgres'
+    knexAdmin = Knex({
+      client: 'postgres',
+      connection: {
+        host     : config.db.host,
+        user     : 'postgres',
+        database : 'postgres'
+      },
+      debug: false
     });
-    await knexAdmin.raw(`DROP DATABASE IF EXISTS ${config.db.database}`)
-    await knexAdmin.raw(`CREATE DATABASE ${config.db.database} OWNER ${config.db.user}`)
+    await knexAdmin.raw(`DROP DATABASE IF EXISTS ${config.db.database};`);
+    await knexAdmin.raw(`CREATE DATABASE ${config.db.database} OWNER ${config.db.user}`);
 
-    console.log(config.db)
-    knex = createConnection()
-    await initOperation(knex)
+    knex = Knex({
+      client: 'postgres',
+      connection: {
+        host: config.db.host,
+        database: config.db.database,
+        user: 'postgres'
+      },
+      searchPath: ['public', DbSchemaName],
+      debug: false
+    });
+    await knex.raw(`
+      CREATE SCHEMA ${DbSchemaName} AUTHORIZATION ${config.db.user};
+      CREATE EXTENSION "uuid-ossp";`);
+
+    typeormConn = await createConnection();
+    await initOperation(typeormConn);
   });
 
   afterAll(async () => {
     console.log('> afterAll');
 
+    await typeormConn.close();
     await knex.destroy();
 
     await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
@@ -48,191 +103,158 @@ describe('Database operations with user', () => {
   });
 
   afterEach(async () => {
-    await knex.from('user').truncate();
+    await knex.raw('TRUNCATE TABLE "credentials" CASCADE');
   });
 
-  test('create absolutely new user', async () => {
-    await createUser({
+  test('create new user credentials', async () => {
+    await createUserCredentials({
+      email: 'admin@localhost',
       name: 'Name',
       password: 'password',
-      email: 'admin@localhost'
     });
 
-    const user = await knex('user').select(['name', 'email', 'role', 'emailVerified']).first();
-    expect(user).toMatchObject({
+    const cred = await knex('credentials').select(
+      ['UUID', 'hash', 'emailVerified']).first();
+    expect(cred.UUID).toBeDefined();
+    expect(cred.hash).toBeDefined();
+    expect(cred.emailVerified).toEqual(false);
+
+    const user = await knex('user').select(
+      ['UUID', 'email', 'name']).first();
+    expect(user.UUID).toBeDefined();
+    expect(user.email).toEqual('admin@localhost');
+    expect(user.name).toEqual('Name');
+
+    const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
+    expect(sendEmailCallArgs).toBeDefined()
+    expect(sendEmailCallArgs[0]).toBe('admin@localhost');
+  });
+
+  test('create credentials when user already exists', async () => {
+    let {user, cred} = await createUserCredentialsEntities(typeormConn);
+
+    await createUserCredentials({
       name: 'Name',
+      password: 'password',
       email: 'admin@localhost',
-      emailVerified: false
     });
+
+    let newCred = (await typeormConn.manager.findOne(Credentials)) as Credentials;
+    expect(newCred).toMatchObject(cred);
+
     const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
     expect(sendEmailCallArgs[0]).toBe('admin@localhost');
   });
 
-  test('create user when it already exists', async () => {
-    await knex('user').insert({
-      name: 'Name',
-      email: 'admin@localhost',
-      emailVerificationToken: 'abc',
-      emailVerificationTokenExpires: createExpiry(1)
-    });
-    const fields = ['email', 'hash', 'name', 'emailVerificationToken'];
-    const oldUser = await knex('user').select(fields).first();
+  test('create credentials when user already exists but email verification token expired', async () => {
+    let {user: oldUser, cred: oldCred} = await createUserCredentialsEntities(
+      typeormConn, {}, {emailVerificationTokenExpires: createExpiry(-1)});
 
-    await createUser({
+    await createUserCredentials({
       name: 'Name',
       password: 'password',
       email: 'admin@localhost'
     });
 
-    let newUser = await knex('user').select(fields).first();
-    expect(newUser).toMatchObject(oldUser);
-
-    const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
-    expect(sendEmailCallArgs[0]).toBe('admin@localhost');
-  });
-
-  test('create user when it already exists but email verification token expired', async () => {
-    await knex('user').insert({
-      name: 'Name',
-      email: 'admin@localhost',
-      emailVerificationToken: 'abc',
-      emailVerificationTokenExpires: createExpiry(-1)
-    });
-    const oldUser = await knex('user').select(['email', 'hash', 'name']).first();
-    const oldUserVerificationToken = (await knex('user')
-      .select(['emailVerificationToken']).first()).emailVerificationToken;
-
-    await createUser({
-      name: 'Name',
-      password: 'password',
-      email: 'admin@localhost'
-    });
-
-    let newUser = await knex('user').select(['email', 'hash', 'name']).first();
-    expect(newUser).toMatchObject(oldUser);
-    const newUserEmailVerificationToken = (await knex('user')
-      .select(['emailVerificationToken']).first()).emailVerificationToken;
-    expect(oldUserVerificationToken).not.toEqual(newUserEmailVerificationToken);
+    const newCred = (await typeormConn.manager.findOne(Credentials)) as Credentials;
+    expect(newCred.hash).toEqual(oldCred.hash);
+    expect(newCred.emailVerificationToken).not.toEqual(oldCred.emailVerificationToken);
+    expect(newCred.emailVerificationTokenExpires).toBeDefined();
+    expect((newCred.emailVerificationTokenExpires as Date).valueOf())
+      .toBeGreaterThan((oldCred.emailVerificationTokenExpires as Date).valueOf());
 
     const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
     expect(sendEmailCallArgs[0]).toBe('admin@localhost');
   });
 
   test('create user when it already exists, email verified', async () => {
-    await knex('user').insert({
-      name: 'Name',
-      email: 'admin@localhost',
-      emailVerificationToken: null,
-      emailVerified: true
-    });
-    const fields = ['email', 'hash', 'name', 'emailVerified', 'emailVerificationToken'];
-    const oldUser = await knex('user').select(fields).first();
+    let {user, cred} = await createUserCredentialsEntities(
+      typeormConn, {}, {emailVerified: true});
 
-    await createUser({
+    await createUserCredentials({
       name: 'Name',
       password: 'password',
       email: 'admin@localhost'
     });
 
-    let newUser = await knex('user').select(fields).first();
-    expect(newUser).toMatchObject(oldUser);
+    const updCred = await typeormConn.manager.findOne(Credentials);
+    expect(updCred).toMatchObject(cred);
 
     const sendEmailCallArgs = mockEmail.sendLoginEmail.mock.calls[0];
     expect(sendEmailCallArgs[0]).toBe('admin@localhost');
   });
 
   test('verify email', async () => {
-    await knex('user').insert({
-      name: 'Name',
-      email: 'admin@localhost',
-      emailVerificationToken: 'abc',
-      emailVerificationTokenExpires: createExpiry(1),
-      emailVerified: false
-    });
+    let {user, cred} = await createUserCredentialsEntities(typeormConn);
 
-    await verifyEmail('admin@localhost', 'abc');
-
-    const fields = ['emailVerified', 'emailVerificationToken'];
-    let user = await knex('user').select(fields).first();
-    expect(user).toMatchObject({
+    let updUser = (await verifyEmail('admin@localhost', 'abc')) as User;
+    expect(updUser.credentials).toMatchObject({
       emailVerified: true,
-      emailVerificationToken: null
+      emailVerificationToken: null,
+      emailVerificationTokenExpires: null
     });
+
+    const savedUser = (await typeormConn.manager.findOne(User, {relations: ['credentials']})) as User;
+    expect(savedUser).toMatchObject(updUser);
   });
 
   test('verify email fails, token expired', async () => {
-    await knex('user').insert({
-      name: 'Name',
-      email: 'admin@localhost',
-      emailVerificationToken: 'abc',
-      emailVerificationTokenExpires: createExpiry(-1),
-      emailVerified: false
-    });
+    let {user, cred} = await createUserCredentialsEntities(
+      typeormConn, {}, {emailVerificationTokenExpires: createExpiry(-1)});
 
-    const user = await verifyEmail('admin@localhost', 'abc');
+    const updUser = await verifyEmail('admin@localhost', 'abc');
 
-    expect(user).toBeUndefined();
+    expect(updUser).toBeUndefined();
   });
 
   test('send reset password token', async () => {
-    await knex('user').insert({
-      name: 'Name',
-      email: 'admin@localhost',
-      resetPasswordToken: null
-    });
+    await createUserCredentialsEntities(typeormConn);
 
     await sendResetPasswordToken('admin@localhost');
 
-    const fields = ['resetPasswordToken'];
-    let user = await knex('user').select(fields).first();
-    expect(user.resetPasswordToken).not.toBeNull();
+    const updCred = (await typeormConn.manager.findOne(Credentials)) as Credentials;
+    expect(updCred.resetPasswordToken).not.toBeNull();
+    expect(updCred.resetPasswordTokenExpires).not.toBeNull();
 
     const sendEmailCallArgs = mockEmail.sendResetPasswordEmail.mock.calls[0];
     expect(sendEmailCallArgs[0]).toBe('admin@localhost');
   });
 
   test('send reset password token, token refreshed', async () => {
-    await knex('user').insert({
-      name: 'Name',
-      email: 'admin@localhost',
-      resetPasswordToken: 'abc',
-      resetPasswordTokenExpires: createExpiry(-1)
-    });
-    let oldUser = await knex('user').select(['resetPasswordToken']).first();
+    const {user, cred} = await createUserCredentialsEntities(
+      typeormConn, {}, {resetPasswordTokenExpires: createExpiry(-1)});
 
     await sendResetPasswordToken('admin@localhost');
 
-    let newUser = await knex('user').select(['resetPasswordToken']).first();
-    expect(newUser.resetPasswordToken).not.toEqual(oldUser.resetPasswordToken);
+    let updCred = (await typeormConn.manager.findOne(Credentials)) as Credentials;
+    expect(updCred.resetPasswordToken).not.toEqual(cred.resetPasswordToken);
 
     const sendEmailCallArgs = mockEmail.sendResetPasswordEmail.mock.calls[0];
     expect(sendEmailCallArgs[0]).toBe('admin@localhost');
   });
 
   test('reset password', async () => {
-    await knex('user').insert({
-      name: 'Name',
-      email: 'admin@localhost',
-      resetPasswordToken: 'abc',
-      resetPasswordTokenExpires: createExpiry(1)
-    });
+    const {user, cred} = await createUserCredentialsEntities(
+      typeormConn, {}, {
+        resetPasswordToken: 'abc',
+        resetPasswordTokenExpires: createExpiry(1)
+      });
 
     await resetPassword('admin@localhost', 'new password', 'abc');
 
-    let user = await knex('user').select(['hash']).first();
-    expect(await verifyPassword('new password', user.hash)).toBeTruthy();
+    let updCred = (await typeormConn.manager.findOne(Credentials)) as Credentials;
+    expect(await verifyPassword('new password', updCred.hash)).toBeTruthy();
   });
 
   test('reset password fails, token expired', async () => {
-    await knex('user').insert({
-      name: 'Name',
-      email: 'admin@localhost',
-      resetPasswordToken: 'abc',
-      resetPasswordTokenExpires: createExpiry(-1)
-    });
+    const {user, cred} = await createUserCredentialsEntities(
+      typeormConn, {}, {
+        resetPasswordToken: 'abc',
+        resetPasswordTokenExpires: createExpiry(-1)
+      });
 
-    const user = await resetPassword('admin@localhost', 'new password', 'abc');
+    const updUser = await resetPassword('admin@localhost', 'new password', 'abc');
 
-    expect(user).toBeUndefined();
+    expect(updUser).toBeUndefined();
   });
 });

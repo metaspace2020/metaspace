@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
     "allowJs": true,
-    "target": "es5",
+    "target": "es2017",
     "strict": true,
     "sourceMap": true,
+    "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "lib": ["ES2015", "ESNext", "ScriptHost"],
     "module": "CommonJS",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "strictPropertyInitialization": false
   }
 }

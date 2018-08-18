@@ -1,32 +1,35 @@
-import * as Knex from 'knex';
+import "reflect-metadata";
+import {
+  createConnection as createTypeORMConnection,
+  ConnectionOptions} from "typeorm";
+
 import config from './config';
-import * as _ from 'lodash';
+import {Credentials} from '../modules/auth/model';
+import {User} from '../modules/user/model';
 
-const defaultDBConfig = {
-  ...config.db,
-  max: 10, // client pool size
-  idleTimeoutMillis: 30000
-}
+export const DbSchemaName = 'graphql';
 
-export const createConnection = (dbConfig: object={}, schemaName: string='public'): Knex => {
-  return Knex({
-    client: 'postgres',
-    connection: _.merge(defaultDBConfig, dbConfig),
-    searchPath: [schemaName],
-    // pool: {
-    //   min: 1,
-    //   max: 1
-    // },
-    // debug: true
+const defaultDBConfig: ConnectionOptions = {
+  type: "postgres",
+  host: config.db.host,
+  database: config.db.database,
+  username: config.db.user,
+  password: config.db.password,
+  schema: DbSchemaName,
+  entities: [
+    Credentials,
+    User
+  ],
+  synchronize: true,
+  logging: false
+};
+
+export const createConnection = async () => {
+  return createTypeORMConnection({
+    ...defaultDBConfig
   });
 };
 
 export interface DbRow {
   id: number;
-}
-
-export const createUpdateTable = (knex: Knex) => {
-  return async (name: string, row: DbRow): Promise<void> => {
-    await knex(name).where('id', row.id).update(row);
-  };
 }
