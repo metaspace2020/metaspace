@@ -29,7 +29,3 @@ export const createConnection = async () => {
     ...defaultDBConfig
   });
 };
-
-export interface DbRow {
-  id: number;
-}

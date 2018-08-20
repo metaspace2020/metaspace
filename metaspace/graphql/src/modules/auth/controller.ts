@@ -7,23 +7,21 @@ import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
 import * as JwtSimple from 'jwt-simple';
 
 import config from '../../utils/config';
-import {DbUser} from "./model"
-import {createConnection} from '../../utils/db'
+import {findUserByEmail, findUserByGoogleId, findUserById} from '../user';
+import {User} from '../user/model';
+import {createConnection} from '../../utils';
 import {
   sendResetPasswordToken,
-  createUser,
-  findUserByEmail,
-  findUserByGoogleId,
-  findUserById,
+  createUserCredentials,
   resetPassword,
   verifyEmail,
   verifyPassword,
   initOperation
 } from './operation';
 
-const getUserFromRequest = (req: Request): DbUser | null => {
+const getUserFromRequest = (req: Request): User | null => {
   const user = (req as any).cookieUser;
-  return user ? user as DbUser : null;
+  return user ? user as User : null;
 };
 
 const preventCache = (req: Request, res: Response, next: NextFunction) => {
@@ -39,9 +37,9 @@ const configurePassport = (app: Express) => {
   }));
   app.use(Passport.session());
 
-  Passport.serializeUser<DbUser, number>(callbackify( async (user: DbUser) => user.id));
+  Passport.serializeUser<string, string>(callbackify( async (userId: string) => userId));
 
-  Passport.deserializeUser<DbUser | false, number>(callbackify(async (id: number) => {
+  Passport.deserializeUser<User | false, string>(callbackify(async (id: string) => {
     return await findUserById(id) || false;
   }));
 
@@ -55,8 +53,15 @@ const configurePassport = (app: Express) => {
   });
 };
 
+export interface JwtUser extends User {
+  iss: string,
+  sub?: string,
+  iat?: number,
+  exp?: number
+}
+
 const configureJwt = (app: Express) => {
-  function mintJWT(user: DbUser | null, expSeconds: number | null = 60) {
+  function mintJWT(user: User | null, expSeconds: number | null = 60) {
     const nowSeconds = Math.floor(Date.now() / 1000);
     let payload;
     if (user != null) {
@@ -75,7 +80,7 @@ const configureJwt = (app: Express) => {
         'role': 'anonymous',
       };
     }
-    return JwtSimple.encode(payload, config.jwt.secret);
+    return JwtSimple.encode(payload as JwtUser, config.jwt.secret);
   }
 
   // Gives a one-time token, which expires in 60 seconds.
@@ -115,9 +120,9 @@ const configureLocalAuth = (app: Express) => {
       usernameField: 'email',
       passwordField: 'password',
     },
-    callbackify(async (username: string, password: string) => {
-      const user = await findUserByEmail(username);
-      return user && await verifyPassword(password, user.hash) ? user : false;
+    callbackify(async (email: string, password: string) => {
+      const user = await findUserByEmail(email);
+      return user && await verifyPassword(password, user.credentials.hash) ? user : false;
     })
   ));
 
@@ -150,7 +155,7 @@ const configureGoogleAuth = (app: Express) => {
       },
       callbackify(async (accessToken: string, refreshToken: string, profile: any) => {
         return await findUserByGoogleId(profile.id)
-          || await createUser({
+          || await createUserCredentials({
             googleId: profile.id,
             name: profile.displayName,
             email: profile.emails[0].value,
@@ -173,7 +178,7 @@ const configureCreateAccount = (app: Express) => {
   app.post('/api_auth/createaccount', async (req, res, next) => {
     try {
       const { name, email, password } = req.body;
-      await createUser({ name, email, password });
+      await createUserCredentials({ name, email, password });
       res.send(true);
     } catch (err) {
       next(err);
@@ -215,7 +220,7 @@ const configureResetPassword = (app: Express) => {
     try {
       const { email, token } = req.body;
       const user = await findUserByEmail(email);
-      if (user && user.resetPasswordToken === token) {
+      if (user && user.credentials.resetPasswordToken === token) {
         res.send(true);
       } else {
         res.sendStatus(400);
@@ -228,9 +233,9 @@ const configureResetPassword = (app: Express) => {
   app.post('/api_auth/resetpassword', async (req, res, next) => {
     try {
       const { email, token, password } = req.body;
-      const user = await resetPassword(email, password, token);
-      if (user != null) {
-        req.login(user, (err) => {
+      const userId = await resetPassword(email, password, token);
+      if (userId != null) {
+        req.login(userId, (err) => {
           if (err) {
             next(err);
           } else {
@@ -247,7 +252,7 @@ const configureResetPassword = (app: Express) => {
 };
 
 export const configureAuth = async (app: Express) => {
-  await initOperation(createConnection())
+  await initOperation(await createConnection());
   configurePassport(app);
   configureJwt(app);
   configureLocalAuth(app);

@@ -15,6 +15,8 @@ import {
 } from './operation'
 import {Credentials} from './model';
 import {User} from '../user/model';
+import {findUserById} from '../user';
+import {initOperation as userInitOperation} from '../user';
 
 jest.mock('./email');
 import * as _mockEmail from './email';
@@ -24,13 +26,13 @@ async function createUserCredentialsEntities(connection: Connection, user?: Obje
   const defaultCred = {
     hash: 'some hash',
     emailVerificationToken: 'abc',
-    emailVerificationTokenExpires: createExpiry(1),
+    emailVerificationTokenExpires: createExpiry(10),
     resetPasswordToken: null,
   };
   const updCred = {
     ...defaultCred,
     ...cred
-  } as Credentials;
+  };
   await connection.manager.insert(Credentials, updCred);
 
   const defaultUser = {
@@ -41,8 +43,8 @@ async function createUserCredentialsEntities(connection: Connection, user?: Obje
     ...defaultUser,
     ...user,
     credentials: updCred
-  } as User;
-  await connection.manager.insert(User, updUser);
+  };
+  await connection.manager.insert(User, updUser as User);
 
   return {
     user: updUser,
@@ -54,7 +56,7 @@ describe('Database operations with user', () => {
   let knexAdmin: Knex;
   let knex: Knex;
   let typeormConn: Connection;
-  let UUID: string;
+  let id: string;
 
   beforeAll(async () => {
     console.log('> beforeAll');
@@ -87,6 +89,7 @@ describe('Database operations with user', () => {
 
     typeormConn = await createConnection();
     await initOperation(typeormConn);
+    await userInitOperation(typeormConn);
   });
 
   afterAll(async () => {
@@ -114,14 +117,14 @@ describe('Database operations with user', () => {
     });
 
     const cred = await knex('credentials').select(
-      ['UUID', 'hash', 'emailVerified']).first();
-    expect(cred.UUID).toBeDefined();
+      ['id', 'hash', 'emailVerified']).first();
+    expect(cred.id).toBeDefined();
     expect(cred.hash).toBeDefined();
     expect(cred.emailVerified).toEqual(false);
 
     const user = await knex('user').select(
-      ['UUID', 'email', 'name']).first();
-    expect(user.UUID).toBeDefined();
+      ['id', 'email', 'name']).first();
+    expect(user.id).toBeDefined();
     expect(user.email).toEqual('admin@localhost');
     expect(user.name).toEqual('Name');
 
@@ -160,8 +163,8 @@ describe('Database operations with user', () => {
     expect(newCred.hash).toEqual(oldCred.hash);
     expect(newCred.emailVerificationToken).not.toEqual(oldCred.emailVerificationToken);
     expect(newCred.emailVerificationTokenExpires).toBeDefined();
-    expect((newCred.emailVerificationTokenExpires as Date).valueOf())
-      .toBeGreaterThan((oldCred.emailVerificationTokenExpires as Date).valueOf());
+    expect(newCred.emailVerificationTokenExpires!.valueOf())
+      .toBeGreaterThan(oldCred.emailVerificationTokenExpires!.valueOf());
 
     const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
     expect(sendEmailCallArgs[0]).toBe('admin@localhost');
@@ -187,7 +190,9 @@ describe('Database operations with user', () => {
   test('verify email', async () => {
     let {user, cred} = await createUserCredentialsEntities(typeormConn);
 
-    let updUser = (await verifyEmail('admin@localhost', 'abc')) as User;
+    const userId = await verifyEmail('admin@localhost', 'abc');
+
+    const updUser = (await findUserById(userId!)) as User;
     expect(updUser.credentials).toMatchObject({
       emailVerified: true,
       emailVerificationToken: null,
