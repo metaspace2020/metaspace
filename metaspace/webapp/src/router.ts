@@ -36,13 +36,18 @@ const router = new VueRouter({
     },
     { path: '/about', component: AboutPage },
     { path: '/help', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "HelpPage" */ './components/HelpPage.vue') },
+    { path: '/user/me', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "EditUserPage" */ './modules/Account/components/EditUserPage.vue') },
 
     ...(config.features.newAuth ? [
       { path: '/account/sign-in', component: DialogPage, props: {dialog: 'signIn'} },
       { path: '/account/create-account', component: DialogPage, props: {dialog: 'createAccount'} },
       { path: '/account/forgot-password', component: DialogPage, props: {dialog: 'forgotPassword'} },
       { path: '/account/reset-password', component: ResetPasswordPage },
-    ] : [])
+    ] : []),
+
+    { path: '/group/create', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "GroupPage" */ './modules/GroupProfile')).CreateGroupPage },
+    { path: '/group/:groupId', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "GroupPage" */ './modules/GroupProfile')).ViewGroupProfile },
+    { path: '/group/:groupId/edit', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "GroupPage" */ './modules/GroupProfile')).EditGroupProfile },
   ]
 });
 

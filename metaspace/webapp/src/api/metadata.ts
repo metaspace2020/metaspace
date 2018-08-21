@@ -1,15 +1,48 @@
 import gql from 'graphql-tag';
+import { datasetSubmitterFragment } from './user';
 
-export const fetchMetadataQuery =
+export const editDatasetFragment =
+  gql`fragment EditDatasetFragment on Dataset {
+    id
+    metadataJson
+    isPublic
+    group {
+      id
+    }
+    principalInvestigator {
+      name
+      email
+    }
+    molDBs
+    adducts
+    name
+  }`;
+
+export const editDatasetQuery =
   gql`query fetchMetadataQuery($id: String!) {
     dataset(id: $id) {
-      metadataJson,
-      isPublic,
-      molDBs,
-      adducts,
-      name
+      ...EditDatasetFragment
+      submitter {
+        ...DatasetSubmitterFragment
+      }
     }
-  }`;
+  }
+  ${editDatasetFragment}
+  ${datasetSubmitterFragment}
+  `;
+
+export const newDatasetQuery =
+  gql`query {
+    currentUserLastSubmittedDataset {
+      ...EditDatasetFragment
+    }
+    currentUser {
+      ...DatasetSubmitterFragment
+    }
+  }
+  ${editDatasetFragment}
+  ${datasetSubmitterFragment}
+  `;
 
 export const fetchAutocompleteSuggestionsQuery =
   gql`query suggestions($field: String!, $query: String!) {
@@ -33,6 +66,10 @@ export const fetchOptionListsQuery = gql`{
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
   molecularDatabases: molecularDatabases(hideDeprecated: false){name, default}
   submitterNames: submitterSuggestions(query: "") {
+    id
+    name
+  }
+  groups: allGroups {
     id
     name
   }

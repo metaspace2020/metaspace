@@ -5,6 +5,9 @@ db.sqlite
 /src/assets/*.json
 /src/assets/metadataMapping.js
 
+# Copy of graphql schema for tests
+/tests/utils/graphql-schema.json
+
 # Compiled output
 stats.json
 

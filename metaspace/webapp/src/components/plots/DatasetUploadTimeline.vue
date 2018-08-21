@@ -22,6 +22,12 @@
  export default {
   name: 'upload-timeline-plot',
 
+  data() {
+    return {
+      uploadDates: []
+    }
+  },
+
   apollo: {
     uploadDates: {
       query: query,

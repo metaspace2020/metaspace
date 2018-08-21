@@ -7,7 +7,7 @@
       <span>{{ name }}</span><span v-if="required" style="color: red">*</span>
       <el-popover trigger="hover" placement="right" v-if="help">
         <component :is="help"></component>
-        <i slot="reference" class="el-icon-question field-label-help"></i>
+        <i slot="reference" class="el-icon-question metadata-help-icon"></i>
       </el-popover>
     </span>
 
@@ -26,6 +26,7 @@
 
     <el-input
       v-else-if="type === 'textarea'"
+      :autosize="{minRows: 1.5, maxRows: 5}"
       type="textarea"
       @input="onInput"
       :value="value"
@@ -49,9 +50,11 @@
       :value="value"
       :required="required"
       v-bind="$attrs">
-      <el-option v-for="opt in options" :value="opt" :label="opt" :key="opt" />
+      <el-option v-for="opt in options"
+                 :value="optionsAreStrings ? opt : opt.value"
+                 :label="optionsAreStrings ? opt : opt.label"
+                 :key="optionsAreStrings ? opt : opt.value" />
     </el-select>
-
 
     <el-select
       v-else-if="type === 'selectMulti'"
@@ -60,7 +63,10 @@
       :required="required"
       multiple
       v-bind="$attrs">
-      <el-option v-for="opt in options" :value="opt" :label="opt" :key="opt" />
+      <el-option v-for="opt in options"
+                 :value="optionsAreStrings ? opt : opt.value"
+                 :label="optionsAreStrings ? opt : opt.label"
+                 :key="optionsAreStrings ? opt : opt.value" />
     </el-select>
 
     <table-input
@@ -78,7 +84,6 @@
       @input="onInput"
       :value="value"
       :error="typeof error !== 'string' ? error : null"
-      :disableEmail="name === 'Submitter' /* FIXME: Remove this */"
       :required="required"
       :fetchSuggestions="fetchSuggestions"
       v-bind="$attrs"
@@ -122,7 +127,7 @@
     name!: string;
     @Prop()
     help?: any;
-    @Prop({ required: true, type: [String, Number, Boolean, Object, Array] })
+    @Prop({ validator: val => val !== undefined })
     value!: any;
     @Prop([String, Object, Array])
     error?: string | object | any[];
@@ -139,6 +144,10 @@
 
     wideAutocomplete = false;
 
+    get optionsAreStrings() {
+      return this.options && this.options.length > 0 && typeof this.options[0] === 'string';
+    }
+
     onInput(val: any) {
       this.$emit('input', val);
     }
@@ -151,7 +160,6 @@
         callback(results);
       })
     }
-
   }
 </script>
 
@@ -170,8 +178,13 @@
 
     > .el-form-item__label {
       padding: 0;
-      font-size: 16px;
+      margin-bottom: 2px;
+      font-size: 14px;
       line-height: 16px;
+    }
+
+    .el-select {
+      width: 100%;
     }
   }
 
@@ -183,17 +196,13 @@
     min-width: 400px;
   }
 
-  .field-label-help {
-    cursor: pointer;
-  }
-
   .subfield {
-    padding-right: 10px;
+    padding-right: 20px;
   }
 
   .subfield-label {
-    font-size: 14px;
-    padding: 0 0 5px 5px;
+    font-size: 13px;
+    padding: 2px 0 5px 5px;
   }
 
   .error-msg {
@@ -201,4 +210,7 @@
     color: red;
   }
 
+  .el-input__inner {
+    width: 100%;
+  }
 </style>

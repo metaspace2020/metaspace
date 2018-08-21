@@ -33,7 +33,7 @@ class UploadForm {
 
     constructor () {
         this.form = Selector("form.el-form");
-        this.submitButton = Selector('#md-editor-submit > button');
+        this.submitButton = Selector('.md-editor-submit > button');
         this.fileUpload = Selector('input[type="file"]');
     }
 

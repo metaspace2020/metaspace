@@ -166,7 +166,7 @@
      },
 
      formatInstitution() {
-       return this.dataset.institution.replace(/\s/g, '&nbsp;');
+       return this.dataset.institution ? this.dataset.institution.replace(/\s/g, '&nbsp;') : '';
      },
 
      formatDatasetName() {
@@ -236,9 +236,9 @@
        const {user} = this.$store.state;
        if (!user)
          return false;
-       if (user.role == 'admin')
+       if (user.role === 'admin')
          return true;
-       if (user.email == this.dataset.submitter.email)
+       if (user.email != null && user.email === this.dataset.submitter.email)
          return true;
        return false;
      },

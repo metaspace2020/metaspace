@@ -1,45 +1,52 @@
 <template>
   <div class="metadata-section">
-    <div class="heading">METASPACE options</div>
+    <el-row>
+      <el-col :span="6">
+        <div class="metadata-section__title">Annotation settings</div>
+      </el-col>
+      <el-col :span="18">
+        <el-row :gutter="8">
+          <el-form size="medium"
+                   label-position="top">
 
-    <el-form size="medium"
-             label-position="top">
-      <el-col :span="6">
-        <form-field
-          type="selectMulti"
-          name="Metabolite database"
-          :help="dbHelp"
-          :value="value.molDBs"
-          @input="val => onInput('molDBs', val)"
-          :error="error && error.molDBs"
-          :options="molDBOptions"
-          required
-          :multiple-limit="MAX_MOL_DBS"
-        />
+            <el-col :span="8">
+              <form-field
+                type="selectMulti"
+                name="Metabolite database"
+                :help="dbHelp"
+                :value="value.molDBs"
+                @input="val => onInput('molDBs', val)"
+                :error="error && error.molDBs"
+                :options="molDBOptions"
+                required
+              />
+            </el-col>
+            <el-col :span="8">
+              <form-field
+                type="selectMulti"
+                name="Adducts"
+                :value="value.adducts"
+                @input="val => onInput('adducts', val)"
+                :error="error && error.adducts"
+                :options="adductOptions"
+                required
+              />
+            </el-col>
+            <el-col :span="8">
+              <form-field
+                type="text"
+                name="Dataset name"
+                placeholder="Dataset name"
+                :value="value.name"
+                @input="val => onInput('name', val)"
+                :error="error && error.name"
+                required
+              />
+            </el-col>
+          </el-form>
+        </el-row>
       </el-col>
-      <el-col :span="6">
-        <form-field
-          type="selectMulti"
-          name="Adducts"
-          :value="value.adducts"
-          @input="val => onInput('adducts', val)"
-          :error="error && error.adducts"
-          :options="adductOptions"
-          required
-        />
-      </el-col>
-      <el-col :span="7">
-        <form-field
-          type="text"
-          name="Dataset name"
-          placeholder="Dataset name"
-          :value="value.name"
-          @input="val => onInput('name', val)"
-          :error="error && error.name"
-          required
-        />
-      </el-col>
-    </el-form>
+    </el-row>
   </div>
 </template>
 
@@ -47,7 +54,7 @@
   import Vue from 'vue';
   import { Component, Prop } from 'vue-property-decorator';
   import FormField from './FormField.vue';
-  import DatabaseDescriptions from '../DatabaseDescriptions.vue';
+  import DatabaseDescriptions from './DatabaseDescriptions.vue';
   import { MetaspaceOptions } from './formStructure';
   import { MAX_MOL_DBS } from '../../lib/constants';
 
@@ -73,18 +80,9 @@
     onInput<TKey extends keyof MetaspaceOptions>(field: TKey, val: MetaspaceOptions[TKey]) {
       this.$emit('input', {...this.value, [field]: val});
     }
-
   }
 </script>
 
 <style lang="scss">
-  .metadata-section {
-    display: block;
-    max-width: 1000px;
-    > .heading {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-  }
+  @import './FormSection.scss';
 </style>

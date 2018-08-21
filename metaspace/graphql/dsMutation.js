@@ -159,7 +159,7 @@ module.exports = {
         }
 
         input.metadata = JSON.parse(input.metadataJson);
-        setSubmitter(null, input.metadata, user);
+        // setSubmitter(null, input.metadata, user); //FIXME: apply this logic to `submitterId` once it is implemented
         validateMetadata(input.metadata);
         await molDBsExist(input.molDBs);
         addProcessingConfig(input);
@@ -197,7 +197,7 @@ module.exports = {
           input.metadata = JSON.parse(input.metadataJson);
         const updDS = updateObject(ds, input);
 
-        setSubmitter(ds.metadata, updDS.metadata, user);
+        // setSubmitter(ds.metadata, updDS.metadata, user); //FIXME: apply this logic to `submitterId` once it is implemented
         validateMetadata(updDS.metadata);
         addProcessingConfig(updDS);
 

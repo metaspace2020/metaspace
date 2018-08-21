@@ -49,4 +49,22 @@ const apolloClient = new ApolloClient({
   cache: new InMemoryCache(),
 });
 
+export const refreshLoginStatus = async () => {
+  // Problem: `refreshJwt` updates the Vuex store, which sometimes immediately triggers new queries.
+  // `apolloClient.resetStore()` has an error if there are any in-flight queries, so it's not suitable to run it
+  // immediately after `refreshJwt`.
+  // Solution: Split the `resetStore` into two parts: invalidate old data before `refreshJwt` updates Vuex,
+  // then ensure that all queries are refetched.
+
+  await apolloClient.queryManager.clearStore();
+  await tokenAutorefresh.refreshJwt(true);
+  try {
+    await apolloClient.reFetchObservableQueries();
+  } catch (err) {
+    // reFetchObservableQueries throws an error if any queries fail.
+    // Let the source of the query handle it instead of breaking `refreshLoginStatus`.
+    console.error(err);
+  }
+};
+
 export default apolloClient;

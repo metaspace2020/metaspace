@@ -1,54 +1,34 @@
 <template>
-  <div id="upload-page" v-if="!enableUploads">
-    <div id="maintenance-message">
-      Uploading is temporarily disabled so that we can safely update the website.
-      <br/>
-      Please wait a few hours and reload the page. Thank you for understanding!
-    </div>
-  </div>
-
-  <div id="upload-page" v-else-if="!isSignedIn">
-    <div id="sign-in-intro">
-      <intro-message>
-        <p class="sign-in-message"><b>To get started, click "Sign in" to sign in or create an account.</b></p>
-      </intro-message>
-    </div>
-  </div>
-
-  <div id="upload-page" v-else>
-    <div id="upload-left-pane">
-      <div id="filter-panel-container">
-        <filter-panel level="upload"></filter-panel>
-      </div>
-
-      <div id="instructions">
-
-        <p style="font-size: 18px" v-if="introIsHidden">
-          <span>Submitting for the first time?</span>
-          <a style="cursor: pointer;" @click="introIsHidden = false">Show instructions</a>
-        </p>
-
-        <div v-show="!introIsHidden">
-          <intro-message>
-            <p>To start the submission, just drop the file(s) into the box below, fill in the metadata form, and click the Submit button.</p>
-          </intro-message>
+  <div class="md-editor">
+    <div class="upload-page-wrapper">
+      <div v-if="!enableUploads">
+        <div id="maintenance-message">
+          Uploading is temporarily disabled so that we can safely update the website.
+          <br/>
+          Please wait a few hours and reload the page. Thank you for understanding!
         </div>
       </div>
 
-      <fine-uploader :config="fineUploaderConfig"
-                     :dataTypeConfig="fineUploaderDataTypeConfig"
-                     ref="uploader"
-                     @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure">
-      </fine-uploader>
-    </div>
+      <div v-else-if="isSignedIn">
+          <!--Uncomment below when LCMS support is needed-->
+          <!--<div id="filter-panel-container">-->
+            <!--<filter-panel level="upload"></filter-panel>-->
+          <!--</div>-->
 
-    <div id="upload-right-pane">
-      <metadata-editor ref="editor"
-                       :enableSubmit="uploadedUuid != null && !isSubmitting"
-                       @submit="onFormSubmit"
-                       disabledSubmitMessage="Your files must be uploaded first"
-                       :validationErrors="validationErrors">
-      </metadata-editor>
+        <div class="fine-uploader-wrapper">
+          <fine-uploader :config="fineUploaderConfig"
+                         :dataTypeConfig="fineUploaderDataTypeConfig"
+                         ref="uploader"
+                         style="flex-basis: 90%"
+                         @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure" />
+          <div class="md-editor-submit">
+            <el-button v-if="enableSubmit" type="primary" @click="onSubmit" class="el-button__metadata">Submit</el-button>
+            <el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__metadata">Submit</el-button>
+          </div>
+        </div>
+
+        <metadata-editor ref="editor":validationErrors="validationErrors" />
+      </div>
     </div>
   </div>
 </template>
@@ -59,8 +39,8 @@
  import FineUploader from './FineUploader.vue';
  import FilterPanel from './FilterPanel.vue';
  import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
- import IntroMessage from './IntroMessage.vue';
  import Vue from 'vue';
+ import tokenAutorefresh from '../tokenAutorefresh';
 
  import * as config from '../clientConfig.json';
  import {pathFromUUID} from '../util';
@@ -101,35 +81,49 @@
        return true;
      }
    }
- }
+ };
 
  export default {
    name: 'upload-page',
    created() {
      this.$store.commit('updateFilter', this.$store.getters.filter);
    },
-   mounted() {
-     const {query} = this.$store.state.route;
-     if (query['first-time'] !== undefined)
-       this.introIsHidden = false;
+
+   async mounted() {
+     await tokenAutorefresh.waitForAuth();
+     if (!this.isSignedIn && this.features.newAuth) {
+       this.$store.commit('account/showDialog', {
+         dialog: 'signIn',
+         dialogCloseRedirect: '/',
+         loginSuccessRedirect: '/upload',
+       });
+     }
    },
+
    data() {
      return {
        fineUploaderConfig: config.fineUploader,
-       introIsHidden: true,
        enableUploads: config.enableUploads,
        validationErrors: [],
        isSubmitting: false,
        uploadedUuid: null,
+       features: config.features
      }
    },
    components: {
      FineUploader,
      MetadataEditor,
-     FilterPanel,
-     IntroMessage
+     FilterPanel
    },
    computed: {
+	   disabledSubmitMessage(){
+	     return "Your files must be uploaded first"
+     },
+
+     enableSubmit(){
+     	return this.uploadedUuid != null && !this.isSubmitting;
+     },
+
      fineUploaderDataTypeConfig() {
        const activeDataType = this.$store.getters.filter.metadataType;
        return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig['default'];
@@ -140,6 +134,14 @@
    },
 
    methods: {
+   	 onSubmit() {
+       const formValue = this.$refs.editor.getFormValueForSubmit();
+       if (formValue != null) {
+         const {datasetId, metadataJson, metaspaceOptions} = formValue;
+         this.onFormSubmit(datasetId, metadataJson, metaspaceOptions);
+       }
+     },
+
      onUpload(filenames) {
        const allowedExts = this.fineUploaderDataTypeConfig.fileExtensions.map(ext => `.${ext.toLowerCase()}`);
        let fileName = '';
@@ -230,53 +232,64 @@
          this.isSubmitting = false;
        }
      },
+
+	   cancel() {
+		   this.$router.go(-1);
+	   },
    }
  }
 
 </script>
 
-<style>
- #instructions {
-   padding-left: 5px;
- }
+<style scoped>
+  #filter-panel-container > * {
+    padding-left: 0;
+  }
 
- #filter-panel-container > * {
-   padding-left: 0;
- }
-
- #upload-page, #maintenance-message {
-   display: flex;
-   flex-wrap: wrap;
-   flex-direction: row;
-   justify-content: center;
- }
-
- #upload-left-pane {
-   flex-basis: 700px;
-   flex-grow: 1;
-   max-width: 1000px;
-   padding: 20px;
- }
-
- #upload-right-pane {
-   flex-basis: 1000px;
- }
-
- #maintenance-message {
-   font-size: 22px;
-   color: #e44;
-   max-width: 900px;
-   margin: 30px;
-   border: dotted #a00;
-   padding: 10px;
-   text-align: center;
- }
+  #maintenance-message {
+    font-size: 22px;
+    color: #e44;
+    max-width: 900px;
+    margin: 30px;
+    border: dotted #a00;
+    padding: 10px;
+    text-align: center;
+  }
 
   #sign-in-intro {
     padding: 20px;
   }
+
   .sign-in-message {
     margin: 1.5em 0;
     font-size: 1.5em;
+  }
+
+  .upload-page-wrapper {
+    width: 950px;
+  }
+
+  .md-editor {
+    padding: 80px 20px 20px 20px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .md-editor-submit {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .el-button__metadata {
+    margin: auto 0;
+    padding: 20px 20px;
+    font-size: 150%;
+  }
+
+  .fine-uploader-wrapper {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
   }
 </style>

@@ -19,14 +19,14 @@
           "minLength": 1,
           "default": "none"
         },
-        "Solvent": {
-          "description": "Solvent used e.g. for DESI or MALDI matrix",
+        "MALDI_Matrix_Application": {
+          "description": "Method of application, if used",
           "type": "string",
           "minLength": 1,
           "default": "none"
-        },
-        "MALDI_Matrix_Application": {
-          "description": "Method of application, if used",
+        }, 
+        "Solvent": {
+          "description": "Solvent used e.g. for DESI or MALDI matrix",
           "type": "string",
           "minLength": 1,
           "default": "none"

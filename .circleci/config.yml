@@ -9,7 +9,7 @@ jobs:
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
-      
+
       - image: node:8
 
     working_directory: ~/metaspace/metaspace/graphql
@@ -18,14 +18,13 @@ jobs:
           path: ~/metaspace
       - restore_cache:
           keys:
-            - yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
-            - yarn-cache
+            - graphql-yarn-cache-{{checksum "yarn.lock"}}
       - run:
           name: Install npm packages
           command: |
             yarn install
       - save_cache:
-          key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+          key: graphql-yarn-cache-{{checksum "yarn.lock"}}
           paths:
             - /usr/local/share/.cache/yarn
       - run:
@@ -34,6 +33,37 @@ jobs:
             psql -h localhost -U postgres -c "CREATE DATABASE sm_test owner sm"
             yarn run test
             psql -h localhost -U postgres -c "DROP DATABASE sm_test"
+
+
+  generate-graphql-schema:
+    docker:
+      - image: node:8
+
+    working_directory: ~/metaspace/metaspace/graphql
+    steps:
+      - checkout:
+          path: ~/metaspace
+      - restore_cache:
+          keys:
+            - graphql-yarn-cache-{{checksum "yarn.lock"}}
+      - run:
+          name: Install npm packages
+          command: |
+            yarn install --frozen-lockfile
+      - save_cache:
+          key: graphql-yarn-cache-{{checksum "yarn.lock"}}
+          paths:
+            - ~/metaspace/metaspace/graphql/node_modules
+            - /usr/local/share/.cache/yarn
+      - run:
+          name: Generate schema
+          command: |
+            mkdir -p dist
+            node ./bin/generate-json-graphql-schema.js ./dist/graphql-schema.json
+      - persist_to_workspace:
+          root: dist
+          paths:
+            - graphql-schema.json
 
   test-webapp:
     docker:
@@ -45,25 +75,39 @@ jobs:
           path: ~/metaspace
       - restore_cache:
           keys:
-            - yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
-            - yarn-cache
+            - webapp-yarn-cache-{{checksum "yarn.lock"}}
       - run:
           name: Install npm packages
           command: |
-            yarn install
+            yarn install --frozen-lockfile
+            yarn global add codecov
       - save_cache:
-          key: yarn-cache-{{checksum "yarn.lock"}}-{{checksum "../graphql/yarn.lock"}}
+          key: webapp-yarn-cache-{{checksum "yarn.lock"}}
           paths:
+            - ~/metaspace/metaspace/webapp/node_modules
             - /usr/local/share/.cache/yarn
+      - attach_workspace:
+          at: ~/workspace
       - run:
           name: Copy configs
           command: |
             cp ci/conf.js .
             cp ci/clientConfig.json src/
       - run:
+          name: Compile
+          command: |
+            yarn run build-ci
+      - run:
           name: Run tests
           command: |
+            cp ~/workspace/graphql-schema.json ./tests/utils/graphql-schema.json
+            yarn run deref-schema
             yarn run test
+      - run:
+          name: Upload coverage
+          command: |
+            yarn run test --coverage
+            npx codecov -p ../.. -F webapp
 
   test-webapp-e2e:
     docker:
@@ -178,7 +222,7 @@ jobs:
           command: |
             source docker/env.sh
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
-            codecov
+            codecov --root ../.. -F engine
 
   test-engine-sci:
     docker:
@@ -246,18 +290,22 @@ workflows:
     jobs:
       - test-engine
       #- test-graphql
-      - test-webapp
-  daily:
-    jobs:
-      - test-webapp-e2e
-    triggers:
-      - schedule:
-          cron: "0 11 * * 1-5"
-          filters:
-            branches:
-              only:
-                - master
-                - feature/.*
+      - generate-graphql-schema
+      - test-webapp:
+          requires:
+            - generate-graphql-schema
+## Disabled until we have time to redo these tests
+#  daily:
+#    jobs:
+#      - test-webapp-e2e
+#    triggers:
+#      - schedule:
+#          cron: "0 11 * * 1-5"
+#          filters:
+#            branches:
+#              only:
+#                - master
+#                - feature/.*
   weekly:
     jobs:
       - test-engine-sci
