@@ -37,12 +37,7 @@
         </el-button>
       </div>
 
-      <div class="dataset-list">
-        <dataset-item v-for="(dataset, i) in datasets"
-                      :dataset="dataset" :key="dataset.id"
-                      :class="[i%2 ? 'even': 'odd']">
-        </dataset-item>
-      </div>
+      <dataset-list :datasets="datasets" />
     </div>
   </div>
 </template>
@@ -50,7 +45,7 @@
 <script>
  import {datasetDetailItemsQuery, datasetCountQuery} from '../api/dataset';
  import {metadataExportQuery} from '../api/metadata';
- import DatasetItem from './DatasetItem.vue';
+ import DatasetList from './DatasetList.vue';
  import FilterPanel from './FilterPanel.vue';
  import {csvExportHeader} from '../util';
  import gql from 'graphql-tag';
@@ -69,7 +64,7 @@
      }
    },
    components: {
-     DatasetItem,
+     DatasetList,
      FilterPanel,
    },
 

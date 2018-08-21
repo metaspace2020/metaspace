@@ -2,9 +2,9 @@ import { mount } from '@vue/test-utils';
 import VueRouter from 'vue-router';
 import ElementUI from 'element-ui';
 import Vue from 'vue';
-import EditGroupProfile from './EditGroupProfile.vue';
+import EditProjectPage from './EditProjectPage.vue';
 import router from '../../router';
-import { EditGroupQuery } from '../../api/group';
+import { EditProjectQuery } from '../../api/project';
 import Vuex from 'vuex';
 import registerMockComponent from '../../../tests/utils/registerMockComponent';
 
@@ -14,17 +14,17 @@ Vue.use(VueRouter);
 Vue.use(Vuex);
 
 
-describe('EditGroupProfile', () => {
+describe('EditProjectPage', () => {
 
   const currentUser = {id:'1', role:'user'};
-  const mockGroup: EditGroupQuery = {
+  const mockProject: EditProjectQuery = {
     id: '2',
-    name: 'European Molecular Biology Laboratory',
-    shortName: 'EMBL',
-    currentUserRole: 'PRINCIPAL_INVESTIGATOR',
+    name: 'Adduct Assessment Alliance',
+    isPublic: true,
+    currentUserRole: 'ADMIN',
     members: [
       {
-        role: 'PRINCIPAL_INVESTIGATOR',
+        role: 'ADMIN',
         numDatasets: 123,
         user: {
           id: '3',
@@ -55,7 +55,7 @@ describe('EditGroupProfile', () => {
         numDatasets: 1,
         user: {
           id: '6',
-          name: 'Group member',
+          name: 'Project member',
           email: 'person@embl.de'
         }
       }
@@ -70,10 +70,10 @@ describe('EditGroupProfile', () => {
   });
 
   it('should match snapshot', async () => {
-    const wrapper = mount(EditGroupProfile, { router, store, sync: false });
+    const wrapper = mount(EditProjectPage, { router, store, sync: false });
     wrapper.setData({
       currentUser,
-      group: mockGroup
+      project: mockProject
     });
 
     await Vue.nextTick();

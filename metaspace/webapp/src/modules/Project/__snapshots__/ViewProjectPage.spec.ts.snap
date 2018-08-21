@@ -1,13 +1,11 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ViewGroupProfile should match snapshot (invited) 1`] = `
+exports[`ViewProjectPage should match snapshot (invited) 1`] = `
 <div class="page">
   <div class="page-content">
-    <!---->
     <div class="header-row">
       <div class="header-names">
-        <h1>group name</h1>
-        <h2 class="short-name">(groupShortName)</h2>
+        <h1>project name</h1>
       </div>
       <div class="header-buttons">
         <!---->
@@ -20,7 +18,7 @@ exports[`ViewGroupProfile should match snapshot (invited) 1`] = `
           <!---->
           <div style="padding: 0px 0px 20px 20px;">
             <p>
-              You have been invited to join group name.
+              You have been invited to join project name.
             </p>
             <div>
               <button type="button" class="el-button el-button--danger">
@@ -31,7 +29,7 @@ exports[`ViewGroupProfile should match snapshot (invited) 1`] = `
               <button type="button" class="el-button el-button--primary">
                 <!---->
                 <!----><span>
-              Join group
+              Join project
             </span></button>
             </div>
           </div>
@@ -47,21 +45,19 @@ exports[`ViewGroupProfile should match snapshot (invited) 1`] = `
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
       </div>
       <div class="dataset-list-footer">
-        <a href="#/datasets?grp=%7B%22name%22%3A%22group%20name%22%7D" class="">See all datasets</a>
+        <a href="#/datasets?prj=%7B%22name%22%3A%22project%20name%22%7D" class="">See all datasets</a>
       </div>
     </div>
   </div>
 </div>
 `;
 
-exports[`ViewGroupProfile should match snapshot (non-member) 1`] = `
+exports[`ViewProjectPage should match snapshot (non-member) 1`] = `
 <div class="page">
   <div class="page-content">
-    <!---->
     <div class="header-row">
       <div class="header-names">
-        <h1>group name</h1>
-        <h2 class="short-name">(groupShortName)</h2>
+        <h1>project name</h1>
       </div>
       <div class="header-buttons">
         <button type="button" class="el-button el-button--primary">
@@ -82,7 +78,7 @@ exports[`ViewGroupProfile should match snapshot (non-member) 1`] = `
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
       </div>
       <div class="dataset-list-footer">
-        <a href="#/datasets?grp=%7B%22name%22%3A%22group%20name%22%7D" class="">See all datasets</a>
+        <a href="#/datasets?prj=%7B%22name%22%3A%22project%20name%22%7D" class="">See all datasets</a>
       </div>
     </div>
   </div>

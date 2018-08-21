@@ -1,60 +1,51 @@
 <template>
   <div v-loading="!loaded" class="page">
-    <div v-if="group != null" class="page-content">
-      <transfer-datasets-dialog
-        v-if="showTransferDatasetsDialog"
-        :currentUserId="currentUserId"
-        :groupName="group.name"
-        :isInvited="isInvited"
-        @accept="handleAcceptTransferDatasets"
-        @close="handleCloseTransferDatasetsDialog"
-      />
+    <div v-if="project != null" class="page-content">
       <div class="header-row">
         <div class="header-names">
-          <h1>{{group.name}}</h1>
-          <h2 class="short-name">({{group.shortName}})</h2>
+          <h1>{{project.name}}</h1>
         </div>
 
         <div class="header-buttons">
-          <el-button v-if="roleInGroup == null"
+          <el-button v-if="roleInProject == null"
                      type="primary"
                      @click="handleRequestAccess">
             Request access
           </el-button>
-          <el-button v-if="roleInGroup === 'PENDING'"
+          <el-button v-if="roleInProject === 'PENDING'"
                      disabled>
             Request sent
           </el-button>
-          <el-button v-if="roleInGroup === 'PRINCIPAL_INVESTIGATOR'"
+          <el-button v-if="roleInProject === 'ADMIN'"
                      type="primary"
-                     @click="handleManageGroup">
-            Manage group
+                     @click="handleManageProject">
+            Manage project
           </el-button>
         </div>
-        <el-alert v-if="roleInGroup === 'INVITED'"
+        <el-alert v-if="roleInProject === 'INVITED'"
                   type="info"
                   show-icon
                   :closable="false"
                   title="">
           <div style="padding: 0 0 20px 20px;">
             <p>
-              You have been invited to join {{group.name}}.
+              You have been invited to join {{project.name}}.
             </p>
             <div>
               <el-button type="danger" @click="handleRejectInvite">
                 Decline invitation
               </el-button>
-              <el-button type="primary" @click="handleAcceptInvite">
-                Join group
+              <el-button type="primary" @click="handleAcceptInvite" :loading="isAcceptingInvite">
+                Join project
               </el-button>
             </div>
           </div>
         </el-alert>
       </div>
-      <div v-if="groupDatasets.length > 0">
+      <div v-if="projectDatasets.length > 0">
         <h2>Datasets</h2>
 
-        <dataset-list :datasets="groupDatasets.slice(0,8)" />
+        <dataset-list :datasets="projectDatasets.slice(0,8)" />
 
         <div class="dataset-list-footer">
           <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
@@ -68,25 +59,23 @@
   import { Component } from 'vue-property-decorator';
   import { DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset';
   import DatasetList from '../../components/DatasetList.vue';
-  import { acceptGroupInvitationMutation, leaveGroupMutation, requestAccessToGroupMutation } from '../../api/group';
+  import { acceptProjectInvitationMutation, leaveProjectMutation, requestAccessToProjectMutation } from '../../api/project';
   import gql from 'graphql-tag';
-  import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
   import { encodeParams } from '../../url';
   import ConfirmAsync from '../../components/ConfirmAsync';
-  import { importDatasetsIntoGroupMutation } from '../../api/group';
+  import reportError from '../../lib/reportError';
 
-  type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';
+  type UserProjectRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';
 
-  interface GroupInfo {
+  interface ProjectInfo {
     id: string;
     name: string;
-    shortName: string;
-    currentUserRole: UserGroupRole | null;
+    currentUserRole: UserProjectRole | null;
   }
 
-  interface ViewGroupProfileData {
+  interface ViewProjectPageData {
     currentUser: { id: string; } | null;
-    group: GroupInfo | null;
+    project: ProjectInfo | null;
     allDatasets: DatasetDetailItem[];
     countDatasets: number;
   }
@@ -94,31 +83,29 @@
   @Component({
     components: {
       DatasetList,
-      TransferDatasetsDialog,
     },
     apollo: {
       data: {
-        query: gql`query ViewGroupProfile($groupId: ID!, $maxVisibleDatasets: Int!, $inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
+        query: gql`query ViewProjectPage($projectId: ID!, $maxVisibleDatasets: Int!, $inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
           currentUser {
             id
           }
-          group(groupId: $groupId) {
+          project(projectId: $projectId) {
             id
             name
-            shortName
             currentUserRole
           }
-          allDatasets(offset: 0, limit: $maxVisibleDatasets, filter: { group: $groupId }) {
+          allDatasets(offset: 0, limit: $maxVisibleDatasets, filter: { project: $projectId }) {
             ...DatasetDetailItem
           }
-          countDatasets(filter: { group: $groupId })
+          countDatasets(filter: { project: $projectId })
         }
 
         ${datasetDetailItemFragment}`,
-        variables(this: ViewGroupProfile) {
+        variables(this: ViewProjectPage) {
           return {
             maxVisibleDatasets: this.maxVisibleDatasets,
-            groupId: this.groupId
+            projectId: this.projectId
           }
         },
         update(data) {
@@ -130,42 +117,54 @@
       },
     }
   })
-  export default class ViewGroupProfile extends Vue {
+  export default class ViewProjectPage extends Vue {
     loaded = false;
-    showTransferDatasetsDialog: boolean = false;
-    data: ViewGroupProfileData | null = null;
+    isAcceptingInvite = false;
+    data: ViewProjectPageData | null = null;
 
     get currentUserId(): string | null { return this.data && this.data.currentUser && this.data.currentUser.id }
-    get group(): GroupInfo | null { return this.data && this.data.group; }
-    get roleInGroup(): UserGroupRole | null { return this.data && this.data.group && this.data.group.currentUserRole; }
-    get groupDatasets(): DatasetDetailItem[] { return this.data && this.data.allDatasets || []; }
+    get project(): ProjectInfo | null { return this.data && this.data.project; }
+    get roleInProject(): UserProjectRole | null { return this.data && this.data.project && this.data.project.currentUserRole; }
+    get projectDatasets(): DatasetDetailItem[] { return this.data && this.data.allDatasets || []; }
     get countDatasets(): number { return this.data && this.data.countDatasets || 0; }
     maxVisibleDatasets = 8;
 
 
-    get groupId(): string {
-      return this.$route.params.groupId;
+    get projectId(): string {
+      return this.$route.params.projectId;
     }
 
     get isInvited(): boolean {
-      return this.roleInGroup === 'INVITED';
+      return this.roleInProject === 'INVITED';
     }
 
     get datasetsListLink() {
       const filters = {
-        group: this.group && {id: this.groupId, name: this.group.name},
+        project: this.project && {id: this.projectId, name: this.project.name},
       };
       const path = '/datasets';
       const query = encodeParams(filters, path, this.$store.state.filterLists);
       return { path, query }
     }
 
+    @ConfirmAsync({
+      title: '',
+      message: 'An email will be sent to the project\'s principal investigator to confirm your access.',
+      confirmButtonText: "Request access"
+    })
     async handleRequestAccess() {
-      this.showTransferDatasetsDialog = true;
+      await this.joinProject();
     }
 
     async handleAcceptInvite() {
-      this.showTransferDatasetsDialog = true;
+      try {
+        this.isAcceptingInvite = true;
+        await this.joinProject();
+      } catch(err) {
+        reportError(err);
+      } finally {
+        this.isAcceptingInvite = true;
+      }
     }
 
     @ConfirmAsync({
@@ -175,40 +174,22 @@
     })
     async handleRejectInvite() {
       await this.$apollo.mutate({
-        mutation: leaveGroupMutation,
-        variables: { groupId: this.groupId },
+        mutation: leaveProjectMutation,
+        variables: { projectId: this.projectId },
       });
       await this.$apollo.queries.data.refetch();
     }
 
-    handleManageGroup() {
-      this.$router.push(`/group/${this.groupId}/edit`);
+    handleManageProject() {
+      this.$router.push(`/project/${this.projectId}/edit`);
     }
 
-    async handleAcceptTransferDatasets(selectedDatasetIds: string[]) {
-      if (this.isInvited) {
-        await this.$apollo.mutate({
-          mutation: acceptGroupInvitationMutation,
-          variables: { groupId: this.groupId },
-        });
-      } else {
-        await this.$apollo.mutate({
-          mutation: requestAccessToGroupMutation,
-          variables: { groupId: this.groupId },
-        });
-      }
-      if (selectedDatasetIds.length > 0) {
-        await this.$apollo.mutate({
-          mutation: importDatasetsIntoGroupMutation,
-          variables: { groupId: this.groupId, datasetIds: selectedDatasetIds },
-        });
-      }
+    async joinProject() {
+      await this.$apollo.mutate({
+        mutation: this.isInvited ? acceptProjectInvitationMutation : requestAccessToProjectMutation,
+        variables: { projectId: this.projectId },
+      });
       await this.$apollo.queries.data.refetch();
-      this.showTransferDatasetsDialog = false;
-    }
-
-    handleCloseTransferDatasetsDialog() {
-      this.showTransferDatasetsDialog = false;
     }
   }
 
@@ -236,10 +217,6 @@
   .header-names {
     display: flex;
     align-items: baseline;
-  }
-  .short-name {
-    margin-left: 16px;
-    color: grey;
   }
   .header-buttons {
     display: flex;
