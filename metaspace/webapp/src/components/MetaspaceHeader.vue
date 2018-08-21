@@ -136,6 +136,7 @@
      currentUser: {
        query: gql`query {
          currentUser {
+           id
            primaryGroup {
              group {
                id

@@ -26,7 +26,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Datasets" width="80" align="center">
+      <el-table-column label="Datasets" width="90" align="center">
         <template slot-scope="scope">
           <router-link :to="datasetsListLink(scope.row.user)">{{scope.row.numDatasets}}</router-link>
         </template>

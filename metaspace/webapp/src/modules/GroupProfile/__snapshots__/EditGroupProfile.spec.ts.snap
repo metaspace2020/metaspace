@@ -61,12 +61,12 @@ exports[`EditGroupProfile should match snapshot 1`] = `
           <div></div>
         </div>
         <div class="el-table__header-wrapper">
-          <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 840px;">
+          <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 850px;">
             <colgroup>
               <col name="el-table_1_column_1" width="200">
               <col name="el-table_1_column_2" width="200">
               <col name="el-table_1_column_3" width="160">
-              <col name="el-table_1_column_4" width="80">
+              <col name="el-table_1_column_4" width="90">
               <col name="el-table_1_column_5" width="200">
             </colgroup>
             <thead class="">
@@ -91,12 +91,12 @@ exports[`EditGroupProfile should match snapshot 1`] = `
           </table>
         </div>
         <div class="el-table__body-wrapper is-scrolling-left">
-          <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 840px;">
+          <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 850px;">
             <colgroup>
               <col name="el-table_1_column_1" width="200">
               <col name="el-table_1_column_2" width="200">
               <col name="el-table_1_column_3" width="160">
-              <col name="el-table_1_column_4" width="80">
+              <col name="el-table_1_column_4" width="90">
               <col name="el-table_1_column_5" width="200">
             </colgroup>
             <tbody>

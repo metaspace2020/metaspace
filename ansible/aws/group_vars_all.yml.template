@@ -150,7 +150,7 @@ sm_graphql_rabbitmq_host: "{{ rabbitmq_host }}"
 sm_graphql_rabbitmq_user: "{{ rabbitmq_user }}"
 sm_graphql_rabbitmq_password: "{{ rabbitmq_password }}"
 sm_graphql_ws_public_endpoint: "ws://{{ sm_graphql_hostname }}/ws"
-sm_graphql_default_adducts: "{{ sm_default_adducts }}"
+sm_graphql_default_adducts: {{ sm_default_adducts }}
 sm_graphql_img_storage_backend: fs
 sm_graphql_redis_host: localhost
 sm_graphql_redis_port: 6379
@@ -163,6 +163,7 @@ sm_graphql_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/cal
 sm_graphql_cookie_secret: COOKIE_SECRET
 sm_graphql_features:
   newAuth: false
+  graphqlMocks: false
 
 sm_webapp_hostname: "{{ web_host }}"
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"

@@ -63,9 +63,31 @@ function createHttpServerAsync(config) {
       addResolveFunctionsToSchema(schema, Resolvers);
       addErrorLoggingToSchema(schema, logger);
 
-      if (process.env.NODE_ENV === 'development') {
-        addMockFunctionsToSchema({schema, preserveResolvers: true});
-      } else {
+      if (config.features.graphqlMocks) {
+        // TODO: Remove this when it's no longer needed for demoing
+        // TODO: Add test that runs assertResolveFunctionsPresent against schema + resolvers
+        addMockFunctionsToSchema({
+          schema,
+          preserveResolvers: true,
+          mocks: {
+            // Make IDs somewhat deterministic
+            ID: (source, args, context, info) => {
+              let idx = 0;
+              let cur = info.path;
+              while (cur != null) {
+                if (/[0-9]+/.test(cur.key)) {
+                  idx = cur.key;
+                  break;
+                }
+                cur = cur.prev;
+              }
+              return `${info.parentType.name}_${idx}`
+            },
+          }
+        });
+      }
+
+      if (process.env.NODE_ENV !== 'development') {
         maskErrors(schema);
       }
 
