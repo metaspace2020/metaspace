@@ -13,8 +13,8 @@ export class User {
   @Column({ type: 'text'})
   email: string;
 
-  @Column({ type: 'text', nullable: true })
-  role?: string;
+  @Column({ type: 'text', default: 'user'})
+  role: string;
 
   // @Column({ type: 'timestamp', nullable: true })
   // groups: Date | null;
