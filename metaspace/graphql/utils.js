@@ -4,7 +4,8 @@ const slack = require('node-slack'),
   moment = require('moment'),
   { PubSub } = require('graphql-subscriptions'),
   {UserError} = require('graphql-errors'),
-  fetch = require('node-fetch');
+  fetch = require('node-fetch'),
+  Knex = require('knex');
 
 const config = require('config');
 
@@ -123,7 +124,7 @@ const logger = new (winston.Logger)({
 
 const pubsub = new PubSub();
 
-const dbConfig = () => {
+const defaultDBConfig = () => {
   const {host, database, user, password} = config.db;
   return {
     host, database, user, password,
@@ -132,11 +133,13 @@ const dbConfig = () => {
   };
 };
 
-let db = require('knex')({
-  client: 'pg',
-  connection: dbConfig(),
-  searchPath: ['engine', 'public']
-});
+const initDBConnection = (config = defaultDBConfig) => {
+  return Knex({
+    client: 'pg',
+    connection: config(),
+    searchPath: ['engine', 'public']
+  });
+};
 
 function canUserViewEsDataset(dataset, user) {
   return dataset._source.ds_is_public
@@ -257,5 +260,5 @@ module.exports = {
   config,
   logger,
   pubsub,
-  db
+  initDBConnection
 };

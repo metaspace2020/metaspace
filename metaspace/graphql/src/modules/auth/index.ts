@@ -1,2 +1,1 @@
-export {configureAuth} from './api';
-export {initSchema} from './db';
+export {configureAuth} from './controller';

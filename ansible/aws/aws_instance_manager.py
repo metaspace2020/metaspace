@@ -205,8 +205,8 @@ class AWSInstManager(object):
                                                  InstanceId=beta_inst.id)
         print('Associated Elastic IP: {}'.format(resp))
 
-        resp = prod_inst.stop()
-        print('Stopped old prod instance: {}'.format(resp))
+        # resp = prod_inst.stop()
+        # print('Stopped old prod instance: {}'.format(resp))
 
 
 if __name__ == '__main__':
