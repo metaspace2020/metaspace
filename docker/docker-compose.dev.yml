@@ -16,6 +16,7 @@ services:
   rabbitmq:
     image: rabbitmq:management
     ports:
+      - "5672:5672"  # to use rabbitmq from host
       - "15672:15672" #management interface
 
   adminer:

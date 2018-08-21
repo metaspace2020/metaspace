@@ -56,6 +56,9 @@
     - role: nodejs
       tags: [nodejs]
 
+    - role: mol_db
+      tags: [sm-mol-db]
+
     - role: sm_web
       tags: [sm-web]
 

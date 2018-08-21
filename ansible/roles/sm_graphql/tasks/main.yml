@@ -1,5 +1,10 @@
 ---
 
+- name: Create a database schema
+  postgresql_schema:
+    name: graphql
+    owner: sm
+
 - name: Install sm-graphql dependencies
   shell: yarn install
   args:
