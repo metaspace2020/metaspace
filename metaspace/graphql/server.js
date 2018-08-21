@@ -65,6 +65,7 @@ function createHttpServerAsync(config) {
 
       if (config.features.graphqlMocks) {
         // TODO: Remove this when it's no longer needed for demoing
+        // TODO: Add test that runs assertResolveFunctionsPresent against schema + resolvers
         addMockFunctionsToSchema({
           schema,
           preserveResolvers: true,
