@@ -11,12 +11,12 @@ const express = require('express'),
   getPixels = require('get-pixels'),
   Promise = require('promise');
 
-const {logger, db} = require('./utils.js'),
+const {logger} = require('./utils.js'),
   IMG_TABLE_NAME = 'image';
 
-function imageProviderDBBackend(db) {
+function imageProviderDBBackend(knex) {
   /**
-   @param {object} db - knex database handler
+   @param {object} knex - knex database handler
    **/
   return async (app, category, mimeType, basePath, categoryPath) => {
     /**
@@ -36,9 +36,9 @@ function imageProviderDBBackend(db) {
       return result;
     };
 
-    const imgTableExists = await db.schema.hasTable(IMG_TABLE_NAME);
+    const imgTableExists = await knex.schema.hasTable(IMG_TABLE_NAME);
     if (!imgTableExists) {
-      await db.schema.createTable(IMG_TABLE_NAME, function (table) {
+      await knex.schema.createTable(IMG_TABLE_NAME, function (table) {
         table.text('id').primary();
         table.text('category');
         table.binary('data');
@@ -48,7 +48,7 @@ function imageProviderDBBackend(db) {
     app.get(uri,
       async function (req, res) {
         try {
-          const row = await db.select(db.raw('data')).from(IMG_TABLE_NAME).where('id', '=', req.params.image_id).first();
+          const row = await knex.select(knex.raw('data')).from(IMG_TABLE_NAME).where('id', '=', req.params.image_id).first();
           if (row === undefined) {
             throw ({message: `Image with id=${req.params.image_id} does not exist`});
           }
@@ -76,7 +76,7 @@ function imageProviderDBBackend(db) {
           else {
             try {
               let row = {'id': imgID, 'category': category, 'data': pixelsToBinary(pixels)};
-              const m = await db.insert(row).into(IMG_TABLE_NAME);
+              const m = await knex.insert(row).into(IMG_TABLE_NAME);
               logger.debug(`${m}`);
               res.status(201).json({image_id: imgID});
             } catch (e) {
@@ -92,7 +92,7 @@ function imageProviderDBBackend(db) {
     app.delete(uri,
       async function (req, res) {
         try {
-          const m = await db.del().from(IMG_TABLE_NAME).where('id', '=', req.params.image_id);
+          const m = await knex.del().from(IMG_TABLE_NAME).where('id', '=', req.params.image_id);
           logger.debug(`${m}`);
           res.status(202).end();
         } catch (e) {
@@ -171,14 +171,14 @@ function imageProviderFSBackend(storageRootDir) {
   }
 }
 
-async function setRouteHandlers(config) {
+async function setRouteHandlers(config, knex) {
   try {
     const app = express();
     app.use(cors());
 
     const backendFactories = {
       'fs': imageProviderFSBackend(config.img_upload.iso_img_fs_path),
-      'db': imageProviderDBBackend(db)
+      'db': imageProviderDBBackend(knex)
     };
 
     for (const category of Object.keys(config.img_upload.categories)) {
@@ -199,9 +199,9 @@ async function setRouteHandlers(config) {
   }
 }
 
-async function createImgServerAsync(config) {
+async function createImgServerAsync(config, knex) {
   try {
-    let app = await setRouteHandlers(config);
+    let app = await setRouteHandlers(config, knex);
 
     let httpServer = http.createServer(app);
     httpServer.listen(config.img_storage_port, (err) => {

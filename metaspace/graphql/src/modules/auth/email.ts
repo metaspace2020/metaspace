@@ -1,6 +1,7 @@
 import * as AWS from 'aws-sdk';
 
 import config from '../../utils/config';
+import {logger} from '../../utils';
 
 AWS.config.update({
   accessKeyId: config.aws.aws_access_key_id,
@@ -19,8 +20,8 @@ const sendEmail = (recipient: string, subject: string, text: string) => {
       Body: { Text: { Data: text } }
     }
   }, (err, data) => {
-    if (err) console.error(`Failed to sent email to ${recipient}: ${err}`);
-    else console.log(`Sent email to ${recipient}`);
+    if (err) logger.error(`Failed to sent email to ${recipient}: ${err}`);
+    else logger.log(`Sent email to ${recipient}`);
   });
 };
 
