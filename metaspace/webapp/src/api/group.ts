@@ -86,8 +86,8 @@ export const leaveGroupMutation =
   }`;
 
 export const importDatasetsIntoGroupMutation =
-  gql`mutation($groupId: ID!, $importDatasets: [ID!]!) {
-  importDatasetsIntoGroup(groupId: $groupId)
+  gql`mutation($groupId: ID!, $datasetIds: [ID!]!) {
+  importDatasetsIntoGroup(groupId: $groupId, datasetIds: $datasetIds)
   }`;
 
 

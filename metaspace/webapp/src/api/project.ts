@@ -85,6 +85,11 @@ export const leaveProjectMutation =
     leaveProject(projectId: $projectId)
   }`;
 
+export const importDatasetsIntoProjectMutation =
+  gql`mutation($projectId: ID!, $datasetIds: [ID!]!) {
+  importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds)
+  }`;
+
 
 export const editProjectQuery =
   gql`query EditProjectQuery($projectId: ID!) {
