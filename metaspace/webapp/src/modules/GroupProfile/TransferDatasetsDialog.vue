@@ -9,19 +9,7 @@
           <p style="margin-top: 0">
             You have previously uploaded one or more datasets without a group. Do you want to transfer any of these datasets to {{groupName}}?
           </p>
-          <div class="dataset-list">
-            <div v-for="dataset in allDatasets">
-              <el-checkbox v-model="selectedDatasets[dataset.id]">
-                {{dataset.name}}
-                <span class="reset-color">(Submitted {{ formatDate(dataset.uploadDT) }})</span>
-              </el-checkbox>
-            </div>
-          </div>
-          <div class="select-buttons">
-            <a href="#" @click.prevent="handleSelectNone">Select none</a>
-            <span> | </span>
-            <a href="#" @click.prevent="handleSelectAll">Select all</a>
-          </div>
+          <dataset-checkbox-list :datasets="allDatasets" v-model="selectedDatasets" />
           <p v-if="!isInvited">
             An email will be sent to the group's principal investigator to confirm your access.
           </p>
@@ -49,10 +37,12 @@
   import Vue from 'vue';
   import { Component, Prop, Watch } from 'vue-property-decorator';
   import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset';
-  import { fromPairs } from 'lodash-es';
-  import format from 'date-fns/format';
+  import DatasetCheckboxList from '../../components/DatasetCheckboxList.vue';
 
   @Component({
+    components: {
+      DatasetCheckboxList
+    },
     apollo: {
       allDatasets: {
         query: datasetListItemsQuery,
@@ -92,30 +82,10 @@
         : `${action} and transfer ${this.numSelected} ${this.numSelected === 1 ? 'dataset' : 'datasets'}`
     }
 
-    formatDate(date: string) {
-      return `${format(date, 'YYYY-MM-DD')} at ${format(date, 'HH:mm')}`;
-    }
-
-    @Watch('allDatasets')
-    populateSelectedDatasets() {
-      //Rebuild `selectedDatasets` so that the keys are in sync with the ids from `datasets`
-      this.selectedDatasets = fromPairs(this.allDatasets.map(({id}) => {
-        return [id, id in this.selectedDatasets ? this.selectedDatasets[id] : true];
-      }));
-    }
-
     handleClose() {
       if (!this.isSubmitting) {
         this.$emit('close');
       }
-    }
-
-    handleSelectNone() {
-      Object.keys(this.selectedDatasets).forEach(key => this.selectedDatasets[key] = false);
-    }
-
-    handleSelectAll() {
-      Object.keys(this.selectedDatasets).forEach(key => this.selectedDatasets[key] = true);
     }
 
     handleAccept() {
@@ -126,18 +96,8 @@
   }
 </script>
 <style scoped lang="scss">
-  @import "~element-ui/packages/theme-chalk/src/common/var";
   .dialog /deep/ .el-dialog {
     max-width: 600px;
-  }
-  .dataset-list {
-    margin: 20px;
-    max-height: 50vh;
-    overflow: auto;
-  }
-  .select-buttons {
-    text-align: right;
-    margin: 20px;
   }
   .button-bar {
     display: flex;
@@ -145,8 +105,4 @@
     justify-content: flex-end;
     margin-top: 20px;
   }
-  .reset-color {
-    color: $--color-text-regular;
-  }
-
 </style>
