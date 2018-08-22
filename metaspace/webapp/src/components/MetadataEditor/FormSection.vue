@@ -44,6 +44,7 @@
   import { memoize } from 'lodash-es'
   import { FormSectionProperty } from './formStructure'
   import FormField from './FormField.vue';
+  import './FormSection.scss';
 
   @Component({
     components: {
@@ -76,5 +77,5 @@
 </script>
 
 <style lang="scss">
-  @import './FormSection.scss';
+  //@import './FormSection.scss'; // Imported in JS so that Webpack de-duplicates redundant copies
 </style>
