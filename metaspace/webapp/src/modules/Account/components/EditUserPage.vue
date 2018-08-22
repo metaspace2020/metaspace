@@ -211,6 +211,7 @@
   import {TransferDatasetsDialog} from '../../GroupProfile'
   import emailRegex from '../../../lib/emailRegex';
   import ConfirmAsync from '../../../components/ConfirmAsync';
+  import { importDatasetsIntoGroupMutation } from '../../../api/group';
 
   interface Model {
     name: string;
@@ -405,8 +406,15 @@
       try {
         await this.$apollo.mutate({
           mutation: acceptGroupInvitationMutation,
-          variables: { groupId: this.invitingGroup!.id, bringDatasets: selectedDatasetIds },
+          variables: { groupId: this.invitingGroup!.id },
         });
+        if (selectedDatasetIds.length > 0) {
+          await this.$apollo.mutate({
+            mutation: importDatasetsIntoGroupMutation,
+            variables: { groupId: this.invitingGroup!.id, datasetIds: selectedDatasetIds },
+          });
+        }
+
         await this.$apollo.queries.currentUser.refetch();
         this.$message({
           type: "success",

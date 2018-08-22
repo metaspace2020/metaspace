@@ -53,8 +53,8 @@ export const removeUserFromGroupMutation =
   }`;
 
 export const requestAccessToGroupMutation =
-  gql`mutation requestAccessToGroup($groupId: ID!, $bringDatasets: [ID!]!) { 
-    requestAccessToGroup(groupId: $groupId, bringDatasets: $bringDatasets) {
+  gql`mutation requestAccessToGroup($groupId: ID!) { 
+    requestAccessToGroup(groupId: $groupId) {
       role # GraphQL demands a return value be specified
     }
   }`;
@@ -74,8 +74,8 @@ export const inviteUserToGroupMutation =
   }`;
 
 export const acceptGroupInvitationMutation =
-  gql`mutation acceptGroupInvitation($groupId: ID!, $bringDatasets: [ID!]!) { 
-    acceptGroupInvitation(groupId: $groupId, bringDatasets: $bringDatasets) {
+  gql`mutation acceptGroupInvitation($groupId: ID!) { 
+    acceptGroupInvitation(groupId: $groupId) {
       role
     }
   }`;
@@ -83,6 +83,11 @@ export const acceptGroupInvitationMutation =
 export const leaveGroupMutation =
   gql`mutation leaveGroup($groupId: ID!) { 
     leaveGroup(groupId: $groupId)
+  }`;
+
+export const importDatasetsIntoGroupMutation =
+  gql`mutation($groupId: ID!, $importDatasets: [ID!]!) {
+  importDatasetsIntoGroup(groupId: $groupId)
   }`;
 
 

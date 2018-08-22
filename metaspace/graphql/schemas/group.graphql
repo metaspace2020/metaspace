@@ -48,13 +48,14 @@ type Mutation {
   removeUserFromGroup(groupId: ID!, userId: ID!): Boolean!
 
   ## User requests access
-  # `bringDatasets` contains a list of IDs of datasets that the user wants to bring into the group with them
-  requestAccessToGroup(groupId: ID!, bringDatasets: [ID!]!): UserGroup!
+  requestAccessToGroup(groupId: ID!): UserGroup!
   acceptRequestToJoinGroup(groupId: ID!, userId: ID!): UserGroup!
   # User can reject request with `leaveGroup`
 
   ## Group invites user
   inviteUserToGroup(groupId: ID!, email: String!): UserGroup!
-  acceptGroupInvitation(groupId: ID!, bringDatasets: [ID!]!): UserGroup!
+  acceptGroupInvitation(groupId: ID!): UserGroup!
   # Group can reject user with `removeUserFromGroup`
+
+  importDatasetsIntoGroup(groupId: ID!, datasetIds: [ID!]!): Boolean!
 }

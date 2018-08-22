@@ -66,6 +66,7 @@ type Dataset {
   submitter: User!
   group: Group
   principalInvestigator: Person
+  projects: [Project!]!
 
   polarity: Polarity!
   ionisationSource: String!
@@ -197,6 +198,9 @@ input DatasetFilter {
   # exact match
   group: ID
   hasGroup: Boolean
+
+  # exact match
+  project: ID
 
   polarity: Polarity
 

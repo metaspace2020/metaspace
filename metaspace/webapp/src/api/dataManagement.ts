@@ -65,8 +65,9 @@ gql`query($query: String) {
 }`;
 
 export const requestAccessToGroupMutation =
-gql`mutation($groupId: ID!, $bringDatasets: [ID!]!) {
-  requestAccessToGroup(groupId: $groupId, bringDatasets: $bringDatasets){
+gql`mutation($groupId: ID!) {
+  requestAccessToGroup(groupId: $groupId){
     role
     }
   }`;
+

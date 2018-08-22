@@ -56,6 +56,7 @@ function createHttpServerAsync(config) {
         await readFile('schema.graphql', 'utf8'),
         await readFile('schemas/user.graphql', 'utf8'),
         await readFile('schemas/group.graphql', 'utf8'),
+        await readFile('schemas/project.graphql', 'utf8'),
       ]);
     })
     .then((mergedSchema) => {
