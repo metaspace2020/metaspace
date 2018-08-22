@@ -7,12 +7,6 @@
           <div class="flex-spacer" />
 
           <div class="header-row-buttons">
-            <el-button v-if="canDelete && group"
-                       type="danger"
-                       @click="handleDeleteGroup"
-                       :loading="isDeletingGroup">
-              Delete Group
-            </el-button>
             <el-button v-if="canEdit && group"
                        type="primary"
                        @click="handleSave"
@@ -34,9 +28,25 @@
           @rejectUser="handleRejectUser"
           @addMember="handleAddMember"
         />
-        <div>
+        <div style="margin-bottom: 2em">
           <h2>Datasets</h2>
-          <router-link :to="datasetsListLink">See all datasets</router-link>
+          <p>
+            <router-link :to="datasetsListLink">See all datasets</router-link>
+          </p>
+        </div>
+        <div v-if="canDelete && group">
+          <h2>Delete group</h2>
+          <p>
+            Please ensure all datasets have been removed before deleting a group.
+          </p>
+          <div style="text-align: right; margin: 1em 0;">
+            <el-button
+              type="danger"
+              @click="handleDeleteGroup"
+              :loading="isDeletingGroup">
+              Delete group
+            </el-button>
+          </div>
         </div>
       </div>
     </div>

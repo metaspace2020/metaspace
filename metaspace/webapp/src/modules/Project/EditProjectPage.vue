@@ -8,12 +8,6 @@
 
           <div class="header-row-buttons">
             <el-button v-if="canEdit && project"
-                       type="danger"
-                       @click="handleDeleteProject"
-                       :loading="isDeletingProject">
-              Delete Project
-            </el-button>
-            <el-button v-if="canEdit && project"
                        type="primary"
                        @click="handleSave"
                        :loading="isSaving">
@@ -34,9 +28,25 @@
           @rejectUser="handleRejectUser"
           @addMember="handleAddMember"
         />
-        <div>
+        <div style="margin-bottom: 2em">
           <h2>Datasets</h2>
-          <router-link :to="datasetsListLink">See all datasets</router-link>
+          <p>
+            <router-link :to="datasetsListLink">See all datasets</router-link>
+          </p>
+        </div>
+        <div v-if="canEdit && project">
+          <h2>Delete project</h2>
+          <p>
+            Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
+          </p>
+          <div style="text-align: right; margin: 1em 0;">
+            <el-button
+              type="danger"
+              @click="handleDeleteProject"
+              :loading="isDeletingProject">
+              Delete project
+            </el-button>
+          </div>
         </div>
       </div>
     </div>
