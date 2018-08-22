@@ -8,7 +8,6 @@ exports[`EditGroupProfile should match snapshot 1`] = `
         <h1>Group Details</h1>
         <div class="flex-spacer"></div>
         <div class="header-row-buttons">
-          <!---->
           <button type="button" class="el-button el-button--primary">
             <!---->
             <!----><span>
@@ -256,10 +255,13 @@ exports[`EditGroupProfile should match snapshot 1`] = `
           <!----><span>Add member</span></button>
       </div>
     </div>
-    <div>
+    <div style="margin-bottom: 2em;">
       <h2>Datasets</h2>
-      <a href="#/datasets?grp=%7B%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D" class="">See all datasets</a>
+      <p>
+        <a href="#/datasets?grp=%7B%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D" class="">See all datasets</a>
+      </p>
     </div>
+    <!---->
   </div>
 </div>
 </div>
