@@ -6,7 +6,7 @@ export const getRoleName = (role: ProjectRole | null | undefined) => {
     case 'INVITED': return 'Invited';
     case 'PENDING': return 'Requesting access';
     case 'MEMBER': return 'Member';
-    case 'ADMIN': return 'Administrator';
+    case 'ADMIN': return 'Project manager';
     case null: return '';
     case undefined: return '';
   }

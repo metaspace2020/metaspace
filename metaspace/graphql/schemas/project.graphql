@@ -31,7 +31,7 @@ enum UserProjectRole {
   INVITED    # User was invited into the project but hasn't confirmed it yet
   PENDING    # User requested to join the project but the PI hasn't confirmed it yet
   MEMBER     # Normal member of the project
-  MANAGER    # Project administrator
+  ADMIN      # Project administrator
 }
 
 type Query {
