@@ -2,6 +2,7 @@ type Project {
   id: ID!
   name: String!
   isPublic: Boolean!
+  urlSlug: String
   currentUserRole: UserProjectRole
   members: [UserProject!]    # null if current user is not allowed to see
 }
@@ -9,11 +10,13 @@ type Project {
 input CreateProjectInput {
   name: String!
   isPublic: Boolean!
+  urlSlug: String
 }
 
 input UpdateProjectInput {
   name: String
   isPublic: Boolean
+  urlSlug: String
 }
 
 # Many-to-many relationship between User and Project
@@ -28,11 +31,11 @@ enum UserProjectRole {
   INVITED    # User was invited into the project but hasn't confirmed it yet
   PENDING    # User requested to join the project but the PI hasn't confirmed it yet
   MEMBER     # Normal member of the project
-  ADMIN      # Project administrator
+  MANAGER    # Project administrator
 }
 
 type Query {
-  project(projectId: ID!): Project
+  project(projectId: ID!): Project           # If a non-UUID string is used for projectId, the project will be looked up by urlSlug instead
   allProjects(query: String): [Project!]!
 }
 

@@ -2,6 +2,7 @@ type Group {
   id: ID!
   name: String!
   shortName: String!
+  urlSlug: String
   currentUserRole: UserGroupRole
   members: [UserGroup!]    # null if current user is not allowed to see
 }
@@ -9,12 +10,14 @@ type Group {
 input CreateGroupInput {
   name: String!
   shortName: String!
+  urlSlug: String
   principalInvestigatorEmail: String!
 }
 
 input UpdateGroupInput {
   name: String
   shortName: String
+  urlSlug: String
 }
 
 # Many-to-many relationship between User and Group
@@ -33,7 +36,7 @@ enum UserGroupRole {
 }
 
 type Query {
-  group(groupId: ID!): Group
+  group(groupId: ID!): Group           # If a non-UUID string is used for groupId, the group will be looked up by urlSlug instead
   allGroups(query: String): [Group!]!
 }
 
