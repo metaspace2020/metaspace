@@ -16,7 +16,7 @@
                      disabled>
             Request sent
           </el-button>
-          <el-button v-if="roleInProject === 'ADMIN'"
+          <el-button v-if="roleInProject === 'MANAGER'"
                      type="primary"
                      @click="handleManageProject">
             Manage project

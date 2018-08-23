@@ -115,7 +115,7 @@
 
     get canEdit(): boolean {
       return (this.currentUser && this.currentUser.role === 'admin')
-        || (this.project && this.project.currentUserRole === 'ADMIN')
+        || (this.project && this.project.currentUserRole === 'MANAGER')
         || false;
     }
     get projectId(): string {

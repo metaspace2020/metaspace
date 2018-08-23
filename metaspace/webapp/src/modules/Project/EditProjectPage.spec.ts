@@ -21,10 +21,10 @@ describe('EditProjectPage', () => {
     id: '2',
     name: 'Adduct Assessment Alliance',
     isPublic: true,
-    currentUserRole: 'ADMIN',
+    currentUserRole: 'MANAGER',
     members: [
       {
-        role: 'ADMIN',
+        role: 'MANAGER',
         numDatasets: 123,
         user: {
           id: '3',
