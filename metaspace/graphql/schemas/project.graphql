@@ -1,0 +1,64 @@
+type Project {
+  id: ID!
+  name: String!
+  isPublic: Boolean!
+  urlSlug: String
+  currentUserRole: UserProjectRole
+  members: [UserProject!]    # null if current user is not allowed to see
+}
+
+input CreateProjectInput {
+  name: String!
+  isPublic: Boolean!
+  urlSlug: String
+}
+
+input UpdateProjectInput {
+  name: String
+  isPublic: Boolean
+  urlSlug: String
+}
+
+# Many-to-many relationship between User and Project
+type UserProject {
+  user: User!
+  project: Project!
+  role: UserProjectRole!
+  numDatasets: Int!
+}
+
+enum UserProjectRole {
+  INVITED    # User was invited into the project but hasn't confirmed it yet
+  PENDING    # User requested to join the project but the PI hasn't confirmed it yet
+  MEMBER     # Normal member of the project
+  MANAGER    # Project administrator
+}
+
+type Query {
+  project(projectId: ID!): Project
+  projectByUrlSlug(urlSlug: String!): Project
+  allProjects(query: String): [Project!]!
+}
+
+type Mutation {
+  ## Managing projects
+  createProject(projectDetails: CreateProjectInput!): Project!
+  updateProject(projectId: ID!, projectDetails: UpdateProjectInput!): Project!
+  deleteProject(projectId: ID!): Boolean!
+
+  ## Managing project users
+  leaveProject(projectId: ID!): Boolean!
+  removeUserFromProject(projectId: ID!, userId: ID!): Boolean!
+
+  ## User requests access
+  requestAccessToProject(projectId: ID!): UserProject!
+  acceptRequestToJoinProject(projectId: ID!, userId: ID!): UserProject!
+  # User can reject request with `leaveProject`
+
+  ## Project invites user
+  inviteUserToProject(projectId: ID!, email: String!): UserProject!
+  acceptProjectInvitation(projectId: ID!): UserProject!
+  # Project can reject user with `removeUserFromProject`
+
+  importDatasetsIntoProject(projectId: ID!, datasetIds: [ID!]!): Boolean!
+}

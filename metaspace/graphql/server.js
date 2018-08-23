@@ -51,10 +51,11 @@ async function createHttpServerAsync(config) {
   let httpServer = http.createServer(app);
 
   const mergedSchema = mergeTypes([
-    await readFile('schema.graphql', 'utf8'),
-    await readFile('schemas/user.graphql', 'utf8'),
-    await readFile('schemas/group.graphql', 'utf8'),
-  ]);
+        await readFile('schema.graphql', 'utf8'),
+        await readFile('schemas/user.graphql', 'utf8'),
+        await readFile('schemas/group.graphql', 'utf8'),
+        await readFile('schemas/project.graphql', 'utf8'),
+      ]);
 
   const schema = makeExecutableSchema({typeDefs: mergedSchema});
   addResolveFunctionsToSchema(schema, Resolvers);

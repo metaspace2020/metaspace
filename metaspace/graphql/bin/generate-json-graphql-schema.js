@@ -10,6 +10,7 @@ const schemaFiles = [
   '../schema.graphql',
   '../schemas/user.graphql',
   '../schemas/group.graphql',
+  '../schemas/project.graphql',
 ];
 
 const run = async (outputFile) => {

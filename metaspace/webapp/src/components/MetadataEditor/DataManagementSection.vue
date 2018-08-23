@@ -289,10 +289,7 @@
         this.isGroupAccessLoading = true;
         await this.$apollo.mutate({
           mutation: requestAccessToGroupMutation,
-          variables: {
-            groupId: this.groupSearchSelectedId,
-            bringDatasets: []
-          }
+          variables: { groupId: this.groupSearchSelectedId }
         });
 
         this.groupId = this.groupSearchSelectedId;

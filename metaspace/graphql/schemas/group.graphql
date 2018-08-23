@@ -2,6 +2,7 @@ type Group {
   id: ID!
   name: String!
   shortName: String!
+  urlSlug: String
   currentUserRole: UserGroupRole
   members: [UserGroup!]    # null if current user is not allowed to see
 }
@@ -9,12 +10,14 @@ type Group {
 input CreateGroupInput {
   name: String!
   shortName: String!
+  urlSlug: String
   principalInvestigatorEmail: String!
 }
 
 input UpdateGroupInput {
   name: String
   shortName: String
+  urlSlug: String
 }
 
 # Many-to-many relationship between User and Group
@@ -34,6 +37,7 @@ enum UserGroupRole {
 
 type Query {
   group(groupId: ID!): Group
+  groupByUrlSlug(urlSlug: String!): Group
   allGroups(query: String): [Group!]!
 }
 
@@ -48,13 +52,14 @@ type Mutation {
   removeUserFromGroup(groupId: ID!, userId: ID!): Boolean!
 
   ## User requests access
-  # `bringDatasets` contains a list of IDs of datasets that the user wants to bring into the group with them
-  requestAccessToGroup(groupId: ID!, bringDatasets: [ID!]!): UserGroup!
+  requestAccessToGroup(groupId: ID!): UserGroup!
   acceptRequestToJoinGroup(groupId: ID!, userId: ID!): UserGroup!
   # User can reject request with `leaveGroup`
 
   ## Group invites user
   inviteUserToGroup(groupId: ID!, email: String!): UserGroup!
-  acceptGroupInvitation(groupId: ID!, bringDatasets: [ID!]!): UserGroup!
+  acceptGroupInvitation(groupId: ID!): UserGroup!
   # Group can reject user with `removeUserFromGroup`
+
+  importDatasetsIntoGroup(groupId: ID!, datasetIds: [ID!]!): Boolean!
 }
