@@ -36,7 +36,8 @@ enum UserGroupRole {
 }
 
 type Query {
-  group(groupId: ID!): Group           # If a non-UUID string is used for groupId, the group will be looked up by urlSlug instead
+  group(groupId: ID!): Group
+  groupByUrlSlug(urlSlug: String!): Group
   allGroups(query: String): [Group!]!
 }
 

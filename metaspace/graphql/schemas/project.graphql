@@ -31,11 +31,12 @@ enum UserProjectRole {
   INVITED    # User was invited into the project but hasn't confirmed it yet
   PENDING    # User requested to join the project but the PI hasn't confirmed it yet
   MEMBER     # Normal member of the project
-  ADMIN      # Project administrator
+  MANAGER    # Project administrator
 }
 
 type Query {
-  project(projectId: ID!): Project           # If a non-UUID string is used for projectId, the project will be looked up by urlSlug instead
+  project(projectId: ID!): Project
+  projectByUrlSlug(urlSlug: String!): Project
   allProjects(query: String): [Project!]!
 }
 
