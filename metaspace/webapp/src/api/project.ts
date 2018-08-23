@@ -1,12 +1,12 @@
 import gql from 'graphql-tag';
 
-export type ProjectRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'ADMIN';
+export type ProjectRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'MANAGER';
 export const getRoleName = (role: ProjectRole | null | undefined) => {
   switch (role) {
     case 'INVITED': return 'Invited';
     case 'PENDING': return 'Requesting access';
     case 'MEMBER': return 'Member';
-    case 'ADMIN': return 'Project manager';
+    case 'MANAGER': return 'Project manager';
     case null: return '';
     case undefined: return '';
   }
