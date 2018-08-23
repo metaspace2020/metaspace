@@ -8,6 +8,11 @@ export const editDatasetFragment =
     isPublic
     group {
       id
+      name
+    }
+    projects {
+      id
+      name
     }
     principalInvestigator {
       name

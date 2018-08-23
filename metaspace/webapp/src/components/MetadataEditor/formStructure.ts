@@ -48,6 +48,7 @@ export interface MetaspaceOptions {
   molDBs: string[];
   adducts: string[];
   groupId: string | null;
+  projectIds: string[];
   principalInvestigator: {
     name: string;
     email: string;

@@ -1,18 +1,28 @@
 <template>
-  <el-form ref="form" :model="model" :disabled="disabled" :rules="rules" label-position="top">
+  <el-form
+    ref="form"
+    :model="value"
+    :disabled="disabled"
+    :rules="rules"
+    label-position="top"
+  >
     <div>
       <el-form-item label="Name" prop="name" class="name">
-        <el-input v-model="model.name" :maxLength="50" />
+        <el-input v-model="value.name" :maxLength="50" />
       </el-form-item>
       <el-form-item prop="isPublic" class="isPublic">
-        <el-checkbox v-model="model.isPublic">Allow other users to see this project</el-checkbox>
+        <el-checkbox v-model="value.isPublic">Allow other users to see this project</el-checkbox>
       </el-form-item>
+      <!--<h2 v-if="showUrlSlug">Custom URL</h2>-->
+      <!--<el-form-item v-if="showUrlSlug" prop="urlSlug" class="urlSlug">-->
+        <!--http://metaspace2020.eu/#/projects/<el-input v-model="value.urlSlug" :maxLength="30" size="mini" placeholder="project-name-here" />-->
+      <!--</el-form-item>-->
     </div>
   </el-form>
 </template>
 <script lang="ts">
   import Vue from 'vue';
-  import { Component, Prop } from 'vue-property-decorator';
+  import { Component, Model, Prop } from 'vue-property-decorator';
   import { ElForm } from 'element-ui/types/form';
 
   interface Model {
@@ -21,10 +31,12 @@
 
   @Component
   export default class EditProjectForm extends Vue {
-    @Prop({type: Object, required: true})
-    model!: Model;
+    @Model('input', {type: Object, required: true})
+    value!: Model;
     @Prop({type: Boolean, default: false})
     disabled!: Boolean;
+    @Prop({type: Boolean, default: true})
+    showUrlSlug!: Boolean;
 
     rules = {
       name: [{type: 'string', required: true, min: 2, message: 'Name is required', trigger: 'manual'}],
@@ -42,6 +54,15 @@
   }
 
   .isPublic {
-    margin-left: 10px;
+    margin-left: 20px;
   }
+  /*.urlSlug {*/
+    /*/deep/ .el-input {*/
+      /*display: inline-block;*/
+      /*width: 150px;*/
+      /*input {*/
+        /*padding: 0 5px;*/
+      /*}*/
+    /*}*/
+  /*}*/
 </style>

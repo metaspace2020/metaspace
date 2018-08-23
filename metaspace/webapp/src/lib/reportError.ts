@@ -10,6 +10,7 @@ export function setErrorNotifier(_$notify: ElNotification) {
 export default function reportError(err: Error, message?: string) {
   try {
     Raven.captureException(err);
+    console.error(err);
     if ($notify != null) {
       $notify.error(message || 'Oops! Something went wrong. Please refresh the page and try again.');
     }

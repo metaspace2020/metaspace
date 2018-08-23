@@ -74,12 +74,12 @@
       try {
         await (this.$refs.form as any).validate();
         try {
-          const {data} = await this.$apollo.mutate<{data: CreateGroupMutation}>({
+          const {data} = await this.$apollo.mutate({
             mutation: createGroupMutation,
             variables: { groupDetails: this.model },
           });
           this.$message({ message: `${this.model.name} was created`, type: 'success' });
-          this.$router.push(`/group/${data.createGroup.id}/edit`);
+          this.$router.push(`/group/${data!.createGroup.id}/edit`);
         } catch (err) {
           reportError(err);
         }

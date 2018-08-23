@@ -46,6 +46,14 @@ export const userProfileQuery =
         name
       }
     }
+    projects {
+      role
+      numDatasets
+      project {
+        id
+        name
+      }
+    }
   }
 }
 `;
@@ -65,6 +73,12 @@ export interface DatasetSubmitterFragment {
       name: string;
     }
   }[] | null;
+  projects: {
+    project: {
+      id: string;
+      name: string;
+    }
+  }[] | null;
 }
 
 export const datasetSubmitterFragment =
@@ -79,6 +93,12 @@ export const datasetSubmitterFragment =
     }
     groups {
       group {
+        id
+        name
+      }
+    }
+    projects {
+      project {
         id
         name
       }

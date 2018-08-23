@@ -15,7 +15,7 @@
             </el-button>
           </div>
         </div>
-        <edit-project-form :model="model" :disabled="isSaving || !canEdit" />
+        <edit-project-form v-model="model" :disabled="isSaving || !canEdit" />
         <members-list
           :loading="projectLoading !== 0"
           :members="project && project.members || []"

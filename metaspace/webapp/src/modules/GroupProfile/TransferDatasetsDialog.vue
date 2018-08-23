@@ -15,7 +15,7 @@
           </p>
           <div class="button-bar">
             <el-button :disabled="isSubmitting" @click="handleClose">Cancel</el-button>
-            <el-button type="primary" :loading="isSubmitting" @click="handleAccept">{{acceptText}}</el-button>
+            <el-button type="primary" :loading="isSubmitting" @click="handleCreate">{{acceptText}}</el-button>
           </div>
         </div>
         <div v-else>
@@ -27,7 +27,7 @@
           </p>
           <div class="button-bar">
             <el-button :disabled="isSubmitting" @click="handleClose" size="small">Cancel</el-button>
-            <el-button type="primary" :loading="isSubmitting" @click="handleAccept" size="small">{{acceptText}}</el-button>
+            <el-button type="primary" :loading="isSubmitting" @click="handleCreate" size="small">{{acceptText}}</el-button>
           </div>
         </div>
       </div>
