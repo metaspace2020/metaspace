@@ -161,6 +161,22 @@ const FILTER_SPECIFICATIONS = {
     valueKey: 'id',
   },
 
+  project: {
+    type: SingleSelectFilter,
+    name: 'Project',
+    description: 'Select project',
+    levels: ['annotation', 'dataset'],
+    initialValue: undefined,
+    encoding: 'json',
+    options: lists => lists.projects.map(x => {
+      const {id, name} = x;
+      return {id, name};
+    }),
+    optionFormatter: ({name}) => name,
+    valueFormatter: ({name}) => name,
+    valueKey: 'id',
+  },
+
   submitter: {
     type: SingleSelectFilter,
     name: 'Submitter',

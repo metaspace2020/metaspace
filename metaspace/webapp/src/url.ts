@@ -11,6 +11,7 @@ const FILTER_TO_URL: Dictionary<string> = {
   database: 'db',
   institution: 'lab',
   group: 'grp',
+  project: 'prj',
   submitter: 'subm',
   datasetIds: 'ds',
   minMSM: 'msm',

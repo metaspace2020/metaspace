@@ -8,7 +8,6 @@ exports[`EditGroupProfile should match snapshot 1`] = `
         <h1>Group Details</h1>
         <div class="flex-spacer"></div>
         <div class="header-row-buttons">
-          <!---->
           <button type="button" class="el-button el-button--primary">
             <!---->
             <!----><span>
@@ -51,7 +50,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
     <!---->
     </form>
     <div>
-      <h1>Members</h1>
+      <h2>Members</h2>
       <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" element-loading-text="Loading results from the server...">
         <div class="hidden-columns">
           <div></div>
@@ -118,7 +117,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=%7B%22id%22%3A%222%22,%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D&amp;subm=%7B%22id%22%3A%223%22,%22name%22%3A%22me%22%7D" class="">123</a>
+                    <a href="#/datasets?grp=%7B%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D&amp;subm=%7B%22id%22%3A%223%22,%22name%22%3A%22me%22%7D" class="">123</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -148,7 +147,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=%7B%22id%22%3A%222%22,%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D&amp;subm=%7B%22id%22%3A%224%22,%22name%22%3A%22Person%20who%20asked%20to%20join%22%7D" class="">0</a>
+                    <a href="#/datasets?grp=%7B%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D&amp;subm=%7B%22id%22%3A%224%22,%22name%22%3A%22Person%20who%20asked%20to%20join%22%7D" class="">0</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -186,7 +185,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=%7B%22id%22%3A%222%22,%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D&amp;subm=%7B%22id%22%3A%225%22,%22name%22%3A%22Invitee%22%7D" class="">0</a>
+                    <a href="#/datasets?grp=%7B%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D&amp;subm=%7B%22id%22%3A%225%22,%22name%22%3A%22Invitee%22%7D" class="">0</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -220,7 +219,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=%7B%22id%22%3A%222%22,%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D&amp;subm=%7B%22id%22%3A%226%22,%22name%22%3A%22Group%20member%22%7D" class="">1</a>
+                    <a href="#/datasets?grp=%7B%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D&amp;subm=%7B%22id%22%3A%226%22,%22name%22%3A%22Group%20member%22%7D" class="">1</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -256,10 +255,13 @@ exports[`EditGroupProfile should match snapshot 1`] = `
           <!----><span>Add member</span></button>
       </div>
     </div>
-    <div>
-      <h1>Datasets</h1>
-      <a href="#/datasets?grp=%7B%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D" class="">See all datasets</a>
+    <div style="margin-bottom: 2em;">
+      <h2>Datasets</h2>
+      <p>
+        <a href="#/datasets?grp=%7B%22name%22%3A%22European%20Molecular%20Biology%20Laboratory%22%7D" class="">See all datasets</a>
+      </p>
     </div>
+    <!---->
   </div>
 </div>
 </div>

@@ -48,6 +48,8 @@ const router = new VueRouter({
     { path: '/group/create', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "GroupPage" */ './modules/GroupProfile')).CreateGroupPage },
     { path: '/group/:groupId', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "GroupPage" */ './modules/GroupProfile')).ViewGroupProfile },
     { path: '/group/:groupId/edit', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "GroupPage" */ './modules/GroupProfile')).EditGroupProfile },
+    { path: '/project/:projectId', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "ProjectPage" */ './modules/Project')).ViewProjectPage },
+    { path: '/project/:projectId/edit', component: async () => (await import(/* webpackPrefetch: true, webpackChunkName: "ProjectPage" */ './modules/Project')).EditProjectPage },
   ]
 });
 

@@ -3,11 +3,11 @@
     <div class="page">
       <div class="page-content">
         <div class="header-row">
-          <h1>Group Details</h1>
+          <h1>Project Details</h1>
           <div class="flex-spacer" />
 
           <div class="header-row-buttons">
-            <el-button v-if="canEdit && group"
+            <el-button v-if="canEdit && project"
                        type="primary"
                        @click="handleSave"
                        :loading="isSaving">
@@ -15,11 +15,11 @@
             </el-button>
           </div>
         </div>
-        <edit-group-form :model="model" :disabled="isSaving || !canEdit" />
+        <edit-project-form :model="model" :disabled="isSaving || !canEdit" />
         <members-list
-          :loading="groupLoading !== 0"
-          :members="group && group.members || []"
-          type="group"
+          :loading="projectLoading !== 0"
+          :members="project && project.members || []"
+          type="project"
           :filter="datasetsListFilter"
           :canEdit="canEdit"
           @removeUser="handleRemoveUser"
@@ -34,17 +34,17 @@
             <router-link :to="datasetsListLink">See all datasets</router-link>
           </p>
         </div>
-        <div v-if="canDelete && group">
-          <h2>Delete group</h2>
+        <div v-if="canEdit && project">
+          <h2>Delete project</h2>
           <p>
-            Please ensure all datasets have been removed before deleting a group.
+            Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
           </p>
           <div style="text-align: right; margin: 1em 0;">
             <el-button
               type="danger"
-              @click="handleDeleteGroup"
-              :loading="isDeletingGroup">
-              Delete group
+              @click="handleDeleteProject"
+              :loading="isDeletingProject">
+              Delete project
             </el-button>
           </div>
         </div>
@@ -57,18 +57,18 @@
   import { Component, Watch } from 'vue-property-decorator';
   import DatasetItem from '../../components/DatasetItem.vue';
   import {
-    acceptRequestToJoinGroupMutation,
-    deleteGroupMutation,
-    editGroupQuery,
-    EditGroupQuery,
-    EditGroupQueryMember,
-    inviteUserToGroupMutation,
-    removeUserFromGroupMutation,
-    UpdateGroupMutation,
-    updateGroupMutation,
-  } from '../../api/group';
+    acceptRequestToJoinProjectMutation,
+    deleteProjectMutation,
+    editProjectQuery,
+    EditProjectQuery,
+    EditProjectQueryMember,
+    inviteUserToProjectMutation,
+    removeUserFromProjectMutation,
+    UpdateProjectMutation,
+    updateProjectMutation,
+  } from '../../api/project';
   import gql from 'graphql-tag';
-  import EditGroupForm from './EditGroupForm.vue';
+  import EditProjectForm from './EditProjectForm.vue';
   import MembersList from '../../components/MembersList/MembersList.vue';
   import { UserRole } from '../../api/user';
   import { encodeParams } from '../../url';
@@ -84,7 +84,7 @@
   @Component({
     components: {
       DatasetItem,
-      EditGroupForm,
+      EditProjectForm,
       MembersList,
     },
     apollo: {
@@ -94,49 +94,46 @@
           role
         }
       }`,
-      group: {
-        query: editGroupQuery,
+      project: {
+        query: editProjectQuery,
         loadingKey: 'membersLoading',
-        variables(this: EditGroupProfile) { return { groupId: this.groupId } },
+        variables(this: EditProjectProfile) { return { projectId: this.projectId } },
       },
     }
   })
-  export default class EditGroupProfile extends Vue {
-    groupLoading = 0;
-    isDeletingGroup = false;
+  export default class EditProjectProfile extends Vue {
+    projectLoading = 0;
+    isDeletingProject = false;
     isSaving = false;
     model = {
       name: '',
-      shortName: '',
+      isPublic: true,
     };
 
     currentUser: CurrentUserQuery | null = null;
-    group: EditGroupQuery | null = null;
+    project: EditProjectQuery | null = null;
 
-    get canDelete(): boolean {
-      return this.currentUser && this.currentUser.role === 'admin' || false;
-    }
     get canEdit(): boolean {
       return (this.currentUser && this.currentUser.role === 'admin')
-        || (this.group && this.group.currentUserRole === 'PRINCIPAL_INVESTIGATOR')
+        || (this.project && this.project.currentUserRole === 'MANAGER')
         || false;
     }
-    get groupId(): string {
-      return this.$route.params.groupId;
+    get projectId(): string {
+      return this.$route.params.projectId;
     }
-    get groupName() {
-      return this.group ? this.group.name : '';
+    get projectName() {
+      return this.project ? this.project.name : '';
     }
     get datasetsListFilter() {
       return {
-        group: {id: this.groupId, name: this.groupName}
+        project: {id: this.projectId, name: this.projectName}
       };
     }
 
-    @Watch('group')
+    @Watch('project')
     setModel() {
-      this.model.name = this.group && this.group.name || '';
-      this.model.shortName = this.group && this.group.shortName || '';
+      this.model.name = this.project && this.project.name || '';
+      this.model.isPublic = this.project && this.project.isPublic || true;
     }
 
     get datasetsListLink() {
@@ -145,37 +142,37 @@
       return { path, query }
     }
 
-    @ConfirmAsync(function (this: EditGroupProfile) {
+    @ConfirmAsync(function (this: EditProjectProfile) {
       return {
-        message: `Are you sure you want to delete ${this.groupName}?`,
-        confirmButtonText: 'Delete group',
+        message: `Are you sure you want to delete ${this.projectName}?`,
+        confirmButtonText: 'Delete project',
         confirmButtonLoadingText: 'Deleting...'
       }
     })
-    async handleDeleteGroup() {
-      this.isDeletingGroup = true;
+    async handleDeleteProject() {
+      this.isDeletingProject = true;
       try {
-        const groupName = this.groupName;
+        const projectName = this.projectName;
         await this.$apollo.mutate({
-          mutation: deleteGroupMutation,
-          variables: { groupId: this.groupId },
+          mutation: deleteProjectMutation,
+          variables: { projectId: this.projectId },
         });
-        this.$message({ message: `${groupName} has been deleted`, type: 'success' });
+        this.$message({ message: `${projectName} has been deleted`, type: 'success' });
         this.$router.push('/');
       } catch(err) {
         reportError(err);
       } finally {
-        this.isDeletingGroup = false;
+        this.isDeletingProject = false;
       }
     }
 
     async handleSave() {
       this.isSaving = true;
       try {
-        const {name, shortName} = this.model;
-        await this.$apollo.mutate<UpdateGroupMutation>({
-          mutation: updateGroupMutation,
-          variables: { groupId: this.groupId, groupDetails: { name, shortName } },
+        const {name, isPublic} = this.model;
+        await this.$apollo.mutate<UpdateProjectMutation>({
+          mutation: updateProjectMutation,
+          variables: { projectId: this.projectId, projectDetails: { name, isPublic } },
         });
         this.$message({ message: `${name} has been saved`, type: 'success' });
       } catch(err) {
@@ -185,69 +182,69 @@
       }
     }
 
-    @ConfirmAsync(function (this: EditGroupProfile, member: EditGroupQueryMember) {
+    @ConfirmAsync(function (this: EditProjectProfile, member: EditProjectQueryMember) {
       return {
-        message: `Are you sure you want to remove ${member.user.name} from ${this.groupName}?`,
+        message: `Are you sure you want to remove ${member.user.name} from ${this.projectName}?`,
         confirmButtonText: 'Remove user',
         confirmButtonLoadingText: 'Removing...'
       }
     })
-    async handleRemoveUser(member: EditGroupQueryMember) {
+    async handleRemoveUser(member: EditProjectQueryMember) {
       await this.$apollo.mutate({
-        mutation: removeUserFromGroupMutation,
-        variables: { groupId: this.groupId, userId: member.user.id },
+        mutation: removeUserFromProjectMutation,
+        variables: { projectId: this.projectId, userId: member.user.id },
       });
-      await this.$apollo.queries.group.refetch();
+      await this.$apollo.queries.project.refetch();
     }
 
-    @ConfirmAsync(function (this: EditGroupProfile, member: EditGroupQueryMember) {
+    @ConfirmAsync(function (this: EditProjectProfile, member: EditProjectQueryMember) {
       return {
-        message: `This will allow ${member.user.name} to access all private datasets that are in ${this.groupName}. Are you sure you want to accept them into the group?`,
+        message: `This will allow ${member.user.name} to access all private datasets that are in ${this.projectName}. Are you sure you want to accept them into the project?`,
         confirmButtonText: 'Accept request',
         confirmButtonLoadingText: 'Accepting...'
       }
     })
-    async handleAcceptUser(member: EditGroupQueryMember) {
+    async handleAcceptUser(member: EditProjectQueryMember) {
       await this.$apollo.mutate({
-        mutation: acceptRequestToJoinGroupMutation,
-        variables: { groupId: this.groupId, userId: member.user.id },
+        mutation: acceptRequestToJoinProjectMutation,
+        variables: { projectId: this.projectId, userId: member.user.id },
       });
-      await this.$apollo.queries.group.refetch();
+      await this.$apollo.queries.project.refetch();
     }
 
-    @ConfirmAsync(function (this: EditGroupProfile, member: EditGroupQueryMember) {
+    @ConfirmAsync(function (this: EditProjectProfile, member: EditProjectQueryMember) {
       return {
-        message: `Are you sure you want to decline ${member.user.name}'s request for access to ${this.groupName}?`,
+        message: `Are you sure you want to decline ${member.user.name}'s request for access to ${this.projectName}?`,
         confirmButtonText: 'Decline request',
         confirmButtonLoadingText: 'Declining...'
       }
     })
-    async handleRejectUser(member: EditGroupQueryMember) {
+    async handleRejectUser(member: EditProjectQueryMember) {
       await this.$apollo.mutate({
-        mutation: removeUserFromGroupMutation,
-        variables: { groupId: this.groupId, userId: member.user.id },
+        mutation: removeUserFromProjectMutation,
+        variables: { projectId: this.projectId, userId: member.user.id },
       });
-      await this.$apollo.queries.group.refetch();
+      await this.$apollo.queries.project.refetch();
     }
 
-    @ConfirmAsync(function (this: EditGroupProfile) {
+    @ConfirmAsync(function (this: EditProjectProfile) {
       return {
         title: 'Add member',
-        message: `An email will be sent inviting them to join the group. If they accept the invitation, they will be able to access the private datasets of ${this.groupName}.`,
+        message: `An email will be sent inviting them to join the project. If they accept the invitation, they will be able to access the private datasets of ${this.projectName}.`,
         showInput: true,
         inputPlaceholder: 'Email address',
         inputPattern: emailRegex,
         inputErrorMessage: 'Please enter a valid email address',
-        confirmButtonText: 'Invite to group',
+        confirmButtonText: 'Invite to project',
         confirmButtonLoadingText: 'Sending invitation...'
       }
     })
     async handleAddMember(email: string) {
       await this.$apollo.mutate({
-        mutation: inviteUserToGroupMutation,
-        variables: { groupId: this.groupId, email },
+        mutation: inviteUserToProjectMutation,
+        variables: { projectId: this.projectId, email },
       });
-      await this.$apollo.queries.group.refetch();
+      await this.$apollo.queries.project.refetch();
     }
   }
 

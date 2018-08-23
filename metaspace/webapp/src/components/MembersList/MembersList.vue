@@ -1,12 +1,12 @@
 <template>
   <div>
-    <h1>Members</h1>
+    <h2>Members</h2>
     <el-table :data="currentPageData"
               :row-key="row => row.user.id"
               v-loading="loading"
               element-loading-text="Loading results from the server...">
 
-      <p slot="empty">This group is empty, or you do not have access to view its member list.</p>
+      <p slot="empty">You do not have access to view the member list.</p>
 
       <el-table-column label="Name" min-width="200">
         <template slot-scope="scope">
@@ -67,7 +67,7 @@
       </el-table-column>
     </el-table>
     <div class="pagination-row">
-      <el-pagination v-if="members.length > pageSize"
+      <el-pagination v-if="members.length > pageSize || page !== 1"
                      :total="members.length"
                      :page-size="pageSize"
                      :current-page.sync="page"
@@ -80,33 +80,47 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component, Emit, Prop } from 'vue-property-decorator';
-  import { EditGroupQuery, EditGroupQueryMember, EditGroupQueryUser, getRoleName } from '../../api/group';
+  import { getRoleName as getGroupRoleName, UserGroupRole } from '../../api/group';
+  import { getRoleName as getProjectRoleName, ProjectRole } from '../../api/project';
   import { encodeParams } from '../../url';
 
+  export interface Member {
+    role: UserGroupRole | ProjectRole,
+    numDatasets: number,
+    user: {
+      id: string;
+      name: string;
+      email: string | null;
+    }
+  }
+
   @Component({})
-  export default class EditGroupMembersList extends Vue {
+  export default class MembersList extends Vue {
     @Prop({type:Boolean, required: true})
     loading!: boolean;
-    @Prop(Object)
-    group!: EditGroupQuery | null;
+    @Prop({type:Array, required: true})
+    members!: Member[];
     @Prop({type:Boolean, required: true})
     canEdit!: boolean;
+    @Prop({type: String, required: true})
+    type!: 'group' | 'project';
+    @Prop({required: true})
+    filter!: any;
 
     pageSize: number = 10;
     page: number = 1;
 
-    getRoleName = getRoleName;
-
-    get members(): EditGroupQueryMember[] {
-      return this.group && this.group.members || [];
+    get getRoleName() {
+      return this.type === 'group' ? getGroupRoleName : getProjectRoleName;
     }
-    get currentPageData(): EditGroupQueryMember[] {
+
+    get currentPageData(): Member[] {
       return this.members.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
     }
 
-    datasetsListLink(user: EditGroupQueryUser) {
+    datasetsListLink(user: Member['user']) {
       const filters = {
-        group: this.group && {id: this.group.id, name: this.group.name},
+        ...this.filter,
         submitter: {id: user.id, name: user.name},
       };
       const path = '/datasets';
@@ -115,16 +129,16 @@
     }
 
     @Emit('removeUser')
-    handleRemoveUser(userId: EditGroupQueryMember) {}
+    handleRemoveUser(user: Member) {}
 
     @Emit('cancelInvite')
-    handleCancelInvite(userId: EditGroupQueryMember) {}
+    handleCancelInvite(user: Member) {}
 
     @Emit('acceptUser')
-    handleAcceptUser(userId: EditGroupQueryMember) {}
+    handleAcceptUser(user: Member) {}
 
     @Emit('rejectUser')
-    handleRejectUser(userId: EditGroupQueryMember) {}
+    handleRejectUser(user: Member) {}
 
     @Emit('addMember')
     handleAddMember() {}
