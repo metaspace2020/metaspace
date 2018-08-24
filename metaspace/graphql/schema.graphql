@@ -243,6 +243,7 @@ input DatasetCreateInput {
   uploadDT: String
   submitterId: ID
   groupId: ID
+  projectIds: [ID!] = []
   principalInvestigator: PersonInput
   isPublic: Boolean! = true
   molDBs: [String!]!
@@ -256,6 +257,7 @@ input DatasetUpdateInput {
   metadataJson: String
   submitterId: ID
   groupId: ID
+  projectIds: [ID!] = []
   principalInvestigator: PersonInput
   isPublic: Boolean = true
   molDBs: [String!]
