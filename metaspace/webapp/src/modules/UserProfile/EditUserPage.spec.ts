@@ -1,8 +1,8 @@
 import { mount, Wrapper } from '@vue/test-utils';
 import ElementUI from 'element-ui';
 import Vue from 'vue';
-import registerMockComponent from '../../../../tests/utils/registerMockComponent';
-import { restoreConsole, suppressConsoleWarn } from '../../../../tests/utils/suppressConsole';
+import registerMockComponent from '../../../tests/utils/registerMockComponent';
+import { restoreConsole, suppressConsoleWarn } from '../../../tests/utils/suppressConsole';
 import EditUserPage from './EditUserPage.vue';
 
 Vue.use(ElementUI);
