@@ -137,8 +137,7 @@
     lastPrincipalInvestigator: MetaspaceOptions['principalInvestigator'] = null;
 
     created() {
-      this.fetchGroupIfUnknown();
-      this.fetchProjectsIfUnknown();
+      this.fetchUnknowns();
     }
 
     get showPI() {
@@ -210,9 +209,10 @@
       if (this.groupIdIsUnknown && this.unknownGroup != null && this.unknownGroup.id === this.value.groupId) {
         options.push({value: this.unknownGroup.id, label: this.unknownGroup.name });
       }
-      // TODO: Handle case where submitter isn't the editor, either by removing the Find my group option,
-      // or not requesting access as part of the search.
-      options.push({value: FIND_GROUP, label: "Find my group..."});
+      // TODO: Uncomment when userIDs are fully implemented so that "Find my group" is hidden when editing someone else's dataset
+      // if (this.submitter != null && this.currentUser != null && this.submitter.id === this.currentUser.id) {
+      options.push({ value: FIND_GROUP, label: "Find my group..." });
+      // }
       options.push({value: NO_GROUP, label: "No group (Enter PI instead)"});
       return options;
     }
@@ -233,6 +233,11 @@
     }
 
     @Watch('submitter')
+    fetchUnknowns() {
+      this.fetchGroupIfUnknown();
+      this.fetchProjectsIfUnknown();
+    }
+
     @Watch('value.groupId')
     async fetchGroupIfUnknown() {
       // If the dataset is saved with a groupId for a group that the user isn't a member of, or the group
@@ -250,7 +255,6 @@
       }
     }
 
-    @Watch('submitter')
     @Watch('value.projectIds')
     async fetchProjectsIfUnknown() {
       if (this.submitter == null) return; // Still loading
