@@ -133,12 +133,15 @@ const defaultDBConfig = () => {
   };
 };
 
+let db;
+
 const initDBConnection = (config = defaultDBConfig) => {
-  return Knex({
+  db = Knex({
     client: 'pg',
     connection: config(),
     searchPath: ['engine', 'public']
   });
+  return db;
 };
 
 function canUserViewEsDataset(dataset, user) {
