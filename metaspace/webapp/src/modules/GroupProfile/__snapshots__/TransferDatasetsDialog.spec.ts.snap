@@ -1,66 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`TransferDatasetsDialog should match snapshot (datasets to import, invited) 1`] = `
-<mock-el-dialog visible="" append-to-body="" title="Transfer datasets" class="dialog">
+<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog">
   <div>
     <div>
       <p style="margin-top: 0px;">
-        You have previously uploaded one or more datasets without a group. Do you want to transfer any of these datasets to Group Name?
+        Are you sure you want to join Group Name?
       </p>
-      <div class="dataset-list">
-        <div>
-          <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-            <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
-            </span><span class="el-checkbox__label">
-            Untreated_3_434
-            <span class="reset-color">(Submitted 2018-06-28 at 13:23)</span>
-            <!---->
-            </span>
-          </label>
-        </div>
-        <div>
-          <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-            <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
-            </span><span class="el-checkbox__label">
-            Dataset 2
-            <span class="reset-color">(Submitted 2018-06-28 at 13:21)</span>
-            <!---->
-            </span>
-          </label>
-        </div>
-        <div>
-          <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-            <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
-            </span><span class="el-checkbox__label">
-            Dataset 3
-            <span class="reset-color">(Submitted 2018-06-28 at 12:03)</span>
-            <!---->
-            </span>
-          </label>
-        </div>
-        <div>
-          <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-            <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
-            </span><span class="el-checkbox__label">
-            Dataset 4
-            <span class="reset-color">(Submitted 2018-06-28 at 13:20)</span>
-            <!---->
-            </span>
-          </label>
-        </div>
-      </div>
-      <div class="select-buttons">
-        <a href="#">Select none</a> <span> | </span>
-        <a href="#">Select all</a>
-      </div>
-      <!---->
       <div class="button-bar">
-        <button type="button" class="el-button el-button--default">
+        <button type="button" class="el-button el-button--default el-button--small">
           <!---->
           <!----><span>Cancel</span></button>
-        <button type="button" class="el-button el-button--primary">
+        <button type="button" class="el-button el-button--primary el-button--small">
           <!---->
-          <!----><span>Join group and transfer 4 datasets</span></button>
+          <!----><span>Join group</span></button>
       </div>
     </div>
   </div>
@@ -68,68 +21,19 @@ exports[`TransferDatasetsDialog should match snapshot (datasets to import, invit
 `;
 
 exports[`TransferDatasetsDialog should match snapshot (datasets to import, requesting access) 1`] = `
-<mock-el-dialog visible="" append-to-body="" title="Transfer datasets" class="dialog">
+<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog">
   <div>
     <div>
       <p style="margin-top: 0px;">
-        You have previously uploaded one or more datasets without a group. Do you want to transfer any of these datasets to Group Name?
-      </p>
-      <div class="dataset-list">
-        <div>
-          <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-            <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
-            </span><span class="el-checkbox__label">
-            Untreated_3_434
-            <span class="reset-color">(Submitted 2018-06-28 at 13:23)</span>
-            <!---->
-            </span>
-          </label>
-        </div>
-        <div>
-          <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-            <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
-            </span><span class="el-checkbox__label">
-            Dataset 2
-            <span class="reset-color">(Submitted 2018-06-28 at 13:21)</span>
-            <!---->
-            </span>
-          </label>
-        </div>
-        <div>
-          <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-            <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
-            </span><span class="el-checkbox__label">
-            Dataset 3
-            <span class="reset-color">(Submitted 2018-06-28 at 12:03)</span>
-            <!---->
-            </span>
-          </label>
-        </div>
-        <div>
-          <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
-            <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
-            </span><span class="el-checkbox__label">
-            Dataset 4
-            <span class="reset-color">(Submitted 2018-06-28 at 13:20)</span>
-            <!---->
-            </span>
-          </label>
-        </div>
-      </div>
-      <div class="select-buttons">
-        <a href="#">Select none</a> <span> | </span>
-        <a href="#">Select all</a>
-      </div>
-      <p>
         An email will be sent to the group's principal investigator to confirm your access.
       </p>
       <div class="button-bar">
-        <button type="button" class="el-button el-button--default">
+        <button type="button" class="el-button el-button--default el-button--small">
           <!---->
           <!----><span>Cancel</span></button>
-        <button type="button" class="el-button el-button--primary">
+        <button type="button" class="el-button el-button--primary el-button--small">
           <!---->
-          <!----><span>Request access and transfer 4 datasets</span></button>
+          <!----><span>Request access</span></button>
       </div>
     </div>
   </div>

@@ -57,6 +57,7 @@
   import DatabaseDescriptions from './DatabaseDescriptions.vue';
   import { MetaspaceOptions } from './formStructure';
   import { MAX_MOL_DBS } from '../../lib/constants';
+  import './FormSection.scss';
 
   @Component({
     components: {
@@ -84,5 +85,5 @@
 </script>
 
 <style lang="scss">
-  @import './FormSection.scss';
+  //@import './FormSection.scss';
 </style>

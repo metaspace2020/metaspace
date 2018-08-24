@@ -56,6 +56,14 @@ export const oneGroupQuery =
   }
 }`;
 
+export const oneProjectQuery =
+  gql`query($projectId: ID!) {
+  project(projectId:$projectId) {
+    id
+    name
+  }
+}`;
+
 export const allGroupsQuery =
 gql`query($query: String) {
   allGroups(query:$query) {

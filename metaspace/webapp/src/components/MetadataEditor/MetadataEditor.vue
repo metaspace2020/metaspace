@@ -81,7 +81,8 @@
    molDBs: [],
    adducts: [],
    name: '',
-   groupId: ''
+   groupId: null,
+   projectIds: []
  };
  
  function safeJsonParse(json) {
@@ -167,9 +168,10 @@
    methods: {
      async loadDataset() {
        const metaspaceOptionsFromDataset = (dataset) => {
-         const {isPublic, molDBs, adducts, name, group, principalInvestigator} = dataset;
+         const {isPublic, molDBs, adducts, name, group, projects, principalInvestigator} = dataset;
          return {
            groupId: group ? group.id : null,
+           projectIds: projects.map(p => p.id),
            principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
            isPublic, molDBs, adducts, name,
          };

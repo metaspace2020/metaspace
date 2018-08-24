@@ -42,5 +42,5 @@
 </script>
 
 <style lang="scss">
-  @import './FormSection.scss';
+  //@import './FormSection.scss';
 </style>
