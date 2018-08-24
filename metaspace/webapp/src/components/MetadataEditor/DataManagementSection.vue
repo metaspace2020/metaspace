@@ -258,8 +258,7 @@
       const loadedProjects = this.submitter.projects;
       const projectIds = this.value.projectIds;
       const unknownProjectIds = projectIds
-        .filter(id => loadedProjects == null
-          || loadedProjects.some(project => project.project.id === id));
+        .filter(id => loadedProjects == null || !loadedProjects.some(project => project.project.id === id));
 
       if (unknownProjectIds.length > 0) {
         const promises = unknownProjectIds.map(projectId => this.$apollo.query({

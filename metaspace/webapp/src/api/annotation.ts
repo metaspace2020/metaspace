@@ -78,6 +78,7 @@ export const tableExportQuery =
 export const annotationQuery =
   gql`query GetAnnotation($id: String!) {
     annotation(id: $id) {
+      id
       peakChartData
       isotopeImages {
         mz
@@ -93,6 +94,7 @@ export const allAdductsQuery =
     }, filter: {
       sumFormula: $molFormula, database: $db
     }) {
+      id
       mz
       adduct
       msmScore
