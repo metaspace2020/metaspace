@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import * as uuid from 'uuid';
-import {Connection, getRepository, Repository, } from 'typeorm';
+import {Connection, Repository} from 'typeorm';
 import * as moment from 'moment';
 import {Moment} from 'moment';
 
@@ -9,7 +9,6 @@ import config from '../../utils/config';
 import {logger, createConnection} from '../../utils';
 import {Credentials} from './model';
 import {User} from '../user/model';
-import {findUserByEmail} from '../user';
 
 export interface UserCredentialsInput {
   email: string;
@@ -26,11 +25,34 @@ let userRepo: Repository<User>;
 
 export const initOperation = async (typeormConn?: Connection) => {
   connection = typeormConn || await createConnection();
-  credRepo = getRepository(Credentials);
-  userRepo = getRepository(User);
+  credRepo = connection.getRepository(Credentials);
+  userRepo = connection.getRepository(User);
 };
 
 // FIXME: some mechanism should be added so that a user's other sessions are revoked when they change their password, etc.
+
+export const findUserById = async (id: string, credentials: boolean=true): Promise<User|undefined> => {
+  if (id) {
+    return await userRepo.findOne({
+      relations: credentials ? ['credentials'] : [],
+      where: { 'id': id }
+    });
+  }
+};
+
+export const findUserByEmail = async (email: string) => {
+  return await userRepo.findOne({
+    relations: ['credentials'],
+    where: { 'LOWER(email) = ?': email.toLowerCase() }
+  });
+};
+
+export const findUserByGoogleId = async (googleId: string|undefined) => {
+  return await userRepo.findOne({
+    relations: ['credentials'],
+    where: { 'googleId': googleId }
+  });
+};
 
 export const createExpiry = (minutes: number=10): Moment => {
   return moment.utc().add(minutes, 'minutes');

@@ -9,7 +9,7 @@
     "start": "ts-node src/index.ts",
     "test": "jest",
     "test-integration": "mocha --timeout 3000 tests/*RegrTest.js",
-    "gen-binding": "graphql-binding --language typescript --input schema.js --outputBinding src/binding.ts"
+    "gen-binding": "graphql-binding --language typescript --input schema.ts --outputBinding src/binding.ts"
   },
   "license": "ISC",
   "dependencies": {
@@ -25,7 +25,7 @@
     "@types/uuid": "^3.4.3",
     "ajv": "4.10.0",
     "amqplib": "^0.5.1",
-    "apollo-server-express": "1.2.0",
+    "apollo-server-express": "^2.0.4",
     "aws-sdk": "^2.13.0",
     "bcrypt": "^3.0.0",
     "body-parser": "^1.15.2",
@@ -42,7 +42,7 @@
     "graphql": "^0.13.2",
     "graphql-errors": "^2.1.0",
     "graphql-subscriptions": "^0.4.3",
-    "graphql-tools": "^0.11.0",
+    "graphql-tools": "^3.1.1",
     "json-schema-deref-sync": "^0.4.0",
     "jsondiffpatch": "^0.3.9",
     "jwt-simple": "^0.5.1",

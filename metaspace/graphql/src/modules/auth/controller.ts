@@ -5,18 +5,16 @@ import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
 import * as JwtSimple from 'jwt-simple';
+import {Connection} from 'typeorm';
 
 import config from '../../utils/config';
-import {findUserByEmail, findUserByGoogleId, findUserById} from '../user';
 import {User} from '../user/model';
-import {createConnection} from '../../utils';
 import {
-  sendResetPasswordToken,
   createUserCredentials,
-  resetPassword,
-  verifyEmail,
-  verifyPassword,
-  initOperation
+  sendResetPasswordToken, resetPassword,
+  verifyEmail, verifyPassword,
+  initOperation,
+  findUserByEmail, findUserByGoogleId, findUserById
 } from './operation';
 
 const getUserFromRequest = (req: Request): User | null => {
@@ -37,10 +35,10 @@ const configurePassport = (app: Express) => {
   }));
   app.use(Passport.session());
 
-  Passport.serializeUser<string, string>(callbackify( async (userId: string) => userId));
+  Passport.serializeUser<User, string>(callbackify( async (user: User) => user.id));
 
   Passport.deserializeUser<User | false, string>(callbackify(async (id: string) => {
-    return await findUserById(id) || false;
+    return await findUserById(id, false) || false;
   }));
 
   app.post('/api_auth/signout', preventCache, (req, res) => {
@@ -55,6 +53,7 @@ const configurePassport = (app: Express) => {
 
 export interface JwtUser extends User {
   iss: string,
+  user?: User,
   sub?: string,
   iat?: number,
   exp?: number
@@ -66,18 +65,15 @@ const configureJwt = (app: Express) => {
     let payload;
     if (user != null) {
       payload = {
-        'iss': 'METASPACE2020',
-        'sub': user.id,
-        'name': user.name,
-        'email': user.email,
-        'iat': nowSeconds,
-        'exp': expSeconds == null ? undefined : nowSeconds + expSeconds,
-        'role': user.role,
+        iss: 'METASPACE2020',
+        user,
+        iat: nowSeconds,
+        exp: expSeconds == null ? undefined : nowSeconds + expSeconds,
       };
     } else {
       payload = {
-        'iss': 'METASPACE2020',
-        'role': 'anonymous',
+        iss: 'METASPACE2020',
+        role: 'anonymous',
       };
     }
     return JwtSimple.encode(payload as JwtUser, config.jwt.secret);
@@ -120,8 +116,8 @@ const configureLocalAuth = (app: Express) => {
       usernameField: 'email',
       passwordField: 'password',
     },
-    callbackify(async (email: string, password: string) => {
-      const user = await findUserByEmail(email);
+    callbackify(async (username: string, password: string) => {
+      const user = await findUserByEmail(username);
       return user && await verifyPassword(password, user.credentials.hash) ? user : false;
     })
   ));
@@ -251,8 +247,8 @@ const configureResetPassword = (app: Express) => {
   });
 };
 
-export const configureAuth = async (app: Express) => {
-  await initOperation(await createConnection());
+export const configureAuth = async (app: Express, connection: Connection) => {
+  await initOperation(connection);
   configurePassport(app);
   configureJwt(app);
   configureLocalAuth(app);

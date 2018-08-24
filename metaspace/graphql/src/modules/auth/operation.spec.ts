@@ -7,16 +7,13 @@ import {createExpiry} from "./operation";
 import {createConnection, DbSchemaName} from '../../utils/db'
 import {
   createUserCredentials,
-  verifyEmail,
-  resetPassword,
-  sendResetPasswordToken,
-  verifyPassword,
+  resetPassword, sendResetPasswordToken,
+  verifyPassword, verifyEmail,
   initOperation,
+  findUserById
 } from './operation'
 import {Credentials} from './model';
 import {User} from '../user/model';
-import {findUserById} from '../user';
-import {initOperation as userInitOperation} from '../user';
 
 jest.mock('./email');
 import * as _mockEmail from './email';
@@ -89,7 +86,6 @@ describe('Database operations with user', () => {
 
     typeormConn = await createConnection();
     await initOperation(typeormConn);
-    await userInitOperation(typeormConn);
   });
 
   afterAll(async () => {

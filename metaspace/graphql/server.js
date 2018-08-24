@@ -4,19 +4,18 @@ const bodyParser = require('body-parser'),
   express = require('express'),
   session = require('express-session'),
   connectRedis = require('connect-redis'),
-  {graphqlExpress, graphiqlExpress} = require('apollo-server-express'),
+  {ApolloServer} = require('apollo-server-express'),
   jwt = require('express-jwt'),
   cors = require('cors'),
-  {makeExecutableSchema, addResolveFunctionsToSchema, addErrorLoggingToSchema, addMockFunctionsToSchema} = require('graphql-tools'),
-  {mergeTypes} = require('merge-graphql-schemas'),
-  {maskErrors} = require('graphql-errors'),
-  {promisify} = require('util'),
-  readFile = promisify(require("fs").readFile);
+  {UserError} = require('graphql-errors');
 
-const { createImgServerAsync } = require('./imageUpload.js'),
-  { configureAuth } = require('./src/modules/auth'),
-  Resolvers = require('./resolvers'),
-  { logger, initDBConnection } = require('./utils');
+const {createImgServerAsync} = require('./imageUpload.js'),
+  {configureAuth} = require('./src/modules/auth'),
+  {User} = require('./src/modules/user/model'),
+  {logger, initDBConnection} = require('./utils'),
+  {createConnection} = require('./src/utils'),
+  {executableSchema} = require('./executableSchema'),
+  {generateUserOperations} = require('./src/modules/user/operation');
 
 // subscriptions setup
 const http = require('http'),
@@ -50,45 +49,6 @@ async function createHttpServerAsync(config) {
   let app = express();
   let httpServer = http.createServer(app);
 
-  const mergedSchema = mergeTypes([
-        await readFile('schema.graphql', 'utf8'),
-        await readFile('schemas/user.graphql', 'utf8'),
-        await readFile('schemas/group.graphql', 'utf8'),
-        await readFile('schemas/project.graphql', 'utf8'),
-      ]);
-
-  const schema = makeExecutableSchema({typeDefs: mergedSchema});
-  addResolveFunctionsToSchema(schema, Resolvers);
-  addErrorLoggingToSchema(schema, logger);
-
-  if (config.features.graphqlMocks) {
-    // TODO: Remove this when it's no longer needed for demoing
-    // TODO: Add test that runs assertResolveFunctionsPresent against schema + resolvers
-    addMockFunctionsToSchema({
-      schema,
-      preserveResolvers: true,
-      mocks: {
-        // Make IDs somewhat deterministic
-        ID: (source, args, context, info) => {
-          let idx = 0;
-          let cur = info.path;
-          while (cur != null) {
-            if (/[0-9]+/.test(cur.key)) {
-              idx = cur.key;
-              break;
-            }
-            cur = cur.prev;
-          }
-          return `${info.parentType.name}_${idx}`
-        },
-      }
-    });
-  }
-
-  if (process.env.NODE_ENV !== 'development') {
-    maskErrors(schema);
-  }
-
   app.use(cors());
   app.use(compression());
   app.use(jwt({
@@ -96,22 +56,34 @@ async function createHttpServerAsync(config) {
     // issuer: config.jwt.issuer, // TODO: Add issuer to config so that it can be validated
     credentialsRequired: false,
   }));
-  app.use('/graphql',
-      bodyParser.json({type: '*/*'}),
-      graphqlExpress(req => ({
-        schema,
-        context: req
-      })));
-  app.use('/graphiql', graphiqlExpress({
-    endpointURL: '/graphql',
-    subscriptionsEndpoint: config.websocket_public_url,
-  }));
+
+  const connection = await createConnection();
 
   if (config.features.newAuth) {
     app.use(bodyParser.json());
     configureSession(app);
-    await configureAuth(app);
+    await configureAuth(app, connection);
   }
+
+  const apollo = new ApolloServer({
+    schema: executableSchema,
+    context: ({req}) => {
+      // if (!req.user) throw new UserError('You must be logged in');
+      const user = req.user.user,
+        userRepo = connection.getRepository(User);
+      return {
+        user,
+        UserOperations: generateUserOperations(user, userRepo),
+      };
+    },
+    playground: {
+      settings: {
+        'editor.theme': 'light',
+        'editor.cursorShape': 'line',
+      }
+    },
+  });
+  apollo.applyMiddleware({ app });
 
   app.use(function (err, req, res, next) {
     res.status(err.status || 500);
@@ -121,21 +93,23 @@ async function createHttpServerAsync(config) {
     });
   });
 
-  httpServer.listen(config.port);
-
   wsServer.listen(config.ws_port, (err) => {
     if (err) {
-      logger.error('Could not start WebSocket server', err)
+      logger.error('Could not start WebSocket server', err);
     }
     logger.info(`WebSocket server is running on ${config.ws_port} port...`);
-    SubscriptionServer.create({execute, subscribe, schema}, {
+    SubscriptionServer.create({
+      execute,
+      subscribe,
+      schema: executableSchema
+    }, {
       server: wsServer,
       path: '/graphql',
     });
   });
 
+  httpServer.listen(config.port);
   logger.info(`SM GraphQL is running on ${config.port} port...`);
-
   return httpServer;
 }
 

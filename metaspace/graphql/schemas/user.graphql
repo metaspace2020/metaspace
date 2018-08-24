@@ -1,8 +1,8 @@
 type User {
   id: ID!
   name: String!
-  role: String            # null if current user is not allowed to see
-  email: String           # null if current user is not allowed to see
+  role: String!            # null if current user is not allowed to see
+  email: String!           # null if current user is not allowed to see
   groups: [UserGroup!]    # null if current user is not allowed to see
   primaryGroup: UserGroup
   projects: [UserProject!] # null if current user is not allowed to see
@@ -17,11 +17,11 @@ input UpdateUserInput {
 
 type Query {
   currentUser: User
-  user(userId: ID!): User                # For admins
-  allUsers(query: String): [User!]!  # For admins
+  user(userId: ID!): User           # For admins
+  allUsers(query: String): [User!]  # For admins
 }
 
 type Mutation {
   updateUser(userId: ID!, update: UpdateUserInput): User!
-  deleteUser(userId: ID!, deleteDatasets: Boolean!): Boolean!
+  deleteUser(userId: ID!, deleteDatasets: Boolean!): Boolean
 }

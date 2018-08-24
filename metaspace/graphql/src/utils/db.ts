@@ -21,11 +21,11 @@ const defaultDBConfig: ConnectionOptions = {
     User
   ],
   synchronize: true,
-  logging: false
+  logging: true
 };
 
 export const createConnection = async () => {
-  return createTypeORMConnection({
+  return await createTypeORMConnection({
     ...defaultDBConfig
   });
 };
