@@ -37,7 +37,7 @@ Object {
     "adducts.0.adduct",
     "adducts.1.adduct",
   ],
-  "groupId": "dataset.group.id",
+  "groupId": "123",
   "isPublic": true,
   "molDBs": Array [
     "molecularDatabases.1.name",
@@ -47,6 +47,10 @@ Object {
     "email": "dataset.principalInvestigator.email",
     "name": "dataset.principalInvestigator.name",
   },
+  "projectIds": Array [
+    "dataset.projects.0.id",
+    "dataset.projects.1.id",
+  ],
 }
 `;
 
@@ -326,7 +330,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
             <button disabled="disabled" type="button" class="el-button el-button--primary is-disabled">
               <!---->
               <!----><span>Request access
-      </span></button>
+    </span></button>
           </div>
           <div class="el-row">
             <p>
@@ -334,6 +338,85 @@ exports[`MetadataEditor should match snapshot 1`] = `
               <a href="mailto:contact@metaspace2020.eu">Contact us</a> to get your team started, or
               <a href="#" style="cursor: pointer;">fill in your Principal Investigator</a> instead.
             </p>
+          </div>
+        </mock-el-dialog>
+        <mock-el-dialog append-to-body="" title="Create project" class="dialog">
+          <div class="">
+            <form class="el-form el-form--label-top" size="mini">
+              <div>
+                <div class="el-form-item name is-required">
+                  <label for="name" class="el-form-item__label">Name</label>
+                  <div class="el-form-item__content">
+                    <div class="el-input">
+                      <!---->
+                      <input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                    <!---->
+                  </div>
+                </div>
+                <div class="el-form-item isPublic">
+                  <!---->
+                  <div class="el-form-item__content">
+                    <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                      </span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
+                    <!---->
+                  </div>
+                </div>
+              </div>
+            </form>
+            <div>
+              <h4 style="margin-top: 0px;">
+                Would you like to include any of your previously submitted datasets?
+              </h4>
+              <div>
+                <div class="dataset-checkbox-list">
+                  <div>
+                    <label role="checkbox" class="el-checkbox is-checked" aria-checked="true"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                      </span><span class="el-checkbox__label">
+        allDatasets.0.name
+        <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
+                      <!---->
+                      </span>
+                    </label>
+                  </div>
+                  <div>
+                    <label role="checkbox" class="el-checkbox is-checked" aria-checked="true"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                      </span><span class="el-checkbox__label">
+        allDatasets.1.name
+        <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
+                      <!---->
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                <div class="select-buttons">
+                  <a href="#">Select none</a> <span> | </span>
+                  <a href="#">Select all</a>
+                </div>
+              </div>
+            </div>
+            <div class="button-bar">
+              <button type="button" class="el-button el-button--default">
+                <!---->
+                <!----><span>Cancel</span></button>
+              <button type="button" class="el-button el-button--primary">
+                <!---->
+                <!----><span>Create project and include 2 datasets</span></button>
+            </div>
+            <div class="el-loading-mask" style="display: none;">
+              <div class="el-loading-spinner">
+                <svg viewBox="25 25 50 50" class="circular">
+                  <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
+                </svg>
+                <!---->
+              </div>
+            </div>
           </div>
         </mock-el-dialog>
         <div class="el-row">
@@ -368,12 +451,27 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       </span>
                     </label>
                     <div class="el-form-item__content">
-                      <mock-el-select value="" required="true">
+                      <mock-el-select required="true">
                         <mock-el-option value="currentUser.groups.0.group.id" label="currentUser.groups.0.group.name"></mock-el-option>
                         <mock-el-option value="currentUser.groups.1.group.id" label="currentUser.groups.1.group.name"></mock-el-option>
-                        <mock-el-option value="" label="group.name"></mock-el-option>
                         <mock-el-option value="FIND_GROUP" label="Find my group..."></mock-el-option>
                         <mock-el-option value="NO_GROUP" label="No group (Enter PI instead)"></mock-el-option>
+                      </mock-el-select>
+                      <!---->
+                    </div>
+                  </div>
+                </div>
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium">
+                    <label class="el-form-item__label"><span class="field-label"><span>Projects</span><span style="color: red;">*</span>
+                      <!---->
+                      </span>
+                    </label>
+                    <div class="el-form-item__content">
+                      <mock-el-select value="" required="true" multiple="">
+                        <mock-el-option value="currentUser.projects.0.project.id" label="currentUser.projects.0.project.name"></mock-el-option>
+                        <mock-el-option value="currentUser.projects.1.project.id" label="currentUser.projects.1.project.name"></mock-el-option>
+                        <mock-el-option value="CREATE_PROJECT" label="Create a new project..."></mock-el-option>
                       </mock-el-select>
                       <!---->
                     </div>

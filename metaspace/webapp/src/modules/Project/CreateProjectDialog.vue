@@ -1,6 +1,6 @@
 <template>
   <el-dialog class="dialog"
-             visible
+             :visible="visible"
              append-to-body
              title="Create project"
              @close="handleClose">
@@ -28,7 +28,7 @@
   import { createProjectMutation, importDatasetsIntoProjectMutation } from '../../api/project';
   import reportError from '../../lib/reportError';
 
-  @Component({
+  @Component<CreateProjectDialog>({
     components: {
       EditProjectForm,
       DatasetCheckboxList
@@ -37,19 +37,21 @@
       allDatasets: {
         query: datasetListItemsQuery,
         loadingKey: 'loading',
-        variables(this: TransferDatasetsDialog) {
+        variables() {
           return {
             dFilter: {
-              // submitter: this.currentUserId,
+              submitter: this.currentUserId,
             }
           };
         }
       }
     }
   })
-  export default class TransferDatasetsDialog extends Vue {
+  export default class CreateProjectDialog extends Vue {
     @Prop({ required: true })
     currentUserId!: string;
+    @Prop({ default: false })
+    visible!: boolean;
 
     $apollo: any; // Type fixes in PR: https://github.com/Akryum/vue-apollo/pull/367
 
@@ -121,6 +123,10 @@
   .dialog /deep/ .el-dialog {
     max-width: 600px;
 
+    .el-form {
+      margin-left: 10px;
+      margin-right: 10px;
+    }
     .el-form-item {
       margin-bottom: 10px;
     }

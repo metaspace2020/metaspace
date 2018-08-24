@@ -1,6 +1,6 @@
 <template>
   <el-dialog
-    visible
+    :visible="visible"
     custom-class="find-group-dialog"
     @close="handleClose"
     :lockScroll="false">
@@ -73,8 +73,10 @@
       }
     }
   })
-
   export default class FindGroupDialog extends Vue {
+    @Prop({ default: false })
+    visible!: boolean;
+
     query: string = '';
     searchResults: GroupListItem[] | null = null;
     searchLoading = 0;

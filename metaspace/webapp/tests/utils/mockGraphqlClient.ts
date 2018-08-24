@@ -19,9 +19,23 @@ const getPath = (info: GraphQLResolveInfo) => {
   return path.reverse().join('.');
 };
 
+const getID = (info: GraphQLResolveInfo) => {
+  let path = getPath(info);
+  if(!/[0-9]/.test(path)) {
+    // If there's no ID in the path, it's probably a get-by-id query so look through the query variables to find the id
+    const IDs = Object.keys(info.variableValues)
+      .filter(key => /^id$|Id$/.test(key) && typeof info.variableValues[key] === 'string')
+      .map(key => info.variableValues[key]);
+    if (IDs.length > 0) {
+      return IDs.join(',');
+    }
+  }
+  return path;
+};
+
 const baseMocks: IMocks = {
   // Replace primitive types with non-randomized versions
-  ID: (source, args, context, info) => getPath(info),
+  ID: (source, args, context, info) => getID(info),
   String: (source, args, context, info) => getPath(info),
   Boolean: (source, args, context, info) => (lazyHash(getPath(info)) & 1) === 1,
   Int: (source, args, context, info) => lazyHash(getPath(info)),

@@ -50,7 +50,6 @@
 </script>
 <style scoped lang="scss">
   .name {
-    width: 400px;
   }
 
   .isPublic {

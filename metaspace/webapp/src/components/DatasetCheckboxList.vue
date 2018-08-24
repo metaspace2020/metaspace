@@ -36,7 +36,6 @@
       const selectedDatasets = fromPairs(this.datasets.map(({id}) => {
         return [id, id in this.selectedDatasets ? this.selectedDatasets[id] : true];
       }));
-      console.log(selectedDatasets);
       this.$emit('input', selectedDatasets);
     }
 

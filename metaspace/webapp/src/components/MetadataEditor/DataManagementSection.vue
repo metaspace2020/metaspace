@@ -1,12 +1,12 @@
 <template>
   <div class="metadata-section">
     <find-group-dialog
-      v-if="showFindGroupDialog"
+      :visible="showFindGroupDialog"
       @close="hideFindGroupDialog"
       @selectGroup="handleSelectGroup"
     />
     <create-project-dialog
-      v-if="showCreateProjectDialog && currentUser != null"
+      :visible="showCreateProjectDialog && currentUser != null"
       :currentUserId="currentUser && currentUser.id"
       @close="hideCreateProjectDialog"
       @create="handleSelectProject"
