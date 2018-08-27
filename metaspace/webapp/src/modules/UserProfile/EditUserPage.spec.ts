@@ -40,7 +40,7 @@ describe('EditUserPage', () => {
   });
 
   beforeEach(() => {
-    // suppressConsoleWarn('async-validator:');
+    suppressConsoleWarn('async-validator:');
   });
 
   afterEach(async () => {

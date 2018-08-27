@@ -39,18 +39,10 @@ export const userProfileQuery =
     role
     email
     primaryGroup {
-      group {
-        id
-        name
-      }
+      ...UserProfileQueryGroup
     }
     groups {
-      role
-      numDatasets
-      group {
-        id
-        name
-      }
+      ...UserProfileQueryGroup
     }
     projects {
       role
@@ -60,6 +52,14 @@ export const userProfileQuery =
         name
       }
     }
+  }
+}
+fragment UserProfileQueryGroup on UserGroup {
+  role
+  numDatasets
+  group {
+    id
+    name
   }
 }
 `;
