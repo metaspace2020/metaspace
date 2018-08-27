@@ -175,13 +175,9 @@
         query: userProfileQuery,
         result({data}: {data: {currentUser: UserProfileQuery}}) {
           if (!this.isLoaded) {
-            if (data.currentUser != null) {
-              // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
-              // button that causes this query to refetch
-              this.isLoaded = true;
-            } else {
-              this.$router.push('/account/sign-in');
-            }
+            // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
+            // button that causes this query to refetch
+            this.isLoaded = true;
           }
         },
       }
@@ -211,12 +207,15 @@
       }]
     };
 
+    @Watch('isLoaded')
     @Watch('currentUser', {deep: true})
     onCurrentUserChanged(this: any) {
       if (this.currentUser) {
         this.model.name = this.currentUser.name;
         this.model.email = this.currentUser.email;
         this.primaryGroupId = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
+      } else if (this.isLoaded) {
+        this.$router.push('/account/sign-in');
       }
     }
 

@@ -14,6 +14,7 @@
               type="password"
               v-model="model.password"
               placeholder="Password"
+              @keypress.native.enter="onSubmit"
             />
           </el-form-item>
           <vue-slide-up-down :active="isInvalid">
