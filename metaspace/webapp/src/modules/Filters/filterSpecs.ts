@@ -1,15 +1,16 @@
-import { renderMolFormula } from './util';
-import InputFilter from './components/InputFilter.vue';
-import SingleSelectFilter from './components/SingleSelectFilter.vue';
-import DatasetNameFilter from './components/DatasetNameFilter.vue';
-import MzFilter from './components/MzFilter.vue';
-import SearchBox from './components/SearchBox.vue';
-import {metadataTypes, defaultMetadataType} from './assets/metadataRegistry';
+import { renderMolFormula } from '../../util';
+import InputFilter from './filter-components/InputFilter.vue';
+import SingleSelectFilter from './filter-components/SingleSelectFilter.vue';
+import DatasetNameFilter from './filter-components/DatasetNameFilter.vue';
+import MzFilter from './filter-components/MzFilter.vue';
+import SearchBox from './filter-components/SearchBox.vue';
+import {metadataTypes, defaultMetadataType} from '../../assets/metadataRegistry';
+import { Component } from 'vue';
 
 // Filled during the initialization of adduct filter below
-const ADDUCT_POLARITY = {};
+const ADDUCT_POLARITY: Record<string, string> = {};
 
-function formatAdduct (adduct) {
+function formatAdduct (adduct: string) {
   if (adduct === null)
     return '';
   else {
@@ -17,8 +18,8 @@ function formatAdduct (adduct) {
   }
 }
 
-function formatFDR (fdr) {
-  return fdr ? Math.round(fdr * 100) + '%' : null;
+function formatFDR (fdr: number) {
+  return fdr ? Math.round(fdr * 100) + '%' : '';
 }
 
 /*
@@ -57,7 +58,32 @@ function formatFDR (fdr) {
    incorporate any extra fields that are needed to populate the options.
 */
 
-const FILTER_SPECIFICATIONS = {
+export type Level = 'annotation' | 'dataset' | 'upload';
+
+export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName' | 'adduct' | 'mz' | 'fdrLevel' | 'institution'
+  | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
+  | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleQuery' | 'metadataType';
+
+export type MetadataLists = Record<string, any[]>;
+
+export interface FilterSpecification {
+  type: Component;
+  name: string;
+  description?: string;
+  levels: Level[];
+  defaultInLevels?: Level[];
+  initialValue: undefined | null | number | string | ((lists: MetadataLists) => any);
+  options?: string | number[] | string[] | ((lists: MetadataLists) => any[]);
+  removable?: boolean;
+  filterable?: boolean;
+  hidden?: boolean | (() => boolean);
+  encoding?: 'list' | 'json';
+  optionFormatter?(value: any): string;
+  valueFormatter?(value: any): string;
+  valueKey?: string;
+}
+
+export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   database: {
     type: SingleSelectFilter,
     name: 'Database',
@@ -299,7 +325,7 @@ const FILTER_SPECIFICATIONS = {
   }
 };
 
-function getFilterInitialValue(key, filterLists) {
+export function getFilterInitialValue(key: FilterKey, filterLists: MetadataLists) {
   let value = FILTER_SPECIFICATIONS[key].initialValue;
 
   if(typeof value === 'function') {
@@ -312,15 +338,15 @@ function getFilterInitialValue(key, filterLists) {
   return value;
 }
 
-function getDefaultFilter(level, filterLists) {
-  const filter = {};
-  for (const key in FILTER_SPECIFICATIONS) {
-    if(FILTER_SPECIFICATIONS[key].defaultInLevels != null
-      && FILTER_SPECIFICATIONS[key].defaultInLevels.includes(level)) {
+export function getDefaultFilter(level: Level, filterLists: MetadataLists) {
+  const filter: Partial<Record<FilterKey, any>> = {};
+  let key: FilterKey;
+  for (key in FILTER_SPECIFICATIONS) {
+    const spec = FILTER_SPECIFICATIONS[key];
+    if (spec.defaultInLevels != null && spec.defaultInLevels.includes(level)) {
       filter[key] = getFilterInitialValue(key, filterLists);
     }
   }
   return filter;
 }
 
-export { FILTER_SPECIFICATIONS as default, getFilterInitialValue, getDefaultFilter };

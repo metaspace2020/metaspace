@@ -30,7 +30,7 @@
 </template>
 
 <script>
- import FILTER_SPECIFICATIONS from '../filterSpecs';
+ import {FILTER_SPECIFICATIONS} from './filterSpecs';
 
  const orderedFilterKeys = [
    'database',

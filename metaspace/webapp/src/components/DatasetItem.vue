@@ -131,7 +131,7 @@
  import {capitalize} from 'lodash-es';
  import {deleteDatasetQuery, thumbnailOptImageQuery} from '../api/dataset';
  import {mdTypeSupportsOpticalImages} from '../util';
- import {encodeParams} from '../url';
+ import {encodeParams} from '../modules/Filters';
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');

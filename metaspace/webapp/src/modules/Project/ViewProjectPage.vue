@@ -61,7 +61,7 @@
   import DatasetList from '../../components/DatasetList.vue';
   import { acceptProjectInvitationMutation, leaveProjectMutation, requestAccessToProjectMutation } from '../../api/project';
   import gql from 'graphql-tag';
-  import { encodeParams } from '../../url';
+  import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
 

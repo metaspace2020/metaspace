@@ -49,7 +49,7 @@
   */
 
  import {defaultMetadataType, metadataSchemas} from '../../assets/metadataRegistry';
- import FilterPanel from '../FilterPanel.vue';
+ import {FilterPanel} from '../../modules/Filters';
  import {deriveFullSchema} from './formStructure';
  import {
    get, set, cloneDeep, defaults,

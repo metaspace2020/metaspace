@@ -71,7 +71,7 @@
   import EditGroupForm from './EditGroupForm.vue';
   import MembersList from '../../components/MembersList/MembersList.vue';
   import { UserRole } from '../../api/user';
-  import { encodeParams } from '../../url';
+  import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
   import emailRegex from '../../lib/emailRegex';

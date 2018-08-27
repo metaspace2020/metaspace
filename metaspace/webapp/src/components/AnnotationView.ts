@@ -2,7 +2,7 @@
  import DatasetInfo from './DatasetInfo.vue';
  import { annotationQuery } from '../api/annotation';
  import { msAcqGeometryQuery, opticalImageQuery } from '../api/dataset';
- import { encodeParams } from '../url';
+ import { encodeParams } from '../modules/Filters';
  import annotationWidgets from './annotation-widgets/index'
 
  import Vue from 'vue';

@@ -76,7 +76,7 @@
   } from '../../api/group';
   import gql from 'graphql-tag';
   import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
-  import { encodeParams } from '../../url';
+  import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
 
   type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';

@@ -92,7 +92,7 @@
 <script>
   import gql from 'graphql-tag';
  import {signOut} from '../api/auth';
- import {encodeParams} from '../url';
+ import {encodeParams} from '../modules/Filters';
   import { refreshLoginStatus } from '../graphqlClient';
  import * as config from '../clientConfig.json';
 

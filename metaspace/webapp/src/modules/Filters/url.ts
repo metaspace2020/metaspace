@@ -1,4 +1,4 @@
-import FILTER_SPECIFICATIONS, { getDefaultFilter } from './filterSpecs.js';
+import { FILTER_SPECIFICATIONS, FilterKey, getDefaultFilter, Level, MetadataLists } from './filterSpecs';
 
 import {invert} from 'lodash-es';
 import { Location } from 'vue-router';
@@ -7,7 +7,7 @@ interface Dictionary<T> {
   [key: string]: T;
 }
 
-const FILTER_TO_URL: Dictionary<string> = {
+const FILTER_TO_URL: Record<FilterKey, string> = {
   database: 'db',
   institution: 'lab',
   group: 'grp',
@@ -31,23 +31,24 @@ const FILTER_TO_URL: Dictionary<string> = {
   metadataType: 'mdtype'
 };
 
-const URL_TO_FILTER: Dictionary<string> = invert(FILTER_TO_URL);
+const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>;
 
-const PATH_TO_LEVEL: Dictionary<string> = {
+const PATH_TO_LEVEL: Record<string, Level> = {
   '/annotations': 'annotation',
   '/datasets': 'dataset',
   '/datasets/summary': 'dataset',
   '/upload': 'upload'
 };
 
-export function encodeParams(filter: any, path?: string, filterLists?: any): Dictionary<string> {
+export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {
   const level = path != null ? PATH_TO_LEVEL[path.toLowerCase()] : null;
-  const defaultFilter = filterLists != null ? getDefaultFilter(level, filterLists) : null;
+  const defaultFilter = level != null && filterLists != null ? getDefaultFilter(level, filterLists) : null;
 
   let q: Dictionary<string> = {};
-  for (var key in FILTER_TO_URL) {
+  let key: FilterKey;
+  for (key in FILTER_TO_URL) {
     const {levels, encoding} = FILTER_SPECIFICATIONS[key];
-    if (path != null && levels.indexOf(level) == -1)
+    if (path != null && level != null && levels.indexOf(level) == -1)
       continue;
 
     if (key in filter && (defaultFilter == null || filter[key] != defaultFilter[key])) {

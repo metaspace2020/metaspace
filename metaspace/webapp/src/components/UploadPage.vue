@@ -37,7 +37,7 @@
  // TODO: try https://github.com/FineUploader/vue-fineuploader once it's ready for production
 
  import FineUploader from './FineUploader.vue';
- import FilterPanel from './FilterPanel.vue';
+ import {FilterPanel} from '../modules/Filters';
  import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
  import Vue from 'vue';
  import tokenAutorefresh from '../tokenAutorefresh';

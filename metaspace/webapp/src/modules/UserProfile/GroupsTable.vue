@@ -80,7 +80,7 @@
   } from '../../api/group';
   import reportError from '../../lib/reportError';
   import ConfirmAsync from '../../components/ConfirmAsync';
-  import { encodeParams } from '../../url';
+  import { encodeParams } from '../Filters';
   import { TransferDatasetsDialog } from '../GroupProfile';
 
   interface GroupRow {

@@ -46,7 +46,7 @@
  import {datasetDetailItemsQuery, datasetCountQuery} from '../api/dataset';
  import {metadataExportQuery} from '../api/metadata';
  import DatasetList from './DatasetList.vue';
- import FilterPanel from './FilterPanel.vue';
+ import {FilterPanel} from '../modules/Filters';
  import {csvExportHeader} from '../util';
  import gql from 'graphql-tag';
  import FileSaver from 'file-saver';
