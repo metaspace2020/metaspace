@@ -41,10 +41,10 @@ export const findUserById = async (id: string, credentials: boolean=true): Promi
 };
 
 export const findUserByEmail = async (email: string) => {
-  return await userRepo.findOne({
-    relations: ['credentials'],
-    where: { 'LOWER(email) = ?': email.toLowerCase() }
-  });
+  return await userRepo.createQueryBuilder('user')
+    .leftJoinAndSelect('user.credentials', 'credentials')
+    .where('LOWER(email) = :email', {'email': email.toLowerCase()})
+    .getOne();
 };
 
 export const findUserByGoogleId = async (googleId: string|undefined) => {
