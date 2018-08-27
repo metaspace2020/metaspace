@@ -55,7 +55,6 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component, Watch } from 'vue-property-decorator';
-  import DatasetItem from '../../components/DatasetItem.vue';
   import {
     acceptRequestToJoinGroupMutation,
     deleteGroupMutation,
@@ -83,7 +82,6 @@
 
   @Component({
     components: {
-      DatasetItem,
       EditGroupForm,
       MembersList,
     },

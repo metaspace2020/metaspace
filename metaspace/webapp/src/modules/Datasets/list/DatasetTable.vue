@@ -43,11 +43,11 @@
 </template>
 
 <script>
- import {datasetDetailItemsQuery, datasetCountQuery} from '../api/dataset';
- import {metadataExportQuery} from '../api/metadata';
+ import {datasetDetailItemsQuery, datasetCountQuery} from '../../../api/dataset';
+ import {metadataExportQuery} from '../../../api/metadata';
  import DatasetList from './DatasetList.vue';
- import {FilterPanel} from '../modules/Filters';
- import {csvExportHeader} from '../util';
+ import {FilterPanel} from '../../Filters/index';
+ import {csvExportHeader} from '../../../util';
  import gql from 'graphql-tag';
  import FileSaver from 'file-saver';
 

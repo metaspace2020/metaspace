@@ -13,12 +13,12 @@
           <img class="opt-image-thumbnail" :src="opticalImageSmall" alt="Edit optical image"/>
         </div>
         <div v-else class="no-opt-image" title="Add Optical Image">
-          <img class="add-opt-image-thumbnail" src="../assets/no_opt_image.png" alt="Add optical image"/>
+          <img class="add-opt-image-thumbnail" src="../../../assets/no_opt_image.png" alt="Add optical image"/>
         </div>
       </router-link>
       <div v-else class="edit-opt-image-guest">
         <img v-if="thumbnailCheck" :src="opticalImageSmall" alt="Optical image"/>
-        <img v-else src="../assets/no_opt_image.png" alt="Optical image"/>
+        <img v-else src="../../../assets/no_opt_image.png" alt="Optical image"/>
       </div>
     </div>
 
@@ -120,18 +120,18 @@
 
       <img v-if="!dataset.isPublic"
            class="ds-item-private-icon"
-           src="../assets/padlock-icon.svg"
+           src="../../../assets/padlock-icon.svg"
            title="These annotation results are not publicly visible">
     </div>
   </div>
 </template>
 
 <script>
- import DatasetInfo from './DatasetInfo.vue';
+ import DatasetInfo from '../../../components/DatasetInfo.vue';
  import {capitalize} from 'lodash-es';
- import {deleteDatasetQuery, thumbnailOptImageQuery} from '../api/dataset';
- import {mdTypeSupportsOpticalImages} from '../util';
- import {encodeParams} from '../modules/Filters';
+ import {deleteDatasetQuery, thumbnailOptImageQuery} from '../../../api/dataset';
+ import {mdTypeSupportsOpticalImages} from '../../../util';
+ import {encodeParams} from '../../Filters/index';
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');

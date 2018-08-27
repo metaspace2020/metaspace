@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 import AboutPage from './components/AboutPage.vue';
-import DatasetsPage from './components/DatasetsPage.vue';
+import DatasetsPage from './modules/Datasets/DatasetsPage.vue';
 import {DialogPage, ResetPasswordPage} from './modules/Account';
 import * as config from './clientConfig.json';
 
@@ -15,8 +15,8 @@ const router = new VueRouter({
       path: '/datasets',
       component: DatasetsPage,
       children: [
-        {path: '', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "DatasetTable" */ './components/DatasetTable.vue')},
-        {path: 'summary', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "DatasetSummary" */ './components/plots/DatasetSummary.vue')},
+        {path: '', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "DatasetTable" */ './modules/Datasets/list/DatasetTable.vue')},
+        {path: 'summary', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "DatasetSummary" */ './modules/Datasets/summary/DatasetSummary.vue')},
       ]
     },
 

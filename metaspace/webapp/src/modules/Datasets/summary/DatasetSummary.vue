@@ -24,7 +24,7 @@
   import SubmitterSummaryPlot from './SubmitterSummaryPlot.vue';
   import MassSpecSetupPlot from './MSSetupSummaryPlot.vue';
   import OrganismSummaryPlot from './OrganismSummaryPlot.vue';
-  import {FilterPanel} from '../../modules/Filters';
+  import {FilterPanel} from '../../Filters/index';
 
 
   export default {

@@ -58,7 +58,7 @@
   import Vue from 'vue';
   import { Component } from 'vue-property-decorator';
   import { DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset';
-  import DatasetList from '../../components/DatasetList.vue';
+  import DatasetList from '../Datasets/list/DatasetList.vue';
   import { acceptProjectInvitationMutation, leaveProjectMutation, requestAccessToProjectMutation } from '../../api/project';
   import gql from 'graphql-tag';
   import { encodeParams } from '../Filters';
