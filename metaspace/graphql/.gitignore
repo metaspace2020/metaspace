@@ -1,9 +1,6 @@
 config/*.js
 !config/test.js
 metadata_schema.json
-.idea/
-.vscode/
-node_modules/
 build/
 tmp/
 temp/

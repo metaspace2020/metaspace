@@ -65,8 +65,8 @@ type Dataset {
   institution: String
   submitter: User!
   group: Group
-  principalInvestigator: Person
-  projects: [Project!]!
+  principalInvestigator: Person!
+  projects: [Project!]
 
   polarity: Polarity!
   ionisationSource: String!
