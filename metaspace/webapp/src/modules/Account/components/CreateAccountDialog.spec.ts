@@ -1,21 +1,16 @@
 import { mount, Wrapper } from '@vue/test-utils';
-import VueRouter from 'vue-router';
 import ElementUI from 'element-ui';
 import Vuex from 'vuex';
 import Vue from 'vue';
 import CreateAccountDialog from './CreateAccountDialog.vue';
 import account from '../store/account';
 import router from '../../../router';
-import registerMockComponent from '../../../../tests/utils/registerMockComponent';
 import { restoreConsole, suppressConsoleWarn } from '../../../../tests/utils/suppressConsole';
 
 jest.mock('../../../api/auth');
 import * as _mockAuthApi from '../../../api/auth';
 const mockAuthApi = _mockAuthApi as jest.Mocked<typeof _mockAuthApi>;
 
-Vue.use(ElementUI);
-registerMockComponent('el-dialog'); // ElDialogs mount their content somewhere else in the DOM. Mock it out so that the snapshot includes the content.
-Vue.use(VueRouter);
 Vue.use(Vuex);
 
 const setFormField = (wrapper: Wrapper<Vue>, fieldName: string, value: string) => {

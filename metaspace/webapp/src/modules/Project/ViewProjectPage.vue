@@ -139,12 +139,10 @@
     }
 
     get datasetsListLink() {
-      const filters = {
-        project: this.project && {id: this.projectId, name: this.project.name},
-      };
-      const path = '/datasets';
-      const query = encodeParams(filters, path, this.$store.state.filterLists);
-      return { path, query }
+      return {
+        path: '/datasets',
+        query: this.project && encodeParams({ project: {id: this.projectId, name: this.project.name} })
+      }
     }
 
     @ConfirmAsync({

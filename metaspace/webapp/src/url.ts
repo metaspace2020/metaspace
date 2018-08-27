@@ -40,17 +40,17 @@ const PATH_TO_LEVEL: Dictionary<string> = {
   '/upload': 'upload'
 };
 
-export function encodeParams(filter: any, path: string, filterLists: any): Dictionary<string> {
-  const level = PATH_TO_LEVEL[path.toLowerCase()];
-  const defaultFilter = getDefaultFilter(level, filterLists);
+export function encodeParams(filter: any, path?: string, filterLists?: any): Dictionary<string> {
+  const level = path != null ? PATH_TO_LEVEL[path.toLowerCase()] : null;
+  const defaultFilter = filterLists != null ? getDefaultFilter(level, filterLists) : null;
 
   let q: Dictionary<string> = {};
   for (var key in FILTER_TO_URL) {
     const {levels, encoding} = FILTER_SPECIFICATIONS[key];
-    if (levels.indexOf(level) == -1)
+    if (path != null && levels.indexOf(level) == -1)
       continue;
 
-    if (key in filter && filter[key] != defaultFilter[key]) {
+    if (key in filter && (defaultFilter == null || filter[key] != defaultFilter[key])) {
       if (encoding == 'json')
         q[FILTER_TO_URL[key]] = JSON.stringify(filter[key]);
       else if (encoding == 'list')

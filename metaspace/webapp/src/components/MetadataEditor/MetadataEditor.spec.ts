@@ -1,21 +1,8 @@
 import { mount, config as testConfig } from '@vue/test-utils';
-import VueRouter from 'vue-router';
-import ElementUI from 'element-ui';
-import Vue from 'vue';
 import MetadataEditor from './MetadataEditor.vue';
 import router from '../../router';
-import registerMockComponent from '../../../tests/utils/registerMockComponent';
-import { restoreConsole, suppressConsoleWarn } from '../../../tests/utils/suppressConsole';
 import { initMockGraphqlClient, provide } from '../../../tests/utils/mockGraphqlClient';
 import store from '../../store';
-
-Vue.use(ElementUI);
-registerMockComponent('el-dialog'); // ElDialogs mount their content somewhere else in the DOM. Mock it out so that the snapshot includes the content.
-registerMockComponent('el-popover');
-registerMockComponent('el-autocomplete');
-registerMockComponent('el-select');
-registerMockComponent('el-option');
-Vue.use(VueRouter);
 
 
 describe('MetadataEditor', () => {

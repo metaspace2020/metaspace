@@ -119,13 +119,13 @@
     }
 
     datasetsListLink(user: Member['user']) {
-      const filters = {
-        ...this.filter,
-        submitter: {id: user.id, name: user.name},
-      };
-      const path = '/datasets';
-      const query = encodeParams(filters, path, this.$store.state.filterLists);
-      return { path, query }
+      return {
+        path: '/datasets',
+        query: encodeParams({
+          ...this.filter,
+          submitter: {id: user.id, name: user.name},
+        })
+      }
     }
 
     @Emit('removeUser')

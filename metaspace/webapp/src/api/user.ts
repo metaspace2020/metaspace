@@ -1,28 +1,34 @@
 import { UserGroupRole } from './group';
 import gql from 'graphql-tag';
+import { ProjectRole } from './project';
 
 export type UserRole = 'admin' | 'user' | 'anonymous';
 
+export interface UserProfileQueryGroup {
+  role: UserGroupRole;
+  numDatasets: number;
+  group: {
+    id: string,
+    name: string
+  };
+}
+export interface UserProfileQueryProject {
+  role: ProjectRole;
+  numDatasets: number;
+  project: {
+    id: string,
+    name: string
+  };
+}
 
 export interface UserProfileQuery {
   id: string;
   name: string;
   role: string;
   email: string | null;
-  groups: {
-    role: UserGroupRole;
-    numDatasets: number;
-    group: {
-      id: string,
-      name: string
-    };
-  }[] | null;
-  primaryGroup: {
-    group: {
-      id: string;
-      name: string;
-    }
-  } | null;
+  groups: UserProfileQueryGroup[] | null;
+  primaryGroup: UserProfileQueryGroup | null;
+  projects: UserProfileQueryProject[] | null;
 }
 
 export const userProfileQuery =
@@ -33,18 +39,10 @@ export const userProfileQuery =
     role
     email
     primaryGroup {
-      group {
-        id
-        name
-      }
+      ...UserProfileQueryGroup
     }
     groups {
-      role
-      numDatasets
-      group {
-        id
-        name
-      }
+      ...UserProfileQueryGroup
     }
     projects {
       role
@@ -54,6 +52,14 @@ export const userProfileQuery =
         name
       }
     }
+  }
+}
+fragment UserProfileQueryGroup on UserGroup {
+  role
+  numDatasets
+  group {
+    id
+    name
   }
 }
 `;

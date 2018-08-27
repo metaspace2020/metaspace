@@ -1,0 +1,449 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`EditUserPage should match snapshot 1`] = `
+<div class="main-content">
+  <mock-el-dialog title="Delete account" custom-class="delete-account-dialog" width="500px">
+    <p>If you delete your account, you will lose access to all private datasets.
+    </p>
+    <p>Please select whether you would like to delete all your datasets or keep them within METASPACE accessible by the group members:
+    </p>
+    <label role="checkbox" class="el-checkbox" style="margin: 10px 20px;"><span aria-checked="mixed" class="el-checkbox__input"><span class="el-checkbox__inner"></span>
+      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+      </span><span class="el-checkbox__label">
+      Delete datasets that I have submitted
+    <!----></span></label>
+    <div style="margin: 10px 0px 20px; text-align: right;">
+      <button type="button" class="el-button el-button--default" title="Cancel">
+        <!---->
+        <!----><span>Cancel</span></button>
+      <button type="button" class="el-button el-button--danger" title="Delete account">
+        <!---->
+        <!----><span>
+        Delete account</span></button>
+    </div>
+    <p>
+      <b>Note:</b> if you choose not to delete the datasets now, you will still be able to have them deleted later by emailing the
+      <a href="mailto:contact@metaspace2020.eu">METASPACE administrators</a>.
+    </p>
+  </mock-el-dialog>
+  <div class="user-edit-page el-loading-parent--relative">
+    <div class="el-row">
+      <div class="el-col el-col-16">
+        <h2>User details</h2>
+      </div>
+      <div class="el-col el-col-8">
+        <button type="button" class="el-button saveButton el-button--primary" title="Save">
+          <!---->
+          <!----><span>
+          Save
+        </span></button>
+      </div>
+    </div>
+    <div class="el-row" style="margin-left: -10px; margin-right: -10px;">
+      <form class="el-form">
+        <div class="user-details" style="padding-left: 15px;">
+          <div class="el-col el-col-12" style="padding-left: 10px; padding-right: 10px;">
+            <div>
+              <div class="el-form-item is-required">
+                <label for="name" class="el-form-item__label">Full name</label>
+                <div class="el-form-item__content">
+                  <div class="el-input">
+                    <!---->
+                    <input type="text" autocomplete="off" name="name" class="el-input__inner">
+                    <!---->
+                    <!---->
+                    <!---->
+                  </div>
+                  <!---->
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="el-col el-col-12" style="padding-left: 10px; padding-right: 10px;">
+            <div>
+              <div class="el-form-item is-required">
+                <label for="email" class="el-form-item__label">Email address</label>
+                <div class="el-form-item__content">
+                  <div class="el-input">
+                    <!---->
+                    <input type="text" autocomplete="off" name="email" class="el-input__inner">
+                    <!---->
+                    <!---->
+                    <!---->
+                  </div>
+                  <!---->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div>
+      <h2>Groups</h2>
+      <div>
+        <!---->
+        <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" style="width: 100%; padding-left: 15px;">
+          <div class="hidden-columns">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+          <div class="el-table__header-wrapper">
+            <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 620px;">
+              <colgroup>
+                <col name="el-table_1_column_1" width="180">
+                <col name="el-table_1_column_2" width="280">
+                <col name="el-table_1_column_3" width="80">
+                <col name="el-table_1_column_4" width="80">
+              </colgroup>
+              <thead class="">
+                <tr class="">
+                  <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf">
+                    <div class="cell">Group</div>
+                  </th>
+                  <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf">
+                    <div class="cell">Role</div>
+                  </th>
+                  <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf">
+                    <div class="cell">Datasets contributed</div>
+                  </th>
+                  <th colspan="1" rowspan="1" class="el-table_1_column_4     is-leaf">
+                    <div class="cell"></div>
+                  </th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div class="el-table__body-wrapper is-scrolling-left">
+            <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 620px;">
+              <colgroup>
+                <col name="el-table_1_column_1" width="180">
+                <col name="el-table_1_column_2" width="280">
+                <col name="el-table_1_column_3" width="80">
+                <col name="el-table_1_column_4" width="80">
+              </colgroup>
+              <tbody>
+                <tr class="el-table__row">
+                  <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                    <div class="cell">
+                      <a href="#/group/AAA" class="">Group A</a>
+                    </div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                    <div class="cell">Member</div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                    <div class="cell">
+                      <!----><span>0</span></div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
+                    <div class="cell">
+                      <button type="button" class="el-button el-button--default el-button--mini">
+                        <!---->
+                        <i class="el-icon-arrow-right"></i><span>
+          Leave
+        </span></button>
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                  </td>
+                </tr>
+                <tr class="el-table__row">
+                  <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                    <div class="cell">
+                      <a href="#/group/BBB" class="">Group B</a>
+                    </div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                    <div class="cell">Invited</div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                    <div class="cell">
+                      <!----><span>0</span></div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
+                    <div class="cell">
+                      <!---->
+                      <!---->
+                      <button type="button" class="el-button el-button--success el-button--mini">
+                        <!---->
+                        <i class="el-icon-check"></i><span>
+          Accept
+        </span></button>
+                      <button type="button" class="el-button el-button--default el-button--mini">
+                        <!---->
+                        <i class="el-icon-close"></i><span>
+          Decline
+        </span></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="el-table__row">
+                  <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                    <div class="cell">
+                      <a href="#/group/CCC" class="">Group C</a>
+                    </div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                    <div class="cell">Requesting access</div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                    <div class="cell">
+                      <!----><span>0</span></div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
+                    <div class="cell">
+                      <!---->
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                  </td>
+                </tr>
+                <tr class="el-table__row">
+                  <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                    <div class="cell">
+                      <a href="#/group/DDD" class="">Group D</a>
+                    </div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                    <div class="cell">Principal investigator</div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                    <div class="cell">
+                      <a href="#/datasets?grp=%7B%22id%22%3A%22DDD%22,%22name%22%3A%22Group%20D%22%7D&amp;subm=%7B%22id%22%3A%2222333%22,%22name%22%3A%22foo%22%7D" class="">
+                        20
+                      </a>
+                      <!---->
+                    </div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
+                    <div class="cell">
+                      <!---->
+                      <button disabled="disabled" type="button" class="el-button el-button--default el-button--mini is-disabled">
+                        <!---->
+                        <i class="el-icon-arrow-right"></i><span>
+          Leave
+        </span></button>
+                      <!---->
+                      <!---->
+                    </div>
+                  </td>
+                </tr>
+                <!---->
+              </tbody>
+            </table>
+            <!---->
+            <!---->
+          </div>
+          <!---->
+          <!---->
+          <!---->
+          <!---->
+          <div class="el-table__column-resize-proxy" style="display: none;"></div>
+        </div>
+      </div>
+      <div>
+        <p>Primary group:</p>
+        <mock-el-select placeholder="Select" style="padding-left: 15px;">
+          <mock-el-option label="Group A" value="AAA"></mock-el-option>
+          <mock-el-option label="Group B" value="BBB"></mock-el-option>
+          <mock-el-option label="Group C" value="CCC"></mock-el-option>
+          <mock-el-option label="Group D" value="DDD"></mock-el-option>
+        </mock-el-select>
+      </div>
+    </div>
+    <div style="margin-top: 40px;">
+      <h2>Projects</h2>
+      <div>
+        <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" style="width: 100%; padding-left: 15px;">
+          <div class="hidden-columns">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+          </div>
+          <div class="el-table__header-wrapper">
+            <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 620px;">
+              <colgroup>
+                <col name="el-table_2_column_5" width="180">
+                <col name="el-table_2_column_6" width="280">
+                <col name="el-table_2_column_7" width="80">
+                <col name="el-table_2_column_8" width="80">
+              </colgroup>
+              <thead class="">
+                <tr class="">
+                  <th colspan="1" rowspan="1" class="el-table_2_column_5     is-leaf">
+                    <div class="cell">Project</div>
+                  </th>
+                  <th colspan="1" rowspan="1" class="el-table_2_column_6     is-leaf">
+                    <div class="cell">Role</div>
+                  </th>
+                  <th colspan="1" rowspan="1" class="el-table_2_column_7     is-leaf">
+                    <div class="cell">Datasets contributed</div>
+                  </th>
+                  <th colspan="1" rowspan="1" class="el-table_2_column_8     is-leaf">
+                    <div class="cell"></div>
+                  </th>
+                </tr>
+              </thead>
+            </table>
+          </div>
+          <div class="el-table__body-wrapper is-scrolling-left">
+            <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 620px;">
+              <colgroup>
+                <col name="el-table_2_column_5" width="180">
+                <col name="el-table_2_column_6" width="280">
+                <col name="el-table_2_column_7" width="80">
+                <col name="el-table_2_column_8" width="80">
+              </colgroup>
+              <tbody>
+                <tr class="el-table__row">
+                  <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
+                    <div class="cell">
+                      <a href="#/project/AA" class="">Project A</a>
+                    </div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
+                    <div class="cell">Member</div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_7  ">
+                    <div class="cell">
+                      <!----><span>0</span></div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_8  ">
+                    <div class="cell">
+                      <button type="button" class="el-button el-button--default el-button--mini">
+                        <!---->
+                        <i class="el-icon-arrow-right"></i><span>
+          Leave
+        </span></button>
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                  </td>
+                </tr>
+                <tr class="el-table__row">
+                  <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
+                    <div class="cell">
+                      <a href="#/project/BB" class="">Project B</a>
+                    </div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
+                    <div class="cell">Invited</div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_7  ">
+                    <div class="cell">
+                      <!----><span>0</span></div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_8  ">
+                    <div class="cell">
+                      <!---->
+                      <!---->
+                      <button type="button" class="el-button el-button--success el-button--mini">
+                        <!---->
+                        <i class="el-icon-check"></i><span>
+          Accept
+        </span></button>
+                      <button type="button" class="el-button el-button--default el-button--mini">
+                        <!---->
+                        <i class="el-icon-close"></i><span>
+          Decline
+        </span></button>
+                    </div>
+                  </td>
+                </tr>
+                <tr class="el-table__row">
+                  <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
+                    <div class="cell">
+                      <a href="#/project/CC" class="">Project C</a>
+                    </div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
+                    <div class="cell">Requesting access</div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_7  ">
+                    <div class="cell">
+                      <!----><span>0</span></div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_8  ">
+                    <div class="cell">
+                      <!---->
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                  </td>
+                </tr>
+                <tr class="el-table__row">
+                  <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
+                    <div class="cell">
+                      <a href="#/project/DD" class="">Project D</a>
+                    </div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
+                    <div class="cell">Project manager</div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_7  ">
+                    <div class="cell">
+                      <a href="#/datasets?prj=%7B%22id%22%3A%22DD%22,%22name%22%3A%22Project%20D%22%7D&amp;subm=%7B%22id%22%3A%2222333%22,%22name%22%3A%22foo%22%7D" class="">
+                        20
+                      </a>
+                      <!---->
+                    </div>
+                  </td>
+                  <td rowspan="1" colspan="1" class="el-table_2_column_8  ">
+                    <div class="cell">
+                      <!---->
+                      <button disabled="disabled" type="button" class="el-button el-button--default el-button--mini is-disabled">
+                        <!---->
+                        <i class="el-icon-arrow-right"></i><span>
+          Leave
+        </span></button>
+                      <!---->
+                      <!---->
+                    </div>
+                  </td>
+                </tr>
+                <!---->
+              </tbody>
+            </table>
+            <!---->
+            <!---->
+          </div>
+          <!---->
+          <!---->
+          <!---->
+          <!---->
+          <div class="el-table__column-resize-proxy" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top: 45px;">
+      <h2>Delete account</h2>
+      <p style="width: 100%; padding-left: 15px;">
+        If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE. For the latter, the private data will still be accessible by the group members only.
+      </p>
+    </div>
+    <div class="el-row">
+      <button type="button" class="el-button el-button--danger" title="Delete account" style="float: right; margin-top: 15px;">
+        <!---->
+        <!----><span>
+        Delete account
+      </span></button>
+    </div>
+    <div class="el-loading-mask" style="display: none;">
+      <div class="el-loading-spinner">
+        <svg viewBox="25 25 50 50" class="circular">
+          <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
+        </svg>
+        <!---->
+      </div>
+    </div>
+  </div>
+</div>
+`;

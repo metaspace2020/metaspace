@@ -36,7 +36,7 @@ const router = new VueRouter({
     },
     { path: '/about', component: AboutPage },
     { path: '/help', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "HelpPage" */ './components/HelpPage.vue') },
-    { path: '/user/me', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "EditUserPage" */ './modules/Account/components/EditUserPage.vue') },
+    { path: '/user/me', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "EditUserPage" */ './modules/UserProfile/EditUserPage.vue') },
 
     ...(config.features.newAuth ? [
       { path: '/account/sign-in', component: DialogPage, props: {dialog: 'signIn'} },

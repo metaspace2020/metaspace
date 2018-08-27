@@ -1,13 +1,5 @@
 <template>
   <div class="main-content">
-    <transfer-datasets-dialog
-      v-if="showTransferDatasetsDialog"
-      :currentUserId="currentUser && currentUser.id"
-      :groupName="invitingGroup && invitingGroup.name"
-      :isInvited="true"
-      @accept="handleAcceptTransferDatasets"
-      @close="handleCloseTransferDatasetsDialog"
-    />
     <el-dialog
       title="Delete account"
       custom-class="delete-account-dialog"
@@ -58,15 +50,15 @@
           <div class="user-details" style="padding-left: 15px;">
             <el-col :span="12">
               <div>
-                <el-form-item prop="name" label="Full name:">
-                  <el-input v-model="model.name" />
+                <el-form-item prop="name" label="Full name">
+                  <el-input v-model="model.name" name="name" />
                 </el-form-item>
               </div>
             </el-col>
             <el-col :span="12">
               <div>
-                <el-form-item prop="email" label="E-mail:">
-                  <el-input v-model="model.email" />
+                <el-form-item prop="email" label="Email address">
+                  <el-input v-model="model.email" name="email" />
                 </el-form-item>
               </div>
             </el-col>
@@ -76,68 +68,23 @@
 
       <div>
         <h2>Groups</h2>
-        <el-table
-          :data="groupsData"
-          style="width: 100%;padding-left: 15px;">
-          <el-table-column
-            prop="name"
-            label="Group"
-            width="180">
-          </el-table-column>
-          <el-table-column
-            prop="roleName"
-            label="Role"
-            width="280">
-          </el-table-column>
-          <el-table-column
-            prop="numDatasets"
-            label="Dataset contributed">
-          </el-table-column>
-          <el-table-column>
-            <template slot-scope="scope">
-              <el-button
-                v-if="scope.row.role === 'MEMBER'"
-                size="mini"
-                icon="el-icon-arrow-right"
-                @click="leaveGroup('leave', scope.row)">
-                Leave
-              </el-button>
-              <el-button
-                v-if="scope.row.role === 'PRINCIPAL_INVESTIGATOR'"
-                size="mini"
-                icon="el-icon-arrow-right"
-                disabled>
-                Leave
-              </el-button>
-              <el-button
-                v-if="scope.row.role === 'INVITED'"
-                size="mini"
-                type="success"
-                @click="acceptInvitation(scope.row)"
-                icon="el-icon-check">
-                Accept
-              </el-button>
-              <el-button
-                v-if="scope.row.role === 'INVITED'"
-                size="mini"
-                icon="el-icon-close"
-                @click="leaveGroup('leaveGroup', scope.row)">
-                Decline
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <div v-if="groupsData && groupsData.length > 1">
+        <groups-table :currentUser="currentUser" :refetchData="refetchData" />
+        <div v-if="currentUser && currentUser.groups && currentUser.groups.length > 1">
           <p>Primary group:</p>
           <el-select v-model="primaryGroupId" placeholder="Select" style="padding-left: 15px;">
             <el-option
-              v-for="item in groupsData"
-              :key="item.id"
-              :label="item.name"
-              :value="item.id">
+              v-for="userGroup in currentUser.groups"
+              :key="userGroup.group.id"
+              :label="userGroup.group.name"
+              :value="userGroup.group.id">
             </el-option>
           </el-select>
         </div>
+      </div>
+
+      <div style="margin-top: 40px;">
+        <h2>Projects</h2>
+        <projects-table :currentUser="currentUser" :refetchData="refetchData" />
       </div>
       <!--The section below will be introduced in vFuture-->
       <!--<div class="notifications" style="margin-top: 30px">-->
@@ -203,45 +150,34 @@
 <script lang="ts">
   import Vue from 'vue'
   import { Component, Watch } from 'vue-property-decorator'
-  import { updateUserMutation, deleteUserMutation, userProfileQuery, UserProfileQuery } from '../../../api/user';
-  import { getRoleName, UserGroupRole, leaveGroupMutation, acceptGroupInvitationMutation } from '../../../api/group';
-  import reportError from "../../../lib/reportError";
-  import {refreshLoginStatus} from '../../../graphqlClient';
+  import { updateUserMutation, deleteUserMutation, userProfileQuery, UserProfileQuery } from '../../api/user';
+  import reportError from "../../lib/reportError";
+  import {refreshLoginStatus} from '../../graphqlClient';
   import {ElForm} from "element-ui/types/form";
-  import {TransferDatasetsDialog} from '../../GroupProfile'
-  import emailRegex from '../../../lib/emailRegex';
-  import ConfirmAsync from '../../../components/ConfirmAsync';
-  import { importDatasetsIntoGroupMutation } from '../../../api/group';
+  import {TransferDatasetsDialog} from '../GroupProfile/index'
+  import emailRegex from '../../lib/emailRegex';
+  import GroupsTable from './GroupsTable.vue';
+  import ProjectsTable from './ProjectsTable.vue';
 
   interface Model {
     name: string;
     email: string | null;
   }
 
-  interface GroupRow {
-    id: string;
-    name: string;
-    role: UserGroupRole;
-    roleName: string;
-    numDatasets: number;
-  }
-
   @Component<EditUserPage>({
     components: {
-      TransferDatasetsDialog
+      TransferDatasetsDialog,
+      GroupsTable,
+      ProjectsTable,
     },
     apollo: {
       currentUser: {
         query: userProfileQuery,
         result({data}: {data: {currentUser: UserProfileQuery}}) {
           if (!this.isLoaded) {
-            if (data.currentUser != null) {
-              // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
-              // button that causes this query to refetch
-              this.isLoaded = true;
-            } else {
-              this.$router.push('/account/sign-in');
-            }
+            // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
+            // button that causes this query to refetch
+            this.isLoaded = true;
           }
         },
       }
@@ -252,7 +188,6 @@
     showDeleteAccountDialog: boolean = false;
     isUserDetailsLoading: boolean = false;
     isUserDeletionLoading: boolean = false;
-    showTransferDatasetsDialog: boolean = false;
 
     currentUser: UserProfileQuery | null = null;
     model: Model = {
@@ -260,7 +195,6 @@
       email: ''
     };
     primaryGroupId: string | null = null;
-    invitingGroup: GroupRow | null = null;
 
     delDatasets: boolean = false;
     rules: object = {
@@ -269,16 +203,19 @@
       ],
       email: [
         {required: true, pattern: emailRegex,
-        message: 'Please enter a correct Email address', trigger: "blur"
+        message: 'Please enter a valid email address', trigger: "blur"
       }]
     };
 
+    @Watch('isLoaded')
     @Watch('currentUser', {deep: true})
     onCurrentUserChanged(this: any) {
       if (this.currentUser) {
         this.model.name = this.currentUser.name;
         this.model.email = this.currentUser.email;
         this.primaryGroupId = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
+      } else if (this.isLoaded) {
+        this.$router.push('/account/sign-in');
       }
     }
 
@@ -288,17 +225,6 @@
 
     closeDeleteAccountDialog() {
       this.showDeleteAccountDialog = false;
-    }
-
-    get groupsData(): GroupRow[] {
-      if (this.currentUser == null || this.currentUser.groups == null) {
-        return [];
-      }
-      return this.currentUser.groups.map(({group, numDatasets, role}) => {
-        const {id, name} = group;
-        const roleName = getRoleName(role);
-        return {id, name, role, roleName, numDatasets}
-      });
     }
 
     async updateUserDetails() {
@@ -347,33 +273,6 @@
       }
     }
 
-    @ConfirmAsync(function(action: string, groupRow: GroupRow) {
-      return {
-        message: (action === 'leave') ? `Are you sure you want to leave ${groupRow.name}?` :
-          `Are you sure you want to decline the invitation to ${groupRow.name}?`,
-        confirmButtonText: (action === 'leave') ? "Yes, leave the group" :
-          "Yes, decline the invitation",
-        confirmButtonLoadingText: 'Leaving...'
-      };
-    })
-    async leaveGroup(action: string, groupRow: GroupRow) {
-      await this.$apollo.mutate({
-        mutation: leaveGroupMutation,
-        variables: {
-          groupId: groupRow.id
-        }
-      });
-      this.$message({
-        message: "You have declined the invitation"
-      });
-      await this.$apollo.queries.currentUser.refetch();
-      if (action === 'leave') {
-        this.$message({
-          message: "You have successfully left the group"
-        });
-      }
-    }
-
     async deleteAccount(this: any) {
       try {
         this.isUserDeletionLoading = true;
@@ -397,39 +296,8 @@
       }
     }
 
-    async acceptInvitation(groupRow: GroupRow) {
-      this.showTransferDatasetsDialog = true;
-      this.invitingGroup = groupRow;
-    }
-
-    async handleAcceptTransferDatasets(selectedDatasetIds: string[]) {
-      try {
-        await this.$apollo.mutate({
-          mutation: acceptGroupInvitationMutation,
-          variables: { groupId: this.invitingGroup!.id },
-        });
-        if (selectedDatasetIds.length > 0) {
-          await this.$apollo.mutate({
-            mutation: importDatasetsIntoGroupMutation,
-            variables: { groupId: this.invitingGroup!.id, datasetIds: selectedDatasetIds },
-          });
-        }
-
-        await this.$apollo.queries.currentUser.refetch();
-        this.$message({
-          type: "success",
-          message: "You have successfully joined the group!"
-        });
-        this.showTransferDatasetsDialog = false;
-      } catch(err) {
-        reportError(err);
-      } finally {
-        this.showTransferDatasetsDialog = false;
-      }
-    }
-
-    handleCloseTransferDatasetsDialog() {
-      this.showTransferDatasetsDialog = false;
+    async refetchData() {
+      await this.$apollo.queries.currentUser.refetch();
     }
   }
 </script>
@@ -461,7 +329,7 @@
     padding: 0 20px 20px 20px;
   }
 
-  /* Uncomment when the vFuture notifications will be introduced
+  /* Uncomment when the vFuture notifications will be introduced */
   /*.notifications_checkbox {*/
     /*margin-left: 0;*/
     /*padding: 0;*/
