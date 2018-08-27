@@ -72,7 +72,6 @@ const getGraphqlSchema = () => {
 
 export const initMockGraphqlClient = (mocks?: IMocks) => {
 
-
   const schema = makeRemoteExecutableSchema({
     schema: buildClientSchema(getGraphqlSchema())
   });

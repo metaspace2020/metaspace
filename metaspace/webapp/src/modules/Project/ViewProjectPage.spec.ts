@@ -1,14 +1,8 @@
 import { mount, Stubs } from '@vue/test-utils';
-import VueRouter from 'vue-router';
-import ElementUI from 'element-ui';
 import Vue from 'vue';
 import ViewProjectPage from './ViewProjectPage.vue';
 import router from '../../router';
-import Vuex from 'vuex';
 
-Vue.use(ElementUI);
-Vue.use(VueRouter);
-Vue.use(Vuex);
 
 
 describe('ViewProjectPage', () => {
@@ -29,19 +23,12 @@ describe('ViewProjectPage', () => {
     countDatasets: 3
   };
 
-  const store = new Vuex.Store({
-    state: {
-      filterLists: {
-      },
-    },
-  });
-
   const stubs: Stubs = {
     DatasetItem: true
   };
 
   it('should match snapshot (non-member)', () => {
-    const wrapper = mount(ViewProjectPage, { router, store, stubs });
+    const wrapper = mount(ViewProjectPage, { router, stubs });
     wrapper.setData({
       loaded: true,
       data: mockData,
@@ -51,7 +38,7 @@ describe('ViewProjectPage', () => {
   });
 
   it('should match snapshot (invited)', () => {
-    const wrapper = mount<Vue>(ViewProjectPage, { router, store, stubs });
+    const wrapper = mount<Vue>(ViewProjectPage, { router, stubs });
     wrapper.setData({
       loaded: true,
       data: {

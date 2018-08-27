@@ -1,17 +1,10 @@
 import { mount, Wrapper } from '@vue/test-utils';
 import VueRouter from 'vue-router';
 import ElementUI from 'element-ui';
-import Vuex from 'vuex';
 import Vue from 'vue';
 import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
 import router from '../../router';
-import registerMockComponent from '../../../tests/utils/registerMockComponent';
 jest.mock('../../components/DatasetItem.vue', () => require('../../../tests/utils/mockComponent')('dataset-item'));
-
-Vue.use(ElementUI);
-registerMockComponent('el-dialog');
-Vue.use(VueRouter);
-Vue.use(Vuex);
 
 describe('TransferDatasetsDialog', () => {
   const mockDatasets = [

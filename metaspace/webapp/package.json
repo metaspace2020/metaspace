@@ -96,7 +96,7 @@
     "@types/node-fetch": "1.6.7",
     "@types/plotly.js": "1.28.11",
     "@types/webpack-env": "1.13.1",
-    "@vue/test-utils": "^1.0.0-beta.20",
+    "@vue/test-utils": "^1.0.0-beta.24",
     "apollo": "^1.7.0",
     "apollo-link-schema": "^1.1.0",
     "autoprefixer": "^6.7.2",

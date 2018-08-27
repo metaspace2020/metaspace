@@ -137,9 +137,7 @@
     }
 
     get datasetsListLink() {
-      const path = '/datasets';
-      const query = encodeParams(this.datasetsListFilter, path, this.$store.state.filterLists);
-      return { path, query }
+      return { path: '/datasets', query: encodeParams(this.datasetsListFilter) }
     }
 
     @ConfirmAsync(function (this: EditProjectProfile) {

@@ -51,14 +51,14 @@
             <el-col :span="12">
               <div>
                 <el-form-item prop="name" label="Full name">
-                  <el-input v-model="model.name" />
+                  <el-input v-model="model.name" name="name" />
                 </el-form-item>
               </div>
             </el-col>
             <el-col :span="12">
               <div>
                 <el-form-item prop="email" label="Email address">
-                  <el-input v-model="model.email" />
+                  <el-input v-model="model.email" name="email" />
                 </el-form-item>
               </div>
             </el-col>
@@ -82,7 +82,7 @@
         </div>
       </div>
 
-      <div>
+      <div style="margin-top: 40px;">
         <h2>Projects</h2>
         <projects-table :currentUser="currentUser" :refetchData="refetchData" />
       </div>
@@ -330,7 +330,7 @@
     padding: 0 20px 20px 20px;
   }
 
-  /* Uncomment when the vFuture notifications will be introduced
+  /* Uncomment when the vFuture notifications will be introduced */
   /*.notifications_checkbox {*/
     /*margin-left: 0;*/
     /*padding: 0;*/

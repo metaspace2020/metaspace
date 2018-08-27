@@ -1,14 +1,7 @@
 import { mount, Stubs } from '@vue/test-utils';
-import VueRouter from 'vue-router';
-import ElementUI from 'element-ui';
 import Vue from 'vue';
 import ViewGroupProfile from './ViewGroupProfile.vue';
 import router from '../../router';
-import Vuex from 'vuex';
-
-Vue.use(ElementUI);
-Vue.use(VueRouter);
-Vue.use(Vuex);
 
 
 describe('ViewGroupProfile', () => {
@@ -29,19 +22,12 @@ describe('ViewGroupProfile', () => {
     countDatasets: 3
   };
 
-  const store = new Vuex.Store({
-    state: {
-      filterLists: {
-      },
-    },
-  });
-
   const stubs: Stubs = {
     DatasetItem: true
   };
 
   it('should match snapshot (non-member)', () => {
-    const wrapper = mount(ViewGroupProfile, { router, store, stubs });
+    const wrapper = mount(ViewGroupProfile, { router, stubs });
     wrapper.setData({
       loaded: true,
       data: mockData,
@@ -51,7 +37,7 @@ describe('ViewGroupProfile', () => {
   });
 
   it('should match snapshot (invited)', () => {
-    const wrapper = mount<Vue>(ViewGroupProfile, { router, store, stubs });
+    const wrapper = mount<Vue>(ViewGroupProfile, { router, stubs });
     wrapper.setData({
       loaded: true,
       data: {

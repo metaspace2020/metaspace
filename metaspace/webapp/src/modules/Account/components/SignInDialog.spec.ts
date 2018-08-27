@@ -1,12 +1,10 @@
 import { mount, Wrapper } from '@vue/test-utils';
-import VueRouter from 'vue-router';
 import ElementUI from 'element-ui';
 import Vuex from 'vuex';
 import Vue from 'vue';
 import SignInDialog from './SignInDialog.vue';
 import account from '../store/account';
 import router from '../../../router';
-import registerMockComponent from '../../../../tests/utils/registerMockComponent';
 import { restoreConsole, suppressConsoleWarn } from '../../../../tests/utils/suppressConsole';
 
 jest.mock('../../../api/auth');
@@ -17,9 +15,6 @@ jest.mock('../../../graphqlClient');
 import {refreshLoginStatus as _mockRefreshLoginStatus} from '../../../graphqlClient';
 const mockRefreshLoginStatus = _mockRefreshLoginStatus as jest.Mocked<typeof _mockRefreshLoginStatus>;
 
-Vue.use(ElementUI);
-registerMockComponent('el-dialog');
-Vue.use(VueRouter);
 Vue.use(Vuex);
 
 const setFormField = (wrapper: Wrapper<Vue>, fieldName: string, value: string) => {
