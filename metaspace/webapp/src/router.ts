@@ -22,7 +22,7 @@ const router = new VueRouter({
 
     {
       path: '/datasets/edit/:dataset_id',
-      component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ './components/MetadataEditPage.vue'),
+      component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "MetadataEditPage" */ './modules/MetadataEditor/MetadataEditPage.vue'),
       name: 'edit-metadata'
     },
     {
@@ -32,7 +32,7 @@ const router = new VueRouter({
     },
     {
       path: '/upload',
-      component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ './components/UploadPage.vue')
+      component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ './modules/MetadataEditor/UploadPage.vue')
     },
     { path: '/about', component: AboutPage },
     { path: '/help', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "HelpPage" */ './components/HelpPage.vue') },

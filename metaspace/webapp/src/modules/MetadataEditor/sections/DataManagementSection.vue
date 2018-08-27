@@ -89,17 +89,17 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component, Prop, Watch } from 'vue-property-decorator';
-  import FormField from './FormField.vue';
-  import { MetaspaceOptions } from './formStructure';
+  import FormField from '../inputs/FormField.vue';
+  import { MetaspaceOptions } from '../formStructure';
   import {
     GroupListItem,
     oneGroupQuery, oneProjectQuery,
-  } from '../../api/dataManagement';
-  import { DatasetSubmitterFragment } from '../../api/user';
+  } from '../../../api/dataManagement';
+  import { DatasetSubmitterFragment } from '../../../api/user';
   import './FormSection.scss';
   import gql from 'graphql-tag';
   import FindGroupDialog from './FindGroupDialog.vue';
-  import {CreateProjectDialog} from '../../modules/Project';
+  import CreateProjectDialog from '../../Project/CreateProjectDialog.vue'; // imported directly so that the Project pages aren't pulled into the bundle
 
   const FIND_GROUP = 'FIND_GROUP';
   const NO_GROUP = 'NO_GROUP';

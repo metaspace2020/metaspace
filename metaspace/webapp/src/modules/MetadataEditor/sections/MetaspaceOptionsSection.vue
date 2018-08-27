@@ -53,10 +53,10 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component, Prop } from 'vue-property-decorator';
-  import FormField from './FormField.vue';
-  import DatabaseDescriptions from './DatabaseDescriptions.vue';
-  import { MetaspaceOptions } from './formStructure';
-  import { MAX_MOL_DBS } from '../../lib/constants';
+  import FormField from '../inputs/FormField.vue';
+  import DatabaseDescriptions from '../inputs/DatabaseDescriptions.vue';
+  import { MetaspaceOptions } from '../formStructure';
+  import { MAX_MOL_DBS } from '../../../lib/constants';
   import './FormSection.scss';
 
   @Component({

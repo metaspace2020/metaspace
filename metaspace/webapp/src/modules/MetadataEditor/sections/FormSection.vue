@@ -42,8 +42,8 @@
   import { Component, Prop } from 'vue-property-decorator';
   import { FetchSuggestionsCallback } from 'element-ui/types/autocomplete'
   import { memoize } from 'lodash-es'
-  import { FormSectionProperty } from './formStructure'
-  import FormField from './FormField.vue';
+  import { FormSectionProperty } from '../formStructure'
+  import FormField from '../inputs/FormField.vue';
   import './FormSection.scss';
 
   @Component({

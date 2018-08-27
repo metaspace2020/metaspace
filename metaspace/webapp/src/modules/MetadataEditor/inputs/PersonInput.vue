@@ -44,7 +44,7 @@
   import Vue from 'vue';
   import { Component, Prop } from 'vue-property-decorator';
   import { FetchSuggestions } from 'element-ui/types/autocomplete';
-  import {Person} from './formStructure';
+  import {Person} from '../formStructure';
 
   @Component({name: 'person-input'})
   export default class PersonInput extends Vue {

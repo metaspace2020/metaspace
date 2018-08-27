@@ -31,7 +31,7 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component, Prop } from 'vue-property-decorator';
-  import {DetectorResolvingPower} from './formStructure';
+  import {DetectorResolvingPower} from '../formStructure';
 
   @Component({name: 'detector-resolving-power-input'})
   export default class DetectorResolvingPowerInput extends Vue {

@@ -36,15 +36,15 @@
 <script>
  // TODO: try https://github.com/FineUploader/vue-fineuploader once it's ready for production
 
- import FineUploader from './FineUploader.vue';
- import {FilterPanel} from '../modules/Filters';
- import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
+ import FineUploader from './inputs/FineUploader.vue';
+ import {FilterPanel} from '../Filters/index';
+ import MetadataEditor from './MetadataEditor.vue';
  import Vue from 'vue';
- import tokenAutorefresh from '../tokenAutorefresh';
+ import tokenAutorefresh from '../../tokenAutorefresh';
 
- import * as config from '../clientConfig.json';
- import {pathFromUUID} from '../util';
- import {createDatasetQuery} from '../api/dataset';
+ import * as config from '../../clientConfig.json';
+ import {pathFromUUID} from '../../util';
+ import {createDatasetQuery} from '../../api/dataset';
 
  const DataTypeConfig = {
    'LC-MS': {

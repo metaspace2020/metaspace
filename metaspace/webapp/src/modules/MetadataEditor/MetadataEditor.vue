@@ -49,7 +49,7 @@
   */
 
  import {defaultMetadataType, metadataSchemas} from '../../assets/metadataRegistry';
- import {FilterPanel} from '../../modules/Filters';
+ import {FilterPanel} from '../Filters/index';
  import {deriveFullSchema} from './formStructure';
  import {
    get, set, cloneDeep, defaults,
@@ -62,10 +62,10 @@
    editDatasetQuery,
    metadataOptionsQuery,
  } from '../../api/metadata';
- import MetaspaceOptionsSection from './MetaspaceOptionsSection.vue';
- import VisibilityOptionSection from './VisibilityOptionSection.vue';
- import FormSection from './FormSection.vue';
- import DataManagementSection from './DataManagementSection.vue'
+ import MetaspaceOptionsSection from './sections/MetaspaceOptionsSection.vue';
+ import VisibilityOptionSection from './sections/VisibilityOptionSection.vue';
+ import FormSection from './sections/FormSection.vue';
+ import DataManagementSection from './sections/DataManagementSection.vue'
  import emailRegex from '../../lib/emailRegex';
 
  const factories = {

@@ -20,8 +20,8 @@
 </template>
 
 <script>
- import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
- import {updateDatasetQuery} from '../api/metadata';
+ import MetadataEditor from './MetadataEditor.vue';
+ import {updateDatasetQuery} from '../../api/metadata';
 
  export default {
    name: 'metadata-edit-page',

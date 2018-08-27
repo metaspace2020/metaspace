@@ -2,7 +2,7 @@ import { mount, config as testConfig } from '@vue/test-utils';
 import MetadataEditor from './MetadataEditor.vue';
 import router from '../../router';
 import { initMockGraphqlClient, provide } from '../../../tests/utils/mockGraphqlClient';
-import store from '../../store';
+import store from '../../store/index';
 
 
 describe('MetadataEditor', () => {

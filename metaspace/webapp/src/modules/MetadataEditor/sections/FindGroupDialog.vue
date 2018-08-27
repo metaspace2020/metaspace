@@ -52,8 +52,8 @@
     allGroupsQuery,
     requestAccessToGroupMutation,
     GroupListItem,
-  } from '../../api/dataManagement';
-  import reportError from "../../lib/reportError";
+  } from '../../../api/dataManagement';
+  import reportError from "../../../lib/reportError";
   import './FormSection.scss';
 
   @Component<FindGroupDialog>({
