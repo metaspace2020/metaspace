@@ -4,12 +4,14 @@ import { restoreConsole, suppressConsoleWarn } from '../../../tests/utils/suppre
 import EditUserPage from './EditUserPage.vue';
 import router from '../../router';
 import { initMockGraphqlClient, provide } from '../../../tests/utils/mockGraphqlClient';
+import { UserProfileQuery } from '../../api/user';
 
 
 describe('EditUserPage', () => {
-  const mockCurrentUser = {
+  const mockCurrentUser: UserProfileQuery = {
     id: '22333',
     name: 'foo',
+    email: 'foo@bar.baz',
     role: 'user',
     groups: [
       {role: 'MEMBER', numDatasets: 0, group: { id: 'AAA', name: 'Group A' }},
