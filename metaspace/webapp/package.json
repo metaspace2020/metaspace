@@ -8,10 +8,10 @@
     "dev": "cross-env NODE_ENV=development node --max_old_space_size=4096 server.js",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
     "build-ci": "cross-env NODE_ENV=production webpack --hide-modules",
-    "test": "jest",
+    "test": "cross-env NODE_ENV=test jest",
     "test-e2e": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=20000 --quarantine-mode --assertion-timeout=20000",
     "cucumber-test": "cucumber-js --compiler ts:ts-node/register tests/e2e/ --fail-fast",
-    "coverage": "jest --coverage",
+    "coverage": "cross-env NODE_ENV=test jest --coverage",
     "deref-schema": "node ./deref_schema.js src/assets",
     "generate-local-graphql-schema": "NODE_PATH=../graphql/node_modules node ../graphql/bin/generate-json-graphql-schema.js tests/utils/graphql-schema.json",
     "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint http://metaspace2020.eu/graphql"

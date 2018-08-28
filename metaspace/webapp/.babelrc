@@ -1,6 +1,13 @@
 {
+  "env": {
+    "test": {
+      "presets": [
+        ["env", {"modules": "commonjs"}]
+      ]
+    }
+  },
   "presets": [
-    ["env", {"modules":false}]
+    ["env", {"modules": false}]
   ],
   "plugins": [
     ["component", [{
