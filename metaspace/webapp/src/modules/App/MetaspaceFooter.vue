@@ -1,7 +1,7 @@
 <template>
   <div id="metaspace-footer">
     <div id="footer-contents">
-      <img class="footer-logo" src="../assets/eu_flag.jpg"></img>
+      <img class="footer-logo" src="../../assets/eu_flag.jpg"></img>
       <div id="footer-text">
         We acknowledge funding from the
         European Union’s Horizon 2020 programme under the grant agreement 634402

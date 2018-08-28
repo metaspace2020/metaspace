@@ -27,7 +27,7 @@ import router from './router';
 import { sync } from 'vuex-router-sync';
 sync(store, router);
 
-import App from './App.vue';
+import App from './modules/App/App.vue';
 
 const isProd = process.env.NODE_ENV === 'production';
 

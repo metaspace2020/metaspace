@@ -44,9 +44,9 @@
 <script>
  import Vue from 'vue';
 
- import introTour from '../tours/intro.tour';
- import filteringTour from '../tours/filtering.tour';
- import diagnosticsTour from '../tours/diagnostics.tour';
+ import introTour from '../../tours/intro.tour';
+ import filteringTour from '../../tours/filtering.tour';
+ import diagnosticsTour from '../../tours/diagnostics.tour';
  import TourStep from './TourStep.vue';
 
  export default {

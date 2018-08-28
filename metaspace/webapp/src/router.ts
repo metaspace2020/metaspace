@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import AboutPage from './components/AboutPage.vue';
+import AboutPage from './modules/App/AboutPage.vue';
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue';
 import {DialogPage, ResetPasswordPage} from './modules/Account';
 import * as config from './clientConfig.json';
@@ -35,7 +35,7 @@ const router = new VueRouter({
       component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "UploadPage" */ './modules/MetadataEditor/UploadPage.vue')
     },
     { path: '/about', component: AboutPage },
-    { path: '/help', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "HelpPage" */ './components/HelpPage.vue') },
+    { path: '/help', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "HelpPage" */ './modules/App/HelpPage.vue') },
     { path: '/user/me', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "EditUserPage" */ './modules/UserProfile/EditUserPage.vue') },
 
     ...(config.features.newAuth ? [

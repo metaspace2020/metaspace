@@ -83,8 +83,8 @@
         <h2 id="please-appreciate-those-who-funded-it">Funding</h2>
         <div style="display:flex; flex-direction: row; flex-wrap: wrap; width: 100%;">
           <div style="flex-basis: 200px; padding: 16px 0">
-            <img src="../assets/eu_flag.jpg" alt="EU" style="width: 90px">
-            <img src="../assets/nih_logo.png" alt="NIH" style="width: 90px">
+            <img src="../../assets/eu_flag.jpg" alt="EU" style="width: 90px">
+            <img src="../../assets/nih_logo.png" alt="NIH" style="width: 90px">
           </div>
           <div style="flex-basis: 70%; flex-grow: 1"><p> We acknowledge funding from the
             European Union’s Horizon 2020 programme under the grant agreement 634402
@@ -160,7 +160,7 @@
    height: 400px;
    max-width: 1100px;
    width: 100%;
-   background: url("../assets/METASPACE_banner_blue_bg.jpg") -50px;
+   background: url("../../assets/METASPACE_banner_blue_bg.jpg") -50px;
    background-size: cover;
    margin: -8px auto 0 auto;
    /*outline: 1px solid red;*/

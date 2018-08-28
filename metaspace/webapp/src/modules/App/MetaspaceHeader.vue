@@ -2,7 +2,7 @@
   <div class="b-header">
     <div class="header-items">
       <router-link to="/" class="header-item logo">
-        <img src="../assets/logo.png" alt="Metaspace" title="Metaspace"/>
+        <img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"/>
       </router-link>
 
       <router-link :to="uploadHref" class="header-item page-link" id='upload-link'>
@@ -91,10 +91,10 @@
 
 <script>
   import gql from 'graphql-tag';
- import {signOut} from '../api/auth';
- import {encodeParams} from '../modules/Filters';
-  import { refreshLoginStatus } from '../graphqlClient';
- import * as config from '../clientConfig.json';
+ import {signOut} from '../../api/auth';
+ import {encodeParams} from '../Filters';
+  import { refreshLoginStatus } from '../../graphqlClient';
+ import * as config from '../../clientConfig.json';
 
  export default {
    name: 'metaspace-header',

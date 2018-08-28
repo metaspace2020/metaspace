@@ -22,11 +22,11 @@
 
 <script>
  import * as cookie from 'js-cookie';
- import MetaspaceHeader from './components/MetaspaceHeader.vue';
- import MetaspaceFooter from './components/MetaspaceFooter.vue';
- import TourStep from './components/TourStep.vue';
- import {DialogController} from './modules/Account';
- import * as config from './clientConfig.json';
+ import MetaspaceHeader from './MetaspaceHeader.vue';
+ import MetaspaceFooter from './MetaspaceFooter.vue';
+ import TourStep from './TourStep.vue';
+ import {DialogController} from '../Account';
+ import * as config from '../../clientConfig.json';
 
  export default {
    name: 'app',
