@@ -168,5 +168,13 @@
     "snapshotSerializers": [
       "<rootDir>/node_modules/jest-serializer-vue"
     ]
+  },
+  "browserslist": {
+    "production": [
+      "defaults"
+    ],
+    "development": [
+      "last 1 Chrome version"
+    ]
   }
 }
