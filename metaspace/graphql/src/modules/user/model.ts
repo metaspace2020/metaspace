@@ -1,4 +1,4 @@
-import {Entity, PrimaryColumn, Column, OneToOne, JoinColumn} from 'typeorm';
+import {Entity, PrimaryColumn, Column, OneToOne, JoinColumn, OneToMany, ManyToOne} from 'typeorm';
 import {Credentials} from '../auth/model';
 
 @Entity()
@@ -23,7 +23,20 @@ export class User {
   // primaryGroup: boolean | null;
 
   @OneToOne(type => Credentials)
-  @JoinColumn()
+  @JoinColumn({ name: 'credentials_id' })
   credentials: Credentials;
+
+  @OneToMany(type => Dataset, ds => ds.user)
+  datasets: Dataset[];
 }
 
+@Entity()
+export class Dataset {
+
+  @PrimaryColumn({ type: 'text'})
+  id: string;
+
+  @ManyToOne(type => User, user => user.datasets)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+}

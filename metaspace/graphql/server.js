@@ -11,7 +11,7 @@ const bodyParser = require('body-parser'),
 
 const {createImgServerAsync} = require('./imageUpload.js'),
   {configureAuth} = require('./src/modules/auth'),
-  {User} = require('./src/modules/user/model'),
+  {User, Dataset} = require('./src/modules/user/model'),
   {logger, initDBConnection} = require('./utils'),
   {createConnection} = require('./src/utils'),
   {executableSchema} = require('./executableSchema'),
@@ -70,10 +70,11 @@ async function createHttpServerAsync(config) {
     context: ({req}) => {
       // if (!req.user) throw new UserError('You must be logged in');
       const user = req.user.user,
-        userRepo = connection.getRepository(User);
+        userRepo = connection.getRepository(User),
+        dsRepo = connection.getRepository(Dataset);
       return {
         user,
-        UserOperations: generateUserOperations(user, userRepo),
+        UserOperations: generateUserOperations(user, userRepo, dsRepo),
       };
     },
     playground: {

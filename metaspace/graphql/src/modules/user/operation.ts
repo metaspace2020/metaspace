@@ -5,7 +5,7 @@ import {UserError} from 'graphql-errors';
 
 function hasAccess(user: UserModel, userId?: string) {
   if (!user
-    || (user.role !== 'admin' && userId && user.id !== userId))
+    || (user.role !== 'admin' && (userId && user.id !== userId)))
     throw new UserError('Access denied');
 }
 
@@ -77,4 +77,14 @@ export const generateUserOperations = (user: UserModel,
     // TODO: delete credentials
     return true;
   },
+
+  addUserDataset: async (userId: string, dsId: string) => {
+    hasAccess(user, userId);
+
+    const ds = dsRepo.create({
+      id: dsId,
+      user: await userRepo.findOne(userId)
+    });
+    await dsRepo.insert(ds);
+  }
 });
