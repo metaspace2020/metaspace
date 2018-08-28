@@ -28,7 +28,7 @@ const router = new VueRouter({
     {
       path: '/datasets/:dataset_id/add-optical-image',
       name: 'add-optical-image',
-      component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "ImageAlignmentPage" */ './components/ImageAlignmentPage.vue')
+      component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "ImageAlignmentPage" */ './modules/ImageAlignment/ImageAlignmentPage.vue')
     },
     {
       path: '/upload',

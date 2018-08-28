@@ -80,9 +80,9 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component, Emit, Prop } from 'vue-property-decorator';
-  import { getRoleName as getGroupRoleName, UserGroupRole } from '../../api/group';
-  import { getRoleName as getProjectRoleName, ProjectRole } from '../../api/project';
-  import { encodeParams } from '../../modules/Filters';
+  import { getRoleName as getGroupRoleName, UserGroupRole } from '../api/group';
+  import { getRoleName as getProjectRoleName, ProjectRole } from '../api/project';
+  import { encodeParams } from '../modules/Filters';
 
   export interface Member {
     role: UserGroupRole | ProjectRole,

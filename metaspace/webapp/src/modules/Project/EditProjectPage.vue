@@ -68,7 +68,7 @@
   } from '../../api/project';
   import gql from 'graphql-tag';
   import EditProjectForm from './EditProjectForm.vue';
-  import MembersList from '../../components/MembersList/MembersList.vue';
+  import MembersList from '../../components/MembersList.vue';
   import { UserRole } from '../../api/user';
   import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';

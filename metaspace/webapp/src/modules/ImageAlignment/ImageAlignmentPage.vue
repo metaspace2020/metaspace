@@ -10,23 +10,23 @@
         <div id="hints" v-if="showHints.status === true">
           <ul class="hint-list">
             <li> <img class="mouse-hint-icon"
-                      src="../assets/translate-icon.png"
+                      src="../../assets/translate-icon.png"
                       title="Show/hide optical image"
             /> Click and drag the annotation image to move it </li>
             <li> <img class="mouse-hint-icon"
-                      src="../assets/zoom-icon.png"
+                      src="../../assets/zoom-icon.png"
                       title="Show/hide optical image"
             /> Use the mouse scroll wheel to zoom in and out</li>
             <li> <img class="mouse-hint-icon"
-                      src="../assets/rotate-icon.png"
+                      src="../../assets/rotate-icon.png"
                       title="Show/hide optical image"
             /> Right-click and drag to rotate the annotation image</li>
             <li> <img class="mouse-hint-icon"
-                      src="../assets/images-icon.png"
+                      src="../../assets/images-icon.png"
                       title="Show/hide optical image"
             /> Choose an annotation image with a recognisable spatial distribution</li>
             <li> <img class="mouse-hint-icon"
-                      src="../assets/corners-icon.jpg"
+                      src="../../assets/corners-icon.jpg"
                       title="Show/hide optical image"
             /> Double click the annotation image to enable fine tuning</li>
           </ul>
@@ -136,9 +136,9 @@
 <script>
 
  import ImageAligner from './ImageAligner.vue';
- import {annotationListQuery} from '../api/annotation';
- import {addOpticalImageQuery, deleteOpticalImageQuery, rawOpticalImageQuery} from '../api/dataset';
- import {renderMolFormula, prettifySign} from '../util';
+ import {annotationListQuery} from '../../api/annotation';
+ import {addOpticalImageQuery, deleteOpticalImageQuery, rawOpticalImageQuery} from '../../api/dataset';
+ import {renderMolFormula, prettifySign} from '../../util';
 
  import gql from 'graphql-tag';
 
