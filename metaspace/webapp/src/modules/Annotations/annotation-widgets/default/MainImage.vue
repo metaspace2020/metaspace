@@ -35,12 +35,12 @@
 
             <div class="annot-view__image-download">
                 <!-- see https://github.com/tsayen/dom-to-image/issues/155 -->
-                <img src="../../../assets/download-icon.png"
+                <img src="../../../../assets/download-icon.png"
                      width="32px"
                      title="Save visible region in PNG format"
                      @click="saveImage"
                      v-if="browserSupportsDomToImage"/>
-                <img src="../../../assets/download-icon.png"
+                <img src="../../../../assets/download-icon.png"
                      width="32px"
                      style="opacity: 0.3"
                      title="Your browser is not supported"
@@ -58,8 +58,8 @@ import { Component, Prop } from 'vue-property-decorator';
 import * as domtoimage from 'dom-to-image';
 import { saveAs } from 'file-saver';
 
-import Colorbar from '../../Colorbar.vue';
-import ImageLoader from '../../ImageLoader.vue';
+import Colorbar from './Colorbar.vue';
+import ImageLoader from '../../../../components/ImageLoader.vue';
 
 @Component({
     name: 'main-image',

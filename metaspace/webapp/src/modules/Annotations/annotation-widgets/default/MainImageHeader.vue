@@ -14,7 +14,7 @@
 
     <span>
         <img class="reset-image-icon"
-            src="../../../assets/reset-image-icon.png"
+            src="../../../../assets/reset-image-icon.png"
             title="Reset image zoom and offsets"
             @click="resetViewport"/>
     </span>
@@ -22,7 +22,7 @@
     <span v-if="imageLoaderSettings.opticalImageUrl">
         <img class="show-optical-image-icon"
             :class="imageLoaderSettings.showOpticalImage ? '' : 'png-icon-disabled'"
-            src="../../../assets/microscope-icon.png"
+            src="../../../../assets/microscope-icon.png"
             title="Show/hide optical image"
             @click="toggleOpticalImage"/>
     </span>
@@ -33,7 +33,7 @@
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 
-import IonImageSettings from '../../IonImageSettings.vue';
+import IonImageSettings from './IonImageSettings.vue';
 
 @Component({
     name: 'main-image',

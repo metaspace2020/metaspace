@@ -22,10 +22,10 @@
 </template>
 
 <script>
-import { renderMolFormula } from '../../../util';
+import { renderMolFormula } from '../../../../util';
 
-import ImageLoader from '../../ImageLoader.vue';
-import { allAdductsQuery } from '../../../api/annotation';
+import ImageLoader from '../../../../components/ImageLoader.vue';
+import { allAdductsQuery } from '../../../../api/annotation';
 
 export default {
     props: ['annotation', 'database', 'imageLoaderSettings'],

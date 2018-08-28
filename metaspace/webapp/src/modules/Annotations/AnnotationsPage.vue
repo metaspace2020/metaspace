@@ -26,7 +26,7 @@
 <script>
  import AnnotationTable from './AnnotationTable.vue';
  import AnnotationView from './AnnotationView.vue';
- import {FilterPanel} from '../modules/Filters';
+ import {FilterPanel} from '../Filters/index';
 
  export default {
    name: 'annotations-page',

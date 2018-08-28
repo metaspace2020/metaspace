@@ -12,7 +12,7 @@ import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 import { schemeCategory10 as LegendColors } from 'd3';
 
-import XicPlot from '../../XicPlot.vue';
+import XicPlot from './XicPlot.vue';
 
 @Component({
     name: 'main-image',

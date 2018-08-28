@@ -46,7 +46,7 @@
             <span class="cell-span">
               {{ props.row.dataset.institution }}
             </span>
-            <img src="../assets/filter-icon.png"
+            <img src="../../assets/filter-icon.png"
                  @click="filterInstitution(props.row)"
                  title="Limit results to this lab"/>
           </div>
@@ -61,7 +61,7 @@
               <span class="cell-span">
                   {{ formatDatasetName(props.row) }}
               </span>
-              <img src="../assets/filter-icon.png"
+              <img src="../../assets/filter-icon.png"
                    @click="filterDataset(props.row)"
                    title="Limit results to this dataset"/>
           </div>
@@ -85,7 +85,7 @@
             <div slot="reference" class="cell-wrapper">
                 <span class="sf cell-span"
                       v-html="renderMolFormula(props.row.sumFormula, props.row.adduct, props.row.dataset.polarity)"></span>
-                <img src="../assets/filter-icon.png"
+                <img src="../../assets/filter-icon.png"
                      v-if="!filter.compoundName"
                      @click="filterMolFormula(props.row)"
                      title="Limit results to this molecular formula"/>
@@ -103,7 +103,7 @@
               <span class="cell-span">
                   {{ formatMZ(props.row) }}
               </span>
-              <img src="../assets/filter-icon.png"
+              <img src="../../assets/filter-icon.png"
                    @click="filterMZ(props.row)"
                    title="Limit results to this m/z (with 5 ppm tolerance)"/>
           </div>
@@ -171,12 +171,12 @@
 </template>
 
 <script>
- import { renderMolFormula, csvExportHeader } from '../util';
+ import { renderMolFormula, csvExportHeader } from '../../util';
  import ProgressButton from './ProgressButton.vue';
  import {
    annotationListQuery,
    tableExportQuery
- } from '../api/annotation';
+ } from '../../api/annotation';
 
  import Vue from 'vue';
  import FileSaver from 'file-saver';

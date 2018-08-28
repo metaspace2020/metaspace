@@ -42,9 +42,9 @@ import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 import { schemeCategory10 as LegendColors } from 'd3';
 
-import IsotopePatternPlot from '../../IsotopePatternPlot.vue';
-import PlotLegend from '../../PlotLegend.vue';
-import XicPlot from '../../XicPlot.vue';
+import IsotopePatternPlot from '../IsotopePatternPlot.vue';
+import PlotLegend from '../PlotLegend.vue';
+import XicPlot from './XicPlot.vue';
 
 @Component({
     name: 'diagnostics',

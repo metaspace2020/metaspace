@@ -12,13 +12,13 @@
               <router-link slot="reference"
                            target="_blank"
                            :to="permalinkHref">
-                <img src="../assets/share-icon.png" class="av-icon">
+                <img src="../../assets/share-icon.png" class="av-icon">
               </router-link>
               <div>Link to this annotation (opens in a new tab)</div>
             </el-popover>
 
             <el-popover v-if="!annotation.dataset.isPublic" trigger="hover" placement="bottom">
-              <img slot="reference" src="../assets/padlock-icon.svg" class="av-icon">
+              <img slot="reference" src="../../assets/padlock-icon.svg" class="av-icon">
               <div>This dataset's annotation results are not publicly visible</div>
             </el-popover>
           </div>

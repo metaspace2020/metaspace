@@ -43,9 +43,9 @@ import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
 import { schemeCategory10 as LegendColors } from 'd3';
 
-import ImageLoader from '../../ImageLoader.vue';
-import PlotLegend from '../../PlotLegend.vue';
-import IsotopePatternPlot from '../../IsotopePatternPlot.vue';
+import ImageLoader from '../../../../components/ImageLoader.vue';
+import PlotLegend from '../PlotLegend.vue';
+import IsotopePatternPlot from '../IsotopePatternPlot.vue';
 
 @Component({
     name: 'diagnostics',

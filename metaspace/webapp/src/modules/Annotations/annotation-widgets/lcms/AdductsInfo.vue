@@ -16,10 +16,10 @@
 
 <script>
  import { schemeCategory10 as graphColors } from 'd3';
- import { renderMolFormula } from '../../../util';
- import XicPlot from '../../XicPlot.vue';
- import PlotLegend from '../../PlotLegend.vue';
- import { allAdductsQuery } from '../../../api/annotation';
+ import { renderMolFormula } from '../../../../util';
+ import XicPlot from './XicPlot.vue';
+ import PlotLegend from '../PlotLegend.vue';
+ import { allAdductsQuery } from '../../../../api/annotation';
 
  export default {
    props: ['annotation', 'database', 'acquisitionGeometry'],

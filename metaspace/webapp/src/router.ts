@@ -10,7 +10,7 @@ Vue.use(VueRouter);
 const router = new VueRouter({
   routes: [
     { path: '/', redirect: '/about' },
-    { path: '/annotations', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "AnnotationsPage" */ './components/AnnotationsPage.vue') },
+    { path: '/annotations', component: async () => await import(/* webpackPrefetch: true, webpackChunkName: "AnnotationsPage" */ './modules/Annotations/AnnotationsPage.vue') },
     {
       path: '/datasets',
       component: DatasetsPage,

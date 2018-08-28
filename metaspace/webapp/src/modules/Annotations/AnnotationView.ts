@@ -1,8 +1,8 @@
- import { renderMolFormula } from '../util';
- import DatasetInfo from './DatasetInfo.vue';
- import { annotationQuery } from '../api/annotation';
- import { msAcqGeometryQuery, opticalImageQuery } from '../api/dataset';
- import { encodeParams } from '../modules/Filters';
+ import { renderMolFormula } from '../../util';
+ import DatasetInfo from '../../components/DatasetInfo.vue';
+ import { annotationQuery } from '../../api/annotation';
+ import { msAcqGeometryQuery, opticalImageQuery } from '../../api/dataset';
+ import { encodeParams } from '../Filters/index';
  import annotationWidgets from './annotation-widgets/index'
 
  import Vue from 'vue';
