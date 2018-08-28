@@ -2,21 +2,21 @@
   "env": {
     "test": {
       "presets": [
-        ["env", {"modules": "commonjs"}]
+        ["@babel/preset-env", {"modules": "commonjs"}]
       ]
     }
   },
   "presets": [
-    ["env", {"modules": false}]
+    ["@babel/preset-env", {"modules": false}]
   ],
   "plugins": [
-    ["component", [{
+    ["babel-plugin-component", {
       "libraryName": "element-ui",
       "styleLibraryName": "theme-default"
-    }]],
+    }],
 
-    "transform-object-rest-spread",
-    "transform-runtime",
-    "syntax-dynamic-import"
+    "@babel/plugin-proposal-object-rest-spread",
+    "@babel/plugin-transform-runtime",
+    "@babel/plugin-syntax-dynamic-import"
   ]
 }
