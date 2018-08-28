@@ -1,15 +1,22 @@
 {
+  "env": {
+    "test": {
+      "presets": [
+        ["@babel/preset-env", {"modules": "commonjs"}]
+      ]
+    }
+  },
   "presets": [
-    ["env"]
+    ["@babel/preset-env", {"modules": false}]
   ],
   "plugins": [
-    ["component", [{
+    ["babel-plugin-component", {
       "libraryName": "element-ui",
       "styleLibraryName": "theme-default"
-    }]],
+    }],
 
-    "transform-object-rest-spread",
-    "transform-runtime",
-    "syntax-dynamic-import"
+    "@babel/plugin-proposal-object-rest-spread",
+    "@babel/plugin-transform-runtime",
+    "@babel/plugin-syntax-dynamic-import"
   ]
 }

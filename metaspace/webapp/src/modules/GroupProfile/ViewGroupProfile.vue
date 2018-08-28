@@ -67,7 +67,7 @@
   import Vue from 'vue';
   import { Component } from 'vue-property-decorator';
   import { DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset';
-  import DatasetList from '../../components/DatasetList.vue';
+  import DatasetList from '../Datasets/list/DatasetList.vue';
   import {
     acceptGroupInvitationMutation,
     importDatasetsIntoGroupMutation,
@@ -76,7 +76,7 @@
   } from '../../api/group';
   import gql from 'graphql-tag';
   import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
-  import { encodeParams } from '../../url';
+  import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
 
   type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';

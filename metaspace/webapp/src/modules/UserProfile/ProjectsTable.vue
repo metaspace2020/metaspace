@@ -65,7 +65,7 @@
   import { acceptProjectInvitationMutation, getRoleName, leaveProjectMutation, ProjectRole } from '../../api/project';
   import reportError from '../../lib/reportError';
   import ConfirmAsync from '../../components/ConfirmAsync';
-  import { encodeParams } from '../../url';
+  import { encodeParams } from '../Filters';
 
   interface ProjectRow {
     id: string;

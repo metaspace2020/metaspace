@@ -1,6 +1,6 @@
 import apolloClient from '../graphqlClient';
 import {fetchOptionListsQuery} from '../api/metadata';
-import {decodeParams} from '../url';
+import {decodeParams} from '../modules/Filters';
 
 export default {
 

@@ -8,10 +8,10 @@
     "dev": "cross-env NODE_ENV=development node --max_old_space_size=4096 server.js",
     "build": "cross-env NODE_ENV=production webpack --progress --hide-modules",
     "build-ci": "cross-env NODE_ENV=production webpack --hide-modules",
-    "test": "jest",
+    "test": "cross-env NODE_ENV=test jest",
     "test-e2e": "testcafe firefox:headless tests/e2e/annotations.js --app 'yarn run dev' --no-color --app-init-delay=20000 --quarantine-mode --assertion-timeout=20000",
     "cucumber-test": "cucumber-js --compiler ts:ts-node/register tests/e2e/ --fail-fast",
-    "coverage": "jest --coverage",
+    "coverage": "cross-env NODE_ENV=test jest --coverage",
     "deref-schema": "node ./deref_schema.js src/assets",
     "generate-local-graphql-schema": "NODE_PATH=../graphql/node_modules node ../graphql/bin/generate-json-graphql-schema.js tests/utils/graphql-schema.json",
     "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint http://metaspace2020.eu/graphql"
@@ -30,7 +30,7 @@
     "connect-redis": "^3.2.0",
     "cookie-parser": "^1.4.3",
     "css-element-queries": "^0.4.0",
-    "d3": "^4.8.0",
+    "d3": "4.10.1",
     "d3-color": "^1.0.3",
     "d3-scale": "^1.0.5",
     "d3-svg-legend": "^2.24.0",
@@ -87,6 +87,12 @@
     "zen-observable-ts": "^0.8.9"
   },
   "devDependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "@babel/runtime": "^7.0.0",
     "@types/cucumber": "2.0.4",
     "@types/d3": "4.10.1",
     "@types/file-saver": "0.0.1",
@@ -100,15 +106,9 @@
     "apollo": "^1.7.0",
     "apollo-link-schema": "^1.1.0",
     "autoprefixer": "^6.7.2",
-    "babel": "6.23.0",
-    "babel-core": "6.26.3",
-    "babel-loader": "7.1.4",
+    "babel-jest": "^23.4.2",
+    "babel-loader": "^8.0.0",
     "babel-plugin-component": "^1.1.1",
-    "babel-plugin-syntax-dynamic-import": "6.18.0",
-    "babel-plugin-transform-object-rest-spread": "~6.26.0",
-    "babel-plugin-transform-runtime": "~6.23.0",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-es2015": "~6.24.1",
     "cross-env": "^3.0.0",
     "css-loader": "^0.28.11",
     "cucumber": "^2.0.0",
@@ -138,10 +138,13 @@
     "vue-template-compiler": "~2.5.16",
     "webpack": "^4.12.1",
     "webpack-bundle-analyzer": "^2.13.1",
-    "webpack-cli": "^2.1.4",
+    "webpack-cli": "^3.1.0",
     "webpack-dev-middleware": "^3.1.3",
     "webpack-dev-server": "^3.1.4",
     "webpack-hot-middleware": "^2.22.2"
+  },
+  "resolutions": {
+    "babel-core": "7.0.0-bridge.0"
   },
   "jest": {
     "transform": {
@@ -167,6 +170,14 @@
     ],
     "snapshotSerializers": [
       "<rootDir>/node_modules/jest-serializer-vue"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      "defaults"
+    ],
+    "development": [
+      "last 1 Chrome version"
     ]
   }
 }
