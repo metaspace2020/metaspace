@@ -22,6 +22,7 @@ const asyncPages = {
   EditGroupProfile: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/GroupProfile/EditGroupProfile.vue'),
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ViewProjectPage.vue'),
   EditProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/EditProjectPage.vue'),
+  ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ProjectsListPage.vue'),
 };
 
 const router = new VueRouter({
@@ -49,10 +50,11 @@ const router = new VueRouter({
     { path: '/account/reset-password', component: ResetPasswordPage },
 
     { path: '/group/create', component: asyncPages.CreateGroupPage },
-    { path: '/group/:groupId', component: asyncPages.ViewGroupProfile },
-    { path: '/group/:groupId/edit', component: asyncPages.EditGroupProfile },
-    { path: '/project/:projectId', component: asyncPages.ViewProjectPage },
-    { path: '/project/:projectId/edit', component: asyncPages.EditProjectPage },
+    { path: '/group/:groupId', name: 'group', component: asyncPages.ViewGroupProfile },
+    { path: '/group/:groupId/edit', name: 'edit-group', component: asyncPages.EditGroupProfile },
+    { path: '/project/:projectId', name: 'project', component: asyncPages.ViewProjectPage },
+    { path: '/project/:projectId/edit', name: 'edit-project', component: asyncPages.EditProjectPage },
+    { path: '/projects', component: asyncPages.ProjectsListPage },
   ]
 });
 

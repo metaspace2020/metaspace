@@ -58,7 +58,7 @@ function formatFDR (fdr: number) {
    incorporate any extra fields that are needed to populate the options.
 */
 
-export type Level = 'annotation' | 'dataset' | 'upload';
+export type Level = 'annotation' | 'dataset' | 'upload' | 'projects';
 
 export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName' | 'adduct' | 'mz' | 'fdrLevel' | 'institution'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
@@ -306,8 +306,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SearchBox,
     name: 'Simple query',
     description: 'Search anything',
-    levels: ['annotation', 'dataset'],
-    defaultInLevels: ['annotation', 'dataset'],
+    levels: ['annotation', 'dataset', 'projects'],
+    defaultInLevels: ['annotation', 'dataset', 'projects'],
     initialValue: '',
     removable: false
   },

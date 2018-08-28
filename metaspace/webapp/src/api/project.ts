@@ -128,3 +128,62 @@ export interface EditProjectQueryUser {
   email: string | null;
 }
 
+const projectsListItemFragment =
+  gql`fragment ProjectsListItem on Project {
+      id
+      name
+      isPublic
+      currentUserRole
+      numMembers
+      numDatasets
+      createdDT
+      latestUploadDT
+    }`;
+
+export const projectsListQuery =
+  gql`query ProjectsListQuery($query: String!, $offset: Int = 0, $limit: Int = 10) {
+    projects: allProjects(query: $query, offset: $offset, limit: $limit) {
+      ...ProjectsListItem
+    }
+  }
+  ${projectsListItemFragment}`;
+export const myProjectsListQuery =
+  gql`query MyProjectsListQuery {
+    myProjects: currentUser {
+      id
+      projects {
+        project {
+          ...ProjectsListItem
+        }
+      }
+    }
+  }
+  ${projectsListItemFragment}`;
+export const projectsCountQuery =
+  gql`query ProjectsCountQuery($query: String!) {
+    projectsCount(query: $query)
+  }`;
+
+export interface ProjectsListQuery {
+  projects: ProjectsListItem[];
+}
+export interface MyProjectsListQuery {
+  myProjects: {
+    projects: MyProjectsListItem[] | null;
+  } | null;
+}
+
+export interface ProjectsListItem {
+  id: string;
+  name: string;
+  isPublic: boolean;
+  currentUserRole: ProjectRole | null;
+  numMembers: number;
+  numDatasets: number;
+  createdDT: string;
+  latestUploadDT: string | null;
+}
+
+export interface MyProjectsListItem {
+  project: ProjectsListItem
+}

@@ -179,7 +179,10 @@
     }
 
     handleManageProject() {
-      this.$router.push(`/project/${this.projectId}/edit`);
+      this.$router.push({
+        name: 'edit-project',
+        params: {projectId: this.projectId},
+      });
     }
 
     async joinProject() {
