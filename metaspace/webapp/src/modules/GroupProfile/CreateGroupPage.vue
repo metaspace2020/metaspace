@@ -79,7 +79,10 @@
             variables: { groupDetails: this.model },
           });
           this.$message({ message: `${this.model.name} was created`, type: 'success' });
-          this.$router.push(`/group/${data!.createGroup.id}/edit`);
+          this.$router.push({
+            name: 'edit-group',
+            params: {groupId: data!.createGroup.id}
+          });
         } catch (err) {
           reportError(err);
         }

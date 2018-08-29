@@ -37,7 +37,8 @@ const PATH_TO_LEVEL: Record<string, Level> = {
   '/annotations': 'annotation',
   '/datasets': 'dataset',
   '/datasets/summary': 'dataset',
-  '/upload': 'upload'
+  '/upload': 'upload',
+  '/projects': 'projects',
 };
 
 export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {

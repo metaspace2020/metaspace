@@ -20,3 +20,6 @@ registerMockComponent('el-messagebox');
 
 // Mock error reporting
 jest.mock('../../src/lib/reportError', () => jest.fn(console.error));
+
+// Prevent JWT requests
+jest.mock('../../src/graphqlClient', () => require('./mockGraphqlClient'));

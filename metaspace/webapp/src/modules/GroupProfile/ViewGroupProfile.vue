@@ -186,7 +186,10 @@
     }
 
     handleManageGroup() {
-      this.$router.push(`/group/${this.groupId}/edit`);
+      this.$router.push({
+        name: 'edit-group',
+        params: {groupId: this.groupId}
+      });
     }
 
     async handleAcceptTransferDatasets(selectedDatasetIds: string[]) {

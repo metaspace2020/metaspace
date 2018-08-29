@@ -17,6 +17,10 @@
         Annotations
       </router-link>
 
+      <router-link to="/projects" class="header-item page-link">
+        Projects
+      </router-link>
+
       <router-link to="/about" class="header-item page-link">
         About
       </router-link>
@@ -60,7 +64,7 @@
     <div v-else class="header-items">
       <router-link
         v-if="currentUser && currentUser.primaryGroup"
-        :to="`/group/${currentUser.primaryGroup.group.id}`"
+        :to="primaryGroupHref"
         class="header-item page-link">
         <div class="limit-width">
           {{currentUser.primaryGroup.group.shortName}}
@@ -110,6 +114,13 @@
 
      annotationsHref() {
        return this.href('/annotations');
+     },
+
+     primaryGroupHref() {
+       return {
+         name: 'group',
+         params: {groupId: this.currentUser.primaryGroup.group.id}
+       }
      },
 
      userNameOrEmail() {
@@ -251,7 +262,7 @@
    padding-left: 15px;
  }
 
- @media (max-width: 1000px) {
+ @media (max-width: 1279px) {
    .header-item {
      padding: 0px 10px;
      font-size: 14px;
@@ -318,7 +329,7 @@
    line-height: 1.2em;
    max-height: 2.4em;
  }
- @media (max-width: 1000px) {
+ @media (max-width: 1279px) {
    .limit-width {
      max-width: 150px;
    }
