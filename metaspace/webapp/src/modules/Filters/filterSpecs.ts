@@ -1,7 +1,7 @@
 import { renderMolFormula } from '../../util';
 import InputFilter from './filter-components/InputFilter.vue';
 import SingleSelectFilter from './filter-components/SingleSelectFilter.vue';
-import DatasetNameFilter from './filter-components/DatasetNameFilter.vue';
+import SearchableFilter from './filter-components/SearchableFilter.vue';
 import MzFilter from './filter-components/MzFilter.vue';
 import SearchBox from './filter-components/SearchBox.vue';
 import {metadataTypes, defaultMetadataType} from '../../assets/metadataRegistry';
@@ -76,6 +76,7 @@ export interface FilterSpecification {
   options?: string | number[] | string[] | ((lists: MetadataLists) => any[]);
   removable?: boolean;
   filterable?: boolean;
+  multiple?: boolean;
   hidden?: boolean | (() => boolean);
   encoding?: 'list' | 'json';
   optionFormatter?(value: any): string;
@@ -98,12 +99,12 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   },
 
   datasetIds: {
-    type: DatasetNameFilter,
+    type: SearchableFilter,
     name: 'Dataset',
     description: 'Select dataset',
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
-
+    multiple: true,
     encoding: 'list'
   },
 
@@ -172,52 +173,27 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   },
 
   group: {
-    type: SingleSelectFilter,
+    type: SearchableFilter,
     name: 'Group',
     description: 'Select group',
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
-    encoding: 'json',
-    options: lists => lists.groups.map(x => {
-      const {id, name} = x;
-      return {id, name};
-    }),
-    optionFormatter: ({name}) => name,
-    valueFormatter: ({name}) => name,
-    valueKey: 'id',
   },
 
   project: {
-    type: SingleSelectFilter,
+    type: SearchableFilter,
     name: 'Project',
     description: 'Select project',
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
-    encoding: 'json',
-    options: lists => lists.projects.map(x => {
-      const {id, name} = x;
-      return {id, name};
-    }),
-    optionFormatter: ({name}) => name,
-    valueFormatter: ({name}) => name,
-    valueKey: 'id',
   },
 
   submitter: {
-    type: SingleSelectFilter,
+    type: SearchableFilter,
     name: 'Submitter',
     description: 'Select submitter',
     levels: ['annotation', 'dataset'],
     initialValue: undefined,
-
-    encoding: 'json',
-    options: lists => lists.submitterNames.map(x => {
-      const {id, name} = x;
-      return {id, name};
-    }),
-    optionFormatter: ({name}) => name,
-    valueFormatter: ({name}) => name,
-    valueKey: 'id',
   },
 
   polarity: {
