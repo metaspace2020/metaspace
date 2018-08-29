@@ -3,7 +3,6 @@ import ElementUI from 'element-ui';
 import Vue from 'vue';
 import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
 import router from '../../router';
-// jest.mock('../../components/DatasetItem.vue', () => require('../../../tests/utils/mockComponent')('dataset-item'));
 
 describe('TransferDatasetsDialog', () => {
   const mockDatasets = [

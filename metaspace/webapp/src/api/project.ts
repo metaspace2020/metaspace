@@ -142,11 +142,12 @@ const projectsListItemFragment =
 
 export const projectsListQuery =
   gql`query ProjectsListQuery($query: String!, $offset: Int = 0, $limit: Int = 10) {
-    projects: allProjects(query: $query, offset: $offset, limit: $limit) {
+    allProjects(query: $query, offset: $offset, limit: $limit) {
       ...ProjectsListItem
     }
   }
   ${projectsListItemFragment}`;
+
 export const myProjectsListQuery =
   gql`query MyProjectsListQuery {
     myProjects: currentUser {
@@ -159,21 +160,24 @@ export const myProjectsListQuery =
     }
   }
   ${projectsListItemFragment}`;
+
 export const projectsCountQuery =
   gql`query ProjectsCountQuery($query: String!) {
     projectsCount(query: $query)
   }`;
 
 export interface ProjectsListQuery {
-  projects: ProjectsListItem[];
+  allProjects: ProjectsListProject[];
 }
+
 export interface MyProjectsListQuery {
   myProjects: {
+    id: String;
     projects: MyProjectsListItem[] | null;
   } | null;
 }
 
-export interface ProjectsListItem {
+export interface ProjectsListProject {
   id: string;
   name: string;
   isPublic: boolean;
@@ -185,5 +189,5 @@ export interface ProjectsListItem {
 }
 
 export interface MyProjectsListItem {
-  project: ProjectsListItem
+  project: ProjectsListProject
 }
