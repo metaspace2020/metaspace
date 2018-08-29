@@ -11,6 +11,7 @@
     </el-select>
 
     <component v-for="f in visibleFilters" :key="f.filterKey"
+               :data-test-key="f.filterKey"
                :is="f.type"
                :filterKey="f.filterKey"
                :name="f.name"

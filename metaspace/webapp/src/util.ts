@@ -50,8 +50,9 @@ function pathFromUUID(uuid: string): string {
     return fuConfig.storage + '/' + uuid + '/';
 }
 
-function mzFilterPrecision(value: number): string {
-  const splitVal = (value + '').split('.');
+function mzFilterPrecision(value: number | string): string {
+  // Using parseFloat to remove any extra decimal places that won't actually count toward the precision
+  const splitVal = String(parseFloat(String(value))).split('.');
   if (splitVal.length == 1) {
     return '1';
   } else {

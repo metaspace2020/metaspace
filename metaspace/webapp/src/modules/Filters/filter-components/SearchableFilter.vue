@@ -2,7 +2,7 @@
   <tag-filter :name="name" @destroy="destroy" :width="multiple ? 900 : 300">
     <el-select slot="edit"
                ref="select"
-               placeholder="Start typing dataset name"
+               placeholder="Start typing name"
                remote filterable clearable
                :remote-method="fetchOptions"
                :loading="loading"
@@ -11,7 +11,7 @@
                :multiple="multiple"
                :multiple-limit=10
                :value="value"
-               @input="onInput">
+               @change="onInput">
       <el-option v-for="(item, idx) in joinedOptions"
                  :label="item.label"
                  :value="item.value"

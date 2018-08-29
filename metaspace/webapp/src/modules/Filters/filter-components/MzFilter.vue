@@ -27,7 +27,7 @@
    },
    props: {
      name: String,
-     value: Number,
+     value: String,
      removable: {type: Boolean, default: true}
    },
    computed: {
@@ -36,7 +36,7 @@
      }
    },
    methods: {
-     onChange(val: number): void {
+     onChange(val: string): void {
        this.$emit('input', val);
        this.$emit('change', val);
      },
