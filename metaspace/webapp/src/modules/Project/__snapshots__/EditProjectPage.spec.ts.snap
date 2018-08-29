@@ -109,7 +109,7 @@ exports[`EditProjectPage should match snapshot 1`] = `
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                     <div class="cell">
-                      <a href="#/datasets?prj=%7B%22name%22%3A%22Adduct%20Assessment%20Alliance%22%7D&amp;subm=%7B%22id%22%3A%223%22,%22name%22%3A%22me%22%7D" class="">123</a>
+                      <a href="#/datasets?prj=2&amp;subm=3" class="">123</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -139,7 +139,7 @@ exports[`EditProjectPage should match snapshot 1`] = `
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                     <div class="cell">
-                      <a href="#/datasets?prj=%7B%22name%22%3A%22Adduct%20Assessment%20Alliance%22%7D&amp;subm=%7B%22id%22%3A%224%22,%22name%22%3A%22Person%20who%20asked%20to%20join%22%7D" class="">0</a>
+                      <a href="#/datasets?prj=2&amp;subm=4" class="">0</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -177,7 +177,7 @@ exports[`EditProjectPage should match snapshot 1`] = `
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                     <div class="cell">
-                      <a href="#/datasets?prj=%7B%22name%22%3A%22Adduct%20Assessment%20Alliance%22%7D&amp;subm=%7B%22id%22%3A%225%22,%22name%22%3A%22Invitee%22%7D" class="">0</a>
+                      <a href="#/datasets?prj=2&amp;subm=5" class="">0</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -211,7 +211,7 @@ exports[`EditProjectPage should match snapshot 1`] = `
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                     <div class="cell">
-                      <a href="#/datasets?prj=%7B%22name%22%3A%22Adduct%20Assessment%20Alliance%22%7D&amp;subm=%7B%22id%22%3A%226%22,%22name%22%3A%22Project%20member%22%7D" class="">1</a>
+                      <a href="#/datasets?prj=2&amp;subm=6" class="">1</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -250,7 +250,7 @@ exports[`EditProjectPage should match snapshot 1`] = `
       <div style="margin-bottom: 2em;">
         <h2>Datasets</h2>
         <p>
-          <a href="#/datasets?prj=%7B%22name%22%3A%22Adduct%20Assessment%20Alliance%22%7D" class="">See all datasets</a>
+          <a href="#/datasets?prj=2" class="">See all datasets</a>
         </p>
       </div>
       <div>

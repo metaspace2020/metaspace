@@ -53,7 +53,7 @@
     get datasetsLink() {
       return {
         path: '/datasets',
-        query: encodeParams({project: {name: this.project.name, id: this.project.id}})
+        query: encodeParams({project: this.project.id })
       }
     }
 

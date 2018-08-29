@@ -127,7 +127,7 @@
     }
     get datasetsListFilter() {
       return {
-        group: {id: this.groupId, name: this.groupName}
+        group: this.groupId,
       };
     }
 

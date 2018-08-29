@@ -47,7 +47,7 @@ exports[`ViewGroupProfile should match snapshot (invited) 1`] = `
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
       </div>
       <div class="dataset-list-footer">
-        <a href="#/datasets?grp=%7B%22name%22%3A%22group%20name%22%7D" class="">See all datasets</a>
+        <a href="#/datasets?grp=groupId" class="">See all datasets</a>
       </div>
     </div>
   </div>
@@ -82,7 +82,7 @@ exports[`ViewGroupProfile should match snapshot (non-member) 1`] = `
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
       </div>
       <div class="dataset-list-footer">
-        <a href="#/datasets?grp=%7B%22name%22%3A%22group%20name%22%7D" class="">See all datasets</a>
+        <a href="#/datasets?grp=groupId" class="">See all datasets</a>
       </div>
     </div>
   </div>

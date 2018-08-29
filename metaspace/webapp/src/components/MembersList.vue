@@ -123,7 +123,7 @@
         path: '/datasets',
         query: encodeParams({
           ...this.filter,
-          submitter: {id: user.id, name: user.name},
+          submitter: user.id,
         })
       }
     }

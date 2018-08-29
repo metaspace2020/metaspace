@@ -37,7 +37,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
           <div class="info-line project-name">
             <a href="#/project/project%203" class="">project three</a>
           </div>
-          <div class="info-line"><span><a href="#/datasets?prj=%7B%22name%22%3A%22project%20three%22,%22id%22%3A%22project%203%22%7D" class="">5 Datasets</a>,
+          <div class="info-line"><span><a href="#/datasets?prj=project%203" class="">5 Datasets</a>,
       </span> 10 Members
           </div>
           <div class="info-line"><span>
@@ -52,7 +52,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
           <div class="info-line project-name">
             <a href="#/project/project%202" class="">project two</a>
           </div>
-          <div class="info-line"><span><a href="#/datasets?prj=%7B%22name%22%3A%22project%20two%22,%22id%22%3A%22project%202%22%7D" class="">20 Datasets</a>,
+          <div class="info-line"><span><a href="#/datasets?prj=project%202" class="">20 Datasets</a>,
       </span> 20 Members
           </div>
           <div class="info-line"><span>

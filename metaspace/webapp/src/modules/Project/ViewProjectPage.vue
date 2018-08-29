@@ -141,7 +141,7 @@
     get datasetsListLink() {
       return {
         path: '/datasets',
-        query: this.project && encodeParams({ project: {id: this.projectId, name: this.project.name} })
+        query: this.project && encodeParams({ project: this.projectId })
       }
     }
 

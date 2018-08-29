@@ -27,6 +27,8 @@ describe('ViewProjectPage', () => {
     DatasetItem: true
   };
 
+  router.replace({ name: 'project', params: { projectId: mockData.project.id } });
+
   it('should match snapshot (non-member)', () => {
     const wrapper = mount(ViewProjectPage, { router, stubs });
     wrapper.setData({

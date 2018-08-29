@@ -124,7 +124,7 @@
     }
     get datasetsListFilter() {
       return {
-        project: {id: this.projectId, name: this.projectName}
+        project: this.projectId,
       };
     }
 
