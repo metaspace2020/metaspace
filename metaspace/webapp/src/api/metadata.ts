@@ -90,9 +90,11 @@ export const metadataExportQuery = gql`
       name
       institution
       submitter {
+        id
         name
       }
       principalInvestigator {
+        id
         name
       }
       organism

@@ -9,18 +9,24 @@
 </template>
 
 <script>
- import {metadataSchemas} from '../assets/metadataRegistry';
+  import { defaultMetadataType, metadataSchemas } from '../assets/metadataRegistry';
+  import {get} from 'lodash-es';
 
  export default {
    name: 'dataset-info',
    props: ['metadata', 'expandedKeys'],
    data() {
      return {
-       schema: metadataSchemas[this.$store.getters.filter.metadataType],
        defaultExpandedKeys: this.expandedKeys
      }
    },
    computed: {
+     schema() {
+       const metadataType = get(this.metadata, 'Metadata_Type')
+         || this.$store.getters.filter.metadataType
+         || defaultMetadataType;
+       return metadataSchemas[metadataType];
+     },
      treeData() {
        return this.objToTreeNode(null, this.metadata, this.schema);
      }
