@@ -12,30 +12,32 @@ exports[`ViewProjectPage should match snapshot (invited) 1`] = `
         <!---->
         <!---->
       </div>
-      <div role="alert" class="el-alert el-alert--info el-alert-fade-enter el-alert-fade-enter-active">
-        <i class="el-alert__icon el-icon-info is-big"></i>
-        <div class="el-alert__content">
-          <!---->
-          <div style="padding: 0px 0px 20px 20px;">
-            <p>
-              You have been invited to join project name.
-            </p>
-            <div>
-              <button type="button" class="el-button el-button--danger">
-                <!---->
-                <!----><span>
+      <mock-transition name="el-alert-fade">
+        <div role="alert" class="el-alert el-alert--info">
+          <i class="el-alert__icon el-icon-info is-big"></i>
+          <div class="el-alert__content">
+            <!---->
+            <div style="padding: 0px 0px 20px 20px;">
+              <p>
+                You have been invited to join project name.
+              </p>
+              <div>
+                <button type="button" class="el-button el-button--danger">
+                  <!---->
+                  <!----><span>
               Decline invitation
             </span></button>
-              <button type="button" class="el-button el-button--primary">
-                <!---->
-                <!----><span>
+                <button type="button" class="el-button el-button--primary">
+                  <!---->
+                  <!----><span>
               Join project
             </span></button>
+              </div>
             </div>
+            <i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
           </div>
-          <i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
         </div>
-      </div>
+      </mock-transition>
     </div>
     <div>
       <h2>Datasets</h2>

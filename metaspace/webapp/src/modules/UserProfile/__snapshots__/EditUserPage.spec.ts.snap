@@ -54,7 +54,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div>
-                  <!---->
+                  <mock-transition name="el-zoom-in-top"></mock-transition>
                 </div>
               </div>
             </div>
@@ -71,7 +71,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div>
-                  <!---->
+                  <mock-transition name="el-zoom-in-top"></mock-transition>
                 </div>
               </div>
             </div>
@@ -436,14 +436,16 @@ exports[`EditUserPage should match snapshot 1`] = `
         Delete account
       </span></button>
     </div>
-    <div class="el-loading-mask" style="display: none;">
-      <div class="el-loading-spinner">
-        <svg viewBox="25 25 50 50" class="circular">
-          <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
-        </svg>
-        <!---->
+    <mock-transition name="el-loading-fade">
+      <div class="el-loading-mask" style="display: none;">
+        <div class="el-loading-spinner">
+          <svg viewBox="25 25 50 50" class="circular">
+            <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
+          </svg>
+          <!---->
+        </div>
       </div>
-    </div>
+    </mock-transition>
   </div>
 </div>
 `;
