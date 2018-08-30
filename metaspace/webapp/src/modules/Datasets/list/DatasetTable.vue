@@ -47,9 +47,10 @@
  import {metadataExportQuery} from '../../../api/metadata';
  import DatasetList from './DatasetList.vue';
  import {FilterPanel} from '../../Filters/index';
- import { csvExportHeader, delay } from '../../../util';
+ import { csvExportHeader} from '../../../util';
  import gql from 'graphql-tag';
  import FileSaver from 'file-saver';
+ import delay from '../../../lib/delay';
 
  const processingStages = ['started', 'queued', 'finished'];
 

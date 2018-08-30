@@ -84,7 +84,5 @@ describe('DatasetTable', () => {
     const csvWithoutDateHeader = csv.replace(/# Generated at .*\n/, '');
 
     expect(csvWithoutDateHeader).toMatchSnapshot();
-
-    await new Promise(resolve => setTimeout(resolve, 50));
   });
 });

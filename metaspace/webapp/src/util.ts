@@ -6,10 +6,6 @@ function prettifySign(str: string): string {
   return str.replace('-', ' – ').replace('+', ' + ');
 }
 
-function delay(timeMs: number) {
-  return new Promise(resolve => setTimeout(resolve, timeMs));
-}
-
 interface StringDictionary {
   [x: string]: string
 }
@@ -104,7 +100,6 @@ function getOS() {
 export {
   renderMolFormula,
   prettifySign,
-  delay,
   getJWT,
   decodePayload,
   pathFromUUID,

@@ -27,3 +27,6 @@ jest.mock('../../src/graphqlClient', () => require('./mockGraphqlClient'));
 // Transitions throw errors because cssstyle doesn't support transition styles
 registerMockComponent('transition');
 registerMockComponent('transition-group');
+
+// Ignore delay duration
+jest.mock('../../src/lib/delay', () => jest.fn(() => Promise.resolve()));
