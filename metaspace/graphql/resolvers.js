@@ -328,6 +328,7 @@ const Resolvers = {
 
     submitter(ds) {
       return _.get(ds._source.ds_meta, 'Submitted_By.Submitter');
+      // TODO: return ds._source.ds_submitter;
     },
 
     principalInvestigator(ds) {
@@ -502,8 +503,8 @@ const Resolvers = {
       return DSMutation.update({id: id, input: ds, reprocess: true, delFirst: delFirst, priority: priority}, user);
     },
 
-    createDataset: (_, args, {user}) => {
-      return DSMutation.create(args, user);
+    createDataset: (_, args, context) => {
+      return DSMutation.create(args, context);
     },
 
     updateDataset: (_, args, {user}) => {

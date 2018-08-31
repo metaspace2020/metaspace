@@ -1,16 +1,18 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 import {
   createConnection as createTypeORMConnection,
-  ConnectionOptions} from "typeorm";
+  ConnectionOptions
+} from 'typeorm';
 
 import config from './config';
 import {Credentials} from '../modules/auth/model';
-import {User} from '../modules/user/model';
+import {User, Dataset} from '../modules/user/model';
+import {Group, UserGroup} from '../modules/group/model';
 
 export const DbSchemaName = 'graphql';
 
 const defaultDBConfig: ConnectionOptions = {
-  type: "postgres",
+  type: 'postgres',
   host: config.db.host,
   database: config.db.database,
   username: config.db.user,
@@ -18,14 +20,17 @@ const defaultDBConfig: ConnectionOptions = {
   schema: DbSchemaName,
   entities: [
     Credentials,
-    User
+    User,
+    Dataset,
+    Group,
+    UserGroup
   ],
   synchronize: true,
-  logging: false
+  logging: true
 };
 
 export const createConnection = async () => {
-  return createTypeORMConnection({
+  return await createTypeORMConnection({
     ...defaultDBConfig
   });
 };

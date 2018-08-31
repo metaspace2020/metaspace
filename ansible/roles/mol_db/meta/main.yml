@@ -1,5 +1,5 @@
 ---
 
 dependencies:
-  - name: supervisor
-  - name: metaspace
+  - role: supervisor
+  - role: metaspace_repo

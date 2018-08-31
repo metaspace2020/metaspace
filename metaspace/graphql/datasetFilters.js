@@ -149,7 +149,7 @@ const datasetFilters = {
   submitter: new PersonFilter('Submitted_By.Submitter'),
   hasGroup: new NotNullFilter('GroupId'), // FIXME: Use a real field
   metadataType: new ExactMatchFilter('Data_Type', {}),
-}
+};
 
 function dsField(hit, alias){
   let info = hit._source.ds_meta;
@@ -162,13 +162,7 @@ function dsField(hit, alias){
 }
 
 module.exports = {
-  AbstractDatasetFilter,
-  ExactMatchFilter,
-  PhraseMatchFilter,
   SubstringMatchFilter,
-  DatasetIdFilter,
-  PersonFilter,
-
   datasetFilters,
   dsField,
   getPgField

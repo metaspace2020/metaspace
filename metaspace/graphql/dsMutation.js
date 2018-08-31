@@ -7,7 +7,8 @@ const jsondiffpatch = require('jsondiffpatch'),
 
 const {logger, fetchDS, assertUserCanEditDataset,
     addProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
-  metadataSchema = require('./metadata_schema.json');
+  metadataSchema = require('./metadata_schema.json'),
+  {addUserDataset} = require('./src/modules/user/controller');
 
 const ajv = new Ajv({allErrors: true});
 const validator = ajv.compile(metadataSchema);
@@ -114,7 +115,7 @@ function processingSettingsChanged(ds, updDS) {
 
 async function smAPIRequest(datasetId, uri, body) {
   const url = `http://${config.services.sm_engine_api_host}${uri}`;
-  let resp = await fetch(url, {
+  let rawResp = await fetch(url, {
     method: 'POST',
     body: JSON.stringify(body),
     headers: {
@@ -122,10 +123,9 @@ async function smAPIRequest(datasetId, uri, body) {
     }
   });
 
-  const respText = await resp.text();
-  if (!resp.ok) {
-    const err = JSON.parse(respText);
-    if (err.status == 'dataset_busy')
+  const resp = await rawResp.json();
+  if (!rawResp.ok) {
+    if (resp.status == 'dataset_busy')
       throw new UserError(JSON.stringify({
         'type': 'dataset_busy',
         'hint': `Dataset is busy. Try again later.`
@@ -136,7 +136,7 @@ async function smAPIRequest(datasetId, uri, body) {
   else {
     logger.info(`Successful ${uri}: ${datasetId}`);
     logger.debug(`Body: ${JSON.stringify(body)}`);
-    return respText;
+    return resp;
   }
 }
 
@@ -149,13 +149,14 @@ function updateObject(obj, upd) {
 module.exports = {
   processingSettingsChanged,
   Mutation: {
-    create: async (args, user) => {
-      const {id, input, priority} = args;
+    create: async (args, {user, connection}) => {
+      const {input, priority} = args;
+      let dsId = args.id;
       try {
-        if (id !== undefined && user.role == 'admin') {
-          let ds = await fetchDS({id});
+        if (dsId !== undefined && user.role == 'admin') {
+          let ds = await fetchDS({dsId});
           if (ds !== undefined)
-            throw new UserError(`DS id '${id}' already exists`);
+            throw new UserError(`DS id '${dsId}' already exists`);
         }
 
         input.metadata = JSON.parse(input.metadataJson);
@@ -176,9 +177,14 @@ module.exports = {
           priority: priority,
           email: user.email,
         };
-        if (id !== undefined)
-          body.id = id;
-        return await smAPIRequest(id, '/v1/datasets/add', body);
+        if (dsId !== undefined)
+          body.id = dsId;
+
+        const resp = await smAPIRequest(dsId, '/v1/datasets/add', body);
+        dsId = resp['ds_id'];
+
+        await addUserDataset({userId: input.submitterId, dsId}, {user, connection});
+        return JSON.stringify({ dsId });
       } catch (e) {
         logger.error(e.stack);
         throw e;
