@@ -30,7 +30,10 @@
       </router-link>
     </div>
 
-    <div v-if="!this.$store.state.authenticated" class="header-items">
+    <div v-if="loadingUser > 0">
+      <!-- Loading -->
+    </div>
+    <div v-else-if="features.newAuth ? currentUser == null : !this.$store.state.authenticated" class="header-items">
       <div v-if="features.newAuth" class="header-items">
         <div class="header-item page-link" @click="showCreateAccount">
           Create account
@@ -124,10 +127,17 @@
      },
 
      userNameOrEmail() {
-       const {user} = this.$store.state;
-       if (!user)
+       if (config.features.newAuth) {
+         if (this.currentUser && this.currentUser.name) {
+           return this.currentUser.name;
+         }
          return '';
-       return user.name || user.email;
+       } else {
+         const {user} = this.$store.state;
+         if (!user)
+           return '';
+         return user.name || user.email;
+       }
      },
 
      features() {
@@ -137,7 +147,8 @@
 
    data() {
      return {
-       loginEmail: (this.$store.state.user ? this.$store.state.user.email : ''),
+       loginEmail: '',
+       loadingUser: 0,
        currentUser: null,
        openSubmenu: null
      };
@@ -148,6 +159,7 @@
        query: gql`query {
          currentUser {
            id
+           name
            primaryGroup {
              group {
                id
@@ -156,7 +168,8 @@
              }
            }
          }
-       }`
+       }`,
+       loadingKey: 'loadingUser'
      }
    },
 
