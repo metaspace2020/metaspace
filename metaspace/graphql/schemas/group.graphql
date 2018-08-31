@@ -43,7 +43,7 @@ type Query {
 
 type Mutation {
   ## Managing groups
-  createGroup(groupDetails: CreateGroupInput!): Group!
+  createGroup(groupDetails: CreateGroupInput!): Group!  # For admins only
   updateGroup(groupId: ID!, groupDetails: UpdateGroupInput!): Group!
   deleteGroup(groupId: ID!): Boolean!
 
@@ -53,13 +53,14 @@ type Mutation {
 
   ## User requests access
   requestAccessToGroup(groupId: ID!): UserGroup!
-  acceptRequestToJoinGroup(groupId: ID!, userId: ID!): UserGroup!
+  acceptRequestToJoinGroup(groupId: ID!, userId: ID!): UserGroup!  # For group managers
   # User can reject request with `leaveGroup`
 
   ## Group invites user
-  inviteUserToGroup(groupId: ID!, email: String!): UserGroup!
+  inviteUserToGroup(groupId: ID!, email: String!): UserGroup!  # For group managers
   acceptGroupInvitation(groupId: ID!): UserGroup!
   # Group can reject user with `removeUserFromGroup`
 
   importDatasetsIntoGroup(groupId: ID!, datasetIds: [ID!]!): Boolean!
+  # TODO: add dataset removal from group
 }

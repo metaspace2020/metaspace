@@ -14,8 +14,7 @@ const {createImgServerAsync} = require('./imageUpload.js'),
   {User, Dataset} = require('./src/modules/user/model'),
   {logger, initDBConnection} = require('./utils'),
   {createConnection} = require('./src/utils'),
-  {executableSchema} = require('./executableSchema'),
-  {generateUserOperations} = require('./src/modules/user/operation');
+  {executableSchema} = require('./executableSchema');
 
 // subscriptions setup
 const http = require('http'),
@@ -69,12 +68,9 @@ async function createHttpServerAsync(config) {
     schema: executableSchema,
     context: ({req}) => {
       // if (!req.user) throw new UserError('You must be logged in');
-      const user = req.user.user,
-        userRepo = connection.getRepository(User),
-        dsRepo = connection.getRepository(Dataset);
       return {
-        user,
-        UserOperations: generateUserOperations(user, userRepo, dsRepo),
+        user: req.user.user,
+        connection
       };
     },
     playground: {

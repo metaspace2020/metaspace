@@ -9,6 +9,7 @@ import {mergeTypes} from 'merge-graphql-schemas';
 import {logger} from './utils';
 import config from './src/utils/config';
 import {Resolvers as UserResolvers} from './src/modules/user/controller';
+import {Resolvers as GroupResolvers} from './src/modules/group/controller';
 import * as Resolvers from './resolvers';
 import schema from './schema';
 
@@ -16,7 +17,8 @@ const executableSchema = mergeSchemas({
   schemas: [schema],
   resolvers: [
     Resolvers,
-    UserResolvers
+    UserResolvers,
+    GroupResolvers
   ]
 });
 

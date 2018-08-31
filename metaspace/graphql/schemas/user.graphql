@@ -18,7 +18,7 @@ input UpdateUserInput {
 type Query {
   currentUser: User
   user(userId: ID!): User           # For admins
-  allUsers(query: String): [User!]  # For admins
+  allUsers(query: String=""): [User!]  # For admins
 }
 
 type Mutation {

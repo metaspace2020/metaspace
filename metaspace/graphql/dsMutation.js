@@ -7,7 +7,8 @@ const jsondiffpatch = require('jsondiffpatch'),
 
 const {logger, fetchDS, assertUserCanEditDataset,
     addProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
-  metadataSchema = require('./metadata_schema.json');
+  metadataSchema = require('./metadata_schema.json'),
+  {addUserDataset} = require('./src/modules/user/controller');
 
 const ajv = new Ajv({allErrors: true});
 const validator = ajv.compile(metadataSchema);
@@ -148,7 +149,7 @@ function updateObject(obj, upd) {
 module.exports = {
   processingSettingsChanged,
   Mutation: {
-    create: async (args, {user, UserOperations}) => {
+    create: async (args, {user, connection}) => {
       const {input, priority} = args;
       let dsId = args.id;
       try {
@@ -182,7 +183,7 @@ module.exports = {
         const resp = await smAPIRequest(dsId, '/v1/datasets/add', body);
         dsId = resp['ds_id'];
 
-        await UserOperations.addUserDataset(input.submitterId, dsId);
+        await addUserDataset({userId: input.submitterId, dsId}, {user, connection});
         return JSON.stringify({ dsId });
       } catch (e) {
         logger.error(e.stack);
