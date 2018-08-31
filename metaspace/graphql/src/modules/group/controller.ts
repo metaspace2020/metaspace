@@ -149,10 +149,10 @@ export const Resolvers = {
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
-      let userGroup = userGroupRepo.findOne({ where: { groupId, userId: user.id } });
+      let userGroup = await userGroupRepo.findOne({ where: { groupId, userId: user.id } });
 
       if (!userGroup) {
-        userGroup = userGroupRepo.create({
+        userGroup = await userGroupRepo.create({
           userId: user.id,
           groupId,
           role: UserGroupRoleOptions.PENDING,
@@ -161,7 +161,7 @@ export const Resolvers = {
         await userGroupRepo.save(userGroup);
       }
 
-      return userGroupRepo.findOneOrFail({
+      return await userGroupRepo.findOneOrFail({
         where: { groupId, userId: user.id },
         relations: ['user', 'group']
       });
