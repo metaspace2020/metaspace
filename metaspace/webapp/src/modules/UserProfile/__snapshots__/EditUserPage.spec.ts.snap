@@ -54,7 +54,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div>
-                  <!---->
+                  <mock-transition name="el-zoom-in-top"></mock-transition>
                 </div>
               </div>
             </div>
@@ -71,7 +71,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div>
-                  <!---->
+                  <mock-transition name="el-zoom-in-top"></mock-transition>
                 </div>
               </div>
             </div>
@@ -214,7 +214,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
                     <div class="cell">
-                      <a href="#/datasets?grp=%7B%22id%22%3A%22DDD%22,%22name%22%3A%22Group%20D%22%7D&amp;subm=%7B%22id%22%3A%2222333%22,%22name%22%3A%22foo%22%7D" class="">
+                      <a href="#/datasets?grp=DDD&amp;subm=22333" class="">
                         20
                       </a>
                       <!---->
@@ -390,7 +390,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_2_column_7  ">
                     <div class="cell">
-                      <a href="#/datasets?prj=%7B%22id%22%3A%22DD%22,%22name%22%3A%22Project%20D%22%7D&amp;subm=%7B%22id%22%3A%2222333%22,%22name%22%3A%22foo%22%7D" class="">
+                      <a href="#/datasets?prj=DD&amp;subm=22333" class="">
                         20
                       </a>
                       <!---->
@@ -436,14 +436,16 @@ exports[`EditUserPage should match snapshot 1`] = `
         Delete account
       </span></button>
     </div>
-    <div class="el-loading-mask" style="display: none;">
-      <div class="el-loading-spinner">
-        <svg viewBox="25 25 50 50" class="circular">
-          <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
-        </svg>
-        <!---->
+    <mock-transition name="el-loading-fade">
+      <div class="el-loading-mask" style="display: none;">
+        <div class="el-loading-spinner">
+          <svg viewBox="25 25 50 50" class="circular">
+            <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
+          </svg>
+          <!---->
+        </div>
       </div>
-    </div>
+    </mock-transition>
   </div>
 </div>
 `;

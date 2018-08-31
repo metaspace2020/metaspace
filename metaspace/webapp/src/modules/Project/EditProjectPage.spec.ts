@@ -54,6 +54,8 @@ describe('EditProjectPage', () => {
     ]
   };
 
+  router.replace({ name: 'edit-project', params: { projectId: mockProject.id } });
+
   it('should match snapshot', async () => {
     const wrapper = mount(EditProjectPage, { router, sync: false });
     wrapper.setData({

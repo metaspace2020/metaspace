@@ -10,14 +10,17 @@
       </el-option>
     </el-select>
 
-    <component v-for="f in visibleFilters" :key="f.name"
+    <component v-for="f in visibleFilters" :key="f.filterKey"
+               :data-test-key="f.filterKey"
                :is="f.type"
+               :filterKey="f.filterKey"
                :name="f.name"
-               :options="getFilterOptions(f)"
+               :options="f.options"
                :labels="f.labels"
                :clearable="f.clearable"
                :removable="f.removable"
                :filterable="f.filterable"
+               :multiple="f.multiple"
                :optionFormatter="f.optionFormatter"
                :value="f.value"
                :valueFormatter="f.valueFormatter"
@@ -130,7 +133,9 @@
        const filterSpec = FILTER_SPECIFICATIONS[filterKey];
        let self = this;
        const behaviour = {
+         filterKey,
          value: self.filter[filterKey],
+         options: this.getFilterOptions(filterSpec),
          // passing the value of undefined destroys the tag element
          onChange(val) {
            self.$store.commit('updateFilter',

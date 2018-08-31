@@ -128,7 +128,7 @@
     "source-map-loader": "0.2.3",
     "style-loader": "~0.21.0",
     "testcafe": "^0.18.1",
-    "ts-jest": "^23.0.0",
+    "ts-jest": "^23.1.4",
     "ts-node": "~3.1.0",
     "typescript": "~2.8.4",
     "vue-class-component": "6.2.0",

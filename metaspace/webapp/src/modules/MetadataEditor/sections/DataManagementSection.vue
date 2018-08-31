@@ -95,7 +95,7 @@
     GroupListItem,
     oneGroupQuery, oneProjectQuery,
   } from '../../../api/dataManagement';
-  import { DatasetSubmitterFragment } from '../../../api/user';
+  import { currentUserIdQuery, DatasetSubmitterFragment } from '../../../api/user';
   import './FormSection.scss';
   import gql from 'graphql-tag';
   import FindGroupDialog from './FindGroupDialog.vue';
@@ -112,9 +112,7 @@
       CreateProjectDialog,
     },
     apollo: {
-      currentUser: gql`query {
-        currentUser { id }
-      }`
+      currentUser: currentUserIdQuery
     }
   })
   export default class DataManagementSection extends Vue {

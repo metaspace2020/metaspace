@@ -118,10 +118,14 @@
         <a @click="openDeleteDialog">Delete dataset</a>
       </div>
 
-      <img v-if="!dataset.isPublic"
-           class="ds-item-private-icon"
-           src="../../../assets/padlock-icon.svg"
-           title="These annotation results are not publicly visible">
+      <el-popover v-if="!dataset.isPublic" trigger="hover" placement="top" @show="loadVisibility">
+        <div v-loading="visibilityText == null">
+          {{visibilityText}}
+        </div>
+        <img slot="reference"
+             class="ds-item-private-icon"
+             src="../../../assets/padlock-icon.svg">
+      </el-popover>
     </div>
   </div>
 </template>
@@ -132,6 +136,8 @@
  import {deleteDatasetQuery, thumbnailOptImageQuery} from '../../../api/dataset';
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
+ import { currentUserIdQuery } from '../../../api/user';
+ import gql from 'graphql-tag';
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');
@@ -252,6 +258,19 @@
 
      disabledClass() {
        return this.disabled ? "ds-item-disabled" : "";
+     },
+
+     visibilityText() {
+       if (this.datasetVisibility != null) {
+         const {submitter, group, projects} = this.datasetVisibility;
+         const submitterName = this.currentUser && submitter.id === this.currentUser.id ? 'you' : submitter.name;
+         const all = [
+           submitterName,
+           ...(group ? [group.name] : []),
+           ...(projects || []).map(p => p.name),
+         ];
+         return `These annotation results are not publicly visible. They are visible to ${all.join(', ')} and METASPACE Administrators.`
+       }
      }
    },
    data() {
@@ -264,6 +283,22 @@
    },
 
    apollo: {
+     datasetVisibility: {
+       query: gql`query DatasetVisibility($id: String!) {
+         datasetVisibility: dataset(id: $id) {
+           submitter { id name }
+           group { id name }
+           projects { id name }
+         }
+       }`,
+       skip: true,
+       variables() {
+         return {id: this.dataset.id}
+       }
+     },
+     currentUser: {
+       query: currentUserIdQuery
+     },
      thumbnailImage: {
        query: thumbnailOptImageQuery,
        variables() {
@@ -346,6 +381,10 @@
 
      formatDbName() {
        return this.dataset.fdrCounts.dbName;
+     },
+
+     loadVisibility() {
+       this.$apollo.queries.datasetVisibility.start();
      }
    }
  }

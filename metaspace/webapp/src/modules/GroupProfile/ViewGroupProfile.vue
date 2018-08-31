@@ -159,7 +159,7 @@
       return {
         path: '/datasets',
         query: this.group && encodeParams({
-          group: {id: this.groupId, name: this.group.name}
+          group: this.groupId,
         })
       }
     }

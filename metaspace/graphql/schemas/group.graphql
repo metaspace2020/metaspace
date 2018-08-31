@@ -38,7 +38,7 @@ enum UserGroupRole {
 type Query {
   group(groupId: ID!): Group
   groupByUrlSlug(urlSlug: String!): Group
-  allGroups(query: String): [Group!]!
+  allGroups(query: String, limit: Int = 10): [Group!]!
 }
 
 type Mutation {

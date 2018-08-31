@@ -47,9 +47,10 @@
  import {metadataExportQuery} from '../../../api/metadata';
  import DatasetList from './DatasetList.vue';
  import {FilterPanel} from '../../Filters/index';
- import {csvExportHeader} from '../../../util';
+ import { csvExportHeader} from '../../../util';
  import gql from 'graphql-tag';
  import FileSaver from 'file-saver';
+ import delay from '../../../lib/delay';
 
  const processingStages = ['started', 'queued', 'finished'];
 
@@ -59,6 +60,7 @@
      return {
        currentPage: 0,
        recordsPerPage: 10,
+       csvChunkSize: 1000,
        categories: processingStages,
        isExporting: false
      }
@@ -205,9 +207,7 @@
        this.$apollo.queries.finishedCount.refresh();
      },
 
-     startExport() {
-       const chunkSize = 1000;
-
+     async startExport() {
        let csv = csvExportHeader();
 
        csv += ['datasetId', 'datasetName', 'institution', 'submitter',
@@ -248,37 +248,28 @@
        this.isExporting = true;
        let self = this;
 
-       function finish() {
-         if (!self.isExporting)
-           return;
-
-         self.isExporting = false;
-
-         let blob = new Blob([csv], {type: 'text/csv; charset="utf-8"'});
-         FileSaver.saveAs(blob, "metaspace_datasets.csv");
-       }
-
        let v = this.queryVariables('FINISHED'),
            chunks = [],
            offset = 0;
 
-       v.limit = chunkSize;
+       v.limit = this.csvChunkSize;
 
-       function runExport() {
+       while (self.isExporting && offset < self.finishedCount) {
          const variables = Object.assign(v, {offset});
-         self.$apollo.query({query: metadataExportQuery, variables})
-             .then(resp => {
-           offset += chunkSize;
-           writeCsvChunk(resp.data.datasets);
-           if (!self.isExporting || offset >= self.finishedCount) {
-             finish();
-           } else {
-             window.setTimeout(runExport, 50);
-           }
-         })
+         const resp = await self.$apollo.query({query: metadataExportQuery, variables});
+
+         offset += this.csvChunkSize;
+         writeCsvChunk(resp.data.datasets);
+         await delay(50);
        }
 
-       runExport();
+       if (!self.isExporting)
+         return;
+
+       self.isExporting = false;
+
+       let blob = new Blob([csv], {type: 'text/csv; charset="utf-8"'});
+       FileSaver.saveAs(blob, "metaspace_datasets.csv");
      },
 
      onChangeTab(tab) {

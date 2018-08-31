@@ -107,7 +107,6 @@
 
     get rows(): GroupRow[] {
       if (this.currentUser != null && this.currentUser.groups != null) {
-        const submitter = { id: this.currentUser.id, name: this.currentUser.name };
         return this.currentUser.groups.map((item) => {
           const {group, numDatasets, role} = item;
           const {id, name} = group;
@@ -118,7 +117,7 @@
             route: `/group/${id}`,
             datasetsRoute: {
               path: '/datasets',
-              query: encodeParams({ submitter, group: { id, name } })
+              query: encodeParams({ submitter: this.currentUser!.id, group: id })
             },
           };
         });

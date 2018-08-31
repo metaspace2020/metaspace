@@ -26,6 +26,8 @@ describe('ViewGroupProfile', () => {
     DatasetItem: true
   };
 
+  router.replace({ name: 'group', params: { groupId: mockData.group.id } });
+
   it('should match snapshot (non-member)', () => {
     const wrapper = mount(ViewGroupProfile, { router, stubs });
     wrapper.setData({

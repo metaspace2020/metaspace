@@ -7,14 +7,16 @@ exports[`ProjectsListPage should match snapshot 1`] = `
       <!---->
     </div>
     <div class="el-loading-parent--relative">
-      <div class="el-loading-mask" style="display: none;">
-        <div class="el-loading-spinner">
-          <svg viewBox="25 25 50 50" class="circular">
-            <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
-          </svg>
-          <!---->
+      <mock-transition name="el-loading-fade">
+        <div class="el-loading-mask" style="display: none;">
+          <div class="el-loading-spinner">
+            <svg viewBox="25 25 50 50" class="circular">
+              <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
+            </svg>
+            <!---->
+          </div>
         </div>
-      </div>
+      </mock-transition>
       <div class="project-item">
         <a href="#/project/project%201" class="underlay"></a>
         <div class="info">
@@ -37,7 +39,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
           <div class="info-line project-name">
             <a href="#/project/project%203" class="">project three</a>
           </div>
-          <div class="info-line"><span><a href="#/datasets?prj=%7B%22name%22%3A%22project%20three%22,%22id%22%3A%22project%203%22%7D" class="">5 Datasets</a>,
+          <div class="info-line"><span><a href="#/datasets?prj=project%203" class="">5 Datasets</a>,
       </span> 10 Members
           </div>
           <div class="info-line"><span>
@@ -52,7 +54,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
           <div class="info-line project-name">
             <a href="#/project/project%202" class="">project two</a>
           </div>
-          <div class="info-line"><span><a href="#/datasets?prj=%7B%22name%22%3A%22project%20two%22,%22id%22%3A%22project%202%22%7D" class="">20 Datasets</a>,
+          <div class="info-line"><span><a href="#/datasets?prj=project%202" class="">20 Datasets</a>,
       </span> 20 Members
           </div>
           <div class="info-line"><span>

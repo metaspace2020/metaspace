@@ -53,6 +53,8 @@ describe('EditGroupProfile', () => {
     ]
   };
 
+  router.replace({ name: 'edit-group', params: { groupId: mockGroup.id } });
+
   it('should match snapshot', async () => {
     const wrapper = mount(EditGroupProfile, { router, sync: false });
     wrapper.setData({

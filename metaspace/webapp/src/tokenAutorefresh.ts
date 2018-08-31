@@ -1,4 +1,5 @@
-import { getJWT, decodePayload, delay } from './util'
+import { getJWT, decodePayload} from './util'
+import delay from './lib/delay';
 
 const REFRESH_INTERVAL_MS = 30000;
 

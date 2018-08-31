@@ -88,7 +88,6 @@
 
     get rows(): ProjectRow[] {
       if (this.currentUser != null && this.currentUser.projects != null) {
-        const submitter = { id: this.currentUser.id, name: this.currentUser.name };
         return this.currentUser.projects.map((item) => {
           const {project, numDatasets, role} = item;
           const {id, name} = project;
@@ -99,7 +98,7 @@
             route: `/project/${id}`,
             datasetsRoute: {
               path: '/datasets',
-              query: encodeParams({ submitter, project: { id, name } })
+              query: encodeParams({ submitter: this.currentUser!.id, project: id })
             },
           };
         });
