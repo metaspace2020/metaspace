@@ -10,3 +10,11 @@ declare module "plotly.js/src/components/colorscale/scales.js"
 declare module "plotly.js/src/components/colorscale/extract_scale.js"
 
 declare module "vue-slide-up-down";
+
+declare module "vue-apollo/types/vue-apollo" {
+  import { ApolloProperty } from 'vue-apollo/types/vue-apollo';
+  import { ApolloClient } from 'apollo-client';
+
+  export interface ApolloProperty<V> {
+  }
+}

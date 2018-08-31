@@ -1,17 +1,8 @@
-import { mount, Wrapper } from '@vue/test-utils';
-import VueRouter from 'vue-router';
+import { mount, Stubs, Wrapper } from '@vue/test-utils';
 import ElementUI from 'element-ui';
-import Vuex from 'vuex';
 import Vue from 'vue';
 import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
 import router from '../../router';
-import registerMockComponent from '../../../tests/utils/registerMockComponent';
-jest.mock('../../components/DatasetItem.vue', () => require('../../../tests/utils/mockComponent')('dataset-item'));
-
-Vue.use(ElementUI);
-registerMockComponent('el-dialog');
-Vue.use(VueRouter);
-Vue.use(Vuex);
 
 describe('TransferDatasetsDialog', () => {
   const mockDatasets = [
@@ -25,11 +16,14 @@ describe('TransferDatasetsDialog', () => {
     groupName: 'Group Name',
     isInvited: true
   };
+  const stubs: Stubs = {
+    DatasetItem: true
+  };
   [false, true].forEach(hasDatasets => {
     [false, true].forEach(isInvited => {
       it(`should match snapshot (${hasDatasets ? 'datasets to import' : 'no datasets'}, ${isInvited ? 'invited' : 'requesting access'})`, () => {
         const propsData = { ...mockProps, isInvited };
-        const wrapper = mount(TransferDatasetsDialog, { router, propsData });
+        const wrapper = mount(TransferDatasetsDialog, { router, propsData, stubs, sync: false });
         wrapper.setData({ allDatasets: hasDatasets ? mockDatasets : [] });
 
         expect(wrapper).toMatchSnapshot();
@@ -38,8 +32,9 @@ describe('TransferDatasetsDialog', () => {
   });
 
   it('should call back on success when some datasets are selected', async () => {
-    const wrapper = mount(TransferDatasetsDialog, { router, propsData: mockProps });
+    const wrapper = mount(TransferDatasetsDialog, { router, propsData: mockProps, stubs, sync: false });
     wrapper.setData({ allDatasets: mockDatasets });
+    await Vue.nextTick();
 
     wrapper.find(ElementUI.Checkbox).trigger('click');
     wrapper.findAll(ElementUI.Button)

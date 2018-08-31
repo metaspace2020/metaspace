@@ -1,17 +1,9 @@
 import { mount } from '@vue/test-utils';
-import VueRouter from 'vue-router';
-import ElementUI from 'element-ui';
 import Vue from 'vue';
 import EditProjectPage from './EditProjectPage.vue';
 import router from '../../router';
 import { EditProjectQuery } from '../../api/project';
-import Vuex from 'vuex';
-import registerMockComponent from '../../../tests/utils/registerMockComponent';
 
-Vue.use(ElementUI);
-registerMockComponent('el-popover');
-Vue.use(VueRouter);
-Vue.use(Vuex);
 
 
 describe('EditProjectPage', () => {
@@ -62,15 +54,10 @@ describe('EditProjectPage', () => {
     ]
   };
 
-  const store = new Vuex.Store({
-    state: {
-      filterLists: {
-      },
-    },
-  });
+  router.replace({ name: 'edit-project', params: { projectId: mockProject.id } });
 
   it('should match snapshot', async () => {
-    const wrapper = mount(EditProjectPage, { router, store, sync: false });
+    const wrapper = mount(EditProjectPage, { router, sync: false });
     wrapper.setData({
       currentUser,
       project: mockProject

@@ -15,7 +15,7 @@
             </el-button>
           </div>
         </div>
-        <edit-project-form :model="model" :disabled="isSaving || !canEdit" />
+        <edit-project-form v-model="model" :disabled="isSaving || !canEdit" />
         <members-list
           :loading="projectLoading !== 0"
           :members="project && project.members || []"
@@ -55,7 +55,6 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component, Watch } from 'vue-property-decorator';
-  import DatasetItem from '../../components/DatasetItem.vue';
   import {
     acceptRequestToJoinProjectMutation,
     deleteProjectMutation,
@@ -69,9 +68,9 @@
   } from '../../api/project';
   import gql from 'graphql-tag';
   import EditProjectForm from './EditProjectForm.vue';
-  import MembersList from '../../components/MembersList/MembersList.vue';
+  import MembersList from '../../components/MembersList.vue';
   import { UserRole } from '../../api/user';
-  import { encodeParams } from '../../url';
+  import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
   import emailRegex from '../../lib/emailRegex';
@@ -83,7 +82,6 @@
 
   @Component({
     components: {
-      DatasetItem,
       EditProjectForm,
       MembersList,
     },
@@ -126,7 +124,7 @@
     }
     get datasetsListFilter() {
       return {
-        project: {id: this.projectId, name: this.projectName}
+        project: this.projectId,
       };
     }
 
@@ -137,9 +135,7 @@
     }
 
     get datasetsListLink() {
-      const path = '/datasets';
-      const query = encodeParams(this.datasetsListFilter, path, this.$store.state.filterLists);
-      return { path, query }
+      return { path: '/datasets', query: encodeParams(this.datasetsListFilter) }
     }
 
     @ConfirmAsync(function (this: EditProjectProfile) {

@@ -14,30 +14,32 @@ exports[`ViewGroupProfile should match snapshot (invited) 1`] = `
         <!---->
         <!---->
       </div>
-      <div role="alert" class="el-alert el-alert--info el-alert-fade-enter el-alert-fade-enter-active">
-        <i class="el-alert__icon el-icon-info is-big"></i>
-        <div class="el-alert__content">
-          <!---->
-          <div style="padding: 0px 0px 20px 20px;">
-            <p>
-              You have been invited to join group name.
-            </p>
-            <div>
-              <button type="button" class="el-button el-button--danger">
-                <!---->
-                <!----><span>
+      <mock-transition name="el-alert-fade">
+        <div role="alert" class="el-alert el-alert--info">
+          <i class="el-alert__icon el-icon-info is-big"></i>
+          <div class="el-alert__content">
+            <!---->
+            <div style="padding: 0px 0px 20px 20px;">
+              <p>
+                You have been invited to join group name.
+              </p>
+              <div>
+                <button type="button" class="el-button el-button--danger">
+                  <!---->
+                  <!----><span>
               Decline invitation
             </span></button>
-              <button type="button" class="el-button el-button--primary">
-                <!---->
-                <!----><span>
+                <button type="button" class="el-button el-button--primary">
+                  <!---->
+                  <!----><span>
               Join group
             </span></button>
+              </div>
             </div>
+            <i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
           </div>
-          <i class="el-alert__closebtn el-icon-close" style="display: none;"></i>
         </div>
-      </div>
+      </mock-transition>
     </div>
     <div>
       <h2>Datasets</h2>
@@ -47,7 +49,7 @@ exports[`ViewGroupProfile should match snapshot (invited) 1`] = `
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
       </div>
       <div class="dataset-list-footer">
-        <a href="#/datasets?grp=%7B%22name%22%3A%22group%20name%22%7D" class="">See all datasets</a>
+        <a href="#/datasets?grp=groupId" class="">See all datasets</a>
       </div>
     </div>
   </div>
@@ -82,7 +84,7 @@ exports[`ViewGroupProfile should match snapshot (non-member) 1`] = `
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
       </div>
       <div class="dataset-list-footer">
-        <a href="#/datasets?grp=%7B%22name%22%3A%22group%20name%22%7D" class="">See all datasets</a>
+        <a href="#/datasets?grp=groupId" class="">See all datasets</a>
       </div>
     </div>
   </div>

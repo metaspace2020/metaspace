@@ -1,5 +1,5 @@
 import {mzFilterPrecision} from '../util';
-import {decodeParams, decodeSettings} from '../url';
+import {decodeParams, decodeSettings} from '../modules/Filters';
 
 export default {
   filter(state) {
@@ -40,13 +40,14 @@ export default {
 
   gqlDatasetFilter(state, getters) {
     const filter = getters.filter;
-    const {institution, group, submitter, datasetIds, polarity,
+    const {institution, group, project, submitter, datasetIds, polarity,
            organism, organismPart, condition, growthConditions,
            ionisationSource, analyzerType, maldiMatrix, metadataType} = filter;
     return {
       institution,
-      group: group && group.id,
-      submitter: submitter && submitter.id,
+      group: group,
+      project: project,
+      submitter: submitter,
 
       // temporary workaround because of array-related bugs in apollo-client
       ids: datasetIds ? datasetIds.join("|") : null,

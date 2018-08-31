@@ -5,6 +5,10 @@ type Project {
   urlSlug: String
   currentUserRole: UserProjectRole
   members: [UserProject!]    # null if current user is not allowed to see
+  numMembers: Int!
+  numDatasets: Int!
+  createdDT: String!
+  latestUploadDT: String
 }
 
 input CreateProjectInput {
@@ -37,7 +41,8 @@ enum UserProjectRole {
 type Query {
   project(projectId: ID!): Project
   projectByUrlSlug(urlSlug: String!): Project
-  allProjects(query: String): [Project!]!
+  allProjects(query: String, offset: Int = 0, limit: Int = 10): [Project!]!
+  projectsCount(query: String): Int!
 }
 
 type Mutation {

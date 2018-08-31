@@ -1,0 +1,90 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ProjectsListPage should match snapshot 1`] = `
+<div class="page">
+  <div class="page-content">
+    <div class="filter-panel">
+      <!---->
+    </div>
+    <div class="el-loading-parent--relative">
+      <mock-transition name="el-loading-fade">
+        <div class="el-loading-mask" style="display: none;">
+          <div class="el-loading-spinner">
+            <svg viewBox="25 25 50 50" class="circular">
+              <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
+            </svg>
+            <!---->
+          </div>
+        </div>
+      </mock-transition>
+      <div class="project-item">
+        <a href="#/project/project%201" class="underlay"></a>
+        <div class="info">
+          <div class="info-line project-name">
+            <a href="#/project/project%201" class="">project one</a>
+          </div>
+          <div class="info-line">
+            <!---->
+            1 Members
+          </div>
+          <div class="info-line"><span>
+        Created on <b>2018-08-29</b></span></div>
+          <!---->
+        </div>
+        <img src="../../assets/padlock-icon.svg" title="This project is only visible to its members and METASPACE administrators" class="private-icon">
+      </div>
+      <div class="project-item">
+        <a href="#/project/project%203" class="underlay"></a>
+        <div class="info">
+          <div class="info-line project-name">
+            <a href="#/project/project%203" class="">project three</a>
+          </div>
+          <div class="info-line"><span><a href="#/datasets?prj=project%203" class="">5 Datasets</a>,
+      </span> 10 Members
+          </div>
+          <div class="info-line"><span>
+        Last submission <b>2018-05-15</b></span></div>
+          <!---->
+        </div>
+        <!---->
+      </div>
+      <div class="project-item">
+        <a href="#/project/project%202" class="underlay"></a>
+        <div class="info">
+          <div class="info-line project-name">
+            <a href="#/project/project%202" class="">project two</a>
+          </div>
+          <div class="info-line"><span><a href="#/datasets?prj=project%202" class="">20 Datasets</a>,
+      </span> 20 Members
+          </div>
+          <div class="info-line"><span>
+        Last submission <b>2018-08-01</b></span></div>
+          <!---->
+        </div>
+        <!---->
+      </div>
+    </div>
+    <div style="text-align: center;">
+      <div class="el-pagination">
+        <button type="button" disabled="disabled" class="btn-prev">
+          <i class="el-icon el-icon-arrow-left"></i>
+        </button>
+        <ul class="el-pager">
+          <li class="number active">1</li>
+          <!---->
+          <li class="number">2</li>
+          <li class="number">3</li>
+          <li class="number">4</li>
+          <li class="number">5</li>
+          <li class="number">6</li>
+          <!---->
+          <li class="number">7</li>
+        </ul>
+        <button type="button" class="btn-next">
+          <i class="el-icon el-icon-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+`;

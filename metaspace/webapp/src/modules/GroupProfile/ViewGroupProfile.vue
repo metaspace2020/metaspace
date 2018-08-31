@@ -67,13 +67,17 @@
   import Vue from 'vue';
   import { Component } from 'vue-property-decorator';
   import { DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset';
-  import DatasetList from '../../components/DatasetList.vue';
-  import { acceptGroupInvitationMutation, leaveGroupMutation, requestAccessToGroupMutation } from '../../api/group';
+  import DatasetList from '../Datasets/list/DatasetList.vue';
+  import {
+    acceptGroupInvitationMutation,
+    importDatasetsIntoGroupMutation,
+    leaveGroupMutation,
+    requestAccessToGroupMutation,
+  } from '../../api/group';
   import gql from 'graphql-tag';
   import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
-  import { encodeParams } from '../../url';
+  import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
-  import { importDatasetsIntoGroupMutation } from '../../api/group';
 
   type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';
 
@@ -152,12 +156,12 @@
     }
 
     get datasetsListLink() {
-      const filters = {
-        group: this.group && {id: this.groupId, name: this.group.name},
-      };
-      const path = '/datasets';
-      const query = encodeParams(filters, path, this.$store.state.filterLists);
-      return { path, query }
+      return {
+        path: '/datasets',
+        query: this.group && encodeParams({
+          group: this.groupId,
+        })
+      }
     }
 
     async handleRequestAccess() {
@@ -182,7 +186,10 @@
     }
 
     handleManageGroup() {
-      this.$router.push(`/group/${this.groupId}/edit`);
+      this.$router.push({
+        name: 'edit-group',
+        params: {groupId: this.groupId}
+      });
     }
 
     async handleAcceptTransferDatasets(selectedDatasetIds: string[]) {

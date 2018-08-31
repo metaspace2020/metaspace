@@ -1,28 +1,34 @@
 import { UserGroupRole } from './group';
 import gql from 'graphql-tag';
+import { ProjectRole } from './project';
 
 export type UserRole = 'admin' | 'user' | 'anonymous';
 
+export interface UserProfileQueryGroup {
+  role: UserGroupRole;
+  numDatasets: number;
+  group: {
+    id: string,
+    name: string
+  };
+}
+export interface UserProfileQueryProject {
+  role: ProjectRole;
+  numDatasets: number;
+  project: {
+    id: string,
+    name: string
+  };
+}
 
 export interface UserProfileQuery {
   id: string;
   name: string;
   role: string;
   email: string | null;
-  groups: {
-    role: UserGroupRole;
-    numDatasets: number;
-    group: {
-      id: string,
-      name: string
-    };
-  }[] | null;
-  primaryGroup: {
-    group: {
-      id: string;
-      name: string;
-    }
-  } | null;
+  groups: UserProfileQueryGroup[] | null;
+  primaryGroup: UserProfileQueryGroup | null;
+  projects: UserProfileQueryProject[] | null;
 }
 
 export const userProfileQuery =
@@ -33,19 +39,27 @@ export const userProfileQuery =
     role
     email
     primaryGroup {
-      group {
-        id
-        name
-      }
+      ...UserProfileQueryGroup
     }
     groups {
+      ...UserProfileQueryGroup
+    }
+    projects {
       role
       numDatasets
-      group {
+      project {
         id
         name
       }
     }
+  }
+}
+fragment UserProfileQueryGroup on UserGroup {
+  role
+  numDatasets
+  group {
+    id
+    name
   }
 }
 `;
@@ -61,6 +75,12 @@ export interface DatasetSubmitterFragment {
   } | null;
   groups: {
     group: {
+      id: string;
+      name: string;
+    }
+  }[] | null;
+  projects: {
+    project: {
       id: string;
       name: string;
     }
@@ -83,6 +103,12 @@ export const datasetSubmitterFragment =
         name
       }
     }
+    projects {
+      project {
+        id
+        name
+      }
+    }
   }`;
 
 export const updateUserMutation =
@@ -98,3 +124,13 @@ export const deleteUserMutation =
   gql`mutation ($userId: ID!, $deleteDatasets: Boolean!) {
   deleteUser(userId: $userId, deleteDatasets: $deleteDatasets)
 }`;
+
+export interface CurrentUserIdResult {
+  id: string;
+}
+
+export const currentUserIdQuery =
+  gql`query {
+  currentUser { id }
+}
+`;

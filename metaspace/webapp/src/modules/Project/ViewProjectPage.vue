@@ -58,10 +58,10 @@
   import Vue from 'vue';
   import { Component } from 'vue-property-decorator';
   import { DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset';
-  import DatasetList from '../../components/DatasetList.vue';
+  import DatasetList from '../Datasets/list/DatasetList.vue';
   import { acceptProjectInvitationMutation, leaveProjectMutation, requestAccessToProjectMutation } from '../../api/project';
   import gql from 'graphql-tag';
-  import { encodeParams } from '../../url';
+  import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
 
@@ -139,12 +139,10 @@
     }
 
     get datasetsListLink() {
-      const filters = {
-        project: this.project && {id: this.projectId, name: this.project.name},
-      };
-      const path = '/datasets';
-      const query = encodeParams(filters, path, this.$store.state.filterLists);
-      return { path, query }
+      return {
+        path: '/datasets',
+        query: this.project && encodeParams({ project: this.projectId })
+      }
     }
 
     @ConfirmAsync({
@@ -181,7 +179,10 @@
     }
 
     handleManageProject() {
-      this.$router.push(`/project/${this.projectId}/edit`);
+      this.$router.push({
+        name: 'edit-project',
+        params: {projectId: this.projectId},
+      });
     }
 
     async joinProject() {

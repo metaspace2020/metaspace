@@ -15,7 +15,7 @@ exports[`SignInDialog should match snapshot 1`] = `
               <!---->
               <!---->
             </div>
-            <!---->
+            <mock-transition name="el-zoom-in-top"></mock-transition>
           </div>
         </div>
         <div class="el-form-item is-required">
@@ -28,7 +28,7 @@ exports[`SignInDialog should match snapshot 1`] = `
               <!---->
               <!---->
             </div>
-            <!---->
+            <mock-transition name="el-zoom-in-top"></mock-transition>
           </div>
         </div>
         <div style="overflow: hidden; height: auto;">

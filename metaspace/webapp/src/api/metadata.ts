@@ -8,6 +8,11 @@ export const editDatasetFragment =
     isPublic
     group {
       id
+      name
+    }
+    projects {
+      id
+      name
     }
     principalInvestigator {
       name
@@ -85,9 +90,11 @@ export const metadataExportQuery = gql`
       name
       institution
       submitter {
+        id
         name
       }
       principalInvestigator {
+        id
         name
       }
       organism

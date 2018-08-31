@@ -46,7 +46,18 @@ const link = authLink.split(
 
 const apolloClient = new ApolloClient({
   link,
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    cacheRedirects: {
+      Query: {
+        // Allow get-by-id queries to use cached data that originated from other kinds of queries
+        dataset: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Dataset', id: args.id }),
+        annotation: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Annotation', id: args.id }),
+        user: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'User', id: args.userId }),
+        group: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Group', id: args.groupId }),
+        project: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Project', id: args.projectId }),
+      }
+    }
+  }),
 });
 
 export const refreshLoginStatus = async () => {
