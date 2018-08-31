@@ -49,7 +49,7 @@ export const Resolvers = {
           groupId: group.id
         }
       });
-      return userGroup ? userGroup.role : undefined;
+      return userGroup ? userGroup.role : null;
     },
 
     async members(group: GroupModel, _: any, {connection}: any) {

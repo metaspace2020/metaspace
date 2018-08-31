@@ -35,7 +35,7 @@ export const Resolvers = {
       return await connection.getRepository(UserGroupModel).findOne({
         where: { userId: user.id, primary: true },
         relations: ['group']
-      });
+      }) || null;
     },
 
     async groups(user: UserModel, _: any, {connection}: any) {
