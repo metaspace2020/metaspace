@@ -152,7 +152,7 @@ export const Resolvers = {
       let userGroup = await userGroupRepo.findOne({ where: { groupId, userId: user.id } });
 
       if (!userGroup) {
-        userGroup = await userGroupRepo.create({
+        userGroup = userGroupRepo.create({
           userId: user.id,
           groupId,
           role: UserGroupRoleOptions.PENDING,
