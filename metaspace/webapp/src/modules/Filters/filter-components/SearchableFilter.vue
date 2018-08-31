@@ -1,7 +1,6 @@
 <template>
   <tag-filter :name="name" @destroy="destroy" :width="multiple ? 900 : 300">
     <el-select slot="edit"
-               ref="select"
                placeholder="Start typing name"
                remote filterable clearable
                :remote-method="fetchOptions"
@@ -56,10 +55,6 @@
     value!: string[] | string | undefined;
     @Prop({ type: String, required: true })
     filterKey!: SearchableFilterKey;
-
-    $refs!: {
-      select: any;
-    };
 
     loading = false;
     options: Option[] = [];
