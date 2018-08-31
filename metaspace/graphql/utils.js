@@ -263,5 +263,6 @@ module.exports = {
   config,
   logger,
   pubsub,
-  initDBConnection
+  initDBConnection,
+  db: initDBConnection()
 };
