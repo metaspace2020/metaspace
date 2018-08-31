@@ -529,10 +529,10 @@ const Resolvers = {
       subscribe: () => pubsub.asyncIterator('datasetStatusUpdated'),
       resolve: (payload, _, context) => {
         if (payload.dataset && payload.dbDs && canUserViewPgDataset(payload.dbDs, context.user)) {
-          return {dataset: payload.dataset};
+          return { dataset: payload.dataset };
         } else {
           // Empty payload indicates that the client should still refresh its dataset list
-          return {};
+          return { dataset: null };
         }
       }
     },
