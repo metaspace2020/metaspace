@@ -160,7 +160,7 @@ export function decodeSettings(location: Location): any {
 
   let settings = {
     table: {
-      currentPage: 0,
+      currentPage: 1,
       order: {
         by: 'ORDER_BY_MSM',
         dir: 'DESCENDING'
@@ -178,7 +178,7 @@ export function decodeSettings(location: Location): any {
   };
 
   if (query.page)
-    settings.table.currentPage = parseInt(query.page) - 1;
+    settings.table.currentPage = parseInt(query.page);
   if (query.sort)
     settings.table.order = decodeSortOrder(query.sort);
   if (query.cmap)
