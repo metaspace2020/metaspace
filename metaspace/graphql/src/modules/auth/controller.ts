@@ -64,9 +64,10 @@ const configureJwt = (app: Express) => {
     const nowSeconds = Math.floor(Date.now() / 1000);
     let payload;
     if (user != null) {
+      const {id, name, email, role} = user;
       payload = {
         iss: 'METASPACE2020',
-        user,
+        user: {id, name, email, role},
         iat: nowSeconds,
         exp: expSeconds == null ? undefined : nowSeconds + expSeconds,
       };
