@@ -32,7 +32,7 @@ export const addUserDataset = async ({userId, dsId}: any, {user, connection}: an
 export const Resolvers = {
   User: {
     async primaryGroup(user: UserModel, _: any, {connection}: any) {
-      return await connection.getRepository(UserGroupModel).findOneOrFail({
+      return await connection.getRepository(UserGroupModel).findOne({
         where: { userId: user.id, primary: true },
         relations: ['group']
       });
