@@ -1,7 +1,7 @@
 import {
   addErrorLoggingToSchema,
   addMockFunctionsToSchema,
-  mergeSchemas
+  makeExecutableSchema,
 } from 'graphql-tools';
 import {maskErrors} from 'graphql-errors';
 import {mergeTypes} from 'merge-graphql-schemas';
@@ -11,10 +11,10 @@ import config from './src/utils/config';
 import {Resolvers as UserResolvers} from './src/modules/user/controller';
 import {Resolvers as GroupResolvers} from './src/modules/group/controller';
 import * as Resolvers from './resolvers';
-import schema from './schema';
+import {mergedSchemas} from './schema';
 
-const executableSchema = mergeSchemas({
-  schemas: [schema],
+const executableSchema = makeExecutableSchema({
+  typeDefs: mergedSchemas,
   resolvers: [
     Resolvers,
     UserResolvers,
