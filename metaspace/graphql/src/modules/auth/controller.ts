@@ -184,9 +184,9 @@ const configureCreateAccount = (app: Express) => {
 
   app.get('/api_auth/verifyemail', preventCache, async (req, res, next) => {
     const {email, token} = req.query;
-    const userId = await verifyEmail(email, token);
-    if (userId) {
-      req.login({id: userId}, (err) => {
+    const user = await verifyEmail(email, token);
+    if (user) {
+      req.login(user, (err) => {
         if (err) {
           next(err);
         } else {
