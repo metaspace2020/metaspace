@@ -114,7 +114,7 @@ export default {
   },
 
   setCurrentPage(state, page) {
-    let query = Object.assign({}, state.route.query, {page: page + 1});
+    let query = Object.assign({}, state.route.query, {page});
     router.replace({query});
   },
 

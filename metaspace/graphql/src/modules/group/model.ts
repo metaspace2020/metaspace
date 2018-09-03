@@ -29,8 +29,8 @@ export class Group {
   @Column({ type: 'text', name: 'short_name' })
   shortName: string;
 
-  @Column({ type: 'text', name: 'url_slug' })
-  urlSlug: string;
+  @Column({ type: 'text', name: 'url_slug', nullable: true })
+  urlSlug: string | null;
 
   @OneToMany(type => UserGroup, userGroup => userGroup.group)
   members: UserGroup[];
