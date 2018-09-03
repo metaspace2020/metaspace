@@ -1,5 +1,6 @@
 ---
 
+# TODO: Move into sm_web tasks after production has been updated, as this is a provisioning step
 - name: Create a database schema
   become: yes
   become_user: postgres
@@ -8,6 +9,7 @@
     owner: sm
     name: graphql
 
+# TODO: Move into sm_web tasks after production has been updated, as this is a provisioning step
 - name: Import uuid-ossp extension into sm postgres database
   become: yes
   become_user: postgres
