@@ -1,15 +1,21 @@
-const sprintf = require('sprintf-js'),
-  {UserError} = require('graphql-errors'),
-  fetch = require('node-fetch'),
-  _ = require('lodash');
-
-const config = require('config'),
-  {esSearchResults, esCountResults, esCountGroupedResults,
-   esAnnotationByID, esDatasetByID} = require('./esConnector'),
-  {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
-  {pgDatasetsViewableByUser, fetchDS, fetchMolecularDatabases, assertUserCanViewDataset,
-    canUserViewPgDataset, wait, logger, pubsub, db} = require("./utils.js"),
-  {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js');
+import {UserError} from 'graphql-errors';
+import fetch from 'node-fetch';
+import * as _ from 'lodash';
+import * as config from 'config';
+import {esSearchResults, esCountResults, esCountGroupedResults, esAnnotationByID, esDatasetByID} from './esConnector';
+import {dsField, getPgField, SubstringMatchFilter} from './datasetFilters';
+import {
+  pgDatasetsViewableByUser,
+  fetchDS,
+  fetchMolecularDatabases,
+  assertUserCanViewDataset,
+  canUserViewPgDataset,
+  wait,
+  logger,
+  pubsub,
+  db
+} from './utils';
+import {Mutation as DSMutation} from './dsMutation';
 
 
 async function publishDatasetStatusUpdate(ds_id, status) {
