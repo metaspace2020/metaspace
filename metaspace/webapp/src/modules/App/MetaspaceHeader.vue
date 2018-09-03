@@ -127,17 +127,10 @@
      },
 
      userNameOrEmail() {
-       if (config.features.newAuth) {
-         if (this.currentUser && this.currentUser.name) {
-           return this.currentUser.name;
-         }
-         return '';
-       } else {
-         const {user} = this.$store.state;
-         if (!user)
-           return '';
-         return user.name || user.email;
+       if (this.currentUser && this.currentUser.name) {
+         return this.currentUser.name;
        }
+       return '';
      },
 
      features() {

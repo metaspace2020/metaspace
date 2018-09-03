@@ -136,7 +136,7 @@
  import {deleteDatasetQuery, thumbnailOptImageQuery} from '../../../api/dataset';
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
- import { currentUserIdQuery } from '../../../api/user';
+ import { currentUserRoleQuery } from '../../../api/user';
  import gql from 'graphql-tag';
 
  function removeUnderscores(str) {
@@ -239,12 +239,11 @@
      },
 
      haveEditAccess() {
-       const {user} = this.$store.state;
-       if (!user)
+       if (!this.currentUser)
          return false;
-       if (user.role === 'admin')
+       if (this.currentUser.role === 'admin')
          return true;
-       if (user.email != null && user.email === this.dataset.submitter.email)
+       if (this.currentUser.email != null && this.currentUser.email === this.dataset.submitter.email)
          return true;
        return false;
      },
@@ -297,7 +296,7 @@
        }
      },
      currentUser: {
-       query: currentUserIdQuery
+       query: currentUserRoleQuery
      },
      thumbnailImage: {
        query: thumbnailOptImageQuery,
