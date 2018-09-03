@@ -88,7 +88,6 @@ export default {
 
   setUser(state, user) {
     state.authenticated = user != null && user.role !== 'anonymous';
-    state.user = user;
   },
 
   startTour(state, tourDescription) {
