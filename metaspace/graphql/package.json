@@ -90,7 +90,7 @@
       "<rootDir>/tests"
     ],
     "transform": {
-      "^.+\\.(ts|tsx)?$": "ts-jest"
+      "^.+\\.(js|ts|tsx)?$": "ts-jest"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(j|t)sx?$",
     "moduleFileExtensions": [
