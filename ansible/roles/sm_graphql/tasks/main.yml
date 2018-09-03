@@ -1,9 +1,17 @@
 ---
 
 - name: Create a database schema
+  become: yes
+  become_user: postgres
   postgresql_schema:
-    name: graphql
+    database: sm
     owner: sm
+    name: graphql
+
+- name: Import uuid-ossp extension into sm postgres database
+  become: yes
+  become_user: postgres
+  postgresql_ext: db=sm name=uuid-ossp
 
 - name: Install sm-graphql dependencies
   shell: yarn install
@@ -17,6 +25,12 @@
 
 - name: Dereference metadata schema
   shell: node deref_schema.js > metadata_schema.json
+  args:
+    chdir: "{{ sm_graphql_home }}"
+    executable: /bin/bash
+
+- name: Generate binding.ts
+  shell: yarn run gen-binding
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash
