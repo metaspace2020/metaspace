@@ -43,7 +43,7 @@ const PATH_TO_LEVEL: Record<string, Level> = {
 
 export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {
   const level = path != null ? PATH_TO_LEVEL[path.toLowerCase()] : null;
-  const defaultFilter = level != null && filterLists != null ? getDefaultFilter(level, filterLists) : null;
+  const defaultFilter = level != null ? getDefaultFilter(level, filterLists) : null;
 
   let q: Dictionary<string> = {};
   let key: FilterKey;

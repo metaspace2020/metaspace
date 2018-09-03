@@ -301,7 +301,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
   }
 };
 
-export function getFilterInitialValue(key: FilterKey, filterLists: MetadataLists) {
+export function getFilterInitialValue(key: FilterKey, filterLists?: MetadataLists) {
   let value = FILTER_SPECIFICATIONS[key].initialValue;
 
   if(typeof value === 'function') {
@@ -314,7 +314,7 @@ export function getFilterInitialValue(key: FilterKey, filterLists: MetadataLists
   return value;
 }
 
-export function getDefaultFilter(level: Level, filterLists: MetadataLists) {
+export function getDefaultFilter(level: Level, filterLists?: MetadataLists) {
   const filter: Partial<Record<FilterKey, any>> = {};
   let key: FilterKey;
   for (key in FILTER_SPECIFICATIONS) {
