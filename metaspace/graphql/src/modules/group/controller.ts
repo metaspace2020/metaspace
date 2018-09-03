@@ -63,13 +63,13 @@ export const Resolvers = {
   },
 
   Query: {
-    async group(_: any, {groupId}: any, {user, connection}: any): Promise<Group|undefined> {
+    async group(_: any, {groupId}: any, {user, connection}: any): Promise<Group> {
       await hasAccess(connection, user, groupId);
 
       return await connection.getRepository(GroupModel).findOneOrFail(groupId);
     },
 
-    async groupByUrlSlug(_: any, {urlSlug}: any, {user, connection}: any): Promise<Group|undefined> {
+    async groupByUrlSlug(_: any, {urlSlug}: any, {user, connection}: any): Promise<Group> {
       const group = await connection.getRepository(GroupModel).findOneOrFail({
         where: { urlSlug }
       });
@@ -78,7 +78,7 @@ export const Resolvers = {
       return group;
     },
 
-    async allGroups(_: any, {query}: any, {user, connection}: any): Promise<Group[]|undefined> {
+    async allGroups(_: any, {query}: any, {user, connection}: any): Promise<Group[]> {
       await hasAccess(connection, user);
 
       return connection.getRepository(GroupModel).find({
@@ -88,7 +88,7 @@ export const Resolvers = {
   },
 
   Mutation: {
-    async createGroup(_: any, {groupDetails}: any, {user, connection}: any): Promise<Group|undefined> {
+    async createGroup(_: any, {groupDetails}: any, {user, connection}: any): Promise<Group> {
       if (!user || user.role !== 'admin')
         throw new UserError('Only admins can create groups');
 
@@ -100,7 +100,7 @@ export const Resolvers = {
       return {...groupIdMap, ...groupInput};
     },
 
-    async updateGroup(_: any, {groupId, groupDetails}: any, {user, connection}: any): Promise<Group|undefined> {
+    async updateGroup(_: any, {groupId, groupDetails}: any, {user, connection}: any): Promise<Group> {
       await hasAccess(connection, user, groupId);
 
       const groupRepo = connection.getRepository(GroupModel);
