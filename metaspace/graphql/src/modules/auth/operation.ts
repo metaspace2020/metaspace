@@ -127,7 +127,7 @@ export const createUserCredentials = async (userCred: UserCredentialsInput): Pro
   }
 };
 
-export const verifyEmail = async (email: string, token: string): Promise<string|undefined> => {
+export const verifyEmail = async (email: string, token: string): Promise<User|undefined> => {
   const user = await findUserByEmail(email);
   if (user) {
     if (user.credentials.emailVerificationToken !== token
@@ -143,7 +143,7 @@ export const verifyEmail = async (email: string, token: string): Promise<string|
       });
       await credRepo.update(updCred.id, updCred);
       logger.info(`Verified user email ${email}`);
-      return user.id;
+      return user;
     }
   }
   else {
