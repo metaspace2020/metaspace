@@ -4,3 +4,4 @@ metadata_schema.json
 build/
 tmp/
 temp/
+src/binding.ts
