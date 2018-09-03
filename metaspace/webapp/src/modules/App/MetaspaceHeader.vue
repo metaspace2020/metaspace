@@ -9,62 +9,18 @@
         Upload
       </router-link>
 
-      <router-link :to="datasetsHref" class="header-item page-link" id='datasets-link'>
-        Datasets
-      </router-link>
-
       <router-link :to="annotationsHref" class="header-item page-link" id='annotations-link'>
         Annotations
+      </router-link>
+
+      <router-link :to="datasetsHref" class="header-item page-link" id='datasets-link'>
+        Datasets
       </router-link>
 
       <router-link to="/projects" class="header-item page-link">
         Projects
       </router-link>
 
-      <router-link to="/about" class="header-item page-link">
-        About
-      </router-link>
-
-      <router-link to="/help" class="header-item page-link">
-        Help
-      </router-link>
-    </div>
-
-    <div v-if="loadingUser > 0">
-      <!-- Loading -->
-    </div>
-    <div v-else-if="features.newAuth ? currentUser == null : !this.$store.state.authenticated" class="header-items">
-      <div v-if="features.newAuth" class="header-items">
-        <div class="header-item page-link" @click="showCreateAccount">
-          Create account
-        </div>
-
-        <div class="header-item page-link" @click="showSignIn">
-          Sign in
-        </div>
-      </div>
-      <div v-else class="header-items">
-        <el-popover placement="bottom" trigger="click" class="header-items">
-          <div slot="reference" class="header-item page-link">
-            Sign in
-          </div>
-          <div id="email-link-container">
-            <el-button type="primary" @click="sendLoginLink">Send a link to</el-button>
-            <span>
-              <el-input v-model="loginEmail" placeholder="e-mail address" />
-            </span>
-          </div>
-
-          <div style="text-align: center;">
-            <div style="margin: 10px; font-size: 18px;">or</div>
-            <a href="/auth/google">
-              <el-button>Sign in with Google</el-button>
-            </a>
-          </div>
-        </el-popover>
-      </div>
-    </div>
-    <div v-else class="header-items">
       <router-link
         v-if="currentUser && currentUser.primaryGroup"
         :to="primaryGroupHref"
@@ -73,22 +29,41 @@
           {{currentUser.primaryGroup.group.shortName}}
         </div>
       </router-link>
-      <div class="submenu-container user-submenu"
-           :class="{'submenu-container-open': openSubmenu === 'user'}"
-           @mouseenter="handleSubmenuEnter('user')"
-           @mouseleave="handleSubmenuLeave('user')">
-        <div class="header-item submenu-header"
-             :class="{'router-link-active': matchesRoute('/user/me')}">
-          <div class="limit-width" style="color: white;">
-          {{ userNameOrEmail }}
-          </div>
+    </div>
+
+    <div class="header-items">
+      <router-link to="/help" class="header-item page-link">
+        Help
+      </router-link>
+
+      <div v-if="loadingUser === 0 && currentUser == null" class="header-items">
+        <div class="header-item page-link" @click="showCreateAccount">
+          Create account
         </div>
-        <div class="submenu">
-          <router-link to="/user/me" class="submenu-item page-link">
-            My account
-          </router-link>
-          <div class="submenu-item page-link" @click="logout">
-            Sign out
+
+        <div class="header-item page-link" @click="showSignIn">
+          Sign in
+        </div>
+      </div>
+
+      <div v-if="loadingUser === 0 && currentUser != null" class="header-items">
+        <div class="submenu-container user-submenu"
+             :class="{'submenu-container-open': openSubmenu === 'user'}"
+             @mouseenter="handleSubmenuEnter('user')"
+             @mouseleave="handleSubmenuLeave('user')">
+          <div class="header-item submenu-header"
+               :class="{'router-link-active': matchesRoute('/user/me')}">
+            <div class="limit-width" style="color: white;">
+            {{ userNameOrEmail }}
+            </div>
+          </div>
+          <div class="submenu">
+            <router-link to="/user/me" class="submenu-item page-link">
+              My account
+            </router-link>
+            <div class="submenu-item page-link" @click="logout">
+              Sign out
+            </div>
           </div>
         </div>
       </div>
@@ -101,7 +76,6 @@
  import {signOut} from '../../api/auth';
  import {encodeParams} from '../Filters';
   import { refreshLoginStatus } from '../../graphqlClient';
- import * as config from '../../clientConfig.json';
 
  export default {
    name: 'metaspace-header',
@@ -132,10 +106,6 @@
        }
        return '';
      },
-
-     features() {
-       return config.features;
-     }
    },
 
    data() {
@@ -184,28 +154,6 @@
        return this.$route.path.startsWith(path);
      },
 
-     sendLoginLink() {
-       fetch('/sendToken?user=' + this.loginEmail)
-         .then((res) => {
-           if (res.ok)
-             this.$notify({
-               title: 'Check your mailbox!',
-               type: 'success',
-               message: "We've sent you an e-mail with the link to log in"
-             });
-           else
-             this.$notify({
-               title: 'Error ' + res.status,
-               type: 'error',
-               message: res.statusText
-             });
-         });
-       this.$ga.event({
-         eventCategory: 'Link sender',
-         eventAction: 'sending login link'
-       })
-     },
-
      showCreateAccount() {
        this.$store.commit('account/showDialog', 'createAccount');
      },
@@ -215,11 +163,7 @@
      },
 
      async logout() {
-       if (config.features.newAuth) {
-         await signOut();
-       } else {
-         await fetch('/logout', {credentials: 'include'});
-       }
+       await signOut();
        await refreshLoginStatus();
      },
 

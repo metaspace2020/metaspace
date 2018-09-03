@@ -91,7 +91,7 @@
 
    async mounted() {
      await tokenAutorefresh.waitForAuth();
-     if (!this.isSignedIn && this.features.newAuth) {
+     if (!this.isSignedIn) {
        this.$store.commit('account/showDialog', {
          dialog: 'signIn',
          dialogCloseRedirect: '/',
