@@ -244,6 +244,17 @@
        }
 
        this.normalizedTransform = computeTransform(this.originalHandlePositions(), pos);
+       console.log('Untested code to decrease coverage')
+       console.log('Untested code to decrease coverage')
+       console.log('Untested code to decrease coverage')
+       console.log('Untested code to decrease coverage')
+       console.log('Untested code to decrease coverage')
+       console.log('Untested code to decrease coverage')
+       console.log('Untested code to decrease coverage')
+       console.log('Untested code to decrease coverage')
+       console.log('Untested code to decrease coverage')
+       console.log('Untested code to decrease coverage')
+       console.log('Untested code to decrease coverage')
      },
 
      updateRotation(event){
