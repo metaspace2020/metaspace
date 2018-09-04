@@ -11,11 +11,22 @@ Web application for browsing results produced by [METASPACE engine](../engine).
 
 ## Running in development mode
 
-```bash
-NODE_ENV=development nodemon server.js
-```
+`yarn run dev` will start webpack-dev-server, which will serve and dynamically rebuild client-side code.
+However, there is a small amount of server-side code in this project that won't be automatically reloaded when changed.
+If you are changing the server-side code and want it to hot-reload, use `NODE_ENV=development nodemon server.js`.
+Note that using `nodemon` is much slower for client-side development, as it completely restarts the process
+instead of allowing webpack-dev-server to do an incremental rebuild.
 
-This will take care of hot reloading after both server and client code changes.
+## Testing
+
+The tests rely on having a local copy of the GraphQL schema in `tests/utils/graphql-schema.json`.
+This file can either be retrieved from the Production server by running `yarn run fetch-prod-graphql-schema`, or
+it can be generated from the local code by running `yarn run generate-local-graphql-schema` (you may need to run
+`yarn install` in `../graphql` first)
+
+To run the unit tests: `yarn run test`
+To run the unit tests automatically whenever code is changed: `yarn run test --watch`
+To check code coverage: `yarn run coverage` then open `coverage/lcov-report/index.html`
 
 ## Running in production
 

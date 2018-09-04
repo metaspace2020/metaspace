@@ -5,10 +5,10 @@ GraphQL interface to SM engine
 ## Development setup
 
 0. Copy `config.json.template` to `config.json` and edit credentials to match your SM engine installation.
-1. `npm install`
-2. `npm install -g babel-cli nodemon`
-3. Run `nodemon --exec babel-node server.js`, it will automatically restart Node.JS server when the code changes.
-4. Open `localhost:3010/graphiql` in the browser to play with queries.
+1. `yarn install`
+2. `yarn run gen-binding` to generate `src/binding.ts`, which contains the TypeScript types for the GraphQL schema.
+3. Run `yarn run dev`, it will automatically restart Node.JS server when the code changes.
+4. Open `localhost:3010/graphql` in the browser to play with queries.
 
 ## Funding
 
