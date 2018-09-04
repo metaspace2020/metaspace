@@ -29,7 +29,7 @@ function checkStatus(response: Response): Response {
 }
 
 async function getJWT(): Promise<JWT> {
-  const url = config.features.newAuth ? '/api_auth/gettoken' : '/getToken';
+  const url = '/api_auth/gettoken';
   const response = await fetch(url, {credentials: 'include'});
   checkStatus(response);
   return await response.text();

@@ -16,11 +16,9 @@ export default class DialogPage extends Vue {
   }
   @Watch('dialog')
   showDialog() {
-    if (config.features.newAuth) {
-      this.$store.commit('account/showDialog', {
-        dialog: this.dialog,
-        dialogCloseRedirect: '/'
-      });
-    }
+    this.$store.commit('account/showDialog', {
+      dialog: this.dialog,
+      dialogCloseRedirect: '/'
+    });
   }
 }

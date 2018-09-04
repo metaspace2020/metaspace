@@ -14,7 +14,7 @@
     <!--metaspace-footer>
     </metaspace-footer-->
 
-    <dialog-controller v-if="features.newAuth" />
+    <dialog-controller />
 
     <tour-step ref="tour" :tour="this.$store.state.currentTour"></tour-step>
   </div>
