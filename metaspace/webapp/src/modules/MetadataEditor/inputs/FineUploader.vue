@@ -234,7 +234,7 @@
    padding: 10px 0;
    min-height: 45px;
    max-height: 100px;
-   margin: 25px 20px 25px 0;
+   margin: 25px 5px 25px 0;
  }
 
  .fu-dropzone-content {

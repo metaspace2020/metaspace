@@ -1,5 +1,11 @@
 <template>
   <div class="md-editor">
+    <el-dialog
+      :visible.sync="helpDialog"
+      :lock-scroll="false"
+      append-to-body>
+      <embed src="http://project.metaspace2020.eu/imzml" style="width:800px; height: 800px;">
+    </el-dialog>
     <div class="upload-page-wrapper">
       <div v-if="!enableUploads">
         <div id="maintenance-message">
@@ -19,11 +25,12 @@
           <fine-uploader :config="fineUploaderConfig"
                          :dataTypeConfig="fineUploaderDataTypeConfig"
                          ref="uploader"
-                         style="flex-basis: 90%"
+                         style="flex-basis: 80%"
                          @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure" />
           <div class="md-editor-submit">
-            <el-button v-if="enableSubmit" type="primary" @click="onSubmit" class="el-button__metadata">Submit</el-button>
-            <el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__metadata">Submit</el-button>
+            <el-button type="info" class="el-button__help_metadata" @click="helpDialog = true" icon="el-icon-question"></el-button>
+            <el-button v-if="enableSubmit" type="primary" @click="onSubmit" class="el-button__submit_metadata">Submit</el-button>
+            <el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__submit_metadata">Submit</el-button>
           </div>
         </div>
 
@@ -107,7 +114,8 @@
        validationErrors: [],
        isSubmitting: false,
        uploadedUuid: null,
-       features: config.features
+       features: config.features,
+	     helpDialog: false
      }
    },
    components: {
@@ -277,14 +285,24 @@
 
   .md-editor-submit {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex-direction: row;
+    flex: 1;
+    justify-content: space-between;
+    padding: 5px 0;
   }
 
-  .el-button__metadata {
-    margin: auto 0;
-    padding: 20px 20px;
+  .md-editor-submit > button {
+    flex: 1;
+    margin: auto 5px;
     font-size: 150%;
+  }
+
+  .el-button__submit_metadata {
+    padding: 20px;
+  }
+
+  .el-button__help_metadata {
+    padding: 20px 0;
   }
 
   .fine-uploader-wrapper {
