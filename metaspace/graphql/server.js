@@ -67,7 +67,6 @@ async function createHttpServerAsync(config) {
   const apollo = new ApolloServer({
     schema: executableSchema,
     context: ({req}) => {
-      // if (!req.user) throw new UserError('You must be logged in');
       return {
         user: req.user.user,
         connection

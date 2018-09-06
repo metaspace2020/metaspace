@@ -22,64 +22,6 @@ const RESOL_POWER_PARAMS = {
     '1000K': {sigma: 0.00017331000892, fwhm: 0.000408113883008, pts_per_mz: 28850},
 };
 
-// TODO: move config generation to engine
-function addProcessingConfig(ds) {
-  const polarity_dict = {'Positive': '+', 'Negative': '-'},
-        polarity = polarity_dict[ds.metadata['MS_Analysis']['Polarity']],
-        instrument = ds.metadata['MS_Analysis']['Analyzer'],
-        rp = ds.metadata['MS_Analysis']['Detector_Resolving_Power'],
-        rp_mz = parseFloat(rp['mz']),
-        rp_resolution = parseFloat(rp['Resolving_Power']);
-
-  let rp200, params;
-
-  if (instrument === 'FTICR')
-    rp200 = rp_resolution * rp_mz / 200.0;
-  else if (instrument === 'Orbitrap')
-    rp200 = rp_resolution * Math.pow(rp_mz / 200.0,  0.5);
-  else
-    rp200 = rp_resolution;
-
-  if (rp200 < 85000)       params = RESOL_POWER_PARAMS['70K'];
-  else if (rp200 < 120000) params = RESOL_POWER_PARAMS['100K'];
-  else if (rp200 < 195000) params = RESOL_POWER_PARAMS['140K'];
-  else if (rp200 < 265000) params = RESOL_POWER_PARAMS['250K'];
-  else if (rp200 < 390000) params = RESOL_POWER_PARAMS['280K'];
-  else if (rp200 < 625000) params = RESOL_POWER_PARAMS['500K'];
-  else if (rp200 < 875000) params = RESOL_POWER_PARAMS['750K'];
-  else params = RESOL_POWER_PARAMS['1000K'];
-
-  const molDBs = ds.molDBs;
-  for (let defaultMolDBName of config.defaults.moldb_names) {
-    if (molDBs.indexOf(defaultMolDBName) < 0)
-      molDBs.push(defaultMolDBName);
-  }
-  let adducts = config.defaults.adducts[polarity];
-  if (Array.isArray(ds.adducts)) {
-    if (ds.adducts.length > 0)
-      adducts = ds.adducts;
-  }
-
-  ds.config = {
-    "databases": molDBs,
-    "isotope_generation": {
-      "adducts": adducts,
-      "charge": {
-        "polarity": polarity,
-        "n_charges": 1
-      },
-      "isocalc_sigma": Number(params['sigma'].toFixed(6)),
-      "isocalc_pts_per_mz": params['pts_per_mz']
-    },
-    "image_generation": {
-      "ppm": 3,
-      "nlevels": 30,
-      "q": 99,
-      "do_preprocessing": false
-    }
-  };
-}
-
 function metadataChangeSlackNotify(user, datasetId, oldMetadata, newMetadata) {
   const delta = jsondiffpatch.diff(oldMetadata, newMetadata),
     diff = jsondiffpatch.formatters.jsonpatch.format(delta);
@@ -187,22 +129,7 @@ async function assertUserCanViewDataset(datasetId, user) {
   }
 }
 
-function assertUserCanEditDataset(datasetId, user) {
-  return db.select().from('dataset').where('id', '=', datasetId)
-    .then(records => {
-      if (records.length === 0)
-        throw new UserError(`No dataset with specified id: ${datasetId}`);
-
-      if (user == null
-          || !(user.role === 'admin'
-               || user.email === records[0].metadata.Submitted_By.Submitter.Email)) {
-        throw new UserError(`You don't have permissions to edit the dataset: ${datasetId}`);
-      }
-    });
-}
-
-async function fetchDS({id, name}) {
-  // TODO Lachlan: Refactor this so that security is enforced by default
+async function fetchEngineDS({id, name}) {
   let records;
   if (id !== undefined)
     records = await db.select().from('dataset').where('id', '=', id);
@@ -212,7 +139,7 @@ async function fetchDS({id, name}) {
     throw new UserError(`'id' or 'name' must be provided`);
 
   if (records.length === 0)
-    return undefined;
+    throw new UserError(`DS '${id}' does not exist`);
   else if (records.length > 1)
     throw new UserError(`More than one dataset found: '${id}' '${name}'`);
 
@@ -249,15 +176,13 @@ async function wait(ms) {
 }
 
 module.exports = {
-  addProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
   canUserViewEsDataset,
   canUserViewPgDataset,
   pgDatasetsViewableByUser,
   assertUserCanViewDataset,
-  assertUserCanEditDataset,
-  fetchDS,
+  fetchEngineDS,
   fetchMolecularDatabases,
   wait,
   config,

@@ -327,8 +327,21 @@ const Resolvers = {
     metadataType(ds) { return dsField(ds, 'metadataType'); },
 
     submitter(ds) {
-      return _.get(ds._source.ds_meta, 'Submitted_By.Submitter');
-      // TODO: return ds._source.ds_submitter;
+      return {
+        id: ds._source.ds_submitter_id,
+        name: ds._source.ds_submitter_name,
+        email: ds._source.ds_submitter_email,
+      };
+    },
+
+    group(ds) {
+      if (ds._source.ds_group_id) {
+        return {
+          id: ds._source.ds_group_id,
+          name: ds._source.ds_group_name,
+          shortName: ds._source.ds_group_short_name,
+        }
+      };
     },
 
     principalInvestigator(ds) {
@@ -507,8 +520,8 @@ const Resolvers = {
       return DSMutation.create(args, context);
     },
 
-    updateDataset: (_, args, {user}) => {
-      return DSMutation.update(args, user);
+    updateDataset: (_, args, context) => {
+      return DSMutation.update(args, context);
     },
 
     deleteDataset: (_, args, {user}) => {
