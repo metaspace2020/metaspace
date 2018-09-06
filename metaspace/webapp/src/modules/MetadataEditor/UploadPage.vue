@@ -4,7 +4,8 @@
       :visible.sync="helpDialog"
       :lock-scroll="false"
       append-to-body>
-      <embed src="http://project.metaspace2020.eu/imzml" style="width:800px; height: 800px;">
+      <embed :src="helpLink"
+             style="width:800px; height: 800px;">
     </el-dialog>
     <div class="upload-page-wrapper">
       <div v-if="!enableUploads">
@@ -115,7 +116,8 @@
        isSubmitting: false,
        uploadedUuid: null,
        features: config.features,
-	     helpDialog: false
+	     helpDialog: false,
+       helpLink: "https://docs.google.com/document/d/1gKlhxWlY0WTZn7uLIcUxfRJGQVYEwFCRXfVZqTbvhA0/edit?usp=sharing"
      }
    },
    components: {
