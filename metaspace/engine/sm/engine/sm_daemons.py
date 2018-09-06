@@ -67,7 +67,7 @@ class SMDaemonManager(object):
             yield job_id, MolecularDB(id=mol_db_id).name
 
     def index(self, ds):
-        """ Reindex all dataset results """
+        """ Re-index all search results for the dataset """
         self.es.delete_ds(ds.id)
 
         for job_id, mol_db_name in self._finished_job_moldbs(ds.id):
@@ -78,6 +78,9 @@ class SMDaemonManager(object):
                                      iso_gen_config=ds.config['isotope_generation'])
                 isocalc = IsocalcWrapper(ds.config['isotope_generation'])
                 self.es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
+
+    def update(self, ds, fields):
+        self.es.update(ds.id, fields)
 
     def _del_iso_images(self, ds):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
@@ -212,7 +215,7 @@ class SMAnnotateDaemon(object):
         upd_msg = {
             'ds_id': msg['ds_id'],
             'ds_name': msg['ds_name'],
-            'action': 'update'
+            'action': 'index'
         }
         self._upd_queue_pub.publish(msg=upd_msg, priority=2)
 
@@ -278,8 +281,10 @@ class SMUpdateDaemon(object):
         self.logger.info(f' SM update daemon received a message: {msg}')
         self._manager.post_to_slack('new', f" [v] New {msg['action']} message: {json.dumps(msg)}")
 
-        if msg['action'] == 'update':
+        if msg['action'] == 'index':
             self._manager.index(ds=ds)
+        if msg['action'] == 'update':
+            self._manager.update(ds, msg['fields'])
         elif msg['action'] == 'delete':
             self._manager.delete(ds=ds)
         else:
