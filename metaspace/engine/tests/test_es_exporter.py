@@ -35,7 +35,9 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
                 'ds_last_finished': datetime.strptime(last_finished, '%Y-%m-%dT%H:%M:%S'),
                 'ds_is_public': True,
                 'ds_ion_img_storage': 'fs',
-                'ds_acq_geometry': {}
+                'ds_acq_geometry': {},
+                'ds_submitter': 'user_id',
+                'ds_group': 'group_id',
             }]
         elif sql == ANNOTATIONS_SEL:
             return [{
@@ -70,7 +72,7 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
                 'polarity': '+'
             }]
         else:
-            logging.getLogger('engine').error('Wrong db_sel_side_effect arguments: ', args)
+            logging.getLogger('engine').error(f'Wrong db_sel_side_effect arguments: {params}')
 
     db_mock = MagicMock(spec=DB)
     db_mock.select_with_fields.side_effect = db_sel_side_effect
@@ -104,7 +106,9 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
                                           {'level': 20, 'n': 2}, {'level': 50, 'n': 2}]}],
         'ds_is_public': True,
         'ds_acq_geometry': {},
-        'ds_ion_img_storage': 'fs'
+        'ds_ion_img_storage': 'fs',
+        'ds_submitter': 'user_id',
+        'ds_group': 'group_id',
     }
     ann_1_d = es_dsl_search.filter('term', sf='H2O').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_1_d == {
@@ -115,7 +119,8 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 100., 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
         'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
-        'ds_ion_img_storage': 'fs', 'ds_is_public': True
+        'ds_ion_img_storage': 'fs', 'ds_is_public': True,
+        'ds_submitter': 'user_id', 'ds_group': 'group_id',
     }
     ann_2_d = es_dsl_search.filter('term', sf='Au').execute().to_dict()['hits']['hits'][0]['_source']
     assert ann_2_d == {
@@ -126,7 +131,8 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
         'ion_add_pol': '[M+H]+', 'comp_names': ['mol_name'], 'db_name': 'db_name', 'mz': 10., 'ds_meta': {},
         'comp_ids': ['mol_id'], 'ds_config': 'ds_config', 'ds_input_path': 'ds_input_path', 'ds_id': ds_id,
         'ds_upload_dt': upload_dt, 'ds_last_finished': last_finished,
-        'ds_ion_img_storage': 'fs', 'ds_is_public': True
+        'ds_ion_img_storage': 'fs', 'ds_is_public': True,
+        'ds_submitter': 'user_id', 'ds_group': 'group_id',
     }
 
 
@@ -205,6 +211,53 @@ def test_delete_ds__completely(es, sm_index, sm_config):
     assert es.count(index=index, doc_type='annotation', body=body)['count'] == 1
     body['query']['bool']['filter'] = [{'term': {'ds_id': 'dataset1'}}, {'term': {'_type': 'dataset'}}]
     assert es.count(index=index, doc_type='dataset', body=body)['count'] == 0
+
+
+def test_update_ds_works_for_all_fields(es, sm_index, es_dsl_search, sm_config):
+    update = {
+        'ds_name': 'new_ds_name',
+        'ds_submitter': 'new_ds_submitter',
+        'ds_group': 'new_ds_group',
+        'ds_projects': ['proj1', 'proj2'],
+        'ds_is_public': True
+    }
+
+    index = sm_config['elasticsearch']['index']
+    es.create(
+        index=index, doc_type='annotation', id='id1',
+        body={
+            'ds_id': 'dataset1',
+            'ds_name': 'ds_name',
+            'ds_submitter': 'ds_submitter',
+            'ds_group': 'ds_group',
+            'ds_projects': [],
+            'ds_is_public': False
+        })
+    es.create(
+        index=index, doc_type='dataset', id='dataset1',
+        body={
+            'ds_id': 'dataset1',
+            'ds_name': 'ds_name',
+            'ds_submitter': 'ds_submitter',
+            'ds_group': 'ds_group',
+            'ds_projects': [],
+            'ds_is_public': False
+        })
+    wait_for_es(sec=1)
+
+    db_mock = MagicMock(spec=DB)
+
+    es_exporter = ESExporter(db_mock)
+    es_exporter.update('dataset1', update)
+    wait_for_es(sec=1)
+
+    ds_doc = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']
+    for k, v in update.items():
+        assert v == ds_doc[k]
+
+    ann_doc = es_dsl_search.filter('term', _type='annotation').execute().to_dict()['hits']['hits'][0]['_source']
+    for k, v in update.items():
+        assert v == ann_doc[k]
 
 
 def test_rename_index_works(test_db, sm_config):
