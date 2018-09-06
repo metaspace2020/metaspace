@@ -71,33 +71,47 @@ def _create_dataset_manager(db):
 
 @post('/v1/datasets/add')
 def add_ds():
+    """
+    Request params: {
+        input {
+            id?
+            name
+            input_path
+            upload_dt
+            metadata
+            is_public
+            mol_dbs
+            adducts
+        }
+        priority
+        force
+        del_first
+        email
+    }
+    """
     ds_id = None
     try:
         params = _json_params(req)
-        logger.info('Received ADD request: %s', params)
-        now = datetime.now()
-        ds_id = params.get('id', None) or now.strftime("%Y-%m-%d_%Hh%Mm%Ss")
-        ds = Dataset(ds_id,
-                     params.get('name', None),
-                     params.get('input_path'),
-                     params.get('upload_dt', now.isoformat()),
-                     params.get('metadata', None),
-                     params.get('config'),
-                     is_public=params.get('is_public'),
-                     mol_dbs=params.get('mol_dbs'),
-                     adducts=params.get('adducts'))
-        priority = params.get('priority', DatasetActionPriority.DEFAULT)
-
-        db = _create_db_conn()
-        ds_man = _create_dataset_manager(db)
-        ds_man.add(ds, del_first=params.get('del_first', False),
-                   force=params.get('force', False),
-                   email=params.get('email', None))
-        db.close()
-        return {
-            'status': OK['status'],
-            'ds_id': ds_id
-        }
+        logger.info(f'Received ADD request: {params}')
+        ds_input = params.get('input', None)
+        if not ds_input:
+            msg = 'No input to create a dataset'
+            logger.info(msg)
+            raise Exception(msg)
+        else:
+            # priority = params.get('priority', DatasetActionPriority.DEFAULT)
+            db = _create_db_conn()
+            ds_man = _create_dataset_manager(db)
+            ds_man.add(ds_input,
+                       del_first=params.get('del_first', False),
+                       force=params.get('force', False),
+                       email=params.get('email', None),
+                       priority=params.get('priority', DatasetActionPriority.DEFAULT))
+            db.close()
+            return {
+                'status': OK['status'],
+                'ds_id': ds_id
+            }
     except DSIsBusy as e:
         logger.warning(e.message)
         resp.status = ERR_DS_BUSY['status_code']
@@ -159,15 +173,28 @@ def sm_modify_dataset(request_name):
 @post('/v1/datasets/<ds_id>/update')
 @sm_modify_dataset('UPDATE')
 def update_ds(ds_man, ds, params):
-    ds.name = params.get('name', ds.name)
-    ds.input_path = params.get('input_path', ds.input_path)
-    ds.metadata = params.get('metadata', ds.metadata)
-    ds.upload_dt = params.get('upload_dt', ds.upload_dt)
-    ds.config = params.get('config', ds.config)
-    ds.is_public = params.get('is_public', ds.is_public)
-    ds.mol_dbs = params.get('mol_dbs', ds.mol_dbs)
-    force = params.get('force', False)
-    ds_man.update(ds, force=force)
+    """
+    :param ds_man: rest.SMapiDatasetManager
+    :param ds: engine.Dataset
+    :param params: {
+        name
+        input_path
+        upload_dt
+        metadata
+        config
+        is_public
+        submitter_id
+        group_id
+    }
+    :return:
+    """
+    update_dict = params.get('update', None)
+    if not update_dict:
+        logger.info(f'Nothing to update for "{ds.id}"')
+    else:
+        force = params.get('force', False)
+        priority = params.get('priority', DatasetActionPriority.STANDARD)
+        ds_man.update(ds, update_dict, force=force, priority=priority)
 
 
 @post('/v1/datasets/<ds_id>/delete')
