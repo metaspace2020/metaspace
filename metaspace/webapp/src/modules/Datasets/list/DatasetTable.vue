@@ -58,7 +58,6 @@
    name: 'dataset-table',
    data () {
      return {
-       currentPage: 0,
        recordsPerPage: 10,
        csvChunkSize: 1000,
        categories: processingStages,

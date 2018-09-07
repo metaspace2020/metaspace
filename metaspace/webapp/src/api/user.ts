@@ -134,3 +134,13 @@ export const currentUserIdQuery =
   currentUser { id }
 }
 `;
+
+export interface CurrentUserRoleResult {
+  id: string;
+}
+
+export const currentUserRoleQuery =
+  gql`query {
+  currentUser { id role }
+}
+`;

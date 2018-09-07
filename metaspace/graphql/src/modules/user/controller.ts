@@ -22,14 +22,14 @@ const hasAccess = (user: UserModel, userId?: string) => {
 
 export const Resolvers = {
   User: {
-    async primaryGroup(user: UserModel, _: any, {connection}: any) {
-      return await connection.getRepository(UserGroupModel).findOneOrFail({
+    async primaryGroup(user: UserModel, _: any, {connection}: any): Promise<UserGroupModel|null> {
+      return await connection.getRepository(UserGroupModel).findOne({
         where: { userId: user.id, primary: true },
         relations: ['group']
-      });
+      }) || null;
     },
 
-    async groups(user: UserModel, _: any, {connection}: any) {
+    async groups(user: UserModel, _: any, {connection}: any): Promise<UserGroupModel[]> {
       return await connection.getRepository(UserGroupModel).find({
         where: { userId: user.id },
         relations: ['group']
@@ -38,7 +38,7 @@ export const Resolvers = {
   },
 
   Query: {
-    async user(_: any, {userId}: any, {user, connection}: any): Promise<User|undefined> {
+    async user(_: any, {userId}: any, {user, connection}: any): Promise<User|null> {
       await hasAccess(user, userId);
 
       if (userId) {
@@ -46,17 +46,19 @@ export const Resolvers = {
           where: { 'id': userId }
         });
       }
+      return null;
     },
 
-    async currentUser(_: any, {}: any, {user, connection}: any): Promise<User|undefined> {
+    async currentUser(_: any, {}: any, {user, connection}: any): Promise<User|null> {
       if (user) {
         return await connection.getRepository(UserModel).findOneOrFail({
           where: { 'id': user.id }
         });
       }
+      return null;
     },
 
-    async allUsers(_: any, {query}: any, {user, connection}: any): Promise<User[]|undefined> {
+    async allUsers(_: any, {query}: any, {user, connection}: any): Promise<User[]> {
       hasAccess(user);
 
       return await connection.getRepository(UserModel).find({
@@ -66,7 +68,7 @@ export const Resolvers = {
   },
 
   Mutation: {
-    async updateUser(_: any, {userId, update}: any, {user, connection}: any): Promise<User|undefined> {
+    async updateUser(_: any, {userId, update}: any, {user, connection}: any): Promise<User> {
       hasAccess(user, userId);
 
       if (update.role && user.role !== 'admin') {
@@ -85,7 +87,7 @@ export const Resolvers = {
       return userObj;
     },
 
-    async deleteUser(_: any, {userId, deleteDatasets}: any, {user, connection}: any) {
+    async deleteUser(_: any, {userId, deleteDatasets}: any, {user, connection}: any): Promise<Boolean> {
       hasAccess(user, userId);
 
       if (deleteDatasets) {

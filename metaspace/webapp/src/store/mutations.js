@@ -88,7 +88,6 @@ export default {
 
   setUser(state, user) {
     state.authenticated = user != null && user.role !== 'anonymous';
-    state.user = user;
   },
 
   startTour(state, tourDescription) {
@@ -114,7 +113,7 @@ export default {
   },
 
   setCurrentPage(state, page) {
-    let query = Object.assign({}, state.route.query, {page: page + 1});
+    let query = Object.assign({}, state.route.query, {page});
     router.replace({query});
   },
 

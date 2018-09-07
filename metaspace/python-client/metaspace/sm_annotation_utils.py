@@ -22,8 +22,8 @@ def _extract_data(res):
 
 
 DEFAULT_CONFIG = {
-    'graphql_url': 'http://metaspace2020.eu/graphql',
-    'moldb_url': 'http://metaspace2020.eu/mol_db/v1',
+    'graphql_url': 'http://staging.metaspace2020.eu/graphql',
+    'moldb_url': 'http://staging.metaspace2020.eu/mol_db/v1',
     'jwt': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNRVRBU1BBQ0UyMDIwIiwicm9sZSI6ImFub255bW91cyJ9.Hl0h6crcHLb-SPm7nomXkQco5l2iAO6D1bwdjmOaFXM'
 }
 
@@ -68,14 +68,36 @@ class GraphQLClient(object):
     DATASET_FIELDS = """
         id
         name
+        uploadDT
         institution
         submitter {
           name
-          surname
+        }
+        group {
+          id
+          name
+          shortName
+          urlSlug
+          members {
+            user {
+              name
+            }
+            group {
+              id
+              name
+              shortName
+            }
+            role
+            numDatasets
+          }
         }
         principalInvestigator {
           name
-          surname
+        }
+        projects {
+            name
+            isPublic
+            urlSlug
         }
         polarity
         ionisationSource
@@ -91,6 +113,8 @@ class GraphQLClient(object):
         configJson
         metadataJson
         isPublic
+        molDBs
+        adducts
         acquisitionGeometry
         metadataType
         status

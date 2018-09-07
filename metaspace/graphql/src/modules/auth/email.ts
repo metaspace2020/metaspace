@@ -12,17 +12,21 @@ AWS.config.update({
 const ses = new AWS.SES();
 
 const sendEmail = (recipient: string, subject: string, text: string) => {
-  ses.sendEmail({
-    Source: 'contact@metaspace2020.eu',
-    Destination: { ToAddresses: [recipient] },
-    Message: {
-      Subject: { Data: subject },
-      Body: { Text: { Data: text } }
-    }
-  }, (err, data) => {
-    if (err) logger.error(`Failed to sent email to ${recipient}: ${err}`);
-    else logger.log(`Sent email to ${recipient}`);
-  });
+  if (process.env.NODE_ENV === 'development' && !config.aws.aws_access_key_id && !config.aws.aws_secret_access_key) {
+    console.log(`Email not set up. Logging to console.\nTo: ${recipient}\nSubject: ${subject}\n${text}`)
+  } else {
+    ses.sendEmail({
+      Source: 'contact@metaspace2020.eu',
+      Destination: { ToAddresses: [recipient] },
+      Message: {
+        Subject: { Data: subject },
+        Body: { Text: { Data: text } }
+      }
+    }, (err, data) => {
+      if (err) logger.error(`Failed to sent email to ${recipient}: ${err}`);
+      else logger.log(`Sent email to ${recipient}`);
+    });
+  }
 };
 
 export const sendVerificationEmail = (email: string, link: string) => {

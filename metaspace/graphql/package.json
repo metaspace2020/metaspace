@@ -60,7 +60,7 @@
     "reflect-metadata": "^0.1.10",
     "s3": "^4.4.0",
     "sprintf-js": "^1.0.3",
-    "subscriptions-transport-ws": "^0.7.3",
+    "subscriptions-transport-ws": "^0.9.14",
     "ts-node": "^6.2.0",
     "typeorm": "0.2.7",
     "typescript": "^2.9.2",
@@ -90,7 +90,7 @@
       "<rootDir>/tests"
     ],
     "transform": {
-      "^.+\\.(ts|tsx)?$": "ts-jest"
+      "^.+\\.(js|ts|tsx)?$": "ts-jest"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(j|t)sx?$",
     "moduleFileExtensions": [

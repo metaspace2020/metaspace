@@ -78,6 +78,7 @@
   import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
   import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
+  import reportError from '../../lib/reportError';
 
   type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';
 
@@ -193,25 +194,30 @@
     }
 
     async handleAcceptTransferDatasets(selectedDatasetIds: string[]) {
-      if (this.isInvited) {
-        await this.$apollo.mutate({
-          mutation: acceptGroupInvitationMutation,
-          variables: { groupId: this.groupId },
-        });
-      } else {
-        await this.$apollo.mutate({
-          mutation: requestAccessToGroupMutation,
-          variables: { groupId: this.groupId },
-        });
+      try {
+        if (this.isInvited) {
+          await this.$apollo.mutate({
+            mutation: acceptGroupInvitationMutation,
+            variables: { groupId: this.groupId },
+          });
+        } else {
+          await this.$apollo.mutate({
+            mutation: requestAccessToGroupMutation,
+            variables: { groupId: this.groupId },
+          });
+        }
+        if (selectedDatasetIds.length > 0) {
+          await this.$apollo.mutate({
+            mutation: importDatasetsIntoGroupMutation,
+            variables: { groupId: this.groupId, datasetIds: selectedDatasetIds },
+          });
+        }
+        await this.$apollo.queries.data.refetch();
+      } catch (err) {
+        reportError(err);
+      } finally {
+        this.showTransferDatasetsDialog = false;
       }
-      if (selectedDatasetIds.length > 0) {
-        await this.$apollo.mutate({
-          mutation: importDatasetsIntoGroupMutation,
-          variables: { groupId: this.groupId, datasetIds: selectedDatasetIds },
-        });
-      }
-      await this.$apollo.queries.data.refetch();
-      this.showTransferDatasetsDialog = false;
     }
 
     handleCloseTransferDatasetsDialog() {

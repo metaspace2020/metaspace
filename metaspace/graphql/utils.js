@@ -62,7 +62,7 @@ const defaultDBConfig = () => {
   };
 };
 
-let db;
+let db; // Don't initialize immediately as tests may need to set up the DB first.
 
 const initDBConnection = (config = defaultDBConfig) => {
   db = Knex({
@@ -162,7 +162,8 @@ async function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-module.exports = {
+export {
+  addProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
   canUserViewEsDataset,
@@ -175,5 +176,6 @@ module.exports = {
   config,
   logger,
   pubsub,
-  initDBConnection
+  db,
+  initDBConnection,
 };

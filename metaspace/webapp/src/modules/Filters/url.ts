@@ -43,7 +43,7 @@ const PATH_TO_LEVEL: Record<string, Level> = {
 
 export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {
   const level = path != null ? PATH_TO_LEVEL[path.toLowerCase()] : null;
-  const defaultFilter = level != null && filterLists != null ? getDefaultFilter(level, filterLists) : null;
+  const defaultFilter = level != null ? getDefaultFilter(level, filterLists) : null;
 
   let q: Dictionary<string> = {};
   let key: FilterKey;
@@ -160,7 +160,7 @@ export function decodeSettings(location: Location): any {
 
   let settings = {
     table: {
-      currentPage: 0,
+      currentPage: 1,
       order: {
         by: 'ORDER_BY_MSM',
         dir: 'DESCENDING'
@@ -178,7 +178,7 @@ export function decodeSettings(location: Location): any {
   };
 
   if (query.page)
-    settings.table.currentPage = parseInt(query.page) - 1;
+    settings.table.currentPage = parseInt(query.page);
   if (query.sort)
     settings.table.order = decodeSortOrder(query.sort);
   if (query.cmap)

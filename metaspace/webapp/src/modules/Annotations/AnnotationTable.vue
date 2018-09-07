@@ -135,8 +135,7 @@
                        :page-size="recordsPerPage"
                        @size-change="onPageSizeChange"
                        :page-sizes="pageSizes"
-                       :current-page="currentPage + 1"
-                       @current-change="onPageChange"
+                       :current-page.sync="currentPage"
                        :layout="paginationLayout">
         </el-pagination>
 
@@ -261,8 +260,13 @@
        };
      },
 
-     currentPage () {
-       return this.$store.getters.settings.table.currentPage;
+     currentPage: {
+       get() {
+         return this.$store.getters.settings.table.currentPage;
+       },
+       set(page) {
+         this.$store.commit('setCurrentPage', page);
+       }
      },
 
      paginationLayout() {
@@ -340,7 +344,7 @@
          query: ftsQuery,
          orderBy: this.orderBy,
          sortingOrder: this.sortingOrder,
-         offset: this.currentPage * this.recordsPerPage,
+         offset: (this.currentPage - 1) * this.recordsPerPage,
          limit: this.recordsPerPage
        };
      },
@@ -385,14 +389,6 @@
        });
      },
 
-     setPage (page) {
-       this.$store.commit('setCurrentPage', page);
-     },
-
-     onPageChange (page) {
-       this.setPage(page - 1);
-     },
-
      onCurrentRowChange (row) {
        if (row)
          this.$store.commit('setAnnotation', row);
@@ -419,18 +415,18 @@
        const curIdx = this.annotations.indexOf(curRow);
 
        if (action == 'up' && curIdx == 0) {
-         if (this.currentPage == 0)
+         if (this.currentPage === 1)
            return;
          this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, data.length - 1)); };
-         this.setPage(this.currentPage - 1);
+         this.currentPage -= 1;
          return;
        }
 
        if (action == 'down' && curIdx == this.annotations.length - 1) {
-         if (this.currentPage == this.numberOfPages - 1)
+         if (this.currentPage === this.numberOfPages)
            return;
          this._onDataArrival = data => { Vue.nextTick(() => this.setRow(data, 0)); };
-         this.setPage(this.currentPage + 1);
+         this.currentPage += 1;
          return;
        }
 

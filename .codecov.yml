@@ -1,0 +1,22 @@
+codecov:
+  notify:
+    require_ci_to_pass: yes
+
+comment: false
+
+coverage:
+  precision: 2
+  round: down
+
+  status:
+    project:
+      engine:
+        range: 70...100
+        threshold: 0.2
+        flags: engine
+      webapp:
+        range: 40...100
+        threshold: 0.2
+        flags: webapp
+    patch: no
+    changes: no

@@ -186,9 +186,9 @@ describe('Database operations with user', () => {
   test('verify email', async () => {
     let {user, cred} = await createUserCredentialsEntities(typeormConn);
 
-    const userId = await verifyEmail('admin@localhost', 'abc');
+    const verifiedUser = await verifyEmail('admin@localhost', 'abc');
 
-    const updUser = (await findUserById(userId!)) as User;
+    const updUser = (await findUserById(verifiedUser!.id)) as User;
     expect(updUser.credentials).toMatchObject({
       emailVerified: true,
       emailVerificationToken: null,
