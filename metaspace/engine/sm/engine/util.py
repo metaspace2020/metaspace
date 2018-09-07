@@ -8,8 +8,6 @@ from pathlib import Path
 import re
 from fnmatch import translate
 
-from sm.engine.dataset import Dataset
-
 
 def proj_root():
     return os.getcwd()
@@ -135,7 +133,9 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
                   if re.match(regexp, str(f))][0]
     ms_file_type_config = SMConfig.get_ms_file_handler(str(imzml_path))
     img_storage_type = ms_file_type_config['img_storage_type']
-    return Dataset(ds_id, ds_name, str(ds_input_path), datetime.now(), metadata, ds_config,
+
+    from sm.engine.dataset import Dataset
+    return Dataset(ds_id, ds_name, str(ds_input_path), datetime.now(), metadata,
                    is_public=True,
                    mol_dbs=ds_config['databases'],
                    adducts=ds_config['isotope_generation']['adducts'],

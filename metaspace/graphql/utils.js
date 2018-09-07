@@ -9,19 +9,6 @@ const slack = require('node-slack'),
 
 const config = require('config');
 
-
-const RESOL_POWER_PARAMS = {
-    '70K': {sigma: 0.00247585727028, fwhm: 0.00583019832869, pts_per_mz: 2019},
-    '100K': {sigma: 0.0017331000892, fwhm: 0.00408113883008, pts_per_mz: 2885},
-    '140K': {sigma: 0.00123792863514, fwhm: 0.00291509916435, pts_per_mz: 4039},
-    '200K': {sigma: 0.000866550044598, fwhm: 0.00204056941504, pts_per_mz: 5770},
-    '250K': {sigma: 0.000693240035678, fwhm: 0.00163245553203, pts_per_mz: 7212},
-    '280K': {sigma: 0.00061896431757, fwhm: 0.00145754958217, pts_per_mz: 8078},
-    '500K': {sigma: 0.000346620017839, fwhm: 0.000816227766017, pts_per_mz: 14425},
-    '750K': {sigma: 0.000231080011893, fwhm: 0.000544151844011, pts_per_mz: 21637},
-    '1000K': {sigma: 0.00017331000892, fwhm: 0.000408113883008, pts_per_mz: 28850},
-};
-
 function metadataChangeSlackNotify(user, datasetId, oldMetadata, newMetadata) {
   const delta = jsondiffpatch.diff(oldMetadata, newMetadata),
     diff = jsondiffpatch.formatters.jsonpatch.format(delta);

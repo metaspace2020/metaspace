@@ -215,11 +215,11 @@ def test_delete_ds__completely(es, sm_index, sm_config):
 
 def test_update_ds_works_for_all_fields(es, sm_index, es_dsl_search, sm_config):
     update = {
-        'ds_name': 'new_ds_name',
-        'ds_submitter': 'new_ds_submitter',
-        'ds_group': 'new_ds_group',
-        'ds_projects': ['proj1', 'proj2'],
-        'ds_is_public': True
+        'name': 'new_ds_name',
+        'submitter_id': 'new_ds_submitter_id',
+        'group_id': 'new_ds_group_id',
+        'projects_ids': ['proj_id1', 'proj_id2'],
+        'is_public': True
     }
 
     index = sm_config['elasticsearch']['index']
@@ -228,9 +228,9 @@ def test_update_ds_works_for_all_fields(es, sm_index, es_dsl_search, sm_config):
         body={
             'ds_id': 'dataset1',
             'ds_name': 'ds_name',
-            'ds_submitter': 'ds_submitter',
-            'ds_group': 'ds_group',
-            'ds_projects': [],
+            'ds_submitter_id': 'ds_submitter',
+            'ds_group_id': 'ds_group_id',
+            'ds_project_ids': [],
             'ds_is_public': False
         })
     es.create(
@@ -238,26 +238,37 @@ def test_update_ds_works_for_all_fields(es, sm_index, es_dsl_search, sm_config):
         body={
             'ds_id': 'dataset1',
             'ds_name': 'ds_name',
-            'ds_submitter': 'ds_submitter',
-            'ds_group': 'ds_group',
-            'ds_projects': [],
+            'ds_submitter_id': 'ds_submitter_id',
+            'ds_group_id': 'ds_group_id',
+            'ds_projects_ids': [],
             'ds_is_public': False
         })
     wait_for_es(sec=1)
 
     db_mock = MagicMock(spec=DB)
+    db_mock.select_with_fields.return_value = [{
+        'ds_name': 'new_ds_name',
+        'ds_submitter_id': 'new_ds_submitter_id',
+        'ds_submitter_name': 'submitter_name',
+        'ds_submitter_email': 'submitter_email',
+        'ds_group_id': 'new_ds_group_id',
+        'ds_group_name': 'group_name',
+        'ds_group_short_name': 'group_short_name',
+        'ds_projects_ids': ['proj_id1', 'proj_id2'],
+        'ds_is_public': True
+    }]
 
     es_exporter = ESExporter(db_mock)
-    es_exporter.update('dataset1', update)
+    es_exporter.update('dataset1', fields=list(update.keys()))
     wait_for_es(sec=1)
 
     ds_doc = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']
     for k, v in update.items():
-        assert v == ds_doc[k]
+        assert v == ds_doc[f'ds_{k}']
 
     ann_doc = es_dsl_search.filter('term', _type='annotation').execute().to_dict()['hits']['hits'][0]['_source']
     for k, v in update.items():
-        assert v == ann_doc[k]
+        assert v == ann_doc[f'ds_{k}']
 
 
 def test_rename_index_works(test_db, sm_config):

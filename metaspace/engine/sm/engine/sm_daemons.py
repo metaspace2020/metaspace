@@ -57,7 +57,6 @@ class SMDaemonManager(object):
         if del_first:
             self.logger.warning('Deleting all results for dataset: {}'.format(ds.id))
             self._del_iso_images(ds)
-            # self._es.delete_ds(ds.id)
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self.es)
         search_job_factory(img_store=self._img_store).run(ds)
@@ -283,7 +282,7 @@ class SMUpdateDaemon(object):
 
         if msg['action'] == 'index':
             self._manager.index(ds=ds)
-        if msg['action'] == 'update':
+        elif msg['action'] == 'update':
             self._manager.update(ds, msg['fields'])
         elif msg['action'] == 'delete':
             self._manager.delete(ds=ds)
