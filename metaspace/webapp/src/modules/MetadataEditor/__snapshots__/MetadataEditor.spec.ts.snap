@@ -537,7 +537,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               A curated rapeseed database from LC-MS/MS measurements.
                               <mock-el-popover trigger="hover" placement="top">
                                 <div slot-key="default">
-                                  <div class="desc-cite-popover"><i>University of Rennes 1</i></div>
+                                  <div class="desc-cite-popover">
+                                    <i>University of Rennes 1</i>
+                                  </div>
                                 </div>
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>
@@ -620,7 +622,8 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               A database developed at EMBL and used for experimental purposes.
                               <mock-el-popover trigger="hover" placement="top">
                                 <div slot-key="default">
-                                  <div class="desc-cite-popover"><i>EMBL</i>, Development database 1</div>
+                                  <div class="desc-cite-popover">
+                                    <i>EMBL</i>, Development database 1</div>
                                 </div>
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>
@@ -630,7 +633,8 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               A large collection of natural products.
                               <mock-el-popover trigger="hover" placement="top">
                                 <div slot-key="default">
-                                  <div class="desc-cite-popover"><i>EMBL</i>, Development database 2</div>
+                                  <div class="desc-cite-popover">
+                                    <i>EMBL</i>, Development database 2</div>
                                 </div>
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>
