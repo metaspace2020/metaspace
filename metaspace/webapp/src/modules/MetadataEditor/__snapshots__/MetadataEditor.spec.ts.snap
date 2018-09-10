@@ -1,0 +1,725 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MetadataEditor should be able to load an existing dataset: metadata 1`] = `
+Object {
+  "Additional_Information": Object {
+    "Supplementary": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+  },
+  "Data_Type": "Imaging MS",
+  "MS_Analysis": Object {
+    "Analyzer": "none",
+    "Detector_Resolving_Power": Object {
+      "Resolving_Power": 123456,
+      "mz": 123,
+    },
+    "Ionisation_Source": "none",
+    "Polarity": "Positive",
+  },
+  "Sample_Information": Object {
+    "Condition": "Live",
+    "Organism": "Human",
+    "Organism_Part": "Liver",
+    "Sample_Growth_Conditions": "N/A",
+  },
+  "Sample_Preparation": Object {
+    "MALDI_Matrix": "baz",
+    "MALDI_Matrix_Application": "qux",
+    "Sample_Stabilisation": "foo",
+    "Solvent": "quux",
+    "Tissue_Modification": "bar",
+  },
+}
+`;
+
+exports[`MetadataEditor should be able to load an existing dataset: metaspaceOptions 1`] = `
+Object {
+  "adducts": Array [
+    "adducts.0.adduct",
+    "adducts.1.adduct",
+  ],
+  "groupId": "123",
+  "isPublic": true,
+  "molDBs": Array [
+    "molecularDatabases.1.name",
+  ],
+  "name": "dataset.name",
+  "principalInvestigator": Object {
+    "email": "dataset.principalInvestigator.email",
+    "name": "dataset.principalInvestigator.name",
+  },
+  "projectIds": Array [
+    "dataset.projects.0.id",
+    "dataset.projects.1.id",
+  ],
+}
+`;
+
+exports[`MetadataEditor should match snapshot 1`] = `
+<div id="md-editor-container">
+  <div class="el-loading-parent--relative" style="position: relative;">
+    <div id="md-section-list">
+      <div class="metadata-section">
+        <form class="el-form el-form--label-top">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">
+              Sample information
+              <!---->
+            </div>
+          </div>
+          <div class="el-col el-col-18">
+            <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Organism</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Species" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Organism part</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Organ or organism part" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Condition</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. wildtype, diseased" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Sample growth conditions</span>
+                    <!---->
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" placeholder="E.g. intervention, treatment" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="metadata-section">
+        <form class="el-form el-form--label-top">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">
+              Sample preparation
+              <!---->
+            </div>
+          </div>
+          <div class="el-col el-col-18">
+            <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Sample stabilisation</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Preservation method" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Tissue modification</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. chemical modification" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>MALDI matrix</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="none" required="true" placeholder="MALDI matrix, if used" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>MALDI matrix application</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="none" required="true" placeholder="Method of application, if used" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Solvent</span>
+                    <!---->
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="none" placeholder="Solvent used e.g. for DESI or MALDI matrix" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="metadata-section">
+        <form class="el-form el-form--label-top">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">
+              MS analysis
+              <mock-el-popover trigger="hover" placement="top">
+                <div slot-key="default">
+                  <p>METASPACE is optimized for data from high-resolving power MS like FTICR or Orbitrap</p>
+                </div>
+                <div slot-key="reference">
+                  <i class="el-icon-question metadata-help-icon"></i>
+                </div>
+              </mock-el-popover>
+            </div>
+          </div>
+          <div class="el-col el-col-18">
+            <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+              <div class="el-col el-col-4" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Polarity</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-select value="" required="true">
+                      <mock-el-option value="Positive" label="Positive"></mock-el-option>
+                      <mock-el-option value="Negative" label="Negative"></mock-el-option>
+                    </mock-el-select>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Ionisation source</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. MALDI, DESI" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Analyzer</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. FTICR, Orbitrap" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-17" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Detector resolving power</span>
+                    <!---->
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <div class="el-row">
+                      <div class="subfield el-col el-col-12">
+                        <div class="el-form-item is-required el-form-item--medium">
+                          <!---->
+                          <div class="el-form-item__content">
+                            <div class="fw-num el-input-number el-input-number--medium"><span role="button" class="el-input-number__decrease"><i class="el-icon-minus"></i></span><span role="button" class="el-input-number__increase"><i class="el-icon-plus"></i></span>
+                              <div class="el-input el-input--medium">
+                                <!---->
+                                <input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="200" aria-disabled="false">
+                                <!---->
+                                <!---->
+                                <!---->
+                              </div>
+                            </div>
+                            <div class="subfield-label">mz<span style="color: red;">*</span></div>
+                            <!---->
+                            <mock-transition name="el-zoom-in-top"></mock-transition>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="subfield el-col el-col-12">
+                        <div class="el-form-item is-required el-form-item--medium">
+                          <!---->
+                          <div class="el-form-item__content">
+                            <div class="fw-num el-input-number el-input-number--medium"><span role="button" class="el-input-number__decrease"><i class="el-icon-minus"></i></span><span role="button" class="el-input-number__increase"><i class="el-icon-plus"></i></span>
+                              <div class="el-input el-input--medium">
+                                <!---->
+                                <input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="140000" aria-disabled="false">
+                                <!---->
+                                <!---->
+                                <!---->
+                              </div>
+                            </div>
+                            <div class="subfield-label">resolving power<span style="color: red;">*</span></div>
+                            <!---->
+                            <mock-transition name="el-zoom-in-top"></mock-transition>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="metadata-section">
+        <mock-el-dialog custom-class="find-group-dialog">
+          <h2>Find a group</h2>
+          <p>If you are not member of a group, you can request access here and your dataset will be automatically added to the group once your access has been approved.</p>
+          <form class="el-form">
+            <div class="el-form-item">
+              <label class="el-form-item__label">Your group:</label>
+              <div class="el-form-item__content">
+                <div class="el-row">
+                  <mock-el-select filterable="" remote="" remote-method="function () { [native code] }" placeholder="Enter group name"></mock-el-select>
+                </div>
+                <mock-transition name="el-zoom-in-top"></mock-transition>
+              </div>
+            </div>
+          </form>
+          <div class="el-row" style="margin: 15px 0px;">
+            <button type="button" class="el-button el-button--default">
+              <!---->
+              <!----><span>Cancel</span></button>
+            <button disabled="disabled" type="button" class="el-button el-button--primary is-disabled">
+              <!---->
+              <!----><span>Request access
+    </span></button>
+          </div>
+          <div class="el-row">
+            <p>
+              <b>Can't find your group?</b>
+              <a href="mailto:contact@metaspace2020.eu">Contact us</a> to get your team started, or
+              <a href="#" style="cursor: pointer;">fill in your Principal Investigator</a> instead.
+            </p>
+          </div>
+        </mock-el-dialog>
+        <mock-el-dialog append-to-body="" title="Create project" class="dialog">
+          <div class="">
+            <form class="el-form el-form--label-top" size="mini">
+              <div>
+                <div class="el-form-item name is-required">
+                  <label for="name" class="el-form-item__label">Name</label>
+                  <div class="el-form-item__content">
+                    <div class="el-input">
+                      <!---->
+                      <input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+                <div class="el-form-item isPublic">
+                  <!---->
+                  <div class="el-form-item__content">
+                    <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                      </span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+            </form>
+            <div>
+              <h4 style="margin-top: 0px;">
+                Would you like to include any of your previously submitted datasets?
+              </h4>
+              <div>
+                <div class="dataset-checkbox-list">
+                  <div>
+                    <label role="checkbox" class="el-checkbox is-checked" aria-checked="true"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                      </span><span class="el-checkbox__label">
+        allDatasets.0.name
+        <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
+                      <!---->
+                      </span>
+                    </label>
+                  </div>
+                  <div>
+                    <label role="checkbox" class="el-checkbox is-checked" aria-checked="true"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                      <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                      </span><span class="el-checkbox__label">
+        allDatasets.1.name
+        <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
+                      <!---->
+                      </span>
+                    </label>
+                  </div>
+                </div>
+                <div class="select-buttons">
+                  <a href="#">Select none</a> <span> | </span>
+                  <a href="#">Select all</a>
+                </div>
+              </div>
+            </div>
+            <div class="button-bar">
+              <button type="button" class="el-button el-button--default">
+                <!---->
+                <!----><span>Cancel</span></button>
+              <button type="button" class="el-button el-button--primary">
+                <!---->
+                <!----><span>Create project and include 2 datasets</span></button>
+            </div>
+            <mock-transition name="el-loading-fade">
+              <div class="el-loading-mask" style="display: none;">
+                <div class="el-loading-spinner">
+                  <svg viewBox="25 25 50 50" class="circular">
+                    <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
+                  </svg>
+                  <!---->
+                </div>
+              </div>
+            </mock-transition>
+          </div>
+        </mock-el-dialog>
+        <div class="el-row">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">Data management</div>
+          </div>
+          <div class="el-col el-col-18">
+            <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+              <form class="el-form el-form--label-top">
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium">
+                    <label class="el-form-item__label"><span class="field-label"><span>Submitter name</span><span style="color: red;">*</span>
+                      <!---->
+                      </span>
+                    </label>
+                    <div class="el-form-item__content">
+                      <div class="el-input el-input--medium is-disabled">
+                        <!---->
+                        <input type="text" disabled="disabled" autocomplete="off" required="required" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <!---->
+                      </div>
+                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                    </div>
+                  </div>
+                </div>
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium">
+                    <label class="el-form-item__label"><span class="field-label"><span>Group</span><span style="color: red;">*</span>
+                      <!---->
+                      </span>
+                    </label>
+                    <div class="el-form-item__content">
+                      <mock-el-select required="true">
+                        <mock-el-option value="currentUser.groups.0.group.id" label="currentUser.groups.0.group.name"></mock-el-option>
+                        <mock-el-option value="currentUser.groups.1.group.id" label="currentUser.groups.1.group.name"></mock-el-option>
+                        <mock-el-option value="FIND_GROUP" label="Find my group..."></mock-el-option>
+                        <mock-el-option value="NO_GROUP" label="No group (Enter PI instead)"></mock-el-option>
+                      </mock-el-select>
+                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                    </div>
+                  </div>
+                </div>
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium">
+                    <label class="el-form-item__label"><span class="field-label"><span>Projects</span><span style="color: red;">*</span>
+                      <!---->
+                      </span>
+                    </label>
+                    <div class="el-form-item__content">
+                      <mock-el-select value="" required="true" multiple="">
+                        <mock-el-option value="currentUser.projects.0.project.id" label="currentUser.projects.0.project.name"></mock-el-option>
+                        <mock-el-option value="currentUser.projects.1.project.id" label="currentUser.projects.1.project.name"></mock-el-option>
+                        <mock-el-option value="CREATE_PROJECT" label="Create a new project..."></mock-el-option>
+                      </mock-el-select>
+                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        <!---->
+      </div>
+      <div class="metadata-section">
+        <div class="el-row">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">
+              Visibility
+              <mock-el-popover trigger="hover" placement="top">
+                <div slot-key="default">
+                  <div>
+                    <p>
+                      <b>Public:</b> Annotations will be available in the METASPACE public knowledge base, sharable and searchable by the community. The uploaded imzML files are not made public.</p>
+                    <p>
+                      <b>Private:</b> Annotations will be visible to the submitter (and only the submitter) when the submitter is logged in. METASPACE admins can also view these annotations. The uploaded imzML files are also private.</p>
+                  </div>
+                </div>
+                <div slot-key="reference">
+                  <i class="el-icon-question metadata-help-icon"></i>
+                </div>
+              </mock-el-popover>
+            </div>
+          </div>
+          <div class="el-col el-col-18" style="padding: 12px 6px 0px;">
+            <div role="switch" aria-checked="true" class="el-switch is-checked">
+              <input type="checkbox" name="" true-value="true" class="el-switch__input"><span class="el-switch__label el-switch__label--left"><!----><span aria-hidden="true">Private</span></span><span class="el-switch__core" style="width: 40px;"></span><span class="el-switch__label el-switch__label--right is-active"><!----><span>Public</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="metadata-section">
+        <div class="el-row">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">Annotation settings</div>
+          </div>
+          <div class="el-col el-col-18">
+            <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+              <form class="el-form el-form--label-top">
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium">
+                    <label class="el-form-item__label"><span class="field-label"><span>Metabolite database</span><span style="color: red;">*</span>
+                      <mock-el-popover trigger="hover" placement="right">
+                        <div slot-key="default">
+                          <div class="desc-popover">
+                            <p>
+                              Database selection determines which metabolites can be annotated. Many databases are for specific types of sample, please see their respective webpages for details. We show either the version number or a time-stamped date of export. Up to 3 databases
+                              may be selected.
+                              <br>
+                              <b>HMDB-v4</b> is our suggested choice for mammalian datasets.
+                            </p>
+                            <div>
+                              <b>Brassica Napus database (BraChemDB):</b>
+                              A curated rapeseed database from LC-MS/MS measurements.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover"><i>University of Rennes 1</i></div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>
+                                <a href="https://www.ebi.ac.uk/chebi/aboutChebiForward.do">Chemical Entities of Biological Interest (ChEBI)</a>:</b>
+                              ChEBI is a database and ontology of products of nature or synthetic products used to intervene in the processes of living organisms.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover">
+                                    Hastings J, Owen G, Dekker A, Ennis M, Kale N, Muthukrishnan V, Turner S, Swainston N, Mendes P, Steinbeck C. (2016). ChEBI in 2016: Improved services and an expanding collection of metabolites.
+                                    <a href="http://europepmc.org/abstract/MED/26467479">Nucleic Acids Res.</a>
+                                  </div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>
+                                <a href="http://www.hmdb.ca/about">Human Metabolome Database (HMDB)</a>:</b>
+                              Database containing small molecule metabolites known to be in the human body.
+                              <b>HMDB-endogenous</b> is a filtered version of HMDB that contains only molecules labelled in the database as endogenously produced.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover">
+                                    Wishart DS, Feunang YD, Marcu A, Guo AC, Liang K, et al., HMDB 4.0 — The Human Metabolome Database for 2018. Nucleic Acids Res. 2018. Jan 4;46(D1):D608-17.
+                                    <a href="http://www.ncbi.nlm.nih.gov/pubmed/29140435">29140435</a>
+                                  </div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>
+                                <a href="http://www.lipidmaps.org/data/databases.html">LIPID Metabolites And Pathways Strategy (LipidMaps)</a>:</b>
+                              An experimentally determined list of all of the major and many minor lipid species in mammalian cells.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover">
+                                    LIPID MAPS structure database. Sud M., Fahy E., Cotter D., Brown A., Dennis E., Glass C., Murphy R., Raetz C., Russell D., and Subramaniam S., Nucleic Acids Research 35, D527-32 (2006)
+                                  </div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>
+                                <a href="http://pseudomonas.umaryland.edu/PAMDB">Pseudomonas aeruginosa Metabolome Database (PAMDB)</a>:</b>
+                              An experimentally determined database containing extensive metabolomic data and metabolic pathway diagrams about Pseudomonas aeruginosa (reference strain PAO1).
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover">
+                                    Weiliang Huang, Luke K. Brewer, Jace W. Jones, Angela T. Nguyen, Ana Marcu, David S. Wishart, Amanda G. Oglesby-Sherrouse, Maureen A. Kane, and Angela Wilks (2018). PAMDB: a comprehensive Pseudomonas aeruginosa metabolome database. Nucleic Acids Res.
+                                    46(D1):D575-D580. DOI:
+                                    <a href="https://academic.oup.com/nar/article-lookup/doi/10.1093/nar/gkx1061">10.1093/nar/gkx1061</a>
+                                  </div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>
+                                <a href="http://www.swisslipids.org/#/about">SwissLipids</a>:</b>
+                              The set of known, expert curated lipids provided plus a library of theoretical lipid structures.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover">
+                                    Lucila Aimo, Robin Liechti, Nevila Hyka-Nouspikel, Anne Niknejad, Anne Gleizes, Lou Götz, Dmitry Kuznetsov, Fabrice P.A. David, F. Gisou van der Goot, Howard Riezman, Lydie Bougueleret, Ioannis Xenarios, Alan Bridge; The SwissLipids knowledgebase for
+                                    lipid biology,
+                                    <i>Bioinformatics</i>, Volume 31, Issue 17, 1 September 2015, Pages 2860–2866,
+                                    <a href="https://doi.org/10.1093/bioinformatics/btv285">https://doi.org/10.1093/bioinformatics/btv285</a>
+                                  </div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>EMBL-dev1:</b>
+                              A database developed at EMBL and used for experimental purposes.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover"><i>EMBL</i>, Development database 1</div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>EMBL-dev2:</b>
+                              A large collection of natural products.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover"><i>EMBL</i>, Development database 2</div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                          </div>
+                        </div>
+                        <div slot-key="reference">
+                          <i class="el-icon-question metadata-help-icon"></i>
+                        </div>
+                      </mock-el-popover>
+                      </span>
+                    </label>
+                    <div class="el-form-item__content">
+                      <mock-el-select value="molecularDatabases.0.name" required="true" multiple="">
+                        <mock-el-option value="molecularDatabases.0.name" label="molecularDatabases.0.name"></mock-el-option>
+                        <mock-el-option value="molecularDatabases.1.name" label="molecularDatabases.1.name"></mock-el-option>
+                      </mock-el-select>
+                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                    </div>
+                  </div>
+                </div>
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium">
+                    <label class="el-form-item__label"><span class="field-label"><span>Adducts</span><span style="color: red;">*</span>
+                      <!---->
+                      </span>
+                    </label>
+                    <div class="el-form-item__content">
+                      <mock-el-select value="adducts.0.adduct,adducts.1.adduct" required="true" multiple="">
+                        <mock-el-option value="adducts.0.adduct" label="adducts.0.adduct"></mock-el-option>
+                        <mock-el-option value="adducts.1.adduct" label="adducts.1.adduct"></mock-el-option>
+                      </mock-el-select>
+                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                    </div>
+                  </div>
+                </div>
+                <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
+                  <div class="el-form-item md-form-field el-form-item--medium">
+                    <label class="el-form-item__label"><span class="field-label"><span>Dataset name</span><span style="color: red;">*</span>
+                      <!---->
+                      </span>
+                    </label>
+                    <div class="el-form-item__content">
+                      <div class="el-input el-input--medium">
+                        <!---->
+                        <input type="text" autocomplete="off" required="required" placeholder="Dataset name" class="el-input__inner">
+                        <!---->
+                        <!---->
+                        <!---->
+                      </div>
+                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="metadata-section">
+        <form class="el-form el-form--label-top">
+          <div class="el-col el-col-6">
+            <div class="metadata-section__title">
+              Additional information
+              <!---->
+            </div>
+          </div>
+          <div class="el-col el-col-18">
+            <div class="el-row" style="margin-left: -4px; margin-right: -4px;">
+              <div class="el-col el-col-16" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Other information about the sample/preparation/experiment</span>
+                    <!---->
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <div class="el-textarea el-input--medium">
+                      <textarea class="el-textarea__inner" style="min-height: -6px; height: -20px;"></textarea>
+                    </div>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+`;
