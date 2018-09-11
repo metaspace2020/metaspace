@@ -68,7 +68,7 @@ async function createHttpServerAsync(config) {
     schema: executableSchema,
     context: ({req}) => {
       return {
-        user: req.user.user,
+        user: req.user != null ? req.user.user : null,
         connection
       };
     },
