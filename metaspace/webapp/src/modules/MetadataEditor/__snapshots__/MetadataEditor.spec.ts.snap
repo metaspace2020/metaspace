@@ -619,22 +619,22 @@ exports[`MetadataEditor should match snapshot 1`] = `
                             </div>
                             <div>
                               <b>EMBL-dev1:</b>
-                              A database developed at EMBL and used for experimental purposes.
+                              A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
                               <mock-el-popover trigger="hover" placement="top">
                                 <div slot-key="default">
                                   <div class="desc-cite-popover">
-                                    <i>EMBL</i>, Development database 1</div>
+                                    <i>EMBL</i>, developers database 1</div>
                                 </div>
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>
                             </div>
                             <div>
                               <b>EMBL-dev2:</b>
-                              A large collection of natural products.
+                              A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
                               <mock-el-popover trigger="hover" placement="top">
                                 <div slot-key="default">
                                   <div class="desc-cite-popover">
-                                    <i>EMBL</i>, Development database 2</div>
+                                    <i>EMBL</i>, developers database 2</div>
                                 </div>
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>

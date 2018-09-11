@@ -85,17 +85,17 @@
     </div>
     <div>
       <b>EMBL-dev1:</b>
-      A database developed at EMBL and used for experimental purposes.
+      A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
       <el-popover trigger="hover" placement="top">
-        <div class="desc-cite-popover"><i>EMBL</i>, Development database 1</div>
+        <div class="desc-cite-popover"><i>EMBL</i>, developers database 1</div>
         <span slot="reference" class="desc-cite">Citation</span>
       </el-popover>
     </div>
     <div>
       <b>EMBL-dev2:</b>
-      A large collection of natural products.
+      A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
       <el-popover trigger="hover" placement="top">
-        <div class="desc-cite-popover"><i>EMBL</i>, Development database 2</div>
+        <div class="desc-cite-popover"><i>EMBL</i>, developers database 2</div>
         <span slot="reference" class="desc-cite">Citation</span>
       </el-popover>
     </div>
