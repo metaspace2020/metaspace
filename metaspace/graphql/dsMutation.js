@@ -5,10 +5,10 @@ const jsondiffpatch = require('jsondiffpatch'),
   {UserError} = require('graphql-errors'),
   _ = require('lodash');
 
-const {logger, fetchDS, assertUserCanEditDataset,
-    addProcessingConfig, fetchMolecularDatabases} = require('./utils.js'),
+const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json'),
-  {addUserDataset} = require('./src/modules/user/controller');
+  {Dataset: DatasetModel} = require('./src/modules/user/model'),
+  {UserGroup: UserGrouModel, UserGroupRoleOptions} = require('./src/modules/group/model');
 
 const ajv = new Ajv({allErrors: true});
 const validator = ajv.compile(metadataSchema);
@@ -44,32 +44,6 @@ function trimEmptyFields(schema, value) {
   return obj;
 }
 
-function setSubmitter(oldMetadata, newMetadata, user) {
-  let email;
-  if (oldMetadata == null) {
-    if (user.role == 'admin') {
-      if (newMetadata.Submitted_By.Submitter.Email == user.email) {
-        email = user.email;
-      }
-      else {
-        email = newMetadata.Submitted_By.Submitter.Email;
-      }
-    }
-    else {
-      email = user.email;
-    }
-  }
-  else {
-    if (user.role == 'admin') {
-      email = newMetadata.Submitted_By.Submitter.Email;
-    }
-    else {
-      email = oldMetadata.Submitted_By.Submitter.Email;
-    }
-  }
-  _.set(newMetadata, ['Submitted_By', 'Submitter', 'Email'], email);
-}
-
 function validateMetadata(metadata) {
   const cleanValue = trimEmptyFields(metadataSchema, metadata);
   validator(cleanValue);
@@ -94,23 +68,32 @@ async function molDBsExist(molDBNames) {
   }
 }
 
-function processingSettingsChanged(ds, updDS) {
-  const configDelta = jsondiffpatch.diff(ds.config, updDS.config),
-    configDiff = jsondiffpatch.formatters.jsonpatch.format(configDelta),
-    metaDelta = jsondiffpatch.diff(ds.metadata, updDS.metadata),
-    metaDiff = jsondiffpatch.formatters.jsonpatch.format(metaDelta);
+function processingSettingsChanged(ds, update) {
+  let newDB = false, procSettingsUpd = false, metaDiff = null;
+  if (update.molDBs)
+    newDB = true;
+  if (update.adducts)
+    procSettingsUpd = true;
 
-  let newDB = false, procSettingsUpd = false;
-  for (let diffObj of configDiff) {
-    if (diffObj.op !== 'move') {  // ignore permuations in arrays
-      if (diffObj.path.startsWith('/databases') && diffObj.op == 'add')
-        newDB = true;
-      if (!diffObj.path.startsWith('/databases'))
-        procSettingsUpd = true;
+  if (update.metadata) {
+    const metaDelta = jsondiffpatch.diff(ds.metadata, update.metadata),
+      metaDiff = jsondiffpatch.formatters.jsonpatch.format(metaDelta);
+
+    for (let diffObj of metaDiff) {
+      if (diffObj.op !== 'move') {  // ignore permuations in arrays
+        const procSettingsPaths = [
+          '/MS_Analysis/Polarity',
+          '/MS_Analysis/Detector_Resolving_Power',
+        ];
+        for(let path of procSettingsPaths) {
+          if (diffObj.path.startsWith(path))
+            procSettingsUpd = true;
+        }
+      }
     }
   }
-  return {newDB: newDB, procSettingsUpd: procSettingsUpd,
-    configDiff: configDiff, metaDiff: metaDiff}
+
+  return {newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff}
 }
 
 async function smAPIRequest(datasetId, uri, body) {
@@ -131,7 +114,7 @@ async function smAPIRequest(datasetId, uri, body) {
         'hint': `Dataset is busy. Try again later.`
       }));
     else
-      throw new UserError(`smAPIRequest: ${respText}`);
+      throw new UserError(`smAPIRequest: ${JSON.stringify(resp)}`);
   }
   else {
     logger.info(`Successful ${uri}: ${datasetId}`);
@@ -140,93 +123,132 @@ async function smAPIRequest(datasetId, uri, body) {
   }
 }
 
-function updateObject(obj, upd) {
-  const updObj = _.cloneDeep(obj);
-  _.extend(updObj, upd);
-  return updObj;
-}
+const hasEditAccess = async (connection, user, dsId) => {
+  if (!user)
+    throw new UserError('Access denied');
+
+  if (user.role === 'admin')
+    return;
+
+  if (dsId) {
+    const ds = await connection.getRepository(DatasetModel).findOne({
+      id: dsId
+    });
+    if (!ds)
+      throw new UserError(`DS ${dsId} does not exist`);
+
+    if (user.id !== ds.userId)
+      throw new UserError('Access denied');
+  }
+  else {
+    throw new UserError(`DS id not privided`);
+  }
+};
+
+const isMemberOf = async (connection, user, groupId) => {
+  const userGroup = await connection.getRepository(UserGrouModel).find({
+    userId: user.id,
+    groupId
+  });
+  if (![UserGroupRoleOptions.MEMBER,
+    UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(userGroup.role))
+    throw new UserError(`User ${user.id} is not a member of ${groupId} group`);
+};
+
+const saveDS = async (connection, dsId, input) => {
+  if (input.submitterId || input.groupId) {
+    const dsUpdate = {
+      id: dsId,
+      userId: input.submitterId,
+      groupId: input.groupId
+    };
+    await connection.getRepository(DatasetModel).save(dsUpdate);
+  }
+};
+
+const smAPIdsUpdate = (update) => {
+  const smapiFieldMap = {
+    name: 'name',
+    inputPath: 'input_path',
+    uploadDT: 'upload_dt',
+    metadata: 'metadata',
+    isPublic: 'is_public',
+    submitterId: 'submitter_id',
+    groupId: 'group_id',
+    adducts: 'adducts',
+    moldDBs: 'mol_dbs'
+  };
+  let smAPIUpdate = _.pickBy(update, (v,k) => Object.keys(smapiFieldMap).includes(k));
+  smAPIUpdate = _.mapKeys(smAPIUpdate, (v,k) => smapiFieldMap[k]);
+  return smAPIUpdate;
+};
 
 module.exports = {
   processingSettingsChanged,
+
   Mutation: {
     create: async (args, {user, connection}) => {
       const {input, priority} = args;
       let dsId = args.id;
-      try {
-        if (dsId !== undefined && user.role == 'admin') {
-          let ds = await fetchDS({dsId});
-          if (ds !== undefined)
-            throw new UserError(`DS id '${dsId}' already exists`);
-        }
+      if (!user)
+        throw new UserError(`Not authenticated`);
 
+      if (input.groupId)
+        await isMemberOf(connection, user, groupId);
+
+      try {
         input.metadata = JSON.parse(input.metadataJson);
-        // setSubmitter(null, input.metadata, user); //FIXME: apply this logic to `submitterId` once it is implemented
         validateMetadata(input.metadata);
         await molDBsExist(input.molDBs);
-        addProcessingConfig(input);
 
         const body = {
-          name: input.name,
-          input_path: input.inputPath,
-          upload_dt: input.uploadDT,
-          metadata: input.metadata,
-          config: input.config,
-          is_public: input.isPublic,
-          mol_dbs: input.molDBs,
-          adducts: input.adducts,
+          input: smAPIdsUpdate(input),
           priority: priority,
           email: user.email,
         };
-        if (dsId !== undefined)
-          body.id = dsId;
+        if (dsId)
+          body.input.id = dsId;
 
+        // TODO: generate dsId here and save it before calling SM API
         const resp = await smAPIRequest(dsId, '/v1/datasets/add', body);
         dsId = resp['ds_id'];
 
-        await addUserDataset({userId: input.submitterId, dsId}, {user, connection});
+        await saveDS(connection, dsId, input);
         return JSON.stringify({ dsId });
       } catch (e) {
         logger.error(e.stack);
         throw e;
       }
     },
-    update: async (args, user) => {
-      const {id, input, reprocess, delFirst, force, priority} = args;
+
+    update: async (args, {user, connection}) => {
+      const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
       try {
-        let ds = await fetchDS({id});
-        if (ds === undefined) {
-          throw new UserError(`DS id '${id}' does not exist`);
+        await hasEditAccess(connection, user, dsId);
+        if (update.groupId)
+          await isMemberOf(connection, user, update.groupId);
+
+        if (update.metadataJson !== undefined) {
+          update.metadata = JSON.parse(update.metadataJson);
+          validateMetadata(update.metadata);
         }
-        await assertUserCanEditDataset(id, user);
 
-        if (input.metadataJson !== undefined)
-          input.metadata = JSON.parse(input.metadataJson);
-        const updDS = updateObject(ds, input);
-
-        // setSubmitter(ds.metadata, updDS.metadata, user); //FIXME: apply this logic to `submitterId` once it is implemented
-        validateMetadata(updDS.metadata);
-        addProcessingConfig(updDS);
-
-        const {newDB, procSettingsUpd} = await processingSettingsChanged(ds, updDS);
+        const engineDS = await fetchEngineDS({id: dsId});
+        const {newDB, procSettingsUpd} = await processingSettingsChanged(engineDS, update);
         const reprocessingNeeded = newDB || procSettingsUpd;
 
+        //TODO: handle principalInvestigator update
+
         const body = {
-          id: updDS.id,
-          name: updDS.name,
-          input_path: updDS.inputPath,
-          upload_dt: updDS.uploadDT,
-          metadata: updDS.metadata,
-          config: updDS.config,
-          is_public: updDS.isPublic,
-          mol_dbs: updDS.molDBs,
-          adducts: updDS.adducts,
-          del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
+          id: dsId,
+          update: smAPIdsUpdate(update),
           priority: priority,
-          force: force
+          force: force,
         };
 
         if (reprocess) {
-          return await smAPIRequest(updDS.id, '/v1/datasets/add', body);
+          body.del_first = procSettingsUpd || delFirst;  // delete old results if processing settings changed
+          return await smAPIRequest(dsId, '/v1/datasets/add', body);
         }
         else {
           if (reprocessingNeeded) {
@@ -236,7 +258,9 @@ module.exports = {
             }));
           }
           else {
-            return await smAPIRequest(updDS.id, `/v1/datasets/${updDS.id}/update`, body);
+            await saveDS(connection, dsId, update);
+            const resp = await smAPIRequest(dsId, `/v1/datasets/${dsId}/update`, body);
+            return JSON.stringify(resp);
           }
         }
       } catch (e) {
@@ -244,11 +268,12 @@ module.exports = {
         throw e;
       }
     },
-    delete: async (args, user) => {
-      const {id, priority} = args;
+
+    delete: async (args, {user, connection}) => {
+      const {id: dsId, priority} = args;
 
       try {
-        await assertUserCanEditDataset(id, user);
+        await hasEditAccess(connection, user, dsId);
 
         try {
           await smAPIRequest(id, `/v1/datasets/${id}/del-optical-image`, {});
@@ -263,8 +288,11 @@ module.exports = {
         throw e;
       }
     },
-    addOpticalImage: async (args, user) => {
-      let {datasetId, imageUrl, transform} = args;
+
+    addOpticalImage: async (args, {user, connection}) => {
+      const {datasetId: dsId, imageUrl, transform} = args;
+      await hasEditAccess(connection, user, dsId);
+
       const basePath = `http://localhost:${config.img_storage_port}`;
       if (imageUrl[0] === '/') {
         // imageUrl comes from the web application and should not include host/port.
@@ -277,20 +305,19 @@ module.exports = {
         imageUrl = basePath + imageUrl;
       }
       try {
-        logger.info(args);
-        await assertUserCanEditDataset(datasetId, user);
-        const uri = `/v1/datasets/${datasetId}/add-optical-image`;
+        const uri = `/v1/datasets/${dsId}/add-optical-image`;
         const body = {url: imageUrl, transform};
-        return await smAPIRequest(datasetId, uri, body);
+        return await smAPIRequest(dsId, uri, body);
       } catch (e) {
         logger.error(e.message);
         throw e;
       }
     },
-    deleteOpticalImage: async (args, user) => {
-      const {datasetId} = args;
-      await assertUserCanEditDataset(datasetId, user);
-      return await smAPIRequest(datasetId, `/v1/datasets/${datasetId}/del-optical-image`, {});
+
+    deleteOpticalImage: async (args, {user, connection}) => {
+      const {datasetId: dsId} = args;
+      await hasEditAccess(connection, user, dsId);
+      return await smAPIRequest(dsId, `/v1/datasets/${dsId}/del-optical-image`, {});
     }
   }
 };

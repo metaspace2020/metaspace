@@ -45,13 +45,12 @@ class MSMBasicSearch(SearchAlgorithm):
                           .apply(lambda df: df.int.tolist()).to_dict())
         all_sf_metrics_df = sf_image_metrics(sf_images=sf_images, metrics=self.metrics, ds=self._ds,
                                              ds_reader=self._ds_reader, ion_centr_ints=ion_centr_ints, sc=self._sc)
-        return all_sf_metrics_df
+        return all_sf_metrics_df.join(self._centr_gen.ion_df)
 
     def estimate_fdr(self, ion_metrics_df):
-        ion_metrics_sf_adduct_df = ion_metrics_df.join(self._centr_gen.ion_df)
         sf_adduct_fdr_df = self._fdr.estimate_fdr(
-            ion_metrics_sf_adduct_df.set_index(['sf', 'adduct']).msm)
-        ion_metrics_sf_adduct_fdr_df = pd.merge(ion_metrics_sf_adduct_df.reset_index(),
+            ion_metrics_df.set_index(['sf', 'adduct']).msm)
+        ion_metrics_sf_adduct_fdr_df = pd.merge(ion_metrics_df.reset_index(),
                                                 sf_adduct_fdr_df.reset_index(),
                                                 how='inner', on=['sf', 'adduct']).set_index('ion_i')
         return ion_metrics_sf_adduct_fdr_df

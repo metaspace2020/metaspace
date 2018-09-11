@@ -27,10 +27,10 @@ def test_filter_sf_images(spark_context):
     assert dict(flt_iso_images.take(1)).keys() == dict(sf_iso_images.take(1)).keys()
 
 
-def test_add_sf_image_est_fdr():
-    sf_metrics_df = (pd.DataFrame([[0, 0.9, 0.9, 0.9, [100.], [0], [10.], 0.9**3],
-                                  [1, 0.5, 0.5, 0.5, [100.], [0], [10.], 0.5**3]],
-                                  columns=['ion_i', 'chaos', 'spatial', 'spectral',
+def test_estimate_fdr():
+    sf_metrics_df = (pd.DataFrame([['H2O', '+H', 0, 0.9, 0.9, 0.9, [100.], [0], [10.], 0.9**3],
+                                  ['C2H2', '+H', 1, 0.5, 0.5, 0.5, [100.], [0], [10.], 0.5**3]],
+                                  columns=['sf', 'adduct', 'ion_i', 'chaos', 'spatial', 'spectral',
                                            'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'msm'])
                      .set_index(['ion_i']))
 
@@ -46,10 +46,9 @@ def test_add_sf_image_est_fdr():
                                 centr_gen=centr_gen_mock, fdr=fdr_mock, ds_config=None)
     res_metrics_df = search_alg.estimate_fdr(sf_metrics_df)
 
-    exp_col_list = ['ion_i', 'chaos', 'spatial', 'spectral',
-                    'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'msm',
-                    'sf', 'adduct', 'fdr']
-    exp_metrics_df = pd.DataFrame([[0, 0.9, 0.9, 0.9, [100.], [0], [10.], 0.9**3, 'H2O', '+H', 0.99],
-                                   [1, 0.5, 0.5, 0.5, [100.], [0], [10.], 0.5**3, 'C2H2', '+H', 0.5]],
+    exp_col_list = ['sf', 'adduct', 'ion_i', 'chaos', 'spatial', 'spectral',
+                    'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'msm', 'fdr']
+    exp_metrics_df = pd.DataFrame([['H2O', '+H', 0, 0.9, 0.9, 0.9, [100.], [0], [10.], 0.9**3, 0.99],
+                                   ['C2H2', '+H', 1, 0.5, 0.5, 0.5, [100.], [0], [10.], 0.5**3, 0.5]],
                                   columns=exp_col_list).set_index(['ion_i'])
     assert_frame_equal(res_metrics_df, exp_metrics_df)

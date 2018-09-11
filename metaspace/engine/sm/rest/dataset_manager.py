@@ -1,17 +1,12 @@
 import io
 import logging
-import requests
+from datetime import datetime
 import numpy as np
 from PIL import Image
 
 from sm.engine.dataset import DatasetStatus, Dataset
-from sm.engine.errors import DSIDExists, UnknownDSID, DSIsBusy
-from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.mol_db import MolecularDB, MolDBServiceWrapper
-from sm.engine.png_generator import ImageStoreServiceWrapper
+from sm.engine.errors import DSIsBusy
 from sm.engine.util import SMConfig
-from sm.engine.work_dir import WorkDirManager
-from sm.engine.ims_geometry_factory import ImsGeometryFactory
 
 SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
 UPD_DATASET_RAW_OPTICAL_IMAGE = 'update dataset set optical_image = %s, transform = %s WHERE id = %s'
@@ -57,7 +52,8 @@ class SMapiDatasetManager(object):
                          DatasetStatus.INDEXING} and not kwargs.get('force', False):
             raise DSIsBusy(ds.id)
 
-        ds.set_status(self._db, self._es, self._status_queue, DatasetStatus.QUEUED)
+        ds.status = DatasetStatus.QUEUED
+        ds.save(self._db, self._es, self._status_queue)
 
         msg = {
             'ds_id': ds.id,
@@ -68,17 +64,42 @@ class SMapiDatasetManager(object):
         queue.publish(msg, priority)
         self.logger.info('New message posted to %s: %s', queue, msg)
 
-    def add(self, ds, **kwargs):
-        """ Send add message to the queue """
+    def add(self, ds_doc, **kwargs):
+        """ Save dataset and send add message to the queue """
+        now = datetime.now()
+        if 'id' not in ds_doc:
+            ds_doc['id'] = now.strftime('%Y-%m-%d_%Hh%Mm%Ss')
+
+        ds = Dataset(id=ds_doc['id'],
+                     name=ds_doc.get('name'),
+                     input_path=ds_doc.get('input_path'),
+                     upload_dt=ds_doc.get('upload_dt', now.isoformat()),
+                     metadata=ds_doc.get('metadata'),
+                     is_public=ds_doc.get('is_public'),
+                     mol_dbs=ds_doc.get('mol_dbs'),
+                     adducts=ds_doc.get('adducts'))
+        ds.save(self._db, self._es, self._status_queue)
+
         self._post_sm_msg(ds=ds, queue=self._annot_queue, action='annotate', **kwargs)
 
-    def delete(self, ds, **kwargs):
+    def delete(self, ds_id, **kwargs):
         """ Send delete message to the queue """
+        ds = Dataset.load(self._db, ds_id)
         self._post_sm_msg(ds=ds, queue=self._update_queue, action='delete', **kwargs)
 
-    def update(self, ds, **kwargs):
-        """ Send index message to the index update queue """
-        self._post_sm_msg(ds=ds, queue=self._update_queue, action='update', **kwargs)
+    def update(self, ds_id, update_doc, **kwargs):
+        """ Save dataset and send update message to the queue """
+        ds = Dataset.load(self._db, ds_id)
+        ds.name = update_doc.get('name', ds.name)
+        ds.input_path = update_doc.get('input_path', ds.input_path)
+        if 'metadata' in update_doc:
+            ds.metadata = update_doc['metadata']
+        ds.upload_dt = update_doc.get('upload_dt', ds.upload_dt)
+        ds.is_public = update_doc.get('is_public', ds.is_public)
+        ds.save(self._db, self._es, self._status_queue)
+
+        self._post_sm_msg(ds=ds, queue=self._update_queue,
+                          action='update', fields=list(update_doc.keys()), **kwargs)
 
     def _annotation_image_shape(self, ds):
         self.logger.info('Querying annotation image shape for "%s" dataset...', ds.id)
@@ -147,15 +168,17 @@ class SMapiDatasetManager(object):
         img_thumb_id = self._img_store.post_image('fs', 'optical_image', buf)
         self._db.alter(UPD_DATASET_THUMB_OPTICAL_IMAGE, params=(img_thumb_id, ds.id,))
 
-    def add_optical_image(self, ds, img_id, transform, zoom_levels=[1, 2, 4, 8], **kwargs):
+    def add_optical_image(self, ds_id, img_id, transform, zoom_levels=[1, 2, 4, 8], **kwargs):
         """ Generate scaled and transformed versions of the provided optical image + creates the thumbnail """
+        ds = Dataset.load(self._db, ds_id)
         self.logger.info('Adding optical image to "%s" dataset', ds.id)
         self._add_raw_optical_image(ds, img_id, transform)
         self._add_zoom_optical_images(ds, img_id, transform, zoom_levels)
         self._add_thumbnail_optical_image(ds, img_id, transform)
 
-    def del_optical_image(self, ds, **kwargs):
+    def del_optical_image(self, ds_id, **kwargs):
         """ Deletes raw and zoomed optical images from DB and FS"""
+        ds = Dataset.load(self._db, ds_id)
         self.logger.info('Deleting optical image to "%s" dataset', ds.id)
         row = self._db.select_one(SEL_DATASET_RAW_OPTICAL_IMAGE, params=(ds.id,))
         if row:

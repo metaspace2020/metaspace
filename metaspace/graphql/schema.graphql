@@ -241,27 +241,27 @@ input DatasetCreateInput {
   name: String!
   inputPath: String!
   uploadDT: String
+  metadataJson: String!
+  molDBs: [String!]!
+  adducts: [String!]!
   submitterId: ID
   groupId: ID
   projectIds: [ID!] = []
   principalInvestigator: PersonInput
   isPublic: Boolean! = true
-  molDBs: [String!]!
-  adducts: [String!]!
-  metadataJson: String!
 }
 
 input DatasetUpdateInput {
   name: String
   uploadDT: String
   metadataJson: String
-  submitterId: ID
-  groupId: ID
-  projectIds: [ID!] = []
-  principalInvestigator: PersonInput
-  isPublic: Boolean = true
   molDBs: [String!]
   adducts: [String!]
+  submitterId: ID
+  groupId: ID
+  projectIds: [ID!]
+  principalInvestigator: PersonInput
+  isPublic: Boolean
 }
 
 type DatasetCountPerGroupListElement {

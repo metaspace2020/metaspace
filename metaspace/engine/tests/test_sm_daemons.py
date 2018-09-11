@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import logging
@@ -5,17 +6,17 @@ from os.path import join, dirname
 from unittest.mock import patch
 import time
 from datetime import datetime
-
 import pytest
 from fabric.api import local
 from fabric.context_managers import warn_only
+import pandas as pd
 
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.acq_geometry_factory import ACQ_GEOMETRY_KEYS
 from sm.engine.search_job import JobStatus
-from sm.engine.tests.util import sm_config, ds_config, test_db, init_loggers, sm_index, es_dsl_search
+from sm.engine.tests.util import sm_config, test_db, init_loggers, sm_index, es_dsl_search, metadata, ds_config
 
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
@@ -94,31 +95,43 @@ def run_daemons(db, es):
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
-@patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
-def test_sm_daemons(get_compute_img_metrics_mock, filter_sf_metrics_mock,
+@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.calc_metrics')
+def test_sm_daemons(calc_metrics_mock,
+                    filter_sf_metrics_mock,
                     post_images_to_annot_service_mock,
                     MolDBServiceWrapperMock,
-                    sm_config, test_db, es_dsl_search, clean_isotope_storage):
+                    # fixtures
+                    sm_config, test_db, es_dsl_search, clean_isotope_storage,
+                    metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
-    get_compute_img_metrics_mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100.], [0], [10.])
+    ion_metrics_df = pd.DataFrame({
+        'sf': ['C12H24O', 'C12H24O', 'C12H24O'],
+        'adduct': ['+H', '+Na', '+K'],
+        'chaos': [0.9, 0.9, 0.9],
+        'spatial': [0.9, 0.9, 0.9],
+        'spectral': [0.9, 0.9, 0.9],
+        'total_iso_ints': [[100.0], [100.0], [100.0]],
+        'min_iso_ints': [[0], [0], [0]],
+        'max_iso_ints': [[10.0], [10.0], [10.0]],
+        'msm': [0.729, 0.729, 0.729]
+    })
+    ion_metrics_df.index.name = 'ion_i'
+    calc_metrics_mock.return_value = ion_metrics_df
+
     filter_sf_metrics_mock.side_effect = lambda x: x
 
-    url_dict = {
-        'iso_image_ids': ['iso_image_1', None, None, None]
-    }
+    url_dict = {'iso_image_ids': ['iso_image_1', None, None, None]}
     post_images_to_annot_service_mock.return_value = {
-        35: url_dict,
-        44: url_dict
+        0: url_dict,
+        1: url_dict,
+        2: url_dict,
     }
 
     db = DB(sm_config['db'])
     es = ESExporter(db)
-    annotate_daemon = None
-    update_daemon = None
 
     try:
-        ds_config_str = open(ds_config_path).read()
         upload_dt = datetime.now()
         ds_id = '2000-01-01_00h00m'
         db.insert(Dataset.DS_INSERT, [{
@@ -126,8 +139,8 @@ def test_sm_daemons(get_compute_img_metrics_mock, filter_sf_metrics_mock,
             'name': test_ds_name,
             'input_path': input_dir_path,
             'upload_dt': upload_dt,
-            'metadata': '{"Data_Type": "Imaging MS"}',
-            'config': ds_config_str,
+            'metadata': json.dumps(metadata),
+            'config': json.dumps(ds_config),
             'status': DatasetStatus.QUEUED,
             'is_public': True,
             'mol_dbs': ['HMDB-v4'],
@@ -177,11 +190,13 @@ def test_sm_daemons(get_compute_img_metrics_mock, filter_sf_metrics_mock,
         rows = db.select(('SELECT db_id, sf, adduct, stats, iso_image_ids '
                           'FROM iso_image_metrics '
                           'ORDER BY sf, adduct'))
-
-        assert rows[0] == (0, 'C12H24O', '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
+        assert rows[0] == (0, 'C12H24O', '+H', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
                                                 'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
                            ['iso_image_1', None, None, None])
-        assert rows[1] == (0, 'C12H24O', '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
+        assert rows[1] == (0, 'C12H24O', '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
+                                                'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
+                           ['iso_image_1', None, None, None])
+        assert rows[2] == (0, 'C12H24O', '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
                                                  'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
                            ['iso_image_1', None, None, None])
 
@@ -196,10 +211,6 @@ def test_sm_daemons(get_compute_img_metrics_mock, filter_sf_metrics_mock,
 
     finally:
         db.close()
-        if annotate_daemon:
-            annotate_daemon.stop()
-        if update_daemon:
-            update_daemon.stop()
         with warn_only():
             local('rm -rf {}'.format(data_dir_path))
 
@@ -207,42 +218,43 @@ def test_sm_daemons(get_compute_img_metrics_mock, filter_sf_metrics_mock,
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
-@patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
-def test_sm_daemons_annot_fails(get_compute_img_metrics_mock, filter_sf_metrics_mock,
+@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.calc_metrics')
+def test_sm_daemons_annot_fails(calc_metrics_mock,
+                                filter_sf_metrics_mock,
                                 post_images_to_annot_service_mock,
                                 MolDBServiceWrapperMock,
                                 sm_config, test_db, es_dsl_search,
-                                clean_isotope_storage):
+                                clean_isotope_storage,
+                                metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
-    def throw_exception_function(*args):
+    def throw_exception_function(*args, **kwargs):
         raise Exception('Test')
-    get_compute_img_metrics_mock.return_value = throw_exception_function
+    calc_metrics_mock.return_value = throw_exception_function
     filter_sf_metrics_mock.side_effect = lambda x: x
 
     url_dict = {
         'iso_image_ids': ['iso_image_1', None, None, None]
     }
     post_images_to_annot_service_mock.return_value = {
-        35: url_dict,
-        44: url_dict
+        0: url_dict,
+        1: url_dict,
+        2: url_dict
     }
 
     db = DB(sm_config['db'])
     es = ESExporter(db)
-    annotate_daemon = None
 
     try:
         ds_id = '2000-01-01_00h00m'
         upload_dt = datetime.now()
-        ds_config_str = open(ds_config_path).read()
         db.insert(Dataset.DS_INSERT, [{
             'id': ds_id,
             'name': test_ds_name,
             'input_path': input_dir_path,
             'upload_dt': upload_dt,
-            'metadata': '{}',
-            'config': ds_config_str,
+            'metadata': json.dumps(metadata),
+            'config': json.dumps(ds_config),
             'status': DatasetStatus.QUEUED,
             'is_public': True,
             'mol_dbs': ['HMDB-v4'],
@@ -250,8 +262,7 @@ def test_sm_daemons_annot_fails(get_compute_img_metrics_mock, filter_sf_metrics_
             'ion_img_storage': 'fs'
         }])
 
-        ds = Dataset.load(db, ds_id)
-        queue_pub.publish({'ds_id': ds.id, 'ds_name': ds.name, 'action': 'annotate'})
+        queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': 'annotate'})
 
         run_daemons(db, es)
 
@@ -262,8 +273,6 @@ def test_sm_daemons_annot_fails(get_compute_img_metrics_mock, filter_sf_metrics_
         assert row[0] == 'FAILED'
     finally:
         db.close()
-        if annotate_daemon:
-            annotate_daemon.stop()
         with warn_only():
             local('rm -rf {}'.format(data_dir_path))
 
@@ -271,23 +280,39 @@ def test_sm_daemons_annot_fails(get_compute_img_metrics_mock, filter_sf_metrics_
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
-@patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics')
-def test_sm_daemon_es_export_fails(get_compute_img_metrics_mock, filter_sf_metrics_mock,
+@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.calc_metrics')
+def test_sm_daemon_es_export_fails(calc_metrics_mock,
+                                   filter_sf_metrics_mock,
                                    post_images_to_annot_service_mock,
                                    MolDBServiceWrapperMock,
                                    sm_config, test_db, es_dsl_search,
-                                   clean_isotope_storage):
+                                   clean_isotope_storage,
+                                   metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
-    get_compute_img_metrics_mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100.], [0], [10.])
+    ion_metrics_df = pd.DataFrame({
+        'sf': ['C12H24O', 'C12H24O', 'C12H24O'],
+        'adduct': ['+H', '+Na', '+K'],
+        'chaos': [0.9, 0.9, 0.9],
+        'spatial': [0.9, 0.9, 0.9],
+        'spectral': [0.9, 0.9, 0.9],
+        'total_iso_ints': [[100.0], [100.0], [100.0]],
+        'min_iso_ints': [[0], [0], [0]],
+        'max_iso_ints': [[10.0], [10.0], [10.0]],
+        'msm': [0.729, 0.729, 0.729]
+    })
+    ion_metrics_df.index.name = 'ion_i'
+    calc_metrics_mock.return_value = ion_metrics_df
+
     filter_sf_metrics_mock.side_effect = lambda x: x
 
     url_dict = {
         'iso_image_ids': ['iso_image_1', None, None, None]
     }
     post_images_to_annot_service_mock.return_value = {
-        35: url_dict,
-        44: url_dict
+        0: url_dict,
+        1: url_dict,
+        2: url_dict,
     }
 
     db = DB(sm_config['db'])
@@ -303,14 +328,13 @@ def test_sm_daemon_es_export_fails(get_compute_img_metrics_mock, filter_sf_metri
     try:
         ds_id = '2000-01-01_00h00m'
         upload_dt = datetime.now()
-        ds_config_str = open(ds_config_path).read()
         db.insert(Dataset.DS_INSERT, [{
             'id': ds_id,
             'name': test_ds_name,
             'input_path': input_dir_path,
             'upload_dt': upload_dt,
-            'metadata': '{}',
-            'config': ds_config_str,
+            'metadata': json.dumps(metadata),
+            'config': json.dumps(ds_config),
             'status': DatasetStatus.QUEUED,
             'is_public': True,
             'mol_dbs': ['HMDB-v4'],
@@ -318,8 +342,7 @@ def test_sm_daemon_es_export_fails(get_compute_img_metrics_mock, filter_sf_metri
             'ion_img_storage': 'fs'
         }])
 
-        ds = Dataset.load(db, ds_id)
-        queue_pub.publish({'ds_id': ds.id, 'ds_name': ds.name, 'action': 'annotate'})
+        queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': 'annotate'})
 
         run_daemons(db, es)
 
