@@ -1,19 +1,22 @@
 <template>
   <div>
+    <create-project-dialog
+      :visible="showCreateProjectDialog && currentUser != null"
+      :currentUserId="currentUser && currentUser.id"
+      @close="() => showCreateProjectDialog = false"
+      @create="createProject"
+    />
     <el-table
       :data="rows"
-      style="width: 100%;padding-left: 15px;">
-      <el-table-column label="Project" width="180">
+      style="margin-left: 15px;"
+    class="table">
+      <el-table-column label="Project">
         <template slot-scope="scope">
           <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
         </template>
       </el-table-column>
-      <el-table-column
-        prop="roleName"
-        label="Role"
-        width="280"
-      />
-      <el-table-column label="Datasets contributed">
+      <el-table-column prop="roleName" label="Role" width="160" />
+      <el-table-column label="Datasets contributed" width="160" align="center">
         <template slot-scope="scope">
           <router-link v-if="scope.row.numDatasets > 0" :to="scope.row.datasetsRoute">
             {{scope.row.numDatasets}}
@@ -21,7 +24,7 @@
           <span v-if="scope.row.numDatasets === 0">{{scope.row.numDatasets}}</span>
         </template>
       </el-table-column>
-      <el-table-column>
+      <el-table-column width="240" align="right">
         <template slot-scope="scope">
           <el-button
             v-if="scope.row.role === 'MEMBER'"
@@ -55,6 +58,8 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-button style="float: right; margin: 10px 0;" @click="() => showCreateProjectDialog = true">Create project</el-button>
+    <div class="clearfix"/>
   </div>
 </template>
 
@@ -66,6 +71,7 @@
   import reportError from '../../lib/reportError';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import { encodeParams } from '../Filters';
+  import { CreateProjectDialog } from '../Project';
 
   interface ProjectRow {
     id: string;
@@ -76,7 +82,11 @@
   }
 
 
-  @Component
+  @Component({
+    components: {
+      CreateProjectDialog
+    }
+  })
   export default class ProjectsTable extends Vue {
     @Prop()
     currentUser!: UserProfileQuery | null;
@@ -84,6 +94,7 @@
     refetchData!: () => void;
 
     showTransferDatasetsDialog: boolean = false;
+    showCreateProjectDialog: boolean = false;
     invitingProject: ProjectRow | null = null;
 
     get rows(): ProjectRow[] {
@@ -154,8 +165,22 @@
         this.showTransferDatasetsDialog = false;
       }
     }
+
+    hideCreateProjectDialog() {
+      this.showCreateProjectDialog = false;
+    }
+
+    async createProject() {
+      await this.refetchData();
+      this.showCreateProjectDialog = false;
+    }
+
+
   }
 </script>
 
-<style>
+<style scoped>
+  .table.el-table /deep/ .cell {
+    word-break: normal !important;
+  }
 </style>

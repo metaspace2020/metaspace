@@ -10,18 +10,15 @@
     />
     <el-table
       :data="rows"
-      style="width: 100%;padding-left: 15px;">
-      <el-table-column label="Group" width="180">
+      style="margin-left: 15px;"
+      class="table">
+      <el-table-column label="Group">
         <template slot-scope="scope">
           <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
         </template>
       </el-table-column>
-      <el-table-column
-        prop="roleName"
-        label="Role"
-        width="280"
-      />
-      <el-table-column label="Datasets contributed">
+      <el-table-column prop="roleName" label="Role" width="160" />
+      <el-table-column label="Datasets contributed" width="160" align="center">
         <template slot-scope="scope">
           <router-link v-if="scope.row.numDatasets > 0" :to="scope.row.datasetsRoute">
             {{scope.row.numDatasets}}
@@ -29,7 +26,7 @@
           <span v-if="scope.row.numDatasets === 0">{{scope.row.numDatasets}}</span>
         </template>
       </el-table-column>
-      <el-table-column>
+      <el-table-column width="240" align="right">
         <template slot-scope="scope">
           <el-button
             v-if="scope.row.role === 'MEMBER'"
@@ -192,5 +189,8 @@
   }
 </script>
 
-<style>
+<style scoped>
+  .table.el-table /deep/ .cell {
+    word-break: normal !important;
+  }
 </style>
