@@ -230,12 +230,23 @@
 </script>
 
 <style>
- .qq-uploader {
-   padding: 10px 0;
-   min-height: 45px;
-   max-height: 100px;
-   margin: 25px 20px 25px 0;
- }
+  .qq-uploader {
+    padding: 10px 0;
+    min-height: 45px;
+    max-height: 45px;
+    margin: 25px 5px 25px 0;
+  }
+
+  .qq-upload-list li {
+    padding: 0 0 0 20px;
+    line-height: 18px;
+    font-size: 13px;
+    font-weight: bold;
+  }
+
+  .qq-progress-bar {
+    height: 4px;
+  }
 
  .fu-dropzone-content {
    font-size: 200%;
