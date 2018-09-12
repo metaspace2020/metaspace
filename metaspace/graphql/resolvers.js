@@ -8,6 +8,7 @@ import {
   pgDatasetsViewableByUser,
   fetchDS,
   fetchMolecularDatabases,
+  deprecatedMolDBs,
   assertUserCanViewDataset,
   canUserViewPgDataset,
   wait,
@@ -176,9 +177,26 @@ const Resolvers = {
 
     async molecularDatabases(_, args, {user}) {
       try {
-        let molDBs = await fetchMolecularDatabases({hideDeprecated: args.hideDeprecated});
-        for (let moldb of molDBs)
-          moldb['default'] = config.defaults.moldb_names.includes(moldb.name);
+        const {hideDeprecated, onlyLastVersion} = args;
+
+        let molDBs = await fetchMolecularDatabases();
+        if (hideDeprecated) {
+          molDBs = molDBs.filter((molDB) => !deprecatedMolDBs.has(molDB.name));
+        }
+        for (let molDB of molDBs) {
+          molDB['default'] = config.defaults.moldb_names.includes(molDB.name);
+        }
+        if (onlyLastVersion) {
+          const molDBNameMap = new Map();
+          for (let molDB of molDBs) {
+            if (!molDBNameMap.has(molDB.name))
+              molDBNameMap.set(molDB.name, molDB);
+            else if (molDB.version > molDBNameMap.get(molDB.name).version)
+              molDBNameMap.set(molDB.name, molDB);
+          }
+          molDBs = Array.from(molDBNameMap.values());
+        }
+
         logger.debug(`Molecular databases: ` + JSON.stringify(molDBs));
         return molDBs;
       }

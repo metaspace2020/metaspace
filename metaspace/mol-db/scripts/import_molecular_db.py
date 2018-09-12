@@ -20,17 +20,17 @@ def get_inchikey_gen():
 
     def get_inchikey(ser):
         try:
-            if 'inchikey' in ser:
+            if 'inchikey' in ser and ser.inchikey:
                 return ser.inchikey
 
-            if ser.inchi is None or ser.inchi == '':
+            if not ser.inchi:
                 raise Exception('Empty inchi')
 
             mol = OBMol()
             ob_conversion.ReadString(mol, ser.inchi)
             return ob_conversion.WriteString(mol).strip('\n')
         except Exception as e:
-            LOG.warning(e)
+            LOG.warning(f'{e}\t{ser}')
             return '{}-{}-{}'.format(ser.formula, ser['name'], ser['id'])
 
     return get_inchikey

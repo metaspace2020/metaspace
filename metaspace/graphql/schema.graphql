@@ -317,7 +317,8 @@ type Query {
 
   submitterSuggestions(query: String!): [SubmitterSearchResult!]!
 
-  molecularDatabases(hideDeprecated: Boolean = true): [MolecularDatabase!]
+  molecularDatabases(hideDeprecated: Boolean=true,
+    onlyLastVersion: Boolean=true): [MolecularDatabase!]
 
   adductSuggestions: [Adduct!]!
 
