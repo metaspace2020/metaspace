@@ -90,12 +90,15 @@
       if (this.currentUser != null && this.currentUser.projects != null) {
         return this.currentUser.projects.map((item) => {
           const {project, numDatasets, role} = item;
-          const {id, name} = project;
+          const {id, name, urlSlug} = project;
 
           return {
             id, name, role, numDatasets,
             roleName: getRoleName(role),
-            route: `/project/${id}`,
+            route: {
+              name: 'project',
+              params: {projectIdOrSlug: urlSlug || id}
+            },
             datasetsRoute: {
               path: '/datasets',
               query: encodeParams({ submitter: this.currentUser!.id, project: id })

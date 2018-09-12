@@ -45,7 +45,7 @@
       <div v-if="projectDatasets.length > 0">
         <h2>Datasets</h2>
 
-        <dataset-list :datasets="projectDatasets.slice(0,8)" />
+        <dataset-list :datasets="projectDatasets.slice(0, maxVisibleDatasets)" />
 
         <div class="dataset-list-footer">
           <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
@@ -56,26 +56,32 @@
 </template>
 <script lang="ts">
   import Vue from 'vue';
-  import { Component } from 'vue-property-decorator';
+  import { Component, Watch } from 'vue-property-decorator';
   import { DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset';
   import DatasetList from '../Datasets/list/DatasetList.vue';
-  import { acceptProjectInvitationMutation, leaveProjectMutation, requestAccessToProjectMutation } from '../../api/project';
+  import { acceptProjectInvitationMutation, leaveProjectMutation, requestAccessToProjectMutation, ProjectRole } from '../../api/project';
   import gql from 'graphql-tag';
   import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
+  import { currentUserIdQuery, CurrentUserIdResult } from '../../api/user';
+  import isUuid from '../../lib/isUuid';
 
-  type UserProjectRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';
 
   interface ProjectInfo {
     id: string;
     name: string;
-    currentUserRole: UserProjectRole | null;
+    urlSlug: string | null;
+    currentUserRole: ProjectRole | null;
   }
+  const projectInfoFragment = gql`fragment ProjectInfoFragment on Project {
+    id
+    name
+    urlSlug
+    currentUserRole
+  }`;
 
   interface ViewProjectPageData {
-    currentUser: { id: string; } | null;
-    project: ProjectInfo | null;
     allDatasets: DatasetDetailItem[];
     countDatasets: number;
   }
@@ -85,16 +91,29 @@
       DatasetList,
     },
     apollo: {
+      currentUser: {
+        query: currentUserIdQuery
+      },
+      project: {
+        query() {
+          if (isUuid(this.$route.params.projectIdOrSlug)) {
+            return gql`query ProjectProfileById($projectIdOrSlug: ID!) {
+              project(projectId: $projectIdOrSlug) { ...ProjectInfoFragment }
+            }
+            ${projectInfoFragment}`;
+          } else {
+            return gql`query ProjectProfileBySlug($projectIdOrSlug: String!) {
+              project: projectByUrlSlug(urlSlug: $projectIdOrSlug) { ...ProjectInfoFragment }
+            }
+            ${projectInfoFragment}`;
+          }
+        },
+        variables() {
+          return {projectIdOrSlug: this.$route.params.projectIdOrSlug};
+        }
+      },
       data: {
-        query: gql`query ViewProjectPage($projectId: ID!, $maxVisibleDatasets: Int!, $inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
-          currentUser {
-            id
-          }
-          project(projectId: $projectId) {
-            id
-            name
-            currentUserRole
-          }
+        query: gql`query ProjectProfileDatasets($projectId: ID!, $maxVisibleDatasets: Int!, $inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
           allDatasets(offset: 0, limit: $maxVisibleDatasets, filter: { project: $projectId }) {
             ...DatasetDetailItem
           }
@@ -102,7 +121,7 @@
         }
 
         ${datasetDetailItemFragment}`,
-        variables(this: ViewProjectPage) {
+        variables() {
           return {
             maxVisibleDatasets: this.maxVisibleDatasets,
             projectId: this.projectId
@@ -110,9 +129,12 @@
         },
         update(data) {
           // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
-          // button that causes this query to refetch
+          // button that causes this query to refetch.
           this.loaded = true;
           return data;
+        },
+        skip() {
+          return this.projectId == null
         }
       },
     }
@@ -120,18 +142,22 @@
   export default class ViewProjectPage extends Vue {
     loaded = false;
     isAcceptingInvite = false;
+    currentUser: CurrentUserIdResult | null = null;
+    project: ProjectInfo | null = null;
     data: ViewProjectPageData | null = null;
 
-    get currentUserId(): string | null { return this.data && this.data.currentUser && this.data.currentUser.id }
-    get project(): ProjectInfo | null { return this.data && this.data.project; }
-    get roleInProject(): UserProjectRole | null { return this.data && this.data.project && this.data.project.currentUserRole; }
+    get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
+    get roleInProject(): ProjectRole | null { return this.project && this.project.currentUserRole; }
     get projectDatasets(): DatasetDetailItem[] { return this.data && this.data.allDatasets || []; }
     get countDatasets(): number { return this.data && this.data.countDatasets || 0; }
     maxVisibleDatasets = 8;
 
-
-    get projectId(): string {
-      return this.$route.params.projectId;
+    get projectId(): string | null {
+      if (isUuid(this.$route.params.projectIdOrSlug)) {
+        return this.$route.params.projectIdOrSlug; // If it's possible to get the ID from the route, use that because it's faster than projectById/projectBySlug.
+      } else {
+        return this.project && this.project.id
+      }
     }
 
     get isInvited(): boolean {
@@ -141,7 +167,17 @@
     get datasetsListLink() {
       return {
         path: '/datasets',
-        query: this.project && encodeParams({ project: this.projectId })
+        query: this.projectId && encodeParams({ project: this.projectId })
+      }
+    }
+
+    @Watch('$route.params.projectIdOrSlug')
+    @Watch('project.urlSlug')
+    canonicalizeUrl() {
+      if (isUuid(this.$route.params.projectIdOrSlug) && this.project != null && this.project.urlSlug) {
+        this.$router.replace({
+          params: {projectIdOrSlug: this.project.urlSlug}
+        })
       }
     }
 
@@ -175,14 +211,16 @@
         mutation: leaveProjectMutation,
         variables: { projectId: this.projectId },
       });
-      await this.$apollo.queries.data.refetch();
+      await this.refetch();
     }
 
     handleManageProject() {
-      this.$router.push({
-        name: 'edit-project',
-        params: {projectId: this.projectId},
-      });
+      if (this.projectId != null) {
+        this.$router.push({
+          name: 'edit-project',
+          params: { projectId: this.projectId },
+        });
+      }
     }
 
     async joinProject() {
@@ -190,7 +228,14 @@
         mutation: this.isInvited ? acceptProjectInvitationMutation : requestAccessToProjectMutation,
         variables: { projectId: this.projectId },
       });
-      await this.$apollo.queries.data.refetch();
+      await this.refetch();
+    }
+
+    async refetch() {
+      return await Promise.all([
+        this.$apollo.queries.group.refetch(),
+        this.$apollo.queries.data.refetch(),
+      ]);
     }
   }
 

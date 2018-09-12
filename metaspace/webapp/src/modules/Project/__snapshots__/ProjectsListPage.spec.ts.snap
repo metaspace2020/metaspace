@@ -8,10 +8,10 @@ exports[`ProjectsListPage should match snapshot 1`] = `
     </div>
     <div mock-v-loading="false">
       <div class="project-item">
-        <a href="#/project/project%201" class="underlay"></a>
+        <a href="#/project/proj-one" class="underlay"></a>
         <div class="info">
           <div class="info-line project-name">
-            <a href="#/project/project%201" class="">project one</a>
+            <a href="#/project/proj-one" class="">project one</a>
           </div>
           <div class="info-line">
             <!---->

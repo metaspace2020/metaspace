@@ -132,6 +132,7 @@ const projectsListItemFragment =
   gql`fragment ProjectsListItem on Project {
       id
       name
+      urlSlug
       isPublic
       currentUserRole
       numMembers
@@ -180,6 +181,7 @@ export interface MyProjectsListQuery {
 export interface ProjectsListProject {
   id: string;
   name: string;
+  urlSlug: string | null;
   isPublic: boolean;
   currentUserRole: ProjectRole | null;
   numMembers: number;

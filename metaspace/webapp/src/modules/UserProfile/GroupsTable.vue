@@ -109,12 +109,15 @@
       if (this.currentUser != null && this.currentUser.groups != null) {
         return this.currentUser.groups.map((item) => {
           const {group, numDatasets, role} = item;
-          const {id, name} = group;
+          const {id, name, urlSlug} = group;
 
           return {
             id, name, role, numDatasets,
             roleName: getRoleName(role),
-            route: `/group/${id}`,
+            route: {
+              name: 'group',
+              params: { groupIdOrSlug: urlSlug || id }
+            },
             datasetsRoute: {
               path: '/datasets',
               query: encodeParams({ submitter: this.currentUser!.id, group: id })

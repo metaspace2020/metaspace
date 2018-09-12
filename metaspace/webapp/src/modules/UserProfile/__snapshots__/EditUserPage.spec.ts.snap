@@ -128,7 +128,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
                     <div class="cell">
-                      <a href="#/group/AAA" class="">Group A</a>
+                      <a href="#/group/grp-a" class="">Group A</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
@@ -304,7 +304,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                     <div class="cell">
-                      <a href="#/project/AA" class="">Project A</a>
+                      <a href="#/project/proj-a" class="">Project A</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_2_column_6  ">

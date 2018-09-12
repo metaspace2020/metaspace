@@ -50,9 +50,9 @@ const router = new VueRouter({
     { path: '/account/reset-password', component: ResetPasswordPage },
 
     { path: '/group/create', component: asyncPages.CreateGroupPage },
-    { path: '/group/:groupId', name: 'group', component: asyncPages.ViewGroupProfile },
+    { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupProfile },
     { path: '/group/:groupId/edit', name: 'edit-group', component: asyncPages.EditGroupProfile },
-    { path: '/project/:projectId', name: 'project', component: asyncPages.ViewProjectPage },
+    { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
     { path: '/project/:projectId/edit', name: 'edit-project', component: asyncPages.EditProjectPage },
     { path: '/projects', component: asyncPages.ProjectsListPage },
   ]

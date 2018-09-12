@@ -33,7 +33,8 @@ describe('MetaspaceHeader', () => {
           primaryGroup: {
             group: {
               id: '456',
-              name: 'Test Group'
+              name: 'Test Group',
+              urlSlug: null
             }
           }
         })

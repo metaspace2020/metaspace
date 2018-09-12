@@ -45,9 +45,10 @@ exports[`ViewProjectPage should match snapshot (invited) 1`] = `
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
         <datasetitem-stub dataset="[object Object]" class="even"></datasetitem-stub>
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
+        <datasetitem-stub dataset="[object Object]" class="even"></datasetitem-stub>
       </div>
       <div class="dataset-list-footer">
-        <a href="#/datasets?prj=projectId" class="">See all datasets</a>
+        <!---->
       </div>
     </div>
   </div>
@@ -80,7 +81,7 @@ exports[`ViewProjectPage should match snapshot (non-member) 1`] = `
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
       </div>
       <div class="dataset-list-footer">
-        <a href="#/datasets?prj=projectId" class="">See all datasets</a>
+        <a href="#/datasets?prj=00000000-1111-2222-3333-444444444444" class="">See all datasets</a>
       </div>
     </div>
   </div>
