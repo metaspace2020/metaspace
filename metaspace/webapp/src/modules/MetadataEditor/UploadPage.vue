@@ -8,11 +8,11 @@
       <p style="padding-left: 15px"><b>Type of MS:</b> We can annotate only FTICR- or Orbitrap- imaging MS data.</p>
       <p style="padding-left: 15px"><b>Format:</b> We can receive only data in the imzML centroided format.
         Please check out
-        <a :href="helpLink" target="_blank" class="external" title="The page will be opened in a new page">our instructions</a>
+        <a :href="helpLink" target="_blank" class="external" title="The page will open in a new window">our instructions</a>
         for converting datasets into this format. If you are experiencing difficulties,
         please contact your instrument vendor.</p>
       <p>If you have any further questions, please check out our main
-        <a href="#/help" target="_blank" class="external" title="The page will be opened in a new page">help</a>
+        <a href="#/help" target="_blank" class="external" title="The page will open in a new window">help</a>
         page or email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a></p>
       <p>Have fun using METASPACE!</p>
     </el-dialog>
