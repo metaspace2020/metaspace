@@ -248,6 +248,18 @@ exports[`EditProjectPage should match snapshot 1`] = `
         </div>
       </div>
       <div style="margin-bottom: 2em;">
+        <h2>Custom URL</h2>
+        <!---->
+        <!---->
+        <div>
+          <p>
+            <a href="http://localhost/#/project/2">http://localhost/#/project/<span class="urlSlug">2</span></a>
+          </p>
+          <p>
+            <a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL for your project.</p>
+        </div>
+      </div>
+      <div style="margin-bottom: 2em;">
         <h2>Datasets</h2>
         <p>
           <a href="#/datasets?prj=2" class="">See all datasets</a>

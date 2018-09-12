@@ -29,6 +29,22 @@
           @addMember="handleAddMember"
         />
         <div style="margin-bottom: 2em">
+          <h2>Custom URL</h2>
+          <div v-if="canEditUrlSlug">
+            <a :href="groupUrlHref">{{groupUrlPrefix}}</a>
+            <input v-model="model.urlSlug" />
+          </div>
+          <div v-if="!canEditUrlSlug && group && group.urlSlug">
+            <a :href="groupUrlHref">
+              {{groupUrlPrefix}}<span class="urlSlug">{{group.urlSlug}}</span>
+            </a>
+          </div>
+          <div v-if="!canEditUrlSlug && group && !group.urlSlug">
+            <p><a :href="groupUrlHref">{{groupUrlPrefix}}<span class="urlSlug">{{group.id}}</span></a></p>
+            <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
+          </div>
+        </div>
+        <div style="margin-bottom: 2em">
           <h2>Datasets</h2>
           <p>
             <router-link :to="datasetsListLink">See all datasets</router-link>
@@ -106,6 +122,7 @@
     model = {
       name: '',
       shortName: '',
+      urlSlug: '',
     };
 
     currentUser: CurrentUserQuery | null = null;
@@ -119,6 +136,9 @@
         || (this.group && this.group.currentUserRole === 'PRINCIPAL_INVESTIGATOR')
         || false;
     }
+    get canEditUrlSlug(): boolean {
+      return this.currentUser && this.currentUser.role === 'admin' || false;
+    }
     get groupId(): string {
       return this.$route.params.groupId;
     }
@@ -130,11 +150,21 @@
         group: this.groupId,
       };
     }
+    get groupUrlHref() {
+      const groupIdOrSlug = this.group ? this.group.urlSlug || this.group.id : '';
+      const {href} = this.$router.resolve({ name: 'group', params: { groupIdOrSlug } }, undefined, true);
+      return `${location.origin}/${href}`;
+    }
+    get groupUrlPrefix() {
+      const {href} = this.$router.resolve({ name: 'group', params: { groupIdOrSlug: 'REMOVE' } }, undefined, true);
+      return `${location.origin}/${href.replace('REMOVE', '')}`;
+    }
 
     @Watch('group')
     setModel() {
       this.model.name = this.group && this.group.name || '';
       this.model.shortName = this.group && this.group.shortName || '';
+      this.model.urlSlug = this.group && this.group.urlSlug || '';
     }
 
     get datasetsListLink() {
@@ -168,10 +198,17 @@
     async handleSave() {
       this.isSaving = true;
       try {
-        const {name, shortName} = this.model;
+        const {name, shortName, urlSlug} = this.model;
         await this.$apollo.mutate<UpdateGroupMutation>({
           mutation: updateGroupMutation,
-          variables: { groupId: this.groupId, groupDetails: { name, shortName } },
+          variables: {
+            groupId: this.groupId,
+            groupDetails: {
+              name,
+              shortName,
+              urlSlug: this.canEditUrlSlug ? urlSlug : null,
+            }
+          },
         });
         this.$message({ message: `${name} has been saved`, type: 'success' });
       } catch(err) {
@@ -272,6 +309,11 @@
 
   .flex-spacer {
     flex-grow: 1;
+  }
+
+  .urlSlug {
+    padding: 4px 0;
+    background-color: #EEEEEE;
   }
 
 </style>

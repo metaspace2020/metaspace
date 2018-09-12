@@ -28,6 +28,22 @@
           @rejectUser="handleRejectUser"
           @addMember="handleAddMember"
         />
+        <div v-if="project && project.isPublic" style="margin-bottom: 2em">
+          <h2>Custom URL</h2>
+          <div v-if="canEditUrlSlug">
+            <a :href="projectUrlHref">{{projectUrlPrefix}}</a>
+            <input v-model="model.urlSlug" />
+          </div>
+          <div v-if="!canEditUrlSlug && project && project.urlSlug">
+            <a :href="projectUrlHref">
+              {{projectUrlPrefix}}<span class="urlSlug">{{project.urlSlug}}</span>
+            </a>
+          </div>
+          <div v-if="!canEditUrlSlug && project && !project.urlSlug">
+            <p><a :href="projectUrlHref">{{projectUrlPrefix}}<span class="urlSlug">{{project.id}}</span></a></p>
+            <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL for your project.</p>
+          </div>
+        </div>
         <div style="margin-bottom: 2em">
           <h2>Datasets</h2>
           <p>
@@ -106,6 +122,7 @@
     model = {
       name: '',
       isPublic: true,
+      urlSlug: '',
     };
 
     currentUser: CurrentUserQuery | null = null;
@@ -115,6 +132,9 @@
       return (this.currentUser && this.currentUser.role === 'admin')
         || (this.project && this.project.currentUserRole === 'MANAGER')
         || false;
+    }
+    get canEditUrlSlug(): boolean {
+      return this.currentUser && this.currentUser.role === 'admin' || false;
     }
     get projectId(): string {
       return this.$route.params.projectId;
@@ -127,11 +147,21 @@
         project: this.projectId,
       };
     }
+    get projectUrlHref() {
+      const projectIdOrSlug = this.project ? this.project.urlSlug || this.project.id : '';
+      const {href} = this.$router.resolve({ name: 'project', params: { projectIdOrSlug } }, undefined, true);
+      return `${location.origin}/${href}`;
+    }
+    get projectUrlPrefix() {
+      const {href} = this.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true);
+      return `${location.origin}/${href.replace('REMOVE', '')}`;
+    }
 
     @Watch('project')
     setModel() {
       this.model.name = this.project && this.project.name || '';
       this.model.isPublic = this.project && this.project.isPublic || true;
+      this.model.urlSlug = this.project && this.project.urlSlug || '';
     }
 
     get datasetsListLink() {
@@ -165,10 +195,17 @@
     async handleSave() {
       this.isSaving = true;
       try {
-        const {name, isPublic} = this.model;
+        const {name, isPublic, urlSlug} = this.model;
         await this.$apollo.mutate<UpdateProjectMutation>({
           mutation: updateProjectMutation,
-          variables: { projectId: this.projectId, projectDetails: { name, isPublic } },
+          variables: {
+            projectId: this.projectId,
+            projectDetails: {
+              name,
+              isPublic,
+              urlSlug: this.canEditUrlSlug ? urlSlug : null,
+            }
+          },
         });
         this.$message({ message: `${name} has been saved`, type: 'success' });
       } catch(err) {
@@ -269,6 +306,11 @@
 
   .flex-spacer {
     flex-grow: 1;
+  }
+
+  .urlSlug {
+    padding: 4px 0;
+    background-color: #EEEEEE;
   }
 
 </style>
