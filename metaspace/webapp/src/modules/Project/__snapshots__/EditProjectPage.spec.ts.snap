@@ -43,7 +43,7 @@ exports[`EditProjectPage should match snapshot 1`] = `
       </form>
       <div>
         <h2>Members</h2>
-        <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" element-loading-text="Loading results from the server...">
+        <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" element-loading-text="Loading results from the server..." mock-v-loading="false">
           <div class="hidden-columns">
             <div></div>
             <div></div>
