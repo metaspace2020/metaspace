@@ -150,11 +150,11 @@
     get projectUrlHref() {
       const projectIdOrSlug = this.project ? this.project.urlSlug || this.project.id : '';
       const {href} = this.$router.resolve({ name: 'project', params: { projectIdOrSlug } }, undefined, true);
-      return `${location.origin}/${href}`;
+      return location.origin + href;
     }
     get projectUrlPrefix() {
       const {href} = this.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true);
-      return `${location.origin}/${href.replace('REMOVE', '')}`;
+      return location.origin + href.replace('REMOVE', '');
     }
 
     @Watch('project')

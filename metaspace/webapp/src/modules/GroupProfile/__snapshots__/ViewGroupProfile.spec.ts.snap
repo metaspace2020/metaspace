@@ -85,7 +85,7 @@ exports[`ViewGroupProfile should match snapshot (non-member) 1`] = `
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
       </div>
       <div class="dataset-list-footer">
-        <a href="#/datasets?grp=00000000-1111-2222-3333-444444444444" class="">See all datasets</a>
+        <a href="/datasets?grp=00000000-1111-2222-3333-444444444444" class="">See all datasets</a>
       </div>
     </div>
   </div>

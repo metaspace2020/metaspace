@@ -153,11 +153,11 @@
     get groupUrlHref() {
       const groupIdOrSlug = this.group ? this.group.urlSlug || this.group.id : '';
       const {href} = this.$router.resolve({ name: 'group', params: { groupIdOrSlug } }, undefined, true);
-      return `${location.origin}/${href}`;
+      return location.origin + href;
     }
     get groupUrlPrefix() {
       const {href} = this.$router.resolve({ name: 'group', params: { groupIdOrSlug: 'REMOVE' } }, undefined, true);
-      return `${location.origin}/${href.replace('REMOVE', '')}`;
+      return location.origin + href.replace('REMOVE', '');
     }
 
     @Watch('group')

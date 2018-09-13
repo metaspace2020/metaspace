@@ -3,29 +3,29 @@
 exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
 <div class="b-header">
   <div class="header-items">
-    <a href="#/" class="header-item logo router-link-active">
+    <a href="/" class="header-item logo router-link-active">
       <img src="../../assets/logo.png" alt="Metaspace" title="Metaspace">
     </a>
-    <a href="#/upload" class="header-item page-link" id="upload-link">
+    <a href="/upload" class="header-item page-link" id="upload-link">
       Upload
     </a>
-    <a href="#/annotations" class="header-item page-link" id="annotations-link">
+    <a href="/annotations" class="header-item page-link" id="annotations-link">
       Annotations
     </a>
-    <a href="#/datasets" class="header-item page-link" id="datasets-link">
+    <a href="/datasets" class="header-item page-link" id="datasets-link">
       Datasets
     </a>
-    <a href="#/projects" class="header-item page-link">
+    <a href="/projects" class="header-item page-link">
       Projects
     </a>
-    <a href="#/group/456" class="header-item page-link">
+    <a href="/group/456" class="header-item page-link">
       <div class="limit-width">
         currentUser.primaryGroup.group.shortName
       </div>
     </a>
   </div>
   <div class="header-items">
-    <a href="#/help" class="header-item page-link">
+    <a href="/help" class="header-item page-link">
       Help
     </a>
     <!---->
@@ -37,7 +37,7 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
           </div>
         </div>
         <div class="submenu">
-          <a href="#/user/me" class="submenu-item page-link">
+          <a href="/user/me" class="submenu-item page-link">
             My account
           </a>
           <div class="submenu-item page-link">
@@ -53,25 +53,25 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
 exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
 <div class="b-header">
   <div class="header-items">
-    <a href="#/" class="header-item logo router-link-active">
+    <a href="/" class="header-item logo router-link-active">
       <img src="../../assets/logo.png" alt="Metaspace" title="Metaspace">
     </a>
-    <a href="#/upload" class="header-item page-link" id="upload-link">
+    <a href="/upload" class="header-item page-link" id="upload-link">
       Upload
     </a>
-    <a href="#/annotations" class="header-item page-link" id="annotations-link">
+    <a href="/annotations" class="header-item page-link" id="annotations-link">
       Annotations
     </a>
-    <a href="#/datasets" class="header-item page-link" id="datasets-link">
+    <a href="/datasets" class="header-item page-link" id="datasets-link">
       Datasets
     </a>
-    <a href="#/projects" class="header-item page-link">
+    <a href="/projects" class="header-item page-link">
       Projects
     </a>
     <!---->
   </div>
   <div class="header-items">
-    <a href="#/help" class="header-item page-link">
+    <a href="/help" class="header-item page-link">
       Help
     </a>
     <div class="header-items">

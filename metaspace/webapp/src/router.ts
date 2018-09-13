@@ -25,7 +25,16 @@ const asyncPages = {
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ProjectsListPage.vue'),
 };
 
+const convertLegacyHashUrls = () => {
+  const {pathname, hash} = window.location;
+  if (pathname === '/' && hash && hash.startsWith('#/')) {
+    history.replaceState(undefined, undefined, hash.slice(1));
+  }
+};
+convertLegacyHashUrls();
+
 const router = new VueRouter({
+  mode: 'history',
   routes: [
     { path: '/', redirect: '/about' },
     { path: '/annotations', component: asyncPages.AnnotationsPage },

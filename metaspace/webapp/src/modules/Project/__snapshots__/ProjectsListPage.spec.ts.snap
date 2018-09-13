@@ -8,10 +8,10 @@ exports[`ProjectsListPage should match snapshot 1`] = `
     </div>
     <div mock-v-loading="false">
       <div class="project-item">
-        <a href="#/project/proj-one" class="underlay"></a>
+        <a href="/project/proj-one" class="underlay"></a>
         <div class="info">
           <div class="info-line project-name">
-            <a href="#/project/proj-one" class="">project one</a>
+            <a href="/project/proj-one" class="">project one</a>
           </div>
           <div class="info-line">
             <!---->
@@ -24,12 +24,12 @@ exports[`ProjectsListPage should match snapshot 1`] = `
         <img src="../../assets/padlock-icon.svg" title="This project is only visible to its members and METASPACE administrators" class="private-icon">
       </div>
       <div class="project-item">
-        <a href="#/project/project%203" class="underlay"></a>
+        <a href="/project/project%203" class="underlay"></a>
         <div class="info">
           <div class="info-line project-name">
-            <a href="#/project/project%203" class="">project three</a>
+            <a href="/project/project%203" class="">project three</a>
           </div>
-          <div class="info-line"><span><a href="#/datasets?prj=project%203" class="">5 Datasets</a>,
+          <div class="info-line"><span><a href="/datasets?prj=project%203" class="">5 Datasets</a>,
       </span> 10 Members
           </div>
           <div class="info-line"><span>
@@ -39,12 +39,12 @@ exports[`ProjectsListPage should match snapshot 1`] = `
         <!---->
       </div>
       <div class="project-item">
-        <a href="#/project/project%202" class="underlay"></a>
+        <a href="/project/project%202" class="underlay"></a>
         <div class="info">
           <div class="info-line project-name">
-            <a href="#/project/project%202" class="">project two</a>
+            <a href="/project/project%202" class="">project two</a>
           </div>
-          <div class="info-line"><span><a href="#/datasets?prj=project%202" class="">20 Datasets</a>,
+          <div class="info-line"><span><a href="/datasets?prj=project%202" class="">20 Datasets</a>,
       </span> 20 Members
           </div>
           <div class="info-line"><span>

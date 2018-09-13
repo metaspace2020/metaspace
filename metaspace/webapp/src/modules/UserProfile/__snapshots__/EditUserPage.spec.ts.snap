@@ -128,7 +128,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
                     <div class="cell">
-                      <a href="#/group/grp-a" class="">Group A</a>
+                      <a href="/group/grp-a" class="">Group A</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
@@ -154,7 +154,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
                     <div class="cell">
-                      <a href="#/group/BBB" class="">Group B</a>
+                      <a href="/group/BBB" class="">Group B</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
@@ -184,7 +184,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
                     <div class="cell">
-                      <a href="#/group/CCC" class="">Group C</a>
+                      <a href="/group/CCC" class="">Group C</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
@@ -206,7 +206,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
                     <div class="cell">
-                      <a href="#/group/DDD" class="">Group D</a>
+                      <a href="/group/DDD" class="">Group D</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
@@ -214,7 +214,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_3 is-center ">
                     <div class="cell">
-                      <a href="#/datasets?grp=DDD&amp;subm=22333" class="">
+                      <a href="/datasets?grp=DDD&amp;subm=22333" class="">
                         20
                       </a>
                       <!---->
@@ -375,7 +375,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                     <div class="cell">
-                      <a href="#/project/proj-a" class="">Project A</a>
+                      <a href="/project/proj-a" class="">Project A</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
@@ -401,7 +401,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                     <div class="cell">
-                      <a href="#/project/BB" class="">Project B</a>
+                      <a href="/project/BB" class="">Project B</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
@@ -431,7 +431,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                     <div class="cell">
-                      <a href="#/project/CC" class="">Project C</a>
+                      <a href="/project/CC" class="">Project C</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
@@ -453,7 +453,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                 <tr class="el-table__row">
                   <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                     <div class="cell">
-                      <a href="#/project/DD" class="">Project D</a>
+                      <a href="/project/DD" class="">Project D</a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
@@ -461,7 +461,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_2_column_7 is-center ">
                     <div class="cell">
-                      <a href="#/datasets?prj=DD&amp;subm=22333" class="">
+                      <a href="/datasets?prj=DD&amp;subm=22333" class="">
                         20
                       </a>
                       <!---->

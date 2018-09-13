@@ -117,7 +117,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=2&amp;subm=3" class="">123</a>
+                    <a href="/datasets?grp=2&amp;subm=3" class="">123</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -147,7 +147,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=2&amp;subm=4" class="">0</a>
+                    <a href="/datasets?grp=2&amp;subm=4" class="">0</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -185,7 +185,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=2&amp;subm=5" class="">0</a>
+                    <a href="/datasets?grp=2&amp;subm=5" class="">0</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -219,7 +219,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=2&amp;subm=6" class="">1</a>
+                    <a href="/datasets?grp=2&amp;subm=6" class="">1</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -261,7 +261,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
       <!---->
       <div>
         <p>
-          <a href="http://localhost/#/group/2">http://localhost/#/group/<span class="urlSlug">2</span></a>
+          <a href="http://localhost/group/2">http://localhost/group/<span class="urlSlug">2</span></a>
         </p>
         <p>
           <a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
@@ -270,7 +270,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
     <div style="margin-bottom: 2em;">
       <h2>Datasets</h2>
       <p>
-        <a href="#/datasets?grp=2" class="">See all datasets</a>
+        <a href="/datasets?grp=2" class="">See all datasets</a>
       </p>
     </div>
     <!---->
