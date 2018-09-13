@@ -4,7 +4,7 @@
       :visible="showCreateProjectDialog && currentUser != null"
       :currentUserId="currentUser && currentUser.id"
       @close="handleCloseCreateProjectDialog"
-      @create="createProject"
+      @create="handleCreateProject"
     />
     <div style="padding-left: 15px">
       <el-table :data="rows" class="table">
@@ -174,10 +174,8 @@
       this.showCreateProjectDialog = false;
     }
 
-
-    async createProject() {
-      await this.refetchData();
-      this.showCreateProjectDialog = false;
+    handleCreateProject({id}: {id: string}) {
+      this.$router.push({name: 'project', params: {projectIdOrSlug: id}});
     }
 
 
