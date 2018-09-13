@@ -1,13 +1,9 @@
 import pandas as pd
 import numpy as np
 
-import requests
-import json
-import re
+import requests, json, re, os, boto3, pprint
 from copy import deepcopy
 from io import BytesIO
-import os
-import boto3
 from PIL import Image
 
 
@@ -18,13 +14,16 @@ def _extract_data(res):
     if 'data' in res_json:
         return res.json()['data']
     else:
+        if (json.loads(res_json['errors'][0]['message'])['type'] == "failed_validation"):
+            pprint.pprint(res_json)
+            raise Exception("Validaton of metadata failed, please check that all fields are correctly entered")
         raise Exception(res.json()['errors'][0]['message'])
 
 
 DEFAULT_CONFIG = {
     'graphql_url': 'http://metaspace2020.eu/graphql',
     'moldb_url': 'http://metaspace2020.eu/mol_db/v1',
-    'jwt': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNRVRBU1BBQ0UyMDIwIiwicm9sZSI6ImFub255bW91cyJ9.Hl0h6crcHLb-SPm7nomXkQco5l2iAO6D1bwdjmOaFXM'
+    'jwt': ''
 }
 
 class GraphQLClient(object):
@@ -206,40 +205,33 @@ class GraphQLClient(object):
         variables = {"datasetId": dsid}
         return self.query(query, variables)
 
-    def submitDataset(self, data_path, metadata, priority=0, dsid=None):
+    def createDataset(self, data_path, metadata, priority=0, dsName=None,
+                      isPublic=None, molDBs=None, adducts=None, dsid=None):
         if self.jwt == None:
             raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
         query = """
-                        mutation customSubmitDataset ($jwt: String!, $path: String!, 
-                        $metadata: String!, $priority: Int, $datasetId: String) {
-                              submitDataset(
-                                jwt: $jwt,
-                                path: $path,
-                                metadataJson: $metadata,
-                                priority: $priority,
-                                datasetId: $datasetId
-                              )
-                         }
-                        """
-        queryWithId = """
-                mutation customSubmitDataset ($jwt: String!, $path: String!, 
-                $metadata: String!, $priority: Int, $datasetId: String) {
-                      submitDataset(
-                        jwt: $jwt,
-                        path: $path,
-                        metadataJson: $metadata,
-                        priority: $priority,
-                        datasetId: $datasetId
-                      )
-                 }
+                    mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int) {
+                        createDataset(
+                          id: $id,
+                          input: $input,
+                          priority: $priority
+                        )
+                      }
                 """
+
         variables = {
-            'jwt': self.jwt, 'path': data_path,
-            'metadata': metadata, 'priority': priority}
-        if dsid is not None:
-            variables['datasetId'] = dsid
-            return self.query(queryWithId, variables)
-        print('noid', dsid)
+            'jwt': self.jwt,
+            'id': dsid,
+            'input': {
+                'name': dsName,
+                'inputPath': data_path,
+                'isPublic': isPublic,
+                'molDBs': molDBs,
+                'adducts': adducts,
+                'metadataJson': metadata
+            }
+        }
+
         return self.query(query, variables)
 
     def deleteDataset(self, datasetID, delRaw=False):
@@ -710,7 +702,8 @@ class SMInstance(object):
                                             fill_value=fill_values.get(f, 0.0))
         return d
 
-    def submit_dataset(self, imzml_fn, ibd_fn, metadata, dsid=None, folder_uuid = None, s3bucket ='sm-external-export', priority=0):
+    def submit_dataset(self, imzml_fn, ibd_fn, metadata, dsid=None, folder_uuid = None, dsName=None,
+                       isPublic=None, molDBs=None, adducts=None, s3bucket=None, priority=0):
         """
         Submit a dataset for processing on the SM Instance
         :param imzml_fn: file path to imzml
@@ -732,7 +725,7 @@ class SMInstance(object):
             key = "{}/{}".format(folder_uuid, os.path.split(fn)[1])
             s3.upload_file(fn, s3bucket, key)
         folder = "s3a://" + s3bucket + "/" + folder_uuid
-        return self._gqclient.submitDataset(folder, metadata, priority, dsid=dsid)
+        return self._gqclient.createDataset(folder, metadata, priority, dsName, isPublic, molDBs, adducts, dsid=dsid)
 
     def delete_dataset(self, dsid, **kwargs):
         return self._gqclient.deleteDataset(dsid, **kwargs)
