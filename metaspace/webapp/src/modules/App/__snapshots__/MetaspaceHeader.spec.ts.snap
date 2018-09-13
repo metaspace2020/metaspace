@@ -3,7 +3,7 @@
 exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
 <div class="b-header">
   <div class="header-items">
-    <a href="/" class="header-item logo router-link-active">
+    <a href="/" class="header-item logo router-link-exact-active router-link-active">
       <img src="../../assets/logo.png" alt="Metaspace" title="Metaspace">
     </a>
     <a href="/upload" class="header-item page-link" id="upload-link">
@@ -53,7 +53,7 @@ exports[`MetaspaceHeader should match snapshot (logged in) 1`] = `
 exports[`MetaspaceHeader should match snapshot (logged out) 1`] = `
 <div class="b-header">
   <div class="header-items">
-    <a href="/" class="header-item logo router-link-active">
+    <a href="/" class="header-item logo router-link-exact-active router-link-active">
       <img src="../../assets/logo.png" alt="Metaspace" title="Metaspace">
     </a>
     <a href="/upload" class="header-item page-link" id="upload-link">
