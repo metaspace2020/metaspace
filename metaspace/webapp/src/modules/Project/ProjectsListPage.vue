@@ -3,7 +3,11 @@
     <div class="page-content">
       <filter-panel level="projects" />
       <div v-loading="loading !== 0">
-        <projects-list-item v-for="project in projects" :key="project.id" :project="project" />
+        <projects-list-item v-for="project in projects"
+                            :key="project.id"
+                            :project="project"
+                            :currentUser="currentUser"
+                            :refreshData="handleRefreshData" />
       </div>
       <div style="text-align: center;" v-if="projectsCount > pageSize || page !== 1">
       <el-pagination :total="projectsCount"
@@ -24,14 +28,9 @@
     ProjectsListProject,
     projectsListQuery,
   } from '../../api/project';
-  import { UserRole } from '../../api/user';
+  import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user';
   import { FilterPanel } from '../Filters';
   import ProjectsListItem from './ProjectsListItem.vue';
-
-  interface CurrentUserQuery {
-    id: string;
-    role: UserRole;
-  }
 
   @Component<ProjectsListPage>({
     components: {
@@ -39,6 +38,10 @@
       ProjectsListItem,
     },
     apollo: {
+      currentUser: {
+        query: currentUserRoleQuery,
+        loadingKey: 'loading',
+      },
       allProjects: {
         query: projectsListQuery,
         loadingKey: 'loading',
@@ -74,7 +77,7 @@
   })
   export default class ProjectsListPage extends Vue {
     loading = 0;
-    currentUser: CurrentUserQuery | null = null;
+    currentUser: CurrentUserRoleResult | null = null;
     allProjects: ProjectsListProject[] | null = null;
     myProjects: ProjectsListProject[] | null = null;
     projectsCount = 0;
@@ -105,6 +108,14 @@
 
     created() {
       this.$store.commit('updateFilter', this.$store.getters.filter);
+    }
+
+    async handleRefreshData() {
+      await Promise.all([
+        this.$apollo.queries.allProjects.refetch(),
+        this.$apollo.queries.myProjects.refetch(),
+        this.$apollo.queries.projectsCount.refetch(),
+      ])
     }
   }
 
