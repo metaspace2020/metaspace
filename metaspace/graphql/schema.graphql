@@ -252,6 +252,7 @@ input DatasetCreateInput {
 }
 
 input DatasetUpdateInput {
+  # Don't supply fields that haven't been changed
   name: String
   uploadDT: String
   metadataJson: String

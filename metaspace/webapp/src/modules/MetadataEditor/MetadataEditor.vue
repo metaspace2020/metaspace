@@ -81,6 +81,7 @@
    molDBs: [],
    adducts: [],
    name: '',
+   submitterId: null,
    groupId: null,
    projectIds: []
  };
@@ -168,8 +169,9 @@
    methods: {
      async loadDataset() {
        const metaspaceOptionsFromDataset = (dataset) => {
-         const {isPublic, molDBs, adducts, name, group, projects, principalInvestigator} = dataset;
+         const {isPublic, molDBs, adducts, name, group, projects, submitter, principalInvestigator} = dataset;
          return {
+           submitterId: submitter ? submitter.id : null,
            groupId: group ? group.id : null,
            projectIds: projects.map(p => p.id),
            principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
@@ -185,7 +187,10 @@
 
          return {
            metadata: dataset && safeJsonParse(dataset.metadataJson) || {},
-           metaspaceOptions: dataset != null ? metaspaceOptionsFromDataset(dataset) : null,
+           metaspaceOptions: {
+             ...(dataset != null ? metaspaceOptionsFromDataset(dataset) : null),
+             submitterId: data.currentUser.id,
+           },
            submitter: data.currentUser
          }
        } else {
@@ -326,7 +331,6 @@
            }
          }
        }
-
 
        this.localErrors = errors;
      },
