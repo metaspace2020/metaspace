@@ -100,8 +100,8 @@ const configureGoogleAuth = (app, knex) => {
 
     app.get('/auth/google/callback',
       passport.authenticate('google', {
-        successRedirect: '/#/datasets',
-        failureRedirect: '/#/help',
+        successRedirect: '/datasets',
+        failureRedirect: '/help',
       }))
   }
 };

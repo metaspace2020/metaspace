@@ -107,7 +107,7 @@ const uploadForm = new UploadForm();
 const datasetsPage = new DatasetsPage();
 
 fixture(`Upload page`)
-    .page(`http://${HOST_NAME}:${PORT}/#/upload`)
+    .page(`http://${HOST_NAME}:${PORT}/upload`)
     .beforeEach(async (t: TestController) => {
         const user: UserInfo = {
             firstName: 'Erica',
@@ -136,6 +136,6 @@ test('submitted dataset appears in the Datasets tab', async (t: TestController) 
     await t
         .typeText(datasetNameField, datasetName, {replace: true, paste: true})
         .click(uploadForm.submitButton)
-        .navigateTo('/#/datasets')
+        .navigateTo('/datasets')
         .expect(datasetsPage.findDataset(datasetName).exists).ok();
 });
