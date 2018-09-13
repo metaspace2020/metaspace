@@ -194,7 +194,7 @@ module.exports = {
         throw new UserError(`Not authenticated`);
 
       if (input.groupId)
-        await isMemberOf(connection, user, groupId);
+        await isMemberOf(connection, user, input.groupId);
 
       try {
         input.metadata = JSON.parse(input.metadataJson);
