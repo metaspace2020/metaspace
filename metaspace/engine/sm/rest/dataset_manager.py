@@ -81,6 +81,7 @@ class SMapiDatasetManager(object):
         ds.save(self._db, self._es, self._status_queue)
 
         self._post_sm_msg(ds=ds, queue=self._annot_queue, action='annotate', **kwargs)
+        return ds_doc['id']
 
     def delete(self, ds_id, **kwargs):
         """ Send delete message to the queue """

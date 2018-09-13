@@ -6,7 +6,7 @@ import {esSearchResults, esCountResults, esCountGroupedResults, esAnnotationByID
 import {dsField, getPgField, SubstringMatchFilter} from './datasetFilters';
 import {
   pgDatasetsViewableByUser,
-  fetchDS,
+  fetchEngineDS,
   fetchMolecularDatabases,
   deprecatedMolDBs,
   assertUserCanViewDataset,
@@ -35,7 +35,7 @@ async function publishDatasetStatusUpdate(ds_id, status) {
       } else if (ds !== null && status !== 'DELETED') {
         pubsub.publish('datasetStatusUpdated', {
           dataset: Object.assign({}, ds, { status }),
-          dbDs: await fetchDS({ id: ds_id })
+          dbDs: await fetchEngineDS({ id: ds_id })
         });
         return;
       }
@@ -431,11 +431,11 @@ const Resolvers = {
     opticalImage(ds, _, context) {
       return Resolvers.Query.rawOpticalImage(null, {datasetId: ds._source.ds_id}, context)
           .then(optImage => {
-            if (optImage.transform == null) {
+            if (!optImage) {
               //non-existing optical image don't have transform value
               return 'noOptImage'
             }
-            return optImage.url
+            return optImage.url;
           }).catch((e) => {
             logger.error(e);
           })
@@ -534,7 +534,7 @@ const Resolvers = {
   Mutation: {
     reprocessDataset: async (_, args, {user}) => {
       const {id, delFirst, priority} = args;
-      const ds = await fetchDS({id});
+      const ds = await fetchEngineDS({id});
       if (ds === undefined)
         throw new UserError('DS does not exist');
       return DSMutation.update({id: id, input: ds, reprocess: true, delFirst: delFirst, priority: priority}, user);
@@ -548,8 +548,8 @@ const Resolvers = {
       return DSMutation.update(args, context);
     },
 
-    deleteDataset: (_, args, {user}) => {
-      return DSMutation.delete(args, user);
+    deleteDataset: (_, args, context) => {
+      return DSMutation.delete(args, context);
     },
 
     addOpticalImage: (_, {input}, {user}) => {

@@ -292,7 +292,7 @@ class ESExporter(object):
             self._ingest.put_pipeline(
                 id=pipeline_id,
                 body={'processors': processors})
-
+            # Note: mind the time gap between the queries when called from different processes
             self._es.update_by_query(
                 index=self.index,
                 body={'query': {'term': {'ds_id': ds_id}}},

@@ -244,7 +244,7 @@ input DatasetCreateInput {
   metadataJson: String!
   molDBs: [String!]!
   adducts: [String!]!
-  submitterId: ID
+  submitterId: ID!
   groupId: ID
   projectIds: [ID!] = []
   principalInvestigator: PersonInput

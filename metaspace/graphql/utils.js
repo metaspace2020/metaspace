@@ -159,7 +159,6 @@ async function wait(ms) {
 }
 
 export {
-  addProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
   canUserViewEsDataset,

@@ -97,14 +97,14 @@ def add_ds():
             logger.info(msg)
             raise Exception(msg)
         else:
-            # priority = params.get('priority', DatasetActionPriority.DEFAULT)
             db = _create_db_conn()
             ds_man = _create_dataset_manager(db)
-            ds_man.add(ds_doc,
-                       del_first=params.get('del_first', False),
-                       force=params.get('force', False),
-                       email=params.get('email', None),
-                       priority=params.get('priority', DatasetActionPriority.DEFAULT))
+            ds_id = ds_man.add(
+                ds_doc,
+                del_first=params.get('del_first', False),
+                force=params.get('force', False),
+                email=params.get('email', None),
+                priority=params.get('priority', DatasetActionPriority.DEFAULT))
             db.close()
             return {
                 'status': OK['status'],

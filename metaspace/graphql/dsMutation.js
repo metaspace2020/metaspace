@@ -8,7 +8,7 @@ const jsondiffpatch = require('jsondiffpatch'),
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json'),
   {Dataset: DatasetModel} = require('./src/modules/user/model'),
-  {UserGroup: UserGrouModel, UserGroupRoleOptions} = require('./src/modules/group/model');
+  {UserGroup: UserGroupModel, UserGroupRoleOptions} = require('./src/modules/group/model');
 
 const ajv = new Ajv({allErrors: true});
 const validator = ajv.compile(metadataSchema);
@@ -146,21 +146,21 @@ const hasEditAccess = async (connection, user, dsId) => {
 };
 
 const isMemberOf = async (connection, user, groupId) => {
-  const userGroup = await connection.getRepository(UserGrouModel).find({
+  const userGroup = await connection.getRepository(UserGroupModel).findOne({
     userId: user.id,
     groupId
   });
-  if (![UserGroupRoleOptions.MEMBER,
+  if (!userGroup || ![UserGroupRoleOptions.MEMBER,
     UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(userGroup.role))
     throw new UserError(`User ${user.id} is not a member of ${groupId} group`);
 };
 
-const saveDS = async (connection, dsId, input) => {
-  if (input.submitterId || input.groupId) {
+const saveDS = async (connection, dsId, submitterId, groupId) => {
+  if (submitterId || groupId) {
     const dsUpdate = {
       id: dsId,
-      userId: input.submitterId,
-      groupId: input.groupId
+      userId: submitterId,
+      groupId: groupId
     };
     await connection.getRepository(DatasetModel).save(dsUpdate);
   }
@@ -176,7 +176,7 @@ const smAPIdsUpdate = (update) => {
     submitterId: 'submitter_id',
     groupId: 'group_id',
     adducts: 'adducts',
-    moldDBs: 'mol_dbs'
+    molDBs: 'mol_dbs'
   };
   let smAPIUpdate = _.pickBy(update, (v,k) => Object.keys(smapiFieldMap).includes(k));
   smAPIUpdate = _.mapKeys(smAPIUpdate, (v,k) => smapiFieldMap[k]);
@@ -213,7 +213,7 @@ module.exports = {
         const resp = await smAPIRequest(dsId, '/v1/datasets/add', body);
         dsId = resp['ds_id'];
 
-        await saveDS(connection, dsId, input);
+        await saveDS(connection, dsId, input.submitterId, input.groupId);
         return JSON.stringify({ dsId });
       } catch (e) {
         logger.error(e.stack);
@@ -276,13 +276,14 @@ module.exports = {
         await hasEditAccess(connection, user, dsId);
 
         try {
-          await smAPIRequest(id, `/v1/datasets/${id}/del-optical-image`, {});
+          await smAPIRequest(dsId, `/v1/datasets/${dsId}/del-optical-image`, {});
         }
         catch (err) {
           logger.warn(err);
         }
 
-        return await smAPIRequest(id, `/v1/datasets/${id}/delete`, {});
+        const resp = await smAPIRequest(dsId, `/v1/datasets/${dsId}/delete`, {});
+        return JSON.stringify(resp);
       } catch (e) {
         logger.error(e.stack);
         throw e;
