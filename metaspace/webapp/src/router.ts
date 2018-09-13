@@ -36,7 +36,8 @@ convertLegacyHashUrls();
 const router = new VueRouter({
   mode: 'history',
   routes: [
-    { path: '/', redirect: '/about' },
+    { path: '/', component: AboutPage },
+    { path: '/about', component: AboutPage },
     { path: '/annotations', component: asyncPages.AnnotationsPage },
     {
       path: '/datasets',
@@ -49,7 +50,6 @@ const router = new VueRouter({
     { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
     { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.ImageAlignmentPage },
     { path: '/upload', component: asyncPages.UploadPage },
-    { path: '/about', component: AboutPage },
     { path: '/help', component: asyncPages.HelpPage },
     { path: '/user/me', component: asyncPages.EditUserPage },
 
