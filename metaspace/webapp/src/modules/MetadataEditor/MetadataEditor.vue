@@ -131,7 +131,9 @@
        molDBOptions: [],
        possibleAdducts: {},
        metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
-       submitter: null
+       submitter: null,
+       initialValue: null,
+       initialMetaspaceOptions: null,
      }
    },
 
@@ -269,6 +271,8 @@
 
        this.value = metadata;
        this.metaspaceOptions = metaspaceOptions;
+       this.initialValue = cloneDeep(metadata);
+       this.initialMetaspaceOptions = cloneDeep(metaspaceOptions);
        if (dataset.submitter != null) {
          this.submitter = dataset.submitter;
        }
@@ -392,11 +396,12 @@
          return null;
        }
 
-       const value = JSON.stringify(this.value);
        return {
          datasetId: this.datasetId ? this.datasetId: '',
-         metadataJson: value,
-         metaspaceOptions: this.metaspaceOptions
+         metadataJson: JSON.stringify(this.value),
+         metaspaceOptions: this.metaspaceOptions,
+         initialMetadataJson: JSON.stringify(this.initialValue),
+         initialMetaspaceOptions: this.initialMetaspaceOptions,
        }
      },
 
