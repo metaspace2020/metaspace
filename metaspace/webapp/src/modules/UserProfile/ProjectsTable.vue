@@ -1,66 +1,66 @@
 <template>
-  <div>
+  <el-row>
     <create-project-dialog
       :visible="showCreateProjectDialog && currentUser != null"
       :currentUserId="currentUser && currentUser.id"
-      @close="() => showCreateProjectDialog = false"
+      @close="handleCloseCreateProjectDialog"
       @create="createProject"
     />
-    <el-table
-      :data="rows"
-      style="margin-left: 15px;"
-    class="table">
-      <el-table-column label="Project">
-        <template slot-scope="scope">
-          <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
-        </template>
-      </el-table-column>
-      <el-table-column prop="roleName" label="Role" width="160" />
-      <el-table-column label="Datasets contributed" width="160" align="center">
-        <template slot-scope="scope">
-          <router-link v-if="scope.row.numDatasets > 0" :to="scope.row.datasetsRoute">
-            {{scope.row.numDatasets}}
-          </router-link>
-          <span v-if="scope.row.numDatasets === 0">{{scope.row.numDatasets}}</span>
-        </template>
-      </el-table-column>
-      <el-table-column width="240" align="right">
-        <template slot-scope="scope">
-          <el-button
-            v-if="scope.row.role === 'MEMBER'"
-            size="mini"
-            icon="el-icon-arrow-right"
-            @click="handleLeave(scope.row)">
-            Leave
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'MANAGER'"
-            size="mini"
-            icon="el-icon-arrow-right"
-            disabled>
-            Leave
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'INVITED'"
-            size="mini"
-            type="success"
-            @click="handleAcceptInvitation(scope.row)"
-            icon="el-icon-check">
-            Accept
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'INVITED'"
-            size="mini"
-            icon="el-icon-close"
-            @click="handleDeclineInvitation(scope.row)">
-            Decline
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-    <el-button style="float: right; margin: 10px 0;" @click="() => showCreateProjectDialog = true">Create project</el-button>
-    <div class="clearfix"/>
-  </div>
+    <div style="padding-left: 15px">
+      <el-table :data="rows" class="table">
+        <el-table-column label="Project">
+          <template slot-scope="scope">
+            <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
+          </template>
+        </el-table-column>
+        <el-table-column prop="roleName" label="Role" width="160" />
+        <el-table-column label="Datasets contributed" width="160" align="center">
+          <template slot-scope="scope">
+            <router-link v-if="scope.row.numDatasets > 0" :to="scope.row.datasetsRoute">
+              {{scope.row.numDatasets}}
+            </router-link>
+            <span v-if="scope.row.numDatasets === 0">{{scope.row.numDatasets}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column width="240" align="right">
+          <template slot-scope="scope">
+            <el-button
+              v-if="scope.row.role === 'MEMBER'"
+              size="mini"
+              icon="el-icon-arrow-right"
+              @click="handleLeave(scope.row)">
+              Leave
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'MANAGER'"
+              size="mini"
+              icon="el-icon-arrow-right"
+              disabled>
+              Leave
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'INVITED'"
+              size="mini"
+              type="success"
+              @click="handleAcceptInvitation(scope.row)"
+              icon="el-icon-check">
+              Accept
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'INVITED'"
+              size="mini"
+              icon="el-icon-close"
+              @click="handleDeclineInvitation(scope.row)">
+              Decline
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+    <el-row>
+      <el-button style="float: right; margin: 10px 0;" @click="handleOpenCreateProjectDialog">Create project</el-button>
+    </el-row>
+  </el-row>
 </template>
 
 <script lang="ts">
@@ -166,9 +166,14 @@
       }
     }
 
-    hideCreateProjectDialog() {
+    handleOpenCreateProjectDialog() {
+      this.showCreateProjectDialog = true;
+    }
+
+    handleCloseCreateProjectDialog() {
       this.showCreateProjectDialog = false;
     }
+
 
     async createProject() {
       await this.refetchData();

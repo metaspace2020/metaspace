@@ -8,58 +8,57 @@
       @accept="handleAcceptTransferDatasets"
       @close="handleCloseTransferDatasetsDialog"
     />
-    <el-table
-      :data="rows"
-      style="margin-left: 15px;"
-      class="table">
-      <el-table-column label="Group">
-        <template slot-scope="scope">
-          <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
-        </template>
-      </el-table-column>
-      <el-table-column prop="roleName" label="Role" width="160" />
-      <el-table-column label="Datasets contributed" width="160" align="center">
-        <template slot-scope="scope">
-          <router-link v-if="scope.row.numDatasets > 0" :to="scope.row.datasetsRoute">
-            {{scope.row.numDatasets}}
-          </router-link>
-          <span v-if="scope.row.numDatasets === 0">{{scope.row.numDatasets}}</span>
-        </template>
-      </el-table-column>
-      <el-table-column width="240" align="right">
-        <template slot-scope="scope">
-          <el-button
-            v-if="scope.row.role === 'MEMBER'"
-            size="mini"
-            icon="el-icon-arrow-right"
-            @click="handleLeave(scope.row)">
-            Leave
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'PRINCIPAL_INVESTIGATOR'"
-            size="mini"
-            icon="el-icon-arrow-right"
-            disabled>
-            Leave
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'INVITED'"
-            size="mini"
-            type="success"
-            @click="handleAcceptInvitation(scope.row)"
-            icon="el-icon-check">
-            Accept
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'INVITED'"
-            size="mini"
-            icon="el-icon-close"
-            @click="handleDeclineInvitation(scope.row)">
-            Decline
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div style="padding-left: 15px;">
+      <el-table :data="rows" class="table">
+        <el-table-column label="Group">
+          <template slot-scope="scope">
+            <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
+          </template>
+        </el-table-column>
+        <el-table-column prop="roleName" label="Role" width="160" />
+        <el-table-column label="Datasets contributed" width="160" align="center">
+          <template slot-scope="scope">
+            <router-link v-if="scope.row.numDatasets > 0" :to="scope.row.datasetsRoute">
+              {{scope.row.numDatasets}}
+            </router-link>
+            <span v-if="scope.row.numDatasets === 0">{{scope.row.numDatasets}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column width="240" align="right">
+          <template slot-scope="scope">
+            <el-button
+              v-if="scope.row.role === 'MEMBER'"
+              size="mini"
+              icon="el-icon-arrow-right"
+              @click="handleLeave(scope.row)">
+              Leave
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'PRINCIPAL_INVESTIGATOR'"
+              size="mini"
+              icon="el-icon-arrow-right"
+              disabled>
+              Leave
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'INVITED'"
+              size="mini"
+              type="success"
+              @click="handleAcceptInvitation(scope.row)"
+              icon="el-icon-check">
+              Accept
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'INVITED'"
+              size="mini"
+              icon="el-icon-close"
+              @click="handleDeclineInvitation(scope.row)">
+              Decline
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
   </div>
 </template>
