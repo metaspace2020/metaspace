@@ -31,16 +31,20 @@
         <div style="margin-bottom: 2em">
           <h2>Custom URL</h2>
           <div v-if="canEditUrlSlug">
-            <a :href="groupUrlHref">{{groupUrlPrefix}}</a>
+            <router-link :href="groupUrlRoute">{{groupUrlPrefix}}</router-link>
             <input v-model="model.urlSlug" />
           </div>
           <div v-if="!canEditUrlSlug && group && group.urlSlug">
-            <a :href="groupUrlHref">
+            <router-link :to="groupUrlRoute">
               {{groupUrlPrefix}}<span class="urlSlug">{{group.urlSlug}}</span>
-            </a>
+            </router-link>
           </div>
           <div v-if="!canEditUrlSlug && group && !group.urlSlug">
-            <p><a :href="groupUrlHref">{{groupUrlPrefix}}<span class="urlSlug">{{group.id}}</span></a></p>
+            <p>
+              <router-link :to="groupUrlRoute">
+                {{groupUrlPrefix}}<span class="urlSlug">{{group.id}}</span>
+              </router-link>
+            </p>
             <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
           </div>
         </div>
@@ -150,10 +154,9 @@
         group: this.groupId,
       };
     }
-    get groupUrlHref() {
+    get groupUrlRoute() {
       const groupIdOrSlug = this.group ? this.group.urlSlug || this.group.id : '';
-      const {href} = this.$router.resolve({ name: 'group', params: { groupIdOrSlug } }, undefined, true);
-      return location.origin + href;
+      return { name: 'group', params: { groupIdOrSlug } };
     }
     get groupUrlPrefix() {
       const {href} = this.$router.resolve({ name: 'group', params: { groupIdOrSlug: 'REMOVE' } }, undefined, true);

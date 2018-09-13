@@ -31,16 +31,20 @@
         <div v-if="project && project.isPublic" style="margin-bottom: 2em">
           <h2>Custom URL</h2>
           <div v-if="canEditUrlSlug">
-            <a :href="projectUrlHref">{{projectUrlPrefix}}</a>
+            <router-link :to="projectUrlRoute">{{projectUrlPrefix}}</router-link>
             <input v-model="model.urlSlug" />
           </div>
           <div v-if="!canEditUrlSlug && project && project.urlSlug">
-            <a :href="projectUrlHref">
+            <router-link :to="projectUrlRoute">
               {{projectUrlPrefix}}<span class="urlSlug">{{project.urlSlug}}</span>
-            </a>
+            </router-link>
           </div>
           <div v-if="!canEditUrlSlug && project && !project.urlSlug">
-            <p><a :href="projectUrlHref">{{projectUrlPrefix}}<span class="urlSlug">{{project.id}}</span></a></p>
+            <p>
+              <router-link :to="projectUrlRoute">
+                {{projectUrlPrefix}}<span class="urlSlug">{{project.id}}</span>
+              </router-link>
+            </p>
             <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL for your project.</p>
           </div>
         </div>
@@ -147,10 +151,9 @@
         project: this.projectId,
       };
     }
-    get projectUrlHref() {
+    get projectUrlRoute() {
       const projectIdOrSlug = this.project ? this.project.urlSlug || this.project.id : '';
-      const {href} = this.$router.resolve({ name: 'project', params: { projectIdOrSlug } }, undefined, true);
-      return location.origin + href;
+      return { name: 'project', params: { projectIdOrSlug } };
     }
     get projectUrlPrefix() {
       const {href} = this.$router.resolve({ name: 'project', params: { projectIdOrSlug: 'REMOVE' } }, undefined, true);

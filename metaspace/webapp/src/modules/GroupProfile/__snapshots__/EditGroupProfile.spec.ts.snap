@@ -261,7 +261,8 @@ exports[`EditGroupProfile should match snapshot 1`] = `
       <!---->
       <div>
         <p>
-          <a href="http://localhost/group/2">http://localhost/group/<span class="urlSlug">2</span></a>
+          <a href="/group/2" class="router-link-active">
+            http://localhost/group/<span class="urlSlug">2</span></a>
         </p>
         <p>
           <a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>

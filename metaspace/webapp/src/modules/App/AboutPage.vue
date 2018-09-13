@@ -11,19 +11,19 @@
       <el-row id="threePanelHeader" style="margin:20px 0px 50px 0px" :gutter=20>
         <el-col :span=6>
           <h2>Metabolite Annotation</h2>
-          <p><a href="/#/upload">Submit</a> your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine</p>
+          <p><router-link to="/upload">Submit</router-link> your high-resolution imaging mass spectrometry data to our high-throughput metabolite annotation engine</p>
         </el-col>
 
         <el-col :span=6>
           <h2>Explore the Knowledgebase</h2>
-          <p><a href="/#/annotations">Browse</a> annotations from all datasets using our interactive interface </p>
+          <p><router-link to="/annotations">Browse</router-link> annotations from all datasets using our interactive interface </p>
           <p>You can search, filter and compare youre annotations alongside those from the whole imaging mass spectrometry community</p>
         </el-col>
 
         <el-col :span=6>
           <h2>Get Going Fast</h2>
-          <p>Head to the <a href="/#/upload">upload </a> page to submit a dataset. </p>
-          <p> We also have interactive <a href="/#/help">tutorials</a> prepared to help you.</p>
+          <p>Head to the <router-link to="/upload">upload </router-link> page to submit a dataset. </p>
+          <p> We also have interactive <router-link to="/help">tutorials</router-link> prepared to help you.</p>
         </el-col>
 
         <el-col :span=6>
