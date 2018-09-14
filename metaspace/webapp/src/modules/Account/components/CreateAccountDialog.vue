@@ -52,6 +52,7 @@
                 v-model="model.password"
                 placeholder="Password"
                 required
+                @keypress.native.enter="onSubmit"
               />
             </el-form-item>
             <el-button type="primary" :loading="isSubmitting" @click="onSubmit">

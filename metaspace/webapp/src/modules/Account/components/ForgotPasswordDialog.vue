@@ -12,6 +12,7 @@
           <el-input
             v-model="model.email"
             placeholder="Email address"
+            @keypress.native.enter="onSubmit"
           />
         </el-form-item>
         <el-button type="primary" :loading="isSubmitting" @click="onSubmit">
