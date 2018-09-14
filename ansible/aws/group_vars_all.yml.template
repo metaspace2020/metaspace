@@ -96,6 +96,8 @@ mol_db_home: "{{ metaspace_home }}/metaspace/mol-db"
 mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}/mol_db/v1"
 mol_db_postgres_pass: POSTGRES_PASSWORD
 mol_db_image_dir: /var/www/mol-images
+mol_db_miniconda_env:
+  name: mol-db
 mol_db_import_databases: true  # set to false to avoid dropping MolDB database
 mol_db_import_mol_images: true  # set to false to avoid reimporting all molecular images
 mol_db_image_archives:
@@ -150,7 +152,6 @@ sm_graphql_rabbitmq_host: "{{ rabbitmq_host }}"
 sm_graphql_rabbitmq_user: "{{ rabbitmq_user }}"
 sm_graphql_rabbitmq_password: "{{ rabbitmq_password }}"
 sm_graphql_ws_public_endpoint: "ws://{{ sm_graphql_hostname }}/ws"
-sm_graphql_default_adducts: {{ sm_default_adducts }}
 sm_graphql_img_storage_backend: fs
 sm_graphql_redis_host: localhost
 sm_graphql_redis_port: 6379

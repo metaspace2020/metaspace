@@ -147,7 +147,7 @@ const datasetFilters = {
   ids: new DatasetIdFilter(),
   status: new ExactMatchFilter('', {esField: 'ds_status', pgField: 'status'}),
   submitter: new PersonFilter('Submitted_By.Submitter'),
-  hasGroup: new NotNullFilter('GroupId'), // FIXME: Use a real field
+  hasGroup: new NotNullFilter('ds_group_id'),
   metadataType: new ExactMatchFilter('Data_Type', {}),
 };
 

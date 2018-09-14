@@ -1,8 +1,6 @@
 import argparse
 import json
-from datetime import datetime
 import logging
-
 from bottle import post, run
 from bottle import request as req
 from bottle import response as resp
@@ -71,33 +69,47 @@ def _create_dataset_manager(db):
 
 @post('/v1/datasets/add')
 def add_ds():
+    """
+    Request params: {
+        input {
+            id?
+            name
+            input_path
+            upload_dt
+            metadata
+            is_public
+            mol_dbs
+            adducts
+        }
+        priority
+        force
+        del_first
+        email
+    }
+    """
     ds_id = None
     try:
         params = _json_params(req)
-        logger.info('Received ADD request: %s', params)
-        now = datetime.now()
-        ds_id = params.get('id', None) or now.strftime("%Y-%m-%d_%Hh%Mm%Ss")
-        ds = Dataset(ds_id,
-                     params.get('name', None),
-                     params.get('input_path'),
-                     params.get('upload_dt', now.isoformat()),
-                     params.get('metadata', None),
-                     params.get('config'),
-                     is_public=params.get('is_public'),
-                     mol_dbs=params.get('mol_dbs'),
-                     adducts=params.get('adducts'))
-        priority = params.get('priority', DatasetActionPriority.DEFAULT)
-
-        db = _create_db_conn()
-        ds_man = _create_dataset_manager(db)
-        ds_man.add(ds, del_first=params.get('del_first', False),
-                   force=params.get('force', False),
-                   email=params.get('email', None))
-        db.close()
-        return {
-            'status': OK['status'],
-            'ds_id': ds_id
-        }
+        logger.info(f'Received ADD request: {params}')
+        ds_doc = params.get('input', None)
+        if not ds_doc:
+            msg = 'No input to create a dataset'
+            logger.info(msg)
+            raise Exception(msg)
+        else:
+            # priority = params.get('priority', DatasetActionPriority.DEFAULT)
+            db = _create_db_conn()
+            ds_man = _create_dataset_manager(db)
+            ds_man.add(ds_doc,
+                       del_first=params.get('del_first', False),
+                       force=params.get('force', False),
+                       email=params.get('email', None),
+                       priority=params.get('priority', DatasetActionPriority.DEFAULT))
+            db.close()
+            return {
+                'status': OK['status'],
+                'ds_id': ds_id
+            }
     except DSIsBusy as e:
         logger.warning(e.message)
         resp.status = ERR_DS_BUSY['status_code']
@@ -121,9 +133,8 @@ def sm_modify_dataset(request_name):
                 params = _json_params(req)
                 logger.info('Received %s request: %s', request_name, params)
                 db = _create_db_conn()
-                ds = Dataset.load(db=db, ds_id=ds_id)
                 ds_man = _create_dataset_manager(db)
-                handler(ds_man, ds, params)
+                handler(ds_man, ds_id, params)
 
                 db.close()
                 return {
@@ -158,37 +169,51 @@ def sm_modify_dataset(request_name):
 
 @post('/v1/datasets/<ds_id>/update')
 @sm_modify_dataset('UPDATE')
-def update_ds(ds_man, ds, params):
-    ds.name = params.get('name', ds.name)
-    ds.input_path = params.get('input_path', ds.input_path)
-    ds.metadata = params.get('metadata', ds.metadata)
-    ds.upload_dt = params.get('upload_dt', ds.upload_dt)
-    ds.config = params.get('config', ds.config)
-    ds.is_public = params.get('is_public', ds.is_public)
-    ds.mol_dbs = params.get('mol_dbs', ds.mol_dbs)
-    force = params.get('force', False)
-    ds_man.update(ds, force=force)
+def update_ds(ds_man, ds_id, params):
+    """
+    :param ds_man: rest.SMapiDatasetManager
+    :param ds_id: string
+    :param params: {
+        name
+        input_path
+        upload_dt
+        metadata
+        config
+        is_public
+        submitter_id
+        group_id
+    }
+    :return:
+    """
+    update_dict = params.get('update', None)
+    if not update_dict:
+        logger.info(f'Nothing to update for "{ds_id}"')
+    else:
+        force = params.get('force', False)
+        priority = params.get('priority', DatasetActionPriority.STANDARD)
+        ds_man.update(ds_id=ds_id, update_dict=update_dict,
+                      force=force, priority=priority)
 
 
 @post('/v1/datasets/<ds_id>/delete')
 @sm_modify_dataset('DELETE')
-def delete_ds(ds_man, ds, params):
+def delete_ds(ds_man, ds_id, params):
     del_raw = params.get('del_raw', False)
     force = params.get('force', False)
-    ds_man.delete(ds, del_raw_data=del_raw, force=force)
+    ds_man.delete(ds_id=ds_id, del_raw_data=del_raw, force=force)
 
 
 @post('/v1/datasets/<ds_id>/add-optical-image')
 @sm_modify_dataset('ADD_OPTICAL_IMAGE')
-def add_optical_image(ds_man, ds, params):
+def add_optical_image(ds_man, ds_id, params):
     img_id = params['url'].split('/')[-1]
-    ds_man.add_optical_image(ds, img_id, params['transform'])
+    ds_man.add_optical_image(ds_id, img_id, params['transform'])
 
 
 @post('/v1/datasets/<ds_id>/del-optical-image')
 @sm_modify_dataset('DEL_OPTICAL_IMAGE')
-def del_optical_image(ds_man, ds, params):
-    ds_man.del_optical_image(ds)
+def del_optical_image(ds_man, ds_id, params):
+    ds_man.del_optical_image(ds_id)
 
 
 if __name__ == '__main__':

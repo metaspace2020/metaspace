@@ -8,18 +8,17 @@ from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import DatasetStatus, Dataset
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.tests.util import pysparkling_context, sm_config, ds_config, test_db, fill_db
-from sm.engine.tests.util import sm_index, es_dsl_search
+from sm.engine.tests.util import sm_config, test_db, fill_db, sm_index, es_dsl_search, metadata, ds_config
 
 
 def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
-              metadata=None, ds_config=None, status=DatasetStatus.NEW, mol_dbs=None, adducts=None):
+              metadata=None, status=DatasetStatus.NEW, mol_dbs=None, adducts=None):
     upload_dt = upload_dt or datetime.now()
     if not mol_dbs:
         mol_dbs = ['HMDB-v4']
     if not adducts:
         adducts = ['+H', '+Na', '+K']
-    return Dataset(ds_id, ds_name, input_path, upload_dt, metadata or {}, ds_config or {},
+    return Dataset(ds_id, ds_name, input_path, upload_dt, metadata or {},
                    status=status, mol_dbs=mol_dbs, adducts=adducts, img_storage_type='fs')
 
 
@@ -43,7 +42,7 @@ class TestSMDaemonDatasetManager:
         def run(self, *args, **kwargs):
             pass
 
-    def test_annotate_ds(self, test_db, sm_config, ds_config):
+    def test_annotate_ds(self, test_db, sm_config, metadata, ds_config):
         es_mock = MagicMock(spec=ESExporter)
         db = DB(sm_config['db'])
         try:
@@ -53,9 +52,8 @@ class TestSMDaemonDatasetManager:
             ds_name = 'ds_name'
             input_path = 'input_path'
             upload_dt = datetime.now()
-            metadata = {}
-            ds = create_ds(ds_id=ds_id, ds_name=ds_name, input_path=input_path, upload_dt=upload_dt,
-                           metadata=metadata, ds_config=ds_config)
+            ds = create_ds(ds_id=ds_id, ds_name=ds_name, input_path=input_path,
+                           upload_dt=upload_dt, metadata=metadata)
 
             manager.annotate(ds, search_job_factory=self.SearchJob)
 
@@ -64,20 +62,16 @@ class TestSMDaemonDatasetManager:
         finally:
             db.close()
 
-    def test_index_ds(self, fill_db, sm_config, ds_config):
+    def test_index_ds(self, fill_db, sm_config, metadata):
         es_mock = MagicMock(spec=ESExporter)
         manager = create_daemon_man(sm_config, es=es_mock)
 
         ds_id = '2000-01-01'
-        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
+        ds = create_ds(ds_id=ds_id, metadata=metadata)
 
         with patch('sm.engine.sm_daemons.MolecularDB') as MolecularDB:
             mol_db_mock = MolecularDB.return_value
             mol_db_mock.name = 'HMDB-v4'
-
-            # with patch('sm.engine.mol_db.MolDBServiceWrapper') as MolDBServiceWrapper:
-            #     moldb_service_wrapper_mock = MolDBServiceWrapper.return_value
-            #     moldb_service_wrapper_mock.find_db_by_id.return_value = {'name': 'HMDB-v4'}
 
             manager.index(ds)
 
@@ -85,14 +79,14 @@ class TestSMDaemonDatasetManager:
             call_args = es_mock.index_ds.call_args[1].values()
             assert ds_id in call_args and mol_db_mock in call_args
 
-    def test_delete_ds(self, fill_db, sm_config, ds_config):
+    def test_delete_ds(self, fill_db, sm_config):
         db = DB(sm_config['db'])
         es_mock = MagicMock(spec=ESExporter)
         img_store_service_mock = MagicMock(spec=ImageStoreServiceWrapper)
         manager = create_daemon_man(sm_config, db=db, es=es_mock, img_store=img_store_service_mock)
 
         ds_id = '2000-01-01'
-        ds = create_ds(ds_id=ds_id, ds_config=ds_config)
+        ds = create_ds(ds_id=ds_id)
 
         manager.delete(ds)
 

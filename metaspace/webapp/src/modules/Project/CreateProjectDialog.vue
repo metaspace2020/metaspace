@@ -3,7 +3,8 @@
              :visible="visible"
              append-to-body
              title="Create project"
-             @close="handleClose">
+             @close="handleClose"
+             :lockScroll="false">
     <div v-loading="loading">
       <edit-project-form ref="form" v-model="project" size="mini" />
       <div v-if="allDatasets.length > 0">

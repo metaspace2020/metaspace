@@ -20,15 +20,6 @@ const hasAccess = (user: UserModel, userId?: string) => {
   }
 };
 
-export const addUserDataset = async ({userId, dsId}: any, {user, connection}: any) => {
-  hasAccess(user, userId);
-
-  return connection.getRepository(DatasetModel).insert({
-    id: dsId,
-    userId: userId
-  });
-};
-
 export const Resolvers = {
   User: {
     async primaryGroup(user: UserModel, _: any, {connection}: any): Promise<UserGroupModel|null> {

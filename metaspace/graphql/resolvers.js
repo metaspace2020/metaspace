@@ -8,6 +8,7 @@ import {
   pgDatasetsViewableByUser,
   fetchDS,
   fetchMolecularDatabases,
+  deprecatedMolDBs,
   assertUserCanViewDataset,
   canUserViewPgDataset,
   wait,
@@ -176,9 +177,26 @@ const Resolvers = {
 
     async molecularDatabases(_, args, {user}) {
       try {
-        let molDBs = await fetchMolecularDatabases({hideDeprecated: args.hideDeprecated});
-        for (let moldb of molDBs)
-          moldb['default'] = config.defaults.moldb_names.includes(moldb.name);
+        const {hideDeprecated, onlyLastVersion} = args;
+
+        let molDBs = await fetchMolecularDatabases();
+        if (hideDeprecated) {
+          molDBs = molDBs.filter((molDB) => !deprecatedMolDBs.has(molDB.name));
+        }
+        for (let molDB of molDBs) {
+          molDB['default'] = config.defaults.moldb_names.includes(molDB.name);
+        }
+        if (onlyLastVersion) {
+          const molDBNameMap = new Map();
+          for (let molDB of molDBs) {
+            if (!molDBNameMap.has(molDB.name))
+              molDBNameMap.set(molDB.name, molDB);
+            else if (molDB.version > molDBNameMap.get(molDB.name).version)
+              molDBNameMap.set(molDB.name, molDB);
+          }
+          molDBs = Array.from(molDBNameMap.values());
+        }
+
         logger.debug(`Molecular databases: ` + JSON.stringify(molDBs));
         return molDBs;
       }
@@ -333,8 +351,21 @@ const Resolvers = {
     metadataType(ds) { return dsField(ds, 'metadataType'); },
 
     submitter(ds) {
-      return _.get(ds._source.ds_meta, 'Submitted_By.Submitter');
-      // TODO: return ds._source.ds_submitter;
+      return {
+        id: ds._source.ds_submitter_id,
+        name: ds._source.ds_submitter_name,
+        email: ds._source.ds_submitter_email,
+      };
+    },
+
+    group(ds) {
+      if (ds._source.ds_group_id) {
+        return {
+          id: ds._source.ds_group_id,
+          name: ds._source.ds_group_name,
+          shortName: ds._source.ds_group_short_name,
+        }
+      };
     },
 
     principalInvestigator(ds) {
@@ -513,8 +544,8 @@ const Resolvers = {
       return DSMutation.create(args, context);
     },
 
-    updateDataset: (_, args, {user}) => {
-      return DSMutation.update(args, user);
+    updateDataset: (_, args, context) => {
+      return DSMutation.update(args, context);
     },
 
     deleteDataset: (_, args, {user}) => {

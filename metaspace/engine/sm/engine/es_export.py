@@ -1,6 +1,6 @@
 from elasticsearch import Elasticsearch, NotFoundError, ElasticsearchException
 from elasticsearch.helpers import bulk, BulkIndexError
-from elasticsearch.client import IndicesClient
+from elasticsearch.client import IndicesClient, IngestClient
 import logging
 from collections import defaultdict
 import pandas as pd
@@ -36,22 +36,35 @@ WHERE ds.id = %s AND m.db_id = %s
 ORDER BY COALESCE(m.msm, 0::real) DESC'''
 
 DATASET_SEL = '''SELECT
-    dataset.id AS ds_id,
-    name AS ds_name,
-    config AS ds_config,
-    metadata AS ds_meta,
-    input_path AS ds_input_path,
-    upload_dt AS ds_upload_dt,
-    dataset.status AS ds_status,
-    to_char(max(finish), 'YYYY-MM-DD HH24:MI:SS') AS ds_last_finished,
-    is_public AS ds_is_public,
-    mol_dbs AS ds_mol_dbs,
-    adducts AS ds_adducts,
-    acq_geometry AS ds_acq_geometry,
-    ion_img_storage_type AS ds_ion_img_storage
-FROM dataset LEFT JOIN job ON job.ds_id = dataset.id
-WHERE dataset.id = %s
-GROUP BY dataset.id'''
+    d.*,
+    gu.id as ds_submitter_id,
+    gu.name as ds_submitter_name,
+    gu.email as ds_submitter_email,
+    gg.id as ds_group_id,
+    gg.name as ds_group_name,
+    gg.short_name as ds_group_short_name
+FROM (
+  SELECT
+    d.id AS ds_id,
+    d.name AS ds_name,
+    d.config AS ds_config,
+    d.metadata AS ds_meta,
+    d.input_path AS ds_input_path,
+    d.upload_dt AS ds_upload_dt,
+    d.status AS ds_status,
+    to_char(max(job.finish), 'YYYY-MM-DD HH24:MI:SS') AS ds_last_finished,
+    d.is_public AS ds_is_public,
+    d.mol_dbs AS ds_mol_dbs,
+    d.adducts AS ds_adducts,
+    d.acq_geometry AS ds_acq_geometry,
+    d.ion_img_storage_type AS ds_ion_img_storage
+  FROM dataset as d
+  LEFT JOIN job ON job.ds_id = d.id
+  GROUP BY d.id) as d
+LEFT JOIN graphql.dataset gd ON gd.id = d.ds_id
+LEFT JOIN graphql.user gu ON gu.id = gd.user_id
+LEFT JOIN graphql.group gg ON gg.id = gd.group_id
+WHERE d.ds_id = %s'''
 
 DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry',)
 
@@ -166,6 +179,7 @@ class ESExporter(object):
         if not es_config:
             es_config = self.sm_config['elasticsearch']
         self._es = init_es_conn(es_config)
+        self._ingest = IngestClient(self._es)
         self._db = db
         self.index = es_config['index']
 
@@ -178,23 +192,19 @@ class ESExporter(object):
         self._es.update(self.index, id=ds_id, body={'doc': dataset}, doc_type='dataset')
         return dataset
 
-    def _ds_add_derived_fields(self, dataset):
-        submitter = dataset.get('ds_meta', {}).get('Submitted_By', {}).get('Submitter', None)
-        if submitter:
-            dataset['ds_submitter'] = submitter.get('First_Name', '') + ' ' + submitter.get('Surname', '')
-            dataset['ds_submitter_email'] = submitter.get('Email', '')
-
-    def _ds_get_by_id(self, ds_id):
-        dataset = self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
-        self._ds_add_derived_fields(dataset)
-        return dataset
+    def _select_ds_by_id(self, ds_id):
+        return self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
 
     def sync_dataset(self, ds_id):
-        dataset = self._ds_get_by_id(ds_id)
+        """ Warning: This will wait till ES index/update is completed
+        """
+        ds = self._select_ds_by_id(ds_id)
         if self._es.exists(index=self.index, doc_type='dataset', id=ds_id):
-            self._es.update(index=self.index, id=ds_id, doc_type='dataset', body={'doc': dataset})
+            self._es.update(index=self.index, id=ds_id,
+                            doc_type='dataset', body={'doc': ds}, params={'refresh': 'wait_for'})
         else:
-            self._es.index(index=self.index, id=ds_id, doc_type='dataset', body=dataset)
+            self._es.index(index=self.index, id=ds_id,
+                           doc_type='dataset', body=ds, params={'refresh': 'wait_for'})
 
     def _get_mol_by_sf_df(self, mol_db):
         by_sf = mol_db.get_molecules().groupby('sf')
@@ -203,51 +213,53 @@ class ESExporter(object):
         mol_by_sf_df.columns = ['mol_ids', 'mol_names']
         return mol_by_sf_df
 
-    def _add_ds_attrs_to_ann(self, ann, ds_attrs):
-        for attr in ds_attrs:
-            if attr not in DS_COLUMNS_TO_SKIP_IN_ANN:
-                ann[attr] = ds_attrs[attr]
+    def _add_ds_fields_to_ann(self, ann, ds_doc):
+        for f in ds_doc:
+            if f not in DS_COLUMNS_TO_SKIP_IN_ANN:
+                ann[f] = ds_doc[f]
 
     def index_ds(self, ds_id, mol_db, isocalc):
         try:
-            dataset = self._remove_mol_db_from_dataset(ds_id, mol_db)
+            ds_doc = self._remove_mol_db_from_dataset(ds_id, mol_db)
         except NotFoundError:
-            dataset = self._ds_get_by_id(ds_id)
-        if 'annotation_counts' not in dataset:
-            dataset['annotation_counts'] = []
+            ds_doc = self._select_ds_by_id(ds_id)
+        if 'annotation_counts' not in ds_doc:
+            ds_doc['annotation_counts'] = []
 
         annotation_counts = defaultdict(int)
         fdr_levels = [5, 10, 20, 50]
 
-        annotations = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
-        logger.info('Indexing {} documents: {}, {}'.format(len(annotations), ds_id, mol_db))
+        annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
+        logger.info('Indexing {} documents: {}, {}'.format(len(annotation_docs), ds_id, mol_db))
+
+        # TODO: export dataset projects
 
         n = 100
         to_index = []
         mol_by_sf_df = self._get_mol_by_sf_df(mol_db)
-        for d in annotations:
-            self._add_ds_attrs_to_ann(d, dataset)
-            d['db_name'] = mol_db.name
-            d['db_version'] = mol_db.version
-            sf = d['sf']
-            d['comp_ids'] = mol_by_sf_df.mol_ids.loc[sf][:50].tolist()  # to prevent ES 413 Request Entity Too Large error
-            d['comp_names'] = mol_by_sf_df.mol_names.loc[sf][:50].tolist()
-            mzs, _ = isocalc.ion_centroids(d['sf'], d['adduct'])
-            d['centroid_mzs'] = list(mzs)
-            d['mz'] = mzs[0]
-            d['ion_add_pol'] = '[M{}]{}'.format(d['adduct'], d['polarity'])
+        for doc in annotation_docs:
+            self._add_ds_fields_to_ann(doc, ds_doc)
+            doc['db_name'] = mol_db.name
+            doc['db_version'] = mol_db.version
+            sf = doc['sf']
+            doc['comp_ids'] = mol_by_sf_df.mol_ids.loc[sf][:50].tolist()  # to prevent ES 413 Request Entity Too Large error
+            doc['comp_names'] = mol_by_sf_df.mol_names.loc[sf][:50].tolist()
+            mzs, _ = isocalc.ion_centroids(doc['sf'], doc['adduct'])
+            doc['centroid_mzs'] = list(mzs)
+            doc['mz'] = mzs[0]
+            doc['ion_add_pol'] = '[M{}]{}'.format(doc['adduct'], doc['polarity'])
 
-            fdr = round(d['fdr'] * 100, 2)
+            fdr = round(doc['fdr'] * 100, 2)
             # assert fdr in fdr_levels
             annotation_counts[fdr] += 1
 
-            add_str = d['adduct'].replace('+', 'plus_').replace('-', 'minus_')
+            add_str = doc['adduct'].replace('+', 'plus_').replace('-', 'minus_')
             to_index.append({
                 '_index': self.index,
                 '_type': 'annotation',
-                '_id': '{}_{}_{}_{}_{}'.format(d['ds_id'], mol_db.name, mol_db.version,
-                                               d['sf'], add_str),
-                '_source': d
+                '_id': '{}_{}_{}_{}_{}'.format(doc['ds_id'], mol_db.name, mol_db.version,
+                                               doc['sf'], add_str),
+                '_source': doc
             })
 
             if len(to_index) >= n:
@@ -255,13 +267,36 @@ class ESExporter(object):
                 to_index = []
 
         bulk(self._es, actions=to_index, timeout='60s')
+
         for i, level in enumerate(fdr_levels[1:]):
             annotation_counts[level] += annotation_counts[fdr_levels[i]]
-        dataset['annotation_counts'].append({
+        ds_doc['annotation_counts'].append({
             'db': {'name': mol_db.name, 'version': mol_db.version},
             'counts': [{'level': level, 'n': annotation_counts[level]} for level in fdr_levels]
         })
-        self._es.index(self.index, doc_type='dataset', body=dataset, id=ds_id)
+        self._es.index(self.index, doc_type='dataset', body=ds_doc, id=ds_id)
+
+    def update(self, ds_id, fields):
+        pipeline_id = 'update-ds-fields'
+        if fields:
+            if 'submitter_id' in fields:
+                fields += ['submitter_name', 'submitter_email']
+            if 'group_id' in fields:
+                fields += ['group_name', 'group_short_name']
+            es_fields = [f'ds_{f}' for f in fields]
+
+            ds_doc = self._select_ds_by_id(ds_id)
+            processors = []
+            for f in es_fields:
+                processors.append({'set': {'field': f, 'value': ds_doc[f]}})
+            self._ingest.put_pipeline(
+                id=pipeline_id,
+                body={'processors': processors})
+
+            self._es.update_by_query(
+                index=self.index,
+                body={'query': {'term': {'ds_id': ds_id}}},
+                params={'pipeline': pipeline_id, 'wait_for_completion': True})
 
     def delete_ds(self, ds_id, mol_db=None):
         """

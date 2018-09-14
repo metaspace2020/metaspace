@@ -1,0 +1,31 @@
+---
+
+- name: EMBL dev database update
+  hosts: web
+  user: ubuntu
+  gather_facts: true
+
+  vars:
+    mol_dbs:
+      - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/embl-dev/embl-dev1.tsv"
+        name: "EMBL-dev1"
+
+  tasks:
+    - name: Copy database import files
+      get_url:
+        url: "{{ item.url }}"
+        dest: "/tmp/{{ item.url | basename }}"
+        force: yes
+      with_items: "{{ mol_dbs }}"
+
+    - name: Import databases
+      shell: |
+        source activate {{ mol_db_miniconda_env.name }} && \
+        cd {{ mol_db_home }} && \
+        python scripts/import_molecular_db.py \
+          {{ item.name }} \
+          {{ moldb_version }} \
+          /tmp/{{ item.url | basename }}
+      args:
+        executable: /bin/bash
+      with_items: "{{ mol_dbs }}"
