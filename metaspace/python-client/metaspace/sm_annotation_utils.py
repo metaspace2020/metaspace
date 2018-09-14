@@ -15,7 +15,6 @@ def _extract_data(res):
     if not res.headers.get('Content-Type').startswith('application/json'):
         raise Exception(res.text)
     res_json = res.json()
-    pprint.pprint(res_json)
     if 'data' in res_json:
         return res.json()['data']
     else:
@@ -259,7 +258,7 @@ class GraphQLClient(object):
         variables = {'jwt': self.jwt, 'datasetId': datasetID, 'delRaw': delRaw}
         return self.query(query, variables)
 
-    def updateDatabasesQuery(self, ds_id, molDBs, reprocess=True, priority=1):
+    def updateDatabasesQuery(self, ds_id, molDBs, adducts, reprocess=True, priority=1):
         if self.jwt == None:
             raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
 
@@ -279,6 +278,7 @@ class GraphQLClient(object):
             'id': ds_id,
             'input': {
                 'molDBs': molDBs,
+                'adducts': adducts,
             },
             'priority': priority,
             'reprocess': reprocess
@@ -494,6 +494,10 @@ class SMDataset(object):
     @property
     def _baseurl(self):
         return self._gqclient.url.rsplit("/", 1)[0]
+
+    @property
+    def adducts(self):
+        return self._config['isotope_generation']['adducts']
 
     def isotope_images(self, sf, adduct):
         records = self._gqclient.getAnnotations(
@@ -762,8 +766,8 @@ class SMInstance(object):
         folder = "s3a://" + s3bucket + "/" + folder_uuid
         return self._gqclient.submitDataset(folder, metadata, priority, dsid=dsid)
 
-    def update_dataset_dbs(self, datasetID, molDBs, priority):
-        return self._gqclient.updateDatabasesQuery(datasetID, molDBs, priority)
+    def update_dataset_dbs(self, datasetID, molDBs, adducts, priority):
+        return self._gqclient.updateDatabasesQuery(datasetID, molDBs, adducts, priority)
 
     def delete_dataset(self, dsid, **kwargs):
         return self._gqclient.deleteDataset(dsid, **kwargs)
