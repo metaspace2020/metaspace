@@ -23,7 +23,7 @@ def _extract_data(res):
 DEFAULT_CONFIG = {
     'graphql_url': 'http://metaspace2020.eu/graphql',
     'moldb_url': 'http://metaspace2020.eu/mol_db/v1',
-    'jwt': ''
+    'jwt': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNRVRBU1BBQ0UyMDIwIiwicm9sZSI6ImFub255bW91cyJ9.Hl0h6crcHLb-SPm7nomXkQco5l2iAO6D1bwdjmOaFXM'
 }
 
 class GraphQLClient(object):
@@ -513,6 +513,10 @@ class SMInstance(object):
 
     def __repr__(self):
         return "SMInstance({})".format(self._config['graphql_url'])
+
+    def assign_jwt(self, jwt):
+        self._config['jwt'] = jwt
+        self.reconnect()
 
     def reconnect(self):
         self._gqclient = GraphQLClient(self._config['graphql_url'], self._config['jwt'])
