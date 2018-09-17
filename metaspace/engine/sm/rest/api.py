@@ -67,13 +67,54 @@ def _create_dataset_manager(db):
                                logger=logger)
 
 
+def sm_modify_dataset(request_name):
+    def _modify(handler):
+        def _func(ds_id=None):
+            try:
+                params = _json_params(req)
+                logger.info('Received %s request: %s', request_name, params)
+                db = _create_db_conn()
+                ds_man = _create_dataset_manager(db)
+                res = handler(ds_man, ds_id, params)
+
+                db.close()
+                return {
+                    'status': OK['status'],
+                    'ds_id': ds_id or res.get('ds_id', None)
+                }
+            except UnknownDSID as e:
+                logger.warning(e.message)
+                resp.status = ERR_DS_NOT_EXIST['status_code']
+                return {
+                    'status': ERR_DS_NOT_EXIST['status'],
+                    'ds_id': ds_id
+                }
+            except DSIsBusy as e:
+                logger.warning(e.message)
+                resp.status = ERR_DS_BUSY['status_code']
+                return {
+                    'status': ERR_DS_BUSY['status'],
+                    'ds_id': ds_id
+                }
+            except Exception as e:
+                logger.error(e, exc_info=True)
+                resp.status = ERROR['status_code']
+                return {
+                    'status': ERROR['status'],
+                    'ds_id': ds_id
+                }
+        return _func
+    return _modify
+
+
 @post('/v1/datasets/<ds_id>/add')
 @post('/v1/datasets/add')
-def add_ds(ds_id=None):
+@sm_modify_dataset('ADD')
+def add_ds(ds_man, ds_id=None, params=None):
     """
+    :param ds_man: rest.SMapiDatasetManager
     :param ds_id: string
-
-    Request params: {
+    :param params: {
         doc {
             name
             input_path
@@ -89,85 +130,24 @@ def add_ds(ds_id=None):
         email
     }
     """
-    ds_id = None
-    try:
-        params = _json_params(req)
-        logger.info(f'Received ADD request: {params}')
-        doc = params.get('doc', None)
-        if not doc:
-            msg = 'No input to create a dataset'
-            logger.info(msg)
-            raise Exception(msg)
-        else:
-            db = _create_db_conn()
-            ds_man = _create_dataset_manager(db)
-            if 'ds_id' in params:
-                doc['id'] = params['ds_id']
-            ds_id = ds_man.add(
-                doc=doc,
-                del_first=params.get('del_first', False),
-                force=params.get('force', False),
-                email=params.get('email', None),
-                priority=params.get('priority', DatasetActionPriority.DEFAULT))
-            db.close()
-            return {
-                'status': OK['status'],
-                'ds_id': ds_id
-            }
-    except DSIsBusy as e:
-        logger.warning(e.message)
-        resp.status = ERR_DS_BUSY['status_code']
+    logger.info(f'Received ADD request: {params}')
+    doc = params.get('doc', None)
+    if not doc:
+        msg = 'No input to create a dataset'
+        logger.info(msg)
+        raise Exception(msg)
+    else:
+        if ds_id:
+            doc['id'] = ds_id
+        ds_id = ds_man.add(
+            doc=doc,
+            del_first=params.get('del_first', False),
+            force=params.get('force', False),
+            email=params.get('email', None),
+            priority=params.get('priority', DatasetActionPriority.DEFAULT))
         return {
-            'status': ERR_DS_BUSY['status'],
-            'ds_id': e.ds_id
-        }
-    except Exception as e:
-        logger.error(e, exc_info=True)
-        resp.status = ERROR['status_code']
-        return {
-            'status': ERROR['status'],
             'ds_id': ds_id
         }
-
-
-def sm_modify_dataset(request_name):
-    def _modify(handler):
-        def _func(ds_id):
-            try:
-                params = _json_params(req)
-                logger.info('Received %s request: %s', request_name, params)
-                db = _create_db_conn()
-                ds_man = _create_dataset_manager(db)
-                handler(ds_man, ds_id, params)
-
-                db.close()
-                return {
-                    'status': OK['status'],
-                    'ds_id': ds_id
-                }
-            except UnknownDSID as e:
-                logger.warning(e.message)
-                resp.status = ERR_DS_NOT_EXIST['status_code']
-                return {
-                    'status': ERR_DS_NOT_EXIST['status'],
-                    'ds_id': e.ds_id
-                }
-            except DSIsBusy as e:
-                logger.warning(e.message)
-                resp.status = ERR_DS_BUSY['status_code']
-                return {
-                    'status': ERR_DS_BUSY['status'],
-                    'ds_id': e.ds_id
-                }
-            except Exception as e:
-                logger.error(e, exc_info=True)
-                resp.status = ERROR['status_code']
-                return {
-                    'status': ERROR['status'],
-                    'ds_id': ds_id
-                }
-        return _func
-    return _modify
 
 
 @post('/v1/datasets/<ds_id>/update')
