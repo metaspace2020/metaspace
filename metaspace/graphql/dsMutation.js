@@ -201,15 +201,13 @@ module.exports = {
         validateMetadata(input.metadata);
         await molDBsExist(input.molDBs);
 
-        const body = {
+        const url = dsId ? `/v1/datasets/${dsId}/add` : '/v1/datasets/add';
+        const resp = await smAPIRequest(url, {
           doc: toSMAPIparam(input),
           priority: priority,
           email: user.email,
-        };
-
+        });
         // TODO: generate dsId here and save it before calling SM API
-        const url = dsId ? `/v1/datasets/${dsId}/add` : '/v1/datasets/add';
-        const resp = await smAPIRequest(url, body);
         dsId = resp['ds_id'];
 
         await saveDS(connection, dsId, input.submitterId, input.groupId);
@@ -239,6 +237,7 @@ module.exports = {
         //TODO: handle principalInvestigator update
 
         if (reprocess) {
+          await saveDS(connection, dsId, update.submitterId, update.groupId);
           const body = {
             id: dsId,
             doc: toSMAPIparam({...engineDS, ...update}),
@@ -246,7 +245,7 @@ module.exports = {
             priority: priority,
             force: force,
           }
-          return await smAPIRequest('/v1/datasets/add', body);
+          return await smAPIRequest(`/v1/datasets/${dsId}/add`, body);
         }
         else {
           if (reprocessingNeeded) {
