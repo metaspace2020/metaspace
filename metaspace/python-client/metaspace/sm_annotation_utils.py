@@ -495,10 +495,6 @@ class SMDataset(object):
     def _baseurl(self):
         return self._gqclient.url.rsplit("/", 1)[0]
 
-    @property
-    def adducts(self):
-        return self._config['isotope_generation']['adducts']
-
     def isotope_images(self, sf, adduct):
         records = self._gqclient.getAnnotations(
             dict(sumFormula=sf, adduct=adduct, database=None),
@@ -553,6 +549,10 @@ class SMInstance(object):
 
     def __repr__(self):
         return "SMInstance({})".format(self._config['graphql_url'])
+
+    def assign_jwt(self, jwt):
+        self._config['jwt'] = jwt
+        self.reconnect()
 
     def reconnect(self):
         self._gqclient = GraphQLClient(self._config['graphql_url'], self._config['jwt'])
