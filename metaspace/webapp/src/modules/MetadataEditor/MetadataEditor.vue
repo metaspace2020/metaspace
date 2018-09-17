@@ -175,7 +175,7 @@
          return {
            submitterId: submitter ? submitter.id : null,
            groupId: group ? group.id : null,
-           projectIds: projects.map(p => p.id),
+           projectIds: projects ? projects.map(p => p.id) : [],
            principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
            isPublic, molDBs, adducts, name,
          };

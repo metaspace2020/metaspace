@@ -243,7 +243,7 @@
          return false;
        if (this.currentUser.role === 'admin')
          return true;
-       if (this.currentUser.email != null && this.currentUser.email === this.dataset.submitter.email)
+       if (this.currentUser.id === this.dataset.submitter.id)
          return true;
        return false;
      },

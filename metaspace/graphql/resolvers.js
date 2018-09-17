@@ -17,6 +17,8 @@ import {
   db
 } from './utils';
 import {Mutation as DSMutation} from './dsMutation';
+import {UserGroup as UserGroupModel, UserGroupRoleOptions} from './src/modules/group/model';
+import {User as UserModel} from './src/modules/user/model';
 
 
 async function publishDatasetStatusUpdate(ds_id, status) {
@@ -95,12 +97,12 @@ function baseDatasetQuery() {
 
 
 const Resolvers = {
-  Person: {
-    // FIXME: Using id = name here until we have actual IDs
-    id(obj) { return [obj.First_Name, obj.Surname].join('|||'); },
-    name(obj) { return [obj.First_Name, obj.Surname].filter(n => n).join(' '); },
-    email(obj) { return obj.Email; }
-  },
+  // Person: {
+  //   // FIXME: Using id = name here until we have actual IDs
+  //   id(obj) { return [obj.First_Name, obj.Surname].join('|||'); },
+  //   name(obj) { return [obj.First_Name, obj.Surname].filter(n => n).join(' '); },
+  //   email(obj) { return obj.Email; }
+  // },
 
   Query: {
     async dataset(_, { id }, {user}) {
@@ -273,6 +275,7 @@ const Resolvers = {
         email: user.email || null,
       }
     },
+
     async currentUserLastSubmittedDataset(_, args, {user}) {
       if (user == null || user.name == null) {
         return null;
@@ -368,8 +371,20 @@ const Resolvers = {
       };
     },
 
-    principalInvestigator(ds) {
-      return _.get(ds._source.ds_meta, 'Submitted_By.Principal_Investigator');
+    async principalInvestigator(ds, _, {connection}) {
+      const userGroup = await connection.getRepository(UserGroupModel).findOneOrFail({
+        where: {
+          groupId: ds._source.ds_group_id,
+          role: UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR
+        },
+        relations: ['user']
+      });
+
+      return {
+        id: userGroup.user.id,
+        name: userGroup.user.name,
+        email: userGroup.user.email,
+      }
     },
 
     analyzer(ds) {
@@ -532,12 +547,16 @@ const Resolvers = {
   },
 
   Mutation: {
+    // for dev purposes only, not a part of the public API
     reprocessDataset: async (_, args, {user}) => {
       const {id, delFirst, priority} = args;
       const ds = await fetchEngineDS({id});
       if (ds === undefined)
         throw new UserError('DS does not exist');
-      return DSMutation.update({id: id, input: ds, reprocess: true, delFirst: delFirst, priority: priority}, user);
+      return DSMutation.create({
+        id: id, input: ds, reprocess: true,
+        delFirst: delFirst, priority: priority
+      }, user);
     },
 
     createDataset: (_, args, context) => {

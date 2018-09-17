@@ -67,12 +67,14 @@ def _create_dataset_manager(db):
                                logger=logger)
 
 
+@post('/v1/datasets/<ds_id>/add')
 @post('/v1/datasets/add')
-def add_ds():
+def add_ds(ds_id=None):
     """
+    :param ds_id: string
+
     Request params: {
-        input {
-            id?
+        doc {
             name
             input_path
             upload_dt
@@ -91,16 +93,18 @@ def add_ds():
     try:
         params = _json_params(req)
         logger.info(f'Received ADD request: {params}')
-        ds_doc = params.get('input', None)
-        if not ds_doc:
+        doc = params.get('doc', None)
+        if not doc:
             msg = 'No input to create a dataset'
             logger.info(msg)
             raise Exception(msg)
         else:
             db = _create_db_conn()
             ds_man = _create_dataset_manager(db)
+            if 'ds_id' in params:
+                doc['id'] = params['ds_id']
             ds_id = ds_man.add(
-                ds_doc,
+                doc=doc,
                 del_first=params.get('del_first', False),
                 force=params.get('force', False),
                 email=params.get('email', None),
@@ -155,7 +159,6 @@ def sm_modify_dataset(request_name):
                     'status': ERR_DS_BUSY['status'],
                     'ds_id': e.ds_id
                 }
-
             except Exception as e:
                 logger.error(e, exc_info=True)
                 resp.status = ERROR['status_code']
@@ -174,24 +177,26 @@ def update_ds(ds_man, ds_id, params):
     :param ds_man: rest.SMapiDatasetManager
     :param ds_id: string
     :param params: {
-        name
-        input_path
-        upload_dt
-        metadata
-        config
-        is_public
-        submitter_id
-        group_id
+        doc {
+            name
+            input_path
+            upload_dt
+            metadata
+            config
+            is_public
+            submitter_id
+            group_id
+        }
     }
     :return:
     """
-    update_dict = params.get('update', None)
-    if not update_dict:
+    doc = params.get('doc', None)
+    if not doc:
         logger.info(f'Nothing to update for "{ds_id}"')
     else:
         force = params.get('force', False)
         priority = params.get('priority', DatasetActionPriority.STANDARD)
-        ds_man.update(ds_id=ds_id, update_dict=update_dict,
+        ds_man.update(ds_id=ds_id, doc=doc,
                       force=force, priority=priority)
 
 

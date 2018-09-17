@@ -78,6 +78,11 @@ async function createHttpServerAsync(config) {
         'editor.cursorShape': 'line',
       }
     },
+    formatError: error => {
+      const {message, extensions, source} = error;
+      logger.error(extensions.exception, source);
+      return error;
+    }
   });
   apollo.applyMiddleware({ app });
 

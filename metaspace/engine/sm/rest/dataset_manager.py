@@ -64,43 +64,43 @@ class SMapiDatasetManager(object):
         queue.publish(msg, priority)
         self.logger.info('New message posted to %s: %s', queue, msg)
 
-    def add(self, ds_doc, **kwargs):
+    def add(self, doc, **kwargs):
         """ Save dataset and send add message to the queue """
         now = datetime.now()
-        if 'id' not in ds_doc:
-            ds_doc['id'] = now.strftime('%Y-%m-%d_%Hh%Mm%Ss')
+        if 'id' not in doc:
+            doc['id'] = now.strftime('%Y-%m-%d_%Hh%Mm%Ss')
 
-        ds = Dataset(id=ds_doc['id'],
-                     name=ds_doc.get('name'),
-                     input_path=ds_doc.get('input_path'),
-                     upload_dt=ds_doc.get('upload_dt', now.isoformat()),
-                     metadata=ds_doc.get('metadata'),
-                     is_public=ds_doc.get('is_public'),
-                     mol_dbs=ds_doc.get('mol_dbs'),
-                     adducts=ds_doc.get('adducts'))
+        ds = Dataset(id=doc['id'],
+                     name=doc.get('name'),
+                     input_path=doc.get('input_path'),
+                     upload_dt=doc.get('upload_dt', now.isoformat()),
+                     metadata=doc.get('metadata'),
+                     is_public=doc.get('is_public'),
+                     mol_dbs=doc.get('mol_dbs'),
+                     adducts=doc.get('adducts'))
         ds.save(self._db, self._es, self._status_queue)
 
         self._post_sm_msg(ds=ds, queue=self._annot_queue, action='annotate', **kwargs)
-        return ds_doc['id']
+        return doc['id']
 
     def delete(self, ds_id, **kwargs):
         """ Send delete message to the queue """
         ds = Dataset.load(self._db, ds_id)
         self._post_sm_msg(ds=ds, queue=self._update_queue, action='delete', **kwargs)
 
-    def update(self, ds_id, update_doc, **kwargs):
+    def update(self, ds_id, doc, **kwargs):
         """ Save dataset and send update message to the queue """
         ds = Dataset.load(self._db, ds_id)
-        ds.name = update_doc.get('name', ds.name)
-        ds.input_path = update_doc.get('input_path', ds.input_path)
-        if 'metadata' in update_doc:
-            ds.metadata = update_doc['metadata']
-        ds.upload_dt = update_doc.get('upload_dt', ds.upload_dt)
-        ds.is_public = update_doc.get('is_public', ds.is_public)
+        ds.name = doc.get('name', ds.name)
+        ds.input_path = doc.get('input_path', ds.input_path)
+        if 'metadata' in doc:
+            ds.metadata = doc['metadata']
+        ds.upload_dt = doc.get('upload_dt', ds.upload_dt)
+        ds.is_public = doc.get('is_public', ds.is_public)
         ds.save(self._db, self._es, self._status_queue)
 
         self._post_sm_msg(ds=ds, queue=self._update_queue,
-                          action='update', fields=list(update_doc.keys()), **kwargs)
+                          action='update', fields=list(doc.keys()), **kwargs)
 
     def _annotation_image_shape(self, ds):
         self.logger.info('Querying annotation image shape for "%s" dataset...', ds.id)
