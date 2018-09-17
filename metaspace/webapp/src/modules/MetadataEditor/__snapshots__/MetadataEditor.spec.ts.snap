@@ -465,12 +465,13 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 </div>
                 <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
                   <div class="el-form-item md-form-field el-form-item--medium">
-                    <label class="el-form-item__label"><span class="field-label"><span>Projects</span><span style="color: red;">*</span>
+                    <label class="el-form-item__label"><span class="field-label"><span>Projects</span>
+                      <!---->
                       <!---->
                       </span>
                     </label>
                     <div class="el-form-item__content">
-                      <mock-el-select value="" required="true" multiple="">
+                      <mock-el-select value="" multiple="">
                         <mock-el-option value="currentUser.projects.0.project.id" label="currentUser.projects.0.project.name"></mock-el-option>
                         <mock-el-option value="currentUser.projects.1.project.id" label="currentUser.projects.1.project.name"></mock-el-option>
                         <mock-el-option value="CREATE_PROJECT" label="Create a new project..."></mock-el-option>
@@ -537,7 +538,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               A curated rapeseed database from LC-MS/MS measurements.
                               <mock-el-popover trigger="hover" placement="top">
                                 <div slot-key="default">
-                                  <div class="desc-cite-popover">University of Rennes 1</div>
+                                  <div class="desc-cite-popover">
+                                    <i>University of Rennes 1</i>
+                                  </div>
                                 </div>
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>
@@ -611,6 +614,28 @@ exports[`MetadataEditor should match snapshot 1`] = `
                                     <i>Bioinformatics</i>, Volume 31, Issue 17, 1 September 2015, Pages 2860–2866,
                                     <a href="https://doi.org/10.1093/bioinformatics/btv285">https://doi.org/10.1093/bioinformatics/btv285</a>
                                   </div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>EMBL-dev1:</b>
+                              A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover">
+                                    <i>EMBL</i>, developers database 1</div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>EMBL-dev2:</b>
+                              A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover">
+                                    <i>EMBL</i>, developers database 2</div>
                                 </div>
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>
