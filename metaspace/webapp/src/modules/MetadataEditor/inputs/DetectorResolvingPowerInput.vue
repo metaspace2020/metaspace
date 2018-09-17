@@ -2,20 +2,22 @@
   <el-row>
     <el-col class="subfield" :span="12">
       <el-form-item :class="{'is-error': error && error.mz}" required>
-        <el-input-number
+        <el-input
+          type="number"
           class="fw-num"
           @input="val => onInput('mz', val)"
           :value="value.mz"
           :required="required"
         />
-        <div class="subfield-label">mz<span style="color: red;">*</span></div>
+        <div class="subfield-label">m/z<span style="color: red;">*</span></div>
         <span class="error-msg" v-if="error && error.mz">{{ error.mz }}</span>
       </el-form-item>
     </el-col>
 
     <el-col class="subfield" :span="12">
       <el-form-item :class="{'is-error': error && error.Resolving_Power}" required>
-        <el-input-number
+        <el-input
+          type="number"
           class="fw-num"
           @input="val => onInput('Resolving_Power', val)"
           :value="value.Resolving_Power"

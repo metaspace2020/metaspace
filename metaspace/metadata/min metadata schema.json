@@ -79,7 +79,7 @@
     "MS_Analysis": {
       "type": "object",
       "description": "Mass spectrometry settings",
-      "required": ["Polarity", "Ionisation_Source", "Analyzer"],
+      "required": ["Polarity", "Ionisation_Source", "Analyzer", "Pixel_Size"],
       "help": "METASPACE is optimized for data from high-resolving power MS like FTICR or Orbitrap",
       "properties": {
         "Polarity": {
@@ -116,9 +116,28 @@
             "Resolving_Power": {
               "description": "Peak FWHM / m/z",
               "type": "number",
-              "minimum": 10000,
-              "maximum": 1000000,
+              "minimum": 50000,
+              "maximum": 400000,
               "default": 140000
+            }
+          }
+        },
+        "Pixel_Size": {
+          "type": "object",
+          "title": "The size of a pixel in um",
+          "required": ["PS_X", "PS_Y"],
+          "properties": {
+            "PS_X": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1000,
+              "default": 500
+            },
+            "PS_Y": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1000,
+              "default": 400
             }
           }
         }
