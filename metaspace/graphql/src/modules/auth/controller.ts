@@ -165,8 +165,8 @@ const configureGoogleAuth = (app: Express) => {
     }));
 
     app.get('/api_auth/google/callback', Passport.authenticate('google', {
-      successRedirect: '/#/datasets',
-      failureRedirect: '/#/account/sign-in',
+      successRedirect: '/datasets',
+      failureRedirect: '/account/sign-in',
     }));
   }
 };
@@ -191,12 +191,12 @@ const configureCreateAccount = (app: Express) => {
           next(err);
         } else {
           res.cookie('flashMessage', JSON.stringify({type: 'verify_email_success'}), {maxAge: 10*60*1000});
-          res.redirect('/#/');
+          res.redirect('/');
         }
       });
     } else {
       res.cookie('flashMessage', JSON.stringify({type: 'verify_email_failure'}), {maxAge: 10*60*1000});
-      res.redirect('/#/');
+      res.redirect('/');
     }
   });
 };

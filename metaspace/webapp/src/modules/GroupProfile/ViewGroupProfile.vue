@@ -54,7 +54,7 @@
       <div v-if="groupDatasets.length > 0">
         <h2>Datasets</h2>
 
-        <dataset-list :datasets="groupDatasets.slice(0,8)" />
+        <dataset-list :datasets="groupDatasets.slice(0, maxVisibleDatasets)" />
 
         <div class="dataset-list-footer">
           <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
@@ -65,7 +65,7 @@
 </template>
 <script lang="ts">
   import Vue from 'vue';
-  import { Component } from 'vue-property-decorator';
+  import { Component, Watch } from 'vue-property-decorator';
   import { DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset';
   import DatasetList from '../Datasets/list/DatasetList.vue';
   import {
@@ -73,46 +73,66 @@
     importDatasetsIntoGroupMutation,
     leaveGroupMutation,
     requestAccessToGroupMutation,
+    UserGroupRole,
   } from '../../api/group';
   import gql from 'graphql-tag';
   import TransferDatasetsDialog from './TransferDatasetsDialog.vue';
   import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
+  import { currentUserIdQuery, CurrentUserIdResult } from '../../api/user';
+  import isUuid from '../../lib/isUuid';
 
-  type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';
 
   interface GroupInfo {
     id: string;
     name: string;
     shortName: string;
+    urlSlug: string | null;
     currentUserRole: UserGroupRole | null;
   }
+  const groupInfoFragment = gql`fragment GroupInfoFragment on Group {
+    id
+    name
+    shortName
+    urlSlug
+    currentUserRole
+  }`;
 
   interface ViewGroupProfileData {
-    currentUser: { id: string; } | null;
-    group: GroupInfo | null;
     allDatasets: DatasetDetailItem[];
     countDatasets: number;
   }
 
-  @Component({
+  @Component<ViewGroupProfile>({
     components: {
       DatasetList,
       TransferDatasetsDialog,
     },
     apollo: {
+      currentUser: {
+        query: currentUserIdQuery
+      },
+      group: {
+        query() {
+          if (isUuid(this.$route.params.groupIdOrSlug)) {
+            return gql`query GroupProfileById($groupIdOrSlug: ID!) {
+              group(groupId: $groupIdOrSlug) { ...GroupInfoFragment }
+            }
+            ${groupInfoFragment}`;
+          } else {
+            return gql`query GroupProfileBySlug($groupIdOrSlug: String!) {
+              group: groupByUrlSlug(urlSlug: $groupIdOrSlug) { ...GroupInfoFragment }
+            }
+            ${groupInfoFragment}`;
+          }
+        },
+        variables() {
+          return {groupIdOrSlug: this.$route.params.groupIdOrSlug};
+        }
+      },
       data: {
-        query: gql`query ViewGroupProfile($groupId: ID!, $maxVisibleDatasets: Int!, $inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
-          currentUser {
-            id
-          }
-          group(groupId: $groupId) {
-            id
-            name
-            shortName
-            currentUserRole
-          }
+        query: gql`query GroupProfileDatasets($groupId: ID!, $maxVisibleDatasets: Int!, $inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
           allDatasets(offset: 0, limit: $maxVisibleDatasets, filter: { group: $groupId }) {
             ...DatasetDetailItem
           }
@@ -120,7 +140,7 @@
         }
 
         ${datasetDetailItemFragment}`,
-        variables(this: ViewGroupProfile) {
+        variables() {
           return {
             maxVisibleDatasets: this.maxVisibleDatasets,
             groupId: this.groupId
@@ -128,9 +148,12 @@
         },
         update(data) {
           // Not using 'loadingKey' pattern here to avoid getting a full-page loading spinner when the user clicks a
-          // button that causes this query to refetch
+          // button that causes this query to refetch.
           this.loaded = true;
           return data;
+        },
+        skip() {
+          return this.groupId == null
         }
       },
     }
@@ -138,18 +161,22 @@
   export default class ViewGroupProfile extends Vue {
     loaded = false;
     showTransferDatasetsDialog: boolean = false;
+    currentUser: CurrentUserIdResult | null = null;
+    group: GroupInfo | null = null;
     data: ViewGroupProfileData | null = null;
 
-    get currentUserId(): string | null { return this.data && this.data.currentUser && this.data.currentUser.id }
-    get group(): GroupInfo | null { return this.data && this.data.group; }
-    get roleInGroup(): UserGroupRole | null { return this.data && this.data.group && this.data.group.currentUserRole; }
+    get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
+    get roleInGroup(): UserGroupRole | null { return this.group && this.group.currentUserRole; }
     get groupDatasets(): DatasetDetailItem[] { return this.data && this.data.allDatasets || []; }
     get countDatasets(): number { return this.data && this.data.countDatasets || 0; }
     maxVisibleDatasets = 8;
 
-
-    get groupId(): string {
-      return this.$route.params.groupId;
+    get groupId(): string | null {
+      if (isUuid(this.$route.params.groupIdOrSlug)) {
+        return this.$route.params.groupIdOrSlug; // If it's possible to get the ID from the route, use that because it's faster than groupById/groupBySlug.
+      } else {
+        return this.group && this.group.id
+      }
     }
 
     get isInvited(): boolean {
@@ -159,8 +186,18 @@
     get datasetsListLink() {
       return {
         path: '/datasets',
-        query: this.group && encodeParams({
+        query: this.groupId && encodeParams({
           group: this.groupId,
+        })
+      }
+    }
+
+    @Watch('$route.params.groupIdOrSlug')
+    @Watch('group.urlSlug')
+    canonicalizeUrl() {
+      if (isUuid(this.$route.params.groupIdOrSlug) && this.group != null && this.group.urlSlug) {
+        this.$router.replace({
+          params: {groupIdOrSlug: this.group.urlSlug}
         })
       }
     }
@@ -183,14 +220,16 @@
         mutation: leaveGroupMutation,
         variables: { groupId: this.groupId },
       });
-      await this.$apollo.queries.data.refetch();
+      await this.refetch();
     }
 
     handleManageGroup() {
-      this.$router.push({
-        name: 'edit-group',
-        params: {groupId: this.groupId}
-      });
+      if (this.groupId != null) {
+        this.$router.push({
+          name: 'edit-group',
+          params: { groupId: this.groupId }
+        });
+      }
     }
 
     async handleAcceptTransferDatasets(selectedDatasetIds: string[]) {
@@ -212,7 +251,7 @@
             variables: { groupId: this.groupId, datasetIds: selectedDatasetIds },
           });
         }
-        await this.$apollo.queries.data.refetch();
+        await this.refetch();
       } catch (err) {
         reportError(err);
       } finally {
@@ -222,6 +261,13 @@
 
     handleCloseTransferDatasetsDialog() {
       this.showTransferDatasetsDialog = false;
+    }
+
+    async refetch() {
+      return await Promise.all([
+        this.$apollo.queries.group.refetch(),
+        this.$apollo.queries.data.refetch(),
+      ]);
     }
   }
 
