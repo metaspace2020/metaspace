@@ -2,6 +2,11 @@ version: '2'
 
 services:
 
+  elasticsearch:
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
   kibana:
     image: kibana:5.5
     volumes:
@@ -13,11 +18,19 @@ services:
     depends_on:
       - elasticsearch
 
+  redis:
+    ports:
+      - "6379:6379"
+
   rabbitmq:
     image: rabbitmq:management
     ports:
       - "5672:5672"  # to use rabbitmq from host
       - "15672:15672" #management interface
+
+  postgres:
+    ports:
+      - "5432:5432"
 
   adminer:
     image: adminer
