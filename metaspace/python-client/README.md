@@ -18,9 +18,21 @@ You need Python 3 to use this library.
 If you are trying to access annotations from the main public metaspace instance
 then make sure you include the branch name of the latest release branch, e.g.
 
-`pip install git+https://github.com/metaspace2020/metaspace@rel-v0.10#subdirectory=metaspace/python-client`
+`pip install git+https://github.com/metaspace2020/metaspace@release/v0.11-rc#subdirectory=metaspace/python-client`
 
-The list of branches can be found [here](https://github.com/metaspace2020/metaspace/branches/all?&query=rel-v).
+## Jupyter Playbooks
+There are several playbooks available to retrieve dataset information as well as to upload it on Metaspace.
+
+| Playbook | Description |
+| :--- | :--- |
+| **access_change_PI_names**| Reads and updates PI names in dataset metadata |
+| **api_examples**| Illustrates how to access all the information about a dataset that is visible on the [METASPACE](metaspace2020.eu) platform |
+| **compare-reference-engine-results**| Compares engine results against the pySM reference implementation |
+| **iso_img_retrieval**| Retrieves isotopic images for the provided dataset |
+| **simple_database_queries**| A few queries to get annotations for a dataset, show stats on the annotations, and compare annotations between two datasets |
+| **top_hits**| Retrieves ions with the highest average MSM score across all datasets |
+| **update_DBs_dataset_api**| Reprocesses a dataset with a different set of databases |
+| **upload_dataset_api**| Uploads a new dataset with the provided metadata |
 
 ## Funding
 
