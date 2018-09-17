@@ -16,6 +16,7 @@ import {
   initOperation,
   findUserByEmail, findUserByGoogleId, findUserById
 } from './operation';
+import {allGroupsQuery} from '../../../../webapp/src/api/dataManagement';
 
 const getUserFromRequest = (req: Request): User | null => {
   const user = (req as any).cookieUser;
@@ -38,7 +39,7 @@ const configurePassport = (app: Express) => {
   Passport.serializeUser<User, string>(callbackify( async (user: User) => user.id));
 
   Passport.deserializeUser<User | false, string>(callbackify(async (id: string) => {
-    return await findUserById(id, false) || false;
+    return await findUserById(id, false, true) || false;
   }));
 
   app.post('/api_auth/signout', preventCache, (req, res) => {
@@ -51,9 +52,14 @@ const configurePassport = (app: Express) => {
   });
 };
 
-export interface JwtUser extends User {
+export interface JwtUser {
   iss: string,
-  user?: User,
+  user?: {
+    id?: string,
+    email?: string,
+    groupIds?: string[],
+    role: 'user' | 'admin' | 'anonymous',
+  },
   sub?: string,
   iat?: number,
   exp?: number
@@ -63,18 +69,23 @@ const configureJwt = (app: Express) => {
   function mintJWT(user: User | null, expSeconds: number | null = 60) {
     const nowSeconds = Math.floor(Date.now() / 1000);
     let payload;
-    if (user != null) {
-      const {id, name, email, role} = user;
+    if (user) {
+      const {id, email, role, groups} = user;
       payload = {
         iss: 'METASPACE2020',
-        user: {id, name, email, role},
+        user: {
+          id, email, role,
+          groupIds: groups.map(g => g.groupId)
+        },
         iat: nowSeconds,
         exp: expSeconds == null ? undefined : nowSeconds + expSeconds,
       };
     } else {
       payload = {
         iss: 'METASPACE2020',
-        role: 'anonymous',
+        user: {
+          role: 'anonymous',
+        }
       };
     }
     return JwtSimple.encode(payload as JwtUser, config.jwt.secret);
