@@ -527,7 +527,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               A curated rapeseed database from LC-MS/MS measurements.
                               <mock-el-popover trigger="hover" placement="top">
                                 <div slot-key="default">
-                                  <div class="desc-cite-popover">University of Rennes 1</div>
+                                  <div class="desc-cite-popover">
+                                    <i>University of Rennes 1</i>
+                                  </div>
                                 </div>
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>
@@ -601,6 +603,28 @@ exports[`MetadataEditor should match snapshot 1`] = `
                                     <i>Bioinformatics</i>, Volume 31, Issue 17, 1 September 2015, Pages 2860–2866,
                                     <a href="https://doi.org/10.1093/bioinformatics/btv285">https://doi.org/10.1093/bioinformatics/btv285</a>
                                   </div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>EMBL-dev1:</b>
+                              A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover">
+                                    <i>EMBL</i>, developers database 1</div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>EMBL-dev2:</b>
+                              A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover">
+                                    <i>EMBL</i>, developers database 2</div>
                                 </div>
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>

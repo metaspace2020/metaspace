@@ -68,7 +68,6 @@ export interface Config {
     secret: string;
   };
   features: {
-    newAuth: boolean;
     graphqlMocks: boolean;
   };
   aws:  {

@@ -163,15 +163,10 @@ sm_graphql_google_client_secret: ""
 sm_graphql_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
 sm_graphql_cookie_secret: COOKIE_SECRET
 sm_graphql_features:
-  newAuth: false
   graphqlMocks: false
 
-sm_webapp_hostname: "{{ web_host }}"
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
 sm_webapp_port: 8082
-sm_webapp_cookie_secret: COOKIE_SECRET
-sm_webapp_admin_emails:
-  - admin@mail.de
 # The region should satisfy the following requirements:
 #  - AWS SES endpoints are available there
 #  - AWS authentication protocol V2 is supported
@@ -180,19 +175,14 @@ sm_webapp_aws_access_key_id: WEBAPP_AWS_ACCESS_KEY_ID
 sm_webapp_aws_secret_access_key: WEBAPP_AWS_SECRET_ACCESS_KEY
 sm_webapp_s3_bucket: BUCKET-NAME-UPLOAD  # just plain bucket name
 sm_webapp_google_client_id: ""
-sm_webapp_google_client_secret: ""
-sm_webapp_google_callback_url: "http://{{ sm_webapp_hostname }}/auth/google/callback"
 sm_webapp_sentry_dsn: ""
 sm_webapp_upload_destination: s3
-sm_webapp_jwt_secret: "{{ sm_graphql_jwt_secret }}"
-sm_webapp_redis_host: localhost
-sm_webapp_redis_port: 6379
 sm_webapp_enable_uploads: true
 # metadata types are specified by corresponding filenames in metaspace2020/metadata repository
 # "specialised metadata" subfolder
 sm_webapp_metadata_types: ["ims"]  # set ["ims", "lcms"] to accept both IMS and LC-MS datasets
 sm_webapp_features:
-  newAuth: false
+  newAuth: false # Unused - leaving this here as an example for the next feature flag
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
