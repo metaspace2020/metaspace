@@ -28,6 +28,7 @@ export interface UpdateProjectMutation {
   data: {
     id: string;
     name: string;
+    urlSlug: string | null;
     isPublic: boolean;
     currentUserRole: ProjectRole | null;
   }
@@ -37,6 +38,7 @@ export const updateProjectMutation =
     updateProject(projectId: $projectId, projectDetails: $projectDetails) {
       id
       name
+      urlSlug
       isPublic
       currentUserRole
     }
@@ -96,6 +98,7 @@ export const editProjectQuery =
     project(projectId: $projectId) {
       id
       name
+      urlSlug
       isPublic
       currentUserRole
       members {
@@ -113,6 +116,7 @@ export const editProjectQuery =
 export interface EditProjectQuery {
   id: string;
   name: string;
+  urlSlug: string | null;
   isPublic: boolean;
   currentUserRole: ProjectRole | null;
   members: EditProjectQueryMember[] | null;
@@ -132,6 +136,7 @@ const projectsListItemFragment =
   gql`fragment ProjectsListItem on Project {
       id
       name
+      urlSlug
       isPublic
       currentUserRole
       numMembers
@@ -180,6 +185,7 @@ export interface MyProjectsListQuery {
 export interface ProjectsListProject {
   id: string;
   name: string;
+  urlSlug: string | null;
   isPublic: boolean;
   currentUserRole: ProjectRole | null;
   numMembers: number;

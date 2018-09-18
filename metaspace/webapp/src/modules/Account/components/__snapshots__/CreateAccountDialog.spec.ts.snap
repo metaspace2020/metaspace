@@ -105,7 +105,7 @@ exports[`CreateAccountDialog should match snapshot 1`] = `
     </div>
     <p style="margin-bottom: 0px;">
       Already registered?
-      <a href="#/account/sign-in">Sign in</a>
+      <a href="/account/sign-in">Sign in</a>
     </p>
   </div>
 </mock-el-dialog>

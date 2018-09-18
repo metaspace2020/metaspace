@@ -25,9 +25,19 @@ const asyncPages = {
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ProjectsListPage.vue'),
 };
 
+const convertLegacyHashUrls = () => {
+  const {pathname, hash} = window.location;
+  if (pathname === '/' && hash && hash.startsWith('#/')) {
+    history.replaceState(undefined, undefined, hash.slice(1));
+  }
+};
+convertLegacyHashUrls();
+
 const router = new VueRouter({
+  mode: 'history',
   routes: [
-    { path: '/', redirect: '/about' },
+    { path: '/', component: AboutPage },
+    { path: '/about', component: AboutPage },
     { path: '/annotations', component: asyncPages.AnnotationsPage },
     {
       path: '/datasets',
@@ -40,7 +50,6 @@ const router = new VueRouter({
     { path: '/datasets/edit/:dataset_id', name: 'edit-metadata', component: asyncPages.MetadataEditPage },
     { path: '/datasets/:dataset_id/add-optical-image', name: 'add-optical-image', component: asyncPages.ImageAlignmentPage },
     { path: '/upload', component: asyncPages.UploadPage },
-    { path: '/about', component: AboutPage },
     { path: '/help', component: asyncPages.HelpPage },
     { path: '/user/me', component: asyncPages.EditUserPage },
 
@@ -50,9 +59,9 @@ const router = new VueRouter({
     { path: '/account/reset-password', component: ResetPasswordPage },
 
     { path: '/group/create', component: asyncPages.CreateGroupPage },
-    { path: '/group/:groupId', name: 'group', component: asyncPages.ViewGroupProfile },
+    { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupProfile },
     { path: '/group/:groupId/edit', name: 'edit-group', component: asyncPages.EditGroupProfile },
-    { path: '/project/:projectId', name: 'project', component: asyncPages.ViewProjectPage },
+    { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
     { path: '/project/:projectId/edit', name: 'edit-project', component: asyncPages.EditProjectPage },
     { path: '/projects', component: asyncPages.ProjectsListPage },
   ]

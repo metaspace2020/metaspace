@@ -3,6 +3,7 @@ import Vue from 'vue';
 import ElementUI from 'element-ui';
 import registerMockComponent from './registerMockComponent';
 import VueRouter from 'vue-router';
+import registerMockDirective from './registerMockDirective';
 
 window.fetch = jest.fn();
 
@@ -17,6 +18,9 @@ registerMockComponent('el-autocomplete');
 registerMockComponent('el-select');
 registerMockComponent('el-option');
 registerMockComponent('el-messagebox');
+
+// Mock problematic directives
+registerMockDirective('loading');
 
 // Mock error reporting
 jest.mock('../../src/lib/reportError', () => jest.fn(console.error));

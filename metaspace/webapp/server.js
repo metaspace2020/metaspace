@@ -7,7 +7,8 @@ const AWS = require('aws-sdk'),
       favicon = require('serve-favicon'),
       session = require('express-session'),
       GoogleStrategy = require('passport-google-oauth20').Strategy,
-      Raven = require('raven');
+      Raven = require('raven'),
+      connectHistoryApiFallback = require('connect-history-api-fallback');
 
 const env = process.env.NODE_ENV || 'development';
 const conf = require('./conf.js');
@@ -99,8 +100,8 @@ const configureGoogleAuth = (app, knex) => {
 
     app.get('/auth/google/callback',
       passport.authenticate('google', {
-        successRedirect: '/#/datasets',
-        failureRedirect: '/#/help',
+        successRedirect: '/datasets',
+        failureRedirect: '/help',
       }))
   }
 };
@@ -249,8 +250,6 @@ const configureJwtMinting = (app, knex) => {
 };
 
 const configureAppServer = (app) => {
-  app.get('/', (req, res, next) =>
-    res.sendFile(__dirname + '/index.html'));
 
   if (env === 'development') {
     const webpackDevMiddleware = require('webpack-dev-middleware');
@@ -272,6 +271,9 @@ const configureAppServer = (app) => {
       maxAge: '10m'
     }));
   }
+
+  app.use(connectHistoryApiFallback({index: '/'})); // Rewrite unknown non-file paths to serve index.html
+  app.get('/', (req, res) => res.sendFile(__dirname + '/index.html'));
 };
 
 const configureRavenRequestHandler = (app) => {
@@ -317,8 +319,9 @@ const startServer = () => {
     });
 
   configureJwtMinting(app, knex);
-  configureAppServer(app);
   configureUploadHandler(app);
+  // Keep configureAppServer as the last route handler, because connectHistoryApiFallback rewrites unhandled routes to serve index.html
+  configureAppServer(app);
   configureRavenErrorHandler(app);
 
   app.listen(conf.PORT, () => {

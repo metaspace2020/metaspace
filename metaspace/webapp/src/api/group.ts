@@ -29,6 +29,7 @@ export interface UpdateGroupMutation {
     id: string;
     name: string;
     shortName: string;
+    urlSlug: string | null;
     currentUserRole: UserGroupRole | null;
   }
 }
@@ -38,6 +39,7 @@ export const updateGroupMutation =
       id
       name
       shortName
+      urlSlug
       currentUserRole
     }
   }`;
@@ -97,6 +99,7 @@ export const editGroupQuery =
       id
       name
       shortName
+      urlSlug
       currentUserRole
       members {
         role
@@ -114,6 +117,7 @@ export interface EditGroupQuery {
   id: string;
   name: string;
   shortName: string;
+  urlSlug: string | null;
   currentUserRole: UserGroupRole | null;
   members: EditGroupQueryMember[] | null;
 }

@@ -68,7 +68,7 @@
     get projectLink() {
       return {
         name: 'project',
-        params: {projectId: this.project.id}
+        params: {projectIdOrSlug: this.project.urlSlug || this.project.id}
       }
     }
 

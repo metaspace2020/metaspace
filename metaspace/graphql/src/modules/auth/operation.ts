@@ -172,7 +172,7 @@ export const sendResetPasswordToken = async (email: string): Promise<void> => {
   else {
     resetPasswordToken = cred.resetPasswordToken;
   }
-  const link = `${config.web_public_url}/#/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetPasswordToken)}`;
+  const link = `${config.web_public_url}/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetPasswordToken)}`;
   emailService.sendResetPasswordEmail(email, link);
   logger.debug(`Sent password reset email to ${email}: ${link}`);
 };

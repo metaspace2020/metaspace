@@ -56,7 +56,7 @@ Object {
 
 exports[`MetadataEditor should match snapshot 1`] = `
 <div id="md-editor-container">
-  <div class="el-loading-parent--relative" style="position: relative;">
+  <div mock-v-loading="true" style="position: relative;">
     <div id="md-section-list">
       <div class="metadata-section">
         <form class="el-form el-form--label-top">
@@ -341,7 +341,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
           </div>
         </mock-el-dialog>
         <mock-el-dialog append-to-body="" title="Create project" class="dialog">
-          <div class="">
+          <div mock-v-loading="0">
             <form class="el-form el-form--label-top" size="mini">
               <div>
                 <div class="el-form-item name is-required">
@@ -409,16 +409,6 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 <!---->
                 <!----><span>Create project and include 2 datasets</span></button>
             </div>
-            <mock-transition name="el-loading-fade">
-              <div class="el-loading-mask" style="display: none;">
-                <div class="el-loading-spinner">
-                  <svg viewBox="25 25 50 50" class="circular">
-                    <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
-                  </svg>
-                  <!---->
-                </div>
-              </div>
-            </mock-transition>
           </div>
         </mock-el-dialog>
         <div class="el-row">
