@@ -3,7 +3,7 @@ import {Component} from 'vue';
 
 export type Polarity = 'Positive' | 'Negative';
 export type DetectorResolvingPower = { mz: number; Resolving_Power: number; };
-export type PixelSize = { PS_X: number; PS_Y: number; }
+export type PixelSize = { Xaxis: number; Yaxis: number; }
 export type Person = { First_Name: string; Last_Name: string; Email: string; };
 
 export interface JsonSchemaProperty {
@@ -103,8 +103,6 @@ function getFieldType(prop: JsonSchemaProperty, propName: string): FormFieldEdit
       return 'person';
     } else if (prop.properties && prop.properties.Resolving_Power != null) {
       return 'detectorResolvingPower';
-    } else if (prop.properties && prop.properties.PS_X != null) {
-      return 'pixelSize';
     }
   }
   return 'text';

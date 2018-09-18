@@ -32,6 +32,36 @@
           "default": "none"
         }
       }
+    },
+    "MS_Analysis": {
+      "type": "object",
+      "description": "Mass spectrometry settings",
+      "required": ["Pixel_Size"],
+      "properties": {
+        "Pixel_Size": {
+          "type": "object",
+          "title": "The size of a pixel in μm",
+          "smEditorType": "pixelSize",
+          "required": [
+            "Xaxis",
+            "Yaxis"
+          ],
+          "properties": {
+            "Xaxis": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1000,
+              "default": 500
+            },
+            "Yaxis": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1000,
+              "default": 400
+            }
+          }
+        }
+      }
     }
   }
 }

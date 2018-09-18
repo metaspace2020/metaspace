@@ -1,30 +1,17 @@
 <template>
   <el-row>
     <el-col class="subfield" :span="12">
-      <el-form-item :class="{'is-error': error && error.PS_X}" required>
-        <el-input
-          type="number"
-          class="fw-num"
-          @input="val => onInput('PS_X', val)"
-          :value="value.PS_X"
-          :required="required"
-        />
-        <div class="subfield-label">size in X-axis<span style="color: red;">*</span></div>
-        <span class="error-msg" v-if="error && error.PS_X">{{ error.PS_X }}</span>
+      <el-form-item :class="{'is-error': error && error.Xaxis}" required>
+        <custom-number-input :value="value.Xaxis" @input="val => onInput('Xaxis', val)"></custom-number-input>
+        <div class="subfield-label">size on X-axis<span style="color: red;">*</span></div>
+        <span class="error-msg" v-if="error && error.Xaxis">{{ error.Xaxis }}</span>
       </el-form-item>
     </el-col>
-
     <el-col class="subfield" :span="12">
-      <el-form-item :class="{'is-error': error && error.PS_Y}" required>
-        <el-input
-          type="number"
-          class="fw-num"
-          @input="val => onInput('PS_Y', val)"
-          :value="value.PS_Y"
-          :required="required"
-        />
-        <div class="subfield-label">size in Y-axis<span style="color: red;">*</span></div>
-        <span class="error-msg" v-if="error && error.PS_Y">{{ error.PS_Y }}</span>
+      <el-form-item :class="{'is-error': error && error.Yaxis}" required>
+        <custom-number-input :value="value.Yaxis" @input="val => onInput('Yaxis', val)"></custom-number-input>
+        <div class="subfield-label">size on Y-axis<span style="color: red;">*</span></div>
+        <span class="error-msg" v-if="error && error.Yaxis">{{ error.Yaxis }}</span>
       </el-form-item>
     </el-col>
   </el-row>
@@ -34,8 +21,11 @@
   import Vue from 'vue';
   import { Component, Prop } from 'vue-property-decorator';
   import {PixelSize} from '../formStructure';
+  import CustomNumberInput from './CustomNumberInput.vue'
 
-  @Component({name: 'pixel-size-input'})
+  @Component({
+    components: {CustomNumberInput}
+  })
   export default class PixelSizeInput extends Vue {
     @Prop(Object)
     value!: PixelSize;
@@ -46,7 +36,7 @@
     @Prop({ type: Boolean, default: false })
     required!: boolean;
 
-    onInput(fieldName: keyof PixelSize, value: string) {
+    onInput(fieldName: keyof PixelSize, value: number) {
       const newValue = {
         ...this.value,
         [fieldName]: value
