@@ -13,10 +13,6 @@
       <el-form-item prop="isPublic" class="isPublic">
         <el-checkbox v-model="value.isPublic">Allow other users to see this project</el-checkbox>
       </el-form-item>
-      <!--<h2 v-if="showUrlSlug">Custom URL</h2>-->
-      <!--<el-form-item v-if="showUrlSlug" prop="urlSlug" class="urlSlug">-->
-        <!--http://metaspace2020.eu/#/projects/<el-input v-model="value.urlSlug" :maxLength="30" size="mini" placeholder="project-name-here" />-->
-      <!--</el-form-item>-->
     </div>
   </el-form>
 </template>
@@ -27,6 +23,7 @@
 
   interface Model {
     name: string;
+    isPublic: boolean;
   }
 
   @Component
@@ -35,8 +32,6 @@
     value!: Model;
     @Prop({type: Boolean, default: false})
     disabled!: Boolean;
-    @Prop({type: Boolean, default: true})
-    showUrlSlug!: Boolean;
 
     rules = {
       name: [{type: 'string', required: true, min: 2, message: 'Name is required', trigger: 'manual'}],

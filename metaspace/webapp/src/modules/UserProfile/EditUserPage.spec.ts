@@ -14,17 +14,17 @@ describe('EditUserPage', () => {
     email: 'foo@bar.baz',
     role: 'user',
     groups: [
-      {role: 'MEMBER', numDatasets: 0, group: { id: 'AAA', name: 'Group A' }},
-      {role: 'INVITED', numDatasets: 0, group: { id: 'BBB', name: 'Group B' }},
-      {role: 'PENDING', numDatasets: 0, group: { id: 'CCC', name: 'Group C' }},
-      {role: 'PRINCIPAL_INVESTIGATOR', numDatasets: 20, group: { id: 'DDD', name: 'Group D' }},
+      {role: 'MEMBER', numDatasets: 0, group: { id: 'AAA', name: 'Group A', urlSlug: 'grp-a' }},
+      {role: 'INVITED', numDatasets: 0, group: { id: 'BBB', name: 'Group B', urlSlug: null }},
+      {role: 'PENDING', numDatasets: 0, group: { id: 'CCC', name: 'Group C', urlSlug: null }},
+      {role: 'PRINCIPAL_INVESTIGATOR', numDatasets: 20, group: { id: 'DDD', name: 'Group D', urlSlug: null }},
     ],
-    primaryGroup: {role: 'PRINCIPAL_INVESTIGATOR', numDatasets: 20, group: { id: 'DDD', name: 'Group D' }},
+    primaryGroup: {role: 'PRINCIPAL_INVESTIGATOR', numDatasets: 20, group: { id: 'DDD', name: 'Group D', urlSlug: null }},
     projects: [
-      {role: 'MEMBER', numDatasets: 0, project: { id: 'AA', name: 'Project A' }},
-      {role: 'INVITED', numDatasets: 0, project: { id: 'BB', name: 'Project B' }},
-      {role: 'PENDING', numDatasets: 0, project: { id: 'CC', name: 'Project C' }},
-      {role: 'MANAGER', numDatasets: 20, project: { id: 'DD', name: 'Project D' }},
+      {role: 'MEMBER', numDatasets: 0, project: { id: 'AA', name: 'Project A', urlSlug: 'proj-a' }},
+      {role: 'INVITED', numDatasets: 0, project: { id: 'BB', name: 'Project B', urlSlug: null }},
+      {role: 'PENDING', numDatasets: 0, project: { id: 'CC', name: 'Project C', urlSlug: null }},
+      {role: 'MANAGER', numDatasets: 20, project: { id: 'DD', name: 'Project D', urlSlug: null }},
     ],
   };
 

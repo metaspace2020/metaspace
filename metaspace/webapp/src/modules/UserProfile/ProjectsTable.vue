@@ -1,61 +1,66 @@
 <template>
-  <div>
-    <el-table
-      :data="rows"
-      style="width: 100%;padding-left: 15px;">
-      <el-table-column label="Project" width="180">
-        <template slot-scope="scope">
-          <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="roleName"
-        label="Role"
-        width="280"
-      />
-      <el-table-column label="Datasets contributed">
-        <template slot-scope="scope">
-          <router-link v-if="scope.row.numDatasets > 0" :to="scope.row.datasetsRoute">
-            {{scope.row.numDatasets}}
-          </router-link>
-          <span v-if="scope.row.numDatasets === 0">{{scope.row.numDatasets}}</span>
-        </template>
-      </el-table-column>
-      <el-table-column>
-        <template slot-scope="scope">
-          <el-button
-            v-if="scope.row.role === 'MEMBER'"
-            size="mini"
-            icon="el-icon-arrow-right"
-            @click="handleLeave(scope.row)">
-            Leave
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'MANAGER'"
-            size="mini"
-            icon="el-icon-arrow-right"
-            disabled>
-            Leave
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'INVITED'"
-            size="mini"
-            type="success"
-            @click="handleAcceptInvitation(scope.row)"
-            icon="el-icon-check">
-            Accept
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'INVITED'"
-            size="mini"
-            icon="el-icon-close"
-            @click="handleDeclineInvitation(scope.row)">
-            Decline
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
-  </div>
+  <el-row>
+    <create-project-dialog
+      :visible="showCreateProjectDialog && currentUser != null"
+      :currentUserId="currentUser && currentUser.id"
+      @close="handleCloseCreateProjectDialog"
+      @create="handleCreateProject"
+    />
+    <div style="padding-left: 15px">
+      <el-table :data="rows" class="table">
+        <el-table-column label="Project">
+          <template slot-scope="scope">
+            <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
+          </template>
+        </el-table-column>
+        <el-table-column prop="roleName" label="Role" width="160" />
+        <el-table-column label="Datasets contributed" width="160" align="center">
+          <template slot-scope="scope">
+            <router-link v-if="scope.row.numDatasets > 0" :to="scope.row.datasetsRoute">
+              {{scope.row.numDatasets}}
+            </router-link>
+            <span v-if="scope.row.numDatasets === 0">{{scope.row.numDatasets}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column width="240" align="right">
+          <template slot-scope="scope">
+            <el-button
+              v-if="scope.row.role === 'MEMBER'"
+              size="mini"
+              icon="el-icon-arrow-right"
+              @click="handleLeave(scope.row)">
+              Leave
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'MANAGER'"
+              size="mini"
+              icon="el-icon-arrow-right"
+              disabled>
+              Leave
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'INVITED'"
+              size="mini"
+              type="success"
+              @click="handleAcceptInvitation(scope.row)"
+              icon="el-icon-check">
+              Accept
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'INVITED'"
+              size="mini"
+              icon="el-icon-close"
+              @click="handleDeclineInvitation(scope.row)">
+              Decline
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+    <el-row>
+      <el-button style="float: right; margin: 10px 0;" @click="handleOpenCreateProjectDialog">Create project</el-button>
+    </el-row>
+  </el-row>
 </template>
 
 <script lang="ts">
@@ -66,6 +71,7 @@
   import reportError from '../../lib/reportError';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import { encodeParams } from '../Filters';
+  import { CreateProjectDialog } from '../Project';
 
   interface ProjectRow {
     id: string;
@@ -76,7 +82,11 @@
   }
 
 
-  @Component
+  @Component({
+    components: {
+      CreateProjectDialog
+    }
+  })
   export default class ProjectsTable extends Vue {
     @Prop()
     currentUser!: UserProfileQuery | null;
@@ -84,18 +94,22 @@
     refetchData!: () => void;
 
     showTransferDatasetsDialog: boolean = false;
+    showCreateProjectDialog: boolean = false;
     invitingProject: ProjectRow | null = null;
 
     get rows(): ProjectRow[] {
       if (this.currentUser != null && this.currentUser.projects != null) {
         return this.currentUser.projects.map((item) => {
           const {project, numDatasets, role} = item;
-          const {id, name} = project;
+          const {id, name, urlSlug} = project;
 
           return {
             id, name, role, numDatasets,
             roleName: getRoleName(role),
-            route: `/project/${id}`,
+            route: {
+              name: 'project',
+              params: {projectIdOrSlug: urlSlug || id}
+            },
             datasetsRoute: {
               path: '/datasets',
               query: encodeParams({ submitter: this.currentUser!.id, project: id })
@@ -151,8 +165,25 @@
         this.showTransferDatasetsDialog = false;
       }
     }
+
+    handleOpenCreateProjectDialog() {
+      this.showCreateProjectDialog = true;
+    }
+
+    handleCloseCreateProjectDialog() {
+      this.showCreateProjectDialog = false;
+    }
+
+    handleCreateProject({id}: {id: string}) {
+      this.$router.push({name: 'project', params: {projectIdOrSlug: id}});
+    }
+
+
   }
 </script>
 
-<style>
+<style scoped>
+  .table.el-table /deep/ .cell {
+    word-break: normal !important;
+  }
 </style>

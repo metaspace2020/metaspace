@@ -33,7 +33,8 @@ describe('MetaspaceHeader', () => {
           primaryGroup: {
             group: {
               id: '456',
-              name: 'Test Group'
+              name: 'Test Group',
+              urlSlug: null
             }
           }
         })
@@ -50,7 +51,7 @@ describe('MetaspaceHeader', () => {
     const wrapper = mount(MetaspaceHeader, { store, router, provide, sync: false });
     await Vue.nextTick();
 
-    expect(wrapper.find('#annotations-link').attributes().href).toEqual("#/annotations?db=HMDB&organism=human");
-    expect(wrapper.find('#datasets-link').attributes().href).toEqual("#/datasets?organism=human"); // db isn't a valid filter for datasets
+    expect(wrapper.find('#annotations-link').attributes().href).toEqual("/annotations?db=HMDB&organism=human");
+    expect(wrapper.find('#datasets-link').attributes().href).toEqual("/datasets?organism=human"); // db isn't a valid filter for datasets
   });
 });

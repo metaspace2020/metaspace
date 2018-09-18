@@ -8,61 +8,57 @@
       @accept="handleAcceptTransferDatasets"
       @close="handleCloseTransferDatasetsDialog"
     />
-    <el-table
-      :data="rows"
-      style="width: 100%;padding-left: 15px;">
-      <el-table-column label="Group" width="180">
-        <template slot-scope="scope">
-          <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="roleName"
-        label="Role"
-        width="280"
-      />
-      <el-table-column label="Datasets contributed">
-        <template slot-scope="scope">
-          <router-link v-if="scope.row.numDatasets > 0" :to="scope.row.datasetsRoute">
-            {{scope.row.numDatasets}}
-          </router-link>
-          <span v-if="scope.row.numDatasets === 0">{{scope.row.numDatasets}}</span>
-        </template>
-      </el-table-column>
-      <el-table-column>
-        <template slot-scope="scope">
-          <el-button
-            v-if="scope.row.role === 'MEMBER'"
-            size="mini"
-            icon="el-icon-arrow-right"
-            @click="handleLeave(scope.row)">
-            Leave
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'PRINCIPAL_INVESTIGATOR'"
-            size="mini"
-            icon="el-icon-arrow-right"
-            disabled>
-            Leave
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'INVITED'"
-            size="mini"
-            type="success"
-            @click="handleAcceptInvitation(scope.row)"
-            icon="el-icon-check">
-            Accept
-          </el-button>
-          <el-button
-            v-if="scope.row.role === 'INVITED'"
-            size="mini"
-            icon="el-icon-close"
-            @click="handleDeclineInvitation(scope.row)">
-            Decline
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div style="padding-left: 15px;">
+      <el-table :data="rows" class="table">
+        <el-table-column label="Group">
+          <template slot-scope="scope">
+            <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
+          </template>
+        </el-table-column>
+        <el-table-column prop="roleName" label="Role" width="160" />
+        <el-table-column label="Datasets contributed" width="160" align="center">
+          <template slot-scope="scope">
+            <router-link v-if="scope.row.numDatasets > 0" :to="scope.row.datasetsRoute">
+              {{scope.row.numDatasets}}
+            </router-link>
+            <span v-if="scope.row.numDatasets === 0">{{scope.row.numDatasets}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column width="240" align="right">
+          <template slot-scope="scope">
+            <el-button
+              v-if="scope.row.role === 'MEMBER'"
+              size="mini"
+              icon="el-icon-arrow-right"
+              @click="handleLeave(scope.row)">
+              Leave
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'PRINCIPAL_INVESTIGATOR'"
+              size="mini"
+              icon="el-icon-arrow-right"
+              disabled>
+              Leave
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'INVITED'"
+              size="mini"
+              type="success"
+              @click="handleAcceptInvitation(scope.row)"
+              icon="el-icon-check">
+              Accept
+            </el-button>
+            <el-button
+              v-if="scope.row.role === 'INVITED'"
+              size="mini"
+              icon="el-icon-close"
+              @click="handleDeclineInvitation(scope.row)">
+              Decline
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
 
   </div>
 </template>
@@ -109,12 +105,15 @@
       if (this.currentUser != null && this.currentUser.groups != null) {
         return this.currentUser.groups.map((item) => {
           const {group, numDatasets, role} = item;
-          const {id, name} = group;
+          const {id, name, urlSlug} = group;
 
           return {
             id, name, role, numDatasets,
             roleName: getRoleName(role),
-            route: `/group/${id}`,
+            route: {
+              name: 'group',
+              params: { groupIdOrSlug: urlSlug || id }
+            },
             datasetsRoute: {
               path: '/datasets',
               query: encodeParams({ submitter: this.currentUser!.id, group: id })
@@ -189,5 +188,8 @@
   }
 </script>
 
-<style>
+<style scoped>
+  .table.el-table /deep/ .cell {
+    word-break: normal !important;
+  }
 </style>
