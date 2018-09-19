@@ -258,8 +258,9 @@ class SMUpdateDaemon(object):
             self._manager.post_to_slack('dart', f' [v] Delete succeeded: {json.dumps(msg)}')
 
     def _on_success(self, msg):
-        ds = Dataset.load(self._db, msg['ds_id'])
-        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FINISHED)
+        if msg['action'] != 'delete':
+            ds = Dataset.load(self._db, msg['ds_id'])
+            ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FINISHED)
 
         self.logger.info(f" SM update daemon: success")
         self._post_to_slack(msg)

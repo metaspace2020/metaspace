@@ -300,7 +300,8 @@ type Query {
 
   peopleSuggestions(role: PersonRole!, query: String!): [Person!]!
 
-  molecularDatabases(hideDeprecated: Boolean = true): [MolecularDatabase!]
+  molecularDatabases(hideDeprecated: Boolean=true,
+    onlyLastVersion: Boolean=true): [MolecularDatabase!]
 
   adductSuggestions: [Adduct!]!
 

@@ -12,7 +12,7 @@
       <b>Brassica Napus database (BraChemDB):</b>
       A curated rapeseed database from LC-MS/MS measurements.
       <el-popover trigger="hover" placement="top">
-        <div class="desc-cite-popover">University of Rennes 1</div>
+        <div class="desc-cite-popover"><i>University of Rennes 1</i></div>
         <span slot="reference" class="desc-cite">Citation</span>
       </el-popover>
     </div>
@@ -80,6 +80,22 @@
           Volume 31, Issue 17, 1 September 2015, Pages 2860–2866,
           <a href="https://doi.org/10.1093/bioinformatics/btv285">https://doi.org/10.1093/bioinformatics/btv285</a>
         </div>
+        <span slot="reference" class="desc-cite">Citation</span>
+      </el-popover>
+    </div>
+    <div>
+      <b>EMBL-dev1:</b>
+      A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
+      <el-popover trigger="hover" placement="top">
+        <div class="desc-cite-popover"><i>EMBL</i>, developers database 1</div>
+        <span slot="reference" class="desc-cite">Citation</span>
+      </el-popover>
+    </div>
+    <div>
+      <b>EMBL-dev2:</b>
+      A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
+      <el-popover trigger="hover" placement="top">
+        <div class="desc-cite-popover"><i>EMBL</i>, developers database 2</div>
         <span slot="reference" class="desc-cite">Citation</span>
       </el-popover>
     </div>

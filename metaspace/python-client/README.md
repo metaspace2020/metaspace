@@ -21,10 +21,12 @@ then make sure you include the branch name of the latest release branch, e.g.
 `pip install git+https://github.com/metaspace2020/metaspace@release/v0.11-rc#subdirectory=metaspace/python-client`
 
 ## Jupyter Notebooks
+
 There are several playbooks available to retrieve dataset information as well as to upload it on Metaspace.
 
-| Playbook | Description |
+| Notebook | Description |
 | :--- | :--- |
+
 | **access_change_PI_names**| Reads and updates PI names in dataset metadata |
 | **api_examples**| Illustrates how to access all the information about a dataset that is visible on the [METASPACE](metaspace2020.eu) platform |
 | **compare-reference-engine-results**| Compares engine results against the pySM reference implementation |
@@ -33,6 +35,7 @@ There are several playbooks available to retrieve dataset information as well as
 | **top_hits**| Retrieves ions with the highest average MSM score across all datasets |
 | **update_DBs_dataset_api**| Reprocesses a dataset with a different set of databases |
 | **upload_dataset_api**| Uploads a new dataset with the provided metadata |
+
 
 ## Funding
 
