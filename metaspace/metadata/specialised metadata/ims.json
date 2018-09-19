@@ -36,7 +36,6 @@
     "MS_Analysis": {
       "type": "object",
       "description": "Mass spectrometry settings",
-      "required": ["Pixel_Size"],
       "properties": {
         "Pixel_Size": {
           "type": "object",

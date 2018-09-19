@@ -3,8 +3,7 @@
     v-bind:value="inputVal"
     @keydown.native="checkNumber"
     @input="val=>updateVal(val)"
-    :required="required"
-    ref="inpVal"
+    ref="custInput"
     type="text">
   </el-input>
 </template>
@@ -16,14 +15,16 @@
   @Component
 	export default class CustomNumberInput extends Vue{
 
-  	@Prop()
+  	@Prop({default: 0})
     value!: number;
 
-    inputVal = this.value;
+    inputVal: any = this.value;
+    arrowsVals: string[] = ['ArrowLeft', 'ArrowRight'];
 
     checkNumber(val: any){
       let charCode = (val.which) ? val.which : val.keyCode;
-      if ((charCode > 31 && (charCode < 48 || charCode > 57))) {
+      if (charCode > 31 && (charCode < 48 || charCode > 57)
+        && (charCode < 96 || charCode > 105) && !this.arrowsVals.includes(val.key)) {
         val.preventDefault();
       } else {
         return true
@@ -31,8 +32,12 @@
     }
 
     updateVal(val: any) {
-      console.log(val, this.inputVal)
-      this.inputVal = parseInt(val, 10)
+      // '' is assigned to this.inputVal to make an empty field invalid (in validation)
+      if (val === '') {
+        this.inputVal = '';
+      } else {
+        this.inputVal = parseInt(val);
+      }
       this.$emit('input', this.inputVal);
     }
   }
