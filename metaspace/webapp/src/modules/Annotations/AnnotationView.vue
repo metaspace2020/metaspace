@@ -17,9 +17,11 @@
               <div>Link to this annotation (opens in a new tab)</div>
             </el-popover>
 
-            <el-popover v-if="!annotation.dataset.isPublic" trigger="hover" placement="bottom">
+            <el-popover v-if="!annotation.dataset.isPublic" trigger="hover" placement="bottom" @show="loadVisibility">
               <img slot="reference" src="../../assets/padlock-icon.svg" class="av-icon">
-              <div>This dataset's annotation results are not publicly visible</div>
+              <div v-loading="visibilityText == null">
+                {{visibilityText}}
+              </div>
             </el-popover>
           </div>
         </div>

@@ -455,12 +455,13 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 </div>
                 <div class="el-col el-col-8" style="padding-left: 4px; padding-right: 4px;">
                   <div class="el-form-item md-form-field el-form-item--medium">
-                    <label class="el-form-item__label"><span class="field-label"><span>Projects</span><span style="color: red;">*</span>
+                    <label class="el-form-item__label"><span class="field-label"><span>Projects</span>
+                      <!---->
                       <!---->
                       </span>
                     </label>
                     <div class="el-form-item__content">
-                      <mock-el-select value="" required="true" multiple="">
+                      <mock-el-select value="" multiple="">
                         <mock-el-option value="currentUser.projects.0.project.id" label="currentUser.projects.0.project.name"></mock-el-option>
                         <mock-el-option value="currentUser.projects.1.project.id" label="currentUser.projects.1.project.name"></mock-el-option>
                         <mock-el-option value="CREATE_PROJECT" label="Create a new project..."></mock-el-option>

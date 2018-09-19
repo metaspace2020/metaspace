@@ -141,6 +141,7 @@ export const currentUserIdQuery =
 
 export interface CurrentUserRoleResult {
   id: string;
+  role: UserRole;
 }
 
 export const currentUserRoleQuery =
