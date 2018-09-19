@@ -6,12 +6,10 @@ const jsondiffpatch = require('jsondiffpatch'),
   _ = require('lodash');
 
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
-  metadataSchema = require('./metadata_schema.json'),
+  metadataSchemaIMS = require('../webapp/src/assets/ims.json'),
+  metadataSchemaLCMS = require('../webapp/src/assets/lcms.json'),
   {Dataset: DatasetModel} = require('./src/modules/user/model'),
   {UserGroup: UserGrouModel, UserGroupRoleOptions} = require('./src/modules/group/model');
-
-const ajv = new Ajv({allErrors: true});
-const validator = ajv.compile(metadataSchema);
 
 function isEmpty(obj) {
   if (!obj)
@@ -45,6 +43,17 @@ function trimEmptyFields(schema, value) {
 }
 
 function validateMetadata(metadata) {
+  const ajv = new Ajv({allErrors: true});
+  const metadataType = metadata.Data_Type;
+  let validator = {};
+  let metadataSchema = {};
+  if (metadataType === 'Imaging MS') {
+    metadataSchema = metadataSchemaIMS;
+    validator = ajv.compile(metadataSchemaIMS);
+  } else if (metadataType === 'LC-MS') {
+    metadataSchema = metadataSchemaIMS;
+    validator = ajv.compile(metadataSchemaLCMS);
+  }
   const cleanValue = trimEmptyFields(metadataSchema, metadata);
   validator(cleanValue);
   const validationErrors = validator.errors || [];
