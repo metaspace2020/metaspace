@@ -26,7 +26,6 @@ There are several playbooks available to retrieve dataset information as well as
 
 | Notebook | Description |
 | :--- | :--- |
-
 | **access_change_PI_names**| Reads and updates PI names in dataset metadata |
 | **api_examples**| Illustrates how to access all the information about a dataset that is visible on the [METASPACE](metaspace2020.eu) platform |
 | **compare-reference-engine-results**| Compares engine results against the pySM reference implementation |
