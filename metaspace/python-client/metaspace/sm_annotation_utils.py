@@ -250,6 +250,34 @@ class GraphQLClient(object):
         variables = {'jwt': self.jwt, 'datasetId': datasetID, 'delRaw': delRaw}
         return self.query(query, variables)
 
+    def updateDatabasesQuery(self, ds_id, molDBs, adducts, reprocess=True, priority=1):
+        if self.jwt == None:
+            raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
+
+        query = """
+                mutation updateMetadataDatabases($id: String!, $reprocess: Boolean, 
+                $input: DatasetUpdateInput!, $priority: Int) {
+                        updateDataset(
+                          id: $id,
+                          input: $input,
+                          priority: $priority,
+                          reprocess: $reprocess,
+                          )
+                        }
+                """
+        variables = {
+            'jwt': self.jwt,
+            'id': ds_id,
+            'input': {
+                'molDBs': molDBs,
+                'adducts': adducts,
+            },
+            'priority': priority,
+            'reprocess': reprocess
+        }
+
+        return self.query(query, variables)
+
 
 class MolDBClient:
     def __init__(self, config):
@@ -730,6 +758,9 @@ class SMInstance(object):
             s3.upload_file(fn, s3bucket, key)
         folder = "s3a://" + s3bucket + "/" + folder_uuid
         return self._gqclient.createDataset(folder, metadata, priority, dsName, isPublic, molDBs, adducts, dsid=dsid)
+
+    def update_dataset_dbs(self, datasetID, molDBs, adducts, priority):
+        return self._gqclient.updateDatabasesQuery(datasetID, molDBs, adducts, priority)
 
     def delete_dataset(self, dsid, **kwargs):
         return self._gqclient.deleteDataset(dsid, **kwargs)
