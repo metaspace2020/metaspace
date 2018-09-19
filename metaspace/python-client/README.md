@@ -20,7 +20,7 @@ then make sure you include the branch name of the latest release branch, e.g.
 
 `pip install git+https://github.com/metaspace2020/metaspace@release/v0.11-rc#subdirectory=metaspace/python-client`
 
-## Jupyter Playbooks
+## Jupyter Notebooks
 There are several playbooks available to retrieve dataset information as well as to upload it on Metaspace.
 
 | Playbook | Description |
