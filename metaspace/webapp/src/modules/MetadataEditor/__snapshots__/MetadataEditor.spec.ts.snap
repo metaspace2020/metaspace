@@ -13,6 +13,10 @@ Object {
       "mz": 123,
     },
     "Ionisation_Source": "none",
+    "Pixel_Size": Object {
+      "Xaxis": 500,
+      "Yaxis": 400,
+    },
     "Polarity": "Positive",
   },
   "Sample_Information": Object {
@@ -254,8 +258,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
               </div>
               <div class="el-col el-col-17" style="padding-left: 4px; padding-right: 4px;">
                 <div class="el-form-item md-form-field el-form-item--medium">
-                  <label class="el-form-item__label"><span class="field-label"><span>Detector resolving power</span>
-                    <!---->
+                  <label class="el-form-item__label"><span class="field-label"><span>Detector resolving power</span><span style="color: red;">*</span>
                     <!---->
                     </span>
                   </label>
@@ -265,16 +268,10 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <div class="el-form-item is-required el-form-item--medium">
                           <!---->
                           <div class="el-form-item__content">
-                            <div class="fw-num el-input-number el-input-number--medium"><span role="button" class="el-input-number__decrease"><i class="el-icon-minus"></i></span><span role="button" class="el-input-number__increase"><i class="el-icon-plus"></i></span>
-                              <div class="el-input el-input--medium">
-                                <!---->
-                                <input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="200" aria-disabled="false">
-                                <!---->
-                                <!---->
-                                <!---->
-                              </div>
+                            <div class="el-input el-input--medium">
+                              <input required="required" type="text" class="el-input__inner">
                             </div>
-                            <div class="subfield-label">mz<span style="color: red;">*</span></div>
+                            <div class="subfield-label">m/z</div>
                             <!---->
                             <mock-transition name="el-zoom-in-top"></mock-transition>
                           </div>
@@ -284,16 +281,49 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <div class="el-form-item is-required el-form-item--medium">
                           <!---->
                           <div class="el-form-item__content">
-                            <div class="fw-num el-input-number el-input-number--medium"><span role="button" class="el-input-number__decrease"><i class="el-icon-minus"></i></span><span role="button" class="el-input-number__increase"><i class="el-icon-plus"></i></span>
-                              <div class="el-input el-input--medium">
-                                <!---->
-                                <input type="text" autocomplete="off" max="Infinity" min="-Infinity" class="el-input__inner" role="spinbutton" aria-valuemax="Infinity" aria-valuemin="-Infinity" aria-valuenow="140000" aria-disabled="false">
-                                <!---->
-                                <!---->
-                                <!---->
-                              </div>
+                            <div class="el-input el-input--medium">
+                              <input required="required" type="text" class="el-input__inner">
                             </div>
-                            <div class="subfield-label">resolving power<span style="color: red;">*</span></div>
+                            <div class="subfield-label">resolving power</div>
+                            <!---->
+                            <mock-transition name="el-zoom-in-top"></mock-transition>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-17" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Pixel size in μm</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <div class="el-row">
+                      <div class="subfield el-col el-col-12">
+                        <div class="el-form-item is-required el-form-item--medium">
+                          <!---->
+                          <div class="el-form-item__content">
+                            <div class="el-input el-input--medium">
+                              <input required="required" type="text" class="el-input__inner">
+                            </div>
+                            <div class="subfield-label">size on X-axis</div>
+                            <!---->
+                            <mock-transition name="el-zoom-in-top"></mock-transition>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="subfield el-col el-col-12">
+                        <div class="el-form-item is-required el-form-item--medium">
+                          <!---->
+                          <div class="el-form-item__content">
+                            <div class="el-input el-input--medium">
+                              <input required="required" type="text" class="el-input__inner">
+                            </div>
+                            <div class="subfield-label">size on Y-axis</div>
                             <!---->
                             <mock-transition name="el-zoom-in-top"></mock-transition>
                           </div>
@@ -537,7 +567,9 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               A curated rapeseed database from LC-MS/MS measurements.
                               <mock-el-popover trigger="hover" placement="top">
                                 <div slot-key="default">
-                                  <div class="desc-cite-popover">University of Rennes 1</div>
+                                  <div class="desc-cite-popover">
+                                    <i>University of Rennes 1</i>
+                                  </div>
                                 </div>
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>
@@ -611,6 +643,28 @@ exports[`MetadataEditor should match snapshot 1`] = `
                                     <i>Bioinformatics</i>, Volume 31, Issue 17, 1 September 2015, Pages 2860–2866,
                                     <a href="https://doi.org/10.1093/bioinformatics/btv285">https://doi.org/10.1093/bioinformatics/btv285</a>
                                   </div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>EMBL-dev1:</b>
+                              A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover">
+                                    <i>EMBL</i>, developers database 1</div>
+                                </div>
+                                <div slot-key="reference"><span class="desc-cite">Citation</span></div>
+                              </mock-el-popover>
+                            </div>
+                            <div>
+                              <b>EMBL-dev2:</b>
+                              A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
+                              <mock-el-popover trigger="hover" placement="top">
+                                <div slot-key="default">
+                                  <div class="desc-cite-popover">
+                                    <i>EMBL</i>, developers database 2</div>
                                 </div>
                                 <div slot-key="reference"><span class="desc-cite">Citation</span></div>
                               </mock-el-popover>
