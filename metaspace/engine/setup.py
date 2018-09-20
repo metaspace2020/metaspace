@@ -14,5 +14,8 @@ setup(name='sm',
           "cpyImagingMSpec==0.2.4",
           "pyMSpec==0.1.2",
           "cpyMSpec==0.3.5",  # Drop all isotopic patterns if updated!
-          "pyimzML==1.2.3"
+          "pyimzML==1.2.4"
+      ],
+      dependency_links=[
+          "git+https://github.com/alexandrovteam/pyimzML.git/@1.2.4#egg=pyimzML-1.2.4"
       ])
