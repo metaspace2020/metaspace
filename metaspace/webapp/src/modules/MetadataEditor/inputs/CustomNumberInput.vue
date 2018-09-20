@@ -14,18 +14,18 @@
   import {Component, Prop, Watch} from 'vue-property-decorator'
 
   @Component
-	export default class CustomNumberInput extends Vue{
+  export default class CustomNumberInput extends Vue {
 
-  	@Prop({default: 0})
+    @Prop({default: 0})
     value!: number;
 
-  	@Prop({type: Boolean, default: false})
+    @Prop({type: Boolean, default: false})
     isInteger!: boolean;
 
-    @Prop({ type: Boolean, default: false })
+    @Prop({type: Boolean, default: false})
     required!: boolean;
 
-  	lastEmittedValue: number | null = null;
+    lastEmittedValue: number | null = null;
     stringValue: string = '';
 
     created() {
