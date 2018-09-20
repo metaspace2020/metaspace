@@ -176,7 +176,7 @@
 
 <style lang="scss">
   .md-form-field {
-    padding: 0 5px 10px 5px;
+    padding: 5px 5px 8px 5px;
     margin-bottom: 0;
 
     .el-form-item__content {
@@ -184,7 +184,7 @@
     }
 
     .el-form-item__error {
-      position: static;
+      position: absolute;
     }
 
     > .el-form-item__label {

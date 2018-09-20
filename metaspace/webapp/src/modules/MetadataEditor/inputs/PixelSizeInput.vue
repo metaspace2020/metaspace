@@ -2,15 +2,22 @@
   <el-row>
     <el-col class="subfield" :span="12">
       <el-form-item :class="{'is-error': error && error.Xaxis}" required>
-        <custom-number-input :value="value.Xaxis" @input="val => onInput('Xaxis', val)"></custom-number-input>
-        <div class="subfield-label">size on X-axis<span style="color: red;">*</span></div>
+        <custom-number-input
+          :value="value.Xaxis"
+          @input="val => onInput('Xaxis', val)"
+        ></custom-number-input>
+        <div class="subfield-label">size on X-axis</div>
         <span class="error-msg" v-if="error && error.Xaxis">{{ error.Xaxis }}</span>
       </el-form-item>
     </el-col>
     <el-col class="subfield" :span="12">
       <el-form-item :class="{'is-error': error && error.Yaxis}" required>
-        <custom-number-input :value="value.Yaxis" @input="val => onInput('Yaxis', val)"></custom-number-input>
-        <div class="subfield-label">size on Y-axis<span style="color: red;">*</span></div>
+        <custom-number-input
+          :value="value.Yaxis"
+          @input="val => onInput('Yaxis', val)"
+          :required="required"
+        ></custom-number-input>
+        <div class="subfield-label">size on Y-axis</div>
         <span class="error-msg" v-if="error && error.Yaxis">{{ error.Yaxis }}</span>
       </el-form-item>
     </el-col>

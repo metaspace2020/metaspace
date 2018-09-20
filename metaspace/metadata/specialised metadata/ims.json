@@ -36,15 +36,13 @@
     "MS_Analysis": {
       "type": "object",
       "description": "Mass spectrometry settings",
+      "required": ["Pixel_Size"],
       "properties": {
         "Pixel_Size": {
           "type": "object",
-          "title": "The size of a pixel in μm",
+          "title": "Pixel size in μm",
           "smEditorType": "pixelSize",
-          "required": [
-            "Xaxis",
-            "Yaxis"
-          ],
+          "required": ["Xaxis", "Yaxis"],
           "properties": {
             "Xaxis": {
               "type": "number",
