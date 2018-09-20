@@ -26,7 +26,7 @@
   when: sm_graphql_update_binary
 
 - name: Dereference metadata schema
-  shell: node deref_schema.js > metadata_schema.json
+  shell: node deref_schema.js ./src/assets/
   args:
     chdir: "{{ sm_graphql_home }}"
     executable: /bin/bash

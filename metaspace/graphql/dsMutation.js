@@ -6,8 +6,8 @@ const jsondiffpatch = require('jsondiffpatch'),
   _ = require('lodash');
 
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
-  metadataSchemaIMS = require('../webapp/src/assets/ims.json'),
-  metadataSchemaLCMS = require('../webapp/src/assets/lcms.json'),
+  metadataSchemaIMS = require('./src/assets/ims.json'),
+  metadataSchemaLCMS = require('./src/assets/lcms.json'),
   {Dataset: DatasetModel} = require('./src/modules/user/model'),
   {UserGroup: UserGrouModel, UserGroupRoleOptions} = require('./src/modules/group/model');
 
@@ -117,7 +117,7 @@ async function smAPIRequest(datasetId, uri, body) {
 
   const resp = await rawResp.json();
   if (!rawResp.ok) {
-    if (resp.status == 'dataset_busy')
+    if (resp.status === 'dataset_busy')
       throw new UserError(JSON.stringify({
         'type': 'dataset_busy',
         'hint': `Dataset is busy. Try again later.`
