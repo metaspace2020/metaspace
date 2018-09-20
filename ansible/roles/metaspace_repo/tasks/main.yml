@@ -51,18 +51,11 @@
       dest: "{{ sm_ansible_home }}/"
       rsync_opts:
         - --exclude=.*
-
-- name: Upload local files (engine)
-  synchronize:
-    src: "{{ sm_home }}/{{ item }}/"
-    dest: "{{ sm_home }}/{{ item }}/"
-    rsync_opts:
-      - "--exclude=*.sh"
-      - "--exclude=*.json"
-      - "--exclude=.*"
-  with_items:
-    - scripts
-    - conf
-    - sm
-    - tests
-  when: local_deploy is defined
+    - src: "{{ sm_home }}/"
+      dest: "{{ sm_home }}/"
+      rsync_opts:
+        - --exclude=.*
+        - --exclude=config/*
+        - --exclude=logs/*
+        - --exclude=docker/*
+        - --exclude=docs/*
