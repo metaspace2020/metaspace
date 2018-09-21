@@ -46,15 +46,15 @@
           "properties": {
             "Xaxis": {
               "type": "number",
-              "minimum": 0,
+              "minimum": 0.1,
               "maximum": 1000,
-              "default": 500
+              "default": 20
             },
             "Yaxis": {
               "type": "number",
-              "minimum": 0,
+              "minimum": 0.1,
               "maximum": 1000,
-              "default": 400
+              "default": 20
             }
           }
         }
