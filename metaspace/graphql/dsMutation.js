@@ -162,7 +162,7 @@ const saveDS = async (connection, dsId, submitterId, groupId, approved) => {
       id: dsId,
       userId: submitterId,
       groupId: groupId,
-      approved: approved,
+      groupApproved: approved,
     };
     await connection.getRepository(DatasetModel).save(dsUpdate);
   }

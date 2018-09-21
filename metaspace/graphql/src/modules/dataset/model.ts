@@ -22,6 +22,6 @@ export class Dataset {
   @JoinColumn({ name: 'group_id' })
   group: Group;
 
-  @Column({ default: false })
-  approved: boolean; // true when submitter is a group member
+  @Column({ default: false, name: 'group_approved' })
+  groupApproved: boolean; // true when submitter is a group member
 }
