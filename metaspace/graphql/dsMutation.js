@@ -108,13 +108,15 @@ async function smAPIRequest(uri, body) {
 
   const resp = await rawResp.json();
   if (!rawResp.ok) {
-    if (resp.status == 'dataset_busy')
+    if (resp.status === 'dataset_busy') {
       throw new UserError(JSON.stringify({
         'type': 'dataset_busy',
         'hint': `Dataset is busy. Try again later.`
       }));
-    else
+    }
+    else {
       throw new UserError(`smAPIRequest: ${JSON.stringify(resp)}`);
+    }
   }
   else {
     logger.info(`Successful ${uri}`);
@@ -141,7 +143,7 @@ const hasEditAccess = async (connection, user, dsId) => {
       throw new UserError('Access denied');
   }
   else {
-    throw new UserError(`DS id not privided`);
+    throw new UserError(`DS id not provided`);
   }
 };
 
@@ -150,17 +152,17 @@ const isMemberOf = async (connection, user, groupId) => {
     userId: user.id,
     groupId
   });
-  if (!userGroup || ![UserGroupRoleOptions.MEMBER,
-    UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(userGroup.role))
-    throw new UserError(`User ${user.id} is not a member of ${groupId} group`);
+  return (!userGroup || ![UserGroupRoleOptions.MEMBER,
+    UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(userGroup.role));
 };
 
-const saveDS = async (connection, dsId, submitterId, groupId) => {
+const saveDS = async (connection, dsId, submitterId, groupId, approved) => {
   if (submitterId || groupId) {
     const dsUpdate = {
       id: dsId,
       userId: submitterId,
-      groupId: groupId
+      groupId: groupId,
+      approved: approved,
     };
     await connection.getRepository(DatasetModel).save(dsUpdate);
   }
@@ -193,8 +195,9 @@ module.exports = {
       if (!user)
         throw new UserError(`Not authenticated`);
 
+      let approved = false;
       if (input.groupId)
-        await isMemberOf(connection, user, input.groupId);
+        approved = await isMemberOf(connection, user, input.groupId);
 
       try {
         input.metadata = JSON.parse(input.metadataJson);
@@ -210,7 +213,7 @@ module.exports = {
         // TODO: generate dsId here and save it before calling SM API
         dsId = resp['ds_id'];
 
-        await saveDS(connection, dsId, input.submitterId, input.groupId);
+        await saveDS(connection, dsId, input.submitterId, input.groupId, approved);
         return JSON.stringify({ dsId, status: 'success' });
       } catch (e) {
         logger.error(e.stack);
@@ -222,8 +225,6 @@ module.exports = {
       const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
       try {
         await hasEditAccess(connection, user, dsId);
-        if (update.groupId)
-          await isMemberOf(connection, user, update.groupId);
 
         if (update.metadataJson !== undefined) {
           update.metadata = JSON.parse(update.metadataJson);
@@ -236,16 +237,19 @@ module.exports = {
 
         //TODO: handle principalInvestigator update
 
+        let approved = false;
+        if (update.groupId)
+          approved = await isMemberOf(connection, user, update.groupId);
+
         if (reprocess) {
-          await saveDS(connection, dsId, update.submitterId, update.groupId);
-          const body = {
+          await saveDS(connection, dsId, update.submitterId, update.groupId, approved);
+          return await smAPIRequest(`/v1/datasets/${dsId}/add`, {
             id: dsId,
             doc: toSMAPIparam({...engineDS, ...update}),
             del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
             priority: priority,
             force: force,
-          }
-          return await smAPIRequest(`/v1/datasets/${dsId}/add`, body);
+          });
         }
         else {
           if (reprocessingNeeded) {
@@ -255,14 +259,13 @@ module.exports = {
             }));
           }
           else {
-            await saveDS(connection, dsId, update.submitterId, update.groupId);
-            const body = {
+            await saveDS(connection, dsId, update.submitterId, update.groupId, approved);
+            const resp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
               id: dsId,
               doc: toSMAPIparam(update),
               priority: priority,
               force: force,
-            };
-            const resp = await smAPIRequest(`/v1/datasets/${dsId}/update`, body);
+            });
             return JSON.stringify(resp);
           }
         }
