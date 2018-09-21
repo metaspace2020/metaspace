@@ -7,7 +7,7 @@ const jsondiffpatch = require('jsondiffpatch'),
 
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json'),
-  {Dataset: DatasetModel} = require('./src/modules/user/model'),
+  {Dataset: DatasetModel} = require('./src/modules/dataset/model'),
   {UserGroup: UserGroupModel, UserGroupRoleOptions} = require('./src/modules/group/model');
 
 const ajv = new Ajv({allErrors: true});

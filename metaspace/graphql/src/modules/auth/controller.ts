@@ -1,5 +1,4 @@
 import { Express, Request, Response, NextFunction } from 'express';
-import * as Knex from 'knex'
 import {callbackify} from 'util';
 import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
@@ -53,13 +52,15 @@ const configurePassport = (app: Express) => {
 };
 
 export interface JwtUser {
+  id?: string,
+  email?: string,
+  groupIds?: string[], // used in esConnector for ES visibility filters
+  role: 'admin' | 'user' | 'anonymous',
+}
+
+export interface JwtPayload {
   iss: string,
-  user?: {
-    id?: string,
-    email?: string,
-    groupIds?: string[],
-    role: 'user' | 'admin' | 'anonymous',
-  },
+  user?: JwtUser,
   sub?: string,
   iat?: number,
   exp?: number
@@ -75,7 +76,7 @@ const configureJwt = (app: Express) => {
         iss: 'METASPACE2020',
         user: {
           id, email, role,
-          groupIds: groups.map(g => g.groupId)
+          groupIds: groups ? groups.map(g => g.groupId) : null
         },
         iat: nowSeconds,
         exp: expSeconds == null ? undefined : nowSeconds + expSeconds,
@@ -88,7 +89,7 @@ const configureJwt = (app: Express) => {
         }
       };
     }
-    return JwtSimple.encode(payload as JwtUser, config.jwt.secret);
+    return JwtSimple.encode(payload as JwtPayload, config.jwt.secret);
   }
 
   // Gives a one-time token, which expires in 60 seconds.
