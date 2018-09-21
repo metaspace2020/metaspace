@@ -1,7 +1,12 @@
  import { renderMolFormula } from '../../util';
  import DatasetInfo from '../../components/DatasetInfo.vue';
  import { annotationQuery } from '../../api/annotation';
- import { msAcqGeometryQuery, opticalImageQuery } from '../../api/dataset';
+ import {
+  datasetVisibilityQuery,
+   DatasetVisibilityResult,
+  msAcqGeometryQuery,
+  opticalImageQuery,
+} from '../../api/dataset';
  import { encodeParams } from '../Filters/index';
  import annotationWidgets from './annotation-widgets/index'
 
@@ -9,6 +14,7 @@
  import { Store } from 'vuex';
  import { Component, Prop } from 'vue-property-decorator';
  import { Location } from 'vue-router';
+ import { currentUserIdQuery, CurrentUserIdResult } from '../../api/user';
 
  type ImagePosition = {
    zoom: number
@@ -77,6 +83,18 @@
          }
        },
        update: (data: any) => JSON.parse(data['dataset']['acquisitionGeometry'])
+     },
+
+     datasetVisibility: {
+       query: datasetVisibilityQuery,
+       skip: true,
+       variables() {
+         return {id: this.annotation.dataset.id}
+       }
+     },
+
+     currentUser: {
+       query: currentUserIdQuery
      }
    }
  })
@@ -88,6 +106,8 @@
    peakChartData: any
    opticalImageUrl?: string
    showOpticalImage: boolean = true
+   datasetVisibility: DatasetVisibilityResult | null = null
+   currentUser: CurrentUserIdResult | null = null
 
    metadataDependentComponent(category: string): any {
      const currentMdType: string = this.$store.getters.filter.metadataType;
@@ -146,6 +166,19 @@
      });
    }
 
+   get visibilityText() {
+     if (this.datasetVisibility != null && this.datasetVisibility.id === this.annotation.dataset.id) {
+       const {submitter, group, projects} = this.datasetVisibility;
+       const submitterName = this.currentUser && submitter.id === this.currentUser.id ? 'you' : submitter.name;
+       const all = [
+         submitterName,
+         ...(group ? [group.name] : []),
+         ...(projects || []).map(p => p.name),
+       ];
+       return `These annotation results are not publicly visible. They are visible to ${all.join(', ')} and METASPACE Administrators.`
+     }
+   }
+
    opacity: number = 1.0;
 
    imagePosition: ImagePosition = {
@@ -183,5 +216,9 @@
    toggleOpticalImage(event: any): void {
      event.stopPropagation();
      this.showOpticalImage = !this.showOpticalImage
+   }
+
+   loadVisibility() {
+     this.$apollo.queries.datasetVisibility.start();
    }
  }

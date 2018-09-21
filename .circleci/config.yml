@@ -214,7 +214,6 @@ jobs:
           name: Run unit and integration tests
           command: |
             source docker/env.sh
-            pip install -U pip
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests
       - run:

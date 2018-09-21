@@ -133,7 +133,7 @@
 <script>
  import DatasetInfo from '../../../components/DatasetInfo.vue';
  import {capitalize} from 'lodash-es';
- import {deleteDatasetQuery, thumbnailOptImageQuery} from '../../../api/dataset';
+ import { datasetVisibilityQuery, deleteDatasetQuery, thumbnailOptImageQuery } from '../../../api/dataset';
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
  import { currentUserRoleQuery } from '../../../api/user';
@@ -283,13 +283,7 @@
 
    apollo: {
      datasetVisibility: {
-       query: gql`query DatasetVisibility($id: String!) {
-         datasetVisibility: dataset(id: $id) {
-           submitter { id name }
-           group { id name }
-           projects { id name }
-         }
-       }`,
+       query: datasetVisibilityQuery,
        skip: true,
        variables() {
          return {id: this.dataset.id}

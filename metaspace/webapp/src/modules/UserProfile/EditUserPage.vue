@@ -127,7 +127,7 @@
           <!--</el-row>-->
         <!--</div>-->
       <!--</div>-->
-      <div style="margin-top: 45px">
+      <div>
         <h2>Delete account</h2>
         <p style="width: 100%;padding-left: 15px;">
           If you delete your METASPACE account, you can either delete all your datasets or keep them within METASPACE.

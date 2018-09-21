@@ -143,3 +143,20 @@ export const msAcqGeometryQuery =
       acquisitionGeometry
     }
   }`;
+
+export const datasetVisibilityQuery =
+  gql`query DatasetVisibility($id: String!) {
+     datasetVisibility: dataset(id: $id) {
+       id
+       submitter { id name }
+       group { id name }
+       projects { id name }
+     }
+   }`;
+
+export interface DatasetVisibilityResult {
+  id: string;
+  submitter: { id: string, name: string };
+  group: { id: string, name: string } | null;
+  projects: { id: string, name: string }[] | null;
+}

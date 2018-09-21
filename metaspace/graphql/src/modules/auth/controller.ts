@@ -1,4 +1,4 @@
-import { Express, Request, Response, NextFunction } from 'express';
+import { Express, Router, IRouter, Request, Response, NextFunction } from 'express';
 import {callbackify} from 'util';
 import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
@@ -29,11 +29,11 @@ const preventCache = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
-const configurePassport = (app: Express) => {
-  app.use(Passport.initialize({
+const configurePassport = (router: IRouter<any>) => {
+  router.use(Passport.initialize({
     userProperty: 'cookieUser' // req.user is already used by the JWT
   }));
-  app.use(Passport.session());
+  router.use(Passport.session());
 
   Passport.serializeUser<User, string>(callbackify( async (user: User) => user.id));
 
@@ -41,11 +41,11 @@ const configurePassport = (app: Express) => {
     return await findUserById(id, false, true) || false;
   }));
 
-  app.post('/api_auth/signout', preventCache, (req, res) => {
+  router.post('/signout', preventCache, (req, res) => {
     req.logout();
     res.send('OK');
   });
-  app.get('/api_auth/signout', preventCache, (req, res) => {
+  router.get('/signout', preventCache, (req, res) => {
     req.logout();
     res.redirect('/');
   });
@@ -66,7 +66,7 @@ export interface JwtPayload {
   exp?: number
 }
 
-const configureJwt = (app: Express) => {
+const configureJwt = (router: IRouter<any>) => {
   function mintJWT(user: User | null, expSeconds: number | null = 60) {
     const nowSeconds = Math.floor(Date.now() / 1000);
     let payload;
@@ -95,7 +95,7 @@ const configureJwt = (app: Express) => {
   // Gives a one-time token, which expires in 60 seconds.
   // (this allows small time discrepancy between different servers)
   // If we want to use longer lifetimes we need to setup HTTPS on all servers.
-  app.get('/api_auth/gettoken', preventCache, async (req, res, next) => {
+  router.get('/gettoken', preventCache, async (req, res, next) => {
     try {
       const user = getUserFromRequest(req);
       if (user) {
@@ -108,7 +108,7 @@ const configureJwt = (app: Express) => {
     }
   });
 
-  app.get('/api_auth/getapitoken', async (req, res, next) => {
+  router.get('/getapitoken', async (req, res, next) => {
     try {
       const user = getUserFromRequest(req);
       if (user) {
@@ -123,7 +123,7 @@ const configureJwt = (app: Express) => {
   });
 };
 
-const configureLocalAuth = (app: Express) => {
+const configureLocalAuth = (router: IRouter<any>) => {
   Passport.use(new LocalStrategy(
     {
       usernameField: 'email',
@@ -135,7 +135,7 @@ const configureLocalAuth = (app: Express) => {
     })
   ));
 
-  app.post('/api_auth/signin', function(req, res, next) {
+  router.post('/signin', function(req, res, next) {
     Passport.authenticate('local', function(err, user, info) {
       if (err) {
         next(err);
@@ -154,7 +154,7 @@ const configureLocalAuth = (app: Express) => {
   })
 };
 
-const configureGoogleAuth = (app: Express) => {
+const configureGoogleAuth = (router: IRouter<any>) => {
   if (config.google.client_id) {
     Passport.use(new GoogleStrategy(
       {
@@ -172,19 +172,19 @@ const configureGoogleAuth = (app: Express) => {
       })
     ));
 
-    app.get('/api_auth/google', Passport.authenticate('google', {
+    router.get('/google', Passport.authenticate('google', {
       scope: ['profile', 'email']
     }));
 
-    app.get('/api_auth/google/callback', Passport.authenticate('google', {
-      successRedirect: '/#/datasets',
-      failureRedirect: '/#/account/sign-in',
+    router.get('/google/callback', Passport.authenticate('google', {
+      successRedirect: '/datasets',
+      failureRedirect: '/account/sign-in',
     }));
   }
 };
 
-const configureCreateAccount = (app: Express) => {
-  app.post('/api_auth/createaccount', async (req, res, next) => {
+const configureCreateAccount = (router: IRouter<any>) => {
+  router.post('/createaccount', async (req, res, next) => {
     try {
       const { name, email, password } = req.body;
       await createUserCredentials({ name, email, password });
@@ -194,7 +194,7 @@ const configureCreateAccount = (app: Express) => {
     }
   });
 
-  app.get('/api_auth/verifyemail', preventCache, async (req, res, next) => {
+  router.get('/verifyemail', preventCache, async (req, res, next) => {
     const {email, token} = req.query;
     const user = await verifyEmail(email, token);
     if (user) {
@@ -203,18 +203,18 @@ const configureCreateAccount = (app: Express) => {
           next(err);
         } else {
           res.cookie('flashMessage', JSON.stringify({type: 'verify_email_success'}), {maxAge: 10*60*1000});
-          res.redirect('/#/');
+          res.redirect('/');
         }
       });
     } else {
       res.cookie('flashMessage', JSON.stringify({type: 'verify_email_failure'}), {maxAge: 10*60*1000});
-      res.redirect('/#/');
+      res.redirect('/');
     }
   });
 };
 
-const configureResetPassword = (app: Express) => {
-  app.post('/api_auth/sendpasswordresettoken', async (req, res, next) => {
+const configureResetPassword = (router: IRouter<any>) => {
+  router.post('/sendpasswordresettoken', async (req, res, next) => {
     try {
       const { email } = req.body;
       await sendResetPasswordToken(email);
@@ -224,7 +224,7 @@ const configureResetPassword = (app: Express) => {
     }
   });
 
-  app.post('/api_auth/validatepasswordresettoken', async (req, res, next) => {
+  router.post('/validatepasswordresettoken', async (req, res, next) => {
     try {
       const { email, token } = req.body;
       const user = await findUserByEmail(email);
@@ -238,7 +238,7 @@ const configureResetPassword = (app: Express) => {
     }
   });
 
-  app.post('/api_auth/resetpassword', async (req, res, next) => {
+  router.post('/resetpassword', async (req, res, next) => {
     try {
       const { email, token, password } = req.body;
       const userId = await resetPassword(email, password, token);
@@ -260,12 +260,14 @@ const configureResetPassword = (app: Express) => {
 };
 
 export const configureAuth = async (app: Express, connection: Connection) => {
+  const router = Router();
   await initOperation(connection);
-  configurePassport(app);
-  configureJwt(app);
-  configureLocalAuth(app);
-  configureGoogleAuth(app);
+  configurePassport(router);
+  configureJwt(router);
+  configureLocalAuth(router);
+  configureGoogleAuth(router);
   // TODO: find a parameter validation middleware
-  configureCreateAccount(app);
-  configureResetPassword(app);
+  configureCreateAccount(router);
+  configureResetPassword(router);
+  app.use('/api_auth', router);
 };

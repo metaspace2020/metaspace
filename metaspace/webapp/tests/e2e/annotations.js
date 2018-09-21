@@ -3,7 +3,7 @@ import config from '../../conf';
 import {ClientFunction, Selector} from 'testcafe';
 
 fixture `Annotations page`
-  .page `http://${config.HOST_NAME}:${config.PORT}/#/annotations`;
+  .page `http://${config.HOST_NAME}:${config.PORT}/annotations`;
 
 const table = new Selector('#annot-table');
 const filterPanel = new Selector('#annot-page .filter-panel');

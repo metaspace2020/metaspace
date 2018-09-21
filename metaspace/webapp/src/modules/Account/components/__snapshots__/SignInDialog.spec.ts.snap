@@ -68,11 +68,11 @@ exports[`SignInDialog should match snapshot 1`] = `
     </div>
   </div>
   <p>
-    <a href="#/account/forgot-password">Forgot password?</a>
+    <a href="/account/forgot-password">Forgot password?</a>
   </p>
   <p>
     New user?
-    <a href="#/account/create-account">Create an account</a>
+    <a href="/account/create-account">Create an account</a>
   </p>
   <p style="margin-bottom: 0px;">
     Submitted data previously but never set a password?
@@ -81,7 +81,7 @@ exports[`SignInDialog should match snapshot 1`] = `
   <div style="overflow: hidden; height: auto;">
     <p style="margin-bottom: 0px;">
       We now require that all METASPACE users have an account to upload and manage datasets. If you have submitted datasets to METASPACE previously, please
-      <a href="#/account/create-account">create an account</a> using the same email address that you used when submitting the datasets, and you will be reunited with them.
+      <a href="/account/create-account">create an account</a> using the same email address that you used when submitting the datasets, and you will be reunited with them.
       <a href="mailto:contact@metaspace2020.eu">Contact us</a> if you have lost access to any datasets that you submitted.
     </p>
   </div>

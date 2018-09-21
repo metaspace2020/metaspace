@@ -58,11 +58,9 @@ async function createHttpServerAsync(config) {
 
   const connection = await createConnection();
 
-  if (config.features.newAuth) {
-    app.use(bodyParser.json());
-    configureSession(app);
-    await configureAuth(app, connection);
-  }
+  app.use(bodyParser.json());
+  configureSession(app);
+  await configureAuth(app, connection);
 
   const apollo = new ApolloServer({
     schema: executableSchema,

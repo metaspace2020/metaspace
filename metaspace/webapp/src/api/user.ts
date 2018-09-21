@@ -10,6 +10,7 @@ export interface UserProfileQueryGroup {
   group: {
     id: string,
     name: string
+    urlSlug: string | null;
   };
 }
 export interface UserProfileQueryProject {
@@ -18,6 +19,7 @@ export interface UserProfileQueryProject {
   project: {
     id: string,
     name: string
+    urlSlug: string | null;
   };
 }
 
@@ -50,6 +52,7 @@ export const userProfileQuery =
       project {
         id
         name
+        urlSlug
       }
     }
   }
@@ -60,6 +63,7 @@ fragment UserProfileQueryGroup on UserGroup {
   group {
     id
     name
+    urlSlug
   }
 }
 `;
@@ -137,6 +141,7 @@ export const currentUserIdQuery =
 
 export interface CurrentUserRoleResult {
   id: string;
+  role: UserRole;
 }
 
 export const currentUserRoleQuery =

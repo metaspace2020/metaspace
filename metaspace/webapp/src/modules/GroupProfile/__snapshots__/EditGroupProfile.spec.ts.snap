@@ -51,7 +51,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
     </form>
     <div>
       <h2>Members</h2>
-      <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" element-loading-text="Loading results from the server...">
+      <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" element-loading-text="Loading results from the server..." mock-v-loading="false">
         <div class="hidden-columns">
           <div></div>
           <div></div>
@@ -117,7 +117,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=2&amp;subm=3" class="">123</a>
+                    <a href="/datasets?grp=2&amp;subm=3" class="">123</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -147,7 +147,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=2&amp;subm=4" class="">0</a>
+                    <a href="/datasets?grp=2&amp;subm=4" class="">0</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -185,7 +185,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=2&amp;subm=5" class="">0</a>
+                    <a href="/datasets?grp=2&amp;subm=5" class="">0</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -219,7 +219,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                   <div class="cell">
-                    <a href="#/datasets?grp=2&amp;subm=6" class="">1</a>
+                    <a href="/datasets?grp=2&amp;subm=6" class="">1</a>
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
@@ -256,9 +256,22 @@ exports[`EditGroupProfile should match snapshot 1`] = `
       </div>
     </div>
     <div style="margin-bottom: 2em;">
+      <h2>Custom URL</h2>
+      <!---->
+      <!---->
+      <div>
+        <p>
+          <a href="/group/2" class="router-link-active">
+            http://localhost/group/<span class="urlSlug">2</span></a>
+        </p>
+        <p>
+          <a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
+      </div>
+    </div>
+    <div style="margin-bottom: 2em;">
       <h2>Datasets</h2>
       <p>
-        <a href="#/datasets?grp=2" class="">See all datasets</a>
+        <a href="/datasets?grp=2" class="">See all datasets</a>
       </p>
     </div>
     <!---->
