@@ -13,8 +13,8 @@ declare module "*/clientConfig.json" {
   }
 
   interface Features {
-    // Whether to use new authentication system (new sign in / sign up UI, graphql-based login, password-based logins)
-    newAuth?: boolean;
+    // Unused - leaving this as an example
+    // newAuth?: boolean;
   }
 
   interface ClientConfig {

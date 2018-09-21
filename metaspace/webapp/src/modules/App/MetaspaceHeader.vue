@@ -94,9 +94,12 @@
      },
 
      primaryGroupHref() {
-       return {
-         name: 'group',
-         params: {groupId: this.currentUser.primaryGroup.group.id}
+       if (this.currentUser && this.currentUser.primaryGroup) {
+         const { id, urlSlug } = this.currentUser.primaryGroup.group;
+         return {
+           name: 'group',
+           params: { groupIdOrSlug: urlSlug || id }
+         }
        }
      },
 
@@ -128,6 +131,7 @@
                id
                shortName
                name
+               urlSlug
              }
            }
          }

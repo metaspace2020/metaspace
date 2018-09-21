@@ -1,9 +1,23 @@
 <template>
   <div class="page">
+    <create-project-dialog
+      :visible="showCreateProjectDialog && currentUser != null"
+      :currentUserId="currentUser && currentUser.id"
+      @close="handleCloseCreateProject"
+      @create="handleProjectCreated"
+    />
     <div class="page-content">
       <filter-panel level="projects" />
+      <el-row v-if="currentUser" type="flex" justify="end">
+        <el-button @click="handleOpenCreateProject">Create project</el-button>
+      </el-row>
+      <div class="clearfix"/>
       <div v-loading="loading !== 0">
-        <projects-list-item v-for="project in projects" :key="project.id" :project="project" />
+        <projects-list-item v-for="project in projects"
+                            :key="project.id"
+                            :project="project"
+                            :currentUser="currentUser"
+                            :refreshData="handleRefreshData" />
       </div>
       <div style="text-align: center;" v-if="projectsCount > pageSize || page !== 1">
       <el-pagination :total="projectsCount"
@@ -24,21 +38,22 @@
     ProjectsListProject,
     projectsListQuery,
   } from '../../api/project';
-  import { UserRole } from '../../api/user';
+  import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user';
   import { FilterPanel } from '../Filters';
   import ProjectsListItem from './ProjectsListItem.vue';
-
-  interface CurrentUserQuery {
-    id: string;
-    role: UserRole;
-  }
+  import CreateProjectDialog from './CreateProjectDialog.vue';
 
   @Component<ProjectsListPage>({
     components: {
       FilterPanel,
       ProjectsListItem,
+      CreateProjectDialog,
     },
     apollo: {
+      currentUser: {
+        query: currentUserRoleQuery,
+        loadingKey: 'loading',
+      },
       allProjects: {
         query: projectsListQuery,
         loadingKey: 'loading',
@@ -74,11 +89,12 @@
   })
   export default class ProjectsListPage extends Vue {
     loading = 0;
-    currentUser: CurrentUserQuery | null = null;
+    currentUser: CurrentUserRoleResult | null = null;
     allProjects: ProjectsListProject[] | null = null;
     myProjects: ProjectsListProject[] | null = null;
     projectsCount = 0;
 
+    showCreateProjectDialog = false;
     page = 1;
     pageSize = 10;
 
@@ -105,6 +121,24 @@
 
     created() {
       this.$store.commit('updateFilter', this.$store.getters.filter);
+    }
+
+    async handleRefreshData() {
+      await Promise.all([
+        this.$apollo.queries.allProjects.refetch(),
+        this.$apollo.queries.myProjects.refetch(),
+        this.$apollo.queries.projectsCount.refetch(),
+      ])
+    }
+
+    handleOpenCreateProject() {
+      this.showCreateProjectDialog = true;
+    }
+    handleCloseCreateProject() {
+      this.showCreateProjectDialog = false;
+    }
+    handleProjectCreated({id}: {id: string}) {
+      this.$router.push({name: 'project', params: {projectIdOrSlug: id}});
     }
   }
 

@@ -6,7 +6,8 @@ import {
 
 import config from './config';
 import {Credentials} from '../modules/auth/model';
-import {User, Dataset} from '../modules/user/model';
+import {User} from '../modules/user/model';
+import {Dataset} from '../modules/dataset/model';
 import {Group, UserGroup} from '../modules/group/model';
 
 export const DbSchemaName = 'graphql';
@@ -26,7 +27,7 @@ const defaultDBConfig: ConnectionOptions = {
     UserGroup
   ],
   synchronize: true,
-  logging: true
+  logging: false
 };
 
 export const createConnection = async () => {

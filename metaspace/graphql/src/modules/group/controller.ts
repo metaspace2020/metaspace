@@ -2,7 +2,8 @@ import {UserError} from 'graphql-errors';
 import {Connection, Like, In} from 'typeorm';
 
 import {Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions} from './model';
-import {Dataset as DatasetModel, User as UserModel} from '../user/model';
+import {User as UserModel} from '../user/model';
+import {Dataset as DatasetModel} from '../dataset/model';
 import {Group, UserGroup, UserGroupRole} from '../../binding';
 
 const hasAccess = async (connection: Connection, user: UserModel, groupId?: string) => {

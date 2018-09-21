@@ -390,8 +390,7 @@
      },
 
      onCurrentRowChange (row) {
-       if (row)
-         this.$store.commit('setAnnotation', row);
+       this.$store.commit('setAnnotation', row);
      },
 
      onKeyDown (event) {

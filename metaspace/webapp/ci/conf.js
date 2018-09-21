@@ -1,14 +1,6 @@
 exports.PORT = 18082;
-exports.GOOGLE_CALLBACK_URL = "http://dev.server.com:8082/auth/google/callback";
 
 exports.GOOGLE_CLIENT_ID = "clientid";
-exports.GOOGLE_CLIENT_SECRET = "clientsecret";
-
-exports.COOKIE_SECRET = "cookiesecret";
-exports.JWT_SECRET = "jwtsecret";
-
-exports.ADMIN_EMAILS = [];
-exports.AUTO_LOGIN_AS_ADMIN = true;
 
 exports.AWS_ACCESS_KEY_ID = "";
 exports.AWS_SECRET_ACCESS_KEY = "";
@@ -27,10 +19,3 @@ exports.FINE_UPLOADER_CONFIG = {
   },
   storage: "s3"
 }
-
-exports.REDIS_CONFIG = {
-  host: 'localhost',
-  port: 6379
-}
-
-exports.HOST_NAME = 'localhost';

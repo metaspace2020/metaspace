@@ -43,8 +43,7 @@
                 :error="error && error.projectIds"
                 :options="projectOptions"
                 type="selectMulti"
-                name="Projects"
-                required />
+                name="Projects" />
             </el-col>
           </el-form>
         </el-row>

@@ -2,64 +2,164 @@
 
 exports[`ProjectsListPage should match snapshot 1`] = `
 <div class="page">
+  <mock-el-dialog append-to-body="" title="Create project" class="dialog">
+    <div mock-v-loading="1">
+      <form class="el-form el-form--label-top" size="mini">
+        <div>
+          <div class="el-form-item name is-required">
+            <label for="name" class="el-form-item__label">Name</label>
+            <div class="el-form-item__content">
+              <div class="el-input">
+                <!---->
+                <input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
+                <!---->
+                <!---->
+                <!---->
+              </div>
+              <mock-transition name="el-zoom-in-top"></mock-transition>
+            </div>
+          </div>
+          <div class="el-form-item isPublic">
+            <!---->
+            <div class="el-form-item__content">
+              <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                </span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
+              <mock-transition name="el-zoom-in-top"></mock-transition>
+            </div>
+          </div>
+        </div>
+      </form>
+      <div>
+        <h4 style="margin-top: 0px;">
+          Would you like to include any of your previously submitted datasets?
+        </h4>
+        <div>
+          <div class="dataset-checkbox-list">
+            <div>
+              <label role="checkbox" class="el-checkbox is-checked" aria-checked="true"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                </span><span class="el-checkbox__label">
+        allDatasets.0.name
+        <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
+                <!---->
+                </span>
+              </label>
+            </div>
+            <div>
+              <label role="checkbox" class="el-checkbox is-checked" aria-checked="true"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
+                <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
+                </span><span class="el-checkbox__label">
+        allDatasets.1.name
+        <span class="reset-color">(Submitted Invalid Date at Invalid Date)</span>
+                <!---->
+                </span>
+              </label>
+            </div>
+          </div>
+          <div class="select-buttons">
+            <a href="#">Select none</a> <span> | </span>
+            <a href="#">Select all</a>
+          </div>
+        </div>
+      </div>
+      <div class="button-bar">
+        <button type="button" class="el-button el-button--default">
+          <!---->
+          <!----><span>Cancel</span></button>
+        <button type="button" class="el-button el-button--primary">
+          <!---->
+          <!----><span>Create project and include 2 datasets</span></button>
+      </div>
+    </div>
+  </mock-el-dialog>
   <div class="page-content">
     <div class="filter-panel">
       <!---->
     </div>
-    <div class="el-loading-parent--relative">
-      <mock-transition name="el-loading-fade">
-        <div class="el-loading-mask" style="display: none;">
-          <div class="el-loading-spinner">
-            <svg viewBox="25 25 50 50" class="circular">
-              <circle cx="50" cy="50" r="20" fill="none" class="path"></circle>
-            </svg>
-            <!---->
-          </div>
-        </div>
-      </mock-transition>
+    <div class="el-row is-justify-end el-row--flex">
+      <button type="button" class="el-button el-button--default">
+        <!---->
+        <!----><span>Create project</span></button>
+    </div>
+    <div class="clearfix"></div>
+    <div mock-v-loading="false">
       <div class="project-item">
-        <a href="#/project/project%201" class="underlay"></a>
-        <div class="info">
-          <div class="info-line project-name">
-            <a href="#/project/project%201" class="">project one</a>
-          </div>
-          <div class="info-line">
+        <a href="/project/proj-one" class="underlay"></a>
+        <div class="item-body">
+          <div class="info">
+            <div class="info-line project-name">
+              <a href="/project/proj-one" class="">project one</a>
+            </div>
+            <div class="info-line">
+              <!---->
+              1 Members
+            </div>
+            <div class="info-line"><span>
+          Created on <b>2018-08-29</b></span></div>
             <!---->
-            1 Members
           </div>
-          <div class="info-line"><span>
-        Created on <b>2018-08-29</b></span></div>
-          <!---->
+          <div class="actions">
+            <!---->
+            <div>
+              <i class="el-icon-edit"></i>
+              <a href="/project/project%201/edit" class="">Manage project</a>
+            </div>
+            <div class="delete">
+              <i class="el-icon-delete"></i>
+              <a href="#">Delete project</a>
+            </div>
+          </div>
         </div>
         <img src="../../assets/padlock-icon.svg" title="This project is only visible to its members and METASPACE administrators" class="private-icon">
       </div>
       <div class="project-item">
-        <a href="#/project/project%203" class="underlay"></a>
-        <div class="info">
-          <div class="info-line project-name">
-            <a href="#/project/project%203" class="">project three</a>
+        <a href="/project/project%203" class="underlay"></a>
+        <div class="item-body">
+          <div class="info">
+            <div class="info-line project-name">
+              <a href="/project/project%203" class="">project three</a>
+            </div>
+            <div class="info-line"><span><a href="/datasets?prj=project%203" class="">5 Datasets</a>,
+        </span> 10 Members
+            </div>
+            <div class="info-line"><span>
+          Last submission <b>2018-05-15</b></span></div>
+            <!---->
           </div>
-          <div class="info-line"><span><a href="#/datasets?prj=project%203" class="">5 Datasets</a>,
-      </span> 10 Members
+          <div class="actions">
+            <div>
+              <i class="el-icon-picture"></i>
+              <a href="/annotations?db=&amp;prj=project%203" class="">Browse annotations</a>
+            </div>
+            <!---->
+            <!---->
           </div>
-          <div class="info-line"><span>
-        Last submission <b>2018-05-15</b></span></div>
-          <!---->
         </div>
         <!---->
       </div>
       <div class="project-item">
-        <a href="#/project/project%202" class="underlay"></a>
-        <div class="info">
-          <div class="info-line project-name">
-            <a href="#/project/project%202" class="">project two</a>
+        <a href="/project/project%202" class="underlay"></a>
+        <div class="item-body">
+          <div class="info">
+            <div class="info-line project-name">
+              <a href="/project/project%202" class="">project two</a>
+            </div>
+            <div class="info-line"><span><a href="/datasets?prj=project%202" class="">20 Datasets</a>,
+        </span> 20 Members
+            </div>
+            <div class="info-line"><span>
+          Last submission <b>2018-08-01</b></span></div>
+            <!---->
           </div>
-          <div class="info-line"><span><a href="#/datasets?prj=project%202" class="">20 Datasets</a>,
-      </span> 20 Members
+          <div class="actions">
+            <div>
+              <i class="el-icon-picture"></i>
+              <a href="/annotations?db=&amp;prj=project%202" class="">Browse annotations</a>
+            </div>
+            <!---->
+            <!---->
           </div>
-          <div class="info-line"><span>
-        Last submission <b>2018-08-01</b></span></div>
-          <!---->
         </div>
         <!---->
       </div>

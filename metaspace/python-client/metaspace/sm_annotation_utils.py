@@ -1,13 +1,9 @@
 import pandas as pd
 import numpy as np
 
-import requests
-import json
-import re
+import requests, json, re, os, boto3, pprint
 from copy import deepcopy
 from io import BytesIO
-import os
-import boto3
 from PIL import Image
 
 
@@ -18,6 +14,9 @@ def _extract_data(res):
     if 'data' in res_json:
         return res.json()['data']
     else:
+        if (json.loads(res_json['errors'][0]['message'])['type'] == "failed_validation"):
+            pprint.pprint(res_json)
+            raise Exception("Validaton of metadata failed, please check that all fields are correctly entered")
         raise Exception(res.json()['errors'][0]['message'])
 
 
@@ -230,40 +229,33 @@ class GraphQLClient(object):
         variables = {"datasetId": dsid}
         return self.query(query, variables)
 
-    def submitDataset(self, data_path, metadata, priority=0, dsid=None):
+    def createDataset(self, data_path, metadata, priority=0, dsName=None,
+                      isPublic=None, molDBs=None, adducts=None, dsid=None):
         if self.jwt == None:
             raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
         query = """
-                        mutation customSubmitDataset ($jwt: String!, $path: String!, 
-                        $metadata: String!, $priority: Int, $datasetId: String) {
-                              submitDataset(
-                                jwt: $jwt,
-                                path: $path,
-                                metadataJson: $metadata,
-                                priority: $priority,
-                                datasetId: $datasetId
-                              )
-                         }
-                        """
-        queryWithId = """
-                mutation customSubmitDataset ($jwt: String!, $path: String!, 
-                $metadata: String!, $priority: Int, $datasetId: String) {
-                      submitDataset(
-                        jwt: $jwt,
-                        path: $path,
-                        metadataJson: $metadata,
-                        priority: $priority,
-                        datasetId: $datasetId
-                      )
-                 }
+                    mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int) {
+                        createDataset(
+                          id: $id,
+                          input: $input,
+                          priority: $priority
+                        )
+                      }
                 """
+
         variables = {
-            'jwt': self.jwt, 'path': data_path,
-            'metadata': metadata, 'priority': priority}
-        if dsid is not None:
-            variables['datasetId'] = dsid
-            return self.query(queryWithId, variables)
-        print('noid', dsid)
+            'jwt': self.jwt,
+            'id': dsid,
+            'input': {
+                'name': dsName,
+                'inputPath': data_path,
+                'isPublic': isPublic,
+                'molDBs': molDBs,
+                'adducts': adducts,
+                'metadataJson': metadata
+            }
+        }
+
         return self.query(query, variables)
 
     def deleteDataset(self, datasetID, delRaw=False):
@@ -280,6 +272,34 @@ class GraphQLClient(object):
                  }
                 """
         variables = {'jwt': self.jwt, 'datasetId': datasetID, 'delRaw': delRaw}
+        return self.query(query, variables)
+
+    def updateDatabasesQuery(self, ds_id, molDBs, adducts, reprocess=True, priority=1):
+        if self.jwt == None:
+            raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
+
+        query = """
+                mutation updateMetadataDatabases($id: String!, $reprocess: Boolean, 
+                $input: DatasetUpdateInput!, $priority: Int) {
+                        updateDataset(
+                          id: $id,
+                          input: $input,
+                          priority: $priority,
+                          reprocess: $reprocess,
+                          )
+                        }
+                """
+        variables = {
+            'jwt': self.jwt,
+            'id': ds_id,
+            'input': {
+                'molDBs': molDBs,
+                'adducts': adducts,
+            },
+            'priority': priority,
+            'reprocess': reprocess
+        }
+
         return self.query(query, variables)
 
 
@@ -546,6 +566,10 @@ class SMInstance(object):
     def __repr__(self):
         return "SMInstance({})".format(self._config['graphql_url'])
 
+    def assign_jwt(self, jwt):
+        self._config['jwt'] = jwt
+        self.reconnect()
+
     def reconnect(self):
         self._gqclient = GraphQLClient(self._config['graphql_url'], self._config['jwt'])
         self._es_client = None
@@ -734,7 +758,8 @@ class SMInstance(object):
                                             fill_value=fill_values.get(f, 0.0))
         return d
 
-    def submit_dataset(self, imzml_fn, ibd_fn, metadata, dsid=None, folder_uuid = None, s3bucket ='sm-external-export', priority=0):
+    def submit_dataset(self, imzml_fn, ibd_fn, metadata, dsid=None, folder_uuid = None, dsName=None,
+                       isPublic=None, molDBs=None, adducts=None, s3bucket=None, priority=0):
         """
         Submit a dataset for processing on the SM Instance
         :param imzml_fn: file path to imzml
@@ -756,7 +781,10 @@ class SMInstance(object):
             key = "{}/{}".format(folder_uuid, os.path.split(fn)[1])
             s3.upload_file(fn, s3bucket, key)
         folder = "s3a://" + s3bucket + "/" + folder_uuid
-        return self._gqclient.submitDataset(folder, metadata, priority, dsid=dsid)
+        return self._gqclient.createDataset(folder, metadata, priority, dsName, isPublic, molDBs, adducts, dsid=dsid)
+
+    def update_dataset_dbs(self, datasetID, molDBs, adducts, priority):
+        return self._gqclient.updateDatabasesQuery(datasetID, molDBs, adducts, priority)
 
     def delete_dataset(self, dsid, **kwargs):
         return self._gqclient.deleteDataset(dsid, **kwargs)

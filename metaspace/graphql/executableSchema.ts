@@ -1,5 +1,4 @@
 import {
-  addErrorLoggingToSchema,
   addMockFunctionsToSchema,
   makeExecutableSchema,
 } from 'graphql-tools';
@@ -21,8 +20,6 @@ const executableSchema = makeExecutableSchema({
     GroupResolvers
   ]
 });
-
-addErrorLoggingToSchema(executableSchema, logger);
 
 if (config.features.graphqlMocks) {
   // TODO: Remove this when it's no longer needed for demoing

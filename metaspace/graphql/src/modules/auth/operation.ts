@@ -31,10 +31,16 @@ export const initOperation = async (typeormConn?: Connection) => {
 
 // FIXME: some mechanism should be added so that a user's other sessions are revoked when they change their password, etc.
 
-export const findUserById = async (id: string, credentials: boolean=true): Promise<User|undefined> => {
+export const findUserById = async (id: string, credentials: boolean=true,
+                                   groups: boolean=true): Promise<User|undefined> => {
   if (id) {
+    const relations = [];
+    if (credentials)
+      relations.push('credentials');
+    if (groups)
+      relations.push('groups');
     return await userRepo.findOne({
-      relations: credentials ? ['credentials'] : [],
+      relations: relations,
       where: { 'id': id }
     });
   }
@@ -172,7 +178,7 @@ export const sendResetPasswordToken = async (email: string): Promise<void> => {
   else {
     resetPasswordToken = cred.resetPasswordToken;
   }
-  const link = `${config.web_public_url}/#/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetPasswordToken)}`;
+  const link = `${config.web_public_url}/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetPasswordToken)}`;
   emailService.sendResetPasswordEmail(email, link);
   logger.debug(`Sent password reset email to ${email}: ${link}`);
 };

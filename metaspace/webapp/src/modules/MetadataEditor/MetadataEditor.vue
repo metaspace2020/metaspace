@@ -81,6 +81,7 @@
    molDBs: [],
    adducts: [],
    name: '',
+   submitterId: null,
    groupId: null,
    projectIds: []
  };
@@ -130,7 +131,9 @@
        molDBOptions: [],
        possibleAdducts: {},
        metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
-       submitter: null
+       submitter: null,
+       initialValue: null,
+       initialMetaspaceOptions: null,
      }
    },
 
@@ -168,10 +171,11 @@
    methods: {
      async loadDataset() {
        const metaspaceOptionsFromDataset = (dataset) => {
-         const {isPublic, molDBs, adducts, name, group, projects, principalInvestigator} = dataset;
+         const {isPublic, molDBs, adducts, name, group, projects, submitter, principalInvestigator} = dataset;
          return {
+           submitterId: submitter ? submitter.id : null,
            groupId: group ? group.id : null,
-           projectIds: projects.map(p => p.id),
+           projectIds: projects ? projects.map(p => p.id) : [],
            principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
            isPublic, molDBs, adducts, name,
          };
@@ -185,7 +189,10 @@
 
          return {
            metadata: dataset && safeJsonParse(dataset.metadataJson) || {},
-           metaspaceOptions: dataset != null ? metaspaceOptionsFromDataset(dataset) : null,
+           metaspaceOptions: {
+             ...(dataset != null ? metaspaceOptionsFromDataset(dataset) : null),
+             submitterId: data.currentUser.id,
+           },
            submitter: data.currentUser
          }
        } else {
@@ -264,6 +271,8 @@
 
        this.value = metadata;
        this.metaspaceOptions = metaspaceOptions;
+       this.initialValue = cloneDeep(metadata);
+       this.initialMetaspaceOptions = cloneDeep(metaspaceOptions);
        if (dataset.submitter != null) {
          this.submitter = dataset.submitter;
        }
@@ -387,11 +396,12 @@
          return null;
        }
 
-       const value = JSON.stringify(this.value);
        return {
          datasetId: this.datasetId ? this.datasetId: '',
-         metadataJson: value,
-         metaspaceOptions: this.metaspaceOptions
+         metadataJson: JSON.stringify(this.value),
+         metaspaceOptions: this.metaspaceOptions,
+         initialMetadataJson: JSON.stringify(this.initialValue),
+         initialMetaspaceOptions: this.initialMetaspaceOptions,
        }
      },
 

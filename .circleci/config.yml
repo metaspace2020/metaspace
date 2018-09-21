@@ -10,7 +10,7 @@ jobs:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
 
-      - image: node:8
+      - image: node:8.11
 
     working_directory: ~/metaspace/metaspace/graphql
     steps:
@@ -37,7 +37,7 @@ jobs:
 
   generate-graphql-schema:
     docker:
-      - image: node:8
+      - image: node:8.11
 
     working_directory: ~/metaspace/metaspace/graphql
     steps:
@@ -214,7 +214,6 @@ jobs:
           name: Run unit and integration tests
           command: |
             source docker/env.sh
-            pip install -U pip
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests
       - run:
