@@ -13,6 +13,10 @@ Object {
       "mz": 123,
     },
     "Ionisation_Source": "none",
+    "Pixel_Size": Object {
+      "Xaxis": 20,
+      "Yaxis": 20,
+    },
     "Polarity": "Positive",
   },
   "Sample_Information": Object {
@@ -254,8 +258,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
               </div>
               <div class="el-col el-col-17" style="padding-left: 4px; padding-right: 4px;">
                 <div class="el-form-item md-form-field el-form-item--medium">
-                  <label class="el-form-item__label"><span class="field-label"><span>Detector resolving power</span>
-                    <!---->
+                  <label class="el-form-item__label"><span class="field-label"><span>Detector resolving power</span><span style="color: red;">*</span>
                     <!---->
                     </span>
                   </label>
@@ -282,6 +285,45 @@ exports[`MetadataEditor should match snapshot 1`] = `
                               <input required="required" type="text" class="el-input__inner">
                             </div>
                             <div class="subfield-label">resolving power</div>
+                            <!---->
+                            <mock-transition name="el-zoom-in-top"></mock-transition>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                  </div>
+                </div>
+              </div>
+              <div class="el-col el-col-17" style="padding-left: 4px; padding-right: 4px;">
+                <div class="el-form-item md-form-field el-form-item--medium">
+                  <label class="el-form-item__label"><span class="field-label"><span>Pixel size in μm</span><span style="color: red;">*</span>
+                    <!---->
+                    </span>
+                  </label>
+                  <div class="el-form-item__content">
+                    <div class="el-row">
+                      <div class="subfield el-col el-col-12">
+                        <div class="el-form-item is-required el-form-item--medium">
+                          <!---->
+                          <div class="el-form-item__content">
+                            <div class="el-input el-input--medium">
+                              <input required="required" type="text" class="el-input__inner">
+                            </div>
+                            <div class="subfield-label">size on X-axis</div>
+                            <!---->
+                            <mock-transition name="el-zoom-in-top"></mock-transition>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="subfield el-col el-col-12">
+                        <div class="el-form-item is-required el-form-item--medium">
+                          <!---->
+                          <div class="el-form-item__content">
+                            <div class="el-input el-input--medium">
+                              <input required="required" type="text" class="el-input__inner">
+                            </div>
+                            <div class="subfield-label">size on Y-axis</div>
                             <!---->
                             <mock-transition name="el-zoom-in-top"></mock-transition>
                           </div>
