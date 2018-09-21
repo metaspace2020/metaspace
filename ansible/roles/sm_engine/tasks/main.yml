@@ -11,7 +11,7 @@
   args:
     chdir: "{{ sm_home }}"
     executable: /bin/bash
-  shell: "{{ sm_activate_venv }} && pip install ."
+  shell: "{{ sm_activate_venv }} && pip install --process-dependency-links ."
 
 - name: Pull SM config from the remote host
   fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
