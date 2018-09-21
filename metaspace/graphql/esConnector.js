@@ -120,22 +120,30 @@ function constructAnnotationQuery(args, docType, user) {
       query: simpleQuery, fields: ["_all"], default_operator: "and"
    }});
 
-  if (user != null && user.role === 'admin') {
-    // Admin's see everything - don't filter
-  } else if (user != null && user.email) {
-    addFilter({
-      bool: {
-        should: [
-          { term: { ds_is_public: true } },
-          { term: { ds_submitter_email: user.email } }
-        ]
-      }
-    });
-  } else {
+  // (!) Visibility filters
+  if (!user || !user.id) {
+    // not logged in user
     addFilter({ term: { ds_is_public: true } });
   }
+  else if (user.role === 'admin') {
+    // Admins can see everything - don't filter
+  } else if (user.id || user.groupIds) {
+    const filterObj = {
+      bool: {
+        should: [
+          { term: { ds_is_public: true } }]
+      }
+    };
+    if (user.id) {
+      filterObj.bool.should.push({ term: { ds_submitter_id: user.id } });
+    }
+    if (user.groupIds) {
+      filterObj.bool.should.push({ terms: { ds_group_id: user.groupIds } });
+    }
+    addFilter(filterObj);
+  }
 
-  for (var key in datasetFilters) {
+  for (let key in datasetFilters) {
     const val = datasetFilter[key];
     if (val != null && val !== '') {
       const f = datasetFilters[key].esFilter(val);

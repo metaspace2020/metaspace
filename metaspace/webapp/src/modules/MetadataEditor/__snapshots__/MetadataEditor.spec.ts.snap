@@ -51,6 +51,7 @@ Object {
     "dataset.projects.0.id",
     "dataset.projects.1.id",
   ],
+  "submitterId": "123",
 }
 `;
 

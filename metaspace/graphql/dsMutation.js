@@ -7,8 +7,8 @@ const jsondiffpatch = require('jsondiffpatch'),
 
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
   metadataSchema = require('./metadata_schema.json'),
-  {Dataset: DatasetModel} = require('./src/modules/user/model'),
-  {UserGroup: UserGrouModel, UserGroupRoleOptions} = require('./src/modules/group/model');
+  {Dataset: DatasetModel} = require('./src/modules/dataset/model'),
+  {UserGroup: UserGroupModel, UserGroupRoleOptions} = require('./src/modules/group/model');
 
 const ajv = new Ajv({allErrors: true});
 const validator = ajv.compile(metadataSchema);
@@ -96,7 +96,7 @@ function processingSettingsChanged(ds, update) {
   return {newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff}
 }
 
-async function smAPIRequest(datasetId, uri, body) {
+async function smAPIRequest(uri, body) {
   const url = `http://${config.services.sm_engine_api_host}${uri}`;
   let rawResp = await fetch(url, {
     method: 'POST',
@@ -108,16 +108,18 @@ async function smAPIRequest(datasetId, uri, body) {
 
   const resp = await rawResp.json();
   if (!rawResp.ok) {
-    if (resp.status == 'dataset_busy')
+    if (resp.status === 'dataset_busy') {
       throw new UserError(JSON.stringify({
         'type': 'dataset_busy',
         'hint': `Dataset is busy. Try again later.`
       }));
-    else
+    }
+    else {
       throw new UserError(`smAPIRequest: ${JSON.stringify(resp)}`);
+    }
   }
   else {
-    logger.info(`Successful ${uri}: ${datasetId}`);
+    logger.info(`Successful ${uri}`);
     logger.debug(`Body: ${JSON.stringify(body)}`);
     return resp;
   }
@@ -141,32 +143,32 @@ const hasEditAccess = async (connection, user, dsId) => {
       throw new UserError('Access denied');
   }
   else {
-    throw new UserError(`DS id not privided`);
+    throw new UserError(`DS id not provided`);
   }
 };
 
 const isMemberOf = async (connection, user, groupId) => {
-  const userGroup = await connection.getRepository(UserGrouModel).find({
+  const userGroup = await connection.getRepository(UserGroupModel).findOne({
     userId: user.id,
     groupId
   });
-  if (![UserGroupRoleOptions.MEMBER,
-    UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(userGroup.role))
-    throw new UserError(`User ${user.id} is not a member of ${groupId} group`);
+  return (!userGroup || ![UserGroupRoleOptions.MEMBER,
+    UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(userGroup.role));
 };
 
-const saveDS = async (connection, dsId, input) => {
-  if (input.submitterId || input.groupId) {
+const saveDS = async (connection, dsId, submitterId, groupId, approved) => {
+  if (submitterId || groupId) {
     const dsUpdate = {
       id: dsId,
-      userId: input.submitterId,
-      groupId: input.groupId
+      userId: submitterId,
+      groupId: groupId,
+      groupApproved: approved,
     };
     await connection.getRepository(DatasetModel).save(dsUpdate);
   }
 };
 
-const smAPIdsUpdate = (update) => {
+const toSMAPIparam = (obj) => {
   const smapiFieldMap = {
     name: 'name',
     inputPath: 'input_path',
@@ -176,9 +178,9 @@ const smAPIdsUpdate = (update) => {
     submitterId: 'submitter_id',
     groupId: 'group_id',
     adducts: 'adducts',
-    moldDBs: 'mol_dbs'
+    molDBs: 'mol_dbs'
   };
-  let smAPIUpdate = _.pickBy(update, (v,k) => Object.keys(smapiFieldMap).includes(k));
+  let smAPIUpdate = _.pickBy(obj, (v,k) => Object.keys(smapiFieldMap).includes(k));
   smAPIUpdate = _.mapKeys(smAPIUpdate, (v,k) => smapiFieldMap[k]);
   return smAPIUpdate;
 };
@@ -189,32 +191,30 @@ module.exports = {
   Mutation: {
     create: async (args, {user, connection}) => {
       const {input, priority} = args;
-      let dsId = args.id;
+      let {id: dsId} = args;
       if (!user)
         throw new UserError(`Not authenticated`);
 
+      let approved = false;
       if (input.groupId)
-        await isMemberOf(connection, user, groupId);
+        approved = await isMemberOf(connection, user, input.groupId);
 
       try {
         input.metadata = JSON.parse(input.metadataJson);
         validateMetadata(input.metadata);
         await molDBsExist(input.molDBs);
 
-        const body = {
-          input: smAPIdsUpdate(input),
+        const url = dsId ? `/v1/datasets/${dsId}/add` : '/v1/datasets/add';
+        const resp = await smAPIRequest(url, {
+          doc: toSMAPIparam(input),
           priority: priority,
           email: user.email,
-        };
-        if (dsId)
-          body.input.id = dsId;
-
+        });
         // TODO: generate dsId here and save it before calling SM API
-        const resp = await smAPIRequest(dsId, '/v1/datasets/add', body);
         dsId = resp['ds_id'];
 
-        await saveDS(connection, dsId, input);
-        return JSON.stringify({ dsId });
+        await saveDS(connection, dsId, input.submitterId, input.groupId, approved);
+        return JSON.stringify({ dsId, status: 'success' });
       } catch (e) {
         logger.error(e.stack);
         throw e;
@@ -225,8 +225,6 @@ module.exports = {
       const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
       try {
         await hasEditAccess(connection, user, dsId);
-        if (update.groupId)
-          await isMemberOf(connection, user, update.groupId);
 
         if (update.metadataJson !== undefined) {
           update.metadata = JSON.parse(update.metadataJson);
@@ -239,16 +237,19 @@ module.exports = {
 
         //TODO: handle principalInvestigator update
 
-        const body = {
-          id: dsId,
-          update: smAPIdsUpdate(update),
-          priority: priority,
-          force: force,
-        };
+        let approved = false;
+        if (update.groupId)
+          approved = await isMemberOf(connection, user, update.groupId);
 
         if (reprocess) {
-          body.del_first = procSettingsUpd || delFirst;  // delete old results if processing settings changed
-          return await smAPIRequest(dsId, '/v1/datasets/add', body);
+          await saveDS(connection, dsId, update.submitterId, update.groupId, approved);
+          return await smAPIRequest(`/v1/datasets/${dsId}/add`, {
+            id: dsId,
+            doc: toSMAPIparam({...engineDS, ...update}),
+            del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
+            priority: priority,
+            force: force,
+          });
         }
         else {
           if (reprocessingNeeded) {
@@ -258,8 +259,13 @@ module.exports = {
             }));
           }
           else {
-            await saveDS(connection, dsId, update);
-            const resp = await smAPIRequest(dsId, `/v1/datasets/${dsId}/update`, body);
+            await saveDS(connection, dsId, update.submitterId, update.groupId, approved);
+            const resp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
+              id: dsId,
+              doc: toSMAPIparam(update),
+              priority: priority,
+              force: force,
+            });
             return JSON.stringify(resp);
           }
         }
@@ -276,13 +282,15 @@ module.exports = {
         await hasEditAccess(connection, user, dsId);
 
         try {
-          await smAPIRequest(id, `/v1/datasets/${id}/del-optical-image`, {});
+          await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
         }
         catch (err) {
           logger.warn(err);
         }
 
-        return await smAPIRequest(id, `/v1/datasets/${id}/delete`, {});
+        await connection.getRepository(DatasetModel).delete(dsId);
+        const resp = await smAPIRequest(`/v1/datasets/${dsId}/delete`, {});
+        return JSON.stringify(resp);
       } catch (e) {
         logger.error(e.stack);
         throw e;
@@ -307,7 +315,7 @@ module.exports = {
       try {
         const uri = `/v1/datasets/${dsId}/add-optical-image`;
         const body = {url: imageUrl, transform};
-        return await smAPIRequest(dsId, uri, body);
+        return await smAPIRequest(uri, body);
       } catch (e) {
         logger.error(e.message);
         throw e;
@@ -317,7 +325,7 @@ module.exports = {
     deleteOpticalImage: async (args, {user, connection}) => {
       const {datasetId: dsId} = args;
       await hasEditAccess(connection, user, dsId);
-      return await smAPIRequest(dsId, `/v1/datasets/${dsId}/del-optical-image`, {});
+      return await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
     }
   }
 };

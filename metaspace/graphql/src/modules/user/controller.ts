@@ -2,7 +2,8 @@ import {UserError} from "graphql-errors";
 import {Like} from 'typeorm';
 
 import {UpdateUserInput, User} from '../../binding';
-import {User as UserModel, Dataset as DatasetModel} from './model';
+import {User as UserModel} from './model';
+import {Dataset as DatasetModel} from '../dataset/model';
 import {Credentials as CredentialsModel} from '../auth/model';
 import {UserGroup as UserGroupModel, Group as GroupModel} from '../group/model';
 

@@ -64,18 +64,21 @@ async function createHttpServerAsync(config) {
 
   const apollo = new ApolloServer({
     schema: executableSchema,
-    context: ({req}) => {
-      return {
+    context: ({req}) => ({
         user: req.user != null ? req.user.user : null,
         connection
-      };
-    },
+    }),
     playground: {
       settings: {
         'editor.theme': 'light',
         'editor.cursorShape': 'line',
       }
     },
+    formatError: error => {
+      const {message, extensions, source} = error;
+      logger.error(extensions.exception, source);
+      return error;
+    }
   });
   apollo.applyMiddleware({ app });
 

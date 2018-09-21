@@ -15,6 +15,7 @@ import {
   initOperation,
   findUserByEmail, findUserByGoogleId, findUserById
 } from './operation';
+import {allGroupsQuery} from '../../../../webapp/src/api/dataManagement';
 
 const getUserFromRequest = (req: Request): User | null => {
   const user = (req as any).cookieUser;
@@ -37,7 +38,7 @@ const configurePassport = (router: IRouter<any>) => {
   Passport.serializeUser<User, string>(callbackify( async (user: User) => user.id));
 
   Passport.deserializeUser<User | false, string>(callbackify(async (id: string) => {
-    return await findUserById(id, false) || false;
+    return await findUserById(id, false, true) || false;
   }));
 
   router.post('/signout', preventCache, (req, res) => {
@@ -50,9 +51,16 @@ const configurePassport = (router: IRouter<any>) => {
   });
 };
 
-export interface JwtUser extends User {
+export interface JwtUser {
+  id?: string,
+  email?: string,
+  groupIds?: string[], // used in esConnector for ES visibility filters
+  role: 'admin' | 'user' | 'anonymous',
+}
+
+export interface JwtPayload {
   iss: string,
-  user?: User,
+  user?: JwtUser,
   sub?: string,
   iat?: number,
   exp?: number
@@ -62,21 +70,26 @@ const configureJwt = (router: IRouter<any>) => {
   function mintJWT(user: User | null, expSeconds: number | null = 60) {
     const nowSeconds = Math.floor(Date.now() / 1000);
     let payload;
-    if (user != null) {
-      const {id, name, email, role} = user;
+    if (user) {
+      const {id, email, role, groups} = user;
       payload = {
         iss: 'METASPACE2020',
-        user: {id, name, email, role},
+        user: {
+          id, email, role,
+          groupIds: groups ? groups.map(g => g.groupId) : null
+        },
         iat: nowSeconds,
         exp: expSeconds == null ? undefined : nowSeconds + expSeconds,
       };
     } else {
       payload = {
         iss: 'METASPACE2020',
-        role: 'anonymous',
+        user: {
+          role: 'anonymous',
+        }
       };
     }
-    return JwtSimple.encode(payload as JwtUser, config.jwt.secret);
+    return JwtSimple.encode(payload as JwtPayload, config.jwt.secret);
   }
 
   // Gives a one-time token, which expires in 60 seconds.

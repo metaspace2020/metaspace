@@ -22,6 +22,7 @@
 <script>
  import MetadataEditor from './MetadataEditor.vue';
  import {updateDatasetQuery} from '../../api/metadata';
+ import {isArray, isEqual} from 'lodash-es';
 
  export default {
    name: 'metadata-edit-page',
@@ -52,13 +53,27 @@
        const formValue = this.$refs.editor.getFormValueForSubmit();
 
        if (formValue != null) {
-         const { datasetId, metadataJson, metaspaceOptions } = formValue;
+         const { datasetId, metadataJson, metaspaceOptions, initialMetadataJson, initialMetaspaceOptions } = formValue;
          // Prevent duplicate submissions if user double-clicks
          if (this.isSubmitting) return;
          this.isSubmitting = true;
 
+         const payload = {};
+         // Only include changed fields in payload
+         if (metadataJson !== initialMetadataJson) {
+           payload.metadataJson = metadataJson;
+         }
+         Object.keys(metaspaceOptions).forEach(key => {
+           const oldVal = initialMetaspaceOptions[key];
+           const newVal = metaspaceOptions[key];
+           // For arrays (molDBs, adducts, projectIds) ignore changes in order
+           if (isArray(oldVal) && isArray(newVal) ? !isEqual(oldVal.slice().sort(), newVal.slice().sort()) : !isEqual(oldVal, newVal)) {
+             payload[key] = newVal;
+           }
+         });
+
          try {
-           const wasSaved = await this.saveDataset(datasetId, metadataJson, metaspaceOptions);
+           const wasSaved = await this.saveDataset(datasetId, payload);
 
            if (wasSaved) {
              this.validationErrors = [];
@@ -78,10 +93,10 @@
          }
        }
      },
-     async saveDataset(datasetId, metadataJson, metaspaceOptions) {
+     async saveDataset(datasetId, payload) {
        // TODO Lachlan: This is similar to the logic in UploadPage.vue. Refactor this when these components are in JSX
        try {
-         await this.updateOrReprocess(datasetId, metadataJson, metaspaceOptions, false);
+         await this.updateOrReprocess(datasetId, payload, false);
          return true;
        } catch (err) {
          let graphQLError = null;
@@ -89,10 +104,9 @@
            graphQLError = JSON.parse(err.graphQLErrors[0].message);
          } catch(err2) { /* The case where err does not contain a graphQL error is handled below */ }
 
-         if (graphQLError
-           && (graphQLError['type'] === 'reprocessing_needed')) {
+         if (graphQLError && (graphQLError['type'] === 'reprocessing_needed')) {
            if (await this.confirmReprocess()) {
-             return await this.updateOrReprocess(datasetId, metadataJson, metaspaceOptions, true);
+             return await this.updateOrReprocess(datasetId, payload, true);
            }
          } else if (graphQLError && graphQLError.type === 'wrong_moldb_name') {
            this.$refs.editor.resetMetaboliteDatabase();
@@ -140,27 +154,13 @@
        }
      },
 
-     async updateOrReprocess(datasetId, metadataJson, metaspaceOptions, reprocess) {
+     async updateOrReprocess(datasetId, payload, reprocess) {
        return await this.$apollo.mutate({
          mutation: updateDatasetQuery,
          variables: {
            id: datasetId,
-           input: {
-             metadataJson: metadataJson,
-             ...metaspaceOptions
-           },
+           input: payload,
            reprocess: reprocess
-         },
-         updateQueries: {
-           fetchMetadataQuery: (prev, _) => {
-             const {groupId, ...options} = metaspaceOptions;
-             return {
-               ...prev,
-               metadataJson,
-               group: groupId ? {id: groupId} : null,
-               ...options
-             }
-           }
          }
        });
      }
