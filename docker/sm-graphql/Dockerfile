@@ -19,7 +19,7 @@ WORKDIR /opt/metaspace/metaspace/graphql
 RUN mv /opt/pkgcache/node_modules .
 RUN yarn install
 
-RUN node deref_schema.js > metadata_schema.json
+RUN node deref_schema.js ./metadataSchemas/
 
 COPY docker-entrypoint.sh /
 

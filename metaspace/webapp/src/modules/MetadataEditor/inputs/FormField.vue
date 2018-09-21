@@ -98,6 +98,15 @@
       v-bind="$attrs"
     />
 
+    <pixel-size-input
+      v-else-if="type === 'pixelSize'"
+      @input="onInput"
+      :value="value"
+      :error="typeof error !== 'string' ? error : null"
+      :required="required"
+      v-bind="$attrs"
+    />
+
     <div v-else style="color: red">Unrecognized form field type: {{type}}</div>
 
   </el-form-item>
@@ -109,6 +118,7 @@
   import TableInput from './TableInput.vue';
   import PersonInput from './PersonInput.vue';
   import DetectorResolvingPowerInput from './DetectorResolvingPowerInput.vue';
+  import PixelSizeInput from './PixelSizeInput.vue';
   import { Component, Prop } from 'vue-property-decorator';
   import { FetchSuggestions, FetchSuggestionsCallback } from 'element-ui/types/autocomplete';
 
@@ -118,6 +128,7 @@
       TableInput,
       PersonInput,
       DetectorResolvingPowerInput,
+      PixelSizeInput
     }
   })
   export default class FormField extends Vue {
@@ -165,7 +176,7 @@
 
 <style lang="scss">
   .md-form-field {
-    padding: 0 5px 10px 5px;
+    padding: 5px 5px 8px 5px;
     margin-bottom: 0;
 
     .el-form-item__content {
@@ -173,7 +184,7 @@
     }
 
     .el-form-item__error {
-      position: static;
+      position: absolute;
     }
 
     > .el-form-item__label {

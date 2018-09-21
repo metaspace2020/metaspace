@@ -14,7 +14,8 @@ const {createImgServerAsync} = require('./imageUpload.js'),
   {User, Dataset} = require('./src/modules/user/model'),
   {logger, initDBConnection} = require('./utils'),
   {createConnection} = require('./src/utils'),
-  {executableSchema} = require('./executableSchema');
+  {executableSchema} = require('./executableSchema'),
+  derefSchema = require('./deref_schema.js');
 
 // subscriptions setup
 const http = require('http'),
