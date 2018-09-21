@@ -5,3 +5,5 @@ build/
 tmp/
 temp/
 src/binding.ts
+metadataSchemas/*.json
+metadataSchemas/metadataMapping.js
