@@ -48,7 +48,7 @@
           </div>
 
           <div class="el-upload__tip" slot="tip">
-            JPEG file less than {{ 50 }}MB in size
+            JPEG file less than {{ limitMB }}MB in size
           </div>
         </div>
 
@@ -151,7 +151,7 @@
    props: {
      limitMB: {
        type: Number,
-       default: 25
+       default: 50
      },
      // service for storing raw optical images
      rawImageStorageUrl: {
