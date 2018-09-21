@@ -292,24 +292,24 @@ class ESExporter(object):
         if fields:
             ds_doc = self._select_ds_by_id(ds_id)
 
-            es_ds_doc = {}
+            ds_doc_upd = {}
             for f in fields:
                 if f == 'submitter_id':
-                    es_ds_doc['ds_submitter_id'] = ds_doc['submitter_id']
-                    es_ds_doc['ds_submitter_name'] = ds_doc['submitter_name']
-                    es_ds_doc['ds_submitter_email'] = ds_doc['submitter_email']
+                    ds_doc_upd['ds_submitter_id'] = ds_doc['ds_submitter_id']
+                    ds_doc_upd['ds_submitter_name'] = ds_doc['ds_submitter_name']
+                    ds_doc_upd['ds_submitter_email'] = ds_doc['ds_submitter_email']
                 elif f == 'group_id':
-                    es_ds_doc['ds_group_id'] = ds_doc['group_id']
-                    es_ds_doc['ds_group_name'] = ds_doc['group_name']
-                    es_ds_doc['ds_group_short_name'] = ds_doc['group_short_name']
+                    ds_doc_upd['ds_group_id'] = ds_doc['ds_group_id']
+                    ds_doc_upd['ds_group_name'] = ds_doc['ds_group_name']
+                    ds_doc_upd['ds_group_short_name'] = ds_doc['ds_group_short_name']
                 elif f == 'metadata':
                     ds_meta_flat_doc = flatten_doc(ds_doc['ds_meta'], parent_key='ds_meta')
-                    es_ds_doc.update(ds_meta_flat_doc)
+                    ds_doc_upd.update(ds_meta_flat_doc)
                 else:
-                    es_ds_doc[f'ds_{f}'] = ds_doc[f'ds_{f}']
+                    ds_doc_upd[f'ds_{f}'] = ds_doc[f'ds_{f}']
 
             processors = []
-            for k, v in es_ds_doc.items():
+            for k, v in ds_doc_upd.items():
                 processors.append({'set': {'field': k, 'value': v}})
             self._ingest.put_pipeline(
                 id=pipeline_id,
