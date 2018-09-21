@@ -35,7 +35,7 @@ server {
     }
     location /fs/raw_optical_images/ {
         proxy_pass http://sm-graphql:4201/fs/raw_optical_images/;
-        client_max_body_size 25M;
+        client_max_body_size 50M;
     }
     location /graphql {
         proxy_pass http://sm-graphql:3010/graphql;

@@ -62,7 +62,7 @@ nginx_servers:
       - path: /raw_optical_images/
         params:
           - proxy_pass http://isotope_image_server/raw_optical_images/;
-          - client_max_body_size 25M;
+          - client_max_body_size 50M;
       - path: /graphql
         params:
           - proxy_pass http://graphql_server/graphql;
