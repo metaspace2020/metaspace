@@ -55,13 +55,12 @@ function esSort(orderBy, sortingOrder) {
     return [{'ds_name': order}];
 }
 
-// consider renaming the function as it handles not only annotations but datasets as well
-function constructAnnotationQuery(args, docType, user) {
-  const { orderBy, sortingOrder, offset, limit, filter, datasetFilter, simpleQuery } = args;
+function constructESQuery(args, docType, user) {
+  const { orderBy, sortingOrder, offset, limit, filter: annotationFilter, datasetFilter, simpleQuery } = args;
   const { database, datasetName, mzFilter, msmScoreFilter,
-    fdrLevel, sumFormula, adduct, compoundQuery } = filter;
+    fdrLevel, sumFormula, adduct, compoundQuery } = annotationFilter;
 
-  var body = {
+  let body = {
     query: {
       bool: {
         filter: []
@@ -162,7 +161,7 @@ module.exports.esSearchResults = async function(args, docType, user) {
     return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
 
-  const body = constructAnnotationQuery(args, docType, user);
+  const body = constructESQuery(args, docType, user);
   const request = {
     body,
     index: esIndex,
@@ -176,7 +175,7 @@ module.exports.esSearchResults = async function(args, docType, user) {
 };
 
 module.exports.esCountResults = async function(args, docType, user) {
-  const body = constructAnnotationQuery(args, docType, user);
+  const body = constructESQuery(args, docType, user);
   const request = { body, index: esIndex };
   const resp = await es.count(request);
   return resp.count;
@@ -242,7 +241,7 @@ function flattenAggResponse(fields, aggs, idx) {
 }
 
 module.exports.esCountGroupedResults = function(args, docType, user) {
-  const q = constructAnnotationQuery(args, docType, user);
+  const q = constructESQuery(args, docType, user);
 
   if (args.groupingFields.length == 0) {
     // handle case of no grouping for convenience

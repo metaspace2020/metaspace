@@ -1,13 +1,16 @@
 import {UserError} from "graphql-errors";
-import {Like} from 'typeorm';
+import {FindManyOptions, Like, In} from 'typeorm';
 
-import {UpdateUserInput, User} from '../../binding';
+import {User} from '../../binding';
 import {User as UserModel} from './model';
 import {Dataset as DatasetModel} from '../dataset/model';
 import {Credentials as CredentialsModel} from '../auth/model';
-import {UserGroup as UserGroupModel, Group as GroupModel} from '../group/model';
+import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../group/model';
+import {Context, Scope, ScopeRole, ScopeRoleOptions as SRO} from '../../context';
+import {JwtUser} from '../auth/controller';
+import {LooselyCompatible} from '../../utils';
 
-const hasAccess = (user: UserModel, userId?: string) => {
+const hasAccess = (user: JwtUser, userId?: string) => {
   if (!user)
     throw new UserError('Access denied');
 
@@ -21,50 +24,98 @@ const hasAccess = (user: UserModel, userId?: string) => {
   }
 };
 
+const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<ScopeRole> => {
+  let scopeRole = SRO.OTHER;
+  if (ctx.user.role === 'admin') {
+    scopeRole = SRO.ADMIN;
+  }
+  else {
+    if (userId) {
+      if (userId === ctx.user.id) {
+        scopeRole = SRO.PROFILE_OWNER;
+      }
+    }
+  }
+  return scopeRole;
+};
+
 export const Resolvers = {
   User: {
-    async primaryGroup(user: UserModel, _: any, {connection}: any): Promise<UserGroupModel|null> {
-      return await connection.getRepository(UserGroupModel).findOne({
-        where: { userId: user.id, primary: true },
-        relations: ['group']
-      }) || null;
+    async primaryGroup({scopeRole, ...user}: UserModel & Scope, _: any,
+                       ctx: Context): Promise<UserGroupModel|null> {
+      if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
+        return await ctx.connection.getRepository(UserGroupModel).findOne({
+          where: { userId: user.id, primary: true },
+          relations: ['group']
+        }) || null
+      }
+      return null;
     },
 
-    async groups(user: UserModel, _: any, {connection}: any): Promise<UserGroupModel[]> {
-      return await connection.getRepository(UserGroupModel).find({
-        where: { userId: user.id },
-        relations: ['group']
-      });
+    async groups({scopeRole, ...user}: UserModel & Scope, _: any, ctx: Context): Promise<UserGroupModel[]|null> {
+      if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
+        return await ctx.connection.getRepository(UserGroupModel).find({
+          where: { userId: user.id },
+          relations: ['group']
+        });
+      }
+      return null;
+    },
+
+    async email({scopeRole, ...user}: UserModel & Scope): Promise<string|null> {
+      if ([SRO.GROUP_MANAGER,
+        SRO.ADMIN,
+        SRO.PROFILE_OWNER].includes(scopeRole)) {
+        return user.email;
+      }
+      return null;
     }
   },
 
   Query: {
-    async user(_: any, {userId}: any, {user, connection}: any): Promise<User|null> {
-      await hasAccess(user, userId);
-
-      if (userId) {
-        return await connection.getRepository(UserModel).findOneOrFail({
-          where: { 'id': userId }
-        });
+    async user(_: any, {userId}: any, ctx: Context): Promise<User & Scope|null> {
+      const scopeRole = await resolveUserScopeRole(ctx, userId);
+      if ([SRO.PROFILE_OWNER, SRO.ADMIN].includes(scopeRole)) {
+        const user = await ctx.connection.getRepository(UserModel).findOneOrFail({
+          select: ['id', 'name', 'email', 'role'],
+          where: { id: userId }
+        }) as User;
+        return {
+          ...user,
+          scopeRole
+        };
       }
       return null;
     },
 
-    async currentUser(_: any, {}: any, {user, connection}: any): Promise<User|null> {
-      if (user) {
-        return await connection.getRepository(UserModel).findOneOrFail({
-          where: { 'id': user.id }
-        });
+    async currentUser(_: any, {}: any, ctx: Context): Promise<User & Scope|null> {
+      const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
+      if ([SRO.PROFILE_OWNER, SRO.ADMIN].includes(scopeRole)) {
+        const user = await ctx.connection.getRepository(UserModel).findOneOrFail({
+          select: ['id', 'name', 'email', 'role'],
+          where: { id: ctx.user.id }
+        }) as User;
+        return {
+          ...user,
+          scopeRole
+        };
       }
       return null;
     },
 
-    async allUsers(_: any, {query}: any, {user, connection}: any): Promise<User[]> {
-      hasAccess(user);
-
-      return await connection.getRepository(UserModel).find({
-        where: { name: Like(`%${query}%`) }
-      });
+    async allUsers(_: any, {query}: any, ctx: Context): Promise<LooselyCompatible<User & Scope>[]|null> {
+      const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
+      if ([SRO.ADMIN].includes(scopeRole)) {
+        const users = await ctx.connection.getRepository(UserModel).find({
+          select: ['id', 'name', 'email', 'role'],
+          where: {name: Like(`%${query}%`)}
+        }) as User[];
+        return users.map(u => ({
+          ...u,
+          scopeRole
+        }));
+      }
+      return null;
     }
   },
 

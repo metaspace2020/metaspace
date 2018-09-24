@@ -19,6 +19,8 @@ import {
 import {Mutation as DSMutation} from './dsMutation';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from './src/modules/group/model';
 import {User as UserModel} from './src/modules/user/model';
+import {Dataset as DatasetModel} from './src/modules/dataset/model';
+import {Context, ScopeRole, ScopeRoleOptions as SRO} from './src/context';
 
 
 async function publishDatasetStatusUpdate(ds_id, status) {
@@ -95,6 +97,33 @@ function baseDatasetQuery() {
   });
 }
 
+const resolveDatasetScopeRole = async (ctx, dsId) => {
+  let scopeRole = SRO.OTHER;
+  if (ctx.user) {
+    if (ctx.user.role === 'admin') {
+      scopeRole = SRO.ADMIN;
+    }
+    else {
+      if (dsId) {
+        const ds = await ctx.connection.getRepository(DatasetModel).findOne({
+          where: { id: dsId }
+        });
+        if (ds) {
+          const userGroup = await ctx.connection.getRepository(UserGroupModel).findOne({
+            where: { userId: ctx.user.id, groupId: ds.groupId }
+          });
+          if (userGroup) {
+            if (userGroup.role === UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR)
+              scopeRole = SRO.GROUP_MANAGER;
+            else if (userGroup.role === UserGroupRoleOptions.MEMBER)
+              scopeRole = SRO.GROUP_MEMBER;
+          }
+        }
+      }
+    }
+  }
+  return scopeRole;
+};
 
 const Resolvers = {
   // Person: {
@@ -105,8 +134,22 @@ const Resolvers = {
   // },
 
   Query: {
-    async dataset(_, { id }, {user}) {
-      return await esDatasetByID(id, user);
+    async dataset (_, { id }, ctx) {
+      const scopeRole = await resolveDatasetScopeRole(ctx, id);
+      if ([SRO.ADMIN, SRO.GROUP_MANAGER, SRO.GROUP_MEMBER].includes(scopeRole)) {
+        const args = {
+          filter: {},
+          datasetFilter: { ids: id }
+        };
+        const datasets = await esSearchResults(args, 'dataset', ctx.user);
+        if (datasets) {
+          return {
+            ...datasets[0],
+            scopeRole
+          };
+        }
+      }
+      return null;
     },
 
     async allDatasets(_, args, {user}) {
@@ -353,11 +396,12 @@ const Resolvers = {
     maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
     metadataType(ds) { return dsField(ds, 'metadataType'); },
 
-    submitter(ds) {
+    submitter({scopeRole, ...ds}) {
       return {
         id: ds._source.ds_submitter_id,
         name: ds._source.ds_submitter_name,
         email: ds._source.ds_submitter_email,
+        scopeRole
       };
     },
 
