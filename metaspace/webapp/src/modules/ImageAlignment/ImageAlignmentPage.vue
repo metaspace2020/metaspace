@@ -151,7 +151,7 @@
    props: {
      limitMB: {
        type: Number,
-       default: 25
+       default: 50
      },
      // service for storing raw optical images
      rawImageStorageUrl: {
