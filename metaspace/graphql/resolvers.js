@@ -290,32 +290,17 @@ const Resolvers = {
       return DSQuery.reprocessingNeeded(args, user);
     },
 
-    currentUser(_, args, {user}) {
-      if (user == null || user.name == null) {
-        return null;
-      }
-      return {
-        id: user.name.replace(/ /, '|||'), // TODO: Have actual user IDs
-        name: user.name,
-        role: user.role,
-        email: user.email || null,
-      }
-    },
-
     async currentUserLastSubmittedDataset(_, args, {user}) {
-      if (user == null || user.name == null) {
-        return null;
+      const results = await esSearchResults({
+        orderBy: 'ORDER_BY_DATE',
+        sortingOrder: 'DESCENDING',
+        limit: 1,
+      }, 'dataset', user);
+      if (results) {
+        const lastDS = results[0];
+        return lastDS;
       }
-      const lastDataset = await db('dataset')
-        .whereRaw("metadata#>>'{Submitted_By,Submitter,Email}' = ?", [user.email])
-        .orderBy('upload_dt', 'desc')
-        .select('id')
-        .first();
-      if (lastDataset != null) {
-        return await esDatasetByID(lastDataset.id, user);
-      } else {
-        return null;
-      }
+      return null;
     }
   },
 

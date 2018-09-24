@@ -6,8 +6,8 @@ const jsondiffpatch = require('jsondiffpatch'),
   _ = require('lodash');
 
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
-  {Dataset: DatasetModel} = require('./src/modules/user/model'),
-  {UserGroup: UserGrouModel, UserGroupRoleOptions} = require('./src/modules/group/model'),
+  {Dataset: DatasetModel} = require('./src/modules/dataset/model'),
+  {UserGroup: UserGroupModel, UserGroupRoleOptions} = require('./src/modules/group/model'),
   metadataMapping = require('./metadataSchemas/metadataMapping').default;
 
 function isEmpty(obj) {
@@ -154,8 +154,12 @@ const isMemberOf = async (connection, user, groupId) => {
     userId: user.id,
     groupId
   });
-  return (!userGroup || ![UserGroupRoleOptions.MEMBER,
-    UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(userGroup.role));
+  let isMember = false;
+  if (userGroup) {
+    isMember = [UserGroupRoleOptions.MEMBER,
+      UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(userGroup.role);
+  }
+  return isMember;
 };
 
 const saveDS = async (connection, dsId, submitterId, groupId, approved) => {

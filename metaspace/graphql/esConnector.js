@@ -56,7 +56,7 @@ function esSort(orderBy, sortingOrder) {
 }
 
 function constructESQuery(args, docType, user) {
-  const { orderBy, sortingOrder, offset, limit, filter: annotationFilter, datasetFilter, simpleQuery } = args;
+  const { orderBy, sortingOrder, offset, limit, filter: annotationFilter={}, datasetFilter, simpleQuery } = args;
   const { database, datasetName, mzFilter, msmScoreFilter,
     fdrLevel, sumFormula, adduct, compoundQuery, annId } = annotationFilter;
 
@@ -273,18 +273,15 @@ module.exports.esCountGroupedResults = function(args, docType, user) {
     });
 }
 
-async function getById(args, docType, user) {
+async function getFirst(args, docType, user) {
   const docs = await esSearchResults(args, docType, user);
   return docs ? docs[0] : null;
 }
 
 module.exports.esAnnotationByID = async function(id, user) {
-  return getById({ filter: { annId: id } }, 'annotation', user);
+  return getFirst({ filter: { annId: id } }, 'annotation', user);
 };
 
 module.exports.esDatasetByID = async function(id, user) {
-  return getById({
-    filter: {},
-    datasetFilter: { ids: id }
-  }, 'dataset', user);
+  return getFirst({ datasetFilter: { ids: id } }, 'dataset', user);
 };
