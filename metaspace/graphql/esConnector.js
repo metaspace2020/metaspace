@@ -58,7 +58,7 @@ function esSort(orderBy, sortingOrder) {
 function constructESQuery(args, docType, user) {
   const { orderBy, sortingOrder, offset, limit, filter: annotationFilter, datasetFilter, simpleQuery } = args;
   const { database, datasetName, mzFilter, msmScoreFilter,
-    fdrLevel, sumFormula, adduct, compoundQuery } = annotationFilter;
+    fdrLevel, sumFormula, adduct, compoundQuery, annId } = annotationFilter;
 
   let body = {
     query: {
@@ -70,6 +70,9 @@ function constructESQuery(args, docType, user) {
 
   if (orderBy)
     body.sort = esSort(orderBy, sortingOrder);
+
+  if (annId)
+    addFilter({ term: { _id: annId } });
 
   if (database) {
     addFilter({term: {db_name: database}});
@@ -142,21 +145,19 @@ function constructESQuery(args, docType, user) {
     addFilter(filterObj);
   }
 
-  for (let key in datasetFilters) {
-    const val = datasetFilter[key];
-    if (val != null && val !== '') {
-      const f = datasetFilters[key].esFilter(val);
-      if (Array.isArray(f))
-        for (let x of f)
-          addFilter(x);
-      else
+  if (datasetFilter) {
+    for (let key of Object.keys(datasetFilter)) {
+      const val = datasetFilter[key];
+      if (val) {
+        const f = datasetFilters[key].esFilter(val);
         addFilter(f);
+      }
     }
   }
   return body;
 }
 
-module.exports.esSearchResults = async function(args, docType, user) {
+const esSearchResults = async function(args, docType, user) {
   if (args.limit > ES_LIMIT_MAX) {
     return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
@@ -173,6 +174,8 @@ module.exports.esSearchResults = async function(args, docType, user) {
   const resp = await es.search(request);
   return resp.hits.hits;
 };
+
+module.exports.esSearchResults = esSearchResults;
 
 module.exports.esCountResults = async function(args, docType, user) {
   const body = constructESQuery(args, docType, user);
@@ -270,21 +273,18 @@ module.exports.esCountGroupedResults = function(args, docType, user) {
     });
 }
 
-async function getById(docType, id, user, ignorePermissions=false) {
-  const resp = await es.get({ index: esIndex, type: docType, id, ignore: [404] });
-  if (!resp.found) {
-    return null;
-  } else if (ignorePermissions || canUserViewEsDataset(resp, user)) {
-    return resp;
-  } else {
-    throw new Error(`Unauthorized: user ${user.email} tried to access ${docType} ${id}`)
-  }
+async function getById(args, docType, user) {
+  const docs = await esSearchResults(args, docType, user);
+  return docs ? docs[0] : null;
 }
 
-module.exports.esAnnotationByID = function(id, user, ignorePermissions=false) {
-  return getById('annotation', id, user, ignorePermissions);
+module.exports.esAnnotationByID = async function(id, user) {
+  return getById({ filter: { annId: id } }, 'annotation', user);
 };
 
-module.exports.esDatasetByID = function(id, user, ignorePermissions=false) {
-  return getById('dataset', id, user, ignorePermissions);
+module.exports.esDatasetByID = async function(id, user) {
+  return getById({
+    filter: {},
+    datasetFilter: { ids: id }
+  }, 'dataset', user);
 };

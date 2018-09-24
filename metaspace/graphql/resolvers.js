@@ -126,30 +126,12 @@ const resolveDatasetScopeRole = async (ctx, dsId) => {
 };
 
 const Resolvers = {
-  // Person: {
-  //   // FIXME: Using id = name here until we have actual IDs
-  //   id(obj) { return [obj.First_Name, obj.Surname].join('|||'); },
-  //   name(obj) { return [obj.First_Name, obj.Surname].filter(n => n).join(' '); },
-  //   email(obj) { return obj.Email; }
-  // },
-
   Query: {
-    async dataset (_, { id }, ctx) {
+    async dataset(_, { id }, ctx) {
+      // TODO: decide whether to support field level access here
       const scopeRole = await resolveDatasetScopeRole(ctx, id);
-      if ([SRO.ADMIN, SRO.GROUP_MANAGER, SRO.GROUP_MEMBER].includes(scopeRole)) {
-        const args = {
-          filter: {},
-          datasetFilter: { ids: id }
-        };
-        const datasets = await esSearchResults(args, 'dataset', ctx.user);
-        if (datasets) {
-          return {
-            ...datasets[0],
-            scopeRole
-          };
-        }
-      }
-      return null;
+      const ds = await esDatasetByID(id, ctx.user);
+      return ds ? { ...ds, scopeRole }: null;
     },
 
     async allDatasets(_, args, {user}) {
@@ -187,6 +169,7 @@ const Resolvers = {
     },
 
     metadataSuggestions(_, { field, query, limit }, {user}) {
+      // TODO: add authorisation
       let f = new SubstringMatchFilter(field, {}),
           q = db.from(pgDatasetsViewableByUser(user))
                 .select(db.raw(f.pgField + " as field"))
@@ -252,8 +235,8 @@ const Resolvers = {
     },
 
     opticalImageUrl(_, {datasetId, zoom}, {user}) {
+      // TODO: authorisation
       const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
-      assertUserCanViewDataset(datasetId, user);
 
       return db.select().from('optical_image')
           .where('ds_id', '=', datasetId)
