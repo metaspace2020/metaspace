@@ -1,25 +1,40 @@
 <template>
   <el-row>
-    <el-tree :data="treeData"
+    <el-tree :data="getTreeData()"
              id="metadata-tree"
              node-key="id"
-             :default-expanded-keys="defaultExpandedKeys">
+             default-expand-all>
     </el-tree>
   </el-row>
 </template>
 
 <script>
   import { defaultMetadataType, metadataSchemas } from '../assets/metadataRegistry';
-  import {get} from 'lodash-es';
+  import { groupsProjectsQuery } from '../../src/api/dataset';
+  import { get } from 'lodash-es';
 
  export default {
    name: 'dataset-info',
-   props: ['metadata', 'expandedKeys'],
+   props: ['metadata'],
    data() {
-     return {
-       defaultExpandedKeys: this.expandedKeys
-     }
+     	return {
+	      dsGroup: this.$store.state.annotation.dataset.group,
+        dsSubmitter: this.$store.state.annotation.dataset.submitter,
+	      dsProjects: this.$store.state.annotation.dataset.projects
+      }
    },
+	 apollo: {
+		 groupsProjects: {
+			 query: groupsProjectsQuery,
+			 skip: true,
+			 variables() {
+				 return {datasetId: this.$store.state.annotation.dataset.id}
+			 },
+			 update(data) {
+			 	 // console.log('Call')
+       }
+		 }
+	 },
    computed: {
      schema() {
        const metadataType = get(this.metadata, 'Metadata_Type')
@@ -27,12 +42,13 @@
          || defaultMetadataType;
        return metadataSchemas[metadataType];
      },
-     treeData() {
-       return this.objToTreeNode(null, this.metadata, this.schema);
-     }
-   },
-   methods: {
 
+	   isSignedIn() {
+		   return this.$store.state.authenticated;
+	   }
+   },
+
+   methods: {
      prettify(str) {
        return str.toString()
                  .replace(/_/g, ' ')
@@ -66,7 +82,23 @@
          return { id, label: `${label}: ${Array.isArray(obj) ? JSON.stringify(obj) : this.prettify(obj)}` };
 
        return { id, label, children };
-     }
+     },
+
+	   getTreeData() {
+		   let schemaBasedVals = this.objToTreeNode(null, this.metadata, this.schema);
+		   let groupName = this.dsGroup.name;
+		   let submitterName = this.dsSubmitter.name;
+		   let allProjects = this.dsProjects.map(e => e.name).join(', ');
+		   let dataManagementChilds = [
+         { id: "Submitter", label: `Submitter: ${submitterName}`},
+			   { id: "Group", label: `Group: ${groupName}` }
+       ];
+		   if (this.isSignedIn) {
+		   	 dataManagementChilds.push({ id: "Projects", label: `Projects: ${allProjects}` })
+       }
+		   schemaBasedVals.push({id: "Data Management", label: "Data Management", children: dataManagementChilds})
+		   return schemaBasedVals
+	   }
    }
  }
 </script>

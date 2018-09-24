@@ -19,6 +19,9 @@ export const annotationListQuery =
         dataset {
           id
           institution
+          submitter { id name }
+          group { id name }
+          projects { id name }
           name
           polarity
           metadataJson
