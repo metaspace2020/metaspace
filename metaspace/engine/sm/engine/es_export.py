@@ -283,7 +283,7 @@ class ESExporter(object):
 
         for success, info in parallel_bulk(self._es, actions=to_index, timeout='60s'):
             if not success:
-                print('Document failed: ', info)
+                logger.error(f'Document failed: {info}')
 
         for i, level in enumerate(fdr_levels[1:]):
             annotation_counts[level] += annotation_counts[fdr_levels[i]]
