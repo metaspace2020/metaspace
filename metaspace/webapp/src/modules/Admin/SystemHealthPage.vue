@@ -35,7 +35,7 @@
     computed: {
       isAdmin() {
         const {user} = this.$store.state;
-        return user && user.role === 'admin' || false;
+        return user && user.role === 'admin' || false; // TODO: Get current user role from GraphQL after merge into master
       }
     },
     apollo: {
