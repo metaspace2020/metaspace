@@ -141,6 +141,7 @@
  import {renderMolFormula, prettifySign} from '../util';
 
  import gql from 'graphql-tag';
+ import reportError from '../lib/reportError';
 
  export default {
    name: 'image-alignment-page',
@@ -319,11 +320,7 @@
            });
            this.$router.go(-1);
          }).catch((e) => {
-           this.$message({
-             type: 'error',
-             message: 'Internal server error'
-           });
-           throw e;
+           reportError(e);
          });
          return;
        }
@@ -344,11 +341,7 @@
              });
              this.$router.go(-1);
            }).catch((e) => {
-             this.$message({
-               type: 'error',
-               message: 'Internal server error'
-             });
-             throw e;
+             reportError(e);
            });
          } else if (xhr.readyState == 4) {
            this.$message({
@@ -404,11 +397,7 @@
            this.destroyOptImage();
          }
        } catch(e) {
-         this.$message({
-           type: 'error',
-           message: "Couldn't delete optical image due to an error"
-         });
-         throw e;
+         reportError(e);
        }
      },
 
