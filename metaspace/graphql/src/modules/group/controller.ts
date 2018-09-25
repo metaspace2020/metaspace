@@ -41,9 +41,10 @@ const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<Sc
 export const Resolvers = {
   UserGroup: {
     async numDatasets(userGroup: UserGroupModel, _: any, {connection}: any) {
-      return await connection.getRepository(DatasetModel).count({
-        where: {userId: userGroup.userId}
+      const num = await connection.getRepository(DatasetModel).count({
+        where: {userId: userGroup.user.id}
       });
+      return num || 0;
     }
   },
 
@@ -58,8 +59,8 @@ export const Resolvers = {
       return userGroup ? userGroup.role : null;
     },
 
-    async members(parent: GroupModel & Scope, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup & Scope>[]|null> {
-      const {scopeRole, ...group} = parent;
+    async members({scopeRole, ...group}: GroupModel & Scope,
+                  _: any, ctx: Context): Promise<LooselyCompatible<UserGroup & Scope>[]|null> {
       if (!scopeRole || ![ScopeRoleOptions.GROUP_MEMBER,
         ScopeRoleOptions.GROUP_MANAGER,
         ScopeRoleOptions.ADMIN].includes(scopeRole)) {
@@ -68,7 +69,7 @@ export const Resolvers = {
 
       const userGroupModels = await ctx.connection.getRepository(UserGroupModel).find({
         where: { groupId: group.id },
-        relations: ['user']
+        relations: ['user', 'group']
       });
       const userGroups = userGroupModels.map(ug => ({
         user: ug.user,

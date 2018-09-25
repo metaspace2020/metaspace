@@ -560,7 +560,7 @@ const Resolvers = {
 
   Mutation: {
     // for dev purposes only, not a part of the public API
-    reprocessDataset: async (_, args, {user}) => {
+    reprocessDataset: async (_, args, ctx) => {
       const {id, delFirst, priority} = args;
       const ds = await fetchEngineDS({id});
       if (ds === undefined)
@@ -568,7 +568,7 @@ const Resolvers = {
       return DSMutation.create({
         id: id, input: ds, reprocess: true,
         delFirst: delFirst, priority: priority
-      }, user);
+      }, ctx);
     },
 
     createDataset: (_, args, context) => {

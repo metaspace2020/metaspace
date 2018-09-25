@@ -191,15 +191,20 @@ const toSMAPIparam = (obj) => {
   return smAPIUpdate;
 };
 
+const isAuth = (user) => {
+  if (!user)
+    throw new UserError(`Not authenticated`);
+};
+
 module.exports = {
   processingSettingsChanged,
 
   Mutation: {
     create: async (args, {user, connection}) => {
+      isAuth(user);
+
       const {input, priority} = args;
       let {id: dsId} = args;
-      if (!user)
-        throw new UserError(`Not authenticated`);
 
       let approved = false;
       if (input.groupId)
@@ -228,6 +233,8 @@ module.exports = {
     },
 
     update: async (args, {user, connection}) => {
+      isAuth(user);
+
       const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
       try {
         await hasEditAccess(connection, user, dsId);
@@ -282,6 +289,8 @@ module.exports = {
     },
 
     delete: async (args, {user, connection}) => {
+      isAuth(user);
+
       const {id: dsId, priority} = args;
 
       try {

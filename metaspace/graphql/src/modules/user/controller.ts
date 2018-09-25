@@ -46,7 +46,7 @@ export const Resolvers = {
       if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return await ctx.connection.getRepository(UserGroupModel).findOne({
           where: { userId: user.id, primary: true },
-          relations: ['group']
+          relations: ['group', 'user']
         }) || null
       }
       return null;
@@ -56,7 +56,7 @@ export const Resolvers = {
       if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return await ctx.connection.getRepository(UserGroupModel).find({
           where: { userId: user.id },
-          relations: ['group']
+          relations: ['group', 'user']
         });
       }
       return null;
