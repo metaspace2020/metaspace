@@ -11,6 +11,8 @@
 <script>
  import MetadataEditor from './MetadataEditor/MetadataEditor.vue';
  import {updateDatasetQuery} from '../api/metadata';
+ import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../api/system';
+ import { get } from 'lodash-es';
 
  export default {
    name: 'metadata-edit-page',
@@ -18,6 +20,12 @@
      return {
        validationErrors: [],
        isSubmitting: false
+     }
+   },
+   apollo: {
+     systemHealth: {
+       query: getSystemHealthQuery,
+       subscribeToMore: getSystemHealthSubscribeToMore
      }
    },
    computed: {
@@ -70,9 +78,16 @@
            graphQLError = JSON.parse(err.graphQLErrors[0].message);
          } catch(err2) { /* The case where err does not contain a graphQL error is handled below */ }
 
-         if (graphQLError
-           && (graphQLError['type'] === 'reprocessing_needed')) {
-           if (await this.confirmReprocess()) {
+         if (get(err, 'graphQLErrors[0].isHandled')) {
+           return false;
+         } else if (graphQLError && (graphQLError['type'] === 'reprocessing_needed')) {
+           if (this.systemHealth && (!this.systemHealth.canProcessDatasets || !this.systemHealth.canMutate)) {
+             this.$alert(`Changes to the analysis options require that this dataset be reprocessed; however,
+               dataset processing has been temporarily suspended so that we can safely update the website.\n\n
+               Please wait a few hours and try again.`,
+               'Dataset processing suspended',
+               {type: 'warning'})
+           } else if (await this.confirmReprocess()) {
              return await this.updateOrReprocess(datasetId, metadataJson, metaspaceOptions, true);
            }
          } else if (graphQLError && graphQLError.type === 'wrong_moldb_name') {
@@ -90,7 +105,7 @@
            });
          } else {
            this.$message({
-             message: 'There was an unexpected problem submitting the dataset. Please refresh the page and try again.'
+             message: 'There was an unexpected problem submitting the dataset. Please refresh the page and try again. '
              + 'If this problem persists, please contact us at '
              + '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
              dangerouslyUseHTMLString: true,

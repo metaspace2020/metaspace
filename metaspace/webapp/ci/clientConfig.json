@@ -3,7 +3,6 @@
   "wsGraphqlUrl": "ws://localhost:5666/graphql",
 
   "google_client_id": "clientid",
-  "enableUploads": true,
 
   "fineUploader": {
     "aws": {

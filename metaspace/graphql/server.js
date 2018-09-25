@@ -10,7 +10,8 @@ const bodyParser = require('body-parser'),
   makeExecutableSchema = require('graphql-tools').makeExecutableSchema,
   {maskErrors} = require('graphql-errors'),
   {promisify} = require('util'),
-  readFile = promisify(require("fs").readFile);
+  readFile = promisify(require("fs").readFile),
+  {preventMutationsIfReadOnly} = require('./src/modules/system/controller');
 
 const {createImgServerAsync} = require('./imageUpload.js'),
   {configureAuth, initSchema} = require('./src/modules/auth'),
@@ -57,7 +58,10 @@ function createHttpServerAsync(config) {
     .then((contents) => {
       const schema = makeExecutableSchema({
         typeDefs: contents,
-        resolvers: Resolvers,
+        resolvers: {
+          ...Resolvers,
+          Mutation: preventMutationsIfReadOnly(Resolvers.Mutation),
+        },
         logger
       });
 

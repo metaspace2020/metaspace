@@ -65,6 +65,8 @@
  import * as config from '../clientConfig.json';
  import {pathFromUUID} from '../util';
  import {createDatasetQuery} from '../api/dataset';
+ import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../api/system';
+ import get from 'lodash-es/get';
 
  const DataTypeConfig = {
    'LC-MS': {
@@ -105,6 +107,12 @@
 
  export default {
    name: 'upload-page',
+   apollo: {
+     systemHealth: {
+       query: getSystemHealthQuery,
+       subscribeToMore: getSystemHealthSubscribeToMore
+     }
+   },
    created() {
      this.$store.commit('updateFilter', this.$store.getters.filter);
    },
@@ -117,7 +125,6 @@
      return {
        fineUploaderConfig: config.fineUploader,
        introIsHidden: true,
-       enableUploads: config.enableUploads,
        validationErrors: [],
        isSubmitting: false,
        uploadedUuid: null,
@@ -136,6 +143,9 @@
      },
      isSignedIn() {
        return this.$store.state.authenticated;
+     },
+     enableUploads() {
+       return !this.systemHealth || (this.systemHealth.canMutate && this.systemHealth.canProcessDatasets);
      }
    },
 
@@ -201,7 +211,9 @@
            graphQLError = JSON.parse(err.graphQLErrors[0].message);
          } catch(err2) { /* The case where err does not contain a graphQL error is handled below */ }
 
-         if (graphQLError && graphQLError.type === 'failed_validation') {
+         if (get(err, 'graphQLErrors[0].isHandled')) {
+           return false;
+         } else if (graphQLError && graphQLError.type === 'failed_validation') {
            this.validationErrors = graphQLError['validation_errors'];
            this.$message({
              message: 'Please fix the highlighted fields and submit again',
@@ -216,7 +228,7 @@
            });
          } else {
            this.$message({
-             message: 'There was an unexpected problem submitting the dataset. Please refresh the page and try again.'
+             message: 'There was an unexpected problem submitting the dataset. Please refresh the page and try again. '
                + 'If this problem persists, please contact us at '
                + '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
              dangerouslyUseHTMLString: true,
