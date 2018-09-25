@@ -108,6 +108,7 @@
    showOpticalImage: boolean = true
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserIdResult | null = null
+   expandedKeys: string[] = []
 
    metadataDependentComponent(category: string): any {
      const currentMdType: string = this.$store.getters.filter.metadataType;
@@ -220,5 +221,10 @@
 
    loadVisibility() {
      this.$apollo.queries.datasetVisibility.start();
+   }
+
+   updateExpandedKeys(val: string[]) {
+     this.expandedKeys = val;
+     console.log('this.expandedKeys ', this.expandedKeys)
    }
  }

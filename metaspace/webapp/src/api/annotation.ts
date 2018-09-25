@@ -20,6 +20,7 @@ export const annotationListQuery =
           id
           institution
           submitter { id name }
+          principalInvestigator { name }
           group { id name }
           projects { id name }
           name

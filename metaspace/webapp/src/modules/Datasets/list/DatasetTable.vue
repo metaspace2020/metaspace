@@ -97,12 +97,15 @@
            datasetStatusUpdated {
              dataset {
                id
+               institution
                name
                status
-               submitter {
-                 name
-               }
+               submitter { id name }
+               principalInvestigator { name }
+               group { id name }
+               projects { id name }
                institution
+               isPublic
              }
            }
          }`,
