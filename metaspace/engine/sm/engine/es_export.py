@@ -1,5 +1,5 @@
 from elasticsearch import Elasticsearch, NotFoundError, ElasticsearchException
-from elasticsearch.helpers import bulk, BulkIndexError
+from elasticsearch.helpers import parallel_bulk
 from elasticsearch.client import IndicesClient, IngestClient
 import logging
 from collections import defaultdict, MutableMapping
@@ -193,6 +193,7 @@ class ESExporter(object):
         self._ingest = IngestClient(self._es)
         self._db = db
         self.index = es_config['index']
+        self._get_mol_by_sf_dict_cache = dict()
 
     def _remove_mol_db_from_dataset(self, ds_id, mol_db):
         dataset = self._es.get_source(self.index, id=ds_id, doc_type='dataset')
@@ -217,12 +218,20 @@ class ESExporter(object):
             self._es.index(index=self.index, id=ds_id,
                            doc_type='dataset', body=ds, params={'refresh': 'wait_for'})
 
-    def _get_mol_by_sf_df(self, mol_db):
-        by_sf = mol_db.get_molecules().groupby('sf')
-        mol_by_sf_df = pd.concat([by_sf.apply(lambda df: df.mol_id.values),
-                                  by_sf.apply(lambda df: df.mol_name.values)], axis=1)
-        mol_by_sf_df.columns = ['mol_ids', 'mol_names']
-        return mol_by_sf_df
+    def _get_mol_by_sf_dict(self, mol_db):
+        try:
+            return self._get_mol_by_sf_dict_cache[mol_db.id]
+        except KeyError:
+            mols = mol_db.get_molecules()
+            by_sf = mols.groupby('sf')
+            # limit IDs and names to 50 each to prevent ES 413 Request Entity Too Large error
+            mol_by_sf_df = pd.concat([by_sf.apply(lambda df: df.mol_id.values[:50].tolist()),
+                                      by_sf.apply(lambda df: df.mol_name.values[:50].tolist())], axis=1)
+            mol_by_sf_df.columns = ['mol_ids', 'mol_names']
+            mol_by_sf_dict = mol_by_sf_df.apply(lambda row: (row.mol_ids, row.mol_names), axis=1).to_dict()
+
+            self._get_mol_by_sf_dict_cache[mol_db.id] = mol_by_sf_dict
+            return mol_by_sf_dict
 
     def _add_ds_fields_to_ann(self, ann_doc, ds_doc):
         for f in ds_doc:
@@ -247,15 +256,14 @@ class ESExporter(object):
 
         n = 100
         to_index = []
-        mol_by_sf_df = self._get_mol_by_sf_df(mol_db)
+        mol_by_sf = self._get_mol_by_sf_dict(mol_db)
         for doc in annotation_docs:
             self._add_ds_fields_to_ann(doc, ds_doc)
             doc['db_name'] = mol_db.name
             doc['db_version'] = mol_db.version
             sf = doc['sf']
-            doc['comp_ids'] = mol_by_sf_df.mol_ids.loc[sf][:50].tolist()  # to prevent ES 413 Request Entity Too Large error
-            doc['comp_names'] = mol_by_sf_df.mol_names.loc[sf][:50].tolist()
-            mzs, _ = isocalc.ion_centroids(doc['sf'], doc['adduct'])
+            doc['comp_ids'], doc['comp_names'] = mol_by_sf[sf]
+            mzs, _ = isocalc.ion_centroids(sf, doc['adduct'])
             doc['centroid_mzs'] = list(mzs)
             doc['mz'] = mzs[0]
             doc['ion_add_pol'] = '[M{}]{}'.format(doc['adduct'], doc['polarity'])
@@ -273,11 +281,9 @@ class ESExporter(object):
                 '_source': doc
             })
 
-            if len(to_index) >= n:
-                bulk(self._es, actions=to_index, timeout='60s')
-                to_index = []
-
-        bulk(self._es, actions=to_index, timeout='60s')
+        for success, info in parallel_bulk(self._es, actions=to_index, timeout='60s'):
+            if not success:
+                print('Document failed: ', info)
 
         for i, level in enumerate(fdr_levels[1:]):
             annotation_counts[level] += annotation_counts[fdr_levels[i]]
