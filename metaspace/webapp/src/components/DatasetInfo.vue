@@ -12,28 +12,28 @@
 </template>
 
 <script>
-  import { defaultMetadataType, metadataSchemas } from '../assets/metadataRegistry';
-  import { get } from 'lodash-es';
+ import {defaultMetadataType, metadataSchemas} from '../assets/metadataRegistry';
+ import {get} from 'lodash-es';
 
  export default {
    name: 'dataset-info',
    props: ['metadata', 'expandedKeys'],
    data() {
-     	return {
-	      schemaBasedVals: {},
-	      expandAll: false,
-	      expandedTreeNodes: [] || this.expandedKeys,
-	      dsGroup: this.$store.state.annotation.dataset.group,
-        dsSubmitter: this.$store.state.annotation.dataset.submitter,
-	      dsProjects: this.$store.state.annotation.dataset.projects,
-        dsPI: this.$store.state.annotation.dataset.principalInvestigator
-      }
+     return {
+       schemaBasedVals: {},
+       expandAll: false,
+       expandedTreeNodes: [] || this.expandedKeys,
+       dsGroup: this.$store.state.annotation.dataset.group,
+       dsSubmitter: this.$store.state.annotation.dataset.submitter,
+       dsProjects: this.$store.state.annotation.dataset.projects,
+       dsPI: this.$store.state.annotation.dataset.principalInvestigator
+     }
    },
 
    mounted() {
      if (Array.isArray(this.expandedTreeNodes) && !this.expandedTreeNodes.length) {
-	     this.expandAll = true;
-	     this.schemaBasedVals.forEach(node => this.getChildsWOLeafs(node, this.expandedTreeNodes));
+       this.expandAll = true;
+       this.schemaBasedVals.forEach(node => this.getChildsWOLeafs(node, this.expandedTreeNodes));
      }
    },
 
@@ -45,35 +45,35 @@
        return metadataSchemas[metadataType];
      },
 
-	   getTreeData() {
-		   this.schemaBasedVals = this.objToTreeNode(null, this.metadata, this.schema);
-		   let allProjects = this.dsProjects.map(e => e.name).join(', ');
-		   let dataManagementChilds = [
-			   { id: "Submitter", label: `Submitter: ${this.dsSubmitter.name}`},
-			   { id: "Principal Investigator", label: `Principal Investigator: ${this.dsPI.name}`},
-			   { id: "Group", label: `Group: ${this.dsGroup.name}` }
-		   ];
-		   if (this.isSignedIn) {
-			   dataManagementChilds.push({ id: "Projects", label: `Projects: ${allProjects}` })
-		   }
-		   this.schemaBasedVals.push({id: "Data Management", label: "Data Management", children: dataManagementChilds});
-		   return this.schemaBasedVals;
-	   }
+     getTreeData() {
+       this.schemaBasedVals = this.objToTreeNode(null, this.metadata, this.schema);
+       let allProjects = this.dsProjects.map(e => e.name).join(', ');
+       let dataManagementChilds = [
+         {id: "Submitter", label: `Submitter: ${this.dsSubmitter.name}`},
+         {id: "Principal Investigator", label: `Principal Investigator: ${this.dsPI.name}`},
+         {id: "Group", label: `Group: ${this.dsGroup.name}`}
+       ];
+       if (this.isSignedIn) {
+         dataManagementChilds.push({id: "Projects", label: `Projects: ${allProjects}`})
+       }
+       this.schemaBasedVals.push({id: "Data Management", label: "Data Management", children: dataManagementChilds});
+       return this.schemaBasedVals;
+     }
    },
 
    methods: {
-	   getChildsWOLeafs(node, arrToCollect) {
-		   if (Array.isArray(node.children) && node.children.length) {
-			   arrToCollect.push(node.id);
-			   node.children.forEach(child => {
-				   this.getChildsWOLeafs(child, arrToCollect);
-			   })
-		   } else {
-			   return false;
-		   }
-	   },
+     getChildsWOLeafs(node, arrToCollect) {
+       if (Array.isArray(node.children) && node.children.length) {
+         arrToCollect.push(node.id);
+         node.children.forEach(child => {
+           this.getChildsWOLeafs(child, arrToCollect);
+         })
+       } else {
+         return false;
+       }
+     },
 
-	   handleNodeCollapse(node) {
+     handleNodeCollapse(node) {
        let childs = [];
        this.getChildsWOLeafs(node, childs)
        for (let child of childs) {
@@ -82,21 +82,21 @@
            this.expandedTreeNodes.splice(nodeId, 1);
          }
        }
-		   this.$emit('event', this.expandedTreeNodes)
+       this.$emit('event', this.expandedTreeNodes)
      },
 
-	   handleNodeExpand(node) {
+     handleNodeExpand(node) {
        this.expandedTreeNodes.push(node.id);
-		   this.$emit('event', this.expandedTreeNodes)
-	   },
+       this.$emit('event', this.expandedTreeNodes)
+     },
 
      prettify(str) {
        return str.toString()
-                 .replace(/_/g, ' ')
-                 .replace(/ [A-Z][a-z]/g, (x) => ' ' + x.slice(1).toLowerCase())
-                 .replace(/ freetext$/, '')
-                 .replace(/ table$/, '')
-                 .replace('metaspace', 'METASPACE');
+         .replace(/_/g, ' ')
+         .replace(/ [A-Z][a-z]/g, (x) => ' ' + x.slice(1).toLowerCase())
+         .replace(/ freetext$/, '')
+         .replace(/ table$/, '')
+         .replace('metaspace', 'METASPACE');
      },
 
      objToTreeNode(label, obj, schema) {
@@ -120,14 +120,14 @@
        label = this.prettify(label);
        const id = label;
        if (isLeaf)
-         return { id, label: `${label}: ${Array.isArray(obj) ? JSON.stringify(obj) : this.prettify(obj)}` };
+         return {id, label: `${label}: ${Array.isArray(obj) ? JSON.stringify(obj) : this.prettify(obj)}`};
 
-       return { id, label, children };
+       return {id, label, children};
      },
 
-	   isSignedIn() {
-		   return this.$store.state.authenticated;
-	   }
+     isSignedIn() {
+       return this.$store.state.authenticated;
+     }
    }
  }
 </script>
