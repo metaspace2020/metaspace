@@ -291,14 +291,17 @@ const Resolvers = {
     },
 
     async currentUserLastSubmittedDataset(_, args, {user}) {
-      const results = await esSearchResults({
-        orderBy: 'ORDER_BY_DATE',
-        sortingOrder: 'DESCENDING',
-        limit: 1,
-      }, 'dataset', user);
-      if (results) {
-        const lastDS = results[0];
-        return lastDS;
+      if (user) {
+        const results = await esSearchResults({
+          orderBy: 'ORDER_BY_DATE',
+          sortingOrder: 'DESCENDING',
+          submitter: user.id,
+          limit: 1,
+        }, 'dataset', user);
+        if (results) {
+          const lastDS = results[0];
+          return lastDS;
+        }
       }
       return null;
     }
