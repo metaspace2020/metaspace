@@ -68,16 +68,6 @@ function constructESQuery(args, docType, user) {
     }
   };
 
-  if (orderBy)
-    body.sort = esSort(orderBy, sortingOrder);
-
-  if (annId)
-    addFilter({ term: { _id: annId } });
-
-  if (database) {
-    addFilter({term: {db_name: database}});
-  }
-
   function addFilter(filter) {
     body.query.bool.filter.push(filter);
   }
@@ -89,6 +79,39 @@ function constructESQuery(args, docType, user) {
       lt: interval.max
     };
     addFilter(filter);
+  }
+
+  // (!) Authorisation checks
+  if (!user || !user.id) {
+    // not logged in user
+    addFilter({ term: { ds_is_public: true } });
+  }
+  else if (user.role === 'admin') {
+    // Admins can see everything - don't filter
+  } else if (user.id || user.groupIds) {
+    const filterObj = {
+      bool: {
+        should: [
+          { term: { ds_is_public: true } }]
+      }
+    };
+    if (user.id) {
+      filterObj.bool.should.push({ term: { ds_submitter_id: user.id } });
+    }
+    if (user.groupIds) {
+      filterObj.bool.should.push({ terms: { ds_group_id: user.groupIds } });
+    }
+    addFilter(filterObj);
+  }
+
+  if (orderBy)
+    body.sort = esSort(orderBy, sortingOrder);
+
+  if (annId)
+    addFilter({ term: { _id: annId } });
+
+  if (database) {
+    addFilter({term: {db_name: database}});
   }
 
   addFilter({term: {_type: docType}});
@@ -121,29 +144,6 @@ function constructESQuery(args, docType, user) {
     addFilter({simple_query_string: {
       query: simpleQuery, fields: ["_all"], default_operator: "and"
    }});
-
-  // (!) Visibility filters
-  if (!user || !user.id) {
-    // not logged in user
-    addFilter({ term: { ds_is_public: true } });
-  }
-  else if (user.role === 'admin') {
-    // Admins can see everything - don't filter
-  } else if (user.id || user.groupIds) {
-    const filterObj = {
-      bool: {
-        should: [
-          { term: { ds_is_public: true } }]
-      }
-    };
-    if (user.id) {
-      filterObj.bool.should.push({ term: { ds_submitter_id: user.id } });
-    }
-    if (user.groupIds) {
-      filterObj.bool.should.push({ terms: { ds_group_id: user.groupIds } });
-    }
-    addFilter(filterObj);
-  }
 
   if (datasetFilter) {
     for (let key of Object.keys(datasetFilter)) {
@@ -246,7 +246,7 @@ function flattenAggResponse(fields, aggs, idx) {
 module.exports.esCountGroupedResults = function(args, docType, user) {
   const q = constructESQuery(args, docType, user);
 
-  if (args.groupingFields.length == 0) {
+  if (args.groupingFields.length === 0) {
     // handle case of no grouping for convenience
     logger.info(q);
     const request = { body: q, index: esIndex };
@@ -271,7 +271,7 @@ module.exports.esCountGroupedResults = function(args, docType, user) {
       logger.error(e);
       return e.message;
     });
-}
+};
 
 async function getFirst(args, docType, user) {
   const docs = await esSearchResults(args, docType, user);

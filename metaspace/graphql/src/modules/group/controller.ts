@@ -41,10 +41,9 @@ const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<Sc
 export const Resolvers = {
   UserGroup: {
     async numDatasets(userGroup: UserGroupModel, _: any, {connection}: any) {
-      const num = await connection.getRepository(DatasetModel).count({
+      return await connection.getRepository(DatasetModel).count({
         where: {userId: userGroup.user.id}
       });
-      return num || 0;
     }
   },
 
@@ -71,12 +70,7 @@ export const Resolvers = {
         where: { groupId: group.id },
         relations: ['user', 'group']
       });
-      const userGroups = userGroupModels.map(ug => ({
-        user: ug.user,
-        group: ug.group,
-        role: ug.role
-      }));
-      return userGroups.map(ug => ({
+      return userGroupModels.map(ug => ({
         user: {...ug.user, scopeRole},
         group: ug.group,
         role: ug.role
