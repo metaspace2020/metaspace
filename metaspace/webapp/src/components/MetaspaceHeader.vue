@@ -1,92 +1,98 @@
 <template>
-  <div class="b-header">
-    <div>
-      <div class="header-item" id="metasp-logo">
-        <router-link to="/" style="display: flex">
-          <img src="../assets/logo.png"
-              alt="Metaspace" title="Metaspace"
-              style="border: 0px;"
-              class="vc"></img>
+  <div>
+    <div :class="healthMessage ? 'spacerWithAlert' : 'spacer'" />
+    <div class="b-header">
+      <div>
+        <div class="header-item" id="metasp-logo">
+          <router-link to="/" style="display: flex">
+            <img src="../assets/logo.png"
+                alt="Metaspace" title="Metaspace"
+                style="border: 0px;"
+                class="vc"></img>
+          </router-link>
+        </div>
+
+        <router-link :to="uploadHref">
+          <div class="header-item vc page-link" id='upload-link'>
+            <div class="vc">Upload</div>
+          </div>
+        </router-link>
+
+        <router-link :to="datasetsHref">
+          <div class="header-item vc page-link" id='datasets-link'>
+            <div class="vc">Datasets</div>
+          </div>
+        </router-link>
+
+        <router-link :to="annotationsHref">
+          <div class="header-item vc page-link" id='annotations-link'>
+            <div class="vc">Annotations</div>
+          </div>
+        </router-link>
+
+        <router-link to="/about">
+          <div class="header-item vc page-link">
+            <div class="vc">About</div>
+          </div>
+        </router-link>
+
+        <router-link to="/help">
+          <div class="header-item vc page-link">
+            <div class="vc">Help</div>
+          </div>
         </router-link>
       </div>
 
-      <router-link :to="uploadHref">
-        <div class="header-item vc page-link" id='upload-link'>
-          <div class="vc">Upload</div>
-        </div>
-      </router-link>
+      <div v-if="!this.$store.state.authenticated">
+        <div v-if="features.newAuth">
+          <div class="header-item vc page-link" @click="showCreateAccount">
+            <div class="vc">Create account</div>
+          </div>
 
-      <router-link :to="datasetsHref">
-        <div class="header-item vc page-link" id='datasets-link'>
-          <div class="vc">Datasets</div>
+          <div class="header-item vc page-link" @click="showSignIn">
+            <div class="vc">Sign in</div>
+          </div>
         </div>
-      </router-link>
+        <div v-else>
+          <el-popover ref="login-popover"
+                      placement="bottom"
+                      trigger="click"
+                      style="text-align:center;">
+            <div id="email-link-container">
+              <el-button type="primary" @click="sendLoginLink">Send a link to</el-button>
+              <span>
+              <el-input v-model="loginEmail"
+                        placeholder="e-mail address">
+              </el-input>
+            </span>
+            </div>
 
-      <router-link :to="annotationsHref">
-        <div class="header-item vc page-link" id='annotations-link'>
-          <div class="vc">Annotations</div>
-        </div>
-      </router-link>
+            <div style="text-align: center;">
+              <div style="margin: 10px; font-size: 18px;">or</div>
+              <a href="/auth/google">
+                <el-button>Sign in with Google</el-button>
+              </a>
+            </div>
+          </el-popover>
 
-      <router-link to="/about">
-        <div class="header-item vc page-link">
-          <div class="vc">About</div>
-        </div>
-      </router-link>
-
-      <router-link to="/help">
-        <div class="header-item vc page-link">
-          <div class="vc">Help</div>
-        </div>
-      </router-link>
-    </div>
-
-    <div v-if="!this.$store.state.authenticated">
-      <div v-if="features.newAuth">
-        <div class="header-item vc page-link" @click="showCreateAccount">
-          <div class="vc">Create account</div>
-        </div>
-
-        <div class="header-item vc page-link" @click="showSignIn">
-          <div class="vc">Sign in</div>
+          <div class="header-item vc page-link" v-popover:login-popover>
+            <div class="vc">Sign in</div>
+          </div>
         </div>
       </div>
       <div v-else>
-        <el-popover ref="login-popover"
-                    placement="bottom"
-                    trigger="click"
-                    style="text-align:center;">
-          <div id="email-link-container">
-            <el-button type="primary" @click="sendLoginLink">Send a link to</el-button>
-            <span>
-            <el-input v-model="loginEmail"
-                      placeholder="e-mail address">
-            </el-input>
-          </span>
+        <div class="header-item vc">
+          <div class="vc" style="color: white;">
+            {{ userNameOrEmail }}
           </div>
-
-          <div style="text-align: center;">
-            <div style="margin: 10px; font-size: 18px;">or</div>
-            <a href="/auth/google">
-              <el-button>Sign in with Google</el-button>
-            </a>
-          </div>
-        </el-popover>
-
-        <div class="header-item vc page-link" v-popover:login-popover>
-          <div class="vc">Sign in</div>
+        </div>
+        <div class="header-item vc page-link" @click="logout">
+          <div class="vc">Sign out</div>
         </div>
       </div>
-    </div>
-    <div v-else>
-      <div class="header-item vc">
-        <div class="vc" style="color: white;">
-          {{ userNameOrEmail }}
-        </div>
-      </div>
-      <div class="header-item vc page-link" @click="logout">
-        <div class="vc">Sign out</div>
-      </div>
+      <el-row v-if="healthMessage" class="alert">
+        <el-alert show-icon :title="healthMessage" :type="healthSeverity" :closable="false" />
+      </el-row>
     </div>
   </div>
 </template>
@@ -96,6 +102,7 @@
  import {encodeParams} from '../url';
  import tokenAutorefresh from '../tokenAutorefresh';
  import * as config from '../clientConfig.json';
+ import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../api/system';
 
  export default {
    name: 'metaspace-header',
@@ -122,6 +129,18 @@
 
      features() {
        return config.features;
+     },
+
+     healthMessage() {
+       const {canMutate = true, message = null} = this.systemHealth || {};
+       if (message) {
+         return message;
+       } else if (!canMutate) {
+         return "METASPACE is currently in read-only mode for scheduled maintenance."
+       }
+     },
+     healthSeverity() {
+       return this.systemHealth && this.systemHealth.canMutate === false ? 'warning' : 'info';
      }
    },
 
@@ -129,6 +148,13 @@
      return {
        loginEmail: (this.$store.state.user ? this.$store.state.user.email : '')
      };
+   },
+
+   apollo: {
+     systemHealth: {
+       query: getSystemHealthQuery,
+       subscribeToMore: getSystemHealthSubscribeToMore
+     }
    },
 
    methods: {
@@ -185,8 +211,11 @@
  }
 </script>
 
-<style>
- /* bits and pieces copy-pasted from metasp.eu */
+<style lang="scss" scoped>
+
+  $header-height: 62px;
+  $alert-height: 36px;
+
  .b-header {
    background-color: rgba(0, 105, 224, 0.85);
    position: fixed;
@@ -194,9 +223,17 @@
    top: 0;
    left: 0;
    right: 0;
-   height: 62px;
+   height: $header-height;
    display: flex;
    justify-content: space-between;
+ }
+
+ .spacer {
+   height: $header-height + 8px;
+ }
+
+ .spacerWithAlert {
+   height: $header-height + $alert-height + 8px;
  }
 
  .header-item {
@@ -261,4 +298,17 @@
  #email-link-container {
    display: inline-flex;
  }
+
+  .alert {
+    position: fixed;
+    top: $header-height;
+    left: 0;
+    right: 0;
+    border-radius: 0;
+
+    .el-alert {
+      height: $alert-height;
+      justify-content: center;
+    }
+  }
 </style>

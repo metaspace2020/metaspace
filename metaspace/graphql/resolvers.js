@@ -9,7 +9,8 @@ const config = require('config'),
   {datasetFilters, dsField, getPgField, SubstringMatchFilter} = require('./datasetFilters.js'),
   {pgDatasetsViewableByUser, fetchDS, fetchMolecularDatabases, deprecatedMolDBs,
     assertUserCanViewDataset, canUserViewPgDataset, wait, logger, pubsub, db} = require('./utils.js'),
-  {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js');
+  {Mutation: DSMutation, Query: DSQuery} = require('./dsMutation.js'),
+  {Resolvers: SystemResolvers} = require('./src/modules/system/controller' /*TODO: Remove in merge with master*/);
 
 
 async function publishDatasetStatusUpdate(ds_id, status) {
@@ -249,7 +250,9 @@ const Resolvers = {
 
     reprocessingNeeded(_, args, {user}) {
       return DSQuery.reprocessingNeeded(args, user);
-    }
+    },
+
+    ...SystemResolvers.Query, //TODO: Remove in merge with master
   },
 
   Analyzer: {
@@ -502,7 +505,9 @@ const Resolvers = {
 
     deleteOpticalImage: (_, args, {user}) => {
       return DSMutation.deleteOpticalImage(args, user);
-    }
+    },
+
+    ...SystemResolvers.Mutation, //TODO: Remove in merge with master
   },
 
   Subscription: {
@@ -517,6 +522,8 @@ const Resolvers = {
         }
       }
     },
+
+    ...SystemResolvers.Subscription, //TODO: Remove in merge with master
   }
 };
 

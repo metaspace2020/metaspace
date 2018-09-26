@@ -270,6 +270,18 @@ input AddOpticalImageInput {
   transform: [[Float]]!
 }
 
+type SystemHealth { # TODO: Remove in master branch - this belongs in system.graphql
+  canProcessDatasets: Boolean!
+  canMutate: Boolean!
+  message: String
+}
+
+input UpdateSystemHealthInput { # TODO: Remove in master branch - this belongs in system.graphql
+  canProcessDatasets: Boolean!
+  canMutate: Boolean!
+  message: String
+}
+
 type Query {
   dataset(id: String!): Dataset
   datasetByName(name: String!): Dataset
@@ -312,6 +324,8 @@ type Query {
   thumbnailImage(datasetId: String!): String,
 
   reprocessingNeeded(input: DatasetUpdateInput!): Boolean!
+
+  systemHealth: SystemHealth! # TODO: Remove in master branch - this belongs in system.graphql
 }
 
 type Mutation {
@@ -331,6 +345,8 @@ type Mutation {
   addOpticalImage(input: AddOpticalImageInput!): String!
 
   deleteOpticalImage(datasetId: String!): String!
+
+  updateSystemHealth(health: UpdateSystemHealthInput!): Boolean # TODO: Remove in master branch - this belongs in system.graphql
 }
 
 type DatasetStatusUpdate {
@@ -339,6 +355,8 @@ type DatasetStatusUpdate {
 
 type Subscription {
   datasetStatusUpdated: DatasetStatusUpdate
+
+  systemHealthUpdated: SystemHealth! # TODO: Remove in master branch - this belongs in system.graphql
 }
 
 schema {
