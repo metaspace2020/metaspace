@@ -30,7 +30,9 @@ describe('EditUserPage', () => {
 
   const mockUpdateUserMutation = jest.fn(() => ({}));
 
-  beforeAll(() => {
+  beforeEach(() => {
+    suppressConsoleWarn('async-validator:');
+    jest.clearAllMocks();
     initMockGraphqlClient({
       Query: () => ({
         currentUser: () => mockCurrentUser
@@ -39,10 +41,6 @@ describe('EditUserPage', () => {
         updateUser: mockUpdateUserMutation
       })
     });
-  });
-
-  beforeEach(() => {
-    suppressConsoleWarn('async-validator:');
   });
 
   afterEach(async () => {
@@ -63,7 +61,7 @@ describe('EditUserPage', () => {
     const emailInput = wrapper.find('input[name="email"]');
     const saveButton = wrapper.find('.saveButton');
     const name = 'foo bar';
-    const email = 'foo@bar.baz';
+    const email = 'changed@bar.baz';
     wrapper.vm.$confirm = jest.fn(() => Promise.resolve());
     await Vue.nextTick();
 
@@ -72,11 +70,32 @@ describe('EditUserPage', () => {
     saveButton.trigger('click');
     await Vue.nextTick();
 
-    expect(mockUpdateUserMutation).toBeCalled();
+    expect(mockUpdateUserMutation).toHaveBeenCalledTimes(1);
     expect(mockUpdateUserMutation.mock.calls[0][1]).toEqual(
       expect.objectContaining({
         userId: mockCurrentUser.id,
-        update: expect.objectContaining({ name, email }),
+        update: {
+          name,
+          email
+        },
+      })
+    );
+  });
+
+  it('should not include unchanged fields in the update payload', async () => {
+    const wrapper = mount(EditUserPage, { router, provide, sync: false });
+    await Vue.nextTick();
+    const saveButton = wrapper.find('.saveButton');
+    wrapper.vm.$confirm = jest.fn(() => Promise.resolve());
+
+    saveButton.trigger('click');
+    await Vue.nextTick();
+
+    expect(mockUpdateUserMutation).toHaveBeenCalledTimes(1);
+    expect(mockUpdateUserMutation.mock.calls[0][1]).toEqual(
+      expect.objectContaining({
+        userId: mockCurrentUser.id,
+        update: {},
       })
     );
   });
