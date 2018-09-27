@@ -1,55 +1,12 @@
 import gql from 'graphql-tag';
 
-export interface CurrentUserResult {
-  id: string;
-  name: string;
-  email: string | null;
-  groups: {
-    role: string;
-    group: {
-      id: string,
-      name: string
-    };
-  }[]
-  primaryGroup: {
-    group: {
-      id: string,
-      name: string
-    }
-  } | null;
-}
-
-export const currentUserQuery =
-gql`query {
-  currentUser {
-    id
-    name
-    role
-    email
-    groups {
-      role
-      group {
-        id
-        name
-      }
-    }
-    primaryGroup {
-      group {
-        id
-        name
-      }
-    }
-  }
-}
-`;
-
 export interface GroupListItem {
   id: string;
   name: string;
 }
 
 export const oneGroupQuery =
-  gql`query($groupId: ID!) {
+  gql`query oneGroupQuery($groupId: ID!) {
   group(groupId:$groupId) {
     id
     name
@@ -57,7 +14,7 @@ export const oneGroupQuery =
 }`;
 
 export const oneProjectQuery =
-  gql`query($projectId: ID!) {
+  gql`query oneProjectQuery($projectId: ID!) {
   project(projectId:$projectId) {
     id
     name
@@ -65,7 +22,7 @@ export const oneProjectQuery =
 }`;
 
 export const allGroupsQuery =
-gql`query($query: String) {
+gql`query allGroupsQuery($query: String) {
   allGroups(query:$query) {
     id
     name

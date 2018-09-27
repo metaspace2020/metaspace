@@ -146,7 +146,7 @@
        subscribeToMore: getSystemHealthSubscribeToMore
      },
      currentUser: {
-       query: gql`query {
+       query: gql`query metaspaceHeaderCurrentUserQuery {
          currentUser {
            id
            name
