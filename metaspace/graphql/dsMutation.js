@@ -7,7 +7,7 @@ const jsondiffpatch = require('jsondiffpatch'),
 
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
   {Dataset: DatasetModel} = require('./src/modules/dataset/model'),
-  {UserGroup: UserGrouModel, UserGroupRoleOptions} = require('./src/modules/group/model'),
+  {UserGroup: UserGroupModel, UserGroupRoleOptions} = require('./src/modules/group/model'),
   metadataMapping = require('./metadataSchemas/metadataMapping').default;
 
 function isEmpty(obj) {
@@ -127,35 +127,17 @@ async function smAPIRequest(uri, body) {
   }
 }
 
-const hasEditAccess = async (connection, user, dsId) => {
-  if (!user)
-    throw new UserError('Access denied');
-
-  if (user.role === 'admin')
-    return;
-
-  if (dsId) {
-    const ds = await connection.getRepository(DatasetModel).findOne({
-      id: dsId
-    });
-    if (!ds)
-      throw new UserError(`DS ${dsId} does not exist`);
-
-    if (user.id !== ds.userId)
-      throw new UserError('Access denied');
-  }
-  else {
-    throw new UserError(`DS id not provided`);
-  }
-};
-
 const isMemberOf = async (connection, user, groupId) => {
   const userGroup = await connection.getRepository(UserGroupModel).findOne({
     userId: user.id,
     groupId
   });
-  return (!userGroup || ![UserGroupRoleOptions.MEMBER,
-    UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(userGroup.role));
+  let isMember = false;
+  if (userGroup) {
+    isMember = [UserGroupRoleOptions.MEMBER,
+      UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(userGroup.role);
+  }
+  return isMember;
 };
 
 const saveDS = async (connection, dsId, submitterId, groupId, approved) => {
@@ -187,15 +169,42 @@ const toSMAPIparam = (obj) => {
   return smAPIUpdate;
 };
 
+const assertCanEditDataset = async (connection, user, dsId) => {
+  if (!user)
+    throw new UserError('Access denied');
+
+  if (user.role === 'admin')
+    return;
+
+  if (dsId) {
+    const ds = await connection.getRepository(DatasetModel).findOne({
+      id: dsId
+    });
+    if (!ds)
+      throw new UserError(`DS ${dsId} does not exist`);
+
+    if (user.id !== ds.userId)
+      throw new UserError('Access denied');
+  }
+  else {
+    throw new UserError(`DS id not provided`);
+  }
+};
+
+const assertCanCreateDataset = (user) => {
+  if (!user)
+    throw new UserError(`Not authenticated`);
+};
+
 module.exports = {
   processingSettingsChanged,
 
   Mutation: {
     create: async (args, {user, connection}) => {
+      assertCanCreateDataset(user);
+
       const {input, priority} = args;
       let {id: dsId} = args;
-      if (!user)
-        throw new UserError(`Not authenticated`);
 
       let approved = false;
       if (input.groupId)
@@ -226,7 +235,7 @@ module.exports = {
     update: async (args, {user, connection}) => {
       const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
       try {
-        await hasEditAccess(connection, user, dsId);
+        await assertCanEditDataset(connection, user, dsId);
 
         if (update.metadataJson !== undefined) {
           update.metadata = JSON.parse(update.metadataJson);
@@ -281,7 +290,7 @@ module.exports = {
       const {id: dsId, priority} = args;
 
       try {
-        await hasEditAccess(connection, user, dsId);
+        await assertCanEditDataset(connection, user, dsId);
 
         try {
           await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
@@ -300,21 +309,24 @@ module.exports = {
     },
 
     addOpticalImage: async (args, {user, connection}) => {
-      const {datasetId: dsId, imageUrl, transform} = args;
-      await hasEditAccess(connection, user, dsId);
+      const {datasetId: dsId, transform} = args;
+      let {imageUrl} = args;
 
-      const basePath = `http://localhost:${config.img_storage_port}`;
-      if (imageUrl[0] === '/') {
-        // imageUrl comes from the web application and should not include host/port.
-        //
-        // This is necessary for a Virtualbox installation because of port mapping,
-        // and preferred for AWS installation because we're not charged for downloads
-        // if internal network is used.
-        //
-        // TODO support image storage running on a separate host
-        imageUrl = basePath + imageUrl;
-      }
       try {
+        await assertCanEditDataset(connection, user, dsId);
+
+        const basePath = `http://localhost:${config.img_storage_port}`;
+        if (imageUrl[0] === '/') {
+          // imageUrl comes from the web application and should not include host/port.
+          //
+          // This is necessary for a Virtualbox installation because of port mapping,
+          // and preferred for AWS installation because we're not charged for downloads
+          // if internal network is used.
+          //
+          // TODO support image storage running on a separate host
+          imageUrl = basePath + imageUrl;
+        }
+
         const uri = `/v1/datasets/${dsId}/add-optical-image`;
         const body = {url: imageUrl, transform};
         return await smAPIRequest(uri, body);
@@ -326,8 +338,13 @@ module.exports = {
 
     deleteOpticalImage: async (args, {user, connection}) => {
       const {datasetId: dsId} = args;
-      await hasEditAccess(connection, user, dsId);
-      return await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
+      try {
+        await assertCanEditDataset(connection, user, dsId);
+        return await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
+      } catch (e) {
+        logger.error(e.message);
+        throw e;
+      }
     }
   }
 };

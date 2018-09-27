@@ -19,6 +19,8 @@ import {
 import {Mutation as DSMutation} from './dsMutation';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from './src/modules/group/model';
 import {User as UserModel} from './src/modules/user/model';
+import {Dataset as DatasetModel} from './src/modules/dataset/model';
+import {Context, ScopeRole, ScopeRoleOptions as SRO} from './src/context';
 
 
 async function publishDatasetStatusUpdate(ds_id, status) {
@@ -95,18 +97,41 @@ function baseDatasetQuery() {
   });
 }
 
+const resolveDatasetScopeRole = async (ctx, dsId) => {
+  let scopeRole = SRO.OTHER;
+  if (ctx.user) {
+    if (ctx.user.role === 'admin') {
+      scopeRole = SRO.ADMIN;
+    }
+    else {
+      if (dsId) {
+        const ds = await ctx.connection.getRepository(DatasetModel).findOne({
+          where: { id: dsId }
+        });
+        if (ds) {
+          const userGroup = await ctx.connection.getRepository(UserGroupModel).findOne({
+            where: { userId: ctx.user.id, groupId: ds.groupId }
+          });
+          if (userGroup) {
+            if (userGroup.role === UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR)
+              scopeRole = SRO.GROUP_MANAGER;
+            else if (userGroup.role === UserGroupRoleOptions.MEMBER)
+              scopeRole = SRO.GROUP_MEMBER;
+          }
+        }
+      }
+    }
+  }
+  return scopeRole;
+};
 
 const Resolvers = {
-  // Person: {
-  //   // FIXME: Using id = name here until we have actual IDs
-  //   id(obj) { return [obj.First_Name, obj.Surname].join('|||'); },
-  //   name(obj) { return [obj.First_Name, obj.Surname].filter(n => n).join(' '); },
-  //   email(obj) { return obj.Email; }
-  // },
-
   Query: {
-    async dataset(_, { id }, {user}) {
-      return await esDatasetByID(id, user);
+    async dataset(_, { id }, ctx) {
+      // TODO: decide whether to support field level access here
+      const scopeRole = await resolveDatasetScopeRole(ctx, id);
+      const ds = await esDatasetByID(id, ctx.user);
+      return ds ? { ...ds, scopeRole }: null;
     },
 
     async allDatasets(_, args, {user}) {
@@ -144,6 +169,7 @@ const Resolvers = {
     },
 
     metadataSuggestions(_, { field, query, limit }, {user}) {
+      // TODO: add authorisation
       let f = new SubstringMatchFilter(field, {}),
           q = db.from(pgDatasetsViewableByUser(user))
                 .select(db.raw(f.pgField + " as field"))
@@ -209,8 +235,8 @@ const Resolvers = {
     },
 
     opticalImageUrl(_, {datasetId, zoom}, {user}) {
+      // TODO: authorisation
       const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
-      assertUserCanViewDataset(datasetId, user);
 
       return db.select().from('optical_image')
           .where('ds_id', '=', datasetId)
@@ -264,32 +290,20 @@ const Resolvers = {
       return DSQuery.reprocessingNeeded(args, user);
     },
 
-    currentUser(_, args, {user}) {
-      if (user == null || user.name == null) {
-        return null;
-      }
-      return {
-        id: user.name.replace(/ /, '|||'), // TODO: Have actual user IDs
-        name: user.name,
-        role: user.role,
-        email: user.email || null,
-      }
-    },
-
     async currentUserLastSubmittedDataset(_, args, {user}) {
-      if (user == null || user.name == null) {
-        return null;
+      if (user) {
+        const results = await esSearchResults({
+          orderBy: 'ORDER_BY_DATE',
+          sortingOrder: 'DESCENDING',
+          submitter: user.id,
+          limit: 1,
+        }, 'dataset', user);
+        if (results) {
+          const lastDS = results[0];
+          return lastDS;
+        }
       }
-      const lastDataset = await db('dataset')
-        .whereRaw("metadata#>>'{Submitted_By,Submitter,Email}' = ?", [user.email])
-        .orderBy('upload_dt', 'desc')
-        .select('id')
-        .first();
-      if (lastDataset != null) {
-        return await esDatasetByID(lastDataset.id, user);
-      } else {
-        return null;
-      }
+      return null;
     }
   },
 
@@ -353,11 +367,12 @@ const Resolvers = {
     maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
     metadataType(ds) { return dsField(ds, 'metadataType'); },
 
-    submitter(ds) {
+    submitter({scopeRole, ...ds}) {
       return {
         id: ds._source.ds_submitter_id,
         name: ds._source.ds_submitter_name,
         email: ds._source.ds_submitter_email,
+        scopeRole
       };
     },
 
@@ -548,7 +563,7 @@ const Resolvers = {
 
   Mutation: {
     // for dev purposes only, not a part of the public API
-    reprocessDataset: async (_, args, {user}) => {
+    reprocessDataset: async (_, args, ctx) => {
       const {id, delFirst, priority} = args;
       const ds = await fetchEngineDS({id});
       if (ds === undefined)
@@ -556,7 +571,7 @@ const Resolvers = {
       return DSMutation.create({
         id: id, input: ds, reprocess: true,
         delFirst: delFirst, priority: priority
-      }, user);
+      }, ctx);
     },
 
     createDataset: (_, args, context) => {

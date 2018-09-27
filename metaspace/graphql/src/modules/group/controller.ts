@@ -4,27 +4,9 @@ import {Connection, Like, In} from 'typeorm';
 import {Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions} from './model';
 import {User as UserModel} from '../user/model';
 import {Dataset as DatasetModel} from '../dataset/model';
-import {Group, UserGroup, UserGroupRole} from '../../binding';
-
-const hasAccess = async (connection: Connection, user: UserModel, groupId?: string) => {
-  if (!user)
-    throw new UserError('Access denied');
-
-  if (user.role === 'admin')
-    return;
-
-  if (groupId) {
-    const userGroupIds = (await connection.getRepository(UserGroupModel).find({
-      where: {
-        userId: user.id,
-        role: In([UserGroupRoleOptions.MEMBER, UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR])
-      }
-    })).map(g => g.groupId);
-    if (!userGroupIds.includes(groupId)) {
-      throw new UserError('Access denied');
-    }
-  }
-};
+import {Group, UserGroup, User} from '../../binding';
+import {Context, Scope, ScopeRole, ScopeRoleOptions} from '../../context';
+import {LooselyCompatible} from '../../utils';
 
 const findUserByEmail = async (connection: Connection, email: string) => {
   return await connection.getRepository(UserModel)
@@ -33,11 +15,34 @@ const findUserByEmail = async (connection: Connection, email: string) => {
     .getOne();
 };
 
+const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<ScopeRole> => {
+  let scopeRole = ScopeRoleOptions.OTHER;
+  if (ctx.user.role === 'admin') {
+    scopeRole = ScopeRoleOptions.ADMIN;
+  }
+  else {
+    if (groupId) {
+      const userGroup = await ctx.connection.getRepository(UserGroupModel).findOne({
+        where: { userId: ctx.user.id, groupId }
+      });
+      if (userGroup) {
+        if (userGroup.role == UserGroupRoleOptions.MEMBER) {
+          scopeRole =  ScopeRoleOptions.GROUP_MEMBER;
+        }
+        else if (userGroup.role == UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR) {
+          scopeRole = ScopeRoleOptions.GROUP_MANAGER;
+        }
+      }
+    }
+  }
+  return scopeRole;
+};
+
 export const Resolvers = {
   UserGroup: {
     async numDatasets(userGroup: UserGroupModel, _: any, {connection}: any) {
       return await connection.getRepository(DatasetModel).count({
-        where: {userId: userGroup.userId}
+        where: {userId: userGroup.user.id}
       });
     }
   },
@@ -53,38 +58,51 @@ export const Resolvers = {
       return userGroup ? userGroup.role : null;
     },
 
-    async members(group: GroupModel, _: any, {connection}: any) {
-      return await connection.getRepository(UserGroupModel).find({
-        where: {
-          groupId: group.id
-        },
-        relations: ['user']
+    async members({scopeRole, ...group}: GroupModel & Scope,
+                  _: any, ctx: Context): Promise<LooselyCompatible<UserGroup & Scope>[]|null> {
+      if (!scopeRole || ![ScopeRoleOptions.GROUP_MEMBER,
+        ScopeRoleOptions.GROUP_MANAGER,
+        ScopeRoleOptions.ADMIN].includes(scopeRole)) {
+        return null;
+      }
+
+      const userGroupModels = await ctx.connection.getRepository(UserGroupModel).find({
+        where: { groupId: group.id },
+        relations: ['user', 'group']
       });
+      return userGroupModels.map(ug => ({
+        user: {...ug.user, scopeRole},
+        group: ug.group,
+        role: ug.role
+      }));
     }
   },
 
   Query: {
-    async group(_: any, {groupId}: any, {user, connection}: any): Promise<Group> {
-      await hasAccess(connection, user, groupId);
+    async group(_: any, {groupId}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>> {
+      const scopeRole = await resolveGroupScopeRole(ctx, groupId);
 
-      return await connection.getRepository(GroupModel).findOneOrFail(groupId);
+      const group = await ctx.connection.getRepository(GroupModel).findOneOrFail(groupId);
+      return {
+        ...group,
+        scopeRole
+      };
     },
 
-    async groupByUrlSlug(_: any, {urlSlug}: any, {user, connection}: any): Promise<Group> {
-      const group = await connection.getRepository(GroupModel).findOneOrFail({
+    async groupByUrlSlug(_: any, {urlSlug}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>> {
+      const group = await ctx.connection.getRepository(GroupModel).findOneOrFail({
         where: { urlSlug }
       });
-
-      await hasAccess(connection, user, group.id);
-      return group;
+      const scopeRole = await resolveGroupScopeRole(ctx, group.id);
+      return {...group, scopeRole};
     },
 
-    async allGroups(_: any, {query}: any, {user, connection}: any): Promise<Group[]> {
-      await hasAccess(connection, user);
-
-      return connection.getRepository(GroupModel).find({
+    async allGroups(_: any, {query}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
+      const scopeRole = await resolveGroupScopeRole(ctx);
+      const groups = await ctx.connection.getRepository(GroupModel).find({
         where: { 'name': Like(`%${query}%`) }
       });
+      return groups.map(g => ({...g, scopeRole}));
     }
   },
 
@@ -102,7 +120,7 @@ export const Resolvers = {
     },
 
     async updateGroup(_: any, {groupId, groupDetails}: any, {user, connection}: any): Promise<Group> {
-      await hasAccess(connection, user, groupId);
+      // await checkAccessRights(connection, user, groupId);
 
       const groupRepo = connection.getRepository(GroupModel);
       let group = await groupRepo.findOneOrFail(groupId);
@@ -110,7 +128,7 @@ export const Resolvers = {
     },
 
     async deleteGroup(_: any, {groupId}: any, {user, connection}: any): Promise<Boolean> {
-      await hasAccess(user, groupId);
+      // await checkAccessRights(user, groupId);
 
       await connection.getRepository(UserGroupModel).delete({groupId});
       await connection.getRepository(GroupModel).delete(groupId);
@@ -169,7 +187,7 @@ export const Resolvers = {
     },
 
     async acceptRequestToJoinGroup(_: any, {groupId, userId}: any, {user, connection}: any): Promise<UserGroup> {
-      await hasAccess(connection, user, groupId);
+      // await checkAccessRights(connection, user, groupId);
 
       await connection.getRepository(UserModel).findOneOrFail(userId);
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
@@ -203,7 +221,7 @@ export const Resolvers = {
     },
 
     async inviteUserToGroup(_: any, {groupId, email}: any, {user, connection}: any): Promise<UserGroup> {
-      await hasAccess(connection, user, groupId);
+      // await checkAccessRights(connection, user, groupId);
 
       const invUser = await findUserByEmail(connection, email);
       if (!invUser)
@@ -261,7 +279,7 @@ export const Resolvers = {
     },
 
     async importDatasetsIntoGroup(_: any, {groupId, datasetIds}: any, {user, connection}: any): Promise<Boolean> {
-      await hasAccess(connection, user, groupId);
+      // await checkAccessRights(connection, user, groupId);
 
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 

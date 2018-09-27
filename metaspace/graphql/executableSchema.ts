@@ -4,21 +4,22 @@ import {
 } from 'graphql-tools';
 import {maskErrors} from 'graphql-errors';
 import {mergeTypes} from 'merge-graphql-schemas';
-
-import {logger} from './utils';
 import config from './src/utils/config';
 import {Resolvers as UserResolvers} from './src/modules/user/controller';
 import {Resolvers as GroupResolvers} from './src/modules/group/controller';
+import {Resolvers as SystemResolvers} from './src/modules/system/controller';
 import * as Resolvers from './resolvers';
 import {mergedSchemas} from './schema';
+import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInterceptorToSchema';
 
 const executableSchema = makeExecutableSchema({
   typeDefs: mergedSchemas,
   resolvers: [
     Resolvers,
     UserResolvers,
-    GroupResolvers
-  ]
+    GroupResolvers,
+    SystemResolvers,
+  ],
 });
 
 if (config.features.graphqlMocks) {
@@ -41,12 +42,14 @@ if (config.features.graphqlMocks) {
         }
         return `${info.parentType.name}_${idx}`;
       },
-    }
+    },
   });
 }
 
 if (process.env.NODE_ENV !== 'development') {
   maskErrors(executableSchema);
 }
+
+addReadOnlyInterceptorToSchema(executableSchema);
 
 export {executableSchema};

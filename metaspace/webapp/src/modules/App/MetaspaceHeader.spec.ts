@@ -47,6 +47,7 @@ describe('MetaspaceHeader', () => {
   });
 
   it('should include current filters in annotations & dataset links', async () => {
+    initMockGraphqlClient({});
     router.push({path: '/annotations', query: {db: 'HMDB', organism: 'human'}});
     const wrapper = mount(MetaspaceHeader, { store, router, provide, sync: false });
     await Vue.nextTick();
