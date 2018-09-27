@@ -31,7 +31,7 @@
         <div style="margin-bottom: 2em">
           <h2>Custom URL</h2>
           <div v-if="canEditUrlSlug">
-            <router-link :href="groupUrlRoute">{{groupUrlPrefix}}</router-link>
+            <router-link :to="groupUrlRoute">{{groupUrlPrefix}}</router-link>
             <input v-model="model.urlSlug" />
           </div>
           <div v-if="!canEditUrlSlug && group && group.urlSlug">
