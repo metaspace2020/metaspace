@@ -67,6 +67,7 @@
  import FormSection from './sections/FormSection.vue';
  import DataManagementSection from './sections/DataManagementSection.vue'
  import emailRegex from '../../lib/emailRegex';
+ import { safeJsonParse } from '../../util'
 
  const factories = {
    'string': schema => schema.default || '',
@@ -85,17 +86,6 @@
    groupId: null,
    projectIds: []
  };
- 
- function safeJsonParse(json) {
-   if (json) {
-     try {
-       return JSON.parse(json);
-     } catch (err) {
-       Raven.captureException(err);
-     }
-   }
-   return undefined;
- }
 
  // TODO: fill in institution automatically when user profiles are added
 

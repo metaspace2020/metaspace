@@ -15,6 +15,7 @@
  import { Component, Prop } from 'vue-property-decorator';
  import { Location } from 'vue-router';
  import { currentUserIdQuery, CurrentUserIdResult } from '../../api/user';
+ import { safeJsonParse } from '../../util';
 
  type ImagePosition = {
    zoom: number
@@ -49,7 +50,7 @@
        query: annotationQuery,
        update: (data: any) => {
          const {annotation} = data;
-         let chart = JSON.parse(annotation.peakChartData);
+         let chart = safeJsonParse(annotation.peakChartData);
          chart.sampleData = {
            mzs: annotation.isotopeImages.map((im: any) => im.mz),
            ints: annotation.isotopeImages.map((im: any) => im.totalIntensity),
@@ -82,7 +83,7 @@
           datasetId: this.annotation.dataset.id
          }
        },
-       update: (data: any) => JSON.parse(data['dataset']['acquisitionGeometry'])
+       update: (data: any) => safeJsonParse(data['dataset']['acquisitionGeometry'])
      },
 
      datasetVisibility: {
@@ -108,7 +109,6 @@
    showOpticalImage: boolean = true
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserIdResult | null = null
-   expandedKeys: string[] = []
 
    metadataDependentComponent(category: string): any {
      const currentMdType: string = this.$store.getters.filter.metadataType;

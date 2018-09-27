@@ -13,13 +13,14 @@
 <script>
   import {defaultMetadataType, metadataSchemas} from '../assets/metadataRegistry';
   import {get, flatMap} from 'lodash-es';
+  import { safeJsonParse } from '../util'
 
   export default {
     name: 'dataset-info',
     props: ['metadata', 'expandedKeys'],
     data() {
       return {
-        expandedTreeNodes: JSON.parse(localStorage.getItem('expandedTreeNodes')) || [],
+        expandedTreeNodes: safeJsonParse(localStorage.getItem('expandedTreeNodes')) || [],
       };
     },
     created() {

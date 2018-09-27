@@ -96,9 +96,7 @@
         </el-collapse-item>
 
         <el-collapse-item title="Metadata" name="metadata">
-          <dataset-info :metadata="JSON.parse(annotation.dataset.metadataJson)"
-                        :expandedKeys="expandedKeys"
-                        v-on:event="val => updateExpandedKeys(val)">
+          <dataset-info :metadata="JSON.parse(annotation.dataset.metadataJson)">
           </dataset-info>
         </el-collapse-item>
 
