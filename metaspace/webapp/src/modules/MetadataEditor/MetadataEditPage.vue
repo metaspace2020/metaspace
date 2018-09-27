@@ -22,7 +22,8 @@
 <script>
  import MetadataEditor from './MetadataEditor.vue';
  import {updateDatasetQuery} from '../../api/metadata';
- import {isArray, isEqual} from 'lodash-es';
+ import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system';
+ import {isArray, isEqual, get} from 'lodash-es';
 
  export default {
    name: 'metadata-edit-page',
@@ -30,6 +31,12 @@
      return {
        validationErrors: [],
        isSubmitting: false
+     }
+   },
+   apollo: {
+     systemHealth: {
+       query: getSystemHealthQuery,
+       subscribeToMore: getSystemHealthSubscribeToMore
      }
    },
    computed: {
@@ -104,8 +111,16 @@
            graphQLError = JSON.parse(err.graphQLErrors[0].message);
          } catch(err2) { /* The case where err does not contain a graphQL error is handled below */ }
 
-         if (graphQLError && (graphQLError['type'] === 'reprocessing_needed')) {
-           if (await this.confirmReprocess()) {
+         if (get(err, 'graphQLErrors[0].isHandled')) {
+           return false;
+         } else if (graphQLError && (graphQLError['type'] === 'reprocessing_needed')) {
+           if (this.systemHealth && (!this.systemHealth.canProcessDatasets || !this.systemHealth.canMutate)) {
+             this.$alert(`Changes to the analysis options require that this dataset be reprocessed; however,
+               dataset processing has been temporarily suspended so that we can safely update the website.\n\n
+               Please wait a few hours and try again.`,
+               'Dataset processing suspended',
+               {type: 'warning'})
+           } else if (await this.confirmReprocess()) {
              return await this.updateOrReprocess(datasetId, payload, true);
            }
          } else if (graphQLError && graphQLError.type === 'wrong_moldb_name') {

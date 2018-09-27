@@ -4,13 +4,29 @@ import { WebSocketLink } from 'apollo-link-ws';
 import { setContext } from 'apollo-link-context';
 import { SubscriptionClient } from 'subscriptions-transport-ws';
 import { getOperationAST } from 'graphql/utilities/getOperationAST';
+import { onError } from 'apollo-link-error';
 
 import * as config from './clientConfig.json';
 import tokenAutorefresh from './tokenAutorefresh';
 import reportError from './lib/reportError';
+import { flatMap } from 'lodash-es';
 
 const graphqlUrl = config.graphqlUrl || `${window.location.origin}/graphql`;
 const wsGraphqlUrl = config.wsGraphqlUrl || `${window.location.origin.replace(/^http/, 'ws')}/ws`;
+
+let $alert: ((message: string, title: string) => void) | null = null;
+
+export function setMaintenanceMessageHandler(_$alert: (message: string, title: string) => void) {
+  $alert = _$alert;
+}
+
+const isReadOnlyError = (error: any) => {
+  try {
+    return JSON.parse(error.message).type === 'read_only_mode';
+  } catch {
+    return false;
+  }
+};
 
 const authLink = setContext(async () => {
   try {
@@ -25,6 +41,21 @@ const authLink = setContext(async () => {
   }
 });
 
+const errorLink = onError(({ graphQLErrors }) => {
+  if (graphQLErrors) {
+    const readOnlyErrors = graphQLErrors.filter(isReadOnlyError);
+    console.log(graphQLErrors, readOnlyErrors, $alert);
+
+    if (readOnlyErrors.length > 0) {
+      if ($alert != null) {
+        readOnlyErrors.forEach(err => { (err as any).isHandled = true; });
+        $alert('This operation could not be completed. METASPACE is currently in read-only mode for scheduled maintenance. Please try again later.',
+          'Scheduled Maintenance');
+      }
+    }
+  }
+});
+
 const httpLink = new BatchHttpLink({
   uri: graphqlUrl,
   batchInterval: 10,
@@ -34,7 +65,7 @@ const wsLink = new WebSocketLink(new SubscriptionClient(wsGraphqlUrl, {
   reconnect: true,
 }));
 
-const link = authLink.split(
+const link = authLink.concat(errorLink).split(
   (operation) => {
     // Only send subscriptions over websockets
     const operationAST = getOperationAST(operation.query, operation.operationName);
