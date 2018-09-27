@@ -135,6 +135,7 @@
        loginEmail: '',
        loadingUser: 0,
        currentUser: null,
+       systemHealth: null,
        openSubmenu: null
      };
    },

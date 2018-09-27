@@ -8,8 +8,7 @@
       This ensures that a loading screen is displayed and no unnecessary state is retained when e.g. switching
       between group profile pages or datasets
     -->
-    <router-view class="main-content" :key="$route.path">
-    </router-view>
+    <router-view :key="$route.path" />
 
     <!--metaspace-footer>
     </metaspace-footer-->
@@ -92,10 +91,6 @@
 
  a {
    color: #428943;
- }
-
- .main-content {
-   /* padding-bottom: 130px; see MetaspaceFooter.vue: 130 = 30 height + 100 margin */
  }
 
  .warning {

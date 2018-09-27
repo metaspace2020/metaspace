@@ -1,5 +1,4 @@
 import {
-  addErrorLoggingToSchema,
   addMockFunctionsToSchema,
   makeExecutableSchema,
 } from 'graphql-tools';
@@ -12,7 +11,6 @@ import {Resolvers as SystemResolvers} from './src/modules/system/controller';
 import * as Resolvers from './resolvers';
 import {mergedSchemas} from './schema';
 import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInterceptorToSchema';
-import {logger} from './src/utils';
 
 const executableSchema = makeExecutableSchema({
   typeDefs: mergedSchemas,
@@ -52,7 +50,6 @@ if (process.env.NODE_ENV !== 'development') {
   maskErrors(executableSchema);
 }
 
-addErrorLoggingToSchema(executableSchema, { log: msgOrError => msgOrError instanceof Error ? logger.error(msgOrError) : logger.info(msgOrError)});
 addReadOnlyInterceptorToSchema(executableSchema);
 
 export {executableSchema};

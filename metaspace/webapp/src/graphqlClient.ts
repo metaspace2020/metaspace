@@ -9,14 +9,13 @@ import { onError } from 'apollo-link-error';
 import * as config from './clientConfig.json';
 import tokenAutorefresh from './tokenAutorefresh';
 import reportError from './lib/reportError';
-import { flatMap } from 'lodash-es';
 
 const graphqlUrl = config.graphqlUrl || `${window.location.origin}/graphql`;
 const wsGraphqlUrl = config.wsGraphqlUrl || `${window.location.origin.replace(/^http/, 'ws')}/ws`;
 
-let $alert: ((message: string, title: string) => void) | null = null;
+let $alert: ((message: string, title: string, options?: any) => void) | null = null;
 
-export function setMaintenanceMessageHandler(_$alert: (message: string, title: string) => void) {
+export function setMaintenanceMessageHandler(_$alert: (message: string, title: string, options?: any) => void) {
   $alert = _$alert;
 }
 
@@ -50,7 +49,8 @@ const errorLink = onError(({ graphQLErrors }) => {
       if ($alert != null) {
         readOnlyErrors.forEach(err => { (err as any).isHandled = true; });
         $alert('This operation could not be completed. METASPACE is currently in read-only mode for scheduled maintenance. Please try again later.',
-          'Scheduled Maintenance');
+          'Scheduled Maintenance',
+          {type: 'error'});
       }
     }
   }

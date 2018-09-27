@@ -31,6 +31,8 @@
         isUpdating: false,
         buttonType: 'primary',
         buttonText: 'Update',
+        currentUser: null,
+        systemHealth: null,
       };
     },
     computed: {

@@ -30,7 +30,8 @@
    data() {
      return {
        validationErrors: [],
-       isSubmitting: false
+       isSubmitting: false,
+       systemHealth: null,
      }
    },
    apollo: {
