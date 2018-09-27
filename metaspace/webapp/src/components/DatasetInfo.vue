@@ -1,135 +1,138 @@
 <template>
   <el-row>
-    <el-tree :data="getTreeData"
+    <el-tree :data="treeData"
              id="metadata-tree"
              node-key="id"
              @node-collapse="handleNodeCollapse"
              @node-expand="handleNodeExpand"
-             :default-expanded-keys="expandedTreeNodes"
-             auto-expand-parent>
+             :default-expanded-keys="expandedTreeNodes">
     </el-tree>
   </el-row>
 </template>
 
 <script>
- import {defaultMetadataType, metadataSchemas} from '../assets/metadataRegistry';
- import {get} from 'lodash-es';
+  import {defaultMetadataType, metadataSchemas} from '../assets/metadataRegistry';
+  import {get, flatMap} from 'lodash-es';
 
- export default {
-   name: 'dataset-info',
-   props: ['metadata', 'expandedKeys'],
-   data() {
-     return {
-       schemaBasedVals: {},
-       expandAll: false,
-       expandedTreeNodes: [] || this.expandedKeys,
-       dsGroup: this.$store.state.annotation.dataset.group,
-       dsSubmitter: this.$store.state.annotation.dataset.submitter,
-       dsProjects: this.$store.state.annotation.dataset.projects,
-       dsPI: this.$store.state.annotation.dataset.principalInvestigator
-     }
-   },
+  export default {
+    name: 'dataset-info',
+    props: ['metadata', 'expandedKeys'],
+    data() {
+      return {
+        expandedTreeNodes: JSON.parse(localStorage.getItem('expandedTreeNodes')) || [],
+      };
+    },
+    created() {
+      if (!this.expandedTreeNodes.length) {
+        this.expandedTreeNodes = flatMap(this.treeData, this.getNonLeafNodeIds);
+      }
+    },
 
-   mounted() {
-     if (Array.isArray(this.expandedTreeNodes) && !this.expandedTreeNodes.length) {
-       this.expandAll = true;
-       this.schemaBasedVals.forEach(node => this.getChildsWOLeafs(node, this.expandedTreeNodes));
-     }
-   },
+    computed: {
+      dsGroup() {
+        return this.$store.state.annotation.dataset.group
+      },
 
-   computed: {
-     schema() {
-       const metadataType = get(this.metadata, 'Metadata_Type')
-         || this.$store.getters.filter.metadataType
-         || defaultMetadataType;
-       return metadataSchemas[metadataType];
-     },
+      dsSubmitter() {
+        return this.$store.state.annotation.dataset.submitter
+      },
 
-     getTreeData() {
-       this.schemaBasedVals = this.objToTreeNode(null, this.metadata, this.schema);
-       let allProjects = this.dsProjects.map(e => e.name).join(', ');
-       let dataManagementChilds = [
-         {id: "Submitter", label: `Submitter: ${this.dsSubmitter.name}`},
-         {id: "Principal Investigator", label: `Principal Investigator: ${this.dsPI.name}`},
-         {id: "Group", label: `Group: ${this.dsGroup.name}`}
-       ];
-       if (this.isSignedIn) {
-         dataManagementChilds.push({id: "Projects", label: `Projects: ${allProjects}`})
-       }
-       this.schemaBasedVals.push({id: "Data Management", label: "Data Management", children: dataManagementChilds});
-       return this.schemaBasedVals;
-     }
-   },
+      dsProjects() {
+        return this.$store.state.annotation.dataset.projects
+      },
 
-   methods: {
-     getChildsWOLeafs(node, arrToCollect) {
-       if (Array.isArray(node.children) && node.children.length) {
-         arrToCollect.push(node.id);
-         node.children.forEach(child => {
-           this.getChildsWOLeafs(child, arrToCollect);
-         })
-       } else {
-         return false;
-       }
-     },
+      dsPI() {
+        return this.$store.state.annotation.dataset.principalInvestigator
+      },
 
-     handleNodeCollapse(node) {
-       let childs = [];
-       this.getChildsWOLeafs(node, childs)
-       for (let child of childs) {
-         let nodeId = this.expandedTreeNodes.indexOf(child);
-         if (nodeId !== -1) {
-           this.expandedTreeNodes.splice(nodeId, 1);
-         }
-       }
-       this.$emit('event', this.expandedTreeNodes)
-     },
+      schema() {
+        const metadataType = get(this.metadata, 'Metadata_Type')
+          || this.$store.getters.filter.metadataType
+          || defaultMetadataType;
+        return metadataSchemas[metadataType];
+      },
 
-     handleNodeExpand(node) {
-       this.expandedTreeNodes.push(node.id);
-       this.$emit('event', this.expandedTreeNodes)
-     },
+      treeData() {
+        let schemaBasedVals = this.objToTreeNode(null, this.metadata, this.schema);
+        let dataManagementChilds = [
+          {id: "Submitter", label: `Submitter: ${this.dsSubmitter.name}`},
+        ];
+        if (this.PI != null) {
+          dataManagementChilds.push({id: "Principal Investigator", label: `Principal Investigator: ${this.dsPI.name}`});
+        }
+        if (this.dsGroup != null) {
+          dataManagementChilds.push({id: "Group", label: `Group: ${this.dsGroup.name}`});
+        }
+        if (this.dsProjects != null && this.dsProjects.length > 0) {
+          let allProjects = this.dsProjects.map(e => e.name).join(', ');
+          dataManagementChilds.push({id: "Projects", label: `Projects: ${allProjects}`});
+        }
+        schemaBasedVals.push({id: "Data Management", label: "Data Management", children: dataManagementChilds});
+        return schemaBasedVals;
+      }
+    },
 
-     prettify(str) {
-       return str.toString()
-         .replace(/_/g, ' ')
-         .replace(/ [A-Z][a-z]/g, (x) => ' ' + x.slice(1).toLowerCase())
-         .replace(/ freetext$/, '')
-         .replace(/ table$/, '')
-         .replace('metaspace', 'METASPACE');
-     },
+    methods: {
+      handleNodeCollapse(node) {
+        let childs = this.getNonLeafNodeIds(node);
+        for (let child of childs) {
+          let nodeId = this.expandedTreeNodes.indexOf(child);
+          if (nodeId !== -1) {
+            this.expandedTreeNodes.splice(nodeId, 1);
+          }
+        }
+        localStorage.setItem('expandedTreeNodes', JSON.stringify(this.expandedTreeNodes));
+      },
 
-     objToTreeNode(label, obj, schema) {
-       let children = [];
-       let isLeaf = true;
-       for (let key in schema.properties) {
-         const data = obj[key];
-         isLeaf = false;
-         const childSchema = schema.properties[key];
-         if (!data || key == 'Email') // hide e-mails from the interface
-           continue;
-         const child = this.objToTreeNode(key, data, childSchema);
-         if (child.children && child.children.length == 0)
-           continue;
-         children.push(child);
-       }
+      handleNodeExpand(node) {
+        this.expandedTreeNodes.push(node.id);
+        localStorage.setItem('expandedTreeNodes', JSON.stringify(this.expandedTreeNodes));
+      },
 
-       if (label === null)
-         return children;
+      prettify(str) {
+        return str.toString()
+          .replace(/_/g, ' ')
+          .replace(/ [A-Z][a-z]/g, (x) => ' ' + x.slice(1).toLowerCase())
+          .replace(/ freetext$/, '')
+          .replace(/ table$/, '')
+          .replace('metaspace', 'METASPACE');
+      },
 
-       label = this.prettify(label);
-       const id = label;
-       if (isLeaf)
-         return {id, label: `${label}: ${Array.isArray(obj) ? JSON.stringify(obj) : this.prettify(obj)}`};
+      objToTreeNode(label, obj, schema) {
+        let children = [];
+        let isLeaf = true;
+        for (let key in schema.properties) {
+          const data = obj[key];
+          isLeaf = false;
+          const childSchema = schema.properties[key];
+          if (!data || key == 'Email') // hide e-mails from the interface
+            continue;
+          const child = this.objToTreeNode(key, data, childSchema);
+          if (child.children && child.children.length == 0)
+            continue;
+          children.push(child);
+        }
 
-       return {id, label, children};
-     },
+        if (label === null)
+          return children;
 
-     isSignedIn() {
-       return this.$store.state.authenticated;
-     }
-   }
- }
+        label = this.prettify(label);
+        const id = label;
+        if (isLeaf)
+          return {id, label: `${label}: ${Array.isArray(obj) ? JSON.stringify(obj) : this.prettify(obj)}`};
+
+        return {id, label, children};
+      },
+
+      getNonLeafNodeIds(node) {
+        if (node.id !== null && Array.isArray(node.children) && node.children.length > 0) {
+          return [node.id, ...flatMap(node.children, this.getNonLeafNodeIds)];
+        } else {
+          return [];
+        }
+      }
+    }
+  }
 </script>
 
 <style>

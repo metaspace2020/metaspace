@@ -6,7 +6,7 @@ const jsondiffpatch = require('jsondiffpatch'),
   _ = require('lodash');
 
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
-  {Dataset: DatasetModel} = require('./src/modules/user/model'),
+  {Dataset: DatasetModel} = require('./src/modules/dataset/model'),
   {UserGroup: UserGrouModel, UserGroupRoleOptions} = require('./src/modules/group/model'),
   metadataMapping = require('./metadataSchemas/metadataMapping').default;
 

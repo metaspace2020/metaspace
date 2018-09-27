@@ -222,9 +222,4 @@
    loadVisibility() {
      this.$apollo.queries.datasetVisibility.start();
    }
-
-   updateExpandedKeys(val: string[]) {
-     this.expandedKeys = val;
-     console.log('this.expandedKeys ', this.expandedKeys)
-   }
  }
