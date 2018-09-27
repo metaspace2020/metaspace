@@ -1,0 +1,23 @@
+type SystemHealth {
+  canMutate: Boolean!
+  canProcessDatasets: Boolean!
+  message: String
+}
+
+input UpdateSystemHealthInput {
+  canMutate: Boolean!
+  canProcessDatasets: Boolean!
+  message: String
+}
+
+type Query {
+  systemHealth: SystemHealth!
+}
+
+type Mutation {
+  updateSystemHealth(health: UpdateSystemHealthInput!): Boolean
+}
+
+type Subscription {
+  systemHealthUpdated: SystemHealth!
+}

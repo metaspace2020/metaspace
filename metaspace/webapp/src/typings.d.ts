@@ -22,7 +22,6 @@ declare module "*/clientConfig.json" {
     wsGraphqlUrl: string | null
 
     google_client_id: string
-    enableUploads: boolean
 
     fineUploader: FineUploaderConfig
     ravenDsn: string | null

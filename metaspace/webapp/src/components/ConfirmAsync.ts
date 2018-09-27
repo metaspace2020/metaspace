@@ -67,13 +67,13 @@ function ConfirmAsync(options: ValueOrCallback<ElMessageBoxOptions & ExtraOption
                 // if showInput is used, append the input value to `args`
                 const newArgs = showInput ? args.concat([instance.inputValue]) : args;
                 await originalFunc.apply(this, newArgs);
-                done();
               } catch (err) {
                 reportError(err);
               } finally {
                 // Restore instance to its previous state, because MessageBox keeps some state even after closing
                 instance.confirmButtonLoading = false;
                 instance.confirmButtonText = originalConfirmText;
+                done();
               }
             } else {
               done();

@@ -138,6 +138,7 @@
  import {encodeParams} from '../../Filters/index';
  import { currentUserRoleQuery } from '../../../api/user';
  import gql from 'graphql-tag';
+ import reportError from '../../../lib/reportError';
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');
@@ -353,14 +354,8 @@
          });
        }
        catch (err) {
-         this.$message({
-           message: "Deletion failed :( Please contact us at contact@metaspace2020.eu",
-           type: 'error',
-           duration: 0,
-           showClose: true
-         });
          this.disabled = false;
-         throw err;
+         reportError(err, "Deletion failed :( Please contact us at contact@metaspace2020.eu");
        }
      },
 
