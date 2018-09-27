@@ -131,10 +131,13 @@
       }
 
       this.$nextTick(() => {
-        // WORKAROUND: The logic in this.joinedOptions creates labelless options for values that haven't been fetched yet.
-        // After fetching the options, el-select doesn't automatically refresh the label, showing the ID instead.
-        // Calling setSelected() forces it to recalculate the label.
-        (this.$refs.select as any).setSelected();
+        // ElSelect is mocked in tests - do nothing if the ref or the setSelected method are missing
+        if (this.$refs.select != null && (this.$refs.select as any).setSelected != null) {
+          // WORKAROUND: The logic in this.joinedOptions creates labelless options for values that haven't been fetched yet.
+          // After fetching the options, el-select doesn't automatically refresh the label, showing the ID instead.
+          // Calling setSelected() forces it to recalculate the label.
+          (this.$refs.select as any).setSelected();
+        }
       })
     }
 

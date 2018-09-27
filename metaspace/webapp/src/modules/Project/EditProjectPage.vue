@@ -26,7 +26,7 @@
           @cancelInvite="handleRemoveUser"
           @acceptUser="handleAcceptUser"
           @rejectUser="handleRejectUser"
-          @addMember="handleAddMember"
+          @addMember="() => handleAddMember(/* Discard the event argument. ConfirmAsync adds an argument to the end of the arguments list, so the arguments list must be predictable */)"
         />
         <div v-if="project && project.isPublic" style="margin-bottom: 2em">
           <h2>Custom URL</h2>
@@ -100,7 +100,7 @@
     role: UserRole;
   }
 
-  @Component({
+  @Component<EditProjectProfile>({
     components: {
       EditProjectForm,
       MembersList,
@@ -115,7 +115,7 @@
       project: {
         query: editProjectQuery,
         loadingKey: 'membersLoading',
-        variables(this: EditProjectProfile) { return { projectId: this.projectId } },
+        variables() { return { projectId: this.projectId } },
       },
     }
   })
