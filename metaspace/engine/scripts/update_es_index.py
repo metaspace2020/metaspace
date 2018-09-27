@@ -33,7 +33,8 @@ def _reindex_all(conf):
 
 def _reindex_datasets(rows, es_exp):
     logger.info('Reindexing %s dataset(s)', len(rows))
-    for ds_id, ds_name, ds_config in rows:
+    for idx, (ds_id, ds_name, ds_config) in enumerate(rows):
+        logger.info(f'Reindexing {idx+1} out of {len(rows)}')
         try:
             es_exp.delete_ds(ds_id)
             for mol_db_name in ds_config['databases']:
