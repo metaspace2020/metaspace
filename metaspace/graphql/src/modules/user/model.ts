@@ -12,8 +12,11 @@ export class User {
   @Column({ type: 'text' })
   name: string;
 
-  @Column({ type: 'text' })
-  email: string;
+  @Column({ type: 'text', nullable: true })
+  email: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'not_verified_email'})
+  notVerifiedEmail: string | null;
 
   @Column({ type: 'text', default: 'user' })
   role: string;

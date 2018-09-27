@@ -31,26 +31,28 @@ export const initOperation = async (typeormConn?: Connection) => {
 
 // FIXME: some mechanism should be added so that a user's other sessions are revoked when they change their password, etc.
 
-export const findUserById = async (id: string, credentials: boolean=true,
-                                   groups: boolean=true): Promise<User|undefined> => {
+export const findUserById = async (id: string|undefined, credentials: boolean=true,
+                                   groups: boolean=true): Promise<User|null> => {
+  let user = null;
   if (id) {
     const relations = [];
     if (credentials)
       relations.push('credentials');
     if (groups)
       relations.push('groups');
-    return await userRepo.findOne({
+    user = await userRepo.findOne({
       relations: relations,
       where: { 'id': id }
-    });
+    }) || null;
   }
+  return user;
 };
 
-export const findUserByEmail = async (email: string) => {
+export const findUserByEmail = async (value: string, field: string='email') => {
   return await userRepo.createQueryBuilder('user')
     .leftJoinAndSelect('user.credentials', 'credentials')
-    .where('LOWER(email) = :email', {'email': email.toLowerCase()})
-    .getOne();
+    .where(`LOWER(${field}) = :email`, {'email': value.toLowerCase()})
+    .getOne() || null;
 };
 
 export const findUserByGoogleId = async (googleId: string|undefined) => {
@@ -68,8 +70,8 @@ const tokenExpired = (expires?: Moment|null): boolean => {
   return expires == null || expires < moment.utc();
 };
 
-const sendEmailVerificationToken = async (cred: Credentials, email: string) => {
-  if (cred.emailVerificationToken == null || tokenExpired(cred.emailVerificationTokenExpires)) {
+export const sendEmailVerificationToken = async (cred: Credentials, email: string) => {
+  if (!cred.emailVerificationToken || tokenExpired(cred.emailVerificationTokenExpires)) {
     cred.emailVerificationToken = uuid.v4();
     cred.emailVerificationTokenExpires = createExpiry();
     logger.debug(`Token is null or expired for ${cred.id}. New one generated: ${cred.emailVerificationToken}`);
@@ -94,14 +96,14 @@ const hashPassword = async (password: string|undefined): Promise<string|undefine
   return (password) ? await bcrypt.hash(password, NUM_ROUNDS) : undefined;
 };
 
-export const verifyPassword = async (password: string, hash: string|null|undefined): Promise<boolean|undefined> => {
-  return (hash) ? await bcrypt.compare(password, hash) : undefined;
+export const verifyPassword = async (password: string, hash: string|null|undefined): Promise<boolean|null> => {
+  return (hash) ? await bcrypt.compare(password, hash) : null;
 };
 
 const createLocalCredentials = async (userCred: UserCredentialsInput): Promise<Credentials> => {
   const cred = credRepo.create({
     hash: await hashPassword(userCred.password),
-    googleId: userCred.googleId || undefined,
+    googleId: userCred.googleId || null,
     emailVerificationToken: uuid.v4(),
     emailVerificationTokenExpires: createExpiry(),
     emailVerified: false
@@ -112,54 +114,70 @@ const createLocalCredentials = async (userCred: UserCredentialsInput): Promise<C
 };
 
 export const createUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
-  const existingUser = await findUserByEmail(userCred.email);
-  if (existingUser == null) {
-    const newCred = userCred.googleId ?
-      await createGoogleCredentials(userCred) :
-      await createLocalCredentials(userCred);
-
-    const newUser = userRepo.create({
-      email: userCred.email,
-      name: userCred.name,
-      credentials: newCred
-    });
-    await userRepo.insert(newUser);
-  }
-  else if (!existingUser.credentials.emailVerified) {
-    await sendEmailVerificationToken(existingUser.credentials, existingUser.email);
-  } else {
-    emailService.sendLoginEmail(existingUser.email);
+  const existingUser = await findUserByEmail(userCred.email, 'email');
+  if (existingUser) {
+    emailService.sendLoginEmail(existingUser.email!);
     logger.debug(`Email already verified. Sent log in email to ${existingUser.email}`);
+  }
+  else {
+    const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email');
+    if (!existingUserNotVerified) {
+      const newCred = userCred.googleId ?
+        await createGoogleCredentials(userCred) :
+        await createLocalCredentials(userCred);
+
+      const newUser = userRepo.create({
+        notVerifiedEmail: userCred.email,
+        name: userCred.name,
+        credentials: newCred
+      });
+      await userRepo.insert(newUser);
+    }
+    else {
+      await sendEmailVerificationToken(existingUserNotVerified.credentials,
+        existingUserNotVerified.notVerifiedEmail!);
+    }
   }
 };
 
-export const verifyEmail = async (email: string, token: string): Promise<User|undefined> => {
-  const user = await findUserByEmail(email);
+export const verifyEmail = async (email: string, token: string): Promise<User|null> => {
+  let user = await findUserByEmail(email, 'not_verified_email');
   if (user) {
     if (user.credentials.emailVerificationToken !== token
       || tokenExpired(user.credentials.emailVerificationTokenExpires)) {
       logger.debug(`Token '${token}' is wrong or expired for ${email}`);
+      user = null;
     }
     else {
-      const updCred = credRepo.create({
-        ...user.credentials,
+      await credRepo.update(user.credentials.id, {
         emailVerified: true,
         emailVerificationToken: null,
         emailVerificationTokenExpires: null,
       });
-      await credRepo.update(updCred.id, updCred);
+      const userUpdate = {
+        email: user.notVerifiedEmail,
+        notVerifiedEmail: null
+      };
+      await userRepo.update(user.id, userUpdate);
       logger.info(`Verified user email ${email}`);
-      return user;
+      user = {
+        ...user,
+        ...userUpdate,
+      }
     }
   }
   else {
-    logger.warning(`User with ${email} does not exist`);
+    user = await findUserByEmail(email, 'email');
+    if (!user) {
+      logger.warn(`User with ${email} does not exist`);
+    }
   }
+  return user;
 };
 
 export const sendResetPasswordToken = async (email: string): Promise<void> => {
   const user = await findUserByEmail(email);
-  if (user == null) {
+  if (!user) {
     throw new Error(`User with ${email} email does not exist`);
   }
 
@@ -183,7 +201,7 @@ export const sendResetPasswordToken = async (email: string): Promise<void> => {
   logger.debug(`Sent password reset email to ${email}: ${link}`);
 };
 
-export const resetPassword = async (email: string, password: string, token: string): Promise<string | undefined> => {
+export const resetPassword = async (email: string, password: string, token: string): Promise<User | undefined> => {
   const user = await findUserByEmail(email);
   if (user) {
     if (user.credentials.resetPasswordToken !== token || tokenExpired(user.credentials.resetPasswordTokenExpires)) {
@@ -198,7 +216,7 @@ export const resetPassword = async (email: string, password: string, token: stri
       });
       await credRepo.update(updCred.id, updCred);
       logger.info(`Successful password reset: ${email}`);
-      return user.id;
+      return user;
     }
   }
 };

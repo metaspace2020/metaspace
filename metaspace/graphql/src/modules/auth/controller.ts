@@ -15,7 +15,6 @@ import {
   initOperation,
   findUserByEmail, findUserByGoogleId, findUserById
 } from './operation';
-import {allGroupsQuery} from '../../../../webapp/src/api/dataManagement';
 
 const getUserFromRequest = (req: Request): User | null => {
   const user = (req as any).cookieUser;
@@ -140,7 +139,7 @@ const configureLocalAuth = (router: IRouter<any>) => {
       if (err) {
         next(err);
       } else if (user) {
-        req.logIn(user, err => {
+        req.login(user, err => {
           if (err) {
             next();
           } else {
@@ -241,9 +240,9 @@ const configureResetPassword = (router: IRouter<any>) => {
   router.post('/resetpassword', async (req, res, next) => {
     try {
       const { email, token, password } = req.body;
-      const userId = await resetPassword(email, password, token);
-      if (userId != null) {
-        req.login(userId, (err) => {
+      const user = await resetPassword(email, password, token);
+      if (user) {
+        req.login(user, (err) => {
           if (err) {
             next(err);
           } else {
