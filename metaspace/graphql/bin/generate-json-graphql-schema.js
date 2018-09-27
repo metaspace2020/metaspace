@@ -6,11 +6,14 @@ const {resolve} = require('path');
 const readFile = promisify(require("fs").readFile);
 const writeFile = promisify(require("fs").writeFile);
 
+//FIXME: Most of this file is redundant now that `schema.ts` exists in the parent directory.
+
 const schemaFiles = [
   '../schema.graphql',
   '../schemas/user.graphql',
   '../schemas/group.graphql',
   '../schemas/project.graphql',
+  '../schemas/system.graphql',
 ];
 
 const run = async (outputFile) => {
