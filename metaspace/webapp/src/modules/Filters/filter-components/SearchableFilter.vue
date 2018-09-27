@@ -1,6 +1,7 @@
 <template>
   <tag-filter :name="name" @destroy="destroy" :width="multiple ? 900 : 300">
     <el-select slot="edit"
+               ref="select"
                placeholder="Start typing name"
                remote filterable clearable
                :remote-method="fetchOptions"
@@ -9,7 +10,7 @@
                no-match-text="No matches"
                :multiple="multiple"
                :multiple-limit=10
-               :value="value"
+               :value="safeValue"
                @change="onInput">
       <el-option v-for="(item, idx) in joinedOptions"
                  :label="item.label"
@@ -74,6 +75,14 @@
       }
     }
 
+    get safeValue() {
+      if (this.multiple) {
+        return this.valueAsArray;
+      } else {
+        return this.value;
+      }
+    }
+
     get joinedOptions() {
       // adds/moves selected values to the top of the options list
 
@@ -120,6 +129,13 @@
         // data.options.length may be 0 if an invalid ID is passed due to URL truncation or a dataset becoming hidden
         this.currentLabel = foundOptions.length > 0 ? foundOptions[0].label : this.valueAsArray[0];
       }
+
+      this.$nextTick(() => {
+        // WORKAROUND: The logic in this.joinedOptions creates labelless options for values that haven't been fetched yet.
+        // After fetching the options, el-select doesn't automatically refresh the label, showing the ID instead.
+        // Calling setSelected() forces it to recalculate the label.
+        (this.$refs.select as any).setSelected();
+      })
     }
 
     async fetchOptions(query: string) {
