@@ -10,29 +10,6 @@ const mutationRequiresDatasetProcessing = (mutationName: string, args: any) => {
     || (mutationName === 'updateDataset' && args.reprocess !== false)
 };
 
-export const preventMutationsIfReadOnly = (Mutation: Record<string, GraphQLFieldResolver<any, any>>): IResolverObject => {
-  return _.mapValues(Mutation, (resolver: GraphQLFieldResolver<any, any>, key): GraphQLFieldResolver<any, any> => {
-
-    if (!_.isFunction(resolver)) {
-      throw new Error('filterMutations can\'t handle non-function resolvers')
-    }
-
-    if (key === 'updateSystemHealth') {
-      return resolver;
-    } else {
-      return async (source: any, args: any, context: any, info: any) => {
-        const {canMutate, canProcessDatasets, message} = await getHealth();
-
-        if (!canMutate || (!canProcessDatasets && mutationRequiresDatasetProcessing(key, args))) {
-          throw new UserError(JSON.stringify({ type: 'read_only_mode', message }));
-        } else {
-          return resolver(source, args, context, info);
-        }
-      }
-    }
-  })
-};
-
 const addReadOnlyInterceptorToSchema = (schema: GraphQLSchema) => {
   const Mutation = schema.getMutationType();
   if (Mutation != null) {
@@ -49,7 +26,7 @@ const addReadOnlyInterceptorToSchema = (schema: GraphQLSchema) => {
         if (!canMutate || (!canProcessDatasets && mutationRequiresDatasetProcessing(mutationName, args))) {
           throw new UserError(JSON.stringify({ type: 'read_only_mode', message }));
         } else {
-          return originalResolve.apply(this, ...arguments);
+          return originalResolve.apply(this, arguments);
         }
       }
     })
