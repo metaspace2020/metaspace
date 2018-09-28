@@ -31,19 +31,19 @@
 
     computed: {
       dsGroup() {
-        return this.$store.state.annotation.dataset.group
+        return this.metadata.Group
       },
 
       dsSubmitter() {
-        return this.$store.state.annotation.dataset.submitter
+        return this.metadata.Submitter
       },
 
       dsProjects() {
-        return this.$store.state.annotation.dataset.projects
+        return this.metadata.Projects
       },
 
       dsPI() {
-        return this.$store.state.annotation.dataset.principalInvestigator
+        return this.metadata.PI
       },
 
       schema() {

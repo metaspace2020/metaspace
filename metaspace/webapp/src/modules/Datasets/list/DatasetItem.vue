@@ -138,6 +138,7 @@
  import { currentUserRoleQuery } from '../../../api/user';
  import gql from 'graphql-tag';
  import reportError from '../../../lib/reportError';
+ import {safeJsonParse} from "../../../util";
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');
@@ -209,7 +210,13 @@
      },
 
      metadata() {
-       return JSON.parse(this.dataset.metadataJson);
+       const datasetMetadataExternals = {
+         "Submitter": this.formatSubmitter,
+           "PI": this.dataset.principalInvestigator,
+           "Group": this.dataset.group,
+           "Projects": this.dataset.projects
+       };
+       return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals);
      },
 
      metaboliteDatabases() {

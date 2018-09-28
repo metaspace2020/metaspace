@@ -96,7 +96,7 @@
         </el-collapse-item>
 
         <el-collapse-item title="Metadata" name="metadata">
-          <dataset-info :metadata="JSON.parse(annotation.dataset.metadataJson)">
+          <dataset-info :metadata="metadata">
           </dataset-info>
         </el-collapse-item>
 

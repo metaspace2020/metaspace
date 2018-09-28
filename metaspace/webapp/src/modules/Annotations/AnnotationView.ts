@@ -180,6 +180,16 @@
      }
    }
 
+   get metadata() {
+     const datasetMetadataExternals = {
+       "Submitter": this.annotation.dataset.submitter,
+       "PI": this.annotation.dataset.principalInvestigator,
+       "Group": this.annotation.dataset.group,
+       "Projects": this.annotation.dataset.projects
+     };
+     return Object.assign(safeJsonParse(this.annotation.dataset.metadataJson), datasetMetadataExternals);
+   }
+
    opacity: number = 1.0;
 
    imagePosition: ImagePosition = {

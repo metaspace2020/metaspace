@@ -66,7 +66,34 @@ exports[`DatasetTable should match snapshot 1`] = `
     <div class="dataset-list">
       <div class="dataset-item odd">
         <mock-el-dialog title="Provided metadata">
-          <!---->
+          <div class="el-row">
+            <div role="tree" class="el-tree" id="metadata-tree">
+              <div role="treeitem" tabindex="0" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
+                <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+                  <!---->
+                  <!----><span class="el-tree-node__label">MS analysis</span></div>
+                <mock-transition>
+                  <div role="group" aria-expanded="true" class="el-tree-node__children">
+                    <!---->
+                  </div>
+                </mock-transition>
+              </div>
+              <div role="treeitem" tabindex="-1" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
+                <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+                  <!---->
+                  <!----><span class="el-tree-node__label">Data Management</span></div>
+                <mock-transition>
+                  <div role="group" aria-expanded="true" class="el-tree-node__children">
+                    <!---->
+                    <!---->
+                    <!---->
+                  </div>
+                </mock-transition>
+              </div>
+              <!---->
+              <div class="el-tree__drop-indicator" style="display: none;"></div>
+            </div>
+          </div>
         </mock-el-dialog>
         <div class="opt-image">
           <div class="edit-opt-image-guest">
@@ -108,7 +135,34 @@ exports[`DatasetTable should match snapshot 1`] = `
       </div>
       <div class="dataset-item even">
         <mock-el-dialog title="Provided metadata">
-          <!---->
+          <div class="el-row">
+            <div role="tree" class="el-tree" id="metadata-tree">
+              <div role="treeitem" tabindex="0" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
+                <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+                  <!---->
+                  <!----><span class="el-tree-node__label">MS analysis</span></div>
+                <mock-transition>
+                  <div role="group" aria-expanded="true" class="el-tree-node__children">
+                    <!---->
+                  </div>
+                </mock-transition>
+              </div>
+              <div role="treeitem" tabindex="-1" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
+                <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+                  <!---->
+                  <!----><span class="el-tree-node__label">Data Management</span></div>
+                <mock-transition>
+                  <div role="group" aria-expanded="true" class="el-tree-node__children">
+                    <!---->
+                    <!---->
+                    <!---->
+                  </div>
+                </mock-transition>
+              </div>
+              <!---->
+              <div class="el-tree__drop-indicator" style="display: none;"></div>
+            </div>
+          </div>
         </mock-el-dialog>
         <div class="opt-image">
           <div class="edit-opt-image-guest">
@@ -150,7 +204,34 @@ exports[`DatasetTable should match snapshot 1`] = `
       </div>
       <div class="dataset-item odd">
         <mock-el-dialog title="Provided metadata">
-          <!---->
+          <div class="el-row">
+            <div role="tree" class="el-tree" id="metadata-tree">
+              <div role="treeitem" tabindex="0" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
+                <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+                  <!---->
+                  <!----><span class="el-tree-node__label">MS analysis</span></div>
+                <mock-transition>
+                  <div role="group" aria-expanded="true" class="el-tree-node__children">
+                    <!---->
+                  </div>
+                </mock-transition>
+              </div>
+              <div role="treeitem" tabindex="-1" aria-expanded="true" draggable="false" class="el-tree-node is-expanded is-focusable">
+                <div class="el-tree-node__content" style="padding-left: 0px;"><span class="el-tree-node__expand-icon el-icon-caret-right expanded"></span>
+                  <!---->
+                  <!----><span class="el-tree-node__label">Data Management</span></div>
+                <mock-transition>
+                  <div role="group" aria-expanded="true" class="el-tree-node__children">
+                    <!---->
+                    <!---->
+                    <!---->
+                  </div>
+                </mock-transition>
+              </div>
+              <!---->
+              <div class="el-tree__drop-indicator" style="display: none;"></div>
+            </div>
+          </div>
         </mock-el-dialog>
         <div class="opt-image">
           <div class="edit-opt-image-guest">
