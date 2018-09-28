@@ -26,12 +26,12 @@
           @cancelInvite="handleRemoveUser"
           @acceptUser="handleAcceptUser"
           @rejectUser="handleRejectUser"
-          @addMember="handleAddMember"
+          @addMember="() => handleAddMember(/* Discard the event argument. ConfirmAsync adds an argument to the end of the arguments list, so the arguments list must be predictable */)"
         />
         <div style="margin-bottom: 2em">
           <h2>Custom URL</h2>
           <div v-if="canEditUrlSlug">
-            <router-link :href="groupUrlRoute">{{groupUrlPrefix}}</router-link>
+            <router-link :to="groupUrlRoute">{{groupUrlPrefix}}</router-link>
             <input v-model="model.urlSlug" />
           </div>
           <div v-if="!canEditUrlSlug && group && group.urlSlug">
@@ -100,7 +100,7 @@
     role: UserRole;
   }
 
-  @Component({
+  @Component<EditGroupProfile>({
     components: {
       EditGroupForm,
       MembersList,
@@ -115,7 +115,7 @@
       group: {
         query: editGroupQuery,
         loadingKey: 'membersLoading',
-        variables(this: EditGroupProfile) { return { groupId: this.groupId } },
+        variables() { return { groupId: this.groupId } },
       },
     }
   })

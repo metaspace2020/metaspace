@@ -144,8 +144,7 @@
     get groupIdIsUnknown() {
       return this.value.groupId != null
         && this.submitter != null
-        && this.submitter.groups != null
-        && !this.submitter.groups.some(group => group.group.id === this.value.groupId);
+        && (this.submitter.groups == null || !this.submitter.groups.some(group => group.group.id === this.value.groupId));
     }
 
     get groupId() {
@@ -206,10 +205,9 @@
       if (this.groupIdIsUnknown && this.unknownGroup != null && this.unknownGroup.id === this.value.groupId) {
         options.push({value: this.unknownGroup.id, label: this.unknownGroup.name });
       }
-      // TODO: Uncomment when userIDs are fully implemented so that "Find my group" is hidden when editing someone else's dataset
-      // if (this.submitter != null && this.currentUser != null && this.submitter.id === this.currentUser.id) {
-      options.push({ value: FIND_GROUP, label: "Find my group..." });
-      // }
+      if (this.submitter != null && this.currentUser != null && this.submitter.id === this.currentUser.id) {
+        options.push({ value: FIND_GROUP, label: "Find my group..." });
+      }
       options.push({value: NO_GROUP, label: "No group (Enter PI instead)"});
       return options;
     }

@@ -60,6 +60,9 @@
                 <el-form-item prop="email" label="Email address">
                   <el-input v-model="model.email" name="email" />
                 </el-form-item>
+                <p v-if="isEmailChangePending">
+                  <b>Please click the link that has been sent to your new email address to verify the change.</b>
+                </p>
               </div>
             </el-col>
           </div>
@@ -188,6 +191,7 @@
     showDeleteAccountDialog: boolean = false;
     isUserDetailsLoading: boolean = false;
     isUserDeletionLoading: boolean = false;
+    isEmailChangePending: boolean = false;
 
     currentUser: UserProfileQuery | null = null;
     model: Model = {
@@ -212,7 +216,9 @@
     onCurrentUserChanged(this: any) {
       if (this.currentUser) {
         this.model.name = this.currentUser.name;
-        this.model.email = this.currentUser.email;
+        if (!this.isEmailChangePending) {
+          this.model.email = this.currentUser.email;
+        }
         this.primaryGroupId = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
       } else if (this.isLoaded) {
         this.$router.push('/account/sign-in');
@@ -243,19 +249,24 @@
                 confirmButtonText: "Yes, send verification email",
                 lockScroll: false
               });
+            this.isEmailChangePending = true;
           } catch {
             return
           }
         }
         this.isUserDetailsLoading = true;
+
+        const oldPrimaryGroupId = this.currentUser!.primaryGroup != null ? this.currentUser!.primaryGroup!.group.id : null;
         await this.$apollo.mutate({
           mutation: updateUserMutation,
           variables: {
             userId: this.currentUser!.id,
             update: {
-              name: this.model.name,
-              email: this.model.email,
-              primaryGroupId: this.primaryGroupId
+              // Only send fields that have changed, per API requirements
+              // This relies on `undefined` values being discarded during JSON stringification
+              name: this.model.name !== this.currentUser!.name ? this.model.name : undefined,
+              email: this.model.email !== this.currentUser!.email ? this.model.email : undefined,
+              primaryGroupId: this.primaryGroupId !== oldPrimaryGroupId ? this.primaryGroupId : undefined,
             }
           },
         });

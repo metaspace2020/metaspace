@@ -34,7 +34,7 @@ export interface UserProfileQuery {
 }
 
 export const userProfileQuery =
-  gql`query {
+  gql`query UserProfileQuery {
   currentUser {
     id
     name
@@ -134,7 +134,7 @@ export interface CurrentUserIdResult {
 }
 
 export const currentUserIdQuery =
-  gql`query {
+  gql`query CurrentUserIdQuery {
   currentUser { id }
 }
 `;
@@ -145,7 +145,7 @@ export interface CurrentUserRoleResult {
 }
 
 export const currentUserRoleQuery =
-  gql`query {
+  gql`query CurrentUserRoleQuery {
   currentUser { id role }
 }
 `;

@@ -74,6 +74,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                   <mock-transition name="el-zoom-in-top"></mock-transition>
                 </div>
               </div>
+              <!---->
             </div>
           </div>
         </div>

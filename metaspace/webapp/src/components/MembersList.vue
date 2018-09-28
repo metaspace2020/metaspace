@@ -73,7 +73,7 @@
                      :current-page.sync="page"
                      layout="prev,pager,next" />
       <div class="flex-spacer" />
-      <el-button v-if="canEdit" @click="handleAddMember">Add member</el-button>
+      <el-button v-if="canEdit" @click="() => handleAddMember()">Add member</el-button>
     </div>
   </div>
 </template>
