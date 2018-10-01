@@ -2,11 +2,11 @@
 
 exports[`DatasetTable should be able to export a CSV 1`] = `
 "# URL: http://localhost/
-datasetId,datasetName,institution,submitter,PI,organism,organismPart,condition,growthConditions,ionisationSource,maldiMatrix,analyzer,resPower400,polarity,uploadDateTime,FDR@10% + DataBase,opticalImage
-FINISHED1,datasets.0.name,datasets.0.institution,datasets.0.submitter.name,datasets.0.principalInvestigator.name,datasets.0.organism,datasets.0.organismPart,datasets.0.condition,datasets.0.growthConditions,datasets.0.ionisationSource,datasets.0.maldiMatrix,datasets.0.analyzer.type,13,positive,datasets.0.uploadDateTime,1,2,20 HMDB-v2.5,http://localhostdatasets.0.opticalImage
-FINISHED2,datasets.1.name,datasets.1.institution,datasets.1.submitter.name,datasets.1.principalInvestigator.name,datasets.1.organism,datasets.1.organismPart,datasets.1.condition,datasets.1.growthConditions,datasets.1.ionisationSource,datasets.1.maldiMatrix,datasets.1.analyzer.type,13,positive,datasets.1.uploadDateTime,1,2,20 HMDB-v2.5,http://localhostdatasets.1.opticalImage
-FINISHED3,datasets.0.name,datasets.0.institution,datasets.0.submitter.name,datasets.0.principalInvestigator.name,datasets.0.organism,datasets.0.organismPart,datasets.0.condition,datasets.0.growthConditions,datasets.0.ionisationSource,datasets.0.maldiMatrix,datasets.0.analyzer.type,13,positive,datasets.0.uploadDateTime,1,2,20 HMDB-v2.5,http://localhostdatasets.0.opticalImage
-FINISHED4,datasets.1.name,datasets.1.institution,datasets.1.submitter.name,datasets.1.principalInvestigator.name,datasets.1.organism,datasets.1.organismPart,datasets.1.condition,datasets.1.growthConditions,datasets.1.ionisationSource,datasets.1.maldiMatrix,datasets.1.analyzer.type,13,positive,datasets.1.uploadDateTime,1,2,20 HMDB-v2.5,http://localhostdatasets.1.opticalImage
+datasetId,datasetName,group,submitter,PI,organism,organismPart,condition,growthConditions,ionisationSource,maldiMatrix,analyzer,resPower400,polarity,uploadDateTime,FDR@10% + DataBase,opticalImage
+FINISHED1,datasets.0.name,datasets.0.group.name,datasets.0.submitter.name,datasets.0.principalInvestigator.name,datasets.0.organism,datasets.0.organismPart,datasets.0.condition,datasets.0.growthConditions,datasets.0.ionisationSource,datasets.0.maldiMatrix,datasets.0.analyzer.type,13,positive,datasets.0.uploadDateTime,1,2,20 HMDB-v2.5,http://localhostdatasets.0.opticalImage
+FINISHED2,datasets.1.name,datasets.1.group.name,datasets.1.submitter.name,datasets.1.principalInvestigator.name,datasets.1.organism,datasets.1.organismPart,datasets.1.condition,datasets.1.growthConditions,datasets.1.ionisationSource,datasets.1.maldiMatrix,datasets.1.analyzer.type,13,positive,datasets.1.uploadDateTime,1,2,20 HMDB-v2.5,http://localhostdatasets.1.opticalImage
+FINISHED3,datasets.0.name,datasets.0.group.name,datasets.0.submitter.name,datasets.0.principalInvestigator.name,datasets.0.organism,datasets.0.organismPart,datasets.0.condition,datasets.0.growthConditions,datasets.0.ionisationSource,datasets.0.maldiMatrix,datasets.0.analyzer.type,13,positive,datasets.0.uploadDateTime,1,2,20 HMDB-v2.5,http://localhostdatasets.0.opticalImage
+FINISHED4,datasets.1.name,datasets.1.group.name,datasets.1.submitter.name,datasets.1.principalInvestigator.name,datasets.1.organism,datasets.1.organismPart,datasets.1.condition,datasets.1.growthConditions,datasets.1.ionisationSource,datasets.1.maldiMatrix,datasets.1.analyzer.type,13,positive,datasets.1.uploadDateTime,1,2,20 HMDB-v2.5,http://localhostdatasets.1.opticalImage
 "
 `;
 
@@ -14,7 +14,6 @@ exports[`DatasetTable should match snapshot 1`] = `
 <div>
   <div class="filter-panel">
     <mock-el-select placeholder="Add filter" style="width: 200px; margin-bottom: 10px;">
-      <mock-el-option value="institution" label="Select lab"></mock-el-option>
       <mock-el-option value="group" label="Select group"></mock-el-option>
       <mock-el-option value="project" label="Select project"></mock-el-option>
       <mock-el-option value="submitter" label="Select submitter"></mock-el-option>
@@ -148,8 +147,11 @@ exports[`DatasetTable should match snapshot 1`] = `
           <div class="ds-item-line" style="font-size: 15px;">
             Submitted <span class="s-bold">????-??-??</span> at ??:?? by
             <span title="Filter by submitter" class="ds-add-filter">
-        allDatasets.0.submitter.name</span>,
-            <span title="Filter by this lab" class="s-inst ds-add-filter">allDatasets.0.institution</span></div>
+        allDatasets.0.submitter.name</span><span>,
+        <span title="Filter by this group" class="s-group ds-add-filter">
+          allDatasets.0.group.name
+        </span></span>
+          </div>
           <!---->
         </div>
         <div class="ds-actions">
@@ -246,8 +248,11 @@ exports[`DatasetTable should match snapshot 1`] = `
           <div class="ds-item-line" style="font-size: 15px;">
             Submitted <span class="s-bold">????-??-??</span> at ??:?? by
             <span title="Filter by submitter" class="ds-add-filter">
-        allDatasets.0.submitter.name</span>,
-            <span title="Filter by this lab" class="s-inst ds-add-filter">allDatasets.0.institution</span></div>
+        allDatasets.0.submitter.name</span><span>,
+        <span title="Filter by this group" class="s-group ds-add-filter">
+          allDatasets.0.group.name
+        </span></span>
+          </div>
           <!---->
         </div>
         <div class="ds-actions">
@@ -344,8 +349,11 @@ exports[`DatasetTable should match snapshot 1`] = `
           <div class="ds-item-line" style="font-size: 15px;">
             Submitted <span class="s-bold">????-??-??</span> at ??:?? by
             <span title="Filter by submitter" class="ds-add-filter">
-        allDatasets.0.submitter.name</span>,
-            <span title="Filter by this lab" class="s-inst ds-add-filter">allDatasets.0.institution</span></div>
+        allDatasets.0.submitter.name</span><span>,
+        <span title="Filter by this group" class="s-group ds-add-filter">
+          allDatasets.0.group.name
+        </span></span>
+          </div>
           <div class="ds-item-line"><span><a href="/annotations?db=HMDB-v2.5&amp;ds=FINISHED1&amp;mdtype=allDatasets.0.metadataType" class="">1, 2, 20 annotations</a>
         @ FDR 0.05, 0.1, 0.5% (HMDB-v2.5)
       </span></div>

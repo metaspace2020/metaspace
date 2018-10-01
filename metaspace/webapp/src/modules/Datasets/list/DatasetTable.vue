@@ -97,22 +97,20 @@
            datasetStatusUpdated {
              dataset {
                id
-               institution
                name
                status
                submitter { id name }
-               principalInvestigator { name }
+               principalInvestigator { id name }
                group { id name }
                projects { id name }
-               institution
                isPublic
              }
            }
          }`,
          result({data}) {
            if (data.datasetStatusUpdated.dataset != null) {
-             const {name, status, submitter, institution} = data.datasetStatusUpdated.dataset;
-             const who = `${submitter.name} (${institution})`;
+             const {name, status, submitter, group} = data.datasetStatusUpdated.dataset;
+             const who = group ? `${submitter.name} (${group.name})` : submitter.name;
              const statusMap = {
                FINISHED: 'success',
                QUEUED: 'info',
@@ -212,7 +210,7 @@
      async startExport() {
        let csv = csvExportHeader();
 
-       csv += ['datasetId', 'datasetName', 'institution', 'submitter',
+       csv += ['datasetId', 'datasetName', 'group', 'submitter',
                'PI', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource',
                'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime','FDR@10% + DataBase', 'opticalImage'
        ].join(',') + "\n";
@@ -223,7 +221,7 @@
          return [
            row.id,
            row.name,
-           row.institution,
+           row.group ? row.group.name : '',
            person(row.submitter),
            person(row.principalInvestigator),
            row.organism,

@@ -60,7 +60,7 @@ function formatFDR (fdr: number) {
 
 export type Level = 'annotation' | 'dataset' | 'upload' | 'projects';
 
-export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName' | 'adduct' | 'mz' | 'fdrLevel' | 'institution'
+export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName' | 'adduct' | 'mz' | 'fdrLevel'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
   | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleQuery' | 'metadataType';
 
@@ -160,16 +160,6 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     valueFormatter: formatFDR,
     filterable: false,
     removable: false
-  },
-
-  institution: {
-    type: SingleSelectFilter,
-    name: 'Lab',
-    description: 'Select lab',
-    levels: ['annotation', 'dataset'],
-    initialValue: undefined,
-
-    options: 'institutionNames' // take from Vue instance
   },
 
   group: {

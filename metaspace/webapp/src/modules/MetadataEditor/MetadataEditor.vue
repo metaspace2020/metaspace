@@ -87,8 +87,6 @@
    projectIds: []
  };
 
- // TODO: fill in institution automatically when user profiles are added
-
  export default {
    name: 'metadata-editor',
    props: {
@@ -182,6 +180,7 @@
            metaspaceOptions: {
              ...(dataset != null ? metaspaceOptionsFromDataset(dataset) : null),
              submitterId: data.currentUser.id,
+             groupId: data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
            },
            submitter: data.currentUser
          }

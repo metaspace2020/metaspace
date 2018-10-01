@@ -64,11 +64,13 @@
         <span class="ds-add-filter"
               title="Filter by submitter"
               @click="addFilter('submitter')">
-          {{ formatSubmitter }}</span>,
-        <span class="s-inst ds-add-filter"
-              v-html="formatInstitution"
-              title="Filter by this lab"
-              @click="addFilter('institution')"></span>
+          {{ formatSubmitter }}</span><!-- Be careful not to add empty space before the comma --><span v-if="dataset.group">,
+          <span class="s-group ds-add-filter"
+                title="Filter by this group"
+                @click="addFilter('group')">
+            {{dataset.group.name}}
+          </span>
+        </span>
       </div>
       <div class="ds-item-line" v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
         <span>
@@ -169,10 +171,6 @@
      formatSubmitter() {
        const { name } = this.dataset.submitter;
        return name;
-     },
-
-     formatInstitution() {
-       return this.dataset.institution ? this.dataset.institution.replace(/\s/g, '&nbsp;') : '';
      },
 
      formatDatasetName() {
@@ -333,12 +331,15 @@
 
      addFilter(field) {
        let filter = Object.assign({}, this.$store.getters.filter);
-       if (field == 'polarity')
+       if (field == 'polarity') {
          filter['polarity'] = capitalize(this.dataset.polarity);
-       else if (field == 'submitter') {
+       } else if (field == 'submitter') {
          filter[field] = this.dataset.submitter.id;
-       } else
+       } else if (field == 'group') {
+         filter[field] = this.dataset.group.id;
+       } else {
          filter[field] = this.dataset[field] || this[field];
+       }
        this.$store.commit('updateFilter', filter);
      },
 
@@ -501,7 +502,7 @@
    font-weight: bold;
  }
 
- .s-inst {
+ .s-group {
    color: sienna;
  }
 

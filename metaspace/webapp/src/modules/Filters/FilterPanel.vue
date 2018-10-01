@@ -38,7 +38,6 @@
  const orderedFilterKeys = [
    'database',
    'fdrLevel',
-   'institution',
    'group',
    'project',
    'submitter',

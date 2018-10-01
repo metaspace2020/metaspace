@@ -9,7 +9,6 @@ interface Dictionary<T> {
 
 const FILTER_TO_URL: Record<FilterKey, string> = {
   database: 'db',
-  institution: 'lab',
   group: 'grp',
   project: 'prj',
   submitter: 'subm',

@@ -15,7 +15,6 @@ sync(store, router);
 describe('FilterPanel', () => {
   const allFilters = {
     database: 'HMDBv4',
-    institution: 'abc',
     group: '0123',
     project: '4567',
     submitter: '89AB',
