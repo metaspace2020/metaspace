@@ -47,15 +47,15 @@
       </el-row>
       <el-row :gutter="20">
         <el-form :disabled="isUserDetailsLoading" :rules="rules" :model="model" ref="form">
-          <div class="user-details" style="padding-left: 15px;">
-            <el-col :span="12">
+          <div style="padding-left: 15px;">
+            <el-col :span="8">
               <div>
                 <el-form-item prop="name" label="Full name">
                   <el-input v-model="model.name" name="name" />
                 </el-form-item>
               </div>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="8">
               <div>
                 <el-form-item prop="email" label="Email address">
                   <el-input v-model="model.email" name="email" />
@@ -64,6 +64,11 @@
                   <b>Please click the link that has been sent to your new email address to verify the change.</b>
                 </p>
               </div>
+            </el-col>
+            <el-col :span="8">
+              <el-button style="margin-top: 42px;" @click="handleChangePassword">
+                Change password
+              </el-button>
             </el-col>
           </div>
         </el-form>
@@ -161,6 +166,8 @@
   import emailRegex from '../../lib/emailRegex';
   import GroupsTable from './GroupsTable.vue';
   import ProjectsTable from './ProjectsTable.vue';
+  import ConfirmAsync from '../../components/ConfirmAsync';
+  import {sendPasswordResetToken} from '../../api/auth';
 
   interface Model {
     name: string;
@@ -307,6 +314,19 @@
       }
     }
 
+    @ConfirmAsync(function (this: EditUserPage) {
+      return {
+        message: `This will send you an email with a link and instructions to change your password. Do you wish to proceed?`,
+        confirmButtonText: 'Change password',
+        confirmButtonLoadingText: 'Sending email...'
+      }
+    })
+    async handleChangePassword() {
+      // TODO: Customize this so it's not so obviously a rip off of the reset password process
+      await sendPasswordResetToken(this.currentUser!.email!);
+      this.$message({message: 'Email sent!', type: 'success'});
+    }
+
     async refetchData() {
       await this.$apollo.queries.currentUser.refetch();
     }
@@ -329,11 +349,6 @@
     padding: 8px;
     float: right;
     margin: 20px 0;
-  }
-
-  .user-details {
-    display: inline-block;
-    width: 600px;
   }
 
   /deep/ .delete-account-dialog .el-dialog__body {
