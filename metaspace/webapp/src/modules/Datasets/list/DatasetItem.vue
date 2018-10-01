@@ -336,8 +336,7 @@
        if (field == 'polarity')
          filter['polarity'] = capitalize(this.dataset.polarity);
        else if (field == 'submitter') {
-         const {id, name} = this.dataset.submitter;
-         filter[field] = {id, name};
+         filter[field] = this.dataset.submitter.id;
        } else
          filter[field] = this.dataset[field] || this[field];
        this.$store.commit('updateFilter', filter);
