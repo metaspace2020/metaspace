@@ -29,30 +29,38 @@ function esFormatMz(mz) {
 function esSort(orderBy, sortingOrder) {
   // default order
   let order = 'asc';
-  if (orderBy == 'ORDER_BY_MSM' || orderBy == 'ORDER_BY_DATE')
+  if (orderBy === 'ORDER_BY_MSM' || orderBy === 'ORDER_BY_DATE')
     order = 'desc';
 
-  if (sortingOrder == 'DESCENDING')
+  if (sortingOrder === 'DESCENDING')
     order = 'desc';
-  else if (sortingOrder == 'ASCENDING')
+  else if (sortingOrder === 'ASCENDING')
     order = 'asc';
 
+  const sortTerm = (field, order) => {
+    const obj = {};
+    // unmapped_type to avoid exceptions in ES when where is nothing to sort
+    obj[field] = { order: order, unmapped_type: 'string' };
+    return obj;
+  };
+
   // annotation orderings
-  if (orderBy == 'ORDER_BY_MZ')
-    return [{'mz': order}];
-  else if (orderBy == 'ORDER_BY_MSM')
-    return [{'msm': order}];
-  else if (orderBy == 'ORDER_BY_FDR_MSM')
-    return [{'fdr': order}, {'msm': order == 'asc' ? 'desc' : 'asc'}];
-  else if (orderBy == 'ORDER_BY_DATASET')
-    return [{'ds_name': order}, {'mz': order}];
-  else if (orderBy == 'ORDER_BY_FORMULA')
-    return [{'sf': order}, {'adduct': order}, {'fdr': order}];
+  if (orderBy === 'ORDER_BY_MZ')
+    return [sortTerm('mz', order)];
+    // return sortTerms([{ mz: order }]);
+  else if (orderBy === 'ORDER_BY_MSM')
+    return [sortTerm('msm', order)];
+  else if (orderBy === 'ORDER_BY_FDR_MSM')
+    return [sortTerm('fdr', order), sortTerm('msm', order === 'asc' ? 'desc' : 'asc')];
+  else if (orderBy === 'ORDER_BY_DATASET')
+    return [sortTerm('ds_name', order), sortTerm('mz', order)];
+  else if (orderBy === 'ORDER_BY_FORMULA')
+    return [sortTerm('sf', order), sortTerm('adduct', order), sortTerm('fdr', order)];
   // dataset orderings
-  else if (orderBy == 'ORDER_BY_DATE')
-    return [{'ds_last_finished': order}];
-  else if (orderBy == 'ORDER_BY_NAME')
-    return [{'ds_name': order}];
+  else if (orderBy === 'ORDER_BY_DATE')
+    return [sortTerm('ds_last_finished', order)];
+  else if (orderBy === 'ORDER_BY_NAME')
+    return [sortTerm('ds_name', order)];
 }
 
 function constructESQuery(args, docType, user) {

@@ -9,7 +9,6 @@ import {
   fetchEngineDS,
   fetchMolecularDatabases,
   deprecatedMolDBs,
-  assertUserCanViewDataset,
   canUserViewPgDataset,
   wait,
   logger,
@@ -67,35 +66,6 @@ queue.then(function(conn) {
     });
   });
 }).catch(console.warn);
-
-function checkPermissions(datasetId, payload) {
-  return db.select().from('dataset').where('id', '=', datasetId)
-    .then(records => {
-      if (records.length == 0)
-        throw new UserError(`No dataset with specified id: ${datasetId}`);
-      metadata = records[0].metadata;
-
-      let allowUpdate = false;
-      if (payload.role == 'admin')
-        allowUpdate = true;
-      else if (payload.email == metadata.Submitted_By.Submitter.Email)
-        allowUpdate = true;
-      if (!allowUpdate)
-        throw new UserError(`You don't have permissions to edit the dataset: ${datasetId}`);
-    });
-}
-
-function baseDatasetQuery() {
-  return db.from(function() {
-    this.select(db.raw('dataset.id as id'),
-                'name',
-                db.raw('max(finish) as last_finished'),
-                db.raw('dataset.status as status'),
-                'metadata', 'config', 'input_path')
-        .from('dataset').leftJoin('job', 'dataset.id', 'job.ds_id')
-        .groupBy('dataset.id').as('tmp');
-  });
-}
 
 const resolveDatasetScopeRole = async (ctx, dsId) => {
   let scopeRole = SRO.OTHER;
@@ -291,6 +261,7 @@ const Resolvers = {
     },
 
     async currentUserLastSubmittedDataset(_, args, {user}) {
+      let lastDS = null;
       if (user) {
         const results = await esSearchResults({
           orderBy: 'ORDER_BY_DATE',
@@ -298,12 +269,11 @@ const Resolvers = {
           submitter: user.id,
           limit: 1,
         }, 'dataset', user);
-        if (results) {
-          const lastDS = results[0];
-          return lastDS;
+        if (results.length > 0) {
+          lastDS = results[0];
         }
       }
-      return null;
+      return lastDS;
     }
   },
 
@@ -382,8 +352,8 @@ const Resolvers = {
           id: ds._source.ds_group_id,
           name: ds._source.ds_group_name,
           shortName: ds._source.ds_group_short_name,
-        }
-      };
+        };
+      }
     },
 
     async principalInvestigator(ds, _, {connection}) {
