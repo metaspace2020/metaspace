@@ -4,10 +4,20 @@ import fetch from 'node-fetch';
 import config from './config';
 import {logger} from '.';
 
+interface SMAPIBody {
+  doc?: Object;
+  priority?: boolean;
+  force?: boolean;
+  del_first?: boolean;
+}
+
 export const smAPIRequest = async (uri: string, args: any) => {
-  const {id, doc, delFirst, priority, force} = args;
-  const body = {
-    id, doc: {
+  const {doc, delFirst, priority, force} = args;
+  const body: SMAPIBody = {
+    priority, force, del_first: delFirst,
+  };
+  if (doc) {
+    body.doc = {
       name: doc.name,
       input_path: doc.inputPath,
       upload_dt: doc.uploadDT,
@@ -17,9 +27,8 @@ export const smAPIRequest = async (uri: string, args: any) => {
       group_id: doc.groupId,
       adducts: doc.adducts,
       mol_dbs: doc.molDBs,
-    },
-    priority, force, del_first: delFirst,
-  };
+    }
+  }
 
   const url = `http://${config.services.sm_engine_api_host}${uri}`;
   let rawResp = await fetch(url, {
@@ -48,4 +57,3 @@ export const smAPIRequest = async (uri: string, args: any) => {
     return resp;
   }
 };
-

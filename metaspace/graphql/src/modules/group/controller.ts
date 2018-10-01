@@ -124,7 +124,17 @@ export const Resolvers = {
 
       const groupRepo = connection.getRepository(GroupModel);
       let group = await groupRepo.findOneOrFail(groupId);
-      return await groupRepo.save({...group, ...groupDetails});  // update doesn't return updated object;
+      group = groupRepo.save({...group, ...groupDetails});  // update doesn't return updated object;
+
+      const groupDSs = await connection.getRepository(DatasetModel).find({ groupId });
+      if (groupDSs) {
+        for (let ds of groupDSs) {
+          await smAPIRequest(`/v1/datasets/${ds.id}/update`, {
+            doc: { groupId }
+          });
+        }
+      }
+      return group;
     },
 
     async deleteGroup(_: any, {groupId}: any, {user, connection}: any): Promise<Boolean> {
@@ -287,7 +297,6 @@ export const Resolvers = {
       for (let dsId of datasetIds) {
         await dsRepo.update(dsId, { groupId, groupApproved: true });
         await smAPIRequest(`/v1/datasets/${dsId}/update`, {
-          id: dsId,
           doc: { groupId: groupId }
         });
       }

@@ -213,7 +213,6 @@ module.exports = {
           await saveDS(connection, dsId, submitterId, groupId,
             groupApproved, principalInvestigator);
           return await smAPIRequest(`/v1/datasets/${dsId}/add`, {
-            id: dsId,
             doc: {...engineDS, ...update},
             delFirst: procSettingsUpd || delFirst,  // delete old results if processing settings changed
             priority: priority,
@@ -231,7 +230,6 @@ module.exports = {
             await saveDS(connection, dsId, submitterId, groupId,
               groupApproved, principalInvestigator);
             const resp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
-              id: dsId,
               doc: update,
               priority: priority,
               force: force,

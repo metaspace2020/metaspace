@@ -364,19 +364,20 @@ const Resolvers = {
           email: dataset.piEmail,
         };
       }
+      return null;
 
-      const userGroup = await connection.getRepository(UserGroupModel).findOneOrFail({
-        where: {
-          groupId: ds._source.ds_group_id,
-          role: UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR
-        },
-        relations: ['user']
-      });
-      return {
-        id: userGroup.user.id,
-        name: userGroup.user.name,
-        email: userGroup.user.email,
-      };
+      // const userGroup = await connection.getRepository(UserGroupModel).findOneOrFail({
+      //   where: {
+      //     groupId: ds._source.ds_group_id,
+      //     role: UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR
+      //   },
+      //   relations: ['user']
+      // });
+      // return {
+      //   id: userGroup.user.id,
+      //   name: userGroup.user.name,
+      //   email: userGroup.user.email,
+      // };
     },
 
     analyzer(ds) {
