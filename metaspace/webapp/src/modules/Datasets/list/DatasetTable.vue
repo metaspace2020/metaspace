@@ -51,6 +51,7 @@
  import gql from 'graphql-tag';
  import FileSaver from 'file-saver';
  import delay from '../../../lib/delay';
+ import formatCsvRow from '../../../lib/formatCsvRow';
 
  const processingStages = ['started', 'queued', 'finished'];
 
@@ -210,15 +211,15 @@
      async startExport() {
        let csv = csvExportHeader();
 
-       csv += ['datasetId', 'datasetName', 'group', 'submitter',
+       csv += formatCsvRow(['datasetId', 'datasetName', 'group', 'submitter',
                'PI', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource',
                'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime','FDR@10% + DataBase', 'opticalImage'
-       ].join(',') + "\n";
+       ]);
 
        function person(p) { return p ? p.name : ''; }
 
        function formatRow(row) {
-         return [
+         return formatCsvRow([
            row.id,
            row.name,
            row.group ? row.group.name : '',
@@ -236,12 +237,12 @@
            row.uploadDateTime,
            row.fdrCounts ? `${row.fdrCounts.counts}` + ' ' + `${row.fdrCounts.dbName}` : '',
            (row.opticalImage != 'noOptImage') ? 'http://' + window.location.host + row.opticalImage : 'No optical image'
-         ].join(',');
+         ]);
        }
 
        function writeCsvChunk(rows) {
          for (let row of rows) {
-           csv += formatRow(row) + "\n";
+           csv += formatRow(row);
          }
        }
 

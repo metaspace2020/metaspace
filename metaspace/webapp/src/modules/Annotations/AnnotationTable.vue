@@ -181,6 +181,7 @@
 
  import Vue from 'vue';
  import FileSaver from 'file-saver';
+ import formatCsvRow from '../../lib/formatCsvRow';
 
  // 38 = up, 40 = down, 74 = j, 75 = k
  const KEY_TO_ACTION = {38: 'up', 75: 'up', 40: 'down', 74: 'down'};
@@ -472,9 +473,9 @@
        const chunkSize = 1000;
        let csv = csvExportHeader();
 
-       csv += ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
+       csv += formatCsvRow(['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
                'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
-               'moleculeNames', 'moleculeIds'].join(',') + "\n";
+               'moleculeNames', 'moleculeIds']);
 
        function quoted(s) { return '"' + s + '"'; }
 
@@ -485,7 +486,7 @@
        function formatRow(row) {
          const {sumFormula, adduct, msmScore, mz,
                 rhoSpatial, rhoSpectral, rhoChaos, fdrLevel} = row;
-         return [
+         return formatCsvRow([
            row.dataset.group ? row.dataset.group.name : '',
            row.dataset.name,
            row.dataset.id,
@@ -493,12 +494,12 @@
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
            quoted(row.possibleCompounds.map(m => m.name).join(', ')),
            quoted(row.possibleCompounds.map(databaseId).join(', '))
-         ].join(',');
+         ]);
        }
 
        function writeCsvChunk(rows) {
          for (let row of rows) {
-           csv += formatRow(row) + "\n";
+           csv += formatRow(row);
          }
        }
 
