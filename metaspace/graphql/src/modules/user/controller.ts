@@ -11,18 +11,12 @@ import {JwtUser} from '../auth/controller';
 import {sendEmailVerificationToken} from '../auth/operation';
 import {LooselyCompatible, smAPIRequest} from '../../utils';
 
-const assertCanEditUser = (user: JwtUser, userId?: string) => {
-  if (!user)
-    throw new UserError('Access denied');
+const assertCanEditUser = (user: JwtUser, userId: string) => {
+  if (!user || !user.id)
+    throw new UserError('Not authenticated');
 
-  if (userId) {
-    if (user.role !== 'admin' && user.id !== userId)
-      throw new UserError('Access denied');
-  }
-  else {
-    if (user.role !== 'admin')
-      throw new UserError('Access denied');
-  }
+  if (user.role !== 'admin' && user.id !== userId)
+    throw new UserError('Access denied');
 };
 
 const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<ScopeRole> => {
