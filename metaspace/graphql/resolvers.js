@@ -357,6 +357,14 @@ const Resolvers = {
     },
 
     async principalInvestigator(ds, _, {connection}) {
+      const dataset = await connection.getRepository(DatasetModel).findOneOrFail({ id: ds._source.ds_id });
+      if (dataset.piName) {
+        return {
+          name: dataset.piName,
+          email: dataset.piEmail,
+        };
+      }
+
       const userGroup = await connection.getRepository(UserGroupModel).findOneOrFail({
         where: {
           groupId: ds._source.ds_group_id,
@@ -364,12 +372,11 @@ const Resolvers = {
         },
         relations: ['user']
       });
-
       return {
         id: userGroup.user.id,
         name: userGroup.user.name,
         email: userGroup.user.email,
-      }
+      };
     },
 
     analyzer(ds) {

@@ -64,7 +64,7 @@ function esSort(orderBy, sortingOrder) {
 }
 
 function constructESQuery(args, docType, user) {
-  const { orderBy, sortingOrder, offset, limit, filter: annotationFilter={}, datasetFilter, simpleQuery } = args;
+  const { orderBy, sortingOrder, filter: annotationFilter={}, datasetFilter, simpleQuery} = args;
   const { database, datasetName, mzFilter, msmScoreFilter,
     fdrLevel, sumFormula, adduct, compoundQuery, annId } = annotationFilter;
 
@@ -77,7 +77,10 @@ function constructESQuery(args, docType, user) {
   };
 
   function addFilter(filter) {
-    body.query.bool.filter.push(filter);
+    if (Array.isArray(filter))
+      body.query.bool.filter.push(...filter);
+    else
+      body.query.bool.filter.push(filter);
   }
 
   function addRangeFilter(field, interval) {
@@ -99,15 +102,21 @@ function constructESQuery(args, docType, user) {
   } else if (user.id || user.groupIds) {
     const filterObj = {
       bool: {
-        should: [
-          { term: { ds_is_public: true } }]
+        should: [{ term: { ds_is_public: true } }]
       }
     };
     if (user.id) {
       filterObj.bool.should.push({ term: { ds_submitter_id: user.id } });
     }
     if (user.groupIds) {
-      filterObj.bool.should.push({ terms: { ds_group_id: user.groupIds } });
+      filterObj.bool.should.push({
+        bool: {
+          must: [
+            { terms: { ds_group_id: user.groupIds } },
+            { term: { ds_group_approved: true } }
+          ]
+        }
+      });
     }
     addFilter(filterObj);
   }
@@ -154,8 +163,7 @@ function constructESQuery(args, docType, user) {
    }});
 
   if (datasetFilter) {
-    for (let key of Object.keys(datasetFilter)) {
-      const val = datasetFilter[key];
+    for (let [key, val] of Object.entries(datasetFilter)) {
       if (val) {
         const f = datasetFilters[key].esFilter(val);
         addFilter(f);

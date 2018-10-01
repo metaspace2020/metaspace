@@ -109,6 +109,19 @@ class NotNullFilter extends AbstractDatasetFilter {
   }
 }
 
+class GroupMatchFilter extends AbstractDatasetFilter {
+  constructor(schemaPath, options) {
+    super(schemaPath, options);
+  }
+
+  esFilter(value) {
+    return [
+      { term: { [this.esField]: this.preprocess(value) } },
+      { term: { ds_group_approved: true } }
+    ];
+  }
+}
+
 const datasetFilters = {
   institution: new ExactMatchFilter('Submitted_By.Institution', {}),
   polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
@@ -124,7 +137,7 @@ const datasetFilters = {
   status: new ExactMatchFilter('', {esField: 'ds_status', pgField: 'status'}),
   submitter: new ExactMatchFilter('', { esField: 'ds_submitter_id' }),
   hasGroup: new NotNullFilter('', { esField: 'ds_group_id' }),
-  group: new ExactMatchFilter('', { esField: 'ds_group_id' }),
+  group: new GroupMatchFilter('', { esField: 'ds_group_id' }),
   metadataType: new ExactMatchFilter('Data_Type', {}),
 };
 

@@ -24,4 +24,11 @@ export class Dataset {
 
   @Column({ default: false, name: 'group_approved' })
   groupApproved: boolean; // true when submitter is a group member
+
+  // when user manually inputs PI details
+  @Column({ type: 'text', name: 'pi_name', nullable: true })
+  piName: string | null;
+
+  @Column({ type: 'text', name: 'pi_email', nullable: true })
+  piEmail: string | null;
 }

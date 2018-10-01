@@ -6,7 +6,7 @@ import {User as UserModel} from '../user/model';
 import {Dataset as DatasetModel} from '../dataset/model';
 import {Group, UserGroup, User} from '../../binding';
 import {Context, Scope, ScopeRole, ScopeRoleOptions} from '../../context';
-import {LooselyCompatible} from '../../utils';
+import {LooselyCompatible, smAPIRequest, logger} from '../../utils';
 
 const findUserByEmail = async (connection: Connection, email: string) => {
   return await connection.getRepository(UserModel)
@@ -42,7 +42,7 @@ export const Resolvers = {
   UserGroup: {
     async numDatasets(userGroup: UserGroupModel, _: any, {connection}: any) {
       return await connection.getRepository(DatasetModel).count({
-        where: {userId: userGroup.user.id}
+        where: { userId: userGroup.user.id, groupApproved: true }
       });
     }
   },
@@ -284,10 +284,13 @@ export const Resolvers = {
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const dsRepo = connection.getRepository(DatasetModel);
-      for (let id of datasetIds) {
-        await dsRepo.save({ id, groupId });
+      for (let dsId of datasetIds) {
+        await dsRepo.update(dsId, { groupId, groupApproved: true });
+        await smAPIRequest(`/v1/datasets/${dsId}/update`, {
+          id: dsId,
+          doc: { groupId: groupId }
+        });
       }
-      // TODO: update documents in ES for datasetIds
       return true;
     },
   }
