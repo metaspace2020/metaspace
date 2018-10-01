@@ -116,17 +116,17 @@ describe('Database operations with user', () => {
 
     const cred = await knex('credentials').select(
       ['id', 'hash', 'emailVerified']).first();
-    expect(cred.id).toBeDefined();
-    expect(cred.hash).toBeDefined();
+    expect(cred.id).toEqual(expect.anything());
+    expect(cred.hash).toEqual(expect.anything());
     expect(cred.emailVerified).toEqual(false);
 
     const user = await typeormConn.manager.findOneOrFail(User, { relations: ['credentials'] });
-    expect(user.id).toBeDefined();
+    expect(user.id).toEqual(expect.anything());
     expect(user.notVerifiedEmail).toEqual('admin@localhost');
     expect(user.name).toEqual('Name');
 
     const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
-    expect(sendEmailCallArgs).toBeDefined();
+    expect(sendEmailCallArgs).toEqual(expect.anything());
     expect(sendEmailCallArgs[0]).toBe('admin@localhost');
   });
 
@@ -161,7 +161,7 @@ describe('Database operations with user', () => {
     const newCred = (await typeormConn.manager.findOne(Credentials)) as Credentials;
     expect(newCred.hash).toEqual(oldCred.hash);
     expect(newCred.emailVerificationToken).not.toEqual(oldCred.emailVerificationToken);
-    expect(newCred.emailVerificationTokenExpires).toBeDefined();
+    expect(newCred.emailVerificationTokenExpires).toEqual(expect.anything());
     expect(newCred.emailVerificationTokenExpires!.valueOf())
       .toBeGreaterThan((oldCred.emailVerificationTokenExpires as Moment).valueOf());
 

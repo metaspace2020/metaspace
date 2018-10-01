@@ -112,8 +112,7 @@ export const Resolvers = {
       const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
       if ([SRO.ADMIN].includes(scopeRole)) {
         const users = await ctx.connection.getRepository(UserModel).find({
-          where: {name: Like(`%${query}%`)},
-          relations: ['credentials']
+          where: { name: Like(`%${query}%`) }
         }) as UserModel[];
         return users.map(user => ({
           id: user.id,
@@ -130,7 +129,7 @@ export const Resolvers = {
     async updateUser(_: any, {userId, update}: any, {user, connection}: any): Promise<User> {
       assertCanEditUser(user, userId);
 
-      if (update.role && update.role !== 'admin') {
+      if (update.role && user.role !== 'admin') {
         throw new UserError('Only admin can update role');
       }
       if (update.primaryGroupId) {
