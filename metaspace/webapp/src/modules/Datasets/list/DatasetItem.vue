@@ -2,8 +2,7 @@
   <div class="dataset-item" :class="disabledClass">
 
     <el-dialog title="Provided metadata" :visible.sync="showMetadataDialog">
-      <dataset-info :metadata="metadata"
-        :expandedKeys="['Sample information', 'Sample preparation']">
+      <dataset-info :metadata="metadata">
       </dataset-info>
     </el-dialog>
 
@@ -139,6 +138,7 @@
  import { currentUserRoleQuery } from '../../../api/user';
  import gql from 'graphql-tag';
  import reportError from '../../../lib/reportError';
+ import {safeJsonParse} from "../../../util";
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');
@@ -210,7 +210,13 @@
      },
 
      metadata() {
-       return JSON.parse(this.dataset.metadataJson);
+       const datasetMetadataExternals = {
+         "Submitter": this.formatSubmitter,
+           "PI": this.dataset.principalInvestigator,
+           "Group": this.dataset.group,
+           "Projects": this.dataset.projects
+       };
+       return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals);
      },
 
      metaboliteDatabases() {

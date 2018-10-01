@@ -45,6 +45,9 @@ export const datasetDetailItemFragment =
       name
       email
     }
+    principalInvestigator { name }
+    group { id name }
+    projects { id name }
     polarity
     ionisationSource
     analyzer {

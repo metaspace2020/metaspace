@@ -27,7 +27,7 @@ exports[`EditProjectPage should match snapshot 1`] = `
                 <!---->
                 <!---->
               </div>
-              <mock-transition name="el-zoom-in-top"></mock-transition>
+              <!---->
             </div>
           </div>
           <div class="el-form-item isPublic">
@@ -36,7 +36,7 @@ exports[`EditProjectPage should match snapshot 1`] = `
               <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
                 <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
                 </span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
-              <mock-transition name="el-zoom-in-top"></mock-transition>
+              <!---->
             </div>
           </div>
         </div>

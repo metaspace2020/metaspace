@@ -47,7 +47,7 @@
  import {metadataExportQuery} from '../../../api/metadata';
  import DatasetList from './DatasetList.vue';
  import {FilterPanel} from '../../Filters/index';
- import { csvExportHeader} from '../../../util';
+ import { csvExportHeader } from '../../../util';
  import gql from 'graphql-tag';
  import FileSaver from 'file-saver';
  import delay from '../../../lib/delay';
@@ -97,12 +97,15 @@
            datasetStatusUpdated {
              dataset {
                id
+               institution
                name
                status
-               submitter {
-                 name
-               }
+               submitter { id name }
+               principalInvestigator { name }
+               group { id name }
+               projects { id name }
                institution
+               isPublic
              }
            }
          }`,
