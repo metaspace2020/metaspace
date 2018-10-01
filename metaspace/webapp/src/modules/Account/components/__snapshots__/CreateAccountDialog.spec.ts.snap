@@ -18,7 +18,7 @@ exports[`CreateAccountDialog should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div>
-                  <mock-transition name="el-zoom-in-top"></mock-transition>
+                  <!---->
                 </div>
               </div>
             </div>
@@ -35,7 +35,7 @@ exports[`CreateAccountDialog should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div>
-                  <mock-transition name="el-zoom-in-top"></mock-transition>
+                  <!---->
                 </div>
               </div>
             </div>
@@ -50,7 +50,7 @@ exports[`CreateAccountDialog should match snapshot 1`] = `
                 <!---->
                 <!---->
               </div>
-              <mock-transition name="el-zoom-in-top"></mock-transition>
+              <!---->
             </div>
           </div>
           <div class="el-form-item is-required">
@@ -63,7 +63,7 @@ exports[`CreateAccountDialog should match snapshot 1`] = `
                 <!---->
                 <!---->
               </div>
-              <mock-transition name="el-zoom-in-top"></mock-transition>
+              <!---->
             </div>
           </div>
           <button type="button" class="el-button el-button--primary">

@@ -81,7 +81,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Species" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -93,7 +93,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Organ or organism part" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -105,7 +105,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. wildtype, diseased" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -118,7 +118,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <mock-el-autocomplete popper-class="" value="" placeholder="E.g. intervention, treatment" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -144,7 +144,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <mock-el-autocomplete popper-class="" value="" required="true" placeholder="Preservation method" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -156,7 +156,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. chemical modification" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -168,7 +168,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <mock-el-autocomplete popper-class="" value="none" required="true" placeholder="MALDI matrix, if used" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -180,7 +180,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <mock-el-autocomplete popper-class="" value="none" required="true" placeholder="Method of application, if used" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -193,7 +193,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <mock-el-autocomplete popper-class="" value="none" placeholder="Solvent used e.g. for DESI or MALDI matrix" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -229,7 +229,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       <mock-el-option value="Positive" label="Positive"></mock-el-option>
                       <mock-el-option value="Negative" label="Negative"></mock-el-option>
                     </mock-el-select>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -241,7 +241,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. MALDI, DESI" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -253,7 +253,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                   </label>
                   <div class="el-form-item__content">
                     <mock-el-autocomplete popper-class="" value="" required="true" placeholder="E.g. FTICR, Orbitrap" trigger-on-focus="true" fetch-suggestions="function () { [native code] }" class="md-ac"></mock-el-autocomplete>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -274,7 +274,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                             </div>
                             <div class="subfield-label">m/z</div>
                             <!---->
-                            <mock-transition name="el-zoom-in-top"></mock-transition>
+                            <!---->
                           </div>
                         </div>
                       </div>
@@ -287,12 +287,12 @@ exports[`MetadataEditor should match snapshot 1`] = `
                             </div>
                             <div class="subfield-label">resolving power</div>
                             <!---->
-                            <mock-transition name="el-zoom-in-top"></mock-transition>
+                            <!---->
                           </div>
                         </div>
                       </div>
                     </div>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -313,7 +313,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                             </div>
                             <div class="subfield-label">size on X-axis</div>
                             <!---->
-                            <mock-transition name="el-zoom-in-top"></mock-transition>
+                            <!---->
                           </div>
                         </div>
                       </div>
@@ -326,12 +326,12 @@ exports[`MetadataEditor should match snapshot 1`] = `
                             </div>
                             <div class="subfield-label">size on Y-axis</div>
                             <!---->
-                            <mock-transition name="el-zoom-in-top"></mock-transition>
+                            <!---->
                           </div>
                         </div>
                       </div>
                     </div>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -350,7 +350,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                 <div class="el-row">
                   <mock-el-select filterable="" remote="" remote-method="function () { [native code] }" placeholder="Enter group name"></mock-el-select>
                 </div>
-                <mock-transition name="el-zoom-in-top"></mock-transition>
+                <!---->
               </div>
             </div>
           </form>
@@ -385,7 +385,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                       <!---->
                       <!---->
                     </div>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
                 <div class="el-form-item isPublic">
@@ -394,7 +394,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
                       <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
                       </span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>
@@ -463,7 +463,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <!---->
                         <!---->
                       </div>
-                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                      <!---->
                     </div>
                   </div>
                 </div>
@@ -480,7 +480,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <mock-el-option value="FIND_GROUP" label="Find my group..."></mock-el-option>
                         <mock-el-option value="NO_GROUP" label="No group (Enter PI instead)"></mock-el-option>
                       </mock-el-select>
-                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                      <!---->
                     </div>
                   </div>
                 </div>
@@ -497,7 +497,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <mock-el-option value="currentUser.projects.1.project.id" label="currentUser.projects.1.project.name"></mock-el-option>
                         <mock-el-option value="CREATE_PROJECT" label="Create a new project..."></mock-el-option>
                       </mock-el-select>
-                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                      <!---->
                     </div>
                   </div>
                 </div>
@@ -674,7 +674,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <mock-el-option value="molecularDatabases.0.name" label="molecularDatabases.0.name"></mock-el-option>
                         <mock-el-option value="molecularDatabases.1.name" label="molecularDatabases.1.name"></mock-el-option>
                       </mock-el-select>
-                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                      <!---->
                     </div>
                   </div>
                 </div>
@@ -689,7 +689,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <mock-el-option value="adducts.0.adduct" label="adducts.0.adduct"></mock-el-option>
                         <mock-el-option value="adducts.1.adduct" label="adducts.1.adduct"></mock-el-option>
                       </mock-el-select>
-                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                      <!---->
                     </div>
                   </div>
                 </div>
@@ -707,7 +707,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                         <!---->
                         <!---->
                       </div>
-                      <mock-transition name="el-zoom-in-top"></mock-transition>
+                      <!---->
                     </div>
                   </div>
                 </div>
@@ -737,7 +737,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                     <div class="el-textarea el-input--medium">
                       <textarea class="el-textarea__inner" style="min-height: -6px; height: -20px;"></textarea>
                     </div>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>

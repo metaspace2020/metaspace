@@ -27,7 +27,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 <!---->
                 <!---->
               </div>
-              <mock-transition name="el-zoom-in-top"></mock-transition>
+              <!---->
             </div>
           </div>
           <div class="el-form-item shortName is-required">
@@ -43,7 +43,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 <!---->
                 <!---->
               </div>
-              <mock-transition name="el-zoom-in-top"></mock-transition>
+              <!---->
           </div>
         </div>
     </div>
