@@ -78,8 +78,7 @@ export const Resolvers = {
       const scopeRole = await resolveUserScopeRole(ctx, userId);
       if ([SRO.PROFILE_OWNER, SRO.ADMIN].includes(scopeRole)) {
         const user = await ctx.connection.getRepository(UserModel).findOneOrFail({
-          where: { id: userId },
-          relations: ['credentials']
+          where: { id: userId }
         });
         return {
           id: user.id,
@@ -95,8 +94,7 @@ export const Resolvers = {
       const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
       if ([SRO.PROFILE_OWNER, SRO.ADMIN].includes(scopeRole)) {
         const user = await ctx.connection.getRepository(UserModel).findOneOrFail({
-          where: { id: ctx.user.id },
-          relations: ['credentials']
+          where: { id: ctx.user.id }
         });
         return {
           id: user.id,
@@ -164,8 +162,8 @@ export const Resolvers = {
 
       await connection.getRepository(DatasetModel).delete({userId});
       await connection.getRepository(UserGroupModel).delete({userId});
-      await userRepo.delete(userId);
-      await connection.getRepository(CredentialsModel).delete(credentialsId);
+      await userRepo.delete({ id: userId });
+      await connection.getRepository(CredentialsModel).delete({ id: credentialsId });
       return true;
     },
   }
