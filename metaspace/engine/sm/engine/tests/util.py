@@ -101,9 +101,10 @@ def test_db(sm_config, request):
     db.alter('''
         CREATE SCHEMA IF NOT EXISTS graphql;
         CREATE TABLE graphql.dataset (
-            id        text,
-            user_id   uuid,
-            group_id  uuid
+            id              text,
+            user_id         uuid,
+            group_id        uuid,
+            group_approved  boolean
         );
         CREATE TABLE graphql.user (
             id     uuid,

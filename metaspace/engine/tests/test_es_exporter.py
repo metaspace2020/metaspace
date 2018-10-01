@@ -253,6 +253,7 @@ def test_update_ds_works_for_all_fields(es, sm_index, es_dsl_search, sm_config):
         'ds_submitter_email': 'submitter_email',
         'ds_group_id': 'new_ds_group_id',
         'ds_group_name': 'group_name',
+        'ds_group_approved': True,
         'ds_group_short_name': 'group_short_name',
         'ds_projects_ids': ['proj_id1', 'proj_id2'],
         'ds_is_public': True
