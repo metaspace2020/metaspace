@@ -143,7 +143,8 @@
    apollo: {
      systemHealth: {
        query: getSystemHealthQuery,
-       subscribeToMore: getSystemHealthSubscribeToMore
+       subscribeToMore: getSystemHealthSubscribeToMore,
+       fetchPolicy: 'cache-first',
      },
      currentUser: {
        query: gql`query metaspaceHeaderCurrentUserQuery {
@@ -160,6 +161,7 @@
            }
          }
        }`,
+       fetchPolicy: 'cache-first',
        loadingKey: 'loadingUser'
      }
    },

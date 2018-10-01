@@ -89,6 +89,11 @@ const apolloClient = new ApolloClient({
       }
     }
   }),
+  defaultOptions: {
+    query: {
+      fetchPolicy: 'network-only'
+    }
+  }
 });
 
 export const refreshLoginStatus = async () => {

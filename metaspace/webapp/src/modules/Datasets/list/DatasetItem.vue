@@ -136,7 +136,6 @@
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
  import { currentUserRoleQuery } from '../../../api/user';
- import gql from 'graphql-tag';
  import reportError from '../../../lib/reportError';
  import {safeJsonParse} from "../../../util";
 
@@ -297,7 +296,8 @@
        }
      },
      currentUser: {
-       query: currentUserRoleQuery
+       query: currentUserRoleQuery,
+       fetchPolicy: 'cache-first',
      },
      thumbnailImage: {
        query: thumbnailOptImageQuery,
@@ -306,7 +306,7 @@
            datasetId: this.dataset.id,
          };
        },
-       fetchPolicy: 'network-only',
+       fetchPolicy: 'cache-first',
        result(res) {
          this.opticalImageSmall = res.data.thumbnailImage
        }

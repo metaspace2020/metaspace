@@ -86,10 +86,9 @@
     UpdateGroupMutation,
     updateGroupMutation,
   } from '../../api/group';
-  import gql from 'graphql-tag';
   import EditGroupForm from './EditGroupForm.vue';
   import MembersList from '../../components/MembersList.vue';
-  import { UserRole } from '../../api/user';
+  import {currentUserRoleQuery, UserRole} from '../../api/user';
   import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
@@ -106,12 +105,10 @@
       MembersList,
     },
     apollo: {
-      currentUser: gql`query {
-        currentUser {
-          id
-          role
-        }
-      }`,
+      currentUser: {
+        query: currentUserRoleQuery,
+        fetchPolicy: 'cache-first',
+      },
       group: {
         query: editGroupQuery,
         loadingKey: 'membersLoading',

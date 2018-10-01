@@ -107,7 +107,8 @@
    apollo: {
      systemHealth: {
        query: getSystemHealthQuery,
-       subscribeToMore: getSystemHealthSubscribeToMore
+       subscribeToMore: getSystemHealthSubscribeToMore,
+       fetchPolicy: 'cache-first',
      }
    },
    created() {

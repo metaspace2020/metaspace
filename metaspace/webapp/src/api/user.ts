@@ -133,6 +133,7 @@ export interface CurrentUserIdResult {
   id: string;
 }
 
+// Always use fetchPolicy: 'cache-first' for this
 export const currentUserIdQuery =
   gql`query CurrentUserIdQuery {
   currentUser { id }
@@ -144,6 +145,7 @@ export interface CurrentUserRoleResult {
   role: UserRole;
 }
 
+// Always use fetchPolicy: 'cache-first' for this
 export const currentUserRoleQuery =
   gql`query CurrentUserRoleQuery {
   currentUser { id role }

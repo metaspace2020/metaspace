@@ -90,13 +90,9 @@
   import { Component, Prop, Watch } from 'vue-property-decorator';
   import FormField from '../inputs/FormField.vue';
   import { MetaspaceOptions } from '../formStructure';
-  import {
-    GroupListItem,
-    oneGroupQuery, oneProjectQuery,
-  } from '../../../api/dataManagement';
+  import { GroupListItem, oneGroupQuery, oneProjectQuery } from '../../../api/dataManagement';
   import { currentUserIdQuery, DatasetSubmitterFragment } from '../../../api/user';
   import './FormSection.scss';
-  import gql from 'graphql-tag';
   import FindGroupDialog from './FindGroupDialog.vue';
   import CreateProjectDialog from '../../Project/CreateProjectDialog.vue'; // imported directly so that the Project pages aren't pulled into the bundle
 
@@ -111,7 +107,10 @@
       CreateProjectDialog,
     },
     apollo: {
-      currentUser: currentUserIdQuery
+      currentUser: {
+        query: currentUserIdQuery,
+        fetchPolicy: 'cache-first',
+      }
     }
   })
   export default class DataManagementSection extends Vue {

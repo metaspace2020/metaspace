@@ -95,7 +95,8 @@
      },
 
      currentUser: {
-       query: currentUserIdQuery
+       query: currentUserIdQuery,
+       fetchPolicy: 'cache-first',
      }
    }
  })

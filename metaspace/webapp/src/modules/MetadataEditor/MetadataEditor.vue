@@ -189,7 +189,6 @@
          const {data} = await this.$apollo.query({
            query: editDatasetQuery,
            variables: {id: this.datasetId},
-           fetchPolicy: 'network-only'
          });
          return {
            metadata: JSON.parse(data.dataset.metadataJson),
@@ -202,6 +201,7 @@
      async loadOptions() {
        const {data} = await this.$apollo.query({
          query: metadataOptionsQuery,
+         fetchPolicy: 'cache-first',
        });
        return data;
      },

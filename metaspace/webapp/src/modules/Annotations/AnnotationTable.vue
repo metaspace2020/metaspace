@@ -281,6 +281,7 @@
    apollo: {
      annotations: {
        query: annotationListQuery,
+       fetchPolicy: 'cache-first',
        variables() {
          return this.queryVariables();
        },

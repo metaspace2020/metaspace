@@ -43,12 +43,12 @@
     apollo: {
       currentUser: {
         query: currentUserRoleQuery,
+        fetchPolicy: 'cache-first',
       },
       systemHealth: {
         query: getSystemHealthQuery,
         subscribeToMore: getSystemHealthSubscribeToMore,
         loadingKey: 'isLoadingInitial',
-        fetchPolicy: 'network-only',
         result(res) {
           const {canMutate, canProcessDatasets, message} = res.data.systemHealth;
           this.mode = !canMutate ? 2 : !canProcessDatasets ? 1 : 0;
