@@ -7,7 +7,7 @@
         </div>
 
         <div class="header-buttons">
-          <el-button v-if="roleInProject == null"
+          <el-button v-if="currentUser != null && roleInProject == null"
                      type="primary"
                      @click="handleRequestAccess">
             Request access
