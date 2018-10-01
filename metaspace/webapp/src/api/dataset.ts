@@ -143,6 +143,7 @@ export const deleteOpticalImageQuery =
 export const msAcqGeometryQuery =
   gql`query ($datasetId: String!) {
     dataset(id: $datasetId) {
+      id
       acquisitionGeometry
     }
   }`;
