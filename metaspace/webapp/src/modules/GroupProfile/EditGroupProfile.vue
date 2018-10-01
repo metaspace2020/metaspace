@@ -206,7 +206,8 @@
             groupDetails: {
               name,
               shortName,
-              urlSlug: this.canEditUrlSlug ? urlSlug : null,
+              // Avoid sending a null urlSlug unless it's being intentionally unset
+              ...(this.canEditUrlSlug ? {urlSlug: urlSlug || null} : {}),
             }
           },
         });
