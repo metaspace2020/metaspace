@@ -44,6 +44,12 @@ export const newDatasetQuery =
     }
     currentUser {
       ...DatasetSubmitterFragment
+      primaryGroup {
+        group {
+          id
+          name
+        }
+      }
     }
   }
   ${editDatasetFragment}

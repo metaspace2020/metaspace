@@ -1,4 +1,4 @@
-import { ApolloClient,  InMemoryCache } from 'apollo-client-preset';
+import { ApolloClient,  InMemoryCache, defaultDataIdFromObject } from 'apollo-client-preset';
 import { BatchHttpLink } from 'apollo-link-batch-http';
 import { WebSocketLink } from 'apollo-link-ws';
 import { setContext } from 'apollo-link-context';
@@ -83,9 +83,22 @@ const apolloClient = new ApolloClient({
         // Allow get-by-id queries to use cached data that originated from other kinds of queries
         dataset: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Dataset', id: args.id }),
         annotation: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Annotation', id: args.id }),
-        user: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'User', id: args.userId }),
         group: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Group', id: args.groupId }),
         project: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Project', id: args.projectId }),
+      }
+    },
+    dataIdFromObject(object) {
+      // WORKAROUND: Because of Apollo's aggressive caching, often the current User will be overwritten with results
+      // from other queries. The server side often strips fields based on how they're accessed (the "ScopeRole" logic),
+      // which means these query paths will often return different data with the same IDs:
+      // currentUser -> primaryGroup (always present)
+      // dataset -> submitter -> primaryGroup (null unless admin)
+      // To protect against this, don't allow Users (and possibly other types in the future) to have a dataId,
+      // so that InMemoryCache cannot share data between different queries.
+      if (object.__typename === 'User') {
+        return null;
+      } else {
+        return defaultDataIdFromObject(object);
       }
     }
   }),
