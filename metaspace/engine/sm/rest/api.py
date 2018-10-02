@@ -183,6 +183,15 @@ def update_ds(ds_man, ds_id, params):
 @post('/v1/datasets/<ds_id>/delete')
 @sm_modify_dataset('DELETE')
 def delete_ds(ds_man, ds_id, params):
+    """
+    :param ds_man: rest.SMapiDatasetManager
+    :param ds_id: string
+    :param params: {
+        del_raw
+        force
+    }
+    :return:
+    """
     del_raw = params.get('del_raw', False)
     force = params.get('force', False)
     ds_man.delete(ds_id=ds_id, del_raw_data=del_raw, force=force)
@@ -191,6 +200,15 @@ def delete_ds(ds_man, ds_id, params):
 @post('/v1/datasets/<ds_id>/add-optical-image')
 @sm_modify_dataset('ADD_OPTICAL_IMAGE')
 def add_optical_image(ds_man, ds_id, params):
+    """
+    :param ds_man: rest.SMapiDatasetManager
+    :param ds_id: string
+    :param params: {
+        url
+        transform
+    }
+    :return:
+    """
     img_id = params['url'].split('/')[-1]
     ds_man.add_optical_image(ds_id, img_id, params['transform'])
 
@@ -198,6 +216,12 @@ def add_optical_image(ds_man, ds_id, params):
 @post('/v1/datasets/<ds_id>/del-optical-image')
 @sm_modify_dataset('DEL_OPTICAL_IMAGE')
 def del_optical_image(ds_man, ds_id, params):
+    """
+    :param ds_man: rest.SMapiDatasetManager
+    :param ds_id: string
+    :param params: {}
+    :return:
+    """
     ds_man.del_optical_image(ds_id)
 
 
