@@ -154,154 +154,118 @@ module.exports = {
   processingSettingsChanged,
 
   Mutation: {
-    create: async (args, {user, connection}) => {
+    create: async (_, args, {user, connection}) => {
       assertCanCreateDataset(user);
-
       const {input, priority} = args;
       let {id: dsId} = args;
 
-      try {
-        input.metadata = JSON.parse(input.metadataJson);
-        validateMetadata(input.metadata);
-        await molDBsExist(input.molDBs);
+      input.metadata = JSON.parse(input.metadataJson);
+      validateMetadata(input.metadata);
+      await molDBsExist(input.molDBs);
 
-        const url = dsId ? `/v1/datasets/${dsId}/add` : '/v1/datasets/add';
-        const resp = await smAPIRequest(url, {
-          doc: input,
-          priority: priority,
-          email: user.email,
-        });
-        // TODO: generate dsId here and save it before calling SM API
-        dsId = resp['ds_id'];
+      const url = dsId ? `/v1/datasets/${dsId}/add` : '/v1/datasets/add';
+      const resp = await smAPIRequest(url, {
+        doc: input,
+        priority: priority,
+        email: user.email,
+      });
+      // TODO: generate dsId here and save it before calling SM API
+      dsId = resp['ds_id'];
 
-        const {submitterId, groupId, principalInvestigator} = input;
+      const {submitterId, groupId, principalInvestigator} = input;
 
-        let groupApproved = false;
-        if (groupId)
-          groupApproved = await isMemberOf(connection, user, groupId);
+      let groupApproved = false;
+      if (groupId)
+        groupApproved = await isMemberOf(connection, user, groupId);
 
-        await saveDS(connection, dsId, submitterId, groupId,
-          groupApproved, principalInvestigator);
-        return JSON.stringify({ dsId, status: 'success' });
-      } catch (e) {
-        logger.error(e.stack);
-        throw e;
-      }
+      await saveDS(connection, dsId, submitterId, groupId,
+        groupApproved, principalInvestigator);
+      return JSON.stringify({ dsId, status: 'success' });
     },
 
-    update: async (args, {user, connection}) => {
+    update: async (_, args, {user, connection}) => {
       const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
-      try {
-        await assertCanEditDataset(connection, user, dsId);
+      await assertCanEditDataset(connection, user, dsId);
 
-        if (update.metadataJson) {
-          update.metadata = JSON.parse(update.metadataJson);
-          validateMetadata(update.metadata);
+      if (update.metadataJson) {
+        update.metadata = JSON.parse(update.metadataJson);
+        validateMetadata(update.metadata);
+      }
+
+      const engineDS = await fetchEngineDS({id: dsId});
+      const {newDB, procSettingsUpd} = await processingSettingsChanged(engineDS, update);
+      const reprocessingNeeded = newDB || procSettingsUpd;
+
+      const {submitterId, groupId, principalInvestigator} = update;
+
+      let groupApproved = false;
+      if (groupId)
+        groupApproved = await isMemberOf(connection, user, groupId);
+
+      if (reprocess) {
+        await saveDS(connection, dsId, submitterId, groupId,
+          groupApproved, principalInvestigator);
+        return await smAPIRequest(`/v1/datasets/${dsId}/add`, {
+          doc: {...engineDS, ...update},
+          delFirst: procSettingsUpd || delFirst,  // delete old results if processing settings changed
+          priority: priority,
+          force: force,
+        });
+      }
+      else {
+        if (reprocessingNeeded) {
+          throw new UserError(JSON.stringify({
+            'type': 'reprocessing_needed',
+            'hint': `Reprocessing needed. Provide 'reprocess' flag.`
+          }));
         }
-
-        const engineDS = await fetchEngineDS({id: dsId});
-        const {newDB, procSettingsUpd} = await processingSettingsChanged(engineDS, update);
-        const reprocessingNeeded = newDB || procSettingsUpd;
-
-        const {submitterId, groupId, principalInvestigator} = update;
-
-        let groupApproved = false;
-        if (groupId)
-          groupApproved = await isMemberOf(connection, user, groupId);
-
-        if (reprocess) {
+        else {
           await saveDS(connection, dsId, submitterId, groupId,
             groupApproved, principalInvestigator);
-          return await smAPIRequest(`/v1/datasets/${dsId}/add`, {
-            doc: {...engineDS, ...update},
-            delFirst: procSettingsUpd || delFirst,  // delete old results if processing settings changed
+          const resp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
+            doc: update,
             priority: priority,
             force: force,
           });
+          return JSON.stringify(resp);
         }
-        else {
-          if (reprocessingNeeded) {
-            throw new UserError(JSON.stringify({
-              'type': 'reprocessing_needed',
-              'hint': `Reprocessing needed. Provide 'reprocess' flag.`
-            }));
-          }
-          else {
-            await saveDS(connection, dsId, submitterId, groupId,
-              groupApproved, principalInvestigator);
-            const resp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
-              doc: update,
-              priority: priority,
-              force: force,
-            });
-            return JSON.stringify(resp);
-          }
-        }
-      } catch (e) {
-        logger.error(e.stack);
-        throw e;
       }
     },
 
-    delete: async (args, {user, connection}) => {
+    delete: async (_, args, {user, connection}) => {
       const {id: dsId, priority} = args;
+      await assertCanEditDataset(connection, user, dsId);
 
       try {
-        await assertCanEditDataset(connection, user, dsId);
-
-        try {
-          await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
-        }
-        catch (err) {
-          logger.warn(err);
-        }
-
-        await connection.getRepository(DatasetModel).delete(dsId);
-        const resp = await smAPIRequest(`/v1/datasets/${dsId}/delete`, {});
-        return JSON.stringify(resp);
-      } catch (e) {
-        logger.error(e.stack);
-        throw e;
+        await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
       }
+      catch (err) {
+        logger.warn(err);
+      }
+
+      await connection.getRepository(DatasetModel).delete(dsId);
+      const resp = await smAPIRequest(`/v1/datasets/${dsId}/delete`, {});
+      return JSON.stringify(resp);
     },
 
-    addOpticalImage: async (args, {user, connection}) => {
-      const {datasetId: dsId, transform} = args;
-      let {imageUrl} = args;
+    addOpticalImage: async (_, {input}, {user, connection}) => {
+      const {datasetId: dsId, transform} = input;
+      let {imageUrl} = input;
+      await assertCanEditDataset(connection, user, dsId);
 
-      try {
-        await assertCanEditDataset(connection, user, dsId);
-
-        const basePath = `http://localhost:${config.img_storage_port}`;
-        if (imageUrl[0] === '/') {
-          // imageUrl comes from the web application and should not include host/port.
-          //
-          // This is necessary for a Virtualbox installation because of port mapping,
-          // and preferred for AWS installation because we're not charged for downloads
-          // if internal network is used.
-          //
-          // TODO support image storage running on a separate host
-          imageUrl = basePath + imageUrl;
-        }
-
-        const uri = `/v1/datasets/${dsId}/add-optical-image`;
-        const body = {url: imageUrl, transform};
-        return await smAPIRequest(uri, body);
-      } catch (e) {
-        logger.error(e.message);
-        throw e;
-      }
+        // TODO support image storage running on a separate host
+      const url = `http://localhost:${config.img_storage_port}${imageUrl}`;
+      const resp = await smAPIRequest(`/v1/datasets/${dsId}/add-optical-image`, {
+        url, transform
+      });
+      return JSON.stringify(resp);
     },
 
-    deleteOpticalImage: async (args, {user, connection}) => {
+    deleteOpticalImage: async (_, args, {user, connection}) => {
       const {datasetId: dsId} = args;
-      try {
-        await assertCanEditDataset(connection, user, dsId);
-        return await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
-      } catch (e) {
-        logger.error(e.message);
-        throw e;
-      }
+      await assertCanEditDataset(connection, user, dsId);
+      const resp = await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
+      return JSON.stringify(resp);
     }
   }
 };

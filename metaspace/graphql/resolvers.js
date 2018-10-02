@@ -546,31 +546,16 @@ const Resolvers = {
       const ds = await fetchEngineDS({id});
       if (ds === undefined)
         throw new UserError('DS does not exist');
-      return DSMutation.create({
+      return DSMutation.create(_, {
         id: id, input: ds, reprocess: true,
         delFirst: delFirst, priority: priority
       }, ctx);
     },
-
-    createDataset: (_, args, context) => {
-      return DSMutation.create(args, context);
-    },
-
-    updateDataset: (_, args, context) => {
-      return DSMutation.update(args, context);
-    },
-
-    deleteDataset: (_, args, context) => {
-      return DSMutation.delete(args, context);
-    },
-
-    addOpticalImage: (_, {input}, {user}) => {
-      return DSMutation.addOpticalImage(input, user);
-    },
-
-    deleteOpticalImage: (_, args, {user}) => {
-      return DSMutation.deleteOpticalImage(args, user);
-    }
+    createDataset: DSMutation.create,
+    updateDataset: DSMutation.update,
+    deleteDataset: DSMutation.delete,
+    addOpticalImage: DSMutation.addOpticalImage,
+    deleteOpticalImage: DSMutation.deleteOpticalImage,
   },
 
   Subscription: {

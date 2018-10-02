@@ -9,12 +9,14 @@ interface SMAPIBody {
   priority?: boolean;
   force?: boolean;
   del_first?: boolean;
+  url?: string;
+  transform?: Object;
 }
 
 export const smAPIRequest = async (uri: string, args: any) => {
-  const {doc, delFirst, priority, force} = args;
+  const {doc, delFirst, priority, force, url, transform} = args;
   const body: SMAPIBody = {
-    priority, force, del_first: delFirst,
+    priority, force, del_first: delFirst, url, transform,
   };
   if (doc) {
     body.doc = {
@@ -30,8 +32,7 @@ export const smAPIRequest = async (uri: string, args: any) => {
     }
   }
 
-  const url = `http://${config.services.sm_engine_api_host}${uri}`;
-  let rawResp = await fetch(url, {
+  let rawResp = await fetch(`http://${config.services.sm_engine_api_host}${uri}`, {
     method: 'POST',
     body: JSON.stringify(body),
     headers: {
