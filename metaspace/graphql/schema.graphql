@@ -97,7 +97,7 @@ type Dataset {
 
 # fields of categorical type
 enum DatasetAggField {
-  DF_INSTITUTION,
+  DF_GROUP,
   DF_SUBMITTER_NAME,
   DF_POLARITY,
   DF_ION_SOURCE,
@@ -185,9 +185,6 @@ input AnnotationFilter {
 input DatasetFilter {
   # list of IDs separated by '|'
   ids: String
-
-  # exact match
-  institution: String
 
   # substring match
   name: String

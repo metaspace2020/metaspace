@@ -13,7 +13,7 @@
  const query =
    gql`query GetSubmitterCounts($filter: DatasetFilter, $query: String) {
       countDatasetsPerGroup(query: {
-        fields: [DF_INSTITUTION, DF_SUBMITTER_NAME],
+        fields: [DF_GROUP, DF_SUBMITTER_NAME],
         filter: $filter,
         simpleQuery: $query
       }) {
