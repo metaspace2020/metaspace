@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 import * as _ from 'lodash';
 import * as config from 'config';
 import {esSearchResults, esCountResults, esCountGroupedResults,
-  esAnnotationByID, esDatasetByID, esFilterValueCountResults} from './esConnector';
+  esAnnotationByID, esDatasetByID, esFilterValueCountResults, esSubmitterSuggestions} from './esConnector';
 import {dsField, getPgField, SubstringMatchFilter} from './datasetFilters';
 import {
   pgDatasetsViewableByUser,
@@ -140,9 +140,18 @@ const Resolvers = {
     },
 
     async metadataSuggestions(_, {field, query, limit}, {user}) {
-      const valueCounts = await esFilterValueCountResults(
-        { field, query, limit }, user);
-      return Object.keys(valueCounts);
+      const itemCounts = await esFilterValueCountResults({
+        wildcard: { wildcard: { [`ds_meta.${field}`]: `*${query}*` } },
+        aggsTerms: {
+          terms: {
+            field: `ds_meta.${field}.raw`,
+            size: limit,
+            order: { _count : 'desc' }
+          }
+        },
+        limit
+      }, user);
+      return Object.keys(itemCounts);
     },
 
     adductSuggestions() {
@@ -153,21 +162,24 @@ const Resolvers = {
       }));
     },
 
-    submitterSuggestions(_, { query }, {user}) {
-      const schemaPath = 'Submitted_By.Submitter';
-      const p1 = schemaPath + '.First_Name',
-        p2 = schemaPath + '.Surname',
-        f1 = getPgField(p1),
-        f2 = getPgField(p2);
-      const q = db.from(pgDatasetsViewableByUser(user))
-                  .distinct(db.raw(`${f1} as name, ${f2} as surname`))
-                  .whereRaw(`${f1} ILIKE ? OR ${f2} ILIKE ?`, ['%' + query + '%', '%' + query + '%']);
-      logger.info(q.toString());
-      return q.orderBy('name', 'asc').orderBy('surname', 'asc')
-              .then(results => results.map(r => ({
-                id: [r.name, r.surname].join('|||'),
-                name: [r.name, r.surname].filter(n => n).join(' '),
-              })))
+    async submitterSuggestions(_, {query}, {user}) {
+      const itemCounts = await esFilterValueCountResults({
+        wildcard: { wildcard: { ds_submitter_name: `*${query}*` } },
+        aggsTerms: {
+          terms: {
+            script: {
+              inline: "doc['ds_submitter_id'].value + '/' + doc['ds_submitter_name.raw'].value",
+              lang: 'painless'
+            },
+            size: 1000,
+            order: { _term : 'asc' }
+          }
+        }
+      }, user);
+      return Object.keys(itemCounts).map((s) => {
+        const [id, name] = s.split('/');
+        return { id, name }
+      });
     },
 
     async molecularDatabases(_, args, {user}) {

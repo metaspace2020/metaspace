@@ -300,33 +300,22 @@ module.exports.esCountGroupedResults = function(args, docType, user) {
 };
 
 module.exports.esFilterValueCountResults = async (args, user) => {
-  const {field, query, limit=10} = args;
+  const {wildcard, aggsTerms} = args;
   const body = createBodyWithAuthFilters(user);
-
-  const metaPrefix = 'ds_meta',
-    notAnalysedSuffix = 'raw';
   body.query.bool.filter.push({ term: { _type: 'dataset' } });
-  body.query.bool.filter.push({ wildcard: {
-    [`${metaPrefix}.${field}`]: `*${query}*` }
-  });
+  body.query.bool.filter.push(wildcard);
   body.size = 0;  // return only aggregations
-  body.aggs = {
-    field_counts: {
-      terms: {
-        field: `${metaPrefix}.${field}.${notAnalysedSuffix}`,
-        size: limit
-      }
-    }
-  };
+  body.aggs = { field_counts: aggsTerms };
+  console.log(JSON.stringify(body));
   const resp = await es.search({
     body,
     index: esIndex
   });
-  const queryCounts = {};
+  const itemCounts = {};
   resp.aggregations.field_counts.buckets.forEach((o) => {
-    queryCounts[o.key] = o.doc_count
+    itemCounts[o.key] = o.doc_count;
   });
-  return queryCounts;
+  return itemCounts;
 };
 
 async function getFirst(args, docType, user) {
