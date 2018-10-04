@@ -29,17 +29,16 @@ DEFAULT_CONFIG = {
 class GraphQLClient(object):
     def __init__(self, url, user_email="", password=""):
         self.url = url
-        self.s = requests.Session()
-        r = requests.post(DEFAULT_CONFIG['signin_url'], params={"email": user_email, "password": password})
-        self.sm_cookie = requests.utils.dict_from_cookiejar(r.cookies)
+        self.session = requests.Session()
+        self.session.post(DEFAULT_CONFIG['signin_url'], params={"email": user_email, "password": password})
 
     def query(self, query, variables={}):
-        head = {'Authorization': 'Bearer ' + self.get_jwt()}
-        res = requests.post(self.url, json={'query': query, 'variables': variables}, headers=head)
+        res = self.session.post(self.url, json={'query': query, 'variables': variables},
+                                headers={'Authorization': 'Bearer ' + self.get_jwt()})
         return _extract_data(res)
 
     def get_jwt(self):
-        return self.s.get(DEFAULT_CONFIG['gettoken_url'], cookies=self.sm_cookie).text
+        return self.session.get(DEFAULT_CONFIG['gettoken_url']).text
 
     def iterQuery(self, query, variables={}, batch_size=50000):
         """
