@@ -11,31 +11,35 @@ def _extract_data(res):
     if not res.headers.get('Content-Type').startswith('application/json'):
         raise Exception(res.text)
     res_json = res.json()
-    if 'data' in res_json:
+    if 'data' in res_json and 'errors' not in res_json:
         return res.json()['data']
     else:
-        if (json.loads(res_json['errors'][0]['message'])['type'] == "failed_validation"):
-            pprint.pprint(res_json)
-            raise Exception("Validaton of metadata failed, please check that all fields are correctly entered")
+        pprint.pprint(res.json()['errors'])
         raise Exception(res.json()['errors'][0]['message'])
 
-
 DEFAULT_CONFIG = {
-    'graphql_url': 'http://staging.metaspace2020.eu/graphql',
-    'moldb_url': 'http://staging.metaspace2020.eu/mol_db/v1',
-    'jwt': 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJNRVRBU1BBQ0UyMDIwIiwicm9sZSI6ImFub255bW91cyJ9.Hl0h6crcHLb-SPm7nomXkQco5l2iAO6D1bwdjmOaFXM'
+    'graphql_url': 'http://metaspace2020.eu/graphql',
+    'moldb_url': 'http://metaspace2020.eu/mol_db/v1',
+    'signin_url': 'http://metaspace2020.eu/api_auth/signin',
+    'gettoken_url': 'http://metaspace2020.eu/api_auth/gettoken',
+    'usr_email': '',
+    'usr_pass': '',
 }
 
 class GraphQLClient(object):
-    def __init__(self, url, jwt=""):
+    def __init__(self, url, user_email="", password=""):
         self.url = url
-        self.jwt=jwt
-        self.hed = {'Authorization':'Bearer ' + self.jwt}
+        self.s = requests.Session()
+        r = requests.post(DEFAULT_CONFIG['signin_url'], params={"email": user_email, "password": password})
+        self.sm_cookie = requests.utils.dict_from_cookiejar(r.cookies)
 
     def query(self, query, variables={}):
-        res = requests.post(self.url,
-                            json={'query': query, 'variables': variables}, headers = self.hed)
+        head = {'Authorization': 'Bearer ' + self.get_jwt()}
+        res = requests.post(self.url, json={'query': query, 'variables': variables}, headers=head)
         return _extract_data(res)
+
+    def get_jwt(self):
+        return self.s.get(DEFAULT_CONFIG['gettoken_url'], cookies=self.sm_cookie).text
 
     def iterQuery(self, query, variables={}, batch_size=50000):
         """
@@ -229,10 +233,8 @@ class GraphQLClient(object):
         variables = {"datasetId": dsid}
         return self.query(query, variables)
 
-    def createDataset(self, data_path, metadata, priority=0, dsName=None,
+    def createDataset(self, data_path, metadata, submitter_id, priority=0, dsName=None,
                       isPublic=None, molDBs=None, adducts=None, dsid=None):
-        if self.jwt == None:
-            raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
         query = """
                     mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int) {
                         createDataset(
@@ -244,7 +246,6 @@ class GraphQLClient(object):
                 """
 
         variables = {
-            'jwt': self.jwt,
             'id': dsid,
             'input': {
                 'name': dsName,
@@ -252,6 +253,7 @@ class GraphQLClient(object):
                 'isPublic': isPublic,
                 'molDBs': molDBs,
                 'adducts': adducts,
+                'submitterId': submitter_id,
                 'metadataJson': metadata
             }
         }
@@ -259,25 +261,18 @@ class GraphQLClient(object):
         return self.query(query, variables)
 
     def deleteDataset(self, datasetID, delRaw=False):
-        if self.jwt == None:
-            raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
-
-        query = """
-                mutation customDeleteDataset ($jwt: String!, $datasetId: String!, $delRaw: Boolean) {
+       query = """
+                mutation customDeleteDataset ($datasetId: String!, $delRaw: Boolean) {
                       deleteDataset(
-                        jwt: $jwt,
                         datasetId: $datasetId,
                         delRawData: $delRaw
                       )
                  }
                 """
-        variables = {'jwt': self.jwt, 'datasetId': datasetID, 'delRaw': delRaw}
-        return self.query(query, variables)
+       variables = {'datasetId': datasetID, 'delRaw': delRaw}
+       return self.query(query, variables)
 
     def updateDatabasesQuery(self, ds_id, molDBs, adducts, reprocess=True, priority=1):
-        if self.jwt == None:
-            raise ValueError("No jwt supplied. Ask the host of {} to supply you with one".format(self.url))
-
         query = """
                 mutation updateMetadataDatabases($id: String!, $reprocess: Boolean, 
                 $input: DatasetUpdateInput!, $priority: Int) {
@@ -290,11 +285,9 @@ class GraphQLClient(object):
                         }
                 """
         variables = {
-            'jwt': self.jwt,
             'id': ds_id,
             'input': {
                 'molDBs': molDBs,
-                'adducts': adducts,
             },
             'priority': priority,
             'reprocess': reprocess
@@ -566,12 +559,13 @@ class SMInstance(object):
     def __repr__(self):
         return "SMInstance({})".format(self._config['graphql_url'])
 
-    def assign_jwt(self, jwt):
-        self._config['jwt'] = jwt
+    def login(self, email, password):
+        self._config['usr_email'] = email
+        self._config['usr_pass'] = password
         self.reconnect()
 
     def reconnect(self):
-        self._gqclient = GraphQLClient(self._config['graphql_url'], self._config['jwt'])
+        self._gqclient = GraphQLClient(self._config['graphql_url'], self._config['usr_email'], self._config['usr_pass'])
         self._es_client = None
         self._moldb_client = None
 
@@ -781,7 +775,7 @@ class SMInstance(object):
             key = "{}/{}".format(folder_uuid, os.path.split(fn)[1])
             s3.upload_file(fn, s3bucket, key)
         folder = "s3a://" + s3bucket + "/" + folder_uuid
-        return self._gqclient.createDataset(folder, metadata, priority, dsName, isPublic, molDBs, adducts, dsid=dsid)
+        return self._gqclient.createDataset(folder, metadata, submitter_id, priority, dsName, isPublic, molDBs, adducts, dsid=dsid)
 
     def update_dataset_dbs(self, datasetID, molDBs, adducts, priority):
         return self._gqclient.updateDatabasesQuery(datasetID, molDBs, adducts, priority)
