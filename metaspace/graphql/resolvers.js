@@ -2,7 +2,8 @@ import {UserError} from 'graphql-errors';
 import fetch from 'node-fetch';
 import * as _ from 'lodash';
 import * as config from 'config';
-import {esSearchResults, esCountResults, esCountGroupedResults, esAnnotationByID, esDatasetByID} from './esConnector';
+import {esSearchResults, esCountResults, esCountGroupedResults,
+  esAnnotationByID, esDatasetByID, esFilterValueCountResults} from './esConnector';
 import {dsField, getPgField, SubstringMatchFilter} from './datasetFilters';
 import {
   pgDatasetsViewableByUser,
@@ -97,10 +98,10 @@ const resolveDatasetScopeRole = async (ctx, dsId) => {
 
 const Resolvers = {
   Query: {
-    async dataset(_, { id }, ctx) {
+    async dataset(_, { id: dsId }, ctx) {
       // TODO: decide whether to support field level access here
-      const scopeRole = await resolveDatasetScopeRole(ctx, id);
-      const ds = await esDatasetByID(id, ctx.user);
+      const scopeRole = await resolveDatasetScopeRole(ctx, dsId);
+      const ds = await esDatasetByID(dsId, ctx.user);
       return ds ? { ...ds, scopeRole }: null;
     },
 
@@ -138,14 +139,10 @@ const Resolvers = {
       return esAnnotationByID(id, user);
     },
 
-    metadataSuggestions(_, { field, query, limit }, {user}) {
-      // TODO: add authorisation
-      let f = new SubstringMatchFilter(field, {}),
-          q = db.from(pgDatasetsViewableByUser(user))
-                .select(db.raw(f.pgField + " as field"))
-                .groupBy('field').orderByRaw('count(*) desc').limit(limit);
-      return f.pgFilter(q, query).orderBy('field', 'asc')
-              .then(results => results.map(row => row['field']));
+    async metadataSuggestions(_, {field, query, limit}, {user}) {
+      const valueCounts = await esFilterValueCountResults(
+        { field, query, limit }, user);
+      return Object.keys(valueCounts);
     },
 
     adductSuggestions() {
@@ -365,19 +362,6 @@ const Resolvers = {
         };
       }
       return null;
-
-      // const userGroup = await connection.getRepository(UserGroupModel).findOneOrFail({
-      //   where: {
-      //     groupId: ds._source.ds_group_id,
-      //     role: UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR
-      //   },
-      //   relations: ['user']
-      // });
-      // return {
-      //   id: userGroup.user.id,
-      //   name: userGroup.user.name,
-      //   email: userGroup.user.email,
-      // };
     },
 
     analyzer(ds) {

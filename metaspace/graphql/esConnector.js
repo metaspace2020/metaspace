@@ -63,35 +63,24 @@ function esSort(orderBy, sortingOrder) {
     return [sortTerm('ds_name', order)];
 }
 
-function constructESQuery(args, docType, user) {
-  const { orderBy, sortingOrder, filter: annotationFilter={}, datasetFilter, simpleQuery} = args;
-  const { database, datasetName, mzFilter, msmScoreFilter,
-    fdrLevel, sumFormula, adduct, compoundQuery, annId } = annotationFilter;
+const createAddFilter = (body) => {
+  return (filter) => {
+    if (Array.isArray(filter))
+      body.query.bool.filter.push(...filter);
+    else
+      body.query.bool.filter.push(filter);
+  };
+};
 
-  let body = {
+const createBodyWithAuthFilters = (user) => {
+  const body = {
     query: {
       bool: {
         filter: []
       }
     }
   };
-
-  function addFilter(filter) {
-    if (Array.isArray(filter))
-      body.query.bool.filter.push(...filter);
-    else
-      body.query.bool.filter.push(filter);
-  }
-
-  function addRangeFilter(field, interval) {
-    const filter = {range: {}};
-    filter.range[field] = {
-      gte: interval.min,
-      lt: interval.max
-    };
-    addFilter(filter);
-  }
-
+  const addFilter = createAddFilter(body);
   // (!) Authorisation checks
   if (!user || !user.id) {
     // not logged in user
@@ -120,6 +109,27 @@ function constructESQuery(args, docType, user) {
     }
     addFilter(filterObj);
   }
+  return body;
+};
+
+function constructESQuery(args, docType, user) {
+  const { orderBy, sortingOrder, filter: annotationFilter={}, datasetFilter, simpleQuery} = args;
+  const { database, datasetName, mzFilter, msmScoreFilter,
+    fdrLevel, sumFormula, adduct, compoundQuery, annId } = annotationFilter;
+
+  const body = createBodyWithAuthFilters(user);
+  const addFilter = createAddFilter(body);
+
+  function addRangeFilter(field, interval) {
+    const filter = {range: {}};
+    filter.range[field] = {
+      gte: interval.min,
+      lt: interval.max
+    };
+    addFilter(filter);
+  }
+
+  createBodyWithAuthFilters(body, user);
 
   if (orderBy)
     body.sort = esSort(orderBy, sortingOrder);
@@ -287,6 +297,36 @@ module.exports.esCountGroupedResults = function(args, docType, user) {
       logger.error(e);
       return e.message;
     });
+};
+
+module.exports.esFilterValueCountResults = async (args, user) => {
+  const {field, query, limit=10} = args;
+  const body = createBodyWithAuthFilters(user);
+
+  const metaPrefix = 'ds_meta',
+    notAnalysedSuffix = 'raw';
+  body.query.bool.filter.push({ term: { _type: 'dataset' } });
+  body.query.bool.filter.push({ wildcard: {
+    [`${metaPrefix}.${field}`]: `*${query}*` }
+  });
+  body.size = 0;  // return only aggregations
+  body.aggs = {
+    field_counts: {
+      terms: {
+        field: `${metaPrefix}.${field}.${notAnalysedSuffix}`,
+        size: limit
+      }
+    }
+  };
+  const resp = await es.search({
+    body,
+    index: esIndex
+  });
+  const queryCounts = {};
+  resp.aggregations.field_counts.buckets.forEach((o) => {
+    queryCounts[o.key] = o.doc_count
+  });
+  return queryCounts;
 };
 
 async function getFirst(args, docType, user) {

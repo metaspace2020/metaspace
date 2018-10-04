@@ -155,9 +155,12 @@ module.exports = {
 
   Mutation: {
     create: async (_, args, {user, connection}) => {
-      assertCanCreateDataset(user);
       const {input, priority} = args;
       let {id: dsId} = args;
+      if (dsId)
+        await assertCanEditDataset(connection, user, dsId);
+      else
+        assertCanCreateDataset(user);
 
       input.metadata = JSON.parse(input.metadataJson);
       validateMetadata(input.metadata);
