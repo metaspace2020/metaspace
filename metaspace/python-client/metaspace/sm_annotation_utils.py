@@ -40,6 +40,16 @@ class GraphQLClient(object):
     def get_jwt(self):
         return self.session.get(DEFAULT_CONFIG['gettoken_url']).text
 
+    def get_submitter_id(self):
+        query = """
+        query {
+          currentUser {
+            id
+          }
+        }
+        """
+        return self.query(query)['currentUser']['id']
+
     def iterQuery(self, query, variables={}, batch_size=50000):
         """
         Assumes query has $offset and $limit parameters,
@@ -232,8 +242,9 @@ class GraphQLClient(object):
         variables = {"datasetId": dsid}
         return self.query(query, variables)
 
-    def createDataset(self, data_path, metadata, submitter_id, priority=0, dsName=None,
+    def createDataset(self, data_path, metadata, priority=0, dsName=None,
                       isPublic=None, molDBs=None, adducts=None, dsid=None):
+        submitter_id = self.get_submitter_id()
         query = """
                     mutation createDataset($id: String, $input: DatasetCreateInput!, $priority: Int) {
                         createDataset(
@@ -774,7 +785,7 @@ class SMInstance(object):
             key = "{}/{}".format(folder_uuid, os.path.split(fn)[1])
             s3.upload_file(fn, s3bucket, key)
         folder = "s3a://" + s3bucket + "/" + folder_uuid
-        return self._gqclient.createDataset(folder, metadata, submitter_id, priority, dsName, isPublic, molDBs, adducts, dsid=dsid)
+        return self._gqclient.createDataset(folder, metadata, priority, dsName, isPublic, molDBs, adducts, dsid=dsid)
 
     def update_dataset_dbs(self, datasetID, molDBs, adducts, priority):
         return self._gqclient.updateDatabasesQuery(datasetID, molDBs, adducts, priority)
