@@ -193,7 +193,7 @@
   .page {
     display: flex;
     justify-content: center;
-
+    margin-top: 25px;
   }
   .content {
     width: 950px;
