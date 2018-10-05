@@ -162,7 +162,12 @@ export const Resolvers = {
       assertCanEditUser(user, userId);
 
       if (deleteDatasets) {
-        throw new UserError('Not implemented yet');
+        const userDSs = await connection.getRepository(DatasetModel).find({ userId });
+        if (userDSs) {
+          for (let ds of userDSs) {
+            await smAPIRequest(`/v1/datasets/${ds.id}/delete`);
+          }
+        }
       }
 
       const userRepo = await connection.getRepository(UserModel);
