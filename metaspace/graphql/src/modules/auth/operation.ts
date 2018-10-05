@@ -12,7 +12,7 @@ import {User} from '../user/model';
 
 export interface UserCredentialsInput {
   email: string;
-  name: string;
+  name?: string;
   password?: string;
   googleId?: string;
 }
@@ -116,22 +116,23 @@ const createLocalCredentials = async (userCred: UserCredentialsInput): Promise<C
 export const createUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
   const existingUser = await findUserByEmail(userCred.email, 'email');
   if (existingUser) {
-    emailService.sendLoginEmail(existingUser.email!);
+    const link = `${config.web_public_url}//account/sign-in`;
+    emailService.sendLoginEmail(existingUser.email!, link);
     logger.debug(`Email already verified. Sent log in email to ${existingUser.email}`);
   }
   else {
     const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email');
-    if (!existingUserNotVerified) {
+    if (!existingUserNotVerified || !existingUserNotVerified.credentials) {
       const newCred = userCred.googleId ?
         await createGoogleCredentials(userCred) :
         await createLocalCredentials(userCred);
 
-      const newUser = userRepo.create({
+      const userUpd = {
         notVerifiedEmail: userCred.email,
         name: userCred.name,
         credentials: newCred
-      });
-      await userRepo.insert(newUser);
+      };
+      await userRepo.save({...existingUserNotVerified, ...userUpd});
     }
     else {
       await sendEmailVerificationToken(existingUserNotVerified.credentials,

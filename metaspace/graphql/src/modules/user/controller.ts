@@ -36,7 +36,7 @@ const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<Scop
 
 export const Resolvers = {
   User: {
-    async primaryGroup({scopeRole, ...user}: User & Scope, _: any,
+    async primaryGroup({scopeRole, ...user}: UserModel & Scope, _: any,
                        ctx: Context): Promise<LooselyCompatible<UserGroup>|null> {
       if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return await ctx.connection.getRepository(UserGroupModel).findOne({
@@ -47,7 +47,7 @@ export const Resolvers = {
       return null;
     },
 
-    async groups({scopeRole, ...user}: User & Scope, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup>[]|null> {
+    async groups({scopeRole, ...user}: UserModel & Scope, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup>[]|null> {
       if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return await ctx.connection.getRepository(UserGroupModel).find({
           where: { userId: user.id },
@@ -57,11 +57,11 @@ export const Resolvers = {
       return null;
     },
 
-    async email({scopeRole, ...user}: User & Scope): Promise<string|null> {
+    async email({scopeRole, ...user}: UserModel & Scope): Promise<string|null> {
       if ([SRO.GROUP_MANAGER,
         SRO.ADMIN,
         SRO.PROFILE_OWNER].includes(scopeRole)) {
-        return user.email || null;
+        return user.email || user.notVerifiedEmail || null;
       }
       return null;
     }
@@ -153,7 +153,7 @@ export const Resolvers = {
 
       return {
         id: userObj.id,
-        name: userObj.name,
+        name: userObj.name!,
         role: userObj.role
       };
     },

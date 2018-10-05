@@ -8,6 +8,8 @@ import {Group, UserGroup, UserGroupRole} from '../../binding';
 import {Context, Scope, ScopeRole, ScopeRoleOptions} from '../../context';
 import {LooselyCompatible, smAPIRequest, logger} from '../../utils';
 import {JwtUser} from '../auth/controller';
+import {sendInvitationEmail} from '../auth';
+import config from '../../utils/config';
 
 const findUserByEmail = async (connection: Connection, email: string) => {
   return await connection.getRepository(UserModel)
@@ -266,10 +268,15 @@ export const Resolvers = {
     async inviteUserToGroup(_: any, {groupId, email}: any, {user, connection}: any): Promise<UserGroup> {
       await assertCanEditGroup(connection, user, groupId);
 
-      const invUser = await findUserByEmail(connection, email);
-      if (!invUser)
-        // TODO: send sign up invitation
-        throw new UserError('Not Implemented Yet');
+      let invUser = await findUserByEmail(connection, email);
+      if (!invUser) {
+        // create not verified user
+        const userRepo = connection.getRepository(UserModel);
+        invUser = await userRepo.save({ notVerifiedEmail: email }) as UserModel;
+        const invitedByUser = await findUserByEmail(connection, user.email);
+        const link = `${config.web_public_url}/account/create-account`;
+        sendInvitationEmail(email, invitedByUser!.name || '', link);
+      }
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
@@ -283,7 +290,7 @@ export const Resolvers = {
           logger.info(`User ${invUserGroup.userId} is already member of ${groupId}`)
       }
       else {
-        await userGroupRepo.save({
+        invUserGroup = await userGroupRepo.save({
           userId: invUser.id,
           groupId,
           role: UserGroupRoleOptions.INVITED,

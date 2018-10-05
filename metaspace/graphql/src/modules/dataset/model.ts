@@ -16,7 +16,7 @@ export class Dataset {
   user: User;
 
   @Column({ type: 'text', name: 'group_id', nullable: true })
-  groupId: string; // dataset belongs to group -> all members have view rights
+  groupId: string | null; // dataset belongs to group -> all members have view rights
 
   @ManyToOne(type => Group)
   @JoinColumn({ name: 'group_id' })
