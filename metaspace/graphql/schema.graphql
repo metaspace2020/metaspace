@@ -1,5 +1,4 @@
 type Person {
-  id: ID           # null if it was entered as free-text
   name: String!
   email: String    # null if current user is not allowed to see
 }
@@ -98,7 +97,7 @@ type Dataset {
 
 # fields of categorical type
 enum DatasetAggField {
-  DF_INSTITUTION,
+  DF_GROUP,
   DF_SUBMITTER_NAME,
   DF_POLARITY,
   DF_ION_SOURCE,
@@ -186,9 +185,6 @@ input AnnotationFilter {
 input DatasetFilter {
   # list of IDs separated by '|'
   ids: String
-
-  # exact match
-  institution: String
 
   # substring match
   name: String

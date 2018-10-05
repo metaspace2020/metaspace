@@ -2,7 +2,6 @@
   <div>
     <transfer-datasets-dialog
       v-if="showTransferDatasetsDialog"
-      :currentUserId="currentUser && currentUser.id"
       :groupName="invitingGroup && invitingGroup.name"
       :isInvited="true"
       @accept="handleAcceptTransferDatasets"

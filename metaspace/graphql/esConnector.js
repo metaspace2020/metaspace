@@ -211,14 +211,8 @@ module.exports.esCountResults = async function(args, docType, user) {
 };
 
 const fieldEnumToSchemaPath = {
-  DF_INSTITUTION: datasetFilters.institution.esField,
-  DF_SUBMITTER_NAME: {
-    script: {
-      // NOTE: In elasticsearch 6, "inline" is replaced with "source"
-      inline: `doc['${datasetFilters.submitter.esField}.First_Name'].value + ' ' + doc['${datasetFilters.submitter.esField}.Surname'].value`,
-      lang: "painless",
-    }
-  },
+  DF_GROUP: 'ds_group_short_name',
+  DF_SUBMITTER_NAME: 'ds_submitter_name',
   DF_POLARITY: datasetFilters.polarity.esField,
   DF_ION_SOURCE: datasetFilters.ionisationSource.esField,
   DF_ANALYZER_TYPE: datasetFilters.analyzerType.esField,

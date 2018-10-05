@@ -35,38 +35,46 @@
 </template>
 <script lang="ts">
   import Vue from 'vue';
-  import { Component, Prop, Watch } from 'vue-property-decorator';
+  import { Component, Prop } from 'vue-property-decorator';
   import { DatasetListItem, datasetListItemsQuery } from '../../api/dataset';
   import DatasetCheckboxList from '../../components/DatasetCheckboxList.vue';
+  import {currentUserIdQuery, CurrentUserIdResult} from '../../api/user';
 
-  @Component({
+  @Component<TransferDatasetsDialog>({
     components: {
       DatasetCheckboxList
     },
     apollo: {
+      currentUser: {
+        query: currentUserIdQuery,
+        loadingKey: 'loading',
+        fetchPolicy: 'cache-first',
+      },
       allDatasets: {
         query: datasetListItemsQuery,
         loadingKey: 'loading',
-        variables(this: TransferDatasetsDialog) {
+        variables() {
           return {
             dFilter: {
-              submitter: this.currentUserId,
+              submitter: this.currentUser!.id,
               hasGroup: false,
             }
           };
+        },
+        skip() {
+          return !this.currentUser || !this.currentUser.id;
         }
       }
     }
   })
   export default class TransferDatasetsDialog extends Vue {
     @Prop({ required: true })
-    currentUserId!: string; //TODO: It's weird to have this as a prop. It would be better to grab it from Vuex.
-    @Prop({ required: true })
     groupName!: string;
     @Prop({ required: true })
     isInvited!: boolean; // True to show "Accept/reject invitation", false to show "Request access/cancel"
 
     loading: number = 0;
+    currentUser: CurrentUserIdResult | null = null;
     allDatasets: DatasetListItem[] = [];
     selectedDatasets: Record<string, boolean> = {};
     isSubmitting: Boolean = false;

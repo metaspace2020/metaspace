@@ -6,10 +6,12 @@ export interface SystemHealth {
   message?: String
 }
 
+// Always use fetchPolicy: 'cache-first' for this
 export const getSystemHealthQuery = gql`query GetSystemHealth {
   systemHealth { canMutate canProcessDatasets message }
 }`;
 
+// Always use fetchPolicy: 'cache-first' for this
 export const getSystemHealthSubscribeToMore = {
   document: gql`subscription SystemHealth {
     systemHealthUpdated { canMutate canProcessDatasets message }

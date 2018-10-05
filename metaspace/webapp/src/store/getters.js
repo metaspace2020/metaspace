@@ -40,11 +40,10 @@ export default {
 
   gqlDatasetFilter(state, getters) {
     const filter = getters.filter;
-    const {institution, group, project, submitter, datasetIds, polarity,
+    const {group, project, submitter, datasetIds, polarity,
            organism, organismPart, condition, growthConditions,
            ionisationSource, analyzerType, maldiMatrix, metadataType} = filter;
     return {
-      institution,
       group: group,
       project: project,
       submitter: submitter,

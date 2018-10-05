@@ -87,8 +87,6 @@
    projectIds: []
  };
 
- // TODO: fill in institution automatically when user profiles are added
-
  export default {
    name: 'metadata-editor',
    props: {
@@ -182,6 +180,7 @@
            metaspaceOptions: {
              ...(dataset != null ? metaspaceOptionsFromDataset(dataset) : null),
              submitterId: data.currentUser.id,
+             groupId: data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
            },
            submitter: data.currentUser
          }
@@ -189,7 +188,6 @@
          const {data} = await this.$apollo.query({
            query: editDatasetQuery,
            variables: {id: this.datasetId},
-           fetchPolicy: 'network-only'
          });
          return {
            metadata: JSON.parse(data.dataset.metadataJson),
@@ -202,6 +200,7 @@
      async loadOptions() {
        const {data} = await this.$apollo.query({
          query: metadataOptionsQuery,
+         fetchPolicy: 'cache-first',
        });
        return data;
      },

@@ -64,6 +64,7 @@
  import {createDatasetQuery} from '../../api/dataset';
  import {getSystemHealthQuery, getSystemHealthSubscribeToMore} from '../../api/system';
  import get from 'lodash-es/get';
+ import {currentUserIdQuery} from '../../api/user';
 
  const DataTypeConfig = {
    'LC-MS': {
@@ -107,26 +108,29 @@
    apollo: {
      systemHealth: {
        query: getSystemHealthQuery,
-       subscribeToMore: getSystemHealthSubscribeToMore
+       subscribeToMore: getSystemHealthSubscribeToMore,
+       fetchPolicy: 'cache-first',
+     },
+     currentUser: {
+       query: currentUserIdQuery,
+       result({data}) {
+         if (data.currentUser == null) {
+           this.$store.commit('account/showDialog', {
+             dialog: 'signIn',
+             dialogCloseRedirect: '/',
+             loginSuccessRedirect: '/upload',
+           });
+         }
+       }
      }
    },
    created() {
      this.$store.commit('updateFilter', this.$store.getters.filter);
    },
 
-   async mounted() {
-     await tokenAutorefresh.waitForAuth();
-     if (!this.isSignedIn) {
-       this.$store.commit('account/showDialog', {
-         dialog: 'signIn',
-         dialogCloseRedirect: '/',
-         loginSuccessRedirect: '/upload',
-       });
-     }
-   },
-
    data() {
      return {
+       loading: 0,
        fineUploaderConfig: config.fineUploader,
        validationErrors: [],
        isSubmitting: false,
@@ -135,6 +139,7 @@
 	     helpDialog: false,
        helpLink: "https://docs.google.com/document/d/e/2PACX-1vTT4QrMQ2RJMjziscaU8S3gbznlv6Rm5ojwrsdAXPbR5bt7Ivp-ThkC0hefrk3ZdVqiyCX7VU_ddA62/pub",
        systemHealth: null,
+       currentUser: null,
      }
    },
    components: {
@@ -156,7 +161,7 @@
        return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig['default'];
      },
      isSignedIn() {
-       return this.$store.state.authenticated;
+       return this.currentUser != null && this.currentUser.id != null;
      },
      enableUploads() {
        return !this.systemHealth || (this.systemHealth.canMutate && this.systemHealth.canProcessDatasets);
@@ -302,7 +307,7 @@
   }
 
   .md-editor {
-    padding: 80px 20px 20px 20px;
+    padding: 0 20px 20px 20px;
     display: flex;
     justify-content: center;
   }

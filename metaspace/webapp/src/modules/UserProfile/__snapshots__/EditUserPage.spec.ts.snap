@@ -41,8 +41,8 @@ exports[`EditUserPage should match snapshot 1`] = `
     </div>
     <div class="el-row" style="margin-left: -10px; margin-right: -10px;">
       <form class="el-form">
-        <div class="user-details" style="padding-left: 15px;">
-          <div class="el-col el-col-12" style="padding-left: 10px; padding-right: 10px;">
+        <div style="padding-left: 15px;">
+          <div class="el-col el-col-8" style="padding-left: 10px; padding-right: 10px;">
             <div>
               <div class="el-form-item is-required">
                 <label for="name" class="el-form-item__label">Full name</label>
@@ -59,7 +59,7 @@ exports[`EditUserPage should match snapshot 1`] = `
               </div>
             </div>
           </div>
-          <div class="el-col el-col-12" style="padding-left: 10px; padding-right: 10px;">
+          <div class="el-col el-col-8" style="padding-left: 10px; padding-right: 10px;">
             <div>
               <div class="el-form-item is-required">
                 <label for="email" class="el-form-item__label">Email address</label>
@@ -76,6 +76,13 @@ exports[`EditUserPage should match snapshot 1`] = `
               </div>
               <!---->
             </div>
+          </div>
+          <div class="el-col el-col-8" style="padding-left: 10px; padding-right: 10px;">
+            <button type="button" class="el-button el-button--default" style="margin-top: 42px;">
+              <!---->
+              <!----><span>
+              Change password
+            </span></button>
           </div>
         </div>
       </form>

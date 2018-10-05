@@ -57,7 +57,6 @@ export interface MetaspaceOptions {
 }
 
 const FIELD_WIDTH: Record<string, number> = {
-  'Institution': 8,
   'Submitter': 8,
   'Supplementary': 16,
   'Email': 24,

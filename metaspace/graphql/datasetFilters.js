@@ -123,7 +123,6 @@ class GroupMatchFilter extends AbstractDatasetFilter {
 }
 
 const datasetFilters = {
-  institution: new ExactMatchFilter('Submitted_By.Institution', {}),
   polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
   ionisationSource: new ExactMatchFilter('MS_Analysis.Ionisation_Source', {}),
   analyzerType: new PhraseMatchFilter('MS_Analysis.Analyzer', {}),
