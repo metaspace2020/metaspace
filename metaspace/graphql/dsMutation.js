@@ -111,16 +111,17 @@ const isMemberOf = async (connection, user, groupId) => {
   return isMember;
 };
 
-const saveDS = async (connection, dsId, submitterId, groupId, approved, principalInvestigator) => {
-    const dsUpdate = {
-      id: dsId,
-      userId: submitterId,
-      groupId: groupId,
-      groupApproved: approved,
-      piName: principalInvestigator ? principalInvestigator.name : undefined,
-      piEmail: principalInvestigator ? principalInvestigator.email : undefined
-    };
-    await connection.getRepository(DatasetModel).save(dsUpdate);
+const saveDS = async (connection, args) => {
+  const {dsId, submitterId, groupId, groupApproved, principalInvestigator} = args;
+  const dsUpdate = {
+    id: dsId,
+    userId: submitterId,
+    groupId: groupId,
+    groupApproved,
+    piName: principalInvestigator ? principalInvestigator.name : undefined,
+    piEmail: principalInvestigator ? principalInvestigator.email : undefined
+  };
+  await connection.getRepository(DatasetModel).save(dsUpdate);
 };
 
 const assertCanEditDataset = async (connection, user, dsId) => {
@@ -176,13 +177,10 @@ module.exports = {
       dsId = resp['ds_id'];
 
       const {submitterId, groupId, principalInvestigator} = input;
-
-      let groupApproved = false;
+      const saveDSArgs = {dsId, submitterId, groupId, principalInvestigator};
       if (groupId)
-        groupApproved = await isMemberOf(connection, user, groupId);
-
-      await saveDS(connection, dsId, submitterId, groupId,
-        groupApproved, principalInvestigator);
+        saveDSArgs.groupApproved = await isMemberOf(connection, user, groupId);
+      await saveDS(connection, saveDSArgs);
       return JSON.stringify({ dsId, status: 'success' });
     },
 
@@ -200,14 +198,12 @@ module.exports = {
       const reprocessingNeeded = newDB || procSettingsUpd;
 
       const {submitterId, groupId, principalInvestigator} = update;
-
-      let groupApproved = false;
+      const saveDSArgs = {dsId, submitterId, groupId, principalInvestigator};
       if (groupId)
-        groupApproved = await isMemberOf(connection, user, groupId);
+        saveDSArgs.groupApproved = await isMemberOf(connection, user, groupId);
 
       if (reprocess) {
-        await saveDS(connection, dsId, submitterId, groupId,
-          groupApproved, principalInvestigator);
+        await saveDS(connection, saveDSArgs);
         return await smAPIRequest(`/v1/datasets/${dsId}/add`, {
           doc: {...engineDS, ...update},
           delFirst: procSettingsUpd || delFirst,  // delete old results if processing settings changed
@@ -223,8 +219,7 @@ module.exports = {
           }));
         }
         else {
-          await saveDS(connection, dsId, submitterId, groupId,
-            groupApproved, principalInvestigator);
+          await saveDS(connection, saveDSArgs);
           const resp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
             doc: update,
             priority: priority,

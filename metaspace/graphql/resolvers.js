@@ -3,7 +3,7 @@ import fetch from 'node-fetch';
 import * as _ from 'lodash';
 import * as config from 'config';
 import {esSearchResults, esCountResults, esCountGroupedResults,
-  esAnnotationByID, esDatasetByID, esFilterValueCountResults, esSubmitterSuggestions} from './esConnector';
+  esAnnotationByID, esDatasetByID, esFilterValueCountResults} from './esConnector';
 import {dsField, getPgField, SubstringMatchFilter} from './datasetFilters';
 import {
   pgDatasetsViewableByUser,
