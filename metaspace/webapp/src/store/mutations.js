@@ -86,10 +86,6 @@ export default {
     state.tableIsLoading = isLoading;
   },
 
-  setUser(state, user) {
-    state.authenticated = user != null && user.role !== 'anonymous';
-  },
-
   startTour(state, tourDescription) {
     state.currentTour = tourDescription;
   },

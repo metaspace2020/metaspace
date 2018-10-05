@@ -23,8 +23,6 @@ const store = new Vuex.Store({
 
     lastUsedFilters: {},
 
-    authenticated: false,
-
     currentTour: null,
   },
 

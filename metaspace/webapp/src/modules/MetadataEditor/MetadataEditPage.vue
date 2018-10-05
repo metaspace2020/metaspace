@@ -24,6 +24,7 @@
  import {updateDatasetQuery} from '../../api/metadata';
  import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system';
  import {isArray, isEqual, get} from 'lodash-es';
+ import {currentUserIdQuery} from '../../api/user';
 
  export default {
    name: 'metadata-edit-page',
@@ -32,6 +33,7 @@
        validationErrors: [],
        isSubmitting: false,
        systemHealth: null,
+       currentUser: null,
      }
    },
    apollo: {
@@ -39,6 +41,9 @@
        query: getSystemHealthQuery,
        subscribeToMore: getSystemHealthSubscribeToMore,
        fetchPolicy: 'cache-first',
+     },
+     currentUser: {
+       query: currentUserIdQuery,
      }
    },
    computed: {
@@ -47,7 +52,7 @@
      },
 
      loggedIn() {
-       return this.$store.state.authenticated;
+       return this.currentUser != null && this.currentUser.id != null;
      }
    },
    components: {
@@ -188,6 +193,7 @@
   .page {
     display: flex;
     justify-content: center;
+
   }
   .content {
     width: 950px;
