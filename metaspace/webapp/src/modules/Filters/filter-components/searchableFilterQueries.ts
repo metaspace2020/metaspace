@@ -21,6 +21,7 @@ const datasetQueries: FilterQueries = {
          label: name
         }
       }`,
+      fetchPolicy: 'cache-first',
       variables: {
         filter: {
           ...omit($store.getters.gqlDatasetFilter, 'ids'),
@@ -41,6 +42,7 @@ const datasetQueries: FilterQueries = {
           label: name
         }
       }`,
+      fetchPolicy: 'cache-first',
       variables: {ids: ids.join('|')}
     });
     return data.options as Option[];
@@ -57,6 +59,7 @@ const groupQueries: FilterQueries = {
          label: name
         }
       }`,
+        fetchPolicy: 'cache-first',
         variables: { query }
       });
       return data.options as Option[];
@@ -72,7 +75,8 @@ const groupQueries: FilterQueries = {
               }
             }
           }
-        }`
+        }`,
+        fetchPolicy: 'cache-first',
       });
       return currentUser && currentUser.groups && currentUser.groups.map((userGroup: any) => userGroup.group) || [] as Option[];
     }
@@ -85,6 +89,7 @@ const groupQueries: FilterQueries = {
          label: name
         }
       }`,
+      fetchPolicy: 'cache-first',
       variables: { groupId }
     }));
     const results = await Promise.all(promises);
@@ -104,6 +109,7 @@ const projectQueries: FilterQueries = {
          label: name
         }
       }`,
+        fetchPolicy: 'cache-first',
         variables: { query }
       });
       return data.options as Option[];
@@ -119,7 +125,8 @@ const projectQueries: FilterQueries = {
               }
             }
           }
-        }`
+        }`,
+        fetchPolicy: 'cache-first',
       });
       return currentUser && currentUser.projects && currentUser.projects.map((userProject: any) => userProject.project) || [] as Option[];
     }
@@ -132,6 +139,7 @@ const projectQueries: FilterQueries = {
          label: name
         }
       }`,
+      fetchPolicy: 'cache-first',
       variables: { projectId }
     }));
     const results = await Promise.all(promises);
@@ -151,6 +159,7 @@ const submitterQueries: FilterQueries = {
          label: name
         }
       }`,
+        fetchPolicy: 'cache-first',
         variables: { query }
       });
       return data.options as Option[];
@@ -172,7 +181,8 @@ const submitterQueries: FilterQueries = {
               }
             }
           }
-        }`
+        }`,
+        fetchPolicy: 'cache-first',
       });
       if (currentUser) {
         const meOption = { value: currentUser.id, label: currentUser.label };
@@ -195,6 +205,7 @@ const submitterQueries: FilterQueries = {
          label: name
         }
       }`,
+      fetchPolicy: 'cache-first',
       variables: { userId }
     }));
     const results = await Promise.all(promises);

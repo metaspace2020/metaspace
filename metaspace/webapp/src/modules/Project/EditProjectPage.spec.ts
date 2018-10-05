@@ -12,6 +12,7 @@ describe('EditProjectPage', () => {
   const mockProject: EditProjectQuery = {
     id: '2',
     name: 'Adduct Assessment Alliance',
+    urlSlug: null,
     isPublic: true,
     currentUserRole: 'MANAGER',
     members: [

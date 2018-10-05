@@ -18,7 +18,6 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
         mz
         dataset {
           id
-          institution
           submitter { id name }
           principalInvestigator { name }
           group { id name }
@@ -67,8 +66,8 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
       mz
       dataset {
         id
-        institution
         name
+        group { id name }
       }
       possibleCompounds {
         name

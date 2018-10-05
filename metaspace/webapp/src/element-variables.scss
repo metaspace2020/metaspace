@@ -24,3 +24,7 @@ $--collapse-header-height: 40px;
     }
   }
 }
+
+@include b(message) {
+  top: 75px;
+}

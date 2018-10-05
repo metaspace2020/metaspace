@@ -64,11 +64,13 @@
         <span class="ds-add-filter"
               title="Filter by submitter"
               @click="addFilter('submitter')">
-          {{ formatSubmitter }}</span>,
-        <span class="s-inst ds-add-filter"
-              v-html="formatInstitution"
-              title="Filter by this lab"
-              @click="addFilter('institution')"></span>
+          {{ formatSubmitter }}</span><!-- Be careful not to add empty space before the comma --><span v-if="dataset.group">,
+          <span class="s-group ds-add-filter"
+                title="Filter by this group"
+                @click="addFilter('group')">
+            {{dataset.group.name}}
+          </span>
+        </span>
       </div>
       <div class="ds-item-line" v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
         <span>
@@ -136,7 +138,6 @@
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
  import { currentUserRoleQuery } from '../../../api/user';
- import gql from 'graphql-tag';
  import reportError from '../../../lib/reportError';
  import {safeJsonParse} from "../../../util";
 
@@ -170,10 +171,6 @@
      formatSubmitter() {
        const { name } = this.dataset.submitter;
        return name;
-     },
-
-     formatInstitution() {
-       return this.dataset.institution ? this.dataset.institution.replace(/\s/g, '&nbsp;') : '';
      },
 
      formatDatasetName() {
@@ -297,7 +294,8 @@
        }
      },
      currentUser: {
-       query: currentUserRoleQuery
+       query: currentUserRoleQuery,
+       fetchPolicy: 'cache-first',
      },
      thumbnailImage: {
        query: thumbnailOptImageQuery,
@@ -306,7 +304,7 @@
            datasetId: this.dataset.id,
          };
        },
-       fetchPolicy: 'network-only',
+       fetchPolicy: 'cache-first',
        result(res) {
          this.opticalImageSmall = res.data.thumbnailImage
        }
@@ -333,13 +331,15 @@
 
      addFilter(field) {
        let filter = Object.assign({}, this.$store.getters.filter);
-       if (field == 'polarity')
+       if (field == 'polarity') {
          filter['polarity'] = capitalize(this.dataset.polarity);
-       else if (field == 'submitter') {
-         const {id, name} = this.dataset.submitter;
-         filter[field] = {id, name};
-       } else
+       } else if (field == 'submitter') {
+         filter[field] = this.dataset.submitter.id;
+       } else if (field == 'group') {
+         filter[field] = this.dataset.group.id;
+       } else {
          filter[field] = this.dataset[field] || this[field];
+       }
        this.$store.commit('updateFilter', filter);
      },
 
@@ -502,7 +502,7 @@
    font-weight: bold;
  }
 
- .s-inst {
+ .s-group {
    color: sienna;
  }
 

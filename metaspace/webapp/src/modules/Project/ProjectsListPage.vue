@@ -52,6 +52,7 @@
     apollo: {
       currentUser: {
         query: currentUserRoleQuery,
+        fetchPolicy: 'cache-first',
         loadingKey: 'loading',
       },
       allProjects: {

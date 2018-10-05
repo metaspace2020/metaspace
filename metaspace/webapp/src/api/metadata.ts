@@ -43,6 +43,12 @@ export const newDatasetQuery =
     }
     currentUser {
       ...DatasetSubmitterFragment
+      primaryGroup {
+        group {
+          id
+          name
+        }
+      }
     }
   }
   ${editDatasetFragment}
@@ -61,7 +67,6 @@ export const updateDatasetQuery =
 
 // TODO: use autocompletion for filter values, same as on the upload page
 export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
-  institutionNames: metadataSuggestions(field: "Submitted_By.Institution", query: "", limit: 1000)
   organisms: metadataSuggestions(field: "Sample_Information.Organism", query: "", limit: 1000)
   organismParts: metadataSuggestions(field: "Sample_Information.Organism_Part", query: "", limit: 1000)
   conditions: metadataSuggestions(field: "Sample_Information.Condition", query: "", limit: 1000)
@@ -85,12 +90,14 @@ export const metadataExportQuery = gql`
                           offset: $offset, limit: $limit) {
       id
       name
-      institution
       submitter {
         id
         name
       }
       principalInvestigator {
+        name
+      }
+      group {
         id
         name
       }

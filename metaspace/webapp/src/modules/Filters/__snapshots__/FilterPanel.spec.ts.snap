@@ -21,24 +21,6 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </mock-el-popover>
     <!---->
   </div>
-  <div class="tf-outer" data-test-key="institution" filterkey="institution">
-    <div class="tf-name">
-      Lab:
-    </div>
-    <mock-el-popover trigger="click" placement="bottom" width="300">
-      <div slot-key="default">
-        <mock-el-select filterable="true" value="abc">
-          <mock-el-option label="institutionNames" value="institutionNames"></mock-el-option>
-          <mock-el-option label="institutionNames" value="institutionNames"></mock-el-option>
-        </mock-el-select>
-      </div>
-      <div slot-key="reference">
-        <div class="tf-value"><span class="tf-value-span"><span>abc</span></span>
-        </div>
-      </div>
-    </mock-el-popover>
-    <div class="tf-remove el-icon-circle-close"></div>
-  </div>
   <div class="tf-outer" data-test-key="group" options="">
     <div class="tf-name">
       Group:
@@ -376,7 +358,6 @@ exports[`FilterPanel should match snapshot (no filters) 1`] = `
   <mock-el-select placeholder="Add filter" style="width: 200px; margin-bottom: 10px;">
     <mock-el-option value="database" label="Select database"></mock-el-option>
     <mock-el-option value="fdrLevel" label="Select FDR level"></mock-el-option>
-    <mock-el-option value="institution" label="Select lab"></mock-el-option>
     <mock-el-option value="group" label="Select group"></mock-el-option>
     <mock-el-option value="project" label="Select project"></mock-el-option>
     <mock-el-option value="submitter" label="Select submitter"></mock-el-option>

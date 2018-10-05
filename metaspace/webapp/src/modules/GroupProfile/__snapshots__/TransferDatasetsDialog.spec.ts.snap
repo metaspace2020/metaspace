@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`TransferDatasetsDialog should match snapshot (datasets to import, invited) 1`] = `
-<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog">
+<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog" currentuserid="current user id">
   <div mock-v-loading="0">
     <div>
       <p style="margin-top: 0px;">
@@ -21,7 +21,7 @@ exports[`TransferDatasetsDialog should match snapshot (datasets to import, invit
 `;
 
 exports[`TransferDatasetsDialog should match snapshot (datasets to import, requesting access) 1`] = `
-<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog">
+<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog" currentuserid="current user id">
   <div mock-v-loading="0">
     <div>
       <p style="margin-top: 0px;">
@@ -41,7 +41,7 @@ exports[`TransferDatasetsDialog should match snapshot (datasets to import, reque
 `;
 
 exports[`TransferDatasetsDialog should match snapshot (no datasets, invited) 1`] = `
-<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog">
+<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog" currentuserid="current user id">
   <div mock-v-loading="0">
     <div>
       <p style="margin-top: 0px;">
@@ -61,7 +61,7 @@ exports[`TransferDatasetsDialog should match snapshot (no datasets, invited) 1`]
 `;
 
 exports[`TransferDatasetsDialog should match snapshot (no datasets, requesting access) 1`] = `
-<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog">
+<mock-el-dialog visible="" append-to-body="" title="Join group" class="dialog" currentuserid="current user id">
   <div mock-v-loading="0">
     <div>
       <p style="margin-top: 0px;">

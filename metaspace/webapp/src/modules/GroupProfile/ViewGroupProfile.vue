@@ -3,7 +3,6 @@
     <div v-if="group != null" class="page-content">
       <transfer-datasets-dialog
         v-if="showTransferDatasetsDialog"
-        :currentUserId="currentUserId"
         :groupName="group.name"
         :isInvited="isInvited"
         @accept="handleAcceptTransferDatasets"
@@ -16,7 +15,7 @@
         </div>
 
         <div class="header-buttons">
-          <el-button v-if="roleInGroup == null"
+          <el-button v-if="currentUser != null && roleInGroup == null"
                      type="primary"
                      @click="handleRequestAccess">
             Request access
@@ -111,7 +110,8 @@
     },
     apollo: {
       currentUser: {
-        query: currentUserIdQuery
+        query: currentUserIdQuery,
+        fetchPolicy: 'cache-first',
       },
       group: {
         query() {

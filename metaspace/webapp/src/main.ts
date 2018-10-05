@@ -64,6 +64,3 @@ const app = new Vue({
 
 setErrorNotifier(app.$notify);
 setMaintenanceMessageHandler(app.$alert);
-
-import tokenAutorefresh from './tokenAutorefresh'
-tokenAutorefresh.addJwtListener((jwt, payload) => store.commit('setUser', payload));

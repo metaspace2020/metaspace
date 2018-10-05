@@ -20,14 +20,9 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component } from 'vue-property-decorator';
-  import {
-    CreateGroupMutation,
-    createGroupMutation,
-    UserGroupRole,
-  } from '../../api/group';
-  import gql from 'graphql-tag';
+  import {createGroupMutation, UserGroupRole} from '../../api/group';
   import EditGroupForm from './EditGroupForm.vue';
-  import { UserRole } from '../../api/user';
+  import {currentUserRoleQuery, UserRole} from '../../api/user';
   import reportError from '../../lib/reportError';
 
   interface CurrentUserQuery {
@@ -40,12 +35,10 @@
       EditGroupForm,
     },
     apollo: {
-      currentUser: gql`query {
-        currentUser {
-          id
-          role
-        }
-      }`,
+      currentUser: {
+        query: currentUserRoleQuery,
+        fetchPolicy: 'cache-first',
+      },
     }
   })
   export default class CreateGroupPage extends Vue {

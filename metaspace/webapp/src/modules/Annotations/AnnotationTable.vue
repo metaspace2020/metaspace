@@ -39,16 +39,18 @@
         No annotations were found
       </p>
 
-      <el-table-column label="Lab" v-if="!hidden('Institution')"
+      <el-table-column label="Lab" v-if="!hidden('Group')"
                        min-width="95">
         <template slot-scope="props">
           <div class="cell-wrapper">
             <span class="cell-span">
-              {{ props.row.dataset.institution }}
+              <span v-if="props.row.dataset.group">{{props.row.dataset.group.name}}</span>
+              <i v-else>No Group</i>
             </span>
-            <img src="../../assets/filter-icon.png"
-                 @click="filterInstitution(props.row)"
-                 title="Limit results to this lab"/>
+            <img v-if="props.row.dataset.group"
+                 src="../../assets/filter-icon.png"
+                 @click="filterGroup(props.row)"
+                 title="Limit results to this group"/>
           </div>
         </template>
       </el-table-column>
@@ -179,6 +181,7 @@
 
  import Vue from 'vue';
  import FileSaver from 'file-saver';
+ import formatCsvRow from '../../lib/formatCsvRow';
 
  // 38 = up, 40 = down, 74 = j, 75 = k
  const KEY_TO_ACTION = {38: 'up', 75: 'up', 40: 'down', 74: 'down'};
@@ -281,6 +284,7 @@
    apollo: {
      annotations: {
        query: annotationListQuery,
+       fetchPolicy: 'cache-first',
        variables() {
          return this.queryVariables();
        },
@@ -447,8 +451,10 @@
        this.$store.commit('updateFilter', filter);
      },
 
-     filterInstitution (row) {
-       this.updateFilter({institution: row.dataset.institution});
+     filterGroup (row) {
+       if (row.dataset.group != null) {
+         this.updateFilter({ group: row.dataset.group.id });
+       }
      },
 
      filterDataset (row) {
@@ -467,9 +473,9 @@
        const chunkSize = 1000;
        let csv = csvExportHeader();
 
-       csv += ['institution', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
+       csv += formatCsvRow(['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
                'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
-               'moleculeNames', 'moleculeIds'].join(',') + "\n";
+               'moleculeNames', 'moleculeIds']);
 
        function quoted(s) { return '"' + s + '"'; }
 
@@ -480,18 +486,20 @@
        function formatRow(row) {
          const {sumFormula, adduct, msmScore, mz,
                 rhoSpatial, rhoSpectral, rhoChaos, fdrLevel} = row;
-         return [
-           row.dataset.institution, row.dataset.name, row.dataset.id,
+         return formatCsvRow([
+           row.dataset.group ? row.dataset.group.name : '',
+           row.dataset.name,
+           row.dataset.id,
            sumFormula, quoted("M" + adduct), mz,
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
            quoted(row.possibleCompounds.map(m => m.name).join(', ')),
            quoted(row.possibleCompounds.map(databaseId).join(', '))
-         ].join(',');
+         ]);
        }
 
        function writeCsvChunk(rows) {
          for (let row of rows) {
-           csv += formatRow(row) + "\n";
+           csv += formatRow(row);
          }
        }
 
@@ -561,7 +569,7 @@
    font-size: 14px;
  }
 
- /* don't show long institution/dataset names */
+ /* don't show long group/dataset names */
  #annot-table .cell {
    white-space: nowrap;
  }

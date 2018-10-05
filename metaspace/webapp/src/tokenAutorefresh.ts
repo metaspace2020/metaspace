@@ -7,14 +7,15 @@ class TokenAutorefresh {
   jwt?: string;
   jwtPromise?: Promise<string>;
   jwtCanExpire: boolean = true;
-  jwtListeners: ((jwt?: string, payload?: any) => void)[] = [];
   refreshLoopRunning: boolean = false;
 
   constructor() {
+    // noinspection JSIgnoredPromiseFromCall
     this.ensureRefreshLoopRunning();
   }
 
   async getJwt() {
+    // noinspection JSIgnoredPromiseFromCall
     this.ensureRefreshLoopRunning();
     while (this.jwt == null && this.jwtPromise != null) {
       await this.jwtPromise;
@@ -38,13 +39,8 @@ class TokenAutorefresh {
       this.jwtPromise = undefined;
       const payload = decodePayload(this.jwt);
       this.jwtCanExpire = payload.exp != null;
-      this.jwtListeners.forEach(listener => listener(jwt, payload));
     }
     return await this.getJwt();
-  }
-
-  addJwtListener(listener: (jwt?: string, payload?: any) => void) {
-    this.jwtListeners.push(listener);
   }
 
   private async ensureRefreshLoopRunning() {
