@@ -42,7 +42,8 @@ DATASET_SEL = '''SELECT
     gu.email as ds_submitter_email,
     gg.id as ds_group_id,
     gg.name as ds_group_name,
-    gg.short_name as ds_group_short_name
+    gg.short_name as ds_group_short_name,
+    gd.group_approved as ds_group_approved
 FROM (
   SELECT
     d.id AS ds_id,
@@ -98,9 +99,16 @@ class ESIndexManager(object):
         dynamic_templates = [{
             "strings": {
                 "match_mapping_type": "string",
-                    "mapping": {
-                        "type": "keyword",
-                        "normalizer": "default"}}
+                "mapping": {
+                    "type": "keyword",
+                    "normalizer": "default",
+                    "fields": {
+                        "raw": {
+                            "type": "keyword"
+                        }
+                    }
+                }
+            }
         }]
         body = {
             "settings": {
@@ -115,7 +123,9 @@ class ESIndexManager(object):
                                 "filter": ["lowercase", "asciifolding"]
                             }
                         }
-                    }}},
+                    }
+                }
+            },
             "mappings": {
                 "dataset": {
                     "dynamic_templates": dynamic_templates,
@@ -134,7 +144,11 @@ class ESIndexManager(object):
                         "min_iso_ints": {"type": "float"},
                         "max_iso_ints": {"type": "float"},
                         "msm": {"type": "float"},
-                        "fdr": {"type": "float"}}}}}
+                        "fdr": {"type": "float"}
+                    }
+                }
+            }
+        }
 
         if not self._ind_client.exists(index):
             out = self._ind_client.create(index=index, body=body)
@@ -308,6 +322,7 @@ class ESExporter(object):
                     ds_doc_upd['ds_group_id'] = ds_doc['ds_group_id']
                     ds_doc_upd['ds_group_name'] = ds_doc['ds_group_name']
                     ds_doc_upd['ds_group_short_name'] = ds_doc['ds_group_short_name']
+                    ds_doc_upd['ds_group_approved'] = ds_doc['ds_group_approved']
                 elif f == 'metadata':
                     ds_meta_flat_doc = flatten_doc(ds_doc['ds_meta'], parent_key='ds_meta')
                     ds_doc_upd.update(ds_meta_flat_doc)

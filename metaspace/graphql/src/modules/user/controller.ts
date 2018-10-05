@@ -9,20 +9,14 @@ import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../group/model'
 import {Context, Scope, ScopeRole, ScopeRoleOptions as SRO} from '../../context';
 import {JwtUser} from '../auth/controller';
 import {sendEmailVerificationToken} from '../auth/operation';
-import {LooselyCompatible} from '../../utils';
+import {LooselyCompatible, smAPIRequest} from '../../utils';
 
-const assertCanEditUser = (user: JwtUser, userId?: string) => {
-  if (!user)
+const assertCanEditUser = (user: JwtUser, userId: string) => {
+  if (!user || !user.id)
+    throw new UserError('Not authenticated');
+
+  if (user.role !== 'admin' && user.id !== userId)
     throw new UserError('Access denied');
-
-  if (userId) {
-    if (user.role !== 'admin' && user.id !== userId)
-      throw new UserError('Access denied');
-  }
-  else {
-    if (user.role !== 'admin')
-      throw new UserError('Access denied');
-  }
 };
 
 const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<ScopeRole> => {
@@ -142,12 +136,26 @@ export const Resolvers = {
         await sendEmailVerificationToken(userObj.credentials, update.email);
       }
       const {email: notVerifiedEmail, ...rest} = update;
-      userObj = {
+      userObj = await connection.getRepository(UserModel).save({
         ...userObj,
         ...rest,
         notVerifiedEmail
+      });
+
+      const userDSs = await connection.getRepository(DatasetModel).find({ userId });
+      if (userDSs) {
+        for (let ds of userDSs) {
+          await smAPIRequest(`/v1/datasets/${ds.id}/update`, {
+            doc: { submitterId: userId }
+          });
+        }
+      }
+
+      return {
+        id: userObj.id,
+        name: userObj.name,
+        role: userObj.role
       };
-      return await connection.getRepository(UserModel).save(userObj);
     },
 
     async deleteUser(_: any, {userId, deleteDatasets}: any, {user, connection}: any): Promise<Boolean> {

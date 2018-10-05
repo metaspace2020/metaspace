@@ -63,32 +63,24 @@ function esSort(orderBy, sortingOrder) {
     return [sortTerm('ds_name', order)];
 }
 
-function constructESQuery(args, docType, user) {
-  const { orderBy, sortingOrder, offset, limit, filter: annotationFilter={}, datasetFilter, simpleQuery } = args;
-  const { database, datasetName, mzFilter, msmScoreFilter,
-    fdrLevel, sumFormula, adduct, compoundQuery, annId } = annotationFilter;
+const createAddFilter = (body) => {
+  return (filter) => {
+    if (Array.isArray(filter))
+      body.query.bool.filter.push(...filter);
+    else
+      body.query.bool.filter.push(filter);
+  };
+};
 
-  let body = {
+const createBodyWithAuthFilters = (user) => {
+  const body = {
     query: {
       bool: {
         filter: []
       }
     }
   };
-
-  function addFilter(filter) {
-    body.query.bool.filter.push(filter);
-  }
-
-  function addRangeFilter(field, interval) {
-    const filter = {range: {}};
-    filter.range[field] = {
-      gte: interval.min,
-      lt: interval.max
-    };
-    addFilter(filter);
-  }
-
+  const addFilter = createAddFilter(body);
   // (!) Authorisation checks
   if (!user || !user.id) {
     // not logged in user
@@ -99,18 +91,45 @@ function constructESQuery(args, docType, user) {
   } else if (user.id || user.groupIds) {
     const filterObj = {
       bool: {
-        should: [
-          { term: { ds_is_public: true } }]
+        should: [{ term: { ds_is_public: true } }]
       }
     };
     if (user.id) {
       filterObj.bool.should.push({ term: { ds_submitter_id: user.id } });
     }
     if (user.groupIds) {
-      filterObj.bool.should.push({ terms: { ds_group_id: user.groupIds } });
+      filterObj.bool.should.push({
+        bool: {
+          must: [
+            { terms: { ds_group_id: user.groupIds } },
+            { term: { ds_group_approved: true } }
+          ]
+        }
+      });
     }
     addFilter(filterObj);
   }
+  return body;
+};
+
+function constructESQuery(args, docType, user) {
+  const { orderBy, sortingOrder, filter: annotationFilter={}, datasetFilter, simpleQuery} = args;
+  const { database, datasetName, mzFilter, msmScoreFilter,
+    fdrLevel, sumFormula, adduct, compoundQuery, annId } = annotationFilter;
+
+  const body = createBodyWithAuthFilters(user);
+  const addFilter = createAddFilter(body);
+
+  function addRangeFilter(field, interval) {
+    const filter = {range: {}};
+    filter.range[field] = {
+      gte: interval.min,
+      lt: interval.max
+    };
+    addFilter(filter);
+  }
+
+  createBodyWithAuthFilters(body, user);
 
   if (orderBy)
     body.sort = esSort(orderBy, sortingOrder);
@@ -154,8 +173,7 @@ function constructESQuery(args, docType, user) {
    }});
 
   if (datasetFilter) {
-    for (let key of Object.keys(datasetFilter)) {
-      const val = datasetFilter[key];
+    for (let [key, val] of Object.entries(datasetFilter)) {
       if (val) {
         const f = datasetFilters[key].esFilter(val);
         addFilter(f);
@@ -275,15 +293,38 @@ module.exports.esCountGroupedResults = function(args, docType, user) {
     });
 };
 
+module.exports.esFilterValueCountResults = async (args, user) => {
+  const {wildcard, aggsTerms} = args;
+  const body = createBodyWithAuthFilters(user);
+  body.query.bool.filter.push({ term: { _type: 'dataset' } });
+  body.query.bool.filter.push(wildcard);
+  body.size = 0;  // return only aggregations
+  body.aggs = { field_counts: aggsTerms };
+  console.log(JSON.stringify(body));
+  const resp = await es.search({
+    body,
+    index: esIndex
+  });
+  const itemCounts = {};
+  resp.aggregations.field_counts.buckets.forEach((o) => {
+    itemCounts[o.key] = o.doc_count;
+  });
+  return itemCounts;
+};
+
 async function getFirst(args, docType, user) {
   const docs = await esSearchResults(args, docType, user);
   return docs ? docs[0] : null;
 }
 
 module.exports.esAnnotationByID = async function(id, user) {
-  return getFirst({ filter: { annId: id } }, 'annotation', user);
+  if (id)
+    return getFirst({ filter: { annId: id } }, 'annotation', user);
+  return null;
 };
 
 module.exports.esDatasetByID = async function(id, user) {
-  return getFirst({ datasetFilter: { ids: id } }, 'dataset', user);
+  if (id)
+    return getFirst({ datasetFilter: { ids: id } }, 'dataset', user);
+  return null;
 };

@@ -20,6 +20,7 @@
     "@types/jwt-simple": "^0.5.33",
     "@types/knex": "^0.14.15",
     "@types/lodash": "^4.14.111",
+    "@types/node-fetch": "^2.1.2",
     "@types/passport": "^0.4.5",
     "@types/passport-local": "^1.0.33",
     "@types/uuid": "^3.4.3",

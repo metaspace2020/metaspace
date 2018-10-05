@@ -64,7 +64,7 @@ type Dataset {
   institution: String
   submitter: User!
   group: Group
-  principalInvestigator: Person!
+  principalInvestigator: Person
   projects: [Project!]
 
   polarity: Polarity!
@@ -91,7 +91,8 @@ type Dataset {
   inputPath: String
   uploadDateTime: String
   fdrCounts(inpFdrLvls: [Int!]!, checkLvl: Int!): FdrCounts
-  opticalImage: String!
+  opticalImage: String! @deprecated(badName: "Renamed to rawOpticalImageUrl")
+  rawOpticalImageUrl: String
 }
 
 # fields of categorical type
@@ -323,9 +324,9 @@ type Query {
 
   rawOpticalImage(datasetId: String!): RawOpticalImage
 
-  thumbnailImage(datasetId: String!): String,
+  thumbnailImage(datasetId: String!): String @deprecated(badName: "Renamed to thumbnailOpticalImageUrl")
 
-  reprocessingNeeded(input: DatasetUpdateInput!): Boolean!
+  thumbnailOpticalImageUrl(datasetId: String!): String
 
   currentUserLastSubmittedDataset: Dataset
 }
