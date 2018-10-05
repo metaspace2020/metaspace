@@ -234,7 +234,7 @@
 
     async refetch() {
       return await Promise.all([
-        this.$apollo.queries.group.refetch(),
+        this.$apollo.queries.project.refetch(),
         this.$apollo.queries.data.refetch(),
       ]);
     }

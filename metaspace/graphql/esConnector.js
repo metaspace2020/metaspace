@@ -175,6 +175,7 @@ function constructESQuery(args, docType, user) {
   if (datasetFilter) {
     for (let [key, val] of Object.entries(datasetFilter)) {
       if (val) {
+        if (!datasetFilters[key]) console.error(key);
         const f = datasetFilters[key].esFilter(val);
         addFilter(f);
       }

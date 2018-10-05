@@ -137,6 +137,7 @@ const datasetFilters = {
   submitter: new ExactMatchFilter('', { esField: 'ds_submitter_id' }),
   hasGroup: new NotNullFilter('', { esField: 'ds_group_id' }),
   group: new GroupMatchFilter('', { esField: 'ds_group_id' }),
+  project: new ExactMatchFilter('', { esField: 'ds_project_id' }),
   metadataType: new ExactMatchFilter('Data_Type', {}),
 };
 

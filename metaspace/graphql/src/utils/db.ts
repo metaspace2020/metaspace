@@ -7,8 +7,9 @@ import {
 import config from './config';
 import {Credentials} from '../modules/auth/model';
 import {User} from '../modules/user/model';
-import {Dataset} from '../modules/dataset/model';
+import {Dataset, DatasetProject} from '../modules/dataset/model';
 import {Group, UserGroup} from '../modules/group/model';
+import {Project, UserProject} from '../modules/project/model';
 
 export const DbSchemaName = 'graphql';
 
@@ -23,8 +24,11 @@ const defaultDBConfig: ConnectionOptions = {
     Credentials,
     User,
     Dataset,
+    DatasetProject,
     Group,
-    UserGroup
+    UserGroup,
+    Project,
+    UserProject,
   ],
   synchronize: true,
   logging: false

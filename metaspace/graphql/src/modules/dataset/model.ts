@@ -1,6 +1,7 @@
-import {Column, Entity, JoinColumn, ManyToOne, PrimaryColumn} from 'typeorm';
+import {Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryColumn} from 'typeorm';
 import {Group} from '../group/model';
 import {User} from '../user/model';
+import {Project} from '../project/model';
 
 @Entity()
 export class Dataset {
@@ -8,14 +9,14 @@ export class Dataset {
   @PrimaryColumn({ type: 'text' })
   id: string;
 
-  @Column({ type: 'text', name: 'user_id' })
+  @Column({ type: 'uuid', name: 'user_id' })
   userId: string; // dataset submitter and owner -> edit rights
 
   @ManyToOne(type => User, user => user.datasets)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'text', name: 'group_id', nullable: true })
+  @Column({ type: 'uuid', name: 'group_id', nullable: true })
   groupId: string; // dataset belongs to group -> all members have view rights
 
   @ManyToOne(type => Group)
@@ -31,4 +32,29 @@ export class Dataset {
 
   @Column({ type: 'text', name: 'pi_email', nullable: true })
   piEmail: string | null;
+
+  @OneToMany(type => DatasetProject, datasetProject => datasetProject.dataset)
+  @JoinTable({ name: 'dataset_project' })
+  datasetProjects: DatasetProject[];
+}
+
+@Entity({ name: 'dataset_project' })
+export class DatasetProject {
+
+  @PrimaryColumn({ type: 'text', name: 'dataset_id' })
+  datasetId: string;
+
+  @ManyToOne(type => Dataset)
+  @JoinColumn({ name: 'dataset_id' })
+  dataset: Dataset;
+
+  @PrimaryColumn({ type: 'uuid', name: 'project_id' })
+  projectId: string;
+
+  @ManyToOne(type => Project)
+  @JoinColumn({ name: 'project_id' })
+  project: Project;
+
+  @Column({ type: 'boolean' })
+  approved: Boolean;
 }

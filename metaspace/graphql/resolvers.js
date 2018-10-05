@@ -18,9 +18,11 @@ import {
 } from './utils';
 import {Mutation as DSMutation} from './dsMutation';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from './src/modules/group/model';
-import {User as UserModel} from './src/modules/user/model';
 import {Dataset as DatasetModel} from './src/modules/dataset/model';
-import {Context, ScopeRole, ScopeRoleOptions as SRO} from './src/context';
+import {ScopeRole, ScopeRoleOptions as SRO} from './src/bindingTypes';
+import {Project as ProjectModel} from './src/modules/project/model';
+import {projectIsVisibleToCurrentUserWhereClause} from './src/modules/project/util/projectIsVisibleToCurrentUserWhereClause';
+import convertProjectToProjectSource from './src/modules/project/util/convertProjectToProjectSource';
 
 
 async function publishDatasetStatusUpdate(ds_id, status) {
@@ -341,12 +343,16 @@ const Resolvers = {
     maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
     metadataType(ds) { return dsField(ds, 'metadataType'); },
 
-    submitter({scopeRole, ...ds}) {
+    async submitter(ds, args, ctx) {
+      let scopeRole = ds.scopeRole;
+      if (ctx.user && ctx.user.id === ds._source.ds_submitter_id) {
+        scopeRole = SRO.PROFILE_OWNER;
+      }
       return {
         id: ds._source.ds_submitter_id,
         name: ds._source.ds_submitter_name,
         email: ds._source.ds_submitter_email,
-        scopeRole
+        scopeRole,
       };
     },
 
@@ -357,7 +363,29 @@ const Resolvers = {
           name: ds._source.ds_group_name,
           shortName: ds._source.ds_group_short_name,
         };
+      } else {
+        return null;
       }
+    },
+
+    async projects(ds, args, ctx) {
+      // If viewing someone else's DS, only approved projects are visible, so exit early if there are no projects in elasticsearch
+      const projectIds = _.castArray(ds._source.ds_project_id).filter(id => id != null);
+      const canSeeUnapprovedProjects = ctx.isAdmin || (ctx.user != null && ctx.user.id === ds._source.ds_submitter_id);
+      if (!canSeeUnapprovedProjects && projectIds.length === 0) {
+        return [];
+      }
+
+      const userProjectRoles = await ctx.getCurrentUserProjectRoles();
+      let projectsQuery = ctx.connection.getRepository(ProjectModel)
+        .createQueryBuilder('project')
+        .innerJoin('project.datasetProjects', 'datasetProject')
+        .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles));
+      if (canSeeUnapprovedProjects) {
+        projectsQuery = projectsQuery.andWhere('datasetProject.approved')
+      }
+      const projects = await projectsQuery.getMany();
+      return projects.map(project => convertProjectToProjectSource(project, ctx, userProjectRoles));
     },
 
     async principalInvestigator(ds, _, {connection}) {

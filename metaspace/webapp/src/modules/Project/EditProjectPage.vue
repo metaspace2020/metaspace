@@ -160,7 +160,7 @@
     @Watch('project')
     setModel() {
       this.model.name = this.project && this.project.name || '';
-      this.model.isPublic = this.project && this.project.isPublic || true;
+      this.model.isPublic = this.project ? this.project.isPublic : true;
       this.model.urlSlug = this.project && this.project.urlSlug || '';
     }
 
