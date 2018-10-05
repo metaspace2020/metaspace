@@ -101,7 +101,7 @@
                name
                status
                submitter { id name }
-               principalInvestigator { id name }
+               principalInvestigator { name }
                group { id name }
                projects { id name }
                isPublic

@@ -49,7 +49,6 @@ Object {
   "name": "dataset.name",
   "principalInvestigator": Object {
     "email": "dataset.principalInvestigator.email",
-    "id": "123",
     "name": "dataset.principalInvestigator.name",
   },
   "projectIds": Array [

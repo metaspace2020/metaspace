@@ -1,5 +1,4 @@
 type Person {
-  id: ID           # null if it was entered as free-text
   name: String!
   email: String    # null if current user is not allowed to see
 }
