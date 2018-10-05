@@ -324,9 +324,13 @@ async function getFirst(args, docType, user) {
 }
 
 module.exports.esAnnotationByID = async function(id, user) {
-  return getFirst({ filter: { annId: id } }, 'annotation', user);
+  if (id)
+    return getFirst({ filter: { annId: id } }, 'annotation', user);
+  return null;
 };
 
 module.exports.esDatasetByID = async function(id, user) {
-  return getFirst({ datasetFilter: { ids: id } }, 'dataset', user);
+  if (id)
+    return getFirst({ datasetFilter: { ids: id } }, 'dataset', user);
+  return null;
 };

@@ -68,7 +68,8 @@ const initDBConnection = (config = defaultDBConfig) => {
   db = Knex({
     client: 'pg',
     connection: config(),
-    searchPath: ['engine', 'public']
+    searchPath: ['engine', 'public'],
+    asyncStackTraces: true,
   });
   return db;
 };

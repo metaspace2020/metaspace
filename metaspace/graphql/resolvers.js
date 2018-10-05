@@ -213,60 +213,55 @@ const Resolvers = {
       }
     },
 
-    opticalImageUrl(_, {datasetId, zoom}, {user}) {
-      // TODO: authorisation
-      const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
-
-      return db.select().from('optical_image')
-          .where('ds_id', '=', datasetId)
-          .where('zoom', '=', intZoom)
-          .then(records => {
-              if (records.length > 0)
-                  return '/fs/optical_images/' + records[0].id;
-              else
-                  return null;
-          })
-          .catch((e) => {
-              logger.error(e);
-          })
+    async opticalImageUrl(_, {datasetId: dsId, zoom}, ctx) {
+      // TODO: consider moving to Dataset type
+      const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
+      if (ds) {
+        const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
+        // TODO: manage optical images on the graphql side
+        const row = await (db.from('optical_image')
+          .where('ds_id', dsId)
+          .where('zoom', intZoom)
+          .first());
+        return (row) ? `/fs/optical_images/${row.id}` : null;
+      }
+      return null;
     },
 
-    rawOpticalImage(_, {datasetId}, {user}) {
-      return db
-        .from(pgDatasetsViewableByUser(user))
-        .where('id', '=', datasetId)
-        .then(records => {
-          if (records.length > 0)
-            return {
-              url: '/fs/raw_optical_images/' + records[0].optical_image,
-              transform: records[0].transform
-            };
-          else
-            return null;
-        })
-        .catch((e) => {
-          logger.error(e);
-        })
+    async rawOpticalImage(_, {datasetId: dsId}, ctx) {
+      // TODO: consider moving to Dataset type
+      const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
+      if (ds) {
+        const row = await (db.from('dataset')
+          .where('id', dsId)
+          .first());
+        if (row && row.optical_image) {
+          return {
+            url: `/fs/raw_optical_images/${row.optical_image}`,
+            transform: row.transform
+          };
+        }
+      }
+      return null;
     },
 
-    thumbnailImage(_, {datasetId}) {
-      return db.select().from('dataset')
-        .where('id ', '=', datasetId)
-        .then(records => {
-          if (records.length > 0 && records[0].thumbnail != null) {
-            return '/fs/optical_images/' + records[0].thumbnail;
-          }
-          else {
-            return null;
-          }
-        })
-        .catch(e => {
-            logger.error(e);
-        })
+    // TODO: deprecated, remove
+    async thumbnailImage(_, {datasetId}, ctx) {
+      return Resolvers.Query.thumbnailOpticalImageUrl(_, {datasetId}, ctx);
     },
 
-    reprocessingNeeded(_, args, {user}) {
-      return DSQuery.reprocessingNeeded(args, user);
+    async thumbnailOpticalImageUrl(_, {datasetId: dsId}, ctx) {
+      // TODO: consider moving to Dataset type
+      const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
+      if (ds) {
+        const row = await (db.from('dataset')
+          .where('id', dsId)
+          .first());
+        if (row && row.thumbnail) {
+          return `/fs/optical_images/${row.thumbnail}`;
+        }
+      }
+      return null;
     },
 
     async currentUserLastSubmittedDataset(_, args, {user}) {
@@ -432,17 +427,13 @@ const Resolvers = {
       }
     },
 
-    opticalImage(ds, _, context) {
-      return Resolvers.Query.rawOpticalImage(null, {datasetId: ds._source.ds_id}, context)
-          .then(optImage => {
-            if (!optImage) {
-              //non-existing optical image don't have transform value
-              return 'noOptImage'
-            }
-            return optImage.url;
-          }).catch((e) => {
-            logger.error(e);
-          })
+    // TODO: field is deprecated, remove
+    opticalImage(ds, _, ctx) {
+      return Resolvers.Dataset.rawOpticalImageUrl(ds, _, ctx);
+    },
+
+    async rawOpticalImageUrl(ds, _, ctx) {
+      return await Resolvers.Query.rawOpticalImage(_, {}, ctx).url;
     }
   },
 
