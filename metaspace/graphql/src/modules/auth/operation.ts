@@ -116,20 +116,13 @@ const createLocalCredentials = async (userCred: UserCredentialsInput): Promise<C
 };
 
 export const createGoogleUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
-  const existingUser = await findUserByGoogleId(userCred.googleId) as User;
-  if (existingUser) {
-    emailService.sendGoogleLoginEmail(existingUser.email!);
-    logger.debug(`Google user already exists. Sent log in email to ${existingUser.email}`);
-  }
-  else {
-    const newCred = await createGoogleCredentials(userCred);
-    const userUpd = {
-      email: userCred.email,
-      name: userCred.name,
-      credentials: newCred
-    };
-    await userRepo.save({...existingUser!, ...userUpd});
-  }
+  const newCred = await createGoogleCredentials(userCred);
+  const userUpd = {
+    email: userCred.email,
+    name: userCred.name,
+    credentials: newCred
+  };
+  await userRepo.save(userUpd);
 };
 
 export const createUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
