@@ -31,7 +31,7 @@ const defaultDBConfig: ConnectionOptions = {
     UserProject,
   ],
   synchronize: true,
-  logging: false
+  logging: true
 };
 
 export const createConnection = async () => {

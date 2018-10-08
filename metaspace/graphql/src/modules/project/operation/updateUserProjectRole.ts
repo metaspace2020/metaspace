@@ -5,7 +5,7 @@ import {User as UserModel} from '../../user/model';
 import {UserError} from "graphql-errors";
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
 import {projectIsVisibleToCurrentUserWhereClause} from '../util/projectIsVisibleToCurrentUserWhereClause';
-import {In} from 'typeorm';
+import updateProjectDatasets from './updateProjectDatasets';
 
 export default async (ctx: Context, userId: string, projectId: string, newRole: UserProjectRole | null) => {
   const currentUserId = ctx.getUserIdOrFail();
@@ -62,17 +62,7 @@ export default async (ctx: Context, userId: string, projectId: string, newRole: 
 
   // Update ProjectDatasets' "approved" status
   const approved = ([UPRO.MANAGER, UPRO.MEMBER] as (UserProjectRole|null)[]).includes(newRole);
-  const datasetsToUpdate = await datasetProjectRepository
-    .createQueryBuilder('datasetProject')
-    .select('dataset.id', 'id')
-    .leftJoinAndSelect('datasetProject.dataset', 'dataset')
-    .where('dataset.userId = :userId AND datasetProject.approved != :approved', {userId, approved})
-    .getRawMany();
-  if (datasetsToUpdate.length > 0) {
-    const datasetIdsToUpdate = datasetsToUpdate.map(ds => ds.id as string);
-    await datasetProjectRepository.update({ projectId, datasetId: In(datasetIdsToUpdate) }, { approved });
-  }
-  // TODO: Trigger elasticsearch reindexing of datasets
+  await updateProjectDatasets(ctx, projectId, {userId}, approved);
 
   if (!ctx.isAdmin) {
     // TODO: Send emails

@@ -44,8 +44,8 @@ DATASET_SEL = '''SELECT
     gg.name as ds_group_name,
     gg.short_name as ds_group_short_name,
     gd.group_approved as ds_group_approved,
-    gp.ds_project_id,
-    gp.ds_project_name
+    gp.ds_project_ids,
+    gp.ds_project_names
 FROM (
   SELECT
     d.id AS ds_id,
@@ -68,7 +68,7 @@ LEFT JOIN graphql.dataset gd ON gd.id = d.ds_id
 LEFT JOIN graphql.user gu ON gu.id = gd.user_id
 LEFT JOIN graphql.group gg ON gg.id = gd.group_id
 LEFT JOIN (
-    SELECT gdp.dataset_id, array_agg(gp.id)::text[] as ds_project_id, array_agg(gp.name)::text[] as ds_project_name
+    SELECT gdp.dataset_id, array_agg(gp.id)::text[] as ds_project_ids, array_agg(gp.name)::text[] as ds_project_names
     FROM graphql.dataset_project gdp
     JOIN graphql.project gp ON gdp.project_id = gp.id
     WHERE gdp.approved
@@ -330,9 +330,9 @@ class ESExporter(object):
                     ds_doc_upd['ds_group_name'] = ds_doc['ds_group_name']
                     ds_doc_upd['ds_group_short_name'] = ds_doc['ds_group_short_name']
                     ds_doc_upd['ds_group_approved'] = ds_doc['ds_group_approved']
-                elif f == 'project_id':
-                    ds_doc_upd['ds_project_id'] = ds_doc['ds_project_id']
-                    ds_doc_upd['ds_project_name'] = ds_doc['ds_project_name']
+                elif f == 'project_ids':
+                    ds_doc_upd['ds_project_ids'] = ds_doc['ds_project_ids']
+                    ds_doc_upd['ds_project_names'] = ds_doc['ds_project_names']
                 elif f == 'metadata':
                     ds_meta_flat_doc = flatten_doc(ds_doc['ds_meta'], parent_key='ds_meta')
                     ds_doc_upd.update(ds_meta_flat_doc)

@@ -1,4 +1,3 @@
-import {In} from 'typeorm';
 import {IResolvers} from 'graphql-tools';
 import {UserError} from 'graphql-errors';
 import {Mutation, Project, Query, UserProject} from '../../binding';
@@ -17,6 +16,7 @@ import {projectIsVisibleToCurrentUserWhereClause} from './util/projectIsVisibleT
 import updateUserProjectRole from './operation/updateUserProjectRole';
 import convertProjectToProjectSource from './util/convertProjectToProjectSource';
 import {convertUserToUserSource} from '../user/util/convertUserToUserSource';
+import updateProjectDatasets from './operation/updateProjectDatasets';
 
 
 const isLoggedIn = (ctx: Context) => ctx.user != null && ctx.user.id != null;
@@ -179,10 +179,11 @@ const Mutation: FieldResolversFor<Mutation, void> = {
       throw new UserError('urlSlug can only be set by METASPACE administrators');
     }
 
-    const newProject = await ctx.connection.getRepository(ProjectModel)
-      .create({ name, isPublic, urlSlug });
+    const projectRepository = ctx.connection.getRepository(ProjectModel);
+    const newProject = projectRepository.create({ name, isPublic, urlSlug });
+    await projectRepository.insert(newProject);
     await ctx.connection.getRepository(UserProjectModel)
-      .create({
+      .insert({
         projectId: newProject.id,
         userId: ctx.user!.id,
         role: UPRO.MANAGER
@@ -236,6 +237,9 @@ const Mutation: FieldResolversFor<Mutation, void> = {
     await updateUserProjectRole(ctx, userId, projectId, UPRO.PENDING);
     const userProject = await ctx.connection.getRepository(UserProjectModel)
       .findOneOrFail({userId, projectId}, {relations: ['user']});
+
+    // TODO: Double-check userProjectRoles
+
     return { ...userProject, user: convertUserToUserSource(userProject.user, SRO.OTHER) };
   },
 
@@ -275,16 +279,10 @@ const Mutation: FieldResolversFor<Mutation, void> = {
     if (userProjectRole == null) {
       throw new UserError('Not a member of project');
     }
-    const approved = [UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole);
-
-    const datasetProjectRepository = ctx.connection.getRepository(DatasetProjectModel);
-    const existingDatasetProjects = await datasetProjectRepository
-      .find({projectId, datasetId: In(datasetIds)});
-
-    const newDatasetIds = datasetIds.filter(datasetId => !existingDatasetProjects.some(dp => dp.datasetId === datasetId));
-
-    await Promise.all(newDatasetIds.map(datasetId => datasetProjectRepository.insert({projectId, datasetId, approved})));
-    // TODO: Reindex datasets
+    if (datasetIds.length > 0) {
+      const approved = [UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole);
+      await updateProjectDatasets(ctx, projectId, {datasetIds}, approved);
+    }
 
     return true;
   }

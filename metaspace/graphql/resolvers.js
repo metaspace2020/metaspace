@@ -370,7 +370,7 @@ const Resolvers = {
 
     async projects(ds, args, ctx) {
       // If viewing someone else's DS, only approved projects are visible, so exit early if there are no projects in elasticsearch
-      const projectIds = _.castArray(ds._source.ds_project_id).filter(id => id != null);
+      const projectIds = _.castArray(ds._source.ds_project_ids).filter(id => id != null);
       const canSeeUnapprovedProjects = ctx.isAdmin || (ctx.user != null && ctx.user.id === ds._source.ds_submitter_id);
       if (!canSeeUnapprovedProjects && projectIds.length === 0) {
         return [];

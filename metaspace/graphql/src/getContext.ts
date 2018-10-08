@@ -18,7 +18,7 @@ export default (req: Express.Request, connection: Connection): Context => {
       }
       return user.id;
     },
-    getCurrentUserProjectRoles() {
+    async getCurrentUserProjectRoles() {
       if (currentUserProjectRoles == null && user != null && user.id != null) {
         currentUserProjectRoles = new Promise<UserProjectRoles>(async (resolve, reject) => {
           try {
@@ -33,7 +33,7 @@ export default (req: Express.Request, connection: Connection): Context => {
         currentUserProjectRoles = Promise.resolve({});
       }
 
-      return currentUserProjectRoles;
+      return await currentUserProjectRoles;
     },
   };
 }
