@@ -52,7 +52,10 @@ const assertUserAuthenticated = (user: JwtUser) => {
 };
 
 const assertUserRoles = async (connection: Connection, user: JwtUser, groupId: string, roles: UserGroupRole[]) => {
-  if (groupId && user.role !== 'admin') {
+  if (groupId) {
+    if (user.role === 'admin')
+      return;
+
     const userGroup = (await connection.getRepository(UserGroupModel).find({
       select: ['userId'],
       where: {

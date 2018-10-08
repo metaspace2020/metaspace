@@ -128,7 +128,7 @@ export const createGoogleUserCredentials = async (userCred: UserCredentialsInput
       name: userCred.name,
       credentials: newCred
     };
-    await userRepo.save({...existingUser, ...userUpd});
+    await userRepo.save({...existingUser!, ...userUpd});
   }
 };
 
