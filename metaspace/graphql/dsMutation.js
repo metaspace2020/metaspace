@@ -2,11 +2,13 @@ const jsondiffpatch = require('jsondiffpatch'),
   config = require('config'),
   Ajv = require('ajv'),
   {UserError} = require('graphql-errors'),
-  _ = require('lodash');
+  _ = require('lodash'),
+  {In} = require('typeorm');
 
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
-  {Dataset: DatasetModel} = require('./src/modules/dataset/model'),
+  {Dataset: DatasetModel, DatasetProject: DatasetProjectModel} = require('./src/modules/dataset/model'),
   {UserGroup: UserGroupModel, UserGroupRoleOptions} = require('./src/modules/group/model'),
+  {UserProject: UserProjectModel} = require('./src/modules/project/model'),
   metadataMapping = require('./metadataSchemas/metadataMapping').default,
   {smAPIRequest} = require('./src/utils');
 
@@ -112,16 +114,26 @@ const isMemberOf = async (connection, user, groupId) => {
 };
 
 const saveDS = async (connection, args) => {
-  const {dsId, submitterId, groupId, groupApproved, principalInvestigator} = args;
+  const {dsId, submitterId, groupId, projectIds, principalInvestigator} = args;
   const dsUpdate = {
     id: dsId,
     userId: submitterId,
     groupId: groupId,
-    groupApproved,
+    groupApproved: groupId != null ? await isMemberOf(connection, submitterId, groupId) : false,
     piName: principalInvestigator ? principalInvestigator.name : undefined,
     piEmail: principalInvestigator ? principalInvestigator.email : undefined
   };
   await connection.getRepository(DatasetModel).save(dsUpdate);
+  if (projectIds != null && projectIds.length > 0) {
+    const userProjects = await connection.getRepository(UserProjectModel)
+      .find({ userId: submitterId, projectId: In(projectIds) });
+    const datasetProjectModel = connection.getRepository(DatasetProjectModel);
+    const promises = userProjects.map(async ({projectId, role}) => {
+      const approved = [UPRO.MEMBER, UPRO.MANAGER].contains(role);
+      return await datasetProjectModel.insert({datasetId: dsId, projectId, approved});
+    });
+    await Promise.all(promises);
+  }
 };
 
 const assertCanEditDataset = async (connection, user, dsId) => {
@@ -178,8 +190,6 @@ module.exports = {
 
       const {submitterId, groupId, principalInvestigator} = input;
       const saveDSArgs = {dsId, submitterId, groupId, principalInvestigator};
-      if (groupId)
-        saveDSArgs.groupApproved = await isMemberOf(connection, user, groupId);
       await saveDS(connection, saveDSArgs);
       return JSON.stringify({ dsId, status: 'success' });
     },
@@ -199,8 +209,6 @@ module.exports = {
 
       const {submitterId, groupId, principalInvestigator} = update;
       const saveDSArgs = {dsId, submitterId, groupId, principalInvestigator};
-      if (groupId)
-        saveDSArgs.groupApproved = await isMemberOf(connection, user, groupId);
 
       if (reprocess) {
         await saveDS(connection, saveDSArgs);

@@ -4,27 +4,15 @@ import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '..
 import {smAPIRequest} from '../../../utils';
 import {In} from 'typeorm';
 
-type DatasetIdsOrUserId = { datasetIds: string[] } | { userId: string };
 
-/**
- *
- * @param ctx
- * @param projectId
- * @param datasetIdsOrUserId When a userId is specified, this operates only on that user's datasets that are already
- *                           linked to the project. When datasetIds are specified, they are added to / removed from the
- *                           project as needed.
- * @param approved           true/false, or null to remove the dataset from the project
- */
-export default async function (ctx: Context, projectId: string, datasetIdsOrUserId: DatasetIdsOrUserId, approved: Boolean | null) {
+export default async function (ctx: Context, projectId: string, datasetIds: string[], approved: Boolean | null) {
+  const datasetProjectRepository = ctx.connection.getRepository(DatasetProjectModel);
   const datasets = await ctx.connection.getRepository(DatasetModel)
     .find({
-      where: 'userId' in datasetIdsOrUserId
-        ? { userId: datasetIdsOrUserId.userId }
-        : { id: In(datasetIdsOrUserId.datasetIds) },
+      where: { id: In(datasetIds) },
       relations: ['datasetProjects'],
     });
 
-  const datasetProjectRepository = ctx.connection.getRepository(DatasetProjectModel);
   const promises = datasets.map(async dataset => {
     const existingDatasetProject = dataset.datasetProjects.find(dp => dp.projectId === projectId);
     const datasetId = dataset.id;
@@ -50,7 +38,6 @@ export default async function (ctx: Context, projectId: string, datasetIdsOrUser
     } else {
       _.pull(projectIds, projectId);
     }
-
 
     await smAPIRequest(`/v1/datasets/${datasetId}/update`, { doc: { projectIds } });
   });

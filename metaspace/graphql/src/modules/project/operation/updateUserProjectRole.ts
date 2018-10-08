@@ -61,8 +61,18 @@ export default async (ctx: Context, userId: string, projectId: string, newRole: 
   }
 
   // Update ProjectDatasets' "approved" status
-  const approved = ([UPRO.MANAGER, UPRO.MEMBER] as (UserProjectRole|null)[]).includes(newRole);
-  await updateProjectDatasets(ctx, projectId, {userId}, approved);
+  const datasetsToUpdate: {id: string}[] = await datasetProjectRepository.createQueryBuilder('datasetProject')
+    .innerJoin('datasetProject.dataset', 'dataset')
+    .where('dataset.userId = :userId', {userId})
+    .andWhere('datasetProject.projectId = :projectId', {projectId})
+    .select('dataset.id', 'id')
+    .getRawMany();
+
+  if (datasetsToUpdate.length > 0) {
+    const datasetIds = datasetsToUpdate.map(({id}) => id);
+    const approved = ([UPRO.MANAGER, UPRO.MEMBER] as (UserProjectRole|null)[]).includes(newRole);
+    await updateProjectDatasets(ctx, projectId, datasetIds, approved);
+  }
 
   if (!ctx.isAdmin) {
     // TODO: Send emails

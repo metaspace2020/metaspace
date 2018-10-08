@@ -56,9 +56,12 @@ const UserProject: FieldResolversFor<UserProject, UserProjectSource> = {
     // `UserProjectSource`s when you are in the same project as the user, and thus allowed to see the private datasets
     // that are also in that project.
     // If this assumption changes, we'll have to consider whether showing a number that includes private datasets is a privacy breach.
-    return await connection.getRepository(DatasetModel).count({
-      where: {userId: userProject.userId},
-    });
+    const {userId, projectId} = userProject;
+    return await connection.getRepository(DatasetModel)
+      .createQueryBuilder('dataset')
+      .innerJoin('dataset.datasetProjects', 'datasetProject')
+      .where('dataset.userId = :userId AND datasetProject.projectId = :projectId', {userId, projectId})
+      .getCount();
   },
 };
 
@@ -281,7 +284,7 @@ const Mutation: FieldResolversFor<Mutation, void> = {
     }
     if (datasetIds.length > 0) {
       const approved = [UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole);
-      await updateProjectDatasets(ctx, projectId, {datasetIds}, approved);
+      await updateProjectDatasets(ctx, projectId, datasetIds, approved);
     }
 
     return true;
