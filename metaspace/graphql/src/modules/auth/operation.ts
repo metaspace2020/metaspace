@@ -49,17 +49,18 @@ export const findUserById = async (id: string|undefined, credentials: boolean=tr
 };
 
 export const findUserByEmail = async (value: string, field: string='email') => {
-  return await userRepo.createQueryBuilder('user')
+  return await (userRepo.createQueryBuilder('user')
     .leftJoinAndSelect('user.credentials', 'credentials')
-    .where(`LOWER(${field}) = :email`, {'email': value.toLowerCase()})
-    .getOne() || null;
+    .where(`LOWER(${field}) = :email`, { email: value.toLowerCase() })
+    .getOne()) || null;
 };
 
 export const findUserByGoogleId = async (googleId: string|undefined) => {
-  return await userRepo.findOne({
-    relations: ['credentials'],
-    where: { 'googleId': googleId }
-  });
+  const user = await (userRepo.createQueryBuilder('user')
+    .leftJoinAndSelect('user.credentials', 'credentials')
+    .where(`google_id = :googleId`, { googleId: googleId })
+    .getOne()) || null;
+  return user;
 };
 
 export const createExpiry = (minutes: number=10): Moment => {
@@ -86,6 +87,7 @@ const createGoogleCredentials = async (userCred: UserCredentialsInput): Promise<
   // TODO: Add a test case
   const newCred = credRepo.create({
     googleId: userCred.googleId || null,
+    emailVerified: true,
   });
   await credRepo.insert(newCred);
   logger.info(`New google user added: ${userCred.email}`);
@@ -113,6 +115,23 @@ const createLocalCredentials = async (userCred: UserCredentialsInput): Promise<C
   return cred;
 };
 
+export const createGoogleUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
+  const existingUser = await findUserByGoogleId(userCred.googleId) as User;
+  if (existingUser) {
+    emailService.sendGoogleLoginEmail(existingUser.email!);
+    logger.debug(`Google user already exists. Sent log in email to ${existingUser.email}`);
+  }
+  else {
+    const newCred = await createGoogleCredentials(userCred);
+    const userUpd = {
+      email: userCred.email,
+      name: userCred.name,
+      credentials: newCred
+    };
+    await userRepo.save({...existingUser, ...userUpd});
+  }
+};
+
 export const createUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
   const existingUser = await findUserByEmail(userCred.email, 'email');
   if (existingUser) {
@@ -123,10 +142,7 @@ export const createUserCredentials = async (userCred: UserCredentialsInput): Pro
   else {
     const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email');
     if (!existingUserNotVerified || !existingUserNotVerified.credentials) {
-      const newCred = userCred.googleId ?
-        await createGoogleCredentials(userCred) :
-        await createLocalCredentials(userCred);
-
+      const newCred = await createLocalCredentials(userCred);
       const userUpd = {
         notVerifiedEmail: userCred.email,
         name: userCred.name,

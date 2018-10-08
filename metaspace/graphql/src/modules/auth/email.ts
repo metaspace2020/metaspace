@@ -53,6 +53,18 @@ METASPACE Team`;
   sendEmail(email, subject, text);
 };
 
+export const sendGoogleLoginEmail = (email: string) => {
+  const subject = 'METASPACE log in',
+    text =
+      `Dear METASPACE user,
+
+You are already signed up with our service. Please log in using your Google account.
+
+Best wishes,
+METASPACE Team`;
+  sendEmail(email, subject, text);
+};
+
 export const sendResetPasswordEmail = (email: string, link: string) => {
   const subject = 'METASPACE password reset',
     text =
