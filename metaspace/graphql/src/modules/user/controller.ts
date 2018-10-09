@@ -9,7 +9,7 @@ import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../group/model'
 import {Context, Scope, ScopeRole, ScopeRoleOptions as SRO} from '../../context';
 import {JwtUser} from '../auth/controller';
 import {sendEmailVerificationToken} from '../auth/operation';
-import {LooselyCompatible, smAPIRequest} from '../../utils';
+import {logger, LooselyCompatible, smAPIRequest} from '../../utils';
 
 const assertCanEditUser = (user: JwtUser, userId: string) => {
   if (!user || !user.id)
@@ -119,6 +119,7 @@ export const Resolvers = {
 
   Mutation: {
     async updateUser(_: any, {userId, update}: any, {user, connection}: any): Promise<User> {
+      logger.info(`User ${userId} updating by '${user}'...`);
       assertCanEditUser(user, userId);
 
       if (update.role && user.role !== 'admin') {
@@ -144,6 +145,7 @@ export const Resolvers = {
 
       const userDSs = await connection.getRepository(DatasetModel).find({ userId });
       if (userDSs) {
+        logger.info(`Updating user ${userId} datasets...`);
         for (let ds of userDSs) {
           await smAPIRequest(`/v1/datasets/${ds.id}/update`, {
             doc: { submitterId: userId }
@@ -151,6 +153,7 @@ export const Resolvers = {
         }
       }
 
+      logger.info(`User ${userId} updated`);
       return {
         id: userObj.id,
         name: userObj.name!,
@@ -159,11 +162,13 @@ export const Resolvers = {
     },
 
     async deleteUser(_: any, {userId, deleteDatasets}: any, {user, connection}: any): Promise<Boolean> {
+      logger.info(`User ${userId} deleting by '${user}'...`);
       assertCanEditUser(user, userId);
 
       if (deleteDatasets) {
         const userDSs = await connection.getRepository(DatasetModel).find({ userId });
         if (userDSs) {
+          logger.info(`Deleting user ${userId} datasets...`);
           for (let ds of userDSs) {
             await smAPIRequest(`/v1/datasets/${ds.id}/delete`);
           }
@@ -177,6 +182,7 @@ export const Resolvers = {
       await connection.getRepository(UserGroupModel).delete({userId});
       await userRepo.delete({ id: userId });
       await connection.getRepository(CredentialsModel).delete({ id: credentialsId });
+      logger.info(`User ${userId} deleted`);
       return true;
     },
   }

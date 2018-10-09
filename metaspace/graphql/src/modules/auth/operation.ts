@@ -138,20 +138,8 @@ const updateCredentials = async (credId: string, userCred: UserCredentialsInput)
 export const createUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
   const existingUser = await findUserByEmail(userCred.email, 'email');
   if (existingUser) {
-    if (existingUser.credentials.googleId && userCred.password) {
-      await updateCredentials(existingUser.credentialsId!, userCred);
-    }
-    else if (existingUser.credentials.hash && userCred.googleId) {
-      await updateCredentials(existingUser.credentialsId!, userCred);
-    }
-    else if (existingUser.credentials.googleId && userCred.googleId) {
-      // do nothing
-    }
-    else if (existingUser.credentials.hash && userCred.password) {
-      const link = `${config.web_public_url}/account/sign-in`;
-      emailService.sendLoginEmail(existingUser.email!, link);
-      logger.debug(`Email already verified. Sent log in email to ${existingUser.email}`);
-    }
+    const link = `${config.web_public_url}/account/sign-in`;
+    emailService.sendLoginEmail(existingUser.email!, link);
   }
   else {
     if (userCred.googleId) {
@@ -204,7 +192,7 @@ export const verifyEmail = async (email: string, token: string): Promise<User|nu
         notVerifiedEmail: null
       };
       await userRepo.update(user.id, userUpdate);
-      logger.info(`Verified user email ${email}`);
+      logger.info(`Email ${email} successfully verified`);
       user = {
         ...user,
         ...userUpdate,
@@ -215,6 +203,9 @@ export const verifyEmail = async (email: string, token: string): Promise<User|nu
     user = await findUserByEmail(email, 'email');
     if (!user) {
       logger.warn(`User with ${email} does not exist`);
+    }
+    else {
+      logger.info(`Email ${email} already verified`);
     }
   }
   return user;
@@ -243,7 +234,6 @@ export const sendResetPasswordToken = async (email: string): Promise<void> => {
   }
   const link = `${config.web_public_url}/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetPasswordToken)}`;
   emailService.sendResetPasswordEmail(email, link);
-  logger.debug(`Sent password reset email to ${email}: ${link}`);
 };
 
 export const resetPassword = async (email: string, password: string, token: string): Promise<User | undefined> => {
@@ -260,7 +250,7 @@ export const resetPassword = async (email: string, password: string, token: stri
         resetPasswordTokenExpires: null
       });
       await credRepo.update(updCred.id, updCred);
-      logger.info(`Successful password reset: ${email}`);
+      logger.info(`Successful password reset for ${email}`);
       return user;
     }
   }

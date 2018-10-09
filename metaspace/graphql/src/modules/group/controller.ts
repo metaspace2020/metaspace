@@ -153,17 +153,21 @@ export const Resolvers = {
 
   Mutation: {
     async createGroup(_: any, {groupDetails}: any, {user, connection}: any): Promise<Group> {
+      const {principalInvestigatorEmail, ...groupInput} = groupDetails;
+
+      logger.info(`Creating ${groupInput.name} group by ${user}...`);
       assertCanCreateGroup(user);
 
-      const {principalInvestigatorEmail, ...groupInput} = groupDetails;
       // TODO create inactive account for PI
-
       const insertRes = await connection.getRepository(GroupModel).insert(groupInput);
       const groupIdMap = insertRes.identifiers[0];
+
+      logger.info(`${groupInput.name} group created`);
       return {...groupIdMap, ...groupInput};
     },
 
     async updateGroup(_: any, {groupId, groupDetails}: any, {user, connection}: any): Promise<Group> {
+      logger.info(`Updating '${groupId}' group by ${user}...`);
       await assertCanEditGroup(connection, user, groupId);
 
       const groupRepo = connection.getRepository(GroupModel);
@@ -173,23 +177,29 @@ export const Resolvers = {
       const groupDSs = await connection.getRepository(DatasetModel).find({ groupId });
       if (groupDSs) {
         for (let ds of groupDSs) {
+          logger.info(`Updating '${groupId}' group datasets...`);
           await smAPIRequest(`/v1/datasets/${ds.id}/update`, {
             doc: { groupId }
           });
         }
       }
+      logger.info(`'${groupId}' group updated`);
       return group;
     },
 
     async deleteGroup(_: any, {groupId}: any, {user, connection}: any): Promise<Boolean> {
+      logger.info(`Deleting '${groupId}' group by ${user}...`);
       await assertCanEditGroup(connection, user, groupId);
 
       await connection.getRepository(UserGroupModel).delete({groupId});
       await connection.getRepository(GroupModel).delete(groupId);
+
+      logger.info(`'${groupId}' group deleted`);
       return true;
     },
 
     async leaveGroup(_: any, {groupId}: any, {user, connection}: any): Promise<Boolean> {
+      logger.info(`User ${user} leaving '${groupId}' group...`);
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
@@ -199,6 +209,7 @@ export const Resolvers = {
         throw new UserError('Group PI cannot leave group');
 
       await userGroupRepo.delete({ userId: user.id, groupId });
+      logger.info(`User '${user.id}' left '${groupId}' group`);
       return true;
     },
 
@@ -290,7 +301,7 @@ export const Resolvers = {
 
       if (invUserGroup && [UserGroupRoleOptions.MEMBER,
           UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(invUserGroup.role)) {
-          logger.info(`User ${invUserGroup.userId} is already member of ${groupId}`)
+          logger.info(`User ${invUserGroup.userId} is already member of ${groupId}`);
       }
       else {
         invUserGroup = await userGroupRepo.save({
@@ -298,7 +309,7 @@ export const Resolvers = {
           groupId,
           role: UserGroupRoleOptions.INVITED,
         });
-        logger.info(`Invited ${invUserGroup.userId} user to ${groupId} group`)
+        logger.info(`Invited ${invUserGroup.userId} user to ${groupId} group`);
       }
 
       return await userGroupRepo.findOneOrFail({
