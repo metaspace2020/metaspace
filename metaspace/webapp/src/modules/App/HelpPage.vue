@@ -69,7 +69,7 @@
 
 <style>
  #help-wrapper {
-   padding: 100px 20px 20px 20px;
+   padding: 20px 20px 20px 20px;
    display: flex;
    justify-content: center;
  }
