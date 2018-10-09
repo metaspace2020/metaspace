@@ -165,20 +165,16 @@
    },
    computed: {
      scaleBarValX() {
-       if (this.pixelSizeIsActive) {
-         if (this.visibleImageWidth !== 0) {
-           return `${round((this.image.naturalWidth /
-             (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeVal * this.pixelSizeX, 0)} µm`
-         }
+       if (this.pixelSizeIsActive && this.visibleImageWidth !== 0) {
+         return `${round((this.image.naturalWidth /
+           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeVal * this.pixelSizeX, 0)} µm`
        }
      },
 
      scaleBarValY() {
-       if (this.pixelSizeIsActive) {
-         if (this.visibleImageHeight !== 0) {
-           return `${round((this.image.naturalHeight /
-             (this.zoom * this.visibleImageHeight)) * this.scaleBarSizeVal * this.pixelSizeY, 0)} µm`
-         }
+       if (this.visibleImageHeight !== 0 && this.pixelSizeIsActive) {
+         return `${round((this.image.naturalHeight /
+           (this.zoom * this.visibleImageHeight)) * this.scaleBarSizeVal * this.pixelSizeY, 0)} µm`
        }
      },
 
