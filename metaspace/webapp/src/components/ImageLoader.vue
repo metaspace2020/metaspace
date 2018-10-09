@@ -22,12 +22,8 @@
              class="optical-image"
              :style="opticalImageStyle" />
       </div>
-      <div :style="cssProps" :class="{pixelSizeX: pixelSizeIsActive}" @click="onClickScaleBar()">
-        {{scaleBarValX}}
-      </div>
-      <div :style="cssProps" :class="{pixelSizeY: pixelSizeIsActive}" @click="onClickScaleBar()">
-        {{scaleBarValY}}
-      </div>
+      <div :style="cssProps" :class="{pixelSizeX: pixelSizeIsActive}" @click="onClickScaleBar()">{{scaleBarValX}}</div>
+      <div :style="cssProps" :class="{pixelSizeY: pixelSizeIsActive}" @click="onClickScaleBar()">{{scaleBarValY}}</div>
       <compact-picker v-show="paletteIsVisible" :palette="palette"
                       class="color-picker" @input="val=>updateColor(val)" v-model="scaleBarColor" />
     </div>
@@ -143,9 +139,9 @@
        overlayFadingIn: false,
        tmId: 0,
        scaleBarColor: '#000',
-       scaleBarXSize: '30px',
+       scaleBarSizeVal: 25,
+       scaleBarShownSize: `${25}px`, // should be the same value as in scaleBarSizeVal
        paletteIsVisible: false,
-       scaleBarYSize: '30px',
        scaleBarShadow: '#fff'
      }
    },
@@ -170,20 +166,18 @@
    computed: {
      scaleBarValX() {
        if (this.pixelSizeIsActive) {
-         const scaleBarXVal = 30;
          if (this.visibleImageWidth !== 0) {
            return `${round((this.image.naturalWidth /
-             (this.zoom * this.visibleImageWidth)) * scaleBarXVal * this.pixelSizeX, 0)} µm`
+             (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeVal * this.pixelSizeX, 0)} µm`
          }
        }
      },
 
      scaleBarValY() {
        if (this.pixelSizeIsActive) {
-         const scaleBarYVal = 30;
          if (this.visibleImageHeight !== 0) {
            return `${round((this.image.naturalHeight /
-             (this.zoom * this.visibleImageHeight)) * scaleBarYVal * this.pixelSizeY, 0)} µm`
+             (this.zoom * this.visibleImageHeight)) * this.scaleBarSizeVal * this.pixelSizeY, 0)} µm`
          }
        }
      },
@@ -250,10 +244,11 @@
      },
 
      cssProps() {
+       console.log(this.scaleBarShownSize)
        return {
          '--scaleBar-color': this.scaleBarColor,
-         '--scaleBarX-size': this.scaleBarXSize,
-         '--scaleBarY-size': this.scaleBarYSize,
+         '--scaleBarX-size': this.scaleBarShownSize,
+         '--scaleBarY-size': this.scaleBarShownSize,
          '--scaleBarShadow-color': this.scaleBarShadow
        }
      },
@@ -590,15 +585,18 @@
  }
 
  .pixelSizeX {
-  color: var(--scaleBar-color);
-  position: absolute;
-  bottom: 25px;
-  left: 55px;
-  z-index: 3;
-  text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
+   color: var(--scaleBar-color);
+   position: absolute;
+   content: "";
+   width: 60px;
+   height: 10px;
+   bottom: 15px;
+   left: 55px;
+   z-index: 3;
+   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
  }
 
- .pixelSizeX::before {
+ .pixelSizeX::after {
    position: absolute;
    content: "";
    width: var(--scaleBarX-size);
@@ -610,16 +608,19 @@
  .pixelSizeY {
    color: var(--scaleBar-color);
    position: absolute;
-   bottom: 65px;
+   width: 60px;
+   height: 10px;
+   bottom: 58px;
    left: 10px;
    z-index: 3;
    text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
  }
+
  .pixelSizeY::before {
    position: absolute;
    content: "";
    height: var(--scaleBarY-size);
-   bottom: -40px;
+   bottom: -33px;
    left: 10px;
    box-shadow: 1px -1px 1px var(--scaleBarShadow-color);
    border-left: 2px solid var(--scaleBar-color);
