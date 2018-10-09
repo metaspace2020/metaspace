@@ -10,6 +10,8 @@ import {
 import {User} from '../user/model';
 import {UserProjectRole} from '../../binding'
 import {DatasetProject} from '../dataset/model';
+import {Moment} from 'moment';
+import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
 
 export const UserProjectRoleOptions: Record<UserProjectRole, UserProjectRole> = {
   INVITED: 'INVITED',
@@ -39,6 +41,10 @@ export class Project {
   @OneToMany(type => DatasetProject, datasetProject => datasetProject.project)
   @JoinTable({ name: 'dataset_project' })
   datasetProjects: DatasetProject[];
+
+  @Column({ name: 'created_dt', type: 'timestamp without time zone', default: () => "(now() at time zone 'utc')",
+    transformer: new MomentValueTransformer() })
+  createdDT: Moment;
 }
 
 @Entity('user_project')

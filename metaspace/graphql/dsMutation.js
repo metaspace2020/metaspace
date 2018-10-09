@@ -127,10 +127,10 @@ const saveDS = async (connection, args) => {
   if (projectIds != null && projectIds.length > 0) {
     const userProjects = await connection.getRepository(UserProjectModel)
       .find({ userId: submitterId, projectId: In(projectIds) });
-    const datasetProjectModel = connection.getRepository(DatasetProjectModel);
+    const datasetProjectRepo = connection.getRepository(DatasetProjectModel);
     const promises = userProjects.map(async ({projectId, role}) => {
       const approved = [UPRO.MEMBER, UPRO.MANAGER].contains(role);
-      return await datasetProjectModel.insert({datasetId: dsId, projectId, approved});
+      return await datasetProjectRepo.insert({datasetId: dsId, projectId, approved});
     });
     await Promise.all(promises);
   }

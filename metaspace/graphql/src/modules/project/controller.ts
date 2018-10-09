@@ -104,6 +104,22 @@ const Project: FieldResolversFor<Project, ProjectSource> = {
         .getCount();
     }
   },
+
+  async latestUploadDT(project, args, ctx: Context): Promise<Date> {
+    let query = ctx.connection
+      .getRepository(DatasetProjectModel)
+      .createQueryBuilder('dataset_project')
+      .innerJoin('dataset_project.dataset', 'dataset')
+      .innerJoin('(SELECT id, is_public, upload_dt FROM "public"."dataset")', 'public_dataset', 'dataset.id = public_dataset.id')
+      .select('MAX(public_dataset.upload_dt)', 'upload_dt');
+    if (canViewProjectMembersAndDatasets(project.scopeRole)) {
+      query = query.where('dataset_project.project_id = :projectId', {projectId: project.id})
+    } else {
+      query = query.where('dataset_project.project_id = :projectId AND public_dataset.is_public = TRUE', {projectId: project.id});
+    }
+    const {upload_dt} = await query.getRawOne();
+    return upload_dt;
+  }
 };
 
 const Query: FieldResolversFor<Query, void> = {

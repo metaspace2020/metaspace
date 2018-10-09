@@ -15,16 +15,19 @@ import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInte
 import {Context} from './src/context';
 import {ResponsePath} from 'graphql';
 
-const executableSchema = makeExecutableSchema<Context>({
-  typeDefs: mergedSchemas,
-  resolvers: [
-    Resolvers,
-    UserResolvers,
-    GroupResolvers,
-    ProjectResolvers,
-    SystemResolvers,
-  ],
-});
+export const makeNewExecutableSchema = () => {
+  return makeExecutableSchema<Context>({
+    typeDefs: mergedSchemas,
+    resolvers: [
+      Resolvers,
+      UserResolvers,
+      GroupResolvers,
+      ProjectResolvers,
+      SystemResolvers,
+    ],
+  });
+};
+const executableSchema = makeNewExecutableSchema();
 
 if (config.features.graphqlMocks) {
   // TODO: Remove this when it's no longer needed for demoing

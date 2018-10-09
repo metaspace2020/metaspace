@@ -1,10 +1,10 @@
-import {Connection} from 'typeorm';
+import {Connection, EntityManager} from 'typeorm';
 import {Context, UserProjectRoles} from './context';
 import {UserProject as UserProjectModel} from './modules/project/model';
 import _ = require('lodash');
 import {UserError} from 'graphql-errors';
 
-export default (req: Express.Request, connection: Connection): Context => {
+export default (req: Express.Request, connection: Connection | EntityManager): Context => {
   const user = req.user != null ? req.user.user : null;
   let currentUserProjectRoles: Promise<UserProjectRoles> | null = null;
 

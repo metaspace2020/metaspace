@@ -115,6 +115,15 @@ def test_db(sm_config, request):
             id          uuid,
             name        text,
             short_name  text
+        );
+        CREATE TABLE graphql.dataset_project (
+            dataset_id  uuid,
+            project_id  uuid,
+            approved    boolean
+        );
+        CREATE TABLE graphql.project (
+            id          uuid,
+            name        text
         );'''
     )
     db.close()

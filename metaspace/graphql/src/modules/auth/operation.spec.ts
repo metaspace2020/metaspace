@@ -1,10 +1,6 @@
-import * as uuid from 'uuid'
-import * as Knex from 'knex'
-import {Connection, DeepPartial, getRepository} from 'typeorm';
-
-import config from '../../utils/config';
+import {Connection, DeepPartial} from 'typeorm';
 import {createExpiry} from "./operation";
-import {createConnection, DbSchemaName} from '../../utils/db'
+import {createConnection, DbSchemaName} from '../../utils/db';
 import {
   createUserCredentials,
   resetPassword, sendResetPasswordToken,
@@ -52,59 +48,22 @@ async function createUserCredentialsEntities(connection: Connection, user?: Obje
 }
 
 describe('Database operations with user', () => {
-  let knexAdmin: Knex;
-  let knex: Knex;
   let typeormConn: Connection;
-  let id: string;
 
   beforeAll(async () => {
-    console.log('> beforeAll');
-
-    knexAdmin = Knex({
-      client: 'postgres',
-      connection: {
-        host     : config.db.host,
-        user     : 'postgres',
-        database : 'postgres'
-      },
-      debug: false
-    });
-    await knexAdmin.raw(`DROP DATABASE IF EXISTS ${config.db.database};`);
-    await knexAdmin.raw(`CREATE DATABASE ${config.db.database} OWNER ${config.db.user}`);
-
-    knex = Knex({
-      client: 'postgres',
-      connection: {
-        host: config.db.host,
-        database: config.db.database,
-        user: 'postgres'
-      },
-      searchPath: ['public', DbSchemaName],
-      debug: false
-    });
-    await knex.raw(`
-      CREATE SCHEMA ${DbSchemaName} AUTHORIZATION ${config.db.user};
-      CREATE EXTENSION "uuid-ossp";`);
-
     typeormConn = await createConnection();
     await initOperation(typeormConn);
   });
 
   afterAll(async () => {
-    console.log('> afterAll');
-
     await typeormConn.close();
-    await knex.destroy();
-
-    await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
-    await knexAdmin.destroy();
   });
 
   beforeEach(async () => {
   });
 
   afterEach(async () => {
-    await knex.raw('TRUNCATE TABLE "credentials" CASCADE');
+    await typeormConn.query(`TRUNCATE TABLE "${DbSchemaName}"."credentials" CASCADE`);
   });
 
   test('create new user credentials', async () => {
@@ -114,8 +73,7 @@ describe('Database operations with user', () => {
       password: 'password',
     });
 
-    const cred = await knex('credentials').select(
-      ['id', 'hash', 'emailVerified']).first();
+    const cred = await typeormConn.manager.findOneOrFail(Credentials);
     expect(cred.id).toEqual(expect.anything());
     expect(cred.hash).toEqual(expect.anything());
     expect(cred.emailVerified).toEqual(false);

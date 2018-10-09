@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import * as uuid from 'uuid';
-import {Connection, Repository} from 'typeorm';
+import {Connection, EntityManager, Repository} from 'typeorm';
 import * as moment from 'moment';
 import {Moment} from 'moment';
 
@@ -19,11 +19,11 @@ export interface UserCredentialsInput {
 
 const NUM_ROUNDS = 12;
 
-let connection: Connection;
+let connection: Connection | EntityManager;
 let credRepo: Repository<Credentials>;
 let userRepo: Repository<User>;
 
-export const initOperation = async (typeormConn?: Connection) => {
+export const initOperation = async (typeormConn?: Connection | EntityManager) => {
   connection = typeormConn || await createConnection();
   credRepo = connection.getRepository(Credentials);
   userRepo = connection.getRepository(User);

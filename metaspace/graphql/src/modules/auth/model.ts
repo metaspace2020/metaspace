@@ -1,18 +1,7 @@
 import 'reflect-metadata';
-import {Entity, PrimaryColumn, Column, ColumnType} from 'typeorm';
+import {Column, Entity, PrimaryColumn} from 'typeorm';
 import {Moment} from 'moment';
-import {ValueTransformer} from 'typeorm/decorator/options/ValueTransformer';
-import * as moment from 'moment';
-
-class MomentValueTransformer implements ValueTransformer {
-  to (value: Moment): Date| null {
-    return value ? value.toDate(): null;
-  }
-
-  from (value: Date| null): Moment| null {
-    return value ? moment.utc(value) : null;
-  }
-}
+import {MomentValueTransformer} from '../../utils/MomentValueTransformer';
 
 @Entity()
 export class Credentials {
