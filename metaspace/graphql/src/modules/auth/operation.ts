@@ -55,7 +55,7 @@ export const findUserByEmail = async (value: string, field: string='email') => {
     .getOne()) || null;
 };
 
-export const findUserByGoogleId = async (googleId: string|undefined) => {
+export const findUserByGoogleId = async (googleId: string) => {
   const user = await (userRepo.createQueryBuilder('user')
     .leftJoinAndSelect('user.credentials', 'credentials')
     .where(`google_id = :googleId`, { googleId: googleId })
@@ -80,18 +80,7 @@ export const sendEmailVerificationToken = async (cred: Credentials, email: strin
   }
   const link = `${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(email)}&token=${encodeURIComponent(cred.emailVerificationToken)}`;
   emailService.sendVerificationEmail(email, link);
-  logger.debug(`Resent email verification to ${email}: ${link}`);
-};
-
-const createGoogleCredentials = async (userCred: UserCredentialsInput): Promise<Credentials> => {
-  // TODO: Add a test case
-  const newCred = credRepo.create({
-    googleId: userCred.googleId || null,
-    emailVerified: true,
-  });
-  await credRepo.insert(newCred);
-  logger.info(`New google user added: ${userCred.email}`);
-  return newCred;
+  logger.debug(`Sent email verification to ${email}: ${link}`);
 };
 
 const hashPassword = async (password: string|undefined): Promise<string|undefined> => {
@@ -102,50 +91,96 @@ export const verifyPassword = async (password: string, hash: string|null|undefin
   return (hash) ? await bcrypt.compare(password, hash) : null;
 };
 
-const createLocalCredentials = async (userCred: UserCredentialsInput): Promise<Credentials> => {
-  const cred = credRepo.create({
-    hash: await hashPassword(userCred.password),
-    googleId: userCred.googleId || null,
-    emailVerificationToken: uuid.v4(),
-    emailVerificationTokenExpires: createExpiry(),
-    emailVerified: false
-  });
-  await credRepo.insert(cred);
-  await sendEmailVerificationToken(cred, userCred.email);
-  return cred;
+const createCredentials = async (userCred: UserCredentialsInput): Promise<Credentials> => {
+  if (userCred.googleId) {
+    // TODO: Add a test case
+    const newCred = credRepo.create({
+      googleId: userCred.googleId,
+      emailVerified: true,
+    });
+    await credRepo.insert(newCred);
+    logger.info(`New google credentials added for ${userCred.email} user`);
+    return newCred;
+  }
+  else {
+    const newCred = credRepo.create({
+      hash: await hashPassword(userCred.password),
+      emailVerificationToken: uuid.v4(),
+      emailVerificationTokenExpires: createExpiry(),
+      emailVerified: false
+    });
+    await credRepo.insert(newCred);
+    logger.info(`New local credentials added for ${userCred.email} user`);
+    return newCred;
+  }
 };
 
-export const createGoogleUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
-  const newCred = await createGoogleCredentials(userCred);
-  const userUpd = {
-    email: userCred.email,
-    name: userCred.name,
-    credentials: newCred
-  };
-  await userRepo.save(userUpd);
+const updateCredentials = async (credId: string, userCred: UserCredentialsInput): Promise<void> => {
+  // TODO: Add a test case
+  if (userCred.password) {
+    await credRepo.update(credId, {
+      hash: await hashPassword(userCred.password),
+    });
+    logger.info(`${userCred.email} user credentials updated, password added`);
+  }
+  else if (userCred.googleId) {
+    await credRepo.update(credId, {
+      googleId: userCred.googleId,
+      emailVerified: true,
+    });
+    logger.info(`${userCred.email} user credentials updated, google id added`);
+  }
+  else {
+    logger.info('Nothing to update in credentials');
+  }
 };
 
 export const createUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
   const existingUser = await findUserByEmail(userCred.email, 'email');
   if (existingUser) {
-    const link = `${config.web_public_url}//account/sign-in`;
-    emailService.sendLoginEmail(existingUser.email!, link);
-    logger.debug(`Email already verified. Sent log in email to ${existingUser.email}`);
+    if (existingUser.credentials.googleId && userCred.password) {
+      await updateCredentials(existingUser.credentialsId!, userCred);
+    }
+    else if (existingUser.credentials.hash && userCred.googleId) {
+      await updateCredentials(existingUser.credentialsId!, userCred);
+    }
+    else if (existingUser.credentials.googleId && userCred.googleId) {
+      // do nothing
+    }
+    else if (existingUser.credentials.hash && userCred.password) {
+      const link = `${config.web_public_url}/account/sign-in`;
+      emailService.sendLoginEmail(existingUser.email!, link);
+      logger.debug(`Email already verified. Sent log in email to ${existingUser.email}`);
+    }
   }
   else {
-    const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email');
-    if (!existingUserNotVerified || !existingUserNotVerified.credentials) {
-      const newCred = await createLocalCredentials(userCred);
-      const userUpd = {
-        notVerifiedEmail: userCred.email,
+    if (userCred.googleId) {
+      const newCred = await createCredentials(userCred);
+      const newUser = userRepo.create({
+        email: userCred.email,
         name: userCred.name,
         credentials: newCred
-      };
-      await userRepo.save({...existingUserNotVerified, ...userUpd});
+      });
+      await userRepo.insert(newUser);
+      logger.info(`New google user added: ${userCred.email}`);
     }
     else {
-      await sendEmailVerificationToken(existingUserNotVerified.credentials,
-        existingUserNotVerified.notVerifiedEmail!);
+      const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email');
+      if (existingUserNotVerified) {
+        await sendEmailVerificationToken(existingUserNotVerified.credentials,
+          existingUserNotVerified.notVerifiedEmail!);
+      }
+      else {
+        const newCred = await createCredentials(userCred);
+        const newUser = userRepo.create({
+          notVerifiedEmail: userCred.email,
+          name: userCred.name,
+          credentials: newCred
+        });
+        await userRepo.insert(newUser);
+        logger.info(`New local user added: ${userCred.email}`);
+        await sendEmailVerificationToken(newUser.credentials, newUser.notVerifiedEmail!);
+      }
     }
   }
 };

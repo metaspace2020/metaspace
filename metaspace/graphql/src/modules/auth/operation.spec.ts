@@ -114,8 +114,9 @@ describe('Database operations with user', () => {
       password: 'password',
     });
 
-    const cred = await knex('credentials').select(
-      ['id', 'hash', 'emailVerified']).first();
+    const cred = await typeormConn.manager.findOneOrFail(Credentials, {
+      select: ['id', 'hash', 'emailVerified']
+    });
     expect(cred.id).toEqual(expect.anything());
     expect(cred.hash).toEqual(expect.anything());
     expect(cred.emailVerified).toEqual(false);

@@ -9,7 +9,7 @@ import {Connection} from 'typeorm';
 import config from '../../utils/config';
 import {User} from '../user/model';
 import {
-  createUserCredentials, createGoogleUserCredentials,
+  createUserCredentials,
   sendResetPasswordToken, resetPassword,
   verifyEmail, verifyPassword,
   initOperation,
@@ -163,7 +163,7 @@ const configureGoogleAuth = (router: IRouter<any>) => {
       },
       callbackify(async (accessToken: string, refreshToken: string, profile: any) => {
         return await findUserByGoogleId(profile.id)
-          || await createGoogleUserCredentials({
+          || await createUserCredentials({
             googleId: profile.id,
             name: profile.displayName,
             email: profile.emails[0].value,
