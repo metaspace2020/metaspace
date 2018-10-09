@@ -23,13 +23,13 @@
              :style="opticalImageStyle" />
       </div>
       <div :style="cssProps" :class="{pixelSizeX: pixelSizeIsActive}" @click="onClickScaleBar()">
-        {{scaleBarValX()}}
+        {{scaleBarValX}}
       </div>
       <div :style="cssProps" :class="{pixelSizeY: pixelSizeIsActive}" @click="onClickScaleBar()">
-        {{scaleBarValY()}}
+        {{scaleBarValY}}
       </div>
       <compact-picker v-show="paletteIsVisible" :palette="palette"
-                      class="color-picker" @input="val=>updateColor(val)" v-model="textColor" />
+                      class="color-picker" @input="val=>updateColor(val)" v-model="scaleBarColor" />
     </div>
 
     <div ref="mapOverlap"
@@ -142,7 +142,7 @@
        overlayDefault: true,
        overlayFadingIn: false,
        tmId: 0,
-       textColor: '#000',
+       scaleBarColor: '#000',
        scaleBarXSize: '30px',
        paletteIsVisible: false,
        scaleBarYSize: '30px',
@@ -151,7 +151,6 @@
    },
    components: { 'compact-picker': Compact },
    created() {
-     console.log(this.pixelSizeX, this.pixelSizeY);
      this.onResize = throttle(this.onResize, 100);
    },
    mounted() {
@@ -162,7 +161,6 @@
      this.parentDivWidth = this.$refs.parent.clientWidth;
      window.addEventListener('resize', this.onResize);
      this.$el.addEventListener('click', this.paletteClickHandler);
-     this.scaleBarValX()
    },
    beforeDestroy() {
      window.removeEventListener('resize', this.onResize);
@@ -170,6 +168,26 @@
      this.isUnmounted = true;
    },
    computed: {
+     scaleBarValX() {
+       if (this.pixelSizeIsActive) {
+         const scaleBarXVal = 30;
+         if (this.visibleImageWidth !== 0) {
+           return `${round((this.image.naturalWidth /
+             (this.zoom * this.visibleImageWidth)) * scaleBarXVal * this.pixelSizeX, 0)} µm`
+         }
+       }
+     },
+
+     scaleBarValY() {
+       if (this.pixelSizeIsActive) {
+         const scaleBarYVal = 30;
+         if (this.visibleImageHeight !== 0) {
+           return `${round((this.image.naturalHeight /
+             (this.zoom * this.visibleImageHeight)) * scaleBarYVal * this.pixelSizeY, 0)} µm`
+         }
+       }
+     },
+
      pixelSizeIsActive() {
        if (this.pixelSizeX !== 0 && this.pixelSizeY !== 0) {
          return true
@@ -233,7 +251,7 @@
 
      cssProps() {
        return {
-         '--pixelSizeX-color': this.textColor,
+         '--scaleBar-color': this.scaleBarColor,
          '--scaleBarX-size': this.scaleBarXSize,
          '--scaleBarY-size': this.scaleBarYSize,
          '--scaleBarShadow-color': this.scaleBarShadow
@@ -256,28 +274,10 @@
      }
    },
    methods: {
-     scaleBarValX() {
-       if (this.pixelSizeIsActive) {
-         const scaleBarXVal = 30;
-         if (this.$refs.visibleImage !== undefined) {
-           return `${round((this.image.naturalWidth /
-             (this.zoom * this.$refs.visibleImage.clientWidth)) * scaleBarXVal * this.pixelSizeX, 0)} µm`
-         }
-       }
-     },
 
-     scaleBarValY() {
-       if (this.pixelSizeIsActive) {
-         const scaleBarYVal = 30;
-         if (this.$refs.visibleImage !== undefined) {
-           return `${round((this.image.naturalWidth /
-             (this.zoom * this.$refs.visibleImage.clientWidth)) * scaleBarYVal * this.pixelSizeY, 0)} µm`
-         }
-       }
-     },
 
      updateColor(val) {
-       this.textColor = val.hex;
+       this.scaleBarColor = val.hex;
        if(val.hex === '#000000') {
          this.scaleBarShadow = '#FFFFFF';
        }
@@ -590,7 +590,7 @@
  }
 
  .pixelSizeX {
-  color: var(--pixelSizeX-color);
+  color: var(--scaleBar-color);
   position: absolute;
   bottom: 25px;
   left: 55px;
@@ -604,11 +604,11 @@
    width: var(--scaleBarX-size);
    left: -35px;
    box-shadow: 1px 1px 1px var(--scaleBarShadow-color);
-   border-bottom: 2px solid var(--pixelSizeX-color);
+   border-bottom: 2px solid var(--scaleBar-color);
  }
 
  .pixelSizeY {
-   color: var(--pixelSizeX-color);
+   color: var(--scaleBar-color);
    position: absolute;
    bottom: 65px;
    left: 10px;
@@ -622,7 +622,7 @@
    bottom: -40px;
    left: 10px;
    box-shadow: 1px -1px 1px var(--scaleBarShadow-color);
-   border-left: 2px solid var(--pixelSizeX-color);
+   border-left: 2px solid var(--scaleBar-color);
  }
 
  .pixelSizeX:hover,
