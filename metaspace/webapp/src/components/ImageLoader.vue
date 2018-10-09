@@ -144,6 +144,7 @@
        tmId: 0,
        textColor: '#000',
        scaleBarXSize: '30px',
+       paletteIsVisible: false,
        scaleBarYSize: '30px',
        scaleBarShadow: '#fff'
      }
