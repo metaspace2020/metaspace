@@ -68,6 +68,7 @@
     "vue-analytics": "^5.9.1",
     "vue-apollo": "3.0.0-beta.13",
     "vue-clickaway": "^2.1.0",
+    "vue-color": "^2.6.0",
     "vue-lazyload": "^1.0.0-rc5",
     "vue-resize-directive": "^1.0.0",
     "vue-router": "^3.0.1",

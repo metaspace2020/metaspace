@@ -22,6 +22,14 @@
              class="optical-image"
              :style="opticalImageStyle" />
       </div>
+      <div :style="cssProps" :class="{pixelSizeX: pixelSizeIsActive}" @click="onClickScaleBar()">
+        {{scaleBarValX()}}
+      </div>
+      <div :style="cssProps" :class="{pixelSizeY: pixelSizeIsActive}" @click="onClickScaleBar()">
+        {{scaleBarValY()}}
+      </div>
+      <compact-picker v-show="paletteIsVisible" :palette="palette"
+                      class="color-picker" @input="val=>updateColor(val)" v-model="textColor" />
     </div>
 
     <div ref="mapOverlap"
@@ -42,6 +50,8 @@
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
  import config from '../clientConfig.json';
+ import { Compact } from 'vue-color'
+ import { round } from 'lodash-es';
 
  const OPACITY_MAPPINGS = {
    'constant': (x) => 1,
@@ -96,6 +106,14 @@
      scrollBlock: {
        type: Boolean,
        default: false
+     },
+     pixelSizeX: {
+       type: Number,
+       default: 0
+     },
+     pixelSizeY: {
+       type: Number,
+       default: 0
      }
    },
    data () {
@@ -123,10 +141,16 @@
        dragThrottled: false,
        overlayDefault: true,
        overlayFadingIn: false,
-       tmId: 0
+       tmId: 0,
+       textColor: '#000',
+       scaleBarXSize: '30px',
+       scaleBarYSize: '30px',
+       scaleBarShadow: '#fff'
      }
    },
+   components: { 'compact-picker': Compact },
    created() {
+     console.log(this.pixelSizeX, this.pixelSizeY);
      this.onResize = throttle(this.onResize, 100);
    },
    mounted() {
@@ -136,6 +160,8 @@
        this.loadImage(this.src);
      this.parentDivWidth = this.$refs.parent.clientWidth;
      window.addEventListener('resize', this.onResize);
+     this.$el.addEventListener('click', this.paletteClickHandler);
+     this.scaleBarValX()
    },
    beforeDestroy() {
      window.removeEventListener('resize', this.onResize);
@@ -143,6 +169,17 @@
      this.isUnmounted = true;
    },
    computed: {
+     pixelSizeIsActive() {
+       if (this.pixelSizeX !== 0 && this.pixelSizeY !== 0) {
+         return true
+       }
+       return false
+     },
+
+     palette() {
+       return ['#FFFFFF', '#999999', '#000000']
+     },
+
      messageOS() {
        let os = getOS();
 
@@ -191,7 +228,16 @@
 
      opticalImageUrl() {
        return (config.imageStorage || '') + this.opticalSrc;
-     }
+     },
+
+     cssProps() {
+       return {
+         '--pixelSizeX-color': this.textColor,
+         '--scaleBarX-size': this.scaleBarXSize,
+         '--scaleBarY-size': this.scaleBarYSize,
+         '--scaleBarShadow-color': this.scaleBarShadow
+       }
+     },
    },
    watch: {
      'src' (url) {
@@ -209,6 +255,43 @@
      }
    },
    methods: {
+     scaleBarValX() {
+       if (this.pixelSizeIsActive) {
+         const scaleBarXVal = 30;
+         if (this.$refs.visibleImage !== undefined) {
+           return `${round((this.image.naturalWidth /
+             (this.zoom * this.$refs.visibleImage.clientWidth)) * scaleBarXVal * this.pixelSizeX, 0)} µm`
+         }
+       }
+     },
+
+     scaleBarValY() {
+       if (this.pixelSizeIsActive) {
+         const scaleBarYVal = 30;
+         if (this.$refs.visibleImage !== undefined) {
+           return `${round((this.image.naturalWidth /
+             (this.zoom * this.$refs.visibleImage.clientWidth)) * scaleBarYVal * this.pixelSizeY, 0)} µm`
+         }
+       }
+     },
+
+     updateColor(val) {
+       this.textColor = val.hex;
+       if(val.hex === '#000000') {
+         this.scaleBarShadow = '#FFFFFF';
+       }
+       else if (val.hex === '#FFFFFF') {
+         this.scaleBarShadow = '#000'
+       }
+       else if (val.hex === '#999999') {
+         this.scaleBarShadow = '#000000'
+       }
+       this.paletteIsVisible = false;
+     },
+
+     onClickScaleBar() {
+       this.paletteIsVisible = true;
+     },
 
      onResize: function() {
        // v-resize sometimes keeps calling after the component is destroyed - ignore it when it does.
@@ -456,7 +539,7 @@
  }
 </script>
 
-<style>
+<style lang="scss">
  /* No attribute exists for MS Edge at the moment, so ion images are antialiased there */
  .isotope-image {
    image-rendering: pixelated;
@@ -473,7 +556,7 @@
    cursor: -webkit-grab;
    cursor: grab;
    width: 100%;
-   line-height: 0px;
+   line-height: 0;
  }
 
  .image-loader__overlay-text {
@@ -503,6 +586,55 @@
   background-color: black;
   opacity: 0.6;
   transition: 0.7s;
+ }
+
+ .pixelSizeX {
+  color: var(--pixelSizeX-color);
+  position: absolute;
+  bottom: 25px;
+  left: 55px;
+  z-index: 3;
+  text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
+ }
+
+ .pixelSizeX::before {
+   position: absolute;
+   content: "";
+   width: var(--scaleBarX-size);
+   left: -35px;
+   box-shadow: 1px 1px 1px var(--scaleBarShadow-color);
+   border-bottom: 2px solid var(--pixelSizeX-color);
+ }
+
+ .pixelSizeY {
+   color: var(--pixelSizeX-color);
+   position: absolute;
+   bottom: 65px;
+   left: 10px;
+   z-index: 3;
+   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
+ }
+ .pixelSizeY::before {
+   position: absolute;
+   content: "";
+   height: var(--scaleBarY-size);
+   bottom: -40px;
+   left: 10px;
+   box-shadow: 1px -1px 1px var(--scaleBarShadow-color);
+   border-left: 2px solid var(--pixelSizeX-color);
+ }
+
+ .pixelSizeX:hover,
+ .pixelSizeY:hover {
+   cursor: pointer;
+ }
+
+ .color-picker {
+   display: block;
+   position: absolute;
+   bottom: 5%;
+   left: 0;
+   z-index: 4;
  }
 
 </style>

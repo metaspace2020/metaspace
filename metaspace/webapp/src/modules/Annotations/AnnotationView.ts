@@ -190,6 +190,22 @@
      return Object.assign(safeJsonParse(this.annotation.dataset.metadataJson), datasetMetadataExternals);
    }
 
+   get pixelSizeX() {
+     if (JSON.parse(this.annotation.dataset.metadataJson).MS_Analysis !== undefined &&
+     JSON.parse(this.annotation.dataset.metadataJson).MS_Analysis.Pixel_Size !== undefined) {
+       return JSON.parse(this.annotation.dataset.metadataJson).MS_Analysis.Pixel_Size.Xaxis
+     }
+     return 0
+   }
+
+   get pixelSizeY() {
+     if (JSON.parse(this.annotation.dataset.metadataJson).MS_Analysis !== undefined &&
+     JSON.parse(this.annotation.dataset.metadataJson).MS_Analysis.Pixel_Size !== undefined) {
+       return JSON.parse(this.annotation.dataset.metadataJson).MS_Analysis.Pixel_Size.Yaxis
+     }
+     return 0
+   }
+
    opacity: number = 1.0;
 
    imagePosition: ImagePosition = {
