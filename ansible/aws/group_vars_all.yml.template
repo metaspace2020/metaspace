@@ -301,6 +301,7 @@ nginx_servers:
         - auth_basic_user_file /etc/nginx/passwdfile;
         - proxy_pass http://elasticsearch_server;
         - include proxy-params.conf;
+        - client_max_body_size 100M;
 
 basic_auth_users:
   - user: "{{ sm_es_user }}"
