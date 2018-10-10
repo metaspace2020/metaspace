@@ -1,7 +1,7 @@
 require('ts-node/register');
 const Knex = require('knex');
 const config = require('../utils/config').default;
-const {DbSchemaName} = require('../utils/db');
+const {createConnection, DbSchemaName} = require('../utils/db');
 
 module.exports = async () => {
 
@@ -48,4 +48,7 @@ module.exports = async () => {
       );
       GRANT ALL ON ALL TABLES IN SCHEMA public TO ${config.db.user}`);
   await knex.destroy();
+
+  // Create a TypeORM connection just to apply migrations, so that parallel tests don't conflict during initialization
+  await (await createConnection()).close();
 };
