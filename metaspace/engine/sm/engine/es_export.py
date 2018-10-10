@@ -44,8 +44,8 @@ DATASET_SEL = '''SELECT
     gg.name as ds_group_name,
     gg.short_name as ds_group_short_name,
     gd.group_approved as ds_group_approved,
-    gp.ds_project_ids,
-    gp.ds_project_names
+    COALESCE(gp.ds_project_ids, '{}') as ds_project_ids,
+    COALESCE(gp.ds_project_names, '{}') as ds_project_names
 FROM (
   SELECT
     d.id AS ds_id,

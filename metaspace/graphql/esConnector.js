@@ -110,7 +110,7 @@ const createBodyWithAuthFilters = (user, userProjectRoles) => {
       });
     }
     const visibleProjectIds = Object.entries(userProjectRoles || [])
-                                    .filter(([id, role]) => [UPRO.MEMBER, UPRO.MANAGER].contains(role))
+                                    .filter(([id, role]) => [UPRO.MEMBER, UPRO.MANAGER].includes(role))
                                     .map(([id, role]) => id);
     if (visibleProjectIds.length > 0) {
       filterObj.bool.should.push({

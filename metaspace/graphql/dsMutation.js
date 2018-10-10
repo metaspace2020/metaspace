@@ -8,7 +8,7 @@ const jsondiffpatch = require('jsondiffpatch'),
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
   {Dataset: DatasetModel, DatasetProject: DatasetProjectModel} = require('./src/modules/dataset/model'),
   {UserGroup: UserGroupModel, UserGroupRoleOptions} = require('./src/modules/group/model'),
-  {UserProject: UserProjectModel} = require('./src/modules/project/model'),
+  {UserProjectRoleOptions: UPRO} = require('./src/modules/project/model'),
   metadataMapping = require('./metadataSchemas/metadataMapping').default,
   {smAPIRequest} = require('./src/utils');
 
@@ -113,7 +113,7 @@ const isMemberOf = async (connection, user, groupId) => {
   return isMember;
 };
 
-const saveDS = async (connection, args) => {
+const saveDS = async (connection, args, currentUserRoles) => {
   const {dsId, submitterId, groupId, projectIds, principalInvestigator} = args;
   const dsUpdate = {
     id: dsId,
@@ -124,15 +124,24 @@ const saveDS = async (connection, args) => {
     piEmail: principalInvestigator ? principalInvestigator.email : undefined
   };
   await connection.getRepository(DatasetModel).save(dsUpdate);
+
   if (projectIds != null && projectIds.length > 0) {
-    const userProjects = await connection.getRepository(UserProjectModel)
-      .find({ userId: submitterId, projectId: In(projectIds) });
     const datasetProjectRepo = connection.getRepository(DatasetProjectModel);
-    const promises = userProjects.map(async ({projectId, role}) => {
-      const approved = [UPRO.MEMBER, UPRO.MANAGER].contains(role);
-      return await datasetProjectRepo.insert({datasetId: dsId, projectId, approved});
+    const existingDatasetProjects = await datasetProjectRepo.find({ datasetId: dsId });
+    const savePromises = projectIds.map(async (projectId) => {
+      const approved = [UPRO.MEMBER, UPRO.MANAGER].includes(currentUserRoles[projectId]);
+      const existing = existingDatasetProjects.find(dp => dp.projectId === projectId);
+      if (existing == null || existing.approved !== approved) {
+        return await datasetProjectRepo.save({ datasetId: dsId, projectId, approved });
+      } else {
+        return Promise.resolve();
+      }
     });
-    await Promise.all(promises);
+    const deletePromises = existingDatasetProjects
+      .filter(({projectId}) => !projectIds.includes(projectId))
+      .map(async ({projectId}) => await datasetProjectRepo.delete({ datasetId: dsId, projectId }));
+
+    await Promise.all([...savePromises, ...deletePromises]);
   }
 };
 
@@ -167,7 +176,7 @@ module.exports = {
   processingSettingsChanged,
 
   Mutation: {
-    create: async (_, args, {user, connection}) => {
+    create: async (_, args, {user, connection, getCurrentUserProjectRoles}) => {
       const {input, priority} = args;
       let {id: dsId} = args;
       if (dsId)
@@ -188,13 +197,13 @@ module.exports = {
       // TODO: generate dsId here and save it before calling SM API
       dsId = resp['ds_id'];
 
-      const {submitterId, groupId, principalInvestigator} = input;
-      const saveDSArgs = {dsId, submitterId, groupId, principalInvestigator};
-      await saveDS(connection, saveDSArgs);
+      const {submitterId, groupId, projectIds, principalInvestigator} = input;
+      const saveDSArgs = {dsId, submitterId, groupId, projectIds, principalInvestigator};
+      await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles());
       return JSON.stringify({ dsId, status: 'success' });
     },
 
-    update: async (_, args, {user, connection}) => {
+    update: async (_, args, {user, connection, getCurrentUserProjectRoles}) => {
       const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
       await assertCanEditDataset(connection, user, dsId);
 
@@ -207,11 +216,11 @@ module.exports = {
       const {newDB, procSettingsUpd} = await processingSettingsChanged(engineDS, update);
       const reprocessingNeeded = newDB || procSettingsUpd;
 
-      const {submitterId, groupId, principalInvestigator} = update;
-      const saveDSArgs = {dsId, submitterId, groupId, principalInvestigator};
+      const {submitterId, groupId, projectIds, principalInvestigator} = update;
+      const saveDSArgs = {dsId, submitterId, groupId, projectIds, principalInvestigator};
 
       if (reprocess) {
-        await saveDS(connection, saveDSArgs);
+        await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles());
         return await smAPIRequest(`/v1/datasets/${dsId}/add`, {
           doc: {...engineDS, ...update},
           delFirst: procSettingsUpd || delFirst,  // delete old results if processing settings changed
@@ -227,7 +236,7 @@ module.exports = {
           }));
         }
         else {
-          await saveDS(connection, saveDSArgs);
+          await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles());
           const resp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
             doc: update,
             priority: priority,

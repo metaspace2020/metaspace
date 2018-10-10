@@ -24,14 +24,12 @@ const assertCanEditUser = (user: JwtUser, userId: string) => {
 
 const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<ScopeRole> => {
   let scopeRole = SRO.OTHER;
-  if (ctx.user.role === 'admin') {
+  if (ctx.isAdmin) {
     scopeRole = SRO.ADMIN;
   }
   else {
-    if (userId) {
-      if (userId === ctx.user.id) {
-        scopeRole = SRO.PROFILE_OWNER;
-      }
+    if (userId && ctx.user != null && userId === ctx.user.id) {
+      scopeRole = SRO.PROFILE_OWNER;
     }
   }
   return scopeRole;
