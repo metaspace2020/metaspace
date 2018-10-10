@@ -117,7 +117,7 @@ def test_db(sm_config, request):
             short_name  text
         );
         CREATE TABLE graphql.dataset_project (
-            dataset_id  uuid,
+            dataset_id  text,
             project_id  uuid,
             approved    boolean
         );

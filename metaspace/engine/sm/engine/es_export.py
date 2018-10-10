@@ -72,7 +72,7 @@ LEFT JOIN (
     FROM graphql.dataset_project gdp
     JOIN graphql.project gp ON gdp.project_id = gp.id
     WHERE gdp.approved
-    GROUP BY  gdp.dataset_id
+    GROUP BY gdp.dataset_id
 ) gp ON gp.dataset_id = d.ds_id
 WHERE d.ds_id = %s'''
 
