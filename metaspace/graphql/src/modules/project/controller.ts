@@ -17,20 +17,14 @@ import updateUserProjectRole from './operation/updateUserProjectRole';
 import convertProjectToProjectSource from './util/convertProjectToProjectSource';
 import {convertUserToUserSource} from '../user/util/convertUserToUserSource';
 import updateProjectDatasets from './operation/updateProjectDatasets';
+import {In} from 'typeorm';
 
 
-const isLoggedIn = (ctx: Context) => ctx.user != null && ctx.user.id != null;
 const canViewProjectMembersAndDatasets = (scopeRole: ScopeRole) =>
   [SRO.PROJECT_MANAGER, SRO.PROJECT_MEMBER, SRO.ADMIN].includes(scopeRole);
-const assertIsLoggedIn = (ctx: Context) => {
-  if (!isLoggedIn(ctx)) {
-    throw new UserError('Unauthorized');
-  }
-};
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
-  assertIsLoggedIn(ctx);
   const userProject = await ctx.connection.getRepository(UserProjectModel).findOne({
-    where: { projectId, userId: ctx.user!.id, role: UPRO.MANAGER }
+    where: { projectId, userId: ctx.getUserIdOrFail(), role: UPRO.MANAGER }
   });
   if (!ctx.isAdmin && userProject == null) {
     throw new UserError('Unauthorized');
@@ -60,7 +54,9 @@ const UserProject: FieldResolversFor<UserProject, UserProjectSource> = {
     return await connection.getRepository(DatasetModel)
       .createQueryBuilder('dataset')
       .innerJoin('dataset.datasetProjects', 'datasetProject')
-      .where('dataset.userId = :userId AND datasetProject.projectId = :projectId', {userId, projectId})
+      .where('dataset.userId = :userId', {userId})
+      .andWhere('datasetProject.projectId = :projectId', {projectId})
+      .andWhere('datasetProject.approved = TRUE')
       .getCount();
   },
 };
@@ -86,21 +82,23 @@ const Project: FieldResolversFor<Project, ProjectSource> = {
   async numMembers(project, args, ctx: Context): Promise<number> {
     return await ctx.connection
       .getRepository(UserProjectModel)
-      .count({ where: { projectId: project.id } });
+      .count({ where: { projectId: project.id, role: In([UPRO.MEMBER, UPRO.MANAGER]) } });
   },
 
   async numDatasets(project, args, ctx: Context): Promise<number> {
     if (canViewProjectMembersAndDatasets(project.scopeRole)) {
       return await ctx.connection
         .getRepository(DatasetProjectModel)
-        .count({ where: { projectId: project.id } });
+        .count({ where: { projectId: project.id, approved: true } });
     } else {
       return await ctx.connection
         .getRepository(DatasetProjectModel)
         .createQueryBuilder('dataset_project')
         .innerJoinAndSelect('dataset_project.dataset', 'dataset')
         .innerJoin('(SELECT id, is_public FROM "public"."dataset")', 'public_dataset', 'dataset.id = public_dataset.id')
-        .where('dataset_project.project_id = :projectId AND public_dataset.is_public = TRUE', {projectId: project.id})
+        .where('dataset_project.projectId = :projectId', {projectId: project.id})
+        .andWhere('dataset_project.approved = TRUE')
+        .andWhere('public_dataset.is_public = TRUE')
         .getCount();
     }
   },
@@ -111,11 +109,11 @@ const Project: FieldResolversFor<Project, ProjectSource> = {
       .createQueryBuilder('dataset_project')
       .innerJoin('dataset_project.dataset', 'dataset')
       .innerJoin('(SELECT id, is_public, upload_dt FROM "public"."dataset")', 'public_dataset', 'dataset.id = public_dataset.id')
-      .select('MAX(public_dataset.upload_dt)', 'upload_dt');
-    if (canViewProjectMembersAndDatasets(project.scopeRole)) {
-      query = query.where('dataset_project.project_id = :projectId', {projectId: project.id})
-    } else {
-      query = query.where('dataset_project.project_id = :projectId AND public_dataset.is_public = TRUE', {projectId: project.id});
+      .select('MAX(public_dataset.upload_dt)', 'upload_dt')
+      .where('dataset_project.projectId = :projectId', {projectId: project.id})
+      .andWhere('dataset_project.approved = TRUE');
+    if (!canViewProjectMembersAndDatasets(project.scopeRole)) {
+      query = query.andWhere('public_dataset.is_public = TRUE');
     }
     const {upload_dt} = await query.getRawOne();
     return upload_dt;
@@ -192,7 +190,7 @@ const Query: FieldResolversFor<Query, void> = {
 
 const Mutation: FieldResolversFor<Mutation, void> = {
   async createProject(source, {projectDetails}, ctx): Promise<ProjectSource> {
-    assertIsLoggedIn(ctx);
+    const userId = ctx.getUserIdOrFail(); // Exit early if not logged in
     const {name, isPublic, urlSlug} = projectDetails;
     if (!ctx.isAdmin && urlSlug != null) {
       throw new UserError('urlSlug can only be set by METASPACE administrators');
@@ -216,7 +214,6 @@ const Mutation: FieldResolversFor<Mutation, void> = {
   },
 
   async updateProject(source, {projectId, projectDetails}, ctx): Promise<ProjectSource> {
-    assertIsLoggedIn(ctx);
     await asyncAssertCanEditProject(ctx, projectId);
     if (projectDetails.urlSlug !== undefined && !ctx.isAdmin) {
       throw new UserError('urlSlug can only be set by METASPACE administrators');
@@ -292,8 +289,6 @@ const Mutation: FieldResolversFor<Mutation, void> = {
   },
 
   async importDatasetsIntoProject(source, {projectId, datasetIds}, ctx): Promise<Boolean> {
-    assertIsLoggedIn(ctx);
-
     const userProjectRole = (await ctx.getCurrentUserProjectRoles())[projectId];
     if (userProjectRole == null) {
       throw new UserError('Not a member of project');

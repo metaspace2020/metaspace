@@ -68,7 +68,7 @@ describe('modules/project/controller', () => {
       const promise = doQuery<ProjectType>(createProject, { projectDetails }, { context: anonContext });
 
       // Assert
-      await expect(promise).rejects.toThrow('Unauthorized');
+      await expect(promise).rejects.toThrow('Unauthenticated');
     });
     it('should reject a urlSlug from a user', async () => {
       // Act
