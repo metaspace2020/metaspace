@@ -191,16 +191,16 @@
    }
 
    get pixelSizeX() {
-     if (this.metadata.MS_Analysis !== undefined &&
-       this.metadata.MS_Analysis.Pixel_Size !== undefined) {
+     if (this.metadata.MS_Analysis != null &&
+       this.metadata.MS_Analysis.Pixel_Size != null) {
        return this.metadata.MS_Analysis.Pixel_Size.Xaxis
      }
      return 0
    }
 
    get pixelSizeY() {
-     if (this.metadata.MS_Analysis !== undefined &&
-       this.metadata.MS_Analysis.Pixel_Size !== undefined) {
+     if (this.metadata.MS_Analysis != null &&
+       this.metadata.MS_Analysis.Pixel_Size != null) {
        return this.metadata.MS_Analysis.Pixel_Size.Yaxis
      }
      return 0

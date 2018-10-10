@@ -22,10 +22,19 @@
              class="optical-image"
              :style="opticalImageStyle" />
       </div>
-      <div :style="cssProps" :class="{pixelSizeX: pixelSizeIsActive}" @click="onClickScaleBar()">{{scaleBarValX}}</div>
-      <div :style="cssProps" :class="{pixelSizeY: pixelSizeIsActive}" @click="onClickScaleBar()">{{scaleBarValY}}</div>
-      <compact-picker v-show="paletteIsVisible" :palette="palette"
-                      class="color-picker" @input="val=>updateColor(val)" v-model="scaleBarColor" />
+      <div :style="cssProps"
+           :class="{pixelSizeX: pixelSizeIsActive}"
+           title="Click to change the color"
+           @click="onClickScaleBar()">
+        {{scaleBarValX}}
+      </div>
+      <div :style="cssProps"
+           :class="{pixelSizeY: pixelSizeIsActive}"
+           title="Click to change the color"
+           @click="onClickScaleBar()">
+        {{scaleBarValY}}
+      </div>
+      <palette v-show="paletteIsVisible" class="color-picker" @colorInput="val=>updateColor(val)" />
     </div>
 
     <div ref="mapOverlap"
@@ -48,6 +57,7 @@
  import config from '../clientConfig.json';
  import { Compact } from 'vue-color'
  import { round } from 'lodash-es';
+ import Palette from './Palette.vue'
 
  const OPACITY_MAPPINGS = {
    'constant': (x) => 1,
@@ -138,14 +148,15 @@
        overlayDefault: true,
        overlayFadingIn: false,
        tmId: 0,
-       scaleBarColor: '#000',
-       scaleBarSizeVal: 25,
-       scaleBarShownSize: `${25}px`, // should be the same value as in scaleBarSizeVal
+       scaleBarColor: '#000000',
        paletteIsVisible: false,
-       scaleBarShadow: '#fff'
+       scaleBarShadow: '#FFFFFF'
      }
    },
-   components: { 'compact-picker': Compact },
+   components: {
+     'compact-picker': Compact,
+     'palette': Palette
+   },
    created() {
      this.onResize = throttle(this.onResize, 100);
    },
@@ -164,15 +175,27 @@
      this.isUnmounted = true;
    },
    computed: {
+     isIE() {
+       if (window.navigator.userAgent.indexOf('MSIE') > 0 ||
+       window.navigator.userAgent.indexOf('Trident/') > 0) {
+         return true
+       }
+       return false
+     },
+
+     scaleBarSizeVal() {
+       return 25
+     },
+
      scaleBarValX() {
-       if (this.pixelSizeIsActive && this.visibleImageWidth !== 0) {
+       if (this.pixelSizeIsActive && this.visibleImageWidth !== 0 && !this.isIE) {
          return `${round((this.image.naturalWidth /
            (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeVal * this.pixelSizeX, 0)} µm`
        }
      },
 
      scaleBarValY() {
-       if (this.visibleImageHeight !== 0 && this.pixelSizeIsActive) {
+       if (this.pixelSizeIsActive && this.visibleImageHeight !== 0 && !this.isIE) {
          return `${round((this.image.naturalHeight /
            (this.zoom * this.visibleImageHeight)) * this.scaleBarSizeVal * this.pixelSizeY, 0)} µm`
        }
@@ -183,10 +206,6 @@
          return true
        }
        return false
-     },
-
-     palette() {
-       return ['#FFFFFF', '#999999', '#000000']
      },
 
      messageOS() {
@@ -240,12 +259,15 @@
      },
 
      cssProps() {
-       console.log(this.scaleBarShownSize)
-       return {
-         '--scaleBar-color': this.scaleBarColor,
-         '--scaleBarX-size': this.scaleBarShownSize,
-         '--scaleBarY-size': this.scaleBarShownSize,
-         '--scaleBarShadow-color': this.scaleBarShadow
+       if (this.isIE) {
+         return null
+       } else {
+         return {
+           '--scaleBar-color': this.scaleBarColor,
+           '--scaleBarX-size': `${this.scaleBarSizeVal}px`,
+           '--scaleBarY-size': `${this.scaleBarSizeVal}px`,
+           '--scaleBarShadow-color': this.scaleBarShadow
+         }
        }
      },
    },
@@ -265,17 +287,15 @@
      }
    },
    methods: {
-
-
      updateColor(val) {
-       this.scaleBarColor = val.hex;
-       if(val.hex === '#000000') {
+       this.scaleBarColor = val;
+       if(val === '#000000') {
          this.scaleBarShadow = '#FFFFFF';
        }
-       else if (val.hex === '#FFFFFF') {
+       else if (val === '#FFFFFF') {
          this.scaleBarShadow = '#000'
        }
-       else if (val.hex === '#999999') {
+       else if (val === '#999999') {
          this.scaleBarShadow = '#000000'
        }
        this.paletteIsVisible = false;
@@ -297,7 +317,6 @@
          });
        }
      },
-
 
      onWheel(event) {
        // TODO: add pinch event handler for mobile devices
@@ -418,7 +437,6 @@
 
        this.grayscaleData = grayscaleData;
      },
-
 
      redraw () {
        this.isLCMS = this.image.height == 1;
@@ -630,8 +648,8 @@
  .color-picker {
    display: block;
    position: absolute;
-   bottom: 5%;
-   left: 0;
+   bottom: 35px;
+   left: 30px;
    z-index: 4;
  }
 
