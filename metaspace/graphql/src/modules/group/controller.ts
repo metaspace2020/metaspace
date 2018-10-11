@@ -1,22 +1,16 @@
 import {UserError} from 'graphql-errors';
 import {Connection, Like, In} from 'typeorm';
 
+import {Credentials as CredentialsModel} from '../auth/model';
 import {Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions} from './model';
 import {User as UserModel} from '../user/model';
 import {Dataset as DatasetModel} from '../dataset/model';
 import {Group, UserGroup, UserGroupRole} from '../../binding';
 import {Context, Scope, ScopeRole, ScopeRoleOptions} from '../../context';
-import {LooselyCompatible, smAPIRequest, logger} from '../../utils';
+import {LooselyCompatible, smAPIRequest, logger, findUserByEmail} from '../../utils';
 import {JwtUser} from '../auth/controller';
 import {sendInvitationEmail} from '../auth';
 import config from '../../utils/config';
-
-const findUserByEmail = async (connection: Connection, email: string) => {
-  return await connection.getRepository(UserModel)
-    .createQueryBuilder()
-    .where('LOWER(email) = :email', {'email': email.toLowerCase()})
-    .getOne();
-};
 
 const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<ScopeRole> => {
   let scopeRole = ScopeRoleOptions.OTHER;
@@ -282,11 +276,15 @@ export const Resolvers = {
     async inviteUserToGroup(_: any, {groupId, email}: any, {user, connection}: any): Promise<UserGroup> {
       await assertCanEditGroup(connection, user, groupId);
 
-      let invUser = await findUserByEmail(connection, email);
+      let invUser = await findUserByEmail(connection, email, 'email')
+        || await findUserByEmail(connection, email, 'not_verified_email');
       if (!invUser) {
         // create not verified user
-        const userRepo = connection.getRepository(UserModel);
-        invUser = await userRepo.save({ notVerifiedEmail: email }) as UserModel;
+        const invUserCred = await connection.getRepository(CredentialsModel).save({ emailVerified: false });
+        invUser = await connection.getRepository(UserModel).save({
+          notVerifiedEmail: email,
+          credentials: invUserCred
+        }) as UserModel;
         const invitedByUser = await findUserByEmail(connection, user.email);
         const link = `${config.web_public_url}/account/create-account`;
         sendInvitationEmail(email, invitedByUser!.name || '', link);
@@ -309,7 +307,7 @@ export const Resolvers = {
           groupId,
           role: UserGroupRoleOptions.INVITED,
         });
-        logger.info(`Invited ${invUserGroup.userId} user to ${groupId} group`);
+        logger.info(`${invUserGroup.userId} user was invited to ${groupId} group`);
       }
 
       return await userGroupRepo.findOneOrFail({

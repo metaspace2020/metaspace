@@ -78,5 +78,5 @@ You have been invited to METASPACE by ${invitedBy}. Please sign up using this em
 Best wishes,
 METASPACE Team`;
   sendEmail(email, subject, text);
-  logger.info(`${invitedBy} invited user ${email}`);
+  logger.info(`Invitation email sent to ${email} by ${invitedBy}`);
 };

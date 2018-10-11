@@ -21,8 +21,8 @@ export class User {
   @Column({ type: 'text', default: 'user' })
   role: string;
 
-  @Column({ type: 'text', name: 'credentials_id', nullable: true })
-  credentialsId: string | null;
+  @Column({ type: 'text', name: 'credentials_id' })
+  credentialsId: string;
 
   @OneToOne(type => Credentials)
   @JoinColumn({ name: 'credentials_id' })

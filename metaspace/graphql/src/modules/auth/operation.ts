@@ -6,7 +6,8 @@ import {Moment} from 'moment';
 
 import * as emailService from './email';
 import config from '../../utils/config';
-import {logger, createConnection} from '../../utils';
+import {logger} from '../../utils';
+import * as utils from '../../utils';
 import {Credentials} from './model';
 import {User} from '../user/model';
 
@@ -24,7 +25,7 @@ let credRepo: Repository<Credentials>;
 let userRepo: Repository<User>;
 
 export const initOperation = async (typeormConn?: Connection) => {
-  connection = typeormConn || await createConnection();
+  connection = typeormConn || await utils.createConnection();
   credRepo = connection.getRepository(Credentials);
   userRepo = connection.getRepository(User);
 };
@@ -49,10 +50,7 @@ export const findUserById = async (id: string|undefined, credentials: boolean=tr
 };
 
 export const findUserByEmail = async (value: string, field: string='email') => {
-  return await (userRepo.createQueryBuilder('user')
-    .leftJoinAndSelect('user.credentials', 'credentials')
-    .where(`LOWER(${field}) = :email`, { email: value.toLowerCase() })
-    .getOne()) || null;
+  return utils.findUserByEmail(connection, value, field);
 };
 
 export const findUserByGoogleId = async (googleId: string) => {
@@ -138,25 +136,38 @@ const updateCredentials = async (credId: string, userCred: UserCredentialsInput)
 export const createUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
   const existingUser = await findUserByEmail(userCred.email, 'email');
   if (existingUser) {
+    // existing verified user
     const link = `${config.web_public_url}/account/sign-in`;
     emailService.sendLoginEmail(existingUser.email!, link);
   }
   else {
-    if (userCred.googleId) {
-      const newCred = await createCredentials(userCred);
-      const newUser = userRepo.create({
-        email: userCred.email,
-        name: userCred.name,
-        credentials: newCred
-      });
-      await userRepo.insert(newUser);
-      logger.info(`New google user added: ${userCred.email}`);
-    }
-    else {
-      const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email');
-      if (existingUserNotVerified) {
+    const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email');
+    if (existingUserNotVerified) {
+      // existing not verified user
+      if (userCred.googleId) {
+        await updateCredentials(existingUserNotVerified.credentialsId, userCred);
+        await userRepo.update(existingUserNotVerified.id, {
+          email: userCred.email,
+          notVerifiedEmail: null,
+          name: userCred.name,
+        });
+      }
+      else {
         await sendEmailVerificationToken(existingUserNotVerified.credentials,
           existingUserNotVerified.notVerifiedEmail!);
+      }
+    }
+    else {
+      // absolutely new user
+      if (userCred.googleId) {
+        const newCred = await createCredentials(userCred);
+        const newUser = userRepo.create({
+          email: userCred.email,
+          name: userCred.name,
+          credentials: newCred
+        });
+        await userRepo.insert(newUser);
+        logger.info(`New google user added: ${userCred.email}`);
       }
       else {
         const newCred = await createCredentials(userCred);
