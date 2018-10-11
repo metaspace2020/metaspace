@@ -382,7 +382,7 @@ const Resolvers = {
         .innerJoin('project.datasetProjects', 'datasetProject')
         .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles))
         .andWhere('datasetProject.datasetId = :datasetId', {datasetId: ds._source.ds_id});
-      if (canSeeUnapprovedProjects) {
+      if (!canSeeUnapprovedProjects) {
         projectsQuery = projectsQuery.andWhere('datasetProject.approved')
       }
       const projects = await projectsQuery.getMany();
