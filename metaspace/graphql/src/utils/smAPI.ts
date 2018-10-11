@@ -27,6 +27,7 @@ export const smAPIRequest = async (uri: string, args: any={}) => {
       is_public: doc.isPublic,
       submitter_id: doc.submitterId,
       group_id: doc.groupId,
+      project_ids: doc.projectIds,
       adducts: doc.adducts,
       mol_dbs: doc.molDBs,
     }

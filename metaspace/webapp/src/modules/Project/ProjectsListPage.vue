@@ -103,16 +103,18 @@
       return this.$store.getters.filter.simpleQuery || '';
     }
     get projects() {
-      // Concatenate the lists, deduplicating projects by ID
-      // This takes advantage of JS Objects keeping their keys in insertion order to keep the projects sorted
-      const projects: Record<string, ProjectsListProject>  = {};
-      if (this.query === '' && this.myProjects != null) {
-        this.myProjects.forEach(p => projects[p.id] = p);
-      }
-      if (this.allProjects != null) {
-        this.allProjects.forEach(p => projects[p.id] = p);
-      }
-      return Object.values(projects);
+      // // Concatenate the lists, deduplicating projects by ID
+      // // This takes advantage of JS Objects keeping their keys in insertion order to keep the projects sorted
+      // const projects: Record<string, ProjectsListProject>  = {};
+      // if (this.query === '' && this.myProjects != null) {
+      //   this.myProjects.forEach(p => projects[p.id] = p);
+      // }
+      // if (this.allProjects != null) {
+      //   this.allProjects.forEach(p => projects[p.id] = p);
+      // }
+      // return Object.values(projects);
+      // TODO: Switch to having discrete "My Projects" and "All Projects" modes so that pagination is consistent
+      return this.allProjects;
     }
 
     @Watch('query')

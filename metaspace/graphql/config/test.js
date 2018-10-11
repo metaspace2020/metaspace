@@ -70,4 +70,8 @@ config.aws = {
   aws_region: ""
 };
 
+config.features = {
+  graphqlMocks: false
+};
+
 module.exports = config;

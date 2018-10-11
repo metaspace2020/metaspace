@@ -8,19 +8,26 @@ import config from './src/utils/config';
 import {Resolvers as UserResolvers} from './src/modules/user/controller';
 import {Resolvers as GroupResolvers} from './src/modules/group/controller';
 import {Resolvers as SystemResolvers} from './src/modules/system/controller';
+import {Resolvers as ProjectResolvers} from './src/modules/project/controller';
 import * as Resolvers from './resolvers';
 import {mergedSchemas} from './schema';
 import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInterceptorToSchema';
+import {Context} from './src/context';
+import {ResponsePath} from 'graphql';
 
-const executableSchema = makeExecutableSchema({
-  typeDefs: mergedSchemas,
-  resolvers: [
-    Resolvers,
-    UserResolvers,
-    GroupResolvers,
-    SystemResolvers,
-  ],
-});
+export const makeNewExecutableSchema = () => {
+  return makeExecutableSchema<Context>({
+    typeDefs: mergedSchemas,
+    resolvers: [
+      Resolvers,
+      UserResolvers,
+      GroupResolvers,
+      ProjectResolvers,
+      SystemResolvers,
+    ],
+  });
+};
+const executableSchema = makeNewExecutableSchema();
 
 if (config.features.graphqlMocks) {
   // TODO: Remove this when it's no longer needed for demoing
@@ -32,7 +39,7 @@ if (config.features.graphqlMocks) {
       // Make IDs somewhat deterministic
       ID: (source, args, context, info) => {
         let idx: string|number = 0;
-        let cur = info.path;
+        let cur: ResponsePath | undefined = info.path;
         while (cur != null) {
           if (/[0-9]+/.test(String(cur.key))) {
             idx = cur.key;
