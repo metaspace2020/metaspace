@@ -55,7 +55,6 @@
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
  import config from '../clientConfig.json';
- import { Compact } from 'vue-color'
  import { round } from 'lodash-es';
  import Palette from './Palette.vue'
 
@@ -154,7 +153,6 @@
      }
    },
    components: {
-     'compact-picker': Compact,
      'palette': Palette
    },
    created() {
