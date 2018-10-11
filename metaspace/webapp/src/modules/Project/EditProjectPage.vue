@@ -26,7 +26,7 @@
           @cancelInvite="handleRemoveUser"
           @acceptUser="handleAcceptUser"
           @rejectUser="handleRejectUser"
-          @addMember="handleAddMember"
+          @addMember="() => handleAddMember(/* Discard the event argument. ConfirmAsync adds an argument to the end of the arguments list, so the arguments list must be predictable */)"
         />
         <div v-if="project && project.isPublic" style="margin-bottom: 2em">
           <h2>Custom URL</h2>
@@ -86,10 +86,9 @@
     UpdateProjectMutation,
     updateProjectMutation,
   } from '../../api/project';
-  import gql from 'graphql-tag';
   import EditProjectForm from './EditProjectForm.vue';
   import MembersList from '../../components/MembersList.vue';
-  import { UserRole } from '../../api/user';
+  import {currentUserRoleQuery, UserRole} from '../../api/user';
   import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
@@ -100,22 +99,20 @@
     role: UserRole;
   }
 
-  @Component({
+  @Component<EditProjectProfile>({
     components: {
       EditProjectForm,
       MembersList,
     },
     apollo: {
-      currentUser: gql`query {
-        currentUser {
-          id
-          role
-        }
-      }`,
+      currentUser: {
+        query: currentUserRoleQuery,
+        fetchPolicy: 'cache-first',
+      },
       project: {
         query: editProjectQuery,
         loadingKey: 'membersLoading',
-        variables(this: EditProjectProfile) { return { projectId: this.projectId } },
+        variables() { return { projectId: this.projectId } },
       },
     }
   })
@@ -206,7 +203,8 @@
             projectDetails: {
               name,
               isPublic,
-              urlSlug: this.canEditUrlSlug ? urlSlug : null,
+              // Avoid sending a null urlSlug unless it's being intentionally unset
+              ...(this.canEditUrlSlug ? {urlSlug: urlSlug || null} : {}),
             }
           },
         });

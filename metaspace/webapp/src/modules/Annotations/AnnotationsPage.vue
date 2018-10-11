@@ -32,13 +32,13 @@
    name: 'annotations-page',
    computed: {
      hiddenColumns() {
-       const {institution, database, datasetIds} = this.filter;
+       const {group, database, datasetIds} = this.filter;
        let hiddenColumns = [];
        const singleDatasetSelected = datasetIds && datasetIds.length == 1;
        if (singleDatasetSelected)
          hiddenColumns.push('Dataset');
-       if (institution || singleDatasetSelected)
-         hiddenColumns.push('Institution');
+       if (group || singleDatasetSelected)
+         hiddenColumns.push('Group');
        if (database)
          hiddenColumns.push('Database');
        return hiddenColumns;

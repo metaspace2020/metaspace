@@ -1,4 +1,5 @@
 import * as config from './clientConfig.json';
+import * as Raven from 'raven-js';
 
 const fuConfig = config.fineUploader;
 
@@ -97,6 +98,18 @@ function getOS() {
   return os;
 }
 
+function safeJsonParse(json: string) {
+  if (json) {
+    try {
+      return JSON.parse(json);
+    } catch (err) {
+      Raven.captureException(err);
+    }
+  }
+  return undefined;
+}
+
+
 export {
   renderMolFormula,
   prettifySign,
@@ -107,5 +120,6 @@ export {
   csvExportHeader,
   scrollDistance,
   mdTypeSupportsOpticalImages,
-  getOS
+  getOS,
+  safeJsonParse
 };

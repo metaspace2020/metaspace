@@ -141,6 +141,8 @@
  import {renderMolFormula, prettifySign} from '../../util';
 
  import gql from 'graphql-tag';
+ import reportError from '../../lib/reportError';
+ import graphqlClient from '../../graphqlClient';
 
  export default {
    name: 'image-alignment-page',
@@ -151,7 +153,7 @@
    props: {
      limitMB: {
        type: Number,
-       default: 25
+       default: 50
      },
      // service for storing raw optical images
      rawImageStorageUrl: {
@@ -184,7 +186,6 @@
        variables() {
          return {ds_id: this.datasetId}
        },
-       fetchPolicy: 'network-only',
        update(data) {
          const {url, transform} = data.rawOpticalImage;
          if (transform != null) {
@@ -310,21 +311,18 @@
      updateIndex(newIdx) {
        this.annotationIndex = newIdx - 1;
      },
-     submit() {
+     async submit() {
        if (this.alreadyUploaded) {
-         this.addOpticalImage(this.opticalImgUrl).then(() => {
+         try {
+           await this.addOpticalImage(this.opticalImgUrl)
            this.$message({
              type: 'success',
              message: 'The alignment has been updated'
            });
            this.$router.go(-1);
-         }).catch((e) => {
-           this.$message({
-             type: 'error',
-             message: 'Internal server error'
-           });
-           throw e;
-         });
+         } catch (e) {
+           reportError(e);
+         }
          return;
        }
 
@@ -333,23 +331,20 @@
            fd = new FormData();
        xhr.open("POST", uri, true);
        xhr.responseType = 'json';
-       xhr.onreadystatechange = () => {
+       xhr.onreadystatechange = async () => {
          if (xhr.readyState == 4 && xhr.status == 201) {
            const imageId = xhr.response.image_id,
                imageUrl = this.rawImageStorageUrl + '/' + imageId;
-           this.addOpticalImage(imageUrl).then(() => {
+           try {
+             await this.addOpticalImage(imageUrl);
              this.$message({
                type: 'success',
                message: 'The image and alignment were successfully saved'
              });
              this.$router.go(-1);
-           }).catch((e) => {
-             this.$message({
-               type: 'error',
-               message: 'Internal server error'
-             });
-             throw e;
-           });
+           } catch (e) {
+             reportError(e);
+           }
          } else if (xhr.readyState == 4) {
            this.$message({
              type: 'error',
@@ -362,8 +357,12 @@
      },
 
      async addOpticalImage(imageUrl) {
+       this.$message({
+         message: 'Your optical image has been submitted! Please wait while it is saved...',
+         type: 'success'
+       });
        // TODO if there are no iso images found prevent optical image addition
-       const graphQLPromise = this.$apollo.mutate({
+       await this.$apollo.mutate({
          mutation: addOpticalImageQuery,
          variables: {
            datasetId: this.datasetId,
@@ -371,11 +370,11 @@
            transform: this.$refs.aligner.normalizedTransform
          }
        });
-       this.$message({
-         message: 'Your optical image was submitted! Please wait until it will be saved...',
-         type: 'success'
-       });
-       return graphQLPromise;
+       // Reset the GraphQL cache because thumbnails are cached.
+       // Ideally this would just evict cached entries for this dataset, but apollo-cache's only other
+       // cache eviction mechanism is so specific that it's hard to be sure that you've caught all affected queries.
+       // It's better to waste bandwidth here than to lose time debugging cache issues in the future.
+       await graphqlClient.cache.reset();
      },
 
      async deleteOpticalImages() {
@@ -387,6 +386,8 @@
                  id: this.datasetId
                }
              });
+           // Reset the GraphQL cache - see comment in addOpticalImage for rationale
+           await graphqlClient.cache.reset();
            const resp = JSON.parse(graphQLResp.data.deleteOpticalImage);
            if (resp.status !== 'success') {
              this.$message({
@@ -404,11 +405,7 @@
            this.destroyOptImage();
          }
        } catch(e) {
-         this.$message({
-           type: 'error',
-           message: "Couldn't delete optical image due to an error"
-         });
-         throw e;
+         reportError(e);
        }
      },
 

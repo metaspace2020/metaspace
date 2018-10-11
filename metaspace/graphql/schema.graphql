@@ -1,5 +1,4 @@
 type Person {
-  id: ID           # null if it was entered as free-text
   name: String!
   email: String    # null if current user is not allowed to see
 }
@@ -65,7 +64,7 @@ type Dataset {
   institution: String
   submitter: User!
   group: Group
-  principalInvestigator: Person!
+  principalInvestigator: Person
   projects: [Project!]
 
   polarity: Polarity!
@@ -92,12 +91,13 @@ type Dataset {
   inputPath: String
   uploadDateTime: String
   fdrCounts(inpFdrLvls: [Int!]!, checkLvl: Int!): FdrCounts
-  opticalImage: String!
+  opticalImage: String! @deprecated(badName: "Renamed to rawOpticalImageUrl")
+  rawOpticalImageUrl: String
 }
 
 # fields of categorical type
 enum DatasetAggField {
-  DF_INSTITUTION,
+  DF_GROUP,
   DF_SUBMITTER_NAME,
   DF_POLARITY,
   DF_ION_SOURCE,
@@ -186,9 +186,6 @@ input DatasetFilter {
   # list of IDs separated by '|'
   ids: String
 
-  # exact match
-  institution: String
-
   # substring match
   name: String
 
@@ -244,7 +241,7 @@ input DatasetCreateInput {
   metadataJson: String!
   molDBs: [String!]!
   adducts: [String!]!
-  submitterId: ID
+  submitterId: ID!
   groupId: ID
   projectIds: [ID!] = []
   principalInvestigator: PersonInput
@@ -252,6 +249,7 @@ input DatasetCreateInput {
 }
 
 input DatasetUpdateInput {
+  # Don't supply fields that haven't been changed
   name: String
   uploadDT: String
   metadataJson: String
@@ -326,9 +324,9 @@ type Query {
 
   rawOpticalImage(datasetId: String!): RawOpticalImage
 
-  thumbnailImage(datasetId: String!): String,
+  thumbnailImage(datasetId: String!): String @deprecated(badName: "Renamed to thumbnailOpticalImageUrl")
 
-  reprocessingNeeded(input: DatasetUpdateInput!): Boolean!
+  thumbnailOpticalImageUrl(datasetId: String!): String
 
   currentUserLastSubmittedDataset: Dataset
 }

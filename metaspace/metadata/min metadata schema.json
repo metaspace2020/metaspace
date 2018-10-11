@@ -79,7 +79,7 @@
     "MS_Analysis": {
       "type": "object",
       "description": "Mass spectrometry settings",
-      "required": ["Polarity", "Ionisation_Source", "Analyzer"],
+      "required": ["Polarity", "Ionisation_Source", "Analyzer", "Detector_Resolving_Power"],
       "help": "METASPACE is optimized for data from high-resolving power MS like FTICR or Orbitrap",
       "properties": {
         "Polarity": {

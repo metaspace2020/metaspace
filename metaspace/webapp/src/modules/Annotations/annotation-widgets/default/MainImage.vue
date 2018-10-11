@@ -3,6 +3,8 @@
     <div class="main-ion-image-container-row1">
         <image-loader :src="annotation.isotopeImages[0].url"
                       :colormap="colormap"
+                      :pixelSizeX="pixelSizeX"
+                      :pixelSizeY="pixelSizeY"
                       ref="imageLoader"
                       scrollBlock
                       class="image-loader"
@@ -85,7 +87,10 @@ export default class MainImage extends Vue {
     onImageMove!: Function
     @Prop({required: true, type: Function})
     onImageZoom!: Function
-
+    @Prop({type: Number})
+    pixelSizeX!: Number
+    @Prop({type: Number})
+    pixelSizeY!: Number
 
     get colorbarDirection(): string {
       return this.colormap[0] == '-' ? 'bottom' : 'top';

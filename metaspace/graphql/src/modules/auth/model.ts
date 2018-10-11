@@ -23,21 +23,23 @@ export class Credentials {
   @Column({ type: 'text', nullable: true })
   hash: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', name: 'google_id', nullable: true })
   googleId: string | null;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', name: 'email_verification_token', nullable: true })
   emailVerificationToken: string | null;
 
-  @Column({ type: 'timestamp without time zone', nullable: true, transformer: new MomentValueTransformer() })
+  @Column({ type: 'timestamp without time zone', name: 'email_verification_token_expires',
+    nullable: true, transformer: new MomentValueTransformer() })
   emailVerificationTokenExpires?: Moment | null;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: 'boolean', name: 'email_verified', default: false })
   emailVerified: boolean;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'text', name: 'reset_password_token', nullable: true })
   resetPasswordToken: string | null;
 
-  @Column({ type: 'timestamp without time zone', nullable: true, transformer: new MomentValueTransformer() })
+  @Column({ type: 'timestamp without time zone', name: 'reset_password_token_expires',
+    nullable: true, transformer: new MomentValueTransformer() })
   resetPasswordTokenExpires: Moment | null;
 }

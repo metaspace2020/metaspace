@@ -3,6 +3,7 @@ import {Component} from 'vue';
 
 export type Polarity = 'Positive' | 'Negative';
 export type DetectorResolvingPower = { mz: number; Resolving_Power: number; };
+export type PixelSize = { Xaxis: number; Yaxis: number; }
 export type Person = { First_Name: string; Last_Name: string; Email: string; };
 
 export interface JsonSchemaProperty {
@@ -18,7 +19,7 @@ export interface JsonSchemaProperty {
   help?: string;
 }
 
-export type FormFieldEditorType = 'textarea' | 'select' | 'autocomplete' | 'checkbox' | 'table' | 'selectMulti' | 'person' | 'detectorResolvingPower' | 'text';
+export type FormFieldEditorType = 'textarea' | 'select' | 'autocomplete' | 'checkbox' | 'table' | 'selectMulti' | 'person' | 'detectorResolvingPower' | 'text' | 'pixelSize';
 
 export interface FormFieldProperty extends JsonSchemaProperty {
   title: string;
@@ -56,7 +57,6 @@ export interface MetaspaceOptions {
 }
 
 const FIELD_WIDTH: Record<string, number> = {
-  'Institution': 8,
   'Submitter': 8,
   'Supplementary': 16,
   'Email': 24,
@@ -64,6 +64,7 @@ const FIELD_WIDTH: Record<string, number> = {
   'Ionisation_Source': 8,
   'Analyzer': 8,
   'Detector_Resolving_Power': 17,
+  'Pixel_Size': 17,
   'Dataset_Name': 12,
   'Solvent_A_Table': 24,
   'Solvent_B_Table': 24,

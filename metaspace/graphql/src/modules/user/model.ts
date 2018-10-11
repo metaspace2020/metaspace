@@ -1,6 +1,7 @@
 import {Entity, PrimaryColumn, Column, OneToOne, JoinColumn, OneToMany, ManyToOne} from 'typeorm';
 import {Credentials} from '../auth/model';
 import {UserGroup, Group} from '../group/model';
+import {Dataset} from '../dataset/model';
 
 @Entity()
 export class User {
@@ -8,11 +9,14 @@ export class User {
   @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v1mc()' })
   id: string;
 
-  @Column({ type: 'text' })
-  name: string;
+  @Column({ type: 'text', nullable: true })
+  name: string | null;
 
-  @Column({ type: 'text' })
-  email: string;
+  @Column({ type: 'text', nullable: true })
+  email: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'not_verified_email'})
+  notVerifiedEmail: string | null;
 
   @Column({ type: 'text', default: 'user' })
   role: string;
@@ -28,26 +32,5 @@ export class User {
   datasets: Dataset[];
 
   @OneToMany(type => UserGroup, userGroup => userGroup.user)
-  groups: UserGroup[];
-}
-
-@Entity()
-export class Dataset {
-
-  @PrimaryColumn({ type: 'text' })
-  id: string;
-
-  @Column({ type: 'text', name: 'user_id' })
-  userId: string; // dataset submitter and owner -> edit rights
-
-  @ManyToOne(type => User, user => user.datasets)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
-
-  @Column({ type: 'text', name: 'group_id', nullable: true })
-  groupId: string; // dataset belongs to group -> all members have view rights
-
-  @ManyToOne(type => Group)
-  @JoinColumn({ name: 'group_id' })
-  group: Group;
+  groups?: UserGroup[];
 }

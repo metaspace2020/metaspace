@@ -47,10 +47,11 @@
  import {metadataExportQuery} from '../../../api/metadata';
  import DatasetList from './DatasetList.vue';
  import {FilterPanel} from '../../Filters/index';
- import { csvExportHeader} from '../../../util';
+ import { csvExportHeader } from '../../../util';
  import gql from 'graphql-tag';
  import FileSaver from 'file-saver';
  import delay from '../../../lib/delay';
+ import formatCsvRow from '../../../lib/formatCsvRow';
 
  const processingStages = ['started', 'queued', 'finished'];
 
@@ -99,17 +100,18 @@
                id
                name
                status
-               submitter {
-                 name
-               }
-               institution
+               submitter { id name }
+               principalInvestigator { name }
+               group { id name }
+               projects { id name }
+               isPublic
              }
            }
          }`,
          result({data}) {
            if (data.datasetStatusUpdated.dataset != null) {
-             const {name, status, submitter, institution} = data.datasetStatusUpdated.dataset;
-             const who = `${submitter.name} (${institution})`;
+             const {name, status, submitter, group} = data.datasetStatusUpdated.dataset;
+             const who = group ? `${submitter.name} (${group.name})` : submitter.name;
              const statusMap = {
                FINISHED: 'success',
                QUEUED: 'info',
@@ -209,18 +211,18 @@
      async startExport() {
        let csv = csvExportHeader();
 
-       csv += ['datasetId', 'datasetName', 'institution', 'submitter',
+       csv += formatCsvRow(['datasetId', 'datasetName', 'group', 'submitter',
                'PI', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource',
                'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime','FDR@10% + DataBase', 'opticalImage'
-       ].join(',') + "\n";
+       ]);
 
        function person(p) { return p ? p.name : ''; }
 
        function formatRow(row) {
-         return [
+         return formatCsvRow([
            row.id,
            row.name,
-           row.institution,
+           row.group ? row.group.name : '',
            person(row.submitter),
            person(row.principalInvestigator),
            row.organism,
@@ -234,13 +236,13 @@
            row.polarity.toLowerCase(),
            row.uploadDateTime,
            row.fdrCounts ? `${row.fdrCounts.counts}` + ' ' + `${row.fdrCounts.dbName}` : '',
-           (row.opticalImage != 'noOptImage') ? 'http://' + window.location.host + row.opticalImage : 'No optical image'
-         ].join(',');
+           (row.opticalImage) ? 'http://' + window.location.host + row.opticalImage : 'No optical image'
+         ]);
        }
 
        function writeCsvChunk(rows) {
          for (let row of rows) {
-           csv += formatRow(row) + "\n";
+           csv += formatRow(row);
          }
        }
 

@@ -1,97 +1,178 @@
 import {UserError} from "graphql-errors";
-import {Like} from 'typeorm';
+import {FindManyOptions, Like, In} from 'typeorm';
 
-import {UpdateUserInput, User} from '../../binding';
-import {User as UserModel, Dataset as DatasetModel} from './model';
+import {User, UserGroup} from '../../binding';
+import {User as UserModel} from './model';
+import {Dataset as DatasetModel} from '../dataset/model';
 import {Credentials as CredentialsModel} from '../auth/model';
-import {UserGroup as UserGroupModel, Group as GroupModel} from '../group/model';
+import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../group/model';
+import {Context, Scope, ScopeRole, ScopeRoleOptions as SRO} from '../../context';
+import {JwtUser} from '../auth/controller';
+import {sendEmailVerificationToken} from '../auth/operation';
+import {logger, LooselyCompatible, smAPIRequest} from '../../utils';
 
-const hasAccess = (user: UserModel, userId?: string) => {
-  if (!user)
+const assertCanEditUser = (user: JwtUser, userId: string) => {
+  if (!user || !user.id)
+    throw new UserError('Not authenticated');
+
+  if (user.role !== 'admin' && user.id !== userId)
     throw new UserError('Access denied');
+};
 
-  if (userId) {
-    if (user.role !== 'admin' && user.id !== userId)
-      throw new UserError('Access denied');
+const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<ScopeRole> => {
+  let scopeRole = SRO.OTHER;
+  if (ctx.user.role === 'admin') {
+    scopeRole = SRO.ADMIN;
   }
   else {
-    if (user.role !== 'admin')
-      throw new UserError('Access denied');
+    if (userId) {
+      if (userId === ctx.user.id) {
+        scopeRole = SRO.PROFILE_OWNER;
+      }
+    }
   }
+  return scopeRole;
 };
 
 export const Resolvers = {
   User: {
-    async primaryGroup(user: UserModel, _: any, {connection}: any): Promise<UserGroupModel|null> {
-      return await connection.getRepository(UserGroupModel).findOne({
-        where: { userId: user.id, primary: true },
-        relations: ['group']
-      }) || null;
+    async primaryGroup({scopeRole, ...user}: UserModel & Scope, _: any,
+                       ctx: Context): Promise<LooselyCompatible<UserGroup>|null> {
+      if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
+        return await ctx.connection.getRepository(UserGroupModel).findOne({
+          where: { userId: user.id, primary: true },
+          relations: ['group', 'user']
+        }) || null
+      }
+      return null;
     },
 
-    async groups(user: UserModel, _: any, {connection}: any): Promise<UserGroupModel[]> {
-      return await connection.getRepository(UserGroupModel).find({
-        where: { userId: user.id },
-        relations: ['group']
-      });
+    async groups({scopeRole, ...user}: UserModel & Scope, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup>[]|null> {
+      if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
+        return await ctx.connection.getRepository(UserGroupModel).find({
+          where: { userId: user.id },
+          relations: ['group', 'user']
+        });
+      }
+      return null;
+    },
+
+    async email({scopeRole, ...user}: UserModel & Scope): Promise<string|null> {
+      if ([SRO.GROUP_MANAGER,
+        SRO.ADMIN,
+        SRO.PROFILE_OWNER].includes(scopeRole)) {
+        return user.email || user.notVerifiedEmail || null;
+      }
+      return null;
     }
   },
 
   Query: {
-    async user(_: any, {userId}: any, {user, connection}: any): Promise<User|null> {
-      await hasAccess(user, userId);
-
-      if (userId) {
-        return await connection.getRepository(UserModel).findOneOrFail({
-          where: { 'id': userId }
+    async user(_: any, {userId}: any, ctx: Context): Promise<LooselyCompatible<User & Scope>|null> {
+      const scopeRole = await resolveUserScopeRole(ctx, userId);
+      if ([SRO.PROFILE_OWNER, SRO.ADMIN].includes(scopeRole)) {
+        const user = await ctx.connection.getRepository(UserModel).findOneOrFail({
+          where: { id: userId }
         });
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          scopeRole
+        };
       }
       return null;
     },
 
-    async currentUser(_: any, {}: any, {user, connection}: any): Promise<User|null> {
-      if (user) {
-        return await connection.getRepository(UserModel).findOneOrFail({
-          where: { 'id': user.id }
+    async currentUser(_: any, {}: any, ctx: Context): Promise<LooselyCompatible<User & Scope>|null> {
+      const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
+      if ([SRO.PROFILE_OWNER, SRO.ADMIN].includes(scopeRole)) {
+        const user = await ctx.connection.getRepository(UserModel).findOneOrFail({
+          where: { id: ctx.user.id }
         });
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          scopeRole
+        };
       }
       return null;
     },
 
-    async allUsers(_: any, {query}: any, {user, connection}: any): Promise<User[]> {
-      hasAccess(user);
-
-      return await connection.getRepository(UserModel).find({
-        where: { name: Like(`%${query}%`) }
-      });
+    async allUsers(_: any, {query}: any, ctx: Context): Promise<LooselyCompatible<User & Scope>[]|null> {
+      const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
+      if ([SRO.ADMIN].includes(scopeRole)) {
+        const users = await ctx.connection.getRepository(UserModel).find({
+          where: { name: Like(`%${query}%`) }
+        }) as UserModel[];
+        return users.map(user => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          scopeRole
+        }));
+      }
+      return null;
     }
   },
 
   Mutation: {
     async updateUser(_: any, {userId, update}: any, {user, connection}: any): Promise<User> {
-      hasAccess(user, userId);
+      logger.info(`User '${userId}' being updated by '${user.id}'...`);
+      assertCanEditUser(user, userId);
 
       if (update.role && user.role !== 'admin') {
         throw new UserError('Only admin can update role');
       }
-
-      if (update.email || update.primaryGroupId) {
-        // TODO: confirm new email
+      if (update.primaryGroupId) {
         throw new UserError('Not implemented yet');
       }
 
       let userObj = await connection.getRepository(UserModel).findOneOrFail({
-        where: { 'id': userId }
+        where: { id: userId },
+        relations: ['credentials']
+      }) as UserModel;
+      if (update.email) {
+        await sendEmailVerificationToken(userObj.credentials, update.email);
+      }
+      const {email: notVerifiedEmail, ...rest} = update;
+      userObj = await connection.getRepository(UserModel).save({
+        ...userObj,
+        ...rest,
+        notVerifiedEmail
       });
-      userObj = await connection.getRepository(UserModel).save({...userObj, ...update});
-      return userObj;
+
+      const userDSs = await connection.getRepository(DatasetModel).find({ userId });
+      if (userDSs) {
+        logger.info(`Updating user '${userId}' datasets...`);
+        for (let ds of userDSs) {
+          await smAPIRequest(`/v1/datasets/${ds.id}/update`, {
+            doc: { submitterId: userId }
+          });
+        }
+      }
+
+      logger.info(`User '${userId}' was updated`);
+      return {
+        id: userObj.id,
+        name: userObj.name!,
+        role: userObj.role
+      };
     },
 
     async deleteUser(_: any, {userId, deleteDatasets}: any, {user, connection}: any): Promise<Boolean> {
-      hasAccess(user, userId);
+      logger.info(`User '${userId}' being deleted by '${user.id}'...`);
+      assertCanEditUser(user, userId);
 
       if (deleteDatasets) {
-        throw new UserError('Not implemented yet');
+        const userDSs = await connection.getRepository(DatasetModel).find({ userId });
+        if (userDSs) {
+          logger.info(`Deleting user '${userId}' datasets...`);
+          for (let ds of userDSs) {
+            await smAPIRequest(`/v1/datasets/${ds.id}/delete`);
+          }
+        }
       }
 
       const userRepo = await connection.getRepository(UserModel);
@@ -99,8 +180,9 @@ export const Resolvers = {
 
       await connection.getRepository(DatasetModel).delete({userId});
       await connection.getRepository(UserGroupModel).delete({userId});
-      await userRepo.delete(userId);
-      await connection.getRepository(CredentialsModel).delete(credentialsId);
+      await userRepo.delete({ id: userId });
+      await connection.getRepository(CredentialsModel).delete({ id: credentialsId });
+      logger.info(`User '${userId}' was deleted`);
       return true;
     },
   }

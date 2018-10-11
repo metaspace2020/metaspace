@@ -26,12 +26,12 @@
           @cancelInvite="handleRemoveUser"
           @acceptUser="handleAcceptUser"
           @rejectUser="handleRejectUser"
-          @addMember="handleAddMember"
+          @addMember="() => handleAddMember(/* Discard the event argument. ConfirmAsync adds an argument to the end of the arguments list, so the arguments list must be predictable */)"
         />
         <div style="margin-bottom: 2em">
           <h2>Custom URL</h2>
           <div v-if="canEditUrlSlug">
-            <router-link :href="groupUrlRoute">{{groupUrlPrefix}}</router-link>
+            <router-link :to="groupUrlRoute">{{groupUrlPrefix}}</router-link>
             <input v-model="model.urlSlug" />
           </div>
           <div v-if="!canEditUrlSlug && group && group.urlSlug">
@@ -86,10 +86,9 @@
     UpdateGroupMutation,
     updateGroupMutation,
   } from '../../api/group';
-  import gql from 'graphql-tag';
   import EditGroupForm from './EditGroupForm.vue';
   import MembersList from '../../components/MembersList.vue';
-  import { UserRole } from '../../api/user';
+  import {currentUserRoleQuery, UserRole} from '../../api/user';
   import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
@@ -100,22 +99,20 @@
     role: UserRole;
   }
 
-  @Component({
+  @Component<EditGroupProfile>({
     components: {
       EditGroupForm,
       MembersList,
     },
     apollo: {
-      currentUser: gql`query {
-        currentUser {
-          id
-          role
-        }
-      }`,
+      currentUser: {
+        query: currentUserRoleQuery,
+        fetchPolicy: 'cache-first',
+      },
       group: {
         query: editGroupQuery,
         loadingKey: 'membersLoading',
-        variables(this: EditGroupProfile) { return { groupId: this.groupId } },
+        variables() { return { groupId: this.groupId } },
       },
     }
   })
@@ -209,7 +206,8 @@
             groupDetails: {
               name,
               shortName,
-              urlSlug: this.canEditUrlSlug ? urlSlug : null,
+              // Avoid sending a null urlSlug unless it's being intentionally unset
+              ...(this.canEditUrlSlug ? {urlSlug: urlSlug || null} : {}),
             }
           },
         });

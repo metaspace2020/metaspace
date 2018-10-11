@@ -2,8 +2,7 @@
   <div class="dataset-item" :class="disabledClass">
 
     <el-dialog title="Provided metadata" :visible.sync="showMetadataDialog">
-      <dataset-info :metadata="metadata"
-        :expandedKeys="['Sample information', 'Sample preparation']">
+      <dataset-info :metadata="metadata">
       </dataset-info>
     </el-dialog>
 
@@ -65,11 +64,13 @@
         <span class="ds-add-filter"
               title="Filter by submitter"
               @click="addFilter('submitter')">
-          {{ formatSubmitter }}</span>,
-        <span class="s-inst ds-add-filter"
-              v-html="formatInstitution"
-              title="Filter by this lab"
-              @click="addFilter('institution')"></span>
+          {{ formatSubmitter }}</span><!-- Be careful not to add empty space before the comma --><span v-if="dataset.group">,
+          <span class="s-group ds-add-filter"
+                title="Filter by this group"
+                @click="addFilter('group')">
+            {{dataset.group.name}}
+          </span>
+        </span>
       </div>
       <div class="ds-item-line" v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
         <span>
@@ -137,7 +138,8 @@
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
  import { currentUserRoleQuery } from '../../../api/user';
- import gql from 'graphql-tag';
+ import reportError from '../../../lib/reportError';
+ import {safeJsonParse} from "../../../util";
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');
@@ -169,10 +171,6 @@
      formatSubmitter() {
        const { name } = this.dataset.submitter;
        return name;
-     },
-
-     formatInstitution() {
-       return this.dataset.institution ? this.dataset.institution.replace(/\s/g, '&nbsp;') : '';
      },
 
      formatDatasetName() {
@@ -209,7 +207,13 @@
      },
 
      metadata() {
-       return JSON.parse(this.dataset.metadataJson);
+       const datasetMetadataExternals = {
+         "Submitter": this.formatSubmitter,
+           "PI": this.dataset.principalInvestigator,
+           "Group": this.dataset.group,
+           "Projects": this.dataset.projects
+       };
+       return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals);
      },
 
      metaboliteDatabases() {
@@ -243,7 +247,7 @@
          return false;
        if (this.currentUser.role === 'admin')
          return true;
-       if (this.currentUser.email != null && this.currentUser.email === this.dataset.submitter.email)
+       if (this.currentUser.id === this.dataset.submitter.id)
          return true;
        return false;
      },
@@ -290,7 +294,8 @@
        }
      },
      currentUser: {
-       query: currentUserRoleQuery
+       query: currentUserRoleQuery,
+       fetchPolicy: 'cache-first',
      },
      thumbnailImage: {
        query: thumbnailOptImageQuery,
@@ -299,7 +304,7 @@
            datasetId: this.dataset.id,
          };
        },
-       fetchPolicy: 'network-only',
+       fetchPolicy: 'cache-first',
        result(res) {
          this.opticalImageSmall = res.data.thumbnailImage
        }
@@ -326,13 +331,15 @@
 
      addFilter(field) {
        let filter = Object.assign({}, this.$store.getters.filter);
-       if (field == 'polarity')
+       if (field == 'polarity') {
          filter['polarity'] = capitalize(this.dataset.polarity);
-       else if (field == 'submitter') {
-         const {id, name} = this.dataset.submitter;
-         filter[field] = {id, name};
-       } else
+       } else if (field == 'submitter') {
+         filter[field] = this.dataset.submitter.id;
+       } else if (field == 'group') {
+         filter[field] = this.dataset.group.id;
+       } else {
          filter[field] = this.dataset[field] || this[field];
+       }
        this.$store.commit('updateFilter', filter);
      },
 
@@ -353,14 +360,8 @@
          });
        }
        catch (err) {
-         this.$message({
-           message: "Deletion failed :( Please contact us at contact@metaspace2020.eu",
-           type: 'error',
-           duration: 0,
-           showClose: true
-         });
          this.disabled = false;
-         throw err;
+         reportError(err, "Deletion failed :( Please contact us at contact@metaspace2020.eu");
        }
      },
 
@@ -501,7 +502,7 @@
    font-weight: bold;
  }
 
- .s-inst {
+ .s-group {
    color: sienna;
  }
 

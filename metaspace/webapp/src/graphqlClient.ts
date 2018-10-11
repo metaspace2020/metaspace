@@ -1,9 +1,10 @@
-import { ApolloClient,  InMemoryCache } from 'apollo-client-preset';
+import { ApolloClient,  InMemoryCache, defaultDataIdFromObject } from 'apollo-client-preset';
 import { BatchHttpLink } from 'apollo-link-batch-http';
 import { WebSocketLink } from 'apollo-link-ws';
 import { setContext } from 'apollo-link-context';
 import { SubscriptionClient } from 'subscriptions-transport-ws';
 import { getOperationAST } from 'graphql/utilities/getOperationAST';
+import { onError } from 'apollo-link-error';
 
 import * as config from './clientConfig.json';
 import tokenAutorefresh from './tokenAutorefresh';
@@ -11,6 +12,20 @@ import reportError from './lib/reportError';
 
 const graphqlUrl = config.graphqlUrl || `${window.location.origin}/graphql`;
 const wsGraphqlUrl = config.wsGraphqlUrl || `${window.location.origin.replace(/^http/, 'ws')}/ws`;
+
+let $alert: ((message: string, title: string, options?: any) => void) | null = null;
+
+export function setMaintenanceMessageHandler(_$alert: (message: string, title: string, options?: any) => void) {
+  $alert = _$alert;
+}
+
+const isReadOnlyError = (error: any) => {
+  try {
+    return JSON.parse(error.message).type === 'read_only_mode';
+  } catch {
+    return false;
+  }
+};
 
 const authLink = setContext(async () => {
   try {
@@ -25,6 +40,22 @@ const authLink = setContext(async () => {
   }
 });
 
+const errorLink = onError(({ graphQLErrors }) => {
+  if (graphQLErrors) {
+    const readOnlyErrors = graphQLErrors.filter(isReadOnlyError);
+    console.log(graphQLErrors, readOnlyErrors, $alert);
+
+    if (readOnlyErrors.length > 0) {
+      if ($alert != null) {
+        readOnlyErrors.forEach(err => { (err as any).isHandled = true; });
+        $alert('This operation could not be completed. METASPACE is currently in read-only mode for scheduled maintenance. Please try again later.',
+          'Scheduled Maintenance',
+          {type: 'error'});
+      }
+    }
+  }
+});
+
 const httpLink = new BatchHttpLink({
   uri: graphqlUrl,
   batchInterval: 10,
@@ -34,7 +65,7 @@ const wsLink = new WebSocketLink(new SubscriptionClient(wsGraphqlUrl, {
   reconnect: true,
 }));
 
-const link = authLink.split(
+const link = authLink.concat(errorLink).split(
   (operation) => {
     // Only send subscriptions over websockets
     const operationAST = getOperationAST(operation.query, operation.operationName);
@@ -52,12 +83,30 @@ const apolloClient = new ApolloClient({
         // Allow get-by-id queries to use cached data that originated from other kinds of queries
         dataset: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Dataset', id: args.id }),
         annotation: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Annotation', id: args.id }),
-        user: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'User', id: args.userId }),
         group: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Group', id: args.groupId }),
         project: (_, args, { getCacheKey}) => getCacheKey({ __typename: 'Project', id: args.projectId }),
       }
+    },
+    dataIdFromObject(object) {
+      // WORKAROUND: Because of Apollo's aggressive caching, often the current User will be overwritten with results
+      // from other queries. The server side often strips fields based on how they're accessed (the "ScopeRole" logic),
+      // which means these query paths will often return different data with the same IDs:
+      // currentUser -> primaryGroup (always present)
+      // dataset -> submitter -> primaryGroup (null unless admin)
+      // To protect against this, don't allow Users (and possibly other types in the future) to have a dataId,
+      // so that InMemoryCache cannot share data between different queries.
+      if (object.__typename === 'User') {
+        return null;
+      } else {
+        return defaultDataIdFromObject(object);
+      }
     }
   }),
+  defaultOptions: {
+    query: {
+      fetchPolicy: 'network-only'
+    }
+  }
 });
 
 export const refreshLoginStatus = async () => {

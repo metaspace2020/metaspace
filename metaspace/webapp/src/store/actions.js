@@ -11,7 +11,8 @@ export default {
     context.commit('setFilterListsLoading');
 
     const response = await apolloClient.query({
-      query: fetchOptionListsQuery
+      query: fetchOptionListsQuery,
+      fetchPolicy: 'cache-first',
     });
 
     context.commit('setFilterLists', response.data);

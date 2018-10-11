@@ -41,8 +41,8 @@ exports[`EditUserPage should match snapshot 1`] = `
     </div>
     <div class="el-row" style="margin-left: -10px; margin-right: -10px;">
       <form class="el-form">
-        <div class="user-details" style="padding-left: 15px;">
-          <div class="el-col el-col-12" style="padding-left: 10px; padding-right: 10px;">
+        <div style="padding-left: 15px;">
+          <div class="el-col el-col-8" style="padding-left: 10px; padding-right: 10px;">
             <div>
               <div class="el-form-item is-required">
                 <label for="name" class="el-form-item__label">Full name</label>
@@ -54,12 +54,12 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div>
-                  <mock-transition name="el-zoom-in-top"></mock-transition>
+                  <!---->
                 </div>
               </div>
             </div>
           </div>
-          <div class="el-col el-col-12" style="padding-left: 10px; padding-right: 10px;">
+          <div class="el-col el-col-8" style="padding-left: 10px; padding-right: 10px;">
             <div>
               <div class="el-form-item is-required">
                 <label for="email" class="el-form-item__label">Email address</label>
@@ -71,10 +71,18 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <!---->
                     <!---->
                   </div>
-                  <mock-transition name="el-zoom-in-top"></mock-transition>
+                  <!---->
                 </div>
               </div>
+              <!---->
             </div>
+          </div>
+          <div class="el-col el-col-8" style="padding-left: 10px; padding-right: 10px;">
+            <button type="button" class="el-button el-button--default" style="margin-top: 42px;">
+              <!---->
+              <!----><span>
+              Change password
+            </span></button>
           </div>
         </div>
       </form>
@@ -275,7 +283,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                       <!---->
                       <!---->
                     </div>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
                 <div class="el-form-item isPublic">
@@ -284,7 +292,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
                       <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="">
                       </span><span class="el-checkbox__label">Allow other users to see this project<!----></span></label>
-                    <mock-transition name="el-zoom-in-top"></mock-transition>
+                    <!---->
                   </div>
                 </div>
               </div>

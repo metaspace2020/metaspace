@@ -15,6 +15,7 @@
  import { Component, Prop } from 'vue-property-decorator';
  import { Location } from 'vue-router';
  import { currentUserIdQuery, CurrentUserIdResult } from '../../api/user';
+ import { safeJsonParse } from '../../util';
 
  type ImagePosition = {
    zoom: number
@@ -49,7 +50,7 @@
        query: annotationQuery,
        update: (data: any) => {
          const {annotation} = data;
-         let chart = JSON.parse(annotation.peakChartData);
+         let chart = safeJsonParse(annotation.peakChartData);
          chart.sampleData = {
            mzs: annotation.isotopeImages.map((im: any) => im.mz),
            ints: annotation.isotopeImages.map((im: any) => im.totalIntensity),
@@ -82,7 +83,7 @@
           datasetId: this.annotation.dataset.id
          }
        },
-       update: (data: any) => JSON.parse(data['dataset']['acquisitionGeometry'])
+       update: (data: any) => safeJsonParse(data['dataset']['acquisitionGeometry'])
      },
 
      datasetVisibility: {
@@ -94,7 +95,8 @@
      },
 
      currentUser: {
-       query: currentUserIdQuery
+       query: currentUserIdQuery,
+       fetchPolicy: 'cache-first',
      }
    }
  })
@@ -177,6 +179,32 @@
        ];
        return `These annotation results are not publicly visible. They are visible to ${all.join(', ')} and METASPACE Administrators.`
      }
+   }
+
+   get metadata() {
+     const datasetMetadataExternals = {
+       "Submitter": this.annotation.dataset.submitter,
+       "PI": this.annotation.dataset.principalInvestigator,
+       "Group": this.annotation.dataset.group,
+       "Projects": this.annotation.dataset.projects
+     };
+     return Object.assign(safeJsonParse(this.annotation.dataset.metadataJson), datasetMetadataExternals);
+   }
+
+   get pixelSizeX() {
+     if (this.metadata.MS_Analysis != null &&
+       this.metadata.MS_Analysis.Pixel_Size != null) {
+       return this.metadata.MS_Analysis.Pixel_Size.Xaxis
+     }
+     return 0
+   }
+
+   get pixelSizeY() {
+     if (this.metadata.MS_Analysis != null &&
+       this.metadata.MS_Analysis.Pixel_Size != null) {
+       return this.metadata.MS_Analysis.Pixel_Size.Yaxis
+     }
+     return 0
    }
 
    opacity: number = 1.0;

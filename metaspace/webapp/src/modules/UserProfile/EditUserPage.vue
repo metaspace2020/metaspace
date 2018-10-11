@@ -47,20 +47,28 @@
       </el-row>
       <el-row :gutter="20">
         <el-form :disabled="isUserDetailsLoading" :rules="rules" :model="model" ref="form">
-          <div class="user-details" style="padding-left: 15px;">
-            <el-col :span="12">
+          <div style="padding-left: 15px;">
+            <el-col :span="8">
               <div>
                 <el-form-item prop="name" label="Full name">
                   <el-input v-model="model.name" name="name" />
                 </el-form-item>
               </div>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="8">
               <div>
                 <el-form-item prop="email" label="Email address">
                   <el-input v-model="model.email" name="email" />
                 </el-form-item>
+                <p v-if="isEmailChangePending">
+                  <b>Please click the link that has been sent to your new email address to verify the change.</b>
+                </p>
               </div>
+            </el-col>
+            <el-col :span="8">
+              <el-button style="margin-top: 42px;" @click="handleChangePassword">
+                Change password
+              </el-button>
             </el-col>
           </div>
         </el-form>
@@ -158,6 +166,8 @@
   import emailRegex from '../../lib/emailRegex';
   import GroupsTable from './GroupsTable.vue';
   import ProjectsTable from './ProjectsTable.vue';
+  import ConfirmAsync from '../../components/ConfirmAsync';
+  import {sendPasswordResetToken} from '../../api/auth';
 
   interface Model {
     name: string;
@@ -188,6 +198,7 @@
     showDeleteAccountDialog: boolean = false;
     isUserDetailsLoading: boolean = false;
     isUserDeletionLoading: boolean = false;
+    isEmailChangePending: boolean = false;
 
     currentUser: UserProfileQuery | null = null;
     model: Model = {
@@ -212,7 +223,9 @@
     onCurrentUserChanged(this: any) {
       if (this.currentUser) {
         this.model.name = this.currentUser.name;
-        this.model.email = this.currentUser.email;
+        if (!this.isEmailChangePending) {
+          this.model.email = this.currentUser.email;
+        }
         this.primaryGroupId = this.currentUser.primaryGroup ? this.currentUser.primaryGroup.group.id : null;
       } else if (this.isLoaded) {
         this.$router.push('/account/sign-in');
@@ -243,19 +256,24 @@
                 confirmButtonText: "Yes, send verification email",
                 lockScroll: false
               });
+            this.isEmailChangePending = true;
           } catch {
             return
           }
         }
         this.isUserDetailsLoading = true;
+
+        const oldPrimaryGroupId = this.currentUser!.primaryGroup != null ? this.currentUser!.primaryGroup!.group.id : null;
         await this.$apollo.mutate({
           mutation: updateUserMutation,
           variables: {
             userId: this.currentUser!.id,
             update: {
-              name: this.model.name,
-              email: this.model.email,
-              primaryGroupId: this.primaryGroupId
+              // Only send fields that have changed, per API requirements
+              // This relies on `undefined` values being discarded during JSON stringification
+              name: this.model.name !== this.currentUser!.name ? this.model.name : undefined,
+              email: this.model.email !== this.currentUser!.email ? this.model.email : undefined,
+              primaryGroupId: this.primaryGroupId !== oldPrimaryGroupId ? this.primaryGroupId : undefined,
             }
           },
         });
@@ -296,6 +314,19 @@
       }
     }
 
+    @ConfirmAsync(function (this: EditUserPage) {
+      return {
+        message: `This will send you an email with a link and instructions to change your password. Do you wish to proceed?`,
+        confirmButtonText: 'Change password',
+        confirmButtonLoadingText: 'Sending email...'
+      }
+    })
+    async handleChangePassword() {
+      // TODO: Customize this so it's not so obviously a rip off of the reset password process
+      await sendPasswordResetToken(this.currentUser!.email!);
+      this.$message({message: 'Email sent!', type: 'success'});
+    }
+
     async refetchData() {
       await this.$apollo.queries.currentUser.refetch();
     }
@@ -304,7 +335,7 @@
 
 <style scoped>
   .main-content {
-    padding: 100px 20px 20px 20px;
+    padding: 0 20px 20px 20px;
     display: flex;
     justify-content: center;
   }
@@ -318,11 +349,6 @@
     padding: 8px;
     float: right;
     margin: 20px 0;
-  }
-
-  .user-details {
-    display: inline-block;
-    width: 600px;
   }
 
   /deep/ .delete-account-dialog .el-dialog__body {

@@ -34,7 +34,7 @@ export interface UserProfileQuery {
 }
 
 export const userProfileQuery =
-  gql`query {
+  gql`query UserProfileQuery {
   currentUser {
     id
     name
@@ -71,12 +71,6 @@ fragment UserProfileQueryGroup on UserGroup {
 export interface DatasetSubmitterFragment {
   id: string;
   name: string;
-  primaryGroup: {
-    group: {
-      id: string;
-      name: string;
-    }
-  } | null;
   groups: {
     group: {
       id: string;
@@ -95,12 +89,6 @@ export const datasetSubmitterFragment =
   gql`fragment DatasetSubmitterFragment on User {
     id
     name
-    primaryGroup {
-      group {
-        id
-        name
-      }
-    }
     groups {
       group {
         id
@@ -133,8 +121,9 @@ export interface CurrentUserIdResult {
   id: string;
 }
 
+// Always use fetchPolicy: 'cache-first' for this
 export const currentUserIdQuery =
-  gql`query {
+  gql`query CurrentUserIdQuery {
   currentUser { id }
 }
 `;
@@ -144,8 +133,9 @@ export interface CurrentUserRoleResult {
   role: UserRole;
 }
 
+// Always use fetchPolicy: 'cache-first' for this
 export const currentUserRoleQuery =
-  gql`query {
+  gql`query CurrentUserRoleQuery {
   currentUser { id role }
 }
 `;

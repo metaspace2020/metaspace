@@ -1,7 +1,7 @@
 import gql from 'graphql-tag';
 
 export const annotationListQuery =
-  gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
+gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
                            $offset: Int, $limit: Int, $query: String,
                            $filter: AnnotationFilter, $dFilter: DatasetFilter) {
     allAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query,
@@ -18,7 +18,10 @@ export const annotationListQuery =
         mz
         dataset {
           id
-          institution
+          submitter { id name }
+          principalInvestigator { name }
+          group { id name }
+          projects { id name }
           name
           polarity
           metadataJson
@@ -45,7 +48,7 @@ export const annotationListQuery =
   }`;
 
 export const tableExportQuery =
-  gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
+gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
                    $offset: Int, $limit: Int, $query: String,
                    $filter: AnnotationFilter, $dFilter: DatasetFilter) {
     annotations: allAnnotations(filter: $filter, datasetFilter: $dFilter,
@@ -63,8 +66,8 @@ export const tableExportQuery =
       mz
       dataset {
         id
-        institution
         name
+        group { id name }
       }
       possibleCompounds {
         name
@@ -76,7 +79,7 @@ export const tableExportQuery =
   }`;
 
 export const annotationQuery =
-  gql`query GetAnnotation($id: String!) {
+gql`query GetAnnotation($id: String!) {
     annotation(id: $id) {
       id
       peakChartData
@@ -88,7 +91,7 @@ export const annotationQuery =
   }`;
 
 export const allAdductsQuery =
-  gql`query GetAdductData($datasetId: String!, $molFormula: String!, $db: String!) {
+gql`query GetAdductData($datasetId: String!, $molFormula: String!, $db: String!) {
     allAnnotations(datasetFilter: {
       ids: $datasetId
     }, filter: {

@@ -1,81 +1,88 @@
 <template>
-  <div class="b-header">
-    <div class="header-items">
-      <router-link to="/" class="header-item logo">
-        <img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"/>
-      </router-link>
+  <div>
+    <div :class="healthMessage ? 'spacerWithAlert' : 'spacer'" />
+    <div class="b-header">
+      <div class="header-items">
+        <router-link to="/" class="header-item logo">
+          <img src="../../assets/logo.png" alt="Metaspace" title="Metaspace"/>
+        </router-link>
 
-      <router-link :to="uploadHref" class="header-item page-link" id='upload-link'>
-        Upload
-      </router-link>
+        <router-link :to="uploadHref" class="header-item page-link" id='upload-link'>
+          Upload
+        </router-link>
 
-      <router-link :to="annotationsHref" class="header-item page-link" id='annotations-link'>
-        Annotations
-      </router-link>
+        <router-link :to="annotationsHref" class="header-item page-link" id='annotations-link'>
+          Annotations
+        </router-link>
 
-      <router-link :to="datasetsHref" class="header-item page-link" id='datasets-link'>
-        Datasets
-      </router-link>
+        <router-link :to="datasetsHref" class="header-item page-link" id='datasets-link'>
+          Datasets
+        </router-link>
 
-      <router-link to="/projects" class="header-item page-link">
-        Projects
-      </router-link>
+        <router-link to="/projects" class="header-item page-link">
+          Projects
+        </router-link>
 
-      <router-link
-        v-if="currentUser && currentUser.primaryGroup"
-        :to="primaryGroupHref"
-        class="header-item page-link">
-        <div class="limit-width">
-          {{currentUser.primaryGroup.group.shortName}}
-        </div>
-      </router-link>
-    </div>
-
-    <div class="header-items">
-      <router-link to="/help" class="header-item page-link">
-        Help
-      </router-link>
-
-      <div v-if="loadingUser === 0 && currentUser == null" class="header-items">
-        <div class="header-item page-link" @click="showCreateAccount">
-          Create account
-        </div>
-
-        <div class="header-item page-link" @click="showSignIn">
-          Sign in
-        </div>
+        <router-link
+          v-if="currentUser && currentUser.primaryGroup"
+          :to="primaryGroupHref"
+          class="header-item page-link">
+          <div class="limit-width">
+            {{currentUser.primaryGroup.group.shortName}}
+          </div>
+        </router-link>
       </div>
 
-      <div v-if="loadingUser === 0 && currentUser != null" class="header-items">
-        <div class="submenu-container user-submenu"
-             :class="{'submenu-container-open': openSubmenu === 'user'}"
-             @mouseenter="handleSubmenuEnter('user')"
-             @mouseleave="handleSubmenuLeave('user')">
-          <div class="header-item submenu-header"
-               :class="{'router-link-active': matchesRoute('/user/me')}">
-            <div class="limit-width" style="color: white;">
-            {{ userNameOrEmail }}
-            </div>
+      <div class="header-items">
+        <router-link to="/help" class="header-item page-link">
+          Help
+        </router-link>
+
+        <div v-if="loadingUser === 0 && currentUser == null" class="header-items">
+          <div class="header-item page-link" @click="showCreateAccount">
+            Create account
           </div>
-          <div class="submenu">
-            <router-link to="/user/me" class="submenu-item page-link">
-              My account
-            </router-link>
-            <div class="submenu-item page-link" @click="logout">
-              Sign out
+
+          <div class="header-item page-link" @click="showSignIn">
+            Sign in
+          </div>
+        </div>
+
+        <div v-if="loadingUser === 0 && currentUser != null" class="header-items">
+          <div class="submenu-container user-submenu"
+               :class="{'submenu-container-open': openSubmenu === 'user'}"
+               @mouseenter="handleSubmenuEnter('user')"
+               @mouseleave="handleSubmenuLeave('user')">
+            <div class="header-item submenu-header"
+                 :class="{'router-link-active': matchesRoute('/user/me')}">
+              <div class="limit-width" style="color: white;">
+              {{ userNameOrEmail }}
+              </div>
+            </div>
+            <div class="submenu">
+              <router-link to="/user/me" class="submenu-item page-link">
+                My account
+              </router-link>
+              <div class="submenu-item page-link" @click="logout">
+                Sign out
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <el-row v-if="healthMessage" class="alert">
+      <el-alert show-icon :title="healthMessage" :type="healthSeverity" :closable="false" />
+    </el-row>
   </div>
 </template>
 
 <script>
   import gql from 'graphql-tag';
  import {signOut} from '../../api/auth';
+  import {getSystemHealthQuery, getSystemHealthSubscribeToMore} from '../../api/system';
  import {encodeParams} from '../Filters';
-  import { refreshLoginStatus } from '../../graphqlClient';
+  import {refreshLoginStatus} from '../../graphqlClient';
 
  export default {
    name: 'metaspace-header',
@@ -109,6 +116,18 @@
        }
        return '';
      },
+
+     healthMessage() {
+       const {canMutate = true, message = null} = this.systemHealth || {};
+       if (message) {
+         return message;
+       } else if (!canMutate) {
+         return "METASPACE is currently in read-only mode for scheduled maintenance."
+       }
+     },
+     healthSeverity() {
+       return this.systemHealth && this.systemHealth.canMutate === false ? 'warning' : 'info';
+     }
    },
 
    data() {
@@ -116,13 +135,19 @@
        loginEmail: '',
        loadingUser: 0,
        currentUser: null,
+       systemHealth: null,
        openSubmenu: null
      };
    },
 
    apollo: {
+     systemHealth: {
+       query: getSystemHealthQuery,
+       subscribeToMore: getSystemHealthSubscribeToMore,
+       fetchPolicy: 'cache-first',
+     },
      currentUser: {
-       query: gql`query {
+       query: gql`query metaspaceHeaderCurrentUserQuery {
          currentUser {
            id
            name
@@ -136,6 +161,7 @@
            }
          }
        }`,
+       fetchPolicy: 'cache-first',
        loadingKey: 'loadingUser'
      }
    },
@@ -183,7 +209,10 @@
  }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+  $header-height: 62px;
+  $alert-height: 36px;
+
  .b-header {
    background-color: rgba(0, 105, 224, 0.85);
    position: fixed;
@@ -195,6 +224,14 @@
    display: flex;
    align-items: center;
    justify-content: space-between;
+ }
+
+ .spacer {
+   height: $header-height + 8px;
+ }
+
+ .spacerWithAlert {
+   height: $header-height + $alert-height + 8px;
  }
 
  .header-items {
@@ -291,5 +328,18 @@
 
  #email-link-container {
    display: inline-flex;
+ }
+
+ .alert {
+   position: fixed;
+   top: $header-height;
+   left: 0;
+   right: 0;
+   border-radius: 0;
+
+ .el-alert {
+   height: $alert-height;
+   justify-content: center;
+ }
  }
 </style>

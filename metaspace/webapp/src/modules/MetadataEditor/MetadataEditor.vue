@@ -67,6 +67,7 @@
  import FormSection from './sections/FormSection.vue';
  import DataManagementSection from './sections/DataManagementSection.vue'
  import emailRegex from '../../lib/emailRegex';
+ import { safeJsonParse } from '../../util'
 
  const factories = {
    'string': schema => schema.default || '',
@@ -81,22 +82,10 @@
    molDBs: [],
    adducts: [],
    name: '',
+   submitterId: null,
    groupId: null,
    projectIds: []
  };
- 
- function safeJsonParse(json) {
-   if (json) {
-     try {
-       return JSON.parse(json);
-     } catch (err) {
-       Raven.captureException(err);
-     }
-   }
-   return undefined;
- }
-
- // TODO: fill in institution automatically when user profiles are added
 
  export default {
    name: 'metadata-editor',
@@ -130,7 +119,9 @@
        molDBOptions: [],
        possibleAdducts: {},
        metaspaceOptions: cloneDeep(defaultMetaspaceOptions),
-       submitter: null
+       submitter: null,
+       initialValue: null,
+       initialMetaspaceOptions: null,
      }
    },
 
@@ -168,10 +159,11 @@
    methods: {
      async loadDataset() {
        const metaspaceOptionsFromDataset = (dataset) => {
-         const {isPublic, molDBs, adducts, name, group, projects, principalInvestigator} = dataset;
+         const {isPublic, molDBs, adducts, name, group, projects, submitter, principalInvestigator} = dataset;
          return {
+           submitterId: submitter ? submitter.id : null,
            groupId: group ? group.id : null,
-           projectIds: projects.map(p => p.id),
+           projectIds: projects ? projects.map(p => p.id) : [],
            principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
            isPublic, molDBs, adducts, name,
          };
@@ -185,14 +177,17 @@
 
          return {
            metadata: dataset && safeJsonParse(dataset.metadataJson) || {},
-           metaspaceOptions: dataset != null ? metaspaceOptionsFromDataset(dataset) : null,
+           metaspaceOptions: {
+             ...(dataset != null ? metaspaceOptionsFromDataset(dataset) : null),
+             submitterId: data.currentUser.id,
+             groupId: data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
+           },
            submitter: data.currentUser
          }
        } else {
          const {data} = await this.$apollo.query({
            query: editDatasetQuery,
            variables: {id: this.datasetId},
-           fetchPolicy: 'network-only'
          });
          return {
            metadata: JSON.parse(data.dataset.metadataJson),
@@ -205,6 +200,7 @@
      async loadOptions() {
        const {data} = await this.$apollo.query({
          query: metadataOptionsQuery,
+         fetchPolicy: 'cache-first',
        });
        return data;
      },
@@ -264,6 +260,8 @@
 
        this.value = metadata;
        this.metaspaceOptions = metaspaceOptions;
+       this.initialValue = cloneDeep(metadata);
+       this.initialMetaspaceOptions = cloneDeep(metaspaceOptions);
        if (dataset.submitter != null) {
          this.submitter = dataset.submitter;
        }
@@ -327,7 +325,6 @@
          }
        }
 
-
        this.localErrors = errors;
      },
 
@@ -388,11 +385,12 @@
          return null;
        }
 
-       const value = JSON.stringify(this.value);
        return {
          datasetId: this.datasetId ? this.datasetId: '',
-         metadataJson: value,
-         metaspaceOptions: this.metaspaceOptions
+         metadataJson: JSON.stringify(this.value),
+         metaspaceOptions: this.metaspaceOptions,
+         initialMetadataJson: JSON.stringify(this.initialValue),
+         initialMetaspaceOptions: this.initialMetaspaceOptions,
        }
      },
 

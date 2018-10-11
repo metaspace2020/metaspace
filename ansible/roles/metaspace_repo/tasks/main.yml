@@ -17,6 +17,7 @@
 #  register: git_deploy
 #  until: git_deploy | succeeded
 
+# FIXME: double check all exclude paths
 - name: Upload local files
   synchronize:
     src: "{{ item.src }}"

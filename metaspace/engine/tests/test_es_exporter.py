@@ -253,13 +253,14 @@ def test_update_ds_works_for_all_fields(es, sm_index, es_dsl_search, sm_config):
         'ds_submitter_email': 'submitter_email',
         'ds_group_id': 'new_ds_group_id',
         'ds_group_name': 'group_name',
+        'ds_group_approved': True,
         'ds_group_short_name': 'group_short_name',
         'ds_projects_ids': ['proj_id1', 'proj_id2'],
         'ds_is_public': True
     }]
 
     es_exporter = ESExporter(db_mock)
-    es_exporter.update('dataset1', fields=list(update.keys()))
+    es_exporter.update_ds('dataset1', fields=list(update.keys()))
     wait_for_es(sec=1)
 
     ds_doc = es_dsl_search.filter('term', _type='dataset').execute().to_dict()['hits']['hits'][0]['_source']

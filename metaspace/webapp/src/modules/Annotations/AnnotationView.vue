@@ -43,6 +43,8 @@
                      :onImageZoom="onImageZoom"
                      :onImageMove="onImageMove"
                      :acquisitionGeometry="msAcqGeometry"
+                     :pixelSizeX="pixelSizeX"
+                     :pixelSizeY="pixelSizeY"
                      @opacityInput="newVal => opacity = newVal">
           </component>
         </el-collapse-item>
@@ -95,9 +97,8 @@
           </component>
         </el-collapse-item>
 
-        <el-collapse-item title="Dataset info" name="metadata">
-          <dataset-info :metadata="JSON.parse(annotation.dataset.metadataJson)"
-                        :expandedKeys="['Sample information', 'Submitted by', 'Submitter']">
+        <el-collapse-item title="Metadata" name="metadata">
+          <dataset-info :metadata="metadata">
           </dataset-info>
         </el-collapse-item>
 

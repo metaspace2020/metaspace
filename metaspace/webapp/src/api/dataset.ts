@@ -7,7 +7,6 @@ export type GqlJobStatus = 'NEW' | 'QUEUED' | 'ANNOTATING' | 'INDEXING' | 'FINIS
 export interface DatasetDetailItem {
   id: string;
   name: string;
-  institution: string | null;
   submitter: {
     id: string | null;
     name: string;
@@ -39,12 +38,14 @@ export const datasetDetailItemFragment =
   gql`fragment DatasetDetailItem on Dataset {
     id
     name
-    institution
     submitter {
       id
       name
       email
     }
+    principalInvestigator { name }
+    group { id name }
+    projects { id name }
     polarity
     ionisationSource
     analyzer {
@@ -140,6 +141,7 @@ export const deleteOpticalImageQuery =
 export const msAcqGeometryQuery =
   gql`query ($datasetId: String!) {
     dataset(id: $datasetId) {
+      id
       acquisitionGeometry
     }
   }`;

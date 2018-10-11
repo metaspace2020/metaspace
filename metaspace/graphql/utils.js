@@ -68,7 +68,8 @@ const initDBConnection = (config = defaultDBConfig) => {
   db = Knex({
     client: 'pg',
     connection: config(),
-    searchPath: ['engine', 'public']
+    searchPath: ['engine', 'public'],
+    asyncStackTraces: true,
   });
   return db;
 };
@@ -159,7 +160,6 @@ async function wait(ms) {
 }
 
 export {
-  addProcessingConfig,
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
   canUserViewEsDataset,

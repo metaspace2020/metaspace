@@ -79,7 +79,7 @@ class SMDaemonManager(object):
                 self.es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
 
     def update(self, ds, fields):
-        self.es.update(ds.id, fields)
+        self.es.update_ds(ds.id, fields)
 
     def _del_iso_images(self, ds):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
@@ -256,6 +256,8 @@ class SMUpdateDaemon(object):
         if msg['action'] == 'update':
             msg['web_app_link'] = self._manager.create_web_app_link(msg)
             self._manager.post_to_slack('dart', f' [v] Update succeeded: {json.dumps(msg)}')
+        elif msg['action'] == 'index':
+            self._manager.post_to_slack('dart', f' [v] Index succeeded: {json.dumps(msg)}')
         elif msg['action'] == 'delete':
             self._manager.post_to_slack('dart', f' [v] Delete succeeded: {json.dumps(msg)}')
 

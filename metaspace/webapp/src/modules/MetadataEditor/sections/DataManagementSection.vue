@@ -90,13 +90,9 @@
   import { Component, Prop, Watch } from 'vue-property-decorator';
   import FormField from '../inputs/FormField.vue';
   import { MetaspaceOptions } from '../formStructure';
-  import {
-    GroupListItem,
-    oneGroupQuery, oneProjectQuery,
-  } from '../../../api/dataManagement';
+  import { GroupListItem, oneGroupQuery, oneProjectQuery } from '../../../api/dataManagement';
   import { currentUserIdQuery, DatasetSubmitterFragment } from '../../../api/user';
   import './FormSection.scss';
-  import gql from 'graphql-tag';
   import FindGroupDialog from './FindGroupDialog.vue';
   import CreateProjectDialog from '../../Project/CreateProjectDialog.vue'; // imported directly so that the Project pages aren't pulled into the bundle
 
@@ -111,7 +107,10 @@
       CreateProjectDialog,
     },
     apollo: {
-      currentUser: currentUserIdQuery
+      currentUser: {
+        query: currentUserIdQuery,
+        fetchPolicy: 'cache-first',
+      }
     }
   })
   export default class DataManagementSection extends Vue {
@@ -144,8 +143,7 @@
     get groupIdIsUnknown() {
       return this.value.groupId != null
         && this.submitter != null
-        && this.submitter.groups != null
-        && !this.submitter.groups.some(group => group.group.id === this.value.groupId);
+        && (this.submitter.groups == null || !this.submitter.groups.some(group => group.group.id === this.value.groupId));
     }
 
     get groupId() {
@@ -206,10 +204,9 @@
       if (this.groupIdIsUnknown && this.unknownGroup != null && this.unknownGroup.id === this.value.groupId) {
         options.push({value: this.unknownGroup.id, label: this.unknownGroup.name });
       }
-      // TODO: Uncomment when userIDs are fully implemented so that "Find my group" is hidden when editing someone else's dataset
-      // if (this.submitter != null && this.currentUser != null && this.submitter.id === this.currentUser.id) {
-      options.push({ value: FIND_GROUP, label: "Find my group..." });
-      // }
+      if (this.submitter != null && this.currentUser != null && this.submitter.id === this.currentUser.id) {
+        options.push({ value: FIND_GROUP, label: "Find my group..." });
+      }
       options.push({value: NO_GROUP, label: "No group (Enter PI instead)"});
       return options;
     }

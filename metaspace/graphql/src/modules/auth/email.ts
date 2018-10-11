@@ -34,23 +34,25 @@ export const sendVerificationEmail = (email: string, link: string) => {
     text =
 `Dear METASPACE user,
 
-please verify this email by clicking the link ${link}
+Please verify this email by following the link ${link}
 
 Best wishes,
 METASPACE Team`;
   sendEmail(email, subject, text);
+  logger.info(`Sent email verification to ${email}`);
 };
 
-export const sendLoginEmail = (email: string) => {
+export const sendLoginEmail = (email: string, link: string) => {
   const subject = 'METASPACE log in',
     text =
 `Dear METASPACE user,
 
-you are already signed up with our service. Please log in using this email.
+You are already signed up with our service. Please log in using this link ${link}.
 
 Best wishes,
 METASPACE Team`;
   sendEmail(email, subject, text);
+  logger.info(`Email already verified. Sent log in email to ${email}`);
 };
 
 export const sendResetPasswordEmail = (email: string, link: string) => {
@@ -63,4 +65,18 @@ You requested password reset. To do so, please follow the link ${link}
 Best wishes,
 METASPACE Team`;
   sendEmail(email, subject, text);
+  logger.info(`Sent password reset email to ${email}`);
+};
+
+export const sendInvitationEmail = (email: string, invitedBy: string, link: string) => {
+  const subject = 'METASPACE invitation',
+    text =
+      `Dear future METASPACE user,
+
+You have been invited to METASPACE by ${invitedBy}. Please sign up using this email by following the link ${link}.
+
+Best wishes,
+METASPACE Team`;
+  sendEmail(email, subject, text);
+  logger.info(`Invitation email sent to ${email} by ${invitedBy}`);
 };

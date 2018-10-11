@@ -22,6 +22,19 @@
              class="optical-image"
              :style="opticalImageStyle" />
       </div>
+      <div :style="cssProps"
+           :class="{pixelSizeX: pixelSizeIsActive}"
+           title="Click to change the color"
+           @click="onClickScaleBar()">
+        {{scaleBarValX}}
+      </div>
+      <div :style="cssProps"
+           :class="{pixelSizeY: pixelSizeIsActive}"
+           title="Click to change the color"
+           @click="onClickScaleBar()">
+        {{scaleBarValY}}
+      </div>
+      <palette v-show="paletteIsVisible" class="color-picker" @colorInput="val=>updateColor(val)" />
     </div>
 
     <div ref="mapOverlap"
@@ -42,6 +55,8 @@
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
  import config from '../clientConfig.json';
+ import { round } from 'lodash-es';
+ import Palette from './Palette.vue'
 
  const OPACITY_MAPPINGS = {
    'constant': (x) => 1,
@@ -96,6 +111,14 @@
      scrollBlock: {
        type: Boolean,
        default: false
+     },
+     pixelSizeX: {
+       type: Number,
+       default: 0
+     },
+     pixelSizeY: {
+       type: Number,
+       default: 0
      }
    },
    data () {
@@ -123,8 +146,14 @@
        dragThrottled: false,
        overlayDefault: true,
        overlayFadingIn: false,
-       tmId: 0
+       tmId: 0,
+       scaleBarColor: '#000000',
+       paletteIsVisible: false,
+       scaleBarShadow: '#FFFFFF'
      }
+   },
+   components: {
+     'palette': Palette
    },
    created() {
      this.onResize = throttle(this.onResize, 100);
@@ -136,6 +165,7 @@
        this.loadImage(this.src);
      this.parentDivWidth = this.$refs.parent.clientWidth;
      window.addEventListener('resize', this.onResize);
+     this.$el.addEventListener('click', this.paletteClickHandler);
    },
    beforeDestroy() {
      window.removeEventListener('resize', this.onResize);
@@ -143,6 +173,39 @@
      this.isUnmounted = true;
    },
    computed: {
+     isIE() {
+       if (window.navigator.userAgent.indexOf('MSIE') > 0 ||
+       window.navigator.userAgent.indexOf('Trident/') > 0) {
+         return true
+       }
+       return false
+     },
+
+     scaleBarSizeVal() {
+       return 25
+     },
+
+     scaleBarValX() {
+       if (this.pixelSizeIsActive && this.visibleImageWidth !== 0 && !this.isIE) {
+         return `${round((this.image.naturalWidth /
+           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeVal * this.pixelSizeX, 0)} µm`
+       }
+     },
+
+     scaleBarValY() {
+       if (this.pixelSizeIsActive && this.visibleImageHeight !== 0 && !this.isIE) {
+         return `${round((this.image.naturalHeight /
+           (this.zoom * this.visibleImageHeight)) * this.scaleBarSizeVal * this.pixelSizeY, 0)} µm`
+       }
+     },
+
+     pixelSizeIsActive() {
+       if (this.pixelSizeX !== 0 && this.pixelSizeY !== 0) {
+         return true
+       }
+       return false
+     },
+
      messageOS() {
        let os = getOS();
 
@@ -191,7 +254,20 @@
 
      opticalImageUrl() {
        return (config.imageStorage || '') + this.opticalSrc;
-     }
+     },
+
+     cssProps() {
+       if (this.isIE) {
+         return null
+       } else {
+         return {
+           '--scaleBar-color': this.scaleBarColor,
+           '--scaleBarX-size': `${this.scaleBarSizeVal}px`,
+           '--scaleBarY-size': `${this.scaleBarSizeVal}px`,
+           '--scaleBarShadow-color': this.scaleBarShadow
+         }
+       }
+     },
    },
    watch: {
      'src' (url) {
@@ -209,6 +285,23 @@
      }
    },
    methods: {
+     updateColor(val) {
+       this.scaleBarColor = val;
+       if(val === '#000000') {
+         this.scaleBarShadow = '#FFFFFF';
+       }
+       else if (val === '#FFFFFF') {
+         this.scaleBarShadow = '#000'
+       }
+       else if (val === '#999999') {
+         this.scaleBarShadow = '#000000'
+       }
+       this.paletteIsVisible = false;
+     },
+
+     onClickScaleBar() {
+       this.paletteIsVisible = true;
+     },
 
      onResize: function() {
        // v-resize sometimes keeps calling after the component is destroyed - ignore it when it does.
@@ -222,7 +315,6 @@
          });
        }
      },
-
 
      onWheel(event) {
        // TODO: add pinch event handler for mobile devices
@@ -344,7 +436,6 @@
        this.grayscaleData = grayscaleData;
      },
 
-
      redraw () {
        this.isLCMS = this.image.height == 1;
        const canvas = this.$refs.canvas;
@@ -456,7 +547,7 @@
  }
 </script>
 
-<style>
+<style lang="scss">
  /* No attribute exists for MS Edge at the moment, so ion images are antialiased there */
  .isotope-image {
    image-rendering: pixelated;
@@ -473,7 +564,7 @@
    cursor: -webkit-grab;
    cursor: grab;
    width: 100%;
-   line-height: 0px;
+   line-height: 0;
  }
 
  .image-loader__overlay-text {
@@ -503,6 +594,61 @@
   background-color: black;
   opacity: 0.6;
   transition: 0.7s;
+ }
+
+ .pixelSizeX {
+   color: var(--scaleBar-color);
+   position: absolute;
+   content: "";
+   width: 60px;
+   height: 10px;
+   bottom: 15px;
+   left: 55px;
+   z-index: 3;
+   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
+ }
+
+ .pixelSizeX::after {
+   position: absolute;
+   content: "";
+   width: var(--scaleBarX-size);
+   left: -35px;
+   box-shadow: 1px 1px 1px var(--scaleBarShadow-color);
+   border-bottom: 2px solid var(--scaleBar-color);
+ }
+
+ .pixelSizeY {
+   color: var(--scaleBar-color);
+   position: absolute;
+   width: 60px;
+   height: 10px;
+   bottom: 58px;
+   left: 10px;
+   z-index: 3;
+   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
+ }
+
+ .pixelSizeY::before {
+   position: absolute;
+   content: "";
+   height: var(--scaleBarY-size);
+   bottom: -33px;
+   left: 10px;
+   box-shadow: 1px -1px 1px var(--scaleBarShadow-color);
+   border-left: 2px solid var(--scaleBar-color);
+ }
+
+ .pixelSizeX:hover,
+ .pixelSizeY:hover {
+   cursor: pointer;
+ }
+
+ .color-picker {
+   display: block;
+   position: absolute;
+   bottom: 35px;
+   left: 30px;
+   z-index: 4;
  }
 
 </style>

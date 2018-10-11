@@ -83,30 +83,6 @@ class DatasetIdFilter extends AbstractDatasetFilter {
   }
 }
 
-class PersonFilter extends AbstractDatasetFilter {
-  constructor(schemaPath) {
-    super(schemaPath, {});
-    this.pgNameField = getPgField(schemaPath + '.First_Name');
-    this.pgSurnameField = getPgField(schemaPath + '.Surname');
-  }
-
-  esFilter(id) {
-    const [name='',surname=''] = id.split('|||');
-    return [
-      // TODO: make these not_analyzed
-      {term: {[this.esField + '.First_Name']: name}},
-      {term: {[this.esField + '.Surname']: surname}}
-    ];
-  }
-
-  pgFilter(q, id) {
-    const [name,surname] = id.split('|||');
-    // TODO: Change this to a proper ID search when IDs are correctly implemented
-    return q.whereRaw(`${this.pgNameField} = ? AND ${this.pgSurnameField} = ?`,
-      [name, surname]);
-  }
-}
-
 class NotNullFilter extends AbstractDatasetFilter {
   constructor(schemaPath, options={}) {
     super(schemaPath, options);
@@ -133,8 +109,20 @@ class NotNullFilter extends AbstractDatasetFilter {
   }
 }
 
+class GroupMatchFilter extends AbstractDatasetFilter {
+  constructor(schemaPath, options) {
+    super(schemaPath, options);
+  }
+
+  esFilter(value) {
+    return [
+      { term: { [this.esField]: this.preprocess(value) } },
+      { term: { ds_group_approved: true } }
+    ];
+  }
+}
+
 const datasetFilters = {
-  institution: new ExactMatchFilter('Submitted_By.Institution', {}),
   polarity: new PhraseMatchFilter('MS_Analysis.Polarity', {preprocess: capitalize}),
   ionisationSource: new ExactMatchFilter('MS_Analysis.Ionisation_Source', {}),
   analyzerType: new PhraseMatchFilter('MS_Analysis.Analyzer', {}),
@@ -146,8 +134,9 @@ const datasetFilters = {
   name: new SubstringMatchFilter('', {esField: 'ds_name', pgField: 'name'}),
   ids: new DatasetIdFilter(),
   status: new ExactMatchFilter('', {esField: 'ds_status', pgField: 'status'}),
-  submitter: new PersonFilter('Submitted_By.Submitter'),
-  hasGroup: new NotNullFilter('ds_group_id'),
+  submitter: new ExactMatchFilter('', { esField: 'ds_submitter_id' }),
+  hasGroup: new NotNullFilter('', { esField: 'ds_group_id' }),
+  group: new GroupMatchFilter('', { esField: 'ds_group_id' }),
   metadataType: new ExactMatchFilter('Data_Type', {}),
 };
 

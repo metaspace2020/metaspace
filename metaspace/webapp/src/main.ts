@@ -10,7 +10,7 @@ if(config.ravenDsn != null && config.ravenDsn !== '') {
 }
 
 import VueApollo from 'vue-apollo';
-import apolloClient from './graphqlClient';
+import apolloClient, { setMaintenanceMessageHandler } from './graphqlClient';
 Vue.use(VueApollo);
 
 const apolloProvider = new VueApollo({
@@ -63,6 +63,4 @@ const app = new Vue({
 });
 
 setErrorNotifier(app.$notify);
-
-import tokenAutorefresh from './tokenAutorefresh'
-tokenAutorefresh.addJwtListener((jwt, payload) => store.commit('setUser', payload));
+setMaintenanceMessageHandler(app.$alert);
