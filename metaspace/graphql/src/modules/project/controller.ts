@@ -95,10 +95,10 @@ const Project: FieldResolversFor<Project, ProjectSource> = {
         .getRepository(DatasetProjectModel)
         .createQueryBuilder('dataset_project')
         .innerJoinAndSelect('dataset_project.dataset', 'dataset')
-        .innerJoin('(SELECT id, is_public FROM "public"."dataset")', 'public_dataset', 'dataset.id = public_dataset.id')
+        .innerJoin('(SELECT id, is_public FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
         .where('dataset_project.projectId = :projectId', {projectId: project.id})
         .andWhere('dataset_project.approved = TRUE')
-        .andWhere('public_dataset.is_public = TRUE')
+        .andWhere('engine_dataset.is_public = TRUE')
         .getCount();
     }
   },
@@ -108,12 +108,12 @@ const Project: FieldResolversFor<Project, ProjectSource> = {
       .getRepository(DatasetProjectModel)
       .createQueryBuilder('dataset_project')
       .innerJoin('dataset_project.dataset', 'dataset')
-      .innerJoin('(SELECT id, is_public, upload_dt FROM "public"."dataset")', 'public_dataset', 'dataset.id = public_dataset.id')
-      .select('MAX(public_dataset.upload_dt)', 'upload_dt')
+      .innerJoin('(SELECT id, is_public, upload_dt FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
+      .select('MAX(engine_dataset.upload_dt)', 'upload_dt')
       .where('dataset_project.projectId = :projectId', {projectId: project.id})
       .andWhere('dataset_project.approved = TRUE');
     if (!canViewProjectMembersAndDatasets(project.scopeRole)) {
-      query = query.andWhere('public_dataset.is_public = TRUE');
+      query = query.andWhere('engine_dataset.is_public = TRUE');
     }
     const {upload_dt} = await query.getRawOne();
     return upload_dt;
