@@ -281,7 +281,7 @@ module.exports.esCountGroupedResults = function(args, docType, user, userProject
 
   if (args.groupingFields.length === 0) {
     // handle case of no grouping for convenience
-    logger.info(q);
+    logger.debug(q);
     const request = { body: q, index: esIndex };
     return es.count(request).then((resp) => {
       return {counts: [{fieldValues: [], count: resp.count}]};
@@ -292,7 +292,7 @@ module.exports.esCountGroupedResults = function(args, docType, user, userProject
   }
 
   const body = addTermAggregations(q, args.groupingFields);
-  logger.info(body);
+  logger.debug(body);
   const request = { body, index: esIndex, size: 0 };
   console.time('esAgg');
   return es.search(request)
@@ -313,7 +313,6 @@ module.exports.esFilterValueCountResults = async (args, user, userProjectRoles) 
   body.query.bool.filter.push(wildcard);
   body.size = 0;  // return only aggregations
   body.aggs = { field_counts: aggsTerms };
-  console.log(JSON.stringify(body));
   const resp = await es.search({
     body,
     index: esIndex

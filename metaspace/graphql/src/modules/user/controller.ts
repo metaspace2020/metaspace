@@ -11,7 +11,7 @@ import {Context} from '../../context';
 import {ScopeRole, ScopeRoleOptions as SRO, UserProjectSource, UserSource} from '../../bindingTypes';
 import {JwtUser} from '../auth/controller';
 import {sendEmailVerificationToken} from '../auth/operation';
-import {LooselyCompatible, smAPIRequest} from '../../utils';
+import {logger, LooselyCompatible, smAPIRequest} from '../../utils';
 import {convertUserToUserSource} from './util/convertUserToUserSource';
 
 const assertCanEditUser = (user: JwtUser, userId: string) => {
@@ -69,7 +69,7 @@ export const Resolvers = {
 
     async email({scopeRole, ...user}: UserSource): Promise<string|null> {
       if ([SRO.GROUP_MANAGER, SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
-        return user.email || null;
+        return user.email || user.notVerifiedEmail || null;
       }
       return null;
     },
@@ -118,6 +118,7 @@ export const Resolvers = {
 
   Mutation: {
     async updateUser(_: any, {userId, update}: any, {user, connection}: any): Promise<User> {
+      logger.info(`User '${userId}' being updated by '${user.id}'...`);
       assertCanEditUser(user, userId);
 
       if (update.role && user.role !== 'admin') {
@@ -143,6 +144,7 @@ export const Resolvers = {
 
       const userDSs = await connection.getRepository(DatasetModel).find({ userId });
       if (userDSs) {
+        logger.info(`Updating user '${userId}' datasets...`);
         for (let ds of userDSs) {
           await smAPIRequest(`/v1/datasets/${ds.id}/update`, {
             doc: { submitterId: userId }
@@ -150,18 +152,26 @@ export const Resolvers = {
         }
       }
 
+      logger.info(`User '${userId}' was updated`);
       return {
         id: userObj.id,
-        name: userObj.name,
+        name: userObj.name!,
         role: userObj.role
       };
     },
 
     async deleteUser(_: any, {userId, deleteDatasets}: any, {user, connection}: any): Promise<Boolean> {
+      logger.info(`User '${userId}' being deleted by '${user.id}'...`);
       assertCanEditUser(user, userId);
 
       if (deleteDatasets) {
-        throw new UserError('Not implemented yet');
+        const userDSs = await connection.getRepository(DatasetModel).find({ userId });
+        if (userDSs) {
+          logger.info(`Deleting user '${userId}' datasets...`);
+          for (let ds of userDSs) {
+            await smAPIRequest(`/v1/datasets/${ds.id}/delete`);
+          }
+        }
       }
 
       const userRepo = await connection.getRepository(UserModel);
@@ -171,6 +181,7 @@ export const Resolvers = {
       await connection.getRepository(UserGroupModel).delete({userId});
       await userRepo.delete({ id: userId });
       await connection.getRepository(CredentialsModel).delete({ id: credentialsId });
+      logger.info(`User '${userId}' was deleted`);
       return true;
     },
   }

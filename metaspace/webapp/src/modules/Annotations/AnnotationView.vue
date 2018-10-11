@@ -43,6 +43,8 @@
                      :onImageZoom="onImageZoom"
                      :onImageMove="onImageMove"
                      :acquisitionGeometry="msAcqGeometry"
+                     :pixelSizeX="pixelSizeX"
+                     :pixelSizeY="pixelSizeY"
                      @opacityInput="newVal => opacity = newVal">
           </component>
         </el-collapse-item>

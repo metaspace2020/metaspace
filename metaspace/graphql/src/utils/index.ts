@@ -1,5 +1,5 @@
 export {logger} from '../../utils';
-export {createConnection} from './db';
+export {createConnection, findUserByEmail} from './db';
 export {smAPIRequest} from './smAPI';
 
 export type LooselyCompatible<T> =

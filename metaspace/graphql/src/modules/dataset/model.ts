@@ -1,4 +1,4 @@
-import {Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryColumn} from 'typeorm';
+import {Column, Entity, JoinColumn, JoinTable, ManyToOne, OneToMany, PrimaryColumn} from 'typeorm';
 import {Group} from '../group/model';
 import {User} from '../user/model';
 import {Project} from '../project/model';
@@ -17,7 +17,7 @@ export class Dataset {
   user: User;
 
   @Column({ type: 'uuid', name: 'group_id', nullable: true })
-  groupId: string; // dataset belongs to group -> all members have view rights
+  groupId: string | null; // dataset belongs to group -> all members have view rights
 
   @ManyToOne(type => Group)
   @JoinColumn({ name: 'group_id' })

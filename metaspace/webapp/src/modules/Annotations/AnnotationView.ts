@@ -191,6 +191,22 @@
      return Object.assign(safeJsonParse(this.annotation.dataset.metadataJson), datasetMetadataExternals);
    }
 
+   get pixelSizeX() {
+     if (this.metadata.MS_Analysis != null &&
+       this.metadata.MS_Analysis.Pixel_Size != null) {
+       return this.metadata.MS_Analysis.Pixel_Size.Xaxis
+     }
+     return 0
+   }
+
+   get pixelSizeY() {
+     if (this.metadata.MS_Analysis != null &&
+       this.metadata.MS_Analysis.Pixel_Size != null) {
+       return this.metadata.MS_Analysis.Pixel_Size.Yaxis
+     }
+     return 0
+   }
+
    opacity: number = 1.0;
 
    imagePosition: ImagePosition = {

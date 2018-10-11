@@ -1,6 +1,6 @@
 type User {
   id: ID!
-  name: String!
+  name: String
   role: String             # null if current user is not allowed to see
   email: String            # null if current user is not allowed to see
   groups: [UserGroup!]     # null if current user is not allowed to see

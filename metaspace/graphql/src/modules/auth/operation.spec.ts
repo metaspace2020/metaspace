@@ -64,7 +64,9 @@ describe('Database operations with user', () => {
       password: 'password',
     });
 
-    const cred = await testEntityManager.findOneOrFail(Credentials);
+    const cred = await testEntityManager.findOneOrFail(Credentials, {
+      select: ['id', 'hash', 'emailVerified']
+    });
     expect(cred.id).toEqual(expect.anything());
     expect(cred.hash).toEqual(expect.anything());
     expect(cred.emailVerified).toEqual(false);
