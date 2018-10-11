@@ -1,10 +1,7 @@
-process.env.NODE_ENV = 'test';
+import * as config from 'config';
+import * as _ from 'lodash';
 
-const {UserError} = require('graphql-errors'),
-  config = require('config');
-
-const {processingSettingsChanged} = require('../dsMutation'),
-  {addProcessingConfig} = require('../utils');
+import {processingSettingsChanged} from '../dsMutation';
 
 const metadata = {
   "MS_Analysis": {
@@ -79,7 +76,6 @@ function clone(obj) {
 test('Reprocessing needed when database list changed', () => {
   const updDS = clone(ds);
   updDS.molDBs.push('ChEBI');
-  addProcessingConfig(updDS);
 
   const {newDB} = processingSettingsChanged(ds, updDS);
 
@@ -89,7 +85,6 @@ test('Reprocessing needed when database list changed', () => {
 test('Drop reprocessing needed when instrument settings changed', () => {
   const updDS = clone(ds);
   updDS.metadata.MS_Analysis.Detector_Resolving_Power.mz = 100;
-  addProcessingConfig(updDS);
 
   const {procSettingsUpd} = processingSettingsChanged(ds, updDS);
 
@@ -97,12 +92,14 @@ test('Drop reprocessing needed when instrument settings changed', () => {
 });
 
 test('Reprocessing not needed when just metadata changed', () => {
-  const updDS = clone(ds);
-  updDS.metadata.Sample_Preparation.MALDI_Matrix = 'New matrix';
-  updDS.metadata.MS_Analysis.ionisationSource = 'DESI';
-  updDS.metadata.Sample_Information.Organism = 'New organism';
-  updDS.name = 'New DS name';
-  addProcessingConfig(ds, updDS);
+  const updDS = {
+    metadata: _.defaultsDeep({
+      Sample_Preparation: { MALDI_Matrix: 'New matrix' },
+      MS_Analysis: { ionisationSource: 'DESI' },
+      Sample_Information: { Organism: 'New organism' },
+    }, ds.metadata),
+    name: 'New DS name'
+  };
 
   const {newDB, procSettingsUpd} = processingSettingsChanged(ds, updDS);
 

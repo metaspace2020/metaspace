@@ -5,8 +5,9 @@ import {Credentials as CredentialsModel} from '../auth/model';
 import {Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions} from './model';
 import {User as UserModel} from '../user/model';
 import {Dataset as DatasetModel} from '../dataset/model';
-import {Group, UserGroup, UserGroupRole} from '../../binding';
-import {Context, Scope, ScopeRole, ScopeRoleOptions} from '../../context';
+import {Group, UserGroup, User, UserGroupRole} from '../../binding';
+import {Context} from '../../context';
+import {Scope, ScopeRole, ScopeRoleOptions} from '../../bindingTypes';
 import {LooselyCompatible, smAPIRequest, logger, findUserByEmail} from '../../utils';
 import {JwtUser} from '../auth/controller';
 import {sendInvitationEmail} from '../auth';
@@ -14,11 +15,11 @@ import config from '../../utils/config';
 
 const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<ScopeRole> => {
   let scopeRole = ScopeRoleOptions.OTHER;
-  if (ctx.user.role === 'admin') {
+  if (ctx.user != null && ctx.user.role === 'admin') {
     scopeRole = ScopeRoleOptions.ADMIN;
   }
   else {
-    if (groupId) {
+    if (ctx.user != null && groupId) {
       const userGroup = await ctx.connection.getRepository(UserGroupModel).findOne({
         where: { userId: ctx.user.id, groupId }
       });

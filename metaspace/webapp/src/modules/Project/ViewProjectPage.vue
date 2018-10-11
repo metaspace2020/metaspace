@@ -57,7 +57,7 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component, Watch } from 'vue-property-decorator';
-  import { DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset';
+  import {DatasetDetailItem, datasetDetailItemFragment, datasetStatusUpdatedQuery} from '../../api/dataset';
   import DatasetList from '../Datasets/list/DatasetList.vue';
   import { acceptProjectInvitationMutation, leaveProjectMutation, requestAccessToProjectMutation, ProjectRole } from '../../api/project';
   import gql from 'graphql-tag';
@@ -86,7 +86,7 @@
     countDatasets: number;
   }
 
-  @Component({
+  @Component<ViewProjectPage>({
     components: {
       DatasetList,
     },
@@ -136,6 +136,19 @@
         },
         skip() {
           return this.projectId == null
+        }
+      },
+      $subscribe: {
+        datasetStatusUpdated: {
+          query: datasetStatusUpdatedQuery,
+          result({data}: any) {
+            // TODO: Fix websocket authentication so that this can filter out irrelevant status updates
+            // const dataset = data.datasetStatusUpdated.dataset;
+            // if (dataset != null && dataset.projects != null && dataset.projects.some((p: any) => p.id === this.projectId)) {
+            //   this.$apollo.queries.data.refetch();
+            // }
+            this.$apollo.queries.data.refetch();
+          }
         }
       },
     }
@@ -234,7 +247,7 @@
 
     async refetch() {
       return await Promise.all([
-        this.$apollo.queries.group.refetch(),
+        this.$apollo.queries.project.refetch(),
         this.$apollo.queries.data.refetch(),
       ]);
     }

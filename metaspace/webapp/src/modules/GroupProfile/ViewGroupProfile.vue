@@ -65,7 +65,7 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component, Watch } from 'vue-property-decorator';
-  import { DatasetDetailItem, datasetDetailItemFragment } from '../../api/dataset';
+  import {DatasetDetailItem, datasetDetailItemFragment, datasetStatusUpdatedQuery} from '../../api/dataset';
   import DatasetList from '../Datasets/list/DatasetList.vue';
   import {
     acceptGroupInvitationMutation,
@@ -154,6 +154,19 @@
         },
         skip() {
           return this.groupId == null
+        }
+      },
+      $subscribe: {
+        datasetStatusUpdated: {
+          query: datasetStatusUpdatedQuery,
+          result({data}: any) {
+            // TODO: Fix websocket authentication so that this can filter out irrelevant status updates
+            // const dataset = data.datasetStatusUpdated.dataset;
+            // if (dataset != null && dataset.group != null && dataset.group.id === this.groupId) {
+            //   this.$apollo.queries.data.refetch();
+            // }
+            this.$apollo.queries.data.refetch();
+          }
         }
       },
     }

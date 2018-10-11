@@ -43,6 +43,6 @@ describe('ProjectsListPage', () => {
 
     expect(wrapper).toMatchSnapshot();
     const projectIds = wrapper.findAll({name:'ProjectsListItem'}).wrappers.map(item => item.props().project.id);
-    expect(projectIds).toEqual(['project 1', 'project 3', 'project 2']);
+    expect(projectIds).toEqual(['project 1', 'project 2']);
   });
 });

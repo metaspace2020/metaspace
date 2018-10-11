@@ -1,15 +1,18 @@
 import {UserError} from "graphql-errors";
-import {FindManyOptions, Like, In} from 'typeorm';
+import {Like} from 'typeorm';
 
 import {User, UserGroup} from '../../binding';
 import {User as UserModel} from './model';
 import {Dataset as DatasetModel} from '../dataset/model';
 import {Credentials as CredentialsModel} from '../auth/model';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../group/model';
-import {Context, Scope, ScopeRole, ScopeRoleOptions as SRO} from '../../context';
+import {UserProject as UserProjectModel} from '../project/model';
+import {Context} from '../../context';
+import {ScopeRole, ScopeRoleOptions as SRO, UserProjectSource, UserSource} from '../../bindingTypes';
 import {JwtUser} from '../auth/controller';
 import {sendEmailVerificationToken} from '../auth/operation';
 import {logger, LooselyCompatible, smAPIRequest} from '../../utils';
+import {convertUserToUserSource} from './util/convertUserToUserSource';
 
 const assertCanEditUser = (user: JwtUser, userId: string) => {
   if (!user || !user.id)
@@ -21,14 +24,12 @@ const assertCanEditUser = (user: JwtUser, userId: string) => {
 
 const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<ScopeRole> => {
   let scopeRole = SRO.OTHER;
-  if (ctx.user.role === 'admin') {
+  if (ctx.isAdmin) {
     scopeRole = SRO.ADMIN;
   }
   else {
-    if (userId) {
-      if (userId === ctx.user.id) {
-        scopeRole = SRO.PROFILE_OWNER;
-      }
+    if (userId && ctx.user != null && userId === ctx.user.id) {
+      scopeRole = SRO.PROFILE_OWNER;
     }
   }
   return scopeRole;
@@ -36,7 +37,7 @@ const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<Scop
 
 export const Resolvers = {
   User: {
-    async primaryGroup({scopeRole, ...user}: UserModel & Scope, _: any,
+    async primaryGroup({scopeRole, ...user}: UserSource, _: any,
                        ctx: Context): Promise<LooselyCompatible<UserGroup>|null> {
       if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return await ctx.connection.getRepository(UserGroupModel).findOne({
@@ -47,7 +48,7 @@ export const Resolvers = {
       return null;
     },
 
-    async groups({scopeRole, ...user}: UserModel & Scope, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup>[]|null> {
+    async groups({scopeRole, ...user}: UserSource, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup>[]|null> {
       if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return await ctx.connection.getRepository(UserGroupModel).find({
           where: { userId: user.id },
@@ -57,63 +58,61 @@ export const Resolvers = {
       return null;
     },
 
-    async email({scopeRole, ...user}: UserModel & Scope): Promise<string|null> {
-      if ([SRO.GROUP_MANAGER,
-        SRO.ADMIN,
-        SRO.PROFILE_OWNER].includes(scopeRole)) {
+    async projects(user: UserSource, args: any, ctx: Context): Promise<UserProjectSource[]|null> {
+      if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(user.scopeRole)) {
+        const userProjects = await ctx.connection.getRepository(UserProjectModel)
+          .find({userId: user.id});
+        return userProjects.map(userProject => ({ ...userProject, user }));
+      }
+      return null;
+    },
+
+    async email({scopeRole, ...user}: UserSource): Promise<string|null> {
+      if ([SRO.GROUP_MANAGER, SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return user.email || user.notVerifiedEmail || null;
       }
       return null;
-    }
+    },
+
+    async role({scopeRole, ...user}: UserSource): Promise<string|null> {
+      if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
+        return user.role || null;
+      }
+      return null;
+    },
   },
 
   Query: {
-    async user(_: any, {userId}: any, ctx: Context): Promise<LooselyCompatible<User & Scope>|null> {
+    async user(_: any, {userId}: any, ctx: Context): Promise<UserSource|null> {
       const scopeRole = await resolveUserScopeRole(ctx, userId);
-      if ([SRO.PROFILE_OWNER, SRO.ADMIN].includes(scopeRole)) {
-        const user = await ctx.connection.getRepository(UserModel).findOneOrFail({
-          where: { id: userId }
-        });
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          scopeRole
-        };
-      }
-      return null;
+      const user = await ctx.connection.getRepository(UserModel).findOne({
+        where: { id: userId }
+      });
+      return user != null ? convertUserToUserSource(user, scopeRole) : null;
     },
 
-    async currentUser(_: any, {}: any, ctx: Context): Promise<LooselyCompatible<User & Scope>|null> {
-      const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
-      if ([SRO.PROFILE_OWNER, SRO.ADMIN].includes(scopeRole)) {
+    async currentUser(_: any, {}: any, ctx: Context): Promise<UserSource|null> {
+      if (ctx.user != null && ctx.user.id != null) {
+        const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
         const user = await ctx.connection.getRepository(UserModel).findOneOrFail({
           where: { id: ctx.user.id }
         });
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          scopeRole
-        };
+        return convertUserToUserSource(user, scopeRole);
       }
       return null;
     },
 
-    async allUsers(_: any, {query}: any, ctx: Context): Promise<LooselyCompatible<User & Scope>[]|null> {
-      const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
-      if ([SRO.ADMIN].includes(scopeRole)) {
+    async allUsers(_: any, {query}: any, ctx: Context): Promise<UserSource[]|null> {
+      if (ctx.isAdmin) {
         const users = await ctx.connection.getRepository(UserModel).find({
           where: { name: Like(`%${query}%`) }
         }) as UserModel[];
-        return users.map(user => ({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          scopeRole
-        }));
+        const promises = users.map(async user =>
+          convertUserToUserSource(user, await resolveUserScopeRole(ctx, user.id)));
+        return Promise.all(promises);
+      } else {
+        return null;
       }
-      return null;
     }
   },
 

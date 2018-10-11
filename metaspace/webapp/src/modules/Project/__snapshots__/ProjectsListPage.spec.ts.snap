@@ -114,31 +114,6 @@ exports[`ProjectsListPage should match snapshot 1`] = `
         <img src="../../assets/padlock-icon.svg" title="This project is only visible to its members and METASPACE administrators" class="private-icon">
       </div>
       <div class="project-item">
-        <a href="/project/project%203" class="underlay"></a>
-        <div class="item-body">
-          <div class="info">
-            <div class="info-line project-name">
-              <a href="/project/project%203" class="">project three</a>
-            </div>
-            <div class="info-line"><span><a href="/datasets?prj=project%203" class="">5 Datasets</a>,
-        </span> 10 Members
-            </div>
-            <div class="info-line"><span>
-          Last submission <b>2018-05-15</b></span></div>
-            <!---->
-          </div>
-          <div class="actions">
-            <div>
-              <i class="el-icon-picture"></i>
-              <a href="/annotations?db=&amp;prj=project%203" class="">Browse annotations</a>
-            </div>
-            <!---->
-            <!---->
-          </div>
-        </div>
-        <!---->
-      </div>
-      <div class="project-item">
         <a href="/project/project%202" class="underlay"></a>
         <div class="item-body">
           <div class="info">
