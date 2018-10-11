@@ -6,11 +6,36 @@ import {UserError} from 'graphql-errors';
 
 export default (req: Express.Request, connection: Connection | EntityManager): Context => {
   const user = req.user != null ? req.user.user : null;
+
   let currentUserProjectRoles: Promise<UserProjectRoles> | null = null;
+  const getProjectRoles = async () => {
+    if (currentUserProjectRoles == null && user != null && user.id != null) {
+      currentUserProjectRoles = new Promise<UserProjectRoles>(async (resolve, reject) => {
+        try {
+          const userProjects = await connection.getRepository(UserProjectModel)
+            .find({ where: { userId: user.id } });
+          resolve(_.fromPairs(userProjects.map(up => [up.projectId, up.role])));
+        } catch (err) {
+          reject(err);
+        }
+      });
+    } else if (currentUserProjectRoles == null) {
+      currentUserProjectRoles = Promise.resolve({});
+    }
+
+    return await currentUserProjectRoles;
+  };
+
 
   return {
     connection,
-    user,
+    user: user == null || user.id == null ? null : {
+      id: user.id,
+      role: user.role,
+      email: user.email,
+      groupIds: user.groupIds,
+      getProjectRoles,
+    },
     isAdmin: user && user.role === 'admin',
     getUserIdOrFail() {
       if (user == null || user.id == null) {
@@ -18,22 +43,6 @@ export default (req: Express.Request, connection: Connection | EntityManager): C
       }
       return user.id;
     },
-    async getCurrentUserProjectRoles() {
-      if (currentUserProjectRoles == null && user != null && user.id != null) {
-        currentUserProjectRoles = new Promise<UserProjectRoles>(async (resolve, reject) => {
-          try {
-            const userProjects = await connection.getRepository(UserProjectModel)
-              .find({ where: { userId: user.id } });
-            resolve(_.fromPairs(userProjects.map(up => [up.projectId, up.role])));
-          } catch (err) {
-            reject(err);
-          }
-        });
-      } else if (currentUserProjectRoles == null) {
-        currentUserProjectRoles = Promise.resolve({});
-      }
-
-      return await currentUserProjectRoles;
-    },
+    getCurrentUserProjectRoles: getProjectRoles,
   };
 }

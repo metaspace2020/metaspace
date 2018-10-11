@@ -103,24 +103,24 @@ const Resolvers = {
     async dataset(_, { id: dsId }, ctx) {
       // TODO: decide whether to support field level access here
       const scopeRole = await resolveDatasetScopeRole(ctx, dsId);
-      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());
+      const ds = await esDatasetByID(dsId, ctx.user);
       return ds ? { ...ds, scopeRole }: null;
     },
 
     async allDatasets(_, args, ctx) {
       args.datasetFilter = args.filter;
       args.filter = {};
-      return await esSearchResults(args, 'dataset', ctx.user, await ctx.getCurrentUserProjectRoles());
+      return await esSearchResults(args, 'dataset', ctx.user);
     },
 
     async allAnnotations(_, args, ctx) {
-      return await esSearchResults(args, 'annotation', ctx.user, await ctx.getCurrentUserProjectRoles());
+      return await esSearchResults(args, 'annotation', ctx.user);
     },
 
     async countDatasets(_, args, ctx) {
       args.datasetFilter = args.filter;
       args.filter = {};
-      return await esCountResults(args, 'dataset', ctx.user, await ctx.getCurrentUserProjectRoles());
+      return await esCountResults(args, 'dataset', ctx.user);
     },
 
     async countDatasetsPerGroup(_, {query}, ctx) {
@@ -130,15 +130,15 @@ const Resolvers = {
         filter: {},
         groupingFields: query.fields
       };
-      return await esCountGroupedResults(args, 'dataset', ctx.user, await ctx.getCurrentUserProjectRoles());
+      return await esCountGroupedResults(args, 'dataset', ctx.user);
     },
 
     async countAnnotations(_, args, ctx) {
-      return await esCountResults(args, 'annotation', ctx.user, await ctx.getCurrentUserProjectRoles());
+      return await esCountResults(args, 'annotation', ctx.user);
     },
 
     async annotation(_, { id }, ctx) {
-      return await esAnnotationByID(id, ctx.user, await ctx.getCurrentUserProjectRoles());
+      return await esAnnotationByID(id, ctx.user);
     },
 
     async metadataSuggestions(_, {field, query, limit}, ctx) {
@@ -152,7 +152,7 @@ const Resolvers = {
           }
         },
         limit
-      }, ctx.user, await ctx.getCurrentUserProjectRoles());
+      }, ctx.user);
       return Object.keys(itemCounts);
     },
 
@@ -177,7 +177,7 @@ const Resolvers = {
             order: { _term : 'asc' }
           }
         }
-      }, ctx.user, await ctx.getCurrentUserProjectRoles());
+      }, ctx.user);
       return Object.keys(itemCounts).map((s) => {
         const [id, name] = s.split('/');
         return { id, name }
@@ -217,7 +217,7 @@ const Resolvers = {
 
     async opticalImageUrl(_, {datasetId: dsId, zoom}, ctx) {
       // TODO: consider moving to Dataset type
-      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());  // check if user has access
+      const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
       if (ds) {
         const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
         // TODO: manage optical images on the graphql side
@@ -232,7 +232,7 @@ const Resolvers = {
 
     async rawOpticalImage(_, {datasetId: dsId}, ctx) {
       // TODO: consider moving to Dataset type
-      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());  // check if user has access
+      const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
       if (ds) {
         const row = await (db.from('dataset')
           .where('id', dsId)
@@ -254,7 +254,7 @@ const Resolvers = {
 
     async thumbnailOpticalImageUrl(_, {datasetId: dsId}, ctx) {
       // TODO: consider moving to Dataset type
-      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());  // check if user has access
+      const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
       if (ds) {
         const row = await (db.from('dataset')
           .where('id', dsId)
@@ -274,7 +274,7 @@ const Resolvers = {
           sortingOrder: 'DESCENDING',
           submitter: user.id,
           limit: 1,
-        }, 'dataset', user, await ctx.getCurrentUserProjectRoles());
+        }, 'dataset', user);
         if (results.length > 0) {
           lastDS = results[0];
         }

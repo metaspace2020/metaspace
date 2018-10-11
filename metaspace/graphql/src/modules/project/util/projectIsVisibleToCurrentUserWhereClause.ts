@@ -5,7 +5,7 @@ import {Brackets} from 'typeorm';
 export const projectIsVisibleToCurrentUserWhereClause = (ctx: Context, userProjectRoles: UserProjectRoles) => {
   if (ctx.isAdmin) {
     return new Brackets(qb => qb.where('True'));
-  } else if (ctx.user != null && ctx.user.id != null) {
+  } else if (ctx.user != null) {
     const projectIds = Object.keys(userProjectRoles);
     return new Brackets(qb => qb.where('project.isPublic = True')
       .orWhere('project.id = ANY(:projectIds)', { projectIds }));
