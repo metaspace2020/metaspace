@@ -116,7 +116,7 @@ const createBodyWithAuthFilters = (user, userProjectRoles) => {
       filterObj.bool.should.push({
         bool: {
           must: [
-            { terms: { ds_project_id: visibleProjectIds } }
+            { terms: { ds_project_ids: visibleProjectIds } }
           ]
         }
       });
