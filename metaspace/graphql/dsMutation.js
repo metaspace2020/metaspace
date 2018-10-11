@@ -100,9 +100,9 @@ function processingSettingsChanged(ds, update) {
   return {newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff}
 }
 
-const isMemberOf = async (connection, user, groupId) => {
+const isMemberOf = async (connection, userId, groupId) => {
   const userGroup = await connection.getRepository(UserGroupModel).findOne({
-    userId: user.id,
+    userId,
     groupId
   });
   let isMember = false;
