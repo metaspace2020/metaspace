@@ -42,7 +42,7 @@ config.services.moldb_service_host = "localhost";
 config.services.sm_engine_api_host = "localhost";
 
 config.db = {};
-config.db.host = "postgres";
+config.db.host = "localhost";
 config.db.database = "sm_test";
 config.db.user = "sm";
 config.db.password = "password";

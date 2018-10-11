@@ -254,8 +254,9 @@ const Mutation: FieldResolversFor<Mutation, void> = {
     const userProject = await ctx.connection.getRepository(UserProjectModel)
       .findOneOrFail({userId, projectId}, {relations: ['user']});
 
-    // TODO: Double-check userProjectRoles
-
+    // NOTE: In the return value, some role-dependent fields like `userProject.project.currentUserRole` will still reflect
+    // the user's role before the request was made. The UI currently doesn't rely on the result, but if it does,
+    // it may be necessary to make a way to update the cached ctx.getUserProjectRoles() value
     return { ...userProject, user: convertUserToUserSource(userProject.user, SRO.OTHER) };
   },
 
@@ -263,6 +264,8 @@ const Mutation: FieldResolversFor<Mutation, void> = {
     await updateUserProjectRole(ctx, userId, projectId, UPRO.MEMBER);
     const userProject = await ctx.connection.getRepository(UserProjectModel)
       .findOneOrFail({userId, projectId}, {relations: ['user']});
+
+    // NOTE: This return value has the same issue with role-dependent fields as `requestAccessToProject`
     return { ...userProject, user: convertUserToUserSource(userProject.user, SRO.OTHER) };
   },
 
