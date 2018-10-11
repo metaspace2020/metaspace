@@ -119,7 +119,7 @@ export const Resolvers = {
 
   Mutation: {
     async updateUser(_: any, {userId, update}: any, {user, connection}: any): Promise<User> {
-      logger.info(`User ${userId} updating by '${user}'...`);
+      logger.info(`User '${userId}' being updated by '${user.id}'...`);
       assertCanEditUser(user, userId);
 
       if (update.role && user.role !== 'admin') {
@@ -145,7 +145,7 @@ export const Resolvers = {
 
       const userDSs = await connection.getRepository(DatasetModel).find({ userId });
       if (userDSs) {
-        logger.info(`Updating user ${userId} datasets...`);
+        logger.info(`Updating user '${userId}' datasets...`);
         for (let ds of userDSs) {
           await smAPIRequest(`/v1/datasets/${ds.id}/update`, {
             doc: { submitterId: userId }
@@ -153,7 +153,7 @@ export const Resolvers = {
         }
       }
 
-      logger.info(`User ${userId} updated`);
+      logger.info(`User '${userId}' was updated`);
       return {
         id: userObj.id,
         name: userObj.name!,
@@ -162,13 +162,13 @@ export const Resolvers = {
     },
 
     async deleteUser(_: any, {userId, deleteDatasets}: any, {user, connection}: any): Promise<Boolean> {
-      logger.info(`User ${userId} deleting by '${user}'...`);
+      logger.info(`User '${userId}' being deleted by '${user.id}'...`);
       assertCanEditUser(user, userId);
 
       if (deleteDatasets) {
         const userDSs = await connection.getRepository(DatasetModel).find({ userId });
         if (userDSs) {
-          logger.info(`Deleting user ${userId} datasets...`);
+          logger.info(`Deleting user '${userId}' datasets...`);
           for (let ds of userDSs) {
             await smAPIRequest(`/v1/datasets/${ds.id}/delete`);
           }
@@ -182,7 +182,7 @@ export const Resolvers = {
       await connection.getRepository(UserGroupModel).delete({userId});
       await userRepo.delete({ id: userId });
       await connection.getRepository(CredentialsModel).delete({ id: credentialsId });
-      logger.info(`User ${userId} deleted`);
+      logger.info(`User '${userId}' was deleted`);
       return true;
     },
   }

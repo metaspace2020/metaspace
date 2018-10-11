@@ -159,7 +159,7 @@ module.exports = {
       const {input, priority} = args;
       let {id: dsId} = args;
 
-      logger.info(`Creating dataset '${dsId}' by ${user} user ...`);
+      logger.info(`Creating dataset '${dsId}' by '${user.id}' user ...`);
       if (dsId)
         await assertCanEditDataset(connection, user, dsId);
       else
@@ -184,14 +184,14 @@ module.exports = {
         saveDSArgs.groupApproved = await isMemberOf(connection, user, groupId);
       await saveDS(connection, saveDSArgs);
 
-      logger.info(`Dataset '${dsId}' created`);
+      logger.info(`Dataset '${dsId}' was created`);
       return JSON.stringify({ dsId, status: 'success' });
     },
 
     update: async (_, args, {user, connection}) => {
       const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
 
-      logger.info(`User ${user} updating '${dsId}' dataset...`);
+      logger.info(`User '${user.id}' updating '${dsId}' dataset...`);
       await assertCanEditDataset(connection, user, dsId);
 
       if (update.metadataJson) {
@@ -236,14 +236,14 @@ module.exports = {
         }
       }
 
-      logger.info(`Updated '${dsId}' dataset`);
+      logger.info(`Dataset '${dsId}' was updated`);
       return JSON.stringify(smAPIResp);
     },
 
     delete: async (_, args, {user, connection}) => {
       const {id: dsId, priority} = args;
 
-      logger.info(`User ${user} deleting '${dsId}' dataset...`);
+      logger.info(`User '${user.id}' deleting '${dsId}' dataset...`);
       await assertCanEditDataset(connection, user, dsId);
 
       try {
@@ -256,7 +256,7 @@ module.exports = {
       await connection.getRepository(DatasetModel).delete(dsId);
       const resp = await smAPIRequest(`/v1/datasets/${dsId}/delete`, {});
 
-      logger.info(`Deleted '${dsId}' dataset`);
+      logger.info(`Dataset '${dsId}' was deleted`);
       return JSON.stringify(resp);
     },
 
@@ -264,7 +264,7 @@ module.exports = {
       const {datasetId: dsId, transform} = input;
       let {imageUrl} = input;
 
-      logger.info(`User ${user} adding optical image for '${dsId}' dataset...`);
+      logger.info(`User '${user.id}' adding optical image to '${dsId}' dataset...`);
       await assertCanEditDataset(connection, user, dsId);
         // TODO support image storage running on a separate host
       const url = `http://localhost:${config.img_storage_port}${imageUrl}`;
@@ -272,18 +272,18 @@ module.exports = {
         url, transform
       });
 
-      logger.info(`Optical image added for '${dsId}' dataset`);
+      logger.info(`Optical image was added to '${dsId}' dataset`);
       return JSON.stringify(resp);
     },
 
     deleteOpticalImage: async (_, args, {user, connection}) => {
       const {datasetId: dsId} = args;
 
-      logger.info(`User '${user}' deleting optical image for '${dsId}' dataset...`);
+      logger.info(`User '${user.id}' deleting optical image from '${dsId}' dataset...`);
       await assertCanEditDataset(connection, user, dsId);
       const resp = await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
 
-      logger.info(`Optical image deleted for '${dsId}' dataset`);
+      logger.info(`Optical image was deleted from '${dsId}' dataset`);
       return JSON.stringify(resp);
     }
   }

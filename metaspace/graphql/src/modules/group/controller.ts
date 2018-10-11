@@ -148,8 +148,7 @@ export const Resolvers = {
   Mutation: {
     async createGroup(_: any, {groupDetails}: any, {user, connection}: any): Promise<Group> {
       const {principalInvestigatorEmail, ...groupInput} = groupDetails;
-
-      logger.info(`Creating ${groupInput.name} group by ${user}...`);
+      logger.info(`Creating ${groupInput.name} group by '${user.id}' user...`);
       assertCanCreateGroup(user);
 
       // TODO create inactive account for PI
@@ -161,7 +160,7 @@ export const Resolvers = {
     },
 
     async updateGroup(_: any, {groupId, groupDetails}: any, {user, connection}: any): Promise<Group> {
-      logger.info(`Updating '${groupId}' group by ${user}...`);
+      logger.info(`Updating '${groupId}' group by '${user.id}' user...`);
       await assertCanEditGroup(connection, user, groupId);
 
       const groupRepo = connection.getRepository(GroupModel);
@@ -182,7 +181,7 @@ export const Resolvers = {
     },
 
     async deleteGroup(_: any, {groupId}: any, {user, connection}: any): Promise<Boolean> {
-      logger.info(`Deleting '${groupId}' group by ${user}...`);
+      logger.info(`Deleting '${groupId}' group by '${user.id}' user...`);
       await assertCanEditGroup(connection, user, groupId);
 
       await connection.getRepository(UserGroupModel).delete({groupId});
@@ -193,7 +192,7 @@ export const Resolvers = {
     },
 
     async leaveGroup(_: any, {groupId}: any, {user, connection}: any): Promise<Boolean> {
-      logger.info(`User ${user} leaving '${groupId}' group...`);
+      logger.info(`'${user.id}' user leaving '${groupId}' group...`);
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
@@ -208,6 +207,7 @@ export const Resolvers = {
     },
 
     async removeUserFromGroup(_: any, {groupId, userId}: any, {user, connection}: any): Promise<Boolean> {
+      logger.info(`User '${user.id}' removing '${userId}' user from '${groupId}' group...`);
       await assertCanEditGroup(connection, user, groupId);
 
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
@@ -222,10 +222,12 @@ export const Resolvers = {
 
         await userGroupRepo.delete({ userId, groupId });
       }
+      logger.info(`User '${userId}' was removed from '${groupId}' group`);
       return true;
     },
 
     async requestAccessToGroup(_: any, {groupId}: any, {user, connection}: any): Promise<UserGroup> {
+      logger.info(`User '${user.id}' requesting access to '${groupId}' group...`);
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
@@ -241,6 +243,7 @@ export const Resolvers = {
         await userGroupRepo.save(userGroup);
       }
 
+      logger.info(`User '${user.id}' requested access to '${groupId}' group`);
       return await userGroupRepo.findOneOrFail({
         where: { groupId, userId: user.id },
         relations: ['user', 'group']
@@ -248,6 +251,7 @@ export const Resolvers = {
     },
 
     async acceptRequestToJoinGroup(_: any, {groupId, userId}: any, {user, connection}: any): Promise<UserGroup> {
+      logger.info(`User '${user.id}' accepting request from '${userId}' user to join '${groupId}' group...`);
       await assertCanEditGroup(connection, user, groupId);
 
       await connection.getRepository(UserModel).findOneOrFail(userId);
@@ -267,6 +271,7 @@ export const Resolvers = {
         });
       }
 
+      logger.info(`User '${userId}' was accepted to '${groupId}' group`);
       return userGroupRepo.findOneOrFail({
         where: { groupId, userId },
         relations: ['user', 'group']
@@ -274,6 +279,7 @@ export const Resolvers = {
     },
 
     async inviteUserToGroup(_: any, {groupId, email}: any, {user, connection}: any): Promise<UserGroup> {
+      logger.info(`User '${user.id}' inviting ${email} to join '${groupId}' group...`);
       await assertCanEditGroup(connection, user, groupId);
 
       let invUser = await findUserByEmail(connection, email, 'email')
@@ -299,7 +305,7 @@ export const Resolvers = {
 
       if (invUserGroup && [UserGroupRoleOptions.MEMBER,
           UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(invUserGroup.role)) {
-          logger.info(`User ${invUserGroup.userId} is already member of ${groupId}`);
+          logger.info(`User '${invUserGroup.userId}' is already member of '${groupId}'`);
       }
       else {
         invUserGroup = await userGroupRepo.save({
@@ -307,9 +313,10 @@ export const Resolvers = {
           groupId,
           role: UserGroupRoleOptions.INVITED,
         });
-        logger.info(`${invUserGroup.userId} user was invited to ${groupId} group`);
+        logger.info(`'${invUserGroup.userId}' user was invited to '${groupId}' group`);
       }
 
+      logger.info(`User ${email} was invited to '${groupId}' group`);
       return await userGroupRepo.findOneOrFail({
         where: { userId: invUser.id, groupId },
         relations: ['user', 'group']
@@ -317,6 +324,7 @@ export const Resolvers = {
     },
 
     async acceptGroupInvitation(_: any, {groupId}: any, {user, connection}: any): Promise<UserGroup> {
+      logger.info(`User '${user.id}' accepting invitation to join '${groupId}' group...`);
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
@@ -332,6 +340,7 @@ export const Resolvers = {
         });
       }
 
+      logger.info(`User '${user.id}' accepted invitation to '${groupId}' group`);
       return await userGroupRepo.findOneOrFail({
         where: { userId: user.id, groupId },
         relations: ['user', 'group']
@@ -339,6 +348,7 @@ export const Resolvers = {
     },
 
     async importDatasetsIntoGroup(_: any, {groupId, datasetIds}: any, {user, connection}: any): Promise<Boolean> {
+      logger.info(`User '${user.id}' importing datasets ${datasetIds} to '${groupId}' group...`);
       await assertCanAddDataset(connection, user, groupId);
 
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
@@ -350,6 +360,7 @@ export const Resolvers = {
           doc: { groupId: groupId }
         });
       }
+      logger.info(`User '${user.id}' imported datasets to '${groupId}' group`);
       return true;
     },
   }

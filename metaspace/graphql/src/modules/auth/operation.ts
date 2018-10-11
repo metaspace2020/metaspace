@@ -213,10 +213,10 @@ export const verifyEmail = async (email: string, token: string): Promise<User|nu
   else {
     user = await findUserByEmail(email, 'email');
     if (!user) {
-      logger.warn(`User with ${email} does not exist`);
+      logger.warn(`User with ${email} email does not exist`);
     }
     else {
-      logger.info(`Email ${email} already verified`);
+      logger.info(`Email ${email} email already verified`);
     }
   }
   return user;
@@ -261,7 +261,7 @@ export const resetPassword = async (email: string, password: string, token: stri
         resetPasswordTokenExpires: null
       });
       await credRepo.update(updCred.id, updCred);
-      logger.info(`Successful password reset for ${email}`);
+      logger.info(`Successful password reset for ${email} email`);
       return user;
     }
   }
