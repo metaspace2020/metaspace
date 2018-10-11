@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import {
   createConnection as createTypeORMConnection,
-  ConnectionOptions, Connection
+  ConnectionOptions, Connection, EntityManager,
 } from 'typeorm';
 
 import config from './config';
@@ -40,7 +40,7 @@ export const createConnection = async () => {
   });
 };
 
-export const findUserByEmail = async (connection: Connection, value: string, field: string='email') => {
+export const findUserByEmail = async (connection: Connection | EntityManager, value: string, field: string='email') => {
   return await connection.getRepository(UserModel)
     .createQueryBuilder('user')
     .leftJoinAndSelect('user.credentials', 'credentials')

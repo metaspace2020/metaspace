@@ -1,7 +1,8 @@
 import {GraphQLFieldResolver} from 'graphql';
 import {Context} from './context';
+import {User as UserModel} from './modules/user/model';
 import {Project as ProjectModel, UserProject as UserProjectModel} from './modules/project/model';
-import {User, UserProjectRole} from './binding';
+import {UserProjectRole} from './binding';
 
 export type ScopeRole =
   'PROFILE_OWNER'
@@ -27,7 +28,7 @@ export interface Scope {
 }
 
 // Source types
-export type UserSource = User & Scope;
+export type UserSource = UserModel & Scope;
 export type ProjectSource = ProjectModel & { currentUserRole: UserProjectRole | null } & Scope;
 export type UserProjectSource = {
   [field in keyof UserProjectModel]: field extends 'user' ? UserSource : UserProjectModel[field]
