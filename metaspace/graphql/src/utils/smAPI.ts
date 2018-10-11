@@ -13,7 +13,7 @@ interface SMAPIBody {
   transform?: Object;
 }
 
-export const smAPIRequest = async (uri: string, args: any) => {
+export const smAPIRequest = async (uri: string, args: any={}) => {
   const {doc, delFirst, priority, force, url, transform} = args;
   const body: SMAPIBody = {
     priority, force, del_first: delFirst, url, transform,

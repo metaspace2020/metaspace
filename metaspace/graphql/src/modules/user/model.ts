@@ -9,8 +9,8 @@ export class User {
   @PrimaryColumn({ type: 'uuid', default: () => 'uuid_generate_v1mc()' })
   id: string;
 
-  @Column({ type: 'text' })
-  name: string;
+  @Column({ type: 'text', nullable: true })
+  name: string | null;
 
   @Column({ type: 'text', nullable: true })
   email: string | null;

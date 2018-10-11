@@ -6,13 +6,14 @@ import {Moment} from 'moment';
 
 import * as emailService from './email';
 import config from '../../utils/config';
-import {logger, createConnection} from '../../utils';
+import {logger} from '../../utils';
+import * as utils from '../../utils';
 import {Credentials} from './model';
 import {User} from '../user/model';
 
 export interface UserCredentialsInput {
   email: string;
-  name: string;
+  name?: string;
   password?: string;
   googleId?: string;
 }
@@ -24,7 +25,7 @@ let credRepo: Repository<Credentials>;
 let userRepo: Repository<User>;
 
 export const initOperation = async (typeormConn?: Connection) => {
-  connection = typeormConn || await createConnection();
+  connection = typeormConn || await utils.createConnection();
   credRepo = connection.getRepository(Credentials);
   userRepo = connection.getRepository(User);
 };
@@ -49,17 +50,15 @@ export const findUserById = async (id: string|undefined, credentials: boolean=tr
 };
 
 export const findUserByEmail = async (value: string, field: string='email') => {
-  return await userRepo.createQueryBuilder('user')
-    .leftJoinAndSelect('user.credentials', 'credentials')
-    .where(`LOWER(${field}) = :email`, {'email': value.toLowerCase()})
-    .getOne() || null;
+  return utils.findUserByEmail(connection, value, field);
 };
 
-export const findUserByGoogleId = async (googleId: string|undefined) => {
-  return await userRepo.findOne({
-    relations: ['credentials'],
-    where: { 'googleId': googleId }
-  });
+export const findUserByGoogleId = async (googleId: string) => {
+  const user = await (userRepo.createQueryBuilder('user')
+    .leftJoinAndSelect('user.credentials', 'credentials')
+    .where(`google_id = :googleId`, { googleId: googleId })
+    .getOne()) || null;
+  return user;
 };
 
 export const createExpiry = (minutes: number=10): Moment => {
@@ -79,17 +78,7 @@ export const sendEmailVerificationToken = async (cred: Credentials, email: strin
   }
   const link = `${config.web_public_url}/api_auth/verifyemail?email=${encodeURIComponent(email)}&token=${encodeURIComponent(cred.emailVerificationToken)}`;
   emailService.sendVerificationEmail(email, link);
-  logger.debug(`Resent email verification to ${email}: ${link}`);
-};
-
-const createGoogleCredentials = async (userCred: UserCredentialsInput): Promise<Credentials> => {
-  // TODO: Add a test case
-  const newCred = credRepo.create({
-    googleId: userCred.googleId || null,
-  });
-  await credRepo.insert(newCred);
-  logger.info(`New google user added: ${userCred.email}`);
-  return newCred;
+  logger.debug(`Sent email verification to ${email}: ${link}`);
 };
 
 const hashPassword = async (password: string|undefined): Promise<string|undefined> => {
@@ -100,42 +89,97 @@ export const verifyPassword = async (password: string, hash: string|null|undefin
   return (hash) ? await bcrypt.compare(password, hash) : null;
 };
 
-const createLocalCredentials = async (userCred: UserCredentialsInput): Promise<Credentials> => {
-  const cred = credRepo.create({
-    hash: await hashPassword(userCred.password),
-    googleId: userCred.googleId || null,
-    emailVerificationToken: uuid.v4(),
-    emailVerificationTokenExpires: createExpiry(),
-    emailVerified: false
-  });
-  await credRepo.insert(cred);
-  await sendEmailVerificationToken(cred, userCred.email);
-  return cred;
+const createCredentials = async (userCred: UserCredentialsInput): Promise<Credentials> => {
+  if (userCred.googleId) {
+    // TODO: Add a test case
+    const newCred = credRepo.create({
+      googleId: userCred.googleId,
+      emailVerified: true,
+    });
+    await credRepo.insert(newCred);
+    logger.info(`New google credentials added for ${userCred.email} user`);
+    return newCred;
+  }
+  else {
+    const newCred = credRepo.create({
+      hash: await hashPassword(userCred.password),
+      emailVerificationToken: uuid.v4(),
+      emailVerificationTokenExpires: createExpiry(),
+      emailVerified: false
+    });
+    await credRepo.insert(newCred);
+    logger.info(`New local credentials added for ${userCred.email} user`);
+    return newCred;
+  }
+};
+
+const updateCredentials = async (credId: string, userCred: UserCredentialsInput): Promise<void> => {
+  // TODO: Add a test case
+  if (userCred.password) {
+    await credRepo.update(credId, {
+      hash: await hashPassword(userCred.password),
+    });
+    logger.info(`${userCred.email} user credentials updated, password added`);
+  }
+  else if (userCred.googleId) {
+    await credRepo.update(credId, {
+      googleId: userCred.googleId,
+      emailVerified: true,
+    });
+    logger.info(`${userCred.email} user credentials updated, google id added`);
+  }
+  else {
+    logger.info('Nothing to update in credentials');
+  }
 };
 
 export const createUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
   const existingUser = await findUserByEmail(userCred.email, 'email');
   if (existingUser) {
-    emailService.sendLoginEmail(existingUser.email!);
-    logger.debug(`Email already verified. Sent log in email to ${existingUser.email}`);
+    // existing verified user
+    const link = `${config.web_public_url}/account/sign-in`;
+    emailService.sendLoginEmail(existingUser.email!, link);
   }
   else {
     const existingUserNotVerified = await findUserByEmail(userCred.email, 'not_verified_email');
-    if (!existingUserNotVerified) {
-      const newCred = userCred.googleId ?
-        await createGoogleCredentials(userCred) :
-        await createLocalCredentials(userCred);
-
-      const newUser = userRepo.create({
-        notVerifiedEmail: userCred.email,
-        name: userCred.name,
-        credentials: newCred
-      });
-      await userRepo.insert(newUser);
+    if (existingUserNotVerified) {
+      // existing not verified user
+      if (userCred.googleId) {
+        await updateCredentials(existingUserNotVerified.credentialsId, userCred);
+        await userRepo.update(existingUserNotVerified.id, {
+          email: userCred.email,
+          notVerifiedEmail: null,
+          name: userCred.name,
+        });
+      }
+      else {
+        await sendEmailVerificationToken(existingUserNotVerified.credentials,
+          existingUserNotVerified.notVerifiedEmail!);
+      }
     }
     else {
-      await sendEmailVerificationToken(existingUserNotVerified.credentials,
-        existingUserNotVerified.notVerifiedEmail!);
+      // absolutely new user
+      if (userCred.googleId) {
+        const newCred = await createCredentials(userCred);
+        const newUser = userRepo.create({
+          email: userCred.email,
+          name: userCred.name,
+          credentials: newCred
+        });
+        await userRepo.insert(newUser);
+        logger.info(`New google user added: ${userCred.email}`);
+      }
+      else {
+        const newCred = await createCredentials(userCred);
+        const newUser = userRepo.create({
+          notVerifiedEmail: userCred.email,
+          name: userCred.name,
+          credentials: newCred
+        });
+        await userRepo.insert(newUser);
+        logger.info(`New local user added: ${userCred.email}`);
+        await sendEmailVerificationToken(newUser.credentials, newUser.notVerifiedEmail!);
+      }
     }
   }
 };
@@ -159,7 +203,7 @@ export const verifyEmail = async (email: string, token: string): Promise<User|nu
         notVerifiedEmail: null
       };
       await userRepo.update(user.id, userUpdate);
-      logger.info(`Verified user email ${email}`);
+      logger.info(`Email ${email} successfully verified`);
       user = {
         ...user,
         ...userUpdate,
@@ -169,7 +213,10 @@ export const verifyEmail = async (email: string, token: string): Promise<User|nu
   else {
     user = await findUserByEmail(email, 'email');
     if (!user) {
-      logger.warn(`User with ${email} does not exist`);
+      logger.warn(`User with ${email} email does not exist`);
+    }
+    else {
+      logger.info(`Email ${email} email already verified`);
     }
   }
   return user;
@@ -198,7 +245,6 @@ export const sendResetPasswordToken = async (email: string): Promise<void> => {
   }
   const link = `${config.web_public_url}/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetPasswordToken)}`;
   emailService.sendResetPasswordEmail(email, link);
-  logger.debug(`Sent password reset email to ${email}: ${link}`);
 };
 
 export const resetPassword = async (email: string, password: string, token: string): Promise<User | undefined> => {
@@ -215,7 +261,7 @@ export const resetPassword = async (email: string, password: string, token: stri
         resetPasswordTokenExpires: null
       });
       await credRepo.update(updCred.id, updCred);
-      logger.info(`Successful password reset: ${email}`);
+      logger.info(`Successful password reset for ${email} email`);
       return user;
     }
   }

@@ -9,7 +9,7 @@ import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../group/model'
 import {Context, Scope, ScopeRole, ScopeRoleOptions as SRO} from '../../context';
 import {JwtUser} from '../auth/controller';
 import {sendEmailVerificationToken} from '../auth/operation';
-import {LooselyCompatible, smAPIRequest} from '../../utils';
+import {logger, LooselyCompatible, smAPIRequest} from '../../utils';
 
 const assertCanEditUser = (user: JwtUser, userId: string) => {
   if (!user || !user.id)
@@ -36,7 +36,7 @@ const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<Scop
 
 export const Resolvers = {
   User: {
-    async primaryGroup({scopeRole, ...user}: User & Scope, _: any,
+    async primaryGroup({scopeRole, ...user}: UserModel & Scope, _: any,
                        ctx: Context): Promise<LooselyCompatible<UserGroup>|null> {
       if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return await ctx.connection.getRepository(UserGroupModel).findOne({
@@ -47,7 +47,7 @@ export const Resolvers = {
       return null;
     },
 
-    async groups({scopeRole, ...user}: User & Scope, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup>[]|null> {
+    async groups({scopeRole, ...user}: UserModel & Scope, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup>[]|null> {
       if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return await ctx.connection.getRepository(UserGroupModel).find({
           where: { userId: user.id },
@@ -57,11 +57,11 @@ export const Resolvers = {
       return null;
     },
 
-    async email({scopeRole, ...user}: User & Scope): Promise<string|null> {
+    async email({scopeRole, ...user}: UserModel & Scope): Promise<string|null> {
       if ([SRO.GROUP_MANAGER,
         SRO.ADMIN,
         SRO.PROFILE_OWNER].includes(scopeRole)) {
-        return user.email || null;
+        return user.email || user.notVerifiedEmail || null;
       }
       return null;
     }
@@ -119,6 +119,7 @@ export const Resolvers = {
 
   Mutation: {
     async updateUser(_: any, {userId, update}: any, {user, connection}: any): Promise<User> {
+      logger.info(`User '${userId}' being updated by '${user.id}'...`);
       assertCanEditUser(user, userId);
 
       if (update.role && user.role !== 'admin') {
@@ -144,6 +145,7 @@ export const Resolvers = {
 
       const userDSs = await connection.getRepository(DatasetModel).find({ userId });
       if (userDSs) {
+        logger.info(`Updating user '${userId}' datasets...`);
         for (let ds of userDSs) {
           await smAPIRequest(`/v1/datasets/${ds.id}/update`, {
             doc: { submitterId: userId }
@@ -151,18 +153,26 @@ export const Resolvers = {
         }
       }
 
+      logger.info(`User '${userId}' was updated`);
       return {
         id: userObj.id,
-        name: userObj.name,
+        name: userObj.name!,
         role: userObj.role
       };
     },
 
     async deleteUser(_: any, {userId, deleteDatasets}: any, {user, connection}: any): Promise<Boolean> {
+      logger.info(`User '${userId}' being deleted by '${user.id}'...`);
       assertCanEditUser(user, userId);
 
       if (deleteDatasets) {
-        throw new UserError('Not implemented yet');
+        const userDSs = await connection.getRepository(DatasetModel).find({ userId });
+        if (userDSs) {
+          logger.info(`Deleting user '${userId}' datasets...`);
+          for (let ds of userDSs) {
+            await smAPIRequest(`/v1/datasets/${ds.id}/delete`);
+          }
+        }
       }
 
       const userRepo = await connection.getRepository(UserModel);
@@ -172,6 +182,7 @@ export const Resolvers = {
       await connection.getRepository(UserGroupModel).delete({userId});
       await userRepo.delete({ id: userId });
       await connection.getRepository(CredentialsModel).delete({ id: credentialsId });
+      logger.info(`User '${userId}' was deleted`);
       return true;
     },
   }
