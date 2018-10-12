@@ -19,10 +19,8 @@ import {
 import {Mutation as DSMutation} from './dsMutation';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from './src/modules/group/model';
 import {Dataset as DatasetModel} from './src/modules/dataset/model';
-import {ScopeRole, ScopeRoleOptions as SRO} from './src/bindingTypes';
-import {Project as ProjectModel} from './src/modules/project/model';
-import {projectIsVisibleToCurrentUserWhereClause} from './src/modules/project/util/projectIsVisibleToCurrentUserWhereClause';
-import convertProjectToProjectSource from './src/modules/project/util/convertProjectToProjectSource';
+import {ScopeRoleOptions as SRO} from './src/bindingTypes';
+import {ProjectSourceRepository} from './src/modules/project/ProjectSourceRepository';
 
 
 async function publishDatasetStatusUpdate(ds_id, status) {
@@ -376,17 +374,8 @@ const Resolvers = {
         return [];
       }
 
-      const userProjectRoles = await ctx.getCurrentUserProjectRoles();
-      let projectsQuery = ctx.connection.getRepository(ProjectModel)
-        .createQueryBuilder('project')
-        .innerJoin('project.datasetProjects', 'datasetProject')
-        .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles))
-        .andWhere('datasetProject.datasetId = :datasetId', {datasetId: ds._source.ds_id});
-      if (!canSeeUnapprovedProjects) {
-        projectsQuery = projectsQuery.andWhere('datasetProject.approved')
-      }
-      const projects = await projectsQuery.getMany();
-      return projects.map(project => convertProjectToProjectSource(project, ctx, userProjectRoles));
+      return ctx.connection.getCustomRepository(ProjectSourceRepository)
+        .findProjectsByDatasetId(ctx.user, ds._source.ds_id);
     },
 
     async principalInvestigator(ds, _, {connection}) {

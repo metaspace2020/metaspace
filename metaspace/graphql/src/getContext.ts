@@ -1,6 +1,6 @@
 import {Connection, EntityManager} from 'typeorm';
 import {Context, UserProjectRoles} from './context';
-import {UserProject as UserProjectModel} from './modules/project/model';
+import {UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from './modules/project/model';
 import _ = require('lodash');
 import {UserError} from 'graphql-errors';
 
@@ -26,6 +26,13 @@ export default (req: Express.Request, connection: Connection | EntityManager): C
     return await currentUserProjectRoles;
   };
 
+  const getMemberOfProjectIds = async () => {
+    const projectRoles = await getProjectRoles();
+    return Object.entries(projectRoles)
+      .filter(([id, role]) => role != null && [UPRO.MEMBER, UPRO.MANAGER].includes(role))
+      .map(([id, role]) => id);
+  };
+
 
   return {
     connection,
@@ -35,6 +42,7 @@ export default (req: Express.Request, connection: Connection | EntityManager): C
       email: user.email,
       groupIds: user.groupIds,
       getProjectRoles,
+      getMemberOfProjectIds,
     },
     isAdmin: user && user.role === 'admin',
     getUserIdOrFail() {

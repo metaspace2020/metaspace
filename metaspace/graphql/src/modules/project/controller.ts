@@ -12,12 +12,11 @@ import {Context} from '../../context';
 import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from './model';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../dataset/model';
 import {findUserByEmail} from '../auth/operation';
-import {projectIsVisibleToCurrentUserWhereClause} from './util/projectIsVisibleToCurrentUserWhereClause';
 import updateUserProjectRole from './operation/updateUserProjectRole';
-import convertProjectToProjectSource from './util/convertProjectToProjectSource';
 import {convertUserToUserSource} from '../user/util/convertUserToUserSource';
 import updateProjectDatasets from './operation/updateProjectDatasets';
 import {In} from 'typeorm';
+import {ProjectSourceRepository} from './ProjectSourceRepository';
 
 
 const canViewProjectMembersAndDatasets = (scopeRole: ScopeRole) =>
@@ -33,17 +32,14 @@ const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
 
 const UserProject: FieldResolversFor<UserProject, UserProjectSource> = {
   async project(userProject, args, ctx: Context): Promise<ProjectSource> {
-    const userProjectRoles = await ctx.getCurrentUserProjectRoles();
-    const project = await ctx.connection.getRepository(ProjectModel)
-      .createQueryBuilder('project')
-      .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles))
-      .andWhere('project.id = :projectId', {projectId: userProject.projectId})
-      .getOne();
-    if (project == null) {
+    const project = await ctx.connection.getCustomRepository(ProjectSourceRepository)
+      .findProjectById(ctx.user, userProject.projectId);
+
+    if (project != null) {
+      return project;
+    } else {
       throw new UserError('Project not found');
     }
-
-    return convertProjectToProjectSource(project, ctx, userProjectRoles);
   },
   async numDatasets(userProject, args, {connection}: Context): Promise<number> {
     // NOTE: This number includes private datasets. It is only secure because we *currently* only resolve
@@ -96,7 +92,7 @@ const Project: FieldResolversFor<Project, ProjectSource> = {
         .createQueryBuilder('dataset_project')
         .innerJoinAndSelect('dataset_project.dataset', 'dataset')
         .innerJoin('(SELECT id, is_public FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
-        .where('dataset_project.projectId = :projectId', {projectId: project.id})
+        .where('dataset_project.project_id = :projectId', {projectId: project.id})
         .andWhere('dataset_project.approved = TRUE')
         .andWhere('engine_dataset.is_public = TRUE')
         .getCount();
@@ -110,7 +106,7 @@ const Project: FieldResolversFor<Project, ProjectSource> = {
       .innerJoin('dataset_project.dataset', 'dataset')
       .innerJoin('(SELECT id, is_public, upload_dt FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
       .select('MAX(engine_dataset.upload_dt)', 'upload_dt')
-      .where('dataset_project.projectId = :projectId', {projectId: project.id})
+      .where('dataset_project.project_id = :projectId', {projectId: project.id})
       .andWhere('dataset_project.approved = TRUE');
     if (!canViewProjectMembersAndDatasets(project.scopeRole)) {
       query = query.andWhere('engine_dataset.is_public = TRUE');
@@ -122,69 +118,20 @@ const Project: FieldResolversFor<Project, ProjectSource> = {
 
 const Query: FieldResolversFor<Query, void> = {
   async project(source, {projectId}, ctx): Promise<ProjectSource|null> {
-    const userProjectRoles = await ctx.getCurrentUserProjectRoles();
-    const project = await ctx.connection.getRepository(ProjectModel)
-      .createQueryBuilder('project')
-      .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles))
-      .andWhere('project.id = :projectId', {projectId})
-      .getOne();
-
-    return project != null ? convertProjectToProjectSource(project, ctx, userProjectRoles) : null;
+    return await ctx.connection.getCustomRepository(ProjectSourceRepository)
+      .findProjectById(ctx.user, projectId);
   },
   async projectByUrlSlug(source, {urlSlug}, ctx): Promise<ProjectSource|null> {
-    const userProjectRoles = await ctx.getCurrentUserProjectRoles();
-    const project = await ctx.connection.getRepository(ProjectModel)
-      .createQueryBuilder('project')
-      .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles))
-      .andWhere('project.urlSlug = :urlSlug', {urlSlug})
-      .getOne();
-
-    return project != null ? convertProjectToProjectSource(project, ctx, userProjectRoles) : null;
+    return await ctx.connection.getCustomRepository(ProjectSourceRepository)
+      .findProjectByUrlSlug(ctx.user, urlSlug);
   },
   async allProjects(source, {query, offset, limit}, ctx): Promise<ProjectSource[]> {
-    const userProjectRoles = await ctx.getCurrentUserProjectRoles();
-    let projectsQuery = await ctx.connection.getRepository(ProjectModel)
-      .createQueryBuilder('project')
-      .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles));
-
-    if (query) {
-      // TODO: Add a full-text index to project.name to speed this up
-      // The below full-text query attempts to parse `query` as a phrase. If successful it appends ':*' so that the
-      // last word in the query is used as a prefix search. If nothing in query is matchable then it just matches everything.
-      projectsQuery = projectsQuery.andWhere(`(
-        CASE WHEN phraseto_tsquery('english', :query)::text != '' 
-             THEN to_tsvector('english', project.name) @@ to_tsquery(phraseto_tsquery('english', :query)::text || ':*') 
-             ELSE true
-        END
-      )`, {query});
-    }
-    if (offset != null) {
-      projectsQuery = projectsQuery.skip(offset);
-    }
-    if (limit != null) {
-      projectsQuery = projectsQuery.take(limit);
-    }
-
-    // TODO: Order by whether the current user is a member & frecency
-    const projects = await projectsQuery.getMany();
-    return projects.map(project => convertProjectToProjectSource(project, ctx, userProjectRoles));
+    return await ctx.connection.getCustomRepository(ProjectSourceRepository)
+      .findProjectsByQuery(ctx.user, query, offset, limit);
   },
   async projectsCount(source, {query}, ctx): Promise<number> {
-    const userProjectRoles = await ctx.getCurrentUserProjectRoles();
-    let projectsQuery = await ctx.connection.getRepository(ProjectModel)
-      .createQueryBuilder('project')
-      .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles));
-
-    if (query) {
-      projectsQuery = projectsQuery.andWhere(`(
-        CASE WHEN phraseto_tsquery('english', :query)::text != '' 
-             THEN to_tsvector('english', project.name) @@ to_tsquery(phraseto_tsquery('english', :query)::text || ':*') 
-             ELSE true
-        END
-      )`, {query});
-    }
-
-    return await projectsQuery.getCount();
+    return await ctx.connection.getCustomRepository(ProjectSourceRepository)
+      .countProjectsByQuery(ctx.user, query);
   }
 };
 
@@ -205,12 +152,13 @@ const Mutation: FieldResolversFor<Mutation, void> = {
         userId: ctx.user!.id,
         role: UPRO.MANAGER
       });
-    const userProjectRoles = {
-      ...(await ctx.getCurrentUserProjectRoles()),
-      [newProject.id]: UPRO.MANAGER,
-    };
-
-    return convertProjectToProjectSource(newProject, ctx, userProjectRoles);
+    const project = await ctx.connection.getCustomRepository(ProjectSourceRepository)
+      .findProjectById(ctx.user, newProject.id);
+    if (project != null) {
+      return project;
+    } else {
+      throw Error(`Project became invisible to user after create ${newProject.id}`);
+    }
   },
 
   async updateProject(source, {projectId, projectDetails}, ctx): Promise<ProjectSource> {
@@ -221,10 +169,13 @@ const Mutation: FieldResolversFor<Mutation, void> = {
 
     const projectRepository = ctx.connection.getRepository(ProjectModel);
     await projectRepository.update(projectId, projectDetails);
-    const project = await projectRepository.findOneOrFail({ where: {id: projectId}});
-    const userProjectRoles = await ctx.getCurrentUserProjectRoles();
-
-    return convertProjectToProjectSource(project, ctx, userProjectRoles);
+    const project = await ctx.connection.getCustomRepository(ProjectSourceRepository)
+      .findProjectById(ctx.user, projectId);
+    if (project != null) {
+      return project;
+    } else {
+      throw Error(`Project became invisible to user after update ${projectId}`);
+    }
   },
 
   async deleteProject(source, {projectId}, ctx): Promise<Boolean> {

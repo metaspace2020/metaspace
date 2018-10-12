@@ -9,6 +9,7 @@ export interface ContextUser {
   email?: string,
   groupIds?: string[], // used in esConnector for ES visibility filters
   getProjectRoles: () => Promise<UserProjectRoles>;
+  getMemberOfProjectIds: () => Promise<string[]>;
 }
 
 export interface Context {
