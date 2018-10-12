@@ -14,8 +14,13 @@ import apolloClient, { setMaintenanceMessageHandler } from './graphqlClient';
 Vue.use(VueApollo);
 
 const apolloProvider = new VueApollo({
-  defaultClient: apolloClient
-})
+  defaultClient: apolloClient,
+  defaultOptions: {
+    $query: {
+      fetchPolicy: 'network-only',
+    },
+  } as any
+});
 
 import ElementUI from 'element-ui';
 import './element-variables.scss';
