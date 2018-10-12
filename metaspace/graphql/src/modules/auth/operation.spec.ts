@@ -14,7 +14,7 @@ import * as _mockEmail from './email';
 import {Moment} from 'moment';
 import {
   onAfterAll, onAfterEach,
-  onBeforeAll, onBeforeEachWithOptions, testEntityManager,
+  onBeforeAll, onBeforeEach, testEntityManager,
 } from '../../tests/graphqlTestEnvironment';
 const mockEmail = _mockEmail as jest.Mocked<typeof _mockEmail>;
 
@@ -52,9 +52,7 @@ async function createUserCredentialsEntities(user?: Object, cred?: Object):
 describe('Database operations with user', () => {
   beforeAll(onBeforeAll);
   afterAll(onAfterAll);
-  beforeEach(onBeforeEachWithOptions({
-    suppressTestDataCreation: true
-  }));
+  beforeEach(onBeforeEach);
   afterEach(onAfterEach);
 
   test('create new user credentials', async () => {

@@ -62,23 +62,27 @@ export const onAfterAll = async () => {
   await outsideOfTransactionConn.close();
 };
 
-export const onBeforeEachWithOptions = ({suppressTestDataCreation}: TestEnvironmentOptions) => async () => {
+export const onBeforeEach = async () => {
   testEntityManager = await createTransactionEntityManager();
 
-  if (!suppressTestDataCreation) {
-    const creds = testEntityManager.create(Credentials, {});
-    await testEntityManager.insert(Credentials, creds);
-    testUser = testEntityManager.create(User, { name: 'tester', role: 'user', credentialsId: creds.id });
-    await testEntityManager.insert(User, testUser);
-    userContext = getContext({ user: { user: testUser } } as any as Request, testEntityManager);
-    adminContext = getContext({ user: { user: { ...testUser, role: 'admin' } } } as any as Request, testEntityManager);
-  }
+  // Prevent use-after-free
+  (testUser as any) = undefined;
+  (userContext as any) = undefined;
+  (adminContext as any) = undefined;
+
   anonContext = getContext({ user: { user: { role: 'anonymous' } } } as any as Request, testEntityManager);
 
   await initOperation(testEntityManager);
 };
 
-export const onBeforeEach = onBeforeEachWithOptions({});
+export const setupTestUsers = async () => {
+  const creds = testEntityManager.create(Credentials, {});
+  await testEntityManager.insert(Credentials, creds);
+  testUser = testEntityManager.create(User, { name: 'tester', role: 'user', credentialsId: creds.id });
+  await testEntityManager.insert(User, testUser);
+  userContext = getContext({ user: { user: testUser } } as any as Request, testEntityManager);
+  adminContext = getContext({ user: { user: { ...testUser, role: 'admin' } } } as any as Request, testEntityManager);
+};
 
 export const onAfterEach = async () => {
   await (testEntityManager as TransactionEntityManager).rollbackTransaction();

@@ -8,10 +8,14 @@ import {
   adminContext,
   anonContext,
   doQuery,
-  onAfterAll, onAfterEach,
-  onBeforeAll, onBeforeEach,
+  onAfterAll,
+  onAfterEach,
+  onBeforeAll,
+  onBeforeEach,
+  setupTestUsers,
   shallowFieldsOfSchemaType,
-  testEntityManager, testUser,
+  testEntityManager,
+  testUser,
 } from '../../tests/graphqlTestEnvironment';
 
 
@@ -23,6 +27,7 @@ describe('modules/project/controller', () => {
   afterAll(onAfterAll);
   beforeEach(async () => {
     await onBeforeEach();
+    await setupTestUsers();
     userId = testUser.id;
   });
   afterEach(onAfterEach);
