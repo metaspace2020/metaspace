@@ -113,6 +113,7 @@
      },
      currentUser: {
        query: currentUserIdQuery,
+       fetchPolicy: 'cache-first',
        result({data}) {
          if (data.currentUser == null) {
            this.$store.commit('account/showDialog', {
