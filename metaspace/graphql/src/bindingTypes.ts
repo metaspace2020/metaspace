@@ -29,7 +29,7 @@ export interface Scope {
 
 // Source types
 export type UserSource = UserModel & Scope;
-export type ProjectSource = ProjectModel & { currentUserRole: UserProjectRole | null } & Scope;
+export type ProjectSource = ProjectModel & { currentUserRole: UserProjectRole | null };
 export type UserProjectSource = {
   [field in keyof UserProjectModel]: field extends 'user' ? UserSource : UserProjectModel[field]
 };

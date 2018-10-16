@@ -1,6 +1,6 @@
 import {IResolvers} from 'graphql-tools';
 import {UserError} from 'graphql-errors';
-import {Mutation, Project, Query, UserProject} from '../../binding';
+import {Mutation, Project, Query, UserProject, UserProjectRole} from '../../binding';
 import {
   FieldResolversFor,
   ProjectSource,
@@ -19,8 +19,21 @@ import {In} from 'typeorm';
 import {ProjectSourceRepository} from './ProjectSourceRepository';
 
 
-const canViewProjectMembersAndDatasets = (scopeRole: ScopeRole) =>
-  [SRO.PROJECT_MANAGER, SRO.PROJECT_MEMBER, SRO.ADMIN].includes(scopeRole);
+const canViewProjectMembersAndDatasets = (currentUserRole: UserProjectRole | null, isAdmin: boolean) =>
+  isAdmin || ([UPRO.MANAGER, UPRO.MEMBER] as (UserProjectRole | null)[]).includes(currentUserRole);
+
+const getProjectScopeRole = (currentUserRole: UserProjectRole | null, isAdmin: boolean): ScopeRole => {
+  if (isAdmin) {
+    return SRO.ADMIN;
+  } else if (currentUserRole === UPRO.MANAGER) {
+    return SRO.PROJECT_MANAGER;
+  } else if (currentUserRole === UPRO.MEMBER) {
+    return SRO.PROJECT_MEMBER;
+  } else {
+    return SRO.OTHER;
+  }
+};
+
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
   const userProject = await ctx.connection.getRepository(UserProjectModel).findOne({
     where: { projectId, userId: ctx.getUserIdOrFail(), role: UPRO.MANAGER }
@@ -58,8 +71,8 @@ const UserProject: FieldResolversFor<UserProject, UserProjectSource> = {
 };
 
 const Project: FieldResolversFor<Project, ProjectSource> = {
-  async members({scopeRole, ...project}, args, ctx: Context): Promise<UserProjectSource[]|null> {
-    if (!canViewProjectMembersAndDatasets(scopeRole)) {
+  async members(project, args, ctx: Context): Promise<UserProjectSource[]|null> {
+    if (!canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin)) {
       return null;
     }
 
@@ -71,7 +84,7 @@ const Project: FieldResolversFor<Project, ProjectSource> = {
       });
     return userProjectModels.map(up => ({
       ...up,
-      user: convertUserToUserSource(up.user, scopeRole),
+      user: convertUserToUserSource(up.user, getProjectScopeRole(project.currentUserRole, ctx.isAdmin)),
     }));
   },
 
@@ -82,7 +95,7 @@ const Project: FieldResolversFor<Project, ProjectSource> = {
   },
 
   async numDatasets(project, args, ctx: Context): Promise<number> {
-    if (canViewProjectMembersAndDatasets(project.scopeRole)) {
+    if (canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin)) {
       return await ctx.connection
         .getRepository(DatasetProjectModel)
         .count({ where: { projectId: project.id, approved: true } });
@@ -108,12 +121,18 @@ const Project: FieldResolversFor<Project, ProjectSource> = {
       .select('MAX(engine_dataset.upload_dt)', 'upload_dt')
       .where('dataset_project.project_id = :projectId', {projectId: project.id})
       .andWhere('dataset_project.approved = TRUE');
-    if (!canViewProjectMembersAndDatasets(project.scopeRole)) {
+    if (!canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin)) {
       query = query.andWhere('engine_dataset.is_public = TRUE');
     }
     const {upload_dt} = await query.getRawOne();
-    return upload_dt;
-  }
+    return upload_dt != null ? upload_dt.toISOString() : null;
+  },
+
+  async createdDT(project, args, ctx: Context): Promise<string> {
+    // TODO: Use a custom GraphQL scalar type so that Moment and Date are automatically converted to ISO strings.
+    // graphql-binding translates all custom scalar types to strings, unless you run it programmatically and change its config
+    return project.createdDT.toISOString();
+  },
 };
 
 const Query: FieldResolversFor<Query, void> = {

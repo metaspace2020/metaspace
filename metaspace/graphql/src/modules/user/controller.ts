@@ -68,7 +68,7 @@ export const Resolvers = {
     },
 
     async email({scopeRole, ...user}: UserSource): Promise<string|null> {
-      if ([SRO.GROUP_MANAGER, SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
+      if ([SRO.GROUP_MANAGER, SRO.PROJECT_MANAGER, SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return user.email || user.notVerifiedEmail || null;
       }
       return null;

@@ -17,7 +17,7 @@ export interface Context {
   // it can be swapped out by tests so that everything runs in a transaction.
   connection: Connection | EntityManager;
   user: ContextUser | null;
-  isAdmin: Boolean;
+  isAdmin: boolean;
   getUserIdOrFail: () => string; // Throws "Unauthenticated" error if not logged in
   getCurrentUserProjectRoles: () => Promise<UserProjectRoles>;
 }

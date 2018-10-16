@@ -4,8 +4,8 @@ import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRol
 import {User as UserModel} from '../../user/model';
 import {UserError} from "graphql-errors";
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
-import {projectIsVisibleToCurrentUserWhereClause} from '../util/projectIsVisibleToCurrentUserWhereClause';
 import updateProjectDatasets from './updateProjectDatasets';
+import {ProjectSourceRepository} from '../ProjectSourceRepository';
 
 export default async (ctx: Context, userId: string, projectId: string, newRole: UserProjectRole | null) => {
   const currentUserId = ctx.getUserIdOrFail();
@@ -15,12 +15,8 @@ export default async (ctx: Context, userId: string, projectId: string, newRole: 
   const user = await ctx.connection.getRepository(UserModel).findOne(userId);
   if (user == null) throw new UserError('User not found');
 
-  const project = await ctx.connection.getRepository(ProjectModel)
-    .createQueryBuilder('project')
-    .leftJoinAndSelect('project.members', 'member')
-    .where(projectIsVisibleToCurrentUserWhereClause(ctx, currentUserProjectRoles))
-    .andWhere('project.id = :projectId', {projectId})
-    .getOne();
+  const project = await ctx.connection.getCustomRepository(ProjectSourceRepository)
+    .findProjectById(ctx.user, projectId);
   if (project == null) throw new UserError('Project not found');
 
   const existingUserProject = project.members.find(up => up.userId === userId);

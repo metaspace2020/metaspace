@@ -5,3 +5,6 @@
 //
 // const jasmineEnv = (jasmine as any).getEnv();
 // jasmineEnv.addReporter(failFast.init());
+
+// Mock out RabbitMQ as resolvers.js connects on import
+jest.mock('amqplib', () => ({connect: () => new Promise(() => null)}));

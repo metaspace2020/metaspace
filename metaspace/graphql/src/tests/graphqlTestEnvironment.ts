@@ -45,7 +45,7 @@ const createTransactionEntityManager = async () => {
 };
 
 export interface TestEnvironmentOptions {
-  suppressTestDataCreation?: Boolean;
+  suppressTestDataCreation?: boolean;
 }
 
 export let testEntityManager: EntityManager;
@@ -112,7 +112,7 @@ export const doQuery = async <T = any>(query: string, variables?: object, option
 // Returns a space-separated list of scalar fields so that it's easy to select all non-nested return values from a GraphQL operation
 export const shallowFieldsOfSchemaType = (typeName: string) => {
   const type = schema.getType(typeName) as GraphQLObjectType | GraphQLInputObjectType;
-  const isAnyScalarType = (type: GraphQLType): Boolean =>
+  const isAnyScalarType = (type: GraphQLType): boolean =>
     isScalarType(type) || isEnumType(type) || (isNonNullType(type) && isAnyScalarType(type.ofType));
 
   return (Object.values(type.getFields()) as (GraphQLField<any,any> | GraphQLInputField)[])

@@ -23,11 +23,11 @@ export class ProjectSourceRepository {
     if (user && user.role === 'admin') {
       qb = qb.where('true'); // For consistency, in case anything weird happens when `andWhere` is called without first calling `where`
     } else if (user != null) {
-      qb = qb.where(new Brackets(qb => qb.where('project.isPublic = True')
+      qb = qb.where(new Brackets(qb => qb.where('project.is_public = True')
         .orWhere('project.id IN (SELECT project_id FROM graphql.user_project WHERE user_id = :userId AND role = ANY(:roles))',
-          { userId: user.id, roles: [UPRO.MEMBER, UPRO.MANAGER] })));
+          { userId: user.id, roles: [UPRO.INVITED, UPRO.PENDING, UPRO.MEMBER, UPRO.MANAGER] })));
     } else {
-      qb = qb.where('project.isPublic = True');
+      qb = qb.where('project.is_public = True');
     }
     // Add caller-supplied filter
     if (whereClause) {
