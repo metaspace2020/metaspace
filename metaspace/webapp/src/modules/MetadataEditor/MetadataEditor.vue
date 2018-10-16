@@ -159,12 +159,12 @@
    methods: {
      async loadDataset() {
        const metaspaceOptionsFromDataset = (dataset) => {
-         const {isPublic, molDBs, adducts, name, group, projects, submitter, principalInvestigator} = dataset;
+         const {isPublic, molDBs, adducts, name, group, projects, submitter, groupAdmin} = dataset;
          return {
            submitterId: submitter ? submitter.id : null,
            groupId: group ? group.id : null,
            projectIds: projects ? projects.map(p => p.id) : [],
-           principalInvestigator: principalInvestigator == null ? null : omit(principalInvestigator, '__typename'),
+           groupAdmin: groupAdmin == null ? null : omit(groupAdmin, '__typename'),
            isPublic, molDBs, adducts, name,
          };
        };
@@ -295,7 +295,7 @@
      validate() {
        const errors = {};
 
-       const {molDBs, adducts, name, groupId, principalInvestigator} = this.metaspaceOptions;
+       const {molDBs, adducts, name, groupId, groupAdmin} = this.metaspaceOptions;
 
        if (isEmpty(molDBs)) {
          set(errors, ['metaspaceOptions', 'molDBs'], 'should have at least 1 selection');
@@ -309,18 +309,18 @@
          set(errors, ['metaspaceOptions', 'name'], 'should be no more than 50 characters');
        }
 
-       if (groupId == null && principalInvestigator == null) {
+       if (groupId == null && groupAdmin == null) {
          set(errors, ['metaspaceOptions', 'groupId'], 'select a group');
        }
-       if (principalInvestigator != null) {
-         const piName = principalInvestigator.name || '';
-         const piEmail = principalInvestigator.email || '';
+       if (groupAdmin != null) {
+         const piName = groupAdmin.name || '';
+         const piEmail = groupAdmin.email || '';
          if (!groupId || piName.length > 0 || piEmail.length > 0) {
            if (piName.length < 4) {
-             set(errors, ['metaspaceOptions', 'principalInvestigator', 'name'], 'should be at least 4 characters');
+             set(errors, ['metaspaceOptions', 'groupAdmin', 'name'], 'should be at least 4 characters');
            }
-           if (!emailRegex.test(principalInvestigator.email)) {
-             set(errors, ['metaspaceOptions', 'principalInvestigator', 'email'], 'should be a valid email address');
+           if (!emailRegex.test(groupAdmin.email)) {
+             set(errors, ['metaspaceOptions', 'groupAdmin', 'email'], 'should be a valid email address');
            }
          }
        }

@@ -30,7 +30,7 @@ const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<Sc
         if (userGroup.role == UserGroupRoleOptions.MEMBER) {
           scopeRole =  ScopeRoleOptions.GROUP_MEMBER;
         }
-        else if (userGroup.role == UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR) {
+        else if (userGroup.role == UserGroupRoleOptions.GROUP_ADMIN) {
           scopeRole = ScopeRoleOptions.GROUP_MANAGER;
         }
       }
@@ -68,13 +68,13 @@ const assertUserRoles = async (connection: Connection, user: JwtUser, groupId: s
 const assertCanEditGroup = async (connection: Connection, user: JwtUser, groupId: string) => {
   assertUserAuthenticated(user);
   await assertUserRoles(connection, user, groupId,
-    [UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR]);
+    [UserGroupRoleOptions.GROUP_ADMIN]);
 };
 
 const assertCanAddDataset = async (connection: Connection, user: JwtUser, groupId: string) => {
   assertUserAuthenticated(user);
   await assertUserRoles(connection, user, groupId,
-    [UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR, UserGroupRoleOptions.MEMBER]);
+    [UserGroupRoleOptions.GROUP_ADMIN, UserGroupRoleOptions.MEMBER]);
 };
 
 
@@ -150,7 +150,7 @@ export const Resolvers = {
     async createGroup(_: any, {groupDetails}: any, {user, connection}: any): Promise<Group> {
       assertCanCreateGroup(user);
 
-      const {principalInvestigatorEmail, ...groupInput} = groupDetails;
+      const {groupAdminEmail, ...groupInput} = groupDetails;
       // TODO create inactive account for PI
 
       const insertRes = await connection.getRepository(GroupModel).insert(groupInput);
@@ -190,8 +190,8 @@ export const Resolvers = {
       const userGroupRepo = connection.getRepository(UserGroupModel);
 
       const userGroup = await userGroupRepo.findOneOrFail({ userId: user.id });
-      if (userGroup.role === UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR)
-        throw new UserError('Group PI cannot leave group');
+      if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN)
+        throw new UserError('Group admin cannot leave group');
 
       await userGroupRepo.delete({ userId: user.id, groupId });
       return true;
@@ -206,9 +206,9 @@ export const Resolvers = {
       const userGroupRepo = connection.getRepository(UserGroupModel);
 
       const currUserGroup = await userGroupRepo.findOneOrFail({ userId: user.id, groupId });
-      if (currUserGroup.role === UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR) {
+      if (currUserGroup.role === UserGroupRoleOptions.GROUP_ADMIN) {
         if (userId === user.id)
-          throw new UserError('Group PI cannot remove itself from group');
+          throw new UserError('Group admin cannot remove itself from group');
 
         await userGroupRepo.delete({ userId, groupId });
       }
@@ -279,7 +279,7 @@ export const Resolvers = {
       });
 
       if (invUserGroup && [UserGroupRoleOptions.MEMBER,
-          UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR].includes(invUserGroup.role)) {
+          UserGroupRoleOptions.GROUP_ADMIN].includes(invUserGroup.role)) {
           logger.info(`User ${invUserGroup.userId} is already member of ${groupId}`)
       }
       else {

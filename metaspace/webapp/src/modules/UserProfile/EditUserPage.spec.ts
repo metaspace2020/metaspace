@@ -17,9 +17,9 @@ describe('EditUserPage', () => {
       {role: 'MEMBER', numDatasets: 0, group: { id: 'AAA', name: 'Group A', urlSlug: 'grp-a' }},
       {role: 'INVITED', numDatasets: 0, group: { id: 'BBB', name: 'Group B', urlSlug: null }},
       {role: 'PENDING', numDatasets: 0, group: { id: 'CCC', name: 'Group C', urlSlug: null }},
-      {role: 'PRINCIPAL_INVESTIGATOR', numDatasets: 20, group: { id: 'DDD', name: 'Group D', urlSlug: null }},
+      {role: 'GROUP_ADMIN', numDatasets: 20, group: { id: 'DDD', name: 'Group D', urlSlug: null }},
     ],
-    primaryGroup: {role: 'PRINCIPAL_INVESTIGATOR', numDatasets: 20, group: { id: 'DDD', name: 'Group D', urlSlug: null }},
+    primaryGroup: {role: 'GROUP_ADMIN', numDatasets: 20, group: { id: 'DDD', name: 'Group D', urlSlug: null }},
     projects: [
       {role: 'MEMBER', numDatasets: 0, project: { id: 'AA', name: 'Project A', urlSlug: 'proj-a' }},
       {role: 'INVITED', numDatasets: 0, project: { id: 'BB', name: 'Project B', urlSlug: null }},

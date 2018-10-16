@@ -360,7 +360,7 @@ const Resolvers = {
       }
     },
 
-    async principalInvestigator(ds, _, {connection}) {
+    async groupAdmin(ds, _, {connection}) {
       const dataset = await connection.getRepository(DatasetModel).findOneOrFail({ id: ds._source.ds_id });
       if (dataset.piName) {
         return {

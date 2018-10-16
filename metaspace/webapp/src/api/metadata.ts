@@ -14,7 +14,7 @@ export const editDatasetFragment =
       id
       name
     }
-    principalInvestigator {
+    groupAdmin {
       name
       email
     }
@@ -94,7 +94,7 @@ export const metadataExportQuery = gql`
         id
         name
       }
-      principalInvestigator {
+      groupAdmin {
         name
       }
       group {

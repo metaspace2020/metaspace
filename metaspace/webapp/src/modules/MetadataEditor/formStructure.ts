@@ -50,7 +50,7 @@ export interface MetaspaceOptions {
   adducts: string[];
   groupId: string | null;
   projectIds: string[];
-  principalInvestigator: {
+  groupAdmin: {
     name: string;
     email: string;
   } | null;

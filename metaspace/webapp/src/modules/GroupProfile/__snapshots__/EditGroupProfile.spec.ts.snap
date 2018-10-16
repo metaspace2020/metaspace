@@ -112,7 +112,7 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
                   <div class="cell">
-                    Principal investigator
+                    Group admin
                   </div>
                 </td>
                 <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">

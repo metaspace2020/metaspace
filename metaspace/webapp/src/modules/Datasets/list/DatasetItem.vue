@@ -209,7 +209,7 @@
      metadata() {
        const datasetMetadataExternals = {
          "Submitter": this.formatSubmitter,
-           "PI": this.dataset.principalInvestigator,
+           "GA": this.dataset.groupAdmin,
            "Group": this.dataset.group,
            "Projects": this.dataset.projects
        };

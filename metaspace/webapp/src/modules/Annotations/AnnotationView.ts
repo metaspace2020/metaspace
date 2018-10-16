@@ -184,7 +184,7 @@
    get metadata() {
      const datasetMetadataExternals = {
        "Submitter": this.annotation.dataset.submitter,
-       "PI": this.annotation.dataset.principalInvestigator,
+       "GA": this.annotation.dataset.groupAdmin,
        "Group": this.annotation.dataset.group,
        "Projects": this.annotation.dataset.projects
      };

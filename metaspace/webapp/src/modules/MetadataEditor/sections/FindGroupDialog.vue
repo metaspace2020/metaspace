@@ -39,7 +39,7 @@
     <el-row>
       <p>
         <b>Can't find your group?</b> <a href="mailto:contact@metaspace2020.eu">Contact us</a> to get your team started,
-        or <a href="#" @click.prevent="handleSelectNoGroup" style="cursor: pointer">fill in your Principal Investigator</a> instead.
+        or <a href="#" @click.prevent="handleSelectNoGroup" style="cursor: pointer">fill in your Group Admin</a> instead.
       </p>
     </el-row>
   </el-dialog>

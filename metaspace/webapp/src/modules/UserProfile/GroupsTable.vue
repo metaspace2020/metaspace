@@ -33,7 +33,7 @@
               Leave
             </el-button>
             <el-button
-              v-if="scope.row.role === 'PRINCIPAL_INVESTIGATOR'"
+              v-if="scope.row.role === 'GROUP_ADMIN'"
               size="mini"
               icon="el-icon-arrow-right"
               disabled>

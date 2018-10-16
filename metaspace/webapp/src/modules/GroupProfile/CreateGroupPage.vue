@@ -13,7 +13,7 @@
           </el-button>
         </div>
       </div>
-      <edit-group-form ref="form" :model="model" :disabled="isSaving" showPrincipalInvestigator />
+      <edit-group-form ref="form" :model="model" :disabled="isSaving" showGroupAdmin />
     </div>
   </div>
 </template>
@@ -46,13 +46,13 @@
     model = {
       name: '',
       shortName: '',
-      principalInvestigatorEmail: '',
+      groupAdminEmail: '',
     };
 
     currentUser: CurrentUserQuery | null = null;
 
     roleNames: Record<UserGroupRole, string> = {
-      'PRINCIPAL_INVESTIGATOR': 'Principal Investigator',
+      'GROUP_ADMIN': 'Group admin',
       'MEMBER': 'Member',
       'PENDING': 'Requesting access',
       'INVITED': 'Invited',

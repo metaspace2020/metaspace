@@ -14,7 +14,7 @@ export const UserGroupRoleOptions: Record<UserGroupRole, UserGroupRole> = {
   INVITED: 'INVITED',
   PENDING: 'PENDING',
   MEMBER: 'MEMBER',
-  PRINCIPAL_INVESTIGATOR: 'PRINCIPAL_INVESTIGATOR'
+  GROUP_ADMIN: 'GROUP_ADMIN'
 };
 
 @Entity()
@@ -57,7 +57,7 @@ export class UserGroup {
   role: 'INVITED' |
     'PENDING' |
     'MEMBER' |
-    'PRINCIPAL_INVESTIGATOR';
+    'GROUP_ADMIN';
 
   @Column({ default: true })
   primary: boolean;

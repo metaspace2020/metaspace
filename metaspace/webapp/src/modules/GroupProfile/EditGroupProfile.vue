@@ -134,7 +134,7 @@
     }
     get canEdit(): boolean {
       return (this.currentUser && this.currentUser.role === 'admin')
-        || (this.group && this.group.currentUserRole === 'PRINCIPAL_INVESTIGATOR')
+        || (this.group && this.group.currentUserRole === 'GROUP_ADMIN')
         || false;
     }
     get canEditUrlSlug(): boolean {

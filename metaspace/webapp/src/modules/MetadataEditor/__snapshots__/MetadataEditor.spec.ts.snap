@@ -41,16 +41,16 @@ Object {
     "adducts.0.adduct",
     "adducts.1.adduct",
   ],
+  "groupAdmin": Object {
+    "email": "dataset.groupAdmin.email",
+    "name": "dataset.groupAdmin.name",
+  },
   "groupId": "123",
   "isPublic": true,
   "molDBs": Array [
     "molecularDatabases.1.name",
   ],
   "name": "dataset.name",
-  "principalInvestigator": Object {
-    "email": "dataset.principalInvestigator.email",
-    "name": "dataset.principalInvestigator.name",
-  },
   "projectIds": Array [
     "dataset.projects.0.id",
     "dataset.projects.1.id",
@@ -367,7 +367,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
             <p>
               <b>Can't find your group?</b>
               <a href="mailto:contact@metaspace2020.eu">Contact us</a> to get your team started, or
-              <a href="#" style="cursor: pointer;">fill in your Principal Investigator</a> instead.
+              <a href="#" style="cursor: pointer;">fill in your Group Admin</a> instead.
             </p>
           </div>
         </mock-el-dialog>

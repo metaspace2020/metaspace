@@ -224,7 +224,7 @@
            row.name,
            row.group ? row.group.name : '',
            person(row.submitter),
-           person(row.principalInvestigator),
+           person(row.groupAdmin),
            row.organism,
            row.organismPart,
            row.condition,
