@@ -1,3 +1,4 @@
+import {createTestProject, createTestProjectMember, createTestUser} from '../../tests/testDataCreation';
 
 jest.mock('../../utils/smAPI');
 import * as _mockSmApi from '../../utils/smAPI';
@@ -21,6 +22,7 @@ import {
   testEntityManager,
   testUser, userContext,
 } from '../../tests/graphqlTestEnvironment';
+import getContext from '../../getContext';
 
 
 // ROLE_COMBOS is a list of possible user & project role combinations, for tests that should exhaustively check every possibility
@@ -49,12 +51,14 @@ const getContextByRole = (userRole: UserRole) => ({
 
 describe('modules/project/controller', () => {
   const projectFields = shallowFieldsOfSchemaType('Project');
+  let userId: string;
 
   beforeAll(onBeforeAll);
   afterAll(onAfterAll);
   beforeEach(async () => {
     await onBeforeEach();
     await setupTestUsers();
+    userId = testUser.id;
   });
   afterEach(onAfterEach);
 
@@ -68,9 +72,9 @@ describe('modules/project/controller', () => {
 
     const setupProject = async (userRole: UserRole, projectRole: ProjectRole,
                                 options?: {isPublic?: boolean, otherMemberRole?: ProjectRole}) => {
-      const {isPublic = false, otherMemberRole = null} = options || {};
+      const {isPublic = false} = options || {};
 
-      const project = await testEntityManager.save(ProjectModel, {name: 'Test Project', isPublic}) as ProjectModel;
+      const project = await createTestProject({isPublic});
       const projectId = project.id;
       const context = getContextByRole(userRole);
       const userId = context.user && context.user.id;
@@ -83,24 +87,13 @@ describe('modules/project/controller', () => {
         }
       }
 
-      let otherMember: UserModel | null = null;
-      if (otherMemberRole != null) {
-        const otherMemberCreds = await testEntityManager.save(CredentialsModel, {}) as any as CredentialsModel;
-        otherMember = await testEntityManager.save(UserModel, {
-          name: 'Other member',
-          email: 'other@member.com',
-          credentialsId: otherMemberCreds.id
-        }) as UserModel;
-        await testEntityManager.save(UserProjectModel, {userId: otherMember.id, projectId, role: otherMemberRole});
-      }
-
-      return {project, projectId, context, userId, otherMember}
+      return {project, projectId, context};
     };
 
     describe('should give access to all public projects', () => {
       it.each(ROLE_COMBOS)('user role: %s, group role: %s', async (userRole, projectRole) => {
         // Arrange
-        const { project, projectId, context, userId } = await setupProject(userRole, projectRole, {isPublic: true});
+        const { project, projectId, context } = await setupProject(userRole, projectRole, {isPublic: true});
 
         // Act
         const result = await doQuery(query, { projectId }, { context });
@@ -130,7 +123,7 @@ describe('modules/project/controller', () => {
           expect(result).toEqual(expect.objectContaining({
             isPublic: false,
             currentUserRole: projectRole,
-            numMembers: ([UPRO.MEMBER, UPRO.MANAGER] as ProjectRole[]).includes(projectRole) ? 1 : 0
+            numMembers: ([UPRO.MEMBER, UPRO.MANAGER] as ProjectRole[]).includes(projectRole) ? 1 : 0,
           }));
         } else {
           expect(result).toEqual(null);
@@ -141,8 +134,8 @@ describe('modules/project/controller', () => {
     describe('should show group members to admins and other members', () => {
       it.each(ROLE_COMBOS)('user role: %s, group role: %s', async (userRole: UserRole, projectRole: ProjectRole) => {
         // Arrange
-        const { projectId, context, otherMember } = await setupProject(userRole, projectRole,
-          {isPublic: true, otherMemberRole: UPRO.MEMBER});
+        const { projectId, context } = await setupProject(userRole, projectRole, {isPublic: true});
+        const otherMember = await createTestProjectMember(projectId);
 
         // Act
         const result = await doQuery(membersQuery, {projectId}, {context});
@@ -168,8 +161,121 @@ describe('modules/project/controller', () => {
     });
   });
 
+  describe('Query.projectByUrlSlug', () => {
+    const query = `query ($urlSlug: String!) {
+      projectByUrlSlug (urlSlug: $urlSlug) { ${projectFields} }
+    }`;
+
+    it('should find a project by URL slug', async () => {
+      // Create several projects so that we can be sure it's finding the right one, not just the first one
+      const projectPromises = ['abc','def','ghi','jkl','mno']
+        .map(async urlSlug => await createTestProject({urlSlug}));
+      const projects = await Promise.all(projectPromises);
+      const urlSlugToFind = 'ghi';
+      const matchingProject = projects.find(p => p.urlSlug === urlSlugToFind)!;
+
+      const result = await doQuery<ProjectType>(query, {urlSlug: urlSlugToFind});
+
+      expect(result.id).toEqual(matchingProject.id);
+    });
+  });
+
+  describe('Mutations for joining/leaving projects', () => {
+    const leaveProjectQuery = `mutation ($projectId: ID!) { leaveProject(projectId: $projectId) }`;
+    const removeUserFromProjectQuery = `mutation ($projectId: ID!, $userId: ID!) { removeUserFromProject(projectId: $projectId, userId: $userId) }`;
+    const requestAccessToProjectQuery = `mutation ($projectId: ID!) { requestAccessToProject(projectId: $projectId) { role } }`;
+    const acceptRequestToJoinProjectQuery = `mutation ($projectId: ID!, $userId: ID!) { acceptRequestToJoinProject(projectId: $projectId, userId: $userId) { role } }`;
+    const inviteUserToProjectQuery = `mutation ($projectId: ID!, $email: String!) { inviteUserToProject(projectId: $projectId, email: $email) { role } }`;
+    const acceptProjectInvitationQuery = `mutation ($projectId: ID!) { acceptProjectInvitation(projectId: $projectId) { role } }`;
+
+    test('User requests access, is accepted, leaves', async () => {
+      const project = await createTestProject();
+      const projectId = project.id;
+      const manager = await createTestProjectMember(projectId, UPRO.MANAGER);
+      const managerContext = getContext(manager as any, testEntityManager);
+
+      await doQuery(requestAccessToProjectQuery, {projectId});
+      expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
+        .toEqual(expect.objectContaining({ role: UPRO.PENDING }));
+      // TODO: Assert email sent to manager
+
+      await doQuery(acceptRequestToJoinProjectQuery, {projectId, userId}, {context: managerContext});
+      expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
+        .toEqual(expect.objectContaining({ role: UPRO.MEMBER }));
+      // TODO: Assert email sent to user
+
+      await doQuery(leaveProjectQuery, {projectId});
+      expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
+        .toEqual(undefined);
+    });
+
+    test('User requests access, is rejected', async () => {
+      const project = await createTestProject();
+      const projectId = project.id;
+      const manager = await createTestProjectMember(projectId, UPRO.MANAGER);
+      const managerContext = getContext(manager as any, testEntityManager);
+
+      await doQuery(requestAccessToProjectQuery, {projectId});
+      expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
+        .toEqual(expect.objectContaining({ role: UPRO.PENDING }));
+
+      await doQuery(removeUserFromProjectQuery, {projectId, userId}, {context: managerContext});
+      expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
+        .toEqual(undefined);
+    });
+
+    test('Manager invites user, user accepts, manager removes user from group', async () => {
+      const project = await createTestProject();
+      const projectId = project.id;
+      const manager = await createTestProjectMember(projectId, UPRO.MANAGER);
+      const managerContext = getContext(manager as any, testEntityManager);
+
+      await doQuery(inviteUserToProjectQuery, {projectId, email: userContext.user!.email}, {context: managerContext});
+      expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
+        .toEqual(expect.objectContaining({ role: UPRO.INVITED }));
+      // TODO: Assert email sent to user
+
+      await doQuery(acceptProjectInvitationQuery, {projectId});
+      expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
+        .toEqual(expect.objectContaining({ role: UPRO.MEMBER }));
+
+      await doQuery(removeUserFromProjectQuery, {projectId, userId}, {context: managerContext});
+      expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
+        .toEqual(undefined);
+    });
+
+    test('Manager invites user, user declines', async () => {
+      const project = await createTestProject();
+      const projectId = project.id;
+      const manager = await createTestProjectMember(projectId, UPRO.MANAGER);
+      const managerContext = getContext(manager as any, testEntityManager);
+
+      await doQuery(inviteUserToProjectQuery, {projectId, email: userContext.user!.email}, {context: managerContext});
+      expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
+        .toEqual(expect.objectContaining({ role: UPRO.INVITED }));
+
+      await doQuery(leaveProjectQuery, {projectId});
+      expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
+        .toEqual(undefined);
+    });
+
+    test('User attempts to accept non-existent invitation', async () => {
+      const project = await createTestProject();
+      const projectId = project.id;
+
+      await expect(doQuery(acceptProjectInvitationQuery, {projectId})).rejects.toThrow('Unauthorized');
+    });
+
+    test('Non-manager attempts to send invitation', async () => {
+      const project = await createTestProject();
+      const projectId = project.id;
+
+      await expect(doQuery(inviteUserToProjectQuery, {projectId, email: userContext.user!.email}))
+        .rejects.toThrow('Unauthorized');
+    });
+  });
+
   describe('Mutation.createProject', () => {
-    let userId: string;
     const projectDetails = {
       name: 'foo',
       isPublic: false,
@@ -181,10 +287,6 @@ describe('modules/project/controller', () => {
     const createProject = `mutation ($projectDetails: CreateProjectInput!) {
       createProject(projectDetails: $projectDetails) { ${projectFields} }
     }`;
-
-    beforeEach(async () => {
-      userId = testUser.id;
-    });
 
     it('should create a project when run as a user', async () => {
       // Act
@@ -236,9 +338,8 @@ describe('modules/project/controller', () => {
   });
 
   describe('Mutation.updateProject', () => {
-    let userId: string;
     let projectId: string;
-    let initialProject: Pick<ProjectType, 'name' | 'isPublic' | 'urlSlug'>;
+    let initialProject: ProjectModel;
     const projectDetails = {
       name: 'bar',
       isPublic: false,
@@ -252,14 +353,12 @@ describe('modules/project/controller', () => {
     }`;
     
     beforeEach(async () => {
-      initialProject = { // reinitialize every time because testEntityManager.insert modifies it
+      initialProject = await createTestProject({
         name: 'foo',
         isPublic: true,
         urlSlug: 'foo',
-      };
-      const insertResult = await testEntityManager.insert(ProjectModel, initialProject);
-      projectId = insertResult.identifiers[0].id;
-      userId = testUser.id;
+      });
+      projectId = initialProject.id;
     });
     
     it('should update a project when run as a MANAGER of the project', async () => {
@@ -316,16 +415,13 @@ describe('modules/project/controller', () => {
 
   describe('Mutation.deleteProject', () => {
     let projectId: string;
-    let userId: string;
 
     const deleteProject = `mutation ($projectId: ID!) {
       deleteProject(projectId: $projectId)
     }`;
 
     beforeEach(async () => {
-      const insertResult = await testEntityManager.insert(ProjectModel, { name: 'foo' });
-      projectId = insertResult.identifiers[0].id;
-      userId = testUser.id;
+      projectId = (await createTestProject()).id;
     });
 
     it('should delete a project when run as a MANAGER of the project', async () => {

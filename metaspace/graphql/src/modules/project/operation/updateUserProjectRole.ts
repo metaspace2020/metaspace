@@ -9,7 +9,6 @@ import {ProjectSourceRepository} from '../ProjectSourceRepository';
 
 export default async (ctx: Context, userId: string, projectId: string, newRole: UserProjectRole | null) => {
   const currentUserId = ctx.getUserIdOrFail();
-  const currentUserProjectRoles = await ctx.getCurrentUserProjectRoles();
   const userProjectRepository = ctx.connection.getRepository(UserProjectModel);
   const datasetProjectRepository = ctx.connection.getRepository(DatasetProjectModel);
   const user = await ctx.connection.getRepository(UserModel).findOne(userId);
@@ -18,10 +17,11 @@ export default async (ctx: Context, userId: string, projectId: string, newRole: 
   const project = await ctx.connection.getCustomRepository(ProjectSourceRepository)
     .findProjectById(ctx.user, projectId);
   if (project == null) throw new UserError('Project not found');
+  const projectMembers = await userProjectRepository.find({ where: { projectId } });
 
-  const existingUserProject = project.members.find(up => up.userId === userId);
+  const existingUserProject = projectMembers.find(up => up.userId === userId);
   const existingRole = existingUserProject != null ? existingUserProject.role : null;
-  const currentUserUserProject = project.members.find(up => up.userId === currentUserId);
+  const currentUserUserProject = projectMembers.find(up => up.userId === currentUserId);
   const currentUserRole = currentUserUserProject != null ? currentUserUserProject.role : null;
 
   if (newRole === existingRole) return;

@@ -3,9 +3,10 @@ import {Context, UserProjectRoles} from './context';
 import {UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from './modules/project/model';
 import _ = require('lodash');
 import {UserError} from 'graphql-errors';
+import {JwtUser} from './modules/auth/controller';
 
-export default (req: Express.Request, connection: Connection | EntityManager): Context => {
-  const user = req.user != null ? req.user.user : null;
+export default (jwtUser: JwtUser | null, connection: Connection | EntityManager): Context => {
+  const user = jwtUser != null && jwtUser.id != null ? jwtUser : null;
 
   let currentUserProjectRoles: Promise<UserProjectRoles> | null = null;
   const getProjectRoles = async () => {
@@ -38,13 +39,13 @@ export default (req: Express.Request, connection: Connection | EntityManager): C
     connection,
     user: user == null || user.id == null ? null : {
       id: user.id,
-      role: user.role,
+      role: user.role as ('user' | 'admin'),
       email: user.email,
       groupIds: user.groupIds,
       getProjectRoles,
       getMemberOfProjectIds,
     },
-    isAdmin: user && user.role === 'admin',
+    isAdmin: user != null && user.role === 'admin',
     getUserIdOrFail() {
       if (user == null || user.id == null) {
         throw new UserError('Unauthenticated');

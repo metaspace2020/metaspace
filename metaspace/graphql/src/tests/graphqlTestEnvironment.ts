@@ -9,16 +9,15 @@ import {
 } from 'graphql';
 import {runQuery} from 'apollo-server-core';
 import {QueryOptions} from 'apollo-server-core/dist/runQuery';
-import {Request} from 'express';
 
 import {createConnection} from '../utils/db';
 import {Connection, EntityManager} from 'typeorm';
-import {Credentials} from '../modules/auth/model';
 import {User} from '../modules/user/model';
 import {initOperation} from '../modules/auth/operation';
 import getContext from '../getContext';
 import {makeNewExecutableSchema} from '../../executableSchema';
 import {Context} from '../context';
+import {createTestUser} from './testDataCreation';
 
 
 const schema = makeNewExecutableSchema();
@@ -70,18 +69,15 @@ export const onBeforeEach = async () => {
   (userContext as any) = undefined;
   (adminContext as any) = undefined;
 
-  anonContext = getContext({ user: { user: { role: 'anonymous' } } } as any as Request, testEntityManager);
+  anonContext = getContext({ role: 'anonymous' }, testEntityManager);
 
   await initOperation(testEntityManager);
 };
 
 export const setupTestUsers = async () => {
-  const creds = testEntityManager.create(Credentials, {});
-  await testEntityManager.insert(Credentials, creds);
-  testUser = testEntityManager.create(User, { name: 'tester', role: 'user', credentialsId: creds.id });
-  await testEntityManager.insert(User, testUser);
-  userContext = getContext({ user: { user: testUser } } as any as Request, testEntityManager);
-  adminContext = getContext({ user: { user: { ...testUser, role: 'admin' } } } as any as Request, testEntityManager);
+  testUser = await createTestUser();
+  userContext = getContext(testUser as any, testEntityManager);
+  adminContext = getContext({ ...testUser, role: 'admin' } as any, testEntityManager);
 };
 
 export const onAfterEach = async () => {
