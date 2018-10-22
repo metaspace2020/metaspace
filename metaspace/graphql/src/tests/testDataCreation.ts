@@ -1,11 +1,14 @@
+import * as _ from 'lodash';
+import * as moment from 'moment';
 import {User} from '../modules/user/model';
 import {Credentials} from '../modules/auth/model';
-import {testEntityManager} from './graphqlTestEnvironment';
+import {testEntityManager, userContext} from './graphqlTestEnvironment';
 import {Project, UserProject, UserProjectRoleOptions as UPRO} from '../modules/project/model';
 import {UserProjectRole} from '../binding';
+import {Dataset, EngineDataset} from '../modules/dataset/model';
 
 
-export const createTestUser = async (user?: Partial<User>) => {
+export const createTestUser = async (user?: Partial<User>): Promise<User> => {
   const creds = (await testEntityManager.save(Credentials, {})) as any as Credentials;
   return await testEntityManager.save(User, {
     name: 'tester',
@@ -16,7 +19,7 @@ export const createTestUser = async (user?: Partial<User>) => {
   }) as User;
 };
 
-export const createTestProject = async (project?: Partial<Project>) => {
+export const createTestProject = async (project?: Partial<Project>): Promise<Project> => {
   return await testEntityManager.save(Project, {
     name: 'test project',
     isPublic: true,
@@ -34,3 +37,40 @@ export const createTestProjectMember = async (projectOrId: string | {id: string}
   });
   return user;
 };
+
+const dbInsert = async (table: string, params: object) => {
+  const paramFields = Object.keys(params);
+  const paramValues = Object.values(params);
+  const paramIndexes = paramFields.map((key, idx) => `$${idx+1}`);
+  await testEntityManager.query(
+    `INSERT INTO ${table} (${paramFields.join(',')}) VALUES (${paramIndexes.join(',')})`,
+    paramValues);
+};
+
+const genDatasetId = () => {
+  const randomUnixTime = 150e10 + Math.floor(Math.random() * 10e10);
+  return moment(randomUnixTime).toISOString()
+    .replace(/([\d\-]+)T(\d+):(\d+):(\d+).*/, '$1_$2h$3m$4s');
+};
+
+export const createTestDataset = async (dataset: Partial<Dataset> = {}, engineDataset: Partial<EngineDataset> = {}): Promise<Dataset> => {
+  const datasetId = engineDataset.id || genDatasetId();
+  const datasetPromise = testEntityManager.save(Dataset, {
+    id: datasetId,
+    userId: userContext.getUserIdOrFail(),
+    ...dataset,
+  });
+
+  await dbInsert('public.dataset', {
+    id: datasetId,
+    name: 'test dataset',
+    upload_dt: new Date,
+    metadata: {},
+    status: 'FINISHED',
+    is_public: true,
+    ...engineDataset,
+  });
+
+  return (await datasetPromise) as Dataset;
+};
+

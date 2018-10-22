@@ -1,4 +1,4 @@
-import {createTestProject, createTestProjectMember, createTestUser} from '../../tests/testDataCreation';
+import {createTestDataset, createTestProject, createTestProjectMember} from '../../tests/testDataCreation';
 
 jest.mock('../../utils/smAPI');
 import * as _mockSmApi from '../../utils/smAPI';
@@ -7,8 +7,6 @@ const mockSmApi = _mockSmApi as jest.Mocked<typeof _mockSmApi>;
 import {Context} from '../../context';
 import {Project as ProjectType, UserProjectRole} from '../../binding';
 import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from './model';
-import {User as UserModel} from '../user/model';
-import {Credentials as CredentialsModel} from '../auth/model';
 import {
   adminContext,
   anonContext,
@@ -23,6 +21,10 @@ import {
   testUser, userContext,
 } from '../../tests/graphqlTestEnvironment';
 import getContext from '../../getContext';
+import {createBackgroundData, validateBackgroundData} from '../../tests/backgroundDataCreation';
+import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../dataset/model';
+import {User as UserModel} from '../user/model';
+import {In} from 'typeorm';
 
 
 // ROLE_COMBOS is a list of possible user & project role combinations, for tests that should exhaustively check every possibility
@@ -273,6 +275,140 @@ describe('modules/project/controller', () => {
       await expect(doQuery(inviteUserToProjectQuery, {projectId, email: userContext.user!.email}))
         .rejects.toThrow('Unauthorized');
     });
+
+    test('Accepting a request to join should mark imported datasets as approved', async () => {
+      const project = await createTestProject();
+      const projectId = project.id;
+      const manager = await createTestProjectMember(projectId, UPRO.MANAGER);
+      const managerContext = getContext(manager as any, testEntityManager);
+      const datasets = await Promise.all([1,2].map(() => createTestDataset()));
+      const datasetIds = datasets.map(ds => ds.id);
+      await testEntityManager.save(UserProjectModel, {userId, projectId, role: UPRO.PENDING});
+      await Promise.all(datasets.map(async ds => {
+        await testEntityManager.save(DatasetProjectModel, { datasetId: ds.id, projectId, approved: false })
+      }));
+      const bgData = await createBackgroundData({
+        datasetsForProjectIds: [projectId],
+        datasetsForUserIds: [userId],
+      });
+
+      await doQuery(acceptRequestToJoinProjectQuery, {projectId, userId}, {context: managerContext});
+
+      expect(await testEntityManager.find(DatasetProjectModel, {datasetId: In(datasetIds)}))
+        .toEqual(expect.arrayContaining([
+          {datasetId: datasetIds[0], projectId, approved: true},
+          {datasetId: datasetIds[1], projectId, approved: true},
+        ]));
+      await validateBackgroundData(bgData);
+    });
+
+    test('Accepting an invitation should mark imported datasets as approved', async () => {
+      const project = await createTestProject();
+      const projectId = project.id;
+      const datasets = await Promise.all([1,2].map(() => createTestDataset()));
+      const datasetIds = datasets.map(ds => ds.id);
+      await testEntityManager.save(UserProjectModel, {userId, projectId, role: UPRO.INVITED});
+      await Promise.all(datasets.map(async ds => {
+        await testEntityManager.save(DatasetProjectModel, { datasetId: ds.id, projectId, approved: false })
+      }));
+      const bgData = await createBackgroundData({
+        datasetsForProjectIds: [projectId],
+        datasetsForUserIds: [userId],
+      });
+
+      await doQuery(acceptProjectInvitationQuery, {projectId});
+
+      expect(await testEntityManager.find(DatasetProjectModel, {datasetId: In(datasetIds)}))
+        .toEqual(expect.arrayContaining([
+          {datasetId: datasetIds[0], projectId, approved: true},
+          {datasetId: datasetIds[1], projectId, approved: true},
+        ]));
+      await validateBackgroundData(bgData);
+    });
+
+    test('Leaving a project should mark datasets as unapproved', async () => {
+      const project = await createTestProject();
+      const projectId = project.id;
+      const datasets = await Promise.all([1,2].map(() => createTestDataset()));
+      const datasetIds = datasets.map(ds => ds.id);
+      await testEntityManager.save(UserProjectModel, {userId, projectId, role: UPRO.MEMBER});
+      await Promise.all(datasets.map(async ds => {
+        await testEntityManager.save(DatasetProjectModel, { datasetId: ds.id, projectId, approved: true })
+      }));
+      const bgData = await createBackgroundData({
+        datasetsForProjectIds: [projectId],
+        datasetsForUserIds: [userId],
+      });
+
+      await doQuery(leaveProjectQuery, {projectId});
+
+      expect(await testEntityManager.find(DatasetProjectModel, {datasetId: In(datasetIds)}))
+        .toEqual(expect.arrayContaining([
+          {datasetId: datasetIds[0], projectId, approved: false},
+          {datasetId: datasetIds[1], projectId, approved: false},
+        ]));
+      await validateBackgroundData(bgData);
+    });
+
+    test('Removing a user from a project should mark datasets as unapproved', async () => {
+      const project = await createTestProject();
+      const projectId = project.id;
+      const manager = await createTestProjectMember(projectId, UPRO.MANAGER);
+      const managerContext = getContext(manager as any, testEntityManager);
+      const datasets = await Promise.all([1,2].map(() => createTestDataset()));
+      const datasetIds = datasets.map(ds => ds.id);
+      await testEntityManager.save(UserProjectModel, {userId, projectId, role: UPRO.MEMBER});
+      await Promise.all(datasets.map(async ds => {
+        await testEntityManager.save(DatasetProjectModel, { datasetId: ds.id, projectId, approved: true })
+      }));
+      const bgData = await createBackgroundData({
+        datasetsForProjectIds: [projectId],
+        datasetsForUserIds: [userId],
+      });
+
+      await doQuery(removeUserFromProjectQuery, {projectId, userId}, {context: managerContext});
+
+      expect(await testEntityManager.find(DatasetProjectModel, {datasetId: In(datasetIds)}))
+        .toEqual(expect.arrayContaining([
+          {datasetId: datasetIds[0], projectId, approved: false},
+          {datasetId: datasetIds[1], projectId, approved: false},
+        ]));
+      await validateBackgroundData(bgData);
+    });
+  });
+
+  describe('Mutation.importDatasetsIntoProject', () => {
+    const importDatasetsIntoProjectQuery = `mutation ($projectId: ID!, $datasetIds: [ID!]!) { importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds) }`;
+
+    test.each([
+        [false, UPRO.INVITED],
+        [false, UPRO.PENDING],
+        [true, UPRO.MEMBER],
+        [true, UPRO.MANAGER],
+      ] as [boolean, UserProjectRole][])
+    (`should set 'approved' to '%s' if the user is a %s`, async (approved, role) => {
+      const project = await createTestProject();
+      const projectId = project.id;
+      const datasets = await Promise.all([1,2].map(() => createTestDataset()));
+      const datasetIds = datasets.map(ds => ds.id);
+      await testEntityManager.save(UserProjectModel, {userId, projectId, role});
+      await Promise.all(datasets.map(async ds => {
+        await testEntityManager.save(DatasetProjectModel, { datasetId: ds.id, projectId, approved: true })
+      }));
+      const bgData = await createBackgroundData({
+        datasetsForProjectIds: [projectId],
+        datasetsForUserIds: [userId],
+      });
+
+      await doQuery(importDatasetsIntoProjectQuery, {projectId, datasetIds});
+
+      expect(await testEntityManager.find(DatasetProjectModel, {datasetId: In(datasetIds)}))
+        .toEqual(expect.arrayContaining([
+          {datasetId: datasetIds[0], projectId, approved},
+          {datasetId: datasetIds[1], projectId, approved},
+        ]));
+      await validateBackgroundData(bgData);
+    });
   });
 
   describe('Mutation.createProject', () => {
@@ -459,21 +595,4 @@ describe('modules/project/controller', () => {
       await expect(project).toEqual(expect.anything());
     });
   });
-
-// ## Managing project users
-//   leaveProject(projectId: ID!): Boolean!
-//   removeUserFromProject(projectId: ID!, userId: ID!): Boolean!
-//
-// ## User requests access
-//   requestAccessToProject(projectId: ID!): UserProject!
-//   acceptRequestToJoinProject(projectId: ID!, userId: ID!): UserProject!
-// # User can reject request with `leaveProject`
-//
-//     ## Project invites user
-//   inviteUserToProject(projectId: ID!, email: String!): UserProject!
-//   acceptProjectInvitation(projectId: ID!): UserProject!
-// # Project can reject user with `removeUserFromProject`
-//
-//     importDatasetsIntoProject(projectId: ID!, datasetIds: [ID!]!): Boolean!
-
 });
