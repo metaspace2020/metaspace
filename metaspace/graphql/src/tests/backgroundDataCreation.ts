@@ -19,7 +19,7 @@ interface BackgroundDataOptions {
   datasetsForProjectIds?: string[];
 }
 
-interface BackgroundData {
+export interface BackgroundData {
   users: User[];
   projects: Project[];
   datasets: Dataset[];
