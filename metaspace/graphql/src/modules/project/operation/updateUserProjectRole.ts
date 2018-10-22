@@ -66,7 +66,9 @@ export default async (ctx: Context, userId: string, projectId: string, newRole: 
 
   if (datasetsToUpdate.length > 0) {
     const datasetIds = datasetsToUpdate.map(({id}) => id);
-    const approved = ([UPRO.MANAGER, UPRO.MEMBER] as (UserProjectRole|null)[]).includes(newRole);
+    const approved = newRole == null
+      ? null
+      : [UPRO.MANAGER, UPRO.MEMBER].includes(newRole);
     await updateProjectDatasets(ctx, projectId, datasetIds, approved);
   }
 
