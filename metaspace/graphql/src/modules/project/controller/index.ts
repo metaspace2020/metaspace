@@ -1,22 +1,22 @@
 import {IResolvers} from 'graphql-tools';
 import {UserError} from 'graphql-errors';
-import {Mutation, Project, Query, UserProject, UserProjectRole} from '../../binding';
+import {Mutation, Project, Query, UserProject, UserProjectRole} from '../../../binding';
 import {
   FieldResolversFor,
   ProjectSource,
   ScopeRole,
   ScopeRoleOptions as SRO,
   UserProjectSource,
-} from '../../bindingTypes';
-import {Context} from '../../context';
-import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from './model';
-import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../dataset/model';
-import {findUserByEmail} from '../auth/operation';
-import updateUserProjectRole from './operation/updateUserProjectRole';
-import {convertUserToUserSource} from '../user/util/convertUserToUserSource';
-import updateProjectDatasets from './operation/updateProjectDatasets';
+} from '../../../bindingTypes';
+import {Context} from '../../../context';
+import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from '../model';
+import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../../dataset/model';
+import {findUserByEmail} from '../../auth/operation';
+import updateUserProjectRole from '../operation/updateUserProjectRole';
+import {convertUserToUserSource} from '../../user/util/convertUserToUserSource';
+import updateProjectDatasets from '../operation/updateProjectDatasets';
 import {In} from 'typeorm';
-import {ProjectSourceRepository} from './ProjectSourceRepository';
+import {ProjectSourceRepository} from '../ProjectSourceRepository';
 
 
 const canViewProjectMembersAndDatasets = (currentUserRole: UserProjectRole | null, isAdmin: boolean) =>
