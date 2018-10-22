@@ -7,8 +7,13 @@ import {ProjectSourceRepository} from '../ProjectSourceRepository';
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
 import updateUserProjectRole from '../operation/updateUserProjectRole';
 import {convertUserToUserSource} from '../../user/util/convertUserToUserSource';
-import {findUserByEmail} from '../../auth/operation';
+import {createInactiveUser} from '../../auth/operation';
 import updateProjectDatasets from '../operation/updateProjectDatasets';
+import {User as UserModel} from '../../user/model';
+import config from '../../../utils/config';
+import {sendInvitationEmail} from '../../auth';
+import {findUserByEmail} from '../../../utils';
+import {sendProjectAcceptanceEmail, sendProjectInvitationEmail, sendRequestAccessToProjectEmail} from '../email';
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
   const userProject = await ctx.connection.getRepository(UserProjectModel).findOne({
@@ -86,7 +91,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     const userId = ctx.getUserIdOrFail();
     await updateUserProjectRole(ctx, userId, projectId, UPRO.PENDING);
     const userProject = await ctx.connection.getRepository(UserProjectModel)
-      .findOneOrFail({ userId, projectId }, { relations: ['user'] });
+      .findOneOrFail({ userId, projectId }, { relations: ['user', 'project'] });
+
+    const managers = await ctx.connection.getRepository(UserProjectModel)
+      .find({where: {projectId, role: UPRO.MANAGER}, relations: ['user'] });
+    managers.forEach(manager => {
+      sendRequestAccessToProjectEmail(manager.user, userProject.user, userProject.project);
+    });
 
     // NOTE: In the return value, some role-dependent fields like `userProject.project.currentUserRole` will still reflect
     // the user's role before the request was made. The UI currently doesn't rely on the result, but if it does,
@@ -97,16 +108,25 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async acceptRequestToJoinProject(source, { projectId, userId }, ctx: Context): Promise<UserProjectSource> {
     await updateUserProjectRole(ctx, userId, projectId, UPRO.MEMBER);
     const userProject = await ctx.connection.getRepository(UserProjectModel)
-      .findOneOrFail({ userId, projectId }, { relations: ['user'] });
+      .findOneOrFail({ userId, projectId }, { relations: ['user', 'project'] });
+
+    sendProjectAcceptanceEmail(userProject.user, userProject.project);
 
     // NOTE: This return value has the same issue with role-dependent fields as `requestAccessToProject`
     return { ...userProject, user: convertUserToUserSource(userProject.user, SRO.OTHER) };
   },
 
   async inviteUserToProject(source, { projectId, email }, ctx: Context): Promise<UserProjectSource> {
-    const user = await findUserByEmail(email);
+    let user = await findUserByEmail(ctx.connection, email)
+      || await findUserByEmail(ctx.connection, email, 'not_verified_email');
+    const currentUser = await ctx.connection.getRepository(UserModel).findOneOrFail(ctx.getUserIdOrFail());
     if (user == null) {
-      throw new UserError('Not implemented yet');
+      user = await createInactiveUser(email);
+      const link = `${config.web_public_url}/account/create-account`;
+      sendInvitationEmail(email, currentUser.name || '', link);
+    } else {
+      const project = await ctx.connection.getRepository(ProjectModel).findOneOrFail(projectId);
+      sendProjectInvitationEmail(user, currentUser, project);
     }
     const userId = user.id;
 

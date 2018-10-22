@@ -17,6 +17,10 @@ import {BackgroundData, createBackgroundData, validateBackgroundData} from '../.
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
 import {In} from 'typeorm';
 import {Context} from '../../../context';
+import * as auth from '../../auth';
+import * as projectEmails from '../email';
+import {createUserCredentials, verifyEmail} from '../../auth/operation';
+
 
 describe('modules/project/controller (membership-related mutations)', () => {
   let userId: string;
@@ -60,15 +64,24 @@ describe('modules/project/controller (membership-related mutations)', () => {
 
 
     test('User requests access, is accepted, leaves', async () => {
+      const requestAccessEmailSpy = jest.spyOn(projectEmails, 'sendRequestAccessToProjectEmail');
+      const acceptanceEmailSpy = jest.spyOn(projectEmails, 'sendProjectAcceptanceEmail');
       await doQuery(requestAccessToProjectQuery, {projectId});
       expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
         .toEqual(expect.objectContaining({ role: UPRO.PENDING }));
-      // TODO: Assert email sent to manager
+      expect(requestAccessEmailSpy).toHaveBeenCalledTimes(1);
+      expect(requestAccessEmailSpy)
+        .toHaveBeenCalledWith(
+          expect.objectContaining({id: manager.id}),
+          expect.objectContaining({id: userId}),
+          expect.objectContaining({id: projectId}));
 
       await doQuery(acceptRequestToJoinProjectQuery, {projectId, userId}, {context: managerContext});
       expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
         .toEqual(expect.objectContaining({ role: UPRO.MEMBER }));
-      // TODO: Assert email sent to user
+      expect(acceptanceEmailSpy).toHaveBeenCalledTimes(1);
+      expect(acceptanceEmailSpy)
+        .toHaveBeenCalledWith(expect.objectContaining({id: userId}), expect.objectContaining({id: projectId}));
 
       await doQuery(leaveProjectQuery, {projectId});
       expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
@@ -86,10 +99,15 @@ describe('modules/project/controller (membership-related mutations)', () => {
     });
 
     test('Manager invites user, user accepts, manager removes user from group', async () => {
+      const invitationEmailSpy = jest.spyOn(projectEmails, 'sendProjectInvitationEmail');
       await doQuery(inviteUserToProjectQuery, {projectId, email: userContext.user!.email}, {context: managerContext});
       expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
         .toEqual(expect.objectContaining({ role: UPRO.INVITED }));
-      // TODO: Assert email sent to user
+      expect(invitationEmailSpy)
+        .toHaveBeenCalledWith(
+          expect.objectContaining({id: userId}),
+          expect.objectContaining({id: manager.id}),
+          expect.objectContaining({id: projectId}));
 
       await doQuery(acceptProjectInvitationQuery, {projectId});
       expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId}))
@@ -117,6 +135,34 @@ describe('modules/project/controller (membership-related mutations)', () => {
     test('Non-manager attempts to send invitation', async () => {
       await expect(doQuery(inviteUserToProjectQuery, {projectId, email: userContext.user!.email}))
         .rejects.toThrow('Unauthorized');
+    });
+
+    test('Manager invites non-existent user, user creates account and accepts', async () => {
+      const invitationEmailSpy = jest.spyOn(auth, 'sendInvitationEmail');
+      const email = 'newuser123@example.com';
+
+      await doQuery(inviteUserToProjectQuery, {projectId, email}, {context: managerContext});
+      expect(await testEntityManager.findOne(UserModel, {
+        where: {notVerifiedEmail: email},
+        relations: ['projects']
+      }))
+        .toEqual(expect.objectContaining({
+          projects: [expect.objectContaining({role: UPRO.INVITED, projectId})]
+        }));
+      expect(invitationEmailSpy).toHaveBeenCalledWith(email, expect.anything(), expect.anything());
+
+      await createUserCredentials({email, name: 'new user', password: 'abc123!!'});
+      const unverifiedUser = await testEntityManager.findOneOrFail(UserModel, {
+        where: { notVerifiedEmail: email },
+        relations: ['credentials'],
+      });
+      await verifyEmail(email, unverifiedUser.credentials.emailVerificationToken!);
+      const newuser = await testEntityManager.findOneOrFail(UserModel, {email});
+      const newuserContext = getContext(newuser as any, testEntityManager);
+
+      await doQuery(acceptProjectInvitationQuery, {projectId}, {context: newuserContext});
+      expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId: newuser.id}))
+        .toEqual(expect.objectContaining({ role: UPRO.MEMBER }));
     });
 
     test('Accepting a request to join should mark imported datasets as approved', async () => {

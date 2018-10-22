@@ -12,6 +12,7 @@ import {LooselyCompatible, smAPIRequest, logger, findUserByEmail} from '../../ut
 import {JwtUser} from '../auth/controller';
 import {sendInvitationEmail} from '../auth';
 import config from '../../utils/config';
+import {createInactiveUser} from '../auth/operation';
 
 const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<ScopeRole> => {
   let scopeRole = ScopeRoleOptions.OTHER;
@@ -286,22 +287,17 @@ export const Resolvers = {
       });
     },
 
-    async inviteUserToGroup(_: any, {groupId, email}: any, {user, connection}: Context): Promise<UserGroupModel> {
+    async inviteUserToGroup(_: any, {groupId, email}: any, {user, getUserIdOrFail, connection}: Context): Promise<UserGroupModel> {
       await assertCanEditGroup(connection, user, groupId);
       logger.info(`User '${user!.id}' inviting ${email} to join '${groupId}' group...`);
 
       let invUser = await findUserByEmail(connection, email, 'email')
         || await findUserByEmail(connection, email, 'not_verified_email');
       if (!invUser) {
-        // create not verified user
-        const invUserCred = await connection.getRepository(CredentialsModel).save({ emailVerified: false });
-        invUser = await connection.getRepository(UserModel).save({
-          notVerifiedEmail: email,
-          credentials: invUserCred
-        }) as UserModel;
-        const invitedByUser = user!.email != null ? await findUserByEmail(connection, user!.email!) : null;
+        invUser = await createInactiveUser(email);
+        const currentUser = await connection.getRepository(UserModel).findOneOrFail(getUserIdOrFail());
         const link = `${config.web_public_url}/account/create-account`;
-        sendInvitationEmail(email, invitedByUser!.name || '', link);
+        sendInvitationEmail(email, currentUser.name || '', link);
       }
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 

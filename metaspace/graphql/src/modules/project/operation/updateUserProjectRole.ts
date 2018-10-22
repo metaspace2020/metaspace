@@ -71,8 +71,4 @@ export default async (ctx: Context, userId: string, projectId: string, newRole: 
       : [UPRO.MANAGER, UPRO.MEMBER].includes(newRole);
     await updateProjectDatasets(ctx, projectId, datasetIds, approved);
   }
-
-  if (!ctx.isAdmin) {
-    // TODO: Send emails
-  }
 };
