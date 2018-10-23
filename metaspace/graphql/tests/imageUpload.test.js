@@ -2,8 +2,6 @@
  * Created by intsco on 5/9/17.
  * @jest-environment node
  */
-process.env.NODE_ENV = 'test';
-
 const chai = require('chai'),
   should = chai.should(),
   chaiHttp = require('chai-http'),
@@ -26,32 +24,18 @@ describe('imageUploadTest with fs and db backends', () => {
 
     describe(`${storageType} storage type`, () => {
       let server;
-      let knex, knexAdmin;
+      let knex;
 
       beforeAll(async () => {
         logger.info('> Before all');
-        knexAdmin = initDBConnection(() => {
-          return {
-            host      : 'localhost',
-            database  : 'postgres',
-            user      : 'postgres'
-          }
-        });
-        await knexAdmin.raw(`DROP DATABASE IF EXISTS ${config.db.database}`);
-        await knexAdmin.raw(`CREATE DATABASE ${config.db.database} OWNER ${config.db.user}`);
         knex = initDBConnection();
         server = await createImgServerAsync(config, knex);
       });
 
-      afterAll(done => {
+      afterAll(async () => {
         logger.info('> After all');
-        server.close(async () => {
-          await knex.destroy();
-          await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
-          await knexAdmin.destroy();
-          logger.debug('Iso image server closed');
-          done();
-        });
+        await new Promise(resolve => server.close(resolve));
+        await knex.destroy();
       });
 
       let image_id;

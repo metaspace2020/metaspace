@@ -190,7 +190,7 @@ const submitterQueries: FilterQueries = {
           && currentUser.primaryGroup.group.members.map((member: any) => member.user) || [];
         return [
           meOption,
-          ...peerOptions.filter((option: Option) => option.value !== currentUser.id),
+          ...peerOptions.filter((option: Option) => option.value !== currentUser.id && !!option.label),
         ];
       } else {
         return [];

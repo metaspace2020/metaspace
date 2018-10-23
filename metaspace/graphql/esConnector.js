@@ -1,6 +1,8 @@
 /**
  * Created by intsco on 1/11/17.
  */
+import {UserProjectRoleOptions as UPRO} from './src/modules/project/model';
+
 const ES_LIMIT_MAX = 50000;
 
 const elasticsearch = require('elasticsearch'),
@@ -72,7 +74,7 @@ const createAddFilter = (body) => {
   };
 };
 
-const createBodyWithAuthFilters = (user) => {
+const createBodyWithAuthFilters = (user, userProjectRoles) => {
   const body = {
     query: {
       bool: {
@@ -107,17 +109,29 @@ const createBodyWithAuthFilters = (user) => {
         }
       });
     }
+    const visibleProjectIds = Object.entries(userProjectRoles || [])
+                                    .filter(([id, role]) => [UPRO.MEMBER, UPRO.MANAGER].includes(role))
+                                    .map(([id, role]) => id);
+    if (visibleProjectIds.length > 0) {
+      filterObj.bool.should.push({
+        bool: {
+          must: [
+            { terms: { ds_project_ids: visibleProjectIds } }
+          ]
+        }
+      });
+    }
     addFilter(filterObj);
   }
   return body;
 };
 
-function constructESQuery(args, docType, user) {
+function constructESQuery(args, docType, user, userProjectRoles) {
   const { orderBy, sortingOrder, filter: annotationFilter={}, datasetFilter, simpleQuery} = args;
   const { database, datasetName, mzFilter, msmScoreFilter,
     fdrLevel, sumFormula, adduct, compoundQuery, annId } = annotationFilter;
 
-  const body = createBodyWithAuthFilters(user);
+  const body = createBodyWithAuthFilters(user, userProjectRoles);
   const addFilter = createAddFilter(body);
 
   function addRangeFilter(field, interval) {
@@ -128,8 +142,6 @@ function constructESQuery(args, docType, user) {
     };
     addFilter(filter);
   }
-
-  createBodyWithAuthFilters(body, user);
 
   if (orderBy)
     body.sort = esSort(orderBy, sortingOrder);
@@ -175,6 +187,7 @@ function constructESQuery(args, docType, user) {
   if (datasetFilter) {
     for (let [key, val] of Object.entries(datasetFilter)) {
       if (val) {
+        if (!datasetFilters[key]) console.error(key);
         const f = datasetFilters[key].esFilter(val);
         addFilter(f);
       }
@@ -183,12 +196,12 @@ function constructESQuery(args, docType, user) {
   return body;
 }
 
-const esSearchResults = async function(args, docType, user) {
+const esSearchResults = async function(args, docType, user, userProjectRoles) {
   if (args.limit > ES_LIMIT_MAX) {
     return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
 
-  const body = constructESQuery(args, docType, user);
+  const body = constructESQuery(args, docType, user, userProjectRoles);
   const request = {
     body,
     index: esIndex,
@@ -203,8 +216,8 @@ const esSearchResults = async function(args, docType, user) {
 
 module.exports.esSearchResults = esSearchResults;
 
-module.exports.esCountResults = async function(args, docType, user) {
-  const body = constructESQuery(args, docType, user);
+module.exports.esCountResults = async function(args, docType, user, userProjectRoles) {
+  const body = constructESQuery(args, docType, user, userProjectRoles);
   const request = { body, index: esIndex };
   const resp = await es.count(request);
   return resp.count;
@@ -263,8 +276,8 @@ function flattenAggResponse(fields, aggs, idx) {
   return { counts };
 }
 
-module.exports.esCountGroupedResults = function(args, docType, user) {
-  const q = constructESQuery(args, docType, user);
+module.exports.esCountGroupedResults = function(args, docType, user, userProjectRoles) {
+  const q = constructESQuery(args, docType, user, userProjectRoles);
 
   if (args.groupingFields.length === 0) {
     // handle case of no grouping for convenience
@@ -293,9 +306,9 @@ module.exports.esCountGroupedResults = function(args, docType, user) {
     });
 };
 
-module.exports.esFilterValueCountResults = async (args, user) => {
+module.exports.esFilterValueCountResults = async (args, user, userProjectRoles) => {
   const {wildcard, aggsTerms} = args;
-  const body = createBodyWithAuthFilters(user);
+  const body = createBodyWithAuthFilters(user, userProjectRoles);
   body.query.bool.filter.push({ term: { _type: 'dataset' } });
   body.query.bool.filter.push(wildcard);
   body.size = 0;  // return only aggregations
@@ -311,19 +324,19 @@ module.exports.esFilterValueCountResults = async (args, user) => {
   return itemCounts;
 };
 
-async function getFirst(args, docType, user) {
-  const docs = await esSearchResults(args, docType, user);
+async function getFirst(args, docType, user, userProjectRoles) {
+  const docs = await esSearchResults(args, docType, user, userProjectRoles);
   return docs ? docs[0] : null;
 }
 
-module.exports.esAnnotationByID = async function(id, user) {
+module.exports.esAnnotationByID = async function(id, user, userProjectRoles) {
   if (id)
-    return getFirst({ filter: { annId: id } }, 'annotation', user);
+    return getFirst({ filter: { annId: id } }, 'annotation', user, userProjectRoles);
   return null;
 };
 
-module.exports.esDatasetByID = async function(id, user) {
+module.exports.esDatasetByID = async function(id, user, userProjectRoles) {
   if (id)
-    return getFirst({ datasetFilter: { ids: id } }, 'dataset', user);
+    return getFirst({ datasetFilter: { ids: id } }, 'dataset', user, userProjectRoles);
   return null;
 };

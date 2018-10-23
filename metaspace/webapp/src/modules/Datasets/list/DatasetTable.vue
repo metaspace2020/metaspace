@@ -43,7 +43,7 @@
 </template>
 
 <script>
- import {datasetDetailItemsQuery, datasetCountQuery} from '../../../api/dataset';
+  import {datasetDetailItemsQuery, datasetCountQuery, datasetStatusUpdatedQuery} from '../../../api/dataset';
  import {metadataExportQuery} from '../../../api/metadata';
  import DatasetList from './DatasetList.vue';
  import {FilterPanel} from '../../Filters/index';
@@ -94,20 +94,7 @@
    apollo: {
      $subscribe: {
        datasetStatusUpdated: {
-         query: gql`subscription DS {
-           datasetStatusUpdated {
-             dataset {
-               id
-               name
-               status
-               submitter { id name }
-               principalInvestigator { name }
-               group { id name }
-               projects { id name }
-               isPublic
-             }
-           }
-         }`,
+         query: datasetStatusUpdatedQuery,
          result({data}) {
            if (data.datasetStatusUpdated.dataset != null) {
              const {name, status, submitter, group} = data.datasetStatusUpdated.dataset;

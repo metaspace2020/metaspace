@@ -18,9 +18,11 @@ import {
 } from './utils';
 import {Mutation as DSMutation} from './dsMutation';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from './src/modules/group/model';
-import {User as UserModel} from './src/modules/user/model';
 import {Dataset as DatasetModel} from './src/modules/dataset/model';
-import {Context, ScopeRole, ScopeRoleOptions as SRO} from './src/context';
+import {ScopeRole, ScopeRoleOptions as SRO} from './src/bindingTypes';
+import {Project as ProjectModel} from './src/modules/project/model';
+import {projectIsVisibleToCurrentUserWhereClause} from './src/modules/project/util/projectIsVisibleToCurrentUserWhereClause';
+import convertProjectToProjectSource from './src/modules/project/util/convertProjectToProjectSource';
 
 
 async function publishDatasetStatusUpdate(ds_id, status) {
@@ -30,7 +32,7 @@ async function publishDatasetStatusUpdate(ds_id, status) {
   try {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       console.log({attempt, status});
-      const ds = await esDatasetByID(ds_id, null, true);
+      const ds = await esDatasetByID(ds_id, null, {});
 
       if (ds === null && status === 'DELETED') {
         await wait(1000);
@@ -101,45 +103,45 @@ const Resolvers = {
     async dataset(_, { id: dsId }, ctx) {
       // TODO: decide whether to support field level access here
       const scopeRole = await resolveDatasetScopeRole(ctx, dsId);
-      const ds = await esDatasetByID(dsId, ctx.user);
+      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());
       return ds ? { ...ds, scopeRole }: null;
     },
 
-    async allDatasets(_, args, {user}) {
+    async allDatasets(_, args, ctx) {
       args.datasetFilter = args.filter;
       args.filter = {};
-      return await esSearchResults(args, 'dataset', user);
+      return await esSearchResults(args, 'dataset', ctx.user, await ctx.getCurrentUserProjectRoles());
     },
 
-    async allAnnotations(_, args, {user}) {
-      return await esSearchResults(args, 'annotation', user);
+    async allAnnotations(_, args, ctx) {
+      return await esSearchResults(args, 'annotation', ctx.user, await ctx.getCurrentUserProjectRoles());
     },
 
-    countDatasets(_, args, {user}) {
+    async countDatasets(_, args, ctx) {
       args.datasetFilter = args.filter;
       args.filter = {};
-      return esCountResults(args, 'dataset', user);
+      return await esCountResults(args, 'dataset', ctx.user, await ctx.getCurrentUserProjectRoles());
     },
 
-    countDatasetsPerGroup(_, {query}, {user}) {
+    async countDatasetsPerGroup(_, {query}, ctx) {
       const args = {
         datasetFilter: query.filter,
         simpleQuery: query.simpleQuery,
         filter: {},
         groupingFields: query.fields
       };
-      return esCountGroupedResults(args, 'dataset', user);
+      return await esCountGroupedResults(args, 'dataset', ctx.user, await ctx.getCurrentUserProjectRoles());
     },
 
-    countAnnotations(_, args, {user}) {
-      return esCountResults(args, 'annotation', user);
+    async countAnnotations(_, args, ctx) {
+      return await esCountResults(args, 'annotation', ctx.user, await ctx.getCurrentUserProjectRoles());
     },
 
-    annotation(_, { id }, {user}) {
-      return esAnnotationByID(id, user);
+    async annotation(_, { id }, ctx) {
+      return await esAnnotationByID(id, ctx.user, await ctx.getCurrentUserProjectRoles());
     },
 
-    async metadataSuggestions(_, {field, query, limit}, {user}) {
+    async metadataSuggestions(_, {field, query, limit}, ctx) {
       const itemCounts = await esFilterValueCountResults({
         wildcard: { wildcard: { [`ds_meta.${field}`]: `*${query}*` } },
         aggsTerms: {
@@ -150,7 +152,7 @@ const Resolvers = {
           }
         },
         limit
-      }, user);
+      }, ctx.user, await ctx.getCurrentUserProjectRoles());
       return Object.keys(itemCounts);
     },
 
@@ -175,14 +177,14 @@ const Resolvers = {
             order: { _term : 'asc' }
           }
         }
-      }, user);
+      }, ctx.user, await ctx.getCurrentUserProjectRoles());
       return Object.keys(itemCounts).map((s) => {
         const [id, name] = s.split('/');
         return { id, name }
       });
     },
 
-    async molecularDatabases(_, args, {user}) {
+    async molecularDatabases(_, args, ctx) {
       try {
         const {hideDeprecated, onlyLastVersion} = args;
 
@@ -215,7 +217,7 @@ const Resolvers = {
 
     async opticalImageUrl(_, {datasetId: dsId, zoom}, ctx) {
       // TODO: consider moving to Dataset type
-      const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
+      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());  // check if user has access
       if (ds) {
         const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
         // TODO: manage optical images on the graphql side
@@ -230,7 +232,7 @@ const Resolvers = {
 
     async rawOpticalImage(_, {datasetId: dsId}, ctx) {
       // TODO: consider moving to Dataset type
-      const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
+      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());  // check if user has access
       if (ds) {
         const row = await (db.from('dataset')
           .where('id', dsId)
@@ -252,7 +254,7 @@ const Resolvers = {
 
     async thumbnailOpticalImageUrl(_, {datasetId: dsId}, ctx) {
       // TODO: consider moving to Dataset type
-      const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
+      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());  // check if user has access
       if (ds) {
         const row = await (db.from('dataset')
           .where('id', dsId)
@@ -272,7 +274,7 @@ const Resolvers = {
           sortingOrder: 'DESCENDING',
           submitter: user.id,
           limit: 1,
-        }, 'dataset', user);
+        }, 'dataset', user, await ctx.getCurrentUserProjectRoles());
         if (results.length > 0) {
           lastDS = results[0];
         }
@@ -341,12 +343,16 @@ const Resolvers = {
     maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
     metadataType(ds) { return dsField(ds, 'metadataType'); },
 
-    submitter({scopeRole, ...ds}) {
+    async submitter(ds, args, ctx) {
+      let scopeRole = ds.scopeRole;
+      if (ctx.user && ctx.user.id === ds._source.ds_submitter_id) {
+        scopeRole = SRO.PROFILE_OWNER;
+      }
       return {
         id: ds._source.ds_submitter_id,
         name: ds._source.ds_submitter_name,
         email: ds._source.ds_submitter_email,
-        scopeRole
+        scopeRole,
       };
     },
 
@@ -357,7 +363,30 @@ const Resolvers = {
           name: ds._source.ds_group_name,
           shortName: ds._source.ds_group_short_name,
         };
+      } else {
+        return null;
       }
+    },
+
+    async projects(ds, args, ctx) {
+      // If viewing someone else's DS, only approved projects are visible, so exit early if there are no projects in elasticsearch
+      const projectIds = _.castArray(ds._source.ds_project_ids).filter(id => id != null);
+      const canSeeUnapprovedProjects = ctx.isAdmin || (ctx.user != null && ctx.user.id === ds._source.ds_submitter_id);
+      if (!canSeeUnapprovedProjects && projectIds.length === 0) {
+        return [];
+      }
+
+      const userProjectRoles = await ctx.getCurrentUserProjectRoles();
+      let projectsQuery = ctx.connection.getRepository(ProjectModel)
+        .createQueryBuilder('project')
+        .innerJoin('project.datasetProjects', 'datasetProject')
+        .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles))
+        .andWhere('datasetProject.datasetId = :datasetId', {datasetId: ds._source.ds_id});
+      if (!canSeeUnapprovedProjects) {
+        projectsQuery = projectsQuery.andWhere('datasetProject.approved')
+      }
+      const projects = await projectsQuery.getMany();
+      return projects.map(project => convertProjectToProjectSource(project, ctx, userProjectRoles));
     },
 
     async principalInvestigator(ds, _, {connection}) {

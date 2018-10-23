@@ -1,15 +1,9 @@
-import * as uuid from 'uuid'
-import * as Knex from 'knex'
-import {Connection, DeepPartial, getRepository} from 'typeorm';
-
-import config from '../../utils/config';
+import {DeepPartial} from 'typeorm';
 import {createExpiry} from "./operation";
-import {createConnection, DbSchemaName} from '../../utils/db'
 import {
   createUserCredentials,
   resetPassword, sendResetPasswordToken,
   verifyPassword, verifyEmail,
-  initOperation,
   findUserById
 } from './operation'
 import {Credentials} from './model';
@@ -18,9 +12,13 @@ import {User} from '../user/model';
 jest.mock('./email');
 import * as _mockEmail from './email';
 import {Moment} from 'moment';
+import {
+  onAfterAll, onAfterEach,
+  onBeforeAll, onBeforeEachWithOptions, testEntityManager,
+} from '../../tests/graphqlTestEnvironment';
 const mockEmail = _mockEmail as jest.Mocked<typeof _mockEmail>;
 
-async function createUserCredentialsEntities(connection: Connection, user?: Object, cred?: Object):
+async function createUserCredentialsEntities(user?: Object, cred?: Object):
   Promise<{ user: DeepPartial<User>, cred: DeepPartial<Credentials> }> {
   const defaultCred = {
     hash: 'some hash',
@@ -33,7 +31,7 @@ async function createUserCredentialsEntities(connection: Connection, user?: Obje
     ...defaultCred,
     ...cred
   };
-  await connection.manager.insert(Credentials, updCred);
+  await testEntityManager.insert(Credentials, updCred);
 
   const defaultUser = {
     name: 'Name',
@@ -43,7 +41,7 @@ async function createUserCredentialsEntities(connection: Connection, user?: Obje
     ...user,
     credentials: updCred
   };
-  await connection.manager.insert(User, updUser as User);
+  await testEntityManager.insert(User, updUser as User);
 
   return {
     user: updUser,
@@ -52,60 +50,12 @@ async function createUserCredentialsEntities(connection: Connection, user?: Obje
 }
 
 describe('Database operations with user', () => {
-  let knexAdmin: Knex;
-  let knex: Knex;
-  let typeormConn: Connection;
-  let id: string;
-
-  beforeAll(async () => {
-    console.log('> beforeAll');
-
-    knexAdmin = Knex({
-      client: 'postgres',
-      connection: {
-        host     : config.db.host,
-        user     : 'postgres',
-        database : 'postgres'
-      },
-      debug: false
-    });
-    await knexAdmin.raw(`DROP DATABASE IF EXISTS ${config.db.database};`);
-    await knexAdmin.raw(`CREATE DATABASE ${config.db.database} OWNER ${config.db.user}`);
-
-    knex = Knex({
-      client: 'postgres',
-      connection: {
-        host: config.db.host,
-        database: config.db.database,
-        user: 'postgres'
-      },
-      searchPath: ['public', DbSchemaName],
-      debug: false
-    });
-    await knex.raw(`
-      CREATE SCHEMA ${DbSchemaName} AUTHORIZATION ${config.db.user};
-      CREATE EXTENSION "uuid-ossp";`);
-
-    typeormConn = await createConnection();
-    await initOperation(typeormConn);
-  });
-
-  afterAll(async () => {
-    console.log('> afterAll');
-
-    await typeormConn.close();
-    await knex.destroy();
-
-    await knexAdmin.raw(`DROP DATABASE ${config.db.database}`);
-    await knexAdmin.destroy();
-  });
-
-  beforeEach(async () => {
-  });
-
-  afterEach(async () => {
-    await knex.raw('TRUNCATE TABLE "credentials" CASCADE');
-  });
+  beforeAll(onBeforeAll);
+  afterAll(onAfterAll);
+  beforeEach(onBeforeEachWithOptions({
+    suppressTestDataCreation: true
+  }));
+  afterEach(onAfterEach);
 
   test('create new user credentials', async () => {
     await createUserCredentials({
@@ -114,25 +64,24 @@ describe('Database operations with user', () => {
       password: 'password',
     });
 
-    const cred = await typeormConn.manager.findOneOrFail(Credentials, {
+    const cred = await testEntityManager.findOneOrFail(Credentials, {
       select: ['id', 'hash', 'emailVerified']
     });
     expect(cred.id).toEqual(expect.anything());
     expect(cred.hash).toEqual(expect.anything());
     expect(cred.emailVerified).toEqual(false);
 
-    const user = await typeormConn.manager.findOneOrFail(User, { relations: ['credentials'] });
+    const user = await testEntityManager.findOneOrFail(User, { relations: ['credentials'] });
     expect(user.id).toEqual(expect.anything());
     expect(user.notVerifiedEmail).toEqual('admin@localhost');
     expect(user.name).toEqual('Name');
 
-    const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
-    expect(sendEmailCallArgs).toEqual(expect.anything());
-    expect(sendEmailCallArgs[0]).toBe('admin@localhost');
+    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledTimes(1);
+    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
   });
 
   test('create credentials when user already exists', async () => {
-    let {user, cred} = await createUserCredentialsEntities(typeormConn,
+    let {user, cred} = await createUserCredentialsEntities(
       { email: 'admin@localhost' });
 
     await createUserCredentials({
@@ -141,15 +90,15 @@ describe('Database operations with user', () => {
       email: 'admin@localhost',
     });
 
-    let newCred = (await typeormConn.manager.findOne(Credentials)) as Credentials;
+    let newCred = (await testEntityManager.findOne(Credentials)) as Credentials;
     expect(newCred).toMatchObject(cred);
 
-    const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
-    expect(sendEmailCallArgs[0]).toBe('admin@localhost');
+    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledTimes(1);
+    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
   });
 
   test('create credentials when user already exists but email verification token expired', async () => {
-    let {user: oldUser, cred: oldCred} = await createUserCredentialsEntities(typeormConn,
+    let {user: oldUser, cred: oldCred} = await createUserCredentialsEntities(
       { notVerifiedEmail: 'admin@localhost' },
       { emailVerified: false, emailVerificationTokenExpires: createExpiry(-1) });
 
@@ -159,20 +108,19 @@ describe('Database operations with user', () => {
       email: 'admin@localhost'
     });
 
-    const newCred = (await typeormConn.manager.findOne(Credentials)) as Credentials;
+    const newCred = (await testEntityManager.findOne(Credentials)) as Credentials;
     expect(newCred.hash).toEqual(oldCred.hash);
     expect(newCred.emailVerificationToken).not.toEqual(oldCred.emailVerificationToken);
     expect(newCred.emailVerificationTokenExpires).toEqual(expect.anything());
     expect(newCred.emailVerificationTokenExpires!.valueOf())
       .toBeGreaterThan((oldCred.emailVerificationTokenExpires as Moment).valueOf());
 
-    const sendEmailCallArgs = mockEmail.sendVerificationEmail.mock.calls[0];
-    expect(sendEmailCallArgs[0]).toBe('admin@localhost');
+    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledTimes(1);
+    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
   });
 
   test('create user when it already exists, email verified', async () => {
-    let {user, cred} = await createUserCredentialsEntities(
-      typeormConn, {}, {emailVerified: true});
+    let {user, cred} = await createUserCredentialsEntities({}, {emailVerified: true});
 
     await createUserCredentials({
       name: 'Name',
@@ -180,16 +128,15 @@ describe('Database operations with user', () => {
       email: 'admin@localhost'
     });
 
-    const updCred = await typeormConn.manager.findOne(Credentials);
+    const updCred = await testEntityManager.findOne(Credentials);
     expect(updCred).toMatchObject(cred);
 
-    const sendEmailCallArgs = mockEmail.sendLoginEmail.mock.calls[0];
-    expect(sendEmailCallArgs[0]).toBe('admin@localhost');
+    expect(mockEmail.sendLoginEmail).toHaveBeenCalledTimes(1);
+    expect(mockEmail.sendLoginEmail).toHaveBeenCalledWith('admin@localhost');
   });
 
   test('verify email', async () => {
-    let {user, cred} = await createUserCredentialsEntities(typeormConn,
-      { notVerifiedEmail: 'admin@localhost' });
+    let {user, cred} = await createUserCredentialsEntities({ notVerifiedEmail: 'admin@localhost' });
 
     const verifiedUser = await verifyEmail('admin@localhost', 'abc');
 
@@ -203,14 +150,14 @@ describe('Database operations with user', () => {
     expect(verifiedUser!.email).toMatch('admin@localhost');
     expect(verifiedUser!.notVerifiedEmail).toBeNull();
 
-    const savedUser = (await typeormConn.manager.findOne(User, {
+    const savedUser = (await testEntityManager.findOne(User, {
       relations: ['credentials', 'groups']
     })) as User;
     expect(savedUser).toMatchObject(updUser);
   });
 
   test('verify email fails, token expired', async () => {
-    let {user, cred} = await createUserCredentialsEntities(typeormConn,
+    let {user, cred} = await createUserCredentialsEntities(
       { notVerifiedEmail: 'admin@localhost' },
       { emailVerificationTokenExpires: createExpiry(-1) });
 
@@ -220,35 +167,34 @@ describe('Database operations with user', () => {
   });
 
   test('send reset password token', async () => {
-    await createUserCredentialsEntities(typeormConn,
-      { email: 'admin@localhost' });
+    await createUserCredentialsEntities({ email: 'admin@localhost' });
 
     await sendResetPasswordToken('admin@localhost');
 
-    const updCred = (await typeormConn.manager.findOne(Credentials)) as Credentials;
+    const updCred = (await testEntityManager.findOne(Credentials)) as Credentials;
     expect(updCred.resetPasswordToken).not.toBeNull();
     expect(updCred.resetPasswordTokenExpires).not.toBeNull();
 
-    const sendEmailCallArgs = mockEmail.sendResetPasswordEmail.mock.calls[0];
-    expect(sendEmailCallArgs[0]).toBe('admin@localhost');
+    expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledTimes(1);
+    expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
   });
 
   test('send reset password token, token refreshed', async () => {
-    const {user, cred} = await createUserCredentialsEntities(typeormConn,
+    const {user, cred} = await createUserCredentialsEntities(
       { email: 'admin@localhost' },
       { resetPasswordTokenExpires: createExpiry(-1) });
 
     await sendResetPasswordToken('admin@localhost');
 
-    let updCred = (await typeormConn.manager.findOne(Credentials)) as Credentials;
+    let updCred = (await testEntityManager.findOne(Credentials)) as Credentials;
     expect(updCred.resetPasswordToken).not.toEqual(cred.resetPasswordToken);
 
-    const sendEmailCallArgs = mockEmail.sendResetPasswordEmail.mock.calls[0];
-    expect(sendEmailCallArgs[0]).toBe('admin@localhost');
+    expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledTimes(1);
+    expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
   });
 
   test('reset password', async () => {
-    const {user, cred} = await createUserCredentialsEntities(typeormConn,
+    const {user, cred} = await createUserCredentialsEntities(
       { email: 'admin@localhost' }, {
         resetPasswordToken: 'abc',
         resetPasswordTokenExpires: createExpiry(1)
@@ -256,13 +202,13 @@ describe('Database operations with user', () => {
 
     await resetPassword('admin@localhost', 'new password', 'abc');
 
-    let updCred = (await typeormConn.manager.findOne(Credentials)) as Credentials;
+    let updCred = (await testEntityManager.findOne(Credentials)) as Credentials;
     expect(await verifyPassword('new password', updCred.hash)).toBeTruthy();
   });
 
   test('reset password fails, token expired', async () => {
     const {user, cred} = await createUserCredentialsEntities(
-      typeormConn, {}, {
+      {}, {
         resetPasswordToken: 'abc',
         resetPasswordTokenExpires: createExpiry(-1)
       });

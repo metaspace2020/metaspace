@@ -1,22 +1,16 @@
-import {Connection} from 'typeorm';
+import {Connection, EntityManager} from 'typeorm';
 import {JwtUser} from './modules/auth/controller';
-import {UserGroup as UserGroupModel, UserGroupRoleOptions} from './modules/group/model';
+import {ProjectRole} from '../../webapp/src/api/project';
 
-export type ScopeRole = 'PROFILE_OWNER' | 'GROUP_MEMBER' | 'GROUP_MANAGER' | 'OTHER' | 'ADMIN';
-
-export const ScopeRoleOptions: Record<ScopeRole, ScopeRole> = {
-  PROFILE_OWNER: 'PROFILE_OWNER',
-  GROUP_MEMBER: 'GROUP_MEMBER',
-  GROUP_MANAGER: 'GROUP_MANAGER',
-  OTHER: 'OTHER',
-  ADMIN: 'ADMIN',
-};
+export type UserProjectRoles = {[projectId: string]: ProjectRole | undefined}
 
 export interface Context {
-  connection: Connection,
-  user: JwtUser
+  // TODO: Replace connection with just EntityManager and rename it, as EntityManager is almost the same, but
+  // it can be swapped out by tests so that everything runs in a transaction.
+  connection: Connection | EntityManager;
+  user: JwtUser | null;
+  isAdmin: Boolean;
+  getUserIdOrFail: () => string; // Throws "Unauthenticated" error if not logged in
+  getCurrentUserProjectRoles: () => Promise<UserProjectRoles>;
 }
 
-export interface Scope {
-  scopeRole: ScopeRole
-}
