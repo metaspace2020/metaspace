@@ -52,7 +52,7 @@
     <el-collapse-transition>
       <el-row v-if="showPI" >
         <el-col :span="6">
-          <div class="metadata-section__title">Group admin</div>
+          <div class="metadata-section__title">Principal Investigator</div>
         </el-col>
         <el-col :span="18">
           <el-row :gutter="8">
@@ -61,9 +61,9 @@
                 <form-field
                   type="text"
                   name="Full name"
-                  :value="value.groupAdmin ? value.groupAdmin.name : ''"
+                  :value="value.principalInvestigator ? value.principalInvestigator.name : ''"
                   @input="value => handleInputPI('name', value)"
-                  :error="error && error.groupAdmin && error.groupAdmin.name"
+                  :error="error && error.principalInvestigator && error.principalInvestigator.name"
                   required
                 />
               </el-col>
@@ -71,9 +71,9 @@
                 <form-field
                   type="text"
                   name="Email address"
-                  :value="value.groupAdmin ? value.groupAdmin.email : ''"
+                  :value="value.principalInvestigator ? value.principalInvestigator.email : ''"
                   @input="value => handleInputPI('email', value)"
-                  :error="error && error.groupAdmin && error.groupAdmin.email"
+                  :error="error && error.principalInvestigator && error.principalInvestigator.email"
                   required
                 />
               </el-col>
@@ -130,14 +130,14 @@
     showCreateProjectDialog: boolean = false;
     loading: boolean = false;
     hasSelectedNoGroup: boolean = false;
-    lastGroupAdmin: MetaspaceOptions['groupAdmin'] = null;
+    lastPrincipalInvestigator: MetaspaceOptions['principalInvestigator'] = null;
 
     created() {
       this.fetchUnknowns();
     }
 
     get showPI() {
-      return this.hasSelectedNoGroup || this.value.groupAdmin != null;
+      return this.hasSelectedNoGroup || this.value.principalInvestigator != null;
     }
 
     get groupIdIsUnknown() {
@@ -157,19 +157,19 @@
     }
     set groupId(value: string | null) {
       let groupId = this.value.groupId;
-      let groupAdmin = this.value.groupAdmin;
+      let principalInvestigator = this.value.principalInvestigator;
 
       // Remove PI only if changing away from the "No group" option, to prevent data loss in case we somehow get
       // datasets with both a group and PI
       if (groupId == null && value !== NO_GROUP) {
-        groupAdmin = null;
+        principalInvestigator = null;
       }
       this.hasSelectedNoGroup = value === NO_GROUP;
 
       if (value === NO_GROUP) {
         groupId = null;
-        if (groupAdmin == null) {
-          groupAdmin = this.lastGroupAdmin || {name: '', email: ''};
+        if (principalInvestigator == null) {
+          principalInvestigator = this.lastPrincipalInvestigator || {name: '', email: ''};
         }
       } else if (value === FIND_GROUP) {
         groupId = null;
@@ -178,7 +178,7 @@
         groupId = value;
       }
 
-      this.$emit('input', {...this.value, groupId, groupAdmin})
+      this.$emit('input', {...this.value, groupId, principalInvestigator})
     }
 
     get projectIds() {
@@ -270,20 +270,20 @@
       }
     }
 
-    @Watch('value.groupAdmin')
+    @Watch('value.principalInvestigator')
     backupPI() {
       // Save the PI in case user selects a group then changes their mind
-      if (this.value.groupAdmin != null) {
-        this.lastGroupAdmin = this.value.groupAdmin;
+      if (this.value.principalInvestigator != null) {
+        this.lastPrincipalInvestigator = this.value.principalInvestigator;
       }
     }
 
     handleInputPI(field: 'name' | 'email', value: string) {
-      const groupAdmin = {
-        ...this.value.groupAdmin,
+      const principalInvestigator = {
+        ...this.value.principalInvestigator,
         [field]: value,
       };
-      this.$emit('input', {...this.value, groupAdmin});
+      this.$emit('input', {...this.value, principalInvestigator});
     }
 
     hideFindGroupDialog() {
@@ -298,8 +298,8 @@
         this.groupId = group.id;
         this.unknownGroup = group;
       } else {
-        const groupAdmin = this.value.groupAdmin || this.lastGroupAdmin || {name: '', email: ''};
-        this.$emit('input', {...this.value, groupId: null, groupAdmin});
+        const principalInvestigator = this.value.principalInvestigator || this.lastPrincipalInvestigator || {name: '', email: ''};
+        this.$emit('input', {...this.value, groupId: null, principalInvestigator});
       }
       this.showFindGroupDialog = false;
     }

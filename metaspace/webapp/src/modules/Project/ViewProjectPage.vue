@@ -184,7 +184,7 @@
 
     @ConfirmAsync({
       title: '',
-      message: 'An email will be sent to the project\'s group admin to confirm your access.',
+      message: 'An email will be sent to the project\'s principal investigator to confirm your access.',
       confirmButtonText: "Request access"
     })
     async handleRequestAccess() {

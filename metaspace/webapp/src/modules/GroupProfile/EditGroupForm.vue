@@ -15,9 +15,9 @@
         <el-input v-model="model.shortName" :maxLength="shortNameMaxLength" />
       </el-form-item>
     </div>
-    <div v-if="showGroupAdmin">
-      <el-form-item label="Group admin" prop="groupAdminEmail" class="groupAdmin">
-        <el-input v-model="model.groupAdminEmail" placeholder="Email address" />
+    <div v-if="showPrincipalInvestigator">
+      <el-form-item label="Principal investigator" prop="principalInvestigatorEmail" class="principalInvestigator">
+        <el-input v-model="model.principalInvestigatorEmail" placeholder="Email address" />
       </el-form-item>
     </div>
   </el-form>
@@ -31,7 +31,7 @@
   interface Model {
     name: string;
     shortName: string;
-    groupAdminEmail?: string;
+    principalInvestigatorEmail?: string;
   }
 
   @Component
@@ -41,15 +41,15 @@
     @Prop({type: Boolean, default: false})
     disabled!: Boolean;
     @Prop({type: Boolean, default: false})
-    showGroupAdmin!: Boolean;
+    showPrincipalInvestigator!: Boolean;
 
     shortNameMaxLength = 20;
 
     rules = {
       name: [{type: 'string', required: true, min: 2, message: 'Full name is required', trigger: 'manual'}],
       shortName: [{type: 'string', required: true, min: 2, message: 'Short name is required', trigger: 'manual'}],
-      groupAdminEmail: [
-        {type: 'string', pattern: emailRegex, required: true, message: 'Group admin must be a valid email address', trigger: 'manual'}
+      principalInvestigatorEmail: [
+        {type: 'string', pattern: emailRegex, required: true, message: 'Principal Investigator must be a valid email address', trigger: 'manual'}
       ],
     };
 

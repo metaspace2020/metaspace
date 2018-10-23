@@ -23,7 +23,7 @@ const metadata = {
       "First_Name": "Name"
     },
     "Institution": "Genentech",
-    "Group_Admin": {
+    "Principal_Investigator": {
       "Email": "pi@example.com",
       "Surname": "Surname",
       "First_Name": "Name"

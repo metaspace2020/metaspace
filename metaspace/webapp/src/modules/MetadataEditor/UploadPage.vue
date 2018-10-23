@@ -19,10 +19,7 @@
     <div class="upload-page-wrapper">
       <div v-if="!enableUploads">
         <div id="maintenance-message">
-          Dataset uploads have been temporarily disabled due to technical reasons.
-          We are currently updating Metaspace.
-          <br/>
-          Please have some patience and try again in a few hours. Thank you for understanding!
+          Dataset uploads have been temporarily disabled. Please try again later. Thank you for understanding!
         </div>
       </div>
 

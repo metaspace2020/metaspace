@@ -11,7 +11,7 @@ input CreateGroupInput {
   name: String!
   shortName: String!
   urlSlug: String
-  groupAdminEmail: String!
+  principalInvestigatorEmail: String!
 }
 
 input UpdateGroupInput {

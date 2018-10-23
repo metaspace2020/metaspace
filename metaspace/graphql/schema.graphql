@@ -64,7 +64,7 @@ type Dataset {
   institution: String
   submitter: User!
   group: Group
-  groupAdmin: Person
+  principalInvestigator: Person
   projects: [Project!]
 
   polarity: Polarity!
@@ -244,7 +244,7 @@ input DatasetCreateInput {
   submitterId: ID!
   groupId: ID
   projectIds: [ID!] = []
-  groupAdmin: PersonInput
+  principalInvestigator: PersonInput
   isPublic: Boolean! = true
 }
 
@@ -258,7 +258,7 @@ input DatasetUpdateInput {
   submitterId: ID
   groupId: ID
   projectIds: [ID!]
-  groupAdmin: PersonInput
+  principalInvestigator: PersonInput
   isPublic: Boolean
 }
 

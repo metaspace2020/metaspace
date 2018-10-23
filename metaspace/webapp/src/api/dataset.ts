@@ -43,7 +43,7 @@ export const datasetDetailItemFragment =
       name
       email
     }
-    principalInvestigator { name }
+    groupAdmin { name }
     group { id name }
     projects { id name }
     polarity
