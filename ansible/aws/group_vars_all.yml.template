@@ -93,7 +93,7 @@ sm_cluster_autostart_ansible_version: 2.6.2
 sm_cluster_autostart_python: "{{ miniconda_prefix }}/envs/{{ miniconda_env.name }}/bin/python"
 
 mol_db_home: "{{ metaspace_home }}/metaspace/mol-db"
-mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}/mol_db/v1"
+mol_db_url: "http://{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:5001/v1"
 mol_db_postgres_pass: POSTGRES_PASSWORD
 mol_db_image_dir: /var/www/mol-images
 mol_db_miniconda_env:
@@ -146,7 +146,7 @@ sm_graphql_jwt_secret: JWT_SECRET
 sm_graphql_public_url: "http://{{ sm_graphql_hostname }}/graphql"
 sm_graphql_mol_image_host: "{{ sm_graphql_hostname }}"
 sm_graphql_img_upload_host: "{{ hostvars['web-1'].ansible_ssh_host }}"
-sm_graphql_moldb_service_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}/mol_db"
+sm_graphql_moldb_service_host: "{{ hostvars['web-1'].ansible_ec2_local_ipv4 }}:5001"
 sm_graphql_database_password: "{{ sm_postgres_password }}"
 sm_graphql_rabbitmq_host: "{{ rabbitmq_host }}"
 sm_graphql_rabbitmq_user: "{{ rabbitmq_user }}"
