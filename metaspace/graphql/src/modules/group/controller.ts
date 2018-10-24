@@ -1,28 +1,25 @@
 import {UserError} from 'graphql-errors';
 import {Connection, Like, In} from 'typeorm';
 
+import {Credentials as CredentialsModel} from '../auth/model';
 import {Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions} from './model';
 import {User as UserModel} from '../user/model';
 import {Dataset as DatasetModel} from '../dataset/model';
-import {Group, UserGroup, UserGroupRole} from '../../binding';
-import {Context, Scope, ScopeRole, ScopeRoleOptions} from '../../context';
-import {LooselyCompatible, smAPIRequest, logger} from '../../utils';
+import {Group, UserGroup, User, UserGroupRole} from '../../binding';
+import {Context} from '../../context';
+import {Scope, ScopeRole, ScopeRoleOptions} from '../../bindingTypes';
+import {LooselyCompatible, smAPIRequest, logger, findUserByEmail} from '../../utils';
 import {JwtUser} from '../auth/controller';
-
-const findUserByEmail = async (connection: Connection, email: string) => {
-  return await connection.getRepository(UserModel)
-    .createQueryBuilder()
-    .where('LOWER(email) = :email', {'email': email.toLowerCase()})
-    .getOne();
-};
+import {sendInvitationEmail} from '../auth';
+import config from '../../utils/config';
 
 const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<ScopeRole> => {
   let scopeRole = ScopeRoleOptions.OTHER;
-  if (ctx.user.role === 'admin') {
+  if (ctx.user != null && ctx.user.role === 'admin') {
     scopeRole = ScopeRoleOptions.ADMIN;
   }
   else {
-    if (groupId) {
+    if (ctx.user != null && groupId) {
       const userGroup = await ctx.connection.getRepository(UserGroupModel).findOne({
         where: { userId: ctx.user.id, groupId }
       });
@@ -50,7 +47,10 @@ const assertUserAuthenticated = (user: JwtUser) => {
 };
 
 const assertUserRoles = async (connection: Connection, user: JwtUser, groupId: string, roles: UserGroupRole[]) => {
-  if (groupId && user.role !== 'admin') {
+  if (groupId) {
+    if (user.role === 'admin')
+      return;
+
     const userGroup = (await connection.getRepository(UserGroupModel).find({
       select: ['userId'],
       where: {
@@ -148,17 +148,21 @@ export const Resolvers = {
 
   Mutation: {
     async createGroup(_: any, {groupDetails}: any, {user, connection}: any): Promise<Group> {
+      const {principalInvestigatorEmail, ...groupInput} = groupDetails;
+      logger.info(`Creating ${groupInput.name} group by '${user.id}' user...`);
       assertCanCreateGroup(user);
 
       const {groupAdminEmail, ...groupInput} = groupDetails;
       // TODO create inactive account for PI
-
       const insertRes = await connection.getRepository(GroupModel).insert(groupInput);
       const groupIdMap = insertRes.identifiers[0];
+
+      logger.info(`${groupInput.name} group created`);
       return {...groupIdMap, ...groupInput};
     },
 
     async updateGroup(_: any, {groupId, groupDetails}: any, {user, connection}: any): Promise<Group> {
+      logger.info(`Updating '${groupId}' group by '${user.id}' user...`);
       await assertCanEditGroup(connection, user, groupId);
 
       const groupRepo = connection.getRepository(GroupModel);
@@ -168,23 +172,29 @@ export const Resolvers = {
       const groupDSs = await connection.getRepository(DatasetModel).find({ groupId });
       if (groupDSs) {
         for (let ds of groupDSs) {
+          logger.info(`Updating '${groupId}' group datasets...`);
           await smAPIRequest(`/v1/datasets/${ds.id}/update`, {
             doc: { groupId }
           });
         }
       }
+      logger.info(`'${groupId}' group updated`);
       return group;
     },
 
     async deleteGroup(_: any, {groupId}: any, {user, connection}: any): Promise<Boolean> {
+      logger.info(`Deleting '${groupId}' group by '${user.id}' user...`);
       await assertCanEditGroup(connection, user, groupId);
 
       await connection.getRepository(UserGroupModel).delete({groupId});
       await connection.getRepository(GroupModel).delete(groupId);
+
+      logger.info(`'${groupId}' group deleted`);
       return true;
     },
 
     async leaveGroup(_: any, {groupId}: any, {user, connection}: any): Promise<Boolean> {
+      logger.info(`'${user.id}' user leaving '${groupId}' group...`);
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
@@ -194,10 +204,12 @@ export const Resolvers = {
         throw new UserError('Group admin cannot leave group');
 
       await userGroupRepo.delete({ userId: user.id, groupId });
+      logger.info(`User '${user.id}' left '${groupId}' group`);
       return true;
     },
 
     async removeUserFromGroup(_: any, {groupId, userId}: any, {user, connection}: any): Promise<Boolean> {
+      logger.info(`User '${user.id}' removing '${userId}' user from '${groupId}' group...`);
       await assertCanEditGroup(connection, user, groupId);
 
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
@@ -212,10 +224,12 @@ export const Resolvers = {
 
         await userGroupRepo.delete({ userId, groupId });
       }
+      logger.info(`User '${userId}' was removed from '${groupId}' group`);
       return true;
     },
 
     async requestAccessToGroup(_: any, {groupId}: any, {user, connection}: any): Promise<UserGroup> {
+      logger.info(`User '${user.id}' requesting access to '${groupId}' group...`);
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
@@ -231,6 +245,7 @@ export const Resolvers = {
         await userGroupRepo.save(userGroup);
       }
 
+      logger.info(`User '${user.id}' requested access to '${groupId}' group`);
       return await userGroupRepo.findOneOrFail({
         where: { groupId, userId: user.id },
         relations: ['user', 'group']
@@ -238,6 +253,7 @@ export const Resolvers = {
     },
 
     async acceptRequestToJoinGroup(_: any, {groupId, userId}: any, {user, connection}: any): Promise<UserGroup> {
+      logger.info(`User '${user.id}' accepting request from '${userId}' user to join '${groupId}' group...`);
       await assertCanEditGroup(connection, user, groupId);
 
       await connection.getRepository(UserModel).findOneOrFail(userId);
@@ -257,6 +273,7 @@ export const Resolvers = {
         });
       }
 
+      logger.info(`User '${userId}' was accepted to '${groupId}' group`);
       return userGroupRepo.findOneOrFail({
         where: { groupId, userId },
         relations: ['user', 'group']
@@ -264,12 +281,22 @@ export const Resolvers = {
     },
 
     async inviteUserToGroup(_: any, {groupId, email}: any, {user, connection}: any): Promise<UserGroup> {
+      logger.info(`User '${user.id}' inviting ${email} to join '${groupId}' group...`);
       await assertCanEditGroup(connection, user, groupId);
 
-      const invUser = await findUserByEmail(connection, email);
-      if (!invUser)
-        // TODO: send sign up invitation
-        throw new UserError('Not Implemented Yet');
+      let invUser = await findUserByEmail(connection, email, 'email')
+        || await findUserByEmail(connection, email, 'not_verified_email');
+      if (!invUser) {
+        // create not verified user
+        const invUserCred = await connection.getRepository(CredentialsModel).save({ emailVerified: false });
+        invUser = await connection.getRepository(UserModel).save({
+          notVerifiedEmail: email,
+          credentials: invUserCred
+        }) as UserModel;
+        const invitedByUser = await findUserByEmail(connection, user.email);
+        const link = `${config.web_public_url}/account/create-account`;
+        sendInvitationEmail(email, invitedByUser!.name || '', link);
+      }
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
@@ -280,17 +307,18 @@ export const Resolvers = {
 
       if (invUserGroup && [UserGroupRoleOptions.MEMBER,
           UserGroupRoleOptions.GROUP_ADMIN].includes(invUserGroup.role)) {
-          logger.info(`User ${invUserGroup.userId} is already member of ${groupId}`)
+          logger.info(`User '${invUserGroup.userId}' is already member of '${groupId}'`);
       }
       else {
-        await userGroupRepo.save({
+        invUserGroup = await userGroupRepo.save({
           userId: invUser.id,
           groupId,
           role: UserGroupRoleOptions.INVITED,
         });
-        logger.info(`Invited ${invUserGroup.userId} user to ${groupId} group`)
+        logger.info(`'${invUserGroup.userId}' user was invited to '${groupId}' group`);
       }
 
+      logger.info(`User ${email} was invited to '${groupId}' group`);
       return await userGroupRepo.findOneOrFail({
         where: { userId: invUser.id, groupId },
         relations: ['user', 'group']
@@ -298,6 +326,7 @@ export const Resolvers = {
     },
 
     async acceptGroupInvitation(_: any, {groupId}: any, {user, connection}: any): Promise<UserGroup> {
+      logger.info(`User '${user.id}' accepting invitation to join '${groupId}' group...`);
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
@@ -313,6 +342,7 @@ export const Resolvers = {
         });
       }
 
+      logger.info(`User '${user.id}' accepted invitation to '${groupId}' group`);
       return await userGroupRepo.findOneOrFail({
         where: { userId: user.id, groupId },
         relations: ['user', 'group']
@@ -320,6 +350,7 @@ export const Resolvers = {
     },
 
     async importDatasetsIntoGroup(_: any, {groupId, datasetIds}: any, {user, connection}: any): Promise<Boolean> {
+      logger.info(`User '${user.id}' importing datasets ${datasetIds} to '${groupId}' group...`);
       await assertCanAddDataset(connection, user, groupId);
 
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
@@ -331,6 +362,7 @@ export const Resolvers = {
           doc: { groupId: groupId }
         });
       }
+      logger.info(`User '${user.id}' imported datasets to '${groupId}' group`);
       return true;
     },
   }

@@ -15,7 +15,8 @@ const {createImgServerAsync} = require('./imageUpload.js'),
   {logger, initDBConnection} = require('./utils'),
   {createConnection} = require('./src/utils'),
   {executableSchema} = require('./executableSchema'),
-  derefSchema = require('./deref_schema.js');
+  derefSchema = require('./deref_schema.js'),
+  getContext = require('./src/getContext').default;
 
 // subscriptions setup
 const http = require('http'),
@@ -65,10 +66,7 @@ async function createHttpServerAsync(config) {
 
   const apollo = new ApolloServer({
     schema: executableSchema,
-    context: ({req}) => ({
-        user: req.user != null ? req.user.user : null,
-        connection
-    }),
+    context: ({req}) => getContext(req, connection),
     playground: {
       settings: {
         'editor.theme': 'light',
@@ -77,9 +75,10 @@ async function createHttpServerAsync(config) {
     },
     formatError: error => {
       const {message, extensions, source} = error;
-      logger.error(extensions.exception, source);
+      logger.error(extensions.exception || message, source);
       return error;
-    }
+    },
+    introspection: true,
   });
   apollo.applyMiddleware({ app });
 

@@ -1,10 +1,10 @@
 type User {
   id: ID!
-  name: String!
-  role: String            # null if current user is not allowed to see
-  email: String           # null if current user is not allowed to see
-  groups: [UserGroup!]    # null if current user is not allowed to see
-  primaryGroup: UserGroup
+  name: String
+  role: String             # null if current user is not allowed to see
+  email: String            # null if current user is not allowed to see
+  groups: [UserGroup!]     # null if current user is not allowed to see
+  primaryGroup: UserGroup  # null if current user is not allowed to see
   projects: [UserProject!] # null if current user is not allowed to see
 }
 
@@ -17,7 +17,7 @@ input UpdateUserInput {
 
 type Query {
   currentUser: User
-  user(userId: ID!): User           # For admins
+  user(userId: ID!): User
   allUsers(query: String=""): [User!]  # For admins
 }
 

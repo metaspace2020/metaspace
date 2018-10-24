@@ -162,3 +162,18 @@ export interface DatasetVisibilityResult {
   group: { id: string, name: string } | null;
   projects: { id: string, name: string }[] | null;
 }
+
+export const datasetStatusUpdatedQuery = gql`subscription DS {
+  datasetStatusUpdated {
+    dataset {
+      id
+      name
+      status
+      submitter { id name }
+      principalInvestigator { name }
+      group { id name }
+      projects { id name }
+      isPublic
+    }
+  }
+}`

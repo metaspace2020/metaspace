@@ -43,7 +43,9 @@ DATASET_SEL = '''SELECT
     gg.id as ds_group_id,
     gg.name as ds_group_name,
     gg.short_name as ds_group_short_name,
-    gd.group_approved as ds_group_approved
+    gd.group_approved as ds_group_approved,
+    COALESCE(gp.ds_project_ids, '{}') as ds_project_ids,
+    COALESCE(gp.ds_project_names, '{}') as ds_project_names
 FROM (
   SELECT
     d.id AS ds_id,
@@ -65,6 +67,13 @@ FROM (
 LEFT JOIN graphql.dataset gd ON gd.id = d.ds_id
 LEFT JOIN graphql.user gu ON gu.id = gd.user_id
 LEFT JOIN graphql.group gg ON gg.id = gd.group_id
+LEFT JOIN (
+    SELECT gdp.dataset_id, array_agg(gp.id)::text[] as ds_project_ids, array_agg(gp.name)::text[] as ds_project_names
+    FROM graphql.dataset_project gdp
+    JOIN graphql.project gp ON gdp.project_id = gp.id
+    WHERE gdp.approved
+    GROUP BY gdp.dataset_id
+) gp ON gp.dataset_id = d.ds_id
 WHERE d.ds_id = %s'''
 
 DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry',)
@@ -266,9 +275,6 @@ class ESExporter(object):
         annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
         logger.info('Indexing {} documents: {}, {}'.format(len(annotation_docs), ds_id, mol_db))
 
-        # TODO: export dataset projects
-
-        n = 100
         to_index = []
         mol_by_sf = self._get_mol_by_sf_dict(mol_db)
         for doc in annotation_docs:
@@ -307,6 +313,7 @@ class ESExporter(object):
         })
         self._es.index(self.index, doc_type='dataset', body=ds_doc, id=ds_id)
 
+
     def update_ds(self, ds_id, fields):
         pipeline_id = 'update-ds-fields'
         if fields:
@@ -323,6 +330,9 @@ class ESExporter(object):
                     ds_doc_upd['ds_group_name'] = ds_doc['ds_group_name']
                     ds_doc_upd['ds_group_short_name'] = ds_doc['ds_group_short_name']
                     ds_doc_upd['ds_group_approved'] = ds_doc['ds_group_approved']
+                elif f == 'project_ids':
+                    ds_doc_upd['ds_project_ids'] = ds_doc['ds_project_ids']
+                    ds_doc_upd['ds_project_names'] = ds_doc['ds_project_names']
                 elif f == 'metadata':
                     ds_meta_flat_doc = flatten_doc(ds_doc['ds_meta'], parent_key='ds_meta')
                     ds_doc_upd.update(ds_meta_flat_doc)

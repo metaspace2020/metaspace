@@ -2,11 +2,13 @@ const jsondiffpatch = require('jsondiffpatch'),
   config = require('config'),
   Ajv = require('ajv'),
   {UserError} = require('graphql-errors'),
-  _ = require('lodash');
+  _ = require('lodash'),
+  {In} = require('typeorm');
 
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
-  {Dataset: DatasetModel} = require('./src/modules/dataset/model'),
+  {Dataset: DatasetModel, DatasetProject: DatasetProjectModel} = require('./src/modules/dataset/model'),
   {UserGroup: UserGroupModel, UserGroupRoleOptions} = require('./src/modules/group/model'),
+  {UserProjectRoleOptions: UPRO} = require('./src/modules/project/model'),
   metadataMapping = require('./metadataSchemas/metadataMapping').default,
   {smAPIRequest} = require('./src/utils');
 
@@ -98,9 +100,9 @@ function processingSettingsChanged(ds, update) {
   return {newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff}
 }
 
-const isMemberOf = async (connection, user, groupId) => {
+const isMemberOf = async (connection, userId, groupId) => {
   const userGroup = await connection.getRepository(UserGroupModel).findOne({
-    userId: user.id,
+    userId,
     groupId
   });
   let isMember = false;
@@ -111,17 +113,36 @@ const isMemberOf = async (connection, user, groupId) => {
   return isMember;
 };
 
-const saveDS = async (connection, args) => {
-  const {dsId, submitterId, groupId, groupApproved, principalInvestigator} = args;
+const saveDS = async (connection, args, currentUserRoles) => {
+  const {dsId, submitterId, groupId, projectIds, principalInvestigator} = args;
   const dsUpdate = {
     id: dsId,
     userId: submitterId,
     groupId: groupId,
-    groupApproved,
+    groupApproved: groupId != null ? await isMemberOf(connection, submitterId, groupId) : false,
     piName: principalInvestigator ? principalInvestigator.name : undefined,
     piEmail: principalInvestigator ? principalInvestigator.email : undefined
   };
   await connection.getRepository(DatasetModel).save(dsUpdate);
+
+  if (projectIds != null && projectIds.length > 0) {
+    const datasetProjectRepo = connection.getRepository(DatasetProjectModel);
+    const existingDatasetProjects = await datasetProjectRepo.find({ datasetId: dsId });
+    const savePromises = projectIds.map(async (projectId) => {
+      const approved = [UPRO.MEMBER, UPRO.MANAGER].includes(currentUserRoles[projectId]);
+      const existing = existingDatasetProjects.find(dp => dp.projectId === projectId);
+      if (existing == null || existing.approved !== approved) {
+        return await datasetProjectRepo.save({ datasetId: dsId, projectId, approved });
+      } else {
+        return Promise.resolve();
+      }
+    });
+    const deletePromises = existingDatasetProjects
+      .filter(({projectId}) => !projectIds.includes(projectId))
+      .map(async ({projectId}) => await datasetProjectRepo.delete({ datasetId: dsId, projectId }));
+
+    await Promise.all([...savePromises, ...deletePromises]);
+  }
 };
 
 const assertCanEditDataset = async (connection, user, dsId) => {
@@ -155,9 +176,11 @@ module.exports = {
   processingSettingsChanged,
 
   Mutation: {
-    create: async (_, args, {user, connection}) => {
+    create: async (_, args, {user, connection, getCurrentUserProjectRoles}) => {
       const {input, priority} = args;
       let {id: dsId} = args;
+
+      logger.info(`Creating dataset '${dsId}' by '${user.id}' user ...`);
       if (dsId)
         await assertCanEditDataset(connection, user, dsId);
       else
@@ -168,24 +191,26 @@ module.exports = {
       await molDBsExist(input.molDBs);
 
       const url = dsId ? `/v1/datasets/${dsId}/add` : '/v1/datasets/add';
-      const resp = await smAPIRequest(url, {
+      const smAPIResp = await smAPIRequest(url, {
         doc: input,
         priority: priority,
         email: user.email,
       });
       // TODO: generate dsId here and save it before calling SM API
-      dsId = resp['ds_id'];
+      dsId = smAPIResp['ds_id'];
 
-      const {submitterId, groupId, principalInvestigator} = input;
-      const saveDSArgs = {dsId, submitterId, groupId, principalInvestigator};
-      if (groupId)
-        saveDSArgs.groupApproved = await isMemberOf(connection, user, groupId);
-      await saveDS(connection, saveDSArgs);
+      const {submitterId, groupId, projectIds, principalInvestigator} = input;
+      const saveDSArgs = {dsId, submitterId, groupId, projectIds, principalInvestigator};
+      await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles());
+
+      logger.info(`Dataset '${dsId}' was created`);
       return JSON.stringify({ dsId, status: 'success' });
     },
 
-    update: async (_, args, {user, connection}) => {
+    update: async (_, args, {user, connection, getCurrentUserProjectRoles}) => {
       const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
+
+      logger.info(`User '${user.id}' updating '${dsId}' dataset...`);
       await assertCanEditDataset(connection, user, dsId);
 
       if (update.metadataJson) {
@@ -197,19 +222,19 @@ module.exports = {
       const {newDB, procSettingsUpd} = await processingSettingsChanged(engineDS, update);
       const reprocessingNeeded = newDB || procSettingsUpd;
 
-      const {submitterId, groupId, principalInvestigator} = update;
-      const saveDSArgs = {dsId, submitterId, groupId, principalInvestigator};
-      if (groupId)
-        saveDSArgs.groupApproved = await isMemberOf(connection, user, groupId);
+      const {submitterId, groupId, projectIds, principalInvestigator} = update;
+      const saveDSArgs = {dsId, submitterId, groupId, projectIds, principalInvestigator};
 
+      let smAPIResp;
       if (reprocess) {
-        await saveDS(connection, saveDSArgs);
-        return await smAPIRequest(`/v1/datasets/${dsId}/add`, {
+        await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles());
+        smAPIResp = await smAPIRequest(`/v1/datasets/${dsId}/add`, {
           doc: {...engineDS, ...update},
           delFirst: procSettingsUpd || delFirst,  // delete old results if processing settings changed
           priority: priority,
           force: force,
         });
+
       }
       else {
         if (reprocessingNeeded) {
@@ -219,19 +244,23 @@ module.exports = {
           }));
         }
         else {
-          await saveDS(connection, saveDSArgs);
-          const resp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
+          await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles());
+          smAPIResp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
             doc: update,
             priority: priority,
             force: force,
           });
-          return JSON.stringify(resp);
         }
       }
+
+      logger.info(`Dataset '${dsId}' was updated`);
+      return JSON.stringify(smAPIResp);
     },
 
     delete: async (_, args, {user, connection}) => {
       const {id: dsId, priority} = args;
+
+      logger.info(`User '${user.id}' deleting '${dsId}' dataset...`);
       await assertCanEditDataset(connection, user, dsId);
 
       try {
@@ -243,26 +272,35 @@ module.exports = {
 
       await connection.getRepository(DatasetModel).delete(dsId);
       const resp = await smAPIRequest(`/v1/datasets/${dsId}/delete`, {});
+
+      logger.info(`Dataset '${dsId}' was deleted`);
       return JSON.stringify(resp);
     },
 
     addOpticalImage: async (_, {input}, {user, connection}) => {
       const {datasetId: dsId, transform} = input;
       let {imageUrl} = input;
-      await assertCanEditDataset(connection, user, dsId);
 
+      logger.info(`User '${user.id}' adding optical image to '${dsId}' dataset...`);
+      await assertCanEditDataset(connection, user, dsId);
         // TODO support image storage running on a separate host
       const url = `http://localhost:${config.img_storage_port}${imageUrl}`;
       const resp = await smAPIRequest(`/v1/datasets/${dsId}/add-optical-image`, {
         url, transform
       });
+
+      logger.info(`Optical image was added to '${dsId}' dataset`);
       return JSON.stringify(resp);
     },
 
     deleteOpticalImage: async (_, args, {user, connection}) => {
       const {datasetId: dsId} = args;
+
+      logger.info(`User '${user.id}' deleting optical image from '${dsId}' dataset...`);
       await assertCanEditDataset(connection, user, dsId);
       const resp = await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
+
+      logger.info(`Optical image was deleted from '${dsId}' dataset`);
       return JSON.stringify(resp);
     }
   }

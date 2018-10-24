@@ -91,7 +91,7 @@ type Dataset {
   inputPath: String
   uploadDateTime: String
   fdrCounts(inpFdrLvls: [Int!]!, checkLvl: Int!): FdrCounts
-  opticalImage: String! @deprecated(badName: "Renamed to rawOpticalImageUrl")
+  opticalImage: String @deprecated(badName: "Renamed to rawOpticalImageUrl")
   rawOpticalImageUrl: String
 }
 

@@ -166,6 +166,7 @@ def update_ds(ds_man, ds_id, params):
             is_public
             submitter_id
             group_id
+            project_ids
         }
     }
     :return:

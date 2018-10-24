@@ -39,14 +39,14 @@ export class Group {
 @Entity('user_group')
 export class UserGroup {
 
-  @PrimaryColumn({ type: 'text', name: 'user_id' })
+  @PrimaryColumn({ type: 'uuid', name: 'user_id' })
   userId: string;
 
   @ManyToOne(type => User)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @PrimaryColumn({ type: 'text', name: 'group_id' })
+  @PrimaryColumn({ type: 'uuid', name: 'group_id' })
   groupId: string;
 
   @ManyToOne(type => Group)
