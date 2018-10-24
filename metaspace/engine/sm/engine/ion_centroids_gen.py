@@ -37,7 +37,7 @@ class IonCentroidsGenerator(object):
         self.ion_df = None
         self.ion_centroids_df = None
 
-    def exists(self):
+    def _saved(self):
         """ Check if ion centroids saved to parquet
         """
         if self._ion_centroids_path.startswith('s3a://'):
@@ -54,13 +54,14 @@ class IonCentroidsGenerator(object):
         else:
             return Path(self._ion_centroids_path + '/ions/_SUCCESS').exists()
 
-    def generate(self, isocalc, sfs, adducts):
+    def generate(self, isocalc, formulas, adducts):
         """ Generate isotopic peaks
 
         Args
         ---
         isocalc: IsocalcWrapper
             Cannot be a class field as Spark doesn't allow to pass 'self' to functions
+        formulas: list
         adducts: list
         """
         logger.info('Generating molecular isotopic peaks')
@@ -77,7 +78,7 @@ class IonCentroidsGenerator(object):
                 return []
 
         ion_df = pd.DataFrame([(i, sf, adduct) for i, (sf, adduct) in
-                               enumerate(sorted(product(sfs, adducts)))],
+                               enumerate(sorted(product(formulas, adducts)))],
                               columns=['ion_i', 'sf', 'adduct']).set_index('ion_i')
 
         ion_centroids_rdd = (self._sc.parallelize(ion_df.reset_index().values,
@@ -110,10 +111,11 @@ class IonCentroidsGenerator(object):
     def restore(self):
         logger.info('Restoring peaks')
 
-        self.ion_df = self._spark_session.read.parquet(
-            self._ion_centroids_path + '/ions').toPandas().set_index('ion_i')
-        self.ion_centroids_df = self._spark_session.read.parquet(
-            self._ion_centroids_path + '/ion_centroids').toPandas().set_index('ion_i')
+        if self._saved():
+            self.ion_df = self._spark_session.read.parquet(
+                self._ion_centroids_path + '/ions').toPandas().set_index('ion_i')
+            self.ion_centroids_df = self._spark_session.read.parquet(
+                self._ion_centroids_path + '/ion_centroids').toPandas().set_index('ion_i')
 
     def sf_adduct_centroids_df(self):
         return self.ion_df.join(self.ion_centroids_df).set_index(['sf', 'adduct'])
@@ -135,14 +137,17 @@ class IonCentroidsGenerator(object):
         ion_ids = ion_map.loc[ions].values
         return self.ion_centroids_df.loc[ion_ids].sort_values(by='mz')
 
-    def generate_if_not_exist(self, isocalc, sfs, adducts):
-        if not self.exists():
-            self.generate(isocalc=isocalc, sfs=sfs, adducts=adducts)
+    def generate_if_not_exist(self, isocalc, formulas, adducts):
+        self.restore()
+        saved_adducts = self.ion_df.adduct.unique() if self.ion_df is not None else []
+        missing_adducts = list(set(adducts) - set(saved_adducts))
+        if len(missing_adducts) > 0:
+            logger.info(f'Missing adducts: {missing_adducts}')
+            all_adducts = list(set(adducts) | set(saved_adducts))
+            self.generate(isocalc, formulas, all_adducts)
             self.save()
-        else:
-            self.restore()
 
     def ions(self, adducts):
-        return (self.ion_df[self.ion_df.adduct.isin(adducts)]
-                .sort_values(by=['sf', 'adduct'])
-                .to_records(index=False))
+        filtered_ion_df = (self.ion_df[self.ion_df.adduct.isin(adducts)]
+                           .sort_values(by=['sf', 'adduct']))
+        return [tuple(r) for r in filtered_ion_df.values]
