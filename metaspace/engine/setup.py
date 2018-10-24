@@ -30,7 +30,13 @@ setup(name='sm',
           "pysparkling",
           "PyArrow>=0.8.0",
           "Pillow==4.2.1",
-          "pyopenms==2.2.0"
+          "pyopenms==2.2.0",
+          "numpy>=1.11.2",
+          "scipy>=0.18.1",
+          "matplotlib>=2",
+          "pandas>=0.22",
+          "cffi",
+          "psycopg2==2.7.1",
       ],
       dependency_links=[
           "git+https://github.com/alexandrovteam/pyimzML.git/@1.2.4#egg=pyimzML-1.2.4"

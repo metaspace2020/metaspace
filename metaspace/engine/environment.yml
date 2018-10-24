@@ -1,11 +1,5 @@
 name: sm
 dependencies:
-  - python>=3.6
-  - numpy=1.11.2
-  - scipy=0.18.1
-  - matplotlib=2
-  - pandas>=0.22
-  - cffi
+  - python=3.6
   - libgcc
-  - psycopg2=2.7.1
   - nomkl
