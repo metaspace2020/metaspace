@@ -273,7 +273,9 @@ const Resolvers = {
         const results = await esSearchResults({
           orderBy: 'ORDER_BY_DATE',
           sortingOrder: 'DESCENDING',
-          submitter: user.id,
+          datasetFilter: {
+            submitter: user.id,
+          },
           limit: 1,
         }, 'dataset', user, await ctx.getCurrentUserProjectRoles());
         if (results.length > 0) {
