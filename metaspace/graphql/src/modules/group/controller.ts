@@ -148,11 +148,10 @@ export const Resolvers = {
 
   Mutation: {
     async createGroup(_: any, {groupDetails}: any, {user, connection}: any): Promise<Group> {
-      const {principalInvestigatorEmail, ...groupInput} = groupDetails;
+      const {groupAdminEmail, ...groupInput} = groupDetails;
       logger.info(`Creating ${groupInput.name} group by '${user.id}' user...`);
       assertCanCreateGroup(user);
 
-      const {groupAdminEmail, ...groupInput} = groupDetails;
       // TODO create inactive account for PI
       const insertRes = await connection.getRepository(GroupModel).insert(groupInput);
       const groupIdMap = insertRes.identifiers[0];

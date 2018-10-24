@@ -46,7 +46,7 @@
     model = {
       name: '',
       shortName: '',
-      principalInvestigatorEmail: '',
+      groupAdminEmail: '',
     };
 
     currentUser: CurrentUserQuery | null = null;
