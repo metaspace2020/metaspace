@@ -148,15 +148,18 @@ const Query: FieldResolversFor<Query, void> = {
       .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles));
 
     if (query) {
+      // Full-text search is disabled as it relies on functions not present in the installed pg version (9.5)
       // TODO: Add a full-text index to project.name to speed this up
       // The below full-text query attempts to parse `query` as a phrase. If successful it appends ':*' so that the
       // last word in the query is used as a prefix search. If nothing in query is matchable then it just matches everything.
-      projectsQuery = projectsQuery.andWhere(`(
-        CASE WHEN phraseto_tsquery('english', :query)::text != '' 
-             THEN to_tsvector('english', project.name) @@ to_tsquery(phraseto_tsquery('english', :query)::text || ':*') 
-             ELSE true
-        END
-      )`, {query});
+      // projectsQuery = projectsQuery.andWhere(`(
+      //   CASE WHEN phraseto_tsquery('english', :query)::text != ''
+      //        THEN to_tsvector('english', project.name) @@ to_tsquery(phraseto_tsquery('english', :query)::text || ':*')
+      //        ELSE true
+      //   END
+      // )`, {query});
+
+      projectsQuery = projectsQuery.andWhere("project.name ILIKE ('%' || :query || '%')", {query});
     }
     if (offset != null) {
       projectsQuery = projectsQuery.skip(offset);
@@ -176,12 +179,7 @@ const Query: FieldResolversFor<Query, void> = {
       .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles));
 
     if (query) {
-      projectsQuery = projectsQuery.andWhere(`(
-        CASE WHEN phraseto_tsquery('english', :query)::text != '' 
-             THEN to_tsvector('english', project.name) @@ to_tsquery(phraseto_tsquery('english', :query)::text || ':*') 
-             ELSE true
-        END
-      )`, {query});
+      projectsQuery = projectsQuery.andWhere("project.name ILIKE ('%' || :query || '%')", {query});
     }
 
     return await projectsQuery.getCount();

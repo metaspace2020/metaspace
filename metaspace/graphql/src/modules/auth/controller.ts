@@ -162,12 +162,17 @@ const configureGoogleAuth = (router: IRouter<any>) => {
         callbackURL: config.google.callback_url,
       },
       callbackify(async (accessToken: string, refreshToken: string, profile: any) => {
-        return await findUserByGoogleId(profile.id)
-          || await createUserCredentials({
+        let user = await findUserByGoogleId(profile.id)
+          || await findUserByEmail(profile.emails[0].value);
+        if (!user) {
+          await createUserCredentials({
             googleId: profile.id,
             name: profile.displayName,
             email: profile.emails[0].value,
           });
+          user = await findUserByGoogleId(profile.id);
+        }
+        return user;
       })
     ));
 

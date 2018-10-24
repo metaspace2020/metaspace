@@ -44,6 +44,7 @@
      },
      currentUser: {
        query: currentUserIdQuery,
+       fetchPolicy: 'cache-first',
      }
    },
    computed: {
