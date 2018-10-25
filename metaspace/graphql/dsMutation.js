@@ -3,7 +3,8 @@ const jsondiffpatch = require('jsondiffpatch'),
   Ajv = require('ajv'),
   {UserError} = require('graphql-errors'),
   _ = require('lodash'),
-  {In} = require('typeorm');
+  {In} = require('typeorm'),
+  moment = require('moment');
 
 const {logger, fetchEngineDS, fetchMolecularDatabases} = require('./utils.js'),
   {Dataset: DatasetModel, DatasetProject: DatasetProjectModel} = require('./src/modules/dataset/model'),
@@ -113,7 +114,7 @@ const isMemberOf = async (connection, userId, groupId) => {
   return isMember;
 };
 
-const saveDS = async (connection, args, currentUserRoles) => {
+const saveDS = async (connection, args, currentUserRoles, requireInsert = false) => {
   const {dsId, submitterId, groupId, projectIds, principalInvestigator} = args;
   const dsUpdate = {
     id: dsId,
@@ -123,7 +124,13 @@ const saveDS = async (connection, args, currentUserRoles) => {
     piName: principalInvestigator ? principalInvestigator.name : undefined,
     piEmail: principalInvestigator ? principalInvestigator.email : undefined
   };
-  await connection.getRepository(DatasetModel).save(dsUpdate);
+
+  if (requireInsert) {
+    // When creating new datasets, use INSERT so that SQL prevents the same ID from being used twice
+    await connection.getRepository(DatasetModel).insert(dsUpdate);
+  } else {
+    await connection.getRepository(DatasetModel).save(dsUpdate);
+  }
 
   if (projectIds != null && projectIds.length > 0) {
     const datasetProjectRepo = connection.getRepository(DatasetProjectModel);
@@ -179,9 +186,14 @@ module.exports = {
     create: async (_, args, {user, connection, getCurrentUserProjectRoles}) => {
       const {input, priority} = args;
       let {id: dsId} = args;
+      const dsIdWasSpecified = !!dsId;
+      if (!dsIdWasSpecified) {
+        const dt = moment();
+        dsId = `${dt.format('YYYY-MM-DD')}_${dt.format('HH')}h${dt.format('mm')}m${dt.format('ss')}s`;
+      }
 
       logger.info(`Creating dataset '${dsId}' by '${user.id}' user ...`);
-      if (dsId)
+      if (dsIdWasSpecified)
         await assertCanEditDataset(connection, user, dsId);
       else
         assertCanCreateDataset(user);
@@ -190,18 +202,16 @@ module.exports = {
       validateMetadata(input.metadata);
       await molDBsExist(input.molDBs);
 
+      const {submitterId, groupId, projectIds, principalInvestigator} = input;
+      const saveDSArgs = {dsId, submitterId, groupId, projectIds, principalInvestigator};
+      await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles(), !dsIdWasSpecified);
+
       const url = dsId ? `/v1/datasets/${dsId}/add` : '/v1/datasets/add';
       const smAPIResp = await smAPIRequest(url, {
         doc: input,
         priority: priority,
         email: user.email,
       });
-      // TODO: generate dsId here and save it before calling SM API
-      dsId = smAPIResp['ds_id'];
-
-      const {submitterId, groupId, projectIds, principalInvestigator} = input;
-      const saveDSArgs = {dsId, submitterId, groupId, projectIds, principalInvestigator};
-      await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles());
 
       logger.info(`Dataset '${dsId}' was created`);
       return JSON.stringify({ dsId, status: 'success' });
