@@ -1,4 +1,4 @@
-FROM jupyter/pyspark-notebook
+FROM jupyter/pyspark-notebook:137a295ff71b
 
 USER root
 
@@ -15,13 +15,14 @@ RUN conda update -n base conda
 RUN curl https://raw.githubusercontent.com/metaspace2020/metaspace/master/metaspace/engine/environment.yml -o /opt/last-environment.yml
 RUN conda env create -f /opt/last-environment.yml
 
-ARG METASPACE_REPO=https://github.com/metaspace2020/metaspace.git
-ARG METASPACE_BRANCH=master
-RUN git clone --branch "$METASPACE_BRANCH" "$METASPACE_REPO" /opt/metaspace
+# The non-dev copy is not used anymore, so don't install it
+# ARG METASPACE_REPO=https://github.com/metaspace2020/metaspace.git
+# ARG METASPACE_BRANCH=master
+# RUN git clone --branch "$METASPACE_BRANCH" "$METASPACE_REPO" /opt/metaspace
 
-WORKDIR /opt/metaspace/metaspace/engine
+WORKDIR /opt/dev/metaspace/metaspace/engine
 
-RUN conda env update
+# RUN conda env update
 
 COPY *.sh /
 

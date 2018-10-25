@@ -271,7 +271,9 @@ const Resolvers = {
         const results = await esSearchResults({
           orderBy: 'ORDER_BY_DATE',
           sortingOrder: 'DESCENDING',
-          submitter: user.id,
+          datasetFilter: {
+            submitter: user.id,
+          },
           limit: 1,
         }, 'dataset', user);
         if (results.length > 0) {
@@ -347,8 +349,13 @@ const Resolvers = {
       if (ctx.user && ctx.user.id === ds._source.ds_submitter_id) {
         scopeRole = SRO.PROFILE_OWNER;
       }
+      if (ds._source.ds_submitter_id == null) {
+        // WORKAROUND: Somehow datasets become broken and are indexed without a submitter
+        console.log('Submitter ID is null: ', _.pick(ds._source, ['ds_id', 'ds_name', 'ds_status', 'ds_submitter_id', 'ds_submitter_name', 'ds_submitter_email']));
+      }
+
       return {
-        id: ds._source.ds_submitter_id,
+        id: ds._source.ds_submitter_id || 'NULL',
         name: ds._source.ds_submitter_name,
         email: ds._source.ds_submitter_email,
         scopeRole,

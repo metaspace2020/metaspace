@@ -24,7 +24,7 @@
                      disabled>
             Request sent
           </el-button>
-          <el-button v-if="roleInGroup === 'PRINCIPAL_INVESTIGATOR'"
+          <el-button v-if="roleInGroup === 'GROUP_ADMIN'"
                      type="primary"
                      @click="handleManageGroup">
             Manage group

@@ -12,16 +12,14 @@
         for converting datasets into this format. If you are experiencing difficulties,
         please contact your instrument vendor.</p>
       <p>If you have any further questions, please check out our main
-        <a href="#/help" target="_blank" class="external" title="The page will open in a new window">help</a>
+        <a href="/help" target="_blank" class="external" title="The page will open in a new window">help</a>
         page or email us at <a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a></p>
       <p>Have fun using METASPACE!</p>
     </el-dialog>
     <div class="upload-page-wrapper">
       <div v-if="!enableUploads">
         <div id="maintenance-message">
-          Uploading is temporarily disabled so that we can safely update the website.
-          <br/>
-          Please wait a few hours and reload the page. Thank you for understanding!
+          Dataset uploads have been temporarily disabled. Please try again later. Thank you for understanding!
         </div>
       </div>
 

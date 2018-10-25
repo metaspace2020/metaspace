@@ -12,10 +12,10 @@ describe('EditGroupProfile', () => {
     id: '2',
     name: 'European Molecular Biology Laboratory',
     shortName: 'EMBL',
-    currentUserRole: 'PRINCIPAL_INVESTIGATOR',
+    currentUserRole: 'GROUP_ADMIN',
     members: [
       {
-        role: 'PRINCIPAL_INVESTIGATOR',
+        role: 'GROUP_ADMIN',
         numDatasets: 123,
         user: {
           id: '3',

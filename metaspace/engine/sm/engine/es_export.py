@@ -341,7 +341,10 @@ class ESExporter(object):
 
             processors = []
             for k, v in ds_doc_upd.items():
-                processors.append({'set': {'field': k, 'value': v}})
+                if v is None:
+                    processors.append({'remove': {'field': k}})
+                else:
+                    processors.append({'set': {'field': k, 'value': v}})
             self._ingest.put_pipeline(
                 id=pipeline_id,
                 body={'processors': processors})

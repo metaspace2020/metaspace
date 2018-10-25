@@ -219,7 +219,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                       </div>
                     </td>
                     <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
-                      <div class="cell">Principal investigator</div>
+                      <div class="cell">Group admin</div>
                     </td>
                     <td rowspan="1" colspan="1" class="el-table_1_column_3 is-center ">
                       <div class="cell">
