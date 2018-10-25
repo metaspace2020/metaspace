@@ -252,29 +252,23 @@ class SMUpdateDaemon(object):
                                                 logger=self.logger)
         self._stopped = False
 
-    def _post_to_slack(self, msg):
-        if msg['action'] == 'update':
-            msg['web_app_link'] = self._manager.create_web_app_link(msg)
-            self._manager.post_to_slack('dart', f' [v] Update succeeded: {json.dumps(msg)}')
-        elif msg['action'] == 'index':
-            self._manager.post_to_slack('dart', f' [v] Index succeeded: {json.dumps(msg)}')
-        elif msg['action'] == 'delete':
-            self._manager.post_to_slack('dart', f' [v] Delete succeeded: {json.dumps(msg)}')
-
     def _on_success(self, msg):
+        self.logger.info(f" SM update daemon: success")
+
         if msg['action'] != 'delete':
             ds = Dataset.load(self._db, msg['ds_id'])
             ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FINISHED)
+        if msg['action'] in ['update', 'index']:
+            msg['web_app_link'] = self._manager.create_web_app_link(msg)
 
-        self.logger.info(f" SM update daemon: success")
-        self._post_to_slack(msg)
+        self._manager.post_to_slack('dart', f" [v] Succeeded to {msg['action']}: {json.dumps(msg)}")
 
     def _on_failure(self, msg):
+        self.logger.error(f' SM update daemon: failure', exc_info=True)
         ds = Dataset.load(self._db, msg['ds_id'])
         ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FAILED)
 
-        self.logger.error(f" SM update daemon: failure", exc_info=True)
-        self._post_to_slack(msg)
+        self._manager.post_to_slack('hankey', f" [x] Failed to {msg['action']}: {json.dumps(msg)}")
 
     def _callback(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
