@@ -75,9 +75,10 @@ async function createHttpServerAsync(config) {
     },
     formatError: error => {
       const {message, extensions, source} = error;
-      logger.error(extensions.exception, source);
+      logger.error(extensions.exception || message, source);
       return error;
-    }
+    },
+    introspection: true,
   });
   apollo.applyMiddleware({ app });
 

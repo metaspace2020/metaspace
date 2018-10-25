@@ -214,7 +214,7 @@
 
        } else {
          options.request = {
-           endpoint: `${this.config.aws.s3_bucket}.s3.amazonaws.com`,
+           endpoint: `https://${this.config.aws.s3_bucket}.s3.amazonaws.com`,
            accessKey: this.config.aws.access_key_id,
          };
 

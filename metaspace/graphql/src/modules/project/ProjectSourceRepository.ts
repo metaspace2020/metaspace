@@ -71,22 +71,27 @@ export class ProjectSourceRepository {
       .getRawMany();
   }
 
-  async findProjectsByQuery(user: ContextUser | null, query?: string,
-                            offset?: number, limit?: number): Promise<ProjectSource[]> {
-    let queryBuilder;
+  private queryProjectsByTextSearch(user: ContextUser | null, query?: string) {
     if (query) {
+      // Full-text search is disabled as it relies on functions not present in the installed pg version (9.5)
       // TODO: Add a full-text index to project.name to speed this up
       // The below full-text query attempts to parse `query` as a phrase. If successful it appends ':*' so that the
       // last word in the query is used as a prefix search. If nothing in query is matchable then it just matches everything.
-      queryBuilder = this.queryProjectsWhere(user, `(
-        CASE WHEN phraseto_tsquery('english', :query)::text != '' 
-             THEN to_tsvector('english', project.name) @@ to_tsquery(phraseto_tsquery('english', :query)::text || ':*') 
-             ELSE true
-        END
-      )`, {query});
+      // queryBuilder = this.queryProjectsWhere(user, `(
+      //   CASE WHEN phraseto_tsquery('english', :query)::text != ''
+      //        THEN to_tsvector('english', project.name) @@ to_tsquery(phraseto_tsquery('english', :query)::text || ':*')
+      //        ELSE true
+      //   END
+      // )`, {query});
+      return this.queryProjectsWhere(user, `project.name ILIKE ('%' || :query || '%')`, {query});
     } else {
-      queryBuilder = this.queryProjectsWhere(user);
+      return this.queryProjectsWhere(user);
     }
+  }
+
+  async findProjectsByQuery(user: ContextUser | null, query?: string,
+                            offset?: number, limit?: number): Promise<ProjectSource[]> {
+    let queryBuilder = this.queryProjectsByTextSearch(user, query);
     if (offset != null) {
       queryBuilder = queryBuilder.skip(offset);
     }
@@ -97,17 +102,6 @@ export class ProjectSourceRepository {
   }
 
   async countProjectsByQuery(user: ContextUser | null, query?: string): Promise<number> {
-    if (query) {
-      return await this.queryProjectsWhere(user, `(
-        CASE WHEN phraseto_tsquery('english', :query)::text != '' 
-             THEN to_tsvector('english', project.name) @@ to_tsquery(phraseto_tsquery('english', :query)::text || ':*') 
-             ELSE true
-        END
-      )`, { query })
-        .getCount();
-    } else {
-      return await this.queryProjectsWhere(user)
-        .getCount();
-    }
+    return await this.queryProjectsByTextSearch(user, query).getCount();
   }
 }

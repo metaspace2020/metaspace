@@ -15,7 +15,7 @@ def test_generate_returns_valid_df(pyspark_context, sm_config, ds_config):
     isocalc = IsocalcWrapper(ds_config['isotope_generation'])
     centroids_gen = IonCentroidsGenerator(sc=pyspark_context, moldb_name='HMDB', isocalc=isocalc)
     centroids_gen._iso_gen_part_n = 1
-    centroids_gen.generate(isocalc=isocalc, sfs=['C2H4O8', 'C3H6O7', 'fake_mf'], adducts=['+Na'])
+    centroids_gen.generate(isocalc=isocalc, formulas=['C2H4O8', 'C3H6O7', 'fake_mf'], adducts=['+Na'])
 
     assert centroids_gen.ion_centroids_df.shape == (8, 3)
     assert np.all(np.diff(centroids_gen.ion_centroids_df.mz.values) >= 0)  # assert that dataframe is sorted by mz
@@ -39,6 +39,20 @@ def test_save_restore_works(pyspark_context, sm_config, ds_config):
 
     df = centr_gen.centroids_subset(ions=[('H2O', '-H')])
     assert df.index.unique().tolist() == [101]
+
+
+def test__generate_if_not_exist__new_custom_adduct(pyspark_context, sm_config, ds_config):
+    isocalc = IsocalcWrapper(ds_config['isotope_generation'])
+    centr_gen = IonCentroidsGenerator(sc=pyspark_context, moldb_name='HMDB', isocalc=isocalc)
+    centr_gen.generate_if_not_exist(isocalc=isocalc, formulas=['H20'], adducts=['+H'])
+
+    centr_gen.generate_if_not_exist(isocalc=isocalc, formulas=['H20'], adducts=['+Na'])
+
+    ions = centr_gen.ions(['+H', '+Na'])
+    assert list(ions) == [('H20', '+H'), ('H20', '+Na')]
+
+    centroids = centr_gen.centroids_subset(ions)
+    assert centroids.shape == (4, 3)
 
 
 def test_centroids_subset_selection_works(pyspark_context, sm_config, ds_config):
@@ -65,7 +79,7 @@ def test_centroids_subset_ordered_by_mz(pyspark_context, sm_config, ds_config):
     centr_gen = IonCentroidsGenerator(sc=pyspark_context, moldb_name='HMDB', isocalc=isocalc)
     centr_gen._iso_gen_part_n = 1
     centr_gen.generate(isocalc=isocalc,
-                       sfs=['C2H4O8', 'C3H6O7', 'C59H112O6', 'C62H108O'],
+                       formulas=['C2H4O8', 'C3H6O7', 'C59H112O6', 'C62H108O'],
                        adducts=['+Na', '+H', '+K'])
 
     ion_centroids = centr_gen.centroids_subset([('C59H112O6', '+H'), ('C62H108O', '+Na')])

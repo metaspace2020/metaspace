@@ -162,7 +162,7 @@ const Resolvers = {
       }));
     },
 
-    async submitterSuggestions(_, {query}, {user}) {
+    async submitterSuggestions(_, {query}, ctx) {
       const itemCounts = await esFilterValueCountResults({
         wildcard: { wildcard: { ds_submitter_name: `*${query}*` } },
         aggsTerms: {
@@ -264,8 +264,9 @@ const Resolvers = {
       return null;
     },
 
-    async currentUserLastSubmittedDataset(_, args, {user}) {
+    async currentUserLastSubmittedDataset(_, args, ctx) {
       let lastDS = null;
+      const {user} = ctx;
       if (user) {
         const results = await esSearchResults({
           orderBy: 'ORDER_BY_DATE',
