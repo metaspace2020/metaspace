@@ -187,6 +187,43 @@ const configureGoogleAuth = (router: IRouter<any>) => {
   }
 };
 
+const configureImpersonation = (router: IRouter<any>) => {
+  if (config.features.impersonation) {
+    router.get('/impersonate', preventCache, async (req, res, next) => {
+      try {
+        const currentUser = getUserFromRequest(req);
+        if (currentUser == null || currentUser.role !== 'admin') {
+          return res.status(403).send('Unauthenticated');
+        }
+
+        let user: User | null = null;
+        const {email, id} = req.query;
+        if (email) {
+          user = await findUserByEmail(email) || await findUserByEmail(email, 'not_verified_email');
+        } else if (id) {
+          user = await findUserById(id);
+        } else {
+          return res.status(400).send( 'No id or email supplied');
+        }
+
+        if (!user) {
+          return res.status(404).send(`User ${email || id} not found`);
+        } else {
+          return req.login(user, err => {
+            if (err) {
+              return next(err);
+            } else {
+              return res.redirect('/');
+            }
+          });
+        }
+      } catch (err) {
+        return next(err);
+      }
+    })
+  }
+};
+
 const configureCreateAccount = (router: IRouter<any>) => {
   router.post('/createaccount', async (req, res, next) => {
     try {
@@ -270,6 +307,7 @@ export const configureAuth = async (app: Express, connection: Connection) => {
   configureJwt(router);
   configureLocalAuth(router);
   configureGoogleAuth(router);
+  configureImpersonation(router);
   // TODO: find a parameter validation middleware
   configureCreateAccount(router);
   configureResetPassword(router);

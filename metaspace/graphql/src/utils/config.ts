@@ -69,6 +69,7 @@ export interface Config {
   };
   features: {
     graphqlMocks: boolean;
+    impersonation: boolean;
   };
   aws:  {
     aws_access_key_id: string;
