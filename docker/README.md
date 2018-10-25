@@ -28,7 +28,10 @@ Copy `.env.example` to `.env` and customize it if needed.
 
 ### Self-contained installation
 
-Run `docker-compose up -d` and jump to the "Import data" section
+~~Run `docker-compose up -d` and jump to the "Import data" section~~
+
+Self-contained installations are currently disabled in the Dockerfiles
+as they add a significant amount of overhead to the build process and weren't used.
 
 ### Development installation
 
@@ -38,6 +41,14 @@ easier to make live code changes.
 
 Running `setup-dev-env.sh` will copy the pre-made docker config files into the
 projects in this repository, set up mol-db, and start the docker containers.
+
+To avoid disruption due to changes in the docker-compose files while updating from git,
+changing branches, etc. it can be useful to compile your configuration into a file
+that is excluded from git. To do this:
+
+* Set up your docker-compose environment per the instructions in this file
+* Run `docker-compose config > docker-compose.custom.yml`
+* Update `.env` with `COMPOSE_FILE=docker-compose.custom.yml`
 
 ### Import data
 

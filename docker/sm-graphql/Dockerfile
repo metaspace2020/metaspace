@@ -1,4 +1,4 @@
-FROM node:8
+FROM node:8.11.3
 
 RUN apt-get update && apt-get install -y netcat && apt-get clean
 RUN yarn global add nodemon
@@ -10,14 +10,15 @@ RUN curl https://raw.githubusercontent.com/metaspace2020/metaspace/master/metasp
 RUN curl https://raw.githubusercontent.com/metaspace2020/metaspace/master/metaspace/graphql/yarn.lock -o yarn.lock
 RUN yarn install
 
-ARG METASPACE_REPO=https://github.com/metaspace2020/metaspace.git
-ARG METASPACE_BRANCH=master
-RUN git clone --branch "$METASPACE_BRANCH" "$METASPACE_REPO" /opt/metaspace
+# The non-dev copy is not used anymore, so don't install it
+# ARG METASPACE_REPO=https://github.com/metaspace2020/metaspace.git
+# ARG METASPACE_BRANCH=master
+# RUN git clone --branch "$METASPACE_BRANCH" "$METASPACE_REPO" /opt/metaspace
 
-WORKDIR /opt/metaspace/metaspace/graphql
+WORKDIR /opt/dev/metaspace/metaspace/graphql
 
-RUN mv /opt/pkgcache/node_modules .
-RUN yarn install
+# RUN mv /opt/pkgcache/node_modules .
+# RUN yarn install
 
 RUN node deref_schema.js ./metadataSchemas/
 
