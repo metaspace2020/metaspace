@@ -246,13 +246,18 @@ describe('modules/project/controller (queries)', () => {
       it.each([
         ['foo', [0, 1, 3, 4, 5]],
         ['project', [1, 4, 5]],
-        ['foo project', [1, 4]], // All words should be matched
+        // Full-text version: ['foo project', [1, 4]], // All words should be matched
+        ['foo project', [1]],
         ['project foo', []], // Order should matter
-        ['the', [0, 1, 2, 3, 4, 5]], // Common words like "the" and "it" should be completely ignored
+        // Full-text version: ['the', [0, 1, 2, 3, 4, 5]], // Common words like "the" and "it" should be completely ignored
+        ['the', [1, 3]],
         ['test', [2, 5]],
         ['all the tim', [3]], // The last word should be a prefix search - e.g. "tim" should match "time"
         ['tes project', []], // Non-last words shouldn't be prefix searched
-        ['() [] \' " % & | ~ ! foo', [0, 1, 3, 4, 5]], // Symbols, etc. should be ignored
+        // Full-text version: ['() [] \' " % & | ~ ! foo', [0, 1, 3, 4, 5]], // Symbols, etc. should be ignored
+        ['() [] \' " % & | ~ ! foo', []], // Symbols, etc. should not cause errors
+        ['(', [4]], // Symbols should be matched
+        ['[', [5]], // Symbols should be matched
       ])('should find expected results for %s', async (searchTerm: string, matchedNameIdxs: number[]) => {
         await Promise.all(names.map(name => createTestProject({name})));
         const sortedNames = matchedNameIdxs.map(idx => names[idx]).sort();
