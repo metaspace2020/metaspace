@@ -208,10 +208,10 @@
 
      metadata() {
        const datasetMetadataExternals = {
-         "Submitter": this.formatSubmitter,
-           "PI": this.dataset.principalInvestigator,
-           "Group": this.dataset.group,
-           "Projects": this.dataset.projects
+         "Submitter": this.dataset.submitter,
+         "PI": this.dataset.principalInvestigator,
+         "Group": this.dataset.group,
+         "Projects": this.dataset.projects
        };
        return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals);
      },

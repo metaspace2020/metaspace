@@ -58,7 +58,7 @@
         let dataManagementChilds = [
           {id: "Submitter", label: `Submitter: ${this.dsSubmitter.name}`},
         ];
-        if (this.PI != null) {
+        if (this.dsPI != null) {
           dataManagementChilds.push({id: "Principal Investigator", label: `Principal Investigator: ${this.dsPI.name}`});
         }
         if (this.dsGroup != null) {
