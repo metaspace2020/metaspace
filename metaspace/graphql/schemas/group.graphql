@@ -11,7 +11,7 @@ input CreateGroupInput {
   name: String!
   shortName: String!
   urlSlug: String
-  principalInvestigatorEmail: String!
+  groupAdminEmail: String!
 }
 
 input UpdateGroupInput {
@@ -32,7 +32,7 @@ enum UserGroupRole {
   INVITED    # User was invited into the group but hasn't confirmed it yet
   PENDING    # User requested to join the group but the PI hasn't confirmed it yet
   MEMBER     # Normal member of the group
-  PRINCIPAL_INVESTIGATOR    # Group administrator
+  GROUP_ADMIN    # Group administrator
 }
 
 type Query {
