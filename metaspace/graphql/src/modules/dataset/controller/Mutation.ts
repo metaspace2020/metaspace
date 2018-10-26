@@ -171,26 +171,23 @@ const saveDS = async (connection: Connection | EntityManager, args: SaveDSArgs,
   }
 };
 
-const assertCanEditDataset = async (connection: Connection | EntityManager, user: ContextUser | null, dsId: string) => {
+const getDatasetForEditing = async (connection: Connection | EntityManager, user: ContextUser | null, dsId: string) => {
   if (!user)
     throw new UserError('Access denied');
 
-  if (user.role === 'admin')
-    return;
-
-  if (dsId) {
-    const ds = await connection.getRepository(DatasetModel).findOne({
-      id: dsId
-    });
-    if (!ds)
-      throw new UserError(`DS ${dsId} does not exist`);
-
-    if (user.id !== ds.userId)
-      throw new UserError('Access denied');
-  }
-  else {
+  if (!dsId)
     throw new UserError(`DS id not provided`);
-  }
+
+  const ds = await connection.getRepository(DatasetModel).findOne({
+    id: dsId
+  });
+  if (!ds)
+    throw new UserError(`DS ${dsId} does not exist`);
+
+  if (user.id !== ds.userId && user.role !== 'admin')
+    throw new UserError('Access denied');
+
+  return ds;
 };
 
 const assertCanCreateDataset = (user: ContextUser | null) => {
@@ -218,16 +215,19 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     }, ctx);
   },
 
-  createDataset: async (_, args, {user, connection, getCurrentUserProjectRoles, getUserIdOrFail}: Context) => {
+  createDataset: async (_, args, {user, connection, isAdmin, getCurrentUserProjectRoles, getUserIdOrFail}: Context) => {
     const {input, priority} = args;
     const dsId = args.id || newDatasetId();
     const dsIdWasSpecified = !!args.id;
+    const userId = getUserIdOrFail();
 
-    logger.info(`Creating dataset '${dsId}' by '${getUserIdOrFail()}' user ...`);
-    if (dsIdWasSpecified)
-      await assertCanEditDataset(connection, user, dsId);
-    else
+    logger.info(`Creating dataset '${dsId}' by '${userId}' user ...`);
+    let ds;
+    if (dsIdWasSpecified) {
+      ds = await getDatasetForEditing(connection, user, dsId);
+    } else {
       assertCanCreateDataset(user);
+    }
 
     const metadata = JSON.parse(input.metadataJson);
     validateMetadata(metadata);
@@ -235,8 +235,15 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     await molDBsExist(input.molDBs as any || []);
 
     const {submitterId, groupId, projectIds, principalInvestigator} = input;
-    const saveDSArgs = {dsId, submitterId, groupId, projectIds, principalInvestigator};
-    await saveDS(connection, saveDSArgs as any, await getCurrentUserProjectRoles(), !dsIdWasSpecified);
+    const saveDSArgs = {
+      dsId,
+      // Only admins can specify the submitterId
+      submitterId: (isAdmin ? submitterId as (string | undefined) : null) || (ds && ds.userId) || userId,
+      groupId: groupId as (string | undefined),
+      projectIds: projectIds as string[],
+      principalInvestigator
+    };
+    await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles(), !dsIdWasSpecified);
 
     const url = `/v1/datasets/${dsId}/add`;
     await smAPIRequest(url, {
@@ -249,11 +256,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     return JSON.stringify({ dsId, status: 'success' });
   },
 
-  updateDataset: async (_, args, {user, connection, getCurrentUserProjectRoles}) => {
+  updateDataset: async (_, args, {user, connection, isAdmin, getCurrentUserProjectRoles}) => {
     const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
 
     logger.info(`User '${user && user.id}' updating '${dsId}' dataset...`);
-    await assertCanEditDataset(connection, user, dsId);
+    const ds = await getDatasetForEditing(connection, user, dsId);
 
     let metadata;
     if (update.metadataJson) {
@@ -266,7 +273,13 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     const reprocessingNeeded = newDB || procSettingsUpd;
 
     const {submitterId, groupId, projectIds, principalInvestigator} = update;
-    const saveDSArgs = {dsId, submitterId, groupId, projectIds, principalInvestigator};
+    const saveDSArgs = {
+      dsId,
+      submitterId: (isAdmin ? submitterId as (string | undefined) : null) || ds.userId,
+      groupId: groupId as (string | undefined),
+      projectIds: projectIds as string[],
+      principalInvestigator
+    };
 
     let smAPIResp;
     if (reprocess) {
@@ -304,7 +317,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     const {id: dsId, priority} = args;
 
     logger.info(`User '${getUserIdOrFail()}' deleting '${dsId}' dataset...`);
-    await assertCanEditDataset(connection, user, dsId);
+    await getDatasetForEditing(connection, user, dsId);
 
     try {
       await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
@@ -326,7 +339,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     let {imageUrl} = input;
 
     logger.info(`User '${getUserIdOrFail()}' adding optical image to '${dsId}' dataset...`);
-    await assertCanEditDataset(connection, user, dsId);
+    await getDatasetForEditing(connection, user, dsId);
     // TODO support image storage running on a separate host
     const url = `http://localhost:${config.img_storage_port}${imageUrl}`;
     const resp = await smAPIRequest(`/v1/datasets/${dsId}/add-optical-image`, {
@@ -341,7 +354,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     const {datasetId: dsId} = args;
 
     logger.info(`User '${getUserIdOrFail()}' deleting optical image from '${dsId}' dataset...`);
-    await assertCanEditDataset(connection, user, dsId);
+    await getDatasetForEditing(connection, user, dsId);
     const resp = await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
 
     logger.info(`Optical image was deleted from '${dsId}' dataset`);
