@@ -218,8 +218,6 @@ nginx_upstream_hosts:
     server: 127.0.0.1:3010
   - name: graphql_ws_server
     server: 127.0.0.1:5666
-  - name: moldb_server
-    server: 127.0.0.1:5001
   - name: kibana_server
     server: 127.0.0.1:5601
   - name: elasticsearch_server
@@ -237,10 +235,19 @@ nginx_servers:
           - proxy_pass http://kibana_server;
           - include proxy-params.conf;
 
+  - desc: HTTP redirect
+    params:
+      - listen 80 default_server;
+      - listen [::]:80 default_server;
+      - server_name _;
+      - return 301 https://$host$request_uri;
+
   - desc: Endpoint for Web App, GraphQL, GraphQL WebSocket, ion images, mol images, and MolDB
     params:
       - server_name {{ sm_webapp_hostname }};
-      - listen 80;
+      - listen 443 ssl;
+      - ssl_certificate ssl/metaspace2020.eu-dfn-ca-chain.pem;
+      - ssl_certificate_key ssl/metaspace2020.eu.nopw.key;
       - proxy_read_timeout 300;
       - send_timeout 300;
     locations:
@@ -271,10 +278,6 @@ nginx_servers:
         params:
           - proxy_pass http://graphql_server/graphql;
           - include proxy-params.conf;
-      - path: /graphiql
-        params:
-          - proxy_pass http://graphql_server/graphiql;
-          - include proxy-params.conf;
       - path: /api_auth
         params:
           - proxy_pass http://graphql_server/api_auth;
@@ -285,10 +288,6 @@ nginx_servers:
           - proxy_http_version 1.1;
           - proxy_set_header Upgrade $http_upgrade;
           - proxy_set_header Connection "upgrade";
-          - include proxy-params.conf;
-      - path: /mol_db/
-        params:
-          - proxy_pass http://moldb_server/;
           - include proxy-params.conf;
 
   - desc: Elasticsearch redirect
@@ -323,6 +322,11 @@ cluster_configuration:
       sec_group: default  # update for better security
       image: ami-07174474  # public ubuntu 16.04 at eu-west-1
                            # ami-4d6c0e22 is for eu-central-1
+      tags:
+        backup: ''
+        retention_daily: '2'
+        retention_weekly: '7'
+
       block_dev_maps:
         - DeviceName: /dev/sda1
           Ebs:
