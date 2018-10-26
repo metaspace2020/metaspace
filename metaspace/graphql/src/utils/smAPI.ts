@@ -1,11 +1,13 @@
 import {UserError} from 'graphql-errors';
 import fetch from 'node-fetch';
+import * as _ from 'lodash';
 
 import config from './config';
 import {logger} from '.';
 
 interface SMAPIBody {
   doc?: Object;
+  email?: string;
   priority?: boolean;
   force?: boolean;
   del_first?: boolean;
@@ -13,25 +15,20 @@ interface SMAPIBody {
   transform?: Object;
 }
 
+const fieldRenameMap = {
+  inputPath: 'input_path',
+  uploadDT: 'upload_dt',
+  isPublic: 'is_public',
+  submitterId: 'submitter_id',
+  groupId: 'group_id',
+  projectIds: 'project_ids',
+  molDBs: 'mol_dbs',
+};
+
 export const smAPIRequest = async (uri: string, args: any={}) => {
-  const {doc, delFirst, priority, force, url, transform} = args;
-  const body: SMAPIBody = {
-    priority, force, del_first: delFirst, url, transform,
-  };
-  if (doc) {
-    body.doc = {
-      name: doc.name,
-      input_path: doc.inputPath,
-      upload_dt: doc.uploadDT,
-      metadata: doc.metadata,
-      is_public: doc.isPublic,
-      submitter_id: doc.submitterId,
-      group_id: doc.groupId,
-      project_ids: doc.projectIds,
-      adducts: doc.adducts,
-      mol_dbs: doc.molDBs,
-    }
-  }
+  const body: SMAPIBody = args;
+  // @ts-ignore
+  body.doc = _.mapKeys(body.doc, (v, k) => fieldRenameMap[k] || k);
 
   let rawResp = await fetch(`http://${config.services.sm_engine_api_host}${uri}`, {
     method: 'POST',
