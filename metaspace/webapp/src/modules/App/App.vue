@@ -14,6 +14,7 @@
     </metaspace-footer-->
 
     <dialog-controller />
+    <release-notes-dialog />
 
     <tour-step ref="tour" :tour="this.$store.state.currentTour"></tour-step>
   </div>
@@ -23,6 +24,7 @@
  import * as cookie from 'js-cookie';
  import MetaspaceHeader from './MetaspaceHeader.vue';
  import MetaspaceFooter from './MetaspaceFooter.vue';
+ import ReleaseNotesDialog from './ReleaseNotesDialog.vue';
  import TourStep from './TourStep.vue';
  import {DialogController} from '../Account';
  import * as config from '../../clientConfig.json';
@@ -32,6 +34,7 @@
    components: {
      MetaspaceHeader,
      MetaspaceFooter,
+     ReleaseNotesDialog,
      TourStep,
      DialogController,
    },
