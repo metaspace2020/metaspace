@@ -278,10 +278,6 @@ nginx_servers:
         params:
           - proxy_pass http://graphql_server/graphql;
           - include proxy-params.conf;
-      - path: /graphiql
-        params:
-          - proxy_pass http://graphql_server/graphiql;
-          - include proxy-params.conf;
       - path: /api_auth
         params:
           - proxy_pass http://graphql_server/api_auth;
