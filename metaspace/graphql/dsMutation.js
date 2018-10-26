@@ -240,9 +240,10 @@ module.exports = {
         await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles());
         smAPIResp = await smAPIRequest(`/v1/datasets/${dsId}/add`, {
           doc: {...engineDS, ...update},
-          delFirst: procSettingsUpd || delFirst,  // delete old results if processing settings changed
+          del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
           priority: priority,
           force: force,
+          email: user.email,
         });
 
       }

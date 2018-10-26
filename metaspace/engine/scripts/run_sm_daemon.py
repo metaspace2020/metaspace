@@ -6,7 +6,7 @@ import signal
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.sm_daemons import SMAnnotateDaemon, SMDaemonManager, SMUpdateDaemon
+from sm.engine.sm_daemons import SMAnnotateDaemon, SMDaemonManager, SMIndexUpdateDaemon
 from sm.engine.queue import SM_ANNOTATE, SM_UPDATE, SM_DS_STATUS, QueuePublisher
 from sm.engine.util import SMConfig, init_loggers
 
@@ -39,8 +39,8 @@ if __name__ == "__main__":
                                   annot_qdesc=SM_ANNOTATE,
                                   upd_qdesc=SM_UPDATE)
     elif args.name == 'update':
-        daemon = SMUpdateDaemon(manager=manager,
-                                update_qdesc=SM_UPDATE)
+        daemon = SMIndexUpdateDaemon(manager=manager,
+                                     update_qdesc=SM_UPDATE)
     else:
         raise Exception(f'Wrong SM daemon name: {args.name}')
 
