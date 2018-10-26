@@ -117,7 +117,7 @@ async function assertUserCanViewDataset(datasetId, user) {
   }
 }
 
-async function fetchEngineDS({id, name}) {
+async function fetchEngineDS({id = undefined, name = undefined}) {
   let records;
   if (id !== undefined)
     records = await db.select().from('dataset').where('id', '=', id);

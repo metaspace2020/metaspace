@@ -16,7 +16,6 @@ import {
   pubsub,
   db
 } from './utils';
-import {Mutation as DSMutation} from './dsMutation';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from './src/modules/group/model';
 import {Dataset as DatasetModel} from './src/modules/dataset/model';
 import {ScopeRoleOptions as SRO} from './src/bindingTypes';
@@ -550,25 +549,6 @@ const Resolvers = {
         }
       });
     }
-  },
-
-  Mutation: {
-    // for dev purposes only, not a part of the public API
-    reprocessDataset: async (_, args, ctx) => {
-      const {id, delFirst, priority} = args;
-      const ds = await fetchEngineDS({id});
-      if (ds === undefined)
-        throw new UserError('DS does not exist');
-      return DSMutation.create(_, {
-        id: id, input: ds, reprocess: true,
-        delFirst: delFirst, priority: priority
-      }, ctx);
-    },
-    createDataset: DSMutation.create,
-    updateDataset: DSMutation.update,
-    deleteDataset: DSMutation.delete,
-    addOpticalImage: DSMutation.addOpticalImage,
-    deleteOpticalImage: DSMutation.deleteOpticalImage,
   },
 
   Subscription: {
