@@ -280,6 +280,7 @@ module.exports = {
         logger.warn(err);
       }
 
+      await connection.getRepository(DatasetProjectModel).delete({ datasetId: dsId });
       await connection.getRepository(DatasetModel).delete(dsId);
       const resp = await smAPIRequest(`/v1/datasets/${dsId}/delete`, {});
 

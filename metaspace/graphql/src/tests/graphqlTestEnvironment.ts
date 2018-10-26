@@ -9,16 +9,15 @@ import {
 } from 'graphql';
 import {runQuery} from 'apollo-server-core';
 import {QueryOptions} from 'apollo-server-core/dist/runQuery';
-import {Request} from 'express';
 
 import {createConnection} from '../utils/db';
 import {Connection, EntityManager} from 'typeorm';
-import {Credentials} from '../modules/auth/model';
 import {User} from '../modules/user/model';
 import {initOperation} from '../modules/auth/operation';
 import getContext from '../getContext';
 import {makeNewExecutableSchema} from '../../executableSchema';
 import {Context} from '../context';
+import {createTestUser} from './testDataCreation';
 
 
 const schema = makeNewExecutableSchema();
@@ -45,7 +44,7 @@ const createTransactionEntityManager = async () => {
 };
 
 export interface TestEnvironmentOptions {
-  suppressTestDataCreation?: Boolean;
+  suppressTestDataCreation?: boolean;
 }
 
 export let testEntityManager: EntityManager;
@@ -62,23 +61,24 @@ export const onAfterAll = async () => {
   await outsideOfTransactionConn.close();
 };
 
-export const onBeforeEachWithOptions = ({suppressTestDataCreation}: TestEnvironmentOptions) => async () => {
+export const onBeforeEach = async () => {
   testEntityManager = await createTransactionEntityManager();
 
-  if (!suppressTestDataCreation) {
-    const creds = testEntityManager.create(Credentials, {});
-    await testEntityManager.insert(Credentials, creds);
-    testUser = testEntityManager.create(User, { name: 'tester', role: 'user', credentialsId: creds.id });
-    await testEntityManager.insert(User, testUser);
-    userContext = getContext({ user: { user: testUser } } as any as Request, testEntityManager);
-    adminContext = getContext({ user: { user: { ...testUser, role: 'admin' } } } as any as Request, testEntityManager);
-  }
-  anonContext = getContext({ user: { user: { role: 'anonymous' } } } as any as Request, testEntityManager);
+  // Prevent use-after-free
+  (testUser as any) = undefined;
+  (userContext as any) = undefined;
+  (adminContext as any) = undefined;
+
+  anonContext = getContext({ role: 'anonymous' }, testEntityManager);
 
   await initOperation(testEntityManager);
 };
 
-export const onBeforeEach = onBeforeEachWithOptions({});
+export const setupTestUsers = async () => {
+  testUser = await createTestUser();
+  userContext = getContext(testUser as any, testEntityManager);
+  adminContext = getContext({ ...testUser, role: 'admin' } as any, testEntityManager);
+};
 
 export const onAfterEach = async () => {
   await (testEntityManager as TransactionEntityManager).rollbackTransaction();
@@ -108,7 +108,7 @@ export const doQuery = async <T = any>(query: string, variables?: object, option
 // Returns a space-separated list of scalar fields so that it's easy to select all non-nested return values from a GraphQL operation
 export const shallowFieldsOfSchemaType = (typeName: string) => {
   const type = schema.getType(typeName) as GraphQLObjectType | GraphQLInputObjectType;
-  const isAnyScalarType = (type: GraphQLType): Boolean =>
+  const isAnyScalarType = (type: GraphQLType): boolean =>
     isScalarType(type) || isEnumType(type) || (isNonNullType(type) && isAnyScalarType(type.ofType));
 
   return (Object.values(type.getFields()) as (GraphQLField<any,any> | GraphQLInputField)[])

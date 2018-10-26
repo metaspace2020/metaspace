@@ -68,7 +68,7 @@ export const Resolvers = {
     },
 
     async email({scopeRole, ...user}: UserSource): Promise<string|null> {
-      if ([SRO.GROUP_MANAGER, SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
+      if ([SRO.GROUP_MANAGER, SRO.PROJECT_MANAGER, SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return user.email || user.notVerifiedEmail || null;
       }
       return null;
@@ -92,7 +92,7 @@ export const Resolvers = {
     },
 
     async currentUser(_: any, {}: any, ctx: Context): Promise<UserSource|null> {
-      if (ctx.user != null && ctx.user.id != null) {
+      if (ctx.user != null) {
         const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
         const user = await ctx.connection.getRepository(UserModel).findOneOrFail({
           where: { id: ctx.user.id }

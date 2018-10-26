@@ -8,8 +8,8 @@ import * as emailService from './email';
 import config from '../../utils/config';
 import {logger} from '../../utils';
 import * as utils from '../../utils';
-import {Credentials} from './model';
-import {User} from '../user/model';
+import {Credentials as CredentialsModel, Credentials} from './model';
+import {User as UserModel, User} from '../user/model';
 
 export interface UserCredentialsInput {
   email: string;
@@ -265,4 +265,12 @@ export const resetPassword = async (email: string, password: string, token: stri
       return user;
     }
   }
+};
+
+export const createInactiveUser = async (email: string): Promise<UserModel> => {
+  const invUserCred = await connection.getRepository(CredentialsModel).save({ emailVerified: false });
+  return await connection.getRepository(UserModel).save({
+    notVerifiedEmail: email,
+    credentials: invUserCred
+  }) as UserModel;
 };

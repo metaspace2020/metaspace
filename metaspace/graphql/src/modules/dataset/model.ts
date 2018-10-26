@@ -58,3 +58,23 @@ export class DatasetProject {
   @Column({ type: 'boolean' })
   approved: Boolean;
 }
+
+export type DatasetStatus = 'NEW' | 'QUEUED' | 'ANNOTATING' | 'INDEXING' | 'FINISHED' | 'FAILED' | 'DELETED';
+// This isn't an Entity because datasets in the "public" schema are owned by sm-engine and aren't managed by TypeORM
+export interface EngineDataset {
+  id: string;
+  name: string | null;
+  input_path: string | null;
+  metadata: object | null;
+  config: object | null;
+  upload_dt: Date | null;
+  status: DatasetStatus | null;
+  optical_image: string | null;
+  transform: number[] | null;
+  is_public: boolean;
+  acq_geometry: object | null;
+  ion_img_storage_type: string;
+  thumbnail: string | null;
+  mol_dbs: string[];
+  adducts: string[];
+}

@@ -14,7 +14,7 @@ import * as _mockEmail from './email';
 import {Moment} from 'moment';
 import {
   onAfterAll, onAfterEach,
-  onBeforeAll, onBeforeEachWithOptions, testEntityManager,
+  onBeforeAll, onBeforeEach, testEntityManager,
 } from '../../tests/graphqlTestEnvironment';
 const mockEmail = _mockEmail as jest.Mocked<typeof _mockEmail>;
 
@@ -52,9 +52,7 @@ async function createUserCredentialsEntities(user?: Object, cred?: Object):
 describe('Database operations with user', () => {
   beforeAll(onBeforeAll);
   afterAll(onAfterAll);
-  beforeEach(onBeforeEachWithOptions({
-    suppressTestDataCreation: true
-  }));
+  beforeEach(onBeforeEach);
   afterEach(onAfterEach);
 
   test('create new user credentials', async () => {
@@ -82,7 +80,7 @@ describe('Database operations with user', () => {
 
   test('create credentials when user already exists', async () => {
     let {user, cred} = await createUserCredentialsEntities(
-      { email: 'admin@localhost' });
+      { notVerifiedEmail: 'admin@localhost' });
 
     await createUserCredentials({
       name: 'Name',
@@ -120,7 +118,7 @@ describe('Database operations with user', () => {
   });
 
   test('create user when it already exists, email verified', async () => {
-    let {user, cred} = await createUserCredentialsEntities({}, {emailVerified: true});
+    let {user, cred} = await createUserCredentialsEntities({email: 'admin@localhost'}, {emailVerified: true});
 
     await createUserCredentials({
       name: 'Name',
@@ -132,7 +130,7 @@ describe('Database operations with user', () => {
     expect(updCred).toMatchObject(cred);
 
     expect(mockEmail.sendLoginEmail).toHaveBeenCalledTimes(1);
-    expect(mockEmail.sendLoginEmail).toHaveBeenCalledWith('admin@localhost');
+    expect(mockEmail.sendLoginEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
   });
 
   test('verify email', async () => {

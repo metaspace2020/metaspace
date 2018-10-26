@@ -66,7 +66,7 @@ async function createHttpServerAsync(config) {
 
   const apollo = new ApolloServer({
     schema: executableSchema,
-    context: ({req}) => getContext(req, connection),
+    context: ({req}) => getContext(req.user && req.user.user, connection),
     playground: {
       settings: {
         'editor.theme': 'light',

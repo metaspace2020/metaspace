@@ -1,21 +1,23 @@
-jest.mock('../../utils/smAPI');
-import * as _mockSmApi from '../../utils/smAPI';
-const mockSmApi = _mockSmApi as jest.Mocked<typeof _mockSmApi>;
-
-import {Project as ProjectType} from '../../binding';
-import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions} from './model';
+import {createTestProject} from '../../../tests/testDataCreation';
+import {Project as ProjectType} from '../../../binding';
+import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from '../model';
 import {
   adminContext,
   anonContext,
   doQuery,
-  onAfterAll, onAfterEach,
-  onBeforeAll, onBeforeEach,
+  onAfterAll,
+  onAfterEach,
+  onBeforeAll,
+  onBeforeEach,
+  setupTestUsers,
   shallowFieldsOfSchemaType,
-  testEntityManager, testUser,
-} from '../../tests/graphqlTestEnvironment';
+  testEntityManager,
+  testUser,
+} from '../../../tests/graphqlTestEnvironment';
+import {createBackgroundData, validateBackgroundData} from '../../../tests/backgroundDataCreation';
 
 
-describe('modules/project/controller', () => {
+describe('modules/project/controller (CRUD mutations)', () => {
   const projectFields = shallowFieldsOfSchemaType('Project');
   let userId: string;
 
@@ -23,6 +25,7 @@ describe('modules/project/controller', () => {
   afterAll(onAfterAll);
   beforeEach(async () => {
     await onBeforeEach();
+    await setupTestUsers();
     userId = testUser.id;
   });
   afterEach(onAfterEach);
@@ -58,7 +61,7 @@ describe('modules/project/controller', () => {
         members: [
           expect.objectContaining({
             userId,
-            role: UserProjectRoleOptions.MANAGER,
+            role: UPRO.MANAGER,
           }),
         ],
       }));
@@ -91,7 +94,7 @@ describe('modules/project/controller', () => {
 
   describe('Mutation.updateProject', () => {
     let projectId: string;
-    let initialProject: Pick<ProjectType, 'name' | 'isPublic' | 'urlSlug'>;
+    let initialProject: ProjectModel;
     const projectDetails = {
       name: 'bar',
       isPublic: false,
@@ -105,18 +108,17 @@ describe('modules/project/controller', () => {
     }`;
     
     beforeEach(async () => {
-      initialProject = { // reinitialize every time because testEntityManager.insert modifies it
+      initialProject = await createTestProject({
         name: 'foo',
         isPublic: true,
         urlSlug: 'foo',
-      };
-      const insertResult = await testEntityManager.insert(ProjectModel, initialProject);
-      projectId = insertResult.identifiers[0].id;
+      });
+      projectId = initialProject.id;
     });
     
     it('should update a project when run as a MANAGER of the project', async () => {
       // Arrange
-      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UserProjectRoleOptions.MANAGER});
+      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UPRO.MANAGER});
 
       // Act
       const result = await doQuery<ProjectType>(updateProject, {projectId, projectDetails});
@@ -129,7 +131,7 @@ describe('modules/project/controller', () => {
     });
     it('should fail when run as a MEMBER of the project', async () => {
       // Arrange
-      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UserProjectRoleOptions.MEMBER});
+      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UPRO.MEMBER});
 
       // Act
       const promise = doQuery(updateProject, { projectId, projectDetails });
@@ -146,7 +148,7 @@ describe('modules/project/controller', () => {
     });
     it('should reject a urlSlug change from a user', async () => {
       // Arrange
-      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UserProjectRoleOptions.MANAGER});
+      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UPRO.MANAGER});
 
       // Act
       const promise = doQuery<ProjectType>(updateProject, {projectId, projectDetails: projectDetailsWithSlug});
@@ -168,18 +170,22 @@ describe('modules/project/controller', () => {
 
   describe('Mutation.deleteProject', () => {
     let projectId: string;
+
     const deleteProject = `mutation ($projectId: ID!) {
       deleteProject(projectId: $projectId)
     }`;
 
     beforeEach(async () => {
-      const insertResult = await testEntityManager.insert(ProjectModel, { name: 'foo' });
-      projectId = insertResult.identifiers[0].id;
+      projectId = (await createTestProject()).id;
     });
 
     it('should delete a project when run as a MANAGER of the project', async () => {
       // Arrange
-      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UserProjectRoleOptions.MANAGER});
+      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UPRO.MANAGER});
+      const bgData = await createBackgroundData({
+        users: true, projects: true, datasets: true,
+        projectsForUserIds: [userId], datasetsForUserIds: [userId]
+      });
 
       // Act
       await doQuery(deleteProject, {projectId});
@@ -187,10 +193,11 @@ describe('modules/project/controller', () => {
       // Assert
       const project = await testEntityManager.findOne(ProjectModel, projectId);
       expect(project).toEqual(undefined);
+      await validateBackgroundData(bgData);
     });
     it('should delete a project when run as an admin', async () => {
       // Arrange
-      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UserProjectRoleOptions.MANAGER});
+      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UPRO.MANAGER});
 
       // Act
       await doQuery(deleteProject, {projectId});
@@ -201,7 +208,7 @@ describe('modules/project/controller', () => {
     });
     it('should fail when run as a MEMBER of the project', async () => {
       // Arrange
-      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UserProjectRoleOptions.MEMBER});
+      await testEntityManager.insert(UserProjectModel, {userId, projectId, role: UPRO.MEMBER});
 
       // Act
       const promise = doQuery(deleteProject, { projectId });
@@ -212,21 +219,4 @@ describe('modules/project/controller', () => {
       await expect(project).toEqual(expect.anything());
     });
   });
-
-// ## Managing project users
-//   leaveProject(projectId: ID!): Boolean!
-//   removeUserFromProject(projectId: ID!, userId: ID!): Boolean!
-//
-// ## User requests access
-//   requestAccessToProject(projectId: ID!): UserProject!
-//   acceptRequestToJoinProject(projectId: ID!, userId: ID!): UserProject!
-// # User can reject request with `leaveProject`
-//
-//     ## Project invites user
-//   inviteUserToProject(projectId: ID!, email: String!): UserProject!
-//   acceptProjectInvitation(projectId: ID!): UserProject!
-// # Project can reject user with `removeUserFromProject`
-//
-//     importDatasetsIntoProject(projectId: ID!, datasetIds: [ID!]!): Boolean!
-
 });
