@@ -1,9 +1,9 @@
 import {Connection, EntityManager} from 'typeorm';
 import {Context, UserProjectRoles} from './context';
-import {UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from './modules/project/model';
-import _ = require('lodash');
+import {UserProjectRoleOptions as UPRO} from './modules/project/model';
 import {UserError} from 'graphql-errors';
 import {JwtUser} from './modules/auth/controller';
+import {getUserProjectRoles} from './utils/db';
 
 export default (jwtUser: JwtUser | null, connection: Connection | EntityManager): Context => {
   const user = jwtUser != null && jwtUser.id != null ? jwtUser : null;
@@ -11,15 +11,7 @@ export default (jwtUser: JwtUser | null, connection: Connection | EntityManager)
   let currentUserProjectRoles: Promise<UserProjectRoles> | null = null;
   const getProjectRoles = async () => {
     if (currentUserProjectRoles == null && user != null && user.id != null) {
-      currentUserProjectRoles = new Promise<UserProjectRoles>(async (resolve, reject) => {
-        try {
-          const userProjects = await connection.getRepository(UserProjectModel)
-            .find({ where: { userId: user.id } });
-          resolve(_.fromPairs(userProjects.map(up => [up.projectId, up.role])));
-        } catch (err) {
-          reject(err);
-        }
-      });
+      currentUserProjectRoles = getUserProjectRoles(connection, user.id)
     } else if (currentUserProjectRoles == null) {
       currentUserProjectRoles = Promise.resolve({});
     }
@@ -33,7 +25,6 @@ export default (jwtUser: JwtUser | null, connection: Connection | EntityManager)
       .filter(([id, role]) => role != null && [UPRO.MEMBER, UPRO.MANAGER].includes(role))
       .map(([id, role]) => id);
   };
-
 
   return {
     connection,

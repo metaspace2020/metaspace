@@ -2,8 +2,7 @@ import * as jsondiffpatch from 'jsondiffpatch';
 import config from '../../../utils/config';
 import * as Ajv from 'ajv';
 import {UserError} from 'graphql-errors';
-import * as _ from 'lodash';
-import {Connection, EntityManager, In} from 'typeorm';
+import {Connection, EntityManager} from 'typeorm';
 import * as moment from 'moment';
 
 import {fetchEngineDS, logger, fetchMolecularDatabases} from '../../../../utils';
@@ -13,9 +12,10 @@ import metadataMapping from '../../../../metadataSchemas/metadataMapping';
 import {UserProjectRoleOptions as UPRO} from '../../project/model';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/model';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
-import {DatasetUpdateInput, Mutation, UserProjectRole} from '../../../binding';
-import {Context, ContextUser, UserProjectRoles} from '../../../context';
+import {DatasetUpdateInput, Mutation} from '../../../binding';
+import {Context, ContextUser} from '../../../context';
 import {FieldResolversFor} from '../../../bindingTypes';
+import {getUserProjectRoles} from '../../../utils/db';
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -132,8 +132,7 @@ interface SaveDSArgs {
   principalInvestigator?: {name: string, email: string};
 }
 
-const saveDS = async (connection: Connection | EntityManager, args: SaveDSArgs,
-                      currentUserRoles: UserProjectRoles, requireInsert = false) => {
+const saveDS = async (connection: Connection | EntityManager, args: SaveDSArgs, requireInsert = false) => {
   const {dsId, submitterId, groupId, projectIds, principalInvestigator} = args;
   const dsUpdate = {
     id: dsId,
@@ -154,15 +153,17 @@ const saveDS = async (connection: Connection | EntityManager, args: SaveDSArgs,
   if (projectIds != null && projectIds.length > 0) {
     const datasetProjectRepo = connection.getRepository(DatasetProjectModel);
     const existingDatasetProjects = await datasetProjectRepo.find({ datasetId: dsId });
-    const savePromises = projectIds.map(async (projectId) => {
-      const approved = ([UPRO.MEMBER, UPRO.MANAGER] as any[]).includes(currentUserRoles[projectId]);
-      const existing = existingDatasetProjects.find(dp => dp.projectId === projectId);
-      if (existing == null || existing.approved !== approved) {
-        return await datasetProjectRepo.save({ datasetId: dsId, projectId, approved });
-      } else {
-        return Promise.resolve();
-      }
-    });
+    const userProjectRoles = await getUserProjectRoles(connection, submitterId);
+    const savePromises = projectIds
+      .map((projectId) => ({
+        projectId,
+        approved: [UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRoles[projectId]),
+        existing: existingDatasetProjects.find(dp => dp.projectId === projectId),
+      }))
+      .filter(({approved, existing}) => existing == null || existing.approved !== approved)
+      .map(async ({projectId, approved}) => {
+        await datasetProjectRepo.save({ datasetId: dsId, projectId, approved });
+      });
     const deletePromises = existingDatasetProjects
       .filter(({projectId}) => !projectIds.includes(projectId))
       .map(async ({projectId}) => { await datasetProjectRepo.delete({ datasetId: dsId, projectId }); });
@@ -243,7 +244,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       projectIds: projectIds as string[],
       principalInvestigator
     };
-    await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles(), !dsIdWasSpecified);
+    await saveDS(connection, saveDSArgs, !dsIdWasSpecified);
 
     const url = `/v1/datasets/${dsId}/add`;
     await smAPIRequest(url, {
@@ -283,7 +284,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
     let smAPIResp;
     if (reprocess) {
-      await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles());
+      await saveDS(connection, saveDSArgs);
       smAPIResp = await smAPIRequest(`/v1/datasets/${dsId}/add`, {
         doc: {...engineDS, ...update, ...(metadata ? {metadata} : {})},
         delFirst: procSettingsUpd || delFirst,  // delete old results if processing settings changed
@@ -300,7 +301,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
         }));
       }
       else {
-        await saveDS(connection, saveDSArgs, await getCurrentUserProjectRoles());
+        await saveDS(connection, saveDSArgs);
         smAPIResp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
           doc: {...update, ...(metadata ? {metadata} : {})},
           priority: priority,
