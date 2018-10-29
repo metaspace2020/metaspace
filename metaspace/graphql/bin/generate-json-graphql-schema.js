@@ -11,6 +11,7 @@ const writeFile = promisify(require("fs").writeFile);
 const schemaFiles = [
   '../schema.graphql',
   '../schemas/user.graphql',
+  '../schemas/dataset.graphql',
   '../schemas/group.graphql',
   '../schemas/project.graphql',
   '../schemas/system.graphql',
