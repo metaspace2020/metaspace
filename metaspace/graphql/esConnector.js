@@ -9,8 +9,8 @@ const elasticsearch = require('elasticsearch'),
   sprintf = require('sprintf-js');
 
 const config = require('config'),
-  {datasetFilters, dsField} = require('./datasetFilters.js'),
-  {logger, canUserViewEsDataset} = require('./utils');
+  {datasetFilters} = require('./datasetFilters.js'),
+  {logger} = require('./utils');
 
 const esConfig = () => {
   return {
@@ -340,3 +340,4 @@ module.exports.esDatasetByID = async function(id, user) {
     return getFirst({ datasetFilter: { ids: id } }, 'dataset', user);
   return null;
 };
+

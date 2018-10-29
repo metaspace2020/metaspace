@@ -11,7 +11,6 @@ import {User as UserModel, User} from '../modules/user/model';
 import {Dataset, DatasetProject} from '../modules/dataset/model';
 import {Group, UserGroup} from '../modules/group/model';
 import {Project, UserProject as UserProjectModel, UserProject} from '../modules/project/model';
-import {UserProjectRoles} from '../context';
 
 export const DbSchemaName = 'graphql';
 

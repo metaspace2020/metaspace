@@ -5,7 +5,8 @@ import {UserError} from 'graphql-errors';
 import {Connection, EntityManager} from 'typeorm';
 import * as moment from 'moment';
 
-import {fetchEngineDS, logger, fetchMolecularDatabases} from '../../../../utils';
+import {logger, fetchMolecularDatabases} from '../../../../utils';
+import {fetchEngineDS} from '../../../utils/knexDb';
 
 import {smAPIRequest} from '../../../utils';
 import metadataMapping from '../../../../metadataSchemas/metadataMapping';
