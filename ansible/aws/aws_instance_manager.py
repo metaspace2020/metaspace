@@ -74,7 +74,8 @@ class AWSInstManager(object):
                 MaxCount=inst_n,
                 SecurityGroups=[sec_group],
                 InstanceType=inst_type,
-                BlockDeviceMappings=block_dev_maps
+                BlockDeviceMappings=block_dev_maps,
+                EbsOptimized=True
             )
         else:
             best_price_az = self.find_best_price_availability_zone(3, inst_type)

@@ -11,11 +11,10 @@ const bodyParser = require('body-parser'),
 
 const {createImgServerAsync} = require('./imageUpload.js'),
   {configureAuth} = require('./src/modules/auth'),
-  {User, Dataset} = require('./src/modules/user/model'),
-  {logger, initDBConnection} = require('./utils'),
+  {initDBConnection} = require('./src/utils/knexDb'),
+  {logger} = require('./utils'),
   {createConnection} = require('./src/utils'),
   {executableSchema} = require('./executableSchema'),
-  derefSchema = require('./deref_schema.js'),
   getContext = require('./src/getContext').default;
 
 // subscriptions setup
@@ -111,11 +110,12 @@ async function createHttpServerAsync(config) {
 }
 
 if (process.argv[1].endsWith('server.js')) {
+  const db = initDBConnection();
   createHttpServerAsync(config)
     .catch(e => {
       logger.error(e);
     });
-  createImgServerAsync(config, initDBConnection());
+  createImgServerAsync(config, db);
 }
 
 module.exports = {createHttpServerAsync, wsServer}; // for testing

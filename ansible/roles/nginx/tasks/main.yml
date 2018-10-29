@@ -36,6 +36,13 @@
     password: "{{ item.password }}"
   with_items: "{{ basic_auth_users }}"
 
+- name: Create directory for ssl certificates and keys
+  become: yes
+  file:
+    path: /etc/nginx/ssl
+    mode: 0700
+    state: directory
+
 - name: Copy ssl certificate and key
   become: yes
   copy:

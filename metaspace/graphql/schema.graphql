@@ -56,59 +56,6 @@ type FdrCounts {
   counts: [Float!]!
 }
 
-type Dataset {
-  id: String!
-  name: String!
-  uploadDT: String!
-
-  institution: String
-  submitter: User!
-  group: Group
-  principalInvestigator: Person
-  projects: [Project!]
-
-  polarity: Polarity!
-  ionisationSource: String!
-  analyzer: Analyzer!
-
-  organism: String
-  organismPart: String
-  condition: String
-  growthConditions: String
-  maldiMatrix: String
-
-  configJson: String!
-  # full metadata JSON conforming to schema published at
-  # https://github.com/metaspace2020/metaspace/tree/master/metaspace/metadata
-  metadataJson: String!
-  isPublic: Boolean!
-  molDBs: [String!]!
-  adducts: [String!]!
-  acquisitionGeometry: String
-  metadataType: String!
-
-  status: JobStatus
-  inputPath: String
-  uploadDateTime: String
-  fdrCounts(inpFdrLvls: [Int!]!, checkLvl: Int!): FdrCounts
-  opticalImage: String @deprecated(badName: "Renamed to rawOpticalImageUrl")
-  rawOpticalImageUrl: String
-}
-
-# fields of categorical type
-enum DatasetAggField {
-  DF_GROUP,
-  DF_SUBMITTER_NAME,
-  DF_POLARITY,
-  DF_ION_SOURCE,
-  DF_ANALYZER_TYPE,
-  DF_ORGANISM,
-  DF_ORGANISM_PART,
-  DF_CONDITION,
-  DF_GROWTH_CONDITIONS,
-  DF_MALDI_MATRIX
-}
-
 type CompoundInfoEntry {
   database: String!
   url: String
@@ -182,128 +129,13 @@ input AnnotationFilter {
   adduct: String
 }
 
-input DatasetFilter {
-  # list of IDs separated by '|'
-  ids: String
-
-  # substring match
-  name: String
-
-  # exact match
-  submitter: ID
-
-  # exact match
-  group: ID
-  hasGroup: Boolean
-
-  # exact match
-  project: ID
-
-  polarity: Polarity
-
-  # exact match
-  ionisationSource: String
-
-  # exact match
-  analyzerType: String
-
-  # exact match
-  maldiMatrix: String
-
-  # exact match
-  organism: String
-
-  # exact match
-  organismPart: String
-
-  # exact match
-  condition: String
-
-  # exact match
-  growthConditions: String
-
-  # exact match
-  metadataType: String
-
-  status: JobStatus
-}
-
-input DatasetCountPerGroupInput {
-  fields: [DatasetAggField!]!
-  filter: DatasetFilter = {}
-  simpleQuery: String
-}
-
-input DatasetCreateInput {
-  name: String!
-  inputPath: String!
-  uploadDT: String
-  metadataJson: String!
-  molDBs: [String!]!
-  adducts: [String!]!
-  submitterId: ID!
-  groupId: ID
-  projectIds: [ID!] = []
-  principalInvestigator: PersonInput
-  isPublic: Boolean! = true
-}
-
-input DatasetUpdateInput {
-  # Don't supply fields that haven't been changed
-  name: String
-  uploadDT: String
-  metadataJson: String
-  molDBs: [String!]
-  adducts: [String!]
-  submitterId: ID
-  groupId: ID
-  projectIds: [ID!]
-  principalInvestigator: PersonInput
-  isPublic: Boolean
-}
-
-type DatasetCountPerGroupListElement {
-  fieldValues: [String!]!  # corresponding to input fields
-  count: Int!
-}
-
-type DatasetCountPerGroup {
-  counts: [DatasetCountPerGroupListElement]
-}
-
-type RawOpticalImage {
-    url: String
-    transform: [[Float]]
-}
-
-input AddOpticalImageInput {
-  datasetId: String!
-  imageUrl: String!
-
-  # 3x3 transformation matrix in row-major order
-  # (acting in homogeneous coordinates)
-  transform: [[Float]]!
-}
-
 type Query {
-  dataset(id: String!): Dataset
-  datasetByName(name: String!): Dataset
-
-  allDatasets(orderBy: DatasetOrderBy = ORDER_BY_DATE,
-              sortingOrder: SortingOrder = DESCENDING,
-              filter: DatasetFilter = {}, simpleQuery: String,
-              offset: Int = 0, limit: Int = 10): [Dataset!]
-
   allAnnotations(orderBy: AnnotationOrderBy = ORDER_BY_MSM,
                  sortingOrder: SortingOrder = DESCENDING,
                  offset: Int = 0, limit: Int = 10,
                  filter: AnnotationFilter = {},
                  datasetFilter: DatasetFilter = {},
                  simpleQuery: String): [Annotation]
-
-  countDatasets(filter: DatasetFilter = {}, simpleQuery: String): Int!
-
-  countDatasetsPerGroup(query: DatasetCountPerGroupInput!): DatasetCountPerGroup!
 
   countAnnotations(filter: AnnotationFilter = {},
                    datasetFilter: DatasetFilter = {},
@@ -319,43 +151,6 @@ type Query {
     onlyLastVersion: Boolean=true): [MolecularDatabase!]
 
   adductSuggestions: [Adduct!]!
-
-  opticalImageUrl(datasetId: String!, zoom: Float = 1): String
-
-  rawOpticalImage(datasetId: String!): RawOpticalImage
-
-  thumbnailImage(datasetId: String!): String @deprecated(badName: "Renamed to thumbnailOpticalImageUrl")
-
-  thumbnailOpticalImageUrl(datasetId: String!): String
-
-  currentUserLastSubmittedDataset: Dataset
-}
-
-type Mutation {
-  createDataset(id: String, input: DatasetCreateInput!,
-        priority: Int=0): String!
-
-  updateDataset(id: String!, input: DatasetUpdateInput!,
-        reprocess: Boolean=false, delFirst: Boolean=false,
-        force: Boolean=false, priority: Int=0): String!
-
-  deleteDataset(id: String!,
-        force: Boolean=false, priority: Int=0): String!
-
-  # for dev purposes only
-  reprocessDataset(id: String, priority: Int=0, delFirst: Boolean=false): String!
-
-  addOpticalImage(input: AddOpticalImageInput!): String!
-
-  deleteOpticalImage(datasetId: String!): String!
-}
-
-type DatasetStatusUpdate {
-  dataset: Dataset
-}
-
-type Subscription {
-  datasetStatusUpdated: DatasetStatusUpdate
 }
 
 schema {

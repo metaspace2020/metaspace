@@ -124,9 +124,6 @@ export const Resolvers = {
       if (update.role && user.role !== 'admin') {
         throw new UserError('Only admin can update role');
       }
-      if (update.primaryGroupId) {
-        throw new UserError('Not implemented yet');
-      }
 
       let userObj = await connection.getRepository(UserModel).findOneOrFail({
         where: { id: userId },
@@ -135,12 +132,24 @@ export const Resolvers = {
       if (update.email) {
         await sendEmailVerificationToken(userObj.credentials, update.email);
       }
-      const {email: notVerifiedEmail, ...rest} = update;
+      const {email: notVerifiedEmail, primaryGroupId, ...rest} = update;
       userObj = await connection.getRepository(UserModel).save({
         ...userObj,
         ...rest,
         notVerifiedEmail
       });
+
+      if (primaryGroupId) {
+        const userGroupRepo = connection.getRepository(UserGroupModel);
+        const userGroups = await userGroupRepo.find({ where: { userId: user.id } }) as UserGroupModel[];
+        if (userGroups.length > 0) {
+          const newPrimary = userGroups.find(ug => ug.groupId === primaryGroupId) || userGroups[0];
+          userGroups.forEach(ug => {
+            ug.primary = ug === newPrimary;
+          });
+          await userGroupRepo.save(userGroups);
+        }
+      }
 
       const userDSs = await connection.getRepository(DatasetModel).find({ userId });
       if (userDSs) {

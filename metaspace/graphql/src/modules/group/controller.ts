@@ -153,17 +153,25 @@ export const Resolvers = {
   },
 
   Mutation: {
-    async createGroup(_: any, {groupDetails}: any, {user, connection}: Context): Promise<Group> {
+    async createGroup(_: any, {groupDetails}: any, {user, connection}: Context): Promise<LooselyCompatible<Group & Scope>> {
       const {groupAdminEmail, ...groupInput} = groupDetails;
       assertCanCreateGroup(user);
       logger.info(`Creating ${groupInput.name} group by '${user!.id}' user...`);
 
-      // TODO create inactive account for PI
-      const insertRes = await connection.getRepository(GroupModel).insert(groupInput);
-      const groupIdMap = insertRes.identifiers[0];
+      const group = await connection.getRepository(GroupModel).save(groupInput) as GroupModel;
+
+      const adminUser = await findUserByEmail(connection, groupAdminEmail)
+        || await findUserByEmail(connection, groupAdminEmail, 'not_verified_email')
+        || await createInactiveUser(groupAdminEmail);
+
+      await connection.getRepository(UserGroupModel).save({
+        groupId: group.id,
+        userId: adminUser.id,
+        role: UserGroupRoleOptions.GROUP_ADMIN
+      });
 
       logger.info(`${groupInput.name} group created`);
-      return {...groupIdMap, ...groupInput};
+      return group;
     },
 
     async updateGroup(_: any, {groupId, groupDetails}: any, {user, connection}: Context): Promise<Group> {
