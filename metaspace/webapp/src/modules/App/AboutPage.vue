@@ -95,7 +95,7 @@
       <el-row id="acknowledgement">
         <h2>Other acknowledgements</h2>
         <p>
-          Icons by <a href="http://www.freepik.com/">Freepik</a> from <a href="www.flaticon.com">www.flaticon.com</a>
+          Icons by <a href="http://www.freepik.com/">Freepik</a> from <a href="http://www.flaticon.com">www.flaticon.com</a>
         </p>
       </el-row>
     </el-row>
