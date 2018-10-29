@@ -1,7 +1,8 @@
-import * as config from 'config';
+import config from '../../../utils/config';
 import * as _ from 'lodash';
 
-import {processingSettingsChanged} from '../dsMutation';
+import {processingSettingsChanged} from './Mutation';
+import {EngineDS} from '../../../utils/knexDb';
 
 const metadata = {
   "MS_Analysis": {
@@ -67,42 +68,44 @@ const metadata = {
     config: dsConfig,
     metadata: metadata,
     molDBs: config.defaults.moldb_names
-  };
+  } as EngineDS;
 
-function clone(obj) {
+function clone(obj: any) {
   return JSON.parse(JSON.stringify(obj));
 }
 
-test('Reprocessing needed when database list changed', () => {
-  const updDS = clone(ds);
-  updDS.molDBs.push('ChEBI');
+describe('processingSettingsChanged', () => {
+  test('Reprocessing needed when database list changed', () => {
+    const updDS = clone(ds);
+    updDS.molDBs.push('ChEBI');
 
-  const {newDB} = processingSettingsChanged(ds, updDS);
+    const {newDB} = processingSettingsChanged(ds, updDS);
 
-  expect(newDB).toBe(true);
-});
+    expect(newDB).toBe(true);
+  });
 
-test('Drop reprocessing needed when instrument settings changed', () => {
-  const updDS = clone(ds);
-  updDS.metadata.MS_Analysis.Detector_Resolving_Power.mz = 100;
+  test('Drop reprocessing needed when instrument settings changed', () => {
+    const updDS = clone(ds);
+    updDS.metadata.MS_Analysis.Detector_Resolving_Power.mz = 100;
 
-  const {procSettingsUpd} = processingSettingsChanged(ds, updDS);
+    const {procSettingsUpd} = processingSettingsChanged(ds, updDS);
 
-  expect(procSettingsUpd).toBe(true);
-});
+    expect(procSettingsUpd).toBe(true);
+  });
 
-test('Reprocessing not needed when just metadata changed', () => {
-  const updDS = {
-    metadata: _.defaultsDeep({
-      Sample_Preparation: { MALDI_Matrix: 'New matrix' },
-      MS_Analysis: { ionisationSource: 'DESI' },
-      Sample_Information: { Organism: 'New organism' },
-    }, ds.metadata),
-    name: 'New DS name'
-  };
+  test('Reprocessing not needed when just metadata changed', () => {
+    const updDS = {
+      metadata: _.defaultsDeep({
+        Sample_Preparation: { MALDI_Matrix: 'New matrix' },
+        MS_Analysis: { ionisationSource: 'DESI' },
+        Sample_Information: { Organism: 'New organism' },
+      }, ds.metadata),
+      name: 'New DS name'
+    };
 
-  const {newDB, procSettingsUpd} = processingSettingsChanged(ds, updDS);
+    const {newDB, procSettingsUpd} = processingSettingsChanged(ds, updDS);
 
-  expect(newDB).toBe(false);
-  expect(procSettingsUpd).toBe(false);
+    expect(newDB).toBe(false);
+    expect(procSettingsUpd).toBe(false);
+  });
 });

@@ -26,6 +26,7 @@ export const initDBConnection = (config = defaultDBConfig) => {
 };
 
 type IdOrName = {id?: string, name?: string};
+export type EngineDS = ReturnType<typeof fetchEngineDS> extends Promise<infer T> ? T : never;
 /** @deprecated Use TypeORM instead */
 export const fetchEngineDS = async ({id, name}: IdOrName) => {
   let records;

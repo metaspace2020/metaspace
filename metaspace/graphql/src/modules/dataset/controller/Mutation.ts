@@ -6,7 +6,7 @@ import {Connection, EntityManager} from 'typeorm';
 import * as moment from 'moment';
 
 import {logger, fetchMolecularDatabases} from '../../../../utils';
-import {fetchEngineDS} from '../../../utils/knexDb';
+import {fetchEngineDS, EngineDS} from '../../../utils/knexDb';
 
 import {smAPIRequest} from '../../../utils';
 import metadataMapping from '../../../../metadataSchemas/metadataMapping';
@@ -21,7 +21,6 @@ import {getUserProjectRoles} from '../../../utils/db';
 type MetadataSchema = any;
 type MetadataRoot = any;
 type MetadataNode = any;
-type EngineDS = ReturnType<typeof fetchEngineDS> extends Promise<infer T> ? T : never;
 
 
 function isEmpty(obj: any) {
