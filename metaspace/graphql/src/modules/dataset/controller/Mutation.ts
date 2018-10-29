@@ -288,7 +288,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       await saveDS(connection, saveDSArgs);
       smAPIResp = await smAPIRequest(`/v1/datasets/${dsId}/add`, {
         doc: {...engineDS, ...update, ...(metadata ? {metadata} : {})},
-        delFirst: procSettingsUpd || delFirst,  // delete old results if processing settings changed
+        del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
         priority: priority,
         force: force,
       });
