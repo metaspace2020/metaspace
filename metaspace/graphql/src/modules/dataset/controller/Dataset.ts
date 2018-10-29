@@ -4,7 +4,7 @@ import {DatasetSource, FieldResolversFor, ScopeRoleOptions as SRO} from '../../.
 import {ProjectSourceRepository} from '../../project/ProjectSourceRepository';
 import {Dataset as DatasetModel} from '../model';
 import {Dataset} from '../../../binding';
-import QueryResolvers from './Query';
+import {rawOpticalImage} from './Query';
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   id(ds) {
@@ -163,14 +163,14 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   // TODO: field is deprecated, remove
-  opticalImage(ds, _, ctx) {
+  async opticalImage(ds, _, ctx) {
     // @ts-ignore
-    return DatasetResolvers.rawOpticalImageUrl(ds, _, ctx);
+    return await rawOpticalImage(ds._source.ds_id, ctx).url;
   },
 
   async rawOpticalImageUrl(ds, _, ctx) {
     // @ts-ignore
-    return await QueryResolvers.rawOpticalImage(_, {datasetId: ds._source.ds_id}, ctx).url;
+    return await rawOpticalImage(ds._source.ds_id, ctx).url;
   }
 };
 

@@ -35,6 +35,23 @@ const resolveDatasetScopeRole = async (ctx: Context, dsId: string) => {
   return scopeRole;
 };
 
+export const rawOpticalImage = async (dsId: string, ctx: Context) => {
+  // TODO: consider moving to Dataset type
+  const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
+  if (ds) {
+    const row = await (db.from('dataset')
+      .where('id', dsId)
+      .first());
+    if (row && row.optical_image) {
+      return {
+        url: `/fs/raw_optical_images/${row.optical_image}`,
+        transform: row.transform
+      };
+    }
+  }
+  return null;
+};
+
 const QueryResolvers: FieldResolversFor<Query, void>  = {
   async dataset(source, { id: dsId }, ctx): Promise<DatasetSource | null> {
     // TODO: decide whether to support field level access here
@@ -87,20 +104,7 @@ const QueryResolvers: FieldResolversFor<Query, void>  = {
   },
 
   async rawOpticalImage(source, {datasetId: dsId}, ctx) {
-    // TODO: consider moving to Dataset type
-    const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
-    if (ds) {
-      const row = await (db.from('dataset')
-        .where('id', dsId)
-        .first());
-      if (row && row.optical_image) {
-        return {
-          url: `/fs/raw_optical_images/${row.optical_image}`,
-          transform: row.transform
-        };
-      }
-    }
-    return null;
+    return await rawOpticalImage(dsId, ctx);
   },
 
   // TODO: deprecated, remove

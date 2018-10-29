@@ -13,7 +13,7 @@ import metadataMapping from '../../../../metadataSchemas/metadataMapping';
 import {UserProjectRoleOptions as UPRO} from '../../project/model';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/model';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
-import {DatasetUpdateInput, Mutation} from '../../../binding';
+import {DatasetCreateInput, DatasetUpdateInput, Int, Mutation, String} from '../../../binding';
 import {Context, ContextUser} from '../../../context';
 import {FieldResolversFor} from '../../../bindingTypes';
 import {getUserProjectRoles} from '../../../utils/db';
@@ -202,6 +202,55 @@ const newDatasetId = () => {
   return `${dt.format('YYYY-MM-DD')}_${dt.format('HH')}h${dt.format('mm')}m${dt.format('ss')}s`;
 };
 
+type CreateDatasetArgs = {
+  id?: String,
+  input: DatasetCreateInput,
+  priority?: Int,
+  reprocess?: boolean, // Only used by reprocess
+  delFirst?: boolean,  // Only used by reprocess
+};
+const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
+  const {input, priority} = args;
+  const {user, connection, isAdmin, getUserIdOrFail} = ctx;
+  const dsId = args.id || newDatasetId();
+  const dsIdWasSpecified = !!args.id;
+  const userId = getUserIdOrFail();
+
+  logger.info(`Creating dataset '${dsId}' by '${userId}' user ...`);
+  let ds;
+  if (dsIdWasSpecified) {
+    ds = await getDatasetForEditing(connection, user, dsId);
+  } else {
+    assertCanCreateDataset(user);
+  }
+
+  const metadata = JSON.parse(input.metadataJson);
+  validateMetadata(metadata);
+  // TODO: Many of the inputs are mistyped because of bugs in graphql-binding that should be reported and/or fixed
+  await molDBsExist(input.molDBs as any || []);
+
+  const {submitterId, groupId, projectIds, principalInvestigator} = input;
+  const saveDSArgs = {
+    dsId,
+    // Only admins can specify the submitterId
+    submitterId: (isAdmin ? submitterId as (string | undefined) : null) || (ds && ds.userId) || userId,
+    groupId: groupId as (string | undefined),
+    projectIds: projectIds as string[],
+    principalInvestigator
+  };
+  await saveDS(connection, saveDSArgs, !dsIdWasSpecified);
+
+  const url = `/v1/datasets/${dsId}/add`;
+  await smAPIRequest(url, {
+    doc: {...input, metadata},
+    priority: priority,
+    email: user!.email,
+  });
+
+  logger.info(`Dataset '${dsId}' was created`);
+  return JSON.stringify({ dsId, status: 'success' });
+};
+
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
   // for dev purposes only, not a part of the public API
@@ -210,55 +259,21 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     const ds = await fetchEngineDS({id});
     if (ds === undefined)
       throw new UserError('DS does not exist');
-    // @ts-ignore: this depends on passing through `reprocess`, which isn't on the GraphQL model
-    return MutationResolvers.createDataset(_, {
-      id: id, input: ds, reprocess: true,
-      delFirst: delFirst, priority: priority
+
+    return await createDataset({
+      id: id,
+      input: ds as any, // TODO: map this properly
+      priority: priority,
+      reprocess: true,
+      delFirst: delFirst,
     }, ctx);
   },
 
-  createDataset: async (_, args, {user, connection, isAdmin, getCurrentUserProjectRoles, getUserIdOrFail}: Context) => {
-    const {input, priority} = args;
-    const dsId = args.id || newDatasetId();
-    const dsIdWasSpecified = !!args.id;
-    const userId = getUserIdOrFail();
-
-    logger.info(`Creating dataset '${dsId}' by '${userId}' user ...`);
-    let ds;
-    if (dsIdWasSpecified) {
-      ds = await getDatasetForEditing(connection, user, dsId);
-    } else {
-      assertCanCreateDataset(user);
-    }
-
-    const metadata = JSON.parse(input.metadataJson);
-    validateMetadata(metadata);
-    // TODO: Many of the inputs are mistyped because of bugs in graphql-binding that should be reported and/or fixed
-    await molDBsExist(input.molDBs as any || []);
-
-    const {submitterId, groupId, projectIds, principalInvestigator} = input;
-    const saveDSArgs = {
-      dsId,
-      // Only admins can specify the submitterId
-      submitterId: (isAdmin ? submitterId as (string | undefined) : null) || (ds && ds.userId) || userId,
-      groupId: groupId as (string | undefined),
-      projectIds: projectIds as string[],
-      principalInvestigator
-    };
-    await saveDS(connection, saveDSArgs, !dsIdWasSpecified);
-
-    const url = `/v1/datasets/${dsId}/add`;
-    await smAPIRequest(url, {
-      doc: {...input, metadata},
-      priority: priority,
-      email: user!.email,
-    });
-
-    logger.info(`Dataset '${dsId}' was created`);
-    return JSON.stringify({ dsId, status: 'success' });
+  createDataset: async (_, args, ctx: Context) => {
+    return await createDataset(args, ctx);
   },
 
-  updateDataset: async (_, args, {user, connection, isAdmin, getCurrentUserProjectRoles}) => {
+  updateDataset: async (_, args, {user, connection, isAdmin}) => {
     const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
 
     logger.info(`User '${user && user.id}' updating '${dsId}' dataset...`);
