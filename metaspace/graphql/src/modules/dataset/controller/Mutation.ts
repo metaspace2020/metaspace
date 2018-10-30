@@ -17,6 +17,7 @@ import {DatasetCreateInput, DatasetUpdateInput, Int, Mutation, String} from '../
 import {Context, ContextUser} from '../../../context';
 import {FieldResolversFor} from '../../../bindingTypes';
 import {getUserProjectRoles} from '../../../utils/db';
+import {metadataSchemas} from '../../../../metadataSchemas/metadataRegistry';
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -56,9 +57,7 @@ function trimEmptyFields(schema: MetadataSchema, value: MetadataNode) {
 
 function validateMetadata(metadata: MetadataNode) {
   const ajv = new Ajv({allErrors: true});
-  const mdType = metadata.Data_Type;
-  const mdSchemaPath = `./metadataSchemas/${metadataMapping[mdType]}`;
-  const mdSchema = require(mdSchemaPath);
+  const mdSchema = metadataSchemas[metadata.Data_Type];
   const validator = ajv.compile(mdSchema);
   const cleanValue = trimEmptyFields(mdSchema, metadata);
   validator(cleanValue);
