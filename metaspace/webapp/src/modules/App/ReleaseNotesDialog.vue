@@ -101,8 +101,6 @@
     margin-left: auto;
     margin-right: auto;
   }
-  .img-acct, .img-grp {
-  }
   .img-acct {
     background: url('../../assets/release_notes_create_account.png') no-repeat center;
     background-size: contain;
