@@ -36,6 +36,22 @@
     password: "{{ item.password }}"
   with_items: "{{ basic_auth_users }}"
 
+- name: Create directory for ssl certificates and keys
+  become: yes
+  file:
+    path: /etc/nginx/ssl
+    mode: 0700
+    state: directory
+
+- name: Copy ssl certificate and key
+  become: yes
+  copy:
+    src={{ item }} dest=/etc/nginx/ssl/{{ item }}
+    owner=ubuntu group=ubuntu mode=0644
+  with_items:
+    - metaspace2020.eu-dfn-ca-chain.pem
+    - metaspace2020.eu.nopw.key
+
 - name: Restart Nginx
   become: yes
   service: name=nginx state=restarted

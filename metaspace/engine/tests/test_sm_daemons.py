@@ -69,7 +69,7 @@ queue_pub = init_queue_pub()
 def run_daemons(db, es):
     from sm.engine.queue import QueuePublisher, SM_DS_STATUS, SM_ANNOTATE, SM_UPDATE
     from sm.engine.png_generator import ImageStoreServiceWrapper
-    from sm.engine.sm_daemons import SMDaemonManager, SMAnnotateDaemon, SMUpdateDaemon
+    from sm.engine.sm_daemons import SMDaemonManager, SMAnnotateDaemon, SMIndexUpdateDaemon
 
     status_queue_pub = QueuePublisher(config=sm_config()['rabbitmq'],
                                       qdesc=SM_DS_STATUS,
@@ -86,8 +86,8 @@ def run_daemons(db, es):
                                        upd_qdesc=SM_UPDATE)
     annotate_daemon.start()
     annotate_daemon.stop()
-    update_daemon = SMUpdateDaemon(manager=manager,
-                                   update_qdesc=SM_UPDATE)
+    update_daemon = SMIndexUpdateDaemon(manager=manager,
+                                        update_qdesc=SM_UPDATE)
     update_daemon.start()
     update_daemon.stop()
 

@@ -46,8 +46,19 @@ class AWSInstManager(object):
         sorted_prices = sorted(prices, key=lambda t: t[1])
         return sorted_prices[0][0]
 
-    def launch_inst(self, inst_name, inst_type, spot_price, inst_n, image, el_ip_id,
-                    sec_group, host_group, block_dev_maps):
+    def assign_tags(self, inst, inst_name, host_group, inst_tags):
+        if not inst_tags:
+            inst_tags = {}
+        tags = [
+            {'Key': 'Name', 'Value': inst_name},
+            {'Key': 'hostgroup', 'Value': host_group}
+        ]
+        for tag_name, tag_value in inst_tags.items():
+            tags.append({'Key': tag_name, 'Value': tag_value})
+        inst.create_tags(Tags=tags)
+
+    def launch_new_inst(self, inst_type, spot_price, inst_n, image, el_ip_id,
+                        sec_group, host_group, block_dev_maps):
         print('Launching {} new instances...'.format(inst_n))
 
         if not image:
@@ -55,7 +66,7 @@ class AWSInstManager(object):
                            key=lambda img: img.creation_date)[-1].id
 
         if not spot_price:
-            insts = self.ec2.create_instances(
+            instances = self.ec2.create_instances(
                 # DryRun=self.dry_run,
                 KeyName=self.key_name,
                 ImageId=image,
@@ -63,7 +74,8 @@ class AWSInstManager(object):
                 MaxCount=inst_n,
                 SecurityGroups=[sec_group],
                 InstanceType=inst_type,
-                BlockDeviceMappings=block_dev_maps
+                BlockDeviceMappings=block_dev_maps,
+                EbsOptimized=True
             )
         else:
             best_price_az = self.find_best_price_availability_zone(3, inst_type)
@@ -95,30 +107,24 @@ class AWSInstManager(object):
             )
 
             desc_resp = self.ec2_client.describe_spot_instance_requests(SpotInstanceRequestIds=spot_req_ids)
-            insts = [self.ec2.Instance(r['InstanceId']) for r in desc_resp['SpotInstanceRequests']]
+            instances = [self.ec2.Instance(r['InstanceId']) for r in desc_resp['SpotInstanceRequests']]
 
         waiter = self.ec2_client.get_waiter('instance_running')
-        waiter.wait(InstanceIds=[inst.id for inst in insts])
-
-        for inst in insts:
-            inst.create_tags(
-                Tags=[
-                    {'Key': 'Name', 'Value': inst_name},
-                    {'Key': 'hostgroup', 'Value': host_group}
-                ])
+        waiter.wait(InstanceIds=[inst.id for inst in instances])
 
         if el_ip_id:
             if inst_n == 1:
                 elastic_ip = self.ec2.VpcAddress(el_ip_id)
-                elastic_ip.associate(InstanceId=insts[0].id)
+                elastic_ip.associate(InstanceId=instances[0].id)
             else:
                 print('Wrong number of instances {} for just one IP address'.format(inst_n))
 
-        print('Launched {}'.format(insts))
+        print('Launched {}'.format(instances))
+        return instances
 
     def create_instances(self, inst_name, inst_type, inst_n, image,
                          sec_group, host_group, block_dev_maps,
-                         spot_price=None, el_ip_id=None):
+                         spot_price=None, el_ip_id=None, inst_tags=None):
         print('Start {} instance(s) of type {}, name={}'.format(inst_n, inst_type, inst_name))
         instances = self.find_inst_by(host_group)
         new_inst_n = inst_n - len(instances)
@@ -137,8 +143,12 @@ class AWSInstManager(object):
                         raise BaseException('Wrong state: {}'.format(inst.state['Name']))
 
                 if new_inst_n > 0:
-                    self.launch_inst(inst_name, inst_type, spot_price, new_inst_n, image, el_ip_id,
-                                     sec_group, host_group, block_dev_maps)
+                    new_instances = self.launch_new_inst(inst_type, spot_price, new_inst_n, image, el_ip_id,
+                                                         sec_group, host_group, block_dev_maps)
+                    instances.extend(new_instances)
+
+                for inst in instances:
+                    self.assign_tags(inst, inst_name, host_group, inst_tags)
             else:
                 print('DRY RUN!')
 
@@ -164,7 +174,7 @@ class AWSInstManager(object):
             i = self.conf['instances'][component]
             self.create_instances(i['hostgroup'], i['type'], i['n'], i['image'],
                                   i['sec_group'], i['hostgroup'], i['block_dev_maps'],
-                                  spot_price=i['price'], el_ip_id=i['elipalloc'])
+                                  spot_price=i['price'], el_ip_id=i['elipalloc'], inst_tags=i.get('tags', {}))
 
     def stop_all_instances(self, components):
         for component in components:
@@ -249,4 +259,4 @@ if __name__ == '__main__':
         raise Exception("Wrong action '{}'".format(args.action))
 
     cmd = '{} update_inventory.py --stage {}'.format(sys.executable, args.stage).split(' ')
-    print(check_output(cmd, universal_newlines=True))
+    print('Inventory:\n{}'.format(check_output(cmd, universal_newlines=True)))

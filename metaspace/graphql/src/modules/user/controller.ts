@@ -68,7 +68,7 @@ export const Resolvers = {
     },
 
     async email({scopeRole, ...user}: UserSource): Promise<string|null> {
-      if ([SRO.GROUP_MANAGER, SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
+      if ([SRO.GROUP_MANAGER, SRO.PROJECT_MANAGER, SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
         return user.email || user.notVerifiedEmail || null;
       }
       return null;
@@ -92,7 +92,7 @@ export const Resolvers = {
     },
 
     async currentUser(_: any, {}: any, ctx: Context): Promise<UserSource|null> {
-      if (ctx.user != null && ctx.user.id != null) {
+      if (ctx.user != null) {
         const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
         const user = await ctx.connection.getRepository(UserModel).findOneOrFail({
           where: { id: ctx.user.id }
@@ -124,9 +124,6 @@ export const Resolvers = {
       if (update.role && user.role !== 'admin') {
         throw new UserError('Only admin can update role');
       }
-      if (update.primaryGroupId) {
-        throw new UserError('Not implemented yet');
-      }
 
       let userObj = await connection.getRepository(UserModel).findOneOrFail({
         where: { id: userId },
@@ -135,12 +132,24 @@ export const Resolvers = {
       if (update.email) {
         await sendEmailVerificationToken(userObj.credentials, update.email);
       }
-      const {email: notVerifiedEmail, ...rest} = update;
+      const {email: notVerifiedEmail, primaryGroupId, ...rest} = update;
       userObj = await connection.getRepository(UserModel).save({
         ...userObj,
         ...rest,
         notVerifiedEmail
       });
+
+      if (primaryGroupId) {
+        const userGroupRepo = connection.getRepository(UserGroupModel);
+        const userGroups = await userGroupRepo.find({ where: { userId: user.id } }) as UserGroupModel[];
+        if (userGroups.length > 0) {
+          const newPrimary = userGroups.find(ug => ug.groupId === primaryGroupId) || userGroups[0];
+          userGroups.forEach(ug => {
+            ug.primary = ug === newPrimary;
+          });
+          await userGroupRepo.save(userGroups);
+        }
+      }
 
       const userDSs = await connection.getRepository(DatasetModel).find({ userId });
       if (userDSs) {

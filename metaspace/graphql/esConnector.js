@@ -9,8 +9,8 @@ const elasticsearch = require('elasticsearch'),
   sprintf = require('sprintf-js');
 
 const config = require('config'),
-  {datasetFilters, dsField} = require('./datasetFilters.js'),
-  {logger, canUserViewEsDataset} = require('./utils');
+  {datasetFilters} = require('./datasetFilters.js'),
+  {logger} = require('./utils');
 
 const esConfig = () => {
   return {
@@ -196,12 +196,12 @@ function constructESQuery(args, docType, user, userProjectRoles) {
   return body;
 }
 
-const esSearchResults = async function(args, docType, user, userProjectRoles) {
+const esSearchResults = async function(args, docType, user) {
   if (args.limit > ES_LIMIT_MAX) {
     return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
 
-  const body = constructESQuery(args, docType, user, userProjectRoles);
+  const body = constructESQuery(args, docType, user, user != null ? await user.getProjectRoles() : {});
   const request = {
     body,
     index: esIndex,
@@ -216,8 +216,8 @@ const esSearchResults = async function(args, docType, user, userProjectRoles) {
 
 module.exports.esSearchResults = esSearchResults;
 
-module.exports.esCountResults = async function(args, docType, user, userProjectRoles) {
-  const body = constructESQuery(args, docType, user, userProjectRoles);
+module.exports.esCountResults = async function(args, docType, user) {
+  const body = constructESQuery(args, docType, user, user != null ? await user.getProjectRoles() : {});
   const request = { body, index: esIndex };
   const resp = await es.count(request);
   return resp.count;
@@ -276,39 +276,39 @@ function flattenAggResponse(fields, aggs, idx) {
   return { counts };
 }
 
-module.exports.esCountGroupedResults = function(args, docType, user, userProjectRoles) {
-  const q = constructESQuery(args, docType, user, userProjectRoles);
+module.exports.esCountGroupedResults = async function (args, docType, user) {
+  const q = constructESQuery(args, docType, user, user != null ? await user.getProjectRoles() : {});
 
   if (args.groupingFields.length === 0) {
     // handle case of no grouping for convenience
     logger.debug(q);
     const request = { body: q, index: esIndex };
-    return es.count(request).then((resp) => {
+    try {
+      const resp = await es.count(request);
       return {counts: [{fieldValues: [], count: resp.count}]};
-    }).catch((e) => {
+    } catch (e) {
       logger.error(e);
       return e.message;
-    });
+    }
   }
 
   const body = addTermAggregations(q, args.groupingFields);
   logger.debug(body);
   const request = { body, index: esIndex, size: 0 };
   console.time('esAgg');
-  return es.search(request)
-    .then(resp => {
-      console.timeEnd('esAgg');
-      return flattenAggResponse(args.groupingFields, resp.aggregations, 0);
-    })
-    .catch((e) => {
-      logger.error(e);
-      return e.message;
-    });
+  try {
+    const resp = await es.search(request);
+    console.timeEnd('esAgg');
+    return flattenAggResponse(args.groupingFields, resp.aggregations, 0);
+  } catch (e) {
+    logger.error(e);
+    return e.message;
+  }
 };
 
-module.exports.esFilterValueCountResults = async (args, user, userProjectRoles) => {
+module.exports.esFilterValueCountResults = async (args, user) => {
   const {wildcard, aggsTerms} = args;
-  const body = createBodyWithAuthFilters(user, userProjectRoles);
+  const body = createBodyWithAuthFilters(user, user != null ? await user.getProjectRoles() : {});
   body.query.bool.filter.push({ term: { _type: 'dataset' } });
   body.query.bool.filter.push(wildcard);
   body.size = 0;  // return only aggregations
@@ -324,19 +324,20 @@ module.exports.esFilterValueCountResults = async (args, user, userProjectRoles) 
   return itemCounts;
 };
 
-async function getFirst(args, docType, user, userProjectRoles) {
-  const docs = await esSearchResults(args, docType, user, userProjectRoles);
+async function getFirst(args, docType, user) {
+  const docs = await esSearchResults(args, docType, user);
   return docs ? docs[0] : null;
 }
 
-module.exports.esAnnotationByID = async function(id, user, userProjectRoles) {
+module.exports.esAnnotationByID = async function(id, user) {
   if (id)
-    return getFirst({ filter: { annId: id } }, 'annotation', user, userProjectRoles);
+    return getFirst({ filter: { annId: id } }, 'annotation', user);
   return null;
 };
 
-module.exports.esDatasetByID = async function(id, user, userProjectRoles) {
+module.exports.esDatasetByID = async function(id, user) {
   if (id)
-    return getFirst({ datasetFilter: { ids: id } }, 'dataset', user, userProjectRoles);
+    return getFirst({ datasetFilter: { ids: id } }, 'dataset', user);
   return null;
 };
+

@@ -2,6 +2,7 @@ import {Entity, PrimaryColumn, Column, OneToOne, JoinColumn, OneToMany, ManyToOn
 import {Credentials} from '../auth/model';
 import {UserGroup, Group} from '../group/model';
 import {Dataset} from '../dataset/model';
+import {UserProject} from '../project/model';
 
 @Entity()
 export class User {
@@ -33,4 +34,7 @@ export class User {
 
   @OneToMany(type => UserGroup, userGroup => userGroup.user)
   groups?: UserGroup[];
+
+  @OneToMany(type => UserProject, userProject => userProject.user)
+  projects?: UserProject[];
 }
