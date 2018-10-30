@@ -90,8 +90,8 @@
 </style>
 <style scoped lang="scss">
   .img-acct-container {
-    max-width: 721px;
-    max-height: 139px;
+    max-width: 721px * 0.75;
+    max-height: 139px * 0.75;
     margin-left: auto;
     margin-right: auto;
   }
