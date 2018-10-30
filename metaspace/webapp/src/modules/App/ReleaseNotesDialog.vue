@@ -1,6 +1,8 @@
 <template>
   <el-dialog
+    class="release-notes-dialog-wrapper"
     custom-class="release-notes-dialog"
+    top=""
     :visible="visible"
     @close="handleClose">
     <div>
@@ -10,27 +12,17 @@
         If you've used METASPACE before, we need just a moment of your time to reconnect you with your previously
         submitted datasets. Please read through the following:
       </p>
+      <h2>Collaboration with groups and projects</h2>
+      <p>We have added new ways for you to share your data with others:</p>
+      <div class="img-grp-container"><div class="img-grp" /></div>
       <h2>User accounts</h2>
-      <div class="img-container"><div class="img-acct" /></div>
       <p>
         To improve your security and control over your data, we now require METASPACE contributors to have accounts.
         If you are using Google to log in, this will be handled automatically. If you previously used email-based login,
-        you will now have to create a new account using your old email address. Please use your institutional
-        email address at first so that you're reconnected with your previously submitted datasets. You are free to
-        change your email address after sign-up.
+        please create a new account. Please use your institutional email address at first so that you're reconnected
+        with your previously submitted datasets. You are free to change your email address after sign-up.
       </p>
-      <p>
-      </p>
-      <h2>Collaboration with groups and projects</h2>
-      <div class="img-container"><div class="img-grp" /></div>
-      <p>
-        Private data sets are now automatically shared with the rest of your Group (institution, lab, etc.). If you wish
-        to opt out of this behavior, please select "No Group" when submitting your datasets.
-      </p>
-      <p>
-        Projects are a new way to organize datasets and share them between collaborators.
-      </p>
-      <h2>Data changes</h2>
+      <div class="img-acct-container"><div class="img-acct" /></div>
       <p>
         With the old email-based logins, we found many people spread their datasets across several email addresses,
         depending on which they had open at the time. As this is no longer a problem with password-based logins, we've
@@ -70,11 +62,18 @@
     }
   }
 </script>
-
-<style scoped lang="scss">
-  /deep/ .release-notes-dialog {
+<style lang="scss">
+  .release-notes-dialog-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .release-notes-dialog {
     width: 1000px;
     max-width: 90vw;
+    max-height: 90%;
+    overflow-y: auto;
+    margin: 0 auto;
 
     h1 {
       text-align: center;
@@ -84,27 +83,36 @@
     .el-dialog__header {
       display: none;
     }
+    .el-dialog__body {
+      font-size: 16px;
+    }
   }
-  .img-container {
-    display: flex;
-    justify-content: center;
-  }
-  .img-acct .img-grp {
-    position: relative;
-    flex-grow: 1;
-    background-size: contain;
-    box-sizing: border-box;
-  }
-  .img-acct {
+</style>
+<style scoped lang="scss">
+  .img-acct-container {
     max-width: 721px;
     max-height: 139px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .img-grp-container {
+    max-width: 800px;
+    max-height: 293px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .img-acct, .img-grp {
+  }
+  .img-acct {
     background: url('../../assets/release_notes_create_account.png') no-repeat center;
+    background-size: contain;
+    box-sizing: border-box;
     padding-top: 139/721*100%; // Maintain aspect ratio
   }
   .img-grp {
-    max-width: 800px;
-    max-height: 293px;
     background: url('../../assets/release_notes_groups_and_projects.png') no-repeat center;
+    background-size: contain;
+    box-sizing: border-box;
     padding-top: 293/800*100%; // Maintain aspect ratio
   }
 </style>
