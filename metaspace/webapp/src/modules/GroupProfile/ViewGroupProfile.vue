@@ -53,7 +53,7 @@
       <div v-if="groupDatasets.length > 0">
         <h2>Datasets</h2>
 
-        <dataset-list :datasets="groupDatasets.slice(0, maxVisibleDatasets)" />
+        <dataset-list :datasets="groupDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" />
 
         <div class="dataset-list-footer">
           <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
@@ -274,6 +274,18 @@
 
     handleCloseTransferDatasetsDialog() {
       this.showTransferDatasetsDialog = false;
+    }
+
+    handleFilterUpdate(newFilter: any) {
+      this.$store.commit('updateFilter', {
+        ...newFilter,
+        group: this.groupId
+      });
+
+      this.$router.push({
+        path: '/datasets',
+        query: this.$route.query,
+      })
     }
 
     async refetch() {

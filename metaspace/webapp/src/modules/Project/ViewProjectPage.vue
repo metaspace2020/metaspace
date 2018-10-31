@@ -45,7 +45,7 @@
       <div v-if="projectDatasets.length > 0">
         <h2>Datasets</h2>
 
-        <dataset-list :datasets="projectDatasets.slice(0, maxVisibleDatasets)" />
+        <dataset-list :datasets="projectDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" />
 
         <div class="dataset-list-footer">
           <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
@@ -235,6 +235,18 @@
           params: { projectId: this.projectId },
         });
       }
+    }
+
+    handleFilterUpdate(newFilter: any) {
+      this.$store.commit('updateFilter', {
+        ...newFilter,
+        project: this.projectId
+      });
+
+      this.$router.push({
+        path: '/datasets',
+        query: this.$route.query,
+      })
     }
 
     async joinProject() {

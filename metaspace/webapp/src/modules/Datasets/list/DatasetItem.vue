@@ -341,6 +341,7 @@
          filter[field] = this.dataset[field] || this[field];
        }
        this.$store.commit('updateFilter', filter);
+       this.$emit('filterUpdate', filter);
      },
 
      async openDeleteDialog() {
