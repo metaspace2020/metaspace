@@ -56,3 +56,25 @@ export const smAPIRequest = async (uri: string, args: any={}) => {
     return resp;
   }
 };
+
+interface UpdateDatasetArgs {
+  name?: string;
+  inputPath?: string;
+  uploadDT?: string;
+  metadata?: object;
+  config?: object;
+  isPublic?: boolean;
+  submitterId?: string;
+  groupId?: string | null;
+  projectIds?: string[];
+}
+
+export const smAPIUpdateDataset = async (id: string, updates: UpdateDatasetArgs) => {
+  try {
+    await smAPIRequest(`/v1/datasets/${id}/update`, {
+      doc: updates
+    });
+  } catch (err) {
+    // TODO: Fix updates on busy datasets
+  }
+};

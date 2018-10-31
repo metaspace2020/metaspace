@@ -13,6 +13,7 @@ import {JwtUser} from '../auth/controller';
 import {sendEmailVerificationToken} from '../auth/operation';
 import {logger, LooselyCompatible, smAPIRequest} from '../../utils';
 import {convertUserToUserSource} from './util/convertUserToUserSource';
+import {smAPIUpdateDataset} from '../../utils/smAPI';
 
 const assertCanEditUser = (user: JwtUser, userId: string) => {
   if (!user || !user.id)
@@ -155,9 +156,7 @@ export const Resolvers = {
       if (userDSs) {
         logger.info(`Updating user '${userId}' datasets...`);
         for (let ds of userDSs) {
-          await smAPIRequest(`/v1/datasets/${ds.id}/update`, {
-            doc: { submitterId: userId }
-          });
+          await smAPIUpdateDataset(ds.id, {submitterId: userId});
         }
       }
 
