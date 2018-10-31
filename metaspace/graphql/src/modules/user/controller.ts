@@ -7,15 +7,14 @@ import {Dataset as DatasetModel} from '../dataset/model';
 import {Credentials as CredentialsModel} from '../auth/model';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../group/model';
 import {UserProject as UserProjectModel} from '../project/model';
-import {Context} from '../../context';
+import {Context, ContextUser} from '../../context';
 import {ScopeRole, ScopeRoleOptions as SRO, UserProjectSource, UserSource} from '../../bindingTypes';
-import {JwtUser} from '../auth/controller';
 import {sendEmailVerificationToken} from '../auth/operation';
 import {logger, LooselyCompatible, smAPIRequest} from '../../utils';
 import {convertUserToUserSource} from './util/convertUserToUserSource';
 import {smAPIUpdateDataset} from '../../utils/smAPI';
 
-const assertCanEditUser = (user: JwtUser, userId: string) => {
+const assertCanEditUser = (user: ContextUser | null, userId: string) => {
   if (!user || !user.id)
     throw new UserError('Not authenticated');
 
@@ -118,11 +117,11 @@ export const Resolvers = {
   },
 
   Mutation: {
-    async updateUser(_: any, {userId, update}: any, {user, connection}: any): Promise<User> {
-      logger.info(`User '${userId}' being updated by '${user.id}'...`);
+    async updateUser(_: any, {userId, update}: any, {user, isAdmin, connection}: Context): Promise<User> {
       assertCanEditUser(user, userId);
+      logger.info(`User '${userId}' being updated by '${user!.id}'...`);
 
-      if (update.role && user.role !== 'admin') {
+      if (update.role && !isAdmin) {
         throw new UserError('Only admin can update role');
       }
 
@@ -155,9 +154,9 @@ export const Resolvers = {
       const userDSs = await connection.getRepository(DatasetModel).find({ userId });
       if (userDSs) {
         logger.info(`Updating user '${userId}' datasets...`);
-        for (let ds of userDSs) {
+        await Promise.all(userDSs.map(async ds => {
           await smAPIUpdateDataset(ds.id, {submitterId: userId});
-        }
+        }));
       }
 
       logger.info(`User '${userId}' was updated`);
@@ -168,18 +167,16 @@ export const Resolvers = {
       };
     },
 
-    async deleteUser(_: any, {userId, deleteDatasets}: any, {user, connection}: any): Promise<Boolean> {
-      logger.info(`User '${userId}' being deleted by '${user.id}'...`);
+    async deleteUser(_: any, {userId, deleteDatasets}: any, {user, connection}: Context): Promise<Boolean> {
       assertCanEditUser(user, userId);
+      logger.info(`User '${userId}' being deleted by '${user!.id}'...`);
 
       if (deleteDatasets) {
         const userDSs = await connection.getRepository(DatasetModel).find({ userId });
-        if (userDSs) {
-          logger.info(`Deleting user '${userId}' datasets...`);
-          for (let ds of userDSs) {
-            await smAPIRequest(`/v1/datasets/${ds.id}/delete`);
-          }
-        }
+        logger.info(`Deleting user '${userId}' datasets...`);
+        await Promise.all(userDSs.map(async ds => {
+          await smAPIRequest(`/v1/datasets/${ds.id}/delete`);
+        }));
       }
 
       const userRepo = await connection.getRepository(UserModel);
