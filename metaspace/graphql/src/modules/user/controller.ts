@@ -141,7 +141,7 @@ export const Resolvers = {
 
       if (primaryGroupId) {
         const userGroupRepo = connection.getRepository(UserGroupModel);
-        const userGroups = await userGroupRepo.find({ where: { userId: user.id } }) as UserGroupModel[];
+        const userGroups = await userGroupRepo.find({ where: { userId } }) as UserGroupModel[];
         if (userGroups.length > 0) {
           const newPrimary = userGroups.find(ug => ug.groupId === primaryGroupId) || userGroups[0];
           userGroups.forEach(ug => {
