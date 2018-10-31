@@ -8,9 +8,9 @@
         </div>
         <div class="info-line">
           <span v-if="project.numDatasets > 0">
-            <router-link :to="datasetsLink">{{project.numDatasets}} Datasets</router-link>,
+            <router-link :to="datasetsLink">{{project.numDatasets}} Dataset{{project.numDatasets === 1 ? '' : 's'}}</router-link>,
           </span>
-          {{project.numMembers}} Members
+          {{project.numMembers}} Member{{project.numMembers === 1 ? '' : 's'}}
         </div>
         <div class="info-line">
           <span v-if="project.latestUploadDT != null">
