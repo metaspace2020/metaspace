@@ -336,7 +336,7 @@ class ESExporter(object):
                 elif f == 'metadata':
                     ds_meta_flat_doc = flatten_doc(ds_doc['ds_meta'], parent_key='ds_meta')
                     ds_doc_upd.update(ds_meta_flat_doc)
-                else:
+                elif f'ds_{f}' in ds_doc:
                     ds_doc_upd[f'ds_{f}'] = ds_doc[f'ds_{f}']
 
             processors = []
