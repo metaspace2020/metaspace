@@ -1,5 +1,11 @@
 <template>
   <div id='help-wrapper'>
+    <el-dialog
+      :visible="visible"
+      @close="handleClose">
+      Our introduction tour requires access to the upload page which can be reached after
+      <a style="cursor: pointer;" @click="showSignIn"> signing in</a> Metaspace.
+    </el-dialog>
     <div id='help-container'>
       We try our best to make the website as intuitive as possible, but it's unavoidable that some features are hard to discover on your own.
       <br/>
@@ -48,12 +54,29 @@
  import filteringTour from '../../tours/filtering.tour';
  import diagnosticsTour from '../../tours/diagnostics.tour';
  import TourStep from './TourStep.vue';
+ import {currentUserIdQuery} from '../../api/user';
 
  export default {
    name: 'help-page',
+   apollo: {
+     currentUser: {
+       query: currentUserIdQuery,
+       fetchPolicy: 'cache-first'
+     }
+   },
+   data() {
+     return {
+       visible: false,
+       currentUser: null
+     }
+   },
    methods: {
      intro() {
-       this.$store.commit('startTour', introTour);
+       if (this.isSignedIn()) {
+         this.$store.commit('startTour', introTour);
+       } else {
+         this.visible = true
+       }
      },
 
      filtering() {
@@ -62,6 +85,19 @@
 
      diagnostics() {
        this.$store.commit('startTour', diagnosticsTour);
+     },
+
+     isSignedIn() {
+       return this.currentUser != null && this.currentUser.id != null
+     },
+
+     showSignIn() {
+       this.handleClose();
+       this.$store.commit('account/showDialog', 'signIn');
+     },
+
+     handleClose() {
+       this.visible = false
      }
    }
  }
