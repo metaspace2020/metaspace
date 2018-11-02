@@ -66,6 +66,7 @@
   import reportError from '../../lib/reportError';
   import { currentUserIdQuery, CurrentUserIdResult } from '../../api/user';
   import isUuid from '../../lib/isUuid';
+  import {throttle} from 'lodash-es';
 
 
   interface ProjectInfo {
@@ -147,7 +148,7 @@
             // if (dataset != null && dataset.projects != null && dataset.projects.some((p: any) => p.id === this.projectId)) {
             //   this.$apollo.queries.data.refetch();
             // }
-            this.$apollo.queries.data.refetch();
+            this.refetchDatasets();
           }
         }
       },
@@ -183,6 +184,13 @@
         path: '/datasets',
         query: this.projectId && encodeParams({ project: this.projectId })
       }
+    }
+
+    created() {
+      this.refetchDatasets = throttle(this.refetchDatasets, 60000)
+    }
+    beforeDestroy() {
+      (this.refetchDatasets as any).cancel();
     }
 
     @Watch('$route.params.projectIdOrSlug')
@@ -255,6 +263,10 @@
         variables: { projectId: this.projectId },
       });
       await this.refetch();
+    }
+
+    refetchDatasets() { // This method is wrapped in _.throttle in this.created()
+      this.$apollo.queries.data.refetch();
     }
 
     async refetch() {
