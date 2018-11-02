@@ -1,8 +1,8 @@
 import * as _ from 'lodash';
 import {Context} from '../../../context';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../../dataset/model';
-import {smAPIRequest} from '../../../utils';
 import {In} from 'typeorm';
+import {smAPIUpdateDataset} from '../../../utils/smAPI';
 
 
 export default async function (ctx: Context, projectId: string, datasetIds: string[], approved: Boolean | null) {
@@ -39,7 +39,7 @@ export default async function (ctx: Context, projectId: string, datasetIds: stri
       _.pull(projectIds, projectId);
     }
 
-    await smAPIRequest(`/v1/datasets/${datasetId}/update`, { doc: { projectIds } });
+    await smAPIUpdateDataset(datasetId, {projectIds});
   });
 
   await Promise.all(promises);

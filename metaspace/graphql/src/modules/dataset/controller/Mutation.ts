@@ -4,6 +4,7 @@ import * as Ajv from 'ajv';
 import {UserError} from 'graphql-errors';
 import {Connection, EntityManager} from 'typeorm';
 import * as moment from 'moment';
+import * as _ from 'lodash';
 
 import {logger, fetchMolecularDatabases} from '../../../../utils';
 import {fetchEngineDS, EngineDS} from '../../../utils/knexDb';
@@ -271,7 +272,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     return await createDataset(args, ctx);
   },
 
-  updateDataset: async (_, args, {user, connection, isAdmin}) => {
+  updateDataset: async (source, args, {user, connection, isAdmin}) => {
     const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
 
     logger.info(`User '${user && user.id}' updating '${dsId}' dataset...`);
@@ -317,7 +318,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       else {
         await saveDS(connection, saveDSArgs);
         smAPIResp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
-          doc: {...update, ...(metadata ? {metadata} : {})},
+          doc: {
+            ..._.omit(update, 'metadataJson'),
+            ...(metadata ? {metadata} : {})
+          },
           priority: priority,
           force: force,
         });

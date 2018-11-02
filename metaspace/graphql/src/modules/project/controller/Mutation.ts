@@ -14,6 +14,7 @@ import config from '../../../utils/config';
 import {sendInvitationEmail} from '../../auth';
 import {findUserByEmail} from '../../../utils';
 import {sendProjectAcceptanceEmail, sendProjectInvitationEmail, sendRequestAccessToProjectEmail} from '../email';
+import {smAPIUpdateDataset} from '../../../utils/smAPI';
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
   const userProject = await ctx.connection.getRepository(UserProjectModel).findOne({
@@ -57,6 +58,15 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
     const projectRepository = ctx.connection.getRepository(ProjectModel);
     await projectRepository.update(projectId, projectDetails);
+
+    const affectedDatasets = await ctx.connection.getRepository(DatasetProjectModel)
+      .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
+    await Promise.all(affectedDatasets.map(async dp => {
+      await smAPIUpdateDataset(dp.datasetId, {
+        projectIds: dp.dataset.datasetProjects.map(p => p.projectId)
+      })
+    }));
+
     const project = await ctx.connection.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId);
     if (project != null) {
@@ -69,7 +79,18 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async deleteProject(source, { projectId }, ctx): Promise<Boolean> {
     await asyncAssertCanEditProject(ctx, projectId);
 
+
+    const affectedDatasets = await ctx.connection.getRepository(DatasetProjectModel)
+      .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
     await ctx.connection.getRepository(DatasetProjectModel).delete({ projectId });
+    await Promise.all(affectedDatasets.map(async dp => {
+      await smAPIUpdateDataset(dp.datasetId, {
+        projectIds: dp.dataset.datasetProjects
+          .filter(p => p.projectId !== projectId)
+          .map(p => p.projectId)
+      })
+    }));
+
     await ctx.connection.getRepository(UserProjectModel).delete({ projectId });
     await ctx.connection.getRepository(ProjectModel).delete({ id: projectId });
 

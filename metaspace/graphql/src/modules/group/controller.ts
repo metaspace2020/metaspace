@@ -1,18 +1,17 @@
 import {UserError} from 'graphql-errors';
 import {Connection, Like, In, EntityManager} from 'typeorm';
 
-import {Credentials as CredentialsModel} from '../auth/model';
 import {Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions} from './model';
 import {User as UserModel} from '../user/model';
 import {Dataset as DatasetModel} from '../dataset/model';
-import {Group, UserGroup, User, UserGroupRole} from '../../binding';
+import {Group, UserGroup, UserGroupRole} from '../../binding';
 import {Context, ContextUser} from '../../context';
 import {Scope, ScopeRole, ScopeRoleOptions} from '../../bindingTypes';
-import {LooselyCompatible, smAPIRequest, logger, findUserByEmail} from '../../utils';
-import {JwtUser} from '../auth/controller';
+import {LooselyCompatible, logger, findUserByEmail} from '../../utils';
 import {sendInvitationEmail} from '../auth';
 import config from '../../utils/config';
 import {createInactiveUser} from '../auth/operation';
+import {smAPIUpdateDataset} from '../../utils/smAPI';
 
 const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<ScopeRole> => {
   let scopeRole = ScopeRoleOptions.OTHER;
@@ -78,6 +77,17 @@ const assertCanAddDataset = async (connection: Connection | EntityManager, user:
   assertUserAuthenticated(user);
   await assertUserRoles(connection, user, groupId,
     [UserGroupRoleOptions.GROUP_ADMIN, UserGroupRoleOptions.MEMBER]);
+};
+
+const updateUserGroupDatasets = async (connection: Connection | EntityManager, userId: string, groupId: string, groupApproved: boolean) => {
+  const datasetRepo = connection.getRepository(DatasetModel);
+  const datasetsToUpdate = await datasetRepo.find({
+    where: {userId, groupId, groupApproved: !groupApproved}
+  });
+  await Promise.all(datasetsToUpdate.map(async ds => {
+    await datasetRepo.update({id: ds.id}, {groupApproved});
+    await smAPIUpdateDataset(ds.id, {groupId});
+  }));
 };
 
 
@@ -182,15 +192,12 @@ export const Resolvers = {
       const group = {...(await groupRepo.findOneOrFail(groupId)), ...groupDetails};
       await groupRepo.save(group);  // update doesn't return updated object;
 
+      logger.info(`Updating '${groupId}' group datasets...`);
       const groupDSs = await connection.getRepository(DatasetModel).find({ groupId });
-      if (groupDSs) {
-        for (let ds of groupDSs) {
-          logger.info(`Updating '${groupId}' group datasets...`);
-          await smAPIRequest(`/v1/datasets/${ds.id}/update`, {
-            doc: { groupId }
-          });
-        }
-      }
+      await Promise.all(groupDSs.map(async ds => {
+        await smAPIUpdateDataset(ds.id, {groupId});
+      }));
+
       logger.info(`'${groupId}' group updated`);
       return group;
     },
@@ -218,6 +225,8 @@ export const Resolvers = {
         throw new UserError('Group admin cannot leave group');
 
       await userGroupRepo.delete({ userId, groupId });
+
+      await updateUserGroupDatasets(connection, userId, groupId, false);
       logger.info(`User '${userId}' left '${groupId}' group`);
       return true;
     },
@@ -231,13 +240,13 @@ export const Resolvers = {
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
 
-      const currUserGroup = await userGroupRepo.findOneOrFail({ userId: user!.id, groupId });
-      if (currUserGroup.role === UserGroupRoleOptions.GROUP_ADMIN) {
-        if (userId === user!.id)
-          throw new UserError('Group admin cannot remove itself from group');
-
-        await userGroupRepo.delete({ userId, groupId });
+      const currUserGroup = await userGroupRepo.findOneOrFail({ userId, groupId });
+      if (currUserGroup.role === UserGroupRoleOptions.GROUP_ADMIN && userId === user!.id) {
+        throw new UserError('Group admin cannot remove themselves from group');
       }
+      await userGroupRepo.delete({ userId, groupId });
+
+      await updateUserGroupDatasets(connection, userId, groupId, false);
       logger.info(`User '${userId}' was removed from '${groupId}' group`);
       return true;
     },
@@ -288,6 +297,7 @@ export const Resolvers = {
         });
       }
 
+      await updateUserGroupDatasets(connection, userId, groupId, true);
       logger.info(`User '${userId}' was accepted to '${groupId}' group`);
       return userGroupRepo.findOneOrFail({
         where: { groupId, userId },
@@ -353,6 +363,8 @@ export const Resolvers = {
         });
       }
 
+      await updateUserGroupDatasets(connection, userId, groupId, true);
+
       logger.info(`User '${userId}' accepted invitation to '${groupId}' group`);
       return await userGroupRepo.findOneOrFail({
         where: { userId: userId, groupId },
@@ -367,12 +379,10 @@ export const Resolvers = {
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
 
       const dsRepo = connection.getRepository(DatasetModel);
-      for (let dsId of datasetIds) {
+      await Promise.all(datasetIds.map(async (dsId: string) => {
         await dsRepo.update(dsId, { groupId, groupApproved: true });
-        await smAPIRequest(`/v1/datasets/${dsId}/update`, {
-          doc: { groupId: groupId }
-        });
-      }
+        await smAPIUpdateDataset(dsId, {groupId});
+      }));
       logger.info(`User '${user!.id}' imported datasets to '${groupId}' group`);
       return true;
     },

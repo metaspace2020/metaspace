@@ -48,7 +48,7 @@
  import DatasetList from './DatasetList.vue';
  import {FilterPanel} from '../../Filters/index';
  import { csvExportHeader } from '../../../util';
- import gql from 'graphql-tag';
+ import {throttle} from 'lodash-es';
  import FileSaver from 'file-saver';
  import delay from '../../../lib/delay';
  import formatCsvRow from '../../../lib/formatCsvRow';
@@ -68,6 +68,15 @@
    components: {
      DatasetList,
      FilterPanel,
+   },
+   created() {
+     // Bulk updates can cause this to trigger hundreds of times per minute. Throttle automatic refetches to at most
+     // once per minute
+
+     this.refetchList = throttle(this.refetchList, 60000);
+   },
+   beforeDestroy() {
+     this.refetchList.cancel();
    },
 
    computed: {
@@ -189,6 +198,10 @@
      },
 
      refetchList() {
+       this.refetchListUnthrottled();
+     },
+
+     refetchListUnthrottled() {
        this.$apollo.queries.started.refresh();
        this.$apollo.queries.queued.refresh();
        this.$apollo.queries.finished.refresh();

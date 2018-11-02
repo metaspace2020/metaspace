@@ -53,7 +53,7 @@
       <div v-if="groupDatasets.length > 0">
         <h2>Datasets</h2>
 
-        <dataset-list :datasets="groupDatasets.slice(0, maxVisibleDatasets)" />
+        <dataset-list :datasets="groupDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" />
 
         <div class="dataset-list-footer">
           <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
@@ -81,6 +81,7 @@
   import reportError from '../../lib/reportError';
   import { currentUserIdQuery, CurrentUserIdResult } from '../../api/user';
   import isUuid from '../../lib/isUuid';
+  import {throttle} from 'lodash-es';
 
 
   interface GroupInfo {
@@ -165,7 +166,7 @@
             // if (dataset != null && dataset.group != null && dataset.group.id === this.groupId) {
             //   this.$apollo.queries.data.refetch();
             // }
-            this.$apollo.queries.data.refetch();
+            this.refetchDatasets();
           }
         }
       },
@@ -203,6 +204,13 @@
           group: this.groupId,
         })
       }
+    }
+
+    created() {
+      this.refetchDatasets = throttle(this.refetchDatasets, 60000)
+    }
+    beforeDestroy() {
+      (this.refetchDatasets as any).cancel();
     }
 
     @Watch('$route.params.groupIdOrSlug')
@@ -274,6 +282,22 @@
 
     handleCloseTransferDatasetsDialog() {
       this.showTransferDatasetsDialog = false;
+    }
+
+    handleFilterUpdate(newFilter: any) {
+      this.$store.commit('updateFilter', {
+        ...newFilter,
+        group: this.groupId
+      });
+
+      this.$router.push({
+        path: '/datasets',
+        query: this.$route.query,
+      })
+    }
+
+    refetchDatasets() { // This method is wrapped in _.throttle in this.created()
+      this.$apollo.queries.data.refetch();
     }
 
     async refetch() {

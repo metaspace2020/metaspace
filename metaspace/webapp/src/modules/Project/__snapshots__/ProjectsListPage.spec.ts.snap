@@ -93,7 +93,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             </div>
             <div class="info-line">
               <!---->
-              1 Members
+              1 Member
             </div>
             <div class="info-line"><span>
           Created on <b>2018-08-29</b></span></div>
