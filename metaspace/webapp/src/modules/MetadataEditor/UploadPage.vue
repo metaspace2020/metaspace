@@ -318,7 +318,7 @@
   }
 
   .md-editor-submit > button {
-    flex: 1;
+    flex: 1 auto;
     margin: 25px 5px;
   }
 

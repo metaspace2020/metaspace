@@ -233,8 +233,12 @@
   .qq-uploader {
     padding: 10px 0;
     min-height: 45px;
-    max-height: 45px;
+    max-height: 100px;
     margin: 25px 5px 25px 0;
+  }
+
+  .qq-upload-status-text {
+    display: inline-block;
   }
 
   .qq-upload-list li {
