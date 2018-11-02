@@ -155,9 +155,10 @@ export const Resolvers = {
 
     async allGroups(_: any, {query}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
       const scopeRole = await resolveGroupScopeRole(ctx);
-      const groups = await ctx.connection.getRepository(GroupModel).find({
-        where: { 'name': Like(`%${query}%`) }
-      });
+      const groups = await ctx.connection.getRepository(GroupModel)
+        .createQueryBuilder('group')
+        .where('group.name ILIKE :query OR group.shortName ILIKE :query', {query: query ? `%${query}%` : '%'})
+        .getMany();
       return groups.map(g => ({...g, scopeRole}));
     }
   },
