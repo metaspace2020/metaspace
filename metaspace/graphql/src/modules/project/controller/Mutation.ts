@@ -166,6 +166,12 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     return { ...userProject, user: convertUserToUserSource(userProject.user, SRO.OTHER) };
   },
 
+  async updateUserProject(source, {projectId, userId, update}, ctx): Promise<boolean> {
+    await asyncAssertCanEditProject(ctx, projectId);
+    await updateUserProjectRole(ctx, userId, projectId, update.role || null);
+    return true;
+  },
+
   async importDatasetsIntoProject(source, { projectId, datasetIds }, ctx): Promise<Boolean> {
     const userProjectRole = (await ctx.getCurrentUserProjectRoles())[projectId];
     if (userProjectRole == null) {

@@ -18,6 +18,7 @@
         <edit-project-form v-model="model" :disabled="isSaving || !canEdit" />
         <members-list
           :loading="projectLoading !== 0"
+          :currentUser="currentUser"
           :members="project && project.members || []"
           type="project"
           :filter="datasetsListFilter"
@@ -27,6 +28,7 @@
           @acceptUser="handleAcceptUser"
           @rejectUser="handleRejectUser"
           @addMember="() => handleAddMember(/* Discard the event argument. ConfirmAsync adds an argument to the end of the arguments list, so the arguments list must be predictable */)"
+          @updateRole="handleUpdateRole"
         />
         <div v-if="project && project.isPublic" style="margin-bottom: 2em">
           <h2>Custom URL</h2>
@@ -81,10 +83,10 @@
     editProjectQuery,
     EditProjectQuery,
     EditProjectQueryMember,
-    inviteUserToProjectMutation,
+    inviteUserToProjectMutation, ProjectRole,
     removeUserFromProjectMutation,
     UpdateProjectMutation,
-    updateProjectMutation,
+    updateProjectMutation, updateUserProjectMutation,
   } from '../../api/project';
   import EditProjectForm from './EditProjectForm.vue';
   import MembersList from '../../components/MembersList.vue';
@@ -279,6 +281,23 @@
         variables: { projectId: this.projectId, email },
       });
       await this.$apollo.queries.project.refetch();
+    }
+
+    async handleUpdateRole(member: EditProjectQueryMember, role: ProjectRole | null) {
+      try {
+        this.projectLoading += 1;
+        await this.$apollo.mutate({
+          mutation: updateUserProjectMutation,
+          variables: {
+            projectId: this.projectId,
+            userId: member.user.id,
+            update: {role},
+          },
+        });
+        await this.$apollo.queries.project.refetch();
+      } finally {
+        this.projectLoading -= 1;
+      }
     }
   }
 

@@ -20,6 +20,10 @@ input UpdateGroupInput {
   urlSlug: String
 }
 
+input UpdateUserGroupInput {
+  role: UserGroupRole
+}
+
 # Many-to-many relationship between User and Group
 type UserGroup {
   user: User!
@@ -60,6 +64,8 @@ type Mutation {
   inviteUserToGroup(groupId: ID!, email: String!): UserGroup!  # For group managers
   acceptGroupInvitation(groupId: ID!): UserGroup!
   # Group can reject user with `removeUserFromGroup`
+
+  updateUserGroup(groupId: ID!, userId: ID!, update: UpdateUserGroupInput!): Boolean!
 
   importDatasetsIntoGroup(groupId: ID!, datasetIds: [ID!]!): Boolean!
   # TODO: add dataset removal from group

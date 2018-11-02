@@ -42,6 +42,7 @@ exports[`EditProjectPage should match snapshot 1`] = `
         </div>
       </form>
       <div>
+        <!---->
         <h2>Members</h2>
         <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" element-loading-text="Loading results from the server..." mock-v-loading="false">
           <div class="hidden-columns">
@@ -104,7 +105,9 @@ exports[`EditProjectPage should match snapshot 1`] = `
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
                     <div class="cell">
-                      Project manager
+                      <a href="#" title="Change role">
+                        Project manager
+                      </a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
@@ -133,9 +136,9 @@ exports[`EditProjectPage should match snapshot 1`] = `
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                    <div class="cell">
-                      Requesting access
-                    </div>
+                    <div class="cell"><span>
+          Requesting access
+        </span></div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                     <div class="cell">
@@ -171,9 +174,9 @@ exports[`EditProjectPage should match snapshot 1`] = `
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
-                    <div class="cell">
-                      Invited
-                    </div>
+                    <div class="cell"><span>
+          Invited
+        </span></div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
                     <div class="cell">
@@ -206,7 +209,9 @@ exports[`EditProjectPage should match snapshot 1`] = `
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
                     <div class="cell">
-                      Member
+                      <a href="#" title="Change role">
+                        Member
+                      </a>
                     </div>
                   </td>
                   <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">

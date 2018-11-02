@@ -1,6 +1,6 @@
 import {Context} from '../../../context';
 import {UserProjectRole} from '../../../binding';
-import {Project as ProjectModel, UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from '../model';
+import {UserProject as UserProjectModel, UserProjectRoleOptions as UPRO} from '../model';
 import {User as UserModel} from '../../user/model';
 import {UserError} from "graphql-errors";
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
@@ -28,7 +28,7 @@ export default async (ctx: Context, userId: string, projectId: string, newRole: 
 
   // Validate
   if (!ctx.isAdmin) {
-    type Transition = { from: UserProjectRole | null, to: UserProjectRole | null, allowedIf: () => Boolean };
+    type Transition = { from: UserProjectRole | null, to: UserProjectRole | null, allowedIf: () => boolean };
     const allowedTransitions: Transition[] = [
       // Request access flow
       { from: null, to: UPRO.PENDING, allowedIf: () => currentUserId === userId },
@@ -38,11 +38,15 @@ export default async (ctx: Context, userId: string, projectId: string, newRole: 
       { from: null, to: UPRO.INVITED, allowedIf: () => currentUserRole === UPRO.MANAGER },
       { from: UPRO.INVITED, to: null, allowedIf: () => currentUserId === userId || currentUserRole === UPRO.MANAGER },
       { from: UPRO.INVITED, to: UPRO.MEMBER, allowedIf: () => currentUserId === userId },
-      // Leave / remove from group
+      // Leave / remove from project
       { from: UPRO.MEMBER, to: null, allowedIf: () => currentUserId === userId || currentUserRole === UPRO.MANAGER },
+      // Admin / manager creation
+      { from: UPRO.MEMBER, to: UPRO.MANAGER, allowedIf: () => currentUserId !== userId && currentUserRole === UPRO.MANAGER },
+      { from: UPRO.MANAGER, to: UPRO.MEMBER, allowedIf: () => currentUserId !== userId && currentUserRole === UPRO.MANAGER },
+      { from: UPRO.MANAGER, to: null, allowedIf: () => currentUserId !== userId && currentUserRole === UPRO.MANAGER },
     ];
-    const transition = allowedTransitions.find(t => t.from === existingRole && t.to === newRole);
-    if (!transition || !transition.allowedIf()) {
+    const transition = allowedTransitions.find(t => t.from === existingRole && t.to === newRole && t.allowedIf());
+    if (!transition) {
       throw new UserError('Unauthorized');
     }
   }

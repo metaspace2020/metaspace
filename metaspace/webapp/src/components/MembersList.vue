@@ -1,5 +1,21 @@
 <template>
   <div>
+    <el-dialog v-if="editingRoleOfMember" visible @close="handleCloseEditRole" :title="`Change ${type} member role`">
+      <p>
+        Change {{editingRoleOfMember.user.name}}'s role to:
+        <el-select v-model="newRole">
+          <el-option v-for="role in allowedRoles" :key="role" :value="role" :label="getRoleName(role)" />
+          <el-option :value="null" :label="`None (remove from ${type})`" />
+        </el-select>
+      </p>
+      <p>
+        Changing a member's role this way does not cause any notification emails to be sent.
+      </p>
+      <el-row align="right">
+        <el-button @click="handleCloseEditRole">Close</el-button>
+        <el-button @click="handleUpdateRole" type="primary">Save</el-button>
+      </el-row>
+    </el-dialog>
     <h2>Members</h2>
     <el-table :data="currentPageData"
               :row-key="row => row.user.id"
@@ -22,7 +38,12 @@
 
       <el-table-column label="Role" width="160">
         <template slot-scope="scope">
-          {{getRoleName(scope.row.role)}}
+          <a v-if="canEditRoleFor(scope.row)" href="#" @click.prevent="() => handleEditRole(scope.row)" title="Change role">
+            {{getRoleName(scope.row.role)}}
+          </a>
+          <span v-else>
+            {{getRoleName(scope.row.role)}}
+          </span>
         </template>
       </el-table-column>
 
@@ -80,9 +101,10 @@
 <script lang="ts">
   import Vue from 'vue';
   import { Component, Emit, Prop } from 'vue-property-decorator';
-  import { getRoleName as getGroupRoleName, UserGroupRole } from '../api/group';
-  import { getRoleName as getProjectRoleName, ProjectRole } from '../api/project';
+  import {getRoleName as getGroupRoleName, UserGroupRole, UserGroupRoleOptions} from '../api/group';
+  import {getRoleName as getProjectRoleName, ProjectRole, ProjectRoleOptions} from '../api/project';
   import { encodeParams } from '../modules/Filters';
+  import {CurrentUserRoleResult} from '../api/user';
 
   export interface Member {
     role: UserGroupRole | ProjectRole,
@@ -98,6 +120,8 @@
   export default class MembersList extends Vue {
     @Prop({type:Boolean, required: true})
     loading!: boolean;
+    @Prop({type: Object})
+    currentUser!: CurrentUserRoleResult | null;
     @Prop({type:Array, required: true})
     members!: Member[];
     @Prop({type:Boolean, required: true})
@@ -109,13 +133,36 @@
 
     pageSize: number = 10;
     page: number = 1;
+    editingRoleOfMember: Member | null = null;
+    newRole: string | null = null;
 
     get getRoleName() {
       return this.type === 'group' ? getGroupRoleName : getProjectRoleName;
     }
 
+    get roles(): string[] {
+      return this.type === 'group' ? Object.values(UserGroupRoleOptions) : Object.values(ProjectRoleOptions);
+    }
+
+    get allowedRoles(): string[] {
+      if (this.currentUser != null && this.currentUser.role === 'admin') {
+        return this.roles;
+      } else {
+        return this.type === 'group'
+          ? [UserGroupRoleOptions.MEMBER, UserGroupRoleOptions.GROUP_ADMIN]
+          : [ProjectRoleOptions.MEMBER, ProjectRoleOptions.MANAGER];
+      }
+    }
+
     get currentPageData(): Member[] {
       return this.members.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
+    }
+
+    canEditRoleFor(user: Member) {
+      return this.canEdit
+        && this.currentUser != null
+        && (this.currentUser.role === 'admin'
+          || (this.currentUser.id !== user.user.id && this.allowedRoles.includes(user.role)));
     }
 
     datasetsListLink(user: Member['user']) {
@@ -142,6 +189,25 @@
 
     @Emit('addMember')
     handleAddMember() {}
+
+    handleEditRole(user: Member) {
+      this.editingRoleOfMember = user;
+      this.newRole = user.role;
+    }
+
+    handleCloseEditRole() {
+      this.editingRoleOfMember = null;
+      this.newRole = null;
+    }
+
+    handleUpdateRole() {
+      this.updateRole(this.editingRoleOfMember!, this.newRole);
+      this.editingRoleOfMember = null;
+      this.newRole = null;
+    }
+
+    @Emit('updateRole')
+    updateRole(user: Member, role: string | null) {}
   }
 
 </script>
