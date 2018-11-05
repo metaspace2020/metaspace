@@ -8,7 +8,7 @@ from PIL import Image
 
 
 def _extract_data(res):
-    if not res.headers.get('Content-Type').startswith('application/json'):
+    if not (res.ok and res.headers.get('Content-Type').startswith('application/json')):
         raise Exception(res.text)
     res_json = res.json()
     if 'data' in res_json and 'errors' not in res_json:
@@ -17,28 +17,36 @@ def _extract_data(res):
         pprint.pprint(res.json()['errors'])
         raise Exception(res.json()['errors'][0]['message'])
 
-DEFAULT_CONFIG = {
-    'graphql_url': 'http://metaspace2020.eu/graphql',
-    'moldb_url': 'http://metaspace2020.eu/mol_db/v1',
-    'signin_url': 'http://metaspace2020.eu/api_auth/signin',
-    'gettoken_url': 'http://metaspace2020.eu/api_auth/gettoken',
-    'usr_email': '',
-    'usr_pass': '',
-}
+
+def get_config(host, email=None, password=None):
+    return {
+        'graphql_url': f'{host}/graphql',
+        'moldb_url': f'{host}/mol_db/v1',
+        'signin_url': f'{host}/api_auth/signin',
+        'gettoken_url': f'{host}/api_auth/gettoken',
+        'usr_email': email,
+        'usr_pass': password,
+    }
+
 
 class GraphQLClient(object):
-    def __init__(self, url, user_email="", password=""):
-        self.url = url
+    def __init__(self, config):
+        self._config = config
         self.session = requests.Session()
-        self.session.post(DEFAULT_CONFIG['signin_url'], params={"email": user_email, "password": password})
+        self.session.post(self._config['signin_url'], params={
+            "email": self._config['usr_email'], "password": self._config['usr_pass']
+        })
 
     def query(self, query, variables={}):
-        res = self.session.post(self.url, json={'query': query, 'variables': variables},
+        print(query)
+        print(self._config)
+        res = self.session.post(self._config['graphql_url'],
+                                json={'query': query, 'variables': variables},
                                 headers={'Authorization': 'Bearer ' + self.get_jwt()})
         return _extract_data(res)
 
     def get_jwt(self):
-        return self.session.get(DEFAULT_CONFIG['gettoken_url']).text
+        return self.session.get(self._config['gettoken_url']).text
 
     def get_submitter_id(self):
         query = """
@@ -562,8 +570,8 @@ class SMDataset(object):
 
 
 class SMInstance(object):
-    def __init__(self, config=DEFAULT_CONFIG):
-        self._config = config
+    def __init__(self, host='http://metaspace2020.eu'):
+        self._config = get_config(host)
         self.reconnect()
 
     def __repr__(self):
@@ -575,7 +583,7 @@ class SMInstance(object):
         self.reconnect()
 
     def reconnect(self):
-        self._gqclient = GraphQLClient(self._config['graphql_url'], self._config['usr_email'], self._config['usr_pass'])
+        self._gqclient = GraphQLClient(self._config)
         self._es_client = None
         self._moldb_client = None
 
