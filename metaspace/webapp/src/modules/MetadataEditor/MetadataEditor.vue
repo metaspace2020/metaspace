@@ -179,8 +179,9 @@
            metadata: dataset && safeJsonParse(dataset.metadataJson) || {},
            metaspaceOptions: {
              ...(dataset != null ? metaspaceOptionsFromDataset(dataset) : null),
-             submitterId: data.currentUser.id,
-             groupId: data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
+             submitterId: this.$store.state.currentTour ? '': data.currentUser.id,
+             groupId: this.$store.state.currentTour ? '':
+               data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
            },
            submitter: data.currentUser
          }

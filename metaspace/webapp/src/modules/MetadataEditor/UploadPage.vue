@@ -23,7 +23,7 @@
         </div>
       </div>
 
-      <div v-else-if="isSignedIn">
+      <div v-else-if="isSignedIn || isTourRunning">
           <!--Uncomment below when LCMS support is needed-->
           <!--<div id="filter-panel-container">-->
             <!--<filter-panel level="upload"></filter-panel>-->
@@ -37,7 +37,7 @@
                          @upload="onUpload" @success="onUploadSuccess" @failure="onUploadFailure" />
           <div class="md-editor-submit">
             <el-button type="info" @click="helpDialog=true" class="el-button__help_metadata" icon="el-icon-question"></el-button>
-            <el-button v-if="enableSubmit" type="primary" @click="onSubmit" class="el-button__submit_metadata">Submit</el-button>
+            <el-button v-if="enableSubmit && !isTourRunning" type="primary" @click="onSubmit" class="el-button__submit_metadata">Submit</el-button>
             <el-button v-else type="primary" disabled :title="disabledSubmitMessage" class="el-button__submit_metadata">Submit</el-button>
           </div>
 
@@ -113,7 +113,7 @@
        query: currentUserIdQuery,
        fetchPolicy: 'cache-first',
        result({data}) {
-         if (data.currentUser == null) {
+         if (data.currentUser == null && this.$store.state.currentTour == null) {
            this.$store.commit('account/showDialog', {
              dialog: 'signIn',
              dialogCloseRedirect: '/',
@@ -159,6 +159,12 @@
        const activeDataType = this.$store.getters.filter.metadataType;
        return (activeDataType in DataTypeConfig) ? DataTypeConfig[activeDataType] : DataTypeConfig['default'];
      },
+     isTourRunning() {
+       if (this.$store.state.currentTour != null) {
+         return true;
+       }
+     },
+
      isSignedIn() {
        return this.currentUser != null && this.currentUser.id != null;
      },
@@ -318,7 +324,7 @@
   }
 
   .md-editor-submit > button {
-    flex: 1;
+    flex: 1 auto;
     margin: 25px 5px;
   }
 
