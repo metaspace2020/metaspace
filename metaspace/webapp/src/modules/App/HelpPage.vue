@@ -2,6 +2,12 @@
   <div id='help-wrapper'>
 
     <div id='help-container'>
+      <p><b>Collaboration with groups and projects</b></p>
+      We have added new ways for you to share your data with others:
+      <div class="help-page">
+        <img src="../../assets/help_page_release_notes_hq.png" style="width: 100%; object-fit: contain;">
+      </div>
+
       We try our best to make the website as intuitive as possible, but it's unavoidable that some features are hard to discover on your own.
       <br/>
       That's why we prepared a few thematic website tours:
@@ -98,5 +104,9 @@
  .tour-block .el-button {
    color: blue;
    width: 180px;
+ }
+
+ .help-page {
+   max-width: 950px;
  }
 </style>
