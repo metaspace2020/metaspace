@@ -23,6 +23,10 @@ input UpdateProjectInput {
   urlSlug: String
 }
 
+input UpdateUserProjectInput {
+  role: UserProjectRole
+}
+
 # Many-to-many relationship between User and Project
 type UserProject {
   user: User!
@@ -64,6 +68,8 @@ type Mutation {
   inviteUserToProject(projectId: ID!, email: String!): UserProject!
   acceptProjectInvitation(projectId: ID!): UserProject!
   # Project can reject user with `removeUserFromProject`
+
+  updateUserProject(projectId: ID!, userId: ID!, update: UpdateUserProjectInput!): Boolean!
 
   importDatasetsIntoProject(projectId: ID!, datasetIds: [ID!]!): Boolean!
 }

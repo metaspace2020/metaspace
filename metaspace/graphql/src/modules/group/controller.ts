@@ -1,5 +1,5 @@
 import {UserError} from 'graphql-errors';
-import {Connection, Like, In, EntityManager} from 'typeorm';
+import {Connection, In, EntityManager} from 'typeorm';
 
 import {Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions} from './model';
 import {User as UserModel} from '../user/model';
@@ -155,9 +155,10 @@ export const Resolvers = {
 
     async allGroups(_: any, {query}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
       const scopeRole = await resolveGroupScopeRole(ctx);
-      const groups = await ctx.connection.getRepository(GroupModel).find({
-        where: { 'name': Like(`%${query}%`) }
-      });
+      const groups = await ctx.connection.getRepository(GroupModel)
+        .createQueryBuilder('group')
+        .where('group.name ILIKE :query OR group.shortName ILIKE :query', {query: query ? `%${query}%` : '%'})
+        .getMany();
       return groups.map(g => ({...g, scopeRole}));
     }
   },
@@ -370,6 +371,24 @@ export const Resolvers = {
         where: { userId: userId, groupId },
         relations: ['user', 'group']
       });
+    },
+
+    async updateUserGroup(_: any, {groupId, userId, update}: any, {user, connection}: Context): Promise<boolean> {
+      await assertCanEditGroup(connection, user, groupId);
+      logger.info(`Updating '${groupId}' '${userId}' membership by '${user!.id}' user...`);
+
+      if (update.role != null) {
+        await connection.getRepository(UserGroupModel).save({
+          userId, groupId, role: update.role
+        });
+      } else {
+        await connection.getRepository(UserGroupModel).delete({ userId, groupId });
+      }
+
+      const groupApproved = [UserGroupRoleOptions.MEMBER, UserGroupRoleOptions.GROUP_ADMIN].includes(update.role);
+      await updateUserGroupDatasets(connection, userId, groupId, groupApproved);
+
+      return true;
     },
 
     async importDatasetsIntoGroup(_: any, {groupId, datasetIds}: any, {user, connection}: Context): Promise<Boolean> {

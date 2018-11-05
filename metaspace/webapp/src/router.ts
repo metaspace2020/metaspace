@@ -54,6 +54,7 @@ const router = new VueRouter({
     { path: '/user/me', component: asyncPages.EditUserPage },
 
     { path: '/admin/health', component: async () => await import('./modules/Admin/SystemHealthPage.vue') },
+    { path: '/admin/groups', component: async () => await import('./modules/Admin/GroupsListPage.vue') },
 
     { path: '/account/sign-in', component: DialogPage, props: {dialog: 'signIn'} },
     { path: '/account/create-account', component: DialogPage, props: {dialog: 'createAccount'} },

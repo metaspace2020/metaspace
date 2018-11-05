@@ -1,6 +1,12 @@
 import gql from 'graphql-tag';
 
 export type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'GROUP_ADMIN';
+export const UserGroupRoleOptions: {[R in UserGroupRole]: R} = {
+  INVITED: 'INVITED',
+  PENDING: 'PENDING',
+  MEMBER: 'MEMBER',
+  GROUP_ADMIN: 'GROUP_ADMIN',
+};
 export const getRoleName = (role: UserGroupRole | null | undefined) => {
   switch (role) {
     case 'INVITED': return 'Invited';
@@ -85,6 +91,11 @@ export const acceptGroupInvitationMutation =
 export const leaveGroupMutation =
   gql`mutation leaveGroup($groupId: ID!) { 
     leaveGroup(groupId: $groupId)
+  }`;
+
+export const updateUserGroupMutation =
+  gql`mutation updateUserGroup($groupId: ID!, $userId: ID!, $update: UpdateUserGroupInput!) {
+    updateUserGroup(groupId: $groupId, userId: $userId, update: $update)
   }`;
 
 export const importDatasetsIntoGroupMutation =

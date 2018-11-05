@@ -18,6 +18,7 @@
         <edit-group-form :model="model" :disabled="isSaving || !canEdit" />
         <members-list
           :loading="groupLoading !== 0"
+          :currentUser="currentUser"
           :members="group && group.members || []"
           type="group"
           :filter="datasetsListFilter"
@@ -27,6 +28,7 @@
           @acceptUser="handleAcceptUser"
           @rejectUser="handleRejectUser"
           @addMember="() => handleAddMember(/* Discard the event argument. ConfirmAsync adds an argument to the end of the arguments list, so the arguments list must be predictable */)"
+          @updateRole="handleUpdateRole"
         />
         <div style="margin-bottom: 2em">
           <h2>Custom URL</h2>
@@ -84,7 +86,7 @@
     inviteUserToGroupMutation,
     removeUserFromGroupMutation,
     UpdateGroupMutation,
-    updateGroupMutation,
+    updateGroupMutation, updateUserGroupMutation, UserGroupRole,
   } from '../../api/group';
   import EditGroupForm from './EditGroupForm.vue';
   import MembersList from '../../components/MembersList.vue';
@@ -282,6 +284,23 @@
         variables: { groupId: this.groupId, email },
       });
       await this.$apollo.queries.group.refetch();
+    }
+
+    async handleUpdateRole(member: EditGroupQueryMember, role: UserGroupRole | null) {
+      try {
+        this.groupLoading += 1;
+        await this.$apollo.mutate({
+          mutation: updateUserGroupMutation,
+          variables: {
+            groupId: this.groupId,
+            userId: member.user.id,
+            update: {role},
+          },
+        });
+        await this.$apollo.queries.group.refetch();
+      } finally {
+        this.groupLoading -= 1;
+      }
     }
   }
 

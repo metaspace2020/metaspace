@@ -1,6 +1,12 @@
 import gql from 'graphql-tag';
 
 export type ProjectRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'MANAGER';
+export const ProjectRoleOptions: {[R in ProjectRole]: R} = {
+  INVITED: 'INVITED',
+  PENDING: 'PENDING',
+  MEMBER: 'MEMBER',
+  MANAGER: 'MANAGER',
+};
 export const getRoleName = (role: ProjectRole | null | undefined) => {
   switch (role) {
     case 'INVITED': return 'Invited';
@@ -85,6 +91,11 @@ export const acceptProjectInvitationMutation =
 export const leaveProjectMutation =
   gql`mutation leaveProject($projectId: ID!) { 
     leaveProject(projectId: $projectId)
+  }`;
+
+export const updateUserProjectMutation =
+  gql`mutation updateUserProject($projectId: ID!, $userId: ID!, $update: UpdateUserProjectInput!) {
+    updateUserProject(projectId: $projectId, userId: $userId, update: $update)
   }`;
 
 export const importDatasetsIntoProjectMutation =
