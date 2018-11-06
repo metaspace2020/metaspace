@@ -336,10 +336,11 @@
    left: 0;
    right: 0;
    border-radius: 0;
+   z-index: 1000;
 
- .el-alert {
-   height: $alert-height;
-   justify-content: center;
- }
+   .el-alert {
+     height: $alert-height;
+     justify-content: center;
+   }
  }
 </style>
