@@ -39,7 +39,7 @@ DATASET_SEL = '''SELECT
     d.*,
     gu.id as ds_submitter_id,
     gu.name as ds_submitter_name,
-    gu.email as ds_submitter_email,
+    COALESCE(gu.email, gu.not_verified_email) as ds_submitter_email,
     gg.id as ds_group_id,
     gg.name as ds_group_name,
     gg.short_name as ds_group_short_name,
