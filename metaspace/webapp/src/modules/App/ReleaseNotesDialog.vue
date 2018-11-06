@@ -7,7 +7,6 @@
     @close="handleClose">
     <div>
       <h1>Welcome to METASPACE 1.0!</h1>
-      <p>If this is your first time here, feel free to skip this.</p>
       <p>
         If you've used METASPACE before, we need just a moment of your time to reconnect you with your previously
         submitted datasets. Please read through the following:
