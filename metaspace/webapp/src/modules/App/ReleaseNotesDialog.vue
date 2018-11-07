@@ -17,7 +17,8 @@
       <div class="img-grp-container"><div class="img-grp" /></div>
       <h2>User accounts</h2>
       <p>
-        To improve your security and control over your data, we now require METASPACE contributors to have accounts.
+        To improve your security and control over your data, we now require METASPACE users to have accounts in
+        order to submit data or to be invited to groups or projects.
         If you are using Google to log in, this will be handled automatically. If you previously used email-based login,
         please create a new account. Please use your institutional email address at first so that you're reconnected
         with your previously submitted datasets. You are free to change your email address after sign-up.
