@@ -107,9 +107,10 @@ def test_db(sm_config, request):
             group_approved  boolean
         );
         CREATE TABLE graphql.user (
-            id     uuid,
-            name   text,
-            email  text
+            id                  uuid,
+            name                text,
+            email               text,
+            not_verified_email  text
         );
         CREATE TABLE graphql.group (
             id          uuid,
