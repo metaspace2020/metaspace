@@ -3,7 +3,6 @@ type Dataset {
   name: String!
   uploadDT: String!
 
-  institution: String
   submitter: User!
   group: Group
   principalInvestigator: Person
