@@ -1,5 +1,3 @@
-
-
 type Dataset {
   id: String!
   name: String!
@@ -52,8 +50,6 @@ enum DatasetAggField {
   DF_GROWTH_CONDITIONS,
   DF_MALDI_MATRIX
 }
-
-
 
 input DatasetFilter {
   # list of IDs separated by '|'
@@ -194,7 +190,7 @@ type Mutation {
         priority: Int=0): String!
 
   updateDataset(id: String!, input: DatasetUpdateInput!,
-        reprocess: Boolean=false, delFirst: Boolean=false,
+        reprocess: Boolean=false, delFirst: Boolean=false, skipValidation: Boolean=false,
         force: Boolean=false, priority: Int=0): String!
 
   deleteDataset(id: String!,

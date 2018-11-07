@@ -24,7 +24,7 @@
  import {updateDatasetQuery} from '../../api/metadata';
  import { getSystemHealthQuery, getSystemHealthSubscribeToMore } from '../../api/system';
  import {isArray, isEqual, get} from 'lodash-es';
- import {currentUserIdQuery} from '../../api/user';
+ import {currentUserRoleQuery} from '../../api/user';
 
  export default {
    name: 'metadata-edit-page',
@@ -43,7 +43,7 @@
        fetchPolicy: 'cache-first',
      },
      currentUser: {
-       query: currentUserIdQuery,
+       query: currentUserRoleQuery,
        fetchPolicy: 'cache-first',
      }
    },
@@ -108,38 +108,42 @@
          }
        }
      },
-     async saveDataset(datasetId, payload) {
+     async saveDataset(datasetId, payload, options = {}) {
        // TODO Lachlan: This is similar to the logic in UploadPage.vue. Refactor this when these components are in JSX
        try {
-         await this.updateOrReprocess(datasetId, payload, false);
+         await this.updateOrReprocess(datasetId, payload, options);
          return true;
        } catch (err) {
          let graphQLError = null;
          try {
            graphQLError = JSON.parse(err.graphQLErrors[0].message);
-         } catch(err2) { /* The case where err does not contain a graphQL error is handled below */ }
+         } catch (err2) { /* The case where err does not contain a graphQL error is handled below */ }
 
          if (get(err, 'graphQLErrors[0].isHandled')) {
            return false;
          } else if (graphQLError && (graphQLError['type'] === 'reprocessing_needed')) {
            if (this.systemHealth && (!this.systemHealth.canProcessDatasets || !this.systemHealth.canMutate)) {
              this.$alert(`Changes to the analysis options require that this dataset be reprocessed; however,
-               dataset processing has been temporarily suspended so that we can safely update the website.\n\n
-               Please wait a few hours and try again.`,
+             dataset processing has been temporarily suspended so that we can safely update the website.\n\n
+             Please wait a few hours and try again.`,
                'Dataset processing suspended',
-               {type: 'warning'})
+               { type: 'warning' });
+             return false;
            } else if (await this.confirmReprocess()) {
-             return await this.updateOrReprocess(datasetId, payload, true);
+             return await this.saveDataset(datasetId, payload, {...options, reprocess: true});
            }
          } else if (graphQLError && graphQLError.type === 'wrong_moldb_name') {
            this.$refs.editor.resetMetaboliteDatabase();
            this.$message({
              message: 'An unrecognized metabolite database was selected. This field has been cleared. ' +
-             'Please select the databases again and resubmit the form.',
+               'Please select the databases again and resubmit the form.',
              type: 'error'
            });
          } else if (graphQLError && graphQLError['type'] === 'failed_validation') {
            this.validationErrors = graphQLError['validation_errors'];
+           if (this.currentUser && this.currentUser.role === 'admin' && await this.confirmSkipValidation()) {
+             return await this.saveDataset(datasetId, payload, {...options, skipValidation: true});
+           }
            this.$message({
              message: 'Please fix the highlighted fields and submit again',
              type: 'error'
@@ -147,8 +151,8 @@
          } else {
            this.$message({
              message: 'There was an unexpected problem submitting the dataset. Please refresh the page and try again.'
-             + 'If this problem persists, please contact us at '
-             + '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
+               + 'If this problem persists, please contact us at '
+               + '<a href="mailto:contact@metaspace2020.eu">contact@metaspace2020.eu</a>',
              dangerouslyUseHTMLString: true,
              type: 'error',
              duration: 0,
@@ -177,13 +181,29 @@
        }
      },
 
-     async updateOrReprocess(datasetId, payload, reprocess) {
+     async confirmSkipValidation() {
+       try {
+         await this.$confirm('There were validation errors. Save anyway?',
+           'Validation errors',
+           {
+             type: 'warning',
+             confirmButtonText: 'Continue',
+             cancelButtonText: 'Cancel'
+           });
+         return true;
+       } catch (e) {
+         // Ignore - user clicked cancel
+         return false;
+       }
+     },
+
+     async updateOrReprocess(datasetId, payload, options) {
        return await this.$apollo.mutate({
          mutation: updateDatasetQuery,
          variables: {
            id: datasetId,
            input: payload,
-           reprocess: reprocess
+           ...options,
          }
        });
      }
