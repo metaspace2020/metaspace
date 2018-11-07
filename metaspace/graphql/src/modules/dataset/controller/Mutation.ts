@@ -277,7 +277,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   },
 
   updateDataset: async (source, args, {user, connection, isAdmin}) => {
-    const {id: dsId, input: update, reprocess, delFirst, force, priority} = args;
+    const {id: dsId, input: update, reprocess, skipValidation, delFirst, force, priority} = args;
 
     logger.info(`User '${user && user.id}' updating '${dsId}' dataset...`);
     const ds = await getDatasetForEditing(connection, user, dsId);
@@ -285,7 +285,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     let metadata;
     if (update.metadataJson) {
       metadata = JSON.parse(update.metadataJson);
-      validateMetadata(metadata);
+      if (!skipValidation || !isAdmin) {
+        validateMetadata(metadata);
+      }
     }
 
     const engineDS = await fetchEngineDS({id: dsId});
