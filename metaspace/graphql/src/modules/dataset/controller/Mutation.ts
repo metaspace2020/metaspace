@@ -134,13 +134,17 @@ interface SaveDSArgs {
 
 const saveDS = async (connection: Connection | EntityManager, args: SaveDSArgs, requireInsert = false) => {
   const {dsId, submitterId, groupId, projectIds, principalInvestigator} = args;
+  const groupUpdate = groupId === undefined ? {}
+    : groupId === null ? { groupId: null, groupApproved: false }
+      : { groupId, groupApproved: await isMemberOf(connection, submitterId, groupId) };
+  const piUpdate = principalInvestigator === undefined ? {}
+    : principalInvestigator === null ? { piName: null, piEmail: null }
+    : { piName: principalInvestigator.name, piEmail: principalInvestigator.email };
   const dsUpdate = {
     id: dsId,
     userId: submitterId,
-    groupId: groupId,
-    groupApproved: groupId != null ? await isMemberOf(connection, submitterId, groupId) : false,
-    piName: principalInvestigator ? principalInvestigator.name : undefined,
-    piEmail: principalInvestigator ? principalInvestigator.email : undefined
+    ...groupUpdate,
+    ...piUpdate,
   };
 
   if (requireInsert) {
@@ -150,7 +154,7 @@ const saveDS = async (connection: Connection | EntityManager, args: SaveDSArgs, 
     await connection.getRepository(DatasetModel).save(dsUpdate);
   }
 
-  if (projectIds != null && projectIds.length > 0) {
+  if (projectIds != null) {
     const datasetProjectRepo = connection.getRepository(DatasetProjectModel);
     const existingDatasetProjects = await datasetProjectRepo.find({ datasetId: dsId });
     const userProjectRoles = await getUserProjectRoles(connection, submitterId);
