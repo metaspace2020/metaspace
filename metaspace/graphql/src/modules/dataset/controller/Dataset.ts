@@ -1,11 +1,10 @@
 import * as _ from 'lodash';
 import {dsField} from '../../../../datasetFilters';
-import {DatasetSource, FieldResolversFor} from '../../../bindingTypes';
+import {DatasetSource, FieldResolversFor, ScopeRoleOptions as SRO} from '../../../bindingTypes';
 import {ProjectSourceRepository} from '../../project/ProjectSourceRepository';
 import {Dataset as DatasetModel} from '../model';
 import {Dataset} from '../../../binding';
 import {rawOpticalImage} from './Query';
-import getScopeRoleForEsDataset from '../util/getScopeRoleForEsDataset';
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   id(ds) {
@@ -64,7 +63,10 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       id: ds._source.ds_submitter_id || 'NULL',
       name: ds._source.ds_submitter_name,
       email: ds._source.ds_submitter_email,
-      scopeRole: await getScopeRoleForEsDataset(ds, ctx),
+      // scopeRole determines whether the email address is visible. Since we don't have any UI to explain to a user why
+      // a particular email address in a dataset's metadata is visible, it's better to just not show email addresses
+      // in metadata for non-admins. The scopeRole here is limited to ADMIN and OTHER so that users don't get creeped out.
+      scopeRole: ctx.isAdmin ? SRO.ADMIN : SRO.OTHER,
     };
   },
 
