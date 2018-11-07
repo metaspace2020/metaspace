@@ -14,8 +14,8 @@ Object {
     },
     "Ionisation_Source": "none",
     "Pixel_Size": Object {
-      "Xaxis": 20,
-      "Yaxis": 20,
+      "Xaxis": 0,
+      "Yaxis": 0,
     },
     "Polarity": "Positive",
   },
