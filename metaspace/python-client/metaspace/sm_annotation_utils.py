@@ -8,8 +8,8 @@ from PIL import Image
 
 
 def _extract_data(res):
-    if not (res.ok and res.headers.get('Content-Type').startswith('application/json')):
-        raise Exception(res.text)
+    if not res.headers.get('Content-Type').startswith('application/json'):
+        raise Exception(f"Wrong Content-Type: {res.headers.get('Content-Type')}")
     res_json = res.json()
     if 'data' in res_json and 'errors' not in res_json:
         return res.json()['data']
@@ -18,7 +18,7 @@ def _extract_data(res):
         raise Exception(res.json()['errors'][0]['message'])
 
 
-def get_config(host, email=None, password=None):
+def get_config(host, email=None, password=None, verify_certificate=True):
     return {
         'graphql_url': f'{host}/graphql',
         'moldb_url': f'{host}/mol_db/v1',
@@ -26,6 +26,7 @@ def get_config(host, email=None, password=None):
         'gettoken_url': f'{host}/api_auth/gettoken',
         'usr_email': email,
         'usr_pass': password,
+        'verify_certificate': verify_certificate
     }
 
 
@@ -33,20 +34,28 @@ class GraphQLClient(object):
     def __init__(self, config):
         self._config = config
         self.session = requests.Session()
-        self.session.post(self._config['signin_url'], params={
-            "email": self._config['usr_email'], "password": self._config['usr_pass']
+        self.session.verify = self._config['verify_certificate']
+        res = self.session.post(self._config['signin_url'], params={
+            "email": self._config['usr_email'],
+            "password": self._config['usr_pass']
         })
+        if res.status_code == 401:
+            print('Unauthorized')
+        elif res.status_code != 200:
+            res.raise_for_status()
 
     def query(self, query, variables={}):
-        print(query)
-        print(self._config)
         res = self.session.post(self._config['graphql_url'],
                                 json={'query': query, 'variables': variables},
-                                headers={'Authorization': 'Bearer ' + self.get_jwt()})
+                                headers={'Authorization': 'Bearer ' + self.get_jwt()},
+                                verify=self._config['verify_certificate'])
         return _extract_data(res)
 
     def get_jwt(self):
-        return self.session.get(self._config['gettoken_url']).text
+        res = self.session.get(self._config['gettoken_url'],
+                               verify=self._config['verify_certificate'])
+        res.raise_for_status()
+        return res.text
 
     def get_submitter_id(self):
         query = """
@@ -89,7 +98,6 @@ class GraphQLClient(object):
         id
         name
         uploadDT
-        institution
         submitter {
           name
         }
@@ -278,37 +286,42 @@ class GraphQLClient(object):
 
         return self.query(query, variables)
 
-    def deleteDataset(self, datasetID, delRaw=False):
-       query = """
-                mutation customDeleteDataset ($datasetId: String!, $delRaw: Boolean) {
+    def delete_dataset(self, ds_id, force=False):
+        query = """
+                mutation customDeleteDataset ($dsId: String!, $force: Boolean) {
                       deleteDataset(
-                        datasetId: $datasetId,
-                        delRawData: $delRaw
+                        id: $dsId
+                        force: $force
                       )
                  }
                 """
-       variables = {'datasetId': datasetID, 'delRaw': delRaw}
-       return self.query(query, variables)
+        variables = {'dsId': ds_id}
+        return self.query(query, variables)
 
-    def updateDatabasesQuery(self, ds_id, molDBs, adducts, reprocess=True, priority=1):
+    def update_dataset(self, ds_id, molDBs=None, adducts=None, reprocess=False, force=False, priority=1):
         query = """
                 mutation updateMetadataDatabases($id: String!, $reprocess: Boolean, 
-                $input: DatasetUpdateInput!, $priority: Int) {
+                    $input: DatasetUpdateInput!, $priority: Int, $force: Boolean) {
                         updateDataset(
                           id: $id,
                           input: $input,
                           priority: $priority,
                           reprocess: $reprocess,
+                          force: $force
                           )
                         }
                 """
+        input_field = {}
+        if molDBs:
+            input_field['molDBs'] = molDBs
+        if adducts:
+            input_field['adducts'] = adducts
         variables = {
             'id': ds_id,
-            'input': {
-                'molDBs': molDBs,
-            },
+            'input': input_field,
             'priority': priority,
-            'reprocess': reprocess
+            'reprocess': reprocess,
+            'force': force,
         }
 
         return self.query(query, variables)
@@ -570,8 +583,12 @@ class SMDataset(object):
 
 
 class SMInstance(object):
-    def __init__(self, host='http://metaspace2020.eu'):
-        self._config = get_config(host)
+    def __init__(self, host='http://metaspace2020.eu', verify_certificate=True):
+        self._config = get_config(host=host, verify_certificate=verify_certificate)
+        if not verify_certificate:
+            import warnings
+            from urllib3.exceptions import InsecureRequestWarning
+            warnings.filterwarnings('ignore', category=InsecureRequestWarning)
         self.reconnect()
 
     def __repr__(self):
@@ -796,10 +813,10 @@ class SMInstance(object):
         return self._gqclient.createDataset(folder, metadata, priority, dsName, isPublic, molDBs, adducts, dsid=dsid)
 
     def update_dataset_dbs(self, datasetID, molDBs, adducts, priority):
-        return self._gqclient.updateDatabasesQuery(datasetID, molDBs, adducts, priority)
+        return self._gqclient.update_dataset(datasetID, molDBs, adducts, priority)
 
-    def delete_dataset(self, dsid, **kwargs):
-        return self._gqclient.deleteDataset(dsid, **kwargs)
+    def delete_dataset(self, ds_id, **kwargs):
+        return self._gqclient.delete_dataset(ds_id, **kwargs)
 
 
 class MolecularDatabase:
