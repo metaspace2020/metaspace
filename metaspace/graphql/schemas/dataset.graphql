@@ -190,7 +190,8 @@ type Mutation {
         priority: Int=0): String!
 
   updateDataset(id: String!, input: DatasetUpdateInput!,
-        reprocess: Boolean=false, delFirst: Boolean=false, skipValidation: Boolean=false,
+        reprocess: Boolean=false, delFirst: Boolean=false,
+        skipValidation: Boolean=false, # ignored for non-admins
         force: Boolean=false, priority: Int=0): String!
 
   deleteDataset(id: String!,
