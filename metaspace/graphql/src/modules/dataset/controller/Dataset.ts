@@ -1,10 +1,11 @@
 import * as _ from 'lodash';
 import {dsField} from '../../../../datasetFilters';
-import {DatasetSource, FieldResolversFor, ScopeRoleOptions as SRO} from '../../../bindingTypes';
+import {DatasetSource, FieldResolversFor} from '../../../bindingTypes';
 import {ProjectSourceRepository} from '../../project/ProjectSourceRepository';
 import {Dataset as DatasetModel} from '../model';
 import {Dataset} from '../../../binding';
 import {rawOpticalImage} from './Query';
+import getScopeRoleForEsDataset from '../util/getScopeRoleForEsDataset';
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   id(ds) {
@@ -54,10 +55,6 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   metadataType(ds) { return dsField(ds, 'metadataType'); },
 
   async submitter(ds, args, ctx) {
-    let scopeRole = ds.scopeRole;
-    if (ctx.user && ctx.user.id === ds._source.ds_submitter_id) {
-      scopeRole = SRO.PROFILE_OWNER;
-    }
     if (ds._source.ds_submitter_id == null) {
       // WORKAROUND: Somehow datasets become broken and are indexed without a submitter
       console.log('Submitter ID is null: ', _.pick(ds._source, ['ds_id', 'ds_name', 'ds_status', 'ds_submitter_id', 'ds_submitter_name', 'ds_submitter_email']));
@@ -67,7 +64,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       id: ds._source.ds_submitter_id || 'NULL',
       name: ds._source.ds_submitter_name,
       email: ds._source.ds_submitter_email,
-      scopeRole,
+      scopeRole: await getScopeRoleForEsDataset(ds, ctx),
     };
   },
 
@@ -95,12 +92,13 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       .findProjectsByDatasetId(ctx.user, ds._source.ds_id);
   },
 
-  async principalInvestigator(ds, _, {connection}) {
+  async principalInvestigator(ds, _, {connection, isAdmin, user}) {
     const dataset = await connection.getRepository(DatasetModel).findOneOrFail({ id: ds._source.ds_id });
+    const canSeePiEmail = isAdmin || (user != null && user.id === ds._source.ds_submitter_id);
     if (dataset.piName) {
       return {
         name: dataset.piName,
-        email: dataset.piEmail,
+        email: canSeePiEmail ? dataset.piEmail : null,
       };
     }
     return null;

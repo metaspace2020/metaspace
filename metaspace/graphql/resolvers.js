@@ -172,7 +172,11 @@ const Resolvers = {
     rhoChaos: (hit) => hit._source.chaos,
 
     dataset(hit) {
-      return Object.assign({_id: hit._source.ds_id}, hit);
+
+      return {
+        _id: hit._source.ds_id,
+        _source: hit._source,
+      };
     },
 
     peakChartData(hit) {

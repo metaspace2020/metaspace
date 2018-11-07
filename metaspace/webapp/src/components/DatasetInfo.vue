@@ -55,11 +55,16 @@
 
       treeData() {
         let schemaBasedVals = this.objToTreeNode(null, this.metadata, this.schema);
+        const submitterEmail = this.dsSubmitter.email ? ` (${this.dsSubmitter.email})` : '';
         let dataManagementChilds = [
-          {id: "Submitter", label: `Submitter: ${this.dsSubmitter.name}`},
+          {id: "Submitter", label: `Submitter: ${this.dsSubmitter.name}${submitterEmail}`},
         ];
         if (this.dsPI != null) {
-          dataManagementChilds.push({id: "Principal Investigator", label: `Principal Investigator: ${this.dsPI.name}`});
+          const piEmail = this.dsPI.email ? ` (${this.dsPI.email})` : '';
+          dataManagementChilds.push({
+            id: "Principal Investigator",
+            label: `Principal Investigator: ${this.dsPI.name}${piEmail}`
+          });
         }
         if (this.dsGroup != null) {
           dataManagementChilds.push({id: "Group", label: `Group: ${this.dsGroup.name}`});
