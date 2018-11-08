@@ -68,7 +68,7 @@
           <span class="s-group ds-add-filter"
                 title="Filter by this group"
                 @click="addFilter('group')">
-            {{dataset.group.name}}
+            {{dataset.group.shortName}}
           </span>
         </span>
       </div>

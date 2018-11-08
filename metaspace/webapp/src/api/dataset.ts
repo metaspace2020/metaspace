@@ -44,7 +44,7 @@ export const datasetDetailItemFragment =
       email
     }
     principalInvestigator { name }
-    group { id name }
+    group { id name shortName }
     projects { id name }
     polarity
     ionisationSource
@@ -171,7 +171,7 @@ export const datasetStatusUpdatedQuery = gql`subscription DS {
       status
       submitter { id name }
       principalInvestigator { name }
-      group { id name }
+      group { id name shortName }
       projects { id name }
       isPublic
     }
