@@ -37,7 +37,7 @@
         </el-button>
       </div>
 
-      <dataset-list :datasets="datasets" />
+      <dataset-list :datasets="datasets" allowDoubleColumn />
     </div>
   </div>
 </template>
@@ -296,25 +296,6 @@
      /* 2 datasets per row on wide screens */
      width: 1620px;
    }
- }
-
- .even {
-   background-color: #e6f1ff;
-
-   @media (min-width: 1650px) {
-     background-color: white;
-   }
- }
-
- .odd {
-   background-color: white;
- }
-
- .dataset-list {
-   display: flex;
-   flex-direction: row;
-   flex-wrap: wrap;
-   align-items: stretch;
  }
 
  .export-btn {

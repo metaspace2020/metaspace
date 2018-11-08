@@ -459,20 +459,13 @@
    position: relative;
    border-radius: 5px;
    width: 100%;
-   max-width: 800px;
+   max-width: 950px;
    margin: 3px;
    padding: 0px;
    border: 1px solid #cce4ff;
    display: flex;
    flex-direction: row;
    justify-content: space-between;
- }
-
- .ds-status {
-   display: flex;
-   padding-left: 5px;
-   flex-direction: column;
-   justify-content: center;
  }
 
  .opt-image {
@@ -483,7 +476,7 @@
  .ds-info{
    padding: 10px;
    margin: 0px;
-   width: 60%;
+   flex-grow: 1;
  }
 
  .ds-actions {
