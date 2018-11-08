@@ -17,7 +17,7 @@
 
   export default {
     name: 'dataset-info',
-    props: ['metadata', 'expandedKeys'],
+    props: ['metadata', 'expandedKeys', 'currentUser'],
     data() {
       return {
         expandedTreeNodes: safeJsonParse(localStorage.getItem('expandedTreeNodes')) || [],
@@ -55,12 +55,17 @@
 
       treeData() {
         let schemaBasedVals = this.objToTreeNode(null, this.metadata, this.schema);
-        const submitterEmail = this.dsSubmitter.email ? ` (${this.dsSubmitter.email})` : '';
-        let dataManagementChilds = [
+        // The current user may be allowed by the API to see the submitter & PI's email address due to being members
+        // of the same groups/projects, but we don't have any way of communicating why they're allowed to see some emails
+        // and not others. This could creep users out and make them wonder if we're sharing their email address to
+        // the public internet. Because of this, only show email addresses to admins here.
+        const canSeeEmailAddresses = this.currentUser && this.currentUser.role === 'admin';
+        const submitterEmail = this.dsSubmitter.email && canSeeEmailAddresses ? ` (${this.dsSubmitter.email})` : '';
+        const dataManagementChilds = [
           {id: "Submitter", label: `Submitter: ${this.dsSubmitter.name}${submitterEmail}`},
         ];
         if (this.dsPI != null) {
-          const piEmail = this.dsPI.email ? ` (${this.dsPI.email})` : '';
+          const piEmail = this.dsPI.email && canSeeEmailAddresses ? ` (${this.dsPI.email})` : '';
           dataManagementChilds.push({
             id: "Principal Investigator",
             label: `Principal Investigator: ${this.dsPI.name}${piEmail}`
