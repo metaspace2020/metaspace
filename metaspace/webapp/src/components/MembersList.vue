@@ -16,7 +16,6 @@
         <el-button @click="handleUpdateRole" type="primary">Save</el-button>
       </el-row>
     </el-dialog>
-    <h2>Members</h2>
     <el-table :data="currentPageData"
               :row-key="row => row.user.id"
               v-loading="loading"

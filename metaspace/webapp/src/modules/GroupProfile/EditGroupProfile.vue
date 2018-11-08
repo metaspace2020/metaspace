@@ -16,19 +16,13 @@
           </div>
         </div>
         <edit-group-form :model="model" :disabled="isSaving || !canEdit" />
-        <members-list
+        <h2>Members</h2>
+        <group-members-list
           :loading="groupLoading !== 0"
           :currentUser="currentUser"
+          :group="group"
           :members="group && group.members || []"
-          type="group"
-          :filter="datasetsListFilter"
-          :canEdit="canEdit"
-          @removeUser="handleRemoveUser"
-          @cancelInvite="handleRemoveUser"
-          @acceptUser="handleAcceptUser"
-          @rejectUser="handleRejectUser"
-          @addMember="() => handleAddMember(/* Discard the event argument. ConfirmAsync adds an argument to the end of the arguments list, so the arguments list must be predictable */)"
-          @updateRole="handleUpdateRole"
+          :refreshData="refreshData"
         />
         <div style="margin-bottom: 2em">
           <h2>Custom URL</h2>
@@ -78,33 +72,23 @@
   import Vue from 'vue';
   import { Component, Watch } from 'vue-property-decorator';
   import {
-    acceptRequestToJoinGroupMutation,
     deleteGroupMutation,
     editGroupQuery,
     EditGroupQuery,
-    EditGroupQueryMember,
-    inviteUserToGroupMutation,
-    removeUserFromGroupMutation,
     UpdateGroupMutation,
-    updateGroupMutation, updateUserGroupMutation, UserGroupRole,
+    updateGroupMutation,
   } from '../../api/group';
   import EditGroupForm from './EditGroupForm.vue';
-  import MembersList from '../../components/MembersList.vue';
-  import {currentUserRoleQuery, UserRole} from '../../api/user';
+  import GroupMembersList from './GroupMembersList.vue';
+  import {currentUserRoleQuery, CurrentUserRoleResult, UserRole} from '../../api/user';
   import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
-  import emailRegex from '../../lib/emailRegex';
-
-  interface CurrentUserQuery {
-    id: string;
-    role: UserRole;
-  }
 
   @Component<EditGroupProfile>({
     components: {
       EditGroupForm,
-      MembersList,
+      GroupMembersList,
     },
     apollo: {
       currentUser: {
@@ -128,7 +112,7 @@
       urlSlug: '',
     };
 
-    currentUser: CurrentUserQuery | null = null;
+    currentUser: CurrentUserRoleResult | null = null;
     group: EditGroupQuery | null = null;
 
     get canDelete(): boolean {
@@ -148,11 +132,6 @@
     get groupName() {
       return this.group ? this.group.name : '';
     }
-    get datasetsListFilter() {
-      return {
-        group: this.groupId,
-      };
-    }
     get groupUrlRoute() {
       const groupIdOrSlug = this.group ? this.group.urlSlug || this.group.id : '';
       return { name: 'group', params: { groupIdOrSlug } };
@@ -170,7 +149,7 @@
     }
 
     get datasetsListLink() {
-      return { path: '/datasets', query: encodeParams(this.datasetsListFilter) }
+      return { path: '/datasets', query: encodeParams({ group: this.groupId }) }
     }
 
     @ConfirmAsync(function (this: EditGroupProfile) {
@@ -221,86 +200,8 @@
       }
     }
 
-    @ConfirmAsync(function (this: EditGroupProfile, member: EditGroupQueryMember) {
-      return {
-        message: `Are you sure you want to remove ${member.user.name} from ${this.groupName}?`,
-        confirmButtonText: 'Remove user',
-        confirmButtonLoadingText: 'Removing...'
-      }
-    })
-    async handleRemoveUser(member: EditGroupQueryMember) {
-      await this.$apollo.mutate({
-        mutation: removeUserFromGroupMutation,
-        variables: { groupId: this.groupId, userId: member.user.id },
-      });
+    async refreshData() {
       await this.$apollo.queries.group.refetch();
-    }
-
-    @ConfirmAsync(function (this: EditGroupProfile, member: EditGroupQueryMember) {
-      return {
-        message: `This will allow ${member.user.name} to access all private datasets that are in ${this.groupName}. Are you sure you want to accept them into the group?`,
-        confirmButtonText: 'Accept request',
-        confirmButtonLoadingText: 'Accepting...'
-      }
-    })
-    async handleAcceptUser(member: EditGroupQueryMember) {
-      await this.$apollo.mutate({
-        mutation: acceptRequestToJoinGroupMutation,
-        variables: { groupId: this.groupId, userId: member.user.id },
-      });
-      await this.$apollo.queries.group.refetch();
-    }
-
-    @ConfirmAsync(function (this: EditGroupProfile, member: EditGroupQueryMember) {
-      return {
-        message: `Are you sure you want to decline ${member.user.name}'s request for access to ${this.groupName}?`,
-        confirmButtonText: 'Decline request',
-        confirmButtonLoadingText: 'Declining...'
-      }
-    })
-    async handleRejectUser(member: EditGroupQueryMember) {
-      await this.$apollo.mutate({
-        mutation: removeUserFromGroupMutation,
-        variables: { groupId: this.groupId, userId: member.user.id },
-      });
-      await this.$apollo.queries.group.refetch();
-    }
-
-    @ConfirmAsync(function (this: EditGroupProfile) {
-      return {
-        title: 'Add member',
-        message: `An email will be sent inviting them to join the group. If they accept the invitation, they will be able to access the private datasets of ${this.groupName}.`,
-        showInput: true,
-        inputPlaceholder: 'Email address',
-        inputPattern: emailRegex,
-        inputErrorMessage: 'Please enter a valid email address',
-        confirmButtonText: 'Invite to group',
-        confirmButtonLoadingText: 'Sending invitation...'
-      }
-    })
-    async handleAddMember(email: string) {
-      await this.$apollo.mutate({
-        mutation: inviteUserToGroupMutation,
-        variables: { groupId: this.groupId, email },
-      });
-      await this.$apollo.queries.group.refetch();
-    }
-
-    async handleUpdateRole(member: EditGroupQueryMember, role: UserGroupRole | null) {
-      try {
-        this.groupLoading += 1;
-        await this.$apollo.mutate({
-          mutation: updateUserGroupMutation,
-          variables: {
-            groupId: this.groupId,
-            userId: member.user.id,
-            update: {role},
-          },
-        });
-        await this.$apollo.queries.group.refetch();
-      } finally {
-        this.groupLoading -= 1;
-      }
     }
   }
 

@@ -16,19 +16,13 @@
           </div>
         </div>
         <edit-project-form v-model="model" :disabled="isSaving || !canEdit" />
-        <members-list
+        <h2>Members</h2>
+        <project-members-list
           :loading="projectLoading !== 0"
           :currentUser="currentUser"
+          :project="project"
           :members="project && project.members || []"
-          type="project"
-          :filter="datasetsListFilter"
-          :canEdit="canEdit"
-          @removeUser="handleRemoveUser"
-          @cancelInvite="handleRemoveUser"
-          @acceptUser="handleAcceptUser"
-          @rejectUser="handleRejectUser"
-          @addMember="() => handleAddMember(/* Discard the event argument. ConfirmAsync adds an argument to the end of the arguments list, so the arguments list must be predictable */)"
-          @updateRole="handleUpdateRole"
+          :refreshData="refreshData"
         />
         <div v-if="project && project.isPublic" style="margin-bottom: 2em">
           <h2>Custom URL</h2>
@@ -78,33 +72,23 @@
   import Vue from 'vue';
   import { Component, Watch } from 'vue-property-decorator';
   import {
-    acceptRequestToJoinProjectMutation,
     deleteProjectMutation,
     editProjectQuery,
     EditProjectQuery,
-    EditProjectQueryMember,
-    inviteUserToProjectMutation, ProjectRole,
-    removeUserFromProjectMutation,
     UpdateProjectMutation,
-    updateProjectMutation, updateUserProjectMutation,
+    updateProjectMutation,
   } from '../../api/project';
   import EditProjectForm from './EditProjectForm.vue';
-  import MembersList from '../../components/MembersList.vue';
-  import {currentUserRoleQuery, UserRole} from '../../api/user';
+  import ProjectMembersList from './ProjectMembersList.vue';
+  import {currentUserRoleQuery, CurrentUserRoleResult, UserRole} from '../../api/user';
   import { encodeParams } from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
-  import emailRegex from '../../lib/emailRegex';
-
-  interface CurrentUserQuery {
-    id: string;
-    role: UserRole;
-  }
 
   @Component<EditProjectProfile>({
     components: {
       EditProjectForm,
-      MembersList,
+      ProjectMembersList,
     },
     apollo: {
       currentUser: {
@@ -128,7 +112,7 @@
       urlSlug: '',
     };
 
-    currentUser: CurrentUserQuery | null = null;
+    currentUser: CurrentUserRoleResult | null = null;
     project: EditProjectQuery | null = null;
 
     get canEdit(): boolean {
@@ -218,86 +202,8 @@
       }
     }
 
-    @ConfirmAsync(function (this: EditProjectProfile, member: EditProjectQueryMember) {
-      return {
-        message: `Are you sure you want to remove ${member.user.name} from ${this.projectName}?`,
-        confirmButtonText: 'Remove user',
-        confirmButtonLoadingText: 'Removing...'
-      }
-    })
-    async handleRemoveUser(member: EditProjectQueryMember) {
-      await this.$apollo.mutate({
-        mutation: removeUserFromProjectMutation,
-        variables: { projectId: this.projectId, userId: member.user.id },
-      });
+    async refreshData() {
       await this.$apollo.queries.project.refetch();
-    }
-
-    @ConfirmAsync(function (this: EditProjectProfile, member: EditProjectQueryMember) {
-      return {
-        message: `This will allow ${member.user.name} to access all private datasets that are in ${this.projectName}. Are you sure you want to accept them into the project?`,
-        confirmButtonText: 'Accept request',
-        confirmButtonLoadingText: 'Accepting...'
-      }
-    })
-    async handleAcceptUser(member: EditProjectQueryMember) {
-      await this.$apollo.mutate({
-        mutation: acceptRequestToJoinProjectMutation,
-        variables: { projectId: this.projectId, userId: member.user.id },
-      });
-      await this.$apollo.queries.project.refetch();
-    }
-
-    @ConfirmAsync(function (this: EditProjectProfile, member: EditProjectQueryMember) {
-      return {
-        message: `Are you sure you want to decline ${member.user.name}'s request for access to ${this.projectName}?`,
-        confirmButtonText: 'Decline request',
-        confirmButtonLoadingText: 'Declining...'
-      }
-    })
-    async handleRejectUser(member: EditProjectQueryMember) {
-      await this.$apollo.mutate({
-        mutation: removeUserFromProjectMutation,
-        variables: { projectId: this.projectId, userId: member.user.id },
-      });
-      await this.$apollo.queries.project.refetch();
-    }
-
-    @ConfirmAsync(function (this: EditProjectProfile) {
-      return {
-        title: 'Add member',
-        message: `An email will be sent inviting them to join the project. If they accept the invitation, they will be able to access the private datasets of ${this.projectName}.`,
-        showInput: true,
-        inputPlaceholder: 'Email address',
-        inputPattern: emailRegex,
-        inputErrorMessage: 'Please enter a valid email address',
-        confirmButtonText: 'Invite to project',
-        confirmButtonLoadingText: 'Sending invitation...'
-      }
-    })
-    async handleAddMember(email: string) {
-      await this.$apollo.mutate({
-        mutation: inviteUserToProjectMutation,
-        variables: { projectId: this.projectId, email },
-      });
-      await this.$apollo.queries.project.refetch();
-    }
-
-    async handleUpdateRole(member: EditProjectQueryMember, role: ProjectRole | null) {
-      try {
-        this.projectLoading += 1;
-        await this.$apollo.mutate({
-          mutation: updateUserProjectMutation,
-          variables: {
-            projectId: this.projectId,
-            userId: member.user.id,
-            update: {role},
-          },
-        });
-        await this.$apollo.queries.project.refetch();
-      } finally {
-        this.projectLoading -= 1;
-      }
     }
   }
 
