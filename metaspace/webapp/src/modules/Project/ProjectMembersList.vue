@@ -2,7 +2,7 @@
   <members-list
     :loading="loading || loadingInternal"
     :currentUser="currentUser"
-    :members="members"
+    :members="sortedMembers"
     type="project"
     :filter="datasetsListFilter"
     :canEdit="canEdit"
@@ -17,12 +17,13 @@
 <script lang="ts">
   import Vue from 'vue';
   import {Component, Prop} from 'vue-property-decorator';
+  import {sortBy} from 'lodash-es';
   import {
     acceptRequestToJoinProjectMutation,
-    EditProjectQuery,
-    EditProjectQueryMember,
+    ViewProjectMember,
     inviteUserToProjectMutation,
     ProjectRole,
+    ProjectRoleOptions as PRO,
     removeUserFromProjectMutation,
     updateUserProjectMutation,
   } from '../../api/project';
@@ -30,6 +31,12 @@
   import {CurrentUserRoleResult} from '../../api/user';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import emailRegex from '../../lib/emailRegex';
+
+  interface ProjectInfo {
+    id: string;
+    name: string;
+    currentUserRole: ProjectRole;
+  }
 
   @Component<ProjectMembersList>({
     components: {
@@ -40,9 +47,9 @@
     @Prop()
     currentUser!: CurrentUserRoleResult | null;
     @Prop()
-    project!: EditProjectQuery | null;
+    project!: ProjectInfo | null;
     @Prop({type: Array, required: true})
-    members!: EditProjectQueryMember[];
+    members!: ViewProjectMember[];
     @Prop({type: Boolean})
     loading!: boolean;
     @Prop({type: Function})
@@ -66,15 +73,19 @@
         project: this.projectId,
       };
     }
+    get sortedMembers() {
+      const roleOrder = [PRO.MANAGER, PRO.MEMBER, PRO.PENDING, PRO.INVITED];
+      return sortBy(this.members, m => roleOrder.indexOf(m.role));
+    }
 
-    @ConfirmAsync(function (this: ProjectMembersList, member: EditProjectQueryMember) {
+    @ConfirmAsync(function (this: ProjectMembersList, member: ViewProjectMember) {
       return {
         message: `Are you sure you want to remove ${member.user.name} from ${this.projectName}?`,
         confirmButtonText: 'Remove user',
         confirmButtonLoadingText: 'Removing...'
       }
     })
-    async handleRemoveUser(member: EditProjectQueryMember) {
+    async handleRemoveUser(member: ViewProjectMember) {
       await this.$apollo.mutate({
         mutation: removeUserFromProjectMutation,
         variables: { projectId: this.projectId, userId: member.user.id },
@@ -82,14 +93,14 @@
       await this.refreshData();
     }
 
-    @ConfirmAsync(function (this: ProjectMembersList, member: EditProjectQueryMember) {
+    @ConfirmAsync(function (this: ProjectMembersList, member: ViewProjectMember) {
       return {
         message: `This will allow ${member.user.name} to access all private datasets that are in ${this.projectName}. Are you sure you want to accept them into the project?`,
         confirmButtonText: 'Accept request',
         confirmButtonLoadingText: 'Accepting...'
       }
     })
-    async handleAcceptUser(member: EditProjectQueryMember) {
+    async handleAcceptUser(member: ViewProjectMember) {
       await this.$apollo.mutate({
         mutation: acceptRequestToJoinProjectMutation,
         variables: { projectId: this.projectId, userId: member.user.id },
@@ -97,14 +108,14 @@
       await this.refreshData();
     }
 
-    @ConfirmAsync(function (this: ProjectMembersList, member: EditProjectQueryMember) {
+    @ConfirmAsync(function (this: ProjectMembersList, member: ViewProjectMember) {
       return {
         message: `Are you sure you want to decline ${member.user.name}'s request for access to ${this.projectName}?`,
         confirmButtonText: 'Decline request',
         confirmButtonLoadingText: 'Declining...'
       }
     })
-    async handleRejectUser(member: EditProjectQueryMember) {
+    async handleRejectUser(member: ViewProjectMember) {
       await this.$apollo.mutate({
         mutation: removeUserFromProjectMutation,
         variables: { projectId: this.projectId, userId: member.user.id },
@@ -132,7 +143,7 @@
       await this.refreshData();
     }
 
-    async handleUpdateRole(member: EditProjectQueryMember, role: ProjectRole | null) {
+    async handleUpdateRole(member: ViewProjectMember, role: ProjectRole | null) {
       try {
         this.loadingInternal = true;
         await this.$apollo.mutate({

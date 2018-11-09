@@ -29,14 +29,14 @@ const getProjectScopeRole = (currentUserRole: UserProjectRole | null, isAdmin: b
 
 const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
   async members(project, args, ctx: Context): Promise<UserProjectSource[] | null> {
-    if (!canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin)) {
-      return null;
-    }
+    const filter = canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin)
+      ? { projectId: project.id }
+      : { projectId: project.id, role: UPRO.MANAGER };
 
     const userProjectModels = await ctx.connection
       .getRepository(UserProjectModel)
       .find({
-        where: { projectId: project.id },
+        where: filter,
         relations: ['user', 'project'],
       });
     return userProjectModels.map(up => ({

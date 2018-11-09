@@ -49,9 +49,9 @@ exports[`EditGroupProfile should match snapshot 1`] = `
     </div>
     <!---->
     </form>
+    <h2>Members</h2>
     <div>
       <!---->
-      <h2>Members</h2>
       <div class="el-table el-table--fit el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition" element-loading-text="Loading results from the server..." mock-v-loading="false">
         <div class="hidden-columns">
           <div></div>
@@ -64,26 +64,26 @@ exports[`EditGroupProfile should match snapshot 1`] = `
           <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 850px;">
             <colgroup>
               <col name="el-table_1_column_1" width="200">
-              <col name="el-table_1_column_2" width="200">
-              <col name="el-table_1_column_3" width="160">
-              <col name="el-table_1_column_4" width="90">
               <col name="el-table_1_column_5" width="200">
+              <col name="el-table_1_column_2" width="160">
+              <col name="el-table_1_column_3" width="90">
+              <col name="el-table_1_column_4" width="200">
             </colgroup>
             <thead class="">
               <tr class="">
                 <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf">
                   <div class="cell">Name</div>
                 </th>
-                <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf">
+                <th colspan="1" rowspan="1" class="el-table_1_column_5     is-leaf">
                   <div class="cell">Email</div>
                 </th>
-                <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf">
+                <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf">
                   <div class="cell">Role</div>
                 </th>
-                <th colspan="1" rowspan="1" class="el-table_1_column_4  is-center   is-leaf">
+                <th colspan="1" rowspan="1" class="el-table_1_column_3  is-center   is-leaf">
                   <div class="cell">Datasets</div>
                 </th>
-                <th colspan="1" rowspan="1" class="el-table_1_column_5     is-leaf">
+                <th colspan="1" rowspan="1" class="el-table_1_column_4     is-leaf">
                   <div class="cell"></div>
                 </th>
               </tr>
@@ -94,10 +94,10 @@ exports[`EditGroupProfile should match snapshot 1`] = `
           <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 850px;">
             <colgroup>
               <col name="el-table_1_column_1" width="200">
-              <col name="el-table_1_column_2" width="200">
-              <col name="el-table_1_column_3" width="160">
-              <col name="el-table_1_column_4" width="90">
               <col name="el-table_1_column_5" width="200">
+              <col name="el-table_1_column_2" width="160">
+              <col name="el-table_1_column_3" width="90">
+              <col name="el-table_1_column_4" width="200">
             </colgroup>
             <tbody>
               <tr class="el-table__row">
@@ -106,24 +106,24 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                     me
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                   <div class="cell">
                     my-email@example.com
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
                   <div class="cell">
                     <a href="#" title="Change role">
                       Group admin
                     </a>
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_3 is-center ">
                   <div class="cell">
                     <a href="/datasets?grp=2&amp;subm=3" class="">123</a>
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
                   <div class="cell">
                     <!---->
                     <!---->
@@ -138,22 +138,22 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                     Person who asked to join
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                   <div class="cell">
                     access@requestor.com
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
                   <div class="cell"><span>
           Requesting access
         </span></div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_3 is-center ">
                   <div class="cell">
                     <a href="/datasets?grp=2&amp;subm=4" class="">0</a>
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
                   <div class="cell">
                     <!---->
                     <!---->
@@ -176,22 +176,22 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                     Invitee
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                   <div class="cell">
                     awaiting@response.com
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
                   <div class="cell"><span>
           Invited
         </span></div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_3 is-center ">
                   <div class="cell">
                     <a href="/datasets?grp=2&amp;subm=5" class="">0</a>
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
                   <div class="cell">
                     <!---->
                     <button type="button" class="el-button grid-button el-button--default el-button--mini">
@@ -210,24 +210,24 @@ exports[`EditGroupProfile should match snapshot 1`] = `
                     Group member
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
                   <div class="cell">
                     person@embl.de
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
                   <div class="cell">
                     <a href="#" title="Change role">
                       Member
                     </a>
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_3 is-center ">
                   <div class="cell">
                     <a href="/datasets?grp=2&amp;subm=6" class="">1</a>
                   </div>
                 </td>
-                <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
                   <div class="cell">
                     <button type="button" class="el-button grid-button el-button--default el-button--mini">
                       <!---->

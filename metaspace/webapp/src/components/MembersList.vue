@@ -29,7 +29,7 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Email" min-width="200">
+      <el-table-column label="Email" min-width="200" v-if="shouldShowEmails">
         <template slot-scope="scope">
           {{scope.row.user.email}}
         </template>
@@ -155,6 +155,10 @@
 
     get currentPageData(): Member[] {
       return this.members.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
+    }
+
+    get shouldShowEmails() {
+      return this.members.some(m => m.user.email != null);
     }
 
     canEditRoleFor(user: Member) {

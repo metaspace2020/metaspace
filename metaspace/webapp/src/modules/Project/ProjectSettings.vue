@@ -1,76 +1,58 @@
 <template>
-  <div>
-    <div class="page">
-      <div class="page-content">
-        <div class="header-row">
-          <h1>Project Details</h1>
-          <div class="flex-spacer" />
+  <div class="project-settings">
+    <div class="header-row">
+      <h2>Project Details</h2>
+      <div class="flex-spacer" />
 
-          <div class="header-row-buttons">
-            <el-button v-if="canEdit && project"
-                       type="primary"
-                       @click="handleSave"
-                       :loading="isSaving">
-              Save
-            </el-button>
-          </div>
-        </div>
-        <edit-project-form v-model="model" :disabled="isSaving || !canEdit" />
-        <h2>Members</h2>
-        <project-members-list
-          :loading="projectLoading !== 0"
-          :currentUser="currentUser"
-          :project="project"
-          :members="project && project.members || []"
-          :refreshData="refreshData"
-        />
-        <div v-if="project && project.isPublic" style="margin-bottom: 2em">
-          <h2>Custom URL</h2>
-          <div v-if="canEditUrlSlug">
-            <router-link :to="projectUrlRoute">{{projectUrlPrefix}}</router-link>
-            <input v-model="model.urlSlug" />
-          </div>
-          <div v-if="!canEditUrlSlug && project && project.urlSlug">
-            <router-link :to="projectUrlRoute">
-              {{projectUrlPrefix}}<span class="urlSlug">{{project.urlSlug}}</span>
-            </router-link>
-          </div>
-          <div v-if="!canEditUrlSlug && project && !project.urlSlug">
-            <p>
-              <router-link :to="projectUrlRoute">
-                {{projectUrlPrefix}}<span class="urlSlug">{{project.id}}</span>
-              </router-link>
-            </p>
-            <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL for your project.</p>
-          </div>
-        </div>
-        <div style="margin-bottom: 2em">
-          <h2>Datasets</h2>
-          <p>
-            <router-link :to="datasetsListLink">See all datasets</router-link>
-          </p>
-        </div>
-        <div v-if="canEdit && project">
-          <h2>Delete project</h2>
-          <p>
-            Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
-          </p>
-          <div style="text-align: right; margin: 1em 0;">
-            <el-button
-              type="danger"
-              @click="handleDeleteProject"
-              :loading="isDeletingProject">
-              Delete project
-            </el-button>
-          </div>
-        </div>
+      <div class="header-row-buttons">
+        <el-button v-if="project"
+                   type="primary"
+                   @click="handleSave"
+                   :loading="isSaving">
+          Save
+        </el-button>
+      </div>
+    </div>
+    <edit-project-form v-model="model" :disabled="isSaving" />
+    <div v-if="project && project.isPublic" style="margin-bottom: 2em">
+      <h2>Custom URL</h2>
+      <div v-if="canEditUrlSlug">
+        <router-link :to="projectUrlRoute">{{projectUrlPrefix}}</router-link>
+        <input v-model="model.urlSlug" />
+      </div>
+      <div v-if="!canEditUrlSlug && project && project.urlSlug">
+        <router-link :to="projectUrlRoute">
+          {{projectUrlPrefix}}<span class="urlSlug">{{project.urlSlug}}</span>
+        </router-link>
+      </div>
+      <div v-if="!canEditUrlSlug && project && !project.urlSlug">
+        <p>
+          <router-link :to="projectUrlRoute">
+            {{projectUrlPrefix}}<span class="urlSlug">{{project.id}}</span>
+          </router-link>
+        </p>
+        <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL for your project.</p>
+      </div>
+    </div>
+    <div v-if="project">
+      <h2>Delete project</h2>
+      <p>
+        Datasets will not be deleted, but they will no longer be able to be shared with other users through this project.
+      </p>
+      <div style="text-align: right; margin: 1em 0;">
+        <el-button
+          type="danger"
+          @click="handleDeleteProject"
+          :loading="isDeletingProject">
+          Delete project
+        </el-button>
       </div>
     </div>
   </div>
 </template>
 <script lang="ts">
   import Vue from 'vue';
-  import { Component, Watch } from 'vue-property-decorator';
+  import {Component, Prop, Watch} from 'vue-property-decorator';
   import {
     deleteProjectMutation,
     editProjectQuery,
@@ -79,16 +61,13 @@
     updateProjectMutation,
   } from '../../api/project';
   import EditProjectForm from './EditProjectForm.vue';
-  import ProjectMembersList from './ProjectMembersList.vue';
-  import {currentUserRoleQuery, CurrentUserRoleResult, UserRole} from '../../api/user';
-  import { encodeParams } from '../Filters';
+  import {currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
 
-  @Component<EditProjectProfile>({
+  @Component<ProjectSettings>({
     components: {
       EditProjectForm,
-      ProjectMembersList,
     },
     apollo: {
       currentUser: {
@@ -97,12 +76,14 @@
       },
       project: {
         query: editProjectQuery,
-        loadingKey: 'membersLoading',
         variables() { return { projectId: this.projectId } },
       },
     }
   })
-  export default class EditProjectProfile extends Vue {
+  export default class ProjectSettings extends Vue {
+    @Prop()
+    projectId!: string;
+
     projectLoading = 0;
     isDeletingProject = false;
     isSaving = false;
@@ -115,16 +96,8 @@
     currentUser: CurrentUserRoleResult | null = null;
     project: EditProjectQuery | null = null;
 
-    get canEdit(): boolean {
-      return (this.currentUser && this.currentUser.role === 'admin')
-        || (this.project && this.project.currentUserRole === 'MANAGER')
-        || false;
-    }
     get canEditUrlSlug(): boolean {
       return this.currentUser && this.currentUser.role === 'admin' || false;
-    }
-    get projectId(): string {
-      return this.$route.params.projectId;
     }
     get projectName() {
       return this.project ? this.project.name : '';
@@ -150,11 +123,7 @@
       this.model.urlSlug = this.project && this.project.urlSlug || '';
     }
 
-    get datasetsListLink() {
-      return { path: '/datasets', query: encodeParams(this.datasetsListFilter) }
-    }
-
-    @ConfirmAsync(function (this: EditProjectProfile) {
+    @ConfirmAsync(function (this: ProjectSettings) {
       return {
         message: `Are you sure you want to delete ${this.projectName}?`,
         confirmButtonText: 'Delete project',
@@ -201,22 +170,13 @@
         this.isSaving = false;
       }
     }
-
-    async refreshData() {
-      await this.$apollo.queries.project.refetch();
-    }
   }
 
 </script>
 <style scoped lang="scss">
-  .page {
-    display: flex;
-    justify-content: center;
-    min-height: 80vh; // Ensure there's space for the loading spinner before is visible
-  }
-
-  .page-content {
+  .project-settings {
     width: 950px;
+    min-height: 80vh; // Ensure there's space for the loading spinner before is visible
   }
 
   .header-row {

@@ -103,7 +103,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             <!---->
             <div>
               <i class="el-icon-edit"></i>
-              <a href="/project/project%201/edit" class="">Manage project</a>
+              <a href="/project/project%201?tab=settings" class="">Manage project</a>
             </div>
             <div class="delete">
               <i class="el-icon-delete"></i>

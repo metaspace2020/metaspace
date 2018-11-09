@@ -42,10 +42,10 @@ exports[`ViewGroupProfile should match snapshot (invited) 1`] = `
     <div>
       <h2>Datasets</h2>
       <div class="dataset-list">
+        <datasetitem-stub dataset="[object Object]" class=""></datasetitem-stub>
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
-        <datasetitem-stub dataset="[object Object]" class="even"></datasetitem-stub>
+        <datasetitem-stub dataset="[object Object]" class=""></datasetitem-stub>
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
-        <datasetitem-stub dataset="[object Object]" class="even"></datasetitem-stub>
       </div>
       <div class="dataset-list-footer">
         <!---->
@@ -78,9 +78,9 @@ exports[`ViewGroupProfile should match snapshot (non-member) 1`] = `
     <div>
       <h2>Datasets</h2>
       <div class="dataset-list">
+        <datasetitem-stub dataset="[object Object]" class=""></datasetitem-stub>
         <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
-        <datasetitem-stub dataset="[object Object]" class="even"></datasetitem-stub>
-        <datasetitem-stub dataset="[object Object]" class="odd"></datasetitem-stub>
+        <datasetitem-stub dataset="[object Object]" class=""></datasetitem-stub>
       </div>
       <div class="dataset-list-footer">
         <a href="/datasets?grp=00000000-1111-2222-3333-444444444444" class="">See all datasets</a>

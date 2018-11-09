@@ -87,8 +87,9 @@
     }
     get manageLink() {
       return {
-        name: 'edit-project',
-        params: {projectId: this.project.id}
+        name: 'project',
+        params: {projectIdOrSlug: this.project.id},
+        query: {tab: 'settings'},
       }
     }
 
