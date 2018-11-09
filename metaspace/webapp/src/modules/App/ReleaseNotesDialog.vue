@@ -57,7 +57,7 @@
     handleClose() {
       this.visible = false;
       if (this.dontShowAgain) {
-        cookie.set('hideReleaseNotes', CURRENT_VERSION as any);
+        cookie.set('hideReleaseNotes', CURRENT_VERSION as any, {expires: 365});
       }
     }
   }

@@ -2,8 +2,7 @@
   <div class="dataset-item" :class="disabledClass">
 
     <el-dialog title="Provided metadata" :visible.sync="showMetadataDialog">
-      <dataset-info :metadata="metadata">
-      </dataset-info>
+      <dataset-info :metadata="metadata" :currentUser="currentUser" />
     </el-dialog>
 
     <div class="opt-image" v-if="isOpticalImageSupported">
