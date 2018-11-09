@@ -1,55 +1,51 @@
 <template>
-  <div>
-    <div class="page">
-      <div class="page-content">
-        <div class="header-row">
-          <h2>Group Details</h2>
-          <div class="flex-spacer" />
+  <div class="group-settings">
+    <div class="header-row">
+      <h2>Group Details</h2>
+      <div class="flex-spacer" />
 
-          <div class="header-row-buttons">
-            <el-button v-if="canEdit && group"
-                       type="primary"
-                       @click="handleSave"
-                       :loading="isSaving">
-              Save
-            </el-button>
-          </div>
-        </div>
-        <edit-group-form :model="model" :disabled="isSaving || !canEdit" />
-        <div style="margin-bottom: 2em" v-if="group != null">
-          <h2>Custom URL</h2>
-          <div v-if="canEditUrlSlug">
-            <router-link :to="groupUrlRoute">{{groupUrlPrefix}}</router-link>
-            <input v-model="model.urlSlug" />
-          </div>
-          <div v-if="!canEditUrlSlug && group && group.urlSlug">
-            <router-link :to="groupUrlRoute">
-              {{groupUrlPrefix}}<span class="urlSlug">{{group.urlSlug}}</span>
-            </router-link>
-          </div>
-          <div v-if="!canEditUrlSlug && group && !group.urlSlug">
-            <p>
-              <router-link :to="groupUrlRoute">
-                {{groupUrlPrefix}}<span class="urlSlug">{{group.id}}</span>
-              </router-link>
-            </p>
-            <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
-          </div>
-        </div>
-        <div v-if="canDelete && group">
-          <h2>Delete group</h2>
-          <p>
-            Please ensure all datasets have been removed before deleting a group.
-          </p>
-          <div style="text-align: right; margin: 1em 0;">
-            <el-button
-              type="danger"
-              @click="handleDeleteGroup"
-              :loading="isDeletingGroup">
-              Delete group
-            </el-button>
-          </div>
-        </div>
+      <div class="header-row-buttons">
+        <el-button v-if="canEdit && group"
+                   type="primary"
+                   @click="handleSave"
+                   :loading="isSaving">
+          Save
+        </el-button>
+      </div>
+    </div>
+    <edit-group-form :model="model" :disabled="isSaving || !canEdit" />
+    <div style="margin-bottom: 2em" v-if="group != null">
+      <h2>Custom URL</h2>
+      <div v-if="canEditUrlSlug">
+        <router-link :to="groupUrlRoute">{{groupUrlPrefix}}</router-link>
+        <input v-model="model.urlSlug" />
+      </div>
+      <div v-if="!canEditUrlSlug && group && group.urlSlug">
+        <router-link :to="groupUrlRoute">
+          {{groupUrlPrefix}}<span class="urlSlug">{{group.urlSlug}}</span>
+        </router-link>
+      </div>
+      <div v-if="!canEditUrlSlug && group && !group.urlSlug">
+        <p>
+          <router-link :to="groupUrlRoute">
+            {{groupUrlPrefix}}<span class="urlSlug">{{group.id}}</span>
+          </router-link>
+        </p>
+        <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
+      </div>
+    </div>
+    <div v-if="canDelete && group">
+      <h2>Delete group</h2>
+      <p>
+        Please ensure all datasets have been removed before deleting a group.
+      </p>
+      <div style="text-align: right; margin: 1em 0;">
+        <el-button
+          type="danger"
+          @click="handleDeleteGroup"
+          :loading="isDeletingGroup">
+          Delete group
+        </el-button>
       </div>
     </div>
   </div>
@@ -192,14 +188,9 @@
 
 </script>
 <style scoped lang="scss">
-  .page {
-    display: flex;
-    justify-content: center;
-    min-height: 80vh; // Ensure there's space for the loading spinner before is visible
-  }
-
-  .page-content {
+  .group-settings {
     width: 950px;
+    min-height: 80vh; // Ensure there's space for the loading spinner before is visible
   }
 
   .header-row {

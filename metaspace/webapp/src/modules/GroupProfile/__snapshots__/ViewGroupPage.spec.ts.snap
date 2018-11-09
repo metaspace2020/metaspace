@@ -503,70 +503,66 @@ exports[`ViewGroupPage settings tab should match snapshot 1`] = `
         <!---->
         <!---->
         <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
-          <div>
-            <div class="page">
-              <div class="page-content">
-                <div class="header-row">
-                  <h2>Group Details</h2>
-                  <div class="flex-spacer"></div>
-                  <div class="header-row-buttons">
-                    <button type="button" class="el-button el-button--primary">
+          <div class="group-settings">
+            <div class="header-row">
+              <h2>Group Details</h2>
+              <div class="flex-spacer"></div>
+              <div class="header-row-buttons">
+                <button type="button" class="el-button el-button--primary">
+                  <!---->
+                  <!----><span>
+        Save
+      </span></button>
+              </div>
+            </div>
+            <form class="el-form el-form--label-top">
+              <div>
+                <div class="el-form-item name is-required">
+                  <label for="name" class="el-form-item__label">Full name</label>
+                  <div class="el-form-item__content">
+                    <div class="el-input">
                       <!---->
-                      <!----><span>
-            Save
-          </span></button>
+                      <input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
+                    </div>
+                    <!---->
                   </div>
                 </div>
-                <form class="el-form el-form--label-top">
-                  <div>
-                    <div class="el-form-item name is-required">
-                      <label for="name" class="el-form-item__label">Full name</label>
-                      <div class="el-form-item__content">
-                        <div class="el-input">
-                          <!---->
-                          <input type="text" autocomplete="off" maxlength="50" class="el-input__inner">
-                          <!---->
-                          <!---->
-                          <!---->
-                        </div>
-                        <!---->
-                      </div>
-                    </div>
-                    <div class="el-form-item shortName is-required">
-                      <label for="shortName" class="el-form-item__label"><span>
+                <div class="el-form-item shortName is-required">
+                  <label for="shortName" class="el-form-item__label"><span>
         Short name
         <mock-el-popover trigger="hover" placement="right"><div slot-key="default"> <p>The short name will be shown whenever space is limited.</p></div><div slot-key="reference"><i class="el-icon-question metadata-help-icon"></i></div></mock-el-popover></span></label>
-                      <div
-                        class="el-form-item__content">
-                        <div class="el-input">
-                          <!---->
-                          <input type="text" autocomplete="off" maxlength="20" class="el-input__inner">
-                          <!---->
-                          <!---->
-                          <!---->
-                        </div>
-                        <!---->
+                  <div
+                    class="el-form-item__content">
+                    <div class="el-input">
+                      <!---->
+                      <input type="text" autocomplete="off" maxlength="20" class="el-input__inner">
+                      <!---->
+                      <!---->
+                      <!---->
                     </div>
-                  </div>
-              </div>
-              <!---->
-              </form>
-              <div style="margin-bottom: 2em;">
-                <h2>Custom URL</h2>
-                <!---->
-                <!---->
-                <div>
-                  <p>
-                    <a href="/group/00000000-1111-2222-3333-444444444444" class="router-link-active">
-                      http://localhost/group/<span class="urlSlug">00000000-1111-2222-3333-444444444444</span></a>
-                  </p>
-                  <p>
-                    <a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
+                    <!---->
                 </div>
               </div>
-              <!---->
+          </div>
+          <!---->
+          </form>
+          <div style="margin-bottom: 2em;">
+            <h2>Custom URL</h2>
+            <!---->
+            <!---->
+            <div>
+              <p>
+                <a href="/group/00000000-1111-2222-3333-444444444444" class="router-link-active">
+                  http://localhost/group/<span class="urlSlug">00000000-1111-2222-3333-444444444444</span></a>
+              </p>
+              <p>
+                <a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
             </div>
           </div>
+          <!---->
         </div>
       </div>
     </div>
