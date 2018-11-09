@@ -31,7 +31,7 @@
       <el-button @click="handleClose">Cancel</el-button>
       <el-button
         type="primary"
-        :disabled="groupId == null"
+        :disabled="groupId == null || sameGroupRequest"
         :loading="isGroupAccessLoading"
         @click="handleRequestGroupAccess">Request access
       </el-button>
@@ -47,17 +47,22 @@
 
 <script lang="ts">
   import Vue from 'vue';
-  import { Component, Prop } from 'vue-property-decorator';
+  import { Component, Prop, Watch } from 'vue-property-decorator';
   import {
     allGroupsQuery,
     requestAccessToGroupMutation,
     GroupListItem,
   } from '../../../api/dataManagement';
+  import { userProfileQuery, UserProfileQuery } from '../../../api/user'
   import reportError from "../../../lib/reportError";
   import './FormSection.scss';
 
   @Component<FindGroupDialog>({
     apollo: {
+      currentUser: {
+        query: userProfileQuery,
+        fetchPolicy: 'cache-first'
+      },
       searchResults: {
         query: allGroupsQuery,
         loadingKey: 'searchLoading',
@@ -79,9 +84,23 @@
 
     query: string = '';
     searchResults: GroupListItem[] | null = null;
+    currentUser!: UserProfileQuery;
     searchLoading = 0;
     groupId: string | null = null;
     isGroupAccessLoading: boolean = false;
+    sameGroupRequest: boolean = false;
+
+    @Watch('groupId')
+    checkFilteredGroup() {
+      this.sameGroupRequest = false;
+      if (this.currentUser.groups != null) {
+        this.currentUser.groups.forEach(el => {
+          if (el.group.id === this.groupId) {
+            this.sameGroupRequest = true;
+          }
+        })
+      }
+    }
 
     handleSelectNoGroup() {
       this.$emit('selectGroup', null);
@@ -111,6 +130,7 @@
         this.$emit('selectGroup', group);
       } catch(err) {
         reportError(err);
+      } finally {
         this.isGroupAccessLoading = false;
       }
     }
