@@ -34,7 +34,6 @@ export type UserProjectSource = {
   [field in keyof UserProjectModel]: field extends 'user' ? UserSource : UserProjectModel[field]
 };
 export interface DatasetSource {
-  scopeRole: ScopeRole;
   _source: {
     ds_id: string;
     ds_name: string;

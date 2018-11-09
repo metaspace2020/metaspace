@@ -98,8 +98,7 @@
         </el-collapse-item>
 
         <el-collapse-item title="Metadata" name="metadata">
-          <dataset-info :metadata="metadata">
-          </dataset-info>
+          <dataset-info :metadata="metadata" :currentUser="currentUser" />
         </el-collapse-item>
 
         <el-collapse-item title="Related annotations" name="adducts">
