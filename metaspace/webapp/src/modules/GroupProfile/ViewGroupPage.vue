@@ -111,7 +111,7 @@
     countDatasets: number;
   }
 
-  @Component<ViewGroupProfile>({
+  @Component<ViewGroupPage>({
     components: {
       DatasetList,
       GroupMembersList,
@@ -186,7 +186,7 @@
       },
     }
   })
-  export default class ViewGroupProfile extends Vue {
+  export default class ViewGroupPage extends Vue {
     groupLoading = 0;
     loaded = false;
     showTransferDatasetsDialog: boolean = false;

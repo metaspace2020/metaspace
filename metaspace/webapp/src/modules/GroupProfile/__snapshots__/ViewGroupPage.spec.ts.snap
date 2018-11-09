@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ViewGroupProfile datasets tab should match snapshot (non-member) 1`] = `
+exports[`ViewGroupPage datasets tab should match snapshot (non-member) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
@@ -52,7 +52,7 @@ exports[`ViewGroupProfile datasets tab should match snapshot (non-member) 1`] = 
 </div>
 `;
 
-exports[`ViewGroupProfile members tab should match snapshot (invited) 1`] = `
+exports[`ViewGroupPage members tab should match snapshot (invited) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
@@ -121,7 +121,7 @@ exports[`ViewGroupProfile members tab should match snapshot (invited) 1`] = `
 </div>
 `;
 
-exports[`ViewGroupProfile members tab should match snapshot (manager, including table) 1`] = `
+exports[`ViewGroupPage members tab should match snapshot (manager, including table) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
@@ -375,7 +375,7 @@ exports[`ViewGroupProfile members tab should match snapshot (manager, including 
 </div>
 `;
 
-exports[`ViewGroupProfile members tab should match snapshot (member) 1`] = `
+exports[`ViewGroupPage members tab should match snapshot (member) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
@@ -419,7 +419,7 @@ exports[`ViewGroupProfile members tab should match snapshot (member) 1`] = `
 </div>
 `;
 
-exports[`ViewGroupProfile members tab should match snapshot (non-member) 1`] = `
+exports[`ViewGroupPage members tab should match snapshot (non-member) 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
@@ -469,7 +469,7 @@ exports[`ViewGroupProfile members tab should match snapshot (non-member) 1`] = `
 </div>
 `;
 
-exports[`ViewGroupProfile settings tab should match snapshot 1`] = `
+exports[`ViewGroupPage settings tab should match snapshot 1`] = `
 <div class="page" mock-v-loading="false">
   <div class="page-content">
     <!---->
