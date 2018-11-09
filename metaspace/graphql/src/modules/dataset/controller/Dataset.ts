@@ -44,7 +44,6 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     return JSON.stringify(ds._source.ds_acq_geometry);
   },
 
-  institution(ds) { return dsField(ds, 'institution'); },
   organism(ds) { return dsField(ds, 'organism'); },
   organismPart(ds) { return dsField(ds, 'organismPart'); },
   condition(ds) { return dsField(ds, 'condition'); },
