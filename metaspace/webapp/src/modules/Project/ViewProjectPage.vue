@@ -353,31 +353,6 @@
     margin-right: 3px;
   }
 
-  .member {
-    position: relative;
-    border-radius: 5px;
-    width: 100%;
-    max-width: 800px;
-    margin: 8px 0;
-    padding: 10px;
-    border: 1px solid #cce4ff;
-    box-sizing: border-box;
-
-    .item-body {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      > * {
-        z-index: 1;
-      }
-    }
-    .info-line {
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-    }
-  }
-
   .notification {
     margin-left: 4px;
     vertical-align: middle;

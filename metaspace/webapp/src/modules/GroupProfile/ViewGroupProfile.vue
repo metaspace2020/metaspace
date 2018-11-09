@@ -350,6 +350,7 @@
 
 </script>
 <style scoped lang="scss">
+  @import "~element-ui/packages/theme-chalk/src/common/var";
 
   .page {
     display: flex;
@@ -378,5 +379,16 @@
     flex-grow: 1;
     align-self: center;
     margin-right: 3px;
+  }
+
+  .notification {
+    margin-left: 4px;
+    vertical-align: middle;
+    color: $--color-danger;
+  }
+
+  .hidden-members-text {
+    text-align: center;
+    color: $--color-text-secondary;
   }
 </style>
