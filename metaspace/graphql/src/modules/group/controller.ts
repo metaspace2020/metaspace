@@ -114,16 +114,25 @@ export const Resolvers = {
       return userGroup ? userGroup.role : null;
     },
 
+    async numMembers(group: GroupModel & Scope, args: any, ctx: Context): Promise<number> {
+      return await ctx.connection
+        .getRepository(UserGroupModel)
+        .count({
+          where: { groupId: group.id, role: In([UserGroupRoleOptions.MEMBER, UserGroupRoleOptions.GROUP_ADMIN]) }
+        });
+    },
+
     async members({scopeRole, ...group}: GroupModel & Scope,
                   _: any, ctx: Context): Promise<LooselyCompatible<UserGroup & Scope>[]|null> {
-      if (!scopeRole || ![ScopeRoleOptions.GROUP_MEMBER,
+      const canSeeAllMembers = [ScopeRoleOptions.GROUP_MEMBER,
         ScopeRoleOptions.GROUP_MANAGER,
-        ScopeRoleOptions.ADMIN].includes(scopeRole)) {
-        return null;
-      }
+        ScopeRoleOptions.ADMIN].includes(scopeRole);
+      const filter = canSeeAllMembers
+        ? { groupId: group.id }
+        : { groupId: group.id, role: UserGroupRoleOptions.GROUP_ADMIN };
 
       const userGroupModels = await ctx.connection.getRepository(UserGroupModel).find({
-        where: { groupId: group.id },
+        where: filter,
         relations: ['user', 'group']
       });
       return userGroupModels.map(ug => ({

@@ -160,6 +160,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
         'counts': outFdrCounts
       }
     }
+    return null;
   },
 
   // TODO: field is deprecated, remove

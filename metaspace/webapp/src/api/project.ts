@@ -216,7 +216,7 @@ export interface ViewProjectMember {
   numDatasets: number,
   user: {
     id: string;
-    name: string;
+    name: string | null;
     email: string | null;
   }
 }

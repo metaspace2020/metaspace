@@ -53,7 +53,7 @@
     get manageLink() {
       return {
         name: 'edit-group',
-        params: {groupId: this.group.id}
+        params: {groupIdOrSlug: this.group.id}
       }
     }
   }

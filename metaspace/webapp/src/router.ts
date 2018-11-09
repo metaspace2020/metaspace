@@ -19,7 +19,6 @@ const asyncPages = {
   EditUserPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/UserProfile/EditUserPage.vue'),
   CreateGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/GroupProfile/CreateGroupPage.vue'),
   ViewGroupProfile: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/GroupProfile/ViewGroupProfile.vue'),
-  EditGroupProfile: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/GroupProfile/EditGroupProfile.vue'),
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ViewProjectPage.vue'),
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ProjectsListPage.vue'),
 };
@@ -62,7 +61,6 @@ const router = new VueRouter({
 
     { path: '/group/create', component: asyncPages.CreateGroupPage },
     { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupProfile },
-    { path: '/group/:groupId/edit', name: 'edit-group', component: asyncPages.EditGroupProfile },
     { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
     { path: '/projects', component: asyncPages.ProjectsListPage },
   ]

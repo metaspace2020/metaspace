@@ -138,7 +138,7 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
               <div class="el-tabs__active-bar is-top" style="width: -40px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
-          Members (4)
+          Members (2)
           <i class="el-icon-message notification"></i></span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" tabindex="-1" class="el-tabs__item is-top">Settings</div>
             </div>
@@ -162,27 +162,27 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
                 <div class="el-table__header-wrapper">
                   <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 850px;">
                     <colgroup>
-                      <col name="el-table_1_column_1" width="200">
-                      <col name="el-table_1_column_2" width="200">
-                      <col name="el-table_1_column_3" width="160">
-                      <col name="el-table_1_column_4" width="90">
-                      <col name="el-table_1_column_5" width="200">
+                      <col name="el-table_2_column_5" width="200">
+                      <col name="el-table_2_column_6" width="200">
+                      <col name="el-table_2_column_7" width="160">
+                      <col name="el-table_2_column_8" width="90">
+                      <col name="el-table_2_column_9" width="200">
                     </colgroup>
                     <thead class="">
                       <tr class="">
-                        <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf">
+                        <th colspan="1" rowspan="1" class="el-table_2_column_5     is-leaf">
                           <div class="cell">Name</div>
                         </th>
-                        <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf">
+                        <th colspan="1" rowspan="1" class="el-table_2_column_6     is-leaf">
                           <div class="cell">Email</div>
                         </th>
-                        <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf">
+                        <th colspan="1" rowspan="1" class="el-table_2_column_7     is-leaf">
                           <div class="cell">Role</div>
                         </th>
-                        <th colspan="1" rowspan="1" class="el-table_1_column_4  is-center   is-leaf">
+                        <th colspan="1" rowspan="1" class="el-table_2_column_8  is-center   is-leaf">
                           <div class="cell">Datasets</div>
                         </th>
-                        <th colspan="1" rowspan="1" class="el-table_1_column_5     is-leaf">
+                        <th colspan="1" rowspan="1" class="el-table_2_column_9     is-leaf">
                           <div class="cell"></div>
                         </th>
                       </tr>
@@ -192,37 +192,37 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
                 <div class="el-table__body-wrapper is-scrolling-left">
                   <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 850px;">
                     <colgroup>
-                      <col name="el-table_1_column_1" width="200">
-                      <col name="el-table_1_column_2" width="200">
-                      <col name="el-table_1_column_3" width="160">
-                      <col name="el-table_1_column_4" width="90">
-                      <col name="el-table_1_column_5" width="200">
+                      <col name="el-table_2_column_5" width="200">
+                      <col name="el-table_2_column_6" width="200">
+                      <col name="el-table_2_column_7" width="160">
+                      <col name="el-table_2_column_8" width="90">
+                      <col name="el-table_2_column_9" width="200">
                     </colgroup>
                     <tbody>
                       <tr class="el-table__row">
-                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                           <div class="cell">
                             me
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
                           <div class="cell">
                             my-email@example.com
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_7  ">
                           <div class="cell">
                             <a href="#" title="Change role">
                               Project manager
                             </a>
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_8 is-center ">
                           <div class="cell">
                             <a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=3" class="">123</a>
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_9  ">
                           <div class="cell">
                             <!---->
                             <!---->
@@ -232,29 +232,29 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
                         </td>
                       </tr>
                       <tr class="el-table__row">
-                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                           <div class="cell">
                             Project member
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
                           <div class="cell">
                             person@embl.de
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_7  ">
                           <div class="cell">
                             <a href="#" title="Change role">
                               Member
                             </a>
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_8 is-center ">
                           <div class="cell">
                             <a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=6" class="">1</a>
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_9  ">
                           <div class="cell">
                             <button type="button" class="el-button grid-button el-button--default el-button--mini">
                               <!---->
@@ -268,27 +268,27 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
                         </td>
                       </tr>
                       <tr class="el-table__row">
-                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                           <div class="cell">
                             Person who asked to join
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
                           <div class="cell">
                             access@requestor.com
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_7  ">
                           <div class="cell"><span>
           Requesting access
         </span></div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_8 is-center ">
                           <div class="cell">
                             <a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=4" class="">0</a>
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_9  ">
                           <div class="cell">
                             <!---->
                             <!---->
@@ -306,27 +306,27 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
                         </td>
                       </tr>
                       <tr class="el-table__row">
-                        <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                           <div class="cell">
                             Invitee
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
                           <div class="cell">
                             awaiting@response.com
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_7  ">
                           <div class="cell"><span>
           Invited
         </span></div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_4 is-center ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_8 is-center ">
                           <div class="cell">
                             <a href="/datasets?prj=00000000-1111-2222-3333-444444444444&amp;subm=5" class="">0</a>
                           </div>
                         </td>
-                        <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+                        <td rowspan="1" colspan="1" class="el-table_2_column_9  ">
                           <div class="cell">
                             <!---->
                             <button type="button" class="el-button grid-button el-button--default el-button--mini">
@@ -480,7 +480,7 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
               <div class="el-tabs__active-bar is-top" style="width: -20px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
-          Members (1)
+          Members (2)
           <!----></span></div>
               <div id="tab-settings" aria-controls="pane-settings" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Settings</div>
             </div>

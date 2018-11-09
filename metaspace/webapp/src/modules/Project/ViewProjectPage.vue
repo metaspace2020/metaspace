@@ -38,7 +38,7 @@
         </el-alert>
       </div>
       <el-tabs v-model="tab">
-        <el-tab-pane name="datasets" :label="`Datasets${parenthesize(countDatasets)}`" lazy>
+        <el-tab-pane name="datasets" :label="'Datasets' | optionalSuffixInParens(countDatasets)" lazy>
           <dataset-list :datasets="projectDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" />
 
           <div class="dataset-list-footer">
@@ -47,7 +47,7 @@
         </el-tab-pane>
         <el-tab-pane name="members" lazy>
           <span slot="label">
-            Members{{parenthesize(countMembers)}}
+            {{'Members' | optionalSuffixInParens(countMembers)}}
             <i v-if="hasMembershipRequest" class="el-icon-message notification" />
           </span>
           <div style="max-width: 950px">
@@ -59,7 +59,7 @@
               :refreshData="refetchProject"
             />
             <p v-if="countHiddenMembers > 0" class="hidden-members-text">
-              + {{countHiddenMembers}} hidden member{{countHiddenMembers !== 1 ? 's' : ''}}.
+              + {{countHiddenMembers | plural('hidden member', 'hidden members')}}.
             </p>
           </div>
         </el-tab-pane>
@@ -93,6 +93,7 @@
   import {throttle} from 'lodash-es';
   import ProjectMembersList from './ProjectMembersList.vue';
   import ProjectSettings from './ProjectSettings.vue';
+  import {optionalSuffixInParens, plural} from '../../lib/vueFilters';
 
 
   interface ViewProjectPageData {
@@ -105,6 +106,10 @@
       DatasetList,
       ProjectMembersList,
       ProjectSettings,
+    },
+    filters: {
+      optionalSuffixInParens,
+      plural,
     },
     apollo: {
       currentUser: {
@@ -177,12 +182,13 @@
     currentUser: CurrentUserRoleResult | null = null;
     project: ViewProjectResult | null = null;
     data: ViewProjectPageData | null = null;
-    tab: string = 'datasets';
 
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInProject(): ProjectRole | null { return this.project && this.project.currentUserRole; }
     get projectDatasets(): DatasetDetailItem[] { return this.data && this.data.allDatasets || []; }
     get countDatasets(): number { return this.data && this.data.countDatasets || 0; }
+    get members() { return this.project && this.project.members || []; }
+    get countMembers() { return this.project && this.project.numMembers; }
     maxVisibleDatasets = 8;
 
     get projectId(): string | null {
@@ -191,6 +197,17 @@
       } else {
         return this.project && this.project.id
       }
+    }
+
+    get tab() {
+      if (['datasets', 'members', 'settings'].includes(this.$route.query.tab)) {
+        return this.$route.query.tab;
+      } else {
+        return 'datasets';
+      }
+    }
+    set tab(tab: string) {
+      this.$router.replace({ query: { tab } })
     }
 
     get isInvited(): boolean {
@@ -209,20 +226,6 @@
         || (this.currentUser && this.currentUser.role === 'admin');
     }
 
-    get countMembers() {
-      if (this.project != null && this.project.currentUserRole === ProjectRoleOptions.MANAGER) {
-        return this.members.length;
-      } else if (this.project != null) {
-        return this.project.numMembers; // May be out of sync with members list because not everybody can see every member
-      } else {
-        return null;
-      }
-    }
-
-    get members() {
-      return this.project && this.project.members || [];
-    }
-
     get countHiddenMembers() {
       if (this.countMembers != null) {
         return Math.max(0, this.countMembers - this.members.length);
@@ -237,9 +240,6 @@
 
     created() {
       this.refetchDatasets = throttle(this.refetchDatasets, 60000);
-      if (['datasets', 'members', 'settings'].includes(this.$route.query.tab)) {
-        this.tab = this.$route.query.tab;
-      }
     }
     beforeDestroy() {
       (this.refetchDatasets as any).cancel();
@@ -252,14 +252,6 @@
         this.$router.replace({
           params: {projectIdOrSlug: this.project.urlSlug}
         })
-      }
-    }
-
-    parenthesize(content: any) {
-      if(content != null && content != '') {
-        return ` (${String(content)})`;
-      } else {
-        return '';
       }
     }
 

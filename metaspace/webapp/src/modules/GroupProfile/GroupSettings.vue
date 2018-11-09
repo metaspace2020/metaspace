@@ -3,7 +3,7 @@
     <div class="page">
       <div class="page-content">
         <div class="header-row">
-          <h1>Group Details</h1>
+          <h2>Group Details</h2>
           <div class="flex-spacer" />
 
           <div class="header-row-buttons">
@@ -16,14 +16,6 @@
           </div>
         </div>
         <edit-group-form :model="model" :disabled="isSaving || !canEdit" />
-        <h2>Members</h2>
-        <group-members-list
-          :loading="groupLoading !== 0"
-          :currentUser="currentUser"
-          :group="group"
-          :members="group && group.members || []"
-          :refreshData="refreshData"
-        />
         <div style="margin-bottom: 2em">
           <h2>Custom URL</h2>
           <div v-if="canEditUrlSlug">
@@ -43,12 +35,6 @@
             </p>
             <p><a href="mailto:contact@metaspace2020.eu">Contact us</a> to set up a custom URL to showcase your group.</p>
           </div>
-        </div>
-        <div style="margin-bottom: 2em">
-          <h2>Datasets</h2>
-          <p>
-            <router-link :to="datasetsListLink">See all datasets</router-link>
-          </p>
         </div>
         <div v-if="canDelete && group">
           <h2>Delete group</h2>
@@ -70,7 +56,7 @@
 </template>
 <script lang="ts">
   import Vue from 'vue';
-  import { Component, Watch } from 'vue-property-decorator';
+  import {Component, Prop, Watch} from 'vue-property-decorator';
   import {
     deleteGroupMutation,
     editGroupQuery,
@@ -79,16 +65,13 @@
     updateGroupMutation,
   } from '../../api/group';
   import EditGroupForm from './EditGroupForm.vue';
-  import GroupMembersList from './GroupMembersList.vue';
-  import {currentUserRoleQuery, CurrentUserRoleResult, UserRole} from '../../api/user';
-  import { encodeParams } from '../Filters';
+  import {currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import reportError from '../../lib/reportError';
 
-  @Component<EditGroupProfile>({
+  @Component<GroupSettings>({
     components: {
       EditGroupForm,
-      GroupMembersList,
     },
     apollo: {
       currentUser: {
@@ -102,7 +85,7 @@
       },
     }
   })
-  export default class EditGroupProfile extends Vue {
+  export default class GroupSettings extends Vue {
     groupLoading = 0;
     isDeletingGroup = false;
     isSaving = false;
@@ -115,6 +98,9 @@
     currentUser: CurrentUserRoleResult | null = null;
     group: EditGroupQuery | null = null;
 
+    @Prop()
+    groupId!: string;
+
     get canDelete(): boolean {
       return this.currentUser && this.currentUser.role === 'admin' || false;
     }
@@ -125,9 +111,6 @@
     }
     get canEditUrlSlug(): boolean {
       return this.currentUser && this.currentUser.role === 'admin' || false;
-    }
-    get groupId(): string {
-      return this.$route.params.groupId;
     }
     get groupName() {
       return this.group ? this.group.name : '';
@@ -148,11 +131,7 @@
       this.model.urlSlug = this.group && this.group.urlSlug || '';
     }
 
-    get datasetsListLink() {
-      return { path: '/datasets', query: encodeParams({ group: this.groupId }) }
-    }
-
-    @ConfirmAsync(function (this: EditGroupProfile) {
+    @ConfirmAsync(function (this: GroupSettings) {
       return {
         message: `Are you sure you want to delete ${this.groupName}?`,
         confirmButtonText: 'Delete group',

@@ -142,7 +142,6 @@ describe('ViewProjectPage', () => {
       mockProjectFn.mockImplementation(() => ({...mockProject, currentUserRole: 'MANAGER'}));
       initMockGraphqlClient(graphqlMocks);
       const wrapper = mount(ViewProjectPage, { router, stubs, provide, sync: false });
-      wrapper.setData({ maxVisibleDatasets: 3 }); // Also test that the datasets list is correctly clipped
       await Vue.nextTick();
 
       expect(wrapper).toMatchSnapshot();

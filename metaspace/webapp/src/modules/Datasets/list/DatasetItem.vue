@@ -458,7 +458,7 @@
  .dataset-item {
    position: relative;
    border-radius: 5px;
-   width: 100%;
+   width: calc(100% - 6px);
    max-width: 950px;
    margin: 3px;
    padding: 0px;
@@ -471,17 +471,20 @@
  .opt-image {
    padding: 10px 0 10px 10px;
    margin: 0px;
+   flex: none;
  }
 
  .ds-info{
    padding: 10px;
    margin: 0px;
    flex-grow: 1;
+   min-width: 0%; /* This may seem pointless, but it's necessary to prevent text overflowing: https://css-tricks.com/flexbox-truncated-text/ */
  }
 
  .ds-actions {
    padding: 10px 15px 10px 0px;
    margin: 0px;
+   flex: none;
  }
 
  .metadata-link, .ds-delete > a {
