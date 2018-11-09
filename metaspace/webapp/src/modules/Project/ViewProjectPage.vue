@@ -250,8 +250,9 @@
     canonicalizeUrl() {
       if (isUuid(this.$route.params.projectIdOrSlug) && this.project != null && this.project.urlSlug) {
         this.$router.replace({
-          params: {projectIdOrSlug: this.project.urlSlug}
-        })
+          params: {projectIdOrSlug: this.project.urlSlug},
+          query: this.$route.query,
+        });
       }
     }
 

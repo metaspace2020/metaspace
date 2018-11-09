@@ -14,7 +14,7 @@
       </div>
     </div>
     <edit-project-form v-model="model" :disabled="isSaving" />
-    <div v-if="project && project.isPublic" style="margin-bottom: 2em">
+    <div v-if="project != null && (project.isPublic || project.urlSlug || canEditUrlSlug)" style="margin-bottom: 2em">
       <h2>Custom URL</h2>
       <div v-if="canEditUrlSlug">
         <router-link :to="projectUrlRoute">{{projectUrlPrefix}}</router-link>
@@ -164,6 +164,12 @@
           },
         });
         this.$message({ message: `${name} has been saved`, type: 'success' });
+        if (this.canEditUrlSlug) {
+          this.$router.replace({
+            params: {projectIdOrSlug: urlSlug || this.projectId},
+            query: this.$route.query,
+          });
+        }
       } catch(err) {
         reportError(err);
       } finally {

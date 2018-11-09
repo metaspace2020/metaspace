@@ -263,8 +263,9 @@
     canonicalizeUrl() {
       if (isUuid(this.$route.params.groupIdOrSlug) && this.group != null && this.group.urlSlug) {
         this.$router.replace({
-          params: {groupIdOrSlug: this.group.urlSlug}
-        })
+          params: {groupIdOrSlug: this.group.urlSlug},
+          query: this.$route.query,
+        });
       }
     }
 

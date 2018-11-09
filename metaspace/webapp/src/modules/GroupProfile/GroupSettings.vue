@@ -16,7 +16,7 @@
           </div>
         </div>
         <edit-group-form :model="model" :disabled="isSaving || !canEdit" />
-        <div style="margin-bottom: 2em">
+        <div style="margin-bottom: 2em" v-if="group != null">
           <h2>Custom URL</h2>
           <div v-if="canEditUrlSlug">
             <router-link :to="groupUrlRoute">{{groupUrlPrefix}}</router-link>
@@ -172,6 +172,12 @@
           },
         });
         this.$message({ message: `${name} has been saved`, type: 'success' });
+        if (this.canEditUrlSlug) {
+          this.$router.replace({
+            params: {groupIdOrSlug: urlSlug || this.groupId},
+            query: this.$route.query,
+          });
+        }
       } catch(err) {
         reportError(err);
       } finally {
