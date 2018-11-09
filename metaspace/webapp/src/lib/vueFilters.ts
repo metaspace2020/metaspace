@@ -10,6 +10,6 @@ export const optionalSuffixInParens = (content: string, suffix: any) => {
   }
 };
 
-export const plural = (number: number, singularSuffix: string, pluralSuffix: string) => {
-  return number === 1 ? `${number} ${singularSuffix}` : `${number} ${pluralSuffix}`;
+export const plural = (number: number | string, singularSuffix: string, pluralSuffix: string) => {
+  return number === 1 || number === '1' ? `${number} ${singularSuffix}` : `${number} ${pluralSuffix}`;
 };

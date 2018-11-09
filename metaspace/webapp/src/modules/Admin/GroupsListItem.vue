@@ -9,8 +9,11 @@
             <i v-if="group.shortName !== group.name">({{group.shortName}})</i>
           </router-link>
         </div>
-        <div class="info-line" v-if="group.members != null">
-          {{group.members.length}} Member{{group.members.length === 1 ? '' : 's'}}
+        <div class="info-line">
+          <span v-if="countDatasets != null && countDatasets > 0">
+            <router-link :to="datasetsLink">{{countDatasets | plural('Dataset', 'Datasets')}}</router-link>,
+          </span>
+          {{group.numMembers | plural('Member', 'Members')}}
         </div>
       </div>
       <div class="actions">
@@ -30,8 +33,22 @@
   import Vue from 'vue';
   import { Component, Prop } from 'vue-property-decorator';
   import { encodeParams } from '../Filters';
+  import gql from 'graphql-tag';
+  import {plural} from '../../lib/vueFilters';
 
-  @Component
+  @Component({
+    apollo: {
+      countDatasets: {
+        query: gql`query ($groupId: ID!) { countDatasets(filter: { group: $groupId }) }`,
+        variables() {
+          return {groupId: this.group.id}
+        }
+      }
+    },
+    filters: {
+      plural,
+    }
+  })
   export default class GroupsListItem extends Vue {
     @Prop({type: Object, required: true})
     group: any;
@@ -52,8 +69,9 @@
 
     get manageLink() {
       return {
-        name: 'edit-group',
-        params: {groupIdOrSlug: this.group.id}
+        name: 'group',
+        params: {groupIdOrSlug: this.group.urlSlug || this.group.id},
+        query: {tab: 'settings'},
       }
     }
   }

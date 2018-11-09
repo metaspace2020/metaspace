@@ -73,7 +73,7 @@
       </div>
       <div class="ds-item-line" v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
         <span>
-          <router-link :to="resultsHref(formatDbName())">{{formatFdrCounts()}} annotations</router-link>
+          <router-link :to="resultsHref(formatDbName())">{{formatFdrCounts() | plural('annotation', 'annotations')}}</router-link>
           @ FDR {{formatFdrLevel()}}% ({{formatDbName()}})
         </span>
       </div>
@@ -139,6 +139,7 @@
  import { currentUserRoleQuery } from '../../../api/user';
  import reportError from '../../../lib/reportError';
  import {safeJsonParse} from "../../../util";
+ import {plural} from '../../../lib/vueFilters';
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');
@@ -149,6 +150,9 @@
    props: ['dataset'],
    components: {
      DatasetInfo
+   },
+   filters: {
+     plural
    },
 
    computed: {

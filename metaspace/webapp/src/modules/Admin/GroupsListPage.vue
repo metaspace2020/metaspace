@@ -39,6 +39,7 @@
             id
             name
             shortName
+            numMembers
             members {
               role
               user {
