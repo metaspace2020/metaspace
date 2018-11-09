@@ -313,7 +313,6 @@ class ESExporter(object):
         })
         self._es.index(self.index, doc_type='dataset', body=ds_doc, id=ds_id)
 
-
     def update_ds(self, ds_id, fields):
         pipeline_id = 'update-ds-fields'
         if fields:
@@ -352,7 +351,11 @@ class ESExporter(object):
             self._es.update_by_query(
                 index=self.index,
                 body={'query': {'term': {'ds_id': ds_id}}},
-                params={'pipeline': pipeline_id, 'wait_for_completion': True})
+                params={
+                    'pipeline': pipeline_id,
+                    'wait_for_completion': True,
+                    'timeout': '60s',
+                })
 
     def delete_ds(self, ds_id, mol_db=None):
         """

@@ -583,7 +583,7 @@ class SMDataset(object):
 
 
 class SMInstance(object):
-    def __init__(self, host='http://metaspace2020.eu', verify_certificate=True):
+    def __init__(self, host='https://metaspace2020.eu', verify_certificate=True):
         self._config = get_config(host=host, verify_certificate=verify_certificate)
         if not verify_certificate:
             import warnings
