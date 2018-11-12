@@ -12,13 +12,6 @@ export const deleteDataset = async (connection: Connection | EntityManager, user
     await getDatasetForEditing(connection, user, dsId);
   }
 
-  try {
-    await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
-  }
-  catch (err) {
-    logger.warn(err);
-  }
-
   await connection.getRepository(DatasetProjectModel).delete({ datasetId: dsId });
   await connection.getRepository(DatasetModel).delete(dsId);
   const resp = await smAPIRequest(`/v1/datasets/${dsId}/delete`, {});

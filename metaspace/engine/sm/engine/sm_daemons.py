@@ -98,7 +98,7 @@ class SMDaemonManager(object):
         """ Delete all dataset related data from the DB """
         self.logger.warning('Deleting dataset: {}'.format(ds.id))
         self._del_iso_images(ds)
-        # TODO: delete optical images
+        # TODO: move deletion of optical images here for consistency - it's currently in SMapiDatasetManager
         self.es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
         if del_raw_data:
