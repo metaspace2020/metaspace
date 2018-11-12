@@ -35,7 +35,6 @@ def _reindex_datasets(ds_ids, db, es_exp):
     logger.info('Reindexing %s dataset(s)', len(ds_ids))
     for idx, ds_id in enumerate(ds_ids):
         logger.info(f'Reindexing {idx+1} out of {len(ds_ids)}')
-        ds_name = None
         try:
             # Delete from ES regardless of whether the DS exists, so that this can clean up deleted datasets
             es_exp.delete_ds(ds_id)
@@ -43,13 +42,17 @@ def _reindex_datasets(ds_ids, db, es_exp):
             if ds:
                 ds_name, ds_config = ds
                 for mol_db_name in ds_config['databases']:
-                    mol_db = MolecularDB(name=mol_db_name, iso_gen_config=ds_config['isotope_generation'])
-                    isocalc = IsocalcWrapper(ds_config['isotope_generation'])
-                    es_exp.index_ds(ds_id, mol_db=mol_db, isocalc=isocalc)
+                    try:
+                        mol_db = MolecularDB(name=mol_db_name, iso_gen_config=ds_config['isotope_generation'])
+                        isocalc = IsocalcWrapper(ds_config['isotope_generation'])
+                        es_exp.index_ds(ds_id, mol_db=mol_db, isocalc=isocalc)
+                    except Exception as e:
+                        new_msg = f'Failed to reindex(ds_id={ds_id}, ds_name={ds_name}, mol_db={mol_db_name}): {e}'
+                        logger.error(new_msg, exc_info=True)
             else:
                 logger.warning(f'Dataset does not exist(ds_id={ds_id})')
         except Exception as e:
-            new_msg = 'Failed to reindex(ds_id={}, ds_name={}): {}'.format(ds_id, ds_name or 'MISSING', e)
+            new_msg = 'Failed to reindex(ds_id={}): {}'.format(ds_id, e)
             logger.error(new_msg, exc_info=True)
 
 
