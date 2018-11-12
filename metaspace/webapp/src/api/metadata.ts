@@ -101,6 +101,7 @@ export const metadataExportQuery = gql`
         id
         name
       }
+      groupApproved
       organism
       organismPart
       condition

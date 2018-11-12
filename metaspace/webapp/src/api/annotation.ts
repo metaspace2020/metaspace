@@ -20,7 +20,8 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
           id
           submitter { id name email }
           principalInvestigator { name email }
-          group { id name }
+          group { id name shortName }
+          groupApproved
           projects { id name }
           name
           polarity

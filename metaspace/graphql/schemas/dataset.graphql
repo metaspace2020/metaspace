@@ -5,6 +5,7 @@ type Dataset {
 
   submitter: User!
   group: Group
+  groupApproved: Boolean!
   principalInvestigator: Person
   projects: [Project!]
 
