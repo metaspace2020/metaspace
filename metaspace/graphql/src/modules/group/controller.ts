@@ -221,7 +221,7 @@ export const Resolvers = {
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
 
-      const userGroup = await userGroupRepo.findOneOrFail({ userId });
+      const userGroup = await userGroupRepo.findOneOrFail({ userId, groupId });
       if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN)
         throw new UserError('Group admin cannot leave group');
 
