@@ -12,7 +12,7 @@ import {
   testEntityManager,
   testUser, userContext,
 } from '../../../tests/graphqlTestEnvironment';
-import getContext from '../../../getContext';
+import {getContextForTest} from '../../../getContext';
 import {BackgroundData, createBackgroundData, validateBackgroundData} from '../../../tests/backgroundDataCreation';
 import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
 import {In} from 'typeorm';
@@ -52,7 +52,7 @@ describe('modules/project/controller (membership-related mutations)', () => {
       project = await createTestProject();
       projectId = project.id;
       manager = await createTestProjectMember(projectId, UPRO.MANAGER);
-      managerContext = getContext(manager as any, testEntityManager);
+      managerContext = getContextForTest(manager as any, testEntityManager);
       bgData = await createBackgroundData({
         datasetsForProjectIds: [projectId],
         datasetsForUserIds: [userId, manager.id],
@@ -158,7 +158,7 @@ describe('modules/project/controller (membership-related mutations)', () => {
       });
       await verifyEmail(email, unverifiedUser.credentials.emailVerificationToken!);
       const newuser = await testEntityManager.findOneOrFail(UserModel, {email});
-      const newuserContext = getContext(newuser as any, testEntityManager);
+      const newuserContext = getContextForTest(newuser as any, testEntityManager);
 
       await doQuery(acceptProjectInvitationQuery, {projectId}, {context: newuserContext});
       expect(await testEntityManager.findOne(UserProjectModel, {projectId, userId: newuser.id}))

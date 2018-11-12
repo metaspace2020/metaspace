@@ -94,7 +94,6 @@ const Resolvers = {
           molDBs = Array.from(molDBNameMap.values());
         }
 
-        logger.debug(`Molecular databases: ` + JSON.stringify(molDBs));
         return molDBs;
       }
       catch (e) {

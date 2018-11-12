@@ -1,3 +1,4 @@
+import {Request, Response} from 'express';
 import {Connection, EntityManager} from 'typeorm';
 import {ProjectRole} from '../../webapp/src/api/project';
 
@@ -13,6 +14,8 @@ export interface ContextUser {
 }
 
 export interface Context {
+  req: Request;
+  res: Response;
   // TODO: Replace connection with just EntityManager and rename it, as EntityManager is almost the same, but
   // it can be swapped out by tests so that everything runs in a transaction.
   connection: Connection | EntityManager;

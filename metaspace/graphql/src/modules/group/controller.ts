@@ -167,6 +167,7 @@ export const Resolvers = {
       const groups = await ctx.connection.getRepository(GroupModel)
         .createQueryBuilder('group')
         .where('group.name ILIKE :query OR group.shortName ILIKE :query', {query: query ? `%${query}%` : '%'})
+        .orderBy('group.name')
         .getMany();
       return groups.map(g => ({...g, scopeRole}));
     }
@@ -230,7 +231,7 @@ export const Resolvers = {
 
       const userGroupRepo = connection.getRepository(UserGroupModel);
 
-      const userGroup = await userGroupRepo.findOneOrFail({ userId });
+      const userGroup = await userGroupRepo.findOneOrFail({ userId, groupId });
       if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN)
         throw new UserError('Group admin cannot leave group');
 

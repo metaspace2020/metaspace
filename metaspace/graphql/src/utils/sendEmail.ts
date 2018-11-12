@@ -24,7 +24,7 @@ export default (recipient: string, subject: string, text: string) => {
       },
     }, (err, data) => {
       if (err) logger.error(`Failed to sent email to ${recipient}: ${err}`);
-      else logger.log(`Sent email to ${recipient}`);
+      else logger.info(`Sent email to ${recipient}`);
     });
   }
 };
