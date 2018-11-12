@@ -17,7 +17,7 @@ async function publishDatasetStatusUpdate(ds_id: string, status: DatasetStatus) 
 
   try {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      console.log({attempt, status});
+      logger.debug(JSON.stringify({attempt, status}));
       const ds = await esDatasetByID(ds_id, null);
 
       if (ds === null && status === 'DELETED') {
