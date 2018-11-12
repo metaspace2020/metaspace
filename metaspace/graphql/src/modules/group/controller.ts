@@ -158,6 +158,7 @@ export const Resolvers = {
       const groups = await ctx.connection.getRepository(GroupModel)
         .createQueryBuilder('group')
         .where('group.name ILIKE :query OR group.shortName ILIKE :query', {query: query ? `%${query}%` : '%'})
+        .orderBy('group.name')
         .getMany();
       return groups.map(g => ({...g, scopeRole}));
     }
