@@ -15,6 +15,9 @@
     },
     "storage": "/opt/data/uploads"
   },
-  "ravenDsn": "https://16556a31185a4882b9ebf6a5abab9452@sentry.io/1203803",
-  "metadataTypes": ["ims","lcms"]
+  "ravenDsn": null,
+  "metadataTypes": ["ims", "lcms"],
+  "features": {
+    "newAuth": false
+  }
 }
