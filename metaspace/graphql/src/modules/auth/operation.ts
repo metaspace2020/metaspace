@@ -145,7 +145,12 @@ export const createUserCredentials = async (userCred: UserCredentialsInput): Pro
     if (existingUserNotVerified) {
       // existing not verified user
       if (userCred.googleId) {
-        await updateCredentials(existingUserNotVerified.credentialsId, userCred);
+        await credRepo.update(existingUserNotVerified.credentialsId, {
+          hash: null, // Remove password because an untrusted user could have set it, as it didn't require email verification prior to this point
+          googleId: userCred.googleId,
+          emailVerified: true,
+        });
+        logger.info(`${userCred.email} user credentials updated, google id added`);
         await userRepo.update(existingUserNotVerified.id, {
           email: userCred.email,
           notVerifiedEmail: null,
@@ -153,6 +158,9 @@ export const createUserCredentials = async (userCred: UserCredentialsInput): Pro
         });
       }
       else {
+        existingUserNotVerified.credentials.hash = await hashPassword(userCred.password) || null;
+        await credRepo.save(existingUserNotVerified.credentials);
+        logger.info(`${userCred.email} user credentials updated, password added`);
         await sendEmailVerificationToken(existingUserNotVerified.credentials,
           existingUserNotVerified.notVerifiedEmail!);
       }
