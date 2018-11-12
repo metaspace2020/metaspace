@@ -354,7 +354,7 @@ class ESExporter(object):
                 params={
                     'pipeline': pipeline_id,
                     'wait_for_completion': True,
-                    'timeout': '60s',
+                    'request_timeout': 60,
                 })
 
     def delete_ds(self, ds_id, mol_db=None):
