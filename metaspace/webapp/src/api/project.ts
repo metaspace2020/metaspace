@@ -112,15 +112,6 @@ export const editProjectQuery =
       urlSlug
       isPublic
       currentUserRole
-      members {
-        role
-        numDatasets
-        user {
-          id
-          name
-          email
-        }
-      }
     }
   }`;
 
@@ -130,17 +121,6 @@ export interface EditProjectQuery {
   urlSlug: string | null;
   isPublic: boolean;
   currentUserRole: ProjectRole | null;
-  members: EditProjectQueryMember[] | null;
-}
-export interface EditProjectQueryMember {
-  role: ProjectRole,
-  numDatasets: number,
-  user: EditProjectQueryUser
-}
-export interface EditProjectQueryUser {
-  id: string;
-  name: string;
-  email: string | null;
 }
 
 const projectsListItemFragment =
@@ -207,4 +187,36 @@ export interface ProjectsListProject {
 
 export interface MyProjectsListItem {
   project: ProjectsListProject
+}
+
+export interface ViewProjectResult {
+  id: string;
+  name: string;
+  urlSlug: string | null;
+  currentUserRole: ProjectRole | null;
+  numMembers: number;
+  members: ViewProjectMember[] | null;
+}
+
+export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
+  id
+  name
+  urlSlug
+  currentUserRole
+  numMembers
+  members {
+    role
+    numDatasets
+    user { id name email }
+  }
+}`;
+
+export interface ViewProjectMember {
+  role: ProjectRole,
+  numDatasets: number,
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  }
 }

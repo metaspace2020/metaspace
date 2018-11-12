@@ -8,9 +8,9 @@
         </div>
         <div class="info-line">
           <span v-if="project.numDatasets > 0">
-            <router-link :to="datasetsLink">{{project.numDatasets}} Dataset{{project.numDatasets === 1 ? '' : 's'}}</router-link>,
+            <router-link :to="datasetsLink">{{project.numDatasets | plural('Dataset', 'Datasets')}}</router-link>,
           </span>
-          {{project.numMembers}} Member{{project.numMembers === 1 ? '' : 's'}}
+          {{project.numMembers | plural('Member', 'Members')}}
         </div>
         <div class="info-line">
           <span v-if="project.latestUploadDT != null">
@@ -55,8 +55,13 @@
   import format from 'date-fns/format';
   import { CurrentUserRoleResult } from '../../api/user';
   import ConfirmAsync from '../../components/ConfirmAsync';
+  import {plural} from '../../lib/vueFilters';
 
-  @Component
+  @Component({
+    filters: {
+      plural
+    }
+  })
   export default class ProjectsListItem extends Vue {
     @Prop({type: Object})
     currentUser!: CurrentUserRoleResult | null;
@@ -87,8 +92,9 @@
     }
     get manageLink() {
       return {
-        name: 'edit-project',
-        params: {projectId: this.project.id}
+        name: 'project',
+        params: {projectIdOrSlug: this.project.urlSlug || this.project.id},
+        query: {tab: 'settings'},
       }
     }
 

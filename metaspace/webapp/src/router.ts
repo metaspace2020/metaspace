@@ -18,10 +18,8 @@ const asyncPages = {
   HelpPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/App/HelpPage.vue'),
   EditUserPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/UserProfile/EditUserPage.vue'),
   CreateGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/GroupProfile/CreateGroupPage.vue'),
-  ViewGroupProfile: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/GroupProfile/ViewGroupProfile.vue'),
-  EditGroupProfile: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/GroupProfile/EditGroupProfile.vue'),
+  ViewGroupPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/GroupProfile/ViewGroupPage.vue'),
   ViewProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ViewProjectPage.vue'),
-  EditProjectPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/EditProjectPage.vue'),
   ProjectsListPage: () => import(/* webpackPrefetch: true, webpackChunkName: "Bundle1" */ './modules/Project/ProjectsListPage.vue'),
 };
 
@@ -62,10 +60,8 @@ const router = new VueRouter({
     { path: '/account/reset-password', component: ResetPasswordPage },
 
     { path: '/group/create', component: asyncPages.CreateGroupPage },
-    { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupProfile },
-    { path: '/group/:groupId/edit', name: 'edit-group', component: asyncPages.EditGroupProfile },
+    { path: '/group/:groupIdOrSlug', name: 'group', component: asyncPages.ViewGroupPage },
     { path: '/project/:projectIdOrSlug', name: 'project', component: asyncPages.ViewProjectPage },
-    { path: '/project/:projectId/edit', name: 'edit-project', component: asyncPages.EditProjectPage },
     { path: '/projects', component: asyncPages.ProjectsListPage },
   ]
 });

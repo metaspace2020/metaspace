@@ -14,6 +14,7 @@
   import {defaultMetadataType, metadataSchemas} from '../assets/metadataRegistry';
   import {get, flatMap} from 'lodash-es';
   import { safeJsonParse } from '../util'
+  import {optionalSuffixInParens} from '../lib/vueFilters';
 
   export default {
     name: 'dataset-info',
@@ -60,16 +61,13 @@
         // and not others. This could creep users out and make them wonder if we're sharing their email address to
         // the public internet. Because of this, only show email addresses to admins here.
         const canSeeEmailAddresses = this.currentUser && this.currentUser.role === 'admin';
-        const submitterEmail = this.dsSubmitter.email && canSeeEmailAddresses ? ` (${this.dsSubmitter.email})` : '';
+        const submitter = optionalSuffixInParens(this.dsSubmitter.name, canSeeEmailAddresses ? this.dsSubmitter.email : null);
         const dataManagementChilds = [
-          {id: "Submitter", label: `Submitter: ${this.dsSubmitter.name}${submitterEmail}`},
+          {id: "Submitter", label: `Submitter: ${submitter}`},
         ];
         if (this.dsPI != null) {
-          const piEmail = this.dsPI.email && canSeeEmailAddresses ? ` (${this.dsPI.email})` : '';
-          dataManagementChilds.push({
-            id: "Principal Investigator",
-            label: `Principal Investigator: ${this.dsPI.name}${piEmail}`
-          });
+          const pi = optionalSuffixInParens(this.dsPI.name, canSeeEmailAddresses ? this.dsPI.email : null);
+          dataManagementChilds.push({id: "Principal Investigator", label: `Principal Investigator: ${pi}`});
         }
         if (this.dsGroup != null) {
           dataManagementChilds.push({id: "Group", label: `Group: ${this.dsGroup.name}`});

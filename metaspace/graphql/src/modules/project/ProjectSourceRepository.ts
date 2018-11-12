@@ -49,12 +49,12 @@ export class ProjectSourceRepository {
 
   async findProjectById(user: ContextUser | null, projectId: string): Promise<ProjectSource | null> {
     return await this.queryProjectsWhere(user, 'project.id = :projectId', {projectId})
-      .getRawOne();
+      .getRawOne() || null;
   }
 
   async findProjectByUrlSlug(user: ContextUser | null, urlSlug: string): Promise<ProjectSource | null> {
     return await this.queryProjectsWhere(user, 'project.urlSlug = :urlSlug', {urlSlug})
-      .getRawOne();
+      .getRawOne() || null;
   }
 
   async findProjectsByDatasetId(user: ContextUser | null, datasetId: string): Promise<ProjectSource[]> {

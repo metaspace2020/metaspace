@@ -67,13 +67,13 @@
           <span class="s-group ds-add-filter"
                 title="Filter by this group"
                 @click="addFilter('group')">
-            {{dataset.group.name}}
+            {{dataset.group.shortName}}
           </span>
         </span>
       </div>
       <div class="ds-item-line" v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
         <span>
-          <router-link :to="resultsHref(formatDbName())">{{formatFdrCounts()}} annotations</router-link>
+          <router-link :to="resultsHref(formatDbName())">{{formatFdrCounts() | plural('annotation', 'annotations')}}</router-link>
           @ FDR {{formatFdrLevel()}}% ({{formatDbName()}})
         </span>
       </div>
@@ -139,6 +139,7 @@
  import { currentUserRoleQuery } from '../../../api/user';
  import reportError from '../../../lib/reportError';
  import {safeJsonParse} from "../../../util";
+ import {plural} from '../../../lib/vueFilters';
 
  function removeUnderscores(str) {
    return str.replace(/_/g, ' ');
@@ -149,6 +150,9 @@
    props: ['dataset'],
    components: {
      DatasetInfo
+   },
+   filters: {
+     plural
    },
 
    computed: {
@@ -457,8 +461,8 @@
  .dataset-item {
    position: relative;
    border-radius: 5px;
-   width: 100%;
-   max-width: 800px;
+   width: calc(100% - 6px);
+   max-width: 950px;
    margin: 3px;
    padding: 0px;
    border: 1px solid #cce4ff;
@@ -467,27 +471,23 @@
    justify-content: space-between;
  }
 
- .ds-status {
-   display: flex;
-   padding-left: 5px;
-   flex-direction: column;
-   justify-content: center;
- }
-
  .opt-image {
    padding: 10px 0 10px 10px;
    margin: 0px;
+   flex: none;
  }
 
  .ds-info{
    padding: 10px;
    margin: 0px;
-   width: 60%;
+   flex-grow: 1;
+   min-width: 0%; /* This may seem pointless, but it's necessary to prevent text overflowing: https://css-tricks.com/flexbox-truncated-text/ */
  }
 
  .ds-actions {
    padding: 10px 15px 10px 0px;
    margin: 0px;
+   flex: none;
  }
 
  .metadata-link, .ds-delete > a {

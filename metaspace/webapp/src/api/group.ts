@@ -142,3 +142,37 @@ export interface EditGroupQueryUser {
   name: string;
   email: string | null;
 }
+
+export interface ViewGroupResult {
+  id: string;
+  name: string;
+  shortName: string;
+  urlSlug: string | null;
+  currentUserRole: UserGroupRole | null;
+  numMembers: number;
+  members: ViewGroupMember[] | null;
+}
+
+interface ViewGroupMember {
+  role: UserGroupRole;
+  numDatasets: number;
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  }
+}
+
+export const ViewGroupFragment = gql`fragment ViewGroupFragment on Group {
+  id
+  name
+  shortName
+  urlSlug
+  currentUserRole
+  numMembers
+  members {
+    role
+    numDatasets
+    user { id name email }
+  }
+}`;

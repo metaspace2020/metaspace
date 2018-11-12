@@ -74,7 +74,7 @@
           this.$message({ message: `${this.model.name} was created`, type: 'success' });
           this.$router.push({
             name: 'edit-group',
-            params: {groupId: data!.createGroup.id}
+            params: {groupIdOrSlug: data!.createGroup.id}
           });
         } catch (err) {
           reportError(err);

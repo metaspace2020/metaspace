@@ -1,15 +1,14 @@
 import { mount, Stubs } from '@vue/test-utils';
 import Vue from 'vue';
-import ViewProjectPage from './ViewProjectPage.vue';
+import ViewGroupPage from './ViewGroupPage.vue';
 import router from '../../router';
 import { initMockGraphqlClient, provide } from '../../../tests/utils/mockGraphqlClient';
 
 
-
-describe('ViewProjectPage', () => {
-  const mockMembersForManagers = [
+describe('ViewGroupPage', () => {
+  const mockMembersForAdmins = [
     {
-      role: 'MANAGER',
+      role: 'GROUP_ADMIN',
       numDatasets: 123,
       user: { id: '3', name: 'me', email: 'my-email@example.com' }
     },
@@ -29,24 +28,24 @@ describe('ViewProjectPage', () => {
       user: { id: '6', name: 'Project member', email: 'person@embl.de' }
     }
   ];
-  const mockMembersForMembers = mockMembersForManagers.map(m => ({...m, user: {...m.user, email: null}}));
-  const mockMembersForPublic = mockMembersForMembers.filter(m => m.role === 'MANAGER');
+  const mockMembersForMembers = mockMembersForAdmins.map(m => ({...m, user: {...m.user, email: null}}));
+  const mockMembersForPublic = mockMembersForMembers.filter(m => m.role === 'GROUP_ADMIN');
 
-  const mockProject = {
+  const mockGroup = {
     id: '00000000-1111-2222-3333-444444444444',
-    name: 'project name',
-    shortName: 'projectShortName',
+    name: 'group name',
+    shortName: 'groupShortName',
     urlSlug: null,
     currentUserRole: null,
     numMembers: 2,
     members: mockMembersForPublic,
   };
-  const mockProjectFn = jest.fn(() => mockProject);
+  const mockGroupFn = jest.fn(() => mockGroup);
   const graphqlMocks = {
     Query: () => ({
       currentUser: () => ({ id: 'userid' }),
-      project: mockProjectFn,
-      projectByUrlSlug: mockProjectFn,
+      group: mockGroupFn,
+      groupByUrlSlug: mockGroupFn,
       allDatasets: () => ([
         { id: 'datasetId1', name: 'dataset name 1' },
         { id: 'datasetId2', name: 'dataset name 2' },
@@ -56,18 +55,19 @@ describe('ViewProjectPage', () => {
       countDatasets: () => 4,
     })
   };
-  
+
   const stubs: Stubs = {
     DatasetItem: true
   };
   const stubsWithMembersList: Stubs = {
     ...stubs,
-    ProjectMembersList: true
+    GroupMembersList: true
   };
-  
+
+
   beforeEach(() => {
     jest.clearAllMocks();
-    router.replace({ name: 'project', params: { projectIdOrSlug: mockProject.id } });
+    router.replace({ name: 'group', params: { groupIdOrSlug: mockGroup.id } });
   });
 
   describe('datasets tab', () => {
@@ -78,7 +78,7 @@ describe('ViewProjectPage', () => {
     it('should match snapshot (non-member)', async () => {
       initMockGraphqlClient(graphqlMocks);
       const maxVisibleDatasets = 3;
-      const wrapper = mount(ViewProjectPage, { router, stubs, provide, sync: false });
+      const wrapper = mount(ViewGroupPage, { router, stubs, provide, sync: false });
       wrapper.setData({ maxVisibleDatasets }); // Also test that the datasets list is correctly clipped
       await Vue.nextTick();
 
@@ -99,34 +99,34 @@ describe('ViewProjectPage', () => {
 
     it('should match snapshot (non-member)', async () => {
       initMockGraphqlClient(graphqlMocks);
-      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, provide, sync: false });
+      const wrapper = mount(ViewGroupPage, { router, stubs: stubsWithMembersList, provide, sync: false });
       await Vue.nextTick();
 
       expect(wrapper).toMatchSnapshot();
     });
 
     it('should match snapshot (invited)', async () => {
-      mockProjectFn.mockImplementation(() => ({...mockProject, currentUserRole: 'INVITED'}));
+      mockGroupFn.mockImplementation(() => ({...mockGroup, currentUserRole: 'INVITED'}));
       initMockGraphqlClient(graphqlMocks);
-      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, provide, sync: false });
+      const wrapper = mount(ViewGroupPage, { router, stubs: stubsWithMembersList, provide, sync: false });
       await Vue.nextTick();
 
       expect(wrapper).toMatchSnapshot();
     });
 
     it('should match snapshot (member)', async () => {
-      mockProjectFn.mockImplementation(() => ({...mockProject, currentUserRole: 'MEMBER', members: mockMembersForMembers}));
+      mockGroupFn.mockImplementation(() => ({...mockGroup, currentUserRole: 'MEMBER', members: mockMembersForMembers}));
       initMockGraphqlClient(graphqlMocks);
-      const wrapper = mount(ViewProjectPage, { router, stubs: stubsWithMembersList, provide, sync: false });
+      const wrapper = mount(ViewGroupPage, { router, stubs: stubsWithMembersList, provide, sync: false });
       await Vue.nextTick();
 
       expect(wrapper).toMatchSnapshot();
     });
 
     it('should match snapshot (manager, including table)', async () => {
-      mockProjectFn.mockImplementation(() => ({...mockProject, currentUserRole: 'MANAGER', members: mockMembersForManagers}));
+      mockGroupFn.mockImplementation(() => ({...mockGroup, currentUserRole: 'GROUP_ADMIN', members: mockMembersForAdmins}));
       initMockGraphqlClient(graphqlMocks);
-      const wrapper = mount(ViewProjectPage, { router, stubs, provide, sync: false });
+      const wrapper = mount(ViewGroupPage, { router, stubs, provide, sync: false });
       await Vue.nextTick();
 
       expect(wrapper).toMatchSnapshot();
@@ -139,28 +139,28 @@ describe('ViewProjectPage', () => {
     });
 
     it('should match snapshot', async () => {
-      mockProjectFn.mockImplementation(() => ({...mockProject, currentUserRole: 'MANAGER'}));
+      mockGroupFn.mockImplementation(() => ({...mockGroup, currentUserRole: 'GROUP_ADMIN'}));
       initMockGraphqlClient(graphqlMocks);
-      const wrapper = mount(ViewProjectPage, { router, stubs, provide, sync: false });
+      const wrapper = mount(ViewGroupPage, { router, stubs, provide, sync: false });
       await Vue.nextTick();
 
       expect(wrapper).toMatchSnapshot();
     });
   });
 
-  it('should correctly fetch data and update the route if the project has a urlSlug but is accessed by ID', async () => {
-    const urlSlug = 'project-url-slug';
-    mockProjectFn.mockImplementation(() => ({...mockProject, urlSlug}));
+  it('should correctly fetch data and update the route if the group has a urlSlug but is accessed by ID', async () => {
+    const urlSlug = 'group-url-slug';
+    mockGroupFn.mockImplementation(() => ({...mockGroup, urlSlug}));
     initMockGraphqlClient(graphqlMocks);
 
-    const wrapper = mount(ViewProjectPage, { router, stubs, provide, sync: false });
+    const wrapper = mount(ViewGroupPage, { router, stubs, provide, sync: false });
     await Vue.nextTick();
 
-    expect(router.currentRoute.params.projectIdOrSlug).toEqual(urlSlug);
+    expect(router.currentRoute.params.groupIdOrSlug).toEqual(urlSlug);
     // Assert that the correct graphql calls were made. See the GraphQLFieldResolver type for details on the args here
-    expect(mockProjectFn.mock.calls[0][1].projectId).toEqual(mockProject.id);
-    expect(mockProjectFn.mock.calls[0][3].fieldName).toEqual('project');
-    expect(mockProjectFn.mock.calls[1][1].urlSlug).toEqual(urlSlug);
-    expect(mockProjectFn.mock.calls[1][3].fieldName).toEqual('projectByUrlSlug');
+    expect(mockGroupFn.mock.calls[0][1].groupId).toEqual(mockGroup.id);
+    expect(mockGroupFn.mock.calls[0][3].fieldName).toEqual('group');
+    expect(mockGroupFn.mock.calls[1][1].urlSlug).toEqual(urlSlug);
+    expect(mockGroupFn.mock.calls[1][3].fieldName).toEqual('groupByUrlSlug');
   });
 });
