@@ -477,8 +477,6 @@
                'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
                'moleculeNames', 'moleculeIds']);
 
-       function quoted(s) { return '"' + s + '"'; }
-
        function databaseId(compound) {
          return compound.information[0].databaseId;
        }
@@ -490,10 +488,10 @@
            row.dataset.group ? row.dataset.group.name : '',
            row.dataset.name,
            row.dataset.id,
-           sumFormula, quoted("M" + adduct), mz,
+           sumFormula, "M" + adduct, mz,
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
-           quoted(row.possibleCompounds.map(m => m.name).join(', ')),
-           quoted(row.possibleCompounds.map(databaseId).join(', '))
+           row.possibleCompounds.map(m => m.name).join(', '),
+           row.possibleCompounds.map(databaseId).join(', ')
          ]);
        }
 
