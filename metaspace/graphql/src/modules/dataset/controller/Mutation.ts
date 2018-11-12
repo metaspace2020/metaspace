@@ -6,19 +6,20 @@ import {Connection, EntityManager} from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 
-import {logger, fetchMolecularDatabases} from '../../../../utils';
-import {fetchEngineDS, EngineDS} from '../../../utils/knexDb';
+import {fetchMolecularDatabases, logger} from '../../../../utils';
+import {EngineDS, fetchEngineDS} from '../../../utils/knexDb';
 
 import {smAPIRequest} from '../../../utils';
-import metadataMapping from '../../../../metadataSchemas/metadataMapping';
 import {UserProjectRoleOptions as UPRO} from '../../project/model';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/model';
 import {Dataset as DatasetModel, DatasetProject as DatasetProjectModel} from '../model';
-import {DatasetCreateInput, DatasetUpdateInput, Int, Mutation, String} from '../../../binding';
+import {DatasetCreateInput, DatasetUpdateInput, Int, Mutation} from '../../../binding';
 import {Context, ContextUser} from '../../../context';
 import {FieldResolversFor} from '../../../bindingTypes';
 import {getUserProjectRoles} from '../../../utils/db';
 import {metadataSchemas} from '../../../../metadataSchemas/metadataRegistry';
+import {getDatasetForEditing} from '../operation/getDatasetForEditing';
+import {deleteDataset} from '../operation/deleteDataset';
 
 type MetadataSchema = any;
 type MetadataRoot = any;
@@ -176,25 +177,6 @@ const saveDS = async (connection: Connection | EntityManager, args: SaveDSArgs, 
   }
 };
 
-const getDatasetForEditing = async (connection: Connection | EntityManager, user: ContextUser | null, dsId: string) => {
-  if (!user)
-    throw new UserError('Access denied');
-
-  if (!dsId)
-    throw new UserError(`DS id not provided`);
-
-  const ds = await connection.getRepository(DatasetModel).findOne({
-    id: dsId
-  });
-  if (!ds)
-    throw new UserError(`DS ${dsId} does not exist`);
-
-  if (user.id !== ds.userId && user.role !== 'admin')
-    throw new UserError('Access denied');
-
-  return ds;
-};
-
 const assertCanCreateDataset = (user: ContextUser | null) => {
   if (!user)
     throw new UserError(`Not authenticated`);
@@ -206,7 +188,7 @@ const newDatasetId = () => {
 };
 
 type CreateDatasetArgs = {
-  id?: String,
+  id?: string,
   input: DatasetCreateInput,
   priority?: Int,
   reprocess?: boolean, // Only used by reprocess
@@ -338,24 +320,12 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     return JSON.stringify(smAPIResp);
   },
 
-  deleteDataset: async (_, args, {user, connection, getUserIdOrFail}) => {
+  deleteDataset: async (_, args, {user, connection}) => {
     const {id: dsId, priority} = args;
-
-    logger.info(`User '${getUserIdOrFail()}' deleting '${dsId}' dataset...`);
-    await getDatasetForEditing(connection, user, dsId);
-
-    try {
-      await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
+    if (user == null) {
+      throw new UserError('Unauthorized');
     }
-    catch (err) {
-      logger.warn(err);
-    }
-
-    await connection.getRepository(DatasetProjectModel).delete({ datasetId: dsId });
-    await connection.getRepository(DatasetModel).delete(dsId);
-    const resp = await smAPIRequest(`/v1/datasets/${dsId}/delete`, {});
-
-    logger.info(`Dataset '${dsId}' was deleted`);
+    const resp = await deleteDataset(connection, user, dsId);
     return JSON.stringify(resp);
   },
 

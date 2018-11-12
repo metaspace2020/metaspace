@@ -1,4 +1,4 @@
-import { Express, Router, IRouter, Request, Response, NextFunction } from 'express';
+import {Express, IRouter, NextFunction, Request, Response, Router} from 'express';
 import {callbackify} from 'util';
 import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
@@ -10,16 +10,16 @@ import config from '../../utils/config';
 import {User} from '../user/model';
 import {
   createUserCredentials,
-  sendResetPasswordToken, resetPassword,
-  verifyEmail, verifyPassword,
+  findUserByEmail,
+  findUserByGoogleId,
+  findUserById,
   initOperation,
-  findUserByEmail, findUserByGoogleId, findUserById
+  resetPassword,
+  sendResetPasswordToken,
+  verifyEmail,
+  verifyPassword,
 } from './operation';
-
-const getUserFromRequest = (req: Request): User | null => {
-  const user = (req as any).cookieUser;
-  return user ? user as User : null;
-};
+import {getUserFromRequest, middleware} from './middleware';
 
 const preventCache = (req: Request, res: Response, next: NextFunction) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -29,10 +29,7 @@ const preventCache = (req: Request, res: Response, next: NextFunction) => {
 };
 
 const configurePassport = (router: IRouter<any>) => {
-  router.use(Passport.initialize({
-    userProperty: 'cookieUser' // req.user is already used by the JWT
-  }));
-  router.use(Passport.session());
+  middleware.forEach(m => { router.use(m); });
 
   Passport.serializeUser<User, string>(callbackify( async (user: User) => user.id));
 

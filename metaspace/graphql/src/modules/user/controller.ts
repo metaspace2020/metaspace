@@ -1,5 +1,6 @@
 import {UserError} from "graphql-errors";
 import {Like} from 'typeorm';
+import * as uuid from 'uuid';
 
 import {User, UserGroup} from '../../binding';
 import {User as UserModel} from './model';
@@ -13,6 +14,8 @@ import {sendEmailVerificationToken} from '../auth/operation';
 import {logger, LooselyCompatible, smAPIRequest} from '../../utils';
 import {convertUserToUserSource} from './util/convertUserToUserSource';
 import {smAPIUpdateDataset} from '../../utils/smAPI';
+import {deleteDataset} from '../dataset/operation/deleteDataset';
+import {patchPassportIntoLiveRequest} from '../auth/middleware';
 
 const assertCanEditUser = (user: ContextUser | null, userId: string) => {
   if (!user || !user.id)
@@ -167,26 +170,41 @@ export const Resolvers = {
       };
     },
 
-    async deleteUser(_: any, {userId, deleteDatasets}: any, {user, connection}: Context): Promise<Boolean> {
-      assertCanEditUser(user, userId);
-      logger.info(`User '${userId}' being deleted by '${user!.id}'...`);
+    async deleteUser(_: any, {userId, deleteDatasets}: any, {req, res, user: currentUser, connection}: Context): Promise<Boolean> {
+      assertCanEditUser(currentUser, userId);
+      logger.info(`User '${userId}' being ${deleteDatasets ? 'hard-' : 'soft-'}deleted by '${currentUser!.id}'...`);
+      const userRepo = await connection.getRepository(UserModel);
+      const deletingUser = (await userRepo.findOneOrFail(userId));
 
       if (deleteDatasets) {
         const userDSs = await connection.getRepository(DatasetModel).find({ userId });
         logger.info(`Deleting user '${userId}' datasets...`);
         await Promise.all(userDSs.map(async ds => {
-          await smAPIRequest(`/v1/datasets/${ds.id}/delete`);
+          await deleteDataset(connection, currentUser!, ds.id);
         }));
+        await connection.getRepository(DatasetModel).delete({userId});
+
+
+        await connection.getRepository(UserGroupModel).delete({userId});
+        await userRepo.delete({ id: userId });
+        await connection.getRepository(CredentialsModel).delete({ id: deletingUser.credentialsId });
+        logger.info(`User '${userId}' was hard-deleted`);
+      } else {
+        await connection.getRepository(UserGroupModel).delete({userId});
+        // Remove login methods to prevent login, and verify the email so that it can't be claimed as an inactive account
+        await connection.getRepository(CredentialsModel).update({ id: deletingUser.credentialsId },
+          { hash: null, googleId: null, emailVerified: true });
+        // Make email invalid so that the password can't be reset
+        const email = `${deletingUser.email || deletingUser.notVerifiedEmail}-DELETED-${uuid.v4()}`;
+        await connection.getRepository(UserModel).update({id: userId},
+          {email, notVerifiedEmail: null});
+
+        logger.info(`User '${userId}' was soft-deleted`);
       }
 
-      const userRepo = await connection.getRepository(UserModel);
-      let credentialsId = (await userRepo.findOneOrFail(userId)).credentialsId;
+      await patchPassportIntoLiveRequest(req, res);
+      req.logout();
 
-      await connection.getRepository(DatasetModel).delete({userId});
-      await connection.getRepository(UserGroupModel).delete({userId});
-      await userRepo.delete({ id: userId });
-      await connection.getRepository(CredentialsModel).delete({ id: credentialsId });
-      logger.info(`User '${userId}' was deleted`);
       return true;
     },
   }

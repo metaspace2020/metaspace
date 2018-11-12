@@ -4,8 +4,11 @@ import {UserProjectRoleOptions as UPRO} from './modules/project/model';
 import {UserError} from 'graphql-errors';
 import {JwtUser} from './modules/auth/controller';
 import {getUserProjectRoles} from './utils/db';
+import {Request, Response} from 'express';
 
-export default (jwtUser: JwtUser | null, connection: Connection | EntityManager): Context => {
+
+const getContext = (jwtUser: JwtUser | null, connection: Connection | EntityManager,
+                req: Request, res: Response): Context => {
   const user = jwtUser != null && jwtUser.id != null ? jwtUser : null;
 
   let currentUserProjectRoles: Promise<UserProjectRoles> | null = null;
@@ -27,7 +30,7 @@ export default (jwtUser: JwtUser | null, connection: Connection | EntityManager)
   };
 
   return {
-    connection,
+    req, res, connection,
     user: user == null || user.id == null ? null : {
       id: user.id,
       role: user.role as ('user' | 'admin'),
@@ -45,4 +48,10 @@ export default (jwtUser: JwtUser | null, connection: Connection | EntityManager)
     },
     getCurrentUserProjectRoles: getProjectRoles,
   };
-}
+};
+export default getContext;
+
+export const getContextForTest = (jwtUser: JwtUser | null, connection: Connection | EntityManager): Context => {
+  // TODO: Add mocks for req & res if/when needed
+  return getContext(jwtUser, connection, null as any, null as any);
+};

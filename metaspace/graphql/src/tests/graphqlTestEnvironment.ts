@@ -14,7 +14,7 @@ import {createConnection} from '../utils/db';
 import {Connection, EntityManager} from 'typeorm';
 import {User} from '../modules/user/model';
 import {initOperation} from '../modules/auth/operation';
-import getContext from '../getContext';
+import {getContextForTest} from '../getContext';
 import {makeNewExecutableSchema} from '../../executableSchema';
 import {Context} from '../context';
 import {createTestUser} from './testDataCreation';
@@ -69,15 +69,15 @@ export const onBeforeEach = async () => {
   (userContext as any) = undefined;
   (adminContext as any) = undefined;
 
-  anonContext = getContext({ role: 'anonymous' }, testEntityManager);
+  anonContext = getContextForTest({ role: 'anonymous' }, testEntityManager);
 
   await initOperation(testEntityManager);
 };
 
 export const setupTestUsers = async () => {
   testUser = await createTestUser();
-  userContext = getContext(testUser as any, testEntityManager);
-  adminContext = getContext({ ...testUser, role: 'admin' } as any, testEntityManager);
+  userContext = getContextForTest(testUser as any, testEntityManager);
+  adminContext = getContextForTest({ ...testUser, role: 'admin' } as any, testEntityManager);
 };
 
 export const onAfterEach = async () => {
