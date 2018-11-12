@@ -6,6 +6,7 @@ import {Dataset as DatasetModel} from '../model';
 import {Dataset} from '../../../binding';
 import {rawOpticalImage} from './Query';
 import getScopeRoleForEsDataset from '../util/getScopeRoleForEsDataset';
+import {logger} from '../../../utils';
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   id(ds) {
@@ -71,8 +72,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     if (ds._source.ds_group_id) {
       return {
         id: ds._source.ds_group_id,
-        name: ds._source.ds_group_name,
-        shortName: ds._source.ds_group_short_name,
+        name: ds._source.ds_group_name || 'NULL',
+        shortName: ds._source.ds_group_short_name || 'NULL',
       };
     } else {
       return null;
@@ -92,7 +93,11 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   async principalInvestigator(ds, _, {connection, isAdmin, user}) {
-    const dataset = await connection.getRepository(DatasetModel).findOneOrFail({ id: ds._source.ds_id });
+    const dataset = await connection.getRepository(DatasetModel).findOne({ id: ds._source.ds_id });
+    if (dataset == null) {
+      logger.warn(`Elasticsearch DS does not exist in DB: ${ds._source.ds_id}`);
+      return null;
+    }
     const canSeePiEmail = isAdmin || (user != null && user.id === ds._source.ds_submitter_id);
     if (dataset.piName) {
       return {
