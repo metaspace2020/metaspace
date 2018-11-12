@@ -15,7 +15,9 @@ export const getUserFromRequest = (req: Request): User | null => {
   return user ? user as User : null;
 };
 
-/** Runs the passport middleware against a live request. Useful for  */
+/** Runs the passport middleware against a live request. This is pretty hacky, but should be reliable enough.
+ * Useful for doing authentication-related actions, like logging out, inside a GraphQL resolver.
+ */
 export const patchPassportIntoLiveRequest = (req: Request, res: Response): Promise<void> => {
   return new Promise((resolve, reject) => {
     try {
