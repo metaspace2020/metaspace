@@ -94,7 +94,7 @@
 
     get groupIdError(): string | null {
       if (this.currentUser != null && this.currentUser.groups != null) {
-        const existingUserGroup = this.currentUser.groups.find(g => g.group.id == this.groupId);
+        const existingUserGroup = this.currentUser.groups.find(g => g.group.id === this.groupId);
         if (existingUserGroup != null) {
           if (existingUserGroup.role === UGRO.PENDING) {
             return 'You have already requested access to this group.';
