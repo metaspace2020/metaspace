@@ -6,7 +6,7 @@
     </el-dialog>
 
     <div class="opt-image" v-if="isOpticalImageSupported">
-      <router-link :to="opticalImageAlignmentHref" v-if="haveEditAccess && dataset.status === 'FINISHED'">
+      <router-link :to="opticalImageAlignmentHref" v-if="canEditOpticalImage">
         <div v-if="thumbnailCheck" class="edit-opt-image" title="Edit Optical Image">
           <img class="opt-image-thumbnail" :src="opticalImageSmall" alt="Edit optical image"/>
         </div>
@@ -107,12 +107,12 @@
       <i class="el-icon-view"></i>
       <a @click="showMetadata" class="metadata-link">Show full metadata</a>
 
-      <div v-if="haveEditAccess && !['QUEUED', 'ANNOTATING', 'INDEXING'].includes(dataset.status)">
+      <div v-if="canEdit">
         <i class="el-icon-edit"></i>
         <router-link :to="editHref">Edit metadata</router-link>
       </div>
 
-      <div v-if="haveEditAccess && !['QUEUED', 'ANNOTATING', 'INDEXING'].includes(dataset.status)"
+      <div v-if="canEdit"
            class="ds-delete">
         <i class="el-icon-delete"></i>
         <a @click="openDeleteDialog">Delete dataset</a>
@@ -245,14 +245,19 @@
        return (Resolving_Power / 1000).toFixed(0) + 'k @ ' + mz;
      },
 
-     haveEditAccess() {
-       if (!this.currentUser)
-         return false;
-       if (this.currentUser.role === 'admin')
-         return true;
-       if (this.currentUser.id === this.dataset.submitter.id)
-         return true;
+     canEdit() {
+       if (this.currentUser != null) {
+         if (this.currentUser.role === 'admin' && !['ANNOTATING', 'INDEXING'].includes(this.dataset.status))
+           return true;
+         if (this.currentUser.id === this.dataset.submitter.id
+           && !['QUEUED', 'ANNOTATING', 'INDEXING'].includes(this.dataset.status))
+           return true;
+       }
        return false;
+     },
+
+     canEditOpticalImage() {
+       return this.canEdit && this.dataset.status === 'FINISHED';
      },
 
      editHref() {
@@ -348,8 +353,13 @@
      },
 
      async openDeleteDialog() {
+       const force = this.currentUser != null
+         && this.currentUser.role === 'admin'
+         && this.dataset.status !== 'FINISHED';
        try {
-         await this.$confirm(`Are you sure you want to delete ${this.formatDatasetName}?`);
+         await this.$confirm(`Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${this.formatDatasetName}?`, {
+           type: force ? 'warning' : null
+         });
        } catch (cancel) {
          return;
        }
@@ -359,7 +369,8 @@
          const resp = await this.$apollo.mutate({
            mutation: deleteDatasetQuery,
            variables: {
-             id: this.dataset.id
+             id: this.dataset.id,
+             force
            }
          });
        }

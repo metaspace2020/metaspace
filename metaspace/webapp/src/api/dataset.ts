@@ -122,8 +122,8 @@ export const createDatasetQuery =
   }`;
 
 export const deleteDatasetQuery =
-  gql`mutation ($id: String!) {
-    deleteDataset(id: $id)
+  gql`mutation ($id: String!, $force: Boolean) {
+    deleteDataset(id: $id, force: $force)
   }`;
 
 export const addOpticalImageQuery =

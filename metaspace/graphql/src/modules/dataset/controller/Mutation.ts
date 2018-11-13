@@ -321,11 +321,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   },
 
   deleteDataset: async (_, args, {user, connection}) => {
-    const {id: dsId, priority} = args;
+    const {id: dsId, force} = args;
     if (user == null) {
       throw new UserError('Unauthorized');
     }
-    const resp = await deleteDataset(connection, user, dsId);
+    const resp = await deleteDataset(connection, user, dsId, {force});
     return JSON.stringify(resp);
   },
 
