@@ -12,6 +12,7 @@ import {sendInvitationEmail} from '../auth';
 import config from '../../utils/config';
 import {createInactiveUser} from '../auth/operation';
 import {smAPIUpdateDataset} from '../../utils/smAPI';
+import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
 
 const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<ScopeRole> => {
   let scopeRole = ScopeRoleOptions.OTHER;
@@ -406,6 +407,11 @@ export const Resolvers = {
       logger.info(`User '${user!.id}' importing datasets ${datasetIds} to '${groupId}' group...`);
 
       await connection.getRepository(GroupModel).findOneOrFail(groupId);
+
+      // Verify user is allowed to edit the datasets
+      await Promise.all(datasetIds.map(async (dsId: string) => {
+        await getDatasetForEditing(connection, user, dsId);
+      }));
 
       const dsRepo = connection.getRepository(DatasetModel);
       await Promise.all(datasetIds.map(async (dsId: string) => {

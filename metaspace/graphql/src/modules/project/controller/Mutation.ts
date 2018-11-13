@@ -15,6 +15,7 @@ import {sendInvitationEmail} from '../../auth';
 import {findUserByEmail} from '../../../utils';
 import {sendProjectAcceptanceEmail, sendProjectInvitationEmail, sendRequestAccessToProjectEmail} from '../email';
 import {smAPIUpdateDataset} from '../../../utils/smAPI';
+import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
   const userProject = await ctx.connection.getRepository(UserProjectModel).findOne({
@@ -178,6 +179,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('Not a member of project');
     }
     if (datasetIds.length > 0) {
+      // Verify user is allowed to edit the datasets
+      await Promise.all(datasetIds.map(async (dsId: string) => {
+        await getDatasetForEditing(ctx.connection, ctx.user, dsId);
+      }));
+
       const approved = [UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole);
       await updateProjectDatasets(ctx, projectId, datasetIds, approved);
     }

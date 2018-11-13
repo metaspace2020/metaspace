@@ -113,26 +113,6 @@ const createCredentials = async (userCred: UserCredentialsInput): Promise<Creden
   }
 };
 
-const updateCredentials = async (credId: string, userCred: UserCredentialsInput): Promise<void> => {
-  // TODO: Add a test case
-  if (userCred.password) {
-    await credRepo.update(credId, {
-      hash: await hashPassword(userCred.password),
-    });
-    logger.info(`${userCred.email} user credentials updated, password added`);
-  }
-  else if (userCred.googleId) {
-    await credRepo.update(credId, {
-      googleId: userCred.googleId,
-      emailVerified: true,
-    });
-    logger.info(`${userCred.email} user credentials updated, google id added`);
-  }
-  else {
-    logger.info('Nothing to update in credentials');
-  }
-};
-
 export const createUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
   const existingUser = await findUserByEmail(userCred.email, 'email');
   if (existingUser) {
@@ -145,7 +125,12 @@ export const createUserCredentials = async (userCred: UserCredentialsInput): Pro
     if (existingUserNotVerified) {
       // existing not verified user
       if (userCred.googleId) {
-        await updateCredentials(existingUserNotVerified.credentialsId, userCred);
+        await credRepo.update(existingUserNotVerified.credentialsId, {
+          hash: null, // Remove password because an untrusted user could have set it, as it didn't require email verification prior to this point
+          googleId: userCred.googleId,
+          emailVerified: true,
+        });
+        logger.info(`${userCred.email} user credentials updated, google id added`);
         await userRepo.update(existingUserNotVerified.id, {
           email: userCred.email,
           notVerifiedEmail: null,
@@ -153,6 +138,9 @@ export const createUserCredentials = async (userCred: UserCredentialsInput): Pro
         });
       }
       else {
+        existingUserNotVerified.credentials.hash = await hashPassword(userCred.password) || null;
+        await credRepo.save(existingUserNotVerified.credentials);
+        logger.info(`${userCred.email} user credentials updated, password added`);
         await sendEmailVerificationToken(existingUserNotVerified.credentials,
           existingUserNotVerified.notVerifiedEmail!);
       }
