@@ -7,8 +7,10 @@
     <h2>Find a group</h2>
     <p>If you are not member of a group, you can request access here and your dataset will be
       automatically added to the group once your access has been approved.</p>
-    <el-form >
-      <el-form-item label="Your group:">
+    <el-form>
+      <el-form-item
+        :error="groupReqError"
+        label="Your group:">
         <el-row>
           <el-select
             v-model="groupId"
@@ -78,17 +80,23 @@
       }
     }
   })
+
   export default class FindGroupDialog extends Vue {
     @Prop({ default: false })
     visible!: boolean;
-
     query: string = '';
     searchResults: GroupListItem[] | null = null;
     currentUser!: UserProfileQuery;
     searchLoading = 0;
-    groupId: string | null = null;
     isGroupAccessLoading: boolean = false;
     sameGroupRequest: boolean = false;
+    groupId: string | null = null;
+
+    get groupReqError() {
+      if (this.sameGroupRequest) {
+        return 'You are already member of the group or have requested the access'
+      }
+    }
 
     @Watch('groupId')
     checkFilteredGroup() {
@@ -122,6 +130,7 @@
           mutation: requestAccessToGroupMutation,
           variables: { groupId: this.groupId }
         });
+        await this.$apollo.queries.currentUser.refetch();
 
         this.$message({
           message: 'Your request was successfully sent!',
@@ -132,6 +141,7 @@
         reportError(err);
       } finally {
         this.isGroupAccessLoading = false;
+        this.groupId = null;
       }
     }
   }
