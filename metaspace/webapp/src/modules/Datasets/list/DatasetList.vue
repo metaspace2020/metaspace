@@ -3,7 +3,8 @@
     <dataset-item v-for="(dataset, i) in datasets"
                   :dataset="dataset" :key="dataset.id"
                   :class="[i%2 ? 'odd': '']"
-                  @filterUpdate="filter => $emit('filterUpdate', filter)">
+                  @filterUpdate="filter => $emit('filterUpdate', filter)"
+                  @datasetMutated="$emit('datasetMutated')">
     </dataset-item>
   </div>
 </template>

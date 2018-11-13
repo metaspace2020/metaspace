@@ -115,7 +115,12 @@
       <div v-if="canEdit"
            class="ds-delete">
         <i class="el-icon-delete"></i>
-        <a @click="openDeleteDialog">Delete dataset</a>
+        <a href="#" @click.prevent="openDeleteDialog">Delete dataset</a>
+      </div>
+
+      <div v-if="canReprocess" class="ds-reprocess">
+        <i class="el-icon-refresh"></i>
+        <a href="#" @click.prevent="handleReprocess">Reprocess dataset</a>
       </div>
 
       <el-popover v-if="!dataset.isPublic" trigger="hover" placement="top" @show="loadVisibility">
@@ -133,7 +138,12 @@
 <script>
  import DatasetInfo from '../../../components/DatasetInfo.vue';
  import {capitalize} from 'lodash-es';
- import { datasetVisibilityQuery, deleteDatasetQuery, thumbnailOptImageQuery } from '../../../api/dataset';
+ import {
+   datasetVisibilityQuery,
+   deleteDatasetQuery,
+   reprocessDatasetQuery,
+   thumbnailOptImageQuery,
+ } from '../../../api/dataset';
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
  import { currentUserRoleQuery } from '../../../api/user';
@@ -260,6 +270,12 @@
        return this.canEdit && this.dataset.status === 'FINISHED';
      },
 
+     canReprocess() {
+       return this.currentUser != null
+         && this.currentUser.role === 'admin'
+         && !['ANNOTATING', 'INDEXING'].includes(this.dataset.status);
+     },
+
      editHref() {
        return {
          name: 'edit-metadata',
@@ -373,10 +389,30 @@
              force
            }
          });
+         this.$emit('datasetMutated');
        }
        catch (err) {
          this.disabled = false;
          reportError(err, "Deletion failed :( Please contact us at contact@metaspace2020.eu");
+       }
+     },
+
+     async handleReprocess() {
+       try {
+         this.disabled = true;
+         await this.$apollo.mutate({
+           mutation: reprocessDatasetQuery,
+           variables: {
+             id: this.dataset.id,
+           }
+         });
+         this.$notify.success("Dataset sent for reprocessing");
+         this.$emit('datasetMutated');
+       }
+       catch (err) {
+         reportError(err);
+       } finally {
+         this.disabled = false;
        }
      },
 
@@ -501,11 +537,11 @@
    flex: none;
  }
 
- .metadata-link, .ds-delete > a {
+ .metadata-link {
    text-decoration: underline;
  }
 
- .metadata-link, .ds-add-filter, .ds-delete > a {
+ .metadata-link, .ds-add-filter {
    cursor: pointer;
  }
 
@@ -547,7 +583,7 @@
    font-size: initial;
  }
 
- .ds-delete, .ds-delete > a {
+ .ds-delete, .ds-delete > a, .ds-reprocess, .ds-reprocess > a {
    color: #a00;
  }
 

@@ -126,6 +126,11 @@ export const deleteDatasetQuery =
     deleteDataset(id: $id, force: $force)
   }`;
 
+export const reprocessDatasetQuery =
+  gql`mutation ($id: String!) {
+    reprocessDataset(id: $id)
+  }`;
+
 export const addOpticalImageQuery =
   gql`mutation ($imageUrl: String!,
                 $datasetId: String!, $transform: [[Float]]!) {
