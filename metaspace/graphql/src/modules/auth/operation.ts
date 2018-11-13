@@ -113,26 +113,6 @@ const createCredentials = async (userCred: UserCredentialsInput): Promise<Creden
   }
 };
 
-const updateCredentials = async (credId: string, userCred: UserCredentialsInput): Promise<void> => {
-  // TODO: Add a test case
-  if (userCred.password) {
-    await credRepo.update(credId, {
-      hash: await hashPassword(userCred.password),
-    });
-    logger.info(`${userCred.email} user credentials updated, password added`);
-  }
-  else if (userCred.googleId) {
-    await credRepo.update(credId, {
-      googleId: userCred.googleId,
-      emailVerified: true,
-    });
-    logger.info(`${userCred.email} user credentials updated, google id added`);
-  }
-  else {
-    logger.info('Nothing to update in credentials');
-  }
-};
-
 export const createUserCredentials = async (userCred: UserCredentialsInput): Promise<void> => {
   const existingUser = await findUserByEmail(userCred.email, 'email');
   if (existingUser) {
