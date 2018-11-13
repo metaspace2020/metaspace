@@ -1,7 +1,7 @@
 <template>
   <div class="dataset-item" :class="disabledClass">
 
-    <el-dialog title="Provided metadata" :visible.sync="showMetadataDialog">
+    <el-dialog title="Provided metadata" :lock-scroll="false" :visible.sync="showMetadataDialog">
       <dataset-info :metadata="metadata" :currentUser="currentUser" />
     </el-dialog>
 

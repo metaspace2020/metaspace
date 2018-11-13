@@ -7,8 +7,10 @@
     <h2>Find a group</h2>
     <p>If you are not member of a group, you can request access here and your dataset will be
       automatically added to the group once your access has been approved.</p>
-    <el-form >
-      <el-form-item label="Your group:">
+    <el-form>
+      <el-form-item
+        :error="groupIdError"
+        label="Your group:">
         <el-row>
           <el-select
             v-model="groupId"
@@ -31,7 +33,7 @@
       <el-button @click="handleClose">Cancel</el-button>
       <el-button
         type="primary"
-        :disabled="groupId == null"
+        :disabled="groupId == null || groupIdError != null"
         :loading="isGroupAccessLoading"
         @click="handleRequestGroupAccess">Request access
       </el-button>
@@ -47,17 +49,23 @@
 
 <script lang="ts">
   import Vue from 'vue';
-  import { Component, Prop } from 'vue-property-decorator';
+  import { Component, Prop, Watch } from 'vue-property-decorator';
   import {
     allGroupsQuery,
     requestAccessToGroupMutation,
     GroupListItem,
   } from '../../../api/dataManagement';
+  import { UserGroupRoleOptions as UGRO } from '../../../api/group';
+  import { userProfileQuery, UserProfileQuery } from '../../../api/user'
   import reportError from "../../../lib/reportError";
   import './FormSection.scss';
 
   @Component<FindGroupDialog>({
     apollo: {
+      currentUser: {
+        query: userProfileQuery,
+        fetchPolicy: 'cache-first'
+      },
       searchResults: {
         query: allGroupsQuery,
         loadingKey: 'searchLoading',
@@ -73,15 +81,32 @@
       }
     }
   })
+
   export default class FindGroupDialog extends Vue {
     @Prop({ default: false })
     visible!: boolean;
-
     query: string = '';
     searchResults: GroupListItem[] | null = null;
+    currentUser!: UserProfileQuery;
     searchLoading = 0;
-    groupId: string | null = null;
     isGroupAccessLoading: boolean = false;
+    groupId: string | null = null;
+
+    get groupIdError(): string | null {
+      if (this.currentUser != null && this.currentUser.groups != null) {
+        const existingUserGroup = this.currentUser.groups.find(g => g.group.id === this.groupId);
+        if (existingUserGroup != null) {
+          if (existingUserGroup.role === UGRO.PENDING) {
+            return 'You have already requested access to this group.';
+          } else if (existingUserGroup.role === UGRO.INVITED) {
+            return 'You have already been invited this group. Please accept the invitation through your account page.';
+          } else {
+            return 'You are already a member of this group.';
+          }
+        }
+      }
+      return null;
+    }
 
     handleSelectNoGroup() {
       this.$emit('selectGroup', null);
@@ -103,6 +128,7 @@
           mutation: requestAccessToGroupMutation,
           variables: { groupId: this.groupId }
         });
+        await this.$apollo.queries.currentUser.refetch();
 
         this.$message({
           message: 'Your request was successfully sent!',
@@ -111,7 +137,9 @@
         this.$emit('selectGroup', group);
       } catch(err) {
         reportError(err);
+      } finally {
         this.isGroupAccessLoading = false;
+        this.groupId = null;
       }
     }
   }
