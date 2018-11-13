@@ -222,7 +222,7 @@
          return formatCsvRow([
            row.id,
            row.name,
-           row.group ? row.group.name : '',
+           row.groupApproved && row.group ? row.group.shortName : '',
            person(row.submitter),
            person(row.principalInvestigator),
            row.organism,

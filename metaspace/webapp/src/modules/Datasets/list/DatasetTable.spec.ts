@@ -38,7 +38,8 @@ describe('DatasetTable', () => {
     metadataJson: mockMetadataJson,
     molDBs: ['HMDB-v2.5', 'HMDB-v4', 'CHEBI'],
     polarity: 'POSITIVE',
-    fdrCounts: mockFdrCounts
+    fdrCounts: mockFdrCounts,
+    groupApproved: true,
   };
 
   afterEach(() => {
@@ -67,7 +68,7 @@ describe('DatasetTable', () => {
         allDatasets: (_: any, {filter:{status}, offset}: any) => {
           return [
             {...mockDataset, id: `${status}${offset+1}`, status},
-            {...mockDataset, id: `${status}${offset+2}`, status}
+            {...mockDataset, groupApproved: false, id: `${status}${offset+2}`, status}
           ]
         },
         countDatasets: () => 4,

@@ -63,7 +63,9 @@
         <span class="ds-add-filter"
               title="Filter by submitter"
               @click="addFilter('submitter')">
-          {{ formatSubmitter }}</span><!-- Be careful not to add empty space before the comma --><span v-if="dataset.group">,
+          {{ formatSubmitter }}</span><!--
+          Be careful not to add empty space before the comma
+          --><span v-if="dataset.groupApproved && dataset.group">,
           <span class="s-group ds-add-filter"
                 title="Filter by this group"
                 @click="addFilter('group')">
@@ -213,7 +215,7 @@
        const datasetMetadataExternals = {
          "Submitter": this.dataset.submitter,
          "PI": this.dataset.principalInvestigator,
-         "Group": this.dataset.group,
+         "Group": this.dataset.groupApproved ? this.dataset.group : null,
          "Projects": this.dataset.projects
        };
        return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals);
