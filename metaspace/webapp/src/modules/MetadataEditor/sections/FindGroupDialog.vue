@@ -9,7 +9,7 @@
       automatically added to the group once your access has been approved.</p>
     <el-form>
       <el-form-item
-        :error="groupReqError"
+        :error="groupIdError"
         label="Your group:">
         <el-row>
           <el-select
@@ -33,7 +33,7 @@
       <el-button @click="handleClose">Cancel</el-button>
       <el-button
         type="primary"
-        :disabled="groupId == null || sameGroupRequest"
+        :disabled="groupId == null || groupIdError != null"
         :loading="isGroupAccessLoading"
         @click="handleRequestGroupAccess">Request access
       </el-button>
@@ -55,6 +55,7 @@
     requestAccessToGroupMutation,
     GroupListItem,
   } from '../../../api/dataManagement';
+  import { UserGroupRoleOptions as UGRO } from '../../../api/group';
   import { userProfileQuery, UserProfileQuery } from '../../../api/user'
   import reportError from "../../../lib/reportError";
   import './FormSection.scss';
@@ -89,25 +90,22 @@
     currentUser!: UserProfileQuery;
     searchLoading = 0;
     isGroupAccessLoading: boolean = false;
-    sameGroupRequest: boolean = false;
     groupId: string | null = null;
 
-    get groupReqError() {
-      if (this.sameGroupRequest) {
-        return 'You are already member of the group or have requested the access'
-      }
-    }
-
-    @Watch('groupId')
-    checkFilteredGroup() {
-      this.sameGroupRequest = false;
-      if (this.currentUser.groups != null) {
-        this.currentUser.groups.forEach(el => {
-          if (el.group.id === this.groupId) {
-            this.sameGroupRequest = true;
+    get groupIdError(): string | null {
+      if (this.currentUser != null && this.currentUser.groups != null) {
+        const existingUserGroup = this.currentUser.groups.find(g => g.group.id == this.groupId);
+        if (existingUserGroup != null) {
+          if (existingUserGroup.role === UGRO.PENDING) {
+            return 'You have already requested access to this group.';
+          } else if (existingUserGroup.role === UGRO.INVITED) {
+            return 'You have already been invited this group. Please accept the invitation through your account page.';
+          } else {
+            return 'You are already a member of this group.';
           }
-        })
+        }
       }
+      return null;
     }
 
     handleSelectNoGroup() {
