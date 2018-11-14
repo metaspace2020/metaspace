@@ -75,6 +75,6 @@ export const smAPIUpdateDataset = async (id: string, updates: UpdateDatasetArgs)
       doc: updates
     });
   } catch (err) {
-    // TODO: Fix updates on busy datasets
+    logger.error('Failed to update dataset', err);
   }
 };
