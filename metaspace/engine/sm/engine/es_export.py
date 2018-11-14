@@ -319,7 +319,7 @@ class ESExporter(object):
 
     def update_ds(self, ds_id, fields):
         with self._ds_locker.lock(ds_id):
-            pipeline_id = 'update-ds-fields'
+            pipeline_id = f'update-ds-fields-{ds_id}'
             if fields:
                 ds_doc = self._select_ds_by_id(ds_id)
 
@@ -361,6 +361,7 @@ class ESExporter(object):
                         'wait_for_completion': True,
                         'request_timeout': 60,
                     })
+                self._ingest.delete_pipeline(pipeline_id)
 
     def delete_ds(self, ds_id, mol_db=None):
         """

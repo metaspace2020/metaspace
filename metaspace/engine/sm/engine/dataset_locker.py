@@ -4,7 +4,7 @@ from zlib import adler32
 
 
 LOCK_KEY = 894951
-MIN_CONNS = 1
+MIN_CONNS = 0
 MAX_CONNS = 2
 
 class DatasetLocker(object):

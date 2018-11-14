@@ -258,13 +258,14 @@ class SMIndexUpdateDaemon(object):
     def _on_success(self, msg):
         self.logger.info(f" SM update daemon: success")
 
-        if msg['action'] != 'delete':
+        if msg['action'] not in ['delete', 'update']:
             ds = Dataset.load(self._db, msg['ds_id'])
             ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FINISHED)
         if msg['action'] in ['update', 'index']:
             msg['web_app_link'] = self._manager.create_web_app_link(msg)
 
-        self._manager.post_to_slack('dart', f" [v] Succeeded to {msg['action']}: {json.dumps(msg)}")
+        if msg['action'] != 'update':
+            self._manager.post_to_slack('dart', f" [v] Succeeded to {msg['action']}: {json.dumps(msg)}")
 
         if msg.get('email'):
             self._manager.send_success_email(msg)
@@ -281,7 +282,6 @@ class SMIndexUpdateDaemon(object):
 
     def _callback(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
-        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.INDEXING)
 
         self.logger.info(f' SM update daemon received a message: {msg}')
         self._manager.post_to_slack('new', f" [v] New {msg['action']} message: {json.dumps(msg)}")
