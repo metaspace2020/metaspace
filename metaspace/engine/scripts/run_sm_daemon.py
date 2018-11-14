@@ -40,15 +40,16 @@ if __name__ == "__main__":
                                         annot_qdesc=SM_ANNOTATE,
                                         upd_qdesc=SM_UPDATE))
     elif args.name == 'update':
-        for i in range(8):
-            daemons.append(SMIndexUpdateDaemon(manager=get_manager(),
-                                               update_qdesc=SM_UPDATE))
+        for i in range(sm_config['services']['update_daemon_threads']):
+            daemon = SMIndexUpdateDaemon(manager=get_manager(),
+                                         update_qdesc=SM_UPDATE)
+            daemons.append(daemon)
     else:
         raise Exception(f'Wrong SM daemon name: {args.name}')
 
     def stop_daemons(*args):
-        for daemon in daemons:
-            daemon.stop()
+        for d in daemons:
+            d.stop()
 
     signal.signal(signal.SIGINT, stop_daemons)
     signal.signal(signal.SIGTERM, stop_daemons)
