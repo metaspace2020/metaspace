@@ -2,8 +2,8 @@
   "bottle": {
     "host": "localhost",
     "port": 5123,
-    "reloader": false,
-    "debug": false
+    "debug": false,
+    "server": "cherrypy"
   },
   "defaults": {
     "adducts": {{ sm_default_adducts | to_json }}
@@ -88,7 +88,7 @@
     "version": 1,
     "formatters": {
       "sm": {
-        "format": "%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s"
+        "format": "%(asctime)s - %(levelname)s - %(name)s[%(thread)d] - %(filename)s:%(lineno)d - %(message)s"
       }
     },
     "handlers": {

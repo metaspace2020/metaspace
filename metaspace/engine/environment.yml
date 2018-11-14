@@ -25,3 +25,6 @@ dependencies:
     - pysparkling
     - PyArrow>=0.8.0
     - Pillow==4.2.1
+    # bottle 0.12 only supports cherrypy<9. The as-yet unreleased bottle 0.13 supports cherrypy>=9 by changing the
+    # "server" setting to "cheroot"
+    - cherrypy<9
