@@ -2,8 +2,8 @@
   "bottle": {
     "host": "0.0.0.0",
     "port": 5123,
-    "refresh": true,
-    "debug": true
+    "debug": false,
+    "server": "cherrypy"
   },
   "defaults": {
     "adducts": {
