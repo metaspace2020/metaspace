@@ -9,7 +9,8 @@
     "start": "ts-node src/index.ts",
     "test": "jest",
     "test-integration": "mocha --timeout 3000 tests/*RegrTest.js",
-    "gen-binding": "graphql-binding --language typescript --input schema.ts --outputBinding src/binding.ts"
+    "gen-binding": "graphql-binding --language typescript --input schema.ts --outputBinding src/binding.ts",
+    "deref-schema": "node deref_schema.js ./metadataSchemas/"
   },
   "license": "ISC",
   "dependencies": {
