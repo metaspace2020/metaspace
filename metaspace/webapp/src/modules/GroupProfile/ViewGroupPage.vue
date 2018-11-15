@@ -56,7 +56,7 @@
         <el-tab-pane name="members" lazy>
           <span slot="label">
             {{'Members' | optionalSuffixInParens(countMembers)}}
-            <span v-if="hasMembershipRequest" class="notification" />
+            <notification-icon v-if="hasMembershipRequest" />
           </span>
           <div style="max-width: 950px">
             <group-members-list
@@ -99,6 +99,7 @@
   import GroupSettings from './GroupSettings.vue';
   import {encodeParams} from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
+  import NotificationIcon from '../../components/NotificationIcon.vue';
   import reportError from '../../lib/reportError';
   import {currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
   import isUuid from '../../lib/isUuid';
@@ -117,6 +118,7 @@
       GroupMembersList,
       GroupSettings,
       TransferDatasetsDialog,
+      NotificationIcon,
     },
     filters: {
       optionalSuffixInParens,
@@ -383,17 +385,6 @@
     flex-grow: 1;
     align-self: center;
     margin-right: 3px;
-  }
-
-  .notification:before {
-    content: '';
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 5px;
-    margin-left: 4px;
-    vertical-align: middle;
-    background-color: $--color-success;
   }
 
   .hidden-members-text {
