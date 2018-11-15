@@ -273,9 +273,8 @@ class SMIndexUpdateDaemon(object):
     def _on_failure(self, msg):
         self.logger.error(f' SM update daemon: failure', exc_info=True)
 
-        if msg['action'] != 'update':
-            ds = Dataset.load(self._db, msg['ds_id'])
-            ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FAILED)
+        ds = Dataset.load(self._db, msg['ds_id'])
+        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FAILED)
 
         self._manager.post_to_slack('hankey', f" [x] Failed to {msg['action']}: {json.dumps(msg)}")
 
