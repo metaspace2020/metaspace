@@ -13,6 +13,7 @@
           <el-checkbox class="cb-started" label="started">Processing {{ count('started') }}</el-checkbox>
           <el-checkbox class="cb-queued" label="queued">Queued {{ count('queued') }}</el-checkbox>
           <el-checkbox label="finished">Finished {{ count('finished') }}</el-checkbox>
+          <el-checkbox v-if="canSeeFailed" class="cb-failed" label="failed">Failed {{ count('failed') }}</el-checkbox>
         </el-checkbox-group>
       </el-form>
     </div>
@@ -37,7 +38,7 @@
         </el-button>
       </div>
 
-      <dataset-list :datasets="datasets" allowDoubleColumn />
+      <dataset-list :datasets="datasets" allowDoubleColumn @datasetMutated="handleDatasetMutated" />
     </div>
   </div>
 </template>
@@ -52,8 +53,9 @@
  import FileSaver from 'file-saver';
  import delay from '../../../lib/delay';
  import formatCsvRow from '../../../lib/formatCsvRow';
+  import {currentUserRoleQuery} from '../../../api/user';
 
- const processingStages = ['started', 'queued', 'finished'];
+ const processingStages = ['started', 'queued', 'failed', 'finished'];
 
  export default {
    name: 'dataset-table',
@@ -61,7 +63,7 @@
      return {
        recordsPerPage: 10,
        csvChunkSize: 1000,
-       categories: processingStages,
+       categories: ['started', 'queued', 'finished'],
        isExporting: false
      }
    },
@@ -98,6 +100,10 @@
            list = list.concat(this[category]);
        return list;
      },
+
+     canSeeFailed() {
+       return this.currentUser != null && this.currentUser.role === 'admin';
+     }
    },
 
    apollo: {
@@ -128,6 +134,23 @@
 
            this.refetchList();
          }
+       }
+     },
+
+     currentUser: {
+       query: currentUserRoleQuery,
+       fetchPolicy: 'cache-first',
+     },
+
+     failed: {
+       fetchPolicy: 'cache-and-network',
+       query: datasetDetailItemsQuery,
+       update: data => data.allDatasets,
+       skip() {
+         return !this.canSeeFailed;
+       },
+       variables () {
+         return this.queryVariables('FAILED');
        }
      },
 
@@ -206,6 +229,15 @@
        this.$apollo.queries.queued.refresh();
        this.$apollo.queries.finished.refresh();
        this.$apollo.queries.finishedCount.refresh();
+       if (this.canSeeFailed) {
+         this.$apollo.queries.failed.refresh();
+       }
+     },
+
+     handleDatasetMutated() {
+       // Reset the throttled function as the next datasetStatusUpdated message is probably related to the mutation that
+       // the user just triggered.
+       this.refetchList.flush();
      },
 
      async startExport() {
@@ -222,7 +254,7 @@
          return formatCsvRow([
            row.id,
            row.name,
-           row.group ? row.group.name : '',
+           row.groupApproved && row.group ? row.group.shortName : '',
            person(row.submitter),
            person(row.principalInvestigator),
            row.organism,
@@ -310,6 +342,10 @@
 
  .cb-queued .el-checkbox__input.is-checked .el-checkbox__inner {
    background: #72c8e5;
+ }
+
+ .cb-failed .el-checkbox__input.is-checked .el-checkbox__inner {
+   background: #f56c6c;
  }
 
  #dataset-list-header {

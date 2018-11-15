@@ -11,6 +11,16 @@ export interface DatasetDetailItem {
     id: string | null;
     name: string;
   };
+  principalInvestigator: {
+    name: string;
+    email: string | null;
+  } | null;
+  group: {
+    id: string;
+    name: string;
+    shortName: string;
+  };
+  groupApproved: boolean;
   polarity: GqlPolarity;
   ionisationSource: string;
   analyzer: {
@@ -22,7 +32,7 @@ export interface DatasetDetailItem {
   condition: string | null;
   growthConditions: string | null;
   metadataJson: string;
-  isPublic: Boolean;
+  isPublic: boolean;
   molDBs: string[];
   status: GqlJobStatus | null;
   metadataType: string;
@@ -45,6 +55,7 @@ export const datasetDetailItemFragment =
     }
     principalInvestigator { name email }
     group { id name shortName }
+    groupApproved
     projects { id name }
     polarity
     ionisationSource
@@ -122,8 +133,13 @@ export const createDatasetQuery =
   }`;
 
 export const deleteDatasetQuery =
+  gql`mutation ($id: String!, $force: Boolean) {
+    deleteDataset(id: $id, force: $force)
+  }`;
+
+export const reprocessDatasetQuery =
   gql`mutation ($id: String!) {
-    deleteDataset(id: $id)
+    reprocessDataset(id: $id)
   }`;
 
 export const addOpticalImageQuery =
@@ -176,4 +192,4 @@ export const datasetStatusUpdatedQuery = gql`subscription DS {
       isPublic
     }
   }
-}`
+}`;

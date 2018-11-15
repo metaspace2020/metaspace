@@ -56,7 +56,7 @@
         <el-tab-pane name="members" lazy>
           <span slot="label">
             {{'Members' | optionalSuffixInParens(countMembers)}}
-            <i v-if="hasMembershipRequest" class="el-icon-message notification" />
+            <span v-if="hasMembershipRequest" class="notification" />
           </span>
           <div style="max-width: 950px">
             <group-members-list
@@ -385,10 +385,15 @@
     margin-right: 3px;
   }
 
-  .notification {
+  .notification:before {
+    content: '';
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 5px;
     margin-left: 4px;
     vertical-align: middle;
-    color: $--color-danger;
+    background-color: $--color-success;
   }
 
   .hidden-members-text {

@@ -1,12 +1,12 @@
 <template>
   <div class="dataset-item" :class="disabledClass">
 
-    <el-dialog title="Provided metadata" :visible.sync="showMetadataDialog">
+    <el-dialog title="Provided metadata" :lock-scroll="false" :visible.sync="showMetadataDialog">
       <dataset-info :metadata="metadata" :currentUser="currentUser" />
     </el-dialog>
 
     <div class="opt-image" v-if="isOpticalImageSupported">
-      <router-link :to="opticalImageAlignmentHref" v-if="haveEditAccess && dataset.status === 'FINISHED'">
+      <router-link :to="opticalImageAlignmentHref" v-if="canEditOpticalImage">
         <div v-if="thumbnailCheck" class="edit-opt-image" title="Edit Optical Image">
           <img class="opt-image-thumbnail" :src="opticalImageSmall" alt="Edit optical image"/>
         </div>
@@ -63,7 +63,9 @@
         <span class="ds-add-filter"
               title="Filter by submitter"
               @click="addFilter('submitter')">
-          {{ formatSubmitter }}</span><!-- Be careful not to add empty space before the comma --><span v-if="dataset.group">,
+          {{ formatSubmitter }}</span><!--
+          Be careful not to add empty space before the comma
+          --><span v-if="dataset.groupApproved && dataset.group">,
           <span class="s-group ds-add-filter"
                 title="Filter by this group"
                 @click="addFilter('group')">
@@ -107,15 +109,20 @@
       <i class="el-icon-view"></i>
       <a @click="showMetadata" class="metadata-link">Show full metadata</a>
 
-      <div v-if="haveEditAccess && !['QUEUED', 'ANNOTATING', 'INDEXING'].includes(dataset.status)">
+      <div v-if="canEdit">
         <i class="el-icon-edit"></i>
         <router-link :to="editHref">Edit metadata</router-link>
       </div>
 
-      <div v-if="haveEditAccess && !['QUEUED', 'ANNOTATING', 'INDEXING'].includes(dataset.status)"
+      <div v-if="canEdit"
            class="ds-delete">
         <i class="el-icon-delete"></i>
-        <a @click="openDeleteDialog">Delete dataset</a>
+        <a href="#" @click.prevent="openDeleteDialog">Delete dataset</a>
+      </div>
+
+      <div v-if="canReprocess" class="ds-reprocess">
+        <i class="el-icon-refresh"></i>
+        <a href="#" @click.prevent="handleReprocess">Reprocess dataset</a>
       </div>
 
       <el-popover v-if="!dataset.isPublic" trigger="hover" placement="top" @show="loadVisibility">
@@ -133,7 +140,12 @@
 <script>
  import DatasetInfo from '../../../components/DatasetInfo.vue';
  import {capitalize} from 'lodash-es';
- import { datasetVisibilityQuery, deleteDatasetQuery, thumbnailOptImageQuery } from '../../../api/dataset';
+ import {
+   datasetVisibilityQuery,
+   deleteDatasetQuery,
+   reprocessDatasetQuery,
+   thumbnailOptImageQuery,
+ } from '../../../api/dataset';
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
  import { currentUserRoleQuery } from '../../../api/user';
@@ -213,7 +225,7 @@
        const datasetMetadataExternals = {
          "Submitter": this.dataset.submitter,
          "PI": this.dataset.principalInvestigator,
-         "Group": this.dataset.group,
+         "Group": this.dataset.groupApproved ? this.dataset.group : null,
          "Projects": this.dataset.projects
        };
        return Object.assign(safeJsonParse(this.dataset.metadataJson), datasetMetadataExternals);
@@ -245,14 +257,25 @@
        return (Resolving_Power / 1000).toFixed(0) + 'k @ ' + mz;
      },
 
-     haveEditAccess() {
-       if (!this.currentUser)
-         return false;
-       if (this.currentUser.role === 'admin')
-         return true;
-       if (this.currentUser.id === this.dataset.submitter.id)
-         return true;
+     canEdit() {
+       if (this.currentUser != null) {
+         if (this.currentUser.role === 'admin' && !['ANNOTATING', 'INDEXING'].includes(this.dataset.status))
+           return true;
+         if (this.currentUser.id === this.dataset.submitter.id
+           && !['QUEUED', 'ANNOTATING', 'INDEXING'].includes(this.dataset.status))
+           return true;
+       }
        return false;
+     },
+
+     canEditOpticalImage() {
+       return this.canEdit && this.dataset.status === 'FINISHED';
+     },
+
+     canReprocess() {
+       return this.currentUser != null
+         && this.currentUser.role === 'admin'
+         && !['ANNOTATING', 'INDEXING'].includes(this.dataset.status);
      },
 
      editHref() {
@@ -348,8 +371,13 @@
      },
 
      async openDeleteDialog() {
+       const force = this.currentUser != null
+         && this.currentUser.role === 'admin'
+         && this.dataset.status !== 'FINISHED';
        try {
-         await this.$confirm(`Are you sure you want to delete ${this.formatDatasetName}?`);
+         await this.$confirm(`Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${this.formatDatasetName}?`, {
+           type: force ? 'warning' : null
+         });
        } catch (cancel) {
          return;
        }
@@ -359,13 +387,34 @@
          const resp = await this.$apollo.mutate({
            mutation: deleteDatasetQuery,
            variables: {
-             id: this.dataset.id
+             id: this.dataset.id,
+             force
            }
          });
+         this.$emit('datasetMutated');
        }
        catch (err) {
          this.disabled = false;
          reportError(err, "Deletion failed :( Please contact us at contact@metaspace2020.eu");
+       }
+     },
+
+     async handleReprocess() {
+       try {
+         this.disabled = true;
+         await this.$apollo.mutate({
+           mutation: reprocessDatasetQuery,
+           variables: {
+             id: this.dataset.id,
+           }
+         });
+         this.$notify.success("Dataset sent for reprocessing");
+         this.$emit('datasetMutated');
+       }
+       catch (err) {
+         reportError(err);
+       } finally {
+         this.disabled = false;
        }
      },
 
@@ -490,11 +539,11 @@
    flex: none;
  }
 
- .metadata-link, .ds-delete > a {
+ .metadata-link {
    text-decoration: underline;
  }
 
- .metadata-link, .ds-add-filter, .ds-delete > a {
+ .metadata-link, .ds-add-filter {
    cursor: pointer;
  }
 
@@ -536,7 +585,7 @@
    font-size: initial;
  }
 
- .ds-delete, .ds-delete > a {
+ .ds-delete, .ds-delete > a, .ds-reprocess, .ds-reprocess > a {
    color: #a00;
  }
 

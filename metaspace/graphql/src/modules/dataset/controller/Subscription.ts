@@ -20,11 +20,11 @@ async function publishDatasetStatusUpdate(ds_id: string, status: DatasetStatus) 
       logger.debug(JSON.stringify({attempt, status}));
       const ds = await esDatasetByID(ds_id, null);
 
-      if (ds === null && status === 'DELETED') {
+      if (ds == null && status === 'DELETED') {
         await wait(1000);
         pubsub.publish('datasetStatusUpdated', {});
         return;
-      } else if (ds !== null && status !== 'DELETED') {
+      } else if (ds != null && status !== 'DELETED') {
         pubsub.publish('datasetStatusUpdated', {
           dataset: Object.assign({}, ds, { status }),
           dbDs: await fetchEngineDS({ id: ds_id })
