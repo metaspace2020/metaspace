@@ -25,9 +25,11 @@ const UserProjectResolvers: FieldResolversFor<UserProject, UserProjectSource> = 
     return await connection.getRepository(DatasetModel)
       .createQueryBuilder('dataset')
       .innerJoin('dataset.datasetProjects', 'datasetProject')
+      .innerJoin('(SELECT id, status FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
       .where('dataset.userId = :userId', { userId })
       .andWhere('datasetProject.projectId = :projectId', { projectId })
       .andWhere('datasetProject.approved = TRUE')
+      .andWhere(`engine_dataset.status != 'FAILED'`)
       .getCount();
   },
 };
