@@ -94,7 +94,6 @@ export const Resolvers = {
     },
 
     async hasPendingRequest(group: GroupModel & Scope, args: any, ctx: Context): Promise<boolean | null> {
-      console.log(group);
       if (group.scopeRole === ScopeRoleOptions.GROUP_MANAGER) {
         const requests = await ctx.connection.getRepository(UserGroupModel).count({
           where: { groupId: group.id, role: UserGroupRoleOptions.PENDING }
@@ -120,10 +119,20 @@ export const Resolvers = {
         ? { groupId: group.id }
         : { groupId: group.id, role: UserGroupRoleOptions.GROUP_ADMIN };
 
-      const userGroupModels = await ctx.connection.getRepository(UserGroupModel).find({
-        where: filter,
-        relations: ['user', 'group']
-      });
+      const userGroupModels = await ctx.connection.getRepository(UserGroupModel)
+        .createQueryBuilder('user_group')
+        .where(filter)
+        .leftJoinAndSelect('user_group.user', 'user')
+        .leftJoinAndSelect('user_group.group', 'group')
+        .orderBy(`CASE user_group.role 
+                         WHEN '${UserGroupRoleOptions.PENDING}' THEN 1 
+                         WHEN '${UserGroupRoleOptions.INVITED}' THEN 2 
+                         WHEN '${UserGroupRoleOptions.GROUP_ADMIN}' THEN 3 
+                         WHEN '${UserGroupRoleOptions.MEMBER}' THEN 4 
+                         ELSE 5 
+                     END`)
+        .addOrderBy('user.name')
+        .getMany();
       return userGroupModels.map(ug => ({
         user: {...ug.user, scopeRole},
         group: ug.group,

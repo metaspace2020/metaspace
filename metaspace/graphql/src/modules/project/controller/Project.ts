@@ -45,10 +45,19 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
 
     const userProjectModels = await ctx.connection
       .getRepository(UserProjectModel)
-      .find({
-        where: filter,
-        relations: ['user', 'project'],
-      });
+      .createQueryBuilder('user_project')
+      .where(filter)
+      .leftJoinAndSelect('user_project.user', 'user')
+      .leftJoinAndSelect('user_project.project', 'project')
+      .orderBy(`CASE user_project.role 
+                         WHEN '${UPRO.PENDING}' THEN 1 
+                         WHEN '${UPRO.INVITED}' THEN 2 
+                         WHEN '${UPRO.MANAGER}' THEN 3 
+                         WHEN '${UPRO.MEMBER}' THEN 4 
+                         ELSE 5 
+                     END`)
+      .addOrderBy('user.name')
+      .getMany();
     return userProjectModels.map(up => ({
       ...up,
       user: convertUserToUserSource(up.user, getProjectScopeRole(project.currentUserRole)),
