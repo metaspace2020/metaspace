@@ -377,16 +377,17 @@ class ESExporter(object):
                 self._ingest.put_pipeline(
                     id=pipeline_id,
                     body={'processors': processors})
-                # Note: mind the time gap between the queries when called from different processes
-                self._es.update_by_query(
-                    index=self.index,
-                    body={'query': {'term': {'ds_id': ds_id}}},
-                    params={
-                        'pipeline': pipeline_id,
-                        'wait_for_completion': True,
-                        'request_timeout': 60,
-                    })
-                self._ingest.delete_pipeline(pipeline_id)
+                try:
+                    self._es.update_by_query(
+                        index=self.index,
+                        body={'query': {'term': {'ds_id': ds_id}}},
+                        params={
+                            'pipeline': pipeline_id,
+                            'wait_for_completion': True,
+                            'request_timeout': 60,
+                        })
+                finally:
+                    self._ingest.delete_pipeline(pipeline_id)
 
     @retry_on_conflict()
     def delete_ds(self, ds_id, mol_db=None):
