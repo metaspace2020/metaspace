@@ -89,7 +89,10 @@ describe('Database operations with user', () => {
     });
 
     let newCred = (await testEntityManager.findOne(Credentials)) as Credentials;
-    expect(newCred).toMatchObject(cred);
+    expect(newCred).toMatchObject({
+      ...cred,
+      hash: expect.anything(),
+    });
 
     expect(mockEmail.sendVerificationEmail).toHaveBeenCalledTimes(1);
     expect(mockEmail.sendVerificationEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
@@ -107,7 +110,7 @@ describe('Database operations with user', () => {
     });
 
     const newCred = (await testEntityManager.findOne(Credentials)) as Credentials;
-    expect(newCred.hash).toEqual(oldCred.hash);
+    expect(newCred.hash).not.toEqual(oldCred.hash);
     expect(newCred.emailVerificationToken).not.toEqual(oldCred.emailVerificationToken);
     expect(newCred.emailVerificationTokenExpires).toEqual(expect.anything());
     expect(newCred.emailVerificationTokenExpires!.valueOf())
@@ -127,7 +130,10 @@ describe('Database operations with user', () => {
     });
 
     const updCred = await testEntityManager.findOne(Credentials);
-    expect(updCred).toMatchObject(cred);
+    expect(updCred).toMatchObject({
+      ...cred,
+      hash: expect.anything(),
+    });
 
     expect(mockEmail.sendLoginEmail).toHaveBeenCalledTimes(1);
     expect(mockEmail.sendLoginEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());

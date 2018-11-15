@@ -24,27 +24,35 @@ if __name__ == "__main__":
     logger = logging.getLogger(f'{args.name}-daemon')
     logger.info(f'Starting {args.name}-daemon')
 
-    db = DB(sm_config['db'])
-    status_queue_pub = QueuePublisher(config=sm_config['rabbitmq'],
-                                      qdesc=SM_DS_STATUS,
-                                      logger=logger)
-    manager = SMDaemonManager(
-        db=db, es=ESExporter(db),
-        img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
-        status_queue=status_queue_pub,
-        logger=logger
-    )
+    def get_manager():
+        db = DB(sm_config['db'])
+        status_queue_pub = QueuePublisher(config=sm_config['rabbitmq'],
+                                          qdesc=SM_DS_STATUS,
+                                          logger=logger)
+        return SMDaemonManager(
+            db=db, es=ESExporter(db),
+            img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
+            status_queue=status_queue_pub,
+            logger=logger)
+    daemons = []
     if args.name == 'annotate':
-        daemon = SMAnnotateDaemon(manager=manager,
-                                  annot_qdesc=SM_ANNOTATE,
-                                  upd_qdesc=SM_UPDATE)
+        daemons.append(SMAnnotateDaemon(manager=get_manager(),
+                                        annot_qdesc=SM_ANNOTATE,
+                                        upd_qdesc=SM_UPDATE))
     elif args.name == 'update':
-        daemon = SMIndexUpdateDaemon(manager=manager,
-                                     update_qdesc=SM_UPDATE)
+        for i in range(sm_config['services']['update_daemon_threads']):
+            daemon = SMIndexUpdateDaemon(manager=get_manager(),
+                                         update_qdesc=SM_UPDATE)
+            daemons.append(daemon)
     else:
         raise Exception(f'Wrong SM daemon name: {args.name}')
 
-    signal.signal(signal.SIGINT, lambda *args: daemon.stop())
-    signal.signal(signal.SIGTERM, lambda *args: daemon.stop())
+    def stop_daemons(*args):
+        for d in daemons:
+            d.stop()
 
-    daemon.start()
+    signal.signal(signal.SIGINT, stop_daemons)
+    signal.signal(signal.SIGTERM, stop_daemons)
+
+    for daemon in daemons:
+        daemon.start()
