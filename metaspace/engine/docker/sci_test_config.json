@@ -33,7 +33,7 @@
     "s3_base_path": ""
   },
   "spark": {
-    "master": "local[4]",
+    "master": "local[2]",
     "executor.memory": "2g",
     "spark.sql.execution.arrow.enabled": true
   },
