@@ -158,6 +158,7 @@ describe('ViewGroupPage', () => {
 
     expect(router.currentRoute.params.groupIdOrSlug).toEqual(urlSlug);
     // Assert that the correct graphql calls were made. See the GraphQLFieldResolver type for details on the args here
+    expect(mockGroupFn).toHaveBeenCalledTimes(2);
     expect(mockGroupFn.mock.calls[0][1].groupId).toEqual(mockGroup.id);
     expect(mockGroupFn.mock.calls[0][3].fieldName).toEqual('group');
     expect(mockGroupFn.mock.calls[1][1].urlSlug).toEqual(urlSlug);

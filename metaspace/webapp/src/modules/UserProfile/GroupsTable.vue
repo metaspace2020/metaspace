@@ -12,6 +12,10 @@
         <el-table-column label="Group">
           <template slot-scope="scope">
             <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
+            <notification-icon
+              v-if="scope.row.hasPendingRequest"
+              :tooltip="`${scope.row.name} has a pending membership request.`"
+              tooltipPlacement="right" />
           </template>
         </el-table-column>
         <el-table-column prop="roleName" label="Role" width="160" />
@@ -75,6 +79,7 @@
   } from '../../api/group';
   import reportError from '../../lib/reportError';
   import ConfirmAsync from '../../components/ConfirmAsync';
+  import NotificationIcon from '../../components/NotificationIcon.vue';
   import { encodeParams } from '../Filters';
   import { TransferDatasetsDialog } from '../GroupProfile';
 
@@ -88,7 +93,8 @@
 
   @Component({
     components: {
-      TransferDatasetsDialog
+      TransferDatasetsDialog,
+      NotificationIcon,
     }
   })
   export default class GroupsTable extends Vue {
@@ -104,10 +110,10 @@
       if (this.currentUser != null && this.currentUser.groups != null) {
         return this.currentUser.groups.map((item) => {
           const {group, numDatasets, role} = item;
-          const {id, name, urlSlug} = group;
+          const {id, name, urlSlug, hasPendingRequest} = group;
 
           return {
-            id, name, role, numDatasets,
+            id, name, role, numDatasets, hasPendingRequest,
             roleName: getRoleName(role),
             route: {
               name: 'group',

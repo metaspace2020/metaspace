@@ -131,12 +131,12 @@
         query() {
           if (isUuid(this.$route.params.groupIdOrSlug)) {
             return gql`query GroupProfileById($groupIdOrSlug: ID!) {
-              group(groupId: $groupIdOrSlug) { ...ViewGroupFragment }
+              group(groupId: $groupIdOrSlug) { ...ViewGroupFragment hasPendingRequest }
             }
             ${ViewGroupFragment}`;
           } else {
             return gql`query GroupProfileBySlug($groupIdOrSlug: String!) {
-              group: groupByUrlSlug(urlSlug: $groupIdOrSlug) { ...ViewGroupFragment }
+              group: groupByUrlSlug(urlSlug: $groupIdOrSlug) { ...ViewGroupFragment hasPendingRequest }
             }
             ${ViewGroupFragment}`;
           }
@@ -144,6 +144,9 @@
         variables() {
           return {groupIdOrSlug: this.$route.params.groupIdOrSlug};
         },
+        // Can't be 'no-cache' because `refetchGroup` is used for updating the cache, which in turn updates
+        // MetaspaceHeader's primaryGroup & the group.hasPendingRequest notification
+        fetchPolicy: 'network-only',
         loadingKey: 'groupLoading'
       },
       data: {

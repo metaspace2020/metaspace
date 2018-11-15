@@ -120,12 +120,12 @@
         query() {
           if (isUuid(this.$route.params.projectIdOrSlug)) {
             return gql`query ProjectProfileById($projectIdOrSlug: ID!) {
-              project(projectId: $projectIdOrSlug) { ...ViewProjectFragment }
+              project(projectId: $projectIdOrSlug) { ...ViewProjectFragment hasPendingRequest }
             }
             ${ViewProjectFragment}`;
           } else {
             return gql`query ProjectProfileBySlug($projectIdOrSlug: String!) {
-              project: projectByUrlSlug(urlSlug: $projectIdOrSlug) { ...ViewProjectFragment }
+              project: projectByUrlSlug(urlSlug: $projectIdOrSlug) { ...ViewProjectFragment hasPendingRequest }
             }
             ${ViewProjectFragment}`;
           }
@@ -133,6 +133,9 @@
         variables() {
           return {projectIdOrSlug: this.$route.params.projectIdOrSlug};
         },
+        // Can't be 'no-cache' because `refetchProject` is used for updating the cache, which in turn updates
+        // MetaspaceHeader's project.hasPendingRequest notification
+        fetchPolicy: 'network-only',
         loadingKey: 'projectLoading'
       },
       data: {

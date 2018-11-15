@@ -147,6 +147,7 @@
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "setupTestFrameworkScriptFile": "<rootDir>/tests/utils/setupTestFramework.ts",
+    "clearMocks": true,
     "restoreMocks": true,
     "moduleFileExtensions": [
       "ts",
