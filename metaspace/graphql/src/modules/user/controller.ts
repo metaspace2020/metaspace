@@ -107,9 +107,13 @@ export const Resolvers = {
 
     async allUsers(_: any, {query}: any, ctx: Context): Promise<UserSource[]|null> {
       if (ctx.isAdmin) {
-        const users = await ctx.connection.getRepository(UserModel).find({
-          where: { name: Like(`%${query}%`) }
-        }) as UserModel[];
+        const users = await ctx.connection.getRepository(UserModel)
+          .createQueryBuilder('user')
+          .where(`user.name ILIKE '%' || :query || '%'`, {query})
+          .orWhere(`user.email ILIKE :query || '%'`, {query})
+          .orWhere(`user.notVerifiedEmail ILIKE :query || '%'`, {query})
+          .orderBy(`user.name`)
+          .getMany() as UserModel[];
         const promises = users.map(async user =>
           convertUserToUserSource(user, await resolveUserScopeRole(ctx, user.id)));
         return Promise.all(promises);
