@@ -148,7 +148,7 @@ describe('modules/project/controller (queries)', () => {
           const {id, name} = otherMember!;
           expectedMembers = expect.arrayContaining([{id, name, email: null}]);
         } else {
-          expectedMembers = null;
+          expectedMembers = [];
         }
 
         expect(members).toEqual(expectedMembers);
@@ -290,10 +290,10 @@ describe('modules/project/controller (queries)', () => {
       const result = await doQuery(query);
 
       expect(result.projects).toEqual(expect.arrayContaining([
-        {role: UPRO.INVITED, numDatasets: 0, project: { members: null }},
-        {role: UPRO.PENDING, numDatasets: 1, project: { members: null }},
-        {role: UPRO.MEMBER, numDatasets: 2, project: { members: expect.anything() }},
-        {role: UPRO.MANAGER, numDatasets: 3, project: { members: expect.anything() }},
+        {role: UPRO.INVITED, numDatasets: 0, project: { members: [] }},
+        {role: UPRO.PENDING, numDatasets: 1, project: { members: [] }},
+        {role: UPRO.MEMBER, numDatasets: 2, project: { members: expect.arrayContaining([expect.anything()]) }},
+        {role: UPRO.MANAGER, numDatasets: 3, project: { members: expect.arrayContaining([expect.anything()]) }},
       ]));
     })
   });

@@ -191,11 +191,12 @@ type CreateDatasetArgs = {
   id?: string,
   input: DatasetCreateInput,
   priority?: Int,
-  reprocess?: boolean, // Only used by reprocess
-  delFirst?: boolean,  // Only used by reprocess
+  reprocess?: boolean,       // Only used by reprocess
+  delFirst?: boolean,        // Only used by reprocess
+  skipValidation?: boolean,  // Only used by reprocess
 };
 const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
-  const {input, priority} = args;
+  const {input, priority, skipValidation} = args;
   const {user, connection, isAdmin, getUserIdOrFail} = ctx;
   const dsId = args.id || newDatasetId();
   const dsIdWasSpecified = !!args.id;
@@ -210,7 +211,9 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   }
 
   const metadata = JSON.parse(input.metadataJson);
-  validateMetadata(metadata);
+  if (!skipValidation || !isAdmin) {
+    validateMetadata(metadata);
+  }
   // TODO: Many of the inputs are mistyped because of bugs in graphql-binding that should be reported and/or fixed
   await molDBsExist(input.molDBs as any || []);
 
@@ -250,6 +253,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       input: ds as any, // TODO: map this properly
       priority: priority,
       reprocess: true,
+      skipValidation: true,
       delFirst: delFirst,
     }, ctx);
   },
@@ -321,11 +325,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
   },
 
   deleteDataset: async (_, args, {user, connection}) => {
-    const {id: dsId, priority} = args;
+    const {id: dsId, force} = args;
     if (user == null) {
       throw new UserError('Unauthorized');
     }
-    const resp = await deleteDataset(connection, user, dsId);
+    const resp = await deleteDataset(connection, user, dsId, {force});
     return JSON.stringify(resp);
   },
 

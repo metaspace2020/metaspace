@@ -87,6 +87,12 @@ config.slack.channel = "";
 config.jwt = {};
 config.jwt.secret = "secret";
 
+config.aws = {
+  aws_access_key_id: "",
+  aws_secret_access_key: "",
+  aws_region: "eu-west-1"
+};
+
 config.features = {
   newAuth: false
 };

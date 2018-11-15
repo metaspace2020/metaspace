@@ -26,7 +26,7 @@ const fieldRenameMap = {
 };
 
 export const smAPIRequest = async (uri: string, args: any={}) => {
-  const body: SMAPIBody = args;
+  const body: SMAPIBody = args || {};
   // @ts-ignore
   body.doc = _.mapKeys(body.doc, (v, k) => fieldRenameMap[k] || k);
 
@@ -77,4 +77,13 @@ export const smAPIUpdateDataset = async (id: string, updates: UpdateDatasetArgs)
   } catch (err) {
     // TODO: Fix updates on busy datasets
   }
+};
+
+export interface DeleteDatasetArgs {
+  del_raw?: boolean;
+  force?: boolean;
+}
+
+export const smAPIDeleteDataset = async (dsId: string, args?: DeleteDatasetArgs) => {
+  return await smAPIRequest(`/v1/datasets/${dsId}/delete`, args);
 };

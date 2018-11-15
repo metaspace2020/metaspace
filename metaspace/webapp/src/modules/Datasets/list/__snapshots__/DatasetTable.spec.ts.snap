@@ -48,6 +48,7 @@ exports[`DatasetTable should match snapshot 1`] = `
         <label role="checkbox" aria-checked="true" class="el-checkbox is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
           <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="finished">
           </span><span class="el-checkbox__label">Finished (1)<!----></span></label>
+        <!---->
       </div>
     </form>
   </div>
@@ -168,6 +169,7 @@ exports[`DatasetTable should match snapshot 1`] = `
           <!---->
           <!---->
           <!---->
+          <!---->
         </div>
       </div>
       <div class="dataset-item odd">
@@ -272,6 +274,7 @@ exports[`DatasetTable should match snapshot 1`] = `
           <!----><span><div title="Waiting in the queue" class="striped-progressbar queued"></div></span>
           <i class="el-icon-view"></i>
           <a class="metadata-link">Show full metadata</a>
+          <!---->
           <!---->
           <!---->
           <!---->
@@ -389,6 +392,7 @@ exports[`DatasetTable should match snapshot 1`] = `
           <!---->
           <i class="el-icon-view"></i>
           <a class="metadata-link">Show full metadata</a>
+          <!---->
           <!---->
           <!---->
           <!---->
