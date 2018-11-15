@@ -15,10 +15,8 @@ import {DatasetProject as DatasetProjectModel} from '../../dataset/model';
 const canViewProjectMembersAndDatasets = (currentUserRole: UserProjectRole | null, isAdmin: boolean) =>
   isAdmin || ([UPRO.MANAGER, UPRO.MEMBER] as (UserProjectRole | null)[]).includes(currentUserRole);
 
-const getProjectScopeRole = (currentUserRole: UserProjectRole | null, isAdmin: boolean): ScopeRole => {
-  if (isAdmin) {
-    return SRO.ADMIN;
-  } else if (currentUserRole === UPRO.MANAGER) {
+const getProjectScopeRole = (currentUserRole: UserProjectRole | null): ScopeRole => {
+  if (currentUserRole === UPRO.MANAGER) {
     return SRO.PROJECT_MANAGER;
   } else if (currentUserRole === UPRO.MEMBER) {
     return SRO.PROJECT_MEMBER;
@@ -28,6 +26,18 @@ const getProjectScopeRole = (currentUserRole: UserProjectRole | null, isAdmin: b
 };
 
 const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
+  async hasPendingRequest(project, args, ctx: Context): Promise<boolean | null> {
+    if (project.currentUserRole === UPRO.MANAGER) {
+      const requests = await ctx.connection
+        .getRepository(UserProjectModel)
+        .count({
+          where: { projectId: project.id, role: UPRO.PENDING }
+        });
+      return requests > 0;
+    }
+    return null;
+  },
+
   async members(project, args, ctx: Context): Promise<UserProjectSource[] | null> {
     const filter = canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin)
       ? { projectId: project.id }
@@ -41,7 +51,7 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
       });
     return userProjectModels.map(up => ({
       ...up,
-      user: convertUserToUserSource(up.user, getProjectScopeRole(project.currentUserRole, ctx.isAdmin)),
+      user: convertUserToUserSource(up.user, getProjectScopeRole(project.currentUserRole)),
     }));
   },
 

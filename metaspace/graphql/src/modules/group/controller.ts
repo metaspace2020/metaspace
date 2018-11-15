@@ -1,41 +1,19 @@
 import {UserError} from 'graphql-errors';
-import {Connection, In, EntityManager} from 'typeorm';
+import {Connection, EntityManager, In} from 'typeorm';
 
 import {Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions} from './model';
 import {User as UserModel} from '../user/model';
 import {Dataset as DatasetModel} from '../dataset/model';
 import {Group, UserGroup, UserGroupRole} from '../../binding';
 import {Context, ContextUser} from '../../context';
-import {Scope, ScopeRole, ScopeRoleOptions} from '../../bindingTypes';
-import {LooselyCompatible, logger, findUserByEmail} from '../../utils';
+import {Scope, ScopeRoleOptions} from '../../bindingTypes';
+import {findUserByEmail, logger, LooselyCompatible} from '../../utils';
 import {sendInvitationEmail} from '../auth';
 import config from '../../utils/config';
 import {createInactiveUser} from '../auth/operation';
 import {smAPIUpdateDataset} from '../../utils/smAPI';
 import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
-
-const resolveGroupScopeRole = async (ctx: Context, groupId?: string): Promise<ScopeRole> => {
-  let scopeRole = ScopeRoleOptions.OTHER;
-  if (ctx.user != null && ctx.user.role === 'admin') {
-    scopeRole = ScopeRoleOptions.ADMIN;
-  }
-  else {
-    if (ctx.user != null && groupId) {
-      const userGroup = await ctx.connection.getRepository(UserGroupModel).findOne({
-        where: { userId: ctx.user.id, groupId }
-      });
-      if (userGroup) {
-        if (userGroup.role == UserGroupRoleOptions.MEMBER) {
-          scopeRole =  ScopeRoleOptions.GROUP_MEMBER;
-        }
-        else if (userGroup.role == UserGroupRoleOptions.GROUP_ADMIN) {
-          scopeRole = ScopeRoleOptions.GROUP_MANAGER;
-        }
-      }
-    }
-  }
-  return scopeRole;
-};
+import {resolveGroupScopeRole} from './util/resolveGroupScopeRole';
 
 const assertCanCreateGroup = (user: ContextUser | null) => {
   if (!user || user.role !== 'admin')
@@ -115,6 +93,17 @@ export const Resolvers = {
       return userGroup ? userGroup.role : null;
     },
 
+    async hasPendingRequest(group: GroupModel & Scope, args: any, ctx: Context): Promise<boolean | null> {
+      console.log(group);
+      if (group.scopeRole === ScopeRoleOptions.GROUP_MANAGER) {
+        const requests = await ctx.connection.getRepository(UserGroupModel).count({
+          where: { groupId: group.id, role: UserGroupRoleOptions.PENDING }
+        });
+        return requests > 0;
+      }
+      return null;
+    },
+
     async numMembers(group: GroupModel & Scope, args: any, ctx: Context): Promise<number> {
       return await ctx.connection
         .getRepository(UserGroupModel)
@@ -125,9 +114,8 @@ export const Resolvers = {
 
     async members({scopeRole, ...group}: GroupModel & Scope,
                   _: any, ctx: Context): Promise<LooselyCompatible<UserGroup & Scope>[]|null> {
-      const canSeeAllMembers = [ScopeRoleOptions.GROUP_MEMBER,
-        ScopeRoleOptions.GROUP_MANAGER,
-        ScopeRoleOptions.ADMIN].includes(scopeRole);
+      const canSeeAllMembers = [ScopeRoleOptions.GROUP_MEMBER, ScopeRoleOptions.GROUP_MANAGER].includes(scopeRole)
+        || ctx.isAdmin;
       const filter = canSeeAllMembers
         ? { groupId: group.id }
         : { groupId: group.id, role: UserGroupRoleOptions.GROUP_ADMIN };
@@ -141,7 +129,7 @@ export const Resolvers = {
         group: ug.group,
         role: ug.role
       }));
-    }
+    },
   },
 
   Query: {

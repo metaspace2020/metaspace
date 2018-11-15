@@ -16,6 +16,7 @@ import {convertUserToUserSource} from './util/convertUserToUserSource';
 import {smAPIUpdateDataset} from '../../utils/smAPI';
 import {deleteDataset} from '../dataset/operation/deleteDataset';
 import {patchPassportIntoLiveRequest} from '../auth/middleware';
+import {resolveGroupScopeRole} from '../group/util/resolveGroupScopeRole';
 
 const assertCanEditUser = (user: ContextUser | null, userId: string) => {
   if (!user || !user.id)
@@ -27,13 +28,8 @@ const assertCanEditUser = (user: ContextUser | null, userId: string) => {
 
 const resolveUserScopeRole = async (ctx: Context, userId?: string): Promise<ScopeRole> => {
   let scopeRole = SRO.OTHER;
-  if (ctx.isAdmin) {
-    scopeRole = SRO.ADMIN;
-  }
-  else {
-    if (userId && ctx.user != null && userId === ctx.user.id) {
-      scopeRole = SRO.PROFILE_OWNER;
-    }
+  if (userId && ctx.user != null && userId === ctx.user.id) {
+    scopeRole = SRO.PROFILE_OWNER;
   }
   return scopeRole;
 };
@@ -42,7 +38,7 @@ export const Resolvers = {
   User: {
     async primaryGroup({scopeRole, ...user}: UserSource, _: any,
                        ctx: Context): Promise<LooselyCompatible<UserGroup>|null> {
-      if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
+      if (scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
         return await ctx.connection.getRepository(UserGroupModel).findOne({
           where: { userId: user.id, primary: true },
           relations: ['group', 'user']
@@ -52,17 +48,26 @@ export const Resolvers = {
     },
 
     async groups({scopeRole, ...user}: UserSource, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup>[]|null> {
-      if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
-        return await ctx.connection.getRepository(UserGroupModel).find({
+      if (scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
+        const userGroups = await ctx.connection.getRepository(UserGroupModel).find({
           where: { userId: user.id },
           relations: ['group', 'user']
         });
+        return await Promise.all(userGroups.map(async userGroup => {
+          return {
+            ...userGroup,
+            group: {
+              ...userGroup.group,
+              scopeRole: await resolveGroupScopeRole(ctx, userGroup.group.id)
+            }
+          };
+        }));
       }
       return null;
     },
 
     async projects(user: UserSource, args: any, ctx: Context): Promise<UserProjectSource[]|null> {
-      if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(user.scopeRole)) {
+      if (user.scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
         const userProjects = await ctx.connection.getRepository(UserProjectModel)
           .find({userId: user.id});
         return userProjects.map(userProject => ({ ...userProject, user }));
@@ -70,15 +75,15 @@ export const Resolvers = {
       return null;
     },
 
-    async email({scopeRole, ...user}: UserSource): Promise<string|null> {
-      if ([SRO.GROUP_MANAGER, SRO.PROJECT_MANAGER, SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
+    async email({scopeRole, ...user}: UserSource, args: any, ctx: Context): Promise<string|null> {
+      if ([SRO.GROUP_MANAGER, SRO.PROJECT_MANAGER, SRO.PROFILE_OWNER].includes(scopeRole) || ctx.isAdmin) {
         return user.email || user.notVerifiedEmail || null;
       }
       return null;
     },
 
-    async role({scopeRole, ...user}: UserSource): Promise<string|null> {
-      if ([SRO.ADMIN, SRO.PROFILE_OWNER].includes(scopeRole)) {
+    async role({scopeRole, ...user}: UserSource, args: any, ctx: Context): Promise<string|null> {
+      if (scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
         return user.role || null;
       }
       return null;
