@@ -61,6 +61,7 @@
    fetchAutocompleteSuggestionsQuery,
    editDatasetQuery,
    metadataOptionsQuery,
+   datasetSubmitterQuery,
  } from '../../api/metadata';
  import MetaspaceOptionsSection from './sections/MetaspaceOptionsSection.vue';
  import VisibilityOptionSection from './sections/VisibilityOptionSection.vue';
@@ -129,6 +130,15 @@
      '$store.getters.filter.metadataType'(newMdType) {
        if (this.isNew && newMdType !== this.value.Data_Type) {
          this.reloadForm(newMdType);
+       }
+     },
+     async 'metaspaceOptions.submitterId'(newSubmitterId) {
+       if (newSubmitterId != null && (this.submitter == null || this.submitter.id !== newSubmitterId)) {
+         const result = await this.$apollo.query({
+           query: datasetSubmitterQuery,
+           variables: {userId: newSubmitterId},
+         });
+         this.submitter = result.data.user;
        }
      }
    },

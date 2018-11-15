@@ -19,7 +19,16 @@
         <el-row :gutter="8">
           <el-form size="medium"
                    label-position="top">
-            <el-col :span="8">
+            <el-col v-if="isAdmin" :span="16" :offset="8" :pull="8">
+              <form-field
+                :value="this.submitter && `${this.submitter.name} (${this.submitter.email})` || null"
+                type="autocomplete"
+                name="Submitter"
+                :fetchSuggestions="handleSearchUsers"
+                @select="handleSelectSubmitter"
+                required />
+            </el-col>
+            <el-col v-else :span="8">
               <form-field
                 type="text"
                 name="Submitter name"
@@ -91,14 +100,21 @@
   import FormField from '../inputs/FormField.vue';
   import { MetaspaceOptions } from '../formStructure';
   import { GroupListItem, oneGroupQuery, oneProjectQuery } from '../../../api/dataManagement';
-  import { currentUserIdQuery, DatasetSubmitterFragment } from '../../../api/user';
+  import {currentUserRoleQuery, CurrentUserRoleResult, DatasetSubmitterFragment} from '../../../api/user';
   import './FormSection.scss';
   import FindGroupDialog from './FindGroupDialog.vue';
-  import CreateProjectDialog from '../../Project/CreateProjectDialog.vue'; // imported directly so that the Project pages aren't pulled into the bundle
+  import CreateProjectDialog from '../../Project/CreateProjectDialog.vue';
+  import {FetchSuggestionsCallback} from 'element-ui/types/autocomplete';
+  import gql from 'graphql-tag'; // imported directly so that the Project pages aren't pulled into the bundle
 
   const FIND_GROUP = 'FIND_GROUP';
   const NO_GROUP = 'NO_GROUP';
   const CREATE_PROJECT = 'CREATE_PROJECT';
+
+  interface SubmitterOption {
+    id: string;
+    value: string;
+  }
 
   @Component<DataManagementSection>({
     components: {
@@ -108,7 +124,7 @@
     },
     apollo: {
       currentUser: {
-        query: currentUserIdQuery,
+        query: currentUserRoleQuery,
         fetchPolicy: 'cache-first',
       }
     }
@@ -123,7 +139,7 @@
 
     $apollo: any; // Type fixes in PR: https://github.com/Akryum/vue-apollo/pull/367
 
-    currentUser: {id: string} | null = null;
+    currentUser: CurrentUserRoleResult | null = null;
     unknownGroup: GroupListItem | null = null;
     unknownProjects: {id: string, name: string}[] = [];
     showFindGroupDialog: boolean = false;
@@ -134,6 +150,10 @@
 
     created() {
       this.fetchUnknowns();
+    }
+
+    get isAdmin() {
+      return this.currentUser != null && this.currentUser.role === 'admin';
     }
 
     get showPI() {
@@ -308,6 +328,22 @@
       this.unknownProjects.push(project);
       this.value.projectIds.push(project.id);
       this.showCreateProjectDialog = false;
+    }
+
+    handleSelectSubmitter(option: SubmitterOption) {
+      this.$emit('input', {...this.value, submitterId: option.id});
+    }
+
+    async handleSearchUsers(q: string, cb: FetchSuggestionsCallback) {
+      const result = await this.$apollo.query({
+        query: gql`query ($query: String!) { allUsers (query: $query) { id name email } }`,
+        variables: {query: q},
+      });
+      const users: {id: string, name: string, email: string}[] = result.data.allUsers;
+      cb(users.map(u => ({
+        id: u.id,
+        value: `${u.name} (${u.email})`,
+      })));
     }
   }
 </script>
