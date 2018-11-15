@@ -1,13 +1,12 @@
-import random
 from functools import wraps
-
+from time import sleep
 from elasticsearch import Elasticsearch, NotFoundError, ElasticsearchException, ConflictError
 from elasticsearch.helpers import parallel_bulk
 from elasticsearch.client import IndicesClient, IngestClient
 import logging
 from collections import defaultdict, MutableMapping
 import pandas as pd
-from time import sleep
+import random
 
 from sm.engine.dataset_locker import DatasetLocker
 from sm.engine.util import SMConfig
@@ -82,6 +81,7 @@ LEFT JOIN (
 WHERE d.ds_id = %s'''
 
 DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry',)
+
 
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
