@@ -95,9 +95,15 @@ const updateUserGroupDatasets = async (connection: Connection | EntityManager, u
 export const Resolvers = {
   UserGroup: {
     async numDatasets(userGroup: UserGroupModel, _: any, {connection}: Context) {
-      return await connection.getRepository(DatasetModel).count({
-        where: { userId: userGroup.user.id, groupApproved: true }
-      });
+      const {userId, groupId} = userGroup;
+      return await connection.getRepository(DatasetModel)
+        .createQueryBuilder('dataset')
+        .innerJoin('(SELECT id, status FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
+        .where('dataset.userId = :userId', { userId })
+        .andWhere('dataset.groupId = :groupId', { groupId })
+        .andWhere('dataset.groupApproved = TRUE')
+        .andWhere(`engine_dataset.status != 'FAILED'`)
+        .getCount();
     }
   },
 
