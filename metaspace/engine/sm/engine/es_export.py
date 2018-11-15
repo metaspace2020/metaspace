@@ -1,9 +1,13 @@
-from elasticsearch import Elasticsearch, NotFoundError, ElasticsearchException
+import random
+from functools import wraps
+
+from elasticsearch import Elasticsearch, NotFoundError, ElasticsearchException, ConflictError
 from elasticsearch.helpers import parallel_bulk
 from elasticsearch.client import IndicesClient, IngestClient
 import logging
 from collections import defaultdict, MutableMapping
 import pandas as pd
+from time import sleep
 
 from sm.engine.dataset_locker import DatasetLocker
 from sm.engine.util import SMConfig
@@ -78,7 +82,6 @@ LEFT JOIN (
 WHERE d.ds_id = %s'''
 
 DS_COLUMNS_TO_SKIP_IN_ANN = ('ds_acq_geometry',)
-
 
 def init_es_conn(es_config):
     hosts = [{"host": es_config['host'], "port": int(es_config['port'])}]
@@ -208,6 +211,25 @@ def flatten_doc(doc, parent_key='', sep='.'):
     return dict(items)
 
 
+def retry_on_conflict(num_retries=3):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for i in range(num_retries):
+                try:
+                    return func(*args, **kwargs)
+                except ConflictError:
+                    delay = random.uniform(2, 5 + i * 3)
+                    logger.warning(f'ElasticSearch update conflict on attempt {i+1}. '
+                                   f'Retrying after {delay:.1f} seconds...')
+                    sleep(delay)
+            # Last attempt, don't catch the exception
+            return func(*args, **kwargs)
+    
+        return wrapper
+
+    return decorator
+
 class ESExporter(object):
     def __init__(self, db, es_config=None):
         self.sm_config = SMConfig.get_conf()
@@ -232,6 +254,7 @@ class ESExporter(object):
     def _select_ds_by_id(self, ds_id):
         return self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
 
+    @retry_on_conflict()
     def sync_dataset(self, ds_id):
         """ Warning: This will wait till ES index/update is completed
         """
@@ -264,6 +287,7 @@ class ESExporter(object):
             if f not in DS_COLUMNS_TO_SKIP_IN_ANN:
                 ann_doc[f] = ds_doc[f]
 
+    @retry_on_conflict()
     def index_ds(self, ds_id, mol_db, isocalc):
         with self._ds_locker.lock(ds_id):
             try:
@@ -317,6 +341,7 @@ class ESExporter(object):
             })
             self._es.index(self.index, doc_type='dataset', body=ds_doc, id=ds_id)
 
+    @retry_on_conflict()
     def update_ds(self, ds_id, fields):
         with self._ds_locker.lock(ds_id):
             pipeline_id = f'update-ds-fields-{ds_id}'
@@ -363,6 +388,7 @@ class ESExporter(object):
                     })
                 self._ingest.delete_pipeline(pipeline_id)
 
+    @retry_on_conflict()
     def delete_ds(self, ds_id, mol_db=None):
         """
         If mol_db passed, only annotation statistics are updated in the dataset document. DS document won't be deleted
