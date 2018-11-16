@@ -7,14 +7,15 @@
       @create="handleProjectCreated"
     />
     <div class="page-content">
-      <el-radio-group v-if="currentUser != null" v-model="tab">
-        <el-radio-button :label="ALL_PROJECTS" />
-        <el-radio-button :label="MY_PROJECTS" />
-      </el-radio-group>
-      <filter-panel level="projects" />
-      <el-row v-if="currentUser" type="flex" justify="end">
-        <el-button @click="handleOpenCreateProject">Create project</el-button>
-      </el-row>
+      <div class="header-row">
+        <el-radio-group v-if="currentUser != null" v-model="tab">
+          <el-radio-button :label="ALL_PROJECTS" />
+          <el-radio-button :label="MY_PROJECTS" />
+        </el-radio-group>
+        <filter-panel level="projects" />
+        <div style="flex-grow: 1" />
+        <el-button v-if="currentUser" @click="handleOpenCreateProject">Create project</el-button>
+      </div>
       <div class="clearfix"/>
       <div v-loading="loading !== 0" style="min-height: 100px;">
         <projects-list-item v-for="project in projects"
@@ -63,7 +64,7 @@
         query: projectsListQuery,
         loadingKey: 'loading',
         skip() {
-          return !(this.tab === this.ALL_PROJECTS && this.currentUser != null);
+          return this.tab !== this.ALL_PROJECTS;
         },
         variables() {
           return {
@@ -76,7 +77,7 @@
       allProjectsCount: {
         query: projectsCountQuery,
         skip() {
-          return !(this.tab === this.ALL_PROJECTS && this.currentUser != null);
+          return this.tab !== this.ALL_PROJECTS;
         },
         variables() {
           return {
@@ -126,14 +127,14 @@
       }
     }
     get projects() {
-      if (this.tab === this.ALL_PROJECTS || this.currentUser == null) {
+      if (this.tab === this.ALL_PROJECTS) {
         return this.allProjects;
       } else {
         return this.filteredMyProjects.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
       }
     }
     get projectsCount() {
-      if (this.tab === this.ALL_PROJECTS || this.currentUser == null) {
+      if (this.tab === this.ALL_PROJECTS) {
         return this.allProjectsCount;
       } else {
         return this.filteredMyProjects.length;
@@ -144,6 +145,13 @@
     @Watch('tab')
     resetPagination() {
       this.page = 1;
+    }
+
+    @Watch('currentUser')
+    resetTab() {
+      if (this.currentUser == null) {
+        this.tab = this.ALL_PROJECTS;
+      }
     }
 
     created() {
@@ -179,5 +187,12 @@
 
   .page-content {
     width: 800px;
+  }
+
+  .header-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
   }
 </style>

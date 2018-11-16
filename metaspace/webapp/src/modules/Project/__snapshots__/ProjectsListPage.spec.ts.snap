@@ -74,16 +74,17 @@ exports[`ProjectsListPage should match snapshot 1`] = `
     </div>
   </mock-el-dialog>
   <div class="page-content">
-    <div role="radiogroup" class="el-radio-group">
-      <label role="radio" aria-checked="true" tabindex="0" class="el-radio-button is-active">
-        <input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="All projects"><span class="el-radio-button__inner">All projects</span></label>
-      <label role="radio" tabindex="-1" class="el-radio-button">
-        <input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="My projects"><span class="el-radio-button__inner">My projects</span></label>
-    </div>
-    <div class="filter-panel">
-      <!---->
-    </div>
-    <div class="el-row is-justify-end el-row--flex">
+    <div class="header-row">
+      <div role="radiogroup" class="el-radio-group">
+        <label role="radio" aria-checked="true" tabindex="0" class="el-radio-button is-active">
+          <input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="All projects"><span class="el-radio-button__inner">All projects</span></label>
+        <label role="radio" tabindex="-1" class="el-radio-button">
+          <input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="My projects"><span class="el-radio-button__inner">My projects</span></label>
+      </div>
+      <div class="filter-panel">
+        <!---->
+      </div>
+      <div></div>
       <button type="button" class="el-button el-button--default">
         <!---->
         <!----><span>Create project</span></button>
