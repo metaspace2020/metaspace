@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils';
+import {mount, Wrapper} from '@vue/test-utils';
 import Vue from 'vue';
 import ProjectsListPage from './ProjectsListPage.vue';
 import router from '../../router';
@@ -22,10 +22,10 @@ describe('ProjectsListPage', () => {
   const mockProject3: ProjectsListProject = { id: 'project 3', name: 'project three', urlSlug: null, isPublic: true, currentUserRole: 'MEMBER',
     numMembers: 10, numDatasets: 5, createdDT: '2018-04-30T11:00:00.000', latestUploadDT: '2018-05-15T13:00:00.000' };
 
-  const mockMyProjects: MyProjectsListQuery['myProjects'] = {
+  const makeMockMyProjects = (projects: any[]): MyProjectsListQuery['myProjects'] => ({
     id: 'id',
-    projects: [{project: mockProject1}, {project:mockProject3}],
-  };
+    projects: projects.map(project => ({project})),
+  });
   const mockAllProjects: ProjectsListQuery['allProjects'] = [mockProject1, mockProject2];
 
   sync(store, router);
@@ -33,7 +33,6 @@ describe('ProjectsListPage', () => {
   it('should match snapshot', async () => {
     initMockGraphqlClient({
       Query: () => ({
-        currentUser: () => mockMyProjects,
         allProjects: () => mockAllProjects,
         countProjects: () => 3,
       })
@@ -45,5 +44,44 @@ describe('ProjectsListPage', () => {
     expect(wrapper).toMatchSnapshot();
     const projectIds = wrapper.findAll({name:'ProjectsListItem'}).wrappers.map(item => item.props().project.id);
     expect(projectIds).toEqual(['project 1', 'project 2']);
+  });
+
+  it('should show only my projects when on the My Projects tab', async () => {
+    initMockGraphqlClient({
+      Query: () => ({
+        currentUser: () => makeMockMyProjects([mockProject3, mockProject1]),
+        allProjects: () => mockAllProjects,
+      })
+    });
+    const wrapper = mount(ProjectsListPage, { router, provide, store, sync: false });
+    await Vue.nextTick();
+    wrapper.findAll({name: 'ElRadioButton'})
+      .filter((rb: Wrapper<Vue>) => rb.props().label === 'My projects')
+      .trigger('click');
+    await Vue.nextTick();
+
+    const projectIds = wrapper.findAll({name:'ProjectsListItem'}).wrappers.map(item => item.props().project.id);
+    expect(projectIds).toEqual(['project 3', 'project 1']);
+  });
+
+  it('should filter projects by the keyword search on the My Projects tab', async () => {
+    const mockProjects = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+      .split('')
+      .map(letter => ({ id: `ID ${letter}`, name: `Project ${letter}${letter}${letter}` }));
+    initMockGraphqlClient({
+      Query: () => ({
+        currentUser: () => makeMockMyProjects(mockProjects),
+      })
+    });
+    const wrapper = mount(ProjectsListPage, { router, provide, store, sync: false });
+    await Vue.nextTick();
+    wrapper.findAll({name: 'ElRadioButton'})
+      .filter((rb: Wrapper<Vue>) => rb.props().label === 'My projects')
+      .trigger('click');
+    router.push('/projects?q=ww');
+    await Vue.nextTick();
+
+    const projectIds = wrapper.findAll({name:'ProjectsListItem'}).wrappers.map(item => item.props().project.id);
+    expect(projectIds).toEqual(['ID W']);
   });
 });
