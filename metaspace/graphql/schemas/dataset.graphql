@@ -49,10 +49,14 @@ type DatasetGroup {
   id: ID!
   name: String!
   shortName: String!
+  urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  members: [UserGroup!] @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
 }
 type DatasetProject {
   id: ID!
   name: String!
+  isPublic: Boolean @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
 }
 
 # fields of categorical type
