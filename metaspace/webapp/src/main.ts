@@ -17,7 +17,7 @@ const apolloProvider = new VueApollo({
   defaultClient: apolloClient,
   defaultOptions: {
     $query: {
-      fetchPolicy: 'network-first',
+      fetchPolicy: 'network-only',
     },
   } as any
 });
