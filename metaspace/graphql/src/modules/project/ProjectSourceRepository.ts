@@ -3,13 +3,14 @@ import {ContextUser} from '../../context';
 import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from './model';
 import {ProjectSource} from '../../bindingTypes';
 
+type SortBy = 'name' | 'popularity';
 
 @EntityRepository()
 export class ProjectSourceRepository {
   constructor(private manager: EntityManager) {
   }
 
-  private queryProjectsWhere(user: ContextUser | null, whereClause?: string, parameters?: object) {
+  private queryProjectsWhere(user: ContextUser | null, whereClause?: string, parameters?: object, sortBy: SortBy = 'name') {
     const columnMap = this.manager.connection
       .getMetadata(ProjectModel)
       .columns
@@ -17,8 +18,26 @@ export class ProjectSourceRepository {
 
     let qb = this.manager
       .createQueryBuilder(ProjectModel, 'project')
-      .select(columnMap)
-      .orderBy('project.name');
+      .select(columnMap);
+
+    if (sortBy === 'name') {
+      qb = qb.orderBy('project.name');
+    } else {
+      // Approximate popularity as num_members * 20 + num_datasets
+      qb = qb
+        .leftJoin(`(SELECT project_id, COUNT(*) as cnt 
+                            FROM graphql.user_project 
+                            WHERE role IN ('${UPRO.MEMBER}','${UPRO.MANAGER}') 
+                            GROUP BY project_id)`,
+        'num_members', 'project.id = num_members.project_id')
+        .leftJoin(`(SELECT project_id, COUNT(*) as cnt 
+                            FROM graphql.dataset_project 
+                            WHERE approved = true
+                            GROUP BY project_id)`,
+          'num_datasets', 'project.id = num_datasets.project_id')
+        .orderBy('(COALESCE(num_members.cnt * 20, 0) + COALESCE(num_datasets.cnt, 0))', 'DESC')
+        .addOrderBy('project.name');
+    }
 
     // Hide datasets the current user doesn't have access to
     if (user && user.role === 'admin') {
@@ -72,7 +91,7 @@ export class ProjectSourceRepository {
       .getRawMany();
   }
 
-  private queryProjectsByTextSearch(user: ContextUser | null, query?: string) {
+  private queryProjectsByTextSearch(user: ContextUser | null, query?: string, sortBy: SortBy = 'name') {
     if (query) {
       // Full-text search is disabled as it relies on functions not present in the installed pg version (9.5)
       // TODO: Add a full-text index to project.name to speed this up
@@ -84,15 +103,15 @@ export class ProjectSourceRepository {
       //        ELSE true
       //   END
       // )`, {query});
-      return this.queryProjectsWhere(user, `project.name ILIKE ('%' || :query || '%')`, {query});
+      return this.queryProjectsWhere(user, `project.name ILIKE ('%' || :query || '%')`, {query}, sortBy);
     } else {
-      return this.queryProjectsWhere(user);
+      return this.queryProjectsWhere(user, undefined, undefined, sortBy);
     }
   }
 
   async findProjectsByQuery(user: ContextUser | null, query?: string,
                             offset?: number, limit?: number): Promise<ProjectSource[]> {
-    let queryBuilder = this.queryProjectsByTextSearch(user, query);
+    let queryBuilder = this.queryProjectsByTextSearch(user, query, 'popularity');
     if (offset != null) {
       queryBuilder = queryBuilder.offset(offset);
     }
