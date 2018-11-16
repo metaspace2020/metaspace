@@ -40,6 +40,7 @@ describe('ProjectsListPage', () => {
     });
     const wrapper = mount(ProjectsListPage, { router, provide, store, sync: false });
     await Vue.nextTick();
+    await Vue.nextTick();
 
     expect(wrapper).toMatchSnapshot();
     const projectIds = wrapper.findAll({name:'ProjectsListItem'}).wrappers.map(item => item.props().project.id);
