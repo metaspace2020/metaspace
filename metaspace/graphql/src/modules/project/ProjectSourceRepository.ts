@@ -17,7 +17,8 @@ export class ProjectSourceRepository {
 
     let qb = this.manager
       .createQueryBuilder(ProjectModel, 'project')
-      .select(columnMap);
+      .select(columnMap)
+      .orderBy('project.name');
 
     // Hide datasets the current user doesn't have access to
     if (user && user.role === 'admin') {
@@ -93,10 +94,10 @@ export class ProjectSourceRepository {
                             offset?: number, limit?: number): Promise<ProjectSource[]> {
     let queryBuilder = this.queryProjectsByTextSearch(user, query);
     if (offset != null) {
-      queryBuilder = queryBuilder.skip(offset);
+      queryBuilder = queryBuilder.offset(offset);
     }
     if (limit != null) {
-      queryBuilder = queryBuilder.take(limit);
+      queryBuilder = queryBuilder.limit(limit);
     }
     return await queryBuilder.getRawMany();
   }

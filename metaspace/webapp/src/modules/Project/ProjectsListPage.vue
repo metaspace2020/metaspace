@@ -7,12 +7,16 @@
       @create="handleProjectCreated"
     />
     <div class="page-content">
+      <el-radio-group v-if="currentUser != null" v-model="tab">
+        <el-radio-button :label="ALL_PROJECTS" />
+        <el-radio-button :label="MY_PROJECTS" />
+      </el-radio-group>
       <filter-panel level="projects" />
       <el-row v-if="currentUser" type="flex" justify="end">
         <el-button @click="handleOpenCreateProject">Create project</el-button>
       </el-row>
       <div class="clearfix"/>
-      <div v-loading="loading !== 0">
+      <div v-loading="loading !== 0" style="min-height: 100px;">
         <projects-list-item v-for="project in projects"
                             :key="project.id"
                             :project="project"
@@ -58,6 +62,9 @@
       allProjects: {
         query: projectsListQuery,
         loadingKey: 'loading',
+        skip() {
+          return !(this.tab === this.ALL_PROJECTS && this.currentUser != null);
+        },
         variables() {
           return {
             query: this.query,
@@ -66,34 +73,43 @@
           }
         },
       },
+      allProjectsCount: {
+        query: projectsCountQuery,
+        skip() {
+          return !(this.tab === this.ALL_PROJECTS && this.currentUser != null);
+        },
+        variables() {
+          return {
+            query: this.query,
+          }
+        },
+        update(data: any) {
+          return data.projectsCount;
+        }
+      },
       myProjects: {
         query: myProjectsListQuery,
         loadingKey: 'loading',
         skip() {
-          return this.query !== '';
+          return this.tab !== this.MY_PROJECTS;
         },
         update(data: MyProjectsListQuery) {
           return data.myProjects && data.myProjects.projects
             ? data.myProjects.projects.map(userProject => userProject.project)
             : [];
         }
-      },
-      projectsCount: {
-        query: projectsCountQuery,
-        variables() {
-          return {
-            query: this.query,
-          }
-        },
       }
     }
   })
   export default class ProjectsListPage extends Vue {
+    readonly MY_PROJECTS = 'My projects';
+    readonly ALL_PROJECTS = 'All projects';
     loading = 0;
     currentUser: CurrentUserRoleResult | null = null;
     allProjects: ProjectsListProject[] | null = null;
     myProjects: ProjectsListProject[] | null = null;
-    projectsCount = 0;
+    allProjectsCount = 0;
+    tab = this.ALL_PROJECTS;
 
     showCreateProjectDialog = false;
     page = 1;
@@ -102,22 +118,30 @@
     get query(): string {
       return this.$store.getters.filter.simpleQuery || '';
     }
+    get filteredMyProjects() {
+      if (this.query && this.myProjects != null) {
+        return this.myProjects.filter(p => p.name.toLowerCase().includes(this.query.toLowerCase()));
+      } else {
+        return this.myProjects || [];
+      }
+    }
     get projects() {
-      // // Concatenate the lists, deduplicating projects by ID
-      // // This takes advantage of JS Objects keeping their keys in insertion order to keep the projects sorted
-      // const projects: Record<string, ProjectsListProject>  = {};
-      // if (this.query === '' && this.myProjects != null) {
-      //   this.myProjects.forEach(p => projects[p.id] = p);
-      // }
-      // if (this.allProjects != null) {
-      //   this.allProjects.forEach(p => projects[p.id] = p);
-      // }
-      // return Object.values(projects);
-      // TODO: Switch to having discrete "My Projects" and "All Projects" modes so that pagination is consistent
-      return this.allProjects;
+      if (this.tab === this.ALL_PROJECTS || this.currentUser == null) {
+        return this.allProjects;
+      } else {
+        return this.filteredMyProjects.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
+      }
+    }
+    get projectsCount() {
+      if (this.tab === this.ALL_PROJECTS || this.currentUser == null) {
+        return this.allProjectsCount;
+      } else {
+        return this.filteredMyProjects.length;
+      }
     }
 
     @Watch('query')
+    @Watch('tab')
     resetPagination() {
       this.page = 1;
     }
