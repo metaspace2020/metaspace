@@ -57,6 +57,12 @@ export interface DatasetSource {
     annotation_counts: any[];
   };
 }
+export interface DatasetUserSource {
+  id: string;
+  name: string;
+  email: string;
+  scopeRole: ScopeRole;
+}
 
 // Utility to extract the type of the `args` field from a query/mutation in binding.ts
 // Usage: customField(source, args: ArgsFromBinding<CustomType['customField']>)
