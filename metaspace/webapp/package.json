@@ -14,7 +14,7 @@
     "coverage": "cross-env NODE_ENV=test jest --coverage",
     "deref-schema": "node ./deref_schema.js src/assets",
     "generate-local-graphql-schema": "NODE_PATH=../graphql/node_modules node ../graphql/bin/generate-json-graphql-schema.js tests/utils/graphql-schema.json",
-    "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint http://metaspace2020.eu/graphql"
+    "fetch-prod-graphql-schema": "apollo schema:download tests/utils/graphql-schema.json --endpoint https://metaspace2020.eu/graphql"
   },
   "dependencies": {
     "@types/js-cookie": "^2.1.0",

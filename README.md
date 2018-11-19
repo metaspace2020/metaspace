@@ -30,7 +30,7 @@ Please check the [ansible](ansible) project for production installations on AWS,
 ## Uploading Dataset and Browsing Results
 Please visit the help page of our web application running on AWS:
 
-[http://metaspace2020.eu/#/help](http://metaspace2020.eu/#/help)
+[https://metaspace2020.eu/help](https://metaspace2020.eu/help)
 
 ## Acknowledgements
 

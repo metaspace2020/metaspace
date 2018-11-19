@@ -46,7 +46,7 @@ class SMDaemonManager(object):
             md_type_quoted = urllib.parse.quote(ds_meta['Data_Type'])
             base_url = self._sm_config['services']['web_app_url']
             ds_id_quoted = urllib.parse.quote(msg['ds_id'])
-            link = '{}/#/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
+            link = '{}/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
         except Exception as e:
             self.logger.error(e)
         return link
