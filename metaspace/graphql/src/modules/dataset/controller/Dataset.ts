@@ -171,13 +171,13 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   // TODO: field is deprecated, remove
   async opticalImage(ds, _, ctx) {
-    // @ts-ignore
-    return await rawOpticalImage(ds._source.ds_id, ctx).url;
+    const opticalImage = await rawOpticalImage(ds._source.ds_id, ctx);
+    return opticalImage ? opticalImage.url : null;
   },
 
   async rawOpticalImageUrl(ds, _, ctx) {
-    // @ts-ignore
-    return await rawOpticalImage(ds._source.ds_id, ctx).url;
+    const opticalImage = await rawOpticalImage(ds._source.ds_id, ctx);
+    return opticalImage ? opticalImage.url : null;
   }
 };
 
