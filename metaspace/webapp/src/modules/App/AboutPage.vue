@@ -77,7 +77,7 @@
         <p>Find out more about the METASPACE consortium at the <a href="http://project.metaspace2020.eu/">project website</a></p>
         <p>For all other inquiries or questions,
           <a href="https://gitter.im/metaspace2020/metaspace">chat with us on Gitter</a> or
-          <a href="mailto:contact@metaspace2020.eu">contact us over email</a>.
+          <a href="mailto:contact@metaspace2020.eu">contact us by email</a>.
         </p>
       </el-row>
       <el-row id="funding">
