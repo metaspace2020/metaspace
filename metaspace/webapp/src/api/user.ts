@@ -33,27 +33,25 @@ export interface UserProfileQuery {
   projects: UserProfileQueryProject[] | null;
 }
 
-export const userProfileQuery =
-  gql`query UserProfileQuery {
-  currentUser {
-    id
-    name
+const userProfileFragment =
+  gql`fragment UserProfileFragment on User {
+  id
+  name
+  role
+  email
+  primaryGroup {
+    ...UserProfileQueryGroup
+  }
+  groups {
+    ...UserProfileQueryGroup
+  }
+  projects {
     role
-    email
-    primaryGroup {
-      ...UserProfileQueryGroup
-    }
-    groups {
-      ...UserProfileQueryGroup
-    }
-    projects {
-      role
-      numDatasets
-      project {
-        id
-        name
-        urlSlug
-      }
+    numDatasets
+    project {
+      id
+      name
+      urlSlug
     }
   }
 }
@@ -67,6 +65,22 @@ fragment UserProfileQueryGroup on UserGroup {
   }
 }
 `;
+export const userProfileQuery =
+  gql`query UserProfileQuery {
+  currentUser {
+    ...UserProfileFragment
+  }
+}
+${userProfileFragment}
+`;
+
+export const updateUserMutation =
+  gql`mutation ($userId: ID!, $update: UpdateUserInput!) {
+  updateUser(userId: $userId, update: $update) {
+    ...UserProfileFragment
+  }
+}
+${userProfileFragment}`;
 
 export interface DatasetSubmitterFragment {
   id: string;
@@ -102,15 +116,6 @@ export const datasetSubmitterFragment =
       }
     }
   }`;
-
-export const updateUserMutation =
-  gql`mutation ($userId: ID!, $update: UpdateUserInput!) {
-  updateUser(userId: $userId, update: $update) {
-    id
-    name
-    email
-  }
-}`;
 
 export const deleteUserMutation =
   gql`mutation ($userId: ID!, $deleteDatasets: Boolean!) {
