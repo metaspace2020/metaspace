@@ -71,6 +71,7 @@ fragment UserProfileQueryGroup on UserGroup {
 export interface DatasetSubmitterFragment {
   id: string;
   name: string;
+  email: string;
   groups: {
     group: {
       id: string;
@@ -89,6 +90,7 @@ export const datasetSubmitterFragment =
   gql`fragment DatasetSubmitterFragment on User {
     id
     name
+    email
     groups {
       group {
         id
