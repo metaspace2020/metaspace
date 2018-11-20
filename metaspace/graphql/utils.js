@@ -36,7 +36,7 @@ const logger = new (winston.Logger)({
     new (winston.transports.Console)({
       level: config.log.level,
       timestamp: function() {
-        return moment().format();
+        return moment().format('YYYY-MM-DD HH:mm:ss,SSS');
       },
       // formatter: function(options) {
       //   // TODO Lachlan: This custom formatter logs an empty string when given an error
