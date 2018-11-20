@@ -81,11 +81,11 @@
 
 <script>
   import gql from 'graphql-tag';
- import {signOut} from '../../api/auth';
+  import {signOut} from '../../api/auth';
   import {getSystemHealthQuery, getSystemHealthSubscribeToMore} from '../../api/system';
   import {UserGroupRoleOptions as UGRO} from '../../api/group';
   import {ProjectRoleOptions as UPRO} from '../../api/project';
- import {encodeParams} from '../Filters';
+  import {encodeParams} from '../Filters';
   import {refreshLoginStatus} from '../../graphqlClient';
   import NotificationIcon from '../../components/NotificationIcon.vue';
 
