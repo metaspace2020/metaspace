@@ -138,6 +138,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
                       <div class="cell">
                         <a href="/group/grp-a" class="">Group A</a>
+                        <mock-el-tooltip content="Group A has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
                       </div>
                     </td>
                     <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
@@ -164,6 +165,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
                       <div class="cell">
                         <a href="/group/BBB" class="">Group B</a>
+                        <!---->
                       </div>
                     </td>
                     <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
@@ -194,6 +196,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
                       <div class="cell">
                         <a href="/group/CCC" class="">Group C</a>
+                        <mock-el-tooltip content="Group C has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
                       </div>
                     </td>
                     <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
@@ -216,6 +219,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
                       <div class="cell">
                         <a href="/group/DDD" class="">Group D</a>
+                        <!---->
                       </div>
                     </td>
                     <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
@@ -387,6 +391,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                       <div class="cell">
                         <a href="/project/proj-a" class="">Project A</a>
+                        <mock-el-tooltip content="Project A has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
                       </div>
                     </td>
                     <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
@@ -413,6 +418,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                       <div class="cell">
                         <a href="/project/BB" class="">Project B</a>
+                        <!---->
                       </div>
                     </td>
                     <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
@@ -443,6 +449,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                       <div class="cell">
                         <a href="/project/CC" class="">Project C</a>
+                        <mock-el-tooltip content="Project C has a pending membership request." placement="right"><span class="notification"></span></mock-el-tooltip>
                       </div>
                     </td>
                     <td rowspan="1" colspan="1" class="el-table_2_column_6  ">
@@ -465,6 +472,7 @@ exports[`EditUserPage should match snapshot 1`] = `
                     <td rowspan="1" colspan="1" class="el-table_2_column_5  ">
                       <div class="cell">
                         <a href="/project/DD" class="">Project D</a>
+                        <!---->
                       </div>
                     </td>
                     <td rowspan="1" colspan="1" class="el-table_2_column_6  ">

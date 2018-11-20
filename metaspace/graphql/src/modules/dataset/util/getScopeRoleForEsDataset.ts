@@ -4,9 +4,7 @@ import {Context} from '../../../context';
 
 export default async (ds: DatasetSource, ctx: Context) => {
   if (ctx.user != null) {
-    if (ctx.isAdmin) {
-      return SRO.ADMIN;
-    } else if (ctx.user.id === ds._source.ds_submitter_id) {
+    if (ctx.user.id === ds._source.ds_submitter_id) {
       return SRO.PROFILE_OWNER;
     } else if (ctx.user && ctx.user.groupIds && ds._source.ds_group_id && ctx.user.groupIds.includes(ds._source.ds_group_id)) {
       return SRO.GROUP_MEMBER; //TODO: Differentiate manager vs member?
