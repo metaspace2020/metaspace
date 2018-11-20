@@ -4,11 +4,11 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from app import log
 from app import config
 
-LOG = log.get_logger()
+logger = log.get_logger()
 
 
 def get_engine(uri):
-    LOG.info('Connecting to database..')
+    logger.info('Connecting to database...')
     options = {
         'pool_recycle': 3600,
         'pool_size': 10,
