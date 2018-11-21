@@ -159,12 +159,13 @@
   }
 
   .info {
-    flex-basis: 70%;
+    overflow: hidden;
+    flex: auto;
+    padding-right: 12px;
   }
 
   .item-body {
     display: flex;
-    flex-wrap: wrap;
     flex-direction: row;
     justify-content: space-between;
     > * {
@@ -174,8 +175,10 @@
 
   .info-line {
     overflow: hidden;
+    white-space: nowrap;
     text-overflow: ellipsis;
   }
+
   .description {
     $line-height: 1.2em;
     $lines: 5;
@@ -223,7 +226,7 @@
   }
 
   .actions {
-    width: 170px;
+    flex: 0 0 170px;
   }
 
   .delete, .delete > a {
