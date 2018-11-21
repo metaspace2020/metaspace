@@ -61,7 +61,7 @@
    fetchAutocompleteSuggestionsQuery,
    editDatasetQuery,
    metadataOptionsQuery,
-   datasetSubmitterQuery,
+   editDatasetSubmitterQuery,
  } from '../../api/metadata';
  import MetaspaceOptionsSection from './sections/MetaspaceOptionsSection.vue';
  import VisibilityOptionSection from './sections/VisibilityOptionSection.vue';
@@ -200,10 +200,22 @@
            query: editDatasetQuery,
            variables: {id: this.datasetId},
          });
+         let submitter;
+         // If submitter is not the current user, we need to make a second request after finding the submitter's userId
+         // to get the rest of the submitter data (groups, projects, etc.)
+         if (data.dataset.submitter.id === data.currentUser.id) {
+           submitter = data.currentUser;
+         } else {
+           const {data: submitterData} = await this.$apollo.query({
+             query: editDatasetSubmitterQuery,
+             variables: {userId: data.dataset.submitter.id},
+           });
+           submitter = submitterData.user;
+         }
          return {
            metadata: JSON.parse(data.dataset.metadataJson),
            metaspaceOptions: metaspaceOptionsFromDataset(data.dataset),
-           submitter: data.dataset.submitter,
+           submitter,
          }
        }
      },

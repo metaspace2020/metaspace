@@ -28,11 +28,23 @@ export const editDatasetQuery =
     dataset(id: $id) {
       ...EditDatasetFragment
       submitter {
-        ...DatasetSubmitterFragment
+        id
       }
+    }
+    currentUser {
+      ...DatasetSubmitterFragment
     }
   }
   ${editDatasetFragment}
+  ${datasetSubmitterFragment}
+  `;
+
+export const editDatasetSubmitterQuery =
+  gql`query editDatasetQuery($userId: ID!) {
+    user(userId: $userId) {
+      ...DatasetSubmitterFragment
+    }
+  }
   ${datasetSubmitterFragment}
   `;
 

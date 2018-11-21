@@ -105,27 +105,12 @@ class GraphQLClient(object):
           id
           name
           shortName
-          urlSlug
-          members {
-            user {
-              name
-            }
-            group {
-              id
-              name
-              shortName
-            }
-            role
-            numDatasets
-          }
         }
         principalInvestigator {
           name
         }
         projects {
             name
-            isPublic
-            urlSlug
         }
         polarity
         ionisationSource

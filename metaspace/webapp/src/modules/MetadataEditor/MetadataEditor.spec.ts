@@ -80,4 +80,27 @@ describe('MetadataEditor', () => {
     expect(fieldValues['Polarity']).toEqual(mockMetadata.MS_Analysis.Polarity);
     expect(fieldValues['Detector resolving power']).toEqual(mockMetadata.MS_Analysis.Detector_Resolving_Power);
   });
+
+  it('should be able to load another user\'s dataset', async () => {
+    const submitterId = 'submitter id';
+    const mockUser = {
+      id: submitterId,
+      name: 'mock user',
+      groups: [{ group: {id: 'group', name: 'group name'} }],
+    };
+    const mockUserFn = jest.fn(() => mockUser);
+    initMockGraphqlClient({
+      Query: () => ({
+        dataset: () => ({...mockDataset, submitter: { id: submitterId }}),
+        user: mockUserFn,
+      })
+    });
+    const propsData = { datasetId: '123' };
+    const wrapper = mount(MetadataEditor, { store, router, provide, propsData, sync: false });
+    await wrapper.vm.$data.loadingPromise;
+
+    expect(mockUserFn).toHaveBeenCalledTimes(1);
+    expect(mockUserFn.mock.calls[0][1]).toEqual({userId: submitterId});
+    expect(wrapper.vm.$data.submitter).toMatchObject(mockUser);
+  });
 });
