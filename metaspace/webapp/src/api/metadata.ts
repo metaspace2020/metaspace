@@ -141,6 +141,6 @@ export const metadataExportQuery = gql`
         levels
         counts
       }
-      opticalImage
+      rawOpticalImageUrl
     }
   } `;

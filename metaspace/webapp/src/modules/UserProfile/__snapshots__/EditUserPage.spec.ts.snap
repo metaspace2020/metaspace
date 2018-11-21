@@ -32,7 +32,7 @@ exports[`EditUserPage should match snapshot 1`] = `
         <h2>User details</h2>
       </div>
       <div class="el-col el-col-8">
-        <button type="button" class="el-button saveButton el-button--primary" title="Save">
+        <button disabled="disabled" type="button" class="el-button saveButton el-button--primary is-disabled" title="Save">
           <!---->
           <!----><span>
           Save
@@ -40,49 +40,51 @@ exports[`EditUserPage should match snapshot 1`] = `
       </div>
     </div>
     <div class="el-row" style="margin-left: -10px; margin-right: -10px;">
-      <form class="el-form">
+      <form class="el-form el-form--label-top">
         <div style="padding-left: 15px;">
           <div class="el-col el-col-8" style="padding-left: 10px; padding-right: 10px;">
-            <div>
-              <div class="el-form-item is-required">
-                <label for="name" class="el-form-item__label">Full name</label>
-                <div class="el-form-item__content">
-                  <div class="el-input">
-                    <!---->
-                    <input type="text" autocomplete="off" name="name" class="el-input__inner">
-                    <!---->
-                    <!---->
-                    <!---->
-                  </div>
+            <div class="el-form-item is-required">
+              <label for="name" class="el-form-item__label">Full name</label>
+              <div class="el-form-item__content">
+                <div class="el-input">
+                  <!---->
+                  <input type="text" autocomplete="off" name="name" class="el-input__inner">
+                  <!---->
+                  <!---->
                   <!---->
                 </div>
+                <!---->
               </div>
             </div>
           </div>
           <div class="el-col el-col-8" style="padding-left: 10px; padding-right: 10px;">
-            <div>
-              <div class="el-form-item is-required">
-                <label for="email" class="el-form-item__label">Email address</label>
-                <div class="el-form-item__content">
-                  <div class="el-input">
-                    <!---->
-                    <input type="text" autocomplete="off" name="email" class="el-input__inner">
-                    <!---->
-                    <!---->
-                    <!---->
-                  </div>
+            <div class="el-form-item is-required">
+              <label for="email" class="el-form-item__label">Email address</label>
+              <div class="el-form-item__content">
+                <div class="el-input">
+                  <!---->
+                  <input type="text" autocomplete="off" name="email" class="el-input__inner">
+                  <!---->
+                  <!---->
                   <!---->
                 </div>
+                <!---->
               </div>
-              <!---->
             </div>
+            <!---->
           </div>
           <div class="el-col el-col-8" style="padding-left: 10px; padding-right: 10px;">
-            <button type="button" class="el-button el-button--default" style="margin-top: 42px;">
-              <!---->
-              <!----><span>
-              Change password
-            </span></button>
+            <div class="el-form-item is-required">
+              <label class="el-form-item__label">Password</label>
+              <div class="el-form-item__content">
+                <button type="button" class="el-button el-button--text" style="margin-left: 16px;">
+                  <!---->
+                  <!----><span>
+                Click to change...
+              </span></button>
+                <!---->
+              </div>
+            </div>
           </div>
         </div>
       </form>
@@ -262,7 +264,7 @@ exports[`EditUserPage should match snapshot 1`] = `
       </div>
       <div>
         <p>Primary group:</p>
-        <mock-el-select placeholder="Select" style="padding-left: 15px;">
+        <mock-el-select placeholder="Select" style="padding-left: 15px; width: 400px;" mock-v-loading="false">
           <mock-el-option label="Group A" value="AAA"></mock-el-option>
           <mock-el-option label="Group B" value="BBB"></mock-el-option>
           <mock-el-option label="Group C" value="CCC"></mock-el-option>

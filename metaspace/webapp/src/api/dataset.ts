@@ -41,7 +41,7 @@ export interface DatasetDetailItem {
     levels: number[];
     counts: number[];
   };
-  opticalImage: string;
+  rawOpticalImageUrl: string;
 }
 
 export const datasetDetailItemFragment =
@@ -77,7 +77,7 @@ export const datasetDetailItemFragment =
       levels
       counts
     }
-    opticalImage
+    rawOpticalImageUrl
   }`;
 
 export const datasetDetailItemsQuery =
