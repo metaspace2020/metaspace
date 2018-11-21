@@ -10,7 +10,7 @@ Python module that provides programmatic access to a running instance of [`METAS
 
 ## Installation
 
-You need Python 3 to use this library.
+You need to have **Python 3.6 or higher** to use this library.
 
 `pip install git+https://github.com/metaspace2020/metaspace#subdirectory=metaspace/python-client`
 
@@ -18,7 +18,7 @@ You need Python 3 to use this library.
 If you are trying to access annotations from the main public metaspace instance
 then make sure you include the branch name of the latest release branch, e.g.
 
-`pip install git+https://github.com/metaspace2020/metaspace@release/v0.11-rc#subdirectory=metaspace/python-client`
+`pip install git+https://github.com/metaspace2020/metaspace@release/v1.0#subdirectory=metaspace/python-client`
 
 ## Jupyter Notebooks
 
