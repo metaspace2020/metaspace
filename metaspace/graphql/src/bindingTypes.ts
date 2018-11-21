@@ -10,8 +10,7 @@ export type ScopeRole =
   | 'GROUP_MANAGER'
   | 'PROJECT_MEMBER'
   | 'PROJECT_MANAGER'
-  | 'OTHER'
-  | 'ADMIN';
+  | 'OTHER';
 
 export const ScopeRoleOptions: Record<ScopeRole, ScopeRole> = {
   PROFILE_OWNER: 'PROFILE_OWNER',
@@ -20,7 +19,6 @@ export const ScopeRoleOptions: Record<ScopeRole, ScopeRole> = {
   PROJECT_MEMBER: 'PROJECT_MEMBER',
   PROJECT_MANAGER: 'PROJECT_MANAGER',
   OTHER: 'OTHER',
-  ADMIN: 'ADMIN',
 };
 
 export interface Scope {
@@ -56,6 +54,12 @@ export interface DatasetSource {
     ds_project_ids?: string[];
     annotation_counts: any[];
   };
+}
+export interface DatasetUserSource {
+  id: string;
+  name: string;
+  email: string;
+  scopeRole: ScopeRole;
 }
 
 // Utility to extract the type of the `args` field from a query/mutation in binding.ts

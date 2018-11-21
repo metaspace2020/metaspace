@@ -268,7 +268,7 @@
            row.polarity.toLowerCase(),
            row.uploadDateTime,
            row.fdrCounts ? `${row.fdrCounts.counts}` + ' ' + `${row.fdrCounts.dbName}` : '',
-           (row.rawOpticalImageUrl) ? 'http://' + window.location.host + row.rawOpticalImageUrl : 'No optical image'
+           (row.rawOpticalImageUrl) ? window.location.origin + row.rawOpticalImageUrl : 'No optical image'
          ]);
        }
 

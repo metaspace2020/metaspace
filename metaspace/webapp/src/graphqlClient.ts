@@ -75,6 +75,8 @@ const link = authLink.concat(errorLink).split(
   httpLink,
 );
 
+const nonNormalizableTypes: any[] = ['User', 'DatasetUser', 'DatasetGroup', 'DatasetProject'];
+
 const apolloClient = new ApolloClient({
   link,
   cache: new InMemoryCache({
@@ -95,7 +97,7 @@ const apolloClient = new ApolloClient({
       // dataset -> submitter -> primaryGroup (null unless admin)
       // To protect against this, don't allow Users (and possibly other types in the future) to have a dataId,
       // so that InMemoryCache cannot share data between different queries.
-      if (object.__typename === 'User') {
+      if (nonNormalizableTypes.includes(object.__typename)) {
         return null;
       } else {
         return defaultDataIdFromObject(object);

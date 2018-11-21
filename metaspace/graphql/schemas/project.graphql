@@ -4,6 +4,7 @@ type Project {
   isPublic: Boolean!
   urlSlug: String
   currentUserRole: UserProjectRole
+  hasPendingRequest: Boolean  # null if current user is not allowed to see
   members: [UserProject!]    # null if current user is not allowed to see
   numMembers: Int!
   numDatasets: Int!
