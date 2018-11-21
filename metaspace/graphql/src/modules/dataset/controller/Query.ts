@@ -10,24 +10,19 @@ import {Context} from '../../../context';
 const resolveDatasetScopeRole = async (ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER;
   if (ctx.user) {
-    if (ctx.user.role === 'admin') {
-      scopeRole = SRO.ADMIN;
-    }
-    else {
-      if (dsId) {
-        const ds = await ctx.connection.getRepository(DatasetModel).findOne({
-          where: { id: dsId }
+    if (dsId) {
+      const ds = await ctx.connection.getRepository(DatasetModel).findOne({
+        where: { id: dsId }
+      });
+      if (ds) {
+        const userGroup = await ctx.connection.getRepository(UserGroupModel).findOne({
+          where: { userId: ctx.user.id, groupId: ds.groupId }
         });
-        if (ds) {
-          const userGroup = await ctx.connection.getRepository(UserGroupModel).findOne({
-            where: { userId: ctx.user.id, groupId: ds.groupId }
-          });
-          if (userGroup) {
-            if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN)
-              scopeRole = SRO.GROUP_MANAGER;
-            else if (userGroup.role === UserGroupRoleOptions.MEMBER)
-              scopeRole = SRO.GROUP_MEMBER;
-          }
+        if (userGroup) {
+          if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN)
+            scopeRole = SRO.GROUP_MANAGER;
+          else if (userGroup.role === UserGroupRoleOptions.MEMBER)
+            scopeRole = SRO.GROUP_MEMBER;
         }
       }
     }

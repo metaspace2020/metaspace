@@ -16,6 +16,7 @@
       class="md-ac"
       :popper-class="wideAutocomplete ? 'md-ac-popper--wide' : ''"
       @input="onInput"
+      @select="onSelect"
       :value="value"
       :required="required"
       :placeholder="placeholder"
@@ -157,6 +158,10 @@
 
     get optionsAreStrings() {
       return this.options && this.options.length > 0 && typeof this.options[0] === 'string';
+    }
+
+    onSelect(val: any) {
+      this.$emit('select', val);
     }
 
     onInput(val: any) {

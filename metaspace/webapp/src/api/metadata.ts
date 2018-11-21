@@ -67,6 +67,15 @@ export const newDatasetQuery =
   ${datasetSubmitterFragment}
   `;
 
+export const datasetSubmitterQuery =
+  gql`query datasetSubmitterQuery($userId: ID!) {
+    user(userId: $userId) {
+      ...DatasetSubmitterFragment
+    }
+  }
+  ${datasetSubmitterFragment}
+  `;
+
 export const fetchAutocompleteSuggestionsQuery =
   gql`query suggestions($field: String!, $query: String!) {
     metadataSuggestions(field: $field, query: $query, limit: 5)

@@ -11,6 +11,7 @@ export interface UserProfileQueryGroup {
     id: string,
     name: string
     urlSlug: string | null;
+    hasPendingRequest: boolean | null;
   };
 }
 export interface UserProfileQueryProject {
@@ -20,6 +21,7 @@ export interface UserProfileQueryProject {
     id: string,
     name: string
     urlSlug: string | null;
+    hasPendingRequest: boolean | null;
   };
 }
 
@@ -53,6 +55,7 @@ export const userProfileQuery =
         id
         name
         urlSlug
+        hasPendingRequest
       }
     }
   }
@@ -64,6 +67,7 @@ fragment UserProfileQueryGroup on UserGroup {
     id
     name
     urlSlug
+    hasPendingRequest
   }
 }
 `;
@@ -71,6 +75,7 @@ fragment UserProfileQueryGroup on UserGroup {
 export interface DatasetSubmitterFragment {
   id: string;
   name: string;
+  email: string;
   groups: {
     group: {
       id: string;
@@ -89,6 +94,7 @@ export const datasetSubmitterFragment =
   gql`fragment DatasetSubmitterFragment on User {
     id
     name
+    email
     groups {
       group {
         id

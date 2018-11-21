@@ -9,7 +9,7 @@ from PIL import Image
 
 def _extract_data(res):
     if not res.headers.get('Content-Type').startswith('application/json'):
-        raise Exception(f"Wrong Content-Type: {res.headers.get('Content-Type')}")
+        raise Exception('Wrong Content-Type: {}'.format(res.headers.get('Content-Type')))
     res_json = res.json()
     if 'data' in res_json and 'errors' not in res_json:
         return res.json()['data']
@@ -20,10 +20,10 @@ def _extract_data(res):
 
 def get_config(host, email=None, password=None, verify_certificate=True):
     return {
-        'graphql_url': f'{host}/graphql',
-        'moldb_url': f'{host}/mol_db/v1',
-        'signin_url': f'{host}/api_auth/signin',
-        'gettoken_url': f'{host}/api_auth/gettoken',
+        'graphql_url': '{}/graphql'.format(host),
+        'moldb_url': '{}/mol_db/v1'.format(host),
+        'signin_url': '{}/api_auth/signin'.format(host),
+        'gettoken_url': '{}/api_auth/gettoken'.format(host),
         'usr_email': email,
         'usr_pass': password,
         'verify_certificate': verify_certificate

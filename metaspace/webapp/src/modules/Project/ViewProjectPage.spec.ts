@@ -5,7 +5,6 @@ import router from '../../router';
 import { initMockGraphqlClient, provide } from '../../../tests/utils/mockGraphqlClient';
 
 
-
 describe('ViewProjectPage', () => {
   const mockMembersForManagers = [
     {
@@ -158,6 +157,7 @@ describe('ViewProjectPage', () => {
 
     expect(router.currentRoute.params.projectIdOrSlug).toEqual(urlSlug);
     // Assert that the correct graphql calls were made. See the GraphQLFieldResolver type for details on the args here
+    expect(mockProjectFn).toHaveBeenCalledTimes(2);
     expect(mockProjectFn.mock.calls[0][1].projectId).toEqual(mockProject.id);
     expect(mockProjectFn.mock.calls[0][3].fieldName).toEqual('project');
     expect(mockProjectFn.mock.calls[1][1].urlSlug).toEqual(urlSlug);

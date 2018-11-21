@@ -36,7 +36,15 @@ describe('MetaspaceHeader', () => {
               name: 'Test Group',
               urlSlug: null
             }
-          }
+          },
+          groups: [
+            {role: 'MEMBER', group: {hasPendingRequest: null}},
+            {role: 'GROUP_ADMIN', group: {hasPendingRequest: false}},
+          ],
+          projects: [
+            {role: 'PENDING', project: {hasPendingRequest: null}},
+            {role: 'MANAGER', project: {hasPendingRequest: true}},
+          ],
         })
       })
     });

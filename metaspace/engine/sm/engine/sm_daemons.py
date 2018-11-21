@@ -46,7 +46,7 @@ class SMDaemonManager(object):
             md_type_quoted = urllib.parse.quote(ds_meta['Data_Type'])
             base_url = self._sm_config['services']['web_app_url']
             ds_id_quoted = urllib.parse.quote(msg['ds_id'])
-            link = '{}/#/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
+            link = '{}/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
         except Exception as e:
             self.logger.error(e)
         return link
@@ -273,9 +273,8 @@ class SMIndexUpdateDaemon(object):
     def _on_failure(self, msg):
         self.logger.error(f' SM update daemon: failure', exc_info=True)
 
-        if msg['action'] != 'update':
-            ds = Dataset.load(self._db, msg['ds_id'])
-            ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FAILED)
+        ds = Dataset.load(self._db, msg['ds_id'])
+        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FAILED)
 
         self._manager.post_to_slack('hankey', f" [x] Failed to {msg['action']}: {json.dumps(msg)}")
 

@@ -1,6 +1,6 @@
 # METASPACE
 
-[![Build Status](https://circleci.com/gh/metaspace2020/metaspace.svg?style=svg)](https://circleci.com/gh/metaspace2020/metaspace) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/metaspace2020/metaspace/branch/master/graph/badge.svg)](https://codecov.io/gh/metaspace2020/metaspace)
+[![Build Status](https://circleci.com/gh/metaspace2020/metaspace.svg?style=svg)](https://circleci.com/gh/metaspace2020/metaspace) [![Documentation Status](https://readthedocs.org/projects/sm-distributed/badge/?version=latest)](http://sm-distributed.readthedocs.org/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/metaspace2020/metaspace/branch/master/graph/badge.svg)](https://codecov.io/gh/metaspace2020/metaspace) [![Gitter](https://badges.gitter.im/metaspace2020/metaspace.svg)](https://gitter.im/metaspace2020/metaspace?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 [The METASPACE platform](http://metaspace2020.eu/) hosts an engine for
  metabolite annotation of imaging mass spectrometry data as well as a
@@ -30,7 +30,7 @@ Please check the [ansible](ansible) project for production installations on AWS,
 ## Uploading Dataset and Browsing Results
 Please visit the help page of our web application running on AWS:
 
-[http://metaspace2020.eu/#/help](http://metaspace2020.eu/#/help)
+[https://metaspace2020.eu/help](https://metaspace2020.eu/help)
 
 ## Acknowledgements
 
