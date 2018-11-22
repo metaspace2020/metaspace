@@ -7,7 +7,7 @@
     <tf-input-box mode="number" @change="onChange" :value="value">
     </tf-input-box>
 
-    <span>± {{ precision }}</span>
+    <span class="tf-value-suffix">± {{ precision }}</span>
 
     <div class="tf-remove el-icon-circle-close"
          v-if="removable"

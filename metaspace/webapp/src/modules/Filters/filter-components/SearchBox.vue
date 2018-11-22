@@ -5,8 +5,7 @@
     </div>
 
     <input ref="input"
-           class="tf-value-input" type="text"
-           style="display: inline-block;"
+           class="tf-value tf-value-input" type="text"
            placeholder="enter any keywords"
            :value="value" @input="onChange($event.target.value)">
 

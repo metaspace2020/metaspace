@@ -6,7 +6,8 @@
 
     <el-popover trigger="click"
                 placement="bottom"
-                :width="width">
+                :width="width"
+                class="tf-value-container">
       <slot name="edit"></slot>
       <div class="tf-value" slot="reference">
         <slot name="show"></slot>
@@ -47,34 +48,49 @@
 <style>
 
  .tf-outer {
-   display: inline-block;
+   display: inline-flex;
+   align-items: stretch;
    text-align: center;
+   box-sizing: border-box;
    border: 2px solid rgb(38, 127, 228);
-   padding: 0 5px 0 0;
-   margin: 0 5px 7px;
+   margin: 5px;
    border-radius: 5px;
+   height: 40px; /* Height should match height of element UI inputs */
  }
 
  .tf-name {
-   display: inline-block;
-   padding: 7px 5px;
+   display: flex;
+   align-items: center;
+   padding: 5px;
    background-color: rgb(38, 127, 228);
    color: #fff;
  }
 
+ .tf-value-container {
+   display: flex;
+ }
+
  .tf-value {
-   display: inline-block;
+   display: flex;
+   align-items: center;
+   padding: 5px;
+ }
+
+ .tf-value-suffix {
+   align-self: center;
+   padding: 5px 5px 6px 0;
  }
 
  .tf-value-span {
+   padding: 2px 0 1px 0;
    border-bottom: 1px dashed #000;
    text-decoration: none;
  }
 
  .tf-remove {
-   display: inline-block;
+   align-self: center;
    cursor: pointer;
-   padding: 7px 0px 7px 3px;
+   padding: 5px 5px 5px 0;
  }
 
  .el-popover > .el-select {

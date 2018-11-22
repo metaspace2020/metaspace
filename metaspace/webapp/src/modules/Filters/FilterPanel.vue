@@ -1,10 +1,10 @@
 <template>
   <div class="filter-panel">
     <el-select v-if="anyOptionalFilterPresent"
+               class="filter-select"
                placeholder="Add filter"
                v-model="selectedFilterToAdd"
-               @change="addFilter"
-               style="width: 200px; margin-bottom: 10px;">
+               @change="addFilter">
       <el-option v-for="f in availableFilters" :key="f.key"
                  :value="f.key" :label="f.description">
       </el-option>
@@ -176,7 +176,12 @@
    display: inline-flex;
    align-items: flex-start;
    flex-wrap: wrap;
-   padding: 0px 4px;
+   margin: -5px -5px 5px; /* Remove margins of .tf-outer so that they're properly aligned. Add margin to bottom to fit well with other components */
+ }
+
+ .filter-select {
+   width: 200px;
+   margin: 5px;
  }
 
  .el-select-dropdown__wrap {
