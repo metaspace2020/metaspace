@@ -114,6 +114,7 @@
     }
     &[type='number'] {
       width: 100px; // IE11 fix - inputs without a "width" won't follow flex-shrink rules
+      -moz-appearance: textfield; // Firefox fix - something is broken with the up/down buttons on input[type='number']s on win 10 so just hide them
     }
     &[type='text'] {
       width: 200px; // IE11 fix - inputs without a "width" won't follow flex-shrink rules
