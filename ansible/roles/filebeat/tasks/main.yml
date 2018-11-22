@@ -1,29 +1,39 @@
 ---
 
-- name: Download Filebeat version={{ filebeat_version }}
-  get_url: url=https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-{{ filebeat_version }}-amd64.deb
-           dest=/tmp/filebeat-{{ filebeat_version }}.deb
+- name: Download Filebeat version={{ filebeat.version }}
+  get_url: url=https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-{{ filebeat.version }}-amd64.deb
+           dest=/tmp/filebeat-{{ filebeat.version }}.deb
 
 - name: Install Filebeat
-  command: dpkg -i /tmp/filebeat-{{ filebeat_version }}.deb
+  become: yes
+  command: dpkg -i /tmp/filebeat-{{ filebeat.version }}.deb
 
 - name: Create /etc/filebeat/filebeat.yml template
+  become: yes
   template: src=filebeat.yml.j2 dest=/etc/filebeat/filebeat.yml mode=0644
 
-- name: Create Elasticsearch ingest node pipelines
+- name: Create Elasticsearch ingest node pipeline
   uri:
-    url: http://{{ es_host }}:9200/_ingest/pipeline/{{ ingest_node_pipeline_id }}
+    url: http://{{ filebeat.elasticsearch.host }}/_ingest/pipeline/{{ filebeat.elasticsearch.ingest_node_pipeline_id }}
     method: PUT
-    user: "{{ es_user }}"
-    password: "{{ es_password }}"
-    body: "{{ ingest_node_pipeline | to_json }}"
+    body: "{{ filebeat.elasticsearch.ingest_node_pipeline }}"
     body_format: json
 
-- name: Filebeat conf update restart
+- name: Create Elasticsearch index template
+  uri:
+    url: http://{{ filebeat.elasticsearch.host }}/_template/filebeat
+    method: PUT
+    body: "{{ lookup('file','index-template.json') }}"
+    body_format: json
+
+- name: Filebeat service restart
+  become: yes
   service: name=filebeat state=restarted
 
-- name: Start Filebeat service
+- name: Check Filebeat service is running
+  become: yes
   service: name=filebeat state=started
 
 - name: Start Filebeat on boot
+  become: yes
   service: name=filebeat enabled=true
