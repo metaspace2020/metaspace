@@ -1,3 +1,4 @@
+import {isEqual} from 'lodash-es';
 import router from '../router';
 import compare from '../lib/compare';
 
@@ -56,7 +57,7 @@ export default {
     active.sort((a, b) =>
       compare(FILTER_SPECIFICATIONS[a].sortOrder || 100, FILTER_SPECIFICATIONS[b].sortOrder || 100));
 
-    const changedFilterSet = state.orderedActiveFilters != active;
+    const changedFilterSet = !isEqual(state.orderedActiveFilters, active);
 
     state.orderedActiveFilters = active;
     if (changedFilterSet)

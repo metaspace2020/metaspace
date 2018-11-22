@@ -116,7 +116,7 @@
     }
     get filter(): 'all' | 'my' {
       const {simpleFilter} = this.$store.getters.filter;
-      return simpleFilter === 'my' ? 'my' : 'all';
+      return simpleFilter === 'my-projects' ? 'my' : 'all';
     }
     get filteredMyProjects() {
       if (this.query && this.myProjects != null) {
