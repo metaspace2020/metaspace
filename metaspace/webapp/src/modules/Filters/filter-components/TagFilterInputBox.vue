@@ -48,19 +48,3 @@
  }
 
 </script>
-
-<style lang="scss">
- .tf-value-input input, input.tf-value-input {
-   border: none;
-   // This takes styles from "html" and "#app" in App.vue to make the text match the other filters
-   font-family: 'Roboto', Helvetica, sans-serif;
-   font-size: 1em;
-   -webkit-font-smoothing: antialiased;
-   -moz-osx-font-smoothing: grayscale;
-   color: #2c3e50;
-
-   &::-ms-clear {
-     display: none;
-   }
- }
-</style>

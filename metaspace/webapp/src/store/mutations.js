@@ -1,8 +1,11 @@
 import router from '../router';
+import compare from '../lib/compare';
 
-import {decodeParams,
-        encodeParams, encodeSections, encodeSortOrder,
-        stripFilteringParams} from '../modules/Filters';
+import {
+  decodeParams,
+  encodeParams, encodeSections, encodeSortOrder, FILTER_SPECIFICATIONS,
+  stripFilteringParams,
+} from '../modules/Filters';
 import {getFilterInitialValue} from '../modules/Filters';
 
 
@@ -48,6 +51,10 @@ export default {
       if (filter[key] !== undefined &&
           active.indexOf(key) == -1)
         active.push(key);
+
+    // sort
+    active.sort((a, b) =>
+      compare(FILTER_SPECIFICATIONS[a].sortOrder || 100, FILTER_SPECIFICATIONS[b].sortOrder || 100));
 
     const changedFilterSet = state.orderedActiveFilters != active;
 

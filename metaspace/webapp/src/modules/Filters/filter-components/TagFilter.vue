@@ -1,7 +1,9 @@
 <template>
   <div class="tf-outer">
     <div class="tf-name">
-      {{ name }}:
+      <slot name="name">
+        {{ name }}:
+      </slot>
     </div>
 
     <el-popover trigger="click"
@@ -45,7 +47,7 @@
  } as ComponentOptions<TagFilter>
 </script>
 
-<style>
+<style lang="scss">
 
  .tf-outer {
    display: inline-flex;
@@ -56,6 +58,7 @@
    margin: 5px;
    border-radius: 5px;
    height: 40px; /* Height should match height of element UI inputs */
+   max-width: 300px;
  }
 
  .tf-name {
@@ -64,16 +67,19 @@
    padding: 5px;
    background-color: rgb(38, 127, 228);
    color: #fff;
+   flex: none;
  }
 
  .tf-value-container {
    display: flex;
+   overflow: hidden;
  }
 
  .tf-value {
    display: flex;
    align-items: center;
    padding: 5px;
+   overflow: hidden;
  }
 
  .tf-value-suffix {
@@ -82,10 +88,29 @@
  }
 
  .tf-value-span {
+   flex: auto;
    padding: 2px 0 1px 0;
    border-bottom: 1px dashed #000;
    text-decoration: none;
+   text-align: start;
+   text-overflow: ellipsis;
+   overflow: hidden;
+   white-space: nowrap;
  }
+
+  .tf-value-input input, input.tf-value-input {
+    border: none;
+    // This takes styles from "html" and "#app" in App.vue to make the text match the other filters
+    font-family: 'Roboto', Helvetica, sans-serif;
+    font-size: 1rem;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #2c3e50;
+
+    &::-ms-clear {
+      display: none;
+    }
+  }
 
  .tf-remove {
    align-self: center;
