@@ -50,7 +50,7 @@
 <style lang="scss">
 
  .tf-outer {
-   display: inline-flex;
+   display: flex;
    align-items: stretch;
    text-align: center;
    box-sizing: border-box;
@@ -80,11 +80,13 @@
    align-items: center;
    padding: 5px;
    overflow: hidden;
+   flex: auto;
  }
 
  .tf-value-suffix {
    align-self: center;
    padding: 5px 5px 6px 0;
+   white-space: nowrap;
  }
 
  .tf-value-span {
@@ -109,6 +111,12 @@
 
     &::-ms-clear {
       display: none;
+    }
+    &[type='number'] {
+      width: 100px; // IE11 fix - inputs without a "width" won't follow flex-shrink rules
+    }
+    &[type='text'] {
+      width: 200px; // IE11 fix - inputs without a "width" won't follow flex-shrink rules
     }
   }
 
