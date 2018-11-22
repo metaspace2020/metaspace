@@ -174,7 +174,8 @@ class AWSInstManager(object):
             i = self.conf['instances'][component]
             self.create_instances(i['hostgroup'], i['type'], i['n'], i['image'],
                                   i['sec_group'], i['hostgroup'], i['block_dev_maps'],
-                                  spot_price=i['price'], el_ip_id=i['elipalloc'], inst_tags=i.get('tags', {}))
+                                  spot_price=i.get('price', None), el_ip_id=i['elipalloc'],
+                                  inst_tags=i.get('tags', {}))
 
     def stop_all_instances(self, components):
         for component in components:
@@ -228,7 +229,6 @@ if __name__ == '__main__':
     parser.add_argument('--create-ami', dest='create_ami', action='store_true')
     parser.add_argument('--dry-run', dest='dry_run', action='store_true',
                         help="Don't actually start/stop instances")
-    parser.add_argument('--region', dest='region', type=str, help='AWS region to spin up instances at')
     args = parser.parse_args()
 
     conf_file = 'group_vars/all.yml' if not args.create_ami else 'group_vars/create_ami_config.yml'
@@ -237,13 +237,13 @@ if __name__ == '__main__':
     cluster_conf = conf['cluster_configuration']
 
     aws_inst_man = AWSInstManager(key_name=args.key_name or conf['aws_key_name'],
-                                  conf=cluster_conf, region=args.region,
+                                  conf=cluster_conf, region=conf['aws_region'],
                                   dry_run=args.dry_run, verbose=True)
 
     if args.components:
         components = args.components.strip(' ').split(',')
         if 'all' in components:
-            components = ['web', 'master', 'slave']
+            components = ['web', 'master', 'slave', 'elk']
     else:
         components = []
 

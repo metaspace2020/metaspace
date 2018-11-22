@@ -136,7 +136,7 @@ class ClusterDaemon(object):
 
     def sm_engine_deploy(self):
         self.logger.info('Deploying SM engine code...')
-        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'deploy/engine.yml'],
+        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'deploy/spark.yml'],
                     'The SM engine is deployed', 'Failed to deploy the SM engine')
 
     def _post_to_slack(self, emoji, msg):

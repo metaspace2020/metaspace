@@ -2,3 +2,4 @@
 
 dependencies:
   - name: sm_engine
+    tags: [sm_engine]

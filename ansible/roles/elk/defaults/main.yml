@@ -1,2 +1,2 @@
-elk_version: 5.1.1
-elasticsearch_port: 9210  # nginx proxies 9200 -> 9210
+elk_version: 6.4.3
+elk_es_port: 9210  # nginx proxies 9200 -> 9210

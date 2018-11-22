@@ -12,13 +12,13 @@
     - debug: var=components
     - debug: var=aws_key_name
 
-    - name: Spin up SM cluster instances
+    - name: Spin up SM instances
       shell: python3 aws_instance_manager.py create --key-name {{ aws_key_name }}
-             --components {{ components }} --stage {{ stage }} --region {{ aws_region }}
+             --components {{ components }} --stage {{ stage }}
       when: spark_volume_size is not defined
 
     - meta: refresh_inventory
-  tags: ["web", "spark"]
+  tags: ["web", "spark", "elk"]
 
 
 - name: Wait for SSH on the master to come up
