@@ -187,8 +187,8 @@
          return {ds_id: this.datasetId}
        },
        update(data) {
-         const {url, transform} = data.rawOpticalImage;
-         if (transform != null) {
+         if (data.rawOpticalImage != null && data.rawOpticalImage.transform != null) {
+           const {url, transform} = data.rawOpticalImage;
            this.opticalImgUrl = url;
            this.initialTransform = transform;
            this.angle = 0;
