@@ -9,6 +9,7 @@ import { onError } from 'apollo-link-error';
 import * as config from './clientConfig.json';
 import tokenAutorefresh from './tokenAutorefresh';
 import reportError from './lib/reportError';
+import {get} from 'lodash-es';
 
 const graphqlUrl = config.graphqlUrl || `${window.location.origin}/graphql`;
 const wsGraphqlUrl = config.wsGraphqlUrl || `${window.location.origin.replace(/^http/, 'ws')}/ws`;
@@ -40,10 +41,9 @@ const authLink = setContext(async () => {
   }
 });
 
-const errorLink = onError(({ graphQLErrors }) => {
+const errorLink = onError(({ graphQLErrors, networkError, forward, operation }) => {
   if (graphQLErrors) {
     const readOnlyErrors = graphQLErrors.filter(isReadOnlyError);
-    console.log(graphQLErrors, readOnlyErrors, $alert);
 
     if (readOnlyErrors.length > 0) {
       if ($alert != null) {
@@ -52,6 +52,13 @@ const errorLink = onError(({ graphQLErrors }) => {
           'Scheduled Maintenance',
           {type: 'error'});
       }
+    }
+  } else if (networkError) {
+    const message = get(networkError, 'result.message');
+    if (message === 'jwt expired') {
+      // noinspection JSIgnoredPromiseFromCall
+      tokenAutorefresh.refreshJwt(true);
+      return forward(operation);
     }
   }
 });
@@ -65,7 +72,7 @@ const wsLink = new WebSocketLink(new SubscriptionClient(wsGraphqlUrl, {
   reconnect: true,
 }));
 
-const link = authLink.concat(errorLink).split(
+const link = errorLink.concat(authLink).split(
   (operation) => {
     // Only send subscriptions over websockets
     const operationAST = getOperationAST(operation.query, operation.operationName);
