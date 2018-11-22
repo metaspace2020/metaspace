@@ -13,6 +13,11 @@
           {{project.numMembers | plural('Member', 'Members')}}
         </div>
         <div class="info-line">
+          <span>Project manager<span v-if="projectManagers.length>1">s</span>:</span>
+          <span v-for="(manager, ind) in projectManagers">
+            <b>{{manager.user.name}}<span v-if="ind+1 < projectManagers.length" >, </span></b></span>
+        </div>
+        <div class="info-line">
           <span v-if="project.latestUploadDT != null">
             Last submission <b>{{formatDate(project.latestUploadDT)}}</b>
           </span>
@@ -56,12 +61,15 @@
   import { CurrentUserRoleResult } from '../../api/user';
   import ConfirmAsync from '../../components/ConfirmAsync';
   import {plural} from '../../lib/vueFilters';
+  import {ProjectRoleOptions as UPRO} from '../../api/project';
+
 
   @Component({
     filters: {
       plural
     }
   })
+
   export default class ProjectsListItem extends Vue {
     @Prop({type: Object})
     currentUser!: CurrentUserRoleResult | null;
@@ -69,6 +77,10 @@
     project!: ProjectsListProject;
     @Prop({type: Function, required: true})
     refreshData!: () => void;
+
+    get projectManagers(): Array<Object> {
+      return this.project.members.filter(member => (member.role === UPRO.MANAGER))
+    }
 
     get projectLink() {
       return {
@@ -146,6 +158,12 @@
     }
   }
 
+  .info {
+    overflow: hidden;
+    flex: auto;
+    padding-right: 12px;
+  }
+
   .item-body {
     display: flex;
     flex-direction: row;
@@ -160,6 +178,7 @@
     white-space: nowrap;
     text-overflow: ellipsis;
   }
+
   .description {
     $line-height: 1.2em;
     $lines: 5;
@@ -207,7 +226,7 @@
   }
 
   .actions {
-    width: 170px;
+    flex: 0 0 170px;
   }
 
   .delete, .delete > a {

@@ -95,6 +95,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
               <!---->
               1 Member
             </div>
+            <div class="info-line"><span>Project manager<!---->:</span> <span><b>TestUser1<!----></b></span></div>
             <div class="info-line"><span>
           Created on <b>2018-08-29</b></span></div>
             <!---->
@@ -123,6 +124,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             <div class="info-line"><span><a href="/datasets?prj=project%202" class="">20 Datasets</a>,
         </span> 20 Members
             </div>
+            <div class="info-line"><span>Project manager<!---->:</span> <span><b>TestUser1<!----></b></span></div>
             <div class="info-line"><span>
           Last submission <b>2018-08-01</b></span></div>
             <!---->
