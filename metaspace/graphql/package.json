@@ -29,7 +29,7 @@
     "amqplib": "^0.5.1",
     "apollo-server-express": "^2.0.4",
     "aws-sdk": "^2.13.0",
-    "bcrypt": "^3.0.0",
+    "bcrypt": "^3.0.2",
     "body-parser": "^1.15.2",
     "compression": "^1.6.2",
     "config": "^1.26.1",
