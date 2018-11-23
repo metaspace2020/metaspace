@@ -406,6 +406,7 @@
            mutation: reprocessDatasetQuery,
            variables: {
              id: this.dataset.id,
+             force: true,
            }
          });
          this.$notify.success("Dataset sent for reprocessing");
