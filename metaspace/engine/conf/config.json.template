@@ -106,7 +106,7 @@
     },
     "loggers": {
         "engine": {
-            "handlers": ["console_debug", "file_engine"],
+            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "api": {

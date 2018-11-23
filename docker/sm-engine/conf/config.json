@@ -105,17 +105,11 @@
             "class": "logging.StreamHandler",
             "formatter": "sm",
             "level": "DEBUG"
-        },
-        "file_engine": {
-            "class": "logging.FileHandler",
-            "formatter": "sm",
-            "level": "DEBUG",
-            "filename": "logs/sm-engine.log"
         }
     },
     "loggers": {
         "engine": {
-            "handlers": ["console_debug", "file_engine"],
+            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "api": {
