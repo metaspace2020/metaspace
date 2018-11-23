@@ -59,7 +59,7 @@ export class DatasetProject {
   approved: Boolean;
 }
 
-export type DatasetStatus = 'NEW' | 'QUEUED' | 'ANNOTATING' | 'INDEXING' | 'FINISHED' | 'FAILED' | 'DELETED';
+export type DatasetStatus = 'NEW' | 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED' | 'UPDATED' | 'DELETED';
 // This isn't an Entity because datasets in the "public" schema are owned by sm-engine and aren't managed by TypeORM
 export interface EngineDataset {
   id: string;

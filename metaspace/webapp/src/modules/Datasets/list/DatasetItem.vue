@@ -376,7 +376,8 @@
          && this.dataset.status !== 'FINISHED';
        try {
          await this.$confirm(`Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${this.formatDatasetName}?`, {
-           type: force ? 'warning' : null
+           type: force ? 'warning' : null,
+           lockScroll: false,
          });
        } catch (cancel) {
          return;

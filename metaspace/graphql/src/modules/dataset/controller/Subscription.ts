@@ -1,10 +1,12 @@
 import * as Amqplib from 'amqplib';
 import {esDatasetByID} from '../../../../esConnector';
-import {canUserViewPgDataset, logger, pubsub, wait} from '../../../../utils';
+import {logger, pubsub, wait} from '../../../../utils';
 import config from '../../../utils/config';
 import {DatasetStatus, EngineDataset} from '../model';
 import {Context} from '../../../context';
-import {fetchEngineDS} from '../../../utils/knexDb';
+import canViewEsDataset from '../util/canViewEsDataset';
+import {relationshipToDataset} from '../util/relationshipToDataset';
+import {DatasetStatusUpdate} from '../../../binding';
 
 interface DatasetStatusUpdatePayload {
   dataset?: any;
@@ -22,13 +24,10 @@ async function publishDatasetStatusUpdate(ds_id: string, status: DatasetStatus) 
 
       if (ds == null && status === 'DELETED') {
         await wait(1000);
-        pubsub.publish('datasetStatusUpdated', {});
+        pubsub.publish('datasetDeleted', { id: ds_id });
         return;
       } else if (ds != null && status !== 'DELETED') {
-        pubsub.publish('datasetStatusUpdated', {
-          dataset: Object.assign({}, ds, { status }),
-          dbDs: await fetchEngineDS({ id: ds_id })
-        });
+        pubsub.publish('datasetStatusUpdated', { dataset: { ...ds, status } });
         return;
       }
 
@@ -49,8 +48,9 @@ queue.then(function(conn) {
   return ch.assertQueue(rabbitmqChannel).then(function(ok) {
     return ch.consume(rabbitmqChannel, function(msg) {
       if (msg != null) {
+        console.log(msg.content.toString());
         const { ds_id, status } = JSON.parse(msg.content.toString());
-        if (['QUEUED', 'ANNOTATING', 'FINISHED', 'FAILED', 'DELETED'].indexOf(status) >= 0)
+        if (['QUEUED', 'ANNOTATING', 'FINISHED', 'FAILED', 'UPDATED', 'DELETED'].indexOf(status) >= 0)
           publishDatasetStatusUpdate(ds_id, status).then(/* Ignore promise - allow to run in background */);
         ch.ack(msg);
       }
@@ -60,16 +60,27 @@ queue.then(function(conn) {
 
 const SubscriptionResolvers = {
   datasetStatusUpdated: {
-    subscribe: () => pubsub.asyncIterator('datasetStatusUpdated'),
-    resolve: (payload: DatasetStatusUpdatePayload, args: {}, context: Context) => {
-      if (payload.dataset && payload.dbDs && canUserViewPgDataset(payload.dbDs, context.user)) {
-        return { dataset: payload.dataset };
-      } else {
-        // Empty payload indicates that the client should still refresh its dataset list
-        return { dataset: null };
+    subscribe: async function* datasetStatusUpdated(source: any, args: any, context: Context) {
+      // for-await loops need an Iterable, and pubsub.asyncIterator's return value does actually support
+      // both interfaces even though its type is "AsyncIterator"
+      const iterable = pubsub.asyncIterator('datasetStatusUpdated') as AsyncIterableIterator<DatasetStatusUpdatePayload>;
+
+      for await (const payload of iterable) {
+        if (payload.dataset && canViewEsDataset(payload.dataset, context.user)) {
+          const relationships = await relationshipToDataset(payload.dataset, context);
+          yield {
+            dataset: payload.dataset,
+            relationship: relationships.length > 0 ? relationships[0] : null,
+          };
+        }
       }
-    }
+    },
+    resolve: (payload: any) => payload,
   },
+  datasetDeleted: {
+    subscribe: () => pubsub.asyncIterator('datasetDeleted'),
+    resolve: (payload: any) => payload,
+  }
 };
 
 export default SubscriptionResolvers;

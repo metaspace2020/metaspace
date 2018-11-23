@@ -88,6 +88,7 @@
   import {encodeParams} from '../Filters';
   import {refreshLoginStatus} from '../../graphqlClient';
   import NotificationIcon from '../../components/NotificationIcon.vue';
+  import {datasetStatusUpdatedQuery} from '../../api/dataset';
 
  export default {
    name: 'metaspace-header',
@@ -209,7 +210,47 @@
        }`,
        fetchPolicy: 'cache-first',
        loadingKey: 'loadingUser'
-     }
+     },
+     $subscribe: {
+       datasetStatusUpdated: {
+         query: datasetStatusUpdatedQuery,
+         result({ data }) {
+           const { dataset, relationship } = data.datasetStatusUpdated;
+           if (dataset != null && relationship != null) {
+             const { name, status, submitter } = dataset;
+             const type = {
+               FINISHED: 'success',
+               QUEUED: 'info',
+               ANNOTATING: 'info',
+               FAILED: 'warning',
+             }[status];
+
+             let message;
+             if (relationship.type === 'submitter') {
+               if (status === 'FINISHED') {
+                 message = `Processing of dataset ${name} is finished!`;
+               } else if (status === 'FAILED') {
+                 message = `Something went wrong with dataset ${name} :(`;
+               } else if (status === 'QUEUED') {
+                 message = `Dataset ${name} has been submitted`;
+               } else if (status === 'ANNOTATING') {
+                 message = `Started processing dataset ${name}`;
+               }
+             } else {
+               const who = `${submitter.name} (${relationship.name})`;
+               if (status === 'FINISHED') {
+                 message = `Processing of dataset ${name} by ${who} is finished!`;
+               } else if (status === 'QUEUED') {
+                 message = `Dataset ${name} has been submitted by ${who}`;
+               }
+             }
+             if (message != null && type != null) {
+               this.$notify({ message, type });
+             }
+           }
+         }
+       },
+     },
    },
 
    methods: {

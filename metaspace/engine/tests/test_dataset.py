@@ -69,7 +69,7 @@ def test_dataset_update_status_works(fill_db, sm_config, metadata):
 
     upload_dt = datetime.now()
     ds_id = '2000-01-01'
-    ds = Dataset(ds_id, 'ds_name', 'input_path', upload_dt, metadata, DatasetStatus.INDEXING, mol_dbs=['HMDB'])
+    ds = Dataset(ds_id, 'ds_name', 'input_path', upload_dt, metadata, DatasetStatus.ANNOTATING, mol_dbs=['HMDB'])
 
     ds.set_status(db, es_mock, status_queue_mock, DatasetStatus.FINISHED)
 

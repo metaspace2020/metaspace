@@ -179,17 +179,22 @@ export interface DatasetVisibilityResult {
   projects: { id: string, name: string }[] | null;
 }
 
-export const datasetStatusUpdatedQuery = gql`subscription DS {
+export const datasetStatusUpdatedQuery = gql`subscription datasetStatusUpdated($inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
   datasetStatusUpdated {
     dataset {
+      ...DatasetDetailItem
+    }
+    relationship {
+      type
       id
       name
-      status
-      submitter { id name }
-      principalInvestigator { name }
-      group { id name shortName }
-      projects { id name }
-      isPublic
     }
+  }
+}
+${datasetDetailItemFragment}`;
+
+export const datasetDeletedQuery = gql`subscription datasetDeleted {
+  datasetDeleted {
+    id
   }
 }`;

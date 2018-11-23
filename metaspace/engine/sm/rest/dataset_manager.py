@@ -48,8 +48,7 @@ class SMapiDatasetManager(object):
 
     def _set_ds_busy(self, ds, **kwargs):
         if ds.status in {DatasetStatus.QUEUED,
-                         DatasetStatus.ANNOTATING,
-                         DatasetStatus.INDEXING} and not kwargs.get('force', False):
+                         DatasetStatus.ANNOTATING} and not kwargs.get('force', False):
             raise DSIsBusy(ds.id)
 
         ds.set_status(self._db, self._es, status_queue=self._status_queue, status=DatasetStatus.QUEUED)

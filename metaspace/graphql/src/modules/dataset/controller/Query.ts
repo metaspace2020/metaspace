@@ -52,7 +52,7 @@ const QueryResolvers: FieldResolversFor<Query, void>  = {
     // TODO: decide whether to support field level access here
     const scopeRole = await resolveDatasetScopeRole(ctx, dsId);
     const ds = await esDatasetByID(dsId, ctx.user);
-    return ds ? { ...ds, scopeRole }: null;
+    return ds ? { ...ds, scopeRole } : null;
   },
 
   async allDatasets(source, args, ctx): Promise<DatasetSource[]> {

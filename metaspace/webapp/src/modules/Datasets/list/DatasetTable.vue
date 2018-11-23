@@ -38,22 +38,26 @@
         </el-button>
       </div>
 
-      <dataset-list :datasets="datasets" allowDoubleColumn @datasetMutated="handleDatasetMutated" />
+      <dataset-list :datasets="datasets" allowDoubleColumn />
     </div>
   </div>
 </template>
 
 <script>
-  import {datasetDetailItemsQuery, datasetCountQuery, datasetStatusUpdatedQuery} from '../../../api/dataset';
+  import {
+    datasetDetailItemsQuery,
+    datasetCountQuery,
+    datasetDeletedQuery,
+  } from '../../../api/dataset';
  import {metadataExportQuery} from '../../../api/metadata';
  import DatasetList from './DatasetList.vue';
  import {FilterPanel} from '../../Filters/index';
  import { csvExportHeader } from '../../../util';
- import {throttle} from 'lodash-es';
  import FileSaver from 'file-saver';
  import delay from '../../../lib/delay';
  import formatCsvRow from '../../../lib/formatCsvRow';
   import {currentUserRoleQuery} from '../../../api/user';
+  import {removeDatasetFromAllDatasetsQuery} from '../../../lib/updateQuery';
 
  const processingStages = ['started', 'queued', 'failed', 'finished'];
 
@@ -70,15 +74,6 @@
    components: {
      DatasetList,
      FilterPanel,
-   },
-   created() {
-     // Bulk updates can cause this to trigger hundreds of times per minute. Throttle automatic refetches to at most
-     // once per minute
-
-     this.refetchList = throttle(this.refetchList, 60000);
-   },
-   beforeDestroy() {
-     this.refetchList.cancel();
    },
 
    computed: {
@@ -108,31 +103,13 @@
 
    apollo: {
      $subscribe: {
-       datasetStatusUpdated: {
-         query: datasetStatusUpdatedQuery,
+       datasetDeleted: {
+         query: datasetDeletedQuery,
          result({data}) {
-           if (data.datasetStatusUpdated.dataset != null) {
-             const {name, status, submitter, group} = data.datasetStatusUpdated.dataset;
-             const who = group ? `${submitter.name} (${group.name})` : submitter.name;
-             const statusMap = {
-               FINISHED: 'success',
-               QUEUED: 'info',
-               ANNOTATING: 'info',
-               FAILED: 'warning'
-             };
-             let message = '';
-             if (status == 'FINISHED')
-               message = `Processing of dataset ${name} is finished!`;
-             else if (status == 'FAILED')
-               message = `Something went wrong with dataset ${name} :(`;
-             else if (status == 'QUEUED')
-               message = `Dataset ${name} has been submitted to query by ${who}`;
-             else if (status == 'ANNOTATING')
-               message = `Started processing dataset ${name}`;
-             this.$notify({ message, type: statusMap[status] });
-           }
-
-           this.refetchList();
+           const datasetId = data.datasetDeleted.id;
+           ['failed', 'finished', 'queued', 'started'].forEach(queryName => {
+             removeDatasetFromAllDatasetsQuery(this, queryName, datasetId);
+           });
          }
        }
      },
@@ -218,26 +195,6 @@
        // assume not too many items are queued/being processed
        // so they are all visible in the web app
        return '(' + this[stage].length + ')';
-     },
-
-     refetchList() {
-       this.refetchListUnthrottled();
-     },
-
-     refetchListUnthrottled() {
-       this.$apollo.queries.started.refresh();
-       this.$apollo.queries.queued.refresh();
-       this.$apollo.queries.finished.refresh();
-       this.$apollo.queries.finishedCount.refresh();
-       if (this.canSeeFailed) {
-         this.$apollo.queries.failed.refresh();
-       }
-     },
-
-     handleDatasetMutated() {
-       // Reset the throttled function as the next datasetStatusUpdated message is probably related to the mutation that
-       // the user just triggered.
-       this.refetchList.flush();
      },
 
      async startExport() {

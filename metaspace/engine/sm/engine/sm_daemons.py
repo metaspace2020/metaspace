@@ -80,6 +80,7 @@ class SMDaemonManager(object):
 
     def update(self, ds, fields):
         self.es.update_ds(ds.id, fields)
+        self.status_queue.publish({'ds_id': ds.id, 'status': DatasetStatus.UPDATED})
 
     def _del_iso_images(self, ds):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)

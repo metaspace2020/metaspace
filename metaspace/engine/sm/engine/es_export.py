@@ -384,6 +384,7 @@ class ESExporter(object):
                         params={
                             'pipeline': pipeline_id,
                             'wait_for_completion': True,
+                            'refresh': 'wait_for',
                             'request_timeout': 60,
                         })
                 finally:

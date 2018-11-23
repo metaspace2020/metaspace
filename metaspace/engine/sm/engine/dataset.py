@@ -19,17 +19,18 @@ class DatasetStatus(object):
     """ The processing is in progress """
     ANNOTATING = 'ANNOTATING'
 
-    """ The records are being updated because of changed metadata """
-    INDEXING = 'INDEXING'
-
-    """ The processing/reindexing finished successfully (most common) """
+    """ The processing finished successfully (most common) """
     FINISHED = 'FINISHED'
 
     """ An error occurred during processing """
     FAILED = 'FAILED'
 
+    """ The dataset's metadata was updated without reprocessing """
+    UPDATED = 'UPDATED'  # only for the status queue - actual status will be 'FINISHED'
+
     """ The dataset has been deleted """
     DELETED = 'DELETED'  # only for the status queue
+
 
 
 RESOL_POWER_PARAMS = {
