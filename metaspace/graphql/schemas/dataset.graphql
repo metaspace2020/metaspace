@@ -3,11 +3,11 @@ type Dataset {
   name: String!
   uploadDT: String!
 
-  submitter: User!
-  group: Group
+  submitter: DatasetUser!
+  group: DatasetGroup
   groupApproved: Boolean!
   principalInvestigator: Person
-  projects: [Project!]
+  projects: [DatasetProject!]
 
   polarity: Polarity!
   ionisationSource: String!
@@ -35,6 +35,28 @@ type Dataset {
   fdrCounts(inpFdrLvls: [Int!]!, checkLvl: Int!): FdrCounts
   opticalImage: String @deprecated(badName: "Renamed to rawOpticalImageUrl")
   rawOpticalImageUrl: String
+}
+
+# Datasets' submitter and group are taken from ElasticSearch, which means they can be out of sync with the database.
+# If they overlap with Users/Groups loaded from the database, it causes a lot of problems with the client-side GraphQL cache.
+# To solve this, they're separated into their own data types so that client-side code can cache them differently.
+type DatasetUser {
+  id: ID!
+  name: String
+  email: String
+}
+type DatasetGroup {
+  id: ID!
+  name: String!
+  shortName: String!
+  urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  members: [UserGroup!] @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+}
+type DatasetProject {
+  id: ID!
+  name: String!
+  isPublic: Boolean @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
 }
 
 # fields of categorical type

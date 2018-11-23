@@ -134,6 +134,12 @@ const projectsListItemFragment =
       numDatasets
       createdDT
       latestUploadDT
+      members {
+        user {
+          name
+        }
+        role
+      }
     }`;
 
 export const projectsListQuery =
@@ -182,6 +188,12 @@ export interface ProjectsListProject {
   numMembers: number;
   numDatasets: number;
   createdDT: string;
+  members: {
+    user: {
+      name: string;
+    },
+    role: string
+  }[];
   latestUploadDT: string | null;
 }
 

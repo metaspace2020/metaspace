@@ -41,8 +41,9 @@
       <p><b>Step-by-step tutorial:</b> Please read our <a href="https://speakerdeck.com/metaspace2020/metaspace-training-guide">training guide slides</a> providing an introduction to METASPACE as well as a step-by-step tutorial with screenshots.</p>
 
       <p>
-        If you have any ideas on how to improve the website, please send them to
-        <a href="mailto:contact@metaspace2020.eu">our e-mail address</a>.
+        If you have any ideas on how to improve the website, please
+        <a href="https://gitter.im/metaspace2020/metaspace">chat with us on Gitter</a> or
+        send them to <a href="mailto:contact@metaspace2020.eu">our e-mail address</a>.
       </p>
     </div>
   </div>

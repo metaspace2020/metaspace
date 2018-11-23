@@ -74,6 +74,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
         id: ds._source.ds_group_id,
         name: ds._source.ds_group_name || 'NULL',
         shortName: ds._source.ds_group_short_name || 'NULL',
+        urlSlug: null,
+        members: null,
       };
     } else {
       return null;
@@ -92,8 +94,14 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       return [];
     }
 
-    return ctx.connection.getCustomRepository(ProjectSourceRepository)
+    const projects = await ctx.connection.getCustomRepository(ProjectSourceRepository)
       .findProjectsByDatasetId(ctx.user, ds._source.ds_id);
+    return projects.map(p => ({
+      id: p.id,
+      name: p.name,
+      isPublic: null,
+      urlSlug: null,
+    }));
   },
 
   async principalInvestigator(ds, _, {connection, isAdmin, user}) {
@@ -171,13 +179,13 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   // TODO: field is deprecated, remove
   async opticalImage(ds, _, ctx) {
-    // @ts-ignore
-    return await rawOpticalImage(ds._source.ds_id, ctx).url;
+    const opticalImage = await rawOpticalImage(ds._source.ds_id, ctx);
+    return opticalImage ? opticalImage.url : null;
   },
 
   async rawOpticalImageUrl(ds, _, ctx) {
-    // @ts-ignore
-    return await rawOpticalImage(ds._source.ds_id, ctx).url;
+    const opticalImage = await rawOpticalImage(ds._source.ds_id, ctx);
+    return opticalImage ? opticalImage.url : null;
   }
 };
 

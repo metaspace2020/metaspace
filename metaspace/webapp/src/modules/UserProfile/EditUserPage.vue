@@ -38,6 +38,7 @@
         <el-col :span="8">
           <el-button title="Save"
                      type="primary"
+                     :disabled="isUserDetailsPristine"
                      @click="updateUserDetails"
                      class="saveButton"
                      :loading="isUserDetailsLoading">
@@ -46,29 +47,27 @@
         </el-col>
       </el-row>
       <el-row :gutter="20">
-        <el-form :disabled="isUserDetailsLoading" :rules="rules" :model="model" ref="form">
+        <el-form :disabled="isUserDetailsLoading" :rules="rules" :model="model" ref="form" label-position="top">
           <div style="padding-left: 15px;">
             <el-col :span="8">
-              <div>
-                <el-form-item prop="name" label="Full name">
-                  <el-input v-model="model.name" name="name" />
-                </el-form-item>
-              </div>
+              <el-form-item prop="name" label="Full name">
+                <el-input v-model="model.name" name="name" />
+              </el-form-item>
             </el-col>
             <el-col :span="8">
-              <div>
-                <el-form-item prop="email" label="Email address">
-                  <el-input v-model="model.email" name="email" />
-                </el-form-item>
-                <p v-if="isEmailChangePending">
-                  <b>Please click the link that has been sent to your new email address to verify the change.</b>
-                </p>
-              </div>
+              <el-form-item prop="email" label="Email address">
+                <el-input v-model="model.email" name="email" />
+              </el-form-item>
+              <p v-if="isEmailChangePending">
+                <b>Please click the link that has been sent to your new email address to verify the change.</b>
+              </p>
             </el-col>
             <el-col :span="8">
-              <el-button style="margin-top: 42px;" @click="handleChangePassword">
-                Change password
-              </el-button>
+              <el-form-item label="Password" required>
+                <el-button style="margin-left: 16px" type="text" @click="handleChangePassword">
+                  Click to change...
+                </el-button>
+              </el-form-item>
             </el-col>
           </div>
         </el-form>
@@ -79,7 +78,11 @@
         <groups-table :currentUser="currentUser" :refetchData="refetchData" />
         <div v-if="currentUser && currentUser.groups && currentUser.groups.length > 1">
           <p>Primary group:</p>
-          <el-select v-model="primaryGroupId" placeholder="Select" style="padding-left: 15px;">
+          <el-select v-model="primaryGroupId"
+                     placeholder="Select"
+                     style="padding-left: 15px;width: 400px;"
+                     v-loading="isChangingPrimaryGroup"
+                     @change="handleChangePrimaryGroup">
             <el-option
               v-for="userGroup in currentUser.groups"
               :key="userGroup.group.id"
@@ -199,6 +202,7 @@
     isUserDetailsLoading: boolean = false;
     isUserDeletionLoading: boolean = false;
     isEmailChangePending: boolean = false;
+    isChangingPrimaryGroup: boolean = false;
 
     currentUser: UserProfileQuery | null = null;
     model: Model = {
@@ -217,6 +221,11 @@
         message: 'Please enter a valid email address', trigger: "blur"
       }]
     };
+
+    get isUserDetailsPristine() {
+      return this.currentUser == null
+        || (this.model.name === this.currentUser.name && this.model.email === this.currentUser.email);
+    }
 
     @Watch('isLoaded')
     @Watch('currentUser', {deep: true})
@@ -273,11 +282,10 @@
               // This relies on `undefined` values being discarded during JSON stringification
               name: this.model.name !== this.currentUser!.name ? this.model.name : undefined,
               email: this.model.email !== this.currentUser!.email ? this.model.email : undefined,
-              primaryGroupId: this.primaryGroupId !== oldPrimaryGroupId ? this.primaryGroupId : undefined,
             }
           },
         });
-        await this.$apollo.queries.currentUser.refetch();
+        await this.$apollo.queries.currentUser.refetch(); // TODO: Remove after PR #127 is merged
         this.$message({
           type: "success",
           message: emailChanged
@@ -325,6 +333,26 @@
       // TODO: Customize this so it's not so obviously a rip off of the reset password process
       await sendPasswordResetToken(this.currentUser!.email!);
       this.$message({message: 'Email sent!', type: 'success'});
+    }
+
+    async handleChangePrimaryGroup() {
+      const oldPrimaryGroupId = this.currentUser!.primaryGroup != null ? this.currentUser!.primaryGroup!.group.id : null;
+
+      if (this.primaryGroupId !== oldPrimaryGroupId) {
+        this.isChangingPrimaryGroup = true;
+        try {
+          await this.$apollo.mutate({
+            mutation: updateUserMutation,
+            variables: {
+              userId: this.currentUser!.id,
+              update: { primaryGroupId: this.primaryGroupId }
+            },
+          });
+          await this.$apollo.queries.currentUser.refetch(); // TODO: Remove after PR #127 is merged
+        } finally {
+          this.isChangingPrimaryGroup = false;
+        }
+      }
     }
 
     async refetchData() {

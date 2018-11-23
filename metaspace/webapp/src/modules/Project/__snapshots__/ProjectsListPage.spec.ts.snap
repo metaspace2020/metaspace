@@ -3,7 +3,7 @@
 exports[`ProjectsListPage should match snapshot 1`] = `
 <div class="page">
   <mock-el-dialog append-to-body="" title="Create project" class="dialog">
-    <div mock-v-loading="1">
+    <div mock-v-loading="0">
       <form class="el-form el-form--label-top" size="mini">
         <div>
           <div class="el-form-item name is-required">
@@ -74,16 +74,23 @@ exports[`ProjectsListPage should match snapshot 1`] = `
     </div>
   </mock-el-dialog>
   <div class="page-content">
-    <div class="filter-panel">
-      <!---->
-    </div>
-    <div class="el-row is-justify-end el-row--flex">
+    <div class="header-row">
+      <div role="radiogroup" class="el-radio-group">
+        <label role="radio" aria-checked="true" tabindex="0" class="el-radio-button is-active">
+          <input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="All projects"><span class="el-radio-button__inner">All projects</span></label>
+        <label role="radio" tabindex="-1" class="el-radio-button">
+          <input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="My projects"><span class="el-radio-button__inner">My projects</span></label>
+      </div>
+      <div class="filter-panel">
+        <!---->
+      </div>
+      <div></div>
       <button type="button" class="el-button el-button--default">
         <!---->
         <!----><span>Create project</span></button>
     </div>
     <div class="clearfix"></div>
-    <div mock-v-loading="false">
+    <div style="min-height: 100px;" mock-v-loading="false">
       <div class="project-item">
         <a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
@@ -95,6 +102,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
               <!---->
               1 Member
             </div>
+            <div class="info-line"><span>Project manager<!---->:</span> <span><b>TestUser1<!----></b></span></div>
             <div class="info-line"><span>
           Created on <b>2018-08-29</b></span></div>
             <!---->
@@ -123,6 +131,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             <div class="info-line"><span><a href="/datasets?prj=project%202" class="">20 Datasets</a>,
         </span> 20 Members
             </div>
+            <div class="info-line"><span>Project manager<!---->:</span> <span><b>TestUser1<!----></b></span></div>
             <div class="info-line"><span>
           Last submission <b>2018-08-01</b></span></div>
             <!---->
