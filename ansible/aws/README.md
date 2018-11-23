@@ -16,8 +16,11 @@ Software requirements for the developer machine:
 ```
 git clone -b rel-v0.8 https://github.com/metaspace2020/metaspace.git
 cd metaspace/ansible/aws
-mkdir dev/group_vars
-cp group_vars_all.yml.template dev/group_vars/all.yml
+mkdir env/dev/group_vars
+cp templates/all.yml.template env/dev/group_vars/group_vars/all.yml
+cp templates/web.yml.template env/dev/group_vars/group_vars/web.yml.template
+cp templates/master.yml.template env/dev/group_vars/group_vars/master.yml.template
+cp templates/elk.yml.template env/dev/group_vars/group_vars/elk.yml.template
 ```
 
 #### Go through manual steps in AWS console

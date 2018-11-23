@@ -153,6 +153,7 @@ sm_graphql_rabbitmq_host: "{{ rabbitmq_host }}"
 sm_graphql_rabbitmq_user: "{{ rabbitmq_user }}"
 sm_graphql_rabbitmq_password: "{{ rabbitmq_password }}"
 sm_graphql_ws_public_endpoint: "ws://{{ sm_graphql_hostname }}/ws"
+sm_graphql_default_adducts: "{{ sm_default_adducts }}"
 sm_graphql_img_storage_backend: fs
 sm_graphql_redis_host: localhost
 sm_graphql_redis_port: 6379
@@ -167,6 +168,7 @@ sm_graphql_features:
   graphqlMocks: false
   impersonation: false
 
+sm_webapp_hostname: "{{ web_host }}"  # specify manually in production
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"
 sm_webapp_port: 8082
 # The region should satisfy the following requirements:
@@ -179,6 +181,9 @@ sm_webapp_s3_bucket: BUCKET-NAME-UPLOAD  # just plain bucket name
 sm_webapp_google_client_id: ""
 sm_webapp_sentry_dsn: ""
 sm_webapp_upload_destination: s3
+sm_webapp_jwt_secret: "{{ sm_graphql_jwt_secret }}"
+sm_webapp_redis_host: localhost
+sm_webapp_redis_port: 6379
 sm_webapp_enable_uploads: true
 # metadata types are specified by corresponding filenames in metaspace2020/metadata repository
 # "specialised metadata" subfolder
@@ -208,6 +213,11 @@ spark_env_extras_master:
 
 slack_channel:
 slack_webhook_url:
+
+ssl:
+  path: ../files
+  cert: CERTIFICATE.pem
+  key: PRIVATE.key
 
 nginx_upstream_hosts:
   - name: web_server
@@ -248,8 +258,8 @@ nginx_servers:
     params:
       - server_name {{ sm_webapp_hostname }};
       - listen 443 ssl;
-      - ssl_certificate ssl/metaspace2020.eu-dfn-ca-chain.pem;
-      - ssl_certificate_key ssl/metaspace2020.eu.nopw.key;
+      - ssl_certificate ssl/{{ ssl.cert }};
+      - ssl_certificate_key ssl/{{ ssl.key }};
       - proxy_read_timeout 300;
       - send_timeout 300;
     locations:
@@ -368,6 +378,19 @@ cluster_configuration:
             DeleteOnTermination: True
             VolumeType: gp2
 # uncomment below if you want to use Elasticsearch for logs aggregation
-#    elk:
-#      hostgroup: elk
-#      sec_group: elk
+    elk:
+      hostgroup: elk
+      type: t3.medium
+      n: 1
+      elipalloc:
+      sec_group: elk
+      image: ami-00035f41c82244dab  # Canonical, Ubuntu, 18.04 LTS, amd64 bionic image build on 2018-09-12
+      tags:
+        backup: ''
+        retention_daily: '1'
+      block_dev_maps:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30
+            DeleteOnTermination: True
+            VolumeType: gp2

@@ -1,0 +1,77 @@
+---
+
+ingest_node_pipeline_on_failure: !unsafe "{{ _ingest.on_failure_message }}"
+
+filebeat:
+  version: 6.4.3
+  logging_level: debug
+  instance_id: "{{ ansible_ec2_instance_id }}"
+  inputs:
+    - type: log
+      enabled: true
+      paths:
+        - "{{ sm_home }}/logs/*.log"
+        - "{{ mol_db_home }}/logs/*.log"
+        - "{{ sm_graphql_home }}/logs/*.log"
+        - "{{ sm_ansible_home }}/aws/logs/*.log"
+      multiline:
+        pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}.+$'
+        negate: true
+        match: after
+  kibana:
+    host: "{{ hostvars[groups['elk'][0]].ansible_default_ipv4.address }}:5601"
+  elasticsearch:
+    host: "{{ hostvars[groups['elk'][0]].ansible_default_ipv4.address }}:9200"
+    index: "filebeat-%{[beat.version]}-%{+yyyy.MM}"
+    index_template:
+    ingest_node_pipeline_id: sm_log_extract_web
+    ingest_node_pipeline: |
+      {
+        "description" : "Ingest node description for the log messages dispatched by filebeat",
+        "processors" : [
+          {
+            "rename": {
+              "field": "message",
+              "target_field": "raw_message"
+            }
+          },
+          {
+            "grok" : {
+              "field": "source",
+              "patterns": [
+                "%{GREEDYDATA:path}/%{GREEDYDATA:file}",
+              ]
+            }
+          },
+          {
+            "grok" : {
+              "field": "raw_message",
+              "patterns": [
+                "%{TIMESTAMP_ISO8601:timestamp} - %{LOGLEVEL:level} - %{NOTSPACE:component}\\[%{GREEDYDATA:thread}\\] - %{NOTSPACE:file_line} - %{GREEDYDATA:message}",
+                "%{TIMESTAMP_ISO8601:timestamp} - %{LOGLEVEL:level}: %{GREEDYDATA:message}",
+                "%{TIMESTAMP_ISO8601:timestamp} %{GREEDYDATA:component} %{LOGLEVEL:level}    %{GREEDYDATA:message}"
+              ]
+            }
+          },
+          {
+            "date" : {
+              "field": "timestamp",
+              "timezone": "{{ time_zone_name }}",
+              "formats": [
+                "yyyy-MM-dd HH:mm:ss,SSS"
+              ]
+            }
+          },
+          {
+            "remove": {
+              "field": "timestamp"
+            }
+          }
+        ],
+        "on_failure" : [{
+            "set" : {
+              "field" : "error.message",
+              "value" : "{{ ingest_node_pipeline_on_failure }}"
+            }
+          }]
+      }
