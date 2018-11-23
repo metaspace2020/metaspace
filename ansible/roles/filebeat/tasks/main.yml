@@ -8,7 +8,7 @@
   become: yes
   command: dpkg -i /tmp/filebeat-{{ filebeat.version }}.deb
 
-- name: Create /etc/filebeat/filebeat.yml template
+- name: Create /etc/filebeat/filebeat.yml config file
   become: yes
   template: src=filebeat.yml.j2 dest=/etc/filebeat/filebeat.yml mode=0644
 
