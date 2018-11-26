@@ -52,7 +52,7 @@ class ClusterDaemon(object):
     def _setup_logger(self):
         self.logger = logging.getLogger('sm_cluster_auto_start')
         handler = logging.StreamHandler()
-        formatter = logging.Formatter('%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(name)s[%(threadName)s] - %(filename)s:%(lineno)d - %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
