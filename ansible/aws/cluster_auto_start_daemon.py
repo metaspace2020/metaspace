@@ -190,7 +190,7 @@ class ClusterDaemon(object):
                     if not self.spark_up():
                         self._try_start_setup_deploy()
                 else:
-                    if self.spark_master_public_ip and not self.job_running() and self._ec2_hour_over():
+                    if self.spark_master_public_ip and not self.job_running():
                         self.logger.info('Queue is empty. No jobs running. Stopping the cluster...')
                         self.cluster_stop()
                         self._post_to_slack('checkered_flag', "[v] Cluster stopped")
