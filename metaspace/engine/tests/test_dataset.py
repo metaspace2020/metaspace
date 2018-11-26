@@ -59,7 +59,7 @@ def test_dataset_save_overwrite_ds_works(fill_db, sm_config, metadata, ds_config
 
     assert ds == Dataset.load(db, ds_id)
     es_mock.sync_dataset.assert_called_once_with(ds_id)
-    status_queue_mock.publish.assert_called_with({'ds_id': ds_id, 'status': DatasetStatus.NEW})
+    status_queue_mock.publish.assert_called_with({'ds_id': ds_id, 'status': DatasetStatus.QUEUED})
 
 
 def test_dataset_update_status_works(fill_db, sm_config, metadata):

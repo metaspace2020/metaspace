@@ -185,6 +185,7 @@ type DatasetRelationship {
 type DatasetStatusUpdate {
   dataset: Dataset
   relationship: DatasetRelationship
+  suppressNotification: Boolean!       # If true, the change is minor so don't show a notification
 }
 
 type DatasetDeletion {

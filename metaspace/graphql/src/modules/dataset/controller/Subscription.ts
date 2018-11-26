@@ -2,15 +2,14 @@ import * as Amqplib from 'amqplib';
 import {esDatasetByID} from '../../../../esConnector';
 import {logger, pubsub, wait} from '../../../../utils';
 import config from '../../../utils/config';
-import {DatasetStatus, EngineDataset} from '../model';
+import {DatasetStatus} from '../model';
 import {Context} from '../../../context';
 import canViewEsDataset from '../util/canViewEsDataset';
 import {relationshipToDataset} from '../util/relationshipToDataset';
-import {DatasetStatusUpdate} from '../../../binding';
 
 interface DatasetStatusUpdatePayload {
   dataset?: any;
-  dbDs?: EngineDataset;
+  suppressNotification: boolean;
 }
 
 async function publishDatasetStatusUpdate(ds_id: string, status: DatasetStatus) {
@@ -27,7 +26,16 @@ async function publishDatasetStatusUpdate(ds_id: string, status: DatasetStatus) 
         pubsub.publish('datasetDeleted', { id: ds_id });
         return;
       } else if (ds != null && status !== 'DELETED') {
-        pubsub.publish('datasetStatusUpdated', { dataset: { ...ds, status } });
+        pubsub.publish('datasetStatusUpdated', {
+          dataset: {
+            ...ds,
+            _source: {
+              ...ds._source,
+              ds_status: status === 'UPDATED' ? 'FINISHED' : status,
+            }
+          },
+          suppressNotification: status === 'UPDATED'
+        });
         return;
       }
 
@@ -71,6 +79,7 @@ const SubscriptionResolvers = {
           yield {
             dataset: payload.dataset,
             relationship: relationships.length > 0 ? relationships[0] : null,
+            suppressNotification: payload.suppressNotification,
           };
         }
       }

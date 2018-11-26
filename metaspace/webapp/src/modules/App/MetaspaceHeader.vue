@@ -215,8 +215,8 @@
        datasetStatusUpdated: {
          query: datasetStatusUpdatedQuery,
          result({ data }) {
-           const { dataset, relationship } = data.datasetStatusUpdated;
-           if (dataset != null && relationship != null) {
+           const { dataset, relationship, suppressNotification } = data.datasetStatusUpdated;
+           if (dataset != null && relationship != null && !suppressNotification) {
              const { name, status, submitter } = dataset;
              const type = {
                FINISHED: 'success',
@@ -251,6 +251,14 @@
          }
        },
      },
+   },
+
+   watch: {
+     '$route'() {
+       // Ensure queries are running, because occasionally the websocket connection doesn't automatically recover
+       this.$apollo.subscriptions.systemHealth.start();
+       this.$apollo.subscriptions.datasetStatusUpdated.start();
+     }
    },
 
    methods: {

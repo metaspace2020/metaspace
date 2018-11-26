@@ -2,7 +2,7 @@ import gql from 'graphql-tag';
 
 // Prefixing these with `Gql` because differently-cased variants are used elsewhere
 export type GqlPolarity = 'POSITIVE' | 'NEGATIVE';
-export type GqlJobStatus = 'NEW' | 'QUEUED' | 'ANNOTATING' | 'INDEXING' | 'FINISHED' | 'FAILED';
+export type GqlJobStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
 
 export interface DatasetDetailItem {
   id: string;
@@ -189,6 +189,7 @@ export const datasetStatusUpdatedQuery = gql`subscription datasetStatusUpdated($
       id
       name
     }
+    suppressNotification
   }
 }
 ${datasetDetailItemFragment}`;

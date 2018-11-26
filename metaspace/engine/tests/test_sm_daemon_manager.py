@@ -12,7 +12,7 @@ from sm.engine.tests.util import sm_config, test_db, fill_db, sm_index, es_dsl_s
 
 
 def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
-              metadata=None, status=DatasetStatus.NEW, mol_dbs=None, adducts=None):
+              metadata=None, status=DatasetStatus.QUEUED, mol_dbs=None, adducts=None):
     upload_dt = upload_dt or datetime.now()
     if not mol_dbs:
         mol_dbs = ['HMDB-v4']

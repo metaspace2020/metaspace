@@ -28,7 +28,7 @@ def create_api_ds_man(sm_config, db=None, es=None, img_store=None,
 
 
 def create_ds_doc(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
-                  metadata=None, status=DatasetStatus.NEW, mol_dbs=None, adducts=None):
+                  metadata=None, status=DatasetStatus.QUEUED, mol_dbs=None, adducts=None):
     upload_dt = upload_dt or datetime.now()
     if not mol_dbs:
         mol_dbs = ['HMDB-v4']

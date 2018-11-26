@@ -57,7 +57,7 @@
  import delay from '../../../lib/delay';
  import formatCsvRow from '../../../lib/formatCsvRow';
   import {currentUserRoleQuery} from '../../../api/user';
-  import {removeDatasetFromAllDatasetsQuery} from '../../../lib/updateQuery';
+  import {removeDatasetFromAllDatasetsQuery} from '../../../lib/updateApolloCache';
 
  const processingStages = ['started', 'queued', 'failed', 'finished'];
 

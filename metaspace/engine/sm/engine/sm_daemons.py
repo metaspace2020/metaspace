@@ -67,7 +67,7 @@ class SMDaemonManager(object):
 
     def index(self, ds):
         """ Re-index all search results for the dataset """
-        self.es.delete_ds(ds.id)
+        self.es.delete_ds(ds.id, delete_dataset=False)
 
         for job_id, mol_db_name in self._finished_job_moldbs(ds.id):
             if mol_db_name not in ds.mol_dbs:
@@ -259,7 +259,7 @@ class SMIndexUpdateDaemon(object):
     def _on_success(self, msg):
         self.logger.info(f" SM update daemon: success")
 
-        if msg['action'] not in ['delete', 'update']:
+        if msg['action'] not in ['delete', 'update', 'index']:
             ds = Dataset.load(self._db, msg['ds_id'])
             ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FINISHED)
         if msg['action'] in ['update', 'index']:

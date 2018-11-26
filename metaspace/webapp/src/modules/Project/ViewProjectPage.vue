@@ -100,7 +100,7 @@
   import ProjectSettings from './ProjectSettings.vue';
   import {optionalSuffixInParens, plural} from '../../lib/vueFilters';
   import apolloClient from '../../graphqlClient';
-  import {removeDatasetFromAllDatasetsQuery} from '../../lib/updateQuery';
+  import {removeDatasetFromAllDatasetsQuery} from '../../lib/updateApolloCache';
 
 
   interface ViewProjectPageData {

@@ -109,7 +109,7 @@
   import isUuid from '../../lib/isUuid';
   import {throttle} from 'lodash-es';
   import {optionalSuffixInParens, plural} from '../../lib/vueFilters';
-  import {removeDatasetFromAllDatasetsQuery} from '../../lib/updateQuery';
+  import {removeDatasetFromAllDatasetsQuery} from '../../lib/updateApolloCache';
 
 
   interface ViewGroupProfileData {

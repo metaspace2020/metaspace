@@ -391,7 +391,7 @@ class ESExporter(object):
                     self._ingest.delete_pipeline(pipeline_id)
 
     @retry_on_conflict()
-    def delete_ds(self, ds_id, mol_db=None):
+    def delete_ds(self, ds_id, mol_db=None, delete_dataset=True):
         """
         If mol_db passed, only annotation statistics are updated in the dataset document. DS document won't be deleted
 
@@ -413,7 +413,7 @@ class ESExporter(object):
             try:
                 if mol_db:
                     self._remove_mol_db_from_dataset(ds_id, mol_db)
-                else:
+                elif delete_dataset:
                     self._es.delete(id=ds_id, index=self.index, doc_type='dataset')
             except ElasticsearchException as e:
                 logger.warning('Dataset deletion failed: %s', e)

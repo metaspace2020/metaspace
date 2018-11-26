@@ -98,11 +98,11 @@
         <br/>
       </span>
 
-      <span v-if="['ANNOTATING', 'INDEXING'].includes(dataset.status)">
+      <span v-if="dataset.status === 'ANNOTATING'">
         <div class="striped-progressbar processing" title="Processing is under way"></div>
       </span>
 
-      <span v-if="dataset.status == 'QUEUED'">
+      <span v-if="dataset.status === 'QUEUED'">
         <div class="striped-progressbar queued" title="Waiting in the queue"></div>
       </span>
 
@@ -259,10 +259,10 @@
 
      canEdit() {
        if (this.currentUser != null) {
-         if (this.currentUser.role === 'admin' && !['ANNOTATING', 'INDEXING'].includes(this.dataset.status))
+         if (this.currentUser.role === 'admin' && this.dataset.status !== 'ANNOTATING')
            return true;
          if (this.currentUser.id === this.dataset.submitter.id
-           && !['QUEUED', 'ANNOTATING', 'INDEXING'].includes(this.dataset.status))
+           && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status))
            return true;
        }
        return false;
@@ -275,7 +275,7 @@
      canReprocess() {
        return this.currentUser != null
          && this.currentUser.role === 'admin'
-         && !['ANNOTATING', 'INDEXING'].includes(this.dataset.status);
+         && this.dataset.status !== 'ANNOTATING';
      },
 
      editHref() {

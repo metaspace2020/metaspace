@@ -3,7 +3,7 @@ import apolloClient from '../graphqlClient';
 import {DatasetDetailItem} from '../api/dataset';
 
 export const removeDatasetFromAllDatasetsQuery = (vm: Vue, queryName: string, datasetId: string) => {
-  updateQuery(vm, queryName, oldVal => {
+  updateApolloCache(vm, queryName, oldVal => {
     if (oldVal.allDatasets != null && oldVal.allDatasets.some((ds: DatasetDetailItem) => ds.id === datasetId)) {
       return {
         ...oldVal,
@@ -15,7 +15,15 @@ export const removeDatasetFromAllDatasetsQuery = (vm: Vue, queryName: string, da
   });
 };
 
-const updateQuery = (vm: Vue, queryName: string, update: (value: any) => any) => {
+/**
+ * Updates a vue-apollo smart query's results in the Apollo cache.
+ * @param vm         Instance of the component that holds the query.
+ * @param queryName  Name of the query in the component.
+ * @param update     A function that is called with the currently cached value, and should return either an updated value
+ *                   or undefined. It should not directly modify the value it is called with - it should make and return
+ *                   a copy.
+ */
+const updateApolloCache = (vm: Vue, queryName: string, update: (value: any) => any) => {
   let {query, variables} = vm.$apollo.queries[queryName].options;
   if (query instanceof Function) query = query.call(vm);
   if (variables instanceof Function) variables = variables.call(vm);
@@ -27,10 +35,11 @@ const updateQuery = (vm: Vue, queryName: string, update: (value: any) => any) =>
   }
   if (oldVal != null) {
     const newVal = update(oldVal);
+    console.log('updated cache', oldVal, newVal);
     if (newVal !== undefined && newVal !== oldVal) {
       apolloClient.writeQuery({ query, variables, data: newVal });
     }
   }
 };
 
-export default updateQuery;
+export default updateApolloCache;

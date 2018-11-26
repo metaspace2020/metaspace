@@ -42,12 +42,10 @@ enum SortingOrder {
 }
 
 enum JobStatus {
-  NEW,
   QUEUED,
   ANNOTATING,
-  INDEXING,
   FINISHED,
-  FAILED
+  FAILED,
 }
 
 type FdrCounts {

@@ -10,9 +10,6 @@ logger = logging.getLogger('engine')
 class DatasetStatus(object):
     """ Stage of dataset lifecycle """
 
-    """ The dataset is just saved to the db """
-    NEW = 'NEW'
-
     """ The dataset is queued for processing """
     QUEUED = 'QUEUED'
 
@@ -66,7 +63,7 @@ class Dataset(object):
     IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
 
     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
-                 metadata=None, status=DatasetStatus.NEW,
+                 metadata=None, status=DatasetStatus.QUEUED,
                  is_public=True, mol_dbs=None, adducts=None, img_storage_type='fs'):
         self.id = id
         self.name = name
