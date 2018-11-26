@@ -103,7 +103,7 @@ class ClusterDaemon(object):
         self.logger.debug('Messages in the queue: {}'.format(m.method.message_count))
         return m.method.message_count == 0
 
-    def cluster_up(self):
+    def spark_up(self):
         return self._send_rest_request('http://{}:8080/api/v1/applications'.format(self.spark_master_public_ip))
 
     def job_running(self):
@@ -187,10 +187,10 @@ class ClusterDaemon(object):
         try:
             while True:
                 if not self.queue_empty():
-                    if not self.cluster_up():
+                    if not self.spark_up():
                         self._try_start_setup_deploy()
                 else:
-                    if self.cluster_up() and not self.job_running() and self._ec2_hour_over():
+                    if self.spark_master_public_ip and not self.job_running() and self._ec2_hour_over():
                         self.logger.info('Queue is empty. No jobs running. Stopping the cluster...')
                         self.cluster_stop()
                         self._post_to_slack('checkered_flag', "[v] Cluster stopped")
