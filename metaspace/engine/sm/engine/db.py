@@ -5,6 +5,7 @@
 .. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
 """
 from functools import wraps
+from weakref import WeakSet
 
 import psycopg2
 import psycopg2.extensions
@@ -52,16 +53,27 @@ class DB(object):
     autocommit : bool
         enable non-transactional client mode
     """
+    _dbs = WeakSet()
 
     def __init__(self, config, autocommit=False):
         self.conn = psycopg2.connect(**config)
         if autocommit:
             self.conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         self.curs = None
+        DB._dbs.add(self)
 
     def close(self):
         """ Close the connection to the database """
         self.conn.close()
+        try:
+            DB._dbs.add(self)
+        except KeyError:
+            pass # Already closed
+
+    @classmethod
+    def close_all(cls):
+        for db in list(cls._dbs):
+            db.close()
 
     def _select(self, sql, params=None):
         self.curs = self.conn.cursor()
