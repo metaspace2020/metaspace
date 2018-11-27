@@ -4,6 +4,8 @@ type Group {
   shortName: String!
   urlSlug: String
   currentUserRole: UserGroupRole
+  hasPendingRequest: Boolean  # null if current user is not allowed to see
+  numMembers: Int!
   members: [UserGroup!]    # null if current user is not allowed to see
 }
 
@@ -11,13 +13,17 @@ input CreateGroupInput {
   name: String!
   shortName: String!
   urlSlug: String
-  principalInvestigatorEmail: String!
+  groupAdminEmail: String!
 }
 
 input UpdateGroupInput {
   name: String
   shortName: String
   urlSlug: String
+}
+
+input UpdateUserGroupInput {
+  role: UserGroupRole
 }
 
 # Many-to-many relationship between User and Group
@@ -32,7 +38,7 @@ enum UserGroupRole {
   INVITED    # User was invited into the group but hasn't confirmed it yet
   PENDING    # User requested to join the group but the PI hasn't confirmed it yet
   MEMBER     # Normal member of the group
-  PRINCIPAL_INVESTIGATOR    # Group administrator
+  GROUP_ADMIN    # Group administrator
 }
 
 type Query {
@@ -60,6 +66,8 @@ type Mutation {
   inviteUserToGroup(groupId: ID!, email: String!): UserGroup!  # For group managers
   acceptGroupInvitation(groupId: ID!): UserGroup!
   # Group can reject user with `removeUserFromGroup`
+
+  updateUserGroup(groupId: ID!, userId: ID!, update: UpdateUserGroupInput!): Boolean!
 
   importDatasetsIntoGroup(groupId: ID!, datasetIds: [ID!]!): Boolean!
   # TODO: add dataset removal from group

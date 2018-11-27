@@ -1,5 +1,6 @@
 
 export {default as FilterPanel} from './FilterPanel.vue';
+export {default as SearchBox} from './filter-components/SearchBox.vue';
 
 export {
   FILTER_SPECIFICATIONS,

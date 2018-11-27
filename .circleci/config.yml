@@ -5,12 +5,12 @@ jobs:
 
   test-graphql:
     docker:
+      - image: intsco/sm-webapp:0.9
+
       - image: postgres:9.5-alpine
         environment:
           POSTGRES_USER: sm
           POSTGRES_PASSWORD: password
-
-      - image: node:8.11
 
     working_directory: ~/metaspace/metaspace/graphql
     steps:
@@ -30,9 +30,14 @@ jobs:
       - run:
           name: Run tests
           command: |
-            psql -h localhost -U postgres -c "CREATE DATABASE sm_test owner sm"
-            yarn run test
-            psql -h localhost -U postgres -c "DROP DATABASE sm_test"
+            psql -h localhost -U sm -c "CREATE ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'postgres'"
+            psql -h localhost -U sm -c "CREATE DATABASE sm_test owner sm"
+            psql -h localhost -U sm -d sm_test -c "CREATE EXTENSION \"uuid-ossp\";"
+            psql -h localhost -U sm -d sm_test -c "CREATE SCHEMA graphql;"
+            yarn run gen-binding
+            yarn run deref-schema
+            NODE_ENV=test yarn run test --verbose --detectOpenHandles --forceExit
+            psql -h localhost -U sm -c "DROP DATABASE sm_test"
 
 
   generate-graphql-schema:
@@ -265,10 +270,10 @@ jobs:
       - run:
           name: Create and prefill the databases
           command: |
-            createdb -h localhost -U postgres sm_test
+            createdb -h localhost -U sm sm_test
             psql -U sm -h localhost -d sm_test < scripts/create_schema.sql
             wget -qN https://s3-eu-west-1.amazonaws.com/embl-sm-testing/dumps/2018-03-13/mol_db.dump
-            pg_restore -U sm -h localhost --no-owner --role=sm -d sm_test mol_db.dump
+            pg_restore -U sm -h localhost --no-owner --no-privileges --role=sm -d sm_test mol_db.dump
             cp docker/mol_db_conf.ini ../mol-db/conf/local.ini
       - run:
           name: Run mol db
@@ -281,14 +286,14 @@ jobs:
           name: Run scientific test
           command: |
             source docker/env.sh
-            python tests/sci_test_spheroid.py -r --mock-img-store
+            python tests/sci_test_spheroid.py -r --mock-img-store --mock-graphql-db
 
 workflows:
   version: 2
   commit:
     jobs:
       - test-engine
-      #- test-graphql
+      # - test-graphql
       - generate-graphql-schema
       - test-webapp:
           requires:

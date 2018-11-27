@@ -56,12 +56,14 @@
             <div class="header-item submenu-header"
                  :class="{'router-link-active': matchesRoute('/user/me')}">
               <div class="limit-width" style="color: white;">
-              {{ userNameOrEmail }}
+                {{ userNameOrEmail }}
+                <notification-icon v-if="pendingRequestMessage != null" :tooltip="pendingRequestMessage" tooltipPlacement="left" />
               </div>
             </div>
             <div class="submenu">
               <router-link to="/user/me" class="submenu-item page-link">
                 My account
+                <notification-icon v-if="pendingRequestMessage != null" :tooltip="pendingRequestMessage" tooltipPlacement="left" />
               </router-link>
               <div class="submenu-item page-link" @click="logout">
                 Sign out
@@ -79,13 +81,20 @@
 
 <script>
   import gql from 'graphql-tag';
- import {signOut} from '../../api/auth';
+  import {signOut} from '../../api/auth';
   import {getSystemHealthQuery, getSystemHealthSubscribeToMore} from '../../api/system';
- import {encodeParams} from '../Filters';
+  import {UserGroupRoleOptions as UGRO} from '../../api/group';
+  import {ProjectRoleOptions as UPRO} from '../../api/project';
+  import {encodeParams} from '../Filters';
   import {refreshLoginStatus} from '../../graphqlClient';
+  import NotificationIcon from '../../components/NotificationIcon.vue';
 
  export default {
    name: 'metaspace-header',
+
+   components: {
+     NotificationIcon,
+   },
 
    computed: {
      uploadHref() {
@@ -127,6 +136,27 @@
      },
      healthSeverity() {
        return this.systemHealth && this.systemHealth.canMutate === false ? 'warning' : 'info';
+     },
+     pendingRequestMessage() {
+       if (this.currentUser != null) {
+         if (this.currentUser.groups != null) {
+           const invitedGroup = this.currentUser.groups.find(g => g.role === UGRO.INVITED);
+           const requestGroup = this.currentUser.groups.find(g => g.role === UGRO.GROUP_ADMIN && g.group.hasPendingRequest);
+           if (invitedGroup != null)
+             return `You have been invited to join ${invitedGroup.group.name}.`;
+           if (requestGroup != null)
+             return `${requestGroup.group.name} has a pending membership request.`;
+         }
+         if (this.currentUser.projects != null) {
+           const invitedProject = this.currentUser.projects.find(g => g.role === UPRO.INVITED);
+           const requestProject = this.currentUser.projects.find(g => g.role === UPRO.MANAGER && g.project.hasPendingRequest);
+           if (invitedProject != null)
+             return `You have been invited to join ${invitedProject.project.name}.`;
+           if (requestProject != null)
+             return `${requestProject.project.name} has a pending membership request.`;
+         }
+       }
+       return null;
      }
    },
 
@@ -157,6 +187,22 @@
                shortName
                name
                urlSlug
+             }
+           }
+           groups {
+             role
+             group {
+               id
+               name
+               hasPendingRequest
+             }
+           }
+           projects {
+             role
+             project {
+               id
+               name
+               hasPendingRequest
              }
            }
          }
@@ -336,10 +382,11 @@
    left: 0;
    right: 0;
    border-radius: 0;
+   z-index: 1000;
 
- .el-alert {
-   height: $alert-height;
-   justify-content: center;
- }
+   .el-alert {
+     height: $alert-height;
+     justify-content: center;
+   }
  }
 </style>

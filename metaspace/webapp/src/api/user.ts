@@ -11,6 +11,7 @@ export interface UserProfileQueryGroup {
     id: string,
     name: string
     urlSlug: string | null;
+    hasPendingRequest: boolean | null;
   };
 }
 export interface UserProfileQueryProject {
@@ -20,6 +21,7 @@ export interface UserProfileQueryProject {
     id: string,
     name: string
     urlSlug: string | null;
+    hasPendingRequest: boolean | null;
   };
 }
 
@@ -33,27 +35,26 @@ export interface UserProfileQuery {
   projects: UserProfileQueryProject[] | null;
 }
 
-export const userProfileQuery =
-  gql`query UserProfileQuery {
-  currentUser {
-    id
-    name
+const userProfileFragment =
+  gql`fragment UserProfileFragment on User {
+  id
+  name
+  role
+  email
+  primaryGroup {
+    ...UserProfileQueryGroup
+  }
+  groups {
+    ...UserProfileQueryGroup
+  }
+  projects {
     role
-    email
-    primaryGroup {
-      ...UserProfileQueryGroup
-    }
-    groups {
-      ...UserProfileQueryGroup
-    }
-    projects {
-      role
-      numDatasets
-      project {
-        id
-        name
-        urlSlug
-      }
+    numDatasets
+    project {
+      id
+      name
+      urlSlug
+      hasPendingRequest
     }
   }
 }
@@ -64,13 +65,31 @@ fragment UserProfileQueryGroup on UserGroup {
     id
     name
     urlSlug
+    hasPendingRequest
   }
 }
 `;
+export const userProfileQuery =
+  gql`query UserProfileQuery {
+  currentUser {
+    ...UserProfileFragment
+  }
+}
+${userProfileFragment}
+`;
+
+export const updateUserMutation =
+  gql`mutation ($userId: ID!, $update: UpdateUserInput!) {
+  updateUser(userId: $userId, update: $update) {
+    ...UserProfileFragment
+  }
+}
+${userProfileFragment}`;
 
 export interface DatasetSubmitterFragment {
   id: string;
   name: string;
+  email: string;
   groups: {
     group: {
       id: string;
@@ -89,6 +108,7 @@ export const datasetSubmitterFragment =
   gql`fragment DatasetSubmitterFragment on User {
     id
     name
+    email
     groups {
       group {
         id
@@ -102,15 +122,6 @@ export const datasetSubmitterFragment =
       }
     }
   }`;
-
-export const updateUserMutation =
-  gql`mutation ($userId: ID!, $update: UpdateUserInput!) {
-  updateUser(userId: $userId, update: $update) {
-    id
-    name
-    email
-  }
-}`;
 
 export const deleteUserMutation =
   gql`mutation ($userId: ID!, $deleteDatasets: Boolean!) {

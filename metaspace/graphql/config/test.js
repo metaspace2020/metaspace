@@ -5,7 +5,7 @@ config.ws_port = 5667;
 config.img_storage_port = 4202;
 
 config.log = {};
-config.log.level = 'debug';
+config.log.level = 'error'; // Use 'console.log' while testing. Winston logs appear asynchronously, even for the console
 
 config.defaults = {
   adducts: {

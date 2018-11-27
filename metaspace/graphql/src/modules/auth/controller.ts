@@ -1,4 +1,4 @@
-import { Express, Router, IRouter, Request, Response, NextFunction } from 'express';
+import {Express, IRouter, NextFunction, Request, Response, Router} from 'express';
 import {callbackify} from 'util';
 import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
@@ -10,16 +10,16 @@ import config from '../../utils/config';
 import {User} from '../user/model';
 import {
   createUserCredentials,
-  sendResetPasswordToken, resetPassword,
-  verifyEmail, verifyPassword,
+  findUserByEmail,
+  findUserByGoogleId,
+  findUserById,
   initOperation,
-  findUserByEmail, findUserByGoogleId, findUserById
+  resetPassword,
+  sendResetPasswordToken,
+  verifyEmail,
+  verifyPassword,
 } from './operation';
-
-const getUserFromRequest = (req: Request): User | null => {
-  const user = (req as any).cookieUser;
-  return user ? user as User : null;
-};
+import {getUserFromRequest, middleware} from './middleware';
 
 const preventCache = (req: Request, res: Response, next: NextFunction) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
@@ -29,10 +29,7 @@ const preventCache = (req: Request, res: Response, next: NextFunction) => {
 };
 
 const configurePassport = (router: IRouter<any>) => {
-  router.use(Passport.initialize({
-    userProperty: 'cookieUser' // req.user is already used by the JWT
-  }));
-  router.use(Passport.session());
+  middleware.forEach(m => { router.use(m); });
 
   Passport.serializeUser<User, string>(callbackify( async (user: User) => user.id));
 
@@ -187,6 +184,43 @@ const configureGoogleAuth = (router: IRouter<any>) => {
   }
 };
 
+const configureImpersonation = (router: IRouter<any>) => {
+  if (config.features.impersonation) {
+    router.get('/impersonate', preventCache, async (req, res, next) => {
+      try {
+        const currentUser = getUserFromRequest(req);
+        if (currentUser == null || currentUser.role !== 'admin') {
+          return res.status(403).send('Unauthenticated');
+        }
+
+        let user: User | null = null;
+        const {email, id} = req.query;
+        if (email) {
+          user = await findUserByEmail(email) || await findUserByEmail(email, 'not_verified_email');
+        } else if (id) {
+          user = await findUserById(id);
+        } else {
+          return res.status(400).send( 'No id or email supplied');
+        }
+
+        if (!user) {
+          return res.status(404).send(`User ${email || id} not found`);
+        } else {
+          return req.login(user, err => {
+            if (err) {
+              return next(err);
+            } else {
+              return res.redirect('/');
+            }
+          });
+        }
+      } catch (err) {
+        return next(err);
+      }
+    })
+  }
+};
+
 const configureCreateAccount = (router: IRouter<any>) => {
   router.post('/createaccount', async (req, res, next) => {
     try {
@@ -270,6 +304,7 @@ export const configureAuth = async (app: Express, connection: Connection) => {
   configureJwt(router);
   configureLocalAuth(router);
   configureGoogleAuth(router);
+  configureImpersonation(router);
   // TODO: find a parameter validation middleware
   configureCreateAccount(router);
   configureResetPassword(router);

@@ -12,6 +12,7 @@ import uuid
 
 from sm.engine.db import DB
 from sm.engine.mol_db import MolecularDB
+from sm.engine.tests.mock_graphql_schema import MOCK_GRAPHQL_SCHEMA
 from sm.engine.util import proj_root, SMConfig, init_loggers
 from sm.engine.es_export import ESIndexManager
 
@@ -80,7 +81,7 @@ def pyspark_context(request):
     sc = SparkContext(master='local[2]')
     request.addfinalizer(lambda: sc.stop())
     return sc
-    
+
 
 @pytest.fixture()
 def test_db(sm_config, request):
@@ -98,34 +99,7 @@ def test_db(sm_config, request):
 
     db_config = dict(**sm_config['db'])
     db = DB(db_config, autocommit=True)
-    db.alter('''
-        CREATE SCHEMA IF NOT EXISTS graphql;
-        CREATE TABLE graphql.dataset (
-            id              text,
-            user_id         uuid,
-            group_id        uuid,
-            group_approved  boolean
-        );
-        CREATE TABLE graphql.user (
-            id     uuid,
-            name   text,
-            email  text
-        );
-        CREATE TABLE graphql.group (
-            id          uuid,
-            name        text,
-            short_name  text
-        );
-        CREATE TABLE graphql.dataset_project (
-            dataset_id  text,
-            project_id  uuid,
-            approved    boolean
-        );
-        CREATE TABLE graphql.project (
-            id          uuid,
-            name        text
-        );'''
-    )
+    db.alter(MOCK_GRAPHQL_SCHEMA)
     db.close()
 
     def fin():

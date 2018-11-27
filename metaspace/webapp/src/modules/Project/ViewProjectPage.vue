@@ -16,11 +16,6 @@
                      disabled>
             Request sent
           </el-button>
-          <el-button v-if="roleInProject === 'MANAGER'"
-                     type="primary"
-                     @click="handleManageProject">
-            Manage project
-          </el-button>
         </div>
         <el-alert v-if="roleInProject === 'INVITED'"
                   type="info"
@@ -42,44 +37,65 @@
           </div>
         </el-alert>
       </div>
-      <div v-if="projectDatasets.length > 0">
-        <h2>Datasets</h2>
+      <el-tabs v-model="tab">
+        <el-tab-pane name="datasets" :label="'Datasets' | optionalSuffixInParens(countDatasets)" lazy>
+          <dataset-list :datasets="projectDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" />
 
-        <dataset-list :datasets="projectDatasets.slice(0, maxVisibleDatasets)" />
-
-        <div class="dataset-list-footer">
-          <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
-        </div>
-      </div>
+          <div class="dataset-list-footer">
+            <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane name="members" lazy>
+          <span slot="label">
+            {{'Members' | optionalSuffixInParens(countMembers)}}
+            <notification-icon v-if="hasMembershipRequest" />
+          </span>
+          <div style="max-width: 950px">
+            <project-members-list
+              :loading="projectLoading !== 0"
+              :currentUser="currentUser"
+              :project="project"
+              :members="members"
+              :refreshData="refetchProject"
+            />
+            <p v-if="countHiddenMembers > 0" class="hidden-members-text">
+              + {{countHiddenMembers | plural('hidden member', 'hidden members')}}.
+            </p>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane name="settings" label="Settings" v-if="canEdit && projectId != null" lazy>
+          <project-settings :projectId="projectId" />
+        </el-tab-pane>
+      </el-tabs>
     </div>
   </div>
 </template>
 <script lang="ts">
   import Vue from 'vue';
-  import { Component, Watch } from 'vue-property-decorator';
+  import {Component, Watch} from 'vue-property-decorator';
   import {DatasetDetailItem, datasetDetailItemFragment, datasetStatusUpdatedQuery} from '../../api/dataset';
   import DatasetList from '../Datasets/list/DatasetList.vue';
-  import { acceptProjectInvitationMutation, leaveProjectMutation, requestAccessToProjectMutation, ProjectRole } from '../../api/project';
+  import {
+    acceptProjectInvitationMutation,
+    leaveProjectMutation,
+    ProjectRole,
+    ProjectRoleOptions,
+    requestAccessToProjectMutation,
+    ViewProjectFragment,
+    ViewProjectResult,
+  } from '../../api/project';
   import gql from 'graphql-tag';
-  import { encodeParams } from '../Filters';
+  import {encodeParams} from '../Filters';
   import ConfirmAsync from '../../components/ConfirmAsync';
+  import NotificationIcon from '../../components/NotificationIcon.vue';
   import reportError from '../../lib/reportError';
-  import { currentUserIdQuery, CurrentUserIdResult } from '../../api/user';
+  import {currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
   import isUuid from '../../lib/isUuid';
+  import {throttle} from 'lodash-es';
+  import ProjectMembersList from './ProjectMembersList.vue';
+  import ProjectSettings from './ProjectSettings.vue';
+  import {optionalSuffixInParens, plural} from '../../lib/vueFilters';
 
-
-  interface ProjectInfo {
-    id: string;
-    name: string;
-    urlSlug: string | null;
-    currentUserRole: ProjectRole | null;
-  }
-  const projectInfoFragment = gql`fragment ProjectInfoFragment on Project {
-    id
-    name
-    urlSlug
-    currentUserRole
-  }`;
 
   interface ViewProjectPageData {
     allDatasets: DatasetDetailItem[];
@@ -89,29 +105,40 @@
   @Component<ViewProjectPage>({
     components: {
       DatasetList,
+      ProjectMembersList,
+      ProjectSettings,
+      NotificationIcon,
+    },
+    filters: {
+      optionalSuffixInParens,
+      plural,
     },
     apollo: {
       currentUser: {
-        query: currentUserIdQuery,
+        query: currentUserRoleQuery,
         fetchPolicy: 'cache-first',
       },
       project: {
         query() {
           if (isUuid(this.$route.params.projectIdOrSlug)) {
             return gql`query ProjectProfileById($projectIdOrSlug: ID!) {
-              project(projectId: $projectIdOrSlug) { ...ProjectInfoFragment }
+              project(projectId: $projectIdOrSlug) { ...ViewProjectFragment hasPendingRequest }
             }
-            ${projectInfoFragment}`;
+            ${ViewProjectFragment}`;
           } else {
             return gql`query ProjectProfileBySlug($projectIdOrSlug: String!) {
-              project: projectByUrlSlug(urlSlug: $projectIdOrSlug) { ...ProjectInfoFragment }
+              project: projectByUrlSlug(urlSlug: $projectIdOrSlug) { ...ViewProjectFragment hasPendingRequest }
             }
-            ${projectInfoFragment}`;
+            ${ViewProjectFragment}`;
           }
         },
         variables() {
           return {projectIdOrSlug: this.$route.params.projectIdOrSlug};
-        }
+        },
+        // Can't be 'no-cache' because `refetchProject` is used for updating the cache, which in turn updates
+        // MetaspaceHeader's project.hasPendingRequest notification
+        fetchPolicy: 'network-only',
+        loadingKey: 'projectLoading'
       },
       data: {
         query: gql`query ProjectProfileDatasets($projectId: ID!, $maxVisibleDatasets: Int!, $inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
@@ -147,23 +174,26 @@
             // if (dataset != null && dataset.projects != null && dataset.projects.some((p: any) => p.id === this.projectId)) {
             //   this.$apollo.queries.data.refetch();
             // }
-            this.$apollo.queries.data.refetch();
+            this.refetchDatasets();
           }
         }
       },
     }
   })
   export default class ViewProjectPage extends Vue {
+    projectLoading = 0;
     loaded = false;
     isAcceptingInvite = false;
-    currentUser: CurrentUserIdResult | null = null;
-    project: ProjectInfo | null = null;
+    currentUser: CurrentUserRoleResult | null = null;
+    project: ViewProjectResult | null = null;
     data: ViewProjectPageData | null = null;
 
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInProject(): ProjectRole | null { return this.project && this.project.currentUserRole; }
     get projectDatasets(): DatasetDetailItem[] { return this.data && this.data.allDatasets || []; }
     get countDatasets(): number { return this.data && this.data.countDatasets || 0; }
+    get members() { return this.project && this.project.members || []; }
+    get countMembers() { return this.project && this.project.numMembers; }
     maxVisibleDatasets = 8;
 
     get projectId(): string | null {
@@ -172,6 +202,17 @@
       } else {
         return this.project && this.project.id
       }
+    }
+
+    get tab() {
+      if (['datasets', 'members', 'settings'].includes(this.$route.query.tab)) {
+        return this.$route.query.tab;
+      } else {
+        return 'datasets';
+      }
+    }
+    set tab(tab: string) {
+      this.$router.replace({ query: { tab } })
     }
 
     get isInvited(): boolean {
@@ -185,19 +226,44 @@
       }
     }
 
+    get canEdit() {
+      return this.roleInProject === ProjectRoleOptions.MANAGER
+        || (this.currentUser && this.currentUser.role === 'admin');
+    }
+
+    get countHiddenMembers() {
+      if (this.countMembers != null) {
+        return Math.max(0, this.countMembers - this.members.length);
+      } else {
+        return 0;
+      }
+    }
+
+    get hasMembershipRequest() {
+      return this.members.some(m => m.role === ProjectRoleOptions.PENDING);
+    }
+
+    created() {
+      this.refetchDatasets = throttle(this.refetchDatasets, 60000);
+    }
+    beforeDestroy() {
+      (this.refetchDatasets as any).cancel();
+    }
+
     @Watch('$route.params.projectIdOrSlug')
     @Watch('project.urlSlug')
     canonicalizeUrl() {
       if (isUuid(this.$route.params.projectIdOrSlug) && this.project != null && this.project.urlSlug) {
         this.$router.replace({
-          params: {projectIdOrSlug: this.project.urlSlug}
-        })
+          params: {projectIdOrSlug: this.project.urlSlug},
+          query: this.$route.query,
+        });
       }
     }
 
     @ConfirmAsync({
       title: '',
-      message: 'An email will be sent to the project\'s principal investigator to confirm your access.',
+      message: 'An email will be sent to the project\'s manager to confirm your access.',
       confirmButtonText: "Request access"
     })
     async handleRequestAccess() {
@@ -228,13 +294,16 @@
       await this.refetch();
     }
 
-    handleManageProject() {
-      if (this.projectId != null) {
-        this.$router.push({
-          name: 'edit-project',
-          params: { projectId: this.projectId },
-        });
-      }
+    handleFilterUpdate(newFilter: any) {
+      this.$store.commit('updateFilter', {
+        ...newFilter,
+        project: this.projectId
+      });
+
+      this.$router.push({
+        path: '/datasets',
+        query: this.$route.query,
+      })
     }
 
     async joinProject() {
@@ -243,6 +312,14 @@
         variables: { projectId: this.projectId },
       });
       await this.refetch();
+    }
+
+    refetchDatasets() { // This method is wrapped in _.throttle in this.created()
+      this.$apollo.queries.data.refetch();
+    }
+
+    async refetchProject() {
+      await this.$apollo.queries.project.refetch();
     }
 
     async refetch() {
@@ -255,6 +332,7 @@
 
 </script>
 <style scoped lang="scss">
+  @import "~element-ui/packages/theme-chalk/src/common/var";
 
   .page {
     display: flex;
@@ -262,12 +340,7 @@
     min-height: 80vh; // Ensure there's space for the loading spinner before is visible
   }
   .page-content {
-    width: 820px;
-
-    @media (min-width: 1650px) {
-      /* 2 datasets per row on wide screens */
-      width: 1620px;
-    }
+    width: 950px;
   }
 
   .header-row {
@@ -284,5 +357,10 @@
     flex-grow: 1;
     align-self: center;
     margin-right: 3px;
+  }
+
+  .hidden-members-text {
+    text-align: center;
+    color: $--color-text-secondary;
   }
 </style>

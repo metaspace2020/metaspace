@@ -1,144 +1,32 @@
-import {UserError} from 'graphql-errors';
 import fetch from 'node-fetch';
-import * as _ from 'lodash';
 import * as config from 'config';
-import {esSearchResults, esCountResults, esCountGroupedResults,
-  esAnnotationByID, esDatasetByID, esFilterValueCountResults} from './esConnector';
-import {dsField, getPgField, SubstringMatchFilter} from './datasetFilters';
 import {
-  pgDatasetsViewableByUser,
+  esSearchResults,
+  esAnnotationByID,
+  esFilterValueCountResults,
+  esCountResults,
+} from './esConnector';
+import {
   fetchEngineDS,
   fetchMolecularDatabases,
   deprecatedMolDBs,
-  canUserViewPgDataset,
-  wait,
   logger,
-  pubsub,
-  db
 } from './utils';
-import {Mutation as DSMutation} from './dsMutation';
-import {UserGroup as UserGroupModel, UserGroupRoleOptions} from './src/modules/group/model';
-import {Dataset as DatasetModel} from './src/modules/dataset/model';
-import {ScopeRole, ScopeRoleOptions as SRO} from './src/bindingTypes';
-import {Project as ProjectModel} from './src/modules/project/model';
-import {projectIsVisibleToCurrentUserWhereClause} from './src/modules/project/util/projectIsVisibleToCurrentUserWhereClause';
-import convertProjectToProjectSource from './src/modules/project/util/convertProjectToProjectSource';
 
-
-async function publishDatasetStatusUpdate(ds_id, status) {
-  // wait until updates are reflected in ES so that clients can refresh their data
-  const maxAttempts = 5;
-
-  try {
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      console.log({attempt, status});
-      const ds = await esDatasetByID(ds_id, null, {});
-
-      if (ds === null && status === 'DELETED') {
-        await wait(1000);
-        pubsub.publish('datasetStatusUpdated', {});
-        return;
-      } else if (ds !== null && status !== 'DELETED') {
-        pubsub.publish('datasetStatusUpdated', {
-          dataset: Object.assign({}, ds, { status }),
-          dbDs: await fetchEngineDS({ id: ds_id })
-        });
-        return;
-      }
-
-      await wait(50 * attempt * attempt);
-    }
-  } catch (err) {
-    logger.error(err);
-  }
-
-  logger.warn(`Failed to propagate dataset update for ${ds_id}`);
-}
-
-let queue = require('amqplib').connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`);
-let rabbitmqChannel = 'sm_dataset_status';
-queue.then(function(conn) {
-  return conn.createChannel();
-}).then(function(ch) {
-  return ch.assertQueue(rabbitmqChannel).then(function(ok) {
-    return ch.consume(rabbitmqChannel, function(msg) {
-      const {ds_id, status} = JSON.parse(msg.content.toString());
-      if (['QUEUED', 'ANNOTATING', 'FINISHED', 'FAILED', 'DELETED'].indexOf(status) >= 0)
-        publishDatasetStatusUpdate(ds_id, status);
-      ch.ack(msg);
-    });
-  });
-}).catch(console.warn);
-
-const resolveDatasetScopeRole = async (ctx, dsId) => {
-  let scopeRole = SRO.OTHER;
-  if (ctx.user) {
-    if (ctx.user.role === 'admin') {
-      scopeRole = SRO.ADMIN;
-    }
-    else {
-      if (dsId) {
-        const ds = await ctx.connection.getRepository(DatasetModel).findOne({
-          where: { id: dsId }
-        });
-        if (ds) {
-          const userGroup = await ctx.connection.getRepository(UserGroupModel).findOne({
-            where: { userId: ctx.user.id, groupId: ds.groupId }
-          });
-          if (userGroup) {
-            if (userGroup.role === UserGroupRoleOptions.PRINCIPAL_INVESTIGATOR)
-              scopeRole = SRO.GROUP_MANAGER;
-            else if (userGroup.role === UserGroupRoleOptions.MEMBER)
-              scopeRole = SRO.GROUP_MEMBER;
-          }
-        }
-      }
-    }
-  }
-  return scopeRole;
-};
 
 const Resolvers = {
   Query: {
-    async dataset(_, { id: dsId }, ctx) {
-      // TODO: decide whether to support field level access here
-      const scopeRole = await resolveDatasetScopeRole(ctx, dsId);
-      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());
-      return ds ? { ...ds, scopeRole }: null;
-    },
-
-    async allDatasets(_, args, ctx) {
-      args.datasetFilter = args.filter;
-      args.filter = {};
-      return await esSearchResults(args, 'dataset', ctx.user, await ctx.getCurrentUserProjectRoles());
-    },
 
     async allAnnotations(_, args, ctx) {
-      return await esSearchResults(args, 'annotation', ctx.user, await ctx.getCurrentUserProjectRoles());
-    },
-
-    async countDatasets(_, args, ctx) {
-      args.datasetFilter = args.filter;
-      args.filter = {};
-      return await esCountResults(args, 'dataset', ctx.user, await ctx.getCurrentUserProjectRoles());
-    },
-
-    async countDatasetsPerGroup(_, {query}, ctx) {
-      const args = {
-        datasetFilter: query.filter,
-        simpleQuery: query.simpleQuery,
-        filter: {},
-        groupingFields: query.fields
-      };
-      return await esCountGroupedResults(args, 'dataset', ctx.user, await ctx.getCurrentUserProjectRoles());
+      return await esSearchResults(args, 'annotation', ctx.user);
     },
 
     async countAnnotations(_, args, ctx) {
-      return await esCountResults(args, 'annotation', ctx.user, await ctx.getCurrentUserProjectRoles());
+      return await esCountResults(args, 'annotation', ctx.user);
     },
 
     async annotation(_, { id }, ctx) {
-      return await esAnnotationByID(id, ctx.user, await ctx.getCurrentUserProjectRoles());
+      return await esAnnotationByID(id, ctx.user);
     },
 
     async metadataSuggestions(_, {field, query, limit}, ctx) {
@@ -152,7 +40,7 @@ const Resolvers = {
           }
         },
         limit
-      }, ctx.user, await ctx.getCurrentUserProjectRoles());
+      }, ctx.user);
       return Object.keys(itemCounts);
     },
 
@@ -177,7 +65,7 @@ const Resolvers = {
             order: { _term : 'asc' }
           }
         }
-      }, ctx.user, await ctx.getCurrentUserProjectRoles());
+      }, ctx.user);
       return Object.keys(itemCounts).map((s) => {
         const [id, name] = s.split('/');
         return { id, name }
@@ -206,7 +94,6 @@ const Resolvers = {
           molDBs = Array.from(molDBNameMap.values());
         }
 
-        logger.debug(`Molecular databases: ` + JSON.stringify(molDBs));
         return molDBs;
       }
       catch (e) {
@@ -214,74 +101,6 @@ const Resolvers = {
         return 'Server error';
       }
     },
-
-    async opticalImageUrl(_, {datasetId: dsId, zoom}, ctx) {
-      // TODO: consider moving to Dataset type
-      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());  // check if user has access
-      if (ds) {
-        const intZoom = zoom <= 1.5 ? 1 : (zoom <= 3 ? 2 : (zoom <= 6 ? 4 : 8));
-        // TODO: manage optical images on the graphql side
-        const row = await (db.from('optical_image')
-          .where('ds_id', dsId)
-          .where('zoom', intZoom)
-          .first());
-        return (row) ? `/fs/optical_images/${row.id}` : null;
-      }
-      return null;
-    },
-
-    async rawOpticalImage(_, {datasetId: dsId}, ctx) {
-      // TODO: consider moving to Dataset type
-      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());  // check if user has access
-      if (ds) {
-        const row = await (db.from('dataset')
-          .where('id', dsId)
-          .first());
-        if (row && row.optical_image) {
-          return {
-            url: `/fs/raw_optical_images/${row.optical_image}`,
-            transform: row.transform
-          };
-        }
-      }
-      return null;
-    },
-
-    // TODO: deprecated, remove
-    async thumbnailImage(_, {datasetId}, ctx) {
-      return Resolvers.Query.thumbnailOpticalImageUrl(_, {datasetId}, ctx);
-    },
-
-    async thumbnailOpticalImageUrl(_, {datasetId: dsId}, ctx) {
-      // TODO: consider moving to Dataset type
-      const ds = await esDatasetByID(dsId, ctx.user, await ctx.getCurrentUserProjectRoles());  // check if user has access
-      if (ds) {
-        const row = await (db.from('dataset')
-          .where('id', dsId)
-          .first());
-        if (row && row.thumbnail) {
-          return `/fs/optical_images/${row.thumbnail}`;
-        }
-      }
-      return null;
-    },
-
-    async currentUserLastSubmittedDataset(_, args, ctx) {
-      let lastDS = null;
-      const {user} = ctx;
-      if (user) {
-        const results = await esSearchResults({
-          orderBy: 'ORDER_BY_DATE',
-          sortingOrder: 'DESCENDING',
-          submitter: user.id,
-          limit: 1,
-        }, 'dataset', user, await ctx.getCurrentUserProjectRoles());
-        if (results.length > 0) {
-          lastDS = results[0];
-        }
-      }
-      return lastDS;
-    }
   },
 
   Analyzer: {
@@ -294,176 +113,6 @@ const Resolvers = {
         return (rpMz / mz) * rpRp;
       else
         return rpRp;
-    }
-  },
-
-  Dataset: {
-    id(ds) {
-      return ds._source.ds_id;
-    },
-
-    name(ds) {
-      return ds._source.ds_name;
-    },
-
-    uploadDT(ds) {
-      return ds._source.ds_upload_dt;
-    },
-
-    configJson(ds) {
-      return JSON.stringify(ds._source.ds_config);
-    },
-
-    metadataJson(ds) {
-      return JSON.stringify(ds._source.ds_meta);
-    },
-
-    isPublic(ds) {
-      return ds._source.ds_is_public;
-    },
-
-    molDBs(ds) {
-      return ds._source.ds_mol_dbs;
-    },
-
-    adducts(ds) {
-      return ds._source.ds_adducts;
-    },
-
-    acquisitionGeometry(ds) {
-      return JSON.stringify(ds._source.ds_acq_geometry);
-    },
-
-    institution(ds) { return dsField(ds, 'institution'); },
-    organism(ds) { return dsField(ds, 'organism'); },
-    organismPart(ds) { return dsField(ds, 'organismPart'); },
-    condition(ds) { return dsField(ds, 'condition'); },
-    growthConditions(ds) { return dsField(ds, 'growthConditions'); },
-    polarity(ds) { return dsField(ds, 'polarity').toUpperCase(); },
-    ionisationSource(ds) { return dsField(ds, 'ionisationSource'); },
-    maldiMatrix(ds) { return dsField(ds, 'maldiMatrix'); },
-    metadataType(ds) { return dsField(ds, 'metadataType'); },
-
-    async submitter(ds, args, ctx) {
-      let scopeRole = ds.scopeRole;
-      if (ctx.user && ctx.user.id === ds._source.ds_submitter_id) {
-        scopeRole = SRO.PROFILE_OWNER;
-      }
-      return {
-        id: ds._source.ds_submitter_id,
-        name: ds._source.ds_submitter_name,
-        email: ds._source.ds_submitter_email,
-        scopeRole,
-      };
-    },
-
-    group(ds) {
-      if (ds._source.ds_group_id) {
-        return {
-          id: ds._source.ds_group_id,
-          name: ds._source.ds_group_name,
-          shortName: ds._source.ds_group_short_name,
-        };
-      } else {
-        return null;
-      }
-    },
-
-    async projects(ds, args, ctx) {
-      // If viewing someone else's DS, only approved projects are visible, so exit early if there are no projects in elasticsearch
-      const projectIds = _.castArray(ds._source.ds_project_ids).filter(id => id != null);
-      const canSeeUnapprovedProjects = ctx.isAdmin || (ctx.user != null && ctx.user.id === ds._source.ds_submitter_id);
-      if (!canSeeUnapprovedProjects && projectIds.length === 0) {
-        return [];
-      }
-
-      const userProjectRoles = await ctx.getCurrentUserProjectRoles();
-      let projectsQuery = ctx.connection.getRepository(ProjectModel)
-        .createQueryBuilder('project')
-        .innerJoin('project.datasetProjects', 'datasetProject')
-        .where(projectIsVisibleToCurrentUserWhereClause(ctx, userProjectRoles))
-        .andWhere('datasetProject.datasetId = :datasetId', {datasetId: ds._source.ds_id});
-      if (!canSeeUnapprovedProjects) {
-        projectsQuery = projectsQuery.andWhere('datasetProject.approved')
-      }
-      const projects = await projectsQuery.getMany();
-      return projects.map(project => convertProjectToProjectSource(project, ctx, userProjectRoles));
-    },
-
-    async principalInvestigator(ds, _, {connection}) {
-      const dataset = await connection.getRepository(DatasetModel).findOneOrFail({ id: ds._source.ds_id });
-      if (dataset.piName) {
-        return {
-          name: dataset.piName,
-          email: dataset.piEmail,
-        };
-      }
-      return null;
-    },
-
-    analyzer(ds) {
-      const msInfo = ds._source.ds_meta.MS_Analysis;
-      return {
-        'type': msInfo.Analyzer,
-        'rp': msInfo.Detector_Resolving_Power
-      };
-    },
-
-    status(ds) {
-      return ds._source.ds_status;
-    },
-
-    inputPath(ds) {
-      return ds._source.ds_input_path;
-    },
-
-    uploadDateTime(ds) {
-      return ds._source.ds_upload_dt;
-    },
-
-    fdrCounts(ds, {inpFdrLvls, checkLvl}) {
-      let outFdrLvls = [], outFdrCounts = [], maxCounts = 0, dbName = '';
-      if(ds._source.annotation_counts && ds._source.ds_status === 'FINISHED') {
-        let annotCounts = ds._source.annotation_counts;
-        let molDBs = ds._source.ds_mol_dbs;
-        let filteredMolDBs = annotCounts.filter(el => {
-            return molDBs.includes(el.db.name);
-        });
-        for (let db of filteredMolDBs) {
-          let maxCountsCand = db.counts.find(lvlObj => {
-                return lvlObj.level === checkLvl
-            });
-            if (maxCountsCand.n >= maxCounts) {
-              maxCounts = maxCountsCand.n;
-              outFdrLvls = [];
-              outFdrCounts = [];
-              inpFdrLvls.forEach(inpLvl => {
-                let findRes = db.counts.find(lvlObj => {
-                  return lvlObj.level === inpLvl
-                });
-                if (findRes) {
-                  dbName = db.db.name;
-                  outFdrLvls.push(findRes.level);
-                  outFdrCounts.push(findRes.n);
-                }
-              })
-            }
-        }
-        return {
-            'dbName': dbName,
-            'levels': outFdrLvls,
-            'counts': outFdrCounts
-        }
-      }
-    },
-
-    // TODO: field is deprecated, remove
-    opticalImage(ds, _, ctx) {
-      return Resolvers.Dataset.rawOpticalImageUrl(ds, _, ctx);
-    },
-
-    async rawOpticalImageUrl(ds, _, ctx) {
-      return await Resolvers.Query.rawOpticalImage(_, {}, ctx).url;
     }
   },
 
@@ -522,7 +171,11 @@ const Resolvers = {
     rhoChaos: (hit) => hit._source.chaos,
 
     dataset(hit) {
-      return Object.assign({_id: hit._source.ds_id}, hit);
+
+      return {
+        _id: hit._source.ds_id,
+        _source: hit._source,
+      };
     },
 
     peakChartData(hit) {
@@ -555,39 +208,6 @@ const Resolvers = {
       });
     }
   },
-
-  Mutation: {
-    // for dev purposes only, not a part of the public API
-    reprocessDataset: async (_, args, ctx) => {
-      const {id, delFirst, priority} = args;
-      const ds = await fetchEngineDS({id});
-      if (ds === undefined)
-        throw new UserError('DS does not exist');
-      return DSMutation.create(_, {
-        id: id, input: ds, reprocess: true,
-        delFirst: delFirst, priority: priority
-      }, ctx);
-    },
-    createDataset: DSMutation.create,
-    updateDataset: DSMutation.update,
-    deleteDataset: DSMutation.delete,
-    addOpticalImage: DSMutation.addOpticalImage,
-    deleteOpticalImage: DSMutation.deleteOpticalImage,
-  },
-
-  Subscription: {
-    datasetStatusUpdated: {
-      subscribe: () => pubsub.asyncIterator('datasetStatusUpdated'),
-      resolve: (payload, _, context) => {
-        if (payload.dataset && payload.dbDs && canUserViewPgDataset(payload.dbDs, context.user)) {
-          return { dataset: payload.dataset };
-        } else {
-          // Empty payload indicates that the client should still refresh its dataset list
-          return { dataset: null };
-        }
-      }
-    },
-  }
 };
 
 module.exports = Resolvers;

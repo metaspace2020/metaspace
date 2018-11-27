@@ -1,10 +1,10 @@
 <template>
   <div class="filter-panel">
     <el-select v-if="anyOptionalFilterPresent"
+               class="filter-select"
                placeholder="Add filter"
                v-model="selectedFilterToAdd"
-               @change="addFilter"
-               style="width: 200px; margin-bottom: 10px;">
+               @change="addFilter">
       <el-option v-for="f in availableFilters" :key="f.key"
                  :value="f.key" :label="f.description">
       </el-option>
@@ -55,6 +55,7 @@
    'maldiMatrix',
    'minMSM',
    'simpleQuery',
+   'simpleFilter',
    'metadataType'
  ];
 
@@ -74,7 +75,7 @@
 
  export default {
    name: 'filter-panel',
-   props: ["level"],
+   props: ["level", "simpleFilterOptions"],
    components: filterComponents,
    mounted() {
      this.$store.dispatch('initFilterLists');
@@ -116,6 +117,16 @@
      }
    },
 
+   watch: {
+     simpleFilterOptions(newVal) {
+       // Remove simpleFilter if it has a value that's no longer selectable
+       if (this.filter.simpleFilter != null &&
+         (newVal == null || !newVal.some(opt => opt.value === this.filter.simpleFilter))) {
+         self.$store.commit('updateFilter', {...this.filter, simpleFilter: null});
+       }
+     }
+   },
+
    data () {
      return {
        selectedFilterToAdd: null
@@ -125,7 +136,13 @@
    methods: {
      shouldShowFilter(filterKey) {
        const {hidden} = FILTER_SPECIFICATIONS[filterKey];
-       return !(typeof hidden === 'function' ? hidden() : (hidden != null && hidden));
+       if (typeof hidden === 'function' ? hidden() : (hidden != null && hidden)) {
+         return false;
+       }
+       if (filterKey === 'simpleFilter') {
+         return this.simpleFilterOptions != null;
+       }
+       return true;
      },
 
      makeFilter(filterKey) {
@@ -134,7 +151,7 @@
        const behaviour = {
          filterKey,
          value: self.filter[filterKey],
-         options: this.getFilterOptions(filterSpec),
+         options: this.getFilterOptions(filterSpec, filterKey),
          // passing the value of undefined destroys the tag element
          onChange(val) {
            self.$store.commit('updateFilter',
@@ -152,10 +169,12 @@
        }
      },
 
-     getFilterOptions(filter) {
+     getFilterOptions(filter, filterKey) {
        const {filterLists} = this.$store.state;
        // dynamically generated options are supported:
        // either specify a function of optionLists or one of its field names
+       if (filterKey === 'simpleFilter')
+         return this.simpleFilterOptions;
        if (typeof filter.options === 'object')
          return filter.options;
        if (filterLists == null)
@@ -176,7 +195,12 @@
    display: inline-flex;
    align-items: flex-start;
    flex-wrap: wrap;
-   padding: 0px 4px;
+   margin: -5px -5px 5px; /* Remove margins of .tf-outer so that they're properly aligned. Add margin to bottom to fit well with other components */
+ }
+
+ .filter-select {
+   width: 200px;
+   margin: 5px;
  }
 
  .el-select-dropdown__wrap {

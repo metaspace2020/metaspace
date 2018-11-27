@@ -61,6 +61,7 @@
    fetchAutocompleteSuggestionsQuery,
    editDatasetQuery,
    metadataOptionsQuery,
+   editDatasetSubmitterQuery,
  } from '../../api/metadata';
  import MetaspaceOptionsSection from './sections/MetaspaceOptionsSection.vue';
  import VisibilityOptionSection from './sections/VisibilityOptionSection.vue';
@@ -130,6 +131,15 @@
        if (this.isNew && newMdType !== this.value.Data_Type) {
          this.reloadForm(newMdType);
        }
+     },
+     async 'metaspaceOptions.submitterId'(newSubmitterId) {
+       if (newSubmitterId != null && (this.submitter == null || this.submitter.id !== newSubmitterId)) {
+         const result = await this.$apollo.query({
+           query: datasetSubmitterQuery,
+           variables: {userId: newSubmitterId},
+         });
+         this.submitter = result.data.user;
+       }
      }
    },
 
@@ -179,8 +189,9 @@
            metadata: dataset && safeJsonParse(dataset.metadataJson) || {},
            metaspaceOptions: {
              ...(dataset != null ? metaspaceOptionsFromDataset(dataset) : null),
-             submitterId: data.currentUser.id,
-             groupId: data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
+             submitterId: this.$store.state.currentTour ? '': data.currentUser.id,
+             groupId: this.$store.state.currentTour ? '':
+               data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
            },
            submitter: data.currentUser
          }
@@ -189,10 +200,22 @@
            query: editDatasetQuery,
            variables: {id: this.datasetId},
          });
+         let submitter;
+         // If submitter is not the current user, we need to make a second request after finding the submitter's userId
+         // to get the rest of the submitter data (groups, projects, etc.)
+         if (data.dataset.submitter.id === data.currentUser.id) {
+           submitter = data.currentUser;
+         } else {
+           const {data: submitterData} = await this.$apollo.query({
+             query: editDatasetSubmitterQuery,
+             variables: {userId: data.dataset.submitter.id},
+           });
+           submitter = submitterData.user;
+         }
          return {
            metadata: JSON.parse(data.dataset.metadataJson),
            metaspaceOptions: metaspaceOptionsFromDataset(data.dataset),
-           submitter: data.dataset.submitter,
+           submitter,
          }
        }
      },

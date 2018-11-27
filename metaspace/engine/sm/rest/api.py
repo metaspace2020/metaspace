@@ -172,10 +172,10 @@ def update_ds(ds_man, ds_id, params):
     :return:
     """
     doc = params.get('doc', None)
-    if not doc:
+    force = params.get('force', False)
+    if not doc and not force:
         logger.info(f'Nothing to update for "{ds_id}"')
     else:
-        force = params.get('force', False)
         priority = params.get('priority', DatasetActionPriority.STANDARD)
         ds_man.update(ds_id=ds_id, doc=doc,
                       force=force, priority=priority)

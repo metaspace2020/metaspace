@@ -35,7 +35,7 @@
     - gcc
     - git
     - software-properties-common
-    - python-pip
+    - python3-pip
     - libssl-dev
 
 - name: Update pip

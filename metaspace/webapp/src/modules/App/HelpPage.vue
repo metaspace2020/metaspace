@@ -1,6 +1,13 @@
 <template>
   <div id='help-wrapper'>
+
     <div id='help-container'>
+      <p><b>Collaboration with groups and projects</b></p>
+      We have added new ways for you to share your data with others:
+      <div class="help-page">
+        <img src="../../assets/help_page_release_notes_hq.png" style="width: 100%; object-fit: contain;">
+      </div>
+
       We try our best to make the website as intuitive as possible, but it's unavoidable that some features are hard to discover on your own.
       <br/>
       That's why we prepared a few thematic website tours:
@@ -34,8 +41,9 @@
       <p><b>Step-by-step tutorial:</b> Please read our <a href="https://speakerdeck.com/metaspace2020/metaspace-training-guide">training guide slides</a> providing an introduction to METASPACE as well as a step-by-step tutorial with screenshots.</p>
 
       <p>
-        If you have any ideas on how to improve the website, please send them to
-        <a href="mailto:contact@metaspace2020.eu">our e-mail address</a>.
+        If you have any ideas on how to improve the website, please
+        <a href="https://gitter.im/metaspace2020/metaspace">chat with us on Gitter</a> or
+        send them to <a href="mailto:contact@metaspace2020.eu">our e-mail address</a>.
       </p>
     </div>
   </div>
@@ -97,5 +105,9 @@
  .tour-block .el-button {
    color: blue;
    width: 180px;
+ }
+
+ .help-page {
+   max-width: 950px;
  }
 </style>

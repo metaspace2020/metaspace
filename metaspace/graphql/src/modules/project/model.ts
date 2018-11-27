@@ -35,7 +35,7 @@ export class Project {
   @OneToMany(type => UserProject, userProject => userProject.project)
   members: UserProject[];
 
-  @Column({ type: 'boolean', default: true })
+  @Column({ name: 'is_public', type: 'boolean', default: true })
   isPublic: boolean;
 
   @OneToMany(type => DatasetProject, datasetProject => datasetProject.project)

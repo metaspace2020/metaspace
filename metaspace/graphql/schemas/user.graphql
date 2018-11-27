@@ -22,6 +22,6 @@ type Query {
 }
 
 type Mutation {
-  updateUser(userId: ID!, update: UpdateUserInput): User!
+  updateUser(userId: ID!, update: UpdateUserInput!): User!
   deleteUser(userId: ID!, deleteDatasets: Boolean!): Boolean
 }

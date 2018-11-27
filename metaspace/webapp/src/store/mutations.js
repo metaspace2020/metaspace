@@ -1,8 +1,12 @@
+import {isEqual, pull, without} from 'lodash-es';
 import router from '../router';
+import compare from '../lib/compare';
 
-import {decodeParams,
-        encodeParams, encodeSections, encodeSortOrder,
-        stripFilteringParams} from '../modules/Filters';
+import {
+  decodeParams,
+  encodeParams, encodeSections, encodeSortOrder, FILTER_SPECIFICATIONS,
+  stripFilteringParams,
+} from '../modules/Filters';
 import {getFilterInitialValue} from '../modules/Filters';
 
 
@@ -25,11 +29,11 @@ function replaceURL(state, filter) {
 }
 
 function pushURL(state, filter) {
-  replaceURL(state, filter);
-  return;
-
-  // TODO: add router hook to update orderedActiveFilters
   router.push(updatedLocation(state, filter));
+}
+
+function sortFilterKeys(keys) {
+  keys.sort((a, b) => compare(FILTER_SPECIFICATIONS[a].sortOrder || 100, FILTER_SPECIFICATIONS[b].sortOrder || 100));
 }
 
 export default {
@@ -49,7 +53,10 @@ export default {
           active.indexOf(key) == -1)
         active.push(key);
 
-    const changedFilterSet = state.orderedActiveFilters != active;
+    // sort
+    sortFilterKeys(active);
+
+    const changedFilterSet = !isEqual(state.orderedActiveFilters, active);
 
     state.orderedActiveFilters = active;
     if (changedFilterSet)
@@ -67,6 +74,17 @@ export default {
 
     state.orderedActiveFilters.push(name);
     pushURL(state, filter);
+  },
+
+  updateFilterOnNavigate(state, to) {
+    const newActiveFilters = Object.keys(decodeParams(to, state.filterLists));
+
+    const removed = without(state.orderedActiveFilters, ...newActiveFilters);
+    const added = without(newActiveFilters, ...state.orderedActiveFilters);
+
+    pull(state.orderedActiveFilters, ...removed);
+    state.orderedActiveFilters.push(...added);
+    sortFilterKeys(state.orderedActiveFilters);
   },
 
   setFilterListsLoading(state) {

@@ -216,6 +216,7 @@
      datasetProperties: {
        query: gql`query getDatasetName($id: String!) {
                     dataset(id: $id) {
+                      id
                       name
                       metadataType
                     }

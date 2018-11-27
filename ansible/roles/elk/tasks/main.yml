@@ -1,0 +1,25 @@
+---
+
+- name: Install Elasticsearch Curator
+  become: yes
+  pip:
+    name: elasticsearch-curator
+    state: latest
+
+- name: Make sure config directory for Elasticsearch Curator exists
+  file: path=~/.es-curator state=directory mode=0755
+
+- name: Create Elasticsearch Curator config and action files
+  template: src={{ item }}.j2 dest=~/.es-curator/{{ item }} mode=0644
+  with_items:
+    - es-curator.yml
+    - es-curator-actions.yml
+
+- name: Ensure a Cron job that runs Elasticsearch Curator on a schedule
+  cron:
+    name: "Delete old Elasticsearch indices"
+    day: "1"
+    hour: "0"
+    minute: "0"
+    user: ubuntu
+    job: "/usr/local/bin/curator --config ~/.es-curator/es-curator.yml ~/.es-curator/es-curator-actions.yml"

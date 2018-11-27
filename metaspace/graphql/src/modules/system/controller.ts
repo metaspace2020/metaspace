@@ -6,11 +6,8 @@ import { pubsub } from '../../../utils';
 import {UserError} from 'graphql-errors';
 import {SystemHealth, UpdateSystemHealthInput} from '../../binding';
 import {IResolvers} from 'graphql-tools';
+import {Context} from '../../context';
 
-
-interface Context { // TODO: Get from Context.ts after merge with master
-  user?: {role: string}
-}
 
 const SYSTEM_HEALTH_CHANNEL = 'systemHealthUpdated';
 const healthFile = path.join(path.dirname(require.main!.filename), 'health.json');
@@ -34,7 +31,7 @@ let currentHealth: Promise<SystemHealth> = (async () => {
 
 export const getHealth = async () => await currentHealth;
 
-export const Resolvers: IResolvers<any, any> = {
+export const Resolvers: IResolvers<any, Context> = {
   Query: {
     async systemHealth(): Promise<SystemHealth> {
       return await currentHealth;
@@ -42,7 +39,7 @@ export const Resolvers: IResolvers<any, any> = {
   },
 
   Mutation: {
-    async updateSystemHealth(source: any, {health: _health}: any, {user}: any) {
+    async updateSystemHealth(source: any, {health: _health}: any, {user}: Context) {
       const health = _health as UpdateSystemHealthInput;
       if (user && user.role === 'admin') {
         const newHealth = {...defaultHealth, ...health};

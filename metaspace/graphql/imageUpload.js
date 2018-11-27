@@ -147,7 +147,6 @@ function imageProviderFSBackend(storageRootDir) {
     app.post(uri, upload.single(category),
       function (req, res, next) {
         let imageID = path.basename(req.file.destination) + req.file.filename;
-        logger.debug(req.file);
         res.status(201).json({'image_id': imageID});
       });
     logger.debug(`Accepting POST on ${uri}`);

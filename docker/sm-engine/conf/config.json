@@ -2,8 +2,8 @@
   "bottle": {
     "host": "0.0.0.0",
     "port": 5123,
-    "refresh": true,
-    "debug": true
+    "debug": false,
+    "server": "cherrypy"
   },
   "defaults": {
     "adducts": {
@@ -28,7 +28,8 @@
     "img_service_url": "http://sm-graphql:4201",
     "mol_db": "http://nginx:8999/mol_db/v1",
     "web_app_url": "http://nginx:8999",
-    "send_email": false
+    "send_email": false,
+    "update_daemon_threads": 4
   },
   "rabbitmq": {
     "host": "rabbitmq",
@@ -91,7 +92,7 @@
     "version": 1,
     "formatters": {
       "sm": {
-        "format": "%(asctime)s - %(levelname)s - %(name)s - %(filename)s:%(lineno)d - %(message)s"
+        "format": "%(asctime)s - %(levelname)s - %(name)s[%(threadName)s] - %(filename)s:%(lineno)d - %(message)s"
       }
     },
     "handlers": {
@@ -104,17 +105,11 @@
             "class": "logging.StreamHandler",
             "formatter": "sm",
             "level": "DEBUG"
-        },
-        "file_engine": {
-            "class": "logging.FileHandler",
-            "formatter": "sm",
-            "level": "DEBUG",
-            "filename": "logs/sm-engine.log"
         }
     },
     "loggers": {
         "engine": {
-            "handlers": ["console_debug", "file_engine"],
+            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "api": {
@@ -126,5 +121,12 @@
             "level": "INFO"
         }
     }
+  },
+  "ds_config_defaults": {
+    "adducts": {
+      "+": ["+H", "+Na", "+K"],
+      "-": ["-H", "+Cl" ]
+    },
+    "moldb_names": ["HMDB-v4"]
   }
 }

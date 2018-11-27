@@ -26,7 +26,8 @@
 
 - name: Install Ansible htpasswd module dependencies
   become: yes
-  apt: name=python-passlib state=present update_cache=yes
+  pip:
+    name: passlib>=1.6
 
 - name: Create basic auth users
   become: yes
@@ -35,6 +36,22 @@
     name: "{{ item.user }}"
     password: "{{ item.password }}"
   with_items: "{{ basic_auth_users }}"
+
+- name: Create directory for ssl certificates and keys
+  become: yes
+  file:
+    path: /etc/nginx/ssl
+    mode: 0700
+    state: directory
+
+- name: Copy ssl certificate and key
+  become: yes
+  copy:
+    src={{ ssl.path }}/{{ item }} dest=/etc/nginx/ssl/{{ item }}
+    owner=ubuntu group=ubuntu mode=0644
+  with_items:
+    - "{{ ssl.cert }}"
+    - "{{ ssl.key }}"
 
 - name: Restart Nginx
   become: yes

@@ -7,12 +7,14 @@
   "scripts": {
     "dev": "nodemon -e js,json,ts --require ts-node/register server.js",
     "start": "ts-node src/index.ts",
-    "test": "jest",
+    "test": "NODE_ENV=test jest",
     "test-integration": "mocha --timeout 3000 tests/*RegrTest.js",
-    "gen-binding": "graphql-binding --language typescript --input schema.ts --outputBinding src/binding.ts"
+    "gen-binding": "graphql-binding --language typescript --input schema.ts --outputBinding src/binding.ts",
+    "deref-schema": "node deref_schema.js ./metadataSchemas/"
   },
   "license": "ISC",
   "dependencies": {
+    "@types/amqplib": "^0.5.9",
     "@types/aws-sdk": "^2.7.0",
     "@types/bcrypt": "^2.0.0",
     "@types/config": "^0.0.34",
@@ -28,7 +30,7 @@
     "amqplib": "^0.5.1",
     "apollo-server-express": "^2.0.4",
     "aws-sdk": "^2.13.0",
-    "bcrypt": "^3.0.0",
+    "bcrypt": "^3.0.2",
     "body-parser": "^1.15.2",
     "compression": "^1.6.2",
     "config": "^1.26.1",
@@ -66,7 +68,7 @@
     "typeorm": "0.2.7",
     "typescript": "^2.9.2",
     "uuid": "^3.3.2",
-    "winston": "^2.3.1"
+    "winston": "^2.4.4"
   },
   "devDependencies": {
     "@types/graphql": "^14.0.1",

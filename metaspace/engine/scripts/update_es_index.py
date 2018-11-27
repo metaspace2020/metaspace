@@ -31,18 +31,28 @@ def _reindex_all(conf):
         raise e
 
 
-def _reindex_datasets(rows, es_exp):
-    logger.info('Reindexing %s dataset(s)', len(rows))
-    for idx, (ds_id, ds_name, ds_config) in enumerate(rows):
-        logger.info(f'Reindexing {idx+1} out of {len(rows)}')
+def _reindex_datasets(ds_ids, db, es_exp):
+    logger.info('Reindexing %s dataset(s)', len(ds_ids))
+    for idx, ds_id in enumerate(ds_ids):
+        logger.info(f'Reindexing {idx+1} out of {len(ds_ids)}')
         try:
+            # Delete from ES regardless of whether the DS exists, so that this can clean up deleted datasets
             es_exp.delete_ds(ds_id)
-            for mol_db_name in ds_config['databases']:
-                mol_db = MolecularDB(name=mol_db_name, iso_gen_config=ds_config['isotope_generation'])
-                isocalc = IsocalcWrapper(ds_config['isotope_generation'])
-                es_exp.index_ds(ds_id, mol_db=mol_db, isocalc=isocalc)
+            ds = db.select_one("select name, config from dataset where id = %s", (ds_id,))
+            if ds:
+                ds_name, ds_config = ds
+                for mol_db_name in ds_config['databases']:
+                    try:
+                        mol_db = MolecularDB(name=mol_db_name, iso_gen_config=ds_config['isotope_generation'])
+                        isocalc = IsocalcWrapper(ds_config['isotope_generation'])
+                        es_exp.index_ds(ds_id, mol_db=mol_db, isocalc=isocalc)
+                    except Exception as e:
+                        new_msg = f'Failed to reindex(ds_id={ds_id}, ds_name={ds_name}, mol_db={mol_db_name}): {e}'
+                        logger.error(new_msg, exc_info=True)
+            else:
+                logger.warning(f'Dataset does not exist(ds_id={ds_id})')
         except Exception as e:
-            new_msg = 'Failed to reindex(ds_id={}, ds_name={}): {}'.format(ds_id, ds_name, e)
+            new_msg = 'Failed to reindex(ds_id={}): {}'.format(ds_id, e)
             logger.error(new_msg, exc_info=True)
 
 
@@ -57,19 +67,19 @@ def reindex_results(ds_id, ds_mask):
         es_exp = ESExporter(db)
 
         if ds_id:
-            rows = db.select("select id, name, config from dataset where id = '{}'".format(ds_id))
+            ds_ids = ds_id.split(',')
         elif ds_mask:
-            rows = db.select("select id, name, config from dataset where name like '{}%'".format(ds_mask))
+            ds_ids = [id for (id,) in db.select("select id from dataset where name like '{}%'".format(ds_mask))]
         else:
-            rows = []
+            ds_ids = []
 
-        _reindex_datasets(rows, es_exp)
+        _reindex_datasets(ds_ids, db, es_exp)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Reindex dataset results')
     parser.add_argument('--config', default='conf/config.json', help='SM config path')
-    parser.add_argument('--ds-id', dest='ds_id', default='', help='DS id')
+    parser.add_argument('--ds-id', dest='ds_id', default='', help='DS id (or comma-separated list of ids)')
     parser.add_argument('--ds-name', dest='ds_name', default='', help='DS name prefix mask (_all_ for all datasets)')
     args = parser.parse_args()
 

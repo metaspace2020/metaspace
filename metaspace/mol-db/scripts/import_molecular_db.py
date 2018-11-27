@@ -10,7 +10,7 @@ import pandas as pd
 from app.model.molecular_db import MolecularDB
 from app.model.molecule import Molecule
 from app.database import init_session, db_session
-from app.log import LOG
+from app.log import logger
 
 
 def get_inchikey_gen():
@@ -30,7 +30,7 @@ def get_inchikey_gen():
             ob_conversion.ReadString(mol, ser.inchi)
             return ob_conversion.WriteString(mol).strip('\n')
         except Exception as e:
-            LOG.warning(f'{e}\t{ser}')
+            logger.warning(f'{e}\t{ser}')
             return '{}-{}-{}'.format(ser.formula, ser['name'], ser['id'])
 
     return get_inchikey
@@ -61,7 +61,7 @@ def remove_invalid_inchikey_molecules(mol_db_df):
     invalid_inchikey = mol_db_df.inchikey.isnull()
     n_invalid = invalid_inchikey.sum()
     if n_invalid > 0:
-        LOG.warning("{} invalid records (InChI key couldn't be generated)".format(n_invalid))
+        logger.warning("{} invalid records (InChI key couldn't be generated)".format(n_invalid))
     return mol_db_df[~invalid_inchikey]
 
 
@@ -69,8 +69,8 @@ def remove_duplicated_inchikey_molecules(mol_db_df):
     ids_to_insert = set()
     for inchikey, g in mol_db_df.groupby('inchikey'):
         if len(g) > 1:
-            LOG.warning("{} molecules have the same InChI key {}: {} - taking only the first one" \
-                        .format(len(g), inchikey, list(g['id'])))
+            logger.warning("{} molecules have the same InChI key {}: {} - taking only the first one" \
+                           .format(len(g), inchikey, list(g['id'])))
         ids_to_insert.add(g.iloc[0].id)
     # remove duplicates
     return mol_db_df[mol_db_df['id'].isin(ids_to_insert)]
@@ -88,12 +88,12 @@ def filter_formulas(mol_db_df):
 
     def is_valid(sf):
         if '.' in sf:
-            LOG.warning('"." in formula {}, skipping'.format(sf))
+            logger.warning('"." in formula {}, skipping'.format(sf))
             return False
         try:
             parseSumFormula(sf)
         except Exception as e:
-            LOG.warning(e)
+            logger.warning(e)
             return False
         else:
             return True
@@ -112,11 +112,11 @@ def import_molecules(mol_db, csv_file, delimiter):
     mol_db_df = remove_invalid_inchikey_molecules(mol_db_df)
     mol_db_df = remove_duplicated_inchikey_molecules(mol_db_df)
 
-    LOG.info('{} new rows to insert into molecule table'.format(mol_db_df.shape[0]))
+    logger.info('{} new rows to insert into molecule table'.format(mol_db_df.shape[0]))
     if not mol_db_df.empty:
         save_molecules(mol_db, mol_db_df)
         db_session.commit()
-    LOG.info('Inserted {} new molecules for {}'.format(len(mol_db_df), mol_db))
+    logger.info('Inserted {} new molecules for {}'.format(len(mol_db_df), mol_db))
 
 
 if __name__ == "__main__":
@@ -136,10 +136,10 @@ if __name__ == "__main__":
 
     mol_db = MolecularDB.find_by_name_version(db_session, args.name, args.version)
     if mol_db and not args.drop:
-        LOG.info('Molecular DB already exists: {} {}'.format(args.name, args.version))
+        logger.info('Molecular DB already exists: {} {}'.format(args.name, args.version))
     else:
         if mol_db:
-            LOG.info('Deleting molecular DB: {} {}'.format(args.name, args.version))
+            logger.info('Deleting molecular DB: {} {}'.format(args.name, args.version))
             db_session.delete(mol_db)
             db_session.commit()
 
@@ -150,6 +150,6 @@ if __name__ == "__main__":
         db_session.add(mol_db)
         db_session.commit()
 
-        LOG.info('Appending molecules to Mol DB: {} {}'.format(args.name, args.version))
+        logger.info('Appending molecules to Mol DB: {} {}'.format(args.name, args.version))
         import_molecules(mol_db, args.csv_file, args.sep)
         db_session.commit()

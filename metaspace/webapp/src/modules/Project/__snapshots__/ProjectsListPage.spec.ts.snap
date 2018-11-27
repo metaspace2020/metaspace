@@ -3,7 +3,7 @@
 exports[`ProjectsListPage should match snapshot 1`] = `
 <div class="page">
   <mock-el-dialog append-to-body="" title="Create project" class="dialog">
-    <div mock-v-loading="1">
+    <div mock-v-loading="0">
       <form class="el-form el-form--label-top" size="mini">
         <div>
           <div class="el-form-item name is-required">
@@ -74,16 +74,35 @@ exports[`ProjectsListPage should match snapshot 1`] = `
     </div>
   </mock-el-dialog>
   <div class="page-content">
-    <div class="filter-panel">
-      <!---->
-    </div>
-    <div class="el-row is-justify-end el-row--flex">
+    <div class="header-row">
+      <div class="filter-panel">
+        <!---->
+        <div class="tf-outer" data-test-key="simpleFilter" filterkey="simpleFilter">
+          <div class="tf-name">
+            <svg viewBox="190 256 1412 1410" xmlns="http://www.w3.org/2000/svg" class="filter-icon">
+              <path d="M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z"></path>
+            </svg>
+          </div>
+          <mock-el-select size="medium" class="tf-value tf-value-input simple-filter">
+            <mock-el-option label="All projects"></mock-el-option>
+            <mock-el-option value="my-projects" label="My projects"></mock-el-option>
+          </mock-el-select>
+        </div>
+        <div class="tf-outer" data-test-key="simpleQuery" filterkey="simpleQuery" name="Simple query" options="">
+          <div class="tf-name">
+            <i class="el-icon-search" style="color: white;"></i>
+          </div>
+          <input type="text" placeholder="enter any keywords" class="tf-value tf-value-input">
+          <!---->
+        </div>
+      </div>
+      <div></div>
       <button type="button" class="el-button el-button--default">
         <!---->
         <!----><span>Create project</span></button>
     </div>
     <div class="clearfix"></div>
-    <div mock-v-loading="false">
+    <div style="min-height: 100px;" mock-v-loading="false">
       <div class="project-item">
         <a href="/project/proj-one" class="underlay"></a>
         <div class="item-body">
@@ -93,8 +112,9 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             </div>
             <div class="info-line">
               <!---->
-              1 Members
+              1 Member
             </div>
+            <div class="info-line"><span>Project manager<!---->:</span> <span><b>TestUser1<!----></b></span></div>
             <div class="info-line"><span>
           Created on <b>2018-08-29</b></span></div>
             <!---->
@@ -103,7 +123,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             <!---->
             <div>
               <i class="el-icon-edit"></i>
-              <a href="/project/project%201/edit" class="">Manage project</a>
+              <a href="/project/proj-one?tab=settings" class="">Manage project</a>
             </div>
             <div class="delete">
               <i class="el-icon-delete"></i>
@@ -123,6 +143,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             <div class="info-line"><span><a href="/datasets?prj=project%202" class="">20 Datasets</a>,
         </span> 20 Members
             </div>
+            <div class="info-line"><span>Project manager<!---->:</span> <span><b>TestUser1<!----></b></span></div>
             <div class="info-line"><span>
           Last submission <b>2018-08-01</b></span></div>
             <!---->

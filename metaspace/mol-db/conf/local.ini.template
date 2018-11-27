@@ -12,4 +12,4 @@ user=mol_db
 level=DEBUG
 
 [database]
-echo=yes
+echo=no

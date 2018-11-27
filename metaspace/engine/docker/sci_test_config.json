@@ -22,15 +22,18 @@
     "password": "password"
   },
   "services": {
+    "web_app_url": "",
     "img_service_url": "",
-    "mol_db": "http://localhost:5001/v1"
+    "mol_db": "http://localhost:5001/v1",
+    "send_email": false,
+    "update_daemon_threads": 1
   },
   "fs": {
     "base_path": "/opt/data/sm_test_data",
     "s3_base_path": ""
   },
   "spark": {
-    "master": "local[4]",
+    "master": "local[2]",
     "executor.memory": "2g",
     "spark.sql.execution.arrow.enabled": true
   },
@@ -85,27 +88,32 @@
             "class": "logging.StreamHandler",
             "formatter": "sm",
             "level": "DEBUG"
-        },
-        "file_engine": {
-            "class": "logging.FileHandler",
-            "formatter": "sm",
-            "level": "DEBUG",
-            "filename": "logs/sm-engine.log"
         }
     },
     "loggers": {
         "engine": {
-            "handlers": ["console_debug", "file_engine"],
+            "handlers": ["console_debug"],
             "level": "INFO"
         },
         "api": {
             "handlers": ["console_debug"],
             "level": "INFO"
         },
-        "daemon": {
+        "update-daemon": {
+            "handlers": ["console_debug"],
+            "level": "INFO"
+        },
+        "annotate-daemon": {
             "handlers": ["console_debug"],
             "level": "INFO"
         }
     }
+  },
+  "ds_config_defaults": {
+    "adducts": {
+      "+": ["+H", "+Na", "+K"],
+      "-": ["-H", "+Cl" ]
+    },
+    "moldb_names": []
   }
 }

@@ -11,10 +11,9 @@
  import annotationWidgets from './annotation-widgets/index'
 
  import Vue from 'vue';
- import { Store } from 'vuex';
  import { Component, Prop } from 'vue-property-decorator';
  import { Location } from 'vue-router';
- import { currentUserIdQuery, CurrentUserIdResult } from '../../api/user';
+ import { currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
  import { safeJsonParse } from '../../util';
 
  type ImagePosition = {
@@ -95,7 +94,7 @@
      },
 
      currentUser: {
-       query: currentUserIdQuery,
+       query: currentUserRoleQuery,
        fetchPolicy: 'cache-first',
      }
    }
@@ -109,7 +108,7 @@
    opticalImageUrl?: string
    showOpticalImage: boolean = true
    datasetVisibility: DatasetVisibilityResult | null = null
-   currentUser: CurrentUserIdResult | null = null
+   currentUser: CurrentUserRoleResult | null = null
 
    metadataDependentComponent(category: string): any {
      const currentMdType: string = this.$store.getters.filter.metadataType;

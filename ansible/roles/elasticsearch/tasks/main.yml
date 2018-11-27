@@ -27,7 +27,7 @@
     dest: /etc/elasticsearch/elasticsearch.yml
     regexp: network.host
     line: "network.host: 0.0.0.0"
-  when: bound_to_any_host
+  when: elasticsearch_bound_to_any_host
 
 - name: Specify a port for ElasticSearch
   become: yes
@@ -35,11 +35,6 @@
     dest: /etc/elasticsearch/elasticsearch.yml
     regexp: http.port
     line: "http.port: {{ elasticsearch_port }}"
-
-#  notify:
-#    - es_conf_update
-
-#- meta: flush_handlers
 
 - name: ES conf update restart
   become: yes

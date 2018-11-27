@@ -1,13 +1,26 @@
-filebeat:
-  prospectors:
-{% for prosp in filebeat_prospectors %}
-    - {{ prosp | to_yaml | indent(width=6, indentfirst=False) }}
-{% endfor %}
+filebeat.inputs: {{ filebeat.inputs }}
 
-output:
-  elasticsearch:
-    hosts: ["{{ es_host }}:9200"]
-    index: "filebeat-%{+yyyy}"
-    pipeline: "{{ ingest_node_pipeline_id }}"
-    username: "{{ es_user }}"
-    password: "{{ es_password }}"
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+setup:
+  template:
+    name: "filebeat"
+    pattern: "filebeat-*"
+    settings.index.number_of_shards: 3
+  kibana.host: "{{ filebeat.kibana.host }}"
+
+fields_under_root: true
+fields:
+  env: "{{ stage }}"
+  instance_id: "{{ filebeat.instance_id }}"
+
+output.elasticsearch:
+  hosts: ["{{ filebeat.elasticsearch.host }}"]
+  index: "{{ filebeat.elasticsearch.index }}"
+  pipeline: {{ filebeat.elasticsearch.ingest_node_pipeline_id }}
+
+logging:
+  level: {{ filebeat.logging_level }}
+  json: false

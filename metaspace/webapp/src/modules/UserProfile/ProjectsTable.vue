@@ -11,6 +11,10 @@
         <el-table-column label="Project">
           <template slot-scope="scope">
             <router-link :to="scope.row.route">{{scope.row.name}}</router-link>
+            <notification-icon
+              v-if="scope.row.hasPendingRequest"
+              :tooltip="`${scope.row.name} has a pending membership request.`"
+              tooltipPlacement="right" />
           </template>
         </el-table-column>
         <el-table-column prop="roleName" label="Role" width="160" />
@@ -70,6 +74,7 @@
   import { acceptProjectInvitationMutation, getRoleName, leaveProjectMutation, ProjectRole } from '../../api/project';
   import reportError from '../../lib/reportError';
   import ConfirmAsync from '../../components/ConfirmAsync';
+  import NotificationIcon from '../../components/NotificationIcon.vue';
   import { encodeParams } from '../Filters';
   import { CreateProjectDialog } from '../Project';
 
@@ -84,7 +89,8 @@
 
   @Component({
     components: {
-      CreateProjectDialog
+      CreateProjectDialog,
+      NotificationIcon,
     }
   })
   export default class ProjectsTable extends Vue {
@@ -101,10 +107,10 @@
       if (this.currentUser != null && this.currentUser.projects != null) {
         return this.currentUser.projects.map((item) => {
           const {project, numDatasets, role} = item;
-          const {id, name, urlSlug} = project;
+          const {id, name, urlSlug, hasPendingRequest} = project;
 
           return {
-            id, name, role, numDatasets,
+            id, name, role, numDatasets, hasPendingRequest,
             roleName: getRoleName(role),
             route: {
               name: 'project',

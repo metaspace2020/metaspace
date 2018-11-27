@@ -1,0 +1,7 @@
+elk_version: 6.4.3
+elk_es_port: 9200
+basic_auth_users:
+  - user: elastic
+    password: ES_PASSWORD
+  - user: kibana
+    password: KIBANA_PASSWORD

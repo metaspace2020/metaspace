@@ -28,11 +28,23 @@ export const editDatasetQuery =
     dataset(id: $id) {
       ...EditDatasetFragment
       submitter {
-        ...DatasetSubmitterFragment
+        id
       }
+    }
+    currentUser {
+      ...DatasetSubmitterFragment
     }
   }
   ${editDatasetFragment}
+  ${datasetSubmitterFragment}
+  `;
+
+export const editDatasetSubmitterQuery =
+  gql`query editDatasetQuery($userId: ID!) {
+    user(userId: $userId) {
+      ...DatasetSubmitterFragment
+    }
+  }
   ${datasetSubmitterFragment}
   `;
 
@@ -55,14 +67,23 @@ export const newDatasetQuery =
   ${datasetSubmitterFragment}
   `;
 
+export const datasetSubmitterQuery =
+  gql`query datasetSubmitterQuery($userId: ID!) {
+    user(userId: $userId) {
+      ...DatasetSubmitterFragment
+    }
+  }
+  ${datasetSubmitterFragment}
+  `;
+
 export const fetchAutocompleteSuggestionsQuery =
   gql`query suggestions($field: String!, $query: String!) {
     metadataSuggestions(field: $field, query: $query, limit: 5)
   }`;
 
 export const updateDatasetQuery =
-  gql`mutation ($id: String!, $reprocess: Boolean, $input: DatasetUpdateInput!) {
-    updateDataset(id: $id, input: $input, reprocess: $reprocess priority: 1)
+  gql`mutation ($id: String!, $reprocess: Boolean, $skipValidation: Boolean, $input: DatasetUpdateInput!) {
+    updateDataset(id: $id, input: $input, reprocess: $reprocess, skipValidation: $skipValidation, priority: 1)
   }`;
 
 // TODO: use autocompletion for filter values, same as on the upload page
@@ -100,7 +121,9 @@ export const metadataExportQuery = gql`
       group {
         id
         name
+        shortName
       }
+      groupApproved
       organism
       organismPart
       condition
@@ -118,6 +141,6 @@ export const metadataExportQuery = gql`
         levels
         counts
       }
-      opticalImage
+      rawOpticalImageUrl
     }
   } `;

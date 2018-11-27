@@ -9,7 +9,8 @@ const chai = require('chai'),
   config = require('config'),
   {promisify} = require('util');
 
-const {logger, initDBConnection} = require('../utils.js'),
+const {logger} = require('../utils.js'),
+  {initDBConnection} = require('../src/utils/knexDb'),
   {createImgServerAsync, IMG_TABLE_NAME} = require('../imageUpload');
 
 chai.use(chaiHttp);

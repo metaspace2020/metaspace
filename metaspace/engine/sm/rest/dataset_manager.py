@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 from sm.engine.dataset import DatasetStatus, Dataset
-from sm.engine.errors import DSIsBusy
+from sm.engine.errors import DSIsBusy, UnknownDSID
 from sm.engine.util import SMConfig
 
 SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
@@ -46,15 +46,15 @@ class SMapiDatasetManager(object):
         self._update_queue = update_queue
         self.logger = logger or logging.getLogger()
 
-    def _post_sm_msg(self, ds, queue, priority=DatasetActionPriority.DEFAULT, **kwargs):
+    def _set_ds_busy(self, ds, **kwargs):
         if ds.status in {DatasetStatus.QUEUED,
                          DatasetStatus.ANNOTATING,
                          DatasetStatus.INDEXING} and not kwargs.get('force', False):
             raise DSIsBusy(ds.id)
 
-        ds.status = DatasetStatus.QUEUED
-        ds.save(self._db, self._es, self._status_queue)
+        ds.set_status(self._db, self._es, status_queue=self._status_queue, status=DatasetStatus.QUEUED)
 
+    def _post_sm_msg(self, ds, queue, priority=DatasetActionPriority.DEFAULT, **kwargs):
         msg = {
             'ds_id': ds.id,
             'ds_name': ds.name
@@ -70,6 +70,12 @@ class SMapiDatasetManager(object):
         if 'id' not in doc:
             doc['id'] = now.strftime('%Y-%m-%d_%Hh%Mm%Ss')
 
+        try:
+            ds = Dataset.load(self._db, doc['id'])
+            self._set_ds_busy(ds, **kwargs)
+        except UnknownDSID:
+            pass
+
         ds = Dataset(id=doc['id'],
                      name=doc.get('name'),
                      input_path=doc.get('input_path'),
@@ -84,8 +90,10 @@ class SMapiDatasetManager(object):
         return doc['id']
 
     def delete(self, ds_id, **kwargs):
-        """ Send delete message to the queue """
+        """ Delete optical images and send delete message to the queue """
         ds = Dataset.load(self._db, ds_id)
+        self._set_ds_busy(ds, **kwargs)
+        self.del_optical_image(ds_id, **kwargs)
         self._post_sm_msg(ds=ds, queue=self._update_queue, action='delete', **kwargs)
 
     def update(self, ds_id, doc, **kwargs):
@@ -97,7 +105,7 @@ class SMapiDatasetManager(object):
             ds.metadata = doc['metadata']
         ds.upload_dt = doc.get('upload_dt', ds.upload_dt)
         ds.is_public = doc.get('is_public', ds.is_public)
-        ds.save(self._db, self._es, self._status_queue)
+        ds.save(self._db, self._es, None)
 
         self._post_sm_msg(ds=ds, queue=self._update_queue,
                           action='update', fields=list(doc.keys()), **kwargs)

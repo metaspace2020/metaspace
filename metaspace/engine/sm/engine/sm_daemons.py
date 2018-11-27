@@ -46,7 +46,7 @@ class SMDaemonManager(object):
             md_type_quoted = urllib.parse.quote(ds_meta['Data_Type'])
             base_url = self._sm_config['services']['web_app_url']
             ds_id_quoted = urllib.parse.quote(msg['ds_id'])
-            link = '{}/#/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
+            link = '{}/annotations?mdtype={}&ds={}'.format(base_url, md_type_quoted, ds_id_quoted)
         except Exception as e:
             self.logger.error(e)
         return link
@@ -98,7 +98,7 @@ class SMDaemonManager(object):
         """ Delete all dataset related data from the DB """
         self.logger.warning('Deleting dataset: {}'.format(ds.id))
         self._del_iso_images(ds)
-        # TODO: delete optical images
+        # TODO: move deletion of optical images here for consistency - it's currently in SMapiDatasetManager
         self.es.delete_ds(ds.id)
         self._db.alter('DELETE FROM dataset WHERE id=%s', params=(ds.id,))
         if del_raw_data:
@@ -107,27 +107,6 @@ class SMDaemonManager(object):
             wd_man.del_input_data(ds.input_path)
 
         self.status_queue.publish({'ds_id': ds.id, 'status': DatasetStatus.DELETED})
-
-
-class SMAnnotateDaemon(object):
-    """ Reads messages from annotation queue and starts annotation jobs
-    """
-    logger = logging.getLogger('annotate-daemon')
-
-    def __init__(self, manager, annot_qdesc, upd_qdesc, poll_interval=1):
-        self._sm_config = SMConfig.get_conf()
-        self._stopped = False
-        self._annot_queue_consumer = QueueConsumer(config=self._sm_config['rabbitmq'], qdesc=annot_qdesc,
-                                                   callback=self._callback,
-                                                   on_success=self._on_success,
-                                                   on_failure=self._on_failure,
-                                                   logger=self.logger, poll_interval=poll_interval)
-        self._upd_queue_pub = QueuePublisher(config=self._sm_config['rabbitmq'],
-                                             qdesc=upd_qdesc,
-                                             logger=self.logger)
-
-        self._db = DB(self._sm_config['db'])
-        self._manager = manager
 
     def _send_email(self, email, subj, body):
         try:
@@ -158,25 +137,58 @@ class SMAnnotateDaemon(object):
             else:
                 self.logger.warning(f'SEM failed to send email to {email}')
 
+    def send_success_email(self, msg):
+        ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])
+        email_body = (
+            'Dear METASPACE user,\n\n'
+            f'Thank you for uploading the "{ds_name}" dataset to the METASPACE annotation service. '
+            'We are pleased to inform you that the dataset has been processed and '
+            f"is available at {msg['web_app_link']}.\n\n"
+            'Best regards,\n'
+            'METASPACE Team'
+        )
+        self._send_email(msg['email'], 'METASPACE service notification (SUCCESS)', email_body)
+
+    def send_failed_email(self, msg):
+        ds_name, _ = self.fetch_ds_metadata(msg['ds_id'])
+        email_body = (
+            'Dear METASPACE user,\n\n'
+            f'We are sorry to inform you that there was a problem during processing of the "{ds_name}" dataset '
+            'and it could not be annotated. '
+            'If this is unexpected, please do not hesitate to contact us for support at contact@metaspace2020.eu\n\n'
+            'Best regards,\n'
+            'METASPACE Team'
+        )
+        self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
+
+
+class SMAnnotateDaemon(object):
+    """ Reads messages from annotation queue and starts annotation jobs
+    """
+    logger = logging.getLogger('annotate-daemon')
+
+    def __init__(self, manager, annot_qdesc, upd_qdesc, poll_interval=1):
+        self._sm_config = SMConfig.get_conf()
+        self._stopped = False
+        self._annot_queue_consumer = QueueConsumer(config=self._sm_config['rabbitmq'], qdesc=annot_qdesc,
+                                                   callback=self._callback,
+                                                   on_success=self._on_success,
+                                                   on_failure=self._on_failure,
+                                                   logger=self.logger, poll_interval=poll_interval)
+        self._upd_queue_pub = QueuePublisher(config=self._sm_config['rabbitmq'],
+                                             qdesc=upd_qdesc,
+                                             logger=self.logger)
+
+        self._db = DB(self._sm_config['db'])
+        self._manager = manager
+
     def _on_success(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
         ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FINISHED)
 
         self.logger.info(f" SM annotate daemon: success")
 
-        ds_name, _ = self._manager.fetch_ds_metadata(msg['ds_id'])
-        msg['web_app_link'] = self._manager.create_web_app_link(msg)
         self._manager.post_to_slack('dart', ' [v] Annotation succeeded: {}'.format(json.dumps(msg)))
-
-        if msg.get('email'):
-            email_body = (
-                'Dear METASPACE user,\n\n'
-                'Thank you for uploading the "{}" dataset to the METASPACE annotation service. '
-                'We are pleased to inform you that the dataset has been processed and is available at {}.\n\n'
-                'Best regards,\n'
-                'METASPACE Team'
-            ).format(ds_name, msg['web_app_link'])
-            self._send_email(msg['email'], 'METASPACE service notification (SUCCESS)', email_body)
 
     def _on_failure(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
@@ -184,20 +196,10 @@ class SMAnnotateDaemon(object):
 
         self.logger.error(f" SM annotate daemon: failure", exc_info=True)
 
-        ds_name, _ = self._manager.fetch_ds_metadata(msg['ds_id'])
-        msg['web_app_link'] = self._manager.create_web_app_link(msg)
         self._manager.post_to_slack('hankey', ' [x] Annotation failed: {}'.format(json.dumps(msg)))
 
         if msg.get('email'):
-            email_body = (
-                'Dear METASPACE user,\n\n'
-                'We are sorry to inform you that there was a problem during processing of the "{}" dataset '
-                'and it could not be annotated. '
-                'If this is unexpected, please do not hesitate to contact us for support at contact@metaspace2020.eu\n\n'
-                'Best regards,\n'
-                'METASPACE Team'
-            ).format(ds_name)
-            self._send_email(msg['email'], 'METASPACE service notification (FAILED)', email_body)
+            self._manager.send_failed_email(msg)
 
     def _callback(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
@@ -214,7 +216,8 @@ class SMAnnotateDaemon(object):
         upd_msg = {
             'ds_id': msg['ds_id'],
             'ds_name': msg['ds_name'],
-            'action': 'index'
+            'email': msg.get('email', None),
+            'action': 'index',
         }
         self._upd_queue_pub.publish(msg=upd_msg, priority=2)
 
@@ -231,8 +234,8 @@ class SMAnnotateDaemon(object):
             self._db.close()
 
 
-class SMUpdateDaemon(object):
-    """ Reads messages from update queue and does updates/deletes
+class SMIndexUpdateDaemon(object):
+    """ Reads messages from the update queue and does indexing/update/delete
     """
     logger = logging.getLogger('update-daemon')
 
@@ -252,33 +255,34 @@ class SMUpdateDaemon(object):
                                                 logger=self.logger)
         self._stopped = False
 
-    def _post_to_slack(self, msg):
-        if msg['action'] == 'update':
-            msg['web_app_link'] = self._manager.create_web_app_link(msg)
-            self._manager.post_to_slack('dart', f' [v] Update succeeded: {json.dumps(msg)}')
-        elif msg['action'] == 'index':
-            self._manager.post_to_slack('dart', f' [v] Index succeeded: {json.dumps(msg)}')
-        elif msg['action'] == 'delete':
-            self._manager.post_to_slack('dart', f' [v] Delete succeeded: {json.dumps(msg)}')
-
     def _on_success(self, msg):
-        if msg['action'] != 'delete':
+        self.logger.info(f" SM update daemon: success")
+
+        if msg['action'] not in ['delete', 'update']:
             ds = Dataset.load(self._db, msg['ds_id'])
             ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FINISHED)
+        if msg['action'] in ['update', 'index']:
+            msg['web_app_link'] = self._manager.create_web_app_link(msg)
 
-        self.logger.info(f" SM update daemon: success")
-        self._post_to_slack(msg)
+        if msg['action'] != 'update':
+            self._manager.post_to_slack('dart', f" [v] Succeeded to {msg['action']}: {json.dumps(msg)}")
+
+        if msg.get('email'):
+            self._manager.send_success_email(msg)
 
     def _on_failure(self, msg):
+        self.logger.error(f' SM update daemon: failure', exc_info=True)
+
         ds = Dataset.load(self._db, msg['ds_id'])
         ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FAILED)
 
-        self.logger.error(f" SM update daemon: failure", exc_info=True)
-        self._post_to_slack(msg)
+        self._manager.post_to_slack('hankey', f" [x] Failed to {msg['action']}: {json.dumps(msg)}")
+
+        if msg.get('email'):
+            self._manager.send_failed_email(msg)
 
     def _callback(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
-        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.INDEXING)
 
         self.logger.info(f' SM update daemon received a message: {msg}')
         self._manager.post_to_slack('new', f" [v] New {msg['action']} message: {json.dumps(msg)}")

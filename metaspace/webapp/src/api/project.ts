@@ -1,6 +1,12 @@
 import gql from 'graphql-tag';
 
 export type ProjectRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'MANAGER';
+export const ProjectRoleOptions: {[R in ProjectRole]: R} = {
+  INVITED: 'INVITED',
+  PENDING: 'PENDING',
+  MEMBER: 'MEMBER',
+  MANAGER: 'MANAGER',
+};
 export const getRoleName = (role: ProjectRole | null | undefined) => {
   switch (role) {
     case 'INVITED': return 'Invited';
@@ -87,6 +93,11 @@ export const leaveProjectMutation =
     leaveProject(projectId: $projectId)
   }`;
 
+export const updateUserProjectMutation =
+  gql`mutation updateUserProject($projectId: ID!, $userId: ID!, $update: UpdateUserProjectInput!) {
+    updateUserProject(projectId: $projectId, userId: $userId, update: $update)
+  }`;
+
 export const importDatasetsIntoProjectMutation =
   gql`mutation($projectId: ID!, $datasetIds: [ID!]!) {
   importDatasetsIntoProject(projectId: $projectId, datasetIds: $datasetIds)
@@ -101,15 +112,6 @@ export const editProjectQuery =
       urlSlug
       isPublic
       currentUserRole
-      members {
-        role
-        numDatasets
-        user {
-          id
-          name
-          email
-        }
-      }
     }
   }`;
 
@@ -119,17 +121,6 @@ export interface EditProjectQuery {
   urlSlug: string | null;
   isPublic: boolean;
   currentUserRole: ProjectRole | null;
-  members: EditProjectQueryMember[] | null;
-}
-export interface EditProjectQueryMember {
-  role: ProjectRole,
-  numDatasets: number,
-  user: EditProjectQueryUser
-}
-export interface EditProjectQueryUser {
-  id: string;
-  name: string;
-  email: string | null;
 }
 
 const projectsListItemFragment =
@@ -143,6 +134,12 @@ const projectsListItemFragment =
       numDatasets
       createdDT
       latestUploadDT
+      members {
+        user {
+          name
+        }
+        role
+      }
     }`;
 
 export const projectsListQuery =
@@ -191,9 +188,47 @@ export interface ProjectsListProject {
   numMembers: number;
   numDatasets: number;
   createdDT: string;
+  members: {
+    user: {
+      name: string;
+    },
+    role: string
+  }[];
   latestUploadDT: string | null;
 }
 
 export interface MyProjectsListItem {
   project: ProjectsListProject
+}
+
+export interface ViewProjectResult {
+  id: string;
+  name: string;
+  urlSlug: string | null;
+  currentUserRole: ProjectRole | null;
+  numMembers: number;
+  members: ViewProjectMember[] | null;
+}
+
+export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
+  id
+  name
+  urlSlug
+  currentUserRole
+  numMembers
+  members {
+    role
+    numDatasets
+    user { id name email }
+  }
+}`;
+
+export interface ViewProjectMember {
+  role: ProjectRole,
+  numDatasets: number,
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  }
 }

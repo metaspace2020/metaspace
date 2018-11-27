@@ -47,14 +47,12 @@
             "Xaxis": {
               "type": "number",
               "minimum": 0.1,
-              "maximum": 1000,
-              "default": 20
+              "maximum": 1000
             },
             "Yaxis": {
               "type": "number",
               "minimum": 0.1,
-              "maximum": 1000,
-              "default": 20
+              "maximum": 1000
             }
           }
         }

@@ -10,8 +10,7 @@ export type ScopeRole =
   | 'GROUP_MANAGER'
   | 'PROJECT_MEMBER'
   | 'PROJECT_MANAGER'
-  | 'OTHER'
-  | 'ADMIN';
+  | 'OTHER';
 
 export const ScopeRoleOptions: Record<ScopeRole, ScopeRole> = {
   PROFILE_OWNER: 'PROFILE_OWNER',
@@ -20,7 +19,6 @@ export const ScopeRoleOptions: Record<ScopeRole, ScopeRole> = {
   PROJECT_MEMBER: 'PROJECT_MEMBER',
   PROJECT_MANAGER: 'PROJECT_MANAGER',
   OTHER: 'OTHER',
-  ADMIN: 'ADMIN',
 };
 
 export interface Scope {
@@ -29,10 +27,40 @@ export interface Scope {
 
 // Source types
 export type UserSource = UserModel & Scope;
-export type ProjectSource = ProjectModel & { currentUserRole: UserProjectRole | null } & Scope;
+export type ProjectSource = ProjectModel & { currentUserRole: UserProjectRole | null };
 export type UserProjectSource = {
   [field in keyof UserProjectModel]: field extends 'user' ? UserSource : UserProjectModel[field]
 };
+export interface DatasetSource {
+  _source: {
+    ds_id: string;
+    ds_name: string;
+    ds_upload_dt: string;
+    ds_config: any;
+    ds_meta: any;
+    ds_status: string;
+    ds_input_path: string;
+    ds_is_public: boolean;
+    ds_mol_dbs: string[];
+    ds_adducts: string[];
+    ds_acq_geometry: any;
+    ds_submitter_id: string;
+    ds_submitter_name: string;
+    ds_submitter_email: string;
+    ds_group_id: string | null;
+    ds_group_name: string | null;
+    ds_group_short_name: string | null;
+    ds_group_approved: boolean;
+    ds_project_ids?: string[];
+    annotation_counts: any[];
+  };
+}
+export interface DatasetUserSource {
+  id: string;
+  name: string;
+  email: string;
+  scopeRole: ScopeRole;
+}
 
 // Utility to extract the type of the `args` field from a query/mutation in binding.ts
 // Usage: customField(source, args: ArgsFromBinding<CustomType['customField']>)

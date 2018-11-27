@@ -1,12 +1,18 @@
 import gql from 'graphql-tag';
 
-export type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'PRINCIPAL_INVESTIGATOR';
+export type UserGroupRole = 'INVITED' | 'PENDING' | 'MEMBER' | 'GROUP_ADMIN';
+export const UserGroupRoleOptions: {[R in UserGroupRole]: R} = {
+  INVITED: 'INVITED',
+  PENDING: 'PENDING',
+  MEMBER: 'MEMBER',
+  GROUP_ADMIN: 'GROUP_ADMIN',
+};
 export const getRoleName = (role: UserGroupRole | null | undefined) => {
   switch (role) {
     case 'INVITED': return 'Invited';
     case 'PENDING': return 'Requesting access';
     case 'MEMBER': return 'Member';
-    case 'PRINCIPAL_INVESTIGATOR': return 'Principal investigator';
+    case 'GROUP_ADMIN': return 'Group admin';
     case null: return '';
     case undefined: return '';
   }
@@ -87,6 +93,11 @@ export const leaveGroupMutation =
     leaveGroup(groupId: $groupId)
   }`;
 
+export const updateUserGroupMutation =
+  gql`mutation updateUserGroup($groupId: ID!, $userId: ID!, $update: UpdateUserGroupInput!) {
+    updateUserGroup(groupId: $groupId, userId: $userId, update: $update)
+  }`;
+
 export const importDatasetsIntoGroupMutation =
   gql`mutation($groupId: ID!, $datasetIds: [ID!]!) {
   importDatasetsIntoGroup(groupId: $groupId, datasetIds: $datasetIds)
@@ -131,3 +142,37 @@ export interface EditGroupQueryUser {
   name: string;
   email: string | null;
 }
+
+export interface ViewGroupResult {
+  id: string;
+  name: string;
+  shortName: string;
+  urlSlug: string | null;
+  currentUserRole: UserGroupRole | null;
+  numMembers: number;
+  members: ViewGroupMember[] | null;
+}
+
+interface ViewGroupMember {
+  role: UserGroupRole;
+  numDatasets: number;
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  }
+}
+
+export const ViewGroupFragment = gql`fragment ViewGroupFragment on Group {
+  id
+  name
+  shortName
+  urlSlug
+  currentUserRole
+  numMembers
+  members {
+    role
+    numDatasets
+    user { id name email }
+  }
+}`;

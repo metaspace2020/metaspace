@@ -1,10 +1,14 @@
-from elasticsearch import Elasticsearch, NotFoundError, ElasticsearchException
+from functools import wraps
+from time import sleep
+from elasticsearch import Elasticsearch, NotFoundError, ElasticsearchException, ConflictError
 from elasticsearch.helpers import parallel_bulk
 from elasticsearch.client import IndicesClient, IngestClient
 import logging
 from collections import defaultdict, MutableMapping
 import pandas as pd
+import random
 
+from sm.engine.dataset_locker import DatasetLocker
 from sm.engine.util import SMConfig
 
 logger = logging.getLogger('engine')
@@ -39,7 +43,7 @@ DATASET_SEL = '''SELECT
     d.*,
     gu.id as ds_submitter_id,
     gu.name as ds_submitter_name,
-    gu.email as ds_submitter_email,
+    COALESCE(gu.email, gu.not_verified_email) as ds_submitter_email,
     gg.id as ds_group_id,
     gg.name as ds_group_name,
     gg.short_name as ds_group_short_name,
@@ -207,6 +211,25 @@ def flatten_doc(doc, parent_key='', sep='.'):
     return dict(items)
 
 
+def retry_on_conflict(num_retries=3):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            for i in range(num_retries):
+                try:
+                    return func(*args, **kwargs)
+                except ConflictError:
+                    delay = random.uniform(2, 5 + i * 3)
+                    logger.warning(f'ElasticSearch update conflict on attempt {i+1}. '
+                                   f'Retrying after {delay:.1f} seconds...')
+                    sleep(delay)
+            # Last attempt, don't catch the exception
+            return func(*args, **kwargs)
+    
+        return wrapper
+
+    return decorator
+
 class ESExporter(object):
     def __init__(self, db, es_config=None):
         self.sm_config = SMConfig.get_conf()
@@ -215,6 +238,7 @@ class ESExporter(object):
         self._es = init_es_conn(es_config)
         self._ingest = IngestClient(self._es)
         self._db = db
+        self._ds_locker = DatasetLocker(self.sm_config['db'])
         self.index = es_config['index']
         self._get_mol_by_sf_dict_cache = dict()
 
@@ -230,16 +254,18 @@ class ESExporter(object):
     def _select_ds_by_id(self, ds_id):
         return self._db.select_with_fields(DATASET_SEL, params=(ds_id,))[0]
 
+    @retry_on_conflict()
     def sync_dataset(self, ds_id):
         """ Warning: This will wait till ES index/update is completed
         """
-        ds = self._select_ds_by_id(ds_id)
-        if self._es.exists(index=self.index, doc_type='dataset', id=ds_id):
-            self._es.update(index=self.index, id=ds_id,
-                            doc_type='dataset', body={'doc': ds}, params={'refresh': 'wait_for'})
-        else:
-            self._es.index(index=self.index, id=ds_id,
-                           doc_type='dataset', body=ds, params={'refresh': 'wait_for'})
+        with self._ds_locker.lock(ds_id):
+            ds = self._select_ds_by_id(ds_id)
+            if self._es.exists(index=self.index, doc_type='dataset', id=ds_id):
+                self._es.update(index=self.index, id=ds_id,
+                                doc_type='dataset', body={'doc': ds}, params={'refresh': 'wait_for'})
+            else:
+                self._es.index(index=self.index, id=ds_id,
+                               doc_type='dataset', body=ds, params={'refresh': 'wait_for'})
 
     def _get_mol_by_sf_dict(self, mol_db):
         try:
@@ -261,96 +287,109 @@ class ESExporter(object):
             if f not in DS_COLUMNS_TO_SKIP_IN_ANN:
                 ann_doc[f] = ds_doc[f]
 
+    @retry_on_conflict()
     def index_ds(self, ds_id, mol_db, isocalc):
-        try:
-            ds_doc = self._remove_mol_db_from_dataset(ds_id, mol_db)
-        except NotFoundError:
-            ds_doc = self._select_ds_by_id(ds_id)
-        if 'annotation_counts' not in ds_doc:
-            ds_doc['annotation_counts'] = []
+        with self._ds_locker.lock(ds_id):
+            try:
+                ds_doc = self._remove_mol_db_from_dataset(ds_id, mol_db)
+            except NotFoundError:
+                ds_doc = self._select_ds_by_id(ds_id)
+            if 'annotation_counts' not in ds_doc:
+                ds_doc['annotation_counts'] = []
 
-        annotation_counts = defaultdict(int)
-        fdr_levels = [5, 10, 20, 50]
+            annotation_counts = defaultdict(int)
+            fdr_levels = [5, 10, 20, 50]
 
-        annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
-        logger.info('Indexing {} documents: {}, {}'.format(len(annotation_docs), ds_id, mol_db))
+            annotation_docs = self._db.select_with_fields(ANNOTATIONS_SEL, params=(ds_id, mol_db.id))
+            logger.info('Indexing {} documents: {}, {}'.format(len(annotation_docs), ds_id, mol_db))
 
-        to_index = []
-        mol_by_sf = self._get_mol_by_sf_dict(mol_db)
-        for doc in annotation_docs:
-            self._add_ds_fields_to_ann(doc, ds_doc)
-            doc['db_name'] = mol_db.name
-            doc['db_version'] = mol_db.version
-            sf = doc['sf']
-            doc['comp_ids'], doc['comp_names'] = mol_by_sf[sf]
-            mzs, _ = isocalc.ion_centroids(sf, doc['adduct'])
-            doc['centroid_mzs'] = list(mzs)
-            doc['mz'] = mzs[0]
-            doc['ion_add_pol'] = '[M{}]{}'.format(doc['adduct'], doc['polarity'])
+            to_index = []
+            mol_by_sf = self._get_mol_by_sf_dict(mol_db)
+            for doc in annotation_docs:
+                self._add_ds_fields_to_ann(doc, ds_doc)
+                doc['db_name'] = mol_db.name
+                doc['db_version'] = mol_db.version
+                sf = doc['sf']
+                doc['comp_ids'], doc['comp_names'] = mol_by_sf[sf]
+                mzs, _ = isocalc.ion_centroids(sf, doc['adduct'])
+                doc['centroid_mzs'] = list(mzs)
+                doc['mz'] = mzs[0]
+                doc['ion_add_pol'] = '[M{}]{}'.format(doc['adduct'], doc['polarity'])
 
-            fdr = round(doc['fdr'] * 100, 2)
-            # assert fdr in fdr_levels
-            annotation_counts[fdr] += 1
+                fdr = round(doc['fdr'] * 100, 2)
+                # assert fdr in fdr_levels
+                annotation_counts[fdr] += 1
 
-            add_str = doc['adduct'].replace('+', 'plus_').replace('-', 'minus_')
-            to_index.append({
-                '_index': self.index,
-                '_type': 'annotation',
-                '_id': '{}_{}_{}_{}_{}'.format(doc['ds_id'], mol_db.name, mol_db.version,
-                                               doc['sf'], add_str),
-                '_source': doc
+                add_str = doc['adduct'].replace('+', 'plus_').replace('-', 'minus_')
+                to_index.append({
+                    '_index': self.index,
+                    '_type': 'annotation',
+                    '_id': '{}_{}_{}_{}_{}'.format(doc['ds_id'], mol_db.name, mol_db.version,
+                                                   doc['sf'], add_str),
+                    '_source': doc
+                })
+
+            for success, info in parallel_bulk(self._es, actions=to_index, timeout='60s'):
+                if not success:
+                    logger.error(f'Document failed: {info}')
+
+            for i, level in enumerate(fdr_levels[1:]):
+                annotation_counts[level] += annotation_counts[fdr_levels[i]]
+            ds_doc['annotation_counts'].append({
+                'db': {'name': mol_db.name, 'version': mol_db.version},
+                'counts': [{'level': level, 'n': annotation_counts[level]} for level in fdr_levels]
             })
+            self._es.index(self.index, doc_type='dataset', body=ds_doc, id=ds_id)
 
-        for success, info in parallel_bulk(self._es, actions=to_index, timeout='60s'):
-            if not success:
-                logger.error(f'Document failed: {info}')
-
-        for i, level in enumerate(fdr_levels[1:]):
-            annotation_counts[level] += annotation_counts[fdr_levels[i]]
-        ds_doc['annotation_counts'].append({
-            'db': {'name': mol_db.name, 'version': mol_db.version},
-            'counts': [{'level': level, 'n': annotation_counts[level]} for level in fdr_levels]
-        })
-        self._es.index(self.index, doc_type='dataset', body=ds_doc, id=ds_id)
-
-
+    @retry_on_conflict()
     def update_ds(self, ds_id, fields):
-        pipeline_id = 'update-ds-fields'
-        if fields:
-            ds_doc = self._select_ds_by_id(ds_id)
+        with self._ds_locker.lock(ds_id):
+            pipeline_id = f'update-ds-fields-{ds_id}'
+            if fields:
+                ds_doc = self._select_ds_by_id(ds_id)
 
-            ds_doc_upd = {}
-            for f in fields:
-                if f == 'submitter_id':
-                    ds_doc_upd['ds_submitter_id'] = ds_doc['ds_submitter_id']
-                    ds_doc_upd['ds_submitter_name'] = ds_doc['ds_submitter_name']
-                    ds_doc_upd['ds_submitter_email'] = ds_doc['ds_submitter_email']
-                elif f == 'group_id':
-                    ds_doc_upd['ds_group_id'] = ds_doc['ds_group_id']
-                    ds_doc_upd['ds_group_name'] = ds_doc['ds_group_name']
-                    ds_doc_upd['ds_group_short_name'] = ds_doc['ds_group_short_name']
-                    ds_doc_upd['ds_group_approved'] = ds_doc['ds_group_approved']
-                elif f == 'project_ids':
-                    ds_doc_upd['ds_project_ids'] = ds_doc['ds_project_ids']
-                    ds_doc_upd['ds_project_names'] = ds_doc['ds_project_names']
-                elif f == 'metadata':
-                    ds_meta_flat_doc = flatten_doc(ds_doc['ds_meta'], parent_key='ds_meta')
-                    ds_doc_upd.update(ds_meta_flat_doc)
-                else:
-                    ds_doc_upd[f'ds_{f}'] = ds_doc[f'ds_{f}']
+                ds_doc_upd = {}
+                for f in fields:
+                    if f == 'submitter_id':
+                        ds_doc_upd['ds_submitter_id'] = ds_doc['ds_submitter_id']
+                        ds_doc_upd['ds_submitter_name'] = ds_doc['ds_submitter_name']
+                        ds_doc_upd['ds_submitter_email'] = ds_doc['ds_submitter_email']
+                    elif f == 'group_id':
+                        ds_doc_upd['ds_group_id'] = ds_doc['ds_group_id']
+                        ds_doc_upd['ds_group_name'] = ds_doc['ds_group_name']
+                        ds_doc_upd['ds_group_short_name'] = ds_doc['ds_group_short_name']
+                        ds_doc_upd['ds_group_approved'] = ds_doc['ds_group_approved']
+                    elif f == 'project_ids':
+                        ds_doc_upd['ds_project_ids'] = ds_doc['ds_project_ids']
+                        ds_doc_upd['ds_project_names'] = ds_doc['ds_project_names']
+                    elif f == 'metadata':
+                        ds_meta_flat_doc = flatten_doc(ds_doc['ds_meta'], parent_key='ds_meta')
+                        ds_doc_upd.update(ds_meta_flat_doc)
+                    elif f'ds_{f}' in ds_doc:
+                        ds_doc_upd[f'ds_{f}'] = ds_doc[f'ds_{f}']
 
-            processors = []
-            for k, v in ds_doc_upd.items():
-                processors.append({'set': {'field': k, 'value': v}})
-            self._ingest.put_pipeline(
-                id=pipeline_id,
-                body={'processors': processors})
-            # Note: mind the time gap between the queries when called from different processes
-            self._es.update_by_query(
-                index=self.index,
-                body={'query': {'term': {'ds_id': ds_id}}},
-                params={'pipeline': pipeline_id, 'wait_for_completion': True})
+                processors = []
+                for k, v in ds_doc_upd.items():
+                    if v is None:
+                        processors.append({'remove': {'field': k}})
+                    else:
+                        processors.append({'set': {'field': k, 'value': v}})
+                self._ingest.put_pipeline(
+                    id=pipeline_id,
+                    body={'processors': processors})
+                try:
+                    self._es.update_by_query(
+                        index=self.index,
+                        body={'query': {'term': {'ds_id': ds_id}}},
+                        params={
+                            'pipeline': pipeline_id,
+                            'wait_for_completion': True,
+                            'request_timeout': 60,
+                        })
+                finally:
+                    self._ingest.delete_pipeline(pipeline_id)
 
+    @retry_on_conflict()
     def delete_ds(self, ds_id, mol_db=None):
         """
         If mol_db passed, only annotation statistics are updated in the dataset document. DS document won't be deleted
@@ -359,33 +398,34 @@ class ESExporter(object):
         :param mol_db: sm.engine.MolecularDB
         :return:
         """
-        logger.info('Deleting or updating dataset document in ES: %s, %s', ds_id, mol_db)
+        with self._ds_locker.lock(ds_id):
+            logger.info('Deleting or updating dataset document in ES: %s, %s', ds_id, mol_db)
 
-        must = [{'term': {'ds_id': ds_id}}]
-        body = {
-            'query': {
-                'constant_score': {
-                    'filter': {
-                        'bool': {'must': must}}}}
-        }
+            must = [{'term': {'ds_id': ds_id}}]
+            body = {
+                'query': {
+                    'constant_score': {
+                        'filter': {
+                            'bool': {'must': must}}}}
+            }
 
-        try:
+            try:
+                if mol_db:
+                    self._remove_mol_db_from_dataset(ds_id, mol_db)
+                else:
+                    self._es.delete(id=ds_id, index=self.index, doc_type='dataset')
+            except ElasticsearchException as e:
+                logger.warning('Dataset deletion failed: %s', e)
+
+            logger.info('Deleting annotation documents from ES: %s, %s', ds_id, mol_db)
+
             if mol_db:
-                self._remove_mol_db_from_dataset(ds_id, mol_db)
-            else:
-                self._es.delete(id=ds_id, index=self.index, doc_type='dataset')
-        except ElasticsearchException as e:
-            logger.warning('Dataset deletion failed: %s', e)
+                must.append({'term': {'db_name': mol_db.name}})
+                must.append({'term': {'db_version': mol_db.version}})
 
-        logger.info('Deleting annotation documents from ES: %s, %s', ds_id, mol_db)
-
-        if mol_db:
-            must.append({'term': {'db_name': mol_db.name}})
-            must.append({'term': {'db_version': mol_db.version}})
-
-        try:
-            resp = self._es.delete_by_query(index=self.index, body=body,
-                                            doc_type='annotation', conflicts='proceed')
-            logger.debug(resp)
-        except ElasticsearchException as e:
-            logger.warning('Annotation deletion failed: %s', e)
+            try:
+                resp = self._es.delete_by_query(index=self.index, body=body,
+                                                doc_type='annotation', conflicts='proceed')
+                logger.debug(resp)
+            except ElasticsearchException as e:
+                logger.warning('Annotation deletion failed: %s', e)

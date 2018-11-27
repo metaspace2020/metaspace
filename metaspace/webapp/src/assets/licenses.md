@@ -7,3 +7,8 @@
     (modified for symmetry)
     CC0 Free for commercial use / No attribution required
     https://pixabay.com/en/padlock-lock-security-protection-303266/
+
+
+* filter-icon.svg
+    SIL Open Font License / 
+    https://www.iconfinder.com/icons/1608702/filter_icon

@@ -17,9 +17,9 @@ describe('EditUserPage', () => {
       {role: 'MEMBER', numDatasets: 0, group: { id: 'AAA', name: 'Group A', urlSlug: 'grp-a' }},
       {role: 'INVITED', numDatasets: 0, group: { id: 'BBB', name: 'Group B', urlSlug: null }},
       {role: 'PENDING', numDatasets: 0, group: { id: 'CCC', name: 'Group C', urlSlug: null }},
-      {role: 'PRINCIPAL_INVESTIGATOR', numDatasets: 20, group: { id: 'DDD', name: 'Group D', urlSlug: null }},
+      {role: 'GROUP_ADMIN', numDatasets: 20, group: { id: 'DDD', name: 'Group D', urlSlug: null }},
     ],
-    primaryGroup: {role: 'PRINCIPAL_INVESTIGATOR', numDatasets: 20, group: { id: 'DDD', name: 'Group D', urlSlug: null }},
+    primaryGroup: {role: 'GROUP_ADMIN', numDatasets: 20, group: { id: 'DDD', name: 'Group D', urlSlug: null }},
     projects: [
       {role: 'MEMBER', numDatasets: 0, project: { id: 'AA', name: 'Project A', urlSlug: 'proj-a' }},
       {role: 'INVITED', numDatasets: 0, project: { id: 'BB', name: 'Project B', urlSlug: null }},
@@ -67,6 +67,7 @@ describe('EditUserPage', () => {
 
     nameInput.setValue(name);
     emailInput.setValue(email);
+    await Vue.nextTick();
     saveButton.trigger('click');
     await Vue.nextTick();
 
@@ -85,9 +86,13 @@ describe('EditUserPage', () => {
   it('should not include unchanged fields in the update payload', async () => {
     const wrapper = mount(EditUserPage, { router, provide, sync: false });
     await Vue.nextTick();
+    const nameInput = wrapper.find('input[name="name"]');
     const saveButton = wrapper.find('.saveButton');
+    const name = 'foo bar';
     wrapper.vm.$confirm = jest.fn(() => Promise.resolve());
 
+    nameInput.setValue(name);
+    await Vue.nextTick();
     saveButton.trigger('click');
     await Vue.nextTick();
 
@@ -95,7 +100,7 @@ describe('EditUserPage', () => {
     expect(mockUpdateUserMutation.mock.calls[0][1]).toEqual(
       expect.objectContaining({
         userId: mockCurrentUser.id,
-        update: {},
+        update: { name },
       })
     );
   });

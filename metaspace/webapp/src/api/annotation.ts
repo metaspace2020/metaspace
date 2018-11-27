@@ -18,9 +18,10 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
         mz
         dataset {
           id
-          submitter { id name }
-          principalInvestigator { name }
-          group { id name }
+          submitter { id name email }
+          principalInvestigator { name email }
+          group { id name shortName }
+          groupApproved
           projects { id name }
           name
           polarity
