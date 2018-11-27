@@ -4,14 +4,8 @@
   debug: var=kibana_version
 
 - name: Download Kibana
-  get_url: url=https://download.elastic.co/kibana/kibana/kibana-{{ kibana_version }}-amd64.deb
-           dest=/tmp/kibana-{{ kibana_version }}.deb
-  when: not "'{{ kibana_version }}'.startswith('5.')"
-
-- name: Download Kibana
   get_url: url=https://artifacts.elastic.co/downloads/kibana/kibana-{{ kibana_version }}-amd64.deb
            dest=/tmp/kibana-{{ kibana_version }}.deb
-  when: "'{{ kibana_version }}'.startswith('5.')"
 
 #- name: Check if kibana.yml exists
 #  stat: path=/etc/kibana/kibana.yml

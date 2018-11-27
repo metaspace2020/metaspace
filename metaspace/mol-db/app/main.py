@@ -1,24 +1,21 @@
 import sys
 from os.path import dirname
-sys.path.append(dirname(dirname(__file__)))
+# sys.path.append(dirname(dirname(__file__)))
 import falcon
 
 from app import log
 from app.middleware import DatabaseSessionManager
 from app.database import db_session, init_session
-from app.api import base
-from app.api import molecular_dbs
-from app.api import molecules
-from app.api import isotopic_pattern
+from app.api import base, molecular_dbs, molecules, isotopic_pattern
 from app.errors import AppError
 
-LOG = log.get_logger()
+logger = log.get_logger()
 
 
 class App(falcon.API):
     def __init__(self, *args, **kwargs):
         super(App, self).__init__(*args, **kwargs)
-        LOG.info('API Server is starting')
+        logger.info('API Server is starting')
 
         self.add_route('/', base.BaseResource())
 

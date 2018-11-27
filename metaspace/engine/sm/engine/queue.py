@@ -396,7 +396,7 @@ class QueueConsumer(Thread):
 
                 self._callback(msg)
             except BaseException as e:
-                self.logger.error(' [x] Failed: {}'.format(body), exc_info=True)
+                self.logger.error(' [x] Failed: {}'.format(body), exc_info=False)
                 try:
                     self._on_failure(msg or body)
                 except BaseException as e:
@@ -416,7 +416,7 @@ class QueueConsumer(Thread):
             try:
                 self._poll()
             except AMQPError as e:
-                self.logger.warning(' [x] Server disconnected: {}. Reconnecting...'.format(e))
+                self.logger.warning(f' [x] Server disconnected: {e}. Reconnecting in {self._poll_interval} sec...')
                 sleep(self._poll_interval)
             except StopThread:
                 self.logger.info(' [x] Stop signal received. Stopping')

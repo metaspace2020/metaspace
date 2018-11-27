@@ -1,16 +1,7 @@
 ---
 
-- name: Collect the Spark master facts for creating an AMI
-  hosts: master
-  user: ubuntu
-
-  tasks:
-    - name: Gather AWS instance facts
-      action: ec2_metadata_facts
-
-
-- name: Collect the Spark slave facts for creating an AMI
-  hosts: slave
+- name: Collect the Spark master and slave facts for creating an AMI
+  hosts: [master, slave]
   user: ubuntu
 
   tasks:
@@ -39,6 +30,7 @@
         region: "{{ aws_region }}"
         wait: yes
       register: instance
+      tags: [master]
 
     - debug: var=instance
 

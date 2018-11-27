@@ -6,9 +6,9 @@
   gather_facts: no
 
   tasks:
-    - name: Install python-simplejson
+    - name: Install python3-simplejson
       become: yes
-      raw: apt-get update && apt-get install -y python-simplejson
+      raw: apt-get update && apt-get install -y python3-simplejson
 
 
 - name: Install and configure ES, Kibana, Nginx
@@ -21,6 +21,4 @@
       tags: [base]
 
     - role: elk
-      nginx_server_name: "{{ ansible_ec2_public_ipv4 }}"
-      basic_auth_users: "{{ elk_basic_auth_users }}"
       tags: [elk]

@@ -1,15 +1,24 @@
 ---
 
+- name: Gather Ansible facts about elk and web hosts
+  hosts: [elk, web]
+  user: ubuntu
+  gather_facts: yes
+  tasks:
+    - name: Gather AWS instance facts
+      action: ec2_metadata_facts
+  tags: [always]
+
+
 - name: SM master, slave instances basic configuration
-  hosts: master, slave
+  hosts: [master, slave]
   user: ubuntu
   gather_facts: no
-
   roles:
     - role: base
       become: yes
       swapsize: 16384
-  tags: [base, master, slave]
+  tags: [base, slave]
 
 
 - name: SM spark slave instances configuration
@@ -18,6 +27,10 @@
   gather_facts: yes
 
   roles:
+    - role: base
+      become: yes
+      swapsize: 16384
+
     - role: spark
       become: yes
       spark_env_extras: "{{ spark_env_extras_slave }}"
@@ -32,16 +45,6 @@
   tags: [slave]
 
 
-- name: Collect the Web server facts
-  hosts: web
-  user: ubuntu
-
-  tasks:
-    - name: Gather AWS instance facts
-      action: ec2_metadata_facts
-  tags: [always]
-
-
 - name: SM spark master instance configuration
   hosts: master
   user: ubuntu
@@ -52,16 +55,19 @@
     spark_slave_ips: []
 
   pre_tasks:
+    - name: Gather EC2 instance facts
+      ec2_metadata_facts:
+      tags: [always]
+
     - name: Create a list of private ip addresses for the slave instances
       set_fact: spark_slave_ips="{{ spark_slave_ips  + [ hostvars[item].ansible_ssh_host ] }}"
       with_items: "{{ groups['slave'] }}"
 
-    - name: Load variables for Filebeat role
-      include_vars:
-        file: elk-vars.yml
-      when: elk_enable
-
   roles:
+    - role: base
+      become: yes
+      swapsize: 16384
+
     - role: spark
       become: yes
       spark_env_extras: "{{ spark_env_extras_master }}"
@@ -75,15 +81,6 @@
     - role: supervisor
 
     - role: filebeat
-      become: yes
-      filebeat_prospectors: "{{ spark_master_filebeat.prospectors }}"
-      filebeat_version: "{{ spark_master_filebeat.version }}"
-      es_host: "{{ spark_master_filebeat.es_host }}"
-      es_user: "{{ spark_master_filebeat.es_user }}"
-      es_password: "{{ spark_master_filebeat.es_password }}"
-      ingest_node_pipeline_id: "{{ spark_master_filebeat.ingest_node_pipeline_id }}"
-      ingest_node_pipeline: "{{ spark_master_filebeat.ingest_node_pipeline }}"
-      when: spark_master_filebeat is defined
       tags: [filebeat]
 
     - role: metaspace_repo

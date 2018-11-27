@@ -18,6 +18,13 @@
   tags: [base]
 
 
+- name: Gather Ansible facts about ELK host
+  hosts: elk
+  user: ubuntu
+  gather_facts: yes
+  tags: [filebeat]
+
+
 - name: SM services instance configuration
   hosts: web
   user: ubuntu
@@ -61,6 +68,9 @@
 
     - role: sm_web
       tags: [sm-web]
+
+    - name: filebeat
+      tags: [filebeat]
 
     - role: sm_cluster_autostart
       tags: [sm-cluster-autostart]
