@@ -44,7 +44,7 @@ filebeat:
             "grok" : {
               "field": "raw_message",
               "patterns": [
-                "%{TIMESTAMP_ISO8601:timestamp} - %{LOGLEVEL:level} - %{NOTSPACE:component}\\[%{GREEDYDATA:thread}\\] - %{NOTSPACE:file_line} - %{GREEDYDATA:message}",
+                "%{TIMESTAMP_ISO8601:timestamp} - %{LOGLEVEL:level} - %{NOTSPACE:component}\\[%{DATA:thread}\\] - %{NOTSPACE:file_line} - %{GREEDYDATA:message}",
                 "%{GREEDYDATA:message}"
               ]
             }
