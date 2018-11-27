@@ -4,7 +4,7 @@ ingest_node_pipeline_on_failure: !unsafe "{{ _ingest.on_failure_message }}"
 
 filebeat:
   version: 6.4.3
-  logging_level: debug
+  logging_level: info
   instance_id: "{{ ansible_ec2_instance_id }}"
   inputs:
     - type: log
