@@ -8,11 +8,7 @@
     />
     <div class="page-content">
       <div class="header-row">
-        <el-radio-group v-if="currentUser != null" v-model="tab">
-          <el-radio-button :label="ALL_PROJECTS" />
-          <el-radio-button :label="MY_PROJECTS" />
-        </el-radio-group>
-        <filter-panel level="projects" />
+        <filter-panel level="projects" :simpleFilterOptions="simpleFilterOptions"/>
         <div style="flex-grow: 1" />
         <el-button v-if="currentUser" @click="handleOpenCreateProject">Create project</el-button>
       </div>
@@ -45,6 +41,7 @@
   } from '../../api/project';
   import { currentUserRoleQuery, CurrentUserRoleResult } from '../../api/user';
   import { FilterPanel } from '../Filters';
+  import QuickFilterBox from '../Filters/filter-components/SimpleFilterBox.vue';
   import ProjectsListItem from './ProjectsListItem.vue';
   import CreateProjectDialog from './CreateProjectDialog.vue';
 
@@ -53,6 +50,7 @@
       FilterPanel,
       ProjectsListItem,
       CreateProjectDialog,
+      QuickFilterBox,
     },
     apollo: {
       currentUser: {
@@ -64,7 +62,7 @@
         query: projectsListQuery,
         loadingKey: 'loading',
         skip() {
-          return this.tab !== this.ALL_PROJECTS;
+          return this.filter !== 'all';
         },
         variables() {
           return {
@@ -77,7 +75,7 @@
       allProjectsCount: {
         query: projectsCountQuery,
         skip() {
-          return this.tab !== this.ALL_PROJECTS;
+          return this.filter !== 'all';
         },
         variables() {
           return {
@@ -92,7 +90,7 @@
         query: myProjectsListQuery,
         loadingKey: 'loading',
         skip() {
-          return this.tab !== this.MY_PROJECTS;
+          return this.filter !== 'my';
         },
         update(data: MyProjectsListQuery) {
           return data.myProjects && data.myProjects.projects
@@ -103,14 +101,11 @@
     }
   })
   export default class ProjectsListPage extends Vue {
-    readonly MY_PROJECTS = 'My projects';
-    readonly ALL_PROJECTS = 'All projects';
     loading = 0;
     currentUser: CurrentUserRoleResult | null = null;
     allProjects: ProjectsListProject[] | null = null;
     myProjects: ProjectsListProject[] | null = null;
     allProjectsCount = 0;
-    tab = this.ALL_PROJECTS;
 
     showCreateProjectDialog = false;
     page = 1;
@@ -118,6 +113,10 @@
 
     get query(): string {
       return this.$store.getters.filter.simpleQuery || '';
+    }
+    get filter(): 'all' | 'my' {
+      const {simpleFilter} = this.$store.getters.filter;
+      return simpleFilter === 'my-projects' && this.currentUser != null ? 'my' : 'all';
     }
     get filteredMyProjects() {
       if (this.query && this.myProjects != null) {
@@ -127,17 +126,27 @@
       }
     }
     get projects() {
-      if (this.tab === this.ALL_PROJECTS) {
-        return this.allProjects;
-      } else {
+      if (this.filter === 'my') {
         return this.filteredMyProjects.slice((this.page - 1) * this.pageSize, this.page * this.pageSize);
+      } else {
+        return this.allProjects;
       }
     }
     get projectsCount() {
-      if (this.tab === this.ALL_PROJECTS) {
-        return this.allProjectsCount;
-      } else {
+      if (this.filter === 'my') {
         return this.filteredMyProjects.length;
+      } else {
+        return this.allProjectsCount;
+      }
+    }
+    get simpleFilterOptions() {
+      if (this.currentUser == null) {
+        return null;
+      } else {
+        return [
+          { value: null, label: 'All projects' },
+          { value: 'my-projects', label: 'My projects' },
+        ]
       }
     }
 
@@ -145,13 +154,6 @@
     @Watch('tab')
     resetPagination() {
       this.page = 1;
-    }
-
-    @Watch('currentUser')
-    resetTab() {
-      if (this.currentUser == null) {
-        this.tab = this.ALL_PROJECTS;
-      }
     }
 
     created() {

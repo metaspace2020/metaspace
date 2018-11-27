@@ -75,14 +75,26 @@ exports[`ProjectsListPage should match snapshot 1`] = `
   </mock-el-dialog>
   <div class="page-content">
     <div class="header-row">
-      <div role="radiogroup" class="el-radio-group">
-        <label role="radio" aria-checked="true" tabindex="0" class="el-radio-button is-active">
-          <input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="All projects"><span class="el-radio-button__inner">All projects</span></label>
-        <label role="radio" tabindex="-1" class="el-radio-button">
-          <input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="My projects"><span class="el-radio-button__inner">My projects</span></label>
-      </div>
       <div class="filter-panel">
         <!---->
+        <div class="tf-outer" data-test-key="simpleFilter" filterkey="simpleFilter">
+          <div class="tf-name">
+            <svg viewBox="190 256 1412 1410" xmlns="http://www.w3.org/2000/svg" class="filter-icon">
+              <path d="M1595 295q17 41-14 70l-493 493v742q0 42-39 59-13 5-25 5-27 0-45-19l-256-256q-19-19-19-45v-486l-493-493q-31-29-14-70 17-39 59-39h1280q42 0 59 39z"></path>
+            </svg>
+          </div>
+          <mock-el-select size="medium" class="tf-value tf-value-input simple-filter">
+            <mock-el-option label="All projects"></mock-el-option>
+            <mock-el-option value="my-projects" label="My projects"></mock-el-option>
+          </mock-el-select>
+        </div>
+        <div class="tf-outer" data-test-key="simpleQuery" filterkey="simpleQuery" name="Simple query" options="">
+          <div class="tf-name">
+            <i class="el-icon-search" style="color: white;"></i>
+          </div>
+          <input type="text" placeholder="enter any keywords" class="tf-value tf-value-input">
+          <!---->
+        </div>
       </div>
       <div></div>
       <button type="button" class="el-button el-button--default">

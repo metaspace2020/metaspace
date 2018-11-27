@@ -27,6 +27,7 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   maldiMatrix: 'matrix',
   analyzerType: 'instr',
   simpleQuery: 'q',
+  simpleFilter: 'f',
   metadataType: 'mdtype'
 };
 

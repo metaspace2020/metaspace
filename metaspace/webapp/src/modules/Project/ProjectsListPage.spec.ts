@@ -33,6 +33,10 @@ describe('ProjectsListPage', () => {
 
   sync(store, router);
 
+  beforeEach(() => {
+    router.push('/projects');
+  });
+
   it('should match snapshot', async () => {
     initMockGraphqlClient({
       Query: () => ({
@@ -56,11 +60,9 @@ describe('ProjectsListPage', () => {
         allProjects: () => mockAllProjects,
       })
     });
+
     const wrapper = mount(ProjectsListPage, { router, provide, store, sync: false });
-    await Vue.nextTick();
-    wrapper.findAll({name: 'ElRadioButton'})
-      .filter((rb: Wrapper<Vue>) => rb.props().label === 'My projects')
-      .trigger('click');
+    store.commit('updateFilter', { simpleFilter: 'my-projects' });
     await Vue.nextTick();
 
     const projectIds = wrapper.findAll({name:'ProjectsListItem'}).wrappers.map(item => item.props().project.id);
@@ -76,12 +78,9 @@ describe('ProjectsListPage', () => {
         currentUser: () => makeMockMyProjects(mockProjects),
       })
     });
+
     const wrapper = mount(ProjectsListPage, { router, provide, store, sync: false });
-    await Vue.nextTick();
-    wrapper.findAll({name: 'ElRadioButton'})
-      .filter((rb: Wrapper<Vue>) => rb.props().label === 'My projects')
-      .trigger('click');
-    router.push('/projects?q=ww');
+    store.commit('updateFilter', { simpleFilter: 'my-projects', simpleQuery: 'ww' });
     await Vue.nextTick();
 
     const projectIds = wrapper.findAll({name:'ProjectsListItem'}).wrappers.map(item => item.props().project.id);

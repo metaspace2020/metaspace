@@ -31,6 +31,9 @@ import store from './store';
 import router from './router';
 import { sync } from 'vuex-router-sync';
 sync(store, router);
+router.afterEach((to) => {
+  store.commit('updateFilterOnNavigate', to);
+});
 
 import App from './modules/App/App.vue';
 

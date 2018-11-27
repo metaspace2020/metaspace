@@ -13,7 +13,7 @@ exports[`DatasetTable should be able to export a CSV 1`] = `
 exports[`DatasetTable should match snapshot 1`] = `
 <div>
   <div class="filter-panel">
-    <mock-el-select placeholder="Add filter" style="width: 200px; margin-bottom: 10px;">
+    <mock-el-select placeholder="Add filter" class="filter-select">
       <mock-el-option value="group" label="Select group"></mock-el-option>
       <mock-el-option value="project" label="Select project"></mock-el-option>
       <mock-el-option value="submitter" label="Select submitter"></mock-el-option>

@@ -71,19 +71,22 @@
 </script>
 
 <style>
+  #annot-page {
+    padding: 0 5px;
+  }
 
- #annot-table-container {
-   top: 80px;
- }
+  #annot-table-container {
+    padding-right: 5px;
+  }
 
- @media (min-width: 1200px) {
-   #annot-table-container {
-     position: sticky;
-     position: -webkit-sticky;
-   }
- }
+  @media (min-width: 1200px) {
+    #annot-table-container {
+      position: sticky;
+      position: -webkit-sticky;
+    }
+  }
 
- #annot-table-container, #annot-view-container {
-   padding: 0px 5px;
- }
+  #annot-view-container {
+    padding-left: 5px;
+  }
 </style>

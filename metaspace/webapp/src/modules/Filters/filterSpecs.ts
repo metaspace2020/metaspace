@@ -6,6 +6,7 @@ import MzFilter from './filter-components/MzFilter.vue';
 import SearchBox from './filter-components/SearchBox.vue';
 import {metadataTypes, defaultMetadataType} from '../../assets/metadataRegistry';
 import { Component } from 'vue';
+import SimpleFilterBox from './filter-components/SimpleFilterBox.vue';
 
 // Filled during the initialization of adduct filter below
 const ADDUCT_POLARITY: Record<string, string> = {};
@@ -62,7 +63,7 @@ export type Level = 'annotation' | 'dataset' | 'upload' | 'projects';
 
 export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName' | 'adduct' | 'mz' | 'fdrLevel'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
-  | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleQuery' | 'metadataType';
+  | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType';
 
 export type MetadataLists = Record<string, any[]>;
 
@@ -82,6 +83,7 @@ export interface FilterSpecification {
   optionFormatter?(value: any): string;
   valueFormatter?(value: any): string;
   valueKey?: string;
+  sortOrder?: number;
 }
 
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
@@ -268,6 +270,17 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     options: 'analyzerTypes'
   },
 
+  simpleFilter: {
+    type: SimpleFilterBox,
+    name: 'Simple filter',
+    description: 'Quick access to filter presets',
+    levels: ['projects'],
+    defaultInLevels: ['projects'],
+    initialValue: null,
+    removable: false,
+    sortOrder: 1
+  },
+
   simpleQuery: {
     type: SearchBox,
     name: 'Simple query',
@@ -275,7 +288,8 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     levels: ['annotation', 'dataset', 'projects'],
     defaultInLevels: ['annotation', 'dataset', 'projects'],
     initialValue: '',
-    removable: false
+    removable: false,
+    sortOrder: 2
   },
 
   metadataType: {

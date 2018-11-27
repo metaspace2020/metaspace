@@ -1,12 +1,15 @@
 <template>
   <div class="tf-outer">
     <div class="tf-name">
-      {{ name }}:
+      <slot name="name">
+        {{ name }}:
+      </slot>
     </div>
 
     <el-popover trigger="click"
                 placement="bottom"
-                :width="width">
+                :width="width"
+                class="tf-value-container">
       <slot name="edit"></slot>
       <div class="tf-value" slot="reference">
         <slot name="show"></slot>
@@ -44,37 +47,84 @@
  } as ComponentOptions<TagFilter>
 </script>
 
-<style>
+<style lang="scss">
 
  .tf-outer {
-   display: inline-block;
+   display: flex;
+   align-items: stretch;
    text-align: center;
+   box-sizing: border-box;
    border: 2px solid rgb(38, 127, 228);
-   padding: 0 5px 0 0;
-   margin: 0 5px 7px;
+   margin: 5px;
    border-radius: 5px;
+   height: 40px; /* Height should match height of element UI inputs */
+   max-width: 300px;
  }
 
  .tf-name {
-   display: inline-block;
-   padding: 7px 5px;
+   display: flex;
+   align-items: center;
+   padding: 5px;
    background-color: rgb(38, 127, 228);
    color: #fff;
+   flex: none;
+ }
+
+ .tf-value-container {
+   display: flex;
+   overflow: hidden;
  }
 
  .tf-value {
-   display: inline-block;
+   display: flex;
+   align-items: center;
+   padding: 5px;
+   overflow: hidden;
+   flex: auto;
+ }
+
+ .tf-value-suffix {
+   align-self: center;
+   padding: 5px 5px 6px 0;
+   white-space: nowrap;
  }
 
  .tf-value-span {
+   flex: auto;
+   padding: 2px 0 1px 0;
    border-bottom: 1px dashed #000;
    text-decoration: none;
+   text-align: start;
+   text-overflow: ellipsis;
+   overflow: hidden;
+   white-space: nowrap;
  }
 
+  .tf-value-input input, input.tf-value-input {
+    border: none;
+    // This takes styles from "html" and "#app" in App.vue to make the text match the other filters
+    font-family: 'Roboto', Helvetica, sans-serif;
+    font-size: 1rem;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #2c3e50;
+
+    &::-ms-clear {
+      display: none;
+    }
+    &[type='number'] {
+      width: 100px; // IE11 fix - inputs without a "width" won't follow flex-shrink rules
+      -moz-appearance: textfield; // Firefox fix - something is broken with the up/down buttons on input[type='number']s on win 10 so just hide them
+    }
+    &[type='text'] {
+      width: 200px; // IE11 fix - inputs without a "width" won't follow flex-shrink rules
+    }
+  }
+
  .tf-remove {
-   display: inline-block;
+   align-self: center;
    cursor: pointer;
-   padding: 7px 0px 7px 3px;
+   padding: 5px 5px 5px 0;
  }
 
  .el-popover > .el-select {
