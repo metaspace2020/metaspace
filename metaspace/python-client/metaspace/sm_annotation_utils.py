@@ -20,6 +20,7 @@ def _extract_data(res):
 
 def get_config(host, email=None, password=None, verify_certificate=True):
     return {
+        'host': '{}'.format(host),
         'graphql_url': '{}/graphql'.format(host),
         'moldb_url': '{}/mol_db/v1'.format(host),
         'signin_url': '{}/api_auth/signin'.format(host),
@@ -518,7 +519,7 @@ class SMDataset(object):
 
     @property
     def _baseurl(self):
-        return self._gqclient.url.rsplit("/", 1)[0]
+        return self._gqclient._config['host']
 
     def isotope_images(self, sf, adduct):
         records = self._gqclient.getAnnotations(
