@@ -166,6 +166,9 @@
   "browserslist": {
     "production": [
       "defaults"
+    ],
+    "development": [
+      "last 1 Chrome version"
     ]
   }
 }
