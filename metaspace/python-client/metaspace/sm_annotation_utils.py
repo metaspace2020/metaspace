@@ -20,6 +20,7 @@ def _extract_data(res):
 
 def get_config(host, email=None, password=None, verify_certificate=True):
     return {
+        'host': host,
         'graphql_url': '{}/graphql'.format(host),
         'moldb_url': '{}/mol_db/v1'.format(host),
         'signin_url': '{}/api_auth/signin'.format(host),
@@ -33,6 +34,7 @@ def get_config(host, email=None, password=None, verify_certificate=True):
 class GraphQLClient(object):
     def __init__(self, config):
         self._config = config
+        self.host = self._config['host']
         self.session = requests.Session()
         self.session.verify = self._config['verify_certificate']
         res = self.session.post(self._config['signin_url'], params={
@@ -518,7 +520,7 @@ class SMDataset(object):
 
     @property
     def _baseurl(self):
-        return self._gqclient.url.rsplit("/", 1)[0]
+        return self._gqclient.host
 
     def isotope_images(self, sf, adduct):
         records = self._gqclient.getAnnotations(
@@ -531,7 +533,7 @@ class SMDataset(object):
         def fetchImage(url):
             if not url:
                 return None
-            url = self._gqclient.url.rsplit("/",1)[0]+url
+            url = self._baseurl + url
             im = mpimg.imread(BytesIO(requests.get(url).content))
             mask = im[:, :, 3]
             data = im[:, :, 0]
