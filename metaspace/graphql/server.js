@@ -2,6 +2,9 @@
 // async iterators, and the 'iterall' package imported by graphql-js will make its own symbol and reject others
 // if this isn't defined when 'iterall' is loaded
 Symbol.asyncIterator = Symbol.asyncIterator || Symbol.for("Symbol.asyncIterator");
+if (require('iterall').$$asyncIterator !== Symbol.asyncIterator) {
+  throw new Error('iterall is using the wrong symbol for asyncIterator')
+}
 
 const bodyParser = require('body-parser'),
   compression = require('compression'),

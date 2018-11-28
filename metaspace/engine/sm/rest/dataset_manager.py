@@ -52,7 +52,7 @@ class SMapiDatasetManager(object):
                          DatasetStatus.ANNOTATING} and not ignore_status:
             raise DSIsBusy(ds.id)
 
-        ds.update_status(self._db, self._es, DatasetStatus.QUEUED)
+        ds.set_status(self._db, self._es, DatasetStatus.QUEUED)
 
     def _post_sm_msg(self, ds, queue, priority=DatasetActionPriority.DEFAULT, **kwargs):
         msg = {
@@ -73,9 +73,9 @@ class SMapiDatasetManager(object):
         try:
             ds = Dataset.load(self._db, doc['id'])
             self._set_ds_busy(ds, kwargs.get('force', False))
-            is_new = True
-        except UnknownDSID:
             is_new = False
+        except UnknownDSID:
+            is_new = True
 
         ds = Dataset(id=doc['id'],
                      name=doc.get('name'),
@@ -87,7 +87,7 @@ class SMapiDatasetManager(object):
                      adducts=doc.get('adducts'),
                      status=DatasetStatus.QUEUED)
         ds.save(self._db, self._es)
-        ds.notify_update(self._update_queue, DaemonAction.ANNOTATE, DaemonActionStage.QUEUED, is_new=is_new)
+        ds.notify_update(self._status_queue, DaemonAction.ANNOTATE, DaemonActionStage.QUEUED, is_new=is_new)
 
         self._post_sm_msg(ds=ds, queue=self._annot_queue, action=DaemonAction.ANNOTATE, **kwargs)
         return doc['id']

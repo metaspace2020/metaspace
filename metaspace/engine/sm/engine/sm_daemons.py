@@ -109,8 +109,6 @@ class SMDaemonManager(object):
             wd_man = WorkDirManager(ds.id)
             wd_man.del_input_data(ds.input_path)
 
-        self.status_queue.publish({'ds_id': ds.id, 'status': DatasetStatus.DELETED})
-
     def _send_email(self, email, subj, body):
         try:
             cred_dict = dict(aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],

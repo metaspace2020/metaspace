@@ -29,9 +29,9 @@ export interface ESDatasetSource {
   annotation_counts: any[];
 }
 
-export function esSearchResults(args: any, docType: DocType, user: ContextUser | null): Promise<any[]>;
+export function esSearchResults(args: any, docType: DocType, user: ContextUser | null, bypassAuth?: boolean): Promise<any[]>;
 export function esCountResults(args: any, docType: DocType, user: ContextUser | null): Promise<number>;
 export function esCountGroupedResults(args: any, docType: DocType, user: ContextUser | null): Promise<any>;
 export function esFilterValueCountResults(args: any, user: ContextUser | null): Promise<any>;
 export function esAnnotationByID(id: string, user: ContextUser | null): Promise<object | null>;
-export function esDatasetByID(id: string, user: ContextUser | null): Promise<ESDataset | null>;
+export function esDatasetByID(id: string, user: ContextUser | null, bypassAuth?: boolean): Promise<ESDataset | null>;

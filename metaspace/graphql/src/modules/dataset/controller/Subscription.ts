@@ -35,7 +35,7 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
   try {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       logger.debug(JSON.stringify({attempt, status}));
-      const ds = await esDatasetByID(ds_id, null);
+      const ds = await esDatasetByID(ds_id, null, true);
 
       if (action === 'DELETE' && stage === 'FINISHED') {
         if (ds == null) {
@@ -43,26 +43,19 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
           publishDatasetDeleted({ id: ds_id });
           return;
         }
-      } else {
-        if (ds != null && ds._source.ds_status === status) {
-          const shouldSendUpdate = action === 'ANNOTATE' || action === 'DELETE'
-            || stage === 'FINISHED' || stage === 'FAILED';
-          if (shouldSendUpdate) {
-            publishDatasetStatusUpdated({
-              dataset: {
-                ...ds,
-                _source: {
-                  ...ds._source,
-                  ds_status: status,
-                }
-              },
-              action,
-              stage,
-              ...rest,
-            });
-          }
-          return;
-        }
+      } else if (ds != null) {
+        publishDatasetStatusUpdated({
+          dataset: {
+            ...ds,
+            _source: {
+              ...ds._source,
+            }
+          },
+          action,
+          stage,
+          ...rest,
+        });
+        return;
       }
 
       await wait(50 * attempt * attempt);
@@ -98,18 +91,56 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
 
 const SubscriptionResolvers = {
   datasetStatusUpdated: {
-    subscribe: async function* datasetStatusUpdated(source: any, args: any, context: Context) {
-      for await (const payload of asyncIterateDatasetStatusUpdated()) {
-        if (payload.dataset && canViewEsDataset(payload.dataset, context.user)) {
-          const relationships = await relationshipToDataset(payload.dataset, context);
-          yield {
-            is_new: null,
-            ...payload,
-            relationship: relationships.length > 0 ? relationships[0] : null,
-          };
+    subscribe: (source: any, args: any, context: Context) => {
+      const iterator = asyncIterateDatasetStatusUpdated();
+      // This asyncIterator is manually implemented because there is a weird interaction between TypeScript and iterall.
+      // Somehow `iterator.return()` doesn't get called. I suspect iterall doesn't recognize TypeScript's asyncIterators
+      // and this leads to them not having `iterator.return()` called after execution. It also seems like TypeScript
+      // doesn't correctly execute code in the `finally` block if a try-finally block is put around the for-await loop.
+      // This shows up as memory leak warnings after a certain number of subscriptions, even if they have all
+      // correctly unsubscribed.
+      return {
+        [Symbol.asyncIterator]() {
+          return this;
+        },
+        async next() {
+          while (true) {
+            const { value, done } = await iterator.next();
+            if (done) {
+              return {done}
+            }
+            console.log(value.dataset != null, context.user != null, await canViewEsDataset(value.dataset, context.user))
+            if (value.dataset && await canViewEsDataset(value.dataset, context.user)) {
+              const relationships = await relationshipToDataset(value.dataset, context);
+              const payload = {
+                is_new: null,
+                ...value,
+                relationship: relationships.length > 0 ? relationships[0] : null,
+              };
+              return { value: payload, done: false };
+            }
+          }
+        },
+        throw(err?: any) {
+          return iterator.throw && iterator.throw(err);
+        },
+        return() {
+          return iterator.return && iterator.return();
         }
       }
     },
+    // subscribe: async function* datasetStatusUpdated(source: any, args: any, context: Context) {
+    //   for await (const payload of asyncIterateDatasetStatusUpdated()) {
+    //     if (payload.dataset && canViewEsDataset(payload.dataset, context.user)) {
+    //       const relationships = await relationshipToDataset(payload.dataset, context);
+    //       yield {
+    //         is_new: null,
+    //         ...payload,
+    //         relationship: relationships.length > 0 ? relationships[0] : null,
+    //       };
+    //     }
+    //   }
+    // },
     resolve: (payload: any) => payload,
   },
   datasetDeleted: {

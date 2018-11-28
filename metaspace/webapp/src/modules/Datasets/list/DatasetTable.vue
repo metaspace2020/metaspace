@@ -59,6 +59,8 @@
  import formatCsvRow from '../../../lib/formatCsvRow';
   import {currentUserRoleQuery} from '../../../api/user';
   import {removeDatasetFromAllDatasetsQuery} from '../../../lib/updateApolloCache';
+  import {sortBy, uniqBy} from 'lodash-es';
+  import updateApolloCache from '../../../lib/updateApolloCache';
 
  const processingStages = ['started', 'queued', 'failed', 'finished'];
 
@@ -89,12 +91,28 @@
        return this.datasets.length > 0;
      },
 
-     datasets() {
+     allDatasets() {
        let list = [];
-       for (let category of processingStages)
-         if (this.categories.indexOf(category) >= 0 && this[category])
+       for (let category of processingStages) {
+         if (this[category]) {
            list = list.concat(this[category]);
+         }
+       }
+       // Sort again in case any datasets have had their status changed and are now in the wrong list
+       const sortOrder = ['FAILED', 'ANNOTATING', 'QUEUED', 'FINISHED'];
+       list = uniqBy(list, 'id');
+       list = sortBy(list, dataset => sortOrder.indexOf(dataset.status));
        return list;
+
+     },
+
+     datasets() {
+       return this.allDatasets
+         .filter(ds =>
+           (ds.status === 'FAILED' && this.categories.includes('failed'))
+           || (ds.status === 'ANNOTATING' && this.categories.includes('started'))
+           || (ds.status === 'QUEUED' && this.categories.includes('queued'))
+           || (ds.status === 'FINISHED' && this.categories.includes('finished')));
      },
 
      canSeeFailed() {
@@ -117,26 +135,17 @@
          query: datasetStatusUpdatedQuery,
          async result({ data }) {
            const { dataset, action, stage, is_new } = data.datasetStatusUpdated;
-           if (dataset != null) {
-             if (action === 'ANNOTATE'){
-               if (stage === 'QUEUED') {
-                 await this.$apollo.queries.queued.refetch();
-                 if (!is_new) {
-                   removeDatasetFromAllDatasetsQuery(this, 'finished', dataset.id);
-                 }
-               } else if (stage === 'STARTED') {
-                 await this.$apollo.queries.started.refetch();
-                 removeDatasetFromAllDatasetsQuery(this, 'queued', dataset.id);
-               }
-             } else if (dataset != null && action === 'INDEX') {
-               if (stage === 'FINISHED') {
-                 await Promise.all([
-                   this.$apollo.queries.finished.refetch(),
-                   this.$apollo.queries.finishedCount.refetch(),
-                 ]);
-                 removeDatasetFromAllDatasetsQuery(this, 'started', dataset.id);
-               }
-             }
+           if (dataset != null && action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
+             console.log('updating queued')
+             updateApolloCache(this, 'queued', oldVal => {
+               console.log('updating queued', oldVal)
+               return {
+                 ...oldVal,
+                 allDatasets: oldVal.allDatasets && [dataset, ...oldVal.allDatasets],
+               };
+             });
+             this.$apollo.queries.queued.refetch();
+             this.$apollo.queries.started.refetch();
            }
          }
        },
@@ -216,13 +225,19 @@
      },
 
      count(stage) {
-       if (stage == 'finished')
-         return this.finishedCount ? '(' + this.finishedCount + ')' : '';
-       if (!this[stage])
-         return '';
-       // assume not too many items are queued/being processed
-       // so they are all visible in the web app
-       return '(' + this[stage].length + ')';
+       let count = null;
+       // assume not too many items are failed/queued/annotating so they are all visible in the web app,
+       // but check all lists because they may be in the wrong list due to status updates after they were loaded
+       if (stage === 'failed')
+         count = this.datasets.filter(ds => ds.status === 'FAILED').length;
+       if (stage === 'queued')
+         count = this.datasets.filter(ds => ds.status === 'QUEUED').length;
+       if (stage === 'started')
+         count = this.datasets.filter(ds => ds.status === 'ANNOTATING').length;
+       if (stage === 'finished')
+         count = this.finishedCount;
+
+       return count != null ? `(${count})` : '';
      },
 
      async startExport() {
