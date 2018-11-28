@@ -137,6 +137,11 @@ const projectsListItemFragment =
       members {
         user {
           name
+          primaryGroup {
+            group {
+              name
+            }
+          }
         }
         role
       }
