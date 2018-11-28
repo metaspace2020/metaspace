@@ -59,7 +59,7 @@ class TestSMapiDatasetManager:
         update_queue = MagicMock(spec=QueuePublisher)
         db, ds_man = create_api_ds_man(sm_config, update_queue=update_queue)
         ds_id = '2000-01-01'
-        ds = Dataset(**create_ds_doc(ds_id=ds_id))
+        ds = Dataset(**create_ds_doc(ds_id=ds_id, status=DatasetStatus.FINISHED))
         ds.save(db)
 
         ds_man.delete(ds_id)

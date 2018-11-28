@@ -75,7 +75,7 @@ class TestSMDaemonDatasetManager:
 
             manager.index(ds)
 
-            es_mock.delete_ds.assert_called_with(ds_id)
+            es_mock.delete_ds.assert_called_with(ds_id, delete_dataset=False)
             call_args = es_mock.index_ds.call_args[1].values()
             assert ds_id in call_args and mol_db_mock in call_args
 
