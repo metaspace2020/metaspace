@@ -34,6 +34,7 @@ def get_config(host, email=None, password=None, verify_certificate=True):
 class GraphQLClient(object):
     def __init__(self, config):
         self._config = config
+        self.host = self._config['host']
         self.session = requests.Session()
         self.session.verify = self._config['verify_certificate']
         res = self.session.post(self._config['signin_url'], params={
@@ -519,7 +520,7 @@ class SMDataset(object):
 
     @property
     def _baseurl(self):
-        return self._gqclient._config['host']
+        return self._gqclient.host
 
     def isotope_images(self, sf, adduct):
         records = self._gqclient.getAnnotations(
