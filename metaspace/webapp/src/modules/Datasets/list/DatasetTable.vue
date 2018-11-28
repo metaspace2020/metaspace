@@ -136,16 +136,12 @@
          async result({ data }) {
            const { dataset, action, stage, is_new } = data.datasetStatusUpdated;
            if (dataset != null && action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
-             console.log('updating queued')
              updateApolloCache(this, 'queued', oldVal => {
-               console.log('updating queued', oldVal)
                return {
                  ...oldVal,
                  allDatasets: oldVal.allDatasets && [dataset, ...oldVal.allDatasets],
                };
              });
-             this.$apollo.queries.queued.refetch();
-             this.$apollo.queries.started.refetch();
            }
          }
        },
@@ -237,7 +233,7 @@
        if (stage === 'finished') {
          const inOtherLists = this.allDatasets.filter(ds => ds.status === 'FINISHED').length
            - (this.finished && this.finished.length || 0);
-         count = this.finishedCount == null ? null : this.finishedCount - inOtherLists;
+         count = this.finishedCount == null ? null : this.finishedCount + inOtherLists;
        }
 
        return count != null && !isNaN(count) ? `(${count})` : '';

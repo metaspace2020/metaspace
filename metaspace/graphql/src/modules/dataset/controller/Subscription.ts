@@ -109,7 +109,6 @@ const SubscriptionResolvers = {
             if (done) {
               return {done}
             }
-            console.log(value.dataset != null, context.user != null, await canViewEsDataset(value.dataset, context.user))
             if (value.dataset && await canViewEsDataset(value.dataset, context.user)) {
               const relationships = await relationshipToDataset(value.dataset, context);
               const payload = {
