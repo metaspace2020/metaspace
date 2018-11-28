@@ -229,15 +229,18 @@
        // assume not too many items are failed/queued/annotating so they are all visible in the web app,
        // but check all lists because they may be in the wrong list due to status updates after they were loaded
        if (stage === 'failed')
-         count = this.datasets.filter(ds => ds.status === 'FAILED').length;
+         count = this.allDatasets.filter(ds => ds.status === 'FAILED').length;
        if (stage === 'queued')
-         count = this.datasets.filter(ds => ds.status === 'QUEUED').length;
+         count = this.allDatasets.filter(ds => ds.status === 'QUEUED').length;
        if (stage === 'started')
-         count = this.datasets.filter(ds => ds.status === 'ANNOTATING').length;
-       if (stage === 'finished')
-         count = this.finishedCount;
+         count = this.allDatasets.filter(ds => ds.status === 'ANNOTATING').length;
+       if (stage === 'finished') {
+         const inOtherLists = this.allDatasets.filter(ds => ds.status === 'FINISHED').length
+           - (this.finished && this.finished.length || 0);
+         count = this.finishedCount == null ? null : this.finishedCount - inOtherLists;
+       }
 
-       return count != null ? `(${count})` : '';
+       return count != null && !isNaN(count) ? `(${count})` : '';
      },
 
      async startExport() {
