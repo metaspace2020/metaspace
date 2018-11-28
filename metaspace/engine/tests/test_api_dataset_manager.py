@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, call
 from datetime import datetime
 from PIL import Image
 
+from sm.engine.daemon_action import DaemonAction
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
@@ -51,7 +52,7 @@ class TestSMapiDatasetManager:
 
         ds_man.add(ds_doc, priority=DatasetActionPriority.HIGH)
 
-        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': 'annotate'}
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.ANNOTATE}
         action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.HIGH)])
 
     def test_delete_ds(self, test_db, sm_config, ds_config):
@@ -63,7 +64,7 @@ class TestSMapiDatasetManager:
 
         ds_man.delete(ds_id)
 
-        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': 'delete'}
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.DELETE}
         update_queue.publish.assert_has_calls([call(msg, DatasetActionPriority.STANDARD)])
 
     def test_add_optical_image(self, fill_db, sm_config, ds_config):

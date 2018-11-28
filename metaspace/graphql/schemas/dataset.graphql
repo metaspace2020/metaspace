@@ -181,11 +181,25 @@ type DatasetRelationship {
   id: String!
   name: String!
 }
+enum DatasetAction {
+  ANNOTATE
+  UPDATE
+  INDEX
+  DELETE
+}
+enum DatasetActionStage {
+  QUEUED
+  STARTED
+  FINISHED
+  FAILED
+}
 
 type DatasetStatusUpdate {
   dataset: Dataset
   relationship: DatasetRelationship
-  suppressNotification: Boolean!       # If true, the change is minor so don't show a notification
+  action: DatasetAction!
+  stage: DatasetActionStage!
+  is_new: Boolean
 }
 
 type DatasetDeletion {

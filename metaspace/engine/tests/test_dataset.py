@@ -7,6 +7,7 @@ from sm.engine.dataset import DatasetStatus, Dataset
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
+from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.tests.util import sm_config, test_db, metadata, ds_config
 
 
@@ -49,32 +50,43 @@ def test_dataset_load_existing_ds_works(fill_db, sm_config, metadata, ds_config)
 def test_dataset_save_overwrite_ds_works(fill_db, sm_config, metadata, ds_config):
     db = DB(sm_config['db'])
     es_mock = MagicMock(spec=ESExporter)
-    status_queue_mock = MagicMock(spec=QueuePublisher)
 
     upload_dt = datetime.now()
     ds_id = '2000-01-01'
     ds = Dataset(ds_id, 'ds_name', 'input_path', upload_dt, metadata, mol_dbs=['HMDB'])
 
-    ds.save(db, es_mock, status_queue_mock)
+    ds.save(db, es_mock)
 
     assert ds == Dataset.load(db, ds_id)
     es_mock.sync_dataset.assert_called_once_with(ds_id)
-    status_queue_mock.publish.assert_called_with({'ds_id': ds_id, 'status': DatasetStatus.QUEUED})
 
 
 def test_dataset_update_status_works(fill_db, sm_config, metadata):
     db = DB(sm_config['db'])
     es_mock = MagicMock(spec=ESExporter)
-    status_queue_mock = MagicMock(spec=QueuePublisher)
 
     upload_dt = datetime.now()
     ds_id = '2000-01-01'
     ds = Dataset(ds_id, 'ds_name', 'input_path', upload_dt, metadata, DatasetStatus.ANNOTATING, mol_dbs=['HMDB'])
 
-    ds.set_status(db, es_mock, status_queue_mock, DatasetStatus.FINISHED)
+    ds.set_status(db, es_mock, DatasetStatus.FINISHED)
 
     assert DatasetStatus.FINISHED == Dataset.load(db, ds_id).status
-    status_queue_mock.publish.assert_called_once_with({'ds_id': ds_id, 'status': DatasetStatus.FINISHED})
+
+
+def test_dataset_notify_update_works(fill_db, sm_config, metadata):
+    status_queue_mock = MagicMock(spec=QueuePublisher)
+
+    upload_dt = datetime.now()
+    ds_id = '2000-01-01'
+    ds = Dataset(ds_id, 'ds_name', 'input_path', upload_dt, metadata, DatasetStatus.FINISHED, mol_dbs=['HMDB'])
+
+    ds.notify_update(status_queue_mock, DaemonAction.ANNOTATE, DaemonActionStage.FINISHED)
+
+    status_queue_mock.publish.assert_called_once_with({'ds_id': ds_id,
+                                                       'status': DatasetStatus.FINISHED,
+                                                       'action': DaemonAction.ANNOTATE,
+                                                       'stage': DaemonActionStage.FINISHED})
 
 
 def test_dataset_to_queue_message_works(metadata, ds_config):

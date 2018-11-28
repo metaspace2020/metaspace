@@ -4,6 +4,7 @@ from requests import post
 import logging
 import boto3
 
+from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.rest.dataset_manager import IMG_URLS_BY_ID_SEL
 from sm.engine.errors import UnknownDSID
 from sm.engine.isocalc_wrapper import IsocalcWrapper
@@ -78,9 +79,10 @@ class SMDaemonManager(object):
                 isocalc = IsocalcWrapper(ds.config['isotope_generation'])
                 self.es.index_ds(ds_id=ds.id, mol_db=mol_db, isocalc=isocalc)
 
+        ds.set_status(self._db, self.es, DatasetStatus.FINISHED)
+
     def update(self, ds, fields):
         self.es.update_ds(ds.id, fields)
-        self.status_queue.publish({'ds_id': ds.id, 'status': DatasetStatus.UPDATED})
 
     def _del_iso_images(self, ds):
         self.logger.info('Deleting isotopic images: (%s, %s)', ds.id, ds.name)
@@ -185,7 +187,7 @@ class SMAnnotateDaemon(object):
 
     def _on_success(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
-        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FINISHED)
+        ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.FINISHED)
 
         self.logger.info(f" SM annotate daemon: success")
 
@@ -193,7 +195,8 @@ class SMAnnotateDaemon(object):
 
     def _on_failure(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
-        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FAILED)
+        ds.set_status(self._db, self._manager.es, DatasetStatus.FAILED)
+        ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.FAILED)
 
         self.logger.error(f" SM annotate daemon: failure", exc_info=True)
 
@@ -204,7 +207,8 @@ class SMAnnotateDaemon(object):
 
     def _callback(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
-        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.ANNOTATING)
+        ds.set_status(self._db, self._manager.es, DatasetStatus.ANNOTATING)
+        ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.STARTED)
 
         self.logger.info(f" SM annotate daemon received a message: {msg}")
         self._manager.post_to_slack('new', " [v] New annotation message: {}".format(json.dumps(msg)))
@@ -259,13 +263,23 @@ class SMIndexUpdateDaemon(object):
     def _on_success(self, msg):
         self.logger.info(f" SM update daemon: success")
 
-        if msg['action'] not in ['delete', 'update', 'index']:
+        if msg['action'] == DaemonAction.DELETE:
+            self._manager.status_queue.publish({
+                'ds_id': msg['ds_id'],
+                'status': 'DELETED',
+                'action': DaemonAction.DELETE,
+                'stage': DaemonActionStage.FINISHED,
+            })
+        else:
             ds = Dataset.load(self._db, msg['ds_id'])
-            ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FINISHED)
-        if msg['action'] in ['update', 'index']:
+            if msg['action'] == DaemonAction.INDEX:
+                ds.set_status(self._db, self._manager.es, DatasetStatus.FINISHED)
+            ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.FINISHED)
+
+        if msg['action'] in [DaemonAction.UPDATE, DaemonAction.INDEX]:
             msg['web_app_link'] = self._manager.create_web_app_link(msg)
 
-        if msg['action'] != 'update':
+        if msg['action'] != DaemonAction.UPDATE:
             self._manager.post_to_slack('dart', f" [v] Succeeded to {msg['action']}: {json.dumps(msg)}")
 
         if msg.get('email'):
@@ -275,7 +289,8 @@ class SMIndexUpdateDaemon(object):
         self.logger.error(f' SM update daemon: failure', exc_info=True)
 
         ds = Dataset.load(self._db, msg['ds_id'])
-        ds.set_status(self._db, self._manager.es, self._manager.status_queue, DatasetStatus.FAILED)
+        ds.set_status(self._db, self._manager.es, DatasetStatus.FAILED)
+        ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.FAILED)
 
         self._manager.post_to_slack('hankey', f" [x] Failed to {msg['action']}: {json.dumps(msg)}")
 
@@ -287,12 +302,13 @@ class SMIndexUpdateDaemon(object):
 
         self.logger.info(f' SM update daemon received a message: {msg}')
         self._manager.post_to_slack('new', f" [v] New {msg['action']} message: {json.dumps(msg)}")
+        ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.STARTED)
 
-        if msg['action'] == 'index':
+        if msg['action'] == DaemonAction.INDEX:
             self._manager.index(ds=ds)
-        elif msg['action'] == 'update':
+        elif msg['action'] == DaemonAction.UPDATE:
             self._manager.update(ds, msg['fields'])
-        elif msg['action'] == 'delete':
+        elif msg['action'] == DaemonAction.DELETE:
             self._manager.delete(ds=ds)
         else:
             raise Exception(f"Wrong action: {msg['action']}")

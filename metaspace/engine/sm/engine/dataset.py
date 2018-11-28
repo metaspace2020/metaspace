@@ -22,13 +22,6 @@ class DatasetStatus(object):
     """ An error occurred during processing """
     FAILED = 'FAILED'
 
-    """ The dataset's metadata was updated without reprocessing """
-    UPDATED = 'UPDATED'  # only for the status queue - actual status will be 'FINISHED'
-
-    """ The dataset has been deleted """
-    DELETED = 'DELETED'  # only for the status queue
-
-
 
 RESOL_POWER_PARAMS = {
     '70K': {'sigma': 0.00247585727028, 'fwhm': 0.00583019832869, 'pts_per_mz': 2019},
@@ -95,9 +88,19 @@ class Dataset(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    def set_status(self, db, es, status_queue=None, status=None):
+    def set_status(self, db, es, status):
         self.status = status
-        self.save(db, es, status_queue)
+        self.save(db, es)
+
+    def notify_update(self, status_queue, action, stage, **kwargs):
+        status_queue.publish({
+            'ds_id': self.id,
+            'status': self.status,
+            'action': action.upper(),
+            'stage': stage,
+            **kwargs,
+        })
+
 
     @classmethod
     def load(cls, db, ds_id):
@@ -111,7 +114,7 @@ class Dataset(object):
         r = db.select_one(self.DS_SEL, params=(self.id,))
         return True if r else False
 
-    def save(self, db, es=None, status_queue=None):
+    def save(self, db, es=None):
         doc = {
             'id': self.id,
             'name': self.name,
@@ -132,8 +135,6 @@ class Dataset(object):
 
         if es:
             es.sync_dataset(self.id)
-        if status_queue:
-            status_queue.publish({'ds_id': self.id, 'status': self.status})
 
     def get_acq_geometry(self, db):
         r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, params=(self.id,))

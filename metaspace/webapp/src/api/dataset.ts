@@ -189,7 +189,9 @@ export const datasetStatusUpdatedQuery = gql`subscription datasetStatusUpdated($
       id
       name
     }
-    suppressNotification
+    action
+    stage
+    is_new
   }
 }
 ${datasetDetailItemFragment}`;

@@ -2,7 +2,6 @@ const slack = require('node-slack'),
   jsondiffpatch = require('jsondiffpatch'),
   winston = require('winston'),
   moment = require('moment'),
-  { PubSub } = require('graphql-subscriptions'),
   fetch = require('node-fetch');
 
 const config = require('config');
@@ -49,9 +48,6 @@ const logger = new (winston.Logger)({
   ]
 });
 
-const pubsub = new PubSub();
-
-
 const deprecatedMolDBs = new Set(['HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids', 'COTTON_HMDB']);
 
 async function fetchMolecularDatabases() {
@@ -73,5 +69,4 @@ export {
   wait,
   config,
   logger,
-  pubsub,
 };

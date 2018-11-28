@@ -48,6 +48,7 @@
     datasetDetailItemsQuery,
     datasetCountQuery,
     datasetDeletedQuery,
+    datasetStatusUpdatedQuery,
   } from '../../../api/dataset';
  import {metadataExportQuery} from '../../../api/metadata';
  import DatasetList from './DatasetList.vue';
@@ -111,7 +112,34 @@
              removeDatasetFromAllDatasetsQuery(this, queryName, datasetId);
            });
          }
-       }
+       },
+       datasetStatusUpdated: {
+         query: datasetStatusUpdatedQuery,
+         async result({ data }) {
+           const { dataset, action, stage, is_new } = data.datasetStatusUpdated;
+           if (dataset != null) {
+             if (action === 'ANNOTATE'){
+               if (stage === 'QUEUED') {
+                 await this.$apollo.queries.queued.refetch();
+                 if (!is_new) {
+                   removeDatasetFromAllDatasetsQuery(this, 'finished', dataset.id);
+                 }
+               } else if (stage === 'STARTED') {
+                 await this.$apollo.queries.started.refetch();
+                 removeDatasetFromAllDatasetsQuery(this, 'queued', dataset.id);
+               }
+             } else if (dataset != null && action === 'INDEX') {
+               if (stage === 'FINISHED') {
+                 await Promise.all([
+                   this.$apollo.queries.finished.refetch(),
+                   this.$apollo.queries.finishedCount.refetch(),
+                 ]);
+                 removeDatasetFromAllDatasetsQuery(this, 'started', dataset.id);
+               }
+             }
+           }
+         }
+       },
      },
 
      currentUser: {

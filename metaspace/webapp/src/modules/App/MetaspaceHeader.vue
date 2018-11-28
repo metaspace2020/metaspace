@@ -215,33 +215,36 @@
        datasetStatusUpdated: {
          query: datasetStatusUpdatedQuery,
          result({ data }) {
-           const { dataset, relationship, suppressNotification } = data.datasetStatusUpdated;
-           if (dataset != null && relationship != null && !suppressNotification) {
-             const { name, status, submitter } = dataset;
-             const type = {
-               FINISHED: 'success',
-               QUEUED: 'info',
-               ANNOTATING: 'info',
-               FAILED: 'warning',
-             }[status];
+           const { dataset, relationship, action, stage, is_new } = data.datasetStatusUpdated;
+           if (dataset != null && relationship != null) {
+             const { name, submitter } = dataset;
 
-             let message;
+             let message, type;
              if (relationship.type === 'submitter') {
-               if (status === 'FINISHED') {
+               if (action === 'ANNOTATE' && stage === 'FINISHED') {
                  message = `Processing of dataset ${name} is finished!`;
-               } else if (status === 'FAILED') {
+                 type = 'success';
+               } else if (stage === 'FAILED') {
                  message = `Something went wrong with dataset ${name} :(`;
-               } else if (status === 'QUEUED') {
+                 type = 'warning';
+               } else if (action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
                  message = `Dataset ${name} has been submitted`;
-               } else if (status === 'ANNOTATING') {
+                 type = 'info';
+               } else if (action === 'ANNOTATE' && stage === 'QUEUED' && !is_new) {
+                 message = `Dataset ${name} has been submitted for reprocessing`;
+                 type = 'info';
+               } else if (action === 'ANNOTATE' && stage === 'STARTED') {
                  message = `Started processing dataset ${name}`;
+                 type = 'info';
                }
              } else {
                const who = `${submitter.name} (${relationship.name})`;
-               if (status === 'FINISHED') {
+               if (action === 'ANNOTATE' && stage === 'FINISHED') {
                  message = `Processing of dataset ${name} by ${who} is finished!`;
-               } else if (status === 'QUEUED') {
+                 type = 'success';
+               } else if (action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
                  message = `Dataset ${name} has been submitted by ${who}`;
+                 type = 'info';
                }
              }
              if (message != null && type != null) {

@@ -35,7 +35,6 @@ const updateApolloCache = (vm: Vue, queryName: string, update: (value: any) => a
   }
   if (oldVal != null) {
     const newVal = update(oldVal);
-    console.log('updated cache', oldVal, newVal);
     if (newVal !== undefined && newVal !== oldVal) {
       apolloClient.writeQuery({ query, variables, data: newVal });
     }

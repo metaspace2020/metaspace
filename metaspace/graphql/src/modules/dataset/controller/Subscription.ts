@@ -1,18 +1,34 @@
 import * as Amqplib from 'amqplib';
 import {esDatasetByID} from '../../../../esConnector';
-import {logger, pubsub, wait} from '../../../../utils';
+import {logger, wait} from '../../../../utils';
 import config from '../../../utils/config';
 import {DatasetStatus} from '../model';
 import {Context} from '../../../context';
 import canViewEsDataset from '../util/canViewEsDataset';
 import {relationshipToDataset} from '../util/relationshipToDataset';
+import {
+  asyncIterateDatasetDeleted,
+  asyncIterateDatasetStatusUpdated,
+  publishDatasetDeleted,
+  publishDatasetStatusUpdated,
+} from '../../../utils/pubsub';
 
-interface DatasetStatusUpdatePayload {
-  dataset?: any;
-  suppressNotification: boolean;
+/** From `DaemonAction` in sm-engine, but capitalized */
+type EngineDatasetAction = 'ANNOTATE' | 'UPDATE' | 'INDEX' | 'DELETE';
+/** From `DaemonActionStage` in sm-engine */
+type EngineDatasetActionStage = 'QUEUED' | 'STARTED' | 'FINISHED' | 'FAILED';
+
+
+interface DatasetStatusPayload {
+  ds_id: string;
+  status: DatasetStatus | null;
+  action: EngineDatasetAction;
+  stage: EngineDatasetActionStage;
+  is_new?: boolean;
 }
 
-async function publishDatasetStatusUpdate(ds_id: string, status: DatasetStatus) {
+async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
+  const {ds_id, status, action, stage, ...rest} = payload;
   // wait until updates are reflected in ES so that clients can refresh their data
   const maxAttempts = 5;
 
@@ -21,22 +37,32 @@ async function publishDatasetStatusUpdate(ds_id: string, status: DatasetStatus) 
       logger.debug(JSON.stringify({attempt, status}));
       const ds = await esDatasetByID(ds_id, null);
 
-      if (ds == null && status === 'DELETED') {
-        await wait(1000);
-        pubsub.publish('datasetDeleted', { id: ds_id });
-        return;
-      } else if (ds != null && status !== 'DELETED') {
-        pubsub.publish('datasetStatusUpdated', {
-          dataset: {
-            ...ds,
-            _source: {
-              ...ds._source,
-              ds_status: status === 'UPDATED' ? 'FINISHED' : status,
-            }
-          },
-          suppressNotification: status === 'UPDATED'
-        });
-        return;
+      if (action === 'DELETE' && stage === 'FINISHED') {
+        if (ds == null) {
+          await wait(1000);
+          publishDatasetDeleted({ id: ds_id });
+          return;
+        }
+      } else {
+        if (ds != null && ds._source.ds_status === status) {
+          const shouldSendUpdate = action === 'ANNOTATE' || action === 'DELETE'
+            || stage === 'FINISHED' || stage === 'FAILED';
+          if (shouldSendUpdate) {
+            publishDatasetStatusUpdated({
+              dataset: {
+                ...ds,
+                _source: {
+                  ...ds._source,
+                  ds_status: status,
+                }
+              },
+              action,
+              stage,
+              ...rest,
+            });
+          }
+          return;
+        }
       }
 
       await wait(50 * attempt * attempt);
@@ -48,38 +74,38 @@ async function publishDatasetStatusUpdate(ds_id: string, status: DatasetStatus) 
   logger.warn(`Failed to propagate dataset update for ${ds_id}`);
 }
 
-let queue = Amqplib.connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`);
-let rabbitmqChannel = 'sm_dataset_status';
-queue.then(function(conn) {
-  return conn.createChannel();
-}).then(function(ch) {
-  return ch.assertQueue(rabbitmqChannel).then(function(ok) {
-    return ch.consume(rabbitmqChannel, function(msg) {
+(async () => {
+  try {
+    const RABBITMQ_CHANNEL = 'sm_dataset_status';
+    const conn = await Amqplib.connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`);
+    const ch = await conn.createChannel();
+    await ch.assertQueue(RABBITMQ_CHANNEL);
+    await ch.consume(RABBITMQ_CHANNEL, msg => {
       if (msg != null) {
-        console.log(msg.content.toString());
-        const { ds_id, status } = JSON.parse(msg.content.toString());
-        if (['QUEUED', 'ANNOTATING', 'FINISHED', 'FAILED', 'UPDATED', 'DELETED'].indexOf(status) >= 0)
-          publishDatasetStatusUpdate(ds_id, status).then(/* Ignore promise - allow to run in background */);
-        ch.ack(msg);
+        try {
+          waitForChangeAndPublish(JSON.parse(msg.content.toString()))
+            .then(/* Ignore promise - allow to run in background */);
+        } finally {
+          ch.ack(msg);
+        }
       }
     });
-  });
-}).catch(console.warn);
+  } catch (err) {
+    console.error(err);
+  }
+})();
+
 
 const SubscriptionResolvers = {
   datasetStatusUpdated: {
     subscribe: async function* datasetStatusUpdated(source: any, args: any, context: Context) {
-      // for-await loops need an Iterable, and pubsub.asyncIterator's return value does actually support
-      // both interfaces even though its type is "AsyncIterator"
-      const iterable = pubsub.asyncIterator('datasetStatusUpdated') as AsyncIterableIterator<DatasetStatusUpdatePayload>;
-
-      for await (const payload of iterable) {
+      for await (const payload of asyncIterateDatasetStatusUpdated()) {
         if (payload.dataset && canViewEsDataset(payload.dataset, context.user)) {
           const relationships = await relationshipToDataset(payload.dataset, context);
           yield {
-            dataset: payload.dataset,
+            is_new: null,
+            ...payload,
             relationship: relationships.length > 0 ? relationships[0] : null,
-            suppressNotification: payload.suppressNotification,
           };
         }
       }
@@ -87,7 +113,7 @@ const SubscriptionResolvers = {
     resolve: (payload: any) => payload,
   },
   datasetDeleted: {
-    subscribe: () => pubsub.asyncIterator('datasetDeleted'),
+    subscribe: asyncIterateDatasetDeleted,
     resolve: (payload: any) => payload,
   }
 };
