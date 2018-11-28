@@ -20,7 +20,7 @@ def _extract_data(res):
 
 def get_config(host, email=None, password=None, verify_certificate=True):
     return {
-        'host': '{}'.format(host),
+        'host': host,
         'graphql_url': '{}/graphql'.format(host),
         'moldb_url': '{}/mol_db/v1'.format(host),
         'signin_url': '{}/api_auth/signin'.format(host),
@@ -532,7 +532,7 @@ class SMDataset(object):
         def fetchImage(url):
             if not url:
                 return None
-            url = self._gqclient.url.rsplit("/",1)[0]+url
+            url = self._baseurl + url
             im = mpimg.imread(BytesIO(requests.get(url).content))
             mask = im[:, :, 3]
             data = im[:, :, 0]
