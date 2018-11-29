@@ -61,6 +61,7 @@
    fetchAutocompleteSuggestionsQuery,
    editDatasetQuery,
    metadataOptionsQuery,
+   datasetSubmitterQuery,
    editDatasetSubmitterQuery,
  } from '../../api/metadata';
  import MetaspaceOptionsSection from './sections/MetaspaceOptionsSection.vue';
@@ -189,8 +190,8 @@
            metadata: dataset && safeJsonParse(dataset.metadataJson) || {},
            metaspaceOptions: {
              ...(dataset != null ? metaspaceOptionsFromDataset(dataset) : null),
-             submitterId: this.$store.state.currentTour ? '': data.currentUser.id,
-             groupId: this.$store.state.currentTour ? '':
+             submitterId: this.$store.state.currentTour ? null : data.currentUser.id,
+             groupId: this.$store.state.currentTour ? null :
                data.currentUser.primaryGroup && data.currentUser.primaryGroup.group.id,
            },
            submitter: data.currentUser

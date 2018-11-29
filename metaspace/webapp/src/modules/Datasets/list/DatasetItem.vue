@@ -259,7 +259,7 @@
 
      canEdit() {
        if (this.currentUser != null) {
-         if (this.currentUser.role === 'admin' && !['ANNOTATING', 'INDEXING'].includes(this.dataset.status))
+         if (this.currentUser.role === 'admin')
            return true;
          if (this.currentUser.id === this.dataset.submitter.id
            && !['QUEUED', 'ANNOTATING', 'INDEXING'].includes(this.dataset.status))
@@ -274,8 +274,7 @@
 
      canReprocess() {
        return this.currentUser != null
-         && this.currentUser.role === 'admin'
-         && !['ANNOTATING', 'INDEXING'].includes(this.dataset.status);
+         && this.currentUser.role === 'admin';
      },
 
      editHref() {
@@ -406,6 +405,7 @@
            mutation: reprocessDatasetQuery,
            variables: {
              id: this.dataset.id,
+             force: true,
            }
          });
          this.$notify.success("Dataset sent for reprocessing");

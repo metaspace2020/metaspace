@@ -191,12 +191,13 @@ type CreateDatasetArgs = {
   id?: string,
   input: DatasetCreateInput,
   priority?: Int,
+  force?: boolean,           // Only used by reprocess
   reprocess?: boolean,       // Only used by reprocess
   delFirst?: boolean,        // Only used by reprocess
   skipValidation?: boolean,  // Only used by reprocess
 };
 const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
-  const {input, priority, skipValidation} = args;
+  const {input, priority, force, skipValidation} = args;
   const {user, connection, isAdmin, getUserIdOrFail} = ctx;
   const dsId = args.id || newDatasetId();
   const dsIdWasSpecified = !!args.id;
@@ -232,6 +233,7 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   await smAPIRequest(url, {
     doc: {...input, metadata},
     priority: priority,
+    force: force,
     email: user!.email,
   });
 
@@ -253,6 +255,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       input: ds as any, // TODO: map this properly
       priority: priority,
       reprocess: true,
+      force: true,
       skipValidation: true,
       delFirst: delFirst,
     }, ctx);

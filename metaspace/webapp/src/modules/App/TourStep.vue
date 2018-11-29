@@ -129,17 +129,18 @@
            timeout = minTimeout;
 
        function showStep() {
-         let el = document.querySelector(self.step.target);
-         if (!el) {
-           timeout *= factor;
-           if (timeout > maxTimeout)
+         if (self.step != null) {
+           let el = document.querySelector(self.step.target);
+           if (!el) {
+             timeout *= factor;
+             if (timeout > maxTimeout)
+               return;
+             window.setTimeout(showStep, timeout);
              return;
-           window.setTimeout(showStep, timeout);
-           return;
-         }
+           }
 
-         self.popper = new Popper(el, self.$refs.container,
-                                  {placement: self.step.placement});
+           self.popper = new Popper(el, self.$refs.container, { placement: self.step.placement });
+         }
        }
 
        Vue.nextTick(() => {
