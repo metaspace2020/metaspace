@@ -43,9 +43,11 @@ class GraphQLClient(object):
         })
         if res.status_code == 401:
             print('Unauthorized. Only public but not private datasets will be accessible.')
+        elif res.status_code == 200:
+            print('Authorized.')
         elif res.status_code != 200:
-            print('Authorized')
             res.raise_for_status()
+
 
     def query(self, query, variables={}):
         res = self.session.post(self._config['graphql_url'],
