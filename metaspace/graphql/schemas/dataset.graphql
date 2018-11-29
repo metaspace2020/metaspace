@@ -178,7 +178,6 @@ input AddOpticalImageInput {
 
 type Query {
   dataset(id: String!): Dataset
-  datasetByName(name: String!): Dataset
 
   allDatasets(orderBy: DatasetOrderBy = ORDER_BY_DATE,
               sortingOrder: SortingOrder = DESCENDING,

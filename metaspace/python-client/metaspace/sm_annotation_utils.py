@@ -42,8 +42,9 @@ class GraphQLClient(object):
             "password": self._config['usr_pass']
         })
         if res.status_code == 401:
-            print('Unauthorized')
+            print('Unauthorized. Only public but not private datasets will be accessible.')
         elif res.status_code != 200:
+            print('Authorized')
             res.raise_for_status()
 
     def query(self, query, variables={}):
@@ -187,6 +188,12 @@ class GraphQLClient(object):
         matches = self.query(query, {'filter': {'name': datasetName}})['allDatasets']
         if not matches:
             raise DatasetNotFound("search by name for {}".format(datasetName))
+        elif len(matches) > 1:
+            print('Found datasets:')
+            for dataset in matches:
+                print(dataset['name'], 'id={}'.format(dataset['id']), '\n')
+            raise Exception('More than 1 dataset were found with the same name, '
+                            'please run your code with the dataset ID instead.')
         else:
             return matches[0]
 
