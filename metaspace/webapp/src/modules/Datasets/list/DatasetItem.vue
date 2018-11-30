@@ -7,15 +7,15 @@
 
     <div class="opt-image" v-if="isOpticalImageSupported">
       <router-link :to="opticalImageAlignmentHref" v-if="canEditOpticalImage">
-        <div v-if="thumbnailCheck" class="edit-opt-image" title="Edit Optical Image">
-          <img class="opt-image-thumbnail" :src="opticalImageSmall" alt="Edit optical image"/>
+        <div v-if="dataset.thumbnailOpticalImageUrl != null" class="edit-opt-image" title="Edit Optical Image">
+          <img class="opt-image-thumbnail" :src="dataset.thumbnailOpticalImageUrl" alt="Edit optical image"/>
         </div>
         <div v-else class="no-opt-image" title="Add Optical Image">
           <img class="add-opt-image-thumbnail" src="../../../assets/no_opt_image.png" alt="Add optical image"/>
         </div>
       </router-link>
       <div v-else class="edit-opt-image-guest">
-        <img v-if="thumbnailCheck" :src="opticalImageSmall" alt="Optical image"/>
+        <img v-if="dataset.thumbnailOpticalImageUrl != null" :src="dataset.thumbnailOpticalImageUrl" alt="Optical image"/>
         <img v-else src="../../../assets/no_opt_image.png" alt="Optical image"/>
       </div>
     </div>
@@ -144,7 +144,6 @@
    datasetVisibilityQuery,
    deleteDatasetQuery,
    reprocessDatasetQuery,
-   thumbnailOptImageQuery,
  } from '../../../api/dataset';
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
@@ -167,10 +166,6 @@
    },
 
    computed: {
-     thumbnailCheck() {
-       return this.opticalImageSmall!=null
-     },
-
      opticalImageAlignmentHref() {
          return {
              name: 'add-optical-image',
@@ -303,7 +298,6 @@
    data() {
      return {
        showMetadataDialog: false,
-       opticalImageSmall: null,
        disabled: false,
        ind: null,
        deferRender: this.idx > 20,
@@ -323,21 +317,6 @@
          return {id: this.dataset.id}
        }
      },
-     thumbnailImage: {
-       query: thumbnailOptImageQuery,
-       variables() {
-         return {
-           datasetId: this.dataset.id,
-         };
-       },
-       skip() {
-         return this.deferRender;
-       },
-       fetchPolicy: 'cache-first',
-       result(res) {
-         this.opticalImageSmall = res.data.thumbnailImage
-       }
-     }
    },
 
    methods: {

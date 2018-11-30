@@ -7,6 +7,7 @@ import {Dataset} from '../../../binding';
 import {rawOpticalImage} from './Query';
 import getScopeRoleForEsDataset from '../util/getScopeRoleForEsDataset';
 import {logger} from '../../../utils';
+import {db} from '../../../utils/knexDb';
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   id(ds) {
@@ -186,6 +187,18 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   async rawOpticalImageUrl(ds, _, ctx) {
     const opticalImage = await rawOpticalImage(ds._source.ds_id, ctx);
     return opticalImage ? opticalImage.url : null;
+  },
+
+  async thumbnailOpticalImageUrl(ds, args, ctx) {
+    const row = await db.from('dataset')
+      .where('id', ds._source.ds_id)
+      .select('thumbnail')
+      .first();
+    if (row && row.thumbnail) {
+      return `/fs/optical_images/${row.thumbnail}`;
+    } else {
+      return null;
+    }
   }
 };
 

@@ -107,6 +107,7 @@ const QueryResolvers: FieldResolversFor<Query, void>  = {
     return QueryResolvers.thumbnailOpticalImageUrl!(source, {datasetId}, ctx, null as any);
   },
 
+  // TODO: deprecated, remove
   async thumbnailOpticalImageUrl(source, {datasetId: dsId}, ctx) {
     // TODO: consider moving to Dataset type
     const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
