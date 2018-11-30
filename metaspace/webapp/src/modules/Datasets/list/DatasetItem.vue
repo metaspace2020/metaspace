@@ -1,5 +1,5 @@
 <template>
-  <div class="dataset-item" :class="disabledClass">
+  <div class="dataset-item" :class="disabledClass" v-if="!deferRender">
 
     <el-dialog title="Provided metadata" :lock-scroll="false" :visible.sync="showMetadataDialog">
       <dataset-info :metadata="metadata" :currentUser="currentUser" />
@@ -148,7 +148,6 @@
  } from '../../../api/dataset';
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
- import { currentUserRoleQuery } from '../../../api/user';
  import reportError from '../../../lib/reportError';
  import {safeJsonParse} from "../../../util";
  import {plural} from '../../../lib/vueFilters';
@@ -159,7 +158,7 @@
 
  export default {
    name: 'dataset-item',
-   props: ['dataset'],
+   props: ['dataset', 'currentUser', 'idx'],
    components: {
      DatasetInfo
    },
@@ -306,10 +305,16 @@
        showMetadataDialog: false,
        opticalImageSmall: null,
        disabled: false,
-       ind: null
+       ind: null,
+       deferRender: this.idx > 20,
      };
    },
-
+   created() {
+     // Defer rendering of most elements until after the first render, so that the page becomes interactive sooner
+     setTimeout(() => {
+       this.deferRender = false;
+     }, Math.floor(this.idx/10) * 10);
+   },
    apollo: {
      datasetVisibility: {
        query: datasetVisibilityQuery,
@@ -318,16 +323,15 @@
          return {id: this.dataset.id}
        }
      },
-     currentUser: {
-       query: currentUserRoleQuery,
-       fetchPolicy: 'cache-first',
-     },
      thumbnailImage: {
        query: thumbnailOptImageQuery,
        variables() {
          return {
            datasetId: this.dataset.id,
          };
+       },
+       skip() {
+         return this.deferRender;
        },
        fetchPolicy: 'cache-first',
        result(res) {
@@ -511,6 +515,7 @@
    position: relative;
    border-radius: 5px;
    width: calc(100% - 6px);
+   min-height: 120px;
    max-width: 950px;
    margin: 3px;
    padding: 0px;
