@@ -66,11 +66,16 @@
           {{ formatSubmitter }}</span><!--
           Be careful not to add empty space before the comma
           --><span v-if="dataset.groupApproved && dataset.group">,
-          <span class="s-group ds-add-filter"
-                title="Filter by this group"
-                @click="addFilter('group')">
-            {{dataset.group.shortName}}
-          </span>
+          <el-dropdown @command="handleDropdownCommand">
+            <span class="s-group ds-add-filter"
+                  @click="addFilter('group')">
+              {{dataset.group.shortName}}
+            </span>
+            <el-dropdown-menu slot="dropdown" v-if="!hideGroupMenu">
+              <el-dropdown-item command="filter_group">Filter by this group</el-dropdown-item>
+              <el-dropdown-item command="view_group">View group</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
         </span>
       </div>
       <div class="ds-item-line" v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
@@ -157,9 +162,9 @@
 
  export default {
    name: 'dataset-item',
-   props: ['dataset', 'currentUser', 'idx'],
+   props: ['dataset', 'currentUser', 'idx', 'hideGroupMenu'],
    components: {
-     DatasetInfo
+     DatasetInfo,
    },
    filters: {
      plural
@@ -398,6 +403,19 @@
          reportError(err);
        } finally {
          this.disabled = false;
+       }
+     },
+
+     handleDropdownCommand(command) {
+       if (command.startsWith('filter_')) {
+         this.addFilter(command.substring('filter_'.length));
+       } else if (command === 'view_group') {
+         this.$router.push({
+           name: 'group',
+           params: {
+             groupIdOrSlug: this.dataset.group.id,
+           },
+         })
        }
      },
 

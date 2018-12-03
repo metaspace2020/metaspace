@@ -47,7 +47,7 @@
       </div>
       <el-tabs v-model="tab">
         <el-tab-pane name="datasets" :label="'Datasets' | optionalSuffixInParens(countDatasets)" lazy>
-          <dataset-list :datasets="groupDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" />
+          <dataset-list :datasets="groupDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" hideGroupMenu />
 
           <div class="dataset-list-footer">
             <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>

@@ -5,6 +5,7 @@
                   :class="i%2 ? 'odd': ''"
                   :currentUser="currentUser"
                   :idx="i"
+                  :hideGroupMenu="hideGroupMenu"
                   @filterUpdate="filter => $emit('filterUpdate', filter)"
                   @datasetMutated="$emit('datasetMutated')">
     </dataset-item>
@@ -19,7 +20,8 @@
     name: 'dataset-list',
     props: {
       datasets: {type: Array, required: true},
-      allowDoubleColumn: {type: Boolean, default: false}
+      allowDoubleColumn: {type: Boolean, default: false},
+      hideGroupMenu: {type: Boolean, default: false}
     },
     components: {
       DatasetItem,
