@@ -20,6 +20,9 @@ registerMockComponent('el-autocomplete');
 registerMockComponent('el-select');
 registerMockComponent('el-option');
 registerMockComponent('el-messagebox');
+registerMockComponent('el-dropdown');
+registerMockComponent('el-dropdown-menu');
+registerMockComponent('el-dropdown-item');
 
 // Mock problematic directives
 registerMockDirective('loading');
