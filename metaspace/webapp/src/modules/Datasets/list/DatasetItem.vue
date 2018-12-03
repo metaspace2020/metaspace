@@ -305,14 +305,18 @@
        showMetadataDialog: false,
        disabled: false,
        ind: null,
-       deferRender: this.idx > 20,
+       deferRender: this.idx >= 20,
      };
    },
-   created() {
+   async created() {
      // Defer rendering of most elements until after the first render, so that the page becomes interactive sooner
-     setTimeout(() => {
-       this.deferRender = false;
-     }, Math.floor(this.idx/10) * 10);
+     const delayFrames = Math.floor(this.idx/10);
+     try {
+       for (let i = 0; i < delayFrames; i++) {
+         await new Promise(resolve => requestAnimationFrame(resolve));
+       }
+     } catch (err) { /* Browser/test doesn't support requestAnimationFrame? */}
+     this.deferRender = false;
    },
    apollo: {
      datasetVisibility: {
