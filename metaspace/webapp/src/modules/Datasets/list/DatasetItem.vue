@@ -304,7 +304,6 @@
      return {
        showMetadataDialog: false,
        disabled: false,
-       ind: null,
        deferRender: this.idx >= 20,
      };
    },
