@@ -139,7 +139,8 @@ const projectsListItemFragment =
           name
           primaryGroup {
             group {
-              name
+              id
+              shortName
             }
           }
         }

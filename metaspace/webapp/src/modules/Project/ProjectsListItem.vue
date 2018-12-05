@@ -17,11 +17,11 @@
             </span>
             {{project.numMembers | plural('Member', 'Members')}}
           </div>
-          <div class="info-line">
+          <div class="info-line" v-if="projectManagers.length>0">
             <span>Manager<span v-if="projectManagers.length>1">s</span>:</span>
             <span v-for="(manager, ind) in projectManagers">
-            {{manager.user.name}} ({{manager.user.primaryGroup.group.name}})
-              <span v-if="ind+1 < projectManagers.length" >, </span></span>
+              {{manager.user.name}}, <span class="s-group group-link" @click="addFilter(manager)">{{shortGroupName(manager)}}</span><!--
+              --><span v-if="ind+1 < projectManagers.length" >, </span></span>
           </div>
           <div class="info-line">
             <span v-if="project.latestUploadDT != null" >
@@ -66,6 +66,18 @@
   import {plural} from '../../lib/vueFilters';
   import {ProjectRoleOptions as UPRO} from '../../api/project';
 
+  interface managerGroupName {
+    user: {
+      name: string
+      primaryGroup: {
+        group: {
+          id: string,
+          shortName: string
+        }
+      }
+    },
+    role: string
+  }
 
   @Component({
     filters: {
@@ -115,6 +127,26 @@
 
     get canManage() {
       return (this.currentUser && this.currentUser.role === 'admin') || this.project.currentUserRole === 'MANAGER';
+    }
+
+
+    shortGroupName(manager: managerGroupName): string|null {
+      if (manager.user.primaryGroup !== null) {
+        return manager.user.primaryGroup.group.shortName
+      } else {
+        return null
+      }
+    }
+
+    addFilter(manager: managerGroupName): void {
+      let filter = Object.assign({}, this.$store.getters.filter);
+      filter['group'] = manager.user.primaryGroup.group.shortName;
+      this.$router.push({
+        name: 'group',
+        params: {
+          groupIdOrSlug: manager.user.primaryGroup.group.id,
+        },
+      })
     }
 
     formatDate(date: string) {
@@ -208,13 +240,12 @@
 
   .project-name {
     margin-bottom: 2px;
-  }
 
-  .project-name a {
-    font-size: 1.5em;
-    text-decoration: none;
-    font-weight: 500;
-    color: #333;
+    a {
+      font-size: 1.5em;
+      text-decoration: none;
+      color: #333;
+    }
   }
 
   .private-icon {
@@ -248,6 +279,14 @@
 
   .delete, .delete > a {
     color: #a00;
+  }
+
+  .s-group {
+    color: sienna;
+  }
+
+  .group-link {
+    cursor: pointer;
   }
 
 

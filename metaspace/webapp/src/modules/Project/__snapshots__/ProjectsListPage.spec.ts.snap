@@ -117,8 +117,10 @@ exports[`ProjectsListPage should match snapshot 1`] = `
                 1 Member
               </div>
               <div class="info-line"><span>Manager<!---->:</span> <span>
-          TestUser1 (allProjects.0.members.0.user.primaryGroup.group.name)
-            <!----></span></div>
+            TestUser1, <span class="s-group group-link">allProjects.0.members.0.user.primaryGroup.group.shortName</span>
+                <!---->
+                </span>
+              </div>
               <div class="info-line"><span>
               Created on <b><span style="font-size: 14px;">2018-08-29</span></b>
                 </span>
@@ -153,8 +155,10 @@ exports[`ProjectsListPage should match snapshot 1`] = `
                 20 Members
               </div>
               <div class="info-line"><span>Manager<!---->:</span> <span>
-          TestUser1 (allProjects.1.members.0.user.primaryGroup.group.name)
-            <!----></span></div>
+            TestUser1, <span class="s-group group-link">allProjects.1.members.0.user.primaryGroup.group.shortName</span>
+                <!---->
+                </span>
+              </div>
               <div class="info-line"><span>
             Last submission <b><span style="font-size: 14px;">2018-08-01</span></b>
                 </span>
