@@ -1,5 +1,4 @@
-import {DeepPartial} from 'typeorm';
-import {createExpiry} from "./operation";
+import {createExpiry, validateResetPasswordToken} from './operation';
 import {
   createUserCredentials,
   resetPassword, sendResetPasswordToken,
@@ -19,7 +18,7 @@ import {
 const mockEmail = _mockEmail as jest.Mocked<typeof _mockEmail>;
 
 async function createUserCredentialsEntities(user?: Object, cred?: Object):
-  Promise<{ user: DeepPartial<User>, cred: DeepPartial<Credentials> }> {
+  Promise<{ user: User, cred: Credentials }> {
   const defaultCred = {
     hash: 'some hash',
     emailVerificationToken: 'abc',
@@ -44,8 +43,8 @@ async function createUserCredentialsEntities(user?: Object, cred?: Object):
   await testEntityManager.insert(User, updUser as User);
 
   return {
-    user: updUser,
-    cred: updCred
+    user: updUser as User,
+    cred: updCred as Credentials
   };
 }
 
@@ -55,170 +54,245 @@ describe('Database operations with user', () => {
   beforeEach(onBeforeEach);
   afterEach(onAfterEach);
 
-  test('create new user credentials', async () => {
-    await createUserCredentials({
-      email: 'admin@localhost',
-      name: 'Name',
-      password: 'password',
+  describe('createUserCredentials', () => {
+    test('create new user credentials', async () => {
+      await createUserCredentials({
+        email: 'admin@localhost',
+        name: 'Name',
+        password: 'password',
+      });
+
+      const cred = await testEntityManager.findOneOrFail(Credentials, {
+        select: ['id', 'hash', 'emailVerified']
+      });
+      expect(cred.id).toEqual(expect.anything());
+      expect(cred.hash).toEqual(expect.anything());
+      expect(cred.emailVerified).toEqual(false);
+
+      const user = await testEntityManager.findOneOrFail(User, { relations: ['credentials'] });
+      expect(user.id).toEqual(expect.anything());
+      expect(user.notVerifiedEmail).toEqual('admin@localhost');
+      expect(user.name).toEqual('Name');
+
+      expect(mockEmail.sendVerificationEmail).toHaveBeenCalledTimes(1);
+      expect(mockEmail.sendVerificationEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
     });
 
-    const cred = await testEntityManager.findOneOrFail(Credentials, {
-      select: ['id', 'hash', 'emailVerified']
-    });
-    expect(cred.id).toEqual(expect.anything());
-    expect(cred.hash).toEqual(expect.anything());
-    expect(cred.emailVerified).toEqual(false);
+    test('create credentials when user already exists', async () => {
+      let {user, cred} = await createUserCredentialsEntities(
+        { notVerifiedEmail: 'admin@localhost' });
 
-    const user = await testEntityManager.findOneOrFail(User, { relations: ['credentials'] });
-    expect(user.id).toEqual(expect.anything());
-    expect(user.notVerifiedEmail).toEqual('admin@localhost');
-    expect(user.name).toEqual('Name');
+      await createUserCredentials({
+        name: 'Name',
+        password: 'password',
+        email: 'admin@localhost',
+      });
 
-    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledTimes(1);
-    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
-  });
+      let newCred = (await testEntityManager.findOne(Credentials)) as Credentials;
+      expect(newCred).toMatchObject({
+        ...cred,
+        hash: expect.anything(),
+      });
 
-  test('create credentials when user already exists', async () => {
-    let {user, cred} = await createUserCredentialsEntities(
-      { notVerifiedEmail: 'admin@localhost' });
-
-    await createUserCredentials({
-      name: 'Name',
-      password: 'password',
-      email: 'admin@localhost',
+      expect(mockEmail.sendVerificationEmail).toHaveBeenCalledTimes(1);
+      expect(mockEmail.sendVerificationEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
     });
 
-    let newCred = (await testEntityManager.findOne(Credentials)) as Credentials;
-    expect(newCred).toMatchObject({
-      ...cred,
-      hash: expect.anything(),
+    test('create credentials when user already exists but email verification token expired', async () => {
+      let {user: oldUser, cred: oldCred} = await createUserCredentialsEntities(
+        { notVerifiedEmail: 'admin@localhost' },
+        { emailVerified: false, emailVerificationTokenExpires: createExpiry(-1) });
+
+      await createUserCredentials({
+        name: 'Name',
+        password: 'password',
+        email: 'admin@localhost'
+      });
+
+      const newCred = (await testEntityManager.findOne(Credentials)) as Credentials;
+      expect(newCred.hash).not.toEqual(oldCred.hash);
+      expect(newCred.emailVerificationToken).not.toEqual(oldCred.emailVerificationToken);
+      expect(newCred.emailVerificationTokenExpires).toEqual(expect.anything());
+      expect(newCred.emailVerificationTokenExpires!.valueOf())
+        .toBeGreaterThan((oldCred.emailVerificationTokenExpires as Moment).valueOf());
+
+      expect(mockEmail.sendVerificationEmail).toHaveBeenCalledTimes(1);
+      expect(mockEmail.sendVerificationEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
     });
 
-    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledTimes(1);
-    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
+    test('create user when it already exists, email verified', async () => {
+      let {user, cred} = await createUserCredentialsEntities({email: 'admin@localhost'}, {emailVerified: true});
+
+      await createUserCredentials({
+        name: 'Name',
+        password: 'password',
+        email: 'admin@localhost'
+      });
+
+      const updCred = await testEntityManager.findOne(Credentials);
+      expect(updCred).toMatchObject({
+        ...cred,
+        hash: expect.anything(),
+      });
+
+      expect(mockEmail.sendLoginEmail).toHaveBeenCalledTimes(1);
+      expect(mockEmail.sendLoginEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
+    });
   });
 
-  test('create credentials when user already exists but email verification token expired', async () => {
-    let {user: oldUser, cred: oldCred} = await createUserCredentialsEntities(
-      { notVerifiedEmail: 'admin@localhost' },
-      { emailVerified: false, emailVerificationTokenExpires: createExpiry(-1) });
 
-    await createUserCredentials({
-      name: 'Name',
-      password: 'password',
-      email: 'admin@localhost'
+  describe('verifyEmail', () => {
+    test('verify email', async () => {
+      let {user, cred} = await createUserCredentialsEntities({ notVerifiedEmail: 'admin@localhost' });
+
+      const verifiedUser = await verifyEmail('admin@localhost', 'abc');
+
+      const updUser = (await findUserById(verifiedUser!.id)) as User;
+      expect(updUser.credentials).toMatchObject({
+        emailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationTokenExpires: null
+      });
+
+      expect(verifiedUser!.email).toMatch('admin@localhost');
+      expect(verifiedUser!.notVerifiedEmail).toBeNull();
+
+      const savedUser = (await testEntityManager.findOne(User, {
+        relations: ['credentials', 'groups']
+      })) as User;
+      expect(savedUser).toMatchObject(updUser);
     });
 
-    const newCred = (await testEntityManager.findOne(Credentials)) as Credentials;
-    expect(newCred.hash).not.toEqual(oldCred.hash);
-    expect(newCred.emailVerificationToken).not.toEqual(oldCred.emailVerificationToken);
-    expect(newCred.emailVerificationTokenExpires).toEqual(expect.anything());
-    expect(newCred.emailVerificationTokenExpires!.valueOf())
-      .toBeGreaterThan((oldCred.emailVerificationTokenExpires as Moment).valueOf());
+    test('verify email fails, token expired', async () => {
+      let {user, cred} = await createUserCredentialsEntities(
+        { notVerifiedEmail: 'admin@localhost' },
+        { emailVerificationTokenExpires: createExpiry(-1) });
 
-    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledTimes(1);
-    expect(mockEmail.sendVerificationEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
+      const updUser = await verifyEmail('admin@localhost', 'abc');
+
+      expect(updUser).toBeNull();
+    });
   });
 
-  test('create user when it already exists, email verified', async () => {
-    let {user, cred} = await createUserCredentialsEntities({email: 'admin@localhost'}, {emailVerified: true});
+  describe('sendResetPasswordToken', () => {
+    test('send reset password token', async () => {
+      await createUserCredentialsEntities({ email: 'admin@localhost' });
 
-    await createUserCredentials({
-      name: 'Name',
-      password: 'password',
-      email: 'admin@localhost'
+      await sendResetPasswordToken('admin@localhost');
+
+      const updCred = (await testEntityManager.findOne(Credentials)) as Credentials;
+      expect(updCred.resetPasswordToken).not.toBeNull();
+      expect(updCred.resetPasswordTokenExpires).not.toBeNull();
+
+      expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledTimes(1);
+      expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
     });
 
-    const updCred = await testEntityManager.findOne(Credentials);
-    expect(updCred).toMatchObject({
-      ...cred,
-      hash: expect.anything(),
+    test('send reset password token, token refreshed', async () => {
+      const {user, cred} = await createUserCredentialsEntities(
+        { email: 'admin@localhost' },
+        { resetPasswordTokenExpires: createExpiry(-1) });
+
+      await sendResetPasswordToken('admin@localhost');
+
+      let updCred = (await testEntityManager.findOne(Credentials)) as Credentials;
+      expect(updCred.resetPasswordToken).not.toEqual(cred.resetPasswordToken);
+
+      expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledTimes(1);
+      expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
     });
 
-    expect(mockEmail.sendLoginEmail).toHaveBeenCalledTimes(1);
-    expect(mockEmail.sendLoginEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
-  });
+    test('send reset password token, inactive user', async () => {
+      await createUserCredentialsEntities({ notVerifiedEmail: 'inactive@user' });
 
-  test('verify email', async () => {
-    let {user, cred} = await createUserCredentialsEntities({ notVerifiedEmail: 'admin@localhost' });
+      await sendResetPasswordToken('inactive@user');
 
-    const verifiedUser = await verifyEmail('admin@localhost', 'abc');
-
-    const updUser = (await findUserById(verifiedUser!.id)) as User;
-    expect(updUser.credentials).toMatchObject({
-      emailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationTokenExpires: null
+      expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledTimes(1);
+      expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledWith('inactive@user', expect.anything());
     });
 
-    expect(verifiedUser!.email).toMatch('admin@localhost');
-    expect(verifiedUser!.notVerifiedEmail).toBeNull();
+    test('send reset password token, user doesn\'t exist', async () => {
 
-    const savedUser = (await testEntityManager.findOne(User, {
-      relations: ['credentials', 'groups']
-    })) as User;
-    expect(savedUser).toMatchObject(updUser);
+      await sendResetPasswordToken('i@dont.exist');
+
+      expect(mockEmail.sendCreateAccountEmail).toHaveBeenCalledTimes(1);
+      expect(mockEmail.sendCreateAccountEmail).toHaveBeenCalledWith('i@dont.exist', expect.anything());
+    });
   });
 
-  test('verify email fails, token expired', async () => {
-    let {user, cred} = await createUserCredentialsEntities(
-      { notVerifiedEmail: 'admin@localhost' },
-      { emailVerificationTokenExpires: createExpiry(-1) });
+  describe('validateResetPasswordToken', () => {
+    const email = 'admin@localhost';
+    const token = 'abc';
+    const testCases = [
+      {testCase: 'valid token', expiry: 1, tokenToTry: token, expected: true},
+      {testCase: 'invalid token', expiry: 1, tokenToTry: 'def', expected: false},
+      {testCase: 'expired token', expiry: -1, tokenToTry: token, expected: false},
+    ];
 
-    const updUser = await verifyEmail('admin@localhost', 'abc');
+    testCases.forEach(({testCase, tokenToTry, expiry, expected}) => {
+      test(testCase, async () => {
+        const {user, cred} = await createUserCredentialsEntities(
+          { email }, {
+            resetPasswordToken: token,
+            resetPasswordTokenExpires: createExpiry(expiry)
+          });
 
-    expect(updUser).toBeNull();
+        const result = await validateResetPasswordToken(email, tokenToTry);
+
+        expect(result).toBe(expected);
+      });
+    });
   });
 
-  test('send reset password token', async () => {
-    await createUserCredentialsEntities({ email: 'admin@localhost' });
+  describe('sendResetPasswordToken', () => {
+    test('reset password', async () => {
+      const {user, cred} = await createUserCredentialsEntities(
+        { email: 'admin@localhost' }, {
+          resetPasswordToken: 'abc',
+          resetPasswordTokenExpires: createExpiry(1)
+        });
 
-    await sendResetPasswordToken('admin@localhost');
+      await resetPassword('admin@localhost', 'new password', 'abc');
 
-    const updCred = (await testEntityManager.findOne(Credentials)) as Credentials;
-    expect(updCred.resetPasswordToken).not.toBeNull();
-    expect(updCred.resetPasswordTokenExpires).not.toBeNull();
+      let updCred = (await testEntityManager.findOne(Credentials, cred.id)) as Credentials;
+      expect(await verifyPassword('new password', updCred.hash)).toBeTruthy();
+    });
 
-    expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledTimes(1);
-    expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
-  });
+    test('reset password fails, token expired', async () => {
+      const {user, cred} = await createUserCredentialsEntities(
+        {}, {
+          resetPasswordToken: 'abc',
+          resetPasswordTokenExpires: createExpiry(-1)
+        });
 
-  test('send reset password token, token refreshed', async () => {
-    const {user, cred} = await createUserCredentialsEntities(
-      { email: 'admin@localhost' },
-      { resetPasswordTokenExpires: createExpiry(-1) });
+      const updUser = await resetPassword('admin@localhost', 'new password', 'abc');
 
-    await sendResetPasswordToken('admin@localhost');
+      expect(updUser).toBeUndefined();
+    });
 
-    let updCred = (await testEntityManager.findOne(Credentials)) as Credentials;
-    expect(updCred.resetPasswordToken).not.toEqual(cred.resetPasswordToken);
-
-    expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledTimes(1);
-    expect(mockEmail.sendResetPasswordEmail).toHaveBeenCalledWith('admin@localhost', expect.anything());
-  });
-
-  test('reset password', async () => {
-    const {user, cred} = await createUserCredentialsEntities(
-      { email: 'admin@localhost' }, {
+    test('reset password, inactive user', async () => {
+      const {user, cred} = await createUserCredentialsEntities({
+        notVerifiedEmail: 'inactive@user',
+        name: 'inactive user'
+      }, {
+        emailVerified: false,
         resetPasswordToken: 'abc',
         resetPasswordTokenExpires: createExpiry(1)
       });
 
-    await resetPassword('admin@localhost', 'new password', 'abc');
+      await resetPassword('inactive@user', 'new password', 'abc');
 
-    let updCred = (await testEntityManager.findOne(Credentials)) as Credentials;
-    expect(await verifyPassword('new password', updCred.hash)).toBeTruthy();
-  });
-
-  test('reset password fails, token expired', async () => {
-    const {user, cred} = await createUserCredentialsEntities(
-      {}, {
-        resetPasswordToken: 'abc',
-        resetPasswordTokenExpires: createExpiry(-1)
-      });
-
-    const updUser = await resetPassword('admin@localhost', 'new password', 'abc');
-
-    expect(updUser).toBeUndefined();
+      let updUser = await testEntityManager.findOneOrFail(User, user.id, {relations: ['credentials']});
+      expect(await verifyPassword('new password', updUser.credentials.hash)).toBeTruthy();
+      expect(updUser).toMatchObject({
+        email: 'inactive@user',
+        notVerifiedEmail: null,
+        credentials: {
+          emailVerified: true,
+          emailVerificationToken: null,
+          emailVerificationTokenExpires: null,
+        }
+      })
+    });
   });
 });
