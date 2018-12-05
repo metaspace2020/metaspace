@@ -7,7 +7,7 @@ import {Dataset as DatasetModel} from '../../dataset/model';
 
 const UserProjectResolvers: FieldResolversFor<UserProject, UserProjectSource> = {
   async project(userProject, args, ctx: Context): Promise<ProjectSource> {
-    const project = await ctx.connection.getCustomRepository(ProjectSourceRepository)
+    const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, userProject.projectId);
 
     if (project != null) {
@@ -16,13 +16,13 @@ const UserProjectResolvers: FieldResolversFor<UserProject, UserProjectSource> = 
       throw new UserError('Project not found');
     }
   },
-  async numDatasets(userProject, args, { connection }: Context): Promise<number> {
+  async numDatasets(userProject, args, { entityManager }: Context): Promise<number> {
     // NOTE: This number includes private datasets. It is only secure because we *currently* only resolve
     // `UserProjectSource`s when you are in the same project as the user, and thus allowed to see the private datasets
     // that are also in that project.
     // If this assumption changes, we'll have to consider whether showing a number that includes private datasets is a privacy breach.
     const { userId, projectId } = userProject;
-    return await connection.getRepository(DatasetModel)
+    return await entityManager.getRepository(DatasetModel)
       .createQueryBuilder('dataset')
       .innerJoin('dataset.datasetProjects', 'datasetProject')
       .innerJoin('(SELECT id, status FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')

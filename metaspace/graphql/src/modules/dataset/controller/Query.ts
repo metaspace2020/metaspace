@@ -12,11 +12,11 @@ const resolveDatasetScopeRole = async (ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER;
   if (ctx.user) {
     if (dsId) {
-      const ds = await ctx.connection.getRepository(DatasetModel).findOne({
+      const ds = await ctx.entityManager.getRepository(DatasetModel).findOne({
         where: { id: dsId }
       });
       if (ds) {
-        const userGroup = await ctx.connection.getRepository(UserGroupModel).findOne({
+        const userGroup = await ctx.entityManager.getRepository(UserGroupModel).findOne({
           where: { userId: ctx.user.id, groupId: ds.groupId }
         });
         if (userGroup) {

@@ -4,7 +4,7 @@ import * as Passport from 'passport';
 import {Strategy as LocalStrategy} from 'passport-local';
 import {Strategy as GoogleStrategy} from 'passport-google-oauth20';
 import * as JwtSimple from 'jwt-simple';
-import {Connection} from 'typeorm';
+import {EntityManager} from 'typeorm';
 
 import config from '../../utils/config';
 import {User} from '../user/model';
@@ -297,9 +297,9 @@ const configureResetPassword = (router: IRouter<any>) => {
   });
 };
 
-export const configureAuth = async (app: Express, connection: Connection) => {
+export const configureAuth = async (app: Express, entityManager: EntityManager) => {
   const router = Router();
-  await initOperation(connection);
+  await initOperation(entityManager);
   configurePassport(router);
   configureJwt(router);
   configureLocalAuth(router);

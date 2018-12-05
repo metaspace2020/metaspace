@@ -1,4 +1,4 @@
-import {Connection, EntityManager} from 'typeorm';
+import {EntityManager} from 'typeorm';
 import {Context, UserProjectRoles} from './context';
 import {UserProjectRoleOptions as UPRO} from './modules/project/model';
 import {UserError} from 'graphql-errors';
@@ -7,14 +7,14 @@ import {getUserProjectRoles} from './utils/db';
 import {Request, Response} from 'express';
 
 
-const getContext = (jwtUser: JwtUser | null, connection: Connection | EntityManager,
+const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
                 req: Request, res: Response): Context => {
   const user = jwtUser != null && jwtUser.id != null ? jwtUser : null;
 
   let currentUserProjectRoles: Promise<UserProjectRoles> | null = null;
   const getProjectRoles = async () => {
     if (currentUserProjectRoles == null && user != null && user.id != null) {
-      currentUserProjectRoles = getUserProjectRoles(connection, user.id)
+      currentUserProjectRoles = getUserProjectRoles(entityManager, user.id)
     } else if (currentUserProjectRoles == null) {
       currentUserProjectRoles = Promise.resolve({});
     }
@@ -30,7 +30,7 @@ const getContext = (jwtUser: JwtUser | null, connection: Connection | EntityMana
   };
 
   return {
-    req, res, connection,
+    req, res, entityManager,
     user: user == null || user.id == null ? null : {
       id: user.id,
       role: user.role as ('user' | 'admin'),
@@ -51,7 +51,7 @@ const getContext = (jwtUser: JwtUser | null, connection: Connection | EntityMana
 };
 export default getContext;
 
-export const getContextForTest = (jwtUser: JwtUser | null, connection: Connection | EntityManager): Context => {
+export const getContextForTest = (jwtUser: JwtUser | null, entityManager: EntityManager): Context => {
   // TODO: Add mocks for req & res if/when needed
-  return getContext(jwtUser, connection, null as any, null as any);
+  return getContext(jwtUser, entityManager, null as any, null as any);
 };
