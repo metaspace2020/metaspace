@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcrypt';
 import * as uuid from 'uuid';
-import {Connection, EntityManager, Repository} from 'typeorm';
+import {EntityManager, Repository} from 'typeorm';
 import * as moment from 'moment';
 import {Moment} from 'moment';
 
@@ -21,14 +21,14 @@ export interface UserCredentialsInput {
 
 const NUM_ROUNDS = 12;
 
-let connection: Connection | EntityManager;
+let entityManager: EntityManager;
 let credRepo: Repository<Credentials>;
 let userRepo: Repository<User>;
 
-export const initOperation = async (typeormConn?: Connection | EntityManager) => {
-  connection = typeormConn || await utils.createConnection();
-  credRepo = connection.getRepository(Credentials);
-  userRepo = connection.getRepository(User);
+export const initOperation = async (typeormConn?: EntityManager) => {
+  entityManager = typeormConn || (await utils.createConnection()).manager;
+  credRepo = entityManager.getRepository(Credentials);
+  userRepo = entityManager.getRepository(User);
 };
 
 // FIXME: some mechanism should be added so that a user's other sessions are revoked when they change their password, etc.
@@ -51,7 +51,7 @@ export const findUserById = async (id: string|undefined, credentials: boolean=tr
 };
 
 export const findUserByEmail = async (value: string, field: string='email') => {
-  return utils.findUserByEmail(connection, value, field);
+  return utils.findUserByEmail(entityManager, value, field);
 };
 
 export const findUserByGoogleId = async (googleId: string) => {
@@ -277,8 +277,8 @@ export const resetPassword = async (email: string, password: string, token: stri
 };
 
 export const createInactiveUser = async (email: string): Promise<UserModel> => {
-  const invUserCred = await connection.getRepository(CredentialsModel).save({ emailVerified: false });
-  return await connection.getRepository(UserModel).save({
+  const invUserCred = await entityManager.getRepository(CredentialsModel).save({ emailVerified: false });
+  return await entityManager.getRepository(UserModel).save({
     notVerifiedEmail: email,
     credentials: invUserCred
   }) as UserModel;

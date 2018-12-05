@@ -28,7 +28,7 @@ const getProjectScopeRole = (currentUserRole: UserProjectRole | null): ScopeRole
 const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
   async hasPendingRequest(project, args, ctx: Context): Promise<boolean | null> {
     if (project.currentUserRole === UPRO.MANAGER) {
-      const requests = await ctx.connection
+      const requests = await ctx.entityManager
         .getRepository(UserProjectModel)
         .count({
           where: { projectId: project.id, role: UPRO.PENDING }
@@ -43,7 +43,7 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
       ? { projectId: project.id }
       : { projectId: project.id, role: UPRO.MANAGER };
 
-    const userProjectModels = await ctx.connection
+    const userProjectModels = await ctx.entityManager
       .getRepository(UserProjectModel)
       .createQueryBuilder('user_project')
       .where(filter)
@@ -65,18 +65,18 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
   },
 
   async numMembers(project, args, ctx: Context): Promise<number> {
-    return await ctx.connection
+    return await ctx.entityManager
       .getRepository(UserProjectModel)
       .count({ where: { projectId: project.id, role: In([UPRO.MEMBER, UPRO.MANAGER]) } });
   },
 
   async numDatasets(project, args, ctx: Context): Promise<number> {
     if (canViewProjectMembersAndDatasets(project.currentUserRole, ctx.isAdmin)) {
-      return await ctx.connection
+      return await ctx.entityManager
         .getRepository(DatasetProjectModel)
         .count({ where: { projectId: project.id, approved: true } });
     } else {
-      return await ctx.connection
+      return await ctx.entityManager
         .getRepository(DatasetProjectModel)
         .createQueryBuilder('dataset_project')
         .innerJoinAndSelect('dataset_project.dataset', 'dataset')
@@ -89,7 +89,7 @@ const ProjectResolvers: FieldResolversFor<Project, ProjectSource> = {
   },
 
   async latestUploadDT(project, args, ctx: Context): Promise<Date> {
-    let query = ctx.connection
+    let query = ctx.entityManager
       .getRepository(DatasetProjectModel)
       .createQueryBuilder('dataset_project')
       .innerJoin('dataset_project.dataset', 'dataset')
