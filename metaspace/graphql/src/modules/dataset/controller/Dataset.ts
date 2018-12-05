@@ -7,7 +7,16 @@ import {Dataset} from '../../../binding';
 import {rawOpticalImage} from './Query';
 import getScopeRoleForEsDataset from '../util/getScopeRoleForEsDataset';
 import {logger} from '../../../utils';
-import {db} from '../../../utils/knexDb';
+import {Context} from '../../../context';
+
+export const thumbnailOpticalImageUrl = async (ctx: Context, id: string) => {
+  const result = await ctx.connection.query('SELECT thumbnail FROM public.dataset WHERE id = $1', [id]);
+  if (result && result.length === 1 && result[0].thumbnail != null) {
+    return `/fs/optical_images/${result[0].thumbnail}`;
+  } else {
+    return null;
+  }
+};
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   id(ds) {
@@ -190,15 +199,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   async thumbnailOpticalImageUrl(ds, args, ctx) {
-    const row = await db.from('dataset')
-      .where('id', ds._source.ds_id)
-      .select('thumbnail')
-      .first();
-    if (row && row.thumbnail) {
-      return `/fs/optical_images/${row.thumbnail}`;
-    } else {
-      return null;
-    }
+    return await thumbnailOpticalImageUrl(ctx, ds._source.ds_id);
   }
 };
 
