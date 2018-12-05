@@ -36,33 +36,41 @@ function sortFilterKeys(keys) {
   keys.sort((a, b) => compare(FILTER_SPECIFICATIONS[a].sortOrder || 100, FILTER_SPECIFICATIONS[b].sortOrder || 100));
 }
 
+function updateFilter(state, filter, routerAction = null) {
+  let active = [];
+
+  // drop unset filters
+  for (var i = 0; i < state.orderedActiveFilters.length; i++) {
+    let key = state.orderedActiveFilters[i];
+    if (filter[key] !== undefined)
+      active.push(key);
+  }
+
+  // append newly added filters to the end
+  for (var key in filter)
+    if (filter[key] !== undefined &&
+      active.indexOf(key) == -1)
+      active.push(key);
+
+  // sort
+  sortFilterKeys(active);
+
+  const changedFilterSet = !isEqual(state.orderedActiveFilters, active);
+
+  state.orderedActiveFilters = active;
+  if (routerAction === 'push' || (routerAction == null && changedFilterSet))
+    pushURL(state, filter);
+  else
+    replaceURL(state, filter);
+}
+
 export default {
   updateFilter (state, filter) {
-    let active = [];
+    updateFilter(state, filter);
+  },
 
-    // drop unset filters
-    for (var i = 0; i < state.orderedActiveFilters.length; i++) {
-      let key = state.orderedActiveFilters[i];
-      if (filter[key] !== undefined)
-        active.push(key);
-    }
-
-    // append newly added filters to the end
-    for (var key in filter)
-      if (filter[key] !== undefined &&
-          active.indexOf(key) == -1)
-        active.push(key);
-
-    // sort
-    sortFilterKeys(active);
-
-    const changedFilterSet = !isEqual(state.orderedActiveFilters, active);
-
-    state.orderedActiveFilters = active;
-    if (changedFilterSet)
-      pushURL(state, filter);
-    else
-      replaceURL(state, filter);
+  replaceFilter (state, filter) {
+    updateFilter(state, filter, 'replace');
   },
 
   addFilter (state, name) {
