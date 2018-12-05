@@ -214,7 +214,8 @@ export const verifyEmail = async (email: string, token: string): Promise<User|nu
 export const sendResetPasswordToken = async (email: string): Promise<void> => {
   const user = await findUserByEmail(email) || await findUserByEmail(email, 'not_verified_email');
 
-  if (!user || (!user.email && !user.name)) {
+  // Inactive users can reset their password only if they have a name, otherwise they have to create an account
+  if (user == null || (user.email == null && (user.name == null || user.name === ''))) {
     sendCreateAccountEmail(email, `${config.web_public_url}/account/create-account`);
   } else {
     logger.info(`Creating password reset token for ${user.email == null ? 'inactive ' : ''}user ${user.id}`);
