@@ -61,11 +61,12 @@ async function createHttpServerAsync(config) {
 
   app.use(bodyParser.json());
   configureSession(app);
-  await configureAuth(app, connection);
+  await configureAuth(app, connection.manager);
+
 
   const apollo = new ApolloServer({
     schema: executableSchema,
-    context: ({req, res}) => getContext(req.user && req.user.user, connection, req, res),
+    context: ({req, res}) => getContext(req.user && req.user.user, connection.manager, req, res),
     playground: {
       settings: {
         'editor.theme': 'light',

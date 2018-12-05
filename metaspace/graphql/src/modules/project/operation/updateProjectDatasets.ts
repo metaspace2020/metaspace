@@ -6,8 +6,8 @@ import {smAPIUpdateDataset} from '../../../utils/smAPI';
 
 
 export default async function (ctx: Context, projectId: string, datasetIds: string[], approved: Boolean | null) {
-  const datasetProjectRepository = ctx.connection.getRepository(DatasetProjectModel);
-  const datasets = await ctx.connection.getRepository(DatasetModel)
+  const datasetProjectRepository = ctx.entityManager.getRepository(DatasetProjectModel);
+  const datasets = await ctx.entityManager.getRepository(DatasetModel)
     .find({
       where: { id: In(datasetIds) },
       relations: ['datasetProjects'],
