@@ -178,6 +178,36 @@ input AddOpticalImageInput {
   transform: [[Float]]!
 }
 
+type DatasetRelationship {
+  type: String!
+  id: String!
+  name: String!
+}
+enum DatasetAction {
+  ANNOTATE
+  UPDATE
+  INDEX
+  DELETE
+}
+enum DatasetActionStage {
+  QUEUED
+  STARTED
+  FINISHED
+  FAILED
+}
+
+type DatasetStatusUpdate {
+  dataset: Dataset
+  relationship: DatasetRelationship
+  action: DatasetAction!
+  stage: DatasetActionStage!
+  is_new: Boolean
+}
+
+type DatasetDeletion {
+  id: String!
+}
+
 type Query {
   dataset(id: String!): Dataset
 
@@ -228,12 +258,9 @@ type Mutation {
   deleteOpticalImage(datasetId: String!): String!
 }
 
-type DatasetStatusUpdate {
-  dataset: Dataset
-}
-
 type Subscription {
   datasetStatusUpdated: DatasetStatusUpdate
+  datasetDeleted: DatasetDeletion
 }
 
 schema {

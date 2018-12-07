@@ -1,8 +1,8 @@
 import {Request, Response} from 'express';
 import {EntityManager} from 'typeorm';
-import {ProjectRole} from '../../webapp/src/api/project';
+import {UserProjectRole} from './binding';
 
-export type UserProjectRoles = {[projectId: string]: ProjectRole | undefined}
+export type UserProjectRoles = {[projectId: string]: UserProjectRole | undefined}
 
 export interface ContextUser {
   role: 'user' | 'admin';

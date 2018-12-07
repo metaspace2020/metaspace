@@ -3,6 +3,7 @@ import {Context} from './context';
 import {User as UserModel} from './modules/user/model';
 import {Project as ProjectModel, UserProject as UserProjectModel} from './modules/project/model';
 import {UserProjectRole} from './binding';
+import {ESDataset} from '../esConnector';
 
 export type ScopeRole =
   'PROFILE_OWNER'
@@ -31,30 +32,7 @@ export type ProjectSource = ProjectModel & { currentUserRole: UserProjectRole | 
 export type UserProjectSource = {
   [field in keyof UserProjectModel]: field extends 'user' ? UserSource : UserProjectModel[field]
 };
-export interface DatasetSource {
-  _source: {
-    ds_id: string;
-    ds_name: string;
-    ds_upload_dt: string;
-    ds_config: any;
-    ds_meta: any;
-    ds_status: string;
-    ds_input_path: string;
-    ds_is_public: boolean;
-    ds_mol_dbs: string[];
-    ds_adducts: string[];
-    ds_acq_geometry: any;
-    ds_submitter_id: string;
-    ds_submitter_name: string;
-    ds_submitter_email: string;
-    ds_group_id: string | null;
-    ds_group_name: string | null;
-    ds_group_short_name: string | null;
-    ds_group_approved: boolean;
-    ds_project_ids?: string[];
-    annotation_counts: any[];
-  };
-}
+export type DatasetSource = ESDataset;
 export interface DatasetUserSource {
   id: string;
   name: string;

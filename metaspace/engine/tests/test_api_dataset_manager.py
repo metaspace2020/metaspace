@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, call
 from datetime import datetime
 from PIL import Image
 
+from sm.engine.daemon_action import DaemonAction
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.queue import QueuePublisher
@@ -28,7 +29,7 @@ def create_api_ds_man(sm_config, db=None, es=None, img_store=None,
 
 
 def create_ds_doc(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
-                  metadata=None, status=DatasetStatus.NEW, mol_dbs=None, adducts=None):
+                  metadata=None, status=DatasetStatus.QUEUED, mol_dbs=None, adducts=None):
     upload_dt = upload_dt or datetime.now()
     if not mol_dbs:
         mol_dbs = ['HMDB-v4']
@@ -51,19 +52,19 @@ class TestSMapiDatasetManager:
 
         ds_man.add(ds_doc, priority=DatasetActionPriority.HIGH)
 
-        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': 'annotate'}
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.ANNOTATE}
         action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.HIGH)])
 
     def test_delete_ds(self, test_db, sm_config, ds_config):
         update_queue = MagicMock(spec=QueuePublisher)
         db, ds_man = create_api_ds_man(sm_config, update_queue=update_queue)
         ds_id = '2000-01-01'
-        ds = Dataset(**create_ds_doc(ds_id=ds_id))
+        ds = Dataset(**create_ds_doc(ds_id=ds_id, status=DatasetStatus.FINISHED))
         ds.save(db)
 
         ds_man.delete(ds_id)
 
-        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': 'delete'}
+        msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.DELETE}
         update_queue.publish.assert_has_calls([call(msg, DatasetActionPriority.STANDARD)])
 
     def test_add_optical_image(self, fill_db, sm_config, ds_config):

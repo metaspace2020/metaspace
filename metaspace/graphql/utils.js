@@ -2,7 +2,6 @@ const slack = require('node-slack'),
   jsondiffpatch = require('jsondiffpatch'),
   winston = require('winston'),
   moment = require('moment'),
-  { PubSub } = require('graphql-subscriptions'),
   fetch = require('node-fetch');
 
 const config = require('config');
@@ -49,15 +48,6 @@ const logger = new (winston.Logger)({
   ]
 });
 
-const pubsub = new PubSub();
-
-function canUserViewPgDataset(dataset, user) {
-  return dataset.is_public
-    || (user != null && user.role === 'admin')
-    || (user != null && user.email != null && user.email !== ''
-      && dataset.metadata.Submitted_By.Submitter.Email === user.email);
-}
-
 const deprecatedMolDBs = new Set(['HMDB', 'ChEBI', 'LIPID_MAPS', 'SwissLipids', 'COTTON_HMDB']);
 
 async function fetchMolecularDatabases() {
@@ -74,11 +64,9 @@ async function wait(ms) {
 export {
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
-  canUserViewPgDataset,
   fetchMolecularDatabases,
   deprecatedMolDBs,
   wait,
   config,
   logger,
-  pubsub,
 };

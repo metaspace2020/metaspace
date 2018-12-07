@@ -2,14 +2,13 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as _ from 'lodash';
 import {promisify} from 'util';
-import { pubsub } from '../../../utils';
 import {UserError} from 'graphql-errors';
 import {SystemHealth, UpdateSystemHealthInput} from '../../binding';
 import {IResolvers} from 'graphql-tools';
 import {Context} from '../../context';
+import {asyncIterateSystemHealthUpdated, publishSystemHealthUpdated} from '../../utils/pubsub';
 
 
-const SYSTEM_HEALTH_CHANNEL = 'systemHealthUpdated';
 const healthFile = path.join(path.dirname(require.main!.filename), 'health.json');
 const defaultHealth: SystemHealth = {
   canMutate: true,
@@ -44,7 +43,7 @@ export const Resolvers: IResolvers<any, Context> = {
       if (user && user.role === 'admin') {
         const newHealth = {...defaultHealth, ...health};
         currentHealth = Promise.resolve(newHealth);
-        pubsub.publish(SYSTEM_HEALTH_CHANNEL, newHealth);
+        publishSystemHealthUpdated(newHealth);
 
         // Don't persist to disk in development mode, as it triggers nodemon to restart the process
         if (process.env.NODE_ENV !== 'development') {
@@ -67,7 +66,7 @@ export const Resolvers: IResolvers<any, Context> = {
 
   Subscription: {
     systemHealthUpdated: {
-      subscribe: () => pubsub.asyncIterator<SystemHealth>(SYSTEM_HEALTH_CHANNEL),
+      subscribe: asyncIterateSystemHealthUpdated,
       resolve: (payload: SystemHealth) => payload,
     },
   },

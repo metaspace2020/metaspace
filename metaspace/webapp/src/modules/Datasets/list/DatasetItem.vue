@@ -103,11 +103,11 @@
         <br/>
       </span>
 
-      <span v-if="['ANNOTATING', 'INDEXING'].includes(dataset.status)">
+      <span v-if="dataset.status === 'ANNOTATING'">
         <div class="striped-progressbar processing" title="Processing is under way"></div>
       </span>
 
-      <span v-if="dataset.status == 'QUEUED'">
+      <span v-if="dataset.status === 'QUEUED'">
         <div class="striped-progressbar queued" title="Waiting in the queue"></div>
       </span>
 
@@ -261,7 +261,7 @@
          if (this.currentUser.role === 'admin')
            return true;
          if (this.currentUser.id === this.dataset.submitter.id
-           && !['QUEUED', 'ANNOTATING', 'INDEXING'].includes(this.dataset.status))
+           && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status))
            return true;
        }
        return false;
@@ -366,7 +366,8 @@
          && this.dataset.status !== 'FINISHED';
        try {
          await this.$confirm(`Are you sure you want to ${force ? 'FORCE-DELETE' : 'delete'} ${this.formatDatasetName}?`, {
-           type: force ? 'warning' : null
+           type: force ? 'warning' : null,
+           lockScroll: false,
          });
        } catch (cancel) {
          return;
