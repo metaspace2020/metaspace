@@ -409,6 +409,7 @@
    font-size: 16px;
    align-self: stretch;
    justify-content: center;
+   white-space: nowrap;
  }
  .limit-width {
    max-width: 250px;

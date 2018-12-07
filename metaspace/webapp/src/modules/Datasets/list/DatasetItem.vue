@@ -1,5 +1,5 @@
 <template>
-  <div class="dataset-item" :class="disabledClass">
+  <div class="dataset-item" :class="disabledClass" v-if="!deferRender">
 
     <el-dialog title="Provided metadata" :lock-scroll="false" :visible.sync="showMetadataDialog">
       <dataset-info :metadata="metadata" :currentUser="currentUser" />
@@ -7,15 +7,15 @@
 
     <div class="opt-image" v-if="isOpticalImageSupported">
       <router-link :to="opticalImageAlignmentHref" v-if="canEditOpticalImage">
-        <div v-if="thumbnailCheck" class="edit-opt-image" title="Edit Optical Image">
-          <img class="opt-image-thumbnail" :src="opticalImageSmall" alt="Edit optical image"/>
+        <div v-if="dataset.thumbnailOpticalImageUrl != null" class="edit-opt-image" title="Edit Optical Image">
+          <img class="opt-image-thumbnail" :src="dataset.thumbnailOpticalImageUrl" alt="Edit optical image"/>
         </div>
         <div v-else class="no-opt-image" title="Add Optical Image">
           <img class="add-opt-image-thumbnail" src="../../../assets/no_opt_image.png" alt="Add optical image"/>
         </div>
       </router-link>
       <div v-else class="edit-opt-image-guest">
-        <img v-if="thumbnailCheck" :src="opticalImageSmall" alt="Optical image"/>
+        <img v-if="dataset.thumbnailOpticalImageUrl != null" :src="dataset.thumbnailOpticalImageUrl" alt="Optical image"/>
         <img v-else src="../../../assets/no_opt_image.png" alt="Optical image"/>
       </div>
     </div>
@@ -66,11 +66,16 @@
           {{ formatSubmitter }}</span><!--
           Be careful not to add empty space before the comma
           --><span v-if="dataset.groupApproved && dataset.group">,
-          <span class="s-group ds-add-filter"
-                title="Filter by this group"
-                @click="addFilter('group')">
-            {{dataset.group.shortName}}
-          </span>
+          <el-dropdown @command="handleDropdownCommand" :showTimeout="50" placement="bottom">
+            <span class="s-group ds-add-filter"
+                  @click="addFilter('group')">
+              {{dataset.group.shortName}}
+            </span>
+            <el-dropdown-menu slot="dropdown" v-if="!hideGroupMenu">
+              <el-dropdown-item command="filter_group">Filter by this group</el-dropdown-item>
+              <el-dropdown-item command="view_group">View group</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
         </span>
       </div>
       <div class="ds-item-line" v-if="dataset.status == 'FINISHED' && this.dataset.fdrCounts">
@@ -144,11 +149,9 @@
    datasetVisibilityQuery,
    deleteDatasetQuery,
    reprocessDatasetQuery,
-   thumbnailOptImageQuery,
  } from '../../../api/dataset';
  import {mdTypeSupportsOpticalImages} from '../../../util';
  import {encodeParams} from '../../Filters/index';
- import { currentUserRoleQuery } from '../../../api/user';
  import reportError from '../../../lib/reportError';
  import {safeJsonParse} from "../../../util";
  import {plural} from '../../../lib/vueFilters';
@@ -159,19 +162,15 @@
 
  export default {
    name: 'dataset-item',
-   props: ['dataset'],
+   props: ['dataset', 'currentUser', 'idx', 'hideGroupMenu'],
    components: {
-     DatasetInfo
+     DatasetInfo,
    },
    filters: {
      plural
    },
 
    computed: {
-     thumbnailCheck() {
-       return this.opticalImageSmall!=null
-     },
-
      opticalImageAlignmentHref() {
          return {
              name: 'add-optical-image',
@@ -259,7 +258,7 @@
 
      canEdit() {
        if (this.currentUser != null) {
-         if (this.currentUser.role === 'admin' && this.dataset.status !== 'ANNOTATING')
+         if (this.currentUser.role === 'admin')
            return true;
          if (this.currentUser.id === this.dataset.submitter.id
            && !['QUEUED', 'ANNOTATING'].includes(this.dataset.status))
@@ -274,8 +273,7 @@
 
      canReprocess() {
        return this.currentUser != null
-         && this.currentUser.role === 'admin'
-         && this.dataset.status !== 'ANNOTATING';
+         && this.currentUser.role === 'admin';
      },
 
      editHref() {
@@ -305,12 +303,20 @@
    data() {
      return {
        showMetadataDialog: false,
-       opticalImageSmall: null,
        disabled: false,
-       ind: null
+       deferRender: this.idx >= 20,
      };
    },
-
+   async created() {
+     // Defer rendering of most elements until after the first render, so that the page becomes interactive sooner
+     const delayFrames = Math.floor(this.idx/10);
+     try {
+       for (let i = 0; i < delayFrames; i++) {
+         await new Promise(resolve => requestAnimationFrame(resolve));
+       }
+     } catch (err) { /* Browser/test doesn't support requestAnimationFrame? */}
+     this.deferRender = false;
+   },
    apollo: {
      datasetVisibility: {
        query: datasetVisibilityQuery,
@@ -319,22 +325,6 @@
          return {id: this.dataset.id}
        }
      },
-     currentUser: {
-       query: currentUserRoleQuery,
-       fetchPolicy: 'cache-first',
-     },
-     thumbnailImage: {
-       query: thumbnailOptImageQuery,
-       variables() {
-         return {
-           datasetId: this.dataset.id,
-         };
-       },
-       fetchPolicy: 'cache-first',
-       result(res) {
-         this.opticalImageSmall = res.data.thumbnailImage
-       }
-     }
    },
 
    methods: {
@@ -407,6 +397,7 @@
            mutation: reprocessDatasetQuery,
            variables: {
              id: this.dataset.id,
+             force: true,
            }
          });
          this.$notify.success("Dataset sent for reprocessing");
@@ -416,6 +407,19 @@
          reportError(err);
        } finally {
          this.disabled = false;
+       }
+     },
+
+     handleDropdownCommand(command) {
+       if (command.startsWith('filter_')) {
+         this.addFilter(command.substring('filter_'.length));
+       } else if (command === 'view_group') {
+         this.$router.push({
+           name: 'group',
+           params: {
+             groupIdOrSlug: this.dataset.group.id,
+           },
+         })
        }
      },
 
@@ -512,6 +516,7 @@
    position: relative;
    border-radius: 5px;
    width: calc(100% - 6px);
+   min-height: 120px;
    max-width: 950px;
    margin: 3px;
    padding: 0px;

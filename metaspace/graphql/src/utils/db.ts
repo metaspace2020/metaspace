@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import * as _ from 'lodash';
 import {
   createConnection as createTypeORMConnection,
-  ConnectionOptions, Connection, EntityManager,
+  ConnectionOptions, EntityManager,
 } from 'typeorm';
 
 import config from './config';
@@ -41,16 +41,16 @@ export const createConnection = async () => {
   });
 };
 
-export const findUserByEmail = async (connection: Connection | EntityManager, value: string, field: string='email') => {
-  return await connection.getRepository(UserModel)
+export const findUserByEmail = async (entityManager: EntityManager, value: string, field: string='email') => {
+  return await entityManager.getRepository(UserModel)
     .createQueryBuilder('user')
     .leftJoinAndSelect('user.credentials', 'credentials')
     .where(`LOWER(${field}) = :email`, { email: value.toLowerCase() })
     .getOne() || null;
 };
 
-export const getUserProjectRoles = async (connection: Connection | EntityManager, userId: string) => {
-  const userProjects = await connection.getRepository(UserProjectModel)
+export const getUserProjectRoles = async (entityManager: EntityManager, userId: string) => {
+  const userProjects = await entityManager.getRepository(UserProjectModel)
     .find({ where: { userId } });
   return _.fromPairs(userProjects.map(up => [up.projectId, up.role]));
 };

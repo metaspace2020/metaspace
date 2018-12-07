@@ -77,7 +77,7 @@ export const datasetDetailItemFragment =
       levels
       counts
     }
-    rawOpticalImageUrl
+    thumbnailOpticalImageUrl
   }`;
 
 export const datasetDetailItemsQuery =

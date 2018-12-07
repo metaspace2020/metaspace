@@ -17,6 +17,7 @@ const datasetQueries: FilterQueries = {
     const {data} = await $apollo.query({
       query: gql`query DatasetOptions($filter: DatasetFilter!, $orderBy: DatasetOrderBy, $sortingOrder: SortingOrder) {
         options: allDatasets(filter: $filter, orderBy: $orderBy, sortingOrder: $sortingOrder, limit: 20) {
+         id
          value: id
          label: name
         }
@@ -38,6 +39,7 @@ const datasetQueries: FilterQueries = {
     const {data} = await $apollo.query({
       query: gql`query DatasetNames($ids: String) {
         options: allDatasets(filter: {ids: $ids}) {
+          id
           value: id
           label: name
         }
@@ -55,6 +57,7 @@ const groupQueries: FilterQueries = {
       const { data } = await $apollo.query({
         query: gql`query GroupOptions($query: String!) {
         options: allGroups(query: $query, limit: 20) {
+         id
          value: id
          label: name
         }
@@ -70,6 +73,7 @@ const groupQueries: FilterQueries = {
             id
             groups {
               group {
+                id
                 value: id
                 label: name
               }
@@ -85,6 +89,7 @@ const groupQueries: FilterQueries = {
     const promises = ids.map(groupId => $apollo.query({
       query: gql`query GroupOptionById ($groupId: ID!) {
         group(groupId: $groupId) {
+         id
          value: id
          label: name
         }
@@ -105,6 +110,7 @@ const projectQueries: FilterQueries = {
       const { data } = await $apollo.query({
         query: gql`query ProjectOptions ($query: String!) {
         options: allProjects(query: $query, limit: 20) {
+         id
          value: id
          label: name
         }
@@ -120,6 +126,7 @@ const projectQueries: FilterQueries = {
             id
             projects {
               project {
+                id
                 value: id
                 label: name
               }
@@ -135,6 +142,7 @@ const projectQueries: FilterQueries = {
     const promises = ids.map(projectId => $apollo.query({
       query: gql`query ProjectOptionById ($projectId: ID!) {
         project(projectId: $projectId) {
+         id
          value: id
          label: name
         }
@@ -155,6 +163,7 @@ const submitterQueries: FilterQueries = {
       const { data } = await $apollo.query({
         query: gql`query SubmitterOptions ($query: String!) {
         options: submitterSuggestions(query: $query) {
+         id
          value: id
          label: name
         }
@@ -174,6 +183,7 @@ const submitterQueries: FilterQueries = {
                 id
                 members {
                   user {
+                    id
                     value: id
                     label: name
                   }
@@ -201,6 +211,7 @@ const submitterQueries: FilterQueries = {
     const promises = ids.map(userId => $apollo.query({
       query: gql`query SubmitterOptionById ($userId: ID!) {
         user(userId: $userId) {
+         id
          value: id
          label: name
         }

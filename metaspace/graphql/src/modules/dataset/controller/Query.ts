@@ -5,17 +5,18 @@ import {db} from '../../../utils/knexDb';
 import {Dataset as DatasetModel} from '../model';
 import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/model';
 import {Context} from '../../../context';
+import {thumbnailOpticalImageUrl} from './Dataset';
 
 
 const resolveDatasetScopeRole = async (ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER;
   if (ctx.user) {
     if (dsId) {
-      const ds = await ctx.connection.getRepository(DatasetModel).findOne({
+      const ds = await ctx.entityManager.getRepository(DatasetModel).findOne({
         where: { id: dsId }
       });
       if (ds) {
-        const userGroup = await ctx.connection.getRepository(UserGroupModel).findOne({
+        const userGroup = await ctx.entityManager.getRepository(UserGroupModel).findOne({
           where: { userId: ctx.user.id, groupId: ds.groupId }
         });
         if (userGroup) {
@@ -102,21 +103,12 @@ const QueryResolvers: FieldResolversFor<Query, void>  = {
 
   // TODO: deprecated, remove
   async thumbnailImage(source, {datasetId}, ctx) {
-    return QueryResolvers.thumbnailOpticalImageUrl!(source, {datasetId}, ctx, null as any);
+    return await thumbnailOpticalImageUrl(ctx, datasetId);
   },
 
-  async thumbnailOpticalImageUrl(source, {datasetId: dsId}, ctx) {
-    // TODO: consider moving to Dataset type
-    const ds = await esDatasetByID(dsId, ctx.user);  // check if user has access
-    if (ds) {
-      const row = await (db.from('dataset')
-        .where('id', dsId)
-        .first());
-      if (row && row.thumbnail) {
-        return `/fs/optical_images/${row.thumbnail}`;
-      }
-    }
-    return null;
+  // TODO: deprecated, remove
+  async thumbnailOpticalImageUrl(source, {datasetId}, ctx) {
+    return await thumbnailOpticalImageUrl(ctx, datasetId);
   },
 
   async currentUserLastSubmittedDataset(source, args, ctx): Promise<DatasetSource | null> {

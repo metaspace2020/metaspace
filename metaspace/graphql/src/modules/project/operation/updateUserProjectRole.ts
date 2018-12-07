@@ -9,12 +9,12 @@ import {ProjectSourceRepository} from '../ProjectSourceRepository';
 
 export default async (ctx: Context, userId: string, projectId: string, newRole: UserProjectRole | null) => {
   const currentUserId = ctx.getUserIdOrFail();
-  const userProjectRepository = ctx.connection.getRepository(UserProjectModel);
-  const datasetProjectRepository = ctx.connection.getRepository(DatasetProjectModel);
-  const user = await ctx.connection.getRepository(UserModel).findOne(userId);
+  const userProjectRepository = ctx.entityManager.getRepository(UserProjectModel);
+  const datasetProjectRepository = ctx.entityManager.getRepository(DatasetProjectModel);
+  const user = await ctx.entityManager.getRepository(UserModel).findOne(userId);
   if (user == null) throw new UserError('User not found');
 
-  const project = await ctx.connection.getCustomRepository(ProjectSourceRepository)
+  const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
     .findProjectById(ctx.user, projectId);
   if (project == null) throw new UserError('Project not found');
   const projectMembers = await userProjectRepository.find({ where: { projectId } });

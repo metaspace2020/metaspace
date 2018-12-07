@@ -170,11 +170,14 @@
      },
 
      onOpticalImageLoad() {
-       this.opticalImageWidth = this.$refs.scan.width;
-       this.opticalImageHeight = this.$refs.scan.height;
-       this.opticalImageNaturalWidth = this.$refs.scan.naturalWidth;
-       this.opticalImageNaturalHeight = this.$refs.scan.naturalHeight;
-       this.normalizedTransform = this.initialTransform;
+       // Ignore if the image loads after the user has left the page
+       if (this.$refs.scan == null) {
+         this.opticalImageWidth = this.$refs.scan.width;
+         this.opticalImageHeight = this.$refs.scan.height;
+         this.opticalImageNaturalWidth = this.$refs.scan.naturalWidth;
+         this.opticalImageNaturalHeight = this.$refs.scan.naturalHeight;
+         this.normalizedTransform = this.initialTransform;
+       }
      },
 
      onResize() {

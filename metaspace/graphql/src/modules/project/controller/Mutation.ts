@@ -18,7 +18,7 @@ import {smAPIUpdateDataset} from '../../../utils/smAPI';
 import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
-  const userProject = await ctx.connection.getRepository(UserProjectModel).findOne({
+  const userProject = await ctx.entityManager.getRepository(UserProjectModel).findOne({
     where: { projectId, userId: ctx.getUserIdOrFail(), role: UPRO.MANAGER },
   });
   if (!ctx.isAdmin && userProject == null) {
@@ -33,16 +33,16 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('urlSlug can only be set by METASPACE administrators');
     }
 
-    const projectRepository = ctx.connection.getRepository(ProjectModel);
+    const projectRepository = ctx.entityManager.getRepository(ProjectModel);
     const newProject = projectRepository.create({ name, isPublic, urlSlug });
     await projectRepository.insert(newProject);
-    await ctx.connection.getRepository(UserProjectModel)
+    await ctx.entityManager.getRepository(UserProjectModel)
       .insert({
         projectId: newProject.id,
         userId: ctx.user!.id,
         role: UPRO.MANAGER,
       });
-    const project = await ctx.connection.getCustomRepository(ProjectSourceRepository)
+    const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, newProject.id);
     if (project != null) {
       return project;
@@ -57,10 +57,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       throw new UserError('urlSlug can only be set by METASPACE administrators');
     }
 
-    const projectRepository = ctx.connection.getRepository(ProjectModel);
+    const projectRepository = ctx.entityManager.getRepository(ProjectModel);
     await projectRepository.update(projectId, projectDetails);
 
-    const affectedDatasets = await ctx.connection.getRepository(DatasetProjectModel)
+    const affectedDatasets = await ctx.entityManager.getRepository(DatasetProjectModel)
       .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
     await Promise.all(affectedDatasets.map(async dp => {
       await smAPIUpdateDataset(dp.datasetId, {
@@ -68,7 +68,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       })
     }));
 
-    const project = await ctx.connection.getCustomRepository(ProjectSourceRepository)
+    const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId);
     if (project != null) {
       return project;
@@ -81,9 +81,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await asyncAssertCanEditProject(ctx, projectId);
 
 
-    const affectedDatasets = await ctx.connection.getRepository(DatasetProjectModel)
+    const affectedDatasets = await ctx.entityManager.getRepository(DatasetProjectModel)
       .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
-    await ctx.connection.getRepository(DatasetProjectModel).delete({ projectId });
+    await ctx.entityManager.getRepository(DatasetProjectModel).delete({ projectId });
     await Promise.all(affectedDatasets.map(async dp => {
       await smAPIUpdateDataset(dp.datasetId, {
         projectIds: dp.dataset.datasetProjects
@@ -92,8 +92,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
       })
     }));
 
-    await ctx.connection.getRepository(UserProjectModel).delete({ projectId });
-    await ctx.connection.getRepository(ProjectModel).delete({ id: projectId });
+    await ctx.entityManager.getRepository(UserProjectModel).delete({ projectId });
+    await ctx.entityManager.getRepository(ProjectModel).delete({ id: projectId });
 
     return true;
   },
@@ -112,10 +112,10 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async requestAccessToProject(source, { projectId }, ctx): Promise<UserProjectSource> {
     const userId = ctx.getUserIdOrFail();
     await updateUserProjectRole(ctx, userId, projectId, UPRO.PENDING);
-    const userProject = await ctx.connection.getRepository(UserProjectModel)
+    const userProject = await ctx.entityManager.getRepository(UserProjectModel)
       .findOneOrFail({ userId, projectId }, { relations: ['user', 'project'] });
 
-    const managers = await ctx.connection.getRepository(UserProjectModel)
+    const managers = await ctx.entityManager.getRepository(UserProjectModel)
       .find({where: {projectId, role: UPRO.MANAGER}, relations: ['user'] });
     managers.forEach(manager => {
       sendRequestAccessToProjectEmail(manager.user, userProject.user, userProject.project);
@@ -129,7 +129,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
 
   async acceptRequestToJoinProject(source, { projectId, userId }, ctx: Context): Promise<UserProjectSource> {
     await updateUserProjectRole(ctx, userId, projectId, UPRO.MEMBER);
-    const userProject = await ctx.connection.getRepository(UserProjectModel)
+    const userProject = await ctx.entityManager.getRepository(UserProjectModel)
       .findOneOrFail({ userId, projectId }, { relations: ['user', 'project'] });
 
     sendProjectAcceptanceEmail(userProject.user, userProject.project);
@@ -139,22 +139,22 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   },
 
   async inviteUserToProject(source, { projectId, email }, ctx: Context): Promise<UserProjectSource> {
-    let user = await findUserByEmail(ctx.connection, email)
-      || await findUserByEmail(ctx.connection, email, 'not_verified_email');
-    const currentUser = await ctx.connection.getRepository(UserModel).findOneOrFail(ctx.getUserIdOrFail());
+    let user = await findUserByEmail(ctx.entityManager, email)
+      || await findUserByEmail(ctx.entityManager, email, 'not_verified_email');
+    const currentUser = await ctx.entityManager.getRepository(UserModel).findOneOrFail(ctx.getUserIdOrFail());
     if (user == null) {
       user = await createInactiveUser(email);
       const link = `${config.web_public_url}/account/create-account`;
       sendInvitationEmail(email, currentUser.name || '', link);
     } else {
-      const project = await ctx.connection.getRepository(ProjectModel).findOneOrFail(projectId);
+      const project = await ctx.entityManager.getRepository(ProjectModel).findOneOrFail(projectId);
       sendProjectInvitationEmail(user, currentUser, project);
     }
     const userId = user.id;
 
     await updateUserProjectRole(ctx, userId, projectId, UPRO.INVITED);
 
-    const userProject = await ctx.connection.getRepository(UserProjectModel)
+    const userProject = await ctx.entityManager.getRepository(UserProjectModel)
       .findOneOrFail({ userId, projectId }, { relations: ['user'] });
     return { ...userProject, user: convertUserToUserSource(userProject.user, SRO.OTHER) };
   },
@@ -162,7 +162,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
   async acceptProjectInvitation(source, { projectId }, ctx): Promise<UserProjectSource> {
     const userId = ctx.getUserIdOrFail();
     await updateUserProjectRole(ctx, userId, projectId, UPRO.MEMBER);
-    const userProject = await ctx.connection.getRepository(UserProjectModel)
+    const userProject = await ctx.entityManager.getRepository(UserProjectModel)
       .findOneOrFail({ userId, projectId }, { relations: ['user'] });
     return { ...userProject, user: convertUserToUserSource(userProject.user, SRO.OTHER) };
   },
@@ -181,7 +181,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (datasetIds.length > 0) {
       // Verify user is allowed to edit the datasets
       await Promise.all(datasetIds.map(async (dsId: string) => {
-        await getDatasetForEditing(ctx.connection, ctx.user, dsId);
+        await getDatasetForEditing(ctx.entityManager, ctx.user, dsId);
       }));
 
       const approved = [UPRO.MEMBER, UPRO.MANAGER].includes(userProjectRole);

@@ -2,7 +2,10 @@
   <div class="dataset-list" :class="{'double-column': isDoubleColumn, 'allow-double-column': allowDoubleColumn}">
     <dataset-item v-for="(dataset, i) in datasets"
                   :dataset="dataset" :key="dataset.id"
-                  :class="[i%2 ? 'odd': '']"
+                  :class="i%2 ? 'odd': ''"
+                  :currentUser="currentUser"
+                  :idx="i"
+                  :hideGroupMenu="hideGroupMenu"
                   @filterUpdate="filter => $emit('filterUpdate', filter)"
                   @datasetMutated="$emit('datasetMutated')">
     </dataset-item>
@@ -11,15 +14,23 @@
 
 <script>
   import DatasetItem from './DatasetItem.vue';
+  import {currentUserRoleQuery} from '../../../api/user';
 
   export default {
     name: 'dataset-list',
     props: {
       datasets: {type: Array, required: true},
-      allowDoubleColumn: {type: Boolean, default: false}
+      allowDoubleColumn: {type: Boolean, default: false},
+      hideGroupMenu: {type: Boolean, default: false}
     },
     components: {
       DatasetItem,
+    },
+    apollo: {
+      currentUser: {
+        query: currentUserRoleQuery,
+        fetchPolicy: 'cache-first',
+      },
     },
     data() {
       // window.matchMedia is present on all our supported browsers, but not available in jsdom for tests
