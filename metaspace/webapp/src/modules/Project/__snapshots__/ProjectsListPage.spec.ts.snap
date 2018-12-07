@@ -109,7 +109,7 @@ exports[`ProjectsListPage should match snapshot 1`] = `
           <div class="info">
             <div class="info-line project-name">
               <a href="/project/proj-one" class=""><span style="margin-left: 5px;">project one</span></a>
-              <img src="../../assets/padlock.svg" title="This project is only visible to its members and METASPACE administrators" class="private-icon">
+              <img src="../../assets/padlock-icon.svg" title="This project is only visible to its members and METASPACE administrators" class="private-icon">
             </div>
             <div style="margin-left: 12px;">
               <div class="info-line">
@@ -117,10 +117,9 @@ exports[`ProjectsListPage should match snapshot 1`] = `
                 1 Member
               </div>
               <div class="info-line"><span>Manager<!---->:</span> <span>
-            TestUser1, <span class="s-group group-link">allProjects.0.members.0.user.primaryGroup.group.shortName</span>
-                <!---->
-                </span>
-              </div>
+            TestUser1,
+            <a href="/group/allProjects.0.members.0.user.primaryGroup.group.id" class="group-link">
+              allProjects.0.members.0.user.primaryGroup.group.shortName</a><!----></span></div>
               <div class="info-line"><span>
               Created on <b><span style="font-size: 14px;">2018-08-29</span></b>
                 </span>
@@ -155,10 +154,9 @@ exports[`ProjectsListPage should match snapshot 1`] = `
                 20 Members
               </div>
               <div class="info-line"><span>Manager<!---->:</span> <span>
-            TestUser1, <span class="s-group group-link">allProjects.1.members.0.user.primaryGroup.group.shortName</span>
-                <!---->
-                </span>
-              </div>
+            TestUser1,
+            <a href="/group/allProjects.1.members.0.user.primaryGroup.group.id" class="group-link">
+              allProjects.1.members.0.user.primaryGroup.group.shortName</a><!----></span></div>
               <div class="info-line"><span>
             Last submission <b><span style="font-size: 14px;">2018-08-01</span></b>
                 </span>

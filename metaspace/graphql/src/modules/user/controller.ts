@@ -1,12 +1,12 @@
 import {UserError} from 'graphql-errors';
-import {Like} from 'typeorm';
+import {In, Like} from 'typeorm';
 import * as uuid from 'uuid';
 
 import {User, UserGroup} from '../../binding';
 import {User as UserModel} from './model';
 import {Dataset as DatasetModel} from '../dataset/model';
 import {Credentials as CredentialsModel} from '../auth/model';
-import {UserGroup as UserGroupModel} from '../group/model';
+import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../group/model';
 import {UserProject as UserProjectModel} from '../project/model';
 import {Context, ContextUser} from '../../context';
 import {ScopeRole, ScopeRoleOptions as SRO, UserProjectSource, UserSource} from '../../bindingTypes';
@@ -39,13 +39,20 @@ export const Resolvers = {
   User: {
     async primaryGroup({scopeRole, ...user}: UserSource, _: any,
                        ctx: Context): Promise<LooselyCompatible<UserGroup>|null> {
+      let criteria;
       if (scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
-        return await ctx.connection.getRepository(UserGroupModel).findOne({
-          where: { userId: user.id, primary: true },
-          relations: ['group', 'user']
-        }) || null
+        criteria = { userId: user.id, primary: true };
+      } else {
+        criteria = {
+          userId: user.id,
+          primary: true,
+          role: In ([UserGroupRoleOptions.GROUP_ADMIN, UserGroupRoleOptions.MEMBER])
+        };
       }
-      return null;
+      return await ctx.connection.getRepository(UserGroupModel).findOne({
+        where: criteria,
+        relations: ['group', 'user']
+      }) || null
     },
 
     async groups({scopeRole, ...user}: UserSource, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup>[]|null> {

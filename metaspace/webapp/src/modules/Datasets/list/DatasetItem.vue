@@ -131,7 +131,7 @@
         </div>
         <img slot="reference"
              class="ds-item-private-icon"
-             src="../../../assets/padlock.svg">
+             src="../../../assets/padlock-icon.svg">
       </el-popover>
     </div>
   </div>

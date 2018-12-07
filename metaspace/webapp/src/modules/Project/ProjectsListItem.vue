@@ -7,7 +7,7 @@
           <router-link :to="projectLink"><span style="margin-left: 5px">{{project.name}}</span></router-link>
           <img v-if="!project.isPublic"
                class="private-icon"
-               src="../../assets/padlock.svg"
+               src="../../assets/padlock-icon.svg"
                title="This project is only visible to its members and METASPACE administrators">
         </div>
         <div style="margin-left: 12px">
@@ -20,8 +20,11 @@
           <div class="info-line" v-if="projectManagers.length>0">
             <span>Manager<span v-if="projectManagers.length>1">s</span>:</span>
             <span v-for="(manager, ind) in projectManagers">
-              {{manager.user.name}}, <span class="s-group group-link" @click="addFilter(manager)">{{shortGroupName(manager)}}</span><!--
-              --><span v-if="ind+1 < projectManagers.length" >, </span></span>
+              {{manager.user.name}}<span v-if="(ind < projectManagers.length) && manager.user.primaryGroup">, </span>
+              <router-link class="group-link" v-if="manager.user.primaryGroup" :to="groupHref(manager)">
+                {{manager.user.primaryGroup.group.shortName}}<!--
+              --></router-link><span v-if="(ind+1 < projectManagers.length) && manager.user.primaryGroup">, </span>
+            </span>
           </div>
           <div class="info-line">
             <span v-if="project.latestUploadDT != null" >
@@ -138,15 +141,13 @@
       }
     }
 
-    addFilter(manager: managerGroupName): void {
-      let filter = Object.assign({}, this.$store.getters.filter);
-      filter['group'] = manager.user.primaryGroup.group.shortName;
-      this.$router.push({
+    groupHref(manager: managerGroupName) {
+      return {
         name: 'group',
         params: {
           groupIdOrSlug: manager.user.primaryGroup.group.id,
         },
-      })
+      };
     }
 
     formatDate(date: string) {
@@ -281,12 +282,9 @@
     color: #a00;
   }
 
-  .s-group {
-    color: sienna;
-  }
-
   .group-link {
     cursor: pointer;
+    color: sienna;
   }
 
 
