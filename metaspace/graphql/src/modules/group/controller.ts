@@ -1,5 +1,5 @@
 import {UserError} from 'graphql-errors';
-import {Connection, EntityManager, In} from 'typeorm';
+import {EntityManager, In} from 'typeorm';
 
 import {Group as GroupModel, UserGroup as UserGroupModel, UserGroupRoleOptions} from './model';
 import {User as UserModel} from '../user/model';
@@ -25,13 +25,13 @@ const assertUserAuthenticated = (user: ContextUser | null) => {
     throw new UserError('Not authenticated');
 };
 
-const assertUserRoles = async (connection: Connection | EntityManager, user: ContextUser | null, groupId: string, roles: UserGroupRole[]) => {
+const assertUserRoles = async (entityManager: EntityManager, user: ContextUser | null, groupId: string, roles: UserGroupRole[]) => {
   if (groupId) {
     if (user != null && user.role === 'admin')
       return;
 
     const userGroup = user != null
-      ? (await connection.getRepository(UserGroupModel).find({
+      ? (await entityManager.getRepository(UserGroupModel).find({
         select: ['userId'],
         where: {
           userId: user.id,
@@ -46,20 +46,20 @@ const assertUserRoles = async (connection: Connection | EntityManager, user: Con
   }
 };
 
-const assertCanEditGroup = async (connection: Connection | EntityManager, user: ContextUser | null, groupId: string) => {
+const assertCanEditGroup = async (entityManager: EntityManager, user: ContextUser | null, groupId: string) => {
   assertUserAuthenticated(user);
-  await assertUserRoles(connection, user, groupId,
+  await assertUserRoles(entityManager, user, groupId,
     [UserGroupRoleOptions.GROUP_ADMIN]);
 };
 
-const assertCanAddDataset = async (connection: Connection | EntityManager, user: ContextUser | null, groupId: string) => {
+const assertCanAddDataset = async (entityManager: EntityManager, user: ContextUser | null, groupId: string) => {
   assertUserAuthenticated(user);
-  await assertUserRoles(connection, user, groupId,
+  await assertUserRoles(entityManager, user, groupId,
     [UserGroupRoleOptions.GROUP_ADMIN, UserGroupRoleOptions.MEMBER]);
 };
 
-const updateUserGroupDatasets = async (connection: Connection | EntityManager, userId: string, groupId: string, groupApproved: boolean) => {
-  const datasetRepo = connection.getRepository(DatasetModel);
+const updateUserGroupDatasets = async (entityManager: EntityManager, userId: string, groupId: string, groupApproved: boolean) => {
+  const datasetRepo = entityManager.getRepository(DatasetModel);
   const datasetsToUpdate = await datasetRepo.find({
     where: {userId, groupId, groupApproved: !groupApproved}
   });
@@ -72,9 +72,9 @@ const updateUserGroupDatasets = async (connection: Connection | EntityManager, u
 
 export const Resolvers = {
   UserGroup: {
-    async numDatasets(userGroup: UserGroupModel, _: any, {connection}: Context) {
+    async numDatasets(userGroup: UserGroupModel, _: any, {entityManager}: Context) {
       const {userId, groupId} = userGroup;
-      return await connection.getRepository(DatasetModel)
+      return await entityManager.getRepository(DatasetModel)
         .createQueryBuilder('dataset')
         .innerJoin('(SELECT id, status FROM "public"."dataset")', 'engine_dataset', 'dataset.id = engine_dataset.id')
         .where('dataset.userId = :userId', { userId })
@@ -86,11 +86,11 @@ export const Resolvers = {
   },
 
   Group: {
-    async currentUserRole(group: GroupModel, _: any, {user, connection}: Context) {
+    async currentUserRole(group: GroupModel, _: any, {user, entityManager}: Context) {
       if (user == null) {
         return null;
       }
-      const userGroup = await connection.getRepository(UserGroupModel).findOne({
+      const userGroup = await entityManager.getRepository(UserGroupModel).findOne({
         where: {
           userId: user.id,
           groupId: group.id
@@ -101,7 +101,7 @@ export const Resolvers = {
 
     async hasPendingRequest(group: GroupModel & Scope, args: any, ctx: Context): Promise<boolean | null> {
       if (group.scopeRole === ScopeRoleOptions.GROUP_MANAGER) {
-        const requests = await ctx.connection.getRepository(UserGroupModel).count({
+        const requests = await ctx.entityManager.getRepository(UserGroupModel).count({
           where: { groupId: group.id, role: UserGroupRoleOptions.PENDING }
         });
         return requests > 0;
@@ -110,7 +110,7 @@ export const Resolvers = {
     },
 
     async numMembers(group: GroupModel & Scope, args: any, ctx: Context): Promise<number> {
-      return await ctx.connection
+      return await ctx.entityManager
         .getRepository(UserGroupModel)
         .count({
           where: { groupId: group.id, role: In([UserGroupRoleOptions.MEMBER, UserGroupRoleOptions.GROUP_ADMIN]) }
@@ -125,7 +125,7 @@ export const Resolvers = {
         ? { groupId: group.id }
         : { groupId: group.id, role: UserGroupRoleOptions.GROUP_ADMIN };
 
-      const userGroupModels = await ctx.connection.getRepository(UserGroupModel)
+      const userGroupModels = await ctx.entityManager.getRepository(UserGroupModel)
         .createQueryBuilder('user_group')
         .where(filter)
         .leftJoinAndSelect('user_group.user', 'user')
@@ -151,7 +151,7 @@ export const Resolvers = {
     async group(_: any, {groupId}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>> {
       const scopeRole = await resolveGroupScopeRole(ctx, groupId);
 
-      const group = await ctx.connection.getRepository(GroupModel).findOneOrFail(groupId);
+      const group = await ctx.entityManager.getRepository(GroupModel).findOneOrFail(groupId);
       return {
         ...group,
         scopeRole
@@ -159,7 +159,7 @@ export const Resolvers = {
     },
 
     async groupByUrlSlug(_: any, {urlSlug}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>> {
-      const group = await ctx.connection.getRepository(GroupModel).findOneOrFail({
+      const group = await ctx.entityManager.getRepository(GroupModel).findOneOrFail({
         where: { urlSlug }
       });
       const scopeRole = await resolveGroupScopeRole(ctx, group.id);
@@ -168,7 +168,7 @@ export const Resolvers = {
 
     async allGroups(_: any, {query}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
       const scopeRole = await resolveGroupScopeRole(ctx);
-      const groups = await ctx.connection.getRepository(GroupModel)
+      const groups = await ctx.entityManager.getRepository(GroupModel)
         .createQueryBuilder('group')
         .where('group.name ILIKE :query OR group.shortName ILIKE :query', {query: query ? `%${query}%` : '%'})
         .orderBy('group.name')
@@ -178,18 +178,18 @@ export const Resolvers = {
   },
 
   Mutation: {
-    async createGroup(_: any, {groupDetails}: any, {user, connection}: Context): Promise<LooselyCompatible<Group & Scope>> {
+    async createGroup(_: any, {groupDetails}: any, {user, entityManager}: Context): Promise<LooselyCompatible<Group & Scope>> {
       const {groupAdminEmail, ...groupInput} = groupDetails;
       assertCanCreateGroup(user);
       logger.info(`Creating ${groupInput.name} group by '${user!.id}' user...`);
 
-      const group = await connection.getRepository(GroupModel).save(groupInput) as GroupModel;
+      const group = await entityManager.getRepository(GroupModel).save(groupInput) as GroupModel;
 
-      const adminUser = await findUserByEmail(connection, groupAdminEmail)
-        || await findUserByEmail(connection, groupAdminEmail, 'not_verified_email')
+      const adminUser = await findUserByEmail(entityManager, groupAdminEmail)
+        || await findUserByEmail(entityManager, groupAdminEmail, 'not_verified_email')
         || await createInactiveUser(groupAdminEmail);
 
-      await connection.getRepository(UserGroupModel).save({
+      await entityManager.getRepository(UserGroupModel).save({
         groupId: group.id,
         userId: adminUser.id,
         role: UserGroupRoleOptions.GROUP_ADMIN
@@ -199,16 +199,16 @@ export const Resolvers = {
       return group;
     },
 
-    async updateGroup(_: any, {groupId, groupDetails}: any, {user, connection}: Context): Promise<Group> {
-      await assertCanEditGroup(connection, user, groupId);
+    async updateGroup(_: any, {groupId, groupDetails}: any, {user, entityManager}: Context): Promise<Group> {
+      await assertCanEditGroup(entityManager, user, groupId);
       logger.info(`Updating '${groupId}' group by '${user!.id}' user...`);
 
-      const groupRepo = connection.getRepository(GroupModel);
+      const groupRepo = entityManager.getRepository(GroupModel);
       const group = {...(await groupRepo.findOneOrFail(groupId)), ...groupDetails};
       await groupRepo.save(group);  // update doesn't return updated object;
 
       logger.info(`Updating '${groupId}' group datasets...`);
-      const groupDSs = await connection.getRepository(DatasetModel).find({ groupId });
+      const groupDSs = await entityManager.getRepository(DatasetModel).find({ groupId });
       await Promise.all(groupDSs.map(async ds => {
         await smAPIUpdateDataset(ds.id, {groupId});
       }));
@@ -217,23 +217,23 @@ export const Resolvers = {
       return group;
     },
 
-    async deleteGroup(_: any, {groupId}: any, {user, connection}: Context): Promise<Boolean> {
-      await assertCanEditGroup(connection, user, groupId);
+    async deleteGroup(_: any, {groupId}: any, {user, entityManager}: Context): Promise<Boolean> {
+      await assertCanEditGroup(entityManager, user, groupId);
       logger.info(`Deleting '${groupId}' group by '${user!.id}' user...`);
 
-      await connection.getRepository(UserGroupModel).delete({groupId});
-      await connection.getRepository(GroupModel).delete(groupId);
+      await entityManager.getRepository(UserGroupModel).delete({groupId});
+      await entityManager.getRepository(GroupModel).delete(groupId);
 
       logger.info(`'${groupId}' group deleted`);
       return true;
     },
 
-    async leaveGroup(_: any, {groupId}: any, {getUserIdOrFail, connection}: Context): Promise<Boolean> {
+    async leaveGroup(_: any, {groupId}: any, {getUserIdOrFail, entityManager}: Context): Promise<Boolean> {
       const userId = getUserIdOrFail();
       logger.info(`'${userId}' user leaving '${groupId}' group...`);
-      await connection.getRepository(GroupModel).findOneOrFail(groupId);
+      await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
 
-      const userGroupRepo = connection.getRepository(UserGroupModel);
+      const userGroupRepo = entityManager.getRepository(UserGroupModel);
 
       const userGroup = await userGroupRepo.findOneOrFail({ userId, groupId });
       if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN)
@@ -241,19 +241,19 @@ export const Resolvers = {
 
       await userGroupRepo.delete({ userId, groupId });
 
-      await updateUserGroupDatasets(connection, userId, groupId, false);
+      await updateUserGroupDatasets(entityManager, userId, groupId, false);
       logger.info(`User '${userId}' left '${groupId}' group`);
       return true;
     },
 
-    async removeUserFromGroup(_: any, {groupId, userId}: any, {user, connection}: Context): Promise<Boolean> {
-      await assertCanEditGroup(connection, user, groupId);
+    async removeUserFromGroup(_: any, {groupId, userId}: any, {user, entityManager}: Context): Promise<Boolean> {
+      await assertCanEditGroup(entityManager, user, groupId);
       logger.info(`User '${user!.id}' removing '${userId}' user from '${groupId}' group...`);
 
-      await connection.getRepository(GroupModel).findOneOrFail(groupId);
-      await connection.getRepository(UserModel).findOneOrFail(userId);
+      await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
+      await entityManager.getRepository(UserModel).findOneOrFail(userId);
 
-      const userGroupRepo = connection.getRepository(UserGroupModel);
+      const userGroupRepo = entityManager.getRepository(UserGroupModel);
 
       const currUserGroup = await userGroupRepo.findOneOrFail({ userId, groupId });
       if (currUserGroup.role === UserGroupRoleOptions.GROUP_ADMIN && userId === user!.id) {
@@ -261,17 +261,17 @@ export const Resolvers = {
       }
       await userGroupRepo.delete({ userId, groupId });
 
-      await updateUserGroupDatasets(connection, userId, groupId, false);
+      await updateUserGroupDatasets(entityManager, userId, groupId, false);
       logger.info(`User '${userId}' was removed from '${groupId}' group`);
       return true;
     },
 
-    async requestAccessToGroup(_: any, {groupId}: any, {getUserIdOrFail, connection}: Context): Promise<UserGroupModel> {
+    async requestAccessToGroup(_: any, {groupId}: any, {getUserIdOrFail, entityManager}: Context): Promise<UserGroupModel> {
       const userId = getUserIdOrFail();
       logger.info(`User '${userId}' requesting access to '${groupId}' group...`);
-      await connection.getRepository(GroupModel).findOneOrFail(groupId);
+      await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
 
-      const userGroupRepo = connection.getRepository(UserGroupModel);
+      const userGroupRepo = entityManager.getRepository(UserGroupModel);
       let userGroup = await userGroupRepo.findOne({ where: { groupId, userId } });
 
       if (!userGroup) {
@@ -291,14 +291,14 @@ export const Resolvers = {
       });
     },
 
-    async acceptRequestToJoinGroup(_: any, {groupId, userId}: any, {user, connection}: Context): Promise<UserGroupModel> {
-      await assertCanEditGroup(connection, user, groupId);
+    async acceptRequestToJoinGroup(_: any, {groupId, userId}: any, {user, entityManager}: Context): Promise<UserGroupModel> {
+      await assertCanEditGroup(entityManager, user, groupId);
       logger.info(`User '${user!.id}' accepting request from '${userId}' user to join '${groupId}' group...`);
 
-      await connection.getRepository(UserModel).findOneOrFail(userId);
-      await connection.getRepository(GroupModel).findOneOrFail(groupId);
+      await entityManager.getRepository(UserModel).findOneOrFail(userId);
+      await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
 
-      const userGroupRepo = connection.getRepository(UserGroupModel);
+      const userGroupRepo = entityManager.getRepository(UserGroupModel);
 
       const reqUserGroup = await userGroupRepo.findOne({ userId, groupId });
       if (!reqUserGroup)
@@ -312,7 +312,7 @@ export const Resolvers = {
         });
       }
 
-      await updateUserGroupDatasets(connection, userId, groupId, true);
+      await updateUserGroupDatasets(entityManager, userId, groupId, true);
       logger.info(`User '${userId}' was accepted to '${groupId}' group`);
       return userGroupRepo.findOneOrFail({
         where: { groupId, userId },
@@ -320,21 +320,21 @@ export const Resolvers = {
       });
     },
 
-    async inviteUserToGroup(_: any, {groupId, email}: any, {user, getUserIdOrFail, connection}: Context): Promise<UserGroupModel> {
-      await assertCanEditGroup(connection, user, groupId);
+    async inviteUserToGroup(_: any, {groupId, email}: any, {user, getUserIdOrFail, entityManager}: Context): Promise<UserGroupModel> {
+      await assertCanEditGroup(entityManager, user, groupId);
       logger.info(`User '${user!.id}' inviting ${email} to join '${groupId}' group...`);
 
-      let invUser = await findUserByEmail(connection, email, 'email')
-        || await findUserByEmail(connection, email, 'not_verified_email');
+      let invUser = await findUserByEmail(entityManager, email, 'email')
+        || await findUserByEmail(entityManager, email, 'not_verified_email');
       if (!invUser) {
         invUser = await createInactiveUser(email);
-        const currentUser = await connection.getRepository(UserModel).findOneOrFail(getUserIdOrFail());
+        const currentUser = await entityManager.getRepository(UserModel).findOneOrFail(getUserIdOrFail());
         const link = `${config.web_public_url}/account/create-account`;
         sendInvitationEmail(email, currentUser.name || '', link);
       }
-      await connection.getRepository(GroupModel).findOneOrFail(groupId);
+      await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
 
-      const userGroupRepo = connection.getRepository(UserGroupModel);
+      const userGroupRepo = entityManager.getRepository(UserGroupModel);
 
       let invUserGroup = await userGroupRepo.findOne({
         where: { userId: invUser.id, groupId }
@@ -360,12 +360,12 @@ export const Resolvers = {
       });
     },
 
-    async acceptGroupInvitation(_: any, {groupId}: any, {getUserIdOrFail, connection}: Context): Promise<UserGroupModel> {
+    async acceptGroupInvitation(_: any, {groupId}: any, {getUserIdOrFail, entityManager}: Context): Promise<UserGroupModel> {
       const userId = getUserIdOrFail();
       logger.info(`User '${userId}' accepting invitation to join '${groupId}' group...`);
-      await connection.getRepository(GroupModel).findOneOrFail(groupId);
+      await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
 
-      const userGroupRepo = connection.getRepository(UserGroupModel);
+      const userGroupRepo = entityManager.getRepository(UserGroupModel);
 
       const userGroup = await userGroupRepo.findOneOrFail({
         where: { userId: userId, groupId }
@@ -378,7 +378,7 @@ export const Resolvers = {
         });
       }
 
-      await updateUserGroupDatasets(connection, userId, groupId, true);
+      await updateUserGroupDatasets(entityManager, userId, groupId, true);
 
       logger.info(`User '${userId}' accepted invitation to '${groupId}' group`);
       return await userGroupRepo.findOneOrFail({
@@ -387,36 +387,36 @@ export const Resolvers = {
       });
     },
 
-    async updateUserGroup(_: any, {groupId, userId, update}: any, {user, connection}: Context): Promise<boolean> {
-      await assertCanEditGroup(connection, user, groupId);
+    async updateUserGroup(_: any, {groupId, userId, update}: any, {user, entityManager}: Context): Promise<boolean> {
+      await assertCanEditGroup(entityManager, user, groupId);
       logger.info(`Updating '${groupId}' '${userId}' membership by '${user!.id}' user...`);
 
       if (update.role != null) {
-        await connection.getRepository(UserGroupModel).save({
+        await entityManager.getRepository(UserGroupModel).save({
           userId, groupId, role: update.role
         });
       } else {
-        await connection.getRepository(UserGroupModel).delete({ userId, groupId });
+        await entityManager.getRepository(UserGroupModel).delete({ userId, groupId });
       }
 
       const groupApproved = [UserGroupRoleOptions.MEMBER, UserGroupRoleOptions.GROUP_ADMIN].includes(update.role);
-      await updateUserGroupDatasets(connection, userId, groupId, groupApproved);
+      await updateUserGroupDatasets(entityManager, userId, groupId, groupApproved);
 
       return true;
     },
 
-    async importDatasetsIntoGroup(_: any, {groupId, datasetIds}: any, {user, connection}: Context): Promise<Boolean> {
-      await assertCanAddDataset(connection, user, groupId);
+    async importDatasetsIntoGroup(_: any, {groupId, datasetIds}: any, {user, entityManager}: Context): Promise<Boolean> {
+      await assertCanAddDataset(entityManager, user, groupId);
       logger.info(`User '${user!.id}' importing datasets ${datasetIds} to '${groupId}' group...`);
 
-      await connection.getRepository(GroupModel).findOneOrFail(groupId);
+      await entityManager.getRepository(GroupModel).findOneOrFail(groupId);
 
       // Verify user is allowed to edit the datasets
       await Promise.all(datasetIds.map(async (dsId: string) => {
-        await getDatasetForEditing(connection, user, dsId);
+        await getDatasetForEditing(entityManager, user, dsId);
       }));
 
-      const dsRepo = connection.getRepository(DatasetModel);
+      const dsRepo = entityManager.getRepository(DatasetModel);
       await Promise.all(datasetIds.map(async (dsId: string) => {
         await dsRepo.update(dsId, { groupId, groupApproved: true });
         await smAPIUpdateDataset(dsId, {groupId});

@@ -2,7 +2,7 @@ import * as jsondiffpatch from 'jsondiffpatch';
 import config from '../../../utils/config';
 import * as Ajv from 'ajv';
 import {UserError} from 'graphql-errors';
-import {Connection, EntityManager} from 'typeorm';
+import {EntityManager} from 'typeorm';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 
@@ -111,8 +111,8 @@ export function processingSettingsChanged(ds: EngineDS, update: DatasetUpdateInp
   return {newDB: newDB, procSettingsUpd: procSettingsUpd, metaDiff: metaDiff}
 }
 
-const isMemberOf = async (connection: Connection | EntityManager, userId: string, groupId: string) => {
-  const userGroup = await connection.getRepository(UserGroupModel).findOne({
+const isMemberOf = async (entityManager: EntityManager, userId: string, groupId: string) => {
+  const userGroup = await entityManager.getRepository(UserGroupModel).findOne({
     userId,
     groupId
   });
@@ -132,11 +132,11 @@ interface SaveDSArgs {
   principalInvestigator?: {name: string, email: string};
 }
 
-const saveDS = async (connection: Connection | EntityManager, args: SaveDSArgs, requireInsert = false) => {
+const saveDS = async (entityManager: EntityManager, args: SaveDSArgs, requireInsert = false) => {
   const {dsId, submitterId, groupId, projectIds, principalInvestigator} = args;
   const groupUpdate = groupId === undefined ? {}
     : groupId === null ? { groupId: null, groupApproved: false }
-      : { groupId, groupApproved: await isMemberOf(connection, submitterId, groupId) };
+      : { groupId, groupApproved: await isMemberOf(entityManager, submitterId, groupId) };
   const piUpdate = principalInvestigator === undefined ? {}
     : principalInvestigator === null ? { piName: null, piEmail: null }
     : { piName: principalInvestigator.name, piEmail: principalInvestigator.email };
@@ -149,15 +149,15 @@ const saveDS = async (connection: Connection | EntityManager, args: SaveDSArgs, 
 
   if (requireInsert) {
     // When creating new datasets, use INSERT so that SQL prevents the same ID from being used twice
-    await connection.getRepository(DatasetModel).insert(dsUpdate);
+    await entityManager.getRepository(DatasetModel).insert(dsUpdate);
   } else {
-    await connection.getRepository(DatasetModel).save(dsUpdate);
+    await entityManager.getRepository(DatasetModel).save(dsUpdate);
   }
 
   if (projectIds != null) {
-    const datasetProjectRepo = connection.getRepository(DatasetProjectModel);
+    const datasetProjectRepo = entityManager.getRepository(DatasetProjectModel);
     const existingDatasetProjects = await datasetProjectRepo.find({ datasetId: dsId });
-    const userProjectRoles = await getUserProjectRoles(connection, submitterId);
+    const userProjectRoles = await getUserProjectRoles(entityManager, submitterId);
     const savePromises = projectIds
       .map((projectId) => ({
         projectId,
@@ -190,13 +190,14 @@ type CreateDatasetArgs = {
   id?: string,
   input: DatasetCreateInput,
   priority?: Int,
+  force?: boolean,           // Only used by reprocess
   reprocess?: boolean,       // Only used by reprocess
   delFirst?: boolean,        // Only used by reprocess
   skipValidation?: boolean,  // Only used by reprocess
 };
 const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
-  const {input, priority, skipValidation} = args;
-  const {user, connection, isAdmin, getUserIdOrFail} = ctx;
+  const {input, priority, force, skipValidation} = args;
+  const {user, entityManager, isAdmin, getUserIdOrFail} = ctx;
   const dsId = args.id || newDatasetId();
   const dsIdWasSpecified = !!args.id;
   const userId = getUserIdOrFail();
@@ -204,7 +205,7 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
   logger.info(`Creating dataset '${dsId}' by '${userId}' user ...`);
   let ds;
   if (dsIdWasSpecified) {
-    ds = await getDatasetForEditing(connection, user, dsId);
+    ds = await getDatasetForEditing(entityManager, user, dsId);
   } else {
     assertCanCreateDataset(user);
   }
@@ -225,12 +226,13 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
     projectIds: projectIds as string[],
     principalInvestigator
   };
-  await saveDS(connection, saveDSArgs, !dsIdWasSpecified);
+  await saveDS(entityManager, saveDSArgs, !dsIdWasSpecified);
 
   const url = `/v1/datasets/${dsId}/add`;
   await smAPIRequest(url, {
     doc: {...input, metadata},
     priority: priority,
+    force: force,
     email: user!.email,
   });
 
@@ -252,6 +254,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       input: ds as any, // TODO: map this properly
       priority: priority,
       reprocess: true,
+      force: true,
       skipValidation: true,
       delFirst: delFirst,
     }, ctx);
@@ -261,11 +264,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     return await createDataset(args, ctx);
   },
 
-  updateDataset: async (source, args, {user, connection, isAdmin}) => {
+  updateDataset: async (source, args, {user, entityManager, isAdmin}) => {
     const {id: dsId, input: update, reprocess, skipValidation, delFirst, force, priority} = args;
 
     logger.info(`User '${user && user.id}' updating '${dsId}' dataset...`);
-    const ds = await getDatasetForEditing(connection, user, dsId);
+    const ds = await getDatasetForEditing(entityManager, user, dsId);
 
     let metadata;
     if (update.metadataJson) {
@@ -290,7 +293,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
     let smAPIResp;
     if (reprocess) {
-      await saveDS(connection, saveDSArgs);
+      await saveDS(entityManager, saveDSArgs);
       smAPIResp = await smAPIRequest(`/v1/datasets/${dsId}/add`, {
         doc: {...engineDS, ...update, ...(metadata ? {metadata} : {})},
         del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
@@ -307,7 +310,7 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
         }));
       }
       else {
-        await saveDS(connection, saveDSArgs);
+        await saveDS(entityManager, saveDSArgs);
         smAPIResp = await smAPIRequest(`/v1/datasets/${dsId}/update`, {
           doc: {
             ..._.omit(update, 'metadataJson'),
@@ -323,21 +326,21 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     return JSON.stringify(smAPIResp);
   },
 
-  deleteDataset: async (_, args, {user, connection}) => {
+  deleteDataset: async (_, args, {user, entityManager}) => {
     const {id: dsId, force} = args;
     if (user == null) {
       throw new UserError('Unauthorized');
     }
-    const resp = await deleteDataset(connection, user, dsId, {force});
+    const resp = await deleteDataset(entityManager, user, dsId, {force});
     return JSON.stringify(resp);
   },
 
-  addOpticalImage: async (_, {input}, {user, connection, getUserIdOrFail}) => {
+  addOpticalImage: async (_, {input}, {user, entityManager, getUserIdOrFail}) => {
     const {datasetId: dsId, transform} = input;
     let {imageUrl} = input;
 
     logger.info(`User '${getUserIdOrFail()}' adding optical image to '${dsId}' dataset...`);
-    await getDatasetForEditing(connection, user, dsId);
+    await getDatasetForEditing(entityManager, user, dsId);
     // TODO support image storage running on a separate host
     const url = `http://localhost:${config.img_storage_port}${imageUrl}`;
     const resp = await smAPIRequest(`/v1/datasets/${dsId}/add-optical-image`, {
@@ -348,11 +351,11 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
     return JSON.stringify(resp);
   },
 
-  deleteOpticalImage: async (_, args, {user, connection, getUserIdOrFail}) => {
+  deleteOpticalImage: async (_, args, {user, entityManager, getUserIdOrFail}) => {
     const {datasetId: dsId} = args;
 
     logger.info(`User '${getUserIdOrFail()}' deleting optical image from '${dsId}' dataset...`);
-    await getDatasetForEditing(connection, user, dsId);
+    await getDatasetForEditing(entityManager, user, dsId);
     const resp = await smAPIRequest(`/v1/datasets/${dsId}/del-optical-image`, {});
 
     logger.info(`Optical image was deleted from '${dsId}' dataset`);

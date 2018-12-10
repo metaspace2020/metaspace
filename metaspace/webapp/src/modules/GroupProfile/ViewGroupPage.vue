@@ -47,7 +47,7 @@
       </div>
       <el-tabs v-model="tab">
         <el-tab-pane name="datasets" :label="'Datasets' | optionalSuffixInParens(countDatasets)" lazy>
-          <dataset-list :datasets="groupDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" />
+          <dataset-list :datasets="groupDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" hideGroupMenu />
 
           <div class="dataset-list-footer">
             <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
@@ -81,7 +81,11 @@
 <script lang="ts">
   import Vue from 'vue';
   import {Component, Watch} from 'vue-property-decorator';
-  import {DatasetDetailItem, datasetDetailItemFragment, datasetStatusUpdatedQuery} from '../../api/dataset';
+  import {
+    datasetDeletedQuery,
+    DatasetDetailItem,
+    datasetDetailItemFragment,
+  } from '../../api/dataset';
   import DatasetList from '../Datasets/list/DatasetList.vue';
   import {
     acceptGroupInvitationMutation,
@@ -105,6 +109,7 @@
   import isUuid from '../../lib/isUuid';
   import {throttle} from 'lodash-es';
   import {optionalSuffixInParens, plural} from '../../lib/vueFilters';
+  import {removeDatasetFromAllDatasetsQuery} from '../../lib/updateApolloCache';
 
 
   interface ViewGroupProfileData {
@@ -177,15 +182,10 @@
         }
       },
       $subscribe: {
-        datasetStatusUpdated: {
-          query: datasetStatusUpdatedQuery,
-          result({data}: any) {
-            // TODO: Fix websocket authentication so that this can filter out irrelevant status updates
-            // const dataset = data.datasetStatusUpdated.dataset;
-            // if (dataset != null && dataset.group != null && dataset.group.id === this.groupId) {
-            //   this.$apollo.queries.data.refetch();
-            // }
-            this.refetchDatasets();
+        datasetDeleted: {
+          query: datasetDeletedQuery,
+          result({data}) {
+            removeDatasetFromAllDatasetsQuery(this, 'data', data.datasetDeleted.id);
           }
         }
       },
@@ -254,13 +254,6 @@
 
     get hasMembershipRequest() {
       return this.members.some(m => m.role === UserGroupRoleOptions.PENDING);
-    }
-
-    created() {
-      this.refetchDatasets = throttle(this.refetchDatasets, 60000)
-    }
-    beforeDestroy() {
-      (this.refetchDatasets as any).cancel();
     }
 
     @Watch('$route.params.groupIdOrSlug')
@@ -336,10 +329,6 @@
         path: '/datasets',
         query: this.$route.query,
       })
-    }
-
-    refetchDatasets() { // This method is wrapped in _.throttle in this.created()
-      this.$apollo.queries.data.refetch();
     }
 
     async refetchGroup() {

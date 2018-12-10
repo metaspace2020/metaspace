@@ -103,6 +103,7 @@ def test_db(sm_config, request):
     db.close()
 
     def fin():
+        DB.close_all()
         db = DB(db_config, autocommit=True)
         try:
             db.alter('DROP DATABASE IF EXISTS sm_test')

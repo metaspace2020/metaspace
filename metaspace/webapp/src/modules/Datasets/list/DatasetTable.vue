@@ -38,22 +38,29 @@
         </el-button>
       </div>
 
-      <dataset-list :datasets="datasets" allowDoubleColumn @datasetMutated="handleDatasetMutated" />
+      <dataset-list :datasets="datasets" allowDoubleColumn />
     </div>
   </div>
 </template>
 
 <script>
-  import {datasetDetailItemsQuery, datasetCountQuery, datasetStatusUpdatedQuery} from '../../../api/dataset';
+  import {
+    datasetDetailItemsQuery,
+    datasetCountQuery,
+    datasetDeletedQuery,
+    datasetStatusUpdatedQuery,
+  } from '../../../api/dataset';
  import {metadataExportQuery} from '../../../api/metadata';
  import DatasetList from './DatasetList.vue';
  import {FilterPanel} from '../../Filters/index';
  import { csvExportHeader } from '../../../util';
- import {throttle} from 'lodash-es';
  import FileSaver from 'file-saver';
  import delay from '../../../lib/delay';
  import formatCsvRow from '../../../lib/formatCsvRow';
   import {currentUserRoleQuery} from '../../../api/user';
+  import {removeDatasetFromAllDatasetsQuery} from '../../../lib/updateApolloCache';
+  import {sortBy, uniqBy} from 'lodash-es';
+  import updateApolloCache from '../../../lib/updateApolloCache';
 
  const processingStages = ['started', 'queued', 'failed', 'finished'];
 
@@ -71,15 +78,6 @@
      DatasetList,
      FilterPanel,
    },
-   created() {
-     // Bulk updates can cause this to trigger hundreds of times per minute. Throttle automatic refetches to at most
-     // once per minute
-
-     this.refetchList = throttle(this.refetchList, 60000);
-   },
-   beforeDestroy() {
-     this.refetchList.cancel();
-   },
 
    computed: {
      noFilters() {
@@ -93,12 +91,28 @@
        return this.datasets.length > 0;
      },
 
-     datasets() {
+     allDatasets() {
        let list = [];
-       for (let category of processingStages)
-         if (this.categories.indexOf(category) >= 0 && this[category])
+       for (let category of processingStages) {
+         if (this[category]) {
            list = list.concat(this[category]);
+         }
+       }
+       // Sort again in case any datasets have had their status changed and are now in the wrong list
+       const sortOrder = ['FAILED', 'ANNOTATING', 'QUEUED', 'FINISHED'];
+       list = uniqBy(list, 'id');
+       list = sortBy(list, dataset => sortOrder.indexOf(dataset.status));
        return list;
+
+     },
+
+     datasets() {
+       return this.allDatasets
+         .filter(ds =>
+           (ds.status === 'FAILED' && this.categories.includes('failed'))
+           || (ds.status === 'ANNOTATING' && this.categories.includes('started'))
+           || (ds.status === 'QUEUED' && this.categories.includes('queued'))
+           || (ds.status === 'FINISHED' && this.categories.includes('finished')));
      },
 
      canSeeFailed() {
@@ -108,33 +122,29 @@
 
    apollo: {
      $subscribe: {
+       datasetDeleted: {
+         query: datasetDeletedQuery,
+         result({data}) {
+           const datasetId = data.datasetDeleted.id;
+           ['failed', 'finished', 'queued', 'started'].forEach(queryName => {
+             removeDatasetFromAllDatasetsQuery(this, queryName, datasetId);
+           });
+         }
+       },
        datasetStatusUpdated: {
          query: datasetStatusUpdatedQuery,
-         result({data}) {
-           if (data.datasetStatusUpdated.dataset != null) {
-             const {name, status, submitter, group} = data.datasetStatusUpdated.dataset;
-             const who = group ? `${submitter.name} (${group.name})` : submitter.name;
-             const statusMap = {
-               FINISHED: 'success',
-               QUEUED: 'info',
-               ANNOTATING: 'info',
-               FAILED: 'warning'
-             };
-             let message = '';
-             if (status == 'FINISHED')
-               message = `Processing of dataset ${name} is finished!`;
-             else if (status == 'FAILED')
-               message = `Something went wrong with dataset ${name} :(`;
-             else if (status == 'QUEUED')
-               message = `Dataset ${name} has been submitted to query by ${who}`;
-             else if (status == 'ANNOTATING')
-               message = `Started processing dataset ${name}`;
-             this.$notify({ message, type: statusMap[status] });
+         async result({ data }) {
+           const { dataset, action, stage, is_new } = data.datasetStatusUpdated;
+           if (dataset != null && action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
+             updateApolloCache(this, 'queued', oldVal => {
+               return {
+                 ...oldVal,
+                 allDatasets: oldVal.allDatasets && [dataset, ...oldVal.allDatasets],
+               };
+             });
            }
-
-           this.refetchList();
          }
-       }
+       },
      },
 
      currentUser: {
@@ -211,33 +221,22 @@
      },
 
      count(stage) {
-       if (stage == 'finished')
-         return this.finishedCount ? '(' + this.finishedCount + ')' : '';
-       if (!this[stage])
-         return '';
-       // assume not too many items are queued/being processed
-       // so they are all visible in the web app
-       return '(' + this[stage].length + ')';
-     },
-
-     refetchList() {
-       this.refetchListUnthrottled();
-     },
-
-     refetchListUnthrottled() {
-       this.$apollo.queries.started.refresh();
-       this.$apollo.queries.queued.refresh();
-       this.$apollo.queries.finished.refresh();
-       this.$apollo.queries.finishedCount.refresh();
-       if (this.canSeeFailed) {
-         this.$apollo.queries.failed.refresh();
+       let count = null;
+       // assume not too many items are failed/queued/annotating so they are all visible in the web app,
+       // but check all lists because they may be in the wrong list due to status updates after they were loaded
+       if (stage === 'failed')
+         count = this.allDatasets.filter(ds => ds.status === 'FAILED').length;
+       if (stage === 'queued')
+         count = this.allDatasets.filter(ds => ds.status === 'QUEUED').length;
+       if (stage === 'started')
+         count = this.allDatasets.filter(ds => ds.status === 'ANNOTATING').length;
+       if (stage === 'finished') {
+         const inOtherLists = this.allDatasets.filter(ds => ds.status === 'FINISHED').length
+           - (this.finished && this.finished.length || 0);
+         count = this.finishedCount == null ? null : this.finishedCount + inOtherLists;
        }
-     },
 
-     handleDatasetMutated() {
-       // Reset the throttled function as the next datasetStatusUpdated message is probably related to the mutation that
-       // the user just triggered.
-       this.refetchList.flush();
+       return count != null && !isNaN(count) ? `(${count})` : '';
      },
 
      async startExport() {

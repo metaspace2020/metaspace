@@ -10,26 +10,17 @@ logger = logging.getLogger('engine')
 class DatasetStatus(object):
     """ Stage of dataset lifecycle """
 
-    """ The dataset is just saved to the db """
-    NEW = 'NEW'
-
     """ The dataset is queued for processing """
     QUEUED = 'QUEUED'
 
     """ The processing is in progress """
     ANNOTATING = 'ANNOTATING'
 
-    """ The records are being updated because of changed metadata """
-    INDEXING = 'INDEXING'
-
-    """ The processing/reindexing finished successfully (most common) """
+    """ The processing finished successfully (most common) """
     FINISHED = 'FINISHED'
 
     """ An error occurred during processing """
     FAILED = 'FAILED'
-
-    """ The dataset has been deleted """
-    DELETED = 'DELETED'  # only for the status queue
 
 
 RESOL_POWER_PARAMS = {
@@ -65,7 +56,7 @@ class Dataset(object):
     IMG_STORAGE_TYPE_UPD = 'UPDATE dataset SET ion_img_storage_type = %s WHERE id = %s'
 
     def __init__(self, id=None, name=None, input_path=None, upload_dt=None,
-                 metadata=None, status=DatasetStatus.NEW,
+                 metadata=None, status=DatasetStatus.QUEUED,
                  is_public=True, mol_dbs=None, adducts=None, img_storage_type='fs'):
         self.id = id
         self.name = name
@@ -97,9 +88,19 @@ class Dataset(object):
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
 
-    def set_status(self, db, es, status_queue=None, status=None):
+    def set_status(self, db, es, status):
         self.status = status
-        self.save(db, es, status_queue)
+        self.save(db, es)
+
+    def notify_update(self, status_queue, action, stage, **kwargs):
+        status_queue.publish({
+            'ds_id': self.id,
+            'status': self.status,
+            'action': action.upper(),
+            'stage': stage,
+            **kwargs,
+        })
+
 
     @classmethod
     def load(cls, db, ds_id):
@@ -113,7 +114,7 @@ class Dataset(object):
         r = db.select_one(self.DS_SEL, params=(self.id,))
         return True if r else False
 
-    def save(self, db, es=None, status_queue=None):
+    def save(self, db, es=None):
         doc = {
             'id': self.id,
             'name': self.name,
@@ -134,8 +135,6 @@ class Dataset(object):
 
         if es:
             es.sync_dataset(self.id)
-        if status_queue:
-            status_queue.publish({'ds_id': self.id, 'status': self.status})
 
     def get_acq_geometry(self, db):
         r = db.select_one(Dataset.ACQ_GEOMETRY_SEL, params=(self.id,))

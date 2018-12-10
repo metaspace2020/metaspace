@@ -7,6 +7,16 @@ import {Dataset} from '../../../binding';
 import {rawOpticalImage} from './Query';
 import getScopeRoleForEsDataset from '../util/getScopeRoleForEsDataset';
 import {logger} from '../../../utils';
+import {Context} from '../../../context';
+
+export const thumbnailOpticalImageUrl = async (ctx: Context, id: string) => {
+  const result = await ctx.entityManager.query('SELECT thumbnail FROM public.dataset WHERE id = $1', [id]);
+  if (result && result.length === 1 && result[0].thumbnail != null) {
+    return `/fs/optical_images/${result[0].thumbnail}`;
+  } else {
+    return null;
+  }
+};
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   id(ds) {
@@ -94,7 +104,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
       return [];
     }
 
-    const projects = await ctx.connection.getCustomRepository(ProjectSourceRepository)
+    const projects = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectsByDatasetId(ctx.user, ds._source.ds_id);
     return projects.map(p => ({
       id: p.id,
@@ -104,8 +114,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     }));
   },
 
-  async principalInvestigator(ds, _, {connection, isAdmin, user}) {
-    const dataset = await connection.getRepository(DatasetModel).findOne({ id: ds._source.ds_id });
+  async principalInvestigator(ds, _, {entityManager, isAdmin, user}) {
+    const dataset = await entityManager.getRepository(DatasetModel).findOne({ id: ds._source.ds_id });
     if (dataset == null) {
       logger.warn(`Elasticsearch DS does not exist in DB: ${ds._source.ds_id}`);
       return null;
@@ -186,6 +196,10 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   async rawOpticalImageUrl(ds, _, ctx) {
     const opticalImage = await rawOpticalImage(ds._source.ds_id, ctx);
     return opticalImage ? opticalImage.url : null;
+  },
+
+  async thumbnailOpticalImageUrl(ds, args, ctx) {
+    return await thumbnailOpticalImageUrl(ctx, ds._source.ds_id);
   }
 };
 

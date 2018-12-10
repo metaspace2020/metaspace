@@ -11,6 +11,7 @@ from fabric.api import local
 from fabric.context_managers import warn_only
 import pandas as pd
 
+from sm.engine.daemon_action import DaemonAction
 from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
@@ -149,7 +150,7 @@ def test_sm_daemons(calc_metrics_mock,
         }])
 
         ds = Dataset.load(db, ds_id)
-        queue_pub.publish({'ds_id': ds.id, 'ds_name': ds.name, 'action': 'annotate'})
+        queue_pub.publish({'ds_id': ds.id, 'ds_name': ds.name, 'action': DaemonAction.ANNOTATE})
 
         run_daemons(db, es)
 
@@ -262,7 +263,7 @@ def test_sm_daemons_annot_fails(calc_metrics_mock,
             'ion_img_storage': 'fs'
         }])
 
-        queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': 'annotate'})
+        queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
 
         run_daemons(db, es)
 
@@ -342,7 +343,7 @@ def test_sm_daemon_es_export_fails(calc_metrics_mock,
             'ion_img_storage': 'fs'
         }])
 
-        queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': 'annotate'})
+        queue_pub.publish({'ds_id': ds_id, 'ds_name': test_ds_name, 'action': DaemonAction.ANNOTATE})
 
         run_daemons(db, es)
 

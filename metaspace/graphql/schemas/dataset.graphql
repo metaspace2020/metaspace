@@ -32,9 +32,11 @@ type Dataset {
   status: JobStatus
   inputPath: String
   uploadDateTime: String
-  fdrCounts(inpFdrLvls: [Int!]!, checkLvl: Int!): FdrCounts
+  fdrCounts(inpFdrLvls: [Int!]! = [10], checkLvl: Int! = 10): FdrCounts
   opticalImage: String @deprecated(badName: "Renamed to rawOpticalImageUrl")
   rawOpticalImageUrl: String
+
+  thumbnailOpticalImageUrl: String
 }
 
 # Datasets' submitter and group are taken from ElasticSearch, which means they can be out of sync with the database.
@@ -176,9 +178,38 @@ input AddOpticalImageInput {
   transform: [[Float]]!
 }
 
+type DatasetRelationship {
+  type: String!
+  id: String!
+  name: String!
+}
+enum DatasetAction {
+  ANNOTATE
+  UPDATE
+  INDEX
+  DELETE
+}
+enum DatasetActionStage {
+  QUEUED
+  STARTED
+  FINISHED
+  FAILED
+}
+
+type DatasetStatusUpdate {
+  dataset: Dataset
+  relationship: DatasetRelationship
+  action: DatasetAction!
+  stage: DatasetActionStage!
+  is_new: Boolean
+}
+
+type DatasetDeletion {
+  id: String!
+}
+
 type Query {
   dataset(id: String!): Dataset
-  datasetByName(name: String!): Dataset
 
   allDatasets(orderBy: DatasetOrderBy = ORDER_BY_DATE,
               sortingOrder: SortingOrder = DESCENDING,
@@ -202,7 +233,7 @@ type Query {
 
   thumbnailImage(datasetId: String!): String @deprecated(badName: "Renamed to thumbnailOpticalImageUrl")
 
-  thumbnailOpticalImageUrl(datasetId: String!): String
+  thumbnailOpticalImageUrl(datasetId: String!): String @deprecated(reason: "Use Dataset.thumbnailOpticalImageUrl instead")
 
   currentUserLastSubmittedDataset: Dataset
 }
@@ -227,12 +258,9 @@ type Mutation {
   deleteOpticalImage(datasetId: String!): String!
 }
 
-type DatasetStatusUpdate {
-  dataset: Dataset
-}
-
 type Subscription {
   datasetStatusUpdated: DatasetStatusUpdate
+  datasetDeleted: DatasetDeletion
 }
 
 schema {

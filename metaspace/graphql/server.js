@@ -1,3 +1,11 @@
+// Before loading anything graphql-related, polyfill Symbol.asyncIterator because it's needed by TypeScript to support
+// async iterators, and the 'iterall' package imported by graphql-js will make its own symbol and reject others
+// if this isn't defined when 'iterall' is loaded
+Symbol.asyncIterator = Symbol.asyncIterator || Symbol.for("Symbol.asyncIterator");
+if (require('iterall').$$asyncIterator !== Symbol.asyncIterator) {
+  throw new Error('iterall is using the wrong symbol for asyncIterator')
+}
+
 const bodyParser = require('body-parser'),
   compression = require('compression'),
   config = require('config'),
@@ -6,6 +14,7 @@ const bodyParser = require('body-parser'),
   connectRedis = require('connect-redis'),
   {ApolloServer} = require('apollo-server-express'),
   jwt = require('express-jwt'),
+  jwtSimple = require('jwt-simple'),
   cors = require('cors'),
   {UserError} = require('graphql-errors');
 
@@ -61,11 +70,12 @@ async function createHttpServerAsync(config) {
 
   app.use(bodyParser.json());
   configureSession(app);
-  await configureAuth(app, connection);
+  await configureAuth(app, connection.manager);
+
 
   const apollo = new ApolloServer({
     schema: executableSchema,
-    context: ({req, res}) => getContext(req.user && req.user.user, connection, req, res),
+    context: ({req, res}) => getContext(req.user && req.user.user, connection.manager, req, res),
     playground: {
       settings: {
         'editor.theme': 'light',
@@ -97,7 +107,13 @@ async function createHttpServerAsync(config) {
     SubscriptionServer.create({
       execute,
       subscribe,
-      schema: executableSchema
+      schema: executableSchema,
+      onOperation(message, params) {
+        const jwt = message.payload.jwt;
+        const user = jwt != null ? jwtSimple.decode(jwt, config.jwt.secret) : null;
+        params.context = getContext(user && user.user, connection, null, null);
+        return params;
+      }
     }, {
       server: wsServer,
       path: '/graphql',

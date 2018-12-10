@@ -19,7 +19,7 @@ const apolloProvider = new VueApollo({
     $query: {
       fetchPolicy: 'network-only',
     },
-  } as any
+  } as any,
 });
 
 import ElementUI from 'element-ui';

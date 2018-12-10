@@ -2,7 +2,7 @@ import gql from 'graphql-tag';
 
 // Prefixing these with `Gql` because differently-cased variants are used elsewhere
 export type GqlPolarity = 'POSITIVE' | 'NEGATIVE';
-export type GqlJobStatus = 'NEW' | 'QUEUED' | 'ANNOTATING' | 'INDEXING' | 'FINISHED' | 'FAILED';
+export type GqlJobStatus = 'QUEUED' | 'ANNOTATING' | 'FINISHED' | 'FAILED';
 
 export interface DatasetDetailItem {
   id: string;
@@ -77,7 +77,7 @@ export const datasetDetailItemFragment =
       levels
       counts
     }
-    rawOpticalImageUrl
+    thumbnailOpticalImageUrl
   }`;
 
 export const datasetDetailItemsQuery =
@@ -179,17 +179,25 @@ export interface DatasetVisibilityResult {
   projects: { id: string, name: string }[] | null;
 }
 
-export const datasetStatusUpdatedQuery = gql`subscription DS {
+export const datasetStatusUpdatedQuery = gql`subscription datasetStatusUpdated($inpFdrLvls: [Int!] = [10], $checkLvl: Int = 10) {
   datasetStatusUpdated {
     dataset {
+      ...DatasetDetailItem
+    }
+    relationship {
+      type
       id
       name
-      status
-      submitter { id name }
-      principalInvestigator { name }
-      group { id name shortName }
-      projects { id name }
-      isPublic
     }
+    action
+    stage
+    is_new
+  }
+}
+${datasetDetailItemFragment}`;
+
+export const datasetDeletedQuery = gql`subscription datasetDeleted {
+  datasetDeleted {
+    id
   }
 }`;

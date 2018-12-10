@@ -9,6 +9,7 @@ import { onError } from 'apollo-link-error';
 import * as config from './clientConfig.json';
 import tokenAutorefresh from './tokenAutorefresh';
 import reportError from './lib/reportError';
+import {get} from 'lodash-es';
 
 const graphqlUrl = config.graphqlUrl || `${window.location.origin}/graphql`;
 const wsGraphqlUrl = config.wsGraphqlUrl || `${window.location.origin.replace(/^http/, 'ws')}/ws`;
@@ -40,10 +41,9 @@ const authLink = setContext(async () => {
   }
 });
 
-const errorLink = onError(({ graphQLErrors }) => {
+const errorLink = onError(({ graphQLErrors, networkError, forward, operation }) => {
   if (graphQLErrors) {
     const readOnlyErrors = graphQLErrors.filter(isReadOnlyError);
-    console.log(graphQLErrors, readOnlyErrors, $alert);
 
     if (readOnlyErrors.length > 0) {
       if ($alert != null) {
@@ -53,6 +53,13 @@ const errorLink = onError(({ graphQLErrors }) => {
           {type: 'error'});
       }
     }
+  } else if (networkError) {
+    const message = get(networkError, 'result.message');
+    if (message === 'jwt expired') {
+      // noinspection JSIgnoredPromiseFromCall
+      tokenAutorefresh.refreshJwt(true);
+      return forward(operation);
+    }
   }
 });
 
@@ -61,11 +68,46 @@ const httpLink = new BatchHttpLink({
   batchInterval: 10,
 });
 
-const wsLink = new WebSocketLink(new SubscriptionClient(wsGraphqlUrl, {
+const wsClient = new SubscriptionClient(wsGraphqlUrl, {
   reconnect: true,
-}));
+  async connectionParams() {
+    // WORKAROUND: This is not the right place for this, but it's the only callback that gets called after a reconnect
+    // and can run an async operation before any messages are sent.
+    // All subscription operations need to have their JWTs updated before they are reconnected, so do that before
+    // supplying the connection params.
+    const operations = Object.values(wsClient.operations || {}).map(op => op.options);
+    const queuedMessages: any[] = wsClient['unsentMessagesQueue'].map((m: any) => m.payload);
+    const payloads = [...operations, ...queuedMessages];
 
-const link = authLink.concat(errorLink).split(
+    if (payloads.length > 0) {
+      const jwt = await tokenAutorefresh.getJwt();
+      payloads.forEach(payload => {
+        payload.jwt = jwt;
+      });
+    }
+
+    return {}
+  }
+});
+wsClient.use([{
+  async applyMiddleware(operationOptions: any, next: Function) {
+    // Attach a JWT to each request
+    try {
+      operationOptions['jwt'] = await tokenAutorefresh.getJwt();
+    } catch (err) {
+      reportError(err);
+      next(err);
+    } finally {
+      next();
+    }
+  }
+}]);
+
+const wsLink = new WebSocketLink(wsClient);
+(window as any).wsClient = wsClient;
+(window as any).wsLink = wsLink;
+
+const link = errorLink.concat(authLink).split(
   (operation) => {
     // Only send subscriptions over websockets
     const operationAST = getOperationAST(operation.query, operation.operationName);
@@ -120,6 +162,7 @@ export const refreshLoginStatus = async () => {
 
   await apolloClient.queryManager.clearStore();
   await tokenAutorefresh.refreshJwt(true);
+
   try {
     await apolloClient.reFetchObservableQueries();
   } catch (err) {

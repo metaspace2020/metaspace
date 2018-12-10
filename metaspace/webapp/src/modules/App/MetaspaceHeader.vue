@@ -88,6 +88,7 @@
   import {encodeParams} from '../Filters';
   import {refreshLoginStatus} from '../../graphqlClient';
   import NotificationIcon from '../../components/NotificationIcon.vue';
+  import {datasetStatusUpdatedQuery} from '../../api/dataset';
 
  export default {
    name: 'metaspace-header',
@@ -209,6 +210,57 @@
        }`,
        fetchPolicy: 'cache-first',
        loadingKey: 'loadingUser'
+     },
+     $subscribe: {
+       datasetStatusUpdated: {
+         query: datasetStatusUpdatedQuery,
+         result({ data }) {
+           const { dataset, relationship, action, stage, is_new } = data.datasetStatusUpdated;
+           if (dataset != null && relationship != null) {
+             const { name, submitter } = dataset;
+
+             let message, type;
+             if (relationship.type === 'submitter') {
+               if (action === 'ANNOTATE' && stage === 'FINISHED') {
+                 message = `Processing of dataset ${name} is finished!`;
+                 type = 'success';
+               } else if (stage === 'FAILED') {
+                 message = `Something went wrong with dataset ${name} :(`;
+                 type = 'warning';
+               } else if (action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
+                 message = `Dataset ${name} has been submitted`;
+                 type = 'info';
+               } else if (action === 'ANNOTATE' && stage === 'QUEUED' && !is_new) {
+                 message = `Dataset ${name} has been submitted for reprocessing`;
+                 type = 'info';
+               } else if (action === 'ANNOTATE' && stage === 'STARTED') {
+                 message = `Started processing dataset ${name}`;
+                 type = 'info';
+               }
+             } else {
+               const who = `${submitter.name} (${relationship.name})`;
+               if (action === 'ANNOTATE' && stage === 'FINISHED') {
+                 message = `Processing of dataset ${name} by ${who} is finished!`;
+                 type = 'success';
+               } else if (action === 'ANNOTATE' && stage === 'QUEUED' && is_new) {
+                 message = `Dataset ${name} has been submitted by ${who}`;
+                 type = 'info';
+               }
+             }
+             if (message != null && type != null) {
+               this.$notify({ message, type });
+             }
+           }
+         }
+       },
+     },
+   },
+
+   watch: {
+     '$route'() {
+       // Ensure queries are running, because occasionally the websocket connection doesn't automatically recover
+       this.$apollo.subscriptions.systemHealth.start();
+       this.$apollo.subscriptions.datasetStatusUpdated.start();
      }
    },
 
@@ -357,6 +409,7 @@
    font-size: 16px;
    align-self: stretch;
    justify-content: center;
+   white-space: nowrap;
  }
  .limit-width {
    max-width: 250px;

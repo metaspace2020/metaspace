@@ -57,7 +57,7 @@ export const Resolvers = {
 
     async groups({scopeRole, ...user}: UserSource, _: any, ctx: Context): Promise<LooselyCompatible<UserGroup>[]|null> {
       if (scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
-        const userGroups = await ctx.connection.getRepository(UserGroupModel).find({
+        const userGroups = await ctx.entityManager.getRepository(UserGroupModel).find({
           where: { userId: user.id },
           relations: ['group', 'user']
         });
@@ -76,7 +76,7 @@ export const Resolvers = {
 
     async projects(user: UserSource, args: any, ctx: Context): Promise<UserProjectSource[]|null> {
       if (user.scopeRole === SRO.PROFILE_OWNER || ctx.isAdmin) {
-        const userProjects = await ctx.connection.getRepository(UserProjectModel)
+        const userProjects = await ctx.entityManager.getRepository(UserProjectModel)
           .find({userId: user.id});
         return userProjects.map(userProject => ({ ...userProject, user }));
       }
@@ -101,7 +101,7 @@ export const Resolvers = {
   Query: {
     async user(_: any, {userId}: any, ctx: Context): Promise<UserSource|null> {
       const scopeRole = await resolveUserScopeRole(ctx, userId);
-      const user = await ctx.connection.getRepository(UserModel).findOne({
+      const user = await ctx.entityManager.getRepository(UserModel).findOne({
         where: { id: userId }
       });
       return user != null ? convertUserToUserSource(user, scopeRole) : null;
@@ -110,7 +110,7 @@ export const Resolvers = {
     async currentUser(_: any, {}: any, ctx: Context): Promise<UserSource|null> {
       if (ctx.user != null) {
         const scopeRole = await resolveUserScopeRole(ctx, ctx.user.id);
-        const user = await ctx.connection.getRepository(UserModel).findOneOrFail({
+        const user = await ctx.entityManager.getRepository(UserModel).findOneOrFail({
           where: { id: ctx.user.id }
         });
         return convertUserToUserSource(user, scopeRole);
@@ -120,7 +120,7 @@ export const Resolvers = {
 
     async allUsers(_: any, {query}: any, ctx: Context): Promise<UserSource[]|null> {
       if (ctx.isAdmin) {
-        const users = await ctx.connection.getRepository(UserModel)
+        const users = await ctx.entityManager.getRepository(UserModel)
           .createQueryBuilder('user')
           .where(`user.name ILIKE '%' || :query || '%'`, {query})
           .orWhere(`user.email ILIKE :query || '%'`, {query})
@@ -137,7 +137,7 @@ export const Resolvers = {
   },
 
   Mutation: {
-    async updateUser(_: any, {userId, update}: any, {user, isAdmin, connection}: Context): Promise<User> {
+    async updateUser(_: any, {userId, update}: any, {user, isAdmin, entityManager}: Context): Promise<User> {
       assertCanEditUser(user, userId);
       logger.info(`User '${userId}' being updated by '${user!.id}'...`);
 
@@ -145,7 +145,7 @@ export const Resolvers = {
         throw new UserError('Only admin can update role');
       }
 
-      let userObj = await connection.getRepository(UserModel).findOneOrFail({
+      let userObj = await entityManager.getRepository(UserModel).findOneOrFail({
         where: { id: userId },
         relations: ['credentials']
       }) as UserModel;
@@ -153,14 +153,14 @@ export const Resolvers = {
         await sendEmailVerificationToken(userObj.credentials, update.email);
       }
       const {email: notVerifiedEmail, primaryGroupId, ...rest} = update;
-      userObj = await connection.getRepository(UserModel).save({
+      userObj = await entityManager.getRepository(UserModel).save({
         ...userObj,
         ...rest,
         notVerifiedEmail
       });
 
       if (primaryGroupId) {
-        const userGroupRepo = connection.getRepository(UserGroupModel);
+        const userGroupRepo = entityManager.getRepository(UserGroupModel);
         const userGroups = await userGroupRepo.find({ where: { userId } }) as UserGroupModel[];
         if (userGroups.length > 0) {
           const newPrimary = userGroups.find(ug => ug.groupId === primaryGroupId) || userGroups[0];
@@ -171,7 +171,7 @@ export const Resolvers = {
         }
       }
 
-      const userDSs = await connection.getRepository(DatasetModel).find({ userId });
+      const userDSs = await entityManager.getRepository(DatasetModel).find({ userId });
       if (userDSs) {
         logger.info(`Updating user '${userId}' datasets...`);
         await Promise.all(userDSs.map(async ds => {
@@ -187,33 +187,33 @@ export const Resolvers = {
       };
     },
 
-    async deleteUser(_: any, {userId, deleteDatasets}: any, {req, res, user: currentUser, connection}: Context): Promise<Boolean> {
+    async deleteUser(_: any, {userId, deleteDatasets}: any, {req, res, user: currentUser, entityManager}: Context): Promise<Boolean> {
       assertCanEditUser(currentUser, userId);
       logger.info(`User '${userId}' being ${deleteDatasets ? 'hard-' : 'soft-'}deleted by '${currentUser!.id}'...`);
-      const userRepo = await connection.getRepository(UserModel);
+      const userRepo = await entityManager.getRepository(UserModel);
       const deletingUser = (await userRepo.findOneOrFail(userId));
 
       if (deleteDatasets) {
-        const userDSs = await connection.getRepository(DatasetModel).find({ userId });
+        const userDSs = await entityManager.getRepository(DatasetModel).find({ userId });
         logger.info(`Deleting user '${userId}' datasets...`);
         await Promise.all(userDSs.map(async ds => {
-          await deleteDataset(connection, currentUser!, ds.id);
+          await deleteDataset(entityManager, currentUser!, ds.id);
         }));
-        await connection.getRepository(DatasetModel).delete({userId});
+        await entityManager.getRepository(DatasetModel).delete({userId});
 
 
-        await connection.getRepository(UserGroupModel).delete({userId});
+        await entityManager.getRepository(UserGroupModel).delete({userId});
         await userRepo.delete({ id: userId });
-        await connection.getRepository(CredentialsModel).delete({ id: deletingUser.credentialsId });
+        await entityManager.getRepository(CredentialsModel).delete({ id: deletingUser.credentialsId });
         logger.info(`User '${userId}' was hard-deleted`);
       } else {
-        await connection.getRepository(UserGroupModel).delete({userId});
+        await entityManager.getRepository(UserGroupModel).delete({userId});
         // Remove login methods to prevent login, and verify the email so that it can't be claimed as an inactive account
-        await connection.getRepository(CredentialsModel).update({ id: deletingUser.credentialsId },
+        await entityManager.getRepository(CredentialsModel).update({ id: deletingUser.credentialsId },
           { hash: null, googleId: null, emailVerified: true });
         // Make email invalid so that the password can't be reset
         const email = `${deletingUser.email || deletingUser.notVerifiedEmail}-DELETED-${uuid.v4()}`;
-        await connection.getRepository(UserModel).update({id: userId},
+        await entityManager.getRepository(UserModel).update({id: userId},
           {email, notVerifiedEmail: null});
 
         logger.info(`User '${userId}' was soft-deleted`);
