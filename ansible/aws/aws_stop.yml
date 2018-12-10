@@ -1,5 +1,17 @@
 ---
 
+- name: Stop daemons on master
+  hosts: master
+  user: ubuntu
+
+  tasks:
+    - name: Stop all daemons managed by supervisor on master
+      command: supervisorctl status all
+      register: res
+
+    - debug: var=res.stdout
+
+
 - hosts: localhost
   connection: local
   gather_facts: False
