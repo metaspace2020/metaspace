@@ -117,9 +117,12 @@ exports[`ProjectsListPage should match snapshot 1`] = `
                 1 Member
               </div>
               <div class="info-line"><span>Manager<!---->:</span> <span>
-            TestUser1,
-            <a href="/group/allProjects.0.members.0.user.primaryGroup.group.id" class="group-link">
-              allProjects.0.members.0.user.primaryGroup.group.shortName</a><!----></span></div>
+            TestUser1<span>, </span>
+                <a href="/group/allProjects.0.members.0.user.primaryGroup.group.id" class="group-link">
+                  allProjects.0.members.0.user.primaryGroup.group.shortName</a>
+                <!---->
+                </span>
+              </div>
               <div class="info-line"><span>
               Created on <b><span style="font-size: 14px;">2018-08-29</span></b>
                 </span>
@@ -154,9 +157,12 @@ exports[`ProjectsListPage should match snapshot 1`] = `
                 20 Members
               </div>
               <div class="info-line"><span>Manager<!---->:</span> <span>
-            TestUser1,
-            <a href="/group/allProjects.1.members.0.user.primaryGroup.group.id" class="group-link">
-              allProjects.1.members.0.user.primaryGroup.group.shortName</a><!----></span></div>
+            TestUser1<span>, </span>
+                <a href="/group/allProjects.1.members.0.user.primaryGroup.group.id" class="group-link">
+                  allProjects.1.members.0.user.primaryGroup.group.shortName</a>
+                <!---->
+                </span>
+              </div>
               <div class="info-line"><span>
             Last submission <b><span style="font-size: 14px;">2018-08-01</span></b>
                 </span>
