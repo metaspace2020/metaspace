@@ -125,9 +125,11 @@ class ClusterDaemon(object):
                     'Cluster is spun up', 'Failed to spin up the cluster')
 
     def cluster_stop(self):
-        self.logger.info('Stopping the cluster...')
-        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_stop.yml', '-e', 'components=master,slave'],
-                    'Cluster is stopped successfully', 'Failed to stop the cluster')
+        if self.queue_empty():  # make sure there are no new messages
+            self.logger.info('No jobs running. Queue is empty. Stopping the cluster...')
+            self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_stop.yml', '-e', 'components=master,slave'],
+                        'Cluster is stopped successfully', 'Failed to stop the cluster')
+            self._post_to_slack('checkered_flag', "[v] Cluster stopped")
 
     def cluster_setup(self):
         self.logger.info('Setting up the cluster...')
@@ -182,8 +184,8 @@ class ClusterDaemon(object):
             else:
                 break
 
-    def start(self):
-        self.logger.info('Started the SM cluster auto-start daemon (interval=%dsec)...', self.interval)
+    def run(self):
+        self.logger.info('Started SM cluster auto-start daemon (interval=%dsec)...', self.interval)
         try:
             while True:
                 if not self.queue_empty():
@@ -191,9 +193,7 @@ class ClusterDaemon(object):
                         self._try_start_setup_deploy()
                 else:
                     if self.spark_master_public_ip and not self.job_running():
-                        self.logger.info('Queue is empty. No jobs running. Stopping the cluster...')
                         self.cluster_stop()
-                        self._post_to_slack('checkered_flag', "[v] Cluster stopped")
 
                 sleep(self.interval)
         except Exception as e:
@@ -212,4 +212,4 @@ if __name__ == "__main__":
 
     cluster_daemon = ClusterDaemon(args.ansible_config_path, interval=args.interval,
                                    qname='sm_annotate', debug=args.debug)
-    cluster_daemon.start()
+    cluster_daemon.run()
