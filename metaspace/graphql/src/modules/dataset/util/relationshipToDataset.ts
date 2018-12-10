@@ -37,7 +37,7 @@ export const relationshipToDataset = async (dataset: DatasetSource, ctx: Context
       const projectIds = ds.ds_project_ids
         .filter(id => projectRoles[id] === UPRO.MANAGER || projectRoles[id] === UPRO.MEMBER);
       if (projectIds.length > 0) {
-        const projects = await ctx.connection.getRepository(ProjectModel).findByIds(projectIds);
+        const projects = await ctx.entityManager.getRepository(ProjectModel).findByIds(projectIds);
         projects.forEach(({id, name}) => {
           relationships.push({ type: 'project', id, name })
         });

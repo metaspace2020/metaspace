@@ -540,7 +540,7 @@
  }
 
  .ds-actions {
-   padding: 10px 15px 10px 0px;
+   padding: 10px 22px 10px 0px;
    margin: 0px;
    flex: none;
  }
@@ -595,14 +595,10 @@
    color: #a00;
  }
 
- .ds-item-disabled {
-   pointer-events: none;
-   opacity: 0.5;
- }
  .ds-item-private-icon {
    position: absolute;
-   opacity: 0.2;
-   width: 24px;
+   opacity: 0.3;
+   width: 22px;
    height: 32px;
    right: 10px;
    bottom: 8px;

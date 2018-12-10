@@ -108,16 +108,27 @@ exports[`ProjectsListPage should match snapshot 1`] = `
         <div class="item-body">
           <div class="info">
             <div class="info-line project-name">
-              <a href="/project/proj-one" class="">project one</a>
+              <a href="/project/proj-one" class=""><span style="margin-left: 5px;">project one</span></a>
+              <img src="../../assets/padlock-icon.svg" title="This project is only visible to its members and METASPACE administrators" class="private-icon">
             </div>
-            <div class="info-line">
+            <div style="margin-left: 12px;">
+              <div class="info-line">
+                <!---->
+                1 Member
+              </div>
+              <div class="info-line"><span>Manager<!---->:</span> <span>
+            TestUser1<span><span>, </span></span>
+                <a href="/group/allProjects.0.members.0.user.primaryGroup.group.id" class="group-link">
+                  allProjects.0.members.0.user.primaryGroup.group.shortName</a>
+                <!---->
+                </span>
+              </div>
+              <div class="info-line"><span>
+              Created on <b><span style="font-size: 14px;">2018-08-29</span></b>
+                </span>
+              </div>
               <!---->
-              1 Member
             </div>
-            <div class="info-line"><span>Project manager<!---->:</span> <span><b>TestUser1<!----></b></span></div>
-            <div class="info-line"><span>
-          Created on <b>2018-08-29</b></span></div>
-            <!---->
           </div>
           <div class="actions">
             <!---->
@@ -131,22 +142,33 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             </div>
           </div>
         </div>
-        <img src="../../assets/padlock-icon.svg" title="This project is only visible to its members and METASPACE administrators" class="private-icon">
       </div>
-      <div class="project-item">
+      <div class="project-item odd">
         <a href="/project/project%202" class="underlay"></a>
         <div class="item-body">
           <div class="info">
             <div class="info-line project-name">
-              <a href="/project/project%202" class="">project two</a>
+              <a href="/project/project%202" class=""><span style="margin-left: 5px;">project two</span></a>
+              <!---->
             </div>
-            <div class="info-line"><span><a href="/datasets?prj=project%202" class="">20 Datasets</a>,
-        </span> 20 Members
+            <div style="margin-left: 12px;">
+              <div class="info-line"><span><a href="/datasets?prj=project%202" class=""><span>20 Datasets</span></a>,
+                </span>
+                20 Members
+              </div>
+              <div class="info-line"><span>Manager<!---->:</span> <span>
+            TestUser1<span><span>, </span></span>
+                <a href="/group/allProjects.1.members.0.user.primaryGroup.group.id" class="group-link">
+                  allProjects.1.members.0.user.primaryGroup.group.shortName</a>
+                <!---->
+                </span>
+              </div>
+              <div class="info-line"><span>
+            Last submission <b><span style="font-size: 14px;">2018-08-01</span></b>
+                </span>
+              </div>
+              <!---->
             </div>
-            <div class="info-line"><span>Project manager<!---->:</span> <span><b>TestUser1<!----></b></span></div>
-            <div class="info-line"><span>
-          Last submission <b>2018-08-01</b></span></div>
-            <!---->
           </div>
           <div class="actions">
             <div>
@@ -157,7 +179,6 @@ exports[`ProjectsListPage should match snapshot 1`] = `
             <!---->
           </div>
         </div>
-        <!---->
       </div>
     </div>
     <div style="text-align: center;">

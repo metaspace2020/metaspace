@@ -14,7 +14,8 @@
       </div>
       <div class="clearfix"/>
       <div v-loading="loading !== 0" style="min-height: 100px;">
-        <projects-list-item v-for="project in projects"
+        <projects-list-item v-for="(project, i) in projects"
+                            :class="[i%2 ? 'odd': '']"
                             :key="project.id"
                             :project="project"
                             :currentUser="currentUser"
@@ -196,5 +197,9 @@
     flex-wrap: wrap;
     justify-content: space-between;
     align-items: flex-start;
+  }
+
+  .odd {
+    background-color: #e6f1ff;
   }
 </style>
