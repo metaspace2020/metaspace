@@ -16,6 +16,7 @@ import {
   initOperation,
   resetPassword,
   sendResetPasswordToken,
+  validateResetPasswordToken,
   verifyEmail,
   verifyPassword,
 } from './operation';
@@ -265,8 +266,7 @@ const configureResetPassword = (router: IRouter<any>) => {
   router.post('/validatepasswordresettoken', async (req, res, next) => {
     try {
       const { email, token } = req.body;
-      const user = await findUserByEmail(email);
-      if (user && user.credentials.resetPasswordToken === token) {
+      if (await validateResetPasswordToken(email, token)) {
         res.send(true);
       } else {
         res.sendStatus(400);

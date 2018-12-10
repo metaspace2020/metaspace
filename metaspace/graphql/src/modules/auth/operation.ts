@@ -10,6 +10,7 @@ import {logger} from '../../utils';
 import * as utils from '../../utils';
 import {Credentials as CredentialsModel, Credentials} from './model';
 import {User as UserModel, User} from '../user/model';
+import {sendCreateAccountEmail} from './email';
 
 export interface UserCredentialsInput {
   email: string;
@@ -211,44 +212,64 @@ export const verifyEmail = async (email: string, token: string): Promise<User|nu
 };
 
 export const sendResetPasswordToken = async (email: string): Promise<void> => {
-  const user = await findUserByEmail(email);
-  if (!user) {
-    throw new Error(`User with ${email} email does not exist`);
-  }
+  const user = await findUserByEmail(email) || await findUserByEmail(email, 'not_verified_email');
 
-  const cred = user.credentials;
-  let resetPasswordToken;
-  if (cred.resetPasswordToken == null || tokenExpired(cred.resetPasswordTokenExpires)) {
-    resetPasswordToken = uuid.v4();
-    logger.debug(`Token '${cred.resetPasswordToken}' expired for ${email}. A new one generated: ${resetPasswordToken}`);
-    const updCred = credRepo.create({
-      ...cred,
-      resetPasswordToken,
-      resetPasswordTokenExpires: createExpiry()
-    });
-    await credRepo.update(updCred.id, updCred);
+  // Inactive users can reset their password only if they have a name, otherwise they have to create an account
+  if (user == null || (user.email == null && (user.name == null || user.name === ''))) {
+    sendCreateAccountEmail(email, `${config.web_public_url}/account/create-account`);
+  } else {
+    logger.info(`Creating password reset token for ${user.email == null ? 'inactive ' : ''}user ${user.id}`);
+    const cred = user.credentials;
+    let resetPasswordToken;
+    if (cred.resetPasswordToken == null || tokenExpired(cred.resetPasswordTokenExpires)) {
+      resetPasswordToken = uuid.v4();
+      logger.debug(`Token '${cred.resetPasswordToken}' expired for ${email}. A new one generated: ${resetPasswordToken}`);
+      const updCred = credRepo.create({
+        ...cred,
+        resetPasswordToken,
+        resetPasswordTokenExpires: createExpiry()
+      });
+      await credRepo.update(updCred.id, updCred);
+    } else {
+      resetPasswordToken = cred.resetPasswordToken;
+    }
+    const link = `${config.web_public_url}/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetPasswordToken)}`;
+    emailService.sendResetPasswordEmail(email, link);
   }
-  else {
-    resetPasswordToken = cred.resetPasswordToken;
-  }
-  const link = `${config.web_public_url}/account/reset-password?email=${encodeURIComponent(email)}&token=${encodeURIComponent(resetPasswordToken)}`;
-  emailService.sendResetPasswordEmail(email, link);
+};
+
+export const validateResetPasswordToken = async (email: string, token: string): Promise<boolean> => {
+  const user = await findUserByEmail(email) || await findUserByEmail(email, 'not_verified_email');
+  return user != null
+    && user.credentials.resetPasswordToken === token
+    && !tokenExpired(user.credentials.resetPasswordTokenExpires);
 };
 
 export const resetPassword = async (email: string, password: string, token: string): Promise<User | undefined> => {
-  const user = await findUserByEmail(email);
+  const user = await findUserByEmail(email) || await findUserByEmail(email, 'not_verified_email');
   if (user) {
     if (user.credentials.resetPasswordToken !== token || tokenExpired(user.credentials.resetPasswordTokenExpires)) {
       logger.debug(`Token '${user.credentials.resetPasswordToken}' is wrong or expired for ${email}`);
     }
     else {
-      const updCred = credRepo.create({
-        ...user.credentials,
+      if (user.email == null) {
+        await credRepo.update(user.credentials.id, {
+          emailVerified: true,
+          emailVerificationToken: null,
+          emailVerificationTokenExpires: null,
+        });
+        await userRepo.update(user.id, {
+          email: user.notVerifiedEmail,
+          notVerifiedEmail: null
+        });
+
+        logger.info(`Validated email address during password reset for ${email}`);
+      }
+      await credRepo.update(user.credentials.id, {
         hash: await hashPassword(password),
         resetPasswordToken: null,
         resetPasswordTokenExpires: null
       });
-      await credRepo.update(updCred.id, updCred);
       logger.info(`Successful password reset for ${email} email`);
       return user;
     }

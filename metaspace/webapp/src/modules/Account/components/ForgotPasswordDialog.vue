@@ -31,6 +31,7 @@
   import { Form } from 'element-ui';
   import InterDialogLink from './InterDialogLink';
   import { sendPasswordResetToken } from '../../../api/auth';
+  import reportError from '../../../lib/reportError';
 
   interface Model {
     email: string;
@@ -59,6 +60,7 @@
         await sendPasswordResetToken(this.model.email);
         this.hasSucceeded = true;
       } catch (err) {
+        reportError(err);
       } finally {
         this.isSubmitting = false;
       }
