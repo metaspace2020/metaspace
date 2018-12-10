@@ -20,7 +20,8 @@
           <div class="info-line" v-if="projectManagers.length>0">
             <span>Manager<span v-if="projectManagers.length>1">s</span>:</span>
             <span v-for="(manager, ind) in projectManagers">
-              {{manager.user.name}}<span v-if="(ind < projectManagers.length) && manager.user.primaryGroup">, </span>
+              {{manager.user.name}}<span v-if="(ind < projectManagers.length)">
+              <span v-if="manager.user.primaryGroup || ind+1 < projectManagers.length">, </span></span>
               <router-link class="group-link" v-if="manager.user.primaryGroup" :to="groupHref(manager)">
                 {{manager.user.primaryGroup.group.shortName}}<!--
               --></router-link><span v-if="(ind+1 < projectManagers.length) && manager.user.primaryGroup">, </span>

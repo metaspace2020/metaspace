@@ -49,7 +49,7 @@ export const Resolvers = {
           role: In ([UserGroupRoleOptions.GROUP_ADMIN, UserGroupRoleOptions.MEMBER])
         };
       }
-      return await ctx.connection.getRepository(UserGroupModel).findOne({
+      return await ctx.entityManager.getRepository(UserGroupModel).findOne({
         where: criteria,
         relations: ['group', 'user']
       }) || null
