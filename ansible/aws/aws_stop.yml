@@ -6,7 +6,7 @@
 
   tasks:
     - name: Stop all daemons managed by supervisor on master
-      command: supervisorctl status all
+      command: supervisorctl stop all
       register: res
 
     - debug: var=res.stdout
