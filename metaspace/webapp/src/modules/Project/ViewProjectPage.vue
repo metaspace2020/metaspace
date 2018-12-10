@@ -73,7 +73,11 @@
 <script lang="ts">
   import Vue from 'vue';
   import {Component, Watch} from 'vue-property-decorator';
-  import {DatasetDetailItem, datasetDetailItemFragment, datasetStatusUpdatedQuery} from '../../api/dataset';
+  import {
+    datasetDeletedQuery,
+    DatasetDetailItem,
+    datasetDetailItemFragment,
+  } from '../../api/dataset';
   import DatasetList from '../Datasets/list/DatasetList.vue';
   import {
     acceptProjectInvitationMutation,
@@ -91,10 +95,12 @@
   import reportError from '../../lib/reportError';
   import {currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
   import isUuid from '../../lib/isUuid';
-  import {throttle} from 'lodash-es';
+  import {isArray, throttle} from 'lodash-es';
   import ProjectMembersList from './ProjectMembersList.vue';
   import ProjectSettings from './ProjectSettings.vue';
   import {optionalSuffixInParens, plural} from '../../lib/vueFilters';
+  import apolloClient from '../../graphqlClient';
+  import {removeDatasetFromAllDatasetsQuery} from '../../lib/updateApolloCache';
 
 
   interface ViewProjectPageData {
@@ -166,15 +172,10 @@
         }
       },
       $subscribe: {
-        datasetStatusUpdated: {
-          query: datasetStatusUpdatedQuery,
-          result({data}: any) {
-            // TODO: Fix websocket authentication so that this can filter out irrelevant status updates
-            // const dataset = data.datasetStatusUpdated.dataset;
-            // if (dataset != null && dataset.projects != null && dataset.projects.some((p: any) => p.id === this.projectId)) {
-            //   this.$apollo.queries.data.refetch();
-            // }
-            this.refetchDatasets();
+        datasetDeleted: {
+          query: datasetDeletedQuery,
+          result({data}) {
+            removeDatasetFromAllDatasetsQuery(this, 'data', data.datasetDeleted.id);
           }
         }
       },
@@ -243,13 +244,6 @@
       return this.members.some(m => m.role === ProjectRoleOptions.PENDING);
     }
 
-    created() {
-      this.refetchDatasets = throttle(this.refetchDatasets, 60000);
-    }
-    beforeDestroy() {
-      (this.refetchDatasets as any).cancel();
-    }
-
     @Watch('$route.params.projectIdOrSlug')
     @Watch('project.urlSlug')
     canonicalizeUrl() {
@@ -312,10 +306,6 @@
         variables: { projectId: this.projectId },
       });
       await this.refetch();
-    }
-
-    refetchDatasets() { // This method is wrapped in _.throttle in this.created()
-      this.$apollo.queries.data.refetch();
     }
 
     async refetchProject() {

@@ -74,7 +74,7 @@ const createAddFilter = (body) => {
   };
 };
 
-const createBodyWithAuthFilters = (user, userProjectRoles) => {
+const createBodyWithAuthFilters = (user, userProjectRoles, bypassAuth = false) => {
   const body = {
     query: {
       bool: {
@@ -84,7 +84,9 @@ const createBodyWithAuthFilters = (user, userProjectRoles) => {
   };
   const addFilter = createAddFilter(body);
   // (!) Authorisation checks
-  if (!user || !user.id) {
+  if (bypassAuth === true) {
+    // skip
+  } else if (!user || !user.id) {
     // not logged in user
     addFilter({ term: { ds_is_public: true } });
   }
@@ -126,12 +128,12 @@ const createBodyWithAuthFilters = (user, userProjectRoles) => {
   return body;
 };
 
-function constructESQuery(args, docType, user, userProjectRoles) {
+function constructESQuery(args, docType, user, userProjectRoles, bypassAuth) {
   const { orderBy, sortingOrder, filter: annotationFilter={}, datasetFilter, simpleQuery} = args;
   const { database, datasetName, mzFilter, msmScoreFilter,
     fdrLevel, sumFormula, adduct, compoundQuery, annId } = annotationFilter;
 
-  const body = createBodyWithAuthFilters(user, userProjectRoles);
+  const body = createBodyWithAuthFilters(user, userProjectRoles, bypassAuth);
   const addFilter = createAddFilter(body);
 
   function addRangeFilter(field, interval) {
@@ -196,12 +198,12 @@ function constructESQuery(args, docType, user, userProjectRoles) {
   return body;
 }
 
-const esSearchResults = async function(args, docType, user) {
+const esSearchResults = async function(args, docType, user, bypassAuth) {
   if (args.limit > ES_LIMIT_MAX) {
     return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
 
-  const body = constructESQuery(args, docType, user, user != null ? await user.getProjectRoles() : {});
+  const body = constructESQuery(args, docType, user, user != null ? await user.getProjectRoles() : {}, bypassAuth);
   const request = {
     body,
     index: esIndex,
@@ -324,8 +326,8 @@ module.exports.esFilterValueCountResults = async (args, user) => {
   return itemCounts;
 };
 
-async function getFirst(args, docType, user) {
-  const docs = await esSearchResults(args, docType, user);
+async function getFirst(args, docType, user, bypassAuth) {
+  const docs = await esSearchResults(args, docType, user, bypassAuth);
   return docs ? docs[0] : null;
 }
 
@@ -335,9 +337,9 @@ module.exports.esAnnotationByID = async function(id, user) {
   return null;
 };
 
-module.exports.esDatasetByID = async function(id, user) {
+module.exports.esDatasetByID = async function(id, user, bypassAuth) {
   if (id)
-    return getFirst({ datasetFilter: { ids: id } }, 'dataset', user);
+    return getFirst({ datasetFilter: { ids: id } }, 'dataset', user, bypassAuth);
   return null;
 };
 

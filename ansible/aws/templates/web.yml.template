@@ -39,7 +39,7 @@ filebeat:
             "grok" : {
               "field": "source",
               "patterns": [
-                "%{GREEDYDATA:path}/%{GREEDYDATA:file}",
+                "%{GREEDYDATA:path}/%{GREEDYDATA:file}"
               ]
             }
           },
@@ -49,7 +49,7 @@ filebeat:
               "patterns": [
                 "%{TIMESTAMP_ISO8601:timestamp} - %{LOGLEVEL:level} - %{NOTSPACE:component}\\[%{DATA:thread}\\] - %{NOTSPACE:file_line} - %{GREEDYDATA:message}",
                 "%{TIMESTAMP_ISO8601:timestamp} - %{LOGLEVEL:level}: %{GREEDYDATA:message}",
-                "%{TIMESTAMP_ISO8601:timestamp} %{GREEDYDATA:component} %{LOGLEVEL:level}    %{GREEDYDATA:message}",
+                "%{TIMESTAMP_ISO8601:timestamp} %{DATA:component} %{LOGLEVEL:level}    %{GREEDYDATA:message}",
                 "%{GREEDYDATA:message}"
               ]
             }

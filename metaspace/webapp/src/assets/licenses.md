@@ -4,9 +4,9 @@
 
 
 * padlock-icon.svg
-    (modified for symmetry)
-    CC0 Free for commercial use / No attribution required
-    https://pixabay.com/en/padlock-lock-security-protection-303266/
+    Flaticon Basic License (attribution required) 
+    Author: [dave-gandy](https://www.flaticon.com/authors/dave-gandy)
+    https://www.flaticon.com/free-icon/padlock_25239
 
 
 * filter-icon.svg

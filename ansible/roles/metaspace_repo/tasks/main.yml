@@ -25,38 +25,40 @@
     rsync_opts: "{{ item.rsync_opts }}"
   when: local_deploy is defined
   with_items:
-    - src: "{{ sm_graphql_home }}/"
-      dest: "{{ sm_graphql_home }}/"
-      rsync_opts:
-        - --exclude='config/*.js'
-        - --exclude='logs/*'
-        - --exclude='dist/*'
-        - --exclude='node_modules/*'
-        - --exclude='.*'
-    - src: "{{ sm_webapp_home }}/"
-      dest: "{{ sm_webapp_home }}/"
-      rsync_opts:
-        - --exclude='config/*.js'
-        - --exclude=S3/*
-        - --exclude='logs/*'
-        - --exclude='dist/*'
-        - --exclude='node_modules/*'
-        - --exclude='.*'
-    - src: "{{ mol_db_home }}/"
-      dest: "{{ mol_db_home }}/"
-      rsync_opts:
-        - --exclude='conf/*'
-        - --exclude='logs'
-        - --exclude='.*'
     - src: "{{ sm_ansible_home }}/"
       dest: "{{ sm_ansible_home }}/"
       rsync_opts:
         - --exclude=.*
-    - src: "{{ sm_home }}/"
-      dest: "{{ sm_home }}/"
-      rsync_opts:
-        - --exclude=.*
-        - --exclude=config/*
-        - --exclude=logs/*
-        - --exclude=docker/*
-        - --exclude=docs/*
+  tags: [sm-cluster-autostart]
+
+#    - src: "{{ sm_graphql_home }}/"
+#      dest: "{{ sm_graphql_home }}/"
+#      rsync_opts:
+#        - --exclude='config/*.js'
+#        - --exclude='logs/*'
+#        - --exclude='dist/*'
+#        - --exclude='node_modules/*'
+#        - --exclude='.*'
+#    - src: "{{ sm_webapp_home }}/"
+#      dest: "{{ sm_webapp_home }}/"
+#      rsync_opts:
+#        - --exclude='config/*.js'
+#        - --exclude=S3/*
+#        - --exclude='logs/*'
+#        - --exclude='dist/*'
+#        - --exclude='node_modules/*'
+#        - --exclude='.*'
+#    - src: "{{ mol_db_home }}/"
+#      dest: "{{ mol_db_home }}/"
+#      rsync_opts:
+#        - --exclude='conf/*'
+#        - --exclude='logs'
+#        - --exclude='.*'
+#    - src: "{{ sm_home }}/"
+#      dest: "{{ sm_home }}/"
+#      rsync_opts:
+#        - --exclude=.*
+#        - --exclude=config/*
+#        - --exclude=logs/*
+#        - --exclude=docker/*
+#        - --exclude=docs/*

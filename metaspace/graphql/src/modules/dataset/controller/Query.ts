@@ -50,10 +50,8 @@ export const rawOpticalImage = async (dsId: string, ctx: Context) => {
 
 const QueryResolvers: FieldResolversFor<Query, void>  = {
   async dataset(source, { id: dsId }, ctx): Promise<DatasetSource | null> {
-    // TODO: decide whether to support field level access here
-    const scopeRole = await resolveDatasetScopeRole(ctx, dsId);
     const ds = await esDatasetByID(dsId, ctx.user);
-    return ds ? { ...ds, scopeRole }: null;
+    return ds || null;
   },
 
   async allDatasets(source, args, ctx): Promise<DatasetSource[]> {

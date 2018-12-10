@@ -6,6 +6,7 @@ from PIL import Image
 
 from sm.engine.dataset import DatasetStatus, Dataset
 from sm.engine.errors import DSIsBusy, UnknownDSID
+from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.util import SMConfig
 
 SEL_DATASET_RAW_OPTICAL_IMAGE = 'SELECT optical_image from dataset WHERE id = %s'
@@ -46,13 +47,12 @@ class SMapiDatasetManager(object):
         self._update_queue = update_queue
         self.logger = logger or logging.getLogger()
 
-    def _set_ds_busy(self, ds, **kwargs):
+    def _set_ds_busy(self, ds, ignore_status=False):
         if ds.status in {DatasetStatus.QUEUED,
-                         DatasetStatus.ANNOTATING,
-                         DatasetStatus.INDEXING} and not kwargs.get('force', False):
+                         DatasetStatus.ANNOTATING} and not ignore_status:
             raise DSIsBusy(ds.id)
 
-        ds.set_status(self._db, self._es, status_queue=self._status_queue, status=DatasetStatus.QUEUED)
+        ds.set_status(self._db, self._es, DatasetStatus.QUEUED)
 
     def _post_sm_msg(self, ds, queue, priority=DatasetActionPriority.DEFAULT, **kwargs):
         msg = {
@@ -72,9 +72,10 @@ class SMapiDatasetManager(object):
 
         try:
             ds = Dataset.load(self._db, doc['id'])
-            self._set_ds_busy(ds, **kwargs)
+            self._set_ds_busy(ds, kwargs.get('force', False))
+            is_new = False
         except UnknownDSID:
-            pass
+            is_new = True
 
         ds = Dataset(id=doc['id'],
                      name=doc.get('name'),
@@ -83,18 +84,20 @@ class SMapiDatasetManager(object):
                      metadata=doc.get('metadata'),
                      is_public=doc.get('is_public'),
                      mol_dbs=doc.get('mol_dbs'),
-                     adducts=doc.get('adducts'))
-        ds.save(self._db, self._es, self._status_queue)
+                     adducts=doc.get('adducts'),
+                     status=DatasetStatus.QUEUED)
+        ds.save(self._db, self._es)
+        ds.notify_update(self._status_queue, DaemonAction.ANNOTATE, DaemonActionStage.QUEUED, is_new=is_new)
 
-        self._post_sm_msg(ds=ds, queue=self._annot_queue, action='annotate', **kwargs)
+        self._post_sm_msg(ds=ds, queue=self._annot_queue, action=DaemonAction.ANNOTATE, **kwargs)
         return doc['id']
 
     def delete(self, ds_id, **kwargs):
         """ Delete optical images and send delete message to the queue """
         ds = Dataset.load(self._db, ds_id)
-        self._set_ds_busy(ds, **kwargs)
+        self._set_ds_busy(ds, kwargs.get('force', False))
         self.del_optical_image(ds_id, **kwargs)
-        self._post_sm_msg(ds=ds, queue=self._update_queue, action='delete', **kwargs)
+        self._post_sm_msg(ds=ds, queue=self._update_queue, action=DaemonAction.DELETE, **kwargs)
 
     def update(self, ds_id, doc, **kwargs):
         """ Save dataset and send update message to the queue """
@@ -105,10 +108,10 @@ class SMapiDatasetManager(object):
             ds.metadata = doc['metadata']
         ds.upload_dt = doc.get('upload_dt', ds.upload_dt)
         ds.is_public = doc.get('is_public', ds.is_public)
-        ds.save(self._db, self._es, None)
+        ds.save(self._db, self._es)
 
         self._post_sm_msg(ds=ds, queue=self._update_queue,
-                          action='update', fields=list(doc.keys()), **kwargs)
+                          action=DaemonAction.UPDATE, fields=list(doc.keys()), **kwargs)
 
     def _annotation_image_shape(self, ds):
         self.logger.info('Querying annotation image shape for "%s" dataset...', ds.id)

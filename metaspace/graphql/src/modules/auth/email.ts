@@ -28,6 +28,19 @@ METASPACE Team`;
   logger.info(`Email already verified. Sent log in email to ${email}`);
 };
 
+export const sendCreateAccountEmail = (email: string, link: string) => {
+  const subject = 'METASPACE log in',
+    text =
+      `Dear METASPACE user,
+
+You do not have an account with this email address. Please create an account here: ${link}.
+
+Best wishes,
+METASPACE Team`;
+  sendEmail(email, subject, text);
+  logger.info(`No account. Sent create account email to ${email}`);
+};
+
 export const sendResetPasswordEmail = (email: string, link: string) => {
   const subject = 'METASPACE password reset',
     text =

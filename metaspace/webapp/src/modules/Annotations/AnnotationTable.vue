@@ -466,7 +466,7 @@
      },
 
      filterMZ (row) {
-       this.updateFilter({mz: row.mz});
+       this.updateFilter({mz: row.mz.toFixed(4)});
      },
 
      startExport () {

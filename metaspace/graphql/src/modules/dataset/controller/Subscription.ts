@@ -1,33 +1,59 @@
 import * as Amqplib from 'amqplib';
 import {esDatasetByID} from '../../../../esConnector';
-import {canUserViewPgDataset, logger, pubsub, wait} from '../../../../utils';
+import {logger, wait} from '../../../../utils';
 import config from '../../../utils/config';
-import {DatasetStatus, EngineDataset} from '../model';
+import {DatasetStatus} from '../model';
 import {Context} from '../../../context';
-import {fetchEngineDS} from '../../../utils/knexDb';
+import canViewEsDataset from '../util/canViewEsDataset';
+import {relationshipToDataset} from '../util/relationshipToDataset';
+import {
+  asyncIterateDatasetDeleted,
+  asyncIterateDatasetStatusUpdated,
+  publishDatasetDeleted,
+  publishDatasetStatusUpdated,
+} from '../../../utils/pubsub';
 
-interface DatasetStatusUpdatePayload {
-  dataset?: any;
-  dbDs?: EngineDataset;
+/** From `DaemonAction` in sm-engine, but capitalized */
+type EngineDatasetAction = 'ANNOTATE' | 'UPDATE' | 'INDEX' | 'DELETE';
+/** From `DaemonActionStage` in sm-engine */
+type EngineDatasetActionStage = 'QUEUED' | 'STARTED' | 'FINISHED' | 'FAILED';
+
+
+interface DatasetStatusPayload {
+  ds_id: string;
+  status: DatasetStatus | null;
+  action: EngineDatasetAction;
+  stage: EngineDatasetActionStage;
+  is_new?: boolean;
 }
 
-async function publishDatasetStatusUpdate(ds_id: string, status: DatasetStatus) {
+async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
+  const {ds_id, status, action, stage, ...rest} = payload;
   // wait until updates are reflected in ES so that clients can refresh their data
   const maxAttempts = 5;
 
   try {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       logger.debug(JSON.stringify({attempt, status}));
-      const ds = await esDatasetByID(ds_id, null);
+      const ds = await esDatasetByID(ds_id, null, true);
 
-      if (ds == null && status === 'DELETED') {
-        await wait(1000);
-        pubsub.publish('datasetStatusUpdated', {});
-        return;
-      } else if (ds != null && status !== 'DELETED') {
-        pubsub.publish('datasetStatusUpdated', {
-          dataset: Object.assign({}, ds, { status }),
-          dbDs: await fetchEngineDS({ id: ds_id })
+      if (action === 'DELETE' && stage === 'FINISHED') {
+        if (ds == null) {
+          await wait(1000);
+          publishDatasetDeleted({ id: ds_id });
+          return;
+        }
+      } else if (ds != null) {
+        publishDatasetStatusUpdated({
+          dataset: {
+            ...ds,
+            _source: {
+              ...ds._source,
+            }
+          },
+          action,
+          stage,
+          ...rest,
         });
         return;
       }
@@ -41,35 +67,85 @@ async function publishDatasetStatusUpdate(ds_id: string, status: DatasetStatus) 
   logger.warn(`Failed to propagate dataset update for ${ds_id}`);
 }
 
-let queue = Amqplib.connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`);
-let rabbitmqChannel = 'sm_dataset_status';
-queue.then(function(conn) {
-  return conn.createChannel();
-}).then(function(ch) {
-  return ch.assertQueue(rabbitmqChannel).then(function(ok) {
-    return ch.consume(rabbitmqChannel, function(msg) {
+(async () => {
+  try {
+    const RABBITMQ_CHANNEL = 'sm_dataset_status';
+    const conn = await Amqplib.connect(`amqp://${config.rabbitmq.user}:${config.rabbitmq.password}@${config.rabbitmq.host}`);
+    const ch = await conn.createChannel();
+    await ch.assertQueue(RABBITMQ_CHANNEL);
+    await ch.consume(RABBITMQ_CHANNEL, msg => {
       if (msg != null) {
-        const { ds_id, status } = JSON.parse(msg.content.toString());
-        if (['QUEUED', 'ANNOTATING', 'FINISHED', 'FAILED', 'DELETED'].indexOf(status) >= 0)
-          publishDatasetStatusUpdate(ds_id, status).then(/* Ignore promise - allow to run in background */);
-        ch.ack(msg);
+        try {
+          waitForChangeAndPublish(JSON.parse(msg.content.toString()))
+            .then(/* Ignore promise - allow to run in background */);
+        } finally {
+          ch.ack(msg);
+        }
       }
     });
-  });
-}).catch(console.warn);
+  } catch (err) {
+    console.error(err);
+  }
+})();
+
 
 const SubscriptionResolvers = {
   datasetStatusUpdated: {
-    subscribe: () => pubsub.asyncIterator('datasetStatusUpdated'),
-    resolve: (payload: DatasetStatusUpdatePayload, args: {}, context: Context) => {
-      if (payload.dataset && payload.dbDs && canUserViewPgDataset(payload.dbDs, context.user)) {
-        return { dataset: payload.dataset };
-      } else {
-        // Empty payload indicates that the client should still refresh its dataset list
-        return { dataset: null };
+    subscribe: (source: any, args: any, context: Context) => {
+      const iterator = asyncIterateDatasetStatusUpdated();
+      // This asyncIterator is manually implemented because there is a weird interaction between TypeScript and iterall.
+      // Somehow `iterator.return()` doesn't get called. I suspect iterall doesn't recognize TypeScript's asyncIterators
+      // and this leads to them not having `iterator.return()` called after execution. It also seems like TypeScript
+      // doesn't correctly execute code in the `finally` block if a try-finally block is put around the for-await loop.
+      // This shows up as memory leak warnings after a certain number of subscriptions, even if they have all
+      // correctly unsubscribed.
+      return {
+        [Symbol.asyncIterator]() {
+          return this;
+        },
+        async next() {
+          while (true) {
+            const { value, done } = await iterator.next();
+            if (done) {
+              return {done}
+            }
+            if (value.dataset && await canViewEsDataset(value.dataset, context.user)) {
+              const relationships = await relationshipToDataset(value.dataset, context);
+              const payload = {
+                is_new: null,
+                ...value,
+                relationship: relationships.length > 0 ? relationships[0] : null,
+              };
+              return { value: payload, done: false };
+            }
+          }
+        },
+        throw(err?: any) {
+          return iterator.throw && iterator.throw(err);
+        },
+        return() {
+          return iterator.return && iterator.return();
+        }
       }
-    }
+    },
+    // subscribe: async function* datasetStatusUpdated(source: any, args: any, context: Context) {
+    //   for await (const payload of asyncIterateDatasetStatusUpdated()) {
+    //     if (payload.dataset && canViewEsDataset(payload.dataset, context.user)) {
+    //       const relationships = await relationshipToDataset(payload.dataset, context);
+    //       yield {
+    //         is_new: null,
+    //         ...payload,
+    //         relationship: relationships.length > 0 ? relationships[0] : null,
+    //       };
+    //     }
+    //   }
+    // },
+    resolve: (payload: any) => payload,
   },
+  datasetDeleted: {
+    subscribe: asyncIterateDatasetDeleted,
+    resolve: (payload: any) => payload,
+  }
 };
 
 export default SubscriptionResolvers;

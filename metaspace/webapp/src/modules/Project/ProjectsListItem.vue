@@ -4,29 +4,40 @@
     <div class="item-body">
       <div class="info">
         <div class="info-line project-name">
-          <router-link :to="projectLink">{{project.name}}</router-link>
+          <router-link :to="projectLink"><span style="margin-left: 5px">{{project.name}}</span></router-link>
+          <img v-if="!project.isPublic"
+               class="private-icon"
+               src="../../assets/padlock-icon.svg"
+               title="This project is only visible to its members and METASPACE administrators">
         </div>
-        <div class="info-line">
-          <span v-if="project.numDatasets > 0">
-            <router-link :to="datasetsLink">{{project.numDatasets | plural('Dataset', 'Datasets')}}</router-link>,
-          </span>
-          {{project.numMembers | plural('Member', 'Members')}}
-        </div>
-        <div class="info-line">
-          <span>Project manager<span v-if="projectManagers.length>1">s</span>:</span>
-          <span v-for="(manager, ind) in projectManagers">
-            <b>{{manager.user.name}}<span v-if="ind+1 < projectManagers.length" >, </span></b></span>
-        </div>
-        <div class="info-line">
-          <span v-if="project.latestUploadDT != null">
-            Last submission <b>{{formatDate(project.latestUploadDT)}}</b>
-          </span>
-          <span v-else>
-            Created on <b>{{formatDate(project.createdDT)}}</b>
-          </span>
-        </div>
-        <div class="description" v-if="project.description">
-          {{project.description}}
+        <div style="margin-left: 12px">
+          <div class="info-line">
+            <span v-if="project.numDatasets > 0">
+              <router-link :to="datasetsLink"><span>{{project.numDatasets | plural('Dataset', 'Datasets')}}</span></router-link>,
+            </span>
+            {{project.numMembers | plural('Member', 'Members')}}
+          </div>
+          <div class="info-line" v-if="projectManagers.length>0">
+            <span>Manager<span v-if="projectManagers.length>1">s</span>:</span>
+            <span v-for="(manager, ind) in projectManagers">
+              {{manager.user.name}}<span v-if="(ind < projectManagers.length)">
+              <span v-if="manager.user.primaryGroup || ind+1 < projectManagers.length">, </span></span>
+              <router-link class="group-link" v-if="manager.user.primaryGroup" :to="groupHref(manager)">
+                {{manager.user.primaryGroup.group.shortName}}<!--
+              --></router-link><span v-if="(ind+1 < projectManagers.length) && manager.user.primaryGroup">, </span>
+            </span>
+          </div>
+          <div class="info-line">
+            <span v-if="project.latestUploadDT != null" >
+              Last submission <b><span style="font-size: 14px">{{formatDate(project.latestUploadDT)}}</span></b>
+            </span>
+              <span v-else >
+                Created on <b><span style="font-size: 14px">{{formatDate(project.createdDT)}}</span></b>
+            </span>
+          </div>
+          <div class="description" v-if="project.description">
+            {{project.description}}
+          </div>
         </div>
       </div>
       <div class="actions">
@@ -44,10 +55,6 @@
         </div>
       </div>
     </div>
-    <img v-if="!project.isPublic"
-         class="private-icon"
-         src="../../assets/padlock-icon.svg"
-         title="This project is only visible to its members and METASPACE administrators">
   </div>
 </template>
 <script lang="ts">
@@ -63,6 +70,18 @@
   import {plural} from '../../lib/vueFilters';
   import {ProjectRoleOptions as UPRO} from '../../api/project';
 
+  interface managerGroupName {
+    user: {
+      name: string
+      primaryGroup: {
+        group: {
+          id: string,
+          shortName: string
+        }
+      }
+    },
+    role: string
+  }
 
   @Component({
     filters: {
@@ -114,6 +133,24 @@
       return (this.currentUser && this.currentUser.role === 'admin') || this.project.currentUserRole === 'MANAGER';
     }
 
+
+    shortGroupName(manager: managerGroupName): string|null {
+      if (manager.user.primaryGroup !== null) {
+        return manager.user.primaryGroup.group.shortName
+      } else {
+        return null
+      }
+    }
+
+    groupHref(manager: managerGroupName) {
+      return {
+        name: 'group',
+        params: {
+          groupIdOrSlug: manager.user.primaryGroup.group.id,
+        },
+      };
+    }
+
     formatDate(date: string) {
       const parsedDate = parse(date);
       return isValid(parsedDate) ? format(parsedDate, 'YYYY-MM-DD') : '????-??-??';
@@ -147,7 +184,7 @@
     width: 100%;
     max-width: 800px;
     margin: 8px 0;
-    padding: 10px;
+    padding: 8px 0 10px 8px;
     border: 1px solid #cce4ff;
     box-sizing: border-box;
     > * {
@@ -174,6 +211,7 @@
   }
 
   .info-line {
+    margin-top: 1px;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -202,19 +240,21 @@
     }
   }
 
-  .project-name a {
-    font-size: 1.5em;
-    text-decoration: none;
-    color: $--color-text-regular;
+  .project-name {
+    margin-bottom: 2px;
+
+    a {
+      font-size: 1.5em;
+      text-decoration: none;
+      color: #333;
+    }
   }
 
   .private-icon {
-    position: absolute;
-    opacity: 0.2;
-    width: 24px;
-    height: 32px;
-    right: 10px;
-    bottom: 8px;
+    margin-left: 3px;
+    margin-bottom: -1px;
+    width: 20px;
+    opacity: 0.4;
   }
 
   .underlay {
@@ -227,10 +267,26 @@
 
   .actions {
     flex: 0 0 170px;
+    padding-top: 5px;
+    margin-right: 10px;
+  }
+
+  .annotations {
+    position: absolute;
+    top: 25px;
+    right: 20px;
+    width: 45px;
+    cursor: pointer;
   }
 
   .delete, .delete > a {
     color: #a00;
   }
+
+  .group-link {
+    cursor: pointer;
+    color: sienna;
+  }
+
 
 </style>

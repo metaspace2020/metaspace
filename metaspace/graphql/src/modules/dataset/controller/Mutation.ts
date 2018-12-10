@@ -20,7 +20,6 @@ import {getUserProjectRoles} from '../../../utils/db';
 import {metadataSchemas} from '../../../../metadataSchemas/metadataRegistry';
 import {getDatasetForEditing} from '../operation/getDatasetForEditing';
 import {deleteDataset} from '../operation/deleteDataset';
-
 type MetadataSchema = any;
 type MetadataRoot = any;
 type MetadataNode = any;

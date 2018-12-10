@@ -12,7 +12,7 @@ from sm.engine.tests.util import sm_config, test_db, fill_db, sm_index, es_dsl_s
 
 
 def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
-              metadata=None, status=DatasetStatus.NEW, mol_dbs=None, adducts=None):
+              metadata=None, status=DatasetStatus.QUEUED, mol_dbs=None, adducts=None):
     upload_dt = upload_dt or datetime.now()
     if not mol_dbs:
         mol_dbs = ['HMDB-v4']
@@ -75,7 +75,7 @@ class TestSMDaemonDatasetManager:
 
             manager.index(ds)
 
-            es_mock.delete_ds.assert_called_with(ds_id)
+            es_mock.delete_ds.assert_called_with(ds_id, delete_dataset=False)
             call_args = es_mock.index_ds.call_args[1].values()
             assert ds_id in call_args and mol_db_mock in call_args
 
