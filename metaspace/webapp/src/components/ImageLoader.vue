@@ -600,7 +600,7 @@
    color: var(--scaleBar-color);
    position: absolute;
    content: "";
-   width: 60px;
+   width: 100px;
    height: 10px;
    bottom: 15px;
    left: 55px;
@@ -620,7 +620,7 @@
  .pixelSizeY {
    color: var(--scaleBar-color);
    position: absolute;
-   width: 60px;
+   width: 100px;
    height: 10px;
    bottom: 58px;
    left: 10px;
