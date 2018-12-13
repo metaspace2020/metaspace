@@ -496,7 +496,8 @@ class SMDataset(object):
             fdr=df['fdrLevel'],
             mz=df['mz'],
             moleculeNames=[[item['name'] for item in lst] for lst in df['possibleCompounds']],
-            moleculeIds=[[item['information'][0]['url'].rsplit("/")[-1] for item in lst] for lst in df['possibleCompounds']]
+            moleculeIds=[[item['information'][0]['url'].rsplit("/")[-1] for item in lst] for lst in df['possibleCompounds']],
+            intensity=[img[0]['maxIntensity'] for img in df['isotopeImages']]
         )).set_index(['formula', 'adduct'])
 
     @property
