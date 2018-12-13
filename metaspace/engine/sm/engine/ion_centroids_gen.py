@@ -37,16 +37,17 @@ class IonCentroidsGenerator(object):
         self.ion_df = None
         self.ion_centroids_df = None
 
+        cred_dict = dict(aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+                         aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
+        self.s3 = boto3.client('s3', self._sm_config['aws']['aws_region'], **cred_dict)
+
     def _saved(self):
         """ Check if ion centroids saved to parquet
         """
         if self._ion_centroids_path.startswith('s3a://'):
-            cred_dict = dict(aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
-                             aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
             bucket, key = split_s3_path(self._ion_centroids_path)
-            s3 = boto3.client('s3', **cred_dict)
             try:
-                s3.head_object(Bucket=bucket, Key=key + '/ions/_SUCCESS')
+                self.s3.head_object(Bucket=bucket, Key=key + '/ions/_SUCCESS')
             except ClientError:
                 return False
             else:

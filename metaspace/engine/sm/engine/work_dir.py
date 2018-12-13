@@ -159,7 +159,7 @@ class WorkDirManager(object):
                          aws_secret_access_key=self.sm_config['aws']['aws_secret_access_key'])
         session = boto3.session.Session(**cred_dict)
         self.s3 = session.resource('s3')
-        self.s3transfer = S3Transfer(boto3.client('s3', 'eu-west-1', **cred_dict))
+        self.s3transfer = S3Transfer(session.client('s3', self.sm_config['aws']['aws_region']))
 
         self.local_dir = LocalWorkDir(self.sm_config['fs']['base_path'], ds_id)
         if not self.local_fs_only:
