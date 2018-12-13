@@ -31,13 +31,13 @@
         mode=0755
   when: aws_access_key_id is defined
 
-- name: Put aws credentials file into the home dir
-  template: src=aws_credentials.j2
-            dest=/home/{{ spark_user }}/.aws/credentials
-            owner={{ spark_user }}
-            group={{ spark_user }}
-            mode=0600
-  when: aws_access_key_id is defined
+#- name: Put aws credentials file into the home dir
+#  template: src=aws_credentials.j2
+#            dest=/home/{{ spark_user }}/.aws/credentials
+#            owner={{ spark_user }}
+#            group={{ spark_user }}
+#            mode=0600
+#  when: aws_access_key_id is defined
 
 - name: Pull SM config from the remote host
   fetch: src={{ sm_home }}/conf/config.json.template dest=/tmp/config.json.template
