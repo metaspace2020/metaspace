@@ -11,8 +11,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Ansible inventory file updater')
     parser.add_argument('--stage', dest='stage', default='dev', type=str, help='One of dev/stage/prod')
     args = parser.parse_args()
-    config_path = path.join(args.stage, 'group_vars/all.yml')
-    config = yaml.load(open(config_path))
+    ansible_config_path = path.join(args.stage, 'group_vars/all.yml')
+    ansible_config = yaml.load(open(ansible_config_path))
     inv_file = path.join(args.stage, 'hosts')
 
     with open(inv_file, 'w') as fp:
@@ -20,9 +20,11 @@ if __name__ == '__main__':
     inventory = ConfigParser(allow_no_value=True)
     inventory.read_file(open(inv_file))
 
-    ec2 = boto3.resource('ec2', config['aws_region'])
+    session = boto3.session.Session(aws_access_key_id=ansible_config['aws_access_key_id'],
+                                    aws_secret_access_key=ansible_config['aws_secret_access_key'])
+    ec2 = session.resource('ec2', ansible_config['aws_region'])
 
-    for component, spec in config['cluster_configuration']['instances'].items():
+    for component, spec in ansible_config['cluster_configuration']['instances'].items():
         print(component)
 
         if component not in inventory.sections():

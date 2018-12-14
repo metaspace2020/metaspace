@@ -31,7 +31,11 @@ class ClusterDaemon(object):
         self.cluster_started_at = None
 
         self._setup_logger()
-        self.ec2 = boto3.resource('ec2', self.ansible_config['aws_region'])
+
+        self.session = boto3.session.Session(aws_access_key_id=self.ansible_config['aws_access_key_id'],
+                                             aws_secret_access_key=self.ansible_config['aws_secret_access_key'])
+        self.ec2 = self.session.resource('ec2', self.ansible_config['aws_region'])
+        self.ses = self.session.client('ses', 'eu-west-1')
 
     def _resolve_spark_master(self):
         self.logger.debug('Resolving spark master ip...')
@@ -59,8 +63,7 @@ class ClusterDaemon(object):
         self.logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
 
     def _send_email(self, email, subj, body):
-        ses = boto3.client('ses', 'eu-west-1')
-        resp = ses.send_email(
+        resp = self.ses.send_email(
             Source='contact@metaspace2020.eu',
             Destination={
                 'ToAddresses': [email]

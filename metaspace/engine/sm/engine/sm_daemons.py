@@ -28,6 +28,10 @@ class SMDaemonManager(object):
         self.status_queue = status_queue
         self.logger = logger or logging.getLogger()
 
+        self.ses = boto3.client('ses', 'eu-west-1',
+                                aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+                                aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
+
     def post_to_slack(self, emoji, msg):
         if self._slack_conf.get('webhook_url', None):
             m = {"channel": self._slack_conf['channel'],
@@ -111,10 +115,7 @@ class SMDaemonManager(object):
 
     def _send_email(self, email, subj, body):
         try:
-            cred_dict = dict(aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
-                             aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
-            ses = boto3.client('ses', 'eu-west-1', **cred_dict)
-            resp = ses.send_email(
+            resp = self.ses.send_email(
                 Source='contact@metaspace2020.eu',
                 Destination={
                     'ToAddresses': [email]

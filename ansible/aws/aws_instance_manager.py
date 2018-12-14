@@ -6,19 +6,19 @@ from datetime import datetime, timedelta
 from os import path
 from subprocess import check_output
 import sys
-
 import boto3
 from yaml import load
 
 
 class AWSInstManager(object):
 
-    def __init__(self, key_name, conf, region, dry_run=False, verbose=False):
-        self.key_name = key_name
-        self.region = region
+    def __init__(self, conf, aws_conf, dry_run=False, verbose=False):
+        self.key_name = aws_conf['key_name']
         self.dry_run = dry_run
-        self.ec2 = boto3.resource('ec2', region_name=region)
-        self.ec2_client = boto3.client('ec2', region_name=region)
+        session = boto3.session.Session(aws_access_key_id=aws_conf['aws_access_key_id'],
+                                        aws_secret_access_key=aws_conf['aws_secret_access_key'])
+        self.ec2 = session.resource('ec2', region_name=aws_conf['region'])
+        self.ec2_client = session.client('ec2', region_name=aws_conf['region'])
         self.conf = conf
         if verbose:
             pprint(self.conf)
@@ -236,8 +236,13 @@ if __name__ == '__main__':
     conf = load(open(config_path))
     cluster_conf = conf['cluster_configuration']
 
-    aws_inst_man = AWSInstManager(key_name=args.key_name or conf['aws_key_name'],
-                                  conf=cluster_conf, region=conf['aws_region'],
+    aws_conf = {
+        'key_name': args.key_name or conf['aws_key_name'],
+        'region': conf['aws_region'],
+        'aws_access_key_id': conf['aws_access_key_id'],
+        'aws_secret_access_key': conf['aws_secret_access_key']
+    }
+    aws_inst_man = AWSInstManager(conf=cluster_conf, aws_conf=aws_conf,
                                   dry_run=args.dry_run, verbose=True)
 
     if args.components:
