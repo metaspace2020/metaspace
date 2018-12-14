@@ -78,11 +78,19 @@ mol_db_miniconda_env:
 mol_db_import_databases: true  # set to false to avoid dropping MolDB database
 mol_db_import_mol_images: true  # set to false to avoid reimporting all molecular images
 mol_db_image_archives:
-  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-hmdb.tar.xz
+  - name: HMDB
+    path: https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-hmdb.tar.xz
 # uncomment below for other databases
-#  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-chebi.tar.xz
-#  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-lipid-maps.tar.xz
-#  - https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-swiss-lipids.tar.xz
+#  - name: ChEBI
+#    path: https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-chebi.tar.xz
+#  - name: LipidMaps
+#    path: https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-lipid-maps.tar.xz
+#  - name: SwissLipids
+#    path: https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-swiss-lipids.tar.xz
+#  - name: PAMDB
+#    path: https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-pamdb.tar.xz
+#  - name: ECMDB
+#    path: https://s3-eu-west-1.amazonaws.com/sm-mol-db/mol-images/mol-images-ecmdb.tar.xz
 mol_db_imports:
   - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/hmdb/hmdb_4.tsv"
     name: "HMDB-v4"
@@ -109,9 +117,12 @@ mol_db_imports:
 #  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/pamdb/pamdb_1-0.tsv"
 #    name: "PAMDB-v1.0"
 #    version: "2018-03-08"
-#  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/swisslipids/swisslipids_2018-02-02"
+#  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/swisslipids/swisslipids_2018-02-02.tsv"
 #    name: "SwissLipids-2018-02-02"
 #    version: "2018-03-08"
+#  - url: "https://s3-eu-west-1.amazonaws.com/sm-mol-db/db_files/ecmdb/ecmdb.tsv"
+#    name: "ECMDB-2018-12"
+#    version: "2018-12-13"
 
 nodejs_version: 8.*
 

@@ -5,9 +5,10 @@
 - name: Copy molecular structure images
   become: yes
   unarchive:
-    src: "{{ item }}"
+    src: "{{ item.path }}"
     dest: "{{ mol_db_image_dir }}"
     remote_src: True
     owner: ubuntu
     group: ubuntu
+    creates: "{{ mol_db_image_dir }}/{{ item.name }}"
   with_items: "{{ mol_db_image_archives }}"
