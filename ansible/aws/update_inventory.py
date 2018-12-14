@@ -20,9 +20,8 @@ if __name__ == '__main__':
     inventory = ConfigParser(allow_no_value=True)
     inventory.read_file(open(inv_file))
 
-    cred_dict = dict(aws_access_key_id=ansible_config['aws_access_key_id'],
-                     aws_secret_access_key=ansible_config['aws_secret_access_key'])
-    session = boto3.session.Session(**cred_dict)
+    session = boto3.session.Session(aws_access_key_id=ansible_config['aws_access_key_id'],
+                                    aws_secret_access_key=ansible_config['aws_secret_access_key'])
     ec2 = session.resource('ec2', ansible_config['aws_region'])
 
     for component, spec in ansible_config['cluster_configuration']['instances'].items():

@@ -15,9 +15,8 @@ class AWSInstManager(object):
     def __init__(self, conf, aws_conf, dry_run=False, verbose=False):
         self.key_name = aws_conf['key_name']
         self.dry_run = dry_run
-        cred_dict = dict(aws_access_key_id=aws_conf['aws_access_key_id'],
-                         aws_secret_access_key=aws_conf['aws_secret_access_key'])
-        session = boto3.session.Session(**cred_dict)
+        session = boto3.session.Session(aws_access_key_id=aws_conf['aws_access_key_id'],
+                                        aws_secret_access_key=aws_conf['aws_secret_access_key'])
         self.ec2 = session.resource('ec2', region_name=aws_conf['region'])
         self.ec2_client = session.client('ec2', region_name=aws_conf['region'])
         self.conf = conf

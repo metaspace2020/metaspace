@@ -31,9 +31,8 @@ class ClusterDaemon(object):
 
         self._setup_logger()
 
-        cred_dict = dict(aws_access_key_id=self.ansible_config['aws_access_key_id'],
-                         aws_secret_access_key=self.ansible_config['aws_secret_access_key'])
-        self.session = boto3.session.Session(**cred_dict)
+        self.session = boto3.session.Session(aws_access_key_id=self.ansible_config['aws_access_key_id'],
+                                             aws_secret_access_key=self.ansible_config['aws_secret_access_key'])
         self.ec2 = self.session.resource('ec2', self.ansible_config['aws_region'])
         self.ses = self.session.client('ses', 'eu-west-1')
 

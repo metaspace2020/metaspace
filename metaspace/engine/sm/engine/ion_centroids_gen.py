@@ -37,9 +37,9 @@ class IonCentroidsGenerator(object):
         self.ion_df = None
         self.ion_centroids_df = None
 
-        cred_dict = dict(aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
-                         aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
-        self.s3 = boto3.client('s3', self._sm_config['aws']['aws_region'], **cred_dict)
+        self.s3 = boto3.client('s3', self._sm_config['aws']['aws_region'],
+                               aws_access_key_id=self._sm_config['aws']['aws_access_key_id'],
+                               aws_secret_access_key=self._sm_config['aws']['aws_secret_access_key'])
 
     def _saved(self):
         """ Check if ion centroids saved to parquet
