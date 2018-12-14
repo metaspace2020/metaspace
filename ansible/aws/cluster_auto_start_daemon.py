@@ -10,7 +10,7 @@ import yaml
 from subprocess import check_output
 from subprocess import CalledProcessError
 import boto3
-import datetime as dt
+from datetime import datetime
 
 
 class ClusterDaemon(object):
@@ -28,6 +28,7 @@ class ClusterDaemon(object):
         self.admin_email = self.ansible_config['notification_email']
         self.qname = qname
         self.debug = debug
+        self.cluster_started_at = None
 
         self._setup_logger()
         self.ec2 = boto3.resource('ec2', self.ansible_config['aws_region'])
@@ -124,6 +125,11 @@ class ClusterDaemon(object):
         self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_start.yml', '-e components=master,slave'],
                     'Cluster is spun up', 'Failed to spin up the cluster')
 
+    def min_uptime_over(self, minutes=10):
+        if self.cluster_started_at:
+            return (datetime.now() - self.cluster_started_at).total_seconds() > minutes * 60
+        return True
+
     def cluster_stop(self):
         if self.queue_empty():  # make sure there are no new messages
             self.logger.info('No jobs running. Queue is empty. Stopping the cluster...')
@@ -156,7 +162,7 @@ class ClusterDaemon(object):
             Filters=[{'Name': 'tag:hostgroup', 'Values': [self.master_hostgroup, self.slave_hostgroup]},
                      {'Name': 'instance-state-name', 'Values': ['running', 'pending']}]))
         launch_time = min([i.launch_time for i in spark_instances])
-        now_time = dt.datetime.utcnow()
+        now_time = datetime.utcnow()
         self.logger.debug('launch: {} now: {}'.format(launch_time, now_time))
         return 0 < (60 + (launch_time.minute - now_time.minute)) % 60 <= max(5, 2 * self.interval / 60)
 
@@ -175,6 +181,7 @@ class ClusterDaemon(object):
                 self.cluster_setup()
                 self.sm_engine_deploy()
                 self._post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
+                self.cluster_started_at = datetime.now()
                 sleep(60)
             except Exception as e:
                 self.logger.warning('Failed to start/setup/deploy cluster: %s', e)
@@ -192,7 +199,7 @@ class ClusterDaemon(object):
                     if not self.spark_up():
                         self._try_start_setup_deploy()
                 else:
-                    if self.spark_master_public_ip and not self.job_running():
+                    if self.spark_master_public_ip and not self.job_running() and self.min_uptime_over():
                         self.cluster_stop()
 
                 sleep(self.interval)
