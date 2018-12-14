@@ -1,5 +1,19 @@
 ---
 
+- name: Set stage in filebeat config
+  become: yes
+  replace:
+    path: /etc/filebeat/filebeat.yml
+    regexp: '(\s*env:\s).+$'
+    replace: '\1"{{ stage }}"'
+    backup: yes
+
+- name: Restart Filebeat service
+  become: yes
+  service:
+    name: filebeat
+    state: restarted
+
 - name: Copy sm-annotate-daemon supervisor config file
   template: src=sm-annotate-daemon.supervisor.j2 dest=/etc/supervisor/{{ sm_annotate_daemon_app_name }}.supervisor
             mode=0600 owner=ubuntu group=ubuntu
