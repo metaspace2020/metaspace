@@ -126,7 +126,9 @@ class ClusterDaemon(object):
                     'Cluster is spun up', 'Failed to spin up the cluster')
 
     def min_uptime_over(self, minutes=10):
-        return (datetime.now() - self.cluster_started_at).total_seconds() > minutes * 60
+        if self.cluster_started_at:
+            return (datetime.now() - self.cluster_started_at).total_seconds() > minutes * 60
+        return True
 
     def cluster_stop(self):
         if self.queue_empty():  # make sure there are no new messages
