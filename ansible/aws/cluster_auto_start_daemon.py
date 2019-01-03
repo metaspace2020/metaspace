@@ -55,7 +55,7 @@ class AnnotationQueue(object):
                                  priority=3  # max priority
                              ))
         except AMQPError as e:
-            self.logger.error(f'Failed to publish exis message: {e}')
+            self.logger.error(f'Failed to publish exit message: {e}')
         finally:
             if self.conn:
                 self.conn.close()
