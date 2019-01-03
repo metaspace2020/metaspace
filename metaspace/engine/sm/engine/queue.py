@@ -394,6 +394,10 @@ class QueueConsumer(Thread):
                                  method.delivery_tag, properties.app_id, body)
                 msg = json.loads(body)
 
+                if msg['action'] == 'exit':
+                    self.stop()
+                    return
+
                 self._callback(msg)
             except BaseException as e:
                 self.logger.error(' [x] Failed: {}'.format(body), exc_info=False)
