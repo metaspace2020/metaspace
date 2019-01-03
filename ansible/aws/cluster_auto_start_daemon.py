@@ -5,6 +5,7 @@ import logging
 from time import sleep
 import pika
 import requests
+from pika.exceptions import AMQPError
 from requests import ConnectionError
 import yaml
 from subprocess import check_output
@@ -13,10 +14,56 @@ import boto3
 from datetime import datetime
 
 
+class AnnotationQueue(object):
+
+    def __init__(self, host, user, password, qname, logger):
+        self.qname = qname
+        self.logger = logger
+        self.conn_params = pika.ConnectionParameters(host=host, heartbeat=0,
+                                                     credentials=pika.PlainCredentials(user, password))
+        self.conn = None
+
+    def _get_channel(self):
+        self.conn = pika.BlockingConnection(self.conn_params)
+        return self.conn.channel()
+
+    def _declare_queue(self, ch):
+        return ch.queue_declare(queue=self.qname, durable=True, arguments={'x-max-priority': 3})
+
+    def get_message_number(self):
+        n_messages = 0
+        try:
+            ch = self._get_channel()
+            m = self._declare_queue(ch)
+            n_messages = m.method.message_count
+        except AMQPError as e:
+            self.logger.error(f'Failed to check message count: {e}')
+        finally:
+            if self.conn:
+                self.conn.close()
+        return n_messages
+
+    def send_queue_exit_message(self):
+        try:
+            ch = self._get_channel()
+            self._declare_queue(ch)
+            ch.basic_publish(exchange='',
+                             routing_key=self.qname,
+                             body=json.dumps({'action': 'exit'}),
+                             properties=pika.BasicProperties(
+                                 delivery_mode=2,  # make message persistent
+                                 priority=3  # max priority
+                             ))
+        except AMQPError as e:
+            self.logger.error(f'Failed to publish exis message: {e}')
+        finally:
+            if self.conn:
+                self.conn.close()
+
+
 class ClusterDaemon(object):
     def __init__(self, ansible_config_path, aws_key_name=None, interval=60,
                  qname='sm_annotate', debug=False):
-
         with open(ansible_config_path) as fp:
             self.ansible_config = yaml.load(fp)
 
@@ -26,12 +73,14 @@ class ClusterDaemon(object):
         self.slave_hostgroup = self.ansible_config['cluster_configuration']['instances']['slave']['hostgroup']
         self.stage = self.ansible_config['stage']
         self.admin_email = self.ansible_config['notification_email']
-        self.qname = qname
         self.debug = debug
         self.cluster_started_at = None
 
         self._setup_logger()
-
+        self.queue = AnnotationQueue(self.ansible_config['rabbitmq_host'],
+                                     self.ansible_config['rabbitmq_user'],
+                                     self.ansible_config['rabbitmq_password'],
+                                     qname, self.logger)
         self.session = boto3.session.Session(aws_access_key_id=self.ansible_config['aws_access_key_id'],
                                              aws_secret_access_key=self.ansible_config['aws_secret_access_key'])
         self.ec2 = self.session.resource('ec2', self.ansible_config['aws_region'])
@@ -98,14 +147,9 @@ class ClusterDaemon(object):
             return resp.ok
 
     def queue_empty(self):
-        creds = pika.PlainCredentials(self.ansible_config['rabbitmq_user'],
-                                      self.ansible_config['rabbitmq_password'])
-        conn = pika.BlockingConnection(pika.ConnectionParameters(host=self.ansible_config['rabbitmq_host'],
-                                                                 credentials=creds))
-        ch = conn.channel()
-        m = ch.queue_declare(queue=self.qname, durable=True, arguments={'x-max-priority': 3})
-        self.logger.debug('Messages in the queue: {}'.format(m.method.message_count))
-        return m.method.message_count == 0
+        n = self.queue.get_message_number()
+        self.logger.debug('Messages in the queue: {}'.format(n))
+        return n == 0
 
     def spark_up(self):
         return self._send_rest_request('http://{}:8080/api/v1/applications'.format(self.spark_master_public_ip))
@@ -134,11 +178,12 @@ class ClusterDaemon(object):
         return True
 
     def cluster_stop(self):
-        if self.queue_empty():  # make sure there are no new messages
-            self.logger.info('No jobs running. Queue is empty. Stopping the cluster...')
-            self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_stop.yml', '-e', 'components=master,slave'],
-                        'Cluster is stopped successfully', 'Failed to stop the cluster')
-            self._post_to_slack('checkered_flag', "[v] Cluster stopped")
+        self.logger.info('No jobs running. Queue is empty. Queue exit message sent')
+        self.queue.send_queue_exit_message()
+        self.logger.info('Stopping the cluster...')
+        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_stop.yml', '-e', 'components=master,slave'],
+                    'Cluster is stopped successfully', 'Failed to stop the cluster')
+        self._post_to_slack('checkered_flag', "[v] Cluster stopped")
 
     def cluster_setup(self):
         self.logger.info('Setting up the cluster...')
