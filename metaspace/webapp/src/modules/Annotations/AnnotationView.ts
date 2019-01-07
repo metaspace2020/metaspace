@@ -15,6 +15,7 @@
  import { Location } from 'vue-router';
  import { currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
  import { safeJsonParse } from '../../util';
+ import {omit, pick} from 'lodash-es';
 
  type ImagePosition = {
    zoom: number
@@ -106,7 +107,7 @@
    msAcqGeometry: any
    peakChartData: any
    opticalImageUrl?: string
-   showOpticalImage: boolean = true
+
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
 
@@ -114,6 +115,10 @@
      const currentMdType: string = this.$store.getters.filter.metadataType;
      const componentKey: string = currentMdType in metadataDependentComponents[category] ? currentMdType : 'default';
      return metadataDependentComponents[category][componentKey];
+   }
+
+   get showOpticalImage(): boolean {
+     return !this.$route.query.hideopt;
    }
 
    get activeSections(): string[] {
@@ -150,11 +155,16 @@
        adduct: this.annotation.adduct,
        fdrLevel: this.annotation.fdrLevel,
        database: this.$store.getters.filter.database,
-       simpleQuery: ''
+       simpleQuery: '',
      };
      const path = '/annotations';
-     const q = encodeParams(filter, path, this.$store.state.filterLists);
-     return {query: q, path};
+     return {
+       path,
+       query: {
+         ...encodeParams(filter, path, this.$store.state.filterLists),
+         ...pick(this.$route.query, 'sections', 'sort', 'hideopt'),
+       },
+     };
    }
 
    get imageLoaderSettings(): ImageLoaderSettings {
@@ -242,7 +252,18 @@
 
    toggleOpticalImage(event: any): void {
      event.stopPropagation();
-     this.showOpticalImage = !this.showOpticalImage
+     if(this.showOpticalImage) {
+       this.$router.replace({
+         query: {
+           ...this.$route.query,
+           hideopt: '1',
+         }
+       });
+     } else {
+       this.$router.replace({
+         query: omit(this.$route.query, 'hideopt'),
+       });
+     }
    }
 
    loadVisibility() {
