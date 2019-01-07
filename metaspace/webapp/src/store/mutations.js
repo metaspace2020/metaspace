@@ -11,7 +11,7 @@ import {
   getFilterInitialValue,
   stripFilteringParams,
 } from '../modules/Filters';
-import {DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER} from '../modules/Filters/url';
+import {DEFAULT_ANNOTATION_VIEW_SECTIONS, DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER} from '../modules/Filters/url';
 
 
 function updatedLocation(state, filter) {
@@ -125,10 +125,13 @@ export default {
   },
 
   updateAnnotationViewSections(state, activeSections) {
-    let query = Object.assign({}, state.route.query, {
-      sections: encodeSections(activeSections)
+    const sections = encodeSections(activeSections);
+    const defaultSections = encodeSections(DEFAULT_ANNOTATION_VIEW_SECTIONS);
+    router.replace({
+      query: sections !== defaultSections
+        ? { ...state.route.query, sections }
+        : omit(state.route.query, 'sections'),
     });
-    router.replace({query});
   },
 
   setColormap(state, cmap) {

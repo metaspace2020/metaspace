@@ -46,6 +46,8 @@ export const DEFAULT_TABLE_ORDER = {
   dir: 'DESCENDING'
 };
 
+export const DEFAULT_ANNOTATION_VIEW_SECTIONS = ['images'];
+
 export const DEFAULT_COLORMAP = 'Viridis';
 
 export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {
@@ -173,7 +175,7 @@ export function decodeSettings(location: Location): any {
     },
 
     annotationView: {
-      activeSections: ['images'],
+      activeSections: DEFAULT_ANNOTATION_VIEW_SECTIONS,
       colormap: DEFAULT_COLORMAP
     },
 
