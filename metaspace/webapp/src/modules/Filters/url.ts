@@ -41,10 +41,12 @@ const PATH_TO_LEVEL: Record<string, Level> = {
   '/projects': 'projects',
 };
 
-export const DEFAULT_ORDER = {
+export const DEFAULT_TABLE_ORDER = {
   by: 'ORDER_BY_MSM',
   dir: 'DESCENDING'
 };
+
+export const DEFAULT_COLORMAP = 'Viridis';
 
 export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {
   const level = path != null ? PATH_TO_LEVEL[path.toLowerCase()] : null;
@@ -167,12 +169,12 @@ export function decodeSettings(location: Location): any {
   let settings = {
     table: {
       currentPage: 1,
-      order: DEFAULT_ORDER,
+      order: DEFAULT_TABLE_ORDER,
     },
 
     annotationView: {
       activeSections: ['images'],
-      colormap: 'Viridis'
+      colormap: DEFAULT_COLORMAP
     },
 
     datasets: {

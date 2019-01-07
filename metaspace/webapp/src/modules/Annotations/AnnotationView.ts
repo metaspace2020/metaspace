@@ -162,7 +162,7 @@
        path,
        query: {
          ...encodeParams(filter, path, this.$store.state.filterLists),
-         ...pick(this.$route.query, 'sections', 'sort', 'hideopt'),
+         ...pick(this.$route.query, 'sections', 'sort', 'hideopt', 'cmap'),
        },
      };
    }

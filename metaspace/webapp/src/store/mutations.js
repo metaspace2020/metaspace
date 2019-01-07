@@ -1,4 +1,4 @@
-import {isEqual, pull, without, omit} from 'lodash-es';
+import {isEqual, omit, pull, without} from 'lodash-es';
 import router from '../router';
 import compare from '../lib/compare';
 
@@ -11,7 +11,7 @@ import {
   getFilterInitialValue,
   stripFilteringParams,
 } from '../modules/Filters';
-import {DEFAULT_ORDER} from '../modules/Filters/url';
+import {DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER} from '../modules/Filters/url';
 
 
 function updatedLocation(state, filter) {
@@ -131,21 +131,25 @@ export default {
     router.replace({query});
   },
 
-  setColormap(state, colormap) {
-    let query = Object.assign({}, state.route.query, {
-      cmap: colormap
+  setColormap(state, cmap) {
+    router.replace({
+      query: cmap !== DEFAULT_COLORMAP
+        ? {...state.route.query, cmap}
+        : omit(state.route.query, 'cmap'),
     });
-    router.replace({query});
   },
 
   setCurrentPage(state, page) {
-    let query = Object.assign({}, state.route.query, {page});
-    router.replace({query});
+    router.replace({
+      query: page !== 1
+        ? { ...state.route.query, page }
+        : omit(state.route.query, 'page'),
+    });
   },
 
   setSortOrder(state, sortOrder) {
     const sort = encodeSortOrder(sortOrder);
-    const defaultSort = encodeSortOrder(DEFAULT_ORDER);
+    const defaultSort = encodeSortOrder(DEFAULT_TABLE_ORDER);
     router.replace({
       query: sort !== defaultSort
         ? { ...state.route.query, sort }
