@@ -485,7 +485,7 @@
          const {sumFormula, adduct, msmScore, mz,
                 rhoSpatial, rhoSpectral, rhoChaos, fdrLevel} = row;
          return formatCsvRow([
-           row.dataset.groupApproved && row.dataset.group ? row.dataset.group.shortName : '',
+           row.dataset.groupApproved && row.dataset.group ? row.dataset.group.name : '',
            row.dataset.name,
            row.dataset.id,
            sumFormula, "M" + adduct, mz,

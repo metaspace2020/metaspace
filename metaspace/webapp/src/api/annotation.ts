@@ -69,6 +69,7 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
         id
         name
         group { id name }
+        groupApproved
       }
       possibleCompounds {
         name
