@@ -1,13 +1,17 @@
-import {isEqual, pull, without} from 'lodash-es';
+import {isEqual, pull, without, omit} from 'lodash-es';
 import router from '../router';
 import compare from '../lib/compare';
 
 import {
   decodeParams,
-  encodeParams, encodeSections, encodeSortOrder, FILTER_SPECIFICATIONS,
+  encodeParams,
+  encodeSections,
+  encodeSortOrder,
+  FILTER_SPECIFICATIONS,
+  getFilterInitialValue,
   stripFilteringParams,
 } from '../modules/Filters';
-import {getFilterInitialValue} from '../modules/Filters';
+import {DEFAULT_ORDER} from '../modules/Filters/url';
 
 
 function updatedLocation(state, filter) {
@@ -140,10 +144,13 @@ export default {
   },
 
   setSortOrder(state, sortOrder) {
-    let query = Object.assign({}, state.route.query, {
-      sort: encodeSortOrder(sortOrder)
+    const sort = encodeSortOrder(sortOrder);
+    const defaultSort = encodeSortOrder(DEFAULT_ORDER);
+    router.replace({
+      query: sort !== defaultSort
+        ? { ...state.route.query, sort }
+        : omit(state.route.query, 'sort'),
     });
-    router.replace({query});
   },
 
   setDatasetTab(state, tab) {
