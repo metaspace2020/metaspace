@@ -51,7 +51,8 @@ class AnnotationQueue(object):
                              routing_key=self.qname,
                              body=json.dumps({'action': 'exit'}),
                              properties=pika.BasicProperties(
-                                 priority=3  # max priority
+                                 priority=3,  # max priority
+                                 expiration=60000,  # 60 sec ttl
                              ))
         except AMQPError as e:
             self.logger.error(f'Failed to publish exit message: {e}')
