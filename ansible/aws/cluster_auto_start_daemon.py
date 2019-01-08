@@ -177,12 +177,13 @@ class ClusterDaemon(object):
         return True
 
     def cluster_stop(self):
-        self.logger.info('No jobs running. Queue is empty. Queue exit message sent')
-        self.queue.send_queue_exit_message()
-        self.logger.info('Stopping the cluster...')
-        self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_stop.yml', '-e', 'components=master,slave'],
-                    'Cluster is stopped successfully', 'Failed to stop the cluster')
-        self._post_to_slack('checkered_flag', "[v] Cluster stopped")
+        if self.queue_empty():
+            self.queue.send_queue_exit_message()
+            self.logger.info('No jobs running. Queue is empty. Queue exit message sent')
+            self.logger.info('Stopping the cluster...')
+            self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_stop.yml', '-e', 'components=master,slave'],
+                        'Cluster is stopped successfully', 'Failed to stop the cluster')
+            self._post_to_slack('checkered_flag', "[v] Cluster stopped")
 
     def cluster_setup(self):
         self.logger.info('Setting up the cluster...')
