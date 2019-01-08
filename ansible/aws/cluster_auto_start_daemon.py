@@ -51,7 +51,6 @@ class AnnotationQueue(object):
                              routing_key=self.qname,
                              body=json.dumps({'action': 'exit'}),
                              properties=pika.BasicProperties(
-                                 delivery_mode=2,  # make message persistent
                                  priority=3  # max priority
                              ))
         except AMQPError as e:
