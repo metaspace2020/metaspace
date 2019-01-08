@@ -5,18 +5,65 @@ import logging
 from time import sleep
 import pika
 import requests
+from pika.exceptions import AMQPError
 from requests import ConnectionError
 import yaml
 from subprocess import check_output
 from subprocess import CalledProcessError
 import boto3
-import datetime as dt
+from datetime import datetime
+
+
+class AnnotationQueue(object):
+
+    def __init__(self, host, user, password, qname, logger):
+        self.qname = qname
+        self.logger = logger
+        self.conn_params = pika.ConnectionParameters(host=host, heartbeat=0,
+                                                     credentials=pika.PlainCredentials(user, password))
+        self.conn = None
+
+    def _get_channel(self):
+        self.conn = pika.BlockingConnection(self.conn_params)
+        return self.conn.channel()
+
+    def _declare_queue(self, ch):
+        return ch.queue_declare(queue=self.qname, durable=True, arguments={'x-max-priority': 3})
+
+    def get_message_number(self):
+        n_messages = 0
+        try:
+            ch = self._get_channel()
+            m = self._declare_queue(ch)
+            n_messages = m.method.message_count
+        except AMQPError as e:
+            self.logger.error(f'Failed to check message count: {e}')
+        finally:
+            if self.conn:
+                self.conn.close()
+        return n_messages
+
+    def send_queue_exit_message(self):
+        try:
+            ch = self._get_channel()
+            self._declare_queue(ch)
+            ch.basic_publish(exchange='',
+                             routing_key=self.qname,
+                             body=json.dumps({'action': 'exit'}),
+                             properties=pika.BasicProperties(
+                                 priority=3,  # max priority
+                                 expiration=60000,  # 60 sec ttl
+                             ))
+        except AMQPError as e:
+            self.logger.error(f'Failed to publish exit message: {e}')
+        finally:
+            if self.conn:
+                self.conn.close()
 
 
 class ClusterDaemon(object):
     def __init__(self, ansible_config_path, aws_key_name=None, interval=60,
                  qname='sm_annotate', debug=False):
-
         with open(ansible_config_path) as fp:
             self.ansible_config = yaml.load(fp)
 
@@ -26,11 +73,14 @@ class ClusterDaemon(object):
         self.slave_hostgroup = self.ansible_config['cluster_configuration']['instances']['slave']['hostgroup']
         self.stage = self.ansible_config['stage']
         self.admin_email = self.ansible_config['notification_email']
-        self.qname = qname
         self.debug = debug
+        self.cluster_started_at = None
 
         self._setup_logger()
-
+        self.queue = AnnotationQueue(self.ansible_config['rabbitmq_host'],
+                                     self.ansible_config['rabbitmq_user'],
+                                     self.ansible_config['rabbitmq_password'],
+                                     qname, self.logger)
         self.session = boto3.session.Session(aws_access_key_id=self.ansible_config['aws_access_key_id'],
                                              aws_secret_access_key=self.ansible_config['aws_secret_access_key'])
         self.ec2 = self.session.resource('ec2', self.ansible_config['aws_region'])
@@ -97,14 +147,9 @@ class ClusterDaemon(object):
             return resp.ok
 
     def queue_empty(self):
-        creds = pika.PlainCredentials(self.ansible_config['rabbitmq_user'],
-                                      self.ansible_config['rabbitmq_password'])
-        conn = pika.BlockingConnection(pika.ConnectionParameters(host=self.ansible_config['rabbitmq_host'],
-                                                                 credentials=creds))
-        ch = conn.channel()
-        m = ch.queue_declare(queue=self.qname, durable=True, arguments={'x-max-priority': 3})
-        self.logger.debug('Messages in the queue: {}'.format(m.method.message_count))
-        return m.method.message_count == 0
+        n = self.queue.get_message_number()
+        self.logger.debug('Messages in the queue: {}'.format(n))
+        return n == 0
 
     def spark_up(self):
         return self._send_rest_request('http://{}:8080/api/v1/applications'.format(self.spark_master_public_ip))
@@ -127,9 +172,16 @@ class ClusterDaemon(object):
         self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_start.yml', '-e components=master,slave'],
                     'Cluster is spun up', 'Failed to spin up the cluster')
 
+    def min_uptime_over(self, minutes=10):
+        if self.cluster_started_at:
+            return (datetime.now() - self.cluster_started_at).total_seconds() > minutes * 60
+        return True
+
     def cluster_stop(self):
-        if self.queue_empty():  # make sure there are no new messages
-            self.logger.info('No jobs running. Queue is empty. Stopping the cluster...')
+        if self.queue_empty():
+            self.queue.send_queue_exit_message()
+            self.logger.info('No jobs running. Queue is empty. Queue exit message sent')
+            self.logger.info('Stopping the cluster...')
             self._local(['ansible-playbook', '-i', self.stage, '-f', '1', 'aws_stop.yml', '-e', 'components=master,slave'],
                         'Cluster is stopped successfully', 'Failed to stop the cluster')
             self._post_to_slack('checkered_flag', "[v] Cluster stopped")
@@ -159,7 +211,7 @@ class ClusterDaemon(object):
             Filters=[{'Name': 'tag:hostgroup', 'Values': [self.master_hostgroup, self.slave_hostgroup]},
                      {'Name': 'instance-state-name', 'Values': ['running', 'pending']}]))
         launch_time = min([i.launch_time for i in spark_instances])
-        now_time = dt.datetime.utcnow()
+        now_time = datetime.utcnow()
         self.logger.debug('launch: {} now: {}'.format(launch_time, now_time))
         return 0 < (60 + (launch_time.minute - now_time.minute)) % 60 <= max(5, 2 * self.interval / 60)
 
@@ -178,6 +230,7 @@ class ClusterDaemon(object):
                 self.cluster_setup()
                 self.sm_engine_deploy()
                 self._post_to_slack('motorway', "[v] Cluster setup finished, SM engine deployed")
+                self.cluster_started_at = datetime.now()
                 sleep(60)
             except Exception as e:
                 self.logger.warning('Failed to start/setup/deploy cluster: %s', e)
@@ -195,7 +248,7 @@ class ClusterDaemon(object):
                     if not self.spark_up():
                         self._try_start_setup_deploy()
                 else:
-                    if self.spark_master_public_ip and not self.job_running():
+                    if self.spark_master_public_ip and not self.job_running() and self.min_uptime_over():
                         self.cluster_stop()
 
                 sleep(self.interval)

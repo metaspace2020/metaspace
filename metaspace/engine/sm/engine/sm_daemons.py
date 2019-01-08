@@ -201,7 +201,7 @@ class SMAnnotateDaemon(object):
 
         self._manager.post_to_slack('hankey', ' [x] Annotation failed: {}'.format(json.dumps(msg)))
 
-        if msg.get('email'):
+        if 'email' in msg:
             self._manager.send_failed_email(msg)
 
     def _callback(self, msg):
@@ -230,6 +230,8 @@ class SMAnnotateDaemon(object):
         self._annot_queue_consumer.start()
 
     def stop(self):
+        """  Must be called from main thread
+        """
         if not self._stopped:
             self._annot_queue_consumer.stop()
             self._annot_queue_consumer.join()

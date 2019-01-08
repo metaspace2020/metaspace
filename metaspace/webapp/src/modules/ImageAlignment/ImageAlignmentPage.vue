@@ -229,7 +229,7 @@
 
          // in case user just opened a link to optical image upload page w/o navigation in web-app,
          // filters are not set up
-         this.$store.commit('updateFilter', {metadataType: data.dataset.metadataType});
+         this.$store.commit('replaceFilter', {metadataType: data.dataset.metadataType});
        }
      }
    },

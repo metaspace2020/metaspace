@@ -11,7 +11,7 @@
              :style="imageStyle"
              @click="onClick"
              @wheel="onWheel"
-             @mousedown="onMouseDown"
+             @mousedown.left.prevent="onMouseDown"
              ref="visibleImage"
              class="isotope-image"/>
       </div>
@@ -345,7 +345,6 @@
 
 
      onMouseDown(event) {
-       event.preventDefault();
        this.dragStartX = event.clientX;
        this.dragStartY = event.clientY;
        this.dragXOffset = this.xOffset;
@@ -553,6 +552,7 @@
    image-rendering: pixelated;
    image-rendering: -moz-crisp-edges;
    -ms-interpolation-mode: nearest-neighbor;
+   user-select: none;
  }
 
  .image-loader {
@@ -600,7 +600,7 @@
    color: var(--scaleBar-color);
    position: absolute;
    content: "";
-   width: 60px;
+   width: 100px;
    height: 10px;
    bottom: 15px;
    left: 55px;
@@ -620,7 +620,7 @@
  .pixelSizeY {
    color: var(--scaleBar-color);
    position: absolute;
-   width: 60px;
+   width: 100px;
    height: 10px;
    bottom: 58px;
    left: 10px;
