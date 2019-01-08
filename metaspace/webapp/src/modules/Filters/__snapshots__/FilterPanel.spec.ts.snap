@@ -329,6 +329,24 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </mock-el-popover>
     <!---->
   </div>
+  <div class="tf-outer" data-test-key="metadataType" filterkey="metadataType">
+    <div class="tf-name">
+      Data type:
+    </div>
+    <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
+      <div slot-key="default">
+        <mock-el-select filterable="true" value="ims">
+          <mock-el-option label="Imaging MS" value="Imaging MS"></mock-el-option>
+          <mock-el-option label="LC-MS" value="LC-MS"></mock-el-option>
+        </mock-el-select>
+      </div>
+      <div slot-key="reference">
+        <div class="tf-value"><span class="tf-value-span"><span>ims</span></span>
+        </div>
+      </div>
+    </mock-el-popover>
+    <!---->
+  </div>
 </div>
 `;
 
