@@ -84,6 +84,20 @@
       </el-popover>
     </div>
     <div>
+      <b><a href="http://ecmdb.ca/about">E. coli Metabolome Database (ECMDB)</a>:</b>
+      An expertly curated database containing extensive metabolomic data and metabolic pathway diagrams about
+      Escherichia coli (strain K12, MG1655).
+      <el-popover trigger="hover" placement="top">
+        <div class="desc-cite-popover">
+          Sajed, T., Marcu, A., Ramirez, M., Pon, A., Guo, A., Knox, C., Wilson, M., Grant, J., Djoumbou,
+          Y. and Wishart, D. (2015). ECMDB 2.0: A richer resource for understanding the biochemistry of
+          E. coli. Nucleic Acids Res, p.gkv1060
+          <a href="https://www.ncbi.nlm.nih.gov/pubmed/26481353">https://www.ncbi.nlm.nih.gov/pubmed/26481353</a>
+        </div>
+        <span slot="reference" class="desc-cite">Citation</span>
+      </el-popover>
+    </div>
+    <div>
       <b>EMBL-dev1:</b>
       A molecular database used for developmental and testing purposes by the Alexandrov team at EMBL.
       <el-popover trigger="hover" placement="top">
