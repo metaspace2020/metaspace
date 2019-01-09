@@ -25,14 +25,16 @@
       <div :style="cssProps"
            :class="{pixelSizeX: pixelSizeIsActive}"
            title="Click to change the color"
-           @click="onClickScaleBar()">
-        {{scaleBarValX}}
+           @click="onClickScaleBar()"
+           v-if="!notExceedsOxViewArea">
+        <div :class="{pixelSizeXText: pixelSizeIsActive}">{{scaleBarValX}}</div>
       </div>
       <div :style="cssProps"
            :class="{pixelSizeY: pixelSizeIsActive}"
            title="Click to change the color"
-           @click="onClickScaleBar()">
-        {{scaleBarValY}}
+           @click="onClickScaleBar()"
+           v-if="!yIsNotEqualX">
+        <div :class="{pixelSizeYText: pixelSizeIsActive}">{{scaleBarValY}}</div>
       </div>
       <palette v-show="paletteIsVisible" class="color-picker" @colorInput="val=>updateColor(val)" />
     </div>
@@ -55,7 +57,6 @@
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
  import config from '../clientConfig.json';
- import { round } from 'lodash-es';
  import Palette from './Palette.vue'
 
  const OPACITY_MAPPINGS = {
@@ -149,7 +150,11 @@
        tmId: 0,
        scaleBarColor: '#000000',
        paletteIsVisible: false,
-       scaleBarShadow: '#FFFFFF'
+       scaleBarShadow: '#FFFFFF',
+       scaleBarOXVal: 50,
+       scaleBarOYVal: 50,
+       oXExceeding: false,
+       oYExceeding: false
      }
    },
    components: {
@@ -173,6 +178,18 @@
      this.isUnmounted = true;
    },
    computed: {
+     notExceedsOxViewArea() {
+       return this.oXExceeding
+     },
+
+     notExceedsOyViewArea() {
+       return this.oYExceeding
+     },
+
+     yIsNotEqualX() {
+       return this.pixelSizeX === this.pixelSizeY
+     },
+
      isIE() {
        if (window.navigator.userAgent.indexOf('MSIE') > 0 ||
        window.navigator.userAgent.indexOf('Trident/') > 0) {
@@ -181,21 +198,35 @@
        return false
      },
 
-     scaleBarSizeVal() {
-       return 25
+     scaleBarSizeBasis() {
+       return 50
      },
 
      scaleBarValX() {
        if (this.pixelSizeIsActive && this.visibleImageWidth !== 0 && !this.isIE) {
-         return `${round((this.image.naturalWidth /
-           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeVal * this.pixelSizeX, 0)} µm`
+         let ceiledVal = Math.ceil(Math.round((this.image.naturalWidth /
+           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * this.pixelSizeX) / 10) * 10;
+         let notCeiledVal = (this.image.naturalWidth /
+           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * this.pixelSizeX;
+         let diff = ceiledVal - notCeiledVal;
+         let addedVal = diff/this.pixelSizeX*((this.zoom * this.visibleImageWidth)/this.image.naturalWidth);
+         this.scaleBarOXVal = this.scaleBarSizeBasis + addedVal;
+         this.oXExceeding = Math.round(this.scaleBarOXVal) >= this.parentDivWidth/3;
+         return `${ceiledVal} µm`
        }
      },
 
      scaleBarValY() {
        if (this.pixelSizeIsActive && this.visibleImageHeight !== 0 && !this.isIE) {
-         return `${round((this.image.naturalHeight /
-           (this.zoom * this.visibleImageHeight)) * this.scaleBarSizeVal * this.pixelSizeY, 0)} µm`
+         let ceiledVal = Math.ceil(Math.round((this.image.naturalWidth /
+           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * this.pixelSizeY) / 10) * 10;
+         let notCeiledVal = (this.image.naturalWidth /
+           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * this.pixelSizeY;
+         let diff = ceiledVal - notCeiledVal;
+         let addedVal = diff/this.pixelSizeY*((this.zoom * this.visibleImageWidth)/this.image.naturalWidth);
+         this.scaleBarOYVal = this.scaleBarSizeBasis + addedVal;
+         this.oYExceeding = Math.round(this.scaleBarOYVal) >= this.parentDivWidth/3;
+         return `${ceiledVal} µm`
        }
      },
 
@@ -262,8 +293,8 @@
        } else {
          return {
            '--scaleBar-color': this.scaleBarColor,
-           '--scaleBarX-size': `${this.scaleBarSizeVal}px`,
-           '--scaleBarY-size': `${this.scaleBarSizeVal}px`,
+           '--scaleBarX-size': `${this.scaleBarOXVal}px`,
+           '--scaleBarY-size': `${this.scaleBarOYVal}px`,
            '--scaleBarShadow-color': this.scaleBarShadow
          }
        }
@@ -599,43 +630,43 @@
  .pixelSizeX {
    color: var(--scaleBar-color);
    position: absolute;
-   content: "";
-   width: 100px;
-   height: 10px;
-   bottom: 15px;
-   left: 55px;
-   z-index: 3;
-   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
- }
-
- .pixelSizeX::after {
-   position: absolute;
-   content: "";
    width: var(--scaleBarX-size);
-   left: -35px;
+   bottom: 20px;
+   left: 20px;
    box-shadow: 1px 1px 1px var(--scaleBarShadow-color);
    border-bottom: 2px solid var(--scaleBar-color);
+   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
+   z-index: 3;
+ }
+
+ .pixelSizeXText {
+   position: absolute;
+   content: "";
+   width: 100px;
+   bottom: 10px;
+   left: 5px;
+   z-index: 3;
  }
 
  .pixelSizeY {
    color: var(--scaleBar-color);
    position: absolute;
-   width: 100px;
-   height: 10px;
-   bottom: 58px;
-   left: 10px;
-   z-index: 3;
-   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
- }
-
- .pixelSizeY::before {
-   position: absolute;
-   content: "";
    height: var(--scaleBarY-size);
-   bottom: -33px;
-   left: 10px;
+   bottom: 20px;
+   left: 20px;
    box-shadow: 1px -1px 1px var(--scaleBarShadow-color);
    border-left: 2px solid var(--scaleBar-color);
+   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
+   z-index: 3;
+ }
+
+ .pixelSizeYText {
+   position: absolute;
+   content: "";
+   width: 100px;
+   bottom: 45px;
+   left: 3px;
+   z-index: 3;
  }
 
  .pixelSizeX:hover,
