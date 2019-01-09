@@ -11,7 +11,7 @@
               width="100%"
               stripe
               tabindex="1"
-              :default-sort="getDefaultSort"
+              :default-sort="tableSort"
               :row-class-name="getRowClass"
               @keyup.native="onKeyUp"
               @keydown.native="onKeyDown"
@@ -238,7 +238,21 @@
        return this.$store.getters.settings.table.order.dir;
      },
 
-     getDefaultSort() {
+     queryVariables() {
+       const {annotationFilter, datasetFilter, ftsQuery} = this.gqlFilter;
+
+       return {
+         filter: annotationFilter,
+         dFilter: datasetFilter,
+         query: ftsQuery,
+         orderBy: this.orderBy,
+         sortingOrder: this.sortingOrder,
+         offset: (this.currentPage - 1) * this.recordsPerPage,
+         limit: this.recordsPerPage
+       };
+     },
+
+     tableSort() {
        let by = this.orderBy,
            order = this.sortingOrder.toLowerCase(),
            prop = 'msmScore';
@@ -248,6 +262,8 @@
          prop = 'msmScore';
        else if (by == 'ORDER_BY_FDR_MSM')
          prop = 'fdrLevel';
+       else if (by == 'ORDER_BY_FORMULA')
+         prop = 'sumFormula';
        return {prop, order};
      },
 
@@ -286,7 +302,7 @@
        query: annotationListQuery,
        fetchPolicy: 'cache-first',
        variables() {
-         return this.queryVariables();
+         return this.queryVariables;
        },
        update: data => data.allAnnotations,
        debounce: 200,
@@ -339,19 +355,6 @@
          this.$refs.table.setCurrentRow(data[rowIndex]);
        }
      },
-     queryVariables() {
-       const {annotationFilter, datasetFilter, ftsQuery} = this.gqlFilter;
-
-       return {
-         filter: annotationFilter,
-         dFilter: datasetFilter,
-         query: ftsQuery,
-         orderBy: this.orderBy,
-         sortingOrder: this.sortingOrder,
-         offset: (this.currentPage - 1) * this.recordsPerPage,
-         limit: this.recordsPerPage
-       };
-     },
 
      hidden (columnLabel) {
        return this.hideColumns.indexOf(columnLabel) >= 0;
@@ -373,11 +376,14 @@
      formatDatasetName: (row, col) => row.dataset.name,
 
      onSortChange (event) {
+       this.clearCurrentRow();
+
        if (!event.order) {
+         const {prop, order} = this.tableSort;
+         // Skip the "unsorted" state by just inverting the last seen sort order
+         this.$refs.table.sort(prop, order === 'ascending' ? 'descending' : 'ascending');
          return;
        }
-
-       this.clearCurrentRow();
 
        let orderBy = this.orderBy;
        if (event.prop == 'msmScore')
@@ -485,7 +491,7 @@
          const {sumFormula, adduct, msmScore, mz,
                 rhoSpatial, rhoSpectral, rhoChaos, fdrLevel} = row;
          return formatCsvRow([
-           row.dataset.groupApproved && row.dataset.group ? row.dataset.group.shortName : '',
+           row.dataset.groupApproved && row.dataset.group ? row.dataset.group.name : '',
            row.dataset.name,
            row.dataset.id,
            sumFormula, "M" + adduct, mz,
@@ -515,11 +521,11 @@
          FileSaver.saveAs(blob, "metaspace_annotations.csv");
        }
 
-       let v = this.queryVariables(),
-           chunks = [],
-           offset = 0;
-
-       v.limit = chunkSize;
+       const v = {
+         ...this.queryVariables,
+         limit: chunkSize,
+       };
+       let offset = 0;
 
        function runExport() {
          const variables = Object.assign(v, {offset});
