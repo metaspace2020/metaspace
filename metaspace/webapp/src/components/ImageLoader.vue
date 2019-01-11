@@ -26,14 +26,14 @@
            :class="{pixelSizeX: pixelSizeIsActive}"
            title="Click to change the color"
            @click="onClickScaleBar()"
-           v-if="!notExceedsOxViewArea">
+           v-if="pixelSizeIsActive && !scaleBarOxExceeds">
         <div :class="{pixelSizeXText: pixelSizeIsActive}">{{scaleBarValX}}</div>
       </div>
       <div :style="cssProps"
            :class="{pixelSizeY: pixelSizeIsActive}"
            title="Click to change the color"
            @click="onClickScaleBar()"
-           v-if="!yIsNotEqualX">
+           v-if="pixelSizeIsActive && !scaleBarOyExceeds && this.pixelSizeX !== this.pixelSizeY">
         <div :class="{pixelSizeYText: pixelSizeIsActive}">{{scaleBarValY}}</div>
       </div>
       <palette v-show="paletteIsVisible" class="color-picker" @colorInput="val=>updateColor(val)" />
@@ -150,11 +150,7 @@
        tmId: 0,
        scaleBarColor: '#000000',
        paletteIsVisible: false,
-       scaleBarShadow: '#FFFFFF',
-       scaleBarOXVal: 50,
-       scaleBarOYVal: 50,
-       oXExceeding: false,
-       oYExceeding: false
+       scaleBarShadow: '#FFFFFF'
      }
    },
    components: {
@@ -178,18 +174,6 @@
      this.isUnmounted = true;
    },
    computed: {
-     notExceedsOxViewArea() {
-       return this.oXExceeding
-     },
-
-     notExceedsOyViewArea() {
-       return this.oYExceeding
-     },
-
-     yIsNotEqualX() {
-       return this.pixelSizeX === this.pixelSizeY
-     },
-
      isIE() {
        if (window.navigator.userAgent.indexOf('MSIE') > 0 ||
        window.navigator.userAgent.indexOf('Trident/') > 0) {
@@ -203,31 +187,19 @@
      },
 
      scaleBarValX() {
-       if (this.pixelSizeIsActive && this.visibleImageWidth !== 0 && !this.isIE) {
-         let ceiledVal = Math.ceil(Math.round((this.image.naturalWidth /
-           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * this.pixelSizeX) / 10) * 10;
-         let notCeiledVal = (this.image.naturalWidth /
-           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * this.pixelSizeX;
-         let diff = ceiledVal - notCeiledVal;
-         let addedVal = diff/this.pixelSizeX*((this.zoom * this.visibleImageWidth)/this.image.naturalWidth);
-         this.scaleBarOXVal = this.scaleBarSizeBasis + addedVal;
-         this.oXExceeding = Math.round(this.scaleBarOXVal) >= this.parentDivWidth/3;
-         return `${ceiledVal} µm`
-       }
+       return this.scaleBarAxisObj(this.pixelSizeX).scaleBarVal
      },
 
      scaleBarValY() {
-       if (this.pixelSizeIsActive && this.visibleImageHeight !== 0 && !this.isIE) {
-         let ceiledVal = Math.ceil(Math.round((this.image.naturalWidth /
-           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * this.pixelSizeY) / 10) * 10;
-         let notCeiledVal = (this.image.naturalWidth /
-           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * this.pixelSizeY;
-         let diff = ceiledVal - notCeiledVal;
-         let addedVal = diff/this.pixelSizeY*((this.zoom * this.visibleImageWidth)/this.image.naturalWidth);
-         this.scaleBarOYVal = this.scaleBarSizeBasis + addedVal;
-         this.oYExceeding = Math.round(this.scaleBarOYVal) >= this.parentDivWidth/3;
-         return `${ceiledVal} µm`
-       }
+       return this.scaleBarAxisObj(this.pixelSizeY).scaleBarVal
+     },
+
+     scaleBarOxExceeds() {
+       return this.scaleBarAxisObj(this.pixelSizeX).axisExceeding
+     },
+
+     scaleBarOyExceeds() {
+       return this.scaleBarAxisObj(this.pixelSizeY).axisExceeding
      },
 
      pixelSizeIsActive() {
@@ -293,9 +265,12 @@
        } else {
          return {
            '--scaleBar-color': this.scaleBarColor,
-           '--scaleBarX-size': `${this.scaleBarOXVal}px`,
-           '--scaleBarY-size': `${this.scaleBarOYVal}px`,
-           '--scaleBarShadow-color': this.scaleBarShadow
+           '--scaleBarX-size': `${this.scaleBarAxisObj(this.pixelSizeX).scaleBarShownAxisVal}px`,
+           '--scaleBarY-size': `${this.scaleBarAxisObj(this.pixelSizeY).scaleBarShownAxisVal}px`,
+           '--scaleBarShadow-color': this.scaleBarShadow,
+           '--addedValToOyBar': this.scaleBarAxisObj(this.pixelSizeY).scaleBarShownAxisVal,
+           '--scaleBarTextWidth': Math.max(document.documentElement.clientWidth, window.innerWidth || 0) > 3000 ?
+             `${100}px` : `${this.scaleBarAxisObj(this.pixelSizeX).scaleBarShownAxisVal}`
          }
        }
      },
@@ -316,6 +291,70 @@
      }
    },
    methods: {
+     scaleBarAxisObj(pixelSizeAxis) {
+       if (this.pixelSizeIsActive && this.visibleImageWidth !== 0 && !this.isIE) {
+         let notCeiledVal = (this.image.naturalWidth /
+           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * pixelSizeAxis;
+         let ceiledVal = 0;
+         switch (notCeiledVal) {
+           case (0 <= notCeiledVal < 1.5):
+             ceiledVal = 1;
+             break;
+           case (1.5 <= notCeiledVal < 2):
+             ceiledVal = 2;
+             break;
+           case (2 <= notCeiledVal < 2.5):
+             ceiledVal = 2.5;
+             break;
+           case (2.5 <= notCeiledVal < 5):
+             ceiledVal = 5;
+             break;
+           case (5 <= notCeiledVal < 10):
+             ceiledVal = 10;
+             break;
+           case (10 <= notCeiledVal < 20):
+             ceiledVal = 20;
+             break;
+           case (20 <= notCeiledVal < 25):
+             ceiledVal = 25;
+             break;
+           case (25 <= notCeiledVal < 50):
+             ceiledVal = 50;
+             break;
+           case (50 <= notCeiledVal < 100):
+             ceiledVal = 100;
+             break;
+           case (100 <= notCeiledVal < 200):
+             ceiledVal = 200;
+             break;
+           case (200 <= notCeiledVal < 250):
+             ceiledVal = 250;
+             break;
+           case (250 <= notCeiledVal < 500):
+             ceiledVal = 500;
+             break;
+           case (500 <= notCeiledVal < 1000):
+             ceiledVal = 1000;
+             break;
+           case (1000 <= notCeiledVal < 2000):
+             ceiledVal = 2000;
+             break;
+           default:
+           ceiledVal = Math.ceil(Math.round(this.image.naturalWidth /
+             (this.zoom * this.visibleImageWidth) * this.scaleBarSizeBasis * pixelSizeAxis) / 10) * 10;
+         }
+         let addedVal = (ceiledVal - notCeiledVal) / pixelSizeAxis *
+           (this.zoom * this.visibleImageWidth) / this.image.naturalWidth;
+         return {
+           // addedVal: addedVal,
+           scaleBarShownAxisVal: this.scaleBarSizeBasis + addedVal,
+           axisExceeding: Math.round(this.scaleBarSizeBasis + addedVal) >= this.parentDivWidth / 3,
+           scaleBarVal: `${ceiledVal} µm`
+         };
+       }
+       return {};
+     },
+
      updateColor(val) {
        this.scaleBarColor = val;
        if(val === '#000000') {
@@ -373,7 +412,6 @@
          }, 1100);
        }
      },
-
 
      onMouseDown(event) {
        this.dragStartX = event.clientX;
@@ -630,33 +668,34 @@
  .pixelSizeX {
    color: var(--scaleBar-color);
    position: absolute;
+   font-weight: bold;
+   font-size: 0.95em;
    width: var(--scaleBarX-size);
    bottom: 20px;
    left: 20px;
-   box-shadow: 1px 1px 1px var(--scaleBarShadow-color);
    border-bottom: 2px solid var(--scaleBar-color);
-   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
    z-index: 3;
  }
 
  .pixelSizeXText {
    position: absolute;
-   content: "";
-   width: 100px;
+   width: var(--scaleBarTextWidth);
    bottom: 10px;
-   left: 5px;
+   left: 0;
+   right: 0;
+   text-align: center;
    z-index: 3;
  }
 
  .pixelSizeY {
    color: var(--scaleBar-color);
    position: absolute;
+   font-weight: bold;
+   font-size: 0.95em;
    height: var(--scaleBarY-size);
    bottom: 20px;
    left: 20px;
-   box-shadow: 1px -1px 1px var(--scaleBarShadow-color);
    border-left: 2px solid var(--scaleBar-color);
-   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
    z-index: 3;
  }
 
@@ -664,8 +703,10 @@
    position: absolute;
    content: "";
    width: 100px;
-   bottom: 45px;
+   bottom: var(--addedValToOyBar)px;
+   top: 5px;
    left: 3px;
+   right: 0;
    z-index: 3;
  }
 
