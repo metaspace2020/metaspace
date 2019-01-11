@@ -57,7 +57,7 @@ class SciTester(object):
 
     def save_sci_test_report(self):
         with open(self.base_search_res_path, 'w') as f:
-            f.write('\t'.join(['sf', 'adduct'] + self.metrics) + '\n')
+            f.write('\t'.join(['formula', 'adduct'] + self.metrics) + '\n')
             for (sf, adduct), metrics in sorted(self.fetch_search_res().items()):
                 f.write('\t'.join([sf, adduct] + metrics.astype(str).tolist()) + '\n')
 

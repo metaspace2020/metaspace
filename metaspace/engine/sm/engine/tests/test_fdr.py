@@ -19,12 +19,12 @@ def test_fdr_decoy_adduct_selection_saves_corr():
                                         ('H2O', '+H', '+Li'),
                                         ('H2O', '+K', '+He'),
                                         ('H2O', '+K', '+Li')],
-                                       columns=['sf', 'ta', 'da'])
+                                       columns=['formula', 'ta', 'da'])
 
     fdr.decoy_adducts_selection(target_ions=[('H2O', '+H'), ('H2O', '+K')])
 
-    assert_frame_equal(fdr.td_df.sort_values(by=['sf', 'ta', 'da']).reset_index(drop=True),
-                       exp_target_decoy_df.sort_values(by=['sf', 'ta', 'da']).reset_index(drop=True))
+    assert_frame_equal(fdr.td_df.sort_values(by=['formula', 'ta', 'da']).reset_index(drop=True),
+                       exp_target_decoy_df.sort_values(by=['formula', 'ta', 'da']).reset_index(drop=True))
 
 
 def test_estimate_fdr_returns_correct_df():
@@ -34,7 +34,7 @@ def test_estimate_fdr_returns_correct_df():
                               ['H2O', '+H', '+Co'],
                               ['C2H2', '+H', '+Ag'],
                               ['C2H2', '+H', '+Ar']],
-                             columns=['sf', 'ta', 'da'])
+                             columns=['formula', 'ta', 'da'])
 
     msm_df = pd.DataFrame([['H2O', '+H', 0.85],
                           ['C2H2', '+H', 0.5],
@@ -42,9 +42,9 @@ def test_estimate_fdr_returns_correct_df():
                           ['H2O', '+Co', 0.5],
                           ['C2H2', '+Ag', 0.75],
                           ['C2H2', '+Ar', 0.0]],
-                          columns=['sf', 'adduct', 'msm']).set_index(['sf', 'adduct']).sort_index()
+                          columns=['formula', 'adduct', 'msm']).set_index(['formula', 'adduct']).sort_index()
     exp_sf_df = pd.DataFrame([['H2O', '+H', 0.2], ['C2H2', '+H', 0.8]],
-                             columns=['sf', 'adduct', 'fdr']).set_index(['sf', 'adduct'])
+                             columns=['formula', 'adduct', 'fdr']).set_index(['formula', 'adduct'])
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
 
@@ -56,7 +56,7 @@ def test_estimate_fdr_digitize_works():
                               ['C2', '+H', '+Ag'],
                               ['C3', '+H', '+Cl'],
                               ['C4', '+H', '+Co']],
-                             columns=['sf', 'ta', 'da'])
+                             columns=['formula', 'ta', 'da'])
 
     msm_df = pd.DataFrame([['C1', '+H', 1.0],
                           ['C2', '+H', 0.75],
@@ -66,12 +66,12 @@ def test_estimate_fdr_digitize_works():
                           ['C2', '+Ag', 0.3],
                           ['C3', '+Cl', 0.25],
                           ['C4', '+Co', 0.1]],
-                          columns=['sf', 'adduct', 'msm']).set_index(['sf', 'adduct']).sort_index()
+                          columns=['formula', 'adduct', 'msm']).set_index(['formula', 'adduct']).sort_index()
     exp_sf_df = pd.DataFrame([['C1', '+H', 0.4],
                               ['C2', '+H', 0.4],
                               ['C3', '+H', 0.4],
                               ['C4', '+H', 0.8]],
-                             columns=['sf', 'adduct', 'fdr']).set_index(['sf', 'adduct'])
+                             columns=['formula', 'adduct', 'fdr']).set_index(['formula', 'adduct'])
 
     assert_frame_equal(fdr.estimate_fdr(msm_df), exp_sf_df)
 

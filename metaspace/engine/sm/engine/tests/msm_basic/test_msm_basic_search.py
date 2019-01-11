@@ -5,7 +5,7 @@ from pandas.util.testing import assert_frame_equal
 from scipy.sparse import csr_matrix
 
 from sm.engine.fdr import FDR
-from sm.engine.ion_centroids_gen import IonCentroidsGenerator
+from sm.engine.ion_centroids import IonCentroidsGenerator
 from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
 from sm.engine.tests.util import pysparkling_context as spark_context
 
@@ -21,7 +21,7 @@ def test_filter_sf_images(spark_context):
                      .set_index(['ion_i']))
 
     search_alg = MSMBasicSearch(sc=None, ds=None, ds_reader=None, mol_db=None,
-                                centr_gen=None, fdr=None, ds_config=None)
+                                ion_centroids=None, fdr=None, ds_config=None)
     flt_iso_images = search_alg.filter_sf_images(sf_iso_images, sf_metrics_df)
 
     assert dict(flt_iso_images.take(1)).keys() == dict(sf_iso_images.take(1)).keys()
@@ -43,7 +43,7 @@ def test_estimate_fdr():
                                                       columns=['sf', 'adduct', 'fdr']).set_index(['sf', 'adduct'])
 
     search_alg = MSMBasicSearch(sc=None, ds=None, ds_reader=None, mol_db=None,
-                                centr_gen=centr_gen_mock, fdr=fdr_mock, ds_config=None)
+                                ion_centroids=centr_gen_mock, fdr=fdr_mock, ds_config=None)
     res_metrics_df = search_alg.estimate_fdr(sf_metrics_df)
 
     exp_col_list = ['sf', 'adduct', 'ion_i', 'chaos', 'spatial', 'spectral',

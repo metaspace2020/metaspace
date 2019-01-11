@@ -35,7 +35,7 @@ class SearchResults(object):
             m = OrderedDict((name, r[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
             image_ids = ion_img_ids[r.ion_i]['iso_image_ids']
-            yield (job_id, db_id, r.sf, r.adduct,
+            yield (job_id, db_id, r.formula, r.adduct,
                    float(r.msm), float(r.fdr), metr_json,
                    image_ids)
 
@@ -76,7 +76,7 @@ class SearchResults(object):
         Args
         ---------
         ion_metrics_df : pandas.Dataframe
-            sf, adduct, msm, fdr, individual metrics
+            formula, adduct, msm, fdr, individual metrics
         ion_iso_images : pyspark.RDD
             values must be lists of 2d intensity arrays (in coo_matrix format)
         alpha_channel : numpy.array
