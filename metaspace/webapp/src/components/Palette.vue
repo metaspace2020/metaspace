@@ -79,6 +79,10 @@
     background: #000;
   }
 
+  .color-item-transparent .chosen-color-dot {
+    background: #000;
+  }
+
   .chosen-color-dot {
     position: absolute;
     top: 5px;
@@ -88,5 +92,6 @@
     border-radius: 50%;
     opacity: 1;
     background: #fff;
+    z-index: 3;
   }
 </style>

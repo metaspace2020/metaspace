@@ -26,6 +26,14 @@
             title="Show/hide optical image"
             @click="toggleOpticalImage"/>
     </span>
+
+    <span>
+      <img class="show-scale-bar-icon"
+           :class="imageLoaderSettings.showScaleBar ? '' : 'png-icon-disabled'"
+           src="../../../../assets/scale_bar_icon.svg"
+           title="Show/hide scale bar"
+           @click="toogleScaleBar" />
+    </span>
 </span>
 </template>
 
@@ -46,11 +54,13 @@ export default class MainImageHeader extends Vue {
     resetViewport!: Function
     @Prop({required: true, type: Function})
     toggleOpticalImage!: Function
+    @Prop({required: true, type: Function})
+    toogleScaleBar
 }
 </script>
 
 <style>
-.reset-image-icon, .show-optical-image-icon {
+.reset-image-icon, .show-optical-image-icon, .show-scale-bar-icon {
     width: 24px;
     padding-left: 20px;
     vertical-align: middle;

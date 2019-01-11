@@ -26,14 +26,14 @@
            :class="{pixelSizeX: pixelSizeIsActive}"
            title="Click to change the color"
            @click="onClickScaleBar()"
-           v-if="pixelSizeIsActive && !scaleBarOxExceeds">
+           v-if="pixelSizeIsActive && showScaleBar && !scaleBarOxExceeds">
         <div :class="{pixelSizeXText: pixelSizeIsActive}">{{scaleBarValX}}</div>
       </div>
       <div :style="cssProps"
            :class="{pixelSizeY: pixelSizeIsActive}"
            title="Click to change the color"
            @click="onClickScaleBar()"
-           v-if="pixelSizeIsActive && !scaleBarOyExceeds && this.pixelSizeX !== this.pixelSizeY">
+           v-if="pixelSizeIsActive && showScaleBar && !scaleBarOyExceeds && this.pixelSizeX !== this.pixelSizeY">
         <div :class="{pixelSizeYText: pixelSizeIsActive}">{{scaleBarValY}}</div>
       </div>
       <palette v-show="paletteIsVisible" class="color-picker" @colorInput="val=>updateColor(val)" />
@@ -120,6 +120,10 @@
      pixelSizeY: {
        type: Number,
        default: 0
+     },
+     showScaleBar: {
+       type: Boolean,
+       default: true
      }
    },
    data () {
@@ -672,7 +676,7 @@
    width: var(--scaleBarX-size);
    bottom: 20px;
    left: 20px;
-   border-bottom: 2px solid var(--scaleBar-color);
+   border-bottom: 3px solid var(--scaleBar-color);
    z-index: 3;
  }
 
@@ -694,7 +698,7 @@
    height: var(--scaleBarY-size);
    bottom: 20px;
    left: 20px;
-   border-left: 2px solid var(--scaleBar-color);
+   border-left: 3px solid var(--scaleBar-color);
    z-index: 3;
  }
 

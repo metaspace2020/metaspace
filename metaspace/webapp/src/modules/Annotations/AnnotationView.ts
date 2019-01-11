@@ -107,6 +107,7 @@
    peakChartData: any
    opticalImageUrl?: string
    showOpticalImage: boolean = true
+   showScaleBar: boolean = true
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
 
@@ -163,7 +164,8 @@
        opticalSrc: this.showOpticalImage && this.opticalImageUrl != null ? this.opticalImageUrl : '',
        opticalImageUrl: this.opticalImageUrl,
        opacityMode: this.imageOpacityMode,
-       showOpticalImage: this.showOpticalImage
+       showOpticalImage: this.showOpticalImage,
+       showScaleBar: this.showScaleBar
      });
    }
 
@@ -243,6 +245,11 @@
    toggleOpticalImage(event: any): void {
      event.stopPropagation();
      this.showOpticalImage = !this.showOpticalImage
+   }
+
+   toogleScaleBar(event: any): void {
+     event.stopPropagation();
+     this.showScaleBar = !this.showScaleBar
    }
 
    loadVisibility() {
