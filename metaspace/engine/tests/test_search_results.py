@@ -28,7 +28,7 @@ def test_save_sf_img_metrics_correct_db_call(search_results):
     ion_metrics_df = (pd.DataFrame([(13, 'H2O', '+H', 0.9, 0.9, 0.9,
                                      [100, 10], [0, 0], [10, 1],
                                      0.9 ** 3, 0.5)],
-                                   columns=['ion_i', 'sf', 'adduct', 'chaos', 'spatial', 'spectral',
+                                   columns=['ion_i', 'formula', 'adduct', 'chaos', 'spatial', 'spectral',
                                             'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'msm', 'fdr'])
                       .set_index('ion_i'))
 
@@ -61,7 +61,7 @@ def test_non_native_python_number_types_handled(search_results):
     ion_metrics_df = (pd.DataFrame([(13, 'H2O', '+H', 0.9, 0.9, 0.9,
                                     [100, 10], [0, 0], [10, 1],
                                     0.9 ** 3, 0.5)],
-                                   columns=['ion_i','sf', 'adduct', 'chaos', 'spatial', 'spectral',
+                                   columns=['ion_i','formula', 'adduct', 'chaos', 'spatial', 'spectral',
                                             'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'msm', 'fdr'])
                           .set_index('ion_i'))
 

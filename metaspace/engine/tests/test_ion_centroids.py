@@ -14,7 +14,7 @@ os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
 
 @pytest.fixture()
 def clean_isotope_storage_path(sm_config):
-    shutil.rmtree(sm_config['isotope_storage']['path'])
+    shutil.rmtree(sm_config['isotope_storage']['path'], ignore_errors=True)
 
 
 def test_if_not_exist_returns_valid_df(pyspark_context, sm_config, ds_config, clean_isotope_storage_path):

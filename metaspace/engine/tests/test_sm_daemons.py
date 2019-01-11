@@ -107,7 +107,7 @@ def test_sm_daemons(calc_metrics_mock,
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
     ion_metrics_df = pd.DataFrame({
-        'sf': ['C12H24O', 'C12H24O', 'C12H24O'],
+        'formula': ['C12H24O', 'C12H24O', 'C12H24O'],
         'adduct': ['+H', '+Na', '+K'],
         'chaos': [0.9, 0.9, 0.9],
         'spatial': [0.9, 0.9, 0.9],
@@ -292,7 +292,7 @@ def test_sm_daemon_es_export_fails(calc_metrics_mock,
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
     ion_metrics_df = pd.DataFrame({
-        'sf': ['C12H24O', 'C12H24O', 'C12H24O'],
+        'formula': ['C12H24O', 'C12H24O', 'C12H24O'],
         'adduct': ['+H', '+Na', '+K'],
         'chaos': [0.9, 0.9, 0.9],
         'spatial': [0.9, 0.9, 0.9],

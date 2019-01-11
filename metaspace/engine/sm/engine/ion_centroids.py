@@ -95,7 +95,6 @@ class IonCentroidsGenerator(object):
         """
         ion_centroids = self.restore()
         if ion_centroids is None:
-            # missing_adducts = adducts
             ion_centroids = self._generate(isocalc, formulas, adducts)
         else:
             saved_adducts = ion_centroids.ions_df.adduct.unique()
