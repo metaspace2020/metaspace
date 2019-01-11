@@ -6,7 +6,7 @@
         v-for="c in paletteColors"
         :key="c"
         :aria-label="'Color:' + c"
-        :class="{'color-item--white': c === '#FFFFFF' }"
+        :class="{'color-item-white': c === '#FFFFFF', 'color-item-transparent': c === 'transparent'}"
         :style="{background: c}"
         title="Click to change the color"
         @click="handlerClick(c)">
@@ -24,7 +24,7 @@
   export default class Palette extends Vue {
     pick: string = '#000000';
 
-    paletteColors: string[] = ['#FFFFFF', '#999999', '#000000'];
+    paletteColors: string[] = ['transparent','#FFFFFF', '#999999', '#000000'];
 
     handlerClick(c: string) {
       this.pick = c;
@@ -59,13 +59,23 @@
     margin-bottom: 5px;
     position: relative;
     cursor: pointer;
+    overflow: hidden;
   }
 
-  .color-item--white {
-    box-shadow: inset 0 0 0 1px #ddd;
+  .color-item-white, .color-item-transparent {
+    border: 1px solid #ddd;
   }
 
-  .color-item--white .chosen-color-dot {
+  .color-item-transparent::after {
+    position: absolute;
+    content: "";
+    right: 0; left: -40%;
+    border-top: 1px solid red;
+    transform: rotate(-45deg);
+    transform-origin: 100% 0;
+  }
+
+  .color-item-white .chosen-color-dot {
     background: #000;
   }
 

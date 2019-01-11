@@ -346,9 +346,8 @@
          let addedVal = (ceiledVal - notCeiledVal) / pixelSizeAxis *
            (this.zoom * this.visibleImageWidth) / this.image.naturalWidth;
          return {
-           // addedVal: addedVal,
            scaleBarShownAxisVal: this.scaleBarSizeBasis + addedVal,
-           axisExceeding: Math.round(this.scaleBarSizeBasis + addedVal) >= this.parentDivWidth / 3,
+           axisExceeding: Math.round(this.scaleBarSizeBasis + addedVal) > this.parentDivWidth,
            scaleBarVal: `${ceiledVal} µm`
          };
        }
