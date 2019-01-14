@@ -299,48 +299,49 @@
        if (this.pixelSizeIsActive && this.visibleImageWidth !== 0 && !this.isIE) {
          let notCeiledVal = (this.image.naturalWidth /
            (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * pixelSizeAxis;
-         let ceiledVal = 0;
-         switch (notCeiledVal) {
-           case (0 <= notCeiledVal < 1.5):
+         let ceiledVal, notCeiledValToSwitch;
+         notCeiledVal !== undefined ? notCeiledValToSwitch = true : notCeiledValToSwitch = false;
+         switch (notCeiledValToSwitch) {
+           case (0 <= notCeiledVal && notCeiledVal < 1.5):
              ceiledVal = 1;
              break;
-           case (1.5 <= notCeiledVal < 2):
+           case (1.5 <= notCeiledVal && notCeiledVal < 2):
              ceiledVal = 2;
              break;
-           case (2 <= notCeiledVal < 2.5):
+           case (2 <= notCeiledVal && notCeiledVal < 2.5):
              ceiledVal = 2.5;
              break;
-           case (2.5 <= notCeiledVal < 5):
+           case (2.5 <= notCeiledVal && notCeiledVal < 5):
              ceiledVal = 5;
              break;
-           case (5 <= notCeiledVal < 10):
+           case (5 <= notCeiledVal && notCeiledVal < 10):
              ceiledVal = 10;
              break;
-           case (10 <= notCeiledVal < 20):
+           case (10 <= notCeiledVal && notCeiledVal < 20):
              ceiledVal = 20;
              break;
-           case (20 <= notCeiledVal < 25):
+           case (20 <= notCeiledVal && notCeiledVal < 25):
              ceiledVal = 25;
              break;
-           case (25 <= notCeiledVal < 50):
+           case (25 <= notCeiledVal && notCeiledVal < 50):
              ceiledVal = 50;
              break;
-           case (50 <= notCeiledVal < 100):
+           case (50 <= notCeiledVal && notCeiledVal < 100):
              ceiledVal = 100;
              break;
-           case (100 <= notCeiledVal < 200):
+           case (100 <= notCeiledVal && notCeiledVal < 200):
              ceiledVal = 200;
              break;
-           case (200 <= notCeiledVal < 250):
+           case (200 <= notCeiledVal && notCeiledVal < 250):
              ceiledVal = 250;
              break;
-           case (250 <= notCeiledVal < 500):
+           case (250 <= notCeiledVal && notCeiledVal < 500):
              ceiledVal = 500;
              break;
-           case (500 <= notCeiledVal < 1000):
+           case (500 <= notCeiledVal && notCeiledVal < 1000):
              ceiledVal = 1000;
              break;
-           case (1000 <= notCeiledVal < 2000):
+           case (1000 <= notCeiledVal && notCeiledVal < 2000):
              ceiledVal = 2000;
              break;
            default:
@@ -352,7 +353,7 @@
          return {
            scaleBarShownAxisVal: this.scaleBarSizeBasis + addedVal,
            axisExceeding: Math.round(this.scaleBarSizeBasis + addedVal) > this.parentDivWidth,
-           scaleBarVal: `${ceiledVal} µm`
+           scaleBarVal: ceiledVal >= 1000 ? `${Math.round(ceiledVal/1000)} mm` : `${ceiledVal} µm`
          };
        }
        return {};
