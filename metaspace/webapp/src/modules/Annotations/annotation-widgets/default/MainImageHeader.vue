@@ -55,7 +55,7 @@ export default class MainImageHeader extends Vue {
     @Prop({required: true, type: Function})
     toggleOpticalImage!: Function
     @Prop({required: true, type: Function})
-    toogleScaleBar
+    toogleScaleBar!: Function
 }
 </script>
 

@@ -61,7 +61,7 @@ import { Component, Prop } from 'vue-property-decorator';
 import { saveAs } from 'file-saver';
 import Colorbar from './Colorbar.vue';
 import ImageLoader from '../../../../components/ImageLoader.vue';
-const domtoimage = require('dom-to-image-google-font-issue');
+import domtoimage from 'dom-to-image-google-font-issue';
 
 @Component({
     name: 'main-image',
@@ -106,7 +106,7 @@ export default class MainImage extends Vue {
           width: imgWidth >= node.clientWidth ? node.clientWidth : imgWidth,
           height:  imgHeight >= node.clientHeight ? node.clientHeight : imgHeight
         })
-        .then(blob => {
+        .then(blob  => {
           saveAs(blob, `${this.annotation.id}.png`);
         })
     }
