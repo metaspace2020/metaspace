@@ -630,11 +630,10 @@
    color: var(--scaleBar-color);
    position: absolute;
    font-weight: bold;
-   font-size: 0.95em;
    width: var(--scaleBarX-size);
    bottom: 20px;
    left: 20px;
-   border-bottom: 3px solid var(--scaleBar-color);
+   border-bottom: 5px solid var(--scaleBar-color);
    z-index: 3;
  }
 
@@ -652,11 +651,10 @@
    color: var(--scaleBar-color);
    position: absolute;
    font-weight: bold;
-   font-size: 0.95em;
    height: var(--scaleBarY-size);
    bottom: 20px;
    left: 20px;
-   border-left: 3px solid var(--scaleBar-color);
+   border-left: 5px solid var(--scaleBar-color);
    z-index: 3;
  }
 
