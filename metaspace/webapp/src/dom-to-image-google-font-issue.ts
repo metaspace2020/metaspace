@@ -1,4 +1,4 @@
-declare module 'dom-to-image' {
+declare module 'dom-to-image-google-font-issue' {
   interface DTIOptions {
     filter?(node: HTMLElement): boolean
     bgcolor?: string

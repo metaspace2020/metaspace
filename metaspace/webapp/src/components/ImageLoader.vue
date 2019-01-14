@@ -25,14 +25,16 @@
       <div :style="cssProps"
            :class="{pixelSizeX: pixelSizeIsActive}"
            title="Click to change the color"
-           @click="onClickScaleBar()">
-        {{scaleBarValX}}
+           @click="onClickScaleBar()"
+           v-if="pixelSizeIsActive && showScaleBar && !scaleBarOxExceeds">
+        <div :class="{pixelSizeXText: pixelSizeIsActive}">{{scaleBarValX}}</div>
       </div>
       <div :style="cssProps"
            :class="{pixelSizeY: pixelSizeIsActive}"
            title="Click to change the color"
-           @click="onClickScaleBar()">
-        {{scaleBarValY}}
+           @click="onClickScaleBar()"
+           v-if="pixelSizeIsActive && showScaleBar && !scaleBarOyExceeds && this.pixelSizeX !== this.pixelSizeY">
+        <div :class="{pixelSizeYText: pixelSizeIsActive}">{{scaleBarValY}}</div>
       </div>
       <palette v-show="paletteIsVisible" class="color-picker" @colorInput="val=>updateColor(val)" />
     </div>
@@ -55,7 +57,6 @@
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
  import config from '../clientConfig.json';
- import { round } from 'lodash-es';
  import Palette from './Palette.vue'
 
  const OPACITY_MAPPINGS = {
@@ -119,6 +120,10 @@
      pixelSizeY: {
        type: Number,
        default: 0
+     },
+     showScaleBar: {
+       type: Boolean,
+       default: true
      }
    },
    data () {
@@ -181,22 +186,24 @@
        return false
      },
 
-     scaleBarSizeVal() {
-       return 25
+     scaleBarSizeBasis() {
+       return 50
      },
 
      scaleBarValX() {
-       if (this.pixelSizeIsActive && this.visibleImageWidth !== 0 && !this.isIE) {
-         return `${round((this.image.naturalWidth /
-           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeVal * this.pixelSizeX, 0)} µm`
-       }
+       return this.scaleBarAxisObj(this.pixelSizeX).scaleBarVal
      },
 
      scaleBarValY() {
-       if (this.pixelSizeIsActive && this.visibleImageHeight !== 0 && !this.isIE) {
-         return `${round((this.image.naturalHeight /
-           (this.zoom * this.visibleImageHeight)) * this.scaleBarSizeVal * this.pixelSizeY, 0)} µm`
-       }
+       return this.scaleBarAxisObj(this.pixelSizeY).scaleBarVal
+     },
+
+     scaleBarOxExceeds() {
+       return this.scaleBarAxisObj(this.pixelSizeX).axisExceeding
+     },
+
+     scaleBarOyExceeds() {
+       return this.scaleBarAxisObj(this.pixelSizeY).axisExceeding
      },
 
      pixelSizeIsActive() {
@@ -262,9 +269,12 @@
        } else {
          return {
            '--scaleBar-color': this.scaleBarColor,
-           '--scaleBarX-size': `${this.scaleBarSizeVal}px`,
-           '--scaleBarY-size': `${this.scaleBarSizeVal}px`,
-           '--scaleBarShadow-color': this.scaleBarShadow
+           '--scaleBarX-size': `${this.scaleBarAxisObj(this.pixelSizeX).scaleBarShownAxisVal}px`,
+           '--scaleBarY-size': `${this.scaleBarAxisObj(this.pixelSizeY).scaleBarShownAxisVal}px`,
+           '--scaleBarShadow-color': this.scaleBarShadow,
+           '--addedValToOyBar': this.scaleBarAxisObj(this.pixelSizeY).scaleBarShownAxisVal,
+           '--scaleBarTextWidth': Math.max(document.documentElement.clientWidth, window.innerWidth || 0) > 3000 ?
+             `${100}px` : `${this.scaleBarAxisObj(this.pixelSizeX).scaleBarShownAxisVal}`
          }
        }
      },
@@ -285,6 +295,27 @@
      }
    },
    methods: {
+     scaleBarAxisObj(pixelSizeAxis) {
+       if (this.pixelSizeIsActive && this.visibleImageWidth !== 0 && !this.isIE) {
+         let notCeiledVal = (this.image.naturalWidth /
+           (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * pixelSizeAxis;
+         const steps = [1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000];
+         let ceiledVal= steps.find(step => notCeiledVal < step);
+         if (ceiledVal == null) {
+           ceiledVal = Math.ceil(Math.round(this.image.naturalWidth /
+             (this.zoom * this.visibleImageWidth) * this.scaleBarSizeBasis * pixelSizeAxis) / 10) * 10;
+         }
+         let addedVal = (ceiledVal - notCeiledVal) / pixelSizeAxis *
+           (this.zoom * this.visibleImageWidth) / this.image.naturalWidth;
+         return {
+           scaleBarShownAxisVal: this.scaleBarSizeBasis + addedVal,
+           axisExceeding: Math.round(this.scaleBarSizeBasis + addedVal) > this.parentDivWidth,
+           scaleBarVal: ceiledVal >= 1000 ? `${Math.round(ceiledVal/1000)} mm` : `${ceiledVal} µm`
+         };
+       }
+       return {};
+     },
+
      updateColor(val) {
        this.scaleBarColor = val;
        if(val === '#000000') {
@@ -342,7 +373,6 @@
          }, 1100);
        }
      },
-
 
      onMouseDown(event) {
        this.dragStartX = event.clientX;
@@ -599,43 +629,46 @@
  .pixelSizeX {
    color: var(--scaleBar-color);
    position: absolute;
-   content: "";
-   width: 100px;
-   height: 10px;
-   bottom: 15px;
-   left: 55px;
+   font-weight: bold;
+   font-size: 0.95em;
+   width: var(--scaleBarX-size);
+   bottom: 20px;
+   left: 20px;
+   border-bottom: 3px solid var(--scaleBar-color);
    z-index: 3;
-   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
  }
 
- .pixelSizeX::after {
+ .pixelSizeXText {
    position: absolute;
-   content: "";
-   width: var(--scaleBarX-size);
-   left: -35px;
-   box-shadow: 1px 1px 1px var(--scaleBarShadow-color);
-   border-bottom: 2px solid var(--scaleBar-color);
+   width: var(--scaleBarTextWidth);
+   bottom: 10px;
+   left: 0;
+   right: 0;
+   text-align: center;
+   z-index: 3;
  }
 
  .pixelSizeY {
    color: var(--scaleBar-color);
    position: absolute;
-   width: 100px;
-   height: 10px;
-   bottom: 58px;
-   left: 10px;
+   font-weight: bold;
+   font-size: 0.95em;
+   height: var(--scaleBarY-size);
+   bottom: 20px;
+   left: 20px;
+   border-left: 3px solid var(--scaleBar-color);
    z-index: 3;
-   text-shadow: 1px 1px 1px var(--scaleBarShadow-color);
  }
 
- .pixelSizeY::before {
+ .pixelSizeYText {
    position: absolute;
    content: "";
-   height: var(--scaleBarY-size);
-   bottom: -33px;
-   left: 10px;
-   box-shadow: 1px -1px 1px var(--scaleBarShadow-color);
-   border-left: 2px solid var(--scaleBar-color);
+   width: 100px;
+   bottom: var(--addedValToOyBar)px;
+   top: 5px;
+   left: 3px;
+   right: 0;
+   z-index: 3;
  }
 
  .pixelSizeX:hover,

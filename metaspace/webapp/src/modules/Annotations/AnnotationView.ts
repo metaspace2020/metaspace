@@ -107,7 +107,7 @@
    msAcqGeometry: any
    peakChartData: any
    opticalImageUrl?: string
-
+   showScaleBar: boolean = true
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
 
@@ -173,7 +173,8 @@
        opticalSrc: this.showOpticalImage && this.opticalImageUrl != null ? this.opticalImageUrl : '',
        opticalImageUrl: this.opticalImageUrl,
        opacityMode: this.imageOpacityMode,
-       showOpticalImage: this.showOpticalImage
+       showOpticalImage: this.showOpticalImage,
+       showScaleBar: this.showScaleBar
      });
    }
 
@@ -264,6 +265,11 @@
          query: omit(this.$route.query, 'hideopt'),
        });
      }
+   }
+
+   toggleScaleBar(event: any): void {
+     event.stopPropagation();
+     this.showScaleBar = !this.showScaleBar
    }
 
    loadVisibility() {

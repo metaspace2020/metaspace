@@ -5,6 +5,7 @@
                       :colormap="colormap"
                       :pixelSizeX="pixelSizeX"
                       :pixelSizeY="pixelSizeY"
+                      :showScaleBar="showScaleBar"
                       ref="imageLoader"
                       scrollBlock
                       class="image-loader"
@@ -57,11 +58,10 @@
 <script lang="ts">
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import * as domtoimage from 'dom-to-image';
 import { saveAs } from 'file-saver';
-
 import Colorbar from './Colorbar.vue';
 import ImageLoader from '../../../../components/ImageLoader.vue';
+import domtoimage from 'dom-to-image-google-font-issue';
 
 @Component({
     name: 'main-image',
@@ -91,6 +91,8 @@ export default class MainImage extends Vue {
     pixelSizeX!: Number
     @Prop({type: Number})
     pixelSizeY!: Number
+    @Prop({type: Boolean})
+    showScaleBar!: Boolean
 
     get colorbarDirection(): string {
       return this.colormap[0] == '-' ? 'bottom' : 'top';
@@ -99,13 +101,12 @@ export default class MainImage extends Vue {
     saveImage(event: any): void {
       let node = this.$refs.imageLoader.getParent(),
         {imgWidth, imgHeight} = this.$refs.imageLoader.getScaledImageSize();
-
       domtoimage
         .toBlob(node, {
           width: imgWidth >= node.clientWidth ? node.clientWidth : imgWidth,
           height:  imgHeight >= node.clientHeight ? node.clientHeight : imgHeight
         })
-        .then(blob => {
+        .then(blob  => {
           saveAs(blob, `${this.annotation.id}.png`);
         })
     }

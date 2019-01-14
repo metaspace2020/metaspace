@@ -5444,10 +5444,10 @@ dns-txt@^2.0.2:
   dependencies:
     buffer-indexof "^1.0.0"
 
-dom-to-image@2.6.0:
-  version "2.6.0"
-  resolved "https://registry.yarnpkg.com/dom-to-image/-/dom-to-image-2.6.0.tgz#8a503608088c87b1c22f9034ae032e1898955867"
-  integrity sha1-ilA2CAiMh7HCL5A0rgMuGJiVWGc=
+dom-to-image-google-font-issue@^2.6.2:
+  version "2.6.2"
+  resolved "https://registry.yarnpkg.com/dom-to-image-google-font-issue/-/dom-to-image-google-font-issue-2.6.2.tgz#56eaeed897f00202db3159a25f32d8548829e7e9"
+  integrity sha512-j3Hy+UC1dhpXm+qkkwIDuWYHKZ2Dyfy5pjRMXRAayaPEqcbeqnqvej/owAbvFG/dwTmbnMRItFuqn5VBxnnfHw==
 
 domain-browser@^1.1.1:
   version "1.1.7"

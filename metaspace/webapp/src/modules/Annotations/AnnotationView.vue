@@ -32,6 +32,7 @@
                      :imageLoaderSettings="imageLoaderSettings"
                      :resetViewport="resetViewport"
                      :toggleOpticalImage="toggleOpticalImage"
+                     :toggleScaleBar="toggleScaleBar"
                      slot="title">
           </component>
           <component :is="metadataDependentComponent('main-image')"
@@ -45,6 +46,7 @@
                      :acquisitionGeometry="msAcqGeometry"
                      :pixelSizeX="pixelSizeX"
                      :pixelSizeY="pixelSizeY"
+                     :showScaleBar="showScaleBar"
                      @opacityInput="newVal => opacity = newVal">
           </component>
         </el-collapse-item>

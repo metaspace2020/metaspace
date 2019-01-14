@@ -37,7 +37,7 @@
     "d3-svg-legend": "^2.24.0",
     "date-fns": "^1.29.0",
     "deepcopy": "^0.6.3",
-    "dom-to-image": "2.6.0",
+    "dom-to-image-google-font-issue": "^2.6.2",
     "ejs": "^2.5.5",
     "element-ui": "2.4.5",
     "express": "^4.14.0",
