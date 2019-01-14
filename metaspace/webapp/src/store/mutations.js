@@ -1,13 +1,17 @@
-import {isEqual, pull, without} from 'lodash-es';
+import {isEqual, omit, pull, without} from 'lodash-es';
 import router from '../router';
 import compare from '../lib/compare';
 
 import {
   decodeParams,
-  encodeParams, encodeSections, encodeSortOrder, FILTER_SPECIFICATIONS,
+  encodeParams,
+  encodeSections,
+  encodeSortOrder,
+  FILTER_SPECIFICATIONS,
+  getFilterInitialValue,
   stripFilteringParams,
 } from '../modules/Filters';
-import {getFilterInitialValue} from '../modules/Filters';
+import {DEFAULT_ANNOTATION_VIEW_SECTIONS, DEFAULT_COLORMAP, DEFAULT_TABLE_ORDER} from '../modules/Filters/url';
 
 
 function updatedLocation(state, filter) {
@@ -121,29 +125,39 @@ export default {
   },
 
   updateAnnotationViewSections(state, activeSections) {
-    let query = Object.assign({}, state.route.query, {
-      sections: encodeSections(activeSections)
+    const sections = encodeSections(activeSections);
+    const defaultSections = encodeSections(DEFAULT_ANNOTATION_VIEW_SECTIONS);
+    router.replace({
+      query: sections !== defaultSections
+        ? { ...state.route.query, sections }
+        : omit(state.route.query, 'sections'),
     });
-    router.replace({query});
   },
 
-  setColormap(state, colormap) {
-    let query = Object.assign({}, state.route.query, {
-      cmap: colormap
+  setColormap(state, cmap) {
+    router.replace({
+      query: cmap !== DEFAULT_COLORMAP
+        ? {...state.route.query, cmap}
+        : omit(state.route.query, 'cmap'),
     });
-    router.replace({query});
   },
 
   setCurrentPage(state, page) {
-    let query = Object.assign({}, state.route.query, {page});
-    router.replace({query});
+    router.replace({
+      query: page !== 1
+        ? { ...state.route.query, page }
+        : omit(state.route.query, 'page'),
+    });
   },
 
   setSortOrder(state, sortOrder) {
-    let query = Object.assign({}, state.route.query, {
-      sort: encodeSortOrder(sortOrder)
+    const sort = encodeSortOrder(sortOrder);
+    const defaultSort = encodeSortOrder(DEFAULT_TABLE_ORDER);
+    router.replace({
+      query: sort !== defaultSort
+        ? { ...state.route.query, sort }
+        : omit(state.route.query, 'sort'),
     });
-    router.replace({query});
   },
 
   setDatasetTab(state, tab) {

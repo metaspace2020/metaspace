@@ -41,6 +41,15 @@ const PATH_TO_LEVEL: Record<string, Level> = {
   '/projects': 'projects',
 };
 
+export const DEFAULT_TABLE_ORDER = {
+  by: 'ORDER_BY_MSM',
+  dir: 'DESCENDING'
+};
+
+export const DEFAULT_ANNOTATION_VIEW_SECTIONS = ['images'];
+
+export const DEFAULT_COLORMAP = 'Viridis';
+
 export function encodeParams(filter: any, path?: string, filterLists?: MetadataLists): Dictionary<string> {
   const level = path != null ? PATH_TO_LEVEL[path.toLowerCase()] : null;
   const defaultFilter = level != null ? getDefaultFilter(level, filterLists) : null;
@@ -148,9 +157,10 @@ interface SortSettings {
   dir: string
 }
 
-export function encodeSortOrder(settings: SortSettings): string {
-  let sort = settings.dir == 'ASCENDING' ? '' : '-';
-  return sort + settings.by.replace('ORDER_BY_', '').toLowerCase();
+export function encodeSortOrder(settings: SortSettings): string | null {
+  const dir = settings.dir == 'ASCENDING' ? '' : '-';
+  const sort = dir + settings.by.replace('ORDER_BY_', '').toLowerCase();
+  return sort === '-msm' ? null : sort;
 }
 
 export function decodeSettings(location: Location): any {
@@ -161,15 +171,12 @@ export function decodeSettings(location: Location): any {
   let settings = {
     table: {
       currentPage: 1,
-      order: {
-        by: 'ORDER_BY_MSM',
-        dir: 'DESCENDING'
-      }
+      order: DEFAULT_TABLE_ORDER,
     },
 
     annotationView: {
-      activeSections: ['images'],
-      colormap: 'Viridis'
+      activeSections: DEFAULT_ANNOTATION_VIEW_SECTIONS,
+      colormap: DEFAULT_COLORMAP
     },
 
     datasets: {
