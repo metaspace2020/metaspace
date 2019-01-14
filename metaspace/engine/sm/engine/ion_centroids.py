@@ -163,10 +163,9 @@ class IonCentroids(object):
         """
         assert type(other) == IonCentroids
         assert pd.merge(self.ions_df, other.ions_df, on=['formula', 'adduct']).empty
-        assert self.ions_df.index.min() == other.ions_df.index.min() == 0
 
         other = other.copy()
-        index_offset = self.ions_df.index.max() + 1
+        index_offset = self.ions_df.index.max() - other.ions_df.index.min() + 1
         other.ions_df.index = other.ions_df.index + index_offset
         other.centroids_df.index = other.centroids_df.index + index_offset
 

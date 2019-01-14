@@ -39,6 +39,26 @@ def test_centroids_subset():
     assert centroids_subset.values.tolist() == [[20, 100]]
 
 
+def test_add_index_valid():
+    ion_centroids = IonCentroids(ions_df=pd.DataFrame([('f1', 'a1')],
+                                                      index=pd.Index([5], name='ion_i'),
+                                                      columns=['formula', 'adduct']),
+                                 centroids_df=pd.DataFrame([(10, 10), (20, 100)],
+                                                           index=pd.Index([5]*2, name='ion_i'),
+                                                           columns=['mz', 'int']))
+    ion_centroids_other = IonCentroids(ions_df=pd.DataFrame([('f1', 'a2')],
+                                                            index=pd.Index([10], name='ion_i'),
+                                                            columns=['formula', 'adduct']),
+                                       centroids_df=pd.DataFrame([(15, 10), (25, 100)],
+                                                                 index=pd.Index([10]*2, name='ion_i'),
+                                                                 columns=['mz', 'int']))
+
+    ion_centroids += ion_centroids_other
+
+    assert ion_centroids.ions_df.index.values.tolist() == [5, 6]
+    assert ion_centroids.centroids_df.index.values.tolist() == [5, 5, 6, 6]
+
+
 def test_ions_subset():
     ion_centroids = create_ion_centroids([('f1', 'a1'), ('f1', 'a2')], [(10, 100), (20, 100)])
 
