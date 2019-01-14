@@ -300,7 +300,7 @@
          let notCeiledVal = (this.image.naturalWidth /
            (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * pixelSizeAxis;
          let ceiledVal, notCeiledValToSwitch;
-         notCeiledVal !== undefined ? notCeiledValToSwitch = true : notCeiledValToSwitch = false;
+         notCeiledValToSwitch = notCeiledVal !== undefined;
          switch (notCeiledValToSwitch) {
            case (0 <= notCeiledVal && notCeiledVal < 1.5):
              ceiledVal = 1;

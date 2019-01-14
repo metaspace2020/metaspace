@@ -24,7 +24,7 @@
   export default class Palette extends Vue {
     pick: string = '#000000';
 
-    paletteColors: string[] = ['transparent','#FFFFFF', '#999999', '#000000'];
+    paletteColors: string[] = ['transparent', '#FFFFFF', '#999999', '#000000'];
 
     handlerClick(c: string) {
       this.pick = c;
