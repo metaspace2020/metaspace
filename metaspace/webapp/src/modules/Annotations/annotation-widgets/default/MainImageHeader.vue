@@ -32,7 +32,7 @@
            :class="imageLoaderSettings.showScaleBar ? '' : 'png-icon-disabled'"
            src="../../../../assets/scale_bar_icon.svg"
            title="Show/hide scale bar"
-           @click="toogleScaleBar" />
+           @click="toggleScaleBar" />
     </span>
 </span>
 </template>
@@ -55,7 +55,7 @@ export default class MainImageHeader extends Vue {
     @Prop({required: true, type: Function})
     toggleOpticalImage!: Function
     @Prop({required: true, type: Function})
-    toogleScaleBar!: Function
+    toggleScaleBar!: Function
 }
 </script>
 

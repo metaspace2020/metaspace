@@ -32,7 +32,7 @@
                      :imageLoaderSettings="imageLoaderSettings"
                      :resetViewport="resetViewport"
                      :toggleOpticalImage="toggleOpticalImage"
-                     :toogleScaleBar="toogleScaleBar"
+                     :toggleScaleBar="toggleScaleBar"
                      slot="title">
           </component>
           <component :is="metadataDependentComponent('main-image')"

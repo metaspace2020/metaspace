@@ -299,52 +299,9 @@
        if (this.pixelSizeIsActive && this.visibleImageWidth !== 0 && !this.isIE) {
          let notCeiledVal = (this.image.naturalWidth /
            (this.zoom * this.visibleImageWidth)) * this.scaleBarSizeBasis * pixelSizeAxis;
-         let ceiledVal, notCeiledValToSwitch;
-         notCeiledValToSwitch = notCeiledVal !== undefined;
-         switch (notCeiledValToSwitch) {
-           case (0 <= notCeiledVal && notCeiledVal < 1.5):
-             ceiledVal = 1;
-             break;
-           case (1.5 <= notCeiledVal && notCeiledVal < 2):
-             ceiledVal = 2;
-             break;
-           case (2 <= notCeiledVal && notCeiledVal < 2.5):
-             ceiledVal = 2.5;
-             break;
-           case (2.5 <= notCeiledVal && notCeiledVal < 5):
-             ceiledVal = 5;
-             break;
-           case (5 <= notCeiledVal && notCeiledVal < 10):
-             ceiledVal = 10;
-             break;
-           case (10 <= notCeiledVal && notCeiledVal < 20):
-             ceiledVal = 20;
-             break;
-           case (20 <= notCeiledVal && notCeiledVal < 25):
-             ceiledVal = 25;
-             break;
-           case (25 <= notCeiledVal && notCeiledVal < 50):
-             ceiledVal = 50;
-             break;
-           case (50 <= notCeiledVal && notCeiledVal < 100):
-             ceiledVal = 100;
-             break;
-           case (100 <= notCeiledVal && notCeiledVal < 200):
-             ceiledVal = 200;
-             break;
-           case (200 <= notCeiledVal && notCeiledVal < 250):
-             ceiledVal = 250;
-             break;
-           case (250 <= notCeiledVal && notCeiledVal < 500):
-             ceiledVal = 500;
-             break;
-           case (500 <= notCeiledVal && notCeiledVal < 1000):
-             ceiledVal = 1000;
-             break;
-           case (1000 <= notCeiledVal && notCeiledVal < 2000):
-             ceiledVal = 2000;
-             break;
-           default:
+         const steps = [1, 2, 2.5, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000];
+         let ceiledVal= steps.find(step => notCeiledVal < step);
+         if (ceiledVal == null) {
            ceiledVal = Math.ceil(Math.round(this.image.naturalWidth /
              (this.zoom * this.visibleImageWidth) * this.scaleBarSizeBasis * pixelSizeAxis) / 10) * 10;
          }

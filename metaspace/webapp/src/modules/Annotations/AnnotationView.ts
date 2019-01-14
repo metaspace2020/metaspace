@@ -267,7 +267,7 @@
      }
    }
 
-   toogleScaleBar(event: any): void {
+   toggleScaleBar(event: any): void {
      event.stopPropagation();
      this.showScaleBar = !this.showScaleBar
    }
