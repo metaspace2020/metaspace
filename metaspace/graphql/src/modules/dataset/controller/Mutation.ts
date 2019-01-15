@@ -299,8 +299,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
         del_first: procSettingsUpd || delFirst,  // delete old results if processing settings changed
         priority: priority,
         force: force,
+        email: user!.email,
       });
-
     }
     else {
       if (reprocessingNeeded) {
