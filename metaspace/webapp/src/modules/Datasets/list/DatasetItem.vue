@@ -66,12 +66,14 @@
           {{ formatSubmitter }}</span><!--
           Be careful not to add empty space before the comma
           --><span v-if="dataset.groupApproved && dataset.group">,
-          <el-dropdown @command="handleDropdownCommand" :showTimeout="50" placement="bottom">
-            <span class="s-group ds-add-filter"
-                  @click="addFilter('group')">
+          <el-dropdown @command="handleDropdownCommand"
+                       :showTimeout="50"
+                       placement="bottom"
+                       :trigger="hideGroupMenu ? 'never' : 'hover'">
+            <span class="s-group ds-add-filter" @click="addFilter('group')">
               {{dataset.group.shortName}}
             </span>
-            <el-dropdown-menu slot="dropdown" v-if="!hideGroupMenu">
+            <el-dropdown-menu slot="dropdown">
               <el-dropdown-item command="filter_group">Filter by this group</el-dropdown-item>
               <el-dropdown-item command="view_group">View group</el-dropdown-item>
             </el-dropdown-menu>

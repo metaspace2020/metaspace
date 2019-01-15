@@ -141,6 +141,9 @@ export const createUserCredentials = async (userCred: UserCredentialsInput): Pro
       else {
         existingUserNotVerified.credentials.hash = await hashPassword(userCred.password) || null;
         await credRepo.save(existingUserNotVerified.credentials);
+        await userRepo.update(existingUserNotVerified.id, {
+          name: userCred.name,
+        });
         logger.info(`${userCred.email} user credentials updated, password added`);
         await sendEmailVerificationToken(existingUserNotVerified.credentials,
           existingUserNotVerified.notVerifiedEmail!);

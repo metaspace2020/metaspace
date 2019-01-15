@@ -155,7 +155,7 @@ exports[`DatasetTable should match snapshot 1`] = `
             Submitted <span class="s-bold">????-??-??</span> at ??:?? by
             <span title="Filter by submitter" class="ds-add-filter">
         allDatasets.0.submitter.name</span><span>,
-        <mock-el-dropdown showtimeout="50" placement="bottom"><div slot-key="default"><span class="s-group ds-add-filter">
+        <mock-el-dropdown showtimeout="50" placement="bottom" trigger="hover"><div slot-key="default"><span class="s-group ds-add-filter">
             allDatasets.0.group.shortName
           </span> </div>
           <div slot-key="dropdown">
@@ -271,7 +271,7 @@ exports[`DatasetTable should match snapshot 1`] = `
           Submitted <span class="s-bold">????-??-??</span> at ??:?? by
           <span title="Filter by submitter" class="ds-add-filter">
         allDatasets.0.submitter.name</span><span>,
-        <mock-el-dropdown showtimeout="50" placement="bottom"><div slot-key="default"><span class="s-group ds-add-filter">
+        <mock-el-dropdown showtimeout="50" placement="bottom" trigger="hover"><div slot-key="default"><span class="s-group ds-add-filter">
             allDatasets.0.group.shortName
           </span> </div>
         <div slot-key="dropdown">
@@ -387,7 +387,7 @@ exports[`DatasetTable should match snapshot 1`] = `
         Submitted <span class="s-bold">????-??-??</span> at ??:?? by
         <span title="Filter by submitter" class="ds-add-filter">
         allDatasets.0.submitter.name</span><span>,
-        <mock-el-dropdown showtimeout="50" placement="bottom"><div slot-key="default"><span class="s-group ds-add-filter">
+        <mock-el-dropdown showtimeout="50" placement="bottom" trigger="hover"><div slot-key="default"><span class="s-group ds-add-filter">
             allDatasets.0.group.shortName
           </span> </div>
       <div slot-key="dropdown">
