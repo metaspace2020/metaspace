@@ -24,7 +24,7 @@ fi
 if [ ! -f "/opt/last-environment.yml" ] || [ "/opt/last-environment.yml" -nt "environment.yml" ] || [ "/opt/last-environment.yml" -ot "environment.yml" ]; then
   echo "Conda env out of date - updating"
   conda env update && cp -p environment.yml /opt/last-environment.yml
-  pip install --process-dependency-links -e .
+  pip install -e .
 else
   echo "Conda env up to date"
 fi

@@ -38,7 +38,5 @@ setup(name='sm',
           "cffi",
           "psycopg2==2.7.1",
           "cherrypy<9",
-      ],
-      dependency_links=[
-          "git+https://github.com/alexandrovteam/pyimzML.git/@1.2.4#egg=pyimzML-1.2.4"
+          "pyimzML==1.2.4",
       ])
