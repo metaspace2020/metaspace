@@ -22,6 +22,7 @@ The METASPACE platform is developed by software engineers, data scientists and
 | [python-client](metaspace/python-client) | A Python library and set of example Jupyter notebooks for performing data analysis on the annotations database |
 | [ansible](ansible) | Ansible playbooks for deploying to AWS and Vagrant |
 | [docker](docker) | Docker Compose configuration for making development and testing environments |
+| [metadata](metaspace/metadata) | Imaging mass spectrometry metadata collected in METASPACE |
 
 ## Installation
 Please check the [ansible](ansible) project for production installations on AWS,
