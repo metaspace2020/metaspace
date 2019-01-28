@@ -7,7 +7,9 @@
     <el-popover placement="bottom" trigger="click">
         <ion-image-settings></ion-image-settings>
         <div slot="reference" @click="$event.stopPropagation()">
-        <i class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i>
+        <img class="color-map-icon"
+             src="../../../../assets/colormap_icon.png"
+             title="Show color map options"/>
         </div>
     </el-popover>
 
@@ -74,7 +76,7 @@ export default class MainImageHeader extends Vue {
 </script>
 
 <style>
-.reset-image-icon, .show-optical-image-icon, .show-scale-bar-icon {
+.reset-image-icon, .show-optical-image-icon, .show-scale-bar-icon, .color-map-icon {
     width: 24px;
     padding-left: 20px;
     vertical-align: middle;
