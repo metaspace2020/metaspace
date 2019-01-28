@@ -24,19 +24,14 @@
       </div>
       <div :style="cssProps"
            :class="{pixelSizeX: pixelSizeIsActive}"
-           title="Click to change the color"
-           @click="onClickScaleBar()"
-           v-if="pixelSizeIsActive && showScaleBar && !scaleBarOxExceeds">
+           v-if="pixelSizeIsActive && !disableScaleBar && !scaleBarOxExceeds">
         <div :class="{pixelSizeXText: pixelSizeIsActive}">{{scaleBarValX}}</div>
       </div>
       <div :style="cssProps"
            :class="{pixelSizeY: pixelSizeIsActive}"
-           title="Click to change the color"
-           @click="onClickScaleBar()"
-           v-if="pixelSizeIsActive && showScaleBar && !scaleBarOyExceeds && this.pixelSizeX !== this.pixelSizeY">
+           v-if="pixelSizeIsActive && !disableScaleBar && !scaleBarOyExceeds && this.pixelSizeX !== this.pixelSizeY">
         <div :class="{pixelSizeYText: pixelSizeIsActive}">{{scaleBarValY}}</div>
       </div>
-      <palette v-show="paletteIsVisible" class="color-picker" @colorInput="val=>updateColor(val)" />
     </div>
 
     <div ref="mapOverlap"
@@ -57,7 +52,6 @@
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
  import config from '../clientConfig.json';
- import Palette from './Palette.vue'
 
  const OPACITY_MAPPINGS = {
    'constant': (x) => 1,
@@ -121,9 +115,13 @@
        type: Number,
        default: 0
      },
-     showScaleBar: {
+     disableScaleBar: {
        type: Boolean,
-       default: true
+       default: false
+     },
+     scaleBarColor: {
+       type: String,
+       default: '#000000'
      }
    },
    data () {
@@ -152,13 +150,8 @@
        overlayDefault: true,
        overlayFadingIn: false,
        tmId: 0,
-       scaleBarColor: '#000000',
        paletteIsVisible: false,
-       scaleBarShadow: '#FFFFFF'
      }
-   },
-   components: {
-     'palette': Palette
    },
    created() {
      this.onResize = throttle(this.onResize, 100);
@@ -271,7 +264,6 @@
            '--scaleBar-color': this.scaleBarColor,
            '--scaleBarX-size': `${this.scaleBarAxisObj(this.pixelSizeX).scaleBarShownAxisVal}px`,
            '--scaleBarY-size': `${this.scaleBarAxisObj(this.pixelSizeY).scaleBarShownAxisVal}px`,
-           '--scaleBarShadow-color': this.scaleBarShadow,
            '--addedValToOyBar': this.scaleBarAxisObj(this.pixelSizeY).scaleBarShownAxisVal,
            '--scaleBarTextWidth': Math.max(document.documentElement.clientWidth, window.innerWidth || 0) > 3000 ?
              `${100}px` : `${this.scaleBarAxisObj(this.pixelSizeX).scaleBarShownAxisVal}`
@@ -314,24 +306,6 @@
          };
        }
        return {};
-     },
-
-     updateColor(val) {
-       this.scaleBarColor = val;
-       if(val === '#000000') {
-         this.scaleBarShadow = '#FFFFFF';
-       }
-       else if (val === '#FFFFFF') {
-         this.scaleBarShadow = '#000'
-       }
-       else if (val === '#999999') {
-         this.scaleBarShadow = '#000000'
-       }
-       this.paletteIsVisible = false;
-     },
-
-     onClickScaleBar() {
-       this.paletteIsVisible = true;
      },
 
      onResize: function() {
@@ -591,8 +565,6 @@
    align-content: center;
    justify-content: space-evenly;
    overflow: hidden;
-   cursor: -webkit-grab;
-   cursor: grab;
    width: 100%;
    line-height: 0;
  }
@@ -669,17 +641,16 @@
    z-index: 3;
  }
 
- .pixelSizeX:hover,
- .pixelSizeY:hover {
-   cursor: pointer;
- }
-
  .color-picker {
    display: block;
    position: absolute;
    bottom: 35px;
    left: 30px;
    z-index: 4;
+ }
+
+ .el-form-item{
+   margin-bottom: 10px;
  }
 
 </style>

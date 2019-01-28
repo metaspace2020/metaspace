@@ -17,6 +17,11 @@
  import { safeJsonParse } from '../../util';
  import {omit, pick} from 'lodash-es';
 
+ type colorObjType = {
+   code: string,
+   colorName: string
+ }
+
  type ImagePosition = {
    zoom: number
    xOffset: number
@@ -107,9 +112,10 @@
    msAcqGeometry: any
    peakChartData: any
    opticalImageUrl?: string
-   showScaleBar: boolean = true
+   disableScaleBar: boolean = false
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
+   scaleBarColor: string = '#000000'
 
    metadataDependentComponent(category: string): any {
      const currentMdType: string = this.$store.getters.filter.metadataType;
@@ -174,7 +180,7 @@
        opticalImageUrl: this.opticalImageUrl,
        opacityMode: this.imageOpacityMode,
        showOpticalImage: this.showOpticalImage,
-       showScaleBar: this.showScaleBar
+       disableScaleBar: this.disableScaleBar
      });
    }
 
@@ -267,12 +273,15 @@
      }
    }
 
-   toggleScaleBar(event: any): void {
-     event.stopPropagation();
-     this.showScaleBar = !this.showScaleBar
+   toggleScaleBar(): void {
+     this.disableScaleBar = !this.disableScaleBar
    }
 
    loadVisibility() {
      this.$apollo.queries.datasetVisibility.start();
+   }
+
+   setScaleBarColor(colorObj: colorObjType) {
+     this.scaleBarColor = colorObj.code;
    }
  }

@@ -5,7 +5,8 @@
                       :colormap="colormap"
                       :pixelSizeX="pixelSizeX"
                       :pixelSizeY="pixelSizeY"
-                      :showScaleBar="showScaleBar"
+                      :disableScaleBar="disableScaleBar"
+                      :scaleBarColor="scaleBarColor"
                       ref="imageLoader"
                       scrollBlock
                       class="image-loader"
@@ -92,7 +93,9 @@ export default class MainImage extends Vue {
     @Prop({type: Number})
     pixelSizeY!: Number
     @Prop({type: Boolean})
-    showScaleBar!: Boolean
+    disableScaleBar!: Boolean
+    @Prop({type: String})
+    scaleBarColor!: String
 
     get colorbarDirection(): string {
       return this.colormap[0] == '-' ? 'bottom' : 'top';

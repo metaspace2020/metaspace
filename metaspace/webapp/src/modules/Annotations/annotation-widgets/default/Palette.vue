@@ -1,34 +1,60 @@
 <template>
-  <div class="colors-wrapper">
-    <ul class="colors-list">
-      <li
-        class="color-item"
-        v-for="c in paletteColors"
-        :key="c"
-        :aria-label="'Color:' + c"
-        :class="{'color-item-white': c === '#FFFFFF', 'color-item-transparent': c === 'transparent'}"
-        :style="{background: c}"
-        title="Click to change the color"
-        @click="handlerClick(c)">
-        <div class="chosen-color-dot" v-show="c === pick"></div>
-      </li>
-    </ul>
-  </div>
+  <span id="scale-bar-settings">
+    <el-form>
+      <el-form-item label="Scale bar color">
+        <el-select :value="pickedColor"
+                   style="width: 120px;"
+                   title="Scale_bar_color"
+                   @input="handlerClick">
+          <el-option v-for="color in paletteColors"
+                     :value="color.colorName" :label="color.colorName" :key="color.code">
+          </el-option>
+        </el-select>
+        <el-form-item>
+          <el-checkbox @click="$event.stopPropagation()" @input="setBarVisibility">Disable</el-checkbox>
+        </el-form-item>
+      </el-form-item>
+    </el-form>
+  </span>
 </template>
 
 <script lang="ts">
   import Vue from 'vue';
   import { Component } from 'vue-property-decorator';
 
+  interface colorObjType {
+    code: string,
+    colorName: string
+  }
+
   @Component({name: 'palette'})
   export default class Palette extends Vue {
-    pick: string = '#000000';
+    paletteColors: colorObjType[] = [{
+        code: '#000000',
+        colorName: "Black"
+      }, {
+        code: '#FFFFFF',
+        colorName: 'White'
+      }, {
+        code: '#999999',
+        colorName: "Gray"
+      }];
+    disableBar = false;
+    pickedColor: string = this.paletteColors[0].colorName;
 
-    paletteColors: string[] = ['transparent', '#FFFFFF', '#999999', '#000000'];
+    setBarVisibility() {
+      this.disableBar = !this.disableBar;
+      this.$emit('toggleScaleBar')
+    }
 
     handlerClick(c: string) {
-      this.pick = c;
-      this.$emit('colorInput', c)
+      this.pickedColor = c;
+      let colorObj: colorObjType | undefined = this.paletteColors.find(el => {
+        return el.colorName === c;
+      });
+      if (colorObj !== undefined) {
+        this.$emit('colorInput', colorObj)
+      }
     }
   }
 </script>

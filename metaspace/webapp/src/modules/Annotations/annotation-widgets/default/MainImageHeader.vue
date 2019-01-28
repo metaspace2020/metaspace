@@ -4,9 +4,8 @@
         m/z image
     </span>
 
-    <el-popover placement="left" trigger="click">
+    <el-popover placement="bottom" trigger="click">
         <ion-image-settings></ion-image-settings>
-
         <div slot="reference" @click="$event.stopPropagation()">
         <i class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i>
         </div>
@@ -28,11 +27,17 @@
     </span>
 
     <span>
-      <img class="show-scale-bar-icon"
-           :class="imageLoaderSettings.showScaleBar ? '' : 'png-icon-disabled'"
-           src="../../../../assets/scale_bar_icon.svg"
-           title="Show/hide scale bar"
-           @click="toggleScaleBar" />
+
+    <el-popover placement="bottom" trigger="click">
+      <palette @colorInput="colorObj=>updateColor(colorObj)" @toggleScaleBar="toggleScaleBar"></palette>
+      <div slot="reference" @click="$event.stopPropagation()">
+        <img class="show-scale-bar-icon"
+             :class="!imageLoaderSettings.disableScaleBar ? '' : 'png-icon-disabled'"
+             src="../../../../assets/scale_bar.png"
+             title="Show scale bar options"/>
+      </div>
+    </el-popover>
+
     </span>
 </span>
 </template>
@@ -40,12 +45,17 @@
 <script lang="ts">
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-
+import Palette from './Palette.vue'
 import IonImageSettings from './IonImageSettings.vue';
+
+interface colorObjType {
+  code: string,
+  colorName: string
+}
 
 @Component({
     name: 'main-image',
-    components: { IonImageSettings }
+    components: { IonImageSettings, Palette }
 })
 export default class MainImageHeader extends Vue {
     @Prop()
@@ -56,6 +66,10 @@ export default class MainImageHeader extends Vue {
     toggleOpticalImage!: Function
     @Prop({required: true, type: Function})
     toggleScaleBar!: Function
+
+    updateColor(colorObj: colorObjType) {
+      this.$emit('colorInput', colorObj)
+    }
 }
 </script>
 
