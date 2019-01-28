@@ -12,14 +12,14 @@ logger = logging.getLogger('engine')
 
 class MSMBasicSearch(SearchAlgorithm):
 
-    def __init__(self, sc, ds, ds_reader, mol_db, centr_gen, fdr, ds_config):
+    def __init__(self, sc, ds, ds_reader, mol_db, ion_centroids, fdr, ds_config):
         super(MSMBasicSearch, self).__init__(sc, ds, ds_reader, mol_db, fdr, ds_config)
         self.metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0),
                                     ('total_iso_ints', [0, 0, 0, 0]),
                                     ('min_iso_ints', [0, 0, 0, 0]),
                                     ('max_iso_ints', [0, 0, 0, 0])])
         self.max_fdr = 0.5
-        self._centr_gen = centr_gen
+        self._ion_centroids = ion_centroids
 
     def search(self):
         """ Search for molecules in the dataset
@@ -30,7 +30,7 @@ class MSMBasicSearch(SearchAlgorithm):
             (ion metrics DataFrame, ion image pyspark.RDD)
         """
         logger.info('Running molecule search')
-        ion_centroids_df = self._centr_gen.centroids_subset(self._fdr.ion_tuples())
+        ion_centroids_df = self._ion_centroids.centroids_subset(self._fdr.ion_tuples())
         ion_images = compute_sf_images(self._sc, self._ds_reader, ion_centroids_df,
                                        self.ds_config['image_generation']['ppm'])
         ion_metrics_df = self.calc_metrics(ion_images, ion_centroids_df)
@@ -45,14 +45,14 @@ class MSMBasicSearch(SearchAlgorithm):
                           .apply(lambda df: df.int.tolist()).to_dict())
         all_sf_metrics_df = sf_image_metrics(sf_images=sf_images, metrics=self.metrics, ds=self._ds,
                                              ds_reader=self._ds_reader, ion_centr_ints=ion_centr_ints, sc=self._sc)
-        return all_sf_metrics_df.join(self._centr_gen.ion_df)
+        return all_sf_metrics_df.join(self._ion_centroids.ions_df)
 
     def estimate_fdr(self, ion_metrics_df):
         sf_adduct_fdr_df = self._fdr.estimate_fdr(
-            ion_metrics_df.set_index(['sf', 'adduct']).msm)
+            ion_metrics_df.set_index(['formula', 'adduct']).msm)
         ion_metrics_sf_adduct_fdr_df = pd.merge(ion_metrics_df.reset_index(),
                                                 sf_adduct_fdr_df.reset_index(),
-                                                how='inner', on=['sf', 'adduct']).set_index('ion_i')
+                                                how='inner', on=['formula', 'adduct']).set_index('ion_i')
         return ion_metrics_sf_adduct_fdr_df
 
     def filter_sf_metrics(self, sf_metrics_df):

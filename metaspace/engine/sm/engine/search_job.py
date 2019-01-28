@@ -18,7 +18,7 @@ from sm.engine.dataset_reader import DatasetReader
 from sm.engine.db import DB
 from sm.engine.fdr import FDR, DECOY_ADDUCTS
 from sm.engine.search_results import SearchResults
-from sm.engine.ion_centroids_gen import IonCentroidsGenerator
+from sm.engine.ion_centroids import IonCentroidsGenerator
 from sm.engine.util import proj_root, SMConfig, read_json
 from sm.engine.work_dir import WorkDirManager, local_path
 from sm.engine.es_export import ESExporter
@@ -109,14 +109,14 @@ class SearchJob(object):
             isocalc = IsocalcWrapper(self._ds.config['isotope_generation'])
             centroids_gen = IonCentroidsGenerator(sc=self._sc, moldb_name=mol_db.name, isocalc=isocalc)
             all_adducts = list(set(target_adducts) | set(DECOY_ADDUCTS))
-            centroids_gen.generate_if_not_exist(isocalc=isocalc,
-                                                formulas=mol_db.sfs,
-                                                adducts=all_adducts)
-            target_ions = centroids_gen.ions(target_adducts)
+            ion_centroids = centroids_gen.generate_if_not_exist(isocalc=isocalc,
+                                                                formulas=mol_db.sfs,
+                                                                adducts=all_adducts)
+            target_ions = ion_centroids.ions_subset(target_adducts)
             self._fdr.decoy_adducts_selection(target_ions)
 
             search_alg = MSMBasicSearch(sc=self._sc, ds=self._ds, ds_reader=self._ds_reader,
-                                        mol_db=mol_db, centr_gen=centroids_gen,
+                                        mol_db=mol_db, ion_centroids=ion_centroids,
                                         fdr=self._fdr, ds_config=self._ds.config)
             ion_metrics_df, ion_iso_images = search_alg.search()
 

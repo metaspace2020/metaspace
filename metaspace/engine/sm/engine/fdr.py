@@ -28,12 +28,12 @@ class FDR(object):
     def decoy_adducts_selection(self, target_ions):
         decoy_adduct_cand = [add for add in DECOY_ADDUCTS if add not in self.target_adducts]
         self.td_df = pd.DataFrame(self._decoy_adduct_gen(target_ions, decoy_adduct_cand),
-                                  columns=['sf', 'ta', 'da'])
+                                  columns=['formula', 'ta', 'da'])
 
     def ion_tuples(self):
         """ All ions needed for FDR calculation """
-        d_ions = self.td_df[['sf', 'da']].drop_duplicates().values.tolist()
-        t_ions = self.td_df[['sf', 'ta']].drop_duplicates().values.tolist()
+        d_ions = self.td_df[['formula', 'da']].drop_duplicates().values.tolist()
+        t_ions = self.td_df[['formula', 'ta']].drop_duplicates().values.tolist()
         return list(map(tuple, t_ions + d_ions))
 
     @staticmethod
@@ -59,14 +59,14 @@ class FDR(object):
     def estimate_fdr(self, sf_adduct_msm_df):
         logger.info('Estimating FDR')
 
-        all_sf_adduct_msm_df = (pd.DataFrame(self.ion_tuples(), columns=['sf', 'adduct'])
-                                .set_index(['sf', 'adduct']).sort_index())
+        all_sf_adduct_msm_df = (pd.DataFrame(self.ion_tuples(), columns=['formula', 'adduct'])
+                                .set_index(['formula', 'adduct']).sort_index())
         all_sf_adduct_msm_df = all_sf_adduct_msm_df.join(sf_adduct_msm_df).fillna(0)
 
         target_fdr_df_list = []
         for ta in self.target_adducts:
             target_msm = all_sf_adduct_msm_df.loc(axis=0)[:, ta]
-            full_decoy_df = self.td_df[self.td_df.ta == ta][['sf', 'da']]
+            full_decoy_df = self.td_df[self.td_df.ta == ta][['formula', 'da']]
 
             msm_fdr_list = []
             for i in range(self.decoy_sample_size):
