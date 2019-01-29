@@ -39,4 +39,5 @@ setup(name='sm',
           "psycopg2==2.7.1",
           "cherrypy<9",
           "pyimzML==1.2.4",
+          "redis"
       ])
