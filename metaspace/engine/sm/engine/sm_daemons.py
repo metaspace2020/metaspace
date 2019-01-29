@@ -1,5 +1,6 @@
 import json
 import urllib.parse
+import redis
 from requests import post
 import logging
 import boto3
@@ -172,6 +173,7 @@ class SMAnnotateDaemon(object):
     def __init__(self, manager, annot_qdesc, upd_qdesc, poll_interval=1):
         self._sm_config = SMConfig.get_conf()
         self._stopped = False
+        self._manager = manager
         self._annot_queue_consumer = QueueConsumer(config=self._sm_config['rabbitmq'], qdesc=annot_qdesc,
                                                    callback=self._callback,
                                                    on_success=self._on_success,
@@ -180,31 +182,31 @@ class SMAnnotateDaemon(object):
         self._upd_queue_pub = QueuePublisher(config=self._sm_config['rabbitmq'],
                                              qdesc=upd_qdesc,
                                              logger=self.logger)
-
         self._db = DB(self._sm_config['db'])
-        self._manager = manager
+        self.redis_client = redis.Redis()
 
     def _on_success(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
         ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.FINISHED)
-
         self.logger.info(f" SM annotate daemon: success")
 
         self._manager.post_to_slack('dart', ' [v] Annotation succeeded: {}'.format(json.dumps(msg)))
+        self.redis_client.set('cluster-busy', 'no')
 
     def _on_failure(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
         ds.set_status(self._db, self._manager.es, DatasetStatus.FAILED)
         ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.FAILED)
-
         self.logger.error(f" SM annotate daemon: failure", exc_info=True)
 
         self._manager.post_to_slack('hankey', ' [x] Annotation failed: {}'.format(json.dumps(msg)))
-
         if 'email' in msg:
             self._manager.send_failed_email(msg)
+        self.redis_client.set('cluster-busy', 'no')
 
     def _callback(self, msg):
+        self.redis_client.set('cluster-busy', 'yes', ex=3600*4)  # key expires in 4h
+
         ds = Dataset.load(self._db, msg['ds_id'])
         ds.set_status(self._db, self._manager.es, DatasetStatus.ANNOTATING)
         ds.notify_update(self._manager.status_queue, msg['action'], DaemonActionStage.STARTED)
