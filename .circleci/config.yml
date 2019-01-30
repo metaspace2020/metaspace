@@ -208,8 +208,9 @@ jobs:
       - checkout:
           path: ~/metaspace
       - run:
-          name: Test setup
+          name: Test engine dependencies
           command: |
+            pip install --upgrade -r requirements.txt
             source docker/env.sh
       - run:
           name: Run unit and integration tests
@@ -250,6 +251,7 @@ jobs:
       - run:
           name: Test setup
           command: |
+            pip install --upgrade -r requirements.txt
             source docker/env.sh
       - run:
           name: Download and unpack isotope centroids
@@ -275,7 +277,6 @@ jobs:
       - run:
           name: Run scientific test
           command: |
-            source docker/env.sh
             python tests/sci_test_spheroid.py -r --mock-img-store --mock-graphql-db
 
 workflows:

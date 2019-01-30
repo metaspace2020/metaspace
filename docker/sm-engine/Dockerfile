@@ -4,8 +4,9 @@ MAINTAINER Vitaly Kovalev <kovalev@embl.de>
 WORKDIR /
 
 ENV SPARK_DIR spark-2.3.0-bin-hadoop2.7
-ENV SPARK_HOME /root/$SPARK_DIR
+ENV SPARK_HOME /$SPARK_DIR
 ENV JAVA_HOME /usr/lib/jvm/openjdk-8-jre-headless
+ENV PYTHONPATH=.:$SPARK_HOME/python:$PYTHONPATH
 
 COPY requirements.txt /requirements.txt
 
@@ -63,8 +64,8 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/*
 
-RUN mkdir -p /opt/metaspace /opt/data
-WORKDIR /opt/dev/metaspace/metaspace/engine
+RUN mkdir -p /opt/data
+WORKDIR /root/metaspace/metaspace/engine
 COPY *.sh /
 
 ENTRYPOINT [ ]
