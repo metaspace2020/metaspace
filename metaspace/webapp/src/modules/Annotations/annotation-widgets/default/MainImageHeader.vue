@@ -5,11 +5,9 @@
     </span>
 
     <el-popover placement="bottom" trigger="click">
-        <ion-image-settings></ion-image-settings>
+        <ion-image-settings @colorInput="updateColor" @toggleScaleBar="toggleScaleBar"></ion-image-settings>
         <div slot="reference" @click="$event.stopPropagation()">
-        <img class="color-map-icon"
-             src="../../../../assets/colormap_icon.png"
-             title="Show color map options"/>
+        <i class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i>
         </div>
     </el-popover>
 
@@ -27,27 +25,12 @@
             title="Show/hide optical image"
             @click="toggleOpticalImage"/>
     </span>
-
-    <span>
-
-    <el-popover placement="bottom" trigger="click">
-      <palette @colorInput="colorObj=>updateColor(colorObj)" @toggleScaleBar="toggleScaleBar"></palette>
-      <div slot="reference" @click="$event.stopPropagation()">
-        <img class="show-scale-bar-icon"
-             :class="!imageLoaderSettings.disableScaleBar ? '' : 'png-icon-disabled'"
-             src="../../../../assets/scale_bar.png"
-             title="Show scale bar options"/>
-      </div>
-    </el-popover>
-
-    </span>
 </span>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import Palette from './Palette.vue'
 import IonImageSettings from './IonImageSettings.vue';
 
 interface colorObjType {
@@ -57,7 +40,7 @@ interface colorObjType {
 
 @Component({
     name: 'main-image',
-    components: { IonImageSettings, Palette }
+    components: { IonImageSettings }
 })
 export default class MainImageHeader extends Vue {
     @Prop()
@@ -76,7 +59,7 @@ export default class MainImageHeader extends Vue {
 </script>
 
 <style>
-.reset-image-icon, .show-optical-image-icon, .show-scale-bar-icon, .color-map-icon {
+.reset-image-icon, .show-optical-image-icon, .show-scale-bar-icon {
     width: 24px;
     padding-left: 20px;
     vertical-align: middle;

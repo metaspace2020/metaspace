@@ -149,8 +149,7 @@
        dragThrottled: false,
        overlayDefault: true,
        overlayFadingIn: false,
-       tmId: 0,
-       paletteIsVisible: false,
+       tmId: 0
      }
    },
    created() {
