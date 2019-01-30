@@ -46,6 +46,8 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     ln -s /usr/bin/python3.6 /usr/local/bin/python && \
     $PIP_INSTALL \
         setuptools \
+        coverage \
+        codecov \
         && \
 
 # --- Engine dependencies ---
