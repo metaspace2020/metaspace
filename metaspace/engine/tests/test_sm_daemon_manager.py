@@ -22,7 +22,7 @@ def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', up
                    status=status, mol_dbs=mol_dbs, adducts=adducts, img_storage_type='fs')
 
 
-def create_daemon_man(sm_config, db=None, es=None, img_store=None, status_queue=None):
+def create_daemon_man(db=None, es=None, img_store=None, status_queue=None):
     db = db or DB(sm_config['db'])
     es_mock = es or MagicMock(spec=ESExporter)
     status_queue_mock = status_queue or MagicMock(QueuePublisher)
@@ -42,11 +42,11 @@ class TestSMDaemonDatasetManager:
         def run(self, *args, **kwargs):
             pass
 
-    def test_annotate_ds(self, test_db, sm_config, metadata, ds_config):
+    def test_annotate_ds(self, test_db, metadata, ds_config):
         es_mock = MagicMock(spec=ESExporter)
         db = DB(sm_config['db'])
         try:
-            manager = create_daemon_man(sm_config, db=db, es=es_mock)
+            manager = create_daemon_man(db=db, es=es_mock)
 
             ds_id = '2000-01-01'
             ds_name = 'ds_name'
@@ -62,9 +62,9 @@ class TestSMDaemonDatasetManager:
         finally:
             db.close()
 
-    def test_index_ds(self, fill_db, sm_config, metadata):
+    def test_index_ds(self, fill_db, metadata):
         es_mock = MagicMock(spec=ESExporter)
-        manager = create_daemon_man(sm_config, es=es_mock)
+        manager = create_daemon_man(es=es_mock)
 
         ds_id = '2000-01-01'
         ds = create_ds(ds_id=ds_id, metadata=metadata)
@@ -79,11 +79,11 @@ class TestSMDaemonDatasetManager:
             call_args = es_mock.index_ds.call_args[1].values()
             assert ds_id in call_args and mol_db_mock in call_args
 
-    def test_delete_ds(self, fill_db, sm_config):
+    def test_delete_ds(self, fill_db):
         db = DB(sm_config['db'])
         es_mock = MagicMock(spec=ESExporter)
         img_store_service_mock = MagicMock(spec=ImageStoreServiceWrapper)
-        manager = create_daemon_man(sm_config, db=db, es=es_mock, img_store=img_store_service_mock)
+        manager = create_daemon_man(db=db, es=es_mock, img_store=img_store_service_mock)
 
         ds_id = '2000-01-01'
         ds = create_ds(ds_id=ds_id)

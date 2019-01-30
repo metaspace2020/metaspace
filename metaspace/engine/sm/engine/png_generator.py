@@ -119,9 +119,9 @@ class PngGenerator(object):
     def _get_img_data(self, img):
         xa = ((img - img.min()) / (img.max() - img.min())) * (2 ** self._bitdepth - 1)
         if self._greyscale:
-            grey = np.empty(shape=xa.shape + (2,), dtype=xa.dtype)
+            grey = np.empty(shape=xa.shape + (2,), dtype=np.uint16)
             grey[:, :, 0] = xa.astype(np.uint16)
-            grey[:, :, 1] = self._mask * (2 ** self._bitdepth - 1)
+            grey[:, :, 1] = (self._mask * (2 ** self._bitdepth - 1)).astype(np.uint16)
             return grey
         else:
             rgba = np.empty(shape=xa.shape + (4,), dtype=self._colors.dtype)

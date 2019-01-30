@@ -17,24 +17,32 @@ from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.acq_geometry_factory import ACQ_GEOMETRY_KEYS
 from sm.engine.search_job import JobStatus
-from sm.engine.tests.util import sm_config, test_db, init_loggers, sm_index, es_dsl_search, metadata, ds_config
-
+from sm.engine.tests.util import (
+    test_db,
+    init_loggers,
+    sm_index,
+    es_dsl_search,
+    metadata,
+    ds_config
+)
+from sm.engine.util import SMConfig
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
+sm_config = SMConfig.get_conf(update=True)
 
-init_loggers(sm_config()['logs'])
+init_loggers(sm_config['logs'])
 logger = logging.getLogger('annotate-daemon')
 
 test_ds_name = 'imzml_example_ds'
 
 proj_dir_path = dirname(dirname(__file__))
-data_dir_path = join(sm_config()["fs"]["base_path"], test_ds_name)
+data_dir_path = join(sm_config["fs"]["base_path"], test_ds_name)
 input_dir_path = join(proj_dir_path, 'tests/data/imzml_example_ds')
 ds_config_path = join(input_dir_path, 'config.json')
 
 
 @pytest.fixture()
-def clean_isotope_storage(sm_config):
+def clean_isotope_storage():
     with warn_only():
         local('rm -rf {}'.format(sm_config['isotope_storage']['path']))
 
@@ -58,7 +66,7 @@ def init_queue_pub(qname='annotate'):
         qdesc = queue.SM_UPDATE
     else:
         raise Exception(f'Wrong qname={qname}')
-    queue_pub = queue.QueuePublisher(config=sm_config()['rabbitmq'],
+    queue_pub = queue.QueuePublisher(config=sm_config['rabbitmq'],
                                      qdesc=qdesc,
                                      logger=logger)
     return queue_pub
@@ -72,15 +80,15 @@ def run_daemons(db, es):
     from sm.engine.png_generator import ImageStoreServiceWrapper
     from sm.engine.sm_daemons import SMDaemonManager, SMAnnotateDaemon, SMIndexUpdateDaemon
 
-    status_queue_pub = QueuePublisher(config=sm_config()['rabbitmq'],
+    status_queue_pub = QueuePublisher(config=sm_config['rabbitmq'],
                                       qdesc=SM_DS_STATUS,
                                       logger=logger)
     manager = SMDaemonManager(
         db=db, es=es,
-        img_store=ImageStoreServiceWrapper(sm_config()['services']['img_service_url']),
+        img_store=ImageStoreServiceWrapper(sm_config['services']['img_service_url']),
         status_queue=status_queue_pub,
         logger=logger,
-        sm_config=sm_config()
+        sm_config=sm_config
     )
     annotate_daemon = SMAnnotateDaemon(manager=manager,
                                        annot_qdesc=SM_ANNOTATE,
@@ -102,7 +110,7 @@ def test_sm_daemons(calc_metrics_mock,
                     post_images_to_annot_service_mock,
                     MolDBServiceWrapperMock,
                     # fixtures
-                    sm_config, test_db, es_dsl_search, clean_isotope_storage,
+                    test_db, es_dsl_search, clean_isotope_storage,
                     metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
@@ -224,7 +232,7 @@ def test_sm_daemons_annot_fails(calc_metrics_mock,
                                 filter_sf_metrics_mock,
                                 post_images_to_annot_service_mock,
                                 MolDBServiceWrapperMock,
-                                sm_config, test_db, es_dsl_search,
+                                test_db, es_dsl_search,
                                 clean_isotope_storage,
                                 metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
@@ -286,7 +294,7 @@ def test_sm_daemon_es_export_fails(calc_metrics_mock,
                                    filter_sf_metrics_mock,
                                    post_images_to_annot_service_mock,
                                    MolDBServiceWrapperMock,
-                                   sm_config, test_db, es_dsl_search,
+                                   test_db, es_dsl_search,
                                    clean_isotope_storage,
                                    metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)

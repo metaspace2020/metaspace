@@ -16,7 +16,7 @@ def wait_for_es(sec=1):
     time.sleep(sec)
 
 
-def test_index_ds_works(es_dsl_search, sm_index, sm_config):
+def test_index_ds_works(es_dsl_search, sm_index):
     ds_id = '2000-01-01_00h00m'
     upload_dt = datetime.now().isoformat(' ')
     mol_db_id = 0
@@ -136,7 +136,7 @@ def test_index_ds_works(es_dsl_search, sm_index, sm_config):
     }
 
 
-def test_delete_ds__one_db_ann_only(es, sm_index, sm_config):
+def test_delete_ds__one_db_ann_only(es, sm_index):
     index = sm_config['elasticsearch']['index']
     es.create(index=index, doc_type='annotation', id='id1',
               body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
@@ -176,7 +176,7 @@ def test_delete_ds__one_db_ann_only(es, sm_index, sm_config):
     assert es.count(index=index, doc_type='dataset', body=body)['count'] == 1
 
 
-def test_delete_ds__completely(es, sm_index, sm_config):
+def test_delete_ds__completely(es, sm_index):
     index = sm_config['elasticsearch']['index']
     es.create(index=index, doc_type='annotation', id='id1',
               body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
@@ -213,7 +213,7 @@ def test_delete_ds__completely(es, sm_index, sm_config):
     assert es.count(index=index, doc_type='dataset', body=body)['count'] == 0
 
 
-def test_update_ds_works_for_all_fields(es, sm_index, es_dsl_search, sm_config):
+def test_update_ds_works_for_all_fields(es, sm_index, es_dsl_search):
     update = {
         'name': 'new_ds_name',
         'submitter_id': 'new_ds_submitter_id',
@@ -272,7 +272,7 @@ def test_update_ds_works_for_all_fields(es, sm_index, es_dsl_search, sm_config):
         assert v == ann_doc[f'ds_{k}']
 
 
-def test_rename_index_works(test_db, sm_config):
+def test_rename_index_works(test_db):
     es_config = sm_config['elasticsearch']
     alias = es_config['index']
     es_man = ESIndexManager(es_config)
@@ -292,7 +292,7 @@ def test_rename_index_works(test_db, sm_config):
     assert not es_man.exists_index('{}-yin'.format(alias))
 
 
-def test_internal_index_name_return_valid_values(sm_config):
+def test_internal_index_name_return_valid_values():
     es_config = sm_config['elasticsearch']
     alias = es_config['index']
     es_man = ESIndexManager(es_config)

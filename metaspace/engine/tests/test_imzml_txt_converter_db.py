@@ -7,7 +7,7 @@ from sm.engine.tests.util import sm_config, ds_config
 
 
 @patch('sm.engine.ms_txt_converter.MsTxtConverter._parser_factory')
-def test_convert(MockImzMLParser, sm_config):
+def test_convert(MockImzMLParser):
     mock_parser = MockImzMLParser.return_value
     mock_parser.coordinates = [(1, 1), (1, 2)]
     mock_parser.getspectrum.side_effect = [(np.array([100., 200.]), np.array([100., 10.])),

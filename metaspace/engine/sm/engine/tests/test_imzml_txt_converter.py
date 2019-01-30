@@ -19,7 +19,7 @@ def test_encode_coord_line():
 
 
 @patch('sm.engine.ms_txt_converter.MsTxtConverter._parser_factory')
-def test_imzml_txt_converter_parse_save_spectrum(MockImzMLParser, sm_config, ds_config):
+def test_imzml_txt_converter_parse_save_spectrum(MockImzMLParser, ds_config):
     mock_parser = MockImzMLParser.return_value
     mock_parser.coordinates = [[1, 1], [1, 2]]
     mock_parser.getspectrum.side_effect = [(np.array([100., 200.]), np.array([100., 10.])),

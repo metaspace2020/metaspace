@@ -15,7 +15,7 @@ QDESC['name'] = 'sm_test'
 
 
 @fixture(scope='module')
-def delete_queue(sm_config):
+def delete_queue():
     # delete before tests
     queue_pub = QueuePublisher(sm_config['rabbitmq'], QDESC)
     queue_pub.delete_queue()
@@ -42,7 +42,7 @@ def queue_is_empty(config):
     return resp.json()['messages'] == 0
 
 
-def test_queue_msg_published_consumed_on_success_called(sm_config, delete_queue):
+def test_queue_msg_published_consumed_on_success_called(delete_queue):
     config = sm_config['rabbitmq']
     queue_pub = QueuePublisher(config, QDESC)
     msg = {'test': 'message'}
@@ -59,7 +59,7 @@ def test_queue_msg_published_consumed_on_success_called(sm_config, delete_queue)
     assert queue_is_empty(config)
 
 
-def test_queue_msg_published_consumed_on_failure_called(sm_config):
+def test_queue_msg_published_consumed_on_failure_called():
     config = sm_config['rabbitmq']
     queue_pub = QueuePublisher(config, QDESC)
     msg = {'test': 'message'}

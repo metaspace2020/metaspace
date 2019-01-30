@@ -8,7 +8,7 @@ from sm.engine.util import SMConfig
 from sm.engine.tests.util import sm_config, ds_config, pysparkling_context as spark_context
 
 
-def test_dataset_reader_get_sample_area_mask_correctness(sm_config, spark_context):
+def test_dataset_reader_get_sample_area_mask_correctness(spark_context):
     work_dir_man_mock = MagicMock(WorkDirManager)
     work_dir_man_mock.ds_coord_path = '/ds_path'
     work_dir_man_mock.txt_path = '/txt_path'
@@ -25,7 +25,7 @@ def test_dataset_reader_get_sample_area_mask_correctness(sm_config, spark_contex
         assert tuple(ds_reader.get_sample_area_mask()) == (True, False, False, True)
 
 
-def test_dataset_reader_get_spectra_works(sm_config, spark_context):
+def test_dataset_reader_get_spectra_works(spark_context):
     work_dir_man_mock = MagicMock(WorkDirManager)
     work_dir_man_mock.ds_coord_path = '/ds_path'
     work_dir_man_mock.txt_path = '/txt_path'

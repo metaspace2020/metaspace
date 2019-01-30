@@ -12,9 +12,9 @@ from sm.engine.work_dir import WorkDirManager, S3WorkDir
 from sm.engine.tests.util import sm_config
 
 ds_id = '2000-01-01_00h00m'
-input_local_path = join(sm_config()['fs']['base_path'], 'test_input_path')
+input_local_path = join(sm_config['fs']['base_path'], 'test_input_path')
 input_remote_path = 's3a://somepath.com/archive'
-data_dir_path = sm_config()['fs']['base_path']
+data_dir_path = sm_config['fs']['base_path']
 ds_path = join(data_dir_path, ds_id)
 
 
@@ -40,7 +40,7 @@ def clear_files(request):
     request.addfinalizer(fin)
 
 
-def test_work_dir_copy_input_data_no_files_local_path(clear_files, sm_config):
+def test_work_dir_copy_input_data_no_files_local_path(clear_files):
     create_sample_files(input_local_path)
 
     SMConfig._config_dict = sm_config
@@ -51,7 +51,7 @@ def test_work_dir_copy_input_data_no_files_local_path(clear_files, sm_config):
     assert file_list == {'foo.imzML', 'foo.ibd', 'config.json', 'meta.json'}
 
 
-def test_work_dir_upload_to_remote_leaves_meta_config_files(clear_files, sm_config):
+def test_work_dir_upload_to_remote_leaves_meta_config_files(clear_files):
     create_sample_files(input_local_path)
 
     SMConfig._config_dict = sm_config

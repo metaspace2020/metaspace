@@ -12,7 +12,7 @@ from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.tests.util import sm_config, metadata, ds_config, test_db, fill_db
 
 
-def create_api_ds_man(sm_config, db=None, es=None, img_store=None,
+def create_api_ds_man(db=None, es=None, img_store=None,
                       annot_queue=None, update_queue=None, status_queue=None):
     db = db or DB(sm_config['db'])
     es_mock = es or MagicMock(spec=ESExporter)
@@ -43,9 +43,9 @@ def create_ds_doc(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path'
 
 class TestSMapiDatasetManager:
 
-    def test_add_new_ds(self, test_db, sm_config, ds_config):
+    def test_add_new_ds(self, test_db, ds_config):
         action_queue_mock = MagicMock(spec=QueuePublisher)
-        _, ds_man = create_api_ds_man(sm_config, annot_queue=action_queue_mock)
+        _, ds_man = create_api_ds_man(annot_queue=action_queue_mock)
 
         ds_id = '2000-01-01'
         ds_doc = create_ds_doc(ds_id=ds_id)
@@ -55,9 +55,9 @@ class TestSMapiDatasetManager:
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.ANNOTATE}
         action_queue_mock.publish.assert_has_calls([call(msg, DatasetActionPriority.HIGH)])
 
-    def test_delete_ds(self, test_db, sm_config, ds_config):
+    def test_delete_ds(self, test_db, ds_config):
         update_queue = MagicMock(spec=QueuePublisher)
-        db, ds_man = create_api_ds_man(sm_config, update_queue=update_queue)
+        db, ds_man = create_api_ds_man(update_queue=update_queue)
         ds_id = '2000-01-01'
         ds = Dataset(**create_ds_doc(ds_id=ds_id, status=DatasetStatus.FINISHED))
         ds.save(db)
@@ -67,14 +67,14 @@ class TestSMapiDatasetManager:
         msg = {'ds_id': ds_id, 'ds_name': 'ds_name', 'action': DaemonAction.DELETE}
         update_queue.publish.assert_has_calls([call(msg, DatasetActionPriority.STANDARD)])
 
-    def test_add_optical_image(self, fill_db, sm_config, ds_config):
+    def test_add_optical_image(self, fill_db, ds_config):
         action_queue_mock = MagicMock(spec=QueuePublisher)
         es_mock = MagicMock(spec=ESExporter)
         img_store_mock = MagicMock(ImageStoreServiceWrapper)
         img_store_mock.post_image.side_effect = ['opt_img_id1', 'opt_img_id2', 'opt_img_id3', 'thumbnail_id']
         img_store_mock.get_image_by_id.return_value = Image.new('RGB', (100, 100))
 
-        db, ds_man = create_api_ds_man(sm_config=sm_config, es=es_mock,
+        db, ds_man = create_api_ds_man(es=es_mock,
                                        img_store=img_store_mock, annot_queue=action_queue_mock)
         ds_man._annotation_image_shape = MagicMock(return_value=(100, 100))
 
