@@ -12,21 +12,10 @@ wait_for() {
   echo "$2 is up"
 }
 
-source activate sm
-
 if [ "$SM_DOCKER_ENV" = "development" ]; then
   cd /opt/dev/metaspace/metaspace/engine
 else
   cd /opt/metaspace/metaspace/engine
-fi
-
-# Update conda environment if it has changed since the last run
-if [ ! -f "/opt/last-environment.yml" ] || [ "/opt/last-environment.yml" -nt "environment.yml" ] || [ "/opt/last-environment.yml" -ot "environment.yml" ]; then
-  echo "Conda env out of date - updating"
-  conda env update && cp -p environment.yml /opt/last-environment.yml
-  pip install -e .
-else
-  echo "Conda env up to date"
 fi
 
 wait_for "nc -z postgres 5432" "Postgres"

@@ -1,29 +1,67 @@
-FROM jupyter/pyspark-notebook:137a295ff71b
+FROM ubuntu:16.04
 
-USER root
+MAINTAINER Vitaly Kovalev <kovalev@embl.de>
+WORKDIR /
 
-RUN apt-get update && apt-get install -y git curl postgresql-client && apt-get clean
+ENV SPARK_DIR spark-2.3.0-bin-hadoop2.7
+ENV SPARK_HOME /root/$SPARK_DIR
+ENV JAVA_HOME /usr/lib/jvm/openjdk-8-jre-headless
 
-RUN mkdir -p /opt/metaspace /opt/data ; chown $NB_UID:$NB_GID /opt /opt/*
+COPY requirements.txt /requirements.txt
 
-USER $NB_UID
+RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
+    PIP_INSTALL="python -m pip install --upgrade" && \
+    apt-get update && \
 
-RUN conda update -n base conda
+# ----- Tools -----
+    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
+        build-essential \
+        ca-certificates \
+        cmake \
+        wget \
+        git \
+        nano \
+        && \
 
-# Prefetch dependencies before getting the full source code so Docker's image cache
-# reduces the amount that needs to be downloaded to rebuild an image after a code change
-RUN curl https://raw.githubusercontent.com/metaspace2020/metaspace/master/metaspace/engine/environment.yml -o /opt/last-environment.yml
-RUN conda env create -f /opt/last-environment.yml
+# ----- Spark -----
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
+        openjdk-8-jre-headless ca-certificates-java wget && \
+    wget -qO - http://s3-eu-west-1.amazonaws.com/sm-engine/dev/$SPARK_DIR.tar.gz | tar xz && \
 
-# The non-dev copy is not used anymore, so don't install it
-# ARG METASPACE_REPO=https://github.com/metaspace2020/metaspace.git
-# ARG METASPACE_BRANCH=master
-# RUN git clone --branch "$METASPACE_BRANCH" "$METASPACE_REPO" /opt/metaspace
+# ----- Python and Pip -----
 
+    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
+        software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
+        python3.6 \
+        python3.6-dev \
+        libsm6 libxrender1 libxext6 \
+        && \
+    wget -O ~/get-pip.py https://bootstrap.pypa.io/get-pip.py && \
+    python3.6 ~/get-pip.py && \
+    ln -s /usr/bin/python3.6 /usr/local/bin/python3 && \
+    ln -s /usr/bin/python3.6 /usr/local/bin/python && \
+    $PIP_INSTALL \
+        setuptools \
+        && \
+
+# --- Engine dependencies ---
+
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
+        git curl postgresql-client && \
+    apt-get clean -y && \
+    apt-get autoremove -y && \
+    $PIP_INSTALL \
+        -r requirements.txt \
+        && \
+    rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/*
+
+RUN mkdir -p /opt/metaspace /opt/data
 WORKDIR /opt/dev/metaspace/metaspace/engine
-
-# RUN conda env update
-
 COPY *.sh /
 
 ENTRYPOINT [ ]

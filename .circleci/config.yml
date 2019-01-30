@@ -184,10 +184,9 @@ jobs:
 
   test-engine:
     docker:
-      # includes:
-      #   - miniconda with all packages required for sm-engine
-      #   - pyspark installation
-      - image: intsco/sm-engine:0.11
+      - image: intsco/sm-engine:1.2.1
+
+      - image: redis:5.0.3
 
       - image: postgres:9.5-alpine
         environment:
@@ -209,22 +208,17 @@ jobs:
       - checkout:
           path: ~/metaspace
       - run:
-          name: Setup configuration files
+          name: Test setup
           command: |
-            cp docker/sci_test_config.json conf/config.json
-            mkdir -p logs
-            echo 'localhost:5432:sm:password\n' > ~/.pgpass
-            chmod 0600 ~/.pgpass
+            source docker/env.sh
       - run:
           name: Run unit and integration tests
           command: |
-            source docker/env.sh
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests
       - run:
           name: Upload test coverage
           command: |
-            source docker/env.sh
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             codecov --root ../.. -F engine
 
