@@ -48,6 +48,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         setuptools \
         coverage \
         codecov \
+        pysparkling \
         && \
 
 # --- Engine dependencies ---
