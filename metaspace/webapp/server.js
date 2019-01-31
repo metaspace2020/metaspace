@@ -17,10 +17,6 @@ const configureAppServer = (app) => {
 
     app.use(webpackDevMiddleware(compiler, config.devServer));
     app.use(webpackHotMiddleware(compiler));
-
-    app.set('views', __dirname);
-    app.engine('html', require('ejs').renderFile);
-    app.set('view engine', 'html');
   } else {
     const compression = require('compression');
     app.use(compression());
