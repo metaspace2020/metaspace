@@ -96,7 +96,7 @@ class Dataset(object):
         status_queue.publish({
             'ds_id': self.id,
             'status': self.status,
-            'action': action.upper(),
+            'action': action,
             'stage': stage,
             **kwargs,
         })
