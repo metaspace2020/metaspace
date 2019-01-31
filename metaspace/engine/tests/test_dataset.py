@@ -85,7 +85,7 @@ def test_dataset_notify_update_works(fill_db, sm_config, metadata):
 
     status_queue_mock.publish.assert_called_once_with({'ds_id': ds_id,
                                                        'status': DatasetStatus.FINISHED,
-                                                       'action': 'ANNOTATE',
+                                                       'action': DaemonAction.ANNOTATE,
                                                        'stage': DaemonActionStage.FINISHED})
 
 
