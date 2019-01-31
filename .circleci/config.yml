@@ -266,7 +266,6 @@ jobs:
             psql -h localhost -U sm -d sm_test < scripts/create_schema.sql
       - run:
           name: Set up and run mol-db
-          background: true
           command: |
             createdb -h localhost -U sm mol_db
             wget -qN https://s3-eu-west-1.amazonaws.com/sm-engine/testing/dumps/2019-01-28/mol_db.sql
@@ -276,7 +275,7 @@ jobs:
             conda env create -f environment.yml
             source activate mol-db
             pip install -e .
-            python app/main.py
+            gunicorn --daemon --bind 0.0.0.0:5001 app.main:application --reload
       - run:
           name: Run scientific test
           command: |
@@ -288,7 +287,7 @@ workflows:
   commit:
     jobs:
       - test-engine
-      - test-engine-sci  # uncomment for debugging
+      #- test-engine-sci  # uncomment for debugging
 #      - test-graphql
       - generate-graphql-schema
       - test-webapp:
