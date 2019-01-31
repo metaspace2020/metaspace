@@ -259,8 +259,8 @@ type Mutation {
 }
 
 type Subscription {
-  datasetStatusUpdated: DatasetStatusUpdate
-  datasetDeleted: DatasetDeletion
+  datasetStatusUpdated: DatasetStatusUpdate!
+  datasetDeleted: DatasetDeletion!
 }
 
 schema {

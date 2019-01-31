@@ -204,7 +204,7 @@
          let submitter;
          // If submitter is not the current user, we need to make a second request after finding the submitter's userId
          // to get the rest of the submitter data (groups, projects, etc.)
-         if (data.dataset.submitter.id === data.currentUser.id) {
+         if (data.currentUser != null && data.dataset.submitter.id === data.currentUser.id) {
            submitter = data.currentUser;
          } else {
            const {data: submitterData} = await this.$apollo.query({

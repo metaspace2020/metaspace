@@ -28,9 +28,10 @@ interface DatasetStatusPayload {
 }
 
 async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
-  const {ds_id, status, action, stage, ...rest} = payload;
+  const {ds_id, status, action: rawAction, stage, ...rest} = payload;
+  const action = (rawAction || '').toUpperCase() as EngineDatasetAction;
   // wait until updates are reflected in ES so that clients can refresh their data
-  const maxAttempts = 5;
+  const maxAttempts = 8;
 
   try {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
