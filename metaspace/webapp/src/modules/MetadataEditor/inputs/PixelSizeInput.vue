@@ -6,7 +6,7 @@
           :value="value.Xaxis"
           @input="val => onInput('Xaxis', val)"
         ></custom-number-input>
-        <div class="subfield-label">size on X-axis</div>
+        <div class="subfield-label">horizontal</div>
         <span class="error-msg" v-if="error && error.Xaxis">{{ error.Xaxis }}</span>
       </el-form-item>
     </el-col>
@@ -17,7 +17,7 @@
           @input="val => onInput('Yaxis', val)"
           :required="required"
         ></custom-number-input>
-        <div class="subfield-label">size on Y-axis</div>
+        <div class="subfield-label">vertical</div>
         <span class="error-msg" v-if="error && error.Yaxis">{{ error.Yaxis }}</span>
       </el-form-item>
     </el-col>

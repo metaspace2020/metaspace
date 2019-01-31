@@ -311,7 +311,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                             <div class="el-input el-input--medium">
                               <input required="required" type="text" class="el-input__inner">
                             </div>
-                            <div class="subfield-label">size on X-axis</div>
+                            <div class="subfield-label">horizontal</div>
                             <!---->
                             <!---->
                           </div>
@@ -324,7 +324,7 @@ exports[`MetadataEditor should match snapshot 1`] = `
                             <div class="el-input el-input--medium">
                               <input required="required" type="text" class="el-input__inner">
                             </div>
-                            <div class="subfield-label">size on Y-axis</div>
+                            <div class="subfield-label">vertical</div>
                             <!---->
                             <!---->
                           </div>
