@@ -5,8 +5,9 @@ WORKDIR /
 
 ENV SPARK_DIR spark-2.3.0-bin-hadoop2.7
 ENV SPARK_HOME /$SPARK_DIR
-ENV JAVA_HOME /usr/lib/jvm/openjdk-8-jre-headless
-ENV PYTHONPATH=.:$SPARK_HOME/python:$PYTHONPATH
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
+ENV PY4J_ARCH py4j-0.10.6-src.zip
+ENV PYTHONPATH=.:$SPARK_HOME/python:$SPARK_HOME/python/lib/$PY4J_ARCH:$PYTHONPATH
 
 COPY requirements.txt /requirements.txt
 
@@ -64,8 +65,8 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/*
 
-RUN mkdir -p /opt/data
-WORKDIR /root/metaspace/metaspace/engine
+RUN mkdir -p /opt/data /root/metaspace
+#WORKDIR /root/metaspace/metaspace/engine
 COPY *.sh /
 
 ENTRYPOINT [ ]

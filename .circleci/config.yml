@@ -263,9 +263,9 @@ jobs:
           name: Create and prefill the databases
           command: |
             createdb -h localhost -U sm sm_test
-            psql -U sm -h localhost -d sm_test < scripts/create_schema.sql
+            psql -h localhost -U sm -d sm_test < scripts/create_schema.sql
             wget -qN https://s3-eu-west-1.amazonaws.com/sm-engine/testing/dumps/2019-01-28/mol_db.sql
-            psql -h localhost -U mol_db -d mol_db -f mol_db.sql
+            psql -h localhost -U sm -d mol_db -f mol_db.sql
             cp docker/mol_db_conf.ini ../mol-db/conf/local.ini
       - run:
           name: Run mol db
