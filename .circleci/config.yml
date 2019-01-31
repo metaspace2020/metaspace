@@ -260,23 +260,27 @@ jobs:
             mkdir -p /tmp/isotope_storage
             tar -xvf HMDB-v2.5.tar.gz -C /tmp/isotope_storage
       - run:
-          name: Create and prefill the databases
+          name: Create engine database
           command: |
             createdb -h localhost -U sm sm_test
             psql -h localhost -U sm -d sm_test < scripts/create_schema.sql
+      - run:
+          name: Set up and run mol-db
+          background: true
+          command: |
+            createdb -h localhost -U sm mol_db
             wget -qN https://s3-eu-west-1.amazonaws.com/sm-engine/testing/dumps/2019-01-28/mol_db.sql
             psql -h localhost -U sm -d mol_db -f mol_db.sql
             cp docker/mol_db_conf.ini ../mol-db/conf/local.ini
-      - run:
-          name: Run mol db
-          background: true
-          command: |
             cd ../mol-db
+            conda env create -f environment.yml
             source activate mol-db
+            pip install -e .
             python app/main.py
       - run:
           name: Run scientific test
           command: |
+            #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             python tests/sci_test_spheroid.py -r --mock-img-store --mock-graphql-db
 
 workflows:

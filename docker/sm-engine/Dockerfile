@@ -14,7 +14,6 @@ COPY requirements.txt /requirements.txt
 RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     PIP_INSTALL="python -m pip install --upgrade" && \
     apt-get update && \
-
 # ----- Tools -----
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         build-essential \
@@ -24,15 +23,12 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         git \
         nano \
         && \
-
 # ----- Spark -----
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         openjdk-8-jre-headless ca-certificates-java wget && \
     wget -qO - http://s3-eu-west-1.amazonaws.com/sm-engine/dev/$SPARK_DIR.tar.gz | tar xz && \
-
 # ----- Python and Pip -----
-
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         software-properties-common && \
     add-apt-repository ppa:deadsnakes/ppa && \
@@ -52,9 +48,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         codecov \
         pysparkling \
         && \
-
 # --- Engine dependencies ---
-
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         git curl postgresql-client && \
@@ -63,7 +57,13 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     $PIP_INSTALL \
         -r requirements.txt \
         && \
-    rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/*
+    rm -rf /var/lib/apt/lists/* /tmp/* ~/* ~/.cache/* && \
+# --- MolDB dependencies ---
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    chmod +x Miniconda3-latest-Linux-x86_64.sh && \
+    ./Miniconda3-latest-Linux-x86_64.sh -b && \
+    ln -S -T /root/miniconda3/bin/conda /usr/local/bin/conda && \
+    ln -S -T /root/miniconda3/bin/activate /usr/local/bin/activate
 
 RUN mkdir -p /opt/data /root/metaspace
 #WORKDIR /root/metaspace/metaspace/engine
