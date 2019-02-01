@@ -162,7 +162,6 @@
        this.loadImage(this.src);
      this.parentDivWidth = this.$refs.parent.clientWidth;
      window.addEventListener('resize', this.onResize);
-     this.$el.addEventListener('click', this.paletteClickHandler);
    },
    beforeDestroy() {
      window.removeEventListener('resize', this.onResize);

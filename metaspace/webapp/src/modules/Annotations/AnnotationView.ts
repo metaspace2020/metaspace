@@ -55,12 +55,16 @@
        query: annotationQuery,
        update: (data: any) => {
          const {annotation} = data;
-         let chart = safeJsonParse(annotation.peakChartData);
-         chart.sampleData = {
-           mzs: annotation.isotopeImages.map((im: any) => im.mz),
-           ints: annotation.isotopeImages.map((im: any) => im.totalIntensity),
-         };
-         return chart;
+         if (annotation != null) {
+           let chart = safeJsonParse(annotation.peakChartData);
+           chart.sampleData = {
+             mzs: annotation.isotopeImages.map((im: any) => im.mz),
+             ints: annotation.isotopeImages.map((im: any) => im.totalIntensity),
+           };
+           return chart;
+         } else {
+           return null;
+         }
        },
        variables(this: any): any {
          return {
@@ -88,7 +92,7 @@
           datasetId: this.annotation.dataset.id
          }
        },
-       update: (data: any) => safeJsonParse(data['dataset']['acquisitionGeometry'])
+       update: (data: any) => data['dataset'] && safeJsonParse(data['dataset']['acquisitionGeometry'])
      },
 
      datasetVisibility: {
