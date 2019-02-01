@@ -18,13 +18,9 @@ from sm.engine.es_export import ESIndexManager
 
 TEST_CONFIG_PATH = 'conf/test_config.json'
 SMConfig.set_path(Path(proj_root()) / TEST_CONFIG_PATH)
+sm_config = SMConfig.get_conf(update=True)
 
-init_loggers(SMConfig.get_conf()['logs'])
-
-
-@pytest.fixture(scope='session')
-def sm_config():
-    return SMConfig.get_conf(update=True)
+init_loggers(sm_config['logs'])
 
 
 @pytest.fixture()
@@ -84,7 +80,7 @@ def pyspark_context(request):
 
 
 @pytest.fixture()
-def test_db(sm_config, request):
+def test_db(request):
     db_config = dict(**sm_config['db'])
     db_config['database'] = 'postgres'
 
@@ -115,7 +111,7 @@ def test_db(sm_config, request):
 
 
 @pytest.fixture()
-def fill_db(test_db, sm_config, metadata, ds_config):
+def fill_db(test_db, metadata, ds_config):
     upload_dt = '2000-01-01 00:00:00'
     ds_id = '2000-01-01'
     db = DB(sm_config['db'])
@@ -143,20 +139,20 @@ def fill_db(test_db, sm_config, metadata, ds_config):
 
 
 @pytest.fixture()
-def es(sm_config):
+def es():
     return Elasticsearch(hosts=["{}:{}".format(sm_config['elasticsearch']['host'],
                                                sm_config['elasticsearch']['port'])])
 
 
 @pytest.fixture()
-def es_dsl_search(sm_config):
+def es_dsl_search():
     es = Elasticsearch(hosts=["{}:{}".format(sm_config['elasticsearch']['host'],
                                              sm_config['elasticsearch']['port'])])
     return Search(using=es, index=sm_config['elasticsearch']['index'])
 
 
 @pytest.fixture()
-def sm_index(sm_config, request):
+def sm_index(request):
     es_config = sm_config['elasticsearch']
     es_man = ESIndexManager(es_config)
     es_man.delete_index(es_config['index'])
@@ -169,7 +165,7 @@ def sm_index(sm_config, request):
 
 
 @pytest.fixture()
-def mol_db(sm_config, ds_config):
+def mol_db(ds_config):
     data = {'id': 1, 'name': 'HMDB', 'version': '2016'}
     service = MagicMock()
     db = MagicMock()

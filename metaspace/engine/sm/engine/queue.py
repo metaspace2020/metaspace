@@ -385,7 +385,7 @@ class QueueConsumer(Thread):
                                                               self._config['host'], self._heartbeat)
 
     def get_message(self):
-        method, properties, body = self._channel.basic_get(queue=self._qname, no_ack=True)
+        method, properties, body = self._channel.basic_get(queue=self._qname, no_ack=False)
         if body is not None:
             msg = None
             try:
@@ -411,6 +411,8 @@ class QueueConsumer(Thread):
                     self._on_success(msg)
                 except BaseException as e:
                     self.logger.error(' [x] Failed in _on_success: {}'.format(body), exc_info=True)
+            finally:
+                self._channel.basic_ack(method.delivery_tag)
         else:
             self.logger.debug('No messages in "{}" queue'.format(self._qname))
 

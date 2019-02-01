@@ -12,6 +12,7 @@ from subprocess import check_output
 from subprocess import CalledProcessError
 import boto3
 from datetime import datetime
+import redis
 
 
 class AnnotationQueue(object):
@@ -85,6 +86,7 @@ class ClusterDaemon(object):
                                              aws_secret_access_key=self.ansible_config['aws_secret_access_key'])
         self.ec2 = self.session.resource('ec2', self.ansible_config['aws_region'])
         self.ses = self.session.client('ses', 'eu-west-1')
+        self.redis_client = redis.Redis()
 
     def _resolve_spark_master(self):
         self.logger.debug('Resolving spark master ip...')
@@ -155,7 +157,8 @@ class ClusterDaemon(object):
         return self._send_rest_request('http://{}:8080/api/v1/applications'.format(self.spark_master_public_ip))
 
     def job_running(self):
-        return self._send_rest_request('http://{}:4040/api/v1/applications'.format(self.spark_master_public_ip))
+        resp = self.redis_client.get('cluster-busy')
+        return resp is not None and resp.decode('utf-8') == 'yes'
 
     def _local(self, command, success_msg=None, failed_msg=None):
         try:

@@ -12,7 +12,7 @@ from sm.engine.tests.util import sm_config, test_db, metadata, ds_config
 
 
 @fixture
-def fill_db(test_db, sm_config, metadata, ds_config):
+def fill_db(test_db, metadata, ds_config):
     upload_dt = '2000-01-01 00:00:00'
     ds_id = '2000-01-01'
     db = DB(sm_config['db'])
@@ -24,14 +24,14 @@ def fill_db(test_db, sm_config, metadata, ds_config):
                      True, ['HMDB-v4'], ['+H', '+Na', '+K'])])
 
 
-def test_config_field_generated(sm_config, metadata, ds_config):
+def test_config_field_generated(metadata, ds_config):
     ds = Dataset(id='2000-01-01', name='ds_name', input_path='input_path', upload_dt=datetime.now(),
                  metadata=metadata, mol_dbs=['HMDB-v4'])
 
     assert ds.config == ds_config
 
 
-def test_dataset_load_existing_ds_works(fill_db, sm_config, metadata, ds_config):
+def test_dataset_load_existing_ds_works(fill_db, metadata, ds_config):
     db = DB(sm_config['db'])
     upload_dt = datetime.strptime('2000-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
     ds_id = '2000-01-01'
@@ -47,7 +47,7 @@ def test_dataset_load_existing_ds_works(fill_db, sm_config, metadata, ds_config)
     )
 
 
-def test_dataset_save_overwrite_ds_works(fill_db, sm_config, metadata, ds_config):
+def test_dataset_save_overwrite_ds_works(fill_db, metadata, ds_config):
     db = DB(sm_config['db'])
     es_mock = MagicMock(spec=ESExporter)
 
@@ -61,7 +61,7 @@ def test_dataset_save_overwrite_ds_works(fill_db, sm_config, metadata, ds_config
     es_mock.sync_dataset.assert_called_once_with(ds_id)
 
 
-def test_dataset_update_status_works(fill_db, sm_config, metadata):
+def test_dataset_update_status_works(fill_db, metadata):
     db = DB(sm_config['db'])
     es_mock = MagicMock(spec=ESExporter)
 
@@ -74,7 +74,7 @@ def test_dataset_update_status_works(fill_db, sm_config, metadata):
     assert DatasetStatus.FINISHED == Dataset.load(db, ds_id).status
 
 
-def test_dataset_notify_update_works(fill_db, sm_config, metadata):
+def test_dataset_notify_update_works(fill_db, metadata):
     status_queue_mock = MagicMock(spec=QueuePublisher)
 
     upload_dt = datetime.now()

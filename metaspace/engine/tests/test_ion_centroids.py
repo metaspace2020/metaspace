@@ -13,11 +13,11 @@ os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
 
 
 @pytest.fixture()
-def clean_isotope_storage_path(sm_config):
+def clean_isotope_storage_path():
     shutil.rmtree(sm_config['isotope_storage']['path'], ignore_errors=True)
 
 
-def test_if_not_exist_returns_valid_df(pyspark_context, sm_config, ds_config, clean_isotope_storage_path):
+def test_if_not_exist_returns_valid_df(pyspark_context, ds_config, clean_isotope_storage_path):
     isocalc = IsocalcWrapper(ds_config['isotope_generation'])
     centroids_gen = IonCentroidsGenerator(sc=pyspark_context, moldb_name='HMDB', isocalc=isocalc)
     centroids_gen._iso_gen_part_n = 1
@@ -31,7 +31,7 @@ def test_if_not_exist_returns_valid_df(pyspark_context, sm_config, ds_config, cl
     assert ion_centroids.ions_df.shape == (2, 2)
 
 
-def test_save_restore_works(pyspark_context, sm_config, ds_config, clean_isotope_storage_path):
+def test_save_restore_works(pyspark_context, ds_config, clean_isotope_storage_path):
     ion_centroids = IonCentroids(ions_df=pd.DataFrame({'ion_i': [101, 101, 102, 102],
                                                        'formula': ['H2O', 'H2O', 'Au', 'Au'],
                                                        'adduct': ['+H', '-H', '+H', '-H']}).set_index('ion_i'),
@@ -50,7 +50,7 @@ def test_save_restore_works(pyspark_context, sm_config, ds_config, clean_isotope
     assert_frame_equal(ion_centroids.centroids_df.sort_index(), ion_centroids_restored.centroids_df.sort_index())
 
 
-def test__generate_if_not_exist__new_custom_adduct(pyspark_context, sm_config, ds_config, clean_isotope_storage_path):
+def test__generate_if_not_exist__new_custom_adduct(pyspark_context, ds_config, clean_isotope_storage_path):
     isocalc = IsocalcWrapper(ds_config['isotope_generation'])
     centr_gen = IonCentroidsGenerator(sc=pyspark_context, moldb_name='HMDB', isocalc=isocalc)
     ion_centroids = IonCentroids(ions_df=pd.DataFrame({'ion_i': [0, 1],
@@ -72,7 +72,7 @@ def test__generate_if_not_exist__new_custom_adduct(pyspark_context, sm_config, d
     assert centroids_df.shape == (3 * 4, 3)
 
 
-def test_centroids_subset_ordered_by_mz(pyspark_context, sm_config, ds_config, clean_isotope_storage_path):
+def test_centroids_subset_ordered_by_mz(pyspark_context, ds_config, clean_isotope_storage_path):
     isocalc = IsocalcWrapper(ds_config['isotope_generation'])
     centr_gen = IonCentroidsGenerator(sc=pyspark_context, moldb_name='HMDB', isocalc=isocalc)
     centr_gen._iso_gen_part_n = 1

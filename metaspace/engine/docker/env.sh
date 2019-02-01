@@ -1,5 +1,5 @@
-source activate sm_engine
-cd ~/metaspace/metaspace/engine
-pip install -U pip
-pip install -U --upgrade-strategy only-if-needed .
-export PYTHONPATH=.:/root/spark-2.3.0-bin-hadoop2.7/python:$PYTHONPATH
+echo 'localhost:5432:sm:password\n' > ~/.pgpass
+chmod 0600 ~/.pgpass
+
+mkdir -p logs
+cp docker/sci_test_config.json conf/config.json
