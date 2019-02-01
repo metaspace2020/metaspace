@@ -183,7 +183,7 @@ class SMAnnotateDaemon(object):
                                              qdesc=upd_qdesc,
                                              logger=self.logger)
         self._db = DB(self._sm_config['db'])
-        self.redis_client = redis.Redis()
+        self.redis_client = redis.Redis(**self._sm_config.get('redis', {}))
 
     def _on_success(self, msg):
         ds = Dataset.load(self._db, msg['ds_id'])
@@ -205,7 +205,7 @@ class SMAnnotateDaemon(object):
         self.redis_client.set('cluster-busy', 'no')
 
     def _callback(self, msg):
-        self.redis_client.set('cluster-busy', 'yes', ex=3600*4)  # key expires in 4h
+        self.redis_client.set('cluster-busy', 'yes', ex=3600*13)  # key expires in 13h
 
         ds = Dataset.load(self._db, msg['ds_id'])
         ds.set_status(self._db, self._manager.es, DatasetStatus.ANNOTATING)

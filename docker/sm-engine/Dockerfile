@@ -22,6 +22,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         wget \
         git \
         nano \
+        netcat \
         && \
 # ----- Spark -----
     apt-get update && \
