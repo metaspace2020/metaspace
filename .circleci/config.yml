@@ -42,7 +42,12 @@ jobs:
 
   generate-graphql-schema:
     docker:
-      - image: node:8.11
+      - image: intsco/sm-webapp:0.9
+
+      - image: postgres:9.5-alpine
+        environment:
+          POSTGRES_USER: sm
+          POSTGRES_PASSWORD: password
 
     working_directory: ~/metaspace/metaspace/graphql
     steps:
@@ -61,14 +66,22 @@ jobs:
             - ~/metaspace/metaspace/graphql/node_modules
             - /usr/local/share/.cache/yarn
       - run:
-          name: Generate schema
+          name: Generate graphql JSON schema
           command: |
             mkdir -p dist
             node ./bin/generate-json-graphql-schema.js ./dist/graphql-schema.json
+      - run:
+          name: Dump SQL schema
+          command: |
+            psql -h localhost -U sm -c "CREATE ROLE postgres WITH LOGIN SUPERUSER PASSWORD 'postgres'"
+            psql -h localhost -U sm -c "CREATE DATABASE sm_test owner sm"
+            yarn run gen-binding
+            NODE_CONFIG_ENV=test node ./bin/dump-sql-schema.js ./dist/graphql_schema.sql
       - persist_to_workspace:
           root: dist
           paths:
             - graphql-schema.json
+            - graphql_schema.sql
 
   test-webapp:
     docker:
@@ -165,7 +178,7 @@ jobs:
           command: |
             export NPM_CONFIG_LOGLEVEL=warn
             cd ../graphql
-            node deref_schema.js > metadata_schema.json
+            yarn run deref-schema
             cp tests/mock_config.js config/default.js
             forever start -e api_mocks.err.log tests/api_mocks.js
             forever start -o sm-graphql.out.log -e sm-graphql.err.log server.js
@@ -212,9 +225,12 @@ jobs:
           command: |
             pip install --upgrade -r requirements.txt
             source docker/env.sh
+      - attach_workspace:
+          at: ~/workspace
       - run:
           name: Run unit and integration tests
           command: |
+            cp ~/workspace/graphql_schema.sql ./sm/engine/tests/graphql_schema.sql
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             coverage run --source=./sm/engine --omit=./sm/engine/tests/*,./tests/* -m py.test sm/engine/tests tests
       - run:
@@ -286,10 +302,12 @@ workflows:
   version: 2
   commit:
     jobs:
-      - test-engine
+      - generate-graphql-schema
+      - test-engine:
+          requires:
+            - generate-graphql-schema
       #- test-engine-sci  # uncomment for debugging
 #      - test-graphql
-      - generate-graphql-schema
       - test-webapp:
           requires:
             - generate-graphql-schema

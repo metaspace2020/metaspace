@@ -4,8 +4,8 @@ const fs = require('fs');
 const path = require('path');
 const metadataTypes = ["ims","lcms"];
 
-const minSchemaPath = "../metadata/min metadata schema.json";
-const specializedSchemasDir = "../metadata/specialised metadata";
+const minSchemaPath = path.resolve(__dirname, "../../metadata/min metadata schema.json");
+const specializedSchemasDir = path.resolve(__dirname, "../../metadata/specialised metadata");
 const metadataFileExtension = '.json';
 const metadataMappingFilename = 'metadataMapping.js';
 
