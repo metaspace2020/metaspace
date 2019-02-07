@@ -12,7 +12,7 @@ import uuid
 
 from sm.engine.db import DB
 from sm.engine.mol_db import MolecularDB
-from sm.engine.tests.mock_graphql_schema import MOCK_GRAPHQL_SCHEMA
+from sm.engine.tests.graphql_sql_schema import GRAPHQL_SQL_SCHEMA
 from sm.engine.util import proj_root, SMConfig, init_loggers
 from sm.engine.es_export import ESIndexManager
 
@@ -95,7 +95,7 @@ def test_db(request):
 
     db_config = dict(**sm_config['db'])
     db = DB(db_config, autocommit=True)
-    db.alter(MOCK_GRAPHQL_SCHEMA)
+    db.alter(GRAPHQL_SQL_SCHEMA)
     db.close()
 
     def fin():

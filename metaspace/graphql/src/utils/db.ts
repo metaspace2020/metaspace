@@ -1,43 +1,13 @@
 import 'reflect-metadata';
 import * as _ from 'lodash';
-import {
-  createConnection as createTypeORMConnection,
-  ConnectionOptions, EntityManager,
-} from 'typeorm';
-
-import config from './config';
-import {Credentials} from '../modules/auth/model';
-import {User as UserModel, User} from '../modules/user/model';
-import {Dataset, DatasetProject} from '../modules/dataset/model';
-import {Group, UserGroup} from '../modules/group/model';
-import {Project, UserProject as UserProjectModel, UserProject} from '../modules/project/model';
-
-export const DbSchemaName = 'graphql';
-
-const defaultDBConfig: ConnectionOptions = {
-  type: 'postgres',
-  host: config.db.host,
-  database: config.db.database,
-  username: config.db.user,
-  password: config.db.password,
-  schema: DbSchemaName,
-  entities: [
-    Credentials,
-    User,
-    Dataset,
-    DatasetProject,
-    Group,
-    UserGroup,
-    Project,
-    UserProject,
-  ],
-  synchronize: true,
-  logging: ['error','warn','info','log']
-};
+import {createConnection as createTypeORMConnection, EntityManager} from 'typeorm';
+import {User as UserModel} from '../modules/user/model';
+import {UserProject as UserProjectModel} from '../modules/project/model';
+import typeOrmConfig from './typeOrmConfig';
 
 export const createConnection = async () => {
   return await createTypeORMConnection({
-    ...defaultDBConfig
+    ...typeOrmConfig
   });
 };
 

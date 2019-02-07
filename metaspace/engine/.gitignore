@@ -6,3 +6,4 @@ data/*/*
 docs/_build
 docs/_static
 docs/_templates
+sm/engine/tests/graphql_schema.sql

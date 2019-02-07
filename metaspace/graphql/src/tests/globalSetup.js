@@ -1,7 +1,8 @@
 require('ts-node/register');
 const Knex = require('knex');
 const config = require('../utils/config').default;
-const {createConnection, DbSchemaName} = require('../utils/db');
+const {createConnection} = require('../utils/db');
+const {DbSchemaName} = require('../utils/typeOrmConfig');
 
 module.exports = async () => {
 

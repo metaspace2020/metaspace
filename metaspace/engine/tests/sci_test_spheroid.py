@@ -12,7 +12,7 @@ from sm.engine.db import DB
 from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import proj_root, SMConfig, create_ds_from_files, init_loggers
-from sm.engine.tests.mock_graphql_schema import MOCK_GRAPHQL_SCHEMA
+from sm.engine.tests.graphql_sql_schema import GRAPHQL_SQL_SCHEMA
 
 SEARCH_RES_SELECT = ("select m.sf, m.adduct, m.stats "
                      "from iso_image_metrics m "
@@ -137,7 +137,7 @@ class SciTester(object):
         else:
             img_store = ImageStoreServiceWrapper(self.sm_config['services']['img_service_url'])
         if mock_graphql_db:
-            self.db.alter(MOCK_GRAPHQL_SCHEMA)
+            self.db.alter(GRAPHQL_SQL_SCHEMA)
 
         manager = SMDaemonManager(db=self.db, es=ESExporter(self.db),
                                  img_store=img_store)
