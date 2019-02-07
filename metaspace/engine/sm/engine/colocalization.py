@@ -24,7 +24,7 @@ ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], sf, adduct, fdr '
 
 DATASET_CONFIG_SEL = "SELECT mol_dbs, config #>> '{isotope_generation,charge,polarity}' FROM dataset WHERE id = %s"
 
-class ColocalizationJob(object):
+class Colocalization(object):
 
     def __init__(self, db):
         self._db = db
@@ -177,9 +177,13 @@ class ColocalizationJob(object):
 
         try:
             logger.debug('Preprocessing images')
-            images = self._preprocess_images([a[0] for a in annotations])
-            ion_ids = np.array([a[1] for a in annotations])
-            fdrs = np.array([a[2] for a in annotations])
+            filtered_annotations = [a for a in annotations if a[0] is not None]
+            if not filtered_annotations:
+
+
+            images = self._preprocess_images(np.array([a[0] for a in filtered_annotations], ndmin=2, dtype=np.float32))
+            ion_ids = np.array([a[1] for a in filtered_annotations])
+            fdrs = np.array([a[2] for a in filtered_annotations])
             pca_images = PCA(min(20, images.shape[1])).fit_transform(images)
 
             logger.debug('Running cosine comparison')
@@ -231,9 +235,11 @@ class ColocalizationJob(object):
 
     def _get_existing_ds_annotations(self, ds_id, mol_db_name, image_storage_type, polarity):
         def get_ion_image(id):
-            im = self._img_store.get_image_by_id(image_storage_type, 'iso_image', id)
-            data = np.asarray(im)
-            return np.where(data[:, :, 3] != 0, data[:, :, 0], 0).ravel()
+            if id is not None:
+                im = self._img_store.get_image_by_id(image_storage_type, 'iso_image', id)
+                data = np.asarray(im)
+                return np.where(data[:, :, 3] != 0, data[:, :, 0], 0).ravel()
+            return None
 
         mol_db = MolecularDB(name=mol_db_name)
         annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db.id])
@@ -249,7 +255,6 @@ class ColocalizationJob(object):
         return list(zip(ion_images, ion_ids, fdrs))
 
     def run_coloc_job_for_existing_ds(self, ds_id):
-
         image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)
         mol_dbs, polarity = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
 
@@ -267,12 +272,19 @@ class ColocalizationJob(object):
         ion_iso_images: pyspark.rdd.RDD
         alpha_channel: np.ndarray
         """
+
         logger.info('Running colocalization job')
         polarity = ds.config['isotope_generation']['charge']['polarity']
         mols = list(ion_metrics_df[['formula','adduct']].itertuples(index=False, name=None))
         ion_id_mapping = self._get_ion_id_mapping(mols, polarity)
-        image_map = ion_iso_images.mapValues(lambda imgs: (imgs[0].toarray() * alpha_channel).ravel()).collectAsMap()
-        annotations = [(image_map[i], ion_id_mapping[(item.formula, item.adduct)], item.fdr)
+
+        def extract_image(imgs):
+            if imgs[0]:
+                return (imgs[0].toarray() * alpha_channel).ravel()
+            return None
+        image_map = ion_iso_images.mapValues(extract_image).collectAsMap()
+        annotations = [(image_map.get(i), ion_id_mapping[(item.formula, item.adduct)], item.fdr)
                        for i, item in ion_metrics_df.iterrows()]
+
         self.run_coloc_job(ds.id, mol_db_name, annotations)
 

@@ -3,7 +3,7 @@ import logging
 
 from sm.engine.util import init_loggers, SMConfig
 from sm.engine.db import DB
-from sm.engine.colocalization_job import ColocalizationJob
+from sm.engine.colocalization import Colocalization
 
 def run_coloc_jobs(ds_id, sql_where):
     assert ds_id or sql_where
@@ -25,7 +25,7 @@ def run_coloc_jobs(ds_id, sql_where):
     for i, ds_id in enumerate(ds_ids):
         try:
             logger.info(f'Running colocalization on {i+1} out of {len(ds_ids)}')
-            coloc = ColocalizationJob(db)
+            coloc = Colocalization(db)
             coloc.run_coloc_job_for_existing_ds(ds_id)
         except Exception:
             logger.error(f'Failed to run colocalization on {ds_id}', exc_info=True)
