@@ -256,7 +256,7 @@ class Colocalization(object):
         mol_db = MolecularDB(name=mol_db_name)
         annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db.id])
         sf_adducts = [(formula, adduct) for image, formula, adduct, fdr in annotation_rows]
-        ion_id_mapping = get_ion_id_mapping(sf_adducts, polarity)
+        ion_id_mapping = get_ion_id_mapping(self._db, sf_adducts, polarity)
         ion_ids = [ion_id_mapping[sf_adduct] for sf_adduct in sf_adducts]
         fdrs = [fdr for image, formula, adduct, fdr in annotation_rows]
 
