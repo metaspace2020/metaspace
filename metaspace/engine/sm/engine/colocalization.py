@@ -130,13 +130,11 @@ def _get_best_colocs(scores, labels, max_samples, min_score):
     coloc_idxs = []
     for i, cluster_id in enumerate(labels):
         pairing_scores = scores[i, :].copy()
-        pairing_scores[labels == cluster_id] = 1 # Give preference to items in the same cluster
         pairing_scores[pairing_scores < min_score] = 0 # Discard scores below threshold
         pairing_scores[i] = 0 # Ignore self-correlation
 
-        num_in_cluster = np.count_nonzero(labels == cluster_id)
         num_above_min_score = np.count_nonzero(pairing_scores)
-        num_to_keep = np.clip(num_above_min_score, num_in_cluster, max_samples)
+        num_to_keep = np.minimum(num_above_min_score, max_samples)
 
         coloc_idxs.append(list(np.argsort(pairing_scores)[::-1][:num_to_keep]))
 
@@ -204,7 +202,7 @@ def analyze_colocalization(ds_id, mol_db, annotations):
                     except Exception as err:
                         logger.warning(f'Failed to cluster {algorithm}: {err}')
 
-                colocs = _get_best_colocs(masked_scores, labels, 50, 0.3)
+                colocs = _get_best_colocs(masked_scores, labels, 100, 0.3)
 
                 sample_ion_ids = [masked_ion_ids[c[0]] for c in clusters] # This could be done better
                 coloc_annotations = list(_format_coloc_annotations(ion_ids, scores, colocs))
