@@ -28,7 +28,7 @@ export const sendRequestAccessToProjectEmail = (recipient: User, sender: User, p
   const subject = 'Request to join project';
   const text = `Dear ${recipient.name || 'METASPACE user'},
 
-${sender.name || 'A METASPACE user'} has requested to join the "${project.name}" project. You may accept or decline the request here: ${config.web_public_url}/project/${project.urlSlug || project.id}/manage
+${sender.name || 'A METASPACE user'} has requested to join the "${project.name}" project. You may accept or decline the request here: ${config.web_public_url}/project/${project.urlSlug || project.id}?tab=members
 
 Best wishes,
 METASPACE Team`;

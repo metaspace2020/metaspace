@@ -68,6 +68,9 @@
         </el-tab-pane>
       </el-tabs>
     </div>
+    <div v-if="loaded && project == null">
+      This project does not exist, or you do not have access to it.
+    </div>
   </div>
 </template>
 <script lang="ts">
