@@ -264,6 +264,8 @@ jobs:
     steps:
       - checkout:
           path: ~/metaspace
+      - attach_workspace:
+          at: ~/workspace
       - run:
           name: Test setup
           command: |
@@ -295,6 +297,7 @@ jobs:
       - run:
           name: Run scientific test
           command: |
+            cp ~/workspace/graphql_schema.sql ./sm/engine/tests/graphql_schema.sql
             #while true; do echo '---'; sleep 5; done   # uncomment this line for debugging
             python tests/sci_test_spheroid.py -r --mock-img-store --mock-graphql-db
 
@@ -311,6 +314,9 @@ workflows:
       - test-webapp:
           requires:
             - generate-graphql-schema
+      - test-engine-sci:
+          requires:
+            - generate-graphql-schema
 ## Disabled until we have time to redo these tests
 #  daily:
 #    jobs:
@@ -325,7 +331,10 @@ workflows:
 #                - feature/.*
   weekly:
     jobs:
-      - test-engine-sci
+      - generate-graphql-schema
+      - test-engine-sci:
+          requires:
+            - generate-graphql-schema
     triggers:
       - schedule:
           cron: "0 11 * * 1"
