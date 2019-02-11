@@ -12,7 +12,7 @@
     </el-row>
     <el-row id="isotope-images-container">
         <el-col :xs="24" :sm="12" :md="12" :lg="6"
-                v-for="(img, idx) in annotation.isotopeImages.filter(img => img.url !== null)"
+                v-for="(img, idx) in sortedIsotopeImages"
                 :key="idx">
             <div class="small-peak-image">
             {{ img.mz.toFixed(4) }}<br/>
@@ -20,8 +20,9 @@
                               :colormap="colormap"
                               :max-height=250
                               v-bind="imageLoaderSettings"
-                              style="overflow: hidden">
-                </image-loader>
+                              v-if="img.url !== null"
+                              style="overflow: hidden"
+                />
             </div>
         </el-col>
     </el-row>
@@ -41,11 +42,11 @@
 <script lang="ts">
 import Vue from 'vue';
 import { Component, Prop } from 'vue-property-decorator';
-import { schemeCategory10 as LegendColors } from 'd3';
 
 import ImageLoader from '../../../../components/ImageLoader.vue';
 import PlotLegend from '../PlotLegend.vue';
 import IsotopePatternPlot from '../IsotopePatternPlot.vue';
+import {sortBy} from 'lodash-es';
 
 @Component({
     name: 'diagnostics',
@@ -72,6 +73,11 @@ export default class Diagnostics extends Vue {
         return this.annotation ? [{name: 'Sample', color: this.sampleIsotopeColor, opacity: 1},
                                   {name: 'Theoretical', color: this.theorIsotopeColor, opacity: 0.6}]
                                : [];
+    }
+
+    get sortedIsotopeImages(): any[] {
+        // Usually isotope images are pre-sorted by the server, but it's not an explicit guarantee of the API
+        return sortBy(this.annotation.isotopeImages, img => img.mz);
     }
 }
 </script>
