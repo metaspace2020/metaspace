@@ -330,9 +330,14 @@ class Colocalization(object):
                        for i, item in ion_metrics_df.iterrows()
                        if image_map.get(i) is not None]
 
-        images = np.array([a[0] for a in annotations], ndmin=2, dtype=np.float32)
-        ion_ids = np.array([a[1] for a in annotations])
-        fdrs = np.array([a[2] for a in annotations])
+        if annotations:
+            images = np.array([a[0] for a in annotations], dtype=np.float32)
+            ion_ids = np.array([a[1] for a in annotations], dtype=np.int64)
+            fdrs = np.array([a[2] for a in annotations], dtype=np.float32)
+        else:
+            images = np.zeros((0, 0), dtype=np.float32)
+            ion_ids = np.zeros((0,), dtype=np.int64)
+            fdrs = np.zeros((0,), dtype=np.float32)
 
         return images, ion_ids, fdrs
 
