@@ -151,9 +151,9 @@ def _get_best_colocs(scores, labels, max_samples, min_score):
 def _format_coloc_annotations(ion_ids, scores, colocs):
     for i, js in enumerate(colocs):
         sorted_js = sorted(js, key=lambda j: -scores[i, j])
-        base_ion_id = ion_ids[i].item()
-        other_ion_ids = [ion_ids[j].item() for j in sorted_js]
-        other_ion_scores = [scores[i, j].item() for j in sorted_js]
+        base_ion_id = ion_ids.item(i)
+        other_ion_ids = [ion_ids.item(j) for j in sorted_js]
+        other_ion_scores = [scores.item((i,j)) for j in sorted_js]
 
         yield base_ion_id, other_ion_ids, other_ion_scores
 
@@ -187,6 +187,7 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
     fdrs: np.ndarray
         1D array where each item is the fdr for the corresponding row in images
     """
+    assert images.shape[0] == ion_ids.shape[0] == fdrs.shape[0]
     start = datetime.now()
 
     if len(ion_ids) < 2:
@@ -204,8 +205,8 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
     pca_sper_scores = spearmanr(pca_images.transpose())[0]  # TODO: Discard low p-value entries?
 
     for fdr in [0.05, 0.1, 0.2, 0.5]:
-        fdr_mask = np.array(fdrs) <= fdr + 0.001
-        masked_ion_ids = np.array(ion_ids)[fdr_mask].tolist()
+        fdr_mask = fdrs <= fdr + 0.001
+        masked_ion_ids = ion_ids[fdr_mask]
 
         if len(masked_ion_ids) > 1:
             logger.debug(f'Finding best colocalizations at FDR {fdr} ({len(masked_ion_ids)} annotations)')
@@ -213,7 +214,7 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
             # NOTE: Keep labels/clusters between algorithms so that if any algorithm fails to cluster,
             # it can use the labels/clusters from a previous successful run.
             # Usually cosine succeeds at clustering and PCA data fails clustering.
-            labels = [0] * len(fdr_mask)
+            labels = [0] * len(masked_ion_ids)
             clusters = []
 
             def run_alg(algorithm, scores, cluster):
@@ -228,10 +229,10 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
                         logger.warning(f'Failed to cluster {algorithm}: {err}')
 
                 colocs = _get_best_colocs(masked_scores, labels, 100, 0.3)
-                sample_ion_ids = [masked_ion_ids[c[0]] for c in clusters] # This could be done better
-                coloc_annotations = list(_format_coloc_annotations(ion_ids, scores, colocs))
+                sample_ion_ids = [masked_ion_ids.item(c[0]) for c in clusters] # This could be done better
+                coloc_annotations = list(_format_coloc_annotations(masked_ion_ids, masked_scores, colocs))
                 return ColocalizationJob(ds_id, mol_db, fdr, algorithm, start, datetime.now(),
-                                         ion_ids=masked_ion_ids, sample_ion_ids=sample_ion_ids,
+                                         ion_ids=masked_ion_ids.tolist(), sample_ion_ids=sample_ion_ids,
                                          coloc_annotations=coloc_annotations)
 
             yield run_alg('cosine', cos_scores, True)
