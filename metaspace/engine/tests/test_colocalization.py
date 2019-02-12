@@ -11,12 +11,11 @@ from sm.engine.tests.util import sm_config, test_db, metadata, ds_config, pyspar
 def test_valid_colocalization_jobs_generated():
     annotations = []
 
-    for i in range(20):
-        ion_image = np.linspace(0, 50, 50, False) % (i + 1)
-        fdr = [0.05, 0.1, 0.2, 0.5][i % 4]
-        annotations.append((ion_image, i * 4, fdr))
+    ion_images = np.array([np.linspace(0, 50, 50, False) % (i + 1) for i in range(20)])
+    ion_ids = np.array(range(20)) * 4
+    fdrs = np.array([[0.05, 0.1, 0.2, 0.5][i % 4] for i in range(20)])
 
-    jobs = list(analyze_colocalization('ds_id', 'HMDB_v4', annotations))
+    jobs = list(analyze_colocalization('ds_id', 'HMDB_v4', ion_images, ion_ids, fdrs))
 
     assert len(jobs) > 1
     assert not any(job.error for job in jobs)
