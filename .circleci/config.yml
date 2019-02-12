@@ -314,9 +314,6 @@ workflows:
       - test-webapp:
           requires:
             - generate-graphql-schema
-      - test-engine-sci:
-          requires:
-            - generate-graphql-schema
 ## Disabled until we have time to redo these tests
 #  daily:
 #    jobs:
