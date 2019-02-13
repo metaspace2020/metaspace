@@ -313,9 +313,6 @@ class Colocalization(object):
         for mol_db_name in mol_dbs:
             images, ion_ids, fdrs = self._get_existing_ds_annotations(ds_id, mol_db_name, image_storage_type, polarity)
             self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs)
-            # Release references explicitly, because normally these fields wouldn't be released until
-            # after the next iteration has already allocated its memory inside _get_existing_ds_annotations.
-            del images, ion_ids, fdrs
 
     def _get_annotations_from_new_ds(self, ds, ion_metrics_df, ion_iso_images, alpha_channel):
         polarity = ds.config['isotope_generation']['charge']['polarity']
