@@ -29,6 +29,7 @@ enum AnnotationOrderBy {
   ORDER_BY_FDR_MSM
   ORDER_BY_DATASET
   ORDER_BY_FORMULA
+  ORDER_BY_COLOCALIZATION
 }
 
 enum DatasetOrderBy {
@@ -92,12 +93,19 @@ type MolecularDatabase {
   default: Boolean!
 }
 
+type ColocalizationAlgo {
+  id: String!
+  name: String!
+}
+
 type Annotation {
   id: String!
 
   dataset: Dataset!
   sumFormula: String!
   adduct: String!
+  ion: String!
+  database: String!
   mz: Float!
   possibleCompounds: [Compound!]!
   fdrLevel: Float!
@@ -108,6 +116,15 @@ type Annotation {
   isotopeImages: [MzImage!]!
 
   peakChartData: String  # JSON
+
+  # Unfortunately Apollo's client-side cache makes it necessary to parameterize colocalizationCoeff so that its values
+  # are consistent between requests. Without this, having multiple queries with different 'colocalizedWith' filters
+  # will cause the values to interfere, e.g. browsing the Annotations page when using a `colocalizedWith` filter
+  # as well as having the "Colocalized With" section open will trigger two queries with different colocalization params
+  # in `allAnnotations`, resulting in different values of colocalizationCoeff for the same annotation.
+  # If `colocalizationCoeffFilter` is null, this will return null, allowing queries to include this field even if it's not
+  # applicable with the current set of filters. Otherwise the values must match the parent `allAnnotations`' filter.
+  colocalizationCoeff(colocalizationCoeffFilter: ColocalizationCoeffFilter): Float
 }
 
 # [min, max) interval
@@ -125,6 +142,16 @@ input AnnotationFilter {
   fdrLevel: Float
   sumFormula: String
   adduct: String
+  colocalizedWith: String         # Should be an ion string (sf+adduct+polarity). Requires DatasetFilter.datasetIds to be set to a specific dataset
+  colocalizationSamples: Boolean  # Requires DatasetFilter.datasetIds to be set to a specific dataset
+  colocalizationAlgo: String
+}
+
+input ColocalizationCoeffFilter {
+  colocalizedWith: String!
+  colocalizationAlgo: String
+  database: String
+  fdrLevel: Float!
 }
 
 type Query {
@@ -149,6 +176,8 @@ type Query {
     onlyLastVersion: Boolean=true): [MolecularDatabase!]
 
   adductSuggestions: [Adduct!]!
+
+  colocalizationAlgos: [ColocalizationAlgo!]!
 }
 
 schema {
