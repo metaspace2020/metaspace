@@ -26,3 +26,4 @@ psycopg2==2.7.1
 cherrypy<9
 pyimzML==1.2.4
 redis
+scikit-learn==0.20.2

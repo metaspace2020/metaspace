@@ -5,6 +5,7 @@ import {User} from '../modules/user/model';
 import {Dataset, DatasetProject} from '../modules/dataset/model';
 import {Group, UserGroup} from '../modules/group/model';
 import {Project, UserProject} from '../modules/project/model';
+import {ColocAnnotation, ColocJob, Ion} from '../modules/annotation/model';
 
 export const DbSchemaName = 'graphql';
 
@@ -24,6 +25,9 @@ const typeOrmConfig: ConnectionOptions = {
     UserGroup,
     Project,
     UserProject,
+    ColocJob,
+    ColocAnnotation,
+    Ion,
   ],
   synchronize: true,
   logging: ['error', 'warn', 'info', 'log'],
