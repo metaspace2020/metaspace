@@ -59,7 +59,6 @@ export interface Config {
     callback_url: string;
   };
   web_public_url: string;
-  websocket_public_url: string;
   slack: {
     webhook_url: string;
     channel: string;
@@ -75,6 +74,10 @@ export interface Config {
     aws_access_key_id: string;
     aws_secret_access_key: string;
     aws_region: string;
+  };
+  metadataLookups: {
+    colocalizationAlgos: Record<string, string>;
+    defaultColocalizationAlgo: string;
   };
 }
 
