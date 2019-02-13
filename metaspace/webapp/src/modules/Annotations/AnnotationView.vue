@@ -23,6 +23,12 @@
                 {{visibilityText}}
               </div>
             </el-popover>
+
+
+            <el-popover trigger="hover" placement="bottom">
+              <img slot="reference" src="../../assets/map-icon.svg" class="av-icon av-icon-link" @click.stop="filterColocSamples">
+              <div>Show representative spatial patterns for dataset</div>
+            </el-popover>
           </div>
         </div>
 
@@ -105,12 +111,38 @@
           <dataset-info :metadata="metadata" :currentUser="currentUser" />
         </el-collapse-item>
 
-        <el-collapse-item title="Related annotations" name="adducts">
-          <el-row style="font-size: 16px; text-align: center; margin: 10px auto;">
-            <span>All adducts for this annotation in the same dataset</span>
-          </el-row>
+        <el-collapse-item name="colocalized">
+          <div slot="title" style="display: flex; align-items: center; padding-right: 10px">
+            <span style="padding-right: 20px">
+              Colocalized annotations
+            </span>
+
+            <el-popover placement="bottom" trigger="click">
+              <colocalization-settings />
+              <div slot="reference" @click.stop="">
+                <i class="el-icon-setting" style="font-size: 20px; vertical-align: middle;"></i>
+              </div>
+            </el-popover>
+            <img src="../../assets/filter-icon.svg"
+                 title="Show in list"
+                 class="av-icon-button"
+                 @click.stop="filterColocalized"
+            />
+          </div>
+          <component v-if="activeSections.indexOf('colocalized') !== -1"
+                     :is="metadataDependentComponent('related-annotations')"
+                     query="colocalized"
+                     :annotation="annotation"
+                     :database="this.$store.getters.filter.database"
+                     :acquisitionGeometry="msAcqGeometry"
+                     :image-loader-settings="imageLoaderSettings">
+          </component>
+        </el-collapse-item>
+
+        <el-collapse-item title="Other adducts" name="adducts">
           <component v-if="activeSections.indexOf('adducts') !== -1"
-                     :is="metadataDependentComponent('adducts-info')"
+                     :is="metadataDependentComponent('related-annotations')"
+                     query="allAdducts"
                      :annotation="annotation"
                      :database="this.$store.getters.filter.database"
                      :acquisitionGeometry="msAcqGeometry"
@@ -127,8 +159,8 @@
  export default AnnotationView;
 </script>
 
-<style lang="scss">
-  .av-header {
+<style scoped lang="scss">
+  /deep/ .av-header {
     text-align: center !important;
     cursor: default !important;
     font: 24px 'Roboto', sans-serif;
@@ -213,5 +245,18 @@
  #annot-img-collapse .el-collapse-item__header>span {
    display: inline-flex;
  }
+
+  .av-icon-button {
+    display: inline-block;
+    box-sizing: border-box;
+    margin-left: 20px;
+    width: 20px;
+    height: 20px;
+    font-size: 24px;
+  }
+
+  .av-icon-link {
+    cursor: pointer;
+  }
 
 </style>

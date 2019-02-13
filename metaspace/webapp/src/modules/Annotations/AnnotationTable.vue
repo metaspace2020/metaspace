@@ -115,8 +115,10 @@
       <el-table-column property="msmScore"
                        label="MSM"
                        sortable="custom"
-                       :formatter="formatMSM"
                        min-width="60">
+        <template slot-scope="props">
+          <span>{{formatMSM(props.row)}}</span>
+        </template>
       </el-table-column>
 
       <el-table-column property="fdrLevel"
@@ -125,7 +127,20 @@
                        sortable="custom"
                        min-width="40">
         <template slot-scope="props">
-          <span class="fdr-span"> {{props.row.fdrLevel * 100}}% </span>
+          <span> {{props.row.fdrLevel * 100}}% </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column v-if="!hidden('ColocalizationCoeff')"
+                       property="colocalizationCoeff"
+                       label="Coloc."
+                       class-name="coloc-cell"
+                       sortable="custom"
+                       min-width="40">
+        <template slot-scope="props">
+          <span v-if="props.row.colocalizationCoeff != null">
+            {{(props.row.colocalizationCoeff).toFixed(2)}}
+          </span>
         </template>
       </el-table-column>
 
@@ -182,9 +197,20 @@
  import Vue from 'vue';
  import FileSaver from 'file-saver';
  import formatCsvRow from '../../lib/formatCsvRow';
+ import {invert} from 'lodash-es';
+ import {createQuantileColormap} from '../../lib/createColormap';
 
  // 38 = up, 40 = down, 74 = j, 75 = k
  const KEY_TO_ACTION = {38: 'up', 75: 'up', 40: 'down', 74: 'down'};
+
+ const SORT_ORDER_TO_COLUMN = {
+   ORDER_BY_MZ: 'mz',
+   ORDER_BY_MSM: 'msmScore',
+   ORDER_BY_FDR_MSM: 'fdrLevel',
+   ORDER_BY_FORMULA: 'sumFormula',
+   ORDER_BY_COLOCALIZATION: 'colocalizationCoeff'
+ };
+ const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN);
 
  export default {
    name: 'annotation-table',
@@ -198,7 +224,8 @@
        pageSizes: [15, 20, 25, 30],
        isExporting: false,
        exportProgress: 0,
-       totalCount: 0
+       totalCount: 0,
+       csvChunkSize: 1000,
      }
    },
    mounted() {
@@ -239,44 +266,29 @@
      },
 
      queryVariables() {
-       const {annotationFilter, datasetFilter, ftsQuery} = this.gqlFilter;
+       const filter = this.$store.getters.gqlAnnotationFilter;
+       const dFilter = this.$store.getters.gqlDatasetFilter;
+       const colocalizationCoeffFilter = this.$store.getters.gqlColocalizationFilter;
+       const query = this.$store.getters.ftsQuery;
 
        return {
-         filter: annotationFilter,
-         dFilter: datasetFilter,
-         query: ftsQuery,
+         filter, dFilter, query, colocalizationCoeffFilter,
          orderBy: this.orderBy,
          sortingOrder: this.sortingOrder,
          offset: (this.currentPage - 1) * this.recordsPerPage,
-         limit: this.recordsPerPage
+         limit: this.recordsPerPage,
        };
      },
 
      tableSort() {
-       let by = this.orderBy,
-           order = this.sortingOrder.toLowerCase(),
-           prop = 'msmScore';
-       if (by == 'ORDER_BY_MZ')
-         prop = 'mz';
-       else if (by == 'ORDER_BY_MSM')
-         prop = 'msmScore';
-       else if (by == 'ORDER_BY_FDR_MSM')
-         prop = 'fdrLevel';
-       else if (by == 'ORDER_BY_FORMULA')
-         prop = 'sumFormula';
-       return {prop, order};
+       return {
+         prop: SORT_ORDER_TO_COLUMN[this.orderBy] || 'msmScore',
+         order: this.sortingOrder.toLowerCase(),
+       };
      },
 
      numberOfPages () {
        return Math.ceil(this.totalCount / this.recordsPerPage);
-     },
-
-     gqlFilter () {
-       return {
-         annotationFilter: this.$store.getters.gqlAnnotationFilter,
-         datasetFilter: this.$store.getters.gqlDatasetFilter,
-         ftsQuery: this.$store.getters.ftsQuery
-       };
      },
 
      currentPage: {
@@ -362,14 +374,20 @@
 
      renderMolFormula,
      getRowClass ({row}) {
-       if (row.fdrLevel <= 0.051)
-         return 'fdr-5';
-       else if (row.fdrLevel <= 0.101)
-         return 'fdr-10';
-       else if (row.fdrLevel <= 0.201)
-         return 'fdr-20';
-       else
-         return 'fdr-50';
+       const {fdrLevel, colocalizationCoeff} = row;
+       const fdrClass =
+         fdrLevel <= 0.051 ? 'fdr-5'
+         : fdrLevel <= 0.101 ? 'fdr-10'
+         : fdrLevel <= 0.201 ? 'fdr-20'
+         : 'fdr-50';
+       const colocClass =
+         colocalizationCoeff == null ? ''
+         : colocalizationCoeff >= 0.949 ? 'coloc-95'
+         : colocalizationCoeff >= 0.899 ? 'coloc-90'
+         : colocalizationCoeff >= 0.799 ? 'coloc-80'
+         : 'coloc-50';
+
+       return `${fdrClass} ${colocClass}`;
      },
      formatMSM: (row, col) => row.msmScore.toFixed(3),
      formatMZ: (row, col) => row.mz.toFixed(4),
@@ -385,17 +403,9 @@
          return;
        }
 
-       let orderBy = this.orderBy;
-       if (event.prop == 'msmScore')
-         orderBy = 'ORDER_BY_MSM';
-       else if (event.prop == 'mz')
-         orderBy = 'ORDER_BY_MZ';
-       else if (event.prop == 'fdrLevel')
-         orderBy = 'ORDER_BY_FDR_MSM';
-       else if (event.prop == 'sumFormula')
-         orderBy = 'ORDER_BY_FORMULA';
        this.$store.commit('setSortOrder', {
-         by: orderBy, dir: event.order.toUpperCase()
+         by: COLUMN_TO_SORT_ORDER[event.prop] || this.orderBy,
+         dir: event.order.toUpperCase()
        });
      },
 
@@ -475,13 +485,17 @@
        this.updateFilter({mz: row.mz.toFixed(4)});
      },
 
-     startExport () {
-       const chunkSize = 1000;
+     async startExport () {
+       const chunkSize = this.csvChunkSize;
+       const includeColoc = !this.hidden('ColocalizationCoeff');
        let csv = csvExportHeader();
-
-       csv += formatCsvRow(['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
-               'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
-               'moleculeNames', 'moleculeIds']);
+       const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
+         'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
+         'moleculeNames', 'moleculeIds'];
+       if (includeColoc) {
+         columns.push('colocalizationCoeff');
+       }
+       csv += formatCsvRow(columns);
 
        function databaseId(compound) {
          return compound.information[0].databaseId;
@@ -489,8 +503,8 @@
 
        function formatRow(row) {
          const {sumFormula, adduct, msmScore, mz,
-                rhoSpatial, rhoSpectral, rhoChaos, fdrLevel} = row;
-         return formatCsvRow([
+                rhoSpatial, rhoSpectral, rhoChaos, fdrLevel, colocalizationCoeff} = row;
+         const cells = [
            row.dataset.groupApproved && row.dataset.group ? row.dataset.group.name : '',
            row.dataset.name,
            row.dataset.id,
@@ -498,51 +512,35 @@
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
            row.possibleCompounds.map(m => m.name).join(', '),
            row.possibleCompounds.map(databaseId).join(', ')
-         ]);
-       }
-
-       function writeCsvChunk(rows) {
-         for (let row of rows) {
-           csv += formatRow(row);
+         ];
+         if (includeColoc) {
+           cells.push(colocalizationCoeff);
          }
+
+         return formatCsvRow(cells);
        }
 
+       const queryVariables = {...this.queryVariables};
+       let offset = 0;
        this.isExporting = true;
-       let self = this;
 
-       function finish() {
-         if (!self.isExporting)
-           return;
+       while (this.isExporting && offset < this.totalCount) {
+         const resp = await this.$apollo.query({
+           query: tableExportQuery,
+           variables: {...queryVariables, limit: chunkSize, offset},
+         });
+         this.exportProgress = offset / this.totalCount;
+         offset += chunkSize;
+         csv += resp.data.annotations.map(formatRow).join('');
+       }
 
-         self.isExporting = false;
-         self.exportProgress = 0;
+       if (this.isExporting) {
+         this.isExporting = false;
+         this.exportProgress = 0;
 
-         let blob = new Blob([csv], {type: 'text/csv; charset="utf-8"'});
+         let blob = new Blob([csv], { type: 'text/csv; charset="utf-8"' });
          FileSaver.saveAs(blob, "metaspace_annotations.csv");
        }
-
-       const v = {
-         ...this.queryVariables,
-         limit: chunkSize,
-       };
-       let offset = 0;
-
-       function runExport() {
-         const variables = Object.assign(v, {offset});
-         self.$apollo.query({query: tableExportQuery, variables})
-             .then(resp => {
-           self.exportProgress = offset / self.totalCount;
-           offset += chunkSize;
-           writeCsvChunk(resp.data.annotations);
-           if (!self.isExporting || offset >= self.totalCount) {
-             finish();
-           } else {
-             window.setTimeout(runExport, 50);
-           }
-         })
-       }
-
-       runExport();
      },
 
      abortExport() {
@@ -582,19 +580,19 @@
    background-color: transparent;
  }
 
- .el-table__body tr.fdr-5 > td.fdr-cell, .fdr-legend.fdr-5 {
+ .el-table__body tr.fdr-5 > td.fdr-cell, .fdr-legend.fdr-5, .el-table__body tr.coloc-95 > td.coloc-cell {
    background-color: #c8ffc8;
  }
 
-.el-table__body tr.fdr-10 > td.fdr-cell, .fdr-legend.fdr-10 {
+.el-table__body tr.fdr-10 > td.fdr-cell, .fdr-legend.fdr-10, .el-table__body tr.coloc-90 > td.coloc-cell {
    background-color: #e0ffe0;
  }
 
-.el-table__body tr.fdr-20 > td.fdr-cell, .fdr-legend.fdr-20 {
+.el-table__body tr.fdr-20 > td.fdr-cell, .fdr-legend.fdr-20, .el-table__body tr.coloc-80 > td.coloc-cell {
    background-color: #ffe;
  }
 
- .el-table__body tr.fdr-50 > td.fdr-cell, .fdr-legend.fdr-50 {
+ .el-table__body tr.fdr-50 > td.fdr-cell, .fdr-legend.fdr-50, .el-table__body tr.coloc-50 > td.coloc-cell {
    background-color: #fff5e0;
  }
 
@@ -660,12 +658,9 @@
    padding: 0;
  }
 
- .fdr-cell > .cell {
+ .fdr-cell > .cell, .coloc-cell > .cell {
    justify-content: center;
- }
-
- .fdr-span {
-   padding-right: 6px;
+   padding: 0 10px !important;
  }
 
  .el-table__empty-block {

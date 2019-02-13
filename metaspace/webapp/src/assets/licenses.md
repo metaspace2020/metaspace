@@ -3,6 +3,10 @@
     https://www.flaticon.com/free-icon/square-graphic-of-four-lines-and-four-circles-on-the-corners_32399
 
 
+* map-icon.svg
+    Flaticon Basic License (attribution required, author: Freepik)
+    https://www.flaticon.com/free-icon/map_1198515
+    
 * padlock-icon.svg
     Flaticon Basic License (attribution required) 
     Author: [dave-gandy](https://www.flaticon.com/authors/dave-gandy)

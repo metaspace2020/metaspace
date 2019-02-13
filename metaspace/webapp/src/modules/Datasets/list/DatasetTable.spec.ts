@@ -56,7 +56,6 @@ describe('DatasetTable', () => {
       })
     });
     const wrapper = mount(DatasetTable, { store, router, provide, sync: false });
-    await wrapper.vm.$data.loadingPromise;
     await Vue.nextTick();
 
     expect(wrapper).toMatchSnapshot();

@@ -70,6 +70,8 @@ function updateFilter(state, filter, routerAction = null) {
 
 export default {
   updateFilter (state, filter) {
+    // TODO: Stop using updateFilter for adding/removing filters, as it makes reacting to added/removed filters
+    // much more difficult
     updateFilter(state, filter);
   },
 
@@ -78,14 +80,51 @@ export default {
   },
 
   addFilter (state, name) {
-    const initialValue = getFilterInitialValue(name, state.filterLists);
+    const oldFilter = decodeParams(state.route, state.filterLists);
+    const filtersToAdd = [name];
+    const filtersToRemove = [];
 
-    // FIXME: is there any way to access getters here?
-    let filter = Object.assign(decodeParams(state.route, state.filterLists),
-                               {[name]: initialValue});
+    // Check for required additional filters & conflicting filters
+    (FILTER_SPECIFICATIONS[name].dependsOnFilters || []).forEach(key => {
+      if (oldFilter[key] === undefined) {
+        filtersToAdd.push(key);
+      }
+    });
+    (FILTER_SPECIFICATIONS[name].conflictsWithFilters || []).forEach(key => {
+      if (oldFilter[key] !== undefined) {
+        filtersToRemove.push(key);
+      }
+    });
 
-    state.orderedActiveFilters.push(name);
-    pushURL(state, filter);
+    const newFilter = {...oldFilter};
+    filtersToAdd.forEach(key => {
+      newFilter[key] = getFilterInitialValue(key, state.filterLists);
+    });
+    filtersToRemove.forEach(key => {
+      newFilter[key] = undefined;
+    });
+    const newActive = without([...state.orderedActiveFilters, ...filtersToAdd], ...filtersToRemove);
+    sortFilterKeys(newActive);
+
+    state.orderedActiveFilters = newActive;
+    pushURL(state, newFilter);
+  },
+
+  removeFilter (state, name) {
+    const oldFilter = decodeParams(state.route, state.filterLists);
+    const filtersToRemove = [name];
+
+    // Check for dependent filters that should also be removed
+    Object.keys(oldFilter).forEach(key => {
+      const {dependsOnFilters} = FILTER_SPECIFICATIONS[key];
+      if (dependsOnFilters != null && dependsOnFilters.includes(name)) {
+        filtersToRemove.push(key);
+      }
+    });
+
+    const newFilter = omit(oldFilter, filtersToRemove);
+    pull(state.orderedActiveFilters, ...filtersToRemove);
+    pushURL(state, newFilter);
   },
 
   updateFilterOnNavigate(state, to) {
@@ -157,6 +196,14 @@ export default {
       query: sort !== defaultSort
         ? { ...state.route.query, sort }
         : omit(state.route.query, 'sort'),
+    });
+  },
+
+  setColocalizationAlgo(state, colocalizationAlgo) {
+    router.replace({
+      query: colocalizationAlgo != null
+        ? { ...state.route.query, alg: colocalizationAlgo }
+        : omit(state.route.query, 'alg'),
     });
   },
 

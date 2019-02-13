@@ -1,0 +1,208 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`AnnotationTable should be able to export a CSV 1`] = `
+"# URL: http://localhost/
+\\"group\\",\\"datasetName\\",\\"datasetId\\",\\"formula\\",\\"adduct\\",\\"mz\\",\\"msm\\",\\"fdr\\",\\"rhoSpatial\\",\\"rhoSpectral\\",\\"rhoChaos\\",\\"moleculeNames\\",\\"moleculeIds\\",\\"colocalizationCoeff\\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"1\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0.840809\\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"2\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0.840809\\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"3\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0.840809\\"
+\\"Laboratory of European Molecular Biology\\",\\"Untreated_3_434\\",\\"2019-02-12_15h55m06s\\",\\"C19H18N2O7S2\\",\\"M-H\\",\\"4\\",\\"0.657486\\",\\"0.1\\",\\"0.686362\\",\\"0.959122\\",\\"0.998756\\",\\"C.I. Food Red 6\\",\\"HMDB0032738\\",\\"0.840809\\"
+"
+`;
+
+exports[`AnnotationTable should match snapshot 1`] = `
+<div class="el-row">
+  <div class="el-table el-table--fit el-table--striped el-table--border el-table--scrollable-x el-table--enable-row-hover el-table--enable-row-transition el-table--mini" id="annot-table" element-loading-text="Loading results from the server..." tabindex="1"
+    mock-v-loading="false">
+    <div class="hidden-columns">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+    <div class="el-table__header-wrapper">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__header" style="width: 560px;">
+        <colgroup>
+          <col name="el-table_1_column_1" width="95">
+          <col name="el-table_1_column_2" width="140">
+          <col name="el-table_1_column_3" width="120">
+          <col name="el-table_1_column_4" width="65">
+          <col name="el-table_1_column_5" width="60">
+          <col name="el-table_1_column_6" width="40">
+          <col name="el-table_1_column_7" width="40">
+        </colgroup>
+        <thead class="">
+          <tr class="">
+            <th colspan="1" rowspan="1" class="el-table_1_column_1     is-leaf">
+              <div class="cell">Lab</div>
+            </th>
+            <th colspan="1" rowspan="1" class="el-table_1_column_2     is-leaf">
+              <div class="cell">Dataset</div>
+            </th>
+            <th colspan="1" rowspan="1" class="el-table_1_column_3     is-leaf is-sortable">
+              <div class="cell">Annotation<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+            </th>
+            <th colspan="1" rowspan="1" class="el-table_1_column_4     is-leaf is-sortable">
+              <div class="cell">m/z<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+            </th>
+            <th colspan="1" rowspan="1" class="el-table_1_column_5 descending    is-leaf is-sortable">
+              <div class="cell">MSM<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+            </th>
+            <th colspan="1" rowspan="1" class="el-table_1_column_6   fdr-cell  is-leaf is-sortable">
+              <div class="cell">FDR<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+            </th>
+            <th colspan="1" rowspan="1" class="el-table_1_column_7   coloc-cell  is-leaf is-sortable">
+              <div class="cell">Coloc.<span class="caret-wrapper"><i class="sort-caret ascending"></i><i class="sort-caret descending"></i></span></div>
+            </th>
+          </tr>
+        </thead>
+      </table>
+    </div>
+    <div class="el-table__body-wrapper is-scrolling-left">
+      <table cellspacing="0" cellpadding="0" border="0" class="el-table__body" style="width: 560px;">
+        <colgroup>
+          <col name="el-table_1_column_1" width="95">
+          <col name="el-table_1_column_2" width="140">
+          <col name="el-table_1_column_3" width="120">
+          <col name="el-table_1_column_4" width="65">
+          <col name="el-table_1_column_5" width="60">
+          <col name="el-table_1_column_6" width="40">
+          <col name="el-table_1_column_7" width="40">
+        </colgroup>
+        <tbody>
+          <tr class="el-table__row current-row fdr-10 coloc-80">
+            <td rowspan="1" colspan="1" class="el-table_1_column_1  ">
+              <div class="cell">
+                <div class="cell-wrapper"><span class="cell-span"><span>Laboratory of European Molecular Biology</span></span>
+                  <img src="../../assets/filter-icon.png" title="Limit results to this group">
+                </div>
+              </div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_2  ">
+              <div class="cell">
+                <div class="cell-wrapper"><span class="cell-span">
+                Untreated_3_434
+            </span>
+                  <img src="../../assets/filter-icon.png" title="Limit results to this dataset">
+                </div>
+              </div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_3  ">
+              <div class="cell">
+                <mock-el-popover trigger="hover" placement="right">
+                  <div slot-key="default">
+                    <div>Candidate molecules (1):
+                      <ul>
+                        <li>
+                          C.I. Food Red 6
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                  <div slot-key="reference">
+                    <div class="cell-wrapper"><span class="sf cell-span">[C<sub>19</sub>H<sub>18</sub>N<sub>2</sub>O<sub>7</sub>S<sub>2</sub> – H]⁺</span>
+                      <img src="../../assets/filter-icon.png" title="Limit results to this molecular formula">
+                    </div>
+                  </div>
+                </mock-el-popover>
+              </div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_4  ">
+              <div class="cell">
+                <div class="cell-wrapper"><span class="cell-span">
+                449.0482
+            </span>
+                  <img src="../../assets/filter-icon.png" title="Limit results to this m/z (with 5 ppm tolerance)">
+                </div>
+              </div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_5  ">
+              <div class="cell"><span>0.657</span></div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_6  fdr-cell">
+              <div class="cell"><span> 10% </span></div>
+            </td>
+            <td rowspan="1" colspan="1" class="el-table_1_column_7  coloc-cell">
+              <div class="cell"><span>
+          0.84
+        </span></div>
+            </td>
+          </tr>
+          <!---->
+        </tbody>
+      </table>
+      <!---->
+      <!---->
+    </div>
+    <!---->
+    <!---->
+    <!---->
+    <!---->
+    <div class="el-table__column-resize-proxy" style="display: none;"></div>
+  </div>
+  <div id="annot-table-controls">
+    <div>
+      <div class="el-pagination">
+        <button type="button" disabled="disabled" class="btn-prev">
+          <i class="el-icon el-icon-arrow-left"></i>
+        </button>
+        <ul class="el-pager">
+          <li class="number active">1</li>
+          <!---->
+          <!---->
+          <!---->
+        </ul>
+        <button type="button" disabled="disabled" class="btn-next">
+          <i class="el-icon el-icon-arrow-right"></i>
+        </button><span class="el-pagination__sizes"><div class="el-select el-select--mini"><!----><div class="el-input el-input--mini el-input--suffix"><!----><input type="text" readonly="readonly" autocomplete="off" placeholder="请选择" class="el-input__inner"><!----><span class="el-input__suffix"><span class="el-input__suffix-inner"><i class="el-select__caret el-input__icon el-icon-arrow-up"></i><!----></span>
+        <!---->
+        </span>
+        <!---->
+      </div>
+      <div class="el-select-dropdown el-popper" style="display: none;">
+        <div class="el-scrollbar" style="">
+          <div class="el-select-dropdown__wrap el-scrollbar__wrap el-scrollbar__wrap--hidden-default">
+            <ul class="el-scrollbar__view el-select-dropdown__list">
+              <!---->
+              <li class="el-select-dropdown__item selected"><span>15条/页</span></li>
+              <li class="el-select-dropdown__item"><span>20条/页</span></li>
+              <li class="el-select-dropdown__item"><span>25条/页</span></li>
+              <li class="el-select-dropdown__item"><span>30条/页</span></li>
+            </ul>
+          </div>
+          <div class="el-scrollbar__bar is-horizontal">
+            <div class="el-scrollbar__thumb" style="transform: translateX(0%); -webkit-transform: translateX(0%);"></div>
+          </div>
+          <div class="el-scrollbar__bar is-vertical">
+            <div class="el-scrollbar__thumb" style="transform: translateY(0%); -webkit-transform: translateY(0%);"></div>
+          </div>
+        </div>
+        <!---->
+      </div>
+    </div>
+    </span>
+  </div>
+  <div id="annot-count">
+    <b>1</b> matching record
+  </div>
+  <div style="padding-top: 10px;">
+    <div class="fdr-legend-header">FDR levels: </div>
+    <div class="fdr-legend fdr-5">5%</div>
+    <div class="fdr-legend fdr-10">10%</div>
+    <div class="fdr-legend fdr-20">20%</div>
+    <div class="fdr-legend fdr-50">50%</div>
+  </div>
+</div>
+<div>
+  <button type="button" class="el-button export-btn el-button--default">
+    <!---->
+    <!----><span>
+        Export to CSV
+      </span></button>
+</div>
+</div>
+</div>
+`;
