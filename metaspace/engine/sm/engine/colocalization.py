@@ -167,8 +167,9 @@ def _downscale_image_if_required(img, num_annotations):
     if zoom_factor > 1:
         return img
     with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', '.*the output shape of zoom\\(\\) is calculated with round\\(\\) '
-                                          'instead of int\\(\\).*')
+        #ignore "UserWarning: From scipy 0.13.0, the output shape of zoom() is calculated with round() instead of int()
+        # - for these inputs the size of the returned array has changed."
+        warnings.filterwarnings('ignore', '.*the output shape of zoom.*')
         return zoom(img, zoom_factor)
 
 
@@ -312,6 +313,9 @@ class Colocalization(object):
         for mol_db_name in mol_dbs:
             images, ion_ids, fdrs = self._get_existing_ds_annotations(ds_id, mol_db_name, image_storage_type, polarity)
             self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs)
+            # Release references explicitly, because normally these fields wouldn't be released until
+            # after the next iteration has already allocated its memory inside _get_existing_ds_annotations.
+            del images, ion_ids, fdrs
 
     def _get_annotations_from_new_ds(self, ds, ion_metrics_df, ion_iso_images, alpha_channel):
         polarity = ds.config['isotope_generation']['charge']['polarity']
