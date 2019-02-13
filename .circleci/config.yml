@@ -57,6 +57,12 @@ jobs:
           keys:
             - graphql-yarn-cache-{{checksum "yarn.lock"}}
       - run:
+          name: Install build environment for bcrypt npm package
+          command: |
+            # This is required because alpine images use musl instead of glibc, and bcrypt doesn't publish prebuild musl packages
+            # More info: https://github.com/kelektiv/node.bcrypt.js/wiki/Installation-Instructions#alpine-linux-based-images
+            apk --no-cache add --virtual builds-deps build-base python
+      - run:
           name: Install npm packages
           command: |
             yarn install --frozen-lockfile
