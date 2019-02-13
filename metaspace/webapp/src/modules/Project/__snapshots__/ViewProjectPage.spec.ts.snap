@@ -47,6 +47,7 @@ exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
       </div>
     </div>
   </div>
+  <!---->
 </div>
 `;
 
@@ -114,6 +115,7 @@ exports[`ViewProjectPage members tab should match snapshot (invited) 1`] = `
       </div>
     </div>
   </div>
+  <!---->
 </div>
 `;
 
@@ -367,6 +369,7 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
       </div>
     </div>
   </div>
+  <!---->
 </div>
 `;
 
@@ -410,6 +413,7 @@ exports[`ViewProjectPage members tab should match snapshot (member) 1`] = `
       </div>
     </div>
   </div>
+  <!---->
 </div>
 `;
 
@@ -458,6 +462,7 @@ exports[`ViewProjectPage members tab should match snapshot (non-member) 1`] = `
       </div>
     </div>
   </div>
+  <!---->
 </div>
 `;
 
@@ -550,5 +555,6 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
       </div>
     </div>
   </div>
+  <!---->
 </div>
 `;
