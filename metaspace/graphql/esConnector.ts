@@ -4,12 +4,75 @@
 import {UserProjectRoleOptions as UPRO} from './src/modules/project/model';
 import * as elasticsearch from 'elasticsearch';
 import * as sprintf from 'sprintf-js';
-import * as config from 'config';
+import config from './src/utils/config';
 import {datasetFilters} from './datasetFilters.js';
 import {logger} from './utils';
+import {ContextUser, UserProjectRoles} from './src/context';
+import {AnnotationFilter, AnnotationOrderBy, DatasetFilter, DatasetOrderBy, SortingOrder} from './src/binding';
 
 const ES_LIMIT_MAX = 50000;
 
+type DocType = 'dataset' | 'annotation';
+
+export interface ESDataset {
+  _source: ESDatasetSource;
+}
+
+export interface ESAnnotation {
+  _id: string;
+  _source: ESAnnotationSource;
+}
+
+export interface ESDatasetSource {
+  ds_id: string;
+  ds_name: string;
+  ds_upload_dt: string;
+  ds_config: any;
+  ds_meta: any;
+  ds_status: string;
+  ds_input_path: string;
+  ds_is_public: boolean;
+  ds_mol_dbs: string[];
+  ds_adducts: string[];
+  ds_acq_geometry: any;
+  ds_submitter_id: string;
+  ds_submitter_name: string;
+  ds_submitter_email: string;
+  ds_group_id: string | null;
+  ds_group_name: string | null;
+  ds_group_short_name: string | null;
+  ds_group_approved: boolean;
+  ds_project_ids?: string[];
+  annotation_counts: any[];
+}
+
+export interface ESAnnotationSource extends ESDatasetSource {
+  job_id: number;
+  db_name: string;
+  db_version: any;
+
+  sf: string;
+  adduct: string;
+  sf_adduct: string;
+  polarity: '-'|'+';
+  ion_add_pol: string;
+
+  mz: number;
+  centroid_mzs: number[];
+  iso_image_ids: (string|null)[];
+  total_iso_ints: number[];
+  min_iso_ints: number[];
+  max_iso_ints: number[];
+
+  chaos: number;
+  image_corr: number;
+  pattern_match: number;
+  fdr: number;
+  msm: number;
+  comp_ids: string[];
+  comp_names: string[];
+
+}
 
 const esConfig = () => {
   return {
@@ -21,15 +84,15 @@ const esConfig = () => {
 const esIndex = config.elasticsearch.index;
 const es = new elasticsearch.Client(esConfig());
 
-function esFormatMz(mz) {
+function esFormatMz(mz: number) {
   // transform m/z into a string according to sm.engine.es_export;
   // add extra 2 digits after decimal place for search queries
   return sprintf.sprintf("%012.6f", mz);
 }
 
-function esSort(orderBy, sortingOrder) {
+function esSort(orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: SortingOrder | null) {
   // default order
-  let order = 'asc';
+  let order: 'asc' | 'desc' = 'asc';
   if (orderBy === 'ORDER_BY_MSM' || orderBy === 'ORDER_BY_DATE')
     order = 'desc';
 
@@ -38,8 +101,8 @@ function esSort(orderBy, sortingOrder) {
   else if (sortingOrder === 'ASCENDING')
     order = 'asc';
 
-  const sortTerm = (field, order) => {
-    const obj = {};
+  const sortTerm = (field: string, order: 'asc' | 'desc') => {
+    const obj: any = {};
     // unmapped_type to avoid exceptions in ES when where is nothing to sort
     obj[field] = { order: order, unmapped_type: 'string' };
     return obj;
@@ -64,7 +127,7 @@ function esSort(orderBy, sortingOrder) {
     return [sortTerm('ds_name', order)];
 }
 
-function constructRangeFilter(field, interval) {
+function constructRangeFilter(field: keyof ESAnnotationSource, interval: {min: number|string, max: number|string}) {
   return {
     range: {
       [field]: {
@@ -75,7 +138,7 @@ function constructRangeFilter(field, interval) {
   };
 }
 
-function constructTermOrTermsFilter(field, valueOrValues) {
+function constructTermOrTermsFilter(field: keyof ESAnnotationSource, valueOrValues: any) {
   if (Array.isArray(valueOrValues)) {
     return { terms: { [field]: valueOrValues } };
   } else {
@@ -83,14 +146,14 @@ function constructTermOrTermsFilter(field, valueOrValues) {
   }
 }
 
-const constructAuthFilters = (user, userProjectRoles) => {
+const constructAuthFilters = (user: ContextUser | null, userProjectRoles: UserProjectRoles) => {
 
   // (!) Authorisation checks
   if (user != null && user.role === 'admin') {
     // Admins can see everything - don't filter
     return []
   } else if (user != null && user.id != null) {
-    const should = [
+    const should: any[] = [
       { term: { ds_is_public: true } },
       { term: { ds_submitter_id: user.id } },
     ];
@@ -106,7 +169,7 @@ const constructAuthFilters = (user, userProjectRoles) => {
       });
     }
     const visibleProjectIds = Object.entries(userProjectRoles || [])
-                                    .filter(([id, role]) => [UPRO.MEMBER, UPRO.MANAGER].includes(role))
+                                    .filter(([id, role]) => ([UPRO.MEMBER, UPRO.MANAGER] as any[]).includes(role))
                                     .map(([id, role]) => id);
     if (visibleProjectIds.length > 0) {
       should.push({ terms: { ds_project_ids: visibleProjectIds } });
@@ -118,7 +181,7 @@ const constructAuthFilters = (user, userProjectRoles) => {
   }
 };
 
-function constructDatasetFilters(filter) {
+function constructDatasetFilters(filter: DatasetFilter) {
   const filters = [];
   for (let [key, val] of Object.entries(filter)) {
     if (val) {
@@ -131,14 +194,19 @@ function constructDatasetFilters(filter) {
   }
   return filters;
 }
-
-function constructAnnotationFilters(filter) {
+interface ExtraAnnotationFilters {
+  sfAdduct?: string;
+  annId?: string;
+}
+function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFilters) {
   const { database, datasetName, mzFilter, msmScoreFilter, fdrLevel, sumFormula, adduct, sfAdduct, compoundQuery, annId } = filter;
   const filters = [];
 
   if (mzFilter)
-    filters.push(constructRangeFilter('mz', {min: esFormatMz(mzFilter.min),
-      max: esFormatMz(mzFilter.max)}));
+    filters.push(constructRangeFilter('mz', {
+      min: esFormatMz(mzFilter.min),
+      max: esFormatMz(mzFilter.max)
+    }));
 
   if (msmScoreFilter)
     filters.push(constructRangeFilter('msm', msmScoreFilter));
@@ -173,7 +241,7 @@ function constructAnnotationFilters(filter) {
   return filters;
 }
 
-function constructSimpleQueryFilter(simpleQuery) {
+function constructSimpleQueryFilter(simpleQuery: string) {
   return {
     simple_query_string: {
       query: simpleQuery,
@@ -183,7 +251,8 @@ function constructSimpleQueryFilter(simpleQuery) {
   };
 }
 
-function constructESQuery(args, docType, user, userProjectRoles, bypassAuth) {
+function constructESQuery(args: any, docType: DocType, user: ContextUser | null,
+                          userProjectRoles: UserProjectRoles, bypassAuth = false) {
   const { orderBy, sortingOrder, filter, datasetFilter, simpleQuery} = args;
 
   return {
@@ -202,9 +271,10 @@ function constructESQuery(args, docType, user, userProjectRoles, bypassAuth) {
   };
 }
 
-export const esSearchResults = async function(args, docType, user, bypassAuth) {
+export const esSearchResults = async (args: any, docType: DocType,
+                                      user: ContextUser | null, bypassAuth?: boolean): Promise<any[]> => {
   if (args.limit > ES_LIMIT_MAX) {
-    return Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
+    throw Error(`The maximum value for limit is ${ES_LIMIT_MAX}`)
   }
 
   const body = constructESQuery(args, docType, user, user != null ? await user.getProjectRoles() : {}, bypassAuth);
@@ -221,7 +291,7 @@ export const esSearchResults = async function(args, docType, user, bypassAuth) {
 };
 
 
-export const esCountResults = async function(args, docType, user) {
+export const esCountResults = async (args: any, docType: DocType, user: ContextUser | null): Promise<number> => {
   const body = constructESQuery(args, docType, user, user != null ? await user.getProjectRoles() : {});
   const request = { body, index: esIndex };
   const resp = await es.count(request);
@@ -241,7 +311,7 @@ const fieldEnumToSchemaPath = {
   DF_MALDI_MATRIX: datasetFilters.maldiMatrix.esField
 };
 
-function constructTermAggregations(fields) {
+function constructTermAggregations(fields: (keyof typeof fieldEnumToSchemaPath)[]) {
   const esFields = fields.map(f => fieldEnumToSchemaPath[f]);
   let aggs = undefined;
   for (let i = fields.length - 1; i >= 0; --i) {
@@ -253,7 +323,7 @@ function constructTermAggregations(fields) {
   return aggs;
 }
 
-function flattenAggResponse(fields, aggs, idx) {
+function flattenAggResponse(fields: string[], aggs: any, idx: number): any {
   const {buckets} = aggs[fields[idx]];
   let counts = [];
   for (let bucket of buckets) {
@@ -276,12 +346,11 @@ function flattenAggResponse(fields, aggs, idx) {
   return { counts };
 }
 
-export const esCountGroupedResults = async function (args, docType, user) {
+export const esCountGroupedResults = async (args: any, docType: DocType, user: ContextUser | null): Promise<any> => {
   const body = constructESQuery(args, docType, user, user != null ? await user.getProjectRoles() : {});
 
   if (args.groupingFields.length === 0) {
     // handle case of no grouping for convenience
-    logger.debug(body);
     const request = { body, index: esIndex };
     try {
       const resp = await es.count(request);
@@ -292,12 +361,16 @@ export const esCountGroupedResults = async function (args, docType, user) {
     }
   }
 
-  body.aggs = constructTermAggregations(args.groupingFields);
-
-  logger.debug(body);
-  const request = { body, index: esIndex, size: 0 };
+  const aggRequest = {
+    body: {
+      ...body,
+      aggs: constructTermAggregations(args.groupingFields)
+    },
+    index: esIndex,
+    size: 0,
+  };
   try {
-    const resp = await es.search(request);
+    const resp = await es.search(aggRequest);
     return flattenAggResponse(args.groupingFields, resp.aggregations, 0);
   } catch (e) {
     logger.error(e);
@@ -305,7 +378,7 @@ export const esCountGroupedResults = async function (args, docType, user) {
   }
 };
 
-export const esFilterValueCountResults = async (args, user) => {
+export const esFilterValueCountResults = async (args: any, user: ContextUser | null): Promise<any> => {
   const {wildcard, aggsTerms} = args;
   const body = {
     query: {
@@ -325,25 +398,26 @@ export const esFilterValueCountResults = async (args, user) => {
     body,
     index: esIndex
   });
-  const itemCounts = {};
-  resp.aggregations.field_counts.buckets.forEach((o) => {
+  const itemCounts: any = {};
+  resp.aggregations.field_counts.buckets.forEach((o: any) => {
     itemCounts[o.key] = o.doc_count;
   });
   return itemCounts;
 };
 
-async function getFirst(args, docType, user, bypassAuth) {
+async function getFirst(args: any, docType: DocType, user: ContextUser | null, bypassAuth: boolean = false) {
   const docs = await esSearchResults(args, docType, user, bypassAuth);
   return docs && docs[0] && docs[0]._source ? docs[0] : null;
 }
 
-export const esAnnotationByID = async function(id, user) {
+export const esAnnotationByID = async (id: string, user: ContextUser | null): Promise<ESAnnotationSource | null> => {
   if (id)
     return getFirst({ filter: { annId: id } }, 'annotation', user);
   return null;
 };
 
-export const esDatasetByID = async function(id, user, bypassAuth) {
+export const esDatasetByID = async (id: string, user: ContextUser | null,
+                                    bypassAuth?: boolean): Promise<ESDataset | null> => {
   if (id)
     return getFirst({ datasetFilter: { ids: id } }, 'dataset', user, bypassAuth);
   return null;
