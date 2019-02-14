@@ -11,7 +11,7 @@ type Args = ArgsFromBinding<Query['allAnnotations']>
           | ArgsFromBinding<Query['countAnnotations']>;
 interface FilterResult {
   args: Args;
-  postprocess?: any;
+  postprocess?(annotations: ESAnnotation[]): ESAnnotationWithColoc[] ;
 }
 
 interface ESAnnotationWithColoc extends ESAnnotation {
@@ -66,7 +66,7 @@ const getColocSampleSfAdducts = async (context: Context, datasetId: string, fdrL
     {datasetId, fdr: fdrLevel, molDb: database, algorithm: colocalizationAlgo},
     { select: ['sampleIonIds'] });
   if (result == null) {
-    return [];
+    return null;
   } else {
     const ions = await context.entityManager.findByIds(Ion, result.sampleIonIds, {select: ['formula','adduct']});
     return ions.map(({formula, adduct}) => formula + adduct);
@@ -111,12 +111,16 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
     args.filter && args.filter.colocalizationAlgo
     || config.metadataLookups.defaultColocalizationAlgo;
   let newArgs = args;
-  let postprocess: any = null;
+  let postprocess: FilterResult['postprocess'];
 
 
   if (datasetId != null && colocalizationAlgo != null && colocalizationSamples) {
     const samples = await getColocSampleSfAdducts(context, datasetId, fdrLevel, database, colocalizationAlgo);
-    newArgs = setOrMerge(newArgs, 'filter.sfAdduct', samples, _.intersection);
+    if (samples != null) {
+      newArgs = setOrMerge(newArgs, 'filter.sfAdduct', samples, _.intersection);
+    } else {
+      throw new UserError(JSON.stringify({ type: 'no_colocalization_job' }));
+    }
   }
 
   if (datasetId != null && colocalizationAlgo != null && colocalizedWith != null) {
@@ -183,7 +187,7 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
         return newAnnotations;
       }
     } else {
-      newArgs = setOrMerge(newArgs, 'filter.sfAdduct', []);
+      throw new UserError(JSON.stringify({ type: 'no_colocalization_job' }));
     }
   }
 
