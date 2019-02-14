@@ -5,12 +5,20 @@ import {Query} from '../../binding';
 import {ColocAnnotation, ColocJob, Ion} from './model';
 import {UserError} from 'graphql-errors';
 import config from '../../utils/config';
+import {ESAnnotation} from '../../../esConnector';
 
 type Args = ArgsFromBinding<Query['allAnnotations']>
           | ArgsFromBinding<Query['countAnnotations']>;
 interface FilterResult {
   args: Args;
   postprocess?: any;
+}
+
+interface ESAnnotationWithColoc extends ESAnnotation {
+  _cachedColocCoeff: number | null;
+  _isColocReference: boolean;
+  getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string,
+                         _database: string, _fdrLevel: number): Promise<number | null>;
 }
 
 const setOrMerge = <T>(obj: any, path: string, value: T, onConflict = (val: T, oldVal: T) => val) => {
@@ -117,7 +125,7 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
     if (annotationAndIons != null) {
       const {annotation, ionsById, ionsBySfAdduct} = annotationAndIons;
       const {offset, limit} = args as ArgsFromBinding<Query['allAnnotations']>;
-      const colocSfAdducts = _.uniq(annotation.colocIonIds)
+      const colocSfAdducts = _.uniq([annotation.ionId, ...annotation.colocIonIds])
         .map(ionId => {
           const ion = ionsById.get(ionId);
           return ion != null ? ion.formula + ion.adduct : null
@@ -125,19 +133,17 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
         .filter(sfAdduct => sfAdduct != null);
 
       newArgs = setOrMerge(newArgs, 'filter.sfAdduct', colocSfAdducts, _.intersection);
-      if (offset != null) {
-        newArgs = setOrMerge(newArgs, 'offset', 0);
-      }
-      if (limit != null) {
-        newArgs = setOrMerge(newArgs, 'limit', 1000);
-      }
+      // Always select 1000 annotations so that sorting by colocalizationCoeff doesn't just sort per-page
+      newArgs = setOrMerge(newArgs, 'offset', 0);
+      newArgs = setOrMerge(newArgs, 'limit', 1000);
 
-      postprocess = (annotations: any[]): any[] => {
+      postprocess = (annotations: ESAnnotation[]): ESAnnotationWithColoc[] => {
         let newAnnotations = annotations.map(ann => {
           const ion = ionsBySfAdduct.get(ann._source.sf_adduct);
           return {
             ...ann,
             _cachedColocCoeff: ion != null ? getColocCoeffInner(annotation, ion.id) : null,
+            _isColocReference: ion != null && ion.id === annotation.ionId,
             async getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string, _database: string, _fdrLevel: number) {
               if (_colocalizedWith === colocalizedWith && _colocalizationAlgo === colocalizationAlgo && _database === database && _fdrLevel === fdrLevel) {
                 return this._cachedColocCoeff;
@@ -150,9 +156,22 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
         });
 
         if (!('orderBy' in args) || args.orderBy === 'ORDER_BY_COLOCALIZATION') {
-          // TODO: Sorting gives incorrect results if there is more than 1 page of annotations
           const order = 'sortingOrder' in args && args.sortingOrder === 'ASCENDING' ? -1 : 1;
-          newAnnotations.sort((a, b) => order * (b._cachedColocCoeff - a._cachedColocCoeff))
+          const sortFunc = (a: ESAnnotationWithColoc, b: ESAnnotationWithColoc) => {
+            if ((a._isColocReference && !b._isColocReference)
+              || (a._cachedColocCoeff != null && b._cachedColocCoeff == null)) {
+              return -order;
+            } else if ((!a._isColocReference && b._isColocReference)
+              || (a._cachedColocCoeff == null && b._cachedColocCoeff != null)) {
+              return order;
+            } else if (a._cachedColocCoeff != null && b._cachedColocCoeff != null) {
+              return b._cachedColocCoeff - a._cachedColocCoeff;
+            } else {
+              return 0;
+            }
+          };
+
+          newAnnotations.sort(sortFunc)
         }
         if (offset) {
           newAnnotations = newAnnotations.slice(offset);

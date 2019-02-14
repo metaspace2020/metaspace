@@ -101,9 +101,9 @@ module.exports = {
   metadataLookups: {
     colocalizationAlgos: {
       cosine: 'Cosine distance',
-      // pca_cosine: 'PCA + Cosine distance',
+      pca_cosine: 'PCA + Cosine distance',
       pca_pearson: 'PCA + Pearson correlation',
-      // pca_spearman: 'PCA + Spearman correlation',
+      pca_spearman: 'PCA + Spearman correlation',
     },
     defaultColocalizationAlgo: 'cosine',
   },
