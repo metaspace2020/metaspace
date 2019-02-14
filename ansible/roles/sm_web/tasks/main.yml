@@ -8,8 +8,8 @@
   become: yes
   lineinfile:
     dest: /etc/redis/redis.conf
-    regexp: bind
-    line: "bind: 0.0.0.0"
+    regexp: ^bind
+    line: "bind 0.0.0.0"
 
 - name: Make sure .aws directory exists
   file: path=/home/ubuntu/.aws/
