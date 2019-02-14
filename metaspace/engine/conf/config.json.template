@@ -5,9 +5,7 @@
     "debug": false,
     "server": "cherrypy"
   },
-  "redis": {
-    "host": "localhost"
-  },
+  "redis": {{ sm_redis | to_json }},
   "defaults": {
     "adducts": {{ sm_default_adducts | to_json }}
   },
