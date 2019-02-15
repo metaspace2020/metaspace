@@ -120,6 +120,9 @@ gql`query GetRelatedAnnotations($datasetId: String!, $filter: AnnotationFilter!,
         url
         maxIntensity
       }
+      possibleCompounds {
+        name
+      }
       colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     }
   }`;

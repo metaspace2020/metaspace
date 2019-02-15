@@ -2,7 +2,18 @@
   <div class="adduct-info-container" v-loading="loading">
     <div class="small-peak-image" v-for="(other, idx) in annotations" :key="other.ion">
       <component :is="other.ion !== colocReferenceIon ? 'router-link' : 'span'" :to="linkToAnnotation(other)" class="ion-link">
-        <span v-if="other.ion !== colocReferenceIon" v-html="renderFormula(other)" />
+
+        <el-popover v-if="other.ion !== colocReferenceIon" trigger="hover" placement="top">
+          <div>Candidate molecules ({{ other.possibleCompounds.length }}):
+            <ul>
+              <li v-for="comp in other.possibleCompounds">
+                {{ comp.name }}
+              </li>
+            </ul>
+          </div>
+
+          <span slot="reference" class="sf cell-span" v-html="renderFormula(other)" />
+        </el-popover>
         <span v-else>Reference annotation<sub><!-- Subscript to make height consistent with formulas --></sub></span>
         <br/>
         {{  other.mz.toFixed(4) }} <br/>
