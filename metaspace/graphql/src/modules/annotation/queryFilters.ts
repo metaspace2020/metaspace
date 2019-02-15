@@ -142,7 +142,7 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
       newArgs = setOrMerge(newArgs, 'limit', 1000);
 
       postprocess = (annotations: ESAnnotation[]): ESAnnotationWithColoc[] => {
-        let newAnnotations = annotations.map(ann => {
+        let newAnnotations: ESAnnotationWithColoc[] = annotations.map(ann => {
           const ion = ionsBySfAdduct.get(ann._source.sf_adduct);
           return {
             ...ann,
@@ -160,22 +160,17 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
         });
 
         if (!('orderBy' in args) || args.orderBy === 'ORDER_BY_COLOCALIZATION') {
-          const order = 'sortingOrder' in args && args.sortingOrder === 'ASCENDING' ? -1 : 1;
-          const sortFunc = (a: ESAnnotationWithColoc, b: ESAnnotationWithColoc) => {
-            if ((a._isColocReference && !b._isColocReference)
-              || (a._cachedColocCoeff != null && b._cachedColocCoeff == null)) {
-              return -order;
-            } else if ((!a._isColocReference && b._isColocReference)
-              || (a._cachedColocCoeff == null && b._cachedColocCoeff != null)) {
-              return order;
-            } else if (a._cachedColocCoeff != null && b._cachedColocCoeff != null) {
-              return b._cachedColocCoeff - a._cachedColocCoeff;
-            } else {
-              return 0;
-            }
-          };
+          const order = 'sortingOrder' in args && args.sortingOrder === 'ASCENDING' ? 1 : -1;
 
-          newAnnotations.sort(sortFunc)
+          newAnnotations = _.sortBy(newAnnotations, ann => {
+            if (ann._isColocReference) {
+              // Always show reference annotations as the most colocalized,
+              // even if there are other annotations with a 1.0 colocalizationCoeff
+              return Infinity * order;
+            } else {
+              return (ann._cachedColocCoeff != null ? ann._cachedColocCoeff : -1) * order;
+            }
+          })
         }
         if (offset) {
           newAnnotations = newAnnotations.slice(offset);
