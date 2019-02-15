@@ -96,21 +96,6 @@
           </div>
         </el-collapse-item>
 
-        <el-collapse-item title="Diagnostics" name="scores">
-          <component v-if="activeSections.indexOf('scores') !== -1"
-                     :is="metadataDependentComponent('diagnostics')"
-                     :annotation="annotation"
-                     :colormap="colormap"
-                     :imageLoaderSettings="imageLoaderSettings"
-                     :peakChartData="peakChartData"
-                     :acquisitionGeometry="msAcqGeometry">
-          </component>
-        </el-collapse-item>
-
-        <el-collapse-item title="Metadata" name="metadata">
-          <dataset-info :metadata="metadata" :currentUser="currentUser" />
-        </el-collapse-item>
-
         <el-collapse-item name="colocalized">
           <div slot="title" style="display: flex; align-items: center; padding-right: 10px">
             <span style="padding-right: 20px">
@@ -148,6 +133,21 @@
                      :acquisitionGeometry="msAcqGeometry"
                      :image-loader-settings="imageLoaderSettings">
           </component>
+        </el-collapse-item>
+
+        <el-collapse-item title="Diagnostics" name="scores">
+          <component v-if="activeSections.indexOf('scores') !== -1"
+                     :is="metadataDependentComponent('diagnostics')"
+                     :annotation="annotation"
+                     :colormap="colormap"
+                     :imageLoaderSettings="imageLoaderSettings"
+                     :peakChartData="peakChartData"
+                     :acquisitionGeometry="msAcqGeometry">
+          </component>
+        </el-collapse-item>
+
+        <el-collapse-item title="Metadata" name="metadata">
+          <dataset-info :metadata="metadata" :currentUser="currentUser" />
         </el-collapse-item>
       </el-collapse>
     </el-col>

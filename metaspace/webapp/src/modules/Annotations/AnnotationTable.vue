@@ -35,6 +35,11 @@
         </ul>
       </p>
 
+      <p slot="empty" v-else-if="noColocJobError">
+        Colocalization data not found. <br/>
+        This usually means that analysis is still in progress.
+      </p>
+
       <p slot="empty" v-else>
         No annotations were found
       </p>
@@ -187,7 +192,7 @@
 </template>
 
 <script>
- import { renderMolFormula, csvExportHeader } from '../../util';
+  import {renderMolFormula, csvExportHeader, safeJsonParse} from '../../util';
  import ProgressButton from './ProgressButton.vue';
  import {
    annotationListQuery,
@@ -197,8 +202,7 @@
  import Vue from 'vue';
  import FileSaver from 'file-saver';
  import formatCsvRow from '../../lib/formatCsvRow';
- import {invert} from 'lodash-es';
- import {createQuantileColormap} from '../../lib/createColormap';
+ import {get, invert} from 'lodash-es';
 
  // 38 = up, 40 = down, 74 = j, 75 = k
  const KEY_TO_ACTION = {38: 'up', 75: 'up', 40: 'down', 74: 'down'};
@@ -226,6 +230,7 @@
        exportProgress: 0,
        totalCount: 0,
        csvChunkSize: 1000,
+       noColocJobError: false,
      }
    },
    mounted() {
@@ -340,9 +345,17 @@
          }
 
          this.totalCount = data.countAnnotations;
+         this.noColocJobError = false;
        },
        watchLoading (isLoading) {
          this.$store.commit('updateAnnotationTableStatus', isLoading);
+       },
+       error(error) {
+         const message = get(error, ['graphQLErrors', 0, 'message']);
+         const errObj = safeJsonParse(message);
+         if (errObj != null && errObj.type === 'no_colocalization_job') {
+           this.noColocJobError = true;
+         }
        }
      }
    },
