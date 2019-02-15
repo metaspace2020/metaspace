@@ -105,7 +105,7 @@ def _labels_to_clusters(labels, scores):
 
 
 def _label_clusters(scores):
-    min_clusters = 2
+    min_clusters = 5
     max_clusters = 20
     n_samples = scores.shape[0]
     if n_samples <= min_clusters:
