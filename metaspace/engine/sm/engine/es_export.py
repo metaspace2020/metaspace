@@ -311,7 +311,7 @@ class ESExporter(object):
                 doc['db_version'] = mol_db.version
                 sf = doc['sf']
                 doc['comp_ids'], doc['comp_names'] = mol_by_sf[sf]
-                mzs, _ = isocalc.ion_centroids(sf, doc['adduct'])
+                mzs, _ = isocalc.centroids(sf, doc['adduct'])
                 doc['centroid_mzs'] = list(mzs)
                 doc['mz'] = mzs[0]
                 doc['ion_add_pol'] = '[M{}]{}'.format(doc['adduct'], doc['polarity'])

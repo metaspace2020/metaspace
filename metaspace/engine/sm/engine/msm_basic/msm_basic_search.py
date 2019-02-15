@@ -1,59 +1,125 @@
 from collections import OrderedDict
+from itertools import product
+import numpy as np
 import pandas as pd
-
-from sm.engine.util import SMConfig
-from sm.engine.msm_basic.formula_imager_segm import compute_sf_images
-from sm.engine.msm_basic.formula_img_validator import sf_image_metrics
-from sm.engine.search_algorithm import SearchAlgorithm
-
 import logging
+
+from sm.engine.fdr import FDR
+from sm.engine.formula_parser import ion_formula
+from sm.engine.formula_centroids import CentroidsGenerator
+from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.util import SMConfig
+from sm.engine.msm_basic.formula_imager_segm import compute_formula_images
+from sm.engine.msm_basic.formula_img_validator import formula_image_metrics
+
 logger = logging.getLogger('engine')
 
 
-class MSMBasicSearch(SearchAlgorithm):
+def init_fdr(moldbs, target_adducts):
+    """ Randomly select decoy adducts for each moldb and target adduct
+    """
+    moldb_fdr_list = []
+    for moldb in moldbs:
+        fdr = FDR(decoy_sample_size=20, target_adducts=target_adducts)
+        target_ions = list(product(moldb.formulas, target_adducts))
+        fdr.decoy_adducts_selection(target_ions)
+        moldb_fdr_list.append((moldb, fdr))
+    return moldb_fdr_list
 
-    def __init__(self, sc, ds, ds_reader, mol_db, ion_centroids, fdr, ds_config):
-        super(MSMBasicSearch, self).__init__(sc, ds, ds_reader, mol_db, fdr, ds_config)
+
+def collect_ion_formulas(moldb_fdr_list):
+    """ Collect all ion formulas that need to be searched for
+    """
+    ion_formula_map_list = []
+    for moldb, fdr in moldb_fdr_list:
+        moldb_ion_formulas = [(moldb.id, ion_formula(formula, adduct), formula, adduct)
+                              for formula, adduct in fdr.ion_tuples()]
+        ion_formula_map_list.extend(moldb_ion_formulas)
+    return pd.DataFrame(ion_formula_map_list,
+                        columns=['moldb_id', 'ion_formula', 'formula', 'adduct'])
+
+
+def _complete_image_list(item):
+    _, images = item
+    return len(images) > 1 and images[0] is not None
+
+
+def compute_fdr(fdr, formula_metrics_df, formula_images, formula_map_df, max_fdr=0.5):
+    """ Compute fdr and filter formulas
+    """
+    moldb_ion_metrics_df = formula_metrics_df.join(formula_map_df.set_index('ion_formula'),
+                                                   on='ion_formula', how='inner')
+    formula_fdr_df = fdr.estimate_fdr(moldb_ion_metrics_df.set_index(['formula', 'adduct']).msm)
+    moldb_ion_metrics_df = moldb_ion_metrics_df.join(formula_fdr_df, on=['formula', 'adduct'])
+    moldb_ion_metrics_df = moldb_ion_metrics_df[moldb_ion_metrics_df.fdr <= max_fdr]
+
+    moldb_ion_images = formula_images.filter(
+        lambda formula_i_images: formula_i_images[0] in moldb_ion_metrics_df.index)
+    return moldb_ion_metrics_df, moldb_ion_images
+
+
+class MSMSearch(object):
+
+    def __init__(self, sc, ds_reader, moldbs, ds_config):
+        self._sc = sc
+        self._ds_config = ds_config
+        self._ds_reader = ds_reader
+        self._moldbs = moldbs
+        self._sm_config = SMConfig.get_conf()
         self.metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0),
                                     ('total_iso_ints', [0, 0, 0, 0]),
                                     ('min_iso_ints', [0, 0, 0, 0]),
                                     ('max_iso_ints', [0, 0, 0, 0])])
-        self.max_fdr = 0.5
-        self._ion_centroids = ion_centroids
+
+        self._ppm = ds_config['image_generation']['ppm']
+        self._target_adducts = ds_config['isotope_generation']['adducts']
+        self._isotope_gen_config = self._ds_config['isotope_generation']
+
+    def _fetch_formula_centroids(self, ion_formula_map_df):
+        """ Generate/load centroids for all ions formulas
+        """
+        isocalc = IsocalcWrapper(self._isotope_gen_config)
+        centroids_gen = CentroidsGenerator(sc=self._sc, isocalc=isocalc)
+        ion_formulas = np.unique(ion_formula_map_df.ion_formula.values)
+        return centroids_gen.generate_if_not_exist(formulas=ion_formulas.tolist())
 
     def search(self):
-        """ Search for molecules in the dataset
+        """ Search, score, and compute FDR for all MolDB formulas
 
         Returns
-        -------
-        : tuple
-            (ion metrics DataFrame, ion image pyspark.RDD)
+        -----
+        tuple[sm.engine.mol_db.MolecularDB, pandas.DataFrame, pyspark.rdd.RDD]
+            (moldb, ion metrics, ion images)
         """
         logger.info('Running molecule search')
-        ion_centroids_df = self._ion_centroids.centroids_subset(self._fdr.ion_tuples())
-        ion_images = compute_sf_images(self._sc, self._ds_reader, ion_centroids_df,
-                                       self.ds_config['image_generation']['ppm'])
-        ion_metrics_df = self.calc_metrics(ion_images, ion_centroids_df)
-        ion_metrics_fdr_df = self.estimate_fdr(ion_metrics_df)
-        ion_metrics_fdr_df = self.filter_sf_metrics(ion_metrics_fdr_df)
-        ion_images = self.filter_sf_images(ion_images, ion_metrics_fdr_df)
 
-        return ion_metrics_fdr_df, ion_images
+        moldb_fdr_list = init_fdr(self._moldbs, self._target_adducts)
+        ion_formula_map_df = collect_ion_formulas(moldb_fdr_list)
 
-    def calc_metrics(self, sf_images, ion_centroids_df):
-        ion_centr_ints = (ion_centroids_df.reset_index().groupby(['ion_i'])
-                          .apply(lambda df: df.int.tolist()).to_dict())
-        all_sf_metrics_df = sf_image_metrics(sf_images=sf_images, metrics=self.metrics, ds=self._ds,
-                                             ds_reader=self._ds_reader, ion_centr_ints=ion_centr_ints, sc=self._sc)
-        return all_sf_metrics_df.join(self._ion_centroids.ions_df)
+        formula_centroids = self._fetch_formula_centroids(ion_formula_map_df)
+        logger.debug(f'ion_centroids_df size: {formula_centroids.centroids_df.shape}')
 
-    def estimate_fdr(self, ion_metrics_df):
-        sf_adduct_fdr_df = self._fdr.estimate_fdr(
-            ion_metrics_df.set_index(['formula', 'adduct']).msm)
-        ion_metrics_sf_adduct_fdr_df = pd.merge(ion_metrics_df.reset_index(),
-                                                sf_adduct_fdr_df.reset_index(),
-                                                how='inner', on=['formula', 'adduct']).set_index('ion_i')
-        return ion_metrics_sf_adduct_fdr_df
+        # Run ion formula search
+        formula_images = compute_formula_images(
+            self._sc, self._ds_reader, formula_centroids.centroids_df, ppm=self._ppm)
+        formula_images = formula_images.filter(_complete_image_list)
 
-    def filter_sf_metrics(self, sf_metrics_df):
-        return sf_metrics_df[sf_metrics_df.fdr <= self.max_fdr]
+        # Score all ion formula images
+        formula_metrics_df = formula_image_metrics(
+            formula_images=formula_images, metrics=self.metrics,
+            formula_centr_ints=formula_centroids.centroids_df.int,
+            ds_config=self._ds_config, ds_reader=self._ds_reader, sc=self._sc)
+        formula_metrics_df = formula_metrics_df[formula_metrics_df.msm > 0]
+        formula_images = formula_images.filter(
+            lambda formula_i_images: formula_i_images[0] in formula_metrics_df.index)
+
+        formula_metrics_df = formula_metrics_df.join(formula_centroids.formulas_df, how='left')
+        formula_metrics_df = formula_metrics_df.rename({'formula': 'ion_formula'}, axis=1)
+
+        # Compute fdr for each moldb search results
+        for moldb, fdr in moldb_fdr_list:
+            moldb_formula_map_df = (ion_formula_map_df[ion_formula_map_df.moldb_id == moldb.id]
+                                    .drop('moldb_id', axis=1))
+            moldb_ion_metrics_df, moldb_ion_images = \
+                compute_fdr(fdr, formula_metrics_df, formula_images, moldb_formula_map_df, max_fdr=0.5)
+            yield moldb, moldb_ion_metrics_df, moldb_ion_images

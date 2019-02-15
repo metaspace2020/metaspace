@@ -10,7 +10,7 @@ from scipy.sparse import csr_matrix
 from sm.rest.dataset_manager import Dataset
 from sm.engine.dataset_reader import DatasetReader
 from sm.engine.msm_basic.formula_img_validator import ImgMetrics
-from sm.engine.msm_basic.formula_img_validator import sf_image_metrics, get_compute_img_metrics
+from sm.engine.msm_basic.formula_img_validator import formula_image_metrics, get_compute_img_metrics
 from sm.engine.tests.util import pysparkling_context as spark_context, ds_config, sm_config
 
 
@@ -66,8 +66,8 @@ def test_sf_image_metrics(spark_context, ds_formulas_images_mock, ds_config):
                                ('min_iso_ints', [0, 0, 0, 0]),
                                ('max_iso_ints', [0, 0, 0, 0])])
         ion_centr_ints = {0: [100, 10, 1], 1: [100, 10, 1]}
-        metrics_df = sf_image_metrics(ref_images_rdd, metrics, ds_mock,
-                                      ds_reader_mock, ion_centr_ints, spark_context)
+        metrics_df = formula_image_metrics(ref_images_rdd, metrics, ds_mock,
+                                           ds_reader_mock, ion_centr_ints, spark_context)
 
         exp_metrics_df = (pd.DataFrame([[0, 0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.], 0.9**3],
                                        [1, 0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.], 0.9**3]],

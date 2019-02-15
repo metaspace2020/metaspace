@@ -103,16 +103,17 @@ def _calculate_msm(sf_metrics_df):
     return sf_metrics_df.chaos * sf_metrics_df.spatial * sf_metrics_df.spectral
 
 
-def sf_image_metrics(sf_images, metrics, ds, ds_reader, ion_centr_ints, sc):
+def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula_centr_ints, sc):
     """ Compute isotope image metrics for each formula
 
     Args
     ------------
     metrics: OrderedDict
     sc : pyspark.SparkContext
-    ds : engine.dataset.Dataset
-    ion_centr_ints: dict
-    sf_images : pyspark.rdd.RDD
+    ds_config : dict
+    ds_reader: engine.dataset_reader.DatasetReader
+    formula_centr_ints: pandas.Series
+    formula_images : pyspark.rdd.RDD
         RDD of (formula, list[images]) pairs
     Returns
     ------------
@@ -121,16 +122,17 @@ def sf_image_metrics(sf_images, metrics, ds, ds_reader, ion_centr_ints, sc):
     nrows, ncols = ds_reader.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
     compute_metrics = get_compute_img_metrics(metrics, ds_reader.get_sample_area_mask(),
-                                              empty_matrix, ds.config['image_generation'])
-    sf_add_ints_map_brcast = sc.broadcast(ion_centr_ints)
+                                              empty_matrix, ds_config['image_generation'])
+    formula_ints_map_brcast = sc.broadcast(formula_centr_ints)
 
     def calculate_ion_metrics(item):
-        ion, images = item
-        return (ion,) + compute_metrics(images, sf_add_ints_map_brcast.value[ion])
+        formula_i, images = item
+        centr_ints = formula_ints_map_brcast.value.loc[formula_i].values
+        return (formula_i,) + compute_metrics(images, centr_ints)
 
-    sf_metrics = sf_images.map(calculate_ion_metrics).collect()
-    index_columns = ['ion_i']
+    formula_metrics = formula_images.map(calculate_ion_metrics).collect()
+    index_columns = ['formula_i']
     columns = index_columns + list(metrics.keys())
-    sf_metrics_df = pd.DataFrame(sf_metrics, columns=columns).set_index(index_columns)
-    sf_metrics_df['msm'] = _calculate_msm(sf_metrics_df)
-    return sf_metrics_df
+    formula_metrics_df = pd.DataFrame(formula_metrics, columns=columns).set_index(index_columns)
+    formula_metrics_df['msm'] = _calculate_msm(formula_metrics_df)
+    return formula_metrics_df

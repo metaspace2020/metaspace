@@ -74,6 +74,9 @@ def pysparkling_context(request):
 @pytest.fixture(scope='module')
 def pyspark_context(request):
     from pyspark import SparkContext
+    import sys
+    import os
+    os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
     sc = SparkContext(master='local[2]')
     request.addfinalizer(lambda: sc.stop())
     return sc

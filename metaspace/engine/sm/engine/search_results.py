@@ -30,11 +30,11 @@ class SearchResults(object):
         self.job_id = job_id
         self.metric_names = metric_names
 
-    def _metrics_table_row_gen(self, job_id, db_id, metr_df, ion_img_ids):
+    def _metrics_table_row_gen(self, job_id, db_id, metr_df, formula_img_ids):
         for ind, r in metr_df.iterrows():
             m = OrderedDict((name, r[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
-            image_ids = ion_img_ids[r.ion_i]['iso_image_ids']
+            image_ids = formula_img_ids[r.formula_i]['iso_image_ids']
             yield (job_id, db_id, r.formula, r.adduct,
                    float(r.msm), float(r.fdr), metr_json,
                    image_ids)

@@ -1,9 +1,3 @@
-"""
-
-:synopsis: Molecular search job driver
-
-.. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
-"""
 import time
 from importlib import import_module
 from pprint import pformat
@@ -12,19 +6,15 @@ from pyspark import SparkContext, SparkConf
 import logging
 
 from sm.engine.colocalization import Colocalization
-from sm.engine.isocalc_wrapper import IsocalcWrapper
-from sm.engine.msm_basic.msm_basic_search import MSMBasicSearch
-from sm.engine.dataset import DatasetStatus
+from sm.engine.msm_basic.msm_basic_search import MSMSearch
 from sm.engine.dataset_reader import DatasetReader
 from sm.engine.db import DB
-from sm.engine.fdr import FDR, DECOY_ADDUCTS
 from sm.engine.search_results import SearchResults
-from sm.engine.ion_centroids import IonCentroidsGenerator
-from sm.engine.util import proj_root, SMConfig, read_json
-from sm.engine.work_dir import WorkDirManager, local_path
+from sm.engine.util import SMConfig
+from sm.engine.work_dir import WorkDirManager
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB
-from sm.engine.errors import JobFailedError, ESExportFailedError
+from sm.engine.errors import JobFailedError
 from sm.engine.queue import QueuePublisher, SM_DS_STATUS
 
 logger = logging.getLogger('engine')
@@ -43,10 +33,10 @@ class JobStatus(object):
 
 
 class SearchJob(object):
-    """ Main class responsible for molecule search. Uses other modules of the engine.
+    """ Main class responsible for molecule search. Uses the other modules of the engine
 
     Args
-    ----
+    -----
     no_clean : bool
         Don't delete interim data files
     """
@@ -60,7 +50,6 @@ class SearchJob(object):
         self._ds = None
         self._ds_reader = None
         self._status_queue = None
-        self._fdr = None
         self._wd_manager = None
         self._es = None
 
@@ -93,46 +82,31 @@ class SearchJob(object):
         rows = [(mol_db_id, self._ds.id, JobStatus.RUNNING, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self._job_id = self._db.insert_return(JOB_INS, rows=rows)[0]
 
-    def _run_annotation_job(self, mol_db):
+    def _run_annotation_jobs(self, moldbs):
         try:
-            self.store_job_meta(mol_db.id)
-            mol_db.set_job_id(self._job_id)
+            logger.info("Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
+                        self._ds.id, self._ds.name, moldbs)
 
-            logger.info("Running new job ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
-                        self._ds.id, self._ds.name, mol_db.name, mol_db.version)
+            search_alg = MSMSearch(sc=self._sc, ds_reader=self._ds_reader,
+                                   moldbs=moldbs, ds_config=self._ds.config)
+            search_results_it = search_alg.search()
 
-            target_adducts = self._ds.config['isotope_generation']['adducts']
-            self._fdr = FDR(job_id=self._job_id,
-                            decoy_sample_size=20,
-                            target_adducts=target_adducts,
-                            db=self._db)
+            for moldb, moldb_ion_metrics_df, moldb_ion_images in search_results_it:
+                # Save results for each moldb
+                self.store_job_meta(moldb.id)
+                search_results = SearchResults(moldb.id, self._job_id, search_alg.metrics.keys())
+                img_store_type = self._ds.get_ion_img_storage_type(self._db)
+                mask = self._ds_reader.get_2d_sample_area_mask()
+                search_results.store(moldb_ion_metrics_df, moldb_ion_images, mask,
+                                     self._db, self._img_store, img_store_type)
 
-            isocalc = IsocalcWrapper(self._ds.config['isotope_generation'])
-            centroids_gen = IonCentroidsGenerator(sc=self._sc, moldb_name=mol_db.name, isocalc=isocalc)
-            all_adducts = list(set(target_adducts) | set(DECOY_ADDUCTS))
-            ion_centroids = centroids_gen.generate_if_not_exist(isocalc=isocalc,
-                                                                formulas=mol_db.sfs,
-                                                                adducts=all_adducts)
-            target_ions = ion_centroids.ions_subset(target_adducts)
-            self._fdr.decoy_adducts_selection(target_ions)
-
-            search_alg = MSMBasicSearch(sc=self._sc, ds=self._ds, ds_reader=self._ds_reader,
-                                        mol_db=mol_db, ion_centroids=ion_centroids,
-                                        fdr=self._fdr, ds_config=self._ds.config)
-            ion_metrics_df, ion_iso_images = search_alg.search()
-
-            search_results = SearchResults(mol_db.id, self._job_id, search_alg.metrics.keys())
-            mask = self._ds_reader.get_2d_sample_area_mask()
-            img_store_type = self._ds.get_ion_img_storage_type(self._db)
-            search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, self._img_store, img_store_type)
-
-            coloc = Colocalization(self._db)
-            coloc.run_coloc_job_for_new_ds(self._ds, mol_db.name, ion_metrics_df, ion_iso_images, mask)
+                coloc = Colocalization(self._db)
+                coloc.run_coloc_job_for_new_ds(self._ds, moldb.name, moldb_ion_metrics_df, moldb_ion_images, mask)
         except Exception as e:
             self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
                                                           datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                                           self._job_id))
-            msg = 'Job failed(ds_id={}, mol_db={}): {}'.format(self._ds.id, mol_db, str(e))
+            msg = 'Job failed(ds_id={}, moldbs={}): {}'.format(self._ds.id, moldbs, str(e))
             raise JobFailedError(msg) from e
         else:
             self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
@@ -165,14 +139,14 @@ class SearchJob(object):
 
     def run(self, ds):
         """ Entry point of the engine. Molecule search is completed in several steps:
-            * Copying input data to the engine work dir
-            * Conversion input mass spec files to plain text format. One line - one spectrum data
-            * Generation and saving to the database theoretical peaks for all formulas from the molecule database
-            * Molecules search. The most compute intensive part. Spark is used to run it in distributed manner.
-            * Saving results (isotope images and their metrics of quality for each putative molecule) to the database
+            * Copy input data to the engine work dir
+            * Convert input mass spec files to plain text format. One line - one spectrum data
+            * Generate and save to the database theoretical peaks for all formulas from the molecule database
+            * Molecules search. The most compute intensive part. Spark is used to run it in distributed manner
+            * Save results (isotope images and their metrics of quality for each formula) to the database
 
         Args
-        ----
+        -----
             ds : sm.engine.dataset_manager.Dataset
         """
         try:
@@ -205,13 +179,15 @@ class SearchJob(object):
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
             completed_moldb_ids, new_moldb_ids = self._moldb_ids()
-            for moldb_id in completed_moldb_ids.symmetric_difference(new_moldb_ids):  # ignore ids present in both sets
+            for moldb_id in completed_moldb_ids - new_moldb_ids:
                 mol_db = MolecularDB(id=moldb_id, db=self._db,
                                      iso_gen_config=self._ds.config['isotope_generation'])
-                if moldb_id not in new_moldb_ids:
-                    self._remove_annotation_job(mol_db)
-                elif moldb_id not in completed_moldb_ids:
-                    self._run_annotation_job(mol_db)
+                self._remove_annotation_job(mol_db)
+
+            moldbs = [MolecularDB(id=moldb_id, db=self._db,
+                                  iso_gen_config=self._ds.config['isotope_generation'])
+                      for moldb_id in new_moldb_ids - completed_moldb_ids]
+            self._run_annotation_jobs(moldbs)
 
             logger.info("All done!")
             time_spent = time.time() - start

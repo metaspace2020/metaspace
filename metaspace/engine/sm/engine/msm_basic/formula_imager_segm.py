@@ -179,7 +179,7 @@ def gen_iso_sf_images(iso_peak_images, shape):
 
 
 # TODO: add tests
-def compute_sf_images(sc, ds_reader, ion_centroids_df, ppm):
+def compute_formula_images(sc, ds_reader, formula_centroids_df, ppm):
     """ Compute isotopic images for all formulas
 
     Returns
@@ -189,12 +189,12 @@ def compute_sf_images(sc, ds_reader, ion_centroids_df, ppm):
     """
     spectra_rdd = ds_reader.get_spectra()
 
-    mz_segments = define_mz_segments(spectra_rdd, ion_centroids_df, ppm)
+    mz_segments = define_mz_segments(spectra_rdd, formula_centroids_df, ppm)
     segm_spectra = (spectra_rdd
                     .flatMap(lambda sp: _segment_spectrum(sp, mz_segments))
                     .groupByKey(numPartitions=len(mz_segments)))
 
-    iso_peak_images = gen_iso_peak_images(sc, ds_reader, ion_centroids_df, segm_spectra, ppm)
+    iso_peak_images = gen_iso_peak_images(sc, ds_reader, formula_centroids_df, segm_spectra, ppm)
     iso_sf_images = gen_iso_sf_images(iso_peak_images, shape=ds_reader.get_dims())
 
     return iso_sf_images

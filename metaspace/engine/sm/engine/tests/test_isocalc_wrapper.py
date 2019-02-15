@@ -15,13 +15,13 @@ from sm.engine.tests.util import ds_config
 ])
 def test_isocalc_wrapper_get_iso_peaks_wrong_sf_adduct(ds_config, sf, adduct):
     isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
-    mzs, ints = isocalc_wrapper.ion_centroids(sf, adduct)
+    mzs, ints = isocalc_wrapper.centroids(sf, adduct)
     assert mzs is None, ints is None
 
 
 def test_isotopic_pattern_h20(ds_config):
     isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
-    mzs, ints = isocalc_wrapper.ion_centroids('H2O', '+H')
+    mzs, ints = isocalc_wrapper.centroids('H2O', '+H')
 
     assert_array_almost_equal(mzs, np.array([19.018, 20.022, 20.024, 21.022]), decimal=3)
     assert_array_almost_equal(ints, np.array([1.00e+02, 3.83e-02, 3.48e-02, 2.06e-01]), decimal=2)
@@ -29,7 +29,7 @@ def test_isotopic_pattern_h20(ds_config):
 
 def test_isotopic_pattern_has_n_peaks(ds_config):
     isocalc_wrapper = IsocalcWrapper(ds_config['isotope_generation'])
-    mzs, ints = isocalc_wrapper.ion_centroids('C8H20NO6P', '+K')
+    mzs, ints = isocalc_wrapper.centroids('C8H20NO6P', '+K')
 
     assert len(mzs) == ISOTOPIC_PEAK_N
     assert len(ints) == ISOTOPIC_PEAK_N
