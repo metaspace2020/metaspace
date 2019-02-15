@@ -64,6 +64,7 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
       id
       sumFormula
       adduct
+      ion
       msmScore
       rhoSpatial
       rhoSpectral
@@ -109,6 +110,7 @@ gql`query GetRelatedAnnotations($datasetId: String!, $filter: AnnotationFilter!,
       mz
       sumFormula
       adduct
+      ion
       msmScore
       rhoSpatial
       rhoSpectral

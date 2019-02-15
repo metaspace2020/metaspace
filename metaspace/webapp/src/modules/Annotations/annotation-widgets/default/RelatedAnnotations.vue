@@ -1,7 +1,9 @@
 <template>
   <div class="adduct-info-container" v-loading="loading">
     <div class="small-peak-image" v-for="(other, idx) in annotations" :key="idx">
-      <span v-html="renderFormula(other)"></span><br/>
+      <span v-if="other.ion !== colocReferenceIon" v-html="renderFormula(other)" />
+      <span v-else>Reference annotation<sub><!-- Subscript to make height consistent with formulas --></sub></span>
+      <br/>
       {{  other.mz.toFixed(4) }} <br/>
       <image-loader :src="other.isotopeImages[0].url"
             v-bind="imageLoaderSettings"
@@ -49,6 +51,9 @@ export default {
   computed: {
     colormap() {
       return this.$store.getters.settings.annotationView.colormap;
+    },
+    colocReferenceIon() {
+      return this.query === 'colocalized' ? this.annotation.ion : null;
     }
   },
   apollo: {

@@ -488,6 +488,7 @@
      async startExport () {
        const chunkSize = this.csvChunkSize;
        const includeColoc = !this.hidden('ColocalizationCoeff');
+       const colocalizedWith = this.filter.colocalizedWith;
        let csv = csvExportHeader();
        const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
          'msm', 'fdr', 'rhoSpatial', 'rhoSpectral', 'rhoChaos',
@@ -502,7 +503,7 @@
        }
 
        function formatRow(row) {
-         const {sumFormula, adduct, msmScore, mz,
+         const {sumFormula, adduct, ion, msmScore, mz,
                 rhoSpatial, rhoSpectral, rhoChaos, fdrLevel, colocalizationCoeff} = row;
          const cells = [
            row.dataset.groupApproved && row.dataset.group ? row.dataset.group.name : '',
@@ -514,7 +515,7 @@
            row.possibleCompounds.map(databaseId).join(', ')
          ];
          if (includeColoc) {
-           cells.push(colocalizationCoeff);
+           cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff);
          }
 
          return formatCsvRow(cells);
