@@ -129,25 +129,4 @@ describe('annotation/queryFilters applyQueryFilters', () => {
     expect(await result[1].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(0.9);
     expect(await result[2].getColocalizationCoeff(ions[1].ion, job.algorithm, job.molDb!, job.fdr)).toEqual(0.7);
   });
-
-  it('should throw an error if no ColocalizationJob is found', async () => {
-    const argsWithColocWith: Args = {
-      datasetFilter: { ids: 'some other dataset id' },
-      filter: {
-        database: job.molDb!,
-        fdrLevel: job.fdr,
-        colocalizedWith: ions[1].ion,
-        colocalizationAlgo: job.algorithm,
-      }
-    };
-
-    const promise = applyQueryFilters(anonContext, argsWithColocWith);
-    await expect(promise).rejects.toBeInstanceOf(Error);
-    try {
-      await promise;
-    } catch (err) {
-      const errorJson = JSON.parse(err.message);
-      expect(errorJson.type).toEqual('no_colocalization_job');
-    }
-  });
 });

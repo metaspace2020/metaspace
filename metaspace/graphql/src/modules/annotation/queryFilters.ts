@@ -119,7 +119,7 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
     if (samples != null) {
       newArgs = setOrMerge(newArgs, 'filter.sfAdduct', samples, _.intersection);
     } else {
-      throw new UserError(JSON.stringify({ type: 'no_colocalization_job' }));
+      newArgs = setOrMerge(newArgs, 'filter.sfAdduct', []);
     }
   }
 
@@ -182,7 +182,7 @@ export const applyQueryFilters = async (context: Context, args: Args): Promise<F
         return newAnnotations;
       }
     } else {
-      throw new UserError(JSON.stringify({ type: 'no_colocalization_job' }));
+      newArgs = setOrMerge(newArgs, 'filter.sfAdduct', []);
     }
   }
 
