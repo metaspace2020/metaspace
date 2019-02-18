@@ -27,7 +27,7 @@
  // import ReleaseNotesDialog from './ReleaseNotesDialog.vue';
  import TourStep from './TourStep.vue';
  import {DialogController} from '../Account';
- import * as config from '../../clientConfig.json';
+ import config from '../../config';
 
  export default {
    name: 'app',

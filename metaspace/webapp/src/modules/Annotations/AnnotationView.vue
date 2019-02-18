@@ -37,7 +37,7 @@
             </el-popover>
 
 
-            <el-popover trigger="hover" placement="bottom">
+            <el-popover v-if="showColoc" trigger="hover" placement="bottom">
               <img slot="reference" src="../../assets/map-icon.svg" class="av-icon av-icon-link" @click.stop="filterColocSamples">
               <div>Show representative spatial patterns for dataset</div>
             </el-popover>
@@ -108,7 +108,7 @@
           </div>
         </el-collapse-item>
 
-        <el-collapse-item name="colocalized">
+        <el-collapse-item v-if="showColoc" name="colocalized">
           <div slot="title" style="display: flex; align-items: center; padding-right: 10px">
             <span style="padding-right: 20px">
               Colocalized annotations

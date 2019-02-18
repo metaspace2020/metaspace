@@ -51,7 +51,7 @@
  import createColormap from '../lib/createColormap';
  import {quantile} from 'simple-statistics';
  import resize from 'vue-resize-directive';
- import config from '../clientConfig.json';
+ import config from '../config';
 
  const OPACITY_MAPPINGS = {
    'constant': (x) => 1,

@@ -18,6 +18,7 @@
  import { safeJsonParse } from '../../util';
  import {omit, pick} from 'lodash-es';
  import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
+ import config from '../../config';
 
  type colorObjType = {
    code: string,
@@ -227,6 +228,10 @@
        return this.metadata.MS_Analysis.Pixel_Size.Yaxis
      }
      return 0
+   }
+
+   get showColoc() {
+     return config.features.coloc;
    }
 
    opacity: number = 1.0;

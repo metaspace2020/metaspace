@@ -55,9 +55,8 @@
  import {FilterPanel} from '../Filters/index';
  import MetadataEditor from './MetadataEditor.vue';
  import Vue from 'vue';
- import tokenAutorefresh from '../../tokenAutorefresh';
 
- import * as config from '../../clientConfig.json';
+ import config from '../../config';
  import {pathFromUUID} from '../../util';
  import {createDatasetQuery} from '../../api/dataset';
  import {getSystemHealthQuery, getSystemHealthSubscribeToMore} from '../../api/system';
