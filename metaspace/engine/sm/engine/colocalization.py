@@ -109,7 +109,7 @@ def _label_clusters(scores):
     max_clusters = 20
     n_samples = scores.shape[0]
     if n_samples <= min_clusters:
-        return np.array([[i] for i in range(n_samples)])
+        return np.array([i for i in range(n_samples)])
 
     results = []
     last_error = None
