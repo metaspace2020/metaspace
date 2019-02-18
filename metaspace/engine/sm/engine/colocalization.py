@@ -224,7 +224,7 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
                         labels = _label_clusters(masked_scores)
                         clusters = _labels_to_clusters(labels, masked_scores)
                     except Exception as err:
-                        logger.warning(f'Failed to cluster {algorithm}: {err}')
+                        logger.warning(f'Failed to cluster {algorithm}: {err}', exc_info=True)
 
                 colocs = _get_best_colocs(masked_scores, labels, 100, 0.3)
                 sample_ion_ids = [masked_ion_ids.item(c[0]) for c in clusters] # This could be done better
