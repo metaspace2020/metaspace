@@ -68,7 +68,6 @@ export default {
   data() {
     return {
       loading: 0,
-      noColocJobError: false,
     };
   },
   computed: {
@@ -77,6 +76,9 @@ export default {
     },
     colocReferenceIon() {
       return this.query === 'colocalized' ? this.annotation.ion : null;
+    },
+    noColocJobError() {
+      return this.query === 'colocalized' && !this.loading && this.annotations.length === 0;
     }
   },
   apollo: {
@@ -103,15 +105,7 @@ export default {
         return vars;
       },
       update(data) {
-        this.noColocJobError = false;
         return data.allAnnotations;
-      },
-      error(error) {
-        const message = get(error, ['graphQLErrors', 0, 'message']);
-        const errObj = safeJsonParse(message);
-        if (errObj != null && errObj.type === 'no_colocalization_job') {
-          this.noColocJobError = true;
-        }
       }
     },
   },

@@ -230,7 +230,6 @@
        exportProgress: 0,
        totalCount: 0,
        csvChunkSize: 1000,
-       noColocJobError: false,
      }
    },
    mounted() {
@@ -312,6 +311,10 @@
          return "pager";
 
        return "prev,pager,next,sizes";
+     },
+     noColocJobError() {
+       return (this.queryVariables.filter.colocalizedWith || this.queryVariables.filter.colocalizationSamples)
+        && this.annotations.length === 0
      }
    },
    apollo: {
@@ -345,17 +348,9 @@
          }
 
          this.totalCount = data.countAnnotations;
-         this.noColocJobError = false;
        },
        watchLoading (isLoading) {
          this.$store.commit('updateAnnotationTableStatus', isLoading);
-       },
-       error(error) {
-         const message = get(error, ['graphQLErrors', 0, 'message']);
-         const errObj = safeJsonParse(message);
-         if (errObj != null && errObj.type === 'no_colocalization_job') {
-           this.noColocJobError = true;
-         }
        }
      }
    },
