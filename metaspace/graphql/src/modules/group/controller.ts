@@ -14,6 +14,7 @@ import {createInactiveUser} from '../auth/operation';
 import {smAPIUpdateDataset} from '../../utils/smAPI';
 import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
 import {resolveGroupScopeRole} from './util/resolveGroupScopeRole';
+import * as sanitizeHtml from 'sanitize-html' ;
 
 const assertCanCreateGroup = (user: ContextUser | null) => {
   if (!user || user.role !== 'admin')
@@ -67,6 +68,22 @@ const updateUserGroupDatasets = async (entityManager: EntityManager, userId: str
     await datasetRepo.update({id: ds.id}, {groupApproved});
     await smAPIUpdateDataset(ds.id, {groupId});
   }));
+};
+
+const sanitizeGroupDescr = function (groupDescription: string) {
+  return sanitizeHtml(
+    groupDescription,
+    {
+      allowedTags: [ 'h3', 'h4', 'h5', 'h6', 'blockquote', 'p', 'a', 'ul', 'ol',
+        'nl', 'li', 'b', 'i', 'strong', 'em', 'strike', 'code', 'hr', 'br', 'div',
+        'table', 'thead', 'caption', 'tbody', 'tr', 'th', 'td', 'pre'],
+      allowedAttributes: {
+        'a': ['href', 'name', 'target', 'rel']
+      },
+      transformTags: {
+        'a': sanitizeHtml.simpleTransform('a', {rel: 'nofollow noopener noreferrer'})
+      },
+    });
 };
 
 
@@ -169,12 +186,12 @@ export const Resolvers = {
     async allGroups(_: any, {query}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
       const scopeRole = await resolveGroupScopeRole(ctx);
       const groups = await ctx.entityManager.getRepository(GroupModel)
-        .createQueryBuilder('group')
-        .where('group.name ILIKE :query OR group.shortName ILIKE :query', {query: query ? `%${query}%` : '%'})
-        .orderBy('group.name')
-        .getMany();
+      .createQueryBuilder('group')
+      .where('group.name ILIKE :query OR group.shortName ILIKE :query', {query: query ? `%${query}%` : '%'})
+      .orderBy('group.name')
+      .getMany();
       return groups.map(g => ({...g, scopeRole}));
-    }
+    },
   },
 
   Mutation: {
@@ -202,8 +219,8 @@ export const Resolvers = {
     async updateGroup(_: any, {groupId, groupDetails}: any, {user, entityManager}: Context): Promise<Group> {
       await assertCanEditGroup(entityManager, user, groupId);
       logger.info(`Updating '${groupId}' group by '${user!.id}' user...`);
-
       const groupRepo = entityManager.getRepository(GroupModel);
+      groupDetails.groupDescription = sanitizeGroupDescr(groupDetails.groupDescription);
       const group = {...(await groupRepo.findOneOrFail(groupId)), ...groupDetails};
       await groupRepo.save(group);  // update doesn't return updated object;
 
@@ -424,5 +441,11 @@ export const Resolvers = {
       logger.info(`User '${user!.id}' imported datasets to '${groupId}' group`);
       return true;
     },
+
+    // async updateGroupDescr(_: any, {groupId, grpDescr}: any, {user, entityManager}: Context): Promise<Boolean> {
+    //   await assertCanEditGroup(entityManager, user, groupId);
+    //   await entityManager.update(GroupModel, {id: groupId}, {groupDescription: grpDescr});
+    //   return true;
+    // },
   }
 };

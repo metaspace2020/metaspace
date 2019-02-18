@@ -7,6 +7,7 @@ type Group {
   hasPendingRequest: Boolean  # null if current user is not allowed to see
   numMembers: Int!
   members: [UserGroup!]    # null if current user is not allowed to see
+  groupDescription: String!
 }
 
 input CreateGroupInput {
@@ -20,6 +21,7 @@ input UpdateGroupInput {
   name: String
   shortName: String
   urlSlug: String
+  groupDescription: String!
 }
 
 input UpdateUserGroupInput {
