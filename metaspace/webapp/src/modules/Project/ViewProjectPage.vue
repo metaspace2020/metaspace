@@ -38,6 +38,9 @@
         </el-alert>
       </div>
       <el-tabs v-model="tab">
+        <el-tab-pane name="description" :label="'Description'" lazy>
+          <project-description :project="project" :canEdit="canEdit && projectId != null" v-on:updateProjectDescription="saveMarkdown" />
+        </el-tab-pane>
         <el-tab-pane name="datasets" :label="'Datasets' | optionalSuffixInParens(countDatasets)" lazy>
           <dataset-list :datasets="projectDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" />
 
@@ -87,7 +90,7 @@
     leaveProjectMutation,
     ProjectRole,
     ProjectRoleOptions,
-    requestAccessToProjectMutation,
+    requestAccessToProjectMutation, updateProjectMutation, UpdateProjectMutation,
     ViewProjectFragment,
     ViewProjectResult,
   } from '../../api/project';
@@ -104,6 +107,7 @@
   import {optionalSuffixInParens, plural} from '../../lib/vueFilters';
   import apolloClient from '../../graphqlClient';
   import {removeDatasetFromAllDatasetsQuery} from '../../lib/updateApolloCache';
+  import ProjectDescription from "./ProjectDescription.vue";
 
 
   interface ViewProjectPageData {
@@ -117,6 +121,7 @@
       ProjectMembersList,
       ProjectSettings,
       NotificationIcon,
+      ProjectDescription
     },
     filters: {
       optionalSuffixInParens,
@@ -209,7 +214,7 @@
     }
 
     get tab() {
-      if (['datasets', 'members', 'settings'].includes(this.$route.query.tab)) {
+      if (['description', 'datasets', 'members', 'settings'].includes(this.$route.query.tab)) {
         return this.$route.query.tab;
       } else {
         return 'datasets';
@@ -309,6 +314,19 @@
         variables: { projectId: this.projectId },
       });
       await this.refetch();
+    }
+
+    async saveMarkdown(newProjectDescription: string) {
+      await this.$apollo.mutate<UpdateProjectMutation>({
+        mutation: updateProjectMutation,
+        variables: {
+          projectId: this.projectId,
+          projectDetails: {
+            projectDescription: newProjectDescription
+          }
+        },
+      });
+      this.refetchProject()
     }
 
     async refetchProject() {

@@ -10,6 +10,7 @@ type Project {
   numDatasets: Int!
   createdDT: String!
   latestUploadDT: String
+  projectDescription: String!
 }
 
 input CreateProjectInput {
@@ -22,6 +23,7 @@ input UpdateProjectInput {
   name: String
   isPublic: Boolean
   urlSlug: String
+  projectDescription: String!
 }
 
 input UpdateUserProjectInput {

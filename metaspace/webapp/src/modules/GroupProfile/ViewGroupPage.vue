@@ -47,51 +47,10 @@
       </div>
       <el-tabs v-model="tab">
         <el-tab-pane name="description" :label="'Description'" lazy >
-          <el-popover
-            placement="top-end"
-            v-if="groupDescrTextarea"
-            trigger="manual"
-            v-model="showHint">
-              <div>
-                You can use markdown language to format your description.
-                <br>
-                  <a style="margin-top: 5px" rel="nofollow noopener noreferrer" target="_blank"
-                     href="http://www.unexpected-vortices.com/sw/rippledoc/quick-markdown-example.html">
-                    Learn more about it</a>
-                <br><el-button
-                  style="margin-top: 5px"
-                  type="primary"
-                  size="mini"
-                  @click="showHint=false">It's clear</el-button>
-              </div>
-              <el-input
-                slot="reference"
-                type="textarea"
-                :rows="linesLen"
-                v-model="groupDescription">
-              </el-input>
-          </el-popover>
-            <div v-if="!groupDescrTextarea" v-html="markedConvert"></div>
-            <el-button
-              class="saveDesc_btn"
-              @click="saveMarkdown"
-              v-if="groupDescrTextarea"
-              type="primary"
-              icon="el-icon-check">
-                Save
-            </el-button>
-            <el-button
-              class="saveDesc_btn"
-              @click="editTextDescr"
-              v-if="!groupDescrTextarea"
-              type="primary"
-              icon="el-icon-edit">
-                Edit
-            </el-button>
+          <group-description :group="group" :canEdit="canEdit && groupId != null" v-on:updateGroupDescription="saveMarkdown" />
         </el-tab-pane>
         <el-tab-pane name="datasets" :label="'Datasets' | optionalSuffixInParens(countDatasets)" lazy>
           <dataset-list :datasets="groupDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" hideGroupMenu />
-
           <div class="dataset-list-footer">
             <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
           </div>
@@ -150,7 +109,7 @@
   import isUuid from '../../lib/isUuid';
   import {optionalSuffixInParens, plural} from '../../lib/vueFilters';
   import {removeDatasetFromAllDatasetsQuery} from '../../lib/updateApolloCache';
-  import marked from 'marked';
+  import GroupDescription from './GroupDescription.vue';
 
   interface ViewGroupProfileData {
     allDatasets: DatasetDetailItem[];
@@ -164,6 +123,7 @@
       GroupSettings,
       TransferDatasetsDialog,
       NotificationIcon,
+      GroupDescription
     },
     filters: {
       optionalSuffixInParens,
@@ -238,9 +198,6 @@
     currentUser: CurrentUserRoleResult | null = null;
     group: ViewGroupResult | null = null;
     data: ViewGroupProfileData | null = null;
-    groupDescrTextarea: boolean = false;
-    groupDescription: string = '';
-    showHint: boolean = false;
 
     get currentUserId(): string | null { return this.currentUser && this.currentUser.id }
     get roleInGroup(): UserGroupRole | null { return this.group && this.group.currentUserRole; }
@@ -249,17 +206,6 @@
     get members() { return this.group && this.group.members || []; }
     get countMembers() { return this.group && this.group.numMembers; }
     maxVisibleDatasets = 8;
-
-    @Watch('group')
-    setGroupDescription() {
-      this.groupDescription = this.group && this.group.groupDescription || '';
-    }
-
-    get markedConvert() {
-      if (this.group != null) {
-        return marked(this.group.groupDescription)
-      }
-    }
 
     get groupId(): string | null {
       if (isUuid(this.$route.params.groupIdOrSlug)) {
@@ -270,7 +216,7 @@
     }
 
     get tab() {
-      if (['datasets', 'members', 'settings', 'description'].includes(this.$route.query.tab)) {
+      if (['description', 'datasets', 'members', 'settings', ].includes(this.$route.query.tab)) {
         return this.$route.query.tab;
       } else {
         return 'datasets';
@@ -385,34 +331,17 @@
       })
     }
 
-    editTextDescr() {
-      this.groupDescrTextarea = true;
-      this.$nextTick( ()=> {
-        this.showHint = true;
-      })
-    }
-
-    async saveMarkdown() {
+    async saveMarkdown(newGroupDescription: string) {
       await this.$apollo.mutate<UpdateGroupMutation>({
         mutation: updateGroupMutation,
         variables: {
           groupId: this.groupId,
           groupDetails: {
-          groupDescription: this.groupDescription
+          groupDescription: newGroupDescription
           }
         },
       });
-      this.groupDescrTextarea = false;
-      this.refetchGroup()
-      this.$nextTick( ()=> {this.showHint = false;})
-    }
-
-    get linesLen() {
-      if (this.group != null) {
-        if (this.group.groupDescription.split(/\r\n|\r|\n/).length < 5)
-          return 10;
-        else return this.group.groupDescription.split(/\r\n|\r|\n/).length
-      }
+      this.refetchGroup();
     }
 
     async refetchGroup() {
@@ -463,10 +392,5 @@
   .hidden-members-text {
     text-align: center;
     color: $--color-text-secondary;
-  }
-
-  .saveDesc_btn{
-    padding: 8px 20px;
-    margin-top: 10px;
   }
 </style>

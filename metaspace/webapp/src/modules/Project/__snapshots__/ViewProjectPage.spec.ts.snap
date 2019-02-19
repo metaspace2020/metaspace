@@ -22,7 +22,8 @@ exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
         <div class="el-tabs__nav-wrap is-top">
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
-              <div class="el-tabs__active-bar is-top" style="width: -20px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
+              <div class="el-tabs__active-bar is-top" style="width: -40px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
+              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
@@ -32,6 +33,7 @@ exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
         </div>
       </div>
       <div class="el-tabs__content">
+        <!---->
         <div role="tabpanel" id="pane-datasets" aria-labelledby="tab-datasets" class="el-tab-pane">
           <div class="dataset-list">
             <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="0" class=""></datasetitem-stub>
@@ -93,6 +95,7 @@ exports[`ViewProjectPage members tab should match snapshot (invited) 1`] = `
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: -20px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
+              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
@@ -102,6 +105,7 @@ exports[`ViewProjectPage members tab should match snapshot (invited) 1`] = `
         </div>
       </div>
       <div class="el-tabs__content">
+        <!---->
         <!---->
         <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
           <div style="max-width: 950px;">
@@ -138,6 +142,7 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: -40px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
+              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
@@ -149,6 +154,7 @@ exports[`ViewProjectPage members tab should match snapshot (manager, including t
         </div>
       </div>
       <div class="el-tabs__content">
+        <!---->
         <!---->
         <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
           <div style="max-width: 950px;">
@@ -392,6 +398,7 @@ exports[`ViewProjectPage members tab should match snapshot (member) 1`] = `
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: -20px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
+              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
@@ -402,6 +409,7 @@ exports[`ViewProjectPage members tab should match snapshot (member) 1`] = `
         </div>
       </div>
       <div class="el-tabs__content">
+        <!---->
         <!---->
         <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
           <div style="max-width: 950px;">
@@ -440,6 +448,7 @@ exports[`ViewProjectPage members tab should match snapshot (non-member) 1`] = `
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: -20px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
+              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" aria-selected="true" tabindex="0" class="el-tabs__item is-top is-active"><span>
           Members (2)
@@ -449,6 +458,7 @@ exports[`ViewProjectPage members tab should match snapshot (non-member) 1`] = `
         </div>
       </div>
       <div class="el-tabs__content">
+        <!---->
         <!---->
         <div role="tabpanel" id="pane-members" aria-labelledby="tab-members" class="el-tab-pane">
           <div style="max-width: 950px;">
@@ -485,6 +495,7 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
           <div class="el-tabs__nav-scroll">
             <div role="tablist" class="el-tabs__nav is-top" style="transform: translateX(-0px);">
               <div class="el-tabs__active-bar is-top" style="width: -20px; transform: translateX(0px); -webkit-transform: translateX(0px);"></div>
+              <div id="tab-description" aria-controls="pane-description" role="tab" tabindex="-1" class="el-tabs__item is-top">Description</div>
               <div id="tab-datasets" aria-controls="pane-datasets" role="tab" tabindex="-1" class="el-tabs__item is-top">Datasets (4)</div>
               <div id="tab-members" aria-controls="pane-members" role="tab" tabindex="-1" class="el-tabs__item is-top"><span>
           Members (2)
@@ -495,6 +506,7 @@ exports[`ViewProjectPage settings tab should match snapshot 1`] = `
         </div>
       </div>
       <div class="el-tabs__content">
+        <!---->
         <!---->
         <!---->
         <div role="tabpanel" id="pane-settings" aria-labelledby="tab-settings" class="el-tab-pane">
