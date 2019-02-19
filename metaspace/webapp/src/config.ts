@@ -65,8 +65,8 @@ export const updateConfigFromQueryString = () => {
         features.substring('feat='.length)
           .split(',')
           .forEach(feat => {
-            const val = !feat.endsWith('-');
-            const key = val ? feat : feat.substring(0, feat.length - 1);
+            const val = !feat.startsWith('-');
+            const key = val ? feat : feat.substring(1);
             (config.features as any)[key] = val;
           });
       });
