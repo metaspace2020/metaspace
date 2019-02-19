@@ -26,7 +26,6 @@
                :valueFormatter="f.valueFormatter"
                :valueKey="f.valueKey"
                :width="f.width"
-               :error="f.error"
                @change="f.onChange"
                @destroy="f.onDestroy">
     </component>

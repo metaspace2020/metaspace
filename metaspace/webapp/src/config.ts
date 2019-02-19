@@ -3,20 +3,20 @@ import {defaultsDeep} from 'lodash-es';
 
 
 interface AWSConfig {
-  access_key_id: string
-  region: string
-  s3_bucket: string
-  s3_signature_endpoint: string
-  s3_signature_version: number
+  access_key_id: string;
+  region: string;
+  s3_bucket: string;
+  s3_signature_endpoint: string;
+  s3_signature_version: number;
 }
 
 interface FineUploaderConfigS3 {
-  storage: 's3'
-  aws: AWSConfig
+  storage: 's3';
+  aws: AWSConfig;
 }
 
 interface FineUploaderConfigLocal {
-  storage: 'local'
+  storage: 'local';
 }
 
 type FineUploaderConfig = FineUploaderConfigS3 | FineUploaderConfigLocal;
@@ -26,14 +26,15 @@ interface Features {
 }
 
 interface ClientConfig {
-  graphqlUrl: string | null
-  wsGraphqlUrl: string | null
+  graphqlUrl: string | null;
+  wsGraphqlUrl: string | null;
 
-  google_client_id: string
+  google_client_id: string;
 
-  fineUploader: FineUploaderConfig
-  ravenDsn: string | null
-  features: Features
+  fineUploader: FineUploaderConfig;
+  ravenDsn: string | null;
+  metadataTypes: string[];
+  features: Features;
 }
 
 const defaultConfig: ClientConfig = {
@@ -44,12 +45,13 @@ const defaultConfig: ClientConfig = {
     storage: 'local'
   },
   ravenDsn: null,
+  metadataTypes: ["ims"],
   features: {
     coloc: false,
   }
 };
 
-const config = defaultsDeep({}, fileConfig, defaultConfig) as ClientConfig;
+let config = defaultsDeep({}, fileConfig, defaultConfig) as ClientConfig;
 
 export const updateConfigFromQueryString = () => {
   if (typeof window !== 'undefined' && window.location && window.location.search) {
@@ -69,6 +71,10 @@ export const updateConfigFromQueryString = () => {
           });
       });
   }
+};
+
+export const replaceConfigWithDefaultForTests = () => {
+  config = defaultsDeep({}, defaultConfig);
 };
 
 export default config;

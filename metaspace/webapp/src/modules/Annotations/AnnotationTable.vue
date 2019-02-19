@@ -18,7 +18,16 @@
               @current-change="onCurrentRowChange"
               @sort-change="onSortChange">
 
-      <p slot="empty" v-if="singleDatasetSelected && filter.fdrLevel <= 0.2 && ((filter.minMSM || 0) <= 0.2)"
+      <p slot="empty" v-if="multipleDatasetsColocError">
+        Colocalization filters cannot be used with multiple datasets selected.
+      </p>
+
+      <p slot="empty" v-else-if="noColocJobError">
+        Colocalization data not found. <br/>
+        This usually means that analysis is still in progress.
+      </p>
+
+      <p slot="empty" v-else-if="singleDatasetSelected && filter.fdrLevel <= 0.2 && ((filter.minMSM || 0) <= 0.2)"
          style="text-align: left;">
         No annotations were found for this dataset at {{ filter.fdrLevel * 100 }}% FDR. This might be because of:
         <ul>
@@ -33,11 +42,6 @@
           <li>Relax the FDR filter</li>
           <li>Look for missing pixels/stripes: <br/>these indicate calibration issues</li>
         </ul>
-      </p>
-
-      <p slot="empty" v-else-if="noColocJobError">
-        Colocalization data not found. <br/>
-        This usually means that analysis is still in progress.
       </p>
 
       <p slot="empty" v-else>
@@ -315,7 +319,12 @@
      noColocJobError() {
        return (this.queryVariables.filter.colocalizedWith || this.queryVariables.filter.colocalizationSamples)
         && this.annotations.length === 0
-     }
+     },
+     multipleDatasetsColocError() {
+       return (this.queryVariables.filter.colocalizedWith || this.queryVariables.filter.colocalizationSamples)
+         && this.$store.getters.filter.datasetIds != null
+         && this.$store.getters.filter.datasetIds.length > 1;
+     },
    },
    apollo: {
      annotations: {
