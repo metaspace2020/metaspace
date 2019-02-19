@@ -42,7 +42,7 @@ logger = logging.getLogger('engine')
 
 class ColocalizationJob(object):
     def __init__(self, ds_id, mol_db, fdr, algorithm_name=None, start=None, finish=None,
-                 error=None, ion_ids=None, sample_ion_ids=[], coloc_annotations=[]):
+                 error=None, ion_ids=None, sample_ion_ids=None, coloc_annotations=None):
         """
         Args
         ----------
@@ -70,8 +70,8 @@ class ColocalizationJob(object):
         self.finish = finish or datetime.now()
         self.error = error
         self.ion_ids = ion_ids
-        self.sample_ion_ids = sample_ion_ids
-        self.coloc_annotations = coloc_annotations
+        self.sample_ion_ids = sample_ion_ids or []
+        self.coloc_annotations = coloc_annotations or []
 
 
 def _preprocess_images_inplace(imgs):
