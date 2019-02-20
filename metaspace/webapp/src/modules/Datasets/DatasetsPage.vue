@@ -27,7 +27,6 @@
 
   /* 1 dataset per row by default*/
   #dataset-page-contents {
-    display: inline-block;
     width: 820px;
 
     @media (min-width: 1650px) {

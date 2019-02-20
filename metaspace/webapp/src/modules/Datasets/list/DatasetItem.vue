@@ -516,9 +516,11 @@
 
  .dataset-item {
    position: relative;
+   box-sizing: border-box;
    border-radius: 5px;
-   width: calc(100% - 6px);
+   flex: 1 1 100%;
    min-height: 120px;
+   min-width: 600px;
    max-width: 950px;
    margin: 3px;
    padding: 0px;
