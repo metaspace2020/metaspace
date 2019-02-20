@@ -5,14 +5,9 @@ formula_regexp = re.compile(r'([A-Z][a-z]?)([0-9]*)')
 adduct_split_regexp = re.compile(r'([+-]*)([A-Za-z0-9]+)')
 
 
-class NegativeTotalElemError(Exception):
-    def __init__(self, *args):
-        self.message = str(args)
-
-
-class FormulaHasNoElement(Exception):
-    def __init__(self, *args):
-        self.message = str(args)
+class ParseFormulaError(Exception):
+    def __init__(self, message):
+        self.message = message
 
 
 def parse_formula(f):
@@ -20,7 +15,7 @@ def parse_formula(f):
             for (elem, n) in formula_regexp.findall(f)]
 
 
-def ion_formula(formula, adduct):
+def generate_ion_formula(formula, adduct):
     """ N.B.: Only single element adducts supported
     """
     ion_elements = []
@@ -44,12 +39,12 @@ def ion_formula(formula, adduct):
                     matched = True
                     n -= a_n
                     if n < 0:
-                        raise NegativeTotalElemError(formula, adduct)
+                        raise ParseFormulaError(f'Negative total element count {formula}, {adduct}')
                 ion_elements.append((elem, n))
             if not matched:
-                raise FormulaHasNoElement(formula, adduct)
+                raise ParseFormulaError(f'Formula has no element for {formula}, {adduct}')
         else:
-            raise Exception('Adduct should be charged')
+            raise ParseFormulaError('Adduct should be charged')
 
     ion_formula = ''
     for elem, n in ion_elements:

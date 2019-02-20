@@ -58,9 +58,16 @@ class IsocalcWrapper(object):
             resolving_power = iso_pattern.masses[0] / fwhm
             instrument_model = InstrumentModel('tof', resolving_power)
             centr = iso_pattern.centroids(instrument_model)
-            mzs = np.array(centr.masses)
-            ints = 100. * np.array(centr.intensities)
-            mzs, ints = self._trim(mzs, ints, ISOTOPIC_PEAK_N)
+            mzs_ = np.array(centr.masses)
+            ints_ = 100. * np.array(centr.intensities)
+            mzs_, ints_ = self._trim(mzs_, ints_, ISOTOPIC_PEAK_N)
+
+            n = len(mzs_)
+            mzs = np.zeros(ISOTOPIC_PEAK_N)
+            mzs[:n] = np.array(mzs_)
+            ints = np.zeros(ISOTOPIC_PEAK_N)
+            ints[:n] = ints_
+
             return mzs, ints
 
         except Exception as e:

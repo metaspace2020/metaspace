@@ -5,7 +5,7 @@ import pandas as pd
 import logging
 
 from sm.engine.fdr import FDR
-from sm.engine.formula_parser import ion_formula
+from sm.engine.formula_parser import generate_ion_formula
 from sm.engine.formula_centroids import CentroidsGenerator
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.util import SMConfig
@@ -32,9 +32,12 @@ def collect_ion_formulas(moldb_fdr_list):
     """
     ion_formula_map_list = []
     for moldb, fdr in moldb_fdr_list:
-        moldb_ion_formulas = [(moldb.id, ion_formula(formula, adduct), formula, adduct)
-                              for formula, adduct in fdr.ion_tuples()]
-        ion_formula_map_list.extend(moldb_ion_formulas)
+        for formula, adduct in fdr.ion_tuples():
+            try:
+                ion_formula = generate_ion_formula(formula, adduct)
+                ion_formula_map_list.append((moldb.id, ion_formula, formula, adduct))
+            except Exception as e:
+                logger.debug(e)
     return pd.DataFrame(ion_formula_map_list,
                         columns=['moldb_id', 'ion_formula', 'formula', 'adduct'])
 
@@ -97,7 +100,7 @@ class MSMSearch(object):
         ion_formula_map_df = collect_ion_formulas(moldb_fdr_list)
 
         formula_centroids = self._fetch_formula_centroids(ion_formula_map_df)
-        logger.debug(f'ion_centroids_df size: {formula_centroids.centroids_df.shape}')
+        logger.debug(f'formula_centroids_df size: {formula_centroids.centroids_df.shape}')
 
         # Run ion formula search
         formula_images = compute_formula_images(
