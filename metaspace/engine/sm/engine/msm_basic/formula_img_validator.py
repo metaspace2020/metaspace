@@ -128,7 +128,7 @@ def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula
         centr_ints = formula_centr_ints_brcast.value[formula_i]
         return (formula_i,) + compute_metrics(images, centr_ints)
 
-    msm_index = list(metrics.keys()).index('msm')
+    msm_index = list(metrics.keys()).index('msm') + 1  # formula_i takes the first index
 
     def filter_metrics(item):
         msm = item[msm_index]

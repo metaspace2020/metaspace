@@ -123,6 +123,7 @@ class MSMSearch(object):
             ds_config=self._ds_config, ds_reader=self._ds_reader, sc=self._sc)
         formula_images = formula_images.filter(
             lambda formula_i_images: formula_i_images[0] in formula_metrics_df.index)
+        formula_images.cache()
 
         formula_metrics_df = formula_metrics_df.join(formula_centroids.formulas_df, how='left')
         formula_metrics_df = formula_metrics_df.rename({'formula': 'ion_formula'}, axis=1)

@@ -80,18 +80,6 @@ def _sp_df_gen(sp_it, sp_indexes):
             yield sp_indexes[sp_id], mz, ints
 
 
-# def _create_lower_upper_mz_bounds(sf_peak_df, ppm):
-#     """ Different approaches for ims data (ppm based) and lcms data (abs tolerance in mz)
-#     """
-#     if ppm > 0:
-#         lower = sf_peak_df.mz.map(lambda mz: mz - mz * ppm * 1e-6)
-#         upper = sf_peak_df.mz.map(lambda mz: mz + mz * ppm * 1e-6)
-#     else:
-#         lower = sf_peak_df.mz.map(lambda mz: mz - ABS_MZ_TOLERANCE_DA)
-#         upper = sf_peak_df.mz.map(lambda mz: mz + ABS_MZ_TOLERANCE_DA)
-#     return lower, upper
-
-
 def _gen_iso_images(spectra_it, sp_indexes, centr_df, nrows, ncols, ppm, min_px=1):
     if len(centr_df) > 0:
         # a bit slower than using pure numpy arrays but much shorter
@@ -100,8 +88,6 @@ def _gen_iso_images(spectra_it, sp_indexes, centr_df, nrows, ncols, ppm, min_px=
                              columns=['idx', 'mz', 'ints']).sort_values(by='mz')
 
         # -1, + 1 are needed to extend sf_peak_mz range so that it covers 100% of spectra
-        # sf_peak_df = sf_peak_df[(sf_peak_df.mz >= sp_df.mz.min()-1) & (sf_peak_df.mz <= sp_df.mz.max()+1)]
-        # lower, upper = _create_lower_upper_mz_bounds(sf_peak_df, ppm)
         centr_df = centr_df[(centr_df.mz >= sp_df.mz.min() - 1) &
                             (centr_df.mz <= sp_df.mz.max() + 1)]
         lower = centr_df.mz.map(lambda mz: mz - mz * ppm * 1e-6)
@@ -137,7 +123,7 @@ def _img_pairs_to_list(pairs, shape):
     return res.tolist()
 
 
-def define_mz_segments(spectra, sf_peak_df, ppm):
+def define_mz_segments(spectra, centroids_df, ppm):
     first_spectrum = spectra.take(1)[0]
     spectra_n = spectra.count()
     if first_spectrum[1].shape[0] > 10**5:
@@ -149,13 +135,14 @@ def define_mz_segments(spectra, sf_peak_df, ppm):
 
     peaks_per_sp = max(1, int(np.mean([mzs.shape[0] for (sp_id, mzs, ints) in spectra_sample])))
     plan_mz_segm_n = (spectra_n * peaks_per_sp) // 10**6  # 1M peaks per segment
-    plan_mz_segm_n = int(np.clip(plan_mz_segm_n, 32, 2048))
+    plan_mz_segm_n = int(np.clip(plan_mz_segm_n, 64, 2048))
 
-    mz_grid, workload_per_mz, sp_workload_per_mz = _estimate_mz_workload(spectra_sample, sf_peak_df, bins=10**4)
-    mz_bounds = _define_mz_bounds(mz_grid, workload_per_mz, sp_workload_per_mz, n=plan_mz_segm_n)
-    mz_segments = _create_mz_segments(mz_bounds, ppm=ppm)
-    logger.debug('Generated m/z segments: %s', mz_segments)
-    return mz_segments
+    segm_bounds_q = [i * 1 / plan_mz_segm_n for i in range(1, plan_mz_segm_n)]
+    segm_bounds = [np.quantile(centroids_df.mz.values, q) for q in segm_bounds_q]
+
+    segments = _create_mz_segments(segm_bounds, ppm=ppm)
+    logger.debug(f'Generated {len(segments)} m/z segments: {segments[0]}...{segments[-1]}')
+    return segments
 
 
 def gen_iso_peak_images(sc, ds_reader, ion_centroids_df, segm_spectra, ppm):
@@ -183,18 +170,16 @@ def compute_formula_images(sc, ds_reader, formula_centroids_df, ppm):
     """ Compute isotopic images for all formulas
 
     Returns
-    ----------
-    : pyspark.rdd.RDD
+    -----
+        pyspark.rdd.RDD
         RDD of sum formula, list[sparse matrix of intensities]
     """
     spectra_rdd = ds_reader.get_spectra()
-
     mz_segments = define_mz_segments(spectra_rdd, formula_centroids_df, ppm)
     segm_spectra = (spectra_rdd
                     .flatMap(lambda sp: _segment_spectrum(sp, mz_segments))
                     .groupByKey(numPartitions=len(mz_segments)))
 
     iso_peak_images = gen_iso_peak_images(sc, ds_reader, formula_centroids_df, segm_spectra, ppm)
-    iso_sf_images = gen_iso_sf_images(iso_peak_images, shape=ds_reader.get_dims())
-
-    return iso_sf_images
+    formula_images = gen_iso_sf_images(iso_peak_images, shape=ds_reader.get_dims())
+    return formula_images
