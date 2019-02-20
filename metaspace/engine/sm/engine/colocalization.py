@@ -333,7 +333,7 @@ class Colocalization(object):
         image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)
         mol_dbs, polarity = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
 
-        for mol_db_name in mol_dbs[1:2]:
+        for mol_db_name in mol_dbs:
             logger.info(f'Running colocalization job for {ds_id} on {mol_db_name}')
             images, ion_ids, fdrs = self._get_existing_ds_annotations(ds_id, mol_db_name, image_storage_type, polarity)
             self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs)
