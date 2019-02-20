@@ -30,8 +30,11 @@ COLOC_ANN_INS = ('INSERT INTO graphql.coloc_annotation(coloc_job_id, ion_id, col
 
 ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], sf, adduct, fdr '
                    'FROM iso_image_metrics m '
-                   'JOIN job j ON j.id = m.job_id '
-                   'WHERE j.ds_id = %s AND j.db_id = %s')
+                   'WHERE m.job_id = ('
+                   '    SELECT id FROM job j '
+                   '    WHERE j.ds_id = %s AND j.db_id = %s '
+                   '    ORDER BY start DESC '
+                   '    LIMIT 1)')
 
 DATASET_CONFIG_SEL = ("SELECT mol_dbs, config #>> '{isotope_generation,charge,polarity}' "
                       "FROM dataset "
@@ -199,8 +202,8 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
     pca_images = PCA(min(20, *images.shape)).fit_transform(images)
     cos_scores = pairwise_kernels(images, metric='cosine')
     pca_cos_scores = pairwise_kernels(pca_images, metric='cosine')
-    pca_pear_scores = np.corrcoef(pca_images)
-    pca_sper_scores = spearmanr(pca_images, axis=1)[0]  # TODO: Discard low p-value entries?
+    pca_pear_scores = np.float32(np.corrcoef(pca_images))
+    pca_sper_scores = np.float32(spearmanr(pca_images, axis=1)[0])  # TODO: Discard low p-value entries?
 
     for fdr in [0.05, 0.1, 0.2, 0.5]:
         fdr_mask = fdrs <= fdr + 0.001
@@ -217,7 +220,7 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
 
             def run_alg(algorithm, scores, cluster):
                 nonlocal labels, clusters
-                masked_scores = scores[fdr_mask, :][:, fdr_mask]
+                masked_scores = scores if fdr_mask.all() else scores[fdr_mask, :][:, fdr_mask]
                 if cluster:
                     logger.debug(f'Clustering {algorithm} at {fdr} FDR with {len(masked_ion_ids)} annotations')
                     try:
