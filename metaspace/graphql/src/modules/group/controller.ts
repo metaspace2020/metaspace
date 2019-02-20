@@ -14,7 +14,6 @@ import {createInactiveUser} from '../auth/operation';
 import {smAPIUpdateDataset} from '../../utils/smAPI';
 import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
 import {resolveGroupScopeRole} from './util/resolveGroupScopeRole';
-import {sanitizeDescr} from '../../../utils'
 
 const assertCanCreateGroup = (user: ContextUser | null) => {
   if (!user || user.role !== 'admin')
@@ -205,16 +204,15 @@ export const Resolvers = {
       await assertCanEditGroup(entityManager, user, groupId);
       logger.info(`Updating '${groupId}' group by '${user!.id}' user...`);
       const groupRepo = entityManager.getRepository(GroupModel);
-      groupDetails.groupDescription = sanitizeDescr(groupDetails.groupDescription);
       const group = {...(await groupRepo.findOneOrFail(groupId)), ...groupDetails};
       await groupRepo.save(group);  // update doesn't return updated object;
-
-      logger.info(`Updating '${groupId}' group datasets...`);
-      const groupDSs = await entityManager.getRepository(DatasetModel).find({ groupId });
-      await Promise.all(groupDSs.map(async ds => {
-        await smAPIUpdateDataset(ds.id, {groupId});
-      }));
-
+      if (groupDetails.name || groupDetails.shortName) {
+        logger.info(`Updating '${groupId}' group datasets...`);
+        const groupDSs = await entityManager.getRepository(DatasetModel).find({ groupId });
+        await Promise.all(groupDSs.map(async ds => {
+          await smAPIUpdateDataset(ds.id, {groupId});
+        }));
+      }
       logger.info(`'${groupId}' group updated`);
       return group;
     },

@@ -21,8 +21,8 @@
       <el-input
           slot="reference"
           type="textarea"
-          :rows="linesLen"
-          v-model="groupDescription">
+          :autosize="{ minRows: 10, maxRows: 50 }"
+          v-model="groupDescriptionAsHtml">
       </el-input>
     </el-popover>
     <el-button-group class="btngroup" v-if="canEdit">
@@ -65,6 +65,7 @@
   import {
     ViewGroupResult,
   } from '../../api/group';
+  import {sanitizeIt} from '../../util'
 
   interface Modes {
     preview: boolean
@@ -81,7 +82,7 @@
     @Prop({required: true, default: false})
     canEdit!: boolean;
 
-    groupDescription: string = this.group && this.group.groupDescription || '';
+    groupDescriptionAsHtml: string = this.group && this.group.groupDescriptionAsHtml || '';
     showHint: boolean = false;
     modes: Modes = {
       preview: false,
@@ -101,7 +102,7 @@
     }
 
     async saveMarkdown() {
-      this.$emit('updateGroupDescription', this.groupDescription);
+      this.$emit('updateGroupDescription', this.groupDescriptionAsHtml);
       this.modes = {
         preview: false,
         saved: true,
@@ -123,15 +124,8 @@
         saved: false,
         edit: false
       };
-      marked(this.groupDescription);
-    }
-
-    get linesLen() {
-      if (this.group != null) {
-        if (this.group.groupDescription.split(/\r\n|\r|\n/).length < 5)
-          return 10;
-        else return this.group.groupDescription.split(/\r\n|\r|\n/).length
-      }
+      this.groupDescriptionAsHtml = sanitizeIt(this.groupDescriptionAsHtml);
+      marked(this.groupDescriptionAsHtml)
     }
 
     disableHint() {
@@ -140,14 +134,15 @@
     }
 
     markedConvert() {
-      return marked(this.groupDescription)
+      this.groupDescriptionAsHtml = sanitizeIt(this.groupDescriptionAsHtml);
+      return marked(this.groupDescriptionAsHtml)
     }
   }
 </script>
 
 <style scoped>
   .btngroup{
-    margin-top: 20px;
+    margin: 20px 0;
   }
 
   .btn {

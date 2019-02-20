@@ -63,23 +63,6 @@ async function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function sanitizeDescr(descriptionText) {
-  return sanitizeHtml(
-    descriptionText,
-    {
-      allowedTags: [ 'h3', 'h4', 'h5', 'h6', 'blockquote', 'p', 'a', 'ul', 'ol',
-        'nl', 'li', 'b', 'i', 'strong', 'em', 'strike', 'code', 'hr', 'br', 'div',
-        'table', 'thead', 'caption', 'tbody', 'tr', 'th', 'td', 'pre'],
-      allowedAttributes: {
-        'a': ['href', 'name', 'target', 'rel']
-      },
-      transformTags: {
-        'a': sanitizeHtml.simpleTransform('a', {rel: 'nofollow noopener noreferrer'})
-      },
-    });
-};
-
-
 export {
   metadataChangeSlackNotify,
   metadataUpdateFailedSlackNotify,
@@ -88,5 +71,4 @@ export {
   wait,
   config,
   logger,
-  sanitizeDescr
 };

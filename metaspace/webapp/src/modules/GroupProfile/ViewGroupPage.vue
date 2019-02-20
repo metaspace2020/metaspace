@@ -337,7 +337,7 @@
         variables: {
           groupId: this.groupId,
           groupDetails: {
-          groupDescription: newGroupDescription
+            groupDescriptionAsHtml: newGroupDescription
           }
         },
       });

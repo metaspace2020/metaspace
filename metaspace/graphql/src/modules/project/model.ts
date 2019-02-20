@@ -47,7 +47,7 @@ export class Project {
   createdDT: Moment;
 
   @Column({ type: 'text', name: 'project_description', default: 'There is no project description so far...'})
-  projectDescription: string;
+  projectDescriptionAsHtml: string;
 }
 
 @Entity('user_project')

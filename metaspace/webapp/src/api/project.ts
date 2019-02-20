@@ -214,7 +214,7 @@ export interface ViewProjectResult {
   currentUserRole: ProjectRole | null;
   numMembers: number;
   members: ViewProjectMember[] | null;
-  projectDescription: string | null;
+  projectDescriptionAsHtml: string | null;
 }
 
 export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
@@ -228,7 +228,7 @@ export const ViewProjectFragment = gql`fragment ViewProjectFragment on Project {
     numDatasets
     user { id name email }
   }
-  projectDescription
+  projectDescriptionAsHtml
 }`;
 
 export interface ViewProjectMember {

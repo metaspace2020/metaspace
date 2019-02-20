@@ -36,7 +36,7 @@ export interface UpdateGroupMutation {
     name: string;
     shortName: string;
     urlSlug: string | null;
-    groupDescription: string;
+    groupDescriptionAsHtml: string;
     currentUserRole: UserGroupRole | null;
   }
 }
@@ -151,7 +151,7 @@ export interface ViewGroupResult {
   urlSlug: string | null;
   currentUserRole: UserGroupRole | null;
   numMembers: number;
-  groupDescription: string;
+  groupDescriptionAsHtml: string;
   members: ViewGroupMember[] | null;
 }
 
@@ -177,5 +177,5 @@ export const ViewGroupFragment = gql`fragment ViewGroupFragment on Group {
     numDatasets
     user { id name email }
   }
-  groupDescription
+  groupDescriptionAsHtml
 }`;

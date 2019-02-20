@@ -322,7 +322,7 @@
         variables: {
           projectId: this.projectId,
           projectDetails: {
-            projectDescription: newProjectDescription
+            projectDescriptionAsHtml: newProjectDescription
           }
         },
       });

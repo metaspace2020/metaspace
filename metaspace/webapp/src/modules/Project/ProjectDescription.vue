@@ -21,8 +21,8 @@
       <el-input
           slot="reference"
           type="textarea"
-          :rows="linesLen"
-          v-model="projectDescription">
+          :autosize="{ minRows: 10, maxRows: 50 }"
+          v-model="projectDescriptionAsHtml">
       </el-input>
     </el-popover>
     <el-button-group class="btngroup" v-if="canEdit">
@@ -62,6 +62,7 @@
   import {Component, Prop} from 'vue-property-decorator';
   import marked from 'marked';
   import * as cookie from 'js-cookie';
+  import {sanitizeIt} from '../../util'
 
   interface Modes {
     preview: boolean
@@ -78,7 +79,7 @@
     @Prop({required: true, default: false})
     canEdit!: boolean;
 
-    projectDescription: string = this.project && this.project.projectDescription || '';
+    projectDescriptionAsHtml: string = this.project && this.project.projectDescriptionAsHtml || '';
     showHint: boolean = false;
     modes: Modes = {
       preview: false,
@@ -98,7 +99,7 @@
     }
 
     async saveMarkdown() {
-      this.$emit('updateProjectDescription', this.projectDescription);
+      this.$emit('updateProjectDescription', this.projectDescriptionAsHtml);
       this.modes = {
         preview: false,
         saved: true,
@@ -120,15 +121,8 @@
         saved: false,
         edit: false
       };
-      marked(this.projectDescription);
-    }
-
-    get linesLen() {
-      if (this.project != null) {
-        if (this.project.projectDescription.split(/\r\n|\r|\n/).length < 5)
-          return 10;
-        else return this.project.projectDescription.split(/\r\n|\r|\n/).length
-      }
+      this.projectDescriptionAsHtml = sanitizeIt(this.projectDescriptionAsHtml);
+      marked(this.projectDescriptionAsHtml);
     }
 
     disableHint() {
@@ -137,14 +131,15 @@
     }
 
     markedConvert() {
-      return marked(this.projectDescription)
+      this.projectDescriptionAsHtml = sanitizeIt(this.projectDescriptionAsHtml);
+      return marked(this.projectDescriptionAsHtml)
     }
   }
 </script>
 
 <style scoped>
   .btngroup{
-    margin-top: 20px;
+    margin: 20px 0;
   }
 
   .btn {
