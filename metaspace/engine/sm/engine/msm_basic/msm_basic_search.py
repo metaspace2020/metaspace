@@ -77,7 +77,7 @@ class MSMSearch(object):
         self._ds_reader = ds_reader
         self._moldbs = moldbs
         self._sm_config = SMConfig.get_conf()
-        self.metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0),
+        self.metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('msm', 0),
                                     ('total_iso_ints', [0, 0, 0, 0]),
                                     ('min_iso_ints', [0, 0, 0, 0]),
                                     ('max_iso_ints', [0, 0, 0, 0])])
@@ -121,7 +121,6 @@ class MSMSearch(object):
             formula_images=formula_images, metrics=self.metrics,
             formula_centr_ints=formula_centr_ints,
             ds_config=self._ds_config, ds_reader=self._ds_reader, sc=self._sc)
-        formula_metrics_df = formula_metrics_df[formula_metrics_df.msm > 0]
         formula_images = formula_images.filter(
             lambda formula_i_images: formula_i_images[0] in formula_metrics_df.index)
 

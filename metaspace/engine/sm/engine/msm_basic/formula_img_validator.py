@@ -90,6 +90,7 @@ def get_compute_img_metrics(metrics, sample_area_mask, empty_matrix, img_gen_con
             m.map['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=sf_ints[1:])
             moc = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'])
             m.map['chaos'] = 0 if np.isclose(moc, 1.0) else moc
+            m.map['msm'] = m.map['chaos'] * m.map['spatial'] * m.map['spectral']
 
             m.map['total_iso_ints'] = [img.sum() for img in iso_imgs]
             m.map['min_iso_ints'] = [img.min() for img in iso_imgs]
@@ -99,15 +100,11 @@ def get_compute_img_metrics(metrics, sample_area_mask, empty_matrix, img_gen_con
     return compute
 
 
-def _calculate_msm(sf_metrics_df):
-    return sf_metrics_df.chaos * sf_metrics_df.spatial * sf_metrics_df.spectral
-
-
 def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula_centr_ints, sc):
     """ Compute isotope image metrics for each formula
 
     Args
-    ------------
+    -----
     metrics: OrderedDict
     sc : pyspark.SparkContext
     ds_config : dict
@@ -115,9 +112,10 @@ def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula
     formula_centr_ints: dict
     formula_images : pyspark.rdd.RDD
         RDD of (formula, list[images]) pairs
+
     Returns
-    ------------
-    : pandas.DataFrame
+    -----
+        pandas.DataFrame
     """
     nrows, ncols = ds_reader.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
@@ -125,14 +123,23 @@ def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula
                                               empty_matrix, ds_config['image_generation'])
     formula_centr_ints_brcast = sc.broadcast(formula_centr_ints)
 
-    def calculate_ion_metrics(item):
+    def calculate_metrics(item):
         formula_i, images = item
         centr_ints = formula_centr_ints_brcast.value[formula_i]
         return (formula_i,) + compute_metrics(images, centr_ints)
 
-    formula_metrics = formula_images.map(calculate_ion_metrics).collect()
+    msm_index = list(metrics.keys()).index('msm')
+
+    def filter_metrics(item):
+        msm = item[msm_index]
+        return msm > 0
+
+    formula_metrics = (formula_images
+                       .map(calculate_metrics)
+                       .filter(filter_metrics)
+                       .collect())
+
     index_columns = ['formula_i']
     columns = index_columns + list(metrics.keys())
     formula_metrics_df = pd.DataFrame(formula_metrics, columns=columns).set_index(index_columns)
-    formula_metrics_df['msm'] = _calculate_msm(formula_metrics_df)
     return formula_metrics_df
