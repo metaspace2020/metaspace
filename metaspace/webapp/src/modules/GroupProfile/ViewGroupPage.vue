@@ -354,6 +354,8 @@
   }
   .page-content {
     width: 950px;
+    margin-left: 5px;
+    margin-right: 5px;
   }
 
   .header-row {
