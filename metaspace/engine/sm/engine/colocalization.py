@@ -89,7 +89,7 @@ class FreeableRef(object):
     @property
     def ref(self):
         if self._freed:
-            raise Exception('FreeableRef is already freed')
+            raise ReferenceError('FreeableRef is already freed')
         else:
             return self._ref
 
@@ -333,7 +333,7 @@ class Colocalization(object):
         image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)
         mol_dbs, polarity = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
 
-        for mol_db_name in mol_dbs:
+        for mol_db_name in mol_dbs[1:2]:
             logger.info(f'Running colocalization job for {ds_id} on {mol_db_name}')
             images, ion_ids, fdrs = self._get_existing_ds_annotations(ds_id, mol_db_name, image_storage_type, polarity)
             self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs)
@@ -372,8 +372,11 @@ class Colocalization(object):
         alpha_channel: np.ndarray
         """
 
-        logger.info('Running colocalization job')
-        images, ion_ids, fdrs = self._get_annotations_from_new_ds(ds, ion_metrics_df, ion_iso_images, alpha_channel)
-        self._analyze_and_save(ds.id, mol_db_name, images, ion_ids, fdrs)
-        logger.info('Finished colocalization job')
+        if self._sm_config.get('colocalization', {}).get('enabled', True):
+            logger.info('Running colocalization job')
+            images, ion_ids, fdrs = self._get_annotations_from_new_ds(ds, ion_metrics_df, ion_iso_images, alpha_channel)
+            self._analyze_and_save(ds.id, mol_db_name, images, ion_ids, fdrs)
+            logger.info('Finished colocalization job')
+        else:
+            logger.info('Skipping colocalization')
 
