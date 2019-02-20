@@ -157,10 +157,12 @@ const Resolvers = {
           infoURL = `http://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}`;
         } else if (dbBaseName === 'SwissLipids') {
           infoURL = `http://swisslipids.org/#/entity/${id}`;
-        } else if (dbBaseName === 'LipidMaps') {
+        } else if (dbBaseName === 'LipidMaps' || dbBaseName === 'LIPID_MAPS') {
           infoURL = `http://www.lipidmaps.org/data/LMSDRecord.php?LMID=${id}`;
         } else if (dbBaseName === 'PAMDB') {
           infoURL = `http://pseudomonas.umaryland.edu/PAMDB?MetID=${id}`;
+        } else if (dbBaseName === 'ECMDB') {
+          infoURL = `http://ecmdb.ca/compounds/${id}`;
         }
 
         compounds.push({
