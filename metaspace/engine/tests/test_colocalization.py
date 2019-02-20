@@ -3,15 +3,16 @@ import numpy as np
 import pandas as pd
 from scipy.sparse import coo_matrix
 
-from sm.engine.colocalization import analyze_colocalization, Colocalization
+from sm.engine.colocalization import analyze_colocalization, Colocalization, FreeableRef
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
 from sm.engine.tests.util import sm_config, test_db, metadata, ds_config, pyspark_context
 
+
 def test_valid_colocalization_jobs_generated():
     annotations = []
 
-    ion_images = np.array([np.linspace(0, 50, 50, False) % (i + 1) for i in range(20)])
+    ion_images = FreeableRef(np.array([np.linspace(0, 50, 50, False) % (i + 1) for i in range(20)]))
     ion_ids = np.array(range(20)) * 4
     fdrs = np.array([[0.05, 0.1, 0.2, 0.5][i % 4] for i in range(20)])
 
