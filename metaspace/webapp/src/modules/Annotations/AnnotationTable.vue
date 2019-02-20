@@ -23,8 +23,9 @@
       </p>
 
       <p slot="empty" v-else-if="noColocJobError">
-        Colocalization data not found. <br/>
-        This usually means that analysis is still in progress.
+        Colocalization data not found. <br />
+        This can be caused by having no annotations match the current filters,
+        or not having enough annotations at this FDR level for analysis.
       </p>
 
       <p slot="empty" v-else-if="singleDatasetSelected && filter.fdrLevel <= 0.2 && ((filter.minMSM || 0) <= 0.2)"

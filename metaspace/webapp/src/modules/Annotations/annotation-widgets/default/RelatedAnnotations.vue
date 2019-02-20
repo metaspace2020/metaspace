@@ -46,7 +46,8 @@
 
     <p v-if="noColocJobError" class="empty-message">
       Colocalization data not found. <br/>
-      This usually means that analysis is still in progress.
+      This can be caused by having no annotations match the current filters,
+      or not having enough annotations at this FDR level for analysis.
     </p>
     <p v-else-if="annotations != null && annotations.length === 0" class="empty-message">
       No annotations found.
