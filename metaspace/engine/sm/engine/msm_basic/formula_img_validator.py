@@ -112,7 +112,7 @@ def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula
     sc : pyspark.SparkContext
     ds_config : dict
     ds_reader: engine.dataset_reader.DatasetReader
-    formula_centr_ints: pandas.Series
+    formula_centr_ints: dict
     formula_images : pyspark.rdd.RDD
         RDD of (formula, list[images]) pairs
     Returns
@@ -123,11 +123,11 @@ def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula
     empty_matrix = np.zeros((nrows, ncols))
     compute_metrics = get_compute_img_metrics(metrics, ds_reader.get_sample_area_mask(),
                                               empty_matrix, ds_config['image_generation'])
-    formula_ints_map_brcast = sc.broadcast(formula_centr_ints)
+    formula_centr_ints_brcast = sc.broadcast(formula_centr_ints)
 
     def calculate_ion_metrics(item):
         formula_i, images = item
-        centr_ints = formula_ints_map_brcast.value.loc[formula_i].values
+        centr_ints = formula_centr_ints_brcast.value[formula_i]
         return (formula_i,) + compute_metrics(images, centr_ints)
 
     formula_metrics = formula_images.map(calculate_ion_metrics).collect()

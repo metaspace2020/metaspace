@@ -7,7 +7,7 @@ import logging
 from sm.engine.fdr import FDR
 from sm.engine.formula_parser import generate_ion_formula
 from sm.engine.formula_centroids import CentroidsGenerator
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.isocalc_wrapper import IsocalcWrapper, ISOTOPIC_PEAK_N
 from sm.engine.util import SMConfig
 from sm.engine.msm_basic.formula_imager_segm import compute_formula_images
 from sm.engine.msm_basic.formula_img_validator import formula_image_metrics
@@ -61,6 +61,14 @@ def compute_fdr(fdr, formula_metrics_df, formula_images, formula_map_df, max_fdr
     return moldb_ion_metrics_df, moldb_ion_images
 
 
+def extract_formula_centr_ints(centroids_df):
+    sort_centr_df = centroids_df.reset_index().sort_values(by=['formula_i', 'peak_i'])
+    values = sort_centr_df.int.values.reshape(-1, ISOTOPIC_PEAK_N)
+    keys = sort_centr_df.formula_i.values[::ISOTOPIC_PEAK_N]
+    centr_ints = dict(zip(keys, values))
+    return centr_ints
+
+
 class MSMSearch(object):
 
     def __init__(self, sc, ds_reader, moldbs, ds_config):
@@ -108,9 +116,10 @@ class MSMSearch(object):
         formula_images = formula_images.filter(_complete_image_list)
 
         # Score all ion formula images
+        formula_centr_ints = extract_formula_centr_ints(formula_centroids.centroids_df)
         formula_metrics_df = formula_image_metrics(
             formula_images=formula_images, metrics=self.metrics,
-            formula_centr_ints=formula_centroids.centroids_df.int,
+            formula_centr_ints=formula_centr_ints,
             ds_config=self._ds_config, ds_reader=self._ds_reader, sc=self._sc)
         formula_metrics_df = formula_metrics_df[formula_metrics_df.msm > 0]
         formula_images = formula_images.filter(
