@@ -163,6 +163,10 @@ sm_graphql_cookie_secret: COOKIE_SECRET
 sm_graphql_features:
   graphqlMocks: false
   impersonation: false
+sm_graphql_metadata_lookups:
+  colocalizationAlgos:
+    - ['cosine', 'Cosine distance']
+  defaultColocalizationAlgo: 'cosine'
 
 sm_webapp_hostname: "{{ web_host }}"  # specify manually in production
 sm_webapp_home: "{{ metaspace_home }}/metaspace/webapp"

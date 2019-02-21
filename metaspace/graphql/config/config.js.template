@@ -59,4 +59,6 @@ config.aws = {
 
 config.features = {{ sm_graphql_features | to_json }};
 
+config.metadataLookups = {{ sm_graphql_metadata_lookups | default({}) | to_json }};
+
 module.exports = config;
