@@ -114,7 +114,7 @@ const Resolvers = {
     },
 
     async colocalizationAlgos() {
-      return Object.entries(config.metadataLookups.colocalizationAlgos)
+      return config.metadataLookups.colocalizationAlgos
         .map(([id, name]) => ({id, name}));
     },
   },
