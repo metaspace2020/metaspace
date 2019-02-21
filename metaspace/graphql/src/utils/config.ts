@@ -76,7 +76,7 @@ export interface Config {
     aws_region: string;
   };
   metadataLookups: {
-    colocalizationAlgos: Record<string, string>;
+    colocalizationAlgos: [string, string][]; // code, name
     defaultColocalizationAlgo: string;
   };
 }
