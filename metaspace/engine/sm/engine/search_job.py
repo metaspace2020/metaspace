@@ -100,8 +100,9 @@ class SearchJob(object):
                 search_results.store(moldb_ion_metrics_df, moldb_ion_images, mask,
                                      self._db, self._img_store, img_store_type)
 
-                coloc = Colocalization(self._db)
-                coloc.run_coloc_job_for_new_ds(self._ds, moldb.name, moldb_ion_metrics_df, moldb_ion_images, mask)
+                if self._sm_config['colocalization'].get('enabled', False):
+                    coloc = Colocalization(self._db)
+                    coloc.run_coloc_job_for_new_ds(self._ds, moldb.name, moldb_ion_metrics_df, moldb_ion_images, mask)
         except Exception as e:
             self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
                                                           datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
@@ -191,7 +192,7 @@ class SearchJob(object):
 
             logger.info("All done!")
             time_spent = time.time() - start
-            logger.info('Time spent: %d mins %d secs', *divmod(int(round(time_spent)), 60))
+            logger.info('Time spent: %d min %d sec', *divmod(int(round(time_spent)), 60))
         finally:
             if self._sc:
                 self._sc.stop()
