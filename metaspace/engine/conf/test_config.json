@@ -115,5 +115,8 @@
       "-": ["-H", "+Cl" ]
     },
     "moldb_names": ["HMDB-v4"]
+  },
+  "colocalization": {
+    "enabled": true
   }
 }

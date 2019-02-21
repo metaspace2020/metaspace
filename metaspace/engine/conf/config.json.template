@@ -127,5 +127,8 @@
   "ds_config_defaults": {
     "adducts": {{ sm_default_adducts | to_json }},
     "moldb_names": ["HMDB-v4"]
+  },
+  "colocalization": {
+    "enabled": true
   }
 }

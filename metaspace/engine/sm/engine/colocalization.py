@@ -30,8 +30,11 @@ COLOC_ANN_INS = ('INSERT INTO graphql.coloc_annotation(coloc_job_id, ion_id, col
 
 ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], sf, adduct, fdr '
                    'FROM iso_image_metrics m '
-                   'JOIN job j ON j.id = m.job_id '
-                   'WHERE j.ds_id = %s AND j.db_id = %s')
+                   'WHERE m.job_id = ('
+                   '    SELECT id FROM job j '
+                   '    WHERE j.ds_id = %s AND j.db_id = %s '
+                   '    ORDER BY start DESC '
+                   '    LIMIT 1)')
 
 DATASET_CONFIG_SEL = ("SELECT mol_dbs, config #>> '{isotope_generation,charge,polarity}' "
                       "FROM dataset "
@@ -72,6 +75,23 @@ class ColocalizationJob(object):
         self.ion_ids = ion_ids
         self.sample_ion_ids = sample_ion_ids or []
         self.coloc_annotations = coloc_annotations or []
+
+
+class FreeableRef(object):
+    def __init__(self, ref):
+        self._ref = ref
+        self._freed = False
+
+    def free(self):
+        self._ref = None
+        self._freed = True
+
+    @property
+    def ref(self):
+        if self._freed:
+            raise ReferenceError('FreeableRef is already freed')
+        else:
+            return self._ref
 
 
 def _preprocess_images_inplace(imgs):
@@ -180,27 +200,29 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
     ----------
     ds_id: str
     mol_db: str
-    images: np.ndarray
+    images: FreeableRef[np.ndarray]
         2D array where each row contains the pixels from one image
-        WARNING: This np.ndarray is modified in-place to save memory
+        WARNING: This FreeableRef is released during use to save memory
     ion_ids: np.ndarray
         1D array where each item is the ion_id for the corresponding row in images
     fdrs: np.ndarray
         1D array where each item is the fdr for the corresponding row in images
     """
-    assert images.shape[1] >= 3
-    assert images.shape[0] == ion_ids.shape[0] == fdrs.shape[0], (images.shape, ion_ids.shape, fdrs.shape)
+    assert images.ref.shape[1] >= 3
+    assert images.ref.shape[0] == ion_ids.shape[0] == fdrs.shape[0], (images.ref.shape, ion_ids.shape, fdrs.shape)
     start = datetime.now()
 
-    logger.debug(f'Preprocessing images (shape: {images.shape}, dtype: {images.dtype})')
-    _preprocess_images_inplace(images)
+    logger.debug(f'Preprocessing images (shape: {images.ref.shape}, dtype: {images.ref.dtype})')
+    _preprocess_images_inplace(images.ref)
 
     logger.debug('Calculating colocalization metrics')
-    pca_images = PCA(min(20, *images.shape)).fit_transform(images)
-    cos_scores = pairwise_kernels(images, metric='cosine')
+    pca_images = PCA(min(20, *images.ref.shape)).fit_transform(images.ref)
+    cos_scores = pairwise_kernels(images.ref, metric='cosine')
+    images.free()
+
     pca_cos_scores = pairwise_kernels(pca_images, metric='cosine')
-    pca_pear_scores = np.corrcoef(pca_images)
-    pca_sper_scores = spearmanr(pca_images, axis=1)[0]  # TODO: Discard low p-value entries?
+    pca_pear_scores = np.float32(np.corrcoef(pca_images))
+    pca_sper_scores = np.float32(spearmanr(pca_images, axis=1)[0])  # TODO: Discard low p-value entries?
 
     for fdr in [0.05, 0.1, 0.2, 0.5]:
         fdr_mask = fdrs <= fdr + 0.001
@@ -217,7 +239,7 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
 
             def run_alg(algorithm, scores, cluster):
                 nonlocal labels, clusters
-                masked_scores = scores[fdr_mask, :][:, fdr_mask]
+                masked_scores = scores if fdr_mask.all() else scores[fdr_mask, :][:, fdr_mask]
                 if cluster:
                     logger.debug(f'Clustering {algorithm} at {fdr} FDR with {len(masked_ion_ids)} annotations')
                     try:
@@ -294,7 +316,7 @@ class Colocalization(object):
             ion_images = list(ex.map(get_ion_image, [row[0] for row in annotation_rows]))
             logger.debug(f'Finished getting images for "{ds_id}" {mol_db_name}')
 
-        images = np.array([img for img in ion_images if img is not None], ndmin=2, dtype=np.float32)
+        images = FreeableRef(np.array([img for img in ion_images if img is not None], ndmin=2, dtype=np.float32))
         ion_ids = np.array([ion_id for i, ion_id in enumerate(ion_ids) if ion_images[i] is not None], dtype=np.int64)
         fdrs = np.array([fdr for i, fdr in enumerate(fdrs) if ion_images[i] is not None], dtype=np.float32)
 
@@ -333,7 +355,7 @@ class Colocalization(object):
                        for i, item in ion_metrics_df.iterrows()
                        if image_map.get(i) is not None]
 
-        images = np.array([a[0] for a in annotations], ndmin=2, dtype=np.float32)
+        images = FreeableRef(np.array([a[0] for a in annotations], ndmin=2, dtype=np.float32))
         ion_ids = np.array([a[1] for a in annotations], dtype=np.int64)
         fdrs = np.array([a[2] for a in annotations], dtype=np.float32)
 
@@ -350,8 +372,11 @@ class Colocalization(object):
         alpha_channel: np.ndarray
         """
 
-        logger.info('Running colocalization job')
-        images, ion_ids, fdrs = self._get_annotations_from_new_ds(ds, ion_metrics_df, ion_iso_images, alpha_channel)
-        self._analyze_and_save(ds.id, mol_db_name, images, ion_ids, fdrs)
-        logger.info('Finished colocalization job')
+        if self._sm_config.get('colocalization', {}).get('enabled', True):
+            logger.info('Running colocalization job')
+            images, ion_ids, fdrs = self._get_annotations_from_new_ds(ds, ion_metrics_df, ion_iso_images, alpha_channel)
+            self._analyze_and_save(ds.id, mol_db_name, images, ion_ids, fdrs)
+            logger.info('Finished colocalization job')
+        else:
+            logger.info('Skipping colocalization')
 
