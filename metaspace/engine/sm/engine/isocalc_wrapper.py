@@ -51,7 +51,7 @@ class IsocalcWrapper(object):
             list[tuple]
         """
         try:
-            pyisocalc.parseSumFormula(formula)  # tests is the sf and adduct compatible
+            pyisocalc.parseSumFormula(formula)  # tests that formula is parsable
             iso_pattern = isotopePattern(str(formula))
             iso_pattern.addCharge(int(self.charge))
             fwhm = self.sigma * SIGMA_TO_FWHM
