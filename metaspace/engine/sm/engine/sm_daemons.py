@@ -65,7 +65,8 @@ class SMDaemonManager(object):
             self._del_iso_images(ds)
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self.es)
-        search_job_factory(img_store=self._img_store).run(ds)
+        search_job_factory(img_store=self._img_store,
+                           sm_config=self._sm_config).run(ds)
 
     def _finished_job_moldbs(self, ds_id):
         for job_id, mol_db_id in self._db.select('SELECT id, db_id FROM job WHERE ds_id = %s', params=(ds_id,)):

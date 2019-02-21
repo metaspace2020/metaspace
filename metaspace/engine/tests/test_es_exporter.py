@@ -85,10 +85,10 @@ def test_index_ds_works(es_dsl_search, sm_index):
                                                           columns=['sf', 'mol_id', 'mol_name'])
 
     isocalc_mock = MagicMock(IsocalcWrapper)
-    isocalc_mock.centroids = lambda sf, adduct: {
-        ('H2O', '+H'): ([100., 200.], None),
-        ('Au', '+H'): ([10., 20.], None)
-    }[(sf, adduct)]
+    isocalc_mock.centroids = lambda formula: {
+        'H2O+H': ([100., 200.], None),
+        'Au+H': ([10., 20.], None)
+    }[formula]
 
     es_exp = ESExporter(db_mock)
     es_exp.delete_ds(ds_id)

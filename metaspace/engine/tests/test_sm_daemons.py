@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import logging
+from collections import OrderedDict
 from os.path import join, dirname
 from unittest.mock import patch
 import time
@@ -16,6 +17,7 @@ from sm.engine.db import DB
 from sm.engine.es_export import ESExporter
 from sm.engine.dataset import Dataset, DatasetStatus
 from sm.engine.acq_geometry_factory import ACQ_GEOMETRY_KEYS
+from sm.engine.msm_basic.msm_basic_search import compute_fdr
 from sm.engine.search_job import JobStatus
 from sm.engine.tests.util import (
     test_db,
@@ -23,12 +25,13 @@ from sm.engine.tests.util import (
     sm_index,
     es_dsl_search,
     metadata,
-    ds_config
-)
+    ds_config,
+    make_moldb_mock)
 from sm.engine.util import SMConfig
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
 sm_config = SMConfig.get_conf(update=True)
+sm_config['colocalization']['enabled'] = False
 
 init_loggers(sm_config['logs'])
 logger = logging.getLogger('annotate-daemon')
@@ -103,10 +106,8 @@ def run_daemons(db, es):
 
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
-@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
-@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.calc_metrics')
-def test_sm_daemons(calc_metrics_mock,
-                    filter_sf_metrics_mock,
+@patch('sm.engine.search_job.MSMSearch')
+def test_sm_daemons(MSMSearchMock,
                     post_images_to_annot_service_mock,
                     MolDBServiceWrapperMock,
                     # fixtures
@@ -114,21 +115,24 @@ def test_sm_daemons(calc_metrics_mock,
                     metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
-    ion_metrics_df = pd.DataFrame({
+    formula_metrics_df = pd.DataFrame({
+        'formula_i': [0, 1, 2],
+        'ion_formula': ['C12H24O+H', 'C12H24O+Na', 'C12H24O+K'],
         'formula': ['C12H24O', 'C12H24O', 'C12H24O'],
         'adduct': ['+H', '+Na', '+K'],
         'chaos': [0.9, 0.9, 0.9],
         'spatial': [0.9, 0.9, 0.9],
         'spectral': [0.9, 0.9, 0.9],
+        'msm': [0.9**3, 0.9**3, 0.9**3],
         'total_iso_ints': [[100.0], [100.0], [100.0]],
         'min_iso_ints': [[0], [0], [0]],
         'max_iso_ints': [[10.0], [10.0], [10.0]],
-        'msm': [0.729, 0.729, 0.729]
-    })
-    ion_metrics_df.index.name = 'ion_i'
-    calc_metrics_mock.return_value = ion_metrics_df
-
-    filter_sf_metrics_mock.side_effect = lambda x: x
+        'fdr': [0.1, 0.1, 0.1]
+    }).set_index('formula_i')
+    search_algo_mock = MSMSearchMock()
+    search_algo_mock.search.return_value = [(make_moldb_mock(), formula_metrics_df, [])]
+    search_algo_mock.metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('msm', 0),
+                                            ('total_iso_ints', []), ('min_iso_ints', []), ('max_iso_ints', [])])
 
     url_dict = {'iso_image_ids': ['iso_image_1', None, None, None]}
     post_images_to_annot_service_mock.return_value = {
@@ -193,19 +197,20 @@ def test_sm_daemons(calc_metrics_mock,
         assert len(rows) == 1
         db_id, ds_id, status, start, finish = rows[0]
         assert (db_id, ds_id, status) == (0, '2000-01-01_00h00m', JobStatus.FINISHED)
-        assert start < finish
+        assert start <= finish
 
         # image metrics asserts
         rows = db.select(('SELECT db_id, sf, adduct, stats, iso_image_ids '
                           'FROM iso_image_metrics '
                           'ORDER BY sf, adduct'))
-        assert rows[0] == (0, 'C12H24O', '+H', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
+        assert len(rows) == 3
+        assert rows[0] == (0, 'C12H24O', '+H', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
                                                 'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
                            ['iso_image_1', None, None, None])
-        assert rows[1] == (0, 'C12H24O', '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
+        assert rows[1] == (0, 'C12H24O', '+K', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
                                                 'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
                            ['iso_image_1', None, None, None])
-        assert rows[2] == (0, 'C12H24O', '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9,
+        assert rows[2] == (0, 'C12H24O', '+Na', {'chaos': 0.9, 'spatial': 0.9, 'spectral': 0.9, 'msm': 0.9**3,
                                                  'total_iso_ints': [100.], 'min_iso_ints': [0], 'max_iso_ints': [10.]},
                            ['iso_image_1', None, None, None])
 
@@ -226,10 +231,8 @@ def test_sm_daemons(calc_metrics_mock,
 
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
-@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
-@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.calc_metrics')
-def test_sm_daemons_annot_fails(calc_metrics_mock,
-                                filter_sf_metrics_mock,
+@patch('sm.engine.search_job.MSMSearch')
+def test_sm_daemons_annot_fails(MSMSearchMock,
                                 post_images_to_annot_service_mock,
                                 MolDBServiceWrapperMock,
                                 test_db, es_dsl_search,
@@ -238,9 +241,10 @@ def test_sm_daemons_annot_fails(calc_metrics_mock,
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
     def throw_exception_function(*args, **kwargs):
-        raise Exception('Test')
-    calc_metrics_mock.return_value = throw_exception_function
-    filter_sf_metrics_mock.side_effect = lambda x: x
+        raise Exception('Test exception')
+
+    msm_algo_mock = MSMSearchMock()
+    msm_algo_mock.search.side_effect = throw_exception_function
 
     url_dict = {
         'iso_image_ids': ['iso_image_1', None, None, None]
@@ -277,8 +281,7 @@ def test_sm_daemons_annot_fails(calc_metrics_mock,
 
         # dataset and job tables asserts
         row = db.select_one('SELECT status from dataset')
-        assert row[0] == 'FAILED'
-        row = db.select_one('SELECT status from job')
+        assert len(row) == 1
         assert row[0] == 'FAILED'
     finally:
         db.close()
@@ -288,10 +291,8 @@ def test_sm_daemons_annot_fails(calc_metrics_mock,
 
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
-@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
-@patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.calc_metrics')
-def test_sm_daemon_es_export_fails(calc_metrics_mock,
-                                   filter_sf_metrics_mock,
+@patch('sm.engine.search_job.MSMSearch')
+def test_sm_daemon_es_export_fails(MSMSearchMock,
                                    post_images_to_annot_service_mock,
                                    MolDBServiceWrapperMock,
                                    test_db, es_dsl_search,
@@ -299,22 +300,24 @@ def test_sm_daemon_es_export_fails(calc_metrics_mock,
                                    metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
-    ion_metrics_df = pd.DataFrame({
+    formula_metrics_df = pd.DataFrame({
+        'formula_i': [0, 1, 2],
+        'ion_formula': ['C12H24O+H', 'C12H24O+Na', 'C12H24O+K'],
         'formula': ['C12H24O', 'C12H24O', 'C12H24O'],
         'adduct': ['+H', '+Na', '+K'],
         'chaos': [0.9, 0.9, 0.9],
         'spatial': [0.9, 0.9, 0.9],
         'spectral': [0.9, 0.9, 0.9],
+        'msm': [0.9 ** 3, 0.9 ** 3, 0.9 ** 3],
         'total_iso_ints': [[100.0], [100.0], [100.0]],
         'min_iso_ints': [[0], [0], [0]],
         'max_iso_ints': [[10.0], [10.0], [10.0]],
-        'msm': [0.729, 0.729, 0.729]
-    })
-    ion_metrics_df.index.name = 'ion_i'
-    calc_metrics_mock.return_value = ion_metrics_df
-
-    filter_sf_metrics_mock.side_effect = lambda x: x
-
+        'fdr': [0.1, 0.1, 0.1]
+    }).set_index('formula_i')
+    search_algo_mock = MSMSearchMock()
+    search_algo_mock.search.return_value = [(make_moldb_mock(), formula_metrics_df, [])]
+    search_algo_mock.metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('msm', 0),
+                                            ('total_iso_ints', []), ('min_iso_ints', []), ('max_iso_ints', [])])
     url_dict = {
         'iso_image_ids': ['iso_image_1', None, None, None]
     }

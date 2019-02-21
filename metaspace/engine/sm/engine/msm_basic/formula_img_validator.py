@@ -55,7 +55,7 @@ class ImgMetrics(object):
             return tuple(self.map.values())
 
 
-def get_compute_img_metrics(metrics, sample_area_mask, empty_matrix, img_gen_conf):
+def get_calculate_img_metrics(metrics, sample_area_mask, empty_matrix, img_gen_conf):
     """ Returns a function for computing isotope image metrics
 
     Args
@@ -119,14 +119,14 @@ def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula
     """
     nrows, ncols = ds_reader.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
-    compute_metrics = get_compute_img_metrics(metrics, ds_reader.get_sample_area_mask(),
-                                              empty_matrix, ds_config['image_generation'])
+    _calculate_metrics = get_calculate_img_metrics(metrics, ds_reader.get_sample_area_mask(),
+                                                   empty_matrix, ds_config['image_generation'])
     formula_centr_ints_brcast = sc.broadcast(formula_centr_ints)
 
     def calculate_metrics(item):
         formula_i, images = item
         centr_ints = formula_centr_ints_brcast.value[formula_i]
-        return (formula_i,) + compute_metrics(images, centr_ints)
+        return (formula_i,) + _calculate_metrics(images, centr_ints)
 
     msm_index = list(metrics.keys()).index('msm') + 1  # formula_i takes the first index
 

@@ -10,7 +10,7 @@ from scipy.sparse import csr_matrix
 from sm.rest.dataset_manager import Dataset
 from sm.engine.dataset_reader import DatasetReader
 from sm.engine.msm_basic.formula_img_validator import ImgMetrics
-from sm.engine.msm_basic.formula_img_validator import formula_image_metrics, get_compute_img_metrics
+from sm.engine.msm_basic.formula_img_validator import formula_image_metrics, get_calculate_img_metrics
 from sm.engine.tests.util import pysparkling_context as spark_context, ds_config, sm_config
 
 
@@ -24,19 +24,19 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
         'q': 99.0
     }
     empty_matrix = np.zeros((2, 3))
-    metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0),
-                           ('total_iso_ints', [0, 0, 0, 0]),
-                           ('min_iso_ints', [0, 0, 0, 0]),
-                           ('max_iso_ints', [0, 0, 0, 0])])
-    compute_measures = get_compute_img_metrics(metrics, np.ones(2*3).astype(bool),
-                                               empty_matrix, img_gen_conf)
+    metrics_dict = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('msm', 0),
+                               ('total_iso_ints', [0, 0, 0, 0]),
+                               ('min_iso_ints', [0, 0, 0, 0]),
+                               ('max_iso_ints', [0, 0, 0, 0])])
+    compute_metrics = get_calculate_img_metrics(metrics_dict, np.ones(2 * 3).astype(bool),
+                                                empty_matrix, img_gen_conf)
 
     sf_iso_images = [csr_matrix([[0., 100., 100.], [10., 0., 3.]]),
                      csr_matrix([[0., 50., 50.], [0., 20., 0.]])]
     sf_intensity = [100., 10., 1.]
 
-    measures = compute_measures(sf_iso_images, sf_intensity)
-    assert measures == (0.99, 0.8, 0.95, [213., 120., 0.], [0, 0, 0], [100., 50., 0.])
+    metrics = compute_metrics(sf_iso_images, sf_intensity)
+    assert metrics == (0.99, 0.8, 0.95, 0.7524, [213., 120., 0.], [0, 0, 0], [100., 50., 0.])
 
 
 @pytest.fixture(scope='module')
@@ -54,26 +54,26 @@ def ds_formulas_images_mock():
     return ds_mock, ds_reader_mock, sf_iso_images
 
 
-def test_sf_image_metrics(spark_context, ds_formulas_images_mock, ds_config):
-    with patch('sm.engine.msm_basic.formula_img_validator.get_compute_img_metrics') as mock:
-        mock.return_value = lambda *args: (0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.])
+def test_formula_image_metrics(spark_context, ds_formulas_images_mock, ds_config):
+    with patch('sm.engine.msm_basic.formula_img_validator.get_calculate_img_metrics') as mock:
+        mock.return_value = lambda *args: (0.9, 0.9, 0.9, 0.9**3, [100., 10.], [0, 0], [10., 1.])
 
         ds_mock, ds_reader_mock, ref_images = ds_formulas_images_mock
         ref_images_rdd = spark_context.parallelize(ref_images)
 
-        metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0),
+        metrics = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('msm', 0),
                                ('total_iso_ints', [0, 0, 0, 0]),
                                ('min_iso_ints', [0, 0, 0, 0]),
                                ('max_iso_ints', [0, 0, 0, 0])])
-        ion_centr_ints = {0: [100, 10, 1], 1: [100, 10, 1]}
-        metrics_df = formula_image_metrics(ref_images_rdd, metrics, ds_mock,
-                                           ds_reader_mock, ion_centr_ints, spark_context)
+        formula_centr_ints = {0: [100, 10, 1], 1: [100, 10, 1]}
+        metrics_df = formula_image_metrics(ref_images_rdd, metrics, ds_config,
+                                           ds_reader_mock, formula_centr_ints, spark_context)
 
-        exp_metrics_df = (pd.DataFrame([[0, 0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.], 0.9**3],
-                                       [1, 0.9, 0.9, 0.9, [100., 10.], [0, 0], [10., 1.], 0.9**3]],
-                                       columns=['ion_i', 'chaos', 'spatial', 'spectral',
-                                                'total_iso_ints', 'min_iso_ints', 'max_iso_ints', 'msm'])
-                          .set_index(['ion_i']))
+        exp_metrics_df = (pd.DataFrame([[0, 0.9, 0.9, 0.9, 0.9**3, [100., 10.], [0, 0], [10., 1.]],
+                                        [1, 0.9, 0.9, 0.9, 0.9**3, [100., 10.], [0, 0], [10., 1.]]],
+                                       columns=['formula_i', 'chaos', 'spatial', 'spectral', 'msm',
+                                                'total_iso_ints', 'min_iso_ints', 'max_iso_ints'])
+                          .set_index(['formula_i']))
         assert_frame_equal(metrics_df, exp_metrics_df)
 
 
