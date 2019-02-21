@@ -32,7 +32,7 @@
    name: 'annotations-page',
    computed: {
      hiddenColumns() {
-       const {group, database, datasetIds} = this.filter;
+       const {group, database, datasetIds, colocalizedWith, fdrLevel} = this.filter;
        let hiddenColumns = [];
        const singleDatasetSelected = datasetIds && datasetIds.length == 1;
        if (singleDatasetSelected)
@@ -41,6 +41,8 @@
          hiddenColumns.push('Group');
        if (database)
          hiddenColumns.push('Database');
+       if (!singleDatasetSelected || colocalizedWith == null || fdrLevel == null)
+         hiddenColumns.push('ColocalizationCoeff');
        return hiddenColumns;
      },
 

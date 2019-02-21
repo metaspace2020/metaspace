@@ -185,7 +185,7 @@ sm_webapp_enable_uploads: true
 # "specialised metadata" subfolder
 sm_webapp_metadata_types: ["ims"]  # set ["ims", "lcms"] to accept both IMS and LC-MS datasets
 sm_webapp_features:
-  newAuth: false # Unused - leaving this here as an example for the next feature flag
+  coloc: false
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 

@@ -27,7 +27,7 @@
                :valueKey="f.valueKey"
                :width="f.width"
                @change="f.onChange"
-               @destroy="f.onChange(undefined)">
+               @destroy="f.onDestroy">
     </component>
   </div>
 </template>
@@ -56,7 +56,7 @@
    'minMSM',
    'simpleQuery',
    'simpleFilter',
-   'metadataType'
+   'metadataType',
  ];
 
  const filterComponents = {};
@@ -156,6 +156,9 @@
          onChange(val) {
            self.$store.commit('updateFilter',
                               Object.assign(self.filter, {[filterKey]: val}));
+         },
+         onDestroy() {
+           self.$store.commit('removeFilter', filterKey);
          }
        };
        let result = Object.assign({}, filterSpec, behaviour);

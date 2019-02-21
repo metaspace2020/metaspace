@@ -1,5 +1,6 @@
  import { renderMolFormula } from '../../util';
  import DatasetInfo from '../../components/DatasetInfo.vue';
+ import ColocalizationSettings from './annotation-widgets/ColocalizationSettings.vue';
  import { annotationQuery } from '../../api/annotation';
  import {
   datasetVisibilityQuery,
@@ -16,6 +17,8 @@
  import { currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
  import { safeJsonParse } from '../../util';
  import {omit, pick} from 'lodash-es';
+ import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
+ import config from '../../config';
 
  type colorObjType = {
    code: string,
@@ -37,7 +40,7 @@
  type ImageLoaderSettings = ImagePosition & ImageSettings;
 
  const metadataDependentComponents: any = {};
- const componentsToRegister: any = { DatasetInfo };
+ const componentsToRegister: any = { DatasetInfo, ColocalizationSettings };
  for (let category of Object.keys(annotationWidgets)) {
    metadataDependentComponents[category] = {};
    for (let mdType of Object.keys(annotationWidgets[category])) {
@@ -227,6 +230,10 @@
      return 0
    }
 
+   get showColoc() {
+     return config.features.coloc;
+   }
+
    opacity: number = 1.0;
 
    imagePosition: ImagePosition = {
@@ -288,4 +295,25 @@
    setScaleBarColor(colorObj: colorObjType) {
      this.scaleBarColor = colorObj.code;
    }
+
+   filterColocSamples() {
+     this.$store.commit('updateFilter', {
+       ...omit(this.$store.getters.filter, ANNOTATION_SPECIFIC_FILTERS),
+       datasetIds: [this.annotation.dataset.id],
+       colocalizationSamples: true,
+     })
+   }
+
+   filterColocalized() {
+     this.$store.commit('updateFilter', {
+       ...omit(this.$store.getters.filter, ANNOTATION_SPECIFIC_FILTERS),
+       datasetIds: [this.annotation.dataset.id],
+       colocalizedWith: this.annotation.ion,
+     });
+     this.$store.commit('setSortOrder', {
+       by: 'colocalization',
+       dir: 'descending'
+     });
+   }
+
  }

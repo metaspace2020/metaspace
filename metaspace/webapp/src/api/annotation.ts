@@ -3,19 +3,23 @@ import gql from 'graphql-tag';
 export const annotationListQuery =
 gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
                            $offset: Int, $limit: Int, $query: String,
-                           $filter: AnnotationFilter, $dFilter: DatasetFilter) {
+                           $filter: AnnotationFilter, $dFilter: DatasetFilter,
+                           $colocalizationCoeffFilter: ColocalizationCoeffFilter) {
     allAnnotations(filter: $filter, datasetFilter: $dFilter, simpleQuery: $query,
       orderBy: $orderBy, sortingOrder: $sortingOrder,
       offset: $offset, limit: $limit) {
         id
         sumFormula
         adduct
+        ion
+        database
         msmScore
         rhoSpatial
         rhoSpectral
         rhoChaos
         fdrLevel
         mz
+        colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
         dataset {
           id
           submitter { id name email }
@@ -51,7 +55,8 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
 export const tableExportQuery =
 gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
                    $offset: Int, $limit: Int, $query: String,
-                   $filter: AnnotationFilter, $dFilter: DatasetFilter) {
+                   $filter: AnnotationFilter, $dFilter: DatasetFilter,
+                   $colocalizationCoeffFilter: ColocalizationCoeffFilter) {
     annotations: allAnnotations(filter: $filter, datasetFilter: $dFilter,
                                 simpleQuery: $query,
                                 orderBy: $orderBy, sortingOrder: $sortingOrder,
@@ -59,6 +64,7 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
       id
       sumFormula
       adduct
+      ion
       msmScore
       rhoSpatial
       rhoSpectral
@@ -77,6 +83,7 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
           databaseId
         }
       }
+      colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     }
   }`;
 
@@ -92,16 +99,18 @@ gql`query GetAnnotation($id: String!) {
     }
   }`;
 
-export const allAdductsQuery =
-gql`query GetAdductData($datasetId: String!, $molFormula: String!, $db: String!) {
+export const relatedAnnotationsQuery =
+gql`query GetRelatedAnnotations($datasetId: String!, $filter: AnnotationFilter!, 
+                                $orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
+                                $colocalizationCoeffFilter: ColocalizationCoeffFilter) {
     allAnnotations(datasetFilter: {
       ids: $datasetId
-    }, filter: {
-      sumFormula: $molFormula, database: $db
-    }) {
+    }, filter: $filter, limit: 12, orderBy: $orderBy, sortingOrder: $sortingOrder) {
       id
       mz
+      sumFormula
       adduct
+      ion
       msmScore
       rhoSpatial
       rhoSpectral
@@ -111,5 +120,9 @@ gql`query GetAdductData($datasetId: String!, $molFormula: String!, $db: String!)
         url
         maxIntensity
       }
+      possibleCompounds {
+        name
+      }
+      colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
     }
   }`;

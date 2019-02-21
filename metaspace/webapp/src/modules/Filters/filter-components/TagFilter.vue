@@ -6,7 +6,8 @@
       </slot>
     </div>
 
-    <el-popover trigger="click"
+    <el-popover v-if="'edit' in $slots"
+                trigger="click"
                 placement="bottom"
                 :width="width"
                 class="tf-value-container">
@@ -15,6 +16,12 @@
         <slot name="show"></slot>
       </div>
     </el-popover>
+    <div v-else-if="'show' in $slots || 'reference' in $slots"
+         class="tf-value"
+         slot="reference">
+      <slot name="show"></slot>
+    </div>
+    <div v-else class="tf-spacer"></div>
 
     <div class="tf-remove el-icon-circle-close"
          v-if="removable"
@@ -119,6 +126,10 @@
     &[type='text'] {
       width: 200px; // IE11 fix - inputs without a "width" won't follow flex-shrink rules
     }
+  }
+
+  .tf-spacer {
+    padding-left: 5px;
   }
 
  .tf-remove {

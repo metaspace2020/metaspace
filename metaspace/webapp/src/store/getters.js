@@ -16,11 +16,15 @@ export default {
 
   gqlAnnotationFilter(state, getters) {
     const filter = getters.filter;
+    const colocalizationAlgo = getters.settings.annotationView.colocalizationAlgo;
     const f = {
       database: filter.database,
       compoundQuery: filter.compoundName,
       adduct: filter.adduct,
-      fdrLevel: filter.fdrLevel
+      fdrLevel: filter.fdrLevel,
+      colocalizedWith: filter.colocalizedWith,
+      colocalizationAlgo,
+      colocalizationSamples: filter.colocalizationSamples,
     };
 
     if (filter.minMSM)
@@ -61,5 +65,15 @@ export default {
       polarity: polarity ? polarity.toUpperCase() : null,
       metadataType
     }
-  }
+  },
+
+  gqlColocalizationFilter(state, getters) {
+    const {datasetIds, colocalizedWith, database, fdrLevel} = getters.filter;
+    const colocalizationAlgo = getters.settings.annotationView.colocalizationAlgo;
+    if (datasetIds && !datasetIds.includes('|') && colocalizedWith != null && database != null && fdrLevel != null) {
+      return {colocalizedWith, colocalizationAlgo, database, fdrLevel};
+    } else {
+      return null;
+    }
+  },
 }

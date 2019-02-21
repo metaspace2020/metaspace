@@ -78,7 +78,7 @@ export default class Diagnostics extends Vue {
 }
 </script>
 
-<style>
+<style scoped>
 .diagnostics-section-title {
     margin: 10px auto;
     text-align: center;

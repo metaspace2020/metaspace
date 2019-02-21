@@ -1,5 +1,5 @@
-import AdductsInfo from './default/AdductsInfo.vue'
-import AdductsInfoLc from './lcms/AdductsInfo.vue'
+import RelatedAnnotations from './default/RelatedAnnotations.vue'
+import RelatedAnnotationsLc from './lcms/RelatedAnnotations.vue'
 import MainImage from './default/MainImage.vue'
 import MainImageLc from './lcms/MainImage.vue'
 import MainImageHeader from './default/MainImageHeader.vue'
@@ -20,8 +20,8 @@ export default {
         default: Diagnostics,
         "LC-MS": DiagnosticsLc
     },
-    "adducts-info": {
-        default: AdductsInfo,
-        "LC-MS": AdductsInfoLc
+    "related-annotations": {
+        default: RelatedAnnotations,
+        "LC-MS": RelatedAnnotationsLc
     }
 } as any

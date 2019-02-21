@@ -1,6 +1,6 @@
 import Vue from 'vue';
 
-import * as config from './clientConfig.json';
+import config from './config';
 import * as Raven from 'raven-js';
 import * as RavenVue from 'raven-js/plugins/vue';
 if(config.ravenDsn != null && config.ravenDsn !== '') {
@@ -41,6 +41,7 @@ const isProd = process.env.NODE_ENV === 'production';
 
 import VueAnalytics from 'vue-analytics';
 import { setErrorNotifier } from './lib/reportError'
+import {updateConfigFromQueryString} from './config';
 
 Vue.use(VueAnalytics, {
   id: 'UA-73509518-1',
@@ -72,3 +73,4 @@ const app = new Vue({
 
 setErrorNotifier(app.$notify);
 setMaintenanceMessageHandler(app.$alert);
+updateConfigFromQueryString();

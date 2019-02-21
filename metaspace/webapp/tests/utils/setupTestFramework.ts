@@ -5,6 +5,7 @@ import registerMockComponent from './registerMockComponent';
 import VueRouter from 'vue-router';
 import registerMockDirective from './registerMockDirective';
 import {Wrapper} from '@vue/test-utils';
+import {replaceConfigWithDefaultForTests} from '../../src/config';
 
 window.fetch = jest.fn();
 
@@ -63,3 +64,8 @@ afterEach(() => {
     mockWrappers.pop()!.destroy();
   }
 });
+
+// Use consistent config
+// TODO: Change metadata to always ship with all available types, but filter at runtime based on config
+// so that it's not environment-dependent in tests
+replaceConfigWithDefaultForTests();
