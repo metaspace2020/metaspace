@@ -145,20 +145,20 @@ def define_mz_segments(spectra, centroids_df, ppm):
     return segments
 
 
-def gen_iso_peak_images(sc, ds_reader, ion_centroids_df, segm_spectra, ppm):
+def gen_iso_peak_images(sc, ds_reader, formula_centroids_df, segm_spectra, ppm):
     sp_indexes_brcast = sc.broadcast(ds_reader.get_norm_img_pixel_inds())
-    ion_centroids_df_brcast = sc.broadcast(ion_centroids_df)  # TODO: replace broadcast variable with rdd and cogroup
+    formula_centroids_df_brcast = sc.broadcast(formula_centroids_df)  # TODO: replace broadcast variable with rdd and cogroup
     nrows, ncols = ds_reader.get_dims()
 
     def generate_images_for_segment(item):
         _, sp_segm = item
-        return _gen_iso_images(sp_segm, sp_indexes_brcast.value, ion_centroids_df_brcast.value,
+        return _gen_iso_images(sp_segm, sp_indexes_brcast.value, formula_centroids_df_brcast.value,
                                nrows, ncols, ppm)
     iso_peak_images = segm_spectra.flatMap(generate_images_for_segment)
     return iso_peak_images
 
 
-def gen_iso_sf_images(iso_peak_images, shape):
+def gen_formula_images(iso_peak_images, shape):
     iso_sf_images = (iso_peak_images
                      .groupByKey(numPartitions=256)
                      .mapValues(lambda img_pairs_it: _img_pairs_to_list(list(img_pairs_it), shape)))
@@ -175,11 +175,12 @@ def compute_formula_images(sc, ds_reader, formula_centroids_df, ppm):
         RDD of sum formula, list[sparse matrix of intensities]
     """
     spectra_rdd = ds_reader.get_spectra()
+    formula_centroids_df = formula_centroids_df[formula_centroids_df.mz > 0]
     mz_segments = define_mz_segments(spectra_rdd, formula_centroids_df, ppm)
     segm_spectra = (spectra_rdd
                     .flatMap(lambda sp: _segment_spectrum(sp, mz_segments))
                     .groupByKey(numPartitions=len(mz_segments)))
 
     iso_peak_images = gen_iso_peak_images(sc, ds_reader, formula_centroids_df, segm_spectra, ppm)
-    formula_images = gen_iso_sf_images(iso_peak_images, shape=ds_reader.get_dims())
+    formula_images = gen_formula_images(iso_peak_images, shape=ds_reader.get_dims())
     return formula_images

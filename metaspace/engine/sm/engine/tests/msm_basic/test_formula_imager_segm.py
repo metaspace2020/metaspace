@@ -1,7 +1,7 @@
 from scipy.sparse import coo_matrix
 
 from sm.engine.tests.util import pysparkling_context as spark_context
-from sm.engine.msm_basic.formula_imager_segm import gen_iso_sf_images
+from sm.engine.msm_basic.formula_imager_segm import gen_formula_images
 
 
 def test_gen_iso_sf_images(spark_context):
@@ -13,10 +13,10 @@ def test_gen_iso_sf_images(spark_context):
                                        None,
                                        coo_matrix([[2., 1., 0.]])])]
 
-    iso_sf_imgs = gen_iso_sf_images(iso_peak_images, shape=(1, 3)).collect()
+    formula_imgs = gen_formula_images(iso_peak_images, shape=(1, 3)).collect()
 
-    assert len(iso_sf_imgs) == len(exp_iso_sf_imgs)
-    for (k, l), (ek, el) in zip(iso_sf_imgs, exp_iso_sf_imgs):
+    assert len(formula_imgs) == len(exp_iso_sf_imgs)
+    for (k, l), (ek, el) in zip(formula_imgs, exp_iso_sf_imgs):
         assert k == ek
         assert len(l) == len(el)
         for m, em in zip(l, el):

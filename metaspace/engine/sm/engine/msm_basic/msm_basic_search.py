@@ -65,7 +65,7 @@ def extract_formula_centr_ints(centroids_df):
     sort_centr_df = centroids_df.reset_index().sort_values(by=['formula_i', 'peak_i'])
     values = sort_centr_df.int.values.reshape(-1, ISOTOPIC_PEAK_N)
     keys = sort_centr_df.formula_i.values[::ISOTOPIC_PEAK_N]
-    centr_ints = dict(zip(keys, values))
+    centr_ints = {k: v[v > 0] for k, v in zip(keys, values)}
     return centr_ints
 
 

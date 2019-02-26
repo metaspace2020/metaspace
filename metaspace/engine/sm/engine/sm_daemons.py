@@ -57,7 +57,7 @@ class SMDaemonManager(object):
             self.logger.error(e)
         return link
 
-    def annotate(self, ds, search_job_factory=None, del_first=False):
+    def annotate(self, ds, search_job_factory=None, del_first=False, **kwargs):
         """ Run an annotation job for the dataset. If del_first provided, delete first
         """
         if del_first:
@@ -66,7 +66,7 @@ class SMDaemonManager(object):
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self.es)
         search_job_factory(img_store=self._img_store,
-                           sm_config=self._sm_config).run(ds)
+                           sm_config=self._sm_config, **kwargs).run(ds)
 
     def _finished_job_moldbs(self, ds_id):
         for job_id, mol_db_id in self._db.select('SELECT id, db_id FROM job WHERE ds_id = %s', params=(ds_id,)):
