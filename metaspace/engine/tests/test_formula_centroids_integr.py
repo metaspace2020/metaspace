@@ -26,8 +26,8 @@ def test_if_not_exist_returns_valid_df(pyspark_context, ds_config, clean_isotope
 
     ion_centroids = centroids_gen.generate_if_not_exist(formulas=['C2H4O8Na', 'C3H6O7Na', 'fake_mfNa'])
 
-    assert ion_centroids.centroids_df.shape == (2 * 4, 3)
-    assert np.all(np.diff(ion_centroids.centroids_df.mz.values) >= 0)  # assert that dataframe is sorted by mz
+    assert ion_centroids.centroids_df(True).shape == (2 * 4, 3)
+    assert np.all(np.diff(ion_centroids.centroids_df().mz.values) >= 0)  # assert that dataframe is sorted by mz
     assert ion_centroids.formulas_df.shape == (2, 1)
 
 
@@ -48,7 +48,8 @@ def test_save_restore_works(pyspark_context, ds_config, clean_isotope_storage_pa
 
     from pandas.testing import assert_frame_equal
     assert_frame_equal(ion_centroids.formulas_df.sort_index(), formula_centroids_restored.formulas_df.sort_index())
-    assert_frame_equal(ion_centroids.centroids_df.sort_index(), formula_centroids_restored.centroids_df.sort_index())
+    assert_frame_equal(ion_centroids.centroids_df().sort_index(),
+                       formula_centroids_restored.centroids_df().sort_index())
 
 
 def test_centroids_subset_ordered_by_mz(pyspark_context, ds_config, clean_isotope_storage_path):
@@ -60,5 +61,5 @@ def test_centroids_subset_ordered_by_mz(pyspark_context, ds_config, clean_isotop
                                     ['+Na', '+H', '+K'])]
     formula_centroids = centr_gen.generate_if_not_exist(formulas)
 
-    assert formula_centroids.centroids_df.shape == (4 * 3 * 4, 3)
-    assert np.all(np.diff(formula_centroids.centroids_df.mz.values) >= 0)  # assert that dataframe is sorted by mz
+    assert formula_centroids.centroids_df(True).shape == (4 * 3 * 4, 3)
+    assert np.all(np.diff(formula_centroids.centroids_df().mz.values) >= 0)  # assert that dataframe is sorted by mz

@@ -61,14 +61,6 @@ def compute_fdr(fdr, formula_metrics_df, formula_images, formula_map_df, max_fdr
     return moldb_ion_metrics_df, moldb_ion_images
 
 
-def extract_formula_centr_ints(centroids_df):
-    sort_centr_df = centroids_df.reset_index().sort_values(by=['formula_i', 'peak_i'])
-    values = sort_centr_df.int.values.reshape(-1, ISOTOPIC_PEAK_N)
-    keys = sort_centr_df.formula_i.values[::ISOTOPIC_PEAK_N]
-    centr_ints = {k: v[v > 0] for k, v in zip(keys, values)}
-    return centr_ints
-
-
 class MSMSearch(object):
 
     def __init__(self, sc, ds_reader, moldbs, ds_config):
@@ -108,18 +100,18 @@ class MSMSearch(object):
         ion_formula_map_df = collect_ion_formulas(moldb_fdr_list)
 
         formula_centroids = self._fetch_formula_centroids(ion_formula_map_df)
-        logger.debug(f'formula_centroids_df size: {formula_centroids.centroids_df.shape}')
+        logger.debug(f'formula_centroids_df size: {formula_centroids.centroids_df().shape}')
 
         # Run ion formula search
         formula_images = compute_formula_images(
-            self._sc, self._ds_reader, formula_centroids.centroids_df, ppm=self._ppm)
+            self._sc, self._ds_reader, formula_centroids.centroids_df(), ppm=self._ppm)
         formula_images = formula_images.filter(_complete_image_list)
 
         # Score all ion formula images
-        formula_centr_ints = extract_formula_centr_ints(formula_centroids.centroids_df)
+        centroids_ints = formula_centroids.centroids_ints()
         formula_metrics_df = formula_image_metrics(
             formula_images=formula_images, metrics=self.metrics,
-            formula_centr_ints=formula_centr_ints,
+            formula_centr_ints=centroids_ints,
             ds_config=self._ds_config, ds_reader=self._ds_reader, sc=self._sc)
         formula_images = formula_images.filter(
             lambda formula_i_images: formula_i_images[0] in formula_metrics_df.index)

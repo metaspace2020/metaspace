@@ -9,7 +9,7 @@ import numpy as np
 from copy import deepcopy
 
 from sm.engine.util import SMConfig, split_s3_path
-from sm.engine.isocalc_wrapper import IsocalcWrapper
+from sm.engine.isocalc_wrapper import IsocalcWrapper, ISOTOPIC_PEAK_N
 
 logger = logging.getLogger('engine')
 
@@ -132,7 +132,8 @@ class CentroidsGenerator(object):
         logger.info('Saving peaks')
         assert formula_centroids.formulas_df.index.name == 'formula_i'
 
-        centr_spark_df = self._spark_session.createDataFrame(formula_centroids.centroids_df.reset_index())
+        centr_spark_df = self._spark_session.createDataFrame(
+            formula_centroids.centroids_df(fixed_size_centroids=True).reset_index())
         centr_spark_df.write.parquet(self._ion_centroids_path + '/centroids', mode='overwrite')
         ion_spark_df = self._spark_session.createDataFrame(formula_centroids.formulas_df.reset_index())
         ion_spark_df.write.parquet(self._ion_centroids_path + '/formulas', mode='overwrite')
@@ -152,27 +153,48 @@ class FormulaCentroids(object):
         assert u_index_formulas == u_index_centroids, (u_index_formulas, u_index_centroids)
 
         self.formulas_df = formulas_df.sort_values(by='formula')
-        self.centroids_df = centroids_df.sort_values(by='mz')
+        self._centroids_df = centroids_df.sort_values(by='mz')
+
+    def centroids_df(self, fixed_size_centroids=False):
+        """
+        Args
+        -----
+        fixed_size_centroids: bool
+            When True, centroids with mz=0 are preserved
+
+        Return
+        -----
+            pandas.DataFrame
+        """
+        if fixed_size_centroids:
+            return self._centroids_df
+        else:
+            return self._centroids_df[self._centroids_df.mz > 0]
 
     def __add__(self, other):
-        """ It will also be used for += operation by Python automatically
+        """ Is also used for += operation by Python automatically
+
+        Args
+        -----
+        other: FormulaCentroids
         """
         assert type(other) == FormulaCentroids
         assert pd.merge(self.formulas_df, other.formulas_df, on='formula').empty
 
-        other = other.copy()
         index_offset = self.formulas_df.index.max() - other.formulas_df.index.min() + 1
-        other.formulas_df.index = other.formulas_df.index + index_offset
-        other.centroids_df.index = other.centroids_df.index + index_offset
+        other_formulas_df = other.formulas_df.copy()
+        other_formulas_df.index = other_formulas_df.index + index_offset
+        other_centroids_df = other.centroids_df(fixed_size_centroids=True).copy()
+        other_centroids_df.index = other_centroids_df.index + index_offset
 
-        formulas_df = pd.concat([self.formulas_df, other.formulas_df])
-        centroids_df = pd.concat([self.centroids_df, other.centroids_df])
+        formulas_df = pd.concat([self.formulas_df, other_formulas_df])
+        centroids_df = pd.concat([self._centroids_df, other_centroids_df])
         formulas_df.index.name = centroids_df.index.name = 'formula_i'  # fix: occasionally pandas looses index name
         return FormulaCentroids(formulas_df, centroids_df)
 
     def copy(self):
         return FormulaCentroids(formulas_df=self.formulas_df.copy(),
-                                centroids_df=self.centroids_df.copy())
+                                centroids_df=self._centroids_df.copy())
 
     def subset(self, formulas):
         formulas = set(formulas)
@@ -185,17 +207,11 @@ class FormulaCentroids(object):
         valid_formulas = formulas - miss_formulas
         valid_formula_ids = self.formulas_df[self.formulas_df.formula.isin(valid_formulas)].index.values
         return FormulaCentroids(formulas_df=self.formulas_df.loc[valid_formula_ids],
-                                centroids_df=self.centroids_df.loc[valid_formula_ids])
+                                centroids_df=self._centroids_df.loc[valid_formula_ids])
 
-    def centroids_subset(self, formulas):
-        """ Isotopic peaks for 'formulas'
-
-        Args
-        ---
-        formulas: list of tuples
-
-        Returns
-        ---
-        : pandas.DataFrame
-        """
-        return self.subset(formulas).centroids_df
+    def centroids_ints(self):
+        sort_centr_df = self._centroids_df.reset_index().sort_values(by=['formula_i', 'peak_i'])
+        values = sort_centr_df.int.values.reshape(-1, ISOTOPIC_PEAK_N)
+        keys = sort_centr_df.formula_i.values[::ISOTOPIC_PEAK_N]
+        centr_ints = {k: v[v > 0] for k, v in zip(keys, values)}
+        return centr_ints

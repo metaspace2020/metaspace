@@ -22,8 +22,8 @@ def _reindex_all(conf):
 
         db = DB(conf['db'])
         es_exp = ESExporter(db, tmp_es_config)
-        rows = db.select('select id, name, config from dataset')
-        _reindex_datasets(rows, es_exp)
+        ds_ids = [r[0] for r in db.select('select id from dataset')]
+        _reindex_datasets(ds_ids, db, es_exp)
 
         es_man.remap_alias(tmp_es_config['index'], alias=alias)
     except Exception as e:

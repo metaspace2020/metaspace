@@ -166,7 +166,7 @@ def gen_formula_images(iso_peak_images, shape):
 
 
 # TODO: add tests
-def compute_formula_images(sc, ds_reader, formula_centroids_df, ppm):
+def compute_formula_images(sc, ds_reader, centroids_df, ppm):
     """ Compute isotopic images for all formulas
 
     Returns
@@ -175,12 +175,11 @@ def compute_formula_images(sc, ds_reader, formula_centroids_df, ppm):
         RDD of sum formula, list[sparse matrix of intensities]
     """
     spectra_rdd = ds_reader.get_spectra()
-    formula_centroids_df = formula_centroids_df[formula_centroids_df.mz > 0]
-    mz_segments = define_mz_segments(spectra_rdd, formula_centroids_df, ppm)
+    mz_segments = define_mz_segments(spectra_rdd, centroids_df, ppm)
     segm_spectra = (spectra_rdd
                     .flatMap(lambda sp: _segment_spectrum(sp, mz_segments))
                     .groupByKey(numPartitions=len(mz_segments)))
 
-    iso_peak_images = gen_iso_peak_images(sc, ds_reader, formula_centroids_df, segm_spectra, ppm)
+    iso_peak_images = gen_iso_peak_images(sc, ds_reader, centroids_df, segm_spectra, ppm)
     formula_images = gen_formula_images(iso_peak_images, shape=ds_reader.get_dims())
     return formula_images
