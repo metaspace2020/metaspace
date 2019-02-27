@@ -17,6 +17,14 @@ export const thumbnailOpticalImageUrl = async (ctx: Context, id: string) => {
     return null;
   }
 };
+export const ionThumbnailUrl = async (ctx: Context, id: string) => {
+  const result = await ctx.entityManager.query('SELECT ion_thumbnail FROM public.dataset WHERE id = $1', [id]);
+  if (result && result.length === 1 && result[0].ion_thumbnail != null) {
+    return `/fs/ion_thumbnails/${result[0].ion_thumbnail}`;
+  } else {
+    return null;
+  }
+};
 
 const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   id(ds) {
@@ -200,6 +208,10 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
 
   async thumbnailOpticalImageUrl(ds, args, ctx) {
     return await thumbnailOpticalImageUrl(ctx, ds._source.ds_id);
+  },
+
+  async ionThumbnailUrl(ds, args, ctx) {
+    return await ionThumbnailUrl(ctx, ds._source.ds_id);
   }
 };
 

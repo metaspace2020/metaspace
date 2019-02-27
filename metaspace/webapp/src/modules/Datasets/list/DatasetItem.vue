@@ -5,19 +5,8 @@
       <dataset-info :metadata="metadata" :currentUser="currentUser" />
     </el-dialog>
 
-    <div class="opt-image" v-if="isOpticalImageSupported">
-      <router-link :to="opticalImageAlignmentHref" v-if="canEditOpticalImage">
-        <div v-if="dataset.thumbnailOpticalImageUrl != null" class="edit-opt-image" title="Edit Optical Image">
-          <img class="opt-image-thumbnail" :src="dataset.thumbnailOpticalImageUrl" alt="Edit optical image"/>
-        </div>
-        <div v-else class="no-opt-image" title="Add Optical Image">
-          <img class="add-opt-image-thumbnail" src="../../../assets/no_opt_image.png" alt="Add optical image"/>
-        </div>
-      </router-link>
-      <div v-else class="edit-opt-image-guest">
-        <img v-if="dataset.thumbnailOpticalImageUrl != null" :src="dataset.thumbnailOpticalImageUrl" alt="Optical image"/>
-        <img v-else src="../../../assets/no_opt_image.png" alt="Optical image"/>
-      </div>
+    <div v-if="isOpticalImageSupported"class="opt-image--container">
+      <dataset-thumbnail :dataset="dataset" :editable="canEditOpticalImage" />
     </div>
 
     <div class="ds-info">
@@ -146,6 +135,7 @@
 
 <script>
  import DatasetInfo from '../../../components/DatasetInfo.vue';
+ import DatasetThumbnail from './DatasetThumbnail.vue';
  import {capitalize} from 'lodash-es';
  import {
    datasetVisibilityQuery,
@@ -167,6 +157,7 @@
    props: ['dataset', 'currentUser', 'idx', 'hideGroupMenu'],
    components: {
      DatasetInfo,
+     DatasetThumbnail,
    },
    filters: {
      plural
@@ -444,74 +435,11 @@
  }
 </script>
 
-<style>
-  .no-opt-image {
-    position: relative;
-    display: block;
-    width: 100px;
-    height: 100px;
-    outline: 1px dotted rgba(0, 0, 0, 0.6);
-    z-index: 0;
-  }
-
-  .no-opt-image:hover::before {
-    font-family: 'element-icons' !important;
-    font-style: normal;
-    font-weight: bold;
-    font-size: 1.5em;
-    color: #2c3e50;
-    position: absolute;
-    content: '\E62B';
-    display: block;
-    width: 30px;
-    height: 30px;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-
-  .no-opt-image:hover{
-    cursor: pointer;
-  }
-
-  .edit-opt-image, .edit-opt-image-guest {
-    position: relative;
-    display: block;
-    width: 100px;
-    height: 100px;
-    z-index: 0;
-  }
-
-  .edit-opt-image:hover::before {
-    font-family: 'element-icons' !important;
-    font-style: normal;
-    font-size: 1.5em;
-    color: #2c3e50;
-    position: absolute;
-    content: '\E61C';
-    display: block;
-    width: 30px;
-    height: 30px;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    background-size: contain;
-  }
-
-  .edit-opt-image:hover {
-    cursor: pointer;
-  }
-
-  .opt-image-thumbnail:hover, .add-opt-image-thumbnail:hover{
-    opacity: .2;
-  }
-
-  .opt-image img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    object-position: 0 0;
+<style lang="scss">
+  .opt-image--container {
+    padding: 10px 0 10px 10px;
+    margin: 0px;
+    flex: none;
   }
 
  .dataset-item {
@@ -526,12 +454,6 @@
    display: flex;
    flex-direction: row;
    justify-content: space-between;
- }
-
- .opt-image {
-   padding: 10px 0 10px 10px;
-   margin: 0px;
-   flex: none;
  }
 
  .ds-info{
