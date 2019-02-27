@@ -151,10 +151,9 @@ def _generate_ion_thumbnail_image(db, img_store, ds_id, algorithm):
         return None
 
     image_ids = [image_id for image_id, in annotation_rows]
-    image_storage_type = Dataset(ds_id).get_ion_img_storage_type(db)
 
     # Hotspot percentile is lowered as a lazy way to brighten images
-    images, mask, (h, w) = img_store.get_ion_images_for_analysis(image_storage_type, image_ids,
+    images, mask, (h, w) = img_store.get_ion_images_for_analysis('fs', image_ids,
                                                                  max_size=(200,200), hotspot_percentile=90)
 
     logger.debug(f'Generating ion thumbnail: {algorithm}({len(images)} x {h} x {w}) ')
