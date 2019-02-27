@@ -6,7 +6,8 @@
     "server": "cherrypy"
   },
   "redis": {
-    "host": "localhost"
+    "host": "{{ sm_redis.host }}",
+    "port": "{{ sm_redis.port }}"
   },
   "defaults": {
     "adducts": {{ sm_default_adducts | to_json }}
