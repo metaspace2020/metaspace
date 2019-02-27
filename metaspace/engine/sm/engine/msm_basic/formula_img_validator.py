@@ -79,6 +79,7 @@ def get_calculate_img_metrics(metrics, sample_area_mask, empty_matrix, img_gen_c
         iso_imgs = [empty_matrix if img is None else img.toarray()
                     for img in iso_images_sparse + [None] * diff]
         iso_imgs_flat = [img.flat[:][sample_area_mask] for img in iso_imgs]
+        iso_imgs_flat = iso_imgs_flat[:len(sf_ints)]
 
         if img_gen_conf['do_preprocessing']:
             for img in iso_imgs_flat:

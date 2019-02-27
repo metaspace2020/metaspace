@@ -46,7 +46,7 @@
     "spark.driver.memory": "4g",
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
     "spark.kryoserializer.buffer.max": "128m",
-    "spark.python.worker.memory": "512m",
+    "spark.python.worker.memory": "1g",
     "spark.rdd.compress": true,
     "spark.ui.showConsoleProgress": false,
     "spark.sql.execution.arrow.enabled": true

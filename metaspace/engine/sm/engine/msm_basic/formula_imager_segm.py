@@ -6,6 +6,7 @@ from scipy.sparse import coo_matrix
 import logging
 
 from sm.engine.errors import JobFailedError
+from sm.engine.isocalc_wrapper import ISOTOPIC_PEAK_N
 
 MAX_MZ_VALUE = 10**5
 MAX_INTENS_VALUE = 10**12
@@ -103,24 +104,25 @@ def _gen_iso_images(spectra_it, sp_indexes, centr_df, nrows, ncols, ppm, min_px=
                     row_inds = idx / ncols
                     col_inds = idx % ncols
                     m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols))
-                    yield centr_df.index[i], (centr_df.peak_i.iloc[i], m)
+                    # yield centr_df.index[i], (centr_df.peak_i.iloc[i], m)
+                    yield centr_df.index[i], centr_df.peak_i.iloc[i], m
 
 
-def _img_pairs_to_list(pairs, shape):
-    """ list of (coord, value) pairs -> list of values """
-    if not pairs:
-        return None
-
-    d = defaultdict(lambda: coo_matrix(shape))
-    for k, m in pairs:
-        _m = d[k]
-        d[k] = _m if _m.nnz >= m.nnz else m
-    distinct_pairs = d.items()
-
-    res = np.ndarray((max(d.keys()) + 1,), dtype=object)
-    for i, m in distinct_pairs:
-        res[i] = m
-    return res.tolist()
+# def _img_pairs_to_list(pairs, shape):
+#     """ list of (coord, value) pairs -> list of values """
+#     if not pairs:
+#         return None
+#
+#     d = defaultdict(lambda: coo_matrix(shape))
+#     for k, m in pairs:
+#         _m = d[k]
+#         d[k] = _m if _m.nnz >= m.nnz else m
+#     distinct_pairs = d.items()
+#
+#     res = np.ndarray((max(d.keys()) + 1,), dtype=object)
+#     for i, m in distinct_pairs:
+#         res[i] = m
+#     return res.tolist()
 
 
 def define_mz_segments(spectra, centroids_df, ppm):
@@ -150,19 +152,32 @@ def gen_iso_peak_images(sc, ds_reader, formula_centroids_df, segm_spectra, ppm):
     formula_centroids_df_brcast = sc.broadcast(formula_centroids_df)  # TODO: replace broadcast variable with rdd and cogroup
     nrows, ncols = ds_reader.get_dims()
 
+    # def generate_images_for_segment(item):
+    #     _, sp_segm = item
+    #     return _gen_iso_images(sp_segm, sp_indexes_brcast.value, formula_centroids_df_brcast.value,
+    #                            nrows, ncols, ppm)
+    # iso_peak_images = segm_spectra.flatMap(generate_images_for_segment)
+    # return iso_peak_images
+
     def generate_images_for_segment(item):
-        _, sp_segm = item
-        return _gen_iso_images(sp_segm, sp_indexes_brcast.value, formula_centroids_df_brcast.value,
-                               nrows, ncols, ppm)
-    iso_peak_images = segm_spectra.flatMap(generate_images_for_segment)
-    return iso_peak_images
+        _, spectrum_segm = item
+        segm_formula_images = defaultdict(lambda: [None] * ISOTOPIC_PEAK_N)
+        formula_image_gen = _gen_iso_images(spectrum_segm,
+                                            sp_indexes_brcast.value, formula_centroids_df_brcast.value,
+                                            nrows, ncols, ppm)
+        for formula_i, peak_i, image in formula_image_gen:
+            segm_formula_images[formula_i][peak_i] = image
+        return list(segm_formula_images.items())
+
+    formula_images = segm_spectra.flatMap(generate_images_for_segment)
+    return formula_images
 
 
-def gen_formula_images(iso_peak_images, shape):
-    iso_sf_images = (iso_peak_images
-                     .groupByKey(numPartitions=256)
-                     .mapValues(lambda img_pairs_it: _img_pairs_to_list(list(img_pairs_it), shape)))
-    return iso_sf_images
+# def gen_formula_images(iso_peak_images, shape):
+#     iso_sf_images = (iso_peak_images
+#                      .groupByKey(numPartitions=256)
+#                      .mapValues(lambda img_pairs_it: _img_pairs_to_list(list(img_pairs_it), shape)))
+#     return iso_sf_images
 
 
 # TODO: add tests
@@ -180,6 +195,12 @@ def compute_formula_images(sc, ds_reader, centroids_df, ppm):
                     .flatMap(lambda sp: _segment_spectrum(sp, mz_segments))
                     .groupByKey(numPartitions=len(mz_segments)))
 
-    iso_peak_images = gen_iso_peak_images(sc, ds_reader, centroids_df, segm_spectra, ppm)
-    formula_images = gen_formula_images(iso_peak_images, shape=ds_reader.get_dims())
+    formula_images = gen_iso_peak_images(sc, ds_reader, centroids_df, segm_spectra, ppm)
+    # print(iso_peak_images.count())
+    # print(iso_peak_images.top(5))
+
+    # print(iso_peak_images.count())
+    # raise Exception('Test')
+
+    # formula_images = gen_formula_images(iso_peak_images, shape=ds_reader.get_dims())
     return formula_images
