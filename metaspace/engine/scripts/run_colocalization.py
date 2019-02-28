@@ -10,48 +10,20 @@ from sm.engine.colocalization import Colocalization
 
 CORRUPT_COLOC_JOBS_SEL = """
 WITH mol_db_lookup AS (SELECT unnest(%s::int[]) AS id, unnest(%s::text[]) AS name), 
-    algorithm_lookup AS (SELECT unnest(%s::text[]) algorithm),
     fdr_lookup AS (SELECT unnest(%s::numeric[]) AS fdr), 
+    algorithm_lookup AS (SELECT unnest(%s::text[]) algorithm),
+    job_fdr_counts_temp AS (SELECT job_id, fdr, COUNT(*) num_annotations FROM iso_image_metrics GROUP BY job_id, fdr),
     job_fdr_counts AS (
-      SELECT job_id, fdr.fdr, COUNT(*) AS num_annotations
-      FROM iso_image_metrics iim
-      JOIN fdr_lookup fdr ON iim.fdr <= fdr.fdr - 0.01
+      SELECT iim.job_id, fdr.fdr, SUM(num_annotations) AS num_annotations
+      FROM job_fdr_counts_temp iim
+      JOIN fdr_lookup fdr ON iim.fdr <= fdr.fdr + 0.01
       GROUP BY job_id, fdr.fdr
-      HAVING COUNT(*) > 2
+      HAVING SUM(num_annotations) > 2
     ), coloc_job_fdr_counts AS (
       SELECT cj.ds_id, cj.mol_db, cj.fdr, cj.algorithm, COUNT(*) AS num_annotations
       FROM graphql.coloc_job cj
       JOIN graphql.coloc_annotation ca ON cj.id = ca.coloc_job_id
-      GROUP BY cj.id, cj.mol_db, cj.fdr, cj.algorithm
-    )
-SELECT DISTINCT j.ds_id, (CASE WHEN cj IS NULL THEN 'missing' ELSE 'corrupt' END) as reason
-FROM dataset ds
-JOIN job j ON ds.id = j.ds_id
-JOIN job_fdr_counts jfc ON j.id = jfc.job_id
-JOIN mol_db_lookup mdb ON j.db_id = mdb.id
-CROSS JOIN algorithm_lookup alg
-LEFT JOIN coloc_job_fdr_counts cj ON ds.id = cj.ds_id AND cj.mol_db = mdb.name 
-                                  AND cj.fdr = jfc.fdr AND cj.algorithm = alg.algorithm
-WHERE ds.status = 'FINISHED'
-  AND j.status = 'FINISHED'
-  AND (cj IS NULL OR cj.num_annotations < jfc.num_annotations)
-ORDER BY j.ds_id DESC;
-"""
-
-MISSING_COLOC_JOBS_SEL = """
-WITH mol_db_lookup AS (SELECT unnest(%s::int[]) AS id, unnest(%s::text[]) AS name), 
-    algorithm_lookup AS (SELECT unnest(%s::text[]) algorithm),
-    fdr_lookup AS (SELECT unnest(%s::numeric[]) AS fdr), 
-    job_fdr_counts AS (
-      SELECT job_id, fdr.fdr, COUNT(*) AS num_annotations
-      FROM iso_image_metrics iim
-      JOIN fdr_lookup fdr ON iim.fdr <= fdr.fdr - 0.01
-      GROUP BY job_id, fdr.fdr
-      HAVING COUNT(*) > 2
-    ), coloc_job_fdr_counts AS (
-      SELECT cj.ds_id, cj.mol_db, cj.fdr, cj.algorithm
-      FROM graphql.coloc_job cj
-      GROUP BY cj.id, cj.mol_db, cj.fdr, cj.algorithm
+      GROUP BY cj.ds_id, cj.mol_db, cj.fdr, cj.algorithm
     )
 SELECT DISTINCT j.ds_id
 FROM dataset ds
@@ -59,18 +31,45 @@ JOIN job j ON ds.id = j.ds_id
 JOIN job_fdr_counts jfc ON j.id = jfc.job_id
 JOIN mol_db_lookup mdb ON j.db_id = mdb.id
 CROSS JOIN algorithm_lookup alg
-LEFT JOIN coloc_job_fdr_counts cj ON ds.id = cj.ds_id AND cj.mol_db = mdb.name 
+JOIN coloc_job_fdr_counts cj ON ds.id = cj.ds_id AND cj.mol_db = mdb.name
                                   AND cj.fdr = jfc.fdr AND cj.algorithm = alg.algorithm
 WHERE ds.status = 'FINISHED'
   AND j.status = 'FINISHED'
-  AND cj IS NULL
+  AND cj.num_annotations < jfc.num_annotations
+ORDER BY j.ds_id DESC;
+"""
+
+MISSING_COLOC_JOBS_SEL = """
+WITH mol_db_lookup AS (SELECT unnest(%s::int[]) AS id, unnest(%s::text[]) AS name), 
+    fdr_lookup AS (SELECT unnest(%s::numeric[]) AS fdr), 
+    job_fdr_counts_temp AS (SELECT job_id, fdr, COUNT(*) num_annotations FROM iso_image_metrics GROUP BY job_id, fdr),
+    job_fdr_counts AS (
+      SELECT iim.job_id, fdr.fdr, SUM(num_annotations) AS num_annotations
+      FROM job_fdr_counts_temp iim
+      JOIN fdr_lookup fdr ON iim.fdr <= fdr.fdr + 0.01
+      GROUP BY job_id, fdr.fdr
+      HAVING SUM(num_annotations) > 2
+    ), coloc_job_fdr_counts AS (
+      SELECT cj.ds_id, cj.mol_db, cj.fdr, array_agg(cj.algorithm) AS algorithms
+      FROM graphql.coloc_job cj
+      GROUP BY cj.ds_id, cj.mol_db, cj.fdr
+    )
+SELECT DISTINCT j.ds_id
+FROM dataset ds
+JOIN job j ON ds.id = j.ds_id
+JOIN job_fdr_counts jfc ON j.id = jfc.job_id
+JOIN mol_db_lookup mdb ON j.db_id = mdb.id
+LEFT JOIN coloc_job_fdr_counts cj ON ds.id = cj.ds_id AND cj.mol_db = mdb.name AND cj.fdr = jfc.fdr
+WHERE ds.status = 'FINISHED'
+  AND j.status = 'FINISHED'
+  AND (cj IS NULL OR NOT cj.algorithms @> %s::text[])
 ORDER BY j.ds_id DESC;
 """
 
 
 def run_coloc_jobs(ds_id, sql_where, fix_missing, fix_corrupt):
     assert len([data_source for data_source in [ds_id, sql_where, fix_missing, fix_corrupt] if data_source]) == 1, \
-           "Exactly one data source (ds_id, sql_where or repair) must be specified"
+           "Exactly one data source (ds_id, sql_where, fix_missing, fix_corrupt) must be specified"
     assert not (ds_id and sql_where)
 
     conf = SMConfig.get_conf()
@@ -85,20 +84,19 @@ def run_coloc_jobs(ds_id, sql_where, fix_missing, fix_corrupt):
         mol_db_service = MolDBServiceWrapper(conf['services']['mol_db'])
         mol_dbs = [(db['id'], db['name']) for db in mol_db_service.fetch_all_dbs()]
         mol_db_ids, mol_db_names = map(list, zip(*mol_dbs))
-        algorithms = ['cosine', 'pca_cosine', 'pca_pearson', 'pca_spearman']
         fdrs = [0.05, 0.1, 0.2, 0.5]
+        algorithms = ['cosine', 'pca_cosine', 'pca_pearson', 'pca_spearman']
 
         if fix_missing:
             logger.info('Checking for missing colocalization jobs...')
-            results = db.select(MISSING_COLOC_JOBS_SEL, [list(mol_db_ids), list(mol_db_names), algorithms, fdrs])
+            results = db.select(MISSING_COLOC_JOBS_SEL, [list(mol_db_ids), list(mol_db_names), fdrs, algorithms])
             ds_ids = [ds_id for ds_id, in results]
             logger.info(f'Found {len(ds_ids)} missing colocalization sets')
         else:
             logger.info('Checking all colocalization jobs. This is super slow: ~5 minutes per 1000 datasets...')
-            results = db.select(MISSING_COLOC_JOBS_SEL, [list(mol_db_ids), list(mol_db_names), algorithms, fdrs])
-            ds_ids, reasons = map(list, zip(*results))
-            reason_counts = ', '.join([f'{len(list(group))} {reason}' for reason, group in groupby(sorted(reasons))])
-            logger.info(f'Found {reason_counts} colocalization sets')
+            results = db.select(CORRUPT_COLOC_JOBS_SEL, [list(mol_db_ids), list(mol_db_names), fdrs, algorithms])
+            ds_ids = [ds_id for ds_id, in results]
+            logger.info(f'Found {len(ds_ids)} corrupt colocalization sets')
 
 
     if not ds_ids:
@@ -123,8 +121,7 @@ if __name__ == '__main__':
     parser.add_argument('--fix-missing', action='store_true',
                         help='Run colocalization on all datasets that are missing colocalization data')
     parser.add_argument('--fix-corrupt', action='store_true',
-                        help='Run colocalization on all datasets that are missing colocalization data, '
-                             'or have incomplete colocalization data (SLOW)')
+                        help='Run colocalization on all datasets that have incomplete colocalization data (SLOW)')
     args = parser.parse_args()
 
     SMConfig.set_path(args.config)
