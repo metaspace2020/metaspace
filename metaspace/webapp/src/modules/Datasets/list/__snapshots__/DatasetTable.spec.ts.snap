@@ -38,7 +38,7 @@ exports[`DatasetTable should match snapshot 1`] = `
         <label role="radio" tabindex="-1" class="el-radio-button el-radio-button--small">
           <input type="radio" tabindex="-1" class="el-radio-button__orig-radio" value="Summary"><span class="el-radio-button__inner">Summary</span></label>
       </div>
-      <div role="group" aria-label="checkbox-group" class="el-checkbox-group" style="padding: 5px 20px;">
+      <div role="group" aria-label="checkbox-group" class="el-checkbox-group dataset-status-checkboxes">
         <label role="checkbox" aria-checked="true" class="el-checkbox cb-started is-checked"><span aria-checked="mixed" class="el-checkbox__input is-checked"><span class="el-checkbox__inner"></span>
           <input type="checkbox" aria-hidden="true" class="el-checkbox__original" value="started">
           </span><span class="el-checkbox__label">Processing (1)<!----></span></label>
