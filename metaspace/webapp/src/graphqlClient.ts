@@ -6,7 +6,7 @@ import { SubscriptionClient } from 'subscriptions-transport-ws';
 import { getOperationAST } from 'graphql/utilities/getOperationAST';
 import { onError } from 'apollo-link-error';
 
-import * as config from './clientConfig.json';
+import config from './config';
 import tokenAutorefresh from './tokenAutorefresh';
 import reportError from './lib/reportError';
 import {get} from 'lodash-es';

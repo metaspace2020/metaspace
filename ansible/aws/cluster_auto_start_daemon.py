@@ -86,7 +86,7 @@ class ClusterDaemon(object):
                                              aws_secret_access_key=self.ansible_config['aws_secret_access_key'])
         self.ec2 = self.session.resource('ec2', self.ansible_config['aws_region'])
         self.ses = self.session.client('ses', 'eu-west-1')
-        self.redis_client = redis.Redis()
+        self.redis_client = redis.Redis(**self.ansible_config.get('sm_cluster_autostart_redis', {}))
 
     def _resolve_spark_master(self):
         self.logger.debug('Resolving spark master ip...')

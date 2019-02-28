@@ -30,8 +30,11 @@ COLOC_ANN_INS = ('INSERT INTO graphql.coloc_annotation(coloc_job_id, ion_id, col
 
 ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], sf, adduct, fdr '
                    'FROM iso_image_metrics m '
-                   'JOIN job j ON j.id = m.job_id '
-                   'WHERE j.ds_id = %s AND j.db_id = %s')
+                   'WHERE m.job_id = ('
+                   '    SELECT id FROM job j '
+                   '    WHERE j.ds_id = %s AND j.db_id = %s '
+                   '    ORDER BY start DESC '
+                   '    LIMIT 1)')
 
 DATASET_CONFIG_SEL = ("SELECT mol_dbs, config #>> '{isotope_generation,charge,polarity}' "
                       "FROM dataset "
@@ -42,7 +45,7 @@ logger = logging.getLogger('engine')
 
 class ColocalizationJob(object):
     def __init__(self, ds_id, mol_db, fdr, algorithm_name=None, start=None, finish=None,
-                 error=None, ion_ids=None, sample_ion_ids=[], coloc_annotations=[]):
+                 error=None, ion_ids=None, sample_ion_ids=None, coloc_annotations=None):
         """
         Args
         ----------
@@ -70,8 +73,25 @@ class ColocalizationJob(object):
         self.finish = finish or datetime.now()
         self.error = error
         self.ion_ids = ion_ids
-        self.sample_ion_ids = sample_ion_ids
-        self.coloc_annotations = coloc_annotations
+        self.sample_ion_ids = sample_ion_ids or []
+        self.coloc_annotations = coloc_annotations or []
+
+
+class FreeableRef(object):
+    def __init__(self, ref):
+        self._ref = ref
+        self._freed = False
+
+    def free(self):
+        self._ref = None
+        self._freed = True
+
+    @property
+    def ref(self):
+        if self._freed:
+            raise ReferenceError('FreeableRef is already freed')
+        else:
+            return self._ref
 
 
 def _preprocess_images_inplace(imgs):
@@ -96,7 +116,7 @@ def _labels_to_clusters(labels, scores):
     to [[0,2],[1,3],[4]] form (mapping cluster idx to sample idx's).
     Each cluster is sorted based on items' distance from the cluster's mean
     """
-    assert labels.shape[0] == scores.shape[0] == scores.shape[1]
+    assert labels.shape[0] == scores.shape[0] == scores.shape[1], (labels.shape, scores.shape)
 
     in_same_cluster_mask = labels[:, np.newaxis] == labels[np.newaxis, :]
     typicalness = np.average(scores * scores, axis=1, weights=in_same_cluster_mask)
@@ -105,11 +125,11 @@ def _labels_to_clusters(labels, scores):
 
 
 def _label_clusters(scores):
-    min_clusters = 2
+    min_clusters = 5
     max_clusters = 20
     n_samples = scores.shape[0]
     if n_samples <= min_clusters:
-        return [[i] for i in range(n_samples)]
+        return np.array([i for i in range(n_samples)])
 
     results = []
     last_error = None
@@ -167,8 +187,9 @@ def _downscale_image_if_required(img, num_annotations):
     if zoom_factor > 1:
         return img
     with warnings.catch_warnings():
-        warnings.filterwarnings('ignore', '.*the output shape of zoom\\(\\) is calculated with round\\(\\) '
-                                          'instead of int\\(\\).*')
+        # ignore "UserWarning: From scipy 0.13.0, the output shape of zoom() is calculated with round() instead of int()
+        # - for these inputs the size of the returned array has changed."
+        warnings.filterwarnings('ignore', '.*the output shape of zoom.*')
         return zoom(img, zoom_factor)
 
 
@@ -179,30 +200,29 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
     ----------
     ds_id: str
     mol_db: str
-    images: np.ndarray
+    images: FreeableRef[np.ndarray]
         2D array where each row contains the pixels from one image
-        WARNING: This np.ndarray is modified in-place to save memory
+        WARNING: This FreeableRef is released during use to save memory
     ion_ids: np.ndarray
         1D array where each item is the ion_id for the corresponding row in images
     fdrs: np.ndarray
         1D array where each item is the fdr for the corresponding row in images
     """
-    assert images.shape[0] == ion_ids.shape[0] == fdrs.shape[0]
+    assert images.ref.shape[1] >= 3
+    assert images.ref.shape[0] == ion_ids.shape[0] == fdrs.shape[0], (images.ref.shape, ion_ids.shape, fdrs.shape)
     start = datetime.now()
 
-    if len(ion_ids) < 2:
-        logger.info('Not enough annotations to perform colocalization')
-        return
-
-    logger.debug(f'Preprocessing images (shape: {images.shape}, dtype: {images.dtype})')
-    _preprocess_images_inplace(images)
+    logger.debug(f'Preprocessing images (shape: {images.ref.shape}, dtype: {images.ref.dtype})')
+    _preprocess_images_inplace(images.ref)
 
     logger.debug('Calculating colocalization metrics')
-    pca_images = PCA(min(20, *images.shape)).fit_transform(images)
-    cos_scores = pairwise_kernels(images, metric='cosine')
+    pca_images = PCA(min(20, *images.ref.shape)).fit_transform(images.ref)
+    cos_scores = pairwise_kernels(images.ref, metric='cosine')
+    images.free()
+
     pca_cos_scores = pairwise_kernels(pca_images, metric='cosine')
-    pca_pear_scores = np.corrcoef(pca_images)
-    pca_sper_scores = spearmanr(pca_images.transpose())[0]  # TODO: Discard low p-value entries?
+    pca_pear_scores = np.float32(np.corrcoef(pca_images))
+    pca_sper_scores = np.float32(spearmanr(pca_images, axis=1)[0])  # TODO: Discard low p-value entries?
 
     for fdr in [0.05, 0.1, 0.2, 0.5]:
         fdr_mask = fdrs <= fdr + 0.001
@@ -219,14 +239,14 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
 
             def run_alg(algorithm, scores, cluster):
                 nonlocal labels, clusters
-                masked_scores = scores[fdr_mask, :][:, fdr_mask]
+                masked_scores = scores if fdr_mask.all() else scores[fdr_mask, :][:, fdr_mask]
                 if cluster:
                     logger.debug(f'Clustering {algorithm} at {fdr} FDR with {len(masked_ion_ids)} annotations')
                     try:
                         labels = _label_clusters(masked_scores)
                         clusters = _labels_to_clusters(labels, masked_scores)
                     except Exception as err:
-                        logger.warning(f'Failed to cluster {algorithm}: {err}')
+                        logger.warning(f'Failed to cluster {algorithm}: {err}', exc_info=True)
 
                 colocs = _get_best_colocs(masked_scores, labels, 100, 0.3)
                 sample_ion_ids = [masked_ion_ids.item(c[0]) for c in clusters] # This could be done better
@@ -251,7 +271,6 @@ class Colocalization(object):
         self._img_store = ImageStoreServiceWrapper(self._sm_config['services']['img_service_url'])
 
     def _save_job_to_db(self, job):
-
         job_id, = self._db.insert_return(COLOC_JOB_INS,
             [[job.ds_id, job.mol_db, job.fdr, job.algorithm_name, job.start, job.finish, job.error, job.sample_ion_ids]])
 
@@ -263,8 +282,13 @@ class Colocalization(object):
             # Clear old jobs from DB
             self._db.alter(COLOC_JOB_DEL, [ds_id, mol_db])
 
-            for job in analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
-                self._save_job_to_db(job)
+            if len(ion_ids) > 2:
+                for job in analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
+                    self._save_job_to_db(job)
+            else:
+                # Technically `len(ion_ids) == 2` is enough, but spearmanr returns a scalar instead of a matrix
+                # when there are only 2 items, and it's not worth handling this edge case
+                logger.info('Not enough annotations to perform colocalization')
         except Exception:
             logger.warning('Colocalization job failed', exc_info=True)
             self._save_job_to_db(ColocalizationJob(ds_id, mol_db, 0, error=format_exc()))
@@ -292,9 +316,9 @@ class Colocalization(object):
             ion_images = list(ex.map(get_ion_image, [row[0] for row in annotation_rows]))
             logger.debug(f'Finished getting images for "{ds_id}" {mol_db_name}')
 
-        images = np.array([img for img in ion_images if img is not None], ndmin=2, dtype=np.float32)
-        ion_ids = np.array([ion_id for i, ion_id in enumerate(ion_ids) if ion_images[i] is not None])
-        fdrs = np.array([fdr for i, fdr in enumerate(fdrs) if ion_images[i] is not None])
+        images = FreeableRef(np.array([img for img in ion_images if img is not None], ndmin=2, dtype=np.float32))
+        ion_ids = np.array([ion_id for i, ion_id in enumerate(ion_ids) if ion_images[i] is not None], dtype=np.int64)
+        fdrs = np.array([fdr for i, fdr in enumerate(fdrs) if ion_images[i] is not None], dtype=np.float32)
 
         return images, ion_ids, fdrs
 
@@ -310,6 +334,7 @@ class Colocalization(object):
         mol_dbs, polarity = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
 
         for mol_db_name in mol_dbs:
+            logger.info(f'Running colocalization job for {ds_id} on {mol_db_name}')
             images, ion_ids, fdrs = self._get_existing_ds_annotations(ds_id, mol_db_name, image_storage_type, polarity)
             self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs)
 
@@ -330,14 +355,9 @@ class Colocalization(object):
                        for i, item in ion_metrics_df.iterrows()
                        if image_map.get(i) is not None]
 
-        if annotations:
-            images = np.array([a[0] for a in annotations], dtype=np.float32)
-            ion_ids = np.array([a[1] for a in annotations], dtype=np.int64)
-            fdrs = np.array([a[2] for a in annotations], dtype=np.float32)
-        else:
-            images = np.zeros((0, 0), dtype=np.float32)
-            ion_ids = np.zeros((0,), dtype=np.int64)
-            fdrs = np.zeros((0,), dtype=np.float32)
+        images = FreeableRef(np.array([a[0] for a in annotations], ndmin=2, dtype=np.float32))
+        ion_ids = np.array([a[1] for a in annotations], dtype=np.int64)
+        fdrs = np.array([a[2] for a in annotations], dtype=np.float32)
 
         return images, ion_ids, fdrs
 
@@ -352,8 +372,11 @@ class Colocalization(object):
         alpha_channel: np.ndarray
         """
 
-        logger.info('Running colocalization job')
-        images, ion_ids, fdrs = self._get_annotations_from_new_ds(ds, ion_metrics_df, ion_iso_images, alpha_channel)
-        self._analyze_and_save(ds.id, mol_db_name, images, ion_ids, fdrs)
-        logger.info('Finished colocalization job')
+        if self._sm_config.get('colocalization', {}).get('enabled', True):
+            logger.info('Running colocalization job')
+            images, ion_ids, fdrs = self._get_annotations_from_new_ds(ds, ion_metrics_df, ion_iso_images, alpha_channel)
+            self._analyze_and_save(ds.id, mol_db_name, images, ion_ids, fdrs)
+            logger.info('Finished colocalization job')
+        else:
+            logger.info('Skipping colocalization')
 

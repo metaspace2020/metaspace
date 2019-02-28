@@ -1,8 +1,8 @@
 <template>
   <div>
     <el-row>
-      <xic-plot v-if="sameAdductAnnotations"
-                :intensityImgs="sameAdductAnnotations.map(a => a.isotopeImages[0])"
+      <xic-plot v-if="annotations"
+                :intensityImgs="annotations.map(a => a.isotopeImages[0])"
                 :graphColors="adductColors"
                 :acquisitionGeometry="acquisitionGeometry"
                 :logIntensity="true"
@@ -19,49 +19,51 @@
  import { renderMolFormula } from '../../../../util';
  import XicPlot from './XicPlot.vue';
  import PlotLegend from '../PlotLegend.vue';
- import { allAdductsQuery } from '../../../../api/annotation';
+ import { relatedAnnotationsQuery } from '../../../../api/annotation';
 
  export default {
-   props: ['annotation', 'database', 'acquisitionGeometry'],
+   props: ['query', 'annotation', 'database', 'acquisitionGeometry'],
    components: {
      PlotLegend,
      XicPlot
    },
    apollo: {
-     sameAdductAnnotations: {
-       query: allAdductsQuery,
+     annotations: {
+       query: relatedAnnotationsQuery,
        variables() {
-         return {
-           db: this.database,
-           datasetId: this.annotation.dataset.id,
-           molFormula: this.annotation.sumFormula
-         };
+         let filter;
+         if (this.query === 'allAdducts') {
+           filter = { database: this.database, sumFormula: this.annotation.sumFormula };
+         } else if (this.query === 'colocalized') {
+           filter = { database: this.database, colocalizedWith: this.annotation.id };
+         }
+         return { datasetId: this.annotation.dataset.id, filter };
        },
        update: data => data.allAnnotations.slice().sort((a, b) => a.mz - b.mz)
      }
    },
    computed: {
      adductColors() {
-       if (!this.sameAdductAnnotations) {
+       if (!this.annotations) {
          return [];
        }
        // no adducts apart from current annotation
-       if (this.sameAdductAnnotations.length == 1) {
+       if (this.annotations.length == 1) {
          return [graphColors[0]];
        }
        // taking last colors from the palette
-       const colors = graphColors.slice(-this.sameAdductAnnotations.length + 1);
+       const colors = graphColors.slice(-this.annotations.length + 1);
        // replacing color of the current annotation with the 1st palette color
-       const curAnnIdx = this.sameAdductAnnotations.findIndex(a => a.adduct == this.annotation.adduct);
+       const curAnnIdx = this.annotations.findIndex(a => a.adduct == this.annotation.adduct);
        colors.splice(curAnnIdx, 0, graphColors[0]);
        return colors;
      },
      adductLegendItems() {
-       if (!this.sameAdductAnnotations) {
+       if (!this.annotations) {
          return [];
        }
        const colors = this.adductColors;
-       return this.sameAdductAnnotations.map((a, idx) => {
+       return this.annotations.map((a, idx) => {
          return {
            name: this.showAdduct(a),
            color: colors[idx],

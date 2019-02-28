@@ -1,5 +1,6 @@
 import fetch from 'node-fetch';
 import * as config from 'config';
+import * as _ from 'lodash';
 import {
   esSearchResults,
   esAnnotationByID,
@@ -12,17 +13,27 @@ import {
   deprecatedMolDBs,
   logger,
 } from './utils';
+import {applyQueryFilters} from './src/modules/annotation/queryFilters';
 
 
 const Resolvers = {
   Query: {
 
     async allAnnotations(_, args, ctx) {
-      return await esSearchResults(args, 'annotation', ctx.user);
+      const {postprocess, args: newArgs} = await applyQueryFilters(ctx, args);
+      let annotations = await esSearchResults(newArgs, 'annotation', ctx.user);
+
+      if (postprocess != null) {
+        annotations = postprocess(annotations);
+      }
+
+      return annotations;
     },
 
     async countAnnotations(_, args, ctx) {
-      return await esCountResults(args, 'annotation', ctx.user);
+      const {args: newArgs} = await applyQueryFilters(ctx, args);
+
+      return await esCountResults(newArgs, 'annotation', ctx.user);
     },
 
     async annotation(_, { id }, ctx) {
@@ -101,6 +112,11 @@ const Resolvers = {
         return 'Server error';
       }
     },
+
+    async colocalizationAlgos() {
+      return config.metadataLookups.colocalizationAlgos
+        .map(([id, name]) => ({id, name}));
+    },
   },
 
   Analyzer: {
@@ -141,10 +157,12 @@ const Resolvers = {
           infoURL = `http://www.ebi.ac.uk/chebi/searchId.do?chebiId=${id}`;
         } else if (dbBaseName === 'SwissLipids') {
           infoURL = `http://swisslipids.org/#/entity/${id}`;
-        } else if (dbBaseName === 'LipidMaps') {
+        } else if (dbBaseName === 'LipidMaps' || dbBaseName === 'LIPID_MAPS') {
           infoURL = `http://www.lipidmaps.org/data/LMSDRecord.php?LMID=${id}`;
         } else if (dbBaseName === 'PAMDB') {
           infoURL = `http://pseudomonas.umaryland.edu/PAMDB?MetID=${id}`;
+        } else if (dbBaseName === 'ECMDB') {
+          infoURL = `http://ecmdb.ca/compounds/${id}`;
         }
 
         compounds.push({
@@ -157,6 +175,14 @@ const Resolvers = {
     },
 
     adduct: (hit) => hit._source.adduct,
+
+    ion: (hit) => {
+      const polarity = _.get(hit._source.ds_meta, 'MS_Analysis.Polarity');
+      const sign = polarity === 'Negative' ? '-' : '+';
+      return hit._source.sf_adduct + sign;
+    },
+
+    database: (hit) => hit._source.db_name,
 
     mz: (hit) => parseFloat(hit._source.centroid_mzs[0]),
 
@@ -206,7 +232,17 @@ const Resolvers = {
           maxIntensity: max_iso_ints[i]
         }
       });
-    }
+    },
+
+    async colocalizationCoeff(hit, args, context) {
+      // Actual implementation is in src/modules/annotation/queryFilters.ts
+      if (hit.getColocalizationCoeff != null && args.colocalizationCoeffFilter != null) {
+        const {colocalizedWith, colocalizationAlgo, database, fdrLevel} = args.colocalizationCoeffFilter;
+        return await hit.getColocalizationCoeff(colocalizedWith, colocalizationAlgo || 'cosine', database, fdrLevel);
+      } else {
+        return null;
+      }
+    },
   },
 };
 

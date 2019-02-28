@@ -28,7 +28,9 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   analyzerType: 'instr',
   simpleQuery: 'q',
   simpleFilter: 'f',
-  metadataType: 'mdtype'
+  metadataType: 'mdtype',
+  colocalizedWith: 'colo',
+  colocalizationSamples: 'locs',
 };
 
 const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>;
@@ -66,6 +68,8 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
         q[FILTER_TO_URL[key]] = JSON.stringify(filter[key]);
       else if (encoding == 'list')
         q[FILTER_TO_URL[key]] = filter[key].join(',');
+      else if (encoding === 'bool')
+        q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0';
       else
         q[FILTER_TO_URL[key]] = filter[key];
     }
@@ -112,6 +116,8 @@ export function decodeParams(location: Location, filterLists: any): Object {
       }
     } else if (encoding == 'list') {
       filter[fKey] = query[key] ? query[key].split(',') : [];
+    } else if (encoding == 'bool') {
+      filter[fKey] = query[key] === '1';
     } else {
       filter[fKey] = query[key];
     }
@@ -122,7 +128,7 @@ export function decodeParams(location: Location, filterLists: any): Object {
   return filter;
 }
 
-const allSections = ['images', 'compounds', 'scores', 'metadata', 'adducts'].reverse();
+const allSections = ['images', 'compounds', 'scores', 'metadata', 'adducts', 'colocalized'].reverse();
 
 function decodeSections(number: string): string[] {
   let sections = [],
@@ -176,7 +182,8 @@ export function decodeSettings(location: Location): any {
 
     annotationView: {
       activeSections: DEFAULT_ANNOTATION_VIEW_SECTIONS,
-      colormap: DEFAULT_COLORMAP
+      colormap: DEFAULT_COLORMAP,
+      colocalizationAlgo: null as string | null,
     },
 
     datasets: {
@@ -192,6 +199,8 @@ export function decodeSettings(location: Location): any {
     settings.annotationView.colormap = query.cmap;
   if (query.sections !== undefined)
     settings.annotationView.activeSections = decodeSections(query.sections);
+  if (query.alg)
+    settings.annotationView.colocalizationAlgo = query.alg;
   if (query.tab !== undefined)
     settings.datasets.tab = query.tab;
   return settings;

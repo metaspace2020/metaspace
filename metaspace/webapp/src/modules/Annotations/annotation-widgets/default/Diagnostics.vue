@@ -82,7 +82,7 @@ export default class Diagnostics extends Vue {
 }
 </script>
 
-<style>
+<style lang="scss" scoped>
 #scores-table {
     border-collapse: collapse;
     border: 1px solid lightblue;
@@ -99,6 +99,19 @@ export default class Diagnostics extends Vue {
     margin: 10px auto;
     text-align: center;
     font-size: 13px;
+}
+
+.small-peak-image {
+    font-size: 1rem;
+    vertical-align: top;
+    padding: 0 5px 0 5px;
+    text-align: center;
+    flex: 0 1 260px;
+    box-sizing: border-box;
+
+    @media (max-width: 768px) {
+        flex-basis: 100%;
+    }
 }
 
 #isotope-plot-container text {

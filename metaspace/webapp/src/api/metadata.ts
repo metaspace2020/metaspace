@@ -95,6 +95,7 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
   ionisationSources: metadataSuggestions(field: "MS_Analysis.Ionisation_Source", query: "", limit: 1000)
   maldiMatrices: metadataSuggestions(field: "Sample_Preparation.MALDI_Matrix", query: "", limit: 1000)
   analyzerTypes: metadataSuggestions(field: "MS_Analysis.Analyzer", query: "", limit: 1000)
+  colocalizationAlgos {id, name}
   molecularDatabases: molecularDatabases(hideDeprecated: false){name, default}
   adducts: adductSuggestions{adduct, charge}
 }`;
@@ -102,6 +103,10 @@ export const fetchOptionListsQuery = gql`query fetchOptionListsQuery {
 export const metadataOptionsQuery = gql`query metadataOptionsQuery {
   molecularDatabases: molecularDatabases{name, default}
   adducts: adductSuggestions{adduct, charge}
+}`;
+
+export const colocalizationAlgosQuery = gql`query colocalizationAlgosQuery {
+  colocalizationAlgos {id, name}
 }`;
 
 export const metadataExportQuery = gql`

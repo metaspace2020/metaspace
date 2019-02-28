@@ -7,6 +7,7 @@ import SearchBox from './filter-components/SearchBox.vue';
 import {metadataTypes, defaultMetadataType} from '../../assets/metadataRegistry';
 import { Component } from 'vue';
 import SimpleFilterBox from './filter-components/SimpleFilterBox.vue';
+import BooleanFilter from './filter-components/BooleanFilter.vue';
 
 // Filled during the initialization of adduct filter below
 const ADDUCT_POLARITY: Record<string, string> = {};
@@ -63,7 +64,8 @@ export type Level = 'annotation' | 'dataset' | 'upload' | 'projects';
 
 export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName' | 'adduct' | 'mz' | 'fdrLevel'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
-  | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType';
+  | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
+  | 'colocalizedWith' | 'colocalizationSamples';
 
 export type MetadataLists = Record<string, any[]>;
 
@@ -73,17 +75,19 @@ export interface FilterSpecification {
   description?: string;
   levels: Level[];
   defaultInLevels?: Level[];
-  initialValue: undefined | null | number | string | ((lists: MetadataLists) => any);
+  initialValue: undefined | null | number | string | boolean | ((lists: MetadataLists) => any);
   options?: string | number[] | string[] | ((lists: MetadataLists) => any[]);
   removable?: boolean;
   filterable?: boolean;
   multiple?: boolean;
   hidden?: boolean | (() => boolean);
-  encoding?: 'list' | 'json';
+  encoding?: 'list' | 'json' | 'bool';
   optionFormatter?(value: any): string;
   valueFormatter?(value: any): string;
   valueKey?: string;
   sortOrder?: number;
+  dependsOnFilters?: FilterKey[];
+  conflictsWithFilters?: FilterKey[];
 }
 
 export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
@@ -302,8 +306,35 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     removable: false,
     options: metadataTypes,
     hidden: () => metadataTypes.length <= 1
+  },
+
+  colocalizedWith: {
+    type: InputFilter,
+    name: 'Colocalized with',
+    levels: ['annotation'],
+    initialValue: undefined,
+    dependsOnFilters: ['fdrLevel', 'database', 'datasetIds'],
+    conflictsWithFilters: ['colocalizationSamples'],
+  },
+
+  colocalizationSamples: {
+    type: BooleanFilter,
+    name: 'Representative spatial patterns',
+    description: 'Show representative spatial patterns',
+    levels: ['annotation'],
+    initialValue: true,
+    encoding: 'bool',
+    dependsOnFilters: ['fdrLevel', 'database', 'datasetIds'],
+    conflictsWithFilters: ['colocalizedWith'],
   }
 };
+
+
+export const DATASET_FILTERS: FilterKey[] = ['datasetIds', 'group', 'project', 'submitter', 'polarity', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource', 'maldiMatrix', 'analyzerType', 'metadataType'];
+/** = all annotation-affecting filters - dataset-affecting filters*/
+export const ANNOTATION_FILTERS: FilterKey[] = ['database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith'];
+/** Filters that are very specific to particular annotations and should be cleared when navigating to other annotations */
+export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = ['compoundName', 'adduct', 'mz', 'colocalizedWith', 'colocalizationSamples'];
 
 export function getFilterInitialValue(key: FilterKey, filterLists?: MetadataLists) {
   let value = FILTER_SPECIFICATIONS[key].initialValue;
