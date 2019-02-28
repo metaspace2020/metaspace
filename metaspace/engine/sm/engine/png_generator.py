@@ -124,14 +124,6 @@ class ImageStoreServiceWrapper(object):
 
         return value, mask, (h, w)
 
-    def get_images_by_ids(self, storage_type, img_type, img_ids):
-        def get_ion_image(id):
-            if id is not None:
-                return self.get_image_by_id(storage_type, img_type, id)
-            return None
-        with ThreadPoolExecutor() as ex:
-            return list(ex.map(get_ion_image, img_ids))
-
     def delete_image_by_id(self, storage_type, img_type, img_id):
         url = self._format_url(storage_type=storage_type, img_type=img_type, method='delete', img_id=img_id)
         self.delete_image(url)

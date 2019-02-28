@@ -9,18 +9,23 @@ import getScopeRoleForEsDataset from '../util/getScopeRoleForEsDataset';
 import {logger} from '../../../utils';
 import {Context} from '../../../context';
 
-export const thumbnailOpticalImageUrl = async (ctx: Context, id: string) => {
-  const result = await ctx.entityManager.query('SELECT thumbnail FROM public.dataset WHERE id = $1', [id]);
-  if (result && result.length === 1 && result[0].thumbnail != null) {
-    return `/fs/optical_images/${result[0].thumbnail}`;
-  } else {
-    return null;
-  }
+interface DbDataset {
+  thumbnail: string | null;
+  ion_thumbnail: string | null;
+}
+const getDbDatasetById = async (ctx: Context, id: string): Promise<DbDataset | null> => {
+  return await ctx.contextCacheGet('getDbDatasetById', [id], async (id) => {
+    const rows = await ctx.entityManager.query(
+      // Add extra columns to this as needed
+      'SELECT thumbnail, ion_thumbnail FROM public.dataset WHERE id = $1', [id]);
+    return rows.length > 0 ? rows[0] : null;
+  });
 };
-export const ionThumbnailUrl = async (ctx: Context, id: string) => {
-  const result = await ctx.entityManager.query('SELECT ion_thumbnail FROM public.dataset WHERE id = $1', [id]);
-  if (result && result.length === 1 && result[0].ion_thumbnail != null) {
-    return `/fs/ion_thumbnails/${result[0].ion_thumbnail}`;
+
+export const thumbnailOpticalImageUrl = async (ctx: Context, id: string) => {
+  const result = await getDbDatasetById(ctx, id);
+  if (result && result.thumbnail != null) {
+    return `/fs/optical_images/${result.thumbnail}`;
   } else {
     return null;
   }
@@ -211,7 +216,12 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
   },
 
   async ionThumbnailUrl(ds, args, ctx) {
-    return await ionThumbnailUrl(ctx, ds._source.ds_id);
+    const result = await getDbDatasetById(ctx, ds._source.ds_id);
+    if (result && result.ion_thumbnail != null) {
+      return `/fs/ion_thumbnails/${result.ion_thumbnail}`;
+    } else {
+      return null;
+    }
   }
 };
 
