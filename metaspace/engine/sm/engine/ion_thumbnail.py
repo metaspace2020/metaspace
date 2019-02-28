@@ -7,8 +7,6 @@ import png
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 
-from sm.engine.dataset import Dataset
-
 ISO_IMAGE_SEL = ("SELECT iso_image_ids[1] "
                  "FROM iso_image_metrics m "
                  "JOIN job j on j.id = m.job_id "
