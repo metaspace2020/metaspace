@@ -9,7 +9,7 @@
           <el-radio-button label="Summary"></el-radio-button>
         </el-radio-group>
 
-        <el-checkbox-group v-model="categories" :min=1 style="padding: 5px 20px;">
+        <el-checkbox-group v-model="categories" :min=1 class="dataset-status-checkboxes">
           <el-checkbox class="cb-started" label="started">Processing {{ count('started') }}</el-checkbox>
           <el-checkbox class="cb-queued" label="queued">Queued {{ count('queued') }}</el-checkbox>
           <el-checkbox label="finished">Finished {{ count('finished') }}</el-checkbox>
@@ -300,6 +300,13 @@
  #dataset-page {
    display: flex;
    justify-content: center;
+ }
+
+ .dataset-status-checkboxes {
+   padding: 5px 20px;
+   display: flex;
+   flex-direction: row;
+   align-items: center;
  }
 
  .cb-started .el-checkbox__input.is-checked .el-checkbox__inner {

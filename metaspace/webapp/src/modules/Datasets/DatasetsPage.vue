@@ -28,8 +28,7 @@
   /* 1 dataset per row by default*/
   #dataset-page-contents {
     width: 820px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin: 0 5px;
 
     @media (min-width: 1650px) {
       /* 2 datasets per row on wide screens */
