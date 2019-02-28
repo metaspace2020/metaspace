@@ -37,6 +37,7 @@ exports[`ViewProjectPage datasets tab should match snapshot (non-member) 1`] = `
             <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="0" class=""></datasetitem-stub>
             <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="1" class="odd"></datasetitem-stub>
             <datasetitem-stub dataset="[object Object]" currentuser="[object Object]" idx="2" class=""></datasetitem-stub>
+            <!---->
           </div>
           <div class="dataset-list-footer">
             <a href="/datasets?prj=00000000-1111-2222-3333-444444444444" class="">See all datasets</a>

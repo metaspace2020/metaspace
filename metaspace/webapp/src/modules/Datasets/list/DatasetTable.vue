@@ -3,43 +3,27 @@
     <filter-panel level="dataset"></filter-panel>
 
     <div>
-      <el-form :inline="true" style="display: inline-flex">
+      <el-form :inline="true" id="dataset-list-header">
         <el-radio-group value="List" @input="onChangeTab" size="small">
           <el-radio-button label="List"></el-radio-button>
           <el-radio-button label="Summary"></el-radio-button>
         </el-radio-group>
 
-        <el-checkbox-group v-model="categories" :min=1 style="padding: 5px 20px;">
+        <el-checkbox-group v-model="categories" :min=1 class="dataset-status-checkboxes">
           <el-checkbox class="cb-started" label="started">Processing {{ count('started') }}</el-checkbox>
           <el-checkbox class="cb-queued" label="queued">Queued {{ count('queued') }}</el-checkbox>
           <el-checkbox label="finished">Finished {{ count('finished') }}</el-checkbox>
           <el-checkbox v-if="canSeeFailed" class="cb-failed" label="failed">Failed {{ count('failed') }}</el-checkbox>
         </el-checkbox-group>
+        <div style="flex-grow: 1;" />
+
+        <el-button v-if="nonEmpty" :disabled="isExporting" @click="startExport" size="small">
+          Export to CSV
+        </el-button>
       </el-form>
     </div>
 
-    <div>
-      <div id="dataset-list-header">
-        <div v-if="noFilters" style="font: 24px 'Roboto', sans-serif; padding: 5px;">
-          <span v-if="noFilters">
-            Recent uploads
-          </span>
-        </div>
-
-        <div v-else style="font: 18px 'Roboto', sans-serif; padding: 5px;">
-          <span v-if="nonEmpty">
-            Search results in reverse chronological order
-          </span>
-          <span v-else>No datasets found</span>
-        </div>
-
-        <el-button v-if="nonEmpty" :disabled="isExporting" @click="startExport" class="export-btn">
-          Export to CSV
-        </el-button>
-      </div>
-
-      <dataset-list :datasets="datasets" allowDoubleColumn />
-    </div>
+    <dataset-list :datasets="datasets" allowDoubleColumn />
   </div>
 </template>
 
@@ -318,21 +302,11 @@
    justify-content: center;
  }
 
- /* 1 dataset per row by default*/
- #dataset-page-contents {
-   display: inline-block;
-   width: 820px;
-
-   @media (min-width: 1650px) {
-     /* 2 datasets per row on wide screens */
-     width: 1620px;
-   }
- }
-
- .export-btn {
-   margin-top: 7px;
-   width: 135px;
-   height: 36px;
+ .dataset-status-checkboxes {
+   padding: 5px 20px;
+   display: flex;
+   flex-direction: row;
+   align-items: center;
  }
 
  .cb-started .el-checkbox__input.is-checked .el-checkbox__inner {
@@ -349,6 +323,7 @@
 
  #dataset-list-header {
    display: flex;
-   align-items: baseline;
+   flex-wrap: wrap;
+   margin-bottom: 10px;
  }
 </style>
