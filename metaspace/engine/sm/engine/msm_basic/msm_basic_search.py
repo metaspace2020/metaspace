@@ -91,7 +91,7 @@ class MSMSearch(object):
 
         Returns
         -----
-        tuple[sm.engine.mol_db.MolecularDB, pandas.DataFrame, pyspark.rdd.RDD]
+            tuple[sm.engine.mol_db.MolecularDB, pandas.DataFrame, pyspark.rdd.RDD]
             (moldb, ion metrics, ion images)
         """
         logger.info('Running molecule search')

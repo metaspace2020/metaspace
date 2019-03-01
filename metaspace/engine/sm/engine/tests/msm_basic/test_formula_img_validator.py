@@ -10,7 +10,7 @@ from scipy.sparse import csr_matrix
 from sm.rest.dataset_manager import Dataset
 from sm.engine.dataset_reader import DatasetReader
 from sm.engine.msm_basic.formula_img_validator import ImgMetrics
-from sm.engine.msm_basic.formula_img_validator import formula_image_metrics, get_calculate_img_metrics
+from sm.engine.msm_basic.formula_img_validator import formula_image_metrics, get_compute_image_metrics
 from sm.engine.tests.util import pysparkling_context as spark_context, ds_config, sm_config
 
 
@@ -28,7 +28,7 @@ def test_get_compute_img_measures_pass(chaos_mock, image_corr_mock, pattern_matc
                                ('total_iso_ints', [0, 0, 0, 0]),
                                ('min_iso_ints', [0, 0, 0, 0]),
                                ('max_iso_ints', [0, 0, 0, 0])])
-    compute_metrics = get_calculate_img_metrics(metrics_dict, np.ones(2 * 3).astype(bool),
+    compute_metrics = get_compute_image_metrics(metrics_dict, np.ones(2 * 3).astype(bool),
                                                 empty_matrix, img_gen_conf)
 
     sf_iso_images = [csr_matrix([[0., 100., 100.], [10., 0., 3.]]),
@@ -55,7 +55,7 @@ def ds_formulas_images_mock():
 
 
 def test_formula_image_metrics(spark_context, ds_formulas_images_mock, ds_config):
-    with patch('sm.engine.msm_basic.formula_img_validator.get_calculate_img_metrics') as mock:
+    with patch('sm.engine.msm_basic.formula_img_validator.get_compute_image_metrics') as mock:
         mock.return_value = lambda *args: (0.9, 0.9, 0.9, 0.9**3, [100., 10.], [0, 0], [10., 1.])
 
         ds_mock, ds_reader_mock, ref_images = ds_formulas_images_mock

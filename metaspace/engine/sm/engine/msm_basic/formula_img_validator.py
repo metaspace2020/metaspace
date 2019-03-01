@@ -55,11 +55,11 @@ class ImgMetrics(object):
             return tuple(self.map.values())
 
 
-def get_calculate_img_metrics(metrics, sample_area_mask, empty_matrix, img_gen_conf):
-    """ Returns a function for computing isotope image metrics
+def get_compute_image_metrics(metrics, sample_area_mask, empty_matrix, img_gen_conf):
+    """ Returns a function for computing formula images metrics
 
     Args
-    ------------
+    -----
     metrics: OrderedDict
     sample_area_mask: ndarray[bool]
         mask for separating sampled pixels (True) from non-sampled (False)
@@ -68,18 +68,17 @@ def get_calculate_img_metrics(metrics, sample_area_mask, empty_matrix, img_gen_c
     img_gen_conf : dict
         isotope_generation section of the dataset config
     Returns
-    ------------
-    : function
-        function that returns tuples of metrics for every list of isotope images
+    -----
+        function
     """
-    def compute(iso_images_sparse, sf_ints):
+    def compute(iso_images_sparse, formula_ints):
         np.seterr(invalid='ignore')  # to ignore division by zero warnings
 
-        diff = len(sf_ints) - len(iso_images_sparse)
+        diff = len(formula_ints) - len(iso_images_sparse)
         iso_imgs = [empty_matrix if img is None else img.toarray()
                     for img in iso_images_sparse + [None] * diff]
         iso_imgs_flat = [img.flat[:][sample_area_mask] for img in iso_imgs]
-        iso_imgs_flat = iso_imgs_flat[:len(sf_ints)]
+        iso_imgs_flat = iso_imgs_flat[:len(formula_ints)]
 
         if img_gen_conf['do_preprocessing']:
             for img in iso_imgs_flat:
@@ -87,8 +86,8 @@ def get_calculate_img_metrics(metrics, sample_area_mask, empty_matrix, img_gen_c
 
         m = ImgMetrics(metrics)
         if len(iso_imgs) > 0:
-            m.map['spectral'] = isotope_pattern_match(iso_imgs_flat, sf_ints)
-            m.map['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=sf_ints[1:])
+            m.map['spectral'] = isotope_pattern_match(iso_imgs_flat, formula_ints)
+            m.map['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=formula_ints[1:])
             moc = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'])
             m.map['chaos'] = 0 if np.isclose(moc, 1.0) else moc
             m.map['msm'] = m.map['chaos'] * m.map['spatial'] * m.map['spectral']
@@ -120,14 +119,14 @@ def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula
     """
     nrows, ncols = ds_reader.get_dims()
     empty_matrix = np.zeros((nrows, ncols))
-    _calculate_metrics = get_calculate_img_metrics(metrics, ds_reader.get_sample_area_mask(),
-                                                   empty_matrix, ds_config['image_generation'])
+    compute_metrics = get_compute_image_metrics(metrics, ds_reader.get_sample_area_mask(),
+                                                empty_matrix, ds_config['image_generation'])
     formula_centr_ints_brcast = sc.broadcast(formula_centr_ints)
 
-    def calculate_metrics(item):
+    def spark_compute_metrics(item):
         formula_i, images = item
         centr_ints = formula_centr_ints_brcast.value[formula_i]
-        return (formula_i,) + _calculate_metrics(images, centr_ints)
+        return (formula_i,) + compute_metrics(images, centr_ints)
 
     msm_index = list(metrics.keys()).index('msm') + 1  # formula_i takes the first index
 
@@ -136,7 +135,7 @@ def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula
         return msm > 0
 
     formula_metrics = (formula_images
-                       .map(calculate_metrics)
+                       .map(spark_compute_metrics)
                        .filter(filter_metrics)
                        .collect())
 

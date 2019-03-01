@@ -30,7 +30,7 @@ from sm.engine.tests.util import (
 from sm.engine.util import SMConfig
 
 os.environ.setdefault('PYSPARK_PYTHON', sys.executable)
-sm_config = SMConfig.get_conf(update=True)
+sm_config = SMConfig.get_conf()
 sm_config['colocalization']['enabled'] = False
 
 init_loggers(sm_config['logs'])

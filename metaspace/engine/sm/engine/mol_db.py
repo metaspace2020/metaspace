@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import pandas as pd
 import logging
 import requests
@@ -53,21 +52,23 @@ class MolDBServiceWrapper(object):
 class MolecularDB(object):
     """ A class representing a molecule database to search through.
         Provides several data structures used in the engine to speed up computation
-
-    Args
-    -----
-    name: str
-    version: str
-        If None the latest version will be used
-    iso_gen_config : dict
-        Isotope generator configuration
-    mol_db_service : sm.engine.MolDBServiceWrapper
-        Molecular database ID/name resolver
-    db : DB
-        Database connector
     """
     def __init__(self, id=None, name=None, version=None, iso_gen_config=None,
                  mol_db_service=None, db=None):
+        """
+        Args
+        -----
+        id: int
+        name: str
+        version: str
+            If None the latest version will be used
+        iso_gen_config: dict
+            Isotope generator configuration
+        mol_db_service: sm.engine.MolDBServiceWrapper
+            Molecular database ID/name resolver
+        db: DB
+            Database connector
+        """
         self._iso_gen_config = iso_gen_config
         sm_config = SMConfig.get_conf()
         self._mol_db_service = mol_db_service or MolDBServiceWrapper(sm_config['services']['mol_db'])
@@ -82,7 +83,6 @@ class MolecularDB(object):
 
         self._id, self._name, self._version = data['id'], data['name'], data['version']
         self._sf_df = None
-        # self._job_id = None
         self._sfs = None
         self._ion_centroids = None
 
@@ -112,10 +112,10 @@ class MolecularDB(object):
         """ Returns a dataframe with (mol_id, mol_name) or (sf, mol_id, mol_name) rows
 
         Args
-        ----------
+        -----
         sf: str
         Returns
-        ----------
+        -----
             pd.DataFrame
         """
         return pd.DataFrame(self._mol_db_service.fetch_molecules(self.id, sf=sf))

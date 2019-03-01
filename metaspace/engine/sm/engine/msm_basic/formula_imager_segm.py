@@ -111,7 +111,7 @@ def _gen_iso_images(spectra_it, sp_indexes, centr_df, nrows, ncols, ppm, min_px=
         sp_df = pd.DataFrame(_sp_df_gen(spectra_it, sp_indexes),
                              columns=['idx', 'mz', 'ints']).sort_values(by='mz')
 
-        # -1, + 1 are needed to extend sf_peak_mz range so that it covers 100% of spectra
+        # -1, + 1 are needed to extend centr_df.mz range so that it covers 100% of spectra
         centr_df = centr_df[(centr_df.mz >= sp_df.mz.min() - 1) &
                             (centr_df.mz <= sp_df.mz.max() + 1)]
         lower = centr_df.mz.map(lambda mz: mz - mz * ppm * 1e-6)

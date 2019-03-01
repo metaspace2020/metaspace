@@ -16,7 +16,7 @@ def wait_for_es(sec=1):
     time.sleep(sec)
 
 
-def test_index_ds_works(es_dsl_search, sm_index):
+def test_index_ds_works(test_db, es_dsl_search, sm_index):
     ds_id = '2000-01-01_00h00m'
     upload_dt = datetime.now().isoformat(' ')
     mol_db_id = 0
@@ -136,7 +136,7 @@ def test_index_ds_works(es_dsl_search, sm_index):
     }
 
 
-def test_delete_ds__one_db_ann_only(es, sm_index):
+def test_delete_ds__one_db_ann_only(test_db, es, sm_index):
     index = sm_config['elasticsearch']['index']
     es.create(index=index, doc_type='annotation', id='id1',
               body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
@@ -176,7 +176,7 @@ def test_delete_ds__one_db_ann_only(es, sm_index):
     assert es.count(index=index, doc_type='dataset', body=body)['count'] == 1
 
 
-def test_delete_ds__completely(es, sm_index):
+def test_delete_ds__completely(test_db, es, sm_index):
     index = sm_config['elasticsearch']['index']
     es.create(index=index, doc_type='annotation', id='id1',
               body={'ds_id': 'dataset1', 'db_name': 'HMDB', 'db_version': '2016'})
@@ -213,7 +213,7 @@ def test_delete_ds__completely(es, sm_index):
     assert es.count(index=index, doc_type='dataset', body=body)['count'] == 0
 
 
-def test_update_ds_works_for_all_fields(es, sm_index, es_dsl_search):
+def test_update_ds_works_for_all_fields(test_db, es, sm_index, es_dsl_search):
     update = {
         'name': 'new_ds_name',
         'submitter_id': 'new_ds_submitter_id',
