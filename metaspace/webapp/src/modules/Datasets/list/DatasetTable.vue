@@ -234,12 +234,15 @@
        function person(p) { return p ? p.name : ''; }
 
        function formatRow(row) {
+         const {groupApproved, group, principalInvestigator} = row;
          return formatCsvRow([
            row.id,
            row.name,
-           row.groupApproved && row.group ? row.group.shortName : '',
+           groupApproved && group ? group.shortName : '',
            person(row.submitter),
-           person(row.principalInvestigator),
+           principalInvestigator ? person(principalInvestigator)
+             : groupApproved && group ? (group.adminNames || []).join(', ')
+             : '',
            row.organism,
            row.organismPart,
            row.condition,
