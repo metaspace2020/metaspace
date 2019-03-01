@@ -84,10 +84,10 @@ def pyspark_context(request):
 
 @pytest.fixture()
 def test_db(request):
-    db_config = dict(**sm_config['db'])
-    db_config['database'] = 'postgres'
+    db_config_postgres = dict(**sm_config['db'])
+    db_config_postgres['database'] = 'postgres'
 
-    db = DB(db_config, autocommit=True)
+    db = DB(db_config_postgres, autocommit=True)
     db.alter('DROP DATABASE IF EXISTS sm_test')
     db.alter('CREATE DATABASE sm_test')
     db.close()
@@ -103,7 +103,7 @@ def test_db(request):
 
     def fin():
         DB.close_all()
-        db = DB(db_config, autocommit=True)
+        db = DB(db_config_postgres, autocommit=True)
         try:
             db.alter('DROP DATABASE IF EXISTS sm_test')
         except Exception as e:

@@ -65,10 +65,7 @@ class DB(object):
     def close(self):
         """ Close the connection to the database """
         self.conn.close()
-        try:
-            DB._dbs.add(self)
-        except KeyError:
-            pass # Already closed
+        DB._dbs.discard(self)
 
     @classmethod
     def close_all(cls):

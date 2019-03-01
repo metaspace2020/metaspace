@@ -7,6 +7,7 @@ from logging.config import dictConfig
 from pathlib import Path
 import re
 from fnmatch import translate
+from copy import deepcopy
 
 
 def proj_root():
@@ -75,7 +76,7 @@ class SMConfig(object):
                     cls._config_dict = json.load(f)
             except IOError as e:
                 logging.getLogger('engine').warning(e)
-        return cls._config_dict
+        return deepcopy(cls._config_dict)
 
     @classmethod
     def get_ms_file_handler(cls, ms_file_path):
