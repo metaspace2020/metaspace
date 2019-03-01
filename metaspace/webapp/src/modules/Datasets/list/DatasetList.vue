@@ -69,7 +69,7 @@
 
   .allow-double-column {
     >.dataset-item {
-      flex-basis: calc(50% - 10px);
+      flex-basis: calc(50% - 6px);
     }
   }
 
