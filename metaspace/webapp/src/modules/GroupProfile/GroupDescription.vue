@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="modes.saved || modes.preview" v-html="markedConvert()"></div>
+    <div v-if="modes.saved || modes.preview" v-html="embedMarkdownAsHtml()"></div>
     <el-popover
         placement="top-end"
         v-if="modes.edit"
@@ -59,7 +59,7 @@
 
 <script lang="ts">
   import Vue from 'vue';
-  import {Component, Prop} from 'vue-property-decorator';
+  import {Component, Prop, Watch} from 'vue-property-decorator';
   import marked from 'marked';
   import * as cookie from 'js-cookie';
   import {
@@ -81,6 +81,7 @@
     group: ViewGroupResult | undefined ;
     @Prop({required: true, default: false})
     canEdit!: boolean;
+
 
     groupDescriptionAsHtml: string = this.group && this.group.groupDescriptionAsHtml || '';
     showHint: boolean = false;
@@ -108,6 +109,7 @@
         saved: true,
         edit: false
       };
+      this.groupDescriptionAsHtml = sanitizeIt(this.groupDescriptionAsHtml);
       this.$nextTick(()=> {
         if (this.showHint) {
           this.showHint = false
@@ -124,7 +126,6 @@
         saved: false,
         edit: false
       };
-      this.groupDescriptionAsHtml = sanitizeIt(this.groupDescriptionAsHtml);
       marked(this.groupDescriptionAsHtml)
     }
 
@@ -133,8 +134,7 @@
       cookie.set('show_descr_hint', 0 as any)
     }
 
-    markedConvert() {
-      this.groupDescriptionAsHtml = sanitizeIt(this.groupDescriptionAsHtml);
+    embedMarkdownAsHtml() {
       return marked(this.groupDescriptionAsHtml)
     }
   }

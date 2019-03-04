@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="modes.saved || modes.preview" v-html="markedConvert()"></div>
+    <div v-if="modes.saved || modes.preview" v-html="embedMarkdownAsHtml()"></div>
     <el-popover
         placement="top-end"
         v-if="modes.edit"
@@ -105,6 +105,7 @@
         saved: true,
         edit: false
       };
+      this.projectDescriptionAsHtml = sanitizeIt(this.projectDescriptionAsHtml);
       this.$nextTick(()=> {
         if (this.showHint) {
           this.showHint = false
@@ -121,7 +122,6 @@
         saved: false,
         edit: false
       };
-      this.projectDescriptionAsHtml = sanitizeIt(this.projectDescriptionAsHtml);
       marked(this.projectDescriptionAsHtml);
     }
 
@@ -130,8 +130,7 @@
       cookie.set('show_descr_hint', 0 as any)
     }
 
-    markedConvert() {
-      this.projectDescriptionAsHtml = sanitizeIt(this.projectDescriptionAsHtml);
+    embedMarkdownAsHtml() {
       return marked(this.projectDescriptionAsHtml)
     }
   }

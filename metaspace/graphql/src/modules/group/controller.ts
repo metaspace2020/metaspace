@@ -14,6 +14,7 @@ import {createInactiveUser} from '../auth/operation';
 import {smAPIUpdateDataset} from '../../utils/smAPI';
 import {getDatasetForEditing} from '../dataset/operation/getDatasetForEditing';
 import {resolveGroupScopeRole} from './util/resolveGroupScopeRole';
+import sanitizer from './../../utils/sanitizer';
 
 const assertCanCreateGroup = (user: ContextUser | null) => {
   if (!user || user.role !== 'admin')
@@ -205,8 +206,11 @@ export const Resolvers = {
       logger.info(`Updating '${groupId}' group by '${user!.id}' user...`);
       const groupRepo = entityManager.getRepository(GroupModel);
       const group = {...(await groupRepo.findOneOrFail(groupId)), ...groupDetails};
+      if (groupDetails.groupDescriptionAsHtml) {
+        groupDetails.groupDescriptionAsHtml = sanitizer(groupDetails.groupDescriptionAsHtml);
+      }
       await groupRepo.save(group);  // update doesn't return updated object;
-      if (groupDetails.name || groupDetails.shortName) {
+      if (groupDetails.name && groupDetails.shortName) {
         logger.info(`Updating '${groupId}' group datasets...`);
         const groupDSs = await entityManager.getRepository(DatasetModel).find({ groupId });
         await Promise.all(groupDSs.map(async ds => {

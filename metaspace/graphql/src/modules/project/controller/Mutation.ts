@@ -16,6 +16,7 @@ import {findUserByEmail} from '../../../utils';
 import {sendProjectAcceptanceEmail, sendProjectInvitationEmail, sendRequestAccessToProjectEmail} from '../email';
 import {smAPIUpdateDataset} from '../../../utils/smAPI';
 import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
+import sanitizer from './../../../utils/sanitizer';
 
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
@@ -56,6 +57,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     await asyncAssertCanEditProject(ctx, projectId);
     if (projectDetails.urlSlug !== undefined && !ctx.isAdmin) {
       throw new UserError('urlSlug can only be set by METASPACE administrators');
+    }
+    if (projectDetails.projectDescriptionAsHtml !== undefined) {
+      projectDetails.projectDescriptionAsHtml = sanitizer(projectDetails.projectDescriptionAsHtml);
     }
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
     await projectRepository.update(projectId, projectDetails);
