@@ -11,6 +11,11 @@
     chdir: "{{ metaspace_home }}"
   when: local_deploy is not defined
 
+- name: Remove all local file changes
+  shell: git reset --hard && git clean -f
+  args:
+    chdir: "{{ metaspace_home }}"
+
 - name: Pull metaspace sources from the repository
   git:
     repo: "{{ metaspace_repo_url }}"
@@ -22,7 +27,7 @@
 #  register: git_deploy
 #  until: git_deploy | succeeded
 
-# FIXME: double check all exclude paths
+# Double check all exclude paths
 - name: Upload local files
   synchronize:
     src: "{{ item.src }}"
@@ -34,7 +39,14 @@
       dest: "{{ sm_ansible_home }}/"
       rsync_opts:
         - --exclude=.*
-  tags: [sm-cluster-autostart]
+    - src: "{{ sm_home }}/"
+      dest: "{{ sm_home }}/"
+      rsync_opts:
+        - --exclude=.*
+        - --exclude=conf/*
+        - --exclude=logs/*
+        - --exclude=docker/*
+        - --exclude=docs/*
 
 #    - src: "{{ sm_graphql_home }}/"
 #      dest: "{{ sm_graphql_home }}/"
@@ -59,11 +71,3 @@
 #        - --exclude='conf/*'
 #        - --exclude='logs'
 #        - --exclude='.*'
-#    - src: "{{ sm_home }}/"
-#      dest: "{{ sm_home }}/"
-#      rsync_opts:
-#        - --exclude=.*
-#        - --exclude=config/*
-#        - --exclude=logs/*
-#        - --exclude=docker/*
-#        - --exclude=docs/*

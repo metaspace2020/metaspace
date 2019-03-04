@@ -91,24 +91,17 @@ def _define_mz_segments(spectra, centroids_df, ppm=3):
     return segments
 
 
-def _segment_spectrum(sp, mz_buckets):
-    sp_id, mzs, ints = sp
-    for s_i, (l, r) in enumerate(mz_buckets):
-        smask = (mzs >= l) & (mzs <= r)
-        yield s_i, (sp_id, mzs[smask], ints[smask])
+def _gen_iso_images(spectra_it, sp_indices, centr_df, nrows, ncols, ppm, min_px=1):
 
+    def sp_df_gen(sp_it):
+        for sp_id, mzs, intensities in sp_it:
+            for mz, ints in zip(mzs, intensities):
+                yield sp_indices[sp_id], mz, ints
 
-def _sp_df_gen(sp_it, sp_indexes):
-    for sp_id, mzs, intensities in sp_it:
-        for mz, ints in zip(mzs, intensities):
-            yield sp_indexes[sp_id], mz, ints
-
-
-def _gen_iso_images(spectra_it, sp_indexes, centr_df, nrows, ncols, ppm, min_px=1):
     if len(centr_df) > 0:
         # a bit slower than using pure numpy arrays but much shorter
         # may leak memory because of https://github.com/pydata/pandas/issues/2659 or smth else
-        sp_df = pd.DataFrame(_sp_df_gen(spectra_it, sp_indexes),
+        sp_df = pd.DataFrame(sp_df_gen(spectra_it),
                              columns=['idx', 'mz', 'ints']).sort_values(by='mz')
 
         # -1, + 1 are needed to extend centr_df.mz range so that it covers 100% of spectra
@@ -130,7 +123,7 @@ def _gen_iso_images(spectra_it, sp_indexes, centr_df, nrows, ncols, ppm, min_px=
                     yield centr_df.index[i], centr_df.peak_i.iloc[i], m
 
 
-def _gen_formula_images(sc, ds_reader, formula_centroids_df, segm_spectra, ppm):
+def _gen_formula_images(sc, ds_reader, formula_centroids_df, spectra_segments, ppm):
     sp_indexes_brcast = sc.broadcast(ds_reader.get_norm_img_pixel_inds())
     formula_centroids_df_brcast = sc.broadcast(formula_centroids_df)
     nrows, ncols = ds_reader.get_dims()
@@ -151,9 +144,15 @@ def _gen_formula_images(sc, ds_reader, formula_centroids_df, segm_spectra, ppm):
                 im_list_a[pi] = image_b
         return im_list_a
 
-    formula_images = (segm_spectra
+    def complete_image_list(item):
+        _, images = item
+        non_empty_image_n = sum(1 for img in images if img is not None)
+        return non_empty_image_n > 1 and images[0] is not None
+
+    formula_images = (spectra_segments
                       .flatMap(gen_images_for_segment)
-                      .reduceByKey(merge_image_lists))
+                      .reduceByKey(merge_image_lists)
+                      .filter(complete_image_list))
     return formula_images
 
 
@@ -167,7 +166,14 @@ def compute_formula_images(sc, ds_reader, centroids_df, ppm):
     """
     spectra_rdd = ds_reader.get_spectra()
     mz_segments = _define_mz_segments(spectra_rdd, centroids_df, ppm)
-    segm_spectra = (spectra_rdd
-                    .flatMap(lambda sp: _segment_spectrum(sp, mz_segments))
-                    .groupByKey(numPartitions=len(mz_segments)))
-    return _gen_formula_images(sc, ds_reader, centroids_df, segm_spectra, ppm)
+
+    def segment_spectrum(item):
+        sp_id, mzs, ints = item
+        for segm_i, (l, r) in enumerate(mz_segments):
+            segm_mask = (mzs >= l) & (mzs <= r)
+            yield segm_i, (sp_id, mzs[segm_mask], ints[segm_mask])
+
+    spectra_segments = (spectra_rdd
+                        .flatMap(lambda sp: segment_spectrum(sp))
+                        .groupByKey(numPartitions=len(mz_segments)))
+    return _gen_formula_images(sc, ds_reader, centroids_df, spectra_segments, ppm)

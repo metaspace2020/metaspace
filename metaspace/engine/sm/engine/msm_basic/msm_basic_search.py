@@ -42,11 +42,6 @@ def collect_ion_formulas(moldb_fdr_list):
                         columns=['moldb_id', 'ion_formula', 'formula', 'adduct'])
 
 
-def _complete_image_list(item):
-    _, images = item
-    return len(images) > 1 and images[0] is not None
-
-
 def compute_fdr(fdr, formula_metrics_df, formula_images, formula_map_df, max_fdr=0.5):
     """ Compute fdr and filter formulas
     """
@@ -105,7 +100,6 @@ class MSMSearch(object):
         # Run ion formula search
         formula_images = compute_formula_images(
             self._sc, self._ds_reader, formula_centroids.centroids_df(), ppm=self._ppm)
-        formula_images = formula_images.filter(_complete_image_list)
 
         # Score all ion formula images
         centroids_ints = formula_centroids.centroids_ints()
@@ -113,8 +107,9 @@ class MSMSearch(object):
             formula_images=formula_images, metrics=self.metrics,
             formula_centr_ints=centroids_ints,
             ds_config=self._ds_config, ds_reader=self._ds_reader, sc=self._sc)
+        valid_formula_inds = set(formula_metrics_df.index)
         formula_images = formula_images.filter(
-            lambda formula_i_images: formula_i_images[0] in formula_metrics_df.index)
+            lambda formula_i_images: formula_i_images[0] in valid_formula_inds)
         formula_images.cache()
 
         formula_metrics_df = formula_metrics_df.join(formula_centroids.formulas_df, how='left')
