@@ -42,7 +42,7 @@ if __name__ == '__main__':
                         help='Algorithm for thumbnail generation. Options: ' + str(list(ALGORITHMS.keys())))
     args = parser.parse_args()
 
-    if not (args.ds_id or args.sql_where) or (args.ds_id and args.sql_where):
+    if not (bool(args.ds_id) ^ bool(args.sql_where)):
         parser.print_usage()
         print('error: must specify either --ds-id or --sql-where')
         exit(1)
