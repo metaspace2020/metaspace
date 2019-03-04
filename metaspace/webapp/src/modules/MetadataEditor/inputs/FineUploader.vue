@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-loading="!isReady">
     <script type="text/template" id="qq-template">
       <div id="upload-area-container" class="qq-uploader-selector qq-uploader">
         <div class="qq-upload-drop-area-selector qq-upload-drop-area" qq-hide-dropzone>
@@ -65,9 +65,10 @@
 </template>
 
 <script>
- import uuid from 'uuid';
+ import genUuid from 'uuid';
  import qq from 'fine-uploader/lib/all';
  import 'fine-uploader/s3.fine-uploader/fine-uploader-new.css';
+ import reportError from '../../../lib/reportError';
 
  const basicOptions = {
    template: 'qq-template',
@@ -90,8 +91,8 @@
    props: ['config', 'dataTypeConfig'],
    data() {
      return {
+       isReady: false,
        fineUploader: null,
-       uuid: '',
        uploadFilenames: [],
        valid: false
      }
@@ -155,74 +156,96 @@
        }
      },
 
-     reset() {
+     async getPathUuid() {
+       if (this.config.storage !== 's3') {
+         return {uuid: genUuid(), uuidSignature: ''};
+       } else {
+         const response = await fetch(this.config.aws.s3_uuid_endpoint);
+         if (response.status < 200 || response.status >= 300) {
+           throw new Error('Could not get upload destination. Server responded with error: ');
+         }
+         return await response.json();
+       }
+     },
+
+     async reset() {
        this.uploadFilenames = [];
        this.valid = false;
-       this.uuid = uuid();
+       this.isReady = false;
 
-       // Fine Uploader adds child elements to the `button` element, so an additional `buttonContent` element is used
-       // to prevent Fine Uploader's elements from being overwritten
-       const button = document.createElement('div');
-       button.classList.add('fu-dropzone-content');
-       const buttonContent = document.createElement('div');
-       buttonContent.classList.add('fu-dropzone-clone');
-       button.appendChild(buttonContent);
+       try {
+         const { uuid, uuidSignature } = await this.getPathUuid();
 
-       let options = Object.assign({}, basicOptions, {
-	       button: button,
-         validation: {
-           allowedExtensions: this.dataTypeConfig.fileExtensions,
-           itemLimit: this.dataTypeConfig.maxFiles
-         },
-         multiple: this.dataTypeConfig.maxFiles > 1,
-         element: this.$refs.fu,
-         objectProperties: {
-           key: (id) => `${this.uuid}/${this.fineUploader.getFile(id).name}`
-         },
-         callbacks: {
-           onAllComplete: (succeeded, failed) => {
-             if (failed.length == 0) {
-               this.$message({message: 'All datasets have been uploaded', type: 'success'})
-               this.$emit('success', this.uuid);
-             } else {
-               this.$message({message: 'Upload failed :(', type: 'error'})
-               this.$emit('failure', failed);
-             }
+         // Fine Uploader adds child elements to the `button` element, so an additional `buttonContent` element is used
+         // to prevent Fine Uploader's elements from being overwritten
+         const button = document.createElement('div');
+         button.classList.add('fu-dropzone-content');
+         const buttonContent = document.createElement('div');
+         buttonContent.classList.add('fu-dropzone-clone');
+         button.appendChild(buttonContent);
+
+         let options = Object.assign({}, basicOptions, {
+           button: button,
+           validation: {
+             allowedExtensions: this.dataTypeConfig.fileExtensions,
+             itemLimit: this.dataTypeConfig.maxFiles
            },
-           onValidateBatch: () => this.validate(),
-           onSubmitted: id => this.uploadIfValid(id)
-         }
-       });
-
-       if (this.config.storage != 's3') {
-         options.request = {
-           endpoint: '/upload',
-           params: {
-             'session_id': sessionStorage.getItem('session_id'),
-             'uuid': this.uuid
+           multiple: this.dataTypeConfig.maxFiles > 1,
+           element: this.$refs.fu,
+           objectProperties: {
+             key: (id) => `${uuid}/${this.fineUploader.getFile(id).name}`
+           },
+           callbacks: {
+             onAllComplete: (succeeded, failed) => {
+               if (failed.length == 0) {
+                 this.$message({ message: 'All datasets have been uploaded', type: 'success' })
+                 this.$emit('success', this.uuid);
+               } else {
+                 this.$message({ message: 'Upload failed :(', type: 'error' })
+                 this.$emit('failure', failed);
+               }
+             },
+             onValidateBatch: () => this.validate(),
+             onSubmitted: id => this.uploadIfValid(id)
            }
-         };
+         });
 
-         // FIXME: move into fineUploaderConfig.json
-         options.chunking.success = {
-           endpoint: '/upload/success',
-           mandatory: true, // to make life easier
-           params: {'uuid': this.uuid}
-         };
+         if (this.config.storage != 's3') {
+           options.request = {
+             endpoint: '/upload',
+             params: {
+               'session_id': sessionStorage.getItem('session_id'),
+               'uuid': uuid
+             }
+           };
 
-         this.fineUploader = new qq.FineUploader(options);
+           // FIXME: move into fineUploaderConfig.json
+           options.chunking.success = {
+             endpoint: '/upload/success',
+             mandatory: true, // to make life easier
+             params: { 'uuid': uuid }
+           };
 
-       } else {
-         options.request = {
-           endpoint: `https://${this.config.aws.s3_bucket}.s3.amazonaws.com`,
-           accessKey: this.config.aws.access_key_id,
-         };
+           this.fineUploader = new qq.FineUploader(options);
 
-         options.signature = {endpoint: this.config.aws.s3_signature_endpoint},
+         } else {
+           options.request = {
+             endpoint: `https://${this.config.aws.s3_bucket}.s3.amazonaws.com`,
+             accessKey: this.config.aws.access_key_id,
+           };
 
-         this.fineUploader = new qq.s3.FineUploader(options);
+           options.signature = {
+             endpoint: `${this.config.aws.s3_signature_endpoint}?uuid_signature=${encodeURIComponent(uuidSignature)}`
+           };
+
+           this.fineUploader = new qq.s3.FineUploader(options);
+         }
+         document.getElementById('upload-area-container').appendChild(button);
+
+         this.isReady = true;
+       } catch (err) {
+         reportError(err);
        }
-       document.getElementById('upload-area-container').appendChild(button);
      }
    }
  }

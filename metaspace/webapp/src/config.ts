@@ -6,6 +6,7 @@ interface AWSConfig {
   access_key_id: string;
   region: string;
   s3_bucket: string;
+  s3_uuid_endpoint: string;
   s3_signature_endpoint: string;
   s3_signature_version: number;
 }
