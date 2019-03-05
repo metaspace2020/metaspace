@@ -199,7 +199,7 @@
              onAllComplete: (succeeded, failed) => {
                if (failed.length == 0) {
                  this.$message({ message: 'All datasets have been uploaded', type: 'success' })
-                 this.$emit('success', this.uuid);
+                 this.$emit('success', uuid);
                } else {
                  this.$message({ message: 'Upload failed :(', type: 'error' })
                  this.$emit('failure', failed);
