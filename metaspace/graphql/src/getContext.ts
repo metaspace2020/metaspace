@@ -65,7 +65,7 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
         const results = await entityManager.getRepository(Model).findByIds(entityIds);
         const keyedResults = _.keyBy(results, obj => keyFunc(modelMetadata.getEntityIdMixedMap(obj)) as string);
         return entityIds.map(id => keyedResults[keyFunc(id) as any] || null);
-      }, {cacheKeyFn: validatingKeyFunc});
+      }, {cacheKeyFn: validatingKeyFunc, maxBatchSize: 100});
     });
     return await dataloader.load(entityId);
   };
