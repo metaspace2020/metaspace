@@ -108,12 +108,21 @@ class ImageStoreServiceWrapper(object):
                 setup_shared_vals(img)
 
             img_arr = np.asarray(img, dtype=np.float32)[:, :, 0]
-            hotspot_threshold = np.percentile(img_arr, hotspot_percentile)
-            normalized_img = Normalize()(np.clip(img_arr, 0, hotspot_threshold))
+
+            # Try to use the hotspot percentile, but fall back to the image's maximum or 1.0 if needed
+            # to ensure that there are no divide-by-zero issues
+            hotspot_threshold = np.percentile(img_arr, hotspot_percentile) or np.max(img_arr) or 1.
+            np.clip(img_arr, None, hotspot_threshold, out=img_arr)
+
             if zoom_factor != 1:
-                zoomed_img = zoom(normalized_img, zoom_factor, prefilter=False)
+                zoomed_img = zoom(img_arr, zoom_factor)
             else:
-                zoomed_img = normalized_img
+                zoomed_img = img_arr
+
+            # Note: due to prefiltering & smoothing, zoom can change the min/max of the image, so hotspot_threshold
+            # cannot be reused here for scaling
+            np.clip(zoomed_img, 0, None, out=zoomed_img)
+            zoomed_img /= np.max(zoomed_img) or 1
 
             value[idx, :] = zoomed_img.ravel()
 

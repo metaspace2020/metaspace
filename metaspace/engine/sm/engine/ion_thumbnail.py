@@ -189,5 +189,4 @@ def generate_ion_thumbnail(db, img_store, ds_id, only_if_needed=False, algorithm
 
     except Exception:
         logger.error('Error generating ion thumbnail image', exc_info=True)
-        return
 
