@@ -1,5 +1,5 @@
 import {Request, Response} from 'express';
-import {EntityManager} from 'typeorm';
+import {EntityManager, ObjectType} from 'typeorm';
 import {UserProjectRole} from './binding';
 
 export type UserProjectRoles = {[projectId: string]: UserProjectRole | undefined}
@@ -31,5 +31,13 @@ export interface Context {
    * @param func            Function to memoize
    */
   contextCacheGet: <V>(functionName: string, args: ContextCacheKeyArg[], func: (...args: ContextCacheKeyArg[]) => V) => V;
+  /**
+   * Fast equivalent of `entityManager.getRepository(Model).findOne(id)` using DataLoader to cache & batch results.
+   * @param Model           Any TypeORM Entity
+   * @param id              The primary key field value to look up. For an entity with a composite primary key,
+   *                        this should be an object. For entities with single-field primary keys, this should be a
+   *                        string or number.
+   */
+  cachedGetEntityById: <T>(Model: ObjectType<T> & {}, id: string | number | object) => Promise<T | null>
 }
 

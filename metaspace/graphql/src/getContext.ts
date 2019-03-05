@@ -1,10 +1,12 @@
-import {EntityManager} from 'typeorm';
+import {EntityManager, ObjectType} from 'typeorm';
 import {Context, ContextCacheKeyArg} from './context';
 import {UserProjectRoleOptions as UPRO} from './modules/project/model';
 import {UserError} from 'graphql-errors';
 import {JwtUser} from './modules/auth/controller';
 import {getUserProjectRoles} from './utils/db';
 import {Request, Response} from 'express';
+import * as _ from 'lodash';
+import * as DataLoader from 'dataloader';
 
 
 const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
@@ -34,6 +36,40 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
       .map(([id, role]) => id);
   };
 
+  const cachedGetEntityById = async <T>(Model: ObjectType<T> & {}, entityId: any): Promise<T | null> => {
+    const modelMetadata = entityManager.connection.getMetadata(Model);
+    const modelName = modelMetadata.name;
+    const dataloader = contextCacheGet('cachedGetEntityByIdDataLoader', [modelName], () => {
+      const idFields = modelMetadata.primaryColumns.map(col => col.propertyName);
+      let keyFunc: (objectKey: any) => any;
+      let validatingKeyFunc: (objectKey: any) => any;
+      if (idFields.length === 1) {
+        keyFunc = key => key;
+        validatingKeyFunc = (key: any) => {
+          if (typeof key !== 'string' && typeof key !== 'number') {
+            throw new Error(`cachedGetEntityById: Invalid entity id: ${key}`);
+          }
+          return key;
+        };
+      } else {
+        keyFunc = (objectKey) => JSON.stringify(idFields.map(idField => objectKey[idField]));
+        validatingKeyFunc = (objectKey) => {
+          const unrecognizedKeyField = Object.keys(objectKey).find(key => !idFields.includes(key));
+          if (unrecognizedKeyField != null) {
+            throw new Error(`cachedGetEntityById: Unrecognized property in entity id: ${unrecognizedKeyField}`);
+          }
+          return JSON.stringify(idFields.map(idField => objectKey[idField]));
+        };
+      }
+      return new DataLoader(async (entityIds: any[]): Promise<(T|null)[]> => {
+        const results = await entityManager.getRepository(Model).findByIds(entityIds);
+        const keyedResults = _.keyBy(results, obj => keyFunc(modelMetadata.getEntityIdMixedMap(obj)) as string);
+        return entityIds.map(id => keyedResults[keyFunc(id) as any] || null);
+      }, {cacheKeyFn: validatingKeyFunc});
+    });
+    return await dataloader.load(entityId);
+  };
+
   return {
     req, res, entityManager,
     user: user == null || user.id == null ? null : {
@@ -54,6 +90,7 @@ const getContext = (jwtUser: JwtUser | null, entityManager: EntityManager,
     // TODO: TypeScript 3.0
     // contextCacheGet<TArgs extends (string | number)[], V>(functionName: string, args: TArgs, func: (...args: TArgs) => V) {
     contextCacheGet,
+    cachedGetEntityById,
   };
 };
 export default getContext;
