@@ -190,6 +190,7 @@ sm_webapp_enable_uploads: true
 sm_webapp_metadata_types: ["ims"]  # set ["ims", "lcms"] to accept both IMS and LC-MS datasets
 sm_webapp_features:
   coloc: false
+  ion_thumbs: false
 
 sm_activate_venv: source {{ miniconda_prefix }}/bin/activate {{ miniconda_env.name }}
 
@@ -286,6 +287,10 @@ nginx_servers:
         params:
           - proxy_pass http://isotope_image_server/fs/raw_optical_images/;
           - client_max_body_size 50M;
+      - path: /fs/ion_thumbnails/
+        params:
+          - proxy_pass http://isotope_image_server/fs/ion_thumbnails/;
+          - limit_except GET {deny all;}
       - path: /graphql
         params:
           - proxy_pass http://graphql_server/graphql;

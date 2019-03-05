@@ -78,6 +78,7 @@ export const datasetDetailItemFragment =
       counts
     }
     thumbnailOpticalImageUrl
+    ionThumbnailUrl
   }`;
 
 export const datasetDetailItemsQuery =

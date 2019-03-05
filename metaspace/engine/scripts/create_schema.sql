@@ -25,6 +25,7 @@ CREATE TABLE dataset (
 	acq_geometry	json,
 	ion_img_storage_type text not null default('fs'),
   thumbnail     text,
+  ion_thumbnail text,
 	CONSTRAINT dataset_id_pk PRIMARY KEY(id)
 );
 CREATE INDEX ind_dataset_name ON dataset (name);

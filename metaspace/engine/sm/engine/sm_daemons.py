@@ -6,6 +6,7 @@ import logging
 import boto3
 
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
+from sm.engine.ion_thumbnail import generate_ion_thumbnail
 from sm.rest.dataset_manager import IMG_URLS_BY_ID_SEL
 from sm.engine.errors import UnknownDSID
 from sm.engine.isocalc_wrapper import IsocalcWrapper
@@ -66,6 +67,10 @@ class SMDaemonManager(object):
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self.es)
         search_job_factory(img_store=self._img_store).run(ds)
+        generate_ion_thumbnail(db=self._db,
+                               img_store=self._img_store,
+                               ds_id=ds.id,
+                               only_if_needed=not del_first)
 
     def _finished_job_moldbs(self, ds_id):
         for job_id, mol_db_id in self._db.select('SELECT id, db_id FROM job WHERE ds_id = %s', params=(ds_id,)):

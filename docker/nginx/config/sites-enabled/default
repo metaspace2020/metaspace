@@ -37,6 +37,10 @@ server {
         proxy_pass http://sm-graphql:4201/fs/raw_optical_images/;
         client_max_body_size 50M;
     }
+    location /fs/ion_thumbnails/ {
+        proxy_pass http://sm-graphql:4201/fs/ion_thumbnails/;
+        client_max_body_size 50M;
+    }
     location /graphql {
         proxy_pass http://sm-graphql:3010/graphql;
         include proxy-params.conf;

@@ -10,9 +10,7 @@ from sm.engine.tests.util import sm_config, test_db, metadata, ds_config, pyspar
 
 
 def test_valid_colocalization_jobs_generated():
-    annotations = []
-
-    ion_images = FreeableRef(np.array([np.linspace(0, 50, 50, False) % (i + 1) for i in range(20)]))
+    ion_images = FreeableRef(np.array([np.linspace(0, 50, 50, False) % (i + 2) for i in range(20)]))
     ion_ids = np.array(range(20)) * 4
     fdrs = np.array([[0.05, 0.1, 0.2, 0.5][i % 4] for i in range(20)])
 

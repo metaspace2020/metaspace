@@ -37,6 +37,7 @@ type Dataset {
   rawOpticalImageUrl: String
 
   thumbnailOpticalImageUrl: String
+  ionThumbnailUrl: String
 }
 
 # Datasets' submitter and group are taken from ElasticSearch, which means they can be out of sync with the database.

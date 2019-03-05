@@ -125,9 +125,9 @@ exports[`DatasetTable should match snapshot 1`] = `
           </div>
         </div>
       </mock-el-dialog>
-      <div class="opt-image">
-        <div class="edit-opt-image-guest">
-          <img src="allDatasets.0.thumbnailOpticalImageUrl" alt="Optical image">
+      <div class="opt-image--container">
+        <div class="thumb thumb__opt">
+          <img src="allDatasets.0.thumbnailOpticalImageUrl" alt="Optical image" class="thumb--img">
         </div>
       </div>
       <div class="ds-info">
@@ -241,9 +241,9 @@ exports[`DatasetTable should match snapshot 1`] = `
         </div>
       </div>
     </mock-el-dialog>
-    <div class="opt-image">
-      <div class="edit-opt-image-guest">
-        <img src="allDatasets.0.thumbnailOpticalImageUrl" alt="Optical image">
+    <div class="opt-image--container">
+      <div class="thumb thumb__opt">
+        <img src="allDatasets.0.thumbnailOpticalImageUrl" alt="Optical image" class="thumb--img">
       </div>
     </div>
     <div class="ds-info">
@@ -357,9 +357,9 @@ exports[`DatasetTable should match snapshot 1`] = `
       </div>
     </div>
   </mock-el-dialog>
-  <div class="opt-image">
-    <div class="edit-opt-image-guest">
-      <img src="allDatasets.0.thumbnailOpticalImageUrl" alt="Optical image">
+  <div class="opt-image--container">
+    <div class="thumb thumb__opt">
+      <img src="allDatasets.0.thumbnailOpticalImageUrl" alt="Optical image" class="thumb--img">
     </div>
   </div>
   <div class="ds-info">
