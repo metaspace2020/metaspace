@@ -1,6 +1,13 @@
+jest.mock('./conf.js', () => {
+  return {
+    AWS_ACCESS_KEY_ID: 'aws-access-key-id',
+    AWS_SECRET_ACCESS_KEY: 'aws-secret-access-key',
+    UPLOAD_DESTINATION: "s3",
+    S3_UPLOAD_BUCKET: 's3-upload-bucket',
+  };
+});
 import supertest from 'supertest';
 import express from 'express';
-import * as config from './conf.js'
 import fineUploaderS3Middleware from './fineUploaderS3Middleware';
 
 
@@ -21,7 +28,7 @@ describe('fineUploaderS3Middleware', () => {
   const formatRequest = (headers) => {
     return {
       headers: headers
-        .replace('(BUCKET_TO_REPLACE)', config.S3_UPLOAD_BUCKET)
+        .replace('(BUCKET_TO_REPLACE)', 's3-upload-bucket')
         .replace('(UUID_TO_REPLACE)', uuid)
     };
   };
