@@ -1,7 +1,9 @@
 import {Brackets, EntityManager, EntityRepository} from 'typeorm';
-import {ContextUser} from '../../context';
+import {Context, ContextUser} from '../../context';
 import {Project as ProjectModel, UserProjectRoleOptions as UPRO} from './model';
 import {ProjectSource} from '../../bindingTypes';
+import _ = require('lodash');
+import * as DataLoader from 'dataloader';
 
 type SortBy = 'name' | 'popularity';
 
@@ -58,7 +60,7 @@ export class ProjectSourceRepository {
     if (user != null) {
       qb = qb.leftJoin('project.members', 'user_project',
         'project.id = user_project.project_id AND user_project.user_id = :userId', { userId: user.id })
-        .addSelect('user_project.role', 'currentUserRole')
+        .addSelect('user_project.role', 'currentUserRole');
     } else {
       qb = qb.addSelect('null::text', 'currentUserRole');
     }
@@ -77,18 +79,29 @@ export class ProjectSourceRepository {
       .getRawOne() || null;
   }
 
-  async findProjectsByDatasetId(user: ContextUser | null, datasetId: string): Promise<ProjectSource[]> {
-    return await this.queryProjectsWhere(user, `EXISTS (
-        SELECT 1 FROM graphql.dataset_project 
-        WHERE dataset_project.project_id = project.id 
-        AND (:isAdmin OR dataset_project.approved OR project.id = ANY(:projectIds))
-        AND dataset_project.dataset_id = :datasetId
-      )`, {
-      datasetId,
-      projectIds: user != null ? await user.getMemberOfProjectIds() : [],
-      isAdmin: user != null && user.role === 'admin',
-    })
+  async findProjectsByDatasetId(ctx: Context, datasetId: string): Promise<ProjectSource[]> {
+    const dataLoader = ctx.contextCacheGet('findProjectsByDatasetIdDataLoader', [], () => {
+      return new DataLoader(async (datasetIds: string[]) => {
+        return await this.findProjectsByDatasetIds(ctx.user, datasetIds);
+      })
+    });
+    return dataLoader.load(datasetId);
+  }
+
+  async findProjectsByDatasetIds(user: ContextUser | null, datasetIds: string[]): Promise<ProjectSource[][]> {
+    const rows = await this.queryProjectsWhere(user, `
+        (:isAdmin OR dataset_project.approved OR project.id = ANY(:projectIds))
+        AND dataset_project.dataset_id = ANY(:datasetIds)`,
+      {
+        datasetIds,
+        projectIds: user != null ? await user.getMemberOfProjectIds() : [],
+        isAdmin: user != null && user.role === 'admin',
+      })
+      .innerJoin('dataset_project', 'dataset_project', 'dataset_project.project_id = project.id')
+      .addSelect('dataset_project.dataset_id', 'datasetId')
       .getRawMany();
+    const groupedRows = _.groupBy(rows, 'datasetId') as Record<string, ProjectSource[]>;
+    return datasetIds.map(id => groupedRows[id] || []);
   }
 
   private queryProjectsByTextSearch(user: ContextUser | null, query?: string, sortBy: SortBy = 'name') {

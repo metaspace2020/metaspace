@@ -8,22 +8,27 @@ import {rawOpticalImage} from './Query';
 import getScopeRoleForEsDataset from '../util/getScopeRoleForEsDataset';
 import {logger} from '../../../utils';
 import {Context} from '../../../context';
+import getGroupAdminNames from '../../group/util/getGroupAdminNames';
+import * as DataLoader from 'dataloader';
 
 interface DbDataset {
   thumbnail: string | null;
   ion_thumbnail: string | null;
 }
 const getDbDatasetById = async (ctx: Context, id: string): Promise<DbDataset | null> => {
-  return await ctx.contextCacheGet('getDbDatasetById', [id], async (id) => {
-    const rows = await ctx.entityManager.query(
-      // Add extra columns to this as needed
-      'SELECT thumbnail, ion_thumbnail FROM public.dataset WHERE id = $1', [id]);
-    return rows.length > 0 ? rows[0] : null;
+  const dataloader = ctx.contextCacheGet('thumbnailOpticalImageUrlDataLoader', [], () => {
+    return new DataLoader(async (datasetIds: string[]): Promise<any[]> => {
+      const results = await ctx.entityManager.query(
+        'SELECT id, thumbnail, ion_thumbnail FROM public.dataset WHERE id = ANY($1)', [datasetIds]);
+      const keyedResults = _.keyBy(results, 'id');
+      return datasetIds.map(id => keyedResults[id] || null);
+    });
   });
+  return await dataloader.load(id);
 };
 
-export const thumbnailOpticalImageUrl = async (ctx: Context, id: string) => {
-  const result = await getDbDatasetById(ctx, id);
+export const thumbnailOpticalImageUrl = async (ctx: Context, datasetId: string) => {
+  const result = await getDbDatasetById(ctx, datasetId);
   if (result && result.thumbnail != null) {
     return `/fs/optical_images/${result.thumbnail}`;
   } else {
@@ -91,14 +96,18 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     };
   },
 
-  group(ds) {
+  group(ds, args, ctx) {
     if (ds._source.ds_group_id) {
+      const groupId = ds._source.ds_group_id;
       return {
-        id: ds._source.ds_group_id,
+        id: groupId,
         name: ds._source.ds_group_name || 'NULL',
         shortName: ds._source.ds_group_short_name || 'NULL',
         urlSlug: null,
         members: null,
+        get adminNames(): Promise<string[] | null> {
+          return getGroupAdminNames(ctx, groupId);
+        },
       };
     } else {
       return null;
@@ -118,7 +127,7 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     }
 
     const projects = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
-      .findProjectsByDatasetId(ctx.user, ds._source.ds_id);
+      .findProjectsByDatasetId(ctx, ds._source.ds_id);
     return projects.map(p => ({
       id: p.id,
       name: p.name,
@@ -127,8 +136,8 @@ const DatasetResolvers: FieldResolversFor<Dataset, DatasetSource> = {
     }));
   },
 
-  async principalInvestigator(ds, _, {entityManager, isAdmin, user}) {
-    const dataset = await entityManager.getRepository(DatasetModel).findOne({ id: ds._source.ds_id });
+  async principalInvestigator(ds, _, {cachedGetEntityById, isAdmin, user}) {
+    const dataset = await cachedGetEntityById(DatasetModel, ds._source.ds_id);
     if (dataset == null) {
       logger.warn(`Elasticsearch DS does not exist in DB: ${ds._source.ds_id}`);
       return null;
