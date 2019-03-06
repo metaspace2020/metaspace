@@ -105,7 +105,6 @@
         saved: true,
         edit: false
       };
-      this.projectDescriptionAsHtml = sanitizeIt(this.projectDescriptionAsHtml);
       this.$nextTick(()=> {
         if (this.showHint) {
           this.showHint = false
@@ -122,7 +121,6 @@
         saved: false,
         edit: false
       };
-      marked(this.projectDescriptionAsHtml);
     }
 
     disableHint() {
@@ -131,7 +129,7 @@
     }
 
     embedMarkdownAsHtml() {
-      return marked(this.projectDescriptionAsHtml)
+      return sanitizeIt(marked(this.projectDescriptionAsHtml));
     }
   }
 </script>

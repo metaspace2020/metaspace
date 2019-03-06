@@ -16,7 +16,6 @@ import {findUserByEmail} from '../../../utils';
 import {sendProjectAcceptanceEmail, sendProjectInvitationEmail, sendRequestAccessToProjectEmail} from '../email';
 import {smAPIUpdateDataset} from '../../../utils/smAPI';
 import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
-import sanitizer from './../../../utils/sanitizer';
 
 
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
@@ -58,12 +57,8 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (projectDetails.urlSlug !== undefined && !ctx.isAdmin) {
       throw new UserError('urlSlug can only be set by METASPACE administrators');
     }
-    if (projectDetails.projectDescriptionAsHtml !== undefined) {
-      projectDetails.projectDescriptionAsHtml = sanitizer(projectDetails.projectDescriptionAsHtml);
-    }
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
     await projectRepository.update(projectId, projectDetails);
-
     if (projectDetails.name || projectDetails.urlSlug || projectDetails.isPublic) {
       const affectedDatasets = await ctx.entityManager.getRepository(DatasetProjectModel)
       .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});

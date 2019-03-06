@@ -59,7 +59,7 @@
 
 <script lang="ts">
   import Vue from 'vue';
-  import {Component, Prop, Watch} from 'vue-property-decorator';
+  import {Component, Prop} from 'vue-property-decorator';
   import marked from 'marked';
   import * as cookie from 'js-cookie';
   import {
@@ -109,7 +109,6 @@
         saved: true,
         edit: false
       };
-      this.groupDescriptionAsHtml = sanitizeIt(this.groupDescriptionAsHtml);
       this.$nextTick(()=> {
         if (this.showHint) {
           this.showHint = false
@@ -126,7 +125,6 @@
         saved: false,
         edit: false
       };
-      marked(this.groupDescriptionAsHtml)
     }
 
     disableHint() {
@@ -135,7 +133,7 @@
     }
 
     embedMarkdownAsHtml() {
-      return marked(this.groupDescriptionAsHtml)
+      return sanitizeIt(marked(this.groupDescriptionAsHtml));
     }
   }
 </script>

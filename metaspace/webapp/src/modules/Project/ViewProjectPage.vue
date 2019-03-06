@@ -38,7 +38,7 @@
         </el-alert>
       </div>
       <el-tabs v-model="tab">
-        <el-tab-pane name="description" :label="'Description'" lazy>
+        <el-tab-pane v-if="canEdit || this.project.projectDescriptionAsHtml !== ''" name="description" :label="'Description'" lazy>
           <project-description :project="project" :canEdit="canEdit && projectId != null" v-on:updateProjectDescription="saveMarkdown" />
         </el-tab-pane>
         <el-tab-pane name="datasets" :label="'Datasets' | optionalSuffixInParens(countDatasets)" lazy>

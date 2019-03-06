@@ -46,7 +46,7 @@
         </el-alert>
       </div>
       <el-tabs v-model="tab">
-        <el-tab-pane name="description" :label="'Description'" lazy >
+        <el-tab-pane v-if="canEdit || this.group.groupDescriptionAsHtml !== ''" name="description" :label="'Description'" lazy >
           <group-description :group="group" :canEdit="canEdit && groupId != null" v-on:updateGroupDescription="saveMarkdown" />
         </el-tab-pane>
         <el-tab-pane name="datasets" :label="'Datasets' | optionalSuffixInParens(countDatasets)" lazy>
@@ -206,6 +206,14 @@
     get members() { return this.group && this.group.members || []; }
     get countMembers() { return this.group && this.group.numMembers; }
     maxVisibleDatasets = 8;
+
+    // get canEditGroupDescr() {
+    //   if (!this.canEdit() && this.group.groupDescriptionAsHtml === '') {
+    //     return false
+    //   } else {
+    //     return true
+    //   }
+    // }
 
     get groupId(): string | null {
       if (isUuid(this.$route.params.groupIdOrSlug)) {

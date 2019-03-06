@@ -46,7 +46,7 @@ export class Project {
     transformer: new MomentValueTransformer() })
   createdDT: Moment;
 
-  @Column({ type: 'text', name: 'project_description', default: 'There is no project description so far...'})
+  @Column({ type: 'text', name: 'project_description', default: ''})
   projectDescriptionAsHtml: string;
 }
 
