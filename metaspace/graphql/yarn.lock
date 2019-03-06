@@ -6270,6 +6270,11 @@ random-bytes@~1.0.0:
   resolved "https://registry.yarnpkg.com/random-bytes/-/random-bytes-1.0.0.tgz#4f68a1dc0ae58bd3fb95848c30324db75d64360b"
   integrity sha1-T2ih3Arli9P7lYSMMDJNt11kNgs=
 
+random-js@^2.0.0-rc2:
+  version "2.0.0-rc2"
+  resolved "https://registry.yarnpkg.com/random-js/-/random-js-2.0.0-rc2.tgz#95745b6b08c48078199ce3e35a1a4bf7a68d001f"
+  integrity sha512-e82LHxdh/4ZbW0iARGh/IsDLXthwoX2ZPxVzZxV+szAdHH6ui8zTjkmU/yQ+toBxyA+nFpxZZlsObjFR/9QzQg==
+
 randomatic@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/randomatic/-/randomatic-3.0.0.tgz#d35490030eb4f7578de292ce6dfb04a91a128923"

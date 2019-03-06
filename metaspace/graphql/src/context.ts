@@ -38,6 +38,6 @@ export interface Context {
    *                        this should be an object. For entities with single-field primary keys, this should be a
    *                        string or number.
    */
-  cachedGetEntityById: <T>(Model: ObjectType<T> & {}, id: string | number | object) => Promise<T | null>
+  cachedGetEntityById: <T>(Model: ObjectType<T> & {}, id: string | number | Partial<T>) => Promise<T | null>
 }
 

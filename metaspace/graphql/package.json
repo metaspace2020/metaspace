@@ -88,6 +88,7 @@
     "knex-cleaner": "^1.1.4",
     "mocha": "^2.5.3",
     "nodemon": "^1.11.0",
+    "random-js": "^2.0.0-rc2",
     "request-promise": "^4.2.1",
     "sinon": "^2.2.0",
     "sinon-chai": "^2.10.0",
