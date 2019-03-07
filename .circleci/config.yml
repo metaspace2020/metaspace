@@ -5,7 +5,7 @@ jobs:
 
   test-graphql:
     docker:
-      - image: intsco/sm-webapp:0.10
+      - image: metaspace2020/sm-webapp:0.10
 
       - image: postgres:9.5-alpine
         environment:
@@ -42,7 +42,7 @@ jobs:
 
   generate-graphql-schema:
     docker:
-      - image: intsco/sm-webapp:0.10
+      - image: metaspace2020/sm-webapp:0.10
 
       - image: postgres:9.5-alpine
         environment:
@@ -85,7 +85,7 @@ jobs:
 
   test-webapp:
     docker:
-      - image: intsco/sm-webapp:0.10
+      - image: metaspace2020/sm-webapp:0.10
 
     working_directory: ~/metaspace/metaspace/webapp
     steps:
@@ -129,7 +129,7 @@ jobs:
 
   test-webapp-e2e:
     docker:
-      - image: intsco/sm-webapp:0.10
+      - image: metaspace2020/sm-webapp:0.10
 
       - image: postgres:9.5-alpine
         environment:
@@ -197,7 +197,7 @@ jobs:
 
   test-engine:
     docker:
-      - image: intsco/sm-engine:1.2.1
+      - image: metaspace2020/sm-engine:1.2.1
 
       - image: redis:5.0.3
 
@@ -241,7 +241,7 @@ jobs:
 
   test-engine-sci:
     docker:
-      - image: intsco/sm-engine:1.2.1
+      - image: metaspace2020/sm-engine:1.2.1
 
       - image: redis:5.0.3
 
