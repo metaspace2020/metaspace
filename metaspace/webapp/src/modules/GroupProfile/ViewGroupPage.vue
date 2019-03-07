@@ -46,9 +46,11 @@
         </el-alert>
       </div>
       <el-tabs v-model="tab">
+        <el-tab-pane v-if="canEdit || this.group.groupDescriptionAsHtml !== ''" name="description" :label="'Description'" lazy >
+          <group-description :group="group" :canEdit="canEdit && groupId != null" v-on:updateGroupDescription="saveMarkdown" />
+        </el-tab-pane>
         <el-tab-pane name="datasets" :label="'Datasets' | optionalSuffixInParens(countDatasets)" lazy>
           <dataset-list :datasets="groupDatasets.slice(0, maxVisibleDatasets)" @filterUpdate="handleFilterUpdate" hideGroupMenu />
-
           <div class="dataset-list-footer">
             <router-link v-if="countDatasets > maxVisibleDatasets" :to="datasetsListLink">See all datasets</router-link>
           </div>
@@ -81,18 +83,16 @@
 <script lang="ts">
   import Vue from 'vue';
   import {Component, Watch} from 'vue-property-decorator';
-  import {
-    datasetDeletedQuery,
-    DatasetDetailItem,
-    datasetDetailItemFragment,
-  } from '../../api/dataset';
+  import {datasetDeletedQuery, DatasetDetailItem, datasetDetailItemFragment,} from '../../api/dataset';
   import DatasetList from '../Datasets/list/DatasetList.vue';
   import {
     acceptGroupInvitationMutation,
     importDatasetsIntoGroupMutation,
     leaveGroupMutation,
     requestAccessToGroupMutation,
-    UserGroupRole, 
+    updateGroupMutation,
+    UpdateGroupMutation,
+    UserGroupRole,
     UserGroupRoleOptions,
     ViewGroupFragment,
     ViewGroupResult,
@@ -107,10 +107,9 @@
   import reportError from '../../lib/reportError';
   import {currentUserRoleQuery, CurrentUserRoleResult} from '../../api/user';
   import isUuid from '../../lib/isUuid';
-  import {throttle} from 'lodash-es';
   import {optionalSuffixInParens, plural} from '../../lib/vueFilters';
   import {removeDatasetFromAllDatasetsQuery} from '../../lib/updateApolloCache';
-
+  import GroupDescription from './GroupDescription.vue';
 
   interface ViewGroupProfileData {
     allDatasets: DatasetDetailItem[];
@@ -124,6 +123,7 @@
       GroupSettings,
       TransferDatasetsDialog,
       NotificationIcon,
+      GroupDescription
     },
     filters: {
       optionalSuffixInParens,
@@ -207,6 +207,14 @@
     get countMembers() { return this.group && this.group.numMembers; }
     maxVisibleDatasets = 8;
 
+    // get canEditGroupDescr() {
+    //   if (!this.canEdit() && this.group.groupDescriptionAsHtml === '') {
+    //     return false
+    //   } else {
+    //     return true
+    //   }
+    // }
+
     get groupId(): string | null {
       if (isUuid(this.$route.params.groupIdOrSlug)) {
         return this.$route.params.groupIdOrSlug; // If it's possible to get the ID from the route, use that because it's faster than groupById/groupBySlug.
@@ -216,7 +224,7 @@
     }
 
     get tab() {
-      if (['datasets', 'members', 'settings'].includes(this.$route.query.tab)) {
+      if (['description', 'datasets', 'members', 'settings', ].includes(this.$route.query.tab)) {
         return this.$route.query.tab;
       } else {
         return 'datasets';
@@ -329,6 +337,19 @@
         path: '/datasets',
         query: this.$route.query,
       })
+    }
+
+    async saveMarkdown(newGroupDescription: string) {
+      await this.$apollo.mutate<UpdateGroupMutation>({
+        mutation: updateGroupMutation,
+        variables: {
+          groupId: this.groupId,
+          groupDetails: {
+            groupDescriptionAsHtml: newGroupDescription
+          }
+        },
+      });
+      this.refetchGroup();
     }
 
     async refetchGroup() {

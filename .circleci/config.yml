@@ -5,7 +5,7 @@ jobs:
 
   test-graphql:
     docker:
-      - image: intsco/sm-webapp:0.9
+      - image: metaspace2020/sm-webapp:0.10
 
       - image: postgres:9.5-alpine
         environment:
@@ -42,7 +42,7 @@ jobs:
 
   generate-graphql-schema:
     docker:
-      - image: intsco/sm-webapp:0.9
+      - image: metaspace2020/sm-webapp:0.10
 
       - image: postgres:9.5-alpine
         environment:
@@ -56,12 +56,6 @@ jobs:
       - restore_cache:
           keys:
             - graphql-yarn-cache-{{checksum "yarn.lock"}}
-      - run:
-          name: Install build environment for bcrypt npm package
-          command: |
-            # This is required because alpine images use musl instead of glibc, and bcrypt doesn't publish prebuild musl packages
-            # More info: https://github.com/kelektiv/node.bcrypt.js/wiki/Installation-Instructions#alpine-linux-based-images
-            apk --no-cache add --virtual builds-deps build-base python
       - run:
           name: Install npm packages
           command: |
@@ -91,7 +85,7 @@ jobs:
 
   test-webapp:
     docker:
-      - image: intsco/sm-webapp:0.9
+      - image: metaspace2020/sm-webapp:0.10
 
     working_directory: ~/metaspace/metaspace/webapp
     steps:
@@ -135,7 +129,7 @@ jobs:
 
   test-webapp-e2e:
     docker:
-      - image: intsco/sm-webapp:0.9
+      - image: metaspace2020/sm-webapp:0.10
 
       - image: postgres:9.5-alpine
         environment:
@@ -203,7 +197,7 @@ jobs:
 
   test-engine:
     docker:
-      - image: intsco/sm-engine:1.2.1
+      - image: metaspace2020/sm-engine:1.2.1
 
       - image: redis:5.0.3
 
@@ -247,7 +241,7 @@ jobs:
 
   test-engine-sci:
     docker:
-      - image: intsco/sm-engine:1.2.1
+      - image: metaspace2020/sm-engine:1.2.1
 
       - image: redis:5.0.3
 

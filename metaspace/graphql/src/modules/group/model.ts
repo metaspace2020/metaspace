@@ -32,6 +32,9 @@ export class Group {
   @Column({ type: 'text', name: 'url_slug', nullable: true })
   urlSlug: string | null;
 
+  @Column({ type: 'text', name: 'group_description', default: ''})
+  groupDescriptionAsHtml: string;
+
   @OneToMany(type => UserGroup, userGroup => userGroup.group)
   members: UserGroup[];
 }

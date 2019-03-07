@@ -86,7 +86,7 @@ describe('ViewProjectPage', () => {
       expect(wrapper.findAll('button').wrappers.map(w => w.text()))
         .toEqual(expect.arrayContaining(['Request access']));
       expect(wrapper.findAll('[role="tab"]').wrappers.map(w => w.text()))
-        .toEqual(['Datasets (4)', 'Members (2)']);
+        .toEqual(['Description', 'Datasets (4)', 'Members (2)']);
       expect(wrapper.findAll('.dataset-list > *')).toHaveLength(maxVisibleDatasets);
     });
   });
