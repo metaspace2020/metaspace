@@ -70,6 +70,7 @@ const updateUserGroupDatasets = async (entityManager: EntityManager, userId: str
 };
 
 
+
 export const Resolvers = {
   UserGroup: {
     async numDatasets(userGroup: UserGroupModel, _: any, {entityManager}: Context) {
@@ -169,12 +170,12 @@ export const Resolvers = {
     async allGroups(_: any, {query}: any, ctx: Context): Promise<LooselyCompatible<Group & Scope>[]|null> {
       const scopeRole = await resolveGroupScopeRole(ctx);
       const groups = await ctx.entityManager.getRepository(GroupModel)
-        .createQueryBuilder('group')
-        .where('group.name ILIKE :query OR group.shortName ILIKE :query', {query: query ? `%${query}%` : '%'})
-        .orderBy('group.name')
-        .getMany();
+      .createQueryBuilder('group')
+      .where('group.name ILIKE :query OR group.shortName ILIKE :query', {query: query ? `%${query}%` : '%'})
+      .orderBy('group.name')
+      .getMany();
       return groups.map(g => ({...g, scopeRole}));
-    }
+    },
   },
 
   Mutation: {
@@ -202,17 +203,16 @@ export const Resolvers = {
     async updateGroup(_: any, {groupId, groupDetails}: any, {user, entityManager}: Context): Promise<Group> {
       await assertCanEditGroup(entityManager, user, groupId);
       logger.info(`Updating '${groupId}' group by '${user!.id}' user...`);
-
       const groupRepo = entityManager.getRepository(GroupModel);
       const group = {...(await groupRepo.findOneOrFail(groupId)), ...groupDetails};
       await groupRepo.save(group);  // update doesn't return updated object;
-
-      logger.info(`Updating '${groupId}' group datasets...`);
-      const groupDSs = await entityManager.getRepository(DatasetModel).find({ groupId });
-      await Promise.all(groupDSs.map(async ds => {
-        await smAPIUpdateDataset(ds.id, {groupId});
-      }));
-
+      if (groupDetails.name || groupDetails.shortName) {
+        logger.info(`Updating '${groupId}' group datasets...`);
+        const groupDSs = await entityManager.getRepository(DatasetModel).find({ groupId });
+        await Promise.all(groupDSs.map(async ds => {
+          await smAPIUpdateDataset(ds.id, {groupId});
+        }));
+      }
       logger.info(`'${groupId}' group updated`);
       return group;
     },
