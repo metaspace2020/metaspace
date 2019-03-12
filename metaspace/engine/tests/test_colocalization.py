@@ -28,12 +28,11 @@ def test_valid_colocalization_jobs_generated():
     assert len(sample_job.coloc_annotations[0][1]) > 0 # First annotation was colocalized with at least one other
 
 
-def _make_sparse_ion_imgs(seed):
-    pixels = np.linspace(0, 25, 25, False).reshape((5, 5)) % (seed or 1)
-    mask = (np.linspace(0, 25, 25, False).reshape((5, 5)) % 4 == 1) * 255
-    rgba = np.uint8(np.dstack([pixels, pixels, pixels, mask]))
-
-    return Image.fromarray(rgba)
+def mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
+    images = np.array([np.linspace(0, 25, 25, False) % ((seed or 1) % 25)
+                       for seed in range(len(img_ids))], dtype=np.float32) / 25
+    mask = (np.linspace(0, 25, 25, False).reshape((5, 5)) % 4 == 1) / 25
+    return images, mask, (5, 5)
 
 
 class MockMolecularDB(object):
@@ -57,9 +56,8 @@ def test_new_ds_saves_to_db(test_db, metadata, ds_config):
     db.insert('INSERT INTO iso_image_metrics(job_id, db_id, sf, adduct, fdr, iso_image_ids) '
               'VALUES (%s, 1, %s, %s, %s, %s)',
               [(job_id, r.formula, r.adduct, r.fdr, [r.image_id]) for i, r in ion_metrics_df.iterrows()])
-    test_images = dict([(r.image_id, _make_sparse_ion_imgs(i)) for i, r in ion_metrics_df.iterrows()])
     img_svc_mock = MagicMock(spec=ImageStoreServiceWrapper)
-    img_svc_mock.get_image_by_id.side_effect = lambda s_type, i_type, id: test_images[id]
+    img_svc_mock.get_ion_images_for_analysis.side_effect = mock_get_ion_images_for_analysis
     mol_db_svc_mock = MagicMock(spec=MolDBServiceWrapper)
     mol_db_svc_mock.find_db_by_name_version.return_value = [{'id': 1}]
 

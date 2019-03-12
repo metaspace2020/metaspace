@@ -1,6 +1,5 @@
 import logging
 import warnings
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from traceback import format_exc
 import numpy as np
@@ -95,23 +94,6 @@ class FreeableRef(object):
             raise ReferenceError('FreeableRef is already freed')
         else:
             return self._ref
-
-
-def _preprocess_images_inplace(imgs):
-    """ Clips the top 1% (if more than 1% of pixels are populated),
-    scales all pixels to the range 0...1,
-    and ensures that no image is completely zero.
-    Modifies imgs in-place to minimize memory usage
-    """
-    max_clipped = np.percentile(imgs, 99, axis=1, keepdims=True)
-    max_unclipped = np.max(imgs, axis=1, keepdims=True)
-    # Use the 99th percentile for each image as a scaling factor, but fall back to the image's maximum or 1.0 if needed
-    # to ensure that there are no divide-by-zero issues
-    scale = np.select([max_clipped != 0, max_unclipped != 0], [max_clipped, max_unclipped], 1)
-    imgs /= scale
-    np.clip(imgs, 0, 1, out=imgs)
-    # On rows that are all zero, set a small non-zero value to prevent future NaNs
-    imgs[(max_unclipped == 0)[:, 0], :] = 0.01
 
 
 def _labels_to_clusters(labels, scores):
@@ -215,8 +197,9 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
     assert images.ref.shape[0] == ion_ids.shape[0] == fdrs.shape[0], (images.ref.shape, ion_ids.shape, fdrs.shape)
     start = datetime.now()
 
-    logger.debug(f'Preprocessing images (shape: {images.ref.shape}, dtype: {images.ref.dtype})')
-    _preprocess_images_inplace(images.ref)
+    if len(ion_ids) < 2:
+        logger.info('Not enough annotations to perform colocalization')
+        return
 
     logger.debug('Calculating colocalization metrics')
     pca_images = PCA(min(20, *images.ref.shape)).fit_transform(images.ref)
@@ -299,32 +282,25 @@ class Colocalization(object):
             raise
 
     def _get_existing_ds_annotations(self, ds_id, mol_db_name, image_storage_type, polarity):
-        def get_ion_image(id):
-            if id is not None:
-                im = self._img_store.get_image_by_id(image_storage_type, 'iso_image', id)
-                data = np.asarray(im)
-                image = np.where(data[:, :, 3] != 0, data[:, :, 0], 0)
-                return _downscale_image_if_required(image, num_annotations).ravel()
-            return None
-
         mol_db = self._mol_db_svc.find_db_by_name_version(mol_db_name)[0]
         annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db['id']])
         num_annotations = len(annotation_rows)
-        sf_adducts = [(formula, adduct) for image, formula, adduct, fdr in annotation_rows]
-        ion_id_mapping = get_ion_id_mapping(self._db, sf_adducts, polarity)
-        ion_ids = [ion_id_mapping[sf_adduct] for sf_adduct in sf_adducts]
-        fdrs = [fdr for image, formula, adduct, fdr in annotation_rows]
+        if num_annotations != 0:
+            sf_adducts = [(formula, adduct) for image, formula, adduct, fdr in annotation_rows]
+            ion_id_mapping = get_ion_id_mapping(self._db, sf_adducts, polarity)
+            ion_ids = np.array([ion_id_mapping[sf_adduct] for sf_adduct in sf_adducts])
+            fdrs = np.array([fdr for image, formula, adduct, fdr in annotation_rows])
 
-        with ThreadPoolExecutor() as ex:
             logger.debug(f'Getting {num_annotations} images for "{ds_id}" {mol_db_name}')
-            ion_images = list(ex.map(get_ion_image, [row[0] for row in annotation_rows]))
-            logger.debug(f'Finished getting images for "{ds_id}" {mol_db_name}')
+            image_ids = [row[0] for row in annotation_rows]
+            images, mask, (h, w) = self._img_store.get_ion_images_for_analysis(image_storage_type, image_ids)
+            logger.debug(f'Finished getting images for "{ds_id}" {mol_db_name}. Image size: {h}x{w}')
+        else:
+            images = np.zeros((0, 0), dtype=np.float32)
+            ion_ids = np.zeros((0,), dtype=np.int64)
+            fdrs = np.zeros((0,), dtype=np.float32)
 
-        images = FreeableRef(np.array([img for img in ion_images if img is not None], ndmin=2, dtype=np.float32))
-        ion_ids = np.array([ion_id for i, ion_id in enumerate(ion_ids) if ion_images[i] is not None], dtype=np.int64)
-        fdrs = np.array([fdr for i, fdr in enumerate(fdrs) if ion_images[i] is not None], dtype=np.float32)
-
-        return images, ion_ids, fdrs
+        return FreeableRef(images), ion_ids, fdrs
 
     def run_coloc_job(self, ds_id, reprocess=False):
         """ Analyze colocalization for a previously annotated dataset, querying the dataset's annotations from the db,
