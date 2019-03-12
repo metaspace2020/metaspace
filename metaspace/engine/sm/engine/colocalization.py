@@ -4,8 +4,6 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from traceback import format_exc
 import numpy as np
-import pandas as pd
-import pyspark.rdd
 from sklearn.decomposition import PCA
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.cluster import spectral_clustering
@@ -14,7 +12,7 @@ from scipy.ndimage import zoom
 
 from sm.engine.dataset import Dataset
 from sm.engine.ion_mapping import get_ion_id_mapping
-from sm.engine.mol_db import MolecularDB
+from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.util import SMConfig
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
@@ -27,6 +25,11 @@ COLOC_JOB_INS = ('INSERT INTO graphql.coloc_job (ds_id, mol_db, fdr, algorithm, 
 
 COLOC_ANN_INS = ('INSERT INTO graphql.coloc_annotation(coloc_job_id, ion_id, coloc_ion_ids, coloc_coeffs) ' 
                  'VALUES (%s, %s, %s, %s)')
+
+SUCCESSFUL_COLOC_JOB_SEL = ('SELECT mol_db FROM graphql.coloc_job '
+                            'WHERE ds_id = %s '
+                            'GROUP BY mol_db '
+                            'HAVING not bool_or(error IS NOT NULL)')
 
 ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], sf, adduct, fdr '
                    'FROM iso_image_metrics m '
@@ -265,10 +268,11 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
 
 class Colocalization(object):
 
-    def __init__(self, db):
+    def __init__(self, db, img_store=None, mol_db_svc=None):
         self._db = db
         self._sm_config = SMConfig.get_conf()
-        self._img_store = ImageStoreServiceWrapper(self._sm_config['services']['img_service_url'])
+        self._img_store = img_store or ImageStoreServiceWrapper(self._sm_config['services']['img_service_url'])
+        self._mol_db_svc = mol_db_svc or MolDBServiceWrapper(self._sm_config['services']['mol_db'])
 
     def _save_job_to_db(self, job):
         job_id, = self._db.insert_return(COLOC_JOB_INS,
@@ -303,8 +307,8 @@ class Colocalization(object):
                 return _downscale_image_if_required(image, num_annotations).ravel()
             return None
 
-        mol_db = MolecularDB(name=mol_db_name)
-        annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db.id])
+        mol_db = self._mol_db_svc.find_db_by_name_version(mol_db_name)[0]
+        annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db['id']])
         num_annotations = len(annotation_rows)
         sf_adducts = [(formula, adduct) for image, formula, adduct, fdr in annotation_rows]
         ion_id_mapping = get_ion_id_mapping(self._db, sf_adducts, polarity)
@@ -322,61 +326,24 @@ class Colocalization(object):
 
         return images, ion_ids, fdrs
 
-    def run_coloc_job_for_existing_ds(self, ds_id):
+    def run_coloc_job(self, ds_id, reprocess=False):
         """ Analyze colocalization for a previously annotated dataset, querying the dataset's annotations from the db,
         and downloading the exported ion images
         Args
         ====
         ds_id: str
+        reprocess: bool
+            Whether to re-run colocalization jobs against databases that have already successfully run
         """
 
         image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)
         mol_dbs, polarity = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
+        existing_mol_dbs = set(db for db, in self._db.select(SUCCESSFUL_COLOC_JOB_SEL, [ds_id]))
 
         for mol_db_name in mol_dbs:
-            logger.info(f'Running colocalization job for {ds_id} on {mol_db_name}')
-            images, ion_ids, fdrs = self._get_existing_ds_annotations(ds_id, mol_db_name, image_storage_type, polarity)
-            self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs)
-
-    def _get_annotations_from_new_ds(self, ds, ion_metrics_df, ion_iso_images, alpha_channel):
-        polarity = ds.config['isotope_generation']['charge']['polarity']
-        mols = list(ion_metrics_df[['formula','adduct']].itertuples(index=False, name=None))
-        ion_id_mapping = get_ion_id_mapping(self._db, mols, polarity)
-        num_annotations = len(mols)
-
-        def extract_image(imgs):
-            if imgs[0] is not None:
-                image = imgs[0].toarray() * alpha_channel
-                return _downscale_image_if_required(image, num_annotations).ravel()
-            return None
-
-        image_map = ion_iso_images.mapValues(extract_image).collectAsMap()
-        annotations = [(image_map.get(i), ion_id_mapping[(item.formula, item.adduct)], item.fdr)
-                       for i, item in ion_metrics_df.iterrows()
-                       if image_map.get(i) is not None]
-
-        images = FreeableRef(np.array([a[0] for a in annotations], ndmin=2, dtype=np.float32))
-        ion_ids = np.array([a[1] for a in annotations], dtype=np.int64)
-        fdrs = np.array([a[2] for a in annotations], dtype=np.float32)
-
-        return images, ion_ids, fdrs
-
-    def run_coloc_job_for_new_ds(self, ds, mol_db_name, ion_metrics_df, ion_iso_images, alpha_channel):
-        """ Analyze colocalization as part of an annotation job, using dataframes from the annotation job as a datasource
-        Args
-        ====
-        ds: Dataset
-        mol_db_name: str
-        ion_metrics_df: pd.DataFrame
-        ion_iso_images: pyspark.rdd.RDD
-        alpha_channel: np.ndarray
-        """
-
-        if self._sm_config.get('colocalization', {}).get('enabled', True):
-            logger.info('Running colocalization job')
-            images, ion_ids, fdrs = self._get_annotations_from_new_ds(ds, ion_metrics_df, ion_iso_images, alpha_channel)
-            self._analyze_and_save(ds.id, mol_db_name, images, ion_ids, fdrs)
-            logger.info('Finished colocalization job')
-        else:
-            logger.info('Skipping colocalization')
-
+            if reprocess or mol_db_name not in existing_mol_dbs:
+                logger.info(f'Running colocalization job for {ds_id} on {mol_db_name}')
+                images, ion_ids, fdrs = self._get_existing_ds_annotations(ds_id, mol_db_name, image_storage_type, polarity)
+                self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs)
+            else:
+                logger.info(f'Skipping colocalization job for {ds_id} on {mol_db_name}')

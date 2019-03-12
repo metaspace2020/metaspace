@@ -5,6 +5,7 @@ from requests import post
 import logging
 import boto3
 
+from sm.engine.colocalization import Colocalization
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.rest.dataset_manager import IMG_URLS_BY_ID_SEL
 from sm.engine.errors import UnknownDSID
@@ -66,6 +67,7 @@ class SMDaemonManager(object):
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self.es)
         search_job_factory(img_store=self._img_store).run(ds)
+        Colocalization(self._db).run_coloc_job(ds.id)
 
     def _finished_job_moldbs(self, ds_id):
         for job_id, mol_db_id in self._db.select('SELECT id, db_id FROM job WHERE ds_id = %s', params=(ds_id,)):
