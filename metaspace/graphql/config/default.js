@@ -33,6 +33,11 @@ module.exports = {
         type: 'image/jpeg',
         path: '/raw_optical_images/',
         storage_types: ['fs']
+      },
+      ion_thumbnail: {
+        type: 'image/png',
+        path: '/ion_thumbnails',
+        storage_types: ['fs'],
       }
     }
   },
