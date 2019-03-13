@@ -11,7 +11,7 @@ from scipy.ndimage import zoom
 
 from sm.engine.dataset import Dataset
 from sm.engine.ion_mapping import get_ion_id_mapping
-from sm.engine.mol_db import MolDBServiceWrapper
+from sm.engine.mol_db import MolecularDB
 from sm.engine.util import SMConfig
 from sm.engine.png_generator import ImageStoreServiceWrapper
 
@@ -251,11 +251,10 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
 
 class Colocalization(object):
 
-    def __init__(self, db, img_store=None, mol_db_svc=None):
+    def __init__(self, db, img_store=None):
         self._db = db
         self._sm_config = SMConfig.get_conf()
         self._img_store = img_store or ImageStoreServiceWrapper(self._sm_config['services']['img_service_url'])
-        self._mol_db_svc = mol_db_svc or MolDBServiceWrapper(self._sm_config['services']['mol_db'])
 
     def _save_job_to_db(self, job):
         job_id, = self._db.insert_return(COLOC_JOB_INS,
@@ -282,8 +281,8 @@ class Colocalization(object):
             raise
 
     def _get_existing_ds_annotations(self, ds_id, mol_db_name, image_storage_type, polarity):
-        mol_db = self._mol_db_svc.find_db_by_name_version(mol_db_name)[0]
-        annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db['id']])
+        mol_db = MolecularDB(name=mol_db_name)
+        annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db.id])
         num_annotations = len(annotation_rows)
         if num_annotations != 0:
             sf_adducts = [(formula, adduct) for image, formula, adduct, fdr in annotation_rows]

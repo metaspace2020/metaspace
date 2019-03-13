@@ -3,17 +3,18 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pandas as pd
-from PIL import Image
 
 from sm.engine.colocalization import analyze_colocalization, Colocalization, FreeableRef
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
-from sm.engine.mol_db import MolDBServiceWrapper
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.tests.util import sm_config, test_db, metadata, ds_config, pyspark_context
 
+mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version':'2001-01-01'}
 
-def test_valid_colocalization_jobs_generated():
+
+@patch('sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock])
+def test_valid_colocalization_jobs_generated(find_db_by_name_version_mock):
     ion_images = FreeableRef(np.array([np.linspace(0, 50, 50, False) % (i + 2) for i in range(20)]))
     ion_ids = np.array(range(20)) * 4
     fdrs = np.array([[0.05, 0.1, 0.2, 0.5][i % 4] for i in range(20)])
@@ -35,13 +36,8 @@ def mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
     return images, mask, (5, 5)
 
 
-class MockMolecularDB(object):
-    def __init__(self, **kwargs):
-        self.id = 123
-
-
-@patch('sm.engine.mol_db.MolecularDB', new=MockMolecularDB)
-def test_new_ds_saves_to_db(test_db, metadata, ds_config):
+@patch('sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock])
+def test_new_ds_saves_to_db(find_db_by_name_version_mock, test_db, metadata, ds_config):
     db = DB(sm_config['db'])
     ds = Dataset('ds_id', 'ds_name', 'input_path', datetime.now(), metadata, mol_dbs=['HDMB'])
     ds.save(db)
@@ -58,10 +54,8 @@ def test_new_ds_saves_to_db(test_db, metadata, ds_config):
               [(job_id, r.formula, r.adduct, r.fdr, [r.image_id]) for i, r in ion_metrics_df.iterrows()])
     img_svc_mock = MagicMock(spec=ImageStoreServiceWrapper)
     img_svc_mock.get_ion_images_for_analysis.side_effect = mock_get_ion_images_for_analysis
-    mol_db_svc_mock = MagicMock(spec=MolDBServiceWrapper)
-    mol_db_svc_mock.find_db_by_name_version.return_value = [{'id': 1}]
 
-    Colocalization(db, img_store=img_svc_mock, mol_db_svc=mol_db_svc_mock).run_coloc_job(ds.id)
+    Colocalization(db, img_store=img_svc_mock).run_coloc_job(ds.id)
 
     jobs = db.select('SELECT id, error, sample_ion_ids FROM graphql.coloc_job')
     annotations = db.select('SELECT coloc_ion_ids, coloc_coeffs FROM graphql.coloc_annotation')

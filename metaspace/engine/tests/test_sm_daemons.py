@@ -9,6 +9,7 @@ from datetime import datetime
 import pytest
 from fabric.api import local
 from fabric.context_managers import warn_only
+import numpy as np
 import pandas as pd
 
 from sm.engine.daemon_action import DaemonAction
@@ -54,6 +55,9 @@ def init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock):
     mol_db_wrapper_mock.fetch_db_sfs.return_value = ['C12H24O']
     mol_db_wrapper_mock.fetch_molecules.return_value = [{'sf': 'C12H24O', 'mol_id': 'HMDB0001',
                                                          'mol_name': 'molecule name'}]
+
+
+get_ion_images_for_analysis_mock_return = np.linspace(0,25,18).reshape((3,6)), np.linspace(0,1,6).reshape((2,3)), (2,3)
 
 
 def init_queue_pub(qname='annotate'):
@@ -103,10 +107,13 @@ def run_daemons(db, es):
 
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
+@patch('sm.engine.colocalization.ImageStoreServiceWrapper.get_ion_images_for_analysis',
+       return_value=get_ion_images_for_analysis_mock_return)
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.calc_metrics')
 def test_sm_daemons(calc_metrics_mock,
                     filter_sf_metrics_mock,
+                    get_ion_images_for_analysis_mock,
                     post_images_to_annot_service_mock,
                     MolDBServiceWrapperMock,
                     # fixtures
