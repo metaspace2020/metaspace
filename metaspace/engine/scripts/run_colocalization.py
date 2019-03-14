@@ -67,7 +67,7 @@ ORDER BY j.ds_id DESC;
 """
 
 
-def run_coloc_jobs(ds_id, sql_where, fix_missing, fix_corrupt):
+def run_coloc_jobs(ds_id, sql_where, fix_missing, fix_corrupt, skip_existing):
     assert len([data_source for data_source in [ds_id, sql_where, fix_missing, fix_corrupt] if data_source]) == 1, \
            "Exactly one data source (ds_id, sql_where, fix_missing, fix_corrupt) must be specified"
     assert not (ds_id and sql_where)
@@ -107,7 +107,7 @@ def run_coloc_jobs(ds_id, sql_where, fix_missing, fix_corrupt):
         try:
             logger.info(f'Running colocalization on {i+1} out of {len(ds_ids)}')
             coloc = Colocalization(db)
-            coloc.run_coloc_job_for_existing_ds(ds_id)
+            coloc.run_coloc_job(ds_id, reprocess=not skip_existing)
         except Exception:
             logger.error(f'Failed to run colocalization on {ds_id}', exc_info=True)
 
@@ -122,10 +122,16 @@ if __name__ == '__main__':
                         help='Run colocalization on all datasets that are missing colocalization data')
     parser.add_argument('--fix-corrupt', action='store_true',
                         help='Run colocalization on all datasets that have incomplete colocalization data (SLOW)')
+    parser.add_argument('--skip-existing', action='store_true',
+                        help='Re-run colocalization jobs even if they have already successfully run')
     args = parser.parse_args()
 
     SMConfig.set_path(args.config)
     init_loggers(SMConfig.get_conf()['logs'])
     logger = logging.getLogger('engine')
 
-    run_coloc_jobs(args.ds_id, args.sql_where, args.fix_missing, args.fix_corrupt)
+    run_coloc_jobs(ds_id=args.ds_id,
+                   sql_where=args.sql_where,
+                   fix_missing=args.fix_missing,
+                   fix_corrupt=args.fix_corrupt,
+                   skip_existing=args.skip_existing)
