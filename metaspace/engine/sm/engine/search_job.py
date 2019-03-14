@@ -125,9 +125,6 @@ class SearchJob(object):
             mask = self._ds_reader.get_2d_sample_area_mask()
             img_store_type = self._ds.get_ion_img_storage_type(self._db)
             search_results.store(ion_metrics_df, ion_iso_images, mask, self._db, self._img_store, img_store_type)
-
-            coloc = Colocalization(self._db)
-            coloc.run_coloc_job_for_new_ds(self._ds, mol_db.name, ion_metrics_df, ion_iso_images, mask)
         except Exception as e:
             self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
                                                           datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
