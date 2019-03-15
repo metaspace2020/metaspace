@@ -1,0 +1,8 @@
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+config/*
+!config/default.ini
+logs/
+models/
+
