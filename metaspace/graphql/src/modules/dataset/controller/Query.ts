@@ -12,7 +12,7 @@ const resolveDatasetScopeRole = async (ctx: Context, dsId: string) => {
   if (ctx.user) {
     if (dsId) {
       const ds = await ctx.cachedGetEntityById(DatasetModel, dsId);
-      if (ds) {
+      if (ds && ds.groupId != null) {
         const userGroup = await ctx.cachedGetEntityById(UserGroupModel, { userId: ctx.user.id, groupId: ds.groupId });
         if (userGroup) {
           if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN)

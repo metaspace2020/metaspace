@@ -5,6 +5,7 @@ from requests import post
 import logging
 import boto3
 
+from sm.engine.colocalization import Colocalization
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.ion_thumbnail import generate_ion_thumbnail
 from sm.rest.dataset_manager import IMG_URLS_BY_ID_SEL
@@ -67,6 +68,7 @@ class SMDaemonManager(object):
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self.es)
         search_job_factory(img_store=self._img_store).run(ds)
+        Colocalization(self._db).run_coloc_job(ds.id)
         generate_ion_thumbnail(db=self._db,
                                img_store=self._img_store,
                                ds_id=ds.id,

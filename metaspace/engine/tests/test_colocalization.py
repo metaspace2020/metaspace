@@ -1,15 +1,20 @@
 from datetime import datetime
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pandas as pd
-from scipy.sparse import coo_matrix
 
 from sm.engine.colocalization import analyze_colocalization, Colocalization, FreeableRef
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
+from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.tests.util import sm_config, test_db, metadata, ds_config, pyspark_context
 
+mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version':'2001-01-01'}
 
-def test_valid_colocalization_jobs_generated():
+
+@patch('sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock])
+def test_valid_colocalization_jobs_generated(find_db_by_name_version_mock):
     ion_images = FreeableRef(np.array([np.linspace(0, 50, 50, False) % (i + 2) for i in range(20)]))
     ion_ids = np.array(range(20)) * 4
     fdrs = np.array([[0.05, 0.1, 0.2, 0.5][i % 4] for i in range(20)])
@@ -24,24 +29,33 @@ def test_valid_colocalization_jobs_generated():
     assert len(sample_job.coloc_annotations[0][1]) > 0 # First annotation was colocalized with at least one other
 
 
-def _make_sparse_ion_imgs(seed):
-    pixels = np.linspace(0, 25, 25, False).reshape((5, 5)) % (seed or 1)
-    return [coo_matrix(pixels)]
+def mock_get_ion_images_for_analysis(storage_type, img_ids, **kwargs):
+    images = np.array([np.linspace(0, 25, 25, False) % ((seed or 1) % 25)
+                       for seed in range(len(img_ids))], dtype=np.float32) / 25
+    mask = (np.linspace(0, 25, 25, False).reshape((5, 5)) % 4 == 1) / 25
+    return images, mask, (5, 5)
 
 
-def test_new_ds_saves_to_db(test_db, metadata, ds_config, pyspark_context):
+@patch('sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock])
+def test_new_ds_saves_to_db(find_db_by_name_version_mock, test_db, metadata, ds_config):
     db = DB(sm_config['db'])
     ds = Dataset('ds_id', 'ds_name', 'input_path', datetime.now(), metadata, mol_dbs=['HDMB'])
+    ds.save(db)
+
     ion_metrics_df = pd.DataFrame({'formula': ['H2O', 'H2O', 'CO2', 'CO2', 'H2SO4', 'H2SO4'],
                                    'adduct': ['+H', '+K', '+H', '+K', '+H', '+K'],
-                                   'fdr': [0.05, 0.1, 0.05, 0.1, 0.05, 0.1]})
-    num_ions = len(ion_metrics_df)
+                                   'fdr': [0.05, 0.1, 0.05, 0.1, 0.05, 0.1],
+                                   'image_id': list(map(str, range(6)))})
+    job_id, = db.insert_return("INSERT INTO job (db_id, ds_id, status) "
+                               "VALUES (1, %s, 'FINISHED') "
+                               "RETURNING id", [[ds.id]])
+    db.insert('INSERT INTO iso_image_metrics(job_id, db_id, sf, adduct, fdr, iso_image_ids) '
+              'VALUES (%s, 1, %s, %s, %s, %s)',
+              [(job_id, r.formula, r.adduct, r.fdr, [r.image_id]) for i, r in ion_metrics_df.iterrows()])
+    img_svc_mock = MagicMock(spec=ImageStoreServiceWrapper)
+    img_svc_mock.get_ion_images_for_analysis.side_effect = mock_get_ion_images_for_analysis
 
-    test_images = [_make_sparse_ion_imgs(i) for i in range(num_ions)]
-    ion_iso_images = pyspark_context.parallelize(zip(range(num_ions), test_images), num_ions)
-    alpha_channel = np.linspace(0, 25, 25, False).reshape((5, 5)) % 2
-
-    Colocalization(db).run_coloc_job_for_new_ds(ds, 'HMDB', ion_metrics_df, ion_iso_images, alpha_channel)
+    Colocalization(db, img_store=img_svc_mock).run_coloc_job(ds.id)
 
     jobs = db.select('SELECT id, error, sample_ion_ids FROM graphql.coloc_job')
     annotations = db.select('SELECT coloc_ion_ids, coloc_coeffs FROM graphql.coloc_annotation')
@@ -52,4 +66,4 @@ def test_new_ds_saves_to_db(test_db, metadata, ds_config, pyspark_context):
     assert jobs[0][2]
     assert len(annotations) > 10
     assert all(len(ann[0]) == len(ann[1]) for ann in annotations)
-    assert len(ions) == num_ions
+    assert len(ions) == len(ion_metrics_df)
