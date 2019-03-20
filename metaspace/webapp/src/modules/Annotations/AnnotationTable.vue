@@ -49,7 +49,9 @@
         No annotations were found
       </p>
 
-      <el-table-column label="Lab" v-if="!hidden('Group')"
+      <el-table-column key="lab"
+                       v-if="!hidden('Group')"
+                       label="Lab"
                        min-width="95">
         <template slot-scope="props">
           <div class="cell-wrapper">
@@ -65,8 +67,10 @@
         </template>
       </el-table-column>
 
-      <el-table-column property="dataset.name"
-                       label="Dataset" v-if="!hidden('Dataset')"
+      <el-table-column key="dataset"
+                       v-if="!hidden('Dataset')"
+                       property="dataset.name"
+                       label="Dataset"
                        min-width="140">
         <template slot-scope="props">
           <div class="cell-wrapper">
@@ -80,7 +84,8 @@
         </template>
       </el-table-column>
 
-      <el-table-column property="sumFormula"
+      <el-table-column key="sumFormula"
+                       property="sumFormula"
                        label="Annotation"
                        sortable="custom"
                        min-width="120">
@@ -106,7 +111,8 @@
         </template>
       </el-table-column>
 
-      <el-table-column property="mz"
+      <el-table-column key="mz"
+                       property="mz"
                        label="m/z"
                        sortable="custom"
                        min-width="65">
@@ -122,7 +128,8 @@
         </template>
       </el-table-column>
 
-      <el-table-column property="msmScore"
+      <el-table-column key="msmScore"
+                       property="msmScore"
                        label="MSM"
                        sortable="custom"
                        min-width="60">
@@ -131,7 +138,8 @@
         </template>
       </el-table-column>
 
-      <el-table-column property="fdrLevel"
+      <el-table-column key="fdrLevel"
+                       property="fdrLevel"
                        label="FDR"
                        class-name="fdr-cell"
                        sortable="custom"
@@ -141,7 +149,8 @@
         </template>
       </el-table-column>
 
-      <el-table-column v-if="!hidden('ColocalizationCoeff')"
+      <el-table-column key="colocalizationCoeff"
+                       v-if="!hidden('ColocalizationCoeff')"
                        property="colocalizationCoeff"
                        label="Coloc."
                        class-name="coloc-cell"

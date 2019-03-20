@@ -81,7 +81,7 @@ export interface FilterSpecification {
   filterable?: boolean;
   multiple?: boolean;
   hidden?: boolean | (() => boolean);
-  encoding?: 'list' | 'json' | 'bool';
+  encoding?: 'list' | 'json' | 'bool' | 'number';
   optionFormatter?(value: any): string;
   valueFormatter?(value: any): string;
   valueKey?: string;
@@ -164,6 +164,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     options: [0.05, 0.1, 0.2, 0.5],
     optionFormatter: formatFDR,
     valueFormatter: formatFDR,
+    encoding: 'number',
     filterable: false,
     removable: false
   },

@@ -8,6 +8,7 @@ import Vuex from 'vuex';
 import { sync } from 'vuex-router-sync';
 jest.mock('file-saver');
 import * as FileSaver from 'file-saver';
+import {merge} from 'lodash-es';
 const mockFileSaver = FileSaver as jest.Mocked<typeof FileSaver>;
 
 Vue.use(Vuex);
@@ -29,8 +30,8 @@ describe('DatasetTable', () => {
   });
   const mockFdrCounts = {
     dbName: 'HMDB-v2.5',
-    levels: [0.05, 0.1, 0.5],
-    counts: [1, 2, 20],
+    levels: [10],
+    counts: [20],
   };
   const mockDataset = {
     id: 'REPLACEME',
@@ -66,9 +67,11 @@ describe('DatasetTable', () => {
       Query: () => ({
         allDatasets: (_: any, {filter:{status}, offset}: any) => {
           return [
-            {...mockDataset, id: `${status}${offset+1}`, status},
-            {...mockDataset, groupApproved: false, id: `${status}${offset+2}`, status}
-          ]
+            merge({}, mockDataset, {principalInvestigator: null, id: `${status}1`, status}),
+            merge({}, mockDataset, {principalInvestigator: null, groupApproved: false, id: `${status}2`, status}),
+            merge({}, mockDataset, {principalInvestigator: null, group: {adminNames: ['group','admin','names']}, id: `${status}3`, status}),
+            merge({}, mockDataset, {principalInvestigator: {name:'principal investigator'}, id: `${status}4`, status}),
+          ].slice(offset, offset+2);
         },
         countDatasets: () => 4,
       })

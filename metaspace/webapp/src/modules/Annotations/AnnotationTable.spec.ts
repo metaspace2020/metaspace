@@ -8,6 +8,7 @@ import Vuex from 'vuex';
 import { sync } from 'vuex-router-sync';
 jest.mock('file-saver');
 import * as FileSaver from 'file-saver';
+import {merge} from 'lodash-es';
 const mockFileSaver = FileSaver as jest.Mocked<typeof FileSaver>;
 
 Vue.use(Vuex);
@@ -71,8 +72,8 @@ describe('AnnotationTable', () => {
       Query: () => ({
         allAnnotations: (_: any, {offset}: any) => {
           return [
-            {...mockAnnotation, id: `AnnotationId_${offset+1}`, mz: offset+1},
-            {...mockAnnotation, groupApproved: false, id: `AnnotationId_${offset+2}`, mz: offset+2}
+            merge({}, mockAnnotation, {id: `AnnotationId_${offset+1}`, mz: offset+1}),
+            merge({}, mockAnnotation, {dataset: {groupApproved: false}, id: `AnnotationId_${offset+2}`, mz: offset+2}),
           ]
         },
         countAnnotations: () => 4,

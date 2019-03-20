@@ -2,11 +2,11 @@
 
 exports[`DatasetTable should be able to export a CSV 1`] = `
 "# URL: http://localhost/
-\\"datasetId\\",\\"datasetName\\",\\"group\\",\\"submitter\\",\\"PI\\",\\"organism\\",\\"organismPart\\",\\"condition\\",\\"growthConditions\\",\\"ionisationSource\\",\\"maldiMatrix\\",\\"analyzer\\",\\"resPower400\\",\\"polarity\\",\\"uploadDateTime\\",\\"FDR@10% + DataBase\\",\\"opticalImage\\"
-\\"FINISHED1\\",\\"datasets.0.name\\",\\"datasets.0.group.shortName\\",\\"datasets.0.submitter.name\\",\\"datasets.0.principalInvestigator.name\\",\\"datasets.0.organism\\",\\"datasets.0.organismPart\\",\\"datasets.0.condition\\",\\"datasets.0.growthConditions\\",\\"datasets.0.ionisationSource\\",\\"datasets.0.maldiMatrix\\",\\"datasets.0.analyzer.type\\",\\"13\\",\\"positive\\",\\"datasets.0.uploadDateTime\\",\\"1,2,20 HMDB-v2.5\\",\\"http://localhostdatasets.0.rawOpticalImageUrl\\"
-\\"FINISHED2\\",\\"datasets.1.name\\",\\"\\",\\"datasets.1.submitter.name\\",\\"datasets.1.principalInvestigator.name\\",\\"datasets.1.organism\\",\\"datasets.1.organismPart\\",\\"datasets.1.condition\\",\\"datasets.1.growthConditions\\",\\"datasets.1.ionisationSource\\",\\"datasets.1.maldiMatrix\\",\\"datasets.1.analyzer.type\\",\\"13\\",\\"positive\\",\\"datasets.1.uploadDateTime\\",\\"1,2,20 HMDB-v2.5\\",\\"http://localhostdatasets.1.rawOpticalImageUrl\\"
-\\"FINISHED3\\",\\"datasets.0.name\\",\\"datasets.0.group.shortName\\",\\"datasets.0.submitter.name\\",\\"datasets.0.principalInvestigator.name\\",\\"datasets.0.organism\\",\\"datasets.0.organismPart\\",\\"datasets.0.condition\\",\\"datasets.0.growthConditions\\",\\"datasets.0.ionisationSource\\",\\"datasets.0.maldiMatrix\\",\\"datasets.0.analyzer.type\\",\\"13\\",\\"positive\\",\\"datasets.0.uploadDateTime\\",\\"1,2,20 HMDB-v2.5\\",\\"http://localhostdatasets.0.rawOpticalImageUrl\\"
-\\"FINISHED4\\",\\"datasets.1.name\\",\\"\\",\\"datasets.1.submitter.name\\",\\"datasets.1.principalInvestigator.name\\",\\"datasets.1.organism\\",\\"datasets.1.organismPart\\",\\"datasets.1.condition\\",\\"datasets.1.growthConditions\\",\\"datasets.1.ionisationSource\\",\\"datasets.1.maldiMatrix\\",\\"datasets.1.analyzer.type\\",\\"13\\",\\"positive\\",\\"datasets.1.uploadDateTime\\",\\"1,2,20 HMDB-v2.5\\",\\"http://localhostdatasets.1.rawOpticalImageUrl\\"
+\\"datasetId\\",\\"datasetName\\",\\"group\\",\\"submitter\\",\\"PI\\",\\"organism\\",\\"organismPart\\",\\"condition\\",\\"growthConditions\\",\\"ionisationSource\\",\\"maldiMatrix\\",\\"analyzer\\",\\"resPower400\\",\\"polarity\\",\\"uploadDateTime\\",\\"FDR@10%\\",\\"database\\",\\"opticalImage\\"
+\\"FINISHED1\\",\\"datasets.0.name\\",\\"datasets.0.group.shortName\\",\\"datasets.0.submitter.name\\",\\"datasets.0.group.adminNames, datasets.0.group.adminNames\\",\\"datasets.0.organism\\",\\"datasets.0.organismPart\\",\\"datasets.0.condition\\",\\"datasets.0.growthConditions\\",\\"datasets.0.ionisationSource\\",\\"datasets.0.maldiMatrix\\",\\"datasets.0.analyzer.type\\",\\"13\\",\\"positive\\",\\"datasets.0.uploadDateTime\\",\\"20\\",\\"HMDB-v2.5\\",\\"http://localhostdatasets.0.rawOpticalImageUrl\\"
+\\"FINISHED2\\",\\"datasets.1.name\\",\\"\\",\\"datasets.1.submitter.name\\",\\"\\",\\"datasets.1.organism\\",\\"datasets.1.organismPart\\",\\"datasets.1.condition\\",\\"datasets.1.growthConditions\\",\\"datasets.1.ionisationSource\\",\\"datasets.1.maldiMatrix\\",\\"datasets.1.analyzer.type\\",\\"13\\",\\"positive\\",\\"datasets.1.uploadDateTime\\",\\"20\\",\\"HMDB-v2.5\\",\\"http://localhostdatasets.1.rawOpticalImageUrl\\"
+\\"FINISHED3\\",\\"datasets.0.name\\",\\"datasets.0.group.shortName\\",\\"datasets.0.submitter.name\\",\\"group, admin, names\\",\\"datasets.0.organism\\",\\"datasets.0.organismPart\\",\\"datasets.0.condition\\",\\"datasets.0.growthConditions\\",\\"datasets.0.ionisationSource\\",\\"datasets.0.maldiMatrix\\",\\"datasets.0.analyzer.type\\",\\"13\\",\\"positive\\",\\"datasets.0.uploadDateTime\\",\\"20\\",\\"HMDB-v2.5\\",\\"http://localhostdatasets.0.rawOpticalImageUrl\\"
+\\"FINISHED4\\",\\"datasets.1.name\\",\\"datasets.1.group.shortName\\",\\"datasets.1.submitter.name\\",\\"principal investigator\\",\\"datasets.1.organism\\",\\"datasets.1.organismPart\\",\\"datasets.1.condition\\",\\"datasets.1.growthConditions\\",\\"datasets.1.ionisationSource\\",\\"datasets.1.maldiMatrix\\",\\"datasets.1.analyzer.type\\",\\"13\\",\\"positive\\",\\"datasets.1.uploadDateTime\\",\\"20\\",\\"HMDB-v2.5\\",\\"http://localhostdatasets.1.rawOpticalImageUrl\\"
 "
 `;
 
@@ -394,8 +394,8 @@ exports[`DatasetTable should match snapshot 1`] = `
     </mock-el-dropdown>
     </span>
   </div>
-  <div class="ds-item-line"><span><a href="/annotations?db=HMDB-v2.5&amp;ds=FINISHED1&amp;mdtype=allDatasets.0.metadataType" class="">1, 2, 20 annotations</a>
-        @ FDR 0.05, 0.1, 0.5% (HMDB-v2.5)
+  <div class="ds-item-line"><span><a href="/annotations?db=HMDB-v2.5&amp;ds=FINISHED1&amp;mdtype=allDatasets.0.metadataType" class="">20 annotations</a>
+        @ FDR 10% (HMDB-v2.5)
       </span></div>
 </div>
 <div class="ds-actions"><span><i class="el-icon-picture"></i> <mock-el-popover trigger="hover" placement="top"><div slot-key="default"><div class="db-link-list">

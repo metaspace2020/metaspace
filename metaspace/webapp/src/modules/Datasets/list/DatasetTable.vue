@@ -1,4 +1,4 @@
-<template>
+\<template>
   <div>
     <filter-panel level="dataset"></filter-panel>
 
@@ -228,18 +228,22 @@
 
        csv += formatCsvRow(['datasetId', 'datasetName', 'group', 'submitter',
                'PI', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource',
-               'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime','FDR@10% + DataBase', 'opticalImage'
+               'maldiMatrix', 'analyzer', 'resPower400', 'polarity', 'uploadDateTime',
+               'FDR@10%', 'database', 'opticalImage'
        ]);
 
        function person(p) { return p ? p.name : ''; }
 
        function formatRow(row) {
+         const {groupApproved, group, principalInvestigator} = row;
          return formatCsvRow([
            row.id,
            row.name,
-           row.groupApproved && row.group ? row.group.shortName : '',
+           groupApproved && group ? group.shortName : '',
            person(row.submitter),
-           person(row.principalInvestigator),
+           principalInvestigator ? person(principalInvestigator)
+             : groupApproved && group ? (group.adminNames || []).join(', ')
+             : '',
            row.organism,
            row.organismPart,
            row.condition,
@@ -250,7 +254,8 @@
            Math.round(row.analyzer.resolvingPower),
            row.polarity.toLowerCase(),
            row.uploadDateTime,
-           row.fdrCounts ? `${row.fdrCounts.counts}` + ' ' + `${row.fdrCounts.dbName}` : '',
+           row.fdrCounts ? row.fdrCounts.counts : '',
+           row.fdrCounts ? row.fdrCounts.dbName : '',
            (row.rawOpticalImageUrl) ? window.location.origin + row.rawOpticalImageUrl : 'No optical image'
          ]);
        }

@@ -3,7 +3,7 @@
     <div class="small-peak-image" v-for="(other, idx) in annotations" :key="other.ion">
       <component :is="other.ion !== colocReferenceIon ? 'router-link' : 'span'" :to="linkToAnnotation(other)" class="ion-link">
 
-        <el-popover v-if="other.ion !== colocReferenceIon" trigger="hover" placement="top">
+        <el-popover trigger="hover" placement="top" :openDelay="100" class="mol-formula-line">
           <div>Candidate molecules ({{ other.possibleCompounds.length }}):
             <ul>
               <li v-for="comp in other.possibleCompounds">
@@ -12,9 +12,9 @@
             </ul>
           </div>
 
-          <span slot="reference" class="sf cell-span" v-html="renderFormula(other)" />
+          <span v-if="other.ion !== colocReferenceIon" slot="reference" class="sf cell-span" v-html="renderFormula(other)" />
+          <span v-else slot="reference">Reference annotation<sub><!-- Subscript to make height consistent with formulas --></sub></span>
         </el-popover>
-        <span v-else>Reference annotation<sub><!-- Subscript to make height consistent with formulas --></sub></span>
         <br/>
         {{  other.mz.toFixed(4) }} <br/>
         <image-loader :src="other.isotopeImages[0].url"
@@ -25,8 +25,9 @@
         </image-loader>
         <el-popover
           trigger="hover"
-          placement="bottom"
           class="rel-annot-details"
+          placement="top"
+          :openDelay="100"
         >
           <div slot="reference">
             <span>{{ other.msmScore.toFixed(3) }},</span>
@@ -171,7 +172,7 @@ export default {
   .small-peak-image {
     font-size: 1rem;
     vertical-align: top;
-    padding: 0 5px 0 5px;
+    padding: 8px 5px;
     text-align: center;
     flex: 0 1 260px;
     box-sizing: border-box;
@@ -180,6 +181,10 @@ export default {
       flex-basis: 100%;
     }
   }
+  .mol-formula-line {
+    line-height: 1em;
+  }
+
   .ion-link, a.ion-link:link {
     color: $--color-text-primary;
     text-decoration: none;
