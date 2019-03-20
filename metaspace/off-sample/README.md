@@ -5,13 +5,13 @@ Simple API for classifying Imaging Mass Spectrometry Ion images as on/off sample
 Inside root directory
 
 ```
-docker build -t metaspace2020/off-sample -f docker/Dockerfile
-docker run -d -p 8000:8000 --name off-sample metaspace2020/off-sample
+docker build -t metaspace2020/off-sample -f docker/Dockerfile .
+docker run -d -p 9876:8000 --name off-sample metaspace2020/off-sample
 ```
 
 # Using API
 
-The API will be available at [http://localhost:8000](http://localhost:8000)
+The API will be available at [http://localhost:9876](http://localhost:9876)
 
 It accepts POST requests with JSON, images must be Base64 encoded, max 32 per request:
 

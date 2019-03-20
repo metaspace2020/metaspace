@@ -5,21 +5,17 @@
 # pytorch       latest (pip)
 # ==================================================================
 
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     PIP_INSTALL="python -m pip --no-cache-dir install --upgrade" && \
     GIT_CLONE="git clone --depth 10" && \
-
     rm -rf /var/lib/apt/lists/* \
            /etc/apt/sources.list.d/cuda.list \
            /etc/apt/sources.list.d/nvidia-ml.list && \
-
     apt-get update && \
-
 # ==================================================================
 # tools
 # ------------------------------------------------------------------
-
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         build-essential \
         ca-certificates \
@@ -29,11 +25,9 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         nano \
         vim \
         && \
-
 # ==================================================================
 # python
 # ------------------------------------------------------------------
-
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         software-properties-common \
         && \
@@ -42,6 +36,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     DEBIAN_FRONTEND=noninteractive $APT_INSTALL \
         python3.6 \
         python3.6-dev \
+        python3-distutils \
         libsm6 libxrender1 libxext6 \
         && \
     wget -O ~/get-pip.py \
@@ -61,11 +56,9 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         redis \
         gunicorn \
         && \
-
 # ==================================================================
 # pytorch
 # ------------------------------------------------------------------
-
     $PIP_INSTALL \
         future \
         protobuf \
@@ -81,20 +74,21 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         torchvision \
         fastai==1.0.48 \
         && \
-
+    python -m pip uninstall -y spacy \
+    && \
 # ==================================================================
 # config & cleanup
 # ------------------------------------------------------------------
-
     ldconfig && \
     apt-get clean && \
     apt-get autoremove && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/*
 
 WORKDIR /app
-COPY . .
-COPY docker/config.ini ./config/config.ini
-COPY docker/start-all.sh ./start-all.sh
+COPY models ./models
+COPY off_sample ./off_sample
+COPY app.py docker/start-all.sh ./
+COPY config/default.ini ./config/config.ini
 
 EXPOSE 8000
 

@@ -22,36 +22,40 @@ class PredictResource(object):
     def save_images(self, doc, path):
         images_doc = doc['images'][:self.images_limit]
         logger.info(f"Saving {len(images_doc)} images to {path}")
+        image_paths = []
         for i, image_doc in enumerate(images_doc):
             img_bytes = base64.b64decode(image_doc['content'])
             image_path = path / f'image-{i}.png'
             with open(image_path, 'wb') as f:
                 f.write(img_bytes)
+            image_paths.append(image_path)
+        return image_paths
 
-    def predict(self, path):
-        logger.info(f'Running model on images in {path}')
-        probs, labels = self.model.predict(path)
+    def predict(self, image_paths):
+        path = Path(image_paths[0]).parent
+        logger.info(f'Running model on {len(image_paths)} images in {path}')
+        probs, labels = self.model.predict(image_paths)
         pred_list = [{'prob': float(prob), 'label': label}
                      for prob, label in zip(probs, labels)]
         return {'predictions': pred_list}
 
     def on_post(self, req, resp):
-        images_path = None
+        path = None
         try:
             req_doc = json.load(req.bounded_stream)
-            images_path = self.data_path / str(uuid4())
-            images_path.mkdir()
-            self.save_images(req_doc, images_path)
+            path = self.data_path / str(uuid4())
+            path.mkdir()
+            image_paths = self.save_images(req_doc, path)
 
-            resp_doc = self.predict(images_path)
+            resp_doc = self.predict(image_paths)
             resp.body = json.dumps(resp_doc)
         except IOError as e:
             logger.error(e, exc_info=True)
             raise falcon.HTTPError('500')
         finally:
-            if images_path:
-                logger.info(f'Cleaning path {images_path}')
-                shutil.rmtree(images_path)
+            if path:
+                logger.info(f'Cleaning path {path}')
+                shutil.rmtree(path)
 
 
 class PingResource(object):

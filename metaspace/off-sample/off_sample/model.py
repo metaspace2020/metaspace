@@ -9,8 +9,8 @@ class OffSamplePredictModel(object):
         self.learn = load_learner('.', model_path)
         self.target_class_idx = self.learn.data.classes.index('off')
 
-    def predict(self, path):
-        item_list = ImageList.from_folder(path)
+    def predict(self, paths):
+        item_list = ImageList(paths)
         self.learn.data.add_test(item_list)
 
         pred_probs, _ = self.learn.get_preds(DatasetType.Test)
