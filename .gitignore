@@ -44,5 +44,6 @@ dist
 # Other files that should usually not be committed
 *.pkl
 *.zip
+.ipynb_checkpoints
 
 ansible/aws/env
