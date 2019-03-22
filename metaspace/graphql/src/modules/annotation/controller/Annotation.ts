@@ -1,4 +1,4 @@
-import * as _ from '../../../../resolvers';
+import * as _ from 'lodash';
 import fetch from 'node-fetch';
 import {logger} from '../../../../utils';
 import {FieldResolversFor} from '../../../bindingTypes';
@@ -40,8 +40,16 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
         infoURL = `http://ecmdb.ca/compounds/${id}`;
       }
 
+      const cleanName = names[i]
+        .trim()
+        // Ensure there are no instances of ", " in the molecule name, because people use that substring to split
+        // the list of molecules in the exported Annotations CSV
+        .replace(/, +/g, ',')
+        // Also clean up molecule names that end in ',' or ';'
+        .replace(/[,;]*$/, '');
+
       compounds.push({
-        name: names[i],
+        name: cleanName,
         imageURL: `/mol-images/${dbBaseName}/${id}.svg`,
         information: [{database: dbName, url: infoURL, databaseId: id}],
       });
