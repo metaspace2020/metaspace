@@ -16,3 +16,7 @@
 * filter-icon.svg
     SIL Open Font License / 
     https://www.iconfinder.com/icons/1608702/filter_icon
+
+* no-image.svg
+    Public domain
+    https://en.wikipedia.org/wiki/File:No_image_available.svg (modified)
