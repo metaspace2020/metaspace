@@ -11,11 +11,9 @@ import {AllHtmlEntities} from 'html-entities';
 const cleanMoleculeName = (name: string) =>
   // Decode &alpha; &beta; &gamma; etc.
   (new AllHtmlEntities).decode(name)
+    // Remove trailing whitespace
     .trim()
-    // Ensure there are no instances of ", " in the molecule name, because people use that substring to split
-    // the list of molecules in the exported Annotations CSV
-    .replace(/, +/g, ',')
-    // Also clean up molecule names that end in ',' or ';'
+    // Clean up molecule names that end in ',' or ';'
     .replace(/[,;]*$/, '');
 
 const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithColoc> = {

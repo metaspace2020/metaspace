@@ -197,7 +197,7 @@
 </template>
 
 <script>
-  import {renderMolFormula, csvExportHeader, safeJsonParse} from '../../util';
+  import {renderMolFormula} from '../../util';
  import ProgressButton from './ProgressButton.vue';
  import {
    annotationListQuery,
@@ -206,7 +206,7 @@
 
  import Vue from 'vue';
  import FileSaver from 'file-saver';
- import formatCsvRow from '../../lib/formatCsvRow';
+  import formatCsvRow, {csvExportHeader, formatCsvTextArray} from '../../lib/formatCsvRow';
  import {get, invert} from 'lodash-es';
 
  // 38 = up, 40 = down, 74 = j, 75 = k
@@ -529,8 +529,8 @@
            row.dataset.id,
            sumFormula, "M" + adduct, mz,
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
-           row.possibleCompounds.map(m => m.name).join(', '),
-           row.possibleCompounds.map(databaseId).join(', ')
+           formatCsvTextArray(row.possibleCompounds.map(m => m.name)),
+           formatCsvTextArray(row.possibleCompounds.map(databaseId))
          ];
          if (includeColoc) {
            cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff);

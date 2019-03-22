@@ -58,10 +58,6 @@ function mzFilterPrecision(value: number | string): string {
   }
 }
 
-function csvExportHeader(): string {
-  return '# Generated at ' + new Date().toString() + '\n# URL: ' + window.location.href + '\n';
-}
-
 function scrollDistance(event: MouseWheelEvent) {
   let sY = 0;
   if ('detail'      in event) { sY = event.detail * 2; }
@@ -117,7 +113,6 @@ export {
   decodePayload,
   pathFromUUID,
   mzFilterPrecision,
-  csvExportHeader,
   scrollDistance,
   mdTypeSupportsOpticalImages,
   getOS,
