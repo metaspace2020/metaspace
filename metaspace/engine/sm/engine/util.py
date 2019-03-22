@@ -47,7 +47,7 @@ def init_loggers(config=None):
 class SMConfig(object):
     """ Engine configuration manager """
 
-    _path = None
+    _path = 'conf/config.json'
     _config_dict = {}
 
     @classmethod

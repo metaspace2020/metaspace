@@ -126,7 +126,8 @@ def fill_db(test_db, metadata, ds_config):
               rows=[(1, 0, 'H2O')])
     db.insert(("INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, iso_image_ids) "
                "VALUES (%s, %s, %s, %s, %s)"),
-              rows=[(0, 0, 'H2O', '+H', ['iso_image_1_id', 'iso_image_2_id'])])
+              rows=[(0, 0, 'H2O', '+H', ['iso_image_11', 'iso_image_12']),
+                    (0, 0, 'CH4', '+H', ['iso_image_21', 'iso_image_22'])])
     user_id = str(uuid.uuid4())
     db.insert("INSERT INTO graphql.user (id, name, email) VALUES (%s, %s, %s)",
               rows=[(user_id, 'name', 'name@embl.de')])
