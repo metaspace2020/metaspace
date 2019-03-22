@@ -6,6 +6,17 @@ import {Annotation, ColocalizationCoeffFilter} from '../../../binding';
 import {ESAnnotation} from '../../../../esConnector';
 import config from '../../../utils/config';
 import {ESAnnotationWithColoc} from '../queryFilters';
+import {AllHtmlEntities} from 'html-entities';
+
+const cleanMoleculeName = (name: string) =>
+  // Decode &alpha; &beta; &gamma; etc.
+  (new AllHtmlEntities).decode(name)
+    .trim()
+    // Ensure there are no instances of ", " in the molecule name, because people use that substring to split
+    // the list of molecules in the exported Annotations CSV
+    .replace(/, +/g, ',')
+    // Also clean up molecule names that end in ',' or ';'
+    .replace(/[,;]*$/, '');
 
 const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithColoc> = {
   id(hit) {
@@ -40,16 +51,8 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
         infoURL = `http://ecmdb.ca/compounds/${id}`;
       }
 
-      const cleanName = names[i]
-        .trim()
-        // Ensure there are no instances of ", " in the molecule name, because people use that substring to split
-        // the list of molecules in the exported Annotations CSV
-        .replace(/, +/g, ',')
-        // Also clean up molecule names that end in ',' or ';'
-        .replace(/[,;]*$/, '');
-
       compounds.push({
-        name: cleanName,
+        name: cleanMoleculeName(names[i]),
         imageURL: `/mol-images/${dbBaseName}/${id}.svg`,
         information: [{database: dbName, url: infoURL, databaseId: id}],
       });
