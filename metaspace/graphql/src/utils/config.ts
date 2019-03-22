@@ -7,6 +7,8 @@ export interface ImageCategoryConfig {
   storage_types: string[],
 }
 
+export type ImageCategory = 'iso_image' | 'optical_image' | 'raw_optical_image' | 'ion_thumbnail';
+
 export interface Config {
   port: number;
   ws_port: number;
@@ -20,11 +22,7 @@ export interface Config {
   };
   img_upload: {
     iso_img_fs_path: string;
-  };
-  categories: {
-    iso_image: ImageCategoryConfig;
-    optical_image: ImageCategoryConfig;
-    raw_optical_image: ImageCategoryConfig;
+    categories: Record<ImageCategory, ImageCategoryConfig>;
   };
   services: {
     moldb_service_host: string;
