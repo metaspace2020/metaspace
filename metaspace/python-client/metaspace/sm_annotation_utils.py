@@ -37,16 +37,16 @@ class GraphQLClient(object):
         self.host = self._config['host']
         self.session = requests.Session()
         self.session.verify = self._config['verify_certificate']
-        res = self.session.post(self._config['signin_url'], params={
+        self.res = self.session.post(self._config['signin_url'], params={
             "email": self._config['usr_email'],
             "password": self._config['usr_pass']
         })
-        if res.status_code == 401:
+        if self.res.status_code == 401:
             print('Unauthorized. Only public but not private datasets will be accessible.')
-        elif res.status_code == 200:
+        elif self.res.status_code == 200:
             print('Authorized.')
-        elif res.status_code != 200:
-            res.raise_for_status()
+        elif self.res.status_code != 200:
+            self.res.raise_for_status()
 
 
     def query(self, query, variables={}):
@@ -617,6 +617,9 @@ class SMInstance(object):
                 http_auth=(self._es_user, self._es_secret),
                 index=self._es_index
             )
+
+    def login_status(self):
+        return self._gqclient.res.status_code
 
     def dataset(self, name=None, id=None):
         if id:
