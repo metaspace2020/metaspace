@@ -38,7 +38,7 @@ def base64_images_to_doc(images):
     return images_doc
 
 
-def retry_on_error(num_retries=3):
+def retry_on_error(num_retries=1):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -87,21 +87,24 @@ UPD_OFF_SAMPLE = (
 
 def classify_images(it, get_image):
     image_predictions = []
-    for chunk in make_chunk_gen(it, chunk_size=32):
-        logger.info('Classifying {} images'.format(len(chunk)))
+    try:
+        for chunk in make_chunk_gen(it, chunk_size=32):
+            logger.info('Off-sample classification of {} images'.format(len(chunk)))
 
-        base64_images = []
-        for elem in chunk:
-            img = get_image(elem)
-            base64_images.append(encode_image_as_base64(img))
+            base64_images = []
+            for elem in chunk:
+                img = get_image(elem)
+                base64_images.append(encode_image_as_base64(img))
 
-        images_doc = base64_images_to_doc(base64_images)
-        pred_doc = call_api('/predict', doc=images_doc)
-        image_predictions.extend(pred_doc['predictions'])
+            images_doc = base64_images_to_doc(base64_images)
+            pred_doc = call_api('/predict', doc=images_doc)
+            image_predictions.extend(pred_doc['predictions'])
+    except Exception as e:
+        logger.warning(f'Failed to classify images: {e}')
     return image_predictions
 
 
-def classify_and_save_dataset_ion_images(db, ds):
+def classify_dataset_ion_images(db, ds):
     image_store_service = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
     storage_type = ds.get_ion_img_storage_type(db)
     get_image_by_id = partial(image_store_service.get_image_by_id, storage_type, 'iso_image')

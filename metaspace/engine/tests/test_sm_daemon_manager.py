@@ -1,3 +1,4 @@
+from itertools import product
 from unittest.mock import call
 from unittest.mock import patch, MagicMock
 from datetime import datetime
@@ -93,7 +94,7 @@ class TestSMDaemonDatasetManager:
 
         manager.delete(ds)
 
-        ids = ['iso_image_{}_id'.format(id) for id in range(1, 3)]
+        ids = [f'iso_image_{i}{j}' for i, j in product([1, 2], [1, 2])]
         img_store_service_mock.delete_image_by_id.assert_has_calls(
             [call('fs', 'iso_image', ids[0]), call('fs', 'iso_image', ids[1])])
         es_mock.delete_ds.assert_called_with(ds_id)

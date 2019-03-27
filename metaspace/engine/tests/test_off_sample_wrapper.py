@@ -3,7 +3,7 @@ from mock import patch
 
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
-from sm.engine.off_sample_wrapper import classify_ion_images
+from sm.engine.off_sample_wrapper import classify_dataset_ion_images
 from sm.engine.tests.util import sm_config, test_db, fill_db, metadata, ds_config, pyspark_context
 
 
@@ -23,7 +23,7 @@ def test_classify_ion_images_preds_saved(call_api_mock, ImageStoreServiceWrapper
     ds_id = '2000-01-01'
     ds = Dataset.load(db, ds_id)
 
-    classify_ion_images(db, ds)
+    classify_dataset_ion_images(db, ds)
 
     annotations = db.select_with_fields(
         ('select off_sample '
