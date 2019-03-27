@@ -1,5 +1,5 @@
 from PIL import Image
-from mock import patch
+from unittest.mock import patch
 
 from sm.engine.dataset import Dataset
 from sm.engine.db import DB
