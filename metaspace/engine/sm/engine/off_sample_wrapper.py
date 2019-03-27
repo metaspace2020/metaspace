@@ -38,7 +38,7 @@ def base64_images_to_doc(images):
     return images_doc
 
 
-def retry_on_error(num_retries=1):
+def retry_on_error(num_retries=3):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
