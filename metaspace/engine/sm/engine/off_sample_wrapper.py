@@ -12,7 +12,7 @@ from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig
 
 sm_config = SMConfig.get_conf()
-api_host = sm_config['services']['off_sample']
+api_endpoint = sm_config['services']['off_sample']
 
 logger = logging.getLogger('update-daemon')
 
@@ -24,19 +24,16 @@ def make_chunk_gen(a, chunk_size):
         yield image_path_chunk
 
 
-def fetch_convert_images_to_json(it, get_image_by_id):
-    base64_images = []
-    for img_id in it:
-        img = get_image_by_id(img_id)
+def encode_image_as_base64(img):
+    fp = BytesIO()
+    img.save(fp, format='PNG')
+    fp.seek(0)
+    return base64.b64encode(fp.read()).decode()
 
-        fp = BytesIO()
-        img.save(fp, format='PNG')
-        fp.seek(0)
-        content = base64.b64encode(fp.read()).decode()
-        base64_images.append(content)
 
+def base64_images_to_doc(images):
     images_doc = {
-        'images': [{'content': content} for content in base64_images]
+        'images': [{'content': content} for content in images]
     }
     return images_doc
 
@@ -64,9 +61,9 @@ def retry_on_error(num_retries=3):
 @retry_on_error()
 def call_api(uri='', doc=None):
     if doc:
-        resp = post(url=api_host + uri, json=doc)
+        resp = post(url=api_endpoint + uri, json=doc)
     else:
-        resp = get(url=api_host + uri)
+        resp = get(url=api_endpoint + uri)
     if resp.status_code == 200:
         return resp.json()
     else:
@@ -88,19 +85,30 @@ UPD_OFF_SAMPLE = (
 )
 
 
-def classify_ion_images(db, ds):
-    annotations = db.select_with_fields(SEL_ION_IMAGES, (ds.id,))
+def classify_images(it, get_image):
+    image_predictions = []
+    for chunk in make_chunk_gen(it, chunk_size=32):
+        logger.info('Classifying {} images'.format(len(chunk)))
 
+        base64_images = []
+        for elem in chunk:
+            img = get_image(elem)
+            base64_images.append(encode_image_as_base64(img))
+
+        images_doc = base64_images_to_doc(base64_images)
+        pred_doc = call_api('/predict', doc=images_doc)
+        image_predictions.extend(pred_doc['predictions'])
+    return image_predictions
+
+
+def classify_and_save_dataset_ion_images(db, ds):
     image_store_service = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
     storage_type = ds.get_ion_img_storage_type(db)
     get_image_by_id = partial(image_store_service.get_image_by_id, storage_type, 'iso_image')
 
-    image_predictions = []
-    for chunk in make_chunk_gen(annotations, chunk_size=32):
-        images_doc = fetch_convert_images_to_json([d['img_id'] for d in chunk],
-                                                  get_image_by_id)
-        pred_doc = call_api('/predict', doc=images_doc)
-        image_predictions.extend(pred_doc['predictions'])
+    annotations = db.select_with_fields(SEL_ION_IMAGES, (ds.id,))
+    image_ids = [a['img_id'] for a in annotations]
+    image_predictions = classify_images(image_ids, get_image_by_id)
 
     rows = [(ann['ann_id'], json.dumps(pred))
             for ann, pred in zip(annotations, image_predictions)]
