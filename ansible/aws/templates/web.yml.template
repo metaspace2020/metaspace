@@ -1,7 +1,5 @@
 ---
 
-off_sample_api_endpoint: OFF_SAMPLE_API_ENDPOINT
-
 ingest_node_pipeline_on_failure: !unsafe "{{ _ingest.on_failure_message }}"
 
 filebeat:
