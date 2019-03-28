@@ -595,6 +595,7 @@ class SMInstance(object):
         self._config['usr_email'] = email
         self._config['usr_pass'] = password
         self.reconnect()
+        return self._gqclient.res.status_code == 200
 
     def reconnect(self):
         self._gqclient = GraphQLClient(self._config)
@@ -617,9 +618,6 @@ class SMInstance(object):
                 http_auth=(self._es_user, self._es_secret),
                 index=self._es_index
             )
-
-    def login_status(self):
-        return self._gqclient.res.status_code
 
     def dataset(self, name=None, id=None):
         if id:
