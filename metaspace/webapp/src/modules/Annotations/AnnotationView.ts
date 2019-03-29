@@ -19,6 +19,7 @@
  import {omit, pick} from 'lodash-es';
  import {ANNOTATION_SPECIFIC_FILTERS} from '../Filters/filterSpecs';
  import config from '../../config';
+ import noImageURL from '../../assets/no-image.svg';
 
  type colorObjType = {
    code: string,
@@ -123,6 +124,8 @@
    datasetVisibility: DatasetVisibilityResult | null = null
    currentUser: CurrentUserRoleResult | null = null
    scaleBarColor: string = '#000000'
+   failedImages: string[] = []
+   noImageURL = noImageURL
 
    metadataDependentComponent(category: string): any {
      const currentMdType: string = this.$store.getters.filter.metadataType;
@@ -259,6 +262,10 @@
    onImageMove(event: any): void {
      this.imagePosition.xOffset = event.xOffset;
      this.imagePosition.yOffset = event.yOffset;
+   }
+
+   onCompoundImageError(url: string) {
+     this.failedImages.push(url);
    }
 
    resetViewport(event: any): void {

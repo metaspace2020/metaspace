@@ -23,6 +23,8 @@ export interface ESAnnotation {
   _source: ESAnnotationSource;
 }
 
+export type ImageStorageType = 'fs' | 'db';
+
 export interface ESDatasetSource {
   ds_id: string;
   ds_name: string;
@@ -31,6 +33,7 @@ export interface ESDatasetSource {
   ds_meta: any;
   ds_status: string;
   ds_input_path: string;
+  ds_ion_img_storage: ImageStorageType;
   ds_is_public: boolean;
   ds_mol_dbs: string[];
   ds_adducts: string[];
