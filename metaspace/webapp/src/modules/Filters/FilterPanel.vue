@@ -122,7 +122,7 @@
        // Remove simpleFilter if it has a value that's no longer selectable
        if (this.filter.simpleFilter != null &&
          (newVal == null || !newVal.some(opt => opt.value === this.filter.simpleFilter))) {
-         self.$store.commit('updateFilter', {...this.filter, simpleFilter: null});
+         this.$store.commit('updateFilter', {...this.filter, simpleFilter: null});
        }
      }
    },

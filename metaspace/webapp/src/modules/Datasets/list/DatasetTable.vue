@@ -37,10 +37,9 @@
  import {metadataExportQuery} from '../../../api/metadata';
  import DatasetList from './DatasetList.vue';
  import {FilterPanel} from '../../Filters/index';
- import { csvExportHeader } from '../../../util';
  import FileSaver from 'file-saver';
  import delay from '../../../lib/delay';
- import formatCsvRow from '../../../lib/formatCsvRow';
+  import formatCsvRow, {csvExportHeader, formatCsvTextArray} from '../../../lib/formatCsvRow';
   import {currentUserRoleQuery} from '../../../api/user';
   import {removeDatasetFromAllDatasetsQuery} from '../../../lib/updateApolloCache';
   import {sortBy, uniqBy} from 'lodash-es';

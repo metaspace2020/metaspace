@@ -14,7 +14,7 @@ interface FilterResult {
   postprocess?(annotations: ESAnnotation[]): ESAnnotationWithColoc[] ;
 }
 
-interface ESAnnotationWithColoc extends ESAnnotation {
+export interface ESAnnotationWithColoc extends ESAnnotation {
   _cachedColocCoeff: number | null;
   _isColocReference: boolean;
   getColocalizationCoeff(_colocalizedWith: string, _colocalizationAlgo: string,

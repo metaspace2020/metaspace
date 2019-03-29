@@ -140,7 +140,8 @@
     },
     "moduleNameMapper": {
       "lodash-es": "lodash",
-      "\\.scss$": "<rootDir>/tests/utils/scssMock.js"
+      "\\.scss$": "<rootDir>/tests/utils/scssMock.js",
+      "\\.(png|jpg|gif|svg)$": "<rootDir>/tests/utils/staticFileMock.js"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "setupFilesAfterEnv": [

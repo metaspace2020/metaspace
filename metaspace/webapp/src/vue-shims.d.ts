@@ -3,6 +3,11 @@ declare module "*.vue" {
   export default Vue;
 }
 
+declare module "*.svg" {
+  const path: string;
+  export default path;
+}
+
 declare module 'vue-analytics';
 declare module 'raven-js/plugins/vue';
 
