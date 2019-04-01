@@ -95,7 +95,7 @@ function getOS() {
   return os;
 }
 
-function safeJsonParse(json: string) {
+function safeJsonParse(json: string | null | undefined) {
   if (json) {
     try {
       return JSON.parse(json);

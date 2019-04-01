@@ -179,7 +179,7 @@ const configureGoogleAuth = (router: IRouter<any>) => {
     }));
 
     router.get('/google/callback', Passport.authenticate('google', {
-      successRedirect: '/datasets',
+      successRedirect: '/account/sign-in-success',
       failureRedirect: '/account/sign-in',
     }));
   }

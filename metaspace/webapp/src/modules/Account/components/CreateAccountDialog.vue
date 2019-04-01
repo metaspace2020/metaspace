@@ -66,7 +66,7 @@
           <div class="divider" />
         </div>
         <div class="right-side">
-          <a class="google-button" href="/api_auth/google">
+          <a class="google-button" href="/api_auth/google" @click="setSignInReturnUrl">
             <google-button>Sign up with Google</google-button>
           </a>
           <ul style="padding: 0 20px;">
@@ -91,6 +91,7 @@
   import { createAccountByEmail } from '../../../api/auth';
   import reportError from '../../../lib/reportError';
   import emailRegex from '../../../lib/emailRegex';
+  import {setSignInReturnUrl} from '../signInReturnUrl';
 
   interface Model {
     firstName: string;
@@ -145,6 +146,10 @@
       } finally {
         this.isSubmitting = false;
       }
+    }
+
+    setSignInReturnUrl() {
+      setSignInReturnUrl(this.$route);
     }
 
     onClose() {

@@ -3,6 +3,7 @@ import VueRouter from 'vue-router';
 import AboutPage from './modules/App/AboutPage.vue';
 import DatasetsPage from './modules/Datasets/DatasetsPage.vue';
 import {DialogPage, ResetPasswordPage} from './modules/Account';
+import {redirectAfterSignIn} from './modules/Account/signInReturnUrl';
 
 Vue.use(VueRouter);
 
@@ -55,6 +56,7 @@ const router = new VueRouter({
     { path: '/admin/groups', component: async () => await import('./modules/Admin/GroupsListPage.vue') },
 
     { path: '/account/sign-in', component: DialogPage, props: {dialog: 'signIn'} },
+    { path: '/account/sign-in-success', redirect: redirectAfterSignIn },
     { path: '/account/create-account', component: DialogPage, props: {dialog: 'createAccount'} },
     { path: '/account/forgot-password', component: DialogPage, props: {dialog: 'forgotPassword'} },
     { path: '/account/reset-password', component: ResetPasswordPage },
