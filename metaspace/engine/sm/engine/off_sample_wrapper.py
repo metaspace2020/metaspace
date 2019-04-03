@@ -5,14 +5,16 @@ from functools import partial, wraps
 from io import BytesIO
 import random
 from time import sleep
-
+from PIL import Image
 from requests import post, get
+import numpy as np
 
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.util import SMConfig
 
 sm_config = SMConfig.get_conf()
 api_endpoint = sm_config['services']['off_sample']
+img_api_endpoint = sm_config['services']['img_service_url']
 
 logger = logging.getLogger('update-daemon')
 
@@ -85,6 +87,19 @@ UPD_OFF_SAMPLE = (
 )
 
 
+def numpy_to_pil(a):
+    assert a.ndim > 1
+
+    if a.ndim == 2:
+        a_min, a_max = a.min(), a.max()
+    else:
+        a = a[:, :, :3]
+        a_min, a_max = a.min(axis=(0, 1)), a.max(axis=(0, 1))
+
+    a = ((a - a_min) / (a_max - a_min) * 255).astype(np.uint8)
+    return Image.fromarray(a)
+
+
 def classify_images(it, get_image):
     image_predictions = []
     try:
@@ -105,7 +120,7 @@ def classify_images(it, get_image):
 
 
 def classify_dataset_ion_images(db, ds):
-    image_store_service = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
+    image_store_service = ImageStoreServiceWrapper(img_api_endpoint)
     storage_type = ds.get_ion_img_storage_type(db)
     get_image_by_id = partial(image_store_service.get_image_by_id, storage_type, 'iso_image')
 
