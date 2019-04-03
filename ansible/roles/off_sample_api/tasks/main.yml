@@ -1,0 +1,4 @@
+---
+
+- name: Update off-sample-api service forcing new deployment
+  local_action: command aws ecs update-service --cluster off-sample-cluster --service off-sample-api --force-new-deployment

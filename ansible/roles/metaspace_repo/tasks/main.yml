@@ -11,7 +11,7 @@
     chdir: "{{ metaspace_home }}"
   when: local_deploy is not defined
 
-- name: Pull metaspace sources from the repository
+- name: Pull metaspace "{{ metaspace_branch }}" branch from the repository
   git:
     repo: "{{ metaspace_repo_url }}"
     version: "{{ metaspace_branch }}"

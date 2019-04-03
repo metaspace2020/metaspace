@@ -8,6 +8,7 @@ import boto3
 from sm.engine.colocalization import Colocalization
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.ion_thumbnail import generate_ion_thumbnail
+from sm.engine.off_sample_wrapper import classify_dataset_ion_images
 from sm.rest.dataset_manager import IMG_URLS_BY_ID_SEL
 from sm.engine.errors import UnknownDSID
 from sm.engine.isocalc_wrapper import IsocalcWrapper
@@ -316,6 +317,9 @@ class SMIndexUpdateDaemon(object):
 
         if msg['action'] == DaemonAction.INDEX:
             self._manager.index(ds=ds)
+            # depending on number of annotations may take up to several minutes
+            classify_dataset_ion_images(self._db, ds)
+
         elif msg['action'] == DaemonAction.UPDATE:
             self._manager.update(ds, msg['fields'])
         elif msg['action'] == DaemonAction.DELETE:

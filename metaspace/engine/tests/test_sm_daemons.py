@@ -7,6 +7,7 @@ from unittest.mock import patch
 import time
 from datetime import datetime
 import pytest
+from PIL import Image
 from fabric.api import local
 from fabric.context_managers import warn_only
 import numpy as np
@@ -109,10 +110,13 @@ def run_daemons(db, es):
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
 @patch('sm.engine.colocalization.ImageStoreServiceWrapper.get_ion_images_for_analysis',
        return_value=get_ion_images_for_analysis_mock_return)
+@patch('sm.engine.off_sample_wrapper.ImageStoreServiceWrapper.get_image_by_id',
+       return_value=Image.new('RGBA', (10, 10)))
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.calc_metrics')
 def test_sm_daemons(calc_metrics_mock,
                     filter_sf_metrics_mock,
+                    get_image_by_id_mock,
                     get_ion_images_for_analysis_mock,
                     post_images_to_annot_service_mock,
                     MolDBServiceWrapperMock,

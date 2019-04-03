@@ -1,7 +1,9 @@
 import base64
 import json
+from os.path import getmtime
 import shutil
 import socket
+from datetime import datetime as dt
 from pathlib import Path
 from uuid import uuid4
 import falcon
@@ -61,8 +63,10 @@ class PredictResource(object):
 class PingResource(object):
 
     def on_get(self, req, resp):
+        updated_dt = dt.fromtimestamp(getmtime(config['paths']['model_path']))
         doc = {
+            'status': 'ok',
             'host': socket.getfqdn(),
-            'status': 'ok'
+            'updated': dt.isoformat(updated_dt)
         }
         resp.body = json.dumps(doc, ensure_ascii=False)
