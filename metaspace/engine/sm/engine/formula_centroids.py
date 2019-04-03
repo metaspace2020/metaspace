@@ -79,12 +79,14 @@ class CentroidsGenerator(object):
 
         Args
         ---
-        formulas: Iterable
+        formulas: list
 
         Returns
         ---
             FormulaCentroids
         """
+        assert len(formulas) > 0
+
         all_formula_centroids = self._restore()
 
         if all_formula_centroids is None:

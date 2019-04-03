@@ -6,6 +6,7 @@ from pyspark import SparkContext, SparkConf
 import logging
 
 from sm.engine.colocalization import Colocalization
+from sm.engine.msm_basic.formula_img_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
 from sm.engine.dataset_reader import DatasetReader
 from sm.engine.db import DB
@@ -94,11 +95,14 @@ class SearchJob(object):
             for moldb, moldb_ion_metrics_df, moldb_ion_images in search_results_it:
                 # Save results for each moldb
                 self.store_job_meta(moldb.id)
-                search_results = SearchResults(moldb.id, self._job_id, search_alg.metrics.keys())
+                search_results = SearchResults(moldb.id, self._job_id, METRICS.keys())
                 img_store_type = self._ds.get_ion_img_storage_type(self._db)
                 mask = self._ds_reader.get_2d_sample_area_mask()
                 search_results.store(moldb_ion_metrics_df, moldb_ion_images, mask,
                                      self._db, self._img_store, img_store_type)
+                self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
+                                                              datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                              self._job_id))
 
                 if self._sm_config['colocalization'].get('enabled', False):
                     coloc = Colocalization(self._db)
@@ -109,10 +113,6 @@ class SearchJob(object):
                                                           self._job_id))
             msg = 'Job failed(ds_id={}, moldbs={}): {}'.format(self._ds.id, moldbs, str(e))
             raise JobFailedError(msg) from e
-        else:
-            self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
-                                                          datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                                          self._job_id))
 
     def _remove_annotation_job(self, mol_db):
         logger.info("Removing job results ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
@@ -188,7 +188,8 @@ class SearchJob(object):
             moldbs = [MolecularDB(id=moldb_id, db=self._db,
                                   iso_gen_config=self._ds.config['isotope_generation'])
                       for moldb_id in new_moldb_ids - completed_moldb_ids]
-            self._run_annotation_jobs(moldbs)
+            if moldbs:
+                self._run_annotation_jobs(moldbs)
 
             logger.info("All done!")
             time_spent = time.time() - start
