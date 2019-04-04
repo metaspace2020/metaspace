@@ -15,7 +15,7 @@
                :is="f.type"
                :filterKey="f.filterKey"
                :name="f.name"
-               :helpHtml="f.helpHtml"
+               :helpComponent="f.helpComponent"
                :options="f.options"
                :labels="f.labels"
                :clearable="f.clearable"

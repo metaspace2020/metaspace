@@ -1,10 +1,10 @@
 <template>
-  <div class="tf-outer" :style="helpHtml ? 'max-width: none;' : ''">
+  <div class="tf-outer">
     <div class="tf-name" v-if="name || 'name' in $slots">
       <slot name="name">
         {{ name }}:
       </slot>
-      <component v-if="helpHtml" :is="helpHtml" />
+      <component v-if="helpComponent" :is="helpComponent" />
     </div>
 
     <el-popover v-if="'edit' in $slots"
@@ -15,7 +15,7 @@
       <slot name="edit"></slot>
       <div class="tf-value" slot="reference">
         <slot name="show"></slot>
-        <component v-if="helpHtml && !(name || 'name' in $slots)" :is="helpHtml" style="align-self: center" />
+        <component v-if="helpComponent && !(name || 'name' in $slots)" :is="helpComponent" style="align-self: center" />
       </div>
     </el-popover>
     <div v-else-if="'show' in $slots || 'reference' in $slots"
@@ -45,7 +45,7 @@
    name: 'tag-filter',
    props: {
      name: String,
-     helpHtml: Object,
+     helpComponent: Object,
      removable: {type: Boolean, default: true},
      width: {type: Number, default: 300}
    },

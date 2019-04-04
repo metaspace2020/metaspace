@@ -75,7 +75,7 @@ export interface FilterSpecification {
   type: Component;
   name: string;
   description?: string;
-  helpHtml?: any;
+  helpComponent?: Component;
   levels: Level[];
   defaultInLevels?: Level[];
   initialValue: undefined | null | number | string | boolean | ((lists: MetadataLists) => any);
@@ -336,7 +336,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     type: SingleSelectFilter,
     name: '',
     description: 'Show/hide off-sample annotations',
-    helpHtml: OffSampleHelp,
+    helpComponent: OffSampleHelp,
     levels: ['annotation'],
     defaultInLevels: [],
     initialValue: false,

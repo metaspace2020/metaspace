@@ -34,9 +34,13 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
   // wait until updates are reflected in ES so that clients can refresh their data
   const maxAttempts = 8;
 
+  if (!KNOWN_ACTIONS.includes(action)) {
+    return;
+  }
+
   try {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      logger.debug(JSON.stringify({attempt, status}));
+      logger.debug(JSON.stringify({attempt, action, status}));
       const ds = await esDatasetByID(ds_id, null, true);
 
       if (action === 'DELETE' && stage === 'FINISHED') {
@@ -45,7 +49,7 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
           publishDatasetDeleted({ id: ds_id });
           return;
         }
-      } else if (ds != null && KNOWN_ACTIONS.includes(action)) {
+      } else if (ds != null) {
         publishDatasetStatusUpdated({
           dataset: {
             ...ds,

@@ -1,5 +1,5 @@
 <template>
-  <tag-filter :name="name" :removable="removable" :helpHtml="helpHtml"
+  <tag-filter :name="name" :removable="removable" :helpComponent="helpComponent"
               @destroy="destroy">
     <el-select slot="edit"
                :filterable="filterable" :clearable="clearable" :value="value" @change="onChange">
@@ -36,7 +36,7 @@
    @Prop({required: true})
    name!: string;
    @Prop()
-   helpHtml!: string | null;
+   helpComponent!: string | null;
    @Prop({required: true})
    options!: any[];
    @Prop()
