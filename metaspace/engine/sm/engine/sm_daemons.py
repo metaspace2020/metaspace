@@ -273,9 +273,6 @@ class SMIndexUpdateDaemon(object):
                                                 on_failure=self._on_failure,
                                                 logger=self.logger,
                                                 poll_interval=poll_interval)
-        self._update_queue_pub = QueuePublisher(config=self._sm_config['rabbitmq'],
-                                                qdesc=update_qdesc,
-                                                logger=self.logger)
         self._status_queue_pub = QueuePublisher(config=self._sm_config['rabbitmq'],
                                                 qdesc=SM_DS_STATUS,
                                                 logger=self.logger)
