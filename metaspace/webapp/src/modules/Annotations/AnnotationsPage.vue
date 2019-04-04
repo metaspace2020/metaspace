@@ -50,7 +50,9 @@
      },
 
      tableWidth() {
-       return 14 - 2 * this.hiddenColumns.length;
+       return (14
+         - (this.hiddenColumns.filter(c => ['Dataset', 'Group'].includes(c)).length * 2)
+         - (this.hiddenColumns.filter(c => ['ColocalizationCoeff', 'OffSampleProb'].includes(c)).length * 1));
      },
 
      selectedAnnotation() {
