@@ -1,6 +1,7 @@
 import base64
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from functools import partial, wraps
 from io import BytesIO
 import random
@@ -10,18 +11,14 @@ from requests import post, get
 import numpy as np
 
 from sm.engine.png_generator import ImageStoreServiceWrapper
-from sm.engine.util import SMConfig
 
-sm_config = SMConfig.get_conf()
-api_endpoint = sm_config['services']['off_sample']
-img_api_endpoint = sm_config['services']['img_service_url']
 
 logger = logging.getLogger('update-daemon')
 
 
-def make_chunk_gen(a, chunk_size):
-    chunk_n = (len(a) - 1) // chunk_size + 1
-    chunks = [a[i * chunk_size:(i + 1) * chunk_size] for i in range(chunk_n)]
+def make_chunk_gen(items, chunk_size):
+    chunk_n = (len(items) - 1) // chunk_size + 1
+    chunks = [items[i * chunk_size:(i + 1) * chunk_size] for i in range(chunk_n)]
     for image_path_chunk in chunks:
         yield image_path_chunk
 
@@ -60,18 +57,6 @@ def retry_on_error(num_retries=3):
     return decorator
 
 
-@retry_on_error()
-def call_api(uri='', doc=None):
-    if doc:
-        resp = post(url=api_endpoint + uri, json=doc)
-    else:
-        resp = get(url=api_endpoint + uri)
-    if resp.status_code == 200:
-        return resp.json()
-    else:
-        raise Exception(resp.content or resp)
-
-
 SEL_ION_IMAGES = (
     'select m.id as ann_id, iso_image_ids[1] as img_id '
     'from dataset d '
@@ -100,33 +85,59 @@ def numpy_to_pil(a):
     return Image.fromarray(a)
 
 
-def classify_images(it, get_image):
-    image_predictions = []
-    try:
-        for chunk in make_chunk_gen(it, chunk_size=32):
-            logger.info('Off-sample classification of {} images'.format(len(chunk)))
-
-            base64_images = []
-            for elem in chunk:
-                img = get_image(elem)
-                base64_images.append(encode_image_as_base64(img))
-
-            images_doc = base64_images_to_doc(base64_images)
-            pred_doc = call_api('/predict', doc=images_doc)
-            image_predictions.extend(pred_doc['predictions'])
-    except Exception as e:
-        logger.warning(f'Failed to classify images: {e}')
-    return image_predictions
+@retry_on_error()
+def call_api(url='', doc=None):
+    if doc:
+        resp = post(url=url, json=doc)
+    else:
+        resp = get(url=url)
+    if resp.status_code == 200:
+        return resp.json()
+    else:
+        raise Exception(resp.content or resp)
 
 
-def classify_dataset_ion_images(db, ds):
+def make_classify_images(api_endpoint, get_image):
+
+    def classify(chunk):
+        logger.info('Off-sample classification of {} images'.format(len(chunk)))
+
+        base64_images = []
+        for elem in chunk:
+            img = get_image(elem)
+            base64_images.append(encode_image_as_base64(img))
+
+        images_doc = base64_images_to_doc(base64_images)
+        pred_doc = call_api(api_endpoint + '/predict', doc=images_doc)
+        return pred_doc['predictions']
+
+    def classify_items(items):
+        try:
+            with ThreadPoolExecutor() as pool:
+                chunk_it = make_chunk_gen(items, chunk_size=32)
+                preds_list = pool.map(classify, chunk_it)
+            image_predictions = [p for preds in preds_list for p in preds]
+            return image_predictions
+
+        except Exception as e:
+            logger.warning(f'Failed to classify images: {e}')
+
+    return classify_items
+
+
+def classify_dataset_ion_images(db, ds, services_config):
+    off_sample_api_endpoint = services_config['off_sample']
+    img_api_endpoint = services_config['img_service_url']
+
     image_store_service = ImageStoreServiceWrapper(img_api_endpoint)
     storage_type = ds.get_ion_img_storage_type(db)
     get_image_by_id = partial(image_store_service.get_image_by_id, storage_type, 'iso_image')
 
     annotations = db.select_with_fields(SEL_ION_IMAGES, (ds.id,))
     image_ids = [a['img_id'] for a in annotations]
-    image_predictions = classify_images(image_ids, get_image_by_id)
+
+    classify_images = make_classify_images(off_sample_api_endpoint, get_image_by_id)
+    image_predictions = classify_images(image_ids)
 
     rows = [(ann['ann_id'], json.dumps(pred))
             for ann, pred in zip(annotations, image_predictions)]
