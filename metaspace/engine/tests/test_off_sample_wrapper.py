@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from PIL import Image
 from unittest.mock import patch
 
@@ -23,7 +25,8 @@ def test_classify_ion_images_preds_saved(call_api_mock, ImageStoreServiceWrapper
     ds_id = '2000-01-01'
     ds = Dataset.load(db, ds_id)
 
-    classify_dataset_ion_images(db, ds)
+    services_config = defaultdict(str)
+    classify_dataset_ion_images(db, ds, services_config)
 
     annotations = db.select_with_fields(
         ('select off_sample '
