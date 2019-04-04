@@ -2,7 +2,9 @@
 
 exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
 <div class="filter-panel">
-  <!---->
+  <mock-el-select placeholder="Add filter" class="filter-select">
+    <mock-el-option value="offSample" label="Show/hide off-sample annotations"></mock-el-option>
+  </mock-el-select>
   <div class="tf-outer" data-test-key="simpleQuery" filterkey="simpleQuery" name="Simple query" options="">
     <div class="tf-name">
       <i class="el-icon-search" style="color: white;"></i>
@@ -13,6 +15,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="polarity" filterkey="polarity">
     <div class="tf-name">
       Polarity:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -23,6 +26,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>Positive</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -31,6 +35,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="project" options="">
     <div class="tf-name">
       Project:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -45,6 +50,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
           <!---->
           </span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -53,6 +59,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="submitter" options="">
     <div class="tf-name">
       Submitter:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -67,6 +74,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
           <!---->
           </span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -75,6 +83,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="datasetIds" options="">
     <div class="tf-name">
       Dataset:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="900" class="tf-value-container">
       <div slot-key="default">
@@ -90,6 +99,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
     </span>
           <!---->
           </span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -118,6 +128,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="adduct" filterkey="adduct">
     <div class="tf-name">
       Adduct:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -128,6 +139,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>[M + K]undefined</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -146,6 +158,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="fdrLevel" filterkey="fdrLevel">
     <div class="tf-name">
       FDR:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -158,6 +171,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>10%</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -166,6 +180,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="group" options="">
     <div class="tf-name">
       Group:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -180,6 +195,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
           <!---->
           <!---->
           </span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -188,6 +204,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="organism" filterkey="organism">
     <div class="tf-name">
       Organism:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -198,6 +215,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>cow</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -206,6 +224,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="organismPart" filterkey="organismPart">
     <div class="tf-name">
       Organism part:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -216,6 +235,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>stomach</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -224,6 +244,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="condition" filterkey="condition">
     <div class="tf-name">
       Organism condition:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -234,6 +255,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>hungry</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -242,6 +264,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="growthConditions" filterkey="growthConditions">
     <div class="tf-name">
       Sample growth conditions:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -252,6 +275,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>paddock</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -260,6 +284,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="ionisationSource" filterkey="ionisationSource">
     <div class="tf-name">
       Source:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -270,6 +295,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>MALDI</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -278,6 +304,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="maldiMatrix" filterkey="maldiMatrix">
     <div class="tf-name">
       Matrix:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -288,6 +315,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>DHB</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -296,6 +324,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="analyzerType" filterkey="analyzerType">
     <div class="tf-name">
       Analyzer type:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -306,6 +335,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>FTICR</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -314,6 +344,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="database" filterkey="database">
     <div class="tf-name">
       Database:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -324,6 +355,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>HMDBv4</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -332,6 +364,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
   <div class="tf-outer" data-test-key="metadataType" filterkey="metadataType">
     <div class="tf-name">
       Data type:
+      <!---->
     </div>
     <mock-el-popover trigger="click" placement="bottom" width="300" class="tf-value-container">
       <div slot-key="default">
@@ -342,6 +375,7 @@ exports[`FilterPanel should match snapshot (all annotation filters) 1`] = `
       </div>
       <div slot-key="reference">
         <div class="tf-value"><span class="tf-value-span"><span>ims</span></span>
+          <!---->
         </div>
       </div>
     </mock-el-popover>
@@ -361,6 +395,7 @@ exports[`FilterPanel should match snapshot (no filters) 1`] = `
     <mock-el-option value="datasetIds" label="Select dataset"></mock-el-option>
     <mock-el-option value="compoundName" label="Search molecule"></mock-el-option>
     <mock-el-option value="mz" label="Search by m/z"></mock-el-option>
+    <mock-el-option value="offSample" label="Show/hide off-sample annotations"></mock-el-option>
     <mock-el-option value="polarity" label="Select polarity"></mock-el-option>
     <mock-el-option value="adduct" label="Select adduct"></mock-el-option>
     <mock-el-option value="organism" label="Select organism"></mock-el-option>

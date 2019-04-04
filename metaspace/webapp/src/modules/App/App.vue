@@ -17,6 +17,7 @@
     <!--<release-notes-dialog />-->
 
     <tour-step ref="tour" :tour="this.$store.state.currentTour"></tour-step>
+    <new-feature-popup v-if="features.new_feature_popups"/>
   </div>
 </template>
 
@@ -25,6 +26,7 @@
  import MetaspaceHeader from './MetaspaceHeader.vue';
  import MetaspaceFooter from './MetaspaceFooter.vue';
  // import ReleaseNotesDialog from './ReleaseNotesDialog.vue';
+ import NewFeaturePopup from './NewFeaturePopup.vue';
  import TourStep from './TourStep.vue';
  import {DialogController} from '../Account';
  import config from '../../config';
@@ -35,6 +37,7 @@
      MetaspaceHeader,
      MetaspaceFooter,
      // ReleaseNotesDialog,
+     NewFeaturePopup,
      TourStep,
      DialogController,
    },

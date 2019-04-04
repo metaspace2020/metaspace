@@ -27,6 +27,7 @@
  import AnnotationTable from './AnnotationTable.vue';
  import AnnotationView from './AnnotationView.vue';
  import {FilterPanel} from '../Filters/index';
+ import config from '../../config';
 
  export default {
    name: 'annotations-page',
@@ -43,6 +44,8 @@
          hiddenColumns.push('Database');
        if (!singleDatasetSelected || colocalizedWith == null || fdrLevel == null)
          hiddenColumns.push('ColocalizationCoeff');
+       if (!config.features.off_sample_col)
+         hiddenColumns.push('OffSampleProb');
        return hiddenColumns;
      },
 

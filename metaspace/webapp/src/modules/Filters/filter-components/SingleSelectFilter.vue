@@ -1,5 +1,5 @@
 <template>
-  <tag-filter :name="name" :removable="removable"
+  <tag-filter :name="name" :removable="removable" :helpHtml="helpHtml"
               @destroy="destroy">
     <el-select slot="edit"
                :filterable="filterable" :clearable="clearable" :value="value" @change="onChange">
@@ -9,7 +9,7 @@
     </el-select>
 
     <span slot="show" class="tf-value-span">
-      <span v-if="value" v-html="formatValue(value)"></span>
+      <span v-if="value != null && value !== ''" v-html="formatValue(value)"></span>
       <span v-else>
         (any)
       </span>
@@ -35,6 +35,8 @@
 
    @Prop({required: true})
    name!: string;
+   @Prop()
+   helpHtml!: string | null;
    @Prop({required: true})
    options!: any[];
    @Prop()

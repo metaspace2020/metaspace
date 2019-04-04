@@ -49,8 +49,10 @@ describe('AnnotationTable', () => {
       { "name": "C.I. Food Red 6", "information": [{ "databaseId": "HMDB0032738" }] },
     ],
     colocalizationCoeff: 0.840809,
+    offSample: 'on',
+    offSampleProb: 0.03,
   };
-  const propsData = {hideColumns: []};
+  const propsData = {hideColumns: ["OffSampleProb"]};
 
   it('should match snapshot', async () => {
     initMockGraphqlClient({
