@@ -15,6 +15,7 @@ import {
 
 /** From `DaemonAction` in sm-engine, but capitalized */
 type EngineDatasetAction = 'ANNOTATE' | 'UPDATE' | 'INDEX' | 'DELETE';
+const KNOWN_ACTIONS = ['ANNOTATE','UPDATE','INDEX','DELETE'];
 /** From `DaemonActionStage` in sm-engine */
 type EngineDatasetActionStage = 'QUEUED' | 'STARTED' | 'FINISHED' | 'FAILED';
 
@@ -44,7 +45,7 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
           publishDatasetDeleted({ id: ds_id });
           return;
         }
-      } else if (ds != null) {
+      } else if (ds != null && KNOWN_ACTIONS.includes(action)) {
         publishDatasetStatusUpdated({
           dataset: {
             ...ds,

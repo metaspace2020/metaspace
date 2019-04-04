@@ -238,7 +238,7 @@ class SMAnnotateDaemon(object):
         analyze_msg = {
             'ds_id': msg['ds_id'],
             'ds_name': msg['ds_name'],
-            'action': DaemonAction.ANALYZE_OFF_SAMPLE,
+            'action': DaemonAction.CLASSIFY_OFF_SAMPLE,
         }
         self._upd_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
 
@@ -328,7 +328,7 @@ class SMIndexUpdateDaemon(object):
         if msg['action'] == DaemonAction.INDEX:
             self._manager.index(ds=ds)
 
-        elif msg['action'] == DaemonAction.ANALYZE_OFF_SAMPLE:
+        elif msg['action'] == DaemonAction.CLASSIFY_OFF_SAMPLE:
             # depending on number of annotations may take up to several minutes
             classify_dataset_ion_images(self._db, ds)
             self._manager.index(ds=ds)
