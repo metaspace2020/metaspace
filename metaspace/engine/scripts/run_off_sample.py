@@ -20,7 +20,7 @@ ORDER BY j.ds_id DESC;
 """
 
 
-def run_off_sample(ds_id, sql_where, fix_missing):
+def run_off_sample(ds_id, sql_where, fix_missing, overwrite_existing):
     assert len([data_source for data_source in [ds_id, sql_where, fix_missing] if data_source]) == 1, \
            "Exactly one data source (ds_id, sql_where, fix_missing) must be specified"
     assert not (ds_id and sql_where)
@@ -46,7 +46,7 @@ def run_off_sample(ds_id, sql_where, fix_missing):
     for i, ds_id in enumerate(ds_ids):
         try:
             logger.info(f'Running off-sample on {i+1} out of {len(ds_ids)}')
-            classify_dataset_ion_images(db, Dataset(id=ds_id))
+            classify_dataset_ion_images(db, Dataset(id=ds_id), overwrite_existing)
 
             # Reindex dataset
             ds_name, ds_config = db.select_one("select name, config from dataset where id = %s", (ds_id,))
@@ -71,6 +71,8 @@ if __name__ == '__main__':
                         help='SQL WHERE clause for picking rows from the dataset table, e.g. "status = \'FINISHED\'"')
     parser.add_argument('--fix-missing', action='store_true',
                         help='Run classification on all datasets that are missing off-sample data')
+    parser.add_argument('--overwrite-existing', action='store_true',
+                        help='Run classification for annotations even if they have already been classified')
     args = parser.parse_args()
 
     SMConfig.set_path(args.config)
@@ -79,4 +81,5 @@ if __name__ == '__main__':
 
     run_off_sample(ds_id=args.ds_id,
                    sql_where=args.sql_where,
-                   fix_missing=args.fix_missing)
+                   fix_missing=args.fix_missing,
+                   overwrite_existing=args.overwrite_existing)
