@@ -92,6 +92,7 @@ We recommend including off-sample area around your sample during data acquisitio
     }
     beforeDestroy() {
       this.mutationObserver.disconnect();
+      this.close();
     }
 
     getStorageDismissedFeatures() {

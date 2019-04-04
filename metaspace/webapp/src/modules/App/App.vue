@@ -16,8 +16,8 @@
     <dialog-controller />
     <!--<release-notes-dialog />-->
 
-    <tour-step ref="tour" :tour="this.$store.state.currentTour"></tour-step>
-    <new-feature-popup v-if="features.new_feature_popups"/>
+    <tour-step ref="tour" :tour="$store.state.currentTour"></tour-step>
+    <new-feature-popup v-if="features.new_feature_popups && $store.state.currentTour == null"/>
   </div>
 </template>
 
