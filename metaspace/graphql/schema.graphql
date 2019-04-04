@@ -30,6 +30,7 @@ enum AnnotationOrderBy {
   ORDER_BY_DATASET
   ORDER_BY_FORMULA
   ORDER_BY_COLOCALIZATION
+  ORDER_BY_OFF_SAMPLE
 }
 
 enum DatasetOrderBy {
@@ -125,6 +126,9 @@ type Annotation {
   # If `colocalizationCoeffFilter` is null, this will return null, allowing queries to include this field even if it's not
   # applicable with the current set of filters. Otherwise the values must match the parent `allAnnotations`' filter.
   colocalizationCoeff(colocalizationCoeffFilter: ColocalizationCoeffFilter): Float
+
+  offSample: Boolean    # false = only on-sample, true = only off-sample
+  offSampleProb: Float  # 0.0 = probably on-sample, 1.0 = probably off-sample
 }
 
 # [min, max) interval
@@ -145,6 +149,7 @@ input AnnotationFilter {
   colocalizedWith: String         # Should be an ion string (sf+adduct+polarity). Requires DatasetFilter.datasetIds to be set to a specific dataset
   colocalizationSamples: Boolean  # Requires DatasetFilter.datasetIds to be set to a specific dataset
   colocalizationAlgo: String
+  offSample: Boolean
 }
 
 input ColocalizationCoeffFilter {
