@@ -3,6 +3,7 @@ class DaemonAction(object):
     UPDATE = 'update'
     INDEX = 'index'
     DELETE = 'delete'
+    CLASSIFY_OFF_SAMPLE = 'classify_off_sample'
 
 
 class DaemonActionStage(object):

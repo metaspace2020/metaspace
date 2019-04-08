@@ -75,7 +75,7 @@ SEL_ION_IMAGES = (
     'from dataset d '
     'join job j on j.ds_id = d.id '
     'join iso_image_metrics m on m.job_id = j.id '
-    'where d.id = %s'
+    'where d.id = %s and (%s or m.off_sample is null)'
     'order by m.id '
 )
 UPD_OFF_SAMPLE = (
@@ -104,12 +104,12 @@ def classify_images(it, get_image):
     return image_predictions
 
 
-def classify_dataset_ion_images(db, ds):
+def classify_dataset_ion_images(db, ds, overwrite_existing=False):
     image_store_service = ImageStoreServiceWrapper(sm_config['services']['img_service_url'])
     storage_type = ds.get_ion_img_storage_type(db)
     get_image_by_id = partial(image_store_service.get_image_by_id, storage_type, 'iso_image')
 
-    annotations = db.select_with_fields(SEL_ION_IMAGES, (ds.id,))
+    annotations = db.select_with_fields(SEL_ION_IMAGES, (ds.id, overwrite_existing))
     image_ids = [a['img_id'] for a in annotations]
     image_predictions = classify_images(image_ids, get_image_by_id)
 

@@ -80,6 +80,10 @@ const Annotation: FieldResolversFor<Annotation, ESAnnotation | ESAnnotationWithC
 
   rhoChaos: (hit) => hit._source.chaos,
 
+  offSample: (hit) => hit._source.off_sample_label == null ? null : hit._source.off_sample_label === 'off',
+
+  offSampleProb: (hit) => hit._source.off_sample_prob == null ? null : hit._source.off_sample_prob,
+
   dataset(hit) {
 
     return {

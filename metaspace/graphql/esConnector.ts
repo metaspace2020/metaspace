@@ -75,6 +75,8 @@ export interface ESAnnotationSource extends ESDatasetSource {
   comp_ids: string[];
   comp_names: string[];
 
+  off_sample_prob?: number;
+  off_sample_label?: 'on' | 'off';
 }
 
 const esConfig = () => {
@@ -123,6 +125,8 @@ function esSort(orderBy: AnnotationOrderBy | DatasetOrderBy, sortingOrder: Sorti
     return [sortTerm('ds_name', order), sortTerm('mz', order)];
   else if (orderBy === 'ORDER_BY_FORMULA')
     return [sortTerm('sf', order), sortTerm('adduct', order), sortTerm('fdr', order)];
+  else if (orderBy === 'ORDER_BY_OFF_SAMPLE')
+    return [sortTerm('off_sample_prob', order)];
   // dataset orderings
   else if (orderBy === 'ORDER_BY_DATE')
     return [sortTerm('ds_last_finished', order)];
@@ -147,6 +151,17 @@ function constructTermOrTermsFilter(field: keyof ESAnnotationSource, valueOrValu
   } else {
     return { term: { [field]: valueOrValues } };
   }
+}
+
+function constructTermsOrNullFilter(field: keyof ESAnnotationSource, values: any[]) {
+  const filters = values.map(val => {
+    if (val == null) {
+      return {bool: {must_not: {exists: {field}}}};
+    } else {
+      return {term: {[field]: val.toUpperCase()}};
+    }
+  });
+  return filters.length == 1 ? filters[0] : {bool: {should: filters}};
 }
 
 const constructAuthFilters = (user: ContextUser | null, userProjectRoles: UserProjectRoles) => {
@@ -202,7 +217,10 @@ interface ExtraAnnotationFilters {
   annId?: string;
 }
 function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFilters) {
-  const { database, datasetName, mzFilter, msmScoreFilter, fdrLevel, sumFormula, adduct, sfAdduct, compoundQuery, annId } = filter;
+  const {
+    database, datasetName, mzFilter, msmScoreFilter, fdrLevel,
+    sumFormula, adduct, sfAdduct, offSample, compoundQuery, annId
+  } = filter;
   const filters = [];
 
   if (mzFilter)
@@ -227,9 +245,12 @@ function constructAnnotationFilters(filter: AnnotationFilter & ExtraAnnotationFi
     filters.push({term: {adduct: adduct}});
   if (datasetName)
     filters.push({term: {ds_name: datasetName}});
+  if (offSample != null)
+    filters.push({term: {off_sample_label: offSample ? 'off' : 'on'}});
 
   if (sfAdduct)
     filters.push(constructTermOrTermsFilter('sf_adduct', sfAdduct));
+
 
   if (compoundQuery) {
     filters.push({
