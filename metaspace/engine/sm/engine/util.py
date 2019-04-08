@@ -126,7 +126,7 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
     if meta_path.exists():
         metadata = json.load(open(str(meta_path)))
     else:
-        metadata = {'Data_Type': 'Imaging MS'}
+        raise Exception('meta.json not found')
     ds_config = json.load(open(str(base_dir / 'config.json')))
 
     regexp = re.compile(translate('*.imzML'), re.IGNORECASE)

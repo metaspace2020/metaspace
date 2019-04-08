@@ -66,7 +66,7 @@ class SearchResults(object):
     def post_images_to_image_store(self, ion_iso_images, alpha_channel, img_store, img_store_type):
         logger.info('Posting iso images to {}'.format(img_store))
         post_images = self._image_inserter(img_store, img_store_type, alpha_channel)
-        return dict(ion_iso_images.mapValues(post_images).collect())
+        return {formula_i: post_images(images) for formula_i, images in ion_iso_images.items()}
 
     def store(self, ion_metrics_df, ion_iso_images, alpha_channel, db, img_store, img_store_type):
         """ Save metrics and images

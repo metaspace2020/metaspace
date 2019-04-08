@@ -1,16 +1,22 @@
 import time
 from importlib import import_module
+from pathlib import Path
 from pprint import pformat
 from datetime import datetime
+from shutil import copytree, rmtree
+
+from pyimzml.ImzMLParser import ImzMLParser
 from pyspark import SparkContext, SparkConf
 import logging
 
 from sm.engine.colocalization import Colocalization
+from sm.engine.msm_basic.formula_img_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
 from sm.engine.dataset_reader import DatasetReader
 from sm.engine.db import DB
 from sm.engine.search_results import SearchResults
 from sm.engine.util import SMConfig
+from sm.engine.utils import make_sample_area_mask
 from sm.engine.work_dir import WorkDirManager
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB
@@ -48,7 +54,6 @@ class SearchJob(object):
         self._sc = None
         self._db = None
         self._ds = None
-        self._ds_reader = None
         self._status_queue = None
         self._wd_manager = None
         self._es = None
@@ -87,18 +92,25 @@ class SearchJob(object):
             logger.info("Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
                         self._ds.id, self._ds.name, moldbs)
 
-            search_alg = MSMSearch(sc=self._sc, ds_reader=self._ds_reader,
+            imzml_path = next(p for p in Path(self._ds.input_path).iterdir()
+                              if str(p).lower().endswith('.imzml'))
+            imzml_parser = ImzMLParser(str(imzml_path))
+            search_alg = MSMSearch(sc=self._sc, imzml_parser=imzml_parser,
                                    moldbs=moldbs, ds_config=self._ds.config)
             search_results_it = search_alg.search()
 
             for moldb, moldb_ion_metrics_df, moldb_ion_images in search_results_it:
                 # Save results for each moldb
                 self.store_job_meta(moldb.id)
-                search_results = SearchResults(moldb.id, self._job_id, search_alg.metrics.keys())
+                search_results = SearchResults(moldb.id, self._job_id, METRICS.keys())
                 img_store_type = self._ds.get_ion_img_storage_type(self._db)
-                mask = self._ds_reader.get_2d_sample_area_mask()
-                search_results.store(moldb_ion_metrics_df, moldb_ion_images, mask,
+                coordinates = [coo[:2] for coo in imzml_parser.coordinates]
+                sample_area_mask = make_sample_area_mask(coordinates)
+                search_results.store(moldb_ion_metrics_df, moldb_ion_images, sample_area_mask,
                                      self._db, self._img_store, img_store_type)
+                self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
+                                                              datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                                                              self._job_id))
 
                 if self._sm_config['colocalization'].get('enabled', False):
                     coloc = Colocalization(self._db)
@@ -109,10 +121,6 @@ class SearchJob(object):
                                                           self._job_id))
             msg = 'Job failed(ds_id={}, moldbs={}): {}'.format(self._ds.id, moldbs, str(e))
             raise JobFailedError(msg) from e
-        else:
-            self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
-                                                          datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                                                          self._job_id))
 
     def _remove_annotation_job(self, mol_db):
         logger.info("Removing job results ds_id: %s, ds_name: %s, db_name: %s, db_version: %s",
@@ -165,17 +173,18 @@ class SearchJob(object):
             else:
                 self._status_queue = None
 
-            self._wd_manager = WorkDirManager(ds.id)
+            # self._wd_manager = WorkDirManager(ds.id)
             self._configure_spark()
 
-            if not self.no_clean:
-                self._wd_manager.clean()
+            # if not self.no_clean:
+            #     self._wd_manager.clean()
 
-            self._ds_reader = DatasetReader(self._ds.input_path, self._sc, self._wd_manager)
-            self._ds_reader.copy_convert_input_data()
+            dest = Path(self._sm_config['fs']['base_path']) / ds.id
+            rmtree(dest, ignore_errors=True)
+            copytree(src=ds.input_path, dst=dest)
 
-            self._save_data_from_raw_ms_file()
-            self._img_store.storage_type = self._ds.get_ion_img_storage_type(self._db)
+            # self._save_data_from_raw_ms_file()
+            self._img_store.storage_type = 'fs'
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
 
@@ -188,7 +197,8 @@ class SearchJob(object):
             moldbs = [MolecularDB(id=moldb_id, db=self._db,
                                   iso_gen_config=self._ds.config['isotope_generation'])
                       for moldb_id in new_moldb_ids - completed_moldb_ids]
-            self._run_annotation_jobs(moldbs)
+            if moldbs:
+                self._run_annotation_jobs(moldbs)
 
             logger.info("All done!")
             time_spent = time.time() - start

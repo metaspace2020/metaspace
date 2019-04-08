@@ -1,20 +1,20 @@
 ---
 
+- name: Remove all local file changes
+  shell: git reset --hard && git clean -f
+  args:
+    chdir: "{{ metaspace_home }}"
+
 - name: Delete all local and remote branches except for 'master'
   shell: |
-    git remote prune origin
     git checkout master
+    git remote prune origin
     git for-each-ref --format '%(refname:short)' refs/heads |
       grep -v master |
       xargs --no-run-if-empty git branch -D
   args:
     chdir: "{{ metaspace_home }}"
   when: local_deploy is not defined
-
-- name: Remove all local file changes
-  shell: git reset --hard && git clean -f
-  args:
-    chdir: "{{ metaspace_home }}"
 
 - name: Pull metaspace sources from the repository
   git:
@@ -47,15 +47,16 @@
         - --exclude=logs/*
         - --exclude=docker/*
         - --exclude=docs/*
+    - src: "{{ sm_graphql_home }}/"
+      dest: "{{ sm_graphql_home }}/"
+      rsync_opts:
+        - --exclude='config/*.js'
+        - --exclude='logs/*'
+        - --exclude='dist/*'
+        - --exclude='node_modules/*'
+        - --exclude='.*'
 
-#    - src: "{{ sm_graphql_home }}/"
-#      dest: "{{ sm_graphql_home }}/"
-#      rsync_opts:
-#        - --exclude='config/*.js'
-#        - --exclude='logs/*'
-#        - --exclude='dist/*'
-#        - --exclude='node_modules/*'
-#        - --exclude='.*'
+
 #    - src: "{{ sm_webapp_home }}/"
 #      dest: "{{ sm_webapp_home }}/"
 #      rsync_opts:

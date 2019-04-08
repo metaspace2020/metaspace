@@ -4,31 +4,40 @@ Classes and functions for isotope image validation
 import numpy as np
 import pandas as pd
 from operator import mul, add
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 from pyImagingMSpec.image_measures import isotope_image_correlation, isotope_pattern_match
 # from pyImagingMSpec.image_measures import measure_of_chaos
 from cpyImagingMSpec import measure_of_chaos
 from pyImagingMSpec import smoothing
 
+from sm.engine.isocalc_wrapper import ISOTOPIC_PEAK_N
 
-class ImgMetrics(object):
-    """ Container for isotope image metrics
+METRICS = OrderedDict([('chaos', 0), ('spatial', 0), ('spectral', 0), ('msm', 0),
+                       ('total_iso_ints', [0, 0, 0, 0]),
+                       ('min_iso_ints', [0, 0, 0, 0]),
+                       ('max_iso_ints', [0, 0, 0, 0])])
+
+
+def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_conf):
+    """ Returns a function for computing formula images metrics
 
     Args
-    ----------
-    metrics: OrderedDict
+    -----
+    sample_area_mask: ndarray[bool]
+        mask for separating sampled pixels (True) from non-sampled (False)
+
+    img_gen_conf : dict
+        isotope_generation section of the dataset config
+    Returns
+    -----
+        function
     """
-
-    def __init__(self, metrics):
-        self.map = metrics
-
-    @staticmethod
-    def _replace_nan(v, new_v=0):
+    def replace_nan(v, default=0):
 
         def replace(x):
             if not x or np.isinf(x) or np.isnan(x):
-                return new_v
+                return default
             else:
                 return x
 
@@ -37,75 +46,54 @@ class ImgMetrics(object):
         else:
             return replace(v)
 
-    def to_tuple(self, replace_nan=True):
-        """ Convert metrics to a tuple
+    empty_matrix = np.zeros((nrows, ncols))
+    sample_area_mask_flat = sample_area_mask.flatten()
 
-        Args
-        ------------
-        replace_nan : bool
-            replace invalid metric values with the default one
-        Returns
-        ------------
-        : tuple
-            tuple of metrics
-        """
-        if replace_nan:
-            return tuple(self._replace_nan(v) for v in self.map.values())
-        else:
-            return tuple(self.map.values())
-
-
-def get_compute_image_metrics(metrics, sample_area_mask, empty_matrix, img_gen_conf):
-    """ Returns a function for computing formula images metrics
-
-    Args
-    -----
-    metrics: OrderedDict
-    sample_area_mask: ndarray[bool]
-        mask for separating sampled pixels (True) from non-sampled (False)
-    empty_matrix : ndarray
-        empty matrix of the same shape as isotope images
-    img_gen_conf : dict
-        isotope_generation section of the dataset config
-    Returns
-    -----
-        function
-    """
     def compute(iso_images_sparse, formula_ints):
         np.seterr(invalid='ignore')  # to ignore division by zero warnings
 
-        diff = len(formula_ints) - len(iso_images_sparse)
-        iso_imgs = [empty_matrix if img is None else img.toarray()
-                    for img in iso_images_sparse + [None] * diff]
-        iso_imgs_flat = [img.flat[:][sample_area_mask] for img in iso_imgs]
-        iso_imgs_flat = iso_imgs_flat[:len(formula_ints)]
+        m = METRICS.copy()
+        if len(iso_images_sparse) > 0:
+            iso_imgs = [img.toarray() if img is not None else empty_matrix
+                        for img in iso_images_sparse]
 
-        if img_gen_conf['do_preprocessing']:
-            for img in iso_imgs_flat:
-                smoothing.hot_spot_removal(img)
+            iso_imgs_flat = [img.flatten()[sample_area_mask_flat] for img in iso_imgs]
+            iso_imgs_flat = iso_imgs_flat[:len(formula_ints)]
 
-        m = ImgMetrics(metrics)
-        if len(iso_imgs) > 0:
-            m.map['spectral'] = isotope_pattern_match(iso_imgs_flat, formula_ints)
-            m.map['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=formula_ints[1:])
-            moc = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'])
-            m.map['chaos'] = 0 if np.isclose(moc, 1.0) else moc
-            m.map['msm'] = m.map['chaos'] * m.map['spatial'] * m.map['spectral']
+            if img_gen_conf['do_preprocessing']:
+                for img in iso_imgs_flat:
+                    smoothing.hot_spot_removal(img)
 
-            m.map['total_iso_ints'] = [img.sum() for img in iso_imgs]
-            m.map['min_iso_ints'] = [img.min() for img in iso_imgs]
-            m.map['max_iso_ints'] = [img.max() for img in iso_imgs]
-        return m.to_tuple()
+            m['spectral'] = isotope_pattern_match(iso_imgs_flat, formula_ints)
+            if m['spectral'] > 0:
+
+                m['spatial'] = isotope_image_correlation(iso_imgs_flat, weights=formula_ints[1:])
+                if m['spatial'] > 0:
+
+                    moc = measure_of_chaos(iso_imgs[0], img_gen_conf['nlevels'])
+                    m['chaos'] = 0 if np.isclose(moc, 1.0) else moc
+                    if m['chaos'] > 0:
+
+                        m['msm'] = m['chaos'] * m['spatial'] * m['spectral']
+                        m['total_iso_ints'] = [img.sum() for img in iso_imgs]
+                        m['min_iso_ints'] = [img.min() for img in iso_imgs]
+                        m['max_iso_ints'] = [img.max() for img in iso_imgs]
+        metrics = OrderedDict((k, replace_nan(v)) for k, v in m.items())
+        return metrics
 
     return compute
 
 
-def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula_centr_ints, sc):
+def complete_image_list(images):
+    non_empty_image_n = sum(1 for img in images if img is not None)
+    return non_empty_image_n > 1 and images[0] is not None
+
+
+def formula_image_metrics(formula_images_gen, compute_metrics, target_formula_inds):
     """ Compute isotope image metrics for each formula
 
     Args
     -----
-    metrics: OrderedDict
     sc : pyspark.SparkContext
     ds_config : dict
     ds_reader: engine.dataset_reader.DatasetReader
@@ -117,29 +105,35 @@ def formula_image_metrics(formula_images, metrics, ds_config, ds_reader, formula
     -----
         pandas.DataFrame
     """
-    nrows, ncols = ds_reader.get_dims()
-    empty_matrix = np.zeros((nrows, ncols))
-    compute_metrics = get_compute_image_metrics(metrics, ds_reader.get_sample_area_mask(),
-                                                empty_matrix, ds_config['image_generation'])
-    formula_centr_ints_brcast = sc.broadcast(formula_centr_ints)
 
-    def spark_compute_metrics(item):
-        formula_i, images = item
-        centr_ints = formula_centr_ints_brcast.value[formula_i]
-        return (formula_i,) + compute_metrics(images, centr_ints)
+    formula_metrics = {}
+    formula_images = {}
 
-    msm_index = list(metrics.keys()).index('msm') + 1  # formula_i takes the first index
+    formula_images_buffer = defaultdict(lambda: [None] * ISOTOPIC_PEAK_N)
+    formula_ints_buffer = defaultdict(lambda: [0] * ISOTOPIC_PEAK_N)
 
-    def filter_metrics(item):
-        msm = item[msm_index]
-        return msm > 0
+    def add_metrics(f_i, f_images, f_ints):
+        if complete_image_list(f_images):
+            f_metrics = compute_metrics(f_images, f_ints)
+            if f_metrics['msm'] > 0:
+                formula_metrics[f_i] = f_metrics
+                if f_i in target_formula_inds:
+                    formula_images[f_i] = f_images
 
-    formula_metrics = (formula_images
-                       .map(spark_compute_metrics)
-                       .filter(filter_metrics)
-                       .collect())
+    for f_i, p_i, f_int, image in formula_images_gen:
+        formula_images_buffer[f_i][p_i] = image
+        formula_ints_buffer[f_i][p_i] = f_int
 
-    index_columns = ['formula_i']
-    columns = index_columns + list(metrics.keys())
-    formula_metrics_df = pd.DataFrame(formula_metrics, columns=columns).set_index(index_columns)
-    return formula_metrics_df
+        if p_i == ISOTOPIC_PEAK_N - 1:  # last formula image index
+            f_images = formula_images_buffer.pop(f_i)
+            f_ints = formula_ints_buffer.pop(f_i)
+            add_metrics(f_i, f_images, f_ints)
+
+    # process formulas with len(peaks) < max_peaks and those that were cut to dataset max mz
+    for f_i, f_images in formula_images_buffer.items():
+        f_ints = formula_ints_buffer[f_i]
+        add_metrics(f_i, f_images, f_ints)
+
+    formula_metrics_df = pd.DataFrame.from_dict(formula_metrics, orient='index')
+    formula_metrics_df.index.name = 'formula_i'
+    return formula_metrics_df, formula_images
