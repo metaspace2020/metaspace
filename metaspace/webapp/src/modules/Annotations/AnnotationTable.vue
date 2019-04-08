@@ -538,7 +538,7 @@
          columns.push('colocalizationCoeff');
        }
        if (includeOffSample) {
-         columns.push('offSample', 'offSampleProb');
+         columns.push('offSample', 'rawOffSampleProb');
        }
        csv += formatCsvRow(columns);
 
