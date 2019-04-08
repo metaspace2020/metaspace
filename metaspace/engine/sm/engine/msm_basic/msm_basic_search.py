@@ -57,27 +57,6 @@ def compute_fdr(fdr, formula_metrics_df, formula_map_df, max_fdr=0.5):
     return moldb_ion_metrics_df
 
 
-# def segment_centroids(centr_df, mz_segments):
-#     formula_segments = {}
-#     for segm_i in range(len(mz_segments))[::-1]:
-#         segm_min_mz, segm_max_mz = mz_segments[segm_i]
-#
-#         segm_df = centr_df[(~centr_df.formula_i.isin(formula_segments))
-#                            & (centr_df.mz > segm_min_mz)
-#                            & (centr_df.mz < segm_max_mz)]
-#
-#         by_fi = segm_df.groupby('formula_i').peak_i
-#         formula_min_peak = by_fi.min()
-#         formula_max_peak = by_fi.max()
-#
-#         formula_inds = set(formula_min_peak[formula_min_peak == 0].index)
-#         formula_inds &= set(formula_max_peak[formula_max_peak > 0].index)
-#
-#         for f_i in formula_inds:
-#             formula_segments[f_i] = segm_i
-#     return formula_segments
-
-
 class MSMSearch(object):
 
     def __init__(self, sc, imzml_parser, moldbs, ds_config):
