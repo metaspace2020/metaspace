@@ -148,6 +148,8 @@ class GraphQLClient(object):
         rhoSpectral
         rhoChaos
         fdrLevel
+        offSample
+        offSampleProb
         dataset {
             id
             name
