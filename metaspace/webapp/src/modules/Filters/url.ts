@@ -31,6 +31,7 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   metadataType: 'mdtype',
   colocalizedWith: 'colo',
   colocalizationSamples: 'locs',
+  offSample: 'offs',
 };
 
 const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>;

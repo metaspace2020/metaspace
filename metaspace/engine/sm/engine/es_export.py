@@ -32,7 +32,9 @@ ANNOTATIONS_SEL = '''SELECT
     j.id AS job_id,
     m.fdr AS fdr,
     m.iso_image_ids AS iso_image_ids,
-    ds.config->'isotope_generation'->'charge'->'polarity' AS polarity
+    ds.config->'isotope_generation'->'charge'->'polarity' AS polarity,
+    m.off_sample->'prob' as off_sample_prob,
+    m.off_sample->'label' as off_sample_label
 FROM iso_image_metrics m
 JOIN job j ON j.id = m.job_id
 JOIN dataset ds ON ds.id = j.ds_id
@@ -157,7 +159,9 @@ class ESIndexManager(object):
                         "min_iso_ints": {"type": "float"},
                         "max_iso_ints": {"type": "float"},
                         "msm": {"type": "float"},
-                        "fdr": {"type": "float"}
+                        "fdr": {"type": "float"},
+                        "off_sample_prob": {"type": "float"},
+                        "off_sample_label": {"type": "keyword"},
                     }
                 }
             }

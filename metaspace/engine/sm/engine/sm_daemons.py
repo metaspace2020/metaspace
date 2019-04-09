@@ -9,7 +9,7 @@ from sm.engine.colocalization import Colocalization
 from sm.engine.daemon_action import DaemonAction, DaemonActionStage
 from sm.engine.ion_thumbnail import generate_ion_thumbnail
 from sm.engine.off_sample_wrapper import classify_dataset_ion_images
-from sm.rest.dataset_manager import IMG_URLS_BY_ID_SEL
+from sm.rest.dataset_manager import IMG_URLS_BY_ID_SEL, DatasetActionPriority
 from sm.engine.errors import UnknownDSID
 from sm.engine.isocalc_wrapper import IsocalcWrapper
 from sm.engine.mol_db import MolecularDB
@@ -231,9 +231,16 @@ class SMAnnotateDaemon(object):
             'ds_id': msg['ds_id'],
             'ds_name': msg['ds_name'],
             'email': msg.get('email', None),
-            'action': 'index',
+            'action': DaemonAction.INDEX,
         }
-        self._upd_queue_pub.publish(msg=upd_msg, priority=2)
+        self._upd_queue_pub.publish(msg=upd_msg, priority=DatasetActionPriority.HIGH)
+
+        analyze_msg = {
+            'ds_id': msg['ds_id'],
+            'ds_name': msg['ds_name'],
+            'action': DaemonAction.CLASSIFY_OFF_SAMPLE,
+        }
+        self._upd_queue_pub.publish(msg=analyze_msg, priority=DatasetActionPriority.LOW)
 
     def start(self):
         self._stopped = False
@@ -317,8 +324,11 @@ class SMIndexUpdateDaemon(object):
 
         if msg['action'] == DaemonAction.INDEX:
             self._manager.index(ds=ds)
+
+        elif msg['action'] == DaemonAction.CLASSIFY_OFF_SAMPLE:
             # depending on number of annotations may take up to several minutes
             classify_dataset_ion_images(self._db, ds, self._sm_config['services'])
+            self._manager.index(ds=ds)
 
         elif msg['action'] == DaemonAction.UPDATE:
             self._manager.update(ds, msg['fields'])

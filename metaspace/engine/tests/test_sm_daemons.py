@@ -49,6 +49,17 @@ def clean_isotope_storage():
         local('rm -rf {}'.format(sm_config['isotope_storage']['path']))
 
 
+@pytest.fixture()
+def reset_queues():
+    from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_UPDATE
+    # Delete queues to clean up remaining messages so that they don't interfere with other tests
+    for qdesc in [SM_ANNOTATE, SM_UPDATE]:
+        queue_pub = QueuePublisher(config=sm_config['rabbitmq'],
+                                   qdesc=qdesc,
+                                   logger=logger)
+        queue_pub.delete_queue()
+
+
 def init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock):
     mol_db_wrapper_mock = MolDBServiceWrapperMock()
     mol_db_wrapper_mock.find_db_by_name_version.return_value = [{'id': 0, 'name': 'HMDB-v4', 'version': '2018'}]
@@ -125,6 +136,7 @@ def test_sm_daemons(calc_metrics_mock,
                     MolDBServiceWrapperMock,
                     # fixtures
                     test_db, es_dsl_search, clean_isotope_storage,
+                    reset_queues,
                     metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
@@ -248,6 +260,7 @@ def test_sm_daemons_annot_fails(calc_metrics_mock,
                                 MolDBServiceWrapperMock,
                                 test_db, es_dsl_search,
                                 clean_isotope_storage,
+                                reset_queues,
                                 metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
@@ -310,6 +323,7 @@ def test_sm_daemon_es_export_fails(calc_metrics_mock,
                                    MolDBServiceWrapperMock,
                                    test_db, es_dsl_search,
                                    clean_isotope_storage,
+                                   reset_queues,
                                    metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 

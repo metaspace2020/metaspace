@@ -27,6 +27,7 @@
  import AnnotationTable from './AnnotationTable.vue';
  import AnnotationView from './AnnotationView.vue';
  import {FilterPanel} from '../Filters/index';
+ import config from '../../config';
 
  export default {
    name: 'annotations-page',
@@ -43,11 +44,15 @@
          hiddenColumns.push('Database');
        if (!singleDatasetSelected || colocalizedWith == null || fdrLevel == null)
          hiddenColumns.push('ColocalizationCoeff');
+       if (!config.features.off_sample_col)
+         hiddenColumns.push('OffSampleProb');
        return hiddenColumns;
      },
 
      tableWidth() {
-       return 14 - 2 * this.hiddenColumns.length;
+       return (14
+         - (this.hiddenColumns.filter(c => ['Dataset', 'Group'].includes(c)).length * 2)
+         - (this.hiddenColumns.filter(c => ['ColocalizationCoeff', 'OffSampleProb'].includes(c)).length * 1));
      },
 
      selectedAnnotation() {
