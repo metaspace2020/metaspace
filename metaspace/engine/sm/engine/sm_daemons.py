@@ -327,7 +327,7 @@ class SMIndexUpdateDaemon(object):
 
         elif msg['action'] == DaemonAction.CLASSIFY_OFF_SAMPLE:
             # depending on number of annotations may take up to several minutes
-            classify_dataset_ion_images(self._db, ds)
+            classify_dataset_ion_images(self._db, ds, self._sm_config['services'])
             self._manager.index(ds=ds)
 
         elif msg['action'] == DaemonAction.UPDATE:

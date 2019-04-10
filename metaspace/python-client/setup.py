@@ -19,4 +19,5 @@ setup(name='metaspace',
           'matplotlib',
           'pyMSpec',
           'boto3',
+          'pillow',
       ])

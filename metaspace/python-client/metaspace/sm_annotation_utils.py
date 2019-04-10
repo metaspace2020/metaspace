@@ -1,6 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import numpy as np
-
 import requests, json, re, os, boto3, pprint
 from copy import deepcopy
 from io import BytesIO
@@ -148,6 +148,8 @@ class GraphQLClient(object):
         rhoSpectral
         rhoChaos
         fdrLevel
+        offSample
+        offSampleProb
         dataset {
             id
             name
@@ -321,6 +323,21 @@ class GraphQLClient(object):
         }
 
         return self.query(query, variables)
+
+    def get_molecular_databases(self, names=None):
+        query = '''{
+          molecularDatabases {
+            id name version
+          }
+        }'''
+        resp = self.query(query)
+        if 'molecularDatabases' not in resp:
+            raise Exception('GraphQL error: {}'.format(resp))
+        mol_dbs = resp['molecularDatabases']
+        if not names:
+            return mol_dbs
+        else:
+            return [d for d in mol_dbs if d['name'] in names]
 
 
 class MolDBClient:
@@ -566,6 +583,12 @@ class SMDataset(object):
                 images[i] *= image_metadata[i]['maxIntensity']
 
         return IsotopeImages(images, sf, adduct, [r['mz'] for r in image_metadata], [r['url'] for r in image_metadata])
+
+    def all_annotation_images(self, fdr=0.1, database=None):
+        with ThreadPoolExecutor() as pool:
+            images = [img for img in pool.map(lambda row: self.isotope_images(*row),
+                                              self.annotations(fdr=fdr, database=database))]
+        return images
 
     def optical_images(self):
         def fetch_image(url):

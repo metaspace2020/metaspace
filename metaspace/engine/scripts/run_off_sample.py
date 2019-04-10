@@ -46,7 +46,7 @@ def run_off_sample(ds_id, sql_where, fix_missing, overwrite_existing):
     for i, ds_id in enumerate(ds_ids):
         try:
             logger.info(f'Running off-sample on {i+1} out of {len(ds_ids)}')
-            classify_dataset_ion_images(db, Dataset(id=ds_id), overwrite_existing)
+            classify_dataset_ion_images(db, Dataset(id=ds_id), conf['services'], overwrite_existing)
 
             # Reindex dataset
             ds_name, ds_config = db.select_one("select name, config from dataset where id = %s", (ds_id,))

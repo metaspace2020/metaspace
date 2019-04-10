@@ -123,10 +123,13 @@ def run_daemons(db, es):
        return_value=get_ion_images_for_analysis_mock_return)
 @patch('sm.engine.off_sample_wrapper.ImageStoreServiceWrapper.get_image_by_id',
        return_value=Image.new('RGBA', (10, 10)))
+@patch('sm.engine.off_sample_wrapper.call_api',
+       return_value={'predictions': {'label': 'off', 'prob': 0.99}})
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.filter_sf_metrics')
 @patch('sm.engine.msm_basic.msm_basic_search.MSMBasicSearch.calc_metrics')
 def test_sm_daemons(calc_metrics_mock,
                     filter_sf_metrics_mock,
+                    call_off_sample_api_mock,
                     get_image_by_id_mock,
                     get_ion_images_for_analysis_mock,
                     post_images_to_annot_service_mock,
