@@ -359,6 +359,22 @@ class MolDBClient:
         ) + '&limit=100&fields=mol_id'
         return [m['mol_id'] for m in _extract_data(requests.get(url))]
 
+    def get_molecules(self, db_id, fields, limit=100):
+        """ Fetch molecules from database
+
+        Args:
+            db_id: int
+            fields: list[string]
+                sf, mol_id, mol_name
+            limit: int
+
+        Return:
+            list[dict]
+        """
+        url = f'{self._url}/databases/{db_id}/molecules?'
+        url += f'limit={limit}&fields={",".join(fields)}'
+        return [m for m in _extract_data(requests.get(url))]
+
     def clearCache(self):
         self._mol_formula_lists = {}
 
@@ -841,6 +857,9 @@ class MolecularDatabase:
 
     def ids(self, sum_formula):
         return self._client.getMolFormulaIds(self._id, sum_formula)
+
+    def molecules(self, limit=100):
+        return  self._client.get_molecules(self._id, ['sf', 'mol_id', 'mol_name'], limit=limit)
 
 
 def plot_diff(ref_df, dist_df, t='', xlabel='', ylabel='', col='msm'):

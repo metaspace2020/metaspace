@@ -230,6 +230,8 @@ nginx_upstream_hosts:
     server: 127.0.0.1:3010
   - name: graphql_ws_server
     server: 127.0.0.1:5666
+  - name: moldb_server
+    server: 127.0.0.1:5001
   - name: kibana_server
     server: 127.0.0.1:5601
   - name: elasticsearch_server
@@ -300,6 +302,10 @@ nginx_servers:
           - proxy_http_version 1.1;
           - proxy_set_header Upgrade $http_upgrade;
           - proxy_set_header Connection "upgrade";
+          - include proxy-params.conf;
+      - path: /mol_db/
+        params:
+          - proxy_pass http://moldb_server/;
           - include proxy-params.conf;
 
   - desc: Elasticsearch redirect
