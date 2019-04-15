@@ -73,6 +73,7 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
         https://download.pytorch.org/whl/cpu/torch-1.0.0-cp36-cp36m-linux_x86_64.whl \
         torchvision \
         fastai==1.0.48 \
+        fastprogress==0.1.20 \
         && \
     python -m pip uninstall -y spacy \
     && \
@@ -83,6 +84,12 @@ RUN APT_INSTALL="apt-get install -y --no-install-recommends" && \
     apt-get clean && \
     apt-get autoremove && \
     rm -rf /var/lib/apt/lists/* /tmp/* ~/*
+
+# Set the locale
+RUN apt-get -y update && apt-get install -y locales && locale-gen en_US.UTF-8 && apt-get clean
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
 WORKDIR /app
 COPY models ./models
