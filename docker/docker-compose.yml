@@ -63,6 +63,13 @@ services:
       - rabbitmq
       - postgres
 
+  off-sample:
+    image: metaspace2020/off-sample
+    ports:
+      - "9876:8000"
+    networks:
+      - sm
+
   sm-api:
     build:
       context: ./sm-engine
