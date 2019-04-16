@@ -100,7 +100,7 @@ def call_api(url='', doc=None):
 def make_classify_images(api_endpoint, get_image):
 
     def classify(chunk):
-        logger.info('Off-sample classification of {} images'.format(len(chunk)))
+        logger.debug('Classifying chunk of {} images'.format(len(chunk)))
 
         base64_images = []
         for elem in chunk:
@@ -112,6 +112,7 @@ def make_classify_images(api_endpoint, get_image):
         return pred_doc['predictions']
 
     def classify_items(items):
+        logger.info('Off-sample classification of {} images'.format(len(items)))
         try:
             with ThreadPoolExecutor() as pool:
                 chunk_it = make_chunk_gen(items, chunk_size=32)

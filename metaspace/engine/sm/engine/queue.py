@@ -377,6 +377,8 @@ class QueueConsumer(Thread):
         self._on_success = on_success
         self._on_failure = on_failure
 
+        self._failed_attempts_limit = 5
+
         self.logger = logger or logging.getLogger()
 
     def get_connect_url(self, hide_password=False):
@@ -418,11 +420,15 @@ class QueueConsumer(Thread):
 
     def run(self):
         """ Use `start` method to kick off message polling """
-        while True:
+        failed_attempts = 0
+        while failed_attempts < self._failed_attempts_limit:
             try:
                 self._poll()
             except AMQPError as e:
-                self.logger.warning(f' [x] Server disconnected: {e}. Reconnecting in {self._poll_interval} sec...')
+                failed_attempts += 1
+                self.logger.warning((f' [x] Server disconnected: {e}. '
+                                     f'{failed_attempts} attempt to '
+                                     f'reconnect in {self._poll_interval} sec...'))
                 sleep(self._poll_interval)
             except StopThread:
                 self.logger.info(' [x] Stop signal received. Stopping')
