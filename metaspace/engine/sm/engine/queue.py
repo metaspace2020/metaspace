@@ -379,6 +379,7 @@ class QueueConsumer(Thread):
 
         self._failed_attempts_limit = 5
         self._failed_attempts = 0
+        self._reconnect_interval = 60
 
         self.logger = logger or logging.getLogger()
 
@@ -428,8 +429,8 @@ class QueueConsumer(Thread):
                 self._failed_attempts += 1
                 self.logger.warning((f' [x] Server disconnected: {e}. '
                                      f'{self._failed_attempts} attempt to '
-                                     f'reconnect in {self._poll_interval} sec...'))
-                sleep(self._poll_interval)
+                                     f'reconnect in {self._reconnect_interval} sec...'))
+                sleep(self._reconnect_interval)
             except StopThread:
                 self.logger.info(' [x] Stop signal received. Stopping')
                 break
