@@ -88,7 +88,7 @@ def numpy_to_pil(a):
 @retry_on_error()
 def call_api(url='', doc=None):
     if doc:
-        resp = post(url=url, json=doc)
+        resp = post(url=url, json=doc, timeout=120)
     else:
         resp = get(url=url)
     if resp.status_code == 200:
@@ -114,7 +114,7 @@ def make_classify_images(api_endpoint, get_image):
     def classify_items(items):
         logger.info('Off-sample classification of {} images'.format(len(items)))
         try:
-            with ThreadPoolExecutor() as pool:
+            with ThreadPoolExecutor(8) as pool:
                 chunk_it = make_chunk_gen(items, chunk_size=32)
                 preds_list = pool.map(classify, chunk_it)
             image_predictions = [p for preds in preds_list for p in preds]

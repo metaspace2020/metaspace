@@ -97,7 +97,7 @@ COPY off_sample ./off_sample
 COPY app.py docker/start-all.sh ./
 COPY config/default.ini ./config/config.ini
 
-EXPOSE 8000
+EXPOSE 9876
 
 ENTRYPOINT [ ]
 CMD [ "./start-all.sh" ]
