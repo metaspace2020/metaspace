@@ -66,7 +66,7 @@ services:
   off-sample:
     image: metaspace2020/off-sample
     ports:
-      - "9876:8000"
+      - "9876:9876"
     networks:
       - sm
 
