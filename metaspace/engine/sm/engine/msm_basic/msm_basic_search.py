@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from itertools import product
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import logging
@@ -11,9 +10,9 @@ from sm.engine.formula_parser import generate_ion_formula
 from sm.engine.formula_centroids import CentroidsGenerator
 from sm.engine.isocalc_wrapper import IsocalcWrapper, ISOTOPIC_PEAK_N
 from sm.engine.util import SMConfig
-from sm.engine.msm_basic.formula_img_validator import formula_image_metrics
-from sm.engine.utils import ds_sample_gen, define_mz_segments, segment_centroids, segment_spectra, \
-    create_process_segment
+from sm.engine.msm_basic.formula_imager import create_process_segment
+from sm.engine.msm_basic.segmenter import define_mz_segments, segment_spectra, segment_centroids
+from sm.engine.msm_basic.formula_validator import formula_image_metrics
 
 logger = logging.getLogger('engine')
 
@@ -59,12 +58,13 @@ def compute_fdr(fdr, formula_metrics_df, formula_map_df, max_fdr=0.5):
 
 class MSMSearch(object):
 
-    def __init__(self, sc, imzml_parser, moldbs, ds_config):
+    def __init__(self, sc, imzml_parser, moldbs, ds_config, ds_data_path):
         self._sc = sc
         self._ds_config = ds_config
         self._imzml_parser = imzml_parser
         self._moldbs = moldbs
         self._sm_config = SMConfig.get_conf()
+        self._ds_data_path = ds_data_path
 
         self._image_gen_config = ds_config['image_generation']
         self._target_adducts = ds_config['isotope_generation']['adducts']
@@ -103,16 +103,14 @@ class MSMSearch(object):
         coordinates = [coo[:2] for coo in self._imzml_parser.coordinates]
         mz_segments = define_mz_segments(self._imzml_parser, centroids_df)
 
+        ds_segments_path = self._ds_data_path / 'spectra_segments'
+        segment_spectra(self._imzml_parser, coordinates, mz_segments, ds_segments_path)
+
         mz_min, mz_max = mz_segments[0, 0], mz_segments[-1, 1]
         centr_df = (centroids_df[(mz_min < centroids_df.mz) & (centroids_df.mz < mz_max)]
                     .copy().reset_index())
-
-        data_path = Path('/tmp/intsco')
-        centr_segm_path = data_path / 'centr_segments'
+        centr_segm_path = self._ds_data_path / 'centr_segments'
         segment_centroids(centr_df, mz_segments, centr_segm_path)
-
-        ds_segments_path = data_path / 'spectra_segments'
-        segment_spectra(self._imzml_parser, coordinates, mz_segments, ds_segments_path)
 
         process_segment = create_process_segment(ds_segments_path, centr_segm_path,
                                                  coordinates, self._image_gen_config, target_formula_inds)
@@ -135,7 +133,5 @@ class MSMSearch(object):
             moldb_formula_map_df = (ion_formula_map_df[ion_formula_map_df.moldb_id == moldb.id]
                                     .drop('moldb_id', axis=1))
             moldb_ion_metrics_df = compute_fdr(fdr, formula_metrics_df, moldb_formula_map_df, max_fdr=0.5)
-
             moldb_ion_images = {f_i: formula_images[f_i] for f_i in moldb_ion_metrics_df.index}
-
             yield moldb, moldb_ion_metrics_df, moldb_ion_images

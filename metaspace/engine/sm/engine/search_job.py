@@ -4,20 +4,17 @@ from pathlib import Path
 from pprint import pformat
 from datetime import datetime
 from shutil import copytree, rmtree
-
 from pyimzml.ImzMLParser import ImzMLParser
 from pyspark import SparkContext, SparkConf
 import logging
 
 from sm.engine.colocalization import Colocalization
-from sm.engine.msm_basic.formula_img_validator import METRICS
+from sm.engine.msm_basic.formula_imager import make_sample_area_mask
+from sm.engine.msm_basic.formula_validator import METRICS
 from sm.engine.msm_basic.msm_basic_search import MSMSearch
-from sm.engine.dataset_reader import DatasetReader
 from sm.engine.db import DB
 from sm.engine.search_results import SearchResults
 from sm.engine.util import SMConfig
-from sm.engine.utils import make_sample_area_mask
-from sm.engine.work_dir import WorkDirManager
 from sm.engine.es_export import ESExporter
 from sm.engine.mol_db import MolecularDB
 from sm.engine.errors import JobFailedError
@@ -59,6 +56,7 @@ class SearchJob(object):
         self._es = None
 
         self._sm_config = sm_config or SMConfig.get_conf()
+        self._ds_data_path = None
 
         logger.debug('Using SM config:\n%s', pformat(self._sm_config))
 
@@ -95,8 +93,8 @@ class SearchJob(object):
             imzml_path = next(p for p in Path(self._ds.input_path).iterdir()
                               if str(p).lower().endswith('.imzml'))
             imzml_parser = ImzMLParser(str(imzml_path))
-            search_alg = MSMSearch(sc=self._sc, imzml_parser=imzml_parser,
-                                   moldbs=moldbs, ds_config=self._ds.config)
+            search_alg = MSMSearch(sc=self._sc, imzml_parser=imzml_parser, moldbs=moldbs,
+                                   ds_config=self._ds.config, ds_data_path=self._ds_data_path)
             search_results_it = search_alg.search()
 
             for moldb, moldb_ion_metrics_df, moldb_ion_images in search_results_it:
@@ -179,9 +177,9 @@ class SearchJob(object):
             # if not self.no_clean:
             #     self._wd_manager.clean()
 
-            dest = Path(self._sm_config['fs']['base_path']) / ds.id
-            rmtree(dest, ignore_errors=True)
-            copytree(src=ds.input_path, dst=dest)
+            self._ds_data_path = Path(self._sm_config['fs']['data_path']) / ds.id
+            rmtree(self._ds_data_path, ignore_errors=True)
+            copytree(src=ds.input_path, dst=self._ds_data_path)
 
             # self._save_data_from_raw_ms_file()
             self._img_store.storage_type = 'fs'
