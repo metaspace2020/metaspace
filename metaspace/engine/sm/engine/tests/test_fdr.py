@@ -10,10 +10,7 @@ from sm.engine.fdr import FDR
 
 @patch('sm.engine.fdr.DECOY_ADDUCTS', ['+He', '+Li'])
 def test_fdr_decoy_adduct_selection_saves_corr():
-    db_mock = MagicMock(DB)
-    db_mock.select.return_value = [(1,)]
-
-    fdr = FDR(job_id=0, decoy_sample_size=2, target_adducts=['+H', '+K'], db=db_mock)
+    fdr = FDR(decoy_sample_size=2, target_adducts=['+H', '+K'])
 
     exp_target_decoy_df = pd.DataFrame([('H2O', '+H', '+He'),
                                         ('H2O', '+H', '+Li'),
@@ -28,7 +25,7 @@ def test_fdr_decoy_adduct_selection_saves_corr():
 
 
 def test_estimate_fdr_returns_correct_df():
-    fdr = FDR(job_id=0, decoy_sample_size=2, target_adducts=['+H'], db=None)
+    fdr = FDR(decoy_sample_size=2, target_adducts=['+H'])
     fdr.fdr_levels = [0.2, 0.8]
     fdr.td_df = pd.DataFrame([['H2O', '+H', '+Cu'],
                               ['H2O', '+H', '+Co'],
@@ -50,7 +47,7 @@ def test_estimate_fdr_returns_correct_df():
 
 
 def test_estimate_fdr_digitize_works():
-    fdr = FDR(job_id=0, decoy_sample_size=1, target_adducts=['+H'], db=None)
+    fdr = FDR(decoy_sample_size=1, target_adducts=['+H'])
     fdr.fdr_levels = [0.4, 0.8]
     fdr.td_df = pd.DataFrame([['C1', '+H', '+Cu'],
                               ['C2', '+H', '+Ag'],
@@ -81,8 +78,7 @@ def test_ions():
     target_adducts = ['+H', '+Na']
     decoy_sample_size = 5
 
-    fdr = FDR(job_id=0, decoy_sample_size=decoy_sample_size,
-              target_adducts=target_adducts, db=None)
+    fdr = FDR(decoy_sample_size=decoy_sample_size, target_adducts=target_adducts)
     fdr.decoy_adducts_selection(target_ions=[('H2O', '+H'), ('H2O', '+Na'),
                                              ('C5H2OH', '+H'), ('C5H2OH', '+Na')])
     ions = fdr.ion_tuples()

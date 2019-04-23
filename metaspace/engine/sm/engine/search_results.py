@@ -7,10 +7,8 @@ import requests
 from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('engine')
-METRICS_INS = '''
-INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, msm, fdr, stats, iso_image_ids)
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-'''
+METRICS_INS = ('INSERT INTO iso_image_metrics (job_id, db_id, sf, adduct, msm, fdr, stats, iso_image_ids) '
+               'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)')
 
 
 class SearchResults(object):
@@ -30,11 +28,11 @@ class SearchResults(object):
         self.job_id = job_id
         self.metric_names = metric_names
 
-    def _metrics_table_row_gen(self, job_id, db_id, metr_df, ion_img_ids):
+    def _metrics_table_row_gen(self, job_id, db_id, metr_df, formula_img_ids):
         for ind, r in metr_df.iterrows():
             m = OrderedDict((name, r[name]) for name in self.metric_names)
             metr_json = json.dumps(m)
-            image_ids = ion_img_ids[r.ion_i]['iso_image_ids']
+            image_ids = formula_img_ids[r.formula_i]['iso_image_ids']
             yield (job_id, db_id, r.formula, r.adduct,
                    float(r.msm), float(r.fdr), metr_json,
                    image_ids)
@@ -68,7 +66,7 @@ class SearchResults(object):
     def post_images_to_image_store(self, ion_iso_images, alpha_channel, img_store, img_store_type):
         logger.info('Posting iso images to {}'.format(img_store))
         post_images = self._image_inserter(img_store, img_store_type, alpha_channel)
-        return dict(ion_iso_images.mapValues(post_images).collect())
+        return {formula_i: post_images(images) for formula_i, images in ion_iso_images.items()}
 
     def store(self, ion_metrics_df, ion_iso_images, alpha_channel, db, img_store, img_store_type):
         """ Save metrics and images

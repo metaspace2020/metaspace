@@ -36,7 +36,7 @@
     "password": "{{ rabbitmq_password }}"
   },
   "fs": {
-    "base_path": "/opt/data/sm_data",
+    "data_path": "/opt/data/sm_data",
     "s3_base_path": "{{ sm_s3_path }}"
   },
   "spark": {
@@ -46,7 +46,7 @@
     "spark.driver.maxResultSize": "3g",
     "spark.serializer": "org.apache.spark.serializer.KryoSerializer",
     "spark.kryoserializer.buffer.max": "128m",
-    "spark.python.worker.memory": "512m",
+    "spark.python.worker.memory": "1g",
     "spark.rdd.compress": true,
     "spark.ui.showConsoleProgress": false,
     "spark.sql.execution.arrow.enabled": true

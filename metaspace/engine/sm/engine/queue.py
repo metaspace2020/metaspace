@@ -480,7 +480,8 @@ class QueuePublisher(object):
         except AMQPError as e:
             self.logger.error('Queue delete failed: %s - %s', self.qname, e)
         finally:
-            self.conn.close()
+            if self.conn:
+                self.conn.close()
 
     def publish(self, msg, priority=0):
         try:

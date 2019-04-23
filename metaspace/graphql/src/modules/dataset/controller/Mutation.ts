@@ -191,12 +191,11 @@ type CreateDatasetArgs = {
   input: DatasetCreateInput,
   priority?: Int,
   force?: boolean,           // Only used by reprocess
-  reprocess?: boolean,       // Only used by reprocess
   delFirst?: boolean,        // Only used by reprocess
   skipValidation?: boolean,  // Only used by reprocess
 };
 const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
-  const {input, priority, force, skipValidation} = args;
+  const {input, priority, force, delFirst, skipValidation} = args;
   const {user, entityManager, isAdmin, getUserIdOrFail} = ctx;
   const dsId = args.id || newDatasetId();
   const dsIdWasSpecified = !!args.id;
@@ -233,6 +232,7 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
     doc: {...input, metadata},
     priority: priority,
     force: force,
+    del_first: delFirst,
     email: user!.email,
   });
 
@@ -242,9 +242,8 @@ const createDataset = async (args: CreateDatasetArgs, ctx: Context) => {
 
 const MutationResolvers: FieldResolversFor<Mutation, void>  = {
 
-  // for dev purposes only, not a part of the public API
   reprocessDataset: async (_, args, ctx) => {
-    const {id, delFirst, priority} = args;
+    const {id, priority} = args;
     const ds = await fetchEngineDS({id});
     if (ds === undefined)
       throw new UserError('DS does not exist');
@@ -253,10 +252,9 @@ const MutationResolvers: FieldResolversFor<Mutation, void>  = {
       id: id,
       input: ds as any, // TODO: map this properly
       priority: priority,
-      reprocess: true,
       force: true,
       skipValidation: true,
-      delFirst: delFirst,
+      delFirst: true,
     }, ctx);
   },
 

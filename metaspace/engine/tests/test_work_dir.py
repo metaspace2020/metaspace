@@ -2,7 +2,6 @@ from unittest.mock import MagicMock
 import json
 from os import listdir
 from os.path import join, basename
-from subprocess import check_call
 import pytest
 from fabric.api import local
 from fabric.context_managers import lcd, warn_only
@@ -64,15 +63,3 @@ def test_work_dir_upload_to_remote_leaves_meta_config_files(clear_files):
 
     file_list = set(listdir(ds_path))
     assert file_list == {'foo.imzML', 'foo.ibd', 'config.json', 'meta.json'}
-
-
-# def test_work_dir_copy_input_data_files_exist(clear_files, sm_config):
-#     create_sample_files(input_local_path)
-#     create_sample_files(ds_path, copy_config=False)
-#
-#     SMConfig._config_dict = sm_config
-#     work_dir_man = WorkDirManager(ds_id)
-#     work_dir_man.copy_input_data(input_local_path, join(input_local_path, 'config.json'))
-#
-#     file_list = set(listdir(ds_path))
-#     assert file_list == {'foo.imzML', 'foo.ibd', 'config.json', 'meta.json'}

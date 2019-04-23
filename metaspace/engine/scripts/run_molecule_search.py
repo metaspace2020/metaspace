@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
     try:
         ds = create_ds_from_files(args.ds_id, args.ds_name, args.input_path)
-        manager.annotate(ds, SearchJob, del_first=True)
+        manager.annotate(ds, SearchJob, del_first=True, no_clean=args.no_clean)
     except Exception as e:
         logging.getLogger('engine').error(e, exc_info=True)
         sys.exit(1)

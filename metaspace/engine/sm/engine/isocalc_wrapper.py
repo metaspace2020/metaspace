@@ -2,7 +2,6 @@ from cpyMSpec import isotopePattern, InstrumentModel
 from pyMSpec.pyisocalc import pyisocalc
 import numpy as np
 import logging
-from collections import namedtuple
 
 
 logger = logging.getLogger('engine')
@@ -41,30 +40,36 @@ class IsocalcWrapper(object):
         ints = ints[mz_order]
         return mzs, ints
 
-    def ion_centroids(self, sf, adduct):
+    def centroids(self, formula):
         """
         Args
-        ----
-        sf : str
-        adduct: str
+        -----
+        formula : str
 
         Returns
-        -------
-        : list of tuples
+        -----
+            list[tuple]
         """
         try:
-            pyisocalc.parseSumFormula(sf + adduct)  # tests is the sf and adduct compatible
-            iso_pattern = isotopePattern(str(sf + adduct))
+            pyisocalc.parseSumFormula(formula)  # tests that formula is parsable
+            iso_pattern = isotopePattern(str(formula))
             iso_pattern.addCharge(int(self.charge))
             fwhm = self.sigma * SIGMA_TO_FWHM
             resolving_power = iso_pattern.masses[0] / fwhm
             instrument_model = InstrumentModel('tof', resolving_power)
             centr = iso_pattern.centroids(instrument_model)
-            mzs = np.array(centr.masses)
-            ints = 100. * np.array(centr.intensities)
-            mzs, ints = self._trim(mzs, ints, ISOTOPIC_PEAK_N)
+            mzs_ = np.array(centr.masses)
+            ints_ = 100. * np.array(centr.intensities)
+            mzs_, ints_ = self._trim(mzs_, ints_, ISOTOPIC_PEAK_N)
+
+            n = len(mzs_)
+            mzs = np.zeros(ISOTOPIC_PEAK_N)
+            mzs[:n] = np.array(mzs_)
+            ints = np.zeros(ISOTOPIC_PEAK_N)
+            ints[:n] = ints_
+
             return mzs, ints
 
         except Exception as e:
-            logger.warning('%s %s - %s', sf, adduct, e)
+            logger.warning('%s - %s', formula, e)
             return None, None

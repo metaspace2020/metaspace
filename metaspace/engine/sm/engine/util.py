@@ -7,6 +7,7 @@ from logging.config import dictConfig
 from pathlib import Path
 import re
 from fnmatch import translate
+from copy import deepcopy
 
 
 def proj_root():
@@ -75,7 +76,7 @@ class SMConfig(object):
                     cls._config_dict = json.load(f)
             except IOError as e:
                 logging.getLogger('engine').warning(e)
-        return cls._config_dict
+        return deepcopy(cls._config_dict)
 
     @classmethod
     def get_ms_file_handler(cls, ms_file_path):
@@ -125,7 +126,7 @@ def create_ds_from_files(ds_id, ds_name, ds_input_path):
     if meta_path.exists():
         metadata = json.load(open(str(meta_path)))
     else:
-        metadata = {'Data_Type': 'Imaging MS'}
+        raise Exception('meta.json not found')
     ds_config = json.load(open(str(base_dir / 'config.json')))
 
     regexp = re.compile(translate('*.imzML'), re.IGNORECASE)

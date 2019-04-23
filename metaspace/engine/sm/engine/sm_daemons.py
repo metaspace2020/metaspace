@@ -60,7 +60,7 @@ class SMDaemonManager(object):
             self.logger.error(e)
         return link
 
-    def annotate(self, ds, search_job_factory=None, del_first=False):
+    def annotate(self, ds, search_job_factory=None, del_first=False, **kwargs):
         """ Run an annotation job for the dataset. If del_first provided, delete first
         """
         if del_first:
@@ -68,7 +68,8 @@ class SMDaemonManager(object):
             self._del_iso_images(ds)
             self._db.alter('DELETE FROM job WHERE ds_id=%s', params=(ds.id,))
         ds.save(self._db, self.es)
-        search_job_factory(img_store=self._img_store).run(ds)
+        search_job_factory(img_store=self._img_store,
+                           sm_config=self._sm_config, **kwargs).run(ds)
         Colocalization(self._db).run_coloc_job(ds.id)
         generate_ion_thumbnail(db=self._db,
                                img_store=self._img_store,

@@ -39,6 +39,22 @@
       dest: "{{ sm_ansible_home }}/"
       rsync_opts:
         - --exclude=.*
+    - src: "{{ sm_home }}/"
+      dest: "{{ sm_home }}/"
+      rsync_opts:
+        - --exclude=.*
+        - --exclude=conf/*
+        - --exclude=logs/*
+        - --exclude=docker/*
+        - --exclude=docs/*
+    - src: "{{ sm_graphql_home }}/"
+      dest: "{{ sm_graphql_home }}/"
+      rsync_opts:
+        - --exclude='config/*.js'
+        - --exclude='logs/*'
+        - --exclude='dist/*'
+        - --exclude='node_modules/*'
+        - --exclude='.*'
         - --exclude=aws/env/*
         - --exclude=aws/files/*
     - src: "{{ sm_home }}/"
