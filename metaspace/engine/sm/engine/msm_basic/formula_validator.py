@@ -39,7 +39,7 @@ def make_compute_image_metrics(sample_area_mask, nrows, ncols, img_gen_conf):
             if not x or np.isinf(x) or np.isnan(x):
                 return default
             else:
-                return x
+                return float(x)
 
         if type(v) is list:
             return [replace(x) for x in v]

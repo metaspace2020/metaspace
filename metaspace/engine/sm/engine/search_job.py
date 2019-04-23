@@ -105,14 +105,14 @@ class SearchJob(object):
                 coordinates = [coo[:2] for coo in imzml_parser.coordinates]
                 sample_area_mask = make_sample_area_mask(coordinates)
                 search_results.store(moldb_ion_metrics_df, moldb_ion_images, sample_area_mask,
-                                     self._db, self._img_store, img_store_type)
+                                     self._db, self._sc, self._img_store, img_store_type)
                 self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FINISHED,
                                                               datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                                                               self._job_id))
 
                 if self._sm_config['colocalization'].get('enabled', False):
                     coloc = Colocalization(self._db)
-                    coloc.run_coloc_job_for_new_ds(self._ds, moldb.name, moldb_ion_metrics_df, moldb_ion_images, mask)
+                    coloc.run_coloc_job(self._ds.id)
         except Exception as e:
             self._db.alter(JOB_UPD_STATUS_FINISH, params=(JobStatus.FAILED,
                                                           datetime.now().strftime('%Y-%m-%d %H:%M:%S'),

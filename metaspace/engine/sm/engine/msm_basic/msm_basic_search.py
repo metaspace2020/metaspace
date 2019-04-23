@@ -11,7 +11,7 @@ from sm.engine.formula_centroids import CentroidsGenerator
 from sm.engine.isocalc_wrapper import IsocalcWrapper, ISOTOPIC_PEAK_N
 from sm.engine.util import SMConfig
 from sm.engine.msm_basic.formula_imager import create_process_segment
-from sm.engine.msm_basic.segmenter import define_mz_segments, segment_spectra, segment_centroids
+from sm.engine.msm_basic.segmenter import define_ds_segments, segment_spectra, segment_centroids
 from sm.engine.msm_basic.formula_validator import formula_image_metrics
 
 logger = logging.getLogger('engine')
@@ -101,23 +101,26 @@ class MSMSearch(object):
         target_formula_inds = set(formulas_df[formulas_df.formula.isin(target_formulas)].index)
 
         coordinates = [coo[:2] for coo in self._imzml_parser.coordinates]
-        mz_segments = define_mz_segments(self._imzml_parser, centroids_df)
+        ds_segm_size_mb = 5
+        ds_segments = define_ds_segments(self._imzml_parser, sample_ratio=0.05, ds_segm_size_mb=ds_segm_size_mb)
 
-        ds_segments_path = self._ds_data_path / 'spectra_segments'
-        segment_spectra(self._imzml_parser, coordinates, mz_segments, ds_segments_path)
+        ds_segments_path = self._ds_data_path / 'ds_segments'
+        segment_spectra(self._imzml_parser, coordinates, ds_segments, ds_segments_path)
 
-        mz_min, mz_max = mz_segments[0, 0], mz_segments[-1, 1]
+        mz_min, mz_max = ds_segments[0, 0], ds_segments[-1, 1]
         centr_df = (centroids_df[(mz_min < centroids_df.mz) & (centroids_df.mz < mz_max)]
                     .copy().reset_index())
-        centr_segm_path = self._ds_data_path / 'centr_segments'
-        segment_centroids(centr_df, mz_segments, centr_segm_path)
+        centr_segments_path = self._ds_data_path / 'centr_segments'
+        ds_size_mb = len(ds_segments) * ds_segm_size_mb
+        data_per_centr_segm_mb = 50
+        centr_segm_n = int(max(32, ds_size_mb // data_per_centr_segm_mb))
+        segment_centroids(centr_df, centr_segm_n, centr_segments_path)
 
-        process_segment = create_process_segment(ds_segments_path, centr_segm_path,
-                                                 coordinates, self._image_gen_config, target_formula_inds)
-        segm_n = len(mz_segments)
-        segm_rdd = self._sc.parallelize(range(segm_n), numSlices=segm_n)
+        process_centr_segment = create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
+                                                       coordinates, self._image_gen_config, target_formula_inds)
         logger.info('Processing segments...')
-        process_results = segm_rdd.map(process_segment).collect()
+        segm_rdd = self._sc.parallelize(range(centr_segm_n), numSlices=centr_segm_n)
+        process_results = segm_rdd.map(process_centr_segment).collect()
 
         formula_metrics_list, formula_images_list = zip(*process_results)
         formula_metrics_df = pd.concat(formula_metrics_list)
@@ -126,7 +129,7 @@ class MSMSearch(object):
             formula_images.update(images)
 
         formula_metrics_df = formula_metrics_df.join(formula_centroids.formulas_df, how='left')
-        formula_metrics_df = formula_metrics_df.rename({'formula': 'ion_formula'}, axis=1)
+        formula_metrics_df = formula_metrics_df.rename({'formula': 'ion_formula'}, axis=1)  # needed for fdr
 
         # Compute fdr for each moldb search results
         for moldb, fdr in moldb_fdr_list:

@@ -32,11 +32,10 @@ def gen_iso_images(sp_inds, sp_mzs, sp_ints, centr_df, nrows, ncols, ppm=3, min_
             m = None
             if u - l >= min_px:
                 data = sp_ints[l:u]
-                if data.shape[0] > 0:
-                    inds = sp_inds[l:u]
-                    row_inds = inds / ncols
-                    col_inds = inds % ncols
-                    m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
+                inds = sp_inds[l:u]
+                row_inds = inds / ncols
+                col_inds = inds % ncols
+                m = coo_matrix((data, (row_inds, col_inds)), shape=(nrows, ncols), copy=True)
             yield centr_f_inds[i], centr_p_inds[i], centr_ints[i], m
 
 
@@ -66,28 +65,56 @@ def make_sample_area_mask(coordinates):
     return sample_area_mask.reshape(nrows, ncols)
 
 
-def create_process_segment(ds_segments_path, centr_segm_path,
-                           coordinates, image_gen_conf, target_formula_inds):
+def create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
+                           coordinates, image_gen_config, target_formula_inds):
     sample_area_mask = make_sample_area_mask(coordinates)
     nrows, ncols = ds_dims(coordinates)
-    compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, image_gen_conf)
+    compute_metrics = make_compute_image_metrics(sample_area_mask, nrows, ncols, image_gen_config)
+    ppm = image_gen_config['ppm']
 
-    def process_segment(segm_i):
-        logger.info(f'Processing segment {segm_i}')
-        logger.info(f'Reading spectra data from {ds_segments_path / str(segm_i)}')
-        data = pd.read_msgpack(ds_segments_path / f'{segm_i}')
-        if type(data) == pd.DataFrame:
-            sp_df = data
+    def read_ds_segment(path):
+        data = pd.read_msgpack(path)
+        if type(data) == list:
+            sp_arr = np.concatenate(data)
         else:
-            sp_df = pd.concat(data)
-        logger.info(f'Reading centroids data from {centr_segm_path / str(segm_i)}')
-        centr_df = pd.read_msgpack(centr_segm_path / f'{segm_i}')
+            sp_arr = data
+        return sp_arr
 
-        formula_images_gen = gen_iso_images(sp_df.idx.values, sp_df.mz.values, sp_df.int.values,
-                                            centr_df, nrows, ncols, ppm=3, min_px=1)
+    def read_ds_segments(first_segm_i, last_segm_i):
+        sp_arr = [read_ds_segment(ds_segments_path / f'{ds_segm_i:04}.msgpack')
+                  for ds_segm_i in range(first_segm_i, last_segm_i + 1)]
+        sp_arr = [a for a in sp_arr if a.shape[0] > 0]
+        if len(sp_arr) > 0:
+            sp_arr = np.concatenate(sp_arr)
+            sp_arr = sp_arr[sp_arr[:, 1].argsort()]  # assumes mz in column 1
+        else:
+            sp_arr = np.empty((0, 3))
+        return sp_arr
+
+    def process_centr_segment(segm_i):
+        centr_segm_path = centr_segments_path / f'{segm_i:04}.msgpack'
+        logger.info(f'Reading centroid segment {segm_i} data from {centr_segm_path}')
+        centr_df = pd.read_msgpack(centr_segm_path)
+
+        centr_segm_min_mz, centr_segm_max_mz = centr_df.mz.agg([np.min, np.max])
+        centr_segm_min_mz -= centr_segm_min_mz * ppm * 1e-6
+        centr_segm_max_mz += centr_segm_max_mz * ppm * 1e-6
+
+        first_ds_segm_i = np.searchsorted(ds_segments[:, 0], centr_segm_min_mz, side='right') - 1
+        first_ds_segm_i = max(0, first_ds_segm_i)
+        last_ds_segm_i = np.searchsorted(ds_segments[:, 1], centr_segm_max_mz, side='left')  # last included
+        last_ds_segm_i = min(len(ds_segments) - 1, last_ds_segm_i)
+
+        logger.info(f'Reading spectra segments {first_ds_segm_i}-{last_ds_segm_i} from {ds_segments_path}')
+
+        sp_arr = read_ds_segments(first_ds_segm_i, last_ds_segm_i)
+
+        formula_images_gen = gen_iso_images(sp_inds=sp_arr[:,0], sp_mzs=sp_arr[:,1], sp_ints=sp_arr[:,2],
+                                            centr_df=centr_df,
+                                            nrows=nrows, ncols=ncols, ppm=3, min_px=1)
         formula_metrics_df, formula_images = \
             formula_image_metrics(formula_images_gen, compute_metrics, target_formula_inds)
         logger.info(f'Segment {segm_i} finished')
         return formula_metrics_df, formula_images
 
-    return process_segment
+    return process_centr_segment
