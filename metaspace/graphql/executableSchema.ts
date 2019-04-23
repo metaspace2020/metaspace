@@ -10,6 +10,7 @@ import {Resolvers as GroupResolvers} from './src/modules/group/controller';
 import {Resolvers as SystemResolvers} from './src/modules/system/controller';
 import {Resolvers as ProjectResolvers} from './src/modules/project/controller';
 import {Resolvers as DatasetResolvers} from './src/modules/dataset/controller';
+import {Resolvers as AnnotationResolvers} from './src/modules/annotation/controller';
 import * as Resolvers from './resolvers';
 import {mergedSchemas} from './schema';
 import addReadOnlyInterceptorToSchema from './src/modules/system/addReadOnlyInterceptorToSchema';
@@ -26,6 +27,7 @@ export const makeNewExecutableSchema = () => {
       ProjectResolvers,
       SystemResolvers,
       DatasetResolvers,
+      AnnotationResolvers,
     ],
   });
 };

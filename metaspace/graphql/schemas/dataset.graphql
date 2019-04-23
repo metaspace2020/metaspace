@@ -37,6 +37,7 @@ type Dataset {
   rawOpticalImageUrl: String
 
   thumbnailOpticalImageUrl: String
+  ionThumbnailUrl: String
 }
 
 # Datasets' submitter and group are taken from ElasticSearch, which means they can be out of sync with the database.
@@ -53,6 +54,7 @@ type DatasetGroup {
   shortName: String!
   urlSlug: String @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
   members: [UserGroup!] @deprecated(reason: "Field removed as it cannot be accessed both consistently and efficiently")
+  adminNames: [String!]
 }
 type DatasetProject {
   id: ID!

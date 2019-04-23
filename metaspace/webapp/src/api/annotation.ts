@@ -20,6 +20,8 @@ gql`query GetAnnotations($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrde
         fdrLevel
         mz
         colocalizationCoeff(colocalizationCoeffFilter: $colocalizationCoeffFilter)
+        offSample
+        offSampleProb
         dataset {
           id
           submitter { id name email }
@@ -65,12 +67,14 @@ gql`query Export($orderBy: AnnotationOrderBy, $sortingOrder: SortingOrder,
       sumFormula
       adduct
       ion
+      mz
       msmScore
+      fdrLevel
       rhoSpatial
       rhoSpectral
       rhoChaos
-      fdrLevel
-      mz
+      offSample
+      offSampleProb
       dataset {
         id
         name

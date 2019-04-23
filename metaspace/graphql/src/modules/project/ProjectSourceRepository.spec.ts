@@ -46,7 +46,7 @@ describe('modules/project/ProjectSourceRepository', () => {
       });
 
       const result = await testEntityManager.getCustomRepository(ProjectSourceRepository)
-        .findProjectsByDatasetId(userContext.user, dataset.id);
+        .findProjectsByDatasetId(userContext, dataset.id);
 
       expect(result).toEqual([
         expect.objectContaining({id: project.id})
@@ -62,7 +62,7 @@ describe('modules/project/ProjectSourceRepository', () => {
       await testEntityManager.save(UserProjectModel, {userId, project: project1, role: UPRO.MEMBER});
 
       const result = await testEntityManager.getCustomRepository(ProjectSourceRepository)
-        .findProjectsByDatasetId(userContext.user, dataset.id);
+        .findProjectsByDatasetId(userContext, dataset.id);
 
       expect(result).toEqual([
         expect.objectContaining({id: project1.id})

@@ -15,6 +15,7 @@ import {
 
 /** From `DaemonAction` in sm-engine, but capitalized */
 type EngineDatasetAction = 'ANNOTATE' | 'UPDATE' | 'INDEX' | 'DELETE';
+const KNOWN_ACTIONS = ['ANNOTATE','UPDATE','INDEX','DELETE'];
 /** From `DaemonActionStage` in sm-engine */
 type EngineDatasetActionStage = 'QUEUED' | 'STARTED' | 'FINISHED' | 'FAILED';
 
@@ -33,9 +34,13 @@ async function waitForChangeAndPublish(payload: DatasetStatusPayload) {
   // wait until updates are reflected in ES so that clients can refresh their data
   const maxAttempts = 8;
 
+  if (!KNOWN_ACTIONS.includes(action)) {
+    return;
+  }
+
   try {
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      logger.debug(JSON.stringify({attempt, status}));
+      logger.debug(JSON.stringify({attempt, action, status}));
       const ds = await esDatasetByID(ds_id, null, true);
 
       if (action === 'DELETE' && stage === 'FINISHED') {

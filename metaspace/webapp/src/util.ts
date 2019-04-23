@@ -1,5 +1,6 @@
 import config from './config';
 import * as Raven from 'raven-js';
+import sanitizeHtml from 'sanitize-html'
 
 const fuConfig = config.fineUploader;
 
@@ -58,10 +59,6 @@ function mzFilterPrecision(value: number | string): string {
   }
 }
 
-function csvExportHeader(): string {
-  return '# Generated at ' + new Date().toString() + '\n# URL: ' + window.location.href + '\n';
-}
-
 function scrollDistance(event: MouseWheelEvent) {
   let sY = 0;
   if ('detail'      in event) { sY = event.detail * 2; }
@@ -98,7 +95,7 @@ function getOS() {
   return os;
 }
 
-function safeJsonParse(json: string) {
+function safeJsonParse(json: string | null | undefined) {
   if (json) {
     try {
       return JSON.parse(json);
@@ -109,6 +106,21 @@ function safeJsonParse(json: string) {
   return undefined;
 }
 
+function sanitizeIt(descriptionText: string) {
+  return sanitizeHtml(
+    descriptionText,
+    {
+      allowedTags: [ 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'p', 'a', 'ul', 'ol',
+        'nl', 'li', 'b', 'i', 'strong', 'em', 'strike', 'code', 'hr', 'br', 'div',
+        'table', 'thead', 'caption', 'tbody', 'tr', 'th', 'td', 'pre', 'del'],
+      allowedAttributes: {
+        'a': ['href', 'rel']
+      },
+      transformTags: {
+        'a': sanitizeHtml.simpleTransform('a', {rel: 'nofollow noopener noreferrer'})
+      },
+    });
+}
 
 export {
   renderMolFormula,
@@ -117,9 +129,9 @@ export {
   decodePayload,
   pathFromUUID,
   mzFilterPrecision,
-  csvExportHeader,
   scrollDistance,
   mdTypeSupportsOpticalImages,
   getOS,
-  safeJsonParse
+  safeJsonParse,
+  sanitizeIt
 };

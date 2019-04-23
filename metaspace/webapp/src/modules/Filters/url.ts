@@ -31,6 +31,7 @@ const FILTER_TO_URL: Record<FilterKey, string> = {
   metadataType: 'mdtype',
   colocalizedWith: 'colo',
   colocalizationSamples: 'locs',
+  offSample: 'offs',
 };
 
 const URL_TO_FILTER = invert(FILTER_TO_URL) as Record<string, FilterKey>;
@@ -64,14 +65,17 @@ export function encodeParams(filter: any, path?: string, filterLists?: MetadataL
       continue;
 
     if (key in filter && (defaultFilter == null || filter[key] != defaultFilter[key])) {
-      if (encoding == 'json')
+      if (encoding === 'json') {
         q[FILTER_TO_URL[key]] = JSON.stringify(filter[key]);
-      else if (encoding == 'list')
+      } else if (encoding === 'list') {
         q[FILTER_TO_URL[key]] = filter[key].join(',');
-      else if (encoding === 'bool')
+      } else if (encoding === 'bool') {
         q[FILTER_TO_URL[key]] = filter[key] ? '1' : '0';
-      else
+      } else if (encoding === 'number') {
+        q[FILTER_TO_URL[key]] = String(filter[key]);
+      } else {
         q[FILTER_TO_URL[key]] = filter[key];
+      }
     }
   }
   return q;
@@ -118,6 +122,8 @@ export function decodeParams(location: Location, filterLists: any): Object {
       filter[fKey] = query[key] ? query[key].split(',') : [];
     } else if (encoding == 'bool') {
       filter[fKey] = query[key] === '1';
+    } else if (encoding == 'number') {
+      filter[fKey] = parseFloat(query[key]);
     } else {
       filter[fKey] = query[key];
     }

@@ -213,7 +213,7 @@ class Dataset(object):
                 'isocalc_pts_per_mz': int(params['pts_per_mz'])
             },
             'image_generation': {
-                'ppm': 3,
+                'ppm': self._metadata.get('Image_Generation', {}).get('ppm', 3),
                 'nlevels': 30,
                 'q': 99,
                 'do_preprocessing': False

@@ -1,3 +1,5 @@
+import * as sanitizeHtml from "sanitize-html";
+
 const slack = require('node-slack'),
   jsondiffpatch = require('jsondiffpatch'),
   winston = require('winston'),

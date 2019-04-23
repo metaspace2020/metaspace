@@ -17,6 +17,7 @@ import {sendProjectAcceptanceEmail, sendProjectInvitationEmail, sendRequestAcces
 import {smAPIUpdateDataset} from '../../../utils/smAPI';
 import {getDatasetForEditing} from '../../dataset/operation/getDatasetForEditing';
 
+
 const asyncAssertCanEditProject = async (ctx: Context, projectId: string) => {
   const userProject = await ctx.entityManager.getRepository(UserProjectModel).findOne({
     where: { projectId, userId: ctx.getUserIdOrFail(), role: UPRO.MANAGER },
@@ -56,17 +57,17 @@ const MutationResolvers: FieldResolversFor<Mutation, void> = {
     if (projectDetails.urlSlug !== undefined && !ctx.isAdmin) {
       throw new UserError('urlSlug can only be set by METASPACE administrators');
     }
-
     const projectRepository = ctx.entityManager.getRepository(ProjectModel);
     await projectRepository.update(projectId, projectDetails);
-
-    const affectedDatasets = await ctx.entityManager.getRepository(DatasetProjectModel)
+    if (projectDetails.name || projectDetails.urlSlug || projectDetails.isPublic) {
+      const affectedDatasets = await ctx.entityManager.getRepository(DatasetProjectModel)
       .find({where: { projectId }, relations: ['dataset', 'dataset.datasetProjects']});
-    await Promise.all(affectedDatasets.map(async dp => {
-      await smAPIUpdateDataset(dp.datasetId, {
-        projectIds: dp.dataset.datasetProjects.map(p => p.projectId)
-      })
-    }));
+      await Promise.all(affectedDatasets.map(async dp => {
+        await smAPIUpdateDataset(dp.datasetId, {
+          projectIds: dp.dataset.datasetProjects.map(p => p.projectId)
+        })
+      }));
+    }
 
     const project = await ctx.entityManager.getCustomRepository(ProjectSourceRepository)
       .findProjectById(ctx.user, projectId);

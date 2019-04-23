@@ -16,7 +16,7 @@
     chdir: "{{ metaspace_home }}"
   when: local_deploy is not defined
 
-- name: Pull metaspace sources from the repository
+- name: Pull metaspace "{{ metaspace_branch }}" branch from the repository
   git:
     repo: "{{ metaspace_repo_url }}"
     version: "{{ metaspace_branch }}"
@@ -39,6 +39,24 @@
       dest: "{{ sm_ansible_home }}/"
       rsync_opts:
         - --exclude=.*
+    - src: "{{ sm_home }}/"
+      dest: "{{ sm_home }}/"
+      rsync_opts:
+        - --exclude=.*
+        - --exclude=conf/*
+        - --exclude=logs/*
+        - --exclude=docker/*
+        - --exclude=docs/*
+    - src: "{{ sm_graphql_home }}/"
+      dest: "{{ sm_graphql_home }}/"
+      rsync_opts:
+        - --exclude='config/*.js'
+        - --exclude='logs/*'
+        - --exclude='dist/*'
+        - --exclude='node_modules/*'
+        - --exclude='.*'
+        - --exclude=aws/env/*
+        - --exclude=aws/files/*
     - src: "{{ sm_home }}/"
       dest: "{{ sm_home }}/"
       rsync_opts:

@@ -15,6 +15,7 @@
                :is="f.type"
                :filterKey="f.filterKey"
                :name="f.name"
+               :helpComponent="f.helpComponent"
                :options="f.options"
                :labels="f.labels"
                :clearable="f.clearable"
@@ -34,6 +35,7 @@
 
 <script>
  import {FILTER_SPECIFICATIONS} from './filterSpecs';
+ import {isFunction} from 'lodash-es';
 
  const orderedFilterKeys = [
    'database',
@@ -44,6 +46,7 @@
    'datasetIds',
    'compoundName',
    'mz',
+   'offSample',
    'polarity',
    'adduct',
    'organism',
@@ -98,11 +101,13 @@
      availableFilters() {
        let available = [];
        for (let key of orderedFilterKeys) {
-         if (FILTER_SPECIFICATIONS[key].levels.indexOf(this.level) == -1)
-           continue;
-         if (this.activeKeys.indexOf(key) == -1)
-           available.push({key,
-                           description: FILTER_SPECIFICATIONS[key].description})
+         const filterSpec = FILTER_SPECIFICATIONS[key];
+         if (filterSpec.levels.includes(this.level)
+           && !this.activeKeys.includes(key)
+           && (filterSpec.hidden == null || filterSpec.hidden === false
+             || (isFunction(filterSpec.hidden) && !filterSpec.hidden()))) {
+           available.push({key, description: filterSpec.description});
+         }
        }
        return available;
      },
@@ -122,7 +127,7 @@
        // Remove simpleFilter if it has a value that's no longer selectable
        if (this.filter.simpleFilter != null &&
          (newVal == null || !newVal.some(opt => opt.value === this.filter.simpleFilter))) {
-         self.$store.commit('updateFilter', {...this.filter, simpleFilter: null});
+         this.$store.commit('updateFilter', {...this.filter, simpleFilter: null});
        }
      }
    },

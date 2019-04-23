@@ -1,6 +1,6 @@
+from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import numpy as np
-
 import requests, json, re, os, boto3, pprint
 from copy import deepcopy
 from io import BytesIO
@@ -37,16 +37,16 @@ class GraphQLClient(object):
         self.host = self._config['host']
         self.session = requests.Session()
         self.session.verify = self._config['verify_certificate']
-        res = self.session.post(self._config['signin_url'], params={
+        self.res = self.session.post(self._config['signin_url'], params={
             "email": self._config['usr_email'],
             "password": self._config['usr_pass']
         })
-        if res.status_code == 401:
+        if self.res.status_code == 401:
             print('Unauthorized. Only public but not private datasets will be accessible.')
-        elif res.status_code == 200:
+        elif self.res.status_code == 200:
             print('Authorized.')
-        elif res.status_code != 200:
-            res.raise_for_status()
+        elif self.res.status_code != 200:
+            self.res.raise_for_status()
 
 
     def query(self, query, variables={}):
@@ -148,6 +148,8 @@ class GraphQLClient(object):
         rhoSpectral
         rhoChaos
         fdrLevel
+        offSample
+        offSampleProb
         dataset {
             id
             name
@@ -322,6 +324,21 @@ class GraphQLClient(object):
 
         return self.query(query, variables)
 
+    def get_molecular_databases(self, names=None):
+        query = '''{
+          molecularDatabases {
+            id name version
+          }
+        }'''
+        resp = self.query(query)
+        if 'molecularDatabases' not in resp:
+            raise Exception('GraphQL error: {}'.format(resp))
+        mol_dbs = resp['molecularDatabases']
+        if not names:
+            return mol_dbs
+        else:
+            return [d for d in mol_dbs if d['name'] in names]
+
 
 class MolDBClient:
     def __init__(self, config):
@@ -358,6 +375,22 @@ class MolDBClient:
             self._url, dbId, molFormula
         ) + '&limit=100&fields=mol_id'
         return [m['mol_id'] for m in _extract_data(requests.get(url))]
+
+    def get_molecules(self, db_id, fields, limit=100):
+        """ Fetch molecules from database
+
+        Args:
+            db_id: int
+            fields: list[string]
+                sf, mol_id, mol_name
+            limit: int
+
+        Return:
+            list[dict]
+        """
+        url = f'{self._url}/databases/{db_id}/molecules?'
+        url += f'limit={limit}&fields={",".join(fields)}'
+        return [m for m in _extract_data(requests.get(url))]
 
     def clearCache(self):
         self._mol_formula_lists = {}
@@ -567,6 +600,12 @@ class SMDataset(object):
 
         return IsotopeImages(images, sf, adduct, [r['mz'] for r in image_metadata], [r['url'] for r in image_metadata])
 
+    def all_annotation_images(self, fdr=0.1, database=None):
+        with ThreadPoolExecutor() as pool:
+            images = [img for img in pool.map(lambda row: self.isotope_images(*row),
+                                              self.annotations(fdr=fdr, database=database))]
+        return images
+
     def optical_images(self):
         def fetch_image(url):
             from PIL import Image
@@ -595,6 +634,7 @@ class SMInstance(object):
         self._config['usr_email'] = email
         self._config['usr_pass'] = password
         self.reconnect()
+        return self._gqclient.res.status_code == 200
 
     def reconnect(self):
         self._gqclient = GraphQLClient(self._config)
@@ -841,6 +881,9 @@ class MolecularDatabase:
 
     def ids(self, sum_formula):
         return self._client.getMolFormulaIds(self._id, sum_formula)
+
+    def molecules(self, limit=100):
+        return  self._client.get_molecules(self._id, ['sf', 'mol_id', 'mol_name'], limit=limit)
 
 
 def plot_diff(ref_df, dist_df, t='', xlabel='', ylabel='', col='msm'):

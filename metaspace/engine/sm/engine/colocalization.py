@@ -1,11 +1,8 @@
 import logging
 import warnings
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from traceback import format_exc
 import numpy as np
-import pandas as pd
-import pyspark.rdd
 from sklearn.decomposition import PCA
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.cluster import spectral_clustering
@@ -27,6 +24,11 @@ COLOC_JOB_INS = ('INSERT INTO graphql.coloc_job (ds_id, mol_db, fdr, algorithm, 
 
 COLOC_ANN_INS = ('INSERT INTO graphql.coloc_annotation(coloc_job_id, ion_id, coloc_ion_ids, coloc_coeffs) ' 
                  'VALUES (%s, %s, %s, %s)')
+
+SUCCESSFUL_COLOC_JOB_SEL = ('SELECT mol_db FROM graphql.coloc_job '
+                            'WHERE ds_id = %s '
+                            'GROUP BY mol_db '
+                            'HAVING not bool_or(error IS NOT NULL)')
 
 ANNOTATIONS_SEL = ('SELECT iso_image_ids[1], sf, adduct, fdr '
                    'FROM iso_image_metrics m '
@@ -92,23 +94,6 @@ class FreeableRef(object):
             raise ReferenceError('FreeableRef is already freed')
         else:
             return self._ref
-
-
-def _preprocess_images_inplace(imgs):
-    """ Clips the top 1% (if more than 1% of pixels are populated),
-    scales all pixels to the range 0...1,
-    and ensures that no image is completely zero.
-    Modifies imgs in-place to minimize memory usage
-    """
-    max_clipped = np.percentile(imgs, 99, axis=1, keepdims=True)
-    max_unclipped = np.max(imgs, axis=1, keepdims=True)
-    # Use the 99th percentile for each image as a scaling factor, but fall back to the image's maximum or 1.0 if needed
-    # to ensure that there are no divide-by-zero issues
-    scale = np.select([max_clipped != 0, max_unclipped != 0], [max_clipped, max_unclipped], 1)
-    imgs /= scale
-    np.clip(imgs, 0, 1, out=imgs)
-    # On rows that are all zero, set a small non-zero value to prevent future NaNs
-    imgs[(max_unclipped == 0)[:, 0], :] = 0.01
 
 
 def _labels_to_clusters(labels, scores):
@@ -212,8 +197,9 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
     assert images.ref.shape[0] == ion_ids.shape[0] == fdrs.shape[0], (images.ref.shape, ion_ids.shape, fdrs.shape)
     start = datetime.now()
 
-    logger.debug(f'Preprocessing images (shape: {images.ref.shape}, dtype: {images.ref.dtype})')
-    _preprocess_images_inplace(images.ref)
+    if len(ion_ids) < 2:
+        logger.info('Not enough annotations to perform colocalization')
+        return
 
     logger.debug('Calculating colocalization metrics')
     pca_images = PCA(min(20, *images.ref.shape)).fit_transform(images.ref)
@@ -265,10 +251,10 @@ def analyze_colocalization(ds_id, mol_db, images, ion_ids, fdrs):
 
 class Colocalization(object):
 
-    def __init__(self, db):
+    def __init__(self, db, img_store=None):
         self._db = db
         self._sm_config = SMConfig.get_conf()
-        self._img_store = ImageStoreServiceWrapper(self._sm_config['services']['img_service_url'])
+        self._img_store = img_store or ImageStoreServiceWrapper(self._sm_config['services']['img_service_url'])
 
     def _save_job_to_db(self, job):
         job_id, = self._db.insert_return(COLOC_JOB_INS,
@@ -295,88 +281,44 @@ class Colocalization(object):
             raise
 
     def _get_existing_ds_annotations(self, ds_id, mol_db_name, image_storage_type, polarity):
-        def get_ion_image(id):
-            if id is not None:
-                im = self._img_store.get_image_by_id(image_storage_type, 'iso_image', id)
-                data = np.asarray(im)
-                image = np.where(data[:, :, 3] != 0, data[:, :, 0], 0)
-                return _downscale_image_if_required(image, num_annotations).ravel()
-            return None
-
         mol_db = MolecularDB(name=mol_db_name)
         annotation_rows = self._db.select(ANNOTATIONS_SEL, [ds_id, mol_db.id])
         num_annotations = len(annotation_rows)
-        sf_adducts = [(formula, adduct) for image, formula, adduct, fdr in annotation_rows]
-        ion_id_mapping = get_ion_id_mapping(self._db, sf_adducts, polarity)
-        ion_ids = [ion_id_mapping[sf_adduct] for sf_adduct in sf_adducts]
-        fdrs = [fdr for image, formula, adduct, fdr in annotation_rows]
+        if num_annotations != 0:
+            sf_adducts = [(formula, adduct) for image, formula, adduct, fdr in annotation_rows]
+            ion_id_mapping = get_ion_id_mapping(self._db, sf_adducts, polarity)
+            ion_ids = np.array([ion_id_mapping[sf_adduct] for sf_adduct in sf_adducts])
+            fdrs = np.array([fdr for image, formula, adduct, fdr in annotation_rows])
 
-        with ThreadPoolExecutor() as ex:
             logger.debug(f'Getting {num_annotations} images for "{ds_id}" {mol_db_name}')
-            ion_images = list(ex.map(get_ion_image, [row[0] for row in annotation_rows]))
-            logger.debug(f'Finished getting images for "{ds_id}" {mol_db_name}')
+            image_ids = [row[0] for row in annotation_rows]
+            images, mask, (h, w) = self._img_store.get_ion_images_for_analysis(image_storage_type, image_ids)
+            logger.debug(f'Finished getting images for "{ds_id}" {mol_db_name}. Image size: {h}x{w}')
+        else:
+            images = np.zeros((0, 0), dtype=np.float32)
+            ion_ids = np.zeros((0,), dtype=np.int64)
+            fdrs = np.zeros((0,), dtype=np.float32)
 
-        images = FreeableRef(np.array([img for img in ion_images if img is not None], ndmin=2, dtype=np.float32))
-        ion_ids = np.array([ion_id for i, ion_id in enumerate(ion_ids) if ion_images[i] is not None], dtype=np.int64)
-        fdrs = np.array([fdr for i, fdr in enumerate(fdrs) if ion_images[i] is not None], dtype=np.float32)
+        return FreeableRef(images), ion_ids, fdrs
 
-        return images, ion_ids, fdrs
-
-    def run_coloc_job_for_existing_ds(self, ds_id):
+    def run_coloc_job(self, ds_id, reprocess=False):
         """ Analyze colocalization for a previously annotated dataset, querying the dataset's annotations from the db,
         and downloading the exported ion images
         Args
         ====
         ds_id: str
+        reprocess: bool
+            Whether to re-run colocalization jobs against databases that have already successfully run
         """
 
         image_storage_type = Dataset(ds_id).get_ion_img_storage_type(self._db)
         mol_dbs, polarity = self._db.select_one(DATASET_CONFIG_SEL, [ds_id])
+        existing_mol_dbs = set(db for db, in self._db.select(SUCCESSFUL_COLOC_JOB_SEL, [ds_id]))
 
         for mol_db_name in mol_dbs:
-            logger.info(f'Running colocalization job for {ds_id} on {mol_db_name}')
-            images, ion_ids, fdrs = self._get_existing_ds_annotations(ds_id, mol_db_name, image_storage_type, polarity)
-            self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs)
-
-    def _get_annotations_from_new_ds(self, ds, ion_metrics_df, ion_iso_images, alpha_channel):
-        polarity = ds.config['isotope_generation']['charge']['polarity']
-        mols = list(ion_metrics_df[['formula','adduct']].itertuples(index=False, name=None))
-        ion_id_mapping = get_ion_id_mapping(self._db, mols, polarity)
-        num_annotations = len(mols)
-
-        def extract_image(imgs):
-            if imgs[0] is not None:
-                image = imgs[0].toarray() * alpha_channel
-                return _downscale_image_if_required(image, num_annotations).ravel()
-            return None
-
-        image_map = ion_iso_images.mapValues(extract_image).collectAsMap()
-        annotations = [(image_map.get(i), ion_id_mapping[(item.formula, item.adduct)], item.fdr)
-                       for i, item in ion_metrics_df.iterrows()
-                       if image_map.get(i) is not None]
-
-        images = FreeableRef(np.array([a[0] for a in annotations], ndmin=2, dtype=np.float32))
-        ion_ids = np.array([a[1] for a in annotations], dtype=np.int64)
-        fdrs = np.array([a[2] for a in annotations], dtype=np.float32)
-
-        return images, ion_ids, fdrs
-
-    def run_coloc_job_for_new_ds(self, ds, mol_db_name, ion_metrics_df, ion_iso_images, alpha_channel):
-        """ Analyze colocalization as part of an annotation job, using dataframes from the annotation job as a datasource
-        Args
-        ====
-        ds: Dataset
-        mol_db_name: str
-        ion_metrics_df: pd.DataFrame
-        ion_iso_images: pyspark.rdd.RDD
-        alpha_channel: np.ndarray
-        """
-
-        if self._sm_config.get('colocalization', {}).get('enabled', True):
-            logger.info('Running colocalization job')
-            images, ion_ids, fdrs = self._get_annotations_from_new_ds(ds, ion_metrics_df, ion_iso_images, alpha_channel)
-            self._analyze_and_save(ds.id, mol_db_name, images, ion_ids, fdrs)
-            logger.info('Finished colocalization job')
-        else:
-            logger.info('Skipping colocalization')
-
+            if reprocess or mol_db_name not in existing_mol_dbs:
+                logger.info(f'Running colocalization job for {ds_id} on {mol_db_name}')
+                images, ion_ids, fdrs = self._get_existing_ds_annotations(ds_id, mol_db_name, image_storage_type, polarity)
+                self._analyze_and_save(ds_id, mol_db_name, images, ion_ids, fdrs)
+            else:
+                logger.info(f'Skipping colocalization job for {ds_id} on {mol_db_name}')

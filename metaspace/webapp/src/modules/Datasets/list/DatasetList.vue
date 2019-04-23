@@ -9,6 +9,10 @@
                   @filterUpdate="filter => $emit('filterUpdate', filter)"
                   @datasetMutated="$emit('datasetMutated')">
     </dataset-item>
+    <div v-if="datasets == null || datasets.length === 0"
+         class="datasets-list-empty">
+      No datasets found
+    </div>
   </div>
 </template>
 
@@ -61,9 +65,11 @@
 </script>
 
 <style scoped lang="scss">
+  @import "~element-ui/packages/theme-chalk/src/common/var";
+
   .allow-double-column {
     >.dataset-item {
-      max-width: 800px;
+      flex-basis: calc(50% - 6px);
     }
   }
 
@@ -72,11 +78,21 @@
     flex-direction: row;
     flex-wrap: wrap;
     align-items: stretch;
+    margin: -3px;
 
     &:not(.double-column) {
       .odd {
         background-color: #e6f1ff;
       }
     }
+  }
+
+  .datasets-list-empty {
+    display: flex;
+    height: 200px;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    color: $--color-text-secondary;
   }
 </style>

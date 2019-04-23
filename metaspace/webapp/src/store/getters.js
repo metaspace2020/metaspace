@@ -17,6 +17,7 @@ export default {
   gqlAnnotationFilter(state, getters) {
     const filter = getters.filter;
     const colocalizationAlgo = getters.settings.annotationView.colocalizationAlgo;
+
     const f = {
       database: filter.database,
       compoundQuery: filter.compoundName,
@@ -25,6 +26,7 @@ export default {
       colocalizedWith: filter.colocalizedWith,
       colocalizationAlgo,
       colocalizationSamples: filter.colocalizationSamples,
+      offSample: filter.offSample == null ? undefined : !!filter.offSample,
     };
 
     if (filter.minMSM)

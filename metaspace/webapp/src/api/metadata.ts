@@ -127,6 +127,7 @@ export const metadataExportQuery = gql`
         id
         name
         shortName
+        adminNames
       }
       groupApproved
       organism

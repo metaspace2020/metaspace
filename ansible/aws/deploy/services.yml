@@ -1,0 +1,9 @@
+---
+
+- name: Deploying Serverless SM Services
+  hosts: 127.0.0.1
+  connection: local
+
+  roles:
+    - role: off_sample_api
+      tags: [off-sample-api]

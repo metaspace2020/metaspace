@@ -18,6 +18,7 @@
                 @input="val => onInput('molDBs', val)"
                 :error="error && error.molDBs"
                 :options="molDBOptions"
+                :multiple-limit="MAX_MOL_DBS"
                 required
               />
             </el-col>

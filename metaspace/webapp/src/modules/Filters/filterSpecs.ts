@@ -2,12 +2,14 @@ import { renderMolFormula } from '../../util';
 import InputFilter from './filter-components/InputFilter.vue';
 import SingleSelectFilter from './filter-components/SingleSelectFilter.vue';
 import SearchableFilter from './filter-components/SearchableFilter.vue';
+import OffSampleHelp from './filter-components/OffSampleHelp.vue';
 import MzFilter from './filter-components/MzFilter.vue';
 import SearchBox from './filter-components/SearchBox.vue';
 import {metadataTypes, defaultMetadataType} from '../../assets/metadataRegistry';
 import { Component } from 'vue';
 import SimpleFilterBox from './filter-components/SimpleFilterBox.vue';
 import BooleanFilter from './filter-components/BooleanFilter.vue';
+import config from '../../config';
 
 // Filled during the initialization of adduct filter below
 const ADDUCT_POLARITY: Record<string, string> = {};
@@ -65,7 +67,7 @@ export type Level = 'annotation' | 'dataset' | 'upload' | 'projects';
 export type FilterKey = 'database' | 'datasetIds' | 'minMSM' | 'compoundName' | 'adduct' | 'mz' | 'fdrLevel'
   | 'group' | 'project' | 'submitter' | 'polarity' | 'organism' | 'organismPart' | 'condition' | 'growthConditions'
   | 'ionisationSource' | 'maldiMatrix' | 'analyzerType' | 'simpleFilter' | 'simpleQuery' | 'metadataType'
-  | 'colocalizedWith' | 'colocalizationSamples';
+  | 'colocalizedWith' | 'colocalizationSamples' | 'offSample';
 
 export type MetadataLists = Record<string, any[]>;
 
@@ -73,15 +75,16 @@ export interface FilterSpecification {
   type: Component;
   name: string;
   description?: string;
+  helpComponent?: Component;
   levels: Level[];
   defaultInLevels?: Level[];
   initialValue: undefined | null | number | string | boolean | ((lists: MetadataLists) => any);
-  options?: string | number[] | string[] | ((lists: MetadataLists) => any[]);
+  options?: string | number[] | boolean[] | string[] | ((lists: MetadataLists) => any[]);
   removable?: boolean;
   filterable?: boolean;
   multiple?: boolean;
   hidden?: boolean | (() => boolean);
-  encoding?: 'list' | 'json' | 'bool';
+  encoding?: 'list' | 'json' | 'bool' | 'number';
   optionFormatter?(value: any): string;
   valueFormatter?(value: any): string;
   valueKey?: string;
@@ -164,6 +167,7 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     options: [0.05, 0.1, 0.2, 0.5],
     optionFormatter: formatFDR,
     valueFormatter: formatFDR,
+    encoding: 'number',
     filterable: false,
     removable: false
   },
@@ -326,13 +330,28 @@ export const FILTER_SPECIFICATIONS: Record<FilterKey, FilterSpecification> = {
     encoding: 'bool',
     dependsOnFilters: ['fdrLevel', 'database', 'datasetIds'],
     conflictsWithFilters: ['colocalizedWith'],
+  },
+
+  offSample: {
+    type: SingleSelectFilter,
+    name: '',
+    description: 'Show/hide off-sample annotations',
+    helpComponent: OffSampleHelp,
+    levels: ['annotation'],
+    defaultInLevels: [],
+    initialValue: false,
+    options: [true, false],
+    encoding: 'bool',
+    optionFormatter: option => `${option ? 'Off' : 'On'}-sample only`,
+    valueFormatter: option => `${option ? 'Off' : 'On'}-sample only`,
+    hidden: () => !config.features.off_sample,
   }
 };
 
 
 export const DATASET_FILTERS: FilterKey[] = ['datasetIds', 'group', 'project', 'submitter', 'polarity', 'organism', 'organismPart', 'condition', 'growthConditions', 'ionisationSource', 'maldiMatrix', 'analyzerType', 'metadataType'];
 /** = all annotation-affecting filters - dataset-affecting filters*/
-export const ANNOTATION_FILTERS: FilterKey[] = ['database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith'];
+export const ANNOTATION_FILTERS: FilterKey[] = ['database', 'minMSM', 'compoundName', 'adduct', 'mz', 'fdrLevel', 'colocalizedWith', 'offSample'];
 /** Filters that are very specific to particular annotations and should be cleared when navigating to other annotations */
 export const ANNOTATION_SPECIFIC_FILTERS: FilterKey[] = ['compoundName', 'adduct', 'mz', 'colocalizedWith', 'colocalizationSamples'];
 

@@ -1,18 +1,11 @@
-"""
-
-:synopsis: Database interface
-
-.. moduleauthor:: Vitaly Kovalev <intscorpio@gmail.com>
-"""
+import logging
 from functools import wraps
 from weakref import WeakSet
 
-import psycopg2
+from psycopg2.extras import execute_values
 import psycopg2.extensions
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
 psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
-import psycopg2.extras
-import logging
 
 
 logger = logging.getLogger('engine')
@@ -167,6 +160,19 @@ class DB(object):
         """
         self.curs = self.conn.cursor()
         self.curs.execute(sql, params)
+
+    @db_decor
+    def alter_many(self, sql, rows=None):
+        """ Execute alter query
+
+        Args
+        ------------
+        sql: string
+            sql alter query with %s placeholders
+        rows:
+            Iterable of query parameters for placeholders
+        """
+        execute_values(self.conn.cursor(), sql, rows)
 
     @db_decor
     def copy(self, inp_file, table, sep='\t', columns=None):

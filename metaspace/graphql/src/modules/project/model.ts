@@ -45,6 +45,9 @@ export class Project {
   @Column({ name: 'created_dt', type: 'timestamp without time zone', default: () => "(now() at time zone 'utc')",
     transformer: new MomentValueTransformer() })
   createdDT: Moment;
+
+  @Column({ type: 'text', name: 'project_description', default: ''})
+  projectDescriptionAsHtml: string;
 }
 
 @Entity('user_project')

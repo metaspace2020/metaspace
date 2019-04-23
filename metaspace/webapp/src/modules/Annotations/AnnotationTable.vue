@@ -49,7 +49,9 @@
         No annotations were found
       </p>
 
-      <el-table-column label="Lab" v-if="!hidden('Group')"
+      <el-table-column key="lab"
+                       v-if="!hidden('Group')"
+                       label="Lab"
                        min-width="95">
         <template slot-scope="props">
           <div class="cell-wrapper">
@@ -65,8 +67,10 @@
         </template>
       </el-table-column>
 
-      <el-table-column property="dataset.name"
-                       label="Dataset" v-if="!hidden('Dataset')"
+      <el-table-column key="dataset"
+                       v-if="!hidden('Dataset')"
+                       property="dataset.name"
+                       label="Dataset"
                        min-width="140">
         <template slot-scope="props">
           <div class="cell-wrapper">
@@ -80,7 +84,8 @@
         </template>
       </el-table-column>
 
-      <el-table-column property="sumFormula"
+      <el-table-column key="sumFormula"
+                       property="sumFormula"
                        label="Annotation"
                        sortable="custom"
                        min-width="120">
@@ -106,7 +111,8 @@
         </template>
       </el-table-column>
 
-      <el-table-column property="mz"
+      <el-table-column key="mz"
+                       property="mz"
                        label="m/z"
                        sortable="custom"
                        min-width="65">
@@ -122,7 +128,19 @@
         </template>
       </el-table-column>
 
-      <el-table-column property="msmScore"
+      <el-table-column key="offSampleProb"
+                       v-if="!hidden('OffSampleProb')"
+                       property="offSampleProb"
+                       label="Off-sample %"
+                       sortable="custom"
+                       min-width="60">
+        <template slot-scope="props">
+          <span> {{(props.row.offSampleProb * 100).toFixed(0)}}% </span>
+        </template>
+      </el-table-column>
+
+      <el-table-column key="msmScore"
+                       property="msmScore"
                        label="MSM"
                        sortable="custom"
                        min-width="60">
@@ -131,7 +149,8 @@
         </template>
       </el-table-column>
 
-      <el-table-column property="fdrLevel"
+      <el-table-column key="fdrLevel"
+                       property="fdrLevel"
                        label="FDR"
                        class-name="fdr-cell"
                        sortable="custom"
@@ -141,7 +160,8 @@
         </template>
       </el-table-column>
 
-      <el-table-column v-if="!hidden('ColocalizationCoeff')"
+      <el-table-column key="colocalizationCoeff"
+                       v-if="!hidden('ColocalizationCoeff')"
                        property="colocalizationCoeff"
                        label="Coloc."
                        class-name="coloc-cell"
@@ -197,7 +217,7 @@
 </template>
 
 <script>
-  import {renderMolFormula, csvExportHeader, safeJsonParse} from '../../util';
+  import {renderMolFormula} from '../../util';
  import ProgressButton from './ProgressButton.vue';
  import {
    annotationListQuery,
@@ -206,8 +226,9 @@
 
  import Vue from 'vue';
  import FileSaver from 'file-saver';
- import formatCsvRow from '../../lib/formatCsvRow';
- import {get, invert} from 'lodash-es';
+  import formatCsvRow, {csvExportHeader, formatCsvTextArray} from '../../lib/formatCsvRow';
+ import {invert} from 'lodash-es';
+ import config from '../../config';
 
  // 38 = up, 40 = down, 74 = j, 75 = k
  const KEY_TO_ACTION = {38: 'up', 75: 'up', 40: 'down', 74: 'down'};
@@ -217,6 +238,7 @@
    ORDER_BY_MSM: 'msmScore',
    ORDER_BY_FDR_MSM: 'fdrLevel',
    ORDER_BY_FORMULA: 'sumFormula',
+   ORDER_BY_OFF_SAMPLE: 'offSampleProb',
    ORDER_BY_COLOCALIZATION: 'colocalizationCoeff'
  };
  const COLUMN_TO_SORT_ORDER = invert(SORT_ORDER_TO_COLUMN);
@@ -506,6 +528,7 @@
      async startExport () {
        const chunkSize = this.csvChunkSize;
        const includeColoc = !this.hidden('ColocalizationCoeff');
+       const includeOffSample = config.features.off_sample;
        const colocalizedWith = this.filter.colocalizedWith;
        let csv = csvExportHeader();
        const columns = ['group', 'datasetName', 'datasetId', 'formula', 'adduct', 'mz',
@@ -514,6 +537,9 @@
        if (includeColoc) {
          columns.push('colocalizationCoeff');
        }
+       if (includeOffSample) {
+         columns.push('offSample', 'rawOffSampleProb');
+       }
        csv += formatCsvRow(columns);
 
        function databaseId(compound) {
@@ -521,19 +547,25 @@
        }
 
        function formatRow(row) {
-         const {sumFormula, adduct, ion, msmScore, mz,
-                rhoSpatial, rhoSpectral, rhoChaos, fdrLevel, colocalizationCoeff} = row;
+         const {
+           dataset, sumFormula, adduct, ion, mz,
+           msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos, possibleCompounds,
+           offSample, offSampleProb, colocalizationCoeff
+         } = row;
          const cells = [
-           row.dataset.groupApproved && row.dataset.group ? row.dataset.group.name : '',
-           row.dataset.name,
-           row.dataset.id,
+           dataset.groupApproved && dataset.group ? dataset.group.name : '',
+           dataset.name,
+           dataset.id,
            sumFormula, "M" + adduct, mz,
            msmScore, fdrLevel, rhoSpatial, rhoSpectral, rhoChaos,
-           row.possibleCompounds.map(m => m.name).join(', '),
-           row.possibleCompounds.map(databaseId).join(', ')
+           formatCsvTextArray(possibleCompounds.map(m => m.name)),
+           formatCsvTextArray(possibleCompounds.map(databaseId))
          ];
          if (includeColoc) {
            cells.push(colocalizedWith === ion ? 'Reference annotation' : colocalizationCoeff);
+         }
+         if (includeOffSample) {
+           cells.push(offSample, offSampleProb);
          }
 
          return formatCsvRow(cells);

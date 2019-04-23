@@ -31,7 +31,7 @@
         <div class="divider" />
       </div>
       <div class="right-side">
-        <a class="google-button" href="/api_auth/google">
+        <a class="google-button" href="/api_auth/google" @click="setSignInReturnUrl">
           <google-button>Sign in with Google</google-button>
         </a>
       </div>
@@ -65,6 +65,7 @@
   import { signInByEmail } from '../../../api/auth';
   import { refreshLoginStatus } from '../../../graphqlClient';
   import reportError from '../../../lib/reportError';
+  import {setSignInReturnUrl} from '../signInReturnUrl';
 
   interface Model {
     email: string;
@@ -119,6 +120,10 @@
       } finally {
         this.isSubmitting = false;
       }
+    }
+
+    setSignInReturnUrl() {
+      setSignInReturnUrl(this.$route);
     }
 
     onClose() {

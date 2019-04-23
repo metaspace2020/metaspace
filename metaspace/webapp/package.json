@@ -17,6 +17,8 @@
   },
   "dependencies": {
     "@types/js-cookie": "^2.1.0",
+    "@types/marked": "^0.6.2",
+    "@types/sanitize-html": "^1.18.2",
     "@types/ws": "^5.1.2",
     "apollo-client": "^2.3.7",
     "apollo-client-preset": "^1.0.8",
@@ -47,14 +49,16 @@
     "json-loader": "^0.5.7",
     "lodash": "^4.17.4",
     "lodash-es": "^4.17.10",
+    "marked": "^0.6.1",
     "mkdirp": "^0.5.1",
     "multer": "^1.3.0",
     "node-sass": "4.5.3",
     "numeric": "^1.2.6",
     "plotly.js": "^1.34.0",
-    "popper.js": "1.0.8",
+    "popper.js": "^1.14.7",
     "raven": "^2.6.2",
     "raven-js": "^3.25.2",
+    "sanitize-html": "^1.20.0",
     "sass-loader": "7.0.1",
     "serve-favicon": "^2.3.2",
     "simple-statistics": "^3.0.0",
@@ -110,6 +114,7 @@
     "postcss-loader": "~2.1.5",
     "source-map-loader": "0.2.3",
     "style-loader": "~0.21.0",
+    "supertest": "^3.4.2",
     "ts-jest": "^23.1.4",
     "ts-node": "~3.1.0",
     "typescript": "~2.8.4",
@@ -135,7 +140,8 @@
     },
     "moduleNameMapper": {
       "lodash-es": "lodash",
-      "\\.scss$": "<rootDir>/tests/utils/scssMock.js"
+      "\\.scss$": "<rootDir>/tests/utils/scssMock.js",
+      "\\.(png|jpg|gif|svg)$": "<rootDir>/tests/utils/staticFileMock.js"
     },
     "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
     "setupFilesAfterEnv": [

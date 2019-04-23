@@ -8,6 +8,7 @@ import Vuex from 'vuex';
 import { sync } from 'vuex-router-sync';
 jest.mock('file-saver');
 import * as FileSaver from 'file-saver';
+import {merge} from 'lodash-es';
 const mockFileSaver = FileSaver as jest.Mocked<typeof FileSaver>;
 
 Vue.use(Vuex);
@@ -48,8 +49,10 @@ describe('AnnotationTable', () => {
       { "name": "C.I. Food Red 6", "information": [{ "databaseId": "HMDB0032738" }] },
     ],
     colocalizationCoeff: 0.840809,
+    offSample: 'on',
+    offSampleProb: 0.03,
   };
-  const propsData = {hideColumns: []};
+  const propsData = {hideColumns: ["OffSampleProb"]};
 
   it('should match snapshot', async () => {
     initMockGraphqlClient({
@@ -71,8 +74,8 @@ describe('AnnotationTable', () => {
       Query: () => ({
         allAnnotations: (_: any, {offset}: any) => {
           return [
-            {...mockAnnotation, id: `AnnotationId_${offset+1}`, mz: offset+1},
-            {...mockAnnotation, groupApproved: false, id: `AnnotationId_${offset+2}`, mz: offset+2}
+            merge({}, mockAnnotation, {id: `AnnotationId_${offset+1}`, mz: offset+1}),
+            merge({}, mockAnnotation, {dataset: {groupApproved: false}, id: `AnnotationId_${offset+2}`, mz: offset+2}),
           ]
         },
         countAnnotations: () => 4,

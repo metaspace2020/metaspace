@@ -1,3 +1,4 @@
+from itertools import product
 from unittest.mock import call
 from unittest.mock import patch, MagicMock
 from datetime import datetime
@@ -9,6 +10,8 @@ from sm.engine.queue import QueuePublisher
 from sm.engine.dataset import DatasetStatus, Dataset
 from sm.engine.png_generator import ImageStoreServiceWrapper
 from sm.engine.tests.util import sm_config, test_db, fill_db, sm_index, es_dsl_search, metadata, ds_config
+
+mol_db_mock = {'id': 1, 'name': 'HMDB-v4', 'version':'2001-01-01'}
 
 
 def create_ds(ds_id='2000-01-01', ds_name='ds_name', input_path='input_path', upload_dt=None,
@@ -42,6 +45,7 @@ class TestSMDaemonDatasetManager:
         def run(self, *args, **kwargs):
             pass
 
+    @patch('sm.engine.mol_db.MolDBServiceWrapper.find_db_by_name_version', return_value=[mol_db_mock])
     def test_annotate_ds(self, test_db, metadata, ds_config):
         es_mock = MagicMock(spec=ESExporter)
         db = DB(sm_config['db'])
@@ -70,14 +74,14 @@ class TestSMDaemonDatasetManager:
         ds = create_ds(ds_id=ds_id, metadata=metadata)
 
         with patch('sm.engine.sm_daemons.MolecularDB') as MolecularDB:
-            mol_db_mock = MolecularDB.return_value
-            mol_db_mock.name = 'HMDB-v4'
+            molecular_db_mock = MolecularDB.return_value
+            molecular_db_mock.name = 'HMDB-v4'
 
             manager.index(ds)
 
             es_mock.delete_ds.assert_called_with(ds_id, delete_dataset=False)
             call_args = es_mock.index_ds.call_args[1].values()
-            assert ds_id in call_args and mol_db_mock in call_args
+            assert ds_id in call_args and molecular_db_mock in call_args
 
     def test_delete_ds(self, fill_db):
         db = DB(sm_config['db'])
@@ -90,7 +94,7 @@ class TestSMDaemonDatasetManager:
 
         manager.delete(ds)
 
-        ids = ['iso_image_{}_id'.format(id) for id in range(1, 3)]
+        ids = [f'iso_image_{i}{j}' for i, j in product([1, 2], [1, 2])]
         img_store_service_mock.delete_image_by_id.assert_has_calls(
             [call('fs', 'iso_image', ids[0]), call('fs', 'iso_image', ids[1])])
         es_mock.delete_ds.assert_called_with(ds_id)

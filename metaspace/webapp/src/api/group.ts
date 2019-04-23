@@ -36,6 +36,7 @@ export interface UpdateGroupMutation {
     name: string;
     shortName: string;
     urlSlug: string | null;
+    groupDescriptionAsHtml: string;
     currentUserRole: UserGroupRole | null;
   }
 }
@@ -100,7 +101,7 @@ export const updateUserGroupMutation =
 
 export const importDatasetsIntoGroupMutation =
   gql`mutation($groupId: ID!, $datasetIds: [ID!]!) {
-  importDatasetsIntoGroup(groupId: $groupId, datasetIds: $datasetIds)
+    importDatasetsIntoGroup(groupId: $groupId, datasetIds: $datasetIds)
   }`;
 
 
@@ -150,6 +151,7 @@ export interface ViewGroupResult {
   urlSlug: string | null;
   currentUserRole: UserGroupRole | null;
   numMembers: number;
+  groupDescriptionAsHtml: string;
   members: ViewGroupMember[] | null;
 }
 
@@ -175,4 +177,5 @@ export const ViewGroupFragment = gql`fragment ViewGroupFragment on Group {
     numDatasets
     user { id name email }
   }
+  groupDescriptionAsHtml
 }`;

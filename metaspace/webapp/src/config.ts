@@ -6,6 +6,7 @@ interface AWSConfig {
   access_key_id: string;
   region: string;
   s3_bucket: string;
+  s3_uuid_endpoint: string;
   s3_signature_endpoint: string;
   s3_signature_version: number;
 }
@@ -23,6 +24,10 @@ type FineUploaderConfig = FineUploaderConfigS3 | FineUploaderConfigLocal;
 
 interface Features {
   coloc: boolean;
+  ion_thumbs: boolean;
+  off_sample: boolean;
+  off_sample_col: boolean;
+  new_feature_popups: boolean;
 }
 
 interface ClientConfig {
@@ -48,6 +53,10 @@ const defaultConfig: ClientConfig = {
   metadataTypes: ["ims"],
   features: {
     coloc: false,
+    ion_thumbs: false,
+    off_sample: true,
+    off_sample_col: false,
+    new_feature_popups: true,
   }
 };
 
@@ -74,7 +83,7 @@ export const updateConfigFromQueryString = () => {
 };
 
 export const replaceConfigWithDefaultForTests = () => {
-  config = defaultsDeep({}, defaultConfig);
+  Object.assign(config, defaultConfig);
 };
 
 export default config;

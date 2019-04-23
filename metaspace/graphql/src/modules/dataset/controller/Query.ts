@@ -7,18 +7,13 @@ import {UserGroup as UserGroupModel, UserGroupRoleOptions} from '../../group/mod
 import {Context} from '../../../context';
 import {thumbnailOpticalImageUrl} from './Dataset';
 
-
 const resolveDatasetScopeRole = async (ctx: Context, dsId: string) => {
   let scopeRole = SRO.OTHER;
   if (ctx.user) {
     if (dsId) {
-      const ds = await ctx.entityManager.getRepository(DatasetModel).findOne({
-        where: { id: dsId }
-      });
-      if (ds) {
-        const userGroup = await ctx.entityManager.getRepository(UserGroupModel).findOne({
-          where: { userId: ctx.user.id, groupId: ds.groupId }
-        });
+      const ds = await ctx.cachedGetEntityById(DatasetModel, dsId);
+      if (ds && ds.groupId != null) {
+        const userGroup = await ctx.cachedGetEntityById(UserGroupModel, { userId: ctx.user.id, groupId: ds.groupId });
         if (userGroup) {
           if (userGroup.role === UserGroupRoleOptions.GROUP_ADMIN)
             scopeRole = SRO.GROUP_MANAGER;

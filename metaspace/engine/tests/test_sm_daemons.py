@@ -8,8 +8,10 @@ from unittest.mock import patch
 import time
 from datetime import datetime
 import pytest
+from PIL import Image
 from fabric.api import local
 from fabric.context_managers import warn_only
+import numpy as np
 import pandas as pd
 
 from sm.engine.daemon_action import DaemonAction
@@ -50,6 +52,17 @@ def clean_isotope_storage():
         local('rm -rf {}'.format(sm_config['isotope_storage']['path']))
 
 
+@pytest.fixture()
+def reset_queues():
+    from sm.engine.queue import QueuePublisher, SM_ANNOTATE, SM_UPDATE
+    # Delete queues to clean up remaining messages so that they don't interfere with other tests
+    for qdesc in [SM_ANNOTATE, SM_UPDATE]:
+        queue_pub = QueuePublisher(config=sm_config['rabbitmq'],
+                                   qdesc=qdesc,
+                                   logger=logger)
+        queue_pub.delete_queue()
+
+
 def init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock):
     mol_db_wrapper_mock = MolDBServiceWrapperMock()
     mol_db_wrapper_mock.find_db_by_name_version.return_value = [{'id': 0, 'name': 'HMDB-v4', 'version': '2018'}]
@@ -57,6 +70,9 @@ def init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock):
     mol_db_wrapper_mock.fetch_db_sfs.return_value = ['C12H24O']
     mol_db_wrapper_mock.fetch_molecules.return_value = [{'sf': 'C12H24O', 'mol_id': 'HMDB0001',
                                                          'mol_name': 'molecule name'}]
+
+
+get_ion_images_for_analysis_mock_return = np.linspace(0,25,18).reshape((3,6)), np.linspace(0,1,6).reshape((2,3)), (2,3)
 
 
 def init_queue_pub(qname='annotate'):
@@ -106,12 +122,22 @@ def run_daemons(db, es):
 
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
 @patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
+@patch('sm.engine.colocalization.ImageStoreServiceWrapper.get_ion_images_for_analysis',
+       return_value=get_ion_images_for_analysis_mock_return)
+@patch('sm.engine.off_sample_wrapper.ImageStoreServiceWrapper.get_image_by_id',
+       return_value=Image.new('RGBA', (10, 10)))
+@patch('sm.engine.off_sample_wrapper.call_api',
+       return_value={'predictions': {'label': 'off', 'prob': 0.99}})
 @patch('sm.engine.search_job.MSMSearch')
 def test_sm_daemons(MSMSearchMock,
+                    call_off_sample_api_mock,
+                    get_image_by_id_mock,
+                    get_ion_images_for_analysis_mock,
                     post_images_to_annot_service_mock,
                     MolDBServiceWrapperMock,
                     # fixtures
                     test_db, es_dsl_search, clean_isotope_storage,
+                    reset_queues,
                     metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
@@ -237,6 +263,7 @@ def test_sm_daemons_annot_fails(MSMSearchMock,
                                 MolDBServiceWrapperMock,
                                 test_db, es_dsl_search,
                                 clean_isotope_storage,
+                                reset_queues,
                                 metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
@@ -297,6 +324,7 @@ def test_sm_daemon_es_export_fails(MSMSearchMock,
                                    MolDBServiceWrapperMock,
                                    test_db, es_dsl_search,
                                    clean_isotope_storage,
+                                   reset_queues,
                                    metadata, ds_config):
     init_mol_db_service_wrapper_mock(MolDBServiceWrapperMock)
 
