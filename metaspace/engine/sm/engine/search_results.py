@@ -4,6 +4,7 @@ import numpy as np
 import logging
 import requests
 
+from sm.engine.isocalc_wrapper import ISOTOPIC_PEAK_N
 from sm.engine.png_generator import PngGenerator
 
 logger = logging.getLogger('engine')
@@ -16,9 +17,7 @@ def post_images_to_image_store(sc, formula_images, alpha_channel, img_store, img
     png_generator = PngGenerator(alpha_channel, greyscale=True)
 
     def generate_png_and_post(imgs):
-        imgs += [None] * (4 - len(imgs))
-
-        iso_image_ids = [None] * 4
+        iso_image_ids = [None] * ISOTOPIC_PEAK_N
         for k, img in enumerate(imgs):
             if img is not None:
                 fp = png_generator.generate_png(img.toarray())

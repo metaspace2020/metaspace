@@ -52,7 +52,6 @@ class SearchJob(object):
         self._db = None
         self._ds = None
         self._status_queue = None
-        self._wd_manager = None
         self._es = None
 
         self._sm_config = sm_config or SMConfig.get_conf()
@@ -85,14 +84,17 @@ class SearchJob(object):
         rows = [(mol_db_id, self._ds.id, JobStatus.RUNNING, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))]
         self._job_id = self._db.insert_return(JOB_INS, rows=rows)[0]
 
+    @property
+    def _ds_imzml_path(self):
+        return next(str(p) for p in Path(self._ds_data_path).iterdir()
+                    if str(p).lower().endswith('.imzml'))
+
     def _run_annotation_jobs(self, moldbs):
         try:
             logger.info("Running new job ds_id: %s, ds_name: %s, mol dbs: %s",
                         self._ds.id, self._ds.name, moldbs)
 
-            imzml_path = next(p for p in Path(self._ds.input_path).iterdir()
-                              if str(p).lower().endswith('.imzml'))
-            imzml_parser = ImzMLParser(str(imzml_path))
+            imzml_parser = ImzMLParser(self._ds_imzml_path)
             search_alg = MSMSearch(sc=self._sc, imzml_parser=imzml_parser, moldbs=moldbs,
                                    ds_config=self._ds.config, ds_data_path=self._ds_data_path)
             search_results_it = search_alg.search()
@@ -134,12 +136,12 @@ class SearchJob(object):
         return completed_moldb_ids, new_moldb_ids
 
     def _save_data_from_raw_ms_file(self):
-        ms_file_type_config = SMConfig.get_ms_file_handler(self._wd_manager.local_dir.ms_file_path)
+        ms_file_type_config = SMConfig.get_ms_file_handler(self._ds_imzml_path)
         acq_geometry_factory_module = ms_file_type_config['acq_geometry_factory']
         acq_geometry_factory = getattr(import_module(acq_geometry_factory_module['path']),
-                                                acq_geometry_factory_module['name'])
+                                       acq_geometry_factory_module['name'])
 
-        acq_geometry = acq_geometry_factory(self._wd_manager.local_dir.ms_file_path).create()
+        acq_geometry = acq_geometry_factory(self._ds_imzml_path).create()
         self._ds.save_acq_geometry(self._db, acq_geometry)
 
         self._ds.save_ion_img_storage_type(self._db, ms_file_type_config['img_storage_type'])
@@ -171,17 +173,13 @@ class SearchJob(object):
             else:
                 self._status_queue = None
 
-            # self._wd_manager = WorkDirManager(ds.id)
             self._configure_spark()
-
-            # if not self.no_clean:
-            #     self._wd_manager.clean()
 
             self._ds_data_path = Path(self._sm_config['fs']['data_path']) / ds.id
             rmtree(self._ds_data_path, ignore_errors=True)
             copytree(src=ds.input_path, dst=self._ds_data_path)
 
-            # self._save_data_from_raw_ms_file()
+            self._save_data_from_raw_ms_file()
             self._img_store.storage_type = 'fs'
 
             logger.info('Dataset config:\n%s', pformat(self._ds.config))
@@ -206,6 +204,4 @@ class SearchJob(object):
                 self._sc.stop()
             if self._db:
                 self._db.close()
-            if self._wd_manager and not self.no_clean:
-                self._wd_manager.clean()
             logger.info('*' * 150)

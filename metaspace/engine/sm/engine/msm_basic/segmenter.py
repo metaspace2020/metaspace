@@ -43,11 +43,11 @@ def spectra_sample_gen(imzml_parser, sample_ratio=0.05):
 
 
 def define_ds_segments(imzml_parser, sample_ratio=0.05, ds_segm_size_mb=5):
-    spectra_sample = spectra_sample_gen(imzml_parser, sample_ratio=sample_ratio)
+    spectra_sample = list(spectra_sample_gen(imzml_parser, sample_ratio=sample_ratio))
+    check_spectra_quality(spectra_sample)
 
     spectra_mzs = np.array([mz for sp_id, mzs, ints in spectra_sample for mz in mzs])
-    n_mz = spectra_mzs.shape[0]
-    total_n_mz = n_mz / sample_ratio
+    total_n_mz = spectra_mzs.shape[0] / sample_ratio
 
     float_prec = 8  # double precision
     segm_arr_columns = 3
@@ -64,7 +64,9 @@ def define_ds_segments(imzml_parser, sample_ratio=0.05, ds_segm_size_mb=5):
 
 def segment_spectra_chunk(sp_mz_int_buf, ds_segments, ds_segments_path):
     for segm_i, (l, r) in ds_segments:
-        segm_start, segm_end = np.searchsorted(sp_mz_int_buf[:, 1], (l, r))  # mz expected to be in column 1
+        print(segm_i, l, r)
+        segm_start = np.searchsorted(sp_mz_int_buf[:, 1], l, side='left')  # mz expected to be in column 1
+        segm_end = np.searchsorted(sp_mz_int_buf[:, 1], r, side='right')
         pd.to_msgpack(ds_segments_path / f'{segm_i:04}.msgpack',
                       sp_mz_int_buf[segm_start:segm_end],
                       append=True)
@@ -116,15 +118,14 @@ def segment_centroids(centr_df, segm_n, centr_segm_path):
     rmtree(centr_segm_path, ignore_errors=True)
     centr_segm_path.mkdir(parents=True)
 
+    first_peak_df = centr_df[centr_df.peak_i == 0].copy()
     segm_bounds_q = [i * 1 / segm_n for i in range(0, segm_n)]
-    segm_lower_bounds = list(np.quantile(centr_df.mz, q) for q in segm_bounds_q)
+    segm_lower_bounds = list(np.quantile(first_peak_df.mz, q) for q in segm_bounds_q)
 
-    first_centr_df = centr_df[centr_df.peak_i == 0].copy()
-    segment_mapping = np.searchsorted(segm_lower_bounds, first_centr_df.mz.values, side='right') - 1
-    first_centr_df['segm_i'] = segment_mapping
+    segment_mapping = np.searchsorted(segm_lower_bounds, first_peak_df.mz.values, side='right') - 1
+    first_peak_df['segm_i'] = segment_mapping
 
-    centr_segm_df = pd.merge(centr_df, first_centr_df[['formula_i', 'segm_i']],
+    centr_segm_df = pd.merge(centr_df, first_peak_df[['formula_i', 'segm_i']],
                              on='formula_i').sort_values('mz')
-    centr_segm_df.groupby('segm_i').apply(
-        lambda df: df.to_msgpack(f'{centr_segm_path}/{df.segm_i.iloc[0]:04}.msgpack')
-    )
+    for segm_i, df in centr_segm_df.groupby('segm_i'):
+        pd.to_msgpack(f'{centr_segm_path}/{segm_i:04}.msgpack', df)

@@ -41,7 +41,7 @@ logger = logging.getLogger('annotate-daemon')
 test_ds_name = 'imzml_example_ds'
 
 proj_dir_path = dirname(dirname(__file__))
-data_dir_path = join(sm_config["fs"]["base_path"], test_ds_name)
+data_dir_path = join(sm_config['fs']['data_path'], test_ds_name)
 input_dir_path = join(proj_dir_path, 'tests/data/imzml_example_ds')
 ds_config_path = join(input_dir_path, 'config.json')
 
@@ -121,7 +121,7 @@ def run_daemons(db, es):
 
 
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
-@patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
+@patch('sm.engine.search_results.post_images_to_image_store')
 @patch('sm.engine.colocalization.ImageStoreServiceWrapper.get_ion_images_for_analysis',
        return_value=get_ion_images_for_analysis_mock_return)
 @patch('sm.engine.off_sample_wrapper.ImageStoreServiceWrapper.get_image_by_id',
@@ -256,7 +256,7 @@ def test_sm_daemons(MSMSearchMock,
 
 
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
-@patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
+@patch('sm.engine.search_results.post_images_to_image_store')
 @patch('sm.engine.search_job.MSMSearch')
 def test_sm_daemons_annot_fails(MSMSearchMock,
                                 post_images_to_annot_service_mock,
@@ -317,7 +317,7 @@ def test_sm_daemons_annot_fails(MSMSearchMock,
 
 
 @patch('sm.engine.mol_db.MolDBServiceWrapper')
-@patch('sm.engine.search_results.SearchResults.post_images_to_image_store')
+@patch('sm.engine.search_results.post_images_to_image_store')
 @patch('sm.engine.search_job.MSMSearch')
 def test_sm_daemon_es_export_fails(MSMSearchMock,
                                    post_images_to_annot_service_mock,

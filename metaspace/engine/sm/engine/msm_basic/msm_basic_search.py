@@ -12,7 +12,6 @@ from sm.engine.isocalc_wrapper import IsocalcWrapper, ISOTOPIC_PEAK_N
 from sm.engine.util import SMConfig
 from sm.engine.msm_basic.formula_imager import create_process_segment
 from sm.engine.msm_basic.segmenter import define_ds_segments, segment_spectra, segment_centroids
-from sm.engine.msm_basic.formula_validator import formula_image_metrics
 
 logger = logging.getLogger('engine')
 
@@ -78,6 +77,10 @@ class MSMSearch(object):
         ion_formulas = np.unique(ion_formula_map_df.ion_formula.values)
         return centroids_gen.generate_if_not_exist(formulas=ion_formulas.tolist())
 
+    def process_segments(self, centr_segm_n, func):
+        segm_rdd = self._sc.parallelize(range(centr_segm_n), numSlices=centr_segm_n)
+        return segm_rdd.map(func).collect()
+
     def search(self):
         """ Search, score, and compute FDR for all MolDB formulas
 
@@ -119,8 +122,7 @@ class MSMSearch(object):
         process_centr_segment = create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
                                                        coordinates, self._image_gen_config, target_formula_inds)
         logger.info('Processing segments...')
-        segm_rdd = self._sc.parallelize(range(centr_segm_n), numSlices=centr_segm_n)
-        process_results = segm_rdd.map(process_centr_segment).collect()
+        process_results = self.process_segments(centr_segm_n, process_centr_segment)
 
         formula_metrics_list, formula_images_list = zip(*process_results)
         formula_metrics_df = pd.concat(formula_metrics_list)

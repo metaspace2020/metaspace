@@ -27,6 +27,7 @@ class SciTester(object):
     def __init__(self, sm_config_path):
         self.sm_config_path = sm_config_path
         self.sm_config = SMConfig.get_conf()
+        self.sm_config['colocalization']['enabled'] = False
         self.db = DB(self.sm_config['db'])
 
         self.ds_id = '2000-01-01_00h00m00s'

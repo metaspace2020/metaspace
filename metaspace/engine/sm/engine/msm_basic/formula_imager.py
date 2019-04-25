@@ -93,28 +93,30 @@ def create_process_segment(ds_segments, ds_segments_path, centr_segments_path,
 
     def process_centr_segment(segm_i):
         centr_segm_path = centr_segments_path / f'{segm_i:04}.msgpack'
-        logger.info(f'Reading centroid segment {segm_i} data from {centr_segm_path}')
-        centr_df = pd.read_msgpack(centr_segm_path)
+        formula_metrics_df, formula_images = pd.DataFrame(), {}
+        if centr_segm_path.exists():
+            logger.info(f'Reading centroid segment {segm_i} data from {centr_segm_path}')
+            centr_df = pd.read_msgpack(centr_segm_path)
 
-        centr_segm_min_mz, centr_segm_max_mz = centr_df.mz.agg([np.min, np.max])
-        centr_segm_min_mz -= centr_segm_min_mz * ppm * 1e-6
-        centr_segm_max_mz += centr_segm_max_mz * ppm * 1e-6
+            centr_segm_min_mz, centr_segm_max_mz = centr_df.mz.agg([np.min, np.max])
+            centr_segm_min_mz -= centr_segm_min_mz * ppm * 1e-6
+            centr_segm_max_mz += centr_segm_max_mz * ppm * 1e-6
 
-        first_ds_segm_i = np.searchsorted(ds_segments[:, 0], centr_segm_min_mz, side='right') - 1
-        first_ds_segm_i = max(0, first_ds_segm_i)
-        last_ds_segm_i = np.searchsorted(ds_segments[:, 1], centr_segm_max_mz, side='left')  # last included
-        last_ds_segm_i = min(len(ds_segments) - 1, last_ds_segm_i)
+            first_ds_segm_i = np.searchsorted(ds_segments[:, 0], centr_segm_min_mz, side='right') - 1
+            first_ds_segm_i = max(0, first_ds_segm_i)
+            last_ds_segm_i = np.searchsorted(ds_segments[:, 1], centr_segm_max_mz, side='left')  # last included
+            last_ds_segm_i = min(len(ds_segments) - 1, last_ds_segm_i)
 
-        logger.info(f'Reading spectra segments {first_ds_segm_i}-{last_ds_segm_i} from {ds_segments_path}')
+            logger.info(f'Reading spectra segments {first_ds_segm_i}-{last_ds_segm_i} from {ds_segments_path}')
 
-        sp_arr = read_ds_segments(first_ds_segm_i, last_ds_segm_i)
+            sp_arr = read_ds_segments(first_ds_segm_i, last_ds_segm_i)
 
-        formula_images_gen = gen_iso_images(sp_inds=sp_arr[:,0], sp_mzs=sp_arr[:,1], sp_ints=sp_arr[:,2],
-                                            centr_df=centr_df,
-                                            nrows=nrows, ncols=ncols, ppm=3, min_px=1)
-        formula_metrics_df, formula_images = \
-            formula_image_metrics(formula_images_gen, compute_metrics, target_formula_inds)
-        logger.info(f'Segment {segm_i} finished')
+            formula_images_it = gen_iso_images(sp_inds=sp_arr[:,0], sp_mzs=sp_arr[:,1], sp_ints=sp_arr[:,2],
+                                               centr_df=centr_df,
+                                               nrows=nrows, ncols=ncols, ppm=ppm, min_px=1)
+            formula_metrics_df, formula_images = \
+                formula_image_metrics(formula_images_it, compute_metrics, target_formula_inds)
+            logger.info(f'Segment {segm_i} finished')
         return formula_metrics_df, formula_images
 
     return process_centr_segment

@@ -1,4 +1,7 @@
-from unittest.mock import MagicMock, patch
+from itertools import product
+from pathlib import Path
+from shutil import rmtree
+from unittest.mock import MagicMock, patch, Mock
 import numpy as np
 import pandas as pd
 
@@ -8,7 +11,7 @@ from sm.engine.msm_basic.msm_basic_search import MSMSearch, init_fdr, collect_io
 from sm.engine.tests.util import pyspark_context, ds_config, make_moldb_mock
 
 
-def test_compute_fdr(pyspark_context):
+def test_compute_fdr():
     moldb_fdr_list = init_fdr([make_moldb_mock()], ['+H', '+Na'])
     _, fdr = moldb_fdr_list[0]
     formula_map_df = collect_ion_formulas(moldb_fdr_list).drop('moldb_id', axis=1)
@@ -18,26 +21,22 @@ def test_compute_fdr(pyspark_context):
                                         (12, 'H2ONa', 0.0)],
                                        columns=['formula_i', 'ion_formula', 'msm'])
                           .set_index('formula_i'))
-    formula_images = pyspark_context.parallelize([(10, []),
-                                                  (11, []),
-                                                  (12, [])])
 
-    metrics_df, images = compute_fdr(fdr, formula_metrics_df, formula_images, formula_map_df, max_fdr=0.5)
+    metrics_df = compute_fdr(fdr, formula_metrics_df, formula_map_df)
 
-    assert metrics_df.shape == (2, 5) and images.count() == 2
+    assert metrics_df.shape == (2, 5)
     assert sorted(metrics_df.columns.tolist()) == sorted(['ion_formula', 'msm', 'formula', 'adduct', 'fdr'])
 
 
-@patch('sm.engine.msm_basic.msm_basic_search.formula_image_metrics')
+@patch('sm.engine.msm_basic.formula_imager.formula_image_metrics')
 def test_search(formula_image_metrics_mock, pyspark_context, ds_config):
-    ds_reader_mock = MagicMock(spec=DatasetReader)
-    ds_reader_mock.get_dims.return_value = (1, 2)
-    ds_reader_mock.get_norm_img_pixel_inds.return_value = np.array([0, 1])
-    ds_reader_mock.get_sample_area_mask.return_value = np.array([1, 1])
-    ds_reader_mock.get_spectra.return_value = pyspark_context.parallelize([(0, np.arange(5), np.ones(5)),
-                                                                           (1, np.arange(5), np.ones(5))])
+    sp_n = 100
+    imzml_parser_mock = Mock()
+    imzml_parser_mock.coordinates = list(product([0], range(sp_n)))
+    imzml_parser_mock.getspectrum.return_value = (np.linspace(0, 100, num=sp_n), np.ones(sp_n))
 
-    msm_search = MSMSearch(pyspark_context, ds_reader_mock, [make_moldb_mock()], ds_config)
+    ds_data_path = Path('/tmp/abc')
+    msm_search = MSMSearch(pyspark_context, imzml_parser_mock, [make_moldb_mock()], ds_config, ds_data_path)
     formulas_df = (pd.DataFrame([(0, 'H3O'), (1, 'C5H4O')], columns=['formula_i', 'formula'])
                    .set_index('formula_i'))
     centroids_df = (pd.DataFrame(data=[(0, 0, 1, 100), (0, 1, 2, 10),
@@ -47,10 +46,22 @@ def test_search(formula_image_metrics_mock, pyspark_context, ds_config):
                     .set_index('formula_i'))
     msm_search._fetch_formula_centroids = lambda args: FormulaCentroids(formulas_df, centroids_df)
 
-    formula_image_metrics_mock.return_value = (pd.DataFrame([(0, 0.95), (1, 0.9)], columns=['formula_i', 'msm'])
-                                               .set_index('formula_i'))
+    def process_segments(centr_segm_n, func):
+        return map(func, range(centr_segm_n))
+
+    msm_search.process_segments = process_segments
+
+    image_metrics_result_list = [
+        (pd.DataFrame([(0, 0.95)], columns=['formula_i', 'msm']).set_index('formula_i'),
+         {0: np.zeros((1, 1))}),
+        (pd.DataFrame([(1, 0.9)], columns=['formula_i', 'msm']).set_index('formula_i'),
+         {0: np.zeros((1, 1)), 1: np.zeros((1, 1))})
+    ]
+    formula_image_metrics_mock.side_effect = image_metrics_result_list
 
     _, moldb_ion_metrics_df, moldb_ion_images = next(msm_search.search())
 
     assert moldb_ion_metrics_df.shape == (2, 5)
-    assert moldb_ion_images.count() == 2
+    assert len(moldb_ion_images) == 2
+
+    rmtree(ds_data_path)
