@@ -49,7 +49,7 @@ def define_ds_segments(imzml_parser, sample_ratio=0.05, ds_segm_size_mb=5):
     spectra_mzs = np.array([mz for sp_id, mzs, ints in spectra_sample for mz in mzs])
     total_n_mz = spectra_mzs.shape[0] / sample_ratio
 
-    float_prec = 8  # double precision
+    float_prec = 4 if imzml_parser.mzPrecision == 'f' else 8
     segm_arr_columns = 3
     segm_n = segm_arr_columns * (total_n_mz * float_prec) // (ds_segm_size_mb * 2**20)
     segm_n = max(1, int(segm_n))
@@ -62,11 +62,9 @@ def define_ds_segments(imzml_parser, sample_ratio=0.05, ds_segm_size_mb=5):
     return ds_segments
 
 
-def segment_spectra_chunk(sp_mz_int_buf, ds_segments, ds_segments_path):
-    for segm_i, (l, r) in ds_segments:
-        print(segm_i, l, r)
-        segm_start = np.searchsorted(sp_mz_int_buf[:, 1], l, side='left')  # mz expected to be in column 1
-        segm_end = np.searchsorted(sp_mz_int_buf[:, 1], r, side='right')
+def segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path):
+    for segm_i, (l, r) in mz_segments:
+        segm_start, segm_end = np.searchsorted(sp_mz_int_buf[:, 1], (l, r))  # mz expected to be in column 1
         pd.to_msgpack(ds_segments_path / f'{segm_i:04}.msgpack',
                       sp_mz_int_buf[segm_start:segm_end],
                       append=True)
@@ -84,7 +82,13 @@ def segment_spectra(imzml_parser, coordinates, ds_segments, ds_segments_path):
     rmtree(ds_segments_path, ignore_errors=True)
     ds_segments_path.mkdir(parents=True)
 
-    ds_segments = list(enumerate(ds_segments))
+    # extend boundaries of the first and last segments
+    # to include all mzs outside of the spectra sample mz range
+    mz_segments = ds_segments.copy()
+    mz_segments[0, 0] = 0
+    mz_segments[-1, 1] = MAX_MZ_VALUE
+    mz_segments = list(enumerate(mz_segments))
+
     sp_id_to_idx = determine_spectra_order(coordinates)
 
     chunk_size = 5000
@@ -109,7 +113,7 @@ def segment_spectra(imzml_parser, coordinates, ds_segments, ds_segments_path):
         sp_mz_int_buf = np.array([np.concatenate(sp_inds_list)[by_mz],
                                   mzs[by_mz],
                                   np.concatenate(ints_list)[by_mz]]).T
-        segment_spectra_chunk(sp_mz_int_buf, ds_segments, ds_segments_path)
+        segment_spectra_chunk(sp_mz_int_buf, mz_segments, ds_segments_path)
 
         sp_inds_list, mzs_list, ints_list = [], [], []
 
