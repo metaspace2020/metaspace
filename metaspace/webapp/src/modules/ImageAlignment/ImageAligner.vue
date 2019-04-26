@@ -194,13 +194,11 @@
        this.opticalImageHeight = this.$refs.scan.height;
      },
 
-     onLoad({width, height}) {
-       const oldWidth = this.width,
-             oldHeight = this.height;
+     onLoad({width, height, naturalWidth, naturalHeight}) {
        this.width = width;
        this.height = height;
-       this.naturalWidth = this.$refs.annotImage.getImage().naturalWidth;
-       this.naturalHeight = this.$refs.annotImage.getImage().naturalHeight;
+       this.naturalWidth = naturalWidth;
+       this.naturalHeight = naturalHeight;
      },
 
      onMouseDown(event, handleIndex) {
@@ -314,7 +312,7 @@
        let deltaAngle = (360.0 / Math.PI) * (a1 - a2);
 
        this.$emit('updateRotationAngle', this.startRotationAngle + deltaAngle);
-       },
+     },
 
      onImageMouseDown(event) {
        event.preventDefault();
@@ -327,7 +325,7 @@
 
      onImageRightMouseDown(event) {
        event.preventDefault();
-       this.imageDrag=false;
+       this.imageDrag = false;
        this.startRotationAngle = this.rotationAngleDegrees;
        document.removeEventListener('mouseup', this.onMouseUp);
        this.dragStartX = event.clientX;

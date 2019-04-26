@@ -125,9 +125,8 @@
             :initialTransform="initialTransform"
             :padding="padding"
             :rotationAngleDegrees="angle"
-            :massSpecSrc="massSpecSrc"
-            @updateRotationAngle="updateAngle">
-    </image-aligner>
+            :ionImageSrc="massSpecSrc"
+            @updateRotationAngle="updateAngle" />
 
   </div>
 

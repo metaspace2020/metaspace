@@ -1,19 +1,21 @@
 <template>
 <div class="main-ion-image-container">
     <div class="main-ion-image-container-row1">
-        <image-loader :src="annotation.isotopeImages[0].url"
-                      :colormap="colormap"
-                      :pixelSizeX="pixelSizeX"
-                      :pixelSizeY="pixelSizeY"
-                      :disableScaleBar="disableScaleBar"
-                      :scaleBarColor="scaleBarColor"
-                      ref="imageLoader"
-                      scrollBlock
-                      class="image-loader"
-                      v-bind="imageLoaderSettings"
-                      @zoom="onImageZoom"
-                      @move="onImageMove">
-        </image-loader>
+        <ion-image-viewer
+          :ionImage="ionImage"
+          :isLoading="ionImageIsLoading"
+          :colormap="colormap"
+          :pixelSizeX="pixelSizeX"
+          :pixelSizeY="pixelSizeY"
+          :disableScaleBar="disableScaleBar"
+          :scaleBarColor="scaleBarColor"
+          ref="imageLoader"
+          scrollBlock
+          class="image-loader"
+          v-bind="imageLoaderSettings"
+          @zoom="onImageZoom"
+          @move="onImageMove">
+        </ion-image-viewer>
 
         <div class="colorbar-container">
             <div v-if="imageLoaderSettings.opticalImageUrl">
@@ -30,12 +32,25 @@
                 </el-slider>
             </div>
 
-            {{ annotation.isotopeImages[0].maxIntensity.toExponential(2) }}
+            <el-tooltip v-if="ionImage && ionImage.maxIntensity !== ionImage.clippedMaxIntensity" placement="left">
+                <div>
+                    <div style="color: red">{{ ionImage.clippedMaxIntensity.toExponential(2) }}</div>
+                </div>
+                <div slot="content">
+                    Hot-spot removal has been applied to this image. <br/>
+                    Pixel intensities above the 99th percentile, {{ ionImage.clippedMaxIntensity.toExponential(2) }},
+                    have been reduced to {{ ionImage.clippedMaxIntensity.toExponential(2) }}. <br/>
+                    The highest intensity before hot-spot removal was {{ ionImage.maxIntensity.toExponential(2) }}.
+                </div>
+            </el-tooltip>
+            <div v-else>
+                {{ ionImage && ionImage.maxIntensity.toExponential(2) }}
+            </div>
             <colorbar style="width: 20px; height: 160px; align-self: center;"
                       :direction="colorbarDirection" :map="colormapName"
                       slot="reference">
             </colorbar>
-            {{ annotation.isotopeImages[0].minIntensity.toExponential(2) }}
+            {{ ionImage && ionImage.minIntensity.toExponential(2) }}
 
             <div class="annot-view__image-download">
                 <!-- see https://github.com/tsayen/dom-to-image/issues/155 -->
@@ -58,17 +73,19 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { Component, Prop } from 'vue-property-decorator';
+import {Component, Prop, Watch} from 'vue-property-decorator';
 import { saveAs } from 'file-saver';
 import Colorbar from './Colorbar.vue';
-import ImageLoader from '../../../../components/ImageLoader.vue';
+import IonImageViewer from '../../../../components/IonImageViewer.vue';
 import domtoimage from 'dom-to-image-google-font-issue';
+import {IonImage, loadPngFromUrl, processIonImage} from '../../../../lib/ionImageRendering';
+import {get} from 'lodash-es';
 
 @Component({
     name: 'main-image',
     components: {
-        ImageLoader,
-        Colorbar
+        IonImageViewer,
+        Colorbar,
     }
 })
 export default class MainImage extends Vue {
@@ -97,6 +114,30 @@ export default class MainImage extends Vue {
     @Prop({type: String})
     scaleBarColor!: String
 
+    ionImageUrl: string | null = null;
+    ionImage: IonImage | null = null;
+    ionImageIsLoading = false;
+
+    created() {
+        const ignoredPromise = this.updateIonImage();
+    }
+
+    @Watch('annotation')
+    async updateIonImage() {
+        const isotopeImage = get(this.annotation, 'isotopeImages[0]');
+        const newUrl = isotopeImage != null ? isotopeImage.url : null;
+        if (newUrl != null && newUrl !== this.ionImageUrl) {
+            this.ionImageUrl = newUrl;
+            this.ionImageIsLoading = true;
+            const png = await loadPngFromUrl(newUrl);
+            if (newUrl === this.ionImageUrl) {
+                const {minIntensity, maxIntensity} = isotopeImage;
+                this.ionImage = processIonImage(png, minIntensity, maxIntensity);
+                this.ionImageIsLoading = false;
+            }
+        }
+    }
+
     get colorbarDirection(): string {
       return this.colormap[0] == '-' ? 'bottom' : 'top';
     }
@@ -106,8 +147,8 @@ export default class MainImage extends Vue {
         {imgWidth, imgHeight} = this.$refs.imageLoader.getScaledImageSize();
       domtoimage
         .toBlob(node, {
-          width: imgWidth >= node.clientWidth ? node.clientWidth : imgWidth,
-          height:  imgHeight >= node.clientHeight ? node.clientHeight : imgHeight
+          width: Math.min(imgWidth, node.clientWidth),
+          height:  Math.min(imgHeight, node.clientHeight)
         })
         .then(blob  => {
           saveAs(blob, `${this.annotation.id}.png`);
@@ -121,7 +162,7 @@ export default class MainImage extends Vue {
       'settings or show the optical image.');
     }
 
-  get browserSupportsDomToImage(): boolean {
+    get browserSupportsDomToImage(): boolean {
       return window.navigator.userAgent.includes('Chrome') ||
           window.navigator.userAgent.includes('Firefox');
     }
